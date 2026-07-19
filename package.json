@@ -12,6 +12,8 @@
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
+    "@rn-primitives/portal": "^1.5.2",
+    "@rn-primitives/slot": "^1.5.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "~57.0.7",
