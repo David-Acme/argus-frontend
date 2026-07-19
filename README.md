@@ -2,6 +2,12 @@
 
 This is the **Argus** mobile app, a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
 
+**Author:** David Acme
+
+## License
+
+Free for personal use. Commercial / business use requires a donation to support the project — see the [LICENSE](./LICENSE) file for full terms.
+
 It was initialized using the following command, then the `Minimal (Uniwind)` template was selected when prompted:
 
 ```bash

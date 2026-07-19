@@ -1,5 +1,7 @@
 {
   "name": "argus-frontend",
+  "author": "David Acme",
+  "license": "SEE LICENSE IN LICENSE",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
