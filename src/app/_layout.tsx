@@ -1,6 +1,6 @@
 import '../global.css';
 
-import { NAV_THEME } from '@/lib/theme';
+import { NAV_THEME } from '@/shared/libs/theme';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';

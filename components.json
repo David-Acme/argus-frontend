@@ -10,11 +10,11 @@
       "cssVariables": true
     },
     "aliases": {
-      "components": "@/src/components",
-      "utils": "@/src/lib/utils",
-      "ui": "@/src/components/ui",
-      "lib": "@/src/lib",
-      "hooks": "@/src/hooks"
+      "components": "@/shared/components",
+      "utils": "@/shared/libs/utils",
+      "ui": "@/shared/components/ui",
+      "lib": "@/shared/libs",
+      "hooks": "@/shared/hooks"
     },
     "iconLibrary": "lucide"
   }
