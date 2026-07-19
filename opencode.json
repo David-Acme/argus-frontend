@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "expo": {
+      "type": "remote",
+      "url": "https://mcp.expo.dev/mcp",
+      "enabled": true
+    }
+  },
+  "skills": {
+    "paths": [".opencode/skills"]
+  }
+}
