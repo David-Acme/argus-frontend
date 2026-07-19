@@ -7,4 +7,7 @@ declare module 'uniwind' {
     }
 }
 
+declare module '*.css';
+declare module '@/global.css';
+
 export {}
