@@ -5,6 +5,7 @@
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "allowArbitraryExtensions": true,
+    "moduleSuffixes": [".native", ".web", ""],
     "paths": {
       "@/*": [
         "src/*"

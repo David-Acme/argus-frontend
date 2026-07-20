@@ -1,0 +1,22 @@
+{
+  "app": {
+    "loading": {
+      "title": "Loading application",
+      "subtitle": "We are initializing the application, please wait."
+    }
+  },
+  "language": {
+    "es": "Spanish",
+    "en": "English"
+  },
+  "actions": {
+    "accept": "Accept",
+    "cancel": "Cancel",
+    "retry": "Try again"
+  },
+  "not-found": {
+    "title": "Page not found",
+    "subtitle": "The page you are looking for does not exist.",
+    "button": "Back to home"
+  }
+}

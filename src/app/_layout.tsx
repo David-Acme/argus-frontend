@@ -6,6 +6,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useUniwind } from 'uniwind';
+import { useI18nStore } from '@/core/i18n';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -14,6 +15,7 @@ export {
 
 export default function RootLayout() {
   const { theme } = useUniwind();
+  useI18nStore((state) => state.language);
 
   return (
     <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
