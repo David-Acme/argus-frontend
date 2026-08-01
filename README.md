@@ -6,7 +6,7 @@ This is the **Argus** mobile app, a [React Native](https://reactnative.dev/) pro
 
 ## License
 
-Free for personal use. Commercial / business use requires a donation to support the project — see the [LICENSE](./LICENSE) file for full terms.
+Free for personal use and for internal business use under AGPL-3.0. A commercial license is required only to redistribute or sell Argus to third parties — see the [LICENSE](./LICENSE) file for full terms.
 
 It was initialized using the following command, then the `Minimal (Uniwind)` template was selected when prompted:
 
