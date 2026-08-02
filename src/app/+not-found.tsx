@@ -1,19 +1,16 @@
 import { Link, Stack } from 'expo-router';
 import { View } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
-import { useTranslation } from '@/core/i18n';
 
 export default function NotFoundScreen() {
-  const { t } = useTranslation();
-
   return (
     <>
-      <Stack.Screen options={{ title: t('not-found.title') }} />
+      <Stack.Screen options={{ title: 'Not found' }} />
       <View>
-        <Text>{t('not-found.subtitle')}</Text>
+        <Text>The page you are looking for does not exist.</Text>
 
         <Link href="/">
-          <Text>{t('not-found.button')}</Text>
+          <Text>Go home</Text>
         </Link>
       </View>
     </>

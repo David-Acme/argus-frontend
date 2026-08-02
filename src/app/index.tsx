@@ -1,82 +1,132 @@
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { Link, Stack } from 'expo-router';
-import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
-import * as React from 'react';
-import { Image, type ImageStyle, View } from 'react-native';
-import { Uniwind, useUniwind } from 'uniwind';
+import { THEME_OPTIONS, THEME_ICONS, colors } from '@/shared/constants';
+import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
+import type { IconName, ThemePreference } from '@/core/types';
+import { useUniwind } from 'uniwind';
+import { useState, type ReactNode } from 'react';
+import { ScrollView, View } from 'react-native';
 
-const LOGO = {
-  light: require('@/assets/images/react-native-reusables-light.png'),
-  dark: require('@/assets/images/react-native-reusables-dark.png'),
+type SectionProps = {
+  title: string;
+  children: ReactNode;
 };
 
-const SCREEN_OPTIONS = {
-  title: 'React Native Reusables',
-  headerTransparent: true,
-  headerRight: () => <ThemeToggle />,
+type StatusTone = 'success' | 'warning' | 'error' | 'info';
+
+type StatusPillProps = {
+  tone: StatusTone;
+  label: string;
 };
 
-const IMAGE_STYLE: ImageStyle = {
-  height: 76,
-  width: 76,
-};
+const SAMPLE_ICONS: IconName[] = ['camera', 'shield-check', 'sparkles', 'video'];
 
 export default function Screen() {
   const { theme } = useUniwind();
+  const [preference, setPreference] = useState<ThemePreference>(getThemePreference());
+
+  const cycleTheme = () => {
+    const idx = THEME_OPTIONS.indexOf(preference);
+    const next = THEME_OPTIONS[(idx + 1) % THEME_OPTIONS.length];
+    setPreference(next);
+    setThemePreference(next);
+  };
 
   return (
-    <>
-      <Stack.Screen options={SCREEN_OPTIONS} />
-      <View className="flex-1 items-center justify-center gap-8 p-4">
-        <Image source={LOGO[theme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" />
-        <View className="gap-2 p-4">
-          <Text className="ios:text-foreground text-muted-foreground font-mono text-sm">
-            1. Edit <Text variant="code">app/index.tsx</Text> to get started.
-          </Text>
-          <Text className="ios:text-foreground text-muted-foreground font-mono text-sm">
-            2. Save to see your changes instantly.
-          </Text>
+    <ScrollView className="bg-background" contentContainerClassName="p-6 pb-16">
+      <View className="gap-8">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 gap-1">
+            <Text className="text-2xl font-bold tracking-tight text-foreground">ARGUS</Text>
+            <Text variant="muted">Design system · {theme}</Text>
+          </View>
+          <Button size="icon" variant="ghost" className="rounded-full" onPress={cycleTheme}>
+            <Icon name={THEME_ICONS[preference]} className="size-5" />
+          </Button>
         </View>
-        <View className="flex-row gap-2">
-          <Link href="https://reactnativereusables.com" asChild>
+
+        <Section title="Typography">
+          <Text variant="h1">Heading 1</Text>
+          <Text variant="h2">Heading 2</Text>
+          <Text variant="h3">Heading 3</Text>
+          <Text variant="lead">Lead — calm, confident, premium.</Text>
+          <Text>
+            Body copy. Everything runs on-device: face recognition, speech-to-text,
+            text-to-speech and a local LLM. No cloud processing, ever.
+          </Text>
+          <Text variant="small">Small — labels and metadata.</Text>
+          <Text variant="muted">Muted — captions and secondary info.</Text>
+          <Text variant="code">npm run dev</Text>
+        </Section>
+
+        <Section title="Buttons">
+          <View className="gap-2">
             <Button>
-              <Text>Browse the Docs</Text>
+              <Text>Primary</Text>
             </Button>
-          </Link>
-          <Link href="https://github.com/founded-labs/react-native-reusables" asChild>
+            <Button variant="secondary">
+              <Text>Secondary</Text>
+            </Button>
+            <Button variant="outline">
+              <Text>Outline</Text>
+            </Button>
             <Button variant="ghost">
-              <Text>Star the Repo</Text>
-              <Icon as={StarIcon} />
+              <Text>Ghost</Text>
             </Button>
-          </Link>
-        </View>
+            <Button variant="destructive">
+              <Text>Destructive</Text>
+            </Button>
+            <Button variant="link">
+              <Text>Link</Text>
+            </Button>
+            <Button disabled>
+              <Text>Disabled</Text>
+            </Button>
+          </View>
+        </Section>
+
+        <Section title="Status">
+          <View className="flex-row flex-wrap gap-2">
+            <StatusPill tone="success" label="Online" />
+            <StatusPill tone="warning" label="Motion" />
+            <StatusPill tone="error" label="Offline" />
+            <StatusPill tone="info" label="Info" />
+          </View>
+        </Section>
+
+        <Section title="Icons">
+          <View className="flex-row gap-4">
+            {SAMPLE_ICONS.map((name) => (
+              <View
+                key={name}
+                className="size-12 items-center justify-center rounded-xl bg-surface">
+                <Icon name={name} className="size-6 text-foreground-secondary" />
+              </View>
+            ))}
+          </View>
+        </Section>
       </View>
-    </>
+    </ScrollView>
   );
 }
 
-const THEME_ICONS = {
-  light: SunIcon,
-  dark: MoonStarIcon,
-};
-
-function ThemeToggle() {
-  const { theme } = useUniwind();
-
-  function toggleTheme() {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    Uniwind.setTheme(newTheme);
-  }
-
+function Section({ title, children }: SectionProps) {
   return (
-    <Button
-      onPressIn={toggleTheme}
-      size="icon"
-      variant="ghost"
-      className="ios:size-9 web:mx-4 rounded-full">
-      <Icon as={THEME_ICONS[theme ?? 'light']} className="size-5" />
-    </Button>
+    <View className="gap-3">
+      <Text className="text-lg font-semibold text-foreground">{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+function StatusPill({ tone, label }: StatusPillProps) {
+  const { theme } = useUniwind();
+  const color = colors[theme][tone];
+  return (
+    <View className="flex-row items-center gap-2 rounded-full bg-surface px-3 py-1.5">
+      <View className="size-2 rounded-full" style={{ backgroundColor: color }} />
+      <Text className="text-sm text-foreground-secondary">{label}</Text>
+    </View>
   );
 }

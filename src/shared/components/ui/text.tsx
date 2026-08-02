@@ -1,8 +1,18 @@
 import { cn } from '@/shared/libs/utils';
 import { Slot } from '@rn-primitives/slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import * as React from 'react';
+import { createContext, useContext } from 'react';
 import { Platform, Text as RNText, type Role } from 'react-native';
+
+type TextVariantProps = VariantProps<typeof textVariants>;
+
+type TextVariant = NonNullable<TextVariantProps['variant']>;
+
+type TextProps = React.ComponentProps<typeof RNText> &
+  React.RefAttributes<typeof RNText> &
+  TextVariantProps & {
+    asChild?: boolean;
+  };
 
 const textVariants = cva(
   cn(
@@ -42,10 +52,6 @@ const textVariants = cva(
   }
 );
 
-type TextVariantProps = VariantProps<typeof textVariants>;
-
-type TextVariant = NonNullable<TextVariantProps['variant']>;
-
 const ROLE: Partial<Record<TextVariant, Role>> = {
   h1: 'heading',
   h2: 'heading',
@@ -62,19 +68,15 @@ const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
   h4: '4',
 };
 
-const TextClassContext = React.createContext<string | undefined>(undefined);
+const TextClassContext = createContext<string | undefined>(undefined);
 
 function Text({
   className,
   asChild = false,
   variant = 'default',
   ...props
-}: React.ComponentProps<typeof RNText> &
-  React.RefAttributes<typeof RNText> &
-  TextVariantProps & {
-    asChild?: boolean;
-  }) {
-  const textClass = React.useContext(TextClassContext);
+}: TextProps) {
+  const textClass = useContext(TextClassContext);
   const Component = asChild ? Slot : RNText;
   return (
     <Component
