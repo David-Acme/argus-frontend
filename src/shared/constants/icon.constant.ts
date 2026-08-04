@@ -1,18 +1,45 @@
-import { Camera, Monitor, Moon, ShieldCheck, Sparkles, Sun, Video } from 'lucide-react-native';
+import {
+  Camera,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  KeyRound,
+  Link,
+  Mic,
+  MicOff,
+  Monitor,
+  Moon,
+  RefreshCw,
+  ScanBarcode,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  Unlink,
+  Video,
+  X,
+} from 'lucide-react-native';
 
-/**
- * Centralized ARGUS icon registry.
- *
- * Only file that imports from an icon library. To use a new icon: import it
- * here and add it to the map (kebab-case key). The rest of the app consumes
- * icons via `Icon name="<key>"` — never imports from lucide directly.
- */
 export const ICONS = {
   camera: Camera,
+  'check-circle': CheckCircle2,
+  'key-round': KeyRound,
+  link: Link,
+  mic: Mic,
+  'mic-off': MicOff,
   monitor: Monitor,
   moon: Moon,
+  'refresh-cw': RefreshCw,
+  'scan-barcode': ScanBarcode,
   'shield-check': ShieldCheck,
   sparkles: Sparkles,
   sun: Sun,
+  unlink: Unlink,
   video: Video,
+  x: X,
+  check: Check,
+  'chevron-down': ChevronDown,
+  'chevron-right': ChevronRight,
+  'chevron-up': ChevronUp,
 } as const;

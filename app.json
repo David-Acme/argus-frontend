@@ -23,7 +23,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./src/assets/images/favicon.png"
     },
     "plugins": [
@@ -37,6 +37,13 @@
         }
       ],
       "expo-localization",
+      "expo-audio",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Argus necesita acceso a la cámara para vincular tu dispositivo con tu servidor."
+        }
+      ],
       [
         "react-native-edge-to-edge",
         {
@@ -45,7 +52,9 @@
             "enforceNavigationBarContrast": false
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

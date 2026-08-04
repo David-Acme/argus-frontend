@@ -1,0 +1,57 @@
+mod net;
+
+use net::discover::discover;
+use net::http::{request as http_request, HttpRequest, HttpResult};
+use net::pair::pair;
+use net::secure::{delete as secure_delete, get as secure_get, set as secure_set};
+
+#[tauri::command]
+async fn argus_discover(timeout_ms: f64) -> Result<net::Discovery, String> {
+  let ms = timeout_ms.max(1000.0) as u64;
+  discover(std::time::Duration::from_millis(ms)).await
+}
+
+#[tauri::command]
+async fn argus_pair(host: String, ip: String, port: f64, code: String) -> Result<net::Pairing, String> {
+  pair(&host, &ip, port as u16, &code).await
+}
+
+#[tauri::command]
+async fn argus_request(
+  request: HttpRequest,
+  ca_pem: String,
+  allowed_host: String,
+  ip: String,
+) -> Result<HttpResult, String> {
+  http_request(request, &ca_pem, &allowed_host, &ip).await
+}
+
+#[tauri::command]
+fn argus_secure_get(key: String) -> Result<Option<String>, String> {
+  secure_get(&key)
+}
+
+#[tauri::command]
+fn argus_secure_set(key: String, value: String) -> Result<(), String> {
+  secure_set(&key, &value)
+}
+
+#[tauri::command]
+fn argus_secure_delete(key: String) -> Result<(), String> {
+  secure_delete(&key)
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+  tauri::Builder::default()
+    .invoke_handler(tauri::generate_handler![
+      argus_discover,
+      argus_pair,
+      argus_request,
+      argus_secure_get,
+      argus_secure_set,
+      argus_secure_delete,
+    ])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
+}

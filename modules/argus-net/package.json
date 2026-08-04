@@ -1,0 +1,37 @@
+{
+  "name": "argus-net",
+  "version": "1.0.0",
+  "description": "Argus native networking: mDNS discovery, one-time pairing and a strict per-instance CA HTTP client (Nitro module).",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "react-native": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "react-native.config.js",
+    "nitrogen",
+    "nitro.json",
+    "android/build.gradle",
+    "android/gradle.properties",
+    "android/fix-prefab.gradle",
+    "android/CMakeLists.txt",
+    "android/src",
+    "ios",
+    "*.podspec",
+    "README.md"
+  ],
+  "keywords": ["react-native", "expo", "nitro", "tls", "pairing", "mdns", "http"],
+  "license": "UNLICENSED",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "specs": "nitrogen"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-nitro-modules": "*"
+  },
+  "dependencies": {
+    "react-native-nitro-modules": "*"
+  }
+}

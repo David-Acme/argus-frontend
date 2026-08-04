@@ -4,8 +4,7 @@ import type { StoragePrimitive } from '@/core/types';
 const PREFIX = 'argus-storage:';
 
 class StorageService implements IStorageService {
-  private get store(): Storage | null {
-    if (typeof window === 'undefined') return null;
+  private get store(): Storage {
     return window.localStorage;
   }
 
@@ -14,11 +13,11 @@ class StorageService implements IStorageService {
   }
 
   set(key: string, value: StoragePrimitive): void {
-    this.store?.setItem(this.prefixed(key), String(value));
+    this.store.setItem(this.prefixed(key), String(value));
   }
 
   getString(key: string): string | null {
-    return this.store?.getItem(this.prefixed(key)) ?? null;
+    return this.store.getItem(this.prefixed(key));
   }
 
   getNumber(key: string): number | null {
@@ -35,7 +34,7 @@ class StorageService implements IStorageService {
   }
 
   setObject<T>(key: string, value: T): void {
-    this.store?.setItem(this.prefixed(key), JSON.stringify(value));
+    this.store.setItem(this.prefixed(key), JSON.stringify(value));
   }
 
   getObject<T>(key: string): T | null {
@@ -50,16 +49,15 @@ class StorageService implements IStorageService {
   }
 
   has(key: string): boolean {
-    return this.store?.getItem(this.prefixed(key)) !== null;
+    return this.store.getItem(this.prefixed(key)) !== null;
   }
 
   remove(key: string): void {
-    this.store?.removeItem(this.prefixed(key));
+    this.store.removeItem(this.prefixed(key));
   }
 
   getAllKeys(): string[] {
     const store = this.store;
-    if (!store) return [];
 
     const keys: string[] = [];
     for (let i = 0; i < store.length; i += 1) {
@@ -73,7 +71,6 @@ class StorageService implements IStorageService {
 
   clear(): void {
     const store = this.store;
-    if (!store) return;
     this.getAllKeys().forEach((key) => store.removeItem(this.prefixed(key)));
   }
 }
