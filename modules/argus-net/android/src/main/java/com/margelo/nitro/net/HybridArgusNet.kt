@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Dns
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -78,6 +79,15 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
   override fun request(options: NetHttpRequest): Promise<NetHttpResult> {
     return Promise.async { requestInternal(options) }
+  }
+
+  override fun openSocket(options: NetSocketOptions): Promise<HybridArgusSocketSpec> {
+    return Promise.async {
+      if (caPem.isEmpty()) {
+        throw netError("PAIRING_REQUIRED", "Server is not paired yet")
+      }
+      ArgusSocket(strictClient(), options.url, options.headers, options.connectTimeoutMs)
+    }
   }
 
   // MARK: - Discovery (mDNS)
@@ -166,10 +176,11 @@ class HybridArgusNet : HybridArgusNetSpec() {
       client.newCall(request).execute().use { response ->
         val raw = response.body?.string() ?: ""
         if (response.code != 200) {
-          if (response.code == 403) {
-            throw netError("INVALID_PAIRING_CODE", "Invalid pairing code")
+          when (response.code) {
+            403 -> throw netError("INVALID_PAIRING_CODE", "Invalid pairing code")
+            409 -> throw netError("ALREADY_PAIRED", "Server already paired")
+            else -> throw netError("NETWORK_ERROR", "Pairing failed (HTTP ${response.code})")
           }
-          throw netError("NETWORK_ERROR", "Pairing failed (HTTP ${response.code})")
         }
         val root = JSONObject(raw)
         val info = root.optJSONObject("info")
@@ -209,10 +220,11 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
   private suspend fun requestInternal(options: NetHttpRequest): NetHttpResult =
     withContext(Dispatchers.IO) {
-      if (caPem.isEmpty()) {
+      val trustAny = options.trustAny == true
+      if (!trustAny && caPem.isEmpty()) {
         throw netError("PAIRING_REQUIRED", "Server is not paired yet")
       }
-      val client = strictClient()
+      val client = if (trustAny) trustAllClient() else strictClient()
       val builder = Request.Builder().url(options.url)
       options.headers.forEach { (key, value) -> builder.header(key, value) }
 
@@ -246,12 +258,31 @@ class HybridArgusNet : HybridArgusNetSpec() {
   private fun buildMultipartBody(options: NetHttpRequest): RequestBody {
     val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
     if (options.body.isNotEmpty()) {
-      builder.addFormDataPart("payload", options.body)
+      addMultipartFields(builder, options.body)
     }
     for (file in options.files) {
       builder.addFormDataPart(file.name, file.filename, readFilePart(file))
     }
     return builder.build()
+  }
+
+  /**
+   * The API consumes regular multipart fields (`lang`, `name`, ...), not a
+   * JSON part called `payload`. Keep the JSON fallback so other callers can
+   * still send an opaque body without silently losing it.
+   */
+  private fun addMultipartFields(builder: MultipartBody.Builder, body: String) {
+    val fields = runCatching { JSONObject(body) }.getOrNull()
+    if (fields == null) {
+      builder.addFormDataPart("payload", body)
+      return
+    }
+    val keys = fields.keys()
+    while (keys.hasNext()) {
+      val key = keys.next()
+      val value = fields.optString(key, "")
+      builder.addFormDataPart(key, value)
+    }
   }
 
   private fun readFilePart(file: NetHttpFile): RequestBody {
@@ -263,14 +294,19 @@ class HybridArgusNet : HybridArgusNetSpec() {
           context.contentResolver.openInputStream(uri)
             ?: throw IllegalStateException("Cannot open ${file.uri}")
         },
+        contentType = file.contentType.toMediaTypeOrNull(),
       )
     }
-    val path = file.uri.removePrefix("file://")
+    val path = uri.path ?: file.uri.removePrefix("file://")
     val fileOnDisk = File(path)
     if (!fileOnDisk.exists()) {
       throw IllegalStateException("File not found: ${file.uri}")
     }
-    return streamBody({ FileInputStream(fileOnDisk) }, fileOnDisk.length())
+    return streamBody(
+      { FileInputStream(fileOnDisk) },
+      fileOnDisk.length(),
+      file.contentType.toMediaTypeOrNull(),
+    )
   }
 
   // MARK: - Body factories (streaming, no deprecated OkHttp API)
@@ -283,9 +319,13 @@ class HybridArgusNet : HybridArgusNetSpec() {
     }
   }
 
-  private fun streamBody(open: () -> InputStream, length: Long? = null): RequestBody =
+  private fun streamBody(
+    open: () -> InputStream,
+    length: Long? = null,
+    contentType: MediaType? = null,
+  ): RequestBody =
     object : RequestBody() {
-      override fun contentType(): MediaType? = null
+      override fun contentType(): MediaType? = contentType
 
       override fun contentLength(): Long = length ?: -1L
 

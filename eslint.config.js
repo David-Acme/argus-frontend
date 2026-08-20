@@ -7,6 +7,8 @@ module.exports = defineConfig([
   {
     rules: {
       'no-console': 'warn',
+      // Known false positive with Reanimated shared-value writes.
+      'react-hooks/immutability': 'off',
     },
   },
   {

@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/immutability */
-import { ORB_AUDIO_ATTACK_MS, ORB_AUDIO_RELEASE_MS } from '@/shared/constants';
+import { VOICE_METER_ATTACK_MS, VOICE_METER_RELEASE_MS } from '@/shared/constants';
+import { t } from '@/core/i18n';
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } from 'expo-audio';
 import { useCallback, useEffect, useState } from 'react';
 import { useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -26,7 +26,7 @@ function amplitudeFromDbfs(db: number): number {
 }
 
 /**
- * Live microphone level for the orb. Works on native and web (expo-audio exposes
+ * Live microphone level for the avatar. Works on native and web (expo-audio exposes
  * metering on both via `getStatus().metering`, dBFS). Requests the recording
  * permission before starting, then polls the recorder and writes a smoothed 0..1
  * amplitude into a shared value — fast attack, slow release — no React re-renders.
@@ -43,7 +43,7 @@ export function useMicLevel(): UseMicLevelResult {
     }
     const id = setInterval(() => {
       const target = amplitudeFromDbfs(recorder.getStatus().metering ?? -160);
-      const duration = target >= level.value ? ORB_AUDIO_ATTACK_MS : ORB_AUDIO_RELEASE_MS;
+      const duration = target >= level.value ? VOICE_METER_ATTACK_MS : VOICE_METER_RELEASE_MS;
       level.value = withTiming(target, { duration });
     }, POLL_INTERVAL_MS);
     return () => clearInterval(id);
@@ -52,7 +52,7 @@ export function useMicLevel(): UseMicLevelResult {
   const toggle = useCallback(async () => {
     if (isRecording) {
       await recorder.stop();
-      level.value = withTiming(0, { duration: ORB_AUDIO_RELEASE_MS * 1.5 });
+      level.value = withTiming(0, { duration: VOICE_METER_RELEASE_MS * 1.5 });
       setIsRecording(false);
       setError(null);
       return false;
@@ -60,7 +60,7 @@ export function useMicLevel(): UseMicLevelResult {
     try {
       const { granted } = await requestRecordingPermissionsAsync();
       if (!granted) {
-        setError('Permiso de micrófono denegado');
+        setError(t('common.mic-permission-denied'));
         return false;
       }
       await recorder.prepareToRecordAsync();
@@ -70,7 +70,7 @@ export function useMicLevel(): UseMicLevelResult {
       return true;
     } catch (reason) {
       setIsRecording(false);
-      setError(reason instanceof Error ? reason.message : 'No se pudo iniciar el micrófono');
+      setError(reason instanceof Error ? reason.message : t('common.mic-start-failed'));
       return false;
     }
   }, [isRecording, recorder, level]);

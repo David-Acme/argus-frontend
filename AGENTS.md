@@ -35,16 +35,15 @@ src/
 stays `PascalCase`; only the file name is kebab.
 
 ```
-src/shared/components/orb/orb.tsx          → export default function Orb()
-src/shared/components/orb/orb-shader.ts    → export const ORB_SKSL
-src/shared/components/orb/orb-loader.web.tsx
+src/shared/components/avatar/avatar.tsx        → export default function Avatar()
+src/shared/components/avatar/avatar-fab.tsx    → export function AvatarFab()
 src/shared/components/ui/native-only-animated-view.tsx
 src/shared/hooks/use-mic-level.ts
 src/core/stores/qr-scan.store.ts
 ```
 
-- Never `Orb.tsx`, `OrbShader.ts`, `OrbLoader.web.tsx`.
-- Multi-word compounds split on `-`: `orb-shader`, `use-theme-preference`,
+- Never `Avatar.tsx` (kebab-case file, PascalCase export).
+- Multi-word compounds split on `-`: `avatar-fab`, `use-theme-preference`,
   `qr-scan.store`.
 - Suffixed families keep their suffix after the kebab name:
   `{domain}.constant.ts`, `{domain}.type.ts`, `{domain}.interface.ts`,
@@ -169,9 +168,9 @@ Inside every component (mandatory):
 - **Platform/Tauri branching**: use the constants from `common.constant.ts`
   (`IS_WEB`, `IS_NATIVE`, `IS_ANDROID`, `IS_IOS`, `IS_TAURI`) — **never** hand-rolled
   checks (`Platform.OS === 'web'`, `'__TAURI_INTERNALS__' in window`). `Platform.select`
-  stays allowed only for per-platform CSS classes. If you mutate reanimated shared
-  values in a component, disable `react-hooks/immutability` at the file level
-  (`/* eslint-disable react-hooks/immutability */`) — known incompatibility.
+  stays allowed only for per-platform CSS classes. `react-hooks/immutability` is
+  **disabled in `eslint.config.js`** — a known false positive with Reanimated shared-value
+  writes; do not re-enable it and do not scatter per-line disable comments.
 
 ### 11. Networking layer (Nitro + Tauri + secure-storage)
 
@@ -219,71 +218,166 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   same as Android's custom `Dns` (`.local` does not always resolve).
 - **WebSocket**: phase 2, always native (RN's JS `WebSocket` does not trust the CA).
 - `http.service.ts` / `websocket.service.ts` will be the final wrappers the app uses.
+- **Nitro modules are split by domain** (`modules/argus-net`, `modules/argus-mic`,
+  `modules/argus-face`), each with its own spec + nitrogen + Kotlin/Swift. They are
+  registered in `android/settings.gradle` with explicit includes (autolinking does
+  not pick up the symlinked local packages reliably) and linked by
+  `scripts/link-argus-modules.mjs`. `argus-face` detects faces by **file URI**
+  (`detectFaces(jpegUri)` → `FaceFrame { luminance, faces }`, normalized 0..1,
+  top-left origin) — MLKit on Android (GMS), Vision on iOS.
+- **Cross-device login (desktop QR)**: `POST /auth/device-login` creates a
+  short-lived challenge bound to the DESKTOP device hash; the mobile approves it
+  (`POST .../approve`, JWT) and the backend issues a session bound to that hash;
+  the desktop polls `GET /auth/device-login/{id}` for the tokens (single use).
+  `auth.service.ts` exposes `createDeviceLogin/approveDeviceLogin/pollDeviceLogin`;
+  the QR JSON is built/parsed by `shared/libs/login-qr.ts` and rendered with the
+  `QrCode` component (`qrcode` + react-native-svg). The desktop never uses the
+  camera: pairing is a manual code, login is the QR.
+- **Register with an existing face**: `POST /auth/register` no longer 409s on a
+  duplicate face — it issues a session for the matched user and sets
+  `alreadyRegistered` in the response (owner → admin session; anyone else → the
+  client informs them "ya estás registrado" and continues).
 
-### 12. Skia / WebGL (Orb shader)
+### 12. Local persistence (WatermelonDB)
 
-- Skia components **must live outside `src/app/`** (`WithSkiaWeb` code-splitting can't
-  lazy-load from the `app` dir in dev). They go in `src/shared/components/`.
-- **Web loading**: `orb-loader.web.tsx` wraps the Skia component in `<WithSkiaWeb>`
-  (loads CanvasKit, then `import('./orb')`). Native: `orb-loader.native.tsx` imports
-  the component directly. Barrel `index.ts` re-exports `Orb` (platform-split,
-  `moduleSuffixes`). **No `// @ts-ignore`.**
-- **CanvasKit**: `bunx setup-skia-web` copies `canvaskit.wasm` to `public/` — already
-  wired into `postinstall`. Run it again after upgrading `@shopify/react-native-skia`.
-- **Shaders**: the SkSL lives in `orb-shader.ts` (`Skia.RuntimeEffect.Make` once,
-  throw on null). The component updates **only uniforms** via `useDerivedValue`
-  (Reanimated) + `useClock` — zero per-frame React re-renders. Mutating shared values
-  → file-level `/* eslint-disable react-hooks/immutability */`. Validate SkSL edits
-  by compiling with `canvaskit-wasm` in a node script (`RuntimeEffect.Make`).
-  **Never** put backticks inside the SkSL template literal (breaks TS parsing) —
-  this has bitten twice; note that a node render script may still pass, because the
-  extraction regex skips backticks not followed by `;`. Only `tsc` catches it.
-- **Validate renders at DEVICE resolution.** The orb is ~338dp on the target phone,
-  which is **~930 physical px** at 2.75x. Judging sharpness on a 300px preview is
-  meaningless — everything looks crisp scaled down 3x. Render at ~930px.
-- The orb is a **glowing energy ring** (annulus): its radius is value noise
-  sampled **on a circle** (`vec2(cos a, sin a)`) so the deformation is seamless
-  by construction.
-- **Band profile is flat-topped, not a bare gaussian.** A solid plateau
-  (`HW_IN`..`HW_OUT`) gives the ring readable thickness; gaussian skirts keep both
-  edges soft, asymmetric (outer ~2.5x wider) so the hollow stays clean. A plain
-  gaussian has no solid core, only falloff — that is what made the orb read as
-  **out of focus** on device.
-- **NO hard edges, ever — user requirement.** Do not add a thin hot core line or
-  any sharp gaussian on top: it reads as a drawn "guide" outline and destroys the
-  floating-in-air feel. For the same reason `cover` is clamped **below 1.0**
-  (`0.97`): if coverage saturates, the profile flattens and the hollow gains a
-  hard rim.
-- **Voice = `u_jump`, never deformation.** Audio drives a damped spring
-  (`ORB_JUMP_*`) fed by **onset detection** (only a *rise* in the envelope injects
-  velocity), so the orb keeps its silhouette and its rotation while it **bounces**
-  to the beat. Coupling audio to the wobble amplitude instead churns the shape into
-  a different blob on every syllable — explicitly rejected by the user.
-- **Rotation must use a rotating frame**: `ra = a - u_phase`, and every angular
-  feature (lobes, luminance, hue, saturation) is sampled at `ra`. Offsetting the
-  noise *coordinates* by `u_phase` only translates the noise field — the shape
-  morphs but nothing ever reads as rotating.
-- **Wind**: the orb drifts on a slow Lissajous float with incommensurate
-  frequencies (never looks like it loops), the wobble octaves evolve on their
-  **own time base** independent of `u_phase` (so the outline keeps billowing
-  even when idle and barely rotating), and the radius breathes.
-- The palette is **procedural but anchored on theme tokens**: `hexToHsv`
-  (`src/shared/libs/color.ts`) turns `accent` into the base hue/sat/val of an
-  **analogous** sweep (biased warm — toward copper/rose, never up into
-  yellow-green) and `error` gives the hue the sweep bends to via `u_tint`.
-  Per-theme sat/val multipliers live in `ORB_PALETTE_ADJUST`
-  (`orb.constant.ts`) — light needs a lighter, less saturated ring or it reads
-  muddy on `#F4F1ED`.
-- **Color must stay pure and all intensity variation must live in the coverage.**
-  Modulating the color by the angular luminance noise paints that noise into the
-  hollow center as dark petals.
-- Rotation is **phase-integrated** with `useFrameCallback` (accelerates with audio
-  without snapping). Output is **premultiplied alpha** (`color * cover, cover`),
-  transparent outside the aura.
-- Keep the wobble noise **low-frequency** (~1.7 / 3.1 around the circle): sampling
-  the value-noise lattice too densely makes the outline crinkle instead of forming
-  smooth rounded lobes. Budget is ~3 noise evals + 2 `exp` per pixel — the orb must
-  stay cheap for low-end Android GPUs.
+**The database is reached ONLY from `src/core/services/*.service.ts`.** There is
+no `DatabaseProvider` and no `useDatabase`: a hook or a screen that imports
+`@/core/database` is a bug.
+
+```
+core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable  ←  UI
+```
+
+- **`src/core/database/`** — WatermelonDB 0.28, platform-split like every other
+  service: `database.native.ts` (`SQLiteAdapter`, `jsi: true`) /
+  `database.web.ts` (`LokiJSAdapter`, `useWebWorker: false`) + `index.ts`.
+  The barrel exports `database`, the models and the typed
+  `collection('zone') → Collection<ZoneModel>` accessor.
+- **DB typing** (`TableName`, `ModelOf`, `ModelMap`) lives in
+  `src/core/types/database.type.ts` (imports are `type`-only → no runtime cycle);
+  the table-level enums and JSON shapes (`UserRole`, `ZonePoint`, ...) are there too.
+- **One file per table**: `tables/{domain}.table.ts` holds the `tableSchema` AND
+  the `Model` together — the column names and the decorator arguments must match
+  exactly, and a mismatch only fails at runtime. `tables/index.ts` is the single
+  registry from which `appSchema` and `modelClasses` are derived (adding a table =
+  1 file + 1 line, never registered per platform). `tables/sanitizers.ts` holds the
+  shared `@json` sanitizers.
+- **Column naming is snake_case, models expose camelCase.** `created_at` /
+  `updated_at` are snake_case by hard requirement (see below), so mixing casings
+  would mean remembering an exception in every `Q.where`.
+- **`Model.prepareUpdate()` touches `columnName('updated_at')` whenever the model
+  exposes an `updatedAt` property**, and `RawRecord._setRaw` destructures the
+  column schema with no guard → `TypeError` if that column is not declared.
+  `notification` has no `updated_at`, so `NotificationModel` MUST NOT declare
+  `updatedAt`. The validator additionally forces `created_at`/`updated_at` to be
+  `number` and NOT optional → `0` is the "no value" sentinel.
+- **`id` is the server id stringified** (`sanitizedRaw` honours `dirtyRaw.id`), so
+  there are no `_id` / `local_id` / `version` columns and FKs are plain indexed
+  `string` columns that `@immutableRelation` resolves natively.
+- **No `deleted_at` / `is_deleted`**: a server-side delete removes the local row.
+- **Timestamp columns store epoch MILLISECONDS** (the backend sends seconds); the
+  `× 1000` conversion belongs to the sync mapper.
+- **`camera.password` is never persisted.**
+- **JSON columns** (`capabilities`, `config`, `points`, `file_paths`, `data`) use `@json`
+  with the shared sanitizers in `tables/sanitizers.ts` (fail-safe to `[]`/`{}`); hot
+  columns (`capabilities`, `points`) pass `{ memo: true }` to skip re-parsing on reads.
+- Relations point at `camera` / `reminder` only. Toward `user`, expose the raw id:
+  role filtering can leave that row absent locally and `Relation.fetch()` throws.
+- **`DatabaseService<K>`** (`core/services/database.service.ts`) is the base class.
+  Query primitives are **`protected`** so `Clause` never crosses the service
+  boundary; the public surface of a service is domain-named.
+- **`query.observe()` does NOT re-emit when a field changes** on a record already
+  in the result set — only on enter/leave. Lists that render fields must use
+  `observeManyWithColumns`.
+- **`shared/hooks/use-observable.ts`** is the only bridge into React
+  (`useSyncExternalStore`). It knows rxjs, not WatermelonDB. No
+  `@nozbe/with-observables` (HOC, and the source of the React 19 peer conflict).
+- Build config: `babel.config.js` needs `@babel/plugin-proposal-decorators`
+  (`version: 'legacy'`) + `class-properties`/`private-methods`/
+  `private-property-in-object` in `loose: true`. **These four MUST stay inside the
+  `overrides` entry scoped to `src/`** — never move them back to the top-level
+  `plugins` array. Top-level `plugins` run before the presets, so a global
+  `class-properties` with `loose: true` reaches `node_modules` and rewrites
+  Flow's type-only class fields (`+NONE: 0;`) into plain assignments before
+  `flow-strip-types` can erase them. React Native's `Event.js` declares
+  `NONE`/`CAPTURING_PHASE`/`AT_TARGET`/`BUBBLING_PHASE` that way *and* defines them
+  as non-writable on `Event.prototype`, so `new Event(...)` then throws
+  `Cannot assign to read-only property 'NONE'` in strict mode.
+  `tsconfig.json` needs
+  `experimentalDecorators` and **`useDefineForClassFields: false`** (otherwise TS
+  emits instance fields that shadow the prototype getters the decorators install).
+  Never add `react-native-worklets/plugin` by hand — the preset does it and runs
+  after these plugins.
+- `migrations.ts` is wired from v1 while empty: bumping `SCHEMA_VERSION` without
+  `migrations` passed to the adapter **wipes the local database**.
+- Adding WatermelonDB changed native deps → **the dev-client must be rebuilt**.
+  `jsi: true` falls back to the async bridge with a warning if unavailable.
+
+### 13. Avatar procedural (asistente visual)
+
+- El avatar de Argus es un **bubble-head 2D procedural** renderizado con
+  **react-native-svg** (cross-platform: native + web/Tauri, sin CanvasKit). NO hay
+  loader platform-split (`avatar-loader.{native,web}.tsx` NO existe) — el barrel
+  `src/shared/components/avatar/index.ts` es un solo archivo y funciona en ambas.
+- **Geometría pura sin React**: `src/shared/libs/avatar-geometry.ts`
+  (`computeFaceGeometry(size)`) — los consumidores la memorizan con `useMemo`
+  (solo `size` cambia los paths; el resto del movimiento es transform/opacity).
+- **Presets por estado**: `src/shared/constants/avatar.constant.ts`
+  (`AVATAR_STATE_PARAMS: Record<AvatarState, AvatarExpression>` — eyeOpen, pupilX/Y,
+  browTilt/raise, headTilt, headBob, sparkle, driftSpeed) + `AVATAR_PALETTE`
+  (light/dark) + tiempos de transición/blink.
+- **Tipos en `src/core/types/avatar.type.ts`** (`AvatarState`, `AvatarExpression`);
+  estado en `src/core/stores/avatar.store.ts` (`useAvatarStore`, reemplazó orb.store).
+- **Expresión → shared values** con `withTiming` (900 ms; 380 ms al hablar). La vida
+  por frame vive en `useFrameCallback` (worklet): **blink Poisson** (2.6-5.4 s,
+  `AVATAR_BLINK_*`), micro-saccades lentas, drift de cabeza (`sin` producto de dos
+  frecuencias), bounce al hablar (`headBob`). Todo se aplica con `animatedProps`
+  (`Animated.createAnimatedComponent(G/Ellipse/Circle/Line)` de react-native-svg)
+  → **cero re-renders React por frame**.
+- **Párpado = elipse piel con `ry` animado** sobre el ojo (blanco+pupila+highlight);
+  la pupila viaja con la mirada (`pupilX/Y + saccade`), las cejas rotan sobre su
+  pivote interno (`browTilt`).
+- **Reduce motion**: drift/bob/saccades = 0 y el parpadeo se espacia (~+6 s); el
+  rostro se queda quieto pero vivo.
+- Integración: `welcome/voice` (estados de voz → `AvatarState`), saludo
+  (`welcome/index`), home (`AvatarFab`). Los estados `idle/listening/thinking/
+  speaking/error` se mapean a expresiones — nunca se deforma con el audio (sin
+  lip-sync; el "hablar" es bounce de cabeza + brillo de ojos).
+
+
+### 14. i18n — custom engine (no external library)
+
+- **Dictionaries**: `src/core/i18n/locales/{locale}/` — one folder per locale;
+  namespaces are **folders named like the routes** (`common/`, `screens/home/`,
+  `screens/qr/`, `screens/not-found/`), each with an `index.ts` (route-folder
+  convention). Default locale is `es`. `en` is forced to the same shape by
+  `localeDictionaries satisfies Record<LanguageCode, I18nSchema>` in
+  `locales/index.ts` — a key added in `es` but missing in `en` fails tsc.
+- **Typed keys**: `TranslationKey` (public in `core/types/i18n.type.ts`, derived
+  in `core/i18n/locales/schema.ts` from the `es` literal) is the flattened union
+  of all dotted paths — a wrong key is a tsc error. Keys are **kebab-case**
+  (`screens.qr.detected-description`, `common.open-settings`).
+- **Interpolation**: `{name}` placeholders; params are typed per key via
+  template-literal types (`t('screens.home.welcome', { name })`). Keys without
+  placeholders **reject** params and keys with them **require** them
+  (`TranslationParamsRest` rest-tuple).
+- **React**: `useTranslation()` from `shared/hooks/use-translation.ts` returns
+  `{ t, language, preference }`; it subscribes to `useLocaleStore`, so every
+  consumer re-renders on language change (100% real-time). `t` is rebuilt only
+  when the resolved language changes.
+- **Non-React**: `t()` / `setLanguage()` / `getLanguage()` from `@/core/i18n`
+  read the current language from the store (`getState()`) — same typing,
+  call-time freshness for `.ts` code (services, hooks, constants).
+- **Store**: `core/stores/locale.store.ts` — `preference: 'system' | 'es' | 'en'`
+  persisted under `app.language` via `storageService` (like `app.theme`). The
+  stored preference **wins**; `system` resolves the device locale by **prefix**
+  (`es-*` → `es`, `en-*` → `en` via `expo-localization`), fallback `es`. Sync
+  init at module load (MMKV/localStorage are sync) — no layout effect needed.
+- **Missing keys/params**: dev-only `console.error` + fallback to the default
+  locale → returns the key as last resort. Never crashes.
+- **Copy held by stores carries keys, never rendered text** (`QR_SCAN_PURPOSES`,
+  `QrScanConfig`): translate at render time, so the store stays language-agnostic.
+- `app.json` native plugin strings (`cameraPermission`) are NOT runtime-translatable.
 
 ## Commands
 
@@ -326,6 +420,7 @@ cd src-tauri && cargo check
 | `src/shared/constants/net.constant.ts` | `ARGUS_HOST`, `ARGUS_DEFAULT_PORT`, `NET_STORAGE_KEYS`, timeouts |
 | `src/shared/constants/index.ts` | Constants barrel |
 | `src/core/types/net.type.ts` | Network types (`NetDiscovery`, `NetPairing`, `NetHttpRequest`, ...) |
+| `src/core/types/database.type.ts` | DB types: `TableName`/`ModelOf`/`ModelMap` + enums & JSON shapes |
 | `src/core/types/index.ts` | Types barrel (`IconName`, `ThemePreference`, `StoragePrimitive`, ...) |
 | `src/core/interfaces/net.interface.ts` | `IArgusNetService` |
 | `src/core/interfaces/secure-storage.interface.ts` | `ISecureStorageService` (async) |
@@ -333,13 +428,46 @@ cd src-tauri && cargo check
 | `src/core/services/storage/` | Platform-split storage (MMKV / localStorage) |
 | `src/core/services/secure-storage/` | Secrets (expo-secure-store / keyring) |
 | `src/core/services/net/` | `IArgusNetService` (native→Nitro, web→Tauri, `net-persistence`) |
-| `modules/argus-net/` | Mobile Nitro module (spec `ArgusNet.nitro.ts` + Kotlin/Swift) |
+| `src/core/services/http.service.ts` | HTTP wrapper sobre `netService`: `IServiceResponse`, refresh 401 single-flight, multipart (`payload` + archivos) |
+| `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `hasAdmin`, `status`, `logout` |
+| `src/core/services/invite.service.ts` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
+| `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
+| `src/core/services/sync/` | Sync autónomo: `synchronize.service` (socket único + `syncOnce`), `entity-mappers`, `sync-db-utils`, `sync-socket.{native,web}` |
+| `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo), `trustAny` para TOFU |
+| `src/core/database/` | WatermelonDB: adapters (`native`/`web`), `schema`, `migrations`, typed `collection()` |
+| `src/core/database/tables/` | One file per table: `tableSchema` + `Model` + the `TABLES` registry |
+| `src/core/services/database.service.ts` | `DatabaseService<K>` base class (protected query primitives) |
+| `src/core/services/{domain}.service.ts` | Data services — the only code that reads the database |
+| `src/shared/hooks/use-observable.ts` | Service `Observable` → React (`useSyncExternalStore`) |
+| `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
+| `modules/argus-net/` | Nitro module de red: `ArgusNet` (HTTP/TLS) + `ArgusSocket` (WebSocket, misma CA) |
+| `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
+| `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | UI primitives (`button`, `text`, `icon`, `input`) |
+| `src/app/welcome/` | Onboarding completo (Stack anidado con fade + progreso): `index` (saludo+avatar), `pairing/` (QR móvil / código desktop), `face/` (guidance MLKit, móvil-only), `voice/` (avatar+voz, móvil-only) |
+| `src/app/login/index.tsx` | Desktop: QR de login cruzado (device-login) + polling + espera de propietario |
+| `src/app/approve/index.tsx` | Móvil: escanear el QR del otro dispositivo y aprobar la sesión |
 | `src/app/qr/index.tsx` | QR scan route (native-only, `expo-camera`; web → redirect to `/`) |
-| `src/core/stores/` | Zustand stores (barrel; `useQrScanStore`, `useOrbStore`) |
-| `src/shared/components/orb/` | Procedural AI orb: `orb.tsx`, `orb-shader.ts`, `orb-loader.{native,web}.tsx` |
-| `src/shared/constants/orb.constant.ts` | `ORB_STATE_PARAMS`, `ORB_PALETTE_ADJUST`, `ORB_JUMP_*` (voice spring) |
+| `src/shared/components/face/` | Guidance facial: `face-guide-overlay` (máscara+óvalo+pill), `face-frame` |
+| `src/shared/hooks/use-face-guide.ts` | Muestreo de cámara → `argusFace.detectFaces` → estado de guía + auto-capture |
+| `src/shared/constants/face.constant.ts` | Umbrales del guidance (zonas, ángulos, luz, muestreo) |
+| `src/shared/components/qr/` | Scanner UI: `qr-guide-frame`, `qr-scan-sheet`, `qr-manual-entry` |
+| `src/shared/constants/qr.constant.ts` | `QR_SCAN_PURPOSES`, `QR_SCAN_FEEDBACK`, scan timings |
+| `src/shared/constants/morph-icon.constant.ts` | `MORPH_ICONS` — registro de iconos animables (datos `lucide` para morphicons) |
+| `src/shared/constants/welcome.constant.ts` | Entrada por turnos del welcome (`WELCOME_*_MS`) |
+| `src/shared/components/ui/morph-icon.tsx` | Icono animado (morphicons): morphs por `setNativeProps`, `reducedMotion="user"`, ref `morphTo`/`set` |
+| `src/core/types/qr.type.ts` | `QrScanPurpose`, `QrScanStatus`, `QrScanFeedback`, `QrScanConfig` |
+| `src/shared/hooks/use-reduce-motion.ts` | OS "reduce motion" setting, live |
+| `src/core/stores/` | Zustand stores (barrel; `useQrScanStore`, `useAvatarStore`, `useLocaleStore`) |
+| `src/core/i18n/` | Custom i18n engine (barrel: `t`/`setLanguage`/`getLanguage`, `translate`, `locales/`) |
+| `src/core/i18n/locales/schema.ts` | `I18nSchema`/`TranslationKey`/`TranslateFn` derivation from the `es` dictionary |
+| `src/core/types/i18n.type.ts` | i18n public types (barrel surface) |
+| `src/core/stores/locale.store.ts` | `useLocaleStore` — language preference/state, `app.language` |
+| `src/shared/hooks/use-translation.ts` | `useTranslation()` reactive hook (real-time) |
+| `src/shared/constants/i18n.constant.ts` | `I18N_STORAGE_KEY`, `I18N_DEFAULT_LANGUAGE`, `SUPPORTED_LANGUAGES`, `LANGUAGE_OPTIONS` |
+| `src/shared/components/avatar/` | Avatar procedural: `avatar.tsx`, `avatar-fab.tsx`, barrel |
+| `src/shared/constants/avatar.constant.ts` | `AVATAR_STATE_PARAMS`, `AVATAR_PALETTE`, blink/transition times |
 | `src/shared/libs/color.ts` | `hexToRgba` / `hexToHsv` (shader uniform helpers) |
 | `src/shared/hooks/use-mic-level.ts` | Live mic metering (expo-audio, native + web) |
 | `src/shared/hooks/use-theme-preference.ts` | Theme preference get/set |

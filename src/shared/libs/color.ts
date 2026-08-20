@@ -20,7 +20,7 @@ export function hexToRgba(hex: string, alpha = 1): [number, number, number, numb
 /**
  * Parses a hex string into `[hue, saturation, value]`, all normalized to 0..1
  * (hue is a turn fraction, not degrees — the form SkSL's `hsv2rgb` expects).
- * Used to anchor the orb's procedural palette on a theme color token.
+ * Converts hex colors for SVG/theme token usage.
  */
 export function hexToHsv(hex: string): [number, number, number] {
   const [r, g, b] = hexToRgba(hex);

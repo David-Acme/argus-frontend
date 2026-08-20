@@ -25,9 +25,11 @@
 | UI | React Native Reusables (`@rn-primitives/portal`, `slot`) + custom `button/text/icon` |
 | Media | `@shopify/react-native-skia` (render), `expo-camera` (barcode/QR scan, mobile), `expo-audio` (record/playback), `expo-asset` |
 | Platform | `common.constant.ts` → `IS_WEB` / `IS_NATIVE` / `IS_ANDROID` / `IS_IOS` / `IS_TAURI` |
-| State | Zustand v5 (in use: `useQrScanStore` for the pairing-QR value; more planned) |
+| State | Zustand v5 (in use: `useQrScanStore` = scan-session config/value/status, `useOrbStore`) |
+| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 7 tables mirroring the backend's sync surface |
 | Storage | `react-native-mmkv` (native) / localStorage (web) via `storageService`; **secrets** (caPem, JWT) via `secureStorageService` (`expo-secure-store` on mobile / `keyring` crate on Tauri) |
 | Icons | `lucide-react-native` — **centralized** in `icon.constant.ts` only |
+| i18n | Custom engine (`core/i18n`): typed keys, `useTranslation()` + imperative `t()`, `useLocaleStore` |
 | System bars | `react-native-edge-to-edge` (official Expo API, `SystemBars` direct, no wrapper) |
 | Package manager | bun (`bun.lock`) |
 
@@ -120,23 +122,94 @@
 
 ## Current state
 
-- **`src/app/index.tsx`** (the `/` route) is a bare **hello world** placeholder.
-  The design-system gallery, theme toggle and the `/pairing` route were removed to
-  rebuild the screens from scratch with scalable, maintainable code.
+- **`src/app/index.tsx`** (the `/` route) is a clean empty shell — a fresh canvas for
+  the upcoming screen work (settings section next). The design-system gallery, theme
+  toggle, the `/pairing` route and the `(test)` route group were removed to rebuild
+  the screens from scratch with scalable, maintainable code.
 - **`src/app/pairing.tsx` was deleted** — the pairing UI will be rebuilt as part of
   the upcoming reorganization. The networking **core layer is intact** (services
   `net`/`secure-storage`, Nitro module `argus-net`, desktop `src-tauri`).
 - **UI primitives**: `button.tsx` (7 variants on semantic tokens: default,
   secondary, outline, ghost, destructive, link, disabled), `text.tsx`
   (typography variants), `icon.tsx` (name-based registry wrapper), `input.tsx`.
-- **`src/app/qr/index.tsx`** — QR scan **route** (native-only). On web/desktop it is
-  unreachable: `Stack.Protected guard={IS_NATIVE}` in `_layout.tsx` redirects to `/`
-  (fast), plus a `Redirect` fallback in the screen. Scan flow (original animated design):
-  live `CameraView` (`barcodeTypes:['qr']`) with the **animated detection box** (dashed,
-  near-black, spring on `bounds`, opacity fade via `withSequence`) + a **value bubble**
-  (`FadeInDown`/`FadeOutDown`, dark pill). Once the box fades → auto `router.back()`
-  with the value via `useQrScanStore` (zustand, `src/core/stores/qr-scan.store.ts`).
-  Ready for the `pairing.tsx` rebuild.
+- **QR scanner (2026-08, user-approved "bottom sheet" design)** — a **reusable**
+  native-only scan route. Web/desktop can't enter it: `Stack.Protected guard={IS_NATIVE}`
+  in `_layout.tsx` plus a `Redirect` fallback in the screen.
+  - **`src/app/qr/index.tsx`** — the route: permissions, scanner lock, validation,
+    torch, safe exit. Composition only; no visual internals.
+  - **`src/shared/components/qr/`** — `qr-guide-frame.tsx` (corner-bracket frame),
+    `qr-scan-sheet.tsx` (the sheet: status pill + title + description + action slot),
+    `qr-manual-entry.tsx` (disclosure → `Input` + submit). They live in `shared/`
+    because Expo Router would turn any file under `app/` into a route.
+  - **The store is the two-way channel** (`useQrScanStore`): the caller sets the
+    parameters with `open({ purpose, ...overrides })` and reads back `value` + `status`
+    (`idle | scanning | scanned | cancelled`). `open()` clears the previous value, so a
+    stale code can never be read as a fresh result, and `status` distinguishes
+    "scanned" from "cancelled" (pairing needs that: autosubmit vs. stay on manual entry).
+  - **`QR_SCAN_PURPOSES`** (`shared/constants/qr.constant.ts`) holds title / hint /
+    manual-entry copy / validation `pattern` per purpose. A new use case is one entry
+    there plus one member of `QrScanPurpose` — **the route never changes**.
+  - **Detection does NOT follow `bounds`.** Verified in `expo-camera` 57's Android source
+    (`BarcodeScannerResultSerializer.kt`): `bounds` is the min/max box of ML Kit's
+    `cornerPoints` with the coordinates only divided by **screen density** — they are never
+    mapped from the analyzer `InputImage` space to the preview view, and the image
+    dimensions, although captured in `BarCodeScannerResult`, are **not serialized to JS**,
+    so the mapping cannot be reconstructed from JS either. The result is a box in the wrong
+    scale and with rotated axes (the analysis buffer is landscape while the preview is
+    portrait). Expo's own docs add that `bounds` "in some case will be representing an
+    empty rectangle", that it "doesn't have to bound the whole barcode", and that corner
+    point **order differs between iOS and Android**. So the old animated dashed box was
+    effectively an iOS-only effect. The frame now signals state by **colour**
+    (`accent/70` → `accent` → `error`), identical on both platforms and dependent on
+    nothing the camera reports.
+  - **Detection gesture**: the four corners **converge diagonally inward**
+    (`QR_SCAN_CONVERGE_RATIO` of the frame side, 260 ms, `Easing.out(cubic)`) while the
+    frame does one scale pulse, then the whole frame fades out (delay 170 ms + 240 ms =
+    410 ms, inside the 450 ms `QR_SCAN_CONFIRM_MS` so it never gets cut off mid-fade).
+    It reads as "captured" without needing to know where the code is. Under **reduce
+    motion** only the fade runs — displacement is the vestibular trigger, opacity is not,
+    the same rule as `ORB_REDUCED_MOTION_SCALE`.
+  - The scanned value is **never rendered**: it is a pairing secret. The pill says
+    "Código detectado".
+  - **Keyboard = the sheet grows over the camera.** `KeyboardProvider` in `_layout.tsx`
+    plus `useKeyboardProgress` (`shared/hooks/`), which wraps
+    `useReanimatedKeyboardAnimation` and adds the two JS flags derived with
+    `useAnimatedReaction`. The keyboard's `offset`/`progress` are **native-driven shared
+    values**, so the sheet tracks the keyboard frame-for-frame on the UI thread with zero
+    JS per frame — `KeyboardAvoidingView` was replaced by this.
+  - **Everything rises; nothing descends.** The card is one full-height
+    (`height: windowHeight`) view pinned to `top: 0` and pushed down by `restOffset`
+    (`windowHeight - contentHeight`), so at rest only its top strip shows as the sheet.
+    Opening the keyboard drives that offset to `0` — the card **grows upward from the
+    bottom**. A first attempt slid a separate cover *down* from above and the user
+    rejected it: a panel dropping in does not read as a sheet expanding.
+  - **The content travels with the card up under the top controls.** It is nested in a
+    second animated layer moving `0 → controlsBottom + QR_SCAN_TYPING_GAP`. Since the
+    card rises faster, the net motion is a straight upward glide from the bottom strip to
+    just below the back/torch row, with real breathing room instead of the content
+    staying glued to the bottom while empty card grew above it. `controlsBottom` is
+    measured (`onLayout`), never assumed from the button height.
+  - **Nothing that triggers layout is animated** (this was the fluidity requirement):
+    both layers are `translateY` only, the corner radius collapses over the first 33 % of
+    the progress and the top hairline fades by **colour** (`interpolateColor` to `card`).
+    Animating a height, `borderTopWidth` or `paddingBottom` would re-run Yoga *and* refire
+    `onLayout` every frame, re-rendering JS at 60 Hz — exactly the stutter to avoid. The
+    radius collapses faster than the card arrives so the rounded notches never expose
+    camera pixels mid-transition.
+  - No keyboard-height lift is needed: the content ends near the top of the screen, far
+    above the keyboard. The card's easing is the **system keyboard curve**, inherited for
+    free from the native `progress`, which is what makes the motion feel connected.
+  - **Cost while typing**: `onBarcodeScanned` is detached as soon as the keyboard starts
+    opening (frame analysis is the dominant cost), and `active={false}` only once the
+    cover fully hides the preview — so killing it is free visually, and it is warmed back
+    up while the sheet is still coming down.
+  - **The torch button morphs into a "back to camera" button**, both icons cross-fading
+    with scale + rotation driven by the same keyboard `progress` value, so the morph is
+    exactly in sync with the sheet.
+  - `QrScanSheet` is **content only**; the route owns the animated chrome (background,
+    radius, border, insets). The animated views take their colours inline from
+    `colorTokens` rather than `className`, following `orb.tsx` / `_layout.tsx` — no
+    component in this repo passes `className` to an `Animated.View`.
 - **`Orb` (2026-08, user-approved)** — procedural **AI energy ring** in
   `src/shared/components/orb/` (`orb.tsx` + `orb-shader.ts` + `orb-loader.*`),
   rebuilt from the animatereactnative orb reference. The whole effect is a **SkSL
@@ -163,22 +236,31 @@
     seeds an **analogous warm hue sweep** (biased toward copper/rose, never
     yellow-green), `error` is the hue `u_tint` bends to. Per-theme sat/val
     correction in `ORB_PALETTE_ADJUST`. `u_pulse` is the thinking **comet head**.
+  - **Depth**: sparse luminous **motes** (one splat per grid cell, two layers
+    counter-rotating for parallax), counter-rotating **internal flow** through the
+    band, a fresnel-like **inner rim**, **chromatic depth** across the band, and a
+    faint interior volume. Coverage is **dithered** to kill 8-bit banding.
+  - **`u_flow`** is the state cue that survives greyscale: listening draws inward,
+    speaking radiates outward, idle/thinking circulate. `error` freezes rigid.
+  - **Reduce motion** zeroes `u_motion` (all displacement) but keeps twinkle/hue.
   - States (`idle`/`listening`/`thinking`/`speaking`/`error`) driven by `useOrbStore`
     (zustand) with `withTiming` toward `ORB_STATE_PARAMS` (`orb.constant.ts`:
-    `intensity/wobble/speed/brightness/pulse/spread/tint`). RN feeds only uniforms
-    per frame (`useClock` + `useDerivedValue`, zero re-renders).
-  - Cost: ~3 noise evals + 2 `exp` per pixel (deliberately cheap for low-end Android).
+    `intensity/wobble/speed/brightness/pulse/spread/motes/flow/tint`). RN feeds only
+    uniforms per frame (`useClock` + `useDerivedValue`, zero re-renders).
+  - Cost: ~4 noise evals + 2 mote splats + ~4 `exp` per pixel, arithmetic hash, and
+    an early cull outside `CULL_R` (deliberately cheap for low-end Android).
   - **Web**: `orb-loader.web.tsx` → `<WithSkiaWeb>` + **animated breathing-ring
     fallback** while CanvasKit loads; `canvaskit.wasm` copied to `public/` by
     `postinstall` (`bunx setup-skia-web`). Mic: `use-mic-level.ts` (expo-audio
-    metering, native + web). Demo: `src/app/(test)/orb.tsx`.
+    metering, native + web).
 - **Navigation**: root `Stack` uses `animation: 'flip'` (static for now; the slide
   animation will be evaluated later) with `headerShown: false` and themed `contentStyle`
   (no white flash) — see `_layout.tsx`.
 - **Storage**: platform-split, typed `IStorageService`.
-- **i18n was deleted** (2026-08) — the previous custom engine
-  (`core/i18n` + `constants/i18n.ts`) was removed entirely. It will be rebuilt
-  from scratch; `expo-localization` plugin remains in `app.json`.
+- **i18n rebuilt** (2026-08) — custom engine in `src/core/i18n/` (see `AGENTS.md`
+  rule 14): typed dictionaries per screen + shared `common`, `useTranslation()`
+  (real-time) + imperative `t()` for `.ts`, `useLocaleStore` (zustand),
+  `app.language` persistence, `es-*`/`en-*` prefix detection, es default + en.
 - Empty placeholder folders / `.gitkeep` were removed for a clean, progressive
   build. Planned areas (auth, chat, workspace, settings, sync, http) will be
   created when built.
@@ -212,6 +294,86 @@ Installed **without sudo** in the user home (Arch Linux, no system JDK/SDK):
 - The client's local network layer is **implemented and working** (pairing +
   strict-TLS HTTP). Pending phases: WebSocket (`/sync`), the final wrappers
   `http.service.ts` / `websocket.service.ts`, and the pairing-code QR.
+
+## Local persistence (2026-08) — WatermelonDB
+
+### Layering (user requirement)
+
+```
+core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable  ←  UI
+```
+
+The database is reached **only** from data services. There is deliberately **no
+`DatabaseProvider` / `useDatabase`** — the UI has no way to hold a `Database`, so
+query logic cannot leak into screens. `DatabaseService<K>` keeps its query
+primitives `protected`, so WatermelonDB's `Clause` never crosses the service
+boundary and each service's public surface is domain-named
+(`observeByCamera`, `observeUnreadCountForUser`). `use-observable.ts` knows rxjs,
+not WatermelonDB.
+
+### Why 0.28 and this shape
+
+- 0.28.0 **is** the latest stable (`next` is a prerelease) — the same pin lynk
+  uses, so there was nothing newer to adopt. The package declares **no
+  peerDependencies** → zero React 19 conflict; lynk's conflict came from
+  `@nozbe/with-observables`, which is **not** installed.
+- Verified before writing code (not assumed): TS 6.0.3 compiles legacy decorators
+  (probe with `@text/@field/@date/@json/@relation`, 0 errors); `babel-preset-expo`
+  + decorators legacy + the three `loose: true` plugins transforms without the
+  "loose mode configuration must be the same" error; the legacy output installs
+  the getter on the **prototype** and `_initializerDefineProperty` becomes a no-op
+  (which is exactly why `useDefineForClassFields: false` is mandatory);
+  autolinking resolves `@nozbe/watermelondb → native/android`
+  (`WatermelonDBPackage`, old architecture over the new-arch interop layer, as in
+  lynk on RN 0.86).
+
+### Schema decisions
+
+- **7 tables** = exactly the backend's `SynchronizedDto` (`user`, `camera`,
+  `camera_stream`, `zone`, `reminder`, `reminder_detail`, `notification`).
+  `event`/`person`/`context_note` have `toJson()` but are **not** in the sync
+  surface, so there would be no way to populate them.
+- **snake_case columns, camelCase model properties.** `created_at`/`updated_at`
+  are snake_case by hard requirement, and a schema with two snake columns among
+  twelve camel ones is worse than one convention. This **reverses** decision 3 of
+  the earlier `PLAN-DATABASE.md`; the cost is a DTO→row mapper in the sync phase.
+- **`id` = `String(dto.id)`** (server id) → no `_id`/`local_id`/`version`, and FKs
+  are indexed `string` columns that `@immutableRelation` resolves natively.
+- **No `deleted_at`/`is_deleted`** — lynk's tombstones force
+  `Q.where('is_deleted', false)` into every query.
+- Timestamp columns store **epoch ms** (backend sends seconds); `0` = no value in
+  `created_at`/`updated_at`, `null` in `completed_at`/`read_at`.
+- **`camera.password` is not persisted.**
+- `notification` has no `updated_at`, so `NotificationModel` must not declare
+  `updatedAt`: `prepareUpdate()` touches `updated_at` whenever that property
+  exists and `RawRecord._setRaw` destructures the missing column schema →
+  TypeError on the first local update.
+- Relations only toward `camera` / `reminder`. Toward `user` only the raw id: role
+  filtering can leave that row absent locally and `Relation.fetch()` throws.
+- `tables/{domain}.table.ts` holds schema **and** model together (lynk splits them
+  across 24+24 files and the contract between them is checked by eye), and
+  `tables/index.ts` is the single registry `appSchema`/`modelClasses` derive from
+  (lynk lists every model in three places).
+- JSON columns (`capabilities`/`config`/`points`/`file_paths`/`data`) are typed and
+  sanitized via the shared `tables/sanitizers.ts` (`sanitizeStringArray`,
+  `sanitizeObject`, `sanitizeZonePoints`), fail-safe to `[]`/`{}` so a mismatch is a
+  typing fix rather than a crash. Hot columns (`capabilities`, `points`) use
+  `@json(..., { memo: true })` to skip re-parsing the stored JSON on every read.
+
+### Traps encoded in the code
+
+- `query.observe()` does **not** re-emit when a field changes on a record already
+  in the result set — only on enter/leave. Lists rendering fields use
+  `observeManyWithColumns`.
+- `migrations.ts` is wired from v1 while empty: bumping `SCHEMA_VERSION` without
+  `migrations` on the adapter **wipes** the local database.
+- `jsi: true` is safe — it falls back to the async bridge with a warning.
+
+### Verification
+
+`bunx tsc --noEmit` 0 errors, `bun run lint` 0 errors, `expo export --platform web`
+bundles the LokiJS adapter, autolinking resolves the Android module.
+**The dev-client must be rebuilt** — native deps changed.
 
 ## Secure networking (2026-08) — local network layer
 
@@ -277,6 +439,31 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
 
 ## History log
 
+- **2026-08** — Custom i18n engine implemented (no external library).
+  Dictionaries in `core/i18n/locales/{locale}/` (route-folder convention:
+  `common/`, `screens/{home,qr,not-found}/` each with `index.ts`; kebab-case
+  keys). `TranslationKey`/`TranslationParamsOf` derived from the `es` literal in
+  `locales/schema.ts`; `{name}` interpolation with per-key typed params enforced
+  via `TranslationParamsRest` rest-tuples (keys without placeholders reject
+  params, keys with them require them); `en` forced to the `es` shape by
+  `satisfies` on the registry. `useTranslation()` (reactive through
+  `useLocaleStore`) + `t()`/`setLanguage()`/`getLanguage()` imperative for `.ts`.
+  Preference persisted under `app.language` via `storageService`; `system`
+  resolves the device locale by prefix (`es-*`/`en-*`), stored preference wins.
+  Migrated all hardcoded copy (home, qr route + components, not-found, mic hook);
+  `QR_SCAN_PURPOSES`/`QR_SCAN_FEEDBACK`/`QrScanConfig` now carry keys, not text.
+  Validated: `tsc`/`lint` 0 errors + negative type probes (wrong key, invalid
+  params, missing `en` key all fail to compile).
+
+- **2026-08** — **WatermelonDB implemented** (persistence only; sync still pending).
+  7 tables mirroring `SynchronizedDto`, schema+model co-located per table, single
+  `TABLES` registry, platform-split adapters (SQLite/JSI + LokiJS/IndexedDB), typed
+  `collection()`. Architecture set by the user: **the database is read only through
+  `core/services/*.service.ts`** — no `DatabaseProvider`, `Clause` stays inside the
+  services, `use-observable.ts` (`useSyncExternalStore`) is the sole bridge to
+  React. Decisions and verified findings in the section above and in
+  `PLAN-WATERMELONDB.md`. Reversed the earlier camelCase-columns decision of
+  `PLAN-DATABASE.md` in favour of snake_case throughout.
 - **2026-08** — Color & theme redesign: warm neutral palette, dual grafito+arena
   accent, canonical HEX in `color.constant.ts` + OKLCH mirror in `global.css`,
   theme preference system, `NAV_THEME`, platform-split storage, centralized icon
@@ -472,6 +659,38 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   ~0.20 per syllable, slight undershoot, no saturation) and by a render strip that
   varies **only** `u_jump` — silhouette and hue positions stay identical while the
   radius pops.
+- **2026-08** — Orb **depth + particles pass**, informed by a research sweep of what
+  shipping voice orbs actually do (Siri's reverse-engineered SkSL, the ElevenLabs
+  Orb source, Gemini, plus motion-accessibility literature). Added:
+  - **Motes**: sparse luminous particles inside the orb, two layers counter-rotating
+    for parallax. First attempt used thresholded value noise and looked like **dirt**
+    — value noise makes diffuse clumps, not points. Replaced with **one splat per
+    grid cell** at a hashed offset, radius kept inside its own cell so no neighbour
+    lookups are needed (2 hashes + 1 exp + 1 sin per layer).
+  - **Energy flow direction** (`u_flow`) as the primary state cue: listening draws
+    inward, speaking radiates outward, idle/thinking circulate. Chosen because it
+    survives greyscale and colour-blindness — hue cannot express direction, and the
+    warm monochrome palette has no hue to spare. `error` now also **freezes**
+    (wobble ~0) so it is not signalled by colour alone (WCAG 1.4.1).
+  - **Internal flow** through the band (counter-rotating noise), a **fresnel-like
+    inner rim**, **chromatic depth** across the band thickness, and a faint interior
+    volume — the hollow no longer reads as dead black.
+  - **Dither** on the coverage: a smooth warm monochrome ramp bands visibly at 8-bit.
+  - **Quasi-periodic drive**: idle motion is now a *product* of two sines with an
+    irrational-ish ratio (effective period of minutes) instead of a sum, which loops
+    visibly in ~2s.
+  - Loudness rebalanced toward **light rather than size** (jump brightness gain
+    0.5 → 1.1, radius gain 0.075 → 0.065).
+  - **Accessibility**: `ORB_REDUCED_MOTION_SCALE` is now `0` and gates a new
+    `u_motion` uniform that zeroes every displacement channel (rotation, wobble,
+    drift, breathing, jump) while keeping twinkle and hue — vestibular triggers are
+    movement/direction/distance, not opacity or colour. `Orb` also takes an
+    `accessibilityLabel`, since the orb is the only indicator of assistant state.
+  - Performance: `hash()` switched to the arithmetic "hash without sine" (the old
+    one cost a transcendental per lookup, four per `noise()`), plus an early return
+    outside `CULL_R` that discards ~36% of the canvas. Roughly cost-neutral versus
+    the previous version despite doing considerably more — **estimated, not measured
+    on device**.
 - **2026-08** — **File naming normalized to kebab-case** (user convention, now rule 1
   in `AGENTS.md`): `Orb.tsx` → `orb.tsx`, `OrbShader.ts` → `orb-shader.ts`,
   `OrbLoader.{native,web}.tsx` → `orb-loader.{native,web}.tsx`. Exported symbols stay
@@ -481,4 +700,243 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   the dead `ORB_STATES` const (it also violated the rule that `*.type.ts` holds only
   types), reordered `orb.tsx` to the golden rule (`handleLayout` was declared after
   the effects), refreshed stale prop/state copy.
+- **2026-08** — **DB layer quality pass**: shared `@json` sanitizers extracted to
+  `tables/sanitizers.ts` (`sanitizeStringArray`, `sanitizeObject`, `sanitizeZonePoints`)
+  — removes the per-table duplicate functions; `{ memo: true }` on hot JSON columns
+  (`capabilities`, `points`). `no-console` silenced per-line in the DB adapter error
+  handlers. `react-hooks/immutability` **disabled in `eslint.config.js`** (known
+  Reanimated shared-value false positive) and all file/per-line disables for it removed.
+  Verified: `tsc` 0 errors, `lint` 0 errors/0 warnings.
+- **2026-08** — **Database layer simplified**: `ModelMap`/`TableName`/`ModelOf` moved
+  from `core/database/index.ts` to `core/types/database.type.ts` (imports are
+  `type`-only, no runtime cycle). `DatabaseService.findById` now uses the primary-key
+  `collection.find()`. Deleted the temporary `core/database/self-check.ts` + the whole
+  `src/app/(test)/` route group (`database.tsx`, `index.tsx`, `_layout.tsx`, `orb.tsx`),
+  and reset `src/app/index.tsx` to a clean shell (the DB config is verified when real
+  sync data lands). Trimmed comments across the database layer to only the
+  necessary "why/trap" notes. AGENTS.md rule 12 updated accordingly.
+- **2026-08** — **QR scanner rebuilt as a reusable "bottom sheet" screen**
+  (design chosen by the user out of three mockups). The screen is now driven entirely by
+  `useQrScanStore`: the caller passes the parameters via `open({ purpose, ...overrides })`
+  and reads `value` + `status` back, so `/qr` is reusable for any future scan without
+  editing it. New files: `core/types/qr.type.ts`, `shared/constants/qr.constant.ts`
+  (`QR_SCAN_PURPOSES` / `QR_SCAN_FEEDBACK` / timings), `shared/components/qr/*`
+  (guide frame, sheet, manual entry), `shared/hooks/use-reduce-motion.ts`.
+  Nine defects fixed in the process, three of them able to strand the user:
+  (1) **navigation depended on an animation callback** — a second QR entering frame
+  restarted the `withSequence`, the old callback fired with `finished === false` and
+  `finishScan` never ran, leaving the scanner open forever. Detection now locks the
+  scanner (`onBarcodeScanned={undefined}`) and a `setTimeout` drives the exit.
+  (2) **`router.back()` with no history check** in both exits → a deep link into `/qr`
+  trapped the user; now `canGoBack() ? back() : replace('/')`.
+  (3) **Android hardware back never resolved the session** — the caller would wait on
+  `scanning` forever; an unmount cleanup now emits `cancel()`.
+  (4) `bounds` tracking dropped — on Android the coordinates are the analyzer image's,
+  only divided by density, and the image size is not exposed to JS (see the section above).
+  (5) no payload validation → `pattern` per purpose, reported **inside** the scanner,
+  resuming after `QR_SCAN_RETRY_MS` instead of navigating away.
+  (6) the pairing secret was rendered on screen; it no longer is.
+  (7) permanently-denied permission had a dead "Permitir cámara" button and **no way out**
+  → `Linking.openSettings()` and the close button now exist in every state.
+  (8) hardcoded `rgba(0,0,0,0.9)` + `text-white` (violated rule 7) and invisible against
+  dark scenes → semantic tokens only. The overlay uses `accent`/`error` deliberately,
+  since `foreground` flips to near-black in the light theme and would vanish on camera.
+  The pill avoids white-on-arena (≈2.3:1): `accent` tone is `bg-accent-soft` +
+  `text-foreground`, and the error tone reuses the already-validated
+  `bg-error` + `text-destructive-foreground` pair (AA in both themes).
+  (9) icon-only buttons had no `accessibilityLabel`; the status pill is now
+  `accessibilityLiveRegion="polite"` and the confirm delay dropped 1800 ms → 450 ms.
+  Verified: `tsc` 0, `lint` 0, and `KeyboardControllerPackage` confirmed present in the
+  installed debug APK's `classes2.dex` — **no rebuild needed**, Metro reload is enough.
+  Not yet validated on device.
+- **2026-08** — **`Cannot assign to read-only property 'NONE'` fixed at the root**
+  (`babel.config.js`). Symptom: an uncaught runtime error on device, invisible in the
+  Metro terminal, thrown from `Event.js:53` whenever `WebSocket.js` built
+  `new Event('error')` on `websocketFailed`.
+  Root cause: **Babel plugin ordering.** Top-level `plugins` run *before* presets, so
+  the global `['@babel/plugin-transform-class-properties', { loose: true }]` (added for
+  WatermelonDB's legacy decorators) also processed `node_modules/react-native`. In loose
+  mode a class field declared without an initializer compiles to a plain assignment
+  (`this.NONE = void 0`) instead of `Object.defineProperty`; in spec mode
+  `flow-strip-types` would have erased it, because `+NONE: 0;` is a Flow *type-only*
+  declaration (`0` is a literal type, not a value). RN also defines those same names on
+  `Event.prototype` with `Object.defineProperty(..., { enumerable: true, value: 0 })` —
+  no `writable: true`, so they are read-only and the assignment throws in strict mode.
+  Fix: the four decorator/loose plugins moved into a Babel **`overrides`** entry whose
+  `test` matches only `<root>/src`, which is the only place using decorators (verified:
+  no decorators under `modules/argus-net`). No `patch-package`, nothing patched in
+  `node_modules`, so it survives reinstalls and RN upgrades.
+  Verified by compiling the real files with the project config: RN `Event.js` went from
+  **4** `this.<PHASE> =` assignments to **0** while keeping its `defineProperty` calls,
+  and `user.table.ts` still emits legacy `applyDecoratedDescriptor` ×8 +
+  `_initializerDefineProperty` with no per-field spec `_defineProperty` (which is what
+  would break WatermelonDB). Plus a full `expo export --platform android` bundles clean
+  (6.2 MB hbc). The underlying WebSocket failure was only the trigger — Metro's dev
+  socket reconnecting — and is now harmless instead of fatal.
+- **2026-08** — QR scanner **typing mode** (user request: it looked bad and the phone
+  stuttered while typing over a live camera). The sheet now **grows over the camera** as
+  the keyboard opens instead of just being pushed up: `KeyboardAvoidingView` replaced by
+  `useKeyboardProgress` over `useReanimatedKeyboardAnimation`, so the whole transition is
+  native shared values on the UI thread. Only transform + colour + radius animate — the
+  cover has a fixed height and slides via `translateY` — because animating height, border
+  width or padding re-runs Yoga and refires `onLayout` every frame, dragging JS along with
+  it. Barcode analysis is detached the instant the keyboard moves; the preview is only
+  switched off (`active={false}`) once it is fully hidden, and rewarmed before it is
+  revealed. The torch button morphs into a "back to camera" button off the same `progress`
+  value. `QrScanSheet` became content-only and the route took over the animated chrome.
+  Verified: `tsc`/`lint` 0 and an Android bundle. **Pending device validation**: the
+  `useResizeMode()` that `useReanimatedKeyboardAnimation` applies sets Android
+  `adjustResize`, and its interaction with edge-to-edge should be eyeballed on the Redmi —
+  if the sheet ever double-offsets, switch that hook to `useGenericKeyboardHandler`.
 
+- **2026-08** — **Capa de servicios reutilizables (HTTP · Sesión · Sync autónomo)** —
+  `PLAN-SYNC-SERVICES.md` define y documenta la fase (lynek como guía, no copia).
+  - **Tipos/interfaces**: shapes de wire (`ISocketEmitDto`, `ISynchronizedDto`,
+    `IResponseLoginDto`, `IAuthUser`, `IServiceResponse`, ...) en `core/interfaces/`
+    con barrel; aliases/uniones (`HttpMethod`, `SyncTableKey`, `SyncCursors`,
+    `SyncOperation` derivada de `SYNC_OPERATION` en `shared/constants/sync.constant.ts`)
+    en `core/types/`. `socket-emit.type.ts` quedó solo con la derivación de tipo.
+  - **`http.service.ts`** (clase concreta, sin interfaz): wrapper sobre `netService`
+    que **devuelve** `IServiceResponse<T>` (nunca lanza), Bearer desde
+    `useAuthStore`, refresh 401 **single-flight** (`PATCH /auth/refresh-token` con
+    promise compartida) + retry único (`skipAuthRetry`), `baseUrl` cacheada por
+    instancia, `postMultipart` (body → part `payload` + archivo, contrato nativo
+    verificado). Multipart login/register usan el campo `image` del backend.
+  - **`auth.store.ts`** (zustand): sesión `{status, user, accessToken, refreshToken}`
+    con **auto-bootstrap al cargar el módulo** (`void bootstrap()` — sin `hydrate()`
+    desde la UI), tokens en secure-storage (`NET_STORAGE_KEYS`), `user` persistido
+    internamente vía `storageService` (`app.session.user`) en cada `setUser`;
+    `clear()` solo borra y el sync se desconecta solo (suscripción al store).
+  - **`auth.service.ts`** (`login/register/hasAdmin/status/logout`) e
+    **`invite.service.ts`** (`create`; `accept` pre-CA por `netService.requestTrustAny`
+    TOFU + fingerprint, host/port desde el QR — fase 2). Solo llaman al API.
+  - **Nitro**: `ArgusSocket` HybridObject (`sendText/sendBinary/close` + callbacks
+    `onOpen/onMessage/onError/onClose`), `openSocket(options)` y `trustAny` en
+    `NetHttpRequest` — regenerado con `bunx nitrogen`, implementado en
+    `ArgusSocket.kt` (OkHttp sobre el cliente CA cacheado, callbacks al main looper,
+    `NullType.NULL` — el constructor es privado) y `ArgusSocket.swift`
+    (URLSessionWebSocketTask con la sesión anclada, `asType()` en los variants).
+    `IArgusNetService.requestTrustAny` + impl native/web (web lanza
+    `NOT_SUPPORTED`; desktop diferido).
+  - **Sync autónomo** (`core/services/sync/`): `synchronize.service.ts` posee el
+    socket único (backoff 2s→30s, `UNAUTHORIZED` → `authStore.clear()`), se
+    auto-suscribe al store (`bind()` idempotente, `IS_NATIVE` guard), en
+    `InitialInfo` (op 0) hace `setUser` + `syncOnce()`; `syncOnce` itera páginas
+    (200 filas, pausa 150ms, máx 20) con cursores en storageService
+    (`app.sync.<userId>`, segundos, sin `+1` — rango inclusivo); mapper
+    `entity-mappers.ts` (whitelist por tabla, `×1000` seg→ms, JSON-string via
+    sanitizers, sin `updatedAt` en notification — trap conocido); escrituras con
+    `prepareCreateFromDirtyRaw` (id = server id string, verificado en
+    `sanitizedRaw`) + `prepareUpdate` + `prepareDestroyPermanently` en
+    `chunkedBatch(100)`; Add/Delete en vivo aplicados directo o encolados durante
+    sync; la fila `user` propia se fusiona en `auth.store.setUser`. Exposición
+    pública para fase voz: `send/sendBinary/on/onBinary/onConnect/onDisconnect`
+    y `syncOnce()` manual. Socket platform-split (`sync-socket.native/web.ts`)
+    para no romper el bundle web.
+  - **Wiring mínimo**: `index.tsx` gate de 3 estados (splash mientras
+    `status === 'loading'`), sin efectos ni hydrate. i18n `common.errors.*` es/en.
+  - Validado: `tsc` 0, `lint` 0, `web:build` OK, `app:compileDebugKotlin` OK
+    (Redmi rebuild pendiente — el dev-client cambió por `ArgusSocket`).
+    Swift no compilable en Linux (pendiente validación en macOS).
+- **2026-08** — **Pantalla de registro facial reescrita** (`welcome/face/index.tsx`
+  + `face-guide-overlay.tsx` + `use-face-guide.ts`), flujo **100% automático**
+  (decisión del usuario: sin confirmación, "todo automático, nada de complejidad").
+  - **Distribución**: el bug raíz era que el sheet (único hijo "en flujo" del
+    `flex-1`, sin `justify-end`) se renderizaba ARRIBA, tapando la frente del óvalo;
+    ahora `justify-end` + sheet `w-full max-w-md self-center` (tablets OK). El óvalo
+    se ajusta al **área de cámara medida** (`onLayout` del sheet, nunca adivinada):
+    `area = [insets.top, sheetTop]`, `ovalH = min(0.52·H, 0.8·areaH)`,
+    `ovalW = min(0.64·W, 1.3·ovalH)`, pill y flecha con posición explícita y clamps.
+    En pantallas ≤700dp el óvalo/pill ya no se solapan con el sheet (antes sí: sheet
+    de altura variable por fase cubría el pill en 360×640).
+  - **Sheet de esqueleto estable**: título + hint (2 líneas máx) + slot de mensaje
+    reservado (`min-h-6`) + slot de acción fijo (`h-11`) → la altura no salta entre
+    fases → el área de cámara (y el óvalo) no se mueven. `maxFontSizeMultiplier 1.25`.
+  - **Flujo**: guía → cara estable 800ms → vibración → **countdown 3-2-1 cancelable**
+    (cualquier drift vuelve a guía y rearama) → foto (quality 0.9, `shutterSound:false`
+    vía `takePictureAsync`, no prop del `CameraView`) → **envío automático** → validación
+    del servidor. Tras fallo: cooldown 6s antes de rear mar + desarme tras 3 fallos
+    consecutivos (solo manual). Cámara apagada en `submitting` y con notice
+    (`active` condicional). `Linking.openSettings()` si el permiso se deniega
+    permanentemente (antes: callejón sin salida).
+  - **Fix de bugs**: el cleanup del redirect de `alreadyRegistered` se perdía (return
+    desde async callback) → ahora ref + cleanup en unmount; el countdown usaba `h2`
+    (heredaba `border-b`) → texto plano; `FACE_OVAL_RATIO` muerto eliminado;
+    colores del overlay → `colorTokens` (antes hex hardcodeados fuera de tema).
+  - **Pattern**: el cancel del countdown por drift es un **evento** del hook
+    (`onDrift`, disparado en el loop de muestreo ante transición ready→no-ready), no un
+    efecto que pollee — evita `react-hooks/set-state-in-effect` y el problema de deps
+    inestables (`captureNow` dependía de `guide`, objeto nuevo por render → el timer
+    se reiniciaba en cada snapshot). Callbacks estables vía refs (`resetGuideRef`,
+    `phaseRef`). i18n: quitadas `confirm-*`, añadidas `hold-still`/`sending`/
+    `permission-*`. Validado: `tsc` 0, `lint` 0. **Pendiente: validación en el Redmi**
+    (flujo completo auto + posiciones del óvalo en 393×873 y una pantalla corta).
+  - **Óvalo redondeado (decisión del usuario)**: `FACE_OVAL_RATIO` reintroducido como
+    **width:height del óvalo** (1.1, casi circular) y el overlay lo mantiene en todos
+    los dispositivos: `ovalW = min(0.8·W, 0.8·areaH·ratio)`, `ovalH = min(ovalW/ratio,
+    0.8·areaH)`. El óvalo anterior (fracciones fijas 0.64W × 0.52H) renderizaba una
+    píldora estrecha en pantallas altas (252×454 en el Redmi, ratio 0.55) donde la
+    cara no cabía en horizontal; ahora 314×285 (ratio 1.1). Consecuencia geométrica:
+    el óvalo redondo es más bajo, así que `FACE_CLOSE_MIN_HEIGHT` bajó de 0.58 a 0.40
+    para que "too close" dispare antes de que la cara desborde el óvalo (banda ready
+    0.24–0.40 de frame). Eliminadas las constantes muertas `FACE_OVAL_W/H_RATIO`.
+- **2026-08** — **Auditoría responsive + guards de plataforma en todas las vistas**
+  (pedido del usuario: mobile/tablet/laptop/desktop).
+  - **Guards verificados** — solo móvil: `/qr` (Stack.Protected + `IS_WEB` Redirect,
+    doble), `/approve` (Stack.Protected), `/welcome/face` (WebOnlyNotice),
+    `/welcome/voice` (WebOnlyNotice). Solo web/desktop: `/login` (`IS_NATIVE` →
+    Redirect al face login). Universales: `/`, `/welcome`, `/welcome/pairing`,
+    `+not-found`.
+  - **Patrón responsive**: las vistas en flujo (no cámara) ahora usan columna
+    centrada con ancho limitado — hero (`welcome`, home) `max-w-lg`, formularios
+    (`login`, `approve`, `pairing`, `voice`, `WebOnlyNotice` de cara) `max-w-md`,
+    siempre `w-full self-center` + insets. En el home el contenido va en un wrapper
+    `max-w-lg` para que el `AvatarFab` (absolute) siga anclado al borde de pantalla.
+    En `+not-found` no había nada: rediseñado con tokens (bg-background, h4, muted,
+    link accent) y centrado con max-w-md.
+  - **WebOnlyNotice de cara**: era dead-end en web para enroll (sin botón) → ahora
+    botón "Volver" (`common.back`) en enroll y "Ir a login" en login.
+  - Verificado: `tsc` 0, `lint` 0, `web:build` OK y clases generadas en el CSS
+    (`max-w-md`/`max-w-lg`/`self-center`/`w-full`/`underline-offset-4`). Los flujos
+    de cámara (face/qr) quedan full-screen por diseño (portrait). Pendiente:
+    validación visual en web (ventana landscape) y en el Redmi/iPad.
+
+## Avatar reactions driven by the backend (2026-08-20)
+
+The avatar now plays a **semantic reaction** the backend derives from each voice
+turn, animated by the prosody of Argus's own reply. Two orthogonal layers: the
+reaction picks the pose, the voice envelope gives it life.
+
+- **Wire** — `voice:event` (the constant `VOICE_EVENT_TYPE` existed with no
+  handler; this is what it was reserved for):
+  `{ reaction, intensity, because }`. The backend sends **meaning**, never an
+  expression name, so retargeting the face is a change to one TS table.
+- **`REACTION_SEMANTIC_KEY`** (`reaction.constant.ts`) maps the 10 reactions to
+  calibrated `semanticKey`s already in `avatar.constant.ts`
+  (`recognizing → joyful-down-right`, `uncertain → skeptical-right`,
+  `alarmed → surprised-left`, …). `idle → null` keeps the phase pose.
+  `getAvatarExpressionBySemanticKey` returns `undefined` for an unknown key, so
+  a backend that learns a new reaction before the app does degrades to the phase
+  pose instead of throwing.
+- **`useAvatarStore`** gained `reaction` + `intensity` and a `react()` action.
+  A reaction is punctuation, not a mood: it expires after `REACTION_HOLD_MS`
+  (4.2 s) via a store-scoped timer, so the face never stays stuck on a surprise
+  from four turns ago. `Avatar` prefers `reaction → phase` for its target pose,
+  and `intensity` scales the ambient-motion ramp.
+- **Voice envelope** (`shared/libs/voice-level.ts`) — `voiceLevel` is a
+  module-level `makeMutable`, not a hook: the producer is a service (not a
+  component) and the consumer is the render worklet, and it updates ~30x/second
+  so it must never cause a render. `voice.service.ts` computes `pcmEnvelope()`
+  over the PCM it **already buffers** before playback and walks it in step with
+  the player; the worklet multiplies ambient motion by it and injects a little
+  extra movement on loud syllables.
+- **Why client-side** — a pose per frame would be ~60 WebSocket messages per
+  second. The client already holds the audio, so the envelope costs one pass
+  over memory plus a 32 ms timer: no extra network, no model, nothing per frame
+  beyond a shared-value read.
+- Dial `VOICE_ENVELOPE_PEAK_GAIN` to 0 for intensity-only modulation if the
+  peaks read as a tic on device; `VOICE_ENVELOPE_MOTION_GAIN` controls how much
+  the voice drives ambient motion at all.
+
+Validated: `tsc --noEmit` 0, `expo lint` 0. Backend side documented in
+`backend/CONTEXT.md` → "Reactions".

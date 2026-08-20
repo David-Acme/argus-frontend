@@ -3,8 +3,10 @@ export type NetMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 export type NetErrorCode =
   | 'PAIRING_REQUIRED'
   | 'INVALID_PAIRING_CODE'
+  | 'ALREADY_PAIRED'
   | 'FINGERPRINT_MISMATCH'
   | 'CERT_NOT_TRUSTED'
+  | 'UNAUTHORIZED'
   | 'HOST_NOT_ALLOWED'
   | 'DISCOVERY_NOT_FOUND'
   | 'NETWORK_ERROR'

@@ -13,9 +13,11 @@ export function createArgusNet(): ArgusNet {
 
 export type {
   ArgusNet,
+  ArgusSocket,
   NetDiscovery,
   NetHttpFile,
   NetHttpRequest,
   NetHttpResult,
   NetPairing,
+  NetSocketOptions,
 } from './ArgusNet.nitro';

@@ -5,6 +5,10 @@
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "allowArbitraryExtensions": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "useDefineForClassFields": false,
+    "strictPropertyInitialization": false,
     "moduleSuffixes": [".native", ".web", ""],
     "paths": {
       "@/*": [

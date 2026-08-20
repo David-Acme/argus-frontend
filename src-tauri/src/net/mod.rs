@@ -2,6 +2,7 @@ pub mod discover;
 pub mod http;
 pub mod pair;
 pub mod secure;
+pub mod socket;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]

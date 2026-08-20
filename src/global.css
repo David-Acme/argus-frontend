@@ -45,9 +45,9 @@
       --color-warning: oklch(0.767 0.132 71.42);
       --color-error: oklch(0.644 0.146 22.03);
       --color-info: oklch(0.624 0.045 237.65);
-      --color-interactive: oklch(0.439 0.000 89.88);
-      --color-interactive-hover: oklch(0.371 0.000 89.88);
-      --color-interactive-pressed: oklch(0.321 0.000 89.88);
+      --color-interactive: oklch(0.371 0.000 89.88);
+      --color-interactive-hover: oklch(0.321 0.000 89.88);
+      --color-interactive-pressed: oklch(0.257 0.000 89.88);
       --color-accent: oklch(0.701 0.081 81.91);
       --color-accent-hover: oklch(0.645 0.079 78.33);
       --color-accent-soft: oklch(0.932 0.031 81.75);
@@ -56,7 +56,7 @@
       --color-foreground-on-interactive: oklch(0.980 0.005 78.30);
 
       /* ---- shadcn-compatible aliases ---- */
-      --color-primary: oklch(0.439 0.000 89.88); /* interactive */
+      --color-primary: oklch(0.371 0.000 89.88); /* interactive */
       --color-primary-foreground: oklch(0.980 0.005 78.30); /* foreground-on-interactive */
       --color-secondary: oklch(0.921 0.012 79.78); /* surface-secondary */
       --color-secondary-foreground: oklch(0.200 0.000 89.88); /* foreground */

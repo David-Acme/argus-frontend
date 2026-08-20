@@ -1,0 +1,46 @@
+import type { UserRole } from '@/core/types';
+
+export interface IResponseLoginDto {
+  accessToken: string;
+  refreshToken: string;
+  userId: number;
+  name: string;
+  role: UserRole;
+  personId: number | null;
+  /** True when a register call matched an already-enrolled face. */
+  alreadyRegistered?: boolean;
+}
+
+export interface IResponseStatusDto {
+  userId: number;
+  name: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
+export interface IHasAdminResponse {
+  paired: boolean;
+  hasAdmin: boolean;
+}
+
+export interface IRegisterInput {
+  imageUri: string;
+  name?: string;
+  inviteCode?: string;
+}
+
+export interface ICreateDeviceLoginResponse {
+  challengeId: string;
+  expiresAt: number;
+}
+
+export type DeviceLoginStatus = 'pending' | 'approved' | 'expired';
+
+export interface IDeviceLoginStatusResponse {
+  status: DeviceLoginStatus;
+  accessToken?: string;
+  refreshToken?: string;
+  userId?: number;
+  name?: string;
+  role?: UserRole;
+}

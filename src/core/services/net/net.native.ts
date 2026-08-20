@@ -1,4 +1,5 @@
 import { createArgusNet } from 'argus-net';
+import type { ArgusSocket, NetSocketOptions } from 'argus-net';
 import { DISCOVERY_TIMEOUT_MS } from '@/shared/constants';
 import type { IArgusNetService } from '@/core/interfaces';
 import {
@@ -60,6 +61,39 @@ class NativeArgusNetService implements IArgusNetService {
         body: options.body ?? '',
         files: options.files ?? [],
       });
+    } catch (error) {
+      throw toNetError(error, 'NETWORK_ERROR');
+    }
+  }
+
+  async requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult> {
+    try {
+      return await net.request({
+        url: options.url,
+        method: options.method,
+        headers: options.headers ?? {},
+        body: options.body ?? '',
+        files: options.files ?? [],
+        trustAny: true,
+      });
+    } catch (error) {
+      throw toNetError(error, 'NETWORK_ERROR');
+    }
+  }
+
+  /** The WS must ride the SAME configured instance (CA + host) as HTTP. */
+  async openSocket(options: NetSocketOptions): Promise<ArgusSocket> {
+    const instance = await loadInstance();
+    if (!instance) {
+      throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
+    }
+    const key = `${instance.caPem}|${instance.host}|${instance.ip}`;
+    if (key !== configuredKey) {
+      configuredKey = key;
+      net.configure(instance.caPem, instance.host, instance.ip);
+    }
+    try {
+      return await net.openSocket(options);
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
     }

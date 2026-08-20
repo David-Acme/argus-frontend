@@ -75,6 +75,7 @@ const NATIVE_ERROR_CODES: ReadonlySet<NetErrorCode> = new Set([
   'INVALID_PAIRING_CODE',
   'FINGERPRINT_MISMATCH',
   'CERT_NOT_TRUSTED',
+  'UNAUTHORIZED',
   'HOST_NOT_ALLOWED',
   'DISCOVERY_NOT_FOUND',
   'NETWORK_ERROR',
@@ -96,6 +97,7 @@ export function toNetError(error: unknown, fallback: NetErrorCode): NetError {
   else if (upper.includes('PAIRING_REQUIRED')) code = 'PAIRING_REQUIRED';
   else if (upper.includes('FINGERPRINT')) code = 'FINGERPRINT_MISMATCH';
   else if (upper.includes('CERTIFICATE')) code = 'CERT_NOT_TRUSTED';
+  else if (upper.includes('UNAUTHORIZED') || upper.includes('401')) code = 'UNAUTHORIZED';
   else if (upper.includes('DISCOVERY_NOT_FOUND')) code = 'DISCOVERY_NOT_FOUND';
   else if (upper.includes('NETWORK_ERROR')) code = 'NETWORK_ERROR';
   else if (upper.includes('STORAGE')) code = 'STORAGE_ERROR';

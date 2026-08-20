@@ -5,10 +5,12 @@ import { getThemePreference } from '@/shared/hooks/use-theme-preference';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { PortalHost } from '@rn-primitives/portal';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Stack } from 'expo-router';
 import { Uniwind, useUniwind } from 'uniwind';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { SessionGate } from '@/shared/components/session/session-gate';
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
@@ -22,20 +24,28 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
-        <SystemBars style={isDark ? 'light' : 'dark'} />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'flip',
-            contentStyle: { backgroundColor: bg },
-          }}>
-          <Stack.Protected guard={IS_NATIVE}>
-            <Stack.Screen name="qr" />
-          </Stack.Protected>
-        </Stack>
-        <PortalHost />
-      </ThemeProvider>
+      <SystemBars style={isDark ? 'light' : 'dark'} />
+      <SessionGate>
+        <KeyboardProvider>
+          <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'fade',
+                contentStyle: { backgroundColor: bg },
+              }}>
+              <Stack.Protected guard={IS_NATIVE}>
+                <Stack.Screen name="qr" />
+                <Stack.Screen name="approve" />
+              </Stack.Protected>
+              <Stack.Screen name="welcome" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="agenda" />
+            </Stack>
+            <PortalHost />
+          </ThemeProvider>
+        </KeyboardProvider>
+      </SessionGate>
     </View>
   );
 }

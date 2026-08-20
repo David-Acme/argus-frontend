@@ -1,0 +1,24 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["argus", "mic"],
+  "ios": {
+    "iosModuleName": "ArgusMic"
+  },
+  "android": {
+    "androidNamespace": ["mic"],
+    "androidCxxLibName": "ArgusMic"
+  },
+  "autolinking": {
+    "ArgusMic": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridArgusMic"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridArgusMic"
+      }
+    }
+  },
+  "ignorePaths": ["**/node_modules"]
+}

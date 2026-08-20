@@ -1,4 +1,18 @@
-import { Easing, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
+import { Easing, FadeIn, FadeOut, ZoomIn, SlideInDown } from 'react-native-reanimated';
+
+/** Shared timing easing for soft, natural motion. */
+export const easeOutCubic = Easing.out(Easing.cubic);
+
+/** Screen content entrance: gentle rise + fade (respects reduce-motion via consumers). */
+export const screenIn = FadeIn.duration(320).easing(easeOutCubic);
+
+export const screenInUp = SlideInDown.duration(320).easing(easeOutCubic);
+
+/** Element entrance used by staggered groups. */
+export const itemIn = FadeIn.duration(260).easing(easeOutCubic);
+
+/** Immediate fade for plain content swaps. */
+export const fadeIn = FadeIn.duration(180).easing(easeOutCubic);
 
 export const overlayIn = FadeIn.duration(200).easing(Easing.out(Easing.cubic));
 

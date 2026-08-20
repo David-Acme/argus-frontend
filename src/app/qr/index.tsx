@@ -1,147 +1,351 @@
-/* eslint-disable react-hooks/immutability */
 import { useQrScanStore } from '@/core/stores';
+import { QrCameraAction, QrGuideFrame, QrManualEntry, QrScanSheet } from '@/shared/components/qr';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { IS_WEB } from '@/shared/constants';
+import {
+  colorTokens,
+  IS_WEB,
+  QR_SCAN_CONFIRM_MS,
+  QR_SCAN_FRAME_MAX,
+  QR_SCAN_FRAME_RATIO,
+  QR_SCAN_RETRY_MS,
+  QR_SCAN_SHEET_PADDING_BOTTOM,
+  QR_SCAN_SHEET_RADIUS,
+  QR_SCAN_TYPING_GAP,
+} from '@/shared/constants';
+import { useKeyboardProgress } from '@/shared/hooks/use-keyboard-progress';
+import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import type { QrScanFeedback, TranslationKey } from '@/core/types';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Redirect, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, {
-  FadeInDown,
-  FadeOutDown,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Keyboard,
+  Linking,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
+import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUniwind } from 'uniwind';
+
+const BLOCKED_TITLE: TranslationKey = 'screens.qr.blocked-title';
+const BLOCKED_DESCRIPTION: TranslationKey = 'screens.qr.blocked-description';
+const DETECTED_DESCRIPTION: TranslationKey = 'screens.qr.detected-description';
+const FALLBACK_INVALID_DESCRIPTION: TranslationKey = 'screens.qr.invalid-fallback';
+const CHROME_FADE_END = 0.33;
 
 function QrScannerScreen() {
   const router = useRouter();
-  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { theme } = useUniwind();
+  const { width, height: windowHeight } = useWindowDimensions();
+  const reduceMotion = useReduceMotion();
+  const keyboard = useKeyboardProgress();
   const [permission, requestPermission] = useCameraPermissions();
-  const [scannedData, setScannedData] = useState<string | null>(null);
+  const config = useQrScanStore((state) => state.config);
+  const { t } = useTranslation();
+  const [torch, setTorch] = useState(false);
+  const [detectedValue, setDetectedValue] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);
+  const [controlsBottom, setControlsBottom] = useState(0);
 
   const cameraReadyRef = useRef(false);
-  const lastScannedRef = useRef<string | null>(null);
-  const navigatingRef = useRef(false);
+  const leavingRef = useRef(false);
+  const requestedRef = useRef(false);
+  const rejectedRef = useRef<string | null>(null);
 
-  const boxX = useSharedValue(width / 2);
-  const boxY = useSharedValue(height / 2);
-  const boxWidth = useSharedValue(0);
-  const boxHeight = useSharedValue(0);
-  const boxOpacity = useSharedValue(0);
+  const palette = colorTokens[theme === 'dark' ? 'dark' : 'light'];
+  const frameSize = Math.min(width * QR_SCAN_FRAME_RATIO, QR_SCAN_FRAME_MAX);
+  const granted = permission?.granted === true;
+  const canRetryPermission = permission !== null && !permission.granted && permission.canAskAgain;
+  const isBlocked = permission !== null && !permission.granted && !permission.canAskAgain;
+  const detected = detectedValue !== null;
+  const restOffset = Math.max(0, windowHeight - contentHeight);
+  const typingOffset = controlsBottom + QR_SCAN_TYPING_GAP;
 
-  const finishScan = useCallback(
-    (data: string) => {
-      if (navigatingRef.current) return;
-      navigatingRef.current = true;
-      useQrScanStore.getState().setValue(data);
-      router.back();
-    },
-    [router],
-  );
+  const feedback: QrScanFeedback =
+    permission === null
+      ? 'requesting'
+      : !permission.granted
+        ? 'blocked'
+        : detected
+          ? 'detected'
+          : invalid
+            ? 'invalid'
+            : 'searching';
 
-  const handleBarCodeScanned = useCallback(
-    (result: BarcodeScanningResult) => {
-      if (!cameraReadyRef.current) return;
-      const { data, bounds } = result;
-      if (!bounds) return;
-      if (data === lastScannedRef.current) return;
-      lastScannedRef.current = data;
-      setScannedData(data);
+  const title = feedback === 'blocked' ? t(BLOCKED_TITLE) : t(config.title);
 
-      boxX.value = withSpring(bounds.origin.x);
-      boxY.value = withSpring(bounds.origin.y);
-      boxWidth.value = withSpring(bounds.size.width);
-      boxHeight.value = withSpring(bounds.size.height);
-      boxOpacity.value = withSequence(
-        withTiming(1, { duration: 300 }),
-        withDelay(
-          1200,
-          withTiming(0, { duration: 300 }, (finished) => {
-            if (finished) {
-              runOnJS(finishScan)(data);
-            }
-          }),
-        ),
-      );
-    },
-    [boxX, boxY, boxWidth, boxHeight, boxOpacity, finishScan],
-  );
+  const description =
+    feedback === 'blocked'
+      ? t(BLOCKED_DESCRIPTION)
+      : feedback === 'detected'
+        ? t(DETECTED_DESCRIPTION)
+        : feedback === 'invalid'
+          ? t(config.invalidMessage ?? FALLBACK_INVALID_DESCRIPTION)
+          : config.hint === null
+            ? null
+            : t(config.hint);
 
-  const boxStyle = useAnimatedStyle(() => {
-    const extra = 0.1;
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: restOffset * (1 - keyboard.progress.value) }],
+  }));
+
+  const contentStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: typingOffset * keyboard.progress.value }],
+  }));
+
+  const chromeStyle = useAnimatedStyle(() => {
+    const collapse = Math.max(0, 1 - keyboard.progress.value / CHROME_FADE_END);
     return {
-      position: 'absolute',
-      left: boxX.value - (boxWidth.value * extra) / 2,
-      top: boxY.value - (boxHeight.value * extra) / 2,
-      width: boxWidth.value * (1 + extra),
-      height: boxHeight.value * (1 + extra),
-      borderWidth: 2,
-      borderStyle: 'dashed',
-      borderColor: 'rgba(0,0,0,0.9)',
-      borderRadius: boxWidth.value / 10,
-      opacity: boxOpacity.value,
+      borderTopLeftRadius: QR_SCAN_SHEET_RADIUS * collapse,
+      borderTopRightRadius: QR_SCAN_SHEET_RADIUS * collapse,
+      borderTopColor: interpolateColor(collapse, [0, 1], [palette.card, palette.border]),
     };
   });
 
-  if (!permission) {
-    return <View className="flex-1 bg-background" />;
-  }
+  const leave = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/');
+  }, [router]);
 
-  if (!permission.granted) {
-    return (
-      <View className="flex-1 items-center justify-center gap-4 bg-background p-6">
-        <Icon name="scan-barcode" className="text-muted-foreground size-10" />
-        <Text variant="muted" className="text-center">
-          Para escanear el código QR de vinculación, Argus necesita acceso a la cámara.
-        </Text>
-        <Button onPress={requestPermission}>
-          <Text>Permitir cámara</Text>
-        </Button>
-      </View>
-    );
-  }
+  const close = useCallback(() => {
+    if (leavingRef.current) {
+      return;
+    }
+    leavingRef.current = true;
+    useQrScanStore.getState().cancel();
+    leave();
+  }, [leave]);
+
+  const accept = useCallback(
+    (value: string) => {
+      if (leavingRef.current) {
+        return;
+      }
+      leavingRef.current = true;
+      useQrScanStore.getState().setValue(value);
+      leave();
+    },
+    [leave]
+  );
+
+  const isValid = useCallback(
+    (value: string) => config.pattern === null || config.pattern.test(value),
+    [config.pattern]
+  );
+
+  const reject = useCallback((value: string) => {
+    rejectedRef.current = value;
+    setInvalid(true);
+  }, []);
+
+  const handleCameraReady = useCallback(() => {
+    cameraReadyRef.current = true;
+  }, []);
+
+  const handleTorchToggle = useCallback(() => setTorch((current) => !current), []);
+
+  const handleReturnToCamera = useCallback(() => Keyboard.dismiss(), []);
+
+  const handleContentLayout = useCallback((event: LayoutChangeEvent) => {
+    setContentHeight(event.nativeEvent.layout.height);
+  }, []);
+
+  const handleControlsLayout = useCallback((event: LayoutChangeEvent) => {
+    const { y, height } = event.nativeEvent.layout;
+    setControlsBottom(y + height);
+  }, []);
+
+  const handlePermissionRetry = useCallback(() => {
+    requestPermission();
+  }, [requestPermission]);
+
+  const handleOpenSettings = useCallback(() => {
+    Linking.openSettings();
+  }, []);
+
+  const handleBarcodeScanned = useCallback(
+    ({ data }: BarcodeScanningResult) => {
+      if (!cameraReadyRef.current || leavingRef.current || data.length === 0) {
+        return;
+      }
+      if (isValid(data)) {
+        setDetectedValue(data);
+        return;
+      }
+      if (data === rejectedRef.current) {
+        return;
+      }
+      reject(data);
+    },
+    [isValid, reject]
+  );
+
+  const handleManualSubmit = useCallback(
+    (value: string) => {
+      Keyboard.dismiss();
+      if (isValid(value)) {
+        accept(value);
+        return;
+      }
+      reject(value);
+    },
+    [accept, isValid, reject]
+  );
+
+  useEffect(() => {
+    if (useQrScanStore.getState().status !== 'scanning') {
+      useQrScanStore.getState().open();
+    }
+    return () => {
+      if (useQrScanStore.getState().status === 'scanning') {
+        useQrScanStore.getState().cancel();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (permission === null || permission.granted || !permission.canAskAgain) {
+      return;
+    }
+    if (requestedRef.current) {
+      return;
+    }
+    requestedRef.current = true;
+    requestPermission();
+  }, [permission, requestPermission]);
+
+  useEffect(() => {
+    if (detectedValue === null) {
+      return;
+    }
+    const timer = setTimeout(() => accept(detectedValue), QR_SCAN_CONFIRM_MS);
+    return () => clearTimeout(timer);
+  }, [accept, detectedValue]);
+
+  useEffect(() => {
+    if (!invalid) {
+      return;
+    }
+    const timer = setTimeout(() => setInvalid(false), QR_SCAN_RETRY_MS);
+    return () => clearTimeout(timer);
+  }, [invalid]);
 
   return (
-    <View className="flex-1 items-center justify-center overflow-hidden bg-background">
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        mute
-        barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-        onBarcodeScanned={handleBarCodeScanned}
-        onCameraReady={() => {
-          cameraReadyRef.current = true;
-        }}
-      />
-      <Animated.View style={boxStyle} pointerEvents="none">
-        {scannedData && (
-          <Animated.View
-            key={scannedData}
-            entering={FadeInDown.springify().delay(200)}
-            exiting={FadeOutDown.duration(150)}
-            className="absolute top-full mt-2.5 min-w-48 rounded-full bg-overlay px-4 py-1.5">
-            <Text className="text-white text-sm" numberOfLines={1} adjustsFontSizeToFit>
-              {scannedData}
-            </Text>
-          </Animated.View>
-        )}
+    <View className="bg-background flex-1">
+      {granted ? (
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          mute
+          active={!keyboard.fullyOpen}
+          enableTorch={torch}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={detected || keyboard.visible ? undefined : handleBarcodeScanned}
+          onCameraReady={handleCameraReady}
+        />
+      ) : (
+        <View className="bg-surface absolute inset-0 items-center justify-center">
+          <Icon name="scan-barcode" className="text-placeholder size-10" />
+        </View>
+      )}
+
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ paddingBottom: contentHeight }}
+        pointerEvents="none">
+        <QrGuideFrame size={frameSize} feedback={feedback} reduceMotion={reduceMotion} />
+      </View>
+
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            left: 0,
+            height: windowHeight,
+            backgroundColor: palette.card,
+            borderTopWidth: StyleSheet.hairlineWidth,
+          },
+          chromeStyle,
+          cardStyle,
+        ]}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleReturnToCamera}
+          accessible={false}
+        />
+
+        <Animated.View style={contentStyle}>
+          <View
+            onLayout={handleContentLayout}
+            style={{ paddingBottom: insets.bottom + QR_SCAN_SHEET_PADDING_BOTTOM }}>
+            <QrScanSheet
+              feedback={feedback}
+              title={title}
+              description={description}
+              reduceMotion={reduceMotion}>
+              {isBlocked ? (
+                <Button onPress={handleOpenSettings}>
+                  <Icon name="settings" />
+                  <Text>{t('common.open-settings')}</Text>
+                </Button>
+              ) : null}
+
+              {canRetryPermission ? (
+                <Button onPress={handlePermissionRetry}>
+                  <Icon name="camera" />
+                  <Text>{t('common.allow-camera')}</Text>
+                </Button>
+              ) : null}
+
+              {config.manualLabel !== null && config.manualPlaceholder !== null ? (
+                <QrManualEntry
+                  label={config.manualLabel}
+                  placeholder={config.manualPlaceholder}
+                  invalid={feedback === 'invalid'}
+                  onSubmit={handleManualSubmit}
+                />
+              ) : null}
+            </QrScanSheet>
+          </View>
+        </Animated.View>
       </Animated.View>
-      <Button
-        size="icon"
-        variant="outline"
-        className="absolute top-12 right-4"
-        onPress={() => {
-          navigatingRef.current = true;
-          router.back();
-        }}>
-        <Icon name="x" />
-      </Button>
+
+      <View
+        className="absolute right-0 left-0 flex-row items-center justify-between px-4"
+        style={{ top: insets.top + 8 }}
+        pointerEvents="box-none"
+        onLayout={handleControlsLayout}>
+        <Button
+          size="icon"
+          variant="outline"
+          onPress={close}
+          accessibilityLabel={t('screens.qr.close-scanner')}>
+          <Icon name="arrow-left" />
+        </Button>
+
+        {granted ? (
+          <QrCameraAction
+            progress={keyboard.progress}
+            torch={torch}
+            returnsToCamera={keyboard.visible}
+            onToggleTorch={handleTorchToggle}
+            onReturnToCamera={handleReturnToCamera}
+          />
+        ) : null}
+      </View>
     </View>
   );
 }

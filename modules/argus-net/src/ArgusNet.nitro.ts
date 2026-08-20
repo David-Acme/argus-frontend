@@ -29,6 +29,8 @@ export interface NetHttpRequest {
   headers: Record<string, string>;
   body: string;
   files: NetHttpFile[];
+  /** Saltarse la verificación de CA (solo para flujos pre-pairing tipo TOFU, p.ej. /invite/accept). */
+  trustAny?: boolean;
 }
 
 export interface NetHttpResult {
@@ -37,9 +39,32 @@ export interface NetHttpResult {
   body: string;
 }
 
+export interface NetSocketOptions {
+  url: string;
+  headers?: Record<string, string>;
+  connectTimeoutMs?: number;
+}
+
+/**
+ * WebSocket nativo sobre el cliente TLS cacheado (misma CA que los requests).
+ * Los callbacks son props asignables desde JS; se disparan en el hilo principal.
+ */
+export interface ArgusSocket extends HybridObject<{ ios: 'swift', android: 'kotlin' }> {
+  sendText(message: string): void;
+  sendBinary(data: ArrayBuffer): void;
+  close(code?: number, reason?: string): void;
+  onOpen: (() => void) | null;
+  /** Solo UNO de message/data no es null (texto o binario). */
+  onMessage: ((message: string | null, data: ArrayBuffer | null) => void) | null;
+  /** Errores estructurados `CODE|message` (NETWORK_ERROR, UNAUTHORIZED, ...). */
+  onError: ((code: string, message: string) => void) | null;
+  onClose: ((code: number, reason: string) => void) | null;
+}
+
 export interface ArgusNet extends HybridObject<{ ios: 'swift', android: 'kotlin' }> {
   discover(timeoutMs: number): Promise<NetDiscovery>;
   pair(host: string, ip: string, port: number, code: string): Promise<NetPairing>;
   configure(caPem: string, allowedHost: string, ip: string): void;
   request(options: NetHttpRequest): Promise<NetHttpResult>;
+  openSocket(options: NetSocketOptions): Promise<ArgusSocket>;
 }

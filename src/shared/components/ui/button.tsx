@@ -92,12 +92,18 @@ const buttonTextVariants = cva(
   }
 );
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
+function Button({ className, variant, size, style, ...props }: ButtonProps) {
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
         className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
         role="button"
+        style={(state) => [
+          typeof style === 'function' ? style(state) : style,
+          state.pressed && !props.disabled
+            ? { transform: [{ scale: 0.97 }], opacity: 0.9 }
+            : null,
+        ]}
         {...props}
       />
     </TextClassContext.Provider>

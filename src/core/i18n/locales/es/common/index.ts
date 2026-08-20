@@ -1,0 +1,26 @@
+export const common = {
+  continue: 'Continuar',
+  retry: 'Reintentar',
+  back: 'Volver',
+  'open-settings': 'Abrir ajustes',
+  'allow-camera': 'Permitir cámara',
+  'mic-permission-denied': 'Permiso de micrófono denegado',
+  'mic-start-failed': 'No se pudo iniciar el micrófono',
+  'language-name': {
+    system: 'Sistema',
+    es: 'Español',
+    en: 'English',
+  },
+  errors: {
+    network: 'No se pudo conectar con Argus',
+    timeout: 'Tiempo de espera agotado',
+    unauthorized: 'Sesión expirada, vuelve a iniciar sesión',
+    forbidden: 'No tienes permiso para esta acción',
+    'not-found': 'Recurso no encontrado',
+    conflict: 'El servidor ya está emparejado',
+    validation: 'Revisa los datos enviados',
+    'server-error': 'El servidor falló, inténtalo de nuevo',
+    'pairing-required': 'Empareja tu dispositivo con el servidor primero',
+    unknown: 'Algo salió mal',
+  },
+} as const;

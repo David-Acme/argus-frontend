@@ -42,6 +42,24 @@ public class HybridArgusNet: HybridArgusNetSpec {
     return Promise.async { try await Self.requestInternal(options: options, caPem: ca, allowedHost: host) }
   }
 
+  func openSocket(options: NetSocketOptions) throws -> Promise<(any HybridArgusSocketSpec)> {
+    let ca = caPem
+    return Promise.async {
+      guard !ca.isEmpty else {
+        throw netError("PAIRING_REQUIRED|Server is not paired yet")
+      }
+      guard let url = URL(string: options.url) else {
+        throw netError("NETWORK_ERROR|Invalid socket URL")
+      }
+      var request = URLRequest(url: url)
+      for (key, value) in options.headers ?? [:] {
+        request.setValue(value, forHTTPHeaderField: key)
+      }
+      let session = try Self.strictSession(for: ca)
+      return ArgusSocket(session: session, request: request)
+    }
+  }
+
   // MARK: - Discovery (Bonjour / mDNS)
 
   private static func discoverInternal(timeoutMs: Double) async throws -> NetDiscovery {
@@ -66,10 +84,14 @@ public class HybridArgusNet: HybridArgusNetSpec {
 
     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
     guard status == 200 else {
-      if status == 403 {
+      switch status {
+      case 403:
         throw netError("INVALID_PAIRING_CODE|Invalid pairing code")
+      case 409:
+        throw netError("ALREADY_PAIRED|Server already paired")
+      default:
+        throw netError("NETWORK_ERROR|Pairing failed (HTTP \(status))")
       }
-      throw netError("NETWORK_ERROR|Pairing failed (HTTP \(status))")
     }
 
     guard
@@ -109,16 +131,22 @@ public class HybridArgusNet: HybridArgusNetSpec {
   private static func requestInternal(
     options: NetHttpRequest, caPem: String, allowedHost: String
   ) async throws -> NetHttpResult {
-    guard !caPem.isEmpty else {
-      throw netError("PAIRING_REQUIRED|Server is not paired yet")
-    }
-    guard
-      let target = URL(string: options.url),
-      target.host?.lowercased() == allowedHost.lowercased()
-    else {
-      throw netError("HOST_NOT_ALLOWED|Host is not allowed")
+    let trustAny = options.trustAny ?? false
+    if !trustAny {
+      guard !caPem.isEmpty else {
+        throw netError("PAIRING_REQUIRED|Server is not paired yet")
+      }
+      guard
+        let target = URL(string: options.url),
+        target.host?.lowercased() == allowedHost.lowercased()
+      else {
+        throw netError("HOST_NOT_ALLOWED|Host is not allowed")
+      }
     }
 
+    guard let target = URL(string: options.url) else {
+      throw netError("NETWORK_ERROR|Invalid URL")
+    }
     var request = URLRequest(url: target)
     request.httpMethod = options.method.uppercased()
     for (key, value) in options.headers {
@@ -134,7 +162,13 @@ public class HybridArgusNet: HybridArgusNetSpec {
       request.httpBody = options.body.data(using: .utf8)
     }
 
-    let session = try Self.strictSession(for: caPem)
+    let session: URLSession
+    if trustAny {
+      session = URLSession(
+        configuration: .ephemeral, delegate: TrustAnyDelegate(), delegateQueue: nil)
+    } else {
+      session = try Self.strictSession(for: caPem)
+    }
     let (data, response) = try await session.data(for: request)
 
     var headers: [String: String] = [:]
@@ -174,10 +208,19 @@ public class HybridArgusNet: HybridArgusNetSpec {
     }
 
     if !options.body.isEmpty {
-      append("--\(boundary)\r\n")
-      append("Content-Disposition: form-data; name=\"payload\"\r\n\r\n")
-      append(options.body)
-      append("\r\n")
+      if let fields = try? JSONSerialization.jsonObject(with: Data(options.body.utf8)) as? [String: String] {
+        for (name, value) in fields {
+          append("--\(boundary)\r\n")
+          append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n")
+          append(value)
+          append("\r\n")
+        }
+      } else {
+        append("--\(boundary)\r\n")
+        append("Content-Disposition: form-data; name=\"payload\"\r\n\r\n")
+        append(options.body)
+        append("\r\n")
+      }
     }
 
     for file in options.files {
