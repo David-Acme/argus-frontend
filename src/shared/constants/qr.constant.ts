@@ -70,6 +70,12 @@ export const QR_SCAN_FRAME_RATIO = 0.68;
 
 export const QR_SCAN_FRAME_MAX = 280;
 
+export const QR_SCAN_SUPPORTING_PANE_MIN_WIDTH = 320;
+
+export const QR_SCAN_SUPPORTING_PANE_MAX_WIDTH = 400;
+
+export const QR_SCAN_SUPPORTING_PANE_RATIO = 0.36;
+
 export const QR_SCAN_FRAME_CORNER_RATIO = 0.17;
 
 export const QR_SCAN_FRAME_BORDER = 2.5;

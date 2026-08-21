@@ -1,5 +1,11 @@
 import { useQrScanStore } from '@/core/stores';
-import { QrCameraAction, QrGuideFrame, QrManualEntry, QrScanSheet } from '@/shared/components/qr';
+import {
+  QrCameraAction,
+  QrGuideFrame,
+  QrManualEntry,
+  QrScanPanel,
+  QrScanSheet,
+} from '@/shared/components/qr';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
@@ -12,11 +18,18 @@ import {
   QR_SCAN_RETRY_MS,
   QR_SCAN_SHEET_PADDING_BOTTOM,
   QR_SCAN_SHEET_RADIUS,
+  QR_SCAN_SUPPORTING_PANE_MAX_WIDTH,
+  QR_SCAN_SUPPORTING_PANE_MIN_WIDTH,
+  QR_SCAN_SUPPORTING_PANE_RATIO,
   QR_SCAN_TYPING_GAP,
+  WINDOW_MEDIUM_MIN,
+  WINDOW_TALL_MIN,
 } from '@/shared/constants';
 import { useKeyboardProgress } from '@/shared/hooks/use-keyboard-progress';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { shouldUseQrSupportingPane } from '@/shared/libs/qr-layout';
+import { cn } from '@/shared/libs/utils';
 import type { QrScanFeedback, TranslationKey } from '@/core/types';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Redirect, useRouter } from 'expo-router';
@@ -62,7 +75,18 @@ function QrScannerScreen() {
   const rejectedRef = useRef<string | null>(null);
 
   const palette = colorTokens[theme === 'dark' ? 'dark' : 'light'];
-  const frameSize = Math.min(width * QR_SCAN_FRAME_RATIO, QR_SCAN_FRAME_MAX);
+  const isSupportingPane = shouldUseQrSupportingPane(width, windowHeight, {
+    mediumMin: WINDOW_MEDIUM_MIN,
+    tallMin: WINDOW_TALL_MIN,
+  });
+  const supportingPaneWidth = isSupportingPane
+    ? Math.min(
+        QR_SCAN_SUPPORTING_PANE_MAX_WIDTH,
+        Math.max(QR_SCAN_SUPPORTING_PANE_MIN_WIDTH, width * QR_SCAN_SUPPORTING_PANE_RATIO)
+      )
+    : 0;
+  const previewWidth = width - supportingPaneWidth;
+  const frameSize = Math.min(previewWidth * QR_SCAN_FRAME_RATIO, QR_SCAN_FRAME_MAX);
   const granted = permission?.granted === true;
   const canRetryPermission = permission !== null && !permission.granted && permission.canAskAgain;
   const isBlocked = permission !== null && !permission.granted && !permission.canAskAgain;
@@ -242,110 +266,138 @@ function QrScannerScreen() {
     return () => clearTimeout(timer);
   }, [invalid]);
 
-  return (
-    <View className="bg-background flex-1">
-      {granted ? (
-        <CameraView
-          style={StyleSheet.absoluteFill}
-          mute
-          active={!keyboard.fullyOpen}
-          enableTorch={torch}
-          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-          onBarcodeScanned={detected || keyboard.visible ? undefined : handleBarcodeScanned}
-          onCameraReady={handleCameraReady}
-        />
-      ) : (
-        <View className="bg-surface absolute inset-0 items-center justify-center">
-          <Icon name="scan-barcode" className="text-placeholder size-10" />
-        </View>
-      )}
-
-      <View
-        className="flex-1 items-center justify-center"
-        style={{ paddingBottom: contentHeight }}
-        pointerEvents="none">
-        <QrGuideFrame size={frameSize} feedback={feedback} reduceMotion={reduceMotion} />
-      </View>
-
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            left: 0,
-            height: windowHeight,
-            backgroundColor: palette.card,
-            borderTopWidth: StyleSheet.hairlineWidth,
-          },
-          chromeStyle,
-          cardStyle,
-        ]}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={handleReturnToCamera}
-          accessible={false}
-        />
-
-        <Animated.View style={contentStyle}>
-          <View
-            onLayout={handleContentLayout}
-            style={{ paddingBottom: insets.bottom + QR_SCAN_SHEET_PADDING_BOTTOM }}>
-            <QrScanSheet
-              feedback={feedback}
-              title={title}
-              description={description}
-              reduceMotion={reduceMotion}>
-              {isBlocked ? (
-                <Button onPress={handleOpenSettings}>
-                  <Icon name="settings" />
-                  <Text>{t('common.open-settings')}</Text>
-                </Button>
-              ) : null}
-
-              {canRetryPermission ? (
-                <Button onPress={handlePermissionRetry}>
-                  <Icon name="camera" />
-                  <Text>{t('common.allow-camera')}</Text>
-                </Button>
-              ) : null}
-
-              {config.manualLabel !== null && config.manualPlaceholder !== null ? (
-                <QrManualEntry
-                  label={config.manualLabel}
-                  placeholder={config.manualPlaceholder}
-                  invalid={feedback === 'invalid'}
-                  onSubmit={handleManualSubmit}
-                />
-              ) : null}
-            </QrScanSheet>
-          </View>
-        </Animated.View>
-      </Animated.View>
-
-      <View
-        className="absolute right-0 left-0 flex-row items-center justify-between px-4"
-        style={{ top: insets.top + 8 }}
-        pointerEvents="box-none"
-        onLayout={handleControlsLayout}>
-        <Button
-          size="icon"
-          variant="outline"
-          onPress={close}
-          accessibilityLabel={t('screens.qr.close-scanner')}>
-          <Icon name="arrow-left" />
+  const scanActions = (
+    <>
+      {isBlocked ? (
+        <Button onPress={handleOpenSettings}>
+          <Icon name="settings" />
+          <Text>{t('common.open-settings')}</Text>
         </Button>
+      ) : null}
 
+      {canRetryPermission ? (
+        <Button onPress={handlePermissionRetry}>
+          <Icon name="camera" />
+          <Text>{t('common.allow-camera')}</Text>
+        </Button>
+      ) : null}
+
+      {config.manualLabel !== null && config.manualPlaceholder !== null ? (
+        <QrManualEntry
+          label={config.manualLabel}
+          placeholder={config.manualPlaceholder}
+          invalid={feedback === 'invalid'}
+          onSubmit={handleManualSubmit}
+        />
+      ) : null}
+    </>
+  );
+
+  const scanSheet = (
+    <QrScanSheet
+      feedback={feedback}
+      title={title}
+      description={description}
+      reduceMotion={reduceMotion}>
+      {scanActions}
+    </QrScanSheet>
+  );
+
+  return (
+    <View className={cn('bg-background flex-1', isSupportingPane && 'flex-row')}>
+      <View className="relative flex-1">
         {granted ? (
-          <QrCameraAction
-            progress={keyboard.progress}
-            torch={torch}
-            returnsToCamera={keyboard.visible}
-            onToggleTorch={handleTorchToggle}
-            onReturnToCamera={handleReturnToCamera}
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            mute
+            active={!keyboard.fullyOpen}
+            enableTorch={torch}
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            onBarcodeScanned={detected || keyboard.visible ? undefined : handleBarcodeScanned}
+            onCameraReady={handleCameraReady}
           />
-        ) : null}
+        ) : (
+          <View className="bg-surface absolute inset-0 items-center justify-center">
+            <Icon name="scan-barcode" className="text-placeholder size-10" />
+          </View>
+        )}
+
+        <View
+          className="flex-1 items-center justify-center"
+          style={isSupportingPane ? undefined : { paddingBottom: contentHeight }}
+          pointerEvents="none">
+          <QrGuideFrame size={frameSize} feedback={feedback} reduceMotion={reduceMotion} />
+        </View>
+
+        {isSupportingPane ? null : (
+          <Animated.View
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                left: 0,
+                height: windowHeight,
+                backgroundColor: palette.card,
+                borderTopWidth: StyleSheet.hairlineWidth,
+              },
+              chromeStyle,
+              cardStyle,
+            ]}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={handleReturnToCamera}
+              accessible={false}
+            />
+
+            <Animated.View style={contentStyle}>
+              <View
+                onLayout={handleContentLayout}
+                style={{ paddingBottom: insets.bottom + QR_SCAN_SHEET_PADDING_BOTTOM }}>
+                {scanSheet}
+              </View>
+            </Animated.View>
+          </Animated.View>
+        )}
+
+        <View
+          className="absolute right-0 left-0 flex-row items-center justify-between px-4"
+          style={{ top: insets.top + 8 }}
+          pointerEvents="box-none"
+          onLayout={handleControlsLayout}>
+          <Button
+            size="icon"
+            variant="outline"
+            onPress={close}
+            accessibilityLabel={t('screens.qr.close-scanner')}>
+            <Icon name="arrow-left" />
+          </Button>
+
+          {granted ? (
+            <QrCameraAction
+              progress={keyboard.progress}
+              torch={torch}
+              returnsToCamera={keyboard.visible}
+              onToggleTorch={handleTorchToggle}
+              onReturnToCamera={handleReturnToCamera}
+            />
+          ) : null}
+        </View>
       </View>
+
+      {isSupportingPane ? (
+        <QrScanPanel
+          width={supportingPaneWidth}
+          topInset={insets.top}
+          bottomInset={insets.bottom}
+          feedback={feedback}
+          title={title}
+          description={description}
+          reduceMotion={reduceMotion}
+        >
+          {scanActions}
+        </QrScanPanel>
+      ) : null}
     </View>
   );
 }

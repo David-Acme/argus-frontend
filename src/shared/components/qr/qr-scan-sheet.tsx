@@ -19,6 +19,7 @@ type QrScanSheetProps = {
   title: string;
   description: string | null;
   reduceMotion: boolean;
+  variant?: 'sheet' | 'supporting-pane';
   children?: ReactNode;
 };
 
@@ -46,10 +47,18 @@ const DOT_TONE: Record<QrScanTone, string> = {
   error: 'bg-destructive-foreground',
 };
 
-function QrScanSheet({ feedback, title, description, reduceMotion, children }: QrScanSheetProps) {
+function QrScanSheet({
+  feedback,
+  title,
+  description,
+  reduceMotion,
+  variant = 'sheet',
+  children,
+}: QrScanSheetProps) {
   const dotOpacity = useSharedValue(1);
   const { t } = useTranslation();
   const { label, tone, icon } = QR_SCAN_FEEDBACK[feedback];
+  const isSupportingPane = variant === 'supporting-pane';
 
   const dotStyle = useAnimatedStyle(() => ({ opacity: dotOpacity.value }));
 
@@ -65,7 +74,7 @@ function QrScanSheet({ feedback, title, description, reduceMotion, children }: Q
   }, [dotOpacity, icon, reduceMotion]);
 
   return (
-    <View className="px-5 pt-4">
+    <View className={cn(!isSupportingPane && 'px-5 pt-4')}>
       <View
         className={cn(
           'flex-row items-center gap-1.5 self-start rounded-full px-2.5 py-1',
@@ -82,7 +91,9 @@ function QrScanSheet({ feedback, title, description, reduceMotion, children }: Q
         <Text className={cn('text-xs font-semibold', PILL_LABEL_TONE[tone])}>{t(label)}</Text>
       </View>
 
-      <Text variant="large" className="mt-3">
+      <Text
+        variant={isSupportingPane ? 'h3' : 'large'}
+        className={isSupportingPane ? 'mt-4' : 'mt-3'}>
         {title}
       </Text>
 
@@ -90,7 +101,9 @@ function QrScanSheet({ feedback, title, description, reduceMotion, children }: Q
         <Text className="text-foreground-secondary mt-1 text-sm leading-5">{description}</Text>
       )}
 
-      {children === undefined ? null : <View className="mt-4 gap-2">{children}</View>}
+      {children === undefined ? null : (
+        <View className={cn(isSupportingPane ? 'mt-6' : 'mt-4', 'gap-2')}>{children}</View>
+      )}
     </View>
   );
 }
