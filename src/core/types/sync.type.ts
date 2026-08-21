@@ -5,12 +5,19 @@ export const SYNC_TABLE_KEYS = [
   'zone',
   'reminder',
   'reminder_detail',
+  'calendar_event',
+  'calendar_event_share',
+  'project',
+  'project_member',
+  'project_task',
+  'event',
+  'person',
   'notification',
 ] as const;
 
 export type SyncTableKey = (typeof SYNC_TABLE_KEYS)[number];
 
-/** Cursores persistidos en storageService (`app.sync.<userId>`); segundos; ausente = primer sync completo. */
+/** Cursors persisted in storageService (`app.sync.<userId>`), in seconds; absent means a first full sync. */
 export type SyncCursors = {
   [key in SyncTableKey]?: {
     createdStart?: number;

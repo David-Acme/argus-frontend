@@ -1,0 +1,46 @@
+import { Q } from '@nozbe/watermelondb';
+import type { Observable } from 'rxjs';
+import type { CalendarEventShareModel } from '@/core/database';
+import type {
+  ICalendarEventShareCreate,
+  IServiceResponse,
+  IShareAccessUpdate,
+} from '@/core/interfaces';
+import { DatabaseService } from './database.service';
+import { httpService } from './http.service';
+
+class CalendarEventShareService extends DatabaseService<'calendar_event_share'> {
+  constructor() {
+    super('calendar_event_share');
+  }
+
+  /** Who an event is shared with. Only the owner and the members receive these. */
+  observeForEvent(calendarEventId: string): Observable<CalendarEventShareModel[]> {
+    return this.observeManyWithColumns(
+      ['user_id', 'access'],
+      [Q.where('calendar_event_id', calendarEventId), Q.sortBy('created_at', Q.asc)],
+    );
+  }
+
+  /** Shares granted to one user, to tell an own event from a shared one. */
+  observeForUser(userId: string): Observable<CalendarEventShareModel[]> {
+    return this.observeManyWithColumns(
+      ['calendar_event_id', 'access'],
+      [Q.where('user_id', userId)],
+    );
+  }
+
+  share(body: ICalendarEventShareCreate): Promise<IServiceResponse<unknown>> {
+    return httpService.post('/calendar-event-share', body);
+  }
+
+  setAccess(id: string, body: IShareAccessUpdate): Promise<IServiceResponse<unknown>> {
+    return httpService.patch(`/calendar-event-share/${id}`, body);
+  }
+
+  revoke(id: string): Promise<IServiceResponse<unknown>> {
+    return httpService.delete(`/calendar-event-share/${id}`);
+  }
+}
+
+export const calendarEventShareService = new CalendarEventShareService();

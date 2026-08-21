@@ -24,10 +24,14 @@
     "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bunx setup-skia-web"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@legendapp/list": "^3.3.7",
     "@nozbe/watermelondb": "~0.28.0",
     "@rn-primitives/context-menu": "^1.5.2",
     "@rn-primitives/dialog": "^1.5.2",
+    "@rn-primitives/dropdown-menu": "^1.5.2",
     "@rn-primitives/label": "^1.5.2",
+    "@rn-primitives/popover": "^1.5.2",
     "@rn-primitives/portal": "^1.5.2",
     "@rn-primitives/slot": "^1.5.2",
     "@shopify/react-native-skia": "2.6.2",
@@ -55,6 +59,7 @@
     "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-hook-form": "^7.85.0",
     "react-native": "0.86.2",
     "react-native-edge-to-edge": "^1.8.1",
     "react-native-gesture-handler": "~3.1.0",
@@ -71,6 +76,7 @@
     "tailwindcss": "^4.3.3",
     "tw-animate-css": "^1.4.0",
     "uniwind": "^1.10.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

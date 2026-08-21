@@ -1,34 +1,38 @@
+import { type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { DashboardTab } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { DASHBOARD_TABS } from '@/shared/constants';
+import { usePermissions } from '@/shared/hooks/use-permissions';
 import { cn } from '@/shared/libs/utils';
 
 type DashboardBottomNavProps = {
   active: DashboardTab;
   /** One accessible label per tab, in `DASHBOARD_TABS` order. */
   labels: Record<DashboardTab, string>;
-  composeLabel: string;
-  bottomInset: number;
   onNavigate: (tab: DashboardTab) => void;
-  onCompose: () => void;
+  /** The compose control, so the bar and the rail share one menu. */
+  compose: ReactNode;
 };
 
+/**
+ * The floating bar itself: pill of tabs plus the compose button. Placement,
+ * safe area and visibility belong to `GlobalBottomNav`, which mounts this once
+ * for the whole app.
+ */
 export function DashboardBottomNav({
   active,
   labels,
-  composeLabel,
-  bottomInset,
   onNavigate,
-  onCompose,
+  compose,
 }: DashboardBottomNavProps) {
+  const { canRead } = usePermissions();
+  const tabs = DASHBOARD_TABS.filter((item) => !item.table || canRead(item.table));
+
   return (
-    <View
-      pointerEvents="box-none"
-      className="absolute left-5 right-5 flex-row items-center gap-3"
-      style={{ bottom: bottomInset + 14 }}>
+    <View pointerEvents="box-none" className="flex-row items-center gap-3">
       <View className="bg-card flex-1 flex-row items-center justify-between rounded-full p-2 shadow-lg shadow-black/[0.09]">
-        {DASHBOARD_TABS.map((item) => {
+        {tabs.map((item) => {
           const selected = active === item.tab;
           return (
             <Pressable
@@ -50,13 +54,7 @@ export function DashboardBottomNav({
           );
         })}
       </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={composeLabel}
-        onPress={onCompose}
-        className="bg-interactive size-[60px] items-center justify-center rounded-full shadow-lg shadow-black/25 active:opacity-80">
-        <Icon name="plus" className="text-foreground-on-interactive size-7" />
-      </Pressable>
+      {compose}
     </View>
   );
 }

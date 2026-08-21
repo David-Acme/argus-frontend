@@ -1,0 +1,202 @@
+import { memo, useMemo } from 'react';
+import { Pressable, View } from 'react-native';
+import type { CalendarEntry } from '@/core/types';
+import { Text } from '@/shared/components/ui/text';
+import { DAYS_PER_WEEK } from '@/shared/constants';
+import { monthGridDays, sameDay, startOfDay } from '@/shared/libs/calendar';
+import { cn } from '@/shared/libs/utils';
+
+/** Entries a roomy cell shows before collapsing the rest into "+N". */
+const MONTH_CELL_ENTRIES = 3;
+
+const EMPTY: readonly CalendarEntry[] = [];
+
+type CalendarMonthViewProps = {
+  anchor: Date;
+  selected: Date;
+  entries: readonly CalendarEntry[];
+  /** Localized short weekday names, Monday first. */
+  weekdayLabels: readonly string[];
+  onSelectDay: (date: Date) => void;
+  /** Stretches the grid over the available height on a big window. */
+  fill?: boolean;
+};
+
+type DayCellProps = {
+  day: Date;
+  entries: readonly CalendarEntry[];
+  isSelected: boolean;
+  isToday: boolean;
+  outside: boolean;
+  /** Roomy cell: the day lists what it holds instead of a single mark. */
+  fill: boolean;
+  onPress: (date: Date) => void;
+};
+
+/**
+ * One mark, never a row of dots: at month scale the question is "is there
+ * something here", and a single bar answers it without turning the grid into
+ * confetti. Memoized because a month is 42 cells and only two ever change.
+ */
+const DayCell = memo(function DayCell({
+  day,
+  entries,
+  isSelected,
+  isToday,
+  outside,
+  fill,
+  onPress,
+}: DayCellProps) {
+  const visible = entries.slice(0, MONTH_CELL_ENTRIES);
+  const overflow = entries.length - visible.length;
+
+  if (!fill) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
+        accessibilityLabel={day.toDateString()}
+        className="min-h-14 flex-1 items-center justify-center py-1 active:opacity-60"
+        onPress={() => onPress(day)}>
+        <View
+          className={cn(
+            'size-9 items-center justify-center rounded-full',
+            isSelected && 'bg-interactive',
+            !isSelected && isToday && 'border-foreground/25 border'
+          )}>
+          <Text
+            className={cn(
+              'text-[15px]',
+              isSelected
+                ? 'text-foreground-on-interactive font-semibold'
+                : outside
+                  ? 'text-muted-foreground/40'
+                  : 'text-foreground'
+            )}>
+            {day.getDate()}
+          </Text>
+        </View>
+        {/* One thin bar per entry, like a month cell on any calendar app: it
+            answers "how much is here" without room for titles. */}
+        {entries.length > 0 ? (
+          <View className="mt-1 w-5 gap-[2px]">
+            {visible.map((entry) => (
+              <View
+                key={entry.id}
+                className={cn('h-[3px] rounded-full', !entry.color && 'bg-foreground-secondary/60')}
+                style={entry.color ? { backgroundColor: entry.color } : undefined}
+              />
+            ))}
+          </View>
+        ) : null}
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      accessibilityLabel={day.toDateString()}
+      className={cn(
+        'border-border-subtle/60 min-h-0 flex-1 gap-1 rounded-xl border p-1.5 active:opacity-70 lg:p-2',
+        isSelected ? 'bg-card border-transparent' : 'bg-transparent'
+      )}
+      onPress={() => onPress(day)}>
+      <View className="flex-row items-center justify-between">
+        <View
+          className={cn(
+            'size-6 items-center justify-center rounded-full',
+            isToday && !isSelected && 'border-foreground/25 border',
+            isSelected && 'bg-interactive'
+          )}>
+          <Text
+            className={cn(
+              'text-[12px] font-medium lg:text-[13px]',
+              isSelected
+                ? 'text-foreground-on-interactive'
+                : outside
+                  ? 'text-muted-foreground/40'
+                  : 'text-foreground'
+            )}>
+            {day.getDate()}
+          </Text>
+        </View>
+        {overflow > 0 ? (
+          <Text className="text-muted-foreground text-[10px]">+{overflow}</Text>
+        ) : null}
+      </View>
+
+      <View className="min-h-0 flex-1 gap-1 overflow-hidden">
+        {visible.map((entry) => (
+          <View key={entry.id} className="bg-surface-secondary rounded-md px-1.5 py-0.5">
+            <Text className="text-[10px] leading-3 lg:text-[11px] lg:leading-4" numberOfLines={1}>
+              {entry.title}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </Pressable>
+  );
+});
+
+export function CalendarMonthView({
+  anchor,
+  selected,
+  entries,
+  weekdayLabels,
+  onSelectDay,
+  fill = false,
+}: CalendarMonthViewProps) {
+  const weeks = useMemo(() => {
+    const days = monthGridDays(anchor);
+    const rows: Date[][] = [];
+    for (let index = 0; index < days.length; index += DAYS_PER_WEEK)
+      rows.push(days.slice(index, index + DAYS_PER_WEEK));
+    return rows;
+  }, [anchor]);
+  const entriesByDay = useMemo(() => {
+    const map = new Map<number, CalendarEntry[]>();
+    for (const entry of entries) {
+      const key = startOfDay(new Date(entry.startsAt)).getTime();
+      const bucket = map.get(key);
+      if (bucket) bucket.push(entry);
+      else map.set(key, [entry]);
+    }
+    return map;
+  }, [entries]);
+
+  return (
+    <View className={cn('gap-1', fill && 'flex-1')}>
+      <View className="flex-row pb-1">
+        {weekdayLabels.map((label) => (
+          <View key={label} className="flex-1 items-center">
+            <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[1.2px]">
+              {label.slice(0, 1)}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <View className={cn(fill ? 'min-h-0 flex-1 gap-1' : undefined)}>
+        {weeks.map((week) => (
+          <View
+            key={week[0].getTime()}
+            className={cn('flex-row items-stretch', fill && 'min-h-0 flex-1 gap-1')}>
+            {week.map((day) => (
+              <DayCell
+                key={day.getTime()}
+                day={day}
+                entries={entriesByDay.get(day.getTime()) ?? EMPTY}
+                isSelected={sameDay(day, selected)}
+                isToday={sameDay(day, new Date())}
+                outside={day.getMonth() !== anchor.getMonth()}
+                fill={fill}
+                onPress={onSelectDay}
+              />
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}

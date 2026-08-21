@@ -19,7 +19,17 @@
   --radius-4xl: 56px;
 
   --spacing-hairline: hairlineWidth();
-  --breakpoint-sm: 640px;
+
+  /*
+    Own breakpoint scale instead of inheriting Tailwind's defaults. They match
+    the three window classes the layout reasons about (see use-window-class):
+    sm/md = compact -> medium, lg and up = expanded.
+  */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 640px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Menlo', 'SF Mono', monospace;

@@ -1,6 +1,7 @@
 import { authService } from '@/core/services/auth.service';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
+import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { QrCode } from '@/shared/components/ui/qr-code';
 import { buildLoginQr } from '@/shared/libs/login-qr';
@@ -8,7 +9,6 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { IS_NATIVE } from '@/shared/constants';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 
 const POLL_MS = 2000;
@@ -18,7 +18,6 @@ type Phase = 'loading' | 'waiting-owner' | 'qr' | 'approved' | 'expired' | 'erro
 
 export default function LoginScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>('loading');
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -112,9 +111,7 @@ export default function LoginScreen() {
   if (IS_NATIVE) return <Redirect href="/welcome/face?mode=login" />;
 
   return (
-    <View
-      className="bg-background flex-1 w-full max-w-md self-center items-center justify-center gap-6 px-6"
-      style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
+    <CenteredScreen maxWidth={448}>
       <View className="items-center gap-2">
         <Text variant="h3">{t('screens.login.title')}</Text>
         <Text className="text-foreground-secondary text-center text-sm leading-5">
@@ -172,6 +169,6 @@ export default function LoginScreen() {
           <Text>{t('screens.login.owner-done')}</Text>
         </Button>
       ) : null}
-    </View>
+    </CenteredScreen>
   );
 }

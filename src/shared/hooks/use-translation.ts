@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import { localeDictionaries, translate } from '@/core/i18n';
+import { localeDictionaries, translate, translateLoose } from '@/core/i18n';
 import { useLocaleStore } from '@/core/stores';
 import type { LanguageCode, LanguagePreference, TranslateFn } from '@/core/types';
 
 type UseTranslationResult = {
   t: TranslateFn;
+  /** Untyped lookup for validation messages; falls back to the string itself. */
+  tk: (key: string) => string;
   language: LanguageCode;
   preference: LanguagePreference;
 };
@@ -23,5 +25,10 @@ export function useTranslation(): UseTranslationResult {
     [language],
   );
 
-  return { t, language, preference };
+  const tk = useMemo(
+    () => (key: string) => translateLoose(localeDictionaries[language], key),
+    [language],
+  );
+
+  return { t, tk, language, preference };
 }

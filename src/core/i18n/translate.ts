@@ -50,3 +50,15 @@ export function translate<K extends TranslationKey>(
     return match;
   });
 }
+
+/**
+ * Same lookup with an untyped key. Validation schemas carry their message as a
+ * plain string (that is what `zod` and `react-hook-form` pass around), so the
+ * typed `translate` cannot be used there. A string that is not a known key is
+ * returned as-is, which keeps a literal message working too.
+ */
+export function translateLoose(locale: I18nSchema, key: string): string {
+  if (!key) return '';
+  const value = resolvePath(locale, key) ?? resolvePath(localeDictionaries[defaultLanguage], key);
+  return value ?? key;
+}

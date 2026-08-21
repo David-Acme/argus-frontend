@@ -1,14 +1,12 @@
 import { Button } from '@/shared/components/ui/button';
+import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { MorphIcon } from '@/shared/components/ui/morph-icon';
 import { BlurReveal } from '@/shared/components/ui/blur-reveal';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { usePairingFlow } from '@/shared/hooks/use-pairing-flow';
-import { useQrScanStore } from '@/core/stores';
 import {
   colorTokens,
-  IS_NATIVE,
   WELCOME_CTA_DELAY_MS,
   WELCOME_CTA_DURATION_MS,
   WELCOME_ICON_DRIFT_DURATION_MS,
@@ -22,7 +20,6 @@ import {
 } from '@/shared/constants';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -30,43 +27,14 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUniwind } from 'uniwind';
-
-const SUCCESS_PAUSE_MS = 700;
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const reduceMotion = useReduceMotion();
   const { theme } = useUniwind();
-  const flow = usePairingFlow();
-  const status = useQrScanStore((s) => s.status);
-  const value = useQrScanStore((s) => s.value);
-
-  const handleStart = useCallback(() => {
-    if (IS_NATIVE) {
-      useQrScanStore.getState().open({ purpose: 'server' });
-      router.push('/qr');
-    } else {
-      router.replace('/welcome/pairing');
-    }
-  }, [router]);
-
-  useEffect(() => {
-    if (status !== 'scanned' || value == null || flow.phase !== 'idle') return;
-    void flow.run(value);
-  }, [status, value, flow]);
-
-  useEffect(() => {
-    if (flow.phase !== 'success') return;
-    const timer = setTimeout(
-      () => router.replace(IS_NATIVE ? '/welcome/face' : '/login'),
-      SUCCESS_PAUSE_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [flow.phase, router]);
+  const handleStart = useCallback(() => router.push('/welcome/pairing'), [router]);
 
   const iconDrift = useSharedValue(0);
   useEffect(() => {
@@ -95,9 +63,7 @@ export default function WelcomeScreen() {
   const iconColor = colorTokens[theme === 'dark' ? 'dark' : 'light']['foreground-on-interactive'];
 
   return (
-    <View
-      className="bg-background flex-1 w-full max-w-lg self-center items-center justify-center gap-9 px-6"
-      style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
+    <CenteredScreen>
       <BlurReveal delay={titleDelay} duration={fullDuration(WELCOME_TITLE_DURATION_MS)} className="items-center">
         <Text variant="h1" className="text-center">
           {t('screens.welcome.title')}
@@ -118,6 +84,6 @@ export default function WelcomeScreen() {
           </Animated.View>
         </Button>
       </BlurReveal>
-    </View>
+    </CenteredScreen>
   );
 }

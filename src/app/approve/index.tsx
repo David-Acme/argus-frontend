@@ -2,19 +2,18 @@ import { authService } from '@/core/services/auth.service';
 import { useQrScanStore } from '@/core/stores';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
+import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { parseLoginQr } from '@/shared/libs/login-qr';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 
 type Phase = 'idle' | 'scanning' | 'approving' | 'approved' | 'error';
 
 export default function ApproveScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>('idle');
   const status = useQrScanStore((s) => s.status);
@@ -56,9 +55,7 @@ export default function ApproveScreen() {
   }, [phase, router]);
 
   return (
-    <View
-      className="bg-background flex-1 w-full max-w-md self-center justify-center gap-6 px-6"
-      style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
+    <CenteredScreen maxWidth={448} className="items-stretch">
       <View className="items-center gap-3">
         <View className="bg-accent-soft size-16 items-center justify-center rounded-full">
           <Icon name="monitor" className="text-accent size-8" />
@@ -103,6 +100,6 @@ export default function ApproveScreen() {
           </Button>
         </View>
       ) : null}
-    </View>
+    </CenteredScreen>
   );
 }

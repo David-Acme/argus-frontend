@@ -10,9 +10,16 @@ export const collection = <K extends TableName>(name: K): Collection<ModelMap[K]
   database.get(name) as unknown as Collection<ModelMap[K]>;
 
 export {
+  CalendarEventModel,
+  CalendarEventShareModel,
   CameraModel,
   CameraStreamModel,
+  EventModel,
   NotificationModel,
+  PersonModel,
+  ProjectMemberModel,
+  ProjectModel,
+  ProjectTaskModel,
   ReminderDetailModel,
   ReminderModel,
   UserModel,

@@ -1,7 +1,14 @@
 export { ActivityCard } from './activity-card';
 export { AgendaItem } from './agenda-item';
+export { CameraGrid, type CameraGridItem } from './camera-grid';
+export { CameraTile } from './camera-tile';
+export { ComposeFab } from './compose-fab';
 export { DashboardBottomNav } from './dashboard-bottom-nav';
 export { DashboardIconButton } from './dashboard-icon-button';
+export { DashboardNavRail } from './dashboard-nav-rail';
+export { DashboardShell } from './dashboard-shell';
+export { GlobalBottomNav } from './global-bottom-nav';
+export { NotificationPopover, type NotificationPreview } from './notification-popover';
 export { DashboardSearchField } from './dashboard-search-field';
 export { MemberStack } from './member-stack';
 export { MosaicChart } from './mosaic-chart';

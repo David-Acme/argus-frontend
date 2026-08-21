@@ -1,4 +1,11 @@
-import { Easing, FadeIn, FadeOut, ZoomIn, SlideInDown } from 'react-native-reanimated';
+import {
+  Easing,
+  FadeIn,
+  FadeOut,
+  SlideInDown,
+  SlideOutDown,
+  ZoomIn,
+} from 'react-native-reanimated';
 
 /** Shared timing easing for soft, natural motion. */
 export const easeOutCubic = Easing.out(Easing.cubic);
@@ -33,3 +40,8 @@ export const menuIn = ZoomIn.withInitialValues({ transform: [{ scale: 0.96 }] })
   .mass(0.9);
 
 export const menuOut = FadeOut.duration(120).easing(Easing.in(Easing.linear));
+
+/** Bottom sheet: springs up, slides back down. Transform only, so it stays on the UI thread. */
+export const sheetIn = SlideInDown.springify().damping(26).stiffness(320).mass(0.9);
+
+export const sheetOut = SlideOutDown.duration(200).easing(Easing.in(Easing.cubic));

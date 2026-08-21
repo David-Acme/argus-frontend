@@ -1,7 +1,9 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { CameraModel } from '@/core/database';
+import type { ICameraCreate, ICameraUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
+import { httpService } from './http.service';
 
 class CameraService extends DatabaseService<'camera'> {
   constructor() {
@@ -24,6 +26,18 @@ class CameraService extends DatabaseService<'camera'> {
 
   observeOnlineCount(): Observable<number> {
     return this.observeTotal([Q.where('is_enabled', true), Q.where('is_online', true)]);
+  }
+
+  create(body: ICameraCreate): Promise<IServiceResponse<unknown>> {
+    return httpService.post('/camera', body);
+  }
+
+  update(id: string, body: ICameraUpdate): Promise<IServiceResponse<unknown>> {
+    return httpService.patch(`/camera/${id}`, body);
+  }
+
+  remove(id: string): Promise<IServiceResponse<unknown>> {
+    return httpService.delete(`/camera/${id}`);
   }
 }
 

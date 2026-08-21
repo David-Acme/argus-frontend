@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { AgendaStatus } from '@/core/types';
@@ -18,6 +19,8 @@ type AgendaItemProps = {
   note?: string;
   status: AgendaStatus;
   onPress?: () => void;
+  /** Row menu; without it the corner stays a plain affordance-free marker. */
+  actions?: ReactNode;
 };
 
 const RAIL_CLASS: Record<AgendaStatus, string> = {
@@ -26,7 +29,15 @@ const RAIL_CLASS: Record<AgendaStatus, string> = {
   complete: 'bg-success',
 };
 
-export function AgendaItem({ title, time, members, note, status, onPress }: AgendaItemProps) {
+export function AgendaItem({
+  title,
+  time,
+  members,
+  note,
+  status,
+  onPress,
+  actions,
+}: AgendaItemProps) {
   const { t } = useTranslation();
   const statusLabel = {
     upcoming: t('screens.home.status-upcoming'),
@@ -48,7 +59,7 @@ export function AgendaItem({ title, time, members, note, status, onPress }: Agen
             <Text className="flex-1 text-[15px] font-semibold leading-5" numberOfLines={1}>
               {title}
             </Text>
-            <Icon name="more-horizontal" className="text-muted-foreground size-4" />
+            {actions ?? <Icon name="more-horizontal" className="text-muted-foreground size-4" />}
           </View>
           <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
           <View className="mt-1.5 flex-row items-center justify-between gap-3">

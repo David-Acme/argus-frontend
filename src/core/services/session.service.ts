@@ -1,6 +1,7 @@
 import { netService } from '@/core/services/net';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
+import { viewCacheService } from '@/core/services/view-cache.service';
 import { useAuthStore } from '@/core/stores/auth.store';
 import { NET_STORAGE_KEYS, SESSION_USER_KEY } from '@/shared/constants';
 import type { AuthStatus, NetPairedInstance } from '@/core/types';
@@ -92,6 +93,9 @@ class SessionService {
     useAuthStore.getState().clear();
     try {
       storageService.remove(SESSION_USER_KEY);
+      // Snapshots are what a screen paints before its query answers: another
+      // user must never see the previous one's rows.
+      viewCacheService.clear();
     } catch {
       // The in-memory session is already cleared; storage cleanup is best effort.
     }

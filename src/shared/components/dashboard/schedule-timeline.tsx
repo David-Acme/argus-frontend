@@ -9,16 +9,23 @@ type ScheduleTimelineProps = {
   entries: readonly ScheduleEntry[];
   /** Formats an hour of the day for the gutter, e.g. 9 → "9 AM". */
   formatHour: (hour: number) => string;
+  /** Hour range to render; defaults to the working span. */
+  hours?: readonly number[];
   onSelect?: (entry: ScheduleEntry) => void;
 };
 
 /** Hour gutter on the left, one card per occupied hour on the right. */
-export function ScheduleTimeline({ entries, formatHour, onSelect }: ScheduleTimelineProps) {
-  const firstHour = entries.length > 0 ? entries[0].hour : TIMELINE_HOURS[0];
+export function ScheduleTimeline({
+  entries,
+  formatHour,
+  hours = TIMELINE_HOURS,
+  onSelect,
+}: ScheduleTimelineProps) {
+  const firstHour = entries.length > 0 ? entries[0].hour : hours[0];
 
   return (
     <View className="gap-2.5">
-      {TIMELINE_HOURS.map((hour) => {
+      {hours.map((hour) => {
         const entry = entries.find((candidate) => candidate.hour === hour);
         const marked = hour === firstHour;
         return (
@@ -49,7 +56,10 @@ export function ScheduleTimeline({ entries, formatHour, onSelect }: ScheduleTime
                   onPress={onSelect ? () => onSelect(entry) : undefined}
                 />
               ) : (
-                <View className="h-6" />
+                // A hairline keeps an empty hour reading as a schedule row.
+                <View className="h-6 justify-center">
+                  <View className="bg-divider/70 h-hairline w-full" />
+                </View>
               )}
             </View>
           </View>

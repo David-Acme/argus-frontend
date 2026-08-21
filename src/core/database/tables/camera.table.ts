@@ -1,6 +1,11 @@
 import { associations, Model, tableSchema, type Query } from '@nozbe/watermelondb';
 import { children, date, field, json, text } from '@nozbe/watermelondb/decorators';
-import type { CameraCapabilities, CameraConfig, CameraRecordMode } from '@/core/types';
+import type {
+  CameraCapabilities,
+  CameraConfig,
+  CameraDriverKind,
+  CameraRecordMode,
+} from '@/core/types';
 import { sanitizeObject, sanitizeStringArray } from './sanitizers';
 import type { CameraStreamModel } from './camera-stream.table';
 import type { ZoneModel } from './zone.table';
@@ -15,6 +20,9 @@ export const CAMERA_SCHEMA = tableSchema({
     { name: 'ip', type: 'string' },
     { name: 'port', type: 'number' },
     { name: 'username', type: 'string' },
+    { name: 'cloud_username', type: 'string' },
+    { name: 'driver', type: 'string', isIndexed: true },
+    { name: 'icon', type: 'string' },
     { name: 'record_mode', type: 'string' },
     { name: 'retention_days', type: 'number', isOptional: true },
     { name: 'capabilities', type: 'string' },
@@ -40,6 +48,9 @@ export class CameraModel extends Model {
   @text('ip') ip!: string;
   @field('port') port!: number;
   @text('username') username!: string;
+  @text('cloud_username') cloudUsername!: string;
+  @field('driver') driver!: CameraDriverKind;
+  @text('icon') icon!: string;
   @field('record_mode') recordMode!: CameraRecordMode;
   @field('retention_days') retentionDays!: number | null;
   @json('capabilities', sanitizeStringArray, { memo: true }) capabilities!: CameraCapabilities;

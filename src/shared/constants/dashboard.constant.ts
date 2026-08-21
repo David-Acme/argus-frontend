@@ -1,4 +1,4 @@
-import type { DashboardTab, IconName, TrendPoint } from '@/core/types';
+import type { DashboardTab, IconName, TableName, TrendPoint } from '@/core/types';
 
 /** Mosaic block behind the performance delta. */
 export const MOSAIC_COLUMNS = 13;
@@ -46,10 +46,150 @@ export const DASHBOARD_MEMBERS: readonly (readonly string[])[] = [
   ['Hugo', 'Irene'],
 ];
 
-/** Bottom bar order and icons. Labels are resolved by the caller via i18n. */
-export const DASHBOARD_TABS: readonly { tab: DashboardTab; icon: IconName }[] = [
+/** Task status order: the grouping order of the Linear-style list. */
+export const TASK_STATUS_ORDER = ['doing', 'todo', 'backlog', 'done', 'canceled'] as const;
+
+/** Priority weight, high first, so the list can sort inside a group. */
+export const TASK_PRIORITY_WEIGHT: Record<string, number> = {
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  none: 4,
+};
+
+/** Where each tab goes. One map so no screen can disagree with another. */
+export const DASHBOARD_TAB_ROUTE: Record<DashboardTab, '/' | '/agenda' | '/projects'> = {
+  home: '/',
+  schedule: '/agenda',
+  projects: '/projects',
+  // No profile screen yet; it lands on home instead of dead-ending.
+  profile: '/',
+};
+
+/**
+ * Reverse of `DASHBOARD_TAB_ROUTE`, used by the global bar to read the active
+ * tab off the current path. `profile` shares `/` with `home`, so home wins.
+ */
+export const DASHBOARD_ROUTE_TAB: Record<string, DashboardTab> = {
+  '/': 'home',
+  '/agenda': 'schedule',
+  '/projects': 'projects',
+};
+
+/**
+ * Bottom bar order and icons. `table` is the permission the tab needs, so a
+ * role without it never sees a tab that would land on an empty screen.
+ */
+export const DASHBOARD_TABS: readonly {
+  tab: DashboardTab;
+  icon: IconName;
+  table?: TableName;
+}[] = [
   { tab: 'home', icon: 'home' },
-  { tab: 'insights', icon: 'pie-chart' },
-  { tab: 'messages', icon: 'messages-square' },
+  { tab: 'schedule', icon: 'calendar', table: 'calendar_event' },
+  { tab: 'projects', icon: 'list-todo', table: 'project' },
   { tab: 'profile', icon: 'user' },
 ];
+
+/** Default RTSP port most IP cameras expose. */
+export const CAMERA_DEFAULT_PORT = 554;
+
+/**
+ * What each integration needs to work. The form renders exactly these fields,
+ * so a driver never asks for something it cannot use — and never hides
+ * something Argus needs (a Tapo without cloud credentials cannot talk or move).
+ */
+export const CAMERA_DRIVER_SPECS = {
+  tapo: {
+    port: 554,
+    username: 'admin',
+    manufacturer: 'TP-Link',
+    requiresCloud: true,
+  },
+  onvif: {
+    port: 80,
+    username: 'admin',
+    manufacturer: '',
+    requiresCloud: false,
+  },
+  rtsp: {
+    port: 554,
+    username: '',
+    manufacturer: '',
+    requiresCloud: false,
+  },
+} as const;
+
+/** Point count the backend accepts for a zone polygon. */
+export const ZONE_MIN_POINTS = 3;
+export const ZONE_MAX_POINTS = 64;
+
+/** Palette offered for a zone outline. */
+export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE'] as const;
+
+/** Row height hint for the virtualized camera list. */
+export const CAMERA_ROW_HEIGHT = 68;
+
+/**
+ * What the compose button offers. Each entry needs the table it writes to, so a
+ * role without permission never sees an action that would come back 403.
+ */
+export const COMPOSE_ACTIONS: readonly {
+  id: string;
+  icon: IconName;
+  /** `?new=` tells the screen to open its creation form on arrival. */
+  route:
+    | '/agenda?new=event'
+    | '/projects?new=project'
+    | '/cameras?new=camera'
+    | '/welcome/voice';
+  table?: TableName;
+}[] = [
+  { id: 'event', icon: 'calendar', route: '/agenda?new=event', table: 'calendar_event' },
+  { id: 'project', icon: 'list-todo', route: '/projects?new=project', table: 'project' },
+  { id: 'camera', icon: 'video', route: '/cameras?new=camera', table: 'camera' },
+  { id: 'voice', icon: 'sparkles', route: '/welcome/voice' },
+];
+
+/** Height of the floating bar, so content can clear it without guessing. */
+export const BOTTOM_NAV_HEIGHT = 60;
+
+/** Delay between speed-dial items, so they cascade instead of popping at once. */
+export const COMPOSE_ITEM_STAGGER_MS = 45;
+
+/** Degrees per PTZ nudge; the Tapo motors take relative steps. */
+export const PTZ_STEP_DEGREES = 15;
+
+/** Icons a camera can be tagged with, so the user picks instead of typing. */
+export const CAMERA_ICONS: readonly IconName[] = [
+  'video',
+  'home',
+  'shield-check',
+  'eye',
+  'monitor',
+  'camera',
+  'key-round',
+  'wifi',
+];
+
+/** Ready-made names for the usual spots in a house. */
+export const CAMERA_NAME_SUGGESTIONS = [
+  'living-room',
+  'dining-room',
+  'kitchen',
+  'entrance',
+  'garage',
+  'yard',
+  'bedroom',
+  'hallway',
+] as const;
+
+/** Days compared against the previous span for the activity delta. */
+export const ACTIVITY_WINDOW_DAYS = 7;
+
+/** Recent security events read to build the activity heatmap. */
+export const EVENT_SAMPLE_LIMIT = 300;
+
+/** Rows of today's schedule shown on the dashboard before "see all". */
+export const TODAY_PREVIEW_LIMIT = 3;

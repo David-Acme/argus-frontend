@@ -6,6 +6,11 @@ import { cn } from '@/shared/libs/utils';
 type MosaicChartProps = {
   /** Milliseconds before the first cell fades in. */
   delay?: number;
+  /**
+   * Density per cell (0..3), rows of time-of-day over days. Without it the
+   * block falls back to its own shape, which is only decoration.
+   */
+  levels?: readonly (readonly number[])[];
 };
 
 /**
@@ -22,7 +27,7 @@ function levelAt(row: number, column: number): number {
   return 0;
 }
 
-export function MosaicChart({ delay = 120 }: MosaicChartProps) {
+export function MosaicChart({ delay = 120, levels }: MosaicChartProps) {
   return (
     <View className="gap-[3px]">
       {Array.from({ length: MOSAIC_ROWS }, (_, row) => (
@@ -31,7 +36,10 @@ export function MosaicChart({ delay = 120 }: MosaicChartProps) {
             <Animated.View
               key={column}
               entering={FadeIn.delay(delay + (row * MOSAIC_COLUMNS + column) * 6).duration(240)}
-              className={cn('size-2 rounded-[2px]', MOSAIC_TINTS[levelAt(row, column)])}
+              className={cn(
+                'size-2 rounded-[2px]',
+                MOSAIC_TINTS[levels?.[row]?.[column] ?? levelAt(row, column)]
+              )}
             />
           ))}
         </View>

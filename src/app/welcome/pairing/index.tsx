@@ -1,6 +1,7 @@
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Icon } from '@/shared/components/ui/icon';
+import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { QrManualEntry } from '@/shared/components/qr';
 import { usePairingFlow, type PairingFlowPhase } from '@/shared/hooks/use-pairing-flow';
@@ -13,8 +14,7 @@ import { IS_NATIVE } from '@/shared/constants';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import type { NetErrorCode, TranslationKey } from '@/core/types';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 
 const PHASE_LABEL: Record<PairingFlowPhase, TranslationKey> = {
@@ -38,7 +38,6 @@ const SUCCESS_PAUSE_MS = 700;
 
 export default function PairingScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const flow = usePairingFlow();
   const status = useQrScanStore((s) => s.status);
@@ -62,8 +61,16 @@ export default function PairingScreen() {
     [flow],
   );
 
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (!IS_NATIVE || autoOpened.current || status !== 'idle' || flow.phase !== 'idle') return;
+    autoOpened.current = true;
+    handleScan();
+  }, [status, flow.phase, handleScan]);
+
   useEffect(() => {
     if (status !== 'scanned' || value == null || flow.phase !== 'idle') return;
+    useQrScanStore.getState().clear();
     void flow.run(value);
   }, [status, value, flow]);
 
@@ -81,9 +88,7 @@ export default function PairingScreen() {
   const invalidCode = flow.phase === 'error' && flow.error?.code === 'INVALID_PAIRING_CODE';
 
   return (
-    <View
-      className="bg-background flex-1 w-full max-w-md self-center justify-center gap-6 px-5"
-      style={{ paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 }}>
+    <CenteredScreen maxWidth={448} className="items-stretch">
       <NativeOnlyAnimatedView entering={itemIn.delay(titleDelay)} className="gap-1.5">
         <Text variant="h3">{t('screens.pairing.title')}</Text>
         <Text className="text-foreground-secondary text-sm leading-5">
@@ -158,6 +163,6 @@ export default function PairingScreen() {
         </CardContent>
       </Card>
       </NativeOnlyAnimatedView>
-    </View>
+    </CenteredScreen>
   );
 }

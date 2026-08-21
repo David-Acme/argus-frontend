@@ -1,19 +1,15 @@
 import { Link, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 export default function NotFoundScreen() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
 
   return (
     <>
       <Stack.Screen options={{ title: t('screens.not-found.title') }} />
-      <View
-        className="bg-background flex-1 w-full max-w-md self-center items-center justify-center gap-4 px-6"
-        style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
+      <CenteredScreen maxWidth={448}>
         <Text variant="h4" className="text-center">
           {t('screens.not-found.title')}
         </Text>
@@ -25,7 +21,7 @@ export default function NotFoundScreen() {
             {t('screens.not-found.go-home')}
           </Text>
         </Link>
-      </View>
+      </CenteredScreen>
     </>
   );
 }

@@ -1,234 +1,354 @@
 import { useAuthStore, useOnboardingStore } from '@/core/stores';
-import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import {
-  DashboardBottomNav,
-  DashboardIconButton,
-  ScheduleTimeline,
-  WeekStrip,
-} from '@/shared/components/dashboard';
-import type { WeekStripDay } from '@/shared/components/dashboard';
-import type { DashboardTab, ScheduleEntry } from '@/core/types';
-import { Icon } from '@/shared/components/ui/icon';
+  CalendarAgendaView,
+  CalendarEventForm,
+  CalendarDayList,
+  CalendarDayView,
+  CalendarHeader,
+  CalendarMonthView,
+  CalendarViewSwitcher,
+  CalendarWeekView,
+  EntryActionsMenu,
+} from '@/shared/components/calendar';
+import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboard';
+import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
+import { calendarEventService } from '@/core/services/calendar-event.service';
+import { useCachedRows } from '@/shared/hooks/use-cached-rows';
+import { useCalendarEntries } from '@/shared/hooks/use-calendar-entries';
+import { useObservable } from '@/shared/hooks/use-observable';
+import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { DASHBOARD_MEMBERS } from '@/shared/constants';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { CALENDAR_DEFAULT_VIEW, DASHBOARD_TAB_ROUTE, VIEW_CACHE_KEYS } from '@/shared/constants';
+import {
+  addDays,
+  addMonths,
+  rangeFor,
+  sameDay,
+  startOfDay,
+  weekDays,
+} from '@/shared/libs/calendar';
 import { screenIn } from '@/shared/libs/animations';
-import { Redirect, useRouter } from 'expo-router';
+import type { CalendarEntry, CalendarView, DashboardTab } from '@/core/types';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-function startOfDay(date: Date): Date {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
-function startOfWeek(date: Date): Date {
-  const value = startOfDay(date);
-  // Monday-first, matching the reference strip.
-  const weekday = (value.getDay() + 6) % 7;
-  value.setDate(value.getDate() - weekday);
-  return value;
-}
-
-function addDays(date: Date, amount: number): Date {
-  const value = new Date(date);
-  value.setDate(value.getDate() + amount);
-  return value;
-}
-
-function sameDay(left: Date, right: Date): boolean {
-  return startOfDay(left).getTime() === startOfDay(right).getTime();
-}
-
-function formatHour(hour: number, locale: string): string {
-  const date = new Date();
-  date.setHours(hour, 0, 0, 0);
-  return new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(date);
-}
-
-function formatRange(start: Date, minutes: number, locale: string): string {
-  const format = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
-  const end = new Date(start.getTime() + minutes * 60_000);
-  return `${format.format(start)} - ${format.format(end)}`;
-}
-
-function formatMonth(date: Date, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(date);
-}
-
+/** Hours the day/week grids show: a working day, not 24 empty rows. */
 export default function ScheduleScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { t, language } = useTranslation();
+  const { windowClass, isWide, isExpanded, isShort } = useWindowClass();
   const authStatus = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const voiceEnabled = useOnboardingStore((state) => state.voiceEnabled);
-  const { reminders } = useDashboardData(user?.id ?? null);
-  const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
+  const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
+  const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
+  const [selectedDay, setSelectedDay] = useState(() => startOfDay(new Date()));
+  const { new: newParam } = useLocalSearchParams<{ new?: string }>();
+  const [eventFormOpen, setEventFormOpen] = useState(newParam === 'event');
+  const [editingEventId, setEditingEventId] = useState('');
+  const { can } = usePermissions();
+
   const locale = language === 'es' ? 'es-PE' : 'en-US';
 
-  const days = useMemo<WeekStripDay[]>(() => {
-    const monday = startOfWeek(selectedDate);
-    return Array.from({ length: 7 }, (_, offset) => {
-      const date = addDays(monday, offset);
-      return {
-        date,
-        weekday: new Intl.DateTimeFormat(locale, { weekday: 'short' })
-          .format(date)
-          .replace('.', ''),
-        day: new Intl.DateTimeFormat(locale, { day: 'numeric' }).format(date),
-      };
-    });
-  }, [locale, selectedDate]);
-
-  const dayReminders = useMemo(
-    () => reminders.filter((reminder) => sameDay(reminder.scheduledAt, selectedDate)),
-    [reminders, selectedDate],
+  const range = useMemo(() => rangeFor(view, anchor), [view, anchor]);
+  // The day list carries merged entries; editing needs the row itself, so the
+  // month range is observed alongside.
+  const calendarEvents = useObservable(
+    () => calendarEventService.observeRange(range.from, range.to),
+    [],
+    [range.from, range.to]
+  );
+  const { entries: liveEntries, ready: entriesReady } = useCalendarEntries({
+    from: range.from,
+    to: range.to,
+    userId: user?.id == null ? '' : String(user.id),
+  });
+  // The window that is on screen is rehydrated from the last visit, so paging
+  // back to it never blinks through an empty grid.
+  const entries = useCachedRows(
+    VIEW_CACHE_KEYS.calendarEntries,
+    liveEntries,
+    entriesReady,
+    `${view}.${range.from}`
   );
 
-  // Template entries so the timeline reads correctly before any reminder is
-  // synced. Replaced one-for-one by real data when it exists.
-  const templateEntries = useMemo<ScheduleEntry[]>(
-    () => [
-      {
-        title: t('screens.home.preview-task-1'),
-        time: '09:15 - 10:15',
-        hour: 9,
-        status: 'active',
-        members: DASHBOARD_MEMBERS[0],
-      },
-      {
-        title: t('screens.home.preview-task-2'),
-        time: '11:15 - 13:00',
-        hour: 11,
-        status: 'upcoming',
-        members: DASHBOARD_MEMBERS[1],
-      },
-      {
-        title: t('screens.home.preview-task-3'),
-        time: '14:00 - 18:00',
-        hour: 14,
-        status: 'upcoming',
-        members: DASHBOARD_MEMBERS[2],
-        note: t('screens.agenda.empty-hint'),
-      },
-      {
-        title: t('screens.home.project-reminders'),
-        time: '19:00 - 20:20',
-        hour: 19,
-        status: 'complete',
-        members: DASHBOARD_MEMBERS[0],
-      },
-    ],
-    [t],
+  const selectedDayEntries = useMemo(
+    () => entries.filter((entry) => sameDay(new Date(entry.startsAt), selectedDay)),
+    [entries, selectedDay]
   );
 
-  const entries = useMemo<ScheduleEntry[]>(() => {
-    if (dayReminders.length === 0) {
-      return sameDay(selectedDate, new Date()) ? templateEntries : [];
-    }
-    return dayReminders.map((reminder) => ({
-      title: reminder.title,
-      time: formatRange(reminder.scheduledAt, 60, locale),
-      hour: reminder.scheduledAt.getHours(),
-      status: reminder.isCompleted ? ('complete' as const) : ('upcoming' as const),
-      members: [],
-    }));
-  }, [dayReminders, locale, selectedDate, templateEntries]);
+  const renderActions = useCallback(
+    (entry: CalendarEntry) => (
+      <EntryActionsMenu
+        entry={entry}
+        canEdit={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
+        canDelete={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
+        onEdit={(target) => {
+          setEditingEventId(target.id.slice(target.id.indexOf(':') + 1));
+          setEventFormOpen(true);
+        }}
+      />
+    ),
+    [can]
+  );
+
+  const weekdayLabels = useMemo(
+    () =>
+      weekDays(anchor).map((day) =>
+        new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(day).replace('.', '')
+      ),
+    [anchor, locale]
+  );
+  const viewLabels = useMemo<Record<CalendarView, string>>(
+    () => ({
+      day: t('screens.agenda.view-day'),
+      week: t('screens.agenda.view-week'),
+      month: t('screens.agenda.view-month'),
+      agenda: t('screens.agenda.view-agenda'),
+    }),
+    [t]
+  );
+
+  const formatHour = useCallback(
+    (hour: number) => {
+      const date = new Date();
+      date.setHours(hour, 0, 0, 0);
+      return new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(date);
+    },
+    [locale]
+  );
+  const formatTime = useCallback(
+    (entry: CalendarEntry) => {
+      if (entry.isAllDay) return t('screens.agenda.today');
+      const format = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
+      const start = format.format(new Date(entry.startsAt));
+      return entry.endsAt ? `${start} - ${format.format(new Date(entry.endsAt))}` : start;
+    },
+    [locale, t]
+  );
+  const formatDay = useCallback(
+    (date: Date) =>
+      new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(
+        date
+      ),
+    [locale]
+  );
+  // Title is the scale you are in, subtitle the context around it: "August" /
+  // "2026" reads faster than "August 2026" on one line.
+  const headerTitle = useMemo(
+    () =>
+      view === 'day'
+        ? new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(anchor)
+        : new Intl.DateTimeFormat(locale, { month: 'long' }).format(anchor),
+    [anchor, locale, view]
+  );
+  const headerSubtitle = useMemo(
+    () =>
+      view === 'day'
+        ? new Intl.DateTimeFormat(locale, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }).format(anchor)
+        : new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(anchor),
+    [anchor, locale, view]
+  );
+
+  const step = useCallback(
+    (direction: 1 | -1) => {
+      setAnchor((current) => {
+        if (view === 'month') return addMonths(current, direction);
+        if (view === 'week') return addDays(current, 7 * direction);
+        return addDays(current, direction);
+      });
+    },
+    [view]
+  );
 
   const goToTab = useCallback(
-    (tab: DashboardTab) => {
-      if (tab === 'home') router.replace('/');
-      else router.replace('/agenda');
-    },
-    [router],
+    (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
+    [router]
   );
   const handleCompose = useCallback(() => {
     if (voiceEnabled) router.push('/welcome/voice');
   }, [router, voiceEnabled]);
 
-  if (authStatus === 'signed-out') return <Redirect href="/" />;
-  if (authStatus !== 'signed-in') return <View className="bg-background flex-1" />;
-
+  // The dashboard routes are only reachable with a session; the root screen
+  // owns the onboarding decision, so an unauthenticated hit bounces there.
+  if (authStatus !== 'signed-in') return <Redirect href="/" />;
 
   return (
-    <View className="bg-background flex-1">
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="pb-36"
-        showsVerticalScrollIndicator={false}>
-        <Animated.View
-          entering={screenIn}
-          className="w-full max-w-3xl self-center gap-5 px-5"
-          style={{ paddingTop: insets.top + 18 }}>
-          <View className="flex-row items-center justify-between">
+    <DashboardShell
+      active="schedule"
+      labels={{
+        home: t('screens.home.home'),
+        schedule: t('screens.agenda.schedule'),
+        projects: t('screens.projects.title'),
+        profile: t('screens.home.profile'),
+      }}
+      composeLabel={t('screens.home.compose')}
+      onNavigate={goToTab}
+      onCompose={handleCompose}
+      scrollable={false}>
+      <Animated.View entering={screenIn} className="flex-1 gap-5">
+        <View className="flex-row items-center justify-between">
+          <DashboardIconButton
+            icon="arrow-left"
+            label={t('common.back')}
+            onPress={() => router.replace('/')}
+          />
+          <Text className="text-[22px] font-semibold tracking-tight">
+            {t('screens.agenda.schedule')}
+          </Text>
+          {can('calendar_event', 'create') ? (
             <DashboardIconButton
-              icon="arrow-left"
-              label={t('common.back')}
-              onPress={() => router.replace('/')}
-            />
-            <Text className="text-[22px] font-semibold tracking-tight">
-              {t('screens.agenda.schedule')}
-            </Text>
-            <DashboardIconButton
-              icon="more-horizontal"
-              label={t('screens.agenda.options')}
-            />
-          </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('screens.agenda.month-picker')}
-            className="flex-row items-center gap-1.5 self-start active:opacity-60">
-            <Text className="text-[19px] font-semibold capitalize tracking-tight">
-              {formatMonth(selectedDate, locale)}
-            </Text>
-            <View className="bg-card size-6 items-center justify-center rounded-full shadow-sm shadow-black/[0.08]">
-              <Icon name="chevron-down" className="text-foreground-secondary size-3.5" />
-            </View>
-          </Pressable>
-
-          <WeekStrip days={days} selected={selectedDate} onSelect={setSelectedDate} />
-
-          <View className="bg-divider/40 h-hairline w-full" />
-
-          {entries.length > 0 ? (
-            <ScheduleTimeline
-              entries={entries}
-              formatHour={(hour) => formatHour(hour, locale)}
+              icon="plus"
+              label={t('screens.agenda.new-event')}
+              onPress={() => {
+                setEditingEventId('');
+                setEventFormOpen(true);
+              }}
             />
           ) : (
-            <View className="bg-card items-center gap-3 rounded-[24px] px-6 py-10 shadow-md shadow-black/[0.06]">
-              <View className="bg-surface-secondary size-12 items-center justify-center rounded-full">
-                <Icon name="calendar" className="text-foreground-secondary size-5" />
-              </View>
-              <Text className="text-center text-base font-semibold">
-                {t('screens.agenda.empty')}
-              </Text>
-              <Text className="text-foreground-secondary max-w-xs text-center text-sm leading-5">
-                {t('screens.agenda.empty-hint')}
-              </Text>
-            </View>
+            <View className="size-11" />
           )}
-        </Animated.View>
-      </ScrollView>
+        </View>
 
-      <DashboardBottomNav
-        active="insights"
-        labels={{
-          home: t('screens.home.home'),
-          insights: t('screens.home.insights'),
-          messages: t('screens.home.messages'),
-          profile: t('screens.home.profile'),
+        <CalendarHeader
+          title={headerTitle}
+          subtitle={headerSubtitle}
+          previousLabel={t('screens.agenda.previous')}
+          nextLabel={t('screens.agenda.next')}
+          todayLabel={t('screens.agenda.today')}
+          onPrevious={() => step(-1)}
+          onNext={() => step(1)}
+          onToday={() => setAnchor(startOfDay(new Date()))}
+        />
+
+        <CalendarViewSwitcher view={view} labels={viewLabels} onChange={setView} />
+
+        {view === 'month' ? (
+          <View className={isWide ? 'flex-1 flex-row items-stretch gap-5' : 'gap-2'}>
+            <View className={isWide ? 'min-w-0 flex-1' : undefined}>
+              <CalendarMonthView
+                anchor={anchor}
+                selected={selectedDay}
+                entries={entries}
+                weekdayLabels={weekdayLabels}
+                onSelectDay={setSelectedDay}
+                fill={isExpanded && !isShort}
+              />
+            </View>
+            {isWide ? (
+              <View className="bg-divider/30 w-hairline self-stretch" />
+            ) : (
+              <View className="bg-divider/30 h-hairline w-full" />
+            )}
+            <View className={isWide ? 'min-h-0 w-[300px] shrink-0 lg:w-[340px]' : undefined}>
+              <View className="flex-row items-center justify-between pb-1.5">
+                <Text className="text-[13px] font-medium">
+                  {new Intl.DateTimeFormat(locale, {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                  }).format(selectedDay)}
+                </Text>
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-muted-foreground text-[12px]">
+                    {selectedDayEntries.length > 0
+                      ? t('screens.agenda.day-count', {
+                          count: String(selectedDayEntries.length),
+                        })
+                      : t('screens.agenda.day-empty')}
+                  </Text>
+                  {can('calendar_event', 'create') ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={() => {
+                        setEditingEventId('');
+                        setEventFormOpen(true);
+                      }}>
+                      <Text>{t('screens.agenda.add-here')}</Text>
+                    </Button>
+                  ) : null}
+                </View>
+              </View>
+              <CalendarDayList
+                entries={selectedDayEntries}
+                emptyLabel={t('screens.agenda.empty-range')}
+                formatTime={formatTime}
+                renderActions={renderActions}
+                onSelect={(entry) => {
+                  // Only a calendar event can be edited here; a reminder or a
+                  // task belongs to its own screen.
+                  if (entry.source !== 'event') return;
+                  setEditingEventId(entry.id);
+                  setEventFormOpen(true);
+                }}
+              />
+            </View>
+          </View>
+        ) : null}
+
+        {view === 'week' ? (
+          <View className="min-h-0 flex-1">
+            <CalendarWeekView
+              anchor={anchor}
+              selected={anchor}
+              entries={entries}
+              weekdayLabels={weekdayLabels}
+              formatHour={formatHour}
+              onSelectDay={setAnchor}
+            />
+          </View>
+        ) : null}
+
+        {view === 'day' ? (
+          <View className="min-h-0 flex-1">
+            <CalendarDayView entries={entries} formatHour={formatHour} formatTime={formatTime} />
+          </View>
+        ) : null}
+
+        {view === 'agenda' ? (
+          <View className="min-h-0 flex-1">
+            <CalendarAgendaView
+              entries={entries}
+              from={range.from}
+              to={range.to}
+              freeLabel={t('screens.agenda.day-empty')}
+              formatDay={formatDay}
+              formatTime={formatTime}
+              renderActions={renderActions}
+              onCreateDay={
+                can('calendar_event', 'create')
+                  ? (day) => {
+                      setSelectedDay(day);
+                      setEditingEventId('');
+                      setEventFormOpen(true);
+                    }
+                  : undefined
+              }
+            />
+          </View>
+        ) : null}
+      </Animated.View>
+
+      <CalendarEventForm
+        open={eventFormOpen}
+        onOpenChange={(open) => {
+          setEventFormOpen(open);
+          if (!open) setEditingEventId('');
         }}
-        composeLabel={t('screens.home.compose')}
-        bottomInset={insets.bottom}
-        onNavigate={goToTab}
-        onCompose={handleCompose}
+        startsAt={selectedDay}
+        event={calendarEvents.find((item) => item.id === editingEventId) ?? null}
+        weekdayLabels={weekdayLabels}
+        locale={locale}
       />
-    </View>
+    </DashboardShell>
   );
 }

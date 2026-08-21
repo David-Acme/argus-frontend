@@ -1,10 +1,10 @@
 import { useLocaleStore } from '@/core/stores';
 import type { LanguageCode, LanguagePreference, TranslateFn } from '@/core/types';
 import { defaultLanguage, localeDictionaries } from './locales';
-import { translate } from './translate';
+import { translate, translateLoose } from './translate';
 
 export { defaultLanguage, localeDictionaries };
-export { translate };
+export { translate, translateLoose };
 export type {
   I18nSchema,
   LanguageCode,
@@ -18,6 +18,10 @@ export type {
 /** Imperative twin for non-React code (.ts): reads the language at call time. */
 export const t: TranslateFn = (key, ...rest) =>
   translate(localeDictionaries[useLocaleStore.getState().language], key, ...rest);
+
+/** Loose twin for validation messages (see `translateLoose`). */
+export const tk = (key: string): string =>
+  translateLoose(localeDictionaries[useLocaleStore.getState().language], key);
 
 export const getLanguage = (): LanguageCode => useLocaleStore.getState().language;
 

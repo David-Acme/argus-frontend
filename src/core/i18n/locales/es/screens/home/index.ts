@@ -37,9 +37,15 @@ export const home = {
   messages: 'Mensajes',
   profile: 'Perfil',
   compose: 'Crear',
+  cameras_section: 'Cámaras',
+  'cameras-empty': 'Aún no has vinculado ninguna cámara.',
+  'cameras-online': '{online} de {total} en línea',
   home: 'Inicio',
   agenda: 'Agenda',
   notifications: 'Notificaciones',
+  'notifications-empty': 'No tienes notificaciones nuevas',
+  'notifications-unread': '{count} sin leer',
+  'notifications-read': 'Todo leído',
   calendar: 'Calendario',
   subtitle:
     'Los parámetros viajan por el store, así que la misma ruta sirve para cualquier escaneo.',
@@ -59,4 +65,7 @@ export const home = {
     scanned: 'Código recibido',
     cancelled: 'El usuario canceló',
   },
+  'activity-no-cameras': 'Conecta una cámara para ver actividad',
+  'activity-events': '{count} eventos en los últimos 7 días',
+  'project-tasks': '{done} de {total} tareas hechas',
 } as const;

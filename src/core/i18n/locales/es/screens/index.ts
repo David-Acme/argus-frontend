@@ -7,7 +7,9 @@ import { voice } from './voice';
 import { welcome } from './welcome';
 import { login } from './login';
 import { approve } from './approve';
+import { cameras } from './cameras';
 import { agenda } from './agenda';
+import { projects } from './projects';
 
 export const screens = {
   home,
@@ -20,4 +22,6 @@ export const screens = {
   login,
   approve,
   agenda,
+  cameras,
+  projects,
 } as const;
