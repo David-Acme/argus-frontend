@@ -1,11 +1,25 @@
 import { TextClassContext } from '@/shared/components/ui/text';
+import { Icon } from '@/shared/components/ui/icon';
 import { cn } from '@/shared/libs/utils';
+import { getButtonState } from '@/shared/libs/button-state';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform, Pressable } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import { useEffect } from 'react';
 
 type ButtonProps = React.ComponentProps<typeof Pressable> &
   React.RefAttributes<typeof Pressable> &
-  VariantProps<typeof buttonVariants>;
+  VariantProps<typeof buttonVariants> & {
+    /** Shows request progress and prevents a duplicate press. */
+    loading?: boolean;
+  };
 
 const buttonVariants = cva(
   cn(
@@ -92,20 +106,56 @@ const buttonTextVariants = cva(
   }
 );
 
-function Button({ className, variant, size, style, ...props }: ButtonProps) {
+function ButtonLoader() {
+  const rotation = useSharedValue(0);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 840, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(rotation);
+  }, [rotation]);
+
+  return (
+    <Animated.View accessibilityElementsHidden style={style}>
+      <Icon name="refresh-cw" className="size-4" />
+    </Animated.View>
+  );
+}
+
+function Button({ className, variant, size, style, loading = false, disabled = false, children, ...props }: ButtonProps) {
+  const buttonState = getButtonState({ disabled: Boolean(disabled), loading });
+
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
-        className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
+        {...props}
+        accessibilityState={{ ...props.accessibilityState, ...buttonState.accessibility }}
+        className={cn(buttonState.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
+        disabled={buttonState.disabled}
         role="button"
         style={(state) => [
           typeof style === 'function' ? style(state) : style,
-          state.pressed && !props.disabled
+          state.pressed && !buttonState.disabled
             ? { transform: [{ scale: 0.97 }], opacity: 0.9 }
             : null,
-        ]}
-        {...props}
-      />
+        ]}>
+        {(state) => (
+          <>
+            {loading ? <ButtonLoader /> : null}
+            {loading && size === 'icon'
+              ? null
+              : typeof children === 'function'
+                ? children(state)
+                : children}
+          </>
+        )}
+      </Pressable>
     </TextClassContext.Provider>
   );
 }

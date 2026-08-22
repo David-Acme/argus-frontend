@@ -4,7 +4,9 @@ import { Platform, ScrollView, View } from 'react-native';
 import type { MenuOption } from '@/core/types';
 import { OptionRow } from '@/shared/components/ui/option-row';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/shared/components/ui/sheet';
+import { IS_NATIVE } from '@/shared/constants';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { cn } from '@/shared/libs/utils';
 
 type AdaptiveMenuProps<T extends string = string> = {
@@ -16,6 +18,9 @@ type AdaptiveMenuProps<T extends string = string> = {
   closeLabel: string;
   selected?: T;
   contentClassName?: string;
+  /** Lets a long-press owner open the phone sheet without a visible trigger. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 /** Beyond this the sheet scrolls instead of growing past the screen. */
@@ -34,16 +39,24 @@ export function AdaptiveMenu<T extends string = string>({
   closeLabel,
   selected,
   contentClassName,
+  open: controlledOpen,
+  onOpenChange,
 }: AdaptiveMenuProps<T>) {
-  const { isCompact } = useWindowClass();
-  const [open, setOpen] = useState(false);
+  const { isCompact, isExpanded, isShort } = useWindowClass();
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+
+  function setOpen(next: boolean) {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  }
 
   function chooseFromSheet(value: string) {
     setOpen(false);
     onSelect(value as T);
   }
 
-  if (isCompact) {
+  if (shouldUseAdaptiveMenuSheet({ isCompact, isExpanded, isNative: IS_NATIVE, isShort })) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>

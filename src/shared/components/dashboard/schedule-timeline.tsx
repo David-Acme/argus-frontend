@@ -12,6 +12,7 @@ type ScheduleTimelineProps = {
   /** Hour range to render; defaults to the working span. */
   hours?: readonly number[];
   onSelect?: (entry: ScheduleEntry) => void;
+  onLongPress?: (entry: ScheduleEntry) => void;
 };
 
 /** Hour gutter on the left, one card per occupied hour on the right. */
@@ -20,6 +21,7 @@ export function ScheduleTimeline({
   formatHour,
   hours = TIMELINE_HOURS,
   onSelect,
+  onLongPress,
 }: ScheduleTimelineProps) {
   const firstHour = entries.length > 0 ? entries[0].hour : hours[0];
 
@@ -54,6 +56,7 @@ export function ScheduleTimeline({
                   note={entry.note}
                   status={entry.status}
                   onPress={onSelect ? () => onSelect(entry) : undefined}
+                  onLongPress={onLongPress ? () => onLongPress(entry) : undefined}
                 />
               ) : (
                 // A hairline keeps an empty hour reading as a schedule row.

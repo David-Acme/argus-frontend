@@ -26,8 +26,8 @@ import { Text } from '@/shared/components/ui/text';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { confirm } from '@/shared/libs/confirm';
 import { startOfDay } from '@/shared/libs/calendar';
+import { calendarEventFormActions } from '@/shared/libs/calendar-entry-actions';
 import { toast } from '@/shared/libs/toast';
 
 type CalendarEventFormProps = {
@@ -153,27 +153,6 @@ export function CalendarEventForm({
     },
   });
 
-  const remove = async () => {
-    if (!event) return;
-    if (
-      !(await confirm({
-        title: t('screens.agenda.delete-event-title', { name: event.title }),
-        description: t('screens.agenda.delete-event-body'),
-        confirmLabel: t('common.confirm-delete'),
-        intent: 'danger',
-      }))
-    )
-      return;
-
-    const result = await calendarEventService.remove(event.id);
-    if (!result.ok) {
-      toast.error(t('common.errors.unknown'), result.errors?.message);
-      return;
-    }
-    toast.success(t('screens.agenda.event-removed'));
-    onOpenChange(false);
-  };
-
   return (
     <AdaptiveDialog
       open={open}
@@ -182,17 +161,21 @@ export function CalendarEventForm({
       closeLabel={t('common.close')}
       footer={
         <>
-          {event ? (
-            <Button variant="ghost" onPress={remove} disabled={submitting}>
-              <Text className="text-error">{t('common.delete')}</Text>
-            </Button>
-          ) : null}
-          <Button variant="outline" onPress={() => onOpenChange(false)} disabled={submitting}>
-            <Text>{t('common.cancel')}</Text>
-          </Button>
-          <Button onPress={submit} disabled={submitting}>
-            <Text>{submitting ? t('common.saving') : t('common.save')}</Text>
-          </Button>
+          {calendarEventFormActions().map((action) =>
+            action === 'cancel' ? (
+              <Button
+                key={action}
+                variant="outline"
+                onPress={() => onOpenChange(false)}
+                disabled={submitting}>
+                <Text>{t('common.cancel')}</Text>
+              </Button>
+            ) : (
+              <Button key={action} onPress={submit} disabled={submitting}>
+                <Text>{submitting ? t('common.saving') : t('common.save')}</Text>
+              </Button>
+            )
+          )}
         </>
       }>
       <FormScrollView formScroll={formScroll} maxHeight={bodyHeight}>

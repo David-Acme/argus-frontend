@@ -3,6 +3,7 @@ import { useEffect, useState, type PropsWithChildren } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { synchronizeService } from '@/core/services/sync';
 import { sessionService } from '@/core/services/session.service';
+import { viewCacheService } from '@/core/services/view-cache.service';
 import { useAuthStore } from '@/core/stores/auth.store';
 import { IS_NATIVE } from '@/shared/constants';
 import { Text } from '@/shared/components/ui/text';
@@ -46,6 +47,10 @@ export function SessionGate({ children }: SessionGateProps) {
       clearSession: () => sessionService.clearSession(),
       updateUser: (partial) => sessionService.updateUser(partial),
     });
+
+    // MMKV is synchronous; hydrate the fast snapshot tier before a route can
+    // mount, then Watermelon observers replace it with live local data.
+    viewCacheService.prime();
 
     void sessionService
       .initialize()

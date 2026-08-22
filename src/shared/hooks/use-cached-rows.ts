@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { ViewCacheKey } from '@/shared/constants';
 
@@ -13,7 +13,11 @@ export function useCachedRows<T>(
   ready: boolean,
   scope?: string
 ): readonly T[] {
-  const [fallback] = useState(() => viewCacheService.read<T>(key, scope));
+  // `scope` is the visible window for views such as the calendar. Reading the
+  // primed in-memory snapshot again when it changes prevents yesterday's (or
+  // last month's) rows from being painted for one frame while its local query
+  // subscribes.
+  const fallback = useMemo(() => viewCacheService.read<T>(key, scope), [key, scope]);
 
   useEffect(() => {
     if (ready) viewCacheService.write(key, rows, scope);
@@ -29,7 +33,7 @@ export function useCachedValue<T>(
   ready: boolean,
   scope?: string
 ): T {
-  const [fallback] = useState(() => viewCacheService.readValue<T>(key, scope));
+  const fallback = useMemo(() => viewCacheService.readValue<T>(key, scope), [key, scope]);
 
   useEffect(() => {
     if (ready) viewCacheService.writeValue(key, value, scope);

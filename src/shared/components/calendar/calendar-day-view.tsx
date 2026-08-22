@@ -10,6 +10,7 @@ type CalendarDayViewProps = {
   formatHour: (hour: number) => string;
   formatTime: (entry: CalendarEntry) => string;
   onSelect?: (entry: CalendarEntry) => void;
+  onLongPress?: (entry: CalendarEntry) => void;
 };
 
 /** Reuses the schedule timeline: one day is exactly what it was built for. */
@@ -18,11 +19,13 @@ export function CalendarDayView({
   formatHour,
   formatTime,
   onSelect,
+  onLongPress,
 }: CalendarDayViewProps) {
   const bottomInset = useBottomNavInset();
   const rows = useMemo<ScheduleEntry[]>(
     () =>
       entries.map((entry) => ({
+        id: entry.id,
         title: entry.title,
         time: formatTime(entry),
         hour: new Date(entry.startsAt).getHours(),
@@ -46,8 +49,16 @@ export function CalendarDayView({
       onSelect={
         onSelect
           ? (row) => {
-              const match = entries.find((entry) => entry.title === row.title);
+              const match = entries.find((entry) => entry.id === row.id);
               if (match) onSelect(match);
+            }
+          : undefined
+      }
+      onLongPress={
+        onLongPress
+          ? (row) => {
+              const match = entries.find((entry) => entry.id === row.id);
+              if (match) onLongPress(match);
             }
           : undefined
       }

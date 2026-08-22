@@ -25,18 +25,13 @@ import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { itemIn, screenIn } from '@/shared/libs/animations';
-import {
-  DASHBOARD_SECTION_MIN_HEIGHT,
-  DASHBOARD_TAB_ROUTE,
-  IS_NATIVE,
-  TODAY_PREVIEW_LIMIT,
-} from '@/shared/constants';
+import { initialDashboardDestination, type DashboardDestination } from '@/shared/libs/dashboard-route-state';
+import { getDashboardSectionLayout } from '@/shared/libs/dashboard-section-layout';
+import { DASHBOARD_TAB_ROUTE, IS_NATIVE, TODAY_PREVIEW_LIMIT } from '@/shared/constants';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-
-type Destination = 'loading' | 'welcome' | 'owner-enroll' | 'login' | 'home';
 
 type DashboardScreenProps = {
   user: IAuthUser | null;
@@ -50,7 +45,7 @@ function firstNameOf(user: IAuthUser | null): string {
 function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
   const router = useRouter();
   const { t, language } = useTranslation();
-  const { isShort, isWide, isExpanded } = useWindowClass();
+  const { height, isShort, isWide, isExpanded, width } = useWindowClass();
   const { can } = usePermissions();
   const {
     cameraTiles,
@@ -63,6 +58,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
   } = useDashboardData(user?.id ?? null);
   const locale = language === 'es' ? 'es-PE' : 'en-US';
   const [query, setQuery] = useState('');
+  const sectionLayout = useMemo(() => getDashboardSectionLayout(width, height), [height, width]);
 
   const matches = useCallback(
     (text: string) =>
@@ -180,6 +176,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
               cameras={cameraTiles}
               emptyLabel={t('screens.home.cameras-empty')}
               fill={isWide}
+              minHeight={sectionLayout.cameraMinHeight}
               onSelect={(id) => router.push(`/cameras/${id}`)}
             />
           </View>
@@ -265,7 +262,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
           onAction={() => router.push(noCameras ? '/cameras?new=camera' : '/cameras')}
         />
 
-        <View className={isWide ? 'flex-row items-start gap-5' : 'gap-5'}>
+        <View className={isWide ? 'flex-row items-stretch gap-5' : 'gap-5'}>
           <Animated.View
             entering={itemIn.delay(160).duration(320)}
             className={isWide ? 'min-w-0 flex-1 gap-3' : 'gap-3'}>
@@ -286,7 +283,8 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
                   </Button>
                 ) : undefined
               }
-              minHeight={isWide ? DASHBOARD_SECTION_MIN_HEIGHT : undefined}>
+              fill={sectionLayout.fill}
+              minHeight={sectionLayout.minHeight}>
               <ScrollView
                 horizontal
                 nestedScrollEnabled
@@ -334,7 +332,8 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
                   </Button>
                 ) : undefined
               }
-              minHeight={isWide ? DASHBOARD_SECTION_MIN_HEIGHT : undefined}
+              fill={sectionLayout.fill}
+              minHeight={sectionLayout.minHeight}
               className="gap-2.5">
               {todayRows.slice(0, TODAY_PREVIEW_LIMIT).map((entry) => (
                 <AgendaItem
@@ -359,9 +358,11 @@ export default function IndexScreen() {
   const authStatus = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
   const voiceEnabled = useOnboardingStore((s) => s.voiceEnabled);
-  const [destination, setDestination] = useState<Destination>('loading');
+  const [destination, setDestination] = useState<DashboardDestination>(() =>
+    initialDashboardDestination(authStatus)
+  );
 
-  const resolveDestination = useCallback(async (): Promise<Destination | null> => {
+  const resolveDestination = useCallback(async (): Promise<DashboardDestination | null> => {
     if (authStatus === 'signed-in') return 'home';
     if (authStatus !== 'signed-out') return null;
     const pairing = await sessionService.getPairingState();

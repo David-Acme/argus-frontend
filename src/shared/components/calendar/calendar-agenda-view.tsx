@@ -18,6 +18,7 @@ type CalendarAgendaViewProps = {
   formatDay: (date: Date) => string;
   formatTime: (entry: CalendarEntry) => string;
   onSelect?: (entry: CalendarEntry) => void;
+  onLongPress?: (entry: CalendarEntry) => void;
   onCreateDay?: (day: Date) => void;
   renderActions?: (entry: CalendarEntry) => ReactNode;
 };
@@ -38,6 +39,7 @@ export function CalendarAgendaView({
   formatDay,
   formatTime,
   onSelect,
+  onLongPress,
   onCreateDay,
   renderActions,
 }: CalendarAgendaViewProps) {
@@ -100,12 +102,13 @@ export function CalendarAgendaView({
             time={formatTime(item.entry)}
             status={item.entry.status}
             onPress={onSelect ? () => onSelect(item.entry) : undefined}
+            onLongPress={onLongPress ? () => onLongPress(item.entry) : undefined}
             actions={renderActions?.(item.entry)}
           />
         </View>
       );
     },
-    [formatDay, formatTime, freeLabel, onCreateDay, onSelect, renderActions]
+    [formatDay, formatTime, freeLabel, onCreateDay, onLongPress, onSelect, renderActions]
   );
 
   return (

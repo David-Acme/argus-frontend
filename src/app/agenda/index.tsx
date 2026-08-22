@@ -1,6 +1,7 @@
 import { useAuthStore, useOnboardingStore } from '@/core/stores';
 import {
   CalendarAgendaView,
+  CalendarEntryDetail,
   CalendarEventForm,
   CalendarDayList,
   CalendarDayView,
@@ -30,6 +31,7 @@ import {
   weekDays,
 } from '@/shared/libs/calendar';
 import { screenIn } from '@/shared/libs/animations';
+import { calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
 import type { CalendarEntry, CalendarView, DashboardTab } from '@/core/types';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -50,7 +52,10 @@ export default function ScheduleScreen() {
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [eventFormOpen, setEventFormOpen] = useState(newParam === 'event');
   const [editingEventId, setEditingEventId] = useState('');
+  const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
+  const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
   const { can } = usePermissions();
+  const userKey = user?.id == null ? '' : String(user.id);
 
   const locale = language === 'es' ? 'es-PE' : 'en-US';
 
@@ -65,7 +70,7 @@ export default function ScheduleScreen() {
   const { entries: liveEntries, ready: entriesReady } = useCalendarEntries({
     from: range.from,
     to: range.to,
-    userId: user?.id == null ? '' : String(user.id),
+    userId: userKey,
   });
   // The window that is on screen is rehydrated from the last visit, so paging
   // back to it never blinks through an empty grid.
@@ -73,7 +78,7 @@ export default function ScheduleScreen() {
     VIEW_CACHE_KEYS.calendarEntries,
     liveEntries,
     entriesReady,
-    `${view}.${range.from}`
+    `${userKey}.${view}.${range.from}`
   );
 
   const selectedDayEntries = useMemo(
@@ -81,19 +86,26 @@ export default function ScheduleScreen() {
     [entries, selectedDay]
   );
 
+  const editEntry = useCallback((entry: CalendarEntry) => {
+    if (entry.source !== 'event') return;
+    setActionEntry(null);
+    setEditingEventId(calendarEntryRecordId(entry));
+    setEventFormOpen(true);
+  }, []);
+
+  const openEntryActions = useCallback((entry: CalendarEntry) => setActionEntry(entry), []);
+  const openEntryDetail = useCallback((entry: CalendarEntry) => setDetailEntry(entry), []);
+
   const renderActions = useCallback(
     (entry: CalendarEntry) => (
       <EntryActionsMenu
         entry={entry}
         canEdit={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
         canDelete={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
-        onEdit={(target) => {
-          setEditingEventId(target.id.slice(target.id.indexOf(':') + 1));
-          setEventFormOpen(true);
-        }}
+        onEdit={editEntry}
       />
     ),
-    [can]
+    [can, editEntry]
   );
 
   const weekdayLabels = useMemo(
@@ -295,13 +307,8 @@ export default function ScheduleScreen() {
                 }
                 formatTime={formatTime}
                 renderActions={renderActions}
-                onSelect={(entry) => {
-                  // Only a calendar event can be edited here; a reminder or a
-                  // task belongs to its own screen.
-                  if (entry.source !== 'event') return;
-                  setEditingEventId(entry.id);
-                  setEventFormOpen(true);
-                }}
+                onSelect={openEntryDetail}
+                onLongPress={openEntryActions}
               />
             </View>
           </View>
@@ -316,13 +323,21 @@ export default function ScheduleScreen() {
               weekdayLabels={weekdayLabels}
               formatHour={formatHour}
               onSelectDay={setAnchor}
+              onSelect={openEntryDetail}
+              onLongPress={openEntryActions}
             />
           </View>
         ) : null}
 
         {view === 'day' ? (
           <View className="min-h-0 flex-1">
-            <CalendarDayView entries={entries} formatHour={formatHour} formatTime={formatTime} />
+            <CalendarDayView
+              entries={entries}
+              formatHour={formatHour}
+              formatTime={formatTime}
+              onSelect={openEntryDetail}
+              onLongPress={openEntryActions}
+            />
           </View>
         ) : null}
 
@@ -336,6 +351,8 @@ export default function ScheduleScreen() {
               formatDay={formatDay}
               formatTime={formatTime}
               renderActions={renderActions}
+              onSelect={openEntryDetail}
+              onLongPress={openEntryActions}
               onCreateDay={
                 can('calendar_event', 'create')
                   ? (day) => {
@@ -361,6 +378,26 @@ export default function ScheduleScreen() {
         weekdayLabels={weekdayLabels}
         locale={locale}
       />
+      <CalendarEntryDetail
+        entry={detailEntry}
+        open={detailEntry !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailEntry(null);
+        }}
+        locale={locale}
+      />
+      {actionEntry ? (
+        <EntryActionsMenu
+          entry={actionEntry}
+          canEdit={can(actionEntry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
+          canDelete={can(actionEntry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
+          onEdit={editEntry}
+          open
+          onOpenChange={(open) => {
+            if (!open) setActionEntry(null);
+          }}
+        />
+      ) : null}
     </DashboardShell>
   );
 }

@@ -198,4 +198,10 @@ export const TODAY_PREVIEW_LIMIT = 3;
  * Height the two dashboard sections hold on a wide window, so the row keeps
  * its shape whether a column has nothing, one row or three.
  */
-export const DASHBOARD_SECTION_MIN_HEIGHT = 210;
+export const DASHBOARD_SECTION_MIN_HEIGHT = 248;
+
+/** Dense baseline for a short wide window; the paired panels still stretch together. */
+export const DASHBOARD_SECTION_MIN_HEIGHT_SHORT = 164;
+
+/** Empty camera panels remain intentional on compact dashboards. */
+export const DASHBOARD_CAMERA_MIN_HEIGHT = 184;

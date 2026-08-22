@@ -12,6 +12,7 @@ type CalendarDayListProps = {
   emptyLabel: string;
   formatTime: (entry: CalendarEntry) => string;
   onSelect?: (entry: CalendarEntry) => void;
+  onLongPress?: (entry: CalendarEntry) => void;
   renderActions?: (entry: CalendarEntry) => ReactNode;
   /** Turns the empty panel into the way to add something to this day. */
   onCreate?: () => void;
@@ -30,6 +31,7 @@ export function CalendarDayList({
   emptyLabel,
   formatTime,
   onSelect,
+  onLongPress,
   renderActions,
   onCreate,
   addLabel,
@@ -37,41 +39,44 @@ export function CalendarDayList({
   const bottomInset = useBottomNavInset();
   const renderItem = useCallback(
     ({ item }: { item: CalendarEntry }) => (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={item.title}
-        className="flex-row items-center gap-3 py-2.5 active:opacity-70"
-        onPress={onSelect ? () => onSelect(item) : undefined}>
-        <View
-          className={cn(
-            'w-[3px] self-stretch rounded-full',
-            item.status === 'complete'
-              ? 'bg-success'
-              : item.source === 'task'
-                ? 'bg-accent'
-                : 'bg-interactive'
-          )}
-        />
-        <View className="flex-1">
-          <Text
+      <View className="flex-row items-center gap-3 py-2.5">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={item.title}
+          className="min-w-0 flex-1 flex-row items-center gap-3 active:opacity-70"
+          onPress={onSelect ? () => onSelect(item) : undefined}
+          onLongPress={onLongPress ? () => onLongPress(item) : undefined}>
+          <View
             className={cn(
-              'text-[15px] font-medium',
-              item.status === 'complete' ? 'text-muted-foreground line-through' : 'text-foreground'
+              'w-[3px] self-stretch rounded-full',
+              item.status === 'complete'
+                ? 'bg-success'
+                : item.source === 'task'
+                  ? 'bg-accent'
+                  : 'bg-interactive'
             )}
-            numberOfLines={1}>
-            {item.title}
-          </Text>
-          {item.location ? (
-            <Text className="text-muted-foreground mt-0.5 text-[12px]" numberOfLines={1}>
-              {item.location}
+          />
+          <View className="min-w-0 flex-1">
+            <Text
+              className={cn(
+                'text-[15px] font-medium',
+                item.status === 'complete' ? 'text-muted-foreground line-through' : 'text-foreground'
+              )}
+              numberOfLines={1}>
+              {item.title}
             </Text>
-          ) : null}
-        </View>
-        <Text className="text-muted-foreground text-[12px] font-medium">{formatTime(item)}</Text>
+            {item.location ? (
+              <Text className="text-muted-foreground mt-0.5 text-[12px]" numberOfLines={1}>
+                {item.location}
+              </Text>
+            ) : null}
+          </View>
+          <Text className="text-muted-foreground text-[12px] font-medium">{formatTime(item)}</Text>
+        </Pressable>
         {renderActions?.(item)}
-      </Pressable>
+      </View>
     ),
-    [formatTime, onSelect, renderActions]
+    [formatTime, onLongPress, onSelect, renderActions]
   );
 
   if (entries.length === 0) {

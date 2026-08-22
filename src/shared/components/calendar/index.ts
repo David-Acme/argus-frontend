@@ -6,5 +6,6 @@ export { CalendarMonthView } from './calendar-month-view';
 export { CalendarViewSwitcher } from './calendar-view-switcher';
 export { CalendarWeekView } from './calendar-week-view';
 export { CalendarEventForm } from './calendar-event-form';
+export { CalendarEntryDetail } from './calendar-entry-detail';
 export { DayPickerField } from './day-picker-field';
 export * from './entry-actions-menu';

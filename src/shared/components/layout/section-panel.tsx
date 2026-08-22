@@ -14,6 +14,8 @@ type SectionPanelProps = {
   emptyAction?: ReactNode;
   /** Keeps the section the same size whether it holds nothing or three rows. */
   minHeight?: number;
+  /** Fills the paired column on a wide dashboard so both panels share its height. */
+  fill?: boolean;
   className?: string;
 };
 
@@ -31,12 +33,14 @@ export function SectionPanel({
   emptyHint,
   emptyAction,
   minHeight,
+  fill = false,
   className,
 }: SectionPanelProps) {
   return (
     <View
       className={cn(
         'border-border-subtle bg-card/40 rounded-3xl border border-dashed p-3',
+        fill && 'flex-1',
         isEmpty && 'items-center justify-center px-6 py-8',
         className
       )}

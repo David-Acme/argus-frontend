@@ -15,6 +15,7 @@ type CalendarWeekViewProps = {
   formatHour: (hour: number) => string;
   onSelectDay: (date: Date) => void;
   onSelect?: (entry: CalendarEntry) => void;
+  onLongPress?: (entry: CalendarEntry) => void;
 };
 
 /** Minimum block height so a 15-minute event stays tappable. */
@@ -28,6 +29,7 @@ export function CalendarWeekView({
   formatHour,
   onSelectDay,
   onSelect,
+  onLongPress,
 }: CalendarWeekViewProps) {
   const bottomInset = useBottomNavInset();
   const days = useMemo(() => weekDays(anchor), [anchor]);
@@ -132,7 +134,8 @@ export function CalendarWeekView({
                           ? 'bg-accent-soft'
                           : 'bg-surface-secondary'
                     )}
-                    onPress={onSelect ? () => onSelect(entry) : undefined}>
+                    onPress={onSelect ? () => onSelect(entry) : undefined}
+                    onLongPress={onLongPress ? () => onLongPress(entry) : undefined}>
                     <Text className="text-foreground text-[10px] font-semibold" numberOfLines={2}>
                       {entry.title}
                     </Text>

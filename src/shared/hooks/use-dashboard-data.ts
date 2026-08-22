@@ -52,6 +52,7 @@ export function useDashboardData(userId: number | null): DashboardData {
     const now = new Date();
     return { from: startOfDay(now).getTime(), to: endOfDay(now).getTime() };
   }, []);
+  const todayScope = `${userKey}.${today.from}`;
 
   const [cameras, camerasReady] = useObservableReady(() => cameraService.observeList(), [], []);
   const [primaryStreams] = useObservableReady(() => cameraStreamService.observePrimaries(), [], []);
@@ -189,7 +190,7 @@ export function useDashboardData(userId: number | null): DashboardData {
     VIEW_CACHE_KEYS.dashboardAgenda,
     todayEntries,
     todayReady,
-    userKey
+    todayScope
   );
   const summary = useCachedValue(
     VIEW_CACHE_KEYS.dashboardSummary,

@@ -22,6 +22,7 @@ export function ConfirmDialog() {
       }}
       title={request?.title ?? ''}
       closeLabel={t('common.close')}
+      contentClassName="sm:max-w-[440px]"
       footer={
         <>
           <Button variant="outline" onPress={() => answer(false)}>
