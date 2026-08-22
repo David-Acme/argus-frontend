@@ -23,19 +23,16 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { SettingRow } from '@/shared/components/cameras';
 import { DayPickerField } from './day-picker-field';
 import { Text } from '@/shared/components/ui/text';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { startOfDay } from '@/shared/libs/calendar';
 import { calendarEventFormActions } from '@/shared/libs/calendar-entry-actions';
 import { toast } from '@/shared/libs/toast';
 
 type CalendarEventFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Localized short weekday names for the day picker. */
-  weekdayLabels: readonly string[];
-  locale: string;
   /** Day the form starts on, so creating from a picked day lands there. */
   startsAt: Date;
   event?: CalendarEventModel | null;
@@ -45,7 +42,11 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const schema = z
   .object({
-    title: z.string().trim().min(1, 'common.validation.required').max(160, 'common.validation.too-long'),
+    title: z
+      .string()
+      .trim()
+      .min(1, 'common.validation.required')
+      .max(160, 'common.validation.too-long'),
     location: z.string().trim().max(160, 'common.validation.too-long'),
     time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-number'),
     endTime: z.string().trim(),
@@ -65,33 +66,9 @@ const schema = z
 
 type EventValues = z.infer<typeof schema>;
 
-const hhmm = (at: Date): string =>
-  `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`;
-
-/** New events start at the next full hour today, or mid-morning on another day. */
-const defaultTime = (day: Date): string => {
-  const now = new Date();
-  if (day.toDateString() !== now.toDateString()) return '09:00';
-  return `${String(Math.min(now.getHours() + 1, 23)).padStart(2, '0')}:00`;
-};
-
-/** `HH:mm` on the given day, in epoch seconds — what the endpoint expects. */
-const secondsAt = (day: Date, time: string): number => {
-  const [hours, minutes] = time.split(':').map(Number);
-  const at = new Date(day);
-  at.setHours(hours, minutes, 0, 0);
-  return Math.round(at.getTime() / 1000);
-};
-
-export function CalendarEventForm({
-  open,
-  onOpenChange,
-  startsAt,
-  event,
-  weekdayLabels,
-  locale,
-}: CalendarEventFormProps) {
+export function CalendarEventForm({ open, onOpenChange, startsAt, event }: CalendarEventFormProps) {
   const { t } = useTranslation();
+  const date = useDateFormatter();
   const formScroll = useFormScroll();
 
   const bodyHeight = useOverlayBodyHeight();
@@ -101,9 +78,9 @@ export function CalendarEventForm({
     defaultValues: {
       title: '',
       location: '',
-      time: defaultTime(new Date()),
+      time: date.defaultInputTime(new Date()),
       endTime: '',
-      day: startOfDay(new Date()).getTime(),
+      day: date.startOfDay(new Date()).getTime(),
       isAllDay: false,
       description: '',
     },
@@ -117,13 +94,13 @@ export function CalendarEventForm({
     form.reset({
       title: event?.title ?? '',
       location: event?.location ?? '',
-      time: event ? hhmm(at) : defaultTime(at),
-      endTime: ends ? hhmm(ends) : '',
-      day: startOfDay(at).getTime(),
+      time: event ? date.formatInputTime(at) : date.defaultInputTime(at),
+      endTime: ends ? date.formatInputTime(ends) : '',
+      day: date.startOfDay(at).getTime(),
       isAllDay: event?.isAllDay ?? false,
       description: event?.description ?? '',
     });
-  }, [open, event, startsAt, form]);
+  }, [date, open, event, startsAt, form]);
 
   const allDay = useWatch({ control: form.control, name: 'isAllDay' });
   const day = useWatch({ control: form.control, name: 'day' });
@@ -137,10 +114,14 @@ export function CalendarEventForm({
         location: values.location || undefined,
         description: values.description || undefined,
         isAllDay: values.isAllDay,
-        startsAt: secondsAt(new Date(values.day), values.isAllDay ? '00:00' : values.time),
+        startsAt: Math.round(
+          date
+            .atInputTime(new Date(values.day), values.isAllDay ? '00:00' : values.time)
+            .getTime() / 1000
+        ),
         endsAt:
           values.endTime && !values.isAllDay
-            ? secondsAt(new Date(values.day), values.endTime)
+            ? Math.round(date.atInputTime(new Date(values.day), values.endTime).getTime() / 1000)
             : undefined,
       };
       return event
@@ -199,9 +180,7 @@ export function CalendarEventForm({
               <FormLabel>{t('screens.agenda.event-day')}</FormLabel>
               <DayPickerField
                 value={new Date(day)}
-                onChange={(next) => form.setValue('day', startOfDay(next).getTime())}
-                weekdayLabels={weekdayLabels}
-                locale={locale}
+                onChange={(next) => form.setValue('day', date.startOfDay(next).getTime())}
               />
             </FormItem>
 
@@ -218,49 +197,48 @@ export function CalendarEventForm({
             />
 
             {!allDay ? (
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('screens.agenda.event-time')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="09:00"
-                          keyboardType="numbers-and-punctuation"
-                          {...field}
-                          onChangeText={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <View className="flex-row gap-3">
+                <View className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('screens.agenda.event-time')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="09:00"
+                            keyboardType="numbers-and-punctuation"
+                            {...field}
+                            onChangeText={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </View>
+                <View className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('screens.agenda.event-end')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="10:00"
+                            keyboardType="numbers-and-punctuation"
+                            {...field}
+                            onChangeText={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </View>
               </View>
-              <View className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('screens.agenda.event-end')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="10:00"
-                          keyboardType="numbers-and-punctuation"
-                          {...field}
-                          onChangeText={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </View>
-            </View>
-
             ) : null}
 
             <View>

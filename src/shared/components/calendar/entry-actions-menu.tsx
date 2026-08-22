@@ -1,10 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactElement } from 'react';
 import { Pressable, View } from 'react-native';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { CalendarEntry, MenuOption } from '@/core/types';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/shared/components/ui/context-menu';
 import { Icon } from '@/shared/components/ui/icon';
+import { Text } from '@/shared/components/ui/text';
 import { IS_NATIVE } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -17,6 +25,7 @@ import {
 } from '@/shared/libs/calendar-entry-actions';
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
+import { cn } from '@/shared/libs/utils';
 
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
@@ -27,6 +36,8 @@ type EntryActionsMenuProps = {
   /** Mobile long press controls the sheet from the parent entry surface. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Tablet long press owns the entry surface, so its menu opens at the press point. */
+  contextTrigger?: ReactElement;
 };
 
 /**
@@ -41,6 +52,7 @@ export function EntryActionsMenu({
   canDelete,
   open,
   onOpenChange,
+  contextTrigger,
 }: EntryActionsMenuProps) {
   const { t } = useTranslation();
   const { isCompact, isExpanded, isShort } = useWindowClass();
@@ -50,6 +62,7 @@ export function EntryActionsMenu({
     isNative: IS_NATIVE,
     isShort,
   });
+  const usesContextMenu = IS_NATIVE && !usesSheet;
   const isEvent = entry.source === 'event';
 
   const options = useMemo<MenuOption<CalendarEntryAction>[]>(() => {
@@ -111,7 +124,53 @@ export function EntryActionsMenu({
     toast.success(t('screens.agenda.deleted'));
   };
 
-  if (options.length === 0) return null;
+  if (options.length === 0) return contextTrigger ?? null;
+
+  if (contextTrigger) {
+    if (!usesContextMenu) return contextTrigger;
+
+    return (
+      <ContextMenu className="min-w-0 flex-1">
+        <ContextMenuTrigger asChild>{contextTrigger}</ContextMenuTrigger>
+        <ContextMenuContent
+          insets={{ top: 16, right: 16, bottom: 16, left: 16 }}
+          sideOffset={8}
+          className="bg-card min-w-48 rounded-[18px] p-1.5 shadow-lg shadow-black/15">
+          {options.map((option, index) => (
+            <View key={option.value}>
+              {option.destructive && index > 0 ? <ContextMenuSeparator /> : null}
+              <ContextMenuItem
+                textValue={option.label}
+                disabled={option.disabled}
+                onPress={() => void run(option.value)}
+                className={cn(
+                  'min-h-12 flex-row items-center gap-3 rounded-[14px] px-3 py-2.5 active:opacity-70',
+                  option.destructive && 'active:bg-error/10'
+                )}>
+                {option.icon ? (
+                  <Icon
+                    name={option.icon}
+                    className={cn(
+                      'size-5',
+                      option.destructive ? 'text-error' : 'text-foreground-secondary'
+                    )}
+                  />
+                ) : null}
+                <Text
+                  className={cn(
+                    'text-[15px] font-medium',
+                    option.destructive ? 'text-error' : 'text-foreground'
+                  )}>
+                  {option.label}
+                </Text>
+              </ContextMenuItem>
+            </View>
+          ))}
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  }
+
   // Touch surfaces use long press. The visible overflow is reserved for web,
   // where it is a predictable pointer affordance.
   if (open === undefined && !shouldShowCalendarEntryOverflow(IS_NATIVE)) return null;

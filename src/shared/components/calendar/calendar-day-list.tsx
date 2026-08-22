@@ -1,19 +1,21 @@
 import { LegendList } from '@legendapp/list/react-native';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, type ReactElement, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
+import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
 type CalendarDayListProps = {
   entries: readonly CalendarEntry[];
   emptyLabel: string;
-  formatTime: (entry: CalendarEntry) => string;
   onSelect?: (entry: CalendarEntry) => void;
   onLongPress?: (entry: CalendarEntry) => void;
   renderActions?: (entry: CalendarEntry) => ReactNode;
+  renderContextMenu?: (entry: CalendarEntry, trigger: ReactElement) => ReactNode;
   /** Turns the empty panel into the way to add something to this day. */
   onCreate?: () => void;
   addLabel?: string;
@@ -29,17 +31,29 @@ const ROW_SIZE = 56;
 export function CalendarDayList({
   entries,
   emptyLabel,
-  formatTime,
   onSelect,
   onLongPress,
   renderActions,
+  renderContextMenu,
   onCreate,
   addLabel,
 }: CalendarDayListProps) {
+  const { t } = useTranslation();
+  const date = useDateFormatter();
   const bottomInset = useBottomNavInset();
+  const formatTime = useCallback(
+    (entry: CalendarEntry) =>
+      entry.isAllDay
+        ? t('screens.agenda.event-all-day')
+        : date.formatTimeRange(
+            new Date(entry.startsAt),
+            entry.endsAt ? new Date(entry.endsAt) : null
+          ),
+    [date, t]
+  );
   const renderItem = useCallback(
-    ({ item }: { item: CalendarEntry }) => (
-      <View className="flex-row items-center gap-3 py-2.5">
+    ({ item }: { item: CalendarEntry }) => {
+      const pressable = (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={item.title}
@@ -60,7 +74,9 @@ export function CalendarDayList({
             <Text
               className={cn(
                 'text-[15px] font-medium',
-                item.status === 'complete' ? 'text-muted-foreground line-through' : 'text-foreground'
+                item.status === 'complete'
+                  ? 'text-muted-foreground line-through'
+                  : 'text-foreground'
               )}
               numberOfLines={1}>
               {item.title}
@@ -73,10 +89,16 @@ export function CalendarDayList({
           </View>
           <Text className="text-muted-foreground text-[12px] font-medium">{formatTime(item)}</Text>
         </Pressable>
-        {renderActions?.(item)}
-      </View>
-    ),
-    [formatTime, onLongPress, onSelect, renderActions]
+      );
+
+      return (
+        <View className="flex-row items-center gap-3 py-2.5">
+          {renderContextMenu ? renderContextMenu(item, pressable) : pressable}
+          {renderActions?.(item)}
+        </View>
+      );
+    },
+    [formatTime, onLongPress, onSelect, renderActions, renderContextMenu]
   );
 
   if (entries.length === 0) {

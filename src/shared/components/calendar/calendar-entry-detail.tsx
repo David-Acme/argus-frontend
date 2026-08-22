@@ -4,6 +4,7 @@ import type { CalendarEntry } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import {
   calendarEntryDetailDialogLayout,
@@ -14,20 +15,15 @@ type CalendarEntryDetailProps = {
   entry: CalendarEntry | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  locale: string;
 };
 
 /**
  * A selected entry is intentionally read-only. On touch, long press remains
  * the deliberate path to destructive or editing actions.
  */
-export function CalendarEntryDetail({
-  entry,
-  open,
-  onOpenChange,
-  locale,
-}: CalendarEntryDetailProps) {
+export function CalendarEntryDetail({ entry, open, onOpenChange }: CalendarEntryDetailProps) {
   const { t } = useTranslation();
+  const date = useDateFormatter();
   const dialogLayout = calendarEntryDetailDialogLayout();
   const rows = useMemo(() => {
     if (!entry) return [];
@@ -48,20 +44,11 @@ export function CalendarEntryDetail({
         active: t('screens.agenda.status-active'),
         complete: t('screens.agenda.status-complete'),
       },
-      (value) =>
-        new Intl.DateTimeFormat(locale, {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        }).format(new Date(value)),
-      (item) => {
-        const format = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' });
-        const start = format.format(new Date(item.startsAt));
-        return item.endsAt ? `${start} - ${format.format(new Date(item.endsAt))}` : start;
-      }
+      (value) => date.formatFullDate(new Date(value)),
+      (item) =>
+        date.formatTimeRange(new Date(item.startsAt), item.endsAt ? new Date(item.endsAt) : null)
     );
-  }, [entry, locale, t]);
+  }, [date, entry, t]);
 
   return (
     <AdaptiveDialog

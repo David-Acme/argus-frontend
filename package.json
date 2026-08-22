@@ -42,6 +42,7 @@
     "argus-net": "file:./modules/argus-net",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "expo": "~57.0.9",
     "expo-asset": "~57.0.8",
     "expo-audio": "~57.0.3",

@@ -14,10 +14,16 @@ describe('shouldUseAdaptiveMenuSheet', () => {
     ).toBe(true);
   });
 
-  test('uses the native sheet on tablets so touch actions remain reachable', () => {
+  test('uses a contextual menu on a portrait tablet instead of a full-width sheet', () => {
+    expect(
+      shouldUseAdaptiveMenuSheet({ isCompact: false, isExpanded: false, isNative: true, isShort: false })
+    ).toBe(false);
+  });
+
+  test('uses a contextual menu on a landscape tablet instead of a full-width sheet', () => {
     expect(
       shouldUseAdaptiveMenuSheet({ isCompact: false, isExpanded: true, isNative: true, isShort: false })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   test('uses the anchored menu on a desktop browser', () => {

@@ -15,9 +15,9 @@ import {
   MOSAIC_ROWS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants';
-import { endOfDay, startOfDay } from '@/shared/libs/calendar';
 import { useCachedRows, useCachedValue } from './use-cached-rows';
 import { useCalendarEntries } from './use-calendar-entries';
+import { useDateFormatter } from './use-date-formatter';
 import { useObservableReady } from './use-observable';
 
 /** Enough rows to fill the notification panel; the inbox screen reads the rest. */
@@ -47,11 +47,12 @@ function emptyLevels(): number[][] {
  * rehydrated from storage and the screen paints filled on the first frame.
  */
 export function useDashboardData(userId: number | null): DashboardData {
+  const date = useDateFormatter();
   const userKey = userId == null ? '' : String(userId);
   const today = useMemo(() => {
     const now = new Date();
-    return { from: startOfDay(now).getTime(), to: endOfDay(now).getTime() };
-  }, []);
+    return { from: date.startOfDay(now).getTime(), to: date.endOfDay(now).getTime() };
+  }, [date]);
   const todayScope = `${userKey}.${today.from}`;
 
   const [cameras, camerasReady] = useObservableReady(() => cameraService.observeList(), [], []);
@@ -167,16 +168,18 @@ export function useDashboardData(userId: number | null): DashboardData {
     let peak = 0;
     for (const event of events) {
       const at = event.occurredAt.getTime();
-      const dayOffset = Math.floor((startOfToday - startOfDay(new Date(at)).getTime()) / DAY_MS);
+      const dayOffset = Math.floor(
+        (startOfToday - date.startOfDay(new Date(at)).getTime()) / DAY_MS
+      );
       if (dayOffset < 0 || dayOffset >= MOSAIC_COLUMNS) continue;
       const column = MOSAIC_COLUMNS - 1 - dayOffset;
-      const row = Math.min(MOSAIC_ROWS - 1, Math.floor(new Date(at).getHours() / BAND_HOURS));
+      const row = Math.min(MOSAIC_ROWS - 1, Math.floor(date.hourOf(new Date(at)) / BAND_HOURS));
       counts[row][column] += 1;
       peak = Math.max(peak, counts[row][column]);
     }
     if (peak === 0) return counts;
     return counts.map((row) => row.map((value) => Math.ceil((value / peak) * 3)));
-  }, [events, today.from]);
+  }, [date, events, today.from]);
 
   const cameraTiles = useCachedRows(VIEW_CACHE_KEYS.dashboardCameras, liveTiles, camerasReady);
   const projects = useCachedRows(VIEW_CACHE_KEYS.dashboardProjects, liveProjects, projectsReady);

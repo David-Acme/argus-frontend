@@ -3,7 +3,14 @@ import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-anima
 import { TextClassContext } from '@/shared/components/ui/text';
 import { IS_IOS, IS_NATIVE, IS_WEB } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
-import { menuIn, menuOut, overlayIn, overlayOut } from '@/shared/libs/animations';
+import {
+  contextMenuIn,
+  contextMenuOut,
+  menuIn,
+  menuOut,
+  overlayIn,
+  overlayOut,
+} from '@/shared/libs/animations';
 import * as ContextMenuPrimitive from '@rn-primitives/context-menu';
 import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { Platform, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
@@ -102,7 +109,7 @@ function ContextMenuContent({
           asChild={IS_NATIVE}>
           <NativeOnlyAnimatedView entering={overlayIn} exiting={overlayOut} as="Pressable">
             <TextClassContext.Provider value="text-popover-foreground">
-              <NativeOnlyAnimatedView entering={menuIn} exiting={menuOut}>
+              <NativeOnlyAnimatedView entering={contextMenuIn} exiting={contextMenuOut}>
                 <ContextMenuPrimitive.Content
                   className={cn(
                     'bg-popover border-border min-w-32 overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5',

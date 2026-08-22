@@ -2,8 +2,8 @@ import { memo, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
-import { DAYS_PER_WEEK } from '@/shared/constants';
-import { monthGridDays, sameDay, startOfDay } from '@/shared/libs/calendar';
+import { DAYS_PER_WEEK } from '@/shared/constants/calendar.constant';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
 
 /** Entries a roomy cell shows before collapsing the rest into "+N". */
@@ -15,8 +15,6 @@ type CalendarMonthViewProps = {
   anchor: Date;
   selected: Date;
   entries: readonly CalendarEntry[];
-  /** Localized short weekday names, Monday first. */
-  weekdayLabels: readonly string[];
   onSelectDay: (date: Date) => void;
   /** Stretches the grid over the available height on a big window. */
   fill?: boolean;
@@ -28,6 +26,8 @@ type DayCellProps = {
   isSelected: boolean;
   isToday: boolean;
   outside: boolean;
+  label: string;
+  dayNumber: string;
   /** Roomy cell: the day lists what it holds instead of a single mark. */
   fill: boolean;
   onPress: (date: Date) => void;
@@ -44,6 +44,8 @@ const DayCell = memo(function DayCell({
   isSelected,
   isToday,
   outside,
+  label,
+  dayNumber,
   fill,
   onPress,
 }: DayCellProps) {
@@ -55,7 +57,7 @@ const DayCell = memo(function DayCell({
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
-        accessibilityLabel={day.toDateString()}
+        accessibilityLabel={label}
         className="min-h-14 flex-1 items-center justify-center py-1 active:opacity-60"
         onPress={() => onPress(day)}>
         <View
@@ -73,7 +75,7 @@ const DayCell = memo(function DayCell({
                   ? 'text-muted-foreground/40'
                   : 'text-foreground'
             )}>
-            {day.getDate()}
+            {dayNumber}
           </Text>
         </View>
         {/* One thin bar per entry, like a month cell on any calendar app: it
@@ -97,7 +99,7 @@ const DayCell = memo(function DayCell({
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={day.toDateString()}
+      accessibilityLabel={label}
       className={cn(
         'border-border-subtle/60 min-h-0 flex-1 gap-1 rounded-xl border p-1.5 active:opacity-70 lg:p-2',
         isSelected ? 'bg-card border-transparent' : 'bg-transparent'
@@ -119,7 +121,7 @@ const DayCell = memo(function DayCell({
                   ? 'text-muted-foreground/40'
                   : 'text-foreground'
             )}>
-            {day.getDate()}
+            {dayNumber}
           </Text>
         </View>
         {overflow > 0 ? (
@@ -144,34 +146,38 @@ export function CalendarMonthView({
   anchor,
   selected,
   entries,
-  weekdayLabels,
   onSelectDay,
   fill = false,
 }: CalendarMonthViewProps) {
+  const date = useDateFormatter();
+  const weekdayLabels = useMemo(
+    () => date.weekDays(anchor).map(date.formatWeekdayShort),
+    [anchor, date]
+  );
   const weeks = useMemo(() => {
-    const days = monthGridDays(anchor);
+    const days = date.monthGridDays(anchor);
     const rows: Date[][] = [];
     for (let index = 0; index < days.length; index += DAYS_PER_WEEK)
       rows.push(days.slice(index, index + DAYS_PER_WEEK));
     return rows;
-  }, [anchor]);
+  }, [anchor, date]);
   const entriesByDay = useMemo(() => {
     const map = new Map<number, CalendarEntry[]>();
     for (const entry of entries) {
-      const key = startOfDay(new Date(entry.startsAt)).getTime();
+      const key = date.startOfDay(new Date(entry.startsAt)).getTime();
       const bucket = map.get(key);
       if (bucket) bucket.push(entry);
       else map.set(key, [entry]);
     }
     return map;
-  }, [entries]);
+  }, [date, entries]);
 
   return (
     <View className={cn('gap-1', fill && 'flex-1')}>
       <View className="flex-row pb-1">
         {weekdayLabels.map((label) => (
           <View key={label} className="flex-1 items-center">
-            <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-[1.2px]">
+            <Text className="text-muted-foreground text-[10px] font-semibold tracking-[1.2px] uppercase">
               {label.slice(0, 1)}
             </Text>
           </View>
@@ -187,9 +193,11 @@ export function CalendarMonthView({
                 key={day.getTime()}
                 day={day}
                 entries={entriesByDay.get(day.getTime()) ?? EMPTY}
-                isSelected={sameDay(day, selected)}
-                isToday={sameDay(day, new Date())}
-                outside={day.getMonth() !== anchor.getMonth()}
+                isSelected={date.sameDay(day, selected)}
+                isToday={date.sameDay(day, new Date())}
+                outside={!date.isSameMonth(day, anchor)}
+                label={date.formatFullDate(day)}
+                dayNumber={date.formatDayNumber(day)}
                 fill={fill}
                 onPress={onSelectDay}
               />

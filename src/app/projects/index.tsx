@@ -22,6 +22,7 @@ import { Text } from '@/shared/components/ui/text';
 import { DASHBOARD_TAB_ROUTE, TASK_PRIORITY_WEIGHT, TASK_STATUS_ORDER } from '@/shared/constants';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useProjectsData } from '@/shared/hooks/use-projects-data';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -31,7 +32,8 @@ import Animated from 'react-native-reanimated';
 
 export default function ProjectsScreen() {
   const router = useRouter();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
+  const date = useDateFormatter();
   const authStatus = useAuthStore((state) => state.status);
   const voiceEnabled = useOnboardingStore((state) => state.voiceEnabled);
   const [selectedId, setSelectedId] = useState('');
@@ -42,7 +44,6 @@ export default function ProjectsScreen() {
   const [editingProject, setEditingProject] = useState(false);
   const { projects, tasks, activeId, progress } = useProjectsData(selectedId);
   const { can } = usePermissions();
-  const locale = language === 'es' ? 'es-PE' : 'en-US';
 
   const statusOptions = useMemo<MenuOption<ProjectTaskStatus>[]>(
     () => [
@@ -52,7 +53,7 @@ export default function ProjectsScreen() {
       { value: 'done', label: t('screens.projects.status-done') },
       { value: 'canceled', label: t('screens.projects.status-canceled') },
     ],
-    [t],
+    [t]
   );
   const statusLabels = useMemo<Record<ProjectTaskStatus, string>>(
     () => ({
@@ -62,7 +63,7 @@ export default function ProjectsScreen() {
       done: t('screens.projects.status-done'),
       canceled: t('screens.projects.status-canceled'),
     }),
-    [t],
+    [t]
   );
   const priorityLabels = useMemo<Record<ProjectTaskPriority, string>>(
     () => ({
@@ -72,7 +73,7 @@ export default function ProjectsScreen() {
       high: t('screens.projects.priority-high'),
       urgent: t('screens.projects.priority-urgent'),
     }),
-    [t],
+    [t]
   );
 
   const grouped = useMemo(() => {
@@ -85,36 +86,29 @@ export default function ProjectsScreen() {
     for (const bucket of map.values()) {
       bucket.sort(
         (left, right) =>
-          (TASK_PRIORITY_WEIGHT[left.priority] ?? 9) - (TASK_PRIORITY_WEIGHT[right.priority] ?? 9),
+          (TASK_PRIORITY_WEIGHT[left.priority] ?? 9) - (TASK_PRIORITY_WEIGHT[right.priority] ?? 9)
       );
     }
     return map;
   }, [tasks]);
 
   const formatDue = useCallback(
-    (due: Date | null) =>
-      due == null
-        ? undefined
-        : new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(due),
-    [locale],
+    (due: Date | null) => (due == null ? undefined : date.formatDayMonth(due)),
+    [date]
   );
 
-  const changeStatus = useCallback(
-    (taskId: string, status: ProjectTaskStatus) => {
-      // Optimistic feel comes from sync: the socket pushes the row right back.
-      void projectTaskService.update(taskId, { status });
-    },
-    [],
-  );
+  const changeStatus = useCallback((taskId: string, status: ProjectTaskStatus) => {
+    // Optimistic feel comes from sync: the socket pushes the row right back.
+    void projectTaskService.update(taskId, { status });
+  }, []);
 
   const goToTab = useCallback(
     (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router],
+    [router]
   );
   const handleCompose = useCallback(() => {
     if (voiceEnabled) router.push('/welcome/voice');
   }, [router, voiceEnabled]);
-
 
   // The dashboard routes are only reachable with a session; the root screen
   // owns the onboarding decision, so an unauthenticated hit bounces there.
@@ -136,10 +130,9 @@ export default function ProjectsScreen() {
         // Only when there is something to list: on compact the aside stacks
         // under the content, and two empty states in a row read as a bug.
         projects.length === 0 ? undefined : (
-        <View className="gap-3">
-          <SectionHeading title={t('screens.projects.title')} />
-          {(
-            projects.map((project) => {
+          <View className="gap-3">
+            <SectionHeading title={t('screens.projects.title')} />
+            {projects.map((project) => {
               const active = project.id === activeId;
               return (
                 <ProjectCardRow
@@ -161,9 +154,8 @@ export default function ProjectsScreen() {
                   onPress={() => setSelectedId(project.id)}
                 />
               );
-            })
-          )}
-        </View>
+            })}
+          </View>
         )
       }>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
@@ -244,7 +236,10 @@ export default function ProjectsScreen() {
                 {TASK_STATUS_ORDER.map((status) => {
                   const bucket = grouped.get(status) ?? [];
                   return (
-                    <TaskStatusGroup key={status} label={statusLabels[status]} count={bucket.length}>
+                    <TaskStatusGroup
+                      key={status}
+                      label={statusLabels[status]}
+                      count={bucket.length}>
                       {bucket.map((task) => (
                         <TaskRow
                           key={task.id}
@@ -278,9 +273,7 @@ export default function ProjectsScreen() {
           setProjectFormOpen(open);
           if (!open) setEditingProject(false);
         }}
-        project={
-          editingProject ? (projects.find((item) => item.id === activeId) ?? null) : null
-        }
+        project={editingProject ? (projects.find((item) => item.id === activeId) ?? null) : null}
       />
       {activeId ? (
         <TaskForm

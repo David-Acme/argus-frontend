@@ -1,28 +1,30 @@
+import type { ReactElement, ReactNode } from 'react';
 import { View } from 'react-native';
 import type { ScheduleEntry } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
-import { TIMELINE_HOURS } from '@/shared/constants';
+import { TIMELINE_HOURS } from '@/shared/constants/dashboard.constant';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
 import { AgendaItem } from './agenda-item';
 
 type ScheduleTimelineProps = {
   entries: readonly ScheduleEntry[];
-  /** Formats an hour of the day for the gutter, e.g. 9 → "9 AM". */
-  formatHour: (hour: number) => string;
   /** Hour range to render; defaults to the working span. */
   hours?: readonly number[];
   onSelect?: (entry: ScheduleEntry) => void;
   onLongPress?: (entry: ScheduleEntry) => void;
+  renderContextMenu?: (entry: ScheduleEntry, trigger: ReactElement) => ReactNode;
 };
 
 /** Hour gutter on the left, one card per occupied hour on the right. */
 export function ScheduleTimeline({
   entries,
-  formatHour,
   hours = TIMELINE_HOURS,
   onSelect,
   onLongPress,
+  renderContextMenu,
 }: ScheduleTimelineProps) {
+  const date = useDateFormatter();
   const firstHour = entries.length > 0 ? entries[0].hour : hours[0];
 
   return (
@@ -43,7 +45,7 @@ export function ScheduleTimeline({
                     'text-[13px] font-medium',
                     marked ? 'text-foreground' : 'text-muted-foreground'
                   )}>
-                  {formatHour(hour)}
+                  {date.formatHour(hour)}
                 </Text>
               </View>
             </View>
@@ -57,6 +59,9 @@ export function ScheduleTimeline({
                   status={entry.status}
                   onPress={onSelect ? () => onSelect(entry) : undefined}
                   onLongPress={onLongPress ? () => onLongPress(entry) : undefined}
+                  contextMenu={
+                    renderContextMenu ? (trigger) => renderContextMenu(entry, trigger) : undefined
+                  }
                 />
               ) : (
                 // A hairline keeps an empty hour reading as a schedule row.

@@ -3,29 +3,23 @@ import { Pressable, View } from 'react-native';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { addDays, addMonths, startOfDay } from '@/shared/libs/calendar';
 import { CalendarMonthView } from './calendar-month-view';
 
 type DayPickerFieldProps = {
   value: Date;
   onChange: (day: Date) => void;
-  /** Localized short weekday names, Monday first. */
-  weekdayLabels: readonly string[];
-  locale: string;
 };
 
 /** Shows the chosen day and opens a month to change it; two shortcuts cover most cases. */
-export function DayPickerField({ value, onChange, weekdayLabels, locale }: DayPickerFieldProps) {
+export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
   const { t } = useTranslation();
+  const date = useDateFormatter();
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(value);
-  const today = startOfDay(new Date());
-  const label = new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }).format(value);
+  const today = date.startOfDay(new Date());
+  const label = date.formatPickerDay(value);
 
   const shortcut = (day: Date, text: string) => (
     <Pressable
@@ -51,7 +45,7 @@ export function DayPickerField({ value, onChange, weekdayLabels, locale }: DayPi
         <Icon name="calendar" className="text-muted-foreground size-4" />
       </Pressable>
       {shortcut(today, t('screens.agenda.today'))}
-      {shortcut(addDays(today, 1), t('screens.agenda.tomorrow'))}
+      {shortcut(date.addDays(today, 1), t('screens.agenda.tomorrow'))}
 
       <AdaptiveDialog
         open={open}
@@ -60,21 +54,19 @@ export function DayPickerField({ value, onChange, weekdayLabels, locale }: DayPi
         closeLabel={t('common.close')}>
         <View className="gap-2 pb-1">
           <View className="flex-row items-center justify-between">
-            <Text className="text-[14px] font-semibold">
-              {new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(month)}
-            </Text>
+            <Text className="text-[14px] font-semibold">{date.formatMonthYear(month)}</Text>
             <View className="flex-row gap-1">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('screens.agenda.previous-month')}
-                onPress={() => setMonth((current) => addMonths(current, -1))}
+                onPress={() => setMonth((current) => date.addMonths(current, -1))}
                 className="bg-surface-secondary size-9 items-center justify-center rounded-full active:opacity-70">
                 <Icon name="chevron-left" className="text-foreground size-4" />
               </Pressable>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t('screens.agenda.next-month')}
-                onPress={() => setMonth((current) => addMonths(current, 1))}
+                onPress={() => setMonth((current) => date.addMonths(current, 1))}
                 className="bg-surface-secondary size-9 items-center justify-center rounded-full active:opacity-70">
                 <Icon name="chevron-right" className="text-foreground size-4" />
               </Pressable>
@@ -84,7 +76,6 @@ export function DayPickerField({ value, onChange, weekdayLabels, locale }: DayPi
             anchor={month}
             selected={value}
             entries={[]}
-            weekdayLabels={weekdayLabels}
             onSelectDay={(day) => {
               onChange(day);
               setOpen(false);

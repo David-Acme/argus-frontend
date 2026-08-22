@@ -3,6 +3,8 @@ const { withUniwindConfig } = require('uniwind/metro');
 
 const config = getDefaultConfig(__dirname);
 
+config.resolver.resolverMainFields = ['react-native', 'browser', 'module', 'main'];
+
 module.exports = withUniwindConfig(config, {
   // relative path to your global.css file (from previous step)
   cssEntryFile: './src/global.css',

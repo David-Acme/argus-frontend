@@ -21,11 +21,15 @@ import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
 import { SectionPanel } from '@/shared/components/layout';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { itemIn, screenIn } from '@/shared/libs/animations';
-import { initialDashboardDestination, type DashboardDestination } from '@/shared/libs/dashboard-route-state';
+import {
+  initialDashboardDestination,
+  type DashboardDestination,
+} from '@/shared/libs/dashboard-route-state';
 import { getDashboardSectionLayout } from '@/shared/libs/dashboard-section-layout';
 import { DASHBOARD_TAB_ROUTE, IS_NATIVE, TODAY_PREVIEW_LIMIT } from '@/shared/constants';
 import { Redirect, useRouter } from 'expo-router';
@@ -44,7 +48,8 @@ function firstNameOf(user: IAuthUser | null): string {
 
 function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
   const router = useRouter();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
+  const date = useDateFormatter();
   const { height, isShort, isWide, isExpanded, width } = useWindowClass();
   const { can } = usePermissions();
   const {
@@ -56,7 +61,6 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
     summary,
     activityLevels,
   } = useDashboardData(user?.id ?? null);
-  const locale = language === 'es' ? 'es-PE' : 'en-US';
   const [query, setQuery] = useState('');
   const sectionLayout = useMemo(() => getDashboardSectionLayout(width, height), [height, width]);
 
@@ -76,10 +80,11 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
     (entry: CalendarEntry) =>
       entry.isAllDay
         ? t('screens.agenda.event-all-day')
-        : new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(
-            new Date(entry.startsAt)
+        : date.formatTimeRange(
+            new Date(entry.startsAt),
+            entry.endsAt ? new Date(entry.endsAt) : null
           ),
-    [locale, t]
+    [date, t]
   );
 
   const scheduleEntries = useMemo<ScheduleEntry[]>(
@@ -88,16 +93,17 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
         id: entry.id,
         title: entry.title,
         time: formatTime(entry),
-        hour: new Date(entry.startsAt).getHours(),
+        hour: date.hourOf(new Date(entry.startsAt)),
         status: entry.status,
         members: [],
       })),
-    [todayRows, formatTime]
+    [date, todayRows, formatTime]
   );
 
   const trend = useMemo(() => {
     const { eventsCurrent, eventsPrevious } = summary;
-    if (eventsCurrent === eventsPrevious) return { label: String(eventsCurrent), direction: 'flat' as const };
+    if (eventsCurrent === eventsPrevious)
+      return { label: String(eventsCurrent), direction: 'flat' as const };
     if (eventsPrevious === 0) {
       return { label: `+${eventsCurrent}`, direction: 'up' as const };
     }
@@ -149,15 +155,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
               action={t('screens.home.see-all')}
               onAction={() => router.push('/agenda')}
             />
-            <ScheduleTimeline
-              entries={scheduleEntries}
-              formatHour={(hour) =>
-                new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(
-                  new Date(2026, 0, 1, hour)
-                )
-              }
-              onSelect={() => router.push('/agenda')}
-            />
+            <ScheduleTimeline entries={scheduleEntries} onSelect={() => router.push('/agenda')} />
           </Animated.View>
         ) : null
       }
@@ -348,7 +346,6 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
             </SectionPanel>
           </Animated.View>
         </View>
-
       </Animated.View>
     </DashboardShell>
   );

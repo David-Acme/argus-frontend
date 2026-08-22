@@ -6,6 +6,8 @@ import {
   SlideOutDown,
   ZoomIn,
 } from 'react-native-reanimated';
+import { IS_IOS } from '@/shared/constants';
+import { contextMenuMotion } from '@/shared/libs/context-menu-motion';
 
 /** Shared timing easing for soft, natural motion. */
 export const easeOutCubic = Easing.out(Easing.cubic);
@@ -40,6 +42,19 @@ export const menuIn = ZoomIn.withInitialValues({ transform: [{ scale: 0.96 }] })
   .mass(0.9);
 
 export const menuOut = FadeOut.duration(120).easing(Easing.in(Easing.linear));
+
+const contextMenu = contextMenuMotion(IS_IOS ? 'ios' : 'android');
+
+/** Contextual actions should settle quickly, not bounce like a dialog. */
+export const contextMenuIn = ZoomIn.withInitialValues({
+  transform: [{ scale: contextMenu.initialScale }],
+})
+  .duration(contextMenu.enterDuration)
+  .easing(easeOutCubic);
+
+export const contextMenuOut = FadeOut.duration(contextMenu.exitDuration).easing(
+  Easing.in(Easing.cubic)
+);
 
 /** Bottom sheet: springs up, slides back down. Transform only, so it stays on the UI thread. */
 export const sheetIn = SlideInDown.springify().damping(26).stiffness(320).mass(0.9);
