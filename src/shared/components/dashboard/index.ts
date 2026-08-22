@@ -19,3 +19,4 @@ export { StatCard } from './stat-card';
 export { TileChart } from './tile-chart';
 export { TrendChart } from './trend-chart';
 export { WeekStrip, type WeekStripDay } from './week-strip';
+export * from './summary-card';

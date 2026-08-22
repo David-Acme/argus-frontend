@@ -87,6 +87,11 @@ class WebArgusNetService implements IArgusNetService {
     return socket;
   }
 
+  /** The browser reaches the server by name; there is no pinned address here. */
+  async refreshAddress(): Promise<boolean> {
+    return false;
+  }
+
   async isPaired(): Promise<boolean> {
     return isPaired();
   }

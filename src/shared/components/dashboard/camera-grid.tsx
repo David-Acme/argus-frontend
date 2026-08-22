@@ -3,6 +3,7 @@ import Animated from 'react-native-reanimated';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { itemIn } from '@/shared/libs/animations';
+import { cn } from '@/shared/libs/utils';
 import { CameraTile } from './camera-tile';
 
 type CameraGridItem = {
@@ -20,13 +21,19 @@ type CameraGridProps = {
   cameras: readonly CameraGridItem[];
   emptyLabel: string;
   onSelect?: (id: string) => void;
+  /** Takes the height it is given; used in the side column of wide windows. */
+  fill?: boolean;
 };
 
 /** Wrapping grid: two per row on phones, as many as fit on wider windows. */
-export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
+export function CameraGrid({ cameras, emptyLabel, onSelect, fill = false }: CameraGridProps) {
   if (cameras.length === 0) {
     return (
-      <View className="bg-card items-center gap-2 rounded-[20px] px-6 py-8 shadow-md shadow-black/[0.05]">
+      <View
+        className={cn(
+          'bg-card items-center justify-center gap-2 rounded-[20px] px-6 py-8 shadow-md shadow-black/[0.05]',
+          fill && 'flex-1'
+        )}>
         <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
           <Icon name="video" className="text-muted-foreground size-5" />
         </View>
@@ -36,7 +43,7 @@ export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
   }
 
   return (
-    <View className="flex-row flex-wrap gap-3">
+    <View className={cn('flex-row flex-wrap content-start gap-3', fill && 'flex-1')}>
       {cameras.map((camera, index) => (
         <Animated.View
           key={camera.id}

@@ -46,7 +46,9 @@ export function NotificationPopover({
       <PopoverTrigger asChild>
         <DashboardIconButton icon="bell" label={label} badge={unreadCount} />
       </PopoverTrigger>
-      <PopoverContent>
+      {/* Tight to the bell: a wide gap reads as a floating panel, not as
+          something the button opened. */}
+      <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">
           <Text className="text-[15px] font-semibold">{title}</Text>
           <Text className="text-foreground-secondary text-xs">{summary}</Text>

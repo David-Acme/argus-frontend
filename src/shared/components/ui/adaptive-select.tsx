@@ -1,4 +1,17 @@
 import * as PopoverPrimitive from '@rn-primitives/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/shared/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 import { useUniwind } from 'uniwind';
@@ -8,7 +21,7 @@ import { Input } from '@/shared/components/ui/input';
 import { OptionRow } from '@/shared/components/ui/option-row';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/shared/components/ui/sheet';
 import { Text } from '@/shared/components/ui/text';
-import { colorTokens } from '@/shared/constants';
+import { colorTokens, IS_WEB } from '@/shared/constants';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 
@@ -154,7 +167,9 @@ export function AdaptiveSelect<T extends string = string>({
     onChange(next as T);
   }
 
-  if (isCompact) {
+  // A sheet belongs to a touch screen. A narrow browser window is still a
+  // pointer, so the web keeps the dropdown at every size.
+  if (isCompact && !IS_WEB) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
@@ -171,6 +186,51 @@ export function AdaptiveSelect<T extends string = string>({
           />
         </SheetContent>
       </Sheet>
+    );
+  }
+
+  // Web, short static list: the plain select, which the browser already knows
+  // how to place and keyboard-navigate. A long list keeps the filter popover.
+  if (IS_WEB && !showFilter) {
+    const selected = options.find((option) => option.value === value);
+    return (
+      <Select
+        value={selected ? { value: selected.value, label: selected.label } : undefined}
+        onValueChange={(option) => {
+          if (option) onChange(option.value as T);
+        }}>
+        <SelectTrigger asChild>{trigger}</SelectTrigger>
+        <SelectContent className={contentClassName}>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value} label={option.label} />
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // Native, wide window: a panel, not an anchored popover. The popover
+  // primitive never mounts when its trigger lives inside a dialog, which is
+  // where most selects are, so the options would simply never appear.
+  if (!IS_WEB) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className={cn('gap-3 sm:max-w-[420px]', contentClassName)}>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          <SelectList
+            options={options}
+            value={value}
+            showFilter={showFilter}
+            searchPlaceholder={searchPlaceholder}
+            emptyLabel={emptyLabel}
+            density="comfortable"
+            onChoose={choose}
+          />
+        </DialogContent>
+      </Dialog>
     );
   }
 

@@ -16,6 +16,12 @@ export interface IArgusNetService {
   requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult>;
   /** Opens a WebSocket over the paired strict-TLS client (same CA as HTTP). */
   openSocket(options: NetSocketOptions): Promise<IArgusSocket>;
+  /**
+   * Looks the paired server up again and re-points the instance at it.
+   * `true` when the address changed. The socket reports its failures through
+   * its own handler, so the reconnect path has to ask for this explicitly.
+   */
+  refreshAddress(): Promise<boolean>;
   isPaired(): Promise<boolean>;
   instance(): Promise<NetPairedInstance | null>;
   unpair(): Promise<void>;

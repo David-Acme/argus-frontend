@@ -20,6 +20,7 @@ import {
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { Input } from '@/shared/components/ui/input';
+import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { ZONE_COLORS, ZONE_MAX_POINTS, ZONE_MIN_POINTS } from '@/shared/constants';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
@@ -150,9 +151,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
                     searchPlaceholder={t('screens.home.search-placeholder')}
                     emptyLabel={t('screens.cameras.zones-empty')}
                     trigger={
-                      <Button variant="outline" className="justify-between">
-                        <Text>{typeLabel(field.value)}</Text>
-                      </Button>
+                      <SelectField label={typeLabel(field.value)} />
                     }
                   />
                   <FormMessage />

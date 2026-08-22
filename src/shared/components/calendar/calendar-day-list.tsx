@@ -2,8 +2,8 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useCallback, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
+import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { EmptyState } from '@/shared/components/layout';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { cn } from '@/shared/libs/utils';
 
@@ -13,6 +13,9 @@ type CalendarDayListProps = {
   formatTime: (entry: CalendarEntry) => string;
   onSelect?: (entry: CalendarEntry) => void;
   renderActions?: (entry: CalendarEntry) => ReactNode;
+  /** Turns the empty panel into the way to add something to this day. */
+  onCreate?: () => void;
+  addLabel?: string;
 };
 
 /** Row height used as the size hint; rows are single-line by design. */
@@ -28,6 +31,8 @@ export function CalendarDayList({
   formatTime,
   onSelect,
   renderActions,
+  onCreate,
+  addLabel,
 }: CalendarDayListProps) {
   const bottomInset = useBottomNavInset();
   const renderItem = useCallback(
@@ -70,7 +75,22 @@ export function CalendarDayList({
   );
 
   if (entries.length === 0) {
-    return <EmptyState icon="calendar" title={emptyLabel} fill={false} />;
+    // A dashed panel that fills the column: the day keeps its place on the
+    // screen, and tapping it is how something gets planned there.
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={addLabel ?? emptyLabel}
+        disabled={!onCreate}
+        onPress={onCreate}
+        className="border-border min-h-[120px] flex-1 items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 active:opacity-70">
+        <Icon name="calendar" className="text-muted-foreground size-5" />
+        <Text className="text-muted-foreground text-center text-[13px]">{emptyLabel}</Text>
+        {onCreate && addLabel ? (
+          <Text className="text-foreground text-[13px] font-medium">{addLabel}</Text>
+        ) : null}
+      </Pressable>
+    );
   }
 
   return (

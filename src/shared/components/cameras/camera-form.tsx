@@ -9,7 +9,6 @@ import type { ICameraCreate, ICameraUpdate } from '@/core/interfaces';
 import type { CameraDriverKind, CameraRecordMode, MenuOption } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
-import { AutocompleteInput } from '@/shared/components/ui/autocomplete-input';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -22,8 +21,9 @@ import {
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { Input } from '@/shared/components/ui/input';
+import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
-import { CAMERA_DRIVER_SPECS, CAMERA_ICONS, CAMERA_NAME_SUGGESTIONS } from '@/shared/constants';
+import { CAMERA_DRIVER_SPECS, CAMERA_ICONS } from '@/shared/constants';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -148,14 +148,6 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
       isEdit: true,
     });
   }, [open, camera, form]);
-
-  const nameSuggestions = useMemo(
-    () =>
-      CAMERA_NAME_SUGGESTIONS.map((key) =>
-        t(`screens.cameras.suggest-${key}` as 'screens.cameras.suggest-kitchen')
-      ),
-    [t]
-  );
 
   const driverOptions = useMemo<MenuOption<CameraDriverKind>[]>(
     () => [
@@ -282,11 +274,9 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                     searchPlaceholder={t('screens.home.search-placeholder')}
                     emptyLabel={t('screens.cameras.zones-empty')}
                     trigger={
-                      <Button variant="outline" className="justify-between">
-                        <Text>
-                          {driverOptions.find((option) => option.value === field.value)?.label}
-                        </Text>
-                      </Button>
+                      <SelectField
+                        label={driverOptions.find((option) => option.value === field.value)?.label}
+                      />
                     }
                   />
                   <FormMessage />
@@ -314,12 +304,10 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                     />
                     <View className="min-w-0 flex-1">
                       <FormControl>
-                        <AutocompleteInput
+                        <Input
                           placeholder={t('screens.cameras.form.name-placeholder')}
                           autoCapitalize="sentences"
                           returnKeyType="next"
-                          suggestions={nameSuggestions}
-                          onPick={field.onChange}
                           {...field}
                           onChangeText={field.onChange}
                         />
@@ -517,13 +505,13 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                     searchPlaceholder={t('screens.home.search-placeholder')}
                     emptyLabel={t('screens.cameras.zones-empty')}
                     trigger={
-                      <Button variant="outline" className="justify-between">
-                        <Text>
-                          {field.value === 'continuous'
+                      <SelectField
+                        label={
+                          field.value === 'continuous'
                             ? t('screens.cameras.form.record-continuous')
-                            : t('screens.cameras.form.record-events')}
-                        </Text>
-                      </Button>
+                            : t('screens.cameras.form.record-events')
+                        }
+                      />
                     }
                   />
                   <FormMessage />

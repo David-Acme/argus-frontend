@@ -8,6 +8,7 @@ import {
   loadInstance,
   savePairing,
   toNetError,
+  updateInstanceIp,
 } from './net-persistence';
 import type {
   NetDiscovery,
@@ -53,17 +54,55 @@ class NativeArgusNetService implements IArgusNetService {
       configuredKey = key;
       net.configure(instance.caPem, instance.host, instance.ip);
     }
-    try {
-      return await net.request({
+    const send = (): Promise<NetHttpResult> =>
+      net.request({
         url: options.url,
         method: options.method,
         headers: options.headers ?? {},
         body: options.body ?? '',
         files: options.files ?? [],
       });
+
+    try {
+      return await send();
     } catch (error) {
-      throw toNetError(error, 'NETWORK_ERROR');
+      const failure = toNetError(error, 'NETWORK_ERROR');
+      if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
+        throw failure;
+      }
+      try {
+        return await send();
+      } catch (retryError) {
+        throw toNetError(retryError, 'NETWORK_ERROR');
+      }
     }
+  }
+
+  /**
+   * The server moved: its lease changed, or the phone came back on another
+   * network. mDNS still finds it by name, so the pinned address is refreshed
+   * instead of asking the user to pair again.
+   */
+  async refreshAddress(): Promise<boolean> {
+    const instance = await loadInstance();
+    return instance ? this.rediscover(instance.ip) : false;
+  }
+
+  private async rediscover(currentIp: string): Promise<boolean> {
+    let found;
+    try {
+      found = await net.discover(DISCOVERY_TIMEOUT_MS);
+    } catch {
+      return false;
+    }
+    if (!found.ip || found.ip === currentIp) return false;
+
+    await updateInstanceIp(found.ip);
+    const instance = await loadInstance();
+    if (!instance) return false;
+    configuredKey = `${instance.caPem}|${instance.host}|${instance.ip}`;
+    net.configure(instance.caPem, instance.host, instance.ip);
+    return true;
   }
 
   async requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult> {
@@ -95,7 +134,17 @@ class NativeArgusNetService implements IArgusNetService {
     try {
       return await net.openSocket(options);
     } catch (error) {
-      throw toNetError(error, 'NETWORK_ERROR');
+      // Same story as an HTTP call: the address can go stale between two
+      // reconnects, and the socket is the one that notices first.
+      const failure = toNetError(error, 'NETWORK_ERROR');
+      if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
+        throw failure;
+      }
+      try {
+        return await net.openSocket(options);
+      } catch (retryError) {
+        throw toNetError(retryError, 'NETWORK_ERROR');
+      }
     }
   }
 

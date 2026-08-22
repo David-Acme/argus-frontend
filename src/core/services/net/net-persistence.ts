@@ -63,6 +63,16 @@ export async function savePairing(result: NetPairing, host: string, ip: string):
   };
 }
 
+/**
+ * Re-points the paired instance at a new address. The certificate is pinned to
+ * the instance, not to the address, so a DHCP lease change must not look like
+ * a different server.
+ */
+export async function updateInstanceIp(ip: string): Promise<void> {
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, ip);
+  if (cachedInstance) cachedInstance = { ...cachedInstance, ip };
+}
+
 export async function clearInstance(): Promise<void> {
   cachedInstance = null;
   for (const key of Object.values(NET_STORAGE_KEYS)) {

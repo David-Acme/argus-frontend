@@ -61,14 +61,28 @@ export function AgendaItem({
             </Text>
             {actions ?? <Icon name="more-horizontal" className="text-muted-foreground size-4" />}
           </View>
-          <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
-          <View className="mt-1.5 flex-row items-center justify-between gap-3">
-            {members && members.length > 0 ? <MemberStack members={members} /> : <View className="h-6" />}
-            <View className="flex-row items-center gap-1.5">
-              <Icon name="clock" className="text-muted-foreground size-3.5" />
-              <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
+          {/* Without members the row collapses: an empty avatar slot turns a
+              one-line entry into a card with a hole in it. */}
+          {members && members.length > 0 ? (
+            <>
+              <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
+              <View className="mt-1.5 flex-row items-center justify-between gap-3">
+                <MemberStack members={members} />
+                <View className="flex-row items-center gap-1.5">
+                  <Icon name="clock" className="text-muted-foreground size-3.5" />
+                  <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <View className="flex-row items-center justify-between gap-3">
+              <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
+              <View className="flex-row items-center gap-1.5">
+                <Icon name="clock" className="text-muted-foreground size-3.5" />
+                <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
+              </View>
             </View>
-          </View>
+          )}
           {note ? (
             <View className="bg-surface mt-2.5 rounded-[14px] p-3">
               <Text className="text-foreground-secondary text-[13px] leading-[19px]">{note}</Text>

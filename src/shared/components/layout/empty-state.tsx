@@ -16,6 +16,33 @@ type EmptyStateProps = {
   className?: string;
 };
 
+type EmptyStateContentProps = {
+  icon: IconName;
+  title: string;
+  hint?: string;
+  action?: ReactNode;
+};
+
+/** The message itself, so a panel that already exists can host it. */
+export function EmptyStateContent({ icon, title, hint, action }: EmptyStateContentProps) {
+  return (
+    <View className="items-center justify-center gap-4">
+      <View className="bg-surface-secondary size-14 items-center justify-center rounded-2xl">
+        <Icon name={icon} className="text-foreground-secondary size-6" />
+      </View>
+      <View className="items-center gap-1.5">
+        <Text className="text-center text-[17px] font-semibold">{title}</Text>
+        {hint ? (
+          <Text className="text-foreground-secondary text-center text-[13px] leading-5">
+            {hint}
+          </Text>
+        ) : null}
+      </View>
+      {action}
+    </View>
+  );
+}
+
 /**
  * One calm panel instead of a wall of placeholders: it takes the space a list
  * would have had, stays centred, and caps its width so it reads the same on a
@@ -23,26 +50,17 @@ type EmptyStateProps = {
  */
 export function EmptyState({ icon, title, hint, action, fill = true, className }: EmptyStateProps) {
   return (
-    <View className={cn('w-full', fill && 'flex-1')}>
+    // The panel takes the width it is given and centres itself in the height:
+    // stretched to a full tablet column it would read as a giant empty box.
+    <View className={cn('w-full items-center justify-center', fill && 'flex-1')}>
       <View
         className={cn(
-          'border-border-subtle bg-card/50 w-full flex-1 items-center justify-center gap-4 self-center rounded-3xl border border-dashed px-6',
+          'border-border-subtle bg-card/50 w-full items-center justify-center gap-4 self-center rounded-3xl border border-dashed px-6',
           fill ? 'py-10' : 'py-8',
           className
         )}
         style={{ maxWidth: EMPTY_STATE_MAX_WIDTH }}>
-        <View className="bg-surface-secondary size-14 items-center justify-center rounded-2xl">
-          <Icon name={icon} className="text-foreground-secondary size-6" />
-        </View>
-        <View className="items-center gap-1.5">
-          <Text className="text-center text-[17px] font-semibold">{title}</Text>
-          {hint ? (
-            <Text className="text-foreground-secondary text-center text-[13px] leading-5">
-              {hint}
-            </Text>
-          ) : null}
-        </View>
-        {action}
+        <EmptyStateContent icon={icon} title={title} hint={hint} action={action} />
       </View>
     </View>
   );

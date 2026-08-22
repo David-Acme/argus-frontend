@@ -75,6 +75,12 @@ function QrScanSheet({
 
   return (
     <View className={cn(!isSupportingPane && 'px-5 pt-4')}>
+      {isSupportingPane ? (
+        <View className="bg-surface-secondary mb-5 size-12 items-center justify-center rounded-2xl">
+          <Icon name="scan-barcode" className="text-foreground-secondary size-6" />
+        </View>
+      ) : null}
+
       <View
         className={cn(
           'flex-row items-center gap-1.5 self-start rounded-full px-2.5 py-1',

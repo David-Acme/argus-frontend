@@ -49,7 +49,14 @@ function DialogOverlay({
         onPress={Platform.select({ web: onOverlayPress, native: onPress })}
         asChild={IS_NATIVE}>
         <NativeOnlyAnimatedView entering={overlayIn} exiting={overlayOut} as="Pressable">
-          <NativeOnlyAnimatedView entering={dialogIn} exiting={dialogOut}>
+          {/* Full width, so the panel's own `w-full` resolves against the
+              window and its max width can do the sizing. Without it the
+              animation wrapper shrinks to the content and every dialog ends up
+              as wide as its longest row. */}
+          <NativeOnlyAnimatedView
+            entering={dialogIn}
+            exiting={dialogOut}
+            className="w-full items-center">
             <>{children}</>
           </NativeOnlyAnimatedView>
         </NativeOnlyAnimatedView>
@@ -71,7 +78,7 @@ function DialogContent({
       <DialogOverlay>
         <DialogPrimitive.Content
           className={cn(
-            'bg-background border-border z-50 mx-auto flex w-full flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg',
+            'bg-background border-border z-50 mx-auto flex max-h-[94%] w-full flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg',
             Platform.select({
               web: 'animate-in fade-in-0 zoom-in-95 duration-200 web:max-w-[calc(100%-2rem)]',
             }),

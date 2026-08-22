@@ -13,18 +13,24 @@ import {
   ProjectCard,
   ScheduleTimeline,
   SectionHeading,
+  SummaryCard,
 } from '@/shared/components/dashboard';
 import type { CalendarEntry, DashboardTab, ScheduleEntry } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
-import { EmptyState } from '@/shared/components/layout';
+import { SectionPanel } from '@/shared/components/layout';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { itemIn, screenIn } from '@/shared/libs/animations';
-import { DASHBOARD_TAB_ROUTE, IS_NATIVE, TODAY_PREVIEW_LIMIT } from '@/shared/constants';
+import {
+  DASHBOARD_SECTION_MIN_HEIGHT,
+  DASHBOARD_TAB_ROUTE,
+  IS_NATIVE,
+  TODAY_PREVIEW_LIMIT,
+} from '@/shared/constants';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -139,9 +145,29 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
       composeLabel={voiceEnabled && IS_NATIVE ? t('screens.home.talk') : t('screens.home.compose')}
       onNavigate={goToTab}
       onCompose={handleVoice}
+      footer={
+        isExpanded && !isShort ? (
+          <Animated.View entering={itemIn.delay(300).duration(320)} className="gap-3">
+            <SectionHeading
+              title={t('screens.home.today-agenda')}
+              action={t('screens.home.see-all')}
+              onAction={() => router.push('/agenda')}
+            />
+            <ScheduleTimeline
+              entries={scheduleEntries}
+              formatHour={(hour) =>
+                new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(
+                  new Date(2026, 0, 1, hour)
+                )
+              }
+              onSelect={() => router.push('/agenda')}
+            />
+          </Animated.View>
+        ) : null
+      }
       aside={
         <Animated.View entering={itemIn.delay(200).duration(320)} className="flex-1 gap-5">
-          <View className="gap-3">
+          <View className="min-h-0 flex-1 gap-3">
             <SectionHeading
               title={t('screens.home.cameras_section')}
               action={t('screens.home.cameras-online', {
@@ -153,9 +179,36 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
             <CameraGrid
               cameras={cameraTiles}
               emptyLabel={t('screens.home.cameras-empty')}
+              fill={isWide}
               onSelect={(id) => router.push(`/cameras/${id}`)}
             />
           </View>
+
+          <SummaryCard
+            title={t('screens.home.overview')}
+            items={[
+              {
+                icon: 'video',
+                label: t('screens.home.cameras'),
+                value: `${summary.camerasOnline}/${summary.camerasTotal}`,
+              },
+              {
+                icon: 'bell',
+                label: t('screens.home.reminders'),
+                value: String(summary.remindersPending),
+              },
+              {
+                icon: 'list-todo',
+                label: t('screens.home.tasks-open'),
+                value: String(summary.tasksOpen),
+              },
+              {
+                icon: 'activity',
+                label: t('screens.home.events-week'),
+                value: String(summary.eventsCurrent),
+              },
+            ]}
+          />
         </Animated.View>
       }>
       <Animated.View entering={screenIn} className="gap-5">
@@ -221,7 +274,19 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
               action={projects.length > 0 ? t('screens.home.see-all') : undefined}
               onAction={() => router.push('/projects')}
             />
-            {visibleProjects.length > 0 ? (
+            <SectionPanel
+              isEmpty={visibleProjects.length === 0}
+              icon="list-todo"
+              emptyTitle={t('screens.projects.empty')}
+              emptyHint={t('screens.projects.empty-hint')}
+              emptyAction={
+                can('project', 'create') ? (
+                  <Button size="sm" onPress={() => router.push('/projects?new=project')}>
+                    <Text>{t('screens.projects.new-project')}</Text>
+                  </Button>
+                ) : undefined
+              }
+              minHeight={isWide ? DASHBOARD_SECTION_MIN_HEIGHT : undefined}>
               <ScrollView
                 horizontal
                 nestedScrollEnabled
@@ -246,21 +311,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
                   />
                 ))}
               </ScrollView>
-            ) : (
-              <EmptyState
-                icon="list-todo"
-                title={t('screens.projects.empty')}
-                hint={t('screens.projects.empty-hint')}
-                fill={false}
-                action={
-                  can('project', 'create') ? (
-                    <Button size="sm" onPress={() => router.push('/projects?new=project')}>
-                      <Text>{t('screens.projects.new-project')}</Text>
-                    </Button>
-                  ) : undefined
-                }
-              />
-            )}
+            </SectionPanel>
           </Animated.View>
 
           <Animated.View
@@ -271,57 +322,34 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
               action={t('screens.home.see-all')}
               onAction={() => router.push('/agenda')}
             />
-            <View className="gap-2.5">
-              {todayRows.length > 0 ? (
-                todayRows
-                  .slice(0, TODAY_PREVIEW_LIMIT)
-                  .map((entry) => (
-                    <AgendaItem
-                      key={entry.id}
-                      title={entry.title}
-                      time={formatTime(entry)}
-                      status={entry.status}
-                      onPress={() => router.push('/agenda')}
-                      actions={renderActions(entry)}
-                    />
-                  ))
-              ) : (
-                <EmptyState
-                  icon="calendar"
-                  title={t('screens.home.empty-agenda')}
-                  hint={t('screens.home.empty-agenda-hint')}
-                  fill={false}
-                  action={
-                    can('calendar_event', 'create') ? (
-                      <Button size="sm" onPress={() => router.push('/agenda?new=event')}>
-                        <Text>{t('screens.agenda.new-event')}</Text>
-                      </Button>
-                    ) : undefined
-                  }
+            <SectionPanel
+              isEmpty={todayRows.length === 0}
+              icon="calendar"
+              emptyTitle={t('screens.home.empty-agenda')}
+              emptyHint={t('screens.home.empty-agenda-hint')}
+              emptyAction={
+                can('calendar_event', 'create') ? (
+                  <Button size="sm" onPress={() => router.push('/agenda?new=event')}>
+                    <Text>{t('screens.agenda.new-event')}</Text>
+                  </Button>
+                ) : undefined
+              }
+              minHeight={isWide ? DASHBOARD_SECTION_MIN_HEIGHT : undefined}
+              className="gap-2.5">
+              {todayRows.slice(0, TODAY_PREVIEW_LIMIT).map((entry) => (
+                <AgendaItem
+                  key={entry.id}
+                  title={entry.title}
+                  time={formatTime(entry)}
+                  status={entry.status}
+                  onPress={() => router.push('/agenda')}
+                  actions={renderActions(entry)}
                 />
-              )}
-            </View>
+              ))}
+            </SectionPanel>
           </Animated.View>
         </View>
 
-        {isExpanded && !isShort ? (
-          <Animated.View entering={itemIn.delay(300).duration(320)} className="gap-3">
-            <SectionHeading
-              title={t('screens.home.today-agenda')}
-              action={t('screens.home.see-all')}
-              onAction={() => router.push('/agenda')}
-            />
-            <ScheduleTimeline
-              entries={scheduleEntries}
-              formatHour={(hour) =>
-                new Intl.DateTimeFormat(locale, { hour: 'numeric' }).format(
-                  new Date(2026, 0, 1, hour)
-                )
-              }
-              onSelect={() => router.push('/agenda')}
-            />
-          </Animated.View>
-        ) : null}
       </Animated.View>
     </DashboardShell>
   );

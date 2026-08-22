@@ -305,7 +305,13 @@ function QrScannerScreen() {
 
   return (
     <View className={cn('bg-background flex-1', isSupportingPane && 'flex-row')}>
-      <View className="relative flex-1">
+      <View
+        className={cn(
+          'relative flex-1',
+          // A framed viewfinder reads as part of the screen; edge to edge it
+          // reads as the camera app took over.
+          isSupportingPane && 'border-border-subtle m-5 overflow-hidden rounded-[28px] border'
+        )}>
         {granted ? (
           <CameraView
             style={StyleSheet.absoluteFill}

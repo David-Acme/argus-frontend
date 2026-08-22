@@ -21,6 +21,11 @@ type DashboardShellProps = {
    */
   aside?: ReactNode;
   /**
+   * Full-width band under the two columns. A wide timeline reads better across
+   * the whole window than squeezed into the content column.
+   */
+  footer?: ReactNode;
+  /**
    * `false` when the screen brings its own scroller (a list, a calendar grid):
    * nesting two of them makes the page drift while the inner list scrolls.
    */
@@ -57,6 +62,7 @@ export function DashboardShell({
   onCompose,
   children,
   aside,
+  footer,
   scrollable = true,
 }: DashboardShellProps) {
   const insets = useSafeAreaInsets();
@@ -102,14 +108,18 @@ export function DashboardShell({
               scarce axis is height, so stacking the aside is the worse trade.
             */}
             {aside && isWide ? (
-              <View className="flex-1 flex-row items-stretch gap-5 lg:gap-6">
-                <View className="min-w-0 flex-1 gap-5">{children}</View>
-                <View className="w-[300px] shrink-0 gap-5 lg:w-[340px]">{aside}</View>
+              <View className="flex-1 gap-5">
+                <View className="flex-row items-stretch gap-5 lg:gap-6">
+                  <View className="min-w-0 flex-1 gap-5">{children}</View>
+                  <View className="w-[300px] shrink-0 gap-5 lg:w-[340px]">{aside}</View>
+                </View>
+                {footer}
               </View>
             ) : (
               <View className="flex-1 gap-5">
                 {children}
                 {aside}
+                {footer}
               </View>
             )}
           </View>

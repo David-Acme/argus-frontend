@@ -248,7 +248,10 @@ export default function ScheduleScreen() {
             ) : (
               <View className="bg-divider/30 h-hairline w-full" />
             )}
-            <View className={isWide ? 'min-h-0 w-[300px] shrink-0 lg:w-[340px]' : undefined}>
+            <View
+              className={
+                isWide ? 'min-h-0 w-[300px] shrink-0 gap-1.5 lg:w-[340px]' : 'gap-1.5'
+              }>
               <View className="flex-row items-center justify-between pb-1.5">
                 <Text className="text-[13px] font-medium">
                   {new Intl.DateTimeFormat(locale, {
@@ -258,13 +261,13 @@ export default function ScheduleScreen() {
                   }).format(selectedDay)}
                 </Text>
                 <View className="flex-row items-center gap-2">
-                  <Text className="text-muted-foreground text-[12px]">
-                    {selectedDayEntries.length > 0
-                      ? t('screens.agenda.day-count', {
-                          count: String(selectedDayEntries.length),
-                        })
-                      : t('screens.agenda.day-empty')}
-                  </Text>
+                  {selectedDayEntries.length > 0 ? (
+                    <Text className="text-muted-foreground text-[12px]">
+                      {t('screens.agenda.day-count', {
+                        count: String(selectedDayEntries.length),
+                      })}
+                    </Text>
+                  ) : null}
                   {can('calendar_event', 'create') ? (
                     <Button
                       variant="outline"
@@ -280,7 +283,16 @@ export default function ScheduleScreen() {
               </View>
               <CalendarDayList
                 entries={selectedDayEntries}
-                emptyLabel={t('screens.agenda.empty-range')}
+                emptyLabel={t('screens.agenda.day-empty')}
+                addLabel={can('calendar_event', 'create') ? t('screens.agenda.add-here') : undefined}
+                onCreate={
+                  can('calendar_event', 'create')
+                    ? () => {
+                        setEditingEventId('');
+                        setEventFormOpen(true);
+                      }
+                    : undefined
+                }
                 formatTime={formatTime}
                 renderActions={renderActions}
                 onSelect={(entry) => {

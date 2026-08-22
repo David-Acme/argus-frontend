@@ -340,6 +340,9 @@ class SynchronizeService {
   private scheduleReconnect(): void {
     if (this.manualClose) return;
     if (this.reconnectTimer) return;
+    // The address may have moved while we were away: ask the transport to look
+    // the server up again, so the next attempt is not against a dead lease.
+    void netService.refreshAddress().catch(() => undefined);
     const wait = Math.min(WS_RECONNECT_BASE_MS * 2 ** this.reconnectAttempt, WS_RECONNECT_MAX_MS);
     this.reconnectAttempt += 1;
     devLog('reconnect scheduled in', wait, 'ms');

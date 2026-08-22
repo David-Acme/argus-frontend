@@ -42,3 +42,13 @@ export const CENTERED_SCREEN_MAX_WIDTH = 512;
 
 /** Share of the window height a sheet or dialog body may take. */
 export const OVERLAY_BODY_HEIGHT_RATIO = 0.62;
+
+/**
+ * Room a dialog spends on its own chrome: title, footer, padding and the gap
+ * to the window edges. Subtracted from the window so a short landscape window
+ * scrolls the body instead of clipping the last field.
+ */
+export const OVERLAY_CHROME_HEIGHT = 210;
+
+/** A body never collapses below this, even on the shortest window. */
+export const OVERLAY_BODY_MIN_HEIGHT = 160;

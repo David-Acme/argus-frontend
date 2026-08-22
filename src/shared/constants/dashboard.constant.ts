@@ -193,3 +193,9 @@ export const EVENT_SAMPLE_LIMIT = 300;
 
 /** Rows of today's schedule shown on the dashboard before "see all". */
 export const TODAY_PREVIEW_LIMIT = 3;
+
+/**
+ * Height the two dashboard sections hold on a wide window, so the row keeps
+ * its shape whether a column has nothing, one row or three.
+ */
+export const DASHBOARD_SECTION_MIN_HEIGHT = 210;
