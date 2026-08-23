@@ -36,6 +36,11 @@ public class HybridArgusNet: HybridArgusNetSpec {
     self.allowedHost = allowedHost
   }
 
+  func configureVerified(caPem: String, caFingerprint: String, allowedHost: String, ip: String) throws -> Void {
+    try Self.verifyCaFingerprint(caPem, expected: caFingerprint)
+    try configure(caPem: caPem, allowedHost: allowedHost, ip: ip)
+  }
+
   func request(options: NetHttpRequest) throws -> Promise<NetHttpResult> {
     let ca = caPem
     let host = allowedHost
@@ -108,13 +113,7 @@ public class HybridArgusNet: HybridArgusNetSpec {
       throw netError("INVALID_PAIRING_CODE|Invalid pairing code")
     }
 
-    guard let der = Self.derFromPem(caPem), let _ = SecCertificateCreateWithData(nil, der as CFData) else {
-      throw netError("CERT_NOT_TRUSTED|Invalid CA certificate")
-    }
-    let digest = SHA256.hash(data: der).map { String(format: "%02X", $0) }.joined()
-    if digest != caFingerprint {
-      throw netError("FINGERPRINT_MISMATCH|The server CA does not match the pairing code")
-    }
+    try Self.verifyCaFingerprint(caPem, expected: caFingerprint)
 
     let resolvedPort = (info["port"] as? NSNumber)?.doubleValue ?? port
     return NetPairing(
@@ -124,6 +123,16 @@ public class HybridArgusNet: HybridArgusNetSpec {
       instanceId: info["instanceId"] as? String ?? "",
       port: resolvedPort,
       scheme: info["scheme"] as? String ?? "https")
+  }
+
+  private static func verifyCaFingerprint(_ caPem: String, expected: String) throws {
+    guard let der = Self.derFromPem(caPem), let _ = SecCertificateCreateWithData(nil, der as CFData) else {
+      throw netError("CERT_NOT_TRUSTED|Invalid CA certificate")
+    }
+    let digest = SHA256.hash(data: der).map { String(format: "%02X", $0) }.joined()
+    if !digest.caseInsensitiveCompare(expected).isOrderedSame {
+      throw netError("FINGERPRINT_MISMATCH|The server CA does not match the invitation")
+    }
   }
 
   // MARK: - Strict request

@@ -59,22 +59,23 @@ export const TASK_PRIORITY_WEIGHT: Record<string, number> = {
 };
 
 /** Where each tab goes. One map so no screen can disagree with another. */
-export const DASHBOARD_TAB_ROUTE: Record<DashboardTab, '/' | '/agenda' | '/projects'> = {
+export const DASHBOARD_TAB_ROUTE: Record<DashboardTab, '/' | '/agenda' | '/projects' | '/profile'> = {
   home: '/',
   schedule: '/agenda',
   projects: '/projects',
-  // No profile screen yet; it lands on home instead of dead-ending.
-  profile: '/',
+  profile: '/profile',
 };
 
 /**
  * Reverse of `DASHBOARD_TAB_ROUTE`, used by the global bar to read the active
- * tab off the current path. `profile` shares `/` with `home`, so home wins.
+ * tab off the current path.
  */
 export const DASHBOARD_ROUTE_TAB: Record<string, DashboardTab> = {
   '/': 'home',
   '/agenda': 'schedule',
   '/projects': 'projects',
+  '/profile': 'profile',
+  '/users': 'profile',
 };
 
 /**

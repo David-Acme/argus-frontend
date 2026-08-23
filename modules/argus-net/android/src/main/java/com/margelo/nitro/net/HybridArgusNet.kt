@@ -74,6 +74,11 @@ class HybridArgusNet : HybridArgusNetSpec() {
     cachedClient = null
   }
 
+  override fun configureVerified(caPem: String, caFingerprint: String, allowedHost: String, ip: String) {
+    verifyCaFingerprint(caPem, caFingerprint)
+    configure(caPem, allowedHost, ip)
+  }
+
   private fun netError(code: String, message: String): IllegalStateException =
     IllegalStateException("$code|$message")
 

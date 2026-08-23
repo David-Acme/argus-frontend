@@ -10,9 +10,12 @@
 - **Stack**: React Native 0.86 + Expo SDK 57, TypeScript strict, Expo Router
   (file-based routing), Tailwind CSS v4 via **Uniwind**, React Native Reusables
   (`@rn-primitives`), `react-native-mmkv` (native storage), `lucide-react-native`
-  (icons, centralized), `zustand` (global state, planned).
-- **Media/Platform**: `@shopify/react-native-skia` (render), `expo-camera` (barcode/QR,
-  mobile), `expo-audio` (audio). Platform/Tauri flags centralized in
+  (icons, centralized), `zustand` v5 (8 stores), **WatermelonDB 0.28** (local DB,
+  15 tables), `rxjs` (service observables → React via `useObservable`), `zod` +
+  `react-hook-form` (forms), custom i18n engine (es/en).
+- **Media/Platform**: `expo-camera` (barcode/QR + face capture, mobile),
+  `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar
+  procedural). Platform/Tauri flags centralized in
   `common.constant.ts` (`IS_WEB`, `IS_NATIVE`, `IS_ANDROID`, `IS_IOS`, `IS_TAURI`).
 - **Local network**: **Nitro** module (`modules/argus-net`, Kotlin/Swift) for mobile and
   **Tauri 2 + Rust** (`src-tauri/`) for desktop; secrets with `expo-secure-store`
@@ -216,8 +219,13 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   `cargo check` (requires `webkit2gtk-4.1` on Linux). `argus_request` uses a
   **pinned DNS resolver** (`reqwest::dns::Resolve`): `argus.local` → the discovery IP,
   same as Android's custom `Dns` (`.local` does not always resolve).
-- **WebSocket**: phase 2, always native (RN's JS `WebSocket` does not trust the CA).
-- `http.service.ts` / `websocket.service.ts` will be the final wrappers the app uses.
+- **WebSocket (shipped)**: always native — RN's JS `WebSocket` does not trust
+  the CA. `ArgusSocket` HybridObject in `modules/argus-net` (OkHttp /
+  `URLSessionWebSocketTask` over the pinned CA session) and Tauri commands
+  `argus_socket_open/send_text/send_binary/close`. Consumed through
+  `netService.openSocket()`; the sync engine owns the single socket and the
+  voice service streams binary PCM through it. `http.service.ts` is the HTTP
+  wrapper; there is no separate websocket wrapper.
 - **Nitro modules are split by domain** (`modules/argus-net`, `modules/argus-mic`,
   `modules/argus-face`), each with its own spec + nitrogen + Kotlin/Swift. They are
   registered in `android/settings.gradle` with explicit includes (autolinking does
@@ -313,6 +321,69 @@ core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable
 - Adding WatermelonDB changed native deps → **the dev-client must be rebuilt**.
   `jsi: true` falls back to the async bridge with a warning if unavailable.
 
+### 12b. Snapshot-first UI and live synchronization
+
+Argus is reactive, but a screen must feel already populated when the user opens
+it. WatermelonDB is the local source of truth; the network refreshes it rather
+than being the first source for a normal screen.
+
+- For any local list/summary, use `useObservableReady()` so an unread query is
+  distinct from an actual empty result. Render an empty state **only after** its
+  relevant local observables are ready.
+- Pair it with `useCachedRows`/`useCachedValue` and a key from
+  `VIEW_CACHE_KEYS`. `SessionGate` primes MMKV snapshots before the signed-in
+  UI mounts; scope caches by user and clear them at session end. Never let data
+  from one account paint for another.
+- Once Watermelon emits, replace the snapshot and keep it reactive. Do not
+  duplicate local resource state in a screen store, fetch the same list from
+  HTTP as a fallback, or show a loading spinner for data that already belongs
+  to the device.
+- Remote mutations and deliberately remote-only resources may show loading,
+  but only on the action that triggered them. Use `<Button loading>`; preserve
+  its label/layout and do not block the whole screen.
+- Detail routes must not redirect because a local observable has not emitted
+  yet. Differentiate `pending` from `missing` (see
+  `shared/libs/camera-detail-state.ts`).
+- Sync cursor data uses server `syncAt` when supplied, otherwise `createdAt`;
+  update/revoke events must therefore be recoverable after an offline device
+  reconnects.
+
+### 12c. People, invitations and portrait privacy
+
+- Roles shape the local projection, not merely the buttons: Owner sees
+  `/users` (users + invitation metadata); Guard sees `/people` (directory only);
+  Resident/Guest see their own profile only. Reuse
+  `shared/libs/people-access.ts` instead of scattering role checks.
+- The personal `/profile` and the directory preview use the neutral `user`
+  icon. Do **not** cache, persist, preload or render a user portrait in a list,
+  profile, MMKV, WatermelonDB or global store.
+- A Guard can explicitly select a person and request a portrait verification.
+  `portraitPreviewService` obtains/consumes a one-use server capability; the
+  resulting data URI lives only in that open dialog's React state and is cleared
+  when it closes or a newer request wins. Do not add image caching.
+- Owner invitation QRs contain the opaque token plus pinned local server
+  identity. The QR preview itself is single-display: dismissing or unmounting
+  revokes its invitation. Do not persist its token or reconstruct it from
+  invitation metadata.
+- `AuthContextChanged` from `/sync` updates the signed-in role and requests a
+  resync without treating a role change as logout. A deactivated account is the
+  only case that must end the session.
+
+### 12d. Responsive product rules
+
+- The UI is warm, calm, modern and simple: follow intrinsic content on compact
+  screens; never reserve large empty cards merely to match a desktop column.
+  Use minimum heights only where a section needs a stable visual footprint
+  (for example dashboard camera/tasks), then let the layout collapse naturally
+  when there is no content.
+- Mobile uses sheets and touch-first actions. Tablet uses contextual/anchored
+  menus for long-press actions; desktop/web uses pointer menus. Dialogs for
+  detail/confirmation stay deliberately narrow, not full-width on a tablet.
+- Adapt every changed screen for phone, portrait/landscape tablet, laptop and
+  desktop. Prefer Uniwind/Tailwind v4 classes; use React Native `StyleSheet`
+  only for APIs that require it. Respect reduced motion and keep navigation
+  natural per platform.
+
 ### 13. Avatar procedural (asistente visual)
 
 - El avatar de Argus es un **bubble-head 2D procedural** renderizado con
@@ -388,6 +459,7 @@ bun run ios            # expo start -c --ios
 bun run web            # expo start -c --web
 bun run lint           # expo lint
 bunx tsc --noEmit      # typecheck (must be 0 errors)
+bun test               # unit tests (bun:test) — pure logic under tests/
 bun run web:build      # expo export --platform web → dist/ (for Tauri)
 bun run desktop:dev    # tauri dev (Linux requires webkit2gtk-4.1)
 bun run desktop:build  # tauri build
@@ -430,6 +502,10 @@ cd src-tauri && cargo check
 | `src/core/services/net/` | `IArgusNetService` (native→Nitro, web→Tauri, `net-persistence`) |
 | `src/core/services/http.service.ts` | HTTP wrapper sobre `netService`: `IServiceResponse`, refresh 401 single-flight, multipart (`payload` + archivos) |
 | `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `hasAdmin`, `status`, `logout` |
+| `src/core/services/session.service.ts` | Ciclo de sesión: establish/refresh/updateUser/clear, cola serializada sobre secure-storage |
+| `src/core/services/view-cache.service.ts` | Snapshot cache MMKV (`VIEW_CACHE_KEYS`), scoped por usuario y limpiada al cerrar sesión |
+| `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + `SyncCursors` (cursores por usuario) |
+| `src/core/services/voice/` | `voiceService`: mic PCM por el socket de sync, observables STT/asistente, playback TTS |
 | `src/core/services/invite.service.ts` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
 | `src/core/services/sync/` | Sync autónomo: `synchronize.service` (socket único + `syncOnce`), `entity-mappers`, `sync-db-utils`, `sync-socket.{native,web}` |
@@ -440,7 +516,6 @@ cd src-tauri && cargo check
 | `src/core/services/{domain}.service.ts` | Data services — the only code that reads the database |
 | `src/shared/hooks/use-observable.ts` | Service `Observable` → React (`useSyncExternalStore`) |
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
-| `modules/argus-net/` | Nitro module de red: `ArgusNet` (HTTP/TLS) + `ArgusSocket` (WebSocket, misma CA) |
 | `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
@@ -449,6 +524,11 @@ cd src-tauri && cargo check
 | `src/app/login/index.tsx` | Desktop: QR de login cruzado (device-login) + polling + espera de propietario |
 | `src/app/approve/index.tsx` | Móvil: escanear el QR del otro dispositivo y aprobar la sesión |
 | `src/app/qr/index.tsx` | QR scan route (native-only, `expo-camera`; web → redirect to `/`) |
+| `src/app/index.tsx` | Entry router (unpaired→welcome, paired→login/dashboard) + DashboardScreen |
+| `src/app/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
+| `src/shared/components/dashboard/` | Familia dashboard (23): camera grid/tile, activity, nav rail/bottom nav, charts, popovers |
+| `src/shared/components/session/session-gate.tsx` | Auth bootstrap + priming de snapshots MMKV antes del UI autenticado |
+| `tests/*.test.ts` | Suite bun:test (16 archivos): contratos QR/people/portrait/auth-context, caches, layouts |
 | `src/shared/components/face/` | Guidance facial: `face-guide-overlay` (máscara+óvalo+pill), `face-frame` |
 | `src/shared/hooks/use-face-guide.ts` | Muestreo de cámara → `argusFace.detectFaces` → estado de guía + auto-capture |
 | `src/shared/constants/face.constant.ts` | Umbrales del guidance (zonas, ángulos, luz, muestreo) |
@@ -459,7 +539,7 @@ cd src-tauri && cargo check
 | `src/shared/components/ui/morph-icon.tsx` | Icono animado (morphicons): morphs por `setNativeProps`, `reducedMotion="user"`, ref `morphTo`/`set` |
 | `src/core/types/qr.type.ts` | `QrScanPurpose`, `QrScanStatus`, `QrScanFeedback`, `QrScanConfig` |
 | `src/shared/hooks/use-reduce-motion.ts` | OS "reduce motion" setting, live |
-| `src/core/stores/` | Zustand stores (barrel; `useQrScanStore`, `useAvatarStore`, `useLocaleStore`) |
+| `src/core/stores/` | Zustand stores (barrel): `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
 | `src/core/i18n/` | Custom i18n engine (barrel: `t`/`setLanguage`/`getLanguage`, `translate`, `locales/`) |
 | `src/core/i18n/locales/schema.ts` | `I18nSchema`/`TranslationKey`/`TranslateFn` derivation from the `es` dictionary |
 | `src/core/types/i18n.type.ts` | i18n public types (barrel surface) |
@@ -473,5 +553,5 @@ cd src-tauri && cargo check
 | `src/shared/hooks/use-theme-preference.ts` | Theme preference get/set |
 | `src/shared/libs/theme.ts` | `NAV_THEME` + `BG_COLORS` (React Navigation) |
 | `src/global.css` | OKLCH tokens + aliases + base/utilities |
-| `src/app/_layout.tsx` | Root layout (theme init, status bar) |
+| `src/app/_layout.tsx` | Root layout: theme init, `SystemBars`, `SessionGate`, guards native-only, Stack con crossfade (`fade`) + overlays globales (nav, confirm, toaster) |
 | `CONTEXT.md` | Full project history and decisions |

@@ -118,7 +118,10 @@ export default function FaceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const { mode = 'owner-enroll' } = useLocalSearchParams<{ mode?: string }>();
+  const { mode = 'owner-enroll', inviteToken } = useLocalSearchParams<{
+    mode?: string;
+    inviteToken?: string;
+  }>();
   const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -180,10 +183,13 @@ export default function FaceScreen() {
       setNotice(null);
       setPhase('submitting');
       try {
-        const response =
-          mode === 'owner-enroll'
-            ? await authService.register({ imageUri: uri })
-            : await authService.login(uri);
+        const enrolling = mode === 'owner-enroll' || mode === 'invite-enroll';
+        const response = enrolling
+          ? await authService.register({
+              imageUri: uri,
+              ...(mode === 'invite-enroll' && inviteToken ? { inviteCode: inviteToken } : {}),
+            })
+          : await authService.login(uri);
         if (response.ok && response.info) {
           const already = response.info.alreadyRegistered === true;
           const isOwner = response.info.role === 'owner';
@@ -195,7 +201,7 @@ export default function FaceScreen() {
             redirectTimer.current = setTimeout(() => router.replace('/'), 2800);
             return;
           }
-          router.replace(mode === 'owner-enroll' ? '/welcome/voice' : '/');
+          router.replace(enrolling ? '/welcome/voice' : '/');
           return;
         }
         const apiError = response.errors ?? {
@@ -222,7 +228,7 @@ export default function FaceScreen() {
         setError(normalized);
       }
     },
-    [mode, router, t],
+    [inviteToken, mode, router, t],
   );
 
   const handleCameraReady = useCallback(() => {
@@ -344,7 +350,7 @@ export default function FaceScreen() {
 
   const sending = phase === 'submitting' || (phase === 'countdown' && capturing);
   const titleKey = sending
-    ? mode === 'owner-enroll'
+    ? mode === 'owner-enroll' || mode === 'invite-enroll'
       ? 'screens.face.enrolling'
       : 'screens.face.logging'
     : phase === 'countdown'

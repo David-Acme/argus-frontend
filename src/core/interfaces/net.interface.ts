@@ -11,6 +11,8 @@ import type { IArgusSocket } from './socket.interface';
 export interface IArgusNetService {
   discover(timeoutMs?: number): Promise<NetDiscovery>;
   pair(host: string, ip: string, port: number, code: string): Promise<NetPairing>;
+  /** Stores a certificate after its fingerprint was verified natively. */
+  adoptPairing(pairing: NetPairing, host: string, ip: string): Promise<void>;
   request(options: NetHttpRequest): Promise<NetHttpResult>;
   /** Pre-pairing (TOFU): TLS trust-any, no stored instance. Only /invite/accept. */
   requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult>;

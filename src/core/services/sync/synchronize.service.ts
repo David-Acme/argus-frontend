@@ -2,6 +2,7 @@ import type { Model } from '@nozbe/watermelondb';
 import { collection } from '@/core/database';
 import { netService } from '@/core/services/net';
 import { storageService } from '@/core/services/storage';
+import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
 import {
   SYNC_CURSORS_PREFIX,
@@ -24,6 +25,7 @@ import type {
   IArgusSocket,
 } from '@/core/interfaces';
 import { toDirtyRaw, toModelProps } from './entity-mappers';
+import { parseAuthContext } from './auth-context';
 import { chunkedBatch, existingByServerId } from './sync-db-utils';
 import {
   SYNC_FIRST_CONFIG,
@@ -62,6 +64,8 @@ class SynchronizeService {
   private reconnectAttempt = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private syncing = false;
+  private activeSync: Promise<void> | null = null;
+  private contextSync: Promise<void> | null = null;
   private lastSyncAt: number | null = null;
   private syncError: string | null = null;
   private pendingAdds: ISocketEmitDto[] = [];
@@ -183,7 +187,22 @@ class SynchronizeService {
   }
 
   async syncOnce(): Promise<void> {
-    if (!this.socket || this.syncing) return;
+    if (this.contextSync) return this.contextSync;
+    return this.startSync();
+  }
+
+  private startSync(): Promise<void> {
+    if (!this.socket) return Promise.resolve();
+    if (this.activeSync) return this.activeSync;
+
+    const activeSync = this.performSync().finally(() => {
+      if (this.activeSync === activeSync) this.activeSync = null;
+    });
+    this.activeSync = activeSync;
+    return activeSync;
+  }
+
+  private async performSync(): Promise<void> {
     this.syncing = true;
     this.syncError = null;
     this.requestEndTime = Math.floor(Date.now() / 1000);
@@ -393,6 +412,9 @@ class SynchronizeService {
       case SYNC_OPERATION.Delete:
         this.onDelete(emit);
         break;
+      case SYNC_OPERATION.AuthContextChanged:
+        this.onAuthContextChanged(emit.info);
+        break;
     }
   }
 
@@ -403,6 +425,47 @@ class SynchronizeService {
     }
     this.sessionActions?.updateUser({ id: info.id, role: info.role, isActive: info.isActive });
     void this.syncOnce();
+  }
+
+  private onAuthContextChanged(info: unknown): void {
+    const currentUser = this.authStore?.getState().user;
+    if (!currentUser) return;
+
+    const context = parseAuthContext(info, currentUser.id);
+    if (!context) return;
+
+    this.sessionActions?.updateUser(context.user);
+    if (!context.user.isActive) {
+      void this.sessionActions?.clearSession();
+      return;
+    }
+    if (context.requiresResync) this.startContextResync();
+  }
+
+  private startContextResync(): void {
+    if (this.contextSync) return;
+
+    const contextSync = (async () => {
+      await this.activeSync;
+      await this.clearSyncedRows();
+      storageService.remove(this.cursorKey());
+      viewCacheService.clear();
+      await this.startSync();
+    })()
+      .catch((error) => {
+        this.syncError = error instanceof Error ? error.message : String(error);
+      })
+      .finally(() => {
+        if (this.contextSync === contextSync) this.contextSync = null;
+      });
+    this.contextSync = contextSync;
+  }
+
+  private async clearSyncedRows(): Promise<void> {
+    for (const key of SYNC_TABLE_KEYS) {
+      const records = await collection(key).query().fetch();
+      await chunkedBatch(records.map((record) => () => record.prepareDestroyPermanently()));
+    }
   }
 
   private onAdd(msg: ISocketEmitDto): void {
@@ -544,7 +607,7 @@ class SynchronizeService {
     const createdRows = body.created as Record<string, unknown>[];
     const createdPosition = this.maxPosition(
       createdRows,
-      'createdAt',
+      'syncAt',
       body.lastSyncDate?.created,
       body.lastSyncDate?.createdId,
     );
@@ -565,13 +628,13 @@ class SynchronizeService {
 
   private maxPosition(
     rows: Record<string, unknown>[],
-    timeField: 'createdAt' | 'deletedAt',
+    timeField: 'syncAt' | 'deletedAt',
     fallbackTime?: number | null,
     fallbackId?: number | string,
   ): { time: number; id?: number | string } | null {
     let result: { time: number; id?: number | string } | null = null;
     for (const row of rows) {
-      const time = secondsOf(row[timeField]);
+      const time = secondsOf(timeField === 'syncAt' ? row.syncAt ?? row.createdAt : row.deletedAt);
       if (!time) continue;
       const id = row.id as number | string | undefined;
       if (!result || time > result.time || (time === result.time && this.compareIds(id, result.id) > 0)) {

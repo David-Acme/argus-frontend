@@ -43,6 +43,16 @@ class NativeArgusNetService implements IArgusNetService {
     }
   }
 
+  async adoptPairing(pairing: NetPairing, host: string, ip: string): Promise<void> {
+    try {
+      net.configureVerified(pairing.caPem, pairing.caFingerprint, host, ip);
+      configuredKey = `${pairing.caPem}|${host}|${ip}`;
+      await savePairing(pairing, host, ip);
+    } catch (error) {
+      throw toNetError(error, 'NETWORK_ERROR');
+    }
+  }
+
   async request(options: NetHttpRequest): Promise<NetHttpResult> {
     const instance = await loadInstance();
     if (!instance) {

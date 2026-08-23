@@ -6,4 +6,5 @@ export const SYNC_OPERATION = {
   Add: 4,
   Delete: 5,
   Log: 6,
+  AuthContextChanged: 7,
 } as const;

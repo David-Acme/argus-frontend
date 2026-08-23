@@ -14,6 +14,10 @@ export const VIEW_CACHE_KEYS = {
   dashboardUnread: 'dashboard.unread',
   cameraList: 'camera.list',
   calendarEntries: 'calendar.entries',
+  projectList: 'project.list',
+  projectTasks: 'project.tasks',
+  peopleUsers: 'people.users',
+  peopleInvitations: 'people.invitations',
 } as const;
 
 export type ViewCacheKey = (typeof VIEW_CACHE_KEYS)[keyof typeof VIEW_CACHE_KEYS];

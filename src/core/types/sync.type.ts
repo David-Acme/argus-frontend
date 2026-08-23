@@ -1,5 +1,6 @@
 export const SYNC_TABLE_KEYS = [
   'user',
+  'user_invitation',
   'camera',
   'camera_stream',
   'zone',

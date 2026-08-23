@@ -23,6 +23,7 @@ export {
   ReminderDetailModel,
   ReminderModel,
   UserModel,
+  UserInvitationModel,
   ZoneModel,
 } from './tables';
 

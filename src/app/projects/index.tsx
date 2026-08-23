@@ -21,7 +21,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { DASHBOARD_TAB_ROUTE, TASK_PRIORITY_WEIGHT, TASK_STATUS_ORDER } from '@/shared/constants';
 import { usePermissions } from '@/shared/hooks/use-permissions';
-import { useProjectsData } from '@/shared/hooks/use-projects-data';
+import { useProjectsData, type ProjectTaskListItem } from '@/shared/hooks/use-projects-data';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
@@ -42,7 +42,7 @@ export default function ProjectsScreen() {
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState('');
   const [editingProject, setEditingProject] = useState(false);
-  const { projects, tasks, activeId, progress } = useProjectsData(selectedId);
+  const { projects, tasks, displayProjects, displayTasks, activeId, progress } = useProjectsData(selectedId);
   const { can } = usePermissions();
 
   const statusOptions = useMemo<MenuOption<ProjectTaskStatus>[]>(
@@ -77,9 +77,9 @@ export default function ProjectsScreen() {
   );
 
   const grouped = useMemo(() => {
-    const map = new Map<ProjectTaskStatus, typeof tasks>();
+    const map = new Map<ProjectTaskStatus, ProjectTaskListItem[]>();
     for (const status of TASK_STATUS_ORDER) map.set(status, []);
-    for (const task of tasks) {
+    for (const task of displayTasks) {
       const bucket = map.get(task.status as ProjectTaskStatus);
       if (bucket) bucket.push(task);
     }
@@ -90,10 +90,10 @@ export default function ProjectsScreen() {
       );
     }
     return map;
-  }, [tasks]);
+  }, [displayTasks]);
 
   const formatDue = useCallback(
-    (due: Date | null) => (due == null ? undefined : date.formatDayMonth(due)),
+    (due: number | null) => (due == null ? undefined : date.formatDayMonth(new Date(due))),
     [date]
   );
 
@@ -129,10 +129,10 @@ export default function ProjectsScreen() {
       aside={
         // Only when there is something to list: on compact the aside stacks
         // under the content, and two empty states in a row read as a bug.
-        projects.length === 0 ? undefined : (
+        displayProjects.length === 0 ? undefined : (
           <View className="gap-3">
             <SectionHeading title={t('screens.projects.title')} />
-            {projects.map((project) => {
+            {displayProjects.map((project) => {
               const active = project.id === activeId;
               return (
                 <ProjectCardRow
@@ -179,7 +179,7 @@ export default function ProjectsScreen() {
           )}
         </View>
 
-        {projects.length === 0 ? (
+        {displayProjects.length === 0 ? (
           <EmptyState
             icon="list-todo"
             title={t('screens.projects.empty')}
@@ -196,7 +196,7 @@ export default function ProjectsScreen() {
           <>
             <View className="flex-row items-center justify-between gap-3">
               <Text className="flex-1 text-[17px] font-semibold" numberOfLines={1}>
-                {projects.find((project) => project.id === activeId)?.name ?? ''}
+                {displayProjects.find((project) => project.id === activeId)?.name ?? ''}
               </Text>
               <Text className="text-muted-foreground text-[12px] font-medium">
                 {t('screens.projects.task-count', {
@@ -229,7 +229,7 @@ export default function ProjectsScreen() {
               ) : null}
             </View>
 
-            {tasks.length === 0 ? (
+            {displayTasks.length === 0 ? (
               <EmptyState icon="list-todo" title={t('screens.projects.empty-tasks')} />
             ) : (
               <View className="flex-1 gap-4">

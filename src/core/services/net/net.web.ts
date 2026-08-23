@@ -39,6 +39,13 @@ class WebArgusNetService implements IArgusNetService {
     }
   }
 
+  async adoptPairing(_pairing: NetPairing, _host: string, _ip: string): Promise<void> {
+    throw toNetError(
+      new Error('NOT_SUPPORTED|Invitation enrollment is available on mobile devices'),
+      'NETWORK_ERROR',
+    );
+  }
+
   async request(options: NetHttpRequest): Promise<NetHttpResult> {
     const instance = await loadInstance();
     if (!instance) {

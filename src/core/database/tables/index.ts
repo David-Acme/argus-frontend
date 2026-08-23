@@ -14,11 +14,13 @@ import { PROJECT_TASK_SCHEMA, ProjectTaskModel } from './project-task.table';
 import { REMINDER_DETAIL_SCHEMA, ReminderDetailModel } from './reminder-detail.table';
 import { REMINDER_SCHEMA, ReminderModel } from './reminder.table';
 import { USER_SCHEMA, UserModel } from './user.table';
+import { USER_INVITATION_SCHEMA, UserInvitationModel } from './user-invitation.table';
 import { ZONE_SCHEMA, ZoneModel } from './zone.table';
 
 /** Single registry: `appSchema` and `modelClasses` are both derived from here. */
 const TABLES = [
   { schema: USER_SCHEMA, model: UserModel },
+  { schema: USER_INVITATION_SCHEMA, model: UserInvitationModel },
   { schema: CAMERA_SCHEMA, model: CameraModel },
   { schema: CAMERA_STREAM_SCHEMA, model: CameraStreamModel },
   { schema: ZONE_SCHEMA, model: ZoneModel },
@@ -52,6 +54,7 @@ export {
   ReminderDetailModel,
   ReminderModel,
   UserModel,
+  UserInvitationModel,
   ZoneModel,
 };
 

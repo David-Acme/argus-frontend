@@ -12,6 +12,7 @@ import type {
   ReminderDetailModel,
   ReminderModel,
   UserModel,
+  UserInvitationModel,
   ZoneModel,
 } from '@/core/database/tables';
 
@@ -57,6 +58,7 @@ export type EventDetails = Record<string, unknown>;
 
 export type ModelMap = {
   user: UserModel;
+  user_invitation: UserInvitationModel;
   camera: CameraModel;
   camera_stream: CameraStreamModel;
   zone: ZoneModel;

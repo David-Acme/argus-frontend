@@ -23,10 +23,10 @@
 | Routing | Expo Router (file-based, `src/app`) — web in **SPA** mode (`output: "single"`, no SSR) |
 | Styling | Tailwind CSS v4 via **Uniwind** (`src/global.css`), `tw-animate-css` |
 | UI | React Native Reusables (`@rn-primitives/portal`, `slot`) + custom `button/text/icon` |
-| Media | `@shopify/react-native-skia` (render), `expo-camera` (barcode/QR scan, mobile), `expo-audio` (record/playback), `expo-asset` |
+| Media | `expo-camera` (barcode/QR + face capture, mobile), `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar procedural). `@shopify/react-native-skia` ya no se importa en `src/` (orb retirado; queda solo en el `postinstall`) |
 | Platform | `common.constant.ts` → `IS_WEB` / `IS_NATIVE` / `IS_ANDROID` / `IS_IOS` / `IS_TAURI` |
-| State | Zustand v5 (in use: `useQrScanStore` = scan-session config/value/status, `useOrbStore`) |
-| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 7 tables mirroring the backend's sync surface |
+| State | Zustand v5 — 8 stores: `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
+| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 15 tables mirroring the role-scoped backend sync surface |
 | Storage | `react-native-mmkv` (native) / localStorage (web) via `storageService`; **secrets** (caPem, JWT) via `secureStorageService` (`expo-secure-store` on mobile / `keyring` crate on Tauri) |
 | Icons | `lucide-react-native` — **centralized** in `icon.constant.ts` only |
 | i18n | Custom engine (`core/i18n`): typed keys, `useTranslation()` + imperative `t()`, `useLocaleStore` |
@@ -120,18 +120,41 @@
 - `_layout.tsx` applies the persisted preference on mount (`Uniwind.setTheme`),
   sets the root bg and the React Navigation theme (`NAV_THEME`).
 
-## Current state
+## Current state (docs resync 2026-08-23)
 
-- **`src/app/index.tsx`** (the `/` route) is a clean empty shell — a fresh canvas for
-  the upcoming screen work (settings section next). The design-system gallery, theme
-  toggle, the `/pairing` route and the `(test)` route group were removed to rebuild
-  the screens from scratch with scalable, maintainable code.
-- **`src/app/pairing.tsx` was deleted** — the pairing UI will be rebuilt as part of
-  the upcoming reorganization. The networking **core layer is intact** (services
-  `net`/`secure-storage`, Nitro module `argus-net`, desktop `src-tauri`).
-- **UI primitives**: `button.tsx` (7 variants on semantic tokens: default,
-  secondary, outline, ghost, destructive, link, disabled), `text.tsx`
-  (typography variants), `icon.tsx` (name-based registry wrapper), `input.tsx`.
+The app is built out end-to-end. Signed-out entry resolution lives in
+`index.tsx`: unpaired → `/welcome`; no admin + native →
+`/welcome/face?mode=owner-enroll`; paired → `/login` (desktop QR or mobile
+face login). Signed-in it renders the dashboard inside `DashboardShell`.
+
+- **Routes** (`src/app/`): `/` (entry router + dashboard: welcome header,
+  activity, camera grid, projects carousel, agenda, notifications),
+  `/agenda` (month/week/day calendar + event forms), `/projects`
+  (projects + tasks), `/cameras` (+ `/cameras/[id]`: PTZ pad, zones CRUD,
+  settings sheet, talk sheet), `/people` (Guard directory + portrait
+  verification), `/users` (Owner management + single-display invitation QR),
+  `/profile`, `/login` (desktop cross-device QR), `/approve` (mobile
+  approval, native-only), `/qr` (reusable scanner, native-only) and the
+  nested `/welcome/*` stack (`index`, `pairing`, `invitation`, `face`,
+  `voice` — the last three native-only via `Stack.Protected`).
+- **Core services**: `http.service` (envelope `{status, info, errors}`,
+  single-flight refresh, multipart), `session.service` (serialized
+  secure-storage queue, version-guarded refresh), `auth.service`
+  (login/register/device-login), `invite.service`, domain services
+  (`user*`, `person`, `camera*`, `zone`, `calendar-event*`, `project*`,
+  `reminder*`, `event`, `notification`, `portrait-preview`, `view-cache`)
+  and the autonomous sync engine (see "Local persistence" below).
+  Voice: `voice.service.ts` streams ArgusMic PCM over the sync socket and
+  plays TTS back.
+- **UI primitives**: 26 components under `shared/components/ui/` (button,
+  text, icon, input, textarea, form family, adaptive dialog/menu/select,
+  sheet, popover, badge, card, qr-code, morph-icon, ...), plus feature
+  families `dashboard/` (23), `calendar/` (12), `cameras/` (11),
+  `projects/` (7), `qr/` (6), `layout/`, `toast/`, `confirm/`, `face/`,
+  `avatar/` and `session/session-gate`.
+- **Tests**: 16 pure-logic suites under `tests/` with `bun:test`
+  (`bun test`) — contracts (QR build/parse, people access, auth context,
+  portrait preview), caches, layouts and route state machines.
 - **QR scanner (2026-08, user-approved "bottom sheet" design)** — a **reusable**
   native-only scan route. Web/desktop can't enter it: `Stack.Protected guard={IS_NATIVE}`
   in `_layout.tsx` plus a `Redirect` fallback in the screen.
@@ -210,7 +233,10 @@
     radius, border, insets). The animated views take their colours inline from
     `colorTokens` rather than `className`, following `orb.tsx` / `_layout.tsx` — no
     component in this repo passes `className` to an `Animated.View`.
-- **`Orb` (2026-08, user-approved)** — procedural **AI energy ring** in
+- **`Orb` — SUPERSEDED (2026-08) by the SVG avatar** (`AGENTS.md` rule 13):
+  `useAvatarStore` replaced `useOrbStore`, the assistant states live in
+  `src/shared/components/avatar/`, and Skia is gone from `src/`. Kept verbatim
+  as history — the energy ring was in
   `src/shared/components/orb/` (`orb.tsx` + `orb-shader.ts` + `orb-loader.*`),
   rebuilt from the animatereactnative orb reference. The whole effect is a **SkSL
   fragment shader**: a glowing **annulus** whose radius is value noise sampled *on a
@@ -253,17 +279,20 @@
     fallback** while CanvasKit loads; `canvaskit.wasm` copied to `public/` by
     `postinstall` (`bunx setup-skia-web`). Mic: `use-mic-level.ts` (expo-audio
     metering, native + web).
-- **Navigation**: root `Stack` uses `animation: 'flip'` (static for now; the slide
-  animation will be evaluated later) with `headerShown: false` and themed `contentStyle`
-  (no white flash) — see `_layout.tsx`.
+- **Navigation**: root `Stack` crossfades every route (`animation: 'fade'`,
+  `animationTypeForReplace: 'push'`) with `headerShown: false`, themed
+  `contentStyle` (no white flash); `GlobalBottomNav`, `ConfirmDialog`,
+  `Toaster` and `PortalHost` render above the Stack in `_layout.tsx`. The
+  welcome stack nests its own fade Stack (240 ms).
 - **Storage**: platform-split, typed `IStorageService`.
 - **i18n rebuilt** (2026-08) — custom engine in `src/core/i18n/` (see `AGENTS.md`
   rule 14): typed dictionaries per screen + shared `common`, `useTranslation()`
   (real-time) + imperative `t()` for `.ts`, `useLocaleStore` (zustand),
   `app.language` persistence, `es-*`/`en-*` prefix detection, es default + en.
-- Empty placeholder folders / `.gitkeep` were removed for a clean, progressive
-  build. Planned areas (auth, chat, workspace, settings, sync, http) will be
-  created when built.
+- Core areas built since the reset: auth (`auth.service` + `auth.store`),
+  session (`session.service`), http (`http.service`), sync
+  (`core/services/sync/` + WatermelonDB mappers), view-cache (MMKV snapshots)
+  and voice (`voice.service`). Still pending: chat, workspace and settings.
 - **Android builds working**: `bunx expo run:android` compiles and installs on
   a physical device (Redmi Note 11, `spes_global`). See "Android development
   environment" below.
@@ -291,9 +320,11 @@ Installed **without sudo** in the user home (Arch Linux, no system JDK/SDK):
 - Backend: `/backend` — C++20 + Drogon + SQLite, all AI on-device (face auth,
   LLM, vision, STT/TTS), WebSocket sync on `/sync`, JWT dual secrets.
 - Backend conventions live in `backend/AGENTS.md` + `backend/CONTEXT.md`.
-- The client's local network layer is **implemented and working** (pairing +
-  strict-TLS HTTP). Pending phases: WebSocket (`/sync`), the final wrappers
-  `http.service.ts` / `websocket.service.ts`, and the pairing-code QR.
+- The client's local network layer is fully implemented: pairing +
+  strict-TLS HTTP, native WebSocket (`ArgusSocket` Nitro on mobile,
+  `argus_socket_*` Tauri commands on desktop), the `http.service.ts`
+  wrapper, the pairing-code QR, invite acceptance (trust-any + fingerprint)
+  and the cross-device login QR flow.
 
 ## Local persistence (2026-08) — WatermelonDB
 
@@ -329,10 +360,12 @@ not WatermelonDB.
 
 ### Schema decisions
 
-- **7 tables** = exactly the backend's `SynchronizedDto` (`user`, `camera`,
-  `camera_stream`, `zone`, `reminder`, `reminder_detail`, `notification`).
-  `event`/`person`/`context_note` have `toJson()` but are **not** in the sync
-  surface, so there would be no way to populate them.
+- **15 tables** = exactly the backend's sync surface (`SYNC_TABLE_KEYS` in
+  `core/types/sync.type.ts`): `user`, `user_invitation`, `camera`,
+  `camera_stream`, `zone`, `reminder`, `reminder_detail`, `calendar_event`,
+  `calendar_event_share`, `project`, `project_member`, `project_task`,
+  `event`, `person`, `notification`. `context_note` has no local table (not
+  synced).
 - **snake_case columns, camelCase model properties.** `created_at`/`updated_at`
   are snake_case by hard requirement, and a schema with two snake columns among
   twelve camel ones is worse than one convention. This **reverses** decision 3 of
@@ -427,10 +460,14 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
 - `tauri.conf.json` → `frontendDist: "../dist"` (generated by `bun run web:build`);
   requires `webkit2gtk-4.1` on Linux. Scripts: `bun run desktop:dev` / `desktop:build`.
 
-### WebSocket (phase 2)
-- Must be **native** (OkHttp WS / `URLSessionWebSocketTask` / `tokio-tungstenite`):
-  RN's JS `WebSocket` **does not trust the CA**. Final wrappers
-  `http.service.ts` / `websocket.service.ts` and the pairing QR → phase 3.
+### WebSocket (shipped)
+- Native as required (RN's JS `WebSocket` does not trust the CA):
+  **`ArgusSocket`** HybridObject in `modules/argus-net` (OkHttp on Android /
+  `URLSessionWebSocketTask` on iOS, both over the pinned-CA session) and
+  Tauri commands `argus_socket_open/send_text/send_binary/close`. Consumed
+  via `netService.openSocket()`; the sync engine owns the single socket and
+  voice streams binary PCM through it. `http.service.ts` is the HTTP
+  wrapper; there is no separate websocket wrapper.
 
 ### Verification
 - `bunx tsc --noEmit` and `bun run lint` → 0 errors. `cargo check` (src-tauri) → 0/0.
@@ -940,3 +977,97 @@ reaction picks the pose, the voice envelope gives it life.
 
 Validated: `tsc --noEmit` 0, `expo lint` 0. Backend side documented in
 `backend/CONTEXT.md` → "Reactions".
+
+## People, invitations, offline snapshots and responsive UX (2026-08-22)
+
+The app is real-time, but it must never feel like a remote dashboard. A signed
+in screen paints the last authorized local snapshot immediately, then
+WatermelonDB changes it reactively as `/sync` receives local/live updates.
+
+### Local-first rendering
+
+- `SessionGate` calls `viewCacheService.prime()` before mounting authenticated
+  UI. `useCachedRows`/`useCachedValue` read the MMKV snapshot until
+  `useObservableReady` receives the first WatermelonDB emission, then write the
+  fresh result back. Cache scopes include the signed-in user id and are cleared
+  on session end; another account can never see a prior account's snapshot.
+- Every local list/summary distinguishes **not queried yet** from **empty**.
+  Do not show `EmptyState`, redirect away, or render a loading fallback until
+  every local observable needed for that view is ready. `camera-detail-state`
+  prevents a camera detail route from treating a pending query as missing.
+- The main cache keys are in `VIEW_CACHE_KEYS`: dashboard sections, camera list,
+  calendar entries, project list/tasks and People users/invitations. New local
+  views must use the same pattern rather than add one-off screen state or an
+  HTTP list fetch.
+- WatermelonDB remains the only local data source for screens: routes and hooks
+  call domain services, never the database directly. The sync mapper honors
+  backend `syncAt` so role/user/invitation updates made while offline are caught
+  up after reconnect.
+- Server-only work can show loading, but it is constrained to the initiating
+  control through `Button.loading`. It must not replace preloaded screen data
+  with a full-screen spinner or shift the action's layout.
+
+### People and access surfaces
+
+- `/profile` is the personal, Threads-inspired but Argus-adapted account view:
+  calm identity hierarchy, role/status and a neutral empty user icon. It is a
+  future profile-settings surface; the user cannot change a portrait there yet.
+- Owner sees **People and access** (`/users`): a locally cached user directory,
+  invitation metadata, narrow edit/create dialogs and a QR preview. Invitation
+  roles are preselected as resident/guard/guest. The QR contains the opaque
+  token and the pinned local Argus identity, but the token is held only in React
+  state. Closing/unmounting its preview revokes that invitation immediately.
+- Guard sees a separate **People** directory (`/people`), not the owner
+  management UI. It is synced locally with names, roles, active status and join
+  date, offers local search/role filters, and starts with neutral user icons.
+  Selecting a person opens a restrained details dialog.
+- Portrait verification is intentionally remote and explicit. A Guard presses
+  the verification action; `portraitPreviewService` obtains and consumes the
+  one-use backend capability. Its returned image data URI exists only in that
+  dialog's React state and is cleared on close/new selection. Portraits are
+  never added to WatermelonDB, MMKV, a list, a profile or an image cache.
+- `peopleAccessForRole` is the shared frontend policy: Owner receives users and
+  invitations, Guard receives the directory only, Resident/Guest receive only
+  their own profile. `AuthContextChanged` updates the local auth context and
+  triggers sync after a server role change without logging the user out.
+
+### Interaction and layout decisions
+
+- The design remains warm-neutral, quiet and functional. Cards follow content
+  in compact layouts; avoid artificial large blank cards when a section has no
+  data. Minimum heights are reserved only for visual continuity in dashboard
+  camera/task surfaces and adapt by window class.
+- Phone actions use native-feeling sheets. Tablet long-press actions use the
+  anchored context menu at the press position. Web/desktop uses the pointer
+  overflow menu. Confirmation and detail dialogs remain intentionally narrow
+  on wider screens.
+- Screens must be validated across phone, portrait/landscape tablet, laptop and
+  desktop. Prefer Uniwind/Tailwind v4 for layout; `StyleSheet` is a narrow
+  exception for React Native APIs that require it. Motion follows the platform
+  and honors reduced-motion settings.
+- Date formatting is centralized through `date-fns`/`useDateFormatter` and
+  device locale/hour-cycle settings. Do not hand-format dates or bake Spanish,
+  AM/PM or 24-hour assumptions into a component.
+
+### Current validation baseline
+
+On 2026-08-22, `bun test` passed 48 tests, `bun run lint`,
+`bunx tsc --noEmit` and `bun run web:build` all succeeded. A fresh Android
+tablet emulator (2560×1800) was started, the Argus app data intentionally
+cleared to exercise fresh local schema/bootstrap, and then stopped to free RAM.
+The unauthenticated welcome/invitation entry was visually checked; People
+requires an actual paired session and is not populated with fabricated data for
+visual testing.
+
+## History log — docs resync (2026-08-23)
+
+- Documentation-only pass (no code changes): CONTEXT/AGENTS brought back in
+  sync with the code. Corrections: the "Current state" section no longer
+  describes the post-reset empty shell — it documents the full route map,
+  core services, UI families and the bun:test suite; WatermelonDB documented
+  at its real **15 tables** matching `SYNC_TABLE_KEYS` (this section still
+  said 7); networking phases closed (native WS `ArgusSocket` + Tauri socket
+  commands, `http.service`, pairing/invite/login QR all shipped); root
+  navigation corrected to the actual `fade` crossfade (the doc claimed
+  `flip`); orb marked SUPERSEDED by the SVG avatar; Zustand store list
+  updated to the real 8 stores; Skia noted as no longer imported in `src/`.

@@ -34,6 +34,16 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     createdAt: toMs,
     updatedAt: toMs,
   },
+  user_invitation: {
+    role: toStr,
+    maxRedemptions: toNum,
+    redemptionCount: toNum,
+    expiresAt: toMs,
+    createdBy: toStr,
+    revokedAt: toOptDate,
+    createdAt: toMs,
+    updatedAt: toMs,
+  },
   camera: {
     name: toStr,
     cloudUsername: toStr,

@@ -5,17 +5,20 @@ import { pairing } from './pairing';
 import { qr } from './qr';
 import { voice } from './voice';
 import { welcome } from './welcome';
+import { invitation } from './invitation';
 import { login } from './login';
 import { approve } from './approve';
 import { cameras } from './cameras';
 import { agenda } from './agenda';
 import { projects } from './projects';
+import { users } from './users';
 
 export const screens = {
   home,
   qr,
   'not-found': notFound,
   welcome,
+  invitation,
   pairing,
   face,
   voice,
@@ -24,4 +27,5 @@ export const screens = {
   agenda,
   cameras,
   projects,
+  users,
 } as const;

@@ -17,6 +17,7 @@ const FULL = {
 
 export const SYNC_FIRST_CONFIG: ISynchronizedDto = {
   user: FULL,
+  user_invitation: FULL,
   camera: FULL,
   camera_stream: FULL,
   zone: FULL,

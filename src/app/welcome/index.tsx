@@ -1,4 +1,5 @@
 import { Button } from '@/shared/components/ui/button';
+import { Icon } from '@/shared/components/ui/icon';
 import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { MorphIcon } from '@/shared/components/ui/morph-icon';
@@ -20,6 +21,7 @@ import {
 } from '@/shared/constants';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
+import { View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -35,6 +37,7 @@ export default function WelcomeScreen() {
   const reduceMotion = useReduceMotion();
   const { theme } = useUniwind();
   const handleStart = useCallback(() => router.push('/welcome/pairing'), [router]);
+  const handleInvitation = useCallback(() => router.push('/welcome/invitation'), [router]);
 
   const iconDrift = useSharedValue(0);
   useEffect(() => {
@@ -77,12 +80,18 @@ export default function WelcomeScreen() {
       </BlurReveal>
 
       <BlurReveal delay={ctaDelay} duration={fullDuration(WELCOME_CTA_DURATION_MS)} blur={false} scale>
-        <Button onPress={handleStart} size="lg" className="gap-3">
-          <Text>{t('screens.welcome.cta')}</Text>
-          <Animated.View style={iconStyle}>
-            <MorphIcon name="arrow-right" size={20} color={iconColor} />
-          </Animated.View>
-        </Button>
+        <View className="items-center gap-3">
+          <Button onPress={handleStart} size="lg" className="gap-3">
+            <Text>{t('screens.welcome.cta')}</Text>
+            <Animated.View style={iconStyle}>
+              <MorphIcon name="arrow-right" size={20} color={iconColor} />
+            </Animated.View>
+          </Button>
+          <Button variant="ghost" onPress={handleInvitation}>
+            <Icon name="scan-barcode" />
+            <Text>{t('screens.welcome.join-invitation')}</Text>
+          </Button>
+        </View>
       </BlurReveal>
     </CenteredScreen>
   );

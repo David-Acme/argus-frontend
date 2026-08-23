@@ -9,9 +9,10 @@ import { CameraForm, CameraRow, type CameraRowItem } from '@/shared/components/c
 import { DashboardIconButton, SectionHeading } from '@/shared/components/dashboard';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
-import { CAMERA_ROW_HEIGHT } from '@/shared/constants';
+import { CAMERA_ROW_HEIGHT, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
-import { useObservable } from '@/shared/hooks/use-observable';
+import { useCachedRows } from '@/shared/hooks/use-cached-rows';
+import { useObservableReady } from '@/shared/hooks/use-observable';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -28,10 +29,10 @@ export default function CamerasScreen() {
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
 
-  const cameras = useObservable(() => cameraService.observeList(), [], []);
-  const zones = useObservable(() => zoneService.observeAll(), [], []);
+  const [cameras, camerasReady] = useObservableReady(() => cameraService.observeList(), [], []);
+  const [zones, zonesReady] = useObservableReady(() => zoneService.observeAll(), [], []);
 
-  const items = useMemo<CameraRowItem[]>(() => {
+  const liveItems = useMemo<CameraRowItem[]>(() => {
     const zonesByCamera = new Map<string, number>();
     for (const zone of zones) {
       zonesByCamera.set(zone.cameraId, (zonesByCamera.get(zone.cameraId) ?? 0) + 1);
@@ -47,6 +48,11 @@ export default function CamerasScreen() {
       zones: zonesByCamera.get(camera.id) ?? 0,
     }));
   }, [cameras, zones]);
+  const items = useCachedRows(
+    VIEW_CACHE_KEYS.cameraList,
+    liveItems,
+    camerasReady && zonesReady,
+  );
 
   const online = items.filter((item) => item.isEnabled && item.isOnline).length;
 
@@ -79,7 +85,7 @@ export default function CamerasScreen() {
         ) : null
       }>
       <Animated.View entering={screenIn} className="flex-1 gap-3">
-        {items.length === 0 ? (
+        {items.length === 0 && camerasReady && zonesReady ? (
           <EmptyState
             icon="video"
             title={t('screens.cameras.empty')}
@@ -92,7 +98,7 @@ export default function CamerasScreen() {
               ) : null
             }
           />
-        ) : (
+        ) : items.length > 0 ? (
           <>
             {isWide ? <SectionHeading title={t('screens.cameras.title')} /> : null}
             <LegendList
@@ -111,7 +117,7 @@ export default function CamerasScreen() {
               )}
             />
           </>
-        )}
+        ) : null}
       </Animated.View>
 
       <CameraForm open={formOpen} onOpenChange={setFormOpen} />

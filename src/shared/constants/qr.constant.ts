@@ -17,9 +17,9 @@ export const QR_SCAN_PURPOSES: Record<QrScanPurpose, QrScanPurposeDefaults> = {
   invite: {
     title: 'screens.qr.purpose.invite.title',
     hint: 'screens.qr.purpose.invite.hint',
-    manualLabel: 'screens.qr.purpose.invite.manual-label',
-    manualPlaceholder: 'screens.qr.purpose.invite.manual-placeholder',
-    pattern: /^[0-9A-Fa-f]{8,64}$/,
+    manualLabel: null,
+    manualPlaceholder: null,
+    pattern: null,
     invalidMessage: 'screens.qr.purpose.invite.invalid-message',
   },
   generic: {

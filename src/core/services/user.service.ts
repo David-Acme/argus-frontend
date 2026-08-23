@@ -16,6 +16,13 @@ class UserService extends DatabaseService<'user'> {
     );
   }
 
+  observeDirectory(): Observable<UserModel[]> {
+    return this.observeManyWithColumns(
+      ['name', 'last_name', 'role', 'is_active', 'created_at'],
+      [Q.sortBy('name', Q.asc)],
+    );
+  }
+
   observeByRole(role: UserRole): Observable<UserModel[]> {
     return this.observeManyWithColumns(
       ['name', 'last_name', 'is_active'],

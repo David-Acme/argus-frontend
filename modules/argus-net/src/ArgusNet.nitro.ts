@@ -65,6 +65,8 @@ export interface ArgusNet extends HybridObject<{ ios: 'swift', android: 'kotlin'
   discover(timeoutMs: number): Promise<NetDiscovery>;
   pair(host: string, ip: string, port: number, code: string): Promise<NetPairing>;
   configure(caPem: string, allowedHost: string, ip: string): void;
+  /** Verifies the CA fingerprint before making it the strict-TLS trust anchor. */
+  configureVerified(caPem: string, caFingerprint: string, allowedHost: string, ip: string): void;
   request(options: NetHttpRequest): Promise<NetHttpResult>;
   openSocket(options: NetSocketOptions): Promise<ArgusSocket>;
 }

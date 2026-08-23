@@ -22,11 +22,12 @@ import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { useObservable } from '@/shared/hooks/use-observable';
+import { useObservableReady } from '@/shared/hooks/use-observable';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
+import { cameraDetailState } from '@/shared/libs/camera-detail-state';
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
 
@@ -48,8 +49,12 @@ export default function CameraDetailScreen() {
   const [talkOpen, setTalkOpen] = useState(false);
   const [moving, setMoving] = useState(false);
 
-  const cameras = useObservable(() => cameraService.observeList(), [], []);
-  const zones = useObservable(() => zoneService.observeByCamera(id ?? ''), [], [id]);
+  const [cameras, camerasReady] = useObservableReady(() => cameraService.observeList(), [], []);
+  const [zones, zonesReady] = useObservableReady(
+    () => zoneService.observeByCamera(id ?? ''),
+    [],
+    [id],
+  );
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
 
@@ -182,6 +187,7 @@ export default function CameraDetailScreen() {
   );
 
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
+  if (cameraDetailState({ cameraFound: camera !== null, camerasReady }) === 'pending') return null;
   if (!camera) return <Redirect href="/cameras" />;
 
   return (
@@ -279,7 +285,7 @@ export default function CameraDetailScreen() {
                   : undefined
               }
             />
-            {zones.length === 0 ? (
+            {zones.length === 0 && zonesReady ? (
               <EmptyState
                 icon="shield-check"
                 title={t('screens.cameras.zones-empty')}
