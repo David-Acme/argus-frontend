@@ -321,32 +321,48 @@ core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable
 - Adding WatermelonDB changed native deps → **the dev-client must be rebuilt**.
   `jsi: true` falls back to the async bridge with a warning if unavailable.
 
-### 12b. Snapshot-first UI and live synchronization
+### 12b. Local-first cache, pagination and granular synchronization
 
-Argus is reactive, but a screen must feel already populated when the user opens
-it. WatermelonDB is the local source of truth; the network refreshes it rather
-than being the first source for a normal screen.
+Argus paints an authorized local view synchronously. **MMKV is the first-frame
+source for a view; WatermelonDB is the durable synchronized projection used to
+maintain that cache and to execute local filters.** A screen must neither wait
+for Watermelon nor make an HTTP list request just because it mounted.
 
-- For any local list/summary, use `useObservableReady()` so an unread query is
-  distinct from an actual empty result. Render an empty state **only after** its
-  relevant local observables are ready.
-- Pair it with `useCachedRows`/`useCachedValue` and a key from
-  `VIEW_CACHE_KEYS`. `SessionGate` primes MMKV snapshots before the signed-in
-  UI mounts; scope caches by user and clear them at session end. Never let data
-  from one account paint for another.
-- Once Watermelon emits, replace the snapshot and keep it reactive. Do not
-  duplicate local resource state in a screen store, fetch the same list from
-  HTTP as a fallback, or show a loading spinner for data that already belongs
-  to the device.
-- Remote mutations and deliberately remote-only resources may show loading,
-  but only on the action that triggered them. Use `<Button loading>`; preserve
-  its label/layout and do not block the whole screen.
-- Detail routes must not redirect because a local observable has not emitted
-  yet. Differentiate `pending` from `missing` (see
-  `shared/libs/camera-detail-state.ts`).
-- Sync cursor data uses server `syncAt` when supplied, otherwise `createdAt`;
-  update/revoke events must therefore be recoverable after an offline device
-  reconnects.
+- UI routes import neither `@/core/database` nor service observables. They read
+  `useViewCacheRows` / `useViewCacheValue` from
+  `shared/hooks/use-cached-rows.ts`; the only React state retained by that hook
+  is an MMKV revision, never a JS array mirror. Do not use legacy
+  `useCachedRows` in new view code.
+- `viewCacheService` owns serialized MMKV values. Keys are namespaced as
+  `view.cache.v2.<userId>.<viewKey>[.<scope>]`; `setUserId` and `clear` are a
+  session boundary, so one account cannot paint another account's snapshot.
+  `view-cache-memory.ts` must not be reintroduced.
+- `ViewCacheCoordinatorService` is the **only** owner of the Watermelon
+  subscriptions that feed views. `sessionService` starts it once the user is
+  established/restored and stops it before local projection/cache cleanup. A
+  screen may request a semantic scope (currently calendar month or people
+  filter), but may not subscribe to a model itself.
+- Cache pages are semantic, not an unbounded dump: ordinary list pages have
+  `VIEW_CACHE_PAGE_SIZE = 40`; agenda day/week/month reads the requested date
+  range from its active calendar cache, and a month cache covers the 42-day
+  visible grid. Keep only the active calendar scope. Pagination/filter SQL stays
+  inside its `.service.ts`, never a component.
+- The coordinator writes base snapshots whenever Watermelon changes and keeps
+  the default cache fresh before navigation. A filter preserves its last MMKV
+  result while its Watermelon query resolves, then replaces only that scoped
+  cache; stale async filter results are discarded. A next-midnight refresh
+  rebuilds date-derived dashboard/day snapshots.
+- Initial normal sync is a full projection bootstrap; subsequent `Synchronize`
+  pages use **`createdAt` only** for newly created rows and deletions. Field
+  updates/revocations flow through global `audit_log` and user-scoped
+  `user_audit_log`, whose cursors are monotonic `{ lastId, watermarkId }`.
+  Fetch audit pages with `afterId/endId`, apply only each
+  `changes[field].current` to Watermelon, and persist the cursor only after the
+  page is applied. A missing audit target triggers a context recovery.
+- Remote mutations may show loading only on the initiating control via
+  `<Button loading>`; they must not replace a cached screen with a full-screen
+  spinner. Detail routes must not redirect merely because their cache has not
+  been populated yet.
 
 ### 12c. People, invitations and portrait privacy
 
@@ -502,19 +518,23 @@ cd src-tauri && cargo check
 | `src/core/services/net/` | `IArgusNetService` (native→Nitro, web→Tauri, `net-persistence`) |
 | `src/core/services/http.service.ts` | HTTP wrapper sobre `netService`: `IServiceResponse`, refresh 401 single-flight, multipart (`payload` + archivos) |
 | `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `hasAdmin`, `status`, `logout` |
-| `src/core/services/session.service.ts` | Ciclo de sesión: establish/refresh/updateUser/clear, cola serializada sobre secure-storage |
-| `src/core/services/view-cache.service.ts` | Snapshot cache MMKV (`VIEW_CACHE_KEYS`), scoped por usuario y limpiada al cerrar sesión |
-| `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + `SyncCursors` (cursores por usuario) |
+| `src/core/services/session.service.ts` | Ciclo de sesión: establish/refresh/updateUser/clear, cola serializada sobre secure-storage; inicia/detiene el coordinador de cache local |
+| `src/core/services/view-cache.service.ts` | Valores serializados MMKV/localStorage por usuario + señal de revisión; no mantiene filas en memoria JS |
+| `src/core/services/view-cache-coordinator.service.ts` | Único suscriptor Watermelon que proyecta/pagina vistas hacia MMKV y refresca derivados diarios |
+| `src/core/interfaces/{view-cache,audit-log}.interface.ts` | Contratos de snapshots de vista y payloads de auditoría; siempre importar desde el barrel de interfaces |
+| `src/core/types/{view-cache,audit-log}.type.ts` | Uniones y tipos auxiliares de cache/auditoría; siempre importar desde el barrel de tipos |
+| `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |
 | `src/core/services/voice/` | `voiceService`: mic PCM por el socket de sync, observables STT/asistente, playback TTS |
 | `src/core/services/invite.service.ts` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
-| `src/core/services/sync/` | Sync autónomo: `synchronize.service` (socket único + `syncOnce`), `entity-mappers`, `sync-db-utils`, `sync-socket.{native,web}` |
+| `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
 | `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo), `trustAny` para TOFU |
 | `src/core/database/` | WatermelonDB: adapters (`native`/`web`), `schema`, `migrations`, typed `collection()` |
 | `src/core/database/tables/` | One file per table: `tableSchema` + `Model` + the `TABLES` registry |
 | `src/core/services/database.service.ts` | `DatabaseService<K>` base class (protected query primitives) |
 | `src/core/services/{domain}.service.ts` | Data services — the only code that reads the database |
-| `src/shared/hooks/use-observable.ts` | Service `Observable` → React (`useSyncExternalStore`) |
+| `src/shared/hooks/use-observable.ts` | Bridge genérico Service `Observable` → React (`useSyncExternalStore`); no es una API de rutas |
+| `src/shared/hooks/use-cached-rows.ts` | Lectura síncrona de snapshots MMKV por revisión (`useViewCacheRows` / `useViewCacheValue`) |
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
 | `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
@@ -527,7 +547,7 @@ cd src-tauri && cargo check
 | `src/app/index.tsx` | Entry router (unpaired→welcome, paired→login/dashboard) + DashboardScreen |
 | `src/app/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
 | `src/shared/components/dashboard/` | Familia dashboard (23): camera grid/tile, activity, nav rail/bottom nav, charts, popovers |
-| `src/shared/components/session/session-gate.tsx` | Auth bootstrap + priming de snapshots MMKV antes del UI autenticado |
+| `src/shared/components/session/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
 | `tests/*.test.ts` | Suite bun:test (16 archivos): contratos QR/people/portrait/auth-context, caches, layouts |
 | `src/shared/components/face/` | Guidance facial: `face-guide-overlay` (máscara+óvalo+pill), `face-frame` |
 | `src/shared/hooks/use-face-guide.ts` | Muestreo de cámara → `argusFace.detectFaces` → estado de guía + auto-capture |

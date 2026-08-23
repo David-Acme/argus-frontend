@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { ProjectModel } from '@/core/database';
+import type { IProjectCacheRow } from '@/core/interfaces';
 import { projectService } from '@/core/services/project.service';
 import type { MenuOption, ProjectStatus } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -32,7 +32,7 @@ import { toast } from '@/shared/libs/toast';
 type ProjectFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  project?: ProjectModel | null;
+  project?: IProjectCacheRow | null;
 };
 
 const schema = z.object({

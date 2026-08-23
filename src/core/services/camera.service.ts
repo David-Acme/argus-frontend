@@ -12,7 +12,7 @@ class CameraService extends DatabaseService<'camera'> {
 
   observeList(): Observable<CameraModel[]> {
     return this.observeManyWithColumns(
-      ['name', 'is_online', 'is_enabled', 'record_mode'],
+      ['name', 'manufacturer', 'model', 'ip', 'icon', 'is_online', 'is_enabled', 'record_mode'],
       [Q.sortBy('name', Q.asc)],
     );
   }

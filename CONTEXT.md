@@ -858,18 +858,21 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   - **Sync autónomo** (`core/services/sync/`): `synchronize.service.ts` posee el
     socket único (backoff 2s→30s, `UNAUTHORIZED` → `authStore.clear()`), se
     auto-suscribe al store (`bind()` idempotente, `IS_NATIVE` guard), en
-    `InitialInfo` (op 0) hace `setUser` + `syncOnce()`; `syncOnce` itera páginas
-    (200 filas, pausa 150ms, máx 20) con cursores en storageService
-    (`app.sync.<userId>`, segundos, sin `+1` — rango inclusivo); mapper
-    `entity-mappers.ts` (whitelist por tabla, `×1000` seg→ms, JSON-string via
-    sanitizers, sin `updatedAt` en notification — trap conocido); escrituras con
+    `InitialInfo` (op 0) hace `setUser` + `syncOnce()`. El primer `Synchronize`
+    construye la proyección completa; después sus páginas normales (200 filas,
+    pausa 150ms, máx 20) usan cursores `createdAt` en storageService para altas y
+    bajas. Los cambios parciales llegan en páginas de `audit_log` y
+    `user_audit_log`, acotadas por `{lastId, watermarkId}` y aplicadas sólo con
+    `changes[field].current`. `entity-mappers.ts` conserva su whitelist por
+    tabla y conversión `×1000` seg→ms; escrituras usan
     `prepareCreateFromDirtyRaw` (id = server id string, verificado en
-    `sanitizedRaw`) + `prepareUpdate` + `prepareDestroyPermanently` en
-    `chunkedBatch(100)`; Add/Delete en vivo aplicados directo o encolados durante
-    sync; la fila `user` propia se fusiona en `auth.store.setUser`. Exposición
-    pública para fase voz: `send/sendBinary/on/onBinary/onConnect/onDisconnect`
-    y `syncOnce()` manual. Socket platform-split (`sync-socket.native/web.ts`)
-    para no romper el bundle web.
+    `sanitizedRaw`) + actualizaciones parciales + `prepareDestroyPermanently` en
+    `chunkedBatch(100)`. Add/Delete/Log en vivo se aplican directo o se encolan
+    durante sync en ese orden; la fila `user` propia se fusiona en
+    `auth.store.setUser`. Exposición pública para fase voz:
+    `send/sendBinary/on/onBinary/onConnect/onDisconnect` y `syncOnce()` manual.
+    Socket platform-split (`sync-socket.native/web.ts`) para no romper el bundle
+    web.
   - **Wiring mínimo**: `index.tsx` gate de 3 estados (splash mientras
     `status === 'loading'`), sin efectos ni hydrate. i18n `common.errors.*` es/en.
   - Validado: `tsc` 0, `lint` 0, `web:build` OK, `app:compileDebugKotlin` OK
@@ -978,34 +981,66 @@ reaction picks the pose, the voice envelope gives it life.
 Validated: `tsc --noEmit` 0, `expo lint` 0. Backend side documented in
 `backend/CONTEXT.md` → "Reactions".
 
-## People, invitations, offline snapshots and responsive UX (2026-08-22)
+## Local-first views, granular audits and responsive UX (2026-08-23)
 
-The app is real-time, but it must never feel like a remote dashboard. A signed
-in screen paints the last authorized local snapshot immediately, then
-WatermelonDB changes it reactively as `/sync` receives local/live updates.
+The app is real-time without behaving like a remote dashboard. On entry, a
+signed-in view reads its last authorized snapshot from MMKV synchronously; a
+central coordinator has already kept that snapshot current from the local
+projection. This eliminates a view-level loading state for local data without
+duplicating resource arrays in React.
 
-### Local-first rendering
+### Read path and cache ownership
 
-- `SessionGate` calls `viewCacheService.prime()` before mounting authenticated
-  UI. `useCachedRows`/`useCachedValue` read the MMKV snapshot until
-  `useObservableReady` receives the first WatermelonDB emission, then write the
-  fresh result back. Cache scopes include the signed-in user id and are cleared
-  on session end; another account can never see a prior account's snapshot.
-- Every local list/summary distinguishes **not queried yet** from **empty**.
-  Do not show `EmptyState`, redirect away, or render a loading fallback until
-  every local observable needed for that view is ready. `camera-detail-state`
-  prevents a camera detail route from treating a pending query as missing.
-- The main cache keys are in `VIEW_CACHE_KEYS`: dashboard sections, camera list,
-  calendar entries, project list/tasks and People users/invitations. New local
-  views must use the same pattern rather than add one-off screen state or an
-  HTTP list fetch.
-- WatermelonDB remains the only local data source for screens: routes and hooks
-  call domain services, never the database directly. The sync mapper honors
-  backend `syncAt` so role/user/invitation updates made while offline are caught
-  up after reconnect.
-- Server-only work can show loading, but it is constrained to the initiating
-  control through `Button.loading`. It must not replace preloaded screen data
-  with a full-screen spinner or shift the action's layout.
+```
+backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorService → MMKV snapshot → route
+                                                        │
+                                                        └─ local filter/query inside *.service.ts
+```
+
+- `viewCacheService` is serialized storage plus a revision signal only. It does
+  **not** retain row arrays in JS and `view-cache-memory.ts` was removed. The
+  key format is `view.cache.v2.<userId>.<viewKey>[.<scope>]`; session changes
+  namespace and clear the cache before another user can render it.
+- Routes consume `useViewCacheRows` / `useViewCacheValue`; they never import
+  Watermelon or maintain their own observable. `useCachedRows` is compatibility
+  code, not the pattern for new screens.
+- `ViewCacheCoordinatorService` is the sole owner of Watermelon subscriptions
+  for view data. `sessionService` starts it after restore/establish and stops it
+  before local cleanup. It projects dashboard, cameras/detail+zones,
+  projects/tasks, people/invitations, calendar and notifications into MMKV.
+- Ordinary lists are bounded at `VIEW_CACHE_PAGE_SIZE = 40`. Calendar is
+  paginated by the visible semantic period: day/week filters read the active
+  cached range and a month cache contains its 42-day grid. Only the active month
+  scope is retained. New views must define their constants in
+  `shared/constants/cache.constant.ts`, their snapshot interfaces in
+  `core/interfaces/`, and their type unions in `core/types/`.
+- Local filters execute in their domain `.service.ts` against WatermelonDB. The
+  coordinator preserves an existing MMKV filter snapshot until its replacement
+  resolves and rejects stale async responses. It also refreshes date-derived
+  dashboard/day data at local midnight.
+- Server-only work may show `Button.loading` on the initiating control. It must
+  not replace locally cached content with a full-screen spinner.
+
+### Sync contract: creations/deletions plus partial update logs
+
+- First `Synchronize` is a full local projection bootstrap for all
+  `SYNC_TABLE_KEYS`. Thereafter the normal stream is **creation-only** and uses
+  `createdAt`; deletes use their existing tombstone stream. It must not depend
+  on `updatedAt`/`syncAt` to transport updates.
+- Updates flow through global `audit_log` and recipient-scoped
+  `user_audit_log`. The client first asks each log for an id watermark, then
+  consumes the bounded interval `afterId < id <= endId` in ascending pages. Its
+  persistent cursor is `{ lastId, watermarkId }`; it advances only after that
+  page has been applied. `afterId = 0` deliberately establishes an empty audit
+  baseline so the first later log is not lost.
+- An audit row is a field diff. `audit-log-patch.ts` maps only
+  `changes[field].current` to partial Watermelon props; omitted columns are
+  never defaulted. The processor batches compatible updates and requests a
+  context recovery if the target row is absent.
+- During initial synchronization, live `Add`, `Delete` and `Log` messages are
+  queued and replayed in that order so an audit patch cannot run before its
+  creation. The coordinator observes the resulting projection and refreshes
+  MMKV before the user enters a view.
 
 ### People and access surfaces
 
@@ -1051,17 +1086,17 @@ WatermelonDB changes it reactively as `/sync` receives local/live updates.
 
 ### Current validation baseline
 
-On 2026-08-22, `bun test` passed 48 tests, `bun run lint`,
-`bunx tsc --noEmit` and `bun run web:build` all succeeded. A fresh Android
-tablet emulator (2560×1800) was started, the Argus app data intentionally
-cleared to exercise fresh local schema/bootstrap, and then stopped to free RAM.
-The unauthenticated welcome/invitation entry was visually checked; People
-requires an actual paired session and is not populated with fabricated data for
-visual testing.
+On 2026-08-23, `bun run lint`, `bunx tsc --noEmit` and `bun run web:build`
+succeeded. The focused cache/audit suite (`view-cache-*`, `audit-log-*`,
+`entity-mappers` and sync constants) passed 14 tests. `git diff --check` also
+passed, and a static scan confirmed no `src/app` route imports WatermelonDB or a
+direct observable. Device-level validation still requires a real paired session;
+do not fabricate people or camera rows merely to make a screen appear loaded.
 
-## History log — docs resync (2026-08-23)
+## History log — prior docs resync (2026-08-23)
 
-- Documentation-only pass (no code changes): CONTEXT/AGENTS brought back in
+- Documentation-only pass, before the local-first/audit work documented above:
+  CONTEXT/AGENTS brought back in
   sync with the code. Corrections: the "Current state" section no longer
   describes the post-reset empty shell — it documents the full route map,
   core services, UI families and the bun:test suite; WatermelonDB documented

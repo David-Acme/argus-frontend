@@ -3,9 +3,8 @@ import { useEffect, useMemo, type ReactNode } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { CameraModel } from '@/core/database';
 import { cameraService } from '@/core/services/camera.service';
-import type { ICameraCreate, ICameraUpdate } from '@/core/interfaces';
+import type { ICameraCacheRow, ICameraCreate, ICameraUpdate } from '@/core/interfaces';
 import type { CameraDriverKind, CameraRecordMode, MenuOption } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
@@ -34,7 +33,7 @@ type CameraFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Present when editing; absent when connecting a new camera. */
-  camera?: CameraModel | null;
+  camera?: ICameraCacheRow | null;
   trigger?: ReactNode;
 };
 

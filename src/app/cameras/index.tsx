@@ -1,18 +1,16 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Animated from 'react-native-reanimated';
+import type { ICameraListCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import { cameraService } from '@/core/services/camera.service';
-import { zoneService } from '@/core/services/zone.service';
-import { CameraForm, CameraRow, type CameraRowItem } from '@/shared/components/cameras';
+import { CameraForm, CameraRow } from '@/shared/components/cameras';
 import { DashboardIconButton, SectionHeading } from '@/shared/components/dashboard';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { CAMERA_ROW_HEIGHT, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
-import { useCachedRows } from '@/shared/hooks/use-cached-rows';
-import { useObservableReady } from '@/shared/hooks/use-observable';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -29,35 +27,12 @@ export default function CamerasScreen() {
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
 
-  const [cameras, camerasReady] = useObservableReady(() => cameraService.observeList(), [], []);
-  const [zones, zonesReady] = useObservableReady(() => zoneService.observeAll(), [], []);
-
-  const liveItems = useMemo<CameraRowItem[]>(() => {
-    const zonesByCamera = new Map<string, number>();
-    for (const zone of zones) {
-      zonesByCamera.set(zone.cameraId, (zonesByCamera.get(zone.cameraId) ?? 0) + 1);
-    }
-    return cameras.map((camera) => ({
-      id: camera.id,
-      icon: (camera.icon || 'video') as CameraRowItem['icon'],
-      name: camera.name,
-      ip: camera.ip,
-      model: [camera.manufacturer, camera.model].filter(Boolean).join(' '),
-      isOnline: camera.isOnline,
-      isEnabled: camera.isEnabled,
-      zones: zonesByCamera.get(camera.id) ?? 0,
-    }));
-  }, [cameras, zones]);
-  const items = useCachedRows(
-    VIEW_CACHE_KEYS.cameraList,
-    liveItems,
-    camerasReady && zonesReady,
-  );
+  const items = useViewCacheRows<ICameraListCacheRow>(VIEW_CACHE_KEYS.cameraList);
 
   const online = items.filter((item) => item.isEnabled && item.isOnline).length;
 
   const statusLabel = useCallback(
-    (item: CameraRowItem) =>
+    (item: ICameraListCacheRow) =>
       !item.isEnabled
         ? t('screens.cameras.status.disabled')
         : item.isOnline
@@ -85,7 +60,7 @@ export default function CamerasScreen() {
         ) : null
       }>
       <Animated.View entering={screenIn} className="flex-1 gap-3">
-        {items.length === 0 && camerasReady && zonesReady ? (
+        {items.length === 0 ? (
           <EmptyState
             icon="video"
             title={t('screens.cameras.empty')}

@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { ProjectTaskModel } from '@/core/database';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { MenuOption, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -33,7 +33,7 @@ type TaskFormProps = {
   onOpenChange: (open: boolean) => void;
   /** Parent project; the task cannot exist without one. */
   projectId: string;
-  task?: ProjectTaskModel | null;
+  task?: IProjectTaskCacheRow | null;
 };
 
 const schema = z.object({

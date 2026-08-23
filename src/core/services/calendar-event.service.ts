@@ -21,7 +21,16 @@ class CalendarEventService extends DatabaseService<'calendar_event'> {
 
   observeRange(fromMs: number, toMs: number): Observable<CalendarEventModel[]> {
     return this.observeManyWithColumns(
-      ['title', 'starts_at', 'ends_at', 'is_all_day', 'color', 'project_id', 'location'],
+      [
+        'title',
+        'starts_at',
+        'ends_at',
+        'is_all_day',
+        'color',
+        'project_id',
+        'location',
+        'description',
+      ],
       [
         Q.where('starts_at', Q.gte(fromMs)),
         Q.where('starts_at', Q.lte(toMs)),

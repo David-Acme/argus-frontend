@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { CalendarEventModel } from '@/core/database';
+import type { ICalendarEventFormRecord } from '@/core/interfaces';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -35,7 +35,7 @@ type CalendarEventFormProps = {
   onOpenChange: (open: boolean) => void;
   /** Day the form starts on, so creating from a picked day lands there. */
   startsAt: Date;
-  event?: CalendarEventModel | null;
+  event?: ICalendarEventFormRecord | null;
 };
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;

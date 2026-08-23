@@ -1,6 +1,28 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { viewCacheService } from '@/core/services/view-cache.service';
-import type { ViewCacheKey } from '@/shared/constants';
+import type { ViewCacheKey } from '@/core/types';
+
+/** Reacts to a MMKV write without keeping another copy of its payload in JS. */
+export function useViewCacheRevision(key: ViewCacheKey, scope?: string): number {
+  const subscribe = useMemo(
+    () => (listener: () => void) => viewCacheService.subscribe(key, scope, listener),
+    [key, scope],
+  );
+  const getSnapshot = useMemo(() => () => viewCacheService.revision(key, scope), [key, scope]);
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+/** Reads the current MMKV snapshot synchronously and re-renders when it changes. */
+export function useViewCacheRows<T>(key: ViewCacheKey, scope?: string): readonly T[] {
+  useViewCacheRevision(key, scope);
+  return viewCacheService.read<T>(key, scope);
+}
+
+/** Single-value MMKV variant for counters and summaries. */
+export function useViewCacheValue<T>(key: ViewCacheKey, scope?: string): T | null {
+  useViewCacheRevision(key, scope);
+  return viewCacheService.readValue<T>(key, scope);
+}
 
 /**
  * Rows to render right now: the snapshot from the last visit until the local
@@ -13,10 +35,7 @@ export function useCachedRows<T>(
   ready: boolean,
   scope?: string
 ): readonly T[] {
-  // `scope` is the visible window for views such as the calendar. Reading the
-  // primed in-memory snapshot again when it changes prevents yesterday's (or
-  // last month's) rows from being painted for one frame while its local query
-  // subscribes.
+  // `scope` is the visible window for views such as the calendar.
   const fallback = useMemo(() => viewCacheService.read<T>(key, scope), [key, scope]);
 
   useEffect(() => {

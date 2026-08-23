@@ -2,10 +2,12 @@ import { inviteService } from '@/core/services/invite.service';
 import { netService } from '@/core/services/net';
 import { synchronizeService } from '@/core/services/sync';
 import { userManagementService } from '@/core/services/user-management.service';
-import { userInvitationService } from '@/core/services/user-invitation.service';
-import { userService } from '@/core/services/user.service';
 import { useAuthStore } from '@/core/stores';
-import type { IInvitationRecord, IUserManagementRecord } from '@/core/interfaces';
+import type {
+  IInvitationRecord,
+  IPeopleDirectoryCacheRow,
+  IUserManagementRecord,
+} from '@/core/interfaces';
 import type { InviteRole, MenuOption, TranslateFn, UserRole } from '@/core/types';
 import {
   DashboardShell,
@@ -21,9 +23,8 @@ import { QrCode } from '@/shared/components/ui/qr-code';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { DASHBOARD_TAB_ROUTE, VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useCachedRows } from '@/shared/hooks/use-cached-rows';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useObservableReady } from '@/shared/hooks/use-observable';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { buildInvitationQr } from '@/shared/libs/invitation-qr';
@@ -257,53 +258,23 @@ export default function UsersScreen() {
   const qrPreviewRef = useRef<InvitationPreview | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const isOwner = currentUser?.role === 'owner';
-  const userScope = String(currentUser?.id ?? '');
-  const [userRows, usersReady] = useObservableReady(
-    () => userService.observeDirectory(),
-    [],
-    [],
-  );
-  const [invitationRows, invitationsReady] = useObservableReady(
-    () => userInvitationService.observeList(),
-    [],
-    [],
-  );
-  const liveUsers = useMemo<IUserManagementRecord[]>(
+  const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
+  const users = useMemo<IUserManagementRecord[]>(
     () =>
-      userRows.map((user) => ({
+      people.map((user) => ({
         id: Number(user.id),
         name: user.name,
         lastName: user.lastName,
         role: user.role,
         lang: 'es',
         isActive: user.isActive,
-        createdAt: Math.floor(user.createdAt.getTime() / 1000),
-        updatedAt: Math.floor(user.updatedAt.getTime() / 1000),
+        createdAt: Math.floor(user.createdAt / 1000),
+        updatedAt: Math.floor(user.updatedAt / 1000),
         deletedAt: null,
       })),
-    [userRows],
+    [people],
   );
-  const liveInvitations = useMemo<IInvitationRecord[]>(
-    () =>
-      invitationRows.map((invitation) => ({
-        id: Number(invitation.id),
-        role: invitation.role,
-        maxRedemptions: invitation.maxRedemptions,
-        redemptionCount: invitation.redemptionCount,
-        expiresAt: Math.floor(invitation.expiresAt.getTime() / 1000),
-        createdBy: Number(invitation.createdBy),
-        revokedAt: invitation.revokedAt ? Math.floor(invitation.revokedAt.getTime() / 1000) : null,
-        createdAt: Math.floor(invitation.createdAt.getTime() / 1000),
-      })),
-    [invitationRows],
-  );
-  const users = useCachedRows(VIEW_CACHE_KEYS.peopleUsers, liveUsers, usersReady, userScope);
-  const invitations = useCachedRows(
-    VIEW_CACHE_KEYS.peopleInvitations,
-    liveInvitations,
-    invitationsReady,
-    userScope,
-  );
+  const invitations = useViewCacheRows<IInvitationRecord>(VIEW_CACHE_KEYS.peopleInvitations);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60_000);

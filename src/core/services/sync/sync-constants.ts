@@ -23,5 +23,12 @@ export const SYNC_FIRST_CONFIG: ISynchronizedDto = {
   zone: FULL,
   reminder: FULL,
   reminder_detail: FULL,
+  calendar_event: FULL,
+  calendar_event_share: FULL,
+  project: FULL,
+  project_member: FULL,
+  project_task: FULL,
+  event: FULL,
+  person: FULL,
   notification: { requiredCreate: true, findLastCreated: true },
 };

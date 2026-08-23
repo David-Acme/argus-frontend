@@ -1,6 +1,7 @@
-import { userService } from '@/core/services/user.service';
 import { portraitPreviewService } from '@/core/services/portrait-preview.service';
 import { useAuthStore } from '@/core/stores';
+import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
+import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import type { DashboardTab, UserRole } from '@/core/types';
 import { DashboardShell, SectionHeading } from '@/shared/components/dashboard';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -10,24 +11,14 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
 import { Text } from '@/shared/components/ui/text';
 import { DASHBOARD_TAB_ROUTE, VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useCachedRows } from '@/shared/hooks/use-cached-rows';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useObservableReady } from '@/shared/hooks/use-observable';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { portraitDataUri } from '@/shared/libs/portrait-preview';
 import { toast } from '@/shared/libs/toast';
 import { Redirect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-
-type DirectoryUser = {
-  id: string;
-  name: string;
-  lastName: string;
-  role: UserRole;
-  isActive: boolean;
-  createdAt: number;
-};
 
 const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard', 'guest', 'owner'];
 
@@ -41,37 +32,18 @@ export default function PeopleDirectoryScreen() {
   const currentUser = useAuthStore((state) => state.user);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<UserRole | 'all'>('all');
-  const [selected, setSelected] = useState<DirectoryUser | null>(null);
+  const [selected, setSelected] = useState<IPeopleDirectoryCacheRow | null>(null);
   const [portraitUri, setPortraitUri] = useState<string | null>(null);
   const [portraitLoading, setPortraitLoading] = useState(false);
   const portraitRequest = useRef(0);
-  const [rows, ready] = useObservableReady(() => userService.observeDirectory(), [], []);
-  const liveRows = useMemo<DirectoryUser[]>(
-    () =>
-      rows.map((user) => ({
-        id: user.id,
-        name: user.name,
-        lastName: user.lastName,
-        role: user.role,
-        isActive: user.isActive,
-        createdAt: user.createdAt.getTime(),
-      })),
-    [rows],
-  );
-  const people = useCachedRows(
-    VIEW_CACHE_KEYS.peopleUsers,
-    liveRows,
-    ready,
-    String(currentUser?.id ?? ''),
-  );
-  const filtered = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase();
-    return people.filter((person) => {
-      const matchesRole = role === 'all' || person.role === role;
-      const fullName = `${person.name} ${person.lastName}`.toLocaleLowerCase();
-      return matchesRole && (!query || fullName.includes(query) || person.role.includes(query));
-    });
-  }, [people, role, search]);
+  const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
+  const filteredRows = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleFilter);
+  const isFiltering = role !== 'all' || search.trim().length > 0;
+  useEffect(() => {
+    if (!isFiltering) return;
+    void viewCacheCoordinatorService.filterPeople({ query: search, role });
+  }, [isFiltering, role, search]);
+  const filtered = isFiltering ? filteredRows : people;
   const goToTab = useCallback(
     (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
     [router],
@@ -188,13 +160,13 @@ export default function PeopleDirectoryScreen() {
                 ))}
               </CardContent>
             </Card>
-          ) : ready ? (
+          ) : (
             <Card>
               <CardContent>
                 <Text className="text-muted-foreground py-2 text-sm">{t('screens.users.no-people')}</Text>
               </CardContent>
             </Card>
-          ) : null}
+          )}
         </View>
       </View>
 

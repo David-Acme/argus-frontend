@@ -10,7 +10,15 @@ class UserInvitationService extends DatabaseService<'user_invitation'> {
 
   observeList(): Observable<UserInvitationModel[]> {
     return this.observeManyWithColumns(
-      ['role', 'max_redemptions', 'redemption_count', 'expires_at', 'revoked_at', 'updated_at'],
+      [
+        'role',
+        'max_redemptions',
+        'redemption_count',
+        'expires_at',
+        'created_by',
+        'revoked_at',
+        'updated_at',
+      ],
       [Q.sortBy('created_at', Q.desc)],
     );
   }

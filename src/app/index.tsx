@@ -60,7 +60,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
     unreadNotifications,
     summary,
     activityLevels,
-  } = useDashboardData(user?.id ?? null);
+  } = useDashboardData();
   const [query, setQuery] = useState('');
   const sectionLayout = useMemo(() => getDashboardSectionLayout(width, height), [height, width]);
 

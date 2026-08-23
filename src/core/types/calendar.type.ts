@@ -23,5 +23,6 @@ export type CalendarEntry = {
   status: AgendaStatus;
   color?: string;
   location?: string;
+  description?: string;
   projectId?: string | null;
 };

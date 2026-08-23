@@ -24,6 +24,13 @@ class ZoneService extends DatabaseService<'zone'> {
     );
   }
 
+  observeForCache(): Observable<ZoneModel[]> {
+    return this.observeManyWithColumns(
+      ['camera_id', 'name', 'points', 'zone_type', 'color', 'is_enabled'],
+      [Q.sortBy('name', Q.asc)],
+    );
+  }
+
   create(body: IZoneCreate): Promise<IServiceResponse<unknown>> {
     return httpService.post('/zone', body);
   }

@@ -14,3 +14,5 @@ export * from './calendar.interface';
 export * from './project.interface';
 export * from './camera.interface';
 export * from './camera-control.interface';
+export * from './audit-log.interface';
+export * from './view-cache.interface';

@@ -3,8 +3,8 @@ import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Pressable, View } from 'react-native';
 import { z } from 'zod';
-import type { ZoneModel } from '@/core/database';
 import { zoneService } from '@/core/services/zone.service';
+import type { IZoneCacheRow } from '@/core/interfaces';
 import type { MenuOption, ZoneType } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
@@ -34,7 +34,7 @@ type ZoneFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   cameraId: string;
-  zone?: ZoneModel | null;
+  zone?: IZoneCacheRow | null;
 };
 
 const schema = z.object({

@@ -6,12 +6,23 @@ import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
 import {
   SYNC_CURSORS_PREFIX,
+  SYNC_AUDIT_CURSORS_PREFIX,
+  SYNC_AUDIT_REQUEST_TYPE,
   SYNC_OPERATION,
   SYNC_WS_PATH,
   WS_RECONNECT_BASE_MS,
   WS_RECONNECT_MAX_MS,
 } from '@/shared/constants';
-import type { SyncCursors, SyncOperation, SyncTableKey, UserRole } from '@/core/types';
+import type {
+  AuditLogCursor,
+  AuditLogCursors,
+  AuditLogRequest,
+  AuditLogScope,
+  SyncCursors,
+  SyncOperation,
+  SyncTableKey,
+  UserRole,
+} from '@/core/types';
 import { SYNC_TABLE_KEYS } from '@/core/types';
 import type {
   IInitialInfo,
@@ -23,7 +34,11 @@ import type {
   ISyncResponseBody,
   IWsMessage,
   IArgusSocket,
+  IAuditLogEntry,
+  IAuditLogSyncResponse,
 } from '@/core/interfaces';
+import { auditLogProcessorService } from './audit-log-processor.service';
+import { buildAuditRequest } from './audit-log-cursor';
 import { toDirtyRaw, toModelProps } from './entity-mappers';
 import { parseAuthContext } from './auth-context';
 import { chunkedBatch, existingByServerId } from './sync-db-utils';
@@ -66,12 +81,19 @@ class SynchronizeService {
   private syncing = false;
   private activeSync: Promise<void> | null = null;
   private contextSync: Promise<void> | null = null;
+  private projectionRecoveryQueued = false;
   private lastSyncAt: number | null = null;
   private syncError: string | null = null;
   private pendingAdds: ISocketEmitDto[] = [];
   private pendingDeletes: ISocketEmitDto[] = [];
+  private pendingLogs: ISocketEmitDto[] = [];
   private pendingResponseResolver: ((response: ISynchronizedResponse) => void) | null = null;
   private pendingResponseRejecter: ((error: Error) => void) | null = null;
+  private auditResponseResolvers = new Map<
+    SyncOperation,
+    (response: IAuditLogSyncResponse) => void
+  >();
+  private auditResponseRejecters = new Map<SyncOperation, (error: Error) => void>();
   private requestEndTime = 0;
   private listeners = new Map<number, Set<(msg: ISocketEmitDto) => void>>();
   private typeListeners = new Map<string, Set<(payload: unknown) => void>>();
@@ -191,6 +213,14 @@ class SynchronizeService {
     return this.startSync();
   }
 
+  async clearLocalProjection(userId: number | string | null): Promise<void> {
+    await this.clearSyncedRows();
+    const scope = userId == null ? '' : String(userId);
+    storageService.remove(SYNC_CURSORS_PREFIX + scope);
+    storageService.remove(SYNC_AUDIT_CURSORS_PREFIX + scope);
+    viewCacheService.clear();
+  }
+
   private startSync(): Promise<void> {
     if (!this.socket) return Promise.resolve();
     if (this.activeSync) return this.activeSync;
@@ -218,6 +248,7 @@ class SynchronizeService {
         await delay(SYNC_PAGE_DELAY_MS);
       }
       if (!complete) throw new Error('Synchronization page limit reached');
+      await this.syncAuditLogs();
       this.lastSyncAt = Date.now();
     } catch (error) {
       this.syncError = error instanceof Error ? error.message : String(error);
@@ -235,6 +266,7 @@ class SynchronizeService {
       this.reconnectTimer = null;
     }
     this.rejectPendingResponse(new Error('Socket disconnected'));
+    this.rejectPendingAuditResponses(new Error('Socket disconnected'));
     this.socket?.close(1000, '');
     this.socket = null;
     this.reconnectAttempt = 0;
@@ -323,6 +355,7 @@ class SynchronizeService {
         devLog('connect: CLOSE', code, reason);
         if (this.socket === socket) this.socket = null;
         this.rejectPendingResponse(new Error(`Socket closed (${code}): ${reason}`));
+        this.rejectPendingAuditResponses(new Error(`Socket closed (${code}): ${reason}`));
         if (!opened) settle(false);
         if (reconnect && !this.manualClose) this.scheduleReconnect();
       };
@@ -406,11 +439,20 @@ class SynchronizeService {
         this.pendingResponseResolver = null;
         this.pendingResponseRejecter = null;
         break;
+      case SYNC_OPERATION.SynchronizeAuditLog:
+        this.resolveAuditResponse(SYNC_OPERATION.SynchronizeAuditLog, emit.info);
+        break;
+      case SYNC_OPERATION.SynchronizeUserAuditLog:
+        this.resolveAuditResponse(SYNC_OPERATION.SynchronizeUserAuditLog, emit.info);
+        break;
       case SYNC_OPERATION.Add:
         this.onAdd(emit);
         break;
       case SYNC_OPERATION.Delete:
         this.onDelete(emit);
+        break;
+      case SYNC_OPERATION.Log:
+        this.onLog(emit);
         break;
       case SYNC_OPERATION.AuthContextChanged:
         this.onAuthContextChanged(emit.info);
@@ -449,6 +491,7 @@ class SynchronizeService {
       await this.activeSync;
       await this.clearSyncedRows();
       storageService.remove(this.cursorKey());
+      storageService.remove(this.auditCursorKey());
       viewCacheService.clear();
       await this.startSync();
     })()
@@ -486,6 +529,15 @@ class SynchronizeService {
     if (key) void this.applyDeleted(key, [msg.info as ISyncDeletedRow]);
   }
 
+  private onLog(msg: ISocketEmitDto): void {
+    if (this.syncing) {
+      this.pendingLogs.push(msg);
+      return;
+    }
+    const scope: AuditLogScope = msg.option === 'user_audit_log' ? 'user' : 'global';
+    void this.applyAuditLogs(scope, [msg.info as IAuditLogEntry]);
+  }
+
   private syncKey(option: string): SyncTableKey | null {
     return SYNC_TABLE_KEYS.includes(option as SyncTableKey) ? (option as SyncTableKey) : null;
   }
@@ -493,8 +545,10 @@ class SynchronizeService {
   private replayPending(): void {
     const adds = this.pendingAdds.splice(0);
     const deletes = this.pendingDeletes.splice(0);
+    const logs = this.pendingLogs.splice(0);
     for (const msg of adds) this.onAdd(msg);
     for (const msg of deletes) this.onDelete(msg);
+    for (const msg of logs) this.onLog(msg);
   }
 
   private requestSync(dto: ISynchronizedDto): Promise<ISynchronizedResponse> {
@@ -530,6 +584,125 @@ class SynchronizeService {
     this.pendingResponseResolver = null;
     this.pendingResponseRejecter = null;
     reject?.(error);
+  }
+
+  private async syncAuditLogs(): Promise<void> {
+    await this.syncAuditScope('global');
+    await this.syncAuditScope('user');
+  }
+
+  private async syncAuditScope(scope: AuditLogScope): Promise<void> {
+    const watermarkResponse = await this.requestAudit(scope, { findLast: true });
+    const watermarkId = Number(watermarkResponse.watermarkId ?? 0);
+    const cursors = this.loadAuditCursors();
+    const saved = cursors[scope];
+    if (!watermarkId) {
+      if (!saved) {
+        cursors[scope] = { lastId: 0, watermarkId: 0 };
+        this.saveAuditCursors(cursors);
+      }
+      return;
+    }
+    if (!saved) {
+      cursors[scope] = { lastId: watermarkId, watermarkId };
+      this.saveAuditCursors(cursors);
+      return;
+    }
+
+    let cursor: AuditLogCursor = { ...saved, watermarkId };
+    while (cursor.lastId < cursor.watermarkId) {
+      const response = await this.requestAudit(scope, buildAuditRequest(cursor));
+      const entries = Array.isArray(response.info) ? response.info : [];
+      if (entries.length === 0) break;
+      await this.applyAuditLogs(scope, entries);
+
+      const nextId = Number(response.nextCursorId ?? entries.at(-1)?.id);
+      if (!Number.isFinite(nextId) || nextId <= cursor.lastId) {
+        throw new Error('Audit synchronization did not advance its cursor');
+      }
+      cursor = { ...cursor, lastId: Math.max(cursor.lastId, nextId) };
+      cursors[scope] = cursor;
+      this.saveAuditCursors(cursors);
+    }
+  }
+
+  private async applyAuditLogs(scope: AuditLogScope, entries: IAuditLogEntry[]): Promise<void> {
+    if (entries.length === 0) return;
+    const result = await auditLogProcessorService.apply(entries);
+    this.updateCurrentUserFromAudit(entries);
+    if (result.missing.length > 0) this.queueProjectionRecovery();
+    devLog('applied audit logs', scope, entries.length);
+  }
+
+  private updateCurrentUserFromAudit(entries: IAuditLogEntry[]): void {
+    const currentUser = this.authStore?.getState().user;
+    if (!currentUser) return;
+
+    for (const entry of entries) {
+      if (entry.tableName !== 'user' || String(entry.recordId) !== String(currentUser.id)) continue;
+      const partial: { name?: string; role?: UserRole; isActive?: boolean } = {};
+      const name = entry.changes.name?.current;
+      const role = entry.changes.role?.current;
+      const isActive = entry.changes.isActive?.current;
+      if (typeof name === 'string') partial.name = name;
+      if (typeof role === 'string') partial.role = role as UserRole;
+      if (typeof isActive === 'boolean') partial.isActive = isActive;
+      if (Object.keys(partial).length > 0) this.sessionActions?.updateUser(partial);
+    }
+  }
+
+  private queueProjectionRecovery(): void {
+    if (this.projectionRecoveryQueued) return;
+    this.projectionRecoveryQueued = true;
+    setTimeout(() => {
+      this.projectionRecoveryQueued = false;
+      this.startContextResync();
+    }, 0);
+  }
+
+  private requestAudit(
+    scope: AuditLogScope,
+    payload: AuditLogRequest,
+  ): Promise<IAuditLogSyncResponse> {
+    if (!this.socket) return Promise.reject(new Error('Socket is not connected'));
+    const operation =
+      scope === 'global'
+        ? SYNC_OPERATION.SynchronizeAuditLog
+        : SYNC_OPERATION.SynchronizeUserAuditLog;
+    if (this.auditResponseResolvers.has(operation)) {
+      return Promise.reject(new Error('An audit sync request is already pending'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.auditResponseResolvers.delete(operation);
+        this.auditResponseRejecters.delete(operation);
+        reject(new Error('Audit synchronization response timeout'));
+      }, SYNC_RESPONSE_TIMEOUT_MS);
+      this.auditResponseResolvers.set(operation, (response) => {
+        clearTimeout(timer);
+        resolve(response);
+      });
+      this.auditResponseRejecters.set(operation, (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      this.send(SYNC_AUDIT_REQUEST_TYPE[scope], payload);
+    });
+  }
+
+  private resolveAuditResponse(operation: SyncOperation, payload: unknown): void {
+    const resolve = this.auditResponseResolvers.get(operation);
+    this.auditResponseResolvers.delete(operation);
+    this.auditResponseRejecters.delete(operation);
+    resolve?.(payload as IAuditLogSyncResponse);
+  }
+
+  private rejectPendingAuditResponses(error: Error): void {
+    const rejecters = [...this.auditResponseRejecters.values()];
+    this.auditResponseResolvers.clear();
+    this.auditResponseRejecters.clear();
+    rejecters.forEach((reject) => reject(error));
   }
 
   private async recoverUnauthorized(): Promise<void> {
@@ -607,7 +780,7 @@ class SynchronizeService {
     const createdRows = body.created as Record<string, unknown>[];
     const createdPosition = this.maxPosition(
       createdRows,
-      'syncAt',
+      'createdAt',
       body.lastSyncDate?.created,
       body.lastSyncDate?.createdId,
     );
@@ -628,13 +801,13 @@ class SynchronizeService {
 
   private maxPosition(
     rows: Record<string, unknown>[],
-    timeField: 'syncAt' | 'deletedAt',
+    timeField: 'createdAt' | 'deletedAt',
     fallbackTime?: number | null,
     fallbackId?: number | string,
   ): { time: number; id?: number | string } | null {
     let result: { time: number; id?: number | string } | null = null;
     for (const row of rows) {
-      const time = secondsOf(timeField === 'syncAt' ? row.syncAt ?? row.createdAt : row.deletedAt);
+      const time = secondsOf(timeField === 'createdAt' ? row.createdAt : row.deletedAt);
       if (!time) continue;
       const id = row.id as number | string | undefined;
       if (!result || time > result.time || (time === result.time && this.compareIds(id, result.id) > 0)) {
@@ -699,6 +872,18 @@ class SynchronizeService {
 
   private saveCursors(cursors: SyncCursors): void {
     storageService.setObject(this.cursorKey(), cursors);
+  }
+
+  private auditCursorKey(): string {
+    return SYNC_AUDIT_CURSORS_PREFIX + (this.authStore?.getState().user?.id ?? '');
+  }
+
+  private loadAuditCursors(): AuditLogCursors {
+    return storageService.getObject<AuditLogCursors>(this.auditCursorKey()) ?? {};
+  }
+
+  private saveAuditCursors(cursors: AuditLogCursors): void {
+    storageService.setObject(this.auditCursorKey(), cursors);
   }
 }
 

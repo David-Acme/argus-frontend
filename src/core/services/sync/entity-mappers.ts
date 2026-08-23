@@ -214,3 +214,17 @@ export const toModelProps = (key: SyncTableKey, row: Record<string, unknown>): R
   }
   return props;
 };
+
+/** Maps an audit patch without materialising defaults for fields it does not contain. */
+export const toPartialModelProps = (
+  key: SyncTableKey,
+  row: Record<string, unknown>,
+): Record<string, unknown> => {
+  const props: Record<string, unknown> = {};
+  for (const [prop, transform] of Object.entries(TABLE_MAPS[key])) {
+    if (Object.prototype.hasOwnProperty.call(row, prop)) {
+      props[prop] = transform(row[prop]);
+    }
+  }
+  return props;
+};

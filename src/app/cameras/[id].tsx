@@ -6,7 +6,11 @@ import { useAuthStore } from '@/core/stores';
 import { cameraControlService } from '@/core/services/camera-control.service';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
-import type { ICameraCapabilities, ICameraDeviceStatus } from '@/core/interfaces';
+import type {
+  ICameraCapabilities,
+  ICameraDetailCache,
+  ICameraDeviceStatus,
+} from '@/core/interfaces';
 import type { MenuOption, ZoneType } from '@/core/types';
 import {
   CameraForm,
@@ -22,12 +26,12 @@ import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { useObservableReady } from '@/shared/hooks/use-observable';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
-import { cameraDetailState } from '@/shared/libs/camera-detail-state';
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
 
@@ -49,13 +53,9 @@ export default function CameraDetailScreen() {
   const [talkOpen, setTalkOpen] = useState(false);
   const [moving, setMoving] = useState(false);
 
-  const [cameras, camerasReady] = useObservableReady(() => cameraService.observeList(), [], []);
-  const [zones, zonesReady] = useObservableReady(
-    () => zoneService.observeByCamera(id ?? ''),
-    [],
-    [id],
-  );
-  const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
+  const detail = useViewCacheValue<ICameraDetailCache>(VIEW_CACHE_KEYS.cameraDetail, id);
+  const camera = detail?.camera ?? null;
+  const zones = useMemo(() => detail?.zones ?? [], [detail]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
 
   const typeLabels = useMemo<Record<ZoneType, string>>(
@@ -187,7 +187,6 @@ export default function CameraDetailScreen() {
   );
 
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
-  if (cameraDetailState({ cameraFound: camera !== null, camerasReady }) === 'pending') return null;
   if (!camera) return <Redirect href="/cameras" />;
 
   return (
@@ -285,7 +284,7 @@ export default function CameraDetailScreen() {
                   : undefined
               }
             />
-            {zones.length === 0 && zonesReady ? (
+            {zones.length === 0 ? (
               <EmptyState
                 icon="shield-check"
                 title={t('screens.cameras.zones-empty')}

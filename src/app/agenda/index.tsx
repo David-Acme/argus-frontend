@@ -14,11 +14,10 @@ import {
 import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboard';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
-import { calendarEventService } from '@/core/services/calendar-event.service';
-import { useCachedRows } from '@/shared/hooks/use-cached-rows';
-import { useCalendarEntries } from '@/shared/hooks/use-calendar-entries';
+import type { ICalendarEventFormRecord } from '@/core/interfaces';
+import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useObservable } from '@/shared/hooks/use-observable';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -33,9 +32,10 @@ import { screenIn } from '@/shared/libs/animations';
 import { calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
 import type { CalendarEntry, CalendarView, DashboardTab } from '@/core/types';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { calendarMonthScope } from '@/core/services/view-cache-projections.service';
 
 /** Hours the day/week grids show: a working day, not 24 empty rows. */
 export default function ScheduleScreen() {
@@ -44,7 +44,6 @@ export default function ScheduleScreen() {
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
   const authStatus = useAuthStore((state) => state.status);
-  const user = useAuthStore((state) => state.user);
   const voiceEnabled = useOnboardingStore((state) => state.voiceEnabled);
   const [anchor, setAnchor] = useState(() => date.startOfDay(new Date()));
   const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
@@ -55,7 +54,6 @@ export default function ScheduleScreen() {
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
   const { can } = usePermissions();
-  const userKey = user?.id == null ? '' : String(user.id);
   const usesActionSheet = shouldUseAdaptiveMenuSheet({
     isCompact,
     isExpanded,
@@ -65,31 +63,41 @@ export default function ScheduleScreen() {
   const usesContextMenu = IS_NATIVE && !usesActionSheet;
 
   const range = useMemo(() => date.rangeFor(view, anchor), [anchor, date, view]);
-  // The day list carries merged entries; editing needs the row itself, so the
-  // month range is observed alongside.
-  const calendarEvents = useObservable(
-    () => calendarEventService.observeRange(range.from, range.to),
-    [],
-    [range.from, range.to]
-  );
-  const { entries: liveEntries, ready: entriesReady } = useCalendarEntries({
-    from: range.from,
-    to: range.to,
-    userId: userKey,
-  });
-  // The window that is on screen is rehydrated from the last visit, so paging
-  // back to it never blinks through an empty grid.
-  const entries = useCachedRows(
+  const cachedEntries = useViewCacheRows<CalendarEntry>(
     VIEW_CACHE_KEYS.calendarEntries,
-    liveEntries,
-    entriesReady,
-    `${userKey}.${view}.${range.from}`
+    calendarMonthScope(anchor),
+  );
+  useEffect(() => {
+    viewCacheCoordinatorService.watchCalendarMonth(anchor);
+  }, [anchor]);
+  const entries = useMemo(
+    () =>
+      cachedEntries.filter(
+        (entry) => entry.startsAt >= range.from && entry.startsAt <= range.to,
+      ),
+    [cachedEntries, range.from, range.to],
   );
 
   const selectedDayEntries = useMemo(
     () => entries.filter((entry) => date.sameDay(new Date(entry.startsAt), selectedDay)),
     [date, entries, selectedDay]
   );
+
+  const editingEvent = useMemo<ICalendarEventFormRecord | null>(() => {
+    const entry = entries.find(
+      (candidate) => candidate.source === 'event' && calendarEntryRecordId(candidate) === editingEventId,
+    );
+    if (!entry || entry.source !== 'event') return null;
+    return {
+      id: calendarEntryRecordId(entry),
+      title: entry.title,
+      startsAt: new Date(entry.startsAt),
+      endsAt: entry.endsAt == null ? null : new Date(entry.endsAt),
+      isAllDay: entry.isAllDay,
+      location: entry.location ?? '',
+      description: entry.description ?? '',
+    };
+  }, [editingEventId, entries]);
 
   const editEntry = useCallback((entry: CalendarEntry) => {
     if (entry.source !== 'event') return;
@@ -340,7 +348,7 @@ export default function ScheduleScreen() {
           if (!open) setEditingEventId('');
         }}
         startsAt={selectedDay}
-        event={calendarEvents.find((item) => item.id === editingEventId) ?? null}
+        event={editingEvent}
       />
       <CalendarEntryDetail
         entry={detailEntry}

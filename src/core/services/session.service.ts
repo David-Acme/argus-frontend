@@ -1,6 +1,8 @@
 import { netService } from '@/core/services/net';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
+import { synchronizeService } from '@/core/services/sync';
+import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { useAuthStore } from '@/core/stores/auth.store';
 import { NET_STORAGE_KEYS, SESSION_USER_KEY } from '@/shared/constants';
@@ -65,6 +67,8 @@ class SessionService {
   async establish(session: IAuthSession): Promise<void> {
     this.sessionVersion += 1;
     useAuthStore.getState().setSession(session);
+    viewCacheService.setUserId(session.user.id);
+    viewCacheCoordinatorService.start(session.user.id);
     await this.persistSession(session);
   }
 
@@ -90,7 +94,11 @@ class SessionService {
   /** Clears memory immediately and removes the durable session afterwards. */
   async clearSession(): Promise<void> {
     this.sessionVersion += 1;
+    const userId = useAuthStore.getState().user?.id ?? null;
+    viewCacheCoordinatorService.stop();
+    await synchronizeService.clearLocalProjection(userId);
     useAuthStore.getState().clear();
+    viewCacheService.setUserId(null);
     try {
       storageService.remove(SESSION_USER_KEY);
       // Snapshots are what a screen paints before its query answers: another
@@ -117,6 +125,8 @@ class SessionService {
           : null;
 
       useAuthStore.getState().hydrate(session);
+      viewCacheService.setUserId(session?.user.id ?? null);
+      if (session) viewCacheCoordinatorService.start(session.user.id);
 
       // Credentials without a complete paired instance can never be used.
       // Remove that stale combination so a later pairing starts cleanly.

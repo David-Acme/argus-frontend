@@ -1,5 +1,6 @@
 import { useAuthStore, useOnboardingStore } from '@/core/stores';
 import { projectTaskService } from '@/core/services/project-task.service';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import type {
   DashboardTab,
   MenuOption,
@@ -21,7 +22,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { DASHBOARD_TAB_ROUTE, TASK_PRIORITY_WEIGHT, TASK_STATUS_ORDER } from '@/shared/constants';
 import { usePermissions } from '@/shared/hooks/use-permissions';
-import { useProjectsData, type ProjectTaskListItem } from '@/shared/hooks/use-projects-data';
+import { useProjectsData } from '@/shared/hooks/use-projects-data';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
@@ -77,7 +78,7 @@ export default function ProjectsScreen() {
   );
 
   const grouped = useMemo(() => {
-    const map = new Map<ProjectTaskStatus, ProjectTaskListItem[]>();
+    const map = new Map<ProjectTaskStatus, IProjectTaskCacheRow[]>();
     for (const status of TASK_STATUS_ORDER) map.set(status, []);
     for (const task of displayTasks) {
       const bucket = map.get(task.status as ProjectTaskStatus);

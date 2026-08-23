@@ -24,3 +24,5 @@ export * from './calendar.type';
 export * from './navigation.type';
 export * from './toast.type';
 export * from './confirm.type';
+export * from './audit-log.type';
+export * from './view-cache.type';
