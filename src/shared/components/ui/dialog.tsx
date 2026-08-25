@@ -22,6 +22,7 @@ function DialogOverlay({
   className,
   children,
   onPress,
+  closeOnPress = true,
   ...props
 }: Omit<ComponentProps<typeof DialogPrimitive.Overlay>, 'asChild'> & {
   children?: ReactNode;
@@ -30,7 +31,7 @@ function DialogOverlay({
 
   function onOverlayPress(event: GestureResponderEvent) {
     onPress?.(event);
-    if (event.target === event.currentTarget && !event.isDefaultPrevented()) {
+    if (closeOnPress && event.target === event.currentTarget && !event.isDefaultPrevented()) {
       onOpenChange(false);
     }
   }
@@ -46,6 +47,7 @@ function DialogOverlay({
           className
         )}
         {...props}
+        closeOnPress={closeOnPress}
         onPress={Platform.select({ web: onOverlayPress, native: onPress })}
         asChild={IS_NATIVE}>
         <NativeOnlyAnimatedView entering={overlayIn} exiting={overlayOut} as="Pressable">
@@ -69,13 +71,16 @@ function DialogContent({
   className,
   portalHost,
   children,
+  dismissible = true,
   ...props
 }: ComponentProps<typeof DialogPrimitive.Content> & {
   portalHost?: string;
+  /** Disables the overlay press and the close button while they stay visible. */
+  dismissible?: boolean;
 }) {
   return (
     <DialogPortal hostName={portalHost}>
-      <DialogOverlay>
+      <DialogOverlay closeOnPress={dismissible}>
         <DialogPrimitive.Content
           className={cn(
             'bg-background border-border z-50 mx-auto flex max-h-[94%] w-full flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg',
@@ -87,8 +92,10 @@ function DialogContent({
           {...props}>
           <>{children}</>
           <DialogPrimitive.Close
+            disabled={!dismissible}
             className={cn(
-              'absolute right-4 top-4 rounded opacity-70 active:opacity-100',
+              'absolute right-4 top-4 rounded',
+              dismissible ? 'opacity-70 active:opacity-100' : 'opacity-40',
               Platform.select({
                 web: 'ring-offset-background focus:ring-ring data-[state=open]:bg-accent transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none',
               })

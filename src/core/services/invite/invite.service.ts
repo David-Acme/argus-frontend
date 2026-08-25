@@ -1,6 +1,6 @@
-import { httpService } from '@/core/services/http.service';
+import { httpService } from '@/core/services/http';
 import { netService } from '@/core/services/net';
-import { validateInvitationResolution } from '@/core/services/invitation-resolution';
+import { validateInvitationResolution } from './invitation-resolution';
 import type {
   IInviteAcceptResult,
   IInviteCreateInput,

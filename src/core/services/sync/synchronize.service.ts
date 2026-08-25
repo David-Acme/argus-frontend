@@ -10,8 +10,13 @@ import {
   SYNC_AUDIT_REQUEST_TYPE,
   SYNC_OPERATION,
   SYNC_WS_PATH,
+  SYNC_WS_CONNECT_TIMEOUT_MS,
   WS_RECONNECT_BASE_MS,
   WS_RECONNECT_MAX_MS,
+  SYNC_PAGE_SIZE,
+  SYNC_PAGE_DELAY_MS,
+  SYNC_MAX_PAGES,
+  SYNC_RESPONSE_TIMEOUT_MS,
 } from '@/shared/constants';
 import type {
   AuditLogCursor,
@@ -39,22 +44,20 @@ import type {
 } from '@/core/interfaces';
 import { auditLogProcessorService } from './audit-log-processor.service';
 import { buildAuditRequest } from './audit-log-cursor';
-import { toDirtyRaw, toModelProps } from './entity-mappers';
+import { toBool, toDirtyRaw, toModelProps } from './entity-mappers';
 import { parseAuthContext } from './auth-context';
 import { chunkedBatch, existingByServerId } from './sync-db-utils';
 import {
   SYNC_FIRST_CONFIG,
-  SYNC_MAX_PAGES,
-  SYNC_PAGE_DELAY_MS,
-  SYNC_PAGE_SIZE,
-  SYNC_RESPONSE_TIMEOUT_MS,
 } from './sync-constants';
 import { openSocket } from './sync-socket';
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-const WS_CONNECT_TIMEOUT_MS = 8000;
 
-const secondsOf = (v: unknown): number => (v == null ? 0 : Number(v));
+const secondsOf = (v: unknown): number => {
+  const value = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(value) ? value : 0;
+};
 
 const devLog = (...args: unknown[]): void => {
   // eslint-disable-next-line no-console
@@ -84,9 +87,8 @@ class SynchronizeService {
   private projectionRecoveryQueued = false;
   private lastSyncAt: number | null = null;
   private syncError: string | null = null;
-  private pendingAdds: ISocketEmitDto[] = [];
-  private pendingDeletes: ISocketEmitDto[] = [];
-  private pendingLogs: ISocketEmitDto[] = [];
+  private pendingEvents: ISocketEmitDto[] = [];
+  private eventQueue: Promise<void> = Promise.resolve();
   private pendingResponseResolver: ((response: ISynchronizedResponse) => void) | null = null;
   private pendingResponseRejecter: ((error: Error) => void) | null = null;
   private auditResponseResolvers = new Map<
@@ -340,7 +342,7 @@ class SynchronizeService {
         devLog('connect: TIMEOUT');
         socket.close(1000, 'Connection timeout');
         handleClose(0, 'WebSocket connection timeout');
-      }, WS_CONNECT_TIMEOUT_MS);
+      }, SYNC_WS_CONNECT_TIMEOUT_MS);
 
       const settle = (connected: boolean): void => {
         if (settled) return;
@@ -412,8 +414,13 @@ class SynchronizeService {
       return;
     }
     if (msg.type && msg.type.endsWith('_error')) {
+      const errorPayload = (msg as Partial<IWsMessage> & { error?: unknown }).error;
       const error = new Error(
-        typeof msg.payload === 'string' ? msg.payload : `Socket error: ${msg.type}`,
+        typeof errorPayload === 'string'
+          ? errorPayload
+          : typeof msg.payload === 'string'
+            ? msg.payload
+            : `Socket error: ${msg.type}`,
       );
       this.syncError = error.message;
       this.rejectPendingResponse(error);
@@ -513,29 +520,49 @@ class SynchronizeService {
 
   private onAdd(msg: ISocketEmitDto): void {
     if (this.syncing) {
-      this.pendingAdds.push(msg);
+      this.pendingEvents.push(msg);
       return;
     }
     const key = this.syncKey(msg.option);
-    if (key) void this.applyCreated(key, [msg.info as Record<string, unknown>]);
+    if (!key) return;
+    const row = msg.info as Record<string, unknown>;
+    this.enqueueEvent(async () => {
+      await this.applyCreated(key, [row]);
+      this.advanceCursor(key, { created: [row], deleted: [] });
+    });
   }
 
   private onDelete(msg: ISocketEmitDto): void {
     if (this.syncing) {
-      this.pendingDeletes.push(msg);
+      this.pendingEvents.push(msg);
       return;
     }
     const key = this.syncKey(msg.option);
-    if (key) void this.applyDeleted(key, [msg.info as ISyncDeletedRow]);
+    if (!key) return;
+    const row = msg.info as ISyncDeletedRow;
+    this.enqueueEvent(async () => {
+      await this.applyDeleted(key, [row]);
+      this.advanceCursor(key, { created: [], deleted: [row] });
+    });
   }
 
   private onLog(msg: ISocketEmitDto): void {
     if (this.syncing) {
-      this.pendingLogs.push(msg);
+      this.pendingEvents.push(msg);
       return;
     }
     const scope: AuditLogScope = msg.option === 'user_audit_log' ? 'user' : 'global';
-    void this.applyAuditLogs(scope, [msg.info as IAuditLogEntry]);
+    const entry = msg.info as IAuditLogEntry;
+    this.enqueueEvent(async () => {
+      await this.applyAuditLogs(scope, [entry]);
+      this.advanceLiveAuditCursor(scope, [entry]);
+    });
+  }
+
+  private enqueueEvent(task: () => Promise<void>): void {
+    this.eventQueue = this.eventQueue.then(task).catch((error: unknown) => {
+      this.syncError = error instanceof Error ? error.message : String(error);
+    });
   }
 
   private syncKey(option: string): SyncTableKey | null {
@@ -543,12 +570,20 @@ class SynchronizeService {
   }
 
   private replayPending(): void {
-    const adds = this.pendingAdds.splice(0);
-    const deletes = this.pendingDeletes.splice(0);
-    const logs = this.pendingLogs.splice(0);
-    for (const msg of adds) this.onAdd(msg);
-    for (const msg of deletes) this.onDelete(msg);
-    for (const msg of logs) this.onLog(msg);
+    const events = this.pendingEvents.splice(0);
+    for (const msg of events) {
+      switch (msg.operation) {
+        case SYNC_OPERATION.Add:
+          this.onAdd(msg);
+          break;
+        case SYNC_OPERATION.Delete:
+          this.onDelete(msg);
+          break;
+        case SYNC_OPERATION.Log:
+          this.onLog(msg);
+          break;
+      }
+    }
   }
 
   private requestSync(dto: ISynchronizedDto): Promise<ISynchronizedResponse> {
@@ -634,6 +669,21 @@ class SynchronizeService {
     devLog('applied audit logs', scope, entries.length);
   }
 
+  private advanceLiveAuditCursor(scope: AuditLogScope, entries: IAuditLogEntry[]): void {
+    const ids = entries
+      .map((entry) => Number(entry.id))
+      .filter((id) => Number.isFinite(id));
+    if (ids.length === 0) return;
+    const lastId = Math.max(...ids);
+    const cursors = this.loadAuditCursors();
+    const current = cursors[scope] ?? { lastId: 0, watermarkId: 0 };
+    cursors[scope] = {
+      lastId: Math.max(current.lastId, lastId),
+      watermarkId: Math.max(current.watermarkId, lastId),
+    };
+    this.saveAuditCursors(cursors);
+  }
+
   private updateCurrentUserFromAudit(entries: IAuditLogEntry[]): void {
     const currentUser = this.authStore?.getState().user;
     if (!currentUser) return;
@@ -646,7 +696,7 @@ class SynchronizeService {
       const isActive = entry.changes.isActive?.current;
       if (typeof name === 'string') partial.name = name;
       if (typeof role === 'string') partial.role = role as UserRole;
-      if (typeof isActive === 'boolean') partial.isActive = isActive;
+      if (isActive !== undefined) partial.isActive = toBool(isActive);
       if (Object.keys(partial).length > 0) this.sessionActions?.updateUser(partial);
     }
   }
@@ -757,7 +807,7 @@ class SynchronizeService {
         this.sessionActions?.updateUser({
           name: String(mine.name ?? ''),
           role: (mine.role as UserRole) ?? 'guest',
-          isActive: Boolean(mine.isActive),
+          isActive: toBool(mine.isActive),
         });
       }
     }

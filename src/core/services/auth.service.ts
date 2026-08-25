@@ -1,4 +1,4 @@
-import { httpService } from '@/core/services/http.service';
+import { httpService } from '@/core/services/http';
 import { sessionService } from '@/core/services/session.service';
 import { useLocaleStore } from '@/core/stores';
 import type {

@@ -18,3 +18,14 @@ export const DAYS_PER_WEEK = 7;
 
 /** Height of one hour in the week view, in points. */
 export const WEEK_HOUR_HEIGHT = 56;
+
+/** Agenda list: entry hint before measurement (~76 incl. its padding). */
+export const AGENDA_ENTRY_ESTIMATE = 76;
+/** Agenda list: headers and free rows are fixed-size, so they skip measuring. */
+export const AGENDA_FIXED_ROW_SIZES: Record<string, number | undefined> = {
+  header: 42,
+  free: 54,
+};
+
+/** Day-list first-render hint; rows run ~40 without location to ~60 with it. */
+export const DAY_LIST_ROW_ESTIMATE = 48;

@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { DAY_LIST_ROW_ESTIMATE } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -20,9 +21,6 @@ type CalendarDayListProps = {
   onCreate?: () => void;
   addLabel?: string;
 };
-
-/** Row height used as the size hint; rows are single-line by design. */
-const ROW_SIZE = 56;
 
 /**
  * The selected day, under the month grid. Two scales on one screen is what
@@ -125,7 +123,7 @@ export function CalendarDayList({
       data={entries as CalendarEntry[]}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
-      estimatedItemSize={ROW_SIZE}
+      estimatedItemSize={DAY_LIST_ROW_ESTIMATE}
       contentContainerStyle={{ paddingBottom: bottomInset }}
       recycleItems
       showsVerticalScrollIndicator={false}

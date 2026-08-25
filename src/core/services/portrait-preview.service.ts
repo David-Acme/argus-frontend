@@ -1,4 +1,4 @@
-import { httpService } from '@/core/services/http.service';
+import { httpService } from '@/core/services/http';
 import type { IServiceResponse } from '@/core/interfaces';
 import type { PortraitPreviewImage } from '@/shared/libs/portrait-preview';
 

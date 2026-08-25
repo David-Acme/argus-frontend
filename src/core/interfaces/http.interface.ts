@@ -14,3 +14,10 @@ export interface IServiceResponse<T> {
   info: T | null;
   errors: IApiError | null;
 }
+
+/** Credential hooks http.service needs, registered by session.service. */
+export interface IHttpAuthBridge {
+  getAccessToken(): string | null;
+  refreshSession(): Promise<boolean>;
+  clearSession(): Promise<void>;
+}

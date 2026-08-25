@@ -7,7 +7,7 @@ import type {
   IServiceResponse,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 /**
  * Reads come from the local projection that `/sync` fills; writes go over REST

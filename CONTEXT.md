@@ -152,9 +152,6 @@ face login). Signed-in it renders the dashboard inside `DashboardShell`.
   families `dashboard/` (23), `calendar/` (12), `cameras/` (11),
   `projects/` (7), `qr/` (6), `layout/`, `toast/`, `confirm/`, `face/`,
   `avatar/` and `session/session-gate`.
-- **Tests**: 16 pure-logic suites under `tests/` with `bun:test`
-  (`bun test`) — contracts (QR build/parse, people access, auth context,
-  portrait preview), caches, layouts and route state machines.
 - **QR scanner (2026-08, user-approved "bottom sheet" design)** — a **reusable**
   native-only scan route. Web/desktop can't enter it: `Stack.Protected guard={IS_NATIVE}`
   in `_layout.tsx` plus a `Redirect` fallback in the screen.
@@ -1087,11 +1084,10 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
 ### Current validation baseline
 
 On 2026-08-23, `bun run lint`, `bunx tsc --noEmit` and `bun run web:build`
-succeeded. The focused cache/audit suite (`view-cache-*`, `audit-log-*`,
-`entity-mappers` and sync constants) passed 14 tests. `git diff --check` also
-passed, and a static scan confirmed no `src/app` route imports WatermelonDB or a
-direct observable. Device-level validation still requires a real paired session;
-do not fabricate people or camera rows merely to make a screen appear loaded.
+succeeded. `git diff --check` also passed, and a static scan confirmed no
+`src/app` route imports WatermelonDB or a direct observable. Device-level
+validation still requires a real paired session; do not fabricate people or
+camera rows merely to make a screen appear loaded.
 
 ## History log — prior docs resync (2026-08-23)
 
@@ -1099,7 +1095,7 @@ do not fabricate people or camera rows merely to make a screen appear loaded.
   CONTEXT/AGENTS brought back in
   sync with the code. Corrections: the "Current state" section no longer
   describes the post-reset empty shell — it documents the full route map,
-  core services, UI families and the bun:test suite; WatermelonDB documented
+  core services and UI families; WatermelonDB documented
   at its real **15 tables** matching `SYNC_TABLE_KEYS` (this section still
   said 7); networking phases closed (native WS `ArgusSocket` + Tauri socket
   commands, `http.service`, pairing/invite/login QR all shipped); root

@@ -1,19 +1,18 @@
 import { Portal } from '@rn-primitives/portal';
 import { useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUniwind } from 'uniwind';
 import { Icon } from '@/shared/components/ui/icon';
-import { MorphIcon, type MorphHandle } from '@/shared/components/ui/morph-icon';
+import { MorphIcon } from '@/shared/components/ui/morph-icon';
 import { Text } from '@/shared/components/ui/text';
 import {
   BOTTOM_NAV_GAP,
   BOTTOM_NAV_HEIGHT,
   COMPOSE_ACTIONS,
   COMPOSE_ITEM_STAGGER_MS,
-  MORPH_ICONS,
   NAV_RAIL_WIDTH,
   colorTokens,
 } from '@/shared/constants';
@@ -42,7 +41,6 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
   const { theme } = useUniwind();
   const { can } = usePermissions();
   const [open, setOpen] = useState(false);
-  const morph = useRef<MorphHandle>(null);
   const iconColor = colorTokens[theme === 'dark' ? 'dark' : 'light']['foreground-on-interactive'];
 
   const labels: Record<string, string> = useMemo(
@@ -60,10 +58,7 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
     [can]
   );
 
-  const close = () => {
-    setOpen(false);
-    morph.current?.morphTo(MORPH_ICONS.plus);
-  };
+  const close = () => setOpen(false);
 
   const stackPosition =
     anchor === 'bar'
@@ -128,17 +123,10 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityLabel={t('screens.home.compose')}
-        onPress={() => {
-          if (open) {
-            close();
-            return;
-          }
-          setOpen(true);
-          morph.current?.morphTo(MORPH_ICONS.x);
-        }}
+        onPress={() => setOpen((value) => !value)}
         style={{ width: size, height: size }}
         className="bg-interactive z-50 items-center justify-center rounded-full shadow-lg shadow-black/25 active:opacity-80">
-        <MorphIcon ref={morph} name="plus" size={size >= 56 ? 28 : 24} color={iconColor} />
+        <MorphIcon name={open ? 'x' : 'plus'} size={size >= 56 ? 28 : 24} color={iconColor} />
       </Pressable>
     </>
   );

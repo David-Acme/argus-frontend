@@ -5,12 +5,31 @@ export type FieldTransform = (value: unknown) => unknown;
 export type EntityFieldMap = Record<string, FieldTransform>;
 
 const toStr = (v: unknown): string => (v == null ? '' : String(v));
-const toBool = (v: unknown): boolean => Boolean(v);
-const toNum = (v: unknown): number => Number(v) ?? 0;
-const toOptNum = (v: unknown): number | null => (v == null ? null : Number(v));
+export const toBool = (v: unknown): boolean => {
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+  if (typeof v === 'string') {
+    const normalized = v.trim().toLowerCase();
+    if (['false', '0', 'no', 'off', 'null', 'undefined', ''].includes(normalized)) return false;
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+  }
+  return Boolean(v);
+};
+const finiteNumber = (v: unknown): number | null => {
+  const value = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(value) ? value : null;
+};
+const toNum = (v: unknown): number => finiteNumber(v) ?? 0;
+const toOptNum = (v: unknown): number | null => finiteNumber(v);
 const toOptStr = (v: unknown): string | null => (v == null ? null : String(v));
-const toMs = (v: unknown): number => (v == null ? 0 : Math.round(Number(v) * 1000));
-const toOptDate = (v: unknown): Date | null => (v == null ? null : new Date(Number(v) * 1000));
+const toMs = (v: unknown): number => {
+  const value = finiteNumber(v);
+  return value == null ? 0 : Math.round(value * 1000);
+};
+const toOptDate = (v: unknown): Date | null => {
+  const value = finiteNumber(v);
+  return value == null ? null : new Date(value * 1000);
+};
 
 const parseJson = (v: unknown): unknown => {
   if (typeof v !== 'string') return v;

@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 import type { ZoneModel } from '@/core/database';
 import type { IServiceResponse, IZoneCreate, IZoneUpdate } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 class ZoneService extends DatabaseService<'zone'> {
   constructor() {

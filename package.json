@@ -9,6 +9,12 @@
       "android": {
         "buildFromSource": ["expo-camera"]
       }
+    },
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": ["@nozbe/watermelondb", "@nozbe/simdjson", "argus-face", "argus-net", "argus-mic"],
+        "listUnknownPackages": false
+      }
     }
   },
   "scripts": {
@@ -21,7 +27,7 @@
     "web:build": "expo export --platform web",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bunx setup-skia-web"
+    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bunx install-skia && bunx setup-skia-web"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -43,17 +49,17 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
-    "expo": "~57.0.9",
-    "expo-asset": "~57.0.8",
-    "expo-audio": "~57.0.3",
-    "expo-camera": "~57.0.3",
-    "expo-constants": "~57.0.8",
-    "expo-dev-client": "~57.0.10",
-    "expo-linking": "~57.0.4",
+    "expo": "~57.0.15",
+    "expo-asset": "~57.0.13",
+    "expo-audio": "~57.0.4",
+    "expo-camera": "~57.0.4",
+    "expo-constants": "~57.0.13",
+    "expo-dev-client": "~57.0.14",
+    "expo-linking": "~57.0.7",
     "expo-localization": "~57.0.1",
-    "expo-router": "~57.0.9",
+    "expo-router": "~57.0.15",
     "expo-secure-store": "~57.0.1",
-    "expo-splash-screen": "~57.0.5",
+    "expo-splash-screen": "~57.0.7",
     "expo-system-ui": "~57.0.2",
     "lucide": "^1.31.0",
     "lucide-react-native": "^1.25.0",
@@ -64,7 +70,7 @@
     "react-hook-form": "^7.85.0",
     "react-native": "0.86.2",
     "react-native-edge-to-edge": "^1.8.1",
-    "react-native-gesture-handler": "~3.1.0",
+    "react-native-gesture-handler": "~2.32.0",
     "react-native-keyboard-controller": "1.21.9",
     "react-native-mmkv": "^4.3.2",
     "react-native-reanimated": "4.5.1",

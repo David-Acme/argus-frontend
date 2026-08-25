@@ -5,6 +5,10 @@ import type { CalendarEntry } from '@/core/types';
 import { AgendaItem } from '@/shared/components/dashboard';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import {
+  AGENDA_ENTRY_ESTIMATE,
+  AGENDA_FIXED_ROW_SIZES,
+} from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -27,8 +31,6 @@ type AgendaRow =
   | { kind: 'header'; key: string; day: number }
   | { kind: 'entry'; key: string; entry: CalendarEntry }
   | { kind: 'free'; key: string; day: number };
-
-const ENTRY_SIZE = 92;
 
 export function CalendarAgendaView({
   entries,
@@ -132,9 +134,13 @@ export function CalendarAgendaView({
       data={rows}
       renderItem={renderItem}
       keyExtractor={(item) => item.key}
-      // One hint for the common row (an entry); Legend List measures the rest,
-      // so mixed heights need no per-row callback.
-      estimatedItemSize={ENTRY_SIZE}
+      // One hint for the common row (an entry); headers/free are exact, and
+      // entries get measured on mount.
+      estimatedItemSize={AGENDA_ENTRY_ESTIMATE}
+      getItemType={(item) => item.kind}
+      getFixedItemSize={(_item, _index, kind) =>
+        kind ? AGENDA_FIXED_ROW_SIZES[kind] : undefined
+      }
       stickyHeaderIndices={headerIndices}
       contentContainerStyle={{ paddingBottom: bottomInset }}
       recycleItems

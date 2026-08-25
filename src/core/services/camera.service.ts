@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 import type { CameraModel } from '@/core/database';
 import type { ICameraCreate, ICameraUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 class CameraService extends DatabaseService<'camera'> {
   constructor() {

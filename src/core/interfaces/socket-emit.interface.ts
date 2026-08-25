@@ -9,6 +9,7 @@ export interface ISocketEmitDto {
 export interface IWsMessage {
   type: string;
   payload?: unknown;
+  error?: unknown;
 }
 
 export interface IWsError {

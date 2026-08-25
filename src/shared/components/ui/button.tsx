@@ -123,7 +123,7 @@ function ButtonLoader() {
 
   return (
     <Animated.View accessibilityElementsHidden style={style}>
-      <Icon name="refresh-cw" className="size-4" />
+      <Icon name="loader-circle" className="size-4" />
     </Animated.View>
   );
 }

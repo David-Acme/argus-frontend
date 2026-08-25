@@ -1,4 +1,4 @@
-import { inviteService } from '@/core/services/invite.service';
+import { inviteService } from '@/core/services/invite';
 import { useQrScanStore } from '@/core/stores';
 import { CenteredScreen } from '@/shared/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';

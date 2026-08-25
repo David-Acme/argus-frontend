@@ -19,6 +19,7 @@ import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordina
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import {
@@ -33,7 +34,7 @@ import { calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
 import type { CalendarEntry, CalendarView, DashboardTab } from '@/core/types';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { calendarMonthScope } from '@/core/services/view-cache-projections.service';
 
@@ -61,6 +62,7 @@ export default function ScheduleScreen() {
     isShort,
   });
   const usesContextMenu = IS_NATIVE && !usesActionSheet;
+  const bottomNavInset = useBottomNavInset();
 
   const range = useMemo(() => date.rangeFor(view, anchor), [anchor, date, view]);
   const cachedEntries = useViewCacheRows<CalendarEntry>(
@@ -177,6 +179,70 @@ export default function ScheduleScreen() {
   // owns the onboarding decision, so an unauthenticated hit bounces there.
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
 
+  const monthBody = (
+    <>
+      <View className={isWide ? 'min-w-0 flex-1' : undefined}>
+        <CalendarMonthView
+          anchor={anchor}
+          selected={selectedDay}
+          entries={entries}
+          onSelectDay={setSelectedDay}
+          fill={isExpanded && !isShort}
+        />
+      </View>
+      {isWide ? (
+        <View className="bg-divider/30 w-hairline self-stretch" />
+      ) : (
+        <View className="bg-divider/30 h-hairline w-full" />
+      )}
+      <View
+        className={isWide ? 'min-h-0 w-[300px] shrink-0 gap-1.5 lg:w-[340px]' : 'gap-1.5'}>
+        <View className="flex-row items-center justify-between pb-1.5">
+          <Text className="text-[13px] font-medium">{date.formatAgendaDay(selectedDay)}</Text>
+          <View className="flex-row items-center gap-2">
+            {selectedDayEntries.length > 0 ? (
+              <Text className="text-muted-foreground text-[12px]">
+                {t('screens.agenda.day-count', {
+                  count: String(selectedDayEntries.length),
+                })}
+              </Text>
+            ) : null}
+            {can('calendar_event', 'create') ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => {
+                  setEditingEventId('');
+                  setEventFormOpen(true);
+                }}>
+                <Text>{t('screens.agenda.add-here')}</Text>
+              </Button>
+            ) : null}
+          </View>
+        </View>
+        <CalendarDayList
+          entries={selectedDayEntries}
+          emptyLabel={t('screens.agenda.day-empty')}
+          addLabel={
+            can('calendar_event', 'create') ? t('screens.agenda.add-here') : undefined
+          }
+          onCreate={
+            can('calendar_event', 'create')
+              ? () => {
+                  setEditingEventId('');
+                  setEventFormOpen(true);
+                }
+              : undefined
+          }
+          renderActions={renderActions}
+          onSelect={openEntryDetail}
+          onLongPress={usesActionSheet ? openEntryActions : undefined}
+          renderContextMenu={usesContextMenu ? renderContextMenu : undefined}
+        />
+      </View>
+    </>
+  );
+
   return (
     <DashboardShell
       active="schedule"
@@ -228,67 +294,17 @@ export default function ScheduleScreen() {
         <CalendarViewSwitcher view={view} labels={viewLabels} onChange={setView} />
 
         {view === 'month' ? (
-          <View className={isWide ? 'flex-1 flex-row items-stretch gap-5' : 'gap-2'}>
-            <View className={isWide ? 'min-w-0 flex-1' : undefined}>
-              <CalendarMonthView
-                anchor={anchor}
-                selected={selectedDay}
-                entries={entries}
-                onSelectDay={setSelectedDay}
-                fill={isExpanded && !isShort}
-              />
-            </View>
-            {isWide ? (
-              <View className="bg-divider/30 w-hairline self-stretch" />
-            ) : (
-              <View className="bg-divider/30 h-hairline w-full" />
-            )}
-            <View
-              className={isWide ? 'min-h-0 w-[300px] shrink-0 gap-1.5 lg:w-[340px]' : 'gap-1.5'}>
-              <View className="flex-row items-center justify-between pb-1.5">
-                <Text className="text-[13px] font-medium">{date.formatAgendaDay(selectedDay)}</Text>
-                <View className="flex-row items-center gap-2">
-                  {selectedDayEntries.length > 0 ? (
-                    <Text className="text-muted-foreground text-[12px]">
-                      {t('screens.agenda.day-count', {
-                        count: String(selectedDayEntries.length),
-                      })}
-                    </Text>
-                  ) : null}
-                  {can('calendar_event', 'create') ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onPress={() => {
-                        setEditingEventId('');
-                        setEventFormOpen(true);
-                      }}>
-                      <Text>{t('screens.agenda.add-here')}</Text>
-                    </Button>
-                  ) : null}
-                </View>
-              </View>
-              <CalendarDayList
-                entries={selectedDayEntries}
-                emptyLabel={t('screens.agenda.day-empty')}
-                addLabel={
-                  can('calendar_event', 'create') ? t('screens.agenda.add-here') : undefined
-                }
-                onCreate={
-                  can('calendar_event', 'create')
-                    ? () => {
-                        setEditingEventId('');
-                        setEventFormOpen(true);
-                      }
-                    : undefined
-                }
-                renderActions={renderActions}
-                onSelect={openEntryDetail}
-                onLongPress={usesActionSheet ? openEntryActions : undefined}
-                renderContextMenu={usesContextMenu ? renderContextMenu : undefined}
-              />
-            </View>
-          </View>
+          isWide ? (
+            <View className="flex-1 flex-row items-stretch gap-5">{monthBody}</View>
+          ) : (
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="gap-2"
+              contentContainerStyle={{ paddingBottom: bottomNavInset }}
+              showsVerticalScrollIndicator={false}>
+              {monthBody}
+            </ScrollView>
+          )
         ) : null}
 
         {view === 'week' ? (

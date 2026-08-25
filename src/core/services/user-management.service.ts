@@ -1,4 +1,4 @@
-import { httpService } from '@/core/services/http.service';
+import { httpService } from '@/core/services/http';
 import type {
   IServiceResponse,
   IUserManagementRecord,

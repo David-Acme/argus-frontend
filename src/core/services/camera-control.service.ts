@@ -7,7 +7,7 @@ import type {
   ICameraTalk,
   IServiceResponse,
 } from '@/core/interfaces';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 /**
  * Talks to the camera itself, not to the local database: these calls reach the

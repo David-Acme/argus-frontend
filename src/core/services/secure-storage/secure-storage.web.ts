@@ -14,8 +14,8 @@ class WebSecureStorageService implements ISecureStorageService {
       try {
         const value = (await invokeSecure('argus_secure_get', { key })) as string | null;
         return value ?? null;
-      } catch {
-        // fall back to localStorage
+      } catch (error) {
+        throw new Error(`Secure storage read failed for ${key}`, { cause: error });
       }
     }
     return localStorage.getItem(FALLBACK_PREFIX + key);
@@ -26,8 +26,8 @@ class WebSecureStorageService implements ISecureStorageService {
       try {
         await invokeSecure('argus_secure_set', { key, value });
         return;
-      } catch {
-        // fall back to localStorage
+      } catch (error) {
+        throw new Error(`Secure storage write failed for ${key}`, { cause: error });
       }
     }
     localStorage.setItem(FALLBACK_PREFIX + key, value);
@@ -38,8 +38,8 @@ class WebSecureStorageService implements ISecureStorageService {
       try {
         await invokeSecure('argus_secure_delete', { key });
         return;
-      } catch {
-        // fall back to localStorage
+      } catch (error) {
+        throw new Error(`Secure storage delete failed for ${key}`, { cause: error });
       }
     }
     localStorage.removeItem(FALLBACK_PREFIX + key);

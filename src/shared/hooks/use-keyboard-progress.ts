@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
-import { runOnJS, useAnimatedReaction, type SharedValue } from 'react-native-reanimated';
+import { useAnimatedReaction, type SharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 type KeyboardProgress = {
   offset: SharedValue<number>;
@@ -18,7 +19,7 @@ export function useKeyboardProgress(): KeyboardProgress {
     () => progress.value > 0,
     (next, previous) => {
       if (next !== previous) {
-        runOnJS(setVisible)(next);
+        scheduleOnRN(setVisible, next);
       }
     }
   );
@@ -27,7 +28,7 @@ export function useKeyboardProgress(): KeyboardProgress {
     () => progress.value >= 1,
     (next, previous) => {
       if (next !== previous) {
-        runOnJS(setFullyOpen)(next);
+        scheduleOnRN(setFullyOpen, next);
       }
     }
   );

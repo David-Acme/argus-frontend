@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
@@ -134,10 +134,21 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
     },
   });
 
+  // onSuccess fires before `submitting` resets, so it closes through the raw
+  // onOpenChange; this guard only blocks user dismissal mid-save.
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next && submitting) return;
+      onOpenChange(next);
+    },
+    [onOpenChange, submitting]
+  );
+
   return (
     <AdaptiveDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
+      dismissible={!submitting}
       title={event ? t('common.edit') : t('screens.agenda.new-event')}
       closeLabel={t('common.close')}
       footer={
@@ -147,7 +158,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
               <Button
                 key={action}
                 variant="outline"
-                onPress={() => onOpenChange(false)}
+                onPress={() => handleOpenChange(false)}
                 disabled={submitting}>
                 <Text>{t('common.cancel')}</Text>
               </Button>

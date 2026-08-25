@@ -1,7 +1,7 @@
 import { Q, type Model } from '@nozbe/watermelondb';
 import { collection, database } from '@/core/database';
+import { SYNC_BATCH_SIZE } from '@/shared/constants';
 import type { SyncTableKey } from '@/core/types';
-import { SYNC_BATCH_SIZE } from './sync-constants';
 
 export async function chunkedBatch(operations: (() => Model)[]): Promise<void> {
   for (let i = 0; i < operations.length; i += SYNC_BATCH_SIZE) {

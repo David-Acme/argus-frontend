@@ -7,7 +7,7 @@ import type {
   IShareAccessUpdate,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 class CalendarEventShareService extends DatabaseService<'calendar_event_share'> {
   constructor() {

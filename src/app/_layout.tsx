@@ -30,7 +30,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bg }}>
       <SystemBars style={isDark ? 'light' : 'dark'} />
       <SessionGate>
-        <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
+        <KeyboardProvider>
           <SafeAreaProvider>
             <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
               <Stack

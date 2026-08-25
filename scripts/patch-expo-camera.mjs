@@ -143,11 +143,7 @@ update(
   'import expo.modules.camera.analyzers.BarcodeAnalyzer',
   'import expo.modules.camera.analyzers.BarcodeAnalyzer\nimport expo.modules.camera.analyzers.FaceAnalyzer',
 );
-update(
-  'android/src/main/java/expo/modules/camera/ExpoCameraView.kt',
-  'import android.util.Log',
-  'import android.util.Size\nimport android.util.Log',
-);
+// `android.util.Size` is imported by upstream since 57.0.4; do not add it here.
 update(
   'android/src/main/java/expo/modules/camera/ExpoCameraView.kt',
   'promise.reject(CameraExceptions.ImageCaptureFailed())',

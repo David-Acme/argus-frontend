@@ -34,6 +34,8 @@ type AdaptiveDialogProps = {
   children?: ReactNode;
   /** Actions row. Pinned under the body on both shapes. */
   footer?: ReactNode;
+  /** Disables every dismissal path while it stays visible. */
+  dismissible?: boolean;
   contentClassName?: string;
 };
 
@@ -52,6 +54,7 @@ export function AdaptiveDialog({
   closeLabel,
   children,
   footer,
+  dismissible = true,
   contentClassName,
 }: AdaptiveDialogProps) {
   const { isCompact, windowClass } = useWindowClass();
@@ -60,8 +63,13 @@ export function AdaptiveDialog({
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
-        <SheetContent className={contentClassName}>
-          <SheetHeader title={title} description={description} closeLabel={closeLabel} />
+        <SheetContent className={contentClassName} dismissible={dismissible}>
+          <SheetHeader
+            title={title}
+            description={description}
+            closeLabel={closeLabel}
+            dismissible={dismissible}
+          />
           {children}
           {footer ? <View className="flex-row justify-end gap-2 pt-1">{footer}</View> : null}
         </SheetContent>
@@ -72,7 +80,9 @@ export function AdaptiveDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-      <DialogContent className={cn(DIALOG_WIDTH_CLASS[windowClass], contentClassName)}>
+      <DialogContent
+        className={cn(DIALOG_WIDTH_CLASS[windowClass], contentClassName)}
+        dismissible={dismissible}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}

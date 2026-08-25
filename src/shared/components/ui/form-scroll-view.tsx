@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode, type Ref } from 'react';
+import { useEffect, useRef, type ComponentType, type ReactNode, type Ref } from 'react';
 import type { ScrollView as RNScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -65,7 +65,8 @@ export function FormScrollView({
 
   return (
     <ScrollView
-      ref={ref}
+      // RNGH 2.x loosens its forwarded ref type; the handle is unchanged.
+      ref={ref as unknown as Ref<ComponentType<any>>}
       onScroll={onScroll}
       className={className}
       style={maxHeight ? { maxHeight } : undefined}

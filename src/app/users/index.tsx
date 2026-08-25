@@ -1,4 +1,4 @@
-import { inviteService } from '@/core/services/invite.service';
+import { inviteService } from '@/core/services/invite';
 import { netService } from '@/core/services/net';
 import { synchronizeService } from '@/core/services/sync';
 import { userManagementService } from '@/core/services/user-management.service';

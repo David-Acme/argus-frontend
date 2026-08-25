@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 import type { ProjectModel } from '@/core/database';
 import type { IProjectCreate, IProjectUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 class ProjectService extends DatabaseService<'project'> {
   constructor() {

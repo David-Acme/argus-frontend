@@ -7,7 +7,7 @@ import type {
   IServiceResponse,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from './http.service';
+import { httpService } from '@/core/services/http';
 
 class ProjectTaskService extends DatabaseService<'project_task'> {
   constructor() {

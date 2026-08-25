@@ -1,6 +1,6 @@
 import type { HttpMethod, NetHttpFile } from '@/core/types';
 import { netService } from '@/core/services/net';
-import { sessionService } from '@/core/services/session.service';
+import { httpAuth } from './http-auth';
 import type { IApiError, IHttpConfig, IServiceResponse } from '@/core/interfaces';
 
 interface Envelope {
@@ -71,11 +71,11 @@ class HttpService {
     }
 
     if (result.status === 401 && !config.skipAuthRetry) {
-      const refreshed = await sessionService.refreshSession();
+      const refreshed = await httpAuth().refreshSession();
       if (refreshed) {
         return this.request<T>(method, path, body, files, { skipAuthRetry: true });
       }
-      void sessionService.clearSession();
+      void httpAuth().clearSession();
     }
 
     return this.parse<T>(result.status, result.body);
@@ -93,7 +93,7 @@ class HttpService {
   private async buildHeaders(withFile: boolean): Promise<Record<string, string>> {
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (!withFile) headers['Content-Type'] = 'application/json';
-    const accessToken = sessionService.getAccessToken();
+    const accessToken = httpAuth().getAccessToken();
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     return headers;
   }

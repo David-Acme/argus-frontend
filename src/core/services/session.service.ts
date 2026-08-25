@@ -1,6 +1,7 @@
 import { netService } from '@/core/services/net';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
+import { registerHttpAuth } from '@/core/services/http';
 import { synchronizeService } from '@/core/services/sync';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
@@ -249,3 +250,9 @@ class SessionService {
 }
 
 export const sessionService = new SessionService();
+
+registerHttpAuth({
+  getAccessToken: () => sessionService.getAccessToken(),
+  refreshSession: () => sessionService.refreshSession(),
+  clearSession: () => sessionService.clearSession(),
+});

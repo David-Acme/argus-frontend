@@ -83,6 +83,10 @@ src/core/stores/qr-scan.store.ts
 - Resolution: Metro picks the platform file at runtime; TS resolves via
   `moduleSuffixes: ['.native', '.web', '']` in `tsconfig.json`. **No `// @ts-ignore` needed.**
 - Consumers import **only the barrel**: `import { storageService } from '@/core/services/storage'`.
+- **The `core/services/` root holds ONLY `*.service.ts` files.** Domain helpers,
+  registries and pure logic live inside their domain folder next to an
+  `index.ts` barrel (e.g. `http/http-auth.ts`, `net/net-persistence.ts`,
+  `invite/invitation-resolution.ts`) — never loose at the root.
 
 ### 6. Icons — centralized registry (critical)
 
@@ -475,7 +479,6 @@ bun run ios            # expo start -c --ios
 bun run web            # expo start -c --web
 bun run lint           # expo lint
 bunx tsc --noEmit      # typecheck (must be 0 errors)
-bun test               # unit tests (bun:test) — pure logic under tests/
 bun run web:build      # expo export --platform web → dist/ (for Tauri)
 bun run desktop:dev    # tauri dev (Linux requires webkit2gtk-4.1)
 bun run desktop:build  # tauri build
@@ -516,7 +519,7 @@ cd src-tauri && cargo check
 | `src/core/services/storage/` | Platform-split storage (MMKV / localStorage) |
 | `src/core/services/secure-storage/` | Secrets (expo-secure-store / keyring) |
 | `src/core/services/net/` | `IArgusNetService` (native→Nitro, web→Tauri, `net-persistence`) |
-| `src/core/services/http.service.ts` | HTTP wrapper sobre `netService`: `IServiceResponse`, refresh 401 single-flight, multipart (`payload` + archivos) |
+| `src/core/services/http/` (`http.service.ts` + `http-auth.ts`) | HTTP wrapper sobre `netService`: `IServiceResponse`, refresh 401 single-flight, multipart (`payload` + archivos); `http-auth.ts` registra los hooks de credenciales y rompe el ciclo con `session.service` |
 | `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `hasAdmin`, `status`, `logout` |
 | `src/core/services/session.service.ts` | Ciclo de sesión: establish/refresh/updateUser/clear, cola serializada sobre secure-storage; inicia/detiene el coordinador de cache local |
 | `src/core/services/view-cache.service.ts` | Valores serializados MMKV/localStorage por usuario + señal de revisión; no mantiene filas en memoria JS |
@@ -548,7 +551,6 @@ cd src-tauri && cargo check
 | `src/app/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
 | `src/shared/components/dashboard/` | Familia dashboard (23): camera grid/tile, activity, nav rail/bottom nav, charts, popovers |
 | `src/shared/components/session/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
-| `tests/*.test.ts` | Suite bun:test (16 archivos): contratos QR/people/portrait/auth-context, caches, layouts |
 | `src/shared/components/face/` | Guidance facial: `face-guide-overlay` (máscara+óvalo+pill), `face-frame` |
 | `src/shared/hooks/use-face-guide.ts` | Muestreo de cámara → `argusFace.detectFaces` → estado de guía + auto-capture |
 | `src/shared/constants/face.constant.ts` | Umbrales del guidance (zonas, ángulos, luz, muestreo) |
