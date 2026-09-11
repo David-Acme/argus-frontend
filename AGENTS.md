@@ -51,8 +51,9 @@ src/core/stores/qr-scan.store.ts
 - Suffixed families keep their suffix after the kebab name:
   `{domain}.constant.ts`, `{domain}.type.ts`, `{domain}.interface.ts`,
   `{domain}.store.ts`, `{domain}.native.ts` / `{domain}.web.ts`.
-- **Only documented exception**: `modules/argus-net/src/ArgusNet.nitro.ts`.
-  Nitrogen requires the spec file name to match the HybridObject name declared in
+- **Only documented exception**: `modules/*/src/{Name}.nitro.ts`
+  (`ArgusNet.nitro.ts`, `ArgusCamera.nitro.ts`, ...). Nitrogen requires the
+  spec file name to match the HybridObject name declared in
   `nitro.json` (`autolinking.ArgusNet`, `androidCxxLibName`, `iosModuleName`) —
   renaming it breaks codegen.
 
