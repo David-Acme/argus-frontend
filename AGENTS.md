@@ -227,11 +227,13 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   the CA. `ArgusSocket` HybridObject in `modules/argus-net` (OkHttp /
   `URLSessionWebSocketTask` over the pinned CA session) and Tauri commands
   `argus_socket_open/send_text/send_binary/close`. Consumed through
-  `netService.openSocket()`; the sync engine owns the single socket and the
-  voice service streams binary PCM through it. `http.service.ts` is the HTTP
+  `netService.openSocket()`. **Two sockets**: the sync engine owns `/sync`
+  (sync + emits + voice PCM), and the camera live view opens
+  `/camera-stream` through `cameraMediaService` and pumps fMP4 fragments
+  into the native `argus-camera` player. `http.service.ts` is the HTTP
   wrapper; there is no separate websocket wrapper.
 - **Nitro modules are split by domain** (`modules/argus-net`, `modules/argus-mic`,
-  `modules/argus-face`), each with its own spec + nitrogen + Kotlin/Swift. They are
+  `modules/argus-face`, `modules/argus-camera`), each with its own spec + nitrogen + Kotlin/Swift. They are
   registered in `android/settings.gradle` with explicit includes (autolinking does
   not pick up the symlinked local packages reliably) and linked by
   `scripts/link-argus-modules.mjs`. `argus-face` detects faces by **file URI**
@@ -489,8 +491,8 @@ bunx expo install <package>   # installs the version pinned by Expo
 bunx expo install --fix       # align known versions
 bunx expo-doctor              # 20/20 health checks
 
-# Nitro module
-cd modules/argus-net && bunx nitrogen   # regenerate bindings after changing the spec
+# Nitro modules (regenerate after changing a spec)
+for m in argus-net argus-mic argus-face argus-camera; do (cd "modules/$m" && bunx nitrogen); done
 
 # Native Android (validate Kotlin/C++/APK)
 export JAVA_HOME=$HOME/.jdks/current && export ANDROID_HOME=$HOME/Android/Sdk
@@ -541,6 +543,9 @@ cd src-tauri && cargo check
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
 | `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
+| `modules/argus-camera/` | Nitro view `ArgusCameraView`: decoder nativo del feed `/camera-stream` (ExoPlayer/Media3 en Android, `AVSampleBufferDisplayLayer` en iOS) con `bufferedBytes()` para el credit-window |
+| `src/core/services/camera-media.service.ts` | Socket `/camera-stream`: subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
+| `src/shared/components/cameras/camera-live-view.*` | Vista en vivo de la cámara (nativa) / placeholder en web |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | UI primitives (`button`, `text`, `icon`, `input`) |
 | `src/app/welcome/` | Onboarding completo (Stack anidado con fade + progreso): `index` (saludo+avatar), `pairing/` (QR móvil / código desktop), `face/` (guidance MLKit, móvil-only), `voice/` (avatar+voz, móvil-only) |

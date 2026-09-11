@@ -12,7 +12,7 @@
     },
     "doctor": {
       "reactNativeDirectoryCheck": {
-        "exclude": ["@nozbe/watermelondb", "@nozbe/simdjson", "argus-face", "argus-net", "argus-mic"],
+        "exclude": ["@nozbe/watermelondb", "@nozbe/simdjson", "argus-face", "argus-net", "argus-mic", "argus-camera"],
         "listUnknownPackages": false
       }
     }
@@ -27,7 +27,7 @@
     "web:build": "expo export --platform web",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bunx install-skia && bunx setup-skia-web"
+    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bunx install-skia && bunx setup-skia-web"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -46,6 +46,7 @@
     "argus-face": "file:./modules/argus-face",
     "argus-mic": "file:./modules/argus-mic",
     "argus-net": "file:./modules/argus-net",
+    "argus-camera": "file:./modules/argus-camera",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

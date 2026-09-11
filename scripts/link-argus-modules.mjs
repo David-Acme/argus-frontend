@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const modules = ['argus-net', 'argus-mic', 'argus-face'];
+const modules = ['argus-net', 'argus-mic', 'argus-face', 'argus-camera'];
 
 for (const name of modules) {
   const target = join(root, 'modules', name);

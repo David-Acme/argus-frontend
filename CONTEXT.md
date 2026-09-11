@@ -462,8 +462,14 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   **`ArgusSocket`** HybridObject in `modules/argus-net` (OkHttp on Android /
   `URLSessionWebSocketTask` on iOS, both over the pinned-CA session) and
   Tauri commands `argus_socket_open/send_text/send_binary/close`. Consumed
-  via `netService.openSocket()`; the sync engine owns the single socket and
-  voice streams binary PCM through it. `http.service.ts` is the HTTP
+  via `netService.openSocket()`.
+- **Two sockets**: the sync engine owns `/sync` (sync + emits + voice PCM) and
+  the camera live view owns `/camera-stream` (camera media). The camera
+  service (`src/core/services/camera-media.service.ts`) subscribes, parses the
+  12-byte `0xA7` framing, pushes fMP4 fragments into the native
+  `argus-camera` view and acks the server only when the decoder has drained
+  below the credit threshold; reconnect uses its own backoff. Web/Tauri shows
+  a placeholder until a decoder exists there. `http.service.ts` is the HTTP
   wrapper; there is no separate websocket wrapper.
 
 ### Verification

@@ -14,6 +14,7 @@ import type {
 import type { MenuOption, ZoneType } from '@/core/types';
 import {
   CameraForm,
+  CameraLiveView,
   CameraSettingsSheet,
   CameraTalkSheet,
   PtzPad,
@@ -210,6 +211,11 @@ export default function CameraDetailScreen() {
         )
       }>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-8">
+        {camera.isEnabled ? (
+          <View className="mb-5">
+            <CameraLiveView cameraId={camera.id} />
+          </View>
+        ) : null}
         <Animated.View
           entering={screenIn}
           className={isWide ? 'flex-row items-start gap-5' : 'gap-5'}>
