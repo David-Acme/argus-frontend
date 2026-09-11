@@ -4,7 +4,7 @@ export const cameras = {
   empty: 'Todavía no has conectado una cámara',
   'empty-hint': 'Conecta la primera para vigilar tu casa.',
   connect: 'Conectar cámara',
-  'live-unsupported': 'La vista en vivo solo está disponible en la app móvil.',
+  'live-unsupported': 'La vista en vivo no está disponible en este dispositivo.',
   edit: 'Editar cámara',
   'connect-description': 'Datos de acceso de la cámara en tu red local.',
   'edit-description': 'Actualiza los datos de {name}.',

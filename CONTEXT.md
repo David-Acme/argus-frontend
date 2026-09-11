@@ -468,8 +468,9 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   service (`src/core/services/camera-media.service.ts`) subscribes, parses the
   12-byte `0xA7` framing, pushes fMP4 fragments into the native
   `argus-camera` view and acks the server only when the decoder has drained
-  below the credit threshold; reconnect uses its own backoff. Web/Tauri shows
-  a placeholder until a decoder exists there. `http.service.ts` is the HTTP
+  below the credit threshold; reconnect uses its own backoff. Desktop/web
+  decodes with WebCodecs + canvas when the webview supports it, otherwise it
+  shows a placeholder. `http.service.ts` is the HTTP
   wrapper; there is no separate websocket wrapper.
 
 ### Verification

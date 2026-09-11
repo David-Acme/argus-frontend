@@ -4,7 +4,7 @@ export const cameras = {
   empty: 'You have not connected a camera yet',
   'empty-hint': 'Connect the first one to watch your home.',
   connect: 'Connect camera',
-  'live-unsupported': 'Live view is only available in the mobile app.',
+  'live-unsupported': 'Live view is not available on this device.',
   edit: 'Edit camera',
   'connect-description': 'Access details of the camera on your local network.',
   'edit-description': 'Update the details of {name}.',

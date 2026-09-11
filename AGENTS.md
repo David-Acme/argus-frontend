@@ -546,7 +546,7 @@ cd src-tauri && cargo check
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
 | `modules/argus-camera/` | Nitro view `ArgusCameraView`: decoder nativo del feed `/camera-stream` (ExoPlayer/Media3 en Android, `AVSampleBufferDisplayLayer` en iOS) con `bufferedBytes()` para el credit-window |
 | `src/core/services/camera-media.service.ts` | Socket `/camera-stream`: subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
-| `src/shared/components/cameras/camera-live-view.*` | Vista en vivo de la cámara (nativa) / placeholder en web |
+| `src/shared/components/cameras/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | UI primitives (`button`, `text`, `icon`, `input`) |
 | `src/app/welcome/` | Onboarding completo (Stack anidado con fade + progreso): `index` (saludo+avatar), `pairing/` (QR móvil / código desktop), `face/` (guidance MLKit, móvil-only), `voice/` (avatar+voz, móvil-only) |
