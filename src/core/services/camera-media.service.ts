@@ -19,7 +19,7 @@ import {
 const KEYFRAME_FLAG = 0x01;
 const INIT_FRAME_TYPE = 1;
 
-class CameraMediaSocketSession implements ICameraMediaSession {
+class CameraMediaSession implements ICameraMediaSession {
   private socket: IArgusSocket | null = null;
   private closed = false;
   private subId: number | null = null;
@@ -30,7 +30,7 @@ class CameraMediaSocketSession implements ICameraMediaSession {
 
   constructor(private readonly input: ICameraMediaOpenInput) {}
 
-  async start(): Promise<CameraMediaSocketSession> {
+  async start(): Promise<CameraMediaSession> {
     this.ackTimer = setInterval(
       () => this.flushAck(),
       CAMERA_STREAM_ACK_INTERVAL_MS,
@@ -183,11 +183,11 @@ class CameraMediaSocketSession implements ICameraMediaSession {
   }
 }
 
-class CameraMediaServiceImpl implements ICameraMediaService {
+class CameraMediaService implements ICameraMediaService {
   open(input: ICameraMediaOpenInput): Promise<ICameraMediaSession> {
-    return new CameraMediaSocketSession(input).start();
+    return new CameraMediaSession(input).start();
   }
 }
 
 export const cameraMediaService: ICameraMediaService =
-  new CameraMediaServiceImpl();
+  new CameraMediaService();

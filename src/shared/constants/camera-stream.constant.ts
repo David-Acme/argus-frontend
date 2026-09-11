@@ -10,3 +10,6 @@ export const CAMERA_STREAM_ACK_INTERVAL_MS = 250;
 
 export const CAMERA_STREAM_RECONNECT_BASE_MS = 2000;
 export const CAMERA_STREAM_RECONNECT_MAX_MS = 30000;
+
+/** Media surface behind the letterboxed video (not a theme token). */
+export const CAMERA_LIVE_BACKGROUND = '#000000';

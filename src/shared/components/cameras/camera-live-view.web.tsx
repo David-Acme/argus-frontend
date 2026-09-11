@@ -6,6 +6,7 @@ import type { ICameraMediaSession, ICameraMediaSink } from '@/core/interfaces';
 import { cameraMediaService } from '@/core/services/camera-media.service';
 import type { CameraStreamQuality } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
+import { CAMERA_LIVE_BACKGROUND } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 import { WebCameraPlayer } from './web-camera-player';
@@ -79,7 +80,7 @@ export function CameraLiveView({
         style={{
           width: '100%',
           aspectRatio: '16 / 9',
-          background: '#000',
+          background: CAMERA_LIVE_BACKGROUND,
           display: 'block',
         }}
       />
