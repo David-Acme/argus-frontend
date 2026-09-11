@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
@@ -20,11 +21,12 @@ export function CameraLiveView({
   quality = 'sub',
 }: CameraLiveViewProps) {
   const { t } = useTranslation();
+  const focused = useIsFocused();
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const [unsupported] = useState(() => !WebCameraPlayer.supported);
 
   useEffect(() => {
-    if (unsupported) return;
+    if (unsupported || !focused) return;
     const target = canvas.current;
     if (!target) return;
     const numericId = Number(cameraId);
@@ -37,6 +39,10 @@ export function CameraLiveView({
       bufferedBytes: () => player.buffered(),
     };
 
+    const onVisibility = () => player.setVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    onVisibility();
+
     let mounted = true;
     let session: ICameraMediaSession | null = null;
     void cameraMediaService
@@ -48,10 +54,11 @@ export function CameraLiveView({
 
     return () => {
       mounted = false;
+      document.removeEventListener('visibilitychange', onVisibility);
       session?.close();
       player.dispose();
     };
-  }, [cameraId, quality, unsupported]);
+  }, [cameraId, focused, quality, unsupported]);
 
   if (unsupported) {
     return (

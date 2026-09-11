@@ -6,6 +6,7 @@ use net::pair::pair;
 use net::secure::{delete as secure_delete, get as secure_get, set as secure_set};
 use net::socket::{close as socket_close, open as socket_open, send_binary as socket_send_binary,
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
+use tauri::ipc::{Channel, Request};
 use tauri::State;
 
 #[tauri::command]
@@ -46,11 +47,11 @@ fn argus_secure_delete(key: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn argus_socket_open(
-  app: tauri::AppHandle,
   state: State<'_, SocketState>,
   options: SocketOpenOptions,
+  on_event: Channel,
 ) -> Result<(), String> {
-  socket_open(app, state, options).await
+  socket_open(state, options, on_event).await
 }
 
 #[tauri::command]
@@ -59,8 +60,8 @@ fn argus_socket_send_text(state: State<'_, SocketState>, socket_id: String, mess
 }
 
 #[tauri::command]
-fn argus_socket_send_binary(state: State<'_, SocketState>, socket_id: String, data: String) -> Result<(), String> {
-  socket_send_binary(state, socket_id, data)
+fn argus_socket_send_binary(request: Request<'_>, state: State<'_, SocketState>) -> Result<(), String> {
+  socket_send_binary(request, state)
 }
 
 #[tauri::command]

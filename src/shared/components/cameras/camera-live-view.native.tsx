@@ -1,4 +1,5 @@
 import { ArgusCameraView, type ArgusCameraViewMethods } from 'argus-camera';
+import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { callback } from 'react-native-nitro-modules';
@@ -17,6 +18,7 @@ export function CameraLiveView({
   cameraId,
   quality = 'sub',
 }: CameraLiveViewProps) {
+  const focused = useIsFocused();
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
 
   const bindPlayer = useCallback((ref: ArgusCameraViewMethods) => {
@@ -25,7 +27,8 @@ export function CameraLiveView({
 
   useEffect(() => {
     const numericId = Number(cameraId);
-    if (!player || !Number.isFinite(numericId) || numericId <= 0) return;
+    if (!player || !focused || !Number.isFinite(numericId) || numericId <= 0)
+      return;
 
     const sink: ICameraMediaSink = {
       resetStream: () => player.resetStream(),
@@ -47,13 +50,13 @@ export function CameraLiveView({
       mounted = false;
       session?.close();
     };
-  }, [cameraId, player, quality]);
+  }, [cameraId, focused, player, quality]);
 
   return (
     <View className="bg-card overflow-hidden rounded-2xl">
       <ArgusCameraView
         hybridRef={callback(bindPlayer)}
-        active
+        active={focused}
         style={{ width: '100%', aspectRatio: 16 / 9 }}
       />
     </View>

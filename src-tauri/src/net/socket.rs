@@ -4,11 +4,11 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use base64::Engine;
 use futures_util::{SinkExt, StreamExt};
 use rustls::pki_types::CertificateDer;
-use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, State};
+use serde::Deserialize;
+use tauri::ipc::{Channel, InvokeBody, InvokeResponseBody, Request};
+use tauri::State;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
@@ -17,6 +17,13 @@ use tokio_tungstenite::{client_async_tls_with_config, Connector};
 
 type SocketSender = mpsc::UnboundedSender<Message>;
 type SocketMap = Arc<Mutex<HashMap<String, SocketSender>>>;
+type SocketChannel = Channel;
+
+const FRAME_OPEN: u8 = 0;
+const FRAME_TEXT: u8 = 1;
+const FRAME_BINARY: u8 = 2;
+const FRAME_ERROR: u8 = 3;
+const FRAME_CLOSE: u8 = 4;
 
 #[derive(Clone, Default)]
 pub struct SocketState {
@@ -35,30 +42,23 @@ pub struct SocketOpenOptions {
   pub connect_timeout_ms: f64,
 }
 
-#[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct SocketEvent {
-  kind: String,
-  message: Option<String>,
-  data: Option<String>,
-  code: Option<i32>,
-  error_code: Option<String>,
-  reason: Option<String>,
+fn send_frame(channel: &SocketChannel, kind: u8, payload: &[u8]) {
+  let mut frame = Vec::with_capacity(payload.len() + 1);
+  frame.push(kind);
+  frame.extend_from_slice(payload);
+  let _ = channel.send(InvokeResponseBody::Raw(frame));
 }
 
-fn event(kind: &str) -> SocketEvent {
-  SocketEvent {
-    kind: kind.to_string(),
-    message: None,
-    data: None,
-    code: None,
-    error_code: None,
-    reason: None,
-  }
+fn send_text_frame(channel: &SocketChannel, kind: u8, text: &str) {
+  send_frame(channel, kind, text.as_bytes());
 }
 
-fn emit(app: &AppHandle, socket_id: &str, payload: SocketEvent) {
-  let _ = app.emit(&format!("argus://socket/{socket_id}"), payload);
+fn send_close_frame(channel: &SocketChannel, code: i32, reason: &str) {
+  let mut frame = Vec::with_capacity(reason.len() + 5);
+  frame.push(FRAME_CLOSE);
+  frame.extend_from_slice(&(code as u32).to_be_bytes());
+  frame.extend_from_slice(reason.as_bytes());
+  let _ = channel.send(InvokeResponseBody::Raw(frame));
 }
 
 fn parse_error(error: impl std::fmt::Display) -> String {
@@ -112,7 +112,11 @@ fn validate_target(options: &SocketOpenOptions) -> Result<(url::Url, SocketAddr)
   Ok((url, SocketAddr::new(ip, port)))
 }
 
-pub async fn open(app: AppHandle, state: State<'_, SocketState>, options: SocketOpenOptions) -> Result<(), String> {
+pub async fn open(
+  state: State<'_, SocketState>,
+  options: SocketOpenOptions,
+  on_event: SocketChannel,
+) -> Result<(), String> {
   let (url, address) = validate_target(&options)?;
   let tls = build_tls_config(&options.ca_pem)?;
   let timeout = Duration::from_millis(options.connect_timeout_ms.max(1000.0) as u64);
@@ -154,7 +158,8 @@ pub async fn open(app: AppHandle, state: State<'_, SocketState>, options: Socket
   state.sockets.lock().map_err(|_| "NETWORK_ERROR|Socket state poisoned".to_string())?
     .insert(options.socket_id.clone(), sender);
 
-  let app_for_task = app.clone();
+  send_frame(&on_event, FRAME_OPEN, &[]);
+
   let socket_id = options.socket_id.clone();
   let sockets = state.sockets.clone();
   tokio::spawn(async move {
@@ -173,14 +178,10 @@ pub async fn open(app: AppHandle, state: State<'_, SocketState>, options: Socket
         incoming = reader.next() => {
           match incoming {
             Some(Ok(Message::Text(message))) => {
-              let mut payload = event("message");
-              payload.message = Some(message.to_string());
-              emit(&app_for_task, &socket_id, payload);
+              send_text_frame(&on_event, FRAME_TEXT, &message);
             }
             Some(Ok(Message::Binary(data))) => {
-              let mut payload = event("binary");
-              payload.data = Some(base64::engine::general_purpose::STANDARD.encode(data));
-              emit(&app_for_task, &socket_id, payload);
+              send_frame(&on_event, FRAME_BINARY, &data);
             }
             Some(Ok(Message::Close(frame))) => {
               if let Some(frame) = frame {
@@ -195,10 +196,11 @@ pub async fn open(app: AppHandle, state: State<'_, SocketState>, options: Socket
             Some(Ok(Message::Pong(_))) => {}
             Some(Ok(Message::Frame(_))) => {}
             Some(Err(error)) => {
-              let mut payload = event("error");
-              payload.error_code = Some("NETWORK_ERROR".to_string());
-              payload.reason = Some(error.to_string());
-              emit(&app_for_task, &socket_id, payload);
+              send_text_frame(
+                &on_event,
+                FRAME_ERROR,
+                &format!("NETWORK_ERROR|{error}"),
+              );
               close_code = 1006;
               close_reason = error.to_string();
               break;
@@ -211,13 +213,9 @@ pub async fn open(app: AppHandle, state: State<'_, SocketState>, options: Socket
     if let Ok(mut sockets) = sockets.lock() {
       sockets.remove(&socket_id);
     }
-    let mut payload = event("close");
-    payload.code = Some(close_code);
-    payload.reason = Some(close_reason);
-    emit(&app_for_task, &socket_id, payload);
+    send_close_frame(&on_event, close_code, &close_reason);
   });
 
-  emit(&app, &options.socket_id, event("open"));
   Ok(())
 }
 
@@ -229,14 +227,20 @@ pub fn send_text(state: State<'_, SocketState>, socket_id: String, message: Stri
     .map_err(|_| "NETWORK_ERROR|Socket is closed".to_string())
 }
 
-pub fn send_binary(state: State<'_, SocketState>, socket_id: String, data: String) -> Result<(), String> {
-  let bytes = base64::engine::general_purpose::STANDARD
-    .decode(data)
-    .map_err(|error| format!("NETWORK_ERROR|Invalid binary payload: {error}"))?;
+pub fn send_binary(request: Request<'_>, state: State<'_, SocketState>) -> Result<(), String> {
+  let socket_id = request
+    .headers()
+    .get("x-argus-socket-id")
+    .and_then(|value| value.to_str().ok())
+    .ok_or_else(|| "NETWORK_ERROR|Missing socket id".to_string())?
+    .to_string();
+  let InvokeBody::Raw(bytes) = request.body() else {
+    return Err("NETWORK_ERROR|Binary body required".to_string());
+  };
   let sockets = state.sockets.lock().map_err(|_| "NETWORK_ERROR|Socket state poisoned".to_string())?;
   sockets.get(&socket_id)
     .ok_or_else(|| "NETWORK_ERROR|Socket is closed".to_string())?
-    .send(Message::Binary(bytes.into()))
+    .send(Message::Binary(bytes.clone().into()))
     .map_err(|_| "NETWORK_ERROR|Socket is closed".to_string())
 }
 

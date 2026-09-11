@@ -1,6 +1,7 @@
 import { parseFragment, parseInit } from '@/shared/libs/fmp4';
 
 const MAX_QUEUED_FRAMES = 8;
+const MAX_LATENCY_BYTES = 768 * 1024;
 
 /** WebCodecs fMP4 player: decodes H.264 fragments and paints them on a canvas. */
 export class WebCameraPlayer {
@@ -15,8 +16,11 @@ export class WebCameraPlayer {
   private readonly context: CanvasRenderingContext2D | null;
   private readonly sampleSizes: number[] = [];
   private decoder: VideoDecoder | null = null;
+  private config: VideoDecoderConfig | null = null;
   private timescale = 0;
   private pending = 0;
+  private dropUntilKeyframe = false;
+  private paused = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -26,9 +30,20 @@ export class WebCameraPlayer {
   reset(): void {
     this.decoder?.close();
     this.decoder = null;
+    this.config = null;
     this.timescale = 0;
     this.sampleSizes.length = 0;
     this.pending = 0;
+    this.dropUntilKeyframe = false;
+  }
+
+  /** Hidden screen: stop decoding and stop acking so the server backpressures. */
+  setVisible(visible: boolean): void {
+    if (visible === !this.paused) return;
+    this.paused = !visible;
+    this.sampleSizes.length = 0;
+    this.pending = 0;
+    this.dropUntilKeyframe = true;
   }
 
   push(type: number, data: ArrayBuffer): void {
@@ -37,8 +52,19 @@ export class WebCameraPlayer {
       this.startStream(bytes);
       return;
     }
-    if (!this.decoder || this.decoder.state !== 'configured') return;
+    if (this.paused || !this.decoder || this.decoder.state !== 'configured')
+      return;
+
     for (const sample of parseFragment(bytes, this.timescale)) {
+      if (this.dropUntilKeyframe) {
+        if (!sample.isKey) continue;
+        this.rewind();
+        this.dropUntilKeyframe = false;
+      }
+      if (this.pending > MAX_LATENCY_BYTES && !sample.isKey) {
+        this.dropUntilKeyframe = true;
+        continue;
+      }
       if (this.decoder.decodeQueueSize > MAX_QUEUED_FRAMES && !sample.isKey)
         continue;
       this.sampleSizes.push(sample.data.byteLength);
@@ -55,7 +81,7 @@ export class WebCameraPlayer {
   }
 
   buffered(): number {
-    return this.pending;
+    return this.paused ? Number.MAX_SAFE_INTEGER : this.pending;
   }
 
   dispose(): void {
@@ -63,18 +89,31 @@ export class WebCameraPlayer {
   }
 
   private startStream(init: Uint8Array): void {
-    const config = parseInit(init);
-    if (!config) return;
+    const parsed = parseInit(init);
+    if (!parsed) return;
     this.reset();
-    this.timescale = config.timescale;
+    this.timescale = parsed.timescale;
+    this.config = {
+      codec: parsed.codec,
+      description: parsed.description,
+    };
     this.decoder = new VideoDecoder({
       output: (frame) => this.draw(frame),
-      error: () => this.reset(),
+      error: () => this.rewind(),
     });
-    this.decoder.configure({
-      codec: config.codec,
-      description: config.description,
-    });
+    this.decoder.configure(this.config);
+  }
+
+  private rewind(): void {
+    if (!this.decoder || !this.config || this.decoder.state === 'closed') return;
+    this.sampleSizes.length = 0;
+    this.pending = 0;
+    try {
+      this.decoder.reset();
+      this.decoder.configure(this.config);
+    } catch {
+      this.decoder = null;
+    }
   }
 
   private draw(frame: VideoFrame): void {

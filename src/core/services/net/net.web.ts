@@ -1,5 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { invoke, Channel } from '@tauri-apps/api/core';
 import type { NetSocketOptions } from 'argus-net';
 
 import { DISCOVERY_TIMEOUT_MS } from '@/shared/constants';
@@ -123,15 +122,22 @@ type TauriSocketOpenOptions = NetSocketOptions & {
 type TauriSocketEvent = {
   kind: 'open' | 'message' | 'binary' | 'error' | 'close';
   message?: string;
-  data?: string;
+  data?: ArrayBuffer;
   code?: number;
   errorCode?: string;
   reason?: string;
 };
 
+const FRAME_OPEN = 0;
+const FRAME_TEXT = 1;
+const FRAME_BINARY = 2;
+const FRAME_ERROR = 3;
+const FRAME_CLOSE = 4;
+
+const textDecoder = new TextDecoder();
+
 class TauriSocket implements IArgusSocket {
-  private readonly eventName: string;
-  private unlisten: (() => void) | null = null;
+  private channel: Channel<ArrayBuffer> | null = null;
   private opened = false;
   private closed = false;
   private queued: TauriSocketEvent[] = [];
@@ -140,9 +146,7 @@ class TauriSocket implements IArgusSocket {
   private errorListener: IArgusSocket['onError'] = null;
   private closeListener: IArgusSocket['onClose'] = null;
 
-  constructor(private readonly socketId: string) {
-    this.eventName = `argus://socket/${socketId}`;
-  }
+  constructor(private readonly socketId: string) {}
 
   get onOpen(): (() => void) | null {
     return this.openListener;
@@ -181,9 +185,9 @@ class TauriSocket implements IArgusSocket {
   }
 
   async open(options: TauriSocketOpenOptions): Promise<void> {
-    this.unlisten = await listen<TauriSocketEvent>(this.eventName, ({ payload }) => {
-      this.receive(payload);
-    });
+    const channel = new Channel<ArrayBuffer>();
+    channel.onmessage = (payload) => this.receiveFrame(payload);
+    this.channel = channel;
     try {
       await invoke('argus_socket_open', {
         options: {
@@ -195,10 +199,10 @@ class TauriSocket implements IArgusSocket {
           ip: options.ip,
           connectTimeoutMs: options.connectTimeoutMs ?? 8000,
         },
+        onEvent: channel,
       });
     } catch (error) {
-      this.unlisten?.();
-      this.unlisten = null;
+      this.channel = null;
       throw toNetError(error, 'NETWORK_ERROR');
     }
   }
@@ -208,12 +212,8 @@ class TauriSocket implements IArgusSocket {
   }
 
   sendBinary(data: ArrayBuffer): void {
-    const bytes = new Uint8Array(data);
-    let binary = '';
-    for (const byte of bytes) binary += String.fromCharCode(byte);
-    void invoke('argus_socket_send_binary', {
-      socketId: this.socketId,
-      data: btoa(binary),
+    void invoke('argus_socket_send_binary', data, {
+      headers: { 'x-argus-socket-id': this.socketId },
     });
   }
 
@@ -221,8 +221,45 @@ class TauriSocket implements IArgusSocket {
     if (this.closed) return;
     this.closed = true;
     void invoke('argus_socket_close', { socketId: this.socketId, code, reason });
-    this.unlisten?.();
-    this.unlisten = null;
+    this.channel = null;
+  }
+
+  private receiveFrame(payload: ArrayBuffer): void {
+    const bytes = new Uint8Array(payload);
+    const kind = bytes[0];
+    const body = bytes.subarray(1);
+    switch (kind) {
+      case FRAME_OPEN:
+        this.receive({ kind: 'open' });
+        break;
+      case FRAME_TEXT:
+        this.receive({ kind: 'message', message: textDecoder.decode(body) });
+        break;
+      case FRAME_BINARY:
+        this.receive({
+          kind: 'binary',
+          data: body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+        });
+        break;
+      case FRAME_ERROR:
+        this.receive({
+          kind: 'error',
+          errorCode: 'NETWORK_ERROR',
+          reason: textDecoder.decode(body),
+        });
+        break;
+      case FRAME_CLOSE: {
+        const code = new DataView(body.buffer, body.byteOffset, 4).getUint32(0);
+        this.receive({
+          kind: 'close',
+          code,
+          reason: textDecoder.decode(body.subarray(4)),
+        });
+        break;
+      }
+      default:
+        break;
+    }
   }
 
   private receive(event: TauriSocketEvent): void {
@@ -260,10 +297,7 @@ class TauriSocket implements IArgusSocket {
         this.messageListener?.(event.message ?? null, null);
         break;
       case 'binary': {
-        const binary = atob(event.data ?? '');
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        this.messageListener?.(null, bytes.buffer);
+        this.messageListener?.(null, event.data ?? new ArrayBuffer(0));
         break;
       }
       case 'error':

@@ -227,7 +227,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
 - **WebSocket (shipped)**: always native — RN's JS `WebSocket` does not trust
   the CA. `ArgusSocket` HybridObject in `modules/argus-net` (OkHttp /
   `URLSessionWebSocketTask` over the pinned CA session) and Tauri commands
-  `argus_socket_open/send_text/send_binary/close`. Consumed through
+  `argus_socket_open/send_text/send_binary/close` (raw Tauri Channel for
+  inbound frames — no base64). Consumed through
   `netService.openSocket()`. **Two sockets**: the sync engine owns `/sync`
   (sync + emits + voice PCM), and the camera live view opens
   `/camera-stream` through `cameraMediaService` and pumps fMP4 fragments
