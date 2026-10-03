@@ -11,4 +11,5 @@ export const IS_IOS = Platform.OS === 'ios';
 export const IS_TAURI = IS_WEB && '__TAURI_INTERNALS__' in window;
 
 export const TOAST_DEFAULT_MS = 4000;
+export const TOAST_ACTION_MS = 6000;
 export const TOAST_MAX_VISIBLE = 3;
