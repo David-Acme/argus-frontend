@@ -1,5 +1,5 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useAuthStore } from '@/core/stores';
@@ -8,7 +8,6 @@ import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
 import type {
   ICameraCacheRow,
-  ICameraCapabilities,
   ICameraDeviceStatus,
 } from '@/core/interfaces';
 import type { MenuOption, ZoneType } from '@/core/types';
@@ -29,6 +28,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -50,14 +50,23 @@ export default function CameraDetailScreen() {
   const [zoneOpen, setZoneOpen] = useState(false);
   const [zoneId, setZoneId] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [device, setDevice] = useState<ICameraDeviceStatus | null>(null);
-  const [features, setFeatures] = useState<ICameraCapabilities | null>(null);
   const [talkOpen, setTalkOpen] = useState(false);
   const [moving, setMoving] = useState(false);
 
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const zones = useMemo(() => camera?.zones ?? [], [camera]);
+  const loadDevice = useCallback(() => cameraControlService.status(id), [id]);
+  const loadFeatures = useCallback(() => cameraControlService.capabilities(id), [id]);
+  const deviceResource = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.cameraDevice, scope: id, load: loadDevice });
+  const { data: features } = useRemoteResource({
+    cacheKey: VIEW_CACHE_KEYS.cameraCapabilities,
+    scope: id,
+    load: loadFeatures,
+  });
+  const device = deviceResource.data;
+  const mutateDevice = deviceResource.mutate;
+  const applyDevice = useCallback((status: ICameraDeviceStatus | null) => mutateDevice(() => status), [mutateDevice]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
 
   const typeLabels = useMemo<Record<ZoneType, string>>(
@@ -119,33 +128,6 @@ export default function CameraDetailScreen() {
     },
     [camera, router, t],
   );
-
-  const readDevice = useCallback(async (): Promise<ICameraDeviceStatus | null> => {
-    if (!id) return null;
-    const result = await cameraControlService.status(id);
-    return result.ok ? (result.info ?? null) : null;
-  }, [id]);
-
-  useEffect(() => {
-    let active = true;
-    void readDevice().then((status) => {
-      if (active) setDevice(status);
-    });
-    return () => {
-      active = false;
-    };
-  }, [readDevice]);
-
-  useEffect(() => {
-    if (!id) return;
-    let active = true;
-    void cameraControlService.capabilities(id).then((result) => {
-      if (active) setFeatures(result.ok ? (result.info ?? null) : null);
-    });
-    return () => {
-      active = false;
-    };
-  }, [id]);
 
   const step = useCallback(
     async (direction: number) => {
@@ -349,7 +331,7 @@ export default function CameraDetailScreen() {
         onOpenChange={setSettingsOpen}
         cameraId={camera.id}
         status={device}
-        onApplied={setDevice}
+        onApplied={applyDevice}
       />
       <ZoneForm open={zoneOpen} onOpenChange={setZoneOpen} cameraId={camera.id} zone={zone} />
     </ScreenShell>

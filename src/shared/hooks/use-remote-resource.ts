@@ -32,7 +32,7 @@ export function useRemoteResource<T>({ cacheKey, scope, load, enabled = true }: 
   }, [cacheKey, load, scope]);
 
   const mutate = useCallback(
-    (update: (previous: T | null) => T) => {
+    (update: (previous: T | null) => T | null) => {
       generation.current += 1;
       viewCacheService.writeValue(cacheKey, update(viewCacheService.readValue<T>(cacheKey, scope)), scope);
     },
