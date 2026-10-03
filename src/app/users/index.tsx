@@ -26,9 +26,7 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { confirm } from '@/shared/libs/confirm';
 
-import { toast } from '@/shared/libs/toast';
 import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -40,6 +38,7 @@ import {
   roleOptions,
   type InvitationPreview,
 } from '@/shared/components/users';
+import { runServiceAction } from '@/shared/libs/service-action';
 
 export default function UsersScreen() {
   const { t } = useTranslation();
@@ -92,43 +91,33 @@ export default function UsersScreen() {
 
   const deactivate = useCallback(
     async (user: IUserManagementRecord) => {
-      if (
-        !(await confirm({
+      const response = await runServiceAction({
+        confirm: {
           title: t('screens.users.deactivate-title', { name: user.name }),
           description: t('screens.users.deactivate-description'),
           confirmLabel: t('screens.users.deactivate'),
           intent: 'danger',
-        }))
-      )
-        return;
-      const response = await userManagementService.deactivate(user.id);
-      if (!response.ok) {
-        toastServiceError(response.errors);
-        return;
-      }
-      await refresh();
-      toast.success(t('screens.users.user-deactivated'));
+        },
+        call: () => userManagementService.deactivate(user.id),
+        success: t('screens.users.user-deactivated'),
+      });
+      if (response) await refresh();
     },
     [refresh, t],
   );
 
   const revoke = useCallback(
     async (invitation: IInvitationRecord) => {
-      if (
-        !(await confirm({
+      const response = await runServiceAction({
+        confirm: {
           title: t('screens.users.revoke-title'),
           description: t('screens.users.revoke-description'),
           confirmLabel: t('screens.users.revoke'),
           intent: 'danger',
-        }))
-      )
-        return;
-      const response = await inviteService.revoke(invitation.id);
-      if (!response.ok) {
-        toastServiceError(response.errors);
-        return;
-      }
-      await refresh();
+        },
+        call: () => inviteService.revoke(invitation.id),
+      });
+      if (response) await refresh();
     },
     [refresh, t],
   );

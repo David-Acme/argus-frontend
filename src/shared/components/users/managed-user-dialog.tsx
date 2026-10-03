@@ -15,11 +15,10 @@ import { Text } from '@/shared/components/ui/text';
 
 import { useTranslation } from '@/shared/hooks/use-translation';
 
-import { toast } from '@/shared/libs/toast';
 
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { type ManagedUserDialogProps, roleOptions } from './user-options';
 
 export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: ManagedUserDialogProps) {
@@ -27,26 +26,19 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
   const [name, setName] = useState(user.name);
   const [lastName, setLastName] = useState(user.lastName);
   const [role, setRole] = useState<UserRole>(user.role);
-  const [saving, setSaving] = useState(false);
+  const { run, pending: saving } = useServiceAction();
   const options = useMemo(() => roleOptions(t), [t]);
 
   const save = useCallback(async () => {
     if (!name.trim()) return;
-    setSaving(true);
-    const response = await userManagementService.update(user.id, {
-      name: name.trim(),
-      lastName: lastName.trim(),
-      role,
+    const response = await run({
+      call: () => userManagementService.update(user.id, { name: name.trim(), lastName: lastName.trim(), role }),
+      success: t('screens.users.user-saved'),
     });
-    setSaving(false);
-    if (!response.ok) {
-      toastServiceError(response.errors);
-      return;
-    }
+    if (!response) return;
     onOpenChange(false);
     await onSaved();
-    toast.success(t('screens.users.user-saved'));
-  }, [lastName, name, onOpenChange, onSaved, role, t, user]);
+  }, [lastName, name, onOpenChange, onSaved, role, run, t, user]);
 
   return (
     <AdaptiveDialog

@@ -33,9 +33,8 @@ import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
-import { confirm } from '@/shared/libs/confirm';
-import { toast } from '@/shared/libs/toast';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { runServiceAction } from '@/shared/libs/service-action';
+import { useServiceAction } from '@/shared/hooks/use-service-action';
 
 type CameraAction = 'edit' | 'toggle' | 'delete';
 
@@ -51,7 +50,7 @@ export default function CameraDetailScreen() {
   const [zoneId, setZoneId] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [talkOpen, setTalkOpen] = useState(false);
-  const [moving, setMoving] = useState(false);
+  const { run: move, pending: moving } = useServiceAction();
 
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
@@ -95,74 +94,56 @@ export default function CameraDetailScreen() {
         return;
       }
       if (action === 'toggle') {
-        if (
-          camera.isEnabled &&
-          !(await confirm({
-            title: t('screens.cameras.disable-confirm-title', { name: camera.name }),
-            description: t('screens.cameras.disable-confirm-body'),
-            intent: 'warning',
-          }))
-        )
-          return;
-        const result = await cameraService.update(camera.id, { isEnabled: !camera.isEnabled });
-        if (!result.ok) toastServiceError(result.errors);
+        await runServiceAction({
+          confirm: camera.isEnabled
+            ? {
+                title: t('screens.cameras.disable-confirm-title', { name: camera.name }),
+                description: t('screens.cameras.disable-confirm-body'),
+                intent: 'warning',
+              }
+            : undefined,
+          call: () => cameraService.update(camera.id, { isEnabled: !camera.isEnabled }),
+        });
         return;
       }
-      if (
-        !(await confirm({
+      const removed = await runServiceAction({
+        confirm: {
           title: t('screens.cameras.delete-confirm-title', { name: camera.name }),
           description: t('screens.cameras.delete-confirm-body'),
           confirmLabel: t('common.confirm-delete'),
           intent: 'danger',
-        }))
-      )
-        return;
-
-      const result = await cameraService.remove(camera.id);
-      if (result.ok) {
-        toast.success(t('screens.cameras.removed'));
-        router.back();
-        return;
-      }
-      toastServiceError(result.errors);
+        },
+        call: () => cameraService.remove(camera.id),
+        success: t('screens.cameras.removed'),
+      });
+      if (removed) router.back();
     },
     [camera, router, t],
   );
 
   const step = useCallback(
-    async (direction: number) => {
-      if (!id) return;
-      setMoving(true);
-      const result = await cameraControlService.move(id, { angle: direction });
-      setMoving(false);
-      if (!result.ok) toastServiceError(result.errors, t('screens.cameras.device-offline'));
-    },
-    [id, t],
+    (direction: number) =>
+      move({ call: () => cameraControlService.move(id, { angle: direction }), errorTitle: t('screens.cameras.device-offline') }),
+    [id, move, t],
   );
 
-  const center = useCallback(async () => {
-    if (!id) return;
-    setMoving(true);
-    const result = await cameraControlService.move(id, { x: 0, y: 0 });
-    setMoving(false);
-    if (!result.ok) toastServiceError(result.errors, t('screens.cameras.device-offline'));
-  }, [id, t]);
+  const center = useCallback(
+    () => move({ call: () => cameraControlService.move(id, { x: 0, y: 0 }), errorTitle: t('screens.cameras.device-offline') }),
+    [id, move, t],
+  );
 
   const removeZone = useCallback(
     async (targetId: string, name: string) => {
-      if (
-        !(await confirm({
+      await runServiceAction({
+        confirm: {
           title: t('screens.cameras.delete-zone-confirm', { name }),
           description: t('screens.cameras.delete-zone-body'),
           confirmLabel: t('common.confirm-delete'),
           intent: 'danger',
-        }))
-      )
-        return;
-
-      const result = await zoneService.remove(targetId);
-      if (result.ok) toast.success(t('screens.cameras.zone-removed'));
-      else toastServiceError(result.errors);
+        },
+        call: () => zoneService.remove(targetId),
+        success: t('screens.cameras.zone-removed'),
+      });
     },
     [t],
   );

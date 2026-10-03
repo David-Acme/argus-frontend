@@ -2,7 +2,7 @@ import { useAuthStore } from '@/core/stores';
 import { authService } from '@/core/services/auth.service';
 import { sessionService } from '@/core/services/session.service';
 import { notificationService } from '@/core/services/notification.service';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { runServiceAction } from '@/shared/libs/service-action';
 import type { IAuthUser } from '@/core/interfaces';
 import {
   ActivityCard,
@@ -57,9 +57,7 @@ function DashboardScreen({ user }: DashboardScreenProps) {
   const { isShort } = useWindowClass();
   const { can, role } = usePermissions();
   const markNotificationsRead = useCallback((ids: readonly string[]) => {
-    void notificationService.markRead(ids).then((result) => {
-      if (!result.ok) toastServiceError(result.errors);
-    });
+    void runServiceAction({ call: () => notificationService.markRead(ids) });
   }, []);
   const guardAccess = guardAccessForRole(role);
   const guardMode = useGuardMode(guardAccess.view).data;

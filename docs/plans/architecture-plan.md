@@ -157,14 +157,24 @@ function useServiceAction<A extends unknown[], R>(
 ): { run: (...args: A) => Promise<R | null>; pending: boolean };
 ```
 
-- [ ] Migrate `use-settings`, then `use-guard` (mode, guests, incidents,
+- [x] Migrate `use-settings`, then `use-guard` (mode, guests, incidents,
   decisions as separate resources), delete `use-guard-mode`, then the two
   camera-detail effects.
-- [ ] Replace the confirm → call → toast blocks with `useServiceAction`.
-- [ ] Result: security, guard mode and the camera device panel paint from
+- [x] Replace the confirm → call → toast blocks with `useServiceAction`.
+- [x] Result: security, guard mode and the camera device panel paint from
   cache; the full-screen spinner and the PTZ flicker disappear.
 - [ ] Push guard-mode and settings changes over `/sync` so every device
-  updates live (backend change, coordinated).
+  updates live (backend change, coordinated). **Deferred**: it needs a backend
+  sync operation; the frontend already keeps both in view-cache keys, so a
+  future live frame only has to write those keys.
+
+Done with one deviation: `useServiceAction` is not a wrapper around one
+action with typed arguments. The shared step is `runServiceAction({ confirm?,
+call, success?, errorTitle? })`, a plain async function every call site
+uses, and `useServiceAction()` only adds `pending` for the controls that need
+it (PTZ pad, camera settings, user and invitation dialogs). That kept the
+call sites shorter than an argument-typed hook: most of them build their
+confirm text from the row they act on.
 
 ### Phase 3 — Design-system primitives
 

@@ -18,9 +18,8 @@ import { Text } from '@/shared/components/ui/text';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { runServiceAction } from '@/shared/libs/service-action';
 
 type TaskFormProps = {
   open: boolean;
@@ -97,23 +96,17 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
 
   const remove = async () => {
     if (!task) return;
-    if (
-      !(await confirm({
+    const removed = await runServiceAction({
+      confirm: {
         title: t('screens.projects.delete-task-title', { name: task.title }),
         description: t('screens.projects.delete-task-body'),
         confirmLabel: t('common.confirm-delete'),
         intent: 'danger',
-      }))
-    )
-      return;
-
-    const result = await projectTaskService.remove(task.id);
-    if (!result.ok) {
-      toastServiceError(result.errors);
-      return;
-    }
-    toast.success(t('screens.projects.task-removed'));
-    onOpenChange(false);
+      },
+      call: () => projectTaskService.remove(task.id),
+      success: t('screens.projects.task-removed'),
+    });
+    if (removed) onOpenChange(false);
   };
 
   return (

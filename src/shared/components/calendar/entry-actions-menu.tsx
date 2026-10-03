@@ -23,10 +23,8 @@ import {
   shouldShowCalendarEntryOverflow,
   type CalendarEntryAction,
 } from '@/shared/libs/calendar-entry-actions';
-import { confirm } from '@/shared/libs/confirm';
-import { toast } from '@/shared/libs/toast';
 import { cn } from '@/shared/libs/utils';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { runServiceAction } from '@/shared/libs/service-action';
 
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
@@ -87,34 +85,27 @@ export function EntryActionsMenu({
       return;
     }
 
+    const id = calendarEntryRecordId(entry);
     if (action === 'toggle') {
       const status = entry.status === 'complete' ? 'todo' : 'done';
-      const result = await projectTaskService.update(calendarEntryRecordId(entry), { status });
-      if (!result.ok) {
-        toastServiceError(result.errors);
-        return;
-      }
-      toast.success(t('screens.agenda.updated'));
+      await runServiceAction({
+        call: () => projectTaskService.update(id, { status }),
+        success: t('screens.agenda.updated'),
+      });
       return;
     }
 
-    const accepted = await confirm({
-      title: t('screens.agenda.delete-title'),
-      description: t('screens.agenda.delete-description', { title: entry.title }),
-      confirmLabel: t('common.delete'),
-      cancelLabel: t('common.cancel'),
-      intent: 'danger',
+    await runServiceAction({
+      confirm: {
+        title: t('screens.agenda.delete-title'),
+        description: t('screens.agenda.delete-description', { title: entry.title }),
+        confirmLabel: t('common.delete'),
+        cancelLabel: t('common.cancel'),
+        intent: 'danger',
+      },
+      call: () => (isEvent ? calendarEventService.remove(id) : projectTaskService.remove(id)),
+      success: t('screens.agenda.deleted'),
     });
-    if (!accepted) return;
-
-    const result = isEvent
-      ? await calendarEventService.remove(calendarEntryRecordId(entry))
-      : await projectTaskService.remove(calendarEntryRecordId(entry));
-    if (!result.ok) {
-      toastServiceError(result.errors);
-      return;
-    }
-    toast.success(t('screens.agenda.deleted'));
   };
 
   if (options.length === 0) return contextTrigger ?? null;

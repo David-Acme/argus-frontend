@@ -19,7 +19,7 @@ import { toast } from '@/shared/libs/toast';
 
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { INVITE_EXPIRIES, type InvitationDialogProps, type InviteExpiry, inviteRoleOptions } from './user-options';
 
 export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: InvitationDialogProps) {
@@ -27,7 +27,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
   const [role, setRole] = useState<InviteRole>('resident');
   const [capacity, setCapacity] = useState('1');
   const [expiry, setExpiry] = useState<InviteExpiry>('7');
-  const [saving, setSaving] = useState(false);
+  const { run, pending: saving } = useServiceAction();
   const roles = useMemo(() => inviteRoleOptions(t), [t]);
   const expiryOptions = useMemo<MenuOption<InviteExpiry>[]>(
     () => INVITE_EXPIRIES.map((item) => ({ value: item.value, label: t('screens.users.expires-days', { days: String(item.days) }) })),
@@ -41,17 +41,11 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
       return;
     }
     const days = INVITE_EXPIRIES.find((item) => item.value === expiry)?.days ?? 7;
-    setSaving(true);
-    const response = await inviteService.create({
-      role,
-      maxRedemptions,
-      expiresAt: Math.floor(Date.now() / 1000) + days * 86_400,
+    const response = await run({
+      call: () =>
+        inviteService.create({ role, maxRedemptions, expiresAt: Math.floor(Date.now() / 1000) + days * 86_400 }),
     });
-    setSaving(false);
-    if (!response.ok || !response.info) {
-      toastServiceError(response.errors);
-      return;
-    }
+    if (!response?.info) return;
     const instance = await netService.instance();
     if (!instance) {
       toast.error(t('common.errors.pairing-required'));
@@ -71,7 +65,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
       }),
     });
     await onSaved();
-  }, [capacity, expiry, onCreated, onOpenChange, onSaved, role, t]);
+  }, [capacity, expiry, onCreated, onOpenChange, onSaved, role, run, t]);
 
   return (
     <AdaptiveDialog

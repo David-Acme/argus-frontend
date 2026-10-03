@@ -459,7 +459,18 @@ for Watermelon nor make an HTTP list request just because it mounted.
   page is applied. A missing audit target triggers a context recovery.
 - Remote mutations may show loading only on the initiating control via
   `<Button loading>`; they must not replace a cached screen with a full-screen
-  spinner. Detail routes must not redirect merely because their cache has not
+  spinner.
+- Data that only the server answers (settings, guard, camera device status
+  and capabilities) is read with `useRemoteResource({ cacheKey, scope?, load,
+  enabled? })` (`shared/hooks/use-remote-resource.ts`): it paints the last
+  answer from the view cache, refetches on focus, ignores stale answers, and
+  `mutate` updates the cache optimistically. `load` must be stable (a
+  module-level arrow or a `useCallback`). A server action goes through
+  `runServiceAction({ confirm?, call, success?, errorTitle? })`
+  (`shared/libs/service-action.ts`: confirm, call, error or success toast,
+  result or `null`); `useServiceAction()` adds the `pending` flag for the
+  control that started it. Never hand-write a generation ref, a
+  `let active = true` effect or a confirm → call → toast block. Detail routes must not redirect merely because their cache has not
   been populated yet.
 
 ### 12c. People, invitations and portrait privacy

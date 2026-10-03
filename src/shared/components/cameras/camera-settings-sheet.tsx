@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { View } from 'react-native';
 import { cameraControlService } from '@/core/services/camera-control.service';
 import type { ICameraDeviceStatus, ICameraSettings } from '@/core/interfaces';
@@ -8,9 +7,8 @@ import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { toast } from '@/shared/libs/toast';
 import { SettingRow } from './setting-row';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { useServiceAction } from '@/shared/hooks/use-service-action';
 
 type CameraSettingsSheetProps = {
   open: boolean;
@@ -28,7 +26,7 @@ export function CameraSettingsSheet({
   onApplied,
 }: CameraSettingsSheetProps) {
   const { t } = useTranslation();
-  const [busy, setBusy] = useState(false);
+  const { run, pending: busy } = useServiceAction();
 
   const dayNightOptions: MenuOption<DayNightMode>[] = [
     { value: 'auto', label: t('screens.cameras.day-night-auto') },
@@ -38,15 +36,12 @@ export function CameraSettingsSheet({
   const dayNight = (status?.dayNightMode as DayNightMode) ?? 'auto';
 
   const apply = async (body: ICameraSettings) => {
-    setBusy(true);
-    const result = await cameraControlService.settings(cameraId, body);
-    setBusy(false);
-    if (!result.ok) {
-      toastServiceError(result.errors, t('screens.cameras.device-offline'));
-      return;
-    }
-    onApplied(result.info ?? null);
-    toast.success(t('screens.cameras.settings-saved'));
+    const result = await run({
+      call: () => cameraControlService.settings(cameraId, body),
+      success: t('screens.cameras.settings-saved'),
+      errorTitle: t('screens.cameras.device-offline'),
+    });
+    if (result) onApplied(result.info ?? null);
   };
 
   return (

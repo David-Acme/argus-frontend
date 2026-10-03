@@ -27,9 +27,8 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
-import { toastServiceError } from '@/shared/libs/service-error';
+import { runServiceAction } from '@/shared/libs/service-action';
 
 type ProjectFormProps = {
   open: boolean;
@@ -95,23 +94,17 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
 
   const remove = async () => {
     if (!project) return;
-    if (
-      !(await confirm({
+    const removed = await runServiceAction({
+      confirm: {
         title: t('screens.projects.delete-project-title', { name: project.name }),
         description: t('screens.projects.delete-project-body'),
         confirmLabel: t('common.confirm-delete'),
         intent: 'danger',
-      }))
-    )
-      return;
-
-    const result = await projectService.remove(project.id);
-    if (!result.ok) {
-      toastServiceError(result.errors);
-      return;
-    }
-    toast.success(t('screens.projects.project-removed'));
-    onOpenChange(false);
+      },
+      call: () => projectService.remove(project.id),
+      success: t('screens.projects.project-removed'),
+    });
+    if (removed) onOpenChange(false);
   };
 
   return (
