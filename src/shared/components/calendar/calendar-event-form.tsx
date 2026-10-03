@@ -21,7 +21,7 @@ import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { FormTextField } from '@/shared/components/ui/form-text-field';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
-import { SettingRow } from '@/shared/components/cameras';
+import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { DayPickerField } from './day-picker-field';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -196,7 +196,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
               control={form.control}
               name="isAllDay"
               render={({ field }) => (
-                <SettingRow
+                <ToggleRow
                   label={t('screens.agenda.event-all-day')}
                   value={field.value}
                   onChange={field.onChange}

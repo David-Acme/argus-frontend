@@ -1,4 +1,5 @@
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { cn } from '@/shared/libs/utils';
 
 type SwitchProps = {
@@ -8,7 +9,13 @@ type SwitchProps = {
   disabled?: boolean;
 };
 
+const KNOB_TRAVEL = 20;
+
 export function Switch({ value, onChange, accessibilityLabel, disabled = false }: SwitchProps) {
+  const knob = useAnimatedStyle(() => ({
+    transform: [{ translateX: withTiming(value ? KNOB_TRAVEL : 0, { duration: 160 }) }],
+  }));
+
   return (
     <Pressable
       accessibilityRole="switch"
@@ -19,15 +26,10 @@ export function Switch({ value, onChange, accessibilityLabel, disabled = false }
       onPress={() => onChange(!value)}
       className={cn(
         'h-7 w-12 justify-center rounded-full px-0.5 active:opacity-80',
-        value ? 'bg-interactive' : 'bg-surface-secondary',
+        value ? 'bg-interactive' : 'bg-border',
         disabled && 'opacity-50'
       )}>
-      <View
-        className={cn(
-          'bg-card size-6 rounded-full shadow-sm shadow-black/20',
-          value ? 'self-end' : 'self-start'
-        )}
-      />
+      <Animated.View className="bg-card size-6 rounded-full shadow-sm shadow-black/20" style={knob} />
     </Pressable>
   );
 }

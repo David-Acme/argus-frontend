@@ -3,7 +3,6 @@ export { CameraLiveView } from './camera-live-view';
 export { CameraSettingsSheet } from './camera-settings-sheet';
 export { CameraTalkSheet } from './camera-talk-sheet';
 export { PtzPad } from './ptz-pad';
-export { SettingRow } from './setting-row';
 export { CameraCard, cameraStatusOf, type CameraCardStatus } from './camera-card';
 export { CameraCardGrid, cameraColumnsFor } from './camera-card-grid';
 export { CameraSummary, type CameraSummaryCounts } from './camera-summary';

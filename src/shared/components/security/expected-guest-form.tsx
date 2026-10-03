@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import type { GuardExpectedGuestCreate } from '@/core/types';
-import { SettingRow } from '@/shared/components/cameras';
+import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -90,7 +90,7 @@ export function ExpectedGuestForm({ open, onOpenChange, onSubmit }: ExpectedGues
           />
         </View>
         <View className="gap-1">
-          <SettingRow label={t('screens.security.guests.one-time')} value={oneTime} onChange={setOneTime} />
+          <ToggleRow label={t('screens.security.guests.one-time')} value={oneTime} onChange={setOneTime} />
           <Text variant="caption" className="px-1">
             {t('screens.security.guests.one-time-hint')}
           </Text>

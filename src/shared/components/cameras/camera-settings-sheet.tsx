@@ -7,7 +7,7 @@ import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { SettingRow } from './setting-row';
+import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 
 type CameraSettingsSheetProps = {
@@ -56,25 +56,25 @@ export function CameraSettingsSheet({
         </Button>
       }>
       <View className="gap-1 pb-1">
-        <SettingRow
+        <ToggleRow
           label={t('screens.cameras.privacy')}
           value={status?.privacyEnabled ?? false}
           disabled={busy}
           onChange={(privacy) => void apply({ privacy })}
         />
-        <SettingRow
+        <ToggleRow
           label={t('screens.cameras.led')}
           value={status?.ledEnabled ?? false}
           disabled={busy}
           onChange={(led) => void apply({ led })}
         />
-        <SettingRow
+        <ToggleRow
           label={t('screens.cameras.motion')}
           value={status?.motionEnabled ?? false}
           disabled={busy}
           onChange={(motion) => void apply({ motion })}
         />
-        <SettingRow
+        <ToggleRow
           label={t('screens.cameras.auto-track')}
           value={status?.autoTrackEnabled ?? false}
           disabled={busy}
