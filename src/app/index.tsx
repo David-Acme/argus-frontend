@@ -1,6 +1,8 @@
 import { useAuthStore, useOnboardingStore } from '@/core/stores';
 import { authService } from '@/core/services/auth.service';
 import { sessionService } from '@/core/services/session.service';
+import { notificationService } from '@/core/services/notification.service';
+import { toastServiceError } from '@/shared/libs/service-error';
 import type { IAuthUser } from '@/core/interfaces';
 import {
   ActivityCard,
@@ -56,6 +58,11 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
   const date = useDateFormatter();
   const { height, isShort, isWide, isExpanded, width } = useWindowClass();
   const { can, role } = usePermissions();
+  const markNotificationsRead = useCallback((ids: readonly string[]) => {
+    void notificationService.markRead(ids).then((result) => {
+      if (!result.ok) toastServiceError(result.errors);
+    });
+  }, []);
   const isOwner = role === 'owner';
   const guardMode = useGuardMode(isOwner);
   const {
@@ -223,6 +230,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
               emptyLabel={t('screens.home.notifications-empty')}
               unreadCount={unreadNotifications}
               items={notifications}
+              onSeen={markNotificationsRead}
             />
             <DashboardIconButton
               icon="calendar"

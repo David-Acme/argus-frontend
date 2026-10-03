@@ -22,6 +22,7 @@ type NotificationPopoverProps = {
   emptyLabel: string;
   unreadCount: number;
   items: readonly NotificationPreview[];
+  onSeen?: (ids: readonly string[]) => void;
 };
 
 const PREVIEW_LIMIT = 4;
@@ -33,11 +34,17 @@ export function NotificationPopover({
   emptyLabel,
   unreadCount,
   items,
+  onSeen,
 }: NotificationPopoverProps) {
   const preview = items.slice(0, PREVIEW_LIMIT);
+  const markSeen = (open: boolean) => {
+    if (!open || !onSeen) return;
+    const unread = preview.filter((item) => !item.isRead).map((item) => item.id);
+    if (unread.length > 0) onSeen(unread);
+  };
 
   return (
-    <Popover>
+    <Popover onOpenChange={markSeen}>
       <PopoverTrigger asChild>
         <DashboardIconButton icon="bell" label={label} badge={unreadCount} />
       </PopoverTrigger>
