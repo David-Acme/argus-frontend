@@ -29,9 +29,9 @@ export function EmptyStateContent({ icon, title, hint, action }: EmptyStateConte
         <Icon name={icon} className="text-foreground-secondary size-6" />
       </View>
       <View className="items-center gap-1.5">
-        <Text className="text-center text-[17px] font-semibold">{title}</Text>
+        <Text className="text-center text-subhead font-semibold">{title}</Text>
         {hint ? (
-          <Text className="text-foreground-secondary text-center text-[13px] leading-5">
+          <Text className="text-foreground-secondary text-center text-caption leading-5">
             {hint}
           </Text>
         ) : null}

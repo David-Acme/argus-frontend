@@ -207,11 +207,11 @@ function SheetHeader({
     <View className="flex-row items-start justify-between gap-3">
       <View className="flex-1 gap-1">
         <DialogPrimitive.Title asChild>
-          <Text className="text-[17px] font-semibold">{title}</Text>
+          <Text className="text-subhead font-semibold">{title}</Text>
         </DialogPrimitive.Title>
         {description ? (
           <DialogPrimitive.Description asChild>
-            <Text className="text-muted-foreground text-[13px] leading-[18px]">{description}</Text>
+            <Text className="text-muted-foreground text-caption leading-[18px]">{description}</Text>
           </DialogPrimitive.Description>
         ) : null}
       </View>

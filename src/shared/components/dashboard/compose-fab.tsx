@@ -104,7 +104,7 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
                     anchor === 'rail' && 'flex-row-reverse'
                   )}>
                   <View className="bg-card rounded-full px-3.5 py-2 shadow-lg shadow-black/25">
-                    <Text className="text-[13px] font-semibold">{labels[action.id]}</Text>
+                    <Text className="text-caption font-semibold">{labels[action.id]}</Text>
                   </View>
                   <View className="bg-card size-11 items-center justify-center rounded-full shadow-lg shadow-black/25">
                     <Icon name={action.icon} className="text-foreground size-5" />

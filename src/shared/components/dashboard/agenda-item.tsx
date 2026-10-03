@@ -50,20 +50,20 @@ export function AgendaItem({
       <View className={cn('w-[3px]', RAIL_CLASS[status])} />
       <View className="min-w-0 flex-1 gap-1 p-3">
         <View className="flex-row items-start justify-between gap-3">
-          <Text className="flex-1 text-[15px] font-semibold leading-5" numberOfLines={1}>
+          <Text className="flex-1 text-body font-semibold leading-5" numberOfLines={1}>
             {title}
           </Text>
         </View>
         <View className="flex-row items-center justify-between gap-3">
-          <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
+          <Text className="text-muted-foreground text-caption">{statusLabel}</Text>
           <View className="flex-row items-center gap-1.5">
             <Icon name="clock" className="text-muted-foreground size-3.5" />
-            <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
+            <Text className="text-foreground-secondary text-xs font-medium">{time}</Text>
           </View>
         </View>
         {note ? (
           <View className="bg-surface mt-2.5 rounded-[14px] p-3">
-            <Text className="text-foreground-secondary text-[13px] leading-[19px]">{note}</Text>
+            <Text className="text-foreground-secondary text-caption leading-[19px]">{note}</Text>
           </View>
         ) : null}
       </View>

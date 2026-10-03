@@ -148,7 +148,7 @@ export default function ProjectsScreen() {
             label={t('common.back')}
             onPress={() => router.replace('/')}
           />
-          <Text className="text-[22px] font-semibold tracking-tight">
+          <Text variant="title">
             {t('screens.projects.title')}
           </Text>
           {can('project', 'create') ? (
@@ -178,10 +178,10 @@ export default function ProjectsScreen() {
         ) : (
           <>
             <View className="flex-row items-center justify-between gap-3">
-              <Text className="flex-1 text-[17px] font-semibold" numberOfLines={1}>
+              <Text className="flex-1 text-subhead font-semibold" numberOfLines={1}>
                 {displayProjects.find((project) => project.id === activeId)?.name ?? ''}
               </Text>
-              <Text className="text-muted-foreground text-[12px] font-medium">
+              <Text className="text-muted-foreground text-xs font-medium">
                 {t('screens.projects.task-count', {
                   done: String(progress.done),
                   total: String(progress.total),

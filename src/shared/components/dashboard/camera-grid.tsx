@@ -27,7 +27,7 @@ export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
         <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
           <Icon name="video" className="text-muted-foreground size-5" />
         </View>
-        <Text className="text-muted-foreground text-center text-[13px]">{emptyLabel}</Text>
+        <Text className="text-muted-foreground text-center text-caption">{emptyLabel}</Text>
       </View>
     );
   }

@@ -38,19 +38,17 @@ export function ActivityCard({
     <View className="bg-card overflow-hidden rounded-[26px] p-4 shadow-md shadow-black/[0.07]">
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-3">
-          <Text className="text-[17px] font-semibold leading-[22px]">{title}</Text>
+          <Text className="text-subhead font-semibold leading-[22px]">{title}</Text>
           <Button size="sm" className="self-start rounded-full px-4" onPress={onAction}>
-            <Text className="text-[13px] font-semibold">{action}</Text>
+            <Text className="text-caption font-semibold">{action}</Text>
           </Button>
         </View>
-        <View className="relative">
-          <MosaicChart levels={levels} />
-          <View className="absolute -top-1 left-0 right-0 items-center">
-            <View className="bg-card flex-row items-center gap-1 rounded-full px-2.5 py-1.5 shadow-sm shadow-black/10">
-              <Icon name={TREND_ICON[direction]} className={cn('size-3', TREND_TONE[direction])} />
-              <Text className="text-foreground text-[11px] font-semibold">{delta}</Text>
-            </View>
+        <View className="items-end gap-2">
+          <View className="bg-surface-secondary flex-row items-center gap-1 rounded-full px-2.5 py-1">
+            <Icon name={TREND_ICON[direction]} className={cn('size-3', TREND_TONE[direction])} />
+            <Text className="text-foreground text-micro font-semibold tabular-nums">{delta}</Text>
           </View>
+          <MosaicChart levels={levels} />
         </View>
       </View>
     </View>

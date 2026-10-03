@@ -80,7 +80,7 @@ function SelectList({
         <View className="bg-surface-secondary flex-row items-center gap-2 rounded-full px-4">
           <Icon name="search" className="text-muted-foreground size-4" />
           <Input
-            className="h-11 flex-1 border-0 bg-transparent px-0 text-[15px] shadow-none"
+            className="h-11 flex-1 border-0 bg-transparent px-0 text-body shadow-none"
             placeholder={searchPlaceholder}
             accessibilityLabel={searchPlaceholder}
             value={query}
@@ -107,7 +107,7 @@ function SelectList({
             ))
           ) : (
             <View className="items-center py-6">
-              <Text className="text-muted-foreground text-[13px]">{emptyLabel}</Text>
+              <Text className="text-muted-foreground text-caption">{emptyLabel}</Text>
             </View>
           )}
         </View>

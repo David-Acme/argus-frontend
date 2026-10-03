@@ -35,7 +35,7 @@ export function SelectField({
       {...props}>
       <View className="min-w-0 flex-1">
         <Text
-          className={cn('text-[15px]', empty ? 'text-muted-foreground' : 'text-foreground')}
+          className={cn('text-body', empty ? 'text-muted-foreground' : 'text-foreground')}
           numberOfLines={1}>
           {empty ? placeholder : label}
         </Text>

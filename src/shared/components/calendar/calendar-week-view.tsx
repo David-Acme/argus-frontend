@@ -74,7 +74,7 @@ export function CalendarWeekView({
               accessibilityState={{ selected: isSelected }}
               className="flex-1 items-center gap-1 active:opacity-70"
               onPress={() => onSelectDay(day)}>
-              <Text className="text-muted-foreground text-[11px] font-medium capitalize">
+              <Text className="text-muted-foreground text-micro font-medium capitalize">
                 {date.formatWeekdayShort(day)}
               </Text>
               <View
@@ -84,7 +84,7 @@ export function CalendarWeekView({
                 )}>
                 <Text
                   className={cn(
-                    'text-[13px] font-semibold',
+                    'text-caption font-semibold',
                     isSelected ? 'text-foreground-on-interactive' : 'text-foreground'
                   )}>
                   {date.formatDayNumber(day)}
@@ -103,7 +103,7 @@ export function CalendarWeekView({
           <View className="w-12">
             {hours.map((hour) => (
               <View key={hour} style={{ height: WEEK_HOUR_HEIGHT }} className="pr-1">
-                <Text className="text-muted-foreground text-[11px]">{date.formatHour(hour)}</Text>
+                <Text className="text-muted-foreground text-micro">{date.formatHour(hour)}</Text>
               </View>
             ))}
           </View>
@@ -136,7 +136,7 @@ export function CalendarWeekView({
                     )}
                     onPress={onSelect ? () => onSelect(entry) : undefined}
                     onLongPress={onLongPress ? () => onLongPress(entry) : undefined}>
-                    <Text className="text-foreground text-[11px] font-semibold" numberOfLines={2}>
+                    <Text className="text-foreground text-micro font-semibold" numberOfLines={2}>
                       {entry.title}
                     </Text>
                   </Pressable>

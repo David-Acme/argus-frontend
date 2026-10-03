@@ -41,7 +41,7 @@ export const CameraRow = memo(function CameraRow({
         <Icon name={item.icon} className="text-foreground-secondary size-5" />
       </View>
       <View className="min-w-0 flex-1">
-        <Text className="text-[15px] font-semibold" numberOfLines={1}>
+        <Text className="text-body font-semibold" numberOfLines={1}>
           {item.name}
         </Text>
         <Text className="text-foreground-secondary text-xs" numberOfLines={1}>
@@ -53,7 +53,7 @@ export const CameraRow = memo(function CameraRow({
           <View className={cn('size-2 rounded-full', dot)} />
           <Text className="text-foreground-secondary text-xs">{statusLabel}</Text>
         </View>
-        <Text className="text-muted-foreground text-[11px]">{zonesLabel}</Text>
+        <Text className="text-muted-foreground text-micro">{zonesLabel}</Text>
       </View>
       <Icon name="chevron-right" className="text-muted-foreground size-4" />
     </Pressable>

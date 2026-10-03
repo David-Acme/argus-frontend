@@ -33,7 +33,7 @@ export function ConfirmDialog() {
       }>
       {request?.description ? (
         <View className="pb-1">
-          <Text className="text-foreground-secondary text-[13px] leading-5">
+          <Text className="text-foreground-secondary text-caption leading-5">
             {request.description}
           </Text>
         </View>

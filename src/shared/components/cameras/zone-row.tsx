@@ -29,7 +29,7 @@ export const ZoneRow = memo(function ZoneRow({
       className="bg-card flex-row items-center gap-3 rounded-xl p-3 active:opacity-80">
       <View className="size-3 rounded-full" style={{ backgroundColor: color || ZONE_COLORS[0] }} />
       <View className="min-w-0 flex-1">
-        <Text className="text-[14px] font-medium" numberOfLines={1}>
+        <Text className="text-sm font-medium" numberOfLines={1}>
           {name}
         </Text>
         <Text className="text-foreground-secondary text-xs">

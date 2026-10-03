@@ -14,11 +14,22 @@
 
   --spacing-hairline: hairlineWidth();
 
-    --breakpoint-sm: 480px;
+  --breakpoint-sm: 480px;
   --breakpoint-md: 640px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
+
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-subhead: 17px;
+  --text-subhead--line-height: 24px;
+  --text-display: 32px;
+  --text-display--line-height: 38px;
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Menlo', 'SF Mono', monospace;

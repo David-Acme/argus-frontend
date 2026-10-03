@@ -58,17 +58,21 @@ export function ProjectCard({
               <Text variant="micro">{tasksLabel}</Text>
             </View>
           </View>
-          <Text variant="body" className="mt-3 font-semibold" numberOfLines={1}>
-            {title}
-          </Text>
-          <Text variant="caption" className="mt-0.5" numberOfLines={2}>
-            {description}
-          </Text>
-          <View className="mt-3 flex-row items-center gap-2">
-            <View className="bg-border-subtle h-[5px] flex-1 overflow-hidden rounded-full">
-              <Animated.View className="bg-interactive h-full rounded-full" style={progressStyle} />
+          <View className="px-1.5 pt-3 pb-1.5">
+            <Text variant="body" className="font-semibold" numberOfLines={1}>
+              {title}
+            </Text>
+            <Text variant="caption" className="mt-0.5" numberOfLines={2}>
+              {description}
+            </Text>
+            <View className="mt-3 flex-row items-center gap-2.5">
+              <View className="bg-border-subtle h-[5px] flex-1 overflow-hidden rounded-full">
+                <Animated.View className="bg-interactive h-full rounded-full" style={progressStyle} />
+              </View>
+              <Text variant="micro" className="min-w-8 text-right tabular-nums">
+                {progressLabel}
+              </Text>
             </View>
-            <Text variant="micro">{progressLabel}</Text>
           </View>
         </View>
       </Pressable>

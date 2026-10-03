@@ -25,14 +25,14 @@ const textVariants = cva(
     variants: {
       variant: {
         default: '',
-        display: 'text-[32px] font-bold leading-[38px] tracking-tight',
+        display: 'text-display font-bold tracking-tight',
         title: 'text-2xl font-semibold leading-[30px] tracking-tight',
         headline: 'text-xl font-semibold leading-[26px]',
-        subhead: 'text-[17px] font-semibold leading-6',
-        body: 'text-[15px] leading-[22px]',
+        subhead: 'text-subhead font-semibold',
+        body: 'text-body',
         label: 'text-sm font-medium leading-5',
-        caption: 'text-muted-foreground text-[13px] leading-[18px]',
-        micro: 'text-muted-foreground text-[11px] font-medium leading-[14px]',
+        caption: 'text-muted-foreground text-caption',
+        micro: 'text-muted-foreground text-micro font-medium',
         h1: cn(
           'text-center text-4xl font-extrabold tracking-tight',
           Platform.select({ web: 'scroll-m-20 text-balance' })

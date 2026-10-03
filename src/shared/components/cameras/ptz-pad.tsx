@@ -44,7 +44,7 @@ export function PtzPad({ labels, disabled, onStep, onCenter }: PtzPadProps) {
           disabled={disabled}
           onPress={onCenter}
           className={cn(button, 'bg-surface-secondary')}>
-          <Text className="text-[11px] font-semibold">{labels.center}</Text>
+          <Text className="text-micro font-semibold">{labels.center}</Text>
         </Pressable>
 
         <Pressable

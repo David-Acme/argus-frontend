@@ -44,13 +44,13 @@ export function ProjectCardRow({
       onPress={onPress}>
       <View className="flex-row items-center gap-2">
         <View className={cn('size-2 rounded-full', STATUS_TONE[status])} />
-        <Text className="flex-1 text-[15px] font-semibold" numberOfLines={1}>
+        <Text className="flex-1 text-body font-semibold" numberOfLines={1}>
           {name}
         </Text>
-        <Text className="text-muted-foreground text-[11px] font-medium">{taskCount}</Text>
+        <Text className="text-muted-foreground text-micro font-medium">{taskCount}</Text>
       </View>
       {description ? (
-        <Text className="text-muted-foreground text-[12px] leading-[17px]" numberOfLines={2}>
+        <Text className="text-muted-foreground text-xs leading-[17px]" numberOfLines={2}>
           {description}
         </Text>
       ) : null}

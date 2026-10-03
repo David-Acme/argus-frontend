@@ -36,7 +36,7 @@ export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
         className="bg-card border-border-subtle flex-row items-start gap-3 rounded-2xl border p-3.5 shadow-lg shadow-black/15 active:opacity-80">
         <Icon name={ICON[item.intent]} className={cn('mt-0.5 size-4 shrink-0', ACCENT[item.intent])} />
         <View className="min-w-0 flex-1">
-          <Text className="text-[13px] font-semibold" numberOfLines={2}>
+          <Text className="text-caption font-semibold" numberOfLines={2}>
             {item.title}
           </Text>
           {item.description ? (

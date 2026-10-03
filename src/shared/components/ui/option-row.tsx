@@ -45,13 +45,13 @@ export function OptionRow({
       <View className="flex-1">
         <Text
           className={cn(
-            'text-[15px] font-medium',
+            'text-body font-medium',
             option.destructive ? 'text-error-strong' : 'text-foreground'
           )}>
           {option.label}
         </Text>
         {option.description ? (
-          <Text className="text-muted-foreground mt-0.5 text-[12px]">{option.description}</Text>
+          <Text className="text-muted-foreground mt-0.5 text-xs">{option.description}</Text>
         ) : null}
       </View>
       {selected ? <Icon name="check" className="text-foreground size-4" /> : null}

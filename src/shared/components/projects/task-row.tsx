@@ -68,14 +68,14 @@ export function TaskRow({
         onPress={onPress}>
         <Text
           className={cn(
-            'text-[14px]',
+            'text-sm',
             finished ? 'text-muted-foreground line-through' : 'text-foreground'
           )}
           numberOfLines={1}>
           {title}
         </Text>
       </Pressable>
-      {due ? <Text className="text-muted-foreground text-[11px]">{due}</Text> : null}
+      {due ? <Text className="text-muted-foreground text-micro">{due}</Text> : null}
       <TaskPriorityMark priority={priority} label={priorityLabel} />
     </View>
   );

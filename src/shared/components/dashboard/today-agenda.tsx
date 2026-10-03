@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
+import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -49,9 +50,12 @@ export function TodayAgenda({ entries, now, formatTime, renderActions, onSelect 
     <View className="gap-2.5">
       {allDay.length > 0 ? (
         <View className="flex-row items-start gap-3">
-          <Text variant="label" className="text-foreground-secondary w-14 pt-3">
-            {t('screens.agenda.event-all-day')}
-          </Text>
+          <View
+            className="w-14 pt-3.5"
+            accessible
+            accessibilityLabel={t('screens.agenda.event-all-day')}>
+            <Icon name="sun" className="text-foreground-secondary size-4" />
+          </View>
           <View className="min-w-0 flex-1 gap-2.5">
             {allDay.map((entry) => (
               <View key={entry.id}>{item(entry)}</View>

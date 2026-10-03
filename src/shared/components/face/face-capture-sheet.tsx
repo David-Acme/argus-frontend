@@ -67,14 +67,14 @@ export function FaceCaptureSheet({
                   {friendlyError}
                 </Text>
                 <Text
-                  className="text-error-strong/70 text-[11px] leading-4"
+                  className="text-error-strong/70 text-micro leading-4"
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.15}>
                   {error.code}
                 </Text>
                 {__DEV__ && error.message && error.message !== friendlyError ? (
                   <Text
-                    className="text-error-strong/70 text-[11px] leading-4"
+                    className="text-error-strong/70 text-micro leading-4"
                     numberOfLines={2}
                     maxFontSizeMultiplier={1.15}>
                     {error.message}

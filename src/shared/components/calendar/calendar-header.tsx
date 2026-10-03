@@ -27,11 +27,11 @@ export function CalendarHeader({
     <View className="flex-row items-end justify-between gap-3">
       <View className="flex-1">
         <Text
-          className="text-[30px] font-bold leading-[34px] tracking-tight"
+          variant="display"
           numberOfLines={1}>
           {title}
         </Text>
-        <Text className="text-muted-foreground mt-0.5 text-[13px]">{subtitle}</Text>
+        <Text className="text-muted-foreground mt-0.5 text-caption">{subtitle}</Text>
       </View>
       <View className="flex-row items-center gap-1.5">
         <Pressable
@@ -39,7 +39,7 @@ export function CalendarHeader({
           accessibilityLabel={todayLabel}
           className="bg-surface-secondary mr-1 rounded-full px-3 py-2 active:opacity-70"
           onPress={onToday}>
-          <Text className="text-foreground-secondary text-[12px] font-semibold">{todayLabel}</Text>
+          <Text className="text-foreground-secondary text-xs font-semibold">{todayLabel}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"

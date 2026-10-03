@@ -26,7 +26,7 @@ export function SettingRow({ label, value, disabled, onChange }: SettingRowProps
         'flex-row items-center justify-between py-2.5',
         disabled ? 'opacity-50' : 'active:opacity-70'
       )}>
-      <Text className="text-[14px]">{label}</Text>
+      <Text className="text-sm">{label}</Text>
       <View
         className={cn(
           'h-6 w-11 justify-center rounded-full px-0.5',

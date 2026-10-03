@@ -207,10 +207,10 @@ export default function ScheduleScreen() {
       <View
         className={isWide ? 'min-h-0 w-[300px] shrink-0 gap-1.5 lg:w-[340px]' : 'gap-1.5'}>
         <View className="flex-row items-center justify-between pb-1.5">
-          <Text className="text-[13px] font-medium">{date.formatAgendaDay(selectedDay)}</Text>
+          <Text className="text-caption font-medium">{date.formatAgendaDay(selectedDay)}</Text>
           <View className="flex-row items-center gap-2">
             {selectedDayEntries.length > 0 ? (
-              <Text className="text-muted-foreground text-[12px]">
+              <Text className="text-muted-foreground text-xs">
                 {t('screens.agenda.day-count', {
                   count: String(selectedDayEntries.length),
                 })}
@@ -263,7 +263,7 @@ export default function ScheduleScreen() {
             label={t('common.back')}
             onPress={() => router.replace('/')}
           />
-          <Text className="text-[22px] font-semibold tracking-tight">
+          <Text variant="title">
             {t('screens.agenda.schedule')}
           </Text>
           {can('calendar_event', 'create') ? (

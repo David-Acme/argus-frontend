@@ -151,7 +151,7 @@ export function EntryActionsMenu({
                 ) : null}
                 <Text
                   className={cn(
-                    'text-[15px] font-medium',
+                    'text-body font-medium',
                     option.destructive ? 'text-error-strong' : 'text-foreground'
                   )}>
                   {option.label}

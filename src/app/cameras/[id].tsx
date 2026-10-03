@@ -240,7 +240,7 @@ export default function CameraDetailScreen() {
               <View className="bg-card gap-4 rounded-2xl p-4">
                 <View className="flex-row items-center justify-between">
                   <View className="min-w-0 flex-1">
-                    <Text className="text-[15px] font-semibold">
+                    <Text className="text-body font-semibold">
                       {t('screens.cameras.ptz')}
                     </Text>
                     <Text className="text-foreground-secondary text-xs" numberOfLines={1}>
@@ -359,8 +359,8 @@ export default function CameraDetailScreen() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between">
-      <Text className="text-foreground-secondary text-[13px]">{label}</Text>
-      <Text className="text-[13px] font-medium">{value}</Text>
+      <Text className="text-foreground-secondary text-caption">{label}</Text>
+      <Text className="text-caption font-medium">{value}</Text>
     </View>
   );
 }

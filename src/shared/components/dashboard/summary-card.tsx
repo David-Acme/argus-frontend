@@ -17,17 +17,17 @@ type SummaryCardProps = {
 export function SummaryCard({ title, items }: SummaryCardProps) {
   return (
     <View className="bg-card gap-3 rounded-[22px] p-4 shadow-md shadow-black/[0.06]">
-      <Text className="text-[15px] font-semibold">{title}</Text>
+      <Text className="text-body font-semibold">{title}</Text>
       <View className="gap-2.5">
         {items.map((item) => (
           <View key={item.label} className="flex-row items-center gap-3">
             <View className="bg-surface-secondary size-8 items-center justify-center rounded-xl">
               <Icon name={item.icon} className="text-foreground-secondary size-4" />
             </View>
-            <Text className="text-foreground-secondary flex-1 text-[13px]" numberOfLines={1}>
+            <Text className="text-foreground-secondary flex-1 text-caption" numberOfLines={1}>
               {item.label}
             </Text>
-            <Text className="text-[15px] font-semibold">{item.value}</Text>
+            <Text className="text-body font-semibold">{item.value}</Text>
           </View>
         ))}
       </View>

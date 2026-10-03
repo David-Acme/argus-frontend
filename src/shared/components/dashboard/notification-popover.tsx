@@ -50,7 +50,7 @@ export function NotificationPopover({
       </PopoverTrigger>
       <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">
-          <Text className="text-[15px] font-semibold">{title}</Text>
+          <Text className="text-body font-semibold">{title}</Text>
           <Text className="text-foreground-secondary text-xs">{summary}</Text>
         </View>
 
@@ -67,7 +67,7 @@ export function NotificationPopover({
                   )}
                 />
                 <View className="min-w-0 flex-1">
-                  <Text className="text-[13px] font-medium" numberOfLines={1}>
+                  <Text className="text-caption font-medium" numberOfLines={1}>
                     {item.title}
                   </Text>
                   <Text

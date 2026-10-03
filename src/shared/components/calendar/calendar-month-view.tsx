@@ -60,7 +60,7 @@ const DayCell = memo(function DayCell({
           )}>
           <Text
             className={cn(
-              'text-[15px]',
+              'text-body',
               isSelected
                 ? 'text-foreground-on-interactive font-semibold'
                 : outside
@@ -104,7 +104,7 @@ const DayCell = memo(function DayCell({
           )}>
           <Text
             className={cn(
-              'text-[12px] font-medium lg:text-[13px]',
+              'text-xs font-medium lg:text-caption',
               isSelected
                 ? 'text-foreground-on-interactive'
                 : outside
@@ -115,14 +115,14 @@ const DayCell = memo(function DayCell({
           </Text>
         </View>
         {overflow > 0 ? (
-          <Text className="text-muted-foreground text-[11px]">+{overflow}</Text>
+          <Text className="text-muted-foreground text-micro">+{overflow}</Text>
         ) : null}
       </View>
 
       <View className="min-h-0 flex-1 gap-1 overflow-hidden">
         {visible.map((entry) => (
           <View key={entry.id} className="bg-surface-secondary rounded-md px-1.5 py-0.5">
-            <Text className="text-[11px] leading-4" numberOfLines={1}>
+            <Text className="text-micro leading-4" numberOfLines={1}>
               {entry.title}
             </Text>
           </View>
@@ -167,7 +167,7 @@ export function CalendarMonthView({
       <View className="flex-row pb-1">
         {weekdayLabels.map((label) => (
           <View key={label} className="flex-1 items-center">
-            <Text className="text-muted-foreground text-[11px] font-semibold tracking-[1.2px] uppercase">
+            <Text className="text-muted-foreground text-micro font-semibold tracking-[1.2px] uppercase">
               {label.slice(0, 1)}
             </Text>
           </View>

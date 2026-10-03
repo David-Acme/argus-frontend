@@ -66,7 +66,7 @@ export function CalendarDayList({
           <View className="min-w-0 flex-1">
             <Text
               className={cn(
-                'text-[15px] font-medium',
+                'text-body font-medium',
                 item.status === 'complete'
                   ? 'text-muted-foreground line-through'
                   : 'text-foreground'
@@ -75,12 +75,12 @@ export function CalendarDayList({
               {item.title}
             </Text>
             {item.location ? (
-              <Text className="text-muted-foreground mt-0.5 text-[12px]" numberOfLines={1}>
+              <Text className="text-muted-foreground mt-0.5 text-xs" numberOfLines={1}>
                 {item.location}
               </Text>
             ) : null}
           </View>
-          <Text className="text-muted-foreground text-[12px] font-medium">{formatTime(item)}</Text>
+          <Text className="text-muted-foreground text-xs font-medium">{formatTime(item)}</Text>
         </Pressable>
       );
 
@@ -103,9 +103,9 @@ export function CalendarDayList({
         onPress={onCreate}
         className="border-border min-h-[120px] flex-1 items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 active:opacity-70">
         <Icon name="calendar" className="text-muted-foreground size-5" />
-        <Text className="text-muted-foreground text-center text-[13px]">{emptyLabel}</Text>
+        <Text className="text-muted-foreground text-center text-caption">{emptyLabel}</Text>
         {onCreate && addLabel ? (
-          <Text className="text-foreground text-[13px] font-medium">{addLabel}</Text>
+          <Text className="text-foreground text-caption font-medium">{addLabel}</Text>
         ) : null}
       </Pressable>
     );

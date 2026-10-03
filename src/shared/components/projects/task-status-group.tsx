@@ -14,10 +14,10 @@ export function TaskStatusGroup({ label, count, children }: TaskStatusGroupProps
   return (
     <View className="gap-1">
       <View className="flex-row items-center gap-2 px-1 pb-1">
-        <Text className="text-foreground-secondary text-[12px] font-semibold uppercase tracking-wide">
+        <Text className="text-foreground-secondary text-xs font-semibold uppercase tracking-wide">
           {label}
         </Text>
-        <Text className="text-muted-foreground text-[12px]">{count}</Text>
+        <Text className="text-muted-foreground text-xs">{count}</Text>
       </View>
       <View className="bg-card divide-border-subtle rounded-[18px] px-3 shadow-md shadow-black/[0.05]">
         {children}

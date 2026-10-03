@@ -40,7 +40,7 @@ export function ScheduleTimeline({
                 )}>
                 <Text
                   className={cn(
-                    'text-[13px] font-medium',
+                    'text-caption font-medium',
                     marked ? 'text-foreground' : 'text-muted-foreground'
                   )}>
                   {date.formatHour(hour)}

@@ -82,7 +82,7 @@ export function CalendarAgendaView({
       if (item.kind === 'header') {
         return (
           <View className="bg-background pt-4 pb-2">
-            <Text className="text-foreground-secondary text-[13px] font-semibold">
+            <Text className="text-foreground-secondary text-caption font-semibold">
               {date.formatAgendaDay(new Date(item.day))}
             </Text>
           </View>
@@ -95,7 +95,7 @@ export function CalendarAgendaView({
             disabled={!onCreateDay}
             onPress={onCreateDay ? () => onCreateDay(new Date(item.day)) : undefined}
             className="border-border mb-2.5 flex-row items-center justify-between rounded-2xl border border-dashed px-4 py-3 active:opacity-70">
-            <Text className="text-muted-foreground text-[13px]">{freeLabel}</Text>
+            <Text className="text-muted-foreground text-caption">{freeLabel}</Text>
             {onCreateDay ? <Icon name="plus" className="text-muted-foreground size-4" /> : null}
           </Pressable>
         );

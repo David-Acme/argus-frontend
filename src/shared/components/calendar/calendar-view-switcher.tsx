@@ -28,7 +28,7 @@ export function CalendarViewSwitcher({ view, labels, onChange }: CalendarViewSwi
             onPress={() => onChange(option)}>
             <Text
               className={cn(
-                'text-[12px] font-semibold capitalize',
+                'text-xs font-semibold capitalize',
                 selected ? 'text-foreground' : 'text-muted-foreground'
               )}>
               {labels[option]}
