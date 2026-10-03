@@ -1,0 +1,110 @@
+import { View } from 'react-native';
+import type { GuardModeState, IconName } from '@/core/types';
+import { Icon } from '@/shared/components/ui/icon';
+import { Text } from '@/shared/components/ui/text';
+import { GUARD_MODE_ICONS } from '@/shared/constants';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { cn } from '@/shared/libs/utils';
+
+type GuardStatusHeroProps = {
+  state: GuardModeState | null;
+  incidents: number;
+  activeGuests: number;
+  pendingReviews: number;
+};
+
+type GuardStatProps = {
+  icon: IconName;
+  value: number;
+  label: string;
+  highlight: boolean;
+};
+
+function GuardStat({ icon, value, label, highlight }: GuardStatProps) {
+  return (
+    <View className="bg-surface-secondary min-w-0 flex-1 gap-1 rounded-2xl px-3 py-3">
+      <View className="flex-row items-center gap-1.5">
+        <Icon
+          name={icon}
+          className={cn('size-4', highlight ? 'text-accent-strong' : 'text-muted-foreground')}
+        />
+        <Text variant="headline">{String(value)}</Text>
+      </View>
+      <Text variant="micro" numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+export function GuardStatusHero({
+  state,
+  incidents,
+  activeGuests,
+  pendingReviews,
+}: GuardStatusHeroProps) {
+  const { t } = useTranslation();
+  const mode = state?.effectiveMode ?? null;
+  const occupancy = state?.occupancy;
+  const schedule =
+    occupancy === 'closed'
+      ? t('screens.security.occupancy.closed', {
+          mode: t(`screens.security.mode.${state?.effectiveMode ?? 'home'}`),
+        })
+      : occupancy === 'open' || occupancy === 'staffed' || occupancy === 'asleep'
+        ? t(`screens.security.occupancy.${occupancy}`)
+        : null;
+
+  return (
+    <View className="bg-card gap-4 rounded-3xl p-4 shadow-md shadow-black/[0.05] sm:p-5">
+      <View className="flex-row items-start gap-4">
+        <View className="bg-interactive size-14 items-center justify-center rounded-2xl">
+          <Icon
+            name={mode ? GUARD_MODE_ICONS[mode] : 'shield'}
+            className="text-foreground-on-interactive size-7"
+          />
+        </View>
+        <View className="min-w-0 flex-1 gap-1">
+          <Text variant="caption">{t('screens.security.status.now')}</Text>
+          <Text variant="title" numberOfLines={1}>
+            {mode ? t(`screens.security.mode.${mode}`) : '—'}
+          </Text>
+          <Text variant="body" className="text-foreground-secondary">
+            {mode
+              ? t(`screens.security.mode.${mode}-detail`)
+              : t('screens.security.status.unknown')}
+          </Text>
+        </View>
+      </View>
+      {schedule ? (
+        <View className="bg-accent/10 flex-row items-center gap-2 rounded-xl px-3 py-2">
+          <Icon name="clock" className="text-accent-strong size-4" />
+          <Text variant="caption" className="text-foreground flex-1">
+            {schedule}
+          </Text>
+        </View>
+      ) : null}
+      <View className="flex-row gap-2">
+        <GuardStat
+          icon="triangle-alert"
+          value={incidents}
+          label={t('screens.security.status.incidents')}
+          highlight={incidents > 0}
+        />
+        <GuardStat
+          icon="user-check"
+          value={activeGuests}
+          label={t('screens.security.status.guests')}
+          highlight={activeGuests > 0}
+        />
+        <GuardStat
+          icon="check-circle"
+          value={pendingReviews}
+          label={t('screens.security.status.pending')}
+          highlight={pendingReviews > 0}
+        />
+      </View>
+      <Text variant="caption">{t('screens.security.mode.note')}</Text>
+    </View>
+  );
+}

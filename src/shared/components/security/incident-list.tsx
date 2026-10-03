@@ -4,6 +4,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { DangerBadge } from './danger-badge';
+import { SecurityEmpty } from './security-empty';
 
 export function IncidentList({ incidents }: { incidents: GuardIncident[] }) {
   const { t } = useTranslation();
@@ -11,14 +12,17 @@ export function IncidentList({ incidents }: { incidents: GuardIncident[] }) {
 
   if (incidents.length === 0) {
     return (
-      <Text variant="caption" className="px-3 py-3">
-        {t('screens.security.incidents.empty')}
-      </Text>
+      <SecurityEmpty
+        icon="shield-check"
+        title={t('screens.security.incidents.empty')}
+        hint={t('screens.security.incidents.empty-hint')}
+        className="min-h-56"
+      />
     );
   }
 
   return (
-    <View className="gap-1">
+    <View className="-mx-3 min-h-56 gap-1">
       {incidents.map((incident, index) => {
         const at = new Date(incident.createdAt * 1000);
         return (

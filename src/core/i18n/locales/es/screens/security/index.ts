@@ -12,8 +12,16 @@ export const security = {
     armed: 'Armado',
     'home-detail': 'Habla con quien llega. Nunca hace sonar la sirena.',
     'night-detail': 'Todo desconocido es alerta alta. Sirena solo ante peligro crítico.',
-    'away-detail': 'Habla primero. Sirena si la visita insiste, entra en una zona de alerta o lleva un arma.',
+    'away-detail':
+      'Habla primero. Sirena si la visita insiste, entra en una zona de alerta o lleva un arma.',
     'armed-detail': 'Sirena inmediata ante peligro crítico.',
+  },
+  status: {
+    now: 'Ahora mismo',
+    unknown: 'Argus aún no ha informado de su modo.',
+    incidents: 'Incidentes',
+    guests: 'Visitas activas',
+    pending: 'Por revisar',
   },
   occupancy: {
     open: 'Horario abierto: hay público, Argus no hace ruido.',
@@ -26,6 +34,8 @@ export const security = {
     description: 'Una visita esperada baja la alerta a media, salvo si se ve un arma.',
     add: 'Añadir visita',
     empty: 'No esperas a nadie ahora.',
+    'empty-hint':
+      'Añade a quien esperas, como un técnico o un repartidor, y Argus bajará la alerta mientras dure su pase.',
     'form-title': 'Nueva visita esperada',
     who: 'Quién viene',
     'who-placeholder': 'Ej. Técnico de internet',
@@ -45,6 +55,7 @@ export const security = {
   incidents: {
     title: 'Incidentes recientes',
     empty: 'Sin incidentes recientes.',
+    'empty-hint': 'Aquí verás quién se acercó, en qué cámara, cuándo y con qué nivel de riesgo.',
     unknown: 'Persona desconocida',
   },
   danger: {
@@ -56,8 +67,10 @@ export const security = {
   },
   decisions: {
     title: 'Revisión de avisos',
-    description: 'Dinos si cada decisión fue acertada. Tus respuestas se guardan para calibrar Argus más adelante; no cambian nada al instante.',
+    description:
+      'Dinos si cada decisión fue acertada. Tus respuestas se guardan para calibrar Argus más adelante; no cambian nada al instante.',
     empty: 'Todavía no hay decisiones que revisar.',
+    'empty-hint': 'Cada vez que Argus decida si avisarte, aparecerá aquí para que digas si acertó.',
     notified: 'Avisó',
     silent: 'No avisó',
     camera: 'Cámara {id}',

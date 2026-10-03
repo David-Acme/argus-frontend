@@ -4,6 +4,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { SecurityEmpty } from './security-empty';
 
 type ExpectedGuestListProps = {
   guests: GuardExpectedGuest[];
@@ -17,14 +18,17 @@ export function ExpectedGuestList({ guests, now, onRemove }: ExpectedGuestListPr
 
   if (guests.length === 0) {
     return (
-      <Text variant="caption" className="px-3 py-3">
-        {t('screens.security.guests.empty')}
-      </Text>
+      <SecurityEmpty
+        icon="users"
+        title={t('screens.security.guests.empty')}
+        hint={t('screens.security.guests.empty-hint')}
+        className="min-h-44"
+      />
     );
   }
 
   return (
-    <View className="gap-1">
+    <View className="-mx-3 min-h-44 gap-1">
       {guests.map((guest) => {
         const until = new Date(guest.validUntil * 1000);
         const expired = until.getTime() <= now;
@@ -32,7 +36,9 @@ export function ExpectedGuestList({ guests, now, onRemove }: ExpectedGuestListPr
           ? date.formatTime(until)
           : `${date.formatDayMonth(until)} ${date.formatTime(until)}`;
         return (
-          <View key={guest.id} className="min-h-14 flex-row items-center gap-3 rounded-2xl px-3 py-2.5">
+          <View
+            key={guest.id}
+            className="min-h-14 flex-row items-center gap-3 rounded-2xl px-3 py-2.5">
             <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
               <Icon name="user-check" className="text-foreground-secondary size-5" />
             </View>

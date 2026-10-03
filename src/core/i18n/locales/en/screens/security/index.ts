@@ -12,8 +12,16 @@ export const security = {
     armed: 'Armed',
     'home-detail': 'Talks to whoever arrives. Never sounds the siren.',
     'night-detail': 'Any stranger is a high alert. Siren only for critical danger.',
-    'away-detail': 'Talks first. Siren if the visitor stays, enters an alert zone or carries a weapon.',
+    'away-detail':
+      'Talks first. Siren if the visitor stays, enters an alert zone or carries a weapon.',
     'armed-detail': 'Immediate siren on critical danger.',
+  },
+  status: {
+    now: 'Right now',
+    unknown: 'Argus has not reported its mode yet.',
+    incidents: 'Incidents',
+    guests: 'Active visitors',
+    pending: 'To review',
   },
   occupancy: {
     open: 'Open hours: the public is in, Argus stays quiet.',
@@ -26,6 +34,8 @@ export const security = {
     description: 'An expected visitor lowers an alert to medium, unless a weapon is seen.',
     add: 'Add visitor',
     empty: 'You are not expecting anyone right now.',
+    'empty-hint':
+      'Add whoever you are expecting, like a technician or a courier, and Argus lowers the alert while their pass lasts.',
     'form-title': 'New expected visitor',
     who: 'Who is coming',
     'who-placeholder': 'E.g. Internet technician',
@@ -45,6 +55,7 @@ export const security = {
   incidents: {
     title: 'Recent incidents',
     empty: 'No recent incidents.',
+    'empty-hint': 'Here you will see who came by, on which camera, when and at what risk level.',
     unknown: 'Unknown person',
   },
   danger: {
@@ -56,8 +67,11 @@ export const security = {
   },
   decisions: {
     title: 'Alert review',
-    description: 'Tell Argus whether each decision was right. Your answers are kept to calibrate Argus later; nothing changes right away.',
+    description:
+      'Tell Argus whether each decision was right. Your answers are kept to calibrate Argus later; nothing changes right away.',
     empty: 'No decisions to review yet.',
+    'empty-hint':
+      'Each time Argus decides whether to notify you, it shows up here so you can say if it was right.',
     notified: 'Notified',
     silent: 'Did not notify',
     camera: 'Camera {id}',

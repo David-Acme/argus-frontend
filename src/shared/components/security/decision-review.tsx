@@ -5,17 +5,19 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { DangerBadge } from './danger-badge';
+import { SecurityEmpty } from './security-empty';
 
 type DecisionReviewProps = {
   decisions: GuardDecision[];
   onFeedback: (eventId: string, label: GuardFeedbackLabel) => void;
 };
 
-const LABELS: readonly { value: GuardFeedbackLabel; key: 'useful' | 'false-alarm' | 'not-now' }[] = [
-  { value: 'useful', key: 'useful' },
-  { value: 'false_alarm', key: 'false-alarm' },
-  { value: 'not_now', key: 'not-now' },
-];
+const LABELS: readonly { value: GuardFeedbackLabel; key: 'useful' | 'false-alarm' | 'not-now' }[] =
+  [
+    { value: 'useful', key: 'useful' },
+    { value: 'false_alarm', key: 'false-alarm' },
+    { value: 'not_now', key: 'not-now' },
+  ];
 
 const hover = Platform.select({ web: 'hover:bg-surface-secondary', default: '' });
 
@@ -25,14 +27,17 @@ export function DecisionReview({ decisions, onFeedback }: DecisionReviewProps) {
 
   if (decisions.length === 0) {
     return (
-      <Text variant="caption" className="px-3 py-3">
-        {t('screens.security.decisions.empty')}
-      </Text>
+      <SecurityEmpty
+        icon="check-circle"
+        title={t('screens.security.decisions.empty')}
+        hint={t('screens.security.decisions.empty-hint')}
+        className="min-h-56"
+      />
     );
   }
 
   return (
-    <View className="gap-1">
+    <View className="-mx-3 min-h-56 gap-1">
       {decisions.map((decision) => {
         const at = new Date(decision.createdAt * 1000);
         return (
@@ -59,7 +64,9 @@ export function DecisionReview({ decisions, onFeedback }: DecisionReviewProps) {
                     onPress={() => onFeedback(decision.eventId, label.value)}
                     className={cn(
                       'min-h-9 justify-center rounded-full border px-3.5 active:opacity-70',
-                      chosen ? 'bg-interactive border-interactive' : cn('border-border bg-card', hover)
+                      chosen
+                        ? 'bg-interactive border-interactive'
+                        : cn('border-border bg-card', hover)
                     )}>
                     <Text
                       variant="label"
