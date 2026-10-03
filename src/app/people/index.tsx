@@ -83,7 +83,7 @@ export default function PeopleDirectoryScreen() {
 
   return (
     <DashboardShell
-      active="profile">
+      active="people">
       <View className="gap-5">
         <View className="gap-1.5">
           <Text variant="h2">{t('screens.users.people-directory')}</Text>

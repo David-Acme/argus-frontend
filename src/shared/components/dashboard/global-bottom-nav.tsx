@@ -23,7 +23,7 @@ let hasIntroduced = false;
 export function GlobalBottomNav() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { labels, navigate } = useDashboardNavigation();
+  const { tabs, labels, navigate } = useDashboardNavigation();
   const { usesNavRail } = useWindowClass();
   const owned = useNavigationStore((state) => state.owner !== null);
   const visible = useNavigationStore(selectBottomNavVisible) && !usesNavRail;
@@ -50,6 +50,7 @@ export function GlobalBottomNav() {
       style={[{ bottom: insets.bottom + BOTTOM_NAV_GAP }, style]}>
       <View style={{ width: '100%', maxWidth: BOTTOM_NAV_MAX_WIDTH }}>
         <DashboardBottomNav
+          tabs={tabs}
           active={active}
           labels={labels}
           onNavigate={navigate}

@@ -13,7 +13,6 @@ import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/share
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
-import { peopleAccessForRole } from '@/shared/libs/people-access';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
@@ -30,7 +29,6 @@ export default function ProfileScreen() {
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
   const [instance, setInstance] = useState<NetPairedInstance | null>(null);
   const [leaving, setLeaving] = useState(false);
-  const access = useMemo(() => (user ? peopleAccessForRole(user.role) : null), [user]);
 
   const themeOptions = useMemo(
     () =>
@@ -119,26 +117,6 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
-
-        {access?.profileAction ? (
-          <SettingsGroup title={t('screens.profile.people')}>
-            <ListRow
-              icon={access.profileAction === 'manage' ? 'shield-check' : 'user'}
-              title={
-                access.profileAction === 'manage'
-                  ? t('screens.users.people-access')
-                  : t('screens.users.people-directory')
-              }
-              subtitle={
-                access.profileAction === 'manage'
-                  ? t('screens.users.subtitle')
-                  : t('screens.users.people-directory-subtitle')
-              }
-              chevron
-              onPress={() => router.push(access.profileAction === 'manage' ? '/users' : '/people')}
-            />
-          </SettingsGroup>
-        ) : null}
 
         {IS_NATIVE ? (
           <SettingsGroup title={t('screens.profile.devices')}>

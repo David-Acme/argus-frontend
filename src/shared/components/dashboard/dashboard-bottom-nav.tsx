@@ -2,11 +2,11 @@ import { type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { DashboardTab } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
-import { DASHBOARD_TABS } from '@/shared/constants';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import type { DASHBOARD_TABS } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 
 type DashboardBottomNavProps = {
+  tabs: typeof DASHBOARD_TABS;
   active: DashboardTab;
   labels: Record<DashboardTab, string>;
   onNavigate: (tab: DashboardTab) => void;
@@ -14,14 +14,12 @@ type DashboardBottomNavProps = {
 };
 
 export function DashboardBottomNav({
+  tabs,
   active,
   labels,
   onNavigate,
   compose,
 }: DashboardBottomNavProps) {
-  const { canRead } = usePermissions();
-  const tabs = DASHBOARD_TABS.filter((item) => !item.table || canRead(item.table));
-
   return (
     <View pointerEvents="box-none" className="flex-row items-center gap-3">
       <View className="bg-card flex-1 flex-row items-center justify-between rounded-full p-2 shadow-lg shadow-black/[0.09]">

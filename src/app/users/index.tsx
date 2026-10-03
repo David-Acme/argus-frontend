@@ -33,7 +33,13 @@ import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
-import { InvitationDialog, ManagedUserDialog, roleOptions, type InvitationPreview } from '@/shared/components/users';
+import {
+  InvitationDialog,
+  ManagedUserDialog,
+  RoleAccessCard,
+  roleOptions,
+  type InvitationPreview,
+} from '@/shared/components/users';
 
 export default function UsersScreen() {
   const { t } = useTranslation();
@@ -139,6 +145,11 @@ export default function UsersScreen() {
   }, [qrPreview, refresh]);
 
   const userRoleLabels = useMemo(() => roleOptions(t), [t]);
+  const roleCounts = useMemo(() => {
+    const counts: Partial<Record<UserRole, number>> = {};
+    for (const user of users) if (user.isActive) counts[user.role] = (counts[user.role] ?? 0) + 1;
+    return counts;
+  }, [users]);
   const roleLabel = useCallback(
     (role: UserRole) => userRoleLabels.find((option) => option.value === role)?.label ?? role,
     [userRoleLabels],
@@ -148,13 +159,20 @@ export default function UsersScreen() {
 
   return (
     <DashboardShell
-      active="profile"
+      active="people"
       aside={
-        invitations.length > 0 ? (
+        <View className="gap-5">
           <View className="gap-3">
-            <SectionHeading title={t('screens.users.invitations')} />
+            <SectionHeading
+              title={t('screens.users.invitations')}
+              action={t('screens.users.new-invitation')}
+              onAction={() => setInviteOpen(true)}
+            />
             <Card>
               <CardContent className="gap-1">
+                {invitations.length === 0 ? (
+                  <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-invitations')}</Text>
+                ) : null}
                 {invitations.map((invitation) => {
                   const usable =
                     invitation.revokedAt == null &&
@@ -183,7 +201,11 @@ export default function UsersScreen() {
               </CardContent>
             </Card>
           </View>
-        ) : undefined
+          <View className="gap-3">
+            <SectionHeading title={t('screens.users.role-access-title')} />
+            <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
+          </View>
+        </View>
       }>
       <View className="gap-5">
         <View className="gap-1.5">
@@ -194,11 +216,7 @@ export default function UsersScreen() {
         </View>
 
         <View className="gap-3">
-          <SectionHeading
-            title={t('screens.users.members')}
-            action={t('screens.users.new-invitation')}
-            onAction={() => setInviteOpen(true)}
-          />
+          <SectionHeading title={t('screens.users.members')} />
           <Card>
             <CardContent className="gap-1">
               {users.length === 0 ? (

@@ -2,9 +2,8 @@ import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DashboardTab } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
-import { DASHBOARD_TABS, NAV_RAIL_WIDTH } from '@/shared/constants';
+import { NAV_RAIL_WIDTH } from '@/shared/constants';
 import { useDashboardNavigation } from '@/shared/hooks/use-dashboard-navigation';
-import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { ComposeFab } from './compose-fab';
@@ -14,10 +13,8 @@ type DashboardNavRailProps = {
 };
 
 export function DashboardNavRail({ active }: DashboardNavRailProps) {
-  const { labels, navigate } = useDashboardNavigation();
-  const { canRead } = usePermissions();
+  const { tabs, labels, navigate } = useDashboardNavigation();
   const { isShort } = useWindowClass();
-  const tabs = DASHBOARD_TABS.filter((item) => !item.table || canRead(item.table));
   const insets = useSafeAreaInsets();
   const target = isShort ? 'size-11' : 'size-12';
 
