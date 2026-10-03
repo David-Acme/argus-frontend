@@ -30,10 +30,12 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     zone: READ,
     event: READ,
     person: READ,
+    user: READ,
     notification: READ_UPDATE,
   },
   guest: {
     camera: READ,
+    user: READ,
     notification: READ_UPDATE,
   },
 };
@@ -41,13 +43,6 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
 export function hasAccess(role: UserRole, table: TableName, permission: Permission): boolean {
   if (role === 'owner') return true;
   return TABLE_ACCESS[role][table]?.includes(permission) ?? false;
-}
-
-export function readableTables(role: UserRole): TableName[] {
-  if (role === 'owner') return Object.keys(TABLE_ACCESS.resident) as TableName[];
-  return (Object.keys(TABLE_ACCESS[role]) as TableName[]).filter((table) =>
-    hasAccess(role, table, 'read')
-  );
 }
 
 export type GuardAccess = {

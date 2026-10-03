@@ -458,6 +458,10 @@ for Watermelon nor make an HTTP list request just because it mounted.
   `/users` (users + invitation metadata); Guard sees `/people` (directory only);
   Resident/Guest see their own profile only. Reuse
   `shared/libs/people-access.ts` instead of scattering role checks.
+- `shared/libs/role-access.ts` mirrors the backend's `kTableAccess`
+  (`backend/packages/lib/auth/src/auth/role-access.hxx`) table by table;
+  `tests/unit/role-access-contract.test.ts` parses the header and fails on any
+  drift, so a backend permission change lands here in the same change.
 - The personal `/profile` and the directory preview use the neutral `user`
   icon. Do **not** cache, persist, preload or render a user portrait in a list,
   profile, MMKV, WatermelonDB or global store.

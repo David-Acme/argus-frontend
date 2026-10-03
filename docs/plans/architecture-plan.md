@@ -109,8 +109,10 @@ also get one Android device pass.
   their tables stay synced, since the sync engine writes them through its
   mappers, not through the services. The `voiceEnabled` flag went with its
   prop: it was persisted and never read.
-- [ ] **Role contract test.** Parse the backend `role-access.hxx` in a test and
-  compare it with the app table; fix the guard/guest `user` drift.
+- [x] **Role contract test.** Parse the backend `role-access.hxx` in a test and
+  compare it with the app table; fix the guard/guest `user` drift. Done:
+  `tests/unit/role-access-contract.test.ts` reads `kTableAccess` and
+  `table-name.hxx` and compares every synced table × permission per role.
 
 ### Phase 1 — Data-layer efficiency (no visible UI change)
 
