@@ -57,7 +57,7 @@ class HttpService {
       result = await netService.request({
         url: serviceUrl(instance, path),
         method,
-        headers: this.buildHeaders(Boolean(files), credential.accessToken),
+        headers: { ...this.buildHeaders(Boolean(files), credential.accessToken), ...config.headers },
         body,
         files,
       });
@@ -69,7 +69,7 @@ class HttpService {
     if (result.status === 401 && !config.skipAuthRetry) {
       const outcome = await httpAuth().refreshSession(credential);
       if (outcome === 'refreshed') {
-        return this.request<T>(method, path, body, files, { skipAuthRetry: true });
+        return this.request<T>(method, path, body, files, { ...config, skipAuthRetry: true });
       }
       if (outcome === 'rejected') void httpAuth().clearSession(credential);
       if (outcome === 'unavailable' && credential.accessToken) {

@@ -2,6 +2,7 @@ import type { SessionCredential, SessionRefreshOutcome } from '@/core/types';
 
 export interface IHttpConfig {
   skipAuthRetry?: boolean;
+  headers?: Readonly<Record<string, string>>;
 }
 
 export interface IApiError {

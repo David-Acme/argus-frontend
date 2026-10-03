@@ -1,3 +1,4 @@
+import { createLoginProof } from '@/core/services/device-login';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
 import { sessionService } from '@/core/services/session.service';
@@ -21,9 +22,13 @@ const STATUS_PATH = '/auth/status';
 const LOGOUT_PATH = '/auth/logout';
 const DEVICE_LOGIN_PATH = '/auth/device-login';
 
+const DEVICE_LOGIN_PROOF_HEADER = 'X-Argus-Login-Proof';
+
 const FACE_FILE = { name: 'image', uri: '', filename: 'face.jpg', contentType: 'image/jpeg' };
 
 class AuthService {
+  private readonly loginProofs = new Map<string, string>();
+
   async login(imageUri: string): Promise<IServiceResponse<IResponseLoginDto>> {
     const response = await httpService.postMultipart<IResponseLoginDto>(
       LOGIN_PATH,
@@ -67,7 +72,17 @@ class AuthService {
   }
 
   async createDeviceLogin(): Promise<IServiceResponse<ICreateDeviceLoginResponse>> {
-    return httpService.post<ICreateDeviceLoginResponse>(DEVICE_LOGIN_PATH, {}, { skipAuthRetry: true });
+    const proof = await createLoginProof().catch(() => null);
+    const response = await httpService.post<ICreateDeviceLoginResponse>(
+      DEVICE_LOGIN_PATH,
+      proof ? { pollHash: proof.pollHash } : {},
+      { skipAuthRetry: true },
+    );
+    if (response.ok && response.info && proof) {
+      this.loginProofs.clear();
+      this.loginProofs.set(response.info.challengeId, proof.proof);
+    }
+    return response;
   }
 
   async approveDeviceLogin(id: string): Promise<IServiceResponse<{ approved: boolean } | null>> {
@@ -75,10 +90,13 @@ class AuthService {
   }
 
   async pollDeviceLogin(id: string): Promise<IServiceResponse<IDeviceLoginStatusResponse>> {
+    const proof = this.loginProofs.get(id);
     const response = await httpService.get<IDeviceLoginStatusResponse>(`${DEVICE_LOGIN_PATH}/${id}`, {
       skipAuthRetry: true,
+      headers: proof ? { [DEVICE_LOGIN_PROOF_HEADER]: proof } : {},
     });
     const info = response.ok ? response.info : null;
+    if (info && info.status !== 'pending') this.loginProofs.delete(id);
     if (info?.status !== 'approved') return response;
     const { accessToken, refreshToken, userId, role } = info;
     if (!accessToken || !refreshToken || !userId || !role) {
