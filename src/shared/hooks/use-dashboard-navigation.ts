@@ -4,6 +4,7 @@ import { useAuthStore } from '@/core/stores';
 import type { DashboardTab } from '@/core/types';
 import { DASHBOARD_TABS, DASHBOARD_TAB_ROUTE } from '@/shared/constants';
 import { peopleAccessForRole } from '@/shared/libs/people-access';
+import { routeFallback } from '@/shared/libs/route-access';
 import { usePermissions } from './use-permissions';
 import { useTranslation } from './use-translation';
 
@@ -21,15 +22,17 @@ export function useDashboardNavigation(): DashboardNavigation {
   const role = useAuthStore((state) => state.user?.role) ?? 'guest';
   const peopleAction = peopleAccessForRole(role).profileAction;
 
+  const routeOf = useCallback(
+    (tab: DashboardTab) => (tab === 'people' && peopleAction === 'manage' ? '/users' : DASHBOARD_TAB_ROUTE[tab]),
+    [peopleAction]
+  );
+
   const tabs = useMemo(
     () =>
       DASHBOARD_TABS.filter(
-        (item) =>
-          (!item.table || canRead(item.table)) &&
-          (!item.directory || peopleAction !== null) &&
-          (!item.ownerOnly || role === 'owner')
+        (item) => (!item.table || canRead(item.table)) && routeFallback(routeOf(item.tab), role) === null
       ),
-    [canRead, peopleAction, role]
+    [canRead, role, routeOf]
   );
 
   const labels = useMemo(
@@ -46,7 +49,7 @@ export function useDashboardNavigation(): DashboardNavigation {
 
   const navigate = useCallback(
     (tab: DashboardTab) => {
-      const route = tab === 'people' && peopleAction === 'manage' ? '/users' : DASHBOARD_TAB_ROUTE[tab];
+      const route = routeOf(tab);
       if (route === pathname) return;
       if (tab === 'home') {
         if (router.canDismiss()) router.dismissTo('/');
@@ -56,7 +59,7 @@ export function useDashboardNavigation(): DashboardNavigation {
       if (pathname === '/') router.push(route);
       else router.replace(route);
     },
-    [pathname, peopleAction, router],
+    [pathname, routeOf, router],
   );
 
   return { tabs, labels, navigate };

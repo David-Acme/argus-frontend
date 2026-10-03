@@ -1,5 +1,4 @@
 import { portraitPreviewService } from '@/core/services/portrait-preview.service';
-import { useAuthStore } from '@/core/stores';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { filterPeople } from '@/core/services/view-cache';
 import type { UserRole } from '@/core/types';
@@ -22,7 +21,6 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { portraitDataUri } from '@/shared/libs/portrait-preview';
 import { toast } from '@/shared/libs/toast';
-import { Redirect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Image, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
@@ -36,7 +34,6 @@ const PERSON_ROW_HEIGHT = 60;
 export default function PeopleDirectoryScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const currentUser = useAuthStore((state) => state.user);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<UserRole | 'all'>('all');
   const [selected, setSelected] = useState<IPeopleDirectoryCacheRow | null>(null);
@@ -85,7 +82,6 @@ export default function PeopleDirectoryScreen() {
     }
     setPortraitUri(dataUri);
   }, [portraitLoading, selected, t]);
-  if (currentUser?.role !== 'guard') return <Redirect href="/profile" />;
 
   return (
     <AppScreen scrollable={false}>

@@ -55,14 +55,12 @@ export const DASHBOARD_TABS: readonly {
   tab: DashboardTab;
   icon: IconName;
   table?: TableName;
-  directory?: boolean;
-  ownerOnly?: boolean;
 }[] = [
   { tab: 'home', icon: 'home' },
   { tab: 'schedule', icon: 'calendar', table: 'calendar_event' },
   { tab: 'projects', icon: 'list-todo', table: 'project' },
-  { tab: 'people', icon: 'users', directory: true },
-  { tab: 'settings', icon: 'settings', ownerOnly: true },
+  { tab: 'people', icon: 'users' },
+  { tab: 'settings', icon: 'settings' },
   { tab: 'profile', icon: 'user' },
 ];
 

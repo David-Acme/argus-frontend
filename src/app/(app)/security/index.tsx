@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useAuthStore } from '@/core/stores';
@@ -31,7 +31,6 @@ export default function SecurityScreen() {
   const access = guardAccessForRole(role ?? 'guest');
   const guard = useGuard(access.review);
   const [guestFormOpen, setGuestFormOpen] = useState(false);
-  if (!access.view) return <Redirect href="/" />;
 
   const activeGuests = guard.guests.filter(
     (guest) => guest.validUntil * 1000 > guard.loadedAt

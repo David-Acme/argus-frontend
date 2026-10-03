@@ -1,9 +1,10 @@
-import { Redirect } from 'expo-router';
+import { Redirect, usePathname } from 'expo-router';
 import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
 import { authService } from '@/core/services/auth.service';
 import { sessionService } from '@/core/services/session.service';
 import { useAuthStore } from '@/core/stores';
 import { IS_NATIVE } from '@/shared/constants';
+import { routeFallback } from '@/shared/libs/route-access';
 import { BrandSplash } from './brand-splash';
 import { ServerUnreachable } from './server-unreachable';
 
@@ -45,7 +46,12 @@ function EntryRedirect() {
 
 export function EntryGate({ children }: PropsWithChildren) {
   const status = useAuthStore((state) => state.status);
-  if (status === 'signed-in') return children;
+  const role = useAuthStore((state) => state.user?.role ?? 'guest');
+  const pathname = usePathname();
+  if (status === 'signed-in') {
+    const fallback = routeFallback(pathname, role);
+    return fallback ? <Redirect href={fallback} /> : children;
+  }
   if (status === 'loading') return <BrandSplash />;
   return <EntryRedirect />;
 }

@@ -2,7 +2,6 @@ import { inviteService } from '@/core/services/invite';
 
 import { synchronizeService } from '@/core/services/sync';
 import { userManagementService } from '@/core/services/user-management.service';
-import { useAuthStore } from '@/core/stores';
 import type {
   IInvitationRecord,
   IPeopleDirectoryCacheRow,
@@ -29,7 +28,6 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
-import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
@@ -45,13 +43,11 @@ import { runServiceAction } from '@/shared/libs/service-action';
 export default function UsersScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const currentUser = useAuthStore((state) => state.user);
   const [editing, setEditing] = useState<IUserManagementRecord | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [qrPreview, setQrPreview] = useState<InvitationPreview | null>(null);
   const qrPreviewRef = useRef<InvitationPreview | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const isOwner = currentUser?.role === 'owner';
   const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
   const users = useMemo<IUserManagementRecord[]>(
     () =>
@@ -146,7 +142,6 @@ export default function UsersScreen() {
     [userRoleLabels],
   );
 
-  if (!isOwner) return <Redirect href="/profile" />;
 
   return (
     <AppScreen

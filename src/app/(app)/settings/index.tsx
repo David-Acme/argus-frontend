@@ -1,4 +1,3 @@
-import { Redirect } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import type { SettingLevel, SettingsOwner, SettingsOwnerName } from '@/core/types';
@@ -8,7 +7,6 @@ import { SettingsOwnerList, SettingsOwnerPanel } from '@/shared/components/setti
 import { Button } from '@/shared/components/ui/button';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
-import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useSettings } from '@/shared/hooks/use-settings';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -18,7 +16,6 @@ const visibleAt = (level: SettingLevel) => (owner: SettingsOwner) =>
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
-  const { role } = usePermissions();
   const { isWide } = useWindowClass();
   const { overview, loading, failed, reload, change } = useSettings();
   const [level, setLevel] = useState<SettingLevel>('basic');
@@ -34,7 +31,6 @@ export default function SettingsScreen() {
     ],
     [t]
   );
-  if (role !== 'owner') return <Redirect href="/profile" />;
 
   const levelControl = (
     <View className={isWide ? 'w-72' : 'w-full'}>
