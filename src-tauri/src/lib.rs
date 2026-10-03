@@ -1,3 +1,5 @@
+#[cfg(target_os = "linux")]
+mod media;
 mod net;
 
 use std::time::Duration;
@@ -10,6 +12,8 @@ use net::socket::{close as socket_close, open as socket_open, send_binary as soc
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
 use tauri::ipc::{Channel, Request};
 use tauri::State;
+#[cfg(target_os = "linux")]
+use tauri::Manager;
 
 const DISCOVERY_MIN_MS: f64 = 1_000.0;
 const DISCOVERY_MAX_MS: f64 = 30_000.0;
@@ -95,6 +99,15 @@ pub fn run() {
   let _ = rustls::crypto::ring::default_provider().install_default();
   tauri::Builder::default()
     .manage(SocketState::default())
+    .setup(|app| {
+      #[cfg(target_os = "linux")]
+      if let Some(window) = app.get_webview_window("main") {
+        window.with_webview(|webview| media::allow_app_microphone(&webview.inner()))?;
+      }
+      #[cfg(not(target_os = "linux"))]
+      let _ = app;
+      Ok(())
+    })
     .invoke_handler(tauri::generate_handler![
       argus_discover,
       argus_pair,

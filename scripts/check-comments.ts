@@ -214,7 +214,7 @@ function commentsOf(path: string, text: string): Range[] | null {
   if (extension in C_FAMILY) return cFamilyComments(text, C_FAMILY[extension]);
   if (HASH_FILES.has(name)) return hashComments(text, name !== 'CMakeLists.txt');
   if (HASH_EXTENSIONS.has(extension)) return hashComments(text, extension === '.properties');
-  if (extension === '.xml') return xmlComments(text);
+  if (extension === '.xml' || extension === '.plist') return xmlComments(text);
   return null;
 }
 

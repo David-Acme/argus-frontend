@@ -26,6 +26,9 @@ url = "2"
 http = "1"
 keyring = { version = "3", default-features = false, features = ["apple-native", "windows-native", "sync-secret-service"] }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = "2.0"
+
 [profile.release]
 strip = true
 lto = true
