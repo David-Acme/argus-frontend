@@ -205,11 +205,9 @@ export function TaskForm({ open, onOpenChange, projectId, task }: TaskFormProps)
                     searchPlaceholder={t('screens.home.search-placeholder')}
                     emptyLabel={t('screens.projects.no-results')}
                     trigger={
-                      <Button variant="outline" className="justify-between">
-                        <Text>
-                          {priorityOptions.find((option) => option.value === field.value)?.label}
-                        </Text>
-                      </Button>
+                      <SelectField
+                        label={priorityOptions.find((option) => option.value === field.value)?.label}
+                      />
                     }
                   />
                   <FormMessage />

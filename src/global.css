@@ -133,6 +133,10 @@
     color: var(--color-foreground);
   }
 
+  [data-radix-popper-content-wrapper] {
+    z-index: 60 !important;
+  }
+
   .required::after {
     content: ' *';
     color: var(--color-error);
