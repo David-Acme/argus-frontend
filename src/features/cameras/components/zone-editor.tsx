@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
@@ -13,6 +13,7 @@ type ZoneEditorProps = {
   color: string;
   hint: string;
   aspectRatio?: number;
+  background?: ReactNode;
 };
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
@@ -23,6 +24,7 @@ export function ZoneEditor({
   color,
   hint,
   aspectRatio = 16 / 9,
+  background,
 }: ZoneEditorProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -59,8 +61,10 @@ export function ZoneEditor({
           onLayout={onLayout}
           style={{ aspectRatio }}
           className="bg-surface-secondary border-border-subtle w-full overflow-hidden rounded-2xl border">
+          {background}
           {size.width > 0 ? (
-            <Svg width="100%" height="100%">
+            <View className="absolute left-0 top-0">
+            <Svg width={size.width} height={size.height}>
               {enough ? (
                 <Polygon points={polygon} fill={color} fillOpacity={0.18} stroke={color} strokeWidth={2} />
               ) : (
@@ -88,6 +92,7 @@ export function ZoneEditor({
                 />
               ))}
             </Svg>
+            </View>
           ) : null}
         </View>
       </GestureDetector>

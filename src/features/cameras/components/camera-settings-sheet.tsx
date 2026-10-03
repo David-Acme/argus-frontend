@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
-import type { ICameraDeviceStatus, ICameraSettings } from '@/core/interfaces';
+import type { ICameraCapabilities, ICameraDeviceStatus, ICameraSettings } from '@/core/interfaces';
 import type { DayNightMode, MenuOption } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
@@ -15,14 +15,27 @@ type CameraSettingsSheetProps = {
   onOpenChange: (open: boolean) => void;
   cameraId: string;
   status: ICameraDeviceStatus | null;
+  features: ICameraCapabilities | null;
   onApplied: (status: ICameraDeviceStatus | null) => void;
 };
+
+function optimisticStatus(status: ICameraDeviceStatus | null, body: ICameraSettings): ICameraDeviceStatus {
+  return {
+    ...status,
+    privacyEnabled: body.privacy ?? status?.privacyEnabled,
+    ledEnabled: body.led ?? status?.ledEnabled,
+    motionEnabled: body.motion ?? status?.motionEnabled,
+    autoTrackEnabled: body.autoTrack ?? status?.autoTrackEnabled,
+    dayNightMode: body.dayNight ?? status?.dayNightMode,
+  };
+}
 
 export function CameraSettingsSheet({
   open,
   onOpenChange,
   cameraId,
   status,
+  features,
   onApplied,
 }: CameraSettingsSheetProps) {
   const { t } = useTranslation();
@@ -36,12 +49,13 @@ export function CameraSettingsSheet({
   const dayNight = (status?.dayNightMode as DayNightMode) ?? 'auto';
 
   const apply = async (body: ICameraSettings) => {
+    const previous = status;
+    onApplied(optimisticStatus(previous, body));
     const result = await run({
       call: () => cameraControlService.settings(cameraId, body),
-      success: t('screens.cameras.settings-saved'),
       errorTitle: t('screens.cameras.device-offline'),
     });
-    if (result) onApplied(result.info ?? null);
+    onApplied(result ? (result.info ?? optimisticStatus(previous, body)) : previous);
   };
 
   return (
@@ -56,31 +70,40 @@ export function CameraSettingsSheet({
         </Button>
       }>
       <View className="gap-1 pb-1">
-        <ToggleRow
-          label={t('screens.cameras.privacy')}
-          value={status?.privacyEnabled ?? false}
-          disabled={busy}
-          onChange={(privacy) => void apply({ privacy })}
-        />
-        <ToggleRow
-          label={t('screens.cameras.led')}
-          value={status?.ledEnabled ?? false}
-          disabled={busy}
-          onChange={(led) => void apply({ led })}
-        />
-        <ToggleRow
-          label={t('screens.cameras.motion')}
-          value={status?.motionEnabled ?? false}
-          disabled={busy}
-          onChange={(motion) => void apply({ motion })}
-        />
-        <ToggleRow
-          label={t('screens.cameras.auto-track')}
-          value={status?.autoTrackEnabled ?? false}
-          disabled={busy}
-          onChange={(autoTrack) => void apply({ autoTrack })}
-        />
+        {features?.privacy !== false ? (
+          <ToggleRow
+            label={t('screens.cameras.privacy')}
+            value={status?.privacyEnabled ?? false}
+            disabled={busy}
+            onChange={(privacy) => void apply({ privacy })}
+          />
+        ) : null}
+        {features?.led !== false ? (
+          <ToggleRow
+            label={t('screens.cameras.led')}
+            value={status?.ledEnabled ?? false}
+            disabled={busy}
+            onChange={(led) => void apply({ led })}
+          />
+        ) : null}
+        {features?.motion !== false ? (
+          <ToggleRow
+            label={t('screens.cameras.motion')}
+            value={status?.motionEnabled ?? false}
+            disabled={busy}
+            onChange={(motion) => void apply({ motion })}
+          />
+        ) : null}
+        {features?.autoTrack !== false ? (
+          <ToggleRow
+            label={t('screens.cameras.auto-track')}
+            value={status?.autoTrackEnabled ?? false}
+            disabled={busy}
+            onChange={(autoTrack) => void apply({ autoTrack })}
+          />
+        ) : null}
 
+        {features?.dayNight !== false ? (
         <View className="flex-row items-center justify-between py-2.5">
           <Text variant="body">{t('screens.cameras.day-night')}</Text>
           <AdaptiveSelect
@@ -98,6 +121,7 @@ export function CameraSettingsSheet({
             }
           />
         </View>
+        ) : null}
       </View>
     </AdaptiveDialog>
   );

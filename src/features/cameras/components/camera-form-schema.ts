@@ -3,8 +3,7 @@ import { z } from 'zod';
 import type { CameraDriverKind } from '@/core/types';
 
 import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
-
-const HOST_RE = /^[a-zA-Z0-9.\-:]+$/;
+import { isLiteralAddress, isPrivateAddress, isStreamPath } from '@/features/cameras/model/camera-address';
 
 export const cameraFormSchema = z
   .object({
@@ -20,7 +19,8 @@ export const cameraFormSchema = z
       .trim()
       .min(1, 'common.validation.required')
       .max(64, 'common.validation.too-long')
-      .regex(HOST_RE, 'common.validation.invalid-ip'),
+      .refine(isLiteralAddress, 'common.validation.invalid-ip')
+      .refine((value) => !isLiteralAddress(value) || isPrivateAddress(value), 'screens.cameras.ip-private'),
     port: z
       .string()
       .trim()
@@ -29,12 +29,14 @@ export const cameraFormSchema = z
         return Number.isInteger(port) && port >= 1 && port <= 65535;
       }, 'common.validation.invalid-port'),
     username: z.string().trim().max(80, 'common.validation.too-long'),
-    password: z.string(),
+    password: z.string().max(128, 'common.validation.too-long'),
     cloudUsername: z.string().trim().max(120, 'common.validation.too-long'),
-    cloudPassword: z.string(),
+    cloudPassword: z.string().max(128, 'common.validation.too-long'),
     manufacturer: z.string().trim().max(80, 'common.validation.too-long'),
     model: z.string().trim().max(80, 'common.validation.too-long'),
     recordMode: z.enum(['events', 'continuous']),
+    streamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
+    subStreamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
     isEdit: z.boolean(),
   })
   .superRefine((values, ctx) => {
@@ -72,6 +74,8 @@ export function cameraFormDefaults(driver: CameraDriverKind, isEdit: boolean): C
     manufacturer: spec.manufacturer,
     model: '',
     recordMode: 'events',
+    streamPath: '',
+    subStreamPath: '',
     isEdit,
   };
 }

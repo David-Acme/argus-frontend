@@ -27,8 +27,8 @@ import { CAMERA_DRIVER_SPECS, CAMERA_ICONS } from '@/features/cameras/constants'
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { toast } from '@/shared/libs/toast';
 import { IconPickerButton } from '@/features/cameras/components/icon-picker-button';
+import { cameraIntentValues } from '@/features/cameras/model/camera-optimistic';
 
 import { cameraFormDefaults, cameraFormSchema, type CameraFormValues } from '@/features/cameras/components/camera-form-schema';
 
@@ -38,6 +38,29 @@ type CameraFormProps = {
   camera?: ICameraCacheRow | null;
   trigger?: ReactNode;
 };
+function cameraBodyOf(values: CameraFormValues): ICameraCreate & ICameraUpdate {
+  const spec = CAMERA_DRIVER_SPECS[values.driver];
+  const body: ICameraCreate & ICameraUpdate = {
+    name: values.name,
+    ip: values.ip,
+    port: Number(values.port),
+    manufacturer: values.manufacturer || undefined,
+    model: values.model || undefined,
+    username: values.username || undefined,
+    recordMode: values.recordMode,
+    driver: values.driver,
+    cloudUsername: spec.requiresCloud ? values.cloudUsername : '',
+    icon: values.icon,
+  };
+  if (spec.customPaths) {
+    body.streamPath = values.streamPath;
+    body.subStreamPath = values.subStreamPath;
+  }
+  if (values.password) body.password = values.password;
+  if (values.cloudPassword) body.cloudPassword = values.cloudPassword;
+  return body;
+}
+
 export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormProps) {
   const { t } = useTranslation();
   const formScroll = useFormScroll();
@@ -70,6 +93,8 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
       manufacturer: camera.manufacturer ?? '',
       model: camera.model ?? '',
       recordMode: (camera.recordMode as CameraRecordMode) ?? 'events',
+      streamPath: camera.streamPath,
+      subStreamPath: camera.subStreamPath,
       isEdit: true,
     });
   }, [open, camera, form]);
@@ -132,28 +157,18 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
     form,
     formScroll,
     request: (values) => {
-      const body: ICameraCreate & ICameraUpdate = {
-        name: values.name,
-        ip: values.ip,
-        port: Number(values.port),
-        manufacturer: values.manufacturer || undefined,
-        model: values.model || undefined,
-        username: values.username || undefined,
-        recordMode: values.recordMode,
-        driver: values.driver,
-        cloudUsername: CAMERA_DRIVER_SPECS[values.driver].requiresCloud
-          ? values.cloudUsername
-          : '',
-        icon: values.icon,
-      };
-      if (values.password) body.password = values.password;
-      if (values.cloudPassword) body.cloudPassword = values.cloudPassword;
+      const body = cameraBodyOf(values);
       return camera ? cameraService.update(camera.id, body) : cameraService.create(body);
     },
-    onSuccess: () => {
-      toast.success(t('screens.cameras.saved'));
-      onOpenChange(false);
-    },
+    optimistic: (values) => ({
+      intents: [
+        camera
+          ? { table: 'camera', kind: 'update', recordId: camera.id, values: cameraIntentValues(cameraBodyOf(values)) }
+          : { table: 'camera', kind: 'create', values: cameraIntentValues(cameraBodyOf(values)) },
+      ],
+      success: t('screens.cameras.saved'),
+    }),
+    onSuccess: () => onOpenChange(false),
   });
 
   return (
@@ -345,6 +360,28 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                 />
               </View>
             </View>
+
+            {spec.customPaths ? (
+              <View className="gap-3">
+                <FormTextField
+                  control={form.control}
+                  name="streamPath"
+                  label={t('screens.cameras.stream-path')}
+                  placeholder="/Streaming/Channels/101"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <FormTextField
+                  control={form.control}
+                  name="subStreamPath"
+                  label={t('screens.cameras.sub-stream-path')}
+                  placeholder="/Streaming/Channels/102"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text variant="caption">{t('screens.cameras.stream-path-hint')}</Text>
+              </View>
+            ) : null}
 
             <FormField
               control={form.control}

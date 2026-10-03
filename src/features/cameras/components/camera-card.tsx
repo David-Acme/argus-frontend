@@ -12,6 +12,7 @@ export type CameraCardStatus = 'online' | 'offline' | 'disabled';
 
 type CameraCardProps = {
   item: ICameraCacheRow;
+  pending?: boolean;
   onPress: (id: string) => void;
 };
 
@@ -57,7 +58,7 @@ export function cameraStatusOf(item: Pick<ICameraCacheRow, 'isEnabled' | 'isOnli
   return item.isOnline ? 'online' : 'offline';
 }
 
-export const CameraCard = memo(function CameraCard({ item, onPress }: CameraCardProps) {
+export const CameraCard = memo(function CameraCard({ item, pending = false, onPress }: CameraCardProps) {
   const { t } = useTranslation();
   const status = cameraStatusOf(item);
   const statusLabel = t(STATUS_LABEL[status]);
@@ -73,8 +74,13 @@ export const CameraCard = memo(function CameraCard({ item, onPress }: CameraCard
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${item.name}, ${statusLabel}`}
+      accessibilityState={{ busy: pending, disabled: pending }}
+      disabled={pending}
       onPress={() => onPress(item.id)}
-      className="bg-card flex-1 gap-3 rounded-3xl p-3 shadow-md shadow-black/[0.05] active:opacity-80 web:hover:opacity-95">
+      className={cn(
+        'bg-card flex-1 gap-3 rounded-3xl p-3 shadow-md shadow-black/[0.05] active:opacity-80 web:hover:opacity-95',
+        pending && 'opacity-60',
+      )}>
       <View
         className="bg-surface-secondary w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl"
         style={{ aspectRatio: PREVIEW_ASPECT }}>

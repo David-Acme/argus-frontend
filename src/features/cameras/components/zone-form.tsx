@@ -26,15 +26,17 @@ import { ZONE_COLORS, ZONE_MAX_POINTS, ZONE_MIN_POINTS } from '@/features/camera
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { toast } from '@/shared/libs/toast';
 import { cn } from '@/shared/libs/utils';
 import { ZoneEditor } from '@/features/cameras/components/zone-editor';
+import { CameraLiveView } from './camera-live-view';
+import { CameraZonesOverlay } from '@/features/cameras/components/camera-zones-overlay';
 
 type ZoneFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   cameraId: string;
   zone?: IZoneCacheRow | null;
+  zones?: readonly IZoneCacheRow[];
 };
 
 const schema = z.object({
@@ -49,7 +51,14 @@ const schema = z.object({
 
 type ZoneFormValues = z.infer<typeof schema>;
 
-export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) {
+const zoneBodyOf = (values: ZoneFormValues) => ({
+  name: values.name,
+  zoneType: values.zoneType,
+  color: values.color,
+  points: values.points,
+});
+
+export function ZoneForm({ open, onOpenChange, cameraId, zone, zones = [] }: ZoneFormProps) {
   const { t } = useTranslation();
   const formScroll = useFormScroll();
   const bodyHeight = useOverlayBodyHeight();
@@ -58,6 +67,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
     defaultValues: { name: '', zoneType: 'monitor', color: ZONE_COLORS[0], points: [] },
     mode: 'onBlur',
   });
+  const others = useMemo(() => zones.filter((item) => item.id !== zone?.id), [zone?.id, zones]);
 
   useEffect(() => {
     if (!open) return;
@@ -82,21 +92,19 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values) => {
-      const body = {
-        name: values.name,
-        zoneType: values.zoneType,
-        color: values.color,
-        points: values.points,
-      };
-      return zone
-        ? zoneService.update(zone.id, body)
-        : zoneService.create({ ...body, cameraId: Number(cameraId) });
-    },
-    onSuccess: () => {
-      toast.success(t('screens.cameras.zone-saved'));
-      onOpenChange(false);
-    },
+    request: (values) =>
+      zone
+        ? zoneService.update(zone.id, zoneBodyOf(values))
+        : zoneService.create({ ...zoneBodyOf(values), cameraId: Number(cameraId) }),
+    optimistic: (values) => ({
+      intents: [
+        zone
+          ? { table: 'zone', kind: 'update', recordId: zone.id, values: zoneBodyOf(values) }
+          : { table: 'zone', kind: 'create', values: { ...zoneBodyOf(values), cameraId: Number(cameraId) } },
+      ],
+      success: t('screens.cameras.zone-saved'),
+    }),
+    onSuccess: () => onOpenChange(false),
   });
 
   const color = useWatch({ control: form.control, name: 'color' });
@@ -222,6 +230,14 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
                     onChange={field.onChange}
                     color={color}
                     hint={t('screens.cameras.zone-points')}
+                    background={
+                      open ? (
+                        <>
+                          <CameraLiveView cameraId={cameraId} fill />
+                          <CameraZonesOverlay zones={others} />
+                        </>
+                      ) : null
+                    }
                   />
                   <FormMessage />
                 </FormItem>

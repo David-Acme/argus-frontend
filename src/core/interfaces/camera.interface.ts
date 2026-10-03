@@ -14,6 +14,8 @@ export interface ICameraCreate {
   icon?: string;
   recordMode?: CameraRecordMode;
   retentionDays?: number;
+  streamPath?: string;
+  subStreamPath?: string;
 }
 
 export type ICameraUpdate = Partial<ICameraCreate> & { isEnabled?: boolean };

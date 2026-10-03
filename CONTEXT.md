@@ -482,15 +482,17 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   Tauri commands `argus_socket_open/send_text/send_binary/close`. Consumed
   via `netService.openSocket()`.
 - **Two sockets**: the sync engine owns `/sync` (sync + emits + voice PCM) and
-  the camera live view owns `/camera-stream` (camera media). The camera
-  service (`src/core/services/camera-media.service.ts`) subscribes, parses the
-  12-byte `0xA7` framing, pushes fMP4 fragments into the native
-  `argus-camera` view and acks the server only when the decoder has drained
-  below the credit threshold; reconnect uses its own backoff. Desktop/web
-  decodes with WebCodecs + canvas when the webview supports it, otherwise it
-  shows a placeholder. Both views open the stream only while their screen is
-  focused and pause decoding when the document is hidden. `http.service.ts`
-  is the HTTP wrapper; there is no separate websocket wrapper.
+  each camera live view owns one `/media` socket on argus-camera (camera
+  media). The camera feature's media service
+  (`features/cameras/services/camera-media.service.ts`) subscribes, parses the
+  12-byte `0xA7` framing, reassembles the server's 16 KiB chunks into whole
+  `moof`+`mdat` fragments, pushes them into the platform player and acks the
+  server only when the decoder has drained below the credit threshold; its
+  recovery rules are under "Cameras" below. Desktop/web decodes with
+  WebCodecs + canvas, native with the `argus-camera` view. Both views open the
+  stream only while their screen is focused and pause decoding when the
+  document is hidden. `http.service.ts` is the HTTP wrapper; there is no
+  separate websocket wrapper.
 
 ### Verification
 - `bunx tsc --noEmit` and `bun run lint` → 0 errors. `cargo check` (src-tauri) → 0/0.
@@ -1162,6 +1164,116 @@ the result of the user's action at once and reconciles with the synced row.
   pointer drag on web/desktop, long press on touch) lifts the card and rings
   the target lane; reduce motion removes the springs, not the feedback. The
   status menu remains the keyboard and screen-reader path.
+
+### Voice settings: previews and install states (2026-10-03)
+
+The TTS owner's engine, Spanish variant and voice settings render as an
+option list (`features/settings/components/setting-choice-list.tsx`)
+instead of a segmented control or a select. Each option has a preview
+button, its install state and, for `jean`, a "non-commercial use only"
+note. The owner asked to hear an option before installing it, so the clips
+are bundled static assets, not server audio: they play offline and
+instantly. The backend's `services/tts/tools/tts-preview/make-previews.sh`
+regenerates them reproducibly (fixed seed, the production engines) into
+`src/assets/audio/tts-previews/`. The three `jean` clips carry that voice's
+CC BY-NC 4.0 terms: drop them, with the voice, before any commercial
+distribution of the app.
+
+- **Two encodings, one per bundle.** `tts-preview-clips.web.ts` imports Opus
+  in Ogg and `tts-preview-clips.native.ts` imports AAC in M4A; Metro bundles
+  only the platform's set. The desktop WebView (WebKitGTK) decodes Ogg/Opus
+  with stock GStreamer but has no MP4 demuxer or AAC decoder, and iOS's
+  AVPlayer does not play Ogg. Metro needed `ogg` added to `assetExts`;
+  `audio-assets.d.ts` types the imports as asset ids. Those files import with
+  a relative path (`../constants/tts-preview-clips`), because eslint's
+  resolver does not apply `.web`/`.native` suffixes to `@/` aliases.
+- **Playback** is expo-audio's `useAudioPlayer` (an `HTMLAudioElement` on
+  web/Tauri; CSP `media-src 'self'` already allows bundled assets). One
+  player per settings panel (`useVoicePreview`), so starting one preview
+  stops the other. The audio session mode is left alone, so a call's session
+  is never reconfigured.
+- **Which clip an option plays** (`model/tts-preview.ts`, unit-tested) is
+  what the house would say with it: the engine option plays the configured
+  variant and voice, the variant option the configured voice, and a voice
+  option the configured variant. A test pins that every bundled file is
+  referenced and every option has both encodings.
+- **Install states** come from argus-settings' optional `choiceStates`
+  (`installed`, `installable`, `installing`, `failed`, `hostOnly`, size in
+  MB, host command). Uninstalled options read "No instalada · ~N MB".
+  Choosing an installable option persists it, and argus-tts installs it in
+  the background while speaking with its fallback. The selected option shows
+  "Instalar" again after a failure. A host-only option cannot be chosen;
+  tapping it reveals the exact command to run on the server. While anything
+  installs, `useSettings` reloads every 4 s.
+
+### Cameras: live view, recovery and edits (2026-10-03)
+
+- **What the stream carries.** argus-camera muxes the camera microphone as a
+  FLAC track beside the H.264 video, one `moof`/`mdat` per sample and per
+  track, and splits each fragment into 16 KiB WebSocket messages. The web
+  player used to take the last `trak`'s timescale (the audio's 8 kHz), feed
+  every fragment's first `traf` to the video decoder (FLAC samples are sync
+  samples, so they arrived as "key" frames and closed the decoder on the first
+  one) and parse each 16 KiB message as a whole fragment (every keyframe, being
+  larger, parsed as nothing). The desktop view therefore never painted a frame.
+  Now `model/fmp4.ts` reads the video `trak` (by `hdlr`) for its track id,
+  timescale and `avcC`/`hvcC`, `parseFragment` only reads that track's `traf`,
+  and `model/fragment-assembler.ts` rebuilds whole fragments before any player
+  sees them (the native ExoPlayer pipe gets the same bytes, whole).
+- **The web player** recreates a decoder that errors (WebCodecs closes it),
+  waits for a keyframe after every (re)configure or dropped frame, decodes
+  with `optimizeForLatency` and paints each frame on arrival, so there is no
+  playout buffer between the socket and the canvas. It asks the server for
+  `fastStart`: an upstream that is already live replays its current GOP at
+  once and the first frame paints in about 0.1 s instead of waiting up to a
+  GOP for the next keyframe. The native view does not ask for it: ExoPlayer
+  schedules frames by timestamp and would keep the replayed GOP as latency.
+- **WebKitGTK needs a system H.264 decoder.** WebCodecs on the Linux desktop
+  decodes through GStreamer; without `gst-libav` (or a VA-API/openh264
+  plugin) `VideoDecoder.isConfigSupported` answers false and the view says so
+  ("unsupported" with its hint) instead of showing a black frame.
+- **Recovery is explicit.** `model/stream-recovery.ts` classifies a refused
+  subscribe (403/404 final, 429 busy, anything else retried), backs off from
+  1 s to 15 s with jitter, and turns three misses into `offline`. A
+  `camera:closed` (the upstream died, e.g. go2rtc restarted) resubscribes on
+  the same socket; a socket error or close reconnects; an expired token
+  refreshes the session once and reconnects; eight seconds without media while
+  the decoder is drained counts as a stall and resubscribes. Handlers of a
+  replaced socket are detached and ignored, so a late `onClose` cannot tear
+  down the current connection. States: `connecting`, `live` (first media
+  fragment), `reconnecting`, `offline`, `unavailable`, `closed`.
+- **The view tells the user.** `CameraLiveStatus` paints a placeholder on the
+  surface colour (never text over black) while there is no picture, with a
+  Retry button when offline, and a small "Live"/"Reconnecting…" badge over the
+  last frame once one has painted. `CameraLiveView` (exported from the feature
+  index for the voice call card) takes `overlay` (the zones) and `fill`.
+- **Detail layout.** Expanded windows put the live panel and the zones under
+  it on the left and the device panel (status, address, integration, model,
+  firmware, recording) with the PTZ panel on a 340 px right column; medium
+  windows put the video full width and the two panels side by side; compact
+  stacks them. The last panel of each column grows so both columns end on the
+  same line. The PTZ panel only exists when `/capabilities` says `ptz: true`;
+  RTSP and ONVIF cameras answer `streamOnly: true` and the device panel says
+  the camera is video only. Zones draw over the live picture (toggle), and the
+  zone editor draws on a live view of the same camera with the other zones
+  faintly behind, instead of a grey box.
+- **Edits are optimistic.** Camera create/edit, enable/disable and delete,
+  and zone create/edit/delete go through `runOptimistic` with the feature's
+  lenses (`model/camera-optimistic.ts`): `useCameraRows()` overlays camera
+  intents on `camera.list` and zone intents on the flattened zones, then
+  regroups them by camera. A zone patch keeps the row's own `points` array when
+  the values are equal, so the synced row settles the intent instead of the
+  60 s TTL. Passwords never enter an intent. Camera device settings (privacy,
+  LED, motion, auto-track, day/night) flip at once through the remote
+  resource's `mutate` and roll back if the camera refuses.
+- **Addresses and paths.** The form accepts only a literal private IPv4/IPv6
+  address (`model/camera-address.ts`, the same ranges argus-camera enforces),
+  and RTSP/ONVIF cameras get main/sub stream path fields (empty = the Tapo
+  `/stream1`, `/stream2`); the paths reach the row through the projection as
+  `streamPath`/`subStreamPath`.
+- **Online means seen.** `isOnline` is written by argus-camera's health
+  monitor (one frame online, two misses offline) and arrives as an ordinary
+  audit patch.
 
 ### Current validation baseline
 

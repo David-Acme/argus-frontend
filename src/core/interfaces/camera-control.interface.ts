@@ -50,4 +50,5 @@ export interface ICameraCapabilities {
   motion?: boolean;
   autoTrack?: boolean;
   alarm?: boolean;
+  streamOnly?: boolean;
 }

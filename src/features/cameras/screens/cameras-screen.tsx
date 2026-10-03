@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import type { ICameraCacheRow, ICameraEventCacheRow } from '@/core/interfaces';
+import type { ICameraEventCacheRow } from '@/core/interfaces';
 import { CameraCardGrid } from '@/features/cameras/components/camera-card-grid';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/components/camera-summary';
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
 import { cameraStatusOf } from '@/features/cameras/components/camera-card';
+import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { ActivityCard } from '@/shared/components/activity/activity-card';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
@@ -34,7 +35,7 @@ export default function CamerasScreen() {
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
 
-  const items = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
+  const { cameras: items, isPendingCamera } = useCameraRows();
   const canCreate = can('camera', 'create');
 
   const counts = useMemo<CameraSummaryCounts>(() => {
@@ -115,6 +116,7 @@ export default function CamerasScreen() {
             <View className={isExpanded ? 'min-w-0 flex-1 gap-4' : 'gap-4'}>
               <CameraCardGrid
                 items={items}
+                isPending={isPendingCamera}
                 onSelect={openCamera}
                 createLabel={t('screens.cameras.connect')}
                 createHint={t('screens.cameras.add-tile-hint')}

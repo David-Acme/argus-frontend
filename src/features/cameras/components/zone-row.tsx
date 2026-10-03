@@ -10,7 +10,7 @@ type ZoneRowProps = {
   typeLabel: string;
   pointsLabel: string;
   color: string;
-  onPress: (id: string) => void;
+  onPress?: (id: string) => void;
 };
 
 export const ZoneRow = memo(function ZoneRow({
@@ -25,8 +25,9 @@ export const ZoneRow = memo(function ZoneRow({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={name}
-      onPress={() => onPress(id)}
-      className="bg-card flex-row items-center gap-3 rounded-xl p-3 active:opacity-80">
+      disabled={!onPress}
+      onPress={() => onPress?.(id)}
+      className="bg-surface-secondary/60 web:hover:bg-surface-secondary flex-row items-center gap-3 rounded-2xl p-3 active:opacity-80">
       <View className="size-3 rounded-full" style={{ backgroundColor: color || ZONE_COLORS[0] }} />
       <View className="min-w-0 flex-1">
         <Text variant="label" numberOfLines={1}>
@@ -36,7 +37,7 @@ export const ZoneRow = memo(function ZoneRow({
           {typeLabel} · {pointsLabel}
         </Text>
       </View>
-      <Icon name="square-pen" className="text-muted-foreground size-4" />
+      {onPress ? <Icon name="square-pen" className="text-muted-foreground size-4" /> : null}
     </Pressable>
   );
 });

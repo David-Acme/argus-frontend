@@ -23,18 +23,21 @@ export const CAMERA_DRIVER_SPECS = {
     username: 'admin',
     manufacturer: 'TP-Link',
     requiresCloud: true,
+    customPaths: false,
   },
   onvif: {
     port: 80,
     username: 'admin',
     manufacturer: '',
     requiresCloud: false,
+    customPaths: true,
   },
   rtsp: {
     port: 554,
     username: '',
     manufacturer: '',
     requiresCloud: false,
+    customPaths: true,
   },
 } as const;
 
