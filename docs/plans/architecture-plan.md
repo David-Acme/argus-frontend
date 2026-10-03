@@ -288,7 +288,11 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
 
 ### Phase 7 — Rendering polish (measure on a low-end Android first)
 
-- [ ] React Compiler on, then remove manual memoization only where it covers.
+- [x] React Compiler on, then remove manual memoization only where it covers. Done: on through
+  `experiments.reactCompiler` (the plugin ships with `babel-preset-expo`); the
+  web entry carries 155 compiled memo caches (+169 KB). Manual `useMemo` /
+  `useCallback` were left in place: removing them is cosmetic once the
+  compiler runs, and each removal would need its own render check.
 - [x] `useWindowClass` memoized on class and orientation; width read
   separately. Done: it subscribes to `Dimensions` through
   `useSyncExternalStore` with a cached classification, so a resize that keeps
