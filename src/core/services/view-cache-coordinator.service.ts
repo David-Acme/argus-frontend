@@ -25,6 +25,7 @@ import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { zoneService } from '@/core/services/zone.service';
+import { isOpenTask, taskProgress } from '@/shared/libs/task-progress';
 import {
   ACTIVITY_WINDOW_DAYS,
   EVENT_SAMPLE_LIMIT,
@@ -240,23 +241,22 @@ class ViewCacheCoordinatorService {
           priority: task.priority,
           dueAt: task.dueAt?.getTime() ?? null,
         }));
+
+        const tasksByProject = new Map<string, IProjectTaskCacheRow[]>();
+        for (const task of taskRows) {
+          const bucket = tasksByProject.get(task.projectId) ?? [];
+          bucket.push(task);
+          tasksByProject.set(task.projectId, bucket);
+        }
         for (const project of projectRows) {
           viewCacheService.write(
             VIEW_CACHE_KEYS.projectTasks,
-            taskRows.filter((task) => task.projectId === project.id),
+            tasksByProject.get(project.id) ?? [],
             project.id,
           );
         }
-
-        const projectProgress = new Map<string, { done: number; total: number }>();
-        for (const task of taskRows) {
-          const progress = projectProgress.get(task.projectId) ?? { done: 0, total: 0 };
-          progress.total += 1;
-          if (task.status === 'done') progress.done += 1;
-          projectProgress.set(task.projectId, progress);
-        }
         const dashboardProjects: DashboardProjectCard[] = projectRows.map((project) => {
-          const progress = projectProgress.get(project.id) ?? { done: 0, total: 0 };
+          const progress = taskProgress(tasksByProject.get(project.id) ?? []);
           return {
             ...project,
             done: progress.done,
@@ -315,7 +315,7 @@ class ViewCacheCoordinatorService {
           camerasOnline: cameras.filter((camera) => camera.isEnabled && camera.isOnline).length,
           remindersPending: reminders.filter((reminder) => !reminder.isCompleted).length,
           projectsActive: projectRows.filter((project) => project.status !== 'archived').length,
-          tasksOpen: taskRows.filter((task) => task.status !== 'done').length,
+          tasksOpen: taskRows.filter(isOpenTask).length,
           eventsCurrent,
           eventsPrevious,
         };
