@@ -1,12 +1,12 @@
 import { View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { OnboardingSteps } from '@/shared/components/onboarding';
+import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { ONBOARDING_STEPS } from '@/shared/constants';
+import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import type { FaceError } from '@/shared/libs/face-error';
+import type { FaceError } from '@/features/auth/model/face-error';
 
 type FaceCaptureSheetProps = {
   enrolling: boolean;

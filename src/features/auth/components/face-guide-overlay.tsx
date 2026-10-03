@@ -4,7 +4,8 @@ import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-anima
 import { itemIn } from '@/shared/libs/animations';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { colorTokens, FACE_OVAL_RATIO } from '@/shared/constants';
+import { colorTokens } from '@/shared/constants';
+import { FACE_OVAL_RATIO } from '@/features/auth/constants/face';
 import type { FaceGuideState, IconName, TranslationKey } from '@/core/types';
 import { useEffect } from 'react';
 import { useWindowDimensions, View } from 'react-native';

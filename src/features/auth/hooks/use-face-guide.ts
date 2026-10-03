@@ -1,24 +1,9 @@
-import { createArgusFace, type FaceDetection } from 'argus-face';
+import type { FaceDetection } from 'argus-face';
+import { createFaceDetector } from '@/features/auth/services/face-detector';
 import type { CameraView } from 'expo-camera';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import {
-  FACE_CENTER_X_TOL,
-  FACE_CENTER_Y_MAX,
-  FACE_CENTER_Y_MIN,
-  FACE_CLOSE_MIN_HEIGHT,
-  FACE_DRIFT_GRACE_MS,
-  FACE_EYE_MIN_OPEN,
-  FACE_FAR_MAX_HEIGHT,
-  FACE_LOW_LIGHT_LUM,
-  FACE_MAX_PITCH_DEG,
-  FACE_MAX_ROLL_DEG,
-  FACE_MAX_YAW_DEG,
-  FACE_UI_UPDATE_MS,
-  FACE_READY_STABLE_MS,
-  FACE_SAMPLE_FAST_MS,
-  FACE_SAMPLE_MS,
-  IS_ANDROID,
-} from '@/shared/constants';
+import { IS_ANDROID } from '@/shared/constants';
+import { FACE_CENTER_X_TOL, FACE_CENTER_Y_MAX, FACE_CENTER_Y_MIN, FACE_CLOSE_MIN_HEIGHT, FACE_DRIFT_GRACE_MS, FACE_EYE_MIN_OPEN, FACE_FAR_MAX_HEIGHT, FACE_LOW_LIGHT_LUM, FACE_MAX_PITCH_DEG, FACE_MAX_ROLL_DEG, FACE_MAX_YAW_DEG, FACE_UI_UPDATE_MS, FACE_READY_STABLE_MS, FACE_SAMPLE_FAST_MS, FACE_SAMPLE_MS } from '@/features/auth/constants/face';
 import type { FaceGuideSnapshot } from '@/core/types';
 
 type UseFaceGuideOptions = {
@@ -118,13 +103,7 @@ function analyze(frame: { luminance: number; faces: FaceDetection[] }): FaceGuid
 }
 
 export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGuideOptions): FaceGuideResult {
-  const face = useMemo(() => {
-    try {
-      return createArgusFace();
-    } catch {
-      return null;
-    }
-  }, []);
+  const face = useMemo(() => createFaceDetector(), []);
   const available = face !== null;
 
   const [snapshot, setSnapshot] = useState<FaceGuideData>({

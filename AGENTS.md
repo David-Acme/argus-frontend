@@ -350,7 +350,7 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   (`POST .../approve`, JWT) and the backend issues a session bound to that hash;
   the desktop polls `GET /auth/device-login/{id}` for the tokens (single use).
   `auth.service.ts` exposes `createDeviceLogin/approveDeviceLogin/pollDeviceLogin`;
-  the QR JSON is built/parsed by `shared/libs/login-qr.ts` and rendered with the
+  the QR JSON is built/parsed by `features/auth/model/login-qr.ts` and rendered with the
   `QrCode` component (`qrcode` + react-native-svg). The desktop never uses the
   camera: pairing is a manual code, login is the QR.
 - **Register with an existing face**: `POST /auth/register` no longer 409s on a
@@ -686,10 +686,10 @@ cd src-tauri && cargo check
 | `src/shared/components/cameras/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | UI primitives (`button`, `text`, `icon`, `input`) |
-| `src/app/welcome/` | Onboarding completo (Stack anidado con fade + progreso): `index` (saludo+avatar), `pairing/` (QR móvil / código desktop), `face/` (guidance MLKit, móvil-only), `voice/` (avatar+voz, móvil-only) |
-| `src/app/login/index.tsx` | Desktop: QR de login cruzado (device-login) + polling + espera de propietario |
-| `src/app/approve/index.tsx` | Móvil: escanear el QR del otro dispositivo y aprobar la sesión |
-| `src/app/qr/index.tsx` | QR scan route (native-only, `expo-camera`; web → redirect to `/`) |
+| `src/app/welcome/` | Onboarding routes (nested Stack with fade + progress), one-line re-exports of `features/auth` screens: `index` (greeting), `pairing/` (mobile QR / desktop code), `face/` (MLKit guidance, mobile-only), `voice/` (onboarding call, mobile-only) |
+| `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
+| `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |
+| `src/app/qr/index.tsx` | QR scan route (`features/qr`; native-only, web → redirect to `/`) |
 | `src/app/(app)/_layout.tsx` | Signed-in group: `EntryGate` (session guard + entry resolver with the branded splash) around `AppShell` (nav rail mounted once) and the group's Stack |
 | `src/app/(app)/index.tsx` | Home dashboard |
 | `src/app/(app)/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` · `security/` · `settings/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
@@ -697,13 +697,10 @@ cd src-tauri && cargo check
 | `src/shared/components/layout/` | App chrome and screen layout: `AppShell`, `AppScreen`, `ScreenHeader`, `NavRail`, `BottomNav`/`GlobalBottomNav`, `ComposeFab`, `CenteredScreen`, `OfflineBanner` |
 | `src/shared/components/activity/` | `ActivityCard` + `MosaicChart` (home and cameras) |
 | `src/shared/components/session/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
-| `src/shared/components/face/` | Guidance facial: `face-guide-overlay` (máscara+óvalo+pill), `face-frame` |
-| `src/shared/hooks/use-face-guide.ts` | Muestreo de cámara → `argusFace.detectFaces` → estado de guía + auto-capture |
-| `src/shared/constants/face.constant.ts` | Umbrales del guidance (zonas, ángulos, luz, muestreo) |
-| `src/shared/components/qr/` | Scanner UI: `qr-guide-frame`, `qr-scan-sheet`, `qr-manual-entry` |
+| `src/features/auth/` | Welcome, pairing, face login/enrolment, invitation, onboarding call, desktop login QR, approve; `useFaceCapture` + `useFaceGuide`; the face detector service (`services/face-detector`, native MLKit/Vision, web stub returns `null`) |
+| `src/features/qr/` | QR scanner: `useQrScanner` (permission, detection, hand-back to the scan store) + the screen and its components |
 | `src/shared/constants/qr.constant.ts` | `QR_SCAN_PURPOSES`, `QR_SCAN_FEEDBACK`, scan timings |
 | `src/shared/constants/morph-icon.constant.ts` | `MORPH_ICONS` — registro de iconos animables (datos `lucide` para morphicons) |
-| `src/shared/constants/welcome.constant.ts` | Entrada por turnos del welcome (`WELCOME_*_MS`) |
 | `src/shared/components/ui/morph-icon.tsx` | Icono animado (morphicons): morphs por `setNativeProps`, `reducedMotion="user"`, ref `morphTo`/`set` |
 | `src/core/types/qr.type.ts` | `QrScanPurpose`, `QrScanStatus`, `QrScanFeedback`, `QrScanConfig` |
 | `src/shared/hooks/use-reduce-motion.ts` | OS "reduce motion" setting, live |
