@@ -1,6 +1,6 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
 import type { UserRole } from '@/core/types';
-import { peopleAccessForRole } from './people-access';
+import { peopleAccessForRole } from '@/shared/libs/people-access';
 
 export type AppScreen = 'home' | 'agenda' | 'projects' | 'cameras' | 'security' | 'people' | 'settings';
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { PlayoutEnvelope, envelopeLevel } from '@/core/services/voice/voice-envelope';
-import { concatPcm, pcmChunk, pcmRms } from '@/shared/libs/pcm';
+import { PlayoutEnvelope, envelopeLevel } from '@/features/voice/services/voice/voice-envelope';
+import { concatPcm, pcmChunk, pcmRms } from '@/features/voice/model/pcm';
 
 function constant(value: number, length: number): Int16Array {
   return new Int16Array(length).fill(value);

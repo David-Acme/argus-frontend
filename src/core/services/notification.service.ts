@@ -12,7 +12,7 @@ class NotificationService extends DatabaseService<'notification'> {
 
   observeForUser(userId: string, limit = 50): Observable<NotificationModel[]> {
     return this.observeManyWithColumns(
-      ['title', 'body', 'is_read', 'read_at'],
+      ['type', 'title', 'body', 'data', 'is_read', 'read_at'],
       [Q.where('user_id', userId), Q.sortBy('created_at', Q.desc), Q.take(limit)],
     );
   }

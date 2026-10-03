@@ -3,10 +3,9 @@ import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 import { Text } from '@/shared/components/ui/text';
-import { CallSurface, VoiceWebNotice } from '@/shared/components/voice';
+import { CallSurface, useCall, VoiceWebNotice } from '@/features/voice';
 import { IS_NATIVE } from '@/shared/constants';
 import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
-import { useCall } from '@/shared/hooks/use-call';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 function OnboardingCall() {

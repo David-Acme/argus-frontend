@@ -2,33 +2,16 @@ import type { ArgusMic } from 'argus-mic';
 import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { synchronizeService } from '@/core/services/sync';
 import type { IVoiceReactionPayload } from '@/core/interfaces';
-import { useAvatarStore } from '@/core/stores';
-import {
-  VOICE_ACTION_TYPE,
-  VOICE_ANSWER_TYPE,
-  VOICE_ASSISTANT_TYPE,
-  VOICE_CONTEXT_TYPE,
-  VOICE_DONE_TYPE,
-  VOICE_ERROR_TYPE,
-  VOICE_EVENT_TYPE,
-  VOICE_INTERRUPTED_TYPE,
-  VOICE_MIC_FRAME_MS,
-  VOICE_MODE_DUPLEX,
-  VOICE_SAMPLE_RATE,
-  VOICE_SKIP_TYPE,
-  VOICE_START_TYPE,
-  VOICE_STOP_TYPE,
-  VOICE_STT_TYPE,
-  VOICE_TRANSCRIPT_MAX_LINES,
-  VOICE_TURN_TYPE,
-} from '@/shared/constants';
-import { concatPcm, pcmChunk } from '@/shared/libs/pcm';
+import { useAvatarStore } from '@/features/voice/stores/avatar.store';
+import { VOICE_ACTION_TYPE, VOICE_ANSWER_TYPE, VOICE_ASSISTANT_TYPE, VOICE_CONTEXT_TYPE, VOICE_DONE_TYPE, VOICE_EVENT_TYPE, VOICE_INTERRUPTED_TYPE, VOICE_MIC_FRAME_MS, VOICE_MODE_DUPLEX, VOICE_SAMPLE_RATE, VOICE_SKIP_TYPE, VOICE_START_TYPE, VOICE_STOP_TYPE, VOICE_STT_TYPE, VOICE_TRANSCRIPT_MAX_LINES, VOICE_TURN_TYPE } from '@/features/voice/constants/voice';
+import { VOICE_ERROR_TYPE } from '@/shared/constants';
+import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
 import type { VoiceAction, VoiceContext, VoicePhase, VoiceSnapshot, VoiceTranscriptLine } from '@/core/types';
 import { log } from '@/core/services/log';
 import { createArgusMic } from './voice-mic';
-import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceAction, parseVoiceError } from './voice-frames';
-import { VoicePlayout } from './voice-playout';
-import { appendAssistantText, appendUserLine, lastAssistantText } from './voice-transcript';
+import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceAction, parseVoiceError } from '@/features/voice/services/voice/voice-frames';
+import { VoicePlayout } from '@/features/voice/services/voice/voice-playout';
+import { appendAssistantText, appendUserLine, lastAssistantText } from '@/features/voice/services/voice/voice-transcript';
 import {
   INITIAL_TURN_GATE,
   assistantTurnKey,
@@ -39,7 +22,7 @@ import {
   gateOnUserFinal,
   shouldSendMic,
   type TurnGate,
-} from './voice-turn-gate';
+} from '@/features/voice/services/voice/voice-turn-gate';
 
 type Listener = () => void;
 type ActionListener = (action: VoiceAction) => void;

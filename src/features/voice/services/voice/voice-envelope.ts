@@ -1,4 +1,4 @@
-import { pcmRms } from '@/shared/libs/pcm';
+import { pcmRms } from '@/features/voice/model/pcm';
 
 type EnvelopeSegment = {
   start: number;

@@ -4,7 +4,7 @@ import {
   appendUserLine,
   lastAssistantText,
   mergeAssistantText,
-} from '@/core/services/voice/voice-transcript';
+} from '@/features/voice/services/voice/voice-transcript';
 
 describe('mergeAssistantText', () => {
   test('sentence deltas are joined with a space', () => {

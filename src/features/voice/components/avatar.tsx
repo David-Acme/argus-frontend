@@ -1,21 +1,9 @@
 import type { AvatarExpression, AvatarState } from '@/core/types';
-import { useAvatarStore } from '@/core/stores';
-import {
-  AVATAR_PALETTE,
-  AVATAR_PREVIEW_EXPRESSIONS,
-  AVATAR_PREVIEW_INTERVAL_MS,
-  AVATAR_STATE_PARAMS,
-  AVATAR_TRANSITION_MS,
-  AVATAR_TRANSITION_SPEAKING_MS,
-  AVATAR_VIEWBOX,
-  REACTION_SEMANTIC_KEY,
-  VOICE_ENVELOPE_MOTION_GAIN,
-  VOICE_ENVELOPE_PEAK_GAIN,
-  getAvatarExpressionBySemanticKey,
-  getAvatarSurface,
-} from '@/shared/constants';
-import { voiceLevel } from '@/shared/libs/voice-level';
-import { computeAvatarGeometry } from '@/shared/libs/avatar-geometry';
+import { useAvatarStore } from '@/features/voice/stores/avatar.store';
+import { REACTION_SEMANTIC_KEY, VOICE_ENVELOPE_MOTION_GAIN, VOICE_ENVELOPE_PEAK_GAIN } from '@/features/voice/constants/reaction';
+import { AVATAR_PALETTE, AVATAR_PREVIEW_EXPRESSIONS, AVATAR_PREVIEW_INTERVAL_MS, AVATAR_STATE_PARAMS, AVATAR_TRANSITION_MS, AVATAR_TRANSITION_SPEAKING_MS, AVATAR_VIEWBOX, getAvatarExpressionBySemanticKey, getAvatarSurface } from '@/features/voice/constants/avatar';
+import { voiceLevel } from '@/features/voice/model/voice-level';
+import { computeAvatarGeometry } from '@/features/voice/model/avatar-geometry';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useUniwind } from 'uniwind';
 import { useEffect, useMemo, useState } from 'react';

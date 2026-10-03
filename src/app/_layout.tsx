@@ -16,7 +16,7 @@ import { ConfirmDialog } from '@/shared/components/confirm';
 import { Toaster } from '@/shared/components/toast';
 import { OfflineBanner } from '@/shared/components/layout';
 import { SessionGate } from '@/shared/components/session/session-gate';
-import { CallPill } from '@/shared/components/voice';
+import { CallPill } from '@/features/voice';
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {

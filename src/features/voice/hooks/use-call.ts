@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
-import { useAvatarStore } from '@/core/stores';
+import { useAvatarStore } from '@/features/voice/stores/avatar.store';
 import type { AvatarState, VoicePhase } from '@/core/types';
-import { useVoiceSession } from './use-voice-session';
+import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 
 const AVATAR_BY_PHASE: Readonly<Record<VoicePhase, AvatarState>> = {
   idle: 'idle',

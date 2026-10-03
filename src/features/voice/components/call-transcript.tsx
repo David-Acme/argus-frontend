@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import type { VoiceTranscriptLine } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
-import { CALL_TRANSCRIPT_VISIBLE } from '@/shared/constants';
+import { CALL_TRANSCRIPT_VISIBLE } from '@/features/voice/constants/voice';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 

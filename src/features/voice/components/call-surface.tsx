@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoicePhase, VoiceTranscriptLine } from '@/core/types';
-import { Avatar } from '@/shared/components/avatar';
+import Avatar from '@/features/voice/components/avatar';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { voiceErrorMessage } from '@/shared/libs/voice-error';
-import { CallControl } from './call-control';
-import { CallTranscript } from './call-transcript';
+import { voiceErrorMessage } from '@/features/voice/model/voice-error';
+import { CallControl } from '@/features/voice/components/call-control';
+import { CallTranscript } from '@/features/voice/components/call-transcript';
 
 type CallSurfaceProps = {
   phase: VoicePhase;

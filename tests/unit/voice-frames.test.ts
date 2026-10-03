@@ -4,7 +4,7 @@ import {
   parseSttFrame,
   parseTurnId,
   parseVoiceError,
-} from '@/core/services/voice/voice-frames';
+} from '@/features/voice/services/voice/voice-frames';
 
 describe('parseTurnId', () => {
   test('numeric and string ids normalise to strings', () => {

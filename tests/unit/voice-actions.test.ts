@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { parseVoiceAction } from '@/core/services/voice/voice-frames';
-import { detectedClasses, resolveCameraId, routeForScreen } from '@/shared/libs/voice-actions';
+import { parseVoiceAction } from '@/features/voice/services/voice/voice-frames';
+import { detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
 
 const cameras = [
   { id: '1', name: 'Entrada principal' },

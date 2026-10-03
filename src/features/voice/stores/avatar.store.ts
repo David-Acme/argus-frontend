@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { REACTION_HOLD_MS } from '@/shared/constants';
+import { REACTION_HOLD_MS } from '@/features/voice/constants/reaction';
 import type { AvatarState, ReactionKind } from '@/core/types';
 
 type AvatarStoreState = {

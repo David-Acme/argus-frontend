@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { voiceService } from '@/core/services/voice';
+import { voiceService } from '@/features/voice/services/voice';
 import type { VoiceSnapshot } from '@/core/types';
 
 export type VoiceSessionState = VoiceSnapshot;

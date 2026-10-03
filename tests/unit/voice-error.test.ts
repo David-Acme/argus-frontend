@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { voiceErrorMessage } from '@/shared/libs/voice-error';
+import { voiceErrorMessage } from '@/features/voice/model/voice-error';
 
 const t = ((key: string) => key) as never;
 

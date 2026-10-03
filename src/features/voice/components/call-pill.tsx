@@ -3,9 +3,9 @@ import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { useCallBridge } from '@/shared/hooks/use-call-bridge';
+import { useCallBridge } from '@/features/voice/hooks/use-call-bridge';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useVoiceSession } from '@/shared/hooks/use-voice-session';
+import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 
 export function CallPill() {
   useCallBridge();

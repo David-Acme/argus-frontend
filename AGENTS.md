@@ -41,7 +41,7 @@ src/
 stays `PascalCase`; only the file name is kebab.
 
 ```
-src/shared/components/avatar/avatar.tsx        → export default function Avatar()
+src/features/voice/components/avatar.tsx      → export default function Avatar()
 src/shared/components/qr/qr-scan-sheet.tsx     → export function QrScanSheet()
 src/shared/components/ui/native-only-animated-view.tsx
 src/shared/hooks/use-mic-level.ts
@@ -545,16 +545,16 @@ for Watermelon nor make an HTTP list request just because it mounted.
 - El avatar de Argus es un **bubble-head 2D procedural** renderizado con
   **react-native-svg** (cross-platform: native + web/Tauri, sin CanvasKit). NO hay
   loader platform-split (`avatar-loader.{native,web}.tsx` NO existe) — el barrel
-  `src/shared/components/avatar/index.ts` es un solo archivo y funciona en ambas.
-- **Geometría pura sin React**: `src/shared/libs/avatar-geometry.ts`
+  `src/features/voice/components/avatar.tsx` es un solo archivo y funciona en ambas.
+- **Geometría pura sin React**: `src/features/voice/model/avatar-geometry.ts`
   (`computeFaceGeometry(size)`) — los consumidores la memorizan con `useMemo`
   (solo `size` cambia los paths; el resto del movimiento es transform/opacity).
-- **Presets por estado**: `src/shared/constants/avatar.constant.ts`
+- **Presets por estado**: `src/features/voice/constants/avatar.ts`
   (`AVATAR_STATE_PARAMS: Record<AvatarState, AvatarExpression>` — eyeOpen, pupilX/Y,
   browTilt/raise, headTilt, headBob, sparkle, driftSpeed) + `AVATAR_PALETTE`
   (light/dark) + tiempos de transición/blink.
 - **Tipos en `src/core/types/avatar.type.ts`** (`AvatarState`, `AvatarExpression`);
-  estado en `src/core/stores/avatar.store.ts` (`useAvatarStore`, reemplazó orb.store).
+  estado en `src/features/voice/stores/avatar.store.ts` (`useAvatarStore`, reemplazó orb.store).
 - **Expresión → shared values** con `withTiming` (900 ms; 380 ms al hablar). La vida
   por frame vive en `useFrameCallback` (worklet): **blink Poisson** (2.6-5.4 s,
   `AVATAR_BLINK_*`), micro-saccades lentas, drift de cabeza (`sin` producto de dos
@@ -667,7 +667,7 @@ cd src-tauri && cargo check
 | `src/core/interfaces/{view-cache,audit-log}.interface.ts` | Contratos de snapshots de vista y payloads de auditoría; siempre importar desde el barrel de interfaces |
 | `src/core/types/{view-cache,audit-log}.type.ts` | Uniones y tipos auxiliares de cache/auditoría; siempre importar desde el barrel de tipos |
 | `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |
-| `src/core/services/voice/` | `voiceService`: mic PCM por el socket de sync, observables STT/asistente, playback TTS |
+| `src/features/voice/` | Voice feature: `services/voice` (`voiceService`: mic PCM over the sync socket, STT/assistant observables, TTS playback), call screen, call pill, `useCall`, `useCallBridge`, avatar |
 | `src/core/services/invite.service.ts` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
 | `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
@@ -704,15 +704,14 @@ cd src-tauri && cargo check
 | `src/shared/components/ui/morph-icon.tsx` | Icono animado (morphicons): morphs por `setNativeProps`, `reducedMotion="user"`, ref `morphTo`/`set` |
 | `src/core/types/qr.type.ts` | `QrScanPurpose`, `QrScanStatus`, `QrScanFeedback`, `QrScanConfig` |
 | `src/shared/hooks/use-reduce-motion.ts` | OS "reduce motion" setting, live |
-| `src/core/stores/` | Zustand stores (barrel): `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
+| `src/core/stores/` | Zustand stores (barrel): `auth`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` (the avatar store lives in `features/voice/stores`) |
 | `src/core/i18n/` | Custom i18n engine (barrel: `t`/`setLanguage`/`getLanguage`, `translate`, `locales/`) |
 | `src/core/i18n/locales/schema.ts` | `I18nSchema`/`TranslationKey`/`TranslateFn` derivation from the `es` dictionary |
 | `src/core/types/i18n.type.ts` | i18n public types (barrel surface) |
 | `src/core/stores/locale.store.ts` | `useLocaleStore` — language preference/state, `app.language` |
 | `src/shared/hooks/use-translation.ts` | `useTranslation()` reactive hook (real-time) |
 | `src/shared/constants/i18n.constant.ts` | `I18N_STORAGE_KEY`, `I18N_DEFAULT_LANGUAGE`, `SUPPORTED_LANGUAGES`, `LANGUAGE_OPTIONS` |
-| `src/shared/components/avatar/` | Avatar procedural: `avatar.tsx`, barrel |
-| `src/shared/constants/avatar.constant.ts` | `AVATAR_STATE_PARAMS`, `AVATAR_PALETTE`, blink/transition times |
+| `src/features/voice/constants/avatar.ts` | `AVATAR_STATE_PARAMS`, `AVATAR_PALETTE`, blink/transition times |
 | `src/shared/libs/color.ts` | `hexToRgba` / `hexToHsv` (shader uniform helpers) |
 | `src/shared/hooks/use-mic-level.ts` | Live mic metering (expo-audio, native + web) |
 | `src/shared/hooks/use-theme-preference.ts` | Theme preference get/set |

@@ -6,6 +6,7 @@ import type {
   DashboardSummary,
   EventSeverity,
   IconName,
+  NotificationData,
   UserRole,
   ZonePoint,
   ZoneType,
@@ -94,9 +95,11 @@ export interface IPeopleDirectoryFilter {
 
 export interface INotificationPreviewCacheRow {
   id: string;
+  type: string;
   title: string;
   body: string;
   isRead: boolean;
+  data: NotificationData;
 }
 
 export interface IDashboardCacheData {

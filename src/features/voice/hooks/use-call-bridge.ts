@@ -1,18 +1,17 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import type { ICameraCacheRow } from '@/core/interfaces';
+import type { ICameraCacheRow, INotificationPreviewCacheRow } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
-import { notificationService } from '@/core/services/notification.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
-import { voiceService } from '@/core/services/voice';
+import { voiceService } from '@/features/voice/services/voice';
 import { useAuthStore } from '@/core/stores';
 import type { GuardMode, VoiceAction } from '@/core/types';
 import { GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
-import { detectedClasses, resolveCameraId, routeForScreen } from '@/shared/libs/voice-actions';
-import { useTranslation } from './use-translation';
-import { useVoiceSession } from './use-voice-session';
+import { detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 
 const RECENT_NOTIFICATIONS = 5;
 
@@ -39,30 +38,32 @@ export function useCallBridge(): void {
 
     const seen = new Set<string>();
     let primed = false;
-    const subscription = notificationService
-      .observeForUser(String(user.id), RECENT_NOTIFICATIONS)
-      .subscribe((rows) => {
-        for (const row of rows) {
-          if (seen.has(row.id)) continue;
-          seen.add(row.id);
-          if (!primed || row.type !== 'camera') continue;
-          const data = row.data ?? {};
-          const camera = typeof data.cameraName === 'string' ? data.cameraName : '';
-          if (!camera) continue;
-          if (data.cameraId !== undefined) lastEventCamera.current = String(data.cameraId);
-          const classes = detectedClasses(data).map((name) => {
-            const key = `screens.voice.objects.${name}`;
-            return tk(key) === key ? name : tk(key);
-          });
-          voiceService.sendContext({
-            kind: 'cameraEvent',
-            camera,
-            text: classes.length > 0 ? classes.join(', ') : t('screens.voice.objects.something-moving'),
-          });
-        }
-        primed = true;
-      });
-    return () => subscription.unsubscribe();
+    const announce = () => {
+      const rows = viewCacheService
+        .rowsSnapshot<INotificationPreviewCacheRow>(VIEW_CACHE_KEYS.dashboardNotifications)
+        .slice(0, RECENT_NOTIFICATIONS);
+      for (const row of rows) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        if (!primed || row.type !== 'camera') continue;
+        const data = row.data ?? {};
+        const camera = typeof data.cameraName === 'string' ? data.cameraName : '';
+        if (!camera) continue;
+        if (data.cameraId !== undefined) lastEventCamera.current = String(data.cameraId);
+        const classes = detectedClasses(data).map((name) => {
+          const key = `screens.voice.objects.${name}`;
+          return tk(key) === key ? name : tk(key);
+        });
+        voiceService.sendContext({
+          kind: 'cameraEvent',
+          camera,
+          text: classes.length > 0 ? classes.join(', ') : t('screens.voice.objects.something-moving'),
+        });
+      }
+      primed = true;
+    };
+    announce();
+    return viewCacheService.subscribe(VIEW_CACHE_KEYS.dashboardNotifications, undefined, announce);
   }, [isActive, user, t, tk]);
 
   useEffect(() => {

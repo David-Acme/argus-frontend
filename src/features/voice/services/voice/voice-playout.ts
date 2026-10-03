@@ -1,16 +1,10 @@
 import type { ArgusMic } from 'argus-mic';
 import { withTiming } from 'react-native-reanimated';
-import {
-  VOICE_ENVELOPE_ATTACK_MS,
-  VOICE_ENVELOPE_RELEASE_MS,
-  VOICE_ENVELOPE_WINDOW_MS,
-  VOICE_PLAYOUT_IDLE_GRACE_MS,
-  VOICE_PLAYOUT_STALL_MS,
-  VOICE_SAMPLE_RATE,
-} from '@/shared/constants';
-import { pcmChunk } from '@/shared/libs/pcm';
-import { voiceLevel } from '@/shared/libs/voice-level';
-import { PlayoutEnvelope } from './voice-envelope';
+import { VOICE_ENVELOPE_ATTACK_MS, VOICE_ENVELOPE_RELEASE_MS, VOICE_ENVELOPE_WINDOW_MS } from '@/features/voice/constants/reaction';
+import { VOICE_PLAYOUT_IDLE_GRACE_MS, VOICE_PLAYOUT_STALL_MS, VOICE_SAMPLE_RATE } from '@/features/voice/constants/voice';
+import { pcmChunk } from '@/features/voice/model/pcm';
+import { voiceLevel } from '@/features/voice/model/voice-level';
+import { PlayoutEnvelope } from '@/features/voice/services/voice/voice-envelope';
 
 const WINDOW_SAMPLES = Math.max(1, Math.round((VOICE_SAMPLE_RATE * VOICE_ENVELOPE_WINDOW_MS) / 1000));
 

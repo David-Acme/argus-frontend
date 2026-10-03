@@ -1,5 +1,5 @@
 import type { VoiceAction, VoiceActionName, VoiceSttFrame } from '@/core/types';
-import { VOICE_ACTION_NAMES } from '@/shared/constants';
+import { VOICE_ACTION_NAMES } from '@/features/voice/constants/voice';
 
 type FrameRecord = Record<string, unknown>;
 

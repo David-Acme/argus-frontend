@@ -8,7 +8,7 @@ import {
   gateOnTurn,
   gateOnUserFinal,
   shouldSendMic,
-} from '@/core/services/voice/voice-turn-gate';
+} from '@/features/voice/services/voice/voice-turn-gate';
 
 describe('turn gate against a duplex server', () => {
   test('a skip discards audio until the next turn starts', () => {
