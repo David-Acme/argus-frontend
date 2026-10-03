@@ -1,5 +1,6 @@
 import { Model, tableSchema } from '@nozbe/watermelondb';
 import { date, field, text } from '@nozbe/watermelondb/decorators';
+import type { PersonStatus } from '@/core/types';
 
 export const PERSON_SCHEMA = tableSchema({
   name: 'person',
@@ -8,6 +9,7 @@ export const PERSON_SCHEMA = tableSchema({
     { name: 'name', type: 'string' },
     { name: 'alias', type: 'string' },
     { name: 'observation', type: 'string' },
+    { name: 'status', type: 'string', isIndexed: true },
     { name: 'first_seen_at', type: 'number' },
     { name: 'last_seen_at', type: 'number', isIndexed: true },
     { name: 'created_at', type: 'number' },
@@ -22,6 +24,7 @@ export class PersonModel extends Model {
   @text('name') name!: string;
   @text('alias') alias!: string;
   @text('observation') observation!: string;
+  @field('status') status!: PersonStatus;
   @date('first_seen_at') firstSeenAt!: Date;
   @date('last_seen_at') lastSeenAt!: Date;
   @date('created_at') createdAt!: Date;

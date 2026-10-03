@@ -1,4 +1,4 @@
-import { combineLatest, type Subscription } from 'rxjs';
+import { auditTime, combineLatest, type Subscription } from 'rxjs';
 import type {
   ICameraCacheRow,
   ICameraDetailCache,
@@ -42,6 +42,7 @@ import {
 const DAY_MS = 86_400_000;
 const BAND_HOURS = 24 / MOSAIC_ROWS;
 const NOTIFICATION_PREVIEW_LIMIT = 8;
+const PROJECTION_REFRESH_MS = 120;
 
 const startOfDay = (value: Date): number =>
   new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
@@ -51,10 +52,6 @@ const endOfDay = (value: Date): number => startOfDay(value) + DAY_MS - 1;
 const emptyLevels = (): number[][] =>
   Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
 
-/**
- * The sole owner of WatermelonDB observers used to keep first-frame MMKV
- * projections fresh. Screens never need to open an observer merely to render.
- */
 class ViewCacheCoordinatorService {
   private userId: string | null = null;
   private coreSubscription: Subscription | null = null;
@@ -103,7 +100,9 @@ class ViewCacheCoordinatorService {
       events: calendarEventService.observeRange(range.from, range.to),
       reminders: reminderService.observeForUser(this.userId),
       tasks: projectTaskService.observeDueRange(range.from, range.to),
-    }).subscribe(({ events, reminders, tasks }) => {
+    })
+      .pipe(auditTime(PROJECTION_REFRESH_MS))
+      .subscribe(({ events, reminders, tasks }) => {
       const entries = toCalendarEntries(events, reminders, tasks, range.from, range.to);
       viewCacheService.write(VIEW_CACHE_KEYS.calendarEntries, entries, scope, {
         limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
@@ -145,7 +144,9 @@ class ViewCacheCoordinatorService {
       events: eventService.observeRecent(EVENT_SAMPLE_LIMIT),
       users: userService.observeDirectory(),
       invitations: userInvitationService.observeList(),
-    }).subscribe(
+    })
+      .pipe(auditTime(PROJECTION_REFRESH_MS))
+      .subscribe(
       ({
         cameras,
         zones,
@@ -334,7 +335,9 @@ class ViewCacheCoordinatorService {
       events: calendarEventService.observeRange(from, to),
       reminders: reminderService.observeForUser(userId),
       tasks: projectTaskService.observeDueRange(from, to),
-    }).subscribe(({ events, reminders, tasks }) => {
+    })
+      .pipe(auditTime(PROJECTION_REFRESH_MS))
+      .subscribe(({ events, reminders, tasks }) => {
       const entries: CalendarEntry[] = toCalendarEntries(events, reminders, tasks, from, to);
       viewCacheService.write(VIEW_CACHE_KEYS.dashboardAgenda, entries, 'today', {
         limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,

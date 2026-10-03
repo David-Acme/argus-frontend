@@ -24,6 +24,7 @@ const FRAME_TEXT: u8 = 1;
 const FRAME_BINARY: u8 = 2;
 const FRAME_ERROR: u8 = 3;
 const FRAME_CLOSE: u8 = 4;
+const PING_INTERVAL: Duration = Duration::from_secs(20);
 
 #[derive(Clone, Default)]
 pub struct SocketState {
@@ -165,8 +166,16 @@ pub async fn open(
   tokio::spawn(async move {
     let mut close_code = 1000;
     let mut close_reason = String::new();
+    let mut ping = tokio::time::interval_at(tokio::time::Instant::now() + PING_INTERVAL, PING_INTERVAL);
     loop {
       tokio::select! {
+        _ = ping.tick() => {
+          if writer.send(Message::Ping(Default::default())).await.is_err() {
+            close_code = 1006;
+            close_reason = "Ping failed".to_string();
+            break;
+          }
+        }
         outgoing = receiver.recv() => {
           match outgoing {
             Some(message) => {

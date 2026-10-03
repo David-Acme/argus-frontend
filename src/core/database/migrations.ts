@@ -58,5 +58,15 @@ export const migrations = schemaMigrations({
       toVersion: 5,
       steps: [addColumns({ table: 'camera', columns: [{ name: 'icon', type: 'string' }] })],
     },
+    {
+      toVersion: 6,
+      steps: [
+        addColumns({
+          table: 'person',
+          columns: [{ name: 'status', type: 'string', isIndexed: true }],
+        }),
+        addColumns({ table: 'user', columns: [{ name: 'lang', type: 'string' }] }),
+      ],
+    },
   ],
 });

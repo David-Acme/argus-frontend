@@ -18,12 +18,15 @@ export const SYNC_TABLE_KEYS = [
 
 export type SyncTableKey = (typeof SYNC_TABLE_KEYS)[number];
 
-/** Cursors persisted in storageService (`app.sync.<userId>`), in seconds; absent means a first full sync. */
+export type SyncTableCursor = {
+  createdStart?: number;
+  createdId?: number | string;
+  deletedStart?: number;
+  deletedId?: number | string;
+  deletedBaseline?: boolean;
+  projection?: number;
+};
+
 export type SyncCursors = {
-  [key in SyncTableKey]?: {
-    createdStart?: number;
-    createdId?: number | string;
-    deletedStart?: number;
-    deletedId?: number | string;
-  };
+  [key in SyncTableKey]?: SyncTableCursor;
 };

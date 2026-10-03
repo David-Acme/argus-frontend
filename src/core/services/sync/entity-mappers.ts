@@ -1,4 +1,4 @@
-import type { SyncTableKey } from '@/core/types';
+import type { PersonStatus, SyncTableKey, UserLang } from '@/core/types';
 import { sanitizeObject, sanitizeStringArray, sanitizeZonePoints } from '@/core/database/tables/sanitizers';
 
 export type FieldTransform = (value: unknown) => unknown;
@@ -26,10 +26,12 @@ const toMs = (v: unknown): number => {
   const value = finiteNumber(v);
   return value == null ? 0 : Math.round(value * 1000);
 };
-const toOptDate = (v: unknown): Date | null => {
+const toOptMs = (v: unknown): number | null => {
   const value = finiteNumber(v);
-  return value == null ? null : new Date(value * 1000);
+  return value == null ? null : Math.round(value * 1000);
 };
+const toPersonStatus = (v: unknown): PersonStatus => (v === 'candidate' ? 'candidate' : 'known');
+const toUserLang = (v: unknown): UserLang => (v === 'en' ? 'en' : 'es');
 
 const parseJson = (v: unknown): unknown => {
   if (typeof v !== 'string') return v;
@@ -49,6 +51,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     name: toStr,
     lastName: toStr,
     role: toStr,
+    lang: toUserLang,
     isActive: toBool,
     createdAt: toMs,
     updatedAt: toMs,
@@ -59,7 +62,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     redemptionCount: toNum,
     expiresAt: toMs,
     createdBy: toStr,
-    revokedAt: toOptDate,
+    revokedAt: toOptMs,
     createdAt: toMs,
     updatedAt: toMs,
   },
@@ -112,7 +115,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     scheduledAt: toMs,
     recurrenceRule: toOptStr,
     isCompleted: toBool,
-    completedAt: toOptDate,
+    completedAt: toOptMs,
     createdAt: toMs,
     updatedAt: toMs,
   },
@@ -134,7 +137,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     location: toStr,
     color: toStr,
     startsAt: toMs,
-    endsAt: toOptDate,
+    endsAt: toOptMs,
     isAllDay: toBool,
     recurrenceRule: toOptStr,
     createdAt: toMs,
@@ -146,8 +149,8 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     description: toStr,
     status: toStr,
     color: toStr,
-    startsAt: toOptDate,
-    targetAt: toOptDate,
+    startsAt: toOptMs,
+    targetAt: toOptMs,
     createdAt: toMs,
     updatedAt: toMs,
   },
@@ -172,7 +175,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     title: toStr,
     status: toStr,
     priority: toStr,
-    dueAt: toOptDate,
+    dueAt: toOptMs,
     sortOrder: toNum,
     createdAt: toMs,
     updatedAt: toMs,
@@ -192,6 +195,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     name: toStr,
     alias: toStr,
     observation: toStr,
+    status: toPersonStatus,
     firstSeenAt: toMs,
     lastSeenAt: toMs,
     createdAt: toMs,
@@ -204,17 +208,15 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     body: toStr,
     data: toObject,
     isRead: toBool,
-    readAt: toOptDate,
+    readAt: toOptMs,
     createdAt: toMs,
   },
 };
 
-/** `string` columns that store JSON (sanitizers receive them already parsed). */
 const JSON_COLUMNS = new Set(['capabilities', 'config', 'points', 'file_paths', 'data']);
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
-/** snake_case columns ready for `prepareCreateFromDirtyRaw` (id = server id string). */
 export const toDirtyRaw = (key: SyncTableKey, row: Record<string, unknown>): Record<string, unknown> => {
   const raw: Record<string, unknown> = { id: String(row.id) };
   for (const [prop, transform] of Object.entries(TABLE_MAPS[key])) {
@@ -225,7 +227,6 @@ export const toDirtyRaw = (key: SyncTableKey, row: Record<string, unknown>): Rec
   return raw;
 };
 
-/** camelCase model props ready for `prepareUpdate` (decorators serialize). */
 export const toModelProps = (key: SyncTableKey, row: Record<string, unknown>): Record<string, unknown> => {
   const props: Record<string, unknown> = {};
   for (const [prop, transform] of Object.entries(TABLE_MAPS[key])) {
@@ -234,7 +235,6 @@ export const toModelProps = (key: SyncTableKey, row: Record<string, unknown>): R
   return props;
 };
 
-/** Maps an audit patch without materialising defaults for fields it does not contain. */
 export const toPartialModelProps = (
   key: SyncTableKey,
   row: Record<string, unknown>,

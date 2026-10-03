@@ -20,6 +20,10 @@ import type {
 
 export type UserRole = 'owner' | 'resident' | 'guard' | 'guest';
 
+export type UserLang = 'es' | 'en';
+
+export type PersonStatus = 'candidate' | 'known';
+
 export type CameraRecordMode = 'events' | 'continuous';
 
 /** Which integration drives a camera; mirrors `CameraDriver` in the backend. */
