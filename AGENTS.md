@@ -729,7 +729,6 @@ cd src-tauri && cargo check
 | `src/app/(app)/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` · `security/` · `settings/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
 | `src/features/home/` | Home dashboard: camera grid/tile, project grid, today's agenda, summary, Novedades, notifications popover |
 | `src/features/settings/` | Configuración: every owner's catalog from argus-settings; TTS engine/variant/voice settings as an option list with bundled voice previews (`constants/tts-preview-clips.{web,native}.ts`, Ogg/Opus vs M4A/AAC), install states and on-demand install (`model/tts-preview.ts`, unit-tested) |
-| `src/features/settings/` | Configuración: every owner's catalog from argus-settings; TTS engine/variant/voice settings as an option list with bundled voice previews (`constants/tts-preview-clips.{web,native}.ts`, Ogg/Opus vs M4A/AAC), install states and on-demand install (`model/tts-preview.ts`, unit-tested) |
 | `src/shared/components/layout/` | App chrome and screen layout: `AppShell`, `AppScreen`, `ScreenHeader`, `NavRail`, `BottomNav`/`GlobalBottomNav`, `ComposeFab`, `CenteredScreen`, `OfflineBanner` |
 | `src/shared/components/activity/` | `ActivityCard` + `MosaicChart` (home and cameras) |
 | `src/features/auth/components/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
