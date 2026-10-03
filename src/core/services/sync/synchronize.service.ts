@@ -143,6 +143,7 @@ type ErrorFrame = Partial<IWsMessage> & { status?: unknown };
 
 class SynchronizeService {
   private socket: IArgusSocket | null = null;
+  private connected = false;
   private connecting: Promise<boolean> | null = null;
   private authStore: AuthStoreApi | null = null;
   private sessionActions: SessionActions | null = null;
@@ -181,7 +182,7 @@ class SynchronizeService {
   }
 
   get isSocketConnected(): boolean {
-    return this.socket != null;
+    return this.connected;
   }
 
   get lastSyncAtValue(): number | null {
@@ -283,7 +284,13 @@ class SynchronizeService {
     socket?.close(1000, '');
     this.reconnectAttempt = 0;
     this.pauseLive();
-    this.disconnectCallbacks.forEach((cb) => cb());
+    this.setConnected(false);
+  }
+
+  private setConnected(next: boolean): void {
+    if (this.connected === next) return;
+    this.connected = next;
+    (next ? this.connectCallbacks : this.disconnectCallbacks).forEach((cb) => cb());
   }
 
   private resetLiveState(): void {
@@ -468,6 +475,7 @@ class SynchronizeService {
           this.socket = null;
           this.pauseLive();
           this.rejectPendingRequests(new Error(`Socket closed (${code}): ${reason}`));
+          this.setConnected(false);
         }
         if (!opened) settle(false);
         if (reconnect && !this.manualClose) this.scheduleReconnect();
@@ -482,7 +490,7 @@ class SynchronizeService {
         opened = true;
         this.reconnectAttempt = 0;
         settle(true);
-        this.connectCallbacks.forEach((cb) => cb());
+        this.setConnected(true);
       };
       socket.onMessage = (message, data) => {
         if (this.socket !== socket) return;

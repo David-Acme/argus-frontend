@@ -2,6 +2,10 @@ export const common = {
 
   continue: 'Continue',
   retry: 'Retry',
+  offline: {
+    title: 'No connection to Argus',
+    description: 'Showing what this device saved last.',
+  },
   'server-unreachable': {
     title: 'Your Argus server is out of reach',
     description: 'Make sure the server is on and that this device is on the same network.',

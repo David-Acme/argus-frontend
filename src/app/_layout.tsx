@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GlobalBottomNav } from '@/shared/components/dashboard';
 import { ConfirmDialog } from '@/shared/components/confirm';
 import { Toaster } from '@/shared/components/toast';
+import { OfflineBanner } from '@/shared/components/layout';
 import { SessionGate } from '@/shared/components/session/session-gate';
 export { ErrorBoundary } from 'expo-router';
 
@@ -55,6 +56,7 @@ export default function RootLayout() {
               </Stack>
               {/* Above the Stack so they survive every route change. */}
               <GlobalBottomNav />
+              <OfflineBanner />
               <ConfirmDialog />
               <Toaster />
               <PortalHost />

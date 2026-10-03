@@ -14,7 +14,7 @@ export const profile = {
   language: 'Language',
   'language-label': 'App language',
   server: 'Server',
-  'server-address': 'Connected to {address}',
+  'server-address': 'Server at {address}',
   'server-paired': 'Paired since {date}',
   unpair: 'Unpair this device',
   'unpair-hint': 'Signs out and forgets the server on this device.',

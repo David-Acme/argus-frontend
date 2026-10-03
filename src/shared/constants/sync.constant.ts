@@ -25,6 +25,7 @@ export const SYNC_WS_PATH = '/sync';
 
 /** Reconnect backoff: doubles per attempt, capped at the max. */
 export const WS_RECONNECT_BASE_MS = 2000;
+export const OFFLINE_NOTICE_DELAY_MS = 4000;
 export const WS_RECONNECT_MAX_MS = 30000;
 
 /** Opening the socket gives up after this long and schedules a reconnect. */

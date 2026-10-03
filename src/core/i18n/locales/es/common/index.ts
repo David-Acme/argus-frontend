@@ -1,6 +1,10 @@
 export const common = {
   continue: 'Continuar',
   retry: 'Reintentar',
+  offline: {
+    title: 'Sin conexión con Argus',
+    description: 'Mostrando lo último guardado en este dispositivo.',
+  },
   'server-unreachable': {
     title: 'No encontramos tu servidor Argus',
     description: 'Comprueba que el servidor esté encendido y que este dispositivo esté en la misma red.',
