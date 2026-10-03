@@ -27,7 +27,7 @@ const TREND_ICON = {
 
 const TREND_TONE = {
   up: 'text-success',
-  down: 'text-error',
+  down: 'text-error-strong',
   flat: 'text-muted-foreground',
 } as const;
 

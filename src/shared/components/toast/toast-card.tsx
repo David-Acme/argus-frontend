@@ -21,8 +21,8 @@ const ICON: Record<ToastItem['intent'], IconName> = {
 
 const ACCENT: Record<ToastItem['intent'], string> = {
   success: 'text-success',
-  error: 'text-error',
-  warning: 'text-warning',
+  error: 'text-error-strong',
+  warning: 'text-warning-strong',
   info: 'text-foreground-secondary',
 };
 

@@ -2,12 +2,6 @@
 @import "uniwind";
 @import "tw-animate-css";
 
-/*
-  ARGUS color tokens (OKLCH) — Tailwind/Uniwind source of truth.
-  The HEX equivalents used by JS/native/React Navigation live in
-  src/shared/constants/color.constant.ts — keep both in sync.
-*/
-
 @theme {
   --radius: 20px;
   --radius-sm: 14px;
@@ -20,12 +14,7 @@
 
   --spacing-hairline: hairlineWidth();
 
-  /*
-    Own breakpoint scale instead of inheriting Tailwind's defaults. They match
-    the three window classes the layout reasons about (see use-window-class):
-    sm/md = compact -> medium, lg and up = expanded.
-  */
-  --breakpoint-sm: 480px;
+    --breakpoint-sm: 480px;
   --breakpoint-md: 640px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
@@ -38,8 +27,7 @@
 @layer theme {
   :root {
     @variant light {
-      /* ---- Canonical semantic tokens ---- */
-      --color-background: oklch(0.959 0.006 75.41);
+            --color-background: oklch(0.959 0.006 75.41);
       --color-surface: oklch(0.980 0.005 78.30);
       --color-surface-secondary: oklch(0.921 0.012 79.78);
       --color-card: oklch(1 0 0);
@@ -48,12 +36,12 @@
       --color-border-subtle: oklch(0.932 0.009 78.28);
       --color-divider: oklch(0.849 0.012 67.66);
       --color-foreground: oklch(0.200 0.000 89.88);
-      --color-foreground-secondary: oklch(0.503 0.009 61.32);
-      --color-muted-foreground: oklch(0.680 0.010 62.52);
-      --color-placeholder: oklch(0.767 0.013 67.64);
-      --color-success: oklch(0.650 0.120 152.04);
+      --color-foreground-secondary: oklch(0.442 0.009 61.28);
+      --color-muted-foreground: oklch(0.540 0.012 58.06);
+      --color-placeholder: oklch(0.637 0.021 67.44);
+      --color-success: oklch(0.528 0.096 151.99);
       --color-warning: oklch(0.767 0.132 71.42);
-      --color-error: oklch(0.644 0.146 22.03);
+      --color-error: oklch(0.561 0.188 25.68);
       --color-info: oklch(0.624 0.045 237.65);
       --color-interactive: oklch(0.371 0.000 89.88);
       --color-interactive-hover: oklch(0.321 0.000 89.88);
@@ -63,32 +51,15 @@
       --color-accent-soft: oklch(0.932 0.031 81.75);
       --color-disabled: oklch(0.869 0.011 76.59);
       --color-overlay: oklch(0.215 0.009 75.14 / 0.45);
+      --color-error-strong: oklch(0.561 0.188 25.68);
+      --color-warning-strong: oklch(0.543 0.112 67.57);
+      --color-accent-strong: oklch(0.538 0.071 81.56);
       --color-foreground-on-interactive: oklch(0.980 0.005 78.30);
 
-      /* ---- shadcn-compatible aliases ---- */
-      --color-primary: oklch(0.371 0.000 89.88); /* interactive */
-      --color-primary-foreground: oklch(0.980 0.005 78.30); /* foreground-on-interactive */
-      --color-secondary: oklch(0.921 0.012 79.78); /* surface-secondary */
-      --color-secondary-foreground: oklch(0.200 0.000 89.88); /* foreground */
-      --color-muted: oklch(0.921 0.012 79.78); /* surface-secondary */
-      --color-destructive: oklch(0.644 0.146 22.03); /* error */
-      --color-destructive-foreground: oklch(0.980 0.005 78.30); /* foreground-on-interactive */
-      --color-input: oklch(0.921 0.012 79.78); /* surface-secondary */
-      --color-ring: oklch(0.701 0.081 81.91); /* accent */
-      --color-popover: oklch(1 0 0); /* card */
-      --color-popover-foreground: oklch(0.200 0.000 89.88); /* foreground */
-      --color-card-foreground: oklch(0.200 0.000 89.88); /* foreground */
-      --color-accent-foreground: oklch(0.200 0.000 89.88); /* foreground */
-      --color-chart-1: oklch(0.701 0.081 81.91); /* accent */
-      --color-chart-2: oklch(0.650 0.120 152.04); /* success */
-      --color-chart-3: oklch(0.624 0.045 237.65); /* info */
-      --color-chart-4: oklch(0.767 0.132 71.42); /* warning */
-      --color-chart-5: oklch(0.644 0.146 22.03); /* error */
-    }
+            --color-primary: oklch(0.371 0.000 89.88);       --color-primary-foreground: oklch(0.980 0.005 78.30);       --color-secondary: oklch(0.921 0.012 79.78);       --color-secondary-foreground: oklch(0.200 0.000 89.88);       --color-muted: oklch(0.921 0.012 79.78);       --color-destructive: oklch(0.561 0.188 25.68);       --color-destructive-foreground: oklch(0.980 0.005 78.30);       --color-input: oklch(0.921 0.012 79.78);       --color-ring: oklch(0.701 0.081 81.91);       --color-popover: oklch(1 0 0);       --color-popover-foreground: oklch(0.200 0.000 89.88);       --color-card-foreground: oklch(0.200 0.000 89.88);       --color-accent-foreground: oklch(0.200 0.000 89.88);       --color-chart-1: oklch(0.701 0.081 81.91);       --color-chart-2: oklch(0.528 0.096 151.99);       --color-chart-3: oklch(0.624 0.045 237.65);       --color-chart-4: oklch(0.767 0.132 71.42);       --color-chart-5: oklch(0.561 0.188 25.68);     }
 
     @variant dark {
-      /* ---- Canonical semantic tokens ---- */
-      --color-background: oklch(0.208 0.004 106.73);
+            --color-background: oklch(0.208 0.004 106.73);
       --color-surface: oklch(0.235 0.008 95.39);
       --color-surface-secondary: oklch(0.257 0.010 88.78);
       --color-card: oklch(0.255 0.009 97.71);
@@ -112,28 +83,12 @@
       --color-accent-soft: oklch(0.291 0.027 78.38);
       --color-disabled: oklch(0.350 0.013 81.74);
       --color-overlay: oklch(0.150 0.003 67.55 / 0.55);
+      --color-error-strong: oklch(0.644 0.113 24.09);
+      --color-warning-strong: oklch(0.814 0.112 83.58);
+      --color-accent-strong: oklch(0.807 0.079 83.02);
       --color-foreground-on-interactive: oklch(0.207 0.009 75.12);
 
-      /* ---- shadcn-compatible aliases ---- */
-      --color-primary: oklch(0.910 0.009 84.57); /* interactive */
-      --color-primary-foreground: oklch(0.207 0.009 75.12); /* foreground-on-interactive */
-      --color-secondary: oklch(0.257 0.010 88.78); /* surface-secondary */
-      --color-secondary-foreground: oklch(0.954 0.012 79.78); /* foreground */
-      --color-muted: oklch(0.257 0.010 88.78); /* surface-secondary */
-      --color-destructive: oklch(0.556 0.145 25.99); /* error */
-      --color-destructive-foreground: oklch(0.866 0.007 67.73); /* plomo-white (grayish label on light red) */
-      --color-input: oklch(0.257 0.010 88.78); /* surface-secondary */
-      --color-ring: oklch(0.807 0.079 83.02); /* accent */
-      --color-popover: oklch(0.255 0.009 97.71); /* card */
-      --color-popover-foreground: oklch(0.954 0.012 79.78); /* foreground */
-      --color-card-foreground: oklch(0.954 0.012 79.78); /* foreground */
-      --color-accent-foreground: oklch(0.954 0.012 79.78); /* foreground */
-      --color-chart-1: oklch(0.807 0.079 83.02); /* accent */
-      --color-chart-2: oklch(0.686 0.115 149.46); /* success */
-      --color-chart-3: oklch(0.710 0.033 237.77); /* info */
-      --color-chart-4: oklch(0.814 0.112 83.58); /* warning */
-      --color-chart-5: oklch(0.556 0.145 25.99); /* error */
-    }
+            --color-primary: oklch(0.910 0.009 84.57);       --color-primary-foreground: oklch(0.207 0.009 75.12);       --color-secondary: oklch(0.257 0.010 88.78);       --color-secondary-foreground: oklch(0.954 0.012 79.78);       --color-muted: oklch(0.257 0.010 88.78);       --color-destructive: oklch(0.556 0.145 25.99);       --color-destructive-foreground: oklch(0.866 0.007 67.73);       --color-input: oklch(0.257 0.010 88.78);       --color-ring: oklch(0.807 0.079 83.02);       --color-popover: oklch(0.255 0.009 97.71);       --color-popover-foreground: oklch(0.954 0.012 79.78);       --color-card-foreground: oklch(0.954 0.012 79.78);       --color-accent-foreground: oklch(0.954 0.012 79.78);       --color-chart-1: oklch(0.807 0.079 83.02);       --color-chart-2: oklch(0.686 0.115 149.46);       --color-chart-3: oklch(0.710 0.033 237.77);       --color-chart-4: oklch(0.814 0.112 83.58);       --color-chart-5: oklch(0.556 0.145 25.99);     }
   }
 }
 

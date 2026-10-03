@@ -140,7 +140,7 @@ function FormLabel({ className, ...props }: ComponentProps<typeof Text>) {
   return (
     <Text
       nativeID={formItemId}
-      className={cn('text-[13px] font-medium', error && 'text-error', className)}
+      className={cn('text-[13px] font-medium', error && 'text-error-strong', className)}
       {...props}
     />
   );
@@ -178,7 +178,7 @@ function FormMessage({ className, children, ...props }: ComponentProps<typeof Te
   return (
     <Text
       nativeID={formMessageId}
-      className={cn('text-error text-xs leading-4', className)}
+      className={cn('text-error-strong text-xs leading-4', className)}
       {...props}>
       {typeof body === 'string' ? tk(body) : body}
     </Text>

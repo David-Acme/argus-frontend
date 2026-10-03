@@ -117,6 +117,20 @@ src/core/stores/qr-scan.store.ts
   Native Reusables components keep working out of the box.
 - Prefer semantic classes (`bg-surface-secondary`, `text-foreground-secondary`)
   over ad-hoc colors. **No hardcoded hex in components.**
+- **Text and icons meet WCAG AA (4.5:1) on `background` and `card`.** Status
+  and accent colors are fills; their text/icon twins are `error-strong`,
+  `warning-strong`, `accent-strong` (`text-error-strong`, never `text-error`).
+  `success`, `foreground-secondary`, `muted-foreground` and `placeholder` are
+  already text-safe in both themes. A new color that carries text gets a
+  measured strong twin, not a guess.
+- **Type scale.** `Text` variants are the scale: `display` (32/38),
+  `title` (24/30), `headline` (20/26), `subhead` (17/24), `body` (15/22),
+  `label` (14/20 medium), `caption` (13/18 muted), `micro` (11/14 muted).
+  New UI uses them instead of `text-[Npx]`; `Text` caps OS font scaling at
+  1.6x so layouts survive the largest accessibility sizes.
+- **Touch targets.** Buttons are at least 44pt tall on touch platforms
+  (`default` 44, `lg` 48, `icon` 44; `sm` 40 plus hit slop) and compact on
+  web/desktop where a pointer is precise.
 
 ### 8. Theme preference
 

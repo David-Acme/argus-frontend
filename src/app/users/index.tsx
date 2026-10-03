@@ -402,7 +402,7 @@ export default function UsersScreen() {
                       </Text>
                       {usable ? (
                         <Pressable onPress={() => void revoke(invitation)} accessibilityLabel={t('screens.users.revoke')}>
-                          <Icon name="x" className="text-error size-5" />
+                          <Icon name="x" className="text-error-strong size-5" />
                         </Pressable>
                       ) : null}
                     </View>
@@ -447,7 +447,7 @@ export default function UsersScreen() {
                   </Button>
                   {user.isActive ? (
                     <Button size="sm" variant="ghost" onPress={() => void deactivate(user)}>
-                      <Icon name="user-minus" className="text-error size-4" />
+                      <Icon name="user-minus" className="text-error-strong size-4" />
                     </Button>
                   ) : null}
                 </View>

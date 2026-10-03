@@ -58,7 +58,7 @@ export default function ApproveScreen() {
     <CenteredScreen maxWidth={448} className="items-stretch">
       <View className="items-center gap-3">
         <View className="bg-accent-soft size-16 items-center justify-center rounded-full">
-          <Icon name="monitor" className="text-accent size-8" />
+          <Icon name="monitor" className="text-accent-strong size-8" />
         </View>
         <Text variant="h3" className="text-center">
           {t('screens.approve.title')}
@@ -77,7 +77,7 @@ export default function ApproveScreen() {
 
       {phase === 'approving' ? (
         <View className="items-center gap-3">
-          <Icon name="refresh-cw" className="text-accent size-6" />
+          <Icon name="refresh-cw" className="text-accent-strong size-6" />
           <Text>{t('screens.approve.approving')}</Text>
         </View>
       ) : null}
@@ -91,7 +91,7 @@ export default function ApproveScreen() {
 
       {phase === 'error' ? (
         <View className="items-center gap-3">
-          <Icon name="triangle-alert" className="text-error size-8" />
+          <Icon name="triangle-alert" className="text-error-strong size-8" />
           <Text variant="muted" className="text-center">
             {t('screens.approve.error')}
           </Text>

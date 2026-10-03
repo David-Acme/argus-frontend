@@ -153,14 +153,14 @@ export function EntryActionsMenu({
                     name={option.icon}
                     className={cn(
                       'size-5',
-                      option.destructive ? 'text-error' : 'text-foreground-secondary'
+                      option.destructive ? 'text-error-strong' : 'text-foreground-secondary'
                     )}
                   />
                 ) : null}
                 <Text
                   className={cn(
                     'text-[15px] font-medium',
-                    option.destructive ? 'text-error' : 'text-foreground'
+                    option.destructive ? 'text-error-strong' : 'text-foreground'
                   )}>
                   {option.label}
                 </Text>

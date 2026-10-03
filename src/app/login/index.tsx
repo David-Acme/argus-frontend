@@ -117,7 +117,7 @@ export default function LoginScreen() {
 
       {phase === 'loading' || phase === 'waiting-owner' ? (
         <View className="items-center gap-3">
-          <Icon name="refresh-cw" className="text-accent size-6" />
+          <Icon name="refresh-cw" className="text-accent-strong size-6" />
           <Text variant="muted" className="text-center">
             {phase === 'loading'
               ? t('screens.login.preparing')
@@ -150,7 +150,7 @@ export default function LoginScreen() {
 
       {phase === 'expired' || phase === 'error' ? (
         <View className="items-center gap-3">
-          <Icon name="triangle-alert" className="text-error size-8" />
+          <Icon name="triangle-alert" className="text-error-strong size-8" />
           <Text variant="muted" className="text-center">
             {t(phase === 'expired' ? 'screens.login.expired' : 'screens.login.error')}
           </Text>

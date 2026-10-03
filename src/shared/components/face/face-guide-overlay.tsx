@@ -33,12 +33,12 @@ const GUIDE_META: Record<FaceGuideState, GuideMeta> = {
 const TONE_CLASS = {
   neutral: {
     pill: 'bg-surface-secondary/90',
-    icon: 'text-accent',
+    icon: 'text-accent-strong',
     text: 'text-foreground',
   },
   warn: {
     pill: 'bg-surface-secondary/90',
-    icon: 'text-error',
+    icon: 'text-error-strong',
     text: 'text-foreground',
   },
   success: {
@@ -146,7 +146,7 @@ export function FaceGuideOverlay({ state, offset, available, area }: FaceGuideOv
       {state !== 'off-center' ? null : (
         <View className="absolute items-center" style={{ top: arrowTop, left: cx - 24, width: 48 }}>
           <NativeOnlyAnimatedView entering={itemIn.delay(0)} className="items-center">
-            <Icon name={arrowIcon} className="text-accent size-8" />
+            <Icon name={arrowIcon} className="text-accent-strong size-8" />
           </NativeOnlyAnimatedView>
         </View>
       )}

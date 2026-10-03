@@ -17,7 +17,7 @@ export default function NotFoundScreen() {
           {t('screens.not-found.body')}
         </Text>
         <Link href="/" className="mt-2">
-          <Text className="text-accent font-medium underline underline-offset-4">
+          <Text className="text-accent-strong font-medium underline underline-offset-4">
             {t('screens.not-found.go-home')}
           </Text>
         </Link>

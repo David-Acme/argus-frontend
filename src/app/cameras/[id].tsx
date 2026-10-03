@@ -334,7 +334,7 @@ export default function CameraDetailScreen() {
                         size="icon"
                         accessibilityLabel={t('screens.cameras.delete-zone')}
                         onPress={() => void removeZone(item.id, item.name)}>
-                        <Icon name="trash" className="text-error size-4" />
+                        <Icon name="trash" className="text-error-strong size-4" />
                       </Button>
                     ) : null}
                   </View>

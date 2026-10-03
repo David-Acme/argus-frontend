@@ -25,12 +25,20 @@ const textVariants = cva(
     variants: {
       variant: {
         default: '',
+        display: 'text-[32px] font-bold leading-[38px] tracking-tight',
+        title: 'text-2xl font-semibold leading-[30px] tracking-tight',
+        headline: 'text-xl font-semibold leading-[26px]',
+        subhead: 'text-[17px] font-semibold leading-6',
+        body: 'text-[15px] leading-[22px]',
+        label: 'text-sm font-medium leading-5',
+        caption: 'text-muted-foreground text-[13px] leading-[18px]',
+        micro: 'text-muted-foreground text-[11px] font-medium leading-[14px]',
         h1: cn(
           'text-center text-4xl font-extrabold tracking-tight',
           Platform.select({ web: 'scroll-m-20 text-balance' })
         ),
         h2: cn(
-          'border-border border-b pb-2 text-3xl font-semibold tracking-tight',
+          'text-3xl font-semibold tracking-tight',
           Platform.select({ web: 'scroll-m-20 first:mt-0' })
         ),
         h3: cn('text-2xl font-semibold tracking-tight', Platform.select({ web: 'scroll-m-20' })),
@@ -57,16 +65,24 @@ const ROLE: Partial<Record<TextVariant, Role>> = {
   h2: 'heading',
   h3: 'heading',
   h4: 'heading',
+  display: 'heading',
+  title: 'heading',
+  headline: 'heading',
   blockquote: Platform.select({ web: 'blockquote' as Role }),
   code: Platform.select({ web: 'code' as Role }),
 };
 
 const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
+  display: '1',
+  title: '2',
+  headline: '3',
   h1: '1',
   h2: '2',
   h3: '3',
   h4: '4',
 };
+
+const MAX_FONT_SCALE = 1.6;
 
 const TextClassContext = createContext<string | undefined>(undefined);
 
@@ -83,6 +99,7 @@ function Text({
       className={cn(textVariants({ variant }), textClass, className)}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
       {...props}
     />
   );

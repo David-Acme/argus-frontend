@@ -22,7 +22,7 @@ function WebOnlyNotice() {
       className="bg-background flex-1 items-center justify-center gap-6 px-6"
       style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
       <View className="bg-accent-soft size-16 items-center justify-center rounded-full">
-        <Icon name="messages-square" className="text-accent size-8" />
+        <Icon name="messages-square" className="text-accent-strong size-8" />
       </View>
       <View className="items-center gap-2">
         <Text variant="h3" className="text-center">

@@ -17,7 +17,6 @@ import { useEffect } from 'react';
 type ButtonProps = React.ComponentProps<typeof Pressable> &
   React.RefAttributes<typeof Pressable> &
   VariantProps<typeof buttonVariants> & {
-    /** Shows request progress and prevents a duplicate press. */
     loading?: boolean;
   };
 
@@ -58,10 +57,10 @@ const buttonVariants = cva(
         link: '',
       },
       size: {
-        default: cn('h-10 px-4 py-2 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
-        sm: cn('h-9 gap-1.5 rounded-md px-3 sm:h-8', Platform.select({ web: 'has-[>svg]:px-2.5' })),
-        lg: cn('h-11 rounded-md px-6 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
-        icon: 'h-10 w-10 sm:h-9 sm:w-9',
+        default: cn('px-4 py-2', Platform.select({ web: 'h-10 has-[>svg]:px-3', default: 'h-11' })),
+        sm: cn('gap-1.5 rounded-md px-3', Platform.select({ web: 'h-9 has-[>svg]:px-2.5', default: 'h-10' })),
+        lg: cn('rounded-md px-6', Platform.select({ web: 'h-11 has-[>svg]:px-4', default: 'h-12' })),
+        icon: Platform.select({ web: 'size-10', default: 'size-11' }),
       },
     },
     defaultVariants: {
@@ -88,7 +87,7 @@ const buttonTextVariants = cva(
         secondary: 'text-foreground',
         ghost: 'group-active:text-foreground',
         link: cn(
-          'text-accent group-active:underline',
+          'text-accent-strong group-active:underline',
           Platform.select({ web: 'underline-offset-4 hover:underline group-hover:underline' })
         ),
       },
@@ -105,6 +104,8 @@ const buttonTextVariants = cva(
     },
   }
 );
+
+const SMALL_HIT_SLOP = 4;
 
 function ButtonLoader() {
   const rotation = useSharedValue(0);
@@ -134,6 +135,7 @@ function Button({ className, variant, size, style, loading = false, disabled = f
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
+        hitSlop={size === 'sm' ? SMALL_HIT_SLOP : undefined}
         {...props}
         accessibilityState={{ ...props.accessibilityState, ...buttonState.accessibility }}
         className={cn(buttonState.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}

@@ -85,7 +85,7 @@ function InvitationScreen() {
 
           {phase === 'resolving' ? (
             <View className="flex-row items-center gap-3 py-1">
-              <Icon name="refresh-cw" className="text-accent size-5" />
+              <Icon name="refresh-cw" className="text-accent-strong size-5" />
               <Text>{t('screens.invitation.validating')}</Text>
             </View>
           ) : null}
@@ -100,8 +100,8 @@ function InvitationScreen() {
           {phase === 'error' ? (
             <View className="gap-3">
               <View className="flex-row items-center gap-3">
-                <Icon name="triangle-alert" className="text-error size-5" />
-                <Text className="text-error flex-1 text-sm leading-5">
+                <Icon name="triangle-alert" className="text-error-strong size-5" />
+                <Text className="text-error-strong flex-1 text-sm leading-5">
                   {t('screens.invitation.error')}
                 </Text>
               </View>

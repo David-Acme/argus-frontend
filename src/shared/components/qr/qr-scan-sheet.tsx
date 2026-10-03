@@ -37,7 +37,7 @@ const PILL_LABEL_TONE: Record<QrScanTone, string> = {
 
 const PILL_ICON_TONE: Record<QrScanTone, string> = {
   muted: 'text-foreground-secondary',
-  accent: 'text-accent',
+  accent: 'text-accent-strong',
   error: 'text-destructive-foreground',
 };
 

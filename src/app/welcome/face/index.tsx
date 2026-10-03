@@ -40,7 +40,7 @@ function WebOnlyNotice({ mode }: { mode: string }) {
       className="bg-background flex-1 w-full max-w-md self-center items-center justify-center gap-6 px-6"
       style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
       <View className="bg-accent-soft size-16 items-center justify-center rounded-full">
-        <Icon name="scan-face" className="text-accent size-8" />
+        <Icon name="scan-face" className="text-accent-strong size-8" />
       </View>
       <View className="items-center gap-2">
         <Text variant="h3" className="text-center">
@@ -434,22 +434,22 @@ export default function FaceScreen() {
           <View className="min-h-6 justify-center">
             {error ? (
               <View className="flex-row items-center gap-2.5">
-                <Icon name="triangle-alert" className="text-error size-5" />
+                <Icon name="triangle-alert" className="text-error-strong size-5" />
                 <View className="flex-1 gap-0.5">
                   <Text
-                    className="text-error text-sm leading-5"
+                    className="text-error-strong text-sm leading-5"
                     maxFontSizeMultiplier={1.25}>
                     {friendlyError}
                   </Text>
                   <Text
-                    className="text-error/70 text-[11px] leading-4"
+                    className="text-error-strong/70 text-[11px] leading-4"
                     numberOfLines={1}
                     maxFontSizeMultiplier={1.15}>
                     {error.code}
                   </Text>
                   {__DEV__ && error.message && error.message !== friendlyError ? (
                     <Text
-                      className="text-error/70 text-[11px] leading-4"
+                      className="text-error-strong/70 text-[11px] leading-4"
                       numberOfLines={2}
                       maxFontSizeMultiplier={1.15}>
                       {error.message}
@@ -473,7 +473,7 @@ export default function FaceScreen() {
           <View className="h-11 justify-center">
             {phase === 'submitting' ? (
               <View className="flex-row items-center justify-center gap-3">
-                <Icon name="refresh-cw" className="text-accent size-5" />
+                <Icon name="refresh-cw" className="text-accent-strong size-5" />
                 <Text maxFontSizeMultiplier={1.25}>{t('screens.face.sending')}</Text>
               </View>
             ) : (

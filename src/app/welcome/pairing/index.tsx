@@ -115,7 +115,7 @@ export default function PairingScreen() {
               </Button>
             ) : (
               <View className="flex-row items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-                <Icon name="monitor" className="text-accent size-5" />
+                <Icon name="monitor" className="text-accent-strong size-5" />
                 <Text className="flex-1 text-sm leading-5">
                   {t('screens.pairing.desktop-hint')}
                 </Text>
@@ -125,7 +125,7 @@ export default function PairingScreen() {
 
           {flow.phase === 'parsing' || flow.phase === 'discovering' || flow.phase === 'pairing' ? (
             <View className="flex-row items-center gap-3">
-              <Icon name="refresh-cw" className="text-accent size-5" />
+              <Icon name="refresh-cw" className="text-accent-strong size-5" />
               <Text>{t(PHASE_LABEL[flow.phase])}</Text>
             </View>
           ) : null}
@@ -145,8 +145,8 @@ export default function PairingScreen() {
           {flow.phase === 'error' && errorKey ? (
             <View className="gap-3">
               <View className="flex-row items-center gap-3">
-                <Icon name="triangle-alert" className="text-error size-5" />
-                <Text className="text-error">{t(errorKey)}</Text>
+                <Icon name="triangle-alert" className="text-error-strong size-5" />
+                <Text className="text-error-strong">{t(errorKey)}</Text>
               </View>
               {IS_NATIVE ? (
                 <Button variant="outline" onPress={handleRetry}>

@@ -123,7 +123,7 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
         <>
           {project ? (
             <Button variant="ghost" onPress={remove} disabled={submitting}>
-              <Text className="text-error">{t('common.delete')}</Text>
+              <Text className="text-error-strong">{t('common.delete')}</Text>
             </Button>
           ) : null}
           <Button variant="outline" onPress={() => onOpenChange(false)} disabled={submitting}>
