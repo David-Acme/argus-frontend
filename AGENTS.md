@@ -92,7 +92,12 @@ src/core/stores/qr-scan.store.ts
 ### 6. Icons — centralized registry (critical)
 
 - **Only** `src/shared/constants/icon.constant.ts` imports `lucide-react-native`.
-- To add an icon: import it there + add a **kebab-case** key to `ICONS`.
+- To add an icon: add a per-icon deep import there
+  (`import Bell from 'lucide-react-native/icons/bell'`, the file name is the
+  icon's canonical kebab name) + a **kebab-case** key to `ICONS`. Never import
+  from the package root: that ships the whole icon set (~3 MB of the web entry).
+  `morph-icon.constant.ts` does the same with `lucide/dist/esm/icons/<name>.mjs`
+  (typed by `lucide-icons.d.ts`).
 - Consume **only** via `Icon` from `@/shared/components/ui/icon`:
   ```tsx
   <Icon name="shield-check" className="size-5 text-muted-foreground" />

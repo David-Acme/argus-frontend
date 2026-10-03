@@ -1,73 +1,71 @@
-import {
-  Activity,
-  ArrowLeft,
-  ArrowUpRight,
-  Bell,
-  CalendarDays,
-  Camera,
-  Check,
-  CheckCircle2,
-  Clock3,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Eye,
-  Flashlight,
-  Filter,
-  FlashlightOff,
-  Home,
-  History,
-  Keyboard,
-  KeyRound,
-  ListTodo,
-  LoaderCircle,
-  Link,
-  MessagesSquare,
-  MoreHorizontal,
-  Mic,
-  MicOff,
-  Monitor,
-  Pencil,
-  Moon,
-  PieChart,
-  Minus,
-  Phone,
-  Plus,
-  RefreshCw,
-  LogOut,
-  WifiOff,
-  QrCode,
-  ScanBarcode,
-  ScanFace,
-  Settings,
-  SquarePen,
-  Trash2,
-  Search,
-  ShieldCheck,
-  SkipForward,
-  SlidersHorizontal,
-  Sparkles,
-  Sun,
-  TriangleAlert,
-  TrendingDown,
-  TrendingUp,
-  Unlink,
-  Shield,
-  DoorOpen,
-  Siren,
-  UserCheck,
-  PhoneOff,
-  Hand,
-  User,
-  Users,
-  UserMinus,
-  UserPlus,
-  Video,
-  Volume2,
-  Wifi,
-  X,
-} from 'lucide-react-native';
+import Activity from 'lucide-react-native/icons/activity';
+import ArrowLeft from 'lucide-react-native/icons/arrow-left';
+import ArrowUpRight from 'lucide-react-native/icons/arrow-up-right';
+import Bell from 'lucide-react-native/icons/bell';
+import CalendarDays from 'lucide-react-native/icons/calendar-days';
+import Camera from 'lucide-react-native/icons/camera';
+import Check from 'lucide-react-native/icons/check';
+import CheckCircle2 from 'lucide-react-native/icons/circle-check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronLeft from 'lucide-react-native/icons/chevron-left';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import Clock3 from 'lucide-react-native/icons/clock-3';
+import DoorOpen from 'lucide-react-native/icons/door-open';
+import Eye from 'lucide-react-native/icons/eye';
+import Filter from 'lucide-react-native/icons/funnel';
+import Flashlight from 'lucide-react-native/icons/flashlight';
+import FlashlightOff from 'lucide-react-native/icons/flashlight-off';
+import Hand from 'lucide-react-native/icons/hand';
+import History from 'lucide-react-native/icons/history';
+import Home from 'lucide-react-native/icons/house';
+import KeyRound from 'lucide-react-native/icons/key-round';
+import Keyboard from 'lucide-react-native/icons/keyboard';
+import Link from 'lucide-react-native/icons/link';
+import ListTodo from 'lucide-react-native/icons/list-todo';
+import LoaderCircle from 'lucide-react-native/icons/loader-circle';
+import LogOut from 'lucide-react-native/icons/log-out';
+import MessagesSquare from 'lucide-react-native/icons/messages-square';
+import Mic from 'lucide-react-native/icons/mic';
+import MicOff from 'lucide-react-native/icons/mic-off';
+import Minus from 'lucide-react-native/icons/minus';
+import Monitor from 'lucide-react-native/icons/monitor';
+import Moon from 'lucide-react-native/icons/moon';
+import MoreHorizontal from 'lucide-react-native/icons/ellipsis';
+import Pencil from 'lucide-react-native/icons/pencil';
+import Phone from 'lucide-react-native/icons/phone';
+import PhoneOff from 'lucide-react-native/icons/phone-off';
+import PieChart from 'lucide-react-native/icons/chart-pie';
+import Plus from 'lucide-react-native/icons/plus';
+import QrCode from 'lucide-react-native/icons/qr-code';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import ScanBarcode from 'lucide-react-native/icons/scan-barcode';
+import ScanFace from 'lucide-react-native/icons/scan-face';
+import Search from 'lucide-react-native/icons/search';
+import Settings from 'lucide-react-native/icons/settings';
+import Shield from 'lucide-react-native/icons/shield';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import Siren from 'lucide-react-native/icons/siren';
+import SkipForward from 'lucide-react-native/icons/skip-forward';
+import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
+import Sparkles from 'lucide-react-native/icons/sparkles';
+import SquarePen from 'lucide-react-native/icons/square-pen';
+import Sun from 'lucide-react-native/icons/sun';
+import Trash2 from 'lucide-react-native/icons/trash-2';
+import TrendingDown from 'lucide-react-native/icons/trending-down';
+import TrendingUp from 'lucide-react-native/icons/trending-up';
+import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
+import Unlink from 'lucide-react-native/icons/unlink';
+import User from 'lucide-react-native/icons/user';
+import UserCheck from 'lucide-react-native/icons/user-check';
+import UserMinus from 'lucide-react-native/icons/user-minus';
+import UserPlus from 'lucide-react-native/icons/user-plus';
+import Users from 'lucide-react-native/icons/users';
+import Video from 'lucide-react-native/icons/video';
+import Volume2 from 'lucide-react-native/icons/volume-2';
+import Wifi from 'lucide-react-native/icons/wifi';
+import WifiOff from 'lucide-react-native/icons/wifi-off';
+import X from 'lucide-react-native/icons/x';
 
 export const ICONS = {
   activity: Activity,

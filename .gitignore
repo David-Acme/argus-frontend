@@ -21,7 +21,6 @@ modules/**/ios/Pods/
 modules/**/ios/build/
 modules/**/build/
 
-public/canvaskit.wasm
 
 .orb-preview/
 

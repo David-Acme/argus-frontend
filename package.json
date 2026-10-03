@@ -30,7 +30,7 @@
     "web:build": "expo export --platform web",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bunx install-skia && bunx setup-skia-web"
+    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-argus-modules.mjs && bun scripts/patch-expo-camera.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -43,7 +43,6 @@
     "@rn-primitives/portal": "^1.5.2",
     "@rn-primitives/select": "^1.5.2",
     "@rn-primitives/slot": "^1.5.2",
-    "@shopify/react-native-skia": "2.6.2",
     "@tauri-apps/api": "^2.11.1",
     "argus-camera": "file:./modules/argus-camera",
     "argus-face": "file:./modules/argus-face",

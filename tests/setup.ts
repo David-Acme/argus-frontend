@@ -12,9 +12,6 @@ mock.module('react-native', () => ({
 }));
 
 const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');
-const iconImports = iconSource.slice(iconSource.indexOf('{') + 1, iconSource.indexOf("} from 'lucide-react-native'"));
-const lucideIcons = iconImports.split(',').map((name) => name.trim()).filter(Boolean);
-
-mock.module('lucide-react-native', () =>
-  Object.fromEntries(lucideIcons.map((name) => [name, () => null]))
-);
+for (const [, path] of iconSource.matchAll(/from '(lucide-react-native\/icons\/[a-z0-9-]+)'/g)) {
+  mock.module(path, () => ({ default: () => null }));
+}
