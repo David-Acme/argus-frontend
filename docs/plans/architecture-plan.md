@@ -289,8 +289,11 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
 ### Phase 7 — Rendering polish (measure on a low-end Android first)
 
 - [ ] React Compiler on, then remove manual memoization only where it covers.
-- [ ] `useWindowClass` memoized on class and orientation; width read
-  separately.
+- [x] `useWindowClass` memoized on class and orientation; width read
+  separately. Done: it subscribes to `Dimensions` through
+  `useSyncExternalStore` with a cached classification, so a resize that keeps
+  the class re-renders nothing; the overlay height hook reads
+  `useWindowDimensions` itself.
 - [ ] `MosaicChart`: one animated container, no placeholder pattern posing as
   data.
 - [ ] Tauri trust boundary: Rust reads the pairing from the keyring; the JS
