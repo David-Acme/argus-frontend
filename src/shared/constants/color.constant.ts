@@ -75,4 +75,3 @@ export const QR_COLORS = { foreground: '#181816', background: '#FFFFFF' } as con
 
 export const OVERLAY_STROKE_COLOR = '#FFFFFF';
 
-export const SHADOW_COLOR = '#000000';

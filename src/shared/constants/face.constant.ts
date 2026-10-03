@@ -2,8 +2,6 @@ export const FACE_SAMPLE_MS = 300;
 
 export const FACE_SAMPLE_FAST_MS = 220;
 
-export const FACE_NATIVE_EVENT_MIN_MS = 180;
-
 export const FACE_UI_UPDATE_MS = 180;
 
 export const FACE_READY_STABLE_MS = 650;

@@ -12,13 +12,6 @@ export const MOSAIC_TINTS = [
 
 export const TIMELINE_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
 
-export const MEMBER_TINTS = [
-  'bg-accent-soft',
-  'bg-surface-secondary',
-  'bg-card-secondary',
-  'bg-border-subtle',
-] as const;
-
 export const TASK_STATUS_ORDER = ['doing', 'todo', 'backlog', 'done', 'canceled'] as const;
 
 export const TASK_PRIORITY_WEIGHT: Record<string, number> = {
@@ -64,8 +57,6 @@ export const DASHBOARD_TABS: readonly {
   { tab: 'profile', icon: 'user' },
 ];
 
-export const CAMERA_DEFAULT_PORT = 554;
-
 export const CAMERA_DRIVER_SPECS = {
   tapo: {
     port: 554,
@@ -91,7 +82,6 @@ export const ZONE_MIN_POINTS = 3;
 export const ZONE_MAX_POINTS = 64;
 
 export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE'] as const;
-
 
 export const COMPOSE_ACTIONS: readonly {
   id: string;
@@ -128,26 +118,9 @@ export const CAMERA_ICONS: readonly IconName[] = [
   'wifi',
 ];
 
-export const CAMERA_NAME_SUGGESTIONS = [
-  'living-room',
-  'dining-room',
-  'kitchen',
-  'entrance',
-  'garage',
-  'yard',
-  'bedroom',
-  'hallway',
-] as const;
-
 export const ACTIVITY_WINDOW_DAYS = 7;
 
 export const RECENT_EVENT_LIMIT = 8;
 
 export const EVENT_SAMPLE_LIMIT = 300;
 
-
-export const DASHBOARD_SECTION_MIN_HEIGHT = 248;
-
-export const DASHBOARD_SECTION_MIN_HEIGHT_SHORT = 164;
-
-export const DASHBOARD_CAMERA_MIN_HEIGHT = 184;

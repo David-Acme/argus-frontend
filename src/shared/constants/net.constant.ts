@@ -21,9 +21,8 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   settings: 7045,
   sync: 7025,
 };
-export const PAIRING_PATH = '/pairing';
+
 export const DISCOVERY_TIMEOUT_MS = 6000;
-export const PAIRING_TIMEOUT_MS = 8000;
 
 export const NET_STORAGE_KEYS = {
   paired: 'net.paired',

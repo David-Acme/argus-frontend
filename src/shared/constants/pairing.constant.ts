@@ -1,5 +1,3 @@
-export const PAIRING_CODE_LENGTH = 8;
-export const PAIRING_FINGERPRINT_LENGTH = 64;
 export const PAIRING_HOST_SUFFIX = '.local';
 
 export const PAIRING_QR_REQUIRED_KEYS = [

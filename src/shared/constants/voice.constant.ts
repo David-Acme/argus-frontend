@@ -1,10 +1,5 @@
 export const VOICE_SAMPLE_RATE = 16000;
-export const VOICE_CHUNK_MS = 80;
-export const VOICE_MAX_TURN_MS = 30000;
 
-export const VOICE_METER_ATTACK_MS = 50;
-
-export const VOICE_METER_RELEASE_MS = 260;
 export const VOICE_MIC_FRAME_MS = 100;
 export const VOICE_PLAYOUT_STALL_MS = 1500;
 export const VOICE_PLAYOUT_IDLE_GRACE_MS = 250;
@@ -26,4 +21,4 @@ export const VOICE_ACTION_NAMES = ['app.show_camera', 'app.open', 'app.set_guard
 export const VOICE_DONE_TYPE = 'voice:done';
 export const VOICE_ERROR_TYPE = 'voice:error';
 
-export const VOICE_TURN_MAX_SILENCE_MS = 1200;export const CALL_TRANSCRIPT_VISIBLE = 4;
+export const CALL_TRANSCRIPT_VISIBLE = 4;
