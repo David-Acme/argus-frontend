@@ -45,6 +45,7 @@ export function appendAssistantText(
     return capped([...lines, { id, role: 'assistant', text }], limit);
   }
   const current = lines[index];
+  if (!current) return lines;
   const text = mergeAssistantText(current.text, input.text);
   if (text === current.text) return lines;
   const next = lines.slice();

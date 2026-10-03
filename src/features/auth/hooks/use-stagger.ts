@@ -1,6 +1,6 @@
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 
-export function useStagger(count: number, stepMs = 70): number[] {
+export function useStagger(stepMs = 70): (index: number) => number {
   const reduceMotion = useReduceMotion();
-  return Array.from({ length: count }, (_, i) => (reduceMotion ? 0 : i * stepMs));
+  return (index) => (reduceMotion ? 0 : index * stepMs);
 }

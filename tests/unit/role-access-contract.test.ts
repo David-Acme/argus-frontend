@@ -14,15 +14,15 @@ const ROLES: readonly UserRole[] = ['owner', 'resident', 'guard', 'guest'];
 
 function wireTableNames(): Map<string, string> {
   const pairs = tableNames.matchAll(/case TableName::(\w+):\s*return "(\w+)";/g);
-  return new Map([...pairs].map(([, symbol, wire]) => [symbol, wire]));
+  return new Map([...pairs].map(([, symbol = '', wire = '']) => [symbol, wire]));
 }
 
 function permissionSets(): Map<string, Permission[]> {
   const sets = roleAccess.matchAll(/inline const PermSet (\w+)\{([^}]*)\}/g);
   return new Map(
-    [...sets].map(([, name, body]) => [
+    [...sets].map(([, name = '', body = '']) => [
       name,
-      [...body.matchAll(/RolePermission::(\w+)/g)].map(([, perm]) => perm.toLowerCase() as Permission),
+      [...body.matchAll(/RolePermission::(\w+)/g)].map(([, perm = '']) => perm.toLowerCase() as Permission),
     ])
   );
 }
@@ -33,9 +33,9 @@ function backendTable(): Map<UserRole, Map<string, Permission[]>> {
   const start = roleAccess.indexOf('kTableAccess');
   const block = roleAccess.slice(start, roleAccess.indexOf('};', start));
   const table = new Map<UserRole, Map<string, Permission[]>>();
-  for (const [, role, body] of block.matchAll(/\{UserRole::(\w+),\s*\{([\s\S]*?)\}\}\}?,?\s*(?=\{UserRole|$)/g)) {
+  for (const [, role = '', body = ''] of block.matchAll(/\{UserRole::(\w+),\s*\{([\s\S]*?)\}\}\}?,?\s*(?=\{UserRole|$)/g)) {
     const entries = [...body.matchAll(/\{TableName::(\w+), (\w+)\}/g)].map(
-      ([, symbol, set]) => [wire.get(symbol) ?? symbol, sets.get(set) ?? []] as const
+      ([, symbol = '', set = '']) => [wire.get(symbol) ?? symbol, sets.get(set) ?? []] as const
     );
     table.set(role.toLowerCase() as UserRole, new Map(entries));
   }

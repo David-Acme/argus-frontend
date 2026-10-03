@@ -67,8 +67,8 @@ export function ZoneEditor({
                 pixels.slice(1).map((point, index) => (
                   <Line
                     key={`edge-${index}`}
-                    x1={pixels[index].x}
-                    y1={pixels[index].y}
+                    x1={pixels[index]?.x ?? point.x}
+                    y1={pixels[index]?.y ?? point.y}
                     x2={point.x}
                     y2={point.y}
                     stroke={color}

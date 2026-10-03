@@ -35,7 +35,7 @@ export function CalendarWeekView({
     () => date.timelineHours(entries.map((entry) => date.hourOf(new Date(entry.startsAt)))),
     [date, entries]
   );
-  const firstHour = hours[0];
+  const firstHour = hours[0] ?? 0;
   const gridHeight = hours.length * WEEK_HOUR_HEIGHT;
 
   const byDay = useMemo(() => {

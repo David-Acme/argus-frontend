@@ -279,7 +279,11 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
 - [x] Tests for `toNetError`, the three QR parsers, refresh outcomes and dates. Refresh
   classification was extracted to `readRefreshResponse` to be testable; the
   date tests found the calendar-cache window bug fixed in `a02460d`.
-- [ ] `noUncheckedIndexedAccess`, feature by feature.
+- [x] `noUncheckedIndexedAccess`, feature by feature. Done in one step: only
+  41 sites in src and ~30 in tests, fixed with guards and restructures (a
+  `DataView` for the media frame header, explicit week/month ranges in the
+  date formatter, a typed base avatar expression) rather than non-null
+  assertions; the flag is on in `tsconfig.json`.
 - [ ] Visual regression of the web export at three widths (Playwright).
 
 ### Phase 7 — Rendering polish (measure on a low-end Android first)

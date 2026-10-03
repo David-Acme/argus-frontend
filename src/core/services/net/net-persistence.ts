@@ -50,7 +50,7 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
     caFingerprint: caFingerprint ?? '',
     instanceId: instanceId ?? '',
     pairedAt: Number(pairedAt ?? 0),
-    routes: parseRoutes(routes),
+    routes: parseRoutes(routes ?? null),
   };
   return cachedInstance;
 }
@@ -124,7 +124,7 @@ const NATIVE_ERROR_CODES: ReadonlySet<NetErrorCode> = new Set([
 export function toNetError(error: unknown, fallback: NetErrorCode): NetError {
   const raw = error instanceof Error ? error.message : String(error);
 
-  const [token, ...rest] = raw.split('|');
+  const [token = '', ...rest] = raw.split('|');
   if (NATIVE_ERROR_CODES.has(token as NetErrorCode)) {
     return { code: token as NetErrorCode, message: rest.join('|') || token };
   }

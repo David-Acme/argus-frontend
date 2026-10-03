@@ -129,12 +129,12 @@ class CameraMediaSession implements ICameraMediaSession {
 
   private handleBinary(data: ArrayBuffer): void {
     if (data.byteLength < CAMERA_STREAM_FRAME_HEADER_BYTES) return;
-    const header = new Uint8Array(data, 0, CAMERA_STREAM_FRAME_HEADER_BYTES);
-    if (header[0] !== CAMERA_STREAM_FRAME_MAGIC) return;
+    const header = new DataView(data, 0, CAMERA_STREAM_FRAME_HEADER_BYTES);
+    if (header.getUint8(0) !== CAMERA_STREAM_FRAME_MAGIC) return;
 
-    const type = header[2];
-    const keyframe = (header[3] & KEYFRAME_FLAG) === KEYFRAME_FLAG;
-    this.subId = (header[4] << 8) | header[5];
+    const type = header.getUint8(2);
+    const keyframe = (header.getUint8(3) & KEYFRAME_FLAG) === KEYFRAME_FLAG;
+    this.subId = header.getUint16(4);
 
     const payload = data.slice(CAMERA_STREAM_FRAME_HEADER_BYTES);
     this.input.sink.pushFragment(type, keyframe, payload);

@@ -19,7 +19,7 @@ describe('resolveCameraId', () => {
   test('an empty request falls back to the camera of the last event, then to the only camera', () => {
     expect(resolveCameraId({ requested: '', cameras, lastEventCameraId: '2' })).toBe('2');
     expect(resolveCameraId({ requested: '', cameras, lastEventCameraId: '9' })).toBeNull();
-    expect(resolveCameraId({ requested: '', cameras: [cameras[0]], lastEventCameraId: null })).toBe('1');
+    expect(resolveCameraId({ requested: '', cameras: cameras.slice(0, 1), lastEventCameraId: null })).toBe('1');
   });
 });
 

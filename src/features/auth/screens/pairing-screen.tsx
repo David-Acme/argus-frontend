@@ -46,7 +46,7 @@ export default function PairingScreen() {
   const flow = usePairingFlow();
   const status = useQrScanStore((s) => s.status);
   const value = useQrScanStore((s) => s.value);
-  const [titleDelay, cardDelay] = useStagger(2, 90);
+  const delayOf = useStagger(90);
   const [address, setAddress] = useState('');
   const [addressOpen, setAddressOpen] = useState(false);
   const showAddress = addressOpen || flow.error?.code === 'DISCOVERY_NOT_FOUND';
@@ -87,7 +87,7 @@ export default function PairingScreen() {
 
   return (
     <CenteredScreen maxWidth={448} className="items-stretch">
-      <NativeOnlyAnimatedView entering={itemIn.delay(titleDelay)} className="gap-1.5">
+      <NativeOnlyAnimatedView entering={itemIn.delay(delayOf(0))} className="gap-1.5">
         {IS_NATIVE ? (
           <OnboardingSteps
             current={ONBOARDING_STEPS.pairing}
@@ -101,7 +101,7 @@ export default function PairingScreen() {
         </Text>
       </NativeOnlyAnimatedView>
 
-      <NativeOnlyAnimatedView entering={itemIn.delay(cardDelay)}>
+      <NativeOnlyAnimatedView entering={itemIn.delay(delayOf(1))}>
       <Panel title={t('screens.pairing.link-server')} className="gap-4">
         {flow.phase === 'idle' ? (
           IS_NATIVE ? (

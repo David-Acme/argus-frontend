@@ -51,15 +51,15 @@ describe('SyncMessageRouter', () => {
     const calls: unknown[][] = [];
     const router = new SyncMessageRouter(recordingHandlers(calls));
     router.route(JSON.stringify({ type: 'sync_error', status: 409, error: 'old' }));
-    expect(calls[0][0]).toBe('syncFailure');
-    expect(isSyncRequestError(calls[0][1], 409)).toBe(true);
+    expect(calls[0]?.[0]).toBe('syncFailure');
+    expect(isSyncRequestError(calls[0]?.[1], 409)).toBe(true);
   });
 
   test('an audit error rejects only its scope', () => {
     const calls: unknown[][] = [];
     const router = new SyncMessageRouter(recordingHandlers(calls));
     router.route(JSON.stringify({ type: 'sync_user_audit_log_error', status: 500 }));
-    expect(calls[0].slice(0, 2)).toEqual(['auditFailure', 'user']);
+    expect(calls[0]?.slice(0, 2)).toEqual(['auditFailure', 'user']);
   });
 
   test('a voice error reaches its own listeners and the voice error listeners', () => {

@@ -38,7 +38,7 @@ export class PlayoutEnvelope {
   }
 
   levelAt(position: number): number {
-    while (this.head < this.segments.length && this.segments[this.head].end <= position) {
+    while ((this.segments[this.head]?.end ?? Infinity) <= position) {
       this.head += 1;
     }
     if (this.head >= COMPACT_AFTER) {

@@ -175,9 +175,9 @@ export function CalendarMonthView({
         ))}
       </View>
       <View className={cn(fill ? 'min-h-0 flex-1 gap-1' : undefined)}>
-        {weeks.map((week) => (
+        {weeks.map((week, index) => (
           <View
-            key={week[0].getTime()}
+            key={index}
             className={cn('flex-row items-stretch', fill && 'min-h-0 flex-1 gap-1')}>
             {week.map((day) => (
               <DayCell

@@ -41,7 +41,8 @@ export function resolveCameraId({ requested, cameras, lastEventCameraId }: Resol
     if (byWord) return byWord.id;
   }
   if (lastEventCameraId && cameras.some((camera) => camera.id === lastEventCameraId)) return lastEventCameraId;
-  if (!wanted && cameras.length === 1) return cameras[0].id;
+  const [only] = cameras;
+  if (!wanted && only && cameras.length === 1) return only.id;
   return null;
 }
 

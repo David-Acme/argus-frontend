@@ -94,10 +94,10 @@ export const toCalendarEntries = (
 export const calendarMonths = (anchor: Date): Date[] =>
   [-1, 0, 1].map((offset) => new Date(anchor.getFullYear(), anchor.getMonth() + offset, 1));
 
-export const calendarWindow = (anchor: Date): Range => {
-  const [previous, , next] = calendarMonths(anchor);
-  return { from: calendarMonthRange(previous).from, to: calendarMonthRange(next).to };
-};
+export const calendarWindow = (anchor: Date): Range => ({
+  from: calendarMonthRange(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1)).from,
+  to: calendarMonthRange(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1)).to,
+});
 
 export function projectCalendar(input: CalendarProjectionInput, anchor: Date): ViewWrite[] {
   return calendarMonths(anchor).map((month) => {

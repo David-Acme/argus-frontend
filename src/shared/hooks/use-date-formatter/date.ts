@@ -116,12 +116,12 @@ export function createDateFormatter(
   const rangeFor = (view: CalendarView, anchor: Date) => {
     if (view === 'day') return { from: startDay(anchor).getTime(), to: endDay(anchor).getTime() };
     if (view === 'week') {
-      const days = weekDays(anchor);
-      return { from: days[0].getTime(), to: endDay(days.at(-1)!).getTime() };
+      const first = startOfWeek(startDay(anchor), options);
+      return { from: first.getTime(), to: endDay(addDays(first, DAYS_PER_WEEK - 1)).getTime() };
     }
     if (view === 'month') {
-      const days = monthGridDays(anchor);
-      return { from: days[0].getTime(), to: endDay(days.at(-1)!).getTime() };
+      const first = startOfWeek(startOfMonthBase(anchor), options);
+      return { from: first.getTime(), to: endDay(addDays(first, MONTH_GRID_ROWS * DAYS_PER_WEEK - 1)).getTime() };
     }
     const start = startDay(anchor);
     return { from: start.getTime(), to: endDay(addDays(start, 30)).getTime() };

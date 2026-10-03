@@ -28,7 +28,7 @@ describe('wire vocabulary matches the backend', () => {
 
   test('voice frame types are the ones the sync relay sends and accepts', () => {
     const relay = read('services/sync/src/feature/transport/infra/voice-grpc-relay.cc');
-    const backendTypes = new Set([...relay.matchAll(/"(voice:[a-z_]+)"/g)].map(([, type]) => type));
+    const backendTypes = new Set([...relay.matchAll(/"(voice:[a-z_]+)"/g)].map(([, type = '']) => type));
     const appTypes = new Set(
       Object.entries(voice)
         .filter(([name, value]) => name.endsWith('_TYPE') && typeof value === 'string')
@@ -46,8 +46,8 @@ describe('wire vocabulary matches the backend', () => {
     };
     const backendPorts: Record<string, number> = {};
     for (const line of read('scripts/lib/route-baseline.txt').split('\n').filter(Boolean)) {
-      const [unit, , path] = line.split('\t');
-      const segment = path.replace(/^\//, '').split('/')[0];
+      const [unit = '', , path = ''] = line.split('\t');
+      const segment = path.replace(/^\//, '').split('/')[0] ?? '';
       const port = segment === 'health' ? null : listenerPort(unit);
       if (port !== null) backendPorts[segment] = port;
     }

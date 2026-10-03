@@ -187,7 +187,7 @@ Inside every component (mandatory):
 
 ### 10. General constraints
 
-- TypeScript strict. Run `bunx tsc --noEmit` before committing — **0 errors**.
+- TypeScript strict with `noUncheckedIndexedAccess`. Run `bunx tsc --noEmit` before committing — **0 errors**.
 - Barrel imports only (`@/shared/constants`, `@/core/types`, `@/core/interfaces`).
 - No unused imports (`bun run lint` must be clean).
 - Keep design language premium/calm: warm neutrals, grafito actions + arena accent,

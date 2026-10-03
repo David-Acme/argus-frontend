@@ -59,14 +59,14 @@ describe('camera projection', () => {
     });
     expect(writes).toHaveLength(1);
     const [first, second] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
-    expect(first.icon).toBe('video');
-    expect(first.modelLabel).toBe('tapo C200');
-    expect(first.zones.map((zone) => zone.id)).toEqual(['z1', 'z2']);
-    expect(first.resolution).toBe('');
-    expect(second.icon).toBe('camera');
-    expect(second.modelLabel).toBe('C200');
-    expect(second.zones).toEqual([]);
-    expect(second.resolution).toBe('1080p');
+    expect(first?.icon).toBe('video');
+    expect(first?.modelLabel).toBe('tapo C200');
+    expect(first?.zones.map((zone) => zone.id)).toEqual(['z1', 'z2']);
+    expect(first?.resolution).toBe('');
+    expect(second?.icon).toBe('camera');
+    expect(second?.modelLabel).toBe('C200');
+    expect(second?.zones).toEqual([]);
+    expect(second?.resolution).toBe('1080p');
   });
 });
 
@@ -162,8 +162,8 @@ describe('activity projection', () => {
     const levels = activityLevels([{ occurredAt: at(15, 1) }, { occurredAt: at(15, 1) }, { occurredAt: at(14, 23) }], now);
     expect(levels).toHaveLength(MOSAIC_ROWS);
     expect(levels[0]).toHaveLength(MOSAIC_COLUMNS);
-    expect(levels[0][MOSAIC_COLUMNS - 1]).toBe(3);
-    expect(levels[MOSAIC_ROWS - 1][MOSAIC_COLUMNS - 2]).toBe(2);
+    expect(levels[0]?.[MOSAIC_COLUMNS - 1]).toBe(3);
+    expect(levels[MOSAIC_ROWS - 1]?.[MOSAIC_COLUMNS - 2]).toBe(2);
   });
 
   test('an empty week is all zeros and future events are ignored', () => {

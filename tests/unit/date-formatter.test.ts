@@ -22,8 +22,8 @@ const october = new Date(2026, 9, 15, 10, 30);
 
 describe('createDateFormatter', () => {
   test('weeks start on the device first weekday', () => {
-    expect(createDateFormatter('es', spain).weekDays(october)[0].getDay()).toBe(1);
-    expect(createDateFormatter('en', us).weekDays(october)[0].getDay()).toBe(0);
+    expect(createDateFormatter('es', spain).weekDays(october)[0]?.getDay()).toBe(1);
+    expect(createDateFormatter('en', us).weekDays(october)[0]?.getDay()).toBe(0);
   });
 
   test('ranges cover whole days of the view', () => {
@@ -66,7 +66,7 @@ describe('createDateFormatter', () => {
         const anchor = new Date(2026, month, 10);
         const window = calendarMonthRange(anchor);
         const grid = date.monthGridDays(anchor);
-        expect(grid[0].getTime()).toBeGreaterThanOrEqual(window.from);
+        expect(grid[0]?.getTime() ?? 0).toBeGreaterThanOrEqual(window.from);
         expect(date.endOfDay(grid.at(-1)!).getTime()).toBeLessThanOrEqual(window.to);
       }
     }

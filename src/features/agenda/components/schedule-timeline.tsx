@@ -23,7 +23,7 @@ export function ScheduleTimeline({
   renderContextMenu,
 }: ScheduleTimelineProps) {
   const date = useDateFormatter();
-  const firstHour = entries.length > 0 ? entries[0].hour : hours[0];
+  const firstHour = entries[0]?.hour ?? hours[0] ?? 0;
 
   return (
     <View className="gap-2.5">

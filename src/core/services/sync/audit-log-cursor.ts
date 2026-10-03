@@ -13,6 +13,6 @@ export const advanceAuditCursor = (
   cursor: AuditLogCursor,
   rows: AuditLogRow[],
 ): AuditLogCursor => {
-  const lastId = rows.length > 0 ? rows[rows.length - 1].id : cursor.lastId;
+  const lastId = rows.at(-1)?.id ?? cursor.lastId;
   return { ...cursor, lastId };
 };

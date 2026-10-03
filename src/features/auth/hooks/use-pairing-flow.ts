@@ -44,10 +44,10 @@ function parseAddress(address: string): ManualAddress | null {
     if (octets.some((octet) => octet > 255) || port === null) return null;
     return { ip: octets.join('.'), port };
   }
-  const ipv6 = value.match(IPV6_PATTERN);
-  if (ipv6 && ipv6[1].includes(':') && (value.startsWith('[') || !ipv6[2])) {
-    const port = validPort(ipv6[2]);
-    return port === null ? null : { ip: ipv6[1], port };
+  const [, host = '', rawPort] = value.match(IPV6_PATTERN) ?? [];
+  if (host.includes(':') && (value.startsWith('[') || !rawPort)) {
+    const port = validPort(rawPort);
+    return port === null ? null : { ip: host, port };
   }
   return null;
 }

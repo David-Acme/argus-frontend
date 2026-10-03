@@ -22,7 +22,7 @@ export function pcmRms(samples: Int16Array, start = 0, end = samples.length): nu
   if (to <= from) return 0;
   let sum = 0;
   for (let i = from; i < to; i += 1) {
-    const value = samples[i] / 32768;
+    const value = (samples[i] ?? 0) / 32768;
     sum += value * value;
   }
   return Math.sqrt(sum / (to - from));

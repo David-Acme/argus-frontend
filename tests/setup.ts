@@ -12,6 +12,6 @@ mock.module('react-native', () => ({
 }));
 
 const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');
-for (const [, path] of iconSource.matchAll(/from '(lucide-react-native\/icons\/[a-z0-9-]+)'/g)) {
+for (const [, path = ''] of iconSource.matchAll(/from '(lucide-react-native\/icons\/[a-z0-9-]+)'/g)) {
   mock.module(path, () => ({ default: () => null }));
 }

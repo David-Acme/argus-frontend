@@ -21,8 +21,11 @@ export function activityLevels(events: readonly Pick<EventSource, 'occurredAt'>[
     if (dayOffset < 0 || dayOffset >= MOSAIC_COLUMNS) continue;
     const column = MOSAIC_COLUMNS - 1 - dayOffset;
     const row = Math.min(MOSAIC_ROWS - 1, Math.floor(event.occurredAt.getHours() / BAND_HOURS));
-    counts[row][column] += 1;
-    peak = Math.max(peak, counts[row][column]);
+    const cells = counts[row];
+    if (!cells) continue;
+    const next = (cells[column] ?? 0) + 1;
+    cells[column] = next;
+    peak = Math.max(peak, next);
   }
   return peak === 0 ? counts : counts.map((row) => row.map((value) => Math.ceil((value / peak) * 3)));
 }

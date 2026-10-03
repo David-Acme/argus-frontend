@@ -71,10 +71,10 @@ function readNativeFrame(event: NativeFaceEvent): { luminance: number; faces: Fa
 function analyze(frame: { luminance: number; faces: FaceDetection[] }): FaceGuideSnapshot['state'] {
   const { luminance, faces } = frame;
   if (luminance > 0 && luminance < FACE_LOW_LIGHT_LUM) return 'low-light';
-  if (faces.length === 0) return 'no-face';
+  const f = faces[0];
+  if (!f) return 'no-face';
   if (faces.length > 1) return 'multiple-faces';
 
-  const f = faces[0];
   const h = f.bounds.height;
   if (h < FACE_FAR_MAX_HEIGHT) return 'too-far';
   if (h > FACE_CLOSE_MIN_HEIGHT) return 'too-close';

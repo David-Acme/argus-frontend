@@ -96,13 +96,15 @@ type CalibratedDefinition = {
   eyeColor?: string;
 };
 
+const baseDefinition: CalibratedDefinition = {
+  id: '00',
+  label: 'upward-side-glance',
+  semanticKey: 'upward-side-glance',
+  values: [7.3, 27.8, -16.1, 22.501171875, 22.501171875, 42.377734375, 42.377734375, 54.3, 0, 0, -20.5, -20.5, 0, 0],
+};
+
 const calibratedDefinitions: readonly CalibratedDefinition[] = [
-  {
-    id: '00',
-    label: 'upward-side-glance',
-    semanticKey: 'upward-side-glance',
-    values: [7.3, 27.8, -16.1, 22.501171875, 22.501171875, 42.377734375, 42.377734375, 54.3, 0, 0, -20.5, -20.5, 0, 0],
-  },
+  baseDefinition,
   {
     id: '01',
     label: 'downward-gaze',
@@ -305,12 +307,14 @@ const toExpression = ({
 const referenceExpressions = calibratedDefinitions.map(toExpression);
 const expressionById = new Map(referenceExpressions.map(expression => [expression.id, expression]));
 
+const baseExpression = toExpression(baseDefinition);
+
 const withMotion = (
   id: string,
   eyeMotion: AvatarEyeMotion,
   bodyMotion: AvatarBodyMotion
 ): AvatarExpression => ({
-  ...(expressionById.get(id) ?? referenceExpressions[0]),
+  ...(expressionById.get(id) ?? baseExpression),
   eyeMotion,
   bodyMotion,
 });
