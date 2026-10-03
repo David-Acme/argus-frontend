@@ -10,3 +10,6 @@ export class SyncRequestError extends Error {
 
 export const isSyncRequestError = (value: unknown, status?: number): value is SyncRequestError =>
   value instanceof SyncRequestError && (status === undefined || value.status === status);
+
+export const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);

@@ -1,4 +1,4 @@
-import type { SyncTableKey } from '@/core/types';
+import type { AuditLogScope, SyncTableKey } from '@/core/types';
 
 export const SYNC_PROJECTION_VERSION = 3;
 
@@ -17,3 +17,5 @@ export const SYNC_STATUS_UNAUTHORIZED = 401;
 export const SYNC_STATUS_REPLICA_TOO_OLD = 409;
 
 export const SYNC_TABLES_WITHOUT_DELETIONS: ReadonlySet<SyncTableKey> = new Set(['notification']);
+
+export const SYNC_AUDIT_SCOPES: readonly AuditLogScope[] = ['global', 'user'];

@@ -1,3 +1,6 @@
+import type { ISyncDeletedRow } from '@/core/interfaces';
+import type { UserRole } from './database.type';
+
 export const SYNC_TABLE_KEYS = [
   'user',
   'user_invitation',
@@ -29,4 +32,15 @@ export type SyncTableCursor = {
 
 export type SyncCursors = {
   [key in SyncTableKey]?: SyncTableCursor;
+};
+
+export type SyncCreatedRows = Map<SyncTableKey, Record<string, unknown>[]>;
+
+export type SyncDeletedRows = Map<SyncTableKey, ISyncDeletedRow[]>;
+
+export type SyncUserPatch = {
+  id?: number;
+  name?: string;
+  role?: UserRole;
+  isActive?: boolean;
 };

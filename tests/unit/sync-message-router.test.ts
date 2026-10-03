@@ -1,0 +1,96 @@
+import { describe, expect, test } from 'bun:test';
+import {
+  SyncMessageRouter,
+  auditScopeOfRequest,
+  readErrorFrame,
+  type SyncFrameHandlers,
+} from '@/core/services/sync/sync-message-router';
+import { isSyncRequestError } from '@/core/services/sync/sync-request-error';
+import { SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/shared/constants';
+
+const recordingHandlers = (calls: unknown[][]): SyncFrameHandlers => ({
+  initialInfo: (info) => calls.push(['initialInfo', info]),
+  syncResponse: (response) => calls.push(['syncResponse', response]),
+  syncFailure: (error) => calls.push(['syncFailure', error]),
+  auditResponse: (scope, response) => calls.push(['auditResponse', scope, response]),
+  auditFailure: (scope, error) => calls.push(['auditFailure', scope, error]),
+  liveFrame: (frame) => calls.push(['liveFrame', frame.operation]),
+  authContextChanged: (info) => calls.push(['authContextChanged', info]),
+});
+
+describe('auditScopeOfRequest', () => {
+  test('maps the two audit request types and nothing else', () => {
+    expect(auditScopeOfRequest('sync_audit_log')).toBe('global');
+    expect(auditScopeOfRequest('sync_user_audit_log')).toBe('user');
+    expect(auditScopeOfRequest('sync')).toBeNull();
+  });
+});
+
+describe('readErrorFrame', () => {
+  test('prefers the error text, then a string payload, then a generic message', () => {
+    expect(readErrorFrame('sync_error', { error: 'boom', status: 409 })).toEqual({
+      requestType: 'sync',
+      status: 409,
+      message: 'boom',
+    });
+    expect(readErrorFrame('voice:start_error', { payload: 'nope' as never })).toEqual({
+      requestType: 'voice:start',
+      status: 0,
+      message: 'nope',
+    });
+    expect(readErrorFrame('x_error', { status: 'bad' })).toEqual({
+      requestType: 'x',
+      status: 0,
+      message: 'Socket error: x_error',
+    });
+  });
+});
+
+describe('SyncMessageRouter', () => {
+  test('a sync error rejects the sync request with its status', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    router.route(JSON.stringify({ type: 'sync_error', status: 409, error: 'old' }));
+    expect(calls[0][0]).toBe('syncFailure');
+    expect(isSyncRequestError(calls[0][1], 409)).toBe(true);
+  });
+
+  test('an audit error rejects only its scope', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    router.route(JSON.stringify({ type: 'sync_user_audit_log_error', status: 500 }));
+    expect(calls[0].slice(0, 2)).toEqual(['auditFailure', 'user']);
+  });
+
+  test('a voice error reaches its own listeners and the voice error listeners', () => {
+    const router = new SyncMessageRouter(recordingHandlers([]));
+    const seen: unknown[] = [];
+    router.onType('voice:start_error', (payload) => seen.push(['own', payload]));
+    router.onType(VOICE_ERROR_TYPE, (payload) => seen.push(['voice', payload]));
+    router.route(JSON.stringify({ type: 'voice:start_error', status: 503, error: 'busy' }));
+    expect(seen).toEqual([
+      ['own', { status: 503, error: 'busy' }],
+      ['voice', { status: 503, error: 'busy' }],
+    ]);
+  });
+
+  test('typed frames go to their listeners and operations to listeners before handlers', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    router.onType('voice:stt', (payload) => calls.push(['type', payload]));
+    router.on(SYNC_OPERATION.Add, () => calls.push(['listener']));
+    router.route(JSON.stringify({ type: 'voice:stt', payload: 'hi' }));
+    router.route(JSON.stringify({ operation: SYNC_OPERATION.Add, option: 'camera', info: {} }));
+    router.route(
+      JSON.stringify({ operation: SYNC_OPERATION.SynchronizeAuditLog, info: { info: [] } })
+    );
+    router.route('not json');
+    router.route(JSON.stringify({ operation: 'x' }));
+    expect(calls).toEqual([
+      ['type', 'hi'],
+      ['listener'],
+      ['liveFrame', SYNC_OPERATION.Add],
+      ['auditResponse', 'global', { info: [] }],
+    ]);
+  });
+});
