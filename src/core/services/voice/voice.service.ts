@@ -1,85 +1,77 @@
 import type { ArgusMic } from 'argus-mic';
-import { File, Paths } from 'expo-file-system';
-import {
-  createAudioPlayer,
-  requestRecordingPermissionsAsync,
-  type AudioPlayer,
-} from 'expo-audio';
+import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { synchronizeService } from '@/core/services/sync';
-import type {
-  IVoiceAssistantPayload,
-  IVoiceDonePayload,
-  IVoiceErrorPayload,
-  IVoiceReactionPayload,
-  IVoiceSttPayload,
-} from '@/core/interfaces';
+import type { IVoiceReactionPayload } from '@/core/interfaces';
 import { useAvatarStore } from '@/core/stores';
 import {
   VOICE_ANSWER_TYPE,
   VOICE_ASSISTANT_TYPE,
   VOICE_DONE_TYPE,
-  VOICE_ENVELOPE_ATTACK_MS,
-  VOICE_ENVELOPE_RELEASE_MS,
-  VOICE_ENVELOPE_WINDOW_MS,
   VOICE_ERROR_TYPE,
   VOICE_EVENT_TYPE,
+  VOICE_INTERRUPTED_TYPE,
+  VOICE_MIC_FRAME_MS,
+  VOICE_MODE_DUPLEX,
   VOICE_SAMPLE_RATE,
   VOICE_SKIP_TYPE,
   VOICE_START_TYPE,
   VOICE_STOP_TYPE,
   VOICE_STT_TYPE,
-  VOICE_TTS_WATCHDOG_MS,
+  VOICE_TRANSCRIPT_MAX_LINES,
+  VOICE_TURN_TYPE,
 } from '@/shared/constants';
-import { pcmChunk, pcmToWav } from '@/shared/libs/pcm';
-import { pcmEnvelope, voiceLevel } from '@/shared/libs/voice-level';
-import { withTiming } from 'react-native-reanimated';
-import { createArgusMic } from './voice-mic';
-import type { VoicePhase } from '@/core/types';
+import { concatPcm, pcmChunk } from '@/shared/libs/pcm';
+import type { VoicePhase, VoiceSnapshot, VoiceTranscriptLine } from '@/core/types';
 import { log } from '@/core/services/log';
+import { createArgusMic } from './voice-mic';
+import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceError } from './voice-frames';
+import { VoicePlayout } from './voice-playout';
+import { appendAssistantText, appendUserLine, lastAssistantText } from './voice-transcript';
+import {
+  INITIAL_TURN_GATE,
+  assistantTurnKey,
+  gateAcceptsAudio,
+  gateOnInterrupted,
+  gateOnSkip,
+  gateOnTurn,
+  gateOnUserFinal,
+  shouldSendMic,
+  type TurnGate,
+} from './voice-turn-gate';
 
 type Listener = () => void;
 
-const MIC_LOG_INTERVAL_MS = 500;
-const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * 100) / 1000;
-
-let ttsSequence = 0;
-
-function rmsOf(samples: Int16Array): number {
-  if (samples.length === 0) return 0;
-  let sum = 0;
-  for (let i = 0; i < samples.length; i++) {
-    const v = samples[i] / 32768;
-    sum += v * v;
-  }
-  return Math.sqrt(sum / samples.length);
-}
+const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * VOICE_MIC_FRAME_MS) / 1000;
+const SOCKET_CHECK_INTERVAL_MS = 1000;
 
 const devLog = (...args: unknown[]): void => log.debug('voice', ...args);
 
 class VoiceService {
   private mic: ArgusMic | null = null;
+  private capturing = false;
   private active = false;
+  private session = 0;
   private phase: VoicePhase = 'idle';
   private sttText = '';
-  private assistantText = '';
+  private transcript: readonly VoiceTranscriptLine[] = [];
+  private muted = false;
   private error: string | null = null;
-  private ttsBuffer: Int16Array[] = [];
-  private ttsSize = 0;
+  private gate: TurnGate = INITIAL_TURN_GATE;
+  private localTurn = 0;
+  private userLines = 0;
   private micPending: Int16Array[] = [];
   private micPendingSamples = 0;
-  private micPausedForTts = false;
-  private ttsChain: Promise<void> = Promise.resolve();
-  private ttsQueueDepth = 0;
-  private players = new Set<AudioPlayer>();
-  private unsubscribers: (() => void)[] = [];
-  private listeners = new Set<Listener>();
-  private micChunks = 0;
-  private lastMicLogAt = 0;
-  private lastPeakRms = 0;
   private lastSocketCheckAt = 0;
+  private readonly playout = new VoicePlayout(() => this.handlePlayoutIdle());
+  private listeners = new Set<Listener>();
+  private snapshotValue: VoiceSnapshot = this.buildSnapshot();
 
   constructor() {
     this.bindSocket();
+  }
+
+  get snapshot(): VoiceSnapshot {
+    return this.snapshotValue;
   }
 
   get isActive(): boolean {
@@ -95,7 +87,7 @@ class VoiceService {
   }
 
   get assistantTextValue(): string {
-    return this.assistantText;
+    return this.snapshotValue.assistantText;
   }
 
   get errorValue(): string | null {
@@ -109,95 +101,54 @@ class VoiceService {
 
   async start(): Promise<void> {
     if (this.active) return;
+    this.session += 1;
+    const session = this.session;
     this.active = true;
-    this.phase = 'listening';
+    this.phase = 'connecting';
     this.sttText = '';
-    this.assistantText = '';
+    this.transcript = [];
+    this.muted = false;
     this.error = null;
-    this.micChunks = 0;
-    this.lastPeakRms = 0;
-    this.ttsBuffer = [];
-    this.ttsSize = 0;
-    this.micPending = [];
-    this.micPendingSamples = 0;
-    this.micPausedForTts = false;
-    this.ttsQueueDepth = 0;
-    this.ttsChain = Promise.resolve();
-    this.players.clear();
+    this.gate = INITIAL_TURN_GATE;
+    this.localTurn = 0;
+    this.userLines = 0;
+    this.resetMicPending();
+    this.playout.stop();
     this.notify();
 
     const connected = await synchronizeService.ensureConnected();
-    if (!this.active) return;
+    if (!this.isCurrent(session)) return;
     if (!connected) {
       this.fail('SOCKET_UNAVAILABLE|Unable to connect to Argus');
       return;
     }
-    devLog('start: sending voice:start, socket connected?', synchronizeService.isSocketConnected);
-    synchronizeService.send(VOICE_START_TYPE);
+    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX });
 
     try {
       const { granted } = await requestRecordingPermissionsAsync();
-      devLog('start: mic permission granted?', granted);
-      if (!this.active) return;
+      if (!this.isCurrent(session)) return;
       if (!granted) {
         this.fail('MIC_PERMISSION_DENIED|Microphone permission denied');
         return;
       }
-      const mic = createArgusMic();
+      const mic = this.mic ?? createArgusMic();
       this.mic = mic;
       mic.onData = (pcm) => {
-        if (pcm == null) return;
-        const now = Date.now();
-        if (now - this.lastSocketCheckAt > 1000) {
-          this.lastSocketCheckAt = now;
-          if (!synchronizeService.isSocketConnected) {
-            devLog('mic: socket lost while recording -> fail');
-            this.fail('SOCKET_LOST|Connection to Argus lost');
-            return;
-          }
-        }
-        this.micChunks += 1;
-        const samples = pcmChunk(pcm);
-        const rms = rmsOf(samples);
-        if (rms > this.lastPeakRms) this.lastPeakRms = rms;
-        if (now - this.lastMicLogAt >= MIC_LOG_INTERVAL_MS) {
-          devLog(
-            'mic: chunks=',
-            this.micChunks,
-            'bytes=',
-            pcm.byteLength,
-            'rms=',
-            rms.toFixed(3),
-            'peak=',
-            this.lastPeakRms.toFixed(3),
-          );
-          this.lastMicLogAt = now;
-          this.lastPeakRms = 0;
-        }
-        this.micPending.push(samples);
-        this.micPendingSamples += samples.length;
-        if (this.micPendingSamples >= MIC_FRAME_SAMPLES) {
-          const total = this.micPendingSamples;
-          const merged = new Int16Array(total);
-          let offset = 0;
-          for (const part of this.micPending) {
-            merged.set(part, offset);
-            offset += part.length;
-          }
-          this.micPending = [];
-          this.micPendingSamples = 0;
-          synchronizeService.sendBinary(merged.buffer);
-        }
+        if (pcm != null) this.handleMicData(pcm);
       };
       mic.onError = (code, message) => {
-        devLog('mic error:', code, message);
+        devLog('native error:', code, message);
         this.fail(`${code}|${message}`);
       };
       mic.start(VOICE_SAMPLE_RATE);
-      devLog('start: mic started at', VOICE_SAMPLE_RATE);
+      this.capturing = true;
+      this.playout.attach(mic);
+      if (!this.isCurrent(session)) return;
+      if (this.phase === 'connecting') this.phase = 'listening';
+      this.notify();
     } catch (reason) {
       const raw = reason instanceof Error ? reason.message : String(reason);
-      devLog('start: exception:', raw);
+      devLog('start failed:', raw);
       this.fail(raw.startsWith('NOT_SUPPORTED') ? raw : `MIC_UNAVAILABLE|${raw}`);
     }
   }
@@ -206,20 +157,29 @@ class VoiceService {
     if (!this.active) return;
     this.active = false;
     synchronizeService.send(VOICE_STOP_TYPE);
-    this.teardownMic();
+    this.stopCapture();
+    this.playout.stop();
+    if (this.phase !== 'error' && this.phase !== 'done') this.phase = 'idle';
+    this.notify();
+  }
+
+  interrupt(): void {
+    synchronizeService.send(VOICE_SKIP_TYPE);
+    this.gate = gateOnSkip(this.gate);
+    this.playout.flush();
+    if (this.active && this.phase === 'speaking') this.phase = 'listening';
     this.notify();
   }
 
   skip(): void {
-    devLog('skip: interrupting TTS playback');
-    for (const player of this.players) player.pause();
-    this.players.clear();
-    this.ttsBuffer = [];
-    this.ttsSize = 0;
-    this.ttsQueueDepth = 0;
-    this.ttsChain = Promise.resolve();
-    this.resumeMicAfterTts();
-    synchronizeService.send(VOICE_SKIP_TYPE);
+    this.interrupt();
+  }
+
+  setMuted(muted: boolean): void {
+    if (this.muted === muted) return;
+    this.muted = muted;
+    this.resetMicPending();
+    this.notify();
   }
 
   answer(text: string): void {
@@ -231,176 +191,150 @@ class VoiceService {
     this.notify();
   }
 
-  private bindSocket(): void {
-    this.unsubscribers.push(
-      synchronizeService.onType(VOICE_STT_TYPE, (payload) => {
-        const p = payload as IVoiceSttPayload;
-        devLog('event voice:stt ->', JSON.stringify(p));
-        this.sttText = p.text;
-        this.notify();
-      }),
-      synchronizeService.onType(VOICE_EVENT_TYPE, (payload) => {
-        const p = payload as IVoiceReactionPayload;
-        devLog('event voice:event ->', JSON.stringify(p));
-        useAvatarStore.getState().react(p.reaction, p.intensity ?? 0);
-      }),
-      synchronizeService.onType(VOICE_ASSISTANT_TYPE, (payload) => {
-        const p = payload as IVoiceAssistantPayload;
-        devLog('event voice:assistant ->', JSON.stringify(p));
-        this.assistantText = p.text;
-        this.flushTts();
-        this.phase = 'speaking';
-        this.notify();
-      }),
-      synchronizeService.onType(VOICE_DONE_TYPE, (payload) => {
-        const p = payload as IVoiceDonePayload;
-        devLog('event voice:done ->', JSON.stringify(p));
-        this.flushTts();
-        this.phase = 'done';
-        this.active = false;
-        this.teardownMic();
-        this.notify();
-        void p;
-      }),      synchronizeService.onType(VOICE_ERROR_TYPE, (payload) => {
-        const p = payload as IVoiceErrorPayload;
-        devLog('event voice:error ->', JSON.stringify(p));
-        this.fail(p.error ?? `VOICE_ERROR|${p.status ?? ''}`.trim());
-      }),
-      synchronizeService.onBinary((data) => {
-        const samples = pcmChunk(data);
-        this.ttsBuffer.push(samples);
-        this.ttsSize += samples.length;
-        this.pauseMicForTts();
-      }),
-    );
+  private isCurrent(session: number): boolean {
+    return this.active && this.session === session;
   }
 
-  private flushTts(): void {
-    this.ttsChain = this.ttsChain
-      .then(() => this.doFlushTts())
-      .catch((reason) => {
-        devLog('tts flush: FAILED', reason);
-        this.ttsQueueDepth = 0;
-        this.resumeMicAfterTts();
-      });
-  }
-
-  private async doFlushTts(): Promise<void> {
-    if (this.ttsBuffer.length === 0) return;
-    const total = this.ttsSize;
-    const merged = new Int16Array(total);
-    let offset = 0;
-    for (const chunk of this.ttsBuffer) {
-      merged.set(chunk, offset);
-      offset += chunk.length;
-    }
-    this.ttsBuffer = [];
-    this.ttsSize = 0;
-
-    const wav = pcmToWav(merged, VOICE_SAMPLE_RATE);
-    const file = new File(Paths.cache, `argus-tts-${Date.now()}-${ttsSequence++}.wav`);
-    const writer = file.writableStream().getWriter();
-    await writer.write(new Uint8Array(wav));
-    await writer.close();
-    devLog('tts flush: wav bytes=', wav.byteLength, 'uri=', (file as unknown as { uri: string }).uri);
-
-    this.ttsQueueDepth += 1;
-    this.pauseMicForTts();
-    const stopEnvelope = this.driveVoiceEnvelope(merged);
-    const player = createAudioPlayer((file as unknown as { uri: string }).uri);
-    this.players.add(player);
-    const watchdog = setTimeout(() => {
-      devLog('tts flush: watchdog — resuming mic');
-      stopEnvelope();
-      player.pause();
-      this.players.delete(player);
-      this.ttsQueueDepth = Math.max(0, this.ttsQueueDepth - 1);
-      if (this.ttsQueueDepth === 0) this.resumeMicAfterTts();
-    }, VOICE_TTS_WATCHDOG_MS);
-    await new Promise<void>((resolve) => {
-      const subscription = player.addListener('playbackStatusUpdate', (status) => {
-        if (status.didJustFinish) {
-          devLog('tts flush: playback finished');
-          subscription.remove();
-          clearTimeout(watchdog);
-          stopEnvelope();
-          resolve();
-        }
-      });
-      player.play();
-    });
-    this.players.delete(player);
-    this.ttsQueueDepth -= 1;
-    if (this.ttsQueueDepth === 0) this.resumeMicAfterTts();
-  }
-
-  private driveVoiceEnvelope(samples: Int16Array): () => void {
-    const windowSamples = Math.max(
-      1,
-      Math.round((VOICE_SAMPLE_RATE * VOICE_ENVELOPE_WINDOW_MS) / 1000)
-    );
-    const envelope = pcmEnvelope(samples, windowSamples);
-    if (envelope.length === 0) {
-      return () => {};
-    }
-    const startedAt = Date.now();
-    const timer = setInterval(() => {
-      const index = Math.floor((Date.now() - startedAt) / VOICE_ENVELOPE_WINDOW_MS);
-      if (index >= envelope.length) {
-        voiceLevel.value = withTiming(0, { duration: VOICE_ENVELOPE_RELEASE_MS });
+  private handleMicData(pcm: ArrayBuffer): void {
+    if (!this.active) return;
+    const now = Date.now();
+    if (now - this.lastSocketCheckAt > SOCKET_CHECK_INTERVAL_MS) {
+      this.lastSocketCheckAt = now;
+      if (!synchronizeService.isSocketConnected) {
+        this.fail('SOCKET_LOST|Connection to Argus lost');
         return;
       }
-      const target = envelope[index];
-      const duration =
-        target >= voiceLevel.value ? VOICE_ENVELOPE_ATTACK_MS : VOICE_ENVELOPE_RELEASE_MS;
-      voiceLevel.value = withTiming(target, { duration });
-    }, VOICE_ENVELOPE_WINDOW_MS);
-
-    return () => {
-      clearInterval(timer);
-      voiceLevel.value = withTiming(0, { duration: VOICE_ENVELOPE_RELEASE_MS });
-    };
+    }
+    const send = shouldSendMic({
+      muted: this.muted,
+      turnAware: this.gate.turnAware,
+      playing: this.playout.isPlaying,
+    });
+    if (!send) {
+      this.resetMicPending();
+      return;
+    }
+    const samples = pcmChunk(pcm);
+    this.micPending.push(samples);
+    this.micPendingSamples += samples.length;
+    if (this.micPendingSamples < MIC_FRAME_SAMPLES) return;
+    const merged = concatPcm(this.micPending, this.micPendingSamples);
+    this.resetMicPending();
+    synchronizeService.sendBinary(merged.buffer);
   }
 
-  private pauseMicForTts(): void {
-    if (this.micPausedForTts) return;
-    this.micPausedForTts = true;
-    if (this.mic) {
-      devLog('mic: paused for TTS');
-      this.mic.stop();
+  private handleTts(data: ArrayBuffer): void {
+    if (!gateAcceptsAudio(this.gate)) return;
+    if (!this.active && !this.playout.isPlaying) return;
+    this.playout.write(data);
+    if (this.active && this.phase !== 'speaking') {
+      this.phase = 'speaking';
+      this.notify();
     }
   }
 
-  private resumeMicAfterTts(): void {
-    if (!this.micPausedForTts) return;
-    this.micPausedForTts = false;
-    if (!this.active) return;
-    try {
-      if (this.mic) {
-        this.mic.start(VOICE_SAMPLE_RATE);
-        devLog('mic: resumed after TTS');
-      }
-    } catch (reason) {
-      devLog('mic: resume failed', reason);
-    }
-  }
-
-  private teardownMic(): void {
-    if (this.mic) {
-      this.mic.stop();
-      this.mic = null;
-    }
-  }
-
-  private fail(message: string): void {
-    this.error = message;
-    this.phase = 'error';
-    this.active = false;
-    this.teardownMic();
+  private handlePlayoutIdle(): void {
+    if (!this.active || this.phase !== 'speaking') return;
+    this.phase = 'listening';
     this.notify();
   }
 
+  private bindSocket(): void {
+    synchronizeService.onType(VOICE_STT_TYPE, (payload) => {
+      const frame = parseSttFrame(payload);
+      if (!frame) return;
+      this.sttText = frame.text;
+      if (frame.final && frame.text.trim()) {
+        this.userLines += 1;
+        this.transcript = appendUserLine(
+          this.transcript,
+          { id: `user-${this.userLines}`, text: frame.text },
+          VOICE_TRANSCRIPT_MAX_LINES,
+        );
+        this.gate = gateOnUserFinal(this.gate);
+        this.localTurn += 1;
+        if (this.active && this.phase === 'listening') this.phase = 'thinking';
+      }
+      this.notify();
+    });
+    synchronizeService.onType(VOICE_EVENT_TYPE, (payload) => {
+      const p = payload as IVoiceReactionPayload;
+      useAvatarStore.getState().react(p.reaction, p.intensity ?? 0);
+    });
+    synchronizeService.onType(VOICE_TURN_TYPE, (payload) => {
+      const id = parseTurnId(payload);
+      if (id === null) return;
+      this.gate = gateOnTurn(id);
+    });
+    synchronizeService.onType(VOICE_INTERRUPTED_TYPE, (payload) => {
+      const outcome = gateOnInterrupted(this.gate, parseTurnId(payload));
+      this.gate = outcome.gate;
+      if (!outcome.flush) return;
+      this.playout.flush();
+      if (this.active && (this.phase === 'speaking' || this.phase === 'thinking')) this.phase = 'listening';
+      this.notify();
+    });
+    synchronizeService.onType(VOICE_ASSISTANT_TYPE, (payload) => {
+      const text = parseAssistantText(payload);
+      if (text === null || !gateAcceptsAudio(this.gate)) return;
+      this.transcript = appendAssistantText(
+        this.transcript,
+        { turnKey: assistantTurnKey(this.gate, this.localTurn), text },
+        VOICE_TRANSCRIPT_MAX_LINES,
+      );
+      if (this.active && this.phase === 'thinking') this.phase = 'speaking';
+      if (!this.playout.isPlaying) this.playout.armIdle();
+      this.notify();
+    });
+    synchronizeService.onType(VOICE_DONE_TYPE, () => {
+      this.phase = 'done';
+      this.active = false;
+      this.stopCapture();
+      this.playout.drainThenStop();
+      this.notify();
+    });
+    synchronizeService.onType(VOICE_ERROR_TYPE, (payload) => {
+      this.fail(parseVoiceError(payload));
+    });
+    synchronizeService.onBinary((data) => this.handleTts(data));
+  }
+
+  private stopCapture(): void {
+    this.resetMicPending();
+    if (!this.capturing || !this.mic) return;
+    this.capturing = false;
+    this.mic.stop();
+  }
+
+  private resetMicPending(): void {
+    this.micPending = [];
+    this.micPendingSamples = 0;
+  }
+
+  private fail(message: string): void {
+    devLog('fail:', message);
+    this.error = message;
+    this.phase = 'error';
+    this.active = false;
+    this.stopCapture();
+    this.playout.stop();
+    this.notify();
+  }
+
+  private buildSnapshot(): VoiceSnapshot {
+    return {
+      phase: this.phase,
+      isActive: this.active,
+      muted: this.muted,
+      sttText: this.sttText,
+      assistantText: lastAssistantText(this.transcript),
+      transcript: this.transcript,
+      error: this.error,
+    };
+  }
+
   private notify(): void {
+    this.snapshotValue = this.buildSnapshot();
     this.listeners.forEach((listener) => listener());
   }
 }

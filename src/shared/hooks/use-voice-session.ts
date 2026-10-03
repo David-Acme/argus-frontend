@@ -1,40 +1,12 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { voiceService } from '@/core/services/voice';
-import type { VoicePhase } from '@/core/types';
+import type { VoiceSnapshot } from '@/core/types';
 
-export type VoiceSessionState = {
-  phase: VoicePhase;
-  isActive: boolean;
-  sttText: string;
-  assistantText: string;
-  error: string | null;
-};
-
-let cached: VoiceSessionState | null = null;
+export type VoiceSessionState = VoiceSnapshot;
 
 const subscribe = (listener: () => void): (() => void) => voiceService.subscribe(listener);
 
-const getSnapshot = (): VoiceSessionState => {
-  const next: VoiceSessionState = {
-    phase: voiceService.phaseValue,
-    isActive: voiceService.isActive,
-    sttText: voiceService.sttTextValue,
-    assistantText: voiceService.assistantTextValue,
-    error: voiceService.errorValue,
-  };
-  if (
-    cached &&
-    cached.phase === next.phase &&
-    cached.isActive === next.isActive &&
-    cached.sttText === next.sttText &&
-    cached.assistantText === next.assistantText &&
-    cached.error === next.error
-  ) {
-    return cached;
-  }
-  cached = next;
-  return cached;
-};
+const getSnapshot = (): VoiceSessionState => voiceService.snapshot;
 
 export function useVoiceSession() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -47,8 +19,16 @@ export function useVoiceSession() {
     voiceService.stop();
   }, []);
 
+  const interrupt = useCallback(() => {
+    voiceService.interrupt();
+  }, []);
+
   const skip = useCallback(() => {
     voiceService.skip();
+  }, []);
+
+  const setMuted = useCallback((muted: boolean) => {
+    voiceService.setMuted(muted);
   }, []);
 
   const answer = useCallback((text: string) => {
@@ -56,7 +36,7 @@ export function useVoiceSession() {
   }, []);
 
   return useMemo(
-    () => ({ ...state, start, stop, skip, answer }),
-    [state, start, stop, skip, answer],
+    () => ({ ...state, start, stop, interrupt, skip, setMuted, answer }),
+    [state, start, stop, interrupt, skip, setMuted, answer],
   );
 }

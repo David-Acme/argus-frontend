@@ -6,7 +6,7 @@ export function pcmToBytes(samples: Int16Array): ArrayBuffer {
   return samples.slice().buffer;
 }
 
-export function concatPcm(parts: readonly Int16Array[], total: number): Int16Array {
+export function concatPcm(parts: readonly Int16Array[], total: number): Int16Array<ArrayBuffer> {
   const merged = new Int16Array(total);
   let offset = 0;
   for (const part of parts) {

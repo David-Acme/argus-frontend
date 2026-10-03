@@ -1,14 +1,11 @@
 package com.margelo.nitro.mic
 
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.ArrayBuffer
 import com.margelo.nitro.core.NullType
-import java.util.concurrent.atomic.AtomicBoolean
+import java.nio.ByteOrder
 
 @DoNotStrip
 class HybridArgusMic : HybridArgusMicSpec() {
@@ -17,82 +14,67 @@ class HybridArgusMic : HybridArgusMicSpec() {
     Variant__pcm__Variant_NullType_ArrayBuffer______Unit_NullType.create(NullType.NULL)
   override var onError: Variant__code__String__message__String_____Unit_NullType =
     Variant__code__String__message__String_____Unit_NullType.create(NullType.NULL)
+  override var onPlayerIdle: Variant_______Unit_NullType =
+    Variant_______Unit_NullType.create(NullType.NULL)
 
   private val mainHandler = Handler(Looper.getMainLooper())
-  private val running = AtomicBoolean(false)
-  private var recorder: AudioRecord? = null
-  private var thread: Thread? = null
+  private val session = CallAudioSession()
+  private val capture = PcmCapture(
+    onChunk = { bytes ->
+      val chunk = ArrayBuffer.copy(bytes)
+      mainHandler.post { onData.asFirstOrNull()?.invoke(Variant_NullType_ArrayBuffer.create(chunk)) }
+    },
+    onFailure = ::emitError,
+  )
+  private val player = PcmPlayer(
+    onIdle = { mainHandler.post { onPlayerIdle.asFirstOrNull()?.invoke() } },
+    onFailure = ::emitError,
+  )
 
   override fun start(sampleRate: Double) {
-    if (running.get()) return
-    val rate = sampleRate.toInt().coerceAtLeast(8000)
-
-    val size = AudioRecord.getMinBufferSize(
-      rate,
-      AudioFormat.CHANNEL_IN_MONO,
-      AudioFormat.ENCODING_PCM_16BIT,
-    )
-
-    val record = try {
-      AudioRecord(
-        MediaRecorder.AudioSource.VOICE_RECOGNITION,
-        rate,
-        AudioFormat.CHANNEL_IN_MONO,
-        AudioFormat.ENCODING_PCM_16BIT,
-        size * 4,
-      )
-    } catch (e: Exception) {
-      emitError("MIC_UNAVAILABLE", "Microphone unavailable")
-      return
-    }
-
-    if (record.state != AudioRecord.STATE_INITIALIZED) {
-      emitError("MIC_PERMISSION_DENIED", "Microphone permission denied")
-      record.release()
-      return
-    }
-
-    recorder = record
-    running.set(true)
-    record.startRecording()
-
-    thread = Thread {
-      val buffer = ShortArray(size / 2)
-      while (running.get()) {
-        val read = record.read(buffer, 0, buffer.size, AudioRecord.READ_NON_BLOCKING)
-        if (read <= 0) {
-          Thread.sleep(5)
-          continue
-        }
-        val bytes = ByteArray(read * 2)
-        var i = 0
-        while (i < read) {
-          val s = buffer[i]
-          bytes[i * 2] = (s.toInt() and 0xFF).toByte()
-          bytes[i * 2 + 1] = ((s.toInt() shr 8) and 0xFF).toByte()
-          i += 1
-        }
-        val chunk = ArrayBuffer.copy(bytes)
-        mainHandler.post { onData.asFirstOrNull()?.invoke(Variant_NullType_ArrayBuffer.create(chunk)) }
-      }
-    }.apply {
-      isDaemon = true
-      start()
-    }
+    if (capture.isRunning) return
+    session.acquire()
+    if (!capture.start(sampleRate.toInt().coerceAtLeast(MIN_RATE))) session.release()
   }
 
   override fun stop() {
-    if (!running.getAndSet(false)) return
-    val record = recorder
-    recorder = null
-    runCatching { record?.stop() }
-    runCatching { record?.release() }
-    thread?.join(500)
-    thread = null
+    if (!capture.isRunning) return
+    capture.stop()
+    session.release()
     mainHandler.post { onData.asFirstOrNull()?.invoke(Variant_NullType_ArrayBuffer.create(NullType.NULL)) }
   }
 
+  override fun playerStart(sampleRate: Double) {
+    if (player.isRunning) return
+    session.acquire()
+    if (!player.start(sampleRate.toInt().coerceAtLeast(MIN_RATE), capture.sessionId)) session.release()
+  }
+
+  override fun playerWrite(pcm: ArrayBuffer) {
+    if (!player.isRunning) return
+    val bytes = pcm.getBuffer(true).order(ByteOrder.LITTLE_ENDIAN)
+    val samples = ShortArray(bytes.remaining() / 2)
+    bytes.asShortBuffer().get(samples)
+    player.write(samples)
+  }
+
+  override fun playerFlush() {
+    player.flush()
+  }
+
+  override fun playerStop() {
+    if (!player.isRunning) return
+    player.stop()
+    session.release()
+  }
+
+  override fun playedSamples(): Double = player.playedFrames().toDouble()
+
   private fun emitError(code: String, message: String) {
     mainHandler.post { onError.asFirstOrNull()?.invoke(code, message) }
+  }
+
+  companion object {
+    private const val MIN_RATE = 8000
   }
 }
