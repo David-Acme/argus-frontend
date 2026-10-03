@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/shared/components/confirm';
 import { Toaster } from '@/shared/components/toast';
 import { OfflineBanner } from '@/shared/components/layout';
 import { SessionGate } from '@/shared/components/session/session-gate';
+import { CallPill } from '@/shared/components/voice';
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
@@ -53,6 +54,7 @@ export default function RootLayout() {
                 <Stack.Screen name="cameras" />
               </Stack>
               <GlobalBottomNav />
+              {IS_NATIVE ? <CallPill /> : null}
               <OfflineBanner />
               <ConfirmDialog />
               <Toaster />

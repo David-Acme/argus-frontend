@@ -4,8 +4,10 @@ import { synchronizeService } from '@/core/services/sync';
 import type { IVoiceReactionPayload } from '@/core/interfaces';
 import { useAvatarStore } from '@/core/stores';
 import {
+  VOICE_ACTION_TYPE,
   VOICE_ANSWER_TYPE,
   VOICE_ASSISTANT_TYPE,
+  VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_ERROR_TYPE,
   VOICE_EVENT_TYPE,
@@ -21,10 +23,10 @@ import {
   VOICE_TURN_TYPE,
 } from '@/shared/constants';
 import { concatPcm, pcmChunk } from '@/shared/libs/pcm';
-import type { VoicePhase, VoiceSnapshot, VoiceTranscriptLine } from '@/core/types';
+import type { VoiceAction, VoiceContext, VoicePhase, VoiceSnapshot, VoiceTranscriptLine } from '@/core/types';
 import { log } from '@/core/services/log';
 import { createArgusMic } from './voice-mic';
-import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceError } from './voice-frames';
+import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceAction, parseVoiceError } from './voice-frames';
 import { VoicePlayout } from './voice-playout';
 import { appendAssistantText, appendUserLine, lastAssistantText } from './voice-transcript';
 import {
@@ -40,6 +42,7 @@ import {
 } from './voice-turn-gate';
 
 type Listener = () => void;
+type ActionListener = (action: VoiceAction) => void;
 
 const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * VOICE_MIC_FRAME_MS) / 1000;
 const SOCKET_CHECK_INTERVAL_MS = 1000;
@@ -64,6 +67,7 @@ class VoiceService {
   private lastSocketCheckAt = 0;
   private readonly playout = new VoicePlayout(() => this.handlePlayoutIdle());
   private listeners = new Set<Listener>();
+  private actionListeners = new Set<ActionListener>();
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
 
   constructor() {
@@ -182,6 +186,18 @@ class VoiceService {
     this.notify();
   }
 
+  onAction(listener: ActionListener): () => void {
+    this.actionListeners.add(listener);
+    return () => {
+      this.actionListeners.delete(listener);
+    };
+  }
+
+  sendContext(context: VoiceContext): void {
+    if (!this.active) return;
+    synchronizeService.send(VOICE_CONTEXT_TYPE, context);
+  }
+
   answer(text: string): void {
     synchronizeService.send(VOICE_ANSWER_TYPE, { text });
   }
@@ -285,6 +301,11 @@ class VoiceService {
       if (this.active && this.phase === 'thinking') this.phase = 'speaking';
       if (!this.playout.isPlaying) this.playout.armIdle();
       this.notify();
+    });
+    synchronizeService.onType(VOICE_ACTION_TYPE, (payload) => {
+      const action = parseVoiceAction(payload);
+      if (!action || !this.active) return;
+      for (const listener of this.actionListeners) listener(action);
     });
     synchronizeService.onType(VOICE_DONE_TYPE, () => {
       this.phase = 'done';

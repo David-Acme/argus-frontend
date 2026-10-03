@@ -20,6 +20,9 @@ export const VOICE_ASSISTANT_TYPE = 'voice:assistant';
 export const VOICE_EVENT_TYPE = 'voice:event';
 export const VOICE_TURN_TYPE = 'voice:turn';
 export const VOICE_INTERRUPTED_TYPE = 'voice:interrupted';
+export const VOICE_ACTION_TYPE = 'voice:action';
+export const VOICE_CONTEXT_TYPE = 'voice:context';
+export const VOICE_ACTION_NAMES = ['app.show_camera', 'app.open', 'app.set_guard_mode'] as const;
 export const VOICE_DONE_TYPE = 'voice:done';
 export const VOICE_ERROR_TYPE = 'voice:error';
 

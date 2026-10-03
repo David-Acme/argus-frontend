@@ -24,6 +24,28 @@ export const voice = {
   'done-subtitle': 'Argus will be here to help you.',
   'web-only-title': 'Argus voice is on your phone',
   'web-only-hint': 'To talk to Argus, use the app on your phone.',
+  'in-call': 'On a call with Argus',
+  'back-to-call': 'Back to the call',
+  context: {
+    cameras: 'Cameras in the house: {names}.',
+    'no-cameras': 'The house has no connected cameras.',
+  },
+  actions: {
+    'camera-missing': 'Argus could not find that camera.',
+    'guard-mode': 'Argus switched security to {mode}.',
+  },
+  objects: {
+    person: 'a person',
+    car: 'a car',
+    truck: 'a truck',
+    motorcycle: 'a motorcycle',
+    bicycle: 'a bicycle',
+    dog: 'a dog',
+    cat: 'a cat',
+    bird: 'a bird',
+    package: 'a package',
+    'something-moving': 'something moving',
+  },
   errors: {
     connection: 'There is no connection to your Argus server.',
     generic: 'Argus cannot take the call right now.',

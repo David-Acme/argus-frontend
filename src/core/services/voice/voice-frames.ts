@@ -1,4 +1,5 @@
-import type { VoiceSttFrame } from '@/core/types';
+import type { VoiceAction, VoiceActionName, VoiceSttFrame } from '@/core/types';
+import { VOICE_ACTION_NAMES } from '@/shared/constants';
 
 type FrameRecord = Record<string, unknown>;
 
@@ -29,4 +30,14 @@ export function parseVoiceError(payload: unknown): string {
   if (record && typeof record.error === 'string' && record.error.length > 0) return record.error;
   const status = record && (typeof record.status === 'number' || typeof record.status === 'string') ? record.status : '';
   return `VOICE_ERROR|${status}`.trim();
+}
+
+const isActionName = (name: unknown): name is VoiceActionName =>
+  typeof name === 'string' && (VOICE_ACTION_NAMES as readonly string[]).includes(name);
+
+export function parseVoiceAction(payload: unknown): VoiceAction | null {
+  const record = asRecord(payload);
+  const id = parseTurnId(payload);
+  if (!record || id === null || !isActionName(record.name)) return null;
+  return { id, name: record.name, arguments: asRecord(record.arguments) ?? {} };
 }
