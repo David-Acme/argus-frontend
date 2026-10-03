@@ -2,8 +2,6 @@ import { httpService } from '@/core/services/http';
 import type { IServiceResponse } from '@/core/interfaces';
 import type { PortraitPreviewImage } from '@/features/people/model/portrait-preview';
 
-export { portraitDataUri } from '@/features/people/model/portrait-preview';
-
 type PortraitCapability = {
   token: string;
   expiresAt: number;
