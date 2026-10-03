@@ -1,6 +1,10 @@
 import { createMic } from 'argus-mic';
-import type { ArgusMic } from 'argus-mic';
+import type { IVoiceMic } from '@/core/interfaces';
 
-export function createArgusMic(): ArgusMic {
+export function voiceCallSupported(): boolean {
+  return true;
+}
+
+export function createVoiceMic(): IVoiceMic {
   return createMic();
 }

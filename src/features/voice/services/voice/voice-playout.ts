@@ -1,4 +1,4 @@
-import type { ArgusMic } from 'argus-mic';
+import type { IVoiceMic } from '@/core/interfaces';
 import { withTiming } from 'react-native-reanimated';
 import { VOICE_ENVELOPE_ATTACK_MS, VOICE_ENVELOPE_RELEASE_MS, VOICE_ENVELOPE_WINDOW_MS } from '@/features/voice/constants/reaction';
 import { VOICE_PLAYOUT_IDLE_GRACE_MS, VOICE_PLAYOUT_STALL_MS, VOICE_SAMPLE_RATE } from '@/features/voice/constants/voice';
@@ -9,7 +9,7 @@ import { PlayoutEnvelope } from '@/features/voice/services/voice/voice-envelope'
 const WINDOW_SAMPLES = Math.max(1, Math.round((VOICE_SAMPLE_RATE * VOICE_ENVELOPE_WINDOW_MS) / 1000));
 
 export class VoicePlayout {
-  private player: ArgusMic | null = null;
+  private player: IVoiceMic | null = null;
   private envelope = new PlayoutEnvelope(WINDOW_SAMPLES);
   private playing = false;
   private stopWhenIdle = false;
@@ -25,7 +25,7 @@ export class VoicePlayout {
     return this.playing;
   }
 
-  attach(player: ArgusMic): void {
+  attach(player: IVoiceMic): void {
     this.stop();
     this.player = player;
     this.stopWhenIdle = false;

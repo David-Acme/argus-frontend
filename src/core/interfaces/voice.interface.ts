@@ -24,3 +24,15 @@ export interface IVoiceErrorPayload {
 export interface IVoiceAnswerPayload {
   text: string;
 }
+export interface IVoiceMic {
+  start(sampleRate: number): void;
+  stop(): void;
+  playerStart(sampleRate: number): void;
+  playerWrite(pcm: ArrayBuffer): void;
+  playerFlush(): void;
+  playerStop(): void;
+  playedSamples(): number;
+  onData: ((pcm: ArrayBuffer | null) => void) | null;
+  onError: ((code: string, message: string) => void) | null;
+  onPlayerIdle: (() => void) | null;
+}

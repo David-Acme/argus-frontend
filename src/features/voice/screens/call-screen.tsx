@@ -5,8 +5,8 @@ import { useAuthStore } from '@/core/stores';
 import { CallCameraCard } from '@/features/voice/components/call-camera-card';
 import { CallSurface } from '@/features/voice/components/call-surface';
 import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
-import { voiceService } from '@/features/voice/services/voice';
-import { IS_NATIVE, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { voiceCallSupported, voiceService } from '@/features/voice/services/voice';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
 
@@ -49,5 +49,5 @@ function CallScreen() {
 export default function CallRoute() {
   const authStatus = useAuthStore((state) => state.status);
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
-  return IS_NATIVE ? <CallScreen /> : <VoiceWebNotice />;
+  return voiceCallSupported() ? <CallScreen /> : <VoiceWebNotice />;
 }

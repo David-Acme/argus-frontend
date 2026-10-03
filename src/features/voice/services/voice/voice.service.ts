@@ -1,7 +1,6 @@
-import type { ArgusMic } from 'argus-mic';
 import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { synchronizeService } from '@/core/services/sync';
-import type { IVoiceReactionPayload } from '@/core/interfaces';
+import type { IVoiceMic, IVoiceReactionPayload } from '@/core/interfaces';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
 import {
   CALL_ACTIONS_KEPT,
@@ -46,7 +45,7 @@ import type {
   VoiceTranscriptLine,
 } from '@/core/types';
 import { log } from '@/core/services/log';
-import { createArgusMic } from './voice-mic';
+import { createVoiceMic } from './voice-mic';
 import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceAction, parseVoiceError } from '@/features/voice/services/voice/voice-frames';
 import { VoicePlayout } from '@/features/voice/services/voice/voice-playout';
 import { appendAssistantText, appendUserLine, lastAssistantText } from '@/features/voice/services/voice/voice-transcript';
@@ -72,7 +71,7 @@ const SOCKET_CHECK_INTERVAL_MS = 1000;
 const devLog = (...args: unknown[]): void => log.debug('voice', ...args);
 
 class VoiceService {
-  private mic: ArgusMic | null = null;
+  private mic: IVoiceMic | null = null;
   private capturing = false;
   private active = false;
   private serverSession = false;
@@ -164,7 +163,7 @@ class VoiceService {
         this.fail('MIC_PERMISSION_DENIED|Microphone permission denied');
         return;
       }
-      const mic = this.mic ?? createArgusMic();
+      const mic = this.mic ?? createVoiceMic();
       this.mic = mic;
       mic.onData = (pcm) => {
         if (pcm != null) this.handleMicData(pcm);

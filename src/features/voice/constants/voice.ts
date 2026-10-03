@@ -1,4 +1,5 @@
 export const VOICE_SAMPLE_RATE = 16000;
+export const VOICE_WORKLET_URL = '/voice/voice-worklets.js';
 
 export const VOICE_MIC_FRAME_MS = 100;
 export const VOICE_PLAYOUT_STALL_MS = 1500;
