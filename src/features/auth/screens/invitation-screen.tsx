@@ -11,6 +11,7 @@ import { parseInvitationQr } from '@/shared/libs/invitation-qr';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { holdInviteToken } from '@/features/auth/model/invite-slot';
 
 type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error';
 
@@ -46,10 +47,8 @@ function InvitationScreen() {
           return;
         }
         setPhase('accepted');
-        router.replace({
-          pathname: '/welcome/face',
-          params: { mode: 'invite-enroll', inviteToken: qr.token },
-        });
+        holdInviteToken(qr.token);
+        router.replace({ pathname: '/welcome/face', params: { mode: 'invite-enroll' } });
       });
     });
     return () => {

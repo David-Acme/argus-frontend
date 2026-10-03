@@ -298,8 +298,12 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
   data.
 - [ ] Tauri trust boundary: Rust reads the pairing from the keyring; the JS
   API shrinks to `{ method, path, headers, body }`.
-- [ ] Deep links: an allow-list in `+native-intent`; the invitation token
-  leaves route params for a short-lived store slot.
+- [x] Deep links: an allow-list in `+native-intent`; the invitation token
+  leaves route params for a short-lived store slot. Done: `app/+native-intent.ts`
+  keeps only the signed-in screens and `/cameras/<id>`, without query or
+  hash, and sends everything else to `/`; the token lives ten minutes in
+  `features/auth/model/invite-slot.ts` and is cleared on a successful
+  enrolment.
 
 ## 5. Order and expected wins
 

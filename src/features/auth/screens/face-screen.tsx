@@ -21,10 +21,7 @@ const SHEET_ESTIMATE = 260;
 export default function FaceScreen() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const { mode = 'owner-enroll', inviteToken } = useLocalSearchParams<{
-    mode?: string;
-    inviteToken?: string;
-  }>();
+  const { mode = 'owner-enroll' } = useLocalSearchParams<{ mode?: string }>();
   const [sheetHeight, setSheetHeight] = useState(0);
   const {
     t,
@@ -44,7 +41,7 @@ export default function FaceScreen() {
     cameraActive,
     handleCameraReady,
     captureManually,
-  } = useFaceCapture({ mode, inviteToken });
+  } = useFaceCapture({ mode });
 
   const handleSheetLayout = useCallback((e: LayoutChangeEvent) => {
     setSheetHeight(e.nativeEvent.layout.height);

@@ -524,7 +524,8 @@ for Watermelon nor make an HTTP list request just because it mounted.
   resulting data URI lives only in that open dialog's React state and is cleared
   when it closes or a newer request wins. Do not add image caching.
 - Owner invitation QRs contain the opaque token plus pinned local server
-  identity. The QR preview itself is single-display: dismissing or unmounting
+  identity. Between scanning and enrolment the token lives in memory only
+  (`features/auth/model/invite-slot.ts`, ten minutes), never in a route param. The QR preview itself is single-display: dismissing or unmounting
   revokes its invitation. Do not persist its token or reconstruct it from
   invitation metadata.
 - `AuthContextChanged` from `/sync` updates the signed-in role and requests a
@@ -720,5 +721,6 @@ cd src-tauri && cargo check
 | `src/shared/hooks/use-theme-preference.ts` | Theme preference get/set |
 | `src/shared/components/layout/navigation-theme.ts` | `NAV_THEME` + `BG_COLORS` (React Navigation) |
 | `src/global.css` | OKLCH tokens + aliases + base/utilities |
+| `src/app/+native-intent.ts` | Deep-link allow-list: signed-in screens and `/cameras/<id>` pass (query and hash dropped), anything else goes to `/` |
 | `src/app/_layout.tsx` | Root layout: theme init, `SystemBars`, `SessionGate`, guards native-only, Stack con crossfade (`fade`) + overlays globales (nav, confirm, toaster) |
 | `CONTEXT.md` | Full project history and decisions |

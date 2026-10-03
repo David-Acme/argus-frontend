@@ -7,16 +7,16 @@ import { log } from '@/core/services/log';
 import { FACE_CAPTURE_READY_TIMEOUT_MS, FACE_CAPTURE_SETTLE_MS, FACE_MANUAL_CAPTURE_DELAY_MS } from '@/features/auth/constants/face';
 import { useFaceGuide } from '@/features/auth/hooks/use-face-guide';
 import { faceErrorFromUnknown, type FaceError } from '@/features/auth/model/face-error';
+import { clearInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 type Phase = 'guide' | 'countdown' | 'submitting';
 
 type FaceCaptureOptions = {
   mode: string;
-  inviteToken?: string;
 };
 
-export function useFaceCapture({ mode, inviteToken }: FaceCaptureOptions) {
+export function useFaceCapture({ mode }: FaceCaptureOptions) {
   const router = useRouter();
   const enrolling = mode === 'owner-enroll' || mode === 'invite-enroll';
   const { t } = useTranslation();
@@ -90,14 +90,16 @@ export function useFaceCapture({ mode, inviteToken }: FaceCaptureOptions) {
       setError(null);
       setNotice(null);
       setPhase('submitting');
+      const inviteToken = mode === 'invite-enroll' ? readInviteToken() : null;
       try {
         const response = enrolling
           ? await authService.register({
               imageUri: uri,
-              ...(mode === 'invite-enroll' && inviteToken ? { inviteCode: inviteToken } : {}),
+              ...(inviteToken ? { inviteCode: inviteToken } : {}),
             })
           : await authService.login(uri);
         if (response.ok && response.info) {
+          clearInviteToken();
           const already = response.info.alreadyRegistered === true;
           const isOwner = response.info.role === 'owner';
           if (already && !isOwner) {
@@ -135,7 +137,7 @@ export function useFaceCapture({ mode, inviteToken }: FaceCaptureOptions) {
         setError(normalized);
       }
     },
-    [enrolling, inviteToken, mode, router, t],
+    [enrolling, mode, router, t],
   );
 
   const handleCameraReady = useCallback(() => {
