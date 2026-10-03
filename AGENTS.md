@@ -480,6 +480,9 @@ for Watermelon nor make an HTTP list request just because it mounted.
   `/users` (users + invitation metadata); Guard sees `/people` (directory only);
   Resident/Guest see their own profile only. Reuse
   `shared/libs/people-access.ts` instead of scattering role checks.
+- Which role may open which screen is one table, `shared/libs/route-access.ts`
+  (`routeFallback(path, role)`): the `(app)` layout redirects with it and the
+  nav hides the tabs it refuses. A screen never checks its own role.
 - `shared/libs/role-access.ts` mirrors the backend's `kTableAccess`
   (`backend/packages/lib/auth/src/auth/role-access.hxx`) table by table;
   `tests/unit/role-access-contract.test.ts` parses the header and fails on any

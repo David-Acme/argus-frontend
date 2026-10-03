@@ -206,9 +206,12 @@ to the documented scale, then a lint rule against them.
   rely on the router's fallback; the gate keeps `/` one route and renders the
   resolver in place. `/call` stays outside the group (full-screen surface) and
   keeps its own redirect.
-- [ ] Role guards from the policies (`requireRole`, people access) instead of
+- [x] Role guards from the policies (`requireRole`, people access) instead of
   hand-written checks in settings, users, people and cameras.
-- [ ] `entryPermissions(entry, can)` for the eight agenda repeats.
+  Done: `shared/libs/route-access.ts` (`routeFallback`) is the one table; the
+  `(app)` gate applies it and the nav filters its tabs with it.
+- [x] `entryPermissions(entry, can)` for the eight agenda repeats. Done: in
+  `shared/libs/calendar-entry-actions.ts`.
 - [x] Split `app/index.tsx` into an entry resolver and the home screen; show
   the branded splash while resolving instead of a blank view.
   Done: `EntryGate` + `(app)/index.tsx`; the splash is `BrandSplash`, shared
