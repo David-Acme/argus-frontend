@@ -10,8 +10,11 @@ import {
   PROJECT_TASK_SCHEMA,
 } from './tables';
 
-const fromSchema = (schema: TableSchema) =>
-  createTable({ name: schema.name, columns: [...schema.columnArray] });
+const fromSchema = (schema: TableSchema, addedLater: readonly string[] = []) =>
+  createTable({
+    name: schema.name,
+    columns: schema.columnArray.filter((column) => !addedLater.includes(column.name)),
+  });
 
 export const migrations = schemaMigrations({
   migrations: [
@@ -22,7 +25,7 @@ export const migrations = schemaMigrations({
         fromSchema(PROJECT_SCHEMA),
         fromSchema(PROJECT_TASK_SCHEMA),
         fromSchema(EVENT_SCHEMA),
-        fromSchema(PERSON_SCHEMA),
+        fromSchema(PERSON_SCHEMA, ['status']),
       ],
     },
     {
