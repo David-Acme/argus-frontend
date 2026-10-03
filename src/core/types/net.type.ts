@@ -10,6 +10,7 @@ export type NetErrorCode =
   | 'HOST_NOT_ALLOWED'
   | 'DISCOVERY_NOT_FOUND'
   | 'NETWORK_ERROR'
+  | 'TIMEOUT'
   | 'STORAGE_ERROR';
 
 export interface NetRoute {
@@ -28,12 +29,18 @@ export interface NetDiscovery {
   routes: NetRoute[];
 }
 
+export interface NetPairExpectation {
+  caFingerprint: string;
+  instanceId: string;
+}
+
 export interface NetPairInput {
   host: string;
   ip: string;
   port: number;
   code: string;
   routes: NetRoutePorts;
+  expect?: NetPairExpectation;
 }
 
 export interface NetAdoptInput {

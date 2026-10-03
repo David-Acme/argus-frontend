@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use futures_util::{SinkExt, StreamExt};
 use rustls::pki_types::CertificateDer;
@@ -17,7 +17,7 @@ use tokio_tungstenite::{client_async_tls_with_config, Connector};
 
 use super::trust::Trust;
 
-type SocketSender = mpsc::UnboundedSender<Message>;
+type SocketSender = mpsc::Sender<Message>;
 type SocketMap = Arc<Mutex<HashMap<String, SocketSender>>>;
 type SocketChannel = Channel;
 
@@ -27,6 +27,11 @@ const FRAME_BINARY: u8 = 2;
 const FRAME_ERROR: u8 = 3;
 const FRAME_CLOSE: u8 = 4;
 const PING_INTERVAL: Duration = Duration::from_secs(20);
+const PEER_SILENCE_LIMIT: Duration = Duration::from_secs(45);
+const WRITE_TIMEOUT: Duration = Duration::from_secs(10);
+const SEND_QUEUE: usize = 512;
+const CONNECT_TIMEOUT_MIN_MS: f64 = 1_000.0;
+const CONNECT_TIMEOUT_MAX_MS: f64 = 60_000.0;
 
 #[derive(Clone, Default)]
 pub struct SocketState {
@@ -42,15 +47,31 @@ pub struct SocketOpenOptions {
   pub connect_timeout_ms: f64,
 }
 
-fn send_frame(channel: &SocketChannel, kind: u8, payload: &[u8]) {
+fn send_frame(channel: &SocketChannel, kind: u8, payload: &[u8]) -> bool {
   let mut frame = Vec::with_capacity(payload.len() + 1);
   frame.push(kind);
   frame.extend_from_slice(payload);
-  let _ = channel.send(InvokeResponseBody::Raw(frame));
+  channel.send(InvokeResponseBody::Raw(frame)).is_ok()
 }
 
-fn send_text_frame(channel: &SocketChannel, kind: u8, text: &str) {
-  send_frame(channel, kind, text.as_bytes());
+fn send_text_frame(channel: &SocketChannel, kind: u8, text: &str) -> bool {
+  send_frame(channel, kind, text.as_bytes())
+}
+
+fn enqueue(sender: &SocketSender, message: Message) -> Result<(), String> {
+  sender.try_send(message).map_err(|error| match error {
+    mpsc::error::TrySendError::Full(_) => "NETWORK_ERROR|Socket send queue is full".to_string(),
+    mpsc::error::TrySendError::Closed(_) => "NETWORK_ERROR|Socket is closed".to_string(),
+  })
+}
+
+fn connect_timeout(requested_ms: f64) -> Duration {
+  let ms = if requested_ms.is_finite() {
+    requested_ms.clamp(CONNECT_TIMEOUT_MIN_MS, CONNECT_TIMEOUT_MAX_MS)
+  } else {
+    CONNECT_TIMEOUT_MIN_MS
+  };
+  Duration::from_millis(ms as u64)
 }
 
 fn send_close_frame(channel: &SocketChannel, code: i32, reason: &str) {
@@ -120,7 +141,7 @@ pub async fn open(
   let trust = super::trust::paired()?;
   let (url, address) = validate_target(&options, &trust)?;
   let tls = build_tls_config(&trust.ca_pem)?;
-  let timeout = Duration::from_millis(options.connect_timeout_ms.max(1000.0) as u64);
+  let timeout = connect_timeout(options.connect_timeout_ms);
 
   let stream = tokio::time::timeout(timeout, TcpStream::connect(address))
     .await
@@ -155,7 +176,7 @@ pub async fn open(
   })?;
 
   let (mut writer, mut reader) = socket.split();
-  let (sender, mut receiver) = mpsc::unbounded_channel::<Message>();
+  let (sender, mut receiver) = mpsc::channel::<Message>(SEND_QUEUE);
   state.sockets.lock().map_err(|_| "NETWORK_ERROR|Socket state poisoned".to_string())?
     .insert(options.socket_id.clone(), sender);
 
@@ -166,11 +187,17 @@ pub async fn open(
   tokio::spawn(async move {
     let mut close_code = 1000;
     let mut close_reason = String::new();
+    let mut last_heard = Instant::now();
     let mut ping = tokio::time::interval_at(tokio::time::Instant::now() + PING_INTERVAL, PING_INTERVAL);
     loop {
       tokio::select! {
         _ = ping.tick() => {
-          if writer.send(Message::Ping(Default::default())).await.is_err() {
+          if last_heard.elapsed() > PEER_SILENCE_LIMIT {
+            close_code = 1006;
+            close_reason = "Peer stopped answering".to_string();
+            break;
+          }
+          if !matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(Message::Ping(Default::default()))).await, Ok(Ok(()))) {
             close_code = 1006;
             close_reason = "Ping failed".to_string();
             break;
@@ -179,19 +206,22 @@ pub async fn open(
         outgoing = receiver.recv() => {
           match outgoing {
             Some(message) => {
-              if writer.send(message).await.is_err() { break; }
+              if !matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(message)).await, Ok(Ok(()))) {
+                close_code = 1006;
+                close_reason = "Write failed".to_string();
+                break;
+              }
             }
             None => break,
           }
         }
         incoming = reader.next() => {
-          match incoming {
-            Some(Ok(Message::Text(message))) => {
-              send_text_frame(&on_event, FRAME_TEXT, &message);
-            }
-            Some(Ok(Message::Binary(data))) => {
-              send_frame(&on_event, FRAME_BINARY, &data);
-            }
+          if matches!(incoming, Some(Ok(_))) {
+            last_heard = Instant::now();
+          }
+          let delivered = match incoming {
+            Some(Ok(Message::Text(message))) => send_text_frame(&on_event, FRAME_TEXT, &message),
+            Some(Ok(Message::Binary(data))) => send_frame(&on_event, FRAME_BINARY, &data),
             Some(Ok(Message::Close(frame))) => {
               if let Some(frame) = frame {
                 close_code = i32::from(u16::from(frame.code));
@@ -200,21 +230,22 @@ pub async fn open(
               break;
             }
             Some(Ok(Message::Ping(data))) => {
-              let _ = writer.send(Message::Pong(data)).await;
+              let _ = tokio::time::timeout(WRITE_TIMEOUT, writer.send(Message::Pong(data))).await;
+              true
             }
-            Some(Ok(Message::Pong(_))) => {}
-            Some(Ok(Message::Frame(_))) => {}
+            Some(Ok(Message::Pong(_) | Message::Frame(_))) => true,
             Some(Err(error)) => {
-              send_text_frame(
-                &on_event,
-                FRAME_ERROR,
-                &format!("NETWORK_ERROR|{error}"),
-              );
+              send_text_frame(&on_event, FRAME_ERROR, &format!("NETWORK_ERROR|{error}"));
               close_code = 1006;
               close_reason = error.to_string();
               break;
             }
             None => break,
+          };
+          if !delivered {
+            close_code = 1001;
+            close_reason = "Listener is gone".to_string();
+            break;
           }
         }
       }
@@ -230,10 +261,8 @@ pub async fn open(
 
 pub fn send_text(state: State<'_, SocketState>, socket_id: String, message: String) -> Result<(), String> {
   let sockets = state.sockets.lock().map_err(|_| "NETWORK_ERROR|Socket state poisoned".to_string())?;
-  sockets.get(&socket_id)
-    .ok_or_else(|| "NETWORK_ERROR|Socket is closed".to_string())?
-    .send(Message::Text(message.into()))
-    .map_err(|_| "NETWORK_ERROR|Socket is closed".to_string())
+  let sender = sockets.get(&socket_id).ok_or_else(|| "NETWORK_ERROR|Socket is closed".to_string())?;
+  enqueue(sender, Message::Text(message.into()))
 }
 
 pub fn send_binary(request: Request<'_>, state: State<'_, SocketState>) -> Result<(), String> {
@@ -247,10 +276,8 @@ pub fn send_binary(request: Request<'_>, state: State<'_, SocketState>) -> Resul
     return Err("NETWORK_ERROR|Binary body required".to_string());
   };
   let sockets = state.sockets.lock().map_err(|_| "NETWORK_ERROR|Socket state poisoned".to_string())?;
-  sockets.get(&socket_id)
-    .ok_or_else(|| "NETWORK_ERROR|Socket is closed".to_string())?
-    .send(Message::Binary(bytes.clone().into()))
-    .map_err(|_| "NETWORK_ERROR|Socket is closed".to_string())
+  let sender = sockets.get(&socket_id).ok_or_else(|| "NETWORK_ERROR|Socket is closed".to_string())?;
+  enqueue(sender, Message::Binary(bytes.clone().into()))
 }
 
 pub fn close(state: State<'_, SocketState>, socket_id: String, code: f64, reason: String) -> Result<(), String> {
@@ -259,10 +286,8 @@ pub fn close(state: State<'_, SocketState>, socket_id: String, code: f64, reason
     .remove(&socket_id);
   if let Some(sender) = sender {
     let code = tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode::from(code as u16);
-    sender.send(Message::Close(Some(tokio_tungstenite::tungstenite::protocol::CloseFrame {
-      code,
-      reason: reason.into(),
-    }))).map_err(|_| "NETWORK_ERROR|Socket is closed".to_string())?;
+    let frame = tokio_tungstenite::tungstenite::protocol::CloseFrame { code, reason: reason.into() };
+    let _ = sender.try_send(Message::Close(Some(frame)));
   }
   Ok(())
 }

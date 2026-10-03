@@ -40,21 +40,13 @@ export async function pairWithQr(qr: QrPairingPayload): Promise<PairWithQrResult
       port: qr.port,
       code: qr.code,
       routes: routePortsOf(discovery.routes),
+      expect:
+        qr.caFingerprint && qr.instanceId
+          ? { caFingerprint: qr.caFingerprint, instanceId: qr.instanceId }
+          : undefined,
     });
   } catch (error) {
     throw toNetError(error);
-  }
-
-  if (qr.caFingerprint && qr.instanceId) {
-    const fingerprintMatches =
-      pairing.caFingerprint.toLowerCase() === qr.caFingerprint.toLowerCase();
-    const instanceMatches = pairing.instanceId.toLowerCase() === qr.instanceId.toLowerCase();
-    if (!fingerprintMatches || !instanceMatches) {
-      throw {
-        code: 'FINGERPRINT_MISMATCH',
-        message: 'The server fingerprint does not match the scanned QR',
-      } as NetError;
-    }
   }
 
   return { pairing, discovery: { host, ip: discovery.ip, port: qr.port } };

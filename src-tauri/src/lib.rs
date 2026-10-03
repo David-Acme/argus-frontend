@@ -1,45 +1,69 @@
 mod net;
 
+use std::time::Duration;
+
 use net::discover::discover;
-use net::http::{request as http_request, HttpRequest, HttpResult};
-use net::pair::pair;
-use net::secure::{delete as secure_delete, get as secure_get, set as secure_set};
+use net::http::{probe as http_probe, request as http_request, HttpRequest, HttpResult};
+use net::pair::{pair, PairExpectation, PairInput};
+use net::secure::{delete as secure_delete, get as secure_get, set_from_webview as secure_set};
 use net::socket::{close as socket_close, open as socket_open, send_binary as socket_send_binary,
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
 use tauri::ipc::{Channel, Request};
 use tauri::State;
 
+const DISCOVERY_MIN_MS: f64 = 1_000.0;
+const DISCOVERY_MAX_MS: f64 = 30_000.0;
+
+async fn blocking<T: Send + 'static>(work: impl FnOnce() -> Result<T, String> + Send + 'static) -> Result<T, String> {
+  tauri::async_runtime::spawn_blocking(work)
+    .await
+    .map_err(|e| format!("STORAGE_ERROR|{e}"))?
+}
+
 #[tauri::command]
 async fn argus_discover(timeout_ms: f64) -> Result<net::Discovery, String> {
-  let ms = timeout_ms.max(1000.0) as u64;
-  discover(std::time::Duration::from_millis(ms)).await
+  let ms = if timeout_ms.is_finite() { timeout_ms.clamp(DISCOVERY_MIN_MS, DISCOVERY_MAX_MS) } else { DISCOVERY_MIN_MS };
+  discover(Duration::from_millis(ms as u64)).await
 }
 
 #[tauri::command]
-async fn argus_pair(host: String, ip: String, port: f64, code: String) -> Result<net::Pairing, String> {
-  pair(&host, &ip, port as u16, &code).await
+async fn argus_pair(
+  host: String,
+  ip: String,
+  port: f64,
+  code: String,
+  expect: Option<PairExpectation>,
+) -> Result<net::Pairing, String> {
+  let port = u16::try_from(port as i64).map_err(|_| "HOST_NOT_ALLOWED|Invalid pairing port".to_string())?;
+  pair(PairInput { host, ip, port, code, expect }).await
 }
 
 #[tauri::command]
-async fn argus_request(request: HttpRequest, ip: Option<String>) -> Result<HttpResult, String> {
-  let trust = net::trust::paired()?;
-  let ip = ip.unwrap_or(trust.ip);
-  http_request(request, &trust.ca_pem, &trust.host, &ip).await
+async fn argus_request(request: HttpRequest) -> Result<HttpResult, String> {
+  let trust = blocking(net::trust::paired).await?;
+  http_request(request, &trust).await
 }
 
 #[tauri::command]
-fn argus_secure_get(key: String) -> Result<Option<String>, String> {
-  secure_get(&key)
+async fn argus_relocate(url: String, ip: String) -> Result<(), String> {
+  let trust = blocking(net::trust::paired).await?;
+  http_probe(&url, &trust, &ip).await?;
+  blocking(move || net::trust::relocate(&ip)).await
 }
 
 #[tauri::command]
-fn argus_secure_set(key: String, value: String) -> Result<(), String> {
-  secure_set(&key, &value)
+async fn argus_secure_get(key: String) -> Result<Option<String>, String> {
+  blocking(move || secure_get(&key)).await
 }
 
 #[tauri::command]
-fn argus_secure_delete(key: String) -> Result<(), String> {
-  secure_delete(&key)
+async fn argus_secure_set(key: String, value: String) -> Result<(), String> {
+  blocking(move || secure_set(&key, &value)).await
+}
+
+#[tauri::command]
+async fn argus_secure_delete(key: String) -> Result<(), String> {
+  blocking(move || secure_delete(&key)).await
 }
 
 #[tauri::command]
@@ -75,6 +99,7 @@ pub fn run() {
       argus_discover,
       argus_pair,
       argus_request,
+      argus_relocate,
       argus_secure_get,
       argus_secure_set,
       argus_secure_delete,

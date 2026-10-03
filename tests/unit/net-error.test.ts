@@ -18,6 +18,10 @@ describe('toNetError', () => {
       message: 'Server proof does not match',
     });
     expect(toNetError('CERT_NOT_TRUSTED|a|b', 'NETWORK_ERROR')).toEqual({ code: 'CERT_NOT_TRUSTED', message: 'a|b' });
+    expect(toNetError('TIMEOUT|operation timed out', 'NETWORK_ERROR')).toEqual({
+      code: 'TIMEOUT',
+      message: 'operation timed out',
+    });
     expect(toNetError('HOST_NOT_ALLOWED', 'NETWORK_ERROR')).toEqual({
       code: 'HOST_NOT_ALLOWED',
       message: 'HOST_NOT_ALLOWED',
@@ -26,7 +30,8 @@ describe('toNetError', () => {
 
   test('free-form messages are classified by keyword', () => {
     expect(toNetError(new Error('bad certificate chain'), 'NETWORK_ERROR').code).toBe('CERT_NOT_TRUSTED');
-    expect(toNetError('HTTP 401', 'NETWORK_ERROR').code).toBe('UNAUTHORIZED');
+    expect(toNetError('websocket unauthorized', 'NETWORK_ERROR').code).toBe('UNAUTHORIZED');
+    expect(toNetError('error sending request for /camera/401/stream', 'NETWORK_ERROR').code).toBe('NETWORK_ERROR');
     expect(toNetError('keyring storage locked', 'NETWORK_ERROR').code).toBe('STORAGE_ERROR');
   });
 

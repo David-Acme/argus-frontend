@@ -1,15 +1,40 @@
+use std::time::Duration;
+
+use serde::Deserialize;
 use serde_json::Value;
 
+use super::trust::{self, PinnedServer};
 use super::Pairing;
 
 const PAIRING_PATH: &str = "/pairing";
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+const PAIRING_TIMEOUT: Duration = Duration::from_secs(20);
 
-pub async fn pair(_host: &str, ip: &str, port: u16, code: &str) -> Result<Pairing, String> {
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PairExpectation {
+  pub ca_fingerprint: String,
+  pub instance_id: String,
+}
+
+pub struct PairInput {
+  pub host: String,
+  pub ip: String,
+  pub port: u16,
+  pub code: String,
+  pub expect: Option<PairExpectation>,
+}
+
+pub async fn pair(input: PairInput) -> Result<Pairing, String> {
+  let PairInput { host, ip, port, code, expect } = input;
   let client = reqwest::Client::builder()
     .danger_accept_invalid_certs(true)
     .danger_accept_invalid_hostnames(true)
+    .redirect(reqwest::redirect::Policy::none())
+    .connect_timeout(CONNECT_TIMEOUT)
+    .timeout(PAIRING_TIMEOUT)
     .build()
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| format!("NETWORK_ERROR|{e}"))?;
 
   let key = code.trim().to_uppercase();
   let nonce = random_hex(16)?;
@@ -22,10 +47,10 @@ pub async fn pair(_host: &str, ip: &str, port: u16, code: &str) -> Result<Pairin
     }))
     .send()
     .await
-    .map_err(|e| format!("NETWORK_ERROR|Pairing failed: {e}"))?;
+    .map_err(|e| if e.is_timeout() { "TIMEOUT|Pairing timed out".to_string() } else { format!("NETWORK_ERROR|Pairing failed: {}", e.without_url()) })?;
 
   let status = response.status().as_u16();
-  let body = response.text().await.map_err(|e| format!("NETWORK_ERROR|{e}"))?;
+  let body = response.text().await.map_err(|e| format!("NETWORK_ERROR|{}", e.without_url()))?;
   if status != 200 {
     if status == 403 || status == 422 {
       return Err("INVALID_PAIRING_CODE|Invalid pairing code".to_string());
@@ -56,12 +81,28 @@ pub async fn pair(_host: &str, ip: &str, port: u16, code: &str) -> Result<Pairin
     return Err("FINGERPRINT_MISMATCH|The server CA does not match the pairing code".to_string());
   }
 
+  let instance_id = info.get("instanceId").and_then(Value::as_str).unwrap_or("").to_string();
+  if let Some(expect) = &expect {
+    if !expect.ca_fingerprint.eq_ignore_ascii_case(&ca_fingerprint)
+      || !expect.instance_id.eq_ignore_ascii_case(&instance_id)
+    {
+      return Err("FINGERPRINT_MISMATCH|The server fingerprint does not match the scanned QR".to_string());
+    }
+  }
+
+  trust::pin(&PinnedServer {
+    ca_pem: &ca_pem,
+    ca_fingerprint: &ca_fingerprint,
+    host: &host,
+    ip: &ip,
+  })?;
+
   Ok(Pairing {
     ca_pem,
     ca_fingerprint,
     server_fingerprint: info.get("serverFingerprint").and_then(Value::as_str).unwrap_or("").to_string(),
-    instance_id: info.get("instanceId").and_then(Value::as_str).unwrap_or("").to_string(),
-    port: info.get("port").and_then(Value::as_f64).unwrap_or(port as f64),
+    instance_id,
+    port: info.get("port").and_then(Value::as_f64).unwrap_or(f64::from(port)),
     scheme: info.get("scheme").and_then(Value::as_str).unwrap_or("https").to_string(),
   })
 }

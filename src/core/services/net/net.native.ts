@@ -6,6 +6,7 @@ import {
   clearInstance,
   isPaired,
   loadInstance,
+  matchesExpectation,
   savePairing,
   toNetError,
   updateInstanceAddress,
@@ -25,7 +26,14 @@ import type {
 const net = createArgusNet();
 let configuredKey: string | null = null;
 
+const fingerprintMismatch = (): NetError => ({
+  code: 'FINGERPRINT_MISMATCH',
+  message: 'The server fingerprint does not match the scanned QR',
+});
+
 class NativeArgusNetService implements IArgusNetService {
+  private rediscovery: Promise<boolean> | null = null;
+
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
     try {
       return await net.discover(timeoutMs);
@@ -35,9 +43,15 @@ class NativeArgusNetService implements IArgusNetService {
   }
 
   async pair(input: NetPairInput): Promise<NetPairing> {
-    const { host, ip, port, code, routes } = input;
+    const { host, ip, port, code, routes, expect } = input;
+    let pairing: NetPairing;
     try {
-      const pairing = await net.pair(host, ip, port, code);
+      pairing = await net.pair(host, ip, port, code);
+    } catch (error) {
+      throw toNetError(error, 'NETWORK_ERROR');
+    }
+    if (!matchesExpectation(pairing, expect)) throw fingerprintMismatch();
+    try {
       configuredKey = `${pairing.caPem}|${host}|${ip}`;
       net.configure(pairing.caPem, host, ip);
       await savePairing({ pairing, host, ip, routes });
@@ -59,6 +73,7 @@ class NativeArgusNetService implements IArgusNetService {
   }
 
   async request(options: NetHttpRequest): Promise<NetHttpResult> {
+    await this.settledRediscovery();
     const instance = await loadInstance();
     if (!instance) {
       throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
@@ -98,7 +113,20 @@ class NativeArgusNetService implements IArgusNetService {
     return instance ? this.rediscover(instance.ip) : false;
   }
 
-  private async rediscover(currentIp: string): Promise<boolean> {
+  private async settledRediscovery(): Promise<void> {
+    if (this.rediscovery) await this.rediscovery.catch(() => false);
+  }
+
+  private rediscover(currentIp: string): Promise<boolean> {
+    if (this.rediscovery) return this.rediscovery;
+    const attempt = this.relocate(currentIp).finally(() => {
+      if (this.rediscovery === attempt) this.rediscovery = null;
+    });
+    this.rediscovery = attempt;
+    return attempt;
+  }
+
+  private async relocate(currentIp: string): Promise<boolean> {
     const instance = await loadInstance();
     if (!instance || instance.ip !== currentIp) return false;
     let found;
@@ -148,6 +176,7 @@ class NativeArgusNetService implements IArgusNetService {
   }
 
   async openSocket(options: NetSocketOptions): Promise<ArgusSocket> {
+    await this.settledRediscovery();
     const instance = await loadInstance();
     if (!instance) {
       throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;

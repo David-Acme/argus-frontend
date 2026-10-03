@@ -5,7 +5,9 @@ import type {
   NetAdoptInput,
   NetError,
   NetErrorCode,
+  NetPairExpectation,
   NetPairedInstance,
+  NetPairing,
   NetRoutePorts,
 } from '@/core/types';
 
@@ -70,18 +72,34 @@ function parseRoutes(raw: string | null): NetRoutePorts {
   }
 }
 
+export function matchesExpectation(pairing: NetPairing, expect: NetPairExpectation | undefined): boolean {
+  if (!expect) return true;
+  return (
+    pairing.caFingerprint.toLowerCase() === expect.caFingerprint.toLowerCase() &&
+    pairing.instanceId.toLowerCase() === expect.instanceId.toLowerCase()
+  );
+}
+
 export async function savePairing(input: NetAdoptInput): Promise<void> {
-  const { pairing, host, ip, routes } = input;
-  const pairedAt = Date.now();
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.paired, 'true');
+  const { pairing, host, ip } = input;
+  cachedInstance = undefined;
+  await secureStorageService.deleteAsync(NET_STORAGE_KEYS.paired);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caPem, pairing.caPem);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caFingerprint, pairing.caFingerprint);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.host, host);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, ip);
+  await savePairingMetadata(input);
+}
+
+export async function savePairingMetadata(input: NetAdoptInput): Promise<void> {
+  const { pairing, host, ip, routes } = input;
+  const pairedAt = Date.now();
+  cachedInstance = undefined;
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.port, String(pairing.port));
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.instanceId, pairing.instanceId);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.pairedAt, String(pairedAt));
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(routes));
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.paired, 'true');
 
   cachedInstance = {
     host,
@@ -97,6 +115,10 @@ export async function savePairing(input: NetAdoptInput): Promise<void> {
 
 export async function updateInstanceAddress(update: NetAddressUpdate): Promise<void> {
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, update.ip);
+  await rememberInstanceAddress(update);
+}
+
+export async function rememberInstanceAddress(update: NetAddressUpdate): Promise<void> {
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(update.routes));
   if (cachedInstance) cachedInstance = { ...cachedInstance, ip: update.ip, routes: update.routes };
 }
@@ -118,6 +140,7 @@ const NATIVE_ERROR_CODES: ReadonlySet<NetErrorCode> = new Set([
   'HOST_NOT_ALLOWED',
   'DISCOVERY_NOT_FOUND',
   'NETWORK_ERROR',
+  'TIMEOUT',
   'STORAGE_ERROR',
 ]);
 
@@ -136,7 +159,7 @@ export function toNetError(error: unknown, fallback: NetErrorCode): NetError {
   else if (upper.includes('PAIRING_REQUIRED')) code = 'PAIRING_REQUIRED';
   else if (upper.includes('FINGERPRINT')) code = 'FINGERPRINT_MISMATCH';
   else if (upper.includes('CERTIFICATE')) code = 'CERT_NOT_TRUSTED';
-  else if (upper.includes('UNAUTHORIZED') || upper.includes('401')) code = 'UNAUTHORIZED';
+  else if (upper.includes('UNAUTHORIZED')) code = 'UNAUTHORIZED';
   else if (upper.includes('DISCOVERY_NOT_FOUND')) code = 'DISCOVERY_NOT_FOUND';
   else if (upper.includes('NETWORK_ERROR')) code = 'NETWORK_ERROR';
   else if (upper.includes('STORAGE')) code = 'STORAGE_ERROR';

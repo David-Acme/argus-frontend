@@ -7,12 +7,14 @@ import {
   clearInstance,
   isPaired,
   loadInstance,
-  savePairing,
+  rememberInstanceAddress,
+  savePairingMetadata,
   toNetError,
-  updateInstanceAddress,
 } from './net-persistence';
 import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
 import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing } from '@/core/types';
+
+const ignoreClosed = (): void => undefined;
 
 class WebArgusNetService implements IArgusNetService {
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
@@ -24,10 +26,10 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async pair(input: NetPairInput): Promise<NetPairing> {
-    const { host, ip, port, code, routes } = input;
+    const { host, ip, port, code, routes, expect } = input;
     try {
-      const pairing = await invoke<NetPairing>('argus_pair', { host, ip, port, code });
-      await savePairing({ pairing, host, ip, routes });
+      const pairing = await invoke<NetPairing>('argus_pair', { host, ip, port, code, expect: expect ?? null });
+      await savePairingMetadata({ pairing, host, ip, routes });
       return pairing;
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
@@ -81,21 +83,15 @@ class WebArgusNetService implements IArgusNetService {
       return false;
     }
     const candidate = relocatedInstance(instance, found);
-    if (!candidate || !(await this.holdsPairedCa(candidate))) return false;
-    await updateInstanceAddress({ ip: candidate.ip, routes: candidate.routes });
+    if (!candidate || !(await this.relocateTo(candidate))) return false;
+    await rememberInstanceAddress({ ip: candidate.ip, routes: candidate.routes });
     return true;
   }
 
-  private async holdsPairedCa(candidate: NetPairedInstance): Promise<boolean> {
+  private async relocateTo(candidate: NetPairedInstance): Promise<boolean> {
     try {
-      await invoke<NetHttpResult>('argus_request', {
-        request: {
-          url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
-          method: 'GET',
-          headers: {},
-          body: '',
-          files: [],
-        },
+      await invoke<void>('argus_relocate', {
+        url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
         ip: candidate.ip,
       });
       return true;
@@ -205,19 +201,21 @@ class TauriSocket implements IArgusSocket {
   }
 
   sendText(message: string): void {
-    void invoke('argus_socket_send_text', { socketId: this.socketId, message });
+    if (this.closed) return;
+    invoke('argus_socket_send_text', { socketId: this.socketId, message }).catch(ignoreClosed);
   }
 
   sendBinary(data: ArrayBuffer): void {
-    void invoke('argus_socket_send_binary', data, {
+    if (this.closed) return;
+    invoke('argus_socket_send_binary', data, {
       headers: { 'x-argus-socket-id': this.socketId },
-    });
+    }).catch(ignoreClosed);
   }
 
   close(code = 1000, reason = ''): void {
     if (this.closed) return;
     this.closed = true;
-    void invoke('argus_socket_close', { socketId: this.socketId, code, reason });
+    invoke('argus_socket_close', { socketId: this.socketId, code, reason }).catch(ignoreClosed);
     this.channel = null;
   }
 
