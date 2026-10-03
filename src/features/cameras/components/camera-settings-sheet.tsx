@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { cameraControlService } from '@/core/services/camera-control.service';
+import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 import type { ICameraDeviceStatus, ICameraSettings } from '@/core/interfaces';
 import type { DayNightMode, MenuOption } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import { cameraControlService } from '@/core/services/camera-control.service';
+import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
 import {

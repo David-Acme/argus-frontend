@@ -23,14 +23,14 @@ import { FormTextField } from '@/shared/components/ui/form-text-field';
 import { Input } from '@/shared/components/ui/input';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
-import { CAMERA_DRIVER_SPECS, CAMERA_ICONS } from '@/shared/constants';
+import { CAMERA_DRIVER_SPECS, CAMERA_ICONS } from '@/features/cameras/constants';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toast } from '@/shared/libs/toast';
-import { IconPickerButton } from './icon-picker-button';
+import { IconPickerButton } from '@/features/cameras/components/icon-picker-button';
 
-import { cameraFormDefaults, cameraFormSchema, type CameraFormValues } from './camera-form-schema';
+import { cameraFormDefaults, cameraFormSchema, type CameraFormValues } from '@/features/cameras/components/camera-form-schema';
 
 type CameraFormProps = {
   open: boolean;

@@ -1,6 +1,3 @@
-app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera-control.service.ts
-app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera.service.ts
-app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/zone.service.ts
 app-core-data | src/app/(app)/index.tsx -> src/core/services/notification.service.ts
 app-core-data | src/app/approve/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/login/index.tsx -> src/core/services/auth.service.ts
@@ -8,7 +5,6 @@ app-core-data | src/app/welcome/face/index.tsx -> src/core/services/auth.service
 app-core-data | src/app/welcome/face/index.tsx -> src/core/services/log.ts
 app-core-data | src/app/welcome/invitation/index.tsx -> src/core/services/invite/index.ts
 shared-single-consumer | shared/components/avatar (1)
-shared-single-consumer | shared/components/cameras (1)
 shared-single-consumer | shared/components/confirm (1)
 shared-single-consumer | shared/components/face (1)
 shared-single-consumer | shared/components/qr (1)
@@ -18,7 +14,6 @@ shared-single-consumer | shared/components/voice (1)
 shared-single-consumer | shared/hooks/use-bottom-nav (1)
 shared-single-consumer | shared/hooks/use-call (1)
 shared-single-consumer | shared/hooks/use-call-bridge (1)
-shared-single-consumer | shared/hooks/use-dashboard-data (1)
 shared-single-consumer | shared/hooks/use-dashboard-navigation (1)
 shared-single-consumer | shared/hooks/use-face-guide (1)
 shared-single-consumer | shared/hooks/use-now (1)
@@ -29,7 +24,6 @@ shared-single-consumer | shared/libs/avatar-geometry (1)
 shared-single-consumer | shared/libs/button-state (1)
 shared-single-consumer | shared/libs/context-menu-motion (1)
 shared-single-consumer | shared/libs/date (1)
-shared-single-consumer | shared/libs/fmp4 (1)
 shared-single-consumer | shared/libs/login-qr (1)
 shared-single-consumer | shared/libs/pcm (1)
 shared-single-consumer | shared/libs/qr-layout (1)

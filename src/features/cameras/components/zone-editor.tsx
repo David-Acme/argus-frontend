@@ -4,7 +4,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, Polygon } from 'react-native-svg';
 import type { ZonePoint } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
-import { OVERLAY_STROKE_COLOR, ZONE_MAX_POINTS, ZONE_MIN_POINTS } from '@/shared/constants';
+import { OVERLAY_STROKE_COLOR } from '@/shared/constants';
+import { ZONE_MAX_POINTS, ZONE_MIN_POINTS } from '@/features/cameras/constants';
 
 type ZoneEditorProps = {
   points: ZonePoint[];

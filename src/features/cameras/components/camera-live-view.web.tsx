@@ -3,13 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
 import type { ICameraMediaSession, ICameraMediaSink } from '@/core/interfaces';
-import { cameraMediaService } from '@/core/services/camera-media.service';
+import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
 import type { CameraStreamQuality } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
-import { CAMERA_LIVE_BACKGROUND } from '@/shared/constants';
+import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
-import { WebCameraPlayer } from './web-camera-player';
+import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
 
 type CameraLiveViewProps = {
   cameraId: string;

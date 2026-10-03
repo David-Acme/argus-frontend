@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { ZONE_COLORS } from '@/shared/constants';
+import { ZONE_COLORS } from '@/features/cameras/constants';
 
 type ZoneRowProps = {
   id: string;

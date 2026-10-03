@@ -22,13 +22,13 @@ import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { Input } from '@/shared/components/ui/input';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
-import { ZONE_COLORS, ZONE_MAX_POINTS, ZONE_MIN_POINTS } from '@/shared/constants';
+import { ZONE_COLORS, ZONE_MAX_POINTS, ZONE_MIN_POINTS } from '@/features/cameras/constants';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toast } from '@/shared/libs/toast';
 import { cn } from '@/shared/libs/utils';
-import { ZoneEditor } from './zone-editor';
+import { ZoneEditor } from '@/features/cameras/components/zone-editor';
 
 type ZoneFormProps = {
   open: boolean;

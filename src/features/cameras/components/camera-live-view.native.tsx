@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { callback } from 'react-native-nitro-modules';
 
 import type { ICameraMediaSession, ICameraMediaSink } from '@/core/interfaces';
-import { cameraMediaService } from '@/core/services/camera-media.service';
+import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
 import type { CameraStreamQuality } from '@/core/types';
 
 type CameraLiveViewProps = {

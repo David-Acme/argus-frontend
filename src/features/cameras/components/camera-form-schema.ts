@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { CameraDriverKind } from '@/core/types';
 
-import { CAMERA_DRIVER_SPECS } from '@/shared/constants';
+import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
 
 const HOST_RE = /^[a-zA-Z0-9.\-:]+$/;
 

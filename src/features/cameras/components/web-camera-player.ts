@@ -1,4 +1,4 @@
-import { parseFragment, parseInit } from '@/shared/libs/fmp4';
+import { parseFragment, parseInit } from '@/features/cameras/model/fmp4';
 
 const MAX_QUEUED_FRAMES = 8;
 const MAX_LATENCY_BYTES = 768 * 1024;

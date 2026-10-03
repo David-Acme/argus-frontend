@@ -28,7 +28,7 @@ export function AppScreen({ children, header, aside, scrollable = true, bottomNa
         <View className="w-[300px] shrink-0 gap-5 lg:w-[340px]">{aside}</View>
       </View>
     ) : (
-      <View className="flex-1 gap-5">
+      <View className={scrollable ? 'flex-1 gap-5' : 'flex-1'}>
         {children}
         {aside}
       </View>

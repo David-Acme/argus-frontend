@@ -1,5 +1,5 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { CameraCard } from './camera-card';
+import { CameraCard } from '@/features/cameras/components/camera-card';
 import { CreateTile } from '@/shared/components/ui/create-tile';
 import { ResponsiveGrid } from '@/shared/components/ui/responsive-grid';
 

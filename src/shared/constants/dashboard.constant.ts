@@ -57,32 +57,6 @@ export const DASHBOARD_TABS: readonly {
   { tab: 'profile', icon: 'user' },
 ];
 
-export const CAMERA_DRIVER_SPECS = {
-  tapo: {
-    port: 554,
-    username: 'admin',
-    manufacturer: 'TP-Link',
-    requiresCloud: true,
-  },
-  onvif: {
-    port: 80,
-    username: 'admin',
-    manufacturer: '',
-    requiresCloud: false,
-  },
-  rtsp: {
-    port: 554,
-    username: '',
-    manufacturer: '',
-    requiresCloud: false,
-  },
-} as const;
-
-export const ZONE_MIN_POINTS = 3;
-export const ZONE_MAX_POINTS = 64;
-
-export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE'] as const;
-
 export const COMPOSE_ACTIONS: readonly {
   id: string;
   icon: IconName;
@@ -104,19 +78,6 @@ export const COMPOSE_ACTIONS: readonly {
 export const BOTTOM_NAV_HEIGHT = 60;
 
 export const COMPOSE_ITEM_STAGGER_MS = 45;
-
-export const PTZ_DIRECTIONS = { right: 0, up: 90, left: 180, down: 270 } as const;
-
-export const CAMERA_ICONS: readonly IconName[] = [
-  'video',
-  'home',
-  'shield-check',
-  'eye',
-  'monitor',
-  'camera',
-  'key-round',
-  'wifi',
-];
 
 export const ACTIVITY_WINDOW_DAYS = 7;
 

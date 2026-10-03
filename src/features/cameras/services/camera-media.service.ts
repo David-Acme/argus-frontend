@@ -7,15 +7,7 @@ import type {
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { sessionService } from '@/core/services/session.service';
-import {
-  CAMERA_STREAM_ACK_INTERVAL_MS,
-  CAMERA_STREAM_ACK_THRESHOLD_BYTES,
-  CAMERA_STREAM_FRAME_HEADER_BYTES,
-  CAMERA_STREAM_FRAME_MAGIC,
-  CAMERA_STREAM_RECONNECT_BASE_MS,
-  CAMERA_STREAM_RECONNECT_MAX_MS,
-  CAMERA_STREAM_WS_PATH,
-} from '@/shared/constants';
+import { CAMERA_STREAM_ACK_INTERVAL_MS, CAMERA_STREAM_ACK_THRESHOLD_BYTES, CAMERA_STREAM_FRAME_HEADER_BYTES, CAMERA_STREAM_FRAME_MAGIC, CAMERA_STREAM_RECONNECT_BASE_MS, CAMERA_STREAM_RECONNECT_MAX_MS, CAMERA_STREAM_WS_PATH } from '@/features/cameras/constants';
 
 const KEYFRAME_FLAG = 0x01;
 const INIT_FRAME_TYPE = 1;

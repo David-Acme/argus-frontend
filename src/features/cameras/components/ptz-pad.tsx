@@ -1,7 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { PTZ_DIRECTIONS } from '@/shared/constants';
+import { PTZ_DIRECTIONS } from '@/features/cameras/constants';
 import { cn } from '@/shared/libs/utils';
 
 type PtzPadProps = {
