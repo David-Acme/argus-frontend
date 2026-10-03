@@ -425,7 +425,7 @@ src/core/services/net/        → IArgusNetService (discover / pair / request / 
   net-persistence.ts  → pairing persistence (shared)
 src/core/services/secure-storage/   → secrets (caPem, JWT)
   secure-storage.native.ts ──► expo-secure-store (Keystore/Keychain)
-  secure-storage.web.ts    ──► Tauri command + keyring crate (localStorage fallback in a plain browser)
+  secure-storage.web.ts    ──► Tauri command + keyring crate (refuses in a plain browser)
 ```
 - `expo-secure-store` **does not support web** (official docs) → on desktop the
   **`keyring`** crate (Keychain / Secret Service / Cred Manager) is used via a Tauri command.

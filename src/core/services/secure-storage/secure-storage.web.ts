@@ -1,48 +1,29 @@
 import type { ISecureStorageService } from '@/core/interfaces';
 import { IS_TAURI } from '@/shared/constants';
 
-const FALLBACK_PREFIX = 'argus.secure.';
-
-async function invokeSecure(action: string, args: Record<string, unknown>): Promise<unknown> {
+async function invokeSecure<T>(action: string, args: Record<string, unknown>): Promise<T> {
   const { invoke } = await import('@tauri-apps/api/core');
-  return invoke(action, args);
+  try {
+    return await invoke<T>(action, args);
+  } catch (error) {
+    throw new Error(`Secure storage ${action} failed for ${String(args.key)}`, { cause: error });
+  }
 }
 
 class WebSecureStorageService implements ISecureStorageService {
   async getStringAsync(key: string): Promise<string | null> {
-    if (IS_TAURI) {
-      try {
-        const value = (await invokeSecure('argus_secure_get', { key })) as string | null;
-        return value ?? null;
-      } catch (error) {
-        throw new Error(`Secure storage read failed for ${key}`, { cause: error });
-      }
-    }
-    return localStorage.getItem(FALLBACK_PREFIX + key);
+    if (!IS_TAURI) return null;
+    return (await invokeSecure<string | null>('argus_secure_get', { key })) ?? null;
   }
 
   async setStringAsync(key: string, value: string): Promise<void> {
-    if (IS_TAURI) {
-      try {
-        await invokeSecure('argus_secure_set', { key, value });
-        return;
-      } catch (error) {
-        throw new Error(`Secure storage write failed for ${key}`, { cause: error });
-      }
-    }
-    localStorage.setItem(FALLBACK_PREFIX + key, value);
+    if (!IS_TAURI) throw new Error('SECURE_STORAGE_UNAVAILABLE|Secrets are only stored by the desktop app');
+    await invokeSecure<void>('argus_secure_set', { key, value });
   }
 
   async deleteAsync(key: string): Promise<void> {
-    if (IS_TAURI) {
-      try {
-        await invokeSecure('argus_secure_delete', { key });
-        return;
-      } catch (error) {
-        throw new Error(`Secure storage delete failed for ${key}`, { cause: error });
-      }
-    }
-    localStorage.removeItem(FALLBACK_PREFIX + key);
+    if (!IS_TAURI) return;
+    await invokeSecure<void>('argus_secure_delete', { key });
   }
 
   async hasAsync(key: string): Promise<boolean> {

@@ -99,7 +99,7 @@ also get one Android device pass.
   Done: entry 8,463,295 B → 5,235,894 B, `dist/` 17 MB → 5.3 MB.
 - [x] **Tauri hardening.** A real CSP, `withGlobalTauri: false`,
   `tls_built_in_root_certs(false)` on reqwest, allow-listed secure-storage keys.
-- [ ] **Web storage.** Outside Tauri, secure storage refuses instead of using
+- [x] **Web storage.** Outside Tauri, secure storage refuses instead of using
   `localStorage`.
 - [x] **Cold start.** (commit `7aedc53`) Read the nine pairing keys with one `Promise.all`.
 - [ ] **Dead code.** `avatar-fab.tsx`, the empty `navigation.type.ts`, the

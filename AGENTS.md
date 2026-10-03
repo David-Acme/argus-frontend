@@ -266,7 +266,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   the caller retries later).
 - **`src/core/services/secure-storage/`** → `ISecureStorageService` **async**
   (`getStringAsync/setStringAsync/deleteAsync/hasAsync`). Native = `expo-secure-store`;
-  web = Tauri command + `keyring` crate (fallback `localStorage`). Keys **separate**
+  web = Tauri command + `keyring` crate; in a plain browser it
+  refuses (reads return `null`, writes throw `SECURE_STORAGE_UNAVAILABLE`), never `localStorage`. Keys **separate**
   per value (~2 KB limit on iOS).
 - **Nitro module `modules/argus-net/`**: the spec `src/ArgusNet.nitro.ts` is the
   **source of truth**; after changing the spec, run `bunx nitrogen` (generates
