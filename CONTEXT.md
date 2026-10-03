@@ -1079,10 +1079,15 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
 
 ### Interaction and layout decisions
 
-- The design remains warm-neutral, quiet and functional. Cards follow content
-  in compact layouts; avoid artificial large blank cards when a section has no
-  data. Minimum heights are reserved only for visual continuity in dashboard
-  camera/task surfaces and adapt by window class.
+- The design remains warm-neutral, quiet and functional. No screen may feel
+  empty (owner decision, 2026-10-03): a section keeps a steady height whether
+  it holds one row or many, its empty state is as tall as a typical populated
+  state and says what will appear there or offers the action that fills it
+  (a dashed create tile, a free hour that opens a new event), and on wide
+  windows side-by-side columns end on the same line, the last panel of the
+  shorter column stretching to meet the other. Free space is filled with
+  useful content (summaries, recent activity, role permissions), never with
+  decoration, and no section stretches in the middle of a column.
 - Phone actions use native-feeling sheets. Tablet long-press actions use the
   anchored context menu at the press position. Web/desktop uses the pointer
   overflow menu. Confirmation and detail dialogs remain intentionally narrow
