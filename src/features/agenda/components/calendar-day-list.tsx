@@ -41,7 +41,7 @@ function DaySlot({ label, hint, icon, onPress, grow }: DaySlotProps) {
       disabled={!onPress}
       onPress={onPress}
       className={cn(
-        'border-border web:hover:bg-surface-secondary/60 items-center justify-center gap-2 rounded-2xl border border-dashed px-4 active:opacity-70',
+        'border-border web:hover:bg-surface-secondary/40 items-center justify-center gap-2 rounded-2xl border border-dashed px-4 active:opacity-70',
         grow ? 'min-h-[120px] flex-1 py-6' : 'min-h-14 flex-row py-3',
       )}>
       <Icon name={icon} className="text-muted-foreground size-5" />

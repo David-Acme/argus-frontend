@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { entryPermissions } from '@/features/agenda/model/calendar-entry-actions';
+import { compareDayEntries, entryPermissions } from '@/features/agenda/model/calendar-entry-actions';
 import { hasAccess } from '@/shared/libs/role-access';
 
 describe('entryPermissions', () => {
@@ -26,5 +26,16 @@ describe('entryPermissions', () => {
     const can = (table: 'project_task' | 'calendar_event', permission: 'update' | 'delete') =>
       hasAccess('guest', table, permission);
     expect(entryPermissions({ source: 'event' }, can)).toEqual({ canEdit: false, canDelete: false });
+  });
+});
+
+describe('compareDayEntries', () => {
+  test('a day lists its all-day entries first, then the timed ones by start', () => {
+    const entries = [
+      { id: 'late', isAllDay: false, startsAt: 300 },
+      { id: 'task', isAllDay: true, startsAt: 500 },
+      { id: 'early', isAllDay: false, startsAt: 100 },
+    ];
+    expect([...entries].sort(compareDayEntries).map((entry) => entry.id)).toEqual(['task', 'early', 'late']);
   });
 });

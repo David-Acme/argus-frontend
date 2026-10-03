@@ -15,7 +15,9 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
+import { cn } from '@/shared/libs/utils';
 import { InvitationDialog } from '@/features/people/components/invitation-dialog';
 import { InvitationsPanel } from '@/features/people/components/invitations-panel';
 import { ManagedUserDialog } from '@/features/people/components/managed-user-dialog';
@@ -30,6 +32,7 @@ const MINUTE_MS = 60_000;
 
 export default function UsersScreen() {
   const { t } = useTranslation();
+  const { isWide } = useWindowClass();
   const currentUserId = String(useAuthStore((state) => state.user?.id ?? ''));
   const [editing, setEditing] = useState<IPeopleDirectoryCacheRow | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -107,12 +110,12 @@ export default function UsersScreen() {
   return (
     <AppScreen
       aside={
-        <View className="flex-1 gap-5">
+        <View className={cn(isWide && 'flex-1', 'gap-5')}>
           <View className="gap-3">
             <SectionHeader title={t('screens.users.role-access-title')} />
             <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
           </View>
-          <View className="flex-1 gap-3">
+          <View className={cn(isWide && 'flex-1', 'gap-3')}>
             <SectionHeader
               title={t('screens.users.invitations')}
               count={invitations.length}
@@ -123,7 +126,7 @@ export default function UsersScreen() {
           </View>
         </View>
       }>
-      <View className="flex-1 gap-5">
+      <View className={cn(isWide && 'flex-1', 'gap-5')}>
         <View className="gap-1.5">
           <Text variant="display">{t('screens.users.title')}</Text>
           <Text variant="caption" className="text-foreground-secondary">
@@ -131,7 +134,7 @@ export default function UsersScreen() {
           </Text>
         </View>
 
-        <View className="flex-1 gap-3">
+        <View className={cn(isWide && 'flex-1', 'gap-3')}>
           <SectionHeader title={t('screens.users.members')} count={users.length} />
           <MembersPanel
             users={users}

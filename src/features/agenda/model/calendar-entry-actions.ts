@@ -85,6 +85,13 @@ export function calendarEntryDetailRows(
   return rows;
 }
 
+export function compareDayEntries(
+  left: Pick<CalendarEntry, 'isAllDay' | 'startsAt'>,
+  right: Pick<CalendarEntry, 'isAllDay' | 'startsAt'>,
+): number {
+  return Number(right.isAllDay) - Number(left.isAllDay) || left.startsAt - right.startsAt;
+}
+
 export function calendarEntryRecordId(entry: CalendarEntry): string {
   return entry.id.slice(entry.id.indexOf(':') + 1);
 }

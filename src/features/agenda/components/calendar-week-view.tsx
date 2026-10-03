@@ -6,6 +6,7 @@ import { WEEK_HOUR_HEIGHT } from '@/shared/constants/calendar.constant';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
+import { isPendingEntry } from '@/features/agenda/model/calendar-optimistic';
 
 type CalendarWeekViewProps = {
   anchor: Date;
@@ -125,9 +126,11 @@ export function CalendarWeekView({
                     accessibilityRole="button"
                     accessibilityLabel={entry.title}
                     style={renderContextMenu ? undefined : position}
+                    accessibilityState={{ busy: isPendingEntry(entry) }}
                     className={cn(
-                      'justify-center overflow-hidden rounded-[8px] px-1.5',
+                      'web:hover:opacity-85 justify-center overflow-hidden rounded-[8px] px-1.5',
                       renderContextMenu && 'flex-1',
+                      isPendingEntry(entry) && 'opacity-60',
                       entry.status === 'complete'
                         ? 'bg-success/20'
                         : entry.source === 'task'

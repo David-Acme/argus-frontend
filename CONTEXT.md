@@ -101,6 +101,14 @@
   button reads darker/more red and the plomo-white label reaches 4.57:1 (AA).
   Outline pressed fallback: light `bg-surface-secondary`, dark
   `dark:active:bg-border` (was `dark:active:bg-surface-secondary`, a no-op).
+- **Dark fills sit above the card (2026-10-03).** Dark `surface-secondary`
+  was `#25231E`, one unit from `card` `#24231E`, so task rows, badges, icon
+  circles, chips and dialog inputs vanished on cards. It is `#312E27`
+  (`oklch(0.302 0.013 87.57)`, mirrored by `secondary`/`muted`/`input`): light
+  keeps the fill 0.08 L below the card, dark 0.047 L above it. Text on it
+  stays AA (foreground 11.8:1, muted-foreground 5.4:1). A card nested in a
+  card uses `dark:bg-card-secondary`, since dark cannot show the shadow
+  light separates it with.
 - Radius scale (hierarchical): base 20 / sm 14 / md 18 / lg 24 / xl 32 /
   2xl 40 / 3xl 48 / 4xl 56.
 

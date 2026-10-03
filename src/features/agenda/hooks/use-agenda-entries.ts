@@ -6,6 +6,7 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
+import { compareDayEntries } from '@/features/agenda/model/calendar-entry-actions';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
 
 type AgendaEntriesInput = {
@@ -30,7 +31,7 @@ export function useAgendaEntries({ view, anchor, selectedDay }: AgendaEntriesInp
     [range.from, range.to, rows],
   );
   const selectedDayEntries = useMemo(
-    () => entries.filter((entry) => date.sameDay(new Date(entry.startsAt), selectedDay)),
+    () => entries.filter((entry) => date.sameDay(new Date(entry.startsAt), selectedDay)).sort(compareDayEntries),
     [date, entries, selectedDay],
   );
 
