@@ -7,7 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
-import { GUARD_GUEST_DEFAULT_HOURS, GUARD_GUEST_HOURS } from '@/shared/constants';
+import { GUARD_GUEST_HOURS, GUARD_GUEST_DEFAULT_HOURS } from '@/features/security/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 type ExpectedGuestFormProps = {

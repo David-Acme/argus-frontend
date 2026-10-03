@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import type { GuardModeState, IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { GUARD_MODE_ICONS } from '@/shared/constants';
+import { GUARD_MODE_ICONS } from '@/features/security/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { Panel } from '@/shared/components/ui/panel';

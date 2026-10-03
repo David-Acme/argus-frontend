@@ -4,7 +4,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { DangerBadge } from './danger-badge';
+import { DangerBadge } from '@/features/security/components/danger-badge';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 
 type DecisionReviewProps = {

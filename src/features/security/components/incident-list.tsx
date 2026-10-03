@@ -3,7 +3,7 @@ import type { GuardIncident } from '@/core/types';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { DangerBadge } from './danger-badge';
+import { DangerBadge } from '@/features/security/components/danger-badge';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 
 export function IncidentList({ incidents }: { incidents: GuardIncident[] }) {

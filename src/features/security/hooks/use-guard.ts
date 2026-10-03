@@ -10,7 +10,7 @@ import type {
 } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { runServiceAction } from '@/shared/libs/service-action';
-import { useRemoteResource } from './use-remote-resource';
+import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 
 const loadMode = () => guardService.mode();
 const loadGuests = () => guardService.expectedGuests();
