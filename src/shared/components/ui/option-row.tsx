@@ -1,22 +1,29 @@
+import type { ComponentProps } from 'react';
 import { Pressable, View } from 'react-native';
 import type { MenuOption } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 
-type OptionRowProps = {
+type OptionRowProps = Omit<ComponentProps<typeof Pressable>, 'children'> & {
   option: MenuOption;
   selected?: boolean;
-  /** Omit when a parent (e.g. a dropdown Item) owns the press. */
   onSelect?: (value: string) => void;
-  /** Compact rows for dropdowns, tall touch targets for sheets. */
   density?: 'comfortable' | 'compact';
 };
 
-/** Shared row so a dropdown item and a sheet item never drift apart. */
-export function OptionRow({ option, selected, onSelect, density = 'comfortable' }: OptionRowProps) {
+export function OptionRow({
+  option,
+  selected,
+  onSelect,
+  density = 'comfortable',
+  className,
+  onPress,
+  ...pressable
+}: OptionRowProps) {
   return (
     <Pressable
+      {...pressable}
       accessibilityRole="menuitem"
       accessibilityState={{ selected, disabled: option.disabled }}
       accessibilityLabel={option.label}
@@ -25,9 +32,10 @@ export function OptionRow({ option, selected, onSelect, density = 'comfortable' 
         'flex-row items-center gap-3 rounded-[14px] px-3 active:opacity-70',
         density === 'compact' ? 'py-2' : 'py-3',
         selected && 'bg-surface-secondary',
-        option.disabled && 'opacity-40'
+        option.disabled && 'opacity-40',
+        className
       )}
-      onPress={onSelect ? () => onSelect(option.value) : undefined}>
+      onPress={onSelect ? () => onSelect(option.value) : onPress}>
       {option.icon ? (
         <Icon
           name={option.icon}

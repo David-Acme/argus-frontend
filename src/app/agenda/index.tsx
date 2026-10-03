@@ -25,7 +25,7 @@ import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { CALENDAR_DEFAULT_VIEW, IS_NATIVE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { screenIn } from '@/shared/libs/animations';
-import { calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
+import { calendarEntryEditHref, calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
 import type { CalendarEntry, CalendarView } from '@/core/types';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
@@ -40,12 +40,21 @@ export default function ScheduleScreen() {
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
   const authStatus = useAuthStore((state) => state.status);
-  const [anchor, setAnchor] = useState(() => date.startOfDay(new Date()));
+  const {
+    new: newParam,
+    edit: editParam,
+    at: atParam,
+  } = useLocalSearchParams<{ new?: string; edit?: string; at?: string }>();
+  const initialDay = useMemo(() => {
+    const at = Number(atParam);
+    return date.startOfDay(Number.isFinite(at) && at > 0 ? new Date(at) : new Date());
+  }, [atParam, date]);
+  const [anchor, setAnchor] = useState(initialDay);
   const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
-  const [selectedDay, setSelectedDay] = useState(() => date.startOfDay(new Date()));
-  const { new: newParam } = useLocalSearchParams<{ new?: string }>();
+  const [selectedDay, setSelectedDay] = useState(initialDay);
   const [eventFormOpen, setEventFormOpen] = useState(newParam === 'event');
   const [editingEventId, setEditingEventId] = useState('');
+  const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
   const { can } = usePermissions();
@@ -95,12 +104,31 @@ export default function ScheduleScreen() {
     };
   }, [editingEventId, entries]);
 
-  const editEntry = useCallback((entry: CalendarEntry) => {
-    if (entry.source !== 'event') return;
-    setActionEntry(null);
-    setEditingEventId(calendarEntryRecordId(entry));
+  const editEntry = useCallback(
+    (entry: CalendarEntry) => {
+      setActionEntry(null);
+      if (entry.source === 'event') {
+        setEditingEventId(calendarEntryRecordId(entry));
+        setEventFormOpen(true);
+        return;
+      }
+      const href = calendarEntryEditHref(entry);
+      if (href) router.push(href);
+    },
+    [router]
+  );
+
+  const pendingEditEntry = pendingEditId
+    ? entries.find(
+        (candidate) =>
+          candidate.source === 'event' && calendarEntryRecordId(candidate) === pendingEditId
+      )
+    : undefined;
+  if (pendingEditEntry) {
+    setPendingEditId('');
+    setEditingEventId(pendingEditId);
     setEventFormOpen(true);
-  }, []);
+  }
 
   const openEntryActions = useCallback((entry: CalendarEntry) => setActionEntry(entry), []);
   const openEntryDetail = useCallback((entry: CalendarEntry) => setDetailEntry(entry), []);

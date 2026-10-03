@@ -1,4 +1,5 @@
 import type { CalendarEntry } from '@/core/types';
+import type { Href } from 'expo-router';
 
 export type CalendarEntryAction = 'edit' | 'delete' | 'toggle';
 export type CalendarEventFormAction = 'cancel' | 'save';
@@ -97,8 +98,19 @@ export function availableCalendarEntryActions(
   if (entry.source === 'reminder') return [];
 
   const actions: CalendarEntryAction[] = [];
-  if (entry.source === 'event' && canEdit) actions.push('edit');
+  if (canEdit) actions.push('edit');
   if (entry.source === 'task' && canEdit) actions.push('toggle');
   if (canDelete) actions.push('delete');
   return actions;
+}
+
+export function calendarEntryEditHref(entry: CalendarEntry): Href | null {
+  const recordId = calendarEntryRecordId(entry);
+  if (entry.source === 'event') {
+    return { pathname: '/agenda', params: { edit: recordId, at: String(entry.startsAt) } };
+  }
+  if (entry.source === 'task' && entry.projectId) {
+    return { pathname: '/projects', params: { id: entry.projectId, task: recordId } };
+  }
+  return null;
 }

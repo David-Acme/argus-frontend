@@ -19,6 +19,7 @@ import type { CalendarEntry, ScheduleEntry } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
+import { calendarEntryEditHref } from '@/shared/libs/calendar-entry-actions';
 import { SectionPanel } from '@/shared/components/layout';
 import { ServerUnreachable } from '@/shared/components/session/server-unreachable';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
@@ -123,7 +124,10 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
         entry={entry}
         canEdit={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
         canDelete={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
-        onEdit={() => router.push('/agenda?new=event')}
+        onEdit={(selected) => {
+          const href = calendarEntryEditHref(selected);
+          if (href) router.push(href);
+        }}
       />
     ),
     [can, router]

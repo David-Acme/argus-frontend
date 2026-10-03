@@ -1,5 +1,5 @@
 import * as DropdownMenuPrimitive from '@rn-primitives/dropdown-menu';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 import type { MenuOption } from '@/core/types';
 import { OptionRow } from '@/shared/components/ui/option-row';
@@ -45,6 +45,7 @@ export function AdaptiveMenu<T extends string = string>({
   const { isCompact, isExpanded, isShort } = useWindowClass();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
+  const chosen = useRef<{ value: T } | null>(null);
 
   function setOpen(next: boolean) {
     if (controlledOpen === undefined) setUncontrolledOpen(next);
@@ -79,10 +80,15 @@ export function AdaptiveMenu<T extends string = string>({
     );
   }
 
-  // The dropdown primitive owns its open state and closes on item press, so the
-  // row must not handle the press itself (hence no onSelect below).
+  function settleDropdown(next: boolean) {
+    const selection = chosen.current;
+    if (next || !selection) return;
+    chosen.current = null;
+    requestAnimationFrame(() => onSelect(selection.value));
+  }
+
   return (
-    <DropdownMenuPrimitive.Root>
+    <DropdownMenuPrimitive.Root onOpenChange={settleDropdown}>
       <DropdownMenuPrimitive.Trigger asChild>{trigger}</DropdownMenuPrimitive.Trigger>
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Overlay
@@ -99,7 +105,9 @@ export function AdaptiveMenu<T extends string = string>({
                 key={option.value}
                 asChild
                 disabled={option.disabled}
-                onPress={() => onSelect(option.value)}>
+                onPress={() => {
+                  chosen.current = { value: option.value };
+                }}>
                 <OptionRow
                   option={option}
                   selected={option.value === selected}

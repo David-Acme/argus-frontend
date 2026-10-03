@@ -30,7 +30,11 @@ export default function ProjectsScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const authStatus = useAuthStore((state) => state.status);
-  const { new: newParam, id: idParam } = useLocalSearchParams<{ new?: string; id?: string }>();
+  const {
+    new: newParam,
+    id: idParam,
+    task: taskParam,
+  } = useLocalSearchParams<{ new?: string; id?: string; task?: string }>();
   const [selectedId, setSelectedId] = useState(idParam ?? '');
   const [projectFormOpen, setProjectFormOpen] = useState(newParam === 'project');
   const [taskFormOpen, setTaskFormOpen] = useState(false);
@@ -38,6 +42,13 @@ export default function ProjectsScreen() {
   const [editingProject, setEditingProject] = useState(false);
   const { projects, tasks, displayProjects, displayTasks, activeId, progress } = useProjectsData(selectedId);
   const { can } = usePermissions();
+  const [pendingTaskId, setPendingTaskId] = useState(taskParam ?? '');
+
+  if (pendingTaskId && tasks.some((item) => item.id === pendingTaskId)) {
+    setPendingTaskId('');
+    setEditingTaskId(pendingTaskId);
+    setTaskFormOpen(true);
+  }
 
   const statusOptions = useMemo<MenuOption<ProjectTaskStatus>[]>(
     () => [
