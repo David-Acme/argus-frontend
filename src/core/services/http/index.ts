@@ -1,2 +1,3 @@
 export { httpService } from './http.service';
 export { registerHttpAuth } from './http-auth';
+export { idempotentConfig, newIdempotencyKey } from './idempotency-key';

@@ -7,7 +7,7 @@ import type {
   IServiceResponse,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from '@/core/services/http';
+import { httpService, idempotentConfig } from '@/core/services/http';
 
 class CalendarEventService extends DatabaseService<'calendar_event'> {
   constructor() {
@@ -41,8 +41,8 @@ class CalendarEventService extends DatabaseService<'calendar_event'> {
     );
   }
 
-  create(body: ICalendarEventCreate): Promise<IServiceResponse<unknown>> {
-    return httpService.post('/calendar-event', body);
+  create(body: ICalendarEventCreate, idempotencyKey?: string): Promise<IServiceResponse<unknown>> {
+    return httpService.post('/calendar-event', body, idempotentConfig(idempotencyKey));
   }
 
   update(id: string, body: ICalendarEventUpdate): Promise<IServiceResponse<unknown>> {

@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 import type { ProjectModel } from '@/core/database';
 import type { IProjectCreate, IProjectUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from '@/core/services/http';
+import { httpService, idempotentConfig } from '@/core/services/http';
 
 class ProjectService extends DatabaseService<'project'> {
   constructor() {
@@ -24,8 +24,8 @@ class ProjectService extends DatabaseService<'project'> {
     );
   }
 
-  create(body: IProjectCreate): Promise<IServiceResponse<unknown>> {
-    return httpService.post('/project', body);
+  create(body: IProjectCreate, idempotencyKey?: string): Promise<IServiceResponse<unknown>> {
+    return httpService.post('/project', body, idempotentConfig(idempotencyKey));
   }
 
   update(id: string, body: IProjectUpdate): Promise<IServiceResponse<unknown>> {

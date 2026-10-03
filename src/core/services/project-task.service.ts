@@ -7,7 +7,7 @@ import type {
   IServiceResponse,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
-import { httpService } from '@/core/services/http';
+import { httpService, idempotentConfig } from '@/core/services/http';
 
 class ProjectTaskService extends DatabaseService<'project_task'> {
   constructor() {
@@ -50,8 +50,8 @@ class ProjectTaskService extends DatabaseService<'project_task'> {
     );
   }
 
-  create(body: IProjectTaskCreate): Promise<IServiceResponse<unknown>> {
-    return httpService.post('/project-task', body);
+  create(body: IProjectTaskCreate, idempotencyKey?: string): Promise<IServiceResponse<unknown>> {
+    return httpService.post('/project-task', body, idempotentConfig(idempotencyKey));
   }
 
   update(id: string, body: IProjectTaskUpdate): Promise<IServiceResponse<unknown>> {
