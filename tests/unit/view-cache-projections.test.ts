@@ -7,7 +7,12 @@ import {
   projectAgenda,
   projectCalendar,
 } from '@/core/services/view-cache/calendar.projection';
-import { projectCameras, type CameraSource } from '@/core/services/view-cache/camera.projection';
+import {
+  CAMERA_SOURCE_COLUMNS,
+  CAMERA_SOURCE_FIELDS,
+  projectCameras,
+  type CameraSource,
+} from '@/core/services/view-cache/camera.projection';
 import { projectNotifications } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
@@ -44,6 +49,7 @@ const camera = (id: string, overrides: Partial<CameraSource> = {}): CameraSource
   retentionDays: null,
   isOnline: true,
   isEnabled: true,
+  config: {},
   ...overrides,
 });
 
@@ -67,6 +73,30 @@ describe('camera projection', () => {
     expect(second?.modelLabel).toBe('C200');
     expect(second?.zones).toEqual([]);
     expect(second?.resolution).toBe('1080p');
+    expect(first?.streamPath).toBe('');
+  });
+
+  test('stream paths come from the config and never anything else in it', () => {
+    const writes = projectCameras({
+      cameras: [
+        camera('1', { config: { streamPath: '/Streaming/Channels/101', subStreamPath: '/Streaming/Channels/102' } }),
+        camera('2', { config: { streamPath: 7, password: 'secret' } }),
+      ],
+      zones: [],
+      streams: [],
+    });
+    const [first, second] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
+    expect(first?.streamPath).toBe('/Streaming/Channels/101');
+    expect(first?.subStreamPath).toBe('/Streaming/Channels/102');
+    expect(second?.streamPath).toBe('');
+    expect(JSON.stringify(second)).not.toContain('secret');
+  });
+
+  test('the camera list watches every column its rows read', () => {
+    expect(CAMERA_SOURCE_COLUMNS).toEqual(
+      expect.arrayContaining(['driver', 'port', 'username', 'cloud_username', 'retention_days', 'config', 'is_online']),
+    );
+    expect(CAMERA_SOURCE_COLUMNS).toHaveLength(CAMERA_SOURCE_FIELDS.length);
   });
 });
 

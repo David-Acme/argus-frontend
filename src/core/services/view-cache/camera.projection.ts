@@ -4,23 +4,33 @@ import type { IconName } from '@/core/types';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
 import type { ViewWrite } from './projection';
 
-export type CameraSource = Pick<
-  CameraModel,
-  | 'id'
-  | 'driver'
-  | 'icon'
-  | 'name'
-  | 'ip'
-  | 'port'
-  | 'username'
-  | 'cloudUsername'
-  | 'manufacturer'
-  | 'model'
-  | 'recordMode'
-  | 'retentionDays'
-  | 'isOnline'
-  | 'isEnabled'
->;
+export const CAMERA_SOURCE_FIELDS = [
+  'driver',
+  'icon',
+  'name',
+  'ip',
+  'port',
+  'username',
+  'cloudUsername',
+  'manufacturer',
+  'model',
+  'recordMode',
+  'retentionDays',
+  'isOnline',
+  'isEnabled',
+  'config',
+] as const satisfies readonly (keyof CameraModel)[];
+
+export const CAMERA_SOURCE_COLUMNS: string[] = CAMERA_SOURCE_FIELDS.map((field) =>
+  field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`),
+);
+
+export type CameraSource = Pick<CameraModel, 'id' | (typeof CAMERA_SOURCE_FIELDS)[number]>;
+
+const configText = (config: CameraSource['config'], key: string): string => {
+  const value = config[key];
+  return typeof value === 'string' ? value : '';
+};
 
 export type ZoneSource = Pick<ZoneModel, 'id' | 'cameraId' | 'name' | 'points' | 'zoneType' | 'color' | 'isEnabled'>;
 
@@ -65,6 +75,8 @@ export function projectCameras({ cameras, zones, streams }: CameraProjectionInpu
     isOnline: camera.isOnline,
     isEnabled: camera.isEnabled,
     resolution: resolutionByCamera.get(camera.id) ?? '',
+    streamPath: configText(camera.config, 'streamPath'),
+    subStreamPath: configText(camera.config, 'subStreamPath'),
     zones: zonesByCamera.get(camera.id) ?? [],
   }));
   return [{ key: VIEW_CACHE_KEYS.cameraList, rows, limit: VIEW_CACHE_LIST_LIMIT }];

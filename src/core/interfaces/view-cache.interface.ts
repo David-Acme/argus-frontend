@@ -40,6 +40,8 @@ export interface ICameraCacheRow {
   isOnline: boolean;
   isEnabled: boolean;
   resolution: string;
+  streamPath: string;
+  subStreamPath: string;
   zones: readonly IZoneCacheRow[];
 }
 

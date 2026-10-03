@@ -16,7 +16,7 @@ class ProjectTaskService extends DatabaseService<'project_task'> {
 
   observeAll(): Observable<ProjectTaskModel[]> {
     return this.observeManyWithColumns(
-      ['title', 'status', 'priority', 'project_id', 'due_at'],
+      ['title', 'status', 'priority', 'project_id', 'due_at', 'sort_order'],
       [Q.sortBy('sort_order', Q.asc)],
     );
   }
