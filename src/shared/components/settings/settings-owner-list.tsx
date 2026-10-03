@@ -1,9 +1,10 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import type { IconName, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { FilterChips } from '@/shared/components/ui/filter-chips';
 import { Panel } from '@/shared/components/ui/panel';
 
 type SettingsOwnerListProps = {
@@ -30,30 +31,16 @@ export function SettingsOwnerList({ owners, selected, layout, countOf, onSelect 
 
   if (layout === 'chips') {
     return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
-        {owners.map((owner) => {
-          const active = owner.service === selected;
-          return (
-            <Pressable
-              key={owner.service}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              onPress={() => onSelect(owner.service)}
-              className={cn(
-                'flex-row items-center gap-2 rounded-full px-4 py-2.5 active:opacity-80',
-                active ? 'bg-interactive' : 'bg-card'
-              )}>
-              <Icon
-                name={SETTINGS_OWNER_ICONS[owner.service]}
-                className={cn('size-4', active ? 'text-foreground-on-interactive' : 'text-foreground-secondary')}
-              />
-              <Text className={cn('text-caption font-semibold', active ? 'text-foreground-on-interactive' : '')}>
-                {t(`screens.settings.owners.${owner.service}.name`)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <FilterChips
+        scroll
+        options={owners.map((owner) => ({
+          value: owner.service,
+          label: t(`screens.settings.owners.${owner.service}.name`),
+          icon: SETTINGS_OWNER_ICONS[owner.service],
+        }))}
+        value={selected}
+        onChange={onSelect}
+      />
     );
   }
 

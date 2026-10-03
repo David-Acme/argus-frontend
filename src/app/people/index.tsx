@@ -7,6 +7,7 @@ import { DashboardShell } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { EmptyState } from '@/shared/components/ui/empty-state';
+import { FilterChips } from '@/shared/components/ui/filter-chips';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
 import { VirtualList } from '@/shared/components/ui/virtual-list';
@@ -23,7 +24,7 @@ import { portraitDataUri } from '@/shared/libs/portrait-preview';
 import { toast } from '@/shared/libs/toast';
 import { Redirect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Image, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
 
 const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard', 'guest', 'owner'];
@@ -106,22 +107,14 @@ export default function PeopleDirectoryScreen() {
             placeholder={t('screens.users.search-people')}
             accessibilityLabel={t('screens.users.search-people')}
           />
-          <View className="flex-row flex-wrap gap-2">
-            {ROLE_FILTERS.map((item) => {
-              const active = role === item;
-              return (
-                <Pressable
-                  key={item}
-                  className={active ? 'bg-foreground rounded-full px-3 py-1.5' : 'bg-surface-secondary rounded-full px-3 py-1.5'}
-                  accessibilityRole="button"
-                  onPress={() => setRole(item)}>
-                  <Text className={active ? 'text-background text-xs font-medium' : 'text-foreground-secondary text-xs font-medium'}>
-                    {item === 'all' ? t('screens.users.all-roles') : t(roleKey(item))}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <FilterChips
+            options={ROLE_FILTERS.map((item) => ({
+              value: item,
+              label: item === 'all' ? t('screens.users.all-roles') : t(roleKey(item)),
+            }))}
+            value={role}
+            onChange={setRole}
+          />
         </View>
 
         <View className="flex-1 gap-3">
