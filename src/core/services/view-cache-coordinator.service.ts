@@ -32,6 +32,7 @@ import {
   MOSAIC_COLUMNS,
   MOSAIC_ROWS,
   VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
+  VIEW_CACHE_LIST_LIMIT,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants';
 import {
@@ -128,7 +129,7 @@ class ViewCacheCoordinatorService {
       createdAt: user.createdAt.getTime(),
       updatedAt: user.updatedAt.getTime(),
     }));
-    viewCacheService.write(VIEW_CACHE_KEYS.peopleFilter, rows);
+    viewCacheService.write(VIEW_CACHE_KEYS.peopleFilter, rows, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
   }
 
   private observeCoreViews(userId: string): void {
@@ -175,7 +176,7 @@ class ViewCacheCoordinatorService {
           isEnabled: camera.isEnabled,
           zones: zonesByCamera.get(camera.id) ?? 0,
         }));
-        viewCacheService.write(VIEW_CACHE_KEYS.cameraList, cameraRows);
+        viewCacheService.write(VIEW_CACHE_KEYS.cameraList, cameraRows, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
 
         const cameraDetails: ICameraCacheRow[] = cameras.map((camera) => ({
           id: camera.id,
@@ -231,7 +232,7 @@ class ViewCacheCoordinatorService {
           description: project.description,
           status: project.status,
         }));
-        viewCacheService.write(VIEW_CACHE_KEYS.projectList, projectRows);
+        viewCacheService.write(VIEW_CACHE_KEYS.projectList, projectRows, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
 
         const taskRows: IProjectTaskCacheRow[] = tasks.map((task) => ({
           id: task.id,
@@ -253,6 +254,7 @@ class ViewCacheCoordinatorService {
             VIEW_CACHE_KEYS.projectTasks,
             tasksByProject.get(project.id) ?? [],
             project.id,
+            { limit: VIEW_CACHE_LIST_LIMIT },
           );
         }
         const dashboardProjects: DashboardProjectCard[] = projectRows.map((project) => {
@@ -275,7 +277,7 @@ class ViewCacheCoordinatorService {
           createdAt: user.createdAt.getTime(),
           updatedAt: user.updatedAt.getTime(),
         }));
-        viewCacheService.write(VIEW_CACHE_KEYS.peopleUsers, people);
+        viewCacheService.write(VIEW_CACHE_KEYS.peopleUsers, people, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
 
         const invitationRows: IInvitationRecord[] = invitations.map((invitation) => ({
           id: Number(invitation.id),
@@ -289,7 +291,9 @@ class ViewCacheCoordinatorService {
             : null,
           createdAt: Math.floor(invitation.createdAt.getTime() / 1000),
         }));
-        viewCacheService.write(VIEW_CACHE_KEYS.peopleInvitations, invitationRows);
+        viewCacheService.write(VIEW_CACHE_KEYS.peopleInvitations, invitationRows, undefined, {
+          limit: VIEW_CACHE_LIST_LIMIT,
+        });
 
         const notificationRows: INotificationPreviewCacheRow[] = notifications.map((notification) => ({
           id: notification.id,

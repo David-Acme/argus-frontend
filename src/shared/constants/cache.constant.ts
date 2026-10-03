@@ -4,6 +4,8 @@ export const VIEW_CACHE_PREFIX = 'view.cache.v2.';
 /** Rows kept per ordinary list page: enough to fill a screen, cheap to write on change. */
 export const VIEW_CACHE_PAGE_SIZE = 40;
 
+export const VIEW_CACHE_LIST_LIMIT = 1000;
+
 /** A month grid has six weeks, irrespective of the locale's first weekday. */
 export const VIEW_CACHE_CALENDAR_MONTH_DAYS = 42;
 
