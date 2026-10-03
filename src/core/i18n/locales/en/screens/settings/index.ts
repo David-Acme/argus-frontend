@@ -65,6 +65,21 @@ export const settings = {
     general: 'General',
   },
   choices: {
+    pocket: 'Pocket (fast)',
+    supertonic: 'Supertonic (balanced)',
+    fast: 'Fast',
+    quality: 'Best quality',
+    lola: 'Lola',
+    alba: 'Alba',
+    eve: 'Eve',
+    fantine: 'Fantine',
+    giovanni: 'Giovanni',
+    marius: 'Marius',
+    javert: 'Javert',
+    michael: 'Michael',
+    jane: 'Jane',
+    mary: 'Mary',
+    george: 'George',
     shadow: 'Shadow',
     enforce: 'Enforce',
     notify: 'Alerts',
@@ -89,6 +104,46 @@ export const settings = {
   },
   keys: {
     tts: {
+      engine_es: {
+        label: 'Spanish voice engine',
+        hint: 'Pocket answers instantly; Supertonic may sound more natural in Spanish but takes longer.',
+      },
+      engine_en: {
+        label: 'English voice engine',
+        hint: 'Pocket is fast and sounds good in English; Supertonic is the balanced alternative.',
+      },
+      pocket_variant_es: {
+        label: 'Pocket model for Spanish',
+        hint: 'Fast answers in milliseconds; Best quality uses a larger, somewhat slower model.',
+      },
+      pocket_voice_es: {
+        label: 'Spanish voice',
+        hint: 'The voice Pocket uses when Argus speaks Spanish.',
+      },
+      pocket_voice_en: {
+        label: 'English voice',
+        hint: 'The voice Pocket uses when Argus speaks English.',
+      },
+      pocket_temperature: {
+        label: 'Pocket expressiveness',
+        hint: 'Higher sounds more varied; lower, steadier.',
+      },
+      pocket_lsd_steps: {
+        label: 'Pocket steps',
+        hint: 'More steps refine the sound at the cost of time.',
+      },
+      pocket_reference_es: {
+        label: 'Spanish reference voice',
+        hint: 'A .wav from the references folder to imitate a voice; empty uses the chosen voice.',
+      },
+      pocket_reference_en: {
+        label: 'English reference voice',
+        hint: 'A .wav from the references folder to imitate a voice; empty uses the chosen voice.',
+      },
+      normalize_text: {
+        label: 'Read numbers and abbreviations',
+        hint: 'Turns times, figures, percentages and abbreviations into words before speaking.',
+      },
       speed: { label: 'Speaking speed', hint: '1 is the normal pace; higher speaks faster.' },
       quality: {
         label: 'Voice quality',

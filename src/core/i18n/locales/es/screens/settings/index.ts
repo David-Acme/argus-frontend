@@ -62,6 +62,21 @@ export const settings = {
     general: 'General',
   },
   choices: {
+    pocket: 'Pocket (rápido)',
+    supertonic: 'Supertonic (equilibrado)',
+    fast: 'Rápida',
+    quality: 'Máxima calidad',
+    lola: 'Lola',
+    alba: 'Alba',
+    eve: 'Eve',
+    fantine: 'Fantine',
+    giovanni: 'Giovanni',
+    marius: 'Marius',
+    javert: 'Javert',
+    michael: 'Michael',
+    jane: 'Jane',
+    mary: 'Mary',
+    george: 'George',
     shadow: 'Observar',
     enforce: 'Aplicar',
     notify: 'Avisos',
@@ -86,6 +101,46 @@ export const settings = {
   },
   keys: {
     tts: {
+      engine_es: {
+        label: 'Motor de voz en español',
+        hint: 'Pocket responde al instante; Supertonic puede sonar más natural en español pero tarda más.',
+      },
+      engine_en: {
+        label: 'Motor de voz en inglés',
+        hint: 'Pocket es rápido y suena bien en inglés; Supertonic es la alternativa equilibrada.',
+      },
+      pocket_variant_es: {
+        label: 'Modelo Pocket para español',
+        hint: 'Rápida responde en milisegundos; Máxima calidad usa un modelo más grande y algo más lento.',
+      },
+      pocket_voice_es: {
+        label: 'Voz en español',
+        hint: 'La voz que usa Pocket cuando Argus habla en español.',
+      },
+      pocket_voice_en: {
+        label: 'Voz en inglés',
+        hint: 'La voz que usa Pocket cuando Argus habla en inglés.',
+      },
+      pocket_temperature: {
+        label: 'Expresividad de Pocket',
+        hint: 'Más alto suena más variado; más bajo, más estable.',
+      },
+      pocket_lsd_steps: {
+        label: 'Pasos de Pocket',
+        hint: 'Más pasos afinan el sonido a cambio de tiempo.',
+      },
+      pocket_reference_es: {
+        label: 'Voz de referencia en español',
+        hint: 'Archivo .wav de la carpeta de referencias para imitar una voz; vacío usa la voz elegida.',
+      },
+      pocket_reference_en: {
+        label: 'Voz de referencia en inglés',
+        hint: 'Archivo .wav de la carpeta de referencias para imitar una voz; vacío usa la voz elegida.',
+      },
+      normalize_text: {
+        label: 'Leer números y abreviaturas',
+        hint: 'Convierte horas, cifras, porcentajes y abreviaturas en palabras antes de hablar.',
+      },
       speed: {
         label: 'Velocidad al hablar',
         hint: '1 es el ritmo normal; más alto habla más rápido.',
