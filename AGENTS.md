@@ -506,6 +506,11 @@ for Watermelon nor make an HTTP list request just because it mounted.
 - Which role may open which screen is one table, `shared/libs/route-access.ts`
   (`routeFallback(path, role)`): the `(app)` layout redirects with it and the
   nav hides the tabs it refuses. A screen never checks its own role.
+- The HTTP DTOs the app reads have zod schemas in `core/contracts/http.contract.ts`,
+  each tied to its TypeScript type with `satisfies z.ZodType<T>`;
+  `tests/unit/http-contract.test.ts` validates every recorded backend response
+  in `backend/scripts/fixtures/http/*.json` (the envelope for all, the schema
+  for each route in `HTTP_CONTRACTS`), so a backend shape change fails here.
 - `shared/libs/role-access.ts` mirrors the backend's `kTableAccess`
   (`backend/packages/lib/auth/src/auth/role-access.hxx`) table by table;
   `tests/unit/role-access-contract.test.ts` parses the header and fails on any

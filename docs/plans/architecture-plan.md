@@ -264,9 +264,12 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
 
 ### Phase 6 — Contracts and tests
 
-- [ ] Zod schemas in `core/contracts/` for the HTTP DTOs the app reads, and a
+- [x] Zod schemas in `core/contracts/` for the HTTP DTOs the app reads, and a
   contract test that validates every recorded backend fixture
   (`backend/scripts/fixtures/http/*.json`) against them.
+  Done: eleven routes in `HTTP_CONTRACTS`; masked fixture values are
+  rehydrated by key (tokens stay strings, timestamps become numbers). Guard's
+  own `/health` is not enveloped and is excluded (the app never reads it).
 - [ ] Enum assertions against the protos (`SyncOperation`, `TableName`, voice
   enums) and the default route ports against the service configs.
 - [ ] Tests for `toNetError`, the three QR parsers, refresh outcomes and dates.

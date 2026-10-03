@@ -1,0 +1,179 @@
+import { z } from 'zod';
+import type {
+  IApiError,
+  ICameraCapabilities,
+  ICreateDeviceLoginResponse,
+  IDeviceLoginStatusResponse,
+  IInvitationRecord,
+  IResponseStatusDto,
+  IUserManagementRecord,
+} from '@/core/interfaces';
+import type {
+  GuardDecisionPage,
+  GuardExpectedGuest,
+  GuardIncident,
+  GuardModeState,
+  SettingsOverview,
+} from '@/core/types';
+
+const userRole = z.enum(['owner', 'resident', 'guard', 'guest']);
+const inviteRole = z.enum(['resident', 'guard', 'guest']);
+const guardMode = z.enum(['home', 'away', 'night', 'armed']);
+const guardDanger = z.enum(['none', 'low', 'medium', 'high', 'critical']);
+
+export const apiErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  fields: z.record(z.string(), z.array(z.string())).optional(),
+}) satisfies z.ZodType<IApiError>;
+
+export const envelopeSchema = z.object({
+  status: z.number().int(),
+  info: z.unknown(),
+  errors: apiErrorSchema.nullable(),
+});
+
+export const authStatusSchema = z.object({
+  userId: z.number(),
+  name: z.string(),
+  role: userRole,
+  isActive: z.boolean(),
+}) satisfies z.ZodType<IResponseStatusDto>;
+
+export const deviceLoginCreatedSchema = z.object({
+  challengeId: z.string(),
+  expiresAt: z.number(),
+}) satisfies z.ZodType<ICreateDeviceLoginResponse>;
+
+export const deviceLoginStatusSchema = z.object({
+  status: z.enum(['pending', 'approved', 'expired']),
+  accessToken: z.string().optional(),
+  refreshToken: z.string().optional(),
+  userId: z.number().optional(),
+  name: z.string().optional(),
+  role: userRole.optional(),
+}) satisfies z.ZodType<IDeviceLoginStatusResponse>;
+
+export const cameraCapabilitiesSchema = z.object({
+  ptz: z.boolean().optional(),
+  presets: z.boolean().optional(),
+  talk: z.boolean().optional(),
+  privacy: z.boolean().optional(),
+  led: z.boolean().optional(),
+  dayNight: z.boolean().optional(),
+  motion: z.boolean().optional(),
+  autoTrack: z.boolean().optional(),
+  alarm: z.boolean().optional(),
+}) satisfies z.ZodType<ICameraCapabilities>;
+
+export const guardModeStateSchema = z.object({
+  mode: guardMode,
+  effectiveMode: guardMode,
+  occupancy: z.enum(['manual', 'armed', 'open', 'staffed', 'closed', 'asleep']),
+  publicPresent: z.boolean(),
+  staffOnly: z.boolean(),
+}) satisfies z.ZodType<GuardModeState>;
+
+export const guardIncidentSchema = z.object({
+  cameraId: z.number(),
+  cameraName: z.string(),
+  rule: z.string(),
+  danger: guardDanger,
+  severity: z.string(),
+  personId: z.number(),
+  identity: z.string(),
+  createdAt: z.number(),
+}) satisfies z.ZodType<GuardIncident>;
+
+export const guardDecisionPageSchema = z.object({
+  rows: z.array(
+    z.object({
+      eventId: z.string(),
+      cameraId: z.number(),
+      severity: guardDanger,
+      hardFloor: z.boolean(),
+      beliefScore: z.number(),
+      beliefThreshold: z.number(),
+      didNotify: z.boolean(),
+      beliefWouldNotify: z.boolean(),
+      legacyWouldNotify: z.boolean(),
+      decisionMode: z.enum(['shadow', 'enforce']),
+      feedbackLabel: z.enum(['useful', 'false_alarm', 'not_now', '']),
+      createdAt: z.number(),
+    })
+  ),
+  hasMore: z.boolean(),
+  nextCursor: z.object({ createdAt: z.number(), eventId: z.string() }).nullable(),
+}) satisfies z.ZodType<GuardDecisionPage>;
+
+export const guardExpectedGuestSchema = z.object({
+  id: z.number(),
+  cameraId: z.number(),
+  personId: z.number(),
+  hostUserId: z.number(),
+  description: z.string(),
+  oneTime: z.boolean(),
+  validFrom: z.number(),
+  validUntil: z.number(),
+}) satisfies z.ZodType<GuardExpectedGuest>;
+
+export const settingsOverviewSchema = z.object({
+  owners: z.array(
+    z.object({
+      service: z.enum(['llm', 'voice', 'tts', 'stt', 'vlm', 'guard', 'camera', 'notification']),
+      reachable: z.boolean(),
+      settings: z.array(
+        z.object({
+          key: z.string(),
+          group: z.string(),
+          type: z.enum(['toggle', 'integer', 'decimal', 'choice', 'text']),
+          level: z.enum(['basic', 'advanced']),
+          apply: z.enum(['live', 'nextSession', 'restart']),
+          min: z.number(),
+          max: z.number(),
+          step: z.number(),
+          choices: z.array(z.string()),
+          value: z.string(),
+          fallback: z.string(),
+        })
+      ),
+    })
+  ),
+}) satisfies z.ZodType<SettingsOverview>;
+
+export const userManagementRecordSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  lastName: z.string(),
+  role: userRole,
+  lang: z.string(),
+  isActive: z.boolean(),
+  createdAt: z.number(),
+  updatedAt: z.number().nullable(),
+  deletedAt: z.number().nullable(),
+}) satisfies z.ZodType<IUserManagementRecord>;
+
+export const invitationRecordSchema = z.object({
+  id: z.number(),
+  role: inviteRole,
+  maxRedemptions: z.number(),
+  redemptionCount: z.number(),
+  expiresAt: z.number(),
+  createdBy: z.number(),
+  revokedAt: z.number().nullable(),
+  createdAt: z.number(),
+}) satisfies z.ZodType<IInvitationRecord>;
+
+export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
+  'GET /auth/status': authStatusSchema,
+  'POST /auth/device-login': deviceLoginCreatedSchema,
+  'GET /auth/device-login/{1}': deviceLoginStatusSchema,
+  'GET /camera/{1}/capabilities': cameraCapabilitiesSchema,
+  'GET /guard/mode': guardModeStateSchema,
+  'GET /guard/incidents': z.array(guardIncidentSchema),
+  'GET /guard/decisions': guardDecisionPageSchema,
+  'GET /guard/expected-guests': z.array(guardExpectedGuestSchema),
+  'GET /settings': settingsOverviewSchema,
+  'GET /user': z.array(userManagementRecordSchema),
+  'GET /invitation': z.array(invitationRecordSchema),
+};
