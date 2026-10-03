@@ -13,6 +13,7 @@ import { agenda } from './agenda';
 import { projects } from './projects';
 import { users } from './users';
 import { profile } from './profile';
+import { security } from './security';
 
 export const screens = {
   home,
@@ -30,4 +31,5 @@ export const screens = {
   projects,
   users,
   profile,
+  security,
 };

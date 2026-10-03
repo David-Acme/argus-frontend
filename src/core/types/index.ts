@@ -27,3 +27,4 @@ export * from './confirm.type';
 export * from './audit-log.type';
 export * from './view-cache.type';
 export * from './camera-stream.type';
+export * from './guard.type';

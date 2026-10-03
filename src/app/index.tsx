@@ -22,7 +22,9 @@ import { EntryActionsMenu } from '@/shared/components/calendar';
 import { calendarEntryEditHref } from '@/shared/libs/calendar-entry-actions';
 import { SectionPanel } from '@/shared/components/layout';
 import { ServerUnreachable } from '@/shared/components/session/server-unreachable';
+import { GuardCard } from '@/shared/components/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
+import { useGuardMode } from '@/shared/hooks/use-guard-mode';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -53,7 +55,9 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const { height, isShort, isWide, isExpanded, width } = useWindowClass();
-  const { can } = usePermissions();
+  const { can, role } = usePermissions();
+  const isOwner = role === 'owner';
+  const guardMode = useGuardMode(isOwner);
   const {
     cameraTiles,
     projects,
@@ -167,6 +171,8 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
               onSelect={(id) => router.push(`/cameras/${id}`)}
             />
           </View>
+
+          {isOwner ? <GuardCard state={guardMode} onPress={() => router.push('/security')} /> : null}
 
           <SummaryCard
             title={t('screens.home.overview')}

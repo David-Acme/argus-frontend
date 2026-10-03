@@ -1,4 +1,6 @@
 import { mock } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 Object.assign(globalThis, { window: globalThis });
 
@@ -9,68 +11,10 @@ mock.module('react-native', () => ({
   },
 }));
 
-const LUCIDE_ICONS = [
-  'Activity',
-  'ArrowLeft',
-  'ArrowUpRight',
-  'Bell',
-  'CalendarDays',
-  'Camera',
-  'Check',
-  'CheckCircle2',
-  'Clock3',
-  'ChevronDown',
-  'ChevronLeft',
-  'ChevronRight',
-  'ChevronUp',
-  'Eye',
-  'Flashlight',
-  'Filter',
-  'FlashlightOff',
-  'Home',
-  'History',
-  'Keyboard',
-  'KeyRound',
-  'ListTodo',
-  'LoaderCircle',
-  'Link',
-  'MessagesSquare',
-  'MoreHorizontal',
-  'Mic',
-  'MicOff',
-  'Monitor',
-  'Pencil',
-  'Moon',
-  'PieChart',
-  'Plus',
-  'RefreshCw',
-  'LogOut',
-  'WifiOff',
-  'QrCode',
-  'ScanBarcode',
-  'ScanFace',
-  'Settings',
-  'SquarePen',
-  'Trash2',
-  'Search',
-  'ShieldCheck',
-  'SkipForward',
-  'SlidersHorizontal',
-  'Sparkles',
-  'Sun',
-  'TriangleAlert',
-  'TrendingDown',
-  'TrendingUp',
-  'Unlink',
-  'User',
-  'UserMinus',
-  'UserPlus',
-  'Video',
-  'Volume2',
-  'Wifi',
-  'X',
-] as const;
+const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');
+const iconImports = iconSource.slice(iconSource.indexOf('{') + 1, iconSource.indexOf("} from 'lucide-react-native'"));
+const lucideIcons = iconImports.split(',').map((name) => name.trim()).filter(Boolean);
 
 mock.module('lucide-react-native', () =>
-  Object.fromEntries(LUCIDE_ICONS.map((name) => [name, () => null]))
+  Object.fromEntries(lucideIcons.map((name) => [name, () => null]))
 );
