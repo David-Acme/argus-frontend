@@ -22,13 +22,13 @@ import { FormTextField } from '@/shared/components/ui/form-text-field';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
-import { DayPickerField } from './day-picker-field';
+import { DayPickerField } from '@/features/agenda/components/day-picker-field';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { calendarEventFormActions } from '@/shared/libs/calendar-entry-actions';
+import { calendarEventFormActions } from '@/features/agenda/model/calendar-entry-actions';
 import { toast } from '@/shared/libs/toast';
 
 type CalendarEventFormProps = {

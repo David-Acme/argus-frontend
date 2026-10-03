@@ -5,7 +5,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { CalendarMonthView } from './calendar-month-view';
+import { CalendarMonthView } from '@/features/agenda/components/calendar-month-view';
 
 type DayPickerFieldProps = {
   value: Date;

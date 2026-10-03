@@ -22,7 +22,7 @@ import {
   calendarEntryRecordId,
   shouldShowCalendarEntryOverflow,
   type CalendarEntryAction,
-} from '@/shared/libs/calendar-entry-actions';
+} from '@/features/agenda/model/calendar-entry-actions';
 import { cn } from '@/shared/libs/utils';
 import { runServiceAction } from '@/shared/libs/service-action';
 

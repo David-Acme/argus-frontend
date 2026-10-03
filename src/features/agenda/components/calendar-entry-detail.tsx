@@ -9,7 +9,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import {
   calendarEntryDetailDialogLayout,
   calendarEntryDetailRows,
-} from '@/shared/libs/calendar-entry-actions';
+} from '@/features/agenda/model/calendar-entry-actions';
 
 type CalendarEntryDetailProps = {
   entry: CalendarEntry | null;

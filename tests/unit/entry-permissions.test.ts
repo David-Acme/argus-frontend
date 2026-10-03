@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { entryPermissions } from '@/shared/libs/calendar-entry-actions';
+import { entryPermissions } from '@/features/agenda/model/calendar-entry-actions';
 import { hasAccess } from '@/shared/libs/role-access';
 
 describe('entryPermissions', () => {
