@@ -21,7 +21,8 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { EmptyState, ScreenShell } from '@/shared/components/layout';
+import { ScreenShell } from '@/shared/components/layout';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 
 const SUMMARY_PANEL_WIDTH = 280;
 

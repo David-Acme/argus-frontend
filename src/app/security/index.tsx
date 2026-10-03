@@ -2,7 +2,8 @@ import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useAuthStore } from '@/core/stores';
-import { EmptyState, ScreenShell } from '@/shared/components/layout';
+import { ScreenShell } from '@/shared/components/layout';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import {
   DecisionReview,
   ExpectedGuestForm,

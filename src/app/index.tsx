@@ -22,7 +22,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
 import { calendarEntryEditHref } from '@/shared/libs/calendar-entry-actions';
-import { EmptyState } from '@/shared/components/layout';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ServerUnreachable } from '@/shared/components/session/server-unreachable';
 import { GuardCard } from '@/shared/components/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';

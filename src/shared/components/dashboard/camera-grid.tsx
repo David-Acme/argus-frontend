@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
 import { CameraTile } from './camera-tile';
+import { EmptyState } from '@/shared/components/ui/empty-state';
+import { Panel } from '@/shared/components/ui/panel';
 
 type CameraGridProps = {
   cameras: readonly ICameraCacheRow[];
@@ -13,12 +13,9 @@ type CameraGridProps = {
 export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
   if (cameras.length === 0) {
     return (
-      <View className="bg-card items-center justify-center gap-2 rounded-[20px] px-6 py-8 shadow-md shadow-black/[0.05]">
-        <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-          <Icon name="video" className="text-muted-foreground size-5" />
-        </View>
-        <Text className="text-muted-foreground text-center text-caption">{emptyLabel}</Text>
-      </View>
+      <Panel>
+        <EmptyState variant="inline" icon="video" title={emptyLabel} />
+      </Panel>
     );
   }
 

@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { useAuthStore } from '@/core/stores';
 import type { SettingLevel, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { DashboardShell } from '@/shared/components/dashboard';
-import { EmptyState } from '@/shared/components/layout';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import { SettingsOwnerList, SettingsOwnerPanel } from '@/shared/components/settings';
 import { Button } from '@/shared/components/ui/button';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';

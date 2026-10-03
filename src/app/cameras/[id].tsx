@@ -22,7 +22,8 @@ import {
 } from '@/shared/components/cameras';
 import { DashboardIconButton } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
-import { EmptyState, ScreenShell } from '@/shared/components/layout';
+import { ScreenShell } from '@/shared/components/layout';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';

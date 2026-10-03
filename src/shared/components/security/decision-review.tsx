@@ -5,7 +5,7 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { DangerBadge } from './danger-badge';
-import { SecurityEmpty } from './security-empty';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 
 type DecisionReviewProps = {
   decisions: GuardDecision[];
@@ -27,7 +27,8 @@ export function DecisionReview({ decisions, onFeedback }: DecisionReviewProps) {
 
   if (decisions.length === 0) {
     return (
-      <SecurityEmpty
+      <EmptyState
+        variant="panel"
         icon="check-circle"
         title={t('screens.security.decisions.empty')}
         hint={t('screens.security.decisions.empty-hint')}

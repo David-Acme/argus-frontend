@@ -1,11 +1,11 @@
 import { View } from 'react-native';
 import type { ICameraEventCacheRow } from '@/core/interfaces';
 import type { EventSeverity } from '@/core/types';
-import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
 import { Panel } from '@/shared/components/ui/panel';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 
 type RecentDetectionsProps = {
   title: string;
@@ -27,17 +27,7 @@ export function RecentDetections({ title, emptyLabel, emptyHint, events, classNa
   return (
     <Panel title={title} className={className}>
       {events.length === 0 ? (
-        <View className="flex-1 items-center justify-center gap-2 py-6">
-          <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-            <Icon name="activity" className="text-muted-foreground size-5" />
-          </View>
-          <Text variant="label" className="text-center">
-            {emptyLabel}
-          </Text>
-          <Text variant="caption" className="text-center">
-            {emptyHint}
-          </Text>
-        </View>
+        <EmptyState variant="panel" icon="activity" title={emptyLabel} hint={emptyHint} />
       ) : (
         <View className="gap-3">
           {events.map((event) => (

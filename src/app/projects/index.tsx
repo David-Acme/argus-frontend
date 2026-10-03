@@ -4,7 +4,7 @@ import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
 import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
-import { EmptyState } from '@/shared/components/layout';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import {
   CreateAffordance,
   ProjectBoardHeader,

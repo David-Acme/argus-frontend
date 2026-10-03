@@ -6,6 +6,7 @@ import type { UserRole } from '@/core/types';
 import { DashboardShell } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Panel } from '@/shared/components/ui/panel';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
@@ -142,7 +143,7 @@ export default function PeopleDirectoryScreen() {
             </Panel>
           ) : (
             <Panel>
-              <Text className="text-muted-foreground py-2 text-sm">{t('screens.users.no-people')}</Text>
+              <EmptyState variant="inline" icon="users" title={t('screens.users.no-people')} />
             </Panel>
           )}
         </View>

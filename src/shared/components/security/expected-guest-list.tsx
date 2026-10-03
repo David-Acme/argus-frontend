@@ -4,7 +4,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { SecurityEmpty } from './security-empty';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 
 type ExpectedGuestListProps = {
   guests: GuardExpectedGuest[];
@@ -18,7 +18,8 @@ export function ExpectedGuestList({ guests, now, onRemove }: ExpectedGuestListPr
 
   if (guests.length === 0) {
     return (
-      <SecurityEmpty
+      <EmptyState
+        variant="panel"
         icon="users"
         title={t('screens.security.guests.empty')}
         hint={t('screens.security.guests.empty-hint')}

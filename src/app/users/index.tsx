@@ -13,6 +13,7 @@ import {
   DashboardShell,
 } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
+import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Panel } from '@/shared/components/ui/panel';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 
@@ -159,7 +160,7 @@ export default function UsersScreen() {
             />
             <Panel className="gap-0 py-2">
               {invitations.length === 0 ? (
-                <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-invitations')}</Text>
+                <EmptyState variant="inline" icon="qr-code" title={t('screens.users.no-invitations')} />
               ) : null}
               {invitations.map((invitation) => {
                 const usable =
@@ -206,7 +207,7 @@ export default function UsersScreen() {
           <SectionHeader title={t('screens.users.members')} />
           <Panel className="gap-0 py-2">
             {users.length === 0 ? (
-              <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-users')}</Text>
+              <EmptyState variant="inline" icon="users" title={t('screens.users.no-users')} />
             ) : users.map((user) => (
               <View key={user.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
                 <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
