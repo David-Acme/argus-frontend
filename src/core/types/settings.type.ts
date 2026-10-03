@@ -14,6 +14,15 @@ export type SettingsOwnerName =
   | 'camera'
   | 'notification';
 
+export type ChoiceAvailability = 'installed' | 'installable' | 'installing' | 'hostOnly' | 'failed';
+
+export interface ChoiceState {
+  choice: string;
+  availability: ChoiceAvailability;
+  sizeMb: number;
+  hostCommand: string;
+}
+
 export interface Setting {
   key: string;
   group: string;
@@ -26,6 +35,7 @@ export interface Setting {
   choices: string[];
   value: string;
   fallback: string;
+  choiceStates?: ChoiceState[];
 }
 
 export interface SettingsOwner {

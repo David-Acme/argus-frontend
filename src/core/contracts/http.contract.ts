@@ -135,6 +135,16 @@ export const settingsOverviewSchema = z.object({
           choices: z.array(z.string()),
           value: z.string(),
           fallback: z.string(),
+          choiceStates: z
+            .array(
+              z.object({
+                choice: z.string(),
+                availability: z.enum(['installed', 'installable', 'installing', 'hostOnly', 'failed']),
+                sizeMb: z.number(),
+                hostCommand: z.string(),
+              })
+            )
+            .optional(),
         })
       ),
     })

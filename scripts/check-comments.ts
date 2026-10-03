@@ -34,7 +34,7 @@ const SCRIPT_KINDS: Record<string, ts.ScriptKind> = {
 
 const HASH_FILES = new Set(['.gitignore', '.npmrc', 'CMakeLists.txt']);
 const HASH_EXTENSIONS = new Set(['.properties', '.toml', '.podspec']);
-const SILENT_EXTENSIONS = new Set(['.json', '.md', '.png', '.lock', '.txt']);
+const SILENT_EXTENSIONS = new Set(['.json', '.md', '.png', '.lock', '.txt', '.ogg', '.m4a']);
 const SILENT_FILES = new Set(['LICENSE', '.prettierrc']);
 const GENERATED_FILES = new Set(['uniwind-types.d.ts']);
 const TRIPLE_SLASH_DIRECTIVE = /^\/\/\/\s*<(reference|amd-module|amd-dependency)\b/;
