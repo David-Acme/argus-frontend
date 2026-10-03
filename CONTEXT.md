@@ -1279,6 +1279,11 @@ distribution of the app.
 - **Online means seen.** `isOnline` is written by argus-camera's health
   monitor (one frame online, two misses offline) and arrives as an ordinary
   audit patch.
+- **Thumbnails.** Each online camera card shows the camera's last still
+  (`GET /camera/{id}/snapshot`, a JPEG data URI), refreshed every 30 s while
+  the grid is focused by `CameraThumbnailPoller`, one camera at a time. The
+  pictures live in React state only: never in MMKV, Watermelon or an image
+  cache, the same rule the people portraits follow.
 
 ### Current validation baseline
 

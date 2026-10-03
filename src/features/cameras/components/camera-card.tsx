@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import type { CameraDriverKind, CameraRecordMode, TranslationKey } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
@@ -13,6 +13,7 @@ export type CameraCardStatus = 'online' | 'offline' | 'disabled';
 type CameraCardProps = {
   item: ICameraCacheRow;
   pending?: boolean;
+  thumbnail?: string;
   onPress: (id: string) => void;
 };
 
@@ -58,7 +59,7 @@ export function cameraStatusOf(item: Pick<ICameraCacheRow, 'isEnabled' | 'isOnli
   return item.isOnline ? 'online' : 'offline';
 }
 
-export const CameraCard = memo(function CameraCard({ item, pending = false, onPress }: CameraCardProps) {
+export const CameraCard = memo(function CameraCard({ item, pending = false, thumbnail, onPress }: CameraCardProps) {
   const { t } = useTranslation();
   const status = cameraStatusOf(item);
   const statusLabel = t(STATUS_LABEL[status]);
@@ -84,18 +85,29 @@ export const CameraCard = memo(function CameraCard({ item, pending = false, onPr
       <View
         className="bg-surface-secondary w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl"
         style={{ aspectRatio: PREVIEW_ASPECT }}>
-        <View className="bg-card size-14 items-center justify-center rounded-full shadow-sm shadow-black/[0.05]">
-          <Icon
-            name={status === 'online' ? item.icon : 'wifi-off'}
-            className={cn(
-              'size-6',
-              status === 'online' ? 'text-foreground' : 'text-muted-foreground',
-            )}
+        {thumbnail && status === 'online' ? (
+          <Image
+            source={{ uri: thumbnail }}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+            className="absolute inset-0 h-full w-full"
           />
-        </View>
-        <Text variant="micro" numberOfLines={1}>
-          {t(PREVIEW_LABEL[status])}
-        </Text>
+        ) : (
+          <>
+            <View className="bg-card size-14 items-center justify-center rounded-full shadow-sm shadow-black/[0.05]">
+              <Icon
+                name={status === 'online' ? item.icon : 'wifi-off'}
+                className={cn(
+                  'size-6',
+                  status === 'online' ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              />
+            </View>
+            <Text variant="micro" numberOfLines={1}>
+              {t(PREVIEW_LABEL[status])}
+            </Text>
+          </>
+        )}
         <StatusBadge
           label={statusLabel}
           surface="card"

@@ -52,3 +52,8 @@ export interface ICameraCapabilities {
   alarm?: boolean;
   streamOnly?: boolean;
 }
+
+export interface ICameraSnapshot {
+  image: string;
+  capturedAt: number;
+}

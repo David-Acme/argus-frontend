@@ -8,6 +8,7 @@ import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/comp
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
 import { cameraStatusOf } from '@/features/cameras/components/camera-card';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
+import { useCameraThumbnails } from '@/features/cameras/hooks/use-camera-thumbnails';
 import { ActivityCard } from '@/shared/components/activity/activity-card';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
@@ -36,6 +37,7 @@ export default function CamerasScreen() {
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
 
   const { cameras: items, isPendingCamera } = useCameraRows();
+  const thumbnails = useCameraThumbnails(items);
   const canCreate = can('camera', 'create');
 
   const counts = useMemo<CameraSummaryCounts>(() => {
@@ -117,6 +119,7 @@ export default function CamerasScreen() {
               <CameraCardGrid
                 items={items}
                 isPending={isPendingCamera}
+                thumbnails={thumbnails}
                 onSelect={openCamera}
                 createLabel={t('screens.cameras.connect')}
                 createHint={t('screens.cameras.add-tile-hint')}

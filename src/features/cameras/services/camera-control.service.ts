@@ -4,6 +4,7 @@ import type {
   ICameraPreset,
   ICameraPtz,
   ICameraSettings,
+  ICameraSnapshot,
   ICameraTalk,
   IServiceResponse,
 } from '@/core/interfaces';
@@ -36,6 +37,10 @@ class CameraControlService {
 
   settings(id: string, body: ICameraSettings): Promise<IServiceResponse<ICameraDeviceStatus>> {
     return httpService.patch(`/camera/${id}/settings`, body);
+  }
+
+  snapshot(id: string): Promise<IServiceResponse<ICameraSnapshot>> {
+    return httpService.get(`/camera/${id}/snapshot`);
   }
 }
 

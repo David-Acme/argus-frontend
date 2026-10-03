@@ -6,6 +6,7 @@ import { ResponsiveGrid } from '@/shared/components/ui/responsive-grid';
 type CameraCardGridProps = {
   items: readonly ICameraCacheRow[];
   isPending?: (item: ICameraCacheRow) => boolean;
+  thumbnails?: ReadonlyMap<string, string>;
   onSelect: (id: string) => void;
   createLabel: string;
   createHint: string;
@@ -22,6 +23,7 @@ export function cameraColumnsFor(width: number): number {
 export function CameraCardGrid({
   items,
   isPending,
+  thumbnails,
   onSelect,
   createLabel,
   createHint,
@@ -33,7 +35,14 @@ export function CameraCardGrid({
       id="cameras"
       items={items}
       keyOf={(item) => item.id}
-      renderItem={(item) => <CameraCard item={item} pending={isPending?.(item) ?? false} onPress={onSelect} />}
+      renderItem={(item) => (
+        <CameraCard
+          item={item}
+          pending={isPending?.(item) ?? false}
+          thumbnail={thumbnails?.get(item.id)}
+          onPress={onSelect}
+        />
+      )}
       columnsFor={(width, count) => Math.min(cameraColumnsFor(width), Math.max(1, slots), Math.max(2, count))}
       gap={16}
       trailing={

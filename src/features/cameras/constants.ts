@@ -17,6 +17,8 @@ export const CAMERA_STREAM_WATCHDOG_MS = 2000;
 
 export const CAMERA_LIVE_BACKGROUND = '#000000';
 
+export const CAMERA_THUMBNAIL_REFRESH_MS = 30000;
+
 export const CAMERA_DRIVER_SPECS = {
   tapo: {
     port: 554,
