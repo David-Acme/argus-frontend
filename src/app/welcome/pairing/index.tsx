@@ -5,7 +5,7 @@ import { Input } from '@/shared/components/ui/input';
 import { OnboardingSteps } from '@/shared/components/onboarding';
 import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
-import { QrManualEntry } from '@/shared/components/qr';
+import { QrManualEntry } from '@/features/qr';
 import { usePairingFlow, type PairingFlowPhase } from '@/shared/hooks/use-pairing-flow';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useStagger } from '@/shared/hooks/use-stagger';

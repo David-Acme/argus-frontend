@@ -1,4 +1,4 @@
-import { QrScanSheet, type QrScanSheetProps } from '@/shared/components/qr/qr-scan-sheet';
+import { QrScanSheet, type QrScanSheetProps } from '@/features/qr/components/qr-scan-sheet';
 import { ScrollView, View } from 'react-native';
 
 type QrScanPanelProps = QrScanSheetProps & {

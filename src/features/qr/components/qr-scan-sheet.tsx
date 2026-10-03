@@ -1,4 +1,4 @@
-import { QR_SCAN_DOT_PULSE_MS, QR_SCAN_FEEDBACK } from '@/shared/constants';
+import { QR_SCAN_DOT_PULSE_MS, QR_SCAN_FEEDBACK } from '@/features/qr/constants';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';

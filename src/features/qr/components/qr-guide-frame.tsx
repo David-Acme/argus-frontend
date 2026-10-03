@@ -1,14 +1,4 @@
-import {
-  QR_SCAN_CONVERGE_MS,
-  QR_SCAN_CONVERGE_RATIO,
-  QR_SCAN_FADE_DELAY_MS,
-  QR_SCAN_FADE_MS,
-  QR_SCAN_FRAME_BORDER,
-  QR_SCAN_FRAME_CORNER_RATIO,
-  QR_SCAN_FRAME_RADIUS,
-  QR_SCAN_PULSE_MS,
-  QR_SCAN_PULSE_SCALE,
-} from '@/shared/constants';
+import { QR_SCAN_CONVERGE_MS, QR_SCAN_CONVERGE_RATIO, QR_SCAN_FADE_DELAY_MS, QR_SCAN_FADE_MS, QR_SCAN_FRAME_BORDER, QR_SCAN_FRAME_CORNER_RATIO, QR_SCAN_FRAME_RADIUS, QR_SCAN_PULSE_MS, QR_SCAN_PULSE_SCALE } from '@/features/qr/constants';
 import type { QrScanFeedback } from '@/core/types';
 import { useEffect } from 'react';
 import { View } from 'react-native';

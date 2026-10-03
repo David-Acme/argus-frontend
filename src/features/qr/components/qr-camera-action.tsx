@@ -1,4 +1,4 @@
-import { QR_SCAN_ICON_MORPH_ROTATION, QR_SCAN_ICON_MORPH_SCALE } from '@/shared/constants';
+import { QR_SCAN_ICON_MORPH_ROTATION, QR_SCAN_ICON_MORPH_SCALE } from '@/features/qr/constants';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { useTranslation } from '@/shared/hooks/use-translation';
