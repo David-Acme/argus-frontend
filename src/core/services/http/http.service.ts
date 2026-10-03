@@ -2,17 +2,8 @@ import type { HttpMethod, NetHttpFile } from '@/core/types';
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { httpAuth } from './http-auth';
-import type { IApiError, IHttpConfig, IServiceResponse } from '@/core/interfaces';
-
-interface Envelope {
-  status?: number;
-  info?: unknown;
-  errors?: IApiError | null;
-}
-
-function errorResponse(status: number, code: string, message: string): IServiceResponse<never> {
-  return { status, ok: false, info: null, errors: { code, message } };
-}
+import { errorResponse, readEnvelope } from './http-envelope';
+import type { IHttpConfig, IServiceResponse } from '@/core/interfaces';
 
 class HttpService {
 
@@ -77,7 +68,7 @@ class HttpService {
       if (outcome === 'rejected') void httpAuth().clearSession();
     }
 
-    return this.parse<T>(result.status, result.body);
+    return readEnvelope<T>(result.status, result.body);
   }
 
   private async buildHeaders(withFile: boolean): Promise<Record<string, string>> {
@@ -86,25 +77,6 @@ class HttpService {
     const accessToken = httpAuth().getAccessToken();
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     return headers;
-  }
-
-  private parse<T>(status: number, raw: string): IServiceResponse<T> {
-    let envelope: Envelope;
-    try {
-      envelope = raw ? (JSON.parse(raw) as Envelope) : {};
-    } catch {
-      return errorResponse(status, 'INVALID_RESPONSE', 'Invalid JSON response');
-    }
-
-    if (status >= 200 && status < 300 && !envelope.errors) {
-      return { status, ok: true, info: (envelope.info as T | null) ?? null, errors: null };
-    }
-
-    const errors = envelope.errors ?? {
-      code: status >= 500 ? 'SERVER_ERROR' : 'HTTP_ERROR',
-      message: `HTTP ${status}`,
-    };
-    return { status, ok: false, info: null, errors };
   }
 
 }

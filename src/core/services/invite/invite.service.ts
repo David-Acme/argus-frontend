@@ -1,4 +1,5 @@
 import { httpService } from '@/core/services/http';
+import { errorResponse, readEnvelope } from '@/core/services/http/http-envelope';
 import { netService } from '@/core/services/net';
 import { validateInvitationResolution } from './invitation-resolution';
 import type {
@@ -11,18 +12,6 @@ import type {
 import type { InvitationQrPayload } from '@/core/types';
 
 const INVITATION_PATH = '/invitation';
-
-type TrustAnyEnvelope = {
-  info?: unknown;
-  errors?: { code?: unknown; message?: unknown } | null;
-};
-
-const failed = <T>(status: number, code: string, message: string): IServiceResponse<T> => ({
-  status,
-  ok: false,
-  info: null,
-  errors: { code, message },
-});
 
 class InviteService {
   create(input: IInviteCreateInput): Promise<IServiceResponse<IInviteCreated>> {
@@ -48,27 +37,15 @@ class InviteService {
       });
     } catch (error) {
       const netError = error as { code?: string; message?: string };
-      return failed(0, netError.code ?? 'NETWORK_ERROR', netError.message ?? 'Network error');
+      return errorResponse(0, netError.code ?? 'NETWORK_ERROR', netError.message ?? 'Network error');
     }
 
-    let envelope: TrustAnyEnvelope;
-    try {
-      envelope = raw.body ? (JSON.parse(raw.body) as TrustAnyEnvelope) : {};
-    } catch {
-      return failed(raw.status, 'INVALID_RESPONSE', 'Invalid invitation response');
-    }
-    if (raw.status < 200 || raw.status >= 300 || envelope.errors) {
-      const error = envelope.errors;
-      return failed(
-        raw.status,
-        typeof error?.code === 'string' ? error.code : 'HTTP_ERROR',
-        typeof error?.message === 'string' ? error.message : `HTTP ${raw.status}`,
-      );
-    }
+    const answer = readEnvelope<unknown>(raw.status, raw.body);
+    if (!answer.ok) return { ...answer, info: null };
 
-    const result = validateInvitationResolution(qr, envelope.info);
+    const result = validateInvitationResolution(qr, answer.info);
     if (!result) {
-      return failed(raw.status, 'FINGERPRINT_MISMATCH', 'Invitation trust validation failed');
+      return errorResponse(raw.status, 'FINGERPRINT_MISMATCH', 'Invitation trust validation failed');
     }
 
     try {
@@ -87,7 +64,7 @@ class InviteService {
       });
     } catch (error) {
       const netError = error as { code?: string; message?: string };
-      return failed(0, netError.code ?? 'CERT_NOT_TRUSTED', netError.message ?? 'Certificate rejected');
+      return errorResponse(0, netError.code ?? 'CERT_NOT_TRUSTED', netError.message ?? 'Certificate rejected');
     }
 
     return { status: raw.status, ok: true, info: result, errors: null };
