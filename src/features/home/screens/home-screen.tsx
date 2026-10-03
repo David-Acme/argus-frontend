@@ -3,13 +3,10 @@ import { notificationService } from '@/core/services/notification.service';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import type { IAuthUser } from '@/core/interfaces';
 import { ActivityCard } from '@/shared/components/activity/activity-card';
-import { CameraGrid } from '@/features/home/components/camera-grid';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { DashboardSearchField } from '@/features/home/components/dashboard-search-field';
 import { NotificationPopover } from '@/features/home/components/notification-popover';
 import { ProjectGrid } from '@/features/home/components/project-grid';
-import { RecentActivityCard } from '@/features/home/components/recent-activity-card';
-import { SummaryCard } from '@/features/home/components/summary-card';
 import { TodayAgenda } from '@/features/home/components/today-agenda';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import type { CalendarEntry } from '@/core/types';
@@ -23,12 +20,12 @@ import {
   entryPermissions,
 } from '@/features/agenda';
 import { NOTIFICATION_LENSES, unreadAfterReads } from '@/features/home/model/notification-optimistic';
+import { activityTrend } from '@/features/home/model/activity-trend';
+import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { AppScreen } from '@/shared/components/layout';
-import { GuardCard, useGuardMode } from '@/features/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
-import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/features/home/hooks/use-now';
 import { usePermissions } from '@/shared/hooks/use-permissions';
@@ -45,12 +42,10 @@ function firstNameOf(user: IAuthUser | null): string {
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const date = useDateFormatter();
   const { isShort } = useWindowClass();
-  const { can, role } = usePermissions();
-  const guardAccess = guardAccessForRole(role);
-  const guardMode = useGuardMode(guardAccess.view).data;
+  const { can } = usePermissions();
   const {
     cameraTiles,
     projects,
@@ -94,19 +89,7 @@ export default function HomeScreen() {
     [date, t]
   );
 
-  const trend = useMemo(() => {
-    const { eventsCurrent, eventsPrevious } = summary;
-    if (eventsCurrent === eventsPrevious)
-      return { label: String(eventsCurrent), direction: 'flat' as const };
-    if (eventsPrevious === 0) {
-      return { label: `+${eventsCurrent}`, direction: 'up' as const };
-    }
-    const change = ((eventsCurrent - eventsPrevious) / eventsPrevious) * 100;
-    return {
-      label: `${change > 0 ? '+' : ''}${change.toFixed(1)}%`,
-      direction: change >= 0 ? ('up' as const) : ('down' as const),
-    };
-  }, [summary]);
+  const trend = useMemo(() => activityTrend(summary, language), [language, summary]);
 
   const noCameras = summary.camerasTotal === 0;
 
@@ -133,59 +116,7 @@ export default function HomeScreen() {
 
   return (
     <AppScreen
-      aside={
-        <View className="flex-1 gap-5">
-          <View className="gap-3">
-            <SectionHeader
-              title={t('screens.home.cameras_section')}
-              action={t('screens.home.cameras-online', {
-                online: String(summary.camerasOnline),
-                total: String(summary.camerasTotal),
-              })}
-              onAction={() => router.push('/cameras')}
-            />
-            <CameraGrid
-              cameras={cameraTiles}
-              emptyLabel={t('screens.home.cameras-empty')}
-              onSelect={(id) => router.push(`/cameras/${id}`)}
-            />
-          </View>
-
-          {guardAccess.view ? <GuardCard state={guardMode} onPress={() => router.push('/security')} /> : null}
-
-          <SummaryCard
-            title={t('screens.home.overview')}
-            items={[
-              {
-                icon: 'video',
-                label: t('screens.home.cameras'),
-                value: `${summary.camerasOnline}/${summary.camerasTotal}`,
-              },
-              {
-                icon: 'bell',
-                label: t('screens.home.reminders'),
-                value: String(summary.remindersPending),
-              },
-              {
-                icon: 'list-todo',
-                label: t('screens.home.tasks-open'),
-                value: String(summary.tasksOpen),
-              },
-              {
-                icon: 'activity',
-                label: t('screens.home.events-week'),
-                value: String(summary.eventsCurrent),
-              },
-            ]}
-          />
-
-          <RecentActivityCard
-            title={t('screens.home.recent')}
-            emptyLabel={t('screens.home.notifications-empty')}
-            items={notifications}
-          />
-        </View>
-      }>
+      aside={<HomeAside cameras={cameraTiles} summary={summary} notifications={notifications} />}>
       <View className="gap-5">
         <View className="flex-row items-center justify-between gap-4">
           <Text variant={isShort ? 'headline' : 'display'} className="flex-1" numberOfLines={2}>
