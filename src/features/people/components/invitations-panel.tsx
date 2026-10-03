@@ -22,9 +22,14 @@ export function InvitationsPanel({ invitations, now, roleLabel, onRevoke }: Invi
   const date = useDateFormatter();
 
   return (
-    <Panel className="gap-1 p-1.5">
+    <Panel className="min-h-40 flex-1 gap-1 p-1.5">
       {invitations.length === 0 ? (
-        <EmptyState variant="inline" icon="qr-code" title={t('screens.users.no-invitations')} />
+        <EmptyState
+          variant="panel"
+          icon="qr-code"
+          title={t('screens.users.no-invitations')}
+          hint={t('screens.users.invitations-hint')}
+        />
       ) : null}
       {invitations.map((invitation) => {
         const usable = isInvitationUsable(invitation, now);

@@ -11,6 +11,7 @@ export const users = {
   'invitation-ready': 'Invitación lista',
   'invitation-ready-description': 'Comparte este QR solo con las personas autorizadas.',
   'no-invitations': 'Aún no hay invitaciones.',
+  'invitations-hint': 'Las invitaciones que crees aparecen aquí con sus usos y su vencimiento.',
   'invite-someone': 'Invitar a alguien',
   'invite-hint': 'Crea un QR de un solo uso para un residente, guardia o invitado.',
   you: 'Tú',

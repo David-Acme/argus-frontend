@@ -107,18 +107,19 @@ export default function UsersScreen() {
   return (
     <AppScreen
       aside={
-        <View className="gap-5">
+        <View className="flex-1 gap-5">
           <View className="gap-3">
+            <SectionHeader title={t('screens.users.role-access-title')} />
+            <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
+          </View>
+          <View className="flex-1 gap-3">
             <SectionHeader
               title={t('screens.users.invitations')}
+              count={invitations.length}
               action={t('screens.users.new-invitation')}
               onAction={() => setInviteOpen(true)}
             />
             <InvitationsPanel invitations={invitations} now={now} roleLabel={roleLabel} onRevoke={revoke} />
-          </View>
-          <View className="gap-3">
-            <SectionHeader title={t('screens.users.role-access-title')} />
-            <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
           </View>
         </View>
       }>
