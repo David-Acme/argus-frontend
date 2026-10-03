@@ -17,3 +17,4 @@ export { SectionHeading } from './section-heading';
 export * from './summary-card';
 export { ProjectGrid } from './project-grid';
 export { TodayAgenda } from './today-agenda';
+export { RecentActivityCard } from './recent-activity-card';

@@ -52,6 +52,10 @@ export default function ScheduleScreen() {
   const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
   const [selectedDay, setSelectedDay] = useState(initialDay);
   const [eventFormOpen, setEventFormOpen] = useState(newParam === 'event');
+  const [createAt, setCreateAt] = useState<Date | null>(() => {
+    const at = Number(atParam);
+    return newParam === 'event' && Number.isFinite(at) && at > 0 ? new Date(at) : null;
+  });
   const [editingEventId, setEditingEventId] = useState('');
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
@@ -361,9 +365,12 @@ export default function ScheduleScreen() {
         open={eventFormOpen}
         onOpenChange={(open) => {
           setEventFormOpen(open);
-          if (!open) setEditingEventId('');
+          if (!open) {
+            setEditingEventId('');
+            setCreateAt(null);
+          }
         }}
-        startsAt={selectedDay}
+        startsAt={createAt ?? selectedDay}
         event={editingEvent}
       />
       <CalendarEntryDetail

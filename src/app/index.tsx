@@ -12,6 +12,7 @@ import {
   DashboardShell,
   NotificationPopover,
   ProjectGrid,
+  RecentActivityCard,
   SectionHeading,
   SummaryCard,
   TodayAgenda,
@@ -132,7 +133,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
     <DashboardShell
       active="home"
       aside={
-        <View className="gap-5">
+        <View className="flex-1 gap-5">
           <View className="gap-3">
             <SectionHeading
               title={t('screens.home.cameras_section')}
@@ -175,6 +176,12 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
                 value: String(summary.eventsCurrent),
               },
             ]}
+          />
+
+          <RecentActivityCard
+            title={t('screens.home.recent')}
+            emptyLabel={t('screens.home.notifications-empty')}
+            items={notifications}
           />
         </View>
       }>
@@ -231,33 +238,21 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
             action={t('screens.home.see-all')}
             onAction={() => router.push('/agenda')}
           />
-          {todayRows.length === 0 ? (
-            <EmptyState
-              fill={false}
-              className="bg-card rounded-3xl py-8"
-              icon="calendar"
-              title={t('screens.home.empty-agenda')}
-              hint={t('screens.home.empty-agenda-hint')}
-              action={
-                can('calendar_event', 'create') ? (
-                  <Button size="sm" onPress={() => router.push('/agenda?new=event')}>
-                    <Text>{t('screens.agenda.new-event')}</Text>
-                  </Button>
-                ) : undefined
-              }
-            />
-          ) : (
-            <TodayAgenda
-              entries={todayRows}
-              now={now}
-              formatTime={formatTime}
-              renderActions={renderActions}
-              onSelect={(entry) => {
-                const href = calendarEntryEditHref(entry);
-                router.push(href ?? '/agenda');
-              }}
-            />
-          )}
+          <TodayAgenda
+            entries={todayRows}
+            now={now}
+            formatTime={formatTime}
+            renderActions={renderActions}
+            onSelect={(entry) => {
+              const href = calendarEntryEditHref(entry);
+              router.push(href ?? '/agenda');
+            }}
+            onCreateAt={
+              can('calendar_event', 'create')
+                ? (at) => router.push(`/agenda?new=event&at=${at}`)
+                : undefined
+            }
+          />
         </View>
 
         <View className="gap-3">

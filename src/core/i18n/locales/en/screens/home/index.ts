@@ -1,4 +1,5 @@
 export const home = {
+  recent: 'Recent',
   now: 'Now',
   today: 'Today',
   title: 'Home',

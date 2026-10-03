@@ -1,4 +1,5 @@
 export const home = {
+  recent: 'Novedades',
   now: 'Ahora',
   today: 'Hoy',
   title: 'Inicio',

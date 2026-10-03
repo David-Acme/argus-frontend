@@ -62,7 +62,7 @@ export function DashboardShell({
               paddingTop: insets.top + (isShort ? 8 : isExpanded ? 20 : 18),
             }}>
             {aside && isWide ? (
-              <View className="flex-1 flex-row items-start gap-5 lg:gap-6">
+              <View className="flex-1 flex-row items-stretch gap-5 lg:gap-6">
                 <View className="min-w-0 flex-1 gap-5">{children}</View>
                 <View className="w-[300px] shrink-0 gap-5 lg:w-[340px]">{aside}</View>
               </View>
