@@ -11,6 +11,7 @@ export const FACE_READY_STABLE_MS = 650;
 export const FACE_DRIFT_GRACE_MS = 500;
 
 export const FACE_CAPTURE_SETTLE_MS = 160;
+export const FACE_MANUAL_CAPTURE_DELAY_MS = 8000;
 
 export const FACE_CAPTURE_READY_TIMEOUT_MS = 2000;
 

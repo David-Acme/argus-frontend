@@ -1,6 +1,7 @@
 export const common = {
 
   continue: 'Continue',
+  step: 'Step {current} of {total}',
   retry: 'Retry',
   offline: {
     title: 'No connection to Argus',

@@ -4,15 +4,21 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { FaceGuideOverlay } from '@/shared/components/face/face-guide-overlay';
+import { FaceCaptureSheet } from '@/shared/components/face/face-capture-sheet';
+import { FaceIntro } from '@/shared/components/face/face-intro';
+import { FaceWebNotice } from '@/shared/components/face/face-web-notice';
+import { OnboardingSteps } from '@/shared/components/onboarding';
 import { useFaceGuide } from '@/shared/hooks/use-face-guide';
 import {
   FACE_CAPTURE_READY_TIMEOUT_MS,
   FACE_CAPTURE_SETTLE_MS,
+  FACE_MANUAL_CAPTURE_DELAY_MS,
+  ONBOARDING_STEPS,
   IS_ANDROID,
   IS_NATIVE,
 } from '@/shared/constants';
-import type { IApiError } from '@/core/interfaces';
-import type { TranslateFn } from '@/core/types';
+import { log } from '@/core/services/log';
+import { faceErrorFromUnknown, faceErrorMessage, type FaceError } from '@/shared/libs/face-error';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,89 +34,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SHEET_ESTIMATE = 260;
 
-function WebOnlyNotice({ mode }: { mode: string }) {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
-  const enrolling = mode !== 'login';
-
-  return (
-    <View
-      className="bg-background flex-1 w-full max-w-md self-center items-center justify-center gap-6 px-6"
-      style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
-      <View className="bg-accent-soft size-16 items-center justify-center rounded-full">
-        <Icon name="scan-face" className="text-accent-strong size-8" />
-      </View>
-      <View className="items-center gap-2">
-        <Text variant="h3" className="text-center">
-          {t('screens.face.web-only-title')}
-        </Text>
-        <Text className="text-foreground-secondary text-center text-sm leading-5">
-          {t(enrolling ? 'screens.face.web-only-enroll' : 'screens.face.web-only-login')}
-        </Text>
-      </View>
-      {enrolling ? (
-        <Button variant="outline" size="lg" onPress={() => router.replace('/welcome')}>
-          <Icon name="arrow-left" />
-          <Text>{t('common.back')}</Text>
-        </Button>
-      ) : (
-        <Button variant="outline" size="lg" onPress={() => router.replace('/login')}>
-          <Icon name="monitor" />
-          <Text>{t('screens.login.title')}</Text>
-        </Button>
-      )}
-    </View>
-  );
-}
-
 type Phase = 'guide' | 'countdown' | 'submitting';
-type FaceError = IApiError & { status?: number };
-
-function reportFaceError(message: string, details?: unknown): void {
-  if (!__DEV__) return;
-  globalThis.console?.error(message, details);
-}
-
-function errorFromUnknown(error: unknown, fallbackCode: string): FaceError {
-  if (error && typeof error === 'object') {
-    const value = error as { code?: unknown; message?: unknown; status?: unknown };
-    return {
-      code: typeof value.code === 'string' ? value.code : fallbackCode,
-      message: typeof value.message === 'string' ? value.message : String(error),
-      ...(typeof value.status === 'number' ? { status: value.status } : {}),
-    };
-  }
-  return { code: fallbackCode, message: String(error) };
-}
-
-function getFaceErrorMessage(error: FaceError, t: TranslateFn): string {
-  const detail = [
-    error.message,
-    ...Object.values(error.fields ?? {}).flat(),
-  ]
-    .join(' ')
-    .toLowerCase();
-  if (error.code === 'CAPTURE_FAILED' || error.code === 'CAPTURE_NO_URI') {
-    return t('screens.face.error-camera-capture');
-  }
-  if (
-    error.code === 'VALIDATION_ERROR' &&
-    (detail.includes('exceed') || detail.includes('10mb') || detail.includes('empty'))
-  ) {
-    return detail.includes('empty')
-      ? t('screens.face.error-empty-image')
-      : t('screens.face.error-image-too-large');
-  }
-  if (detail.includes('face not detected')) return t('screens.face.error-face-not-detected');
-  if (error.code === 'UNAUTHORIZED' || detail.includes('face not recognized')) {
-    return t('screens.face.error-face-not-recognized');
-  }
-  if (error.code === 'NETWORK_ERROR' || error.code === 'PAIRING_REQUIRED') {
-    return t('screens.face.error-network');
-  }
-  return error.message || t('screens.face.error');
-}
 
 export default function FaceScreen() {
   const router = useRouter();
@@ -136,9 +60,24 @@ export default function FaceScreen() {
   const [error, setError] = useState<FaceError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [sheetHeight, setSheetHeight] = useState(0);
+  const enrolling = mode === 'owner-enroll' || mode === 'invite-enroll';
+  const [started, setStarted] = useState(!enrolling);
+  const [requesting, setRequesting] = useState(false);
+  const [asked, setAsked] = useState(false);
+  const [manualAvailable, setManualAvailable] = useState(false);
 
   const granted = permission?.granted === true;
-  const denied = permission !== null && !permission.granted && !permission.canAskAgain;
+  const denied = asked && permission !== null && !permission.granted && !permission.canAskAgain;
+  const showIntro = !denied && (!started || (!granted && !requesting));
+
+  const start = useCallback(async () => {
+    setStarted(true);
+    if (permission?.granted) return;
+    setRequesting(true);
+    await requestPermission();
+    setAsked(true);
+    setRequesting(false);
+  }, [permission?.granted, requestPermission]);
 
   const cameraActive = granted && !notice && phase !== 'submitting';
   const sampling = cameraActive && !capturing && (phase === 'guide' || phase === 'countdown');
@@ -179,7 +118,6 @@ export default function FaceScreen() {
       setNotice(null);
       setPhase('submitting');
       try {
-        const enrolling = mode === 'owner-enroll' || mode === 'invite-enroll';
         const response = enrolling
           ? await authService.register({
               imageUri: uri,
@@ -204,7 +142,7 @@ export default function FaceScreen() {
           code: 'HTTP_ERROR',
           message: `HTTP ${response.status}`,
         };
-        reportFaceError('[face] backend rejected captured image', {
+        log.debug('face', 'backend rejected captured image', {
           mode,
           status: response.status,
           code: apiError.code,
@@ -214,8 +152,8 @@ export default function FaceScreen() {
         setPhase('guide');
         setError({ ...apiError, status: response.status });
       } catch (submitError) {
-        const normalized = errorFromUnknown(submitError, 'NETWORK_ERROR');
-        reportFaceError('[face] image upload failed', {
+        const normalized = faceErrorFromUnknown(submitError, 'NETWORK_ERROR');
+        log.debug('face', 'image upload failed', {
           mode,
           code: normalized.code,
           message: normalized.message,
@@ -224,7 +162,7 @@ export default function FaceScreen() {
         setError(normalized);
       }
     },
-    [inviteToken, mode, router, t],
+    [enrolling, inviteToken, mode, router, t],
   );
 
   const handleCameraReady = useCallback(() => {
@@ -251,15 +189,15 @@ export default function FaceScreen() {
     await new Promise((resolve) => setTimeout(resolve, FACE_CAPTURE_SETTLE_MS));
   }, []);
 
-  const captureNow = useCallback(async (attempt: number) => {
+  const captureNow = useCallback(async (attempt: number, force = false) => {
     const currentGuide = guideRef.current;
+    if (capturingRef.current || attempt !== captureAttemptRef.current) return;
     if (
-      capturingRef.current ||
-      attempt !== captureAttemptRef.current ||
-      phaseRef.current !== 'countdown' ||
-      !currentGuide ||
-      currentGuide.state !== 'ready' ||
-      currentGuide.faces.length !== 1
+      !force &&
+      (phaseRef.current !== 'countdown' ||
+        !currentGuide ||
+        currentGuide.state !== 'ready' ||
+        currentGuide.faces.length !== 1)
     ) return;
     capturingRef.current = true;
     setCapturing(true);
@@ -275,7 +213,7 @@ export default function FaceScreen() {
           });
           break;
         } catch (captureError) {
-          reportFaceError('[face] final capture failed', captureError);
+          log.error('face', 'final capture failed', captureError);
           if (retry === 1) throw captureError;
           await new Promise((resolve) => setTimeout(resolve, 350));
           await waitForCameraReady();
@@ -294,11 +232,11 @@ export default function FaceScreen() {
       Vibration.vibrate(60);
       await submit(shot.uri);
     } catch (captureError) {
-      reportFaceError('[face] capture flow failed', captureError);
+      log.error('face', 'capture flow failed', captureError);
       phaseRef.current = 'guide';
       setPhase('guide');
       resetGuideRef.current();
-      setError(errorFromUnknown(captureError, 'CAPTURE_FAILED'));
+      setError(faceErrorFromUnknown(captureError, 'CAPTURE_FAILED'));
     } finally {
       capturingRef.current = false;
       setCapturing(false);
@@ -316,9 +254,20 @@ export default function FaceScreen() {
   }, []);
 
   useEffect(() => {
-    if (permission === null || permission.granted || !permission.canAskAgain) return;
-    void requestPermission();
-  }, [permission, requestPermission]);
+    if (!cameraActive || phase !== 'guide') return;
+    const timer = setTimeout(() => setManualAvailable(true), FACE_MANUAL_CAPTURE_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      setManualAvailable(false);
+    };
+  }, [cameraActive, phase]);
+
+  const captureManually = useCallback(() => {
+    captureAttemptRef.current += 1;
+    phaseRef.current = 'countdown';
+    setPhase('countdown');
+    void captureNow(captureAttemptRef.current, true);
+  }, [captureNow]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -333,18 +282,35 @@ export default function FaceScreen() {
   const sheetTop = height - (sheetHeight > 0 ? sheetHeight : SHEET_ESTIMATE);
   const cameraArea = { top: insets.top, height: Math.max(sheetTop - insets.top, 120) };
 
-  if (!IS_NATIVE) return <WebOnlyNotice mode={mode} />;
+  if (!IS_NATIVE) return <FaceWebNotice mode={mode} />;
+
+  if (showIntro) {
+    return (
+      <View
+        className="bg-background flex-1 justify-center px-6"
+        style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
+        {enrolling ? (
+          <OnboardingSteps
+            current={ONBOARDING_STEPS.face}
+            total={ONBOARDING_STEPS.total}
+            className="mb-8 w-full max-w-md self-center"
+          />
+        ) : null}
+        <FaceIntro enrolling={enrolling} requesting={requesting} onStart={start} />
+      </View>
+    );
+  }
 
   const sending = phase === 'submitting' || (phase === 'countdown' && capturing);
   const titleKey = sending
-    ? mode === 'owner-enroll' || mode === 'invite-enroll'
+    ? enrolling
       ? 'screens.face.enrolling'
       : 'screens.face.logging'
     : phase === 'countdown'
       ? 'screens.face.hold-still'
       : 'screens.face.position-face';
   const hintKey = sending ? null : 'screens.face.position-hint';
-  const friendlyError = error ? getFaceErrorMessage(error, t) : null;
+  const friendlyError = error ? faceErrorMessage(error, t) : null;
 
   return (
     <View className="bg-background flex-1 justify-end" style={{ paddingTop: insets.top }}>
@@ -392,77 +358,18 @@ export default function FaceScreen() {
         />
       ) : null}
 
-      <View
-        className="bg-card/95 w-full max-w-md self-center rounded-t-2xl px-5 py-6"
-        style={{ paddingBottom: insets.bottom + 24 }}
-        onLayout={handleSheetLayout}>
-        <View className="gap-3">
-          <Text variant="h4" numberOfLines={1} maxFontSizeMultiplier={1.25}>
-            {t(titleKey)}
-          </Text>
-          {hintKey ? (
-            <Text
-              className="text-foreground-secondary text-sm leading-5"
-              numberOfLines={2}
-              maxFontSizeMultiplier={1.25}>
-              {t(hintKey)}
-            </Text>
-          ) : null}
-
-          <View className="min-h-6 justify-center">
-            {error ? (
-              <View className="flex-row items-center gap-2.5">
-                <Icon name="triangle-alert" className="text-error-strong size-5" />
-                <View className="flex-1 gap-0.5">
-                  <Text
-                    className="text-error-strong text-sm leading-5"
-                    maxFontSizeMultiplier={1.25}>
-                    {friendlyError}
-                  </Text>
-                  <Text
-                    className="text-error-strong/70 text-[11px] leading-4"
-                    numberOfLines={1}
-                    maxFontSizeMultiplier={1.15}>
-                    {error.code}
-                  </Text>
-                  {__DEV__ && error.message && error.message !== friendlyError ? (
-                    <Text
-                      className="text-error-strong/70 text-[11px] leading-4"
-                      numberOfLines={2}
-                      maxFontSizeMultiplier={1.15}>
-                      {error.message}
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
-            ) : notice ? (
-              <View className="flex-row items-center gap-2.5">
-                <Icon name="check-circle" className="text-success size-5" />
-                <Text
-                  className="text-success flex-1 text-sm leading-5"
-                  maxFontSizeMultiplier={1.25}>
-                  {notice}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          <View className="h-11 justify-center">
-            {phase === 'submitting' ? (
-              <View className="flex-row items-center justify-center gap-3">
-                <Icon name="refresh-cw" className="text-accent-strong size-5" />
-                <Text maxFontSizeMultiplier={1.25}>{t('screens.face.sending')}</Text>
-              </View>
-            ) : (
-              <Text
-                className="text-foreground-secondary text-center text-sm"
-                maxFontSizeMultiplier={1.25}>
-                {t('screens.face.auto-capture')}
-              </Text>
-            )}
-          </View>
-        </View>
-      </View>
+      <FaceCaptureSheet
+        enrolling={enrolling}
+        title={t(titleKey)}
+        hint={hintKey ? t(hintKey) : null}
+        error={error}
+        friendlyError={friendlyError}
+        notice={notice}
+        submitting={phase === 'submitting'}
+        manualCapture={manualAvailable && phase === 'guide' && !capturing}
+        onManualCapture={captureManually}
+        onLayout={handleSheetLayout}
+      />
     </View>
   );
 }

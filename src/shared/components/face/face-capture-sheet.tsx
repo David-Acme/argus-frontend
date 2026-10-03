@@ -1,0 +1,119 @@
+import { View, type LayoutChangeEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { OnboardingSteps } from '@/shared/components/onboarding';
+import { Button } from '@/shared/components/ui/button';
+import { Icon } from '@/shared/components/ui/icon';
+import { Text } from '@/shared/components/ui/text';
+import { ONBOARDING_STEPS } from '@/shared/constants';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import type { FaceError } from '@/shared/libs/face-error';
+
+type FaceCaptureSheetProps = {
+  enrolling: boolean;
+  title: string;
+  hint: string | null;
+  error: FaceError | null;
+  friendlyError: string | null;
+  notice: string | null;
+  submitting: boolean;
+  manualCapture: boolean;
+  onManualCapture: () => void;
+  onLayout: (event: LayoutChangeEvent) => void;
+};
+
+export function FaceCaptureSheet({
+  enrolling,
+  title,
+  hint,
+  error,
+  friendlyError,
+  notice,
+  submitting,
+  manualCapture,
+  onManualCapture,
+  onLayout,
+}: FaceCaptureSheetProps) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      className="bg-card/95 w-full max-w-md self-center rounded-t-2xl px-5 py-6"
+      style={{ paddingBottom: insets.bottom + 24 }}
+      onLayout={onLayout}>
+      <View className="gap-3">
+        {enrolling ? (
+          <OnboardingSteps current={ONBOARDING_STEPS.face} total={ONBOARDING_STEPS.total} />
+        ) : null}
+        <Text variant="h4" numberOfLines={1} maxFontSizeMultiplier={1.25}>
+          {title}
+        </Text>
+        {hint ? (
+          <Text
+            className="text-foreground-secondary text-sm leading-5"
+            numberOfLines={2}
+            maxFontSizeMultiplier={1.25}>
+            {hint}
+          </Text>
+        ) : null}
+
+        <View className="min-h-6 justify-center">
+          {error ? (
+            <View className="flex-row items-center gap-2.5">
+              <Icon name="triangle-alert" className="text-error-strong size-5" />
+              <View className="flex-1 gap-0.5">
+                <Text
+                  className="text-error-strong text-sm leading-5"
+                  maxFontSizeMultiplier={1.25}>
+                  {friendlyError}
+                </Text>
+                <Text
+                  className="text-error-strong/70 text-[11px] leading-4"
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.15}>
+                  {error.code}
+                </Text>
+                {__DEV__ && error.message && error.message !== friendlyError ? (
+                  <Text
+                    className="text-error-strong/70 text-[11px] leading-4"
+                    numberOfLines={2}
+                    maxFontSizeMultiplier={1.15}>
+                    {error.message}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          ) : notice ? (
+            <View className="flex-row items-center gap-2.5">
+              <Icon name="check-circle" className="text-success size-5" />
+              <Text
+                className="text-success flex-1 text-sm leading-5"
+                maxFontSizeMultiplier={1.25}>
+                {notice}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View className="h-11 justify-center">
+          {submitting ? (
+            <View className="flex-row items-center justify-center gap-3">
+              <Icon name="refresh-cw" className="text-accent-strong size-5" />
+              <Text maxFontSizeMultiplier={1.25}>{t('screens.face.sending')}</Text>
+            </View>
+          ) : manualCapture ? (
+            <Button variant="outline" onPress={onManualCapture}>
+              <Icon name="camera" />
+              <Text>{t('screens.face.manual-capture')}</Text>
+            </Button>
+          ) : (
+            <Text
+              className="text-foreground-secondary text-center text-sm"
+              maxFontSizeMultiplier={1.25}>
+              {t('screens.face.auto-capture')}
+            </Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+}
