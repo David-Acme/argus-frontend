@@ -11,6 +11,7 @@ class ViewCacheService {
   private userId = 'anonymous';
   private revisions = new Map<string, number>();
   private subscribers = new Map<string, Set<() => void>>();
+  private snapshots = new Map<string, { revision: number; value: unknown }>();
 
   setUserId(userId: number | string | null): void {
     this.userId = userId == null ? 'anonymous' : String(userId);
@@ -27,8 +28,27 @@ class ViewCacheService {
     this.subscribers.set(target, listeners);
     return () => {
       listeners.delete(listener);
-      if (listeners.size === 0) this.subscribers.delete(target);
+      if (listeners.size > 0) return;
+      this.subscribers.delete(target);
+      this.snapshots.delete(target);
     };
+  }
+
+  rowsSnapshot<T>(key: ViewCacheKey, scope?: string): readonly T[] {
+    return this.snapshot(this.keyOf(key, scope), () => this.read<T>(key, scope));
+  }
+
+  valueSnapshot<T>(key: ViewCacheKey, scope?: string): T | null {
+    return this.snapshot(this.keyOf(key, scope), () => this.readValue<T>(key, scope));
+  }
+
+  private snapshot<V>(target: string, load: () => V): V {
+    const revision = this.revisions.get(target) ?? 0;
+    const cached = this.snapshots.get(target);
+    if (cached && cached.revision === revision) return cached.value as V;
+    const value = load();
+    this.snapshots.set(target, { revision, value });
+    return value;
   }
 
   revision(key: ViewCacheKey, scope?: string): number {
