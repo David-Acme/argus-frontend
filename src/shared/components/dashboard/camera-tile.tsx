@@ -42,7 +42,7 @@ export function CameraTile({
         <View className="flex-row items-center gap-1.5">
           <View className={cn('size-2 rounded-full', offline ? 'bg-muted-foreground' : 'bg-success')} />
           {resolution ? (
-            <Text className="text-muted-foreground text-[10px] font-medium">{resolution}</Text>
+            <Text className="text-muted-foreground text-[11px] font-medium">{resolution}</Text>
           ) : null}
         </View>
       </View>
@@ -56,7 +56,7 @@ export function CameraTile({
       </View>
       {recordMode ? (
         <View className="bg-surface-secondary self-start rounded-full px-2 py-0.5">
-          <Text className="text-foreground-secondary text-[10px] font-medium">{recordMode}</Text>
+          <Text className="text-foreground-secondary text-[11px] font-medium">{recordMode}</Text>
         </View>
       ) : null}
     </Pressable>

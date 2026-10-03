@@ -103,7 +103,7 @@ export function CalendarWeekView({
           <View className="w-12">
             {hours.map((hour) => (
               <View key={hour} style={{ height: WEEK_HOUR_HEIGHT }} className="pr-1">
-                <Text className="text-muted-foreground text-[10px]">{date.formatHour(hour)}</Text>
+                <Text className="text-muted-foreground text-[11px]">{date.formatHour(hour)}</Text>
               </View>
             ))}
           </View>
@@ -136,7 +136,7 @@ export function CalendarWeekView({
                     )}
                     onPress={onSelect ? () => onSelect(entry) : undefined}
                     onLongPress={onLongPress ? () => onLongPress(entry) : undefined}>
-                    <Text className="text-foreground text-[10px] font-semibold" numberOfLines={2}>
+                    <Text className="text-foreground text-[11px] font-semibold" numberOfLines={2}>
                       {entry.title}
                     </Text>
                   </Pressable>

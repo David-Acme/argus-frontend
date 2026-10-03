@@ -35,7 +35,6 @@ export function CalendarDayView({
             ),
         hour: date.hourOf(new Date(entry.startsAt)),
         status: entry.status,
-        members: [],
       })),
     [date, entries, t]
   );

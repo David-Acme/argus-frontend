@@ -52,7 +52,6 @@ export function ScheduleTimeline({
                 <AgendaItem
                   title={entry.title}
                   time={entry.time}
-                  members={entry.members}
                   note={entry.note}
                   status={entry.status}
                   onPress={onSelect ? () => onSelect(entry) : undefined}

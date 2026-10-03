@@ -7,12 +7,10 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { itemIn } from '@/shared/libs/animations';
 import { cn } from '@/shared/libs/utils';
-import { MemberStack } from './member-stack';
 
 type AgendaItemProps = {
   title: string;
   time: string;
-  members?: readonly string[];
   note?: string;
   status: AgendaStatus;
   onPress?: () => void;
@@ -30,7 +28,6 @@ const RAIL_CLASS: Record<AgendaStatus, string> = {
 export function AgendaItem({
   title,
   time,
-  members,
   note,
   status,
   onPress,
@@ -59,26 +56,13 @@ export function AgendaItem({
             {title}
           </Text>
         </View>
-        {members && members.length > 0 ? (
-          <>
-            <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
-            <View className="mt-1.5 flex-row items-center justify-between gap-3">
-              <MemberStack members={members} />
-              <View className="flex-row items-center gap-1.5">
-                <Icon name="clock" className="text-muted-foreground size-3.5" />
-                <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
-              </View>
-            </View>
-          </>
-        ) : (
-          <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
-            <View className="flex-row items-center gap-1.5">
-              <Icon name="clock" className="text-muted-foreground size-3.5" />
-              <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
-            </View>
+        <View className="flex-row items-center justify-between gap-3">
+          <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>
+          <View className="flex-row items-center gap-1.5">
+            <Icon name="clock" className="text-muted-foreground size-3.5" />
+            <Text className="text-foreground-secondary text-[12px] font-medium">{time}</Text>
           </View>
-        )}
+        </View>
         {note ? (
           <View className="bg-surface mt-2.5 rounded-[14px] p-3">
             <Text className="text-foreground-secondary text-[13px] leading-[19px]">{note}</Text>

@@ -8,7 +8,6 @@ export type ScheduleEntry = {
   time: string;
   hour: number;
   status: AgendaStatus;
-  members: readonly string[];
   note?: string;
 };
 

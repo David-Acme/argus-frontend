@@ -10,7 +10,6 @@ export { DashboardShell } from './dashboard-shell';
 export { GlobalBottomNav } from './global-bottom-nav';
 export { NotificationPopover, type NotificationPreview } from './notification-popover';
 export { DashboardSearchField } from './dashboard-search-field';
-export { MemberStack } from './member-stack';
 export { MosaicChart } from './mosaic-chart';
 export { ProjectCard } from './project-card';
 export { ScheduleTimeline } from './schedule-timeline';

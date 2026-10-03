@@ -1,40 +1,29 @@
 export function pcmChunk(bytes: ArrayBuffer): Int16Array {
-  return new Int16Array(bytes);
+  return new Int16Array(bytes, 0, bytes.byteLength >> 1);
 }
 
 export function pcmToBytes(samples: Int16Array): ArrayBuffer {
   return samples.slice().buffer;
 }
 
-export function pcmToWav(samples: Int16Array, sampleRate: number): ArrayBuffer {
-  const bytesPerSample = 2;
-  const byteRate = sampleRate * bytesPerSample;
-  const dataSize = samples.length * bytesPerSample;
-  const buffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(buffer);
-
-  const writeString = (offset: number, text: string): void => {
-    for (let i = 0; i < text.length; i++) {
-      view.setUint8(offset + i, text.charCodeAt(i));
-    }
-  };
-
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeString(8, 'WAVE');
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, bytesPerSample, true);
-  view.setUint16(34, 16, true);
-  writeString(36, 'data');
-  view.setUint32(40, dataSize, true);
-
-  for (let i = 0; i < samples.length; i++) {
-    view.setInt16(44 + i * 2, samples[i], true);
+export function concatPcm(parts: readonly Int16Array[], total: number): Int16Array {
+  const merged = new Int16Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    merged.set(part, offset);
+    offset += part.length;
   }
-  return buffer;
+  return merged;
+}
+
+export function pcmRms(samples: Int16Array, start = 0, end = samples.length): number {
+  const from = Math.max(0, start);
+  const to = Math.min(samples.length, end);
+  if (to <= from) return 0;
+  let sum = 0;
+  for (let i = from; i < to; i += 1) {
+    const value = samples[i] / 32768;
+    sum += value * value;
+  }
+  return Math.sqrt(sum / (to - from));
 }

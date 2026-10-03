@@ -101,7 +101,6 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
         time: formatTime(entry),
         hour: date.hourOf(new Date(entry.startsAt)),
         status: entry.status,
-        members: [],
       })),
     [date, todayRows, formatTime]
   );
