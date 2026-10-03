@@ -1,5 +1,6 @@
 import { netService } from '@/core/services/net';
 import { hostLabel } from '@/shared/libs/pairing-qr';
+import { routePortsOf } from './net-routes';
 import type { NetError, NetPairing, QrPairingPayload } from '@/core/types';
 
 export interface PairWithQrResult {
@@ -38,7 +39,13 @@ export async function pairWithQr(qr: QrPairingPayload): Promise<PairWithQrResult
 
   let pairing: NetPairing;
   try {
-    pairing = await netService.pair(host, discovery.ip, qr.port, qr.code);
+    pairing = await netService.pair({
+      host,
+      ip: discovery.ip,
+      port: qr.port,
+      code: qr.code,
+      routes: routePortsOf(discovery.routes),
+    });
   } catch (error) {
     throw toNetError(error);
   }

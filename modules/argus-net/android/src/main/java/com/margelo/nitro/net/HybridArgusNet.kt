@@ -22,6 +22,8 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
@@ -42,7 +44,9 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-private const val SERVICE_TYPE = "_argus._tcp."
+private const val SERVICE_TYPE = "_argus-route._tcp."
+private const val DISCOVERY_SETTLE_MS = 1500L
+private const val PAIRING_ROUTE = "/pairing"
 private const val DEFAULT_HOST = "argus.local"
 private const val PAIRING_PATH = "/pairing"
 
@@ -101,35 +105,77 @@ class HybridArgusNet : HybridArgusNetSpec() {
     val context = requireNotNull(NitroModules.applicationContext) { "React context unavailable" }
     val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
     val mainHandler = Handler(Looper.getMainLooper())
+    val mainExecutor = Executor { command -> mainHandler.post(command) }
     return suspendCoroutine { cont ->
       var finished = false
+      var resolving = false
+      var firstIp = ""
+      val pending = ArrayDeque<NsdServiceInfo>()
+      val routes = LinkedHashMap<String, NetRoute>()
       lateinit var discoveryListener: NsdManager.DiscoveryListener
 
-      fun finish(result: NetDiscovery?) {
+      fun finish() {
         if (finished) return
         finished = true
         mainHandler.removeCallbacksAndMessages(null)
         runCatching { nsdManager.stopServiceDiscovery(discoveryListener) }
-        if (result == null) {
+        if (routes.isEmpty()) {
           cont.resumeWithException(netError("DISCOVERY_NOT_FOUND", "No Argus server found on the network"))
-        } else {
-          cont.resume(result)
+          return
+        }
+        val entry = routes[PAIRING_ROUTE] ?: routes.values.first()
+        cont.resume(
+          NetDiscovery(
+            host = DEFAULT_HOST,
+            ip = firstIp,
+            port = entry.port,
+            https = entry.https,
+            routes = routes.values.toTypedArray(),
+          ),
+        )
+      }
+
+      lateinit var resolveNext: () -> Unit
+
+      val resolveListener = object : NsdManager.ResolveListener {
+        override fun onResolveFailed(serviceInfo: NsdServiceInfo?, errorCode: Int) {
+          resolving = false
+          resolveNext()
+        }
+
+        override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+          resolving = false
+          val attributes = serviceInfo.attributes
+          val path = attributes["path"]?.toString(Charsets.UTF_8)?.trim('/').orEmpty()
+          if (path.isNotEmpty()) {
+            val resolvedIp = resolveHostAddress(serviceInfo)
+            if (firstIp.isEmpty()) {
+              firstIp = resolvedIp
+              mainHandler.postDelayed({ finish() }, DISCOVERY_SETTLE_MS)
+            }
+            if (resolvedIp == firstIp) {
+              routes["/$path"] = NetRoute(
+                path = "/$path",
+                port = serviceInfo.port.toDouble(),
+                https = attributes["https"]?.toString(Charsets.UTF_8) == "true",
+              )
+            }
+          }
+          resolveNext()
         }
       }
 
-      val resolveListener = object : NsdManager.ResolveListener {
-        override fun onResolveFailed(serviceInfo: NsdServiceInfo?, errorCode: Int) {}
-
-        override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-          val resolvedIp = resolveHostAddress(serviceInfo)
-          finish(
-            NetDiscovery(
-              host = DEFAULT_HOST,
-              ip = resolvedIp,
-              port = serviceInfo.port.toDouble(),
-              https = true,
-            ),
-          )
+      resolveNext = {
+        if (!finished && !resolving) {
+          val next = pending.removeFirstOrNull()
+          if (next != null) {
+            resolving = true
+            runCatching { resolveService(nsdManager, next, resolveListener, mainExecutor) }
+              .onFailure {
+                resolving = false
+                resolveNext()
+              }
+          }
         }
       }
 
@@ -139,16 +185,15 @@ class HybridArgusNet : HybridArgusNetSpec() {
         override fun onDiscoveryStopped(serviceType: String?) {}
 
         override fun onStartDiscoveryFailed(serviceType: String?, errorCode: Int) {
-          finish(null)
+          finish()
         }
 
         override fun onStopDiscoveryFailed(serviceType: String?, errorCode: Int) {}
 
         override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-          if (!finished && serviceInfo.serviceType == SERVICE_TYPE) {
-            val mainExecutor = Executor { command -> mainHandler.post(command) }
-            resolveService(nsdManager, serviceInfo, resolveListener, mainExecutor)
-          }
+          if (finished || serviceInfo.serviceType != SERVICE_TYPE) return
+          pending.addLast(serviceInfo)
+          resolveNext()
         }
 
         override fun onServiceLost(serviceInfo: NsdServiceInfo) {}
@@ -158,10 +203,10 @@ class HybridArgusNet : HybridArgusNetSpec() {
         try {
           nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
         } catch (e: Exception) {
-          finish(null)
+          finish()
         }
       }
-      mainHandler.postDelayed({ finish(null) }, timeoutMs.toLong())
+      mainHandler.postDelayed({ finish() }, timeoutMs.toLong())
     }
   }
 
@@ -171,7 +216,12 @@ class HybridArgusNet : HybridArgusNetSpec() {
     withContext(Dispatchers.IO) {
       val client = trustAllClient()
       val url = "https://$ip:${port.toInt()}$PAIRING_PATH"
-      val payload = JSONObject().put("code", code.trim()).toString()
+      val key = code.trim().uppercase()
+      val nonce = randomHex(16)
+      val payload = JSONObject()
+        .put("nonce", nonce)
+        .put("proof", hmacHex(key, "argus-pair-client|$nonce"))
+        .toString()
       val request = Request.Builder()
         .url(url)
         .header("Content-Type", "application/json")
@@ -182,7 +232,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
         val raw = response.body?.string() ?: ""
         if (response.code != 200) {
           when (response.code) {
-            403 -> throw netError("INVALID_PAIRING_CODE", "Invalid pairing code")
+            403, 422 -> throw netError("INVALID_PAIRING_CODE", "Invalid pairing code")
             409 -> throw netError("ALREADY_PAIRED", "Server already paired")
             else -> throw netError("NETWORK_ERROR", "Pairing failed (HTTP ${response.code})")
           }
@@ -191,9 +241,10 @@ class HybridArgusNet : HybridArgusNetSpec() {
         val info = root.optJSONObject("info")
           ?: throw netError("NETWORK_ERROR", "Malformed pairing response")
         val caFingerprint = info.optString("caFingerprint", "").uppercase()
-        val expected = code.trim().uppercase()
-        if (expected.isNotEmpty() && !caFingerprint.startsWith(expected)) {
-          throw netError("INVALID_PAIRING_CODE", "Invalid pairing code")
+        val serverProof = info.optString("serverProof", "").uppercase()
+        val expectedProof = hmacHex(key, "argus-pair-server|$nonce|$caFingerprint")
+        if (!MessageDigest.isEqual(serverProof.toByteArray(), expectedProof.toByteArray())) {
+          throw netError("FINGERPRINT_MISMATCH", "The server could not prove the pairing code")
         }
         val caPem = info.getString("caPem")
         verifyCaFingerprint(caPem, caFingerprint)
@@ -207,6 +258,18 @@ class HybridArgusNet : HybridArgusNetSpec() {
         )
       }
     }
+
+  private fun randomHex(bytes: Int): String {
+    val buffer = ByteArray(bytes)
+    SecureRandom().nextBytes(buffer)
+    return buffer.joinToString("") { "%02x".format(it) }
+  }
+
+  private fun hmacHex(key: String, message: String): String {
+    val mac = Mac.getInstance("HmacSHA256")
+    mac.init(SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA256"))
+    return mac.doFinal(message.toByteArray(Charsets.UTF_8)).joinToString("") { "%02X".format(it) }
+  }
 
   private fun verifyCaFingerprint(caPem: String, caFingerprint: String) {
     val certificate = runCatching {

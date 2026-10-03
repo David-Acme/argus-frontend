@@ -1,6 +1,10 @@
 export const common = {
   continue: 'Continuar',
   retry: 'Reintentar',
+  'server-unreachable': {
+    title: 'No encontramos tu servidor Argus',
+    description: 'Comprueba que el servidor esté encendido y que este dispositivo esté en la misma red.',
+  },
   back: 'Volver',
   'open-settings': 'Abrir ajustes',
   'allow-camera': 'Permitir cámara',

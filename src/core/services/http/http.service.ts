@@ -1,5 +1,6 @@
 import type { HttpMethod, NetHttpFile } from '@/core/types';
 import { netService } from '@/core/services/net';
+import { serviceUrl } from '@/core/services/net/net-routes';
 import { httpAuth } from './http-auth';
 import type { IApiError, IHttpConfig, IServiceResponse } from '@/core/interfaces';
 
@@ -14,7 +15,6 @@ function errorResponse(status: number, code: string, message: string): IServiceR
 }
 
 class HttpService {
-  private baseUrlCache: { instanceId: string; url: string } | null = null;
 
   async get<T>(path: string, config?: IHttpConfig): Promise<IServiceResponse<T>> {
     return this.request<T>('GET', path, undefined, undefined, config);
@@ -53,13 +53,13 @@ class HttpService {
     files: NetHttpFile[] | undefined,
     config: IHttpConfig = {},
   ): Promise<IServiceResponse<T>> {
-    const url = await this.baseUrl();
-    if (!url) return errorResponse(0, 'PAIRING_REQUIRED', 'No paired instance');
+    const instance = await netService.instance();
+    if (!instance) return errorResponse(0, 'PAIRING_REQUIRED', 'No paired instance');
 
     let result;
     try {
       result = await netService.request({
-        url: `${url}${path}`,
+        url: serviceUrl(instance, path),
         method,
         headers: await this.buildHeaders(Boolean(files)),
         body,
@@ -71,23 +71,14 @@ class HttpService {
     }
 
     if (result.status === 401 && !config.skipAuthRetry) {
-      const refreshed = await httpAuth().refreshSession();
-      if (refreshed) {
+      const outcome = await httpAuth().refreshSession();
+      if (outcome === 'refreshed') {
         return this.request<T>(method, path, body, files, { skipAuthRetry: true });
       }
-      void httpAuth().clearSession();
+      if (outcome === 'rejected') void httpAuth().clearSession();
     }
 
     return this.parse<T>(result.status, result.body);
-  }
-
-  private async baseUrl(): Promise<string | null> {
-    const instance = await netService.instance();
-    if (!instance) return null;
-    if (this.baseUrlCache?.instanceId === instance.instanceId) return this.baseUrlCache.url;
-    const url = `https://${instance.host}:${instance.port}`;
-    this.baseUrlCache = { instanceId: instance.instanceId, url };
-    return url;
   }
 
   private async buildHeaders(withFile: boolean): Promise<Record<string, string>> {

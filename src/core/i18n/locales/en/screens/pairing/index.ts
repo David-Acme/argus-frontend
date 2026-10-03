@@ -14,7 +14,12 @@ export const pairing = {
     'On this computer, enter the code shown in the Argus server terminal. Camera scanning is only available on mobile.',
   success: 'Server linked',
   'success-subtitle': 'All set, let’s continue.',
+  'address-open': 'Server not showing up? Enter its address',
+  'address-label': 'Server address',
+  'address-placeholder': '192.168.1.20',
+  'address-hint': 'The IP of the computer running Argus. Use it when your network cannot find it on its own.',
   errors: {
+    'invalid-address': 'Enter a valid IP, for example 192.168.1.20.',
     'invalid-code': 'Invalid code.',
     'already-paired': 'This server is already linked.',
     'not-found': 'Server not found on the network.',

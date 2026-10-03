@@ -1,5 +1,4 @@
-/** Dedicated camera media socket served by the gateway. */
-export const CAMERA_STREAM_WS_PATH = '/camera-stream';
+export const CAMERA_STREAM_WS_PATH = '/media';
 
 /** fMP4 wire framing of every binary camera frame. */
 export const CAMERA_STREAM_FRAME_MAGIC = 0xa7;

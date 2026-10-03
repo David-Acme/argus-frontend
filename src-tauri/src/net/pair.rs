@@ -11,10 +11,15 @@ pub async fn pair(_host: &str, ip: &str, port: u16, code: &str) -> Result<Pairin
     .build()
     .map_err(|e| e.to_string())?;
 
+  let key = code.trim().to_uppercase();
+  let nonce = random_hex(16)?;
   let url = format!("https://{ip}:{port}{PAIRING_PATH}");
   let response = client
     .post(&url)
-    .json(&serde_json::json!({ "code": code.trim() }))
+    .json(&serde_json::json!({
+      "nonce": nonce,
+      "proof": hmac_hex(&key, &format!("argus-pair-client|{nonce}")),
+    }))
     .send()
     .await
     .map_err(|e| format!("NETWORK_ERROR|Pairing failed: {e}"))?;
@@ -22,8 +27,11 @@ pub async fn pair(_host: &str, ip: &str, port: u16, code: &str) -> Result<Pairin
   let status = response.status().as_u16();
   let body = response.text().await.map_err(|e| format!("NETWORK_ERROR|{e}"))?;
   if status != 200 {
-    if status == 403 {
+    if status == 403 || status == 422 {
       return Err("INVALID_PAIRING_CODE|Invalid pairing code".to_string());
+    }
+    if status == 409 {
+      return Err("ALREADY_PAIRED|Server already paired".to_string());
     }
     return Err(format!("NETWORK_ERROR|Pairing failed (HTTP {status})"));
   }
@@ -36,9 +44,10 @@ pub async fn pair(_host: &str, ip: &str, port: u16, code: &str) -> Result<Pairin
     .and_then(Value::as_str)
     .ok_or("NETWORK_ERROR|Malformed pairing response")?
     .to_uppercase();
-  let expected = code.trim().to_uppercase();
-  if !expected.is_empty() && !ca_fingerprint.starts_with(&expected) {
-    return Err("INVALID_PAIRING_CODE|Invalid pairing code".to_string());
+  let server_proof = info.get("serverProof").and_then(Value::as_str).unwrap_or("").to_uppercase();
+  let expected_proof = hmac_hex(&key, &format!("argus-pair-server|{nonce}|{ca_fingerprint}"));
+  if server_proof != expected_proof {
+    return Err("FINGERPRINT_MISMATCH|The server could not prove the pairing code".to_string());
   }
 
   let ca_pem = info.get("caPem").and_then(Value::as_str).unwrap_or("").to_string();
@@ -73,4 +82,19 @@ fn sha256_hex_upper(data: &[u8]) -> String {
 
   let digest = Sha256::digest(data);
   digest.iter().map(|byte| format!("{byte:02X}")).collect()
+}
+
+fn random_hex(bytes: usize) -> Result<String, String> {
+  let mut buffer = vec![0u8; bytes];
+  getrandom::getrandom(&mut buffer).map_err(|e| format!("NETWORK_ERROR|{e}"))?;
+  Ok(buffer.iter().map(|byte| format!("{byte:02x}")).collect())
+}
+
+fn hmac_hex(key: &str, message: &str) -> String {
+  use hmac::{Hmac, Mac};
+
+  let mut mac = <Hmac<sha2::Sha256> as Mac>::new_from_slice(key.as_bytes())
+    .expect("HMAC accepts keys of any length");
+  mac.update(message.as_bytes());
+  mac.finalize().into_bytes().iter().map(|byte| format!("{byte:02X}")).collect()
 }

@@ -12,11 +12,40 @@ export type NetErrorCode =
   | 'NETWORK_ERROR'
   | 'STORAGE_ERROR';
 
+export interface NetRoute {
+  path: string;
+  port: number;
+  https: boolean;
+}
+
+export type NetRoutePorts = Record<string, number>;
+
 export interface NetDiscovery {
   host: string;
   ip: string;
   port: number;
   https: boolean;
+  routes: NetRoute[];
+}
+
+export interface NetPairInput {
+  host: string;
+  ip: string;
+  port: number;
+  code: string;
+  routes: NetRoutePorts;
+}
+
+export interface NetAdoptInput {
+  pairing: NetPairing;
+  host: string;
+  ip: string;
+  routes: NetRoutePorts;
+}
+
+export interface NetAddressUpdate {
+  ip: string;
+  routes: NetRoutePorts;
 }
 
 export interface NetPairing {
@@ -57,6 +86,7 @@ export interface NetPairedInstance {
   caFingerprint: string;
   instanceId: string;
   pairedAt: number;
+  routes: NetRoutePorts;
 }
 
 export interface NetError {

@@ -1,3 +1,5 @@
+import type { SessionRefreshOutcome } from '@/core/types';
+
 export interface IHttpConfig {
   skipAuthRetry?: boolean;
 }
@@ -15,9 +17,8 @@ export interface IServiceResponse<T> {
   errors: IApiError | null;
 }
 
-/** Credential hooks http.service needs, registered by session.service. */
 export interface IHttpAuthBridge {
   getAccessToken(): string | null;
-  refreshSession(): Promise<boolean>;
+  refreshSession(): Promise<SessionRefreshOutcome>;
   clearSession(): Promise<void>;
 }

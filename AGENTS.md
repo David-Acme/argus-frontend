@@ -190,6 +190,30 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   the Nitro module; `net.web.ts` calls `invoke('argus_*')`; `net-persistence.ts` stores
   the pairing in secure-storage (shared). Consumers only import the barrel
   `@/core/services/net`.
+- **One host, many services.** The backend has no gateway: every service
+  terminates TLS on its own port and announces one `_argus-route._tcp` mDNS
+  instance per leading path segment (TXT `path`, `https`). `discover()` browses
+  that type for a settle window and returns the whole route table; the pairing
+  stores it (`net.routes`, segment → port). Every URL is built with
+  `serviceUrl(instance, path)` from `net/net-routes.ts`: the discovered port
+  for the path's leading segment, else `ARGUS_DEFAULT_ROUTE_PORTS`, else the
+  pairing port. Never concatenate `instance.port` by hand. A server mDNS cannot
+  see (another subnet, a network that drops multicast, the Android emulator at
+  `10.0.2.2`) is paired by its address on the pairing screen and uses the
+  default ports.
+- **Pairing never sends the code.** The client posts a random `nonce` and
+  `HMAC-SHA256(code, "argus-pair-client|" + nonce)`; the server answers the CA
+  with `serverProof = HMAC-SHA256(code, "argus-pair-server|" + nonce + "|" +
+  caFingerprint)`, which the client checks before trusting the CA (all three
+  platforms). The code is upper-cased as the HMAC key.
+- **Signed-out entry** asks identity `GET /pairing/status` (`{paired,
+  hasOwner}`): owner enrolment only when the server answers that it has no
+  owner; an unanswered probe shows `ServerUnreachable` with retry, never
+  enrolment.
+- **Session refresh has three outcomes** (`SessionRefreshOutcome`):
+  `refreshed`, `rejected` (401/403 — the only case that ends the session) and
+  `unavailable` (429, 503, network, malformed answer — the session is kept and
+  the caller retries later).
 - **`src/core/services/secure-storage/`** → `ISecureStorageService` **async**
   (`getStringAsync/setStringAsync/deleteAsync/hasAsync`). Native = `expo-secure-store`;
   web = Tauri command + `keyring` crate (fallback `localStorage`). Keys **separate**
@@ -208,10 +232,9 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
     `configure` when the config is already applied (key `caPem|host|ip`); `net-persistence.ts`
     caches the bound instance in memory (invalidated in `savePairing`/`clearInstance`)
     to avoid re-reading secure-storage on every request.
-  - **Verify the fingerprint during pairing (all 3 platforms)**: after receiving
-    `caPem` + `caFingerprint`, parse the cert and compare `SHA-256(DER)` in uppercase
-    hex against `caFingerprint`. If it does not match → `FINGERPRINT_MISMATCH`. This
-    closes the "trust-on-first-use" gap during the pairing trust-any call.
+  - **Verify the pairing (all 3 platforms)**: the `serverProof` must match the
+    received `caFingerprint`, and that fingerprint must be `SHA-256(DER)` of the
+    received `caPem` (uppercase hex). Either mismatch → `FINGERPRINT_MISMATCH`.
   - **Structured errors**: natives throw `IllegalStateException`/`NSError`/
     `Err(String)` with the format **`CODE|human message`** (`INVALID_PAIRING_CODE`,
     `FINGERPRINT_MISMATCH`, `CERT_NOT_TRUSTED`, `HOST_NOT_ALLOWED`, `PAIRING_REQUIRED`,
@@ -231,7 +254,7 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   inbound frames — no base64). Consumed through
   `netService.openSocket()`. **Two sockets**: the sync engine owns `/sync`
   (sync + emits + voice PCM), and the camera live view opens
-  `/camera-stream` through `cameraMediaService` and pumps fMP4 fragments
+  `/media` (argus-camera) through `cameraMediaService` and pumps fMP4 fragments
   into the native `argus-camera` player. `http.service.ts` is the HTTP
   wrapper; there is no separate websocket wrapper.
 - **Nitro modules are split by domain** (`modules/argus-net`, `modules/argus-mic`,
@@ -524,7 +547,7 @@ cd src-tauri && cargo check
 | `src/core/services/secure-storage/` | Secrets (expo-secure-store / keyring) |
 | `src/core/services/net/` | `IArgusNetService` (native→Nitro, web→Tauri, `net-persistence`) |
 | `src/core/services/http/` (`http.service.ts` + `http-auth.ts`) | HTTP wrapper sobre `netService`: `IServiceResponse`, refresh 401 single-flight, multipart (`payload` + archivos); `http-auth.ts` registra los hooks de credenciales y rompe el ciclo con `session.service` |
-| `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `hasAdmin`, `status`, `logout` |
+| `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `serverStatus` (`/pairing/status`), `status`, `logout` |
 | `src/core/services/session.service.ts` | Ciclo de sesión: establish/refresh/updateUser/clear, cola serializada sobre secure-storage; inicia/detiene el coordinador de cache local |
 | `src/core/services/view-cache.service.ts` | Valores serializados MMKV/localStorage por usuario + señal de revisión; no mantiene filas en memoria JS |
 | `src/core/services/view-cache-coordinator.service.ts` | Único suscriptor Watermelon que proyecta/pagina vistas hacia MMKV y refresca derivados diarios |
@@ -545,8 +568,8 @@ cd src-tauri && cargo check
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
 | `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
-| `modules/argus-camera/` | Nitro view `ArgusCameraView`: decoder nativo del feed `/camera-stream` (ExoPlayer/Media3 en Android, `AVSampleBufferDisplayLayer` en iOS) con `bufferedBytes()` para el credit-window |
-| `src/core/services/camera-media.service.ts` | Socket `/camera-stream`: subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
+| `modules/argus-camera/` | Nitro view `ArgusCameraView`: decoder nativo del feed `/media` (ExoPlayer/Media3 en Android, `AVSampleBufferDisplayLayer` en iOS) con `bufferedBytes()` para el credit-window |
+| `src/core/services/camera-media.service.ts` | Socket `/media` (argus-camera): subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
 | `src/shared/components/cameras/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | UI primitives (`button`, `text`, `icon`, `input`) |

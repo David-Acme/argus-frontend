@@ -1,10 +1,17 @@
 import { type HybridObject } from 'react-native-nitro-modules';
 
+export interface NetRoute {
+  path: string;
+  port: number;
+  https: boolean;
+}
+
 export interface NetDiscovery {
   host: string;
   ip: string;
   port: number;
   https: boolean;
+  routes: NetRoute[];
 }
 
 export interface NetPairing {

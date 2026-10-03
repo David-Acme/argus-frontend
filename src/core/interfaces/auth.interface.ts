@@ -18,9 +18,9 @@ export interface IResponseStatusDto {
   isActive: boolean;
 }
 
-export interface IHasAdminResponse {
+export interface IServerStatus {
   paired: boolean;
-  hasAdmin: boolean;
+  hasOwner: boolean;
 }
 
 export interface IRegisterInput {

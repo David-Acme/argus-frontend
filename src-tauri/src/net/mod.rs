@@ -4,6 +4,14 @@ pub mod pair;
 pub mod secure;
 pub mod socket;
 
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Route {
+  pub path: String,
+  pub port: f64,
+  pub https: bool,
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Discovery {
@@ -11,6 +19,7 @@ pub struct Discovery {
   pub ip: String,
   pub port: f64,
   pub https: bool,
+  pub routes: Vec<Route>,
 }
 
 #[derive(serde::Serialize)]

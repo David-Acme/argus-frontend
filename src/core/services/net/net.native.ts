@@ -8,13 +8,16 @@ import {
   loadInstance,
   savePairing,
   toNetError,
-  updateInstanceIp,
+  updateInstanceAddress,
 } from './net-persistence';
+import { routePortsOf } from './net-routes';
 import type {
+  NetAdoptInput,
   NetDiscovery,
   NetError,
   NetHttpRequest,
   NetHttpResult,
+  NetPairInput,
   NetPairedInstance,
   NetPairing,
 } from '@/core/types';
@@ -31,23 +34,25 @@ class NativeArgusNetService implements IArgusNetService {
     }
   }
 
-  async pair(host: string, ip: string, port: number, code: string): Promise<NetPairing> {
+  async pair(input: NetPairInput): Promise<NetPairing> {
+    const { host, ip, port, code, routes } = input;
     try {
-      const result = await net.pair(host, ip, port, code);
-      configuredKey = `${result.caPem}|${host}|${ip}`;
-      net.configure(result.caPem, host, ip);
-      await savePairing(result, host, ip);
-      return result;
+      const pairing = await net.pair(host, ip, port, code);
+      configuredKey = `${pairing.caPem}|${host}|${ip}`;
+      net.configure(pairing.caPem, host, ip);
+      await savePairing({ pairing, host, ip, routes });
+      return pairing;
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
     }
   }
 
-  async adoptPairing(pairing: NetPairing, host: string, ip: string): Promise<void> {
+  async adoptPairing(input: NetAdoptInput): Promise<void> {
+    const { pairing, host, ip } = input;
     try {
       net.configureVerified(pairing.caPem, pairing.caFingerprint, host, ip);
       configuredKey = `${pairing.caPem}|${host}|${ip}`;
-      await savePairing(pairing, host, ip);
+      await savePairing(input);
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
     }
@@ -107,7 +112,7 @@ class NativeArgusNetService implements IArgusNetService {
     }
     if (!found.ip || found.ip === currentIp) return false;
 
-    await updateInstanceIp(found.ip);
+    await updateInstanceAddress({ ip: found.ip, routes: routePortsOf(found.routes) });
     const instance = await loadInstance();
     if (!instance) return false;
     configuredKey = `${instance.caPem}|${instance.host}|${instance.ip}`;

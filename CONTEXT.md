@@ -408,10 +408,12 @@ bundles the LokiJS adapter, autolinking resolves the Android module.
 ## Secure networking (2026-08) — local network layer
 
 ### Trust model
-- The backend is its own per-instance CA (`ca.pem` + rotating leaf); HTTPS-only on
-  7024. The client **pairs once** (code = prefix of the CA's SHA-256) and afterwards
-  **trusts only that CA and `argus.local`** (hostname verified against the SAN).
-  Endpoint `POST /pairing` on the backend.
+- The backend is its own per-instance CA (`ca.pem` + rotating leaf); every
+  service is HTTPS on its own port. The client **pairs once** against identity's
+  `POST /pairing` (2026-10: a nonce + HMAC proof of the random code both ways,
+  the code never on the wire) and afterwards **trusts only that CA and
+  `argus.local`** (hostname verified against the SAN), reaching each service on
+  the port its `_argus-route._tcp` announcement gives (see AGENTS.md rule 11).
 
 ### Architecture: one JS API, two native backends
 ```

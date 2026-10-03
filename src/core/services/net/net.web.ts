@@ -9,12 +9,16 @@ import {
   loadInstance,
   savePairing,
   toNetError,
+  updateInstanceAddress,
 } from './net-persistence';
+import { routePortsOf } from './net-routes';
 import type {
+  NetAdoptInput,
   NetDiscovery,
   NetError,
   NetHttpRequest,
   NetHttpResult,
+  NetPairInput,
   NetPairedInstance,
   NetPairing,
 } from '@/core/types';
@@ -28,17 +32,18 @@ class WebArgusNetService implements IArgusNetService {
     }
   }
 
-  async pair(host: string, ip: string, port: number, code: string): Promise<NetPairing> {
+  async pair(input: NetPairInput): Promise<NetPairing> {
+    const { host, ip, port, code, routes } = input;
     try {
-      const result = await invoke<NetPairing>('argus_pair', { host, ip, port, code });
-      await savePairing(result, host, ip);
-      return result;
+      const pairing = await invoke<NetPairing>('argus_pair', { host, ip, port, code });
+      await savePairing({ pairing, host, ip, routes });
+      return pairing;
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
     }
   }
 
-  async adoptPairing(_pairing: NetPairing, _host: string, _ip: string): Promise<void> {
+  async adoptPairing(_input: NetAdoptInput): Promise<void> {
     throw toNetError(
       new Error('NOT_SUPPORTED|Invitation enrollment is available on mobile devices'),
       'NETWORK_ERROR',
@@ -93,9 +98,18 @@ class WebArgusNetService implements IArgusNetService {
     return socket;
   }
 
-  /** The browser reaches the server by name; there is no pinned address here. */
   async refreshAddress(): Promise<boolean> {
-    return false;
+    const instance = await loadInstance();
+    if (!instance) return false;
+    let found: NetDiscovery;
+    try {
+      found = await this.discover();
+    } catch {
+      return false;
+    }
+    if (!found.ip || found.ip === instance.ip) return false;
+    await updateInstanceAddress({ ip: found.ip, routes: routePortsOf(found.routes) });
+    return true;
   }
 
   async isPaired(): Promise<boolean> {

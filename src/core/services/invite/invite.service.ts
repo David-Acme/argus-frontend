@@ -73,8 +73,8 @@ class InviteService {
     }
 
     try {
-      await netService.adoptPairing(
-        {
+      await netService.adoptPairing({
+        pairing: {
           caPem: result.caPem,
           caFingerprint: result.caFingerprint,
           serverFingerprint: result.serverFingerprint,
@@ -82,9 +82,10 @@ class InviteService {
           port: result.port,
           scheme: result.scheme,
         },
-        qr.host,
-        qr.ip,
-      );
+        host: qr.host,
+        ip: qr.ip,
+        routes: {},
+      });
     } catch (error) {
       const netError = error as { code?: string; message?: string };
       return failed(0, netError.code ?? 'CERT_NOT_TRUSTED', netError.message ?? 'Certificate rejected');

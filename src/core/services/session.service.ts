@@ -1,4 +1,5 @@
 import { netService } from '@/core/services/net';
+import { serviceUrl } from '@/core/services/net/net-routes';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
 import { registerHttpAuth } from '@/core/services/http';
@@ -7,7 +8,7 @@ import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordina
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { useAuthStore } from '@/core/stores/auth.store';
 import { NET_STORAGE_KEYS, SESSION_USER_KEY } from '@/shared/constants';
-import type { AuthStatus, NetPairedInstance } from '@/core/types';
+import type { AuthStatus, NetPairedInstance, SessionRefreshOutcome } from '@/core/types';
 import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
 const REFRESH_PATH = '/auth/refresh-token';
@@ -33,7 +34,7 @@ type AuthTokens = Pick<IAuthSession, 'accessToken' | 'refreshToken'>;
  */
 class SessionService {
   private initialization: Promise<SessionBootstrapResult> | null = null;
-  private refreshing: Promise<boolean> | null = null;
+  private refreshing: Promise<SessionRefreshOutcome> | null = null;
   private secureStorageQueue: Promise<void> = Promise.resolve();
   private sessionVersion = 0;
   private initialized = false;
@@ -73,8 +74,7 @@ class SessionService {
     await this.persistSession(session);
   }
 
-  /** Refreshes once for all concurrent callers and updates the store first. */
-  refreshSession(): Promise<boolean> {
+  refreshSession(): Promise<SessionRefreshOutcome> {
     if (this.refreshing) return this.refreshing;
 
     this.refreshing = this.performRefresh().finally(() => {
@@ -152,61 +152,55 @@ class SessionService {
     }
   }
 
-  private async performRefresh(): Promise<boolean> {
+  private async performRefresh(): Promise<SessionRefreshOutcome> {
     const { refreshToken } = useAuthStore.getState();
-    if (!refreshToken) return false;
+    if (!refreshToken) return 'rejected';
     const version = this.sessionVersion;
 
     let instance: NetPairedInstance | null;
     try {
       instance = await netService.instance();
     } catch {
-      return false;
+      return 'unavailable';
     }
-    if (!instance) return false;
+    if (!instance) return 'rejected';
 
     let result;
     try {
       result = await netService.request({
-        url: `https://${instance.host}:${instance.port}${REFRESH_PATH}`,
+        url: serviceUrl(instance, REFRESH_PATH),
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ refreshToken }),
       });
     } catch {
-      return false;
+      return 'unavailable';
     }
 
-    if (result.status < 200 || result.status >= 300) return false;
+    if (result.status === 401 || result.status === 403) return 'rejected';
+    if (result.status < 200 || result.status >= 300) return 'unavailable';
 
+    let accessToken: string | null = null;
+    let nextRefreshToken = refreshToken;
     try {
       const envelope = JSON.parse(result.body) as {
         info?: { accessToken?: unknown; refreshToken?: unknown };
       };
-      const accessToken =
-        typeof envelope.info?.accessToken === 'string' ? envelope.info.accessToken : null;
-      const nextRefreshToken =
-        typeof envelope.info?.refreshToken === 'string'
-          ? envelope.info.refreshToken
-          : refreshToken;
-      if (!accessToken) return false;
-
-      // A logout or a newer login may have happened while the request was in
-      // flight. Never let an old refresh resurrect that session.
-      if (
-        version !== this.sessionVersion ||
-        useAuthStore.getState().refreshToken !== refreshToken
-      ) {
-        return false;
-      }
-
-      const tokens = { accessToken, refreshToken: nextRefreshToken };
-      useAuthStore.getState().setTokens(tokens);
-      await this.persistTokens(tokens);
-      return true;
+      if (typeof envelope.info?.accessToken === 'string') accessToken = envelope.info.accessToken;
+      if (typeof envelope.info?.refreshToken === 'string') nextRefreshToken = envelope.info.refreshToken;
     } catch {
-      return false;
+      return 'unavailable';
     }
+    if (!accessToken) return 'unavailable';
+
+    if (version !== this.sessionVersion || useAuthStore.getState().refreshToken !== refreshToken) {
+      return 'unavailable';
+    }
+
+    const tokens = { accessToken, refreshToken: nextRefreshToken };
+    useAuthStore.getState().setTokens(tokens);
+    await this.persistTokens(tokens);
+    return 'refreshed';
   }
 
   private async persistSession(session: IAuthSession): Promise<void> {

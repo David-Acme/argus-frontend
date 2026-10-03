@@ -1,6 +1,13 @@
 import { secureStorageService } from '@/core/services/secure-storage';
 import { NET_STORAGE_KEYS } from '@/shared/constants';
-import type { NetError, NetErrorCode, NetPairedInstance, NetPairing } from '@/core/types';
+import type {
+  NetAddressUpdate,
+  NetAdoptInput,
+  NetError,
+  NetErrorCode,
+  NetPairedInstance,
+  NetRoutePorts,
+} from '@/core/types';
 
 let cachedInstance: NetPairedInstance | null | undefined;
 
@@ -24,6 +31,7 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
   const caFingerprint = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.caFingerprint);
   const instanceId = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.instanceId);
   const pairedAt = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.pairedAt);
+  const routes = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.routes);
 
   if (!caPem || !host || !ip || !port) {
     cachedInstance = null;
@@ -38,39 +46,55 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
     caFingerprint: caFingerprint ?? '',
     instanceId: instanceId ?? '',
     pairedAt: Number(pairedAt ?? 0),
+    routes: parseRoutes(routes),
   };
   return cachedInstance;
 }
 
-export async function savePairing(result: NetPairing, host: string, ip: string): Promise<void> {
+function parseRoutes(raw: string | null): NetRoutePorts {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, number] => typeof entry[1] === 'number',
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+export async function savePairing(input: NetAdoptInput): Promise<void> {
+  const { pairing, host, ip, routes } = input;
+  const pairedAt = Date.now();
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.paired, 'true');
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caPem, result.caPem);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caFingerprint, result.caFingerprint);
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caPem, pairing.caPem);
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caFingerprint, pairing.caFingerprint);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.host, host);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, ip);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.port, String(result.port));
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.instanceId, result.instanceId);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.pairedAt, String(Date.now()));
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.port, String(pairing.port));
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.instanceId, pairing.instanceId);
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.pairedAt, String(pairedAt));
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(routes));
 
   cachedInstance = {
     host,
     ip,
-    port: result.port,
-    caPem: result.caPem,
-    caFingerprint: result.caFingerprint,
-    instanceId: result.instanceId,
-    pairedAt: Date.now(),
+    port: pairing.port,
+    caPem: pairing.caPem,
+    caFingerprint: pairing.caFingerprint,
+    instanceId: pairing.instanceId,
+    pairedAt,
+    routes,
   };
 }
 
-/**
- * Re-points the paired instance at a new address. The certificate is pinned to
- * the instance, not to the address, so a DHCP lease change must not look like
- * a different server.
- */
-export async function updateInstanceIp(ip: string): Promise<void> {
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, ip);
-  if (cachedInstance) cachedInstance = { ...cachedInstance, ip };
+export async function updateInstanceAddress(update: NetAddressUpdate): Promise<void> {
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, update.ip);
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(update.routes));
+  if (cachedInstance) cachedInstance = { ...cachedInstance, ip: update.ip, routes: update.routes };
 }
 
 export async function clearInstance(): Promise<void> {
@@ -83,6 +107,7 @@ export async function clearInstance(): Promise<void> {
 const NATIVE_ERROR_CODES: ReadonlySet<NetErrorCode> = new Set([
   'PAIRING_REQUIRED',
   'INVALID_PAIRING_CODE',
+  'ALREADY_PAIRED',
   'FINGERPRINT_MISMATCH',
   'CERT_NOT_TRUSTED',
   'UNAUTHORIZED',

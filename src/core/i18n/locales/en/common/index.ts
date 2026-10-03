@@ -2,6 +2,10 @@ export const common = {
 
   continue: 'Continue',
   retry: 'Retry',
+  'server-unreachable': {
+    title: 'Your Argus server is out of reach',
+    description: 'Make sure the server is on and that this device is on the same network.',
+  },
   back: 'Back',
   'open-settings': 'Open settings',
   'allow-camera': 'Allow camera',

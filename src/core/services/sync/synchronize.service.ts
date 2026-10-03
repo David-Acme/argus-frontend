@@ -1,6 +1,7 @@
 import type { Model } from '@nozbe/watermelondb';
 import { collection } from '@/core/database';
 import { netService } from '@/core/services/net';
+import { serviceUrl } from '@/core/services/net/net-routes';
 import { storageService } from '@/core/services/storage';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
@@ -23,6 +24,7 @@ import type {
   AuditLogCursors,
   AuditLogRequest,
   AuditLogScope,
+  SessionRefreshOutcome,
   SyncCursors,
   SyncOperation,
   SyncTableKey,
@@ -67,7 +69,7 @@ const devLog = (...args: unknown[]): void => {
 type AuthStoreApi = typeof UseAuthStoreHook;
 
 type SessionActions = {
-  refreshSession: () => Promise<boolean>;
+  refreshSession: () => Promise<SessionRefreshOutcome>;
   clearSession: () => Promise<void>;
   updateUser: (partial: { id?: number; name?: string; role?: UserRole; isActive?: boolean }) => void;
 };
@@ -303,25 +305,19 @@ class SynchronizeService {
       devLog('connect: aborted (token?', Boolean(accessToken), 'instance?', Boolean(instance), ')');
       return false;
     }
-    devLog('connect: opening', `wss://${instance.host}:${instance.port}${SYNC_WS_PATH}`);
+    devLog('connect: opening', serviceUrl(instance, SYNC_WS_PATH, 'wss'));
 
     let socket: IArgusSocket;
     try {
       socket = await openSocket({
-        url: `wss://${instance.host}:${instance.port}${SYNC_WS_PATH}`,
+        url: serviceUrl(instance, SYNC_WS_PATH, 'wss'),
         headers: { Authorization: `Bearer ${accessToken}` },
       });
     } catch (reason) {
       devLog('connect: EXCEPTION', reason);
       const code = (reason as { code?: string })?.code;
       if (code === 'UNAUTHORIZED') {
-        const refreshed = await this.sessionActions?.refreshSession();
-        if (refreshed && !this.manualClose) {
-          this.scheduleReconnect();
-        } else {
-          this.manualClose = true;
-          await this.sessionActions?.clearSession();
-        }
+        await this.recoverUnauthorized();
         return false;
       }
       this.scheduleReconnect();
@@ -756,13 +752,13 @@ class SynchronizeService {
   }
 
   private async recoverUnauthorized(): Promise<void> {
-    const refreshed = await this.sessionActions?.refreshSession();
-    if (refreshed && !this.manualClose) {
-      this.scheduleReconnect();
+    const outcome = await this.sessionActions?.refreshSession();
+    if (outcome === 'rejected') {
+      this.manualClose = true;
+      await this.sessionActions?.clearSession();
       return;
     }
-    this.manualClose = true;
-    await this.sessionActions?.clearSession();
+    if (!this.manualClose) this.scheduleReconnect();
   }
 
   private async processResponse(resp: ISynchronizedResponse): Promise<boolean> {

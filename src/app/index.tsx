@@ -20,6 +20,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
 import { SectionPanel } from '@/shared/components/layout';
+import { ServerUnreachable } from '@/shared/components/session/server-unreachable';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { usePermissions } from '@/shared/hooks/use-permissions';
@@ -364,11 +365,18 @@ export default function IndexScreen() {
     if (authStatus !== 'signed-out') return null;
     const pairing = await sessionService.getPairingState();
     if (!pairing.paired) return 'welcome';
-    const res = await authService.hasAdmin();
-    const hasAdmin = res.ok && res.info?.hasAdmin === true;
     if (!IS_NATIVE) return 'login';
-    return hasAdmin ? 'login' : 'owner-enroll';
+    const res = await authService.serverStatus();
+    if (!res.ok || !res.info) return 'unreachable';
+    return res.info.hasOwner ? 'login' : 'owner-enroll';
   }, [authStatus]);
+
+  const retryDestination = useCallback(() => {
+    setDestination('loading');
+    void resolveDestination().then((next) => {
+      if (next) setDestination(next);
+    });
+  }, [resolveDestination]);
 
   useEffect(() => {
     let active = true;
@@ -384,6 +392,7 @@ export default function IndexScreen() {
     return <View className="bg-background flex-1" />;
   }
 
+  if (destination === 'unreachable') return <ServerUnreachable onRetry={retryDestination} />;
   if (destination === 'welcome') return <Redirect href="/welcome" />;
   if (destination === 'owner-enroll') return <Redirect href="/welcome/face?mode=owner-enroll" />;
   if (destination === 'login') {

@@ -68,13 +68,11 @@ export default function LoginScreen() {
   useEffect(() => {
     let active = true;
     const boot = async () => {
-      const res = await authService.hasAdmin();
+      const res = await authService.serverStatus();
       if (!active) return;
-      if (res.ok && res.info?.hasAdmin) {
-        void createChallenge();
-      } else {
-        setPhase('waiting-owner');
-      }
+      if (!res.ok || !res.info) setPhase('error');
+      else if (res.info.hasOwner) void createChallenge();
+      else setPhase('waiting-owner');
     };
     void boot();
     return () => {
@@ -95,12 +93,10 @@ export default function LoginScreen() {
   }, [phase, router]);
 
   const retryOwner = useCallback(async () => {
-    const res = await authService.hasAdmin();
-    if (res.ok && res.info?.hasAdmin) {
-      void createChallenge();
-    } else {
-      setPhase('waiting-owner');
-    }
+    const res = await authService.serverStatus();
+    if (!res.ok || !res.info) setPhase('error');
+    else if (res.info.hasOwner) void createChallenge();
+    else setPhase('waiting-owner');
   }, [createChallenge]);
 
   const refreshChallenge = useCallback(() => {

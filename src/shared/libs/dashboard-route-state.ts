@@ -1,6 +1,12 @@
 import type { AuthStatus } from '@/core/types';
 
-export type DashboardDestination = 'loading' | 'welcome' | 'owner-enroll' | 'login' | 'home';
+export type DashboardDestination =
+  | 'loading'
+  | 'welcome'
+  | 'owner-enroll'
+  | 'login'
+  | 'unreachable'
+  | 'home';
 
 /**
  * A tab return already has an authenticated session, so it must render the

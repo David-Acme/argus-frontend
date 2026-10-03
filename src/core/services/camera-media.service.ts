@@ -5,6 +5,7 @@ import type {
   ICameraMediaSession,
 } from '@/core/interfaces';
 import { netService } from '@/core/services/net';
+import { serviceUrl } from '@/core/services/net/net-routes';
 import { sessionService } from '@/core/services/session.service';
 import {
   CAMERA_STREAM_ACK_INTERVAL_MS,
@@ -68,7 +69,7 @@ class CameraMediaSession implements ICameraMediaSession {
 
     this.input.sink.resetStream();
     const socket = await netService.openSocket({
-      url: `wss://${instance.host}:${instance.port}${CAMERA_STREAM_WS_PATH}`,
+      url: serviceUrl(instance, CAMERA_STREAM_WS_PATH, 'wss'),
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (this.closed) {

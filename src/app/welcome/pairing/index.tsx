@@ -1,6 +1,7 @@
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Icon } from '@/shared/components/ui/icon';
+import { Input } from '@/shared/components/ui/input';
 import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { QrManualEntry } from '@/shared/components/qr';
@@ -14,7 +15,7 @@ import { IS_NATIVE } from '@/shared/constants';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import type { NetErrorCode, TranslationKey } from '@/core/types';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
 const PHASE_LABEL: Record<PairingFlowPhase, TranslationKey> = {
@@ -30,6 +31,7 @@ const ERROR_LABEL: Partial<Record<NetErrorCode, TranslationKey>> = {
   ALREADY_PAIRED: 'screens.pairing.errors.already-paired',
   INVALID_PAIRING_CODE: 'screens.pairing.errors.invalid-code',
   DISCOVERY_NOT_FOUND: 'screens.pairing.errors.not-found',
+  HOST_NOT_ALLOWED: 'screens.pairing.errors.invalid-address',
   FINGERPRINT_MISMATCH: 'screens.pairing.errors.fingerprint-mismatch',
   NETWORK_ERROR: 'screens.pairing.errors.network',
 };
@@ -43,6 +45,9 @@ export default function PairingScreen() {
   const status = useQrScanStore((s) => s.status);
   const value = useQrScanStore((s) => s.value);
   const [titleDelay, cardDelay] = useStagger(2, 90);
+  const [address, setAddress] = useState('');
+  const [addressOpen, setAddressOpen] = useState(false);
+  const showAddress = addressOpen || flow.error?.code === 'DISCOVERY_NOT_FOUND';
 
   const handleScan = useCallback(() => {
     useQrScanStore.getState().open({ purpose: 'server' });
@@ -56,10 +61,12 @@ export default function PairingScreen() {
 
   const handleCode = useCallback(
     (code: string) => {
-      void flow.run(code);
+      void flow.run(code, address);
     },
-    [flow],
+    [flow, address],
   );
+
+  const handleOpenAddress = useCallback(() => setAddressOpen(true), []);
 
   const autoOpened = useRef(false);
   useEffect(() => {
@@ -78,9 +85,7 @@ export default function PairingScreen() {
   // yet), desktop goes to the device-login screen.
   useEffect(() => {
     if (flow.phase !== 'success') return;
-    const timer = setTimeout(() => {
-      router.replace(IS_NATIVE ? '/welcome/face' : '/login');
-    }, SUCCESS_PAUSE_MS);
+    const timer = setTimeout(() => router.replace('/'), SUCCESS_PAUSE_MS);
     return () => clearTimeout(timer);
   }, [flow.phase, router]);
 
@@ -159,6 +164,33 @@ export default function PairingScreen() {
               onSubmit={handleCode}
               startExpanded={!IS_NATIVE}
             />
+          ) : null}
+
+          {(flow.phase === 'idle' || flow.phase === 'error') && showAddress ? (
+            <View className="gap-1.5">
+              <Text className="text-foreground-secondary text-sm">
+                {t('screens.pairing.address-label')}
+              </Text>
+              <Input
+                value={address}
+                onChangeText={setAddress}
+                placeholder={t('screens.pairing.address-placeholder')}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect={false}
+                keyboardType="numbers-and-punctuation"
+                accessibilityLabel={t('screens.pairing.address-label')}
+              />
+              <Text variant="muted" className="text-xs leading-4">
+                {t('screens.pairing.address-hint')}
+              </Text>
+            </View>
+          ) : null}
+
+          {(flow.phase === 'idle' || flow.phase === 'error') && !showAddress ? (
+            <Button variant="ghost" size="sm" onPress={handleOpenAddress}>
+              <Text>{t('screens.pairing.address-open')}</Text>
+            </Button>
           ) : null}
         </CardContent>
       </Card>

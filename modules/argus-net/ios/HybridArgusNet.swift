@@ -5,6 +5,8 @@ import CryptoKit
 
 private let defaultHost = "argus.local"
 private let pairingPath = "/pairing"
+private let routeServiceType = "_argus-route._tcp"
+private let discoverySettleSeconds: TimeInterval = 1.5
 
 private func netError(_ message: String) -> NSError {
   return NSError(
@@ -68,9 +70,9 @@ public class HybridArgusNet: HybridArgusNetSpec {
   // MARK: - Discovery (Bonjour / mDNS)
 
   private static func discoverInternal(timeoutMs: Double) async throws -> NetDiscovery {
-    let resolver = await BonjourResolver()
     let timeout = TimeInterval(max(1000, Int(timeoutMs))) / 1000.0
-    return try await withTimeout(seconds: timeout) { try await resolver.resolve() }
+    let resolver = await BonjourResolver(timeout: timeout)
+    return try await withTimeout(seconds: timeout + 2) { try await resolver.resolve() }
   }
 
   // MARK: - Pairing (one-time trust-any)
@@ -80,8 +82,13 @@ public class HybridArgusNet: HybridArgusNetSpec {
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    let key = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    let nonce = Self.randomHex(bytes: 16)
     request.httpBody = try JSONSerialization.data(
-      withJSONObject: ["code": code.trimmingCharacters(in: .whitespacesAndNewlines)])
+      withJSONObject: [
+        "nonce": nonce,
+        "proof": Self.hmacHex(key: key, message: "argus-pair-client|\(nonce)"),
+      ])
 
     let session = URLSession(
       configuration: .ephemeral, delegate: TrustAnyDelegate(), delegateQueue: nil)
@@ -90,7 +97,7 @@ public class HybridArgusNet: HybridArgusNetSpec {
     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
     guard status == 200 else {
       switch status {
-      case 403:
+      case 403, 422:
         throw netError("INVALID_PAIRING_CODE|Invalid pairing code")
       case 409:
         throw netError("ALREADY_PAIRED|Server already paired")
@@ -108,9 +115,11 @@ public class HybridArgusNet: HybridArgusNetSpec {
       throw netError("NETWORK_ERROR|Malformed pairing response")
     }
 
-    let expected = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-    if !expected.isEmpty && !caFingerprint.hasPrefix(expected) {
-      throw netError("INVALID_PAIRING_CODE|Invalid pairing code")
+    let serverProof = (info["serverProof"] as? String)?.uppercased() ?? ""
+    let expectedProof = Self.hmacHex(
+      key: key, message: "argus-pair-server|\(nonce)|\(caFingerprint)")
+    if serverProof != expectedProof {
+      throw netError("FINGERPRINT_MISMATCH|The server could not prove the pairing code")
     }
 
     try Self.verifyCaFingerprint(caPem, expected: caFingerprint)
@@ -123,6 +132,18 @@ public class HybridArgusNet: HybridArgusNetSpec {
       instanceId: info["instanceId"] as? String ?? "",
       port: resolvedPort,
       scheme: info["scheme"] as? String ?? "https")
+  }
+
+  private static func randomHex(bytes: Int) -> String {
+    var buffer = [UInt8](repeating: 0, count: bytes)
+    _ = SecRandomCopyBytes(kSecRandomDefault, bytes, &buffer)
+    return buffer.map { String(format: "%02x", $0) }.joined()
+  }
+
+  private static func hmacHex(key: String, message: String) -> String {
+    let code = HMAC<SHA256>.authenticationCode(
+      for: Data(message.utf8), using: SymmetricKey(data: Data(key.utf8)))
+    return code.map { String(format: "%02X", $0) }.joined()
   }
 
   private static func verifyCaFingerprint(_ caPem: String, expected: String) throws {
@@ -323,51 +344,78 @@ private final class StrictDelegate: NSObject, URLSessionTaskDelegate {
 @MainActor
 private final class BonjourResolver: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
   private let browser = NetServiceBrowser()
-  private var service: NetService?
+  private let timeout: TimeInterval
+  private var services: [NetService] = []
+  private var routes: [String: NetRoute] = [:]
+  private var firstIp = ""
   private var continuation: CheckedContinuation<NetDiscovery, Error>?
   private var finished = false
+
+  init(timeout: TimeInterval) {
+    self.timeout = timeout
+  }
 
   func resolve() async throws -> NetDiscovery {
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<NetDiscovery, Error>) in
       self.continuation = continuation
       browser.delegate = self
-      browser.searchForServices(ofType: "_argus._tcp", inDomain: "local.")
+      browser.searchForServices(ofType: routeServiceType, inDomain: "local.")
+      DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+        self?.finish()
+      }
     }
   }
 
-  private func finish(with result: Result<NetDiscovery, Error>) {
+  private func finish() {
     guard !finished else { return }
     finished = true
     browser.stop()
-    continuation?.resume(with: result)
+    services.forEach { $0.stop() }
+    guard let entry = routes["/pairing"] ?? routes.values.first else {
+      continuation?.resume(throwing: netError("DISCOVERY_NOT_FOUND|No Argus server found on the network"))
+      return
+    }
+    continuation?.resume(
+      returning: NetDiscovery(
+        host: defaultHost,
+        ip: firstIp,
+        port: entry.port,
+        https: entry.https,
+        routes: Array(routes.values)))
   }
 
   func netServiceBrowser(
     _ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool
   ) {
-    self.service = service
+    guard !finished else { return }
+    services.append(service)
     service.delegate = self
-    service.resolve(withTimeout: 10)
+    service.resolve(withTimeout: timeout)
   }
 
   func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String: NSNumber]) {
-    finish(with: .failure(netError("DISCOVERY_NOT_FOUND")))
+    finish()
   }
 
   func netServiceDidResolveAddress(_ sender: NetService) {
+    guard !finished, let txtData = sender.txtRecordData() else { return }
+    let txt = NetService.dictionary(fromTXTRecord: txtData)
+    let path = txt["path"].flatMap { String(data: $0, encoding: .utf8) }?
+      .trimmingCharacters(in: CharacterSet(charactersIn: "/")) ?? ""
     let ip = sender.addresses?.compactMap { Self.ip(from: $0) }.first ?? ""
-    finish(
-      with: .success(
-        NetDiscovery(
-          host: defaultHost,
-          ip: ip,
-          port: Double(sender.port),
-          https: true)))
+    guard !path.isEmpty, !ip.isEmpty else { return }
+    if firstIp.isEmpty {
+      firstIp = ip
+      DispatchQueue.main.asyncAfter(deadline: .now() + discoverySettleSeconds) { [weak self] in
+        self?.finish()
+      }
+    }
+    guard ip == firstIp else { return }
+    let https = txt["https"].flatMap { String(data: $0, encoding: .utf8) } == "true"
+    routes["/\(path)"] = NetRoute(path: "/\(path)", port: Double(sender.port), https: https)
   }
 
-  func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {
-    finish(with: .failure(netError("DISCOVERY_NOT_FOUND")))
-  }
+  func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {}
 
   private static func ip(from data: Data) -> String? {
     var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
