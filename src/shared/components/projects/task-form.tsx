@@ -27,6 +27,7 @@ import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 type TaskFormProps = {
   open: boolean;
@@ -115,7 +116,7 @@ export function TaskForm({ open, onOpenChange, projectId, task }: TaskFormProps)
 
     const result = await projectTaskService.remove(task.id);
     if (!result.ok) {
-      toast.error(t('common.errors.unknown'), result.errors?.message);
+      toastServiceError(result.errors);
       return;
     }
     toast.success(t('screens.projects.task-removed'));

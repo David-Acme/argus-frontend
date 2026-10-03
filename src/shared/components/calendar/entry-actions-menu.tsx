@@ -26,6 +26,7 @@ import {
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
 import { cn } from '@/shared/libs/utils';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
@@ -98,7 +99,7 @@ export function EntryActionsMenu({
       const status = entry.status === 'complete' ? 'todo' : 'done';
       const result = await projectTaskService.update(calendarEntryRecordId(entry), { status });
       if (!result.ok) {
-        toast.error(t('common.errors.unknown'), result.errors?.message);
+        toastServiceError(result.errors);
         return;
       }
       toast.success(t('screens.agenda.updated'));
@@ -118,7 +119,7 @@ export function EntryActionsMenu({
       ? await calendarEventService.remove(calendarEntryRecordId(entry))
       : await projectTaskService.remove(calendarEntryRecordId(entry));
     if (!result.ok) {
-      toast.error(t('common.errors.unknown'), result.errors?.message);
+      toastServiceError(result.errors);
       return;
     }
     toast.success(t('screens.agenda.deleted'));

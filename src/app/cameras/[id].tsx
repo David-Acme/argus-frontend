@@ -35,6 +35,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { screenIn } from '@/shared/libs/animations';
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 type CameraAction = 'edit' | 'toggle' | 'delete';
 
@@ -96,7 +97,7 @@ export default function CameraDetailScreen() {
         )
           return;
         const result = await cameraService.update(camera.id, { isEnabled: !camera.isEnabled });
-        if (!result.ok) toast.error(t('common.errors.unknown'), result.errors?.message);
+        if (!result.ok) toastServiceError(result.errors);
         return;
       }
       if (
@@ -115,7 +116,7 @@ export default function CameraDetailScreen() {
         router.back();
         return;
       }
-      toast.error(t('common.errors.unknown'), result.errors?.message);
+      toastServiceError(result.errors);
     },
     [camera, router, t],
   );
@@ -155,7 +156,7 @@ export default function CameraDetailScreen() {
       setMoving(true);
       const result = await cameraControlService.move(id, { angle: direction });
       setMoving(false);
-      if (!result.ok) toast.error(t('screens.cameras.device-offline'), result.errors?.message);
+      if (!result.ok) toastServiceError(result.errors, t('screens.cameras.device-offline'));
     },
     [id, t],
   );
@@ -165,7 +166,7 @@ export default function CameraDetailScreen() {
     setMoving(true);
     const result = await cameraControlService.move(id, { x: 0, y: 0 });
     setMoving(false);
-    if (!result.ok) toast.error(t('screens.cameras.device-offline'), result.errors?.message);
+    if (!result.ok) toastServiceError(result.errors, t('screens.cameras.device-offline'));
   }, [id, t]);
 
   const removeZone = useCallback(
@@ -182,7 +183,7 @@ export default function CameraDetailScreen() {
 
       const result = await zoneService.remove(targetId);
       if (result.ok) toast.success(t('screens.cameras.zone-removed'));
-      else toast.error(t('common.errors.unknown'), result.errors?.message);
+      else toastServiceError(result.errors);
     },
     [t],
   );

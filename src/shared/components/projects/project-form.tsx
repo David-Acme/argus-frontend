@@ -28,6 +28,7 @@ import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { toast } from '@/shared/libs/toast';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 type ProjectFormProps = {
   open: boolean;
@@ -105,7 +106,7 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
 
     const result = await projectService.remove(project.id);
     if (!result.ok) {
-      toast.error(t('common.errors.unknown'), result.errors?.message);
+      toastServiceError(result.errors);
       return;
     }
     toast.success(t('screens.projects.project-removed'));

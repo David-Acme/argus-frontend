@@ -19,6 +19,7 @@ import { toast } from '@/shared/libs/toast';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard', 'guest', 'owner'];
 
@@ -64,14 +65,14 @@ export default function PeopleDirectoryScreen() {
     if (request !== portraitRequest.current) return;
     if (!capability.ok || !capability.info) {
       setPortraitLoading(false);
-      toast.error(t('common.errors.unknown'), capability.errors?.message);
+      toastServiceError(capability.errors);
       return;
     }
     const portrait = await portraitPreviewService.consume(capability.info.token);
     if (request !== portraitRequest.current) return;
     setPortraitLoading(false);
     if (!portrait.ok || !portrait.info) {
-      toast.error(t('common.errors.unknown'), portrait.errors?.message);
+      toastServiceError(portrait.errors);
       return;
     }
     const dataUri = portraitDataUri(portrait.info);

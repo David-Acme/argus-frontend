@@ -10,6 +10,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toast } from '@/shared/libs/toast';
 import { SettingRow } from './setting-row';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 type CameraSettingsSheetProps = {
   open: boolean;
@@ -42,7 +43,7 @@ export function CameraSettingsSheet({
     const result = await cameraControlService.settings(cameraId, body);
     setBusy(false);
     if (!result.ok) {
-      toast.error(t('screens.cameras.device-offline'), result.errors?.message);
+      toastServiceError(result.errors, t('screens.cameras.device-offline'));
       return;
     }
     onApplied(result.info ?? null);

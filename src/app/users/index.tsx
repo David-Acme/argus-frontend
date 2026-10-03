@@ -32,6 +32,7 @@ import { toast } from '@/shared/libs/toast';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 const INVITE_EXPIRIES = [
   { value: '1', days: 1 },
@@ -91,7 +92,7 @@ function ManagedUserDialog({ user, open, onOpenChange, onSaved }: ManagedUserDia
     });
     setSaving(false);
     if (!response.ok) {
-      toast.error(t('common.errors.unknown'), response.errors?.message);
+      toastServiceError(response.errors);
       return;
     }
     onOpenChange(false);
@@ -169,7 +170,7 @@ function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Invitation
     });
     setSaving(false);
     if (!response.ok || !response.info) {
-      toast.error(t('common.errors.unknown'), response.errors?.message);
+      toastServiceError(response.errors);
       return;
     }
     const instance = await netService.instance();
@@ -310,7 +311,7 @@ export default function UsersScreen() {
         return;
       const response = await userManagementService.deactivate(user.id);
       if (!response.ok) {
-        toast.error(t('common.errors.unknown'), response.errors?.message);
+        toastServiceError(response.errors);
         return;
       }
       await refresh();
@@ -332,7 +333,7 @@ export default function UsersScreen() {
         return;
       const response = await inviteService.revoke(invitation.id);
       if (!response.ok) {
-        toast.error(t('common.errors.unknown'), response.errors?.message);
+        toastServiceError(response.errors);
         return;
       }
       await refresh();
@@ -346,10 +347,10 @@ export default function UsersScreen() {
     setQrPreview(null);
     if (!preview) return;
     void inviteService.revoke(preview.invitationId).then((response) => {
-      if (!response.ok) toast.error(t('common.errors.unknown'), response.errors?.message);
+      if (!response.ok) toastServiceError(response.errors);
       else void refresh();
     });
-  }, [qrPreview, refresh, t]);
+  }, [qrPreview, refresh]);
 
   const goToTab = useCallback(
     (tab: 'home' | 'schedule' | 'projects' | 'profile') => router.replace(DASHBOARD_TAB_ROUTE[tab]),

@@ -4,8 +4,7 @@ import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import type { IServiceResponse } from '@/core/interfaces';
 import { IS_WEB } from '@/shared/constants';
 import type { useFormScroll } from '@/shared/components/ui/form';
-import { toast } from '@/shared/libs/toast';
-import { useTranslation } from './use-translation';
+import { toastServiceError } from '@/shared/libs/service-error';
 
 type UseFormSubmitOptions<TValues extends FieldValues, TResult> = {
   form: UseFormReturn<TValues>;
@@ -21,17 +20,6 @@ type UseFormSubmitResult = {
 };
 
 
-const ERROR_KEY: Record<string, string> = {
-  NETWORK_ERROR: 'common.errors.network',
-  TIMEOUT: 'common.errors.timeout',
-  UNAUTHORIZED: 'common.errors.unauthorized',
-  FORBIDDEN: 'common.errors.forbidden',
-  NOT_FOUND: 'common.errors.not-found',
-  CONFLICT: 'common.errors.conflict',
-  VALIDATION_ERROR: 'common.errors.validation',
-  PAIRING_REQUIRED: 'common.errors.pairing-required',
-};
-
 /**
  * Validate, write, and turn the answer into field errors or a toast. The
  * backend returns `errors.fields` keyed by field name, so a 422 lands under the
@@ -43,7 +31,6 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
   request,
   onSuccess,
 }: UseFormSubmitOptions<TValues, TResult>): UseFormSubmitResult {
-  const { tk } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
 
   const submit = useCallback(async () => {
@@ -62,8 +49,10 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
         return;
       }
 
-      const fields = response.errors?.fields;
-      if (fields && Object.keys(fields).length > 0) {
+      const fields = Object.fromEntries(
+        Object.entries(response.errors?.fields ?? {}).filter(([name]) => name in form.getValues()),
+      );
+      if (Object.keys(fields).length > 0) {
         for (const [name, messages] of Object.entries(fields)) {
           form.setError(name as Path<TValues>, { message: messages[0] });
         }
@@ -71,12 +60,11 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
         return;
       }
 
-      const code = response.errors?.code ?? 'UNKNOWN';
-      toast.error(tk(ERROR_KEY[code] ?? 'common.errors.unknown'), response.errors?.message);
+      toastServiceError(response.errors);
     } finally {
       setSubmitting(false);
     }
-  }, [form, formScroll, onSuccess, request, tk]);
+  }, [form, formScroll, onSuccess, request]);
 
   return { submitting, submit };
 }
