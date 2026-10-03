@@ -3,7 +3,7 @@ import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { synchronizeService } from '@/core/services/sync';
 import type { IVoiceReactionPayload } from '@/core/interfaces';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
-import { VOICE_ACTION_TYPE, VOICE_ANSWER_TYPE, VOICE_ASSISTANT_TYPE, VOICE_CONTEXT_TYPE, VOICE_DONE_TYPE, VOICE_EVENT_TYPE, VOICE_INTERRUPTED_TYPE, VOICE_MIC_FRAME_MS, VOICE_MODE_DUPLEX, VOICE_SAMPLE_RATE, VOICE_SKIP_TYPE, VOICE_START_TYPE, VOICE_STOP_TYPE, VOICE_STT_TYPE, VOICE_TRANSCRIPT_MAX_LINES, VOICE_TURN_TYPE } from '@/features/voice/constants/voice';
+import { VOICE_ACTION_TYPE, VOICE_ASSISTANT_TYPE, VOICE_CONTEXT_TYPE, VOICE_DONE_TYPE, VOICE_EVENT_TYPE, VOICE_INTERRUPTED_TYPE, VOICE_MIC_FRAME_MS, VOICE_MODE_DUPLEX, VOICE_SAMPLE_RATE, VOICE_SKIP_TYPE, VOICE_START_TYPE, VOICE_STOP_TYPE, VOICE_STT_TYPE, VOICE_TRANSCRIPT_MAX_LINES, VOICE_TURN_TYPE } from '@/features/voice/constants/voice';
 import { VOICE_ERROR_TYPE } from '@/shared/constants';
 import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
 import type { VoiceAction, VoiceContext, VoicePhase, VoiceSnapshot, VoiceTranscriptLine } from '@/core/types';
@@ -179,10 +179,6 @@ class VoiceService {
   sendContext(context: VoiceContext): void {
     if (!this.active) return;
     synchronizeService.send(VOICE_CONTEXT_TYPE, context);
-  }
-
-  answer(text: string): void {
-    synchronizeService.send(VOICE_ANSWER_TYPE, { text });
   }
 
   setThinking(): void {

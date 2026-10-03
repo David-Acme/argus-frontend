@@ -270,8 +270,12 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
   Done: eleven routes in `HTTP_CONTRACTS`; masked fixture values are
   rehydrated by key (tokens stay strings, timestamps become numbers). Guard's
   own `/health` is not enveloped and is excluded (the app never reads it).
-- [ ] Enum assertions against the protos (`SyncOperation`, `TableName`, voice
+- [x] Enum assertions against the protos (`SyncOperation`, `TableName`, voice
   enums) and the default route ports against the service configs.
+  Done in `tests/unit/wire-vocabulary.test.ts` (against the C++ headers, the
+  sync relay and `route-baseline.txt` + `config.toml.example`). It found one
+  drift: the app could send `voice:answer`, which the relay rejects; nothing
+  called it, so it is deleted.
 - [ ] Tests for `toNetError`, the three QR parsers, refresh outcomes and dates.
 - [ ] `noUncheckedIndexedAccess`, feature by feature.
 - [ ] Visual regression of the web export at three widths (Playwright).

@@ -31,12 +31,8 @@ export function useVoiceSession() {
     voiceService.setMuted(muted);
   }, []);
 
-  const answer = useCallback((text: string) => {
-    voiceService.answer(text);
-  }, []);
-
   return useMemo(
-    () => ({ ...state, start, stop, interrupt, skip, setMuted, answer }),
-    [state, start, stop, interrupt, skip, setMuted, answer],
+    () => ({ ...state, start, stop, interrupt, skip, setMuted }),
+    [state, start, stop, interrupt, skip, setMuted],
   );
 }
