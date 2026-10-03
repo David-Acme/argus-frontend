@@ -35,6 +35,7 @@ export const home = {
   'preview-description-2': 'Sistema Argus',
   'preview-description-3': 'Próximamente disponible',
   welcome: 'Bienvenido, {name}',
+  'welcome-anonymous': 'Bienvenido',
   'activity-delta': '+3,45%',
   insights: 'Métricas',
   messages: 'Mensajes',

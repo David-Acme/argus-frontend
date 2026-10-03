@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/core/stores';
 import { notificationService } from '@/core/services/notification.service';
-import { runServiceAction } from '@/shared/libs/service-action';
+import { runOptimistic } from '@/shared/libs/optimistic-action';
 import type { IAuthUser } from '@/core/interfaces';
 import { ActivityCard } from '@/shared/components/activity/activity-card';
 import { CameraGrid } from '@/features/home/components/camera-grid';
@@ -15,11 +15,19 @@ import { SectionHeader } from '@/shared/components/ui/section-header';
 import type { CalendarEntry } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
-import { calendarEntryEditHref, EntryActionsMenu, entryPermissions } from '@/features/agenda';
+import {
+  byStart,
+  CALENDAR_LENSES,
+  calendarEntryEditHref,
+  EntryActionsMenu,
+  entryPermissions,
+} from '@/features/agenda';
+import { NOTIFICATION_LENSES, unreadAfterReads } from '@/features/home/model/notification-optimistic';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { AppScreen } from '@/shared/components/layout';
 import { GuardCard, useGuardMode } from '@/features/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
+import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/features/home/hooks/use-now';
@@ -31,7 +39,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 function firstNameOf(user: IAuthUser | null): string {
-  return user?.name?.trim().split(/\s+/)[0] || 'usuario';
+  return user?.name?.trim().split(/\s+/)[0] ?? '';
 }
 
 export default function HomeScreen() {
@@ -41,22 +49,23 @@ export default function HomeScreen() {
   const date = useDateFormatter();
   const { isShort } = useWindowClass();
   const { can, role } = usePermissions();
-  const markNotificationsRead = useCallback((ids: readonly string[]) => {
-    void runServiceAction({ call: () => notificationService.markRead(ids) });
-  }, []);
   const guardAccess = guardAccessForRole(role);
   const guardMode = useGuardMode(guardAccess.view).data;
   const {
     cameraTiles,
     projects,
     today,
-    notifications,
-    unreadNotifications,
+    notifications: syncedNotifications,
+    unreadNotifications: syncedUnread,
     summary,
     activityLevels,
   } = useDashboardData();
   const [query, setQuery] = useState('');
   const now = useNow(60000);
+  const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
+  const { rows: notifications } = useOptimisticRows(syncedNotifications, NOTIFICATION_LENSES);
+  const unreadNotifications = unreadAfterReads(syncedUnread, syncedNotifications, notifications);
+  const firstName = firstNameOf(user);
 
   const matches = useCallback(
     (text: string) =>
@@ -64,7 +73,11 @@ export default function HomeScreen() {
     [query]
   );
 
-  const todayRows = useMemo(() => today.filter((entry) => matches(entry.title)), [today, matches]);
+  const todayRows = useMemo(
+    () =>
+      todayEntries.filter((entry) => date.sameDay(new Date(entry.startsAt), new Date(now)) && matches(entry.title)),
+    [date, matches, now, todayEntries]
+  );
   const visibleProjects = useMemo(
     () => projects.filter((project) => matches(project.name)),
     [projects, matches]
@@ -96,6 +109,13 @@ export default function HomeScreen() {
   }, [summary]);
 
   const noCameras = summary.camerasTotal === 0;
+
+  const markNotificationsRead = useCallback((ids: readonly string[]) => {
+    void runOptimistic({
+      intents: ids.map((id) => ({ table: 'notification', kind: 'update', recordId: id, values: { isRead: true } })),
+      call: () => notificationService.markRead(ids),
+    });
+  }, []);
 
   const renderActions = useCallback(
     (entry: CalendarEntry) => (
@@ -169,7 +189,7 @@ export default function HomeScreen() {
       <View className="gap-5">
         <View className="flex-row items-center justify-between gap-4">
           <Text variant={isShort ? 'headline' : 'display'} className="flex-1" numberOfLines={2}>
-            {t('screens.home.welcome', { name: firstNameOf(user) })}
+            {firstName ? t('screens.home.welcome', { name: firstName }) : t('screens.home.welcome-anonymous')}
           </Text>
           <View className="flex-row gap-2">
             <NotificationPopover

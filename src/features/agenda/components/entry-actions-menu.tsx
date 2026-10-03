@@ -1,4 +1,4 @@
-import { useMemo, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Pressable, View } from 'react-native';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { projectTaskService } from '@/core/services/project-task.service';
@@ -24,7 +24,8 @@ import {
   type CalendarEntryAction,
 } from '@/features/agenda/model/calendar-entry-actions';
 import { cn } from '@/shared/libs/utils';
-import { runServiceAction } from '@/shared/libs/service-action';
+import { isPendingRecordId } from '@/shared/libs/optimistic';
+import { runOptimistic } from '@/shared/libs/optimistic-action';
 
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
@@ -55,9 +56,12 @@ export function EntryActionsMenu({
   });
   const usesContextMenu = IS_NATIVE && !usesSheet;
   const isEvent = entry.source === 'event';
+  const recordId = calendarEntryRecordId(entry);
+  const pending = isPendingRecordId(recordId);
 
-  const options = useMemo<MenuOption<CalendarEntryAction>[]>(() => {
+  const options = ((): MenuOption<CalendarEntryAction>[] => {
     const list: MenuOption<CalendarEntryAction>[] = [];
+    if (pending) return list;
     for (const action of availableCalendarEntryActions(entry, { canEdit, canDelete })) {
       if (action === 'edit' && onEdit) {
         list.push({ value: action, label: t('common.edit'), icon: 'pencil' });
@@ -77,7 +81,7 @@ export function EntryActionsMenu({
       }
     }
     return list;
-  }, [canDelete, canEdit, entry, onEdit, t]);
+  })();
 
   const run = async (action: CalendarEntryAction) => {
     if (action === 'edit') {
@@ -85,26 +89,19 @@ export function EntryActionsMenu({
       return;
     }
 
-    const id = calendarEntryRecordId(entry);
     if (action === 'toggle') {
       const status = entry.status === 'complete' ? 'todo' : 'done';
-      await runServiceAction({
-        call: () => projectTaskService.update(id, { status }),
-        success: t('screens.agenda.updated'),
+      await runOptimistic({
+        intents: [{ table: 'project_task', kind: 'update', recordId, values: { status } }],
+        call: () => projectTaskService.update(recordId, { status }),
       });
       return;
     }
 
-    await runServiceAction({
-      confirm: {
-        title: t('screens.agenda.delete-title'),
-        description: t('screens.agenda.delete-description', { title: entry.title }),
-        confirmLabel: t('common.delete'),
-        cancelLabel: t('common.cancel'),
-        intent: 'danger',
-      },
-      call: () => (isEvent ? calendarEventService.remove(id) : projectTaskService.remove(id)),
-      success: t('screens.agenda.deleted'),
+    await runOptimistic({
+      intents: [{ table: isEvent ? 'calendar_event' : 'project_task', kind: 'delete', recordId }],
+      call: () => (isEvent ? calendarEventService.remove(recordId) : projectTaskService.remove(recordId)),
+      undo: { title: t('screens.agenda.deleted'), description: entry.title },
     });
   };
 

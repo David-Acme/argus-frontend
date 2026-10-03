@@ -2,6 +2,7 @@ export const common = {
   continue: 'Continuar',
   step: 'Paso {current} de {total}',
   retry: 'Reintentar',
+  undo: 'Deshacer',
   offline: {
     title: 'Sin conexión con Argus',
     description: 'Mostrando lo último guardado en este dispositivo.',
@@ -28,6 +29,7 @@ export const common = {
   delete: 'Eliminar',
   share: 'Compartir',
   saving: 'Guardando…',
+  loading: 'Cargando',
   validation: {
     required: 'Este campo es obligatorio',
     'too-short': 'Demasiado corto',

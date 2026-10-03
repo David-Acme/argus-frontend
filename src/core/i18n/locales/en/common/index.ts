@@ -3,6 +3,7 @@ export const common = {
   continue: 'Continue',
   step: 'Step {current} of {total}',
   retry: 'Retry',
+  undo: 'Undo',
   offline: {
     title: 'No connection to Argus',
     description: 'Showing what this device saved last.',
@@ -29,6 +30,7 @@ export const common = {
   delete: 'Delete',
   share: 'Share',
   saving: 'Saving…',
+  loading: 'Loading',
   validation: {
     required: 'This field is required',
     'too-short': 'Too short',

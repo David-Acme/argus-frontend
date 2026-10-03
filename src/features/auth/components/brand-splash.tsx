@@ -1,7 +1,10 @@
 import { ActivityIndicator, View } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
+import { useTranslation } from '@/shared/hooks/use-translation';
 
 export function BrandSplash() {
+  const { t } = useTranslation();
+
   return (
     <View className="bg-background flex-1 items-center justify-center gap-5 px-8" accessibilityLabel="Argus">
       <View className="bg-interactive size-24 items-center justify-center rounded-[28px] shadow-lg shadow-black/10">
@@ -11,7 +14,7 @@ export function BrandSplash() {
         </View>
       </View>
       <Text variant="title">Argus</Text>
-      <ActivityIndicator accessibilityLabel="Loading" />
+      <ActivityIndicator accessibilityLabel={t('common.loading')} />
     </View>
   );
 }

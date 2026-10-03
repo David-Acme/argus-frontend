@@ -15,6 +15,7 @@ type AgendaItemProps = {
   onLongPress?: () => void;
   actions?: ReactNode;
   contextMenu?: (trigger: ReactElement) => ReactNode;
+  pending?: boolean;
 };
 
 const RAIL_CLASS: Record<AgendaStatus, string> = {
@@ -32,6 +33,7 @@ export function AgendaItem({
   onLongPress,
   actions,
   contextMenu,
+  pending = false,
 }: AgendaItemProps) {
   const { t } = useTranslation();
   const statusLabel = {
@@ -44,7 +46,8 @@ export function AgendaItem({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${statusLabel}, ${time}`}
-      className="min-w-0 flex-1 flex-row active:opacity-80"
+      className="web:hover:bg-surface-secondary/40 min-w-0 flex-1 flex-row active:opacity-80"
+      disabled={pending}
       onPress={onPress}
       onLongPress={onLongPress}>
       <View className={cn('w-[3px]', RAIL_CLASS[status])} />
@@ -55,7 +58,7 @@ export function AgendaItem({
           </Text>
         </View>
         <View className="flex-row items-center justify-between gap-3">
-          <Text className="text-muted-foreground text-caption">{statusLabel}</Text>
+          <Text variant="caption">{statusLabel}</Text>
           <View className="flex-row items-center gap-1.5">
             <Icon name="clock" className="text-muted-foreground size-3.5" />
             <Text variant="micro" className="text-foreground-secondary font-medium">{time}</Text>
@@ -71,11 +74,14 @@ export function AgendaItem({
   );
 
   return (
-    <View >
-      <View className="bg-card flex-row overflow-hidden rounded-[20px] shadow-md shadow-black/[0.06]">
-        {contextMenu ? contextMenu(pressable) : pressable}
-        {actions ? <View className="pt-3 pr-3">{actions}</View> : null}
-      </View>
+    <View
+      accessibilityState={{ busy: pending }}
+      className={cn(
+        'bg-card flex-row overflow-hidden rounded-[20px] shadow-md shadow-black/[0.06]',
+        pending && 'opacity-60',
+      )}>
+      {contextMenu ? contextMenu(pressable) : pressable}
+      {actions ? <View className="pt-3 pr-3">{actions}</View> : null}
     </View>
   );
 }

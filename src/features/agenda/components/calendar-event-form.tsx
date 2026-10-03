@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { ICalendarEventFormRecord } from '@/core/interfaces';
+import type { ICalendarEventCreate, ICalendarEventFormRecord } from '@/core/interfaces';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -29,7 +29,6 @@ import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { calendarEventFormActions } from '@/features/agenda/model/calendar-entry-actions';
-import { toast } from '@/shared/libs/toast';
 
 type CalendarEventFormProps = {
   open: boolean;
@@ -104,33 +103,34 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
   const allDay = useWatch({ control: form.control, name: 'isAllDay' });
   const day = useWatch({ control: form.control, name: 'day' });
 
+  const eventBody = (values: EventValues): ICalendarEventCreate => ({
+    title: values.title,
+    location: values.location || undefined,
+    description: values.description || undefined,
+    isAllDay: values.isAllDay,
+    startsAt: Math.round(
+      date.atInputTime(new Date(values.day), values.isAllDay ? '00:00' : values.time).getTime() / 1000
+    ),
+    endsAt:
+      values.endTime && !values.isAllDay
+        ? Math.round(date.atInputTime(new Date(values.day), values.endTime).getTime() / 1000)
+        : undefined,
+  });
+
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values) => {
-      const body = {
-        title: values.title,
-        location: values.location || undefined,
-        description: values.description || undefined,
-        isAllDay: values.isAllDay,
-        startsAt: Math.round(
-          date
-            .atInputTime(new Date(values.day), values.isAllDay ? '00:00' : values.time)
-            .getTime() / 1000
-        ),
-        endsAt:
-          values.endTime && !values.isAllDay
-            ? Math.round(date.atInputTime(new Date(values.day), values.endTime).getTime() / 1000)
-            : undefined,
-      };
-      return event
-        ? calendarEventService.update(event.id, body)
-        : calendarEventService.create(body);
-    },
-    onSuccess: () => {
-      toast.success(t('screens.agenda.event-saved'));
-      onOpenChange(false);
-    },
+    request: (values) =>
+      event ? calendarEventService.update(event.id, eventBody(values)) : calendarEventService.create(eventBody(values)),
+    optimistic: (values) => ({
+      intents: [
+        event
+          ? { table: 'calendar_event', kind: 'update', recordId: event.id, values: eventBody(values) }
+          : { table: 'calendar_event', kind: 'create', values: eventBody(values) },
+      ],
+      success: t('screens.agenda.event-saved'),
+    }),
+    onSuccess: () => onOpenChange(false),
   });
 
   const handleOpenChange = useCallback(

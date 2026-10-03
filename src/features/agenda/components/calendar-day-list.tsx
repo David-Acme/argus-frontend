@@ -9,6 +9,15 @@ import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { isPendingEntry } from '@/features/agenda/model/calendar-optimistic';
+
+type DaySlotProps = {
+  label: string;
+  hint?: string;
+  icon: 'calendar' | 'plus';
+  onPress?: () => void;
+  grow: boolean;
+};
 
 type CalendarDayListProps = {
   entries: readonly CalendarEntry[];
@@ -19,7 +28,34 @@ type CalendarDayListProps = {
   renderContextMenu?: (entry: CalendarEntry, trigger: ReactElement) => ReactNode;
   onCreate?: () => void;
   addLabel?: string;
+  fillCreate?: boolean;
 };
+
+const VIRTUALIZE_FROM = 30;
+
+function DaySlot({ label, hint, icon, onPress, grow }: DaySlotProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={hint ? `${label}. ${hint}` : label}
+      disabled={!onPress}
+      onPress={onPress}
+      className={cn(
+        'border-border web:hover:bg-surface-secondary/60 items-center justify-center gap-2 rounded-2xl border border-dashed px-4 active:opacity-70',
+        grow ? 'min-h-[120px] flex-1 py-6' : 'min-h-14 flex-row py-3',
+      )}>
+      <Icon name={icon} className="text-muted-foreground size-5" />
+      <Text variant="caption" className="text-foreground-secondary text-center">
+        {label}
+      </Text>
+      {hint ? (
+        <Text variant="caption" className="text-foreground text-center font-medium">
+          {hint}
+        </Text>
+      ) : null}
+    </Pressable>
+  );
+}
 
 export function CalendarDayList({
   entries,
@@ -30,6 +66,7 @@ export function CalendarDayList({
   renderContextMenu,
   onCreate,
   addLabel,
+  fillCreate = false,
 }: CalendarDayListProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
@@ -85,7 +122,12 @@ export function CalendarDayList({
       );
 
       return (
-        <View className="flex-row items-center gap-3 py-2.5">
+        <View
+          accessibilityState={{ busy: isPendingEntry(item) }}
+          className={cn(
+            'web:hover:bg-surface-secondary/50 -mx-2 flex-row items-center gap-3 rounded-xl px-2 py-2.5',
+            isPendingEntry(item) && 'opacity-60',
+          )}>
           {renderContextMenu ? renderContextMenu(item, pressable) : pressable}
           {renderActions?.(item)}
         </View>
@@ -96,18 +138,24 @@ export function CalendarDayList({
 
   if (entries.length === 0) {
     return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={addLabel ?? emptyLabel}
-        disabled={!onCreate}
+      <DaySlot
+        icon="calendar"
+        label={emptyLabel}
+        hint={onCreate ? addLabel : undefined}
         onPress={onCreate}
-        className="border-border min-h-[120px] flex-1 items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-6 active:opacity-70">
-        <Icon name="calendar" className="text-muted-foreground size-5" />
-        <Text className="text-muted-foreground text-center text-caption">{emptyLabel}</Text>
-        {onCreate && addLabel ? (
-          <Text className="text-foreground text-caption font-medium">{addLabel}</Text>
-        ) : null}
-      </Pressable>
+        grow
+      />
+    );
+  }
+
+  if (entries.length < VIRTUALIZE_FROM) {
+    return (
+      <View className="flex-1 gap-1">
+        {entries.map((item) => (
+          <View key={item.id}>{renderItem({ item })}</View>
+        ))}
+        {onCreate && addLabel ? <DaySlot icon="plus" label={addLabel} onPress={onCreate} grow={fillCreate} /> : null}
+      </View>
     );
   }
 

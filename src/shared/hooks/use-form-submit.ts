@@ -4,13 +4,22 @@ import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import type { IServiceResponse } from '@/core/interfaces';
 import { IS_WEB } from '@/shared/constants';
 import type { useFormScroll } from '@/shared/components/ui/form';
+import type { OptimisticIntentInput } from '@/shared/libs/optimistic';
+import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { toastServiceError } from '@/shared/libs/service-error';
+
+type OptimisticSubmit = {
+  intents: readonly OptimisticIntentInput<object>[];
+  success?: string;
+  errorTitle?: string;
+};
 
 type UseFormSubmitOptions<TValues extends FieldValues, TResult> = {
   form: UseFormReturn<TValues>;
   formScroll?: ReturnType<typeof useFormScroll>;
   request: (values: TValues) => Promise<IServiceResponse<TResult>>;
   onSuccess?: (info: TResult | null) => void;
+  optimistic?: (values: TValues) => OptimisticSubmit;
 };
 
 type UseFormSubmitResult = {
@@ -23,6 +32,7 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
   formScroll,
   request,
   onSuccess,
+  optimistic,
 }: UseFormSubmitOptions<TValues, TResult>): UseFormSubmitResult {
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,9 +44,18 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
     }
 
     if (!IS_WEB) Keyboard.dismiss();
+    const values = form.getValues();
+
+    if (optimistic) {
+      const plan = optimistic(values);
+      onSuccess?.(null);
+      await runOptimistic({ ...plan, call: () => request(values) });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const response = await request(form.getValues());
+      const response = await request(values);
       if (response.ok) {
         onSuccess?.(response.info);
         return;
@@ -57,7 +76,7 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
     } finally {
       setSubmitting(false);
     }
-  }, [form, formScroll, onSuccess, request]);
+  }, [form, formScroll, onSuccess, optimistic, request]);
 
   return { submitting, submit };
 }

@@ -8,17 +8,19 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { CalendarMonthView } from '@/features/agenda/components/calendar-month-view';
 
 type DayPickerFieldProps = {
-  value: Date;
+  value: Date | null;
   onChange: (day: Date) => void;
+  placeholder?: string;
+  onClear?: () => void;
 };
 
-export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
+export function DayPickerField({ value, onChange, placeholder, onClear }: DayPickerFieldProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState(value);
   const today = date.startOfDay(new Date());
-  const label = date.formatPickerDay(value);
+  const [month, setMonth] = useState(value ?? today);
+  const label = value ? date.formatPickerDay(value) : (placeholder ?? t('screens.agenda.pick-day'));
 
   const shortcut = (day: Date, text: string) => (
     <Pressable
@@ -36,13 +38,25 @@ export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
         accessibilityRole="button"
         accessibilityLabel={t('screens.agenda.pick-day')}
         onPress={() => {
-          setMonth(value);
+          setMonth(value ?? today);
           setOpen(true);
         }}
-        className="border-border bg-card h-11 flex-1 flex-row items-center justify-between rounded-md border px-3 active:opacity-70">
-        <Text variant="body">{label}</Text>
+        className="border-border bg-card web:hover:bg-surface-secondary/60 h-11 flex-1 flex-row items-center justify-between rounded-md border px-3 active:opacity-70">
+        <Text variant="body" className={value ? undefined : 'text-placeholder'}>
+          {label}
+        </Text>
         <Icon name="calendar" className="text-muted-foreground size-4" />
       </Pressable>
+      {value && onClear ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('screens.agenda.clear-day')}
+          hitSlop={8}
+          onPress={onClear}
+          className="bg-surface-secondary size-8 items-center justify-center rounded-full active:opacity-70">
+          <Icon name="x" className="text-foreground-secondary size-4" />
+        </Pressable>
+      ) : null}
       {shortcut(today, t('screens.agenda.today'))}
       {shortcut(date.addDays(today, 1), t('screens.agenda.tomorrow'))}
 
@@ -73,7 +87,7 @@ export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
           </View>
           <CalendarMonthView
             anchor={month}
-            selected={value}
+            selected={value ?? today}
             entries={[]}
             onSelectDay={(day) => {
               onChange(day);

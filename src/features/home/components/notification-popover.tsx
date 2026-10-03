@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 import {
   Popover,
@@ -36,11 +37,17 @@ export function NotificationPopover({
   items,
   onSeen,
 }: NotificationPopoverProps) {
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
   const preview = items.slice(0, PREVIEW_LIMIT);
+
   const markSeen = (open: boolean) => {
-    if (!open || !onSeen) return;
+    if (!open) {
+      setFresh(new Set());
+      return;
+    }
     const unread = preview.filter((item) => !item.isRead).map((item) => item.id);
-    if (unread.length > 0) onSeen(unread);
+    setFresh(new Set(unread));
+    if (unread.length > 0) onSeen?.(unread);
   };
 
   return (
@@ -50,7 +57,7 @@ export function NotificationPopover({
       </PopoverTrigger>
       <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">
-          <Text className="text-body font-semibold">{title}</Text>
+          <Text variant="body" className="font-semibold">{title}</Text>
           <Text variant="caption" className="text-foreground-secondary">{summary}</Text>
         </View>
 
@@ -63,7 +70,7 @@ export function NotificationPopover({
                 <View
                   className={cn(
                     'mt-1.5 size-2 shrink-0 rounded-full',
-                    item.isRead ? 'bg-border' : 'bg-interactive'
+                    item.isRead && !fresh.has(item.id) ? 'bg-border' : 'bg-interactive'
                   )}
                 />
                 <View className="min-w-0 flex-1">

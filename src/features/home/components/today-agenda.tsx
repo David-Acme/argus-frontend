@@ -6,7 +6,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { AgendaItem } from '@/features/agenda';
+import { AgendaItem, isPendingEntry } from '@/features/agenda';
 import { Panel } from '@/shared/components/ui/panel';
 
 type TodayAgendaProps = {
@@ -89,6 +89,7 @@ export function TodayAgenda({
       title={entry.title}
       time={formatTime(entry)}
       status={entry.status}
+      pending={isPendingEntry(entry)}
       onPress={() => onSelect(entry)}
       actions={renderActions(entry)}
     />

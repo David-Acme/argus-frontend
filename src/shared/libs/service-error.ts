@@ -1,6 +1,6 @@
 import { t } from '@/core/i18n';
 import type { IApiError } from '@/core/interfaces';
-import type { TranslationKey } from '@/core/types';
+import type { ToastAction, TranslationKey } from '@/core/types';
 import { toast } from './toast';
 
 const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
@@ -27,8 +27,25 @@ export function serviceErrorKey(error: IApiError | null | undefined): Translatio
   return (error && ERROR_KEYS[error.code]) ?? 'common.errors.unknown';
 }
 
-export function toastServiceError(error: IApiError | null | undefined, title?: string): void {
+const RETRYABLE_CODES: ReadonlySet<string> = new Set([
+  'NETWORK_ERROR',
+  'TIMEOUT',
+  'DEADLINE_EXCEEDED',
+  'SERVICE_UNAVAILABLE',
+  'BAD_GATEWAY',
+  'INTERNAL_ERROR',
+]);
+
+export function isRetryableServiceError(error: IApiError | null | undefined): boolean {
+  return error != null && RETRYABLE_CODES.has(error.code);
+}
+
+export function toastServiceError(
+  error: IApiError | null | undefined,
+  title?: string,
+  action?: ToastAction,
+): void {
   const message = t(serviceErrorKey(error));
-  if (title) toast.error(title, message);
-  else toast.error(message);
+  if (title) toast.error(title, message, action);
+  else toast.error(message, undefined, action);
 }

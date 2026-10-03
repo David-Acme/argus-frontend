@@ -1,0 +1,2 @@
+export const OPTIMISTIC_TTL_MS = 60_000;
+export const OPTIMISTIC_SETTLE_GRACE_MS = 600;
