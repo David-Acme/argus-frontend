@@ -27,6 +27,7 @@ type TaskFormProps = {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   task?: IProjectTaskCacheRow | null;
+  defaultStatus?: ProjectTaskStatus;
 };
 
 const schema = z.object({
@@ -37,7 +38,7 @@ const schema = z.object({
 
 type TaskValues = z.infer<typeof schema>;
 
-export function TaskForm({ open, onOpenChange, projectId, task }: TaskFormProps) {
+export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 'todo' }: TaskFormProps) {
   const { t } = useTranslation();
   const formScroll = useFormScroll();
   const bodyHeight = useOverlayBodyHeight();
@@ -52,10 +53,10 @@ export function TaskForm({ open, onOpenChange, projectId, task }: TaskFormProps)
     if (!open) return;
     form.reset({
       title: task?.title ?? '',
-      status: (task?.status as ProjectTaskStatus) ?? 'todo',
+      status: (task?.status as ProjectTaskStatus) ?? defaultStatus,
       priority: (task?.priority as ProjectTaskPriority) ?? 'none',
     });
-  }, [open, task, form]);
+  }, [open, task, form, defaultStatus]);
 
   const statusOptions = useMemo<MenuOption<ProjectTaskStatus>[]>(
     () => [

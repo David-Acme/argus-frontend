@@ -14,7 +14,7 @@ type ProjectCardRowProps = {
   onPress?: () => void;
 };
 
-const STATUS_TONE: Record<ProjectStatus, string> = {
+export const PROJECT_STATUS_TONE: Record<ProjectStatus, string> = {
   planned: 'bg-border',
   active: 'bg-success',
   paused: 'bg-warning',
@@ -43,14 +43,14 @@ export function ProjectCardRow({
       )}
       onPress={onPress}>
       <View className="flex-row items-center gap-2">
-        <View className={cn('size-2 rounded-full', STATUS_TONE[status])} />
+        <View className={cn('size-2 rounded-full', PROJECT_STATUS_TONE[status])} />
         <Text className="flex-1 text-body font-semibold" numberOfLines={1}>
           {name}
         </Text>
-        <Text className="text-muted-foreground text-micro font-medium">{taskCount}</Text>
+        <Text variant="micro">{taskCount}</Text>
       </View>
       {description ? (
-        <Text className="text-muted-foreground text-xs leading-[17px]" numberOfLines={2}>
+        <Text variant="caption" numberOfLines={2}>
           {description}
         </Text>
       ) : null}

@@ -150,7 +150,7 @@ face login). Signed-in it renders the dashboard inside `DashboardShell`.
   text, icon, input, textarea, form family, adaptive dialog/menu/select,
   sheet, popover, badge, card, qr-code, morph-icon, ...), plus feature
   families `dashboard/` (23), `calendar/` (12), `cameras/` (11),
-  `projects/` (7), `qr/` (6), `layout/`, `toast/`, `confirm/`, `face/`,
+  `projects/` (10), `qr/` (6), `layout/`, `toast/`, `confirm/`, `face/`,
   `avatar/` and `session/session-gate`.
 - **QR scanner (2026-08, user-approved "bottom sheet" design)** — a **reusable**
   native-only scan route. Web/desktop can't enter it: `Stack.Protected guard={IS_NATIVE}`

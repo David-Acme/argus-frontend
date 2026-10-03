@@ -67,11 +67,11 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
 
   const statusOptions = useMemo<MenuOption<ProjectStatus>[]>(
     () => [
-      { value: 'planned', label: t('screens.projects.status-backlog') },
-      { value: 'active', label: t('screens.projects.status-doing') },
-      { value: 'paused', label: t('screens.projects.status-todo') },
-      { value: 'done', label: t('screens.projects.status-done') },
-      { value: 'canceled', label: t('screens.projects.status-canceled') },
+      { value: 'planned', label: t('screens.projects.project-status-planned') },
+      { value: 'active', label: t('screens.projects.project-status-active') },
+      { value: 'paused', label: t('screens.projects.project-status-paused') },
+      { value: 'done', label: t('screens.projects.project-status-done') },
+      { value: 'canceled', label: t('screens.projects.project-status-canceled') },
     ],
     [t]
   );

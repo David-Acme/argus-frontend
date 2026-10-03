@@ -12,6 +12,7 @@ type TaskRowProps = {
   priority: ProjectTaskPriority;
   priorityLabel: string;
   due?: string;
+  statusTag?: string;
   statusOptions: readonly MenuOption<ProjectTaskStatus>[];
   statusMenuTitle: string;
   closeLabel: string;
@@ -33,6 +34,7 @@ export function TaskRow({
   priority,
   priorityLabel,
   due,
+  statusTag,
   statusOptions,
   statusMenuTitle,
   closeLabel,
@@ -42,7 +44,7 @@ export function TaskRow({
   const finished = status === 'done' || status === 'canceled';
 
   return (
-    <View className="flex-row items-center gap-3 py-2.5">
+    <View className="bg-surface-secondary min-h-11 flex-row items-center gap-3 rounded-[14px] px-3 py-2 web:hover:bg-card-secondary">
       <AdaptiveMenu
         options={statusOptions}
         selected={status}
@@ -75,7 +77,12 @@ export function TaskRow({
           {title}
         </Text>
       </Pressable>
-      {due ? <Text className="text-muted-foreground text-micro">{due}</Text> : null}
+      {statusTag ? (
+        <View className="bg-card rounded-full px-2 py-0.5">
+          <Text variant="micro">{statusTag}</Text>
+        </View>
+      ) : null}
+      {due ? <Text variant="micro">{due}</Text> : null}
       <TaskPriorityMark priority={priority} label={priorityLabel} />
     </View>
   );

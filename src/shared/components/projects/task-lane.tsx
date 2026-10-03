@@ -1,0 +1,51 @@
+import { type ReactNode } from 'react';
+import { View } from 'react-native';
+import { Text } from '@/shared/components/ui/text';
+import { cn } from '@/shared/libs/utils';
+import { CreateAffordance } from './create-affordance';
+
+type TaskLaneProps = {
+  label: string;
+  count: number;
+  toneClassName: string;
+  emptyLabel: string;
+  addLabel: string;
+  onAdd?: () => void;
+  children: ReactNode;
+};
+
+export function TaskLane({
+  label,
+  count,
+  toneClassName,
+  emptyLabel,
+  addLabel,
+  onAdd,
+  children,
+}: TaskLaneProps) {
+  const empty = count === 0;
+
+  return (
+    <View className="bg-card flex-1 gap-3 rounded-3xl p-4 shadow-md shadow-black/[0.05]">
+      <View className="flex-row items-center gap-2">
+        <View className={cn('size-2 rounded-full', toneClassName)} />
+        <Text variant="label" className="flex-1 font-semibold" numberOfLines={1}>
+          {label}
+        </Text>
+        <View className="bg-surface-secondary min-w-6 items-center rounded-full px-2 py-0.5">
+          <Text variant="micro" className="text-foreground-secondary tabular-nums">
+            {String(count)}
+          </Text>
+        </View>
+      </View>
+      {empty ? null : <View className="gap-2">{children}</View>}
+      {onAdd ? (
+        <CreateAffordance label={addLabel} onPress={onAdd} fill={empty} />
+      ) : empty ? (
+        <View className="border-border-subtle min-h-[140px] flex-1 items-center justify-center rounded-[14px] border-2 border-dashed px-4 py-6">
+          <Text variant="caption">{emptyLabel}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
