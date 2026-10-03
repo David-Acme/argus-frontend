@@ -150,10 +150,10 @@ export default function CameraDetailScreen() {
   }, [id]);
 
   const step = useCallback(
-    async (angle: number) => {
+    async (direction: number) => {
       if (!id) return;
       setMoving(true);
-      const result = await cameraControlService.move(id, { angle });
+      const result = await cameraControlService.move(id, { angle: direction });
       setMoving(false);
       if (!result.ok) toast.error(t('screens.cameras.device-offline'), result.errors?.message);
     },

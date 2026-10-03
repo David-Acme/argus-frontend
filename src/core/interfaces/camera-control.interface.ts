@@ -2,10 +2,8 @@ import type { DayNightMode } from '@/core/types';
 
 /** Wire payloads of the camera-control endpoints (device, not database). */
 export interface ICameraPtz {
-  /** Absolute motor target. */
   x?: number;
   y?: number;
-  /** Relative step in degrees; takes precedence over x/y. */
   angle?: number;
 }
 

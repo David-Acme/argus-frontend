@@ -159,8 +159,7 @@ export const BOTTOM_NAV_HEIGHT = 60;
 /** Delay between speed-dial items, so they cascade instead of popping at once. */
 export const COMPOSE_ITEM_STAGGER_MS = 45;
 
-/** Degrees per PTZ nudge; the Tapo motors take relative steps. */
-export const PTZ_STEP_DEGREES = 15;
+export const PTZ_DIRECTIONS = { right: 0, up: 90, left: 180, down: 270 } as const;
 
 /** Icons a camera can be tagged with, so the user picks instead of typing. */
 export const CAMERA_ICONS: readonly IconName[] = [
