@@ -15,6 +15,7 @@ import { users } from './users';
 import { profile } from './profile';
 import { security } from './security';
 import { settings } from './settings';
+import { voiceprint } from './voiceprint';
 
 export const screens = {
   home,
@@ -34,4 +35,5 @@ export const screens = {
   profile,
   security,
   settings,
+  voiceprint,
 };

@@ -4,6 +4,7 @@ import { useAuthStore, useLocaleStore } from '@/core/stores';
 import type { LanguagePreference, NetPairedInstance, ThemePreference, UserRole } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
+import { VoiceprintPanel } from '@/features/voiceprint';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
@@ -125,6 +126,10 @@ export default function ProfileScreen() {
             />
           </SettingsGroup>
         ) : null}
+
+        <SettingsGroup title={t('screens.voiceprint.section')}>
+          <VoiceprintPanel />
+        </SettingsGroup>
 
         <SettingsGroup title={t('screens.profile.appearance')}>
           <View className="p-1.5">
