@@ -214,7 +214,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
   },
 };
 
-const JSON_COLUMNS = new Set(['capabilities', 'config', 'points', 'file_paths', 'data']);
+const JSON_COLUMNS = new Set(['capabilities', 'config', 'points', 'file_paths', 'data', 'details']);
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 

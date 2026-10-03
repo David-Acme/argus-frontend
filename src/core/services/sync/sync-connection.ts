@@ -2,12 +2,8 @@ import type { IArgusSocket } from '@/core/interfaces';
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import type { SessionRefreshOutcome } from '@/core/types';
-import {
-  SYNC_WS_CONNECT_TIMEOUT_MS,
-  SYNC_WS_PATH,
-  WS_RECONNECT_BASE_MS,
-  WS_RECONNECT_MAX_MS,
-} from '@/shared/constants';
+import { SYNC_WS_CONNECT_TIMEOUT_MS, SYNC_WS_PATH } from '@/shared/constants';
+import { backoffDelay } from './sync-backoff';
 import { openSocket } from './sync-socket';
 
 export type SyncConnectionHooks = {
@@ -23,6 +19,8 @@ export type SyncConnectionHooks = {
 
 export class SyncConnection {
   private socket: IArgusSocket | null = null;
+  private generation = 0;
+  private abandonCurrent: ((reason: string) => void) | null = null;
   private connected = false;
   private connecting: Promise<boolean> | null = null;
   private manualClose = false;
@@ -83,8 +81,14 @@ export class SyncConnection {
 
   halt(): void {
     this.manualClose = true;
+    this.generation += 1;
+    this.connecting = null;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
+  }
+
+  recycle(reason: string): void {
+    this.abandonCurrent?.(reason);
   }
 
   release(): void {
@@ -101,6 +105,7 @@ export class SyncConnection {
   }
 
   private async openConnection(): Promise<boolean> {
+    const generation = this.generation;
     const accessToken = this.hooks.accessToken() ?? null;
     let instance;
     try {
@@ -119,26 +124,27 @@ export class SyncConnection {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
     } catch (reason) {
+      if (generation !== this.generation) return false;
       const code = (reason as { code?: string })?.code;
       if (code === 'UNAUTHORIZED') {
-        await this.recoverUnauthorized();
+        await this.recoverUnauthorized(accessToken);
         return false;
       }
       this.scheduleReconnect();
       return false;
     }
 
-    if (this.manualClose || this.hooks.isClearing()) {
+    if (generation !== this.generation || this.manualClose || this.hooks.isClearing()) {
       socket.close();
       return false;
     }
 
     this.socket = socket;
     this.hooks.onAttach();
-    return this.watch(socket);
+    return this.watch(socket, accessToken);
   }
 
-  private watch(socket: IArgusSocket): Promise<boolean> {
+  private watch(socket: IArgusSocket, accessToken: string): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       let settled = false;
       let closed = false;
@@ -159,6 +165,7 @@ export class SyncConnection {
         if (closed) return;
         closed = true;
         clearTimeout(timer);
+        if (this.abandonCurrent === abandon) this.abandonCurrent = null;
         if (this.socket === socket) {
           this.socket = null;
           this.hooks.onLost(new Error(`Socket closed (${code}): ${reason}`));
@@ -167,6 +174,12 @@ export class SyncConnection {
         if (!opened) settle(false);
         if (reconnect && !this.manualClose) this.scheduleReconnect();
       };
+
+      const abandon = (reason: string): void => {
+        socket.close(4000, reason);
+        handleClose(4000, reason);
+      };
+      this.abandonCurrent = abandon;
 
       socket.onOpen = () => {
         if (this.manualClose || this.hooks.isClearing()) {
@@ -187,7 +200,7 @@ export class SyncConnection {
       socket.onError = (code, message) => {
         if (code === 'UNAUTHORIZED') {
           handleClose(401, message, false);
-          void this.recoverUnauthorized();
+          void this.recoverUnauthorized(accessToken);
           return;
         }
         handleClose(0, message);
@@ -200,7 +213,7 @@ export class SyncConnection {
     if (this.manualClose) return;
     if (this.reconnectTimer) return;
     void netService.refreshAddress().catch(() => undefined);
-    const wait = Math.min(WS_RECONNECT_BASE_MS * 2 ** this.reconnectAttempt, WS_RECONNECT_MAX_MS);
+    const wait = backoffDelay(this.reconnectAttempt);
     this.reconnectAttempt += 1;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
@@ -208,8 +221,9 @@ export class SyncConnection {
     }, wait);
   }
 
-  private async recoverUnauthorized(): Promise<void> {
-    const outcome = await this.hooks.refreshSession();
+  private async recoverUnauthorized(failedToken: string): Promise<void> {
+    const current = this.hooks.accessToken() ?? null;
+    const outcome = current !== null && current !== failedToken ? 'refreshed' : await this.hooks.refreshSession();
     if (outcome === 'rejected') {
       this.manualClose = true;
       await this.hooks.clearSession();

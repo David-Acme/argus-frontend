@@ -1,6 +1,7 @@
 import type { IAuditLogEntry } from '@/core/interfaces';
 import type { AuditLogApplyResult, AuditPatch, SyncTableKey } from '@/core/types';
-import { chunkedBatch, existingByServerId, type PreparedOperation } from './sync-db-utils';
+import { database } from '@/core/database';
+import { batchPrepared, existingByServerId, type PreparedOperation } from './sync-db-utils';
 import { toAuditPatch } from './audit-log-patch';
 
 export type PreparedAuditLogs = AuditLogApplyResult & {
@@ -47,10 +48,12 @@ class AuditLogProcessorService {
     return { operations, affected, missing: [...missing] };
   }
 
-  async apply(entries: IAuditLogEntry[]): Promise<AuditLogApplyResult> {
-    const { operations, affected, missing } = await this.prepare(entries);
-    await chunkedBatch(operations);
-    return { affected, missing };
+  apply(entries: IAuditLogEntry[]): Promise<AuditLogApplyResult> {
+    return database.write(async () => {
+      const { operations, affected, missing } = await this.prepare(entries);
+      await batchPrepared(operations);
+      return { affected, missing };
+    });
   }
 }
 

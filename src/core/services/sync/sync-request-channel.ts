@@ -16,6 +16,7 @@ type PendingRequest<T> = {
 export type SyncRequestTransport = {
   isOpen: () => boolean;
   send: (type: string, payload: unknown) => void;
+  onTimeout: (reason: string) => void;
 };
 
 export class SyncRequestChannel {
@@ -32,6 +33,7 @@ export class SyncRequestChannel {
       const timer = setTimeout(() => {
         this.pendingSync = null;
         reject(new Error('Synchronization response timeout'));
+        this.transport.onTimeout('Synchronization response timeout');
       }, SYNC_RESPONSE_TIMEOUT_MS);
       this.pendingSync = {
         resolve: (response) => {
@@ -73,6 +75,7 @@ export class SyncRequestChannel {
       const timer = setTimeout(() => {
         this.pendingAudit.delete(scope);
         reject(new Error('Audit synchronization response timeout'));
+        this.transport.onTimeout('Audit synchronization response timeout');
       }, SYNC_RESPONSE_TIMEOUT_MS);
       this.pendingAudit.set(scope, {
         resolve: (response) => {

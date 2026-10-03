@@ -12,11 +12,6 @@ export async function batchPrepared(operations: PreparedOperation[]): Promise<vo
   }
 }
 
-export async function chunkedBatch(operations: PreparedOperation[]): Promise<void> {
-  if (operations.length === 0) return;
-  await database.write(() => batchPrepared(operations));
-}
-
 export async function existingByServerId(
   key: SyncTableKey,
   ids: string[]

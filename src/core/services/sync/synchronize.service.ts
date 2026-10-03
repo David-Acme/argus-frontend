@@ -1,6 +1,6 @@
+import { database } from '@/core/database';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
-import { WS_RECONNECT_BASE_MS, WS_RECONNECT_MAX_MS } from '@/shared/constants';
 import type { SessionRefreshOutcome, SyncOperation, SyncUserPatch } from '@/core/types';
 import { SYNC_TABLE_KEYS } from '@/core/types';
 import type { IAuditLogEntry, IInitialInfo, ISocketEmitDto } from '@/core/interfaces';
@@ -8,8 +8,10 @@ import { AuditLogPager } from './audit-log-pager';
 import { parseAuthContext } from './auth-context';
 import { LiveFrameApplier } from './live-frame-applier';
 import { ProjectionEpoch } from './projection-epoch';
+import { ownsProjection, ProjectionOwnerStore, type ProjectionOwner } from './projection-owner';
 import { userPatchFromRows, userPatchesFromAudit } from './session-user-patch';
 import { SYNC_CATCH_UP_DELAY_MS, SYNC_STATUS_UNAUTHORIZED } from './sync-constants';
+import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
 import { withoutCreatedCursor } from './sync-cursor';
 import { SyncCursorStore } from './sync-cursor-store';
@@ -41,7 +43,10 @@ class SynchronizeService {
   private lastSyncAt: number | null = null;
   private syncError: string | null = null;
   private catchUpRequested = false;
+  private readyEpoch: number | null = null;
+  private contextResyncQueued = false;
   private readonly epoch = new ProjectionEpoch();
+  private readonly owner = new ProjectionOwnerStore(database.localStorage);
   private readonly cursors: SyncCursorStore;
   private readonly connection: SyncConnection;
   private readonly channel: SyncRequestChannel;
@@ -68,6 +73,7 @@ class SynchronizeService {
     this.channel = new SyncRequestChannel({
       isOpen: () => this.connection.hasSocket,
       send: (type, payload) => this.send(type, payload),
+      onTimeout: (reason) => this.connection.recycle(reason),
     });
     this.router = new SyncMessageRouter({
       initialInfo: (info) => this.onInitialInfo(info),
@@ -183,8 +189,9 @@ class SynchronizeService {
     const clear = this.clearChain
       .then(async () => {
         await Promise.allSettled([this.activeSync, this.contextSync, this.live.settled]);
-        await destroyAllRows(SYNC_TABLE_KEYS);
+        await this.owner.forget();
         this.cursors.clear(userId == null ? '' : String(userId));
+        await destroyAllRows(SYNC_TABLE_KEYS);
         viewCacheService.clear();
       })
       .finally(() => {
@@ -243,14 +250,24 @@ class SynchronizeService {
     this.scheduleSync(SYNC_CATCH_UP_DELAY_MS);
   }
 
+  private currentOwner(): ProjectionOwner | null {
+    const user = this.authStore?.getState().user;
+    return user ? { userId: String(user.id), role: user.role } : null;
+  }
+
   private async performSync(): Promise<void> {
     const epoch = this.epoch.current;
+    const owner = this.currentOwner();
     this.syncing = true;
     this.syncError = null;
     this.catchUpRequested = false;
     this.live.pause();
     try {
       await this.runSync(epoch);
+      if (owner && this.epoch.isCurrent(epoch)) {
+        await this.owner.write(owner);
+        this.readyEpoch = epoch;
+      }
       this.lastSyncAt = Date.now();
       this.syncRetryAttempt = 0;
       this.syncing = false;
@@ -265,12 +282,10 @@ class SynchronizeService {
       }
     } catch (error) {
       this.syncError = errorMessage(error);
-      this.live.pause();
+      const projectionReady = this.readyEpoch === epoch && this.epoch.isCurrent(epoch);
+      if (!projectionReady || !this.live.resume()) this.live.pause();
       if (this.epoch.isCurrent(epoch) && !isSyncRequestError(error, SYNC_STATUS_UNAUTHORIZED)) {
-        const wait = Math.min(
-          WS_RECONNECT_BASE_MS * 2 ** this.syncRetryAttempt,
-          WS_RECONNECT_MAX_MS
-        );
+        const wait = backoffDelay(this.syncRetryAttempt);
         this.syncRetryAttempt += 1;
         this.scheduleSync(wait);
       }
@@ -287,7 +302,10 @@ class SynchronizeService {
     const stale = await this.audit.syncAll(epoch);
     if (stale.length === 0) return;
 
-    for (const scope of stale) await this.audit.resetBaseline(scope, epoch);
+    for (const scope of stale) {
+      await this.audit.resetBaseline(scope, epoch);
+      this.live.forgetAuditHigh(scope);
+    }
     for (const key of SYNC_TABLE_KEYS) cursors[key] = withoutCreatedCursor(cursors[key]);
     this.cursors.save(cursors);
     await this.rows.pageRows(cursors, epoch);
@@ -300,13 +318,17 @@ class SynchronizeService {
       void this.sessionActions?.clearSession();
       return;
     }
-    const previousRole = this.authStore.getState().user?.role;
     this.sessionActions?.updateUser({ id: info.id, role: info.role, isActive: info.isActive });
-    if (previousRole && previousRole !== info.role) {
-      this.startContextResync();
-      return;
-    }
-    void this.syncOnce();
+    const epoch = this.epoch.current;
+    const expected = { userId: String(info.id), role: info.role };
+    void this.owner
+      .read()
+      .catch(() => null)
+      .then((owner) => {
+        if (!this.epoch.isCurrent(epoch)) return;
+        if (ownsProjection(owner, expected)) void this.syncOnce();
+        else this.startContextResync();
+      });
   }
 
   private onAuthContextChanged(info: unknown): void {
@@ -325,16 +347,20 @@ class SynchronizeService {
   }
 
   private startContextResync(): void {
-    if (this.contextSync) return;
+    if (this.contextSync) {
+      this.contextResyncQueued = true;
+      return;
+    }
     this.resetLiveState();
     const epoch = this.epoch.current;
 
     const contextSync = (async () => {
       await Promise.allSettled([this.activeSync, this.live.settled]);
       if (!this.epoch.isCurrent(epoch)) return;
+      await this.owner.forget();
+      this.cursors.clear();
       await destroyAllRows(SYNC_TABLE_KEYS);
       if (!this.epoch.isCurrent(epoch)) return;
-      this.cursors.clear();
       viewCacheService.clear();
       await this.startSync();
     })()
@@ -343,6 +369,9 @@ class SynchronizeService {
       })
       .finally(() => {
         if (this.contextSync === contextSync) this.contextSync = null;
+        if (!this.contextResyncQueued) return;
+        this.contextResyncQueued = false;
+        this.startContextResync();
       });
     this.contextSync = contextSync;
   }

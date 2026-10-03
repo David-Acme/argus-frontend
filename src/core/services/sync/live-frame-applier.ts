@@ -1,5 +1,6 @@
 import { database } from '@/core/database';
 import type { IAuditLogEntry, ISocketEmitDto } from '@/core/interfaces';
+import type { AuditLogScope } from '@/core/types';
 import { auditLogProcessorService } from './audit-log-processor.service';
 import { emptyLiveAuditHigh, freshLiveAuditEntries, groupLiveEvents } from './live-frame-batch';
 import type { ProjectionEpoch } from './projection-epoch';
@@ -58,6 +59,10 @@ export class LiveFrameApplier {
     this.pause();
     this.queue = [];
     this.auditHigh = emptyLiveAuditHigh();
+  }
+
+  forgetAuditHigh(scope: AuditLogScope): void {
+    this.auditHigh = { ...this.auditHigh, [scope]: 0 };
   }
 
   resume(): boolean {
