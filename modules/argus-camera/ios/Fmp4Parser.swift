@@ -5,10 +5,12 @@ import Foundation
 final class Fmp4Parser {
   private(set) var formatDescription: CMVideoFormatDescription?
   private var timescale: Int64 = 0
+  private var trackId: UInt32 = 0
 
   func reset() {
     formatDescription = nil
     timescale = 0
+    trackId = 0
   }
 
   func consumeInit(_ data: Data) -> Bool {
@@ -29,7 +31,7 @@ final class Fmp4Parser {
     guard let moof = top.first(where: { $0.type == "moof" }),
       let mdat = top.first(where: { $0.type == "mdat" }),
       let traf = Self.boxes(in: data, from: moof.contentStart, to: moof.end)
-        .first(where: { $0.type == "traf" })
+        .first(where: { $0.type == "traf" && carriesVideo(data, $0) })
     else { return }
 
     var defaultDuration: UInt32 = 0
@@ -151,11 +153,27 @@ final class Fmp4Parser {
     let contentStart: Int
   }
 
+  private func carriesVideo(_ data: Data, _ traf: Box) -> Bool {
+    guard trackId != 0 else { return true }
+    guard let tfhd = Self.boxes(in: data, from: traf.contentStart, to: traf.end)
+      .first(where: { $0.type == "tfhd" }),
+      tfhd.contentStart + 8 <= tfhd.end
+    else { return false }
+    return data.be32(tfhd.contentStart + 4) == trackId
+  }
+
   private func parseTrack(_ data: Data, _ trak: Box) {
-    guard let mdia = Self.boxes(in: data, from: trak.contentStart, to: trak.end)
-      .first(where: { $0.type == "mdia" })
-    else { return }
+    let trakBoxes = Self.boxes(in: data, from: trak.contentStart, to: trak.end)
+    guard let mdia = trakBoxes.first(where: { $0.type == "mdia" }) else { return }
     let mdiaBoxes = Self.boxes(in: data, from: mdia.contentStart, to: mdia.end)
+    guard let hdlr = mdiaBoxes.first(where: { $0.type == "hdlr" }),
+      hdlr.contentStart + 12 <= hdlr.end,
+      String(bytes: data[hdlr.contentStart + 8..<hdlr.contentStart + 12], encoding: .ascii) == "vide"
+    else { return }
+    if let tkhd = trakBoxes.first(where: { $0.type == "tkhd" }) {
+      let version = data[tkhd.contentStart]
+      trackId = data.be32(tkhd.contentStart + (version == 1 ? 20 : 12))
+    }
     if let mdhd = mdiaBoxes.first(where: { $0.type == "mdhd" }) {
       let version = data[mdhd.contentStart]
       let offset = version == 1 ? 20 : 12
