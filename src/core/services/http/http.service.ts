@@ -43,15 +43,21 @@ class HttpService {
     files: NetHttpFile[] | undefined,
     config: IHttpConfig = {},
   ): Promise<IServiceResponse<T>> {
-    const instance = await netService.instance();
+    let instance;
+    try {
+      instance = await netService.instance();
+    } catch {
+      return errorResponse(0, 'STORAGE_ERROR', 'The pairing could not be read');
+    }
     if (!instance) return errorResponse(0, 'PAIRING_REQUIRED', 'No paired instance');
 
+    const credential = httpAuth().credential();
     let result;
     try {
       result = await netService.request({
         url: serviceUrl(instance, path),
         method,
-        headers: await this.buildHeaders(Boolean(files)),
+        headers: this.buildHeaders(Boolean(files), credential.accessToken),
         body,
         files,
       });
@@ -61,20 +67,22 @@ class HttpService {
     }
 
     if (result.status === 401 && !config.skipAuthRetry) {
-      const outcome = await httpAuth().refreshSession();
+      const outcome = await httpAuth().refreshSession(credential);
       if (outcome === 'refreshed') {
         return this.request<T>(method, path, body, files, { skipAuthRetry: true });
       }
-      if (outcome === 'rejected') void httpAuth().clearSession();
+      if (outcome === 'rejected') void httpAuth().clearSession(credential);
+      if (outcome === 'unavailable' && credential.accessToken) {
+        return errorResponse(503, 'SERVICE_UNAVAILABLE', 'The session could not be renewed right now');
+      }
     }
 
     return readEnvelope<T>(result.status, result.body);
   }
 
-  private async buildHeaders(withFile: boolean): Promise<Record<string, string>> {
+  private buildHeaders(withFile: boolean, accessToken: string | null): Record<string, string> {
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (!withFile) headers['Content-Type'] = 'application/json';
-    const accessToken = httpAuth().getAccessToken();
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     return headers;
   }

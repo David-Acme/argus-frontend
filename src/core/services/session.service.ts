@@ -2,14 +2,20 @@ import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
-import { readRefreshResponse } from '@/core/services/http/refresh-response';
+import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
 import { registerHttpAuth } from '@/core/services/http';
+import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { useAuthStore } from '@/core/stores/auth.store';
-import { NET_STORAGE_KEYS, SESSION_USER_KEY } from '@/shared/constants';
-import type { AuthStatus, NetPairedInstance, SessionRefreshOutcome } from '@/core/types';
+import {
+  NET_STORAGE_KEYS,
+  SESSION_TOKEN_PERSIST_ATTEMPTS,
+  SESSION_TOKEN_PERSIST_RETRY_MS,
+  SESSION_USER_KEY,
+} from '@/shared/constants';
+import type { AuthStatus, NetPairedInstance, SessionCredential, SessionRefreshOutcome } from '@/core/types';
 import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
 const REFRESH_PATH = '/auth/refresh-token';
@@ -29,7 +35,9 @@ type AuthTokens = Pick<IAuthSession, 'accessToken' | 'refreshToken'>;
 class SessionService {
   private initialization: Promise<SessionBootstrapResult> | null = null;
   private refreshing: Promise<SessionRefreshOutcome> | null = null;
+  private clearing: Promise<void> | null = null;
   private secureStorageQueue: Promise<void> = Promise.resolve();
+  private persistRetry: ReturnType<typeof setTimeout> | null = null;
   private sessionVersion = 0;
   private initialized = false;
 
@@ -39,6 +47,10 @@ class SessionService {
 
   getAccessToken(): string | null {
     return useAuthStore.getState().accessToken;
+  }
+
+  credential(): SessionCredential {
+    return { accessToken: this.getAccessToken(), version: this.sessionVersion };
   }
 
   async initialize(): Promise<SessionBootstrapResult> {
@@ -67,7 +79,9 @@ class SessionService {
     await this.persistSession(session);
   }
 
-  refreshSession(): Promise<SessionRefreshOutcome> {
+  refreshSession(failed?: SessionCredential): Promise<SessionRefreshOutcome> {
+    const settled = settledRefresh(failed, this.credential());
+    if (settled) return Promise.resolve(settled);
     if (this.refreshing) return this.refreshing;
 
     this.refreshing = this.performRefresh().finally(() => {
@@ -84,19 +98,35 @@ class SessionService {
     this.persistUser(user);
   }
 
-  async clearSession(): Promise<void> {
+  clearSession(failed?: SessionCredential): Promise<void> {
+    if (failed && failed.version !== this.sessionVersion) return Promise.resolve();
+    if (this.clearing) return this.clearing;
+    const clearing = this.performClear().finally(() => {
+      if (this.clearing === clearing) this.clearing = null;
+    });
+    this.clearing = clearing;
+    return clearing;
+  }
+
+  private async performClear(): Promise<void> {
     this.sessionVersion += 1;
+    this.cancelPersistRetry();
     const userId = useAuthStore.getState().user?.id ?? null;
     viewCacheCoordinatorService.stop();
-    await synchronizeService.clearLocalProjection(userId);
-    useAuthStore.getState().clear();
-    viewCacheService.setUserId(null);
     try {
-      storageService.remove(SESSION_USER_KEY);
-      viewCacheService.clear();
-    } catch {
+      await synchronizeService.clearLocalProjection(userId);
+    } catch (error) {
+      log.error('session', 'the local projection was not wiped; the next sync rebuilds it', error);
+    } finally {
+      useAuthStore.getState().clear();
+      viewCacheService.setUserId(null);
+      try {
+        storageService.remove(SESSION_USER_KEY);
+        viewCacheService.clear();
+      } catch {
+      }
+      await this.deletePersistedTokens();
     }
-    await this.deletePersistedTokens();
   }
 
   private async restore(): Promise<SessionBootstrapResult> {
@@ -189,7 +219,8 @@ class SessionService {
     }
   }
 
-  private persistTokens(tokens: AuthTokens): Promise<void> {
+  private persistTokens(tokens: AuthTokens, attempt = 1): Promise<void> {
+    const version = this.sessionVersion;
     this.secureStorageQueue = this.secureStorageQueue
       .catch(() => undefined)
       .then(async () => {
@@ -197,9 +228,27 @@ class SessionService {
           secureStorageService.setStringAsync(NET_STORAGE_KEYS.accessToken, tokens.accessToken),
           secureStorageService.setStringAsync(NET_STORAGE_KEYS.refreshToken, tokens.refreshToken),
         ]);
+      })
+      .catch((error: unknown) => {
+        log.error('session', `tokens were not persisted (attempt ${attempt})`, error);
+        if (attempt < SESSION_TOKEN_PERSIST_ATTEMPTS) this.schedulePersistRetry(tokens, version, attempt + 1);
       });
-    this.secureStorageQueue = this.secureStorageQueue.catch(() => undefined);
     return this.secureStorageQueue;
+  }
+
+  private schedulePersistRetry(tokens: AuthTokens, version: number, attempt: number): void {
+    this.cancelPersistRetry();
+    this.persistRetry = setTimeout(() => {
+      this.persistRetry = null;
+      const stillCurrent =
+        version === this.sessionVersion && useAuthStore.getState().refreshToken === tokens.refreshToken;
+      if (stillCurrent) void this.persistTokens(tokens, attempt);
+    }, SESSION_TOKEN_PERSIST_RETRY_MS * attempt);
+  }
+
+  private cancelPersistRetry(): void {
+    if (this.persistRetry) clearTimeout(this.persistRetry);
+    this.persistRetry = null;
   }
 
   private deletePersistedTokens(): Promise<void> {
@@ -219,7 +268,7 @@ class SessionService {
 export const sessionService = new SessionService();
 
 registerHttpAuth({
-  getAccessToken: () => sessionService.getAccessToken(),
-  refreshSession: () => sessionService.refreshSession(),
-  clearSession: () => sessionService.clearSession(),
+  credential: () => sessionService.credential(),
+  refreshSession: (failed) => sessionService.refreshSession(failed),
+  clearSession: (failed) => sessionService.clearSession(failed),
 });

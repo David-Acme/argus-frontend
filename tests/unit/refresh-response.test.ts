@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readRefreshResponse } from '@/core/services/http/refresh-response';
+import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
 
 const body = (info: unknown) => JSON.stringify({ status: 200, info, errors: null });
 
@@ -30,5 +30,23 @@ describe('readRefreshResponse', () => {
       accessToken: 'a',
       refreshToken: null,
     });
+  });
+});
+
+describe('settledRefresh', () => {
+  const current = { accessToken: 'T2', version: 4 };
+
+  test('a 401 for a token that was already rotated retries with the current one', () => {
+    expect(settledRefresh({ accessToken: 'T1', version: 4 }, current)).toBe('refreshed');
+  });
+
+  test('a 401 from a previous session neither refreshes nor clears this one', () => {
+    expect(settledRefresh({ accessToken: 'T1', version: 3 }, current)).toBe('unavailable');
+  });
+
+  test('a 401 for the current token needs a real refresh', () => {
+    expect(settledRefresh({ accessToken: 'T2', version: 4 }, current)).toBeNull();
+    expect(settledRefresh(undefined, current)).toBeNull();
+    expect(settledRefresh({ accessToken: null, version: 4 }, { accessToken: null, version: 4 })).toBeNull();
   });
 });

@@ -1,4 +1,16 @@
+import type { SessionCredential, SessionRefreshOutcome } from '@/core/types';
+
 type RefreshAnswer = { status: number; body: string };
+
+export function settledRefresh(
+  failed: SessionCredential | undefined,
+  current: SessionCredential,
+): SessionRefreshOutcome | null {
+  if (!failed) return null;
+  if (failed.version !== current.version) return 'unavailable';
+  if (current.accessToken && current.accessToken !== failed.accessToken) return 'refreshed';
+  return null;
+}
 
 export type RefreshReading =
   | { outcome: 'rejected' | 'unavailable' }

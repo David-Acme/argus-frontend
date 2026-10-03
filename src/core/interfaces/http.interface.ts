@@ -1,4 +1,4 @@
-import type { SessionRefreshOutcome } from '@/core/types';
+import type { SessionCredential, SessionRefreshOutcome } from '@/core/types';
 
 export interface IHttpConfig {
   skipAuthRetry?: boolean;
@@ -18,7 +18,7 @@ export interface IServiceResponse<T> {
 }
 
 export interface IHttpAuthBridge {
-  getAccessToken(): string | null;
-  refreshSession(): Promise<SessionRefreshOutcome>;
-  clearSession(): Promise<void>;
+  credential(): SessionCredential;
+  refreshSession(failed: SessionCredential): Promise<SessionRefreshOutcome>;
+  clearSession(failed: SessionCredential): Promise<void>;
 }

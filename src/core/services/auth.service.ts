@@ -1,4 +1,5 @@
 import { httpService } from '@/core/services/http';
+import { errorResponse } from '@/core/services/http/http-envelope';
 import { sessionService } from '@/core/services/session.service';
 import { useLocaleStore } from '@/core/stores';
 import { LOGOUT_REVOKE_TIMEOUT_MS } from '@/shared/constants';
@@ -57,9 +58,7 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    const revoke = httpService
-      .patch<{ updated: boolean } | null>(LOGOUT_PATH, undefined, { skipAuthRetry: true })
-      .catch(() => undefined);
+    const revoke = httpService.patch<{ updated: boolean } | null>(LOGOUT_PATH).catch(() => undefined);
     await Promise.race([
       revoke,
       new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_REVOKE_TIMEOUT_MS)),
@@ -79,24 +78,17 @@ class AuthService {
     const response = await httpService.get<IDeviceLoginStatusResponse>(`${DEVICE_LOGIN_PATH}/${id}`, {
       skipAuthRetry: true,
     });
-    if (
-      response.ok &&
-      response.info?.status === 'approved' &&
-      response.info.accessToken &&
-      response.info.refreshToken
-    ) {
-      await sessionService.establish({
-        accessToken: response.info.accessToken,
-        refreshToken: response.info.refreshToken,
-        user: {
-          id: response.info.userId ?? 0,
-          name: response.info.name ?? '—',
-          role: response.info.role ?? 'resident',
-          isActive: true,
-          personId: null,
-        },
-      });
+    const info = response.ok ? response.info : null;
+    if (info?.status !== 'approved') return response;
+    const { accessToken, refreshToken, userId, role } = info;
+    if (!accessToken || !refreshToken || !userId || !role) {
+      return errorResponse(response.status, 'INVALID_RESPONSE', 'The approved login is missing its session');
     }
+    await sessionService.establish({
+      accessToken,
+      refreshToken,
+      user: { id: userId, name: info.name ?? '—', role, isActive: true, personId: null },
+    });
     return response;
   }
 
