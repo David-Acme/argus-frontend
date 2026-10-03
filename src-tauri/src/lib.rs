@@ -71,6 +71,7 @@ fn argus_socket_close(state: State<'_, SocketState>, socket_id: String, code: f6
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+  let _ = rustls::crypto::ring::default_provider().install_default();
   tauri::Builder::default()
     .manage(SocketState::default())
     .invoke_handler(tauri::generate_handler![
