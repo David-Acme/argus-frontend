@@ -94,8 +94,8 @@ export default function PairingScreen() {
             className="mb-4"
           />
         ) : null}
-        <Text variant="h3">{t('screens.pairing.title')}</Text>
-        <Text className="text-foreground-secondary text-sm leading-5">
+        <Text variant="title">{t('screens.pairing.title')}</Text>
+        <Text variant="caption" className="text-foreground-secondary">
           {t('screens.pairing.subtitle')}
         </Text>
       </NativeOnlyAnimatedView>
@@ -111,7 +111,7 @@ export default function PairingScreen() {
           ) : (
             <View className="flex-row items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
               <Icon name="monitor" className="text-accent-strong size-5" />
-              <Text className="flex-1 text-sm leading-5">
+              <Text variant="body" className="flex-1">
                 {t('screens.pairing.desktop-hint')}
               </Text>
             </View>
@@ -132,7 +132,7 @@ export default function PairingScreen() {
               <Text>{t('screens.pairing.success')}</Text>
             </View>
             {flow.qr ? (
-              <Text variant="muted">{hostLabel(flow.qr.host)}</Text>
+              <Text variant="caption">{hostLabel(flow.qr.host)}</Text>
             ) : null}
           </View>
         ) : null}
@@ -163,7 +163,7 @@ export default function PairingScreen() {
 
         {(flow.phase === 'idle' || flow.phase === 'error') && showAddress ? (
           <View className="gap-1.5">
-            <Text className="text-foreground-secondary text-sm">
+            <Text variant="caption" className="text-foreground-secondary">
               {t('screens.pairing.address-label')}
             </Text>
             <Input
@@ -176,7 +176,7 @@ export default function PairingScreen() {
               keyboardType="numbers-and-punctuation"
               accessibilityLabel={t('screens.pairing.address-label')}
             />
-            <Text variant="muted" className="text-xs leading-4">
+            <Text variant="caption">
               {t('screens.pairing.address-hint')}
             </Text>
           </View>

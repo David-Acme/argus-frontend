@@ -60,10 +60,10 @@ export default function ApproveScreen() {
         <View className="bg-accent-soft size-16 items-center justify-center rounded-full">
           <Icon name="monitor" className="text-accent-strong size-8" />
         </View>
-        <Text variant="h3" className="text-center">
+        <Text variant="title" className="text-center">
           {t('screens.approve.title')}
         </Text>
-        <Text className="text-foreground-secondary text-center text-sm leading-5">
+        <Text variant="caption" className="text-foreground-secondary text-center">
           {t('screens.approve.subtitle')}
         </Text>
       </View>
@@ -92,7 +92,7 @@ export default function ApproveScreen() {
       {phase === 'error' ? (
         <View className="items-center gap-3">
           <Icon name="triangle-alert" className="text-error-strong size-8" />
-          <Text variant="muted" className="text-center">
+          <Text variant="caption" className="text-center">
             {t('screens.approve.error')}
           </Text>
           <Button variant="outline" onPress={() => setPhase('idle')}>

@@ -10,10 +10,10 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: t('screens.not-found.title') }} />
       <CenteredScreen maxWidth={448}>
-        <Text variant="h4" className="text-center">
+        <Text variant="headline" className="text-center">
           {t('screens.not-found.title')}
         </Text>
-        <Text variant="muted" className="text-center leading-5">
+        <Text variant="caption" className="text-center leading-5">
           {t('screens.not-found.body')}
         </Text>
         <Link href="/" className="mt-2">

@@ -19,10 +19,10 @@ export function VoiceWebNotice() {
         <Icon name="messages-square" className="text-accent-strong size-8" />
       </View>
       <View className="items-center gap-2">
-        <Text variant="h3" className="text-center">
+        <Text variant="title" className="text-center">
           {t('screens.voice.web-only-title')}
         </Text>
-        <Text className="text-foreground-secondary text-center text-sm leading-5">
+        <Text variant="caption" className="text-foreground-secondary text-center">
           {t('screens.voice.web-only-hint')}
         </Text>
       </View>

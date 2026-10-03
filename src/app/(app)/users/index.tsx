@@ -197,8 +197,8 @@ export default function UsersScreen() {
       }>
       <View className="gap-5">
         <View className="gap-1.5">
-          <Text variant="h2">{t('screens.users.title')}</Text>
-          <Text className="text-foreground-secondary text-sm leading-5">
+          <Text variant="display">{t('screens.users.title')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">
             {t('screens.users.subtitle')}
           </Text>
         </View>

@@ -26,7 +26,7 @@ export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
       accessibilityLabel={text}
       onPress={() => onChange(day)}
       className="bg-surface-secondary rounded-full px-3 py-1.5 active:opacity-70">
-      <Text className="text-xs font-medium">{text}</Text>
+      <Text variant="micro" className="font-medium">{text}</Text>
     </Pressable>
   );
 
@@ -40,7 +40,7 @@ export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
           setOpen(true);
         }}
         className="border-border bg-card h-11 flex-1 flex-row items-center justify-between rounded-md border px-3 active:opacity-70">
-        <Text className="text-sm">{label}</Text>
+        <Text variant="body">{label}</Text>
         <Icon name="calendar" className="text-muted-foreground size-4" />
       </Pressable>
       {shortcut(today, t('screens.agenda.today'))}
@@ -53,7 +53,7 @@ export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
         closeLabel={t('common.close')}>
         <View className="gap-2 pb-1">
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-semibold">{date.formatMonthYear(month)}</Text>
+            <Text variant="label" className="font-semibold">{date.formatMonthYear(month)}</Text>
             <View className="flex-row gap-1">
               <Pressable
                 accessibilityRole="button"

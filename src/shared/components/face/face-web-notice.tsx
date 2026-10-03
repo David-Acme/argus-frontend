@@ -20,10 +20,10 @@ export function FaceWebNotice({ mode }: { mode: string }) {
         <Icon name="scan-face" className="text-accent-strong size-8" />
       </View>
       <View className="items-center gap-2">
-        <Text variant="h3" className="text-center">
+        <Text variant="title" className="text-center">
           {t('screens.face.web-only-title')}
         </Text>
-        <Text className="text-foreground-secondary text-center text-sm leading-5">
+        <Text variant="caption" className="text-foreground-secondary text-center">
           {t(enrolling ? 'screens.face.web-only-enroll' : 'screens.face.web-only-login')}
         </Text>
       </View>

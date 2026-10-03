@@ -51,11 +51,11 @@ export function NotificationPopover({
       <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">
           <Text className="text-body font-semibold">{title}</Text>
-          <Text className="text-foreground-secondary text-xs">{summary}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{summary}</Text>
         </View>
 
         {preview.length === 0 ? (
-          <Text className="text-foreground-secondary mt-2 text-sm leading-5">{emptyLabel}</Text>
+          <Text variant="caption" className="text-foreground-secondary mt-2">{emptyLabel}</Text>
         ) : (
           <View className="mt-3 gap-3">
             {preview.map((item) => (
@@ -71,7 +71,7 @@ export function NotificationPopover({
                     {item.title}
                   </Text>
                   <Text
-                    className="text-foreground-secondary text-xs leading-4"
+                    variant="caption" className="text-foreground-secondary"
                     numberOfLines={2}>
                     {item.body}
                   </Text>

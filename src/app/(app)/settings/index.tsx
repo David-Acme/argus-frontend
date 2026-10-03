@@ -49,7 +49,7 @@ export default function SettingsScreen() {
         <View className={isWide ? 'flex-row items-end justify-between gap-6' : 'gap-4'}>
           <View className="min-w-0 flex-1 gap-1.5">
             <Text variant="display">{t('screens.settings.title')}</Text>
-            <Text className="text-foreground-secondary text-sm leading-5">{t('screens.settings.subtitle')}</Text>
+            <Text variant="caption" className="text-foreground-secondary">{t('screens.settings.subtitle')}</Text>
           </View>
           {levelControl}
         </View>

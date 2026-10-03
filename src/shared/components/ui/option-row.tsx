@@ -51,7 +51,7 @@ export function OptionRow({
           {option.label}
         </Text>
         {option.description ? (
-          <Text className="text-muted-foreground mt-0.5 text-xs">{option.description}</Text>
+          <Text variant="caption" className="mt-0.5">{option.description}</Text>
         ) : null}
       </View>
       {selected ? <Icon name="check" className="text-foreground size-4" /> : null}

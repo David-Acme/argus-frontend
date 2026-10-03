@@ -65,7 +65,7 @@ export function CameraLiveView({
       <View
         testID={`camera-live-${cameraId}`}
         className="bg-card items-center justify-center rounded-2xl p-6">
-        <Text className="text-foreground-secondary text-center text-sm">
+        <Text variant="caption" className="text-foreground-secondary text-center">
           {t('screens.cameras.live-unsupported')}
         </Text>
       </View>

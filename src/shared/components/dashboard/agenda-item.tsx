@@ -58,7 +58,7 @@ export function AgendaItem({
           <Text className="text-muted-foreground text-caption">{statusLabel}</Text>
           <View className="flex-row items-center gap-1.5">
             <Icon name="clock" className="text-muted-foreground size-3.5" />
-            <Text className="text-foreground-secondary text-xs font-medium">{time}</Text>
+            <Text variant="micro" className="text-foreground-secondary font-medium">{time}</Text>
           </View>
         </View>
         {note ? (

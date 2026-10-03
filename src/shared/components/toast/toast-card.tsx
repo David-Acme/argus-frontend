@@ -40,7 +40,7 @@ export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
             {item.title}
           </Text>
           {item.description ? (
-            <Text className="text-foreground-secondary mt-0.5 text-xs leading-4" numberOfLines={3}>
+            <Text variant="caption" className="text-foreground-secondary mt-0.5" numberOfLines={3}>
               {item.description}
             </Text>
           ) : null}

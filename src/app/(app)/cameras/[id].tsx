@@ -210,7 +210,7 @@ export default function CameraDetailScreen() {
                     <Text className="text-body font-semibold">
                       {t('screens.cameras.ptz')}
                     </Text>
-                    <Text className="text-foreground-secondary text-xs" numberOfLines={1}>
+                    <Text variant="caption" className="text-foreground-secondary" numberOfLines={1}>
                       {device?.model
                         ? [device.model, device.firmware].filter(Boolean).join(' · ')
                         : t('screens.cameras.device-offline')}

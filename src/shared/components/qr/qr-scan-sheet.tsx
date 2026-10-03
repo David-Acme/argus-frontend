@@ -94,17 +94,17 @@ function QrScanSheet({
         ) : (
           <Icon name={icon} className={cn('size-3.5', PILL_ICON_TONE[tone])} />
         )}
-        <Text className={cn('text-xs font-semibold', PILL_LABEL_TONE[tone])}>{t(label)}</Text>
+        <Text variant="micro" className={cn('font-semibold', PILL_LABEL_TONE[tone])}>{t(label)}</Text>
       </View>
 
       <Text
-        variant={isSupportingPane ? 'h3' : 'large'}
+        variant={isSupportingPane ? 'title' : 'subhead'}
         className={isSupportingPane ? 'mt-4' : 'mt-3'}>
         {title}
       </Text>
 
       {description === null ? null : (
-        <Text className="text-foreground-secondary mt-1 text-sm leading-5">{description}</Text>
+        <Text variant="caption" className="text-foreground-secondary mt-1">{description}</Text>
       )}
 
       {children === undefined ? null : (

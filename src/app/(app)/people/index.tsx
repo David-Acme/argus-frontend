@@ -87,8 +87,8 @@ export default function PeopleDirectoryScreen() {
     <AppScreen scrollable={false}>
       <View className="flex-1 gap-5">
         <View className="gap-1.5">
-          <Text variant="h2">{t('screens.users.people-directory')}</Text>
-          <Text className="text-foreground-secondary text-sm leading-5">
+          <Text variant="display">{t('screens.users.people-directory')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">
             {t('screens.users.people-directory-subtitle')}
           </Text>
         </View>
@@ -151,19 +151,19 @@ export default function PeopleDirectoryScreen() {
                 <Icon name="user" className="text-foreground-secondary size-6" />
               </View>
               <View className="min-w-0 flex-1 gap-0.5">
-                <Text variant="h4">{[selected.name, selected.lastName].filter(Boolean).join(' ')}</Text>
-                <Text className="text-foreground-secondary text-sm">{t(roleKey(selected.role))}</Text>
+                <Text variant="headline">{[selected.name, selected.lastName].filter(Boolean).join(' ')}</Text>
+                <Text variant="caption" className="text-foreground-secondary">{t(roleKey(selected.role))}</Text>
               </View>
             </View>
             <View className="bg-surface-secondary gap-1 rounded-2xl px-3.5 py-3">
-              <Text className="text-foreground-secondary text-xs">{t('screens.users.member-since', { date: date.formatDayMonth(new Date(selected.createdAt)) })}</Text>
-              <Text className={selected.isActive ? 'text-success text-sm font-medium' : 'text-muted-foreground text-sm font-medium'}>
+              <Text variant="caption" className="text-foreground-secondary">{t('screens.users.member-since', { date: date.formatDayMonth(new Date(selected.createdAt)) })}</Text>
+              <Text variant="label" className={selected.isActive ? 'text-success' : 'text-muted-foreground'}>
                 {selected.isActive ? t('screens.users.active') : t('screens.users.inactive')}
               </Text>
             </View>
             <View className="gap-1.5">
-              <Text className="text-sm font-medium">{t('screens.users.portrait-verification')}</Text>
-              <Text className="text-muted-foreground text-sm leading-5">{t('screens.users.portrait-private')}</Text>
+              <Text variant="label">{t('screens.users.portrait-verification')}</Text>
+              <Text variant="caption">{t('screens.users.portrait-private')}</Text>
               {portraitUri ? (
                 <Image
                   source={{ uri: portraitUri }}

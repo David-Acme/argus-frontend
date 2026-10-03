@@ -332,10 +332,10 @@ export default function FaceScreen() {
             <View className="items-center gap-4 px-8">
               <Icon name="scan-face" className="text-placeholder size-10" />
               <View className="items-center gap-1.5">
-                <Text variant="h4" className="text-center">
+                <Text variant="headline" className="text-center">
                   {t('screens.face.permission-title')}
                 </Text>
-                <Text className="text-foreground-secondary text-center text-sm leading-5">
+                <Text variant="caption" className="text-foreground-secondary text-center">
                   {t('screens.face.permission-hint')}
                 </Text>
               </View>

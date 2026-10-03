@@ -48,7 +48,7 @@ export function CameraTile({
         </View>
       </View>
       <View className="gap-0.5">
-        <Text className="text-sm font-semibold" numberOfLines={1}>
+        <Text variant="label" className="font-semibold" numberOfLines={1}>
           {name}
         </Text>
         <Text className="text-muted-foreground text-micro" numberOfLines={1}>

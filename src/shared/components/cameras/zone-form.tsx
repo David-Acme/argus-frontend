@@ -192,7 +192,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
                   <View className="flex-row items-center justify-between">
                     <FormLabel>{t('screens.cameras.zones')}</FormLabel>
                     <View className="flex-row items-center gap-3">
-                      <Text className="text-muted-foreground text-xs">
+                      <Text variant="caption">
                         {t('screens.cameras.zone-points-count', {
                           count: String(field.value.length),
                         })}
@@ -202,7 +202,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
                         onPress={() => field.onChange(field.value.slice(0, -1))}
                         disabled={field.value.length === 0}
                         className="active:opacity-70">
-                        <Text className="text-foreground-secondary text-xs">
+                        <Text variant="caption" className="text-foreground-secondary">
                           {t('screens.cameras.zone-undo')}
                         </Text>
                       </Pressable>
@@ -211,7 +211,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone }: ZoneFormProps) 
                         onPress={() => field.onChange([])}
                         disabled={field.value.length === 0}
                         className="active:opacity-70">
-                        <Text className="text-foreground-secondary text-xs">
+                        <Text variant="caption" className="text-foreground-secondary">
                           {t('screens.cameras.zone-reset')}
                         </Text>
                       </Pressable>

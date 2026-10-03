@@ -39,7 +39,7 @@ export function CalendarHeader({
           accessibilityLabel={todayLabel}
           className="bg-surface-secondary mr-1 rounded-full px-3 py-2 active:opacity-70"
           onPress={onToday}>
-          <Text className="text-foreground-secondary text-xs font-semibold">{todayLabel}</Text>
+          <Text variant="micro" className="text-foreground-secondary font-semibold">{todayLabel}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"

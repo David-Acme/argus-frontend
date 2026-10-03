@@ -209,7 +209,7 @@ export default function ScheduleScreen() {
           <Text className="text-caption font-medium">{date.formatAgendaDay(selectedDay)}</Text>
           <View className="flex-row items-center gap-2">
             {selectedDayEntries.length > 0 ? (
-              <Text className="text-muted-foreground text-xs">
+              <Text variant="caption">
                 {t('screens.agenda.day-count', {
                   count: String(selectedDayEntries.length),
                 })}

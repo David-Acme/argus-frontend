@@ -19,10 +19,10 @@ export function ServerUnreachable({ onRetry }: ServerUnreachableProps) {
           <Icon name="wifi-off" className="text-foreground-secondary size-6" />
         </View>
         <View className="items-center gap-1.5">
-          <Text variant="h3" className="text-center">
+          <Text variant="title" className="text-center">
             {t('common.server-unreachable.title')}
           </Text>
-          <Text className="text-foreground-secondary text-center text-sm leading-5">
+          <Text variant="caption" className="text-foreground-secondary text-center">
             {t('common.server-unreachable.description')}
           </Text>
         </View>

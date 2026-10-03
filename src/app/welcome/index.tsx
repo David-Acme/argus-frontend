@@ -73,13 +73,13 @@ export default function WelcomeScreen() {
     <View className="bg-background flex-1">
     <CenteredScreen>
       <BlurReveal delay={titleDelay} duration={fullDuration(WELCOME_TITLE_DURATION_MS)} className="items-center">
-        <Text variant="h1" className="text-center">
+        <Text variant="display" className="text-center">
           {t('screens.welcome.title')}
         </Text>
       </BlurReveal>
 
       <BlurReveal delay={subtitleDelay} duration={fullDuration(WELCOME_SUBTITLE_DURATION_MS)} className="items-center">
-        <Text variant="lead" className="text-center">
+        <Text variant="subhead" className="text-center">
           {t('screens.welcome.subtitle')}
         </Text>
       </BlurReveal>

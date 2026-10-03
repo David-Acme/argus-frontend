@@ -75,12 +75,12 @@ export function CalendarDayList({
               {item.title}
             </Text>
             {item.location ? (
-              <Text className="text-muted-foreground mt-0.5 text-xs" numberOfLines={1}>
+              <Text variant="caption" className="mt-0.5" numberOfLines={1}>
                 {item.location}
               </Text>
             ) : null}
           </View>
-          <Text className="text-muted-foreground text-xs font-medium">{formatTime(item)}</Text>
+          <Text variant="micro" className="text-muted-foreground font-medium">{formatTime(item)}</Text>
         </Pressable>
       );
 

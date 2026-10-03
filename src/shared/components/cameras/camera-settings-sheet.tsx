@@ -82,7 +82,7 @@ export function CameraSettingsSheet({
         />
 
         <View className="flex-row items-center justify-between py-2.5">
-          <Text className="text-sm">{t('screens.cameras.day-night')}</Text>
+          <Text variant="body">{t('screens.cameras.day-night')}</Text>
           <AdaptiveSelect
             options={dayNightOptions}
             value={dayNight}

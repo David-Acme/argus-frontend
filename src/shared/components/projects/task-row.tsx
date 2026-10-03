@@ -70,8 +70,8 @@ export function TaskRow({
         className="flex-1 active:opacity-70"
         onPress={onPress}>
         <Text
+          variant="body"
           className={cn(
-            'text-sm',
             finished ? 'text-muted-foreground line-through' : 'text-foreground'
           )}
           numberOfLines={1}>

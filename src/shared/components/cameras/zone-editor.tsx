@@ -90,7 +90,7 @@ export function ZoneEditor({
           ) : null}
         </View>
       </GestureDetector>
-      <Text className="text-muted-foreground text-xs">{hint}</Text>
+      <Text variant="caption">{hint}</Text>
     </View>
   );
 }

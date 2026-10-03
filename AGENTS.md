@@ -133,7 +133,10 @@ src/core/stores/qr-scan.store.ts
   `title` (24/30), `headline` (20/26), `subhead` (17/24), `body` (15/22),
   `label` (14/20 medium), `caption` (13/18 muted), `micro` (11/14 muted).
   New UI uses them instead of `text-[Npx]`; `Text` caps OS font scaling at
-  1.6x so layouts survive the largest accessibility sizes.
+  1.6x so layouts survive the largest accessibility sizes. The legacy
+  `h1–h4`/`muted`/`lead`/`large` variants are gone, and lint rejects a raw
+  `text-xs…text-9xl` or `text-[Npx]` in a `className` outside
+  `src/shared/components/ui/` (the primitives that implement the scale).
 - **Touch targets.** Buttons are at least 44pt tall on touch platforms
   (`default` 44, `lg` 48, `icon` 44; `sm` 40 plus hit slop) and compact on
   web/desktop where a pointer is precise.

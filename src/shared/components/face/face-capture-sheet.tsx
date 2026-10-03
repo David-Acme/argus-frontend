@@ -44,12 +44,12 @@ export function FaceCaptureSheet({
         {enrolling ? (
           <OnboardingSteps current={ONBOARDING_STEPS.face} total={ONBOARDING_STEPS.total} />
         ) : null}
-        <Text variant="h4" numberOfLines={1} maxFontSizeMultiplier={1.25}>
+        <Text variant="headline" numberOfLines={1} maxFontSizeMultiplier={1.25}>
           {title}
         </Text>
         {hint ? (
           <Text
-            className="text-foreground-secondary text-sm leading-5"
+            variant="caption" className="text-foreground-secondary"
             numberOfLines={2}
             maxFontSizeMultiplier={1.25}>
             {hint}
@@ -62,7 +62,7 @@ export function FaceCaptureSheet({
               <Icon name="triangle-alert" className="text-error-strong size-5" />
               <View className="flex-1 gap-0.5">
                 <Text
-                  className="text-error-strong text-sm leading-5"
+                  variant="body" className="text-error-strong"
                   maxFontSizeMultiplier={1.25}>
                   {friendlyError}
                 </Text>
@@ -86,7 +86,7 @@ export function FaceCaptureSheet({
             <View className="flex-row items-center gap-2.5">
               <Icon name="check-circle" className="text-success size-5" />
               <Text
-                className="text-success flex-1 text-sm leading-5"
+                variant="body" className="text-success flex-1"
                 maxFontSizeMultiplier={1.25}>
                 {notice}
               </Text>
@@ -107,7 +107,7 @@ export function FaceCaptureSheet({
             </Button>
           ) : (
             <Text
-              className="text-foreground-secondary text-center text-sm"
+              variant="caption" className="text-foreground-secondary text-center"
               maxFontSizeMultiplier={1.25}>
               {t('screens.face.auto-capture')}
             </Text>

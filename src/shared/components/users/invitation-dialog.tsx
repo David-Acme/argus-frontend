@@ -86,7 +86,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
       }>
       <View className="gap-3.5 pb-1">
         <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.role')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{t('screens.users.role')}</Text>
           <AdaptiveSelect
             options={roles}
             value={role}
@@ -99,12 +99,12 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
           />
         </View>
         <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.capacity')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{t('screens.users.capacity')}</Text>
           <Input value={capacity} onChangeText={setCapacity} keyboardType="number-pad" />
-          <Text className="text-muted-foreground text-xs">{t('screens.users.capacity-hint')}</Text>
+          <Text variant="caption">{t('screens.users.capacity-hint')}</Text>
         </View>
         <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.expires')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{t('screens.users.expires')}</Text>
           <AdaptiveSelect
             options={expiryOptions}
             value={expiry}

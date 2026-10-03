@@ -107,8 +107,8 @@ export default function LoginScreen() {
   return (
     <CenteredScreen maxWidth={448}>
       <View className="items-center gap-2">
-        <Text variant="h3">{t('screens.login.title')}</Text>
-        <Text className="text-foreground-secondary text-center text-sm leading-5">
+        <Text variant="title">{t('screens.login.title')}</Text>
+        <Text variant="caption" className="text-foreground-secondary text-center">
           {t('screens.login.subtitle')}
         </Text>
       </View>
@@ -116,7 +116,7 @@ export default function LoginScreen() {
       {phase === 'loading' || phase === 'waiting-owner' ? (
         <View className="items-center gap-3">
           <Icon name="refresh-cw" className="text-accent-strong size-6" />
-          <Text variant="muted" className="text-center">
+          <Text variant="caption" className="text-center">
             {phase === 'loading'
               ? t('screens.login.preparing')
               : t('screens.login.waiting-owner')}
@@ -129,7 +129,7 @@ export default function LoginScreen() {
           <View className="rounded-2xl border border-border bg-white p-4 shadow-lg shadow-black/5">
             <QrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color={QR_COLORS.foreground} />
           </View>
-          <Text variant="muted" className="text-center">
+          <Text variant="caption" className="text-center">
             {t('screens.login.qr-hint')}
           </Text>
           <Button variant="outline" onPress={refreshChallenge}>
@@ -149,7 +149,7 @@ export default function LoginScreen() {
       {phase === 'expired' || phase === 'error' ? (
         <View className="items-center gap-3">
           <Icon name="triangle-alert" className="text-error-strong size-8" />
-          <Text variant="muted" className="text-center">
+          <Text variant="caption" className="text-center">
             {t(phase === 'expired' ? 'screens.login.expired' : 'screens.login.error')}
           </Text>
           <Button variant="outline" onPress={phase === 'expired' ? refreshChallenge : retryOwner}>

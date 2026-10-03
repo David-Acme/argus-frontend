@@ -65,8 +65,8 @@ function InvitationScreen() {
   return (
     <CenteredScreen maxWidth={448} className="items-stretch">
       <View className="gap-1.5">
-        <Text variant="h3">{t('screens.invitation.title')}</Text>
-        <Text className="text-foreground-secondary text-sm leading-5">
+        <Text variant="title">{t('screens.invitation.title')}</Text>
+        <Text variant="caption" className="text-foreground-secondary">
           {t('screens.invitation.subtitle')}
         </Text>
       </View>
@@ -97,7 +97,7 @@ function InvitationScreen() {
           <View className="gap-3">
             <View className="flex-row items-center gap-3">
               <Icon name="triangle-alert" className="text-error-strong size-5" />
-              <Text className="text-error-strong flex-1 text-sm leading-5">
+              <Text variant="body" className="text-error-strong flex-1">
                 {t('screens.invitation.error')}
               </Text>
             </View>

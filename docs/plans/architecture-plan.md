@@ -196,6 +196,17 @@ in the same change.
 Typography sweep: legacy `h1–h4` (15 uses) and raw `text-xs/sm/…` (108 uses)
 to the documented scale, then a lint rule against them.
 
+Status: done. Every primitive in the table landed in its own commit with its
+call sites migrated and the old copies deleted (Panel, SectionHeader,
+EmptyState, CreateTile, ResponsiveGrid, ListRow + VirtualList, FilterChips,
+StatusBadge, ToggleRow; AppShell + ScreenHeader landed with Phase 4's route
+group, as `AppShell` (rail, once) + `AppScreen` (scroll, width, aside) +
+`ScreenHeader`). VirtualList is used where a list can be long and has the
+page to itself (the guard's directory); the users page keeps a plain list
+inside its scroll because it shares the page with an aside. The typography
+sweep left the raw sizes only inside `ui/` primitives (shadcn-derived select,
+menu, dialog, input), which the lint rule exempts.
+
 ### Phase 4 — Routing, shell and guards
 
 - [x] `(app)/_layout.tsx` with `Stack.Protected` and the nav mounted once: no

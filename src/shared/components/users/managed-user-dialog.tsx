@@ -58,15 +58,15 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
       }>
       <View className="gap-3.5 pb-1">
         <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.name')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{t('screens.users.name')}</Text>
           <Input value={name} onChangeText={setName} autoCapitalize="words" />
         </View>
         <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.last-name')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{t('screens.users.last-name')}</Text>
           <Input value={lastName} onChangeText={setLastName} autoCapitalize="words" />
         </View>
         <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.role')}</Text>
+          <Text variant="caption" className="text-foreground-secondary">{t('screens.users.role')}</Text>
           <AdaptiveSelect
             options={options}
             value={role}

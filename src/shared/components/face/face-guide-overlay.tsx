@@ -147,7 +147,7 @@ export function FaceGuideOverlay({ state, offset, available, area }: FaceGuideOv
             accessibilityLiveRegion="polite"
             accessibilityRole="text">
             <Icon name={state === 'off-center' ? arrowIcon : meta.icon} className={`size-5 ${tone.icon}`} />
-            <Text className={`text-sm leading-5 ${tone.text}`} maxFontSizeMultiplier={1.25}>
+            <Text variant="body" className={tone.text} maxFontSizeMultiplier={1.25}>
               {t(meta.label)}
             </Text>
           </View>

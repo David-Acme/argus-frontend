@@ -103,8 +103,9 @@ const DayCell = memo(function DayCell({
             isSelected && 'bg-interactive'
           )}>
           <Text
+            variant="micro"
             className={cn(
-              'text-xs font-medium lg:text-caption',
+              'lg:text-caption',
               isSelected
                 ? 'text-foreground-on-interactive'
                 : outside
