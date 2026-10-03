@@ -116,6 +116,7 @@ export function CameraLiveStream({
       <CameraLiveStatus
         state={unsupported ? 'unsupported' : (current?.state ?? 'connecting')}
         painted={current?.painted ?? false}
+        compact={fill}
         onRetry={retry}
       />
     </View>

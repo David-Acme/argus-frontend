@@ -11,6 +11,7 @@ export type CameraLiveState = CameraStreamState | 'unsupported' | 'disabled';
 type CameraLiveStatusProps = {
   state: CameraLiveState;
   painted: boolean;
+  compact?: boolean;
   onRetry?: () => void;
 };
 
@@ -53,7 +54,7 @@ const PLACEHOLDERS: Record<CameraLiveState, Placeholder> = {
   closed: { icon: 'video', title: 'screens.cameras.live.connecting' },
 };
 
-export function CameraLiveStatus({ state, painted, onRetry }: CameraLiveStatusProps) {
+export function CameraLiveStatus({ state, painted, compact = false, onRetry }: CameraLiveStatusProps) {
   const { t } = useTranslation();
   const picture = painted && (state === 'live' || state === 'reconnecting' || state === 'connecting');
   const placeholder = PLACEHOLDERS[state];
@@ -75,6 +76,19 @@ export function CameraLiveStatus({ state, painted, onRetry }: CameraLiveStatusPr
             dotClassName="bg-warning"
           />
         )}
+      </View>
+    );
+  }
+
+  if (compact) {
+    return (
+      <View pointerEvents="none" className="bg-surface-secondary absolute inset-0">
+        <StatusBadge
+          surface="card"
+          label={t(placeholder.title)}
+          icon={placeholder.icon ?? undefined}
+          className="absolute bottom-3 left-3 max-w-[90%]"
+        />
       </View>
     );
   }
