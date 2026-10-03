@@ -15,7 +15,7 @@ type CreateTileProps = {
 
 const SURFACE: Record<CreateTileLayout, string> = {
   tile: 'rounded-3xl items-center justify-center gap-3 px-6 py-8 web:hover:bg-card',
-  fill: 'rounded-[14px] min-h-[140px] flex-1 items-center justify-center gap-3 px-4 py-6 web:hover:bg-surface-secondary',
+  fill: 'rounded-[14px] min-h-[140px] flex-1 items-center justify-center gap-3 px-4 py-6 web:hover:bg-surface-secondary/40',
   row: 'rounded-[14px] min-h-11 flex-row items-center gap-2 px-3 web:hover:bg-surface-secondary',
 };
 

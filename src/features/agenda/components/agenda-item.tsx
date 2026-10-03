@@ -77,7 +77,7 @@ export function AgendaItem({
     <View
       accessibilityState={{ busy: pending }}
       className={cn(
-        'bg-card flex-row overflow-hidden rounded-[20px] shadow-md shadow-black/[0.06]',
+        'bg-card dark:bg-card-secondary flex-row overflow-hidden rounded-[20px] shadow-md shadow-black/[0.06]',
         pending && 'opacity-60',
       )}>
       {contextMenu ? contextMenu(pressable) : pressable}

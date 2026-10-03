@@ -35,7 +35,7 @@ export const colorTokens = {
   dark: {
     background: '#181816',
     surface: '#1F1E1A',
-    'surface-secondary': '#25231E',
+    'surface-secondary': '#312E27',
     card: '#24231E',
     'card-secondary': '#2B2924',
     border: '#39352C',

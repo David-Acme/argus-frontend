@@ -73,7 +73,7 @@
     @variant dark {
             --color-background: oklch(0.208 0.004 106.73);
       --color-surface: oklch(0.235 0.008 95.39);
-      --color-surface-secondary: oklch(0.257 0.010 88.78);
+      --color-surface-secondary: oklch(0.302 0.013 87.57);
       --color-card: oklch(0.255 0.009 97.71);
       --color-card-secondary: oklch(0.281 0.009 88.77);
       --color-border: oklch(0.330 0.016 86.89);
@@ -101,7 +101,7 @@
       --color-foreground-on-interactive: oklch(0.207 0.009 75.12);
       --color-foreground-on-error: oklch(1 0 0);
 
-            --color-primary: oklch(0.910 0.009 84.57);       --color-primary-foreground: oklch(0.207 0.009 75.12);       --color-secondary: oklch(0.257 0.010 88.78);       --color-secondary-foreground: oklch(0.954 0.012 79.78);       --color-muted: oklch(0.257 0.010 88.78);       --color-destructive: oklch(0.556 0.145 25.99);       --color-destructive-foreground: oklch(0.866 0.007 67.73);       --color-input: oklch(0.257 0.010 88.78);       --color-ring: oklch(0.807 0.079 83.02);       --color-popover: oklch(0.255 0.009 97.71);       --color-popover-foreground: oklch(0.954 0.012 79.78);       --color-card-foreground: oklch(0.954 0.012 79.78);       --color-accent-foreground: oklch(0.954 0.012 79.78);       --color-chart-1: oklch(0.807 0.079 83.02);       --color-chart-2: oklch(0.686 0.115 149.46);       --color-chart-3: oklch(0.710 0.033 237.77);       --color-chart-4: oklch(0.814 0.112 83.58);       --color-chart-5: oklch(0.556 0.145 25.99);     }
+            --color-primary: oklch(0.910 0.009 84.57);       --color-primary-foreground: oklch(0.207 0.009 75.12);       --color-secondary: oklch(0.302 0.013 87.57);       --color-secondary-foreground: oklch(0.954 0.012 79.78);       --color-muted: oklch(0.302 0.013 87.57);       --color-destructive: oklch(0.556 0.145 25.99);       --color-destructive-foreground: oklch(0.866 0.007 67.73);       --color-input: oklch(0.302 0.013 87.57);       --color-ring: oklch(0.807 0.079 83.02);       --color-popover: oklch(0.255 0.009 97.71);       --color-popover-foreground: oklch(0.954 0.012 79.78);       --color-card-foreground: oklch(0.954 0.012 79.78);       --color-accent-foreground: oklch(0.954 0.012 79.78);       --color-chart-1: oklch(0.807 0.079 83.02);       --color-chart-2: oklch(0.686 0.115 149.46);       --color-chart-3: oklch(0.710 0.033 237.77);       --color-chart-4: oklch(0.814 0.112 83.58);       --color-chart-5: oklch(0.556 0.145 25.99);     }
   }
 }
 
