@@ -3,7 +3,8 @@ import { useAuthStore } from '@/core/stores';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { filterPeople } from '@/core/services/view-cache';
 import type { UserRole } from '@/core/types';
-import { DashboardShell, SectionHeading } from '@/shared/components/dashboard';
+import { DashboardShell } from '@/shared/components/dashboard';
+import { SectionHeader } from '@/shared/components/ui/section-header';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Panel } from '@/shared/components/ui/panel';
 import { Button } from '@/shared/components/ui/button';
@@ -112,7 +113,7 @@ export default function PeopleDirectoryScreen() {
         </View>
 
         <View className="gap-3">
-          <SectionHeading title={t('screens.users.people-directory')} />
+          <SectionHeader title={t('screens.users.people-directory')} />
           {filtered.length > 0 ? (
             <Panel className="gap-0 py-2">
               {filtered.map((person) => (

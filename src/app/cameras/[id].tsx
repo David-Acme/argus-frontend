@@ -20,7 +20,8 @@ import {
   ZoneForm,
   ZoneRow,
 } from '@/shared/components/cameras';
-import { DashboardIconButton, SectionHeading } from '@/shared/components/dashboard';
+import { DashboardIconButton } from '@/shared/components/dashboard';
+import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState, ScreenShell } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
@@ -239,7 +240,7 @@ export default function CameraDetailScreen() {
               </View>
             ) : null}
 
-            <SectionHeading
+            <SectionHeader
               title={t('screens.cameras.zones')}
               action={can('zone', 'create') ? t('screens.cameras.add-zone') : undefined}
               onAction={

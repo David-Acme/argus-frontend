@@ -13,10 +13,10 @@ import {
   NotificationPopover,
   ProjectGrid,
   RecentActivityCard,
-  SectionHeading,
   SummaryCard,
   TodayAgenda,
 } from '@/shared/components/dashboard';
+import { SectionHeader } from '@/shared/components/ui/section-header';
 import type { CalendarEntry } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
@@ -133,7 +133,7 @@ function DashboardScreen({ user }: DashboardScreenProps) {
       aside={
         <View className="flex-1 gap-5">
           <View className="gap-3">
-            <SectionHeading
+            <SectionHeader
               title={t('screens.home.cameras_section')}
               action={t('screens.home.cameras-online', {
                 online: String(summary.camerasOnline),
@@ -231,7 +231,7 @@ function DashboardScreen({ user }: DashboardScreenProps) {
         />
 
         <View className="gap-3">
-          <SectionHeading
+          <SectionHeader
             title={t('screens.home.today')}
             action={t('screens.home.see-all')}
             onAction={() => router.push('/agenda')}
@@ -254,7 +254,7 @@ function DashboardScreen({ user }: DashboardScreenProps) {
         </View>
 
         <View className="gap-3">
-          <SectionHeading
+          <SectionHeader
             title={t('screens.home.projects')}
             action={projects.length > 0 ? t('screens.home.see-all') : undefined}
             onAction={() => router.push('/projects')}

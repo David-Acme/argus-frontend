@@ -2,7 +2,8 @@ import { useAuthStore } from '@/core/stores';
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
-import { DashboardIconButton, DashboardShell, SectionHeading } from '@/shared/components/dashboard';
+import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboard';
+import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/layout';
 import {
   CreateAffordance,
@@ -183,7 +184,7 @@ export default function ProjectsScreen() {
       aside={
         isExpanded && displayProjects.length > 0 ? (
           <View className="gap-3">
-            <SectionHeading title={t('screens.projects.all-projects')} />
+            <SectionHeader title={t('screens.projects.all-projects')} />
             {displayProjects.map((project) => {
               const active = project.id === activeId;
               const status = project.status as ProjectStatus;

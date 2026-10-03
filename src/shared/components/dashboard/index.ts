@@ -13,7 +13,6 @@ export { DashboardSearchField } from './dashboard-search-field';
 export { MosaicChart } from './mosaic-chart';
 export { ProjectCard } from './project-card';
 export { ScheduleTimeline } from './schedule-timeline';
-export { SectionHeading } from './section-heading';
 export * from './summary-card';
 export { ProjectGrid } from './project-grid';
 export { TodayAgenda } from './today-agenda';

@@ -11,8 +11,8 @@ import type {
 import type { UserRole } from '@/core/types';
 import {
   DashboardShell,
-  SectionHeading,
 } from '@/shared/components/dashboard';
+import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Panel } from '@/shared/components/ui/panel';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 
@@ -152,7 +152,7 @@ export default function UsersScreen() {
       aside={
         <View className="gap-5">
           <View className="gap-3">
-            <SectionHeading
+            <SectionHeader
               title={t('screens.users.invitations')}
               action={t('screens.users.new-invitation')}
               onAction={() => setInviteOpen(true)}
@@ -189,7 +189,7 @@ export default function UsersScreen() {
             </Panel>
           </View>
           <View className="gap-3">
-            <SectionHeading title={t('screens.users.role-access-title')} />
+            <SectionHeader title={t('screens.users.role-access-title')} />
             <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
           </View>
         </View>
@@ -203,7 +203,7 @@ export default function UsersScreen() {
         </View>
 
         <View className="gap-3">
-          <SectionHeading title={t('screens.users.members')} />
+          <SectionHeader title={t('screens.users.members')} />
           <Panel className="gap-0 py-2">
             {users.length === 0 ? (
               <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-users')}</Text>
