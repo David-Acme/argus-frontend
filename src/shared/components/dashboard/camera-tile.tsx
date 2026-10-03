@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 
 type CameraTileProps = {
   name: string;
@@ -55,9 +56,7 @@ export function CameraTile({
         </Text>
       </View>
       {recordMode ? (
-        <View className="bg-surface-secondary self-start rounded-full px-2 py-0.5">
-          <Text className="text-foreground-secondary text-micro font-medium">{recordMode}</Text>
-        </View>
+        <StatusBadge label={recordMode} />
       ) : null}
     </Pressable>
   );

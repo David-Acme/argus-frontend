@@ -5,6 +5,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { EmptyState } from '@/shared/components/ui/empty-state';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 
 type ExpectedGuestListProps = {
   guests: GuardExpectedGuest[];
@@ -54,9 +55,7 @@ export function ExpectedGuestList({ guests, now, onRemove }: ExpectedGuestListPr
               </Text>
             </View>
             {guest.oneTime ? (
-              <View className="bg-surface-secondary rounded-full px-2.5 py-1">
-                <Text variant="micro">{t('screens.security.guests.once')}</Text>
-              </View>
+              <StatusBadge label={t('screens.security.guests.once')} className="self-center" />
             ) : null}
             {onRemove ? (
               <Pressable

@@ -1,22 +1,18 @@
 import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import type { CameraDriverKind, CameraRecordMode, IconName, TranslationKey } from '@/core/types';
+import type { CameraDriverKind, CameraRecordMode, TranslationKey } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 
 export type CameraCardStatus = 'online' | 'offline' | 'disabled';
 
 type CameraCardProps = {
   item: ICameraCacheRow;
   onPress: (id: string) => void;
-};
-
-type CameraMetaPillProps = {
-  icon: IconName;
-  label: string;
 };
 
 const PREVIEW_ASPECT = 16 / 9;
@@ -61,17 +57,6 @@ export function cameraStatusOf(item: Pick<ICameraCacheRow, 'isEnabled' | 'isOnli
   return item.isOnline ? 'online' : 'offline';
 }
 
-function CameraMetaPill({ icon, label }: CameraMetaPillProps) {
-  return (
-    <View className="bg-surface-secondary flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
-      <Icon name={icon} className="text-foreground-secondary size-3.5" />
-      <Text variant="micro" className="text-foreground-secondary" numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 export const CameraCard = memo(function CameraCard({ item, onPress }: CameraCardProps) {
   const { t } = useTranslation();
   const status = cameraStatusOf(item);
@@ -105,12 +90,13 @@ export const CameraCard = memo(function CameraCard({ item, onPress }: CameraCard
         <Text variant="micro" numberOfLines={1}>
           {t(PREVIEW_LABEL[status])}
         </Text>
-        <View className="bg-card absolute left-3 top-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
-          <View className={cn('size-2 rounded-full', STATUS_DOT[status])} />
-          <Text variant="micro" className={STATUS_TEXT[status]} numberOfLines={1}>
-            {statusLabel}
-          </Text>
-        </View>
+        <StatusBadge
+          label={statusLabel}
+          surface="card"
+          dotClassName={STATUS_DOT[status]}
+          className="absolute left-3 top-3"
+          textClassName={STATUS_TEXT[status]}
+        />
       </View>
       <View className="gap-0.5 px-1">
         <Text variant="subhead" numberOfLines={1}>
@@ -127,8 +113,8 @@ export const CameraCard = memo(function CameraCard({ item, onPress }: CameraCard
         </View>
       </View>
       <View className="flex-row flex-wrap gap-2 px-1 pb-1">
-        <CameraMetaPill icon="video" label={t(RECORD_LABEL[item.recordMode])} />
-        <CameraMetaPill icon="shield" label={zonesLabel} />
+        <StatusBadge icon="video" label={t(RECORD_LABEL[item.recordMode])} />
+        <StatusBadge icon="shield" label={zonesLabel} />
       </View>
     </Pressable>
   );

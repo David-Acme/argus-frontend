@@ -5,6 +5,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import { TaskPriorityMark } from './task-priority-mark';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 
 type TaskRowProps = {
   title: string;
@@ -78,9 +79,7 @@ export function TaskRow({
         </Text>
       </Pressable>
       {statusTag ? (
-        <View className="bg-card rounded-full px-2 py-0.5">
-          <Text variant="micro">{statusTag}</Text>
-        </View>
+        <StatusBadge label={statusTag} surface="card" className="self-center" />
       ) : null}
       {due ? <Text variant="micro">{due}</Text> : null}
       <TaskPriorityMark priority={priority} label={priorityLabel} />

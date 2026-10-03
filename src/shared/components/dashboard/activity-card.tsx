@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import { Button } from '@/shared/components/ui/button';
-import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import { MosaicChart } from './mosaic-chart';
 import { Panel } from '@/shared/components/ui/panel';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 
 type ActivityCardProps = {
   title: string;
@@ -49,10 +49,13 @@ export function ActivityCard({
           ) : null}
         </View>
         <View className="items-end gap-2">
-          <View className="bg-surface-secondary flex-row items-center gap-1 rounded-full px-2.5 py-1">
-            <Icon name={TREND_ICON[direction]} className={cn('size-3', TREND_TONE[direction])} />
-            <Text className="text-foreground text-micro font-semibold tabular-nums">{delta}</Text>
-          </View>
+          <StatusBadge
+            label={delta}
+            icon={TREND_ICON[direction]}
+            iconClassName={cn('size-3', TREND_TONE[direction])}
+            className="self-end"
+            textClassName="text-foreground font-semibold tabular-nums"
+          />
           <MosaicChart levels={levels} />
         </View>
       </View>
