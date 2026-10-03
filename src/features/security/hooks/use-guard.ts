@@ -27,7 +27,6 @@ type OptimisticRemote<T, R> = {
 
 const loadMode = () => guardService.mode();
 const loadGuests = () => guardService.expectedGuests();
-const loadIncidents = () => guardService.incidents();
 const loadSite = () => guardService.site();
 const loadCameras = () => guardService.cameras();
 const loadEpisodes = async () => {
@@ -67,25 +66,16 @@ export function useGuardMode(enabled: boolean) {
   return useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardMode, load: loadMode, enabled });
 }
 
-export function useGuard(review: boolean) {
+export function useGuard(owner: boolean) {
   const mode = useGuardMode(true);
   const guests = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardGuests, load: loadGuests });
-  const incidents = useRemoteResource({
-    cacheKey: VIEW_CACHE_KEYS.guardIncidents,
-    load: loadIncidents,
-    enabled: !review,
-  });
-  const site = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardSite, load: loadSite, enabled: review });
+  const site = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardSite, load: loadSite, enabled: owner });
   const cameras = useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.guardCameras,
     load: loadCameras,
-    enabled: review,
+    enabled: owner,
   });
-  const episodes = useRemoteResource({
-    cacheKey: VIEW_CACHE_KEYS.guardEpisodes,
-    load: loadEpisodes,
-    enabled: review,
-  });
+  const episodes = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardEpisodes, load: loadEpisodes });
   const [pendingMode, setPendingMode] = useState<GuardMode | null>(null);
   const reloadMode = mode.reload;
   const reloadGuests = guests.reload;
@@ -178,7 +168,6 @@ export function useGuard(review: boolean) {
   return {
     mode: mode.data,
     guests: guests.data ?? [],
-    incidents: incidents.data ?? [],
     site: site.data,
     cameras: cameras.data ?? [],
     episodes: episodes.data ?? [],

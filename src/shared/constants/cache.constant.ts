@@ -39,11 +39,11 @@ export const VIEW_CACHE_KEYS = {
   cameraCapabilities: 'camera.capabilities',
   guardMode: 'guard.mode',
   guardGuests: 'guard.guests',
-  guardIncidents: 'guard.incidents',
   guardSite: 'guard.site',
   guardCameras: 'guard.cameras',
   guardEpisodes: 'guard.episodes',
   guardEpisode: 'guard.episode',
+  voiceprintStatus: 'voiceprint.status',
 } as const;
 
 export const buildViewCacheStorageKey = (

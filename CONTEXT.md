@@ -1382,11 +1382,13 @@ The owner's Security screen (`features/security`) carries three new panels:
   timeline loaded on demand (`guard.episode` cache, scoped by id) and, for
   episodes that alerted, the review chips (Útil / Falsa alarma / Ahora no).
 
-All three are owner-only like the decision review they replace (the
-per-decision review UI and its `guardService.decisions/feedback` calls are
-gone: reviewing an episode labels its notified decisions server-side).
-Residents and guards keep the incident list until `/guard/episodes` is
-granted to them in `role-access.hxx`.
+The place and camera panels and the review chips are owner-only, like the
+decision review they replace (the per-decision review UI and its
+`guardService.decisions/feedback` calls are gone: reviewing an episode
+labels its notified decisions server-side). Residents and guards read the
+same episode list without the review chips or the timeline (backend
+8dc2856c grants them `GET /guard/episodes`; the detail stays owner-only), so
+the old per-detection incident list and its service call are gone too.
 
 Edits are optimistic over the remote-resource caches: `use-guard.ts`'s
 `optimisticRemote` writes the new value into the view cache at once, calls

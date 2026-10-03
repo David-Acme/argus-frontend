@@ -19,7 +19,6 @@ export const security = {
   status: {
     now: 'Right now',
     unknown: 'Argus has not reported its mode yet.',
-    incidents: 'Incidents',
     active: 'Ongoing',
     guests: 'Active visitors',
     pending: 'To review',
@@ -52,12 +51,6 @@ export const security = {
     until: 'Until {time}',
     expired: 'Expired',
     once: 'Once',
-  },
-  incidents: {
-    title: 'Recent incidents',
-    empty: 'No recent incidents.',
-    'empty-hint': 'Here you will see who came by, on which camera, when and at what risk level.',
-    unknown: 'Unknown person',
   },
   danger: {
     none: 'No risk',

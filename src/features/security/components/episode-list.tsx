@@ -11,7 +11,7 @@ type EpisodeListProps = {
   episodes: readonly GuardEpisode[];
   cameras: readonly ICameraCacheRow[];
   contexts: readonly GuardCameraContext[];
-  onReview: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
+  onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
 };
 
 export function EpisodeList({ episodes, cameras, contexts, onReview }: EpisodeListProps) {

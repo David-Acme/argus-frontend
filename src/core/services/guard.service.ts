@@ -9,7 +9,6 @@ import type {
   GuardExpectedGuest,
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
-  GuardIncident,
   GuardMode,
   GuardModeState,
   GuardSite,
@@ -24,10 +23,6 @@ class GuardService {
 
   setMode(mode: GuardMode): Promise<IServiceResponse<{ mode: GuardMode }>> {
     return httpService.post<{ mode: GuardMode }>('/guard/mode', { mode });
-  }
-
-  incidents(): Promise<IServiceResponse<GuardIncident[]>> {
-    return httpService.get<GuardIncident[]>(`/guard/incidents?limit=${GUARD_LIST_LIMIT}`);
   }
 
   expectedGuests(): Promise<IServiceResponse<GuardExpectedGuest[]>> {

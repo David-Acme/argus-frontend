@@ -15,17 +15,6 @@ export interface GuardModeState {
   profile?: GuardSiteProfile;
 }
 
-export interface GuardIncident {
-  cameraId: number;
-  cameraName: string;
-  rule: string;
-  danger: GuardDanger;
-  severity: string;
-  personId: number;
-  identity: string;
-  createdAt: number;
-}
-
 export interface GuardExpectedGuest {
   id: number;
   cameraId: number;

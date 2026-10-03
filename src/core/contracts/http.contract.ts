@@ -10,7 +10,6 @@ import type {
 } from '@/core/interfaces';
 import type {
   GuardExpectedGuest,
-  GuardIncident,
   GuardModeState,
   SettingsOverview,
 } from '@/core/types';
@@ -18,7 +17,6 @@ import type {
 const userRole = z.enum(['owner', 'resident', 'guard', 'guest']);
 const inviteRole = z.enum(['resident', 'guard', 'guest']);
 const guardMode = z.enum(['home', 'away', 'night', 'armed']);
-const guardDanger = z.enum(['none', 'low', 'medium', 'high', 'critical']);
 
 export const apiErrorSchema = z.object({
   code: z.string(),
@@ -72,17 +70,6 @@ export const guardModeStateSchema = z.object({
   publicPresent: z.boolean(),
   staffOnly: z.boolean(),
 }) satisfies z.ZodType<GuardModeState>;
-
-export const guardIncidentSchema = z.object({
-  cameraId: z.number(),
-  cameraName: z.string(),
-  rule: z.string(),
-  danger: guardDanger,
-  severity: z.string(),
-  personId: z.number(),
-  identity: z.string(),
-  createdAt: z.number(),
-}) satisfies z.ZodType<GuardIncident>;
 
 export const guardExpectedGuestSchema = z.object({
   id: z.number(),
@@ -158,7 +145,6 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /auth/device-login/{1}': deviceLoginStatusSchema,
   'GET /camera/{1}/capabilities': cameraCapabilitiesSchema,
   'GET /guard/mode': guardModeStateSchema,
-  'GET /guard/incidents': z.array(guardIncidentSchema),
   'GET /guard/expected-guests': z.array(guardExpectedGuestSchema),
   'GET /settings': settingsOverviewSchema,
   'GET /user': z.array(userManagementRecordSchema),

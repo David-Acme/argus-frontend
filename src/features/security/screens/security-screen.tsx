@@ -11,7 +11,6 @@ import { ExpectedGuestForm } from '@/features/security/components/expected-guest
 import { ExpectedGuestList } from '@/features/security/components/expected-guest-list';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { GuardStatusHero } from '@/features/security/components/guard-status-hero';
-import { IncidentList } from '@/features/security/components/incident-list';
 import { SitePanel } from '@/features/security/components/site-panel';
 import { needsReview } from '@/features/security/model/episode';
 import { Button } from '@/shared/components/ui/button';
@@ -40,16 +39,14 @@ export default function SecurityScreen() {
   const activeGuests = guard.guests.filter(
     (guest) => guest.validUntil * 1000 > guard.loadedAt
   ).length;
-  const ongoing = access.review
-    ? guard.episodes.filter((episode) => episode.state === 'active').length
-    : guard.incidents.length;
+  const ongoing = guard.episodes.filter((episode) => episode.state === 'active').length;
   const pendingReviews = guard.episodes.filter(needsReview).length;
 
   const heroSection = (
     <GuardStatusHero
       state={guard.mode}
       ongoing={ongoing}
-      ongoingLabel={access.review ? t('screens.security.status.active') : t('screens.security.status.incidents')}
+      ongoingLabel={t('screens.security.status.active')}
       activeGuests={activeGuests}
       pendingReviews={pendingReviews}
     />
@@ -88,15 +85,6 @@ export default function SecurityScreen() {
     </Panel>
   );
 
-  const incidentSection = (className?: string) => (
-    <Panel
-      title={t('screens.security.incidents.title')}
-      count={guard.incidents.length}
-      className={className}>
-      <IncidentList incidents={guard.incidents} />
-    </Panel>
-  );
-
   const episodeSection = (className?: string) => (
     <Panel
       title={t('screens.security.episodes.title')}
@@ -107,7 +95,7 @@ export default function SecurityScreen() {
         episodes={guard.episodes}
         cameras={cameras}
         contexts={guard.cameras}
-        onReview={guard.reviewEpisode}
+        onReview={access.review ? guard.reviewEpisode : undefined}
       />
     </Panel>
   );
@@ -167,7 +155,7 @@ export default function SecurityScreen() {
         {modeSection}
         {guestSection('flex-1')}
       </View>
-      <View className="min-w-0 flex-1 gap-5">{incidentSection('flex-1')}</View>
+      <View className="min-w-0 flex-1 gap-5">{episodeSection('flex-1')}</View>
     </View>
   ) : isMedium ? (
     <View className="flex-1 gap-5">
@@ -175,15 +163,15 @@ export default function SecurityScreen() {
       {modeSection}
       <View className="flex-1 flex-row items-stretch gap-5">
         {guestSection('min-w-0 flex-1')}
-        {incidentSection('min-w-0 flex-1')}
+        {episodeSection('min-w-0 flex-1')}
       </View>
     </View>
   ) : (
     <View className="flex-1 gap-5">
       {heroSection}
       {modeSection}
-      {guestSection()}
-      {incidentSection('flex-1')}
+      {episodeSection()}
+      {guestSection('flex-1')}
     </View>
   );
 

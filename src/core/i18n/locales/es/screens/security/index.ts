@@ -19,7 +19,6 @@ export const security = {
   status: {
     now: 'Ahora mismo',
     unknown: 'Argus aún no ha informado de su modo.',
-    incidents: 'Incidentes',
     active: 'En curso',
     guests: 'Visitas activas',
     pending: 'Por revisar',
@@ -52,12 +51,6 @@ export const security = {
     until: 'Hasta {time}',
     expired: 'Vencida',
     once: 'Una vez',
-  },
-  incidents: {
-    title: 'Incidentes recientes',
-    empty: 'Sin incidentes recientes.',
-    'empty-hint': 'Aquí verás quién se acercó, en qué cámara, cuándo y con qué nivel de riesgo.',
-    unknown: 'Persona desconocida',
   },
   danger: {
     none: 'Sin riesgo',

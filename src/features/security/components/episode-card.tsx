@@ -21,7 +21,7 @@ type EpisodeCardProps = {
   episode: GuardEpisode;
   cameraName: string;
   context: GuardCameraContext | null;
-  onReview: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
+  onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
 };
 
 type ReviewOption = { value: GuardFeedbackLabel; key: 'useful' | 'false-alarm' | 'not-now' };
@@ -139,7 +139,7 @@ export function EpisodeCard({ episode, cameraName, context, onReview }: EpisodeC
           })}
         </Text>
       ) : null}
-      {episode.kind === 'person' && episode.notified ? (
+      {onReview && episode.kind === 'person' && episode.notified ? (
         <View className="gap-1.5 pl-[52px]">
           <Text variant="micro">{t('screens.security.episodes.review-prompt')}</Text>
           <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-2">
@@ -166,7 +166,7 @@ export function EpisodeCard({ episode, cameraName, context, onReview }: EpisodeC
           </View>
         </View>
       ) : null}
-      {episode.kind === 'person' ? (
+      {onReview && episode.kind === 'person' ? (
         <View className="gap-2 pl-[52px]">
           <Pressable
             accessibilityRole="button"
