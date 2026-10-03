@@ -29,6 +29,13 @@ type CalendarEntryPermissions = {
   canDelete: boolean;
 };
 
+type CanFn = (table: 'project_task' | 'calendar_event', permission: 'update' | 'delete') => boolean;
+
+export function entryPermissions(entry: Pick<CalendarEntry, 'source'>, can: CanFn): CalendarEntryPermissions {
+  const table = entry.source === 'task' ? 'project_task' : 'calendar_event';
+  return { canEdit: can(table, 'update'), canDelete: can(table, 'delete') };
+}
+
 export function calendarEventFormActions(): readonly CalendarEventFormAction[] {
   return ['cancel', 'save'];
 }

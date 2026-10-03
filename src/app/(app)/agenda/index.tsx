@@ -25,7 +25,7 @@ import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { CALENDAR_DEFAULT_VIEW, IS_NATIVE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { screenIn } from '@/shared/libs/animations';
-import { calendarEntryEditHref, calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
+import { calendarEntryEditHref, calendarEntryRecordId, entryPermissions } from '@/shared/libs/calendar-entry-actions';
 import type { CalendarEntry, CalendarView } from '@/core/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
@@ -139,8 +139,7 @@ export default function ScheduleScreen() {
     (entry: CalendarEntry) => (
       <EntryActionsMenu
         entry={entry}
-        canEdit={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
-        canDelete={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
+        {...entryPermissions(entry, can)}
         onEdit={editEntry}
       />
     ),
@@ -150,8 +149,7 @@ export default function ScheduleScreen() {
     (entry: CalendarEntry, trigger: ReactElement) => (
       <EntryActionsMenu
         entry={entry}
-        canEdit={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
-        canDelete={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
+        {...entryPermissions(entry, can)}
         onEdit={editEntry}
         contextTrigger={trigger}
       />
@@ -379,11 +377,7 @@ export default function ScheduleScreen() {
       {actionEntry ? (
         <EntryActionsMenu
           entry={actionEntry}
-          canEdit={can(actionEntry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
-          canDelete={can(
-            actionEntry.source === 'task' ? 'project_task' : 'calendar_event',
-            'delete'
-          )}
+          {...entryPermissions(actionEntry, can)}
           onEdit={editEntry}
           open
           onOpenChange={(open) => {

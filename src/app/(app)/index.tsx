@@ -18,7 +18,7 @@ import type { CalendarEntry } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
-import { calendarEntryEditHref } from '@/shared/libs/calendar-entry-actions';
+import { calendarEntryEditHref, entryPermissions } from '@/shared/libs/calendar-entry-actions';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { AppScreen } from '@/shared/components/layout';
 import { GuardCard } from '@/shared/components/security';
@@ -105,8 +105,7 @@ export default function HomeScreen() {
     (entry: CalendarEntry) => (
       <EntryActionsMenu
         entry={entry}
-        canEdit={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'update')}
-        canDelete={can(entry.source === 'task' ? 'project_task' : 'calendar_event', 'delete')}
+        {...entryPermissions(entry, can)}
         onEdit={(selected) => {
           const href = calendarEntryEditHref(selected);
           if (href) router.push(href);
