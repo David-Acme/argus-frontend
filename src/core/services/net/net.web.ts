@@ -12,16 +12,7 @@ import {
   updateInstanceAddress,
 } from './net-persistence';
 import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
-import type {
-  NetAdoptInput,
-  NetDiscovery,
-  NetError,
-  NetHttpRequest,
-  NetHttpResult,
-  NetPairInput,
-  NetPairedInstance,
-  NetPairing,
-} from '@/core/types';
+import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing } from '@/core/types';
 
 class WebArgusNetService implements IArgusNetService {
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
@@ -51,11 +42,6 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async request(options: NetHttpRequest): Promise<NetHttpResult> {
-    const instance = await loadInstance();
-    if (!instance) {
-      throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
-    }
-
     try {
       return await invoke<NetHttpResult>('argus_request', {
         request: {
@@ -65,9 +51,6 @@ class WebArgusNetService implements IArgusNetService {
           body: options.body ?? '',
           files: options.files ?? [],
         },
-        caPem: instance.caPem,
-        allowedHost: instance.host,
-        ip: instance.ip,
       });
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
@@ -82,19 +65,9 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async openSocket(options: NetSocketOptions): Promise<IArgusSocket> {
-    const instance = await loadInstance();
-    if (!instance) {
-      throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
-    }
-
     const socketId = `sync-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const socket = new TauriSocket(socketId);
-    await socket.open({
-      ...options,
-      caPem: instance.caPem,
-      allowedHost: instance.host,
-      ip: instance.ip,
-    });
+    await socket.open(options);
     return socket;
   }
 
@@ -123,8 +96,6 @@ class WebArgusNetService implements IArgusNetService {
           body: '',
           files: [],
         },
-        caPem: candidate.caPem,
-        allowedHost: candidate.host,
         ip: candidate.ip,
       });
       return true;
@@ -147,12 +118,6 @@ class WebArgusNetService implements IArgusNetService {
 }
 
 export const netService = new WebArgusNetService();
-
-type TauriSocketOpenOptions = NetSocketOptions & {
-  caPem: string;
-  allowedHost: string;
-  ip: string;
-};
 
 type TauriSocketEvent = {
   kind: 'open' | 'message' | 'binary' | 'error' | 'close';
@@ -219,7 +184,7 @@ class TauriSocket implements IArgusSocket {
     this.flush();
   }
 
-  async open(options: TauriSocketOpenOptions): Promise<void> {
+  async open(options: NetSocketOptions): Promise<void> {
     const channel = new Channel<ArrayBuffer>();
     channel.onmessage = (payload) => this.receiveFrame(payload);
     this.channel = channel;
@@ -229,9 +194,6 @@ class TauriSocket implements IArgusSocket {
           socketId: this.socketId,
           url: options.url,
           headers: options.headers ?? {},
-          caPem: options.caPem,
-          allowedHost: options.allowedHost,
-          ip: options.ip,
           connectTimeoutMs: options.connectTimeoutMs ?? 8000,
         },
         onEvent: channel,

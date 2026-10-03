@@ -32,13 +32,16 @@ pub fn get(key: &str) -> Result<Option<String>, String> {
 }
 
 pub fn set(key: &str, value: &str) -> Result<(), String> {
-  entry(key)?.set_password(value).map_err(|e| format!("Keyring write failed: {e}"))
+  let written = entry(key)?.set_password(value).map_err(|e| format!("Keyring write failed: {e}"));
+  super::trust::forget();
+  written
 }
 
 pub fn delete(key: &str) -> Result<(), String> {
-  match entry(key)?.delete_credential() {
-    Ok(()) => Ok(()),
-    Err(KeyringError::NoEntry) => Ok(()),
+  let deleted = match entry(key)?.delete_credential() {
+    Ok(()) | Err(KeyringError::NoEntry) => Ok(()),
     Err(e) => Err(format!("Keyring delete failed: {e}")),
-  }
+  };
+  super::trust::forget();
+  deleted
 }

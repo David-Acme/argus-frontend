@@ -15,6 +15,8 @@ use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio_tungstenite::{client_async_tls_with_config, Connector};
 
+use super::trust::Trust;
+
 type SocketSender = mpsc::UnboundedSender<Message>;
 type SocketMap = Arc<Mutex<HashMap<String, SocketSender>>>;
 type SocketChannel = Channel;
@@ -37,9 +39,6 @@ pub struct SocketOpenOptions {
   pub socket_id: String,
   pub url: String,
   pub headers: HashMap<String, String>,
-  pub ca_pem: String,
-  pub allowed_host: String,
-  pub ip: String,
   pub connect_timeout_ms: f64,
 }
 
@@ -91,13 +90,13 @@ fn build_tls_config(ca_pem: &str) -> Result<rustls::ClientConfig, String> {
     .with_no_client_auth())
 }
 
-fn validate_target(options: &SocketOpenOptions) -> Result<(url::Url, SocketAddr), String> {
+fn validate_target(options: &SocketOpenOptions, trust: &Trust) -> Result<(url::Url, SocketAddr), String> {
   let url = url::Url::parse(&options.url)
     .map_err(|error| format!("NETWORK_ERROR|Invalid WebSocket URL: {error}"))?;
   let host = url
     .host_str()
     .ok_or_else(|| "NETWORK_ERROR|WebSocket URL has no host".to_string())?;
-  if host.to_lowercase() != options.allowed_host.to_lowercase() {
+  if host.to_lowercase() != trust.host.to_lowercase() {
     return Err("HOST_NOT_ALLOWED|Host is not allowed".to_string());
   }
   if url.scheme() != "wss" {
@@ -106,7 +105,7 @@ fn validate_target(options: &SocketOpenOptions) -> Result<(url::Url, SocketAddr)
   let port = url
     .port_or_known_default()
     .ok_or_else(|| "NETWORK_ERROR|WebSocket URL has no port".to_string())?;
-  let ip = options
+  let ip = trust
     .ip
     .parse()
     .map_err(|error| format!("NETWORK_ERROR|Invalid paired IP: {error}"))?;
@@ -118,8 +117,9 @@ pub async fn open(
   options: SocketOpenOptions,
   on_event: SocketChannel,
 ) -> Result<(), String> {
-  let (url, address) = validate_target(&options)?;
-  let tls = build_tls_config(&options.ca_pem)?;
+  let trust = super::trust::paired()?;
+  let (url, address) = validate_target(&options, &trust)?;
+  let tls = build_tls_config(&trust.ca_pem)?;
   let timeout = Duration::from_millis(options.connect_timeout_ms.max(1000.0) as u64);
 
   let stream = tokio::time::timeout(timeout, TcpStream::connect(address))

@@ -300,8 +300,13 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
   `useWindowDimensions` itself.
 - [x] `MosaicChart`: one animated container, no placeholder pattern posing as
   data.
-- [ ] Tauri trust boundary: Rust reads the pairing from the keyring; the JS
-  API shrinks to `{ method, path, headers, body }`.
+- [x] Tauri trust boundary: Rust reads the pairing from the keyring; the JS
+  API shrinks to `{ method, path, headers, body }`. Done with one deviation:
+  the JS still sends the full URL (the route table lives in JS), but Rust pins
+  it to the keyring's host, CA and IP, so the WebView can no longer choose
+  what to trust; the relocation probe may pass a new IP, still pinned to the
+  stored CA and host. Verified end to end on the signed-in desktop: a guard
+  mode switch (POST + GET) went through and was switched back.
 - [x] Deep links: an allow-list in `+native-intent`; the invitation token
   leaves route params for a short-lived store slot. Done: `app/+native-intent.ts`
   keeps only the signed-in screens and `/cameras/<id>`, without query or

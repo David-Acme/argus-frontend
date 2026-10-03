@@ -21,13 +21,10 @@ async fn argus_pair(host: String, ip: String, port: f64, code: String) -> Result
 }
 
 #[tauri::command]
-async fn argus_request(
-  request: HttpRequest,
-  ca_pem: String,
-  allowed_host: String,
-  ip: String,
-) -> Result<HttpResult, String> {
-  http_request(request, &ca_pem, &allowed_host, &ip).await
+async fn argus_request(request: HttpRequest, ip: Option<String>) -> Result<HttpResult, String> {
+  let trust = net::trust::paired()?;
+  let ip = ip.unwrap_or(trust.ip);
+  http_request(request, &trust.ca_pem, &trust.host, &ip).await
 }
 
 #[tauri::command]

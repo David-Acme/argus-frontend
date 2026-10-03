@@ -3,6 +3,7 @@ pub mod http;
 pub mod pair;
 pub mod secure;
 pub mod socket;
+pub mod trust;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

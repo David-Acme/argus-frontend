@@ -321,7 +321,12 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   commands `argus_*`. The WebView runs under a real CSP (`tauri.conf.json`:
   scripts and connections only from the app itself and the IPC origin) with
   `withGlobalTauri: false`; the JS reaches Rust through `@tauri-apps/api/core`
-  only. `argus_request`'s reqwest client trusts **only** the pinned CA
+  only. The WebView never hands Rust the trust material: `argus_request`
+  takes the request (plus an optional IP for the relocation probe) and
+  `argus_socket_open` the URL and headers; Rust reads the CA, host and IP from
+  the keyring (`src-tauri/src/net/trust.rs`, cached in memory and dropped
+  whenever a `net.*` key is written or deleted). `argus_request`'s reqwest
+  client trusts **only** the pinned CA
   (`tls_built_in_root_certs(false)`), and `argus_secure_*` refuse any key not in
   `secure.rs`'s `ALLOWED_KEYS`, which a unit test keeps equal to
   `NET_STORAGE_KEYS`. `frontendDist = ../dist` (`bun run web:build`). Verify with
