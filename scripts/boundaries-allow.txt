@@ -4,8 +4,6 @@ app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera-contr
 app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera.service.ts
 app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/zone.service.ts
 app-core-data | src/app/(app)/index.tsx -> src/core/services/notification.service.ts
-app-core-data | src/app/(app)/profile/index.tsx -> src/core/services/auth.service.ts
-app-core-data | src/app/(app)/profile/index.tsx -> src/core/services/net/index.ts
 app-core-data | src/app/approve/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/login/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/welcome/face/index.tsx -> src/core/services/auth.service.ts
@@ -16,7 +14,6 @@ shared-single-consumer | shared/components/calendar (1)
 shared-single-consumer | shared/components/cameras (1)
 shared-single-consumer | shared/components/confirm (1)
 shared-single-consumer | shared/components/face (1)
-shared-single-consumer | shared/components/profile (1)
 shared-single-consumer | shared/components/qr (1)
 shared-single-consumer | shared/components/session (1)
 shared-single-consumer | shared/components/toast (1)
@@ -31,7 +28,6 @@ shared-single-consumer | shared/hooks/use-now (1)
 shared-single-consumer | shared/hooks/use-offline-notice (1)
 shared-single-consumer | shared/hooks/use-pairing-flow (1)
 shared-single-consumer | shared/hooks/use-stagger (1)
-shared-single-consumer | shared/hooks/use-theme-preference (1)
 shared-single-consumer | shared/libs/avatar-geometry (1)
 shared-single-consumer | shared/libs/button-state (1)
 shared-single-consumer | shared/libs/context-menu-motion (1)
