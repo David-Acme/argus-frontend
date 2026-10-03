@@ -1,4 +1,4 @@
-import type { ProjectStatus, ProjectTaskPriority, ProjectTaskStatus, ShareAccess } from '@/core/types';
+import type { ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
 
 export interface IProjectCreate {
   name: string;
@@ -23,12 +23,3 @@ export interface IProjectTaskCreate {
 
 export type IProjectTaskUpdate = Partial<Omit<IProjectTaskCreate, 'projectId'>>;
 
-export interface IProjectMemberCreate {
-  projectId: number;
-  userId: number;
-  access?: ShareAccess;
-}
-
-export interface IShareAccessUpdate {
-  access: ShareAccess;
-}

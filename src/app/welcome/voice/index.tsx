@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
-import { useOnboardingStore } from '@/core/stores';
 import { OnboardingSteps } from '@/shared/components/onboarding';
 import { Text } from '@/shared/components/ui/text';
 import { CallSurface, VoiceWebNotice } from '@/shared/components/voice';
@@ -13,12 +12,9 @@ function OnboardingCall() {
   const router = useRouter();
   const { t } = useTranslation();
   const call = useCall();
-  const setVoiceEnabled = useOnboardingStore((state) => state.setVoiceEnabled);
-
   const finish = useCallback(() => {
-    setVoiceEnabled(true);
     router.replace('/');
-  }, [router, setVoiceEnabled]);
+  }, [router]);
 
   useEffect(() => {
     if (call.phase === 'done') finish();

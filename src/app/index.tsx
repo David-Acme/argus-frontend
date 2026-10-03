@@ -1,4 +1,4 @@
-import { useAuthStore, useOnboardingStore } from '@/core/stores';
+import { useAuthStore } from '@/core/stores';
 import { authService } from '@/core/services/auth.service';
 import { sessionService } from '@/core/services/session.service';
 import { notificationService } from '@/core/services/notification.service';
@@ -44,14 +44,13 @@ import { View } from 'react-native';
 
 type DashboardScreenProps = {
   user: IAuthUser | null;
-  voiceEnabled: boolean;
 };
 
 function firstNameOf(user: IAuthUser | null): string {
   return user?.name?.trim().split(/\s+/)[0] || 'usuario';
 }
 
-function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
+function DashboardScreen({ user }: DashboardScreenProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
@@ -294,7 +293,6 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
 export default function IndexScreen() {
   const authStatus = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
-  const voiceEnabled = useOnboardingStore((s) => s.voiceEnabled);
   const [destination, setDestination] = useState<DashboardDestination>(() =>
     initialDashboardDestination(authStatus)
   );
@@ -338,5 +336,5 @@ export default function IndexScreen() {
     return IS_NATIVE ? <Redirect href="/welcome/face?mode=login" /> : <Redirect href="/login" />;
   }
 
-  return <DashboardScreen user={user} voiceEnabled={voiceEnabled} />;
+  return <DashboardScreen user={user} />;
 }

@@ -39,14 +39,14 @@ stays `PascalCase`; only the file name is kebab.
 
 ```
 src/shared/components/avatar/avatar.tsx        → export default function Avatar()
-src/shared/components/avatar/avatar-fab.tsx    → export function AvatarFab()
+src/shared/components/qr/qr-scan-sheet.tsx     → export function QrScanSheet()
 src/shared/components/ui/native-only-animated-view.tsx
 src/shared/hooks/use-mic-level.ts
 src/core/stores/qr-scan.store.ts
 ```
 
 - Never `Avatar.tsx` (kebab-case file, PascalCase export).
-- Multi-word compounds split on `-`: `avatar-fab`, `use-theme-preference`,
+- Multi-word compounds split on `-`: `qr-scan-sheet`, `use-theme-preference`,
   `qr-scan.store`.
 - Suffixed families keep their suffix after the kebab name:
   `{domain}.constant.ts`, `{domain}.type.ts`, `{domain}.interface.ts`,
@@ -515,7 +515,7 @@ for Watermelon nor make an HTTP list request just because it mounted.
 - **Reduce motion**: drift/bob/saccades = 0 y el parpadeo se espacia (~+6 s); el
   rostro se queda quieto pero vivo.
 - Integración: `welcome/voice` (estados de voz → `AvatarState`), saludo
-  (`welcome/index`), home (`AvatarFab`). Los estados `idle/listening/thinking/
+  (`welcome/index`). Los estados `idle/listening/thinking/
   speaking/error` se mapean a expresiones — nunca se deforma con el audio (sin
   lip-sync; el "hablar" es bounce de cabeza + brillo de ojos).
 
@@ -658,7 +658,7 @@ cd src-tauri && cargo check
 | `src/core/stores/locale.store.ts` | `useLocaleStore` — language preference/state, `app.language` |
 | `src/shared/hooks/use-translation.ts` | `useTranslation()` reactive hook (real-time) |
 | `src/shared/constants/i18n.constant.ts` | `I18N_STORAGE_KEY`, `I18N_DEFAULT_LANGUAGE`, `SUPPORTED_LANGUAGES`, `LANGUAGE_OPTIONS` |
-| `src/shared/components/avatar/` | Avatar procedural: `avatar.tsx`, `avatar-fab.tsx`, barrel |
+| `src/shared/components/avatar/` | Avatar procedural: `avatar.tsx`, barrel |
 | `src/shared/constants/avatar.constant.ts` | `AVATAR_STATE_PARAMS`, `AVATAR_PALETTE`, blink/transition times |
 | `src/shared/libs/color.ts` | `hexToRgba` / `hexToHsv` (shader uniform helpers) |
 | `src/shared/hooks/use-mic-level.ts` | Live mic metering (expo-audio, native + web) |

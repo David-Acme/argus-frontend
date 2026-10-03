@@ -38,7 +38,6 @@ export type ProjectStatus = 'planned' | 'active' | 'paused' | 'done' | 'canceled
 
 export type ProjectTaskStatus = 'backlog' | 'todo' | 'doing' | 'done' | 'canceled';
 
-export type ShareAccess = 'view' | 'edit';
 
 export type ProjectTaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
 

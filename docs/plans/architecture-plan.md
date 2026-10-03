@@ -102,9 +102,13 @@ also get one Android device pass.
 - [x] **Web storage.** Outside Tauri, secure storage refuses instead of using
   `localStorage`.
 - [x] **Cold start.** (commit `7aedc53`) Read the nine pairing keys with one `Promise.all`.
-- [ ] **Dead code.** `avatar-fab.tsx`, the empty `navigation.type.ts`, the
+- [x] **Dead code.** `avatar-fab.tsx`, the empty `navigation.type.ts`, the
   unused `voiceEnabled` prop; decide whether the four zero-consumer Watermelon
-  services stay synced or go.
+  services stay synced or go. Done: the four services (`person`,
+  `calendar-event-share`, `project-member`, `reminder-detail`) are deleted —
+  their tables stay synced, since the sync engine writes them through its
+  mappers, not through the services. The `voiceEnabled` flag went with its
+  prop: it was persisted and never read.
 - [ ] **Role contract test.** Parse the backend `role-access.hxx` in a test and
   compare it with the app table; fix the guard/guest `user` drift.
 

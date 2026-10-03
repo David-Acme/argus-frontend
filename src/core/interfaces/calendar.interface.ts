@@ -1,4 +1,3 @@
-import type { ShareAccess } from '@/core/types';
 
 export interface ICalendarEventCreate {
   title: string;
@@ -14,8 +13,3 @@ export interface ICalendarEventCreate {
 
 export type ICalendarEventUpdate = Partial<ICalendarEventCreate>;
 
-export interface ICalendarEventShareCreate {
-  calendarEventId: number;
-  userId: number;
-  access?: ShareAccess;
-}
