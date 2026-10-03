@@ -573,6 +573,16 @@ for Watermelon nor make an HTTP list request just because it mounted.
   desktop. Prefer Uniwind/Tailwind v4 classes; use React Native `StyleSheet`
   only for APIs that require it. Respect reduced motion and keep navigation
   natural per platform.
+- Side-by-side columns end on the same line: the last panel of the shorter
+  column takes `flex-1`, and only while the columns are side by side
+  (`isWide`); stacked on a phone, a stretched section would split the
+  screen. Dialogs and sheets render beside `AppScreen`, never as its
+  children: its body lays children out with a gap, so a closed dialog adds
+  an invisible one.
+- Fills that mark something on a card use `surface-secondary` (it sits
+  below the card in light and above it in dark); a card nested in a card
+  adds `dark:bg-card-secondary`, because dark mode cannot show the shadow
+  that separates them in light.
 
 ### 13. Avatar procedural (asistente visual)
 
