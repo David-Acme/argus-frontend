@@ -19,12 +19,6 @@ export const MEMBER_TINTS = [
   'bg-border-subtle',
 ] as const;
 
-export const DASHBOARD_MEMBERS: readonly (readonly string[])[] = [
-  ['Ana', 'Bruno', 'Carla'],
-  ['David', 'Elena', 'Franco', 'Gabriel'],
-  ['Hugo', 'Irene'],
-];
-
 export const TASK_STATUS_ORDER = ['doing', 'todo', 'backlog', 'done', 'canceled'] as const;
 
 export const TASK_PRIORITY_WEIGHT: Record<string, number> = {

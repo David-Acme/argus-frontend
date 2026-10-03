@@ -15,6 +15,4 @@ export { MosaicChart } from './mosaic-chart';
 export { ProjectCard } from './project-card';
 export { ScheduleTimeline } from './schedule-timeline';
 export { SectionHeading } from './section-heading';
-export { StatCard } from './stat-card';
-export { WeekStrip, type WeekStripDay } from './week-strip';
 export * from './summary-card';

@@ -40,8 +40,6 @@ class ViewCacheService {
     this.subscribers.get(target)?.forEach((listener) => listener());
   }
 
-  prime(): void {}
-
   read<T>(key: ViewCacheKey, scope?: string): T[] {
     const target = this.keyOf(key, scope);
     return storageService.getObject<T[]>(target) ?? [];
