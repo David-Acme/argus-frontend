@@ -1,81 +1,59 @@
-import { parseFragment, parseInit } from '@/features/cameras/model/fmp4';
+import { parseFragment, parseInit, type Fmp4Init, type Fmp4Sample } from '@/features/cameras/model/fmp4';
 
+const INIT_FRAME_TYPE = 1;
 const MAX_QUEUED_FRAMES = 8;
 const MAX_LATENCY_BYTES = 768 * 1024;
 
+export type WebCameraPlayerEvents = {
+  onFirstFrame?: () => void;
+  onUnsupported?: (codec: string) => void;
+};
+
 export class WebCameraPlayer {
   static get supported(): boolean {
-    return (
-      typeof VideoDecoder !== 'undefined' &&
-      typeof EncodedVideoChunk !== 'undefined'
-    );
+    return typeof VideoDecoder !== 'undefined' && typeof EncodedVideoChunk !== 'undefined';
   }
 
-  private readonly canvas: HTMLCanvasElement;
   private readonly context: CanvasRenderingContext2D | null;
   private readonly sampleSizes: number[] = [];
   private decoder: VideoDecoder | null = null;
+  private track: Fmp4Init | null = null;
   private config: VideoDecoderConfig | null = null;
-  private timescale = 0;
   private pending = 0;
-  private dropUntilKeyframe = false;
+  private awaitingKey = true;
+  private painted = false;
   private paused = false;
+  private disposed = false;
 
-  constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas;
+  constructor(
+    private readonly canvas: HTMLCanvasElement,
+    private readonly events: WebCameraPlayerEvents = {},
+  ) {
     this.context = canvas.getContext('2d');
   }
 
   reset(): void {
-    this.decoder?.close();
-    this.decoder = null;
+    this.closeDecoder();
+    this.track = null;
     this.config = null;
-    this.timescale = 0;
-    this.sampleSizes.length = 0;
-    this.pending = 0;
-    this.dropUntilKeyframe = false;
+    this.painted = false;
   }
 
   setVisible(visible: boolean): void {
     if (visible === !this.paused) return;
     this.paused = !visible;
-    this.sampleSizes.length = 0;
-    this.pending = 0;
-    this.dropUntilKeyframe = true;
+    this.closeDecoder();
   }
 
   push(type: number, data: ArrayBuffer): void {
+    if (this.disposed) return;
     const bytes = new Uint8Array(data);
-    if (type === 1) {
+    if (type === INIT_FRAME_TYPE) {
       this.startStream(bytes);
       return;
     }
-    if (this.paused || !this.decoder || this.decoder.state !== 'configured')
-      return;
-
-    for (const sample of parseFragment(bytes, this.timescale)) {
-      if (this.dropUntilKeyframe) {
-        if (!sample.isKey) continue;
-        this.rewind();
-        this.dropUntilKeyframe = false;
-      }
-      if (this.pending > MAX_LATENCY_BYTES && !sample.isKey) {
-        this.dropUntilKeyframe = true;
-        continue;
-      }
-      if (this.decoder.decodeQueueSize > MAX_QUEUED_FRAMES && !sample.isKey)
-        continue;
-      this.sampleSizes.push(sample.data.byteLength);
-      this.pending += sample.data.byteLength;
-      this.decoder.decode(
-        new EncodedVideoChunk({
-          type: sample.isKey ? 'key' : 'delta',
-          timestamp: sample.timestampUs,
-          duration: sample.durationUs,
-          data: sample.data,
-        }),
-      );
-    }
+    if (this.paused || !this.track) return;
+    for (const sample of parseFragment(bytes, this.track)) this.decode(sample);
   }
 
   buffered(): number {
@@ -83,48 +61,102 @@ export class WebCameraPlayer {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.reset();
   }
 
   private startStream(init: Uint8Array): void {
-    const parsed = parseInit(init);
-    if (!parsed) return;
+    const track = parseInit(init);
+    if (!track) return;
     this.reset();
-    this.timescale = parsed.timescale;
-    this.config = {
-      codec: parsed.codec,
-      description: parsed.description,
+    this.track = track;
+    const config: VideoDecoderConfig = {
+      codec: track.codec,
+      description: track.description,
+      optimizeForLatency: true,
     };
-    this.decoder = new VideoDecoder({
-      output: (frame) => this.draw(frame),
-      error: () => this.rewind(),
-    });
-    this.decoder.configure(this.config);
+    this.config = config;
+    void VideoDecoder.isConfigSupported(config)
+      .then((support) => {
+        if (!support.supported && this.config === config) this.events.onUnsupported?.(config.codec);
+      })
+      .catch(() => undefined);
   }
 
-  private rewind(): void {
-    if (!this.decoder || !this.config || this.decoder.state === 'closed') return;
+  private decoderFor(): VideoDecoder | null {
+    if (this.decoder?.state === 'configured') return this.decoder;
+    const config = this.config;
+    if (!config) return null;
+    this.closeDecoder();
+    const decoder = new VideoDecoder({
+      output: (frame) => this.draw(frame),
+      error: () => {
+        if (this.decoder === decoder) this.closeDecoder();
+      },
+    });
+    try {
+      decoder.configure(config);
+    } catch {
+      this.events.onUnsupported?.(config.codec);
+      return null;
+    }
+    this.decoder = decoder;
+    this.awaitingKey = true;
+    return decoder;
+  }
+
+  private decode(sample: Fmp4Sample): void {
+    if (this.awaitingKey && !sample.isKey) return;
+    const decoder = this.decoderFor();
+    if (!decoder) return;
+    const behind = this.pending > MAX_LATENCY_BYTES || decoder.decodeQueueSize > MAX_QUEUED_FRAMES;
+    if (behind && !sample.isKey) {
+      this.awaitingKey = true;
+      return;
+    }
+    this.awaitingKey = false;
+    try {
+      decoder.decode(
+        new EncodedVideoChunk({
+          type: sample.isKey ? 'key' : 'delta',
+          timestamp: sample.timestampUs,
+          duration: sample.durationUs,
+          data: sample.data,
+        }),
+      );
+    } catch {
+      this.closeDecoder();
+      return;
+    }
+    this.sampleSizes.push(sample.data.byteLength);
+    this.pending += sample.data.byteLength;
+  }
+
+  private closeDecoder(): void {
+    const decoder = this.decoder;
+    this.decoder = null;
     this.sampleSizes.length = 0;
     this.pending = 0;
-    try {
-      this.decoder.reset();
-      this.decoder.configure(this.config);
-    } catch {
-      this.decoder = null;
-    }
+    this.awaitingKey = true;
+    if (decoder && decoder.state !== 'closed') decoder.close();
   }
 
   private draw(frame: VideoFrame): void {
     const size = this.sampleSizes.shift();
     if (size != null) this.pending = Math.max(0, this.pending - size);
-    if (
-      this.canvas.width !== frame.displayWidth ||
-      this.canvas.height !== frame.displayHeight
-    ) {
+    if (this.disposed) {
+      frame.close();
+      return;
+    }
+    if (this.canvas.width !== frame.displayWidth || this.canvas.height !== frame.displayHeight) {
       this.canvas.width = frame.displayWidth;
       this.canvas.height = frame.displayHeight;
     }
     this.context?.drawImage(frame, 0, 0, this.canvas.width, this.canvas.height);
     frame.close();
+    if (!this.painted) {
+      this.painted = true;
+      this.events.onFirstFrame?.();
+    }
   }
 }

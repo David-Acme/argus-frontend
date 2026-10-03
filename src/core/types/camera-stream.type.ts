@@ -4,4 +4,6 @@ export type CameraStreamState =
   | 'connecting'
   | 'live'
   | 'reconnecting'
+  | 'offline'
+  | 'unavailable'
   | 'closed';

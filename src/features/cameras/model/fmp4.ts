@@ -2,6 +2,7 @@ export type Fmp4Init = {
   codec: string;
   description: Uint8Array;
   timescale: number;
+  trackId: number;
 };
 
 export type Fmp4Sample = {
@@ -22,65 +23,97 @@ const NON_SYNC_FLAG = 0x00010000;
 
 export function parseInit(bytes: Uint8Array): Fmp4Init | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const moov = boxes(view, 0, bytes.byteLength).find(
-    (box) => box.type === 'moov',
-  );
+  const moov = boxes(view, 0, bytes.byteLength).find((box) => box.type === 'moov');
   if (!moov) return null;
-
-  let timescale = 0;
-  let description: Uint8Array | null = null;
-  let codec = '';
 
   for (const trak of boxes(view, moov.contentStart, moov.end)) {
     if (trak.type !== 'trak') continue;
-    const mdia = boxes(view, trak.contentStart, trak.end).find(
-      (box) => box.type === 'mdia',
-    );
-    if (!mdia) continue;
-    const mdiaBoxes = boxes(view, mdia.contentStart, mdia.end);
-
-    const mdhd = mdiaBoxes.find((box) => box.type === 'mdhd');
-    if (mdhd) {
-      const version = view.getUint8(mdhd.contentStart);
-      timescale = view.getUint32(
-        mdhd.contentStart + (version === 1 ? 20 : 12),
-      );
-    }
-
-    const minf = mdiaBoxes.find((box) => box.type === 'minf');
-    if (!minf) continue;
-    const stbl = boxes(view, minf.contentStart, minf.end).find(
-      (box) => box.type === 'stbl',
-    );
-    if (!stbl) continue;
-    const stsd = boxes(view, stbl.contentStart, stbl.end).find(
-      (box) => box.type === 'stsd',
-    );
-    if (!stsd) continue;
-
-    for (const entry of boxes(view, stsd.contentStart + 8, stsd.end)) {
-      if (entry.type !== 'avc1' && entry.type !== 'avc3') continue;
-      const avcC = boxes(view, entry.contentStart + 78, entry.end).find(
-        (box) => box.type === 'avcC',
-      );
-      if (!avcC) continue;
-      const profile = view.getUint8(avcC.contentStart + 1);
-      const compatibility = view.getUint8(avcC.contentStart + 2);
-      const level = view.getUint8(avcC.contentStart + 3);
-      const hex = (value: number) => value.toString(16).padStart(2, '0');
-      codec = `avc1.${hex(profile)}${hex(compatibility)}${hex(level)}`;
-      description = bytes.slice(avcC.contentStart, avcC.end);
-    }
+    const video = parseVideoTrack(view, bytes, trak);
+    if (video) return video;
   }
+  return null;
+}
 
-  if (!description || timescale <= 0 || !codec) return null;
-  return { codec, description, timescale };
+function parseVideoTrack(view: DataView, bytes: Uint8Array, trak: Box): Fmp4Init | null {
+  const trakBoxes = boxes(view, trak.contentStart, trak.end);
+  const tkhd = trakBoxes.find((box) => box.type === 'tkhd');
+  const mdia = trakBoxes.find((box) => box.type === 'mdia');
+  if (!tkhd || !mdia) return null;
+  const tkhdVersion = view.getUint8(tkhd.contentStart);
+  const trackId = view.getUint32(tkhd.contentStart + (tkhdVersion === 1 ? 20 : 12));
+
+  const mdiaBoxes = boxes(view, mdia.contentStart, mdia.end);
+  const hdlr = mdiaBoxes.find((box) => box.type === 'hdlr');
+  if (!hdlr || fourCc(view, hdlr.contentStart + 8) !== 'vide') return null;
+  const mdhd = mdiaBoxes.find((box) => box.type === 'mdhd');
+  if (!mdhd) return null;
+  const mdhdVersion = view.getUint8(mdhd.contentStart);
+  const timescale = view.getUint32(mdhd.contentStart + (mdhdVersion === 1 ? 20 : 12));
+
+  const child = (parent: Box | undefined, type: string) =>
+    parent ? boxes(view, parent.contentStart, parent.end).find((box) => box.type === type) : undefined;
+  const stsd = child(child(child(mdia, 'minf'), 'stbl'), 'stsd');
+  if (!stsd) return null;
+
+  for (const entry of boxes(view, stsd.contentStart + 8, stsd.end)) {
+    const config = sampleEntryConfig(view, bytes, entry);
+    if (config && timescale > 0) return { ...config, timescale, trackId };
+  }
+  return null;
+}
+
+function sampleEntryConfig(
+  view: DataView,
+  bytes: Uint8Array,
+  entry: Box,
+): Pick<Fmp4Init, 'codec' | 'description'> | null {
+  const children = boxes(view, entry.contentStart + 78, entry.end);
+  if (entry.type === 'avc1' || entry.type === 'avc3') {
+    const avcC = children.find((box) => box.type === 'avcC');
+    if (!avcC) return null;
+    const profile = view.getUint8(avcC.contentStart + 1);
+    const compatibility = view.getUint8(avcC.contentStart + 2);
+    const level = view.getUint8(avcC.contentStart + 3);
+    return {
+      codec: `${entry.type}.${hex(profile)}${hex(compatibility)}${hex(level)}`,
+      description: bytes.slice(avcC.contentStart, avcC.end),
+    };
+  }
+  if (entry.type === 'hvc1' || entry.type === 'hev1') {
+    const hvcC = children.find((box) => box.type === 'hvcC');
+    if (!hvcC) return null;
+    return {
+      codec: `${entry.type}.${hevcCodecSuffix(view, hvcC.contentStart)}`,
+      description: bytes.slice(hvcC.contentStart, hvcC.end),
+    };
+  }
+  return null;
+}
+
+function hevcCodecSuffix(view: DataView, start: number): string {
+  const general = view.getUint8(start + 1);
+  const space = ['', 'A', 'B', 'C'][general >> 6] ?? '';
+  const tier = (general >> 5) & 1 ? 'H' : 'L';
+  const profile = general & 0x1f;
+  const compatibility = view.getUint32(start + 2);
+  let reversed = 0;
+  for (let bit = 0; bit < 32; bit += 1) reversed = (reversed << 1) | ((compatibility >>> bit) & 1);
+  const constraints: string[] = [];
+  for (let index = 0; index < 6; index += 1) constraints.push(view.getUint8(start + 6 + index).toString(16));
+  while (constraints.length > 0 && constraints[constraints.length - 1] === '0') constraints.pop();
+  const level = view.getUint8(start + 12);
+  return [`${space}${profile}`, (reversed >>> 0).toString(16), `${tier}${level}`, ...constraints].join('.');
+}
+
+function hex(value: number): string {
+  return value.toString(16).padStart(2, '0');
 }
 
 export function parseFragment(
   bytes: Uint8Array,
-  timescale: number,
+  track: Pick<Fmp4Init, 'timescale' | 'trackId'>,
 ): Fmp4Sample[] {
+  const { timescale, trackId } = track;
   if (timescale <= 0) return [];
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const top = boxes(view, 0, bytes.byteLength);
@@ -88,7 +121,7 @@ export function parseFragment(
   const mdat = top.find((box) => box.type === 'mdat');
   if (!moof || !mdat) return [];
   const traf = boxes(view, moof.contentStart, moof.end).find(
-    (box) => box.type === 'traf',
+    (box) => box.type === 'traf' && trafTrackId(view, box) === trackId,
   );
   if (!traf) return [];
 
@@ -189,6 +222,11 @@ export function parseFragment(
     decodeTime += plan.duration;
   }
   return samples;
+}
+
+function trafTrackId(view: DataView, traf: Box): number | null {
+  const tfhd = boxes(view, traf.contentStart, traf.end).find((box) => box.type === 'tfhd');
+  return tfhd ? view.getUint32(tfhd.contentStart + 4) : null;
 }
 
 function toMicros(value: number, timescale: number): number {

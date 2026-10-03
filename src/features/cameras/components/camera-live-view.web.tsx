@@ -1,38 +1,64 @@
 import { useIsFocused } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
-
 import type { ICameraMediaSession, ICameraMediaSink } from '@/core/interfaces';
+import type { CameraStreamQuality, CameraStreamState } from '@/core/types';
 import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
-import type { CameraStreamQuality } from '@/core/types';
-import { Text } from '@/shared/components/ui/text';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
-import { useTranslation } from '@/shared/hooks/use-translation';
-
+import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
+import { cn } from '@/shared/libs/utils';
 
 type CameraLiveViewProps = {
   cameraId: string;
   quality?: CameraStreamQuality;
+  overlay?: ReactNode;
+  fill?: boolean;
+  className?: string;
 };
 
-export function CameraLiveView({
-  cameraId,
-  quality = 'sub',
-}: CameraLiveViewProps) {
-  const { t } = useTranslation();
+type StreamStatus = {
+  key: string;
+  state: CameraStreamState;
+  painted: boolean;
+};
+
+const CANVAS_STYLE = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
+  background: CAMERA_LIVE_BACKGROUND,
+  display: 'block',
+} as const;
+
+export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = false, className }: CameraLiveViewProps) {
   const focused = useIsFocused();
   const canvas = useRef<HTMLCanvasElement | null>(null);
-  const [unsupported] = useState(() => !WebCameraPlayer.supported);
+  const session = useRef<ICameraMediaSession | null>(null);
+  const [unsupported, setUnsupported] = useState(() => !WebCameraPlayer.supported);
+  const [status, setStatus] = useState<StreamStatus | null>(null);
+  const streamKey = `${cameraId}:${quality}`;
+  const current = status?.key === streamKey ? status : null;
+
+  const retry = useCallback(() => session.current?.retry(), []);
 
   useEffect(() => {
     if (unsupported || !focused) return;
     const target = canvas.current;
-    if (!target) return;
     const numericId = Number(cameraId);
-    if (!Number.isFinite(numericId) || numericId <= 0) return;
+    if (!target || !Number.isFinite(numericId) || numericId <= 0) return;
 
-    const player = new WebCameraPlayer(target);
+    const update = (next: Partial<Omit<StreamStatus, 'key'>>) =>
+      setStatus((previous) => ({
+        key: streamKey,
+        state: previous?.key === streamKey ? previous.state : 'connecting',
+        painted: previous?.key === streamKey ? previous.painted : false,
+        ...next,
+      }));
+    const player = new WebCameraPlayer(target, {
+      onFirstFrame: () => update({ painted: true }),
+      onUnsupported: () => setUnsupported(true),
+    });
     const sink: ICameraMediaSink = {
       resetStream: () => player.reset(),
       pushFragment: (type, _keyframe, data) => player.push(type, data),
@@ -44,44 +70,39 @@ export function CameraLiveView({
     onVisibility();
 
     let mounted = true;
-    let session: ICameraMediaSession | null = null;
     void cameraMediaService
-      .open({ cameraId: numericId, quality, sink })
+      .open({
+        cameraId: numericId,
+        quality,
+        fastStart: true,
+        sink,
+        events: { onState: (state) => update({ state }) },
+      })
       .then((opened) => {
-        if (mounted) session = opened;
+        if (mounted) session.current = opened;
         else opened.close();
       });
 
     return () => {
       mounted = false;
       document.removeEventListener('visibilitychange', onVisibility);
-      session?.close();
+      session.current?.close();
+      session.current = null;
       player.dispose();
     };
-  }, [cameraId, focused, quality, unsupported]);
-
-  if (unsupported) {
-    return (
-      <View
-        testID={`camera-live-${cameraId}`}
-        className="bg-card items-center justify-center rounded-2xl p-6">
-        <Text variant="caption" className="text-foreground-secondary text-center">
-          {t('screens.cameras.live-unsupported')}
-        </Text>
-      </View>
-    );
-  }
+  }, [cameraId, focused, quality, streamKey, unsupported]);
 
   return (
-    <View className="bg-card overflow-hidden rounded-2xl">
-      <canvas
-        ref={canvas}
-        style={{
-          width: '100%',
-          aspectRatio: '16 / 9',
-          background: CAMERA_LIVE_BACKGROUND,
-          display: 'block',
-        }}
+    <View
+      testID={`camera-live-${cameraId}`}
+      className={cn('overflow-hidden rounded-2xl', fill ? 'absolute inset-0' : 'w-full', className)}
+      style={fill ? undefined : { aspectRatio: 16 / 9, backgroundColor: CAMERA_LIVE_BACKGROUND }}>
+      {unsupported ? null : <canvas ref={canvas} style={CANVAS_STYLE} />}
+      {overlay}
+      <CameraLiveStatus
+        state={unsupported ? 'unsupported' : (current?.state ?? 'connecting')}
+        painted={current?.painted ?? false}
+        onRetry={retry}
       />
     </View>
   );

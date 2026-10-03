@@ -14,11 +14,13 @@ export interface ICameraMediaEvents {
 export interface ICameraMediaOpenInput {
   cameraId: number;
   quality: CameraStreamQuality;
+  fastStart?: boolean;
   sink: ICameraMediaSink;
   events?: ICameraMediaEvents;
 }
 
 export interface ICameraMediaSession {
+  retry(): void;
   close(): void;
 }
 

@@ -4,94 +4,218 @@ import type {
   ICameraMediaService,
   ICameraMediaSession,
 } from '@/core/interfaces';
+import type { CameraStreamState } from '@/core/types';
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { sessionService } from '@/core/services/session.service';
-import { CAMERA_STREAM_ACK_INTERVAL_MS, CAMERA_STREAM_ACK_THRESHOLD_BYTES, CAMERA_STREAM_FRAME_HEADER_BYTES, CAMERA_STREAM_FRAME_MAGIC, CAMERA_STREAM_RECONNECT_BASE_MS, CAMERA_STREAM_RECONNECT_MAX_MS, CAMERA_STREAM_WS_PATH } from '@/features/cameras/constants';
+import {
+  CAMERA_STREAM_ACK_INTERVAL_MS,
+  CAMERA_STREAM_ACK_THRESHOLD_BYTES,
+  CAMERA_STREAM_CONNECT_TIMEOUT_MS,
+  CAMERA_STREAM_FRAME_HEADER_BYTES,
+  CAMERA_STREAM_FRAME_MAGIC,
+  CAMERA_STREAM_STALL_MS,
+  CAMERA_STREAM_WATCHDOG_MS,
+  CAMERA_STREAM_WS_PATH,
+} from '@/features/cameras/constants';
+import { FragmentAssembler } from '@/features/cameras/model/fragment-assembler';
+import {
+  isStalled,
+  refusalOf,
+  retryDelayMs,
+  stateAfterFailure,
+  type SubscribeRefusal,
+} from '@/features/cameras/model/stream-recovery';
 
 const KEYFRAME_FLAG = 0x01;
 const INIT_FRAME_TYPE = 1;
+const MEDIA_FRAME_TYPE = 2;
+
+type ServerFrame = {
+  type?: string;
+  status?: number;
+  error?: string;
+  payload?: { subId?: number; reason?: string };
+};
 
 class CameraMediaSession implements ICameraMediaSession {
   private socket: IArgusSocket | null = null;
   private closed = false;
   private subId: number | null = null;
   private pendingAck = 0;
-  private reconnectAttempt = 0;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private attempt = 0;
+  private receivedMedia = false;
+  private lastMediaAt = 0;
+  private fragmentKey = false;
+  private state: CameraStreamState | null = null;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private ackTimer: ReturnType<typeof setInterval> | null = null;
+  private watchdogTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly assembler = new FragmentAssembler();
 
   constructor(private readonly input: ICameraMediaOpenInput) {}
 
-  async start(): Promise<CameraMediaSession> {
-    this.ackTimer = setInterval(
-      () => this.flushAck(),
-      CAMERA_STREAM_ACK_INTERVAL_MS,
-    );
-    try {
-      await this.connect();
-    } catch {
-      this.scheduleReconnect();
-    }
+  start(): CameraMediaSession {
+    this.ackTimer = setInterval(() => this.flushAck(), CAMERA_STREAM_ACK_INTERVAL_MS);
+    this.watchdogTimer = setInterval(() => this.watchStall(), CAMERA_STREAM_WATCHDOG_MS);
+    void this.connect();
     return this;
+  }
+
+  retry(): void {
+    if (this.closed) return;
+    this.clearRetry();
+    this.attempt = 0;
+    void this.connect();
   }
 
   close(): void {
     if (this.closed) return;
     this.closed = true;
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.clearRetry();
     if (this.ackTimer) clearInterval(this.ackTimer);
-    this.reconnectTimer = null;
+    if (this.watchdogTimer) clearInterval(this.watchdogTimer);
     this.ackTimer = null;
+    this.watchdogTimer = null;
     this.unsubscribe();
-    this.socket?.close(1000, 'closed');
+    this.detachSocket();
+    this.publish('closed');
+  }
+
+  private publish(state: CameraStreamState): void {
+    if (this.state === state) return;
+    this.state = state;
+    this.input.events?.onState?.(state);
+  }
+
+  private clearRetry(): void {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = null;
+  }
+
+  private detachSocket(): void {
+    if (this.connectTimer) clearTimeout(this.connectTimer);
+    this.connectTimer = null;
+    const socket = this.socket;
     this.socket = null;
-    this.input.events?.onState?.('closed');
+    this.subId = null;
+    this.pendingAck = 0;
+    if (!socket) return;
+    socket.onOpen = null;
+    socket.onMessage = null;
+    socket.onError = null;
+    socket.onClose = null;
+    socket.close(1000, 'closed');
   }
 
   private async connect(): Promise<void> {
     if (this.closed) return;
-    this.input.events?.onState?.(
-      this.reconnectAttempt === 0 ? 'connecting' : 'reconnecting',
-    );
+    this.detachSocket();
+    this.publish(this.attempt === 0 ? 'connecting' : stateAfterFailure(this.attempt));
 
     const accessToken = sessionService.getAccessToken();
-    const instance = await netService.instance();
-    if (!accessToken || !instance) throw new Error('CAMERA_STREAM_NO_SESSION');
-
-    this.input.sink.resetStream();
-    const socket = await netService.openSocket({
-      url: serviceUrl(instance, CAMERA_STREAM_WS_PATH, 'wss'),
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (this.closed) {
+    let socket: IArgusSocket;
+    try {
+      const instance = await netService.instance();
+      if (!accessToken || !instance) throw new Error('CAMERA_STREAM_NO_SESSION');
+      socket = await netService.openSocket({
+        url: serviceUrl(instance, CAMERA_STREAM_WS_PATH, 'wss'),
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (reason) {
+      if ((reason as { code?: string } | null)?.code === 'UNAUTHORIZED') void this.refreshAndRetry();
+      else this.fail('retry');
+      return;
+    }
+    if (this.closed || this.socket) {
       socket.close(1000, 'closed');
       return;
     }
 
     this.socket = socket;
+    this.connectTimer = setTimeout(() => {
+      if (this.socket === socket && !this.receivedMedia) this.fail('retry');
+    }, CAMERA_STREAM_CONNECT_TIMEOUT_MS);
     socket.onOpen = () => {
-      this.reconnectAttempt = 0;
-      this.subscribe();
+      if (this.socket === socket) this.subscribe();
     };
     socket.onMessage = (message, data) => {
+      if (this.socket !== socket) return;
       if (data) this.handleBinary(data);
       else if (message) this.handleText(message);
     };
     socket.onError = (code, message) => {
+      if (this.socket !== socket) return;
       this.input.events?.onError?.(code, message);
-      this.scheduleReconnect();
+      if (code === 'UNAUTHORIZED') void this.refreshAndRetry();
+      else this.fail('retry');
     };
-    socket.onClose = () => this.scheduleReconnect();
+    socket.onClose = () => {
+      if (this.socket === socket) this.fail('retry');
+    };
+  }
+
+  private async refreshAndRetry(): Promise<void> {
+    this.detachSocket();
+    const outcome = await sessionService.refreshSession();
+    if (this.closed) return;
+    if (outcome === 'rejected') {
+      this.publish('unavailable');
+      return;
+    }
+    this.fail('retry');
+  }
+
+  private fail(refusal: SubscribeRefusal): void {
+    if (this.closed) return;
+    this.clearRetry();
+    this.detachSocket();
+    if (refusal === 'final') {
+      this.publish('unavailable');
+      return;
+    }
+    this.scheduleRetry(refusal, () => void this.connect());
+  }
+
+  private resubscribe(refusal: SubscribeRefusal): void {
+    if (this.closed) return;
+    if (refusal === 'final') {
+      this.fail('final');
+      return;
+    }
+    this.clearRetry();
+    this.subId = null;
+    this.pendingAck = 0;
+    this.scheduleRetry(refusal, () => {
+      if (this.socket) this.subscribe();
+      else void this.connect();
+    });
+  }
+
+  private scheduleRetry(refusal: SubscribeRefusal, resume: () => void): void {
+    this.attempt += 1;
+    this.receivedMedia = false;
+    this.lastMediaAt = 0;
+    this.publish(stateAfterFailure(this.attempt));
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      resume();
+    }, retryDelayMs(this.attempt, refusal, Math.random()));
   }
 
   private subscribe(): void {
+    this.assembler.reset();
+    this.input.sink.resetStream();
+    this.receivedMedia = false;
+    this.lastMediaAt = 0;
     this.socket?.sendText(
       JSON.stringify({
         type: 'camera:subscribe',
         payload: {
           cameraId: this.input.cameraId,
           quality: this.input.quality,
+          fastStart: this.input.fastStart === true,
         },
       }),
     );
@@ -100,30 +224,28 @@ class CameraMediaSession implements ICameraMediaSession {
   private unsubscribe(): void {
     if (!this.socket || this.subId == null) return;
     this.socket.sendText(
-      JSON.stringify({
-        type: 'camera:unsubscribe',
-        payload: { subId: this.subId },
-      }),
+      JSON.stringify({ type: 'camera:unsubscribe', payload: { subId: this.subId } }),
     );
   }
 
   private handleText(message: string): void {
-    let json: { type?: string; payload?: { subId?: number }; error?: string };
+    let frame: ServerFrame;
     try {
-      json = JSON.parse(message) as typeof json;
+      frame = JSON.parse(message) as ServerFrame;
     } catch {
       return;
     }
-    if (json.type === 'camera:ready' && json.payload?.subId != null) {
-      this.subId = json.payload.subId;
-      this.input.events?.onState?.('live');
+    if (frame.type === 'camera:ready' && frame.payload?.subId != null) {
+      this.subId = frame.payload.subId;
       return;
     }
-    if (typeof json.type === 'string' && json.type.endsWith('_error')) {
-      this.input.events?.onError?.(
-        'CAMERA_STREAM_ERROR',
-        json.error ?? json.type,
-      );
+    if (frame.type === 'camera:closed') {
+      if (this.subId == null || frame.payload?.subId === this.subId) this.resubscribe('retry');
+      return;
+    }
+    if (frame.type === 'camera:subscribe_error') {
+      this.input.events?.onError?.('CAMERA_STREAM_ERROR', frame.error ?? frame.type);
+      this.resubscribe(refusalOf(frame.status));
     }
   }
 
@@ -135,20 +257,35 @@ class CameraMediaSession implements ICameraMediaSession {
     const type = header.getUint8(2);
     const keyframe = (header.getUint8(3) & KEYFRAME_FLAG) === KEYFRAME_FLAG;
     this.subId = header.getUint16(4);
+    const payload = new Uint8Array(data, CAMERA_STREAM_FRAME_HEADER_BYTES);
 
-    const payload = data.slice(CAMERA_STREAM_FRAME_HEADER_BYTES);
-    this.input.sink.pushFragment(type, keyframe, payload);
-    if (type !== INIT_FRAME_TYPE) {
-      this.pendingAck += payload.byteLength;
-      this.flushAck();
+    if (type === INIT_FRAME_TYPE) {
+      this.assembler.reset();
+      this.input.sink.pushFragment(INIT_FRAME_TYPE, true, payload.slice().buffer);
+      return;
     }
+    if (type !== MEDIA_FRAME_TYPE) return;
+
+    if (this.assembler.pendingBytes() === 0) this.fragmentKey = keyframe;
+    for (const fragment of this.assembler.push(payload)) {
+      this.input.sink.pushFragment(MEDIA_FRAME_TYPE, this.fragmentKey, fragment.buffer);
+      this.fragmentKey = false;
+    }
+    this.pendingAck += payload.byteLength;
+    this.lastMediaAt = Date.now();
+    if (!this.receivedMedia) {
+      this.receivedMedia = true;
+      this.attempt = 0;
+      if (this.connectTimer) clearTimeout(this.connectTimer);
+      this.connectTimer = null;
+      this.publish('live');
+    }
+    this.flushAck();
   }
 
   private flushAck(): void {
-    if (this.closed || !this.socket || this.subId == null) return;
-    if (this.pendingAck <= 0) return;
-    if (this.input.sink.bufferedBytes() > CAMERA_STREAM_ACK_THRESHOLD_BYTES)
-      return;
+    if (this.closed || !this.socket || this.subId == null || this.pendingAck <= 0) return;
+    if (this.input.sink.bufferedBytes() > CAMERA_STREAM_ACK_THRESHOLD_BYTES) return;
     this.socket.sendText(
       JSON.stringify({
         type: 'camera:ack',
@@ -158,29 +295,19 @@ class CameraMediaSession implements ICameraMediaSession {
     this.pendingAck = 0;
   }
 
-  private scheduleReconnect(): void {
-    if (this.closed || this.reconnectTimer) return;
-    this.socket = null;
-    this.subId = null;
-    this.pendingAck = 0;
-    this.input.events?.onState?.('reconnecting');
-    const delay = Math.min(
-      CAMERA_STREAM_RECONNECT_MAX_MS,
-      CAMERA_STREAM_RECONNECT_BASE_MS * 2 ** this.reconnectAttempt,
-    );
-    this.reconnectAttempt += 1;
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      void this.connect().catch(() => this.scheduleReconnect());
-    }, delay);
+  private watchStall(): void {
+    if (this.closed || !this.receivedMedia || this.retryTimer) return;
+    if (this.input.sink.bufferedBytes() > CAMERA_STREAM_ACK_THRESHOLD_BYTES) return;
+    if (!isStalled(this.lastMediaAt, Date.now(), CAMERA_STREAM_STALL_MS)) return;
+    this.unsubscribe();
+    this.resubscribe('retry');
   }
 }
 
 class CameraMediaService implements ICameraMediaService {
   open(input: ICameraMediaOpenInput): Promise<ICameraMediaSession> {
-    return new CameraMediaSession(input).start();
+    return Promise.resolve(new CameraMediaSession(input).start());
   }
 }
 
-export const cameraMediaService: ICameraMediaService =
-  new CameraMediaService();
+export const cameraMediaService: ICameraMediaService = new CameraMediaService();
