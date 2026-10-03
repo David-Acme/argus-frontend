@@ -1,6 +1,6 @@
 import type {
   IDashboardCacheData,
-  IDashboardCameraCacheRow,
+  ICameraCacheRow,
   INotificationPreviewCacheRow,
 } from '@/core/interfaces';
 import type { CalendarEntry, DashboardProjectCard, DashboardSummary } from '@/core/types';
@@ -16,7 +16,7 @@ const emptyActivityLevels = (): readonly (readonly number[])[] =>
   Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
 
 export function useDashboardData(): IDashboardCacheData {
-  const cameraTiles = useViewCacheRows<IDashboardCameraCacheRow>(VIEW_CACHE_KEYS.dashboardCameras);
+  const cameraTiles = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const projects = useViewCacheRows<DashboardProjectCard>(VIEW_CACHE_KEYS.dashboardProjects);
   const today = useViewCacheRows<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today');
   const notifications = useViewCacheRows<INotificationPreviewCacheRow>(

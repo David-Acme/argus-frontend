@@ -1017,18 +1017,18 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   code, not the pattern for new screens.
 - `ViewCacheCoordinatorService` is the sole owner of Watermelon subscriptions
   for view data. `sessionService` starts it after restore/establish and stops it
-  before local cleanup. It projects dashboard, cameras/detail+zones,
-  projects/tasks, people/invitations, calendar and notifications into MMKV.
+  before local cleanup. It is a registry of per-domain projections
+  (`core/services/view-cache/*.projection.ts`: cameras with zones, projects and
+  tasks, people and invitations, notifications, activity, summary, today's
+  agenda, calendar), each a pure function over its own sources.
 - Ordinary lists are bounded at `VIEW_CACHE_PAGE_SIZE = 40`. Calendar is
   paginated by the visible semantic period: day/week filters read the active
-  cached range and a month cache contains its 42-day grid. Only the active month
-  scope is retained. New views must define their constants in
+  cached range and a month cache contains its 42-day grid. The active month and
+  its neighbours are retained. New views must define their constants in
   `shared/constants/cache.constant.ts`, their snapshot interfaces in
   `core/interfaces/`, and their type unions in `core/types/`.
-- Local filters execute in their domain `.service.ts` against WatermelonDB. The
-  coordinator preserves an existing MMKV filter snapshot until its replacement
-  resolves and rejects stale async responses. It also refreshes date-derived
-  dashboard/day data at local midnight.
+- The people search filters the cached directory in memory. The coordinator
+  refreshes date-derived dashboard/day data at local midnight.
 - Server-only work may show `Button.loading` on the initiating control. It must
   not replace locally cached content with a full-screen spinner.
 

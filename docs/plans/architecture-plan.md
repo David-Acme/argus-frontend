@@ -118,7 +118,7 @@ also get one Android device pass.
 
 - [x] `viewCacheService.write` skips identical content (no write, no notify),
   so React keeps the same reference and does not re-render.
-- [ ] The coordinator becomes a projection registry; each feature owns its
+- [x] The coordinator becomes a projection registry; each feature owns its
   projection and subscribes only to its own sources:
   ```ts
   type ViewProjection<S extends Record<string, Observable<unknown>>> = {
@@ -129,10 +129,17 @@ also get one Android device pass.
     scoped?: 'replace' | 'track';
   };
   ```
-- [ ] `scoped: 'track'` removes stale scopes (deleted cameras and projects).
-- [ ] One camera snapshot instead of three; the calendar keeps the active
+- [x] `scoped: 'track'` removes stale scopes (deleted cameras and projects).
+- [x] One camera snapshot instead of three; the calendar keeps the active
   month ±1; the people search filters cached rows in memory.
-- [ ] Unit tests for each pure `project` function.
+- [x] Unit tests for each pure `project` function.
+
+Done as planned, with two deviations. The projections live in
+`core/services/view-cache/`, not in the features: they read Watermelon
+through core services, and `core` must not import `features`. `tracked` is a
+list of keys on the projection rather than a `scoped` mode, so one projection
+can own both plain and tracked keys (projects write `project.list` and the
+tracked `project.tasks`).
 
 ### Phase 2 — Remote resources and actions
 

@@ -13,18 +13,6 @@ import type {
 
 export interface IViewCacheWriteOptions {
   limit?: number;
-  replaceScoped?: boolean;
-}
-
-export interface ICameraListCacheRow {
-  id: string;
-  icon: IconName;
-  name: string;
-  ip: string;
-  model: string;
-  isOnline: boolean;
-  isEnabled: boolean;
-  zones: number;
 }
 
 export interface ICameraEventCacheRow {
@@ -37,7 +25,7 @@ export interface ICameraEventCacheRow {
 export interface ICameraCacheRow {
   id: string;
   driver: CameraDriverKind;
-  icon: string;
+  icon: IconName;
   name: string;
   ip: string;
   port: number;
@@ -45,10 +33,13 @@ export interface ICameraCacheRow {
   cloudUsername: string;
   manufacturer: string;
   model: string;
+  modelLabel: string;
   recordMode: CameraRecordMode;
   retentionDays: number | null;
   isOnline: boolean;
   isEnabled: boolean;
+  resolution: string;
+  zones: readonly IZoneCacheRow[];
 }
 
 export interface IZoneCacheRow {
@@ -59,22 +50,6 @@ export interface IZoneCacheRow {
   zoneType: ZoneType;
   color: string;
   isEnabled: boolean;
-}
-
-export interface ICameraDetailCache {
-  camera: ICameraCacheRow;
-  zones: readonly IZoneCacheRow[];
-}
-
-export interface IDashboardCameraCacheRow {
-  id: string;
-  name: string;
-  model: string;
-  ip: string;
-  isOnline: boolean;
-  isEnabled: boolean;
-  resolution?: string;
-  recordMode?: string;
 }
 
 export interface IProjectCacheRow {
@@ -125,7 +100,7 @@ export interface INotificationPreviewCacheRow {
 }
 
 export interface IDashboardCacheData {
-  cameraTiles: readonly IDashboardCameraCacheRow[];
+  cameraTiles: readonly ICameraCacheRow[];
   projects: readonly DashboardProjectCard[];
   today: readonly CalendarEntry[];
   notifications: readonly INotificationPreviewCacheRow[];

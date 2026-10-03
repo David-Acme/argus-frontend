@@ -1,19 +1,16 @@
 import { memo } from 'react';
 import { Pressable, View } from 'react-native';
-import type { ICameraDetailCache, ICameraListCacheRow } from '@/core/interfaces';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import type { CameraDriverKind, CameraRecordMode, IconName, TranslationKey } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
 export type CameraCardStatus = 'online' | 'offline' | 'disabled';
 
 type CameraCardProps = {
-  item: ICameraListCacheRow;
-  recordMode?: CameraRecordMode;
+  item: ICameraCacheRow;
   onPress: (id: string) => void;
 };
 
@@ -59,7 +56,7 @@ const STATUS_TEXT: Record<CameraCardStatus, string> = {
   disabled: 'text-muted-foreground',
 };
 
-export function cameraStatusOf(item: ICameraListCacheRow): CameraCardStatus {
+export function cameraStatusOf(item: Pick<ICameraCacheRow, 'isEnabled' | 'isOnline'>): CameraCardStatus {
   if (!item.isEnabled) return 'disabled';
   return item.isOnline ? 'online' : 'offline';
 }
@@ -75,19 +72,17 @@ function CameraMetaPill({ icon, label }: CameraMetaPillProps) {
   );
 }
 
-export const CameraCard = memo(function CameraCard({ item, recordMode, onPress }: CameraCardProps) {
+export const CameraCard = memo(function CameraCard({ item, onPress }: CameraCardProps) {
   const { t } = useTranslation();
-  const detail = useViewCacheValue<ICameraDetailCache>(VIEW_CACHE_KEYS.cameraDetail, item.id);
   const status = cameraStatusOf(item);
-  const driver = detail?.camera.driver;
   const statusLabel = t(STATUS_LABEL[status]);
-  const subtitle = [item.model, driver ? t(DRIVER_LABEL[driver]) : '']
+  const subtitle = [item.modelLabel, t(DRIVER_LABEL[item.driver])]
     .filter(Boolean)
     .join(' · ');
   const zonesLabel =
-    item.zones === 1
+    item.zones.length === 1
       ? t('screens.cameras.zones-count-one')
-      : t('screens.cameras.zones-count', { count: String(item.zones) });
+      : t('screens.cameras.zones-count', { count: String(item.zones.length) });
 
   return (
     <Pressable
@@ -132,7 +127,7 @@ export const CameraCard = memo(function CameraCard({ item, recordMode, onPress }
         </View>
       </View>
       <View className="flex-row flex-wrap gap-2 px-1 pb-1">
-        {recordMode ? <CameraMetaPill icon="video" label={t(RECORD_LABEL[recordMode])} /> : null}
+        <CameraMetaPill icon="video" label={t(RECORD_LABEL[item.recordMode])} />
         <CameraMetaPill icon="shield" label={zonesLabel} />
       </View>
     </Pressable>

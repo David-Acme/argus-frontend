@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
-import type { ICameraListCacheRow } from '@/core/interfaces';
-import type { CameraRecordMode } from '@/core/types';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { CameraCard } from './camera-card';
 
 type CameraCardGridProps = {
-  items: readonly ICameraListCacheRow[];
-  recordModes: ReadonlyMap<string, CameraRecordMode>;
+  items: readonly ICameraCacheRow[];
   onSelect: (id: string) => void;
   createLabel: string;
   createHint: string;
@@ -56,7 +54,6 @@ function CameraCreateTile({ label, hint, width, onPress }: CameraCreateTileProps
 
 export function CameraCardGrid({
   items,
-  recordModes,
   onSelect,
   createLabel,
   createHint,
@@ -76,7 +73,7 @@ export function CameraCardGrid({
       {width > 0
         ? items.map((item) => (
             <View key={item.id} style={{ width: tileWidth }}>
-              <CameraCard item={item} recordMode={recordModes.get(item.id)} onPress={onSelect} />
+              <CameraCard item={item} onPress={onSelect} />
             </View>
           ))
         : null}

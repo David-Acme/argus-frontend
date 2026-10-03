@@ -31,7 +31,7 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { calendarMonthScope } from '@/core/services/view-cache-projections.service';
+import { calendarMonthScope } from '@/core/services/view-cache';
 
 export default function ScheduleScreen() {
   const router = useRouter();

@@ -19,7 +19,6 @@ export const EMPTY_DASHBOARD_SUMMARY = {
 } as const;
 
 export const VIEW_CACHE_KEYS = {
-  dashboardCameras: 'dashboard.cameras',
   dashboardAgenda: 'dashboard.agenda',
   dashboardNotifications: 'dashboard.notifications',
   dashboardSummary: 'dashboard.summary',
@@ -27,13 +26,11 @@ export const VIEW_CACHE_KEYS = {
   dashboardActivity: 'dashboard.activity',
   dashboardUnread: 'dashboard.unread',
   cameraList: 'camera.list',
-  cameraDetail: 'camera.detail',
   cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
   peopleUsers: 'people.users',
-  peopleFilter: 'people.filter',
   peopleInvitations: 'people.invitations',
   settingsOverview: 'settings.overview',
 } as const;

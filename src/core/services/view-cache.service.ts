@@ -75,11 +75,12 @@ class ViewCacheService {
     const limited = rows.length > limit ? rows.slice(0, limit) : rows;
     const target = this.keyOf(key, scope);
     this.store(target, limited);
-    if (scope == null || !options.replaceScoped) return;
+  }
 
+  retainScopes(key: ViewCacheKey, kept: ReadonlySet<string>): void {
     const base = `${VIEW_CACHE_PREFIX}${this.userId}.${key}.`;
     for (const stored of storageService.getAllKeys()) {
-      if (stored !== target && stored.startsWith(base)) {
+      if (stored.startsWith(base) && !kept.has(stored.slice(base.length))) {
         storageService.remove(stored);
         this.notify(stored);
       }

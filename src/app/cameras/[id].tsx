@@ -7,8 +7,8 @@ import { cameraControlService } from '@/core/services/camera-control.service';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
 import type {
+  ICameraCacheRow,
   ICameraCapabilities,
-  ICameraDetailCache,
   ICameraDeviceStatus,
 } from '@/core/interfaces';
 import type { MenuOption, ZoneType } from '@/core/types';
@@ -28,7 +28,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -55,9 +55,9 @@ export default function CameraDetailScreen() {
   const [talkOpen, setTalkOpen] = useState(false);
   const [moving, setMoving] = useState(false);
 
-  const detail = useViewCacheValue<ICameraDetailCache>(VIEW_CACHE_KEYS.cameraDetail, id);
-  const camera = detail?.camera ?? null;
-  const zones = useMemo(() => detail?.zones ?? [], [detail]);
+  const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
+  const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
+  const zones = useMemo(() => camera?.zones ?? [], [camera]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
 
   const typeLabels = useMemo<Record<ZoneType, string>>(

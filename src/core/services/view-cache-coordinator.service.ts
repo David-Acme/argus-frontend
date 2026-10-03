@@ -1,28 +1,7 @@
-import { auditTime, combineLatest, type Subscription } from 'rxjs';
-import type {
-  ICameraCacheRow,
-  ICameraDetailCache,
-  ICameraEventCacheRow,
-  ICameraListCacheRow,
-  IDashboardCameraCacheRow,
-  IInvitationRecord,
-  INotificationPreviewCacheRow,
-  IPeopleDirectoryFilter,
-  IPeopleDirectoryCacheRow,
-  IProjectCacheRow,
-  IProjectTaskCacheRow,
-  IZoneCacheRow,
-} from '@/core/interfaces';
-import type {
-  CalendarEntry,
-  DashboardProjectCard,
-  DashboardSummary,
-  EventSeverity,
-  IconName,
-} from '@/core/types';
+import { shareReplay, type Observable, type Subscription } from 'rxjs';
+import { calendarEventService } from '@/core/services/calendar-event.service';
 import { cameraService } from '@/core/services/camera.service';
 import { cameraStreamService } from '@/core/services/camera-stream.service';
-import { calendarEventService } from '@/core/services/calendar-event.service';
 import { eventService } from '@/core/services/event.service';
 import { notificationService } from '@/core/services/notification.service';
 import { projectService } from '@/core/services/project.service';
@@ -30,372 +9,160 @@ import { projectTaskService } from '@/core/services/project-task.service';
 import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
-import { viewCacheService } from '@/core/services/view-cache.service';
 import { zoneService } from '@/core/services/zone.service';
-import { isOpenTask, taskProgress } from '@/shared/libs/task-progress';
+import { EVENT_SAMPLE_LIMIT } from '@/shared/constants';
+import { projectActivity } from './view-cache/activity.projection';
 import {
-  ACTIVITY_WINDOW_DAYS,
-  EVENT_SAMPLE_LIMIT,
-  MOSAIC_COLUMNS,
-  MOSAIC_ROWS,
-  RECENT_EVENT_LIMIT,
-  VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
-  VIEW_CACHE_LIST_LIMIT,
-  VIEW_CACHE_KEYS,
-} from '@/shared/constants';
-import {
-  calendarMonthRange,
   calendarMonthScope,
-  toCalendarEntries,
-} from './view-cache-projections.service';
+  calendarWindow,
+  projectAgenda,
+  projectCalendar,
+  todayRange,
+} from './view-cache/calendar.projection';
+import { projectCameras } from './view-cache/camera.projection';
+import { projectNotifications } from './view-cache/notification.projection';
+import { projectPeople } from './view-cache/people.projection';
+import { projectProjects } from './view-cache/project.projection';
+import { DAY_MS, startOfDay } from './view-cache/dates';
+import { startProjection, type ProjectionContext } from './view-cache/projection';
+import { projectSummary } from './view-cache/summary.projection';
 
-const DAY_MS = 86_400_000;
-const BAND_HOURS = 24 / MOSAIC_ROWS;
 const NOTIFICATION_PREVIEW_LIMIT = 8;
-const PROJECTION_REFRESH_MS = 120;
 
-const startOfDay = (value: Date): number =>
-  new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+const shared = <T>(source: Observable<T>): Observable<T> =>
+  source.pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
-const endOfDay = (value: Date): number => startOfDay(value) + DAY_MS - 1;
+function sessionSources(userId: string) {
+  return {
+    cameras: shared(cameraService.observeList()),
+    zones: shared(zoneService.observeForCache()),
+    streams: shared(cameraStreamService.observePrimaries()),
+    projects: shared(projectService.observeList()),
+    tasks: shared(projectTaskService.observeAll()),
+    reminders: shared(reminderService.observeForUser(userId)),
+    notifications: shared(notificationService.observeForUser(userId, NOTIFICATION_PREVIEW_LIMIT)),
+    unread: shared(notificationService.observeUnreadCountForUser(userId)),
+    events: shared(eventService.observeRecent(EVENT_SAMPLE_LIMIT)),
+    users: shared(userService.observeDirectory()),
+    invitations: shared(userInvitationService.observeList()),
+  };
+}
 
-const emptyLevels = (): number[][] =>
-  Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
+type SessionSources = ReturnType<typeof sessionSources>;
+
+function startSessionProjections(sources: SessionSources, ctx: ProjectionContext): Subscription[] {
+  const { from, to } = todayRange(ctx.now);
+  return [
+    startProjection(
+      {
+        sources: () => ({ cameras: sources.cameras, zones: sources.zones, streams: sources.streams }),
+        project: projectCameras,
+      },
+      ctx,
+    ),
+    startProjection(
+      {
+        sources: () => ({ projects: sources.projects, tasks: sources.tasks }),
+        project: projectProjects,
+        tracked: ['project.tasks'],
+      },
+      ctx,
+    ),
+    startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
+    startProjection(
+      { sources: () => ({ notifications: sources.notifications, unread: sources.unread }), project: projectNotifications },
+      ctx,
+    ),
+    startProjection({ sources: () => ({ events: sources.events }), project: projectActivity }, ctx),
+    startProjection(
+      {
+        sources: () => ({
+          cameras: sources.cameras,
+          reminders: sources.reminders,
+          projects: sources.projects,
+          tasks: sources.tasks,
+          events: sources.events,
+        }),
+        project: projectSummary,
+      },
+      ctx,
+    ),
+    startProjection(
+      {
+        sources: () => ({
+          events: calendarEventService.observeRange(from, to),
+          reminders: sources.reminders,
+          tasks: projectTaskService.observeDueRange(from, to),
+        }),
+        project: projectAgenda,
+      },
+      ctx,
+    ),
+  ];
+}
 
 class ViewCacheCoordinatorService {
   private userId: string | null = null;
-  private coreSubscription: Subscription | null = null;
-  private dashboardAgendaSubscription: Subscription | null = null;
+  private sources: SessionSources | null = null;
+  private subscriptions: Subscription[] = [];
   private calendarSubscription: Subscription | null = null;
   private calendarScope: string | null = null;
   private nextDayTimer: ReturnType<typeof setTimeout> | null = null;
-  private peopleFilterRequest = 0;
 
   start(userId: number | string): void {
     const nextUserId = String(userId);
     if (this.userId === nextUserId) return;
-
     this.stop();
     this.userId = nextUserId;
-    this.observeCoreViews(nextUserId);
-    this.observeDashboardAgenda(nextUserId);
-    this.watchCalendarMonth(new Date());
-    this.scheduleNextDayRefresh();
+    this.sources = sessionSources(nextUserId);
+    this.refresh();
   }
 
   stop(): void {
-    this.peopleFilterRequest += 1;
-    this.coreSubscription?.unsubscribe();
-    this.coreSubscription = null;
-    this.dashboardAgendaSubscription?.unsubscribe();
-    this.dashboardAgendaSubscription = null;
+    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.subscriptions = [];
     this.calendarSubscription?.unsubscribe();
     this.calendarSubscription = null;
     if (this.nextDayTimer) clearTimeout(this.nextDayTimer);
     this.nextDayTimer = null;
     this.calendarScope = null;
+    this.sources = null;
     this.userId = null;
   }
 
   watchCalendarMonth(anchor: Date): void {
-    if (!this.userId) return;
+    const { sources, userId } = this;
+    if (!sources || !userId) return;
     const scope = calendarMonthScope(anchor);
     if (scope === this.calendarScope) return;
-
     this.calendarSubscription?.unsubscribe();
     this.calendarScope = scope;
-    const range = calendarMonthRange(anchor);
-    this.calendarSubscription = combineLatest({
-      events: calendarEventService.observeRange(range.from, range.to),
-      reminders: reminderService.observeForUser(this.userId),
-      tasks: projectTaskService.observeDueRange(range.from, range.to),
-    })
-      .pipe(auditTime(PROJECTION_REFRESH_MS))
-      .subscribe(({ events, reminders, tasks }) => {
-      const entries = toCalendarEntries(events, reminders, tasks, range.from, range.to);
-      viewCacheService.write(VIEW_CACHE_KEYS.calendarEntries, entries, scope, {
-        limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
-        replaceScoped: true,
-      });
-    });
-  }
-
-  async filterPeople(filter: IPeopleDirectoryFilter): Promise<void> {
-    if (!this.userId) return;
-    const request = this.peopleFilterRequest + 1;
-    this.peopleFilterRequest = request;
-    const users = await userService.filterDirectory(filter);
-    if (request !== this.peopleFilterRequest) return;
-    const rows: IPeopleDirectoryCacheRow[] = users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      lastName: user.lastName,
-      role: user.role,
-      isActive: user.isActive,
-      createdAt: user.createdAt.getTime(),
-      updatedAt: user.updatedAt.getTime(),
-    }));
-    viewCacheService.write(VIEW_CACHE_KEYS.peopleFilter, rows, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
-  }
-
-  private observeCoreViews(userId: string): void {
-    this.coreSubscription?.unsubscribe();
-    const subscription = combineLatest({
-      cameras: cameraService.observeList(),
-      zones: zoneService.observeForCache(),
-      streams: cameraStreamService.observePrimaries(),
-      projects: projectService.observeList(),
-      tasks: projectTaskService.observeAll(),
-      reminders: reminderService.observeForUser(userId),
-      notifications: notificationService.observeForUser(userId, NOTIFICATION_PREVIEW_LIMIT),
-      unread: notificationService.observeUnreadCountForUser(userId),
-      events: eventService.observeRecent(EVENT_SAMPLE_LIMIT),
-      users: userService.observeDirectory(),
-      invitations: userInvitationService.observeList(),
-    })
-      .pipe(auditTime(PROJECTION_REFRESH_MS))
-      .subscribe(
-      ({
-        cameras,
-        zones,
-        streams,
-        projects,
-        tasks,
-        reminders,
-        notifications,
-        unread,
-        events,
-        users,
-        invitations,
-      }) => {
-        const zonesByCamera = new Map<string, number>();
-        for (const zone of zones) {
-          zonesByCamera.set(zone.cameraId, (zonesByCamera.get(zone.cameraId) ?? 0) + 1);
-        }
-        const cameraRows: ICameraListCacheRow[] = cameras.map((camera) => ({
-          id: camera.id,
-          icon: (camera.icon || 'video') as IconName,
-          name: camera.name,
-          ip: camera.ip,
-          model: [camera.manufacturer, camera.model].filter(Boolean).join(' '),
-          isOnline: camera.isOnline,
-          isEnabled: camera.isEnabled,
-          zones: zonesByCamera.get(camera.id) ?? 0,
-        }));
-        viewCacheService.write(VIEW_CACHE_KEYS.cameraList, cameraRows, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
-
-        const cameraDetails: ICameraCacheRow[] = cameras.map((camera) => ({
-          id: camera.id,
-          driver: camera.driver,
-          icon: camera.icon,
-          name: camera.name,
-          ip: camera.ip,
-          port: camera.port,
-          username: camera.username,
-          cloudUsername: camera.cloudUsername,
-          manufacturer: camera.manufacturer,
-          model: camera.model,
-          recordMode: camera.recordMode,
-          retentionDays: camera.retentionDays,
-          isOnline: camera.isOnline,
-          isEnabled: camera.isEnabled,
-        }));
-        const zoneRows: IZoneCacheRow[] = zones.map((zone) => ({
-          id: zone.id,
-          cameraId: zone.cameraId,
-          name: zone.name,
-          points: zone.points,
-          zoneType: zone.zoneType,
-          color: zone.color,
-          isEnabled: zone.isEnabled,
-        }));
-        for (const camera of cameraDetails) {
-          const detail: ICameraDetailCache = {
-            camera,
-            zones: zoneRows.filter((zone) => zone.cameraId === camera.id),
-          };
-          viewCacheService.writeValue(VIEW_CACHE_KEYS.cameraDetail, detail, camera.id);
-        }
-
-        const resolutionByCamera = new Map(
-          streams.map((stream) => [stream.cameraId, stream.resolution]),
-        );
-        const dashboardCameras: IDashboardCameraCacheRow[] = cameras.map((camera) => ({
-          id: camera.id,
-          name: camera.name,
-          model: [camera.manufacturer, camera.model].filter(Boolean).join(' '),
-          ip: camera.ip,
-          isOnline: camera.isOnline,
-          isEnabled: camera.isEnabled,
-          resolution: resolutionByCamera.get(camera.id) || undefined,
-          recordMode: camera.recordMode || undefined,
-        }));
-        viewCacheService.write(VIEW_CACHE_KEYS.dashboardCameras, dashboardCameras);
-
-        const projectRows: IProjectCacheRow[] = projects.map((project) => ({
-          id: project.id,
-          name: project.name,
-          description: project.description,
-          status: project.status,
-        }));
-        viewCacheService.write(VIEW_CACHE_KEYS.projectList, projectRows, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
-
-        const taskRows: IProjectTaskCacheRow[] = tasks.map((task) => ({
-          id: task.id,
-          projectId: task.projectId,
-          title: task.title,
-          status: task.status,
-          priority: task.priority,
-          dueAt: task.dueAt?.getTime() ?? null,
-        }));
-
-        const tasksByProject = new Map<string, IProjectTaskCacheRow[]>();
-        for (const task of taskRows) {
-          const bucket = tasksByProject.get(task.projectId) ?? [];
-          bucket.push(task);
-          tasksByProject.set(task.projectId, bucket);
-        }
-        for (const project of projectRows) {
-          viewCacheService.write(
-            VIEW_CACHE_KEYS.projectTasks,
-            tasksByProject.get(project.id) ?? [],
-            project.id,
-            { limit: VIEW_CACHE_LIST_LIMIT },
-          );
-        }
-        const dashboardProjects: DashboardProjectCard[] = projectRows.map((project) => {
-          const progress = taskProgress(tasksByProject.get(project.id) ?? []);
-          return {
-            ...project,
-            done: progress.done,
-            total: progress.total,
-            progress: progress.total > 0 ? progress.done / progress.total : 0,
-          };
-        });
-        viewCacheService.write(VIEW_CACHE_KEYS.dashboardProjects, dashboardProjects);
-
-        const people: IPeopleDirectoryCacheRow[] = users.map((user) => ({
-          id: user.id,
-          name: user.name,
-          lastName: user.lastName,
-          role: user.role,
-          isActive: user.isActive,
-          createdAt: user.createdAt.getTime(),
-          updatedAt: user.updatedAt.getTime(),
-        }));
-        viewCacheService.write(VIEW_CACHE_KEYS.peopleUsers, people, undefined, { limit: VIEW_CACHE_LIST_LIMIT });
-
-        const invitationRows: IInvitationRecord[] = invitations.map((invitation) => ({
-          id: Number(invitation.id),
-          role: invitation.role,
-          maxRedemptions: invitation.maxRedemptions,
-          redemptionCount: invitation.redemptionCount,
-          expiresAt: Math.floor(invitation.expiresAt.getTime() / 1000),
-          createdBy: Number(invitation.createdBy),
-          revokedAt: invitation.revokedAt
-            ? Math.floor(invitation.revokedAt.getTime() / 1000)
-            : null,
-          createdAt: Math.floor(invitation.createdAt.getTime() / 1000),
-        }));
-        viewCacheService.write(VIEW_CACHE_KEYS.peopleInvitations, invitationRows, undefined, {
-          limit: VIEW_CACHE_LIST_LIMIT,
-        });
-
-        const notificationRows: INotificationPreviewCacheRow[] = notifications.map((notification) => ({
-          id: notification.id,
-          title: notification.title,
-          body: notification.body,
-          isRead: notification.isRead,
-        }));
-        viewCacheService.write(VIEW_CACHE_KEYS.dashboardNotifications, notificationRows);
-        viewCacheService.writeValue(VIEW_CACHE_KEYS.dashboardUnread, unread);
-
-        const today = startOfDay(new Date());
-        const since = today - (ACTIVITY_WINDOW_DAYS - 1) * DAY_MS;
-        const previousSince = since - ACTIVITY_WINDOW_DAYS * DAY_MS;
-        let eventsCurrent = 0;
-        let eventsPrevious = 0;
-        for (const event of events) {
-          const occurredAt = event.occurredAt.getTime();
-          if (occurredAt >= since) eventsCurrent += 1;
-          else if (occurredAt >= previousSince) eventsPrevious += 1;
-        }
-        const summary: DashboardSummary = {
-          camerasTotal: cameras.length,
-          camerasOnline: cameras.filter((camera) => camera.isEnabled && camera.isOnline).length,
-          remindersPending: reminders.filter((reminder) => !reminder.isCompleted).length,
-          projectsActive: projectRows.filter((project) => project.status !== 'archived').length,
-          tasksOpen: taskRows.filter(isOpenTask).length,
-          eventsCurrent,
-          eventsPrevious,
-        };
-        viewCacheService.writeValue(VIEW_CACHE_KEYS.dashboardSummary, summary);
-        viewCacheService.write(VIEW_CACHE_KEYS.dashboardActivity, this.activityLevels(events, today));
-        const eventRows: ICameraEventCacheRow[] = [...events]
-          .sort((left, right) => right.occurredAt.getTime() - left.occurredAt.getTime())
-          .slice(0, RECENT_EVENT_LIMIT)
-          .map((event) => ({
-            id: event.id,
-            summary: event.summary,
-            severity: event.severity as EventSeverity,
-            occurredAt: event.occurredAt.getTime(),
-          }));
-        viewCacheService.write(VIEW_CACHE_KEYS.cameraEvents, eventRows);
+    const window = calendarWindow(anchor);
+    this.calendarSubscription = startProjection(
+      {
+        sources: () => ({
+          events: calendarEventService.observeRange(window.from, window.to),
+          reminders: sources.reminders,
+          tasks: projectTaskService.observeDueRange(window.from, window.to),
+        }),
+        project: (values) => projectCalendar(values, anchor),
+        tracked: ['calendar.entries'],
       },
+      { userId, now: new Date() },
     );
-    this.coreSubscription = subscription;
   }
 
-  private observeDashboardAgenda(userId: string): void {
-    this.dashboardAgendaSubscription?.unsubscribe();
-    const today = new Date();
-    const from = startOfDay(today);
-    const to = endOfDay(today);
-    const subscription = combineLatest({
-      events: calendarEventService.observeRange(from, to),
-      reminders: reminderService.observeForUser(userId),
-      tasks: projectTaskService.observeDueRange(from, to),
-    })
-      .pipe(auditTime(PROJECTION_REFRESH_MS))
-      .subscribe(({ events, reminders, tasks }) => {
-      const entries: CalendarEntry[] = toCalendarEntries(events, reminders, tasks, from, to);
-      viewCacheService.write(VIEW_CACHE_KEYS.dashboardAgenda, entries, 'today', {
-        limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
-        replaceScoped: true,
-      });
-    });
-    this.dashboardAgendaSubscription = subscription;
-  }
-
-  private scheduleNextDayRefresh(): void {
-    if (!this.userId) return;
-    const now = Date.now();
-    const next = startOfDay(new Date(now)) + DAY_MS;
-    this.nextDayTimer = setTimeout(() => {
-      const userId = this.userId;
-      if (!userId) return;
-      this.observeCoreViews(userId);
-      this.observeDashboardAgenda(userId);
-      this.watchCalendarMonth(new Date());
-      this.scheduleNextDayRefresh();
-    }, Math.max(1_000, next - now + 1_000));
-  }
-
-  private activityLevels(events: readonly { occurredAt: Date }[], today: number): number[][] {
-    const counts = emptyLevels();
-    let peak = 0;
-    for (const event of events) {
-      const occurredAt = event.occurredAt.getTime();
-      const dayOffset = Math.floor((today - startOfDay(new Date(occurredAt))) / DAY_MS);
-      if (dayOffset < 0 || dayOffset >= MOSAIC_COLUMNS) continue;
-      const column = MOSAIC_COLUMNS - 1 - dayOffset;
-      const row = Math.min(MOSAIC_ROWS - 1, Math.floor(new Date(occurredAt).getHours() / BAND_HOURS));
-      counts[row][column] += 1;
-      peak = Math.max(peak, counts[row][column]);
-    }
-    return peak === 0
-      ? counts
-      : counts.map((row) => row.map((value) => Math.ceil((value / peak) * 3)));
+  private refresh(): void {
+    const userId = this.userId;
+    const sources = this.sources;
+    if (!userId || !sources) return;
+    const now = new Date();
+    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.subscriptions = startSessionProjections(sources, { userId, now });
+    this.calendarScope = null;
+    this.watchCalendarMonth(now);
+    const nextDay = startOfDay(now) + DAY_MS;
+    this.nextDayTimer = setTimeout(() => this.refresh(), Math.max(1_000, nextDay - now.getTime() + 1_000));
   }
 }
 

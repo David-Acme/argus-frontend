@@ -1,7 +1,7 @@
 import { portraitPreviewService } from '@/core/services/portrait-preview.service';
 import { useAuthStore } from '@/core/stores';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
-import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
+import { filterPeople } from '@/core/services/view-cache';
 import type { UserRole } from '@/core/types';
 import { DashboardShell, SectionHeading } from '@/shared/components/dashboard';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -17,7 +17,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { portraitDataUri } from '@/shared/libs/portrait-preview';
 import { toast } from '@/shared/libs/toast';
 import { Redirect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
 
@@ -37,13 +37,7 @@ export default function PeopleDirectoryScreen() {
   const [portraitLoading, setPortraitLoading] = useState(false);
   const portraitRequest = useRef(0);
   const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
-  const filteredRows = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleFilter);
-  const isFiltering = role !== 'all' || search.trim().length > 0;
-  useEffect(() => {
-    if (!isFiltering) return;
-    void viewCacheCoordinatorService.filterPeople({ query: search, role });
-  }, [isFiltering, role, search]);
-  const filtered = isFiltering ? filteredRows : people;
+  const filtered = useMemo(() => filterPeople(people, { query: search, role }), [people, role, search]);
   const closeDetails = useCallback(() => {
     portraitRequest.current += 1;
     setSelected(null);

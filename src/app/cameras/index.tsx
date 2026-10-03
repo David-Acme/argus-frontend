@@ -1,13 +1,8 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import type {
-  ICameraEventCacheRow,
-  ICameraListCacheRow,
-  IDashboardCameraCacheRow,
-} from '@/core/interfaces';
+import type { ICameraCacheRow, ICameraEventCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import type { CameraRecordMode } from '@/core/types';
 import {
   CameraCardGrid,
   CameraForm,
@@ -30,10 +25,6 @@ import { EmptyState, ScreenShell } from '@/shared/components/layout';
 
 const SUMMARY_PANEL_WIDTH = 280;
 
-function isRecordMode(value: string | undefined): value is CameraRecordMode {
-  return value === 'events' || value === 'continuous';
-}
-
 export default function CamerasScreen() {
   const router = useRouter();
   const { summary, activityLevels } = useDashboardData();
@@ -46,17 +37,8 @@ export default function CamerasScreen() {
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
 
-  const items = useViewCacheRows<ICameraListCacheRow>(VIEW_CACHE_KEYS.cameraList);
-  const dashboardCameras = useViewCacheRows<IDashboardCameraCacheRow>(VIEW_CACHE_KEYS.dashboardCameras);
+  const items = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const canCreate = can('camera', 'create');
-
-  const recordModes = useMemo(() => {
-    const modes = new Map<string, CameraRecordMode>();
-    for (const camera of dashboardCameras) {
-      if (isRecordMode(camera.recordMode)) modes.set(camera.id, camera.recordMode);
-    }
-    return modes;
-  }, [dashboardCameras]);
 
   const counts = useMemo<CameraSummaryCounts>(() => {
     const next: CameraSummaryCounts = {
@@ -70,12 +52,11 @@ export default function CamerasScreen() {
     };
     for (const item of items) {
       next[cameraStatusOf(item)] += 1;
-      next.zones += item.zones;
-      const mode = recordModes.get(item.id);
-      if (mode) next[mode] += 1;
+      next.zones += item.zones.length;
+      next[item.recordMode] += 1;
     }
     return next;
-  }, [items, recordModes]);
+  }, [items]);
 
   const openCamera = useCallback((id: string) => router.push(`/cameras/${id}`), [router]);
   const openForm = useCallback(() => setFormOpen(true), []);
@@ -133,7 +114,6 @@ export default function CamerasScreen() {
             <View className={isExpanded ? 'min-w-0 flex-1 gap-4' : 'gap-4'}>
               <CameraCardGrid
                 items={items}
-                recordModes={recordModes}
                 onSelect={openCamera}
                 createLabel={t('screens.cameras.connect')}
                 createHint={t('screens.cameras.add-tile-hint')}

@@ -4,14 +4,26 @@ import type {
   IReminderCacheSource,
 } from '@/core/interfaces';
 import type { AgendaStatus, CalendarEntry } from '@/core/types';
-import { VIEW_CACHE_CALENDAR_MONTH_DAYS } from '@/shared/constants/cache.constant';
+import {
+  VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
+  VIEW_CACHE_CALENDAR_MONTH_DAYS,
+  VIEW_CACHE_KEYS,
+} from '@/shared/constants/cache.constant';
+import { DAY_MS, endOfDay, startOfDay } from './dates';
+import type { ProjectionContext, ViewWrite } from './projection';
 
-const DAY_MS = 86_400_000;
+export type CalendarProjectionInput = {
+  events: readonly ICalendarEventCacheSource[];
+  reminders: readonly IReminderCacheSource[];
+  tasks: readonly IProjectTaskCalendarCacheSource[];
+};
+
+type Range = { from: number; to: number };
 
 export const calendarMonthScope = (value: Date): string =>
   `month.${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
 
-export const calendarMonthRange = (value: Date): { from: number; to: number } => {
+export const calendarMonthRange = (value: Date): Range => {
   const first = new Date(value.getFullYear(), value.getMonth(), 1);
   first.setDate(first.getDate() - first.getDay());
   const from = new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime();
@@ -28,11 +40,13 @@ export const toCalendarEntries = (
   const entries: CalendarEntry[] = [];
 
   for (const event of events) {
+    const startsAt = event.startsAt.getTime();
+    if (startsAt < from || startsAt > to) continue;
     entries.push({
       id: `event:${event.id}`,
       source: 'event',
       title: event.title,
-      startsAt: event.startsAt.getTime(),
+      startsAt,
       endsAt: event.endsAt?.getTime() ?? null,
       isAllDay: event.isAllDay,
       status: 'upcoming',
@@ -77,3 +91,37 @@ export const toCalendarEntries = (
 
   return entries.sort((left, right) => left.startsAt - right.startsAt);
 };
+
+export const calendarMonths = (anchor: Date): Date[] =>
+  [-1, 0, 1].map((offset) => new Date(anchor.getFullYear(), anchor.getMonth() + offset, 1));
+
+export const calendarWindow = (anchor: Date): Range => {
+  const [previous, , next] = calendarMonths(anchor);
+  return { from: calendarMonthRange(previous).from, to: calendarMonthRange(next).to };
+};
+
+export function projectCalendar(input: CalendarProjectionInput, anchor: Date): ViewWrite[] {
+  return calendarMonths(anchor).map((month) => {
+    const range = calendarMonthRange(month);
+    return {
+      key: VIEW_CACHE_KEYS.calendarEntries,
+      scope: calendarMonthScope(month),
+      rows: toCalendarEntries(input.events, input.reminders, input.tasks, range.from, range.to),
+      limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
+    };
+  });
+}
+
+export const todayRange = (now: Date): Range => ({ from: startOfDay(now), to: endOfDay(now) });
+
+export function projectAgenda(input: CalendarProjectionInput, { now }: ProjectionContext): ViewWrite[] {
+  const { from, to } = todayRange(now);
+  return [
+    {
+      key: VIEW_CACHE_KEYS.dashboardAgenda,
+      scope: 'today',
+      rows: toCalendarEntries(input.events, input.reminders, input.tasks, from, to),
+      limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
+    },
+  ];
+}

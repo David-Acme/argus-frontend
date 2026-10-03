@@ -1,4 +1,4 @@
-import type { ICameraListCacheRow } from '@/core/interfaces';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import type { UserRole } from '@/core/types';
 import { peopleAccessForRole } from './people-access';
 
@@ -22,7 +22,7 @@ const normalized = (text: string): string =>
 
 type ResolveCameraInput = {
   requested: string;
-  cameras: readonly Pick<ICameraListCacheRow, 'id' | 'name'>[];
+  cameras: readonly Pick<ICameraCacheRow, 'id' | 'name'>[];
   lastEventCameraId: string | null;
 };
 

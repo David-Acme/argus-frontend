@@ -1,6 +1,6 @@
 export { ActivityCard } from './activity-card';
 export { AgendaItem } from './agenda-item';
-export { CameraGrid, type CameraGridItem } from './camera-grid';
+export { CameraGrid } from './camera-grid';
 export { CameraTile } from './camera-tile';
 export { ComposeFab } from './compose-fab';
 export { DashboardBottomNav } from './dashboard-bottom-nav';

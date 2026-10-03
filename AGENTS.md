@@ -424,22 +424,32 @@ for Watermelon nor make an HTTP list request just because it mounted.
 - `viewCacheService` owns serialized MMKV values. Keys are namespaced as
   `view.cache.v2.<userId>.<viewKey>[.<scope>]`; `setUserId` and `clear` are a
   session boundary, so one account cannot paint another account's snapshot.
-  `view-cache-memory.ts` must not be reintroduced.
+  `view-cache-memory.ts` must not be reintroduced. A write whose serialized
+  content is identical to what is stored is skipped (no write, no notify), so
+  a view keeps its reference and does not re-render.
 - `ViewCacheCoordinatorService` is the **only** owner of the Watermelon
   subscriptions that feed views. `sessionService` starts it once the user is
-  established/restored and stops it before local projection/cache cleanup. A
-  screen may request a semantic scope (currently calendar month or people
-  filter), but may not subscribe to a model itself.
+  established/restored and stops it before local projection/cache cleanup. It
+  is a **projection registry**: each projection in
+  `core/services/view-cache/*.projection.ts` names its own sources and a pure
+  `project(values, ctx) → ViewWrite[]` (unit-tested in
+  `tests/unit/view-cache-projections.test.ts`); the session's Watermelon
+  observables are shared (`shareReplay`) so two projections reading one table
+  open one query. A projection with `tracked` keys removes the scopes it no
+  longer writes (a deleted project's task list). A screen may request a
+  semantic scope (currently the calendar month), but may not subscribe to a
+  model itself.
 - Cache pages are semantic, not an unbounded dump: ordinary list pages have
   `VIEW_CACHE_PAGE_SIZE = 40`; agenda day/week/month reads the requested date
   range from its active calendar cache, and a month cache covers the 42-day
-  visible grid. Keep only the active calendar scope. Pagination/filter SQL stays
-  inside its `.service.ts`, never a component.
+  visible grid. The active month and its two neighbours are cached, so paging
+  one month paints instantly; older months are dropped. One `camera.list`
+  snapshot carries every camera with its zones and stream resolution (list,
+  dashboard and detail read it). The people search filters the cached
+  directory in memory (`filterPeople`), never a query per keystroke.
 - The coordinator writes base snapshots whenever Watermelon changes and keeps
-  the default cache fresh before navigation. A filter preserves its last MMKV
-  result while its Watermelon query resolves, then replaces only that scoped
-  cache; stale async filter results are discarded. A next-midnight refresh
-  rebuilds date-derived dashboard/day snapshots.
+  the default cache fresh before navigation. A next-midnight refresh rebuilds
+  date-derived dashboard/day snapshots.
 - Initial normal sync is a full projection bootstrap; subsequent `Synchronize`
   pages use **`createdAt` only** for newly created rows and deletions. Field
   updates/revocations flow through global `audit_log` and user-scoped
@@ -614,7 +624,8 @@ cd src-tauri && cargo check
 | `src/core/services/auth.service.ts` | Auth API: `login` (multipart `image`), `register`, `serverStatus` (`/pairing/status`), `status`, `logout` |
 | `src/core/services/session.service.ts` | Ciclo de sesión: establish/refresh/updateUser/clear, cola serializada sobre secure-storage; inicia/detiene el coordinador de cache local |
 | `src/core/services/view-cache.service.ts` | Valores serializados MMKV/localStorage por usuario + señal de revisión; no mantiene filas en memoria JS |
-| `src/core/services/view-cache-coordinator.service.ts` | Único suscriptor Watermelon que proyecta/pagina vistas hacia MMKV y refresca derivados diarios |
+| `src/core/services/view-cache-coordinator.service.ts` | Registro de proyecciones: único suscriptor Watermelon, comparte las fuentes de la sesión y refresca derivados diarios |
+| `src/core/services/view-cache/` | Proyecciones puras por dominio (`*.projection.ts`), `projection.ts` (`ViewProjection`, `applyWrites`, `startProjection`) |
 | `src/core/interfaces/{view-cache,audit-log}.interface.ts` | Contratos de snapshots de vista y payloads de auditoría; siempre importar desde el barrel de interfaces |
 | `src/core/types/{view-cache,audit-log}.type.ts` | Uniones y tipos auxiliares de cache/auditoría; siempre importar desde el barrel de tipos |
 | `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |

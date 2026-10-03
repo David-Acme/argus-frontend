@@ -48,3 +48,21 @@ describe('viewCacheService', () => {
     unsubscribe();
   });
 });
+
+describe('applyWrites', () => {
+  test('a tracked key drops the scopes the projection no longer writes', async () => {
+    const { applyWrites } = await import('@/core/services/view-cache/projection');
+    viewCacheService.setUserId('u1');
+    applyWrites(
+      [
+        { key: 'project.tasks', scope: 'p1', rows: [{ id: 't1' }] },
+        { key: 'project.tasks', scope: 'p2', rows: [] },
+      ],
+      ['project.tasks'],
+    );
+    applyWrites([{ key: 'project.tasks', scope: 'p1', rows: [{ id: 't1' }] }], ['project.tasks']);
+    expect([...memory.keys()].filter((key) => key.includes('project.tasks'))).toEqual([
+      'view.cache.v2.u1.project.tasks.p1',
+    ]);
+  });
+});

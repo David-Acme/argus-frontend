@@ -1,21 +1,11 @@
 import { View } from 'react-native';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { CameraTile } from './camera-tile';
 
-type CameraGridItem = {
-  id: string;
-  name: string;
-  model: string;
-  ip: string;
-  isOnline: boolean;
-  isEnabled: boolean;
-  resolution?: string;
-  recordMode?: string;
-};
-
 type CameraGridProps = {
-  cameras: readonly CameraGridItem[];
+  cameras: readonly ICameraCacheRow[];
   emptyLabel: string;
   onSelect?: (id: string) => void;
 };
@@ -38,7 +28,7 @@ export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
         <View key={camera.id} className="min-w-[150px] flex-1 basis-[45%]">
           <CameraTile
             name={camera.name}
-            model={camera.model}
+            model={camera.modelLabel}
             ip={camera.ip}
             isOnline={camera.isOnline}
             isEnabled={camera.isEnabled}
@@ -51,5 +41,3 @@ export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
     </View>
   );
 }
-
-export type { CameraGridItem };

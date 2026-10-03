@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import type { ICameraListCacheRow } from '@/core/interfaces';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
 import { notificationService } from '@/core/services/notification.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
@@ -28,7 +28,7 @@ export function useCallBridge(): void {
 
   useEffect(() => {
     if (!isActive || !user) return;
-    const cameras = viewCacheService.read<ICameraListCacheRow>(VIEW_CACHE_KEYS.cameraList);
+    const cameras = viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
     voiceService.sendContext({
       kind: 'note',
       text:
@@ -69,7 +69,7 @@ export function useCallBridge(): void {
     if (!user) return;
     const run = async (action: VoiceAction) => {
       if (action.name === 'app.show_camera') {
-        const cameras = viewCacheService.read<ICameraListCacheRow>(VIEW_CACHE_KEYS.cameraList);
+        const cameras = viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
         const id = resolveCameraId({
           requested: typeof action.arguments.camera === 'string' ? action.arguments.camera : '',
           cameras,
