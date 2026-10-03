@@ -67,12 +67,11 @@ export const COMPOSE_ACTIONS: readonly {
     | '/welcome/voice'
     | '/call';
   table?: TableName;
-  nativeOnly?: boolean;
 }[] = [
   { id: 'event', icon: 'calendar', route: '/agenda?new=event', table: 'calendar_event' },
   { id: 'project', icon: 'list-todo', route: '/projects?new=project', table: 'project' },
   { id: 'camera', icon: 'video', route: '/cameras?new=camera', table: 'camera' },
-  { id: 'voice', icon: 'sparkles', route: '/call', nativeOnly: true },
+  { id: 'voice', icon: 'sparkles', route: '/call' },
 ];
 
 export const BOTTOM_NAV_HEIGHT = 60;

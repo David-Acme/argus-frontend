@@ -12,7 +12,6 @@ import {
   BOTTOM_NAV_GAP,
   BOTTOM_NAV_HEIGHT,
   COMPOSE_ACTIONS,
-  IS_NATIVE,
   COMPOSE_ITEM_STAGGER_MS,
   NAV_RAIL_WIDTH,
   colorTokens,
@@ -48,10 +47,7 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
 
   const actions = useMemo(
     () =>
-      COMPOSE_ACTIONS.filter(
-        (action) =>
-          (IS_NATIVE || !action.nativeOnly) && (!action.table || can(action.table, 'create')),
-      ),
+      COMPOSE_ACTIONS.filter((action) => !action.table || can(action.table, 'create')),
     [can]
   );
 

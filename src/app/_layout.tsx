@@ -52,7 +52,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(app)" />
               </Stack>
               <GlobalBottomNav />
-              {IS_NATIVE ? <CallPill /> : null}
+              <CallPill />
               <OfflineBanner />
               <ConfirmDialog />
               <Toaster />
