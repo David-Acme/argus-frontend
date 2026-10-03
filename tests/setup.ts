@@ -1,0 +1,76 @@
+import { mock } from 'bun:test';
+
+Object.assign(globalThis, { window: globalThis });
+
+mock.module('react-native', () => ({
+  Platform: {
+    OS: 'web',
+    select: <T>(options: { web?: T; default?: T }) => options.web ?? options.default,
+  },
+}));
+
+const LUCIDE_ICONS = [
+  'Activity',
+  'ArrowLeft',
+  'ArrowUpRight',
+  'Bell',
+  'CalendarDays',
+  'Camera',
+  'Check',
+  'CheckCircle2',
+  'Clock3',
+  'ChevronDown',
+  'ChevronLeft',
+  'ChevronRight',
+  'ChevronUp',
+  'Eye',
+  'Flashlight',
+  'Filter',
+  'FlashlightOff',
+  'Home',
+  'History',
+  'Keyboard',
+  'KeyRound',
+  'ListTodo',
+  'LoaderCircle',
+  'Link',
+  'MessagesSquare',
+  'MoreHorizontal',
+  'Mic',
+  'MicOff',
+  'Monitor',
+  'Pencil',
+  'Moon',
+  'PieChart',
+  'Plus',
+  'RefreshCw',
+  'LogOut',
+  'WifiOff',
+  'QrCode',
+  'ScanBarcode',
+  'ScanFace',
+  'Settings',
+  'SquarePen',
+  'Trash2',
+  'Search',
+  'ShieldCheck',
+  'SkipForward',
+  'SlidersHorizontal',
+  'Sparkles',
+  'Sun',
+  'TriangleAlert',
+  'TrendingDown',
+  'TrendingUp',
+  'Unlink',
+  'User',
+  'UserMinus',
+  'UserPlus',
+  'Video',
+  'Volume2',
+  'Wifi',
+  'X',
+] as const;
+
+mock.module('lucide-react-native', () =>
+  Object.fromEntries(LUCIDE_ICONS.map((name) => [name, () => null]))
+);

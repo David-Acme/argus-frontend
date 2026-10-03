@@ -1,5 +1,5 @@
 import { ARGUS_DEFAULT_ROUTE_PORTS } from '@/shared/constants';
-import type { NetPairedInstance, NetRoute, NetRoutePorts } from '@/core/types';
+import type { NetDiscovery, NetPairedInstance, NetRoute, NetRoutePorts } from '@/core/types';
 
 export function routeSegment(path: string): string {
   const trimmed = path.replace(/^\/+/, '');
@@ -23,4 +23,14 @@ export function portFor(instance: NetPairedInstance, path: string): number {
 
 export function serviceUrl(instance: NetPairedInstance, path: string, scheme: 'https' | 'wss' = 'https'): string {
   return `${scheme}://${instance.host}:${portFor(instance, path)}${path}`;
+}
+
+export const SERVER_IDENTITY_PATH = '/pairing/status';
+
+export function relocatedInstance(
+  instance: NetPairedInstance,
+  found: NetDiscovery
+): NetPairedInstance | null {
+  if (!found.ip || found.ip === instance.ip) return null;
+  return { ...instance, ip: found.ip, routes: routePortsOf(found.routes) };
 }

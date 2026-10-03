@@ -11,7 +11,7 @@ import {
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
-import { routePortsOf } from './net-routes';
+import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
 import type {
   NetAdoptInput,
   NetDiscovery,
@@ -107,9 +107,30 @@ class WebArgusNetService implements IArgusNetService {
     } catch {
       return false;
     }
-    if (!found.ip || found.ip === instance.ip) return false;
-    await updateInstanceAddress({ ip: found.ip, routes: routePortsOf(found.routes) });
+    const candidate = relocatedInstance(instance, found);
+    if (!candidate || !(await this.holdsPairedCa(candidate))) return false;
+    await updateInstanceAddress({ ip: candidate.ip, routes: candidate.routes });
     return true;
+  }
+
+  private async holdsPairedCa(candidate: NetPairedInstance): Promise<boolean> {
+    try {
+      await invoke<NetHttpResult>('argus_request', {
+        request: {
+          url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
+          method: 'GET',
+          headers: {},
+          body: '',
+          files: [],
+        },
+        caPem: candidate.caPem,
+        allowedHost: candidate.host,
+        ip: candidate.ip,
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async isPaired(): Promise<boolean> {

@@ -10,7 +10,7 @@ import {
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
-import { routePortsOf } from './net-routes';
+import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
 import type {
   NetAdoptInput,
   NetDiscovery,
@@ -104,20 +104,37 @@ class NativeArgusNetService implements IArgusNetService {
   }
 
   private async rediscover(currentIp: string): Promise<boolean> {
+    const instance = await loadInstance();
+    if (!instance || instance.ip !== currentIp) return false;
     let found;
     try {
       found = await net.discover(DISCOVERY_TIMEOUT_MS);
     } catch {
       return false;
     }
-    if (!found.ip || found.ip === currentIp) return false;
-
-    await updateInstanceAddress({ ip: found.ip, routes: routePortsOf(found.routes) });
-    const instance = await loadInstance();
-    if (!instance) return false;
-    configuredKey = `${instance.caPem}|${instance.host}|${instance.ip}`;
-    net.configure(instance.caPem, instance.host, instance.ip);
+    const candidate = relocatedInstance(instance, found);
+    if (!candidate || !(await this.holdsPairedCa(candidate))) return false;
+    await updateInstanceAddress({ ip: candidate.ip, routes: candidate.routes });
     return true;
+  }
+
+  private async holdsPairedCa(candidate: NetPairedInstance): Promise<boolean> {
+    configuredKey = null;
+    net.configure(candidate.caPem, candidate.host, candidate.ip);
+    try {
+      await net.request({
+        url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
+        method: 'GET',
+        headers: {},
+        body: '',
+        files: [],
+      });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      configuredKey = null;
+    }
   }
 
   async requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult> {
