@@ -1,4 +1,3 @@
-import { useAuthStore } from '@/core/stores';
 import {
   CalendarAgendaView,
   CalendarEntryDetail,
@@ -11,7 +10,8 @@ import {
   CalendarWeekView,
   EntryActionsMenu,
 } from '@/shared/components/calendar';
-import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboard';
+import { DashboardIconButton } from '@/shared/components/dashboard';
+import { AppScreen } from '@/shared/components/layout';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import type { ICalendarEventFormRecord } from '@/core/interfaces';
@@ -27,7 +27,7 @@ import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { screenIn } from '@/shared/libs/animations';
 import { calendarEntryEditHref, calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
 import type { CalendarEntry, CalendarView } from '@/core/types';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -38,7 +38,6 @@ export default function ScheduleScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
-  const authStatus = useAuthStore((state) => state.status);
   const {
     new: newParam,
     edit: editParam,
@@ -190,8 +189,6 @@ export default function ScheduleScreen() {
     [date, view]
   );
 
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
-
   const monthBody = (
     <>
       <View className={isWide ? 'min-w-0 flex-1' : undefined}>
@@ -257,8 +254,7 @@ export default function ScheduleScreen() {
   );
 
   return (
-    <DashboardShell
-      active="schedule"
+    <AppScreen
       scrollable={false}>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">
@@ -395,6 +391,6 @@ export default function ScheduleScreen() {
           }}
         />
       ) : null}
-    </DashboardShell>
+    </AppScreen>
   );
 }

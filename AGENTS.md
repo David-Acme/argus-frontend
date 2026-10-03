@@ -28,7 +28,8 @@
 
 ```
 src/
-  app/          expo-router pages (file-based routes); native-only routes via Stack.Protected in _layout.tsx
+  app/          expo-router pages (file-based routes); native-only routes via Stack.Protected in _layout.tsx;
+                every signed-in screen lives in (app)/, whose layout guards the session and mounts the nav once
   core/         infra: services, types, interfaces, stores (zustand)
   shared/       UI: components, constants, libs, hooks
   global.css    Uniwind/Tailwind tokens (source for styling)
@@ -663,8 +664,9 @@ cd src-tauri && cargo check
 | `src/app/login/index.tsx` | Desktop: QR de login cruzado (device-login) + polling + espera de propietario |
 | `src/app/approve/index.tsx` | Móvil: escanear el QR del otro dispositivo y aprobar la sesión |
 | `src/app/qr/index.tsx` | QR scan route (native-only, `expo-camera`; web → redirect to `/`) |
-| `src/app/index.tsx` | Entry router (unpaired→welcome, paired→login/dashboard) + DashboardScreen |
-| `src/app/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
+| `src/app/(app)/_layout.tsx` | Signed-in group: `EntryGate` (session guard + entry resolver with the branded splash) around `AppShell` (nav rail mounted once) and the group's Stack |
+| `src/app/(app)/index.tsx` | Home dashboard |
+| `src/app/(app)/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` · `security/` · `settings/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
 | `src/shared/components/dashboard/` | Familia dashboard (23): camera grid/tile, activity, nav rail/bottom nav, charts, popovers |
 | `src/shared/components/session/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
 | `src/shared/components/face/` | Guidance facial: `face-guide-overlay` (máscara+óvalo+pill), `face-frame` |

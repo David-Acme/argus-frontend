@@ -1,9 +1,8 @@
 import { Redirect } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { useAuthStore } from '@/core/stores';
 import type { SettingLevel, SettingsOwner, SettingsOwnerName } from '@/core/types';
-import { DashboardShell } from '@/shared/components/dashboard';
+import { AppScreen } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { SettingsOwnerList, SettingsOwnerPanel } from '@/shared/components/settings';
 import { Button } from '@/shared/components/ui/button';
@@ -19,7 +18,6 @@ const visibleAt = (level: SettingLevel) => (owner: SettingsOwner) =>
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
-  const authStatus = useAuthStore((state) => state.status);
   const { role } = usePermissions();
   const { isWide } = useWindowClass();
   const { overview, loading, failed, reload, change } = useSettings();
@@ -36,8 +34,6 @@ export default function SettingsScreen() {
     ],
     [t]
   );
-
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
   if (role !== 'owner') return <Redirect href="/profile" />;
 
   const levelControl = (
@@ -52,7 +48,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <DashboardShell active="settings">
+    <AppScreen>
       <View className="flex-1 gap-5">
         <View className={isWide ? 'flex-row items-end justify-between gap-6' : 'gap-4'}>
           <View className="min-w-0 flex-1 gap-1.5">
@@ -115,6 +111,6 @@ export default function SettingsScreen() {
           </View>
         )}
       </View>
-    </DashboardShell>
+    </AppScreen>
   );
 }

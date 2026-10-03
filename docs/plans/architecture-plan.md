@@ -198,13 +198,21 @@ to the documented scale, then a lint rule against them.
 
 ### Phase 4 — Routing, shell and guards
 
-- [ ] `(app)/_layout.tsx` with `Stack.Protected` and the nav mounted once: no
+- [x] `(app)/_layout.tsx` with `Stack.Protected` and the nav mounted once: no
   per-screen auth redirects, no rail remount or cross-fade per navigation.
+  Deviation: the group layout guards the session itself (`EntryGate`) instead
+  of `Stack.Protected`. With `Stack.Protected`, `/` would need two routes (the
+  signed-out resolver and the home screen) and a signed-out deep link would
+  rely on the router's fallback; the gate keeps `/` one route and renders the
+  resolver in place. `/call` stays outside the group (full-screen surface) and
+  keeps its own redirect.
 - [ ] Role guards from the policies (`requireRole`, people access) instead of
   hand-written checks in settings, users, people and cameras.
 - [ ] `entryPermissions(entry, can)` for the eight agenda repeats.
-- [ ] Split `app/index.tsx` into an entry resolver and the home screen; show
+- [x] Split `app/index.tsx` into an entry resolver and the home screen; show
   the branded splash while resolving instead of a blank view.
+  Done: `EntryGate` + `(app)/index.tsx`; the splash is `BrandSplash`, shared
+  with `SessionGate`.
 
 ### Phase 5 — Feature folders (one domain per change)
 

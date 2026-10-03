@@ -49,9 +49,7 @@ export default function RootLayout() {
                 </Stack.Protected>
                 <Stack.Screen name="welcome" />
                 <Stack.Screen name="login" />
-                <Stack.Screen name="agenda" />
-                <Stack.Screen name="projects" />
-                <Stack.Screen name="cameras" />
+                <Stack.Screen name="(app)" />
               </Stack>
               <GlobalBottomNav />
               {IS_NATIVE ? <CallPill /> : null}

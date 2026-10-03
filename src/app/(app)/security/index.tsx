@@ -2,7 +2,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useAuthStore } from '@/core/stores';
-import { ScreenShell } from '@/shared/components/layout';
+import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import {
   DecisionReview,
@@ -27,12 +27,11 @@ export default function SecurityScreen() {
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
   const bottomInset = useBottomNavInset();
-  const authStatus = useAuthStore((state) => state.status);
   const role = useAuthStore((state) => state.user?.role);
   const access = guardAccessForRole(role ?? 'guest');
   const guard = useGuard(access.review);
   const [guestFormOpen, setGuestFormOpen] = useState(false);
-  if (authStatus !== 'signed-in' || !access.view) return <Redirect href="/" />;
+  if (!access.view) return <Redirect href="/" />;
 
   const activeGuests = guard.guests.filter(
     (guest) => guest.validUntil * 1000 > guard.loadedAt
@@ -153,16 +152,22 @@ export default function SecurityScreen() {
     );
 
   return (
-    <ScreenShell
-      title={t('screens.security.title')}
-      subtitle={t('screens.security.subtitle')}
-      onBack={() => router.back()}>
+    <AppScreen
+      scrollable={false}
+      bottomNav={false}
+      header={
+        <ScreenHeader
+          title={t('screens.security.title')}
+          subtitle={t('screens.security.subtitle')}
+          onBack={() => router.back()}
+        />
+      }>
       {body}
       <ExpectedGuestForm
         open={guestFormOpen}
         onOpenChange={setGuestFormOpen}
         onSubmit={guard.addGuest}
       />
-    </ScreenShell>
+    </AppScreen>
   );
 }

@@ -2,7 +2,6 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useAuthStore } from '@/core/stores';
 import { cameraControlService } from '@/core/services/camera-control.service';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
@@ -22,7 +21,7 @@ import {
 } from '@/shared/components/cameras';
 import { DashboardIconButton } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
-import { ScreenShell } from '@/shared/components/layout';
+import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
@@ -44,7 +43,6 @@ export default function CameraDetailScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const authStatus = useAuthStore((state) => state.status);
   const { can } = usePermissions();
   const { isWide } = useWindowClass();
   const [editOpen, setEditOpen] = useState(false);
@@ -149,29 +147,33 @@ export default function CameraDetailScreen() {
     },
     [t],
   );
-
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
   if (!camera) return <Redirect href="/cameras" />;
 
   return (
-    <ScreenShell
-      title={camera.name}
-      subtitle={[camera.ip, camera.isOnline ? t('screens.cameras.status.online') : t('screens.cameras.status.offline')]
-        .filter(Boolean)
-        .join(' · ')}
-      onBack={() => router.back()}
-      action={
-        !can('camera', 'update') ? null : (
-        <AdaptiveMenu
-          options={actions}
-          onSelect={(value) => void runAction(value)}
+    <AppScreen
+      scrollable={false}
+      bottomNav={false}
+      header={
+        <ScreenHeader
           title={camera.name}
-          closeLabel={t('common.close')}
-          trigger={
-            <DashboardIconButton icon="more-horizontal" label={t('screens.cameras.edit')} />
+          subtitle={[camera.ip, camera.isOnline ? t('screens.cameras.status.online') : t('screens.cameras.status.offline')]
+            .filter(Boolean)
+            .join(' · ')}
+          onBack={() => router.back()}
+          action={
+            !can('camera', 'update') ? null : (
+            <AdaptiveMenu
+              options={actions}
+              onSelect={(value) => void runAction(value)}
+              title={camera.name}
+              closeLabel={t('common.close')}
+              trigger={
+                <DashboardIconButton icon="more-horizontal" label={t('screens.cameras.edit')} />
+              }
+            />
+            )
           }
         />
-        )
       }>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-8">
         {camera.isEnabled ? (
@@ -317,7 +319,7 @@ export default function CameraDetailScreen() {
         onApplied={applyDevice}
       />
       <ZoneForm open={zoneOpen} onOpenChange={setZoneOpen} cameraId={camera.id} zone={zone} />
-    </ScreenShell>
+    </AppScreen>
   );
 }
 

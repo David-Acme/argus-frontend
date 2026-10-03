@@ -10,8 +10,8 @@ import type {
 } from '@/core/interfaces';
 import type { UserRole } from '@/core/types';
 import {
-  DashboardShell,
 } from '@/shared/components/dashboard';
+import { AppScreen } from '@/shared/components/layout';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ListRow } from '@/shared/components/ui/list-row';
@@ -149,8 +149,7 @@ export default function UsersScreen() {
   if (!isOwner) return <Redirect href="/profile" />;
 
   return (
-    <DashboardShell
-      active="people"
+    <AppScreen
       aside={
         <View className="gap-5">
           <View className="gap-3">
@@ -275,6 +274,6 @@ export default function UsersScreen() {
           </View>
         ) : null}
       </AdaptiveDialog>
-    </DashboardShell>
+    </AppScreen>
   );
 }

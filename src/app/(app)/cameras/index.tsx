@@ -1,8 +1,7 @@
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow, ICameraEventCacheRow } from '@/core/interfaces';
-import { useAuthStore } from '@/core/stores';
 import {
   CameraCardGrid,
   CameraForm,
@@ -21,7 +20,7 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { ScreenShell } from '@/shared/components/layout';
+import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 
 const SUMMARY_PANEL_WIDTH = 280;
@@ -32,7 +31,6 @@ export default function CamerasScreen() {
   const recentEvents = useViewCacheRows<ICameraEventCacheRow>(VIEW_CACHE_KEYS.cameraEvents);
   const { t } = useTranslation();
   const { isCompact, isExpanded } = useWindowClass();
-  const authStatus = useAuthStore((state) => state.status);
   const { can, role } = usePermissions();
   const bottomInset = useBottomNavInset();
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
@@ -62,8 +60,6 @@ export default function CamerasScreen() {
   const openCamera = useCallback((id: string) => router.push(`/cameras/${id}`), [router]);
   const openForm = useCallback(() => setFormOpen(true), []);
 
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
-
   const detections = (
     <RecentDetections
       title={t('screens.cameras.detections.title')}
@@ -75,17 +71,23 @@ export default function CamerasScreen() {
   );
 
   return (
-    <ScreenShell
-      title={t('screens.cameras.title')}
-      subtitle={t('screens.cameras.subtitle', {
-        online: String(counts.online),
-        total: String(items.length),
-      })}
-      onBack={() => router.back()}
-      action={
-        canCreate ? (
-          <DashboardIconButton icon="plus" label={t('screens.cameras.connect')} onPress={openForm} />
-        ) : null
+    <AppScreen
+      scrollable={false}
+      bottomNav={false}
+      header={
+        <ScreenHeader
+          title={t('screens.cameras.title')}
+          subtitle={t('screens.cameras.subtitle', {
+            online: String(counts.online),
+            total: String(items.length),
+          })}
+          onBack={() => router.back()}
+          action={
+            canCreate ? (
+              <DashboardIconButton icon="plus" label={t('screens.cameras.connect')} onPress={openForm} />
+            ) : null
+          }
+        />
       }>
       {items.length === 0 ? (
         <View className="flex-1">
@@ -136,6 +138,6 @@ export default function CamerasScreen() {
       )}
 
       <CameraForm open={formOpen} onOpenChange={setFormOpen} />
-    </ScreenShell>
+    </AppScreen>
   );
 }

@@ -1,8 +1,8 @@
-import { useAuthStore } from '@/core/stores';
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
-import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboard';
+import { DashboardIconButton } from '@/shared/components/dashboard';
+import { AppScreen } from '@/shared/components/layout';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import {
@@ -24,7 +24,7 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { screenIn } from '@/shared/libs/animations';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -45,7 +45,6 @@ export default function ProjectsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const authStatus = useAuthStore((state) => state.status);
   const {
     new: newParam,
     id: idParam,
@@ -176,11 +175,8 @@ export default function ProjectsScreen() {
     setTaskFormOpen(true);
   }, []);
 
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
-
   return (
-    <DashboardShell
-      active="projects"
+    <AppScreen
       aside={
         isExpanded && displayProjects.length > 0 ? (
           <View className="gap-3">
@@ -344,6 +340,6 @@ export default function ProjectsScreen() {
           defaultStatus={newTaskStatus}
         />
       ) : null}
-    </DashboardShell>
+    </AppScreen>
   );
 }

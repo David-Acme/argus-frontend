@@ -122,10 +122,14 @@
 
 ## Current state (docs resync 2026-08-23)
 
-The app is built out end-to-end. Signed-out entry resolution lives in
-`index.tsx`: unpaired → `/welcome`; no admin + native →
-`/welcome/face?mode=owner-enroll`; paired → `/login` (desktop QR or mobile
-face login). Signed-in it renders the dashboard inside `DashboardShell`.
+The app is built out end-to-end. Every signed-in screen lives in the
+`src/app/(app)/` route group; its layout mounts the nav rail once
+(`AppShell`) and is the session guard (`EntryGate`): signed in, it renders
+the screen; loading, the branded splash; signed out, it resolves the entry:
+unpaired → `/welcome`; no admin + native → `/welcome/face?mode=owner-enroll`;
+paired → `/login` (desktop QR or mobile face login). Screens never redirect
+on auth themselves. Each screen lays itself out with `AppScreen` (scroll,
+max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
 
 - **Routes** (`src/app/`): `/` (entry router + dashboard: welcome header,
   activity, camera grid, projects carousel, agenda, notifications),

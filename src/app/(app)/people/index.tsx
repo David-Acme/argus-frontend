@@ -3,7 +3,7 @@ import { useAuthStore } from '@/core/stores';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { filterPeople } from '@/core/services/view-cache';
 import type { UserRole } from '@/core/types';
-import { DashboardShell } from '@/shared/components/dashboard';
+import { AppScreen } from '@/shared/components/layout';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { EmptyState } from '@/shared/components/ui/empty-state';
@@ -36,7 +36,6 @@ const PERSON_ROW_HEIGHT = 60;
 export default function PeopleDirectoryScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const authStatus = useAuthStore((state) => state.status);
   const currentUser = useAuthStore((state) => state.user);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<UserRole | 'all'>('all');
@@ -86,12 +85,10 @@ export default function PeopleDirectoryScreen() {
     }
     setPortraitUri(dataUri);
   }, [portraitLoading, selected, t]);
-
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
   if (currentUser?.role !== 'guard') return <Redirect href="/profile" />;
 
   return (
-    <DashboardShell active="people" scrollable={false}>
+    <AppScreen scrollable={false}>
       <View className="flex-1 gap-5">
         <View className="gap-1.5">
           <Text variant="h2">{t('screens.users.people-directory')}</Text>
@@ -192,6 +189,6 @@ export default function PeopleDirectoryScreen() {
           </View>
         ) : null}
       </AdaptiveDialog>
-    </DashboardShell>
+    </AppScreen>
   );
 }

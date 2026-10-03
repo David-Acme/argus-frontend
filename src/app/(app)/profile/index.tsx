@@ -2,7 +2,7 @@ import { authService } from '@/core/services/auth.service';
 import { netService } from '@/core/services/net';
 import { useAuthStore, useLocaleStore } from '@/core/stores';
 import type { LanguagePreference, NetPairedInstance, ThemePreference, UserRole } from '@/core/types';
-import { DashboardShell } from '@/shared/components/dashboard';
+import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/shared/components/profile';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
@@ -13,7 +13,7 @@ import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/share
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -22,7 +22,6 @@ const roleKey = (role: UserRole) => `screens.users.role-${role}` as const;
 export default function ProfileScreen() {
   const router = useRouter();
   const { t, language } = useTranslation();
-  const authStatus = useAuthStore((state) => state.status);
   const user = useAuthStore((state) => state.user);
   const languagePreference = useLocaleStore((state) => state.preference);
   const setLanguage = useLocaleStore((state) => state.setLanguage);
@@ -98,11 +97,8 @@ export default function ProfileScreen() {
     };
   }, []);
 
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
-
   return (
-    <DashboardShell
-      active="profile">
+    <AppScreen>
       <View className="w-full max-w-[640px] gap-6 self-center">
         <View className="flex-row items-center gap-4 pt-1">
           <View className="bg-surface-secondary size-16 items-center justify-center rounded-full">
@@ -177,6 +173,6 @@ export default function ProfileScreen() {
           <Text>{t('screens.profile.sign-out')}</Text>
         </Button>
       </View>
-    </DashboardShell>
+    </AppScreen>
   );
 }
