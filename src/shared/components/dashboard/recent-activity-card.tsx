@@ -16,8 +16,8 @@ export function RecentActivityCard({ title, emptyLabel, items }: RecentActivityC
   const recent = items.slice(0, RECENT_LIMIT);
 
   return (
-    <View className="bg-card flex-1 gap-3 rounded-3xl p-4 shadow-md shadow-black/[0.05]">
-      <Text className="font-semibold">{title}</Text>
+    <View className="bg-card flex-1 gap-4 rounded-[22px] p-4 shadow-md shadow-black/[0.06]">
+      <Text className="text-body font-semibold">{title}</Text>
       {recent.length === 0 ? (
         <View className="min-h-28 flex-1 items-center justify-center gap-2">
           <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
@@ -28,17 +28,20 @@ export function RecentActivityCard({ title, emptyLabel, items }: RecentActivityC
           </Text>
         </View>
       ) : (
-        <View className="gap-3">
+        <View className="gap-4">
           {recent.map((item) => (
-            <View key={item.id} className="flex-row gap-2.5">
-              <View
-                className={cn(
-                  'mt-1.5 size-2 shrink-0 rounded-full',
-                  item.isRead ? 'bg-border' : 'bg-interactive'
-                )}
-              />
-              <View className="min-w-0 flex-1">
-                <Text className="text-caption font-medium" numberOfLines={1}>
+            <View key={item.id} className="flex-row items-start gap-3">
+              <View className="bg-surface-secondary size-8 items-center justify-center rounded-xl">
+                <Icon name="bell" className="text-foreground-secondary size-4" />
+                <View
+                  className={cn(
+                    'border-card absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2',
+                    item.isRead ? 'hidden' : 'bg-interactive'
+                  )}
+                />
+              </View>
+              <View className="min-w-0 flex-1 gap-0.5">
+                <Text variant="label" numberOfLines={1}>
                   {item.title}
                 </Text>
                 <Text variant="caption" numberOfLines={2}>
