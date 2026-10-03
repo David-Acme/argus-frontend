@@ -3,29 +3,31 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
 import { ACTIVITY_WINDOW_DAYS } from '@/shared/constants/dashboard.constant';
 import { isOpenTask } from '@/shared/libs/task-progress';
 import type { CameraSource } from './camera.projection';
-import type { EventSource } from './activity.projection';
-import { addDays, startOfDay } from './dates';
+import { addDays, startOfDay, startOfNextDay } from './dates';
 import type { ProjectSource, ProjectTaskSource } from './project.projection';
-import type { ProjectionContext, ViewWrite } from './projection';
+import type { ViewWrite } from './projection';
 
 export type SummaryProjectionInput = {
   cameras: readonly Pick<CameraSource, 'isOnline' | 'isEnabled'>[];
   reminders: readonly { isCompleted: boolean }[];
   projects: readonly Pick<ProjectSource, 'status'>[];
   tasks: readonly Pick<ProjectTaskSource, 'status'>[];
-  events: readonly Pick<EventSource, 'occurredAt'>[];
+  eventsCurrent: number;
+  eventsPrevious: number;
 };
 
-export function projectSummary(input: SummaryProjectionInput, { now }: ProjectionContext): ViewWrite[] {
+export type ActivityWindow = { from: number; to: number };
+
+export const activityWindows = (now: Date): { current: ActivityWindow; previous: ActivityWindow } => {
   const since = startOfDay(addDays(now, -(ACTIVITY_WINDOW_DAYS - 1)));
-  const previousSince = startOfDay(addDays(now, -(2 * ACTIVITY_WINDOW_DAYS - 1)));
-  let eventsCurrent = 0;
-  let eventsPrevious = 0;
-  for (const event of input.events) {
-    const occurredAt = event.occurredAt.getTime();
-    if (occurredAt >= since) eventsCurrent += 1;
-    else if (occurredAt >= previousSince) eventsPrevious += 1;
-  }
+  return {
+    current: { from: since, to: startOfNextDay(now) },
+    previous: { from: startOfDay(addDays(now, -(2 * ACTIVITY_WINDOW_DAYS - 1))), to: since },
+  };
+};
+
+export function projectSummary(input: SummaryProjectionInput): ViewWrite[] {
+  const { eventsCurrent, eventsPrevious } = input;
   const summary: DashboardSummary = {
     camerasTotal: input.cameras.length,
     camerasOnline: input.cameras.filter((camera) => camera.isEnabled && camera.isOnline).length,

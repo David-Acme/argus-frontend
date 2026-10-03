@@ -85,3 +85,5 @@ export const RECENT_EVENT_LIMIT = 8;
 
 export const EVENT_SAMPLE_LIMIT = 300;
 
+export const EVENT_MOSAIC_LIMIT = 5000;
+

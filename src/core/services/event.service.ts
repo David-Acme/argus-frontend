@@ -26,6 +26,17 @@ class EventService extends DatabaseService<'event'> {
   observeCountSince(sinceMs: number): Observable<number> {
     return this.observeTotal([Q.where('occurred_at', Q.gte(sinceMs))]);
   }
+
+  observeCountBetween(fromMs: number, toMs: number): Observable<number> {
+    return this.observeTotal([Q.where('occurred_at', Q.gte(fromMs)), Q.where('occurred_at', Q.lt(toMs))]);
+  }
+
+  observeOccurredSince(sinceMs: number, limit: number): Observable<EventModel[]> {
+    return this.observeManyWithColumns(
+      ['occurred_at'],
+      [Q.where('occurred_at', Q.gte(sinceMs)), Q.sortBy('occurred_at', Q.desc), Q.take(limit)],
+    );
+  }
 }
 
 export const eventService = new EventService();

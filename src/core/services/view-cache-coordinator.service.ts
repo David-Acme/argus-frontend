@@ -10,8 +10,8 @@ import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
 import { zoneService } from '@/core/services/zone.service';
-import { EVENT_SAMPLE_LIMIT } from '@/shared/constants';
-import { projectActivity } from './view-cache/activity.projection';
+import { EVENT_MOSAIC_LIMIT, EVENT_SAMPLE_LIMIT } from '@/shared/constants';
+import { mosaicSince, projectActivity } from './view-cache/activity.projection';
 import {
   calendarMonthScope,
   calendarWindow,
@@ -25,7 +25,7 @@ import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
-import { projectSummary } from './view-cache/summary.projection';
+import { activityWindows, projectSummary } from './view-cache/summary.projection';
 
 const NOTIFICATION_PREVIEW_LIMIT = 8;
 
@@ -52,6 +52,7 @@ type SessionSources = ReturnType<typeof sessionSources>;
 
 function startSessionProjections(sources: SessionSources, ctx: ProjectionContext): Subscription[] {
   const { from, to } = todayRange(ctx.now);
+  const windows = activityWindows(ctx.now);
   return [
     startProjection(
       {
@@ -73,7 +74,16 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       { sources: () => ({ notifications: sources.notifications, unread: sources.unread }), project: projectNotifications },
       ctx,
     ),
-    startProjection({ sources: () => ({ events: sources.events }), project: projectActivity }, ctx),
+    startProjection(
+      {
+        sources: () => ({
+          events: sources.events,
+          mosaic: eventService.observeOccurredSince(mosaicSince(ctx.now), EVENT_MOSAIC_LIMIT),
+        }),
+        project: projectActivity,
+      },
+      ctx,
+    ),
     startProjection(
       {
         sources: () => ({
@@ -81,7 +91,8 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           reminders: sources.reminders,
           projects: sources.projects,
           tasks: sources.tasks,
-          events: sources.events,
+          eventsCurrent: eventService.observeCountBetween(windows.current.from, windows.current.to),
+          eventsPrevious: eventService.observeCountBetween(windows.previous.from, windows.previous.to),
         }),
         project: projectSummary,
       },

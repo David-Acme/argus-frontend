@@ -16,7 +16,7 @@ import {
 import { projectNotifications } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
-import { projectSummary } from '@/core/services/view-cache/summary.projection';
+import { activityWindows, projectSummary } from '@/core/services/view-cache/summary.projection';
 import { MOSAIC_COLUMNS, MOSAIC_ROWS } from '@/shared/constants/dashboard.constant';
 
 const now = new Date(2026, 9, 15, 10, 30);
@@ -208,6 +208,7 @@ describe('activity projection', () => {
           { id: 'old', summary: 'a', severity: 'info', occurredAt: at(10, 8) },
           { id: 'new', summary: 'b', severity: 'critical', occurredAt: at(15, 8) },
         ],
+        mosaic: [],
       },
       ctx,
     );
@@ -226,14 +227,9 @@ describe('summary projection', () => {
         reminders: [{ isCompleted: false }, { isCompleted: true }],
         projects: [{ status: 'active' }, { status: 'archived' }],
         tasks: [{ status: 'todo' }, { status: 'done' }, { status: 'canceled' }],
-        events: [
-          { occurredAt: new Date(2026, 9, 9, 1) },
-          { occurredAt: new Date(2026, 9, 8, 23) },
-          { occurredAt: new Date(2026, 9, 1, 12) },
-          { occurredAt: new Date(2026, 8, 1, 12) },
-        ],
+        eventsCurrent: 1,
+        eventsPrevious: 2,
       },
-      ctx,
     );
     expect(valueOf(writes, 'dashboard.summary')).toEqual({
       camerasTotal: 2,
@@ -242,8 +238,16 @@ describe('summary projection', () => {
       projectsActive: 1,
       tasksOpen: 1,
       eventsCurrent: 1,
-      eventsPrevious: 1,
+      eventsPrevious: 2,
     });
+  });
+
+  test('the two activity windows are back-to-back weeks that end tonight', () => {
+    const { current, previous } = activityWindows(now);
+    expect(current.from).toBe(new Date(2026, 9, 9).getTime());
+    expect(current.to).toBe(new Date(2026, 9, 16).getTime());
+    expect(previous.from).toBe(new Date(2026, 9, 2).getTime());
+    expect(previous.to).toBe(current.from);
   });
 });
 
