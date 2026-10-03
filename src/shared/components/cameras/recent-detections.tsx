@@ -5,6 +5,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
+import { Panel } from '@/shared/components/ui/panel';
 
 type RecentDetectionsProps = {
   title: string;
@@ -24,8 +25,7 @@ export function RecentDetections({ title, emptyLabel, emptyHint, events, classNa
   const date = useDateFormatter();
 
   return (
-    <View className={cn('bg-card gap-3 rounded-3xl p-4 shadow-md shadow-black/[0.05]', className)}>
-      <Text className="font-semibold">{title}</Text>
+    <Panel title={title} className={className}>
       {events.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-2 py-6">
           <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
@@ -55,6 +55,6 @@ export function RecentDetections({ title, emptyLabel, emptyHint, events, classNa
           ))}
         </View>
       )}
-    </View>
+    </Panel>
   );
 }

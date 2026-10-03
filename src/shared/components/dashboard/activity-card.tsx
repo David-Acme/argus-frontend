@@ -4,6 +4,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import { MosaicChart } from './mosaic-chart';
+import { Panel } from '@/shared/components/ui/panel';
 
 type ActivityCardProps = {
   title: string;
@@ -37,7 +38,7 @@ export function ActivityCard({
   className,
 }: ActivityCardProps) {
   return (
-    <View className={cn('bg-card justify-center overflow-hidden rounded-[26px] p-4 shadow-md shadow-black/[0.07]', className)}>
+    <Panel className={cn('justify-center overflow-hidden', className)}>
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-3">
           <Text className="text-subhead font-semibold leading-[22px]">{title}</Text>
@@ -55,6 +56,6 @@ export function ActivityCard({
           <MosaicChart levels={levels} />
         </View>
       </View>
-    </View>
+    </Panel>
   );
 }

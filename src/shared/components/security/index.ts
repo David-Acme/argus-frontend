@@ -5,4 +5,3 @@ export { GuardModePicker } from './guard-mode-picker';
 export { IncidentList } from './incident-list';
 export { GuardCard } from './guard-card';
 export { GuardStatusHero } from './guard-status-hero';
-export { SecurityPanel } from './security-panel';

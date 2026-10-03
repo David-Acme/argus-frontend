@@ -13,7 +13,7 @@ import {
   DashboardShell,
   SectionHeading,
 } from '@/shared/components/dashboard';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Panel } from '@/shared/components/ui/panel';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 
 import { Button } from '@/shared/components/ui/button';
@@ -157,38 +157,36 @@ export default function UsersScreen() {
               action={t('screens.users.new-invitation')}
               onAction={() => setInviteOpen(true)}
             />
-            <Card>
-              <CardContent className="gap-1">
-                {invitations.length === 0 ? (
-                  <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-invitations')}</Text>
-                ) : null}
-                {invitations.map((invitation) => {
-                  const usable =
-                    invitation.revokedAt == null &&
-                    invitation.expiresAt * 1000 > now &&
-                    invitation.redemptionCount < invitation.maxRedemptions;
-                  return (
-                    <View key={invitation.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
-                      <Icon name="qr-code" className="text-foreground-secondary size-5" />
-                      <View className="min-w-0 flex-1 gap-0.5">
-                        <Text>{roleLabel(invitation.role)}</Text>
-                        <Text className="text-muted-foreground text-xs">
-                          {invitation.redemptionCount}/{invitation.maxRedemptions} · {date.formatDayMonth(new Date(invitation.expiresAt * 1000))}
-                        </Text>
-                      </View>
-                      <Text className={usable ? 'text-success text-xs' : 'text-muted-foreground text-xs'}>
-                        {usable ? t('screens.users.active') : t('screens.users.inactive')}
+            <Panel className="gap-0 py-2">
+              {invitations.length === 0 ? (
+                <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-invitations')}</Text>
+              ) : null}
+              {invitations.map((invitation) => {
+                const usable =
+                  invitation.revokedAt == null &&
+                  invitation.expiresAt * 1000 > now &&
+                  invitation.redemptionCount < invitation.maxRedemptions;
+                return (
+                  <View key={invitation.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
+                    <Icon name="qr-code" className="text-foreground-secondary size-5" />
+                    <View className="min-w-0 flex-1 gap-0.5">
+                      <Text>{roleLabel(invitation.role)}</Text>
+                      <Text className="text-muted-foreground text-xs">
+                        {invitation.redemptionCount}/{invitation.maxRedemptions} · {date.formatDayMonth(new Date(invitation.expiresAt * 1000))}
                       </Text>
-                      {usable ? (
-                        <Pressable onPress={() => void revoke(invitation)} accessibilityLabel={t('screens.users.revoke')}>
-                          <Icon name="x" className="text-error-strong size-5" />
-                        </Pressable>
-                      ) : null}
                     </View>
-                  );
-                })}
-              </CardContent>
-            </Card>
+                    <Text className={usable ? 'text-success text-xs' : 'text-muted-foreground text-xs'}>
+                      {usable ? t('screens.users.active') : t('screens.users.inactive')}
+                    </Text>
+                    {usable ? (
+                      <Pressable onPress={() => void revoke(invitation)} accessibilityLabel={t('screens.users.revoke')}>
+                        <Icon name="x" className="text-error-strong size-5" />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </Panel>
           </View>
           <View className="gap-3">
             <SectionHeading title={t('screens.users.role-access-title')} />
@@ -206,33 +204,31 @@ export default function UsersScreen() {
 
         <View className="gap-3">
           <SectionHeading title={t('screens.users.members')} />
-          <Card>
-            <CardContent className="gap-1">
-              {users.length === 0 ? (
-                <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-users')}</Text>
-              ) : users.map((user) => (
-                <View key={user.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
-                  <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-                    <Icon name="user" className="text-foreground-secondary size-5" />
-                  </View>
-                  <View className="min-w-0 flex-1 gap-0.5">
-                    <Text numberOfLines={1}>{[user.name, user.lastName].filter(Boolean).join(' ')}</Text>
-                    <Text className="text-muted-foreground text-xs">
-                      {roleLabel(user.role)} · {user.isActive ? t('screens.users.active') : t('screens.users.inactive')}
-                    </Text>
-                  </View>
-                  <Button size="sm" variant="ghost" onPress={() => setEditing(user)}>
-                    <Text>{t('common.edit')}</Text>
-                  </Button>
-                  {user.isActive ? (
-                    <Button size="sm" variant="ghost" onPress={() => void deactivate(user)}>
-                      <Icon name="user-minus" className="text-error-strong size-4" />
-                    </Button>
-                  ) : null}
+          <Panel className="gap-0 py-2">
+            {users.length === 0 ? (
+              <Text className="text-muted-foreground py-3 text-sm">{t('screens.users.no-users')}</Text>
+            ) : users.map((user) => (
+              <View key={user.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
+                <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
+                  <Icon name="user" className="text-foreground-secondary size-5" />
                 </View>
-              ))}
-            </CardContent>
-          </Card>
+                <View className="min-w-0 flex-1 gap-0.5">
+                  <Text numberOfLines={1}>{[user.name, user.lastName].filter(Boolean).join(' ')}</Text>
+                  <Text className="text-muted-foreground text-xs">
+                    {roleLabel(user.role)} · {user.isActive ? t('screens.users.active') : t('screens.users.inactive')}
+                  </Text>
+                </View>
+                <Button size="sm" variant="ghost" onPress={() => setEditing(user)}>
+                  <Text>{t('common.edit')}</Text>
+                </Button>
+                {user.isActive ? (
+                  <Button size="sm" variant="ghost" onPress={() => void deactivate(user)}>
+                    <Icon name="user-minus" className="text-error-strong size-4" />
+                  </Button>
+                ) : null}
+              </View>
+            ))}
+          </Panel>
         </View>
       </View>
 

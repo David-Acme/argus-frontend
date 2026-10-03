@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import type { IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { Panel } from '@/shared/components/ui/panel';
 
 type SummaryItem = {
   icon: IconName;
@@ -16,8 +17,7 @@ type SummaryCardProps = {
 
 export function SummaryCard({ title, items }: SummaryCardProps) {
   return (
-    <View className="bg-card gap-3 rounded-[22px] p-4 shadow-md shadow-black/[0.06]">
-      <Text className="text-body font-semibold">{title}</Text>
+    <Panel title={title}>
       <View className="gap-2.5">
         {items.map((item) => (
           <View key={item.label} className="flex-row items-center gap-3">
@@ -31,6 +31,6 @@ export function SummaryCard({ title, items }: SummaryCardProps) {
           </View>
         ))}
       </View>
-    </View>
+    </Panel>
   );
 }

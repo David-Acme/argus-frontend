@@ -6,6 +6,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { SETTINGS_OWNER_ICONS } from './settings-owner-list';
 import { SettingRow } from './setting-row';
+import { Panel } from '@/shared/components/ui/panel';
 
 type SettingsOwnerPanelProps = {
   owner: SettingsOwner;
@@ -52,7 +53,7 @@ export function SettingsOwnerPanel({
   };
 
   return (
-    <View className="bg-card flex-1 rounded-3xl p-5 shadow-md shadow-black/[0.05]">
+    <Panel className="flex-1 p-5">
       <View className="flex-row items-center gap-3 pb-2">
         <View className="bg-surface-secondary size-11 items-center justify-center rounded-full">
           <Icon name={SETTINGS_OWNER_ICONS[owner.service]} className="text-foreground-secondary size-5" />
@@ -107,6 +108,6 @@ export function SettingsOwnerPanel({
           </Button>
         </View>
       ) : null}
-    </View>
+    </Panel>
   );
 }

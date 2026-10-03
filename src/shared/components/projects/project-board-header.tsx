@@ -5,6 +5,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import { PROJECT_STATUS_TONE } from './project-card-row';
+import { Panel } from '@/shared/components/ui/panel';
 
 type ProjectBoardHeaderProps = {
   name: string;
@@ -36,7 +37,7 @@ export function ProjectBoardHeader({
   const ratio = Math.max(0, Math.min(1, progress));
 
   return (
-    <View className="bg-card gap-4 rounded-3xl p-5 shadow-md shadow-black/[0.05]">
+    <Panel className="gap-4 p-5">
       <View className="flex-row flex-wrap items-start gap-3">
         <View className="min-w-[200px] flex-1 gap-1">
           <View className="flex-row items-center gap-2">
@@ -86,6 +87,6 @@ export function ProjectBoardHeader({
           />
         </View>
       </View>
-    </View>
+    </Panel>
   );
 }

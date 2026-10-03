@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { Panel } from '@/shared/components/ui/panel';
 
 export type CameraSummaryCounts = {
   total: number;
@@ -94,7 +95,7 @@ export function CameraSummary({ counts, layout, compact = false }: CameraSummary
 
   if (layout === 'strip') {
     return (
-      <View className="bg-card gap-4 rounded-3xl p-4 shadow-md shadow-black/[0.05]">
+      <Panel className="gap-4">
         <View className="flex-row flex-wrap gap-y-4">
           <SummaryStat
             label={t('screens.cameras.summary.online')}
@@ -140,12 +141,12 @@ export function CameraSummary({ counts, layout, compact = false }: CameraSummary
           </View>
           <SummaryBar segments={recording} />
         </View>
-      </View>
+      </Panel>
     );
   }
 
   return (
-    <View className="bg-card gap-5 rounded-3xl p-5 shadow-md shadow-black/[0.05]">
+    <Panel className="gap-5 p-5">
       <Text variant="micro">{t('screens.cameras.summary.title')}</Text>
       <View className="gap-3">
         <View className="flex-row items-baseline gap-2">
@@ -190,6 +191,6 @@ export function CameraSummary({ counts, layout, compact = false }: CameraSummary
           />
         </View>
       </View>
-    </View>
+    </Panel>
   );
 }

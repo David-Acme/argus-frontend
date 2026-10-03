@@ -10,9 +10,9 @@ import {
   GuardModePicker,
   GuardStatusHero,
   IncidentList,
-  SecurityPanel,
 } from '@/shared/components/security';
 import { Button } from '@/shared/components/ui/button';
+import { Panel } from '@/shared/components/ui/panel';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
@@ -48,18 +48,18 @@ export default function SecurityScreen() {
   );
 
   const modeSection = (
-    <SecurityPanel title={t('screens.security.mode.title')}>
+    <Panel title={t('screens.security.mode.title')}>
       <GuardModePicker
         state={guard.mode}
         pending={guard.pendingMode}
         onSelect={guard.setMode}
         readOnly={!access.setMode}
       />
-    </SecurityPanel>
+    </Panel>
   );
 
   const guestSection = (className?: string) => (
-    <SecurityPanel
+    <Panel
       title={t('screens.security.guests.title')}
       description={t('screens.security.guests.description')}
       count={guard.guests.length}
@@ -77,26 +77,26 @@ export default function SecurityScreen() {
         now={guard.loadedAt}
         onRemove={access.manageGuests ? guard.removeGuest : undefined}
       />
-    </SecurityPanel>
+    </Panel>
   );
 
   const incidentSection = (className?: string) => (
-    <SecurityPanel
+    <Panel
       title={t('screens.security.incidents.title')}
       count={guard.incidents.length}
       className={className}>
       <IncidentList incidents={guard.incidents} />
-    </SecurityPanel>
+    </Panel>
   );
 
   const decisionSection = (className?: string) => (
-    <SecurityPanel
+    <Panel
       title={t('screens.security.decisions.title')}
       description={t('screens.security.decisions.description')}
       count={pendingReviews}
       className={className}>
       <DecisionReview decisions={guard.decisions} onFeedback={guard.sendFeedback} />
-    </SecurityPanel>
+    </Panel>
   );
 
   const layout = isExpanded ? (

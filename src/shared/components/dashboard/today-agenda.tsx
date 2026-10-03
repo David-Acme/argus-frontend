@@ -7,6 +7,7 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { AgendaItem } from './agenda-item';
+import { Panel } from '@/shared/components/ui/panel';
 
 type TodayAgendaProps = {
   entries: readonly CalendarEntry[];
@@ -94,7 +95,7 @@ export function TodayAgenda({
   );
 
   return (
-    <View className="bg-card gap-1.5 rounded-3xl p-3 shadow-md shadow-black/[0.05]">
+    <Panel className="gap-1.5 p-3">
       {allDay.length > 0 ? (
         <View className="flex-row items-start gap-3 pb-1">
           <View
@@ -133,6 +134,6 @@ export function TodayAgenda({
           </HourRow>
         );
       })}
-    </View>
+    </Panel>
   );
 }

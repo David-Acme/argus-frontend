@@ -4,6 +4,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { Panel } from '@/shared/components/ui/panel';
 
 type SettingsOwnerListProps = {
   owners: readonly SettingsOwner[];
@@ -57,7 +58,7 @@ export function SettingsOwnerList({ owners, selected, layout, countOf, onSelect 
   }
 
   return (
-    <View className="bg-card flex-1 gap-1 rounded-3xl p-2 shadow-md shadow-black/[0.05]">
+    <Panel className="flex-1 gap-1 p-2">
       {owners.map((owner) => {
         const active = owner.service === selected;
         return (
@@ -87,6 +88,6 @@ export function SettingsOwnerList({ owners, selected, layout, countOf, onSelect 
           </Pressable>
         );
       })}
-    </View>
+    </Panel>
   );
 }

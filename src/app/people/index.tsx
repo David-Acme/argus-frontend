@@ -5,7 +5,7 @@ import { filterPeople } from '@/core/services/view-cache';
 import type { UserRole } from '@/core/types';
 import { DashboardShell, SectionHeading } from '@/shared/components/dashboard';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Panel } from '@/shared/components/ui/panel';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
@@ -114,39 +114,35 @@ export default function PeopleDirectoryScreen() {
         <View className="gap-3">
           <SectionHeading title={t('screens.users.people-directory')} />
           {filtered.length > 0 ? (
-            <Card>
-              <CardContent className="gap-1">
-                {filtered.map((person) => (
-                  <Pressable
-                    key={person.id}
-                    className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      portraitRequest.current += 1;
-                      setPortraitUri(null);
-                      setPortraitLoading(false);
-                      setSelected(person);
-                    }}>
-                    <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-                      <Icon name="user" className="text-foreground-secondary size-5" />
-                    </View>
-                    <View className="min-w-0 flex-1 gap-0.5">
-                      <Text numberOfLines={1}>{[person.name, person.lastName].filter(Boolean).join(' ')}</Text>
-                      <Text className="text-muted-foreground text-xs">
-                        {t(roleKey(person.role))} · {person.isActive ? t('screens.users.active') : t('screens.users.inactive')}
-                      </Text>
-                    </View>
-                    <Icon name="chevron-right" className="text-muted-foreground size-5" />
-                  </Pressable>
-                ))}
-              </CardContent>
-            </Card>
+            <Panel className="gap-0 py-2">
+              {filtered.map((person) => (
+                <Pressable
+                  key={person.id}
+                  className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    portraitRequest.current += 1;
+                    setPortraitUri(null);
+                    setPortraitLoading(false);
+                    setSelected(person);
+                  }}>
+                  <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
+                    <Icon name="user" className="text-foreground-secondary size-5" />
+                  </View>
+                  <View className="min-w-0 flex-1 gap-0.5">
+                    <Text numberOfLines={1}>{[person.name, person.lastName].filter(Boolean).join(' ')}</Text>
+                    <Text className="text-muted-foreground text-xs">
+                      {t(roleKey(person.role))} · {person.isActive ? t('screens.users.active') : t('screens.users.inactive')}
+                    </Text>
+                  </View>
+                  <Icon name="chevron-right" className="text-muted-foreground size-5" />
+                </Pressable>
+              ))}
+            </Panel>
           ) : (
-            <Card>
-              <CardContent>
-                <Text className="text-muted-foreground py-2 text-sm">{t('screens.users.no-people')}</Text>
-              </CardContent>
-            </Card>
+            <Panel>
+              <Text className="text-muted-foreground py-2 text-sm">{t('screens.users.no-people')}</Text>
+            </Panel>
           )}
         </View>
       </View>

@@ -1,5 +1,5 @@
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Panel } from '@/shared/components/ui/panel';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
 import { OnboardingSteps } from '@/shared/components/onboarding';
@@ -101,98 +101,93 @@ export default function PairingScreen() {
       </NativeOnlyAnimatedView>
 
       <NativeOnlyAnimatedView entering={itemIn.delay(cardDelay)}>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('screens.pairing.link-server')}</CardTitle>
-        </CardHeader>
-        <CardContent className="gap-4">
-          {flow.phase === 'idle' ? (
-            IS_NATIVE ? (
-              <Button onPress={handleScan} size="lg">
-                <Icon name="scan-barcode" />
-                <Text>{t('screens.pairing.scan')}</Text>
-              </Button>
-            ) : (
-              <View className="flex-row items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-                <Icon name="monitor" className="text-accent-strong size-5" />
-                <Text className="flex-1 text-sm leading-5">
-                  {t('screens.pairing.desktop-hint')}
-                </Text>
-              </View>
-            )
-          ) : null}
-
-          {flow.phase === 'parsing' || flow.phase === 'discovering' || flow.phase === 'pairing' ? (
-            <View className="flex-row items-center gap-3">
-              <Icon name="refresh-cw" className="text-accent-strong size-5" />
-              <Text>{t(PHASE_LABEL[flow.phase])}</Text>
-            </View>
-          ) : null}
-
-          {flow.phase === 'success' ? (
-            <View className="gap-2">
-              <View className="flex-row items-center gap-3">
-                <Icon name="check-circle" className="text-success size-5" />
-                <Text>{t('screens.pairing.success')}</Text>
-              </View>
-              {flow.qr ? (
-                <Text variant="muted">{hostLabel(flow.qr.host)}</Text>
-              ) : null}
-            </View>
-          ) : null}
-
-          {flow.phase === 'error' && errorKey ? (
-            <View className="gap-3">
-              <View className="flex-row items-center gap-3">
-                <Icon name="triangle-alert" className="text-error-strong size-5" />
-                <Text className="text-error-strong">{t(errorKey)}</Text>
-              </View>
-              {IS_NATIVE ? (
-                <Button variant="outline" onPress={handleRetry}>
-                  <Text>{t('screens.pairing.scan-again')}</Text>
-                </Button>
-              ) : null}
-            </View>
-          ) : null}
-
-          {flow.phase === 'idle' || flow.phase === 'error' ? (
-            <QrManualEntry
-              label="screens.pairing.enter-code"
-              placeholder="screens.pairing.code-placeholder"
-              invalid={invalidCode}
-              onSubmit={handleCode}
-              startExpanded={!IS_NATIVE}
-            />
-          ) : null}
-
-          {(flow.phase === 'idle' || flow.phase === 'error') && showAddress ? (
-            <View className="gap-1.5">
-              <Text className="text-foreground-secondary text-sm">
-                {t('screens.pairing.address-label')}
-              </Text>
-              <Input
-                value={address}
-                onChangeText={setAddress}
-                placeholder={t('screens.pairing.address-placeholder')}
-                autoCapitalize="none"
-                autoComplete="off"
-                autoCorrect={false}
-                keyboardType="numbers-and-punctuation"
-                accessibilityLabel={t('screens.pairing.address-label')}
-              />
-              <Text variant="muted" className="text-xs leading-4">
-                {t('screens.pairing.address-hint')}
-              </Text>
-            </View>
-          ) : null}
-
-          {(flow.phase === 'idle' || flow.phase === 'error') && !showAddress ? (
-            <Button variant="ghost" size="sm" onPress={handleOpenAddress}>
-              <Text>{t('screens.pairing.address-open')}</Text>
+      <Panel title={t('screens.pairing.link-server')} className="gap-4">
+        {flow.phase === 'idle' ? (
+          IS_NATIVE ? (
+            <Button onPress={handleScan} size="lg">
+              <Icon name="scan-barcode" />
+              <Text>{t('screens.pairing.scan')}</Text>
             </Button>
-          ) : null}
-        </CardContent>
-      </Card>
+          ) : (
+            <View className="flex-row items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+              <Icon name="monitor" className="text-accent-strong size-5" />
+              <Text className="flex-1 text-sm leading-5">
+                {t('screens.pairing.desktop-hint')}
+              </Text>
+            </View>
+          )
+        ) : null}
+
+        {flow.phase === 'parsing' || flow.phase === 'discovering' || flow.phase === 'pairing' ? (
+          <View className="flex-row items-center gap-3">
+            <Icon name="refresh-cw" className="text-accent-strong size-5" />
+            <Text>{t(PHASE_LABEL[flow.phase])}</Text>
+          </View>
+        ) : null}
+
+        {flow.phase === 'success' ? (
+          <View className="gap-2">
+            <View className="flex-row items-center gap-3">
+              <Icon name="check-circle" className="text-success size-5" />
+              <Text>{t('screens.pairing.success')}</Text>
+            </View>
+            {flow.qr ? (
+              <Text variant="muted">{hostLabel(flow.qr.host)}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {flow.phase === 'error' && errorKey ? (
+          <View className="gap-3">
+            <View className="flex-row items-center gap-3">
+              <Icon name="triangle-alert" className="text-error-strong size-5" />
+              <Text className="text-error-strong">{t(errorKey)}</Text>
+            </View>
+            {IS_NATIVE ? (
+              <Button variant="outline" onPress={handleRetry}>
+                <Text>{t('screens.pairing.scan-again')}</Text>
+              </Button>
+            ) : null}
+          </View>
+        ) : null}
+
+        {flow.phase === 'idle' || flow.phase === 'error' ? (
+          <QrManualEntry
+            label="screens.pairing.enter-code"
+            placeholder="screens.pairing.code-placeholder"
+            invalid={invalidCode}
+            onSubmit={handleCode}
+            startExpanded={!IS_NATIVE}
+          />
+        ) : null}
+
+        {(flow.phase === 'idle' || flow.phase === 'error') && showAddress ? (
+          <View className="gap-1.5">
+            <Text className="text-foreground-secondary text-sm">
+              {t('screens.pairing.address-label')}
+            </Text>
+            <Input
+              value={address}
+              onChangeText={setAddress}
+              placeholder={t('screens.pairing.address-placeholder')}
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect={false}
+              keyboardType="numbers-and-punctuation"
+              accessibilityLabel={t('screens.pairing.address-label')}
+            />
+            <Text variant="muted" className="text-xs leading-4">
+              {t('screens.pairing.address-hint')}
+            </Text>
+          </View>
+        ) : null}
+
+        {(flow.phase === 'idle' || flow.phase === 'error') && !showAddress ? (
+          <Button variant="ghost" size="sm" onPress={handleOpenAddress}>
+            <Text>{t('screens.pairing.address-open')}</Text>
+          </Button>
+        ) : null}
+      </Panel>
       </NativeOnlyAnimatedView>
     </CenteredScreen>
   );

@@ -3,6 +3,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import type { NotificationPreview } from './notification-popover';
+import { Panel } from '@/shared/components/ui/panel';
 
 type RecentActivityCardProps = {
   title: string;
@@ -16,8 +17,7 @@ export function RecentActivityCard({ title, emptyLabel, items }: RecentActivityC
   const recent = items.slice(0, RECENT_LIMIT);
 
   return (
-    <View className="bg-card flex-1 gap-4 rounded-[22px] p-4 shadow-md shadow-black/[0.06]">
-      <Text className="text-body font-semibold">{title}</Text>
+    <Panel title={title} className="flex-1 gap-4">
       {recent.length === 0 ? (
         <View className="min-h-28 flex-1 items-center justify-center gap-2">
           <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
@@ -52,6 +52,6 @@ export function RecentActivityCard({ title, emptyLabel, items }: RecentActivityC
           ))}
         </View>
       )}
-    </View>
+    </Panel>
   );
 }

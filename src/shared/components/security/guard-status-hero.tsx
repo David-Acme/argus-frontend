@@ -5,6 +5,7 @@ import { Text } from '@/shared/components/ui/text';
 import { GUARD_MODE_ICONS } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { Panel } from '@/shared/components/ui/panel';
 
 type GuardStatusHeroProps = {
   state: GuardModeState | null;
@@ -56,7 +57,7 @@ export function GuardStatusHero({
         : null;
 
   return (
-    <View className="bg-card gap-4 rounded-3xl p-4 shadow-md shadow-black/[0.05] sm:p-5">
+    <Panel className="gap-4 sm:p-5">
       <View className="flex-row items-start gap-4">
         <View className="bg-interactive size-14 items-center justify-center rounded-2xl">
           <Icon
@@ -105,6 +106,6 @@ export function GuardStatusHero({
         />
       </View>
       <Text variant="caption">{t('screens.security.mode.note')}</Text>
-    </View>
+    </Panel>
   );
 }

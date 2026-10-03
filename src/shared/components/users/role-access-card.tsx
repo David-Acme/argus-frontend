@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import type { TableName, UserRole } from '@/core/types';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { peopleAccessForRole } from '@/shared/libs/people-access';
@@ -43,37 +43,35 @@ export function RoleAccessCard({ roleLabel, counts }: RoleAccessCardProps) {
   const list = (keys: readonly AreaKey[]) => keys.map((key) => t(`screens.users.${key}`)).join(', ');
 
   return (
-    <Card>
-      <CardContent className="gap-1">
-        {ROLES.map((role) => {
-          const { manages, views } = areasFor(role);
-          return (
-            <View key={role} className="border-border-subtle gap-1 border-b py-3 last:border-b-0">
-              <View className="flex-row items-baseline justify-between gap-3">
-                <Text className="font-semibold">{roleLabel(role)}</Text>
-                <Text className="text-muted-foreground text-xs">
-                  {t('screens.users.role-members', { count: String(counts[role] ?? 0) })}
-                </Text>
-              </View>
-              {manages.length > 0 ? (
-                <Text className="text-foreground-secondary text-sm leading-5">
-                  {t('screens.users.role-manages')}: {list(manages)}
-                </Text>
-              ) : null}
-              {views.length > 0 ? (
-                <Text className="text-foreground-secondary text-sm leading-5">
-                  {t('screens.users.role-views')}: {list(views)}
-                </Text>
-              ) : null}
-              {manages.length === 0 && views.length === 0 ? (
-                <Text className="text-foreground-secondary text-sm leading-5">
-                  {t('screens.users.role-only-own')}
-                </Text>
-              ) : null}
+    <Panel className="gap-0 py-2">
+      {ROLES.map((role) => {
+        const { manages, views } = areasFor(role);
+        return (
+          <View key={role} className="border-border-subtle gap-1 border-b py-3 last:border-b-0">
+            <View className="flex-row items-baseline justify-between gap-3">
+              <Text className="font-semibold">{roleLabel(role)}</Text>
+              <Text className="text-muted-foreground text-xs">
+                {t('screens.users.role-members', { count: String(counts[role] ?? 0) })}
+              </Text>
             </View>
-          );
-        })}
-      </CardContent>
-    </Card>
+            {manages.length > 0 ? (
+              <Text className="text-foreground-secondary text-sm leading-5">
+                {t('screens.users.role-manages')}: {list(manages)}
+              </Text>
+            ) : null}
+            {views.length > 0 ? (
+              <Text className="text-foreground-secondary text-sm leading-5">
+                {t('screens.users.role-views')}: {list(views)}
+              </Text>
+            ) : null}
+            {manages.length === 0 && views.length === 0 ? (
+              <Text className="text-foreground-secondary text-sm leading-5">
+                {t('screens.users.role-only-own')}
+              </Text>
+            ) : null}
+          </View>
+        );
+      })}
+    </Panel>
   );
 }
