@@ -6,6 +6,7 @@ import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import { TaskPriorityMark } from '@/features/projects/components/task-priority-mark';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
+import { useTaskPressGuard } from '@/features/projects/components/task-drag';
 
 type TaskRowProps = {
   title: string;
@@ -19,6 +20,8 @@ type TaskRowProps = {
   closeLabel: string;
   onChangeStatus: (status: ProjectTaskStatus) => void;
   onPress?: () => void;
+  pending?: boolean;
+  overdue?: boolean;
 };
 
 const STATUS_ICON: Record<ProjectTaskStatus, 'check-circle' | 'clock' | 'list-todo' | 'x'> = {
@@ -41,11 +44,19 @@ export function TaskRow({
   closeLabel,
   onChangeStatus,
   onPress,
+  pending = false,
+  overdue = false,
 }: TaskRowProps) {
   const finished = status === 'done' || status === 'canceled';
+  const guardPress = useTaskPressGuard();
 
   return (
-    <View className="bg-surface-secondary min-h-11 flex-row items-center gap-3 rounded-[14px] px-3 py-2 web:hover:bg-card-secondary">
+    <View
+      accessibilityState={{ busy: pending }}
+      className={cn(
+        'bg-surface-secondary web:hover:bg-card-secondary min-h-11 flex-row items-center gap-3 rounded-[14px] px-3 py-2 web:select-none',
+        pending && 'opacity-60',
+      )}>
       <AdaptiveMenu
         options={statusOptions}
         selected={status}
@@ -56,6 +67,8 @@ export function TaskRow({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={statusMenuTitle}
+            disabled={pending}
+            hitSlop={10}
             className="size-6 items-center justify-center active:opacity-60">
             <Icon
               name={STATUS_ICON[status]}
@@ -68,7 +81,8 @@ export function TaskRow({
         accessibilityRole="button"
         accessibilityLabel={title}
         className="flex-1 active:opacity-70"
-        onPress={onPress}>
+        disabled={pending}
+        onPress={() => guardPress(onPress)}>
         <Text
           variant="body"
           className={cn(
@@ -81,7 +95,11 @@ export function TaskRow({
       {statusTag ? (
         <StatusBadge label={statusTag} surface="card" className="self-center" />
       ) : null}
-      {due ? <Text variant="micro">{due}</Text> : null}
+      {due ? (
+        <Text variant="micro" className={overdue && !finished ? 'text-error-strong font-medium' : undefined}>
+          {due}
+        </Text>
+      ) : null}
       <TaskPriorityMark priority={priority} label={priorityLabel} />
     </View>
   );

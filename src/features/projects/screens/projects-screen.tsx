@@ -1,63 +1,77 @@
-import { projectTaskService } from '@/core/services/project-task.service';
-import type { IProjectTaskCacheRow } from '@/core/interfaces';
-import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
-import { IconButton } from '@/shared/components/ui/icon-button';
-import { AppScreen } from '@/shared/components/layout';
-import { SectionHeader } from '@/shared/components/ui/section-header';
-import { EmptyState } from '@/shared/components/ui/empty-state';
-import { ProjectBoardHeader } from '@/features/projects/components/project-board-header';
-import { ProjectCardRow } from '@/features/projects/components/project-card-row';
-import { ProjectForm } from '@/features/projects/components/project-form';
-import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { TaskBoard } from '@/features/projects/components/task-board';
-import { TaskForm } from '@/features/projects/components/task-form';
-import { TaskLane } from '@/features/projects/components/task-lane';
-import { TaskRow } from '@/features/projects/components/task-row';
-import { Button } from '@/shared/components/ui/button';
-import { Text } from '@/shared/components/ui/text';
-import { TASK_PRIORITY_WEIGHT, TASK_STATUS_ORDER } from '@/shared/constants';
-import { usePermissions } from '@/shared/hooks/use-permissions';
-import { useProjectsData } from '@/features/projects/hooks/use-projects-data';
-import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { screenIn } from '@/shared/libs/animations';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { CreateTile } from '@/shared/components/ui/create-tile';
+import { projectTaskService } from '@/core/services/project-task.service';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
+import type { ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
+import { AppScreen } from '@/shared/components/layout';
+import { Button } from '@/shared/components/ui/button';
+import { EmptyState } from '@/shared/components/ui/empty-state';
+import { IconButton } from '@/shared/components/ui/icon-button';
+import { Text } from '@/shared/components/ui/text';
+import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
+import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { screenIn } from '@/shared/libs/animations';
+import { runOptimistic } from '@/shared/libs/optimistic-action';
+import { ProjectAside } from '@/features/projects/components/project-aside';
+import { ProjectBoardHeader } from '@/features/projects/components/project-board-header';
+import { ProjectForm } from '@/features/projects/components/project-form';
+import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { TaskBoard } from '@/features/projects/components/task-board';
+import { DraggableTask } from '@/features/projects/components/task-drag';
+import { TaskForm } from '@/features/projects/components/task-form';
+import { TaskLane } from '@/features/projects/components/task-lane';
+import { TaskRow } from '@/features/projects/components/task-row';
+import type { UpcomingTaskItem } from '@/features/projects/components/upcoming-tasks-panel';
+import { useProjectsData } from '@/features/projects/hooks/use-projects-data';
+import { useTaskLabels } from '@/features/projects/hooks/use-task-labels';
+import { groupTasksByLane, statusForLane, TASK_LANES, upcomingTasks } from '@/features/projects/model/task-lanes';
 
-type TaskLaneKey = 'open' | 'doing' | 'finished';
+type ProjectsParams = { new?: string; id?: string; task?: string };
 
-type TaskLaneModel = {
-  key: TaskLaneKey;
-  label: string;
-  toneClassName: string;
-  statuses: readonly ProjectTaskStatus[];
-  createStatus: ProjectTaskStatus;
-  tasks: IProjectTaskCacheRow[];
-};
+const UPCOMING_LIMIT = 6;
 
 export default function ProjectsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const {
-    new: newParam,
-    id: idParam,
-    task: taskParam,
-  } = useLocalSearchParams<{ new?: string; id?: string; task?: string }>();
+  const { new: newParam, id: idParam, task: taskParam } = useLocalSearchParams<ProjectsParams>();
   const [selectedId, setSelectedId] = useState(idParam ?? '');
   const [projectFormOpen, setProjectFormOpen] = useState(newParam === 'project');
+  const [editingProject, setEditingProject] = useState(false);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState<ProjectTaskStatus>('todo');
-  const { isExpanded } = useWindowClass();
-  const [editingProject, setEditingProject] = useState(false);
-  const { projects, tasks, displayProjects, displayTasks, activeId, progress } = useProjectsData(selectedId);
-  const { can } = usePermissions();
   const [pendingTaskId, setPendingTaskId] = useState(taskParam ?? '');
+  const { isExpanded } = useWindowClass();
+  const { can } = usePermissions();
+  const labels = useTaskLabels();
+  const { projects, tasks, activeId, activePending, progress, isPendingTask } = useProjectsData(selectedId);
+  const lanes = useMemo(() => groupTasksByLane(tasks), [tasks]);
+  const today = date.startOfDay(new Date()).getTime();
+  const upcoming = useMemo<UpcomingTaskItem[]>(
+    () =>
+      upcomingTasks(tasks, UPCOMING_LIMIT).map((task) => ({
+        id: task.id,
+        title: task.title,
+        due: date.formatDayMonth(new Date(task.dueAt ?? 0)),
+        overdue: (task.dueAt ?? 0) < today,
+      })),
+    [date, tasks, today],
+  );
+  const activeProject = projects.find((project) => project.id === activeId);
+  const activeStatus = (activeProject?.status ?? 'active') as ProjectStatus;
+  const canCreateProject = can('project', 'create');
+  const canCreateTask = can('project_task', 'create') && activeId.length > 0 && !activePending;
+  const canUpdateTask = can('project_task', 'update');
+  const countLabel = t('screens.projects.task-count', {
+    done: String(progress.done),
+    total: String(progress.total),
+  });
+  const ratio = progress.total > 0 ? progress.done / progress.total : 0;
 
   if (pendingTaskId && tasks.some((item) => item.id === pendingTaskId)) {
     setPendingTaskId('');
@@ -65,106 +79,9 @@ export default function ProjectsScreen() {
     setTaskFormOpen(true);
   }
 
-  const statusOptions = useMemo<MenuOption<ProjectTaskStatus>[]>(
-    () => [
-      { value: 'backlog', label: t('screens.projects.status-backlog') },
-      { value: 'todo', label: t('screens.projects.status-todo') },
-      { value: 'doing', label: t('screens.projects.status-doing') },
-      { value: 'done', label: t('screens.projects.status-done') },
-      { value: 'canceled', label: t('screens.projects.status-canceled') },
-    ],
-    [t]
-  );
-  const statusLabels = useMemo<Record<ProjectTaskStatus, string>>(
-    () => ({
-      backlog: t('screens.projects.status-backlog'),
-      todo: t('screens.projects.status-todo'),
-      doing: t('screens.projects.status-doing'),
-      done: t('screens.projects.status-done'),
-      canceled: t('screens.projects.status-canceled'),
-    }),
-    [t]
-  );
-  const priorityLabels = useMemo<Record<ProjectTaskPriority, string>>(
-    () => ({
-      none: t('screens.projects.priority-none'),
-      low: t('screens.projects.priority-low'),
-      medium: t('screens.projects.priority-medium'),
-      high: t('screens.projects.priority-high'),
-      urgent: t('screens.projects.priority-urgent'),
-    }),
-    [t]
-  );
-
-  const projectStatusLabels = useMemo<Record<ProjectStatus, string>>(
-    () => ({
-      planned: t('screens.projects.project-status-planned'),
-      active: t('screens.projects.project-status-active'),
-      paused: t('screens.projects.project-status-paused'),
-      done: t('screens.projects.project-status-done'),
-      canceled: t('screens.projects.project-status-canceled'),
-    }),
-    [t]
-  );
-
-  const lanes = useMemo<TaskLaneModel[]>(() => {
-    const models: TaskLaneModel[] = [
-      {
-        key: 'open',
-        label: t('screens.projects.lane-open'),
-        toneClassName: 'bg-muted-foreground',
-        statuses: ['todo', 'backlog'],
-        createStatus: 'todo',
-        tasks: [],
-      },
-      {
-        key: 'doing',
-        label: t('screens.projects.lane-doing'),
-        toneClassName: 'bg-accent',
-        statuses: ['doing'],
-        createStatus: 'doing',
-        tasks: [],
-      },
-      {
-        key: 'finished',
-        label: t('screens.projects.lane-finished'),
-        toneClassName: 'bg-success',
-        statuses: ['done', 'canceled'],
-        createStatus: 'done',
-        tasks: [],
-      },
-    ];
-    for (const task of displayTasks) {
-      const lane = models.find((model) => model.statuses.includes(task.status as ProjectTaskStatus));
-      if (lane) lane.tasks.push(task);
-    }
-    const statusRank = (status: string) => TASK_STATUS_ORDER.indexOf(status as ProjectTaskStatus);
-    for (const lane of models) {
-      lane.tasks.sort(
-        (left, right) =>
-          statusRank(left.status) - statusRank(right.status) ||
-          (TASK_PRIORITY_WEIGHT[left.priority] ?? 9) - (TASK_PRIORITY_WEIGHT[right.priority] ?? 9)
-      );
-    }
-    return models;
-  }, [displayTasks, t]);
-
-  const activeProject = displayProjects.find((project) => project.id === activeId);
-  const canCreateTask = can('project_task', 'create') && activeId.length > 0;
-  const canCreateProject = can('project', 'create');
-  const countLabel = t('screens.projects.task-count', {
-    done: String(progress.done),
-    total: String(progress.total),
-  });
-  const ratio = progress.total > 0 ? progress.done / progress.total : 0;
-
-  const formatDue = useCallback(
-    (due: number | null) => (due == null ? undefined : date.formatDayMonth(new Date(due))),
-    [date]
-  );
-
-  const changeStatus = useCallback((taskId: string, status: ProjectTaskStatus) => {
-    void projectTaskService.update(taskId, { status });
+  const openTask = useCallback((taskId: string) => {
+    setEditingTaskId(taskId);
+    setTaskFormOpen(true);
   }, []);
 
   const openNewTask = useCallback((status: ProjectTaskStatus) => {
@@ -173,66 +90,90 @@ export default function ProjectsScreen() {
     setTaskFormOpen(true);
   }, []);
 
+  const openProjectForm = useCallback((editing: boolean) => {
+    setEditingProject(editing);
+    setProjectFormOpen(true);
+  }, []);
+
+  const changeStatus = useCallback((taskId: string, status: ProjectTaskStatus) => {
+    void runOptimistic({
+      intents: [{ table: 'project_task', kind: 'update', recordId: taskId, values: { status } }],
+      call: () => projectTaskService.update(taskId, { status }),
+    });
+  }, []);
+
+  const moveTask = useCallback(
+    (taskId: string, laneIndex: number) => {
+      const task = tasks.find((candidate) => candidate.id === taskId);
+      const lane = TASK_LANES[laneIndex];
+      if (!task || !lane) return;
+      const next = statusForLane(lane.key, task.status as ProjectTaskStatus);
+      if (next !== task.status) changeStatus(taskId, next);
+    },
+    [changeStatus, tasks],
+  );
+
+  const renderTask = (task: IProjectTaskCacheRow, laneIndex: number) => {
+    const status = task.status as ProjectTaskStatus;
+    const priority = task.priority as ProjectTaskPriority;
+    const pending = isPendingTask(task);
+    return (
+      <DraggableTask key={task.id} taskId={task.id} lane={laneIndex} disabled={pending || !canUpdateTask}>
+        <TaskRow
+          title={task.title}
+          status={status}
+          priority={priority}
+          priorityLabel={labels.priority[priority]}
+          due={task.dueAt == null ? undefined : date.formatDayMonth(new Date(task.dueAt))}
+          overdue={task.dueAt != null && task.dueAt < today}
+          statusTag={status === 'backlog' || status === 'canceled' ? labels.status[status] : undefined}
+          statusOptions={labels.statusOptions}
+          statusMenuTitle={t('screens.projects.select-status')}
+          closeLabel={t('screens.projects.close')}
+          pending={pending}
+          onChangeStatus={(next) => changeStatus(task.id, next)}
+          onPress={() => openTask(task.id)}
+        />
+      </DraggableTask>
+    );
+  };
+
   return (
     <AppScreen
       aside={
-        isExpanded && displayProjects.length > 0 ? (
-          <View className="gap-3">
-            <SectionHeader title={t('screens.projects.all-projects')} />
-            {displayProjects.map((project) => {
-              const active = project.id === activeId;
-              const status = project.status as ProjectStatus;
-              return (
-                <ProjectCardRow
-                  key={project.id}
-                  name={project.name}
-                  description={project.description}
-                  status={status}
-                  statusLabel={projectStatusLabels[status] ?? project.status}
-                  taskCount={active ? countLabel : (projectStatusLabels[status] ?? '')}
-                  progress={active ? ratio : 0}
-                  selected={active}
-                  onPress={() => setSelectedId(project.id)}
-                />
-              );
-            })}
-            {canCreateProject ? (
-              <CreateTile
-                layout="row"
-                label={t('screens.projects.new-project')}
-                onPress={() => setProjectFormOpen(true)}
-              />
-            ) : null}
-          </View>
+        isExpanded && projects.length > 0 ? (
+          <ProjectAside
+            projects={projects}
+            activeId={activeId}
+            countLabel={countLabel}
+            progress={ratio}
+            statusLabels={labels.projectStatus}
+            upcoming={upcoming}
+            onSelect={setSelectedId}
+            onOpenTask={openTask}
+            onCreate={canCreateProject ? () => openProjectForm(false) : undefined}
+          />
         ) : undefined
       }>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">
-          <IconButton
-            icon="arrow-left"
-            label={t('common.back')}
-            onPress={() => router.replace('/')}
-          />
+          <IconButton icon="arrow-left" label={t('common.back')} onPress={() => router.replace('/')} />
           <Text variant="title">{t('screens.projects.title')}</Text>
           {canCreateProject ? (
-            <IconButton
-              icon="plus"
-              label={t('screens.projects.new-project')}
-              onPress={() => setProjectFormOpen(true)}
-            />
+            <IconButton icon="plus" label={t('screens.projects.new-project')} onPress={() => openProjectForm(false)} />
           ) : (
             <View className="size-11" />
           )}
         </View>
 
-        {displayProjects.length === 0 ? (
+        {projects.length === 0 ? (
           <EmptyState
             icon="list-todo"
             title={t('screens.projects.empty')}
             hint={t('screens.projects.empty-hint')}
             action={
               canCreateProject ? (
-                <Button onPress={() => setProjectFormOpen(true)}>
+                <Button onPress={() => openProjectForm(false)}>
                   <Text>{t('screens.projects.new-project')}</Text>
                 </Button>
               ) : null
@@ -242,7 +183,7 @@ export default function ProjectsScreen() {
           <>
             {isExpanded ? null : (
               <ProjectSwitcher
-                projects={displayProjects.map((project) => ({
+                projects={projects.map((project) => ({
                   id: project.id,
                   name: project.name,
                   status: project.status as ProjectStatus,
@@ -255,62 +196,28 @@ export default function ProjectsScreen() {
             <ProjectBoardHeader
               name={activeProject?.name ?? ''}
               description={activeProject?.description ?? ''}
-              status={(activeProject?.status ?? 'active') as ProjectStatus}
-              statusLabel={
-                projectStatusLabels[(activeProject?.status ?? 'active') as ProjectStatus] ?? ''
-              }
+              status={activeStatus}
+              statusLabel={labels.projectStatus[activeStatus] ?? ''}
               countLabel={countLabel}
-              percentLabel={t('screens.projects.progress-percent', {
-                percent: String(Math.round(ratio * 100)),
-              })}
+              percentLabel={t('screens.projects.progress-percent', { percent: String(Math.round(ratio * 100)) })}
               progress={ratio}
               editLabel={t('common.edit')}
               newTaskLabel={t('screens.projects.new-task')}
-              onEdit={
-                can('project', 'update') && activeId
-                  ? () => {
-                      setEditingProject(true);
-                      setProjectFormOpen(true);
-                    }
-                  : undefined
-              }
+              onEdit={can('project', 'update') && activeId && !activePending ? () => openProjectForm(true) : undefined}
               onNewTask={canCreateTask ? () => openNewTask('todo') : undefined}
             />
 
-            <TaskBoard>
-              {lanes.map((lane) => (
+            <TaskBoard onMoveTask={canUpdateTask ? moveTask : undefined}>
+              {TASK_LANES.map((lane, laneIndex) => (
                 <TaskLane
                   key={lane.key}
-                  label={lane.label}
-                  count={lane.tasks.length}
+                  label={labels.lane[lane.key]}
+                  count={lanes[lane.key].length}
                   toneClassName={lane.toneClassName}
                   emptyLabel={t('screens.projects.lane-empty')}
                   addLabel={t('screens.projects.add-task')}
                   onAdd={canCreateTask ? () => openNewTask(lane.createStatus) : undefined}>
-                  {lane.tasks.map((task) => {
-                    const status = task.status as ProjectTaskStatus;
-                    return (
-                      <TaskRow
-                        key={task.id}
-                        title={task.title}
-                        status={status}
-                        priority={task.priority as ProjectTaskPriority}
-                        priorityLabel={priorityLabels[task.priority as ProjectTaskPriority]}
-                        due={formatDue(task.dueAt)}
-                        statusTag={
-                          status === 'backlog' || status === 'canceled' ? statusLabels[status] : undefined
-                        }
-                        statusOptions={statusOptions}
-                        statusMenuTitle={t('screens.projects.select-status')}
-                        closeLabel={t('screens.projects.close')}
-                        onChangeStatus={(next) => changeStatus(task.id, next)}
-                        onPress={() => {
-                          setEditingTaskId(task.id);
-                          setTaskFormOpen(true);
-                        }}
-                      />
-                    );
-                  })}
+                  {lanes[lane.key].map((task) => renderTask(task, laneIndex))}
                 </TaskLane>
               ))}
             </TaskBoard>
@@ -324,7 +231,7 @@ export default function ProjectsScreen() {
           setProjectFormOpen(open);
           if (!open) setEditingProject(false);
         }}
-        project={editingProject ? (projects.find((item) => item.id === activeId) ?? null) : null}
+        project={editingProject ? (activeProject ?? null) : null}
       />
       {activeId ? (
         <TaskForm

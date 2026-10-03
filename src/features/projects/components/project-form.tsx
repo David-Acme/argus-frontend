@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { IProjectCacheRow } from '@/core/interfaces';
+import type { IProjectCacheRow, IProjectCreate } from '@/core/interfaces';
 import { projectService } from '@/core/services/project.service';
-import type { MenuOption, ProjectStatus } from '@/core/types';
+import type { ProjectStatus } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
@@ -20,15 +20,15 @@ import {
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { FormTextField } from '@/shared/components/ui/form-text-field';
-
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { toast } from '@/shared/libs/toast';
-import { runServiceAction } from '@/shared/libs/service-action';
+import { confirm } from '@/shared/libs/confirm';
+import { runOptimistic } from '@/shared/libs/optimistic-action';
+import { useTaskLabels } from '@/features/projects/hooks/use-task-labels';
 
 type ProjectFormProps = {
   open: boolean;
@@ -44,8 +44,15 @@ const schema = z.object({
 
 type ProjectValues = z.infer<typeof schema>;
 
+const projectBody = (values: ProjectValues): IProjectCreate => ({
+  name: values.name,
+  description: values.description || undefined,
+  status: values.status,
+});
+
 export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
   const { t } = useTranslation();
+  const { projectStatusOptions: statusOptions } = useTaskLabels();
   const formScroll = useFormScroll();
   const bodyHeight = useOverlayBodyHeight();
 
@@ -64,47 +71,37 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
     });
   }, [open, project, form]);
 
-  const statusOptions = useMemo<MenuOption<ProjectStatus>[]>(
-    () => [
-      { value: 'planned', label: t('screens.projects.project-status-planned') },
-      { value: 'active', label: t('screens.projects.project-status-active') },
-      { value: 'paused', label: t('screens.projects.project-status-paused') },
-      { value: 'done', label: t('screens.projects.project-status-done') },
-      { value: 'canceled', label: t('screens.projects.project-status-canceled') },
-    ],
-    [t]
-  );
-
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values) => {
-      const body = {
-        name: values.name,
-        description: values.description || undefined,
-        status: values.status,
-      };
-      return project ? projectService.update(project.id, body) : projectService.create(body);
-    },
-    onSuccess: () => {
-      toast.success(t('screens.projects.project-saved'));
-      onOpenChange(false);
-    },
+    request: (values) =>
+      project ? projectService.update(project.id, projectBody(values)) : projectService.create(projectBody(values)),
+    optimistic: (values) => ({
+      intents: [
+        project
+          ? { table: 'project', kind: 'update', recordId: project.id, values: projectBody(values) }
+          : { table: 'project', kind: 'create', values: projectBody(values) },
+      ],
+      success: t('screens.projects.project-saved'),
+    }),
+    onSuccess: () => onOpenChange(false),
   });
 
   const remove = async () => {
     if (!project) return;
-    const removed = await runServiceAction({
-      confirm: {
-        title: t('screens.projects.delete-project-title', { name: project.name }),
-        description: t('screens.projects.delete-project-body'),
-        confirmLabel: t('common.confirm-delete'),
-        intent: 'danger',
-      },
+    const accepted = await confirm({
+      title: t('screens.projects.delete-project-title', { name: project.name }),
+      description: t('screens.projects.delete-project-body'),
+      confirmLabel: t('common.confirm-delete'),
+      intent: 'danger',
+    });
+    if (!accepted) return;
+    onOpenChange(false);
+    await runOptimistic({
+      intents: [{ table: 'project', kind: 'delete', recordId: project.id }],
       call: () => projectService.remove(project.id),
       success: t('screens.projects.project-removed'),
     });
-    if (removed) onOpenChange(false);
   };
 
   return (
