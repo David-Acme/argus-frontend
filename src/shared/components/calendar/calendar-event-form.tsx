@@ -18,6 +18,7 @@ import {
   useFormScroll,
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
+import { FormTextField } from '@/shared/components/ui/form-text-field';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { SettingRow } from '@/shared/components/cameras';
@@ -206,43 +207,21 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
             {!allDay ? (
               <View className="flex-row gap-3">
                 <View className="flex-1">
-                  <FormField
+                  <FormTextField
                     control={form.control}
                     name="time"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('screens.agenda.event-time')}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="09:00"
-                            keyboardType="numbers-and-punctuation"
-                            {...field}
-                            onChangeText={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label={t('screens.agenda.event-time')}
+                    placeholder="09:00"
+                    keyboardType="numbers-and-punctuation"
                   />
                 </View>
                 <View className="flex-1">
-                  <FormField
+                  <FormTextField
                     control={form.control}
                     name="endTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('screens.agenda.event-end')}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={t('screens.agenda.event-end-placeholder')}
-                            keyboardType="numbers-and-punctuation"
-                            {...field}
-                            onChangeText={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label={t('screens.agenda.event-end')}
+                    placeholder={t('screens.agenda.event-end-placeholder')}
+                    keyboardType="numbers-and-punctuation"
                   />
                 </View>
               </View>

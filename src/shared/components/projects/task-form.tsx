@@ -9,17 +9,10 @@ import type { MenuOption, ProjectTaskPriority, ProjectTaskStatus } from '@/core/
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  useFormScroll,
-} from '@/shared/components/ui/form';
+import { Form, FormField, FormItem, FormLabel, FormMessage, useFormScroll } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
-import { Input } from '@/shared/components/ui/input';
+import { FormTextField } from '@/shared/components/ui/form-text-field';
+
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
@@ -146,22 +139,11 @@ export function TaskForm({ open, onOpenChange, projectId, task }: TaskFormProps)
       <FormScrollView formScroll={formScroll} maxHeight={bodyHeight}>
         <Form {...form}>
           <View className="gap-3.5 pb-1">
-            <FormField
+            <FormTextField
               control={form.control}
               name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('screens.projects.task-title')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('screens.projects.task-title-placeholder')}
-                      {...field}
-                      onChangeText={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label={t('screens.projects.task-title')}
+              placeholder={t('screens.projects.task-title-placeholder')}
             />
 
             <FormField

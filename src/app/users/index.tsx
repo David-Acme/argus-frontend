@@ -1,5 +1,5 @@
 import { inviteService } from '@/core/services/invite';
-import { netService } from '@/core/services/net';
+
 import { synchronizeService } from '@/core/services/sync';
 import { userManagementService } from '@/core/services/user-management.service';
 import { useAuthStore } from '@/core/stores';
@@ -8,245 +8,32 @@ import type {
   IPeopleDirectoryCacheRow,
   IUserManagementRecord,
 } from '@/core/interfaces';
-import type { InviteRole, MenuOption, TranslateFn, UserRole } from '@/core/types';
+import type { UserRole } from '@/core/types';
 import {
   DashboardShell,
   SectionHeading,
 } from '@/shared/components/dashboard';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
-import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
+
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
-import { Input } from '@/shared/components/ui/input';
+
 import { QrCode } from '@/shared/components/ui/qr-code';
-import { SelectField } from '@/shared/components/ui/select-field';
+
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
-import { buildInvitationQr } from '@/shared/libs/invitation-qr';
+
 import { toast } from '@/shared/libs/toast';
 import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
-
-const INVITE_EXPIRIES = [
-  { value: '1', days: 1 },
-  { value: '7', days: 7 },
-  { value: '30', days: 30 },
-] as const;
-
-type InviteExpiry = (typeof INVITE_EXPIRIES)[number]['value'];
-
-type ManagedUserDialogProps = {
-  user: IUserManagementRecord;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSaved: () => Promise<void>;
-};
-
-type InvitationDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated: (preview: InvitationPreview) => void;
-  onSaved: () => Promise<void>;
-};
-
-type InvitationPreview = {
-  invitationId: number;
-  value: string;
-};
-
-const roleOptions = (t: TranslateFn): MenuOption<UserRole>[] => [
-  { value: 'owner', label: t('screens.users.role-owner') },
-  { value: 'resident', label: t('screens.users.role-resident') },
-  { value: 'guard', label: t('screens.users.role-guard') },
-  { value: 'guest', label: t('screens.users.role-guest') },
-];
-
-const inviteRoleOptions = (t: TranslateFn): MenuOption<InviteRole>[] => [
-  { value: 'resident', label: t('screens.users.role-resident') },
-  { value: 'guard', label: t('screens.users.role-guard') },
-  { value: 'guest', label: t('screens.users.role-guest') },
-];
-
-function ManagedUserDialog({ user, open, onOpenChange, onSaved }: ManagedUserDialogProps) {
-  const { t } = useTranslation();
-  const [name, setName] = useState(user.name);
-  const [lastName, setLastName] = useState(user.lastName);
-  const [role, setRole] = useState<UserRole>(user.role);
-  const [saving, setSaving] = useState(false);
-  const options = useMemo(() => roleOptions(t), [t]);
-
-  const save = useCallback(async () => {
-    if (!name.trim()) return;
-    setSaving(true);
-    const response = await userManagementService.update(user.id, {
-      name: name.trim(),
-      lastName: lastName.trim(),
-      role,
-    });
-    setSaving(false);
-    if (!response.ok) {
-      toastServiceError(response.errors);
-      return;
-    }
-    onOpenChange(false);
-    await onSaved();
-    toast.success(t('screens.users.user-saved'));
-  }, [lastName, name, onOpenChange, onSaved, role, t, user]);
-
-  return (
-    <AdaptiveDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t('screens.users.edit-user')}
-      closeLabel={t('common.close')}
-      footer={
-        <>
-          <Button variant="outline" disabled={saving} onPress={() => onOpenChange(false)}>
-            <Text>{t('common.cancel')}</Text>
-          </Button>
-          <Button loading={saving} disabled={!name.trim()} onPress={save}>
-            <Text>{t('common.save')}</Text>
-          </Button>
-        </>
-      }>
-      <View className="gap-3.5 pb-1">
-        <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.name')}</Text>
-          <Input value={name} onChangeText={setName} autoCapitalize="words" />
-        </View>
-        <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.last-name')}</Text>
-          <Input value={lastName} onChangeText={setLastName} autoCapitalize="words" />
-        </View>
-        <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.role')}</Text>
-          <AdaptiveSelect
-            options={options}
-            value={role}
-            onChange={setRole}
-            title={t('screens.users.role')}
-            closeLabel={t('common.close')}
-            searchPlaceholder={t('screens.home.search-placeholder')}
-            emptyLabel={t('screens.users.no-results')}
-            trigger={<SelectField label={options.find((option) => option.value === role)?.label} />}
-          />
-        </View>
-      </View>
-    </AdaptiveDialog>
-  );
-}
-
-function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: InvitationDialogProps) {
-  const { t } = useTranslation();
-  const [role, setRole] = useState<InviteRole>('resident');
-  const [capacity, setCapacity] = useState('1');
-  const [expiry, setExpiry] = useState<InviteExpiry>('7');
-  const [saving, setSaving] = useState(false);
-  const roles = useMemo(() => inviteRoleOptions(t), [t]);
-  const expiryOptions = useMemo<MenuOption<InviteExpiry>[]>(
-    () => INVITE_EXPIRIES.map((item) => ({ value: item.value, label: t('screens.users.expires-days', { days: String(item.days) }) })),
-    [t],
-  );
-
-  const create = useCallback(async () => {
-    const maxRedemptions = Number(capacity);
-    if (!Number.isInteger(maxRedemptions) || maxRedemptions < 1 || maxRedemptions > 100) {
-      toast.error(t('common.errors.validation'), t('screens.users.capacity-hint'));
-      return;
-    }
-    const days = INVITE_EXPIRIES.find((item) => item.value === expiry)?.days ?? 7;
-    setSaving(true);
-    const response = await inviteService.create({
-      role,
-      maxRedemptions,
-      expiresAt: Math.floor(Date.now() / 1000) + days * 86_400,
-    });
-    setSaving(false);
-    if (!response.ok || !response.info) {
-      toastServiceError(response.errors);
-      return;
-    }
-    const instance = await netService.instance();
-    if (!instance) {
-      toast.error(t('common.errors.pairing-required'));
-      return;
-    }
-    onOpenChange(false);
-    onCreated({
-      invitationId: response.info.id,
-      value: buildInvitationQr({
-        token: response.info.token,
-        host: instance.host,
-        ip: instance.ip,
-        port: instance.port,
-        scheme: 'https',
-        instanceId: instance.instanceId,
-        caFingerprint: instance.caFingerprint,
-      }),
-    });
-    await onSaved();
-  }, [capacity, expiry, onCreated, onOpenChange, onSaved, role, t]);
-
-  return (
-    <AdaptiveDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t('screens.users.new-invitation')}
-      description={t('screens.users.invitation-description')}
-      closeLabel={t('common.close')}
-      footer={
-        <>
-          <Button variant="outline" disabled={saving} onPress={() => onOpenChange(false)}>
-            <Text>{t('common.cancel')}</Text>
-          </Button>
-          <Button loading={saving} onPress={create}>
-            <Text>{t('common.create')}</Text>
-          </Button>
-        </>
-      }>
-      <View className="gap-3.5 pb-1">
-        <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.role')}</Text>
-          <AdaptiveSelect
-            options={roles}
-            value={role}
-            onChange={setRole}
-            title={t('screens.users.role')}
-            closeLabel={t('common.close')}
-            searchPlaceholder={t('screens.home.search-placeholder')}
-            emptyLabel={t('screens.users.no-results')}
-            trigger={<SelectField label={roles.find((option) => option.value === role)?.label} />}
-          />
-        </View>
-        <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.capacity')}</Text>
-          <Input value={capacity} onChangeText={setCapacity} keyboardType="number-pad" />
-          <Text className="text-muted-foreground text-xs">{t('screens.users.capacity-hint')}</Text>
-        </View>
-        <View className="gap-1.5">
-          <Text className="text-foreground-secondary text-sm">{t('screens.users.expires')}</Text>
-          <AdaptiveSelect
-            options={expiryOptions}
-            value={expiry}
-            onChange={setExpiry}
-            title={t('screens.users.expires')}
-            closeLabel={t('common.close')}
-            searchPlaceholder={t('screens.home.search-placeholder')}
-            emptyLabel={t('screens.users.no-results')}
-            trigger={<SelectField label={expiryOptions.find((option) => option.value === expiry)?.label} />}
-          />
-        </View>
-      </View>
-    </AdaptiveDialog>
-  );
-}
+import { InvitationDialog, ManagedUserDialog, roleOptions, type InvitationPreview } from '@/shared/components/users';
 
 export default function UsersScreen() {
   const { t } = useTranslation();

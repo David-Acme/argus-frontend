@@ -19,7 +19,8 @@ import {
   useFormScroll,
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
-import { Input } from '@/shared/components/ui/input';
+import { FormTextField } from '@/shared/components/ui/form-text-field';
+
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -137,22 +138,11 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
       <FormScrollView formScroll={formScroll} maxHeight={bodyHeight}>
         <Form {...form}>
           <View className="gap-3.5 pb-1">
-            <FormField
+            <FormTextField
               control={form.control}
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('screens.projects.project-name')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('screens.projects.project-name-placeholder')}
-                      {...field}
-                      onChangeText={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label={t('screens.projects.project-name')}
+              placeholder={t('screens.projects.project-name-placeholder')}
             />
 
             <FormField
