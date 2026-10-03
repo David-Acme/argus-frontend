@@ -11,11 +11,12 @@ type GuardModePickerProps = {
   state: GuardModeState | null;
   pending: GuardMode | null;
   onSelect: (mode: GuardMode) => void;
+  readOnly?: boolean;
 };
 
 const hover = Platform.select({ web: 'hover:bg-surface-secondary/70', default: '' });
 
-export function GuardModePicker({ state, pending, onSelect }: GuardModePickerProps) {
+export function GuardModePicker({ state, pending, onSelect, readOnly = false }: GuardModePickerProps) {
   const { t } = useTranslation();
   const { isCompact } = useWindowClass();
   const selected = pending ?? state?.mode ?? null;
@@ -28,10 +29,10 @@ export function GuardModePicker({ state, pending, onSelect }: GuardModePickerPro
           <Pressable
             key={mode}
             accessibilityRole="radio"
-            accessibilityState={{ checked: active, busy: pending === mode }}
+            accessibilityState={{ checked: active, busy: pending === mode, disabled: readOnly }}
             accessibilityLabel={t(`screens.security.mode.${mode}`)}
             accessibilityHint={t(`screens.security.mode.${mode}-detail`)}
-            disabled={pending != null}
+            disabled={readOnly || pending != null}
             onPress={() => onSelect(mode)}
             className={cn(
               'min-h-[76px] flex-row items-start gap-3 rounded-2xl border p-3.5 active:opacity-80',

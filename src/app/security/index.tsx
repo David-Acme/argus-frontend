@@ -18,6 +18,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useGuard } from '@/shared/hooks/use-guard';
+import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { confirm } from '@/shared/libs/confirm';
@@ -30,7 +31,8 @@ export default function SecurityScreen() {
   const bottomInset = useBottomNavInset();
   const authStatus = useAuthStore((state) => state.status);
   const role = useAuthStore((state) => state.user?.role);
-  const guard = useGuard();
+  const access = guardAccessForRole(role ?? 'guest');
+  const guard = useGuard(access.review);
   const [guestFormOpen, setGuestFormOpen] = useState(false);
   const { setMode, removeGuest, sendFeedback, addGuest } = guard;
 
@@ -75,7 +77,7 @@ export default function SecurityScreen() {
     [addGuest, t]
   );
 
-  if (authStatus !== 'signed-in' || role !== 'owner') return <Redirect href="/" />;
+  if (authStatus !== 'signed-in' || !access.view) return <Redirect href="/" />;
 
   const activeGuests = guard.guests.filter(
     (guest) => guest.validUntil * 1000 > guard.loadedAt
@@ -93,7 +95,12 @@ export default function SecurityScreen() {
 
   const modeSection = (
     <SecurityPanel title={t('screens.security.mode.title')}>
-      <GuardModePicker state={guard.mode} pending={guard.pendingMode} onSelect={changeMode} />
+      <GuardModePicker
+        state={guard.mode}
+        pending={guard.pendingMode}
+        onSelect={changeMode}
+        readOnly={!access.setMode}
+      />
     </SecurityPanel>
   );
 
@@ -104,12 +111,18 @@ export default function SecurityScreen() {
       count={guard.guests.length}
       className={className}
       action={
-        <Button variant="ghost" size="sm" onPress={() => setGuestFormOpen(true)}>
-          <Icon name="user-plus" />
-          <Text>{t('screens.security.guests.add')}</Text>
-        </Button>
+        access.manageGuests ? (
+          <Button variant="ghost" size="sm" onPress={() => setGuestFormOpen(true)}>
+            <Icon name="user-plus" />
+            <Text>{t('screens.security.guests.add')}</Text>
+          </Button>
+        ) : undefined
       }>
-      <ExpectedGuestList guests={guard.guests} now={guard.loadedAt} onRemove={askRemoveGuest} />
+      <ExpectedGuestList
+        guests={guard.guests}
+        now={guard.loadedAt}
+        onRemove={access.manageGuests ? askRemoveGuest : undefined}
+      />
     </SecurityPanel>
   );
 
@@ -141,26 +154,26 @@ export default function SecurityScreen() {
       </View>
       <View className="min-w-0 flex-1 gap-5">
         {incidentSection('flex-1')}
-        {decisionSection('flex-1')}
+        {access.review ? decisionSection('flex-1') : null}
       </View>
     </View>
   ) : isMedium ? (
     <View className="flex-1 gap-5">
       {heroSection}
       {modeSection}
-      <View className="flex-row items-stretch gap-5">
+      <View className={access.review ? 'flex-row items-stretch gap-5' : 'flex-1 flex-row items-stretch gap-5'}>
         {guestSection('min-w-0 flex-1')}
         {incidentSection('min-w-0 flex-1')}
       </View>
-      {decisionSection('flex-1')}
+      {access.review ? decisionSection('flex-1') : null}
     </View>
   ) : (
     <View className="flex-1 gap-5">
       {heroSection}
       {modeSection}
       {guestSection()}
-      {incidentSection()}
-      {decisionSection('flex-1')}
+      {incidentSection(access.review ? undefined : 'flex-1')}
+      {access.review ? decisionSection('flex-1') : null}
     </View>
   );
 

@@ -49,3 +49,19 @@ export function readableTables(role: UserRole): TableName[] {
     hasAccess(role, table, 'read')
   );
 }
+
+export type GuardAccess = {
+  view: boolean;
+  setMode: boolean;
+  manageGuests: boolean;
+  review: boolean;
+};
+
+export function guardAccessForRole(role: UserRole): GuardAccess {
+  return {
+    view: role === 'owner' || role === 'resident' || role === 'guard',
+    setMode: role === 'owner' || role === 'resident',
+    manageGuests: role === 'owner' || role === 'resident',
+    review: role === 'owner',
+  };
+}

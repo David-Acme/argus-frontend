@@ -9,7 +9,7 @@ import { SecurityEmpty } from './security-empty';
 type ExpectedGuestListProps = {
   guests: GuardExpectedGuest[];
   now: number;
-  onRemove: (guest: GuardExpectedGuest) => void;
+  onRemove?: (guest: GuardExpectedGuest) => void;
 };
 
 export function ExpectedGuestList({ guests, now, onRemove }: ExpectedGuestListProps) {
@@ -57,14 +57,16 @@ export function ExpectedGuestList({ guests, now, onRemove }: ExpectedGuestListPr
                 <Text variant="micro">{t('screens.security.guests.once')}</Text>
               </View>
             ) : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('screens.security.guests.remove-title')}
-              hitSlop={8}
-              onPress={() => onRemove(guest)}
-              className="size-10 items-center justify-center rounded-full active:opacity-60">
-              <Icon name="trash" className="text-muted-foreground size-5" />
-            </Pressable>
+            {onRemove ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('screens.security.guests.remove-title')}
+                hitSlop={8}
+                onPress={() => onRemove(guest)}
+                className="size-10 items-center justify-center rounded-full active:opacity-60">
+                <Icon name="trash" className="text-muted-foreground size-5" />
+              </Pressable>
+            ) : null}
           </View>
         );
       })}

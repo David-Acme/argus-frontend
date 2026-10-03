@@ -27,6 +27,7 @@ import { ServerUnreachable } from '@/shared/components/session/server-unreachabl
 import { GuardCard } from '@/shared/components/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { useGuardMode } from '@/shared/hooks/use-guard-mode';
+import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
 import { usePermissions } from '@/shared/hooks/use-permissions';
@@ -61,8 +62,8 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
       if (!result.ok) toastServiceError(result.errors);
     });
   }, []);
-  const isOwner = role === 'owner';
-  const guardMode = useGuardMode(isOwner);
+  const guardAccess = guardAccessForRole(role);
+  const guardMode = useGuardMode(guardAccess.view);
   const {
     cameraTiles,
     projects,
@@ -150,7 +151,7 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
             />
           </View>
 
-          {isOwner ? <GuardCard state={guardMode} onPress={() => router.push('/security')} /> : null}
+          {guardAccess.view ? <GuardCard state={guardMode} onPress={() => router.push('/security')} /> : null}
 
           <SummaryCard
             title={t('screens.home.overview')}

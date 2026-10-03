@@ -22,7 +22,7 @@ type GuardData = {
 
 const EMPTY: GuardData = { loadedAt: 0, mode: null, guests: [], incidents: [], decisions: [] };
 
-export function useGuard() {
+export function useGuard(review: boolean) {
   const [data, setData] = useState<GuardData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -37,7 +37,7 @@ export function useGuard() {
       guardService.mode(),
       guardService.expectedGuests(),
       guardService.incidents(),
-      guardService.decisions(),
+      review ? guardService.decisions() : Promise.resolve(null),
     ]);
     if (current !== generation.current) return;
     setFailed(!mode.ok);
@@ -46,10 +46,10 @@ export function useGuard() {
       mode: mode.ok ? mode.info : null,
       guests: guests.ok ? (guests.info ?? []) : [],
       incidents: incidents.ok ? (incidents.info ?? []) : [],
-      decisions: decisions.ok ? (decisions.info?.rows ?? []) : [],
+      decisions: decisions?.ok ? (decisions.info?.rows ?? []) : [],
     });
     setLoading(false);
-  }, []);
+  }, [review]);
 
   useFocusEffect(
     useCallback(() => {
