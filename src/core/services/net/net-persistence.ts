@@ -24,14 +24,18 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
     return null;
   }
 
-  const caPem = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.caPem);
-  const host = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.host);
-  const ip = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.ip);
-  const port = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.port);
-  const caFingerprint = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.caFingerprint);
-  const instanceId = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.instanceId);
-  const pairedAt = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.pairedAt);
-  const routes = await secureStorageService.getStringAsync(NET_STORAGE_KEYS.routes);
+  const [caPem, host, ip, port, caFingerprint, instanceId, pairedAt, routes] = await Promise.all(
+    [
+      NET_STORAGE_KEYS.caPem,
+      NET_STORAGE_KEYS.host,
+      NET_STORAGE_KEYS.ip,
+      NET_STORAGE_KEYS.port,
+      NET_STORAGE_KEYS.caFingerprint,
+      NET_STORAGE_KEYS.instanceId,
+      NET_STORAGE_KEYS.pairedAt,
+      NET_STORAGE_KEYS.routes,
+    ].map((key) => secureStorageService.getStringAsync(key))
+  );
 
   if (!caPem || !host || !ip || !port) {
     cachedInstance = null;
