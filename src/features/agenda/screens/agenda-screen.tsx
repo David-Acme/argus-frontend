@@ -291,7 +291,9 @@ export default function ScheduleScreen() {
 
         {view === 'month' ? (
           isWide ? (
-            <View className="flex-1 flex-row items-stretch gap-5">{monthBody}</View>
+            <View className="flex-1 flex-row items-stretch gap-5" style={{ paddingBottom: bottomNavInset }}>
+              {monthBody}
+            </View>
           ) : (
             <ScrollView
               className="flex-1"
@@ -304,7 +306,7 @@ export default function ScheduleScreen() {
         ) : null}
 
         {view === 'week' ? (
-          <View className="min-h-0 flex-1">
+          <View className="min-h-0 flex-1" style={{ paddingBottom: bottomNavInset }}>
             <CalendarWeekView
               anchor={anchor}
               selected={anchor}
