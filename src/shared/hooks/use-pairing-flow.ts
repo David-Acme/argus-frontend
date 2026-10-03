@@ -27,11 +27,29 @@ type ManualAddress = {
   port: number;
 };
 
+const IPV4_PATTERN = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?::(\d{1,5}))?$/;
+const IPV6_PATTERN = /^\[?([0-9a-fA-F:]+)\]?(?::(\d{1,5}))?$/;
+
+function validPort(value: string | undefined): number | null {
+  const port = value ? Number(value) : ARGUS_PAIRING_PORT;
+  return port > 0 && port < 65536 ? port : null;
+}
+
 function parseAddress(address: string): ManualAddress | null {
-  const match = address.trim().match(/^([0-9a-fA-F.:]+?)(?::(\d{2,5}))?$/);
-  if (!match) return null;
-  const port = match[2] ? Number(match[2]) : ARGUS_PAIRING_PORT;
-  return port > 0 && port < 65536 ? { ip: match[1], port } : null;
+  const value = address.trim();
+  const ipv4 = value.match(IPV4_PATTERN);
+  if (ipv4) {
+    const octets = ipv4.slice(1, 5).map(Number);
+    const port = validPort(ipv4[5]);
+    if (octets.some((octet) => octet > 255) || port === null) return null;
+    return { ip: octets.join('.'), port };
+  }
+  const ipv6 = value.match(IPV6_PATTERN);
+  if (ipv6 && ipv6[1].includes(':') && (value.startsWith('[') || !ipv6[2])) {
+    const port = validPort(ipv6[2]);
+    return port === null ? null : { ip: ipv6[1], port };
+  }
+  return null;
 }
 
 async function pairWithCode(code: string, address?: string): Promise<void> {
