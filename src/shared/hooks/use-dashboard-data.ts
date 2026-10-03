@@ -4,16 +4,8 @@ import type {
   INotificationPreviewCacheRow,
 } from '@/core/interfaces';
 import type { CalendarEntry, DashboardProjectCard, DashboardSummary } from '@/core/types';
-import {
-  EMPTY_DASHBOARD_SUMMARY,
-  MOSAIC_COLUMNS,
-  MOSAIC_ROWS,
-  VIEW_CACHE_KEYS,
-} from '@/shared/constants';
+import { EMPTY_DASHBOARD_SUMMARY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows, useViewCacheValue } from './use-cached-rows';
-
-const emptyActivityLevels = (): readonly (readonly number[])[] =>
-  Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
 
 export function useDashboardData(): IDashboardCacheData {
   const cameraTiles = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
@@ -34,6 +26,6 @@ export function useDashboardData(): IDashboardCacheData {
     notifications,
     unreadNotifications,
     summary,
-    activityLevels: activityLevels.length > 0 ? activityLevels : emptyActivityLevels(),
+    activityLevels,
   };
 }

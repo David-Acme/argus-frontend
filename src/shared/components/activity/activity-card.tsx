@@ -10,7 +10,7 @@ type ActivityCardProps = {
   title: string;
   delta: string;
   direction?: 'up' | 'down' | 'flat';
-  levels?: readonly (readonly number[])[];
+  levels: readonly (readonly number[])[];
   action?: string;
   className?: string;
   onAction?: () => void;

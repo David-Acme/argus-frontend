@@ -294,7 +294,7 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
   `useSyncExternalStore` with a cached classification, so a resize that keeps
   the class re-renders nothing; the overlay height hook reads
   `useWindowDimensions` itself.
-- [ ] `MosaicChart`: one animated container, no placeholder pattern posing as
+- [x] `MosaicChart`: one animated container, no placeholder pattern posing as
   data.
 - [ ] Tauri trust boundary: Rust reads the pairing from the keyring; the JS
   API shrinks to `{ method, path, headers, body }`.
