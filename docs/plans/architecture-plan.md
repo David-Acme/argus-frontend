@@ -116,7 +116,7 @@ also get one Android device pass.
 
 ### Phase 1 — Data-layer efficiency (no visible UI change)
 
-- [ ] `viewCacheService.write` skips identical content (no write, no notify),
+- [x] `viewCacheService.write` skips identical content (no write, no notify),
   so React keeps the same reference and does not re-render.
 - [ ] The coordinator becomes a projection registry; each feature owns its
   projection and subscribes only to its own sources:

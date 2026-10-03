@@ -74,8 +74,7 @@ class ViewCacheService {
     const limit = options.limit ?? VIEW_CACHE_PAGE_SIZE;
     const limited = rows.length > limit ? rows.slice(0, limit) : rows;
     const target = this.keyOf(key, scope);
-    storageService.setObject(target, limited);
-    this.notify(target);
+    this.store(target, limited);
     if (scope == null || !options.replaceScoped) return;
 
     const base = `${VIEW_CACHE_PREFIX}${this.userId}.${key}.`;
@@ -93,8 +92,13 @@ class ViewCacheService {
   }
 
   writeValue<T>(key: ViewCacheKey, value: T, scope?: string): void {
-    const target = this.keyOf(key, scope);
-    storageService.setObject(target, value);
+    this.store(this.keyOf(key, scope), value);
+  }
+
+  private store(target: string, value: unknown): void {
+    const serialized = JSON.stringify(value);
+    if (storageService.getString(target) === serialized) return;
+    storageService.set(target, serialized);
     this.notify(target);
   }
 
