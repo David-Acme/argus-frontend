@@ -1104,6 +1104,57 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   device locale/hour-cycle settings. Do not hand-format dates or bake Spanish,
   AM/PM or 24-hour assumptions into a component.
 
+### Optimistic UI (2026-10-03)
+
+The write path stays HTTP → backend → `/sync` → WatermelonDB → view cache, so
+an action used to look idle until the sync round trip landed. The UI now shows
+the result of the user's action at once and reconciles with the synced row.
+
+- **Intents, not cache writes.** `shared/libs/optimistic.ts` keeps an
+  in-memory registry of entity-level intents (`table`, `kind`, `recordId`,
+  `values` in the HTTP body's shape). It knows no feature and is never
+  persisted: an action is fire-and-forget, and an intent that outlived its
+  request would be a lie after a restart. The view cache stays the single
+  record of synced truth; CORE did not add a cache overlay (orchestrator
+  decision), so there is one implementation.
+- **Lenses live in the feature that owns the view.** A view-cache row is a
+  projection (a `CalendarEntry` is an event, a task or a reminder), so each
+  view declares how an entity intent lands on its row: agenda
+  (`features/agenda/model/calendar-optimistic.ts`, events + tasks, reused by
+  home's "Hoy"), projects (`project-optimistic.ts`), people
+  (`people-optimistic.ts`), home notifications (`notification-optimistic.ts`).
+  `useOptimisticRows(rows, lenses, compare?)` merges them; the result keeps
+  the input reference when nothing applies, so memoized children do not
+  re-render.
+- **Reconciliation without double rows.** A create shows under a temporary
+  id, dimmed and without actions; the HTTP answer's `info.id` re-keys it, and
+  from then on the synced row with that id wins. If the sync `Add` lands
+  before the HTTP answer, a pending create whose lens rebuilds exactly the
+  synced row is hidden. A confirmed intent leaves on evidence only — its patch
+  is a no-op on the synced row, or the created id is present — in per-record
+  order (a later toggle never settles before the earlier one), after a short
+  grace so every projection catches up; a delete, whose absence proves
+  nothing, and any intent the sync never proves, expire after 60 s. A user
+  change clears the registry (session boundary, like the view cache).
+- **Refusals.** `runOptimistic` rolls the intent back and toasts the reason;
+  a network, timeout or 5xx refusal carries a Retry action that replays the
+  same request (forms close on valid input, so Retry is what keeps the typed
+  values from being lost). Deletes of events and tasks are deferred behind an
+  Undo toast (6 s, the toast's own lifetime) instead of a confirm dialog;
+  project deletion (cascades), user deactivation and invitation revocation
+  keep their confirm.
+- **Notifications.** Opening the bell marks the previewed items read at once
+  (badge clears); the items stay highlighted for that open session so the
+  user still sees what was new.
+- **Motion.** Rows enter without per-item animations; feedback comes from the
+  pressed control and the dimmed pending state. Reanimated 4.5 on Fabric keeps
+  the old frame of a `layout={LinearTransition}` view when Reduce Motion is on
+  (software-mansion/react-native-reanimated#10395), so layout transitions are
+  not used for list reflow. The task drag (projects, side-by-side boards only:
+  pointer drag on web/desktop, long press on touch) lifts the card and rings
+  the target lane; reduce motion removes the springs, not the feedback. The
+  status menu remains the keyboard and screen-reader path.
+
 ### Current validation baseline
 
 On 2026-08-23, `bun run lint`, `bunx tsc --noEmit` and `bun run web:build`

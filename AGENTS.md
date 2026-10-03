@@ -503,6 +503,27 @@ for Watermelon nor make an HTTP list request just because it mounted.
   control that started it. Never hand-write a generation ref, a
   `let active = true` effect or a confirm → call → toast block. Detail routes must not redirect merely because their cache has not
   been populated yet.
+- **Optimistic UI for synced rows.** A mutation on a row the sync delivers
+  (event, task, project, user, invitation, notification) shows its result at
+  once and reconciles with the synced row. `runOptimistic({ intents, call,
+  confirm?, undo?, success?, errorTitle? })` (`shared/libs/optimistic-action.ts`)
+  registers entity-level intents (`{ table, kind: create | update | delete,
+  recordId?, values }`, `values` in the HTTP body's shape) in the in-memory
+  `optimisticRegistry` (`shared/libs/optimistic.ts`), runs the call, confirms
+  with the server id from `info.id` or rolls back and toasts the refusal (a
+  retryable refusal carries a Retry action). `undo` defers the call behind an
+  Undo toast (deletes of events and tasks); destructive or security-relevant
+  actions keep `confirm`. Views read `useOptimisticRows(rows, lenses,
+  compare?)` (`shared/hooks/use-optimistic-rows.ts`) over their view-cache rows;
+  a **lens** (`defineLens`) belongs to the feature that owns the view and maps
+  the entity intent onto its row shape (`recordIdOf`, `patch`, `create`,
+  `prepend`). The registry knows no feature. A create is keyed by the server id
+  once confirmed, so the sync `Add` never shows a second row; a confirmed
+  intent leaves only on evidence (its patch is a no-op on the synced row, or
+  the created id is present), in per-record order, or after 60 s; a user change
+  clears it. Pending creates render dimmed and refuse actions
+  (`isPendingRecordId`). Forms pass `optimistic` to `useFormSubmit`: the dialog
+  closes on valid input and the save runs behind the overlay.
 
 ### 12c. People, invitations and portrait privacy
 
@@ -690,6 +711,7 @@ cd src-tauri && cargo check
 | `src/core/services/database.service.ts` | `DatabaseService<K>` base class (protected query primitives) |
 | `src/core/services/{domain}.service.ts` | Data services — the only code that reads the database |
 | `src/shared/hooks/use-cached-rows.ts` | Lectura síncrona de snapshots MMKV por revisión (`useViewCacheRows` / `useViewCacheValue`) |
+| `src/shared/libs/optimistic.ts` · `optimistic-action.ts` · `src/shared/hooks/use-optimistic-rows.ts` | Optimistic UI: the intent registry and its pure merge/settle functions, `runOptimistic` (confirm, undo, rollback, retry toast) and the hook that overlays intents on view-cache rows through feature lenses |
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
 | `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
