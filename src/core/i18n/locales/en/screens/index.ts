@@ -14,6 +14,7 @@ import { projects } from './projects';
 import { users } from './users';
 import { profile } from './profile';
 import { security } from './security';
+import { settings } from './settings';
 
 export const screens = {
   home,
@@ -32,4 +33,5 @@ export const screens = {
   users,
   profile,
   security,
+  settings,
 };

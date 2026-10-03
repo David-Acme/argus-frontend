@@ -1,4 +1,4 @@
-export type DashboardTab = 'home' | 'schedule' | 'projects' | 'people' | 'profile';
+export type DashboardTab = 'home' | 'schedule' | 'projects' | 'people' | 'settings' | 'profile';
 
 export type AgendaStatus = 'upcoming' | 'active' | 'complete';
 

@@ -18,6 +18,7 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   notification: 7028,
   'notification-token': 7028,
   guard: 7039,
+  settings: 7045,
   sync: 7025,
 };
 export const PAIRING_PATH = '/pairing';

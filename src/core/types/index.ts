@@ -28,3 +28,4 @@ export * from './audit-log.type';
 export * from './view-cache.type';
 export * from './camera-stream.type';
 export * from './guard.type';
+export * from './settings.type';

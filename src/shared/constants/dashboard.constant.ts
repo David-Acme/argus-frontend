@@ -31,12 +31,13 @@ export const TASK_PRIORITY_WEIGHT: Record<string, number> = {
 
 export const DASHBOARD_TAB_ROUTE: Record<
   DashboardTab,
-  '/' | '/agenda' | '/projects' | '/people' | '/profile'
+  '/' | '/agenda' | '/projects' | '/people' | '/settings' | '/profile'
 > = {
   home: '/',
   schedule: '/agenda',
   projects: '/projects',
   people: '/people',
+  settings: '/settings',
   profile: '/profile',
 };
 
@@ -46,6 +47,7 @@ export const DASHBOARD_ROUTE_TAB: Record<string, DashboardTab> = {
   '/projects': 'projects',
   '/people': 'people',
   '/users': 'people',
+  '/settings': 'settings',
   '/profile': 'profile',
 };
 
@@ -54,11 +56,13 @@ export const DASHBOARD_TABS: readonly {
   icon: IconName;
   table?: TableName;
   directory?: boolean;
+  ownerOnly?: boolean;
 }[] = [
   { tab: 'home', icon: 'home' },
   { tab: 'schedule', icon: 'calendar', table: 'calendar_event' },
   { tab: 'projects', icon: 'list-todo', table: 'project' },
   { tab: 'people', icon: 'users', directory: true },
+  { tab: 'settings', icon: 'settings', ownerOnly: true },
   { tab: 'profile', icon: 'user' },
 ];
 

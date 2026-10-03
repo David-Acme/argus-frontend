@@ -24,9 +24,12 @@ export function useDashboardNavigation(): DashboardNavigation {
   const tabs = useMemo(
     () =>
       DASHBOARD_TABS.filter(
-        (item) => (!item.table || canRead(item.table)) && (!item.directory || peopleAction !== null)
+        (item) =>
+          (!item.table || canRead(item.table)) &&
+          (!item.directory || peopleAction !== null) &&
+          (!item.ownerOnly || role === 'owner')
       ),
-    [canRead, peopleAction]
+    [canRead, peopleAction, role]
   );
 
   const labels = useMemo(
@@ -35,6 +38,7 @@ export function useDashboardNavigation(): DashboardNavigation {
       schedule: t('screens.agenda.schedule'),
       projects: t('screens.projects.title'),
       people: t('screens.profile.people'),
+      settings: t('screens.settings.title'),
       profile: t('screens.home.profile'),
     }),
     [t],
