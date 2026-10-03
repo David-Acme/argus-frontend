@@ -68,6 +68,7 @@ function QrScannerScreen() {
   const [invalid, setInvalid] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
   const [controlsBottom, setControlsBottom] = useState(0);
+  const [asked, setAsked] = useState(false);
 
   const cameraReadyRef = useRef(false);
   const leavingRef = useRef(false);
@@ -88,14 +89,14 @@ function QrScannerScreen() {
   const previewWidth = width - supportingPaneWidth;
   const frameSize = Math.min(previewWidth * QR_SCAN_FRAME_RATIO, QR_SCAN_FRAME_MAX);
   const granted = permission?.granted === true;
-  const canRetryPermission = permission !== null && !permission.granted && permission.canAskAgain;
-  const isBlocked = permission !== null && !permission.granted && !permission.canAskAgain;
+  const canRetryPermission = asked && permission !== null && !permission.granted && permission.canAskAgain;
+  const isBlocked = asked && permission !== null && !permission.granted && !permission.canAskAgain;
   const detected = detectedValue !== null;
   const restOffset = Math.max(0, windowHeight - contentHeight);
   const typingOffset = controlsBottom + QR_SCAN_TYPING_GAP;
 
   const feedback: QrScanFeedback =
-    permission === null
+    permission === null || (!permission.granted && !isBlocked)
       ? 'requesting'
       : !permission.granted
         ? 'blocked'
@@ -191,8 +192,9 @@ function QrScannerScreen() {
     setControlsBottom(y + height);
   }, []);
 
-  const handlePermissionRetry = useCallback(() => {
-    requestPermission();
+  const askPermission = useCallback(async () => {
+    await requestPermission();
+    setAsked(true);
   }, [requestPermission]);
 
   const handleOpenSettings = useCallback(() => {
@@ -240,15 +242,12 @@ function QrScannerScreen() {
   }, []);
 
   useEffect(() => {
-    if (permission === null || permission.granted || !permission.canAskAgain) {
-      return;
-    }
-    if (requestedRef.current) {
+    if (permission === null || permission.granted || requestedRef.current) {
       return;
     }
     requestedRef.current = true;
-    requestPermission();
-  }, [permission, requestPermission]);
+    void askPermission();
+  }, [permission, askPermission]);
 
   useEffect(() => {
     if (detectedValue === null) {
@@ -276,7 +275,7 @@ function QrScannerScreen() {
       ) : null}
 
       {canRetryPermission ? (
-        <Button onPress={handlePermissionRetry}>
+        <Button onPress={askPermission}>
           <Icon name="camera" />
           <Text>{t('common.allow-camera')}</Text>
         </Button>
