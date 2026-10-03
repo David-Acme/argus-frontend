@@ -73,6 +73,16 @@ describe('callCameraEvent', () => {
     ).toEqual({ cameraId: '1', camera: 'Entrada principal', guardCopy: 'De noche, en la entrada, desde hace 18 s.' });
   });
 
+  test('a camera fallback is spoken like a guard episode and a daily digest is not offered at all', () => {
+    expect(
+      callCameraEvent({ type: 'camera', body: 'Persona en Patio.', data: { cameraId: 2, kind: 'camera_fallback' }, cameras })
+        ?.guardCopy,
+    ).toBe('Persona en Patio.');
+    expect(
+      callCameraEvent({ type: 'camera', body: 'Resumen del día', data: { cameraId: 2, kind: 'guard_digest' }, cameras }),
+    ).toBeNull();
+  });
+
   test('other notifications and unknown cameras are not camera events', () => {
     expect(callCameraEvent({ type: 'reminder', body: '', data: { cameraName: 'Patio' }, cameras })).toBeNull();
     expect(callCameraEvent({ type: 'camera', body: '', data: { cameraId: 9 }, cameras })).toBeNull();

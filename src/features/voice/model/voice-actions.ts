@@ -67,6 +67,9 @@ export function detectedClasses(data: Record<string, unknown>): string[] {
   return classes;
 }
 
+const SPOKEN_KINDS: ReadonlySet<string> = new Set(['guard_episode', 'guard_tamper', 'camera_fallback']);
+const PASSIVE_KINDS: ReadonlySet<string> = new Set(['guard_digest']);
+
 export type CallCameraEvent = {
   cameraId: string | null;
   camera: string;
@@ -87,7 +90,8 @@ export function callCameraEvent({ type, body, data, cameras }: CameraEventInput)
   const named = typeof data.cameraName === 'string' ? data.cameraName.trim() : '';
   const camera = named || cameras.find((row) => row.id === cameraId)?.name || '';
   if (!camera) return null;
-  const fromGuard = typeof data.kind === 'string' && data.kind.startsWith('guard');
+  const kind = typeof data.kind === 'string' ? data.kind : '';
+  if (PASSIVE_KINDS.has(kind)) return null;
   const copy = body.trim();
-  return { cameraId, camera, guardCopy: fromGuard && copy ? copy : null };
+  return { cameraId, camera, guardCopy: SPOKEN_KINDS.has(kind) && copy ? copy : null };
 }

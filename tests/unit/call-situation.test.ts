@@ -22,7 +22,6 @@ describe('buildCallSituation', () => {
   test('says the guard mode, the pending agenda in order and the events of the call', () => {
     const text = buildCallSituation({
       t,
-      now: at(18, 5),
       guardMode: 'away',
       agenda: [
         entry('b', 'Cena', at(21, 0)),
@@ -35,8 +34,8 @@ describe('buildCallSituation', () => {
       offlineCameras: ['Patio'],
     });
     expect(text.split('\n')).toEqual([
-      'screens.voice.situation.header{"time":"18:05"}',
-      'screens.voice.situation.guard-mode{"mode":"screens.security.mode.away"}',
+      'screens.voice.situation.header',
+      'screens.voice.situation.guard-mode{"mode":"screens.voice.situation.modes.away"}',
       'screens.voice.situation.agenda-more{"items":"screens.voice.situation.all-day{\\"title\\":\\"Cumpleaños\\"}; 19:30 Llamada","count":"1"}',
       'screens.voice.situation.events{"items":"18:02 Entrada: una persona"}',
       'screens.voice.situation.offline{"names":"Patio"}',
@@ -46,14 +45,13 @@ describe('buildCallSituation', () => {
   test('a free day says so and a role without the guard leaves the mode out', () => {
     const text = buildCallSituation({
       t,
-      now: at(9, 0),
       guardMode: null,
       agenda: [],
       agendaItems: 4,
       events: [],
       offlineCameras: [],
     });
-    expect(text.split('\n')).toEqual(['screens.voice.situation.header{"time":"09:00"}', 'screens.voice.situation.agenda-empty']);
+    expect(text.split('\n')).toEqual(['screens.voice.situation.header', 'screens.voice.situation.agenda-empty']);
   });
 });
 

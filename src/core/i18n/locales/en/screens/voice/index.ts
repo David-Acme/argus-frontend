@@ -62,7 +62,13 @@ export const voice = {
     close: 'Close the camera',
   },
   situation: {
-    header: 'App context (local time {time}):',
+    header: 'App context:',
+    modes: {
+      home: 'at home',
+      night: 'night (everyone is asleep)',
+      away: 'away (nobody is home)',
+      armed: 'armed, maximum alert',
+    },
     'guard-mode': 'Guard mode: {mode}.',
     agenda: 'Today\'s agenda: {items}.',
     'agenda-more': 'Today\'s agenda: {items}; and {count} more.',

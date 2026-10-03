@@ -8,7 +8,6 @@ export type CallSituationEvent = {
 
 export type CallSituationInput = {
   t: TranslateFn;
-  now: number;
   guardMode: GuardMode | null;
   agenda: readonly CalendarEntry[];
   agendaItems: number;
@@ -48,10 +47,10 @@ function agendaLine({ t, agenda, agendaItems }: CallSituationInput): string {
 }
 
 export function buildCallSituation(input: CallSituationInput): string {
-  const { t, now, guardMode, events, offlineCameras } = input;
-  const lines = [t('screens.voice.situation.header', { time: clockOf(now) })];
+  const { t, guardMode, events, offlineCameras } = input;
+  const lines = [t('screens.voice.situation.header')];
   if (guardMode) {
-    lines.push(t('screens.voice.situation.guard-mode', { mode: t(`screens.security.mode.${guardMode}`) }));
+    lines.push(t('screens.voice.situation.guard-mode', { mode: t(`screens.voice.situation.modes.${guardMode}`) }));
   }
   lines.push(agendaLine(input));
   if (events.length > 0) {

@@ -70,7 +70,6 @@ export function useCallBridge(): void {
       if (!live) return;
       const text = buildCallSituation({
         t,
-        now: Date.now(),
         guardMode: guardMode(),
         agenda: viewCacheService.read<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today'),
         agendaItems: CALL_SITUATION_AGENDA_ITEMS,
@@ -79,9 +78,8 @@ export function useCallBridge(): void {
           .filter((camera) => camera.isEnabled && !camera.isOnline)
           .map((camera) => camera.name),
       });
-      const body = text.slice(text.indexOf('\n') + 1);
-      if (body === lastSituation) return;
-      lastSituation = body;
+      if (text === lastSituation) return;
+      lastSituation = text;
       voiceService.sendContext({ kind: 'situation', text });
     };
 
