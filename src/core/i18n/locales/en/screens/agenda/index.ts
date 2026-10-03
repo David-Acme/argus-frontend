@@ -37,6 +37,7 @@ export const agenda = {
   'event-day': 'Day',
   'event-all-day': 'All day',
   'event-end': 'Ends',
+  'event-end-placeholder': 'Optional',
   'event-notes': 'Notes',
   'pick-day': 'Pick a day',
   tomorrow: 'Tomorrow',

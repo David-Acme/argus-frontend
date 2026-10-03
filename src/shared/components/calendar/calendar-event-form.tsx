@@ -238,7 +238,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
                         <FormLabel>{t('screens.agenda.event-end')}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="10:00"
+                            placeholder={t('screens.agenda.event-end-placeholder')}
                             keyboardType="numbers-and-punctuation"
                             {...field}
                             onChangeText={field.onChange}

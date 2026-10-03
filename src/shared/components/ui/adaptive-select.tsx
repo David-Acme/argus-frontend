@@ -14,14 +14,13 @@ import {
 } from '@/shared/components/ui/select';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
-import { useUniwind } from 'uniwind';
 import type { MenuOption } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
 import { OptionRow } from '@/shared/components/ui/option-row';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/shared/components/ui/sheet';
 import { Text } from '@/shared/components/ui/text';
-import { colorTokens, IS_WEB } from '@/shared/constants';
+import { IS_WEB } from '@/shared/constants';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 
@@ -71,9 +70,7 @@ function SelectList({
   density,
   onChoose,
 }: SelectListProps) {
-  const { theme } = useUniwind();
   const [query, setQuery] = useState('');
-  const placeholderColor = colorTokens[theme === 'dark' ? 'dark' : 'light'].placeholder;
   const visible = useMemo(
     () => options.filter((option) => matches(option, query)),
     [options, query]
@@ -87,7 +84,6 @@ function SelectList({
           <Input
             className="h-11 flex-1 border-0 bg-transparent px-0 text-[15px] shadow-none"
             placeholder={searchPlaceholder}
-            placeholderTextColor={placeholderColor}
             accessibilityLabel={searchPlaceholder}
             value={query}
             onChangeText={setQuery}
