@@ -7,7 +7,6 @@ type StatCardProps = {
   icon: IconName;
   value: string;
   label: string;
-  /** Secondary note on the right of the label. */
   detail: string;
   onPress?: () => void;
 };

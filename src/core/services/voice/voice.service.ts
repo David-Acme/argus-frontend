@@ -35,18 +35,15 @@ import { pcmEnvelope, voiceLevel } from '@/shared/libs/voice-level';
 import { withTiming } from 'react-native-reanimated';
 import { createArgusMic } from './voice-mic';
 import type { VoicePhase } from '@/core/types';
+import { log } from '@/core/services/log';
 
 type Listener = () => void;
 
 const MIC_LOG_INTERVAL_MS = 500;
-// Send mic audio in ~100 ms frames: the Android HAL delivers in bursts, so
-// aggregating before sending turns 25+ tiny WebSocket messages per second
-// into a smooth 10/s stream (the latency cost is negligible on a LAN).
 const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * 100) / 1000;
 
 let ttsSequence = 0;
 
-/** RMS 0..1 de un chunk PCM s16le (intensidad de voz). */
 function rmsOf(samples: Int16Array): number {
   if (samples.length === 0) return 0;
   let sum = 0;
@@ -57,10 +54,7 @@ function rmsOf(samples: Int16Array): number {
   return Math.sqrt(sum / samples.length);
 }
 
-const devLog = (...args: unknown[]): void => {
-  // eslint-disable-next-line no-console
-  console.log('[voice]', ...args);
-};
+const devLog = (...args: unknown[]): void => log.debug('voice', ...args);
 
 class VoiceService {
   private mic: ArgusMic | null = null;
@@ -132,10 +126,6 @@ class VoiceService {
     this.players.clear();
     this.notify();
 
-    // Recover the socket if it went down (Fast Refresh, reconnect backoff).
-    // The native socket is created asynchronously, so waiting here is
-    // essential on the first transition from face auth to voice. Otherwise
-    // voice:start can be dropped before the WebSocket handshake completes.
     const connected = await synchronizeService.ensureConnected();
     if (!this.active) return;
     if (!connected) {
@@ -143,7 +133,6 @@ class VoiceService {
       return;
     }
     devLog('start: sending voice:start, socket connected?', synchronizeService.isSocketConnected);
-    // The backend resolves rate/language itself; `voice:start` is just a signal.
     synchronizeService.send(VOICE_START_TYPE);
 
     try {
@@ -158,8 +147,6 @@ class VoiceService {
       this.mic = mic;
       mic.onData = (pcm) => {
         if (pcm == null) return;
-        // If the socket died, frames go nowhere silently: surface it as a
-        // visible error instead of a permanently deaf session.
         const now = Date.now();
         if (now - this.lastSocketCheckAt > 1000) {
           this.lastSocketCheckAt = now;
@@ -187,8 +174,6 @@ class VoiceService {
           this.lastMicLogAt = now;
           this.lastPeakRms = 0;
         }
-        // Aggregate bursts into ~100 ms frames so the socket is not flooded
-        // with tiny messages (the HAL delivers in bursts on Android).
         this.micPending.push(samples);
         this.micPendingSamples += samples.length;
         if (this.micPendingSamples >= MIC_FRAME_SAMPLES) {
@@ -227,7 +212,6 @@ class VoiceService {
 
   skip(): void {
     devLog('skip: interrupting TTS playback');
-    // Cut playback immediately and drop any TTS still buffered.
     for (const player of this.players) player.pause();
     this.players.clear();
     this.ttsBuffer = [];
@@ -258,8 +242,6 @@ class VoiceService {
       synchronizeService.onType(VOICE_EVENT_TYPE, (payload) => {
         const p = payload as IVoiceReactionPayload;
         devLog('event voice:event ->', JSON.stringify(p));
-        // The backend sends meaning; the avatar owns how it looks. An unknown
-        // reaction name degrades to the phase pose instead of throwing.
         useAvatarStore.getState().react(p.reaction, p.intensity ?? 0);
       }),
       synchronizeService.onType(VOICE_ASSISTANT_TYPE, (payload) => {
@@ -288,17 +270,12 @@ class VoiceService {
         const samples = pcmChunk(data);
         this.ttsBuffer.push(samples);
         this.ttsSize += samples.length;
-        // The first TTS chunk means the backend started synthesizing: Argus
-        // is about to speak, so stop streaming the mic (its own playback
-        // would be captured as echo, and the upload is pure waste).
         this.pauseMicForTts();
       }),
     );
   }
 
   private flushTts(): void {
-    // Sentences arrive as separate `voice:assistant` events; chain the
-    // playback so they never overlap.
     this.ttsChain = this.ttsChain
       .then(() => this.doFlushTts())
       .catch((reason) => {
@@ -332,9 +309,6 @@ class VoiceService {
     const stopEnvelope = this.driveVoiceEnvelope(merged);
     const player = createAudioPlayer((file as unknown as { uri: string }).uri);
     this.players.add(player);
-    // Watchdog: if `didJustFinish` never arrives (interrupted playback,
-    // killed player), the mic must still come back — otherwise the session
-    // goes permanently deaf after the first reply.
     const watchdog = setTimeout(() => {
       devLog('tts flush: watchdog — resuming mic');
       stopEnvelope();
@@ -360,12 +334,6 @@ class VoiceService {
     if (this.ttsQueueDepth === 0) this.resumeMicAfterTts();
   }
 
-  /**
-   * Walks the RMS envelope of the utterance in step with playback so the avatar
-   * breathes with the real prosody. The PCM is already in memory, so this costs
-   * one pass over it plus a ~30 Hz timer — no extra network, no model, and
-   * nothing per frame beyond a shared-value read in the render worklet.
-   */
   private driveVoiceEnvelope(samples: Int16Array): () => void {
     const windowSamples = Math.max(
       1,

@@ -7,7 +7,6 @@ export interface IResponseLoginDto {
   name: string;
   role: UserRole;
   personId: number | null;
-  /** True when a register call matched an already-enrolled face. */
   alreadyRegistered?: boolean;
 }
 

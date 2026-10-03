@@ -16,11 +16,6 @@ type SummaryCardProps = {
   items: readonly SummaryItem[];
 };
 
-/**
- * The numbers behind the screen, for windows wide enough to keep them in view.
- * A compact card instead of tiles: the side column is narrow, and four short
- * rows read faster there than four boxes.
- */
 export function SummaryCard({ title, items }: SummaryCardProps) {
   return (
     <Animated.View

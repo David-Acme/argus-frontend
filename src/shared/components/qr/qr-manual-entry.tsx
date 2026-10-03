@@ -12,7 +12,6 @@ type QrManualEntryProps = {
   placeholder: TranslationKey;
   invalid: boolean;
   onSubmit: (value: string) => void;
-  /** Renders the input immediately instead of the collapse toggle (web/desktop). */
   startExpanded?: boolean;
 };
 

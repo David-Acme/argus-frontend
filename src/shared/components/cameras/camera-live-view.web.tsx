@@ -16,7 +16,6 @@ type CameraLiveViewProps = {
   quality?: CameraStreamQuality;
 };
 
-/** Desktop/web live view: WebCodecs decoder painted on a canvas. */
 export function CameraLiveView({
   cameraId,
   quality = 'sub',

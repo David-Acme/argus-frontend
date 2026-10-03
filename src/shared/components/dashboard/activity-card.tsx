@@ -9,11 +9,8 @@ import { MosaicChart } from './mosaic-chart';
 
 type ActivityCardProps = {
   title: string;
-  /** Headline delta rendered over the mosaic, e.g. "+3.45%". */
   delta: string;
-  /** Where the delta points; decides the icon and its tone. */
   direction?: 'up' | 'down' | 'flat';
-  /** Real density per cell (0..3); without it the mosaic draws its own shape. */
   levels?: readonly (readonly number[])[];
   action: string;
   onAction?: () => void;
@@ -52,8 +49,6 @@ export function ActivityCard({
         </View>
         <View className="relative">
           <MosaicChart levels={levels} />
-          {/* The delta sits ON the block: the number is the headline, the
-              mosaic is the evidence behind it. */}
           <View className="absolute -top-1 left-0 right-0 items-center">
             <View className="bg-card flex-row items-center gap-1 rounded-full px-2.5 py-1.5 shadow-sm shadow-black/10">
               <Icon name={TREND_ICON[direction]} className={cn('size-3', TREND_TONE[direction])} />

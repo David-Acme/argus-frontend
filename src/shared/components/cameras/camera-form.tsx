@@ -32,7 +32,6 @@ import { IconPickerButton } from './icon-picker-button';
 type CameraFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Present when editing; absent when connecting a new camera. */
   camera?: ICameraCacheRow | null;
   trigger?: ReactNode;
 };
@@ -68,13 +67,10 @@ const schema = z
     manufacturer: z.string().trim().max(80, 'common.validation.too-long'),
     model: z.string().trim().max(80, 'common.validation.too-long'),
     recordMode: z.enum(['events', 'continuous']),
-    /** Only for edit: an empty secret means "keep the stored one". */
     isEdit: z.boolean(),
   })
   .superRefine((values, ctx) => {
     if (!CAMERA_DRIVER_SPECS[values.driver].requiresCloud) return;
-    // Talking and moving a Tapo go through the cloud account, not the local
-    // stream: without them the camera connects but half of Argus is dead.
     if (values.cloudUsername.length === 0) {
       ctx.addIssue({
         code: 'custom',
@@ -183,7 +179,6 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
   const driver = useWatch({ control: form.control, name: 'driver' });
   const spec = CAMERA_DRIVER_SPECS[driver];
 
-  /** Switching integration re-seeds the values that belong to the old one. */
   const changeDriver = (next: CameraDriverKind) => {
     const previous = CAMERA_DRIVER_SPECS[form.getValues('driver')];
     const nextSpec = CAMERA_DRIVER_SPECS[next];
@@ -221,7 +216,6 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
           : '',
         icon: values.icon,
       };
-      // An empty secret on edit means "leave the stored one alone".
       if (values.password) body.password = values.password;
       if (values.cloudPassword) body.cloudPassword = values.cloudPassword;
       return camera ? cameraService.update(camera.id, body) : cameraService.create(body);
@@ -257,7 +251,6 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
       <FormScrollView formScroll={formScroll} maxHeight={bodyHeight}>
         <Form {...form}>
           <View className="gap-3.5 pb-1">
-            {/* The integration comes first: it decides what the rest asks for. */}
             <FormField
               control={form.control}
               name="driver"

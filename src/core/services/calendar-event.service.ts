@@ -9,11 +9,6 @@ import type {
 import { DatabaseService } from './database.service';
 import { httpService } from '@/core/services/http';
 
-/**
- * Reads come from the local projection that `/sync` fills; writes go over REST
- * and come back through the socket, so nothing here mutates the database by
- * hand.
- */
 class CalendarEventService extends DatabaseService<'calendar_event'> {
   constructor() {
     super('calendar_event');

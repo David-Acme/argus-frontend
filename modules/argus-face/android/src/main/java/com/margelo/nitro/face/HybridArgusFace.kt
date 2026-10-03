@@ -32,7 +32,6 @@ private fun toVariant(landmark: FaceLandmark?): Variant_NullType_FaceLandmark? =
 private fun averageLuminance(bitmap: Bitmap): Double {
   val width = bitmap.width
   val height = bitmap.height
-  // Sample every 4th pixel; ~200k reads instead of full scan.
   val pixels = IntArray((width * height) / 16)
   val stride = width * 4
   var i = 0
@@ -59,9 +58,6 @@ private fun averageLuminance(bitmap: Bitmap): Double {
 @DoNotStrip
 class HybridArgusFace : HybridArgusFaceSpec() {
 
-  // FAST mode + landmarks: guidance needs an updated box every frame, not
-  // millimetre-accurate geometry. Eye-open probabilities come with
-  // CLASSIFICATION_MODE_ALL.
   private val detector = MKitFaceDetection.getClient(
     FaceDetectorOptions.Builder()
       .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)

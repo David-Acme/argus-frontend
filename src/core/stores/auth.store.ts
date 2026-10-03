@@ -2,13 +2,6 @@ import { create } from 'zustand';
 import type { AuthStatus } from '@/core/types';
 import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
-/**
- * Runtime authentication context.
- *
- * This store intentionally contains no network, persistence or refresh logic.
- * Those concerns belong to sessionService so every platform follows the same
- * lifecycle and the UI can keep consuming a small synchronous context.
- */
 export type AuthStoreState = {
   status: AuthStatus;
   user: IAuthUser | null;

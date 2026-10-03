@@ -33,7 +33,6 @@ import { toast } from '@/shared/libs/toast';
 type CalendarEventFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Day the form starts on, so creating from a picked day lands there. */
   startsAt: Date;
   event?: ICalendarEventFormRecord | null;
 };
@@ -50,7 +49,6 @@ const schema = z
     location: z.string().trim().max(160, 'common.validation.too-long'),
     time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-number'),
     endTime: z.string().trim(),
-    /** Epoch ms of the chosen day, so the picker is just another field. */
     day: z.number(),
     isAllDay: z.boolean(),
     description: z.string().trim().max(500, 'common.validation.too-long'),
@@ -134,8 +132,6 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
     },
   });
 
-  // onSuccess fires before `submitting` resets, so it closes through the raw
-  // onOpenChange; this guard only blocks user dismissal mid-save.
   const handleOpenChange = useCallback(
     (next: boolean) => {
       if (!next && submitting) return;

@@ -5,19 +5,11 @@ import { cn } from '@/shared/libs/utils';
 
 type SelectFieldProps = React.ComponentProps<typeof Pressable> &
   React.RefAttributes<typeof Pressable> & {
-    /** Text of the chosen option; the placeholder shows when nothing is chosen. */
     label?: string;
     placeholder?: string;
     invalid?: boolean;
   };
 
-/**
- * The closed state of a select: reads as a field, not as a button, so a form
- * row of inputs and selects lines up. Opening it is the overlay's business —
- * it is handed to `AdaptiveSelect` as the trigger, which clones it with its own
- * press handler and anchor ref, so every prop it is given must reach the
- * `Pressable`.
- */
 export function SelectField({
   label,
   placeholder,

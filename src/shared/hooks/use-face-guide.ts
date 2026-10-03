@@ -23,11 +23,8 @@ import type { FaceGuideSnapshot } from '@/core/types';
 
 type UseFaceGuideOptions = {
   cameraRef: RefObject<CameraView | null>;
-  /** Pauses the sampling loop (e.g. while submitting or confirming). */
   active: boolean;
-  /** Fired once when the face stays perfect for FACE_READY_STABLE_MS. */
   onReady: () => void;
-  /** Fired when a perfect face leaves the ready zone (e.g. cancel countdowns). */
   onDrift?: () => void;
 };
 
@@ -120,15 +117,7 @@ function analyze(frame: { luminance: number; faces: FaceDetection[] }): FaceGuid
   return 'ready';
 }
 
-/**
- * Live face-capture guidance: samples low-quality frames from the front
- * camera, runs the native detector and derives the guiding state. Fires
- * `onReady` when the face stays perfect long enough (auto-capture).
- */
 export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGuideOptions): FaceGuideResult {
-  // The detector is created lazily once; native modules may throw when the
-  // dev-client predates argus-face, in which case the screen falls back to
-  // manual capture.
   const face = useMemo(() => {
     try {
       return createArgusFace();

@@ -8,7 +8,6 @@ type TaskStatusGroupProps = {
   children: ReactNode;
 };
 
-/** Group header + rows. Collapsing is not offered: scanning beats folding. */
 export function TaskStatusGroup({ label, count, children }: TaskStatusGroupProps) {
   if (count === 0) return null;
 

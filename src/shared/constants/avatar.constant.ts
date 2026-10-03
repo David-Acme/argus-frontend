@@ -7,7 +7,6 @@ import type {
   AvatarSurfaceOverride,
 } from '@/core/types';
 
-/** Palette for the small, dimensional companion. The body stays white in both themes. */
 export type AvatarPalette = {
   body: string;
   bodyShadow: string;
@@ -97,11 +96,6 @@ type CalibratedDefinition = {
   eyeColor?: string;
 };
 
-/**
- * Calibrated values taken from the reference lab's bundled studio document.
- * The renderer remains Argus's own SVG implementation; this table only ports
- * the portable expression model so every eye shape can be reproduced.
- */
 const calibratedDefinitions: readonly CalibratedDefinition[] = [
   {
     id: '00',
@@ -343,7 +337,6 @@ const neutralExpression: AvatarExpression = {
   bodyMotion: 'slowDrift',
 };
 
-/** Poses used by the live assistant, selected to match the reference state pools. */
 export const AVATAR_STATE_PARAMS: Record<AvatarState, AvatarExpression> = {
   idle: neutralExpression,
   listening: withMotion('10', 'microSaccades', 'slowDrift'),
@@ -364,16 +357,10 @@ const expressionBySemanticKey = new Map(
     .map(expression => [expression.semanticKey as string, expression])
 );
 
-/**
- * Resolves a semantic key from the calibrated catalog. Returns `undefined` for
- * an unknown key so a backend that learns a new reaction before the app does
- * degrades to the phase pose instead of crashing.
- */
 export const getAvatarExpressionBySemanticKey = (
   key: string | null
 ): AvatarExpression | undefined => (key == null ? undefined : expressionBySemanticKey.get(key));
 
-/** The complete 00–26 preview catalog from the reference studio. */
 export const AVATAR_PREVIEW_EXPRESSIONS: readonly AvatarPreviewPreset[] = referenceExpressions.map(
   expression => ({
     id: expression.id,
@@ -385,9 +372,7 @@ export const AVATAR_PREVIEW_EXPRESSIONS: readonly AvatarPreviewPreset[] = refere
 
 export const AVATAR_PREVIEW_INTERVAL_MS = 2300;
 
-/** Smooth reference transition: 500 ms pose interpolation, slower while speaking. */
 export const AVATAR_TRANSITION_MS = 500;
 export const AVATAR_TRANSITION_SPEAKING_MS = 380;
 
-/** Stable viewBox for every renderer; width/height remain controlled by size. */
 export const AVATAR_VIEWBOX = { width: 200, height: 200 } as const;

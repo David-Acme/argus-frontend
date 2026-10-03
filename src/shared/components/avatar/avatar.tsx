@@ -41,9 +41,7 @@ const AVATAR_SURFACE_LEAD_MS = 120;
 
 type AvatarProps = {
   size?: number;
-  /** Overrides the store state (e.g. onboarding intro). */
   state?: AvatarState;
-  /** Cycles the complete calibrated expression catalog for visual QA. */
   preview?: boolean;
   previewIntervalMs?: number;
   accessibilityLabel?: string;
@@ -54,11 +52,6 @@ export type { AvatarProps };
 const motionCode = (motion: AvatarExpression['eyeMotion'] | AvatarExpression['bodyMotion']) =>
   motion === 'slowDrift' || motion === 'microSaccades' ? 1 : motion === 'shake' ? 2 : 0;
 
-/**
- * Native renderer for the reference-style avatar. The face remains a simple
- * centered blob; calibrated values only control the two rounded eye shapes,
- * pose and motion. This keeps the same model on Android, iOS and web.
- */
 export default function Avatar({
   size = 220,
   state,
@@ -132,8 +125,6 @@ export default function Avatar({
       duration: reduceMotion ? 0 : duration,
       easing: Easing.inOut(Easing.cubic),
     };
-    // Colored reactions lead the calibrated eye pose slightly. This makes the
-    // sequence read as: color appears → eyes settle → ambient motion starts.
     const surfaceTiming = {
       duration: reduceMotion ? 0 : Math.max(duration - AVATAR_SURFACE_LEAD_MS, 0),
       easing: Easing.inOut(Easing.cubic),
@@ -226,16 +217,11 @@ export default function Avatar({
 
     const elapsedMs = frame.timestamp;
     const time = elapsedMs / 1000;
-    // The assistant's own voice drives the per-frame liveliness. Computed from
-    // the PCM the client already has, so this costs no network and no model:
-    // the reaction picks the pose, the envelope makes it breathe.
     const voice = reduceMotion ? 0 : voiceLevel.value;
     const strength =
       reduceMotion
         ? 0
         : motionStrengthSV.value * (1 - VOICE_ENVELOPE_MOTION_GAIN + VOICE_ENVELOPE_MOTION_GAIN * (1 + voice) / 2);
-    // Keep the slow body bob on the same ramp as shake/drift. Otherwise it
-    // can jump in one frame when a new motion code is enabled.
     const bobStrength = strength;
     const bodyMotion = bodyMotionSV.value;
     const eyeMotion = eyeMotionSV.value;
@@ -290,8 +276,6 @@ export default function Avatar({
       eyeOffsetYSV.value = 0;
     }
 
-    // While speaking, the bob follows the real prosody instead of a fixed
-    // sine, and loud syllables inject a little extra motion.
     const peak = voice * VOICE_ENVELOPE_PEAK_GAIN;
     bobOffsetSV.value =
       bobStrength *

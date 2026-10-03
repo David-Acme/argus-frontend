@@ -5,10 +5,6 @@ import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
-/**
- * Single host for `confirm()`, mounted by the root layout. It is a sheet on a
- * phone and a dialog on a laptop, like every other overlay.
- */
 export function ConfirmDialog() {
   const { t } = useTranslation();
   const request = useConfirmStore((state) => state.request);

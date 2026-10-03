@@ -37,7 +37,6 @@ class InviteService {
     return httpService.delete<null>(`${INVITATION_PATH}/${id}`);
   }
 
-  /** Resolves the QR over temporary TLS, validates its pinned CA, then adopts strict TLS. */
   async accept(qr: InvitationQrPayload): Promise<IServiceResponse<IInviteAcceptResult>> {
     let raw;
     try {

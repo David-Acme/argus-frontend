@@ -26,7 +26,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-/** Estimated bottom-sheet height before the first onLayout measurement. */
 const SHEET_ESTIMATE = 260;
 
 function WebOnlyNotice({ mode }: { mode: string }) {
@@ -68,7 +67,6 @@ function WebOnlyNotice({ mode }: { mode: string }) {
 type Phase = 'guide' | 'countdown' | 'submitting';
 type FaceError = IApiError & { status?: number };
 
-/** Keep diagnostic details in development without triggering the app-wide no-console rule. */
 function reportFaceError(message: string, details?: unknown): void {
   if (!__DEV__) return;
   globalThis.console?.error(message, details);
@@ -168,8 +166,6 @@ export default function FaceScreen() {
     phaseRef.current = phase;
   }, [phase]);
   useEffect(() => {
-    // CameraView is unmounted while the image is uploaded. Do not let the
-    // readiness flag from the previous native view leak into a retry.
     if (!cameraActive) cameraReadyRef.current = false;
   }, [cameraActive]);
   useEffect(() => {
@@ -273,8 +269,6 @@ export default function FaceScreen() {
       for (let retry = 0; retry < 2; retry += 1) {
         try {
           shot = await cameraRef.current?.takePictureAsync({
-            // The backend rejects files over 10 MB.  0.85 keeps enough detail
-            // for the embedding while avoiding full-resolution JPEG spikes.
             quality: 0.85,
             skipProcessing: false,
             shutterSound: false,
@@ -315,21 +309,17 @@ export default function FaceScreen() {
     setSheetHeight(e.nativeEvent.layout.height);
   }, []);
 
-  // Cleanup the "already registered" redirect on unmount (the previous version
-  // returned the cleanup from an async callback, where it was discarded).
   useEffect(() => {
     return () => {
       if (redirectTimer.current) clearTimeout(redirectTimer.current);
     };
   }, []);
 
-  // Auto-request the camera permission once the system answers.
   useEffect(() => {
     if (permission === null || permission.granted || !permission.canAskAgain) return;
     void requestPermission();
   }, [permission, requestPermission]);
 
-  // Capture as soon as the detector marks the face ready.
   useEffect(() => {
     if (phase !== 'countdown') return;
     const attempt = captureAttemptRef.current;
@@ -340,9 +330,6 @@ export default function FaceScreen() {
     return () => clearTimeout(timer);
   }, [phase, captureNow]);
 
-  // The guide area is the camera region between the top inset and the bottom
-  // sheet (measured, never guessed) — the oval lives inside it, so the sheet
-  // can never cover the face frame on any screen size.
   const sheetTop = height - (sheetHeight > 0 ? sheetHeight : SHEET_ESTIMATE);
   const cameraArea = { top: insets.top, height: Math.max(sheetTop - insets.top, 120) };
 
@@ -369,9 +356,6 @@ export default function FaceScreen() {
           mute
           animateShutter={false}
           onCameraReady={handleCameraReady}
-          // Keep the native analyzer mounted while the still image is taken.
-          // Toggling this prop at the same time as takePictureAsync makes
-          // CameraX recreate its use cases and races ImageCapture.
           faceDetectionEnabled={IS_ANDROID ? cameraActive && guide.available : undefined}
           onFacesDetected={IS_ANDROID ? guide.onFacesDetected : undefined}
           active
@@ -408,11 +392,6 @@ export default function FaceScreen() {
         />
       ) : null}
 
-      {/*
-        The sheet is a fixed skeleton across phases (title, hint, message slot,
-        action slot) so its height — and therefore the camera area the oval is
-        fitted to — does not jump when the phase changes.
-      */}
       <View
         className="bg-card/95 w-full max-w-md self-center rounded-t-2xl px-5 py-6"
         style={{ paddingBottom: insets.bottom + 24 }}
@@ -430,7 +409,6 @@ export default function FaceScreen() {
             </Text>
           ) : null}
 
-          {/* Reserved message slot: keeps the sheet height stable across phases. */}
           <View className="min-h-6 justify-center">
             {error ? (
               <View className="flex-row items-center gap-2.5">
@@ -469,7 +447,6 @@ export default function FaceScreen() {
             ) : null}
           </View>
 
-          {/* Fixed-height action slot: automatic capture | sending. */}
           <View className="h-11 justify-center">
             {phase === 'submitting' ? (
               <View className="flex-row items-center justify-center gap-3">

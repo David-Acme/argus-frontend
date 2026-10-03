@@ -26,7 +26,6 @@ const ACCENT: Record<ToastItem['intent'], string> = {
   info: 'text-foreground-secondary',
 };
 
-/** Pressing the card dismisses it. */
 export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
   return (
     <Animated.View entering={itemIn} exiting={overlayOut}>

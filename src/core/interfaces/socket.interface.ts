@@ -1,4 +1,3 @@
-/** Minimal socket contract shared by native Nitro and the Tauri transport. */
 export interface IArgusSocket {
   sendText(message: string): void;
   sendBinary(data: ArrayBuffer): void;

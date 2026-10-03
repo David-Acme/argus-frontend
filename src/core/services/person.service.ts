@@ -3,7 +3,6 @@ import type { Observable } from 'rxjs';
 import type { PersonModel } from '@/core/database';
 import { DatabaseService } from './database.service';
 
-/** People are produced by face recognition on the server: read-only here. */
 class PersonService extends DatabaseService<'person'> {
   constructor() {
     super('person');

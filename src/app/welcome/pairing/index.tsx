@@ -81,8 +81,6 @@ export default function PairingScreen() {
     void flow.run(value);
   }, [status, value, flow]);
 
-  // Auto-advance: mobile continues to the face step (first pairing = no owner
-  // yet), desktop goes to the device-login screen.
   useEffect(() => {
     if (flow.phase !== 'success') return;
     const timer = setTimeout(() => router.replace('/'), SUCCESS_PAUSE_MS);

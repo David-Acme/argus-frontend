@@ -8,10 +8,6 @@ export type DashboardDestination =
   | 'unreachable'
   | 'home';
 
-/**
- * A tab return already has an authenticated session, so it must render the
- * dashboard in its first frame and keep the root navigation claimed.
- */
 export function initialDashboardDestination(authStatus: AuthStatus): DashboardDestination {
   return authStatus === 'signed-in' ? 'home' : 'loading';
 }

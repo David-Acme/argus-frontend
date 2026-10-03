@@ -5,23 +5,15 @@ import { cn } from '@/shared/libs/utils';
 
 type CameraTileProps = {
   name: string;
-  /** Manufacturer + model, already joined by the caller. */
   model: string;
   ip: string;
   isOnline: boolean;
   isEnabled: boolean;
-  /** Resolution of the primary stream, when there is one. */
   resolution?: string;
-  /** Human label for the record mode. */
   recordMode?: string;
   onPress?: () => void;
 };
 
-/**
- * Camera as a status tile, deliberately without a preview: a wall of live
- * fMP4 players costs bandwidth and battery to answer a question the user asks
- * far more often — is it up, and where.
- */
 export function CameraTile({
   name,
   model,

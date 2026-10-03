@@ -4,7 +4,6 @@ import type { EventModel } from '@/core/database';
 import type { EventSeverity } from '@/core/types';
 import { DatabaseService } from './database.service';
 
-/** Events are produced by the server only: read-only on the client. */
 class EventService extends DatabaseService<'event'> {
   constructor() {
     super('event');

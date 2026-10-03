@@ -11,17 +11,11 @@ type ZoneEditorProps = {
   onChange: (points: ZonePoint[]) => void;
   color: string;
   hint: string;
-  /** Frame ratio; camera output is 16:9 unless told otherwise. */
   aspectRatio?: number;
 };
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
-/**
- * Draws the polygon a zone covers. Points are normalized [0..1] so the same
- * zone maps onto any resolution: the frame here, a 4K stream on the server.
- * Tap adds a point, dragging a handle moves it.
- */
 export function ZoneEditor({
   points,
   onChange,

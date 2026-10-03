@@ -9,14 +9,12 @@ import { AgendaItem } from './agenda-item';
 
 type ScheduleTimelineProps = {
   entries: readonly ScheduleEntry[];
-  /** Hour range to render; defaults to the working span. */
   hours?: readonly number[];
   onSelect?: (entry: ScheduleEntry) => void;
   onLongPress?: (entry: ScheduleEntry) => void;
   renderContextMenu?: (entry: ScheduleEntry, trigger: ReactElement) => ReactNode;
 };
 
-/** Hour gutter on the left, one card per occupied hour on the right. */
 export function ScheduleTimeline({
   entries,
   hours = TIMELINE_HOURS,
@@ -64,7 +62,6 @@ export function ScheduleTimeline({
                   }
                 />
               ) : (
-                // A hairline keeps an empty hour reading as a schedule row.
                 <View className="h-6 justify-center">
                   <View className="bg-divider/70 h-hairline w-full" />
                 </View>

@@ -16,18 +16,12 @@ const EASE_OUT = Easing.out(Easing.cubic);
 type BlurRevealProps = {
   delay?: number;
   duration?: number;
-  /** Blur-to-sharp effect (texts). Defaults to true. */
   blur?: boolean;
-  /** Gentle scale-up on entry (buttons). */
   scale?: boolean;
   children: ReactNode;
   className?: string;
 };
 
-/**
- * Entry reveal driven by shared values, so it behaves identically on native
- * and web. Reduced motion: plain fade only.
- */
 export function BlurReveal({
   delay = 0,
   duration = 750,

@@ -89,7 +89,6 @@ class ViewCacheCoordinatorService {
     this.userId = null;
   }
 
-  /** Called by the schedule screen when its anchor enters another month. */
   watchCalendarMonth(anchor: Date): void {
     if (!this.userId) return;
     const scope = calendarMonthScope(anchor);
@@ -113,7 +112,6 @@ class ViewCacheCoordinatorService {
     });
   }
 
-  /** Keeps the previous MMKV result visible until this database filter resolves. */
   async filterPeople(filter: IPeopleDirectoryFilter): Promise<void> {
     if (!this.userId) return;
     const request = this.peopleFilterRequest + 1;

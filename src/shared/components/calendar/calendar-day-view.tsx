@@ -13,7 +13,6 @@ type CalendarDayViewProps = {
   renderContextMenu?: (entry: CalendarEntry, trigger: ReactElement) => ReactNode;
 };
 
-/** Reuses the schedule timeline: one day is exactly what it was built for. */
 export function CalendarDayView({
   entries,
   onSelect,

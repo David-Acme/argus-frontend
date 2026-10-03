@@ -10,7 +10,6 @@ const isInviteRole = (value: unknown): value is InviteRole =>
 const sameFingerprint = (left: string, right: string): boolean =>
   left.toUpperCase() === right.toUpperCase();
 
-/** Rejects any trust response that does not match the server identity in the QR. */
 export const validateInvitationResolution = (
   qr: InvitationQrPayload,
   value: unknown,

@@ -4,9 +4,7 @@ import { MEMBER_TINTS } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 
 type MemberStackProps = {
-  /** Display names; only the initial is rendered. */
   members: readonly string[];
-  /** Beyond this, the rest collapse into a "+n" chip. */
   max?: number;
   size?: 'sm' | 'md';
 };

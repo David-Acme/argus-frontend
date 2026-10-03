@@ -1,4 +1,3 @@
-// https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 
@@ -6,8 +5,7 @@ module.exports = defineConfig([
   expoConfig,
   {
     rules: {
-      'no-console': 'warn',
-      // Known false positive with Reanimated shared-value writes.
+      'no-console': 'error',
       'react-hooks/immutability': 'off',
     },
   },
@@ -34,6 +32,12 @@ module.exports = defineConfig([
           message: 'Use the centralized date formatter instead.',
         },
       ],
+    },
+  },
+  {
+    files: ['src/core/services/log.ts', 'scripts/**/*.{ts,mjs}'],
+    rules: {
+      'no-console': 'off',
     },
   },
   {

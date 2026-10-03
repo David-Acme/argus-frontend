@@ -9,10 +9,6 @@ export type QrScanFeedback = 'requesting' | 'searching' | 'detected' | 'invalid'
 
 export type QrScanTone = 'muted' | 'accent' | 'error';
 
-/**
- * Copy fields hold translation keys, never rendered text: the store stays
- * language-agnostic and the consuming screen translates at render time.
- */
 export type QrScanConfig = {
   purpose: QrScanPurpose;
   title: TranslationKey;

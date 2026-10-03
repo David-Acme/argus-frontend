@@ -13,7 +13,6 @@ type FaceFrameProps = {
   reduceMotion: boolean;
 };
 
-/** Face framing guide (ellipse) with a soft pulse. */
 function FaceFrame({ width, height, reduceMotion }: FaceFrameProps) {
   const pulse = useSharedValue(0);
 

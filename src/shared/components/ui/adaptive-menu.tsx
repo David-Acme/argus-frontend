@@ -13,24 +13,16 @@ type AdaptiveMenuProps<T extends string = string> = {
   options: readonly MenuOption<T>[];
   onSelect: (value: T) => void;
   trigger: ReactNode;
-  /** Title of the sheet variant; a dropdown needs no header. */
   title: string;
   closeLabel: string;
   selected?: T;
   contentClassName?: string;
-  /** Lets a long-press owner open the phone sheet without a visible trigger. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
 
-/** Beyond this the sheet scrolls instead of growing past the screen. */
 const SHEET_MAX_HEIGHT = 420;
 
-/**
- * Pick-one menu. A dropdown anchored to the trigger where there is a pointer,
- * a bottom sheet on phones — a dropdown on a phone means tiny targets against
- * the screen edge. Same options, same handler, one call site.
- */
 export function AdaptiveMenu<T extends string = string>({
   options,
   onSelect,

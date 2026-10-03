@@ -4,18 +4,13 @@ import type { AvatarState, ReactionKind } from '@/core/types';
 
 type AvatarStoreState = {
   state: AvatarState;
-  /** Semantic reaction from the backend; overrides the phase pose while held. */
   reaction: ReactionKind;
-  /** 0..1, how strongly to play the reaction. */
   intensity: number;
   setState: (state: AvatarState) => void;
   react: (reaction: ReactionKind, intensity: number) => void;
   clearReaction: () => void;
 };
 
-// A reaction is punctuation, not a mood: it expires on its own so the face
-// never gets stuck on a surprise from four turns ago. Module-scoped because the
-// timer belongs to the store, not to any component that happens to be mounted.
 let holdTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useAvatarStore = create<AvatarStoreState>((set) => ({

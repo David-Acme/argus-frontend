@@ -7,7 +7,6 @@ type TaskPriorityMarkProps = {
   label: string;
 };
 
-/** Bars, not colour: priority reads at a glance without shouting. */
 const FILLED: Record<ProjectTaskPriority, number> = {
   none: 0,
   low: 1,

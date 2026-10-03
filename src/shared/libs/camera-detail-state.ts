@@ -1,6 +1,5 @@
 export type CameraDetailState = 'pending' | 'missing' | 'ready';
 
-/** Distinguishes an unread local query from an actual missing camera. */
 export function cameraDetailState({
   cameraFound,
   camerasReady,

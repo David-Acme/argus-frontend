@@ -41,8 +41,6 @@ const schema = z.object({
   name: z.string().trim().min(1, 'common.validation.required').max(120, 'common.validation.too-long'),
   zoneType: z.enum(['monitor', 'alert', 'exclude']),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'common.validation.invalid-color'),
-  // The polygon is a field like any other, so zod validates it and the message
-  // lands under the editor.
   points: z
     .array(z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }))
     .min(ZONE_MIN_POINTS, 'common.validation.min-points')

@@ -3,9 +3,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 
 type CalendarHeaderProps = {
-  /** Large line, e.g. "August". */
   title: string;
-  /** Quiet line under it, e.g. "2026" or the weekday. */
   subtitle: string;
   previousLabel: string;
   nextLabel: string;
@@ -15,11 +13,6 @@ type CalendarHeaderProps = {
   onToday: () => void;
 };
 
-/**
- * Title large and top-left, controls small and right: the month is the thing
- * you read, the arrows are the thing you use. Centring the title would make
- * them compete.
- */
 export function CalendarHeader({
   title,
   subtitle,

@@ -36,7 +36,6 @@ const getSnapshot = (): VoiceSessionState => {
   return cached;
 };
 
-/** Reactive voice session state (avatar + transcript + errors). */
 export function useVoiceSession() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
@@ -56,8 +55,6 @@ export function useVoiceSession() {
     voiceService.answer(text);
   }, []);
 
-  // Stable object identity: `state` is cached by getSnapshot and the callbacks
-  // are useCallback-stable, so consumers can safely use this in effect deps.
   return useMemo(
     () => ({ ...state, start, stop, skip, answer }),
     [state, start, stop, skip, answer],

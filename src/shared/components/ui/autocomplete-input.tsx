@@ -5,7 +5,6 @@ import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 
 type AutocompleteInputProps = React.ComponentPropsWithoutRef<typeof Input> & {
-  /** Offered while typing; filtered by what is already written. */
   suggestions: readonly string[];
   onPick: (value: string) => void;
   variant?: 'default' | 'error';
@@ -13,7 +12,6 @@ type AutocompleteInputProps = React.ComponentPropsWithoutRef<typeof Input> & {
 
 const VISIBLE = 4;
 
-/** Input that proposes known values instead of asking the user to remember them. */
 export function AutocompleteInput({
   suggestions,
   onPick,

@@ -71,10 +71,6 @@ async function pairWithCode(code: string, address?: string): Promise<void> {
   });
 }
 
-/**
- * Orchestrates the pairing screen: the scanned value can be the QR JSON
- * from the banner or a plain code (manual fallback).
- */
 export function usePairingFlow(): PairingFlowResult {
   const [phase, setPhase] = useState<PairingFlowPhase>('idle');
   const [error, setError] = useState<NetError | null>(null);

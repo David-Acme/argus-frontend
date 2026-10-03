@@ -11,12 +11,6 @@ const Popover = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
 const PopoverClose = PopoverPrimitive.Close;
 
-/**
- * Anchored floating panel. The primitive measures the trigger and positions the
- * content against it, which is the whole point of using it instead of an
- * absolutely placed view: a hand-picked `top`/`right` is only ever correct for
- * one screen size and one scroll offset.
- */
 function PopoverContent({
   className,
   overlayClassName,
@@ -33,8 +27,6 @@ function PopoverContent({
   return (
     <PopoverPrimitive.Portal hostName={portalHost}>
       <PopoverPrimitive.Overlay
-        // On native the overlay is the outside-press target, so it has to cover
-        // the window; on web the portal is already document-level.
         style={IS_NATIVE ? StyleSheet.absoluteFill : undefined}
         className={cn(Platform.select({ web: 'fixed inset-0 z-50' }), overlayClassName)}>
         <TextClassContext.Provider value="text-foreground">
@@ -42,8 +34,6 @@ function PopoverContent({
             side={side}
             align={align}
             sideOffset={sideOffset}
-            // Keeps the panel off the screen edges when the trigger sits in a
-            // corner, instead of letting it hang half outside.
             insets={{ left: 12, right: 12, top: 12, bottom: 12 }}
             className={cn('z-50', className)}
             {...props}>

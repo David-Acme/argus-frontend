@@ -71,7 +71,6 @@ function DialogContent({
   ...props
 }: ComponentProps<typeof DialogPrimitive.Content> & {
   portalHost?: string;
-  /** Disables the overlay press and the close button while they stay visible. */
   dismissible?: boolean;
 }) {
   return (

@@ -12,7 +12,6 @@ type DayPickerFieldProps = {
   onChange: (day: Date) => void;
 };
 
-/** Shows the chosen day and opens a month to change it; two shortcuts cover most cases. */
 export function DayPickerField({ value, onChange }: DayPickerFieldProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();

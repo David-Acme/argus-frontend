@@ -13,19 +13,11 @@ type MorphIconProps = {
   size?: number;
   color?: string;
   strokeWidth?: number;
-  /** Physics for uncontrolled/imperative mode. */
   spring?: SpringPreset;
-  /** Honors the OS reduce-motion setting (morphs become instant swaps). */
   reducedMotion?: ReducedMotionMode;
   label?: string;
 };
 
-/**
- * Animated icon wrapper around `morphicons/react-native`. The per-frame `d`
- * updates go through `setNativeProps` of react-native-svg — outside the React
- * render — with a single shared rAF, so an active morph costs almost nothing
- * on low-end Android. The ref exposes `morphTo(icon)` / `set(icon)`.
- */
 export const MorphIcon = forwardRef<MorphHandle, MorphIconProps>(
   (
     {

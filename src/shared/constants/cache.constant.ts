@@ -1,15 +1,11 @@
-/** MMKV namespace for the view snapshots that make a screen paint instantly. */
 export const VIEW_CACHE_PREFIX = 'view.cache.v2.';
 
-/** Rows kept per ordinary list page: enough to fill a screen, cheap to write on change. */
 export const VIEW_CACHE_PAGE_SIZE = 40;
 
 export const VIEW_CACHE_LIST_LIMIT = 1000;
 
-/** A month grid has six weeks, irrespective of the locale's first weekday. */
 export const VIEW_CACHE_CALENDAR_MONTH_DAYS = 42;
 
-/** A date range is a calendar page; keep it whole without retaining every month. */
 export const VIEW_CACHE_CALENDAR_ENTRY_LIMIT = 400;
 
 export const EMPTY_DASHBOARD_SUMMARY = {

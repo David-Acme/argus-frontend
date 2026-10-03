@@ -17,15 +17,10 @@ type CalendarDayListProps = {
   onLongPress?: (entry: CalendarEntry) => void;
   renderActions?: (entry: CalendarEntry) => ReactNode;
   renderContextMenu?: (entry: CalendarEntry, trigger: ReactElement) => ReactNode;
-  /** Turns the empty panel into the way to add something to this day. */
   onCreate?: () => void;
   addLabel?: string;
 };
 
-/**
- * The selected day, under the month grid. Two scales on one screen is what
- * makes a calendar usable: the month answers "when", this answers "what".
- */
 export function CalendarDayList({
   entries,
   emptyLabel,
@@ -100,8 +95,6 @@ export function CalendarDayList({
   );
 
   if (entries.length === 0) {
-    // A dashed panel that fills the column: the day keeps its place on the
-    // screen, and tapping it is how something gets planned there.
     return (
       <Pressable
         accessibilityRole="button"

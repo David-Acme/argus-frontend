@@ -37,8 +37,6 @@ export default function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  // Every route crossfades: `animationTypeForReplace` matters
-                  // because tab navigation replaces instead of pushing.
                   animation: 'fade',
                   animationDuration: NAV_FADE_MS,
                   animationTypeForReplace: 'push',
@@ -54,7 +52,6 @@ export default function RootLayout() {
                 <Stack.Screen name="projects" />
                 <Stack.Screen name="cameras" />
               </Stack>
-              {/* Above the Stack so they survive every route change. */}
               <GlobalBottomNav />
               <OfflineBanner />
               <ConfirmDialog />

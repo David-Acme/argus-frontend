@@ -8,9 +8,7 @@ type ProjectCardRowProps = {
   description: string;
   status: ProjectStatus;
   statusLabel: string;
-  /** Already formatted, e.g. "3 of 8". */
   taskCount: string;
-  /** 0..1 */
   progress: number;
   selected?: boolean;
   onPress?: () => void;

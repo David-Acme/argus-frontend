@@ -10,14 +10,6 @@ import {
   PROJECT_TASK_SCHEMA,
 } from './tables';
 
-/**
- * Every SCHEMA_VERSION bump needs an entry here: WatermelonDB throws
- * "Missing migration" and refuses to open the database otherwise. The steps
- * reuse the same `tableSchema` objects the app registers, so a column can
- * never drift between the schema and its migration.
- */
-// `tableSchema()` keeps its columns as a map plus a `columnArray`; createTable
-// wants the array. Adapting here keeps one source of truth for the columns.
 const fromSchema = (schema: TableSchema) =>
   createTable({ name: schema.name, columns: [...schema.columnArray] });
 
@@ -34,14 +26,10 @@ export const migrations = schemaMigrations({
       ],
     },
     {
-      // Sharing: a calendar and a project belong to one user, and these two
-      // tables are how another user gets in.
       toVersion: 3,
       steps: [fromSchema(CALENDAR_EVENT_SHARE_SCHEMA), fromSchema(PROJECT_MEMBER_SCHEMA)],
     },
     {
-      // A camera says which integration drives it, and keeps the cloud user the
-      // talk channel needs (the password never leaves the server).
       toVersion: 4,
       steps: [
         addColumns({
@@ -54,7 +42,6 @@ export const migrations = schemaMigrations({
       ],
     },
     {
-      // An icon per camera, so every surface shows the same glyph.
       toVersion: 5,
       steps: [addColumns({ table: 'camera', columns: [{ name: 'icon', type: 'string' }] })],
     },

@@ -32,7 +32,6 @@ import { toastServiceError } from '@/shared/libs/service-error';
 type TaskFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Parent project; the task cannot exist without one. */
   projectId: string;
   task?: IProjectTaskCacheRow | null;
 };

@@ -9,7 +9,6 @@ type CollapsibleSectionProps = {
   children: ReactNode;
 };
 
-/** Keeps the rare fields out of sight until someone looks for them. */
 export function CollapsibleSection({ label, children }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(false);
 

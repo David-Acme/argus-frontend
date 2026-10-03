@@ -48,7 +48,6 @@ const TONE_CLASS = {
   },
 } as const;
 
-/** Pill height + margin reserved below the oval (used to clamp it inside the area). */
 const PILL_RESERVE = 56;
 
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
@@ -57,15 +56,9 @@ type FaceGuideOverlayProps = {
   state: FaceGuideState | null;
   offset: { dx: number; dy: number };
   available: boolean;
-  /** Camera area between the top inset and the bottom sheet (measured). */
   area: { top: number; height: number };
 };
 
-/**
- * Dimmed backdrop with an elliptical cutout + pulsing guide + state pill.
- * The oval is fitted to the CAMERA AREA (screen minus the bottom sheet), not
- * to the full screen, so the sheet can never cover it on any screen size.
- */
 export function FaceGuideOverlay({ state, offset, available, area }: FaceGuideOverlayProps) {
   const { width, height } = useWindowDimensions();
   const { t } = useTranslation();
@@ -76,19 +69,12 @@ export function FaceGuideOverlay({ state, offset, available, area }: FaceGuideOv
 
   const areaTop = Math.max(area.top, 0);
   const areaH = Math.max(area.height, 120);
-  // The ellipse keeps FACE_OVAL_RATIO (width:height) on every device: on tall
-  // narrow screens the width budget binds and the height follows the ratio,
-  // which is what makes it round (the old fixed fractions rendered a narrow
-  // pill on phones like the Redmi). Height is also capped by the camera area
-  // so the state pill below always has room.
   const ovalW = Math.min(width * 0.8, areaH * 0.8 * FACE_OVAL_RATIO);
   const ovalH = Math.min(ovalW / FACE_OVAL_RATIO, areaH * 0.8);
   const cx = width / 2;
   const cy = areaTop + areaH * 0.46;
   const isReady = state === 'ready';
 
-  // Explicit positions, clamped inside the camera area (never under the sheet
-  // or above the inset).
   const pillTop = Math.min(cy + ovalH / 2 + 16, areaTop + areaH - PILL_RESERVE);
   const arrowTop = Math.max(cy - ovalH / 2 - 56, areaTop + 8);
 
@@ -106,7 +92,6 @@ export function FaceGuideOverlay({ state, offset, available, area }: FaceGuideOv
     strokeWidth: isReady ? 3 + 2.5 * pulse.value : 2.5,
   }));
 
-  // Directional hint: point the chevron toward where the face should move.
   const dx = offset.dx;
   const dy = offset.dy;
   const arrowIcon: IconName =

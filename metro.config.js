@@ -6,9 +6,6 @@ const config = getDefaultConfig(__dirname);
 config.resolver.resolverMainFields = ['react-native', 'browser', 'module', 'main'];
 
 module.exports = withUniwindConfig(config, {
-  // relative path to your global.css file (from previous step)
   cssEntryFile: './src/global.css',
-  // (optional) path where we gonna auto-generate typings
-  // defaults to project's root
   dtsFile: './uniwind-types.d.ts',
 });

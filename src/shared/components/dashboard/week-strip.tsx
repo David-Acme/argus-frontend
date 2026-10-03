@@ -14,7 +14,6 @@ type WeekStripProps = {
   onSelect: (date: Date) => void;
 };
 
-/** Monday-first day picker. The selected day is a raised well. */
 export function WeekStrip({ days, selected, onSelect }: WeekStripProps) {
   return (
     <View className="flex-row justify-between">

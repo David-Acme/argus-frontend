@@ -10,7 +10,6 @@ type DashboardSearchFieldProps = {
   onFilter?: () => void;
 };
 
-/** Search pill: the container carries the surface, so the Input is unstyled. */
 export function DashboardSearchField({
   placeholder,
   filterLabel,

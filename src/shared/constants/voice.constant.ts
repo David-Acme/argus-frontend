@@ -1,15 +1,10 @@
-/** Voice channel over the unified socket: JSON `voice:*` + PCM binary. */
 export const VOICE_SAMPLE_RATE = 16000;
 export const VOICE_CHUNK_MS = 80;
 export const VOICE_MAX_TURN_MS = 30000;
 
-/** Mic-level smoothing: fast attack, slow release (dBFS envelope). */
 export const VOICE_METER_ATTACK_MS = 50;
 
 export const VOICE_METER_RELEASE_MS = 260;
-// Safety net for playback: if expo-audio never reports didJustFinish
-// (interrupted player, app switch), the mic is resumed anyway so the
-// session never goes permanently deaf after the first reply.
 export const VOICE_TTS_WATCHDOG_MS = 30000;
 
 export const VOICE_START_TYPE = 'voice:start';

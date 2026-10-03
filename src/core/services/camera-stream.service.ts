@@ -16,10 +16,6 @@ class CameraStreamService extends DatabaseService<'camera_stream'> {
     );
   }
 
-  /**
-   * Every primary stream in one query. A grid of N cameras must not open N
-   * subscriptions: the caller joins by `cameraId` in memory.
-   */
   observePrimaries(): Observable<CameraStreamModel[]> {
     return this.observeManyWithColumns(
       ['camera_id', 'resolution', 'fps', 'codec', 'is_primary', 'is_enabled'],

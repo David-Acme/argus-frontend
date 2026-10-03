@@ -14,7 +14,6 @@ class CalendarEventShareService extends DatabaseService<'calendar_event_share'> 
     super('calendar_event_share');
   }
 
-  /** Who an event is shared with. Only the owner and the members receive these. */
   observeForEvent(calendarEventId: string): Observable<CalendarEventShareModel[]> {
     return this.observeManyWithColumns(
       ['user_id', 'access'],
@@ -22,7 +21,6 @@ class CalendarEventShareService extends DatabaseService<'calendar_event_share'> 
     );
   }
 
-  /** Shares granted to one user, to tell an own event from a shared one. */
   observeForUser(userId: string): Observable<CalendarEventShareModel[]> {
     return this.observeManyWithColumns(
       ['calendar_event_id', 'access'],

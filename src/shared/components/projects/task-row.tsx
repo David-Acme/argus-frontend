@@ -11,7 +11,6 @@ type TaskRowProps = {
   status: ProjectTaskStatus;
   priority: ProjectTaskPriority;
   priorityLabel: string;
-  /** Already formatted; omit when the task has no due date. */
   due?: string;
   statusOptions: readonly MenuOption<ProjectTaskStatus>[];
   statusMenuTitle: string;
@@ -28,10 +27,6 @@ const STATUS_ICON: Record<ProjectTaskStatus, 'check-circle' | 'clock' | 'list-to
   canceled: 'x',
 };
 
-/**
- * One line per task: status affordance, title, priority, due date. Dense on
- * purpose — a list you scan beats a board you drag when the point is speed.
- */
 export function TaskRow({
   title,
   status,

@@ -93,11 +93,6 @@ class NativeArgusNetService implements IArgusNetService {
     }
   }
 
-  /**
-   * The server moved: its lease changed, or the phone came back on another
-   * network. mDNS still finds it by name, so the pinned address is refreshed
-   * instead of asking the user to pair again.
-   */
   async refreshAddress(): Promise<boolean> {
     const instance = await loadInstance();
     return instance ? this.rediscover(instance.ip) : false;
@@ -152,7 +147,6 @@ class NativeArgusNetService implements IArgusNetService {
     }
   }
 
-  /** The WS must ride the SAME configured instance (CA + host) as HTTP. */
   async openSocket(options: NetSocketOptions): Promise<ArgusSocket> {
     const instance = await loadInstance();
     if (!instance) {
@@ -166,8 +160,6 @@ class NativeArgusNetService implements IArgusNetService {
     try {
       return await net.openSocket(options);
     } catch (error) {
-      // Same story as an HTTP call: the address can go stale between two
-      // reconnects, and the socket is the one that notices first.
       const failure = toNetError(error, 'NETWORK_ERROR');
       if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
         throw failure;

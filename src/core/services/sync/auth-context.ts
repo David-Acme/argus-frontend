@@ -17,7 +17,6 @@ const USER_ROLES: readonly UserRole[] = ['owner', 'resident', 'guard', 'guest'];
 const isUserRole = (value: unknown): value is UserRole =>
   typeof value === 'string' && USER_ROLES.includes(value as UserRole);
 
-/** Validates that a context event belongs to the current local session. */
 export const parseAuthContext = (value: unknown, expectedUserId: number): AuthContext | null => {
   if (!value || typeof value !== 'object') return null;
   const context = value as Record<string, unknown>;

@@ -3,7 +3,6 @@ import type { InviteRole, UserRole } from '@/core/types';
 export interface IInviteCreateInput {
   role: InviteRole;
   maxRedemptions: number;
-  /** Epoch seconds, matching the backend contract. */
   expiresAt: number;
 }
 

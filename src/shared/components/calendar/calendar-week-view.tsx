@@ -17,7 +17,6 @@ type CalendarWeekViewProps = {
   renderContextMenu?: (entry: CalendarEntry, trigger: ReactElement) => ReactNode;
 };
 
-/** Minimum block height so a 15-minute event stays tappable. */
 const MIN_BLOCK_HEIGHT = 22;
 
 export function CalendarWeekView({

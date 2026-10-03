@@ -14,7 +14,6 @@ class ProjectMemberService extends DatabaseService<'project_member'> {
     super('project_member');
   }
 
-  /** Who a project is shared with. Only the owner and the members receive these. */
   observeForProject(projectId: string): Observable<ProjectMemberModel[]> {
     return this.observeManyWithColumns(
       ['user_id', 'access'],
@@ -22,7 +21,6 @@ class ProjectMemberService extends DatabaseService<'project_member'> {
     );
   }
 
-  /** Memberships granted to one user, to tell an own project from a shared one. */
   observeForUser(userId: string): Observable<ProjectMemberModel[]> {
     return this.observeManyWithColumns(
       ['project_id', 'access'],

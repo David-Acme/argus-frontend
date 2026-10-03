@@ -20,7 +20,6 @@ type CameraSettingsSheetProps = {
   onApplied: (status: ICameraDeviceStatus | null) => void;
 };
 
-/** Device switches. Each toggle writes straight through and reports the result. */
 export function CameraSettingsSheet({
   open,
   onOpenChange,

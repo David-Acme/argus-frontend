@@ -21,13 +21,10 @@ type CameraGridProps = {
   cameras: readonly CameraGridItem[];
   emptyLabel: string;
   onSelect?: (id: string) => void;
-  /** Takes the height it is given; used in the side column of wide windows. */
   fill?: boolean;
-  /** Keeps a compact empty camera state visually substantial on mobile. */
   minHeight?: number;
 };
 
-/** Wrapping grid: two per row on phones, as many as fit on wider windows. */
 export function CameraGrid({ cameras, emptyLabel, onSelect, fill = false, minHeight }: CameraGridProps) {
   if (cameras.length === 0) {
     return (

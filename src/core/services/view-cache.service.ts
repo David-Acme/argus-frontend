@@ -7,17 +7,8 @@ import {
   VIEW_CACHE_PREFIX,
 } from '@/shared/constants';
 
-/**
- * Snapshots of what a screen last rendered, kept in synchronous storage.
- *
- * Reads from the local database are async, so the first frame of a screen has
- * nothing to show even when the data is already on the device. Rehydrating a
- * snapshot on the first render removes that gap: the screen paints with real
- * rows and swaps them for the live query as soon as it answers.
- */
 class ViewCacheService {
   private userId = 'anonymous';
-  /** Signal-only memory: the rows remain exclusively in MMKV. */
   private revisions = new Map<string, number>();
   private subscribers = new Map<string, Set<() => void>>();
 
@@ -49,10 +40,6 @@ class ViewCacheService {
     this.subscribers.get(target)?.forEach((listener) => listener());
   }
 
-  /**
-   * MMKV reads synchronously, so no JavaScript data mirror is required.
-   * Kept as an idempotent session hook for callers that previously primed one.
-   */
   prime(): void {}
 
   read<T>(key: ViewCacheKey, scope?: string): T[] {
@@ -73,8 +60,6 @@ class ViewCacheService {
     this.notify(target);
     if (scope == null || !options.replaceScoped) return;
 
-    // Calendar windows are intentionally single-page snapshots: when the
-    // visible month changes, old values must not be displayed for the new one.
     const base = `${VIEW_CACHE_PREFIX}${this.userId}.${key}.`;
     for (const stored of storageService.getAllKeys()) {
       if (stored !== target && stored.startsWith(base)) {
@@ -95,7 +80,6 @@ class ViewCacheService {
     this.notify(target);
   }
 
-  /** Wipes every snapshot; a session change must not leak another user's rows. */
   clear(): void {
     for (const key of storageService.getAllKeys()) {
       if (key.startsWith(VIEW_CACHE_PREFIX)) {

@@ -103,20 +103,15 @@ export default function ProjectsScreen() {
   );
 
   const changeStatus = useCallback((taskId: string, status: ProjectTaskStatus) => {
-    // Optimistic feel comes from sync: the socket pushes the row right back.
     void projectTaskService.update(taskId, { status });
   }, []);
 
-  // The dashboard routes are only reachable with a session; the root screen
-  // owns the onboarding decision, so an unauthenticated hit bounces there.
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
 
   return (
     <DashboardShell
       active="projects"
       aside={
-        // Only when there is something to list: on compact the aside stacks
-        // under the content, and two empty states in a row read as a bug.
         displayProjects.length === 0 ? undefined : (
           <View className="gap-3">
             <SectionHeading title={t('screens.projects.title')} />

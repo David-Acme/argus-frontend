@@ -116,7 +116,6 @@ android {
     main {
       if (isNewArchitectureEnabled()) {
         java.srcDirs += [
-          // React Codegen files
           "${project.buildDir}/generated/source/codegen/java"
         ]
       }
@@ -130,12 +129,9 @@ repositories {
 }
 
 dependencies {
-  //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
 
-  // Add a dependency on NitroModules
   implementation project(":react-native-nitro-modules")
 
-  // OkHttp (HTTP + multipart + WebSocket). Already shipped by RN; pinned for compile-time.
   implementation "com.squareup.okhttp3:okhttp:4.12.0"
 }

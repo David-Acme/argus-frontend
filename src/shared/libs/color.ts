@@ -4,10 +4,6 @@ function hexChannel(hex: string, start: number, end: number): number {
   return Number.parseInt(hex.slice(start, end), 16) / 255;
 }
 
-/**
- * Parses a `#RGB` / `#RRGGBB` hex string into an RGBA array in the 0..1 range,
- * as expected by Skia shader uniforms (`vec3`/`vec4`).
- */
 export function hexToRgba(hex: string, alpha = 1): [number, number, number, number] {
   const normalized = hex.replace('#', '');
   if (!HEX_RE.test(hex)) {
@@ -17,11 +13,6 @@ export function hexToRgba(hex: string, alpha = 1): [number, number, number, numb
   return [hexChannel(full, 0, 2), hexChannel(full, 2, 4), hexChannel(full, 4, 6), alpha];
 }
 
-/**
- * Parses a hex string into `[hue, saturation, value]`, all normalized to 0..1
- * (hue is a turn fraction, not degrees — the form SkSL's `hsv2rgb` expects).
- * Converts hex colors for SVG/theme token usage.
- */
 export function hexToHsv(hex: string): [number, number, number] {
   const [r, g, b] = hexToRgba(hex);
   const max = Math.max(r, g, b);

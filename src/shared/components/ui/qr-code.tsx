@@ -10,11 +10,6 @@ type QrCodeProps = {
   errorCorrection?: 'L' | 'M' | 'Q' | 'H';
 };
 
-/**
- * Renders a QR code as an SVG matrix (native + web). `qrcode` is pure JS and
- * only computes the module matrix via `QRCode.create`; react-native-svg draws
- * it, so displaying a QR needs no camera or permission.
- */
 export function QrCode({
   value,
   size,

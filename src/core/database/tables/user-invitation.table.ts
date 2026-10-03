@@ -16,7 +16,6 @@ export const USER_INVITATION_SCHEMA = tableSchema({
   ],
 });
 
-/** Owner-only metadata. An invitation's opaque QR token is never persisted. */
 export class UserInvitationModel extends Model {
   static table = 'user_invitation';
 

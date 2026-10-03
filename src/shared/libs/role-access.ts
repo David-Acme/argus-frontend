@@ -6,11 +6,6 @@ const FULL: Permission[] = ['read', 'create', 'update', 'delete'];
 const READ: Permission[] = ['read'];
 const READ_UPDATE: Permission[] = ['read', 'update'];
 
-/**
- * Mirror of `role_access::kTableAccess` in the backend. It never grants access
- * on its own — the server decides — it only lets the UI hide what would come
- * back 403 anyway.
- */
 const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> = {
   owner: {},
   resident: {
@@ -48,7 +43,6 @@ export function hasAccess(role: UserRole, table: TableName, permission: Permissi
   return TABLE_ACCESS[role][table]?.includes(permission) ?? false;
 }
 
-/** Tables the role can read, for deciding whether a whole screen is worth showing. */
 export function readableTables(role: UserRole): TableName[] {
   if (role === 'owner') return Object.keys(TABLE_ACCESS.resident) as TableName[];
   return (Object.keys(TABLE_ACCESS[role]) as TableName[]).filter((table) =>

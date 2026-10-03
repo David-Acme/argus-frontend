@@ -16,8 +16,6 @@ import type {
   ZoneModel,
 } from '@/core/database/tables';
 
-/** Mirrors the CHECK constraints and enums in the backend (`shared/enums.hxx`). */
-
 export type UserRole = 'owner' | 'resident' | 'guard' | 'guest';
 
 export type UserLang = 'es' | 'en';
@@ -26,12 +24,10 @@ export type PersonStatus = 'candidate' | 'known';
 
 export type CameraRecordMode = 'events' | 'continuous';
 
-/** Which integration drives a camera; mirrors `CameraDriver` in the backend. */
 export type CameraDriverKind = 'tapo' | 'onvif' | 'rtsp';
 
 export type ZoneType = 'monitor' | 'alert' | 'exclude';
 
-/** Device-side IR mode of a camera. */
 export type DayNightMode = 'auto' | 'day' | 'night';
 
 export type ReminderDetailStatus = 'pending' | 'in_progress' | 'done' | 'blocked';
@@ -42,22 +38,18 @@ export type ProjectStatus = 'planned' | 'active' | 'paused' | 'done' | 'canceled
 
 export type ProjectTaskStatus = 'backlog' | 'todo' | 'doing' | 'done' | 'canceled';
 
-/** Per-member access level of a shared calendar event or project. */
 export type ShareAccess = 'view' | 'edit';
 
 export type ProjectTaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
 
-/** Normalised [0..1] polygon vertex stored in `zone.points`. */
 export type ZonePoint = { x: number; y: number };
 
-/** Opaque server-side JSON: the backend never parses these. */
 export type CameraCapabilities = string[];
 
 export type CameraConfig = Record<string, unknown>;
 
 export type NotificationData = Record<string, unknown>;
 
-/** Opaque server-side JSON of an event. */
 export type EventDetails = Record<string, unknown>;
 
 export type ModelMap = {

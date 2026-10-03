@@ -6,7 +6,6 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { ToastCard } from './toast-card';
 
-/** Single host mounted by the root layout; sits on top so it never fights the bottom bar. */
 export function Toaster() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();

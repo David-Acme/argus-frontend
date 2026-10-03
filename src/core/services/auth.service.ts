@@ -67,17 +67,14 @@ class AuthService {
     await sessionService.clearSession();
   }
 
-  /** Desktop: creates a short-lived login challenge and returns its secret id. */
   async createDeviceLogin(): Promise<IServiceResponse<ICreateDeviceLoginResponse>> {
     return httpService.post<ICreateDeviceLoginResponse>(DEVICE_LOGIN_PATH, {}, { skipAuthRetry: true });
   }
 
-  /** Mobile: approves a pending challenge; the desktop polls it for tokens. */
   async approveDeviceLogin(id: string): Promise<IServiceResponse<{ approved: boolean } | null>> {
     return httpService.post<{ approved: boolean } | null>(`${DEVICE_LOGIN_PATH}/${id}/approve`, {});
   }
 
-  /** Desktop: polls the challenge until approved/expired. */
   async pollDeviceLogin(id: string): Promise<IServiceResponse<IDeviceLoginStatusResponse>> {
     const response = await httpService.get<IDeviceLoginStatusResponse>(`${DEVICE_LOGIN_PATH}/${id}`, {
       skipAuthRetry: true,

@@ -12,7 +12,6 @@ type IconPickerButtonProps = {
   onChange: (icon: IconName) => void;
 };
 
-/** The icon lives behind one square button, so the form stays one line wide. */
 export function IconPickerButton({ options, value, onChange }: IconPickerButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);

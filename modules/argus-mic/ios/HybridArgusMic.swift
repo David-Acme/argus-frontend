@@ -23,7 +23,6 @@ public class HybridArgusMic: HybridArgusMicSpec {
       onBus: 0, bufferSize: 2048, format: format
     ) { [weak self] buffer, _ in
       guard let self else { return }
-      // engine.inputNode requires the tap on the *input* format; resample down to s16le mono 16 kHz.
       let converter = AVAudioConverter(from: format, to: Self.targetFormat(rate: targetRate))
       var packet: AVAudioPacketCount = 1
       let input = AVAudioPCMBuffer(

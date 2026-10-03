@@ -8,7 +8,6 @@ export type ButtonState = {
   disabled: boolean;
 };
 
-/** A request in flight is unavailable to prevent duplicate server mutations. */
 export function getButtonState({ disabled, loading }: ButtonStateInput): ButtonState {
   const isDisabled = disabled || loading;
 

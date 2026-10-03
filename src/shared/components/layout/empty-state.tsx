@@ -11,7 +11,6 @@ type EmptyStateProps = {
   title: string;
   hint?: string;
   action?: ReactNode;
-  /** Takes the remaining height; off when it sits inside a section. */
   fill?: boolean;
   className?: string;
 };
@@ -23,7 +22,6 @@ type EmptyStateContentProps = {
   action?: ReactNode;
 };
 
-/** The message itself, so a panel that already exists can host it. */
 export function EmptyStateContent({ icon, title, hint, action }: EmptyStateContentProps) {
   return (
     <View className="items-center justify-center gap-4">
@@ -43,15 +41,8 @@ export function EmptyStateContent({ icon, title, hint, action }: EmptyStateConte
   );
 }
 
-/**
- * One calm panel instead of a wall of placeholders: it takes the space a list
- * would have had, stays centred, and caps its width so it reads the same on a
- * phone, a tablet and a desktop window.
- */
 export function EmptyState({ icon, title, hint, action, fill = true, className }: EmptyStateProps) {
   return (
-    // The panel takes the width it is given and centres itself in the height:
-    // stretched to a full tablet column it would read as a giant empty box.
     <View className={cn('w-full items-center justify-center', fill && 'flex-1')}>
       <View
         className={cn(

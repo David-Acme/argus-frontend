@@ -6,15 +6,10 @@ import { cn } from '@/shared/libs/utils';
 type DashboardIconButtonProps = Omit<PressableProps, 'children' | 'className'> & {
   icon: IconName;
   label: string;
-  /** Shows an unread dot when greater than zero. */
   badge?: number;
   className?: string;
 };
 
-/**
- * Round header action. The remaining Pressable props are forwarded so it can be
- * used as an `asChild` trigger for a popover or a sheet.
- */
 export function DashboardIconButton({
   icon,
   label,

@@ -22,7 +22,6 @@ class HybridArgusFace: HybridArgusFaceSpec {
         return FaceFrame(luminance: luminance, faces: [])
       }
       let faces = observations.map { face in
-        // Vision normalizes with a bottom-left origin; the spec uses top-left.
         let b = face.boundingBox
         return FaceDetection(
           bounds: FaceBounds(

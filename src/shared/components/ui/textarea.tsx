@@ -24,7 +24,6 @@ const textareaVariants = cva(
   }
 );
 
-/** Multiline input. `textAlignVertical` keeps Android from centring the first line. */
 function Textarea({ className, variant, ...props }: TextareaProps) {
   return (
     <TextInput

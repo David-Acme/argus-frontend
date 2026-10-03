@@ -11,10 +11,6 @@ const DAY_MS = 86_400_000;
 export const calendarMonthScope = (value: Date): string =>
   `month.${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
 
-/**
- * Covers every locale-specific six-week month grid. The screen still narrows
- * the snapshot to its precise day/week/month range before rendering it.
- */
 export const calendarMonthRange = (value: Date): { from: number; to: number } => {
   const first = new Date(value.getFullYear(), value.getMonth(), 1);
   first.setDate(first.getDate() - first.getDay());

@@ -31,11 +31,8 @@ import { cn } from '@/shared/libs/utils';
 
 type SheetContentProps = Omit<ComponentProps<typeof DialogPrimitive.Content>, 'asChild'> & {
   children?: ReactNode;
-  /** Hides the drag handle when the sheet is not dismissible by gesture. */
   showHandle?: boolean;
-  /** Blocks every dismissal path handled here: drag and dim press. */
   dismissible?: boolean;
-  /** Named portal host; defaults to the root one, like Dialog. */
   portalHost?: string;
 };
 
@@ -43,7 +40,6 @@ type SheetHeaderProps = {
   title: string;
   description?: string;
   closeLabel: string;
-  /** Disables the close button while it stays visible. */
   dismissible?: boolean;
 };
 
@@ -63,9 +59,7 @@ function SheetOverlay({
   ...props
 }: Omit<ComponentProps<typeof DialogPrimitive.Overlay>, 'asChild'> & {
   children?: ReactNode;
-  /** Ties the dim to the drag, so it lightens as the sheet is pulled down. */
   dimStyle?: AnimatedStyle<ViewStyle>;
-  /** Whether tapping the dim may dismiss the sheet. */
   dismissible?: boolean;
 }) {
   const { onOpenChange } = DialogPrimitive.useRootContext();
@@ -89,7 +83,6 @@ function SheetOverlay({
         closeOnPress={dismissible}
         onPress={Platform.select({ web: onOverlayPress, native: onPress })}
         asChild={IS_NATIVE}>
-        {/* Dim opacity lives here, not on the layout-animated node above. */}
         <NativeOnlyAnimatedView
           entering={overlayIn}
           exiting={overlayOut}
@@ -103,12 +96,6 @@ function SheetOverlay({
   );
 }
 
-/**
- * Bottom sheet. On mobile it is the native-feeling stand-in for a dialog: it
- * slides from the bottom and follows the finger, so a drag down dismisses it.
- * Built on the dialog primitive to inherit the portal, the focus trap and the
- * escape handling instead of reimplementing them.
- */
 function SheetContent({
   className,
   children,
@@ -129,8 +116,6 @@ function SheetContent({
     bottomInset.value = insets.bottom;
   }, [bottomInset, insets.bottom]);
 
-  // Stays mounted across cycles; without this a gesture dismissal would
-  // reopen the sheet displaced and gesture-frozen.
   useEffect(() => {
     if (!open) return;
     translateY.value = 0;
@@ -141,7 +126,6 @@ function SheetContent({
     onOpenChange(false);
   };
 
-  /** Dismissal closes the state immediately; `sheetOut` finishes the motion. */
   const endDrag = (velocityY: number) => {
     'worklet';
     if (
@@ -160,8 +144,6 @@ function SheetContent({
     .onChange((event) => {
       if (closing.value) return;
       const next = translateY.value + event.changeY;
-      // Upward travel is resisted instead of blocked, which is what makes a
-      // native sheet feel attached to the finger rather than clamped.
       translateY.value = next < 0 ? next * SHEET_OVERDRAG_RESISTANCE : next;
     })
     .onEnd((event) => {
@@ -169,18 +151,14 @@ function SheetContent({
       endDrag(event.velocityY);
     })
     .onFinalize((event, success) => {
-      // Cancelled gestures never reach onEnd; this keeps the state in sync.
       if (success || closing.value) return;
       endDrag(event.velocityY);
     });
 
-  // `keyboardOffset` is negative while the keyboard is up, so adding it lifts
-  // the sheet in step with the real keyboard frame instead of guessing a height.
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value + keyboardOffset.value }],
   }));
 
-  // The dim tracks the drag, so letting go halfway reads as "still holding it".
   const dimStyle = useAnimatedStyle(() => ({
     opacity: interpolate(translateY.value, [0, SHEET_DIM_TRAVEL], [1, 0], Extrapolation.CLAMP),
   }));

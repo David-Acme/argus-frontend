@@ -5,7 +5,6 @@ import java.util.ArrayDeque
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-/** Byte stream shared between the JS pump and the ExoPlayer loader thread. */
 internal class CameraFrameBuffer {
   private val lock = ReentrantLock()
   private val notEmpty = lock.newCondition()
@@ -43,7 +42,6 @@ internal class CameraFrameBuffer {
     }
   }
 
-  /** Blocks until bytes are available or the stream is aborted. */
   fun read(out: ByteArray, offset: Int, length: Int): Int {
     lock.withLock {
       while (bytes == 0 && !closed)

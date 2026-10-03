@@ -2,7 +2,6 @@ export type VoicePhase = 'idle' | 'listening' | 'thinking' | 'speaking' | 'done'
 
 export type VoiceTurnRole = 'user' | 'assistant';
 
-/** Future: Argus will also talk through the cameras (detected person, not the user). */
 export type VoiceSessionSource = 'app' | 'camera';
 
 export type VoiceEventType =

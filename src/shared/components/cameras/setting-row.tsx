@@ -10,7 +10,6 @@ type SettingRowProps = {
   onChange: (next: boolean) => void;
 };
 
-/** Label plus a switch. The knob animates on the UI thread, no layout work. */
 export function SettingRow({ label, value, disabled, onChange }: SettingRowProps) {
   const knob = useAnimatedStyle(() => ({
     transform: [{ translateX: withTiming(value ? 18 : 0, { duration: 160 }) }],

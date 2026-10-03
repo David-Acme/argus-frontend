@@ -10,7 +10,6 @@ import { sanitizeObject, sanitizeStringArray } from './sanitizers';
 import type { CameraStreamModel } from './camera-stream.table';
 import type { ZoneModel } from './zone.table';
 
-// `password` is not persisted on purpose (clear-text RTSP creds on device).
 export const CAMERA_SCHEMA = tableSchema({
   name: 'camera',
   columns: [

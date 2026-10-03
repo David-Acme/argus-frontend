@@ -1,6 +1,4 @@
-/** Payload carried by the desktop device-login QR. */
 export type LoginQrPayload = {
-  /** Challenge id returned by POST /auth/device-login (the secret). */
   id: string;
 };
 
@@ -10,12 +8,10 @@ export const LOGIN_QR_TYPE = 'login';
 
 export const LOGIN_CHALLENGE_PATTERN = /^[0-9a-fA-F]{64}$/;
 
-/** Builds the compact JSON that the desktop encodes as a QR code. */
 export function buildLoginQr(id: string): string {
   return JSON.stringify({ v: LOGIN_QR_VERSION, t: LOGIN_QR_TYPE, id });
 }
 
-/** Parses and validates a scanned device-login QR. `null` if not a login QR. */
 export function parseLoginQr(raw: string): LoginQrPayload | null {
   let json: unknown;
   try {

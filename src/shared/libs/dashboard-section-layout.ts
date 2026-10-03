@@ -11,11 +11,6 @@ export type DashboardSectionLayout = {
   minHeight?: number;
 };
 
-/**
- * The paired Projects/Today's tasks panels have one visual rhythm. A compact
- * portrait keeps enough room for an actionable empty state; a short wide
- * screen uses a denser baseline because the two panels stretch together.
- */
 export function getDashboardSectionLayout(width: number, height: number): DashboardSectionLayout {
   const fill = width >= WINDOW_MEDIUM_MIN;
   const shortWide = fill && height < WINDOW_TALL_MIN;

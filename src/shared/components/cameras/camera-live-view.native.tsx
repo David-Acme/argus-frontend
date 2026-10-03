@@ -13,7 +13,6 @@ type CameraLiveViewProps = {
   quality?: CameraStreamQuality;
 };
 
-/** Live view: native decoder fed by the gateway /camera-stream socket. */
 export function CameraLiveView({
   cameraId,
   quality = 'sub',

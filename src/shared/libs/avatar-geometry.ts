@@ -6,7 +6,6 @@ export type AvatarEyeGeometry = {
   rotation: number;
 };
 
-/** Stable geometry for the deliberately minimal Argus blob. */
 export type AvatarGeometry = {
   centerX: number;
   centerY: number;
@@ -23,9 +22,6 @@ export function computeAvatarGeometry(): AvatarGeometry {
     centerX: 100,
     centerY: 100,
     blobOriginY: 100,
-    // The neutral pose is deliberately mirrored around x=100. Expressions
-    // supply the asymmetry through the eye geometry and head pose; the base
-    // surface itself must never look permanently tilted to one side.
     blobPath:
       'M 96 28 C 132 25 162 42 175 69 C 184 98 174 125 148 145 C 126 159 90 166 56 160 C 29 153 18 131 21 103 C 24 74 45 48 70 36 C 80 31 90 28 96 28 Z',
     blobShadowPath:

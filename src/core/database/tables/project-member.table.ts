@@ -12,7 +12,6 @@ export const PROJECT_MEMBER_SCHEMA = tableSchema({
   ],
 });
 
-/** Who a project is shared with, and whether they may edit it. */
 export class ProjectMemberModel extends Model {
   static table = 'project_member';
 

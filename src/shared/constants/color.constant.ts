@@ -1,11 +1,5 @@
 import type { ThemeName } from '@/core/types/theme.type';
 
-/**
- * Canonical ARGUS color system (HEX).
- *
- * Source of truth for JS/native/React Navigation. The OKLCH values used by
- * Tailwind/Uniwind live in `src/global.css` — keep both in sync manually.
- */
 export const colorTokens = {
   light: {
     background: '#F4F1ED',

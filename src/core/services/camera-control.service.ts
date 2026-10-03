@@ -9,10 +9,6 @@ import type {
 } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 
-/**
- * Talks to the camera itself, not to the local database: these calls reach the
- * device through the server, so nothing here is synced or cached.
- */
 class CameraControlService {
   status(id: string): Promise<IServiceResponse<ICameraDeviceStatus>> {
     return httpService.get(`/camera/${id}/status`);
@@ -34,7 +30,6 @@ class CameraControlService {
     return httpService.get(`/camera/${id}/capabilities`);
   }
 
-  /** Synthesizes the text on the server and plays it on the camera speaker. */
   talk(id: string, body: ICameraTalk): Promise<IServiceResponse<unknown>> {
     return httpService.post(`/camera/${id}/talk`, body);
   }

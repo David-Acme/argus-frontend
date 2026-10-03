@@ -24,7 +24,6 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { Text } from './text';
 
-/** Field = one `FormField` with label, control and message. Messages are i18n keys. */
 const Form = FormProvider;
 
 type FormFieldContextValue = { name: string };
@@ -73,7 +72,6 @@ type FormScrollContextValue = {
 
 const FormScrollContext = createContext<FormScrollContextValue | null>(null);
 
-/** Jumps to the first invalid field; on web the browser's focus is enough. */
 function useFormScroll() {
   const scrollerRef = useRef<React.RefObject<ScrollView | null> | null>(null);
   const offsetY = useRef(0);
@@ -91,7 +89,6 @@ function useFormScroll() {
     }
 
     field.measureInWindow((_x, y) => {
-      // -80 keeps the field clear of the sheet or dialog header.
       scroller.scrollTo({ y: Math.max(0, offsetY.current + y - 80), animated: true });
       form.setFocus(name);
     });

@@ -8,18 +8,11 @@ import { cn } from '@/shared/libs/utils';
 
 type DashboardBottomNavProps = {
   active: DashboardTab;
-  /** One accessible label per tab, in `DASHBOARD_TABS` order. */
   labels: Record<DashboardTab, string>;
   onNavigate: (tab: DashboardTab) => void;
-  /** The compose control, so the bar and the rail share one menu. */
   compose: ReactNode;
 };
 
-/**
- * The floating bar itself: pill of tabs plus the compose button. Placement,
- * safe area and visibility belong to `GlobalBottomNav`, which mounts this once
- * for the whole app.
- */
 export function DashboardBottomNav({
   active,
   labels,
@@ -42,7 +35,6 @@ export function DashboardBottomNav({
               accessibilityLabel={labels[item.tab]}
               className={cn(
                 'size-11 items-center justify-center rounded-full active:opacity-70',
-                // A raised well, not a filled chip: the bar stays one surface.
                 selected ? 'bg-surface shadow-sm shadow-black/10' : 'bg-transparent'
               )}
               onPress={() => onNavigate(item.tab)}>

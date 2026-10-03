@@ -17,7 +17,6 @@ import { USER_SCHEMA, UserModel } from './user.table';
 import { USER_INVITATION_SCHEMA, UserInvitationModel } from './user-invitation.table';
 import { ZONE_SCHEMA, ZoneModel } from './zone.table';
 
-/** Single registry: `appSchema` and `modelClasses` are both derived from here. */
 const TABLES = [
   { schema: USER_SCHEMA, model: UserModel },
   { schema: USER_INVITATION_SCHEMA, model: UserInvitationModel },

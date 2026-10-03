@@ -33,7 +33,6 @@ import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { calendarMonthScope } from '@/core/services/view-cache-projections.service';
 
-/** Hours the day/week grids show: a working day, not 24 empty rows. */
 export default function ScheduleScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -167,8 +166,6 @@ export default function ScheduleScreen() {
     [t]
   );
 
-  // Title is the scale you are in, subtitle the context around it: "August" /
-  // "2026" reads faster than "August 2026" on one line.
   const headerTitle = useMemo(
     () => (view === 'day' ? date.formatWeekday(anchor) : date.formatMonth(anchor)),
     [anchor, date, view]
@@ -189,8 +186,6 @@ export default function ScheduleScreen() {
     [date, view]
   );
 
-  // The dashboard routes are only reachable with a session; the root screen
-  // owns the onboarding decision, so an unauthenticated hit bounces there.
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
 
   const monthBody = (

@@ -7,11 +7,10 @@ import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 
-/** Blocking live byte source backed by [CameraFrameBuffer]. */
 @UnstableApi
 internal class CameraDataSource(
   private val frames: CameraFrameBuffer,
-) : BaseDataSource(/* isNetwork= */ false) {
+) : BaseDataSource(false) {
 
   class Factory(private val frames: CameraFrameBuffer) : DataSource.Factory {
     override fun createDataSource(): DataSource = CameraDataSource(frames)

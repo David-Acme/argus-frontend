@@ -16,7 +16,6 @@ const resolveLanguage = (preference: LanguagePreference): LanguageCode => {
   if (preference !== 'system') {
     return preference;
   }
-  // Device locale: `es-*` → es, `en-*` → en (prefix match on the language tag).
   const locale = getLocales()[0];
   const tag = (locale?.languageTag ?? locale?.languageCode ?? '').toLowerCase();
   if (tag === 'es' || tag.startsWith('es-')) {
@@ -28,7 +27,6 @@ const resolveLanguage = (preference: LanguagePreference): LanguageCode => {
   return I18N_DEFAULT_LANGUAGE;
 };
 
-// Synchronous init (MMKV/localStorage + expo-localization): no layout effect needed.
 const initialPreference = readPreference();
 
 type LocaleStoreState = {

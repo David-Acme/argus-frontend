@@ -80,7 +80,6 @@ export default function CamerasScreen() {
               data={items}
               keyExtractor={(item) => item.id}
               estimatedItemSize={CAMERA_ROW_HEIGHT}
-              // Rows are fixed-height, so skip measuring entirely.
               getFixedItemSize={() => CAMERA_ROW_HEIGHT}
               recycleItems
               contentContainerStyle={{ gap: 10, paddingBottom: bottomInset }}

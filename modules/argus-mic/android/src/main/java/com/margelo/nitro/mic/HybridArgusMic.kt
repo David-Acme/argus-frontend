@@ -59,10 +59,6 @@ class HybridArgusMic : HybridArgusMicSpec() {
     thread = Thread {
       val buffer = ShortArray(size / 2)
       while (running.get()) {
-        // Non-blocking reads: stop() must be able to end this thread
-        // promptly. A blocking read can stay stuck after stop()/release()
-        // on some devices (MIUI), leaving a zombie thread that steals the
-        // mic from the next AudioRecord (delivered as digital silence).
         val read = record.read(buffer, 0, buffer.size, AudioRecord.READ_NON_BLOCKING)
         if (read <= 0) {
           Thread.sleep(5)

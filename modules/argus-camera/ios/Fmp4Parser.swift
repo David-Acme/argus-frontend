@@ -2,7 +2,6 @@ import AVFoundation
 import CoreMedia
 import Foundation
 
-/// Minimal fragmented-MP4 reader for the gateway camera feed (H.264, one track).
 final class Fmp4Parser {
   private(set) var formatDescription: CMVideoFormatDescription?
   private var timescale: Int64 = 0

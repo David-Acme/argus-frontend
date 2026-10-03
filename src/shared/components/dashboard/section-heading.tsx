@@ -3,7 +3,6 @@ import { Text } from '@/shared/components/ui/text';
 
 type SectionHeadingProps = {
   title: string;
-  /** Omit to render the title alone. */
   action?: string;
   onAction?: () => void;
 };

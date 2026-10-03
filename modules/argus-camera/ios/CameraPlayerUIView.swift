@@ -1,7 +1,6 @@
 import AVFoundation
 import UIKit
 
-/// Renders the parsed fMP4 samples with hardware decode.
 final class CameraPlayerUIView: UIView {
   override class var layerClass: AnyClass { AVSampleBufferDisplayLayer.self }
 

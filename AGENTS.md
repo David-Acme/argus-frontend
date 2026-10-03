@@ -194,6 +194,37 @@ Inside every component (mandatory):
   **disabled in `eslint.config.js`** — a known false positive with Reanimated shared-value
   writes; do not re-enable it and do not scatter per-line disable comments.
 
+### 10b. No comments in code — measured, not reviewed
+
+There are no comments in the code, without exception: not in TypeScript or
+JSX (`{/* … */}` included), Kotlin, Swift, Rust, Gradle, C++, CSS, XML or the
+config and ignore files, not as doc blocks, not as commented-out code, and not
+as lint or type suppressions (`eslint-disable`, `@ts-expect-error`,
+`//noinspection`). If code needs a comment to be understood, rewrite it (a
+better name, a helper, a type); the "why" of a decision goes to `CONTEXT.md`.
+What stays is what is not a comment: a shebang and the triple-slash
+`<reference>` directives a tool generates. Every agent and subagent working on
+this tree writes no comments, and a prompt that delegates work says so.
+
+`scripts/check-comments.ts` (`bun run check:comments`) lexes every file git
+tracks — TypeScript and JavaScript through the TypeScript parser, the
+C-family languages through a lexer that knows nested blocks, raw strings and
+Rust lifetimes — fails on any comment and on any file type it cannot classify,
+and `--fix` removes what it finds. `uniwind-types.d.ts` is generated and
+skipped.
+
+### 10c. Logging and tests
+
+- `console` is allowed only in `src/core/services/log.ts` (`log.error`,
+  `log.debug`; debug prints only in `__DEV__`) and in `scripts/`; the lint
+  rule `no-console` is an error everywhere else.
+- Pure logic is unit-tested with `bun test` under `tests/unit/`
+  (`bun run test` type-checks the tests with `tests/tsconfig.json`, then runs
+  them). `tests/setup.ts` stubs what the constants barrel pulls in
+  (`react-native`'s `Platform`, the lucide icons read from
+  `icon.constant.ts`, `window`). A fix to pure logic lands with its test.
+- `bun run verify` runs every gate: comments, typecheck, lint, tests.
+
 ### 11. Networking layer (Nitro + Tauri + secure-storage)
 
 One JS API with two native backends. The app **never** talks to the backend from the
@@ -505,7 +536,7 @@ for Watermelon nor make an HTTP list request just because it mounted.
   stored preference **wins**; `system` resolves the device locale by **prefix**
   (`es-*` → `es`, `en-*` → `en` via `expo-localization`), fallback `es`. Sync
   init at module load (MMKV/localStorage are sync) — no layout effect needed.
-- **Missing keys/params**: dev-only `console.error` + fallback to the default
+- **Missing keys/params**: dev-only `log.error` + fallback to the default
   locale → returns the key as last resort. Never crashes.
 - **Copy held by stores carries keys, never rendered text** (`QR_SCAN_PURPOSES`,
   `QrScanConfig`): translate at render time, so the store stays language-agnostic.
@@ -520,6 +551,9 @@ bun run ios            # expo start -c --ios
 bun run web            # expo start -c --web
 bun run lint           # expo lint
 bunx tsc --noEmit      # typecheck (must be 0 errors)
+bun run test           # unit tests (tests/unit, bun test)
+bun run check:comments # rule 10b gate; --fix removes comments
+bun run verify         # comments + typecheck + lint + tests
 bun run web:build      # expo export --platform web → dist/ (for Tauri)
 bun run desktop:dev    # tauri dev (Linux requires webkit2gtk-4.1)
 bun run desktop:build  # tauri build

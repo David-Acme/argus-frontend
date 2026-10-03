@@ -1,5 +1,3 @@
-/** Wire contracts for the voice channel over the unified socket (`voice:*`). */
-
 export interface IVoiceStartPayload {
   sessionId?: string;
   sampleRate: number;

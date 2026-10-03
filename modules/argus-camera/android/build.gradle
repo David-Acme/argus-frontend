@@ -116,7 +116,6 @@ android {
     main {
       if (isNewArchitectureEnabled()) {
         java.srcDirs += [
-          // React Codegen files
           "${project.buildDir}/generated/source/codegen/java"
         ]
       }
@@ -130,13 +129,10 @@ repositories {
 }
 
 dependencies {
-  //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native:+"
 
-  // Add a dependency on NitroModules
   implementation project(":react-native-nitro-modules")
 
-  // Native H.264 decode + fMP4 demux for the live camera feed.
   implementation "androidx.media3:media3-exoplayer:1.5.1"
   implementation "androidx.media3:media3-ui:1.5.1"
 }

@@ -63,8 +63,6 @@ export default function LoginScreen() {
     pollTimer.current = setTimeout(() => void tick(), POLL_MS);
   }, [stopPolling]);
 
-  // Desktop flow: wait for the owner to register from a phone, then show the
-  // QR. Mobile never reaches this screen (redirected to the face login).
   useEffect(() => {
     let active = true;
     const boot = async () => {

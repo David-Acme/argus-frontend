@@ -6,7 +6,6 @@ import { DAYS_PER_WEEK } from '@/shared/constants/calendar.constant';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
 
-/** Entries a roomy cell shows before collapsing the rest into "+N". */
 const MONTH_CELL_ENTRIES = 3;
 
 const EMPTY: readonly CalendarEntry[] = [];
@@ -16,7 +15,6 @@ type CalendarMonthViewProps = {
   selected: Date;
   entries: readonly CalendarEntry[];
   onSelectDay: (date: Date) => void;
-  /** Stretches the grid over the available height on a big window. */
   fill?: boolean;
 };
 
@@ -28,16 +26,10 @@ type DayCellProps = {
   outside: boolean;
   label: string;
   dayNumber: string;
-  /** Roomy cell: the day lists what it holds instead of a single mark. */
   fill: boolean;
   onPress: (date: Date) => void;
 };
 
-/**
- * One mark, never a row of dots: at month scale the question is "is there
- * something here", and a single bar answers it without turning the grid into
- * confetti. Memoized because a month is 42 cells and only two ever change.
- */
 const DayCell = memo(function DayCell({
   day,
   entries,
@@ -78,8 +70,6 @@ const DayCell = memo(function DayCell({
             {dayNumber}
           </Text>
         </View>
-        {/* One thin bar per entry, like a month cell on any calendar app: it
-            answers "how much is here" without room for titles. */}
         {entries.length > 0 ? (
           <View className="mt-1 w-5 gap-[2px]">
             {visible.map((entry) => (

@@ -17,10 +17,6 @@ type CalendarEntryDetailProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-/**
- * A selected entry is intentionally read-only. On touch, long press remains
- * the deliberate path to destructive or editing actions.
- */
 export function CalendarEntryDetail({ entry, open, onOpenChange }: CalendarEntryDetailProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();

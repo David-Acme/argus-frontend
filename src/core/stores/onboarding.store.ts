@@ -10,7 +10,6 @@ const readStage = (): OnboardingStage => {
     : 'welcome';
 };
 
-// Sync init (MMKV/localStorage): no layout effect needed.
 const initialStage = readStage();
 const initialVoiceEnabled = storageService.getBoolean(VOICE_ENABLED_KEY) === true;
 

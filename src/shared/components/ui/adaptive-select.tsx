@@ -33,7 +33,6 @@ type AdaptiveSelectProps<T extends string = string> = {
   closeLabel: string;
   searchPlaceholder: string;
   emptyLabel: string;
-  /** Below this many options the filter field is hidden as noise. */
   filterThreshold?: number;
   contentClassName?: string;
 };
@@ -60,7 +59,6 @@ function matches(option: MenuOption, query: string): boolean {
   );
 }
 
-/** Filter field + rows. Shared so the popover and the sheet cannot drift. */
 function SelectList({
   options,
   value,
@@ -118,7 +116,6 @@ function SelectList({
   );
 }
 
-/** Popover body: needs the root context to close itself after a pick. */
 function PopoverBody({
   onPicked,
   ...listProps
@@ -136,12 +133,6 @@ function PopoverBody({
   );
 }
 
-/**
- * Pick-one with a filter: a combobox under a pointer, a sheet with a search
- * field on phones. The sheet rides the keyboard (see SheetContent), so the list
- * stays visible while typing instead of being covered — which is the whole
- * reason a phone gets a sheet rather than a floating popover.
- */
 export function AdaptiveSelect<T extends string = string>({
   options,
   value,
@@ -163,8 +154,6 @@ export function AdaptiveSelect<T extends string = string>({
     onChange(next as T);
   }
 
-  // A sheet belongs to a touch screen. A narrow browser window is still a
-  // pointer, so the web keeps the dropdown at every size.
   if (isCompact && !IS_WEB) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
@@ -185,8 +174,6 @@ export function AdaptiveSelect<T extends string = string>({
     );
   }
 
-  // Web, short static list: the plain select, which the browser already knows
-  // how to place and keyboard-navigate. A long list keeps the filter popover.
   if (IS_WEB && !showFilter) {
     const selected = options.find((option) => option.value === value);
     return (
@@ -205,9 +192,6 @@ export function AdaptiveSelect<T extends string = string>({
     );
   }
 
-  // Native, wide window: a panel, not an anchored popover. The popover
-  // primitive never mounts when its trigger lives inside a dialog, which is
-  // where most selects are, so the options would simply never appear.
   if (!IS_WEB) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>

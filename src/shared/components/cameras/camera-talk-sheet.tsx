@@ -34,7 +34,6 @@ const schema = z.object({
 
 type TalkValues = z.infer<typeof schema>;
 
-/** Types a line, the server synthesizes it and the camera speaker says it. */
 export function CameraTalkSheet({ open, onOpenChange, cameraId }: CameraTalkSheetProps) {
   const { t, language } = useTranslation();
   const formScroll = useFormScroll();

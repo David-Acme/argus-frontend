@@ -99,8 +99,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     }
   }
 
-  // MARK: - Discovery (mDNS)
-
   private suspend fun discoverInternal(timeoutMs: Double): NetDiscovery {
     val context = requireNotNull(NitroModules.applicationContext) { "React context unavailable" }
     val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
@@ -210,8 +208,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     }
   }
 
-  // MARK: - Pairing (one-time trust-any)
-
   private suspend fun pairInternal(host: String, ip: String, port: Double, code: String): NetPairing =
     withContext(Dispatchers.IO) {
       val client = trustAllClient()
@@ -284,8 +280,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     }
   }
 
-  // MARK: - Strict request
-
   private suspend fun requestInternal(options: NetHttpRequest): NetHttpResult =
     withContext(Dispatchers.IO) {
       val trustAny = options.trustAny == true
@@ -334,11 +328,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     return builder.build()
   }
 
-  /**
-   * The API consumes regular multipart fields (`lang`, `name`, ...), not a
-   * JSON part called `payload`. Keep the JSON fallback so other callers can
-   * still send an opaque body without silently losing it.
-   */
   private fun addMultipartFields(builder: MultipartBody.Builder, body: String) {
     val fields = runCatching { JSONObject(body) }.getOrNull()
     if (fields == null) {
@@ -377,8 +366,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     )
   }
 
-  // MARK: - Body factories (streaming, no deprecated OkHttp API)
-
   private fun stringBody(content: String): RequestBody = object : RequestBody() {
     override fun contentType(): MediaType? = null
 
@@ -404,8 +391,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
       }
     }
 
-  // MARK: - NsdManager helpers (future-proof: API 30+ overloads, deprecated fallback for older)
-
   private fun resolveHostAddress(serviceInfo: NsdServiceInfo): String {
     @Suppress("DEPRECATION")
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -430,8 +415,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
       nsdManager.resolveService(serviceInfo, listener)
     }
   }
-
-  // MARK: - Clients
 
   private fun strictClient(): OkHttpClient {
     val config = "$caPem|$allowedHost|$ip"

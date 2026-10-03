@@ -20,8 +20,6 @@ public class HybridArgusNet: HybridArgusNetSpec {
 
   private static let sessionCache = NSCache<NSString, URLSession>()
 
-  // MARK: - Spec
-
   func discover(timeoutMs: Double) throws -> Promise<NetDiscovery> {
     return Promise.async { try await Self.discoverInternal(timeoutMs: timeoutMs) }
   }
@@ -67,15 +65,11 @@ public class HybridArgusNet: HybridArgusNetSpec {
     }
   }
 
-  // MARK: - Discovery (Bonjour / mDNS)
-
   private static func discoverInternal(timeoutMs: Double) async throws -> NetDiscovery {
     let timeout = TimeInterval(max(1000, Int(timeoutMs))) / 1000.0
     let resolver = await BonjourResolver(timeout: timeout)
     return try await withTimeout(seconds: timeout + 2) { try await resolver.resolve() }
   }
-
-  // MARK: - Pairing (one-time trust-any)
 
   private static func pairInternal(host: String, ip: String, port: Double, code: String) async throws -> NetPairing {
     let url = URL(string: "https://\(ip):\(Int(port))\(pairingPath)")!
@@ -155,8 +149,6 @@ public class HybridArgusNet: HybridArgusNetSpec {
       throw netError("FINGERPRINT_MISMATCH|The server CA does not match the invitation")
     }
   }
-
-  // MARK: - Strict request
 
   private static func requestInternal(
     options: NetHttpRequest, caPem: String, allowedHost: String
@@ -271,8 +263,6 @@ public class HybridArgusNet: HybridArgusNetSpec {
     return try Data(contentsOf: URL(fileURLWithPath: path))
   }
 
-  // MARK: - PEM helper
-
   private static func certificateFromPem(_ pem: String) -> SecCertificate? {
     guard let der = derFromPem(pem) else { return nil }
     return SecCertificateCreateWithData(nil, der as CFData)
@@ -289,8 +279,6 @@ public class HybridArgusNet: HybridArgusNetSpec {
     return Data(base64Encoded: base64, options: .ignoreUnknownCharacters)
   }
 }
-
-// MARK: - TLS trust delegates
 
 private final class TrustAnyDelegate: NSObject, URLSessionTaskDelegate {
   func urlSession(
@@ -338,8 +326,6 @@ private final class StrictDelegate: NSObject, URLSessionTaskDelegate {
     }
   }
 }
-
-// MARK: - Bonjour resolver
 
 @MainActor
 private final class BonjourResolver: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
@@ -429,8 +415,6 @@ private final class BonjourResolver: NSObject, NetServiceBrowserDelegate, NetSer
     return value.isEmpty ? nil : value
   }
 }
-
-// MARK: - Timeout helper
 
 private func withTimeout<T>(
   seconds: TimeInterval,

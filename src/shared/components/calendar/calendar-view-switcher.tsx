@@ -10,7 +10,6 @@ type CalendarViewSwitcherProps = {
   onChange: (view: CalendarView) => void;
 };
 
-/** Segmented control: four options is few enough to show them all. */
 export function CalendarViewSwitcher({ view, labels, onChange }: CalendarViewSwitcherProps) {
   return (
     <View className="bg-surface-secondary flex-row rounded-full p-1">

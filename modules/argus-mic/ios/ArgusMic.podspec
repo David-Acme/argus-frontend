@@ -12,11 +12,8 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/David-Acme/argus.git", :tag => "#{s.version}" }
 
   s.source_files = [
-    # Implementation (Swift)
     "ios/**/*.{swift}",
-    # Autolinking/Registration (Objective-C++)
     "ios/**/*.{m,mm}",
-    # Implementation (C++ objects)
     "cpp/**/*.{hpp,cpp}",
   ]
 

@@ -34,7 +34,6 @@ export class ProjectTaskModel extends Model {
   @field('status') status!: string;
   @field('priority') priority!: string;
   @date('due_at') dueAt!: Date | null;
-  /** Float so reordering touches one row instead of rewriting the list. */
   @field('sort_order') sortOrder!: number;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;

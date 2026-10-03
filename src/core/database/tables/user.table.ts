@@ -15,8 +15,6 @@ export const USER_SCHEMA = tableSchema({
   ],
 });
 
-// No `associations`: `reminder` references `user` through two columns
-// (`created_by`, `target_user_id`) and WatermelonDB allows only one per table.
 export class UserModel extends Model {
   static table = 'user';
 

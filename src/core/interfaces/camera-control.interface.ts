@@ -1,6 +1,5 @@
 import type { DayNightMode } from '@/core/types';
 
-/** Wire payloads of the camera-control endpoints (device, not database). */
 export interface ICameraPtz {
   x?: number;
   y?: number;
@@ -24,7 +23,6 @@ export interface ICameraSettings {
   alarmVolume?: number;
 }
 
-/** Shape of `GET /camera/{id}/status`. */
 export interface ICameraDeviceStatus {
   ok?: boolean;
   model?: string;
@@ -42,7 +40,6 @@ export interface ICameraTalk {
   lang?: 'es' | 'en';
 }
 
-/** What the driver says the model can do, so the UI hides the rest. */
 export interface ICameraCapabilities {
   ptz?: boolean;
   presets?: boolean;

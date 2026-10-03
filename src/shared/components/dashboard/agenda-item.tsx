@@ -11,19 +11,13 @@ import { MemberStack } from './member-stack';
 
 type AgendaItemProps = {
   title: string;
-  /** Already formatted: a single time or a range. */
   time: string;
-  /** Display names; the card renders initials only. */
   members?: readonly string[];
-  /** Expanded detail, as on the schedule screen. */
   note?: string;
   status: AgendaStatus;
   onPress?: () => void;
-  /** Opens the entry action sheet on a phone without competing with tap. */
   onLongPress?: () => void;
-  /** Row menu; without it the corner stays a plain affordance-free marker. */
   actions?: ReactNode;
-  /** Wraps the press surface when a platform-specific context menu is available. */
   contextMenu?: (trigger: ReactElement) => ReactNode;
 };
 
@@ -58,7 +52,6 @@ export function AgendaItem({
       className="min-w-0 flex-1 flex-row active:opacity-80"
       onPress={onPress}
       onLongPress={onLongPress}>
-      {/* The rail is a card edge, so it lives outside the padding. */}
       <View className={cn('w-[3px]', RAIL_CLASS[status])} />
       <View className="min-w-0 flex-1 gap-1 p-3">
         <View className="flex-row items-start justify-between gap-3">
@@ -66,8 +59,6 @@ export function AgendaItem({
             {title}
           </Text>
         </View>
-        {/* Without members the row collapses: an empty avatar slot turns a
-            one-line entry into a card with a hole in it. */}
         {members && members.length > 0 ? (
           <>
             <Text className="text-muted-foreground text-[13px]">{statusLabel}</Text>

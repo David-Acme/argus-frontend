@@ -1,6 +1,5 @@
 import { useToastStore } from '@/core/stores';
 
-/** Imperative API; the host that renders them lives in the root layout. */
 export const toast = {
   success: (title: string, description?: string) =>
     useToastStore.getState().show('success', title, description),

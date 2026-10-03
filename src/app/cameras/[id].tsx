@@ -86,7 +86,6 @@ export default function CameraDetailScreen() {
         return;
       }
       if (action === 'toggle') {
-        // Turning it off stops the watching, so it is worth a question.
         if (
           camera.isEnabled &&
           !(await confirm({
@@ -137,8 +136,6 @@ export default function CameraDetailScreen() {
     };
   }, [readDevice]);
 
-  // Capabilities come from the driver, so the UI offers only what this model
-  // can actually do — a generic RTSP camera has no PTZ and no speaker.
   useEffect(() => {
     if (!id) return;
     let active = true;

@@ -4,19 +4,10 @@ import { MOSAIC_COLUMNS, MOSAIC_ROWS, MOSAIC_TINTS } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 
 type MosaicChartProps = {
-  /** Milliseconds before the first cell fades in. */
   delay?: number;
-  /**
-   * Density per cell (0..3), rows of time-of-day over days. Without it the
-   * block falls back to its own shape, which is only decoration.
-   */
   levels?: readonly (readonly number[])[];
 };
 
-/**
- * Density rises toward the bottom-right so the block reads as "activity built
- * up over time" instead of noise. Deterministic: same shape every render.
- */
 function levelAt(row: number, column: number): number {
   const bias = (row / (MOSAIC_ROWS - 1)) * 0.62 + (column / (MOSAIC_COLUMNS - 1)) * 0.38;
   const jitter = ((row * 7 + column * 13) % 11) / 11;

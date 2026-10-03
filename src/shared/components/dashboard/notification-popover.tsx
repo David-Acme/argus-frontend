@@ -24,13 +24,8 @@ type NotificationPopoverProps = {
   items: readonly NotificationPreview[];
 };
 
-/** Rows shown in the panel; beyond this it belongs on a screen, not a popover. */
 const PREVIEW_LIMIT = 4;
 
-/**
- * Bell action plus its panel. Anchored to the trigger by the popover primitive,
- * so it stays under the bell on a phone and on a desktop window alike.
- */
 export function NotificationPopover({
   label,
   title,
@@ -46,8 +41,6 @@ export function NotificationPopover({
       <PopoverTrigger asChild>
         <DashboardIconButton icon="bell" label={label} badge={unreadCount} />
       </PopoverTrigger>
-      {/* Tight to the bell: a wide gap reads as a floating panel, not as
-          something the button opened. */}
       <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">
           <Text className="text-[15px] font-semibold">{title}</Text>

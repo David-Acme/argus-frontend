@@ -18,8 +18,6 @@ export const REMINDER_SCHEMA = tableSchema({
   ],
 });
 
-// User ids are exposed raw, not as relations: role filtering can leave the `user`
-// row absent locally and `Relation.fetch()` would throw.
 export class ReminderModel extends Model {
   static table = 'reminder';
 

@@ -12,7 +12,6 @@ export const CALENDAR_EVENT_SHARE_SCHEMA = tableSchema({
   ],
 });
 
-/** Who an event is shared with, and whether they may edit it. */
 export class CalendarEventShareModel extends Model {
   static table = 'calendar_event_share';
 

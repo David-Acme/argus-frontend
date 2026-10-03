@@ -7,7 +7,6 @@ type AvatarFabProps = {
   accessibilityLabel?: string;
 };
 
-/** Floating action button that re-opens the voice session (mini avatar). */
 export function AvatarFab({ onPress, size = 64, accessibilityLabel }: AvatarFabProps) {
   return (
     <Pressable

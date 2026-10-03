@@ -11,11 +11,6 @@ type CenteredScreenProps = {
   className?: string;
 };
 
-/**
- * Single-purpose screens (onboarding, login, errors): centred when there is
- * room, scrollable when there is not, which is what makes them survive a
- * landscape phone as well as a desktop window.
- */
 export function CenteredScreen({
   children,
   maxWidth = CENTERED_SCREEN_MAX_WIDTH,

@@ -13,10 +13,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/shared/compone
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 
-/**
- * A dialog grows with the window: the same form that fills a phone sheet looks
- * pinched in a 512px box on a tablet, and paired fields need the room.
- */
 const DIALOG_WIDTH_CLASS = {
   compact: 'sm:max-w-[520px]',
   medium: 'sm:max-w-[560px]',
@@ -29,22 +25,13 @@ type AdaptiveDialogProps = {
   trigger?: ReactNode;
   title: string;
   description?: string;
-  /** Accessible label of the close affordance on the sheet variant. */
   closeLabel: string;
   children?: ReactNode;
-  /** Actions row. Pinned under the body on both shapes. */
   footer?: ReactNode;
-  /** Disables every dismissal path while it stays visible. */
   dismissible?: boolean;
   contentClassName?: string;
 };
 
-/**
- * One modal API, the right shape per form factor: a centered dialog where
- * there is room for one, a bottom sheet on phones — where a centered dialog
- * always feels like a web page. The switch is the window class, not the
- * platform, so a phone in landscape and a small desktop window agree.
- */
 export function AdaptiveDialog({
   open,
   onOpenChange,

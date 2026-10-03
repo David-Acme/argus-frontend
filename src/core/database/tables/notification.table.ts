@@ -3,8 +3,6 @@ import { date, field, json, text } from '@nozbe/watermelondb/decorators';
 import type { NotificationData } from '@/core/types';
 import { sanitizeObject } from './sanitizers';
 
-// No `updated_at` column → no `updatedAt` prop: `prepareUpdate()` touches it and
-// `RawRecord._setRaw` would TypeError on the missing schema.
 export const NOTIFICATION_SCHEMA = tableSchema({
   name: 'notification',
   columns: [

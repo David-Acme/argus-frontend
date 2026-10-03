@@ -17,11 +17,9 @@ const isIpv4 = (value: unknown): value is string => {
   );
 };
 
-/** Builds the compact enrollment QR from a token and the already-pinned server identity. */
 export const buildInvitationQr = (payload: InvitationQrPayload): string =>
   JSON.stringify({ v: INVITATION_QR_VERSION, t: INVITATION_QR_TYPE, ...payload });
 
-/** Parses an enrollment QR without trusting its endpoint until the certificate is verified. */
 export const parseInvitationQr = (raw: string): InvitationQrPayload | null => {
   let json: unknown;
   try {

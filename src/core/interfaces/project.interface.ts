@@ -1,6 +1,5 @@
 import type { ProjectStatus, ProjectTaskPriority, ProjectTaskStatus, ShareAccess } from '@/core/types';
 
-/** Wire payloads of the project REST endpoints. Timestamps are epoch SECONDS. */
 export interface IProjectCreate {
   name: string;
   description?: string;
@@ -24,7 +23,6 @@ export interface IProjectTaskCreate {
 
 export type IProjectTaskUpdate = Partial<Omit<IProjectTaskCreate, 'projectId'>>;
 
-/** Sharing a project with one person, at one access level. */
 export interface IProjectMemberCreate {
   projectId: number;
   userId: number;

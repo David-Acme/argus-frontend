@@ -23,18 +23,10 @@ import { itemIn } from '@/shared/libs/animations';
 import { cn } from '@/shared/libs/utils';
 
 type ComposeFabProps = {
-  /** Diameter of the trigger; the bar and the rail use different sizes. */
   size?: number;
-  /** Which chrome hosts it, which is what decides where the stack lands. */
   anchor?: 'bar' | 'rail';
 };
 
-/**
- * Speed dial: the actions stack vertically over the trigger and the icon morphs
- * between plus and close. The dim layer and the actions share one portal so the
- * actions paint above the dim, and everything animated is opacity or transform,
- * so it stays on the UI thread.
- */
 export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();

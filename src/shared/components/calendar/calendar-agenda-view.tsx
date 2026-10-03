@@ -17,7 +17,6 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 
 type CalendarAgendaViewProps = {
   entries: readonly CalendarEntry[];
-  /** Window the list walks day by day, so the schedule reads as a continuum. */
   from: number;
   to: number;
   freeLabel: string;
@@ -28,7 +27,6 @@ type CalendarAgendaViewProps = {
   renderContextMenu?: (entry: CalendarEntry, trigger: ReactElement) => ReactNode;
 };
 
-/** A day heading, an entry, or a free day: one flat list, never nested. */
 type AgendaRow =
   | { kind: 'header'; key: string; day: number }
   | { kind: 'entry'; key: string; entry: CalendarEntry }
@@ -83,7 +81,6 @@ export function CalendarAgendaView({
     ({ item }: { item: AgendaRow }) => {
       if (item.kind === 'header') {
         return (
-          // Sticky, so the day you are looking at stays named while you scroll.
           <View className="bg-background pt-4 pb-2">
             <Text className="text-foreground-secondary text-[13px] font-semibold">
               {date.formatAgendaDay(new Date(item.day))}
@@ -136,8 +133,6 @@ export function CalendarAgendaView({
       data={rows}
       renderItem={renderItem}
       keyExtractor={(item) => item.key}
-      // One hint for the common row (an entry); headers/free are exact, and
-      // entries get measured on mount.
       estimatedItemSize={AGENDA_ENTRY_ESTIMATE}
       getItemType={(item) => item.kind}
       getFixedItemSize={(_item, _index, kind) =>

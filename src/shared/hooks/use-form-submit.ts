@@ -9,7 +9,6 @@ import { toastServiceError } from '@/shared/libs/service-error';
 type UseFormSubmitOptions<TValues extends FieldValues, TResult> = {
   form: UseFormReturn<TValues>;
   formScroll?: ReturnType<typeof useFormScroll>;
-  /** The write itself. Receives the validated values. */
   request: (values: TValues) => Promise<IServiceResponse<TResult>>;
   onSuccess?: (info: TResult | null) => void;
 };
@@ -19,12 +18,6 @@ type UseFormSubmitResult = {
   submit: () => Promise<void>;
 };
 
-
-/**
- * Validate, write, and turn the answer into field errors or a toast. The
- * backend returns `errors.fields` keyed by field name, so a 422 lands under the
- * input that caused it.
- */
 export function useFormSubmit<TValues extends FieldValues, TResult>({
   form,
   formScroll,

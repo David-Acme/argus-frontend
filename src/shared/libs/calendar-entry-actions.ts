@@ -29,20 +29,14 @@ type CalendarEntryPermissions = {
   canDelete: boolean;
 };
 
-/**
- * Deletion is deliberately absent from the event editor. It stays in the
- * entry action menu, where the user receives a separate confirmation step.
- */
 export function calendarEventFormActions(): readonly CalendarEventFormAction[] {
   return ['cancel', 'save'];
 }
 
-/** Overflow affordances are reserved for the mouse/pointer experience on web. */
 export function shouldShowCalendarEntryOverflow(isNative: boolean): boolean {
   return !isNative;
 }
 
-/** Keeps the detail panel compact while giving its lone close action room. */
 export function calendarEntryDetailDialogLayout(): {
   contentClassName: string;
   footerClassName: string;
@@ -53,7 +47,6 @@ export function calendarEntryDetailDialogLayout(): {
   };
 }
 
-/** Builds the short, readable summary shown when an entry is selected. */
 export function calendarEntryDetailRows(
   entry: CalendarEntry,
   labels: CalendarEntryDetailLabels,
@@ -85,12 +78,10 @@ export function calendarEntryDetailRows(
   return rows;
 }
 
-/** Removes the source prefix from an entry merged from several local tables. */
 export function calendarEntryRecordId(entry: CalendarEntry): string {
   return entry.id.slice(entry.id.indexOf(':') + 1);
 }
 
-/** Actions accepted by the backend for each kind of schedule entry. */
 export function availableCalendarEntryActions(
   entry: CalendarEntry,
   { canEdit, canDelete }: CalendarEntryPermissions

@@ -1,5 +1,3 @@
-/** Minimal fragmented-MP4 reader for the gateway camera feed (H.264, one track). */
-
 export type Fmp4Init = {
   codec: string;
   description: Uint8Array;

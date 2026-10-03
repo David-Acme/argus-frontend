@@ -31,7 +31,6 @@ class UserService extends DatabaseService<'user'> {
     );
   }
 
-  /** Filter queries stay in the database layer; screens receive only snapshots. */
   async filterDirectory(filter: IPeopleDirectoryFilter): Promise<UserModel[]> {
     const users = await this.fetchMany([Q.sortBy('name', Q.asc)]);
     const query = filter.query.trim().toLocaleLowerCase();

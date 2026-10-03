@@ -15,10 +15,6 @@ import { useViewCacheRows, useViewCacheValue } from './use-cached-rows';
 const emptyActivityLevels = (): readonly (readonly number[])[] =>
   Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
 
-/**
- * Reads only MMKV snapshots. The session coordinator owns every WatermelonDB
- * observer and refreshes these values before a dashboard route is entered.
- */
 export function useDashboardData(): IDashboardCacheData {
   const cameraTiles = useViewCacheRows<IDashboardCameraCacheRow>(VIEW_CACHE_KEYS.dashboardCameras);
   const projects = useViewCacheRows<DashboardProjectCard>(VIEW_CACHE_KEYS.dashboardProjects);

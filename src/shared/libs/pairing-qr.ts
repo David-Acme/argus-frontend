@@ -9,7 +9,6 @@ import {
 const isHexFingerprint = (value: unknown): boolean =>
   typeof value === 'string' && PAIRING_FINGERPRINT_PATTERN.test(value);
 
-/** Parses and validates the server banner QR JSON. `null` if not an Argus QR. */
 export function parsePairingQr(raw: string): QrPairingPayload | null {
   let json: unknown;
   try {
@@ -49,12 +48,10 @@ export function parsePairingQr(raw: string): QrPairingPayload | null {
   } as QrPairingPayload;
 }
 
-/** Is it a plain pairing code (8-12 hex)? Manual entry fallback. */
 export function isPairingCode(value: string): boolean {
   return PAIRING_CODE_PATTERN.test(value.trim());
 }
 
-/** Human-readable host for the UI, without the `.local` suffix. */
 export function hostLabel(host: string): string {
   return host.endsWith(PAIRING_HOST_SUFFIX) ? host.slice(0, -PAIRING_HOST_SUFFIX.length) : host;
 }

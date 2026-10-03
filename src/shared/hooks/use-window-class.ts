@@ -9,24 +9,15 @@ type WindowClassResult = {
   orientation: Orientation;
   width: number;
   height: number;
-  /** Convenience flags so callers avoid string comparisons in JSX. */
   isCompact: boolean;
   isMedium: boolean;
   isExpanded: boolean;
-  /** True from `medium` up: two columns fit. */
   isWide: boolean;
-  /** True when vertical room is scarce — a phone in landscape, mostly. */
   isShort: boolean;
   isLandscape: boolean;
-  /**
-   * Navigation goes to a side rail instead of the floating bar: on a desktop
-   * window because there is room, and on a short wide one because a bottom bar
-   * would eat a fifth of the height.
-   */
   usesNavRail: boolean;
 };
 
-/** Exported so non-React callers share the thresholds. */
 export function classifyWindow(width: number, height: number): {
   windowClass: WindowClass;
   heightClass: WindowHeightClass;
@@ -40,11 +31,6 @@ export function classifyWindow(width: number, height: number): {
   };
 }
 
-/**
- * Classes from the live window size, so phone, tablet and desktop are decided
- * by dimensions and never by platform. Height matters too: a rotated phone is
- * `medium` wide but only ~360dp tall.
- */
 export function useWindowClass(): WindowClassResult {
   const { width, height } = useWindowDimensions();
   const { windowClass, heightClass, orientation } = classifyWindow(width, height);

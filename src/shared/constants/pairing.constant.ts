@@ -1,4 +1,3 @@
-/** Server banner QR validation (JSON, not a plain code). */
 export const PAIRING_CODE_LENGTH = 8;
 export const PAIRING_FINGERPRINT_LENGTH = 64;
 export const PAIRING_HOST_SUFFIX = '.local';

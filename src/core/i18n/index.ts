@@ -15,11 +15,9 @@ export type {
   TranslationParamsRest,
 } from '@/core/types';
 
-/** Imperative twin for non-React code (.ts): reads the language at call time. */
 export const t: TranslateFn = (key, ...rest) =>
   translate(localeDictionaries[useLocaleStore.getState().language], key, ...rest);
 
-/** Loose twin for validation messages (see `translateLoose`). */
 export const tk = (key: string): string =>
   translateLoose(localeDictionaries[useLocaleStore.getState().language], key);
 

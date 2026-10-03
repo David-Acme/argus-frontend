@@ -36,7 +36,6 @@ class HttpService {
     return this.request<T>('DELETE', path, undefined, undefined, config);
   }
 
-  /** Multipart: fields become regular form fields and files keep their own names. */
   async postMultipart<T>(
     path: string,
     file: NetHttpFile,

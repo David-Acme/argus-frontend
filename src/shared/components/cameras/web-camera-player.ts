@@ -3,7 +3,6 @@ import { parseFragment, parseInit } from '@/shared/libs/fmp4';
 const MAX_QUEUED_FRAMES = 8;
 const MAX_LATENCY_BYTES = 768 * 1024;
 
-/** WebCodecs fMP4 player: decodes H.264 fragments and paints them on a canvas. */
 export class WebCameraPlayer {
   static get supported(): boolean {
     return (
@@ -37,7 +36,6 @@ export class WebCameraPlayer {
     this.dropUntilKeyframe = false;
   }
 
-  /** Hidden screen: stop decoding and stop acking so the server backpressures. */
   setVisible(visible: boolean): void {
     if (visible === !this.paused) return;
     this.paused = !visible;

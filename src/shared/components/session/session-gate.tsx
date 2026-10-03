@@ -7,7 +7,6 @@ import { useAuthStore } from '@/core/stores/auth.store';
 import { IS_NATIVE } from '@/shared/constants';
 import { Text } from '@/shared/components/ui/text';
 
-// The native splash must be held before the first React view is mounted.
 if (IS_NATIVE) {
   void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 }
@@ -31,10 +30,6 @@ function SessionSplash() {
   );
 }
 
-/**
- * Keeps the first route behind the native or desktop splash until the local
- * session and the paired server certificate have been hydrated.
- */
 export function SessionGate({ children }: SessionGateProps) {
   const [ready, setReady] = useState(sessionService.isInitialized);
 

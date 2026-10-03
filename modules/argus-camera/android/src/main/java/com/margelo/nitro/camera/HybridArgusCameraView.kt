@@ -15,7 +15,6 @@ import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.ArrayBuffer
 import com.margelo.nitro.views.HybridView
 
-/** Native fMP4 player: ExoPlayer reads the JS-pumped stream through a blocking DataSource. */
 @DoNotStrip
 @UnstableApi
 class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {

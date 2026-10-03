@@ -30,22 +30,14 @@ import { toastServiceError } from '@/shared/libs/service-error';
 
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
-  /** Opens the edit form; only a calendar event has one. */
   onEdit?: (entry: CalendarEntry) => void;
   canEdit: boolean;
   canDelete: boolean;
-  /** Mobile long press controls the sheet from the parent entry surface. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Tablet long press owns the entry surface, so its menu opens at the press point. */
   contextTrigger?: ReactElement;
 };
 
-/**
- * Per-row actions on a schedule entry. Which ones exist depends on what the
- * entry is: an event is edited here, a task is closed here, and a reminder is
- * produced by Argus, so it only offers what the backend accepts.
- */
 export function EntryActionsMenu({
   entry,
   onEdit,
@@ -172,8 +164,6 @@ export function EntryActionsMenu({
     );
   }
 
-  // Touch surfaces use long press. The visible overflow is reserved for web,
-  // where it is a predictable pointer affordance.
   if (open === undefined && !shouldShowCalendarEntryOverflow(IS_NATIVE)) return null;
   if (open !== undefined && !usesSheet) return null;
 

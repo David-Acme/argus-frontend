@@ -1,9 +1,7 @@
 import type { SyncTableKey } from '@/core/types';
 
-/** Ranges in epoch SECONDS (backend contract). */
 export interface ISyncRangeDto {
   startTime?: number;
-  /** Tie-breaker for rows created/deleted in the same second. */
   startId?: number | string;
   endTime?: number;
 }

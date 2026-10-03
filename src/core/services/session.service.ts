@@ -25,13 +25,6 @@ export type SessionBootstrapResult = SessionPairingState & {
 
 type AuthTokens = Pick<IAuthSession, 'accessToken' | 'refreshToken'>;
 
-/**
- * Owns the application session lifecycle.
- *
- * The store is only the in-memory projection consumed by the UI. This service
- * is the single place that restores, persists, refreshes and clears session
- * credentials, including the paired server certificate required by transport.
- */
 class SessionService {
   private initialization: Promise<SessionBootstrapResult> | null = null;
   private refreshing: Promise<SessionRefreshOutcome> | null = null;
@@ -65,7 +58,6 @@ class SessionService {
     }
   }
 
-  /** Publishes credentials immediately, then makes them durable. */
   async establish(session: IAuthSession): Promise<void> {
     this.sessionVersion += 1;
     useAuthStore.getState().setSession(session);
@@ -83,7 +75,6 @@ class SessionService {
     return this.refreshing;
   }
 
-  /** Updates the current user from sync and keeps the durable snapshot fresh. */
   updateUser(partial: Partial<IAuthUser>): void {
     const current = useAuthStore.getState().user;
     if (!current) return;
@@ -92,7 +83,6 @@ class SessionService {
     this.persistUser(user);
   }
 
-  /** Clears memory immediately and removes the durable session afterwards. */
   async clearSession(): Promise<void> {
     this.sessionVersion += 1;
     const userId = useAuthStore.getState().user?.id ?? null;
@@ -102,11 +92,8 @@ class SessionService {
     viewCacheService.setUserId(null);
     try {
       storageService.remove(SESSION_USER_KEY);
-      // Snapshots are what a screen paints before its query answers: another
-      // user must never see the previous one's rows.
       viewCacheService.clear();
     } catch {
-      // The in-memory session is already cleared; storage cleanup is best effort.
     }
     await this.deletePersistedTokens();
   }
@@ -129,13 +116,10 @@ class SessionService {
       viewCacheService.setUserId(session?.user.id ?? null);
       if (session) viewCacheCoordinatorService.start(session.user.id);
 
-      // Credentials without a complete paired instance can never be used.
-      // Remove that stale combination so a later pairing starts cleanly.
       if (!session && (accessToken || refreshToken || user)) {
         try {
           storageService.remove(SESSION_USER_KEY);
         } catch {
-          // The invalid session is already discarded from memory.
         }
         await this.deletePersistedTokens();
       }
@@ -212,7 +196,6 @@ class SessionService {
     try {
       storageService.setObject(SESSION_USER_KEY, user);
     } catch {
-      // Secure tokens remain the source of truth for the next restore attempt.
     }
   }
 

@@ -23,11 +23,6 @@ import {
   X,
 } from 'lucide';
 
-/**
- * Central registry of animatable icons (morphicons). Icons are consumed as
- * DATA from the vanilla `lucide` package (IconNode), never as components —
- * the static registry (`icon.constant.ts`) keeps using `lucide-react-native`.
- */
 export const MORPH_ICONS = {
   'arrow-right': ArrowRight,
   camera: Camera,

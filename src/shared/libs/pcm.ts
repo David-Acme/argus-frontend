@@ -1,5 +1,3 @@
-/** PCM s16le mono helpers — bridge between ArgusMic (ArrayBuffer) and the socket. */
-
 export function pcmChunk(bytes: ArrayBuffer): Int16Array {
   return new Int16Array(bytes);
 }
@@ -8,7 +6,6 @@ export function pcmToBytes(samples: Int16Array): ArrayBuffer {
   return samples.slice().buffer;
 }
 
-/** Wraps PCM into a WAV playable by `expo-audio` (socket TTS buffer). */
 export function pcmToWav(samples: Int16Array, sampleRate: number): ArrayBuffer {
   const bytesPerSample = 2;
   const byteRate = sampleRate * bytesPerSample;

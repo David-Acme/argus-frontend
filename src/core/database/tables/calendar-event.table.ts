@@ -20,8 +20,6 @@ export const CALENDAR_EVENT_SCHEMA = tableSchema({
   ],
 });
 
-// User ids stay raw, not relations: role filtering can leave the `user` row
-// absent locally and `Relation.fetch()` would throw.
 export class CalendarEventModel extends Model {
   static table = 'calendar_event';
 
@@ -33,7 +31,6 @@ export class CalendarEventModel extends Model {
   @text('location') location!: string;
   @field('color') color!: string;
   @date('starts_at') startsAt!: Date;
-  /** Absent means a point in time, not a span. */
   @date('ends_at') endsAt!: Date | null;
   @field('is_all_day') isAllDay!: boolean;
   @text('recurrence_rule') recurrenceRule!: string | null;

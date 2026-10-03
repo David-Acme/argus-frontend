@@ -16,11 +16,6 @@ const toNetError = (error: unknown): NetError => {
   };
 };
 
-/**
- * Pairing via the server banner QR: the QR provides host/port/code/fingerprints
- * but not the IP → resolved with `discover()` and the fingerprint is verified
- * against the real POST /pairing response.
- */
 export async function pairWithQr(qr: QrPairingPayload): Promise<PairWithQrResult> {
   const discovery = await netService.discover();
   if (!discovery.ip) {
@@ -50,8 +45,6 @@ export async function pairWithQr(qr: QrPairingPayload): Promise<PairWithQrResult
     throw toNetError(error);
   }
 
-  // With a full QR we cross-check fingerprints/instanceId (closes the QR TOFU gap).
-  // With a manual code (no fingerprints) the Nitro already verifies code↔fingerprint.
   if (qr.caFingerprint && qr.instanceId) {
     const fingerprintMatches =
       pairing.caFingerprint.toLowerCase() === qr.caFingerprint.toLowerCase();

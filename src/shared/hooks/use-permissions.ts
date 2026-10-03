@@ -10,7 +10,6 @@ type UsePermissionsResult = {
   canWrite: (table: TableName) => boolean;
 };
 
-/** Role of the signed-in user plus the checks the UI needs to hide dead controls. */
 export function usePermissions(): UsePermissionsResult {
   const role = useAuthStore((state) => state.user?.role) ?? 'guest';
 
