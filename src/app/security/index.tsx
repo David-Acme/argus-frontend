@@ -1,8 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { useAuthStore } from '@/core/stores';
-import type { GuardExpectedGuest, GuardFeedbackLabel, GuardMode } from '@/core/types';
 import { EmptyState, ScreenShell } from '@/shared/components/layout';
 import {
   DecisionReview,
@@ -21,8 +20,6 @@ import { useGuard } from '@/shared/hooks/use-guard';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { confirm } from '@/shared/libs/confirm';
-import { toast } from '@/shared/libs/toast';
 
 export default function SecurityScreen() {
   const router = useRouter();
@@ -34,49 +31,6 @@ export default function SecurityScreen() {
   const access = guardAccessForRole(role ?? 'guest');
   const guard = useGuard(access.review);
   const [guestFormOpen, setGuestFormOpen] = useState(false);
-  const { setMode, removeGuest, sendFeedback, addGuest } = guard;
-
-  const changeMode = useCallback(
-    async (mode: GuardMode) => {
-      if (await setMode(mode)) {
-        toast.success(
-          t('screens.security.mode.saved', { mode: t(`screens.security.mode.${mode}`) })
-        );
-      }
-    },
-    [setMode, t]
-  );
-
-  const askRemoveGuest = useCallback(
-    async (guest: GuardExpectedGuest) => {
-      const accepted = await confirm({
-        title: t('screens.security.guests.remove-title'),
-        description: t('screens.security.guests.remove-description', { name: guest.description }),
-        confirmLabel: t('screens.security.guests.remove'),
-        intent: 'danger',
-      });
-      if (accepted && (await removeGuest(guest.id)))
-        toast.success(t('screens.security.guests.removed'));
-    },
-    [removeGuest, t]
-  );
-
-  const giveFeedback = useCallback(
-    async (eventId: string, label: GuardFeedbackLabel) => {
-      if (await sendFeedback(eventId, label)) toast.success(t('screens.security.decisions.saved'));
-    },
-    [sendFeedback, t]
-  );
-
-  const saveGuest = useCallback(
-    async (body: Parameters<typeof addGuest>[0]) => {
-      const saved = await addGuest(body);
-      if (saved) toast.success(t('screens.security.guests.saved'));
-      return saved;
-    },
-    [addGuest, t]
-  );
-
   if (authStatus !== 'signed-in' || !access.view) return <Redirect href="/" />;
 
   const activeGuests = guard.guests.filter(
@@ -98,7 +52,7 @@ export default function SecurityScreen() {
       <GuardModePicker
         state={guard.mode}
         pending={guard.pendingMode}
-        onSelect={changeMode}
+        onSelect={guard.setMode}
         readOnly={!access.setMode}
       />
     </SecurityPanel>
@@ -121,7 +75,7 @@ export default function SecurityScreen() {
       <ExpectedGuestList
         guests={guard.guests}
         now={guard.loadedAt}
-        onRemove={access.manageGuests ? askRemoveGuest : undefined}
+        onRemove={access.manageGuests ? guard.removeGuest : undefined}
       />
     </SecurityPanel>
   );
@@ -141,7 +95,7 @@ export default function SecurityScreen() {
       description={t('screens.security.decisions.description')}
       count={pendingReviews}
       className={className}>
-      <DecisionReview decisions={guard.decisions} onFeedback={giveFeedback} />
+      <DecisionReview decisions={guard.decisions} onFeedback={guard.sendFeedback} />
     </SecurityPanel>
   );
 
@@ -178,11 +132,7 @@ export default function SecurityScreen() {
   );
 
   const body =
-    guard.loading && guard.mode == null ? (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator />
-      </View>
-    ) : guard.failed ? (
+    guard.failed ? (
       <EmptyState
         icon="triangle-alert"
         title={t('screens.security.load-error')}
@@ -210,7 +160,7 @@ export default function SecurityScreen() {
       <ExpectedGuestForm
         open={guestFormOpen}
         onOpenChange={setGuestFormOpen}
-        onSubmit={saveGuest}
+        onSubmit={guard.addGuest}
       />
     </ScreenShell>
   );

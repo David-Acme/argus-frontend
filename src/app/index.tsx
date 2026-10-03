@@ -26,7 +26,7 @@ import { EmptyState } from '@/shared/components/layout';
 import { ServerUnreachable } from '@/shared/components/session/server-unreachable';
 import { GuardCard } from '@/shared/components/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
-import { useGuardMode } from '@/shared/hooks/use-guard-mode';
+import { useGuardMode } from '@/shared/hooks/use-guard';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
@@ -62,7 +62,7 @@ function DashboardScreen({ user }: DashboardScreenProps) {
     });
   }, []);
   const guardAccess = guardAccessForRole(role);
-  const guardMode = useGuardMode(guardAccess.view);
+  const guardMode = useGuardMode(guardAccess.view).data;
   const {
     cameraTiles,
     projects,

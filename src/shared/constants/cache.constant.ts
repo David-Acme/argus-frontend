@@ -33,6 +33,10 @@ export const VIEW_CACHE_KEYS = {
   peopleUsers: 'people.users',
   peopleInvitations: 'people.invitations',
   settingsOverview: 'settings.overview',
+  guardMode: 'guard.mode',
+  guardGuests: 'guard.guests',
+  guardIncidents: 'guard.incidents',
+  guardDecisions: 'guard.decisions',
 } as const;
 
 export const buildViewCacheStorageKey = (
