@@ -7,7 +7,10 @@ import { DashboardShell } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { EmptyState } from '@/shared/components/ui/empty-state';
+import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
+import { VirtualList } from '@/shared/components/ui/virtual-list';
+import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
@@ -27,6 +30,8 @@ const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard',
 
 const roleKey = (role: UserRole) => `screens.users.role-${role}` as const;
 
+const PERSON_ROW_HEIGHT = 60;
+
 export default function PeopleDirectoryScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
@@ -40,6 +45,13 @@ export default function PeopleDirectoryScreen() {
   const portraitRequest = useRef(0);
   const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
   const filtered = useMemo(() => filterPeople(people, { query: search, role }), [people, role, search]);
+  const bottomInset = useBottomNavInset();
+  const openPerson = useCallback((person: IPeopleDirectoryCacheRow) => {
+    portraitRequest.current += 1;
+    setPortraitUri(null);
+    setPortraitLoading(false);
+    setSelected(person);
+  }, []);
   const closeDetails = useCallback(() => {
     portraitRequest.current += 1;
     setSelected(null);
@@ -78,9 +90,8 @@ export default function PeopleDirectoryScreen() {
   if (currentUser?.role !== 'guard') return <Redirect href="/profile" />;
 
   return (
-    <DashboardShell
-      active="people">
-      <View className="gap-5">
+    <DashboardShell active="people" scrollable={false}>
+      <View className="flex-1 gap-5">
         <View className="gap-1.5">
           <Text variant="h2">{t('screens.users.people-directory')}</Text>
           <Text className="text-foreground-secondary text-sm leading-5">
@@ -113,33 +124,25 @@ export default function PeopleDirectoryScreen() {
           </View>
         </View>
 
-        <View className="gap-3">
-          <SectionHeader title={t('screens.users.people-directory')} />
+        <View className="flex-1 gap-3">
+          <SectionHeader title={t('screens.users.people-directory')} count={filtered.length} />
           {filtered.length > 0 ? (
-            <Panel className="gap-0 py-2">
-              {filtered.map((person) => (
-                <Pressable
-                  key={person.id}
-                  className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0"
-                  accessibilityRole="button"
-                  onPress={() => {
-                    portraitRequest.current += 1;
-                    setPortraitUri(null);
-                    setPortraitLoading(false);
-                    setSelected(person);
-                  }}>
-                  <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-                    <Icon name="user" className="text-foreground-secondary size-5" />
-                  </View>
-                  <View className="min-w-0 flex-1 gap-0.5">
-                    <Text numberOfLines={1}>{[person.name, person.lastName].filter(Boolean).join(' ')}</Text>
-                    <Text className="text-muted-foreground text-xs">
-                      {t(roleKey(person.role))} · {person.isActive ? t('screens.users.active') : t('screens.users.inactive')}
-                    </Text>
-                  </View>
-                  <Icon name="chevron-right" className="text-muted-foreground size-5" />
-                </Pressable>
-              ))}
+            <Panel className="flex-1 p-1.5">
+              <VirtualList
+                data={filtered}
+                keyOf={(person) => person.id}
+                estimatedItemSize={PERSON_ROW_HEIGHT}
+                paddingBottom={bottomInset}
+                renderItem={(person) => (
+                  <ListRow
+                    icon="user"
+                    title={[person.name, person.lastName].filter(Boolean).join(' ')}
+                    subtitle={`${t(roleKey(person.role))} · ${person.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
+                    chevron
+                    onPress={() => openPerson(person)}
+                  />
+                )}
+              />
             </Panel>
           ) : (
             <Panel>

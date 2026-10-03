@@ -14,6 +14,7 @@ import {
 } from '@/shared/components/dashboard';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/ui/empty-state';
+import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 
@@ -30,7 +31,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 
 import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
 import {
   InvitationDialog,
@@ -158,7 +159,7 @@ export default function UsersScreen() {
               action={t('screens.users.new-invitation')}
               onAction={() => setInviteOpen(true)}
             />
-            <Panel className="gap-0 py-2">
+            <Panel className="gap-1 p-1.5">
               {invitations.length === 0 ? (
                 <EmptyState variant="inline" icon="qr-code" title={t('screens.users.no-invitations')} />
               ) : null}
@@ -168,23 +169,28 @@ export default function UsersScreen() {
                   invitation.expiresAt * 1000 > now &&
                   invitation.redemptionCount < invitation.maxRedemptions;
                 return (
-                  <View key={invitation.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
-                    <Icon name="qr-code" className="text-foreground-secondary size-5" />
-                    <View className="min-w-0 flex-1 gap-0.5">
-                      <Text>{roleLabel(invitation.role)}</Text>
-                      <Text className="text-muted-foreground text-xs">
-                        {invitation.redemptionCount}/{invitation.maxRedemptions} · {date.formatDayMonth(new Date(invitation.expiresAt * 1000))}
-                      </Text>
-                    </View>
-                    <Text className={usable ? 'text-success text-xs' : 'text-muted-foreground text-xs'}>
-                      {usable ? t('screens.users.active') : t('screens.users.inactive')}
-                    </Text>
-                    {usable ? (
-                      <Pressable onPress={() => void revoke(invitation)} accessibilityLabel={t('screens.users.revoke')}>
-                        <Icon name="x" className="text-error-strong size-5" />
-                      </Pressable>
-                    ) : null}
-                  </View>
+                  <ListRow
+                    key={invitation.id}
+                    icon="qr-code"
+                    title={roleLabel(invitation.role)}
+                    subtitle={`${invitation.redemptionCount}/${invitation.maxRedemptions} · ${date.formatDayMonth(new Date(invitation.expiresAt * 1000))}`}
+                    trailing={
+                      <>
+                        <Text variant="caption" className={usable ? 'text-success' : undefined}>
+                          {usable ? t('screens.users.active') : t('screens.users.inactive')}
+                        </Text>
+                        {usable ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            accessibilityLabel={t('screens.users.revoke')}
+                            onPress={() => void revoke(invitation)}>
+                            <Icon name="x" className="text-error-strong size-5" />
+                          </Button>
+                        ) : null}
+                      </>
+                    }
+                  />
                 );
               })}
             </Panel>
@@ -205,29 +211,32 @@ export default function UsersScreen() {
 
         <View className="gap-3">
           <SectionHeader title={t('screens.users.members')} />
-          <Panel className="gap-0 py-2">
+          <Panel className="gap-1 p-1.5">
             {users.length === 0 ? (
               <EmptyState variant="inline" icon="users" title={t('screens.users.no-users')} />
             ) : users.map((user) => (
-              <View key={user.id} className="border-border-subtle flex-row items-center gap-3 border-b py-3 last:border-b-0">
-                <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-                  <Icon name="user" className="text-foreground-secondary size-5" />
-                </View>
-                <View className="min-w-0 flex-1 gap-0.5">
-                  <Text numberOfLines={1}>{[user.name, user.lastName].filter(Boolean).join(' ')}</Text>
-                  <Text className="text-muted-foreground text-xs">
-                    {roleLabel(user.role)} · {user.isActive ? t('screens.users.active') : t('screens.users.inactive')}
-                  </Text>
-                </View>
-                <Button size="sm" variant="ghost" onPress={() => setEditing(user)}>
-                  <Text>{t('common.edit')}</Text>
-                </Button>
-                {user.isActive ? (
-                  <Button size="sm" variant="ghost" onPress={() => void deactivate(user)}>
-                    <Icon name="user-minus" className="text-error-strong size-4" />
-                  </Button>
-                ) : null}
-              </View>
+              <ListRow
+                key={user.id}
+                icon="user"
+                title={[user.name, user.lastName].filter(Boolean).join(' ')}
+                subtitle={`${roleLabel(user.role)} · ${user.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
+                trailing={
+                  <>
+                    <Button size="sm" variant="ghost" onPress={() => setEditing(user)}>
+                      <Text>{t('common.edit')}</Text>
+                    </Button>
+                    {user.isActive ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        accessibilityLabel={t('screens.users.deactivate')}
+                        onPress={() => void deactivate(user)}>
+                        <Icon name="user-minus" className="text-error-strong size-4" />
+                      </Button>
+                    ) : null}
+                  </>
+                }
+              />
             ))}
           </Panel>
         </View>
