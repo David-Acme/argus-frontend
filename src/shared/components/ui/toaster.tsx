@@ -4,7 +4,7 @@ import { useToastStore } from '@/core/stores';
 import { CONTENT_MAX_WIDTH } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { ToastCard } from './toast-card';
+import { ToastCard } from '@/shared/components/ui/toast-card';
 
 export function Toaster() {
   const insets = useSafeAreaInsets();

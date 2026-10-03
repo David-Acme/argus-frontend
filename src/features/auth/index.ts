@@ -1,3 +1,5 @@
+export { EntryGate } from './components/entry-gate';
+export { SessionGate } from './components/session-gate';
 export { default as ApproveScreen } from './screens/approve-screen';
 export { default as FaceScreen } from './screens/face-screen';
 export { default as InvitationScreen } from './screens/invitation-screen';

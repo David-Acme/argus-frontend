@@ -1,7 +1,7 @@
 import { TextClassContext } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
 import { cn } from '@/shared/libs/utils';
-import { getButtonState } from '@/shared/libs/button-state';
+import { getButtonState } from '@/shared/components/ui/button-state';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform, Pressable } from 'react-native';
 import Animated, {

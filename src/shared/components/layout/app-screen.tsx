@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CONTENT_MAX_WIDTH } from '@/shared/constants';
-import { useBottomNav } from '@/shared/hooks/use-bottom-nav';
+import { useBottomNav } from '@/shared/components/layout/use-bottom-nav';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 

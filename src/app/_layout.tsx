@@ -1,6 +1,6 @@
 import '../global.css';
 import { IS_NATIVE, NAV_FADE_MS } from '@/shared/constants';
-import { NAV_THEME, BG_COLORS } from '@/shared/libs/theme';
+import { NAV_THEME, BG_COLORS } from '@/shared/components/layout/navigation-theme';
 import { getThemePreference } from '@/shared/hooks/use-theme-preference';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { ThemeProvider } from 'expo-router/react-navigation';
@@ -12,10 +12,10 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GlobalBottomNav } from '@/shared/components/layout/global-bottom-nav';
-import { ConfirmDialog } from '@/shared/components/confirm';
-import { Toaster } from '@/shared/components/toast';
+import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
+import { Toaster } from '@/shared/components/ui/toaster';
 import { OfflineBanner } from '@/shared/components/layout';
-import { SessionGate } from '@/shared/components/session/session-gate';
+import { SessionGate } from '@/features/auth';
 import { CallPill } from '@/features/voice';
 export { ErrorBoundary } from 'expo-router';
 

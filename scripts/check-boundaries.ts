@@ -1,24 +1,21 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize, relative } from 'node:path';
 import ts from 'typescript';
 
 const ROOT = join(import.meta.dir, '..');
-const ALLOW_FILE = join(ROOT, 'scripts/boundaries-allow.txt');
 const EXTENSIONS = ['', '.ts', '.tsx', '.native.ts', '.native.tsx', '.web.ts', '.web.tsx', '/index.ts', '/index.tsx'];
 const DESIGN_SYSTEM = new Set(['shared/components/ui', 'shared/components/layout']);
 
 function usage(): never {
-  console.log(`usage: bun scripts/check-boundaries.ts [--write-allow]
+  console.log(`usage: bun scripts/check-boundaries.ts
 
 Checks the import boundaries of src/:
   app     imports features only through features/<name>/index and never core/database or core/services
   feature imports another feature only through its index
   core    never imports features or shared/components
   shared  never imports features
-  shared  modules outside ui/ and layout/ need two or more consumers
-
---write-allow rewrites scripts/boundaries-allow.txt with the current violations.`);
+  shared  modules outside ui/ and layout/ need two or more consumers`);
   process.exit(0);
 }
 
@@ -96,17 +93,6 @@ for (const file of files) {
 }
 
 const current = [...violations].sort();
-if (process.argv.includes('--write-allow')) {
-  writeFileSync(ALLOW_FILE, current.length ? `${current.join('\n')}\n` : '');
-  console.log(`check-boundaries: wrote ${current.length} allowed violations`);
-  process.exit(0);
-}
-
-const allowed = new Set(existsSync(ALLOW_FILE) ? readFileSync(ALLOW_FILE, 'utf8').split('\n').filter(Boolean) : []);
-const fresh = current.filter((violation) => !allowed.has(violation));
-const stale = [...allowed].filter((violation) => !violations.has(violation));
-
-for (const violation of fresh) console.log(`new violation: ${violation}`);
-for (const violation of stale) console.log(`stale allow-list entry (remove it): ${violation}`);
-console.log(`check-boundaries: ${files.length} files, ${current.length} known violations, ${fresh.length} new, ${stale.length} stale`);
-process.exit(fresh.length + stale.length > 0 ? 1 : 0);
+for (const violation of current) console.log(`violation: ${violation}`);
+console.log(`check-boundaries: ${files.length} files, ${current.length} violations`);
+process.exit(current.length > 0 ? 1 : 0);

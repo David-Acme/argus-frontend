@@ -12,7 +12,7 @@ import {
   DASHBOARD_ROUTE_TAB,
   NAV_FADE_MS,
 } from '@/shared/constants';
-import { useDashboardNavigation } from '@/shared/hooks/use-dashboard-navigation';
+import { useDashboardNavigation } from '@/shared/components/layout/use-dashboard-navigation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { easeOutCubic } from '@/shared/libs/animations';
 import { ComposeFab } from '@/shared/components/layout/compose-fab';

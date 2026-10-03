@@ -5,8 +5,8 @@ import { sessionService } from '@/core/services/session.service';
 import { useAuthStore } from '@/core/stores';
 import { IS_NATIVE } from '@/shared/constants';
 import { routeFallback } from '@/shared/libs/route-access';
-import { BrandSplash } from './brand-splash';
-import { ServerUnreachable } from './server-unreachable';
+import { BrandSplash } from '@/features/auth/components/brand-splash';
+import { ServerUnreachable } from '@/features/auth/components/server-unreachable';
 
 type EntryDestination = 'welcome' | 'owner-enroll' | 'login' | 'unreachable';
 

@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 import { useUniwind } from 'uniwind';
 import { AppShell } from '@/shared/components/layout';
-import { EntryGate } from '@/shared/components/session/entry-gate';
+import { EntryGate } from '@/features/auth';
 import { NAV_FADE_MS } from '@/shared/constants';
-import { BG_COLORS } from '@/shared/libs/theme';
+import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
 
 export default function AppLayout() {
   const { theme } = useUniwind();

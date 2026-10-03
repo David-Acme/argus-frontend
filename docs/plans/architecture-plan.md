@@ -246,6 +246,22 @@ Gate on: `scripts/check-boundaries.ts` runs in `bun run verify`; it started
 with 58 allowed violations (19 routes reaching `core/services`, 39 shared
 modules with fewer than two consumers) in `scripts/boundaries-allow.txt`.
 
+Done. Features: settings, security, projects, people (directory + users),
+profile, agenda, cameras, home, qr, auth (welcome, pairing, face, invitation,
+onboarding call, login, approve, session gates) and voice. Every route file
+is a one-line re-export. The allow-list reached zero and is deleted. Large
+screens became hook + view where the plan named them: `useQrScanner`,
+`useFaceCapture`; the face module sits behind `services/face-detector` with a
+web stub; the call bridge reads the notification projection. Deviations:
+Watermelon-backed services the view cache reads (camera, zone,
+camera-stream, project, project-task, calendar-event, reminder, event,
+notification, user, user-invitation) and services two features use (guard,
+invite, auth, net) stay in `core/services`, because `core` may not import
+`features`; profile is its own feature (the plan's domain list had none for
+it). The other large screens (projects, agenda, people, home) moved without
+a hook split; their logic is already mostly hooks (`useProjectsData`,
+`useDashboardData`, the view-cache reads).
+
 ### Phase 6 — Contracts and tests
 
 - [ ] Zod schemas in `core/contracts/` for the HTTP DTOs the app reads, and a

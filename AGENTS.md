@@ -238,9 +238,8 @@ reads every import under `src/` and fails on a new violation of:
    or more consumers (the 2+ rule; a hooks/libs file or a components folder is
    one module).
 
-`scripts/boundaries-allow.txt` lists the violations that existed when the gate
-was introduced; it only shrinks (an entry that no longer occurs fails the gate
-until it is removed), and it is deleted when it is empty.
+There is no allow-list: the gate started with one (58 entries) that shrank to
+zero as each domain moved into its feature folder, and was deleted.
 
 ### 10c. Logging and tests
 

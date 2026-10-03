@@ -5,8 +5,8 @@ import type { DashboardTab } from '@/core/types';
 import { DASHBOARD_TABS, DASHBOARD_TAB_ROUTE } from '@/shared/constants';
 import { peopleAccessForRole } from '@/shared/libs/people-access';
 import { routeFallback } from '@/shared/libs/route-access';
-import { usePermissions } from './use-permissions';
-import { useTranslation } from './use-translation';
+import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useTranslation } from '@/shared/hooks/use-translation';
 
 type DashboardNavigation = {
   tabs: typeof DASHBOARD_TABS;

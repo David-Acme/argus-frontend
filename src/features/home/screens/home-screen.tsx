@@ -22,7 +22,7 @@ import { GuardCard, useGuardMode } from '@/features/security';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useNow } from '@/shared/hooks/use-now';
+import { useNow } from '@/features/home/hooks/use-now';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';

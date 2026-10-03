@@ -6,7 +6,7 @@ import { synchronizeService } from '@/core/services/sync/synchronize.service';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { useOfflineNotice } from '@/shared/hooks/use-offline-notice';
+import { useOfflineNotice } from '@/shared/components/layout/use-offline-notice';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 export function OfflineBanner() {

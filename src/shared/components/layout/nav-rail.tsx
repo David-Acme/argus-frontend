@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DashboardTab } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { NAV_RAIL_WIDTH } from '@/shared/constants';
-import { useDashboardNavigation } from '@/shared/hooks/use-dashboard-navigation';
+import { useDashboardNavigation } from '@/shared/components/layout/use-dashboard-navigation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { ComposeFab } from '@/shared/components/layout/compose-fab';

@@ -8,7 +8,7 @@ import { Text } from '@/shared/components/ui/text';
 import { QrManualEntry } from '@/features/qr';
 import { usePairingFlow, type PairingFlowPhase } from '@/features/auth/hooks/use-pairing-flow';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useStagger } from '@/shared/hooks/use-stagger';
+import { useStagger } from '@/features/auth/hooks/use-stagger';
 import { itemIn } from '@/shared/libs/animations';
 import { useQrScanStore } from '@/core/stores';
 import { hostLabel } from '@/shared/libs/pairing-qr';

@@ -37,7 +37,7 @@ module.exports = defineConfig([
   },
   {
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/shared/libs/date.ts', 'src/shared/constants/common.constant.ts'],
+    ignores: ['src/shared/hooks/use-date-formatter/date.ts', 'src/shared/constants/common.constant.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

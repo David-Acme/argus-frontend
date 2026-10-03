@@ -5,7 +5,7 @@ import {
   createDateFormatter,
   type DateFormatter,
   type DeviceDatePreferences,
-} from '@/shared/libs/date';
+} from '@/shared/hooks/use-date-formatter/date';
 
 export function useDateFormatter(): DateFormatter {
   const language = useLocaleStore((state) => state.language);

@@ -4,7 +4,7 @@ import { synchronizeService } from '@/core/services/sync';
 import { sessionService } from '@/core/services/session.service';
 import { useAuthStore } from '@/core/stores/auth.store';
 import { IS_NATIVE } from '@/shared/constants';
-import { BrandSplash } from './brand-splash';
+import { BrandSplash } from '@/features/auth/components/brand-splash';
 
 if (IS_NATIVE) {
   void SplashScreen.preventAutoHideAsync().catch(() => undefined);
