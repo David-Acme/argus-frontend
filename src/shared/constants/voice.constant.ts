@@ -23,4 +23,4 @@ export const VOICE_INTERRUPTED_TYPE = 'voice:interrupted';
 export const VOICE_DONE_TYPE = 'voice:done';
 export const VOICE_ERROR_TYPE = 'voice:error';
 
-export const VOICE_TURN_MAX_SILENCE_MS = 1200;
+export const VOICE_TURN_MAX_SILENCE_MS = 1200;export const CALL_TRANSCRIPT_VISIBLE = 4;

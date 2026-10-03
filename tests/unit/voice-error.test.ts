@@ -1,0 +1,20 @@
+import { describe, expect, test } from 'bun:test';
+import { voiceErrorMessage } from '@/shared/libs/voice-error';
+
+const t = ((key: string) => key) as never;
+
+describe('voiceErrorMessage', () => {
+  test('a refused microphone says so', () => {
+    expect(voiceErrorMessage('MIC_PERMISSION_DENIED|denied', t)).toBe('screens.voice.errors.permission-denied');
+  });
+
+  test('a lost or missing socket is a connection problem', () => {
+    expect(voiceErrorMessage('SOCKET_LOST|closed', t)).toBe('screens.voice.errors.connection');
+    expect(voiceErrorMessage('SOCKET_UNAVAILABLE|no socket', t)).toBe('screens.voice.errors.connection');
+  });
+
+  test('anything else is the generic message', () => {
+    expect(voiceErrorMessage(null, t)).toBe('screens.voice.errors.generic');
+    expect(voiceErrorMessage('VOICE_UNAVAILABLE|503', t)).toBe('screens.voice.errors.generic');
+  });
+});

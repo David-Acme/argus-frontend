@@ -30,6 +30,7 @@ export const colorTokens = {
     'warning-strong': '#9A6114',
     'accent-strong': '#836A3C',
     'foreground-on-interactive': '#FAF8F5',
+    'foreground-on-error': '#FFFFFF',
   },
   dark: {
     background: '#181816',
@@ -60,6 +61,7 @@ export const colorTokens = {
     'warning-strong': '#E5BC69',
     'accent-strong': '#D9BC85',
     'foreground-on-interactive': '#1A1713',
+    'foreground-on-error': '#FFFFFF',
   },
 } as const satisfies Record<ThemeName, Record<string, string>>;
 

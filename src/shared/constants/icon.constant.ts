@@ -55,6 +55,8 @@ import {
   DoorOpen,
   Siren,
   UserCheck,
+  PhoneOff,
+  Hand,
   User,
   UserMinus,
   UserPlus,
@@ -128,4 +130,6 @@ export const ICONS = {
   'door-open': DoorOpen,
   siren: Siren,
   'user-check': UserCheck,
+  'phone-off': PhoneOff,
+  hand: Hand,
 } as const;
