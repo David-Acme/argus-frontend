@@ -28,3 +28,5 @@ export const OVERLAY_BODY_HEIGHT_RATIO = 0.62;
 export const OVERLAY_CHROME_HEIGHT = 210;
 
 export const OVERLAY_BODY_MIN_HEIGHT = 160;
+
+export const TOAST_MAX_WIDTH = 440;

@@ -21,8 +21,9 @@ export function IconButton({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityValue={badge != null && badge > 0 ? { text: String(badge) } : undefined}
       className={cn(
-        'bg-card active:bg-surface-secondary relative size-11 items-center justify-center rounded-full shadow-sm shadow-black/[0.08]',
+        'bg-card active:bg-surface-secondary web:hover:bg-surface-secondary relative size-11 items-center justify-center rounded-full shadow-sm shadow-black/[0.08]',
         className
       )}
       {...props}>

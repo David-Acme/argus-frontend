@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastStore } from '@/core/stores';
-import { CONTENT_MAX_WIDTH } from '@/shared/constants';
+import { CONTENT_MAX_WIDTH, TOAST_MAX_WIDTH } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { ToastCard } from '@/shared/components/ui/toast-card';
@@ -9,7 +9,7 @@ import { ToastCard } from '@/shared/components/ui/toast-card';
 export function Toaster() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { windowClass } = useWindowClass();
+  const { windowClass, isCompact } = useWindowClass();
   const items = useToastStore((state) => state.items);
   const dismiss = useToastStore((state) => state.dismiss);
 
@@ -20,7 +20,9 @@ export function Toaster() {
       pointerEvents="box-none"
       className="absolute left-0 right-0 items-center px-4"
       style={{ top: insets.top + 8 }}>
-      <View className="w-full gap-2" style={{ maxWidth: CONTENT_MAX_WIDTH[windowClass] }}>
+      <View
+        className="w-full gap-2"
+        style={{ maxWidth: isCompact ? CONTENT_MAX_WIDTH[windowClass] : TOAST_MAX_WIDTH }}>
         {items.map((item) => (
           <ToastCard
             key={item.id}

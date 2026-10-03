@@ -28,7 +28,8 @@ export function SectionHeader({ title, count, action, onAction, className }: Sec
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={action}
-          className="active:opacity-60"
+          hitSlop={8}
+          className="web:hover:opacity-70 min-h-9 justify-center rounded-full active:opacity-60"
           disabled={!onAction}
           onPress={onAction}>
           <Text variant="label" className="text-foreground-secondary">
