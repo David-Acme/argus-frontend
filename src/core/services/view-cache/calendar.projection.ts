@@ -6,10 +6,11 @@ import type {
 import type { AgendaStatus, CalendarEntry } from '@/core/types';
 import {
   VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
+  VIEW_CACHE_CALENDAR_LEAD_DAYS,
   VIEW_CACHE_CALENDAR_MONTH_DAYS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants/cache.constant';
-import { DAY_MS, endOfDay, startOfDay } from './dates';
+import { endOfDay, startOfDay } from './dates';
 import type { ProjectionContext, ViewWrite } from './projection';
 
 export type CalendarProjectionInput = {
@@ -23,12 +24,10 @@ type Range = { from: number; to: number };
 export const calendarMonthScope = (value: Date): string =>
   `month.${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
 
-export const calendarMonthRange = (value: Date): Range => {
-  const first = new Date(value.getFullYear(), value.getMonth(), 1);
-  first.setDate(first.getDate() - first.getDay());
-  const from = new Date(first.getFullYear(), first.getMonth(), first.getDate()).getTime();
-  return { from, to: from + VIEW_CACHE_CALENDAR_MONTH_DAYS * DAY_MS - 1 };
-};
+export const calendarMonthRange = (value: Date): Range => ({
+  from: new Date(value.getFullYear(), value.getMonth(), 1 - VIEW_CACHE_CALENDAR_LEAD_DAYS).getTime(),
+  to: new Date(value.getFullYear(), value.getMonth(), 1 + VIEW_CACHE_CALENDAR_MONTH_DAYS).getTime() - 1,
+});
 
 export const toCalendarEntries = (
   events: readonly ICalendarEventCacheSource[],

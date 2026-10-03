@@ -6,6 +6,8 @@ export const VIEW_CACHE_LIST_LIMIT = 1000;
 
 export const VIEW_CACHE_CALENDAR_MONTH_DAYS = 42;
 
+export const VIEW_CACHE_CALENDAR_LEAD_DAYS = 6;
+
 export const VIEW_CACHE_CALENDAR_ENTRY_LIMIT = 400;
 
 export const EMPTY_DASHBOARD_SUMMARY = {

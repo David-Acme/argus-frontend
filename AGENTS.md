@@ -466,7 +466,7 @@ for Watermelon nor make an HTTP list request just because it mounted.
 - Cache pages are semantic, not an unbounded dump: ordinary list pages have
   `VIEW_CACHE_PAGE_SIZE = 40`; agenda day/week/month reads the requested date
   range from its active calendar cache, and a month cache covers the 42-day
-  visible grid. The active month and its two neighbours are cached, so paging
+  visible grid for any week start (from six days before the 1st to 42 days after). The active month and its two neighbours are cached, so paging
   one month paints instantly; older months are dropped. One `camera.list`
   snapshot carries every camera with its zones and stream resolution (list,
   dashboard and detail read it). The people search filters the cached
