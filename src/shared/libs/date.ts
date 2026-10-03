@@ -99,6 +99,7 @@ export function createDateFormatter(
   const startsOn = weekStartsOn(preferences.firstWeekday, locale.options?.weekStartsOn);
   const timePattern = (preferences.uses24hourClock ?? language === 'es') ? 'HH:mm' : 'h:mm a';
   const options = { locale, weekStartsOn: startsOn };
+  const sentence = (text: string) => text.charAt(0).toLocaleUpperCase(language) + text.slice(1);
   const startDay = (value: Date) => startOfDayBase(value);
   const endDay = (value: Date) => endOfDayBase(value);
   const addDays = (value: Date, amount: number) => addDaysBase(value, amount);
@@ -128,12 +129,12 @@ export function createDateFormatter(
 
   return {
     formatWeekdayShort: (value) => format(value, 'EEE', options).replace('.', ''),
-    formatWeekday: (value) => format(value, 'EEEE', options),
-    formatMonth: (value) => format(value, 'LLLL', options),
+    formatWeekday: (value) => sentence(format(value, 'EEEE', options)),
+    formatMonth: (value) => sentence(format(value, 'LLLL', options)),
     formatYear: (value) => format(value, 'yyyy', options),
-    formatMonthYear: (value) => format(value, 'LLLL yyyy', options),
+    formatMonthYear: (value) => sentence(format(value, 'LLLL yyyy', options)),
     formatDayMonth: (value) => format(value, language === 'es' ? 'd MMM' : 'MMM d', options),
-    formatAgendaDay: (value) => format(value, dayPattern(language), options),
+    formatAgendaDay: (value) => sentence(format(value, dayPattern(language), options)),
     formatFullDate: (value) => format(value, 'PPPP', options),
     formatPickerDay: (value) => format(value, 'EEE, d MMM', options).replace('.', ''),
     formatDayNumber: (value) => format(value, 'd', options),

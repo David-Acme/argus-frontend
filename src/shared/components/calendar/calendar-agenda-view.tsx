@@ -8,6 +8,8 @@ import { Text } from '@/shared/components/ui/text';
 import {
   AGENDA_ENTRY_ESTIMATE,
   AGENDA_FIXED_ROW_SIZES,
+  IS_WEB,
+  SCROLLBAR_GUTTER,
 } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -83,7 +85,7 @@ export function CalendarAgendaView({
         return (
           // Sticky, so the day you are looking at stays named while you scroll.
           <View className="bg-background pt-4 pb-2">
-            <Text className="text-foreground-secondary text-[13px] font-semibold capitalize">
+            <Text className="text-foreground-secondary text-[13px] font-semibold">
               {date.formatAgendaDay(new Date(item.day))}
             </Text>
           </View>
@@ -142,7 +144,7 @@ export function CalendarAgendaView({
         kind ? AGENDA_FIXED_ROW_SIZES[kind] : undefined
       }
       stickyHeaderIndices={headerIndices}
-      contentContainerStyle={{ paddingBottom: bottomInset }}
+      contentContainerStyle={{ paddingBottom: bottomInset, paddingRight: IS_WEB ? SCROLLBAR_GUTTER : 0 }}
       recycleItems
       showsVerticalScrollIndicator={false}
     />

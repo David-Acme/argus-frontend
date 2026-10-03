@@ -21,6 +21,7 @@ export const WEEK_HOUR_HEIGHT = 56;
 
 /** Agenda list: entry hint before measurement (~76 incl. its padding). */
 export const AGENDA_ENTRY_ESTIMATE = 76;
+export const SCROLLBAR_GUTTER = 14;
 /** Agenda list: headers and free rows are fixed-size, so they skip measuring. */
 export const AGENDA_FIXED_ROW_SIZES: Record<string, number | undefined> = {
   header: 42,

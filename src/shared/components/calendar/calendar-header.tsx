@@ -34,11 +34,11 @@ export function CalendarHeader({
     <View className="flex-row items-end justify-between gap-3">
       <View className="flex-1">
         <Text
-          className="text-[30px] font-bold capitalize leading-[34px] tracking-tight"
+          className="text-[30px] font-bold leading-[34px] tracking-tight"
           numberOfLines={1}>
           {title}
         </Text>
-        <Text className="text-muted-foreground mt-0.5 text-[13px] capitalize">{subtitle}</Text>
+        <Text className="text-muted-foreground mt-0.5 text-[13px]">{subtitle}</Text>
       </View>
       <View className="flex-row items-center gap-1.5">
         <Pressable
