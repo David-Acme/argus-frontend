@@ -6,7 +6,7 @@ import type {
 } from '@/core/interfaces';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { taskProgress } from '@/shared/libs/task-progress';
-import { useViewCacheRows } from './use-cached-rows';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 
 export function useProjectsData(selectedId: string): IProjectsCacheData {
   const projects = useViewCacheRows<IProjectCacheRow>(VIEW_CACHE_KEYS.projectList);

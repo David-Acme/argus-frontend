@@ -4,7 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import { PROJECT_STATUS_TONE } from './project-card-row';
+import { PROJECT_STATUS_TONE } from '@/features/projects/components/project-card-row';
 import { Panel } from '@/shared/components/ui/panel';
 
 type ProjectBoardHeaderProps = {

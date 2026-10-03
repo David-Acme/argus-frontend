@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import type { ProjectStatus } from '@/core/types';
 import { FilterChips } from '@/shared/components/ui/filter-chips';
 import { cn } from '@/shared/libs/utils';
-import { PROJECT_STATUS_TONE } from './project-card-row';
+import { PROJECT_STATUS_TONE } from '@/features/projects/components/project-card-row';
 
 type ProjectSwitcherItem = {
   id: string;

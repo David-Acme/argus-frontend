@@ -4,7 +4,7 @@ import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import { TaskPriorityMark } from './task-priority-mark';
+import { TaskPriorityMark } from '@/features/projects/components/task-priority-mark';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 
 type TaskRowProps = {
