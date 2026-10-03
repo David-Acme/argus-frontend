@@ -4,7 +4,7 @@ import { ACTIVITY_WINDOW_DAYS } from '@/shared/constants/dashboard.constant';
 import { isOpenTask } from '@/shared/libs/task-progress';
 import type { CameraSource } from './camera.projection';
 import type { EventSource } from './activity.projection';
-import { DAY_MS, startOfDay } from './dates';
+import { addDays, startOfDay } from './dates';
 import type { ProjectSource, ProjectTaskSource } from './project.projection';
 import type { ProjectionContext, ViewWrite } from './projection';
 
@@ -17,8 +17,8 @@ export type SummaryProjectionInput = {
 };
 
 export function projectSummary(input: SummaryProjectionInput, { now }: ProjectionContext): ViewWrite[] {
-  const since = startOfDay(now) - (ACTIVITY_WINDOW_DAYS - 1) * DAY_MS;
-  const previousSince = since - ACTIVITY_WINDOW_DAYS * DAY_MS;
+  const since = startOfDay(addDays(now, -(ACTIVITY_WINDOW_DAYS - 1)));
+  const previousSince = startOfDay(addDays(now, -(2 * ACTIVITY_WINDOW_DAYS - 1)));
   let eventsCurrent = 0;
   let eventsPrevious = 0;
   for (const event of input.events) {

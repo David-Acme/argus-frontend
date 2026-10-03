@@ -23,7 +23,7 @@ import { projectCameras } from './view-cache/camera.projection';
 import { projectNotifications } from './view-cache/notification.projection';
 import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
-import { DAY_MS, startOfDay } from './view-cache/dates';
+import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
 import { projectSummary } from './view-cache/summary.projection';
 
@@ -107,6 +107,7 @@ class ViewCacheCoordinatorService {
   private subscriptions: Subscription[] = [];
   private calendarSubscription: Subscription | null = null;
   private calendarScope: string | null = null;
+  private calendarAnchor: Date | null = null;
   private nextDayTimer: ReturnType<typeof setTimeout> | null = null;
 
   start(userId: number | string): void {
@@ -126,6 +127,7 @@ class ViewCacheCoordinatorService {
     if (this.nextDayTimer) clearTimeout(this.nextDayTimer);
     this.nextDayTimer = null;
     this.calendarScope = null;
+    this.calendarAnchor = null;
     this.sources = null;
     this.userId = null;
   }
@@ -134,6 +136,7 @@ class ViewCacheCoordinatorService {
     const { sources, userId } = this;
     if (!sources || !userId) return;
     const scope = calendarMonthScope(anchor);
+    this.calendarAnchor = anchor;
     if (scope === this.calendarScope) return;
     this.calendarSubscription?.unsubscribe();
     this.calendarScope = scope;
@@ -160,9 +163,8 @@ class ViewCacheCoordinatorService {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.subscriptions = startSessionProjections(sources, { userId, now });
     this.calendarScope = null;
-    this.watchCalendarMonth(now);
-    const nextDay = startOfDay(now) + DAY_MS;
-    this.nextDayTimer = setTimeout(() => this.refresh(), Math.max(1_000, nextDay - now.getTime() + 1_000));
+    this.watchCalendarMonth(this.calendarAnchor ?? now);
+    this.nextDayTimer = setTimeout(() => this.refresh(), startOfNextDay(now) - now.getTime() + 1_000);
   }
 }
 
