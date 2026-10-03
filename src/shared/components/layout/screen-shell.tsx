@@ -24,7 +24,7 @@ export function ScreenShell({ title, subtitle, onBack, action, children }: Scree
     <View className="bg-background flex-1 flex-row">
       {usesNavRail ? <DashboardNavRail /> : null}
       <View
-        className="w-full flex-1 self-center px-5 lg:px-8"
+        className="mx-auto w-full flex-1 px-5 lg:px-8"
         style={{
           maxWidth: CONTENT_MAX_WIDTH[windowClass],
           paddingTop: insets.top + (isShort ? 8 : isExpanded ? 16 : 14),
