@@ -1,13 +1,7 @@
-import { useAuthStore, useOnboardingStore } from '@/core/stores';
+import { useAuthStore } from '@/core/stores';
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { IProjectTaskCacheRow } from '@/core/interfaces';
-import type {
-  DashboardTab,
-  MenuOption,
-  ProjectStatus,
-  ProjectTaskPriority,
-  ProjectTaskStatus,
-} from '@/core/types';
+import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
 import { DashboardIconButton, DashboardShell, SectionHeading } from '@/shared/components/dashboard';
 import { EmptyState } from '@/shared/components/layout';
 import {
@@ -20,7 +14,7 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { DASHBOARD_TAB_ROUTE, TASK_PRIORITY_WEIGHT, TASK_STATUS_ORDER } from '@/shared/constants';
+import { TASK_PRIORITY_WEIGHT, TASK_STATUS_ORDER } from '@/shared/constants';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useProjectsData } from '@/shared/hooks/use-projects-data';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -36,9 +30,8 @@ export default function ProjectsScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const authStatus = useAuthStore((state) => state.status);
-  const voiceEnabled = useOnboardingStore((state) => state.voiceEnabled);
-  const [selectedId, setSelectedId] = useState('');
-  const { new: newParam } = useLocalSearchParams<{ new?: string }>();
+  const { new: newParam, id: idParam } = useLocalSearchParams<{ new?: string; id?: string }>();
+  const [selectedId, setSelectedId] = useState(idParam ?? '');
   const [projectFormOpen, setProjectFormOpen] = useState(newParam === 'project');
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState('');
@@ -103,14 +96,6 @@ export default function ProjectsScreen() {
     void projectTaskService.update(taskId, { status });
   }, []);
 
-  const goToTab = useCallback(
-    (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router]
-  );
-  const handleCompose = useCallback(() => {
-    if (voiceEnabled) router.push('/welcome/voice');
-  }, [router, voiceEnabled]);
-
   // The dashboard routes are only reachable with a session; the root screen
   // owns the onboarding decision, so an unauthenticated hit bounces there.
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
@@ -118,15 +103,6 @@ export default function ProjectsScreen() {
   return (
     <DashboardShell
       active="projects"
-      labels={{
-        home: t('screens.home.home'),
-        schedule: t('screens.agenda.schedule'),
-        projects: t('screens.projects.title'),
-        profile: t('screens.home.profile'),
-      }}
-      composeLabel={t('screens.projects.new-task')}
-      onNavigate={goToTab}
-      onCompose={handleCompose}
       aside={
         // Only when there is something to list: on compact the aside stacks
         // under the content, and two empty states in a row read as a bug.

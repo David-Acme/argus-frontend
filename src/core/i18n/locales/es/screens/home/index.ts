@@ -67,6 +67,7 @@ export const home = {
   },
   'activity-no-cameras': 'Conecta una cámara para ver actividad',
   'activity-events': '{count} eventos en los últimos 7 días',
+  'project-tasks-label': 'tareas hechas',
   'project-tasks': '{done} de {total} tareas hechas',
   'tasks-open': 'Tareas abiertas',
   'events-week': 'Eventos (7d)',

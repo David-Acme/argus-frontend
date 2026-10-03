@@ -1,4 +1,4 @@
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,37 +10,26 @@ import {
   BOTTOM_NAV_MAX_WIDTH,
   BOTTOM_NAV_TRAVEL,
   DASHBOARD_ROUTE_TAB,
-  DASHBOARD_TAB_ROUTE,
   NAV_FADE_MS,
 } from '@/shared/constants';
-import { useTranslation } from '@/shared/hooks/use-translation';
+import { useDashboardNavigation } from '@/shared/hooks/use-dashboard-navigation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { easeOutCubic } from '@/shared/libs/animations';
 import { ComposeFab } from './compose-fab';
 import { DashboardBottomNav } from './dashboard-bottom-nav';
 
-/** Survives remounts: the intro animation belongs to the launch, not to a screen. */
 let hasIntroduced = false;
 
-/**
- * The app's one bottom bar, mounted by the root layout. Screens ask for it
- * through the navigation store instead of rendering their own copy, so moving
- * between tabs fades the content while the bar stays put — no unmount, no
- * flicker, and a single place that knows where each tab leads.
- */
 export function GlobalBottomNav() {
-  const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { labels, navigate } = useDashboardNavigation();
   const { usesNavRail } = useWindowClass();
-  const context = useNavigationStore((state) => state.context);
+  const owned = useNavigationStore((state) => state.owner !== null);
   const visible = useNavigationStore(selectBottomNavVisible) && !usesNavRail;
   const progress = useSharedValue(0);
 
   useEffect(() => {
-    // The bar fades in once per launch; after that it is furniture, and
-    // replaying the animation on every route change reads as flicker.
     const duration = hasIntroduced ? 0 : NAV_FADE_MS;
     if (visible) hasIntroduced = true;
     progress.value = withTiming(visible ? 1 : 0, { duration, easing: easeOutCubic });
@@ -52,9 +41,7 @@ export function GlobalBottomNav() {
   }));
 
   const active: DashboardTab = DASHBOARD_ROUTE_TAB[pathname] ?? 'home';
-  // The store keeps the last context past a release, so nothing goes blank
-  // halfway through the fade-out.
-  if (!context) return null;
+  if (!owned && !hasIntroduced) return null;
 
   return (
     <Animated.View
@@ -64,13 +51,8 @@ export function GlobalBottomNav() {
       <View style={{ width: '100%', maxWidth: BOTTOM_NAV_MAX_WIDTH }}>
         <DashboardBottomNav
           active={active}
-          labels={{
-            home: t('screens.home.home'),
-            schedule: t('screens.agenda.schedule'),
-            projects: t('screens.projects.title'),
-            profile: t('screens.home.profile'),
-          }}
-          onNavigate={(tab) => router.replace(DASHBOARD_TAB_ROUTE[tab])}
+          labels={labels}
+          onNavigate={navigate}
           compose={<ComposeFab />}
         />
       </View>

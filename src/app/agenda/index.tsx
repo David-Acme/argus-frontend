@@ -1,4 +1,4 @@
-import { useAuthStore, useOnboardingStore } from '@/core/stores';
+import { useAuthStore } from '@/core/stores';
 import {
   CalendarAgendaView,
   CalendarEntryDetail,
@@ -22,16 +22,11 @@ import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import {
-  CALENDAR_DEFAULT_VIEW,
-  DASHBOARD_TAB_ROUTE,
-  IS_NATIVE,
-  VIEW_CACHE_KEYS,
-} from '@/shared/constants';
+import { CALENDAR_DEFAULT_VIEW, IS_NATIVE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { screenIn } from '@/shared/libs/animations';
 import { calendarEntryRecordId } from '@/shared/libs/calendar-entry-actions';
-import type { CalendarEntry, CalendarView, DashboardTab } from '@/core/types';
+import type { CalendarEntry, CalendarView } from '@/core/types';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -45,7 +40,6 @@ export default function ScheduleScreen() {
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
   const authStatus = useAuthStore((state) => state.status);
-  const voiceEnabled = useOnboardingStore((state) => state.voiceEnabled);
   const [anchor, setAnchor] = useState(() => date.startOfDay(new Date()));
   const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
   const [selectedDay, setSelectedDay] = useState(() => date.startOfDay(new Date()));
@@ -167,14 +161,6 @@ export default function ScheduleScreen() {
     [date, view]
   );
 
-  const goToTab = useCallback(
-    (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router]
-  );
-  const handleCompose = useCallback(() => {
-    if (voiceEnabled) router.push('/welcome/voice');
-  }, [router, voiceEnabled]);
-
   // The dashboard routes are only reachable with a session; the root screen
   // owns the onboarding decision, so an unauthenticated hit bounces there.
   if (authStatus !== 'signed-in') return <Redirect href="/" />;
@@ -246,15 +232,6 @@ export default function ScheduleScreen() {
   return (
     <DashboardShell
       active="schedule"
-      labels={{
-        home: t('screens.home.home'),
-        schedule: t('screens.agenda.schedule'),
-        projects: t('screens.projects.title'),
-        profile: t('screens.home.profile'),
-      }}
-      composeLabel={t('screens.home.compose')}
-      onNavigate={goToTab}
-      onCompose={handleCompose}
       scrollable={false}>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">

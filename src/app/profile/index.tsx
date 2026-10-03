@@ -1,13 +1,7 @@
 import { authService } from '@/core/services/auth.service';
 import { netService } from '@/core/services/net';
 import { useAuthStore, useLocaleStore } from '@/core/stores';
-import type {
-  DashboardTab,
-  LanguagePreference,
-  NetPairedInstance,
-  ThemePreference,
-  UserRole,
-} from '@/core/types';
+import type { LanguagePreference, NetPairedInstance, ThemePreference, UserRole } from '@/core/types';
 import { DashboardShell } from '@/shared/components/dashboard';
 import { SettingsGroup } from '@/shared/components/profile';
 import { Button } from '@/shared/components/ui/button';
@@ -15,13 +9,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
-import {
-  DASHBOARD_TAB_ROUTE,
-  IS_NATIVE,
-  LANGUAGE_OPTIONS,
-  THEME_ICONS,
-  THEME_OPTIONS,
-} from '@/shared/constants';
+import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/shared/constants';
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
@@ -64,11 +52,6 @@ export default function ProfileScreen() {
   const pairedSince = instance?.pairedAt
     ? new Date(instance.pairedAt).toLocaleDateString(language, { dateStyle: 'medium' })
     : null;
-
-  const goToTab = useCallback(
-    (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router],
-  );
 
   const changeTheme = useCallback((value: ThemePreference) => {
     setThemePreference(value);
@@ -121,16 +104,7 @@ export default function ProfileScreen() {
 
   return (
     <DashboardShell
-      active="profile"
-      labels={{
-        home: t('screens.home.home'),
-        schedule: t('screens.agenda.schedule'),
-        projects: t('screens.projects.title'),
-        profile: t('screens.home.profile'),
-      }}
-      composeLabel={t('screens.home.compose')}
-      onNavigate={goToTab}
-      onCompose={() => router.push('/agenda?new=event')}>
+      active="profile">
       <View className="w-full max-w-[640px] gap-6 self-center">
         <View className="flex-row items-center gap-4 pt-1">
           <View className="bg-surface-secondary size-16 items-center justify-center rounded-full">

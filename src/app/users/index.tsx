@@ -22,14 +22,14 @@ import { Input } from '@/shared/components/ui/input';
 import { QrCode } from '@/shared/components/ui/qr-code';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
-import { DASHBOARD_TAB_ROUTE, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { buildInvitationQr } from '@/shared/libs/invitation-qr';
 import { toast } from '@/shared/libs/toast';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
@@ -249,7 +249,6 @@ function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Invitation
 }
 
 export default function UsersScreen() {
-  const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
   const currentUser = useAuthStore((state) => state.user);
@@ -352,11 +351,6 @@ export default function UsersScreen() {
     });
   }, [qrPreview, refresh]);
 
-  const goToTab = useCallback(
-    (tab: 'home' | 'schedule' | 'projects' | 'profile') => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router],
-  );
-
   const userRoleLabels = useMemo(() => roleOptions(t), [t]);
   const roleLabel = useCallback(
     (role: UserRole) => userRoleLabels.find((option) => option.value === role)?.label ?? role,
@@ -368,15 +362,6 @@ export default function UsersScreen() {
   return (
     <DashboardShell
       active="profile"
-      labels={{
-        home: t('screens.home.home'),
-        schedule: t('screens.agenda.schedule'),
-        projects: t('screens.projects.title'),
-        profile: t('screens.home.profile'),
-      }}
-      composeLabel={t('screens.home.compose')}
-      onNavigate={goToTab}
-      onCompose={() => router.push('/agenda?new=event')}
       aside={
         invitations.length > 0 ? (
           <View className="gap-3">

@@ -15,7 +15,7 @@ import {
   SectionHeading,
   SummaryCard,
 } from '@/shared/components/dashboard';
-import type { CalendarEntry, DashboardTab, ScheduleEntry } from '@/core/types';
+import type { CalendarEntry, ScheduleEntry } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { EntryActionsMenu } from '@/shared/components/calendar';
@@ -32,7 +32,7 @@ import {
   type DashboardDestination,
 } from '@/shared/libs/dashboard-route-state';
 import { getDashboardSectionLayout } from '@/shared/libs/dashboard-section-layout';
-import { DASHBOARD_TAB_ROUTE, IS_NATIVE, TODAY_PREVIEW_LIMIT } from '@/shared/constants';
+import { IS_NATIVE, TODAY_PREVIEW_LIMIT } from '@/shared/constants';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -117,13 +117,6 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
 
   const noCameras = summary.camerasTotal === 0;
 
-  const goToTab = useCallback(
-    (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router]
-  );
-
-  const handleVoice = useCallback(() => router.push('/welcome/voice'), [router]);
-
   const renderActions = useCallback(
     (entry: CalendarEntry) => (
       <EntryActionsMenu
@@ -139,15 +132,6 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
   return (
     <DashboardShell
       active="home"
-      labels={{
-        home: t('screens.home.home'),
-        schedule: t('screens.agenda.schedule'),
-        projects: t('screens.projects.title'),
-        profile: t('screens.home.profile'),
-      }}
-      composeLabel={voiceEnabled && IS_NATIVE ? t('screens.home.talk') : t('screens.home.compose')}
-      onNavigate={goToTab}
-      onCompose={handleVoice}
       footer={
         isExpanded && !isShort ? (
           <Animated.View entering={itemIn.delay(300).duration(320)} className="gap-3">
@@ -289,11 +273,9 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
                 nestedScrollEnabled
                 showsHorizontalScrollIndicator={false}
                 contentContainerClassName="gap-3 pr-2">
-                {visibleProjects.map((project, index) => (
+                {visibleProjects.map((project) => (
                   <ProjectCard
                     key={project.id}
-                    icon="list-todo"
-                    visual={index % 2 === 0 ? 'chart' : 'tiles'}
                     title={project.name}
                     description={
                       project.description ||
@@ -302,9 +284,11 @@ function DashboardScreen({ user, voiceEnabled }: DashboardScreenProps) {
                         total: String(project.total),
                       })
                     }
-                    progress={project.progress}
-                    meta={`${Math.round(project.progress * 100)}%`}
-                    onPress={() => router.push('/projects')}
+                    done={project.done}
+                    total={project.total}
+                    tasksLabel={t('screens.home.project-tasks-label')}
+                    progressLabel={`${Math.round(project.progress * 100)}%`}
+                    onPress={() => router.push(`/projects?id=${project.id}`)}
                   />
                 ))}
               </ScrollView>

@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DashboardIconButton } from '@/shared/components/dashboard';
+import { DashboardIconButton, DashboardNavRail } from '@/shared/components/dashboard';
 import { Text } from '@/shared/components/ui/text';
 import { CONTENT_MAX_WIDTH } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -15,18 +15,14 @@ type ScreenShellProps = {
   children: ReactNode;
 };
 
-/**
- * Chrome for a secondary screen: back, title and one action, with the same
- * width cap and safe areas as the dashboard. The body owns its own scrolling,
- * so a virtualized list can fill it.
- */
 export function ScreenShell({ title, subtitle, onBack, action, children }: ScreenShellProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { windowClass, isExpanded, isShort } = useWindowClass();
+  const { windowClass, isExpanded, isShort, usesNavRail } = useWindowClass();
 
   return (
-    <View className="bg-background flex-1">
+    <View className="bg-background flex-1 flex-row">
+      {usesNavRail ? <DashboardNavRail /> : null}
       <View
         className="w-full flex-1 self-center px-5 lg:px-8"
         style={{
@@ -39,11 +35,11 @@ export function ScreenShell({ title, subtitle, onBack, action, children }: Scree
             <DashboardIconButton icon="arrow-left" label={t('common.back')} onPress={onBack} />
           ) : null}
           <View className="min-w-0 flex-1">
-            <Text className="text-[22px] font-semibold tracking-tight" numberOfLines={1}>
+            <Text variant="title" numberOfLines={1}>
               {title}
             </Text>
             {subtitle ? (
-              <Text className="text-foreground-secondary text-[13px]" numberOfLines={1}>
+              <Text variant="caption" className="text-foreground-secondary" numberOfLines={1}>
                 {subtitle}
               </Text>
             ) : null}

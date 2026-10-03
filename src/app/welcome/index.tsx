@@ -17,6 +17,7 @@ import {
   WELCOME_SUBTITLE_DELAY_MS,
   WELCOME_SUBTITLE_DURATION_MS,
   WELCOME_TITLE_DELAY_MS,
+  IS_NATIVE,
   WELCOME_TITLE_DURATION_MS,
 } from '@/shared/constants';
 import { useRouter } from 'expo-router';
@@ -87,10 +88,12 @@ export default function WelcomeScreen() {
               <MorphIcon name="arrow-right" size={20} color={iconColor} />
             </Animated.View>
           </Button>
-          <Button variant="ghost" onPress={handleInvitation}>
-            <Icon name="scan-barcode" />
-            <Text>{t('screens.welcome.join-invitation')}</Text>
-          </Button>
+          {IS_NATIVE ? (
+            <Button variant="ghost" onPress={handleInvitation}>
+              <Icon name="scan-barcode" />
+              <Text>{t('screens.welcome.join-invitation')}</Text>
+            </Button>
+          ) : null}
         </View>
       </BlurReveal>
     </CenteredScreen>

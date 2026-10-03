@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import type { Orientation, WindowClass, WindowHeightClass } from '@/core/types';
-import { WINDOW_EXPANDED_MIN, WINDOW_MEDIUM_MIN, WINDOW_TALL_MIN } from '@/shared/constants';
+import { IS_NATIVE, WINDOW_EXPANDED_MIN, WINDOW_MEDIUM_MIN, WINDOW_TALL_MIN } from '@/shared/constants';
 
 type WindowClassResult = {
   windowClass: WindowClass;
@@ -62,7 +62,9 @@ export function useWindowClass(): WindowClassResult {
       isWide: windowClass !== 'compact',
       isShort: heightClass === 'short',
       isLandscape: orientation === 'landscape',
-      usesNavRail: windowClass === 'expanded' || (heightClass === 'short' && windowClass !== 'compact'),
+      usesNavRail:
+        windowClass === 'expanded' ||
+        (windowClass !== 'compact' && (heightClass === 'short' || !IS_NATIVE)),
     }),
     [windowClass, heightClass, orientation, width, height]
   );

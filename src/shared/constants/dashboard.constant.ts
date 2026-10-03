@@ -1,4 +1,4 @@
-import type { DashboardTab, IconName, TableName, TrendPoint } from '@/core/types';
+import type { DashboardTab, IconName, TableName } from '@/core/types';
 
 /** Mosaic block behind the performance delta. */
 export const MOSAIC_COLUMNS = 13;
@@ -11,16 +11,6 @@ export const MOSAIC_TINTS = [
   'bg-foreground-secondary',
   'bg-foreground',
 ] as const;
-
-/** Height of a project card panel, in points. */
-export const PROJECT_PANEL_HEIGHT = 92;
-
-/** Template series for the trend chart until real metrics arrive. */
-export const TREND_POINTS: readonly TrendPoint[] = [
-  { label: '30%', bar: 55, line: 40 },
-  { label: '12%', bar: 78, line: 64 },
-  { label: '32%', bar: 52, line: 50 },
-];
 
 /** Hours the schedule timeline shows: a working day, not 24 empty rows. */
 export const TIMELINE_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
@@ -132,25 +122,21 @@ export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE
 /** Row height hint for the virtualized camera list. */
 export const CAMERA_ROW_HEIGHT = 68;
 
-/**
- * What the compose button offers. Each entry needs the table it writes to, so a
- * role without permission never sees an action that would come back 403.
- */
 export const COMPOSE_ACTIONS: readonly {
   id: string;
   icon: IconName;
-  /** `?new=` tells the screen to open its creation form on arrival. */
   route:
     | '/agenda?new=event'
     | '/projects?new=project'
     | '/cameras?new=camera'
     | '/welcome/voice';
   table?: TableName;
+  nativeOnly?: boolean;
 }[] = [
   { id: 'event', icon: 'calendar', route: '/agenda?new=event', table: 'calendar_event' },
   { id: 'project', icon: 'list-todo', route: '/projects?new=project', table: 'project' },
   { id: 'camera', icon: 'video', route: '/cameras?new=camera', table: 'camera' },
-  { id: 'voice', icon: 'sparkles', route: '/welcome/voice' },
+  { id: 'voice', icon: 'sparkles', route: '/welcome/voice', nativeOnly: true },
 ];
 
 /** Height of the floating bar, so content can clear it without guessing. */

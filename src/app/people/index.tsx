@@ -2,7 +2,7 @@ import { portraitPreviewService } from '@/core/services/portrait-preview.service
 import { useAuthStore } from '@/core/stores';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
-import type { DashboardTab, UserRole } from '@/core/types';
+import type { UserRole } from '@/core/types';
 import { DashboardShell, SectionHeading } from '@/shared/components/dashboard';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Card, CardContent } from '@/shared/components/ui/card';
@@ -10,13 +10,13 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
 import { Text } from '@/shared/components/ui/text';
-import { DASHBOARD_TAB_ROUTE, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { portraitDataUri } from '@/shared/libs/portrait-preview';
 import { toast } from '@/shared/libs/toast';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { toastServiceError } from '@/shared/libs/service-error';
@@ -26,7 +26,6 @@ const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard',
 const roleKey = (role: UserRole) => `screens.users.role-${role}` as const;
 
 export default function PeopleDirectoryScreen() {
-  const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
   const authStatus = useAuthStore((state) => state.status);
@@ -45,10 +44,6 @@ export default function PeopleDirectoryScreen() {
     void viewCacheCoordinatorService.filterPeople({ query: search, role });
   }, [isFiltering, role, search]);
   const filtered = isFiltering ? filteredRows : people;
-  const goToTab = useCallback(
-    (tab: DashboardTab) => router.replace(DASHBOARD_TAB_ROUTE[tab]),
-    [router],
-  );
   const closeDetails = useCallback(() => {
     portraitRequest.current += 1;
     setSelected(null);
@@ -88,16 +83,7 @@ export default function PeopleDirectoryScreen() {
 
   return (
     <DashboardShell
-      active="profile"
-      labels={{
-        home: t('screens.home.home'),
-        schedule: t('screens.agenda.schedule'),
-        projects: t('screens.projects.title'),
-        profile: t('screens.home.profile'),
-      }}
-      composeLabel={t('screens.home.compose')}
-      onNavigate={goToTab}
-      onCompose={() => router.push('/agenda?new=event')}>
+      active="profile">
       <View className="gap-5">
         <View className="gap-1.5">
           <Text variant="h2">{t('screens.users.people-directory')}</Text>
