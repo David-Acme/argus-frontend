@@ -19,6 +19,7 @@ type CallSurfaceProps = {
   transcript: readonly VoiceTranscriptLine[];
   actions?: readonly VoiceActionRecord[];
   header?: ReactNode;
+  camera?: ReactNode;
   onToggleMute: () => void;
   onInterrupt: () => void;
   onHangUp: () => void;
@@ -32,6 +33,7 @@ export function CallSurface({
   transcript,
   actions = [],
   header,
+  camera,
   onToggleMute,
   onInterrupt,
   onHangUp,
@@ -65,7 +67,7 @@ export function CallSurface({
       </View>
 
       <View className="flex-1 items-center justify-center">
-        <Avatar size={isShort ? 180 : 260} accessibilityLabel={t('screens.voice.call-title')} />
+        {camera ?? <Avatar size={isShort ? 180 : 260} accessibilityLabel={t('screens.voice.call-title')} />}
       </View>
 
       <View className="min-h-32 justify-end gap-4 pb-6">

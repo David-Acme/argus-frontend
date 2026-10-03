@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import type { ICameraCacheRow, INotificationPreviewCacheRow } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
@@ -21,16 +21,23 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 
 const RECENT_NOTIFICATIONS = 5;
+const CALL_ROUTE = '/call';
 
 const isGuardMode = (mode: unknown): mode is GuardMode =>
   typeof mode === 'string' && (GUARD_MODES as readonly string[]).includes(mode);
 
 export function useCallBridge(): void {
   const router = useRouter();
+  const pathname = usePathname();
   const { t, tk } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const { isActive } = useVoiceSession();
   const lastEventCamera = useRef<string | null>(null);
+  const onCallScreen = useRef(pathname === CALL_ROUTE);
+
+  useEffect(() => {
+    onCallScreen.current = pathname === CALL_ROUTE;
+  }, [pathname]);
 
   useEffect(() => {
     if (!isActive || !user) return;
@@ -147,7 +154,8 @@ export function useCallBridge(): void {
           toast.error(t('screens.voice.actions.camera-missing'));
           return failed(t('screens.voice.actions.detail.camera-missing'));
         }
-        router.push(`/cameras/${id}`);
+        if (onCallScreen.current) voiceService.showCamera(id);
+        else router.push(`/cameras/${id}`);
         return { ok: true, detail: null };
       }
       if (action.name === 'app.open') {

@@ -43,6 +43,7 @@ export function useCall() {
     error: session.error,
     transcript: session.transcript,
     actions: session.actions,
+    liveCameraId: session.liveCameraId,
     toggleMute,
     interrupt,
     retry,

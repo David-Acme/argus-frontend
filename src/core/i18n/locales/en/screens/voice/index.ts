@@ -57,6 +57,10 @@ export const voice = {
       settings: 'Settings',
     },
   },
+  camera: {
+    open: 'Open the {name} camera',
+    close: 'Close the camera',
+  },
   situation: {
     header: 'App context (local time {time}):',
     'guard-mode': 'Guard mode: {mode}.',
