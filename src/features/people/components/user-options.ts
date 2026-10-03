@@ -1,6 +1,6 @@
 
 
-import type { IUserManagementRecord } from '@/core/interfaces';
+import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { InviteRole, MenuOption, TranslateFn, UserRole } from '@/core/types';
 
 export const INVITE_EXPIRIES = [
@@ -12,17 +12,17 @@ export const INVITE_EXPIRIES = [
 export type InviteExpiry = (typeof INVITE_EXPIRIES)[number]['value'];
 
 export type ManagedUserDialogProps = {
-  user: IUserManagementRecord;
+  user: IPeopleDirectoryCacheRow;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 };
 
 export type InvitationDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (preview: InvitationPreview) => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 };
 
 export type InvitationPreview = {

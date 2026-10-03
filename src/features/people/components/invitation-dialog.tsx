@@ -1,22 +1,15 @@
 import { inviteService } from '@/core/services/invite';
 import { netService } from '@/core/services/net';
-
 import type { InviteRole, MenuOption } from '@/core/types';
-
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
-
 import { Input } from '@/shared/components/ui/input';
-
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
-
 import { useTranslation } from '@/shared/hooks/use-translation';
-
 import { buildInvitationQr } from '@/shared/libs/invitation-qr';
 import { toast } from '@/shared/libs/toast';
-
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
@@ -64,7 +57,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
         caFingerprint: instance.caFingerprint,
       }),
     });
-    await onSaved();
+    onSaved();
   }, [capacity, expiry, onCreated, onOpenChange, onSaved, role, run, t]);
 
   return (
