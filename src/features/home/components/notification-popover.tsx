@@ -6,7 +6,7 @@ import {
 } from '@/shared/components/ui/popover';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import { DashboardIconButton } from './dashboard-icon-button';
+import { IconButton } from '@/shared/components/ui/icon-button';
 
 export type NotificationPreview = {
   id: string;
@@ -46,7 +46,7 @@ export function NotificationPopover({
   return (
     <Popover onOpenChange={markSeen}>
       <PopoverTrigger asChild>
-        <DashboardIconButton icon="bell" label={label} badge={unreadCount} />
+        <IconButton icon="bell" label={label} badge={unreadCount} />
       </PopoverTrigger>
       <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">

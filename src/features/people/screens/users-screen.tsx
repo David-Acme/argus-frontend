@@ -8,8 +8,6 @@ import type {
   IUserManagementRecord,
 } from '@/core/interfaces';
 import type { UserRole } from '@/core/types';
-import {
-} from '@/shared/components/dashboard';
 import { AppScreen } from '@/shared/components/layout';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/ui/empty-state';

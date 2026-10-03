@@ -15,8 +15,8 @@ import {
 import { useDashboardNavigation } from '@/shared/hooks/use-dashboard-navigation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { easeOutCubic } from '@/shared/libs/animations';
-import { ComposeFab } from './compose-fab';
-import { DashboardBottomNav } from './dashboard-bottom-nav';
+import { ComposeFab } from '@/shared/components/layout/compose-fab';
+import { BottomNav } from '@/shared/components/layout/bottom-nav';
 
 let hasIntroduced = false;
 
@@ -49,7 +49,7 @@ export function GlobalBottomNav() {
       className="absolute right-0 left-0 items-center px-5"
       style={[{ bottom: insets.bottom + BOTTOM_NAV_GAP }, style]}>
       <View style={{ width: '100%', maxWidth: BOTTOM_NAV_MAX_WIDTH }}>
-        <DashboardBottomNav
+        <BottomNav
           tabs={tabs}
           active={active}
           labels={labels}

@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { CameraTile } from './camera-tile';
+import { CameraTile } from '@/features/home/components/camera-tile';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Panel } from '@/shared/components/ui/panel';
 

@@ -17,7 +17,7 @@ import { CameraTalkSheet } from '@/features/cameras/components/camera-talk-sheet
 import { PtzPad } from '@/features/cameras/components/ptz-pad';
 import { ZoneForm } from '@/features/cameras/components/zone-form';
 import { ZoneRow } from '@/features/cameras/components/zone-row';
-import { DashboardIconButton } from '@/shared/components/dashboard';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
@@ -166,7 +166,7 @@ export default function CameraDetailScreen() {
               title={camera.name}
               closeLabel={t('common.close')}
               trigger={
-                <DashboardIconButton icon="more-horizontal" label={t('screens.cameras.edit')} />
+                <IconButton icon="more-horizontal" label={t('screens.cameras.edit')} />
               }
             />
             )

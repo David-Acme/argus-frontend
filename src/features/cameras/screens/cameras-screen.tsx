@@ -7,7 +7,8 @@ import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/components/camera-summary';
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
 import { cameraStatusOf } from '@/features/cameras/components/camera-card';
-import { ActivityCard, DashboardIconButton } from '@/shared/components/dashboard';
+import { ActivityCard } from '@/shared/components/activity/activity-card';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
@@ -81,7 +82,7 @@ export default function CamerasScreen() {
           onBack={() => router.back()}
           action={
             canCreate ? (
-              <DashboardIconButton icon="plus" label={t('screens.cameras.connect')} onPress={openForm} />
+              <IconButton icon="plus" label={t('screens.cameras.connect')} onPress={openForm} />
             ) : null
           }
         />

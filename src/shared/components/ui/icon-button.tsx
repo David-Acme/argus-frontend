@@ -3,20 +3,20 @@ import type { IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { cn } from '@/shared/libs/utils';
 
-type DashboardIconButtonProps = Omit<PressableProps, 'children' | 'className'> & {
+type IconButtonProps = Omit<PressableProps, 'children' | 'className'> & {
   icon: IconName;
   label: string;
   badge?: number;
   className?: string;
 };
 
-export function DashboardIconButton({
+export function IconButton({
   icon,
   label,
   badge,
   className,
   ...props
-}: DashboardIconButtonProps) {
+}: IconButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"

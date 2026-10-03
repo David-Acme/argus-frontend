@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import { MosaicChart } from './mosaic-chart';
+import { MosaicChart } from '@/shared/components/activity/mosaic-chart';
 import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 

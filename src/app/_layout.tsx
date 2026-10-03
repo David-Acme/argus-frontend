@@ -11,7 +11,7 @@ import { Uniwind, useUniwind } from 'uniwind';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GlobalBottomNav } from '@/shared/components/dashboard';
+import { GlobalBottomNav } from '@/shared/components/layout/global-bottom-nav';
 import { ConfirmDialog } from '@/shared/components/confirm';
 import { Toaster } from '@/shared/components/toast';
 import { OfflineBanner } from '@/shared/components/layout';

@@ -5,7 +5,7 @@ import { Text } from '@/shared/components/ui/text';
 import { TIMELINE_HOURS } from '@/shared/constants/dashboard.constant';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { cn } from '@/shared/libs/utils';
-import { AgendaItem } from './agenda-item';
+import { AgendaItem } from '@/features/agenda/components/agenda-item';
 
 type ScheduleTimelineProps = {
   entries: readonly ScheduleEntry[];

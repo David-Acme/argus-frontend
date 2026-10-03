@@ -1,7 +1,7 @@
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
-import { DashboardIconButton } from '@/shared/components/dashboard';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { AppScreen } from '@/shared/components/layout';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/ui/empty-state';
@@ -208,14 +208,14 @@ export default function ProjectsScreen() {
       }>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">
-          <DashboardIconButton
+          <IconButton
             icon="arrow-left"
             label={t('common.back')}
             onPress={() => router.replace('/')}
           />
           <Text variant="title">{t('screens.projects.title')}</Text>
           {canCreateProject ? (
-            <DashboardIconButton
+            <IconButton
               icon="plus"
               label={t('screens.projects.new-project')}
               onPress={() => setProjectFormOpen(true)}

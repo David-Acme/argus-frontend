@@ -1,4 +1,3 @@
-app-core-data | src/app/(app)/index.tsx -> src/core/services/notification.service.ts
 app-core-data | src/app/approve/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/login/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/welcome/face/index.tsx -> src/core/services/auth.service.ts

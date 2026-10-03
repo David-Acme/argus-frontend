@@ -6,13 +6,13 @@ import { NAV_RAIL_WIDTH } from '@/shared/constants';
 import { useDashboardNavigation } from '@/shared/hooks/use-dashboard-navigation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
-import { ComposeFab } from './compose-fab';
+import { ComposeFab } from '@/shared/components/layout/compose-fab';
 
-type DashboardNavRailProps = {
+type NavRailProps = {
   active?: DashboardTab;
 };
 
-export function DashboardNavRail({ active }: DashboardNavRailProps) {
+export function NavRail({ active }: NavRailProps) {
   const { tabs, labels, navigate } = useDashboardNavigation();
   const { isShort } = useWindowClass();
   const insets = useSafeAreaInsets();

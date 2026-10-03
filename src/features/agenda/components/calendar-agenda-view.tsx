@@ -2,7 +2,7 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useCallback, useMemo, type ReactElement, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
-import { AgendaItem } from '@/shared/components/dashboard';
+import { AgendaItem } from '@/features/agenda/components/agenda-item';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import {

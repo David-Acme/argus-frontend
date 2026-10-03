@@ -1,6 +1,6 @@
 import type { DashboardProjectCard } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { ProjectCard } from './project-card';
+import { ProjectCard } from '@/features/home/components/project-card';
 import { CreateTile } from '@/shared/components/ui/create-tile';
 import { ResponsiveGrid } from '@/shared/components/ui/responsive-grid';
 

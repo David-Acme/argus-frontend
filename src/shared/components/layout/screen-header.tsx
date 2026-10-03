@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { DashboardIconButton } from '@/shared/components/dashboard/dashboard-icon-button';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
@@ -16,7 +16,7 @@ export function ScreenHeader({ title, subtitle, onBack, action }: ScreenHeaderPr
 
   return (
     <View className="flex-row items-center gap-3 pb-4">
-      {onBack ? <DashboardIconButton icon="arrow-left" label={t('common.back')} onPress={onBack} /> : null}
+      {onBack ? <IconButton icon="arrow-left" label={t('common.back')} onPress={onBack} /> : null}
       <View className="min-w-0 flex-1">
         <Text variant="title" numberOfLines={1}>
           {title}

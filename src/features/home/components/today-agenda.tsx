@@ -6,7 +6,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { AgendaItem } from './agenda-item';
+import { AgendaItem } from '@/features/agenda';
 import { Panel } from '@/shared/components/ui/panel';
 
 type TodayAgendaProps = {

@@ -1,7 +1,7 @@
 import { useMemo, type ReactElement, type ReactNode } from 'react';
 import { ScrollView } from 'react-native';
 import type { CalendarEntry, ScheduleEntry } from '@/core/types';
-import { ScheduleTimeline } from '@/shared/components/dashboard';
+import { ScheduleTimeline } from '@/features/agenda/components/schedule-timeline';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';

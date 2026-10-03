@@ -8,7 +8,7 @@ import { CalendarMonthView } from '@/features/agenda/components/calendar-month-v
 import { CalendarViewSwitcher } from '@/features/agenda/components/calendar-view-switcher';
 import { CalendarWeekView } from '@/features/agenda/components/calendar-week-view';
 import { EntryActionsMenu } from '@/features/agenda/components/entry-actions-menu';
-import { DashboardIconButton } from '@/shared/components/dashboard';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { AppScreen } from '@/shared/components/layout';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
@@ -254,7 +254,7 @@ export default function ScheduleScreen() {
       scrollable={false}>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">
-          <DashboardIconButton
+          <IconButton
             icon="arrow-left"
             label={t('common.back')}
             onPress={() => router.replace('/')}
@@ -263,7 +263,7 @@ export default function ScheduleScreen() {
             {t('screens.agenda.schedule')}
           </Text>
           {can('calendar_event', 'create') ? (
-            <DashboardIconButton
+            <IconButton
               icon="plus"
               label={t('screens.agenda.new-event')}
               onPress={() => {

@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import type { NotificationPreview } from './notification-popover';
+import type { NotificationPreview } from '@/features/home/components/notification-popover';
 import { Panel } from '@/shared/components/ui/panel';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 
