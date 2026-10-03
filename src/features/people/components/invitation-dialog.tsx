@@ -20,7 +20,7 @@ import { toast } from '@/shared/libs/toast';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
-import { INVITE_EXPIRIES, type InvitationDialogProps, type InviteExpiry, inviteRoleOptions } from './user-options';
+import { INVITE_EXPIRIES, type InvitationDialogProps, type InviteExpiry, inviteRoleOptions } from '@/features/people/components/user-options';
 
 export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: InvitationDialogProps) {
   const { t } = useTranslation();

@@ -4,13 +4,8 @@ app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera-contr
 app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera.service.ts
 app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/zone.service.ts
 app-core-data | src/app/(app)/index.tsx -> src/core/services/notification.service.ts
-app-core-data | src/app/(app)/people/index.tsx -> src/core/services/portrait-preview.service.ts
-app-core-data | src/app/(app)/people/index.tsx -> src/core/services/view-cache/index.ts
 app-core-data | src/app/(app)/profile/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/(app)/profile/index.tsx -> src/core/services/net/index.ts
-app-core-data | src/app/(app)/users/index.tsx -> src/core/services/invite/index.ts
-app-core-data | src/app/(app)/users/index.tsx -> src/core/services/sync/index.ts
-app-core-data | src/app/(app)/users/index.tsx -> src/core/services/user-management.service.ts
 app-core-data | src/app/approve/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/login/index.tsx -> src/core/services/auth.service.ts
 app-core-data | src/app/welcome/face/index.tsx -> src/core/services/auth.service.ts
@@ -25,7 +20,6 @@ shared-single-consumer | shared/components/profile (1)
 shared-single-consumer | shared/components/qr (1)
 shared-single-consumer | shared/components/session (1)
 shared-single-consumer | shared/components/toast (1)
-shared-single-consumer | shared/components/users (1)
 shared-single-consumer | shared/components/voice (1)
 shared-single-consumer | shared/hooks/use-bottom-nav (1)
 shared-single-consumer | shared/hooks/use-call (1)

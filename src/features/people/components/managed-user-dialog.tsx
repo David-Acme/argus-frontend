@@ -1,6 +1,6 @@
 
 
-import { userManagementService } from '@/core/services/user-management.service';
+import { userManagementService } from '@/features/people/services/user-management.service';
 
 import type { UserRole } from '@/core/types';
 
@@ -19,7 +19,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
-import { type ManagedUserDialogProps, roleOptions } from './user-options';
+import { type ManagedUserDialogProps, roleOptions } from '@/features/people/components/user-options';
 
 export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: ManagedUserDialogProps) {
   const { t } = useTranslation();

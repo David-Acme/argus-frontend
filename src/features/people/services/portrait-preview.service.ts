@@ -1,8 +1,8 @@
 import { httpService } from '@/core/services/http';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { PortraitPreviewImage } from '@/shared/libs/portrait-preview';
+import type { PortraitPreviewImage } from '@/features/people/model/portrait-preview';
 
-export { portraitDataUri } from '@/shared/libs/portrait-preview';
+export { portraitDataUri } from '@/features/people/model/portrait-preview';
 
 type PortraitCapability = {
   token: string;
