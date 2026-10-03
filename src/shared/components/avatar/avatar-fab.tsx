@@ -1,5 +1,6 @@
 import { Pressable } from 'react-native';
 import Avatar from './avatar';
+import { SHADOW_COLOR } from '@/shared/constants';
 
 type AvatarFabProps = {
   onPress: () => void;
@@ -18,7 +19,7 @@ export function AvatarFab({ onPress, size = 64, accessibilityLabel }: AvatarFabP
         width: size,
         height: size,
         borderRadius: size / 2,
-        shadowColor: '#000',
+        shadowColor: SHADOW_COLOR,
         shadowOpacity: 0.25,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 6 },

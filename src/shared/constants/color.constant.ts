@@ -68,3 +68,9 @@ export type ColorTokenName = keyof (typeof colorTokens)['light'];
 export type ThemeColorTokens = Record<ThemeName, Record<ColorTokenName, string>>;
 
 export const colors = colorTokens as ThemeColorTokens;
+
+export const QR_COLORS = { foreground: '#181816', background: '#FFFFFF' } as const;
+
+export const OVERLAY_STROKE_COLOR = '#FFFFFF';
+
+export const SHADOW_COLOR = '#000000';

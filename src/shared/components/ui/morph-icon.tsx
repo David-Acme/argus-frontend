@@ -1,4 +1,4 @@
-import { MORPH_ICONS } from '@/shared/constants';
+import { colorTokens, MORPH_ICONS } from '@/shared/constants';
 import type { MorphIconName } from '@/core/types';
 import {
   MorphIcon as BaseMorphIcon,
@@ -23,7 +23,7 @@ export const MorphIcon = forwardRef<MorphHandle, MorphIconProps>(
     {
       name,
       size = 24,
-      color = '#161616',
+      color = colorTokens.light.foreground,
       strokeWidth = 2,
       spring = 'smooth',
       reducedMotion = 'user',

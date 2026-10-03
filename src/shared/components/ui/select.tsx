@@ -1,9 +1,10 @@
 import { Icon } from '@/shared/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import { TextClassContext } from '@/shared/components/ui/text';
+import { IS_IOS, IS_NATIVE } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 import * as SelectPrimitive from '@rn-primitives/select';
-import * as React from 'react';
+import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
@@ -18,7 +19,7 @@ function SelectValue({
   ref,
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value> & {
+}: ComponentProps<typeof SelectPrimitive.Value> & {
     className?: string;
   }) {
   const { value } = SelectPrimitive.useRootContext();
@@ -41,8 +42,8 @@ function SelectTrigger({
   children,
   size = 'default',
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-    children?: React.ReactNode;
+}: ComponentProps<typeof SelectPrimitive.Trigger> & {
+    children?: ReactNode;
     size?: 'default' | 'sm';
   }) {
   if (props.asChild) {
@@ -71,7 +72,7 @@ function SelectTrigger({
   );
 }
 
-const FullWindowOverlay = Platform.OS === 'ios' ? RNFullWindowOverlay : React.Fragment;
+const FullWindowOverlay = IS_IOS ? RNFullWindowOverlay : Fragment;
 
 function SelectContent({
   className,
@@ -79,7 +80,7 @@ function SelectContent({
   position = 'popper',
   portalHost,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content> & {
+}: ComponentProps<typeof SelectPrimitive.Content> & {
     className?: string;
     portalHost?: string;
   }) {
@@ -88,7 +89,7 @@ function SelectContent({
       <FullWindowOverlay>
         <SelectPrimitive.Overlay
           style={Platform.select({ native: StyleSheet.absoluteFill })}
-          asChild={Platform.OS !== 'web'}>
+          asChild={IS_NATIVE}>
           <NativeOnlyAnimatedView
             className="z-50"
             entering={FadeIn.reduceMotion(ReduceMotion.System)}
@@ -144,7 +145,7 @@ function SelectContent({
 function SelectLabel({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+}: ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
       className={cn('text-muted-foreground px-2 py-2 text-xs sm:py-1.5', className)}
@@ -156,7 +157,7 @@ function SelectLabel({
 function SelectItem({
   className,
   ...props
-}: Omit<React.ComponentProps<typeof SelectPrimitive.Item>, 'children'>) {
+}: Omit<ComponentProps<typeof SelectPrimitive.Item>, 'children'>) {
   return (
     <SelectPrimitive.Item
       className={cn(
@@ -181,7 +182,7 @@ function SelectItem({
 function SelectSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
+}: ComponentProps<typeof SelectPrimitive.Separator>) {
   return (
     <SelectPrimitive.Separator
       className={cn(
@@ -197,8 +198,8 @@ function SelectSeparator({
 function SelectScrollUpButton({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
-  if (Platform.OS !== 'web') {
+}: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+  if (IS_NATIVE) {
     return null;
   }
   return (
@@ -213,8 +214,8 @@ function SelectScrollUpButton({
 function SelectScrollDownButton({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
-  if (Platform.OS !== 'web') {
+}: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+  if (IS_NATIVE) {
     return null;
   }
   return (

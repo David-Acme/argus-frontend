@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { ZONE_COLORS } from '@/shared/constants';
 
 type ZoneRowProps = {
   id: string;
@@ -26,7 +27,7 @@ export const ZoneRow = memo(function ZoneRow({
       accessibilityLabel={name}
       onPress={() => onPress(id)}
       className="bg-card flex-row items-center gap-3 rounded-xl p-3 active:opacity-80">
-      <View className="size-3 rounded-full" style={{ backgroundColor: color || '#FF3B30' }} />
+      <View className="size-3 rounded-full" style={{ backgroundColor: color || ZONE_COLORS[0] }} />
       <View className="min-w-0 flex-1">
         <Text className="text-[14px] font-medium" numberOfLines={1}>
           {name}

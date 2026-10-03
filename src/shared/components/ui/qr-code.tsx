@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import { useMemo } from 'react';
 import Svg, { Rect } from 'react-native-svg';
+import { QR_COLORS } from '@/shared/constants';
 
 type QrCodeProps = {
   value: string;
@@ -13,8 +14,8 @@ type QrCodeProps = {
 export function QrCode({
   value,
   size,
-  color = '#181816',
-  backgroundColor = '#ffffff',
+  color = QR_COLORS.foreground,
+  backgroundColor = QR_COLORS.background,
   errorCorrection = 'M',
 }: QrCodeProps) {
   const qr = useMemo(

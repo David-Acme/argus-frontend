@@ -1,7 +1,6 @@
 import { createArgusFace, type FaceDetection } from 'argus-face';
 import type { CameraView } from 'expo-camera';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { Platform } from 'react-native';
 import {
   FACE_CENTER_X_TOL,
   FACE_CENTER_Y_MAX,
@@ -18,6 +17,7 @@ import {
   FACE_READY_STABLE_MS,
   FACE_SAMPLE_FAST_MS,
   FACE_SAMPLE_MS,
+  IS_ANDROID,
 } from '@/shared/constants';
 import type { FaceGuideSnapshot } from '@/core/types';
 
@@ -210,14 +210,14 @@ export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGui
 
   const onFacesDetected = useCallback(
     (event: NativeFaceEvent) => {
-      if (Platform.OS !== 'android' || !activeRef.current || !available) return;
+      if (!IS_ANDROID || !activeRef.current || !available) return;
       applyFrame(readNativeFrame(event));
     },
     [applyFrame, available],
   );
 
   useEffect(() => {
-    if (Platform.OS === 'android' || !active || !available || !face) return;
+    if (IS_ANDROID || !active || !available || !face) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 

@@ -11,7 +11,7 @@ module.exports = defineConfig([
   },
   {
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/shared/libs/date.ts'],
+    ignores: ['src/shared/libs/date.ts', 'src/shared/constants/common.constant.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -30,6 +30,14 @@ module.exports = defineConfig([
           selector:
             "NewExpression[callee.object.name='Intl'][callee.property.name='DateTimeFormat']",
           message: 'Use the centralized date formatter instead.',
+        },
+        {
+          selector: "MemberExpression[object.name='Platform'][property.name='OS']",
+          message: 'Use IS_WEB, IS_NATIVE, IS_ANDROID, IS_IOS or IS_TAURI from @/shared/constants.',
+        },
+        {
+          selector: "ImportDeclaration[source.value='react'] > ImportNamespaceSpecifier",
+          message: 'Import React APIs by name.',
         },
       ],
     },

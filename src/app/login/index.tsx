@@ -6,7 +6,7 @@ import { Text } from '@/shared/components/ui/text';
 import { QrCode } from '@/shared/components/ui/qr-code';
 import { buildLoginQr } from '@/shared/libs/login-qr';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { IS_NATIVE } from '@/shared/constants';
+import { IS_NATIVE, QR_COLORS } from '@/shared/constants';
 import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -127,7 +127,7 @@ export default function LoginScreen() {
       {phase === 'qr' && challengeId ? (
         <>
           <View className="rounded-2xl border border-border bg-white p-4 shadow-lg shadow-black/5">
-            <QrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color="#181816" />
+            <QrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color={QR_COLORS.foreground} />
           </View>
           <Text variant="muted" className="text-center">
             {t('screens.login.qr-hint')}
