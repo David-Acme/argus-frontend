@@ -276,7 +276,9 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
   sync relay and `route-baseline.txt` + `config.toml.example`). It found one
   drift: the app could send `voice:answer`, which the relay rejects; nothing
   called it, so it is deleted.
-- [ ] Tests for `toNetError`, the three QR parsers, refresh outcomes and dates.
+- [x] Tests for `toNetError`, the three QR parsers, refresh outcomes and dates. Refresh
+  classification was extracted to `readRefreshResponse` to be testable; the
+  date tests found the calendar-cache window bug fixed in `a02460d`.
 - [ ] `noUncheckedIndexedAccess`, feature by feature.
 - [ ] Visual regression of the web export at three widths (Playwright).
 

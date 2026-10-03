@@ -286,7 +286,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
 - **Session refresh has three outcomes** (`SessionRefreshOutcome`):
   `refreshed`, `rejected` (401/403 — the only case that ends the session) and
   `unavailable` (429, 503, network, malformed answer — the session is kept and
-  the caller retries later).
+  the caller retries later). The classification is `readRefreshResponse`
+  (`core/services/http/refresh-response.ts`), unit-tested.
 - **`src/core/services/secure-storage/`** → `ISecureStorageService` **async**
   (`getStringAsync/setStringAsync/deleteAsync/hasAsync`). Native = `expo-secure-store`;
   web = Tauri command + `keyring` crate; in a plain browser it

@@ -2,6 +2,7 @@ import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
+import { readRefreshResponse } from '@/core/services/http/refresh-response';
 import { registerHttpAuth } from '@/core/services/http';
 import { synchronizeService } from '@/core/services/sync';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
@@ -161,21 +162,10 @@ class SessionService {
       return 'unavailable';
     }
 
-    if (result.status === 401 || result.status === 403) return 'rejected';
-    if (result.status < 200 || result.status >= 300) return 'unavailable';
-
-    let accessToken: string | null = null;
-    let nextRefreshToken = refreshToken;
-    try {
-      const envelope = JSON.parse(result.body) as {
-        info?: { accessToken?: unknown; refreshToken?: unknown };
-      };
-      if (typeof envelope.info?.accessToken === 'string') accessToken = envelope.info.accessToken;
-      if (typeof envelope.info?.refreshToken === 'string') nextRefreshToken = envelope.info.refreshToken;
-    } catch {
-      return 'unavailable';
-    }
-    if (!accessToken) return 'unavailable';
+    const reading = readRefreshResponse(result);
+    if (reading.outcome !== 'refreshed') return reading.outcome;
+    const { accessToken } = reading;
+    const nextRefreshToken = reading.refreshToken ?? refreshToken;
 
     if (version !== this.sessionVersion || useAuthStore.getState().refreshToken !== refreshToken) {
       return 'unavailable';
