@@ -28,7 +28,7 @@ import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { ZoneEditor } from '@/features/cameras/components/zone-editor';
-import { CameraLiveView } from './camera-live-view';
+import { CameraLiveStream } from './camera-live-view';
 import { CameraZonesOverlay } from '@/features/cameras/components/camera-zones-overlay';
 
 type ZoneFormProps = {
@@ -233,7 +233,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone, zones = [] }: Zon
                     background={
                       open ? (
                         <>
-                          <CameraLiveView cameraId={cameraId} fill />
+                          <CameraLiveStream cameraId={cameraId} active={open} fill />
                           <CameraZonesOverlay zones={others} />
                         </>
                       ) : null

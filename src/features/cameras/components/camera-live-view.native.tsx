@@ -10,13 +10,16 @@ import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { cn } from '@/shared/libs/utils';
 
-type CameraLiveViewProps = {
+type CameraLiveStreamProps = {
   cameraId: string;
+  active: boolean;
   quality?: CameraStreamQuality;
   overlay?: ReactNode;
   fill?: boolean;
   className?: string;
 };
+
+type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
 
 type StreamStatus = {
   key: string;
@@ -24,8 +27,19 @@ type StreamStatus = {
   painted: boolean;
 };
 
-export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = false, className }: CameraLiveViewProps) {
+export function CameraLiveView(props: CameraLiveViewProps) {
   const focused = useIsFocused();
+  return <CameraLiveStream {...props} active={focused} />;
+}
+
+export function CameraLiveStream({
+  cameraId,
+  active,
+  quality = 'sub',
+  overlay,
+  fill = false,
+  className,
+}: CameraLiveStreamProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
   const session = useRef<ICameraMediaSession | null>(null);
   const [status, setStatus] = useState<StreamStatus | null>(null);
@@ -40,7 +54,7 @@ export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = fals
 
   useEffect(() => {
     const numericId = Number(cameraId);
-    if (!player || !focused || !Number.isFinite(numericId) || numericId <= 0) return;
+    if (!player || !active || !Number.isFinite(numericId) || numericId <= 0) return;
 
     const sink: ICameraMediaSink = {
       resetStream: () => player.resetStream(),
@@ -73,7 +87,7 @@ export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = fals
       session.current?.close();
       session.current = null;
     };
-  }, [cameraId, focused, player, quality, streamKey]);
+  }, [active, cameraId, player, quality, streamKey]);
 
   return (
     <View
@@ -81,7 +95,7 @@ export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = fals
       style={fill ? undefined : { aspectRatio: 16 / 9, backgroundColor: CAMERA_LIVE_BACKGROUND }}>
       <ArgusCameraView
         hybridRef={callback(bindPlayer)}
-        active={focused}
+        active={active}
         style={{ width: '100%', height: '100%' }}
       />
       {overlay}

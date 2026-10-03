@@ -9,13 +9,16 @@ import { CameraLiveStatus } from '@/features/cameras/components/camera-live-stat
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
 import { cn } from '@/shared/libs/utils';
 
-type CameraLiveViewProps = {
+type CameraLiveStreamProps = {
   cameraId: string;
+  active: boolean;
   quality?: CameraStreamQuality;
   overlay?: ReactNode;
   fill?: boolean;
   className?: string;
 };
+
+type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
 
 type StreamStatus = {
   key: string;
@@ -31,8 +34,19 @@ const CANVAS_STYLE = {
   display: 'block',
 } as const;
 
-export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = false, className }: CameraLiveViewProps) {
+export function CameraLiveView(props: CameraLiveViewProps) {
   const focused = useIsFocused();
+  return <CameraLiveStream {...props} active={focused} />;
+}
+
+export function CameraLiveStream({
+  cameraId,
+  active,
+  quality = 'sub',
+  overlay,
+  fill = false,
+  className,
+}: CameraLiveStreamProps) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const session = useRef<ICameraMediaSession | null>(null);
   const [unsupported, setUnsupported] = useState(() => !WebCameraPlayer.supported);
@@ -43,7 +57,7 @@ export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = fals
   const retry = useCallback(() => session.current?.retry(), []);
 
   useEffect(() => {
-    if (unsupported || !focused) return;
+    if (unsupported || !active) return;
     const target = canvas.current;
     const numericId = Number(cameraId);
     if (!target || !Number.isFinite(numericId) || numericId <= 0) return;
@@ -90,7 +104,7 @@ export function CameraLiveView({ cameraId, quality = 'sub', overlay, fill = fals
       session.current = null;
       player.dispose();
     };
-  }, [cameraId, focused, quality, streamKey, unsupported]);
+  }, [active, cameraId, quality, streamKey, unsupported]);
 
   return (
     <View
