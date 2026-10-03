@@ -11,7 +11,7 @@
   (file-based routing), Tailwind CSS v4 via **Uniwind**, React Native Reusables
   (`@rn-primitives`), `react-native-mmkv` (native storage), `lucide-react-native`
   (icons, centralized), `zustand` v5 (8 stores), **WatermelonDB 0.28** (local DB,
-  15 tables), `rxjs` (service observables → React via `useObservable`), `zod` +
+  15 tables), `rxjs` (service observables → view-cache projections → React via `useViewCacheRows`), `zod` +
   `react-hook-form` (forms), custom i18n engine (es/en).
 - **Media/Platform**: `expo-camera` (barcode/QR + face capture, mobile),
   `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar
@@ -44,7 +44,7 @@ stays `PascalCase`; only the file name is kebab.
 src/features/voice/components/avatar.tsx      → export default function Avatar()
 src/shared/components/qr/qr-scan-sheet.tsx     → export function QrScanSheet()
 src/shared/components/ui/native-only-animated-view.tsx
-src/shared/hooks/use-mic-level.ts
+src/shared/hooks/use-window-class.ts
 src/core/stores/qr-scan.store.ts
 ```
 
@@ -150,7 +150,7 @@ src/core/stores/qr-scan.store.ts
   `setThemePreference()` (persists to storage + `Uniwind.setTheme`).
 - `src/app/_layout.tsx` applies the persisted preference on mount.
 - React Navigation colors via `NAV_THEME` / `BG_COLORS` in
-  `src/shared/libs/theme.ts` (HEX from `color.constant.ts`).
+  `src/shared/components/layout/navigation-theme.ts` (HEX from `color.constant.ts`).
 - **Native system bars**: `SystemBars` from `react-native-edge-to-edge` (official
   Expo-supported API) is used **directly** in `_layout.tsx` — **no wrapper
   component**: `<SystemBars style={isDark ? 'light' : 'dark'} />`. It replaces
@@ -364,7 +364,7 @@ no `DatabaseProvider` and no `useDatabase`: a hook or a screen that imports
 `@/core/database` is a bug.
 
 ```
-core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable  ←  UI
+core/database  ←  core/services/*.service.ts  ←  view-cache projections  ←  shared/hooks/use-cached-rows  ←  UI
 ```
 
 - **`src/core/database/`** — WatermelonDB 0.28, platform-split like every other
@@ -408,9 +408,10 @@ core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable
 - **`query.observe()` does NOT re-emit when a field changes** on a record already
   in the result set — only on enter/leave. Lists that render fields must use
   `observeManyWithColumns`.
-- **`shared/hooks/use-observable.ts`** is the only bridge into React
-  (`useSyncExternalStore`). It knows rxjs, not WatermelonDB. No
-  `@nozbe/with-observables` (HOC, and the source of the React 19 peer conflict).
+- Watermelon reaches React only through the view cache: the coordinator's
+  projections subscribe, and screens read `useViewCacheRows` /
+  `useViewCacheValue` (`shared/hooks/use-cached-rows.ts`, `useSyncExternalStore`).
+  No `@nozbe/with-observables` (HOC, and the source of the React 19 peer conflict).
 - Build config: `babel.config.js` needs `@babel/plugin-proposal-decorators`
   (`version: 'legacy'`) + `class-properties`/`private-methods`/
   `private-property-in-object` in `loose: true`. **These four MUST stay inside the
@@ -667,7 +668,7 @@ cd src-tauri && cargo check
 | `src/core/types/{view-cache,audit-log}.type.ts` | Uniones y tipos auxiliares de cache/auditoría; siempre importar desde el barrel de tipos |
 | `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |
 | `src/features/voice/` | Voice feature: `services/voice` (`voiceService`: mic PCM over the sync socket, STT/assistant observables, TTS playback), call screen, call pill, `useCall`, `useCallBridge`, avatar |
-| `src/core/services/invite.service.ts` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
+| `src/core/services/invite/` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
 | `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
 | `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo), `trustAny` para TOFU |
@@ -675,16 +676,15 @@ cd src-tauri && cargo check
 | `src/core/database/tables/` | One file per table: `tableSchema` + `Model` + the `TABLES` registry |
 | `src/core/services/database.service.ts` | `DatabaseService<K>` base class (protected query primitives) |
 | `src/core/services/{domain}.service.ts` | Data services — the only code that reads the database |
-| `src/shared/hooks/use-observable.ts` | Bridge genérico Service `Observable` → React (`useSyncExternalStore`); no es una API de rutas |
 | `src/shared/hooks/use-cached-rows.ts` | Lectura síncrona de snapshots MMKV por revisión (`useViewCacheRows` / `useViewCacheValue`) |
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
 | `modules/argus-mic/` | Nitro module de voz: `ArgusMic` (PCM s16le streaming) |
 | `modules/argus-face/` | Nitro module de visión: `ArgusFace` (MLKit/Vision, detección por URI + luminancia) |
 | `modules/argus-camera/` | Nitro view `ArgusCameraView`: decoder nativo del feed `/media` (ExoPlayer/Media3 en Android, `AVSampleBufferDisplayLayer` en iOS) con `bufferedBytes()` para el credit-window |
-| `src/core/services/camera-media.service.ts` | Socket `/media` (argus-camera): subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
-| `src/shared/components/cameras/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
+| `src/features/cameras/services/camera-media.service.ts` | Socket `/media` (argus-camera): subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
+| `src/features/cameras/components/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
-| `src/shared/components/ui/` | UI primitives (`button`, `text`, `icon`, `input`) |
+| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `VirtualList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `ConfirmDialog`, `Toaster` |
 | `src/app/welcome/` | Onboarding routes (nested Stack with fade + progress), one-line re-exports of `features/auth` screens: `index` (greeting), `pairing/` (mobile QR / desktop code), `face/` (MLKit guidance, mobile-only), `voice/` (onboarding call, mobile-only) |
 | `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
 | `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |
@@ -695,7 +695,7 @@ cd src-tauri && cargo check
 | `src/features/home/` | Home dashboard: camera grid/tile, project grid, today's agenda, summary, Novedades, notifications popover |
 | `src/shared/components/layout/` | App chrome and screen layout: `AppShell`, `AppScreen`, `ScreenHeader`, `NavRail`, `BottomNav`/`GlobalBottomNav`, `ComposeFab`, `CenteredScreen`, `OfflineBanner` |
 | `src/shared/components/activity/` | `ActivityCard` + `MosaicChart` (home and cameras) |
-| `src/shared/components/session/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
+| `src/features/auth/components/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |
 | `src/features/auth/` | Welcome, pairing, face login/enrolment, invitation, onboarding call, desktop login QR, approve; `useFaceCapture` + `useFaceGuide`; the face detector service (`services/face-detector`, native MLKit/Vision, web stub returns `null`) |
 | `src/features/qr/` | QR scanner: `useQrScanner` (permission, detection, hand-back to the scan store) + the screen and its components |
 | `src/shared/constants/qr.constant.ts` | `QR_SCAN_PURPOSES`, `QR_SCAN_FEEDBACK`, scan timings |
@@ -711,10 +711,8 @@ cd src-tauri && cargo check
 | `src/shared/hooks/use-translation.ts` | `useTranslation()` reactive hook (real-time) |
 | `src/shared/constants/i18n.constant.ts` | `I18N_STORAGE_KEY`, `I18N_DEFAULT_LANGUAGE`, `SUPPORTED_LANGUAGES`, `LANGUAGE_OPTIONS` |
 | `src/features/voice/constants/avatar.ts` | `AVATAR_STATE_PARAMS`, `AVATAR_PALETTE`, blink/transition times |
-| `src/shared/libs/color.ts` | `hexToRgba` / `hexToHsv` (shader uniform helpers) |
-| `src/shared/hooks/use-mic-level.ts` | Live mic metering (expo-audio, native + web) |
 | `src/shared/hooks/use-theme-preference.ts` | Theme preference get/set |
-| `src/shared/libs/theme.ts` | `NAV_THEME` + `BG_COLORS` (React Navigation) |
+| `src/shared/components/layout/navigation-theme.ts` | `NAV_THEME` + `BG_COLORS` (React Navigation) |
 | `src/global.css` | OKLCH tokens + aliases + base/utilities |
 | `src/app/_layout.tsx` | Root layout: theme init, `SystemBars`, `SessionGate`, guards native-only, Stack con crossfade (`fade`) + overlays globales (nav, confirm, toaster) |
 | `CONTEXT.md` | Full project history and decisions |

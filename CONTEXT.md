@@ -332,7 +332,7 @@ Installed **without sudo** in the user home (Arch Linux, no system JDK/SDK):
 ### Layering (user requirement)
 
 ```
-core/database  ←  core/services/*.service.ts  ←  shared/hooks/use-observable  ←  UI
+core/database  ←  core/services/*.service.ts  ←  view-cache projections  ←  shared/hooks/use-cached-rows  ←  UI
 ```
 
 The database is reached **only** from data services. There is deliberately **no
@@ -340,8 +340,8 @@ The database is reached **only** from data services. There is deliberately **no
 query logic cannot leak into screens. `DatabaseService<K>` keeps its query
 primitives `protected`, so WatermelonDB's `Clause` never crosses the service
 boundary and each service's public surface is domain-named
-(`observeByCamera`, `observeUnreadCountForUser`). `use-observable.ts` knows rxjs,
-not WatermelonDB.
+(`observeByCamera`, `observeUnreadCountForUser`). Only the view-cache
+projections subscribe to those observables; screens read MMKV snapshots.
 
 ### Why 0.28 and this shape
 
