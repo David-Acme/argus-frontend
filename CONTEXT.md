@@ -1293,6 +1293,52 @@ succeeded. `git diff --check` also passed, and a static scan confirmed no
 validation still requires a real paired session; do not fabricate people or
 camera rows merely to make a screen appear loaded.
 
+## Core hardening (2026-10)
+
+A review of `core/` and `src-tauri/` against the backend contract, fixed
+with tests. The decisions that outlive the commits:
+
+- **One optimistic layer, in `shared/`.** The pending-intent overlay lives
+  in `shared/libs/optimistic-action.ts` + `shared/hooks/use-optimistic-rows.ts`
+  (UIUX). Core gives it what it needs and nothing parallel: a toast action
+  slot (`show(intent, title, description?, action?)`, 6 s when it carries an
+  action), `IHttpConfig.headers`, and every productivity write answering
+  with the id it touched (create/update: the row; delete: `{deleted, id}`).
+- **A 401 refreshes only the token that failed.** Requests carry the
+  `SessionCredential` they were sent with; a late 401 for an already rotated
+  token retries with the current one, a 401 from a previous session neither
+  refreshes nor clears the new one. Before, parallel screen loads turned one
+  expired token into a chain of rotations that invalidated each other's
+  retries.
+- **Refusals carry the backend's vocabulary.** `readEnvelope` names an
+  envelope-less refusal by its status (a proxy 502 is `BAD_GATEWAY`, an empty
+  503 `SERVICE_UNAVAILABLE`), a refresh that is only unavailable surfaces as
+  503 instead of a misleading 401, and desktop errors are `CODE|message`
+  (`TIMEOUT` is a code now; the old `'401'` substring rule is gone).
+- **Rust owns whom the desktop trusts.** `argus_pair` checks the QR's
+  fingerprint before it pins anything and writes the four trust keys itself;
+  relocation goes through `argus_relocate`. A compromised WebView can still
+  re-pair through `argus_pair` with a code it chose, so this closes the cheap
+  path (two `argus_secure_set` calls), not every path; that would need a
+  native confirmation.
+- **The desktop proves it drew the login QR** (`pollHash` + `X-Argus-Login-Proof`).
+- **The projection knows its owner** (user id + role in WatermelonDB's own
+  local storage); a mismatch at InitialInfo wipes and bootstraps. Existing
+  installs bootstrap once after this landed.
+- **A sync request left unanswered for 10 s recycles the socket**, because
+  replies are matched by type only and a late reply would answer the next
+  request.
+- **Days are calendar days** (`addDays`, `startOfNextDay`); the dashboard
+  trend counts events with COUNT queries instead of a 300-row sample; the
+  camera list watches the columns its projection declares
+  (`CAMERA_SOURCE_FIELDS`); early migration steps name the columns later
+  steps add, and a replay test guards it.
+- **Open**: the invitation `resolve` call still sends the token over
+  trust-any TLS before the fingerprint check (needs a pinned trust-any in
+  the native modules); the app sends no stable `User-Agent`, and the backend
+  binds refresh tokens to the exact agent string, so an OS or library update
+  can log a phone out (adding one would log every session out once).
+
 ## History log — prior docs resync (2026-08-23)
 
 - Documentation-only pass, before the local-first/audit work documented above:

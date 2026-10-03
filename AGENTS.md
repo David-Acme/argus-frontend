@@ -288,7 +288,16 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   `refreshed`, `rejected` (401/403 — the only case that ends the session) and
   `unavailable` (429, 503, network, malformed answer — the session is kept and
   the caller retries later). The classification is `readRefreshResponse`
-  (`core/services/http/refresh-response.ts`), unit-tested.
+  (`core/services/http/refresh-response.ts`), unit-tested. Every request
+  carries the `SessionCredential` it was sent with (token + session
+  version); `settledRefresh` answers a 401 for a token that already rotated
+  with `refreshed` (retry with the current one) and a 401 from a previous
+  session with `unavailable`, so only a 401 for the current token rotates
+  or clears. `clearSession` is single-flight and always clears the store
+  and tokens, even when the local wipe fails. A refusal without an envelope
+  is named after its status (`readEnvelope`, `http/http-envelope.ts`:
+  `BAD_GATEWAY`, `SERVICE_UNAVAILABLE`, `TIMEOUT`, ...); `INVALID_RESPONSE`
+  is only a 2xx that is not an envelope.
 - **`src/core/services/secure-storage/`** → `ISecureStorageService` **async**
   (`getStringAsync/setStringAsync/deleteAsync/hasAsync`). Native = `expo-secure-store`;
   web = Tauri command + `keyring` crate; in a plain browser it
@@ -323,14 +332,21 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   scripts and connections only from the app itself and the IPC origin) with
   `withGlobalTauri: false`; the JS reaches Rust through `@tauri-apps/api/core`
   only. The WebView never hands Rust the trust material: `argus_request`
-  takes the request (plus an optional IP for the relocation probe) and
-  `argus_socket_open` the URL and headers; Rust reads the CA, host and IP from
-  the keyring (`src-tauri/src/net/trust.rs`, cached in memory and dropped
-  whenever a `net.*` key is written or deleted). `argus_request`'s reqwest
-  client trusts **only** the pinned CA
-  (`tls_built_in_root_certs(false)`), and `argus_secure_*` refuse any key not in
-  `secure.rs`'s `ALLOWED_KEYS`, which a unit test keeps equal to
-  `NET_STORAGE_KEYS`. `frontendDist = ../dist` (`bun run web:build`). Verify with
+  takes the request and `argus_socket_open` the URL and headers; Rust reads
+  the CA, host and IP from the keyring (`src-tauri/src/net/trust.rs`, cached
+  in memory and dropped only when a trust key changes). Rust also **writes**
+  them: `net.caPem`, `net.caFingerprint`, `net.host` and `net.ip`
+  (`TRUST_KEYS`) are pinned by `argus_pair` once the proofs and the QR's
+  expected fingerprint check out, and `net.ip` moves only through
+  `argus_relocate(url, ip)` after the candidate answered under the pinned CA;
+  `argus_secure_set` refuses them (the WebView may read and delete them, and
+  writes only `WEBVIEW_KEYS`). A unit test keeps the two lists equal to
+  `NET_STORAGE_KEYS`. `argus_request`'s reqwest client trusts **only** the
+  pinned CA (`tls_built_in_root_certs(false)`), is https-only, follows no
+  redirect, and times out (10 s connect, 30 s read); its errors are
+  `CODE|message` like the mobile modules (`CERT_NOT_TRUSTED` from rustls in
+  the source chain, `TIMEOUT`, `NETWORK_ERROR`). The desktop socket closes a
+  peer silent for 45 s and bounds its send queue (512 frames). `frontendDist = ../dist` (`bun run web:build`). Verify with
   `cargo check` (requires `webkit2gtk-4.1` on Linux). `argus_request` uses a
   **pinned DNS resolver** (`reqwest::dns::Resolve`): `argus.local` → the discovery IP,
   same as Android's custom `Dns` (`.local` does not always resolve).
@@ -355,6 +371,10 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   short-lived challenge bound to the DESKTOP device hash; the mobile approves it
   (`POST .../approve`, JWT) and the backend issues a session bound to that hash;
   the desktop polls `GET /auth/device-login/{id}` for the tokens (single use).
+  The desktop also proves it drew the QR: `createDeviceLogin` sends
+  `pollHash` (SHA-256 of a random proof kept in memory, `core/services/device-login`)
+  and the poll presents the proof in `X-Argus-Login-Proof`, so someone who
+  photographs the QR cannot collect the session.
   `auth.service.ts` exposes `createDeviceLogin/approveDeviceLogin/pollDeviceLogin`;
   the QR JSON is built/parsed by `features/auth/model/login-qr.ts` and rendered with the
   `QrCode` component (`qrcode` + react-native-svg). The desktop never uses the
@@ -488,6 +508,13 @@ for Watermelon nor make an HTTP list request just because it mounted.
   Fetch audit pages with `afterId/endId`, apply only each
   `changes[field].current` to Watermelon, and persist the cursor only after the
   page is applied. A missing audit target triggers a context recovery.
+- The projection records whom it was built for (`ProjectionOwnerStore`,
+  user id + role, in WatermelonDB's own `localStorage` so it vanishes with
+  the rows). It is written when a sync completes and forgotten before any
+  wipe, together with the cursors; InitialInfo pages incrementally only
+  when it matches the server's user and role, and otherwise wipes and
+  bootstraps (another account's leftovers, a WatermelonDB reset, a resync
+  killed halfway).
 - Remote mutations may show loading only on the initiating control via
   `<Button loading>`; they must not replace a cached screen with a full-screen
   spinner.
