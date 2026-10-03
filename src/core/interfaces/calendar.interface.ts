@@ -11,5 +11,11 @@ export interface ICalendarEventCreate {
   projectId?: number;
 }
 
-export type ICalendarEventUpdate = Partial<ICalendarEventCreate>;
+export type ICalendarEventUpdate = Partial<
+  Omit<ICalendarEventCreate, 'description' | 'location' | 'endsAt'>
+> & {
+  description?: string | null;
+  location?: string | null;
+  endsAt?: number | null;
+};
 

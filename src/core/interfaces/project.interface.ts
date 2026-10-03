@@ -21,5 +21,7 @@ export interface IProjectTaskCreate {
   sortOrder?: number;
 }
 
-export type IProjectTaskUpdate = Partial<Omit<IProjectTaskCreate, 'projectId'>>;
+export type IProjectTaskUpdate = Partial<Omit<IProjectTaskCreate, 'projectId' | 'dueAt'>> & {
+  dueAt?: number | null;
+};
 

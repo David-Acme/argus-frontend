@@ -71,15 +71,6 @@ export interface IProjectTaskCacheRow {
   dueAt: number | null;
 }
 
-export interface IProjectsCacheData {
-  projects: readonly IProjectCacheRow[];
-  tasks: readonly IProjectTaskCacheRow[];
-  displayProjects: readonly IProjectCacheRow[];
-  displayTasks: readonly IProjectTaskCacheRow[];
-  activeId: string;
-  progress: { done: number; total: number };
-}
-
 export interface IPeopleDirectoryCacheRow {
   id: string;
   name: string;
