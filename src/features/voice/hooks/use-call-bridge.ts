@@ -42,14 +42,17 @@ export function useCallBridge(): void {
   useEffect(() => {
     if (!isActive || !user) return;
     const cameras = () => viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
-    const names = cameras().map((camera) => camera.name);
-    voiceService.sendContext({
-      kind: 'note',
-      text:
-        names.length > 0
-          ? t('screens.voice.context.cameras', { names: names.join(', ') })
-          : t('screens.voice.context.no-cameras'),
-    });
+    const sendCameras = () => {
+      const names = cameras().map((camera) => camera.name);
+      voiceService.sendContext({
+        kind: 'note',
+        text:
+          names.length > 0
+            ? t('screens.voice.context.cameras', { names: names.join(', ') })
+            : t('screens.voice.context.no-cameras'),
+      });
+    };
+    sendCameras();
 
     const guardView = guardAccessForRole(user.role).view;
     const events: CallSituationEvent[] = [];
@@ -126,6 +129,11 @@ export function useCallBridge(): void {
     }
 
     const unsubscribers = [
+      voiceService.onResumed(() => {
+        sendCameras();
+        lastSituation = '';
+        pushSituation();
+      }),
       viewCacheService.subscribe(VIEW_CACHE_KEYS.dashboardNotifications, undefined, announce),
       viewCacheService.subscribe(VIEW_CACHE_KEYS.dashboardAgenda, 'today', scheduleSituation),
       viewCacheService.subscribe(VIEW_CACHE_KEYS.cameraList, undefined, scheduleSituation),

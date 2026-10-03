@@ -15,6 +15,8 @@ import {
   VOICE_MODE_DUPLEX,
   VOICE_MUTE_TYPE,
   VOICE_PREVIOUS_CALL_GRACE_MS,
+  VOICE_RESUME_RETRY_MS,
+  VOICE_RESUME_WINDOW_MS,
   VOICE_SAMPLE_RATE,
   VOICE_SKIP_TYPE,
   VOICE_START_TYPE,
@@ -64,6 +66,9 @@ import {
 type Listener = () => void;
 type ActionListener = (action: VoiceAction) => void;
 type FailOptions = { serverGone: boolean };
+type ResumeListener = () => void;
+
+const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * VOICE_MIC_FRAME_MS) / 1000;
 const SOCKET_CHECK_INTERVAL_MS = 1000;
@@ -93,6 +98,8 @@ class VoiceService {
   private readonly playout = new VoicePlayout(() => this.handlePlayoutIdle());
   private listeners = new Set<Listener>();
   private actionListeners = new Set<ActionListener>();
+  private resumeListeners = new Set<ResumeListener>();
+  private resuming = false;
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
 
   constructor() {
@@ -237,6 +244,13 @@ class VoiceService {
     this.notify();
   }
 
+  onResumed(listener: ResumeListener): () => void {
+    this.resumeListeners.add(listener);
+    return () => {
+      this.resumeListeners.delete(listener);
+    };
+  }
+
   onAction(listener: ActionListener): () => void {
     this.actionListeners.add(listener);
     return () => {
@@ -271,13 +285,41 @@ class VoiceService {
     return this.boundary.pendingStops > 0;
   }
 
+  private async resume(session: number): Promise<void> {
+    this.resuming = true;
+    this.serverSession = false;
+    this.phase = 'connecting';
+    this.gate = INITIAL_TURN_GATE;
+    this.resetMicPending();
+    this.playout.flush();
+    this.liveCameraId = null;
+    this.notify();
+    const deadline = Date.now() + VOICE_RESUME_WINDOW_MS;
+    while (this.isCurrent(session) && Date.now() < deadline) {
+      if (await synchronizeService.ensureConnected()) break;
+      await wait(VOICE_RESUME_RETRY_MS);
+    }
+    this.resuming = false;
+    if (!this.isCurrent(session)) return;
+    if (!synchronizeService.isSocketConnected) {
+      this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
+      return;
+    }
+    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, resume: true });
+    this.serverSession = true;
+    if (this.muted) synchronizeService.send(VOICE_MUTE_TYPE, { muted: true });
+    this.phase = 'listening';
+    this.notify();
+    for (const listener of this.resumeListeners) listener();
+  }
+
   private handleMicData(pcm: ArrayBuffer): void {
-    if (!this.active) return;
+    if (!this.active || this.resuming) return;
     const now = Date.now();
     if (now - this.lastSocketCheckAt > SOCKET_CHECK_INTERVAL_MS) {
       this.lastSocketCheckAt = now;
       if (!synchronizeService.isSocketConnected) {
-        this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
+        void this.resume(this.session);
         return;
       }
     }
