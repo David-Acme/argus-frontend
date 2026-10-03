@@ -4,7 +4,8 @@ export const settings = {
   search: 'Search option',
   'load-error': 'Settings could not be loaded.',
   'owner-unreachable': 'Not available right now',
-  'owner-unreachable-hint': 'This service is not answering. Its settings will appear when it is back online.',
+  'owner-unreachable-hint':
+    'This service is not answering. Its settings will appear when it is back online.',
   'owner-empty': 'Nothing to tune at this level',
   'owner-empty-hint': 'Switch to Advanced to see every option of this service.',
   'count-basic': '{count} basic',
@@ -29,7 +30,10 @@ export const settings = {
     vlm: { name: 'Vision', hint: 'How it describes what the cameras see.' },
     guard: { name: 'Security', hint: 'When it notifies, speaks or sounds the siren.' },
     camera: { name: 'Cameras', hint: 'Detection, streaming and camera health.' },
-    notification: { name: 'Notifications', hint: 'How many notifications you get and when they stay quiet.' },
+    notification: {
+      name: 'Notifications',
+      hint: 'How many notifications you get and when they stay quiet.',
+    },
   },
   groups: {
     voice: 'Voice',
@@ -51,9 +55,21 @@ export const settings = {
     quiet: 'Quiet hours',
     delivery: 'Delivery',
     history: 'History',
+    response: 'Response',
+    alarm: 'Alarm',
+    visitors: 'Visitors',
+    decisions: 'Decisions',
+    limits: 'Limits',
+    dialogue: 'Dialogue',
+    tracking: 'Tracking',
     general: 'General',
   },
   choices: {
+    shadow: 'Shadow',
+    enforce: 'Enforce',
+    notify: 'Alerts',
+    communication: 'Alerts and voice',
+    all: 'Everything',
     nemo_transducer: 'FastConformer',
     whisper: 'Whisper',
     canary: 'Canary',
@@ -74,14 +90,26 @@ export const settings = {
   keys: {
     tts: {
       speed: { label: 'Speaking speed', hint: '1 is the normal pace; higher speaks faster.' },
-      quality: { label: 'Voice quality', hint: 'Higher quality sounds more natural but takes a little longer.' },
+      quality: {
+        label: 'Voice quality',
+        hint: 'Higher quality sounds more natural but takes a little longer.',
+      },
       steps_low: { label: 'Steps at fast quality', hint: 'Synthesis iterations in fast mode.' },
-      steps_medium: { label: 'Steps at balanced quality', hint: 'Synthesis iterations in balanced mode.' },
+      steps_medium: {
+        label: 'Steps at balanced quality',
+        hint: 'Synthesis iterations in balanced mode.',
+      },
       steps_high: { label: 'Steps at best quality', hint: 'Synthesis iterations in best mode.' },
       steps_cap: { label: 'Step limit', hint: '0 lets each quality use its own steps.' },
       max_chunk_len: { label: 'Chunk length', hint: 'Characters synthesized at once.' },
-      edge_silence_ms: { label: 'Edge silence (ms)', hint: 'Pause at the start and end of each sentence.' },
-      join_silence_ms: { label: 'Join silence (ms)', hint: 'Pause when joining chunks of one answer.' },
+      edge_silence_ms: {
+        label: 'Edge silence (ms)',
+        hint: 'Pause at the start and end of each sentence.',
+      },
+      join_silence_ms: {
+        label: 'Join silence (ms)',
+        hint: 'Pause when joining chunks of one answer.',
+      },
       threads: { label: 'Compute threads', hint: '0 sizes them for your machine.' },
     },
     llm: {
@@ -89,9 +117,15 @@ export const settings = {
       max_tokens: { label: 'Maximum answer length', hint: 'Approximate word limit per answer.' },
       top_k: { label: 'Top-k', hint: 'How many options it weighs for each word.' },
       top_p: { label: 'Top-p', hint: 'Cumulative probability considered for each word.' },
-      penalty_last_n: { label: 'Repetition window', hint: 'Recent tokens checked to avoid repeating.' },
+      penalty_last_n: {
+        label: 'Repetition window',
+        hint: 'Recent tokens checked to avoid repeating.',
+      },
       penalty_repeat: { label: 'Repetition penalty', hint: 'Higher avoids repeating phrases.' },
-      penalty_freq: { label: 'Frequency penalty', hint: 'Lowers words that already appeared often.' },
+      penalty_freq: {
+        label: 'Frequency penalty',
+        hint: 'Lowers words that already appeared often.',
+      },
       penalty_present: { label: 'Presence penalty', hint: 'Favors new topics in the answer.' },
       seed: { label: 'Seed', hint: '0 uses a different seed every time.' },
       context_size: { label: 'Conversation memory', hint: 'Tokens the model keeps in view.' },
@@ -99,84 +133,321 @@ export const settings = {
       threads: { label: 'Answer threads', hint: '0 sizes them for your machine.' },
       batch_threads: { label: 'Reading threads', hint: '0 sizes them for your machine.' },
       kv_type: { label: 'Cache precision', hint: 'Lower precision saves memory.' },
-      flash_attn: { label: 'Accelerated attention', hint: 'Speeds up long answers when your machine supports it.' },
-      n_batch: { label: 'Reading batch', hint: 'Tokens processed together when reading your message.' },
+      flash_attn: {
+        label: 'Accelerated attention',
+        hint: 'Speeds up long answers when your machine supports it.',
+      },
+      n_batch: {
+        label: 'Reading batch',
+        hint: 'Tokens processed together when reading your message.',
+      },
       n_ubatch: { label: 'Micro-batch', hint: 'Size of each step of the reading batch.' },
     },
     memory: {
-      recall_top_k: { label: 'Memories per answer', hint: 'How many memories it may use when answering.' },
-      recall_deadline_ms: { label: 'Time to remember (ms)', hint: 'How long it waits for memory before answering.' },
-      recall_max_tokens: { label: 'Room for memories', hint: 'Tokens memories take in each answer.' },
-      extract_wait_ms: { label: 'Wait to learn (ms)', hint: 'How long it waits to store what you tell it.' },
-      compact_max_tokens: { label: 'Summary size', hint: 'Length of the summaries of older conversations.' },
-      observe_camera_events: { label: 'Remember what cameras see', hint: 'Stores camera encounters in memory.' },
-      embedding_preload: { label: 'Load memory at startup', hint: 'Remembers faster at the cost of memory from boot.' },
+      recall_top_k: {
+        label: 'Memories per answer',
+        hint: 'How many memories it may use when answering.',
+      },
+      recall_deadline_ms: {
+        label: 'Time to remember (ms)',
+        hint: 'How long it waits for memory before answering.',
+      },
+      recall_max_tokens: {
+        label: 'Room for memories',
+        hint: 'Tokens memories take in each answer.',
+      },
+      extract_wait_ms: {
+        label: 'Wait to learn (ms)',
+        hint: 'How long it waits to store what you tell it.',
+      },
+      compact_max_tokens: {
+        label: 'Summary size',
+        hint: 'Length of the summaries of older conversations.',
+      },
+      observe_camera_events: {
+        label: 'Remember what cameras see',
+        hint: 'Stores camera encounters in memory.',
+      },
+      embedding_preload: {
+        label: 'Load memory at startup',
+        hint: 'Remembers faster at the cost of memory from boot.',
+      },
     },
     stt: {
       language: { label: 'Conversation language', hint: 'The language you speak to Argus in.' },
       engine: { label: 'Recognition engine', hint: 'The model that turns your voice into text.' },
     },
     vision: {
-      max_input_px: { label: 'Detail of what cameras see', hint: 'More detail describes better but takes longer.' },
-      max_tokens: { label: 'Length of each description', hint: 'How long a description of one image may run.' },
+      max_input_px: {
+        label: 'Detail of what cameras see',
+        hint: 'More detail describes better but takes longer.',
+      },
+      max_tokens: {
+        label: 'Length of each description',
+        hint: 'How long a description of one image may run.',
+      },
       prompt: { label: 'Description instruction', hint: 'What the model is asked for each image.' },
-      caption_cache_slots: { label: 'Cached descriptions', hint: 'Recent images it does not need to describe again.' },
+      caption_cache_slots: {
+        label: 'Cached descriptions',
+        hint: 'Recent images it does not need to describe again.',
+      },
       image_max_tokens: { label: 'Tokens per image', hint: '0 lets the model decide.' },
       context_size: { label: 'Vision context', hint: 'Tokens the vision model keeps in view.' },
       threads: { label: 'Vision threads', hint: '0 sizes them for your machine.' },
       gpu_layers: { label: 'GPU layers', hint: '-1 uses the GPU as much as possible.' },
     },
     objects: {
-      enabled: { label: 'Detect people and objects', hint: 'Recognizes what appears on the cameras.' },
-      conf: { label: 'Detection sensitivity', hint: 'Higher avoids false alarms; lower catches more.' },
+      enabled: {
+        label: 'Detect people and objects',
+        hint: 'Recognizes what appears on the cameras.',
+      },
+      conf: {
+        label: 'Detection sensitivity',
+        hint: 'Higher avoids false alarms; lower catches more.',
+      },
     },
     operator: {
-      night_start: { label: 'Night starts', hint: 'Hour from which the house is watched as night.' },
+      night_start: {
+        label: 'Night starts',
+        hint: 'Hour from which the house is watched as night.',
+      },
       night_end: { label: 'Night ends', hint: 'Hour when night watch ends.' },
-      cooldown_ms: { label: 'Pause between alerts (ms)', hint: 'Minimum time between two alerts from one camera.' },
-      person_recheck_ms: { label: 'Person recheck (ms)', hint: 'How often it looks again at someone who stays.' },
+      cooldown_ms: {
+        label: 'Pause between alerts (ms)',
+        hint: 'Minimum time between two alerts from one camera.',
+      },
+      person_recheck_ms: {
+        label: 'Person recheck (ms)',
+        hint: 'How often it looks again at someone who stays.',
+      },
     },
     actions: {
       enabled: { label: 'Camera actions', hint: 'Lets Argus speak or use a camera siren.' },
     },
     streaming: {
-      max_viewers_per_camera: { label: 'Viewers per camera', hint: 'People who can watch one camera at once.' },
-      max_total_viewers: { label: 'Viewers in total', hint: 'Simultaneous streams across the house.' },
+      max_viewers_per_camera: {
+        label: 'Viewers per camera',
+        hint: 'People who can watch one camera at once.',
+      },
+      max_total_viewers: {
+        label: 'Viewers in total',
+        hint: 'Simultaneous streams across the house.',
+      },
       hub_window_bytes: { label: 'Stream buffer', hint: 'Data in flight per video connection.' },
     },
     health: {
-      enabled: { label: 'Watch image health', hint: 'Warns when a camera is covered, dark or out of focus.' },
+      enabled: {
+        label: 'Watch image health',
+        hint: 'Warns when a camera is covered, dark or out of focus.',
+      },
       interval_ms: { label: 'Check every (ms)', hint: 'Interval between image checks.' },
-      dark_threshold: { label: 'Darkness threshold', hint: 'Below this brightness it counts as covered.' },
-      bright_threshold: { label: 'Glare threshold', hint: 'Above this brightness it counts as washed out.' },
-      blur_threshold: { label: 'Blur threshold', hint: 'Below this sharpness it counts as out of focus.' },
-      scene_diff: { label: 'Scene change', hint: 'How much the view must change to warn it was moved.' },
-      rebaseline_after_s: { label: 'Accept new scene (s)', hint: 'After this time the new view becomes the normal one.' },
+      dark_threshold: {
+        label: 'Darkness threshold',
+        hint: 'Below this brightness it counts as covered.',
+      },
+      bright_threshold: {
+        label: 'Glare threshold',
+        hint: 'Above this brightness it counts as washed out.',
+      },
+      blur_threshold: {
+        label: 'Blur threshold',
+        hint: 'Below this sharpness it counts as out of focus.',
+      },
+      scene_diff: {
+        label: 'Scene change',
+        hint: 'How much the view must change to warn it was moved.',
+      },
+      rebaseline_after_s: {
+        label: 'Accept new scene (s)',
+        hint: 'After this time the new view becomes the normal one.',
+      },
     },
     notifications: {
       budget_per_hour: { label: 'Alerts per hour', hint: 'Most camera alerts you get each hour.' },
-      fallback_suppress_known: { label: 'Stay quiet for known people', hint: 'No alert when it recognizes someone from the house.' },
-      fallback_min_score_median: { label: 'Minimum confidence', hint: 'Detection certainty needed to alert.' },
-      fallback_min_dwell_ms: { label: 'Minimum dwell (ms)', hint: 'How long something must stay in view to alert.' },
-      guard_heartbeat_timeout_s: { label: 'Wait for security (s)', hint: 'If security does not answer in time, alert anyway.' },
-      silent_start: { label: 'Quiet starts', hint: 'Hour from which you get no alerts; -1 turns it off.' },
+      fallback_suppress_known: {
+        label: 'Stay quiet for known people',
+        hint: 'No alert when it recognizes someone from the house.',
+      },
+      fallback_min_score_median: {
+        label: 'Minimum confidence',
+        hint: 'Detection certainty needed to alert.',
+      },
+      fallback_min_dwell_ms: {
+        label: 'Minimum dwell (ms)',
+        hint: 'How long something must stay in view to alert.',
+      },
+      guard_heartbeat_timeout_s: {
+        label: 'Wait for security (s)',
+        hint: 'If security does not answer in time, alert anyway.',
+      },
+      silent_start: {
+        label: 'Quiet starts',
+        hint: 'Hour from which you get no alerts; -1 turns it off.',
+      },
       silent_end: { label: 'Quiet ends', hint: 'Hour when alerts come back; -1 turns it off.' },
       ack_window_s: { label: 'Acknowledgement window (s)', hint: 'Time to mark an alert as seen.' },
-      selftest_interval_s: { label: 'Alert self-test (s)', hint: 'How often it checks alerts arrive; 0 turns it off.' },
-      fallback_retention_days: { label: 'Days of history', hint: 'How long camera alerts are kept.' },
+      selftest_interval_s: {
+        label: 'Alert self-test (s)',
+        hint: 'How often it checks alerts arrive; 0 turns it off.',
+      },
+      fallback_retention_days: {
+        label: 'Days of history',
+        hint: 'How long camera alerts are kept.',
+      },
+    },
+    guard: {
+      notify_level: {
+        label: 'Level to notify you',
+        hint: 'Severity from which you get an alert (1 = everything).',
+      },
+      announce_level: {
+        label: 'Level to speak',
+        hint: 'Severity from which Argus talks to whoever arrives (5 = never).',
+      },
+      alarm_level: {
+        label: 'Level for the alarm',
+        hint: 'Severity from which the alarm sounds (5 = never).',
+      },
+      alarm_seconds: { label: 'Alarm length (s)', hint: 'How long the warning alarm sounds.' },
+      arm_siren: { label: 'Siren when armed', hint: 'Allows the siren when the house is armed.' },
+      siren_seconds: { label: 'Siren length (s)', hint: 'How long the siren sounds.' },
+      greet_enabled: { label: 'Greet whoever arrives', hint: 'Argus talks with visitors.' },
+      greet_known: { label: 'Greet known people', hint: 'Also greets people of the house.' },
+      expected_guests: {
+        label: 'Expected visits',
+        hint: 'Lowers the alert for someone you expect.',
+      },
+      decision_mode: {
+        label: 'Decision mode',
+        hint: 'Shadow only records; enforce lets confidence filter alerts.',
+      },
+      belief_refresh_s: {
+        label: 'Criteria reload (s)',
+        hint: 'How often per-camera criteria are re-read.',
+      },
+      action_cooldown_s: {
+        label: 'Pause between actions (s)',
+        hint: 'Minimum time between two actions on one situation.',
+      },
+      repeat_window_s: {
+        label: 'Repeat window (s)',
+        hint: 'During this time the same action is not repeated.',
+      },
+      max_actions_per_hour: { label: 'Actions per hour', hint: 'Most security actions each hour.' },
+      max_dialogue_turns: {
+        label: 'Dialogue turns',
+        hint: 'How many times it talks with a visitor.',
+      },
+      greet_listen_seconds: {
+        label: 'Listen after greeting (s)',
+        hint: 'How long it waits for the visitor to answer.',
+      },
+      greet_reply_enabled: {
+        label: 'Answer the visitor',
+        hint: 'Replies to what the visitor says.',
+      },
+      cross_camera_window_s: {
+        label: 'Cross-camera tracking (s)',
+        hint: 'Time to recognize the same person on another camera.',
+      },
+      continuity_window_s: {
+        label: 'Continuity (s)',
+        hint: 'Time to treat it as the same encounter.',
+      },
+      signature_min_similarity: {
+        label: 'Minimum likeness',
+        hint: 'Similarity needed to join two sightings.',
+      },
+      loiter_checks: {
+        label: 'Loitering checks',
+        hint: 'Times someone must be seen standing still to alert.',
+      },
+      staging: {
+        label: 'Gradual escalation',
+        hint: 'Responds from less to more as the situation grows.',
+      },
+      encounter_timeout_s: {
+        label: 'Encounter ends (s)',
+        hint: 'With nobody seen for this long, the encounter ends.',
+      },
+      tamper_sustained_s: {
+        label: 'Sustained tampering (s)',
+        hint: 'A camera covered this long raises its own alert.',
+      },
+      health_stale_s: {
+        label: 'Image state validity (s)',
+        hint: 'After this a camera state no longer counts.',
+      },
+      journal_retention_days: {
+        label: 'Journal days',
+        hint: 'How long the decision journal is kept.',
+      },
+      quiet_hours: {
+        enabled: { label: 'Quiet hours', hint: 'Lower-severity alerts are held for later.' },
+        start_hour: { label: 'Quiet starts', hint: 'Hour it begins.' },
+        end_hour: { label: 'Quiet ends', hint: 'Hour it ends.' },
+        daily_budget: {
+          label: 'Daily alerts while quiet',
+          hint: 'Most alerts per day during quiet hours.',
+        },
+      },
+      belief: {
+        gate_scope: { label: 'Filter scope', hint: 'Which actions confidence may hold back.' },
+        threshold_critical: {
+          label: 'Critical threshold',
+          hint: 'Confidence needed to act on critical events.',
+        },
+        threshold_high: { label: 'High threshold', hint: 'Confidence needed at high severity.' },
+        threshold_medium: {
+          label: 'Medium threshold',
+          hint: 'Confidence needed at medium severity.',
+        },
+        threshold_low: { label: 'Low threshold', hint: 'Confidence needed at low severity.' },
+        detector_strong: {
+          label: 'Strong detection',
+          hint: 'From here a detection counts as certain.',
+        },
+        detector_weak: { label: 'Weak detection', hint: 'Below this a detection is ignored.' },
+        zone_dwell_alert_ms: {
+          label: 'Dwell in alert zone (ms)',
+          hint: 'Time in an alert zone that adds suspicion.',
+        },
+        zone_dwell_monitor_ms: {
+          label: 'Dwell in watched zone (ms)',
+          hint: 'Time in a watched zone that adds suspicion.',
+        },
+      },
     },
     vad: {
-      barge_threshold: { label: 'Ease of interrupting', hint: 'Lower lets you interrupt Argus with less voice.' },
-      min_silence_frames: { label: 'Listening patience', hint: 'How much silence it waits for before answering.' },
+      barge_threshold: {
+        label: 'Ease of interrupting',
+        hint: 'Lower lets you interrupt Argus with less voice.',
+      },
+      min_silence_frames: {
+        label: 'Listening patience',
+        hint: 'How much silence it waits for before answering.',
+      },
       threshold: { label: 'Speech threshold', hint: 'Confidence needed to treat sound as speech.' },
       neg_threshold: { label: 'Silence threshold', hint: 'Below this it counts as silence.' },
-      min_speech_frames: { label: 'Minimum speech', hint: 'Shortest speech it takes into account.' },
+      min_speech_frames: {
+        label: 'Minimum speech',
+        hint: 'Shortest speech it takes into account.',
+      },
       max_turn_frames: { label: 'Maximum turn', hint: 'Longest turn before it is cut.' },
-      pre_roll_frames: { label: 'Pre-roll audio', hint: 'Audio kept from before you start speaking.' },
+      pre_roll_frames: {
+        label: 'Pre-roll audio',
+        hint: 'Audio kept from before you start speaking.',
+      },
       min_turn_ms: { label: 'Minimum turn (ms)', hint: 'Shorter turns are dropped.' },
-      min_mean_prob: { label: 'Minimum turn quality', hint: 'Drops turns with little clear speech.' },
+      min_mean_prob: {
+        label: 'Minimum turn quality',
+        hint: 'Drops turns with little clear speech.',
+      },
       barge_min_frames: { label: 'Speech to interrupt', hint: 'Speech needed to cut Argus off.' },
-      barge_guard_ms: { label: 'Start guard (ms)', hint: 'Keeps its own voice from interrupting it as it starts.' },
+      barge_guard_ms: {
+        label: 'Start guard (ms)',
+        hint: 'Keeps its own voice from interrupting it as it starts.',
+      },
       denoise: { label: 'Noise reduction', hint: 'Cleans background noise before listening.' },
       denoise_gate_rms: { label: 'Noise gate level', hint: 'Sounds below this level are ignored.' },
     },
