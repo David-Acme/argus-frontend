@@ -1,7 +1,7 @@
 export const pairing = {
   title: 'Vincula tu servidor',
   subtitle:
-    'Escanea el código QR que aparece en la terminal de tu servidor Argus, o ingresa el código manualmente.',
+    'Al arrancar por primera vez, tu servidor Argus muestra un código QR y un código de vinculación. Escanea el QR o escribe el código.',
   'link-server': 'Vincular servidor',
   scan: 'Escanear código QR',
   parsing: 'Validando el código…',
@@ -11,7 +11,7 @@ export const pairing = {
   'enter-code': 'Ingresar código manualmente',
   'code-placeholder': 'Código de vinculación',
   'desktop-hint':
-    'En este equipo introduce el código que aparece en la terminal del servidor Argus. El escaneo con cámara solo está disponible en el móvil.',
+    'Escribe el código de vinculación que muestra tu servidor al arrancar por primera vez o al terminar la instalación. El escaneo con cámara solo está disponible en el móvil.',
   success: 'Servidor vinculado',
   'success-subtitle': 'Todo listo para continuar.',
   'address-open': '¿No aparece tu servidor? Escribe su dirección',

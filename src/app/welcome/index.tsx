@@ -21,6 +21,8 @@ import {
   WELCOME_TITLE_DURATION_MS,
 } from '@/shared/constants';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LanguageSwitch } from '@/shared/components/onboarding';
 import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -34,6 +36,7 @@ import { useUniwind } from 'uniwind';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const reduceMotion = useReduceMotion();
   const { theme } = useUniwind();
@@ -67,6 +70,7 @@ export default function WelcomeScreen() {
   const iconColor = colorTokens[theme === 'dark' ? 'dark' : 'light']['foreground-on-interactive'];
 
   return (
+    <View className="bg-background flex-1">
     <CenteredScreen>
       <BlurReveal delay={titleDelay} duration={fullDuration(WELCOME_TITLE_DURATION_MS)} className="items-center">
         <Text variant="h1" className="text-center">
@@ -88,6 +92,9 @@ export default function WelcomeScreen() {
               <MorphIcon name="arrow-right" size={20} color={iconColor} />
             </Animated.View>
           </Button>
+          <Text variant="caption" className="max-w-xs text-center">
+            {t('screens.welcome.requirement')}
+          </Text>
           {IS_NATIVE ? (
             <Button variant="ghost" onPress={handleInvitation}>
               <Icon name="scan-barcode" />
@@ -97,5 +104,9 @@ export default function WelcomeScreen() {
         </View>
       </BlurReveal>
     </CenteredScreen>
+      <View className="absolute right-0 top-0" style={{ paddingTop: insets.top + 12, paddingRight: 16 }}>
+        <LanguageSwitch />
+      </View>
+    </View>
   );
 }

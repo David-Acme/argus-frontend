@@ -1,7 +1,7 @@
 export const pairing = {
   title: 'Link your server',
   subtitle:
-    'Scan the QR code shown in your Argus server terminal, or enter the code manually.',
+    'On its first start, your Argus server shows a QR code and a pairing code. Scan the QR or type the code.',
   'link-server': 'Link server',
   scan: 'Scan QR code',
   parsing: 'Validating the code…',
@@ -11,7 +11,7 @@ export const pairing = {
   'enter-code': 'Enter code manually',
   'code-placeholder': 'Pairing code',
   'desktop-hint':
-    'On this computer, enter the code shown in the Argus server terminal. Camera scanning is only available on mobile.',
+    'Type the pairing code your server shows on its first start or at the end of the installation. Scanning with the camera is only available on the phone.',
   success: 'Server linked',
   'success-subtitle': 'All set, let’s continue.',
   'address-open': 'Server not showing up? Enter its address',

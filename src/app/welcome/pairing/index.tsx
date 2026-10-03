@@ -2,6 +2,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
+import { OnboardingSteps } from '@/shared/components/onboarding';
 import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { QrManualEntry } from '@/shared/components/qr';
@@ -11,11 +12,11 @@ import { useStagger } from '@/shared/hooks/use-stagger';
 import { itemIn } from '@/shared/libs/animations';
 import { useQrScanStore } from '@/core/stores';
 import { hostLabel } from '@/shared/libs/pairing-qr';
-import { IS_NATIVE } from '@/shared/constants';
+import { IS_NATIVE, ONBOARDING_STEPS } from '@/shared/constants';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import type { NetErrorCode, TranslationKey } from '@/core/types';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 const PHASE_LABEL: Record<PairingFlowPhase, TranslationKey> = {
@@ -68,13 +69,6 @@ export default function PairingScreen() {
 
   const handleOpenAddress = useCallback(() => setAddressOpen(true), []);
 
-  const autoOpened = useRef(false);
-  useEffect(() => {
-    if (!IS_NATIVE || autoOpened.current || status !== 'idle' || flow.phase !== 'idle') return;
-    autoOpened.current = true;
-    handleScan();
-  }, [status, flow.phase, handleScan]);
-
   useEffect(() => {
     if (status !== 'scanned' || value == null || flow.phase !== 'idle') return;
     useQrScanStore.getState().clear();
@@ -93,6 +87,13 @@ export default function PairingScreen() {
   return (
     <CenteredScreen maxWidth={448} className="items-stretch">
       <NativeOnlyAnimatedView entering={itemIn.delay(titleDelay)} className="gap-1.5">
+        {IS_NATIVE ? (
+          <OnboardingSteps
+            current={ONBOARDING_STEPS.pairing}
+            total={ONBOARDING_STEPS.total}
+            className="mb-4"
+          />
+        ) : null}
         <Text variant="h3">{t('screens.pairing.title')}</Text>
         <Text className="text-foreground-secondary text-sm leading-5">
           {t('screens.pairing.subtitle')}
