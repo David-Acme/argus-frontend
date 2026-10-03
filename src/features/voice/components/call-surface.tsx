@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { VoicePhase, VoiceTranscriptLine } from '@/core/types';
+import type { VoiceActionRecord, VoicePhase, VoiceTranscriptLine } from '@/core/types';
 import Avatar from '@/features/voice/components/avatar';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { voiceErrorMessage } from '@/features/voice/model/voice-error';
+import { CallActionChips } from '@/features/voice/components/call-action-chips';
 import { CallControl } from '@/features/voice/components/call-control';
 import { CallTranscript } from '@/features/voice/components/call-transcript';
 
@@ -16,6 +17,7 @@ type CallSurfaceProps = {
   muted: boolean;
   error: string | null;
   transcript: readonly VoiceTranscriptLine[];
+  actions?: readonly VoiceActionRecord[];
   header?: ReactNode;
   onToggleMute: () => void;
   onInterrupt: () => void;
@@ -28,6 +30,7 @@ export function CallSurface({
   muted,
   error,
   transcript,
+  actions = [],
   header,
   onToggleMute,
   onInterrupt,
@@ -65,8 +68,9 @@ export function CallSurface({
         <Avatar size={isShort ? 180 : 260} accessibilityLabel={t('screens.voice.call-title')} />
       </View>
 
-      <View className="min-h-32 justify-end pb-6">
+      <View className="min-h-32 justify-end gap-4 pb-6">
         <CallTranscript lines={transcript} />
+        <CallActionChips actions={actions} />
       </View>
 
       {phase === 'error' || phase === 'done' ? (

@@ -17,6 +17,8 @@ export type VoiceEventType =
   | 'voice:turn'
   | 'voice:interrupted'
   | 'voice:action'
+  | 'voice:action_result'
+  | 'voice:mute'
   | 'voice:context'
   | 'voice:done'
   | 'voice:error';
@@ -29,7 +31,19 @@ export type VoiceAction = {
   arguments: Record<string, unknown>;
 };
 
-export type VoiceContextKind = 'note' | 'cameraEvent';
+export type VoiceActionStatus = 'pending' | 'done' | 'failed';
+
+export type VoiceActionRecord = VoiceAction & {
+  status: VoiceActionStatus;
+  detail: string | null;
+};
+
+export type VoiceActionOutcome = {
+  ok: boolean;
+  detail: string | null;
+};
+
+export type VoiceContextKind = 'note' | 'cameraEvent' | 'situation';
 
 export type VoiceContext = {
   kind: VoiceContextKind;
@@ -55,5 +69,7 @@ export type VoiceSnapshot = {
   sttText: string;
   assistantText: string;
   transcript: readonly VoiceTranscriptLine[];
+  actions: readonly VoiceActionRecord[];
+  liveCameraId: string | null;
   error: string | null;
 };

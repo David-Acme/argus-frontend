@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { parseVoiceAction } from '@/features/voice/services/voice/voice-frames';
-import { detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
+import { callCameraEvent, detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
 
 const cameras = [
   { id: '1', name: 'Entrada principal' },
@@ -52,5 +52,30 @@ describe('voice actions on the wire', () => {
       'dog',
     ]);
     expect(detectedClasses({})).toEqual([]);
+  });
+});
+
+describe('callCameraEvent', () => {
+  test('a detection names its camera and carries no guard copy', () => {
+    expect(
+      callCameraEvent({ type: 'camera', body: 'Persona', data: { cameraName: 'Patio', cameraId: 2 }, cameras }),
+    ).toEqual({ cameraId: '2', camera: 'Patio', guardCopy: null });
+  });
+
+  test('a guard episode without a camera name resolves it by id and keeps its spoken copy', () => {
+    expect(
+      callCameraEvent({
+        type: 'camera',
+        body: ' De noche, en la entrada, desde hace 18 s. ',
+        data: { cameraId: 1, kind: 'guard_episode' },
+        cameras,
+      }),
+    ).toEqual({ cameraId: '1', camera: 'Entrada principal', guardCopy: 'De noche, en la entrada, desde hace 18 s.' });
+  });
+
+  test('other notifications and unknown cameras are not camera events', () => {
+    expect(callCameraEvent({ type: 'reminder', body: '', data: { cameraName: 'Patio' }, cameras })).toBeNull();
+    expect(callCameraEvent({ type: 'camera', body: '', data: { cameraId: 9 }, cameras })).toBeNull();
+    expect(callCameraEvent({ type: 'camera', body: '', data: null, cameras })).toBeNull();
   });
 });

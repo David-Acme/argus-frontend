@@ -3,10 +3,48 @@ import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { synchronizeService } from '@/core/services/sync';
 import type { IVoiceReactionPayload } from '@/core/interfaces';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
-import { VOICE_ACTION_TYPE, VOICE_ASSISTANT_TYPE, VOICE_CONTEXT_TYPE, VOICE_DONE_TYPE, VOICE_EVENT_TYPE, VOICE_INTERRUPTED_TYPE, VOICE_MIC_FRAME_MS, VOICE_MODE_DUPLEX, VOICE_SAMPLE_RATE, VOICE_SKIP_TYPE, VOICE_START_TYPE, VOICE_STOP_TYPE, VOICE_STT_TYPE, VOICE_TRANSCRIPT_MAX_LINES, VOICE_TURN_TYPE } from '@/features/voice/constants/voice';
+import {
+  CALL_ACTIONS_KEPT,
+  VOICE_ACTION_RESULT_TYPE,
+  VOICE_ACTION_TYPE,
+  VOICE_ASSISTANT_TYPE,
+  VOICE_CONTEXT_TYPE,
+  VOICE_DONE_TYPE,
+  VOICE_EVENT_TYPE,
+  VOICE_INTERRUPTED_TYPE,
+  VOICE_MIC_FRAME_MS,
+  VOICE_MODE_DUPLEX,
+  VOICE_MUTE_TYPE,
+  VOICE_PREVIOUS_CALL_GRACE_MS,
+  VOICE_SAMPLE_RATE,
+  VOICE_SKIP_TYPE,
+  VOICE_START_TYPE,
+  VOICE_STOP_TYPE,
+  VOICE_STT_TYPE,
+  VOICE_TRANSCRIPT_MAX_LINES,
+  VOICE_TURN_TYPE,
+} from '@/features/voice/constants/voice';
 import { VOICE_ERROR_TYPE } from '@/shared/constants';
 import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
-import type { VoiceAction, VoiceContext, VoicePhase, VoiceSnapshot, VoiceTranscriptLine } from '@/core/types';
+import {
+  INITIAL_CALL_BOUNDARY,
+  boundaryAfterDone,
+  boundaryAfterStop,
+  boundaryExpired,
+  hasAction,
+  recordAction,
+  settleAction,
+  type CallBoundary,
+} from '@/features/voice/model/voice-action-log';
+import type {
+  VoiceAction,
+  VoiceActionOutcome,
+  VoiceActionRecord,
+  VoiceContext,
+  VoicePhase,
+  VoiceSnapshot,
+  VoiceTranscriptLine,
+} from '@/core/types';
 import { log } from '@/core/services/log';
 import { createArgusMic } from './voice-mic';
 import { parseAssistantText, parseSttFrame, parseTurnId, parseVoiceAction, parseVoiceError } from '@/features/voice/services/voice/voice-frames';
@@ -26,6 +64,7 @@ import {
 
 type Listener = () => void;
 type ActionListener = (action: VoiceAction) => void;
+type FailOptions = { serverGone: boolean };
 
 const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * VOICE_MIC_FRAME_MS) / 1000;
 const SOCKET_CHECK_INTERVAL_MS = 1000;
@@ -36,6 +75,10 @@ class VoiceService {
   private mic: ArgusMic | null = null;
   private capturing = false;
   private active = false;
+  private serverSession = false;
+  private boundary: CallBoundary = INITIAL_CALL_BOUNDARY;
+  private actions: readonly VoiceActionRecord[] = [];
+  private liveCameraId: string | null = null;
   private session = 0;
   private phase: VoicePhase = 'idle';
   private sttText = '';
@@ -99,6 +142,8 @@ class VoiceService {
     this.gate = INITIAL_TURN_GATE;
     this.localTurn = 0;
     this.userLines = 0;
+    this.actions = [];
+    this.liveCameraId = null;
     this.resetMicPending();
     this.playout.stop();
     this.notify();
@@ -110,6 +155,7 @@ class VoiceService {
       return;
     }
     synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX });
+    this.serverSession = true;
 
     try {
       const { granted } = await requestRecordingPermissionsAsync();
@@ -141,11 +187,12 @@ class VoiceService {
   }
 
   stop(): void {
-    if (!this.active) return;
+    if (!this.active && !this.serverSession) return;
     this.active = false;
-    synchronizeService.send(VOICE_STOP_TYPE);
+    this.endServerSession();
     this.stopCapture();
     this.playout.stop();
+    this.liveCameraId = null;
     if (this.phase !== 'error' && this.phase !== 'done') this.phase = 'idle';
     this.notify();
   }
@@ -166,6 +213,28 @@ class VoiceService {
     if (this.muted === muted) return;
     this.muted = muted;
     this.resetMicPending();
+    if (this.serverSession) synchronizeService.send(VOICE_MUTE_TYPE, { muted });
+    this.notify();
+  }
+
+  completeAction(id: string, outcome: VoiceActionOutcome): void {
+    const settled = settleAction({ records: this.actions, id, outcome });
+    if (settled === this.actions) return;
+    this.actions = settled;
+    if (this.serverSession) {
+      const numeric = Number(id);
+      synchronizeService.send(VOICE_ACTION_RESULT_TYPE, {
+        id: Number.isSafeInteger(numeric) ? numeric : id,
+        ok: outcome.ok,
+        detail: outcome.detail ?? '',
+      });
+    }
+    this.notify();
+  }
+
+  showCamera(cameraId: string | null): void {
+    if (this.liveCameraId === cameraId) return;
+    this.liveCameraId = this.active ? cameraId : null;
     this.notify();
   }
 
@@ -190,13 +259,26 @@ class VoiceService {
     return this.active && this.session === session;
   }
 
+  private endServerSession(serverGone = false): void {
+    if (!this.serverSession) return;
+    this.serverSession = false;
+    if (serverGone) return;
+    synchronizeService.send(VOICE_STOP_TYPE);
+    this.boundary = boundaryAfterStop(this.boundary, Date.now());
+  }
+
+  private fromPreviousCall(): boolean {
+    this.boundary = boundaryExpired(this.boundary, Date.now(), VOICE_PREVIOUS_CALL_GRACE_MS);
+    return this.boundary.pendingStops > 0;
+  }
+
   private handleMicData(pcm: ArrayBuffer): void {
     if (!this.active) return;
     const now = Date.now();
     if (now - this.lastSocketCheckAt > SOCKET_CHECK_INTERVAL_MS) {
       this.lastSocketCheckAt = now;
       if (!synchronizeService.isSocketConnected) {
-        this.fail('SOCKET_LOST|Connection to Argus lost');
+        this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
         return;
       }
     }
@@ -219,7 +301,7 @@ class VoiceService {
   }
 
   private handleTts(data: ArrayBuffer): void {
-    if (!gateAcceptsAudio(this.gate)) return;
+    if (this.fromPreviousCall() || !gateAcceptsAudio(this.gate)) return;
     if (!this.active && !this.playout.isPlaying) return;
     this.playout.write(data);
     if (this.active && this.phase !== 'speaking') {
@@ -237,7 +319,7 @@ class VoiceService {
   private bindSocket(): void {
     synchronizeService.onType(VOICE_STT_TYPE, (payload) => {
       const frame = parseSttFrame(payload);
-      if (!frame) return;
+      if (!frame || this.fromPreviousCall()) return;
       this.sttText = frame.text;
       if (frame.final && frame.text.trim()) {
         this.userLines += 1;
@@ -253,15 +335,17 @@ class VoiceService {
       this.notify();
     });
     synchronizeService.onType(VOICE_EVENT_TYPE, (payload) => {
+      if (this.fromPreviousCall()) return;
       const p = payload as IVoiceReactionPayload;
       useAvatarStore.getState().react(p.reaction, p.intensity ?? 0);
     });
     synchronizeService.onType(VOICE_TURN_TYPE, (payload) => {
       const id = parseTurnId(payload);
-      if (id === null) return;
+      if (id === null || this.fromPreviousCall()) return;
       this.gate = gateOnTurn(id);
     });
     synchronizeService.onType(VOICE_INTERRUPTED_TYPE, (payload) => {
+      if (this.fromPreviousCall()) return;
       const outcome = gateOnInterrupted(this.gate, parseTurnId(payload));
       this.gate = outcome.gate;
       if (!outcome.flush) return;
@@ -271,7 +355,7 @@ class VoiceService {
     });
     synchronizeService.onType(VOICE_ASSISTANT_TYPE, (payload) => {
       const text = parseAssistantText(payload);
-      if (text === null || !gateAcceptsAudio(this.gate)) return;
+      if (text === null || this.fromPreviousCall() || !gateAcceptsAudio(this.gate)) return;
       this.transcript = appendAssistantText(
         this.transcript,
         { turnKey: assistantTurnKey(this.gate, this.localTurn), text },
@@ -283,18 +367,25 @@ class VoiceService {
     });
     synchronizeService.onType(VOICE_ACTION_TYPE, (payload) => {
       const action = parseVoiceAction(payload);
-      if (!action || !this.active) return;
+      if (!action || !this.active || this.fromPreviousCall() || hasAction(this.actions, action.id)) return;
+      this.actions = recordAction({ records: this.actions, action, kept: CALL_ACTIONS_KEPT });
+      this.notify();
       for (const listener of this.actionListeners) listener(action);
     });
     synchronizeService.onType(VOICE_DONE_TYPE, () => {
+      const { boundary, previousCall } = boundaryAfterDone(this.boundary);
+      this.boundary = boundary;
+      if (previousCall) return;
       this.phase = 'done';
       this.active = false;
+      this.serverSession = false;
+      this.liveCameraId = null;
       this.stopCapture();
       this.playout.drainThenStop();
       this.notify();
     });
     synchronizeService.onType(VOICE_ERROR_TYPE, (payload) => {
-      this.fail(parseVoiceError(payload));
+      this.fail(parseVoiceError(payload), { serverGone: true });
     });
     synchronizeService.onBinary((data) => this.handleTts(data));
   }
@@ -311,11 +402,13 @@ class VoiceService {
     this.micPendingSamples = 0;
   }
 
-  private fail(message: string): void {
+  private fail(message: string, { serverGone }: FailOptions = { serverGone: false }): void {
     devLog('fail:', message);
     this.error = message;
     this.phase = 'error';
     this.active = false;
+    this.liveCameraId = null;
+    this.endServerSession(serverGone);
     this.stopCapture();
     this.playout.stop();
     this.notify();
@@ -329,6 +422,8 @@ class VoiceService {
       sttText: this.sttText,
       assistantText: lastAssistantText(this.transcript),
       transcript: this.transcript,
+      actions: this.actions,
+      liveCameraId: this.liveCameraId,
       error: this.error,
     };
   }

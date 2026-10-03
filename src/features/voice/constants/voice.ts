@@ -15,8 +15,16 @@ export const VOICE_EVENT_TYPE = 'voice:event';
 export const VOICE_TURN_TYPE = 'voice:turn';
 export const VOICE_INTERRUPTED_TYPE = 'voice:interrupted';
 export const VOICE_ACTION_TYPE = 'voice:action';
+export const VOICE_ACTION_RESULT_TYPE = 'voice:action_result';
+export const VOICE_MUTE_TYPE = 'voice:mute';
 export const VOICE_CONTEXT_TYPE = 'voice:context';
 export const VOICE_ACTION_NAMES = ['app.show_camera', 'app.open', 'app.set_guard_mode'] as const;
 export const VOICE_DONE_TYPE = 'voice:done';
 
 export const CALL_TRANSCRIPT_VISIBLE = 4;
+export const CALL_ACTIONS_VISIBLE = 3;
+export const CALL_ACTIONS_KEPT = 12;
+export const CALL_SITUATION_DEBOUNCE_MS = 800;
+export const CALL_SITUATION_AGENDA_ITEMS = 4;
+export const CALL_SITUATION_EVENTS = 3;
+export const VOICE_PREVIOUS_CALL_GRACE_MS = 3000;

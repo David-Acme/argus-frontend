@@ -20,6 +20,7 @@ function CallScreen() {
       muted={call.muted}
       error={call.error}
       transcript={call.transcript}
+      actions={call.actions}
       onToggleMute={call.toggleMute}
       onInterrupt={call.interrupt}
       onHangUp={hangUp}

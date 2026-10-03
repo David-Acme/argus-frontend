@@ -66,3 +66,28 @@ export function detectedClasses(data: Record<string, unknown>): string[] {
   }
   return classes;
 }
+
+export type CallCameraEvent = {
+  cameraId: string | null;
+  camera: string;
+  guardCopy: string | null;
+};
+
+type CameraEventInput = {
+  type: string;
+  body: string;
+  data: Record<string, unknown> | null | undefined;
+  cameras: readonly Pick<ICameraCacheRow, 'id' | 'name'>[];
+};
+
+export function callCameraEvent({ type, body, data, cameras }: CameraEventInput): CallCameraEvent | null {
+  if (type !== 'camera' || !data) return null;
+  const rawId = data.cameraId;
+  const cameraId = typeof rawId === 'number' || (typeof rawId === 'string' && rawId) ? String(rawId) : null;
+  const named = typeof data.cameraName === 'string' ? data.cameraName.trim() : '';
+  const camera = named || cameras.find((row) => row.id === cameraId)?.name || '';
+  if (!camera) return null;
+  const fromGuard = typeof data.kind === 'string' && data.kind.startsWith('guard');
+  const copy = body.trim();
+  return { cameraId, camera, guardCopy: fromGuard && copy ? copy : null };
+}

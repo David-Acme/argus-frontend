@@ -42,6 +42,7 @@ export function useCall() {
     muted: session.muted,
     error: session.error,
     transcript: session.transcript,
+    actions: session.actions,
     toggleMute,
     interrupt,
     retry,
