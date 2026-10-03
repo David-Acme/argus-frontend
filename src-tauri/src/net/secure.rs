@@ -2,8 +2,24 @@ use keyring::{Entry, Error as KeyringError};
 
 const SERVICE: &str = "argus-desktop";
 const USER: &str = "argus";
+const ALLOWED_KEYS: [&str; 11] = [
+  "net.paired",
+  "net.caPem",
+  "net.caFingerprint",
+  "net.host",
+  "net.ip",
+  "net.port",
+  "net.instanceId",
+  "net.pairedAt",
+  "net.routes",
+  "net.accessToken",
+  "net.refreshToken",
+];
 
 fn entry(key: &str) -> Result<Entry, String> {
+  if !ALLOWED_KEYS.contains(&key) {
+    return Err(format!("SECURE_KEY_NOT_ALLOWED|{key} is not a secure-storage key"));
+  }
   Entry::new(SERVICE, &format!("{USER}:{key}")).map_err(|e| format!("Keyring init failed: {e}"))
 }
 

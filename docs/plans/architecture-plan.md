@@ -97,11 +97,11 @@ also get one Android device pass.
   `@shopify/react-native-skia`, its postinstall steps and `public/canvaskit.wasm`.
   Check: `Banana` absent from the bundle, entry well under 8.4 MB, APK smaller.
   Done: entry 8,463,295 B → 5,235,894 B, `dist/` 17 MB → 5.3 MB.
-- [ ] **Tauri hardening.** A real CSP, `withGlobalTauri: false`,
+- [x] **Tauri hardening.** A real CSP, `withGlobalTauri: false`,
   `tls_built_in_root_certs(false)` on reqwest, allow-listed secure-storage keys.
 - [ ] **Web storage.** Outside Tauri, secure storage refuses instead of using
   `localStorage`.
-- [ ] **Cold start.** Read the nine pairing keys with one `Promise.all`.
+- [x] **Cold start.** (commit `7aedc53`) Read the nine pairing keys with one `Promise.all`.
 - [ ] **Dead code.** `avatar-fab.tsx`, the empty `navigation.type.ts`, the
   unused `voiceEnabled` prop; decide whether the four zero-consumer Watermelon
   services stay synced or go.

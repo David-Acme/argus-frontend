@@ -46,6 +46,7 @@ fn strict_client(ca_pem: &str, allowed_host: &str, ip: &str) -> Result<reqwest::
     ip: ip.parse::<IpAddr>().ok(),
   };
   let client = reqwest::Client::builder()
+    .tls_built_in_root_certs(false)
     .add_root_certificate(cert)
     .dns_resolver(Arc::new(resolver))
     .build()

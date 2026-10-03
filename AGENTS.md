@@ -293,7 +293,13 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   - iOS: resolve Bonjour with a single-resume guard; NetServiceBrowser requires `@MainActor`.
   - Multipart: the backend field for login is `image`.
 - **Desktop `src-tauri/`**: Rust in `src/net/` (`discover`/`pair`/`http`/`secure`),
-  commands `argus_*`. `frontendDist = ../dist` (`bun run web:build`). Verify with
+  commands `argus_*`. The WebView runs under a real CSP (`tauri.conf.json`:
+  scripts and connections only from the app itself and the IPC origin) with
+  `withGlobalTauri: false`; the JS reaches Rust through `@tauri-apps/api/core`
+  only. `argus_request`'s reqwest client trusts **only** the pinned CA
+  (`tls_built_in_root_certs(false)`), and `argus_secure_*` refuse any key not in
+  `secure.rs`'s `ALLOWED_KEYS`, which a unit test keeps equal to
+  `NET_STORAGE_KEYS`. `frontendDist = ../dist` (`bun run web:build`). Verify with
   `cargo check` (requires `webkit2gtk-4.1` on Linux). `argus_request` uses a
   **pinned DNS resolver** (`reqwest::dns::Resolve`): `argus.local` → the discovery IP,
   same as Android's custom `Dns` (`.local` does not always resolve).
