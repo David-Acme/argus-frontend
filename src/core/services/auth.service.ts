@@ -1,6 +1,7 @@
 import { httpService } from '@/core/services/http';
 import { sessionService } from '@/core/services/session.service';
 import { useLocaleStore } from '@/core/stores';
+import { LOGOUT_REVOKE_TIMEOUT_MS } from '@/shared/constants';
 import type {
   ICreateDeviceLoginResponse,
   IDeviceLoginStatusResponse,
@@ -55,14 +56,15 @@ class AuthService {
     return httpService.get<IResponseStatusDto>(STATUS_PATH);
   }
 
-  async logout(): Promise<IServiceResponse<{ updated: boolean } | null>> {
-    try {
-      return await httpService.patch<{ updated: boolean } | null>(LOGOUT_PATH, undefined, {
-        skipAuthRetry: true,
-      });
-    } finally {
-      await sessionService.clearSession();
-    }
+  async logout(): Promise<void> {
+    const revoke = httpService
+      .patch<{ updated: boolean } | null>(LOGOUT_PATH, undefined, { skipAuthRetry: true })
+      .catch(() => undefined);
+    await Promise.race([
+      revoke,
+      new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_REVOKE_TIMEOUT_MS)),
+    ]);
+    await sessionService.clearSession();
   }
 
   /** Desktop: creates a short-lived login challenge and returns its secret id. */
