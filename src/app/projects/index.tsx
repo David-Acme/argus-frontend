@@ -6,7 +6,6 @@ import { DashboardIconButton, DashboardShell } from '@/shared/components/dashboa
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import {
-  CreateAffordance,
   ProjectBoardHeader,
   ProjectCardRow,
   ProjectForm,
@@ -29,6 +28,7 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { CreateTile } from '@/shared/components/ui/create-tile';
 
 type TaskLaneKey = 'open' | 'doing' | 'finished';
 
@@ -203,7 +203,8 @@ export default function ProjectsScreen() {
               );
             })}
             {canCreateProject ? (
-              <CreateAffordance
+              <CreateTile
+                layout="row"
                 label={t('screens.projects.new-project')}
                 onPress={() => setProjectFormOpen(true)}
               />

@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { View } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import { CreateAffordance } from './create-affordance';
+import { CreateTile } from '@/shared/components/ui/create-tile';
 import { Panel } from '@/shared/components/ui/panel';
 
 type TaskLaneProps = {
@@ -41,7 +41,7 @@ export function TaskLane({
       </View>
       {empty ? null : <View className="gap-2">{children}</View>}
       {onAdd ? (
-        <CreateAffordance label={addLabel} onPress={onAdd} fill={empty} />
+        <CreateTile label={addLabel} onPress={onAdd} layout={empty ? 'fill' : 'row'} />
       ) : empty ? (
         <View className="border-border-subtle min-h-[140px] flex-1 items-center justify-center rounded-[14px] border-2 border-dashed px-4 py-6">
           <Text variant="caption">{emptyLabel}</Text>

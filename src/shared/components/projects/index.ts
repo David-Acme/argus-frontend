@@ -1,4 +1,3 @@
-export { CreateAffordance } from './create-affordance';
 export { ProjectBoardHeader } from './project-board-header';
 export { ProjectCardRow } from './project-card-row';
 export { ProjectSwitcher } from './project-switcher';

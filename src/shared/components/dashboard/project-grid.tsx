@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Pressable, View, type LayoutChangeEvent } from 'react-native';
+import { View, type LayoutChangeEvent } from 'react-native';
 import type { DashboardProjectCard } from '@/core/types';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ProjectCard } from './project-card';
+import { CreateTile } from '@/shared/components/ui/create-tile';
 
 type ProjectGridProps = {
   projects: readonly DashboardProjectCard[];
@@ -52,17 +51,7 @@ export function ProjectGrid({ projects, onSelect, createLabel, onCreate }: Proje
         </View>
       ))}
       {onCreate && createLabel && createWidth ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={createLabel}
-          onPress={onCreate}
-          style={{ width: createWidth }}
-          className="border-border items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-8 active:opacity-70 web:hover:bg-card">
-          <View className="bg-surface-secondary size-11 items-center justify-center rounded-full">
-            <Icon name="plus" className="text-foreground-secondary size-5" />
-          </View>
-          <Text className="text-foreground-secondary text-center font-semibold">{createLabel}</Text>
-        </Pressable>
+        <CreateTile label={createLabel} style={{ width: createWidth }} onPress={onCreate} />
       ) : null}
     </View>
   );

@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Pressable, View, type LayoutChangeEvent } from 'react-native';
+import { View, type LayoutChangeEvent } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
 import { CameraCard } from './camera-card';
+import { CreateTile } from '@/shared/components/ui/create-tile';
 
 type CameraCardGridProps = {
   items: readonly ICameraCacheRow[];
@@ -13,13 +12,6 @@ type CameraCardGridProps = {
   onCreate?: () => void;
 };
 
-type CameraCreateTileProps = {
-  label: string;
-  hint: string;
-  width: number;
-  onPress: () => void;
-};
-
 const GAP = 16;
 
 export function cameraColumnsFor(width: number): number {
@@ -27,29 +19,6 @@ export function cameraColumnsFor(width: number): number {
   if (width >= 840) return 3;
   if (width >= 520) return 2;
   return 1;
-}
-
-function CameraCreateTile({ label, hint, width, onPress }: CameraCreateTileProps) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={{ width }}
-      className="border-border items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-8 active:opacity-70 web:hover:bg-card">
-      <View className="bg-surface-secondary size-12 items-center justify-center rounded-full">
-        <Icon name="plus" className="text-foreground-secondary size-5" />
-      </View>
-      <View className="items-center gap-1">
-        <Text variant="subhead" className="text-foreground-secondary text-center">
-          {label}
-        </Text>
-        <Text variant="caption" className="text-center" numberOfLines={2}>
-          {hint}
-        </Text>
-      </View>
-    </Pressable>
-  );
 }
 
 export function CameraCardGrid({
@@ -78,7 +47,7 @@ export function CameraCardGrid({
           ))
         : null}
       {onCreate && createWidth > 0 ? (
-        <CameraCreateTile label={createLabel} hint={createHint} width={createWidth} onPress={onCreate} />
+        <CreateTile label={createLabel} hint={createHint} style={{ width: createWidth }} onPress={onCreate} />
       ) : null}
     </View>
   );
