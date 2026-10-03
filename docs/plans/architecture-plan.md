@@ -242,6 +242,10 @@ instead of observing Watermelon from a hook.
 The boundary gate turns on at the start of this phase with a temporary
 allow-list that shrinks with each domain and is deleted at the end.
 
+Gate on: `scripts/check-boundaries.ts` runs in `bun run verify`; it started
+with 58 allowed violations (19 routes reaching `core/services`, 39 shared
+modules with fewer than two consumers) in `scripts/boundaries-allow.txt`.
+
 ### Phase 6 — Contracts and tests
 
 - [ ] Zod schemas in `core/contracts/` for the HTTP DTOs the app reads, and a

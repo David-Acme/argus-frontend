@@ -1,0 +1,58 @@
+app-core-data | src/app/(app)/agenda/index.tsx -> src/core/services/view-cache-coordinator.service.ts
+app-core-data | src/app/(app)/agenda/index.tsx -> src/core/services/view-cache/index.ts
+app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera-control.service.ts
+app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/camera.service.ts
+app-core-data | src/app/(app)/cameras/[id].tsx -> src/core/services/zone.service.ts
+app-core-data | src/app/(app)/index.tsx -> src/core/services/notification.service.ts
+app-core-data | src/app/(app)/people/index.tsx -> src/core/services/portrait-preview.service.ts
+app-core-data | src/app/(app)/people/index.tsx -> src/core/services/view-cache/index.ts
+app-core-data | src/app/(app)/profile/index.tsx -> src/core/services/auth.service.ts
+app-core-data | src/app/(app)/profile/index.tsx -> src/core/services/net/index.ts
+app-core-data | src/app/(app)/projects/index.tsx -> src/core/services/project-task.service.ts
+app-core-data | src/app/(app)/users/index.tsx -> src/core/services/invite/index.ts
+app-core-data | src/app/(app)/users/index.tsx -> src/core/services/sync/index.ts
+app-core-data | src/app/(app)/users/index.tsx -> src/core/services/user-management.service.ts
+app-core-data | src/app/approve/index.tsx -> src/core/services/auth.service.ts
+app-core-data | src/app/login/index.tsx -> src/core/services/auth.service.ts
+app-core-data | src/app/welcome/face/index.tsx -> src/core/services/auth.service.ts
+app-core-data | src/app/welcome/face/index.tsx -> src/core/services/log.ts
+app-core-data | src/app/welcome/invitation/index.tsx -> src/core/services/invite/index.ts
+shared-single-consumer | shared/components/avatar (1)
+shared-single-consumer | shared/components/calendar (1)
+shared-single-consumer | shared/components/cameras (1)
+shared-single-consumer | shared/components/confirm (1)
+shared-single-consumer | shared/components/face (1)
+shared-single-consumer | shared/components/profile (1)
+shared-single-consumer | shared/components/projects (1)
+shared-single-consumer | shared/components/qr (1)
+shared-single-consumer | shared/components/security (1)
+shared-single-consumer | shared/components/session (1)
+shared-single-consumer | shared/components/settings (1)
+shared-single-consumer | shared/components/toast (1)
+shared-single-consumer | shared/components/users (1)
+shared-single-consumer | shared/components/voice (1)
+shared-single-consumer | shared/hooks/use-bottom-nav (1)
+shared-single-consumer | shared/hooks/use-call (1)
+shared-single-consumer | shared/hooks/use-call-bridge (1)
+shared-single-consumer | shared/hooks/use-dashboard-data (1)
+shared-single-consumer | shared/hooks/use-dashboard-navigation (1)
+shared-single-consumer | shared/hooks/use-face-guide (1)
+shared-single-consumer | shared/hooks/use-guard (1)
+shared-single-consumer | shared/hooks/use-now (1)
+shared-single-consumer | shared/hooks/use-offline-notice (1)
+shared-single-consumer | shared/hooks/use-pairing-flow (1)
+shared-single-consumer | shared/hooks/use-projects-data (1)
+shared-single-consumer | shared/hooks/use-settings (1)
+shared-single-consumer | shared/hooks/use-stagger (1)
+shared-single-consumer | shared/hooks/use-theme-preference (1)
+shared-single-consumer | shared/libs/avatar-geometry (1)
+shared-single-consumer | shared/libs/button-state (1)
+shared-single-consumer | shared/libs/context-menu-motion (1)
+shared-single-consumer | shared/libs/date (1)
+shared-single-consumer | shared/libs/fmp4 (1)
+shared-single-consumer | shared/libs/login-qr (1)
+shared-single-consumer | shared/libs/pcm (1)
+shared-single-consumer | shared/libs/qr-layout (1)
+shared-single-consumer | shared/libs/theme (1)
+shared-single-consumer | shared/libs/voice-actions (1)
+shared-single-consumer | shared/libs/voice-error (1)

@@ -222,6 +222,24 @@ Rust lifetimes — fails on any comment and on any file type it cannot classify,
 and `--fix` removes what it finds. `uniwind-types.d.ts` is generated and
 skipped.
 
+### 10b-2. Import boundaries — measured, not reviewed
+
+`scripts/check-boundaries.ts` (`bun run check:boundaries`, part of `verify`)
+reads every import under `src/` and fails on a new violation of:
+
+1. `app/**` imports a feature only through `features/<name>/index`, and never
+   `core/database` or `core/services/*`.
+2. A feature imports another feature only through that feature's `index`.
+3. `core/**` never imports `features/` or `shared/components`.
+4. `shared/**` never imports `features/`.
+5. A `shared/` module outside `components/ui` and `components/layout` has two
+   or more consumers (the 2+ rule; a hooks/libs file or a components folder is
+   one module).
+
+`scripts/boundaries-allow.txt` lists the violations that existed when the gate
+was introduced; it only shrinks (an entry that no longer occurs fails the gate
+until it is removed), and it is deleted when it is empty.
+
 ### 10c. Logging and tests
 
 - `console` is allowed only in `src/core/services/log.ts` (`log.error`,
