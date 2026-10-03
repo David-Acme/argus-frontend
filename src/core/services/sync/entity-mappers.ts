@@ -16,6 +16,7 @@ export const toBool = (v: unknown): boolean => {
   return Boolean(v);
 };
 const finiteNumber = (v: unknown): number | null => {
+  if (v == null || v === '') return null;
   const value = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(value) ? value : null;
 };

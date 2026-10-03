@@ -1,6 +1,6 @@
 import type { SyncTableKey } from '@/core/types';
 
-export const SYNC_PROJECTION_VERSION = 2;
+export const SYNC_PROJECTION_VERSION = 3;
 
 export const SYNC_LIVE_BUFFER_LIMIT = 1000;
 
