@@ -1,9 +1,6 @@
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { itemIn } from '@/shared/libs/animations';
-import { cn } from '@/shared/libs/utils';
 import { CameraTile } from './camera-tile';
 
 type CameraGridItem = {
@@ -21,19 +18,12 @@ type CameraGridProps = {
   cameras: readonly CameraGridItem[];
   emptyLabel: string;
   onSelect?: (id: string) => void;
-  fill?: boolean;
-  minHeight?: number;
 };
 
-export function CameraGrid({ cameras, emptyLabel, onSelect, fill = false, minHeight }: CameraGridProps) {
+export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
   if (cameras.length === 0) {
     return (
-      <View
-        className={cn(
-          'bg-card items-center justify-center gap-2 rounded-[20px] px-6 py-8 shadow-md shadow-black/[0.05]',
-          fill && 'flex-1'
-        )}
-        style={minHeight ? { minHeight } : undefined}>
+      <View className="bg-card items-center justify-center gap-2 rounded-[20px] px-6 py-8 shadow-md shadow-black/[0.05]">
         <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
           <Icon name="video" className="text-muted-foreground size-5" />
         </View>
@@ -43,12 +33,9 @@ export function CameraGrid({ cameras, emptyLabel, onSelect, fill = false, minHei
   }
 
   return (
-    <View className={cn('flex-row flex-wrap content-start gap-3', fill && 'flex-1')}>
-      {cameras.map((camera, index) => (
-        <Animated.View
-          key={camera.id}
-          entering={itemIn.delay(60 + index * 50).duration(300)}
-          className="min-w-[150px] flex-1 basis-[45%]">
+    <View className="flex-row flex-wrap gap-3">
+      {cameras.map((camera) => (
+        <View key={camera.id} className="min-w-[150px] flex-1 basis-[45%]">
           <CameraTile
             name={camera.name}
             model={camera.model}
@@ -59,7 +46,7 @@ export function CameraGrid({ cameras, emptyLabel, onSelect, fill = false, minHei
             recordMode={camera.recordMode}
             onPress={onSelect ? () => onSelect(camera.id) : undefined}
           />
-        </Animated.View>
+        </View>
       ))}
     </View>
   );

@@ -1,9 +1,7 @@
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { itemIn } from '@/shared/libs/animations';
 import { cn } from '@/shared/libs/utils';
 import { MosaicChart } from './mosaic-chart';
 
@@ -37,9 +35,7 @@ export function ActivityCard({
   onAction,
 }: ActivityCardProps) {
   return (
-    <Animated.View
-      entering={itemIn.duration(360)}
-      className="bg-card overflow-hidden rounded-[26px] p-4 shadow-md shadow-black/[0.07]">
+    <View className="bg-card overflow-hidden rounded-[26px] p-4 shadow-md shadow-black/[0.07]">
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-3">
           <Text className="text-[17px] font-semibold leading-[22px]">{title}</Text>
@@ -57,6 +53,6 @@ export function ActivityCard({
           </View>
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }

@@ -1,11 +1,9 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import type { AgendaStatus } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { itemIn } from '@/shared/libs/animations';
 import { cn } from '@/shared/libs/utils';
 
 type AgendaItemProps = {
@@ -73,11 +71,11 @@ export function AgendaItem({
   );
 
   return (
-    <Animated.View entering={itemIn.duration(300)}>
+    <View >
       <View className="bg-card flex-row overflow-hidden rounded-[20px] shadow-md shadow-black/[0.06]">
         {contextMenu ? contextMenu(pressable) : pressable}
         {actions ? <View className="pt-3 pr-3">{actions}</View> : null}
       </View>
-    </Animated.View>
+    </View>
   );
 }

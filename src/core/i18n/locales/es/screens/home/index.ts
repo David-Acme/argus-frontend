@@ -1,4 +1,6 @@
 export const home = {
+  now: 'Ahora',
+  today: 'Hoy',
   title: 'Inicio',
   greeting: 'Buenos días, {name}',
   date: 'Todo bajo control hoy',

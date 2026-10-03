@@ -135,7 +135,6 @@ export const ACTIVITY_WINDOW_DAYS = 7;
 
 export const EVENT_SAMPLE_LIMIT = 300;
 
-export const TODAY_PREVIEW_LIMIT = 3;
 
 export const DASHBOARD_SECTION_MIN_HEIGHT = 248;
 

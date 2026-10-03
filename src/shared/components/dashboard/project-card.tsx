@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { itemIn } from '@/shared/libs/animations';
+import { cn } from '@/shared/libs/utils';
 
 type ProjectCardProps = {
   title: string;
@@ -13,6 +13,7 @@ type ProjectCardProps = {
   progressLabel: string;
   tasksLabel: string;
   onPress?: () => void;
+  className?: string;
 };
 
 export function ProjectCard({
@@ -23,6 +24,7 @@ export function ProjectCard({
   progressLabel,
   tasksLabel,
   onPress,
+  className,
 }: ProjectCardProps) {
   const progress = total > 0 ? done / total : 0;
   const progressValue = useSharedValue(0);
@@ -35,7 +37,7 @@ export function ProjectCard({
   }, [progress, progressValue]);
 
   return (
-    <Animated.View entering={itemIn.delay(120).duration(360)} className="w-[196px]">
+    <View className={cn('min-w-0', className)}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${title}. ${description}`}
@@ -70,6 +72,6 @@ export function ProjectCard({
           </View>
         </View>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }

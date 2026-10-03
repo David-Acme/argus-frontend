@@ -6,7 +6,7 @@ export const WINDOW_TALL_MIN = 500;
 export const CONTENT_MAX_WIDTH = {
   compact: 640,
   medium: 900,
-  expanded: 1440,
+  expanded: 1600,
 } as const;
 
 export const NAV_RAIL_WIDTH = 76;

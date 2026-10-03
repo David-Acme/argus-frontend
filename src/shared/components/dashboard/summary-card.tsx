@@ -1,9 +1,7 @@
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import type { IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { itemIn } from '@/shared/libs/animations';
 
 type SummaryItem = {
   icon: IconName;
@@ -18,9 +16,7 @@ type SummaryCardProps = {
 
 export function SummaryCard({ title, items }: SummaryCardProps) {
   return (
-    <Animated.View
-      entering={itemIn.delay(240).duration(320)}
-      className="bg-card gap-3 rounded-[22px] p-4 shadow-md shadow-black/[0.06]">
+    <View className="bg-card gap-3 rounded-[22px] p-4 shadow-md shadow-black/[0.06]">
       <Text className="text-[15px] font-semibold">{title}</Text>
       <View className="gap-2.5">
         {items.map((item) => (
@@ -35,6 +31,6 @@ export function SummaryCard({ title, items }: SummaryCardProps) {
           </View>
         ))}
       </View>
-    </Animated.View>
+    </View>
   );
 }
