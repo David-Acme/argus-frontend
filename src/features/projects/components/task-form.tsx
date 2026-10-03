@@ -129,6 +129,8 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
               name="title"
               label={t('screens.projects.task-title')}
               placeholder={t('screens.projects.task-title-placeholder')}
+              returnKeyType="done"
+              onSubmitEditing={submit}
             />
 
             <FormField

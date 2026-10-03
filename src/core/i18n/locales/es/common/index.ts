@@ -38,6 +38,7 @@ export const common = {
     'invalid-port': 'El puerto va de 1 a 65535',
     'invalid-color': 'Usa un color en formato #RRGGBB',
     'invalid-number': 'Escribe un número válido',
+    'invalid-time': 'Escribe la hora como 09:30',
     'invalid-range': 'La fecha de fin va después del inicio',
     'min-points': 'Marca al menos 3 puntos',
   },

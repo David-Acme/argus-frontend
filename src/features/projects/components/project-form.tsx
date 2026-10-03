@@ -133,6 +133,8 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
               name="name"
               label={t('screens.projects.project-name')}
               placeholder={t('screens.projects.project-name-placeholder')}
+              returnKeyType="done"
+              onSubmitEditing={submit}
             />
 
             <FormField

@@ -19,7 +19,6 @@ import {
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { FormTextField } from '@/shared/components/ui/form-text-field';
-import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { DayPickerField } from '@/features/agenda/components/day-picker-field';
@@ -47,7 +46,7 @@ const schema = z
       .min(1, 'common.validation.required')
       .max(160, 'common.validation.too-long'),
     location: z.string().trim().max(160, 'common.validation.too-long'),
-    time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-number'),
+    time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-time'),
     endTime: z.string().trim(),
     day: z.number(),
     isAllDay: z.boolean(),
@@ -55,7 +54,7 @@ const schema = z
   })
   .refine((values) => values.endTime === '' || TIME_RE.test(values.endTime), {
     path: ['endTime'],
-    message: 'common.validation.invalid-number',
+    message: 'common.validation.invalid-time',
   })
   .refine((values) => values.endTime === '' || values.endTime > values.time, {
     path: ['endTime'],
@@ -170,18 +169,12 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
       <FormScrollView formScroll={formScroll} maxHeight={bodyHeight}>
         <Form {...form}>
           <View className="gap-3.5 pb-1">
-            <FormField
+            <FormTextField
               control={form.control}
               name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('screens.agenda.event-title')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} onChangeText={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label={t('screens.agenda.event-title')}
+              returnKeyType="done"
+              onSubmitEditing={submit}
             />
 
             <FormItem>
@@ -227,23 +220,13 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
               </View>
             ) : null}
 
-            <View>
-              <View className="flex-1">
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('screens.agenda.event-location')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} onChangeText={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </View>
-            </View>
+            <FormTextField
+              control={form.control}
+              name="location"
+              label={t('screens.agenda.event-location')}
+              returnKeyType="done"
+              onSubmitEditing={submit}
+            />
 
             <FormField
               control={form.control}

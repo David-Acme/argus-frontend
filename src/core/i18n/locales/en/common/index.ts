@@ -39,6 +39,7 @@ export const common = {
     'invalid-port': 'The port goes from 1 to 65535',
     'invalid-color': 'Use a #RRGGBB color',
     'invalid-number': 'Enter a valid number',
+    'invalid-time': 'Write the time like 09:30',
     'invalid-range': 'The end date must come after the start',
     'min-points': 'Mark at least 3 points',
   },
