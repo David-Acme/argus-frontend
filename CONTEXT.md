@@ -1238,7 +1238,12 @@ distribution of the app.
   `camera:closed` (the upstream died, e.g. go2rtc restarted) resubscribes on
   the same socket; a socket error or close reconnects; an expired token
   refreshes the session once and reconnects; eight seconds without media while
-  the decoder is drained counts as a stall and resubscribes. Handlers of a
+  the decoder is drained, or eight seconds after a subscribe that never
+  received any, counts as a stall and resubscribes. Measured live (the app's
+  own media session in headless Chromium against the sandbox, test source
+  stopped at 8 s and restarted at 30 s): reconnecting at 16 s, offline at
+  28 s, picture back at 33.1 s; a steady session paints 15 of 15 frames per
+  second and its first frame about 0.1 s after opening on a warm camera. Handlers of a
   replaced socket are detached and ignored, so a late `onClose` cannot tear
   down the current connection. States: `connecting`, `live` (first media
   fragment), `reconnecting`, `offline`, `unavailable`, `closed`.

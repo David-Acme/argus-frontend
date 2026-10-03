@@ -45,6 +45,8 @@ class CameraMediaSession implements ICameraMediaSession {
   private pendingAck = 0;
   private attempt = 0;
   private receivedMedia = false;
+  private opened = false;
+  private subscribedAt = 0;
   private lastMediaAt = 0;
   private fragmentKey = false;
   private state: CameraStreamState | null = null;
@@ -101,6 +103,8 @@ class CameraMediaSession implements ICameraMediaSession {
     this.socket = null;
     this.subId = null;
     this.pendingAck = 0;
+    this.opened = false;
+    this.subscribedAt = 0;
     if (!socket) return;
     socket.onOpen = null;
     socket.onMessage = null;
@@ -135,10 +139,12 @@ class CameraMediaSession implements ICameraMediaSession {
 
     this.socket = socket;
     this.connectTimer = setTimeout(() => {
-      if (this.socket === socket && !this.receivedMedia) this.fail('retry');
+      if (this.socket === socket && !this.opened) this.fail('retry');
     }, CAMERA_STREAM_CONNECT_TIMEOUT_MS);
     socket.onOpen = () => {
-      if (this.socket === socket) this.subscribe();
+      if (this.socket !== socket) return;
+      this.opened = true;
+      this.subscribe();
     };
     socket.onMessage = (message, data) => {
       if (this.socket !== socket) return;
@@ -187,6 +193,7 @@ class CameraMediaSession implements ICameraMediaSession {
     this.clearRetry();
     this.subId = null;
     this.pendingAck = 0;
+    this.subscribedAt = 0;
     this.scheduleRetry(refusal, () => {
       if (this.socket) this.subscribe();
       else void this.connect();
@@ -209,6 +216,7 @@ class CameraMediaSession implements ICameraMediaSession {
     this.input.sink.resetStream();
     this.receivedMedia = false;
     this.lastMediaAt = 0;
+    this.subscribedAt = Date.now();
     this.socket?.sendText(
       JSON.stringify({
         type: 'camera:subscribe',
@@ -276,8 +284,6 @@ class CameraMediaSession implements ICameraMediaSession {
     if (!this.receivedMedia) {
       this.receivedMedia = true;
       this.attempt = 0;
-      if (this.connectTimer) clearTimeout(this.connectTimer);
-      this.connectTimer = null;
       this.publish('live');
     }
     this.flushAck();
@@ -296,9 +302,11 @@ class CameraMediaSession implements ICameraMediaSession {
   }
 
   private watchStall(): void {
-    if (this.closed || !this.receivedMedia || this.retryTimer) return;
-    if (this.input.sink.bufferedBytes() > CAMERA_STREAM_ACK_THRESHOLD_BYTES) return;
-    if (!isStalled(this.lastMediaAt, Date.now(), CAMERA_STREAM_STALL_MS)) return;
+    if (this.closed || this.retryTimer || !this.socket) return;
+    const now = Date.now();
+    const waitingSince = this.receivedMedia ? this.lastMediaAt : this.subscribedAt;
+    if (this.receivedMedia && this.input.sink.bufferedBytes() > CAMERA_STREAM_ACK_THRESHOLD_BYTES) return;
+    if (!isStalled(waitingSince, now, CAMERA_STREAM_STALL_MS)) return;
     this.unsubscribe();
     this.resubscribe('retry');
   }
