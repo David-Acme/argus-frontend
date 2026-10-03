@@ -53,14 +53,20 @@ export function MonthPanel({
           fill={fill}
         />
       </View>
-      <View className={wide ? 'bg-divider/30 w-hairline self-stretch' : 'bg-divider/30 h-hairline w-full'} />
+      <View
+        className={
+          wide ? 'bg-divider/30 w-hairline self-stretch' : 'bg-divider/30 h-hairline w-full'
+        }
+      />
       <View className={wide ? 'min-h-0 w-[300px] shrink-0 gap-2 lg:w-[340px]' : 'gap-2'}>
         <View className="min-h-9 flex-row items-center justify-between gap-3">
           <Text variant="label" className="font-semibold" numberOfLines={1}>
             {date.formatAgendaDay(selectedDay)}
           </Text>
           {dayEntries.length > 0 ? (
-            <Text variant="caption">{t('screens.agenda.day-count', { count: String(dayEntries.length) })}</Text>
+            <Text variant="caption">
+              {t('screens.agenda.day-count', { count: String(dayEntries.length) })}
+            </Text>
           ) : null}
         </View>
         <CalendarDayList
@@ -80,7 +86,9 @@ export function MonthPanel({
 
   if (wide) {
     return (
-      <View className="flex-1 flex-row items-stretch gap-5" style={{ paddingBottom: bottomNavInset }}>
+      <View
+        className="flex-1 flex-row items-stretch gap-5"
+        style={{ paddingBottom: bottomNavInset }}>
         {body}
       </View>
     );

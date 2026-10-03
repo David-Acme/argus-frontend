@@ -28,7 +28,12 @@ import { TaskRow } from '@/features/projects/components/task-row';
 import type { UpcomingTaskItem } from '@/features/projects/components/upcoming-tasks-panel';
 import { useProjectsData } from '@/features/projects/hooks/use-projects-data';
 import { useTaskLabels } from '@/features/projects/hooks/use-task-labels';
-import { groupTasksByLane, statusForLane, TASK_LANES, upcomingTasks } from '@/features/projects/model/task-lanes';
+import {
+  groupTasksByLane,
+  statusForLane,
+  TASK_LANES,
+  upcomingTasks,
+} from '@/features/projects/model/task-lanes';
 
 type ProjectsParams = { new?: string; id?: string; task?: string };
 
@@ -49,7 +54,8 @@ export default function ProjectsScreen() {
   const { isExpanded } = useWindowClass();
   const { can } = usePermissions();
   const labels = useTaskLabels();
-  const { projects, tasks, activeId, activePending, progress, isPendingTask } = useProjectsData(selectedId);
+  const { projects, tasks, activeId, activePending, progress, isPendingTask } =
+    useProjectsData(selectedId);
   const lanes = useMemo(() => groupTasksByLane(tasks), [tasks]);
   const today = date.startOfDay(new Date()).getTime();
   const upcoming = useMemo<UpcomingTaskItem[]>(
@@ -60,7 +66,7 @@ export default function ProjectsScreen() {
         due: date.formatDayMonth(new Date(task.dueAt ?? 0)),
         overdue: (task.dueAt ?? 0) < today,
       })),
-    [date, tasks, today],
+    [date, tasks, today]
   );
   const activeProject = projects.find((project) => project.id === activeId);
   const activeStatus = (activeProject?.status ?? 'active') as ProjectStatus;
@@ -110,7 +116,7 @@ export default function ProjectsScreen() {
       const next = statusForLane(lane.key, task.status as ProjectTaskStatus);
       if (next !== task.status) changeStatus(taskId, next);
     },
-    [changeStatus, tasks],
+    [changeStatus, tasks]
   );
 
   const renderTask = (task: IProjectTaskCacheRow, laneIndex: number) => {
@@ -118,7 +124,11 @@ export default function ProjectsScreen() {
     const priority = task.priority as ProjectTaskPriority;
     const pending = isPendingTask(task);
     return (
-      <DraggableTask key={task.id} taskId={task.id} lane={laneIndex} disabled={pending || !canUpdateTask}>
+      <DraggableTask
+        key={task.id}
+        taskId={task.id}
+        lane={laneIndex}
+        disabled={pending || !canUpdateTask}>
         <TaskRow
           title={task.title}
           status={status}
@@ -126,7 +136,9 @@ export default function ProjectsScreen() {
           priorityLabel={labels.priority[priority]}
           due={task.dueAt == null ? undefined : date.formatDayMonth(new Date(task.dueAt))}
           overdue={task.dueAt != null && task.dueAt < today}
-          statusTag={status === 'backlog' || status === 'canceled' ? labels.status[status] : undefined}
+          statusTag={
+            status === 'backlog' || status === 'canceled' ? labels.status[status] : undefined
+          }
           statusOptions={labels.statusOptions}
           statusMenuTitle={t('screens.projects.select-status')}
           closeLabel={t('screens.projects.close')}
@@ -139,91 +151,107 @@ export default function ProjectsScreen() {
   };
 
   return (
-    <AppScreen
-      aside={
-        isExpanded && projects.length > 0 ? (
-          <ProjectAside
-            projects={projects}
-            activeId={activeId}
-            countLabel={countLabel}
-            progress={ratio}
-            statusLabels={labels.projectStatus}
-            upcoming={upcoming}
-            onSelect={setSelectedId}
-            onOpenTask={openTask}
-            onCreate={canCreateProject ? () => openProjectForm(false) : undefined}
-          />
-        ) : undefined
-      }>
-      <Animated.View entering={screenIn} className="flex-1 gap-5">
-        <View className="flex-row items-center justify-between">
-          <IconButton icon="arrow-left" label={t('common.back')} onPress={() => router.replace('/')} />
-          <Text variant="title">{t('screens.projects.title')}</Text>
-          {canCreateProject ? (
-            <IconButton icon="plus" label={t('screens.projects.new-project')} onPress={() => openProjectForm(false)} />
-          ) : (
-            <View className="size-11" />
-          )}
-        </View>
-
-        {projects.length === 0 ? (
-          <EmptyState
-            icon="list-todo"
-            title={t('screens.projects.empty')}
-            hint={t('screens.projects.empty-hint')}
-            action={
-              canCreateProject ? (
-                <Button onPress={() => openProjectForm(false)}>
-                  <Text>{t('screens.projects.new-project')}</Text>
-                </Button>
-              ) : null
-            }
-          />
-        ) : (
-          <>
-            {isExpanded ? null : (
-              <ProjectSwitcher
-                projects={projects.map((project) => ({
-                  id: project.id,
-                  name: project.name,
-                  status: project.status as ProjectStatus,
-                }))}
-                activeId={activeId}
-                onSelect={setSelectedId}
-              />
-            )}
-
-            <ProjectBoardHeader
-              name={activeProject?.name ?? ''}
-              description={activeProject?.description ?? ''}
-              status={activeStatus}
-              statusLabel={labels.projectStatus[activeStatus] ?? ''}
+    <>
+      <AppScreen
+        aside={
+          isExpanded && projects.length > 0 ? (
+            <ProjectAside
+              projects={projects}
+              activeId={activeId}
               countLabel={countLabel}
-              percentLabel={t('screens.projects.progress-percent', { percent: String(Math.round(ratio * 100)) })}
               progress={ratio}
-              editLabel={t('common.edit')}
-              newTaskLabel={t('screens.projects.new-task')}
-              onEdit={can('project', 'update') && activeId && !activePending ? () => openProjectForm(true) : undefined}
-              onNewTask={canCreateTask ? () => openNewTask('todo') : undefined}
+              statusLabels={labels.projectStatus}
+              upcoming={upcoming}
+              onSelect={setSelectedId}
+              onOpenTask={openTask}
+              onCreate={canCreateProject ? () => openProjectForm(false) : undefined}
             />
+          ) : undefined
+        }>
+        <Animated.View entering={screenIn} className="flex-1 gap-5">
+          <View className="flex-row items-center justify-between">
+            <IconButton
+              icon="arrow-left"
+              label={t('common.back')}
+              onPress={() => router.replace('/')}
+            />
+            <Text variant="title">{t('screens.projects.title')}</Text>
+            {canCreateProject ? (
+              <IconButton
+                icon="plus"
+                label={t('screens.projects.new-project')}
+                onPress={() => openProjectForm(false)}
+              />
+            ) : (
+              <View className="size-11" />
+            )}
+          </View>
 
-            <TaskBoard onMoveTask={canUpdateTask ? moveTask : undefined}>
-              {TASK_LANES.map((lane, laneIndex) => (
-                <TaskLane
-                  key={lane.key}
-                  label={labels.lane[lane.key]}
-                  count={lanes[lane.key].length}
-                  toneClassName={lane.toneClassName}
-                  emptyLabel={t('screens.projects.lane-empty')}
-                  addLabel={t('screens.projects.add-task')}
-                  onAdd={canCreateTask ? () => openNewTask(lane.createStatus) : undefined}>
-                  {lanes[lane.key].map((task) => renderTask(task, laneIndex))}
-                </TaskLane>
-              ))}
-            </TaskBoard>
-          </>
-        )}
-      </Animated.View>
+          {projects.length === 0 ? (
+            <EmptyState
+              icon="list-todo"
+              title={t('screens.projects.empty')}
+              hint={t('screens.projects.empty-hint')}
+              action={
+                canCreateProject ? (
+                  <Button onPress={() => openProjectForm(false)}>
+                    <Text>{t('screens.projects.new-project')}</Text>
+                  </Button>
+                ) : null
+              }
+            />
+          ) : (
+            <>
+              {isExpanded ? null : (
+                <ProjectSwitcher
+                  projects={projects.map((project) => ({
+                    id: project.id,
+                    name: project.name,
+                    status: project.status as ProjectStatus,
+                  }))}
+                  activeId={activeId}
+                  onSelect={setSelectedId}
+                />
+              )}
+
+              <ProjectBoardHeader
+                name={activeProject?.name ?? ''}
+                description={activeProject?.description ?? ''}
+                status={activeStatus}
+                statusLabel={labels.projectStatus[activeStatus] ?? ''}
+                countLabel={countLabel}
+                percentLabel={t('screens.projects.progress-percent', {
+                  percent: String(Math.round(ratio * 100)),
+                })}
+                progress={ratio}
+                editLabel={t('common.edit')}
+                newTaskLabel={t('screens.projects.new-task')}
+                onEdit={
+                  can('project', 'update') && activeId && !activePending
+                    ? () => openProjectForm(true)
+                    : undefined
+                }
+                onNewTask={canCreateTask ? () => openNewTask('todo') : undefined}
+              />
+
+              <TaskBoard onMoveTask={canUpdateTask ? moveTask : undefined}>
+                {TASK_LANES.map((lane, laneIndex) => (
+                  <TaskLane
+                    key={lane.key}
+                    label={labels.lane[lane.key]}
+                    count={lanes[lane.key].length}
+                    toneClassName={lane.toneClassName}
+                    emptyLabel={t('screens.projects.lane-empty')}
+                    addLabel={t('screens.projects.add-task')}
+                    onAdd={canCreateTask ? () => openNewTask(lane.createStatus) : undefined}>
+                    {lanes[lane.key].map((task) => renderTask(task, laneIndex))}
+                  </TaskLane>
+                ))}
+              </TaskBoard>
+            </>
+          )}
+        </Animated.View>
+      </AppScreen>
 
       <ProjectForm
         open={projectFormOpen}
@@ -245,6 +273,6 @@ export default function ProjectsScreen() {
           defaultStatus={newTaskStatus}
         />
       ) : null}
-    </AppScreen>
+    </>
   );
 }

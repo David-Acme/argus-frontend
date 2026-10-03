@@ -9,7 +9,10 @@ import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 const secondsToMs = (value: number | undefined, fallback: number | null): number | null =>
   value === undefined ? fallback : value * 1000;
 
-export const projectLens: OptimisticLens<IProjectCacheRow> = defineLens<IProjectCacheRow, IProjectCreate>({
+export const projectLens: OptimisticLens<IProjectCacheRow> = defineLens<
+  IProjectCacheRow,
+  IProjectCreate
+>({
   table: 'project',
   prepend: true,
   recordIdOf: (row) => row.id,

@@ -20,7 +20,11 @@ const taskLens = defineLens<TaskRow, TaskValues>({
     title: values.title ?? row.title,
     status: values.status ?? row.status,
   }),
-  create: (recordId, values) => ({ id: recordId, title: values.title ?? '', status: values.status ?? 'todo' }),
+  create: (recordId, values) => ({
+    id: recordId,
+    title: values.title ?? '',
+    status: values.status ?? 'todo',
+  }),
 });
 
 const lenses = [taskLens];
@@ -48,7 +52,10 @@ function manualClock() {
 
 function registry() {
   const clock = manualClock();
-  return { clock, store: new OptimisticRegistry({ schedule: clock.schedule, ttlMs: 60_000, graceMs: 600 }) };
+  return {
+    clock,
+    store: new OptimisticRegistry({ schedule: clock.schedule, ttlMs: 60_000, graceMs: 600 }),
+  };
 }
 
 const base: TaskRow[] = [
@@ -66,7 +73,12 @@ describe('applyIntents', () => {
 
   test('an update patches its row and a delete hides it', () => {
     const { store } = registry();
-    store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } });
+    store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
     store.begin({ table: 'project_task', kind: 'delete', recordId: '2' });
     expect(applyIntents(base, store.snapshot(), lenses)).toEqual([
       { id: '1', title: 'Water the plants', status: 'done' },
@@ -75,13 +87,22 @@ describe('applyIntents', () => {
 
   test('an update that changes nothing keeps the reference', () => {
     const { store } = registry();
-    store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'todo' } });
+    store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'todo' },
+    });
     expect(applyIntents(base, store.snapshot(), lenses)).toBe(base);
   });
 
   test('a pending create appears under a temporary id and is marked pending', () => {
     const { store } = registry();
-    const intent = store.begin({ table: 'project_task', kind: 'create', values: { title: 'Call the plumber' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'create',
+      values: { title: 'Call the plumber' },
+    });
     const rows = applyIntents(base, store.snapshot(), lenses);
     expect(rows).toHaveLength(3);
     const created = rows[2];
@@ -100,17 +121,31 @@ describe('applyIntents', () => {
   test('a compare function orders the merged rows', () => {
     const { store } = registry();
     store.begin({ table: 'project_task', kind: 'create', values: { title: 'Answer the door' } });
-    const rows = applyIntents(base, store.snapshot(), lenses, (left, right) => left.title.localeCompare(right.title));
-    expect(rows.map((row) => row.title)).toEqual(['Answer the door', 'Fix the gate', 'Water the plants']);
+    const rows = applyIntents(base, store.snapshot(), lenses, (left, right) =>
+      left.title.localeCompare(right.title)
+    );
+    expect(rows.map((row) => row.title)).toEqual([
+      'Answer the door',
+      'Fix the gate',
+      'Water the plants',
+    ]);
   });
 });
 
 describe('create reconciliation', () => {
   test('the sync Add landing after the HTTP response never shows a second row', () => {
     const { store } = registry();
-    const intent = store.begin({ table: 'project_task', kind: 'create', values: { title: 'Buy bulbs', status: 'todo' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'create',
+      values: { title: 'Buy bulbs', status: 'todo' },
+    });
     store.confirm(intent.id, '42');
-    expect(applyIntents(base, store.snapshot(), lenses).map((row) => row.id)).toEqual(['1', '2', '42']);
+    expect(applyIntents(base, store.snapshot(), lenses).map((row) => row.id)).toEqual([
+      '1',
+      '2',
+      '42',
+    ]);
     const synced = [...base, { id: '42', title: 'Buy bulbs', status: 'todo' }];
     expect(applyIntents(synced, store.snapshot(), lenses)).toBe(synced);
     expect(settledIntents(synced, store.snapshot(), lenses)).toEqual([intent.id]);
@@ -118,7 +153,11 @@ describe('create reconciliation', () => {
 
   test('the sync Add landing before the HTTP response hides the pending copy', () => {
     const { store } = registry();
-    const intent = store.begin({ table: 'project_task', kind: 'create', values: { title: 'Buy bulbs', status: 'todo' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'create',
+      values: { title: 'Buy bulbs', status: 'todo' },
+    });
     const synced = [...base, { id: '42', title: 'Buy bulbs', status: 'todo' }];
     expect(applyIntents(synced, store.snapshot(), lenses)).toBe(synced);
     expect(settledIntents(synced, store.snapshot(), lenses)).toEqual([]);
@@ -129,18 +168,41 @@ describe('create reconciliation', () => {
 
   test('an update on a just-created row rides on the created copy', () => {
     const { store } = registry();
-    const created = store.begin({ table: 'project_task', kind: 'create', values: { title: 'Paint' } });
+    const created = store.begin({
+      table: 'project_task',
+      kind: 'create',
+      values: { title: 'Paint' },
+    });
     store.confirm(created.id, '7');
-    store.begin({ table: 'project_task', kind: 'update', recordId: '7', values: { status: 'done' } });
-    expect(applyIntents(base, store.snapshot(), lenses)[2]).toEqual({ id: '7', title: 'Paint', status: 'done' });
+    store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '7',
+      values: { status: 'done' },
+    });
+    expect(applyIntents(base, store.snapshot(), lenses)[2]).toEqual({
+      id: '7',
+      title: 'Paint',
+      status: 'done',
+    });
   });
 });
 
 describe('ordering and refusals', () => {
   test('a refused intent rolls back alone, out of order', () => {
     const { store } = registry();
-    const first = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } });
-    const second = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { title: 'Water the garden' } });
+    const first = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
+    const second = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { title: 'Water the garden' },
+    });
     store.confirm(second.id);
     store.rollback(first.id);
     expect(applyIntents(base, store.snapshot(), lenses)[0]).toEqual({
@@ -152,8 +214,18 @@ describe('ordering and refusals', () => {
 
   test('a later intent settles only after the earlier ones on its record', () => {
     const { store } = registry();
-    const done = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } });
-    const reopened = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'todo' } });
+    const done = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
+    const reopened = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'todo' },
+    });
     store.confirm(reopened.id);
     store.confirm(done.id);
     expect(settledIntents(base, store.snapshot(), lenses)).toEqual([]);
@@ -164,7 +236,12 @@ describe('ordering and refusals', () => {
 
   test('an unconfirmed intent never settles, even when the row already matches', () => {
     const { store } = registry();
-    store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'todo' } });
+    store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'todo' },
+    });
     expect(settledIntents(base, store.snapshot(), lenses)).toEqual([]);
   });
 
@@ -186,7 +263,12 @@ describe('OptimisticRegistry lifecycle', () => {
 
   test('a confirmed intent expires after the TTL when the sync never proves it', () => {
     const { store, clock } = registry();
-    const intent = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
     clock.advance(120_000);
     expect(store.snapshot()).toHaveLength(1);
     store.confirm(intent.id);
@@ -198,7 +280,12 @@ describe('OptimisticRegistry lifecycle', () => {
 
   test('a settled intent leaves after the grace period, not the TTL', () => {
     const { store, clock } = registry();
-    const intent = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
     store.confirm(intent.id);
     store.settle([intent.id]);
     store.settle([intent.id]);
@@ -208,7 +295,11 @@ describe('OptimisticRegistry lifecycle', () => {
 
   test('confirming twice or after a rollback changes nothing', () => {
     const { store } = registry();
-    const intent = store.begin({ table: 'project_task', kind: 'create', values: { title: 'Once' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'create',
+      values: { title: 'Once' },
+    });
     store.confirm(intent.id, '9');
     store.confirm(intent.id, '10');
     expect(store.snapshot()[0]?.recordId).toBe('9');
@@ -220,7 +311,12 @@ describe('OptimisticRegistry lifecycle', () => {
   test('a user change clears every intent and its timers', () => {
     const { store, clock } = registry();
     store.bindSession('1');
-    const intent = store.begin({ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } });
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
     store.confirm(intent.id);
     store.bindSession('1');
     expect(store.snapshot()).toHaveLength(1);
@@ -266,11 +362,23 @@ describe('row equality', () => {
     const lens = defineLens<Entry, { title: string; location: string }>({
       table: 'calendar_event',
       recordIdOf: (row) => row.id,
-      patch: (row, values) => ({ ...row, title: values.title ?? row.title, location: values.location || undefined }),
-      create: (recordId, values) => ({ id: recordId, title: values.title ?? '', location: values.location || undefined }),
+      patch: (row, values) => ({
+        ...row,
+        title: values.title ?? row.title,
+        location: values.location || undefined,
+      }),
+      create: (recordId, values) => ({
+        id: recordId,
+        title: values.title ?? '',
+        location: values.location || undefined,
+      }),
     });
     const { store } = registry();
-    const intent = store.begin({ table: 'calendar_event', kind: 'create', values: { title: 'Dentist', location: '' } });
+    const intent = store.begin({
+      table: 'calendar_event',
+      kind: 'create',
+      values: { title: 'Dentist', location: '' },
+    });
     store.confirm(intent.id, '5');
     const synced: Entry[] = [{ id: '5', title: 'Dentist' }];
     expect(applyIntents(synced, store.snapshot(), [lens])).toBe(synced);

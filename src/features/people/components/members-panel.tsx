@@ -22,12 +22,21 @@ type MembersPanelProps = {
 
 const FILL_TILE_UNTIL = 6;
 
-export function MembersPanel({ users, currentUserId, roleLabel, onEdit, onDeactivate, onInvite }: MembersPanelProps) {
+export function MembersPanel({
+  users,
+  currentUserId,
+  roleLabel,
+  onEdit,
+  onDeactivate,
+  onInvite,
+}: MembersPanelProps) {
   const { t } = useTranslation();
 
   return (
     <Panel className="flex-1 gap-1 p-1.5">
-      {users.length === 0 ? <EmptyState variant="inline" icon="users" title={t('screens.users.no-users')} /> : null}
+      {users.length === 0 ? (
+        <EmptyState variant="inline" icon="users" title={t('screens.users.no-users')} />
+      ) : null}
       {users.map((user) => {
         const self = user.id === currentUserId;
         return (
@@ -38,7 +47,9 @@ export function MembersPanel({ users, currentUserId, roleLabel, onEdit, onDeacti
             subtitle={`${roleLabel(user.role)} · ${user.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
             trailing={
               <View className="flex-row items-center gap-1">
-                {self ? <StatusBadge label={t('screens.users.you')} className="self-center" /> : null}
+                {self ? (
+                  <StatusBadge label={t('screens.users.you')} className="self-center" />
+                ) : null}
                 <Button size="sm" variant="ghost" onPress={() => onEdit(user)}>
                   <Text>{t('common.edit')}</Text>
                 </Button>

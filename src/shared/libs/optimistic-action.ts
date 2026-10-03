@@ -4,7 +4,11 @@ import { useAuthStore } from '@/core/stores';
 import type { ConfirmRequest } from '@/core/types';
 import { TOAST_ACTION_MS } from '@/shared/constants';
 import { confirm } from './confirm';
-import { optimisticRegistry, type OptimisticIntent, type OptimisticIntentInput } from './optimistic';
+import {
+  optimisticRegistry,
+  type OptimisticIntent,
+  type OptimisticIntentInput,
+} from './optimistic';
 import { isRetryableServiceError, toastServiceError } from './service-error';
 import { toast } from './toast';
 
@@ -58,7 +62,9 @@ function rollback(begun: readonly OptimisticIntent[]): void {
   for (const intent of begun) optimisticRegistry.rollback(intent.id);
 }
 
-export async function runOptimistic<R>(action: OptimisticAction<R>): Promise<IServiceResponse<R> | null> {
+export async function runOptimistic<R>(
+  action: OptimisticAction<R>
+): Promise<IServiceResponse<R> | null> {
   if (action.confirm && !(await confirm(action.confirm))) return null;
   const begun = action.intents.map((intent) => optimisticRegistry.begin(intent));
   if (action.undo && (await waitForUndo(action.undo))) {
@@ -76,7 +82,10 @@ export async function runOptimistic<R>(action: OptimisticAction<R>): Promise<ISe
     rollback(begun);
     action.onRefused?.();
     const retry = isRetryableServiceError(result.errors)
-      ? { label: t('common.retry'), onPress: () => void runOptimistic({ ...action, confirm: undefined, undo: undefined }) }
+      ? {
+          label: t('common.retry'),
+          onPress: () => void runOptimistic({ ...action, confirm: undefined, undo: undefined }),
+        }
       : undefined;
     toastServiceError(result.errors, action.errorTitle, retry);
     return null;

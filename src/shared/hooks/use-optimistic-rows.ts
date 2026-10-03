@@ -16,17 +16,23 @@ export type OptimisticRows<Row> = {
 export function useOptimisticRows<Row>(
   rows: readonly Row[],
   lenses: readonly OptimisticLens<Row>[],
-  compare?: (left: Row, right: Row) => number,
+  compare?: (left: Row, right: Row) => number
 ): OptimisticRows<Row> {
   const intents = useSyncExternalStore(
     optimisticRegistry.subscribe,
     optimisticRegistry.snapshot,
-    optimisticRegistry.snapshot,
+    optimisticRegistry.snapshot
   );
-  const merged = useMemo(() => applyIntents(rows, intents, lenses, compare), [compare, intents, lenses, rows]);
+  const merged = useMemo(
+    () => applyIntents(rows, intents, lenses, compare),
+    [compare, intents, lenses, rows]
+  );
   const pending = useMemo(() => pendingKeys(intents), [intents]);
 
-  const isPending = useCallback((row: Row) => isPendingRow(row, pending, lenses), [lenses, pending]);
+  const isPending = useCallback(
+    (row: Row) => isPendingRow(row, pending, lenses),
+    [lenses, pending]
+  );
 
   useEffect(() => {
     const settled = settledIntents(rows, intents, lenses);

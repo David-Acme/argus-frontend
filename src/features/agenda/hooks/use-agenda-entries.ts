@@ -24,15 +24,21 @@ type AgendaEntries = {
 export function useAgendaEntries({ view, anchor, selectedDay }: AgendaEntriesInput): AgendaEntries {
   const date = useDateFormatter();
   const range = useMemo(() => date.rangeFor(view, anchor), [anchor, date, view]);
-  const cached = useViewCacheRows<CalendarEntry>(VIEW_CACHE_KEYS.calendarEntries, calendarMonthScope(anchor));
+  const cached = useViewCacheRows<CalendarEntry>(
+    VIEW_CACHE_KEYS.calendarEntries,
+    calendarMonthScope(anchor)
+  );
   const { rows } = useOptimisticRows(cached, CALENDAR_LENSES, byStart);
   const entries = useMemo(
     () => rows.filter((entry) => entry.startsAt >= range.from && entry.startsAt <= range.to),
-    [range.from, range.to, rows],
+    [range.from, range.to, rows]
   );
   const selectedDayEntries = useMemo(
-    () => entries.filter((entry) => date.sameDay(new Date(entry.startsAt), selectedDay)).sort(compareDayEntries),
-    [date, entries, selectedDay],
+    () =>
+      entries
+        .filter((entry) => date.sameDay(new Date(entry.startsAt), selectedDay))
+        .sort(compareDayEntries),
+    [date, entries, selectedDay]
   );
 
   useEffect(() => {

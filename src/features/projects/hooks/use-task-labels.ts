@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import type { MenuOption, ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
+import type {
+  MenuOption,
+  ProjectStatus,
+  ProjectTaskPriority,
+  ProjectTaskStatus,
+} from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { TaskLaneKey } from '@/features/projects/model/task-lanes';
 

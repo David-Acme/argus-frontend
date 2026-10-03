@@ -8,7 +8,12 @@ import {
   upcomingTasks,
 } from '@/features/projects/model/task-lanes';
 
-const task = (id: string, status: string, priority = 'none', dueAt: number | null = null): IProjectTaskCacheRow => ({
+const task = (
+  id: string,
+  status: string,
+  priority = 'none',
+  dueAt: number | null = null
+): IProjectTaskCacheRow => ({
   id,
   projectId: '1',
   title: `Task ${id}`,
@@ -52,11 +57,18 @@ describe('task lanes', () => {
 
   test('upcoming lists open dated tasks soonest first', () => {
     const upcoming = upcomingTasks(
-      [task('1', 'todo', 'none', 300), task('2', 'done', 'none', 100), task('3', 'doing', 'none', 200), task('4', 'todo')],
-      5,
+      [
+        task('1', 'todo', 'none', 300),
+        task('2', 'done', 'none', 100),
+        task('3', 'doing', 'none', 200),
+        task('4', 'todo'),
+      ],
+      5
     );
     expect(upcoming.map((entry) => entry.id)).toEqual(['3', '1']);
-    expect(upcomingTasks([task('1', 'todo', 'none', 1), task('2', 'todo', 'none', 2)], 1)).toHaveLength(1);
+    expect(
+      upcomingTasks([task('1', 'todo', 'none', 1), task('2', 'todo', 'none', 2)], 1)
+    ).toHaveLength(1);
   });
 
   test('a pointer position maps onto the lane under it, clamped to the board', () => {

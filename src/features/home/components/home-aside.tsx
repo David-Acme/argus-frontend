@@ -42,7 +42,9 @@ export function HomeAside({ cameras, summary, notifications }: HomeAsideProps) {
         />
       </View>
 
-      {guardAccess.view ? <GuardCard state={guardMode} onPress={() => router.push('/security')} /> : null}
+      {guardAccess.view ? (
+        <GuardCard state={guardMode} onPress={() => router.push('/security')} />
+      ) : null}
 
       <SummaryCard
         title={t('screens.home.overview')}
@@ -52,9 +54,21 @@ export function HomeAside({ cameras, summary, notifications }: HomeAsideProps) {
             label: t('screens.home.cameras'),
             value: `${summary.camerasOnline}/${summary.camerasTotal}`,
           },
-          { icon: 'bell', label: t('screens.home.reminders'), value: String(summary.remindersPending) },
-          { icon: 'list-todo', label: t('screens.home.tasks-open'), value: String(summary.tasksOpen) },
-          { icon: 'activity', label: t('screens.home.events-week'), value: String(summary.eventsCurrent) },
+          {
+            icon: 'bell',
+            label: t('screens.home.reminders'),
+            value: String(summary.remindersPending),
+          },
+          {
+            icon: 'list-todo',
+            label: t('screens.home.tasks-open'),
+            value: String(summary.tasksOpen),
+          },
+          {
+            icon: 'activity',
+            label: t('screens.home.events-week'),
+            value: String(summary.eventsCurrent),
+          },
         ]}
       />
 

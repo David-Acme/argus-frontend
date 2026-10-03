@@ -38,14 +38,22 @@ export function UpcomingTasksPanel({
             <Pressable
               key={item.id}
               accessibilityRole="button"
-              accessibilityLabel={item.overdue ? `${item.title}, ${overdueLabel}, ${item.due}` : `${item.title}, ${item.due}`}
+              accessibilityLabel={
+                item.overdue
+                  ? `${item.title}, ${overdueLabel}, ${item.due}`
+                  : `${item.title}, ${item.due}`
+              }
               onPress={() => onSelect(item.id)}
               className="active:bg-surface-secondary web:hover:bg-surface-secondary/60 min-h-11 flex-row items-center gap-3 rounded-2xl px-2.5 py-2">
-              <View className={cn('size-2 rounded-full', item.overdue ? 'bg-error' : 'bg-accent')} />
+              <View
+                className={cn('size-2 rounded-full', item.overdue ? 'bg-error' : 'bg-accent')}
+              />
               <Text variant="body" className="min-w-0 flex-1" numberOfLines={1}>
                 {item.title}
               </Text>
-              <Text variant="caption" className={cn('tabular-nums', item.overdue && 'text-error-strong font-medium')}>
+              <Text
+                variant="caption"
+                className={cn('tabular-nums', item.overdue && 'text-error-strong font-medium')}>
                 {item.due}
               </Text>
             </Pressable>

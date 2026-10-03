@@ -12,7 +12,7 @@ export const NOTIFICATION_LENSES: readonly OptimisticLens<INotificationPreviewCa
 export function unreadAfterReads(
   unread: number,
   synced: readonly Pick<INotificationPreviewCacheRow, 'isRead'>[],
-  shown: readonly Pick<INotificationPreviewCacheRow, 'isRead'>[],
+  shown: readonly Pick<INotificationPreviewCacheRow, 'isRead'>[]
 ): number {
   const count = (rows: readonly Pick<INotificationPreviewCacheRow, 'isRead'>[]) =>
     rows.reduce((total, row) => total + (row.isRead ? 0 : 1), 0);

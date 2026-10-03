@@ -57,12 +57,16 @@ export function TaskBoard({ children, onMoveTask }: TaskBoardProps) {
       origin.value = x;
     });
   };
-  const measureBled = (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width - BLEED);
+  const measureBled = (event: LayoutChangeEvent) =>
+    setWidth(event.nativeEvent.layout.width - BLEED);
 
   if (sideBySide) {
     return (
       <TaskDragProvider value={drag}>
-        <View ref={boardRef} className="min-h-[380px] flex-1 flex-row items-stretch gap-4" onLayout={measure}>
+        <View
+          ref={boardRef}
+          className="min-h-[380px] flex-1 flex-row items-stretch gap-4"
+          onLayout={measure}>
           {lanes.map((lane, index) => (
             <TaskDropZone key={index} index={index}>
               {lane}

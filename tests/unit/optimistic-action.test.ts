@@ -22,7 +22,9 @@ mock.module('@/core/stores', () => ({
     }),
   },
   useConfirmStore: {
-    getState: () => ({ ask: (_request: unknown, resolve: (accepted: boolean) => void) => resolve(confirmAnswer) }),
+    getState: () => ({
+      ask: (_request: unknown, resolve: (accepted: boolean) => void) => resolve(confirmAnswer),
+    }),
   },
 }));
 
@@ -31,7 +33,7 @@ mock.module('@/core/i18n', () => ({ t: (key: string) => key }));
 const { optimisticRegistry } = await import('@/shared/libs/optimistic');
 const { runOptimistic, serverRecordId } = await import('@/shared/libs/optimistic-action');
 
-const ok = <T,>(info: T): IServiceResponse<T> => ({ ok: true, status: 200, info, errors: null });
+const ok = <T>(info: T): IServiceResponse<T> => ({ ok: true, status: 200, info, errors: null });
 const refused = (code: string): IServiceResponse<null> => ({
   ok: false,
   status: 503,
@@ -72,14 +74,18 @@ describe('runOptimistic', () => {
 
   test('a refusal rolls back and offers Retry only when retrying can help', async () => {
     await runOptimistic({
-      intents: [{ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } }],
+      intents: [
+        { table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } },
+      ],
       call: async () => refused('NETWORK_ERROR'),
     });
     expect(optimisticRegistry.snapshot()).toEqual([]);
     expect(shown.at(-1)?.action?.label).toBe('common.retry');
 
     await runOptimistic({
-      intents: [{ table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } }],
+      intents: [
+        { table: 'project_task', kind: 'update', recordId: '1', values: { status: 'done' } },
+      ],
       call: async () => refused('FORBIDDEN'),
     });
     expect(shown.at(-1)?.intent).toBe('error');

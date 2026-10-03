@@ -5,7 +5,10 @@ import { CreateTile } from '@/shared/components/ui/create-tile';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ProjectCardRow } from '@/features/projects/components/project-card-row';
-import { UpcomingTasksPanel, type UpcomingTaskItem } from '@/features/projects/components/upcoming-tasks-panel';
+import {
+  UpcomingTasksPanel,
+  type UpcomingTaskItem,
+} from '@/features/projects/components/upcoming-tasks-panel';
 
 type ProjectAsideProps = {
   projects: readonly IProjectCacheRow[];
@@ -53,7 +56,9 @@ export function ProjectAside({
             />
           );
         })}
-        {onCreate ? <CreateTile layout="row" label={t('screens.projects.new-project')} onPress={onCreate} /> : null}
+        {onCreate ? (
+          <CreateTile layout="row" label={t('screens.projects.new-project')} onPress={onCreate} />
+        ) : null}
       </View>
       <UpcomingTasksPanel
         title={t('screens.projects.upcoming')}

@@ -55,7 +55,7 @@ export default function UsersScreen() {
 
   const roleLabel = useCallback(
     (role: UserRole) => roleLabels.find((option) => option.value === role)?.label ?? role,
-    [roleLabels],
+    [roleLabels]
   );
 
   const deactivate = useCallback(
@@ -67,14 +67,16 @@ export default function UsersScreen() {
           confirmLabel: t('screens.users.deactivate'),
           intent: 'danger',
         },
-        intents: [{ table: 'user', kind: 'update', recordId: user.id, values: { isActive: false } }],
+        intents: [
+          { table: 'user', kind: 'update', recordId: user.id, values: { isActive: false } },
+        ],
         call: () => userManagementService.deactivate(Number(user.id)),
         success: t('screens.users.user-deactivated'),
       }).then((response) => {
         if (response) refresh();
       });
     },
-    [refresh, t],
+    [refresh, t]
   );
 
   const revoke = useCallback(
@@ -99,7 +101,7 @@ export default function UsersScreen() {
         if (response) refresh();
       });
     },
-    [refresh, t],
+    [refresh, t]
   );
 
   useEffect(() => {
@@ -108,44 +110,51 @@ export default function UsersScreen() {
   }, []);
 
   return (
-    <AppScreen
-      aside={
+    <>
+      <AppScreen
+        aside={
+          <View className={cn(isWide && 'flex-1', 'gap-5')}>
+            <View className="gap-3">
+              <SectionHeader title={t('screens.users.role-access-title')} />
+              <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
+            </View>
+            <View className={cn(isWide && 'flex-1', 'gap-3')}>
+              <SectionHeader
+                title={t('screens.users.invitations')}
+                count={invitations.length}
+                action={t('screens.users.new-invitation')}
+                onAction={() => setInviteOpen(true)}
+              />
+              <InvitationsPanel
+                invitations={invitations}
+                now={now}
+                roleLabel={roleLabel}
+                onRevoke={revoke}
+              />
+            </View>
+          </View>
+        }>
         <View className={cn(isWide && 'flex-1', 'gap-5')}>
-          <View className="gap-3">
-            <SectionHeader title={t('screens.users.role-access-title')} />
-            <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
+          <View className="gap-1.5">
+            <Text variant="display">{t('screens.users.title')}</Text>
+            <Text variant="caption" className="text-foreground-secondary">
+              {t('screens.users.subtitle')}
+            </Text>
           </View>
-          <View className={cn(isWide && 'flex-1', 'gap-3')}>
-            <SectionHeader
-              title={t('screens.users.invitations')}
-              count={invitations.length}
-              action={t('screens.users.new-invitation')}
-              onAction={() => setInviteOpen(true)}
-            />
-            <InvitationsPanel invitations={invitations} now={now} roleLabel={roleLabel} onRevoke={revoke} />
-          </View>
-        </View>
-      }>
-      <View className={cn(isWide && 'flex-1', 'gap-5')}>
-        <View className="gap-1.5">
-          <Text variant="display">{t('screens.users.title')}</Text>
-          <Text variant="caption" className="text-foreground-secondary">
-            {t('screens.users.subtitle')}
-          </Text>
-        </View>
 
-        <View className={cn(isWide && 'flex-1', 'gap-3')}>
-          <SectionHeader title={t('screens.users.members')} count={users.length} />
-          <MembersPanel
-            users={users}
-            currentUserId={currentUserId}
-            roleLabel={roleLabel}
-            onEdit={setEditing}
-            onDeactivate={deactivate}
-            onInvite={() => setInviteOpen(true)}
-          />
+          <View className={cn(isWide && 'flex-1', 'gap-3')}>
+            <SectionHeader title={t('screens.users.members')} count={users.length} />
+            <MembersPanel
+              users={users}
+              currentUserId={currentUserId}
+              roleLabel={roleLabel}
+              onEdit={setEditing}
+              onDeactivate={deactivate}
+              onInvite={() => setInviteOpen(true)}
+            />
+          </View>
         </View>
-      </View>
+      </AppScreen>
 
       {editing ? (
         <ManagedUserDialog
@@ -156,7 +165,12 @@ export default function UsersScreen() {
           onSaved={refresh}
         />
       ) : null}
-      <InvitationDialog open={inviteOpen} onOpenChange={setInviteOpen} onSaved={refresh} onCreated={showPreview} />
+      <InvitationDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        onSaved={refresh}
+        onCreated={showPreview}
+      />
       <AdaptiveDialog
         open={preview !== null}
         onOpenChange={(open) => !open && dismissPreview()}
@@ -175,6 +189,6 @@ export default function UsersScreen() {
           </View>
         ) : null}
       </AdaptiveDialog>
-    </AppScreen>
+    </>
   );
 }

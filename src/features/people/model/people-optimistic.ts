@@ -1,4 +1,8 @@
-import type { IInvitationRecord, IPeopleDirectoryCacheRow, IUserManagementUpdate } from '@/core/interfaces';
+import type {
+  IInvitationRecord,
+  IPeopleDirectoryCacheRow,
+  IUserManagementUpdate,
+} from '@/core/interfaces';
 import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 
 export const USER_LENSES: readonly OptimisticLens<IPeopleDirectoryCacheRow>[] = [

@@ -19,11 +19,17 @@ const PROJECT_LENSES = [projectLens];
 
 export function useProjectsData(selectedId: string): ProjectsData {
   const cachedProjects = useViewCacheRows<IProjectCacheRow>(VIEW_CACHE_KEYS.projectList);
-  const { rows: projects, isPending: isPendingProject } = useOptimisticRows(cachedProjects, PROJECT_LENSES);
+  const { rows: projects, isPending: isPendingProject } = useOptimisticRows(
+    cachedProjects,
+    PROJECT_LENSES
+  );
   const selected = projects.find((project) => project.id === selectedId);
   const active = selected ?? projects[0];
   const activeId = active?.id ?? '';
-  const cachedTasks = useViewCacheRows<IProjectTaskCacheRow>(VIEW_CACHE_KEYS.projectTasks, activeId);
+  const cachedTasks = useViewCacheRows<IProjectTaskCacheRow>(
+    VIEW_CACHE_KEYS.projectTasks,
+    activeId
+  );
   const taskLenses = useMemo(() => [projectTaskLens(activeId)], [activeId]);
   const { rows: tasks, isPending: isPendingTask } = useOptimisticRows(cachedTasks, taskLenses);
   const progress = useMemo(() => taskProgress(tasks), [tasks]);

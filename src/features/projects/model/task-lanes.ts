@@ -13,21 +13,34 @@ export type TaskLaneSpec = {
 };
 
 export const TASK_LANES: readonly TaskLaneSpec[] = [
-  { key: 'open', statuses: ['todo', 'backlog'], createStatus: 'todo', toneClassName: 'bg-muted-foreground' },
+  {
+    key: 'open',
+    statuses: ['todo', 'backlog'],
+    createStatus: 'todo',
+    toneClassName: 'bg-muted-foreground',
+  },
   { key: 'doing', statuses: ['doing'], createStatus: 'doing', toneClassName: 'bg-accent' },
-  { key: 'finished', statuses: ['done', 'canceled'], createStatus: 'done', toneClassName: 'bg-success' },
+  {
+    key: 'finished',
+    statuses: ['done', 'canceled'],
+    createStatus: 'done',
+    toneClassName: 'bg-success',
+  },
 ];
 
-const statusRank = (status: string): number => TASK_STATUS_ORDER.indexOf(status as ProjectTaskStatus);
+const statusRank = (status: string): number =>
+  TASK_STATUS_ORDER.indexOf(status as ProjectTaskStatus);
 
 const priorityRank = (priority: string): number => TASK_PRIORITY_WEIGHT[priority] ?? 9;
 
 export function laneOf(status: string): TaskLaneKey | null {
-  return TASK_LANES.find((lane) => lane.statuses.includes(status as ProjectTaskStatus))?.key ?? null;
+  return (
+    TASK_LANES.find((lane) => lane.statuses.includes(status as ProjectTaskStatus))?.key ?? null
+  );
 }
 
 export function groupTasksByLane(
-  tasks: readonly IProjectTaskCacheRow[],
+  tasks: readonly IProjectTaskCacheRow[]
 ): Record<TaskLaneKey, IProjectTaskCacheRow[]> {
   const lanes: Record<TaskLaneKey, IProjectTaskCacheRow[]> = { open: [], doing: [], finished: [] };
   for (const task of tasks) {
@@ -37,7 +50,8 @@ export function groupTasksByLane(
   for (const lane of Object.values(lanes)) {
     lane.sort(
       (left, right) =>
-        statusRank(left.status) - statusRank(right.status) || priorityRank(left.priority) - priorityRank(right.priority),
+        statusRank(left.status) - statusRank(right.status) ||
+        priorityRank(left.priority) - priorityRank(right.priority)
     );
   }
   return lanes;
@@ -51,7 +65,7 @@ export function statusForLane(lane: TaskLaneKey, current: ProjectTaskStatus): Pr
 
 export function upcomingTasks(
   tasks: readonly IProjectTaskCacheRow[],
-  limit: number,
+  limit: number
 ): IProjectTaskCacheRow[] {
   return tasks
     .filter((task) => task.dueAt != null && isOpenTask(task))

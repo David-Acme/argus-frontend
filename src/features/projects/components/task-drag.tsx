@@ -71,8 +71,11 @@ export function TaskDropZone({ index, children }: TaskDropZoneProps) {
     zIndex: drag && drag.sourceLane.value === index ? 10 : 0,
   }));
   const ringStyle = useAnimatedStyle(() => {
-    const active = drag != null && drag.hoverLane.value === index && drag.sourceLane.value !== index;
-    return { opacity: reduceMotion ? Number(active) : withTiming(Number(active), { duration: 140 }) };
+    const active =
+      drag != null && drag.hoverLane.value === index && drag.sourceLane.value !== index;
+    return {
+      opacity: reduceMotion ? Number(active) : withTiming(Number(active), { duration: 140 }),
+    };
   });
 
   return (
@@ -98,7 +101,9 @@ export function DraggableTask({ taskId, lane, disabled = false, children }: Drag
 
   const gesture = useMemo(() => {
     const pan = Gesture.Pan().enabled(enabled);
-    const activated = IS_NATIVE ? pan.activateAfterLongPress(LONG_PRESS_MS) : pan.minDistance(POINTER_SLOP);
+    const activated = IS_NATIVE
+      ? pan.activateAfterLongPress(LONG_PRESS_MS)
+      : pan.minDistance(POINTER_SLOP);
     return activated
       .onStart(() => {
         if (!drag) return;
@@ -111,11 +116,21 @@ export function DraggableTask({ taskId, lane, disabled = false, children }: Drag
         if (!drag) return;
         offsetX.value = event.translationX;
         offsetY.value = event.translationY;
-        drag.hoverLane.value = laneAtPosition(event.absoluteX, drag.origin.value, drag.span.value, drag.lanes);
+        drag.hoverLane.value = laneAtPosition(
+          event.absoluteX,
+          drag.origin.value,
+          drag.span.value,
+          drag.lanes
+        );
       })
       .onEnd((event) => {
         if (!drag) return;
-        const target = laneAtPosition(event.absoluteX, drag.origin.value, drag.span.value, drag.lanes);
+        const target = laneAtPosition(
+          event.absoluteX,
+          drag.origin.value,
+          drag.span.value,
+          drag.lanes
+        );
         if (target >= 0 && target !== lane) {
           scheduleOnRN(drag.drop, taskId, target);
           offsetX.value = withDelay(400, withTiming(0, { duration: 0 }));

@@ -47,7 +47,9 @@ export type OptimisticRegistryOptions = {
   graceMs: number;
 };
 
-export function defineLens<Row, V extends object>(lens: TypedOptimisticLens<Row, V>): OptimisticLens<Row> {
+export function defineLens<Row, V extends object>(
+  lens: TypedOptimisticLens<Row, V>
+): OptimisticLens<Row> {
   return lens as unknown as OptimisticLens<Row>;
 }
 
@@ -63,7 +65,8 @@ export function intentKey(table: TableName, recordId: string): string {
 
 function shallowEqual<T>(left: T, right: T): boolean {
   if (Object.is(left, right)) return true;
-  if (typeof left !== 'object' || typeof right !== 'object' || left === null || right === null) return false;
+  if (typeof left !== 'object' || typeof right !== 'object' || left === null || right === null)
+    return false;
   const a = left as Record<string, unknown>;
   const b = right as Record<string, unknown>;
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
@@ -94,7 +97,7 @@ function groupByKey(intents: readonly OptimisticIntent[]): Map<string, Optimisti
 
 function relevantIntents<Row>(
   intents: readonly OptimisticIntent[],
-  lenses: readonly OptimisticLens<Row>[],
+  lenses: readonly OptimisticLens<Row>[]
 ): OptimisticIntent[] {
   if (intents.length === 0 || lenses.length === 0) return [];
   const tables = new Set(lenses.map((lens) => lens.table));
@@ -104,7 +107,7 @@ function relevantIntents<Row>(
 function patchThrough<Row>(
   row: Row,
   group: readonly OptimisticIntent[],
-  lens: OptimisticLens<Row>,
+  lens: OptimisticLens<Row>
 ): Row | null {
   let next = row;
   for (const intent of group) {
@@ -114,7 +117,11 @@ function patchThrough<Row>(
   return shallowEqual(next, row) ? row : next;
 }
 
-function mirrorsCreate<Row>(row: Row, lens: OptimisticLens<Row>, values: OptimisticValues): boolean {
+function mirrorsCreate<Row>(
+  row: Row,
+  lens: OptimisticLens<Row>,
+  values: OptimisticValues
+): boolean {
   const recordId = lens.recordIdOf(row);
   if (recordId == null || !lens.create) return false;
   const expected = lens.create(recordId, values);
@@ -125,7 +132,7 @@ export function applyIntents<Row>(
   rows: readonly Row[],
   intents: readonly OptimisticIntent[],
   lenses: readonly OptimisticLens<Row>[],
-  compare?: (left: Row, right: Row) => number,
+  compare?: (left: Row, right: Row) => number
 ): readonly Row[] {
   const relevant = relevantIntents(intents, lenses);
   if (relevant.length === 0) return rows;
@@ -172,7 +179,7 @@ export function applyIntents<Row>(
 export function settledIntents<Row>(
   rows: readonly Row[],
   intents: readonly OptimisticIntent[],
-  lenses: readonly OptimisticLens<Row>[],
+  lenses: readonly OptimisticLens<Row>[]
 ): string[] {
   const relevant = relevantIntents(intents, lenses);
   if (relevant.length === 0) return [];
@@ -186,7 +193,11 @@ export function settledIntents<Row>(
     const synced = base.get(key);
     for (const intent of group) {
       if (!intent.confirmed || !synced || intent.kind === 'delete') break;
-      if (intent.kind === 'update' && !shallowEqual(synced.lens.patch(synced.row, intent.values), synced.row)) break;
+      if (
+        intent.kind === 'update' &&
+        !shallowEqual(synced.lens.patch(synced.row, intent.values), synced.row)
+      )
+        break;
       settled.push(intent.id);
     }
   }
@@ -195,14 +206,16 @@ export function settledIntents<Row>(
 
 export function pendingKeys(intents: readonly OptimisticIntent[]): ReadonlySet<string> {
   return new Set(
-    intents.filter((intent) => !intent.confirmed).map((intent) => intentKey(intent.table, intent.recordId)),
+    intents
+      .filter((intent) => !intent.confirmed)
+      .map((intent) => intentKey(intent.table, intent.recordId))
   );
 }
 
 export function isPendingRow<Row>(
   row: Row,
   pending: ReadonlySet<string>,
-  lenses: readonly OptimisticLens<Row>[],
+  lenses: readonly OptimisticLens<Row>[]
 ): boolean {
   if (pending.size === 0) return false;
   const located = locate(row, lenses);
@@ -284,7 +297,7 @@ export class OptimisticRegistry {
     this.timers.get(id)?.();
     this.timers.set(
       id,
-      this.options.schedule(() => this.drop([id]), delayMs),
+      this.options.schedule(() => this.drop([id]), delayMs)
     );
   }
 

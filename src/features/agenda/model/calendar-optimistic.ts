@@ -6,10 +6,13 @@ import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-ac
 const recordIdFor = (entry: CalendarEntry, source: CalendarSource): string | null =>
   entry.source === source ? calendarEntryRecordId(entry) : null;
 
-const optionalText = (value: string | undefined, fallback: string | undefined): string | undefined =>
-  value === undefined ? fallback : value || undefined;
+const optionalText = (
+  value: string | undefined,
+  fallback: string | undefined
+): string | undefined => (value === undefined ? fallback : value || undefined);
 
-const msFromSeconds = (value: number | undefined): number | null => (value == null ? null : value * 1000);
+const msFromSeconds = (value: number | undefined): number | null =>
+  value == null ? null : value * 1000;
 
 export function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus {
   if (status === 'done') return 'complete';
@@ -71,8 +74,13 @@ const calendarTaskLens = defineLens<CalendarEntry, IProjectTaskCreate>({
         },
 });
 
-export const CALENDAR_LENSES: readonly OptimisticLens<CalendarEntry>[] = [calendarEventLens, calendarTaskLens];
+export const CALENDAR_LENSES: readonly OptimisticLens<CalendarEntry>[] = [
+  calendarEventLens,
+  calendarTaskLens,
+];
 
-export const byStart = (left: CalendarEntry, right: CalendarEntry): number => left.startsAt - right.startsAt;
+export const byStart = (left: CalendarEntry, right: CalendarEntry): number =>
+  left.startsAt - right.startsAt;
 
-export const isPendingEntry = (entry: CalendarEntry): boolean => isPendingRecordId(calendarEntryRecordId(entry));
+export const isPendingEntry = (entry: CalendarEntry): boolean =>
+  isPendingRecordId(calendarEntryRecordId(entry));

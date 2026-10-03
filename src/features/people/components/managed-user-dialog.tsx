@@ -11,7 +11,10 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { userManagementService } from '@/features/people/services/user-management.service';
-import { type ManagedUserDialogProps, roleOptions } from '@/features/people/components/user-options';
+import {
+  type ManagedUserDialogProps,
+  roleOptions,
+} from '@/features/people/components/user-options';
 
 export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: ManagedUserDialogProps) {
   const { t } = useTranslation();
@@ -54,13 +57,23 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
           <Text variant="caption" className="text-foreground-secondary">
             {t('screens.users.name')}
           </Text>
-          <Input value={name} onChangeText={setName} autoCapitalize="words" onSubmitEditing={save} />
+          <Input
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            onSubmitEditing={save}
+          />
         </View>
         <View className="gap-1.5">
           <Text variant="caption" className="text-foreground-secondary">
             {t('screens.users.last-name')}
           </Text>
-          <Input value={lastName} onChangeText={setLastName} autoCapitalize="words" onSubmitEditing={save} />
+          <Input
+            value={lastName}
+            onChangeText={setLastName}
+            autoCapitalize="words"
+            onSubmitEditing={save}
+          />
         </View>
         <View className="gap-1.5">
           <Text variant="caption" className="text-foreground-secondary">

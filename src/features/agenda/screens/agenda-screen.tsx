@@ -45,13 +45,16 @@ export default function ScheduleScreen() {
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
   const { new: newParam, edit: editParam, at: atParam } = useLocalSearchParams<AgendaParams>();
   const atMs = timestampParam(atParam);
-  const initialDay = useMemo(() => date.startOfDay(atMs == null ? new Date() : new Date(atMs)), [atMs, date]);
+  const initialDay = useMemo(
+    () => date.startOfDay(atMs == null ? new Date() : new Date(atMs)),
+    [atMs, date]
+  );
   const [anchor, setAnchor] = useState(initialDay);
   const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
   const [selectedDay, setSelectedDay] = useState(initialDay);
   const [eventFormOpen, setEventFormOpen] = useState(newParam === 'event');
   const [createAt, setCreateAt] = useState<Date | null>(() =>
-    newParam === 'event' && atMs != null ? new Date(atMs) : null,
+    newParam === 'event' && atMs != null ? new Date(atMs) : null
   );
   const [editingEventId, setEditingEventId] = useState('');
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
@@ -59,14 +62,20 @@ export default function ScheduleScreen() {
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
   const { can } = usePermissions();
   const canCreate = can('calendar_event', 'create');
-  const usesActionSheet = shouldUseAdaptiveMenuSheet({ isCompact, isExpanded, isNative: IS_NATIVE, isShort });
+  const usesActionSheet = shouldUseAdaptiveMenuSheet({
+    isCompact,
+    isExpanded,
+    isNative: IS_NATIVE,
+    isShort,
+  });
   const usesContextMenu = IS_NATIVE && !usesActionSheet;
   const bottomNavInset = useBottomNavInset();
   const { range, entries, selectedDayEntries } = useAgendaEntries({ view, anchor, selectedDay });
 
   const editingEvent = useMemo<ICalendarEventFormRecord | null>(() => {
     const entry = entries.find(
-      (candidate) => candidate.source === 'event' && calendarEntryRecordId(candidate) === editingEventId,
+      (candidate) =>
+        candidate.source === 'event' && calendarEntryRecordId(candidate) === editingEventId
     );
     if (!entry) return null;
     return {
@@ -81,7 +90,10 @@ export default function ScheduleScreen() {
   }, [editingEventId, entries]);
 
   const pendingEditEntry = pendingEditId
-    ? entries.find((candidate) => candidate.source === 'event' && calendarEntryRecordId(candidate) === pendingEditId)
+    ? entries.find(
+        (candidate) =>
+          candidate.source === 'event' && calendarEntryRecordId(candidate) === pendingEditId
+      )
     : undefined;
   if (pendingEditEntry) {
     setPendingEditId('');
@@ -96,7 +108,7 @@ export default function ScheduleScreen() {
       month: t('screens.agenda.view-month'),
       agenda: t('screens.agenda.view-agenda'),
     }),
-    [t],
+    [t]
   );
 
   const createEvent = useCallback((at: Date | null) => {
@@ -116,19 +128,26 @@ export default function ScheduleScreen() {
       const href = calendarEntryEditHref(entry);
       if (href) router.push(href);
     },
-    [router],
+    [router]
   );
 
   const renderActions = useCallback(
-    (entry: CalendarEntry) => <EntryActionsMenu entry={entry} {...entryPermissions(entry, can)} onEdit={editEntry} />,
-    [can, editEntry],
+    (entry: CalendarEntry) => (
+      <EntryActionsMenu entry={entry} {...entryPermissions(entry, can)} onEdit={editEntry} />
+    ),
+    [can, editEntry]
   );
 
   const renderContextMenu = useCallback(
     (entry: CalendarEntry, trigger: ReactElement) => (
-      <EntryActionsMenu entry={entry} {...entryPermissions(entry, can)} onEdit={editEntry} contextTrigger={trigger} />
+      <EntryActionsMenu
+        entry={entry}
+        {...entryPermissions(entry, can)}
+        onEdit={editEntry}
+        contextTrigger={trigger}
+      />
     ),
-    [can, editEntry],
+    [can, editEntry]
   );
 
   const handlers: EntryHandlers = {
@@ -146,7 +165,7 @@ export default function ScheduleScreen() {
         return date.addDays(current, direction);
       });
     },
-    [date, view],
+    [date, view]
   );
 
   const switcher = <CalendarViewSwitcher view={view} labels={viewLabels} onChange={setView} />;
@@ -155,10 +174,18 @@ export default function ScheduleScreen() {
     <AppScreen scrollable={false}>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">
-          <IconButton icon="arrow-left" label={t('common.back')} onPress={() => router.replace('/')} />
+          <IconButton
+            icon="arrow-left"
+            label={t('common.back')}
+            onPress={() => router.replace('/')}
+          />
           <Text variant="title">{t('screens.agenda.schedule')}</Text>
           {canCreate ? (
-            <IconButton icon="plus" label={t('screens.agenda.new-event')} onPress={() => createEvent(null)} />
+            <IconButton
+              icon="plus"
+              label={t('screens.agenda.new-event')}
+              onPress={() => createEvent(null)}
+            />
           ) : (
             <View className="size-11" />
           )}

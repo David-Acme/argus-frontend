@@ -33,7 +33,7 @@ export function useInvitationPreview(onRevoked: () => void): InvitationPreviewSt
       const current = previewRef.current;
       if (current) void inviteService.revoke(current.invitationId);
     },
-    [],
+    []
   );
 
   return { preview, show: setPreview, dismiss };
