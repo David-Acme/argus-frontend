@@ -1,7 +1,8 @@
 # Frontend architecture plan
 
-Status: proposed, 2026-10-03. A living plan: each phase is small, shippable
-on its own, and verified before the next one starts. Evidence was measured on
+Status: implemented, 2026-10-03 (phases 0–7), with two items deferred; see
+§6. A living plan: each phase is small, shippable on its own, and verified
+before the next one starts. Evidence was measured on
 commit `613b0e1` (file paths and counts below are from that tree).
 
 Goal: an app that is secure, simple, scalable and maintainable, and above all
@@ -284,7 +285,9 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
   `DataView` for the media frame header, explicit week/month ranges in the
   date formatter, a typed base avatar expression) rather than non-null
   assertions; the flag is on in `tsconfig.json`.
-- [ ] Visual regression of the web export at three widths (Playwright).
+- [ ] Visual regression of the web export at three widths (Playwright). **Deferred**: it
+  needs a browser runtime installed and a served web build on the owner's
+  machine; the visual passes were done by hand on the desktop build.
 
 ### Phase 7 — Rendering polish (measure on a low-end Android first)
 
@@ -324,3 +327,22 @@ a hook split; their logic is already mostly hooks (`useProjectsData`,
 | 4 | 3 + 4 | 1–2 weeks | consistent design, smoother navigation, 1000-row lists scroll on phones, ~30–40% less code in shared components |
 | 5 | 5 | 1–2 weeks | the frontend mirrors the backend's feature architecture, enforced by a gate |
 | 6 | 6 + 7 | ongoing | contracts fail CI instead of production; final rendering polish |
+
+## 6. Results (2026-10-03)
+
+| Measure | Before (`7aedc53`) | After |
+|---|---|---|
+| Web entry bundle | 8,463,295 B | 5,298,260 B (5,129,636 B before the React Compiler) |
+| `dist/` | 17 MB | 5.4 MB |
+| `src/shared/components` | 11,777 lines | 3,907 lines |
+| `src/shared` | 15,541 lines | 5,595 lines |
+| `src` total | 31,053 lines | 30,798 lines |
+| Unit test files / tests | 14 / 81 | 28 / 146 |
+| Boundary violations | not measured | 0 (gate in `verify`) |
+
+Deferred: live guard-mode and settings pushes over `/sync` (needs a backend
+sync operation) and the Playwright visual regression. Bugs found on the way
+and fixed: the guard/guest `user` read drift, a dead `voice:answer` frame the
+relay rejects, the calendar cache missing the last grid day for Monday-first
+weeks, and the camera detail clipped by layout gaps.
+

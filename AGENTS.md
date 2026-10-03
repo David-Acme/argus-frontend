@@ -12,7 +12,8 @@
   (`@rn-primitives`), `react-native-mmkv` (native storage), `lucide-react-native`
   (icons, centralized), `zustand` v5 (8 stores), **WatermelonDB 0.28** (local DB,
   15 tables), `rxjs` (service observables → view-cache projections → React via `useViewCacheRows`), `zod` +
-  `react-hook-form` (forms), custom i18n engine (es/en).
+  `react-hook-form` (forms), custom i18n engine (es/en). The React Compiler is on
+  (`app.json` → `experiments.reactCompiler`).
 - **Media/Platform**: `expo-camera` (barcode/QR + face capture, mobile),
   `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar
   procedural). Platform/Tauri flags centralized in
