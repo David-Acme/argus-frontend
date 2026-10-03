@@ -3,6 +3,7 @@ import { parseFragment, parseInit, type Fmp4Init, type Fmp4Sample } from '@/feat
 const INIT_FRAME_TYPE = 1;
 const MAX_QUEUED_FRAMES = 8;
 const MAX_LATENCY_BYTES = 768 * 1024;
+const MAX_DECODES_WITHOUT_FRAME = 90;
 
 export type WebCameraPlayerEvents = {
   onFirstFrame?: () => void;
@@ -24,6 +25,7 @@ export class WebCameraPlayer {
   private painted = false;
   private paused = false;
   private disposed = false;
+  private decodesWithoutFrame = 0;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -37,6 +39,7 @@ export class WebCameraPlayer {
     this.track = null;
     this.config = null;
     this.painted = false;
+    this.decodesWithoutFrame = 0;
   }
 
   setVisible(visible: boolean): void {
@@ -130,6 +133,10 @@ export class WebCameraPlayer {
     }
     this.sampleSizes.push(sample.data.byteLength);
     this.pending += sample.data.byteLength;
+    if (this.painted) return;
+    this.decodesWithoutFrame += 1;
+    if (this.decodesWithoutFrame === MAX_DECODES_WITHOUT_FRAME && this.config)
+      this.events.onUnsupported?.(this.config.codec);
   }
 
   private closeDecoder(): void {
