@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
-import { settingsService } from '@/core/services/settings.service';
+import { settingsService } from '@/features/settings/services/settings.service';
 import type { SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { toastServiceError } from '@/shared/libs/service-error';
-import { useRemoteResource } from './use-remote-resource';
+import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 
 type SettingsChangeInput = {
   owner: SettingsOwnerName;

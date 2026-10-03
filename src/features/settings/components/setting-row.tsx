@@ -11,7 +11,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
-import { SettingStepper } from './setting-stepper';
+import { SettingStepper } from '@/features/settings/components/setting-stepper';
 
 type SettingRowProps = {
   setting: Setting;

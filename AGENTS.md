@@ -31,7 +31,9 @@ src/
   app/          expo-router pages (file-based routes); native-only routes via Stack.Protected in _layout.tsx;
                 every signed-in screen lives in (app)/, whose layout guards the session and mounts the nav once
   core/         infra: services, types, interfaces, stores (zustand)
-  shared/       UI: components, constants, libs, hooks
+  features/     one folder per domain (a vertical slice): screens/ components/ hooks/ services/;
+                its index.ts is the public API, and a route file is one line re-exporting a screen
+  shared/       what 2+ consumers use: components (ui/ and layout/ are the design system), constants, libs, hooks
   global.css    Uniwind/Tailwind tokens (source for styling)
 ```
 

@@ -4,8 +4,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { SETTINGS_OWNER_ICONS } from './settings-owner-list';
-import { SettingRow } from './setting-row';
+import { SETTINGS_OWNER_ICONS } from '@/features/settings/components/settings-owner-list';
+import { SettingRow } from '@/features/settings/components/setting-row';
 import { Panel } from '@/shared/components/ui/panel';
 
 type SettingsOwnerPanelProps = {
