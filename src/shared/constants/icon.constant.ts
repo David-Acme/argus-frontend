@@ -1,11 +1,16 @@
 import Activity from 'lucide-react-native/icons/activity';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import ArrowUpRight from 'lucide-react-native/icons/arrow-up-right';
+import Banknote from 'lucide-react-native/icons/banknote';
 import Bell from 'lucide-react-native/icons/bell';
+import Briefcase from 'lucide-react-native/icons/briefcase';
+import Building2 from 'lucide-react-native/icons/building-2';
 import CalendarDays from 'lucide-react-native/icons/calendar-days';
 import Camera from 'lucide-react-native/icons/camera';
+import Car from 'lucide-react-native/icons/car';
 import Check from 'lucide-react-native/icons/check';
 import CheckCircle2 from 'lucide-react-native/icons/circle-check';
+import ChefHat from 'lucide-react-native/icons/chef-hat';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
@@ -17,6 +22,7 @@ import Eye from 'lucide-react-native/icons/eye';
 import Filter from 'lucide-react-native/icons/funnel';
 import Flashlight from 'lucide-react-native/icons/flashlight';
 import FlashlightOff from 'lucide-react-native/icons/flashlight-off';
+import Footprints from 'lucide-react-native/icons/footprints';
 import Hand from 'lucide-react-native/icons/hand';
 import History from 'lucide-react-native/icons/history';
 import Home from 'lucide-react-native/icons/house';
@@ -33,6 +39,7 @@ import Minus from 'lucide-react-native/icons/minus';
 import Monitor from 'lucide-react-native/icons/monitor';
 import Moon from 'lucide-react-native/icons/moon';
 import MoreHorizontal from 'lucide-react-native/icons/ellipsis';
+import Package from 'lucide-react-native/icons/package';
 import Pencil from 'lucide-react-native/icons/pencil';
 import Phone from 'lucide-react-native/icons/phone';
 import PhoneOff from 'lucide-react-native/icons/phone-off';
@@ -50,11 +57,14 @@ import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import Siren from 'lucide-react-native/icons/siren';
 import SkipForward from 'lucide-react-native/icons/skip-forward';
 import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
+import Sofa from 'lucide-react-native/icons/sofa';
 import Sparkles from 'lucide-react-native/icons/sparkles';
 import Square from 'lucide-react-native/icons/square';
 import SquarePen from 'lucide-react-native/icons/square-pen';
+import Store from 'lucide-react-native/icons/store';
 import Sun from 'lucide-react-native/icons/sun';
 import Trash2 from 'lucide-react-native/icons/trash-2';
+import Trees from 'lucide-react-native/icons/trees';
 import TrendingDown from 'lucide-react-native/icons/trending-down';
 import TrendingUp from 'lucide-react-native/icons/trending-up';
 import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
@@ -142,4 +152,14 @@ export const ICONS = {
   'user-check': UserCheck,
   'phone-off': PhoneOff,
   hand: Hand,
+  banknote: Banknote,
+  briefcase: Briefcase,
+  building: Building2,
+  car: Car,
+  'chef-hat': ChefHat,
+  footprints: Footprints,
+  package: Package,
+  sofa: Sofa,
+  store: Store,
+  trees: Trees,
 } as const;

@@ -1306,3 +1306,44 @@ camera rows merely to make a screen appear loaded.
   navigation corrected to the actual `fade` crossfade (the doc claimed
   `flip`); orb marked SUPERSEDED by the SVG avatar; Zustand store list
   updated to the real 8 stores; Skia noted as no longer imported in `src/`.
+
+### Security: the place, its cameras and episodes (2026-10-03)
+
+The guard now understands what kind of place it protects and what each camera
+looks at, and it reports visits as stories instead of rows per detection
+(backend `services/guard/CONTEXT.md`, "Site, camera context and episodes").
+The owner's Security screen (`features/security`) carries three new panels:
+
+- **Tu lugar** (`site-panel`): the profile (Casa / Oficina / Local), whether
+  the hours apply, the hours themselves (rest for a home; staffed and open
+  for a business), what happens when a business is closed (Away or Armed)
+  and the hour of the one daily summary. Hours are edited as windows of days
+  and half-hour times (`hours-fields`, `model/hours.ts` parses and writes
+  the backend's `"mon-fri 08:00-19:00"` syntax, splitting non-contiguous days
+  into one window per run because the backend accepts one range per window).
+  "Usar horario de ejemplo" fills the profile's presets (`model/site-presets.ts`);
+  the backend never assumes hours from the profile, the owner confirms them.
+- **Qué mira cada cámara** (`camera-context-panel` + editor): role (entrance,
+  outside, garage, living area, kitchen, office, register, storeroom, dining
+  room), indoor/outdoor, whether anyone can walk by (street, hallway,
+  customers) and the camera's own hours. Cameras come from the existing
+  `camera.list` view cache; the guard keeps only the context.
+- **Lo que ha pasado** (`episode-list` / `episode-card` / `episode-timeline`):
+  one card per visit with who, where (camera name), when and how long, its
+  state (ongoing, left, someone from home), whether Argus alerted (and how
+  many times), grouped it, kept it for the summary or treated it as routine,
+  the reasons in words, whether it spoke or sounded the alarm, an expandable
+  timeline loaded on demand (`guard.episode` cache, scoped by id) and, for
+  episodes that alerted, the review chips (Útil / Falsa alarma / Ahora no).
+
+All three are owner-only like the decision review they replace (the
+per-decision review UI and its `guardService.decisions/feedback` calls are
+gone: reviewing an episode labels its notified decisions server-side).
+Residents and guards keep the incident list until `/guard/episodes` is
+granted to them in `role-access.hxx`.
+
+Edits are optimistic over the remote-resource caches: `use-guard.ts`'s
+`optimisticRemote` writes the new value into the view cache at once, calls
+the service, settles the cache with the server's answer, or restores the
+snapshot and shows the refusal toast. Editors are mounted only while open,
+so their draft state is initialised from props without effects.

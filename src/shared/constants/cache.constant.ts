@@ -40,7 +40,10 @@ export const VIEW_CACHE_KEYS = {
   guardMode: 'guard.mode',
   guardGuests: 'guard.guests',
   guardIncidents: 'guard.incidents',
-  guardDecisions: 'guard.decisions',
+  guardSite: 'guard.site',
+  guardCameras: 'guard.cameras',
+  guardEpisodes: 'guard.episodes',
+  guardEpisode: 'guard.episode',
 } as const;
 
 export const buildViewCacheStorageKey = (

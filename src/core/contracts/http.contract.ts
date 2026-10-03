@@ -9,7 +9,6 @@ import type {
   IUserManagementRecord,
 } from '@/core/interfaces';
 import type {
-  GuardDecisionPage,
   GuardExpectedGuest,
   GuardIncident,
   GuardModeState,
@@ -84,27 +83,6 @@ export const guardIncidentSchema = z.object({
   identity: z.string(),
   createdAt: z.number(),
 }) satisfies z.ZodType<GuardIncident>;
-
-export const guardDecisionPageSchema = z.object({
-  rows: z.array(
-    z.object({
-      eventId: z.string(),
-      cameraId: z.number(),
-      severity: guardDanger,
-      hardFloor: z.boolean(),
-      beliefScore: z.number(),
-      beliefThreshold: z.number(),
-      didNotify: z.boolean(),
-      beliefWouldNotify: z.boolean(),
-      legacyWouldNotify: z.boolean(),
-      decisionMode: z.enum(['shadow', 'enforce']),
-      feedbackLabel: z.enum(['useful', 'false_alarm', 'not_now', '']),
-      createdAt: z.number(),
-    })
-  ),
-  hasMore: z.boolean(),
-  nextCursor: z.object({ createdAt: z.number(), eventId: z.string() }).nullable(),
-}) satisfies z.ZodType<GuardDecisionPage>;
 
 export const guardExpectedGuestSchema = z.object({
   id: z.number(),
@@ -181,7 +159,6 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /camera/{1}/capabilities': cameraCapabilitiesSchema,
   'GET /guard/mode': guardModeStateSchema,
   'GET /guard/incidents': z.array(guardIncidentSchema),
-  'GET /guard/decisions': guardDecisionPageSchema,
   'GET /guard/expected-guests': z.array(guardExpectedGuestSchema),
   'GET /settings': settingsOverviewSchema,
   'GET /user': z.array(userManagementRecordSchema),

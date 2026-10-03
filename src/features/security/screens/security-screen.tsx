@@ -1,20 +1,26 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
-import { DecisionReview } from '@/features/security/components/decision-review';
+import { CameraContextPanel } from '@/features/security/components/camera-context-panel';
+import { EpisodeList } from '@/features/security/components/episode-list';
 import { ExpectedGuestForm } from '@/features/security/components/expected-guest-form';
 import { ExpectedGuestList } from '@/features/security/components/expected-guest-list';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { GuardStatusHero } from '@/features/security/components/guard-status-hero';
 import { IncidentList } from '@/features/security/components/incident-list';
+import { SitePanel } from '@/features/security/components/site-panel';
+import { needsReview } from '@/features/security/model/episode';
 import { Button } from '@/shared/components/ui/button';
 import { Panel } from '@/shared/components/ui/panel';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useGuard } from '@/features/security/hooks/use-guard';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -28,17 +34,22 @@ export default function SecurityScreen() {
   const role = useAuthStore((state) => state.user?.role);
   const access = guardAccessForRole(role ?? 'guest');
   const guard = useGuard(access.review);
+  const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [guestFormOpen, setGuestFormOpen] = useState(false);
 
   const activeGuests = guard.guests.filter(
     (guest) => guest.validUntil * 1000 > guard.loadedAt
   ).length;
-  const pendingReviews = guard.decisions.filter((decision) => decision.feedbackLabel === '').length;
+  const ongoing = access.review
+    ? guard.episodes.filter((episode) => episode.state === 'active').length
+    : guard.incidents.length;
+  const pendingReviews = guard.episodes.filter(needsReview).length;
 
   const heroSection = (
     <GuardStatusHero
       state={guard.mode}
-      incidents={guard.incidents.length}
+      ongoing={ongoing}
+      ongoingLabel={access.review ? t('screens.security.status.active') : t('screens.security.status.incidents')}
       activeGuests={activeGuests}
       pendingReviews={pendingReviews}
     />
@@ -86,45 +97,93 @@ export default function SecurityScreen() {
     </Panel>
   );
 
-  const decisionSection = (className?: string) => (
+  const episodeSection = (className?: string) => (
     <Panel
-      title={t('screens.security.decisions.title')}
-      description={t('screens.security.decisions.description')}
+      title={t('screens.security.episodes.title')}
+      description={t('screens.security.episodes.description')}
       count={pendingReviews}
       className={className}>
-      <DecisionReview decisions={guard.decisions} onFeedback={guard.sendFeedback} />
+      <EpisodeList
+        episodes={guard.episodes}
+        cameras={cameras}
+        contexts={guard.cameras}
+        onReview={guard.reviewEpisode}
+      />
     </Panel>
   );
 
-  const layout = isExpanded ? (
+  const siteSection = (className?: string) => (
+    <SitePanel site={guard.site} onUpdate={guard.updateSite} className={className} />
+  );
+
+  const cameraSection = (className?: string) => (
+    <CameraContextPanel
+      cameras={cameras}
+      contexts={guard.cameras}
+      onSave={guard.updateCamera}
+      className={className}
+    />
+  );
+
+  const ownerLayout = isExpanded ? (
     <View className="flex-1 flex-row items-stretch gap-5">
       <View className="min-w-0 flex-1 gap-5">
         {heroSection}
         {modeSection}
-        {guestSection('flex-1')}
+        {siteSection()}
+        {cameraSection('flex-1')}
       </View>
       <View className="min-w-0 flex-1 gap-5">
-        {incidentSection('flex-1')}
-        {access.review ? decisionSection('flex-1') : null}
+        {episodeSection('flex-1')}
+        {guestSection()}
       </View>
     </View>
   ) : isMedium ? (
     <View className="flex-1 gap-5">
       {heroSection}
       {modeSection}
-      <View className={access.review ? 'flex-row items-stretch gap-5' : 'flex-1 flex-row items-stretch gap-5'}>
+      {episodeSection()}
+      <View className="flex-row items-stretch gap-5">
+        {siteSection('min-w-0 flex-1')}
+        {cameraSection('min-w-0 flex-1')}
+      </View>
+      {guestSection('flex-1')}
+    </View>
+  ) : (
+    <View className="flex-1 gap-5">
+      {heroSection}
+      {modeSection}
+      {episodeSection()}
+      {siteSection()}
+      {cameraSection()}
+      {guestSection('flex-1')}
+    </View>
+  );
+
+  const memberLayout = isExpanded ? (
+    <View className="flex-1 flex-row items-stretch gap-5">
+      <View className="min-w-0 flex-1 gap-5">
+        {heroSection}
+        {modeSection}
+        {guestSection('flex-1')}
+      </View>
+      <View className="min-w-0 flex-1 gap-5">{incidentSection('flex-1')}</View>
+    </View>
+  ) : isMedium ? (
+    <View className="flex-1 gap-5">
+      {heroSection}
+      {modeSection}
+      <View className="flex-1 flex-row items-stretch gap-5">
         {guestSection('min-w-0 flex-1')}
         {incidentSection('min-w-0 flex-1')}
       </View>
-      {access.review ? decisionSection('flex-1') : null}
     </View>
   ) : (
     <View className="flex-1 gap-5">
       {heroSection}
       {modeSection}
       {guestSection()}
-      {incidentSection(access.review ? undefined : 'flex-1')}
-      {access.review ? decisionSection('flex-1') : null}
+      {incidentSection('flex-1')}
     </View>
   );
 
@@ -144,7 +203,7 @@ export default function SecurityScreen() {
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1, paddingBottom: bottomInset + 24 }}
         showsVerticalScrollIndicator={false}>
-        {layout}
+        {access.review ? ownerLayout : memberLayout}
       </ScrollView>
     );
 

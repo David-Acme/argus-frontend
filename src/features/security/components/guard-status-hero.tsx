@@ -2,14 +2,15 @@ import { View } from 'react-native';
 import type { GuardModeState, IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { GUARD_MODE_ICONS } from '@/features/security/constants';
+import { GUARD_MODE_ICONS, SITE_PROFILE_ICONS } from '@/features/security/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { Panel } from '@/shared/components/ui/panel';
 
 type GuardStatusHeroProps = {
   state: GuardModeState | null;
-  incidents: number;
+  ongoing: number;
+  ongoingLabel: string;
   activeGuests: number;
   pendingReviews: number;
 };
@@ -40,7 +41,8 @@ function GuardStat({ icon, value, label, highlight }: GuardStatProps) {
 
 export function GuardStatusHero({
   state,
-  incidents,
+  ongoing,
+  ongoingLabel,
   activeGuests,
   pendingReviews,
 }: GuardStatusHeroProps) {
@@ -66,7 +68,17 @@ export function GuardStatusHero({
           />
         </View>
         <View className="min-w-0 flex-1 gap-1">
-          <Text variant="caption">{t('screens.security.status.now')}</Text>
+          <View className="flex-row items-center gap-2">
+            <Text variant="caption">{t('screens.security.status.now')}</Text>
+            {state?.profile ? (
+              <View className="bg-surface-secondary flex-row items-center gap-1 rounded-full px-2 py-0.5">
+                <Icon name={SITE_PROFILE_ICONS[state.profile]} className="text-foreground-secondary size-3" />
+                <Text variant="micro" className="text-foreground-secondary font-semibold">
+                  {t(`screens.security.site.profiles.${state.profile}`)}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           <Text variant="title" numberOfLines={1}>
             {mode ? t(`screens.security.mode.${mode}`) : '—'}
           </Text>
@@ -88,9 +100,9 @@ export function GuardStatusHero({
       <View className="flex-row gap-2">
         <GuardStat
           icon="triangle-alert"
-          value={incidents}
-          label={t('screens.security.status.incidents')}
-          highlight={incidents > 0}
+          value={ongoing}
+          label={ongoingLabel}
+          highlight={ongoing > 0}
         />
         <GuardStat
           icon="user-check"
