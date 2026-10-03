@@ -4,6 +4,7 @@ import type {
   CalendarEntry,
   DashboardProjectCard,
   DashboardSummary,
+  EventSeverity,
   IconName,
   UserRole,
   ZonePoint,
@@ -24,6 +25,13 @@ export interface ICameraListCacheRow {
   isOnline: boolean;
   isEnabled: boolean;
   zones: number;
+}
+
+export interface ICameraEventCacheRow {
+  id: string;
+  summary: string;
+  severity: EventSeverity;
+  occurredAt: number;
 }
 
 export interface ICameraCacheRow {

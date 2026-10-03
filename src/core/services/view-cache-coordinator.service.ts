@@ -2,6 +2,7 @@ import { auditTime, combineLatest, type Subscription } from 'rxjs';
 import type {
   ICameraCacheRow,
   ICameraDetailCache,
+  ICameraEventCacheRow,
   ICameraListCacheRow,
   IDashboardCameraCacheRow,
   IInvitationRecord,
@@ -12,7 +13,13 @@ import type {
   IProjectTaskCacheRow,
   IZoneCacheRow,
 } from '@/core/interfaces';
-import type { CalendarEntry, DashboardProjectCard, DashboardSummary, IconName } from '@/core/types';
+import type {
+  CalendarEntry,
+  DashboardProjectCard,
+  DashboardSummary,
+  EventSeverity,
+  IconName,
+} from '@/core/types';
 import { cameraService } from '@/core/services/camera.service';
 import { cameraStreamService } from '@/core/services/camera-stream.service';
 import { calendarEventService } from '@/core/services/calendar-event.service';
@@ -31,6 +38,7 @@ import {
   EVENT_SAMPLE_LIMIT,
   MOSAIC_COLUMNS,
   MOSAIC_ROWS,
+  RECENT_EVENT_LIMIT,
   VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
   VIEW_CACHE_LIST_LIMIT,
   VIEW_CACHE_KEYS,
@@ -323,6 +331,16 @@ class ViewCacheCoordinatorService {
         };
         viewCacheService.writeValue(VIEW_CACHE_KEYS.dashboardSummary, summary);
         viewCacheService.write(VIEW_CACHE_KEYS.dashboardActivity, this.activityLevels(events, today));
+        const eventRows: ICameraEventCacheRow[] = [...events]
+          .sort((left, right) => right.occurredAt.getTime() - left.occurredAt.getTime())
+          .slice(0, RECENT_EVENT_LIMIT)
+          .map((event) => ({
+            id: event.id,
+            summary: event.summary,
+            severity: event.severity as EventSeverity,
+            occurredAt: event.occurredAt.getTime(),
+          }));
+        viewCacheService.write(VIEW_CACHE_KEYS.cameraEvents, eventRows);
       },
     );
     this.coreSubscription = subscription;

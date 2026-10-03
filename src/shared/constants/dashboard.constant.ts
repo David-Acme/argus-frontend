@@ -90,7 +90,6 @@ export const ZONE_MAX_POINTS = 64;
 
 export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE'] as const;
 
-export const CAMERA_ROW_HEIGHT = 68;
 
 export const COMPOSE_ACTIONS: readonly {
   id: string;
@@ -139,6 +138,8 @@ export const CAMERA_NAME_SUGGESTIONS = [
 ] as const;
 
 export const ACTIVITY_WINDOW_DAYS = 7;
+
+export const RECENT_EVENT_LIMIT = 8;
 
 export const EVENT_SAMPLE_LIMIT = 300;
 

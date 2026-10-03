@@ -28,6 +28,7 @@ export const VIEW_CACHE_KEYS = {
   dashboardUnread: 'dashboard.unread',
   cameraList: 'camera.list',
   cameraDetail: 'camera.detail',
+  cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
