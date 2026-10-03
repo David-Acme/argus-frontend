@@ -12,6 +12,7 @@ import { cameras } from './cameras';
 import { agenda } from './agenda';
 import { projects } from './projects';
 import { users } from './users';
+import { profile } from './profile';
 
 export const screens = {
   home,
@@ -28,4 +29,5 @@ export const screens = {
   cameras,
   projects,
   users,
+  profile,
 } as const;
