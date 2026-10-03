@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { settingsService } from '@/features/settings/services/settings.service';
 import type { SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
+import { hasInstallingChoice } from '@/features/settings/model/tts-preview';
 
 type SettingsChangeInput = {
   owner: SettingsOwnerName;
@@ -12,6 +13,7 @@ type SettingsChangeInput = {
 };
 
 const EMPTY: SettingsOverview = { owners: [] };
+const INSTALL_POLL_MS = 4000;
 
 function withValue(overview: SettingsOverview, input: SettingsChangeInput): SettingsOverview {
   return {
@@ -41,6 +43,7 @@ export function useSettings() {
     cacheKey: VIEW_CACHE_KEYS.settingsOverview,
     load: loadOverview,
   });
+  const installing = hasInstallingChoice(data ?? EMPTY);
 
   const change = useCallback(
     async (input: SettingsChangeInput) => {
@@ -61,6 +64,12 @@ export function useSettings() {
     },
     [mutate]
   );
+
+  useEffect(() => {
+    if (!installing) return;
+    const timer = setInterval(() => void reload(), INSTALL_POLL_MS);
+    return () => clearInterval(timer);
+  }, [installing, reload]);
 
   return {
     overview: data ?? EMPTY,

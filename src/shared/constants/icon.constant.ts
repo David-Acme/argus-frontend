@@ -12,6 +12,7 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import ChevronUp from 'lucide-react-native/icons/chevron-up';
 import Clock3 from 'lucide-react-native/icons/clock-3';
 import DoorOpen from 'lucide-react-native/icons/door-open';
+import Download from 'lucide-react-native/icons/download';
 import Eye from 'lucide-react-native/icons/eye';
 import Filter from 'lucide-react-native/icons/funnel';
 import Flashlight from 'lucide-react-native/icons/flashlight';
@@ -36,6 +37,7 @@ import Pencil from 'lucide-react-native/icons/pencil';
 import Phone from 'lucide-react-native/icons/phone';
 import PhoneOff from 'lucide-react-native/icons/phone-off';
 import PieChart from 'lucide-react-native/icons/chart-pie';
+import Play from 'lucide-react-native/icons/play';
 import Plus from 'lucide-react-native/icons/plus';
 import QrCode from 'lucide-react-native/icons/qr-code';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
@@ -49,6 +51,7 @@ import Siren from 'lucide-react-native/icons/siren';
 import SkipForward from 'lucide-react-native/icons/skip-forward';
 import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import Sparkles from 'lucide-react-native/icons/sparkles';
+import Square from 'lucide-react-native/icons/square';
 import SquarePen from 'lucide-react-native/icons/square-pen';
 import Sun from 'lucide-react-native/icons/sun';
 import Trash2 from 'lucide-react-native/icons/trash-2';
@@ -120,6 +123,9 @@ export const ICONS = {
   users: Users,
   video: Video,
   'volume-2': Volume2,
+  download: Download,
+  play: Play,
+  square: Square,
   wifi: Wifi,
   x: X,
   check: Check,

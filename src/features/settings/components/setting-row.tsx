@@ -11,10 +11,15 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
+import { SettingChoiceList } from '@/features/settings/components/setting-choice-list';
 import { SettingStepper } from '@/features/settings/components/setting-stepper';
+import type { VoicePreview } from '@/features/settings/hooks/use-voice-preview';
+import { usesChoiceList } from '@/features/settings/model/tts-preview';
 
 type SettingRowProps = {
   setting: Setting;
+  siblings: readonly Setting[];
+  preview: VoicePreview;
   onChange: (value: string) => void;
 };
 
@@ -39,7 +44,7 @@ function humanize(key: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-export function SettingRow({ setting, onChange }: SettingRowProps) {
+export function SettingRow({ setting, siblings, preview, onChange }: SettingRowProps) {
   const { t, tk } = useTranslation();
   const { isCompact } = useWindowClass();
   const segmentedMax = isCompact ? SEGMENTED_MAX_CHOICES_COMPACT : SEGMENTED_MAX_CHOICES;
@@ -74,7 +79,20 @@ export function SettingRow({ setting, onChange }: SettingRowProps) {
     timer.current = setTimeout(() => onChange(value), COMMIT_DELAY_MS);
   };
 
+  const listed = usesChoiceList(setting);
+
   const control = (() => {
+    if (listed)
+      return (
+        <SettingChoiceList
+          setting={setting}
+          siblings={siblings}
+          label={label}
+          choiceLabel={choiceLabel}
+          onChange={onChange}
+          preview={preview}
+        />
+      );
     switch (setting.type) {
       case 'toggle':
         return (
@@ -135,7 +153,7 @@ export function SettingRow({ setting, onChange }: SettingRowProps) {
     }
   })();
 
-  const wideControl = setting.type === 'choice' && setting.choices.length <= segmentedMax;
+  const wideControl = listed || (setting.type === 'choice' && setting.choices.length <= segmentedMax);
 
   return (
     <View className={cn('gap-3 py-3.5', wideControl ? '' : 'flex-row flex-wrap items-center justify-between')}>

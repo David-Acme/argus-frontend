@@ -6,6 +6,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { SETTINGS_OWNER_ICONS } from '@/features/settings/components/settings-owner-list';
 import { SettingRow } from '@/features/settings/components/setting-row';
+import { useVoicePreview } from '@/features/settings/hooks/use-voice-preview';
 import { Panel } from '@/shared/components/ui/panel';
 
 type SettingsOwnerPanelProps = {
@@ -46,6 +47,7 @@ export function SettingsOwnerPanel({
   onShowAdvanced,
 }: SettingsOwnerPanelProps) {
   const { t, tk } = useTranslation();
+  const preview = useVoicePreview();
   const groups = [...new Set(settings.map((setting) => setting.group))];
   const groupLabel = (group: string) => {
     const key = `screens.settings.groups.${group}`;
@@ -88,6 +90,8 @@ export function SettingsOwnerPanel({
                   <SettingRow
                     key={setting.key}
                     setting={setting}
+                    siblings={owner.settings}
+                    preview={preview}
                     onChange={(value) => onChange(setting.key, value)}
                   />
                 ))}
