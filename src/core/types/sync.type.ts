@@ -34,6 +34,12 @@ export type SyncCursors = {
   [key in SyncTableKey]?: SyncTableCursor;
 };
 
+export type GrantScopeKey = 'project' | 'calendar_event';
+
+export type PendingGrantScopes = {
+  [key in GrantScopeKey]?: string[];
+};
+
 export type SyncCreatedRows = Map<SyncTableKey, Record<string, unknown>[]>;
 
 export type SyncDeletedRows = Map<SyncTableKey, ISyncDeletedRow[]>;

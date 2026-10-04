@@ -1075,7 +1075,23 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   context recovery if the target row is absent.
 - During initial synchronization, live `Add`, `Delete` and `Log` messages are
   queued and replayed in that order so an audit patch cannot run before its
-  creation. The coordinator observes the resulting projection and refreshes
+  creation.
+- **Grants pull their scope (2026-10-03).** A `project_member` or
+  `calendar_event_share` row naming the signed-in user (from a pull page or a
+  live `Add`) records its parent id in `app.sync.grants.<userId>`
+  (`SyncCursorStore.loadGrants/saveGrants`, cleared with the cursors). Each
+  sync, after the creation pages, `GrantScopePager` pulls the pending parents
+  in chunks of 50 with `{requiredCreate, scope}` on `project` + `project_task`
+  or `calendar_event`, pages them by `(createdAt, id)` from zero, upserts the
+  rows and only then drops the chunk from the pending set. A live grant asks
+  for a sync at once. `sweepRevokedGrants` then destroys every project or
+  event the user neither owns nor holds a grant row for, with its tasks and
+  grant rows; it also runs after a live batch that deleted a grant row. So a
+  member added or removed while offline converges on the next connect, and
+  the backend no longer sends a frame per task on a grant (backend
+  `services/sync/CONTEXT.md`, "Grants"). Pure helpers in
+  `core/services/sync/grant-scope.ts`, unit-tested in
+  `tests/unit/grant-scope.test.ts`. The coordinator observes the resulting projection and refreshes
   MMKV before the user enters a view.
 
 ### People and access surfaces

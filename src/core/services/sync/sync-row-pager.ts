@@ -1,6 +1,6 @@
 import { database } from '@/core/database';
 import type { ISynchronizedDto, ISynchronizedResponse } from '@/core/interfaces';
-import type { SyncCursors, SyncTableKey } from '@/core/types';
+import type { SyncCreatedRows, SyncCursors, SyncTableKey } from '@/core/types';
 import { SYNC_TABLE_KEYS } from '@/core/types';
 import { SYNC_MAX_PAGES, SYNC_PAGE_DELAY_MS } from '@/shared/constants';
 import type { ProjectionEpoch } from './projection-epoch';
@@ -21,6 +21,7 @@ export type SyncRowPagerDeps = {
   cursors: SyncCursorStore;
   epoch: ProjectionEpoch;
   onUserRows: (rows: Record<string, unknown>[] | undefined) => void;
+  onCreatedRows: (created: SyncCreatedRows) => void;
 };
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,6 +63,7 @@ export class SyncRowPager {
       await batchPrepared(await prepareSyncRows(created, deleted, 'upsert'));
     });
     this.deps.onUserRows(created.get('user'));
+    this.deps.onCreatedRows(created);
     return advanceRowCursors(created, deleted, cursors);
   }
 }

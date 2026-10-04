@@ -1,6 +1,6 @@
 import { database } from '@/core/database';
 import type { IAuditLogEntry, ISocketEmitDto } from '@/core/interfaces';
-import type { AuditLogScope } from '@/core/types';
+import type { AuditLogScope, SyncCreatedRows, SyncDeletedRows } from '@/core/types';
 import { auditLogProcessorService } from './audit-log-processor.service';
 import { emptyLiveAuditHigh, freshLiveAuditEntries, groupLiveEvents } from './live-frame-batch';
 import type { ProjectionEpoch } from './projection-epoch';
@@ -14,6 +14,7 @@ export type LiveFrameApplierDeps = {
   epoch: ProjectionEpoch;
   cursors: SyncCursorStore;
   onUserRows: (rows: Record<string, unknown>[] | undefined) => void;
+  onGrants: (created: SyncCreatedRows, deleted: SyncDeletedRows) => Promise<void>;
   onUserAudit: (entries: IAuditLogEntry[]) => void;
   onOverflow: () => void;
   onFailure: (message: string) => void;
@@ -119,6 +120,7 @@ export class LiveFrameApplier {
     });
     if (!this.deps.epoch.isCurrent(epoch)) return;
     this.deps.onUserRows(created.get('user'));
+    await this.deps.onGrants(created, deleted);
     this.deps.onUserAudit(entries);
     if (missing > 0) this.deps.requestCatchUp();
   }

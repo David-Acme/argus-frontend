@@ -18,6 +18,8 @@ export const SYNC_AUDIT_REQUEST_TYPE = {
 
 export const SYNC_CURSORS_PREFIX = 'app.sync.';
 
+export const SYNC_GRANT_SCOPES_PREFIX = 'app.sync.grants.';
+
 export const SYNC_WS_PATH = '/sync';
 
 export const WS_RECONNECT_BASE_MS = 2000;
@@ -30,4 +32,5 @@ export const SYNC_BATCH_SIZE = 100;
 export const SYNC_PAGE_SIZE = 200;
 export const SYNC_PAGE_DELAY_MS = 150;
 export const SYNC_MAX_PAGES = 100;
+export const SYNC_SCOPE_CHUNK = 50;
 export const SYNC_RESPONSE_TIMEOUT_MS = 10000;

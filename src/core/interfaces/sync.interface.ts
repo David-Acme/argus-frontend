@@ -13,6 +13,7 @@ export interface ISyncBodyDto {
   findLastDeleted?: boolean;
   requiredCreate?: boolean;
   requiredDeleted?: boolean;
+  scope?: number[];
 }
 
 export type ISynchronizedDto = Partial<Record<SyncTableKey, ISyncBodyDto>>;

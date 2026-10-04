@@ -5,6 +5,9 @@ import type {
   SessionEndNotice,
   SessionRefreshOutcome,
   SessionSignal,
+  SyncCreatedRows,
+  SyncCursors,
+  SyncDeletedRows,
   SyncOperation,
   SyncUserPatch,
 } from '@/core/types';
@@ -12,6 +15,9 @@ import { SYNC_TABLE_KEYS } from '@/core/types';
 import type { IAuditLogEntry, IInitialInfo, ISocketEmitDto } from '@/core/interfaces';
 import { AuditLogPager } from './audit-log-pager';
 import { parseAuthContext } from './auth-context';
+import { GRANT_TABLES } from './grant-scope';
+import { GrantScopePager } from './grant-scope-pager';
+import { sweepRevokedGrants } from './grant-sweep';
 import { endNoticeOf } from './session-end-notice';
 import { LiveFrameApplier } from './live-frame-applier';
 import { ProjectionEpoch } from './projection-epoch';
@@ -61,6 +67,7 @@ class SynchronizeService {
   private readonly router: SyncMessageRouter;
   private readonly rows: SyncRowPager;
   private readonly audit: AuditLogPager;
+  private readonly grants: GrantScopePager;
   private readonly live: LiveFrameApplier;
   private readonly sessionsChangedListeners = new Set<() => void>();
   private readonly userSessionsChangedListeners = new Set<(userId: number) => void>();
@@ -100,6 +107,14 @@ class SynchronizeService {
       cursors: this.cursors,
       epoch: this.epoch,
       onUserRows: (rows) => this.applyUserRows(rows),
+      onCreatedRows: (created) => {
+        this.grants.remember(created, this.currentUserId());
+      },
+    });
+    this.grants = new GrantScopePager({
+      request: (dto) => this.channel.requestSync(dto),
+      cursors: this.cursors,
+      epoch: this.epoch,
     });
     this.audit = new AuditLogPager({
       request: (scope, payload) => this.channel.requestAudit(scope, payload),
@@ -114,6 +129,7 @@ class SynchronizeService {
       epoch: this.epoch,
       cursors: this.cursors,
       onUserRows: (rows) => this.applyUserRows(rows),
+      onGrants: (created, deleted) => this.applyLiveGrants(created, deleted),
       onUserAudit: (entries) => this.applyUserAudit(entries),
       onOverflow: () => this.scheduleSync(0),
       onFailure: (message) => {
@@ -275,6 +291,32 @@ class SynchronizeService {
     this.scheduleSync(SYNC_CATCH_UP_DELAY_MS);
   }
 
+  private requestScopeSync(): void {
+    if (this.syncing) {
+      this.catchUpRequested = true;
+      return;
+    }
+    this.scheduleSync(0);
+  }
+
+  private currentUserId(): string | null {
+    const user = this.authStore?.getState().user;
+    return user ? String(user.id) : null;
+  }
+
+  private async applyLiveGrants(created: SyncCreatedRows, deleted: SyncDeletedRows): Promise<void> {
+    if (this.grants.remember(created, this.currentUserId())) this.requestScopeSync();
+    const revoked = [...deleted].some(([key, rows]) => GRANT_TABLES.has(key) && rows.length > 0);
+    if (revoked) await sweepRevokedGrants(this.currentUserId());
+  }
+
+  private async pageProjection(cursors: SyncCursors, epoch: number): Promise<void> {
+    await this.rows.pageRows(cursors, epoch);
+    await this.grants.bootstrap(epoch);
+    this.epoch.assert(epoch);
+    await sweepRevokedGrants(this.currentUserId());
+  }
+
   private currentOwner(): ProjectionOwner | null {
     const user = this.authStore?.getState().user;
     return user ? { userId: String(user.id), role: user.role } : null;
@@ -323,7 +365,7 @@ class SynchronizeService {
     const cursors = this.cursors.load();
     await this.audit.ensureBaselines(epoch);
     await this.rows.ensureDeletedBaselines(cursors, epoch);
-    await this.rows.pageRows(cursors, epoch);
+    await this.pageProjection(cursors, epoch);
     const stale = await this.audit.syncAll(epoch);
     if (stale.length === 0) return;
 
@@ -333,7 +375,7 @@ class SynchronizeService {
     }
     for (const key of SYNC_TABLE_KEYS) cursors[key] = withoutCreatedCursor(cursors[key]);
     this.cursors.save(cursors);
-    await this.rows.pageRows(cursors, epoch);
+    await this.pageProjection(cursors, epoch);
     const stillStale = await this.audit.syncAll(epoch);
     if (stillStale.length > 0) throw new Error('Audit history is older than the retention window');
   }
