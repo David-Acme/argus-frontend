@@ -21,6 +21,7 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   guard: 7039,
   settings: 7045,
   sync: 7025,
+  rtc: 7025,
 };
 
 export const DISCOVERY_TIMEOUT_MS = 6000;
