@@ -1,4 +1,9 @@
-import { addColumns, createTable, schemaMigrations } from '@nozbe/watermelondb/Schema/migrations';
+import {
+  addColumns,
+  createTable,
+  schemaMigrations,
+  unsafeExecuteSql,
+} from '@nozbe/watermelondb/Schema/migrations';
 import type { TableSchema } from '@nozbe/watermelondb';
 import {
   CALENDAR_EVENT_SCHEMA,
@@ -56,6 +61,14 @@ export const migrations = schemaMigrations({
           columns: [{ name: 'status', type: 'string', isIndexed: true }],
         }),
         addColumns({ table: 'user', columns: [{ name: 'lang', type: 'string' }] }),
+      ],
+    },
+    {
+      toVersion: 7,
+      steps: [
+        unsafeExecuteSql(
+          'create index if not exists "project_task_due_at" on "project_task" ("due_at");'
+        ),
       ],
     },
   ],

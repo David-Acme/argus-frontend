@@ -1,5 +1,10 @@
+import { Database } from 'bun:sqlite';
 import { describe, expect, test } from 'bun:test';
+import type { AppSchema } from '@nozbe/watermelondb';
+import { encodeMigrationSteps, encodeSchema } from '@nozbe/watermelondb/adapters/sqlite/encodeSchema';
+import { stepsForMigration } from '@nozbe/watermelondb/Schema/migrations/stepsForMigration';
 import { migrations } from '@/core/database/migrations';
+import { schema } from '@/core/database/schema';
 import { SCHEMA_VERSION } from '@/shared/constants/database.constant';
 
 type Step =
@@ -31,5 +36,70 @@ describe('database migrations', () => {
         }
       }
     }
+  });
+});
+
+describe('the task due date index', () => {
+  const indexesOf = (db: Database, table: string): string[] =>
+    (db.query(`select name from pragma_index_list('${table}')`).all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const dueRangePlan = (db: Database): string =>
+    (
+      db
+        .query(
+          'explain query plan select * from project_task where due_at >= 1 and due_at <= 2 order by due_at'
+        )
+        .all() as { detail: string }[]
+    )
+      .map((row) => row.detail)
+      .join(' | ');
+
+  const withoutDueIndex = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'project_task') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).map(([column, spec]) => [
+            column,
+            column === 'due_at' ? { ...spec, isIndexed: false } : spec,
+          ])
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 6, tables } as AppSchema;
+  };
+
+  test('a fresh database creates it from the schema', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(indexesOf(db, 'project_task')).toContain('project_task_due_at');
+    expect(dueRangePlan(db)).toContain('project_task_due_at');
+  });
+
+  test('a version 6 database gains the same index through the migration', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(withoutDueIndex()));
+    expect(indexesOf(db, 'project_task')).not.toContain('project_task_due_at');
+    db.query(
+      'insert into project_task (id, _changed, _status, project_id, title, status, priority, due_at, sort_order, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', '3', 'Fix the gate', 'todo', 'low', 1500, 1, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 6, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(indexesOf(db, 'project_task')).toContain('project_task_due_at');
+    expect(dueRangePlan(db)).toContain('project_task_due_at');
+    expect(db.query('select count(*) as n from project_task').get()).toEqual({ n: 1 });
+  });
+
+  test('replaying the migration twice is harmless', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    const steps = stepsForMigration({ migrations, fromVersion: 6, toVersion: SCHEMA_VERSION }) ?? [];
+    expect(() => db.exec(encodeMigrationSteps(steps))).not.toThrow();
   });
 });

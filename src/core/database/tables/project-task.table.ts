@@ -12,7 +12,7 @@ export const PROJECT_TASK_SCHEMA = tableSchema({
     { name: 'title', type: 'string' },
     { name: 'status', type: 'string', isIndexed: true },
     { name: 'priority', type: 'string' },
-    { name: 'due_at', type: 'number', isOptional: true },
+    { name: 'due_at', type: 'number', isOptional: true, isIndexed: true },
     { name: 'sort_order', type: 'number' },
     { name: 'created_at', type: 'number' },
     { name: 'updated_at', type: 'number' },

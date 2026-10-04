@@ -409,6 +409,17 @@ projections subscribe to those observables; screens read MMKV snapshots.
   `observeManyWithColumns`.
 - `migrations.ts` is wired from v1 while empty: bumping `SCHEMA_VERSION` without
   `migrations` on the adapter **wipes** the local database.
+- **`project_task.due_at` is indexed (schema v7, 2026-10-03).** WatermelonDB
+  0.28 has no add-index migration step (`addIndex` is listed as not
+  implemented), so v7 is `unsafeExecuteSql('create index if not exists
+  "project_task_due_at" ...')` with exactly the name `encodeSchema` gives the
+  schema's `isIndexed` column, so a fresh install and an upgraded one end with
+  the same index. `tests/unit/database-migrations.test.ts` builds a v6
+  database with `bun:sqlite`, applies the encoded v6→v7 steps and checks the
+  index and that the due-date range query plans through it. LokiJS ignores
+  `sql` steps: a desktop database created before v7 keeps an unindexed
+  in-memory `due_at` (queries unchanged, only a scan), and a fresh one gets
+  the binary index from the schema.
 - `jsi: true` is safe — it falls back to the async bridge with a warning.
 
 ### Verification
