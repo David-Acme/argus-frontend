@@ -3,6 +3,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
+import { useTranslation } from '@/shared/hooks/use-translation';
 
 type CameraTileProps = {
   name: string;
@@ -25,12 +26,24 @@ export function CameraTile({
   recordMode,
   onPress,
 }: CameraTileProps) {
+  const { t } = useTranslation();
   const offline = !isOnline || !isEnabled;
+  const statusLabel = t(
+    !isEnabled
+      ? 'screens.cameras.status.disabled'
+      : isOnline
+        ? 'screens.cameras.status.online'
+        : 'screens.cameras.status.offline'
+  );
+  const recordLabel =
+    recordMode === 'continuous'
+      ? t('screens.cameras.form.record-continuous')
+      : t('screens.cameras.form.record-events');
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${name}, ${offline ? 'offline' : 'online'}`}
+      accessibilityLabel={`${name}, ${statusLabel}`}
       className="bg-card min-w-[150px] flex-1 gap-3 rounded-[20px] p-3 shadow-md shadow-black/[0.06] active:opacity-80"
       onPress={onPress}>
       <View className="flex-row items-start justify-between gap-2">
@@ -56,7 +69,7 @@ export function CameraTile({
         </Text>
       </View>
       {recordMode ? (
-        <StatusBadge label={recordMode} />
+        <StatusBadge label={recordLabel} />
       ) : null}
     </Pressable>
   );
