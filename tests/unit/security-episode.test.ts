@@ -33,6 +33,7 @@ function episode(overrides: Partial<GuardEpisode>): GuardEpisode {
     spoke: false,
     sounded: false,
     status: '',
+    environmentId: 1,
     ...overrides,
   };
 }
