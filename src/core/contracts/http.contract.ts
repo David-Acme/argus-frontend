@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  authSessionListSchema,
+  sessionRevokeResultSchema,
+  userSessionsOverviewSchema,
+} from '@/core/contracts/session.contract';
+import { voiceprintDirectorySchema } from '@/core/contracts/voiceprint.contract';
 import type {
   IApiError,
   ICameraCapabilities,
@@ -398,9 +404,22 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /auth/status': authStatusSchema,
   'POST /auth/device-login': deviceLoginCreatedSchema,
   'GET /auth/device-login/{1}': deviceLoginStatusSchema,
+  'GET /auth/sessions': authSessionListSchema,
+  'DELETE /auth/sessions': sessionRevokeResultSchema,
+  'DELETE /auth/sessions/{1}': sessionRevokeResultSchema,
+  'GET /auth/users/sessions': userSessionsOverviewSchema,
+  'GET /auth/users/{1}/sessions': authSessionListSchema,
+  'DELETE /auth/users/{1}/sessions': sessionRevokeResultSchema,
+  'DELETE /auth/users/{1}/sessions/{2}': sessionRevokeResultSchema,
   'GET /camera/{1}/capabilities': cameraCapabilitiesSchema,
+  'GET /camera/catalog': cameraCatalogSchema,
+  'GET /camera/overview': cameraOverviewSchema,
+  'POST /camera/probe': cameraProbeSchema,
+  'GET /guard/environments': guardEnvironmentListSchema,
   'GET /guard/expected-guests': z.array(guardExpectedGuestSchema),
   'GET /settings': settingsOverviewSchema,
+  'GET /settings/profiles': settingsProfilesSchema,
+  'GET /voiceprint/users': voiceprintDirectorySchema,
   'GET /user': z.array(userManagementRecordSchema),
   'GET /invitation': z.array(invitationRecordSchema),
 };

@@ -17,7 +17,13 @@ const probes: Probe[] = readdirSync(FIXTURES)
   .filter((file) => file.endsWith('.json') && file !== 'manifest.json')
   .flatMap((file) => (JSON.parse(readFileSync(join(FIXTURES, file), 'utf8')) as { probes: Probe[] }).probes);
 
+const MASKED_SAMPLES: Readonly<Record<string, string>> = {
+  '<masked-hex32>': '0'.repeat(32),
+  '<masked-hex64>': '0'.repeat(64),
+};
+
 function unmask(value: unknown, key = ''): unknown {
+  if (typeof value === 'string' && value in MASKED_SAMPLES) return MASKED_SAMPLES[value];
   if (typeof value === 'string' && value.startsWith('<masked')) return MASKED_STRINGS.has(key) ? value : 0;
   if (Array.isArray(value)) return value.map((item) => unmask(item, key));
   if (value && typeof value === 'object') {
