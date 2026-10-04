@@ -310,6 +310,42 @@ mod live_tests {
   }
 
   #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+  #[ignore = "needs a real /rtc/token grant in ARGUS_RTC_GRANT_* and a fake microphone clip"]
+  async fn a_real_call_with_argus_voice() {
+    let (Ok(url), Ok(token), Ok(agent), Ok(ca), Ok(clip)) = (
+      std::env::var("ARGUS_RTC_GRANT_URL"),
+      std::env::var("ARGUS_RTC_GRANT_TOKEN"),
+      std::env::var("ARGUS_RTC_GRANT_AGENT"),
+      std::env::var("ARGUS_RTC_TEST_CA"),
+      std::env::var("ARGUS_RTC_TEST_CLIP"),
+    ) else {
+      return;
+    };
+    let seconds = std::env::var("ARGUS_RTC_CALL_SECONDS").ok().and_then(|value| value.parse().ok()).unwrap_or(30);
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    crate::net::trust::seed(crate::net::trust::Trust {
+      ca_pem: std::fs::read_to_string(ca).expect("CA readable"),
+      host: "argus.local".to_string(),
+      ip: "127.0.0.1".to_string(),
+    });
+    super::super::transport::install();
+    let url = super::super::protocol::pinned_url(&url, "argus.local").expect("pinned url");
+    let started = Instant::now();
+    let call = Call::join(
+      CallOptions { url, token, agent_identity: agent, audio: AudioChoice::File(clip.into()) },
+      Arc::new(move |event| match &event {
+        RtcEvent::Level { .. } => {}
+        other => println!("{:>6} ms {}", started.elapsed().as_millis(), serde_json::to_string(other).unwrap()),
+      }),
+    )
+    .await
+    .expect("joins the call");
+    tokio::time::sleep(Duration::from_secs(seconds)).await;
+    call.send("argus.hangup".to_string(), "{}".to_string()).await.ok();
+    call.leave().await;
+  }
+
+  #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
   #[ignore = "needs a LiveKit TLS front, the instance CA and tokens in ARGUS_RTC_TEST_*"]
   async fn a_call_dials_livekit_through_the_pinned_tls_front() {
     let (Some(live), Ok(tls_url), Ok(ca)) =
