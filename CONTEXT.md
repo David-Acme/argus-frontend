@@ -1384,6 +1384,43 @@ with tests. The decisions that outlive the commits:
   binds refresh tokens to the exact agent string, so an OS or library update
   can log a phone out (adding one would log every session out once).
 
+## Calls with Argus (2026-10-03)
+
+The call (`features/voice`) runs on every platform that has a microphone
+path, knows the house it is talking about, and reports what it did.
+
+- **Microphone and player.** `IVoiceMic` (`core/interfaces/voice.interface.ts`)
+  is the contract; native is the `argus-mic` Nitro module, web/desktop is
+  `voice-mic.web.ts`: `getUserMedia` with echo cancellation, noise
+  suppression and automatic gain, and two AudioWorklet processors served
+  from the app's origin (`public/voice/voice-worklets.js`, allowed by the
+  desktop CSP's `script-src 'self'`) that cut 20 ms PCM16 frames and play
+  the server's PCM16 with played-sample accounting. `voiceCallSupported()`
+  decides where the call screen, the compose entry and the call pill show.
+  Linux desktop also needs the shell's WebKitGTK media permission and
+  GStreamer's pipewire/pulse sources.
+- **Context.** While a call is live the bridge (`use-call-bridge.ts`, mounted
+  by `CallPill` on every platform) sends the camera names once and a
+  `situation` note whenever it changes: guard mode in words, today's pending
+  agenda, camera alerts of the call and offline cameras, all from the user's
+  own view cache. No clock: the model must not quote a stale time. Camera
+  notifications become spoken offers; guard episodes, tamper alerts and the
+  camera fallback are offered with their own localized copy, the daily
+  digest never.
+- **Actions.** `voice:action` runs one at a time, a repeated id is ignored,
+  and each outcome goes back as `voice:action_result {id, ok, detail}` so
+  argus-voice corrects a failure aloud. The call surface shows them as
+  chips (pending, done, failed). `app.show_camera` opens the camera as a
+  live card inside the call when the call screen is on top
+  (`CameraLiveView` from `features/cameras`), and navigates otherwise.
+- **Lifecycle.** Mute is sent to the server (`voice:mute`), which drops the
+  half-said utterance. The service counts the stops it sent and ignores the
+  previous call's frames until its `voice:done` (3 s grace), so a quick
+  retry is not killed by a late done. A lost socket puts the call back in
+  `connecting` for up to 15 s and resumes it with
+  `voice:start {resume: true}` (no second greeting); the bridge then
+  resends the camera names and the situation.
+
 ## History log — prior docs resync (2026-08-23)
 
 - Documentation-only pass, before the local-first/audit work documented above:
