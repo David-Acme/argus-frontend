@@ -3,7 +3,9 @@ import {
   authSessionListSchema,
   readSessionSignal,
   sessionRevokeResultSchema,
+  userSessionsOverviewSchema,
 } from '@/core/contracts/session.contract';
+import { endNoticeOf } from '@/core/services/sync/session-end-notice';
 
 const ID = '0123456789abcdef0123456789abcdef';
 const OTHER = 'fedcba9876543210fedcba9876543210';
@@ -53,6 +55,23 @@ describe('GET /auth/sessions', () => {
   });
 });
 
+describe('GET /auth/users/sessions', () => {
+  test('every user with an open session, each with its sessions', () => {
+    const sample = {
+      users: [
+        { userId: 4, sessions: [session({ current: false })] },
+        { userId: 1, sessions: [session({ id: OTHER }), session({ id: 'b'.repeat(32), current: false })] },
+      ],
+    };
+    expect(userSessionsOverviewSchema.parse(sample) as unknown).toEqual(sample);
+    expect(userSessionsOverviewSchema.parse({ users: [] })).toEqual({ users: [] });
+    expect(userSessionsOverviewSchema.safeParse({ users: [{ userId: 0, sessions: [] }] }).success).toBe(
+      false
+    );
+    expect(userSessionsOverviewSchema.safeParse({ users: [{ userId: 2 }] }).success).toBe(false);
+  });
+});
+
 describe('DELETE /auth/sessions', () => {
   test('one, others and all answer the revoked ids and whether the caller was among them', () => {
     expect(sessionRevokeResultSchema.parse({ revoked: [OTHER], current: false })).toEqual({
@@ -71,11 +90,35 @@ describe('DELETE /auth/sessions', () => {
 });
 
 describe('AuthContextChanged session frames', () => {
-  test('sessionRevoked carries the session id', () => {
+  test('sessionRevoked carries the session id and why, when the server says', () => {
     expect(readSessionSignal({ reason: 'sessionRevoked', sessionId: ID, resync: false })).toEqual({
       reason: 'sessionRevoked',
       sessionId: ID,
+      cause: null,
     });
+    expect(
+      readSessionSignal({ reason: 'sessionRevoked', sessionId: ID, cause: 'accountDisabled' })
+    ).toEqual({ reason: 'sessionRevoked', sessionId: ID, cause: 'accountDisabled' });
+    expect(
+      readSessionSignal({ reason: 'sessionRevoked', sessionId: ID, cause: 'somethingNew' })
+    ).toEqual({ reason: 'sessionRevoked', sessionId: ID, cause: null });
+  });
+
+  test('the cause picks the notice the signed-out device shows', () => {
+    expect(endNoticeOf(null)).toBe('closed-here');
+    expect(endNoticeOf('revoked')).toBe('closed-here');
+    expect(endNoticeOf('refreshTokenReuse')).toBe('closed-here');
+    expect(endNoticeOf('revokedByOwner')).toBe('closed-by-owner');
+    expect(endNoticeOf('accountDisabled')).toBe('account-disabled');
+  });
+
+  test('userSessionsChanged names the user whose sessions moved', () => {
+    expect(readSessionSignal({ reason: 'userSessionsChanged', userId: 7, resync: false })).toEqual({
+      reason: 'userSessionsChanged',
+      userId: 7,
+    });
+    expect(readSessionSignal({ reason: 'userSessionsChanged' })).toBeNull();
+    expect(readSessionSignal({ reason: 'userSessionsChanged', userId: '7' })).toBeNull();
   });
 
   test('sessionsChanged carries nothing else', () => {

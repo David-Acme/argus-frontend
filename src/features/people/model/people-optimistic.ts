@@ -27,10 +27,20 @@ export const INVITATION_LENSES: readonly OptimisticLens<IInvitationRecord>[] = [
   }),
 ];
 
+export type InvitationState = 'waiting' | 'used' | 'closed' | 'lapsed';
+
+type InvitationLifecycle = Pick<
+  IInvitationRecord,
+  'revokedAt' | 'expiresAt' | 'redemptionCount' | 'maxRedemptions'
+>;
+
+export function invitationStateOf(invitation: InvitationLifecycle, nowMs: number): InvitationState {
+  if (invitation.redemptionCount >= invitation.maxRedemptions) return 'used';
+  if (invitation.revokedAt != null) return 'closed';
+  if (invitation.expiresAt * 1000 <= nowMs) return 'lapsed';
+  return 'waiting';
+}
+
 export function isInvitationUsable(invitation: IInvitationRecord, nowMs: number): boolean {
-  return (
-    invitation.revokedAt == null &&
-    invitation.expiresAt * 1000 > nowMs &&
-    invitation.redemptionCount < invitation.maxRedemptions
-  );
+  return invitationStateOf(invitation, nowMs) === 'waiting';
 }

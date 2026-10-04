@@ -63,6 +63,7 @@ export const common = {
     'cert-not-trusted': 'No se pudo comprobar que este servidor sea tu Argus. Vuelve a vincular el dispositivo.',
     'fingerprint-mismatch': 'Este servidor no es el que vinculaste, así que la app no se ha conectado.',
     storage: 'No se pudieron leer los datos guardados en este dispositivo. Inténtalo de nuevo.',
+    'account-disabled': 'Tu cuenta está desactivada. Pide al propietario de Argus que la vuelva a activar.',
     unknown: 'Algo salió mal',
   },
 } as const;

@@ -19,6 +19,12 @@ describe('faceErrorMessage', () => {
     ).toBe('screens.face.error');
   });
 
+  test('a disabled account is told so, not that the face is unknown', () => {
+    expect(
+      faceErrorMessage({ code: 'ACCOUNT_DISABLED', message: 'User account is disabled' }, t)
+    ).toBe('common.errors.account-disabled');
+  });
+
   test('a known transport refusal reads like the rest of the app', () => {
     expect(faceErrorMessage({ code: 'TIMEOUT', message: 'deadline' }, t)).toBe(
       'common.errors.timeout'

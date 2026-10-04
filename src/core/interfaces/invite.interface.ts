@@ -2,8 +2,6 @@ import type { InviteRole, UserRole } from '@/core/types';
 
 export interface IInviteCreateInput {
   role: InviteRole;
-  maxRedemptions: number;
-  expiresAt: number;
 }
 
 export interface IInviteCreated {

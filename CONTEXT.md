@@ -1656,7 +1656,7 @@ one refresh-token family with an opaque 32-hex id.
   the calm toast "Se cerró la sesión de este dispositivo", the same clear as
   a local logout, and the entry gate lands on the login screen. The notice
   shows once even when the HTTP answer and the frame both arrive.
-- **Configuración for every role.** `/settings` is open to all roles
+- **Configuración for every role** (reverted the same day: the section moved to the profile, see "Sessions in the profile" below). `/settings` was open to all roles
   (`settingsAccessForRole`: the catalog stays owner-only, the sessions
   section is for everyone), mirrored from the backend's `kSessionAccess`
   by `tests/unit/role-access-contract.test.ts`. Non-owners see only the
@@ -1759,3 +1759,52 @@ page code runs, in every webview and on every platform. Selection and the
 keyboard shortcuts (Ctrl+C/V/X/A) are untouched, because only the
 `contextmenu` event is cancelled.
 
+## Sessions in the profile, the owner's access view, single-use invitations (2026-10-03)
+
+David moved "Sesiones y dispositivos" out of Configuración into the profile
+and asked for an owner view of who is signed in where, with the power to
+close sessions and turn accounts off; and for invitations without an
+expiration date.
+
+- **`features/sessions`** is the slice now (it was `features/settings`'
+  sessions folder): the own-sessions section, the owner's connected-devices
+  panel and per-user dialog, their hooks, model and service. Its `index`
+  exports `SessionsSection`, `ConnectedDevicesPanel`, `UserSessionsDialog`,
+  `useConnectedDevices` and `useSessionLabels`; profile and people compose
+  them. `/settings` is the Owner's again (`route-access`, nav).
+- **Profile.** Identity header and the sessions section in the main column,
+  appearance, language and server in the aside on wide windows (stacked on a
+  phone). The section carries the three actions: close this device, close
+  the others (one by one on each row, or all), close everywhere; on a phone
+  it also offers "Conectar otro dispositivo". The old sign-out buttons and
+  the link to Configuración are gone, and "Tu voz" left the profile
+  (VOICEPRINT2).
+- **Owner: Personas y accesos.** Each member row says how many devices the
+  person has open (or "Cuenta desactivada") and opens the access dialog:
+  their sessions (from `GET /auth/users/{id}/sessions`, painting the
+  overview's rows first), close one, "Cerrar todas sus sesiones", and
+  "Desactivar cuenta" / "Reactivar cuenta" (confirmed; never offered for
+  yourself, and the server refuses it for yourself and for the last owner).
+  "Dispositivos conectados" lists every user with an open session (`GET
+  /auth/users/sessions`, view cache `auth.user-sessions`), most recently
+  active first, with the platforms they use. Everything is optimistic:
+  closing or disabling removes the rows at once through `session` delete
+  intents and a `user` update intent, and a refusal brings them back.
+- **Real time.** `userSessionsChanged` (sent to the owners' room on every
+  login and revocation) refreshes the owner's views
+  (`synchronizeService.onUserSessionsChanged`). `sessionRevoked` now says why:
+  `revokedByOwner` ends the session with "El propietario cerró la sesión de
+  este dispositivo", `accountDisabled` with "Tu cuenta fue desactivada…"
+  (`session-end-notice.ts`), which is also the notice for an
+  `AuthContextChanged` with `isActive:false` and for a refresh refused with
+  `ACCOUNT_DISABLED` (`readRefreshResponse`). A face login refused that way
+  says so instead of "rostro no reconocido".
+- **Invitations.** The dialog asks for the role only and says the QR is
+  single use; the preview shows the QR while it waits, and turns into "used"
+  (no revoke on close then), "closed" or "lapsed" from the synced row. The
+  list shows each invitation's state and when it was created. The server
+  keeps a 30-minute lifetime as a safety net for a revoke that never
+  arrives (backend `services/identity/CONTEXT.md`).
+- The four owner routes are not in `HTTP_CONTRACTS` yet: their zod schemas
+  (`userSessionsOverviewSchema`, `authSessionListSchema`,
+  `sessionRevokeResultSchema`) are registered once MAIN records the goldens.

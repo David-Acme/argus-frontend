@@ -1,9 +1,7 @@
 export const profile = {
   title: 'Your profile',
   people: 'People',
-  devices: 'Devices',
   'connect-device': 'Connect another device',
-  'connect-device-hint': 'Scan the code Argus shows on your computer to sign in there.',
   appearance: 'Appearance',
   'theme-label': 'App theme',
   theme: {
@@ -20,7 +18,4 @@ export const profile = {
   'unpair-hint': 'Signs out and forgets the server on this device.',
   'unpair-confirm-title': 'Unpair this device?',
   'unpair-confirm-description': 'You will need the server pairing code again to use Argus here.',
-  'sign-out': 'Sign out',
-  'sign-out-confirm-title': 'Sign out?',
-  'sign-out-confirm-description': 'You can sign back in with your face or from another device.',
 } as const;

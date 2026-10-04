@@ -8,7 +8,7 @@ import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { isInvitationUsable } from '@/features/people/model/people-optimistic';
+import { invitationStateOf } from '@/features/people/model/people-optimistic';
 
 type InvitationsPanelProps = {
   invitations: readonly IInvitationRecord[];
@@ -32,16 +32,16 @@ export function InvitationsPanel({ invitations, now, roleLabel, onRevoke }: Invi
         />
       ) : null}
       {invitations.map((invitation) => {
-        const usable = isInvitationUsable(invitation, now);
+        const state = invitationStateOf(invitation, now);
+        const usable = state === 'waiting';
         return (
           <ListRow
             key={invitation.id}
             icon="qr-code"
             title={roleLabel(invitation.role)}
             subtitle={t('screens.users.invitation-summary', {
-              used: String(invitation.redemptionCount),
-              total: String(invitation.maxRedemptions),
-              date: date.formatDayMonth(new Date(invitation.expiresAt * 1000)),
+              state: t(`screens.users.invitation-row.${state}`),
+              date: date.formatDayMonth(new Date(invitation.createdAt * 1000)),
             })}
             trailing={
               <>

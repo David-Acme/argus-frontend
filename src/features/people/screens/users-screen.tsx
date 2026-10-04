@@ -4,11 +4,8 @@ import { inviteService } from '@/core/services/invite';
 import { synchronizeService } from '@/core/services/sync';
 import type { IInvitationRecord, IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import type { UserRole } from '@/core/types';
+import type { AuthSession, UserRole } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
-import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
-import { Button } from '@/shared/components/ui/button';
-import { QrCode } from '@/shared/components/ui/qr-code';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -18,14 +15,25 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { cn } from '@/shared/libs/utils';
+import {
+  ConnectedDevicesPanel,
+  type ConnectedPerson,
+  useConnectedDevices,
+  UserSessionsDialog,
+} from '@/features/sessions';
 import { InvitationDialog } from '@/features/people/components/invitation-dialog';
+import { InvitationPreviewDialog } from '@/features/people/components/invitation-preview-dialog';
 import { InvitationsPanel } from '@/features/people/components/invitations-panel';
 import { ManagedUserDialog } from '@/features/people/components/managed-user-dialog';
 import { MembersPanel } from '@/features/people/components/members-panel';
 import { RoleAccessCard } from '@/features/people/components/role-access-card';
 import { roleOptions } from '@/features/people/components/user-options';
 import { useInvitationPreview } from '@/features/people/hooks/use-invitation-preview';
-import { INVITATION_LENSES, USER_LENSES } from '@/features/people/model/people-optimistic';
+import {
+  INVITATION_LENSES,
+  invitationStateOf,
+  USER_LENSES,
+} from '@/features/people/model/people-optimistic';
 import { userManagementService } from '@/features/people/services/user-management.service';
 
 const MINUTE_MS = 60_000;
@@ -35,6 +43,8 @@ export default function UsersScreen() {
   const { isWide } = useWindowClass();
   const currentUserId = String(useAuthStore((state) => state.user?.id ?? ''));
   const [editing, setEditing] = useState<IPeopleDirectoryCacheRow | null>(null);
+  const [inspecting, setInspecting] = useState<number | null>(null);
+  const devices = useConnectedDevices();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const cachedUsers = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
@@ -48,35 +58,82 @@ export default function UsersScreen() {
     return counts;
   }, [users]);
 
+  const inspectedUser =
+    inspecting === null ? null : (users.find((user) => user.id === String(inspecting)) ?? null);
+
   const refresh = useCallback(() => {
     void synchronizeService.syncOnce();
   }, []);
-  const { preview, show: showPreview, dismiss: dismissPreview } = useInvitationPreview(refresh);
+  const isSpent = useCallback(
+    (invitationId: number) => {
+      const record = invitations.find((invitation) => invitation.id === invitationId);
+      return record != null && invitationStateOf(record, Date.now()) !== 'waiting';
+    },
+    [invitations]
+  );
+  const {
+    preview,
+    show: showPreview,
+    dismiss: dismissPreview,
+  } = useInvitationPreview({ onRevoked: refresh, isSpent });
+  const previewRecord =
+    preview === null
+      ? null
+      : (invitations.find((invitation) => invitation.id === preview.invitationId) ?? null);
 
   const roleLabel = useCallback(
     (role: UserRole) => roleLabels.find((option) => option.value === role)?.label ?? role,
     [roleLabels]
   );
 
-  const deactivate = useCallback(
-    (user: IPeopleDirectoryCacheRow) => {
+  const fullName = useCallback(
+    (user: IPeopleDirectoryCacheRow) => [user.name, user.lastName].filter(Boolean).join(' '),
+    []
+  );
+
+  const personOf = useCallback(
+    (userId: number): ConnectedPerson => {
+      const user = users.find((candidate) => candidate.id === String(userId));
+      return {
+        name: user ? fullName(user) : t('screens.users.unknown-user', { id: String(userId) }),
+        detail: user ? roleLabel(user.role) : t('screens.users.unknown-role'),
+        isSelf: String(userId) === currentUserId,
+      };
+    },
+    [currentUserId, fullName, roleLabel, t, users]
+  );
+
+  const setActive = useCallback(
+    (user: IPeopleDirectoryCacheRow, isActive: boolean, sessions: readonly AuthSession[]) => {
+      const name = fullName(user);
+      const prefix = isActive ? 'enable' : 'disable';
       void runOptimistic({
         confirm: {
-          title: t('screens.users.deactivate-title', { name: user.name }),
-          description: t('screens.users.deactivate-description'),
-          confirmLabel: t('screens.users.deactivate'),
-          intent: 'danger',
+          title: t(`screens.sessions.admin.confirm-${prefix}-title`, { name }),
+          description: t(`screens.sessions.admin.confirm-${prefix}-description`),
+          confirmLabel: t(`screens.sessions.admin.${prefix}`),
+          intent: isActive ? 'warning' : 'danger',
         },
         intents: [
-          { table: 'user', kind: 'update', recordId: user.id, values: { isActive: false } },
+          { table: 'user', kind: 'update', recordId: user.id, values: { isActive } },
+          ...(isActive
+            ? []
+            : sessions.map((session) => ({
+                table: 'session' as const,
+                kind: 'delete' as const,
+                recordId: session.id,
+              }))),
         ],
-        call: () => userManagementService.deactivate(Number(user.id)),
-        success: t('screens.users.user-deactivated'),
+        call: () => userManagementService.update(Number(user.id), { isActive }),
+        success: t(`screens.sessions.admin.${isActive ? 'enabled' : 'disabled'}`, { name }),
       }).then((response) => {
-        if (response) refresh();
+        if (!response) return;
+        if (!isActive) devices.forget(Number(user.id));
+        refresh();
+        void devices.reload();
       });
     },
-    [refresh, t]
+    [devices, fullName, refresh, t]
   );
 
   const revoke = useCallback(
@@ -142,20 +199,70 @@ export default function UsersScreen() {
             </Text>
           </View>
 
-          <View className={cn(isWide && 'flex-1', 'gap-3')}>
+          <View className="gap-3">
             <SectionHeader title={t('screens.users.members')} count={users.length} />
             <MembersPanel
               users={users}
               currentUserId={currentUserId}
               roleLabel={roleLabel}
+              devicesOf={(user) => devices.sessionsOf(Number(user.id)).length}
               onEdit={setEditing}
-              onDeactivate={deactivate}
+              onOpenAccess={(user) => setInspecting(Number(user.id))}
               onInvite={() => setInviteOpen(true)}
+            />
+          </View>
+
+          <View className={cn(isWide && 'flex-1', 'gap-3')}>
+            <SectionHeader
+              title={t('screens.sessions.admin.title')}
+              count={devices.users.length}
+            />
+            <ConnectedDevicesPanel
+              className={isWide ? 'flex-1' : undefined}
+              users={devices.users}
+              now={devices.now}
+              loading={devices.loading}
+              failed={devices.failed}
+              personOf={personOf}
+              onOpen={setInspecting}
+              onRetry={() => void devices.reload()}
             />
           </View>
         </View>
       </AppScreen>
 
+      {inspectedUser ? (
+        <UserSessionsDialog
+          key={inspectedUser.id}
+          open
+          subject={{
+            userId: Number(inspectedUser.id),
+            name: fullName(inspectedUser),
+            roleLabel: roleLabel(inspectedUser.role),
+            isActive: inspectedUser.isActive,
+            isSelf: inspectedUser.id === currentUserId,
+          }}
+          now={devices.now}
+          fallback={devices.sessionsOf(Number(inspectedUser.id))}
+          onOpenChange={(open) => !open && setInspecting(null)}
+          onCloseSession={(session, deviceLabel) =>
+            void devices.closeSession({
+              userId: Number(inspectedUser.id),
+              session,
+              deviceLabel,
+            })
+          }
+          onCloseAll={(sessions) =>
+            void devices.closeEverySession({
+              userId: Number(inspectedUser.id),
+              userName: fullName(inspectedUser),
+              sessions,
+            })
+          }
+          onDisable={(sessions) => setActive(inspectedUser, false, sessions)}
+          onEnable={() => setActive(inspectedUser, true, [])}
+        />
+      ) : null}
       {editing ? (
         <ManagedUserDialog
           key={editing.id}
@@ -171,24 +278,13 @@ export default function UsersScreen() {
         onSaved={refresh}
         onCreated={showPreview}
       />
-      <AdaptiveDialog
-        open={preview !== null}
-        onOpenChange={(open) => !open && dismissPreview()}
-        title={t('screens.users.invitation-ready')}
-        description={t('screens.users.invitation-ready-description')}
-        closeLabel={t('common.close')}
-        contentClassName="sm:max-w-[380px]"
-        footer={
-          <Button onPress={dismissPreview}>
-            <Text>{t('common.close')}</Text>
-          </Button>
-        }>
-        {preview ? (
-          <View className="items-center pb-1">
-            <QrCode value={preview.value} size={220} errorCorrection="M" />
-          </View>
-        ) : null}
-      </AdaptiveDialog>
+      <InvitationPreviewDialog
+        preview={preview}
+        record={previewRecord}
+        roleLabel={preview ? roleLabel(preview.role) : ''}
+        now={now}
+        onDismiss={dismissPreview}
+      />
     </>
   );
 }

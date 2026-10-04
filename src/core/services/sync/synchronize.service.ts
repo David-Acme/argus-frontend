@@ -12,6 +12,7 @@ import { SYNC_TABLE_KEYS } from '@/core/types';
 import type { IAuditLogEntry, IInitialInfo, ISocketEmitDto } from '@/core/interfaces';
 import { AuditLogPager } from './audit-log-pager';
 import { parseAuthContext } from './auth-context';
+import { endNoticeOf } from './session-end-notice';
 import { LiveFrameApplier } from './live-frame-applier';
 import { ProjectionEpoch } from './projection-epoch';
 import { ownsProjection, ProjectionOwnerStore, type ProjectionOwner } from './projection-owner';
@@ -62,6 +63,7 @@ class SynchronizeService {
   private readonly audit: AuditLogPager;
   private readonly live: LiveFrameApplier;
   private readonly sessionsChangedListeners = new Set<() => void>();
+  private readonly userSessionsChangedListeners = new Set<(userId: number) => void>();
 
   constructor() {
     this.cursors = new SyncCursorStore(() => String(this.authStore?.getState().user?.id ?? ''));
@@ -176,6 +178,13 @@ class SynchronizeService {
 
   onBinary(listener: (data: ArrayBuffer) => void): () => void {
     return this.router.onBinary(listener);
+  }
+
+  onUserSessionsChanged(listener: (userId: number) => void): () => void {
+    this.userSessionsChangedListeners.add(listener);
+    return () => {
+      this.userSessionsChangedListeners.delete(listener);
+    };
   }
 
   onSessionsChanged(listener: () => void): () => void {
@@ -356,7 +365,7 @@ class SynchronizeService {
 
     this.sessionActions?.updateUser(context.user);
     if (!context.user.isActive) {
-      void this.sessionActions?.clearSession();
+      void this.sessionActions?.endSession('account-disabled');
       return;
     }
     if (context.requiresResync) this.startContextResync();
@@ -367,8 +376,12 @@ class SynchronizeService {
       this.sessionsChangedListeners.forEach((listener) => listener());
       return;
     }
+    if (signal.reason === 'userSessionsChanged') {
+      this.userSessionsChangedListeners.forEach((listener) => listener(signal.userId));
+      return;
+    }
     if (this.authStore?.getState().status !== 'signed-in') return;
-    void this.sessionActions?.endSession('closed-here');
+    void this.sessionActions?.endSession(endNoticeOf(signal.cause));
   }
 
   private startContextResync(): void {

@@ -64,6 +64,7 @@ export const common = {
     'cert-not-trusted': 'This server could not be confirmed as your Argus. Pair the device again.',
     'fingerprint-mismatch': 'This is not the server you paired with, so the app did not connect.',
     storage: 'The data saved on this device could not be read. Try again.',
+    'account-disabled': 'Your account is turned off. Ask the Argus owner to turn it back on.',
     unknown: 'Something went wrong',
   },
 };

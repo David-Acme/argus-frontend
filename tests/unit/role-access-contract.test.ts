@@ -92,20 +92,29 @@ function sessionRoutes(): Map<string, Set<UserRole>> {
 describe('session access mirrors the backend kSessionAccess', () => {
   const routes = sessionRoutes();
 
-  test('the parser sees the three session routes', () => {
+  test('the parser sees the own and the owner session routes', () => {
     expect([...routes.keys()].sort()).toEqual([
       'Delete /auth/sessions',
       'Delete /auth/sessions/{id}',
+      'Delete /auth/users/{id}/sessions',
+      'Delete /auth/users/{id}/sessions/{id}',
       'Get /auth/sessions',
+      'Get /auth/users/sessions',
+      'Get /auth/users/{id}/sessions',
     ]);
   });
 
   for (const role of ROLES) {
-    test(`${role} reads and revokes its own sessions exactly as the backend allows`, () => {
+    test(`${role} reads and revokes sessions exactly as the backend allows`, () => {
       const allowed = (route: string) => role === 'owner' || (routes.get(route)?.has(role) ?? false);
       expect(sessionAccessForRole(role)).toEqual({
         view: allowed('Get /auth/sessions'),
         revoke: allowed('Delete /auth/sessions') && allowed('Delete /auth/sessions/{id}'),
+        manageOthers:
+          allowed('Get /auth/users/sessions') &&
+          allowed('Get /auth/users/{id}/sessions') &&
+          allowed('Delete /auth/users/{id}/sessions') &&
+          allowed('Delete /auth/users/{id}/sessions/{id}'),
       });
     });
   }

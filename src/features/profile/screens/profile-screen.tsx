@@ -4,8 +4,7 @@ import { useAuthStore, useLocaleStore } from '@/core/stores';
 import type { LanguagePreference, NetPairedInstance, ThemePreference, UserRole } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
-import { VoiceprintPanel } from '@/features/voiceprint';
-import { Button } from '@/shared/components/ui/button';
+import { SessionsSection } from '@/features/sessions';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
@@ -14,7 +13,6 @@ import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/share
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
-import { runServiceAction } from '@/shared/libs/service-action';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
@@ -62,36 +60,7 @@ export default function ProfileScreen() {
     [setLanguage],
   );
 
-  const signOut = useCallback(async () => {
-    const accepted = await confirm({
-      title: t('screens.profile.sign-out-confirm-title'),
-      description: t('screens.profile.sign-out-confirm-description'),
-      confirmLabel: t('screens.profile.sign-out'),
-      intent: 'warning',
-    });
-    if (!accepted) return;
-    setLeaving(true);
-    await authService.logout();
-    router.replace('/');
-  }, [router, t]);
-
-  const signOutEverywhere = useCallback(async () => {
-    setLeaving(true);
-    try {
-      await runServiceAction({
-        confirm: {
-          title: t('screens.sessions.confirm-all-title'),
-          description: t('screens.sessions.confirm-all-description'),
-          confirmLabel: t('screens.sessions.sign-out-everywhere'),
-          intent: 'danger',
-        },
-        call: () => authService.logoutEverywhere(),
-        errorTitle: t('screens.sessions.close-error'),
-      });
-    } finally {
-      setLeaving(false);
-    }
-  }, [t]);
+  const connectDevice = useCallback(() => router.push('/approve'), [router]);
 
   const unpair = useCallback(async () => {
     const accepted = await confirm({
@@ -117,98 +86,69 @@ export default function ProfileScreen() {
     };
   }, []);
 
-  return (
-    <AppScreen>
-      <View className="w-full max-w-[640px] gap-6 self-center">
-        <View className="flex-row items-center gap-4 pt-1">
-          <View className="bg-surface-secondary size-16 items-center justify-center rounded-full">
-            <Icon name="user" className="text-foreground-secondary size-7" />
-          </View>
-          <View className="min-w-0 flex-1 gap-0.5">
-            <Text variant="title" numberOfLines={1}>
-              {user?.name ?? '—'}
-            </Text>
-            <Text variant="label" className="text-foreground-secondary">
-              {user ? t(roleKey(user.role)) : '—'}
-            </Text>
-          </View>
+  const preferences = (
+    <>
+      <SettingsGroup title={t('screens.profile.appearance')}>
+        <View className="p-1.5">
+          <SegmentedControl
+            options={themeOptions}
+            value={theme}
+            onChange={changeTheme}
+            accessibilityLabel={t('screens.profile.theme-label')}
+          />
         </View>
+      </SettingsGroup>
 
-        <SettingsGroup title={t('screens.profile.devices')}>
-          {IS_NATIVE ? (
-            <ListRow
-              icon="monitor"
-              title={t('screens.profile.connect-device')}
-              subtitle={t('screens.profile.connect-device-hint')}
-              chevron
-              onPress={() => router.push('/approve')}
-            />
-          ) : null}
-          <ListRow
-            icon="monitor-smartphone"
-            title={t('screens.sessions.manage-sessions')}
-            subtitle={t('screens.sessions.manage-sessions-hint')}
-            chevron
-            onPress={() => router.push('/settings')}
+      <SettingsGroup title={t('screens.profile.language')}>
+        <View className="p-1.5">
+          <SegmentedControl
+            options={languageOptions}
+            value={languagePreference}
+            onChange={changeLanguage}
+            accessibilityLabel={t('screens.profile.language-label')}
           />
-        </SettingsGroup>
+        </View>
+      </SettingsGroup>
 
-        <SettingsGroup title={t('screens.voiceprint.section')}>
-          <VoiceprintPanel />
-        </SettingsGroup>
-
-        <SettingsGroup title={t('screens.profile.appearance')}>
-          <View className="p-1.5">
-            <SegmentedControl
-              options={themeOptions}
-              value={theme}
-              onChange={changeTheme}
-              accessibilityLabel={t('screens.profile.theme-label')}
-            />
-          </View>
-        </SettingsGroup>
-
-        <SettingsGroup title={t('screens.profile.language')}>
-          <View className="p-1.5">
-            <SegmentedControl
-              options={languageOptions}
-              value={languagePreference}
-              onChange={changeLanguage}
-              accessibilityLabel={t('screens.profile.language-label')}
-            />
-          </View>
-        </SettingsGroup>
-
-        <SettingsGroup title={t('screens.profile.server')}>
-          {instance ? (
-            <ListRow
-              icon="shield-check"
-              title={t('screens.profile.server-address', { address: instance.ip })}
-              subtitle={
-                pairedSince ? t('screens.profile.server-paired', { date: pairedSince }) : undefined
-              }
-            />
-          ) : null}
+      <SettingsGroup title={t('screens.profile.server')}>
+        {instance ? (
           <ListRow
-            icon="unlink"
-            title={t('screens.profile.unpair')}
-            subtitle={t('screens.profile.unpair-hint')}
-            destructive
-            disabled={leaving}
-            onPress={unpair}
+            icon="shield-check"
+            title={t('screens.profile.server-address', { address: instance.ip })}
+            subtitle={
+              pairedSince ? t('screens.profile.server-paired', { date: pairedSince }) : undefined
+            }
           />
-        </SettingsGroup>
+        ) : null}
+        <ListRow
+          icon="unlink"
+          title={t('screens.profile.unpair')}
+          subtitle={t('screens.profile.unpair-hint')}
+          destructive
+          disabled={leaving}
+          onPress={unpair}
+        />
+      </SettingsGroup>
+    </>
+  );
 
-        <View className="gap-2">
-          <Button variant="outline" size="lg" loading={leaving} onPress={signOut}>
-            <Icon name="log-out" />
-            <Text>{t('screens.profile.sign-out')}</Text>
-          </Button>
-          <Button variant="ghost" disabled={leaving} onPress={signOutEverywhere}>
-            <Text className="text-error-strong">{t('screens.sessions.sign-out-everywhere')}</Text>
-          </Button>
+  return (
+    <AppScreen aside={preferences}>
+      <View className="flex-row items-center gap-4 pt-1">
+        <View className="bg-surface-secondary size-16 items-center justify-center rounded-full">
+          <Icon name="user" className="text-foreground-secondary size-7" />
+        </View>
+        <View className="min-w-0 flex-1 gap-0.5">
+          <Text variant="title" numberOfLines={1}>
+            {user?.name ?? '—'}
+          </Text>
+          <Text variant="label" className="text-foreground-secondary">
+            {user ? t(roleKey(user.role)) : '—'}
+          </Text>
         </View>
       </View>
+
+      <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
     </AppScreen>
   );
 }

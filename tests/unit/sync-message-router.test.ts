@@ -109,13 +109,21 @@ describe('SyncMessageRouter', () => {
     router.route(
       JSON.stringify({ operation: SYNC_OPERATION.AuthContextChanged, info: { reason: 'sessionsChanged', resync: false } })
     );
+    router.route(
+      JSON.stringify({
+        operation: SYNC_OPERATION.AuthContextChanged,
+        option: 'user_invitation',
+        info: { reason: 'userSessionsChanged', userId: 9, resync: false },
+      })
+    );
     router.route(JSON.stringify({ operation: SYNC_OPERATION.AuthContextChanged, info: role }));
     router.route(
       JSON.stringify({ operation: SYNC_OPERATION.AuthContextChanged, info: { reason: 'sessionRevoked', sessionId: 'x' } })
     );
     expect(calls).toEqual([
-      ['sessionSignal', { reason: 'sessionRevoked', sessionId }],
+      ['sessionSignal', { reason: 'sessionRevoked', sessionId, cause: null }],
       ['sessionSignal', { reason: 'sessionsChanged' }],
+      ['sessionSignal', { reason: 'userSessionsChanged', userId: 9 }],
       ['authContextChanged', role],
       ['authContextChanged', { reason: 'sessionRevoked', sessionId: 'x' }],
     ]);

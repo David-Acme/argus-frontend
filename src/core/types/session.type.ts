@@ -38,8 +38,29 @@ export type SessionRevokeResult = {
   current: boolean;
 };
 
-export type SessionSignal =
-  | { reason: 'sessionRevoked'; sessionId: string }
-  | { reason: 'sessionsChanged' };
+export type UserSessions = {
+  userId: number;
+  sessions: AuthSession[];
+};
 
-export type SessionEndNotice = 'closed-here' | 'closed-everywhere';
+export type UserSessionsOverview = {
+  users: UserSessions[];
+};
+
+export type SessionRevokeCause =
+  | 'logout'
+  | 'revoked'
+  | 'refreshTokenReuse'
+  | 'revokedByOwner'
+  | 'accountDisabled';
+
+export type SessionSignal =
+  | { reason: 'sessionRevoked'; sessionId: string; cause: SessionRevokeCause | null }
+  | { reason: 'sessionsChanged' }
+  | { reason: 'userSessionsChanged'; userId: number };
+
+export type SessionEndNotice =
+  | 'closed-here'
+  | 'closed-everywhere'
+  | 'closed-by-owner'
+  | 'account-disabled';

@@ -2,10 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import type { AuthSession } from '@/core/types';
 import {
   activityOf,
+  connectedUsersOf,
   groupOf,
   overviewOf,
   SESSION_LENSES,
-} from '@/features/settings/model/sessions';
+  sessionRowsOf,
+  withoutSessions,
+} from '@/features/sessions/model/sessions';
 import { applyIntents, OptimisticRegistry } from '@/shared/libs/optimistic';
 
 const NOW = 1_790_000_000;
@@ -82,5 +85,42 @@ describe('optimistic session removal', () => {
     ]);
     registry.rollback(intent.id);
     expect(applyIntents(rows, registry.snapshot(), SESSION_LENSES)).toBe(rows);
+  });
+});
+
+describe('connected devices for the owner', () => {
+  const overview = {
+    users: [
+      { userId: 4, sessions: [session('a', { lastSeenAt: NOW - 3_600 })] },
+      {
+        userId: 1,
+        sessions: [
+          session('b', { platform: 'desktop', lastSeenAt: NOW - 7_200, current: true }),
+          session('c', { platform: 'ios', lastSeenAt: NOW - 60 }),
+        ],
+      },
+    ],
+  };
+
+  test('users come most recently active first, each with its latest device first', () => {
+    const users = connectedUsersOf(sessionRowsOf(overview));
+    expect(users.map((user) => user.userId)).toEqual([1, 4]);
+    expect(users[0]?.sessions.map((item) => item.platform)).toEqual(['ios', 'desktop']);
+    expect(users[0]?.lastSeenAt).toBe(NOW - 60);
+    expect(users[0]?.groups).toEqual(['mobile', 'desktop']);
+    expect(users[1]?.groups).toEqual(['mobile']);
+  });
+
+  test('no answer yet is no rows, not an error', () => {
+    expect(sessionRowsOf(null)).toEqual([]);
+    expect(connectedUsersOf([])).toEqual([]);
+  });
+
+  test('closed sessions leave, and a user with none left leaves with them', () => {
+    const remaining = withoutSessions(overview, [session('a').id, session('b').id]);
+    expect(remaining?.users.map((user) => user.userId)).toEqual([1]);
+    expect(remaining?.users[0]?.sessions.map((item) => item.id)).toEqual([session('c').id]);
+    expect(withoutSessions(overview, [])).toBe(overview);
+    expect(withoutSessions(null, ['x'])).toBeNull();
   });
 });

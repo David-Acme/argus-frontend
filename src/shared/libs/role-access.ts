@@ -64,12 +64,13 @@ export function guardAccessForRole(role: UserRole): GuardAccess {
 export type SessionAccess = {
   view: boolean;
   revoke: boolean;
+  manageOthers: boolean;
 };
 
-const OWN_SESSIONS: SessionAccess = { view: true, revoke: true };
+const OWN_SESSIONS: SessionAccess = { view: true, revoke: true, manageOthers: false };
 
 const SESSION_ACCESS: Record<UserRole, SessionAccess> = {
-  owner: OWN_SESSIONS,
+  owner: { view: true, revoke: true, manageOthers: true },
   resident: OWN_SESSIONS,
   guard: OWN_SESSIONS,
   guest: OWN_SESSIONS,

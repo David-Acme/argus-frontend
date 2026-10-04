@@ -3,14 +3,6 @@
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { InviteRole, MenuOption, TranslateFn, UserRole } from '@/core/types';
 
-export const INVITE_EXPIRIES = [
-  { value: '1', days: 1 },
-  { value: '7', days: 7 },
-  { value: '30', days: 30 },
-] as const;
-
-export type InviteExpiry = (typeof INVITE_EXPIRIES)[number]['value'];
-
 export type ManagedUserDialogProps = {
   user: IPeopleDirectoryCacheRow;
   open: boolean;
@@ -27,6 +19,8 @@ export type InvitationDialogProps = {
 
 export type InvitationPreview = {
   invitationId: number;
+  role: InviteRole;
+  expiresAt: number;
   value: string;
 };
 

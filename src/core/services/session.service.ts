@@ -208,6 +208,9 @@ class SessionService {
     }
 
     const reading = readRefreshResponse(result);
+    if (reading.outcome === 'rejected' && reading.accountDisabled) {
+      void this.endSession('account-disabled');
+    }
     if (reading.outcome !== 'refreshed') return reading.outcome;
     const { accessToken } = reading;
     const nextRefreshToken = reading.refreshToken ?? refreshToken;

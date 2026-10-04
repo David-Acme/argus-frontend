@@ -25,6 +25,7 @@ const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   CERT_NOT_TRUSTED: 'common.errors.cert-not-trusted',
   FINGERPRINT_MISMATCH: 'common.errors.fingerprint-mismatch',
   STORAGE_ERROR: 'common.errors.storage',
+  ACCOUNT_DISABLED: 'common.errors.account-disabled',
 };
 
 export function serviceErrorKey(error: IApiError | null | undefined): TranslationKey {

@@ -566,9 +566,12 @@ for Watermelon nor make an HTTP list request just because it mounted.
   `/users` (users + invitation metadata); Guard sees `/people` (directory only);
   Resident/Guest see their own profile only. Reuse
   `shared/libs/people-access.ts` instead of scattering role checks.
-- Every role manages its own sessions: `/settings` is open to all roles, the
-  catalog inside stays owner-only (`settingsAccessForRole`), and
-  `sessionAccessForRole` mirrors the backend's `kSessionAccess`.
+- Every role manages its own sessions from `/profile` ("Sesiones y
+  dispositivos", `features/sessions`); `/settings` is the Owner's alone. The
+  Owner also sees every user's sessions in `/users` ("Dispositivos
+  conectados" and the per-user access dialog), closes them and turns
+  accounts off or back on. `sessionAccessForRole` mirrors the backend's
+  `kSessionAccess`, owner rows included (`manageOthers`).
 - Which role may open which screen is one table, `shared/libs/route-access.ts`
   (`routeFallback(path, role)`): the `(app)` layout redirects with it and the
   nav hides the tabs it refuses. A screen never checks its own role.
@@ -588,8 +591,10 @@ for Watermelon nor make an HTTP list request just because it mounted.
   `portraitPreviewService` obtains/consumes a one-use server capability; the
   resulting data URI lives only in that open dialog's React state and is cleared
   when it closes or a newer request wins. Do not add image caching.
-- Owner invitation QRs contain the opaque token plus pinned local server
-  identity. Between scanning and enrolment the token lives in memory only
+- Owner invitation QRs are single use: the Owner picks the role only (no
+  capacity, no expiry; the server sets a hidden lifetime), and the preview
+  follows the invitation live (waiting, used, closed, lapsed). They contain
+  the opaque token plus pinned local server identity. Between scanning and enrolment the token lives in memory only
   (`features/auth/model/invite-slot.ts`, ten minutes), never in a route param. The QR preview itself is single-display: dismissing or unmounting
   revokes its invitation. Do not persist its token or reconstruct it from
   invitation metadata.
@@ -781,7 +786,7 @@ cd src-tauri && cargo check
 | `src/app/(app)/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` · `security/` · `settings/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
 | `src/features/home/` | Home dashboard: camera grid/tile, project grid, today's agenda, summary, and the notifications (Novedades + bell popover) as threads by `threadKey`, styled by urgency and read per thread (`model/notification-threads.ts`, unit-tested) |
 | `src/features/voiceprint/` | "Tu voz" in the profile: voiceprint status (`useRemoteResource`), consented phrase-by-phrase enrollment (`model/enrollment.ts` reducer), "Try it" verification and delete; recorder platform split (`services/voice-recorder.{native,web}.ts`: argus-mic / getUserMedia+MediaRecorder) and the in-memory 16 kHz WAV + base64 encoder (`model/wav.ts`), both unit-tested |
-| `src/features/settings/` | Configuración: every owner's catalog from argus-settings; TTS engine/variant/voice settings as an option list with bundled voice previews (`constants/tts-preview-clips.{web,native}.ts`, Ogg/Opus vs M4A/AAC), install states and on-demand install (`model/tts-preview.ts`, unit-tested); the "Perfil" section on top (`components/profile/`, `hooks/use-settings-profiles.ts`, `model/settings-profiles.ts`): server profiles with the hardware recommendation, a per-service preview and an optimistic apply that rolls back refused keys |
+| `src/features/settings/` | Configuración (owner-only), two persisted modes: Sencillo (first-run banner, connection notice, Perfil, basic keys) and Avanzado (`components/technical/`: every key with type, unit, range, factory value, apply mode, pending restart, its service's `.toml` path, search/filters, reset to factory, export/import; pure logic in `model/settings-catalog.ts`, unit-tested); every owner's catalog from argus-settings; TTS engine/variant/voice settings as an option list with bundled voice previews (`constants/tts-preview-clips.{web,native}.ts`, Ogg/Opus vs M4A/AAC), install states and on-demand install (`model/tts-preview.ts`, unit-tested); the "Perfil" section on top (`components/profile/`, `hooks/use-settings-profiles.ts`, `model/settings-profiles.ts`): server profiles with the hardware recommendation, a per-service preview and an optimistic apply that rolls back refused keys |
 | `src/shared/components/layout/` | App chrome and screen layout: `AppShell`, `AppScreen`, `ScreenHeader`, `NavRail`, `BottomNav`/`GlobalBottomNav`, `ComposeFab`, `CenteredScreen`, `OfflineBanner` |
 | `src/shared/components/activity/` | `ActivityCard` + `MosaicChart` (home and cameras) |
 | `src/features/auth/components/session-gate.tsx` | Auth bootstrap y puerta de UI autenticada; no observa ni “prime” Watermelon |

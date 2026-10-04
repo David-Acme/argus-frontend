@@ -5,8 +5,23 @@ const body = (info: unknown) => JSON.stringify({ status: 200, info, errors: null
 
 describe('readRefreshResponse', () => {
   test('401 and 403 end the session', () => {
-    expect(readRefreshResponse({ status: 401, body: '' })).toEqual({ outcome: 'rejected' });
-    expect(readRefreshResponse({ status: 403, body: '' })).toEqual({ outcome: 'rejected' });
+    expect(readRefreshResponse({ status: 401, body: '' })).toEqual({
+      outcome: 'rejected',
+      accountDisabled: false,
+    });
+    expect(readRefreshResponse({ status: 403, body: '' })).toEqual({
+      outcome: 'rejected',
+      accountDisabled: false,
+    });
+    const disabled = JSON.stringify({
+      status: 403,
+      info: null,
+      errors: { code: 'ACCOUNT_DISABLED', message: 'User account is disabled' },
+    });
+    expect(readRefreshResponse({ status: 403, body: disabled })).toEqual({
+      outcome: 'rejected',
+      accountDisabled: true,
+    });
   });
 
   test('throttling, outages and malformed answers keep the session', () => {

@@ -1,9 +1,7 @@
 export const profile = {
   title: 'Tu perfil',
   people: 'Personas',
-  devices: 'Dispositivos',
   'connect-device': 'Conectar otro dispositivo',
-  'connect-device-hint': 'Escanea el código que muestra Argus en tu ordenador para iniciar sesión allí.',
   appearance: 'Apariencia',
   'theme-label': 'Tema de la aplicación',
   theme: {
@@ -20,7 +18,4 @@ export const profile = {
   'unpair-hint': 'Cierra la sesión y olvida el servidor en este dispositivo.',
   'unpair-confirm-title': '¿Desvincular este dispositivo?',
   'unpair-confirm-description': 'Tendrás que volver a introducir el código de vinculación del servidor para usar Argus aquí.',
-  'sign-out': 'Cerrar sesión',
-  'sign-out-confirm-title': '¿Cerrar sesión?',
-  'sign-out-confirm-description': 'Podrás volver a entrar con tu rostro o desde otro dispositivo.',
 } as const;
