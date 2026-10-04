@@ -158,6 +158,8 @@ class VoiceService {
   private callReason: string | null = null;
   private pendingSends: { type: string; payload: unknown }[] = [];
   private claiming = false;
+  private waitingCall: IncomingCall | null = null;
+  private waitingTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly handlers: Readonly<Record<string, FrameHandler>> = this.buildHandlers();
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
 
@@ -408,6 +410,7 @@ class VoiceService {
   }
 
   stop(): void {
+    this.clearWaiting();
     if (!this.active && !this.serverSession) return;
     this.active = false;
     this.endServerSession();
@@ -734,18 +737,55 @@ class VoiceService {
     const parsed = incomingCallSchema.safeParse(info);
     if (!parsed.success) return;
     const call = parsed.data;
-    if (
-      this.active ||
-      !incomingCallLive(call.expiresAt, Date.now()) ||
-      AppState.currentState !== 'active'
-    )
+    if (!incomingCallLive(call.expiresAt, Date.now()) || AppState.currentState !== 'active') return;
+    if (this.active) {
+      if (call.callId !== this.callId) this.holdWaiting(call);
       return;
+    }
     void this.start({ callId: call.callId, reason: call.reason });
     for (const listener of this.incomingListeners) listener(call);
   }
 
+  private holdWaiting(call: IncomingCall): void {
+    this.clearWaiting();
+    this.waitingCall = call;
+    this.waitingTimer = setTimeout(
+      () => {
+        this.clearWaiting();
+        this.notify();
+      },
+      Math.max(0, call.expiresAt * 1000 - Date.now())
+    );
+    this.notify();
+  }
+
+  private clearWaiting(): void {
+    if (this.waitingTimer !== null) clearTimeout(this.waitingTimer);
+    this.waitingTimer = null;
+    this.waitingCall = null;
+  }
+
+  answerWaiting(): void {
+    const call = this.waitingCall;
+    if (!call) return;
+    this.clearWaiting();
+    this.stop();
+    void this.start({ callId: call.callId, reason: call.reason });
+  }
+
+  dismissWaiting(): void {
+    if (!this.waitingCall) return;
+    this.clearWaiting();
+    this.notify();
+  }
+
   private handleIncomingCancel(info: unknown): void {
     const parsed = incomingCallCancelSchema.safeParse(info);
+    if (parsed.success && this.waitingCall?.callId === parsed.data.callId) {
+      this.clearWaiting();
+      this.notify();
+      return;
+    }
     if (
       !parsed.success ||
       !this.active ||
@@ -813,6 +853,7 @@ class VoiceService {
       error: this.error,
       transport: this.transport,
       callReason: this.callReason,
+      waitingCall: this.waitingCall,
     };
   }
 

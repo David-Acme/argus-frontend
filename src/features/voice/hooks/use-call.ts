@@ -47,6 +47,7 @@ export function useCall(options: VoiceStartOptions = {}) {
     actions: session.actions,
     liveCameraId: session.liveCameraId,
     callReason: session.callReason,
+    waitingCall: session.waitingCall,
     toggleMute,
     interrupt,
     retry,

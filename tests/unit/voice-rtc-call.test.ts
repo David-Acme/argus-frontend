@@ -338,6 +338,31 @@ describe('Argus calls you', () => {
     expect(voiceService.snapshot.isActive).toBe(true);
   });
 
+  test('a ring during a live call waits for the user instead of joining', async () => {
+    tokenAnswers = [grant(userCall), grant('call-42')];
+    await voiceService.start();
+    operationListeners.get(8)?.(
+      ring({ callId: 'call-42', reason: 'Agenda · Dentista' }) as unknown as ISocketEmitDto
+    );
+    expect(voiceService.snapshot.waitingCall?.callId).toBe('call-42');
+    expect(posted).toHaveLength(1);
+    operationListeners.get(9)?.({
+      operation: 9,
+      info: { callId: 'call-42', reason: 'expired' },
+    } as unknown as ISocketEmitDto);
+    expect(voiceService.snapshot.waitingCall).toBeNull();
+    expect(voiceService.snapshot.transport).toBe('rtc');
+    operationListeners.get(8)?.(
+      ring({ callId: 'call-42', reason: 'Agenda · Dentista' }) as unknown as ISocketEmitDto
+    );
+    voiceService.answerWaiting();
+    await settle();
+    await settle();
+    expect(posted[1]).toEqual({ url: '/rtc/token', body: { callId: 'call-42' } });
+    expect(voiceService.snapshot.callReason).toBe('Agenda · Dentista');
+    expect(voiceService.snapshot.waitingCall).toBeNull();
+  });
+
   test('a ring in the background, an expired ring or a ring during a call is left to the server', async () => {
     setAppState('background');
     operationListeners.get(8)?.(ring() as unknown as ISocketEmitDto);
@@ -350,5 +375,6 @@ describe('Argus calls you', () => {
     operationListeners.get(8)?.(ring({ callId: 'call-42' }) as unknown as ISocketEmitDto);
     await settle();
     expect(posted).toHaveLength(1);
+    expect(voiceService.snapshot.waitingCall?.callId).toBe('call-42');
   });
 });

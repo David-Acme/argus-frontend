@@ -25,6 +25,8 @@ function CallScreen() {
     else router.replace('/');
   }, [router]);
   const closeCamera = useCallback(() => voiceService.showCamera(null), []);
+  const answerWaiting = useCallback(() => voiceService.answerWaiting(), []);
+  const dismissWaiting = useCallback(() => voiceService.dismissWaiting(), []);
   const openCamera = useCallback(() => {
     if (!liveCamera) return;
     voiceService.showCamera(null);
@@ -43,6 +45,9 @@ function CallScreen() {
       transcript={call.transcript}
       actions={call.actions}
       reason={call.callReason}
+      waitingReason={call.waitingCall?.reason ?? null}
+      onAnswerWaiting={answerWaiting}
+      onDismissWaiting={dismissWaiting}
       notice={firstCall ? t('screens.voice.mic-consent') : null}
       camera={
         liveCamera ? (

@@ -1,3 +1,5 @@
+import type { IncomingCall } from './rtc.type';
+
 export type VoicePhase = 'idle' | 'connecting' | 'reconnecting' | 'listening' | 'thinking' | 'speaking' | 'done' | 'error';
 
 export type VoiceTurnRole = 'user' | 'assistant';
@@ -74,6 +76,7 @@ export type VoiceSnapshot = {
   error: string | null;
   transport: VoiceTransport;
   callReason: string | null;
+  waitingCall: IncomingCall | null;
 };
 
 export type VoiceTransport = 'none' | 'sync' | 'rtc';

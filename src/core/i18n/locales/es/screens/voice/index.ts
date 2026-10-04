@@ -30,6 +30,9 @@ export const voice = {
   'incoming-title': 'Argus te llama',
   'mic-consent': 'Argus usa tu micrófono solo durante la llamada. Puedes silenciarlo o colgar cuando quieras.',
   'end-call': 'Terminar la llamada',
+  'waiting-title': 'Argus tiene otra llamada para ti',
+  'waiting-answer': 'Atender',
+  'waiting-dismiss': 'Ahora no',
   context: {
     cameras: 'Cámaras de la casa: {names}.',
     'no-cameras': 'La casa no tiene cámaras conectadas.',

@@ -20,6 +20,9 @@ type CallSurfaceProps = {
   actions?: readonly VoiceActionRecord[];
   reason?: string | null;
   notice?: string | null;
+  waitingReason?: string | null;
+  onAnswerWaiting?: () => void;
+  onDismissWaiting?: () => void;
   header?: ReactNode;
   camera?: ReactNode;
   onToggleMute: () => void;
@@ -36,6 +39,9 @@ export function CallSurface({
   actions = [],
   reason = null,
   notice = null,
+  waitingReason = null,
+  onAnswerWaiting,
+  onDismissWaiting,
   header,
   camera,
   onToggleMute,
@@ -61,6 +67,24 @@ export function CallSurface({
       className="bg-background w-full max-w-lg flex-1 self-center px-6"
       style={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 }}>
       {header}
+      {waitingReason ? (
+        <View
+          accessibilityLiveRegion="polite"
+          className="bg-card dark:bg-card-secondary mt-2 flex-row items-center gap-3 rounded-2xl p-3 shadow-sm shadow-black/10">
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text variant="label">{t('screens.voice.waiting-title')}</Text>
+            <Text variant="caption" numberOfLines={2}>
+              {waitingReason}
+            </Text>
+          </View>
+          <Button variant="outline" size="sm" onPress={onDismissWaiting}>
+            <Text>{t('screens.voice.waiting-dismiss')}</Text>
+          </Button>
+          <Button size="sm" onPress={onAnswerWaiting}>
+            <Text>{t('screens.voice.waiting-answer')}</Text>
+          </Button>
+        </View>
+      ) : null}
       <View className="items-center gap-1 pt-4">
         {reason ? (
           <Text variant="label" className="text-foreground-secondary text-center" numberOfLines={2}>
