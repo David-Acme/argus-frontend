@@ -29,9 +29,10 @@ export const settings = {
   },
   connection: {
     unreachable: 'Not answering right now: {names}.',
-    unconfigured: 'Not connected to Settings: {names}.',
+    unconfigured: 'You can’t adjust {names} from here yet.',
     'unconfigured-hint':
-      'Their settings stay in their .toml file. To see them here, run scripts/provision-host.sh again (or scripts/setup.sh in development) and restart those services.',
+      'They keep running with their current settings; they just aren’t linked to Settings yet. Run the server setup again and they will show up here.',
+    details: 'See details',
   },
   technical: {
     search: 'Search by name, key or service',
@@ -52,7 +53,8 @@ export const settings = {
     },
     'status-hint': {
       unreachable: 'Its options will appear when it answers again.',
-      unconfigured: 'Settings has neither its address nor its credential.',
+      unconfigured:
+        'Settings doesn’t have the address or the credential of argus-{service} yet, so its settings live only in its .toml file. Run scripts/provision-host.sh again (or scripts/setup.sh in development) and restart argus-settings and argus-{service}.',
     },
     gpu: 'GPU available',
     marker: {

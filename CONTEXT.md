@@ -1982,3 +1982,12 @@ fixes:
   time). It sits under the session list in Perfil and under the user rows in
   "Dispositivos conectados", where it reads every user's sessions and names
   the person on each sign-in.
+
+**An owner Configuración cannot reach yet (2026-10-04).** The simple mode no
+longer says "Configuración no tiene su dirección ni su credencial": it says
+what the owner sees ("Aún no puedes ajustar {names} desde aquí"), that the
+service keeps running with its current settings, and what to do (run the
+server setup again), with "Ver detalles" switching to Avanzado. There the
+owner's header names the missing address and credential of
+`argus-<service>`, the `.toml` that still holds its settings, the scripts to
+run and the two services to restart.

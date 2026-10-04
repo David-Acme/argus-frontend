@@ -10,9 +10,10 @@ import { ownerName } from '@/features/settings/model/setting-text';
 type ConnectionNoticeProps = {
   owners: readonly SettingsOwner[];
   onRetry: () => void;
+  onDetails: () => void;
 };
 
-export function ConnectionNotice({ owners, onRetry }: ConnectionNoticeProps) {
+export function ConnectionNotice({ owners, onRetry, onDetails }: ConnectionNoticeProps) {
   const { t } = useTranslation();
   const unconfigured = owners.filter((owner) => ownerStatus(owner) === 'unconfigured').map(ownerName);
   const unreachable = owners.filter((owner) => ownerStatus(owner) === 'unreachable').map(ownerName);
@@ -34,15 +35,22 @@ export function ConnectionNotice({ owners, onRetry }: ConnectionNoticeProps) {
             </Text>
           ) : null}
           {unconfigured.length > 0 ? (
-            <Text variant="micro">{t('screens.settings.connection.unconfigured-hint')}</Text>
+            <Text variant="caption">{t('screens.settings.connection.unconfigured-hint')}</Text>
           ) : null}
         </View>
       </View>
-      {unreachable.length > 0 ? (
-        <Button size="sm" variant="outline" onPress={onRetry}>
-          <Text>{t('common.retry')}</Text>
-        </Button>
-      ) : null}
+      <View className="flex-row gap-2">
+        {unconfigured.length > 0 ? (
+          <Button size="sm" variant="ghost" onPress={onDetails}>
+            <Text>{t('screens.settings.connection.details')}</Text>
+          </Button>
+        ) : null}
+        {unreachable.length > 0 ? (
+          <Button size="sm" variant="outline" onPress={onRetry}>
+            <Text>{t('common.retry')}</Text>
+          </Button>
+        ) : null}
+      </View>
     </View>
   );
 }

@@ -59,7 +59,9 @@ export function TechnicalOwnerHeader({ owner, shown, onExport, onImport }: Techn
           <Text variant="micro">
             {status === 'connected'
               ? t('screens.settings.technical.shown', { count: String(shown), total: String(owner.settings.length) })
-              : t(`screens.settings.technical.status-hint.${status}`)}
+              : status === 'unreachable'
+                ? t('screens.settings.technical.status-hint.unreachable')
+                : t('screens.settings.technical.status-hint.unconfigured', { service: owner.service })}
           </Text>
         </View>
         {status === 'connected' ? (

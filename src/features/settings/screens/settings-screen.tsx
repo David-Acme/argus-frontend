@@ -153,7 +153,11 @@ export default function SettingsScreen() {
             />
           ) : mode === 'simple' ? (
             <>
-              <ConnectionNotice owners={overview.owners} onRetry={() => void reload()} />
+              <ConnectionNotice
+                owners={overview.owners}
+                onRetry={() => void reload()}
+                onDetails={() => switchMode('advanced')}
+              />
               <SettingsProfileSection
                 profiles={profiles.profiles}
                 loading={profiles.loading}
