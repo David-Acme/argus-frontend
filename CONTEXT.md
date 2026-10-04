@@ -2105,3 +2105,79 @@ unfolds its timeline.
   moment it opened from a 420 px window. On a phone the modal allows
   every orientation and hides the system bars; the app cannot force landscape
   without `expo-screen-orientation`, so turning the phone does it.
+
+## Calls over WebRTC (2026-10-04)
+
+David decided that Argus's voice travels over WebRTC through a self-hosted
+LiveKit SFU (backend `RTC-CONTRACT`, owned by argus-sync and argus-voice);
+the `/sync` socket keeps data sync and the "Argus is calling" ring. The PCM
+call over `/sync` stays as the fallback until WebRTC is proven on every
+platform, then leaves in its own change.
+
+- **One interface, three clients.** `IRealtimeCall` (`core/interfaces/rtc.interface.ts`:
+  `join`, `setMicrophone`, `send`, `leave`, events `state | agent | data |
+  level | agentAudio`) is implemented in `features/voice/services/rtc/`:
+  `rtc-call.native.ts` uses `@livekit/react-native` 3.0.0 +
+  `@livekit/react-native-webrtc` 144.2.0 (loaded lazily, and
+  `rtcCallSupported()` answers false while the installed dev client lacks
+  `WebRTCModule`, so a JS update before a native rebuild keeps the PCM call);
+  `rtc-call.web.ts` uses `livekit-client` 2.22.3 in a browser and the Rust
+  client in Tauri. `rtc-livekit.ts` is the shared `livekit-client` adapter.
+- **The desktop call is native.** WebKitGTK has no `RTCPeerConnection`, so
+  `src-tauri/src/rtc/` runs the call with the LiveKit Rust SDK (`livekit`
+  0.9.3, `livekit-net` 0.1.3) behind `argus_rtc_join/microphone/send/leave`
+  (events on a Tauri `Channel`). Audio is `PlatformAudio`: WebRTC's own audio
+  device module (PulseAudio/PipeWire on Linux) with its software echo
+  cancellation, noise suppression and gain control, so the reference signal
+  of the canceller is exactly what plays, and the agent's track plays as it
+  arrives with only WebRTC's jitter buffer in between. The WebView only draws
+  the call. `ARGUS_RTC_FAKE_MIC=<pcm16 48 kHz mono file or wav>` replaces the
+  microphone with that file and opens no audio device at all (testing
+  without a microphone).
+- **Trust.** The LiveKit front (wss 7046) presents the instance leaf. The app
+  dials the token's `url` on the pinned host (`pinnedRtcUrl` /
+  `protocol::pinned_url`, keeping the port). Desktop registers
+  `livekit_net::set_ws_client/set_http_client` with the pinned rustls
+  connector (`net::socket::connect_pinned`, `net::http::pinned_client`).
+  Mobile routes only that origin's WebSocket through `PinnedWebSocket`
+  (`rtc/pinned-websocket.ts`), a browser-shaped socket over the native
+  `ArgusSocket`, so neither OkHttp's nor SocketRocket's trust store is
+  touched and no native change was needed for trust. Media is DTLS with the
+  fingerprints from that signalling, so no CA is involved there.
+- **Call flow** (`voice.service.ts`). `start({callId?, reason?})` asks for the
+  microphone (not on the desktop, where the native ADM needs no WebView
+  permission), then `POST /rtc/token` (`rtc/rtc-token.ts`, answer read by
+  `readTokenAnswer`): a grant joins the room; 404 without a code or 503
+  `RTC_UNAVAILABLE` falls back to `voice:start`; `CALL_TAKEN`,
+  `CALL_EXPIRED`, `CALL_NOT_FOUND` are outcomes the call screen words. The
+  agent's `lk.agent.state` attribute drives the visible phase (`rtcPhase`:
+  initializing reads as connecting; `reconnecting` is a new phase). Room
+  data uses the topics `argus.*`, mapped onto the existing `voice:*`
+  handlers, so transcript, actions, reactions and context notes are the same
+  code on both transports. Mute mutes the track and sends `argus.mute`; hang
+  up sends `argus.hangup` then leaves; a removed participant ends as a
+  revoked session; a lost room resumes with `{callId, resume: true}` for 15 s.
+  Barge-in is the agent's: the microphone stays open while Argus speaks and
+  echo cancellation keeps Argus out of it.
+- **Argus calls you.** `call_incoming` (operation 8, option `notification`)
+  answers at once when the app is in the foreground and no call is live: the
+  service claims the call with the token route, the bridge opens `/call`, and
+  the pill and the call screen show "Argus te llama · <reason>". A
+  `call_cancel` (9) only matters before the claim. The push deep link
+  `argus://call?callId=<id>` passes the allow-list with its call id only
+  (`+native-intent.ts`), and a missed call's notification (`kind: "call"`)
+  reopens it from Novedades (`missedCallId`). Native CallKit /
+  ConnectionService and a microphone foreground service on Android are a
+  later phase.
+- **Consent.** The microphone is asked for only when a call starts; the first
+  call shows "Argus usa tu micrófono solo durante la llamada…" under the
+  status (storage `voice.mic-consent-shown`). `app.json` gives iOS
+  `UIBackgroundModes: audio` and the microphone text, Android
+  `BLUETOOTH_CONNECT`, `WAKE_LOCK` and `ACCESS_NETWORK_STATE`, and the LiveKit
+  Expo plugin's `communication` audio type. A dev-client rebuild is required.
+- **Tests.** `tests/unit/rtc-protocol.test.ts`, `pinned-websocket.test.ts`,
+  `voice-rtc-call.test.ts` (the service against a fake room) and the Rust
+  units; `src-tauri` carries two ignored live tests
+  (`rtc::call::live_tests`) that join a real LiveKit with a bot posing as
+  `argus-voice` (synthetic tone or a recorded clip, data both ways, mute,
+  leave) and through the pinned TLS front.

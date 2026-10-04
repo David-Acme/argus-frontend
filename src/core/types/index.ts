@@ -30,3 +30,4 @@ export * from './camera-catalog.type';
 export * from './guard.type';
 export * from './settings.type';
 export * from './voiceprint.type';
+export * from './rtc.type';

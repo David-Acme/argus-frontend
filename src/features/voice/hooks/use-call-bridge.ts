@@ -149,6 +149,13 @@ export function useCallBridge(): void {
 
   useEffect(() => {
     if (!user) return;
+    return voiceService.onIncoming(() => {
+      if (!onCallScreen.current) router.navigate(CALL_ROUTE);
+    });
+  }, [router, user]);
+
+  useEffect(() => {
+    if (!user) return;
     const failed = (detail: string): VoiceActionOutcome => ({ ok: false, detail: spokenDetail(detail) });
     const run = async (action: VoiceAction): Promise<VoiceActionOutcome> => {
       if (action.name === 'app.show_camera') {

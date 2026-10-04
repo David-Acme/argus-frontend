@@ -1,11 +1,12 @@
 import { useCallback, useEffect } from 'react';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
-import type { AvatarState, VoicePhase } from '@/core/types';
+import type { AvatarState, VoicePhase, VoiceStartOptions } from '@/core/types';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 
 const AVATAR_BY_PHASE: Readonly<Record<VoicePhase, AvatarState>> = {
   idle: 'idle',
   connecting: 'idle',
+  reconnecting: 'thinking',
   listening: 'listening',
   thinking: 'thinking',
   speaking: 'speaking',
@@ -13,18 +14,19 @@ const AVATAR_BY_PHASE: Readonly<Record<VoicePhase, AvatarState>> = {
   error: 'error',
 };
 
-export function useCall() {
+export function useCall(options: VoiceStartOptions = {}) {
   const session = useVoiceSession();
+  const callId = options.callId;
   const { start, stop, setMuted, interrupt } = session;
   const setAvatarState = useAvatarStore((state) => state.setState);
 
   useEffect(() => {
-    start();
+    start(callId ? { callId } : {});
     return () => {
       stop();
       setAvatarState('idle');
     };
-  }, [start, stop, setAvatarState]);
+  }, [callId, start, stop, setAvatarState]);
 
   useEffect(() => {
     setAvatarState(AVATAR_BY_PHASE[session.phase]);
@@ -34,7 +36,7 @@ export function useCall() {
 
   const retry = useCallback(() => {
     stop();
-    start();
+    start({});
   }, [start, stop]);
 
   return {
@@ -44,6 +46,7 @@ export function useCall() {
     transcript: session.transcript,
     actions: session.actions,
     liveCameraId: session.liveCameraId,
+    callReason: session.callReason,
     toggleMute,
     interrupt,
     retry,

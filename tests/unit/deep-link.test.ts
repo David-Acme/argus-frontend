@@ -10,6 +10,17 @@ describe('deep link allow-list', () => {
     expect(deepLinkPath('argus://')).toBe('/');
   });
 
+  test('a call link keeps only a well-formed call id', () => {
+    expect(deepLinkPath('argus://call?callId=call-41')).toBe('/call?callId=call-41');
+    expect(deepLinkPath(`argus://call?x=1&callId=rtc-${'a'.repeat(32)}`)).toBe(
+      `/call?callId=rtc-${'a'.repeat(32)}`
+    );
+    expect(deepLinkPath('argus://call?callId=call-41&other=2')).toBe('/call?callId=call-41');
+    expect(deepLinkPath('argus://call?callId=../settings')).toBe('/call');
+    expect(deepLinkPath('argus://call?callId=call-41x')).toBe('/call');
+    expect(deepLinkPath('argus://agenda?callId=call-41')).toBe('/agenda');
+  });
+
   test('anything else lands on the entry route', () => {
     expect(deepLinkPath('argus://welcome/face?mode=invite-enroll&inviteToken=x')).toBe('/');
     expect(deepLinkPath('argus://approve')).toBe('/');

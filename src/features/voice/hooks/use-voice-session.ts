@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { voiceService } from '@/features/voice/services/voice';
-import type { VoiceSnapshot } from '@/core/types';
+import type { VoiceSnapshot, VoiceStartOptions } from '@/core/types';
 
 export type VoiceSessionState = VoiceSnapshot;
 
@@ -11,8 +11,8 @@ const getSnapshot = (): VoiceSessionState => voiceService.snapshot;
 export function useVoiceSession() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  const start = useCallback(() => {
-    void voiceService.start();
+  const start = useCallback((options: VoiceStartOptions = {}) => {
+    void voiceService.start(options);
   }, []);
 
   const stop = useCallback(() => {
@@ -33,6 +33,6 @@ export function useVoiceSession() {
 
   return useMemo(
     () => ({ ...state, start, stop, interrupt, skip, setMuted }),
-    [state, start, stop, interrupt, skip, setMuted],
+    [state, start, stop, interrupt, skip, setMuted]
   );
 }

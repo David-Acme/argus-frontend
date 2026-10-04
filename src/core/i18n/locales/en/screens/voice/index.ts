@@ -4,6 +4,7 @@ export const voice = {
   'call-title': 'Talk to Argus',
   'status-idle': 'Getting the call ready…',
   'status-connecting': 'Connecting…',
+  'status-reconnecting': 'Reconnecting…',
   'status-listening': 'Listening',
   'status-thinking': 'Thinking…',
   'status-speaking': 'Speaking',
@@ -26,6 +27,9 @@ export const voice = {
   'web-only-hint': 'To talk to Argus, use the app on your phone.',
   'in-call': 'On a call with Argus',
   'back-to-call': 'Back to the call',
+  'incoming-title': 'Argus is calling',
+  'mic-consent': 'Argus uses your microphone only during the call. You can mute it or hang up at any time.',
+  'end-call': 'End the call',
   context: {
     cameras: 'Cameras in the house: {names}.',
     'no-cameras': 'The house has no connected cameras.',
@@ -98,6 +102,9 @@ export const voice = {
     'something-moving': 'something moving',
   },
   errors: {
+    'call-taken': 'You answered this call on another device.',
+    'call-missed': 'This call has already ended.',
+    'session-revoked': 'This device was signed out.',
     connection: 'There is no connection to your Argus server.',
     generic: 'Argus cannot take the call right now.',
     unavailable: 'The microphone is not available.',

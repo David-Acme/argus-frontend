@@ -91,6 +91,14 @@ export function groupNotifications(
   return [...byKey].flatMap(([key, entries]) => toThread(key, entries) ?? []);
 }
 
+const CALL_ID = /^call-\d+$/;
+
+export function missedCallId(thread: Pick<NotificationThread, 'kind' | 'latest'>): string | null {
+  if (thread.kind !== 'call') return null;
+  const callId = textField(thread.latest, 'callId');
+  return callId && CALL_ID.test(callId) ? callId : null;
+}
+
 export function isThreadRead(thread: Pick<NotificationThread, 'unreadIds'>): boolean {
   return thread.unreadIds.length === 0;
 }

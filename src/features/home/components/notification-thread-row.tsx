@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
@@ -10,6 +11,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import {
   isThreadRead,
+  missedCallId,
   phaseOf,
   type NotificationPhase,
   type NotificationThread,
@@ -66,6 +68,7 @@ const KIND_ICONS: Readonly<Record<string, IconName>> = {
   guard_digest: 'history',
   camera_fallback: 'video',
   camera_fallback_digest: 'history',
+  call: 'phone',
 };
 
 const PHASE_KEYS = {
@@ -115,6 +118,7 @@ export function NotificationThreadRow({
   onRead,
 }: NotificationThreadRowProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const date = useDateFormatter();
   const [expanded, setExpanded] = useState(false);
   const { latest } = thread;
@@ -122,7 +126,8 @@ export function NotificationThreadRow({
   const read = isThreadRead(thread);
   const count = thread.entries.length;
   const canExpand = expandable && count > 1;
-  const pressable = canExpand || (onRead != null && !read);
+  const callId = onRead ? missedCallId(thread) : null;
+  const pressable = canExpand || callId !== null || (onRead != null && !read);
   const critical = thread.urgency === 'critical';
 
   const stamp = (at: number): string | null => {
@@ -151,6 +156,7 @@ export function NotificationThreadRow({
   const press = () => {
     if (canExpand) setExpanded((open) => !open);
     if (!read) onRead?.(thread);
+    if (callId) router.push(`/call?callId=${callId}`);
   };
 
   const content = (

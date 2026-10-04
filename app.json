@@ -12,14 +12,26 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.davidacme.argus"
+      "bundleIdentifier": "com.davidacme.argus",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#F4F1ED"
       },
-      "package": "com.davidacme.argus"
+      "package": "com.davidacme.argus",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH_CONNECT"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +50,12 @@
         }
       ],
       "expo-localization",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Argus usa el micrófono solo durante tus llamadas con Argus."
+        }
+      ],
       [
         "expo-camera",
         {
@@ -55,7 +72,15 @@
         }
       ],
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "audioType": "communication"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

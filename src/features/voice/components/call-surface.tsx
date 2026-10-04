@@ -18,6 +18,8 @@ type CallSurfaceProps = {
   error: string | null;
   transcript: readonly VoiceTranscriptLine[];
   actions?: readonly VoiceActionRecord[];
+  reason?: string | null;
+  notice?: string | null;
   header?: ReactNode;
   camera?: ReactNode;
   onToggleMute: () => void;
@@ -32,6 +34,8 @@ export function CallSurface({
   error,
   transcript,
   actions = [],
+  reason = null,
+  notice = null,
   header,
   camera,
   onToggleMute,
@@ -50,7 +54,7 @@ export function CallSurface({
         ? t('screens.voice.muted-hint')
         : speaking
           ? t('screens.voice.speaking-hint')
-          : null;
+          : notice;
 
   return (
     <View
@@ -58,16 +62,26 @@ export function CallSurface({
       style={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 }}>
       {header}
       <View className="items-center gap-1 pt-4">
+        {reason ? (
+          <Text variant="label" className="text-foreground-secondary text-center" numberOfLines={2}>
+            {`${t('screens.voice.incoming-title')} · ${reason}`}
+          </Text>
+        ) : null}
         <Text variant="title" accessibilityRole="header">
           {t(`screens.voice.status-${phase}`)}
         </Text>
-        <Text variant="caption" className="min-h-[18px]">
+        <Text
+          variant="caption"
+          className="min-h-[18px] text-center"
+          accessibilityLiveRegion="polite">
           {hint ?? ''}
         </Text>
       </View>
 
       <View className="flex-1 items-center justify-center">
-        {camera ?? <Avatar size={isShort ? 180 : 260} accessibilityLabel={t('screens.voice.call-title')} />}
+        {camera ?? (
+          <Avatar size={isShort ? 180 : 260} accessibilityLabel={t('screens.voice.call-title')} />
+        )}
       </View>
 
       <View className="min-h-32 justify-end gap-4 pb-6">
@@ -95,7 +109,12 @@ export function CallSurface({
           {speaking ? (
             <CallControl icon="hand" label={t('screens.voice.interrupt')} onPress={onInterrupt} />
           ) : null}
-          <CallControl icon="phone-off" label={t('screens.voice.hang-up')} tone="danger" onPress={onHangUp} />
+          <CallControl
+            icon="phone-off"
+            label={t('screens.voice.hang-up')}
+            tone="danger"
+            onPress={onHangUp}
+          />
         </View>
       )}
     </View>

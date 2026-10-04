@@ -1,4 +1,4 @@
-export type VoicePhase = 'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'done' | 'error';
+export type VoicePhase = 'idle' | 'connecting' | 'reconnecting' | 'listening' | 'thinking' | 'speaking' | 'done' | 'error';
 
 export type VoiceTurnRole = 'user' | 'assistant';
 
@@ -72,4 +72,13 @@ export type VoiceSnapshot = {
   actions: readonly VoiceActionRecord[];
   liveCameraId: string | null;
   error: string | null;
+  transport: VoiceTransport;
+  callReason: string | null;
+};
+
+export type VoiceTransport = 'none' | 'sync' | 'rtc';
+
+export type VoiceStartOptions = {
+  callId?: string;
+  reason?: string | null;
 };

@@ -3,6 +3,7 @@ import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import {
   groupNotifications,
   isThreadRead,
+  missedCallId,
   phaseOf,
   threadKeyOf,
   unreadIdsOf,
@@ -152,5 +153,16 @@ describe('notification threads', () => {
     expect(shown[0]?.unreadIds).toEqual(['4']);
     expect(shown[2]).toBe(read[2]);
     expect(withUnreadSnapshot(read, new Set())).toBe(read);
+  });
+
+  test('a missed call thread names the call it reopens', () => {
+    const [missed] = groupNotifications([
+      row('9', { kind: 'call', callId: 'call-41', threadKey: 'call:41', urgency: 'critical' }),
+    ]);
+    expect(missed && missedCallId(missed)).toBe('call-41');
+    const [forged] = groupNotifications([row('10', { kind: 'call', callId: '../settings' })]);
+    expect(forged && missedCallId(forged)).toBeNull();
+    const [other] = groupNotifications([row('11', { kind: 'guard_episode', callId: 'call-41' })]);
+    expect(other && missedCallId(other)).toBeNull();
   });
 });

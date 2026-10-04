@@ -9,6 +9,7 @@ mock.module('react-native', () => ({
     OS: 'web',
     select: <T>(options: { web?: T; default?: T }) => options.web ?? options.default,
   },
+  AppState: { currentState: 'active' },
 }));
 
 const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');
