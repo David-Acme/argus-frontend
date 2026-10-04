@@ -8,7 +8,7 @@ use std::time::Duration;
 use net::discover::discover;
 use net::http::{probe as http_probe, request as http_request, HttpRequest, HttpResult};
 use net::pair::{pair, PairExpectation, PairInput};
-use net::secure::{delete as secure_delete, get as secure_get, set_from_webview as secure_set};
+use net::secure::{delete_from_webview as secure_delete, get as secure_get, set_from_webview as secure_set};
 use net::socket::{close as socket_close, open as socket_open, send_binary as socket_send_binary,
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
 use tauri::ipc::{Channel, Request};
@@ -33,6 +33,7 @@ async fn argus_discover(timeout_ms: f64) -> Result<net::Discovery, String> {
 
 #[tauri::command]
 async fn argus_pair(
+  app: tauri::AppHandle,
   host: String,
   ip: String,
   port: f64,
@@ -40,7 +41,7 @@ async fn argus_pair(
   expect: Option<PairExpectation>,
 ) -> Result<net::Pairing, String> {
   let port = u16::try_from(port as i64).map_err(|_| "HOST_NOT_ALLOWED|Invalid pairing port".to_string())?;
-  pair(PairInput { host, ip, port, code, expect }).await
+  pair(PairInput { host, ip, port, code, expect }, |change| net::confirm::trust_change(app, change)).await
 }
 
 #[tauri::command]

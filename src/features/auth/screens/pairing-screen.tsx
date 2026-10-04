@@ -31,6 +31,7 @@ const PHASE_LABEL: Record<PairingFlowPhase, TranslationKey> = {
 
 const ERROR_LABEL: Partial<Record<NetErrorCode, TranslationKey>> = {
   ALREADY_PAIRED: 'screens.pairing.errors.already-paired',
+  PAIRING_DECLINED: 'screens.pairing.errors.declined',
   INVALID_PAIRING_CODE: 'screens.pairing.errors.invalid-code',
   DISCOVERY_NOT_FOUND: 'screens.pairing.errors.not-found',
   HOST_NOT_ALLOWED: 'screens.pairing.errors.invalid-address',

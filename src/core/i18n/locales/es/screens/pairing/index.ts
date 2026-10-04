@@ -22,6 +22,7 @@ export const pairing = {
     'invalid-address': 'Escribe una IP válida, por ejemplo 192.168.1.20.',
     'invalid-code': 'Código inválido.',
     'already-paired': 'Este servidor ya está vinculado.',
+    declined: 'Sigues conectado al servidor de antes. El cambio no se confirmó en este equipo.',
     'not-found': 'No se encontró el servidor en la red.',
     'fingerprint-mismatch': 'El servidor no coincide con el código escaneado.',
     network: 'No se pudo conectar con el servidor.',

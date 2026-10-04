@@ -1,8 +1,10 @@
+use std::future::Future;
 use std::time::Duration;
 
 use serde::Deserialize;
 use serde_json::Value;
 
+use super::confirm::{changes_anchor, TrustChange};
 use super::trust::{self, PinnedServer};
 use super::Pairing;
 
@@ -25,7 +27,11 @@ pub struct PairInput {
   pub expect: Option<PairExpectation>,
 }
 
-pub async fn pair(input: PairInput) -> Result<Pairing, String> {
+pub async fn pair<F, Fut>(input: PairInput, confirm: F) -> Result<Pairing, String>
+where
+  F: FnOnce(TrustChange) -> Fut,
+  Fut: Future<Output = bool>,
+{
   let PairInput { host, ip, port, code, expect } = input;
   let client = reqwest::Client::builder()
     .danger_accept_invalid_certs(true)
@@ -88,6 +94,18 @@ pub async fn pair(input: PairInput) -> Result<Pairing, String> {
       || !expect.instance_id.eq_ignore_ascii_case(&instance_id)
     {
       return Err("FINGERPRINT_MISMATCH|The server fingerprint does not match the scanned QR".to_string());
+    }
+  }
+
+  let pinned = trust::pinned_fingerprint()?;
+  if changes_anchor(pinned.as_deref(), &ca_fingerprint) {
+    let change = TrustChange {
+      previous: pinned.unwrap_or_default(),
+      next: ca_fingerprint.clone(),
+      host: host.clone(),
+    };
+    if !confirm(change).await {
+      return Err("PAIRING_DECLINED|The new server was not confirmed on this computer".to_string());
     }
   }
 

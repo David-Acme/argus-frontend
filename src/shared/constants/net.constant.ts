@@ -38,3 +38,10 @@ export const NET_STORAGE_KEYS = {
   accessToken: 'net.accessToken',
   refreshToken: 'net.refreshToken',
 } as const;
+
+export const NET_TRUST_KEYS: readonly string[] = [
+  NET_STORAGE_KEYS.caPem,
+  NET_STORAGE_KEYS.caFingerprint,
+  NET_STORAGE_KEYS.host,
+  NET_STORAGE_KEYS.ip,
+];

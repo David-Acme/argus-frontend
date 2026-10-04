@@ -1434,7 +1434,23 @@ with tests. The decisions that outlive the commits:
   relocation goes through `argus_relocate`. A compromised WebView can still
   re-pair through `argus_pair` with a code it chose, so this closes the cheap
   path (two `argus_secure_set` calls), not every path; that would need a
-  native confirmation.
+  native confirmation. **Closed since (2026-10-03):** `argus_pair` compares the
+  new CA fingerprint with the pinned one, and when they differ it shows a
+  native dialog (`src-tauri/src/net/confirm.rs`, `rfd` 0.15 over GTK, parented
+  to the main window, Spanish or English from `LC_ALL`/`LC_MESSAGES`/`LANG`)
+  naming both fingerprints and the host; only "Confiar en el nuevo servidor"
+  pins the new trust, anything else answers `PAIRING_DECLINED` (the pairing
+  screen says the previous server is kept). A first pairing and a re-pairing
+  to the same CA ask nothing. The WebView may no longer delete a trust key
+  either (`argus_secure_delete` → `delete_from_webview`), so it cannot clear
+  the anchor and then pair as if for the first time: unpairing the desktop
+  forgets the session and the pairing metadata (`clearInstance(NET_TRUST_KEYS)`
+  keeps the four trust keys), and the CA it trusted stays pinned until a
+  confirmed re-pairing replaces it. `rfd` was chosen over
+  `tauri-plugin-dialog` because the plugin pulled tauri 2.12 and 54 other
+  crate upgrades into the lock; `rfd` alone adds one crate. The dialog runs
+  from a blocking thread (`spawn_blocking`), never the main one, as the plugin
+  itself does.
 - **The desktop proves it drew the login QR** (`pollHash` + `X-Argus-Login-Proof`).
 - **The projection knows its owner** (user id + role in WatermelonDB's own
   local storage); a mismatch at InitialInfo wipes and bootstraps. Existing

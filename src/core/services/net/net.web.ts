@@ -1,7 +1,7 @@
 import { invoke, Channel } from '@tauri-apps/api/core';
 import type { NetSocketOptions } from 'argus-net';
 
-import { DISCOVERY_TIMEOUT_MS } from '@/shared/constants';
+import { DISCOVERY_TIMEOUT_MS, NET_TRUST_KEYS } from '@/shared/constants';
 import type { IArgusNetService, IArgusSocket } from '@/core/interfaces';
 import {
   clearInstance,
@@ -109,7 +109,7 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async unpair(): Promise<void> {
-    await clearInstance();
+    await clearInstance(NET_TRUST_KEYS);
   }
 }
 

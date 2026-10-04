@@ -58,6 +58,13 @@ pub fn set(key: &str, value: &str) -> Result<(), String> {
   written
 }
 
+pub fn delete_from_webview(key: &str) -> Result<(), String> {
+  if is_trust_key(key) {
+    return Err(format!("SECURE_KEY_NOT_ALLOWED|{key} is kept by the desktop host"));
+  }
+  delete(key)
+}
+
 pub fn delete(key: &str) -> Result<(), String> {
   let deleted = match entry(key)?.delete_credential() {
     Ok(()) | Err(KeyringError::NoEntry) => Ok(()),

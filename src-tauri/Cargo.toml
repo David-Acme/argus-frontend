@@ -25,6 +25,7 @@ rustls-pemfile = "2"
 url = "2"
 http = "1"
 keyring = { version = "3", default-features = false, features = ["apple-native", "windows-native", "sync-secret-service"] }
+rfd = { version = "0.15", default-features = false, features = ["gtk3"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = "2.0"

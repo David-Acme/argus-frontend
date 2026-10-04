@@ -1,3 +1,4 @@
+pub mod confirm;
 pub mod discover;
 pub mod http;
 pub mod identity;

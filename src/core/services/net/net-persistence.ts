@@ -123,9 +123,10 @@ export async function rememberInstanceAddress(update: NetAddressUpdate): Promise
   if (cachedInstance) cachedInstance = { ...cachedInstance, ip: update.ip, routes: update.routes };
 }
 
-export async function clearInstance(): Promise<void> {
+export async function clearInstance(keep: readonly string[] = []): Promise<void> {
   cachedInstance = null;
   for (const key of Object.values(NET_STORAGE_KEYS)) {
+    if (keep.includes(key)) continue;
     await secureStorageService.deleteAsync(key);
   }
 }
@@ -134,6 +135,7 @@ const NATIVE_ERROR_CODES: ReadonlySet<NetErrorCode> = new Set([
   'PAIRING_REQUIRED',
   'INVALID_PAIRING_CODE',
   'ALREADY_PAIRED',
+  'PAIRING_DECLINED',
   'FINGERPRINT_MISMATCH',
   'CERT_NOT_TRUSTED',
   'UNAUTHORIZED',

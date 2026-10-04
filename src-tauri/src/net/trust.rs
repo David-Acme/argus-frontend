@@ -44,6 +44,10 @@ pub fn paired() -> Result<Trust, String> {
   Ok(trust)
 }
 
+pub fn pinned_fingerprint() -> Result<Option<String>, String> {
+  Ok(secure::get("net.caFingerprint")?.filter(|value| !value.is_empty()))
+}
+
 pub fn pin(server: &PinnedServer<'_>) -> Result<(), String> {
   secure::set("net.caPem", server.ca_pem)?;
   secure::set("net.caFingerprint", server.ca_fingerprint)?;
