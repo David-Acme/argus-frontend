@@ -35,11 +35,7 @@ export const cameras = {
     move: 'Mover',
     'fell-back': 'La conexión no daba para la calidad alta, así que pasamos a Fluida.',
     restore: 'Volver a Alta',
-    'frame-rate': 'Fotogramas por segundo',
-    'frame-rate-option': '{fps} fps',
-    'frame-rate-hint': 'Más fotogramas se ven más fluidos, pero usan más red y más espacio al grabar.',
     'frame-rate-fixed': 'Esta cámara emite a {fps} fps.',
-    'frame-rate-owner': 'Esta cámara emite a {fps} fps. Quien administra la cámara puede cambiarlo.',
   },
   info: {
     title: 'Dispositivo',

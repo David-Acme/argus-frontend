@@ -29,7 +29,6 @@ export interface ICameraSettings {
   autoTrack?: boolean;
   alarm?: boolean;
   alarmVolume?: number;
-  frameRate?: number;
 }
 
 export interface ICameraDeviceStatus {

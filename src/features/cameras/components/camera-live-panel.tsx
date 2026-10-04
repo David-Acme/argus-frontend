@@ -1,5 +1,5 @@
 import { Pressable, View } from 'react-native';
-import type { ICameraVideoProfile, IZoneCacheRow } from '@/core/interfaces';
+import type { IZoneCacheRow } from '@/core/interfaces';
 import type { IconName } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
@@ -34,13 +34,10 @@ type CameraLivePanelProps = {
   quality: CameraQualityControls;
   stage: CameraLiveStageState;
   audio: CameraLiveAudio;
-  video: ICameraVideoProfile | null;
-  canControl: boolean;
   canEnable: boolean;
   ptz: CameraPtzControls | null;
   presets: CameraPresetControls | null;
   onShowZonesChange: (show: boolean) => void;
-  onFrameRate: (fps: number) => void;
   onEnable: () => void;
   className?: string;
 };
@@ -141,13 +138,10 @@ export function CameraLivePanel({
   quality,
   stage,
   audio,
-  video,
-  canControl,
   canEnable,
   ptz,
   presets,
   onShowZonesChange,
-  onFrameRate,
   onEnable,
   className,
 }: CameraLivePanelProps) {
@@ -235,12 +229,7 @@ export function CameraLivePanel({
 
       {enabled ? (
         <View className="px-1">
-          <CameraFrameRate
-            video={video}
-            measuredFps={quality.quality === 'main' ? (stats?.fps ?? 0) : 0}
-            canChange={canControl}
-            onChange={onFrameRate}
-          />
+          <CameraFrameRate measuredFps={stats?.fps ?? 0} />
         </View>
       ) : null}
     </Panel>

@@ -1,4 +1,3 @@
-import type { ICameraVideoProfile } from '@/core/interfaces';
 import type { CameraStreamQuality, CameraStreamState } from '@/core/types';
 
 export type QualityContext = {
@@ -30,13 +29,4 @@ export function recordStall(history: StallHistory, now: number): StallHistory {
 
 export function shouldFallBack(quality: CameraStreamQuality, history: StallHistory): boolean {
   return quality === 'main' && history.length >= STALLS_BEFORE_FALLBACK;
-}
-
-export const MIN_CHOOSABLE_FPS = 10;
-
-export function frameRateChoices(video: Pick<ICameraVideoProfile, 'frameRate' | 'frameRates'> | null): number[] {
-  if (!video) return [];
-  const rates = new Set(video.frameRates.filter((fps) => fps >= MIN_CHOOSABLE_FPS));
-  if (video.frameRate > 0) rates.add(video.frameRate);
-  return [...rates].sort((left, right) => left - right);
 }

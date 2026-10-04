@@ -100,7 +100,6 @@ export default function CameraDetailScreen() {
   const mutateDevice = deviceResource.mutate;
   const applyDevice = useCallback((status: ICameraDeviceStatus | null) => mutateDevice(() => status), [mutateDevice]);
   const deviceSettings = useCameraDeviceSettings({ cameraId: id, status: device, onApplied: applyDevice });
-  const applySettings = deviceSettings.apply;
 
 
   const canDelete = can('camera', 'delete');
@@ -190,8 +189,6 @@ export default function CameraDetailScreen() {
     if (saved) void reloadPresets();
   }, [id, move, presets, reloadPresets, t]);
 
-  const changeFrameRate = useCallback((frameRate: number) => void applySettings({ frameRate }), [applySettings]);
-
 
   const openZone = useCallback((target: string) => {
     setZoneId(target);
@@ -241,15 +238,12 @@ export default function CameraDetailScreen() {
       quality={quality}
       stage={stage}
       audio={audio}
-      video={device?.video ?? null}
-      canControl={canUpdate}
       canEnable={canUpdate}
       ptz={ptz}
       presets={
         canUpdate && features?.presets ? { presets, onGoto: gotoPreset, onSave: () => void savePreset() } : null
       }
       onShowZonesChange={setShowZones}
-      onFrameRate={changeFrameRate}
       onEnable={() => void setEnabled(camera.id, camera.name, true)}
     />
   );

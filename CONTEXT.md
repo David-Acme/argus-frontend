@@ -2075,12 +2075,11 @@ unfolds its timeline.
   sub stream has a most common gap of 50 ms but 15.1 fps on average), and
   whether the stream carries audio. The media session reports it through
   `events.onStats`; the video shows it as a chip ("2688×1520 · 15 fps").
-- **Frame rate.** The device status carries `video {frameRate, frameRates,
-  resolution, resolutions}` from the Tapo encoder. Who may update the camera
-  picks among the offered rates of 10 fps and up (`CameraFrameRate`, applied
-  optimistically through `PATCH /camera/{id}/settings {frameRate}` and rolled
-  back on a refusal); anyone else, or a camera with one rate, reads "Esta
-  cámara emite a N fps". The owner's C225 offers 15, 20 and 25 fps.
+- **Frame rate, read-only.** The C225 has no frame-rate setting Argus can
+  use (argus-camera CONTEXT: the setters are missing or unsupported, and the
+  one the camera accepts is stored without changing the stream), so the
+  detail shows the measured rate under the video ("Esta cámara emite a N
+  fps") and offers no choice.
 - **The camera is heard by default.** The live view plays the camera
   microphone from the fMP4 it already receives (the FLAC track argus-camera
   muxes beside the video), so listening opens nothing: no second stream, never

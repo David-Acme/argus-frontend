@@ -9,7 +9,5 @@ export function optimisticStatus(status: ICameraDeviceStatus | null, body: ICame
     autoTrackEnabled: body.autoTrack ?? status?.autoTrackEnabled,
     dayNightMode: body.dayNight ?? status?.dayNightMode,
     motionSensitivity: body.motionSensitivity ?? status?.motionSensitivity,
-    video:
-      body.frameRate != null && status?.video ? { ...status.video, frameRate: body.frameRate } : status?.video,
   };
 }

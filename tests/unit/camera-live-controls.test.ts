@@ -2,10 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { ptzHold, ptzStep, reachedLimit } from '@/features/cameras/model/camera-ptz';
 import { liveAudioLevel, liveAudioReason, storedMuted } from '@/features/cameras/model/camera-live-audio';
 import { capabilitiesFromRow, hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
-import { optimisticStatus } from '@/features/cameras/model/camera-device';
 import {
   defaultQuality,
-  frameRateChoices,
   isStall,
   recordStall,
   shouldFallBack,
@@ -116,11 +114,6 @@ describe('live quality', () => {
     expect(recordStall(first, 1000 + STALL_WINDOW_MS)).toHaveLength(1);
   });
 
-  test('frame rates below ten are not offered, the current one always is', () => {
-    expect(frameRateChoices({ frameRate: 15, frameRates: [1, 15, 20, 25, 30] })).toEqual([15, 20, 25, 30]);
-    expect(frameRateChoices({ frameRate: 15, frameRates: [] })).toEqual([15]);
-    expect(frameRateChoices(null)).toEqual([]);
-  });
 });
 
 describe('stream meter', () => {
@@ -138,16 +131,6 @@ describe('stream meter', () => {
   });
 });
 
-describe('device settings', () => {
-  test('a frame rate change shows at once on the device status', () => {
-    const status = {
-      model: 'C225',
-      video: { resolution: '2688x1520', frameRate: 15, encoding: 'H264', frameRates: [15, 30], resolutions: [] },
-    };
-    expect(optimisticStatus(status, { frameRate: 30 }).video?.frameRate).toBe(30);
-    expect(optimisticStatus(status, { led: true }).video?.frameRate).toBe(15);
-  });
-});
 
 describe('live camera audio', () => {
   test('plays by default, and the user, an Argus call or a camera call silence it', () => {

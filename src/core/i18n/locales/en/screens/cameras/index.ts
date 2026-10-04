@@ -35,11 +35,7 @@ export const cameras = {
     move: 'Move',
     'fell-back': 'The connection could not keep up with High quality, so we switched to Smooth.',
     restore: 'Back to High',
-    'frame-rate': 'Frames per second',
-    'frame-rate-option': '{fps} fps',
-    'frame-rate-hint': 'More frames look smoother, but use more network and more space when recording.',
     'frame-rate-fixed': 'This camera streams at {fps} fps.',
-    'frame-rate-owner': 'This camera streams at {fps} fps. Whoever manages the camera can change it.',
   },
   info: {
     title: 'Device',
