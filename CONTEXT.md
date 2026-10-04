@@ -2098,6 +2098,10 @@ unfolds its timeline.
   PTZ, quality) in a full-window `Modal`; on the desktop it also makes the
   Tauri window fullscreen (`core:window:allow-set-fullscreen`), on the web the
   document; Escape, the browser's own exit or the button closes it
-  (`services/window-fullscreen.{web,native}.ts`). On a phone the modal allows
+  (`services/window-fullscreen.{web,native}.ts`). The modal and the stage
+  state (`hooks/use-camera-live-stage.ts`) live in the detail screen, beside
+  `AppScreen`: going fullscreen resizes the window, the screen switches layout
+  and remounts the live panel, and a modal inside the panel closed itself the
+  moment it opened from a 420 px window. On a phone the modal allows
   every orientation and hides the system bars; the app cannot force landscape
   without `expo-screen-orientation`, so turning the phone does it.

@@ -11,6 +11,7 @@ import { CameraCallPanel } from '@/features/cameras/components/camera-call-panel
 import { CameraControlPanel } from '@/features/cameras/components/camera-control-panel';
 import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
 import { useCameraDeviceSettings } from '@/features/cameras/hooks/use-camera-device-settings';
+import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-stage';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
@@ -19,7 +20,7 @@ import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import { cameraActionAccessForRole } from '@/shared/libs/role-access';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
-import { CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
+import { CameraLiveFullscreen, CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
 import { CameraTalkSheet } from '@/features/cameras/components/camera-talk-sheet';
 import { CameraZonesPanel } from '@/features/cameras/components/camera-zones-panel';
 import { ZoneForm } from '@/features/cameras/components/zone-form';
@@ -54,6 +55,8 @@ export default function CameraDetailScreen() {
   const [showZones, setShowZones] = useState(true);
   const [streamAudio, setStreamAudio] = useState(false);
   const quality = useCameraQuality(id);
+  const noteStats = useCallback((stats: ICameraLiveStats) => setStreamAudio(stats.audio), []);
+  const stage = useCameraLiveStage({ quality, onStats: noteStats });
   const { run: move, pending: moving } = useServiceAction();
   const { cameras, isPendingZone } = useCameraRows();
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
@@ -206,7 +209,6 @@ export default function CameraDetailScreen() {
 
   const changeFrameRate = useCallback((frameRate: number) => void applySettings({ frameRate }), [applySettings]);
 
-  const noteStats = useCallback((stats: ICameraLiveStats) => setStreamAudio(stats.audio), []);
 
   const openZone = useCallback((target: string) => {
     setZoneId(target);
@@ -246,6 +248,7 @@ export default function CameraDetailScreen() {
 
   const status = cameraStatusOf(camera);
   const stretch = isWide ? 'grow' : undefined;
+  const ptz = canUpdate && features?.ptz ? { moving, onStep: step, onCenter: center } : null;
   const live = (
     <CameraLivePanel
       cameraId={camera.id}
@@ -253,16 +256,16 @@ export default function CameraDetailScreen() {
       zones={zones}
       showZones={showZones}
       quality={quality}
+      stage={stage}
       video={device?.video ?? null}
       canControl={canUpdate}
       canEnable={canUpdate}
-      ptz={canUpdate && features?.ptz ? { moving, onStep: step, onCenter: center } : null}
+      ptz={ptz}
       presets={
         canUpdate && features?.presets ? { presets, onGoto: gotoPreset, onSave: () => void savePreset() } : null
       }
       onShowZonesChange={setShowZones}
       onFrameRate={changeFrameRate}
-      onStats={noteStats}
       onEnable={() => void setEnabled(camera.id, camera.name, true)}
     />
   );
@@ -369,6 +372,16 @@ export default function CameraDetailScreen() {
         </Animated.View>
       </ScrollView>
 
+      {camera.isEnabled ? (
+        <CameraLiveFullscreen
+          cameraId={camera.id}
+          zones={zones}
+          showZones={showZones}
+          quality={quality}
+          ptz={ptz}
+          stage={stage}
+        />
+      ) : null}
       <CameraForm open={editOpen} onOpenChange={setEditOpen} camera={camera} />
       <CameraTalkSheet open={talkOpen} onOpenChange={setTalkOpen} cameraId={camera.id} />
       <ZoneForm open={zoneOpen} onOpenChange={setZoneOpen} cameraId={camera.id} zone={zone} zones={zones} />

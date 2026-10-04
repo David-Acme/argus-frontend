@@ -1,14 +1,12 @@
-import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import type { ICameraLiveStats, ICameraVideoProfile, IZoneCacheRow } from '@/core/interfaces';
-import type { CameraStreamState, IconName } from '@/core/types';
+import type { ICameraVideoProfile, IZoneCacheRow } from '@/core/interfaces';
+import type { IconName } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Panel } from '@/shared/components/ui/panel';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { CameraFrameRate } from '@/features/cameras/components/camera-frame-rate';
 import { CameraFullscreen } from '@/features/cameras/components/camera-fullscreen';
@@ -16,6 +14,7 @@ import { CameraLiveStage, type CameraPtzControls } from '@/features/cameras/comp
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraZonesOverlay } from '@/features/cameras/components/camera-zones-overlay';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
+import type { CameraLiveStageState } from '@/features/cameras/hooks/use-camera-live-stage';
 import type { CameraQualityControls } from '@/features/cameras/hooks/use-camera-quality';
 import type { CameraPreset } from '@/features/cameras/model/camera-presets';
 
@@ -31,6 +30,7 @@ type CameraLivePanelProps = {
   zones: readonly IZoneCacheRow[];
   showZones: boolean;
   quality: CameraQualityControls;
+  stage: CameraLiveStageState;
   video: ICameraVideoProfile | null;
   canControl: boolean;
   canEnable: boolean;
@@ -38,9 +38,25 @@ type CameraLivePanelProps = {
   presets: CameraPresetControls | null;
   onShowZonesChange: (show: boolean) => void;
   onFrameRate: (fps: number) => void;
-  onStats: (stats: ICameraLiveStats) => void;
   onEnable: () => void;
   className?: string;
+};
+
+type CameraLiveFullscreenProps = {
+  cameraId: string;
+  zones: readonly IZoneCacheRow[];
+  showZones: boolean;
+  quality: CameraQualityControls;
+  ptz: CameraPtzControls | null;
+  stage: CameraLiveStageState;
+};
+
+type StageViewProps = CameraLiveFullscreenProps & {
+  inFullscreen: boolean;
+};
+
+type QualitySwitchProps = {
+  quality: CameraQualityControls;
 };
 
 type ChipProps = {
@@ -69,33 +85,9 @@ function Chip({ icon, label, active, onPress }: ChipProps) {
   );
 }
 
-export function CameraLivePanel({
-  cameraId,
-  enabled,
-  zones,
-  showZones,
-  quality,
-  video,
-  canControl,
-  canEnable,
-  ptz,
-  presets,
-  onShowZonesChange,
-  onFrameRate,
-  onStats,
-  onEnable,
-  className,
-}: CameraLivePanelProps) {
+function QualitySwitch({ quality }: QualitySwitchProps) {
   const { t } = useTranslation();
-  const [fullscreen, setFullscreen] = useState(false);
-  const { isCompact } = useWindowClass();
-  const [showPad, setShowPad] = useState(() => !isCompact);
-  const [stats, setStats] = useState<ICameraLiveStats | null>(null);
-  const [live, setLive] = useState(false);
-  const activeZones = zones.filter((zone) => zone.isEnabled).length;
-  const observe = quality.observe;
-  const overlay = showZones ? <CameraZonesOverlay zones={zones} /> : null;
-  const qualityControl = (
+  return (
     <SegmentedControl
       accessibilityLabel={t('screens.cameras.live.quality')}
       value={quality.quality}
@@ -106,39 +98,56 @@ export function CameraLivePanel({
       ]}
     />
   );
+}
 
-  const handleStats = useCallback(
-    (next: ICameraLiveStats) => {
-      setStats(next);
-      onStats(next);
-    },
-    [onStats],
-  );
-
-  const handleState = useCallback(
-    (state: CameraStreamState) => {
-      setLive(state === 'live' || state === 'reconnecting');
-      observe(state);
-    },
-    [observe],
-  );
-
-  const stage = (inFullscreen: boolean) => (
+function StageView({ cameraId, zones, showZones, quality, ptz, stage, inFullscreen }: StageViewProps) {
+  return (
     <CameraLiveStage
       cameraId={cameraId}
       quality={quality.quality}
-      overlay={overlay}
-      stats={stats}
-      live={live}
+      overlay={showZones ? <CameraZonesOverlay zones={zones} /> : null}
+      stats={stage.stats}
+      live={stage.live}
       fullscreen={inFullscreen}
       ptz={ptz}
-      showPad={showPad}
-      fullscreenControls={qualityControl}
-      onStats={handleStats}
-      onState={handleState}
-      onToggleFullscreen={() => setFullscreen(!inFullscreen)}
+      showPad={stage.showPad}
+      fullscreenControls={<QualitySwitch quality={quality} />}
+      onStats={stage.handleStats}
+      onState={stage.handleState}
+      onToggleFullscreen={() => stage.setFullscreen(!inFullscreen)}
     />
   );
+}
+
+export function CameraLiveFullscreen(props: CameraLiveFullscreenProps) {
+  const { stage } = props;
+  return (
+    <CameraFullscreen open={stage.fullscreen} onClose={() => stage.setFullscreen(false)}>
+      {stage.fullscreen ? <StageView {...props} inFullscreen /> : null}
+    </CameraFullscreen>
+  );
+}
+
+export function CameraLivePanel({
+  cameraId,
+  enabled,
+  zones,
+  showZones,
+  quality,
+  stage,
+  video,
+  canControl,
+  canEnable,
+  ptz,
+  presets,
+  onShowZonesChange,
+  onFrameRate,
+  onEnable,
+  className,
+}: CameraLivePanelProps) {
+  const { t } = useTranslation();
+  const { fullscreen, showPad, stats, setShowPad } = stage;
+  const activeZones = zones.filter((zone) => zone.isEnabled).length;
 
   return (
     <Panel className={cn('gap-3 p-3', className)}>
@@ -155,7 +164,15 @@ export function CameraLivePanel({
           <Text variant="caption">{t('screens.cameras.live.in-fullscreen')}</Text>
         </View>
       ) : (
-        stage(false)
+        <StageView
+          cameraId={cameraId}
+          zones={zones}
+          showZones={showZones}
+          quality={quality}
+          ptz={ptz}
+          stage={stage}
+          inFullscreen={false}
+        />
       )}
 
       <View className="min-h-10 flex-row flex-wrap items-center gap-2 px-1">
@@ -172,7 +189,9 @@ export function CameraLivePanel({
         ) : null}
         <View className="flex-1" />
         {enabled ? (
-          <View className="w-56">{qualityControl}</View>
+          <View className="w-56">
+            <QualitySwitch quality={quality} />
+          </View>
         ) : canEnable ? (
           <Button size="sm" onPress={onEnable}>
             <Icon name="play" className="text-foreground-on-interactive size-4" />
@@ -217,10 +236,6 @@ export function CameraLivePanel({
           />
         </View>
       ) : null}
-
-      <CameraFullscreen open={fullscreen} onClose={() => setFullscreen(false)}>
-        {fullscreen ? stage(true) : null}
-      </CameraFullscreen>
     </Panel>
   );
 }
