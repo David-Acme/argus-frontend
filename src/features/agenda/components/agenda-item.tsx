@@ -72,7 +72,7 @@ export function AgendaItem({
         pending && 'opacity-60',
       )}>
       {contextMenu ? contextMenu(pressable) : pressable}
-      {actions ? <View className="pt-3 pr-3">{actions}</View> : null}
+      {actions === undefined ? null : <View className="w-7 items-start pt-3">{actions}</View>}
     </View>
   );
 }
