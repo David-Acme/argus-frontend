@@ -46,7 +46,7 @@ export const common = {
   'confirm-delete': 'Eliminar',
   errors: {
     network: 'No se pudo conectar con Argus',
-    timeout: 'Tiempo de espera agotado',
+    timeout: 'Argus tardó demasiado en responder. Inténtalo de nuevo.',
     unauthorized: 'Sesión expirada, vuelve a iniciar sesión',
     forbidden: 'No tienes permiso para esta acción',
     'not-found': 'Recurso no encontrado',
@@ -59,6 +59,10 @@ export const common = {
     'remote-not-allowed': 'Esto solo se puede hacer desde la red de tu casa.',
     'bad-request': 'Argus no pudo procesar esa petición.',
     'pairing-required': 'Empareja tu dispositivo con el servidor primero',
+    'invalid-response': 'Argus respondió algo que la app no entiende. Inténtalo de nuevo o actualiza la app.',
+    'cert-not-trusted': 'No se pudo comprobar que este servidor sea tu Argus. Vuelve a vincular el dispositivo.',
+    'fingerprint-mismatch': 'Este servidor no es el que vinculaste, así que la app no se ha conectado.',
+    storage: 'No se pudieron leer los datos guardados en este dispositivo. Inténtalo de nuevo.',
     unknown: 'Algo salió mal',
   },
 } as const;

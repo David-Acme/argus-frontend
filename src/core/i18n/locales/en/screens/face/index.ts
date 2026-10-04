@@ -17,7 +17,7 @@ export const face = {
   enrolling: 'Registering your identity…',
   logging: 'Recognizing you…',
   sending: 'Sending…',
-  error: 'Could not complete the operation.',
+  error: 'Something did not work. Try again in a moment.',
   'error-camera-capture': 'The camera could not save the photo. Hold still and try again.',
   'error-empty-image': 'The camera returned an empty photo. Check permission and try again.',
   'error-image-too-large': 'The photo is too large to send. Please try again.',

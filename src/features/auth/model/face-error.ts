@@ -1,5 +1,6 @@
 import type { IApiError } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
+import { serviceErrorKey } from '@/shared/libs/service-error';
 
 export type FaceError = IApiError & { status?: number };
 
@@ -33,5 +34,6 @@ export function faceErrorMessage(error: FaceError, t: TranslateFn): string {
   if (error.code === 'NETWORK_ERROR' || error.code === 'PAIRING_REQUIRED') {
     return t('screens.face.error-network');
   }
-  return error.message || t('screens.face.error');
+  const known = serviceErrorKey(error);
+  return known === 'common.errors.unknown' ? t('screens.face.error') : t(known);
 }

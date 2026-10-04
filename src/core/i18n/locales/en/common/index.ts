@@ -47,7 +47,7 @@ export const common = {
   'confirm-delete': 'Delete',
   errors: {
     network: 'Could not connect to Argus',
-    timeout: 'Request timed out',
+    timeout: 'Argus took too long to answer. Try again.',
     unauthorized: 'Session expired, sign in again',
     forbidden: 'You do not have permission to do this',
     'not-found': 'Resource not found',
@@ -60,6 +60,10 @@ export const common = {
     'remote-not-allowed': 'This can only be done from your home network.',
     'bad-request': 'Argus could not process that request.',
     'pairing-required': 'Pair your device with the server first',
+    'invalid-response': 'Argus answered in a way the app does not understand. Try again or update the app.',
+    'cert-not-trusted': 'This server could not be confirmed as your Argus. Pair the device again.',
+    'fingerprint-mismatch': 'This is not the server you paired with, so the app did not connect.',
+    storage: 'The data saved on this device could not be read. Try again.',
     unknown: 'Something went wrong',
   },
 };
