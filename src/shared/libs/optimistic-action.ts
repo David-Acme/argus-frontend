@@ -18,6 +18,12 @@ export type OptimisticUndo = {
   description?: string;
 };
 
+export type OptimisticRefusal = {
+  recordIds: readonly string[];
+  title: string;
+  description?: string;
+};
+
 export type OptimisticAction<R> = {
   intents: readonly OptimisticIntentInput<object>[];
   call: (idempotencyKey: string) => Promise<IServiceResponse<R>>;
@@ -27,6 +33,7 @@ export type OptimisticAction<R> = {
   success?: string;
   errorTitle?: string;
   onRefused?: () => void;
+  refusals?: (info: R) => OptimisticRefusal | null;
 };
 
 function sessionOf(userId: number | string | undefined): string | null {
@@ -95,7 +102,13 @@ export async function runOptimistic<R>(
     return null;
   }
   const recordId = serverRecordId(result.info);
-  for (const intent of begun) optimisticRegistry.confirm(intent.id, recordId);
-  if (action.success) toast.success(action.success);
+  const refusal = result.info != null && action.refusals ? action.refusals(result.info) : null;
+  const refused = new Set(refusal?.recordIds ?? []);
+  for (const intent of begun) {
+    if (refused.has(intent.recordId)) optimisticRegistry.rollback(intent.id);
+    else optimisticRegistry.confirm(intent.id, recordId);
+  }
+  if (refusal && refused.size > 0) toast.error(refusal.title, refusal.description);
+  else if (action.success) toast.success(action.success);
   return result;
 }

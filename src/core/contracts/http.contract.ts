@@ -11,7 +11,10 @@ import type {
 import type {
   GuardExpectedGuest,
   GuardModeState,
+  ProfileApplyResult,
   SettingsOverview,
+  SettingsOwner,
+  SettingsProfiles,
 } from '@/core/types';
 
 const userRole = z.enum(['owner', 'resident', 'guard', 'guest']);
@@ -82,39 +85,143 @@ export const guardExpectedGuestSchema = z.object({
   validUntil: z.number(),
 }) satisfies z.ZodType<GuardExpectedGuest>;
 
-export const settingsOverviewSchema = z.object({
-  owners: z.array(
+const settingsOwnerName = z.enum([
+  'llm',
+  'voice',
+  'tts',
+  'stt',
+  'vlm',
+  'guard',
+  'camera',
+  'notification',
+]);
+const choiceAvailability = z.enum(['installed', 'installable', 'installing', 'hostOnly', 'failed']);
+const settingApply = z.enum(['live', 'nextSession', 'restart']);
+
+export const settingsOwnerSchema = z.object({
+  service: settingsOwnerName,
+  reachable: z.boolean(),
+  settings: z.array(
     z.object({
-      service: z.enum(['llm', 'voice', 'tts', 'stt', 'vlm', 'guard', 'camera', 'notification']),
-      reachable: z.boolean(),
-      settings: z.array(
+      key: z.string(),
+      group: z.string(),
+      type: z.enum(['toggle', 'integer', 'decimal', 'choice', 'text']),
+      level: z.enum(['basic', 'advanced']),
+      apply: settingApply,
+      min: z.number(),
+      max: z.number(),
+      step: z.number(),
+      choices: z.array(z.string()),
+      value: z.string(),
+      fallback: z.string(),
+      choiceStates: z
+        .array(
+          z.object({
+            choice: z.string(),
+            availability: choiceAvailability,
+            sizeMb: z.number(),
+            hostCommand: z.string(),
+          })
+        )
+        .optional(),
+    })
+  ),
+}) satisfies z.ZodType<SettingsOwner>;
+
+export const settingsOverviewSchema = z.object({
+  owners: z.array(settingsOwnerSchema),
+}) satisfies z.ZodType<SettingsOverview>;
+
+const recommendationRuleSchema = z.object({
+  profile: z.string(),
+  minCores: z.number(),
+  minRamGb: z.number(),
+  vectorIsa: z.boolean(),
+});
+
+export const settingsProfilesSchema = z.object({
+  profiles: z.array(
+    z.object({
+      id: z.string(),
+      labelKey: z.string(),
+      current: z.boolean(),
+      owners: z.array(
         z.object({
-          key: z.string(),
-          group: z.string(),
-          type: z.enum(['toggle', 'integer', 'decimal', 'choice', 'text']),
-          level: z.enum(['basic', 'advanced']),
-          apply: z.enum(['live', 'nextSession', 'restart']),
-          min: z.number(),
-          max: z.number(),
-          step: z.number(),
-          choices: z.array(z.string()),
-          value: z.string(),
-          fallback: z.string(),
-          choiceStates: z
-            .array(
-              z.object({
-                choice: z.string(),
-                availability: z.enum(['installed', 'installable', 'installing', 'hostOnly', 'failed']),
-                sizeMb: z.number(),
-                hostCommand: z.string(),
-              })
-            )
-            .optional(),
+          service: settingsOwnerName,
+          reachable: z.boolean(),
+          changes: z.array(
+            z.object({
+              key: z.string(),
+              from: z.string().nullable(),
+              to: z.string(),
+              changed: z.boolean(),
+              apply: settingApply.optional(),
+              install: z
+                .object({
+                  availability: choiceAvailability,
+                  sizeMb: z.number(),
+                  hostCommand: z.string(),
+                })
+                .optional(),
+            })
+          ),
         })
       ),
     })
   ),
-}) satisfies z.ZodType<SettingsOverview>;
+  recommendation: z.object({
+    profile: z.string(),
+    reason: z.enum(['meets', 'cores', 'ram', 'isa']),
+    hardware: z.object({
+      cores: z.number(),
+      threads: z.number(),
+      ramGb: z.number(),
+      isa: z.enum(['baseline', 'avx2', 'avx512', 'neon']),
+      gpu: z.enum(['none', 'vaapi', 'qsv', 'nvdec', 'videotoolbox']),
+    }),
+    rule: recommendationRuleSchema.nullable(),
+    missed: recommendationRuleSchema.nullable(),
+    rules: z.array(recommendationRuleSchema),
+    fallback: z.string(),
+  }),
+}) satisfies z.ZodType<SettingsProfiles>;
+
+const profileKeyStatus = z.enum(['applied', 'unchanged', 'rejected', 'unreachable']);
+
+export const profileApplyResultSchema = z.object({
+  profile: z.string(),
+  summary: z.object({
+    applied: z.number(),
+    unchanged: z.number(),
+    rejected: z.number(),
+    unreachable: z.number(),
+  }),
+  owners: z.array(
+    z.object({
+      service: settingsOwnerName,
+      reachable: z.boolean(),
+      results: z.array(
+        z.object({
+          key: z.string(),
+          from: z.string().nullable(),
+          to: z.string(),
+          status: profileKeyStatus,
+          reason: z
+            .enum([
+              'unknownKey',
+              'invalid',
+              'outOfRange',
+              'notAChoice',
+              'writeFailed',
+              'notInstalled',
+            ])
+            .optional(),
+        })
+      ),
+      catalog: settingsOwnerSchema.optional(),
+    })
+  ),
+}) satisfies z.ZodType<ProfileApplyResult>;
 
 export const userManagementRecordSchema = z.object({
   id: z.number(),

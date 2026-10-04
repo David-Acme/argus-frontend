@@ -1,13 +1,15 @@
-import type { TableName } from '@/core/types';
+import type { RemoteRowTable, TableName } from '@/core/types';
 import { OPTIMISTIC_SETTLE_GRACE_MS, OPTIMISTIC_TTL_MS } from '@/shared/constants';
 
 export type OptimisticKind = 'create' | 'update' | 'delete';
+
+export type OptimisticTable = TableName | RemoteRowTable;
 
 export type OptimisticValues = Readonly<Record<string, unknown>>;
 
 export type OptimisticIntent = {
   readonly id: string;
-  readonly table: TableName;
+  readonly table: OptimisticTable;
   readonly kind: OptimisticKind;
   readonly recordId: string;
   readonly values: OptimisticValues;
@@ -15,14 +17,14 @@ export type OptimisticIntent = {
 };
 
 export type OptimisticIntentInput<V extends object = OptimisticValues> = {
-  table: TableName;
+  table: OptimisticTable;
   kind: OptimisticKind;
   recordId?: string;
   values?: V;
 };
 
 export type OptimisticLens<Row> = {
-  table: TableName;
+  table: OptimisticTable;
   prepend?: boolean;
   recordIdOf: (row: Row) => string | null;
   patch: (row: Row, values: OptimisticValues) => Row;
@@ -30,7 +32,7 @@ export type OptimisticLens<Row> = {
 };
 
 export type TypedOptimisticLens<Row, V extends object> = {
-  table: TableName;
+  table: OptimisticTable;
   prepend?: boolean;
   recordIdOf: (row: Row) => string | null;
   patch: (row: Row, values: Partial<V>) => Row;
@@ -59,7 +61,7 @@ export function isPendingRecordId(recordId: string): boolean {
   return recordId.startsWith(PENDING_PREFIX);
 }
 
-export function intentKey(table: TableName, recordId: string): string {
+export function intentKey(table: OptimisticTable, recordId: string): string {
   return `${table}:${recordId}`;
 }
 

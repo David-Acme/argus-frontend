@@ -57,3 +57,100 @@ export interface SettingsUpdateResult {
   applied: string[];
   catalog: SettingsOwner;
 }
+
+export type RemoteRowTable = 'setting' | 'session';
+
+export type SettingRejectionReason =
+  | 'unknownKey'
+  | 'invalid'
+  | 'outOfRange'
+  | 'notAChoice'
+  | 'writeFailed'
+  | 'notInstalled';
+
+export type ProfileKeyStatus = 'applied' | 'unchanged' | 'rejected' | 'unreachable';
+
+export type RecommendationReason = 'meets' | 'cores' | 'ram' | 'isa';
+
+export type CpuIsa = 'baseline' | 'avx2' | 'avx512' | 'neon';
+
+export type GpuAccel = 'none' | 'vaapi' | 'qsv' | 'nvdec' | 'videotoolbox';
+
+export interface ProfileInstall {
+  availability: ChoiceAvailability;
+  sizeMb: number;
+  hostCommand: string;
+}
+
+export interface ProfileChange {
+  key: string;
+  from: string | null;
+  to: string;
+  changed: boolean;
+  apply?: SettingApply;
+  install?: ProfileInstall;
+}
+
+export interface ProfileOwnerPreview {
+  service: SettingsOwnerName;
+  reachable: boolean;
+  changes: ProfileChange[];
+}
+
+export interface SettingsProfile {
+  id: string;
+  labelKey: string;
+  current: boolean;
+  owners: ProfileOwnerPreview[];
+}
+
+export interface RecommendationRule {
+  profile: string;
+  minCores: number;
+  minRamGb: number;
+  vectorIsa: boolean;
+}
+
+export interface HardwareFacts {
+  cores: number;
+  threads: number;
+  ramGb: number;
+  isa: CpuIsa;
+  gpu: GpuAccel;
+}
+
+export interface ProfileRecommendation {
+  profile: string;
+  reason: RecommendationReason;
+  hardware: HardwareFacts;
+  rule: RecommendationRule | null;
+  missed: RecommendationRule | null;
+  rules: RecommendationRule[];
+  fallback: string;
+}
+
+export interface SettingsProfiles {
+  profiles: SettingsProfile[];
+  recommendation: ProfileRecommendation;
+}
+
+export interface ProfileKeyResult {
+  key: string;
+  from: string | null;
+  to: string;
+  status: ProfileKeyStatus;
+  reason?: SettingRejectionReason;
+}
+
+export interface ProfileOwnerResult {
+  service: SettingsOwnerName;
+  reachable: boolean;
+  results: ProfileKeyResult[];
+  catalog?: SettingsOwner;
+}
+
+export interface ProfileApplyResult {
+  profile: string;
+  summary: Record<ProfileKeyStatus, number>;
+  owners: ProfileOwnerResult[];
+}

@@ -5,10 +5,13 @@ import { AppScreen } from '@/shared/components/layout';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { SettingsOwnerList } from '@/features/settings/components/settings-owner-list';
 import { SettingsOwnerPanel } from '@/features/settings/components/settings-owner-panel';
+import { ProfilePreviewDialog } from '@/features/settings/components/profile/profile-preview-dialog';
+import { SettingsProfileSection } from '@/features/settings/components/profile/settings-profile-section';
 import { Button } from '@/shared/components/ui/button';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { useSettings } from '@/features/settings/hooks/use-settings';
+import { useSettingsProfiles } from '@/features/settings/hooks/use-settings-profiles';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 
@@ -18,13 +21,18 @@ const visibleAt = (level: SettingLevel) => (owner: SettingsOwner) =>
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const { isWide } = useWindowClass();
-  const { overview, loading, failed, reload, change } = useSettings();
+  const { overview, loading, failed, reload, change, replaceCatalogs } = useSettings();
+  const profiles = useSettingsProfiles({ onCatalogs: replaceCatalogs });
   const [level, setLevel] = useState<SettingLevel>('basic');
   const [selected, setSelected] = useState<SettingsOwnerName | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const preview = profiles.profiles?.profiles.find((profile) => profile.id === previewId) ?? null;
 
   const settingsOf = useMemo(() => visibleAt(level), [level]);
   const owner =
-    overview.owners.find((candidate) => candidate.service === selected) ?? overview.owners[0] ?? null;
+    overview.owners.find((candidate) => candidate.service === selected) ??
+    overview.owners[0] ??
+    null;
   const levelOptions = useMemo(
     () => [
       { value: 'basic' as const, label: t('screens.settings.level.basic') },
@@ -45,41 +53,71 @@ export default function SettingsScreen() {
   );
 
   return (
-    <AppScreen>
-      <View className="flex-1 gap-5">
-        <View className={isWide ? 'flex-row items-end justify-between gap-6' : 'gap-4'}>
-          <View className="min-w-0 flex-1 gap-1.5">
-            <Text variant="display">{t('screens.settings.title')}</Text>
-            <Text variant="caption" className="text-foreground-secondary">{t('screens.settings.subtitle')}</Text>
+    <>
+      <AppScreen>
+        <View className="flex-1 gap-5">
+          <View className={isWide ? 'flex-row items-end justify-between gap-6' : 'gap-4'}>
+            <View className="min-w-0 flex-1 gap-1.5">
+              <Text variant="display">{t('screens.settings.title')}</Text>
+              <Text variant="caption" className="text-foreground-secondary">
+                {t('screens.settings.subtitle')}
+              </Text>
+            </View>
+            {levelControl}
           </View>
-          {levelControl}
-        </View>
 
-        {owner === null ? (
-          <EmptyState
-            icon="sliders"
-            title={failed ? t('screens.settings.load-error') : t('screens.settings.title')}
-            hint={loading ? undefined : t('screens.settings.owner-unreachable-hint')}
-            action={
-              failed ? (
-                <Button size="sm" onPress={() => void reload()}>
-                  <Text>{t('common.retry')}</Text>
-                </Button>
-              ) : undefined
-            }
+          <SettingsProfileSection
+            profiles={profiles.profiles}
+            loading={profiles.loading}
+            failed={profiles.failed}
+            applying={profiles.applying}
+            onOpen={(profile) => setPreviewId(profile.id)}
+            onRetry={() => void profiles.reload()}
           />
-        ) : isWide ? (
-          <View className="flex-1 flex-row items-stretch gap-5">
-            <View className="w-[280px]">
+
+          {owner === null ? (
+            <EmptyState
+              icon="sliders"
+              title={failed ? t('screens.settings.load-error') : t('screens.settings.title')}
+              hint={loading ? undefined : t('screens.settings.owner-unreachable-hint')}
+              action={
+                failed ? (
+                  <Button size="sm" onPress={() => void reload()}>
+                    <Text>{t('common.retry')}</Text>
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : isWide ? (
+            <View className="flex-1 flex-row items-stretch gap-5">
+              <View className="w-[280px]">
+                <SettingsOwnerList
+                  owners={overview.owners}
+                  selected={owner.service}
+                  layout="column"
+                  countOf={(candidate) => settingsOf(candidate).length}
+                  onSelect={setSelected}
+                />
+              </View>
+              <View className="min-w-0 flex-1">
+                <SettingsOwnerPanel
+                  owner={owner}
+                  settings={settingsOf(owner)}
+                  onChange={(key, value) => void change({ owner: owner.service, key, value })}
+                  hiddenCount={owner.settings.length - settingsOf(owner).length}
+                  onShowAdvanced={() => setLevel('advanced')}
+                />
+              </View>
+            </View>
+          ) : (
+            <View className="flex-1 gap-4">
               <SettingsOwnerList
                 owners={overview.owners}
                 selected={owner.service}
-                layout="column"
+                layout="chips"
                 countOf={(candidate) => settingsOf(candidate).length}
                 onSelect={setSelected}
               />
-            </View>
-            <View className="min-w-0 flex-1">
               <SettingsOwnerPanel
                 owner={owner}
                 settings={settingsOf(owner)}
@@ -88,26 +126,18 @@ export default function SettingsScreen() {
                 onShowAdvanced={() => setLevel('advanced')}
               />
             </View>
-          </View>
-        ) : (
-          <View className="flex-1 gap-4">
-            <SettingsOwnerList
-              owners={overview.owners}
-              selected={owner.service}
-              layout="chips"
-              countOf={(candidate) => settingsOf(candidate).length}
-              onSelect={setSelected}
-            />
-            <SettingsOwnerPanel
-              owner={owner}
-              settings={settingsOf(owner)}
-              onChange={(key, value) => void change({ owner: owner.service, key, value })}
-              hiddenCount={owner.settings.length - settingsOf(owner).length}
-              onShowAdvanced={() => setLevel('advanced')}
-            />
-          </View>
-        )}
-      </View>
-    </AppScreen>
+          )}
+        </View>
+      </AppScreen>
+      <ProfilePreviewDialog
+        profile={preview}
+        recommendation={profiles.profiles?.recommendation ?? null}
+        onApply={(profile) => {
+          setPreviewId(null);
+          void profiles.apply(profile);
+        }}
+        onClose={() => setPreviewId(null)}
+      />
+    </>
   );
 }

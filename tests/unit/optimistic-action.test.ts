@@ -160,6 +160,60 @@ describe('runOptimistic', () => {
     expect(optimisticRegistry.snapshot()).toEqual([]);
   });
 
+  test('a partial answer rolls back only the refused records and says so', async () => {
+    const call = deferred<IServiceResponse<{ refused: string[] }>>();
+    const running = runOptimistic({
+      intents: [
+        {
+          table: 'setting',
+          kind: 'update',
+          recordId: 'tts:tts.pocket_variant_es',
+          values: { value: 'fast' },
+        },
+        {
+          table: 'setting',
+          kind: 'update',
+          recordId: 'tts:tts.pocket_voice_es',
+          values: { value: 'jean' },
+        },
+      ],
+      call: () => call.promise,
+      success: 'Applied',
+      refusals: (info) =>
+        info.refused.length > 0
+          ? { recordIds: info.refused, title: 'Not applied', description: 'voice' }
+          : null,
+    });
+    await flush();
+    expect(optimisticRegistry.snapshot()).toHaveLength(2);
+    call.resolve(ok({ refused: ['tts:tts.pocket_voice_es'] }));
+    expect(await running).not.toBeNull();
+    const left = optimisticRegistry.snapshot();
+    expect(left).toHaveLength(1);
+    expect(left[0]).toMatchObject({ recordId: 'tts:tts.pocket_variant_es', confirmed: true });
+    expect(shown.at(-1)).toMatchObject({
+      intent: 'error',
+      title: 'Not applied',
+      description: 'voice',
+    });
+
+    await runOptimistic({
+      intents: [
+        {
+          table: 'setting',
+          kind: 'update',
+          recordId: 'vlm:vision.max_input_px',
+          values: { value: '256' },
+        },
+      ],
+      call: async () => ok({ refused: [] }),
+      success: 'Applied',
+      refusals: (info: { refused: string[] }) =>
+        info.refused.length > 0 ? { recordIds: info.refused, title: 'Not applied' } : null,
+    });
+    expect(shown.at(-1)).toMatchObject({ intent: 'success', title: 'Applied' });
+  });
+
   test('the server id is read from the created row', () => {
     expect(serverRecordId({ id: 7, title: 'x' })).toBe('7');
     expect(serverRecordId({ id: 'abc' })).toBe('abc');

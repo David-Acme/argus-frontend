@@ -35,6 +35,7 @@ export const VIEW_CACHE_KEYS = {
   peopleUsers: 'people.users',
   peopleInvitations: 'people.invitations',
   settingsOverview: 'settings.overview',
+  settingsProfiles: 'settings.profiles',
   cameraDevice: 'camera.device',
   cameraCapabilities: 'camera.capabilities',
   guardMode: 'guard.mode',

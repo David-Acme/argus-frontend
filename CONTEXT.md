@@ -1206,6 +1206,46 @@ distribution of the app.
   tapping it reveals the exact command to run on the server. While anything
   installs, `useSettings` reloads every 4 s.
 
+### Settings profiles (2026-10-03)
+
+Configuración opens with a "Perfil" section: three cards, "Máximo
+rendimiento", "Equilibrado" and "Máxima calidad", from argus-settings'
+`GET /settings/profiles`. The profiles themselves are server data
+(`services/settings/profiles.json`); the app only names them by `labelKey`
+(`screens.settings.profiles.items.<labelKey>`) and never hard-codes a key or a
+value.
+
+- **Recommendation.** The card the server recommends carries "Recomendado
+  para este equipo" and a short reason the app writes from the reason code
+  and the hardware facts (`model/profile-text.ts`: `meets`, `cores`, `ram`,
+  `isa`); the facts themselves (cores, threads, RAM, ISA, GPU) sit beside the
+  section title. The card whose every key already holds its value says
+  "Activo".
+- **Preview first.** A card opens `ProfilePreviewDialog` (rendered beside
+  `AppScreen`, rule 12d): per service, each key that changes with its current
+  and target value (choice labels from `screens.settings.choices`, `_px` keys
+  in pixels), the download it starts, host-only installs with the exact
+  command, keys that already match, services that do not answer, and whether
+  something applies on restart or on the next call. Applying is disabled when
+  nothing can change (everything matches, or only host-only installs remain).
+- **Optimistic apply.** `runOptimistic` gained `refusals(info)`: a 200 can
+  still refuse some records, which are rolled back and named in one toast
+  ("2 ajustes no se aplicaron" with the setting and the reason), while the
+  rest confirm. The registry's `table` is now `TableName | RemoteRowTable`
+  (`'setting' | 'session'`): a setting row's record id is `owner:key`, and
+  `SETTING_LENSES` overlays the intents on the settings overview in
+  `useSettings`, so every changed row shows its new value at once. The
+  apply's answer carries each answering owner's fresh catalog, which
+  replaces those owners in the view cache; the intents then settle on
+  evidence and the profiles reload.
+- **Paint first.** Profiles are a `useRemoteResource` under
+  `settings.profiles`: the last answer paints at once, a first visit shows
+  three placeholder cards, a failure shows a retry row. Per-key fine-tuning
+  below is unchanged.
+- **Layout.** Phone: stacked compact cards (name, summary, recommendation,
+  cost) with a chevron. Medium: three cards in a row. Expanded: the cards
+  also list up to four of the profile's target values.
+
 ### Your voice: confirmed voice enrollment (2026-10-03)
 
 The profile has a "Tu voz / Your voice" section (`features/voiceprint`,
