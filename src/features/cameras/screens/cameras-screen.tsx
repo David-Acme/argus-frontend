@@ -15,7 +15,6 @@ import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -32,7 +31,6 @@ export default function CamerasScreen() {
   const { t } = useTranslation();
   const { isCompact, isExpanded } = useWindowClass();
   const { can, role } = usePermissions();
-  const bottomInset = useBottomNavInset();
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
 
@@ -109,7 +107,7 @@ export default function CamerasScreen() {
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: bottomInset }}>
+          contentContainerClassName="pb-6">
           <View className={isExpanded ? 'flex-row items-stretch gap-6' : 'gap-4'}>
             <View className="gap-4" style={isExpanded ? { width: SUMMARY_PANEL_WIDTH } : undefined}>
               <CameraSummary counts={counts} layout={isExpanded ? 'panel' : 'strip'} compact={isCompact} />
