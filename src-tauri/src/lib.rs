@@ -1,3 +1,4 @@
+mod context_menu;
 #[cfg(target_os = "linux")]
 mod media;
 mod net;
@@ -98,6 +99,7 @@ fn argus_socket_close(state: State<'_, SocketState>, socket_id: String, code: f6
 pub fn run() {
   let _ = rustls::crypto::ring::default_provider().install_default();
   tauri::Builder::default()
+    .plugin(context_menu::plugin())
     .manage(SocketState::default())
     .setup(|app| {
       #[cfg(target_os = "linux")]
