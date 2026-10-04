@@ -130,6 +130,33 @@ export function connectedUsersOf(rows: readonly UserSessionRow[]): ConnectedUser
     .sort((left, right) => right.lastSeenAt - left.lastSeenAt || left.userId - right.userId);
 }
 
+export type SessionInsights<T extends AuthSession> = {
+  open: number;
+  activeToday: number;
+  nextExpiry: number | null;
+  recentSignIns: readonly T[];
+};
+
+export function sessionInsightsOf<T extends AuthSession>(
+  sessions: readonly T[],
+  nowSeconds: number,
+  limit: number
+): SessionInsights<T> {
+  const activeToday = sessions.filter(
+    (session) => session.current || nowSeconds - session.lastSeenAt < DAY_S
+  ).length;
+  const expiries = sessions.map((session) => session.expiresAt).filter((value) => value > nowSeconds);
+  const recentSignIns = [...sessions]
+    .sort((left, right) => right.createdAt - left.createdAt || left.id.localeCompare(right.id))
+    .slice(0, limit);
+  return {
+    open: sessions.length,
+    activeToday,
+    nextExpiry: expiries.length > 0 ? Math.min(...expiries) : null,
+    recentSignIns,
+  };
+}
+
 export function withoutSessions(
   overview: UserSessionsOverview | null,
   revoked: readonly string[]

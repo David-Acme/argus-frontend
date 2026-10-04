@@ -109,7 +109,7 @@ export default function SecurityScreen() {
   );
 
   const layout = isExpanded ? (
-    <View className="flex-1 flex-row items-stretch gap-5">
+    <View className="flex-row items-stretch gap-5">
       <View className="min-w-0 flex-1 gap-5">
         {heroSection}
         {environmentsSection('flex-1')}

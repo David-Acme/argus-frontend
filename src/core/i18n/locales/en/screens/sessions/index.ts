@@ -83,6 +83,14 @@ export const sessions = {
       'They can sign in again with their face. Their old sessions stay closed.',
     enabled: '{name}\'s account is back on',
   },
+  insights: {
+    open: 'Open sessions',
+    'active-today': 'Active today',
+    'next-expiry': 'Next expiry',
+    'next-expiry-none': 'None',
+    'recent-sign-ins': 'Latest sign-ins',
+    'signed-in-at': '{date}, {time}',
+  },
   notice: {
     'closed-here': 'This device was signed out',
     'closed-everywhere': 'You were signed out on all your devices',

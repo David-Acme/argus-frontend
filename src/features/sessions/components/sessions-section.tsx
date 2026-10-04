@@ -11,6 +11,7 @@ import { cn } from '@/shared/libs/utils';
 import { useSessionLabels } from '@/features/sessions/hooks/use-session-labels';
 import { useSessions } from '@/features/sessions/hooks/use-sessions';
 import { SESSION_GROUP_ICONS, type SessionGroup } from '@/features/sessions/model/sessions';
+import { SessionInsights } from '@/features/sessions/components/session-insights';
 import { SessionRow } from '@/features/sessions/components/session-row';
 import { ThisDeviceCard } from '@/features/sessions/components/this-device-card';
 
@@ -74,6 +75,7 @@ export function SessionsSection({ className, onConnectDevice }: SessionsSectionP
   const labels = useSessionLabels(now);
   const { current, groups, others } = overview;
   const hasList = current !== null || others.length > 0;
+  const everySession = current ? [current, ...others] : others;
 
   const detailOf = (session: AuthSession) =>
     `${labels.platformOf(session)} · ${labels.activityLabel(session)}`;
@@ -134,6 +136,8 @@ export function SessionsSection({ className, onConnectDevice }: SessionsSectionP
       />
     );
 
+  const insights = <SessionInsights sessions={everySession} now={now} />;
+
   const card = current ? (
     <ThisDeviceCard
       session={current}
@@ -177,12 +181,16 @@ export function SessionsSection({ className, onConnectDevice }: SessionsSectionP
             {card}
             {actions}
           </View>
-          <View className="min-w-0 flex-1">{list}</View>
+          <View className="min-w-0 flex-1 gap-5">
+            {list}
+            <View className="border-border-subtle border-t pt-4">{insights}</View>
+          </View>
         </View>
       ) : (
         <View className="gap-4">
           {card}
           {list}
+          {insights}
           {actions}
         </View>
       )}

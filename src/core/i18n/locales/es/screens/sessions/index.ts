@@ -83,6 +83,14 @@ export const sessions = {
       'Podrá volver a entrar con su rostro. Sus sesiones anteriores siguen cerradas.',
     enabled: 'Cuenta de {name} reactivada',
   },
+  insights: {
+    open: 'Sesiones abiertas',
+    'active-today': 'Activas hoy',
+    'next-expiry': 'Próxima caducidad',
+    'next-expiry-none': 'Ninguna',
+    'recent-sign-ins': 'Últimos inicios de sesión',
+    'signed-in-at': '{date}, {time}',
+  },
   notice: {
     'closed-here': 'Se cerró la sesión de este dispositivo',
     'closed-everywhere': 'Se cerró la sesión en todos tus dispositivos',

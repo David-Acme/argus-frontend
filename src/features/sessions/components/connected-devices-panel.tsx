@@ -7,10 +7,12 @@ import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { SessionInsights } from '@/features/sessions/components/session-insights';
 import { useSessionLabels } from '@/features/sessions/hooks/use-session-labels';
 import {
   SESSION_GROUP_ICONS,
   type ConnectedUser,
+  type UserSessionRow,
 } from '@/features/sessions/model/sessions';
 
 export type ConnectedPerson = {
@@ -30,6 +32,8 @@ type ConnectedDevicesPanelProps = {
   className?: string;
 };
 
+const RECENT_SIGN_INS = 6;
+
 export function ConnectedDevicesPanel({
   users,
   now,
@@ -42,6 +46,9 @@ export function ConnectedDevicesPanel({
 }: ConnectedDevicesPanelProps) {
   const { t } = useTranslation();
   const labels = useSessionLabels(now);
+  const rows: UserSessionRow[] = users.flatMap((user) =>
+    user.sessions.map((session) => ({ ...session, userId: user.userId }))
+  );
 
   if (users.length === 0) {
     return (
@@ -101,6 +108,13 @@ export function ConnectedDevicesPanel({
           />
         );
       })}
+      <SessionInsights
+        sessions={rows}
+        now={now}
+        ownerOf={(session) => personOf(session.userId).name}
+        limit={RECENT_SIGN_INS}
+        className="border-border-subtle mx-2.5 mt-2 border-t px-0.5 pt-4 pb-2.5"
+      />
     </Panel>
   );
 }

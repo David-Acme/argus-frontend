@@ -5,6 +5,7 @@ import { CONTENT_MAX_WIDTH } from '@/shared/constants';
 import { useBottomNav } from '@/shared/components/layout/use-bottom-nav';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { cn } from '@/shared/libs/utils';
 
 type AppScreenProps = {
   children: ReactNode;
@@ -12,9 +13,17 @@ type AppScreenProps = {
   aside?: ReactNode;
   scrollable?: boolean;
   bottomNav?: boolean;
+  fillHeight?: boolean;
 };
 
-export function AppScreen({ children, header, aside, scrollable = true, bottomNav = true }: AppScreenProps) {
+export function AppScreen({
+  children,
+  header,
+  aside,
+  scrollable = true,
+  bottomNav = true,
+  fillHeight = true,
+}: AppScreenProps) {
   const insets = useSafeAreaInsets();
   const { windowClass, isExpanded, isShort, isWide } = useWindowClass();
   const bottomInset = useBottomNavInset();
@@ -23,7 +32,7 @@ export function AppScreen({ children, header, aside, scrollable = true, bottomNa
 
   const body =
     aside && isWide ? (
-      <View className="flex-1 flex-row items-stretch gap-5 lg:gap-6">
+      <View className={cn('flex-row items-stretch gap-5 lg:gap-6', fillHeight && 'flex-1')}>
         <View className="min-w-0 flex-1 gap-5">{children}</View>
         <View className="w-[300px] shrink-0 gap-5 lg:w-[340px]">{aside}</View>
       </View>

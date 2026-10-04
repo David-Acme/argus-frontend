@@ -1961,3 +1961,24 @@ Guard posture is per environment now (backend 2f669111, `services/guard/CONTEXT.
 - **Device controls no longer need PTZ**: a bullet camera keeps privacy, LED, night vision and
   motion; motion sensitivity (low/normal/high) is in the settings sheet, saved PTZ positions are
   buttons under the pad with "save position", and the device panel shows the SD card.
+
+## Short screens end together, and their slack carries facts (2026-10-04)
+
+At 1366×900 three screens showed big empty cards: the wide `AppScreen`
+row was as tall as the window, so on a short page the last panel of each
+column (`flex-1`, rule 12d) stretched to the window's bottom, empty. Two
+fixes:
+
+- **Columns end at the taller column, not at the window.** `AppScreen` takes
+  `fillHeight` (default `true`: the projects board and the dashboard still
+  fill the window). The people screen passes `false`, so the shorter column's
+  last panel stretches only to the other column's natural end. The security
+  screen's expanded row likewise no longer takes `flex-1`; Entornos and
+  Visitas esperadas stretch only to match their sibling column.
+- **What remains carries information.** `SessionInsights`
+  (`features/sessions/components/session-insights.tsx`, model
+  `sessionInsightsOf`, unit-tested) shows open sessions, sessions active
+  today, the nearest expiry and the latest sign-ins (device, person, date and
+  time). It sits under the session list in Perfil and under the user rows in
+  "Dispositivos conectados", where it reads every user's sessions and names
+  the person on each sign-in.

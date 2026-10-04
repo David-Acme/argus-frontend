@@ -170,6 +170,7 @@ export default function UsersScreen() {
   return (
     <>
       <AppScreen
+        fillHeight={false}
         aside={
           <View className={cn(isWide && 'flex-1', 'gap-5')}>
             <View className="gap-3">
