@@ -3,14 +3,15 @@
 @import "tw-animate-css";
 
 @theme {
-  --radius: 20px;
-  --radius-sm: 14px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
-  --radius-2xl: 40px;
-  --radius-3xl: 48px;
-  --radius-4xl: 56px;
+  --radius: 12px;
+  --radius-xs: 2px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
 
   --spacing-hairline: hairlineWidth();
 

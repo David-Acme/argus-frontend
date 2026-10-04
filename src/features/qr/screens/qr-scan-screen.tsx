@@ -122,7 +122,7 @@ function QrScannerScreen() {
       <View
         className={cn(
           'relative flex-1',
-          isSupportingPane && 'border-border-subtle m-5 overflow-hidden rounded-[28px] border'
+          isSupportingPane && 'border-border-subtle m-5 overflow-hidden rounded-4xl border'
         )}>
         {granted ? (
           <CameraView

@@ -44,7 +44,7 @@ export function ProjectCard({
         className="active:opacity-80"
         onPress={onPress}>
         <View className="bg-card overflow-hidden rounded-3xl p-3 shadow-md shadow-black/[0.06]">
-          <View className="bg-surface-secondary h-[104px] justify-between rounded-[18px] p-3">
+          <View className="bg-surface-secondary h-[104px] justify-between rounded-md p-3">
             <View className="bg-card size-8 items-center justify-center rounded-full">
               <Icon name="list-todo" className="text-foreground-secondary size-4" />
             </View>

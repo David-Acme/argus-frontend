@@ -29,7 +29,7 @@ export function OptionRow({
       accessibilityLabel={option.label}
       disabled={option.disabled}
       className={cn(
-        'flex-row items-center gap-3 rounded-[14px] px-3 active:opacity-70',
+        'flex-row items-center gap-3 rounded-md px-3 active:opacity-70',
         density === 'compact' ? 'py-2' : 'py-3',
         selected && 'bg-surface-secondary',
         option.disabled && 'opacity-40',

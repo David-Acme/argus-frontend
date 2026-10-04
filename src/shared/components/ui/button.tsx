@@ -22,7 +22,7 @@ type ButtonProps = React.ComponentProps<typeof Pressable> &
 
 const buttonVariants = cva(
   cn(
-    'group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none',
+    'group shrink-0 flex-row items-center justify-center gap-2 rounded-lg shadow-none',
     Platform.select({
       web: "focus-visible:border-accent focus-visible:ring-accent/50 aria-invalid:ring-error/20 dark:aria-invalid:ring-error/40 aria-invalid:border-error whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     })
@@ -59,7 +59,7 @@ const buttonVariants = cva(
       size: {
         default: cn('px-4 py-2', Platform.select({ web: 'h-10 has-[>svg]:px-3', default: 'h-11' })),
         sm: cn('gap-1.5 rounded-md px-3', Platform.select({ web: 'h-9 has-[>svg]:px-2.5', default: 'h-10' })),
-        lg: cn('rounded-md px-6', Platform.select({ web: 'h-11 has-[>svg]:px-4', default: 'h-12' })),
+        lg: cn('rounded-lg px-6', Platform.select({ web: 'h-11 has-[>svg]:px-4', default: 'h-12' })),
         icon: Platform.select({ web: 'size-10', default: 'size-11' }),
       },
     },

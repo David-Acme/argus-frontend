@@ -54,7 +54,7 @@ export function TaskRow({
     <View
       accessibilityState={{ busy: pending }}
       className={cn(
-        'bg-surface-secondary web:hover:bg-card-secondary min-h-11 flex-row items-center gap-3 rounded-[14px] px-3 py-2 web:select-none',
+        'bg-surface-secondary web:hover:bg-card-secondary min-h-11 flex-row items-center gap-3 rounded-xl px-3 py-2 web:select-none',
         pending && 'opacity-60',
       )}>
       <AdaptiveMenu

@@ -192,7 +192,9 @@ Inside every component (mandatory):
 - Barrel imports only (`@/shared/constants`, `@/core/types`, `@/core/interfaces`).
 - No unused imports (`bun run lint` must be clean).
 - Keep design language premium/calm: warm neutrals, grafito actions + arena accent,
-  hierarchical radii (sm 14 / md 18 / lg 24 / xl 32), soft shadows.
+  a calm radius scale (sm 6 / md 10 / lg 12 / xl 14 / 2xl 16 / 3xl 20 / 4xl 24,
+  `global.css` `@theme`, never a literal `rounded-[Npx]`; see CONTEXT.md
+  "Calmer corners"), soft shadows.
 - **React imports**: runtime imports are **named** (`useState`, `useEffect`,
   `useContext`, `createContext`, `type ReactNode`) — **never** `import * as React`.
   The `React.` namespace is allowed only in **type positions** (e.g.

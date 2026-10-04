@@ -9,7 +9,7 @@ type InputProps = React.ComponentPropsWithoutRef<typeof TextInput> &
 
 const inputVariants = cva(
   cn(
-    'border-border bg-card text-foreground h-11 w-full min-w-0 flex-row items-center rounded-md border px-3 py-2 text-base leading-5 shadow-sm shadow-black/5',
+    'border-border bg-card text-foreground h-11 w-full min-w-0 flex-row items-center rounded-lg border px-3 py-2 text-base leading-5 shadow-sm shadow-black/5',
     Platform.select({
       web: cn(
         'selection:bg-primary selection:text-primary-foreground transition-[color,box-shadow] outline-none md:text-sm',

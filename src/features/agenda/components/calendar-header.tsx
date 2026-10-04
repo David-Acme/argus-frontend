@@ -61,13 +61,13 @@ export function CalendarHeader({
         </Text>
       </View>
       {accessory}
-      <View className="bg-surface-secondary flex-row items-center gap-0.5 rounded-full p-1">
+      <View className="bg-surface-secondary flex-row items-center gap-0.5 rounded-2xl p-1">
         <StepButton icon="chevron-left" label={previousLabel} onPress={onPrevious} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={showsToday ? todayLabel : todayHint}
           className={cn(
-            'min-h-8 flex-row items-center gap-1.5 rounded-full px-3',
+            'min-h-8 flex-row items-center gap-1.5 rounded-lg px-3',
             showsToday
               ? 'web:hover:bg-card/70 active:opacity-70'
               : 'bg-card web:hover:bg-card/80 shadow-sm shadow-black/10 active:opacity-70'

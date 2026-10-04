@@ -109,8 +109,9 @@
   stays AA (foreground 11.8:1, muted-foreground 5.4:1). A card nested in a
   card uses `dark:bg-card-secondary`, since dark cannot show the shadow
   light separates it with.
-- Radius scale (hierarchical): base 20 / sm 14 / md 18 / lg 24 / xl 32 /
-  2xl 40 / 3xl 48 / 4xl 56.
+- Radius scale (calm, 2026-10-04): base 12 / xs 2 / sm 6 / md 10 / lg 12 /
+  xl 14 / 2xl 16 / 3xl 20 / 4xl 24 (was 20 / 14 / 18 / 24 / 32 / 40 / 48 /
+  56). See "Calmer corners".
 
 ### Sources of truth (two files, kept in sync)
 
@@ -1991,6 +1992,45 @@ server setup again), with "Ver detalles" switching to Avanzado. There the
 owner's header names the missing address and credential of
 `argus-<service>`, the `.toml` that still holds its settings, the scripts to
 run and the two services to restart.
+
+## Calmer corners, and the bell reads what it shows (2026-10-04)
+
+**Radius scale.** David found the app "demasiado bordeado". The old scale
+(`sm 14 / md 18 / lg 24 / xl 32 / 2xl 40 / 3xl 48`) put 48 px on every
+`Panel`, 40 px on the cards nested in it, 32 px on hover rows and 18 px on
+44 px controls, so a button was almost a pill and a panel an oval at its
+corners. The scale is now, in `global.css` `@theme` (one change, every
+`rounded-*` class follows):
+
+| Token | Old | New | Used by |
+|---|---|---|---|
+| `xs` | 2 | 2 | mosaic cells |
+| `sm` | 14 | 6 | week-grid events, menu items without padding |
+| `md` | 18 | 10 | items inside a padded menu (`OptionRow`, context menu), small buttons, a card inside a `p-3` card |
+| `lg` | 24 | 12 | controls: `Button`, `Input`, `Textarea`, `SelectField`, `Select`, segments |
+| `xl` | 32 | 14 | hover rows, nav rail items, small icon tiles, dashed fill tiles, task rows, select and context-menu popups |
+| `2xl` | 40 | 16 | cards nested in a panel, icon tiles, video surfaces, menus, toasts, segmented tracks |
+| `3xl` | 48 | 20 | top-level containers: `Panel`, dialogs, popovers, standalone cards |
+| `4xl` | 56 | 24 | sheets, the brand mark, the QR pane |
+
+- Sources: Apple's concentric rule (WWDC25 "Get to know the new design
+  system", `ConcentricRectangle`: inner radius = outer radius − padding),
+  Material 3's shape scale (8 / 12 / 16 / 20 / 28 for small → extra-large),
+  shadcn/ui's default (`--radius` 10 px, `md` 8, `xl` 14, `2xl` 18) and Radix
+  Themes (6–16 px at the default scaling).
+- Nesting follows the concentric rule where the gap is small: a menu (16)
+  with `p-1.5` gives its items 10, a segmented track (16) with `p-1` gives
+  its segments 12, a home project card (20) with `p-3` gives its inner block
+  10. A card nested in a `p-4` panel keeps 16 rather than the strict 4, since
+  a corner that sharp reads as a different language.
+- Round stays only where the shape means something: icon-only buttons, the
+  FAB, avatars, status badges, counts, filter chips, switches, progress bars,
+  the floating bottom nav and the dashboard search field. The pill segmented
+  groups (agenda view switcher and header, language switch, `SegmentedControl`)
+  became rounded rectangles, and the activity card's button lost its
+  `rounded-full` override.
+- No literal `rounded-[Npx]` is left in `src/`; a new surface picks a token
+  by its role in the table.
 
 ## The camera live view: full quality, honest frame rate, explicit audio, fullscreen (2026-10-04)
 

@@ -88,7 +88,7 @@ export function AdaptiveMenu<T extends string = string>({
           <DropdownMenuPrimitive.Content
             insets={{ left: 12, right: 12 }}
             className={cn(
-              'bg-card z-50 min-w-56 gap-0.5 rounded-[18px] p-1.5 shadow-lg shadow-black/15',
+              'bg-card z-50 min-w-56 gap-0.5 rounded-2xl p-1.5 shadow-lg shadow-black/15',
               Platform.select({ web: 'animate-in fade-in-0 zoom-in-95 origin-top' }),
               contentClassName
             )}>

@@ -36,7 +36,7 @@ function PopoverContent({
         <NativeOnlyAnimatedView entering={menuIn} exiting={menuOut}>
           <View
             className={cn(
-              'bg-card border-border-subtle w-72 rounded-[22px] border p-4 shadow-xl shadow-black/15',
+              'bg-card border-border-subtle w-72 rounded-3xl border p-4 shadow-xl shadow-black/15',
               Platform.select({ web: 'animate-in fade-in-0 zoom-in-95 origin-top' })
             )}>
             {children}

@@ -176,9 +176,9 @@ function SheetContent({
             }}>
             <DialogPrimitive.Content
               className={cn(
-                'bg-card w-full gap-4 rounded-t-[28px] px-5 pt-3 shadow-2xl shadow-black/25',
+                'bg-card w-full gap-4 rounded-t-4xl px-5 pt-3 shadow-2xl shadow-black/25',
                 Platform.select({
-                  web: 'animate-in slide-in-from-bottom-4 mx-auto max-w-lg rounded-b-[28px] sm:mb-4',
+                  web: 'animate-in slide-in-from-bottom-4 mx-auto max-w-lg rounded-b-4xl sm:mb-4',
                 }),
                 className
               )}

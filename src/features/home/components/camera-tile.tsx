@@ -44,7 +44,7 @@ export function CameraTile({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${name}, ${statusLabel}`}
-      className="bg-card min-w-[150px] flex-1 gap-3 rounded-[20px] p-3 shadow-md shadow-black/[0.06] active:opacity-80"
+      className="bg-card min-w-[150px] flex-1 gap-3 rounded-3xl p-3 shadow-md shadow-black/[0.06] active:opacity-80"
       onPress={onPress}>
       <View className="flex-row items-start justify-between gap-2">
         <View className="bg-surface-secondary size-9 items-center justify-center rounded-full">

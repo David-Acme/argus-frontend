@@ -38,7 +38,7 @@ export function ProjectCardRow({
       accessibilityState={{ selected }}
       accessibilityLabel={`${name}, ${statusLabel}`}
       className={cn(
-        'bg-card gap-2 rounded-[18px] p-3 shadow-md shadow-black/[0.05] active:opacity-80',
+        'bg-card gap-2 rounded-2xl p-3 shadow-md shadow-black/[0.05] active:opacity-80',
         selected && 'border-accent border'
       )}
       onPress={onPress}>

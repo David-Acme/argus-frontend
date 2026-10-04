@@ -7,7 +7,7 @@ type TextareaProps = React.ComponentPropsWithoutRef<typeof TextInput> &
 
 const textareaVariants = cva(
   cn(
-    'border-border bg-card text-foreground placeholder:text-muted-foreground min-h-[88px] w-full rounded-md border px-3 py-2.5 text-base leading-5 shadow-sm shadow-black/5',
+    'border-border bg-card text-foreground placeholder:text-muted-foreground min-h-[88px] w-full rounded-lg border px-3 py-2.5 text-base leading-5 shadow-sm shadow-black/5',
     Platform.select({
       web: cn(
         'field-sizing-content transition-[color,box-shadow] outline-none md:text-sm',

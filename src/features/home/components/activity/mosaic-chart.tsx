@@ -14,7 +14,7 @@ export function MosaicChart({ levels, delay = 120 }: MosaicChartProps) {
       {Array.from({ length: MOSAIC_ROWS }, (_, row) => (
         <View key={row} className="flex-row gap-[3px]">
           {Array.from({ length: MOSAIC_COLUMNS }, (_, column) => (
-            <View key={column} className={cn('size-2 rounded-[2px]', MOSAIC_TINTS[levels[row]?.[column] ?? 0])} />
+            <View key={column} className={cn('size-2 rounded-xs', MOSAIC_TINTS[levels[row]?.[column] ?? 0])} />
           ))}
         </View>
       ))}

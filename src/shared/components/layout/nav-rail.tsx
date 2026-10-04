@@ -45,7 +45,7 @@ export function NavRail({ active }: NavRailProps) {
               accessibilityLabel={labels[item.tab]}
               className={cn(
                 target,
-                'items-center justify-center rounded-[18px] active:opacity-70',
+                'items-center justify-center rounded-xl active:opacity-70',
                 selected ? 'bg-surface shadow-sm shadow-black/10' : 'web:hover:bg-surface-secondary/60 bg-transparent'
               )}
               onHoverIn={() => showHint(item.tab)}

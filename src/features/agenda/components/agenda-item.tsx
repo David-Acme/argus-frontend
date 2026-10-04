@@ -56,7 +56,7 @@ export function AgendaItem({
           </View>
         </View>
         {note ? (
-          <View className="bg-surface mt-2.5 rounded-[14px] p-3">
+          <View className="bg-surface mt-2.5 rounded-xl p-3">
             <Text className="text-foreground-secondary text-caption leading-[19px]">{note}</Text>
           </View>
         ) : null}
@@ -68,7 +68,7 @@ export function AgendaItem({
     <View
       accessibilityState={{ busy: pending }}
       className={cn(
-        'bg-card dark:bg-card-secondary flex-row overflow-hidden rounded-[20px] shadow-md shadow-black/[0.06]',
+        'bg-card dark:bg-card-secondary flex-row overflow-hidden rounded-2xl shadow-md shadow-black/[0.06]',
         pending && 'opacity-60',
       )}>
       {contextMenu ? contextMenu(pressable) : pressable}

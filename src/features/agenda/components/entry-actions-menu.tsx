@@ -116,7 +116,7 @@ export function EntryActionsMenu({
         <ContextMenuContent
           insets={{ top: 16, right: 16, bottom: 16, left: 16 }}
           sideOffset={8}
-          className="bg-card min-w-48 rounded-[18px] p-1.5 shadow-lg shadow-black/15">
+          className="bg-card min-w-48 rounded-2xl p-1.5 shadow-lg shadow-black/15">
           {options.map((option, index) => (
             <View key={option.value}>
               {option.destructive && index > 0 ? <ContextMenuSeparator /> : null}
@@ -125,7 +125,7 @@ export function EntryActionsMenu({
                 disabled={option.disabled}
                 onPress={() => void run(option.value)}
                 className={cn(
-                  'min-h-12 flex-row items-center gap-3 rounded-[14px] px-3 py-2.5 active:opacity-70',
+                  'min-h-12 flex-row items-center gap-3 rounded-md px-3 py-2.5 active:opacity-70',
                   option.destructive && 'active:bg-error/10'
                 )}>
                 {option.icon ? (

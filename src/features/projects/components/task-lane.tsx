@@ -43,7 +43,7 @@ export function TaskLane({
       {onAdd ? (
         <CreateTile label={addLabel} onPress={onAdd} layout={empty ? 'fill' : 'row'} />
       ) : empty ? (
-        <View className="border-border-subtle min-h-[140px] flex-1 items-center justify-center rounded-[14px] border-2 border-dashed px-4 py-6">
+        <View className="border-border-subtle min-h-[140px] flex-1 items-center justify-center rounded-xl border-2 border-dashed px-4 py-6">
           <Text variant="caption">{emptyLabel}</Text>
         </View>
       ) : null}

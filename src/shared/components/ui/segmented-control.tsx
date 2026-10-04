@@ -29,7 +29,7 @@ export function SegmentedControl<TValue extends string>({
     <View
       accessibilityRole="radiogroup"
       accessibilityLabel={accessibilityLabel}
-      className="bg-surface-secondary flex-row gap-1 rounded-full p-1">
+      className="bg-surface-secondary flex-row gap-1 rounded-2xl p-1">
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -40,7 +40,7 @@ export function SegmentedControl<TValue extends string>({
             accessibilityLabel={option.label}
             onPress={() => onChange(option.value)}
             className={cn(
-              'min-h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-3 active:opacity-80',
+              'min-h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-lg px-3 active:opacity-80',
               selected ? 'bg-interactive shadow-sm shadow-black/10' : segmentHover,
             )}>
             {option.icon ? (

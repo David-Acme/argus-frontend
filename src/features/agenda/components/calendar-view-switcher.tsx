@@ -12,7 +12,7 @@ type CalendarViewSwitcherProps = {
 
 export function CalendarViewSwitcher({ view, labels, onChange }: CalendarViewSwitcherProps) {
   return (
-    <View accessibilityRole="tablist" className="bg-surface-secondary flex-row rounded-full p-1">
+    <View accessibilityRole="tablist" className="bg-surface-secondary flex-row rounded-2xl p-1">
       {CALENDAR_VIEWS.map((option) => {
         const selected = option === view;
         return (
@@ -22,7 +22,7 @@ export function CalendarViewSwitcher({ view, labels, onChange }: CalendarViewSwi
             accessibilityState={{ selected }}
             accessibilityLabel={labels[option]}
             className={cn(
-              'min-h-8 flex-1 items-center justify-center rounded-full px-3 py-1.5 active:opacity-70',
+              'min-h-8 flex-1 items-center justify-center rounded-lg px-3 py-1.5 active:opacity-70',
               selected ? 'bg-card shadow-sm shadow-black/10' : 'web:hover:bg-card/60'
             )}
             onPress={() => onChange(option)}>

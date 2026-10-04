@@ -12,7 +12,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
     <View
       accessibilityRole="radiogroup"
       accessibilityLabel={t('screens.profile.language-label')}
-      className={cn('bg-surface-secondary flex-row rounded-full p-1', className)}>
+      className={cn('bg-surface-secondary flex-row rounded-2xl p-1', className)}>
       {SUPPORTED_LANGUAGES.map((code) => {
         const active = code === language;
         return (
@@ -23,7 +23,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
             accessibilityLabel={t(`common.language-name.${code}`)}
             onPress={() => setLanguage(code)}
             hitSlop={4}
-            className={cn('min-h-9 min-w-11 items-center justify-center rounded-full px-3', active && 'bg-card')}>
+            className={cn('min-h-9 min-w-11 items-center justify-center rounded-lg px-3', active && 'bg-card')}>
             <Text variant="label" className={active ? 'text-foreground' : 'text-foreground-secondary'}>
               {code.toUpperCase()}
             </Text>

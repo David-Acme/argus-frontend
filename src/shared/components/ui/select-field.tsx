@@ -27,7 +27,7 @@ export function SelectField({
       accessibilityLabel={empty ? placeholder : label}
       disabled={disabled}
       className={cn(
-        'bg-card h-11 flex-row items-center justify-between gap-2 rounded-md border px-3 active:opacity-70',
+        'bg-card h-11 flex-row items-center justify-between gap-2 rounded-lg border px-3 active:opacity-70',
         invalid ? 'border-error' : 'border-border',
         disabled === true && 'opacity-50',
         className

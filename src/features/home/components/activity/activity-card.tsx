@@ -43,7 +43,7 @@ export function ActivityCard({
         <View className="flex-1 gap-3">
           <Text className="text-subhead font-semibold leading-[22px]">{title}</Text>
           {action ? (
-            <Button size="sm" className="self-start rounded-full px-4" onPress={onAction}>
+            <Button size="sm" className="self-start px-4" onPress={onAction}>
               <Text className="text-caption font-semibold">{action}</Text>
             </Button>
           ) : null}
