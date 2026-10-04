@@ -1,5 +1,6 @@
 import { t } from '@/core/i18n';
 import type { IServiceResponse } from '@/core/interfaces';
+import { newIdempotencyKey } from '@/core/services/http';
 import { useAuthStore } from '@/core/stores';
 import type { ConfirmRequest } from '@/core/types';
 import { TOAST_ACTION_MS } from '@/shared/constants';
@@ -19,7 +20,8 @@ export type OptimisticUndo = {
 
 export type OptimisticAction<R> = {
   intents: readonly OptimisticIntentInput<object>[];
-  call: () => Promise<IServiceResponse<R>>;
+  call: (idempotencyKey: string) => Promise<IServiceResponse<R>>;
+  idempotencyKey?: string;
   confirm?: ConfirmRequest;
   undo?: OptimisticUndo;
   success?: string;
@@ -66,6 +68,7 @@ export async function runOptimistic<R>(
   action: OptimisticAction<R>
 ): Promise<IServiceResponse<R> | null> {
   if (action.confirm && !(await confirm(action.confirm))) return null;
+  const idempotencyKey = action.idempotencyKey ?? newIdempotencyKey();
   const begun = action.intents.map((intent) => optimisticRegistry.begin(intent));
   if (action.undo && (await waitForUndo(action.undo))) {
     rollback(begun);
@@ -73,7 +76,7 @@ export async function runOptimistic<R>(
   }
   let result: IServiceResponse<R>;
   try {
-    result = await action.call();
+    result = await action.call(idempotencyKey);
   } catch (error) {
     rollback(begun);
     throw error;
@@ -84,7 +87,8 @@ export async function runOptimistic<R>(
     const retry = isRetryableServiceError(result.errors)
       ? {
           label: t('common.retry'),
-          onPress: () => void runOptimistic({ ...action, confirm: undefined, undo: undefined }),
+          onPress: () =>
+            void runOptimistic({ ...action, idempotencyKey, confirm: undefined, undo: undefined }),
         }
       : undefined;
     toastServiceError(result.errors, action.errorTitle, retry);

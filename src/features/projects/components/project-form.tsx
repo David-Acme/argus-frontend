@@ -74,8 +74,10 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values) =>
-      project ? projectService.update(project.id, projectBody(values)) : projectService.create(projectBody(values)),
+    request: (values, idempotencyKey) =>
+      project
+        ? projectService.update(project.id, projectBody(values))
+        : projectService.create(projectBody(values), idempotencyKey),
     optimistic: (values) => ({
       intents: [
         project

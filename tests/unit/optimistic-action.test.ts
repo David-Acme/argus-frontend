@@ -30,6 +30,14 @@ mock.module('@/core/stores', () => ({
 
 mock.module('@/core/i18n', () => ({ t: (key: string) => key }));
 
+let drawnKeys = 0;
+mock.module('@/core/services/http', () => ({
+  newIdempotencyKey: () => {
+    drawnKeys += 1;
+    return `key-${drawnKeys}`;
+  },
+}));
+
 const { optimisticRegistry } = await import('@/shared/libs/optimistic');
 const { runOptimistic, serverRecordId } = await import('@/shared/libs/optimistic-action');
 
@@ -90,6 +98,30 @@ describe('runOptimistic', () => {
     });
     expect(shown.at(-1)?.intent).toBe('error');
     expect(shown.at(-1)?.action).toBeUndefined();
+  });
+
+  test('every attempt of one action carries the same idempotency key', async () => {
+    const keys: string[] = [];
+    await runOptimistic({
+      intents: [{ table: 'project_task', kind: 'create', values: { title: 'Paint' } }],
+      call: async (key) => {
+        keys.push(key);
+        return refused('NETWORK_ERROR');
+      },
+    });
+    shown.at(-1)?.action?.onPress();
+    await flush();
+    expect(keys).toHaveLength(2);
+    expect(keys[1]).toBe(keys[0]);
+
+    await runOptimistic({
+      intents: [{ table: 'project_task', kind: 'create', values: { title: 'Sand' } }],
+      call: async (key) => {
+        keys.push(key);
+        return ok({ id: 8 });
+      },
+    });
+    expect(keys[2]).not.toBe(keys[0]);
   });
 
   test('Undo before the window closes cancels the call and restores the row', async () => {

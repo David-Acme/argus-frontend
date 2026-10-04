@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Keyboard } from 'react-native';
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import type { IServiceResponse } from '@/core/interfaces';
+import { newIdempotencyKey } from '@/core/services/http';
 import { IS_WEB } from '@/shared/constants';
 import type { useFormScroll } from '@/shared/components/ui/form';
 import type { OptimisticIntentInput } from '@/shared/libs/optimistic';
@@ -17,7 +18,7 @@ type OptimisticSubmit = {
 type UseFormSubmitOptions<TValues extends FieldValues, TResult> = {
   form: UseFormReturn<TValues>;
   formScroll?: ReturnType<typeof useFormScroll>;
-  request: (values: TValues) => Promise<IServiceResponse<TResult>>;
+  request: (values: TValues, idempotencyKey: string) => Promise<IServiceResponse<TResult>>;
   onSuccess?: (info: TResult | null) => void;
   optimistic?: (values: TValues) => OptimisticSubmit;
 };
@@ -49,13 +50,13 @@ export function useFormSubmit<TValues extends FieldValues, TResult>({
     if (optimistic) {
       const plan = optimistic(values);
       onSuccess?.(null);
-      await runOptimistic({ ...plan, call: () => request(values) });
+      await runOptimistic({ ...plan, call: (idempotencyKey) => request(values, idempotencyKey) });
       return;
     }
 
     setSubmitting(true);
     try {
-      const response = await request(values);
+      const response = await request(values, newIdempotencyKey());
       if (response.ok) {
         onSuccess?.(response.info);
         return;
