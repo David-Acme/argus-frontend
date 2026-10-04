@@ -13,6 +13,7 @@ import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
 import { useCameraDeviceSettings } from '@/features/cameras/hooks/use-camera-device-settings';
 import { useCameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-stage';
+import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
@@ -55,10 +56,11 @@ export default function CameraDetailScreen() {
   const [talkOpen, setTalkOpen] = useState(false);
   const [showZones, setShowZones] = useState(true);
   const quality = useCameraQuality(id);
-  const { run: move, pending: moving } = useServiceAction();
+  const { run: move } = useServiceAction();
   const { cameras, isPendingZone } = useCameraRows();
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const call = useCameraCall(id);
+  const ptzControls = useCameraPtz(id);
   const stage = useCameraLiveStage({ quality });
   const audio = useCameraLiveAudio(call.snapshot != null && call.snapshot.state !== 'idle');
   const autoCalled = useRef(false);
@@ -169,24 +171,6 @@ export default function CameraDetailScreen() {
     [camera, setEnabled, t],
   );
 
-  const step = useCallback(
-    (direction: number) =>
-      void move({
-        call: () => cameraControlService.move(id, { angle: direction }),
-        errorTitle: t('screens.cameras.device-offline'),
-      }),
-    [id, move, t],
-  );
-
-  const center = useCallback(
-    () =>
-      void move({
-        call: () => cameraControlService.move(id, { x: 0, y: 0 }),
-        errorTitle: t('screens.cameras.device-offline'),
-      }),
-    [id, move, t],
-  );
-
   const gotoPreset = useCallback(
     (preset: CameraPreset) =>
       void move({
@@ -247,7 +231,7 @@ export default function CameraDetailScreen() {
 
   const status = cameraStatusOf(camera);
   const stretch = isWide ? 'grow' : undefined;
-  const ptz = canUpdate && features?.ptz ? { moving, onStep: step, onCenter: center } : null;
+  const ptz = canUpdate && features?.ptz ? ptzControls : null;
   const live = (
     <CameraLivePanel
       cameraId={camera.id}

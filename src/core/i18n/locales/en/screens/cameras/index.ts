@@ -113,7 +113,7 @@ export const cameras = {
   'ptz-down': 'Down',
   'ptz-left': 'Left',
   'ptz-right': 'Right',
-  'ptz-center': 'Center',
+  'ptz-limit': 'The camera cannot turn any further that way',
   presets: 'Positions',
   'preset-save': 'Save position',
   'preset-empty': 'No saved positions',

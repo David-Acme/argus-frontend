@@ -11,6 +11,7 @@ export interface ICameraPtz {
   x?: number;
   y?: number;
   angle?: number;
+  stop?: boolean;
 }
 
 export interface ICameraPreset {

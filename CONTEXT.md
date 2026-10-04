@@ -2105,10 +2105,16 @@ unfolds its timeline.
   password says how to enable talking. The separate "Escuchar" action is gone.
 - **Controls on the video.** The PTZ pad sits on the picture (hidden by
   default on phones, toggled by "Mover"); saved positions and "Guardar
-  posición" are under the video. The device settings (privacy, motion and its
-  sensitivity, auto-tracking, LED, night vision) are inline in "Ajustes de la
-  cámara" instead of a sheet. There is no click-to-center: Tapo's
-  `motorMove` coordinates have no documented mapping to the picture.
+  posición" are under the video. A tap is a 10° step (`motorMove`, relative
+  degrees: right `+x`, left `-x`, up `+y`, down `-y`); holding an arrow for
+  350 ms starts a continuous move (`relativeMove` 0/90/180/270) and releasing
+  sends `stop` (`model/camera-ptz.ts`, `hooks/use-camera-ptz.ts`, unit-tested;
+  calls are queued so a stop never overtakes its start). When the server
+  answers `limit: true` that arrow dims and the video says the camera cannot
+  turn further. There is no "Centrar": the C225 exposes no home position
+  locally (argus-camera CONTEXT, "Pan and tilt, measured"). The device
+  settings (privacy, motion and its sensitivity, auto-tracking, LED, night
+  vision) are inline in "Ajustes de la cámara".
 - **Fullscreen.** The button on the video opens the same stage (badge, stats,
   PTZ, quality) in a full-window `Modal`; on the desktop it also makes the
   Tauri window fullscreen (`core:window:allow-set-fullscreen`), on the web the

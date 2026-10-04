@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { ptzHold, ptzStep, reachedLimit } from '@/features/cameras/model/camera-ptz';
 import { liveAudioLevel, liveAudioReason, storedMuted } from '@/features/cameras/model/camera-live-audio';
 import { capabilitiesFromRow, hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { optimisticStatus } from '@/features/cameras/model/camera-device';
@@ -159,5 +160,27 @@ describe('live camera audio', () => {
     expect(liveAudioReason({ ...base, muted: true, argusCall: true })).toBe('muted');
     expect(storedMuted(null)).toBe(false);
     expect(storedMuted(true)).toBe(true);
+  });
+});
+
+describe('pan and tilt', () => {
+  test('each arrow is a 10 degree relative step with the C225 signs: +x right, +y up', () => {
+    expect(ptzStep('right')).toEqual({ x: 10, y: 0 });
+    expect(ptzStep('left')).toEqual({ x: -10, y: 0 });
+    expect(ptzStep('up')).toEqual({ x: 0, y: 10 });
+    expect(ptzStep('down')).toEqual({ x: 0, y: -10 });
+  });
+
+  test('holding an arrow moves continuously in the protocol direction', () => {
+    expect(ptzHold('right')).toEqual({ angle: 0 });
+    expect(ptzHold('up')).toEqual({ angle: 90 });
+    expect(ptzHold('left')).toEqual({ angle: 180 });
+    expect(ptzHold('down')).toEqual({ angle: 270 });
+  });
+
+  test('the server says when the camera stood at the end of its travel', () => {
+    expect(reachedLimit({ moved: false, limit: true })).toBe(true);
+    expect(reachedLimit({ moved: true, limit: false })).toBe(false);
+    expect(reachedLimit(null)).toBe(false);
   });
 });

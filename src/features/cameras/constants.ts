@@ -53,8 +53,6 @@ export const ZONE_MAX_POINTS = 64;
 
 export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE'] as const;
 
-export const PTZ_DIRECTIONS = { right: 0, up: 90, left: 180, down: 270 } as const;
-
 export const CAMERA_ICONS: readonly IconName[] = [
   'video',
   'home',

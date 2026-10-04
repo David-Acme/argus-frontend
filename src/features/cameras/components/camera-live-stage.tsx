@@ -11,13 +11,8 @@ import { cn } from '@/shared/libs/utils';
 import { CameraLiveView } from './camera-live-view';
 import { PtzPad } from '@/features/cameras/components/ptz-pad';
 import type { CameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
+import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
-
-export type CameraPtzControls = {
-  moving: boolean;
-  onStep: (direction: number) => void;
-  onCenter: () => void;
-};
 
 type CameraLiveStageProps = {
   cameraId: string;
@@ -114,12 +109,22 @@ export function CameraLiveStage({
                 down: t('screens.cameras.ptz-down'),
                 left: t('screens.cameras.ptz-left'),
                 right: t('screens.cameras.ptz-right'),
-                center: t('screens.cameras.ptz-center'),
               }}
-              disabled={ptz.moving}
+              limit={ptz.limit}
               onStep={ptz.onStep}
-              onCenter={ptz.onCenter}
+              onHoldStart={ptz.onHoldStart}
+              onHoldEnd={ptz.onHoldEnd}
             />
+          </View>
+        ) : null}
+        {live && ptz?.limit ? (
+          <View pointerEvents="none" className="absolute inset-x-0 top-12 items-center">
+            <View className="bg-card/90 flex-row items-center gap-1.5 rounded-full px-3 py-1.5">
+              <Icon name="triangle-alert" className="text-foreground-secondary size-3.5" />
+              <Text variant="micro" className="text-foreground">
+                {t('screens.cameras.ptz-limit')}
+              </Text>
+            </View>
           </View>
         ) : null}
         {fullscreen && fullscreenControls ? (
