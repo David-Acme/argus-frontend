@@ -2200,6 +2200,21 @@ platform, then leaves in its own change.
   `UIBackgroundModes: audio` and the microphone text, Android
   `BLUETOOTH_CONNECT`, `WAKE_LOCK` and `ACCESS_NETWORK_STATE`, and the LiveKit
   Expo plugin's `communication` audio type. A dev-client rebuild is required.
+- **Live findings (2026-10-04).** argus-notification fans `call_cancel
+  {answered_elsewhere}` out as soon as a call is claimed, and it reached the
+  claiming desktop before its own token answer, so a cancel is ignored while
+  this device's claim is in flight. The interrupt control keeps its slot
+  (disabled while Argus is silent) so the hang-up button never moves under a
+  finger. A ring during a live call (the user turned `liveAnnounce` off) is
+  held as a banner, 'Argus tiene otra llamada para ti', with Atender (ends the
+  current call, answers the new one) and Ahora no.
+- **Llamadas de Argus** (`components/call-preferences-section.tsx`, a panel in
+  Perfil under the sessions): argus-notification's `GET/PATCH
+  /notification/call-preferences`, one row per user, edited optimistically
+  through the remote-resource cache and rolled back with a toast. Each option
+  explains itself in one line; the per-person timings RTC-CALLS added
+  (agenda lead, ring length, phone delay, call language, live news, quiet
+  days) are optional in the contract and render once the server sends them.
 - **Tests.** `tests/unit/rtc-protocol.test.ts`, `pinned-websocket.test.ts`,
   `voice-rtc-call.test.ts` (the service against a fake room) and the Rust
   units; `src-tauri` carries two ignored live tests
