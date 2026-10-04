@@ -16,6 +16,7 @@ type CalendarMonthViewProps = {
   entries: readonly CalendarEntry[];
   onSelectDay: (date: Date) => void;
   fill?: boolean;
+  mini?: boolean;
 };
 
 type DayCellProps = {
@@ -27,6 +28,7 @@ type DayCellProps = {
   label: string;
   dayNumber: string;
   fill: boolean;
+  mini: boolean;
   onPress: (date: Date) => void;
 };
 
@@ -39,6 +41,7 @@ const DayCell = memo(function DayCell({
   label,
   dayNumber,
   fill,
+  mini,
   onPress,
 }: DayCellProps) {
   const visible = entries.slice(0, MONTH_CELL_ENTRIES);
@@ -50,17 +53,22 @@ const DayCell = memo(function DayCell({
         accessibilityRole="button"
         accessibilityState={{ selected: isSelected }}
         accessibilityLabel={label}
-        className="min-h-14 flex-1 items-center justify-center py-1 active:opacity-60"
+        className={cn(
+          'flex-1 items-center justify-center active:opacity-60',
+          mini ? 'web:hover:bg-surface-secondary/60 min-h-10 rounded-xl py-0.5' : 'min-h-14 py-1'
+        )}
         onPress={() => onPress(day)}>
         <View
           className={cn(
-            'size-9 items-center justify-center rounded-full',
+            'items-center justify-center rounded-full',
+            mini ? 'size-7' : 'size-9',
             isSelected && 'bg-interactive',
-            !isSelected && isToday && 'border-foreground/25 border'
+            !isSelected && isToday && (mini ? 'bg-accent-soft' : 'border-foreground/25 border')
           )}>
           <Text
             className={cn(
-              'text-body',
+              mini ? 'text-caption' : 'text-body',
+              isToday && !isSelected && 'font-semibold',
               isSelected
                 ? 'text-foreground-on-interactive font-semibold'
                 : outside
@@ -70,7 +78,14 @@ const DayCell = memo(function DayCell({
             {dayNumber}
           </Text>
         </View>
-        {entries.length > 0 ? (
+        {mini ? (
+          <View
+            className={cn(
+              'mt-0.5 size-1 rounded-full',
+              entries.length > 0 ? 'bg-foreground-secondary/70' : 'bg-transparent'
+            )}
+          />
+        ) : entries.length > 0 ? (
           <View className="mt-1 w-5 gap-[2px]">
             {visible.map((entry) => (
               <View
@@ -139,6 +154,7 @@ export function CalendarMonthView({
   entries,
   onSelectDay,
   fill = false,
+  mini = false,
 }: CalendarMonthViewProps) {
   const date = useDateFormatter();
   const weekdayLabels = useMemo(
@@ -190,6 +206,7 @@ export function CalendarMonthView({
                 label={date.formatFullDate(day)}
                 dayNumber={date.formatDayNumber(day)}
                 fill={fill}
+                mini={mini}
                 onPress={onSelectDay}
               />
             ))}

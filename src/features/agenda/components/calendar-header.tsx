@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { cn } from '@/shared/libs/utils';
 
 type CalendarHeaderProps = {
   title: string;
@@ -9,11 +10,32 @@ type CalendarHeaderProps = {
   previousLabel: string;
   nextLabel: string;
   todayLabel: string;
+  todayHint: string;
+  showsToday: boolean;
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
   accessory?: ReactNode;
 };
+
+type StepButtonProps = {
+  icon: 'chevron-left' | 'chevron-right';
+  label: string;
+  onPress: () => void;
+};
+
+function StepButton({ icon, label, onPress }: StepButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={4}
+      className="web:hover:bg-card/70 size-8 items-center justify-center rounded-full active:opacity-60"
+      onPress={onPress}>
+      <Icon name={icon} className="text-foreground-secondary size-[18px]" />
+    </Pressable>
+  );
+}
 
 export function CalendarHeader({
   title,
@@ -21,49 +43,46 @@ export function CalendarHeader({
   previousLabel,
   nextLabel,
   todayLabel,
+  todayHint,
+  showsToday,
   onPrevious,
   onNext,
   onToday,
   accessory,
 }: CalendarHeaderProps) {
   return (
-    <View className="flex-row items-end justify-between gap-3">
+    <View className="flex-row items-center justify-between gap-3">
       <View className="min-w-0 flex-1">
-        <Text variant="display" numberOfLines={1}>
+        <Text variant="display" numberOfLines={1} className="capitalize">
           {title}
         </Text>
-        <Text variant="caption" className="mt-0.5">
+        <Text variant="caption" className="mt-0.5" numberOfLines={1}>
           {subtitle}
         </Text>
       </View>
       {accessory}
-      <View className="flex-row items-center gap-1">
+      <View className="bg-surface-secondary flex-row items-center gap-0.5 rounded-full p-1">
+        <StepButton icon="chevron-left" label={previousLabel} onPress={onPrevious} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={todayLabel}
-          hitSlop={6}
-          className="bg-surface-secondary web:hover:bg-border-subtle mr-1 min-h-9 justify-center rounded-full px-3.5 active:opacity-70"
+          accessibilityLabel={showsToday ? todayLabel : todayHint}
+          className={cn(
+            'min-h-8 flex-row items-center gap-1.5 rounded-full px-3',
+            showsToday
+              ? 'web:hover:bg-card/70 active:opacity-70'
+              : 'bg-card web:hover:bg-card/80 shadow-sm shadow-black/10 active:opacity-70'
+          )}
           onPress={onToday}>
-          <Text variant="caption" className="text-foreground font-semibold">
+          <View
+            className={cn('size-1.5 rounded-full', showsToday ? 'bg-muted-foreground/50' : 'bg-accent')}
+          />
+          <Text
+            variant="caption"
+            className={cn('font-semibold', showsToday ? 'text-foreground-secondary' : 'text-foreground')}>
             {todayLabel}
           </Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={previousLabel}
-          hitSlop={4}
-          className="web:hover:bg-surface-secondary size-9 items-center justify-center rounded-full active:opacity-60"
-          onPress={onPrevious}>
-          <Icon name="chevron-left" className="text-foreground-secondary size-5" />
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={nextLabel}
-          hitSlop={4}
-          className="web:hover:bg-surface-secondary size-9 items-center justify-center rounded-full active:opacity-60"
-          onPress={onNext}>
-          <Icon name="chevron-right" className="text-foreground-secondary size-5" />
-        </Pressable>
+        <StepButton icon="chevron-right" label={nextLabel} onPress={onNext} />
       </View>
     </View>
   );

@@ -18,15 +18,35 @@ type AgendaEntriesInput = {
 type AgendaEntries = {
   range: { from: number; to: number };
   entries: readonly CalendarEntry[];
+  monthEntries: readonly CalendarEntry[];
   selectedDayEntries: readonly CalendarEntry[];
 };
+
+function mergeById(
+  first: readonly CalendarEntry[],
+  second: readonly CalendarEntry[]
+): readonly CalendarEntry[] {
+  if (second.length === 0) return first;
+  const seen = new Set(first.map((entry) => entry.id));
+  const extra = second.filter((entry) => !seen.has(entry.id));
+  return extra.length === 0 ? first : [...first, ...extra];
+}
 
 export function useAgendaEntries({ view, anchor, selectedDay }: AgendaEntriesInput): AgendaEntries {
   const date = useDateFormatter();
   const range = useMemo(() => date.rangeFor(view, anchor), [anchor, date, view]);
-  const cached = useViewCacheRows<CalendarEntry>(
+  const nextMonth = useMemo(() => date.addMonths(anchor, 1), [anchor, date]);
+  const current = useViewCacheRows<CalendarEntry>(
     VIEW_CACHE_KEYS.calendarEntries,
     calendarMonthScope(anchor)
+  );
+  const following = useViewCacheRows<CalendarEntry>(
+    VIEW_CACHE_KEYS.calendarEntries,
+    calendarMonthScope(nextMonth)
+  );
+  const cached = useMemo(
+    () => (view === 'agenda' ? mergeById(current, following) : current),
+    [current, following, view]
   );
   const { rows } = useOptimisticRows(cached, CALENDAR_LENSES, byStart);
   const entries = useMemo(
@@ -45,5 +65,5 @@ export function useAgendaEntries({ view, anchor, selectedDay }: AgendaEntriesInp
     viewCacheCoordinatorService.watchCalendarMonth(anchor);
   }, [anchor]);
 
-  return { range, entries, selectedDayEntries };
+  return { range, entries, monthEntries: rows, selectedDayEntries };
 }

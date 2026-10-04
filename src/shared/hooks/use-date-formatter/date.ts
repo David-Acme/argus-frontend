@@ -45,6 +45,7 @@ export type DateFormatter = {
   formatAgendaDay: (value: Date) => string;
   formatFullDate: (value: Date) => string;
   formatPickerDay: (value: Date) => string;
+  formatDayRange: (from: Date, to: Date) => string;
   formatDayNumber: (value: Date) => string;
   formatHour: (hour: number) => string;
   formatTime: (value: Date) => string;
@@ -137,6 +138,17 @@ export function createDateFormatter(
     formatAgendaDay: (value) => sentence(format(value, dayPattern(language), options)),
     formatFullDate: (value) => format(value, 'PPPP', options),
     formatPickerDay: (value) => format(value, 'EEE, d MMM', options).replace('.', ''),
+    formatDayRange: (from, to) => {
+      const pattern = language === 'es' ? 'd MMM' : 'MMM d';
+      if (isSameDay(from, to)) return format(from, pattern, options);
+      const sameYear = from.getFullYear() === to.getFullYear();
+      if (sameYear && isSameMonth(from, to)) {
+        return language === 'es'
+          ? `${format(from, 'd', options)}–${format(to, 'd MMM', options)}`
+          : `${format(from, 'MMM d', options)}–${format(to, 'd', options)}`;
+      }
+      return `${format(from, pattern, options)} – ${format(to, pattern, options)}`;
+    },
     formatDayNumber: (value) => format(value, 'd', options),
     formatHour: (hour) => format(new Date(2000, 0, 1, hour), timePattern, options),
     formatTime: (value) => format(value, timePattern, options),

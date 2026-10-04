@@ -95,7 +95,10 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
     form.reset({
       title: event?.title ?? '',
       location: event?.location ?? '',
-      time: event ? date.formatInputTime(at) : date.defaultInputTime(at),
+      time:
+        event || at.getHours() !== 0 || at.getMinutes() !== 0
+          ? date.formatInputTime(at)
+          : date.defaultInputTime(at),
       endTime: ends ? date.formatInputTime(ends) : '',
       day: date.startOfDay(at).getTime(),
       isAllDay: event?.isAllDay ?? false,
@@ -161,6 +164,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
       open={open}
       onOpenChange={handleOpenChange}
       dismissible={!submitting}
+      onSubmit={submitting ? undefined : () => void submit()}
       title={event ? t('common.edit') : t('screens.agenda.new-event')}
       closeLabel={t('common.close')}
       footer={

@@ -2,15 +2,6 @@ export type DashboardTab = 'home' | 'schedule' | 'projects' | 'people' | 'settin
 
 export type AgendaStatus = 'upcoming' | 'active' | 'complete';
 
-export type ScheduleEntry = {
-  id?: string;
-  title: string;
-  time: string;
-  hour: number;
-  status: AgendaStatus;
-  note?: string;
-};
-
 export type DashboardProjectCard = {
   id: string;
   name: string;

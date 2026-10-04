@@ -15,9 +15,4 @@ export const WEEK_HOUR_HEIGHT = 56;
 
 export const AGENDA_ENTRY_ESTIMATE = 76;
 export const SCROLLBAR_GUTTER = 14;
-export const AGENDA_FIXED_ROW_SIZES: Record<string, number | undefined> = {
-  header: 42,
-  free: 54,
-};
-
 export const DAY_LIST_ROW_ESTIMATE = 48;

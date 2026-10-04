@@ -38,6 +38,16 @@ describe('createDateFormatter', () => {
     expect(new Date(month.from)).toEqual(new Date(2026, 8, 28));
   });
 
+  test('day ranges name the month once when they share it', () => {
+    const es = createDateFormatter('es', spain);
+    const en = createDateFormatter('en', us);
+    expect(es.formatDayRange(new Date(2026, 9, 4), new Date(2026, 9, 9))).toBe('4–9 oct');
+    expect(en.formatDayRange(new Date(2026, 9, 4), new Date(2026, 9, 9))).toBe('Oct 4–9');
+    expect(es.formatDayRange(new Date(2026, 9, 29), new Date(2026, 10, 2))).toBe('29 oct – 2 nov');
+    expect(en.formatDayRange(new Date(2026, 9, 29), new Date(2026, 10, 2))).toBe('Oct 29 – Nov 2');
+    expect(es.formatDayRange(new Date(2026, 9, 3), new Date(2026, 9, 3, 23))).toBe('3 oct');
+  });
+
   test('times follow the clock preference', () => {
     const start = new Date(2026, 9, 15, 14, 5);
     const end = new Date(2026, 9, 15, 15, 0);

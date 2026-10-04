@@ -10,11 +10,13 @@ import { Text } from '@/shared/components/ui/text';
 import { CALENDAR_DEFAULT_VIEW, IS_NATIVE } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
+import { useNow } from '@/shared/hooks/use-now';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { screenIn } from '@/shared/libs/animations';
+import { AgendaSidePanel } from '@/features/agenda/components/agenda-side-panel';
 import { CalendarAgendaView } from '@/features/agenda/components/calendar-agenda-view';
 import { CalendarDayView } from '@/features/agenda/components/calendar-day-view';
 import { CalendarEntryDetail } from '@/features/agenda/components/calendar-entry-detail';
@@ -40,7 +42,7 @@ function timestampParam(value: string | undefined): number | null {
 
 export default function ScheduleScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
   const { new: newParam, edit: editParam, at: atParam } = useLocalSearchParams<AgendaParams>();
@@ -70,7 +72,14 @@ export default function ScheduleScreen() {
   });
   const usesContextMenu = IS_NATIVE && !usesActionSheet;
   const bottomNavInset = useBottomNavInset();
-  const { range, entries, selectedDayEntries } = useAgendaEntries({ view, anchor, selectedDay });
+  const now = useNow(60000);
+  const { range, entries, monthEntries, selectedDayEntries } = useAgendaEntries({
+    view,
+    anchor,
+    selectedDay,
+  });
+  const showsToday = now >= range.from && now <= range.to;
+  const sidePanel = isWide && (view === 'agenda' || view === 'day');
 
   const editingEvent = useMemo<ICalendarEventFormRecord | null>(() => {
     const entry = entries.find(
@@ -110,6 +119,23 @@ export default function ScheduleScreen() {
     }),
     [t]
   );
+
+  const stepLabels = {
+    day: { previous: t('screens.agenda.previous'), next: t('screens.agenda.next') },
+    week: { previous: t('screens.agenda.previous-week'), next: t('screens.agenda.next-week') },
+    month: { previous: t('screens.agenda.previous-month'), next: t('screens.agenda.next-month') },
+    agenda: { previous: t('screens.agenda.previous-month'), next: t('screens.agenda.next-month') },
+  }[view];
+
+  const subtitle =
+    view === 'day'
+      ? date.formatFullDate(anchor)
+      : view === 'month'
+        ? date.formatYear(anchor)
+        : date.formatDayRange(new Date(range.from), new Date(range.to));
+
+  const nextMonth = date.formatMonth(date.addMonths(anchor, 1));
+  const nextMonthName = language === 'es' ? nextMonth.toLocaleLowerCase('es') : nextMonth;
 
   const createEvent = useCallback((at: Date | null) => {
     setEditingEventId('');
@@ -157,16 +183,34 @@ export default function ScheduleScreen() {
     renderContextMenu: usesContextMenu ? renderContextMenu : undefined,
   };
 
-  const step = useCallback(
-    (direction: 1 | -1) => {
-      setAnchor((current) => {
-        if (view === 'month') return date.addMonths(current, direction);
-        if (view === 'week') return date.addDays(current, 7 * direction);
-        return date.addDays(current, direction);
-      });
-    },
-    [date, view]
-  );
+  const step = (direction: 1 | -1) => {
+    const today = date.startOfDay(new Date());
+    if (view === 'week') {
+      setAnchor(date.addDays(anchor, 7 * direction));
+      return;
+    }
+    if (view === 'day') {
+      const next = date.addDays(anchor, direction);
+      setAnchor(next);
+      setSelectedDay(next);
+      return;
+    }
+    const month = date.addMonths(new Date(anchor.getFullYear(), anchor.getMonth(), 1), direction);
+    const target = date.isSameMonth(month, today) ? today : month;
+    setAnchor(view === 'month' ? month : target);
+    setSelectedDay(target);
+  };
+
+  const goToday = () => {
+    const today = date.startOfDay(new Date());
+    setAnchor(today);
+    setSelectedDay(today);
+  };
+
+  const pickDay = (day: Date) => {
+    setAnchor(day);
+    setSelectedDay(day);
+  };
 
   const switcher = <CalendarViewSwitcher view={view} labels={viewLabels} onChange={setView} />;
 
@@ -193,18 +237,16 @@ export default function ScheduleScreen() {
 
         <CalendarHeader
           title={view === 'day' ? date.formatWeekday(anchor) : date.formatMonth(anchor)}
-          subtitle={view === 'day' ? date.formatFullDate(anchor) : date.formatYear(anchor)}
-          previousLabel={t('screens.agenda.previous')}
-          nextLabel={t('screens.agenda.next')}
+          subtitle={subtitle}
+          previousLabel={stepLabels.previous}
+          nextLabel={stepLabels.next}
           todayLabel={t('screens.agenda.today')}
+          todayHint={t('screens.agenda.today-hint')}
+          showsToday={showsToday}
           onPrevious={() => step(-1)}
           onNext={() => step(1)}
-          onToday={() => {
-            const today = date.startOfDay(new Date());
-            setAnchor(today);
-            setSelectedDay(today);
-          }}
-          accessory={isWide ? <View className="w-[340px] self-center">{switcher}</View> : undefined}
+          onToday={goToday}
+          accessory={isWide ? <View className="w-[340px]">{switcher}</View> : undefined}
         />
 
         {isWide ? null : switcher}
@@ -237,37 +279,63 @@ export default function ScheduleScreen() {
           </View>
         ) : null}
 
-        {view === 'day' ? (
-          <View className="min-h-0 flex-1">
-            <CalendarDayView
-              entries={entries}
-              onSelect={handlers.onSelect}
-              onLongPress={handlers.onLongPress}
-              renderContextMenu={handlers.renderContextMenu}
-            />
-          </View>
-        ) : null}
+        {view === 'day' || view === 'agenda' ? (
+          <View className="min-h-0 flex-1 flex-row gap-6">
+            {view === 'day' ? (
+              <View className="min-h-0 min-w-0 flex-1">
+                <CalendarDayView
+                  day={anchor}
+                  now={now}
+                  compact={isCompact}
+                  entries={entries}
+                  onSelect={handlers.onSelect}
+                  onLongPress={handlers.onLongPress}
+                  onCreateAt={canCreate ? createEvent : undefined}
+                  renderActions={renderActions}
+                  renderContextMenu={handlers.renderContextMenu}
+                />
+              </View>
+            ) : null}
 
-        {view === 'agenda' ? (
-          <View className="min-h-0 flex-1">
-            <CalendarAgendaView
-              entries={entries}
-              from={range.from}
-              to={range.to}
-              freeLabel={t('screens.agenda.day-empty')}
-              renderActions={renderActions}
-              onSelect={handlers.onSelect}
-              onLongPress={handlers.onLongPress}
-              renderContextMenu={handlers.renderContextMenu}
-              onCreateDay={
-                canCreate
-                  ? (day) => {
-                      setSelectedDay(day);
-                      createEvent(null);
-                    }
-                  : undefined
-              }
-            />
+            {view === 'agenda' ? (
+              <View className="min-h-0 min-w-0 flex-1">
+                <CalendarAgendaView
+                  entries={entries}
+                  from={range.from}
+                  to={range.to}
+                  now={now}
+                  compact={isCompact}
+                  continueLabel={t('screens.agenda.continue-month', { month: nextMonthName })}
+                  onContinue={() => step(1)}
+                  renderActions={renderActions}
+                  onSelect={handlers.onSelect}
+                  onLongPress={handlers.onLongPress}
+                  renderContextMenu={handlers.renderContextMenu}
+                  onCreateDay={
+                    canCreate
+                      ? (day) => {
+                          setSelectedDay(day);
+                          createEvent(day);
+                        }
+                      : undefined
+                  }
+                />
+              </View>
+            ) : null}
+
+            {sidePanel ? (
+              <AgendaSidePanel
+                anchor={anchor}
+                selected={view === 'day' ? anchor : selectedDay}
+                monthEntries={monthEntries}
+                entries={entries}
+                range={range}
+                now={now}
+                onSelectDay={pickDay}
+                onSelectEntry={setDetailEntry}
+                onCreate={canCreate ? () => createEvent(view === 'day' ? anchor : null) : undefined}
+              />
+            ) : null}
           </View>
         ) : null}
       </Animated.View>
