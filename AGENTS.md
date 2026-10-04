@@ -347,7 +347,9 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   `CODE|message` like the mobile modules (`CERT_NOT_TRUSTED` from rustls in
   the source chain, `TIMEOUT`, `NETWORK_ERROR`). The desktop socket closes a
   peer silent for 45 s and bounds its send queue (512 frames). `frontendDist = ../dist` (`bun run web:build`). Verify with
-  `cargo check` (requires `webkit2gtk-4.1` on Linux). `argus_request` uses a
+  `cargo check` (requires `webkit2gtk-4.1` on Linux). The WebView's native
+  context menu is refused by the `argus-context-menu` plugin
+  (`src-tauri/src/context_menu.rs`). `argus_request` uses a
   **pinned DNS resolver** (`reqwest::dns::Resolve`): `argus.local` → the discovery IP,
   same as Android's custom `Dns` (`.local` does not always resolve).
 - **WebSocket (shipped)**: always native — RN's JS `WebSocket` does not trust
@@ -615,6 +617,10 @@ for Watermelon nor make an HTTP list request just because it mounted.
   screen. Dialogs and sheets render beside `AppScreen`, never as its
   children: its body lays children out with a gap, so a closed dialog adds
   an invisible one.
+- Dialogs scroll through `AdaptiveDialog` itself (`OverlayBody`: full-width
+  body, ring-safe gutter, sticky header and actions); never wrap a dialog's
+  content in another vertical scroll view, and pass `onSubmit` to a form
+  dialog so Enter submits on web.
 - Fills that mark something on a card use `surface-secondary` (it sits
   below the card in light and above it in dark); a card nested in a card
   adds `dark:bg-card-secondary`, because dark mode cannot show the shadow

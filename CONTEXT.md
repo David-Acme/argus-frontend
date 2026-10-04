@@ -1153,9 +1153,11 @@ the result of the user's action at once and reconciles with the synced row.
   Undo toast (6 s, the toast's own lifetime) instead of a confirm dialog;
   project deletion (cascades), user deactivation and invitation revocation
   keep their confirm.
-- **Notifications.** Opening the bell marks the previewed items read at once
-  (badge clears); the items stay highlighted for that open session so the
-  user still sees what was new.
+- **Notifications.** Opening the bell no longer reads anything (owner
+  decision, 2026-10-03): a preview is not a read. A thread is read when it is
+  tapped (bell or Novedades) or through the bell's "Marcar todo como leído",
+  which reads every unread row of the user in WatermelonDB, not only the
+  cached window. Both go through `runOptimistic`.
 - **Motion.** Rows enter without per-item animations; feedback comes from the
   pressed control and the dimmed pending state. Reanimated 4.5 on Fabric keeps
   the old frame of a `layout={LinearTransition}` view when Reduce Motion is on
@@ -1544,9 +1546,9 @@ unit-tested; the row is `notification-thread-row.tsx`):
   a summary history (a moon after quiet hours), the camera fallback a video,
   anything else the bell.
 - Read state is per thread: a thread is unread while any of its rows is.
-  Opening the bell marks every unread row of the previewed threads read (they
-  stay highlighted while it is open); pressing a thread in Novedades marks it
-  read and, when it has more than one row, unfolds its timeline
+  Opening the bell reads nothing; pressing a thread (in the bell or in
+  Novedades) marks it read and, in Novedades, when it has more than one row,
+  unfolds its timeline
   (`TimelineItem`, `shared/components/ui/timeline.tsx`, shared with the
   episode timeline). Both go through `runOptimistic`, one `notification`
   update intent per row.
@@ -1671,3 +1673,89 @@ one refresh-token family with an opaque 32-hex id.
   as `FINGERPRINT_MISMATCH`, which the invitation screen explains ("Este
   servidor no es el de la invitación… No se envió nada"). The desktop has
   no invitation path (enrolment is mobile-only), so it never sends a token.
+
+## Dialogs, the agenda and the desktop shell (2026-10-03)
+
+**Dialogs own their scroll.** A focused input inside a dialog lost the sides
+of its focus ring: the form scrolled inside `FormScrollView`, a scroll
+container exactly as wide as the inputs, and a scroll container clips what
+overflows it, so the 3 px ring (and the buttons' 2 px outline at a 2 px
+offset) was cut on both edges. The fix is in the primitives, so every dialog
+gets it:
+
+- `AdaptiveDialog` renders its children in `OverlayBody`
+  (`shared/components/ui/overlay-body.tsx`): one scroll view that spans the
+  dialog's full width (negative margin equal to the dialog's own padding,
+  `DIALOG_INSET` / `SHEET_INSET`, given back as content padding) with a
+  vertical `OVERLAY_RING_GUTTER`, so a ring is never at a scroll edge. The
+  header and the actions stay put (sticky) and long content scrolls between
+  them; a hairline appears above and below the body only while it really
+  overflows (on web it reads `scrollHeight` from the DOM node, because
+  `onLayout` uses `getBoundingClientRect`, which the opening zoom animation
+  scales). `scroll-py-6` keeps a focused field clear of the edges when the
+  browser scrolls it into view. On native the body height comes from
+  `useOverlayBodyHeight`.
+- A `FormScrollView` inside an `AdaptiveDialog` no longer scrolls itself: it
+  joins the dialog body through `OverlayBodyContext` (registers that scroller
+  for `scrollToFirstError` and its offset), so there is never a scroll inside
+  a scroll; its `maxHeight` only applies outside a dialog.
+- Keyboard: Radix gives the focus trap, Escape (refused while a dialog is not
+  dismissible, `onEscapeKeyDown`) and the first focusable field. The optional
+  `onSubmit` makes Enter submit on web (`dialog-submit-key.ts`, unit-tested:
+  Enter in a field or the dialog submits, a textarea needs Ctrl/Cmd+Enter,
+  buttons, switches, tabs, options and links keep their own Enter, IME
+  composition never submits). It listens in the capture phase because
+  react-native-web's `TextInput` stops the propagation of its key events, and
+  it prevents the event, so a field's own `onSubmitEditing` does not submit a
+  second time. Agenda and project forms pass it; the other features' forms
+  can pass `onSubmit={submit}` the same way.
+- The close button is a 32 px round button with the caller's `closeLabel`
+  (it used to be an English "Close" at 70 % opacity), the overlay keeps 24 px
+  around the dialog from `sm` up, and the Radix wrapper that takes focus on a
+  click in the empty part of a dialog no longer draws WebKit's focus outline.
+
+**Agenda.** The Agenda mode was a stack of one dashed "Nada este día" row per
+empty day. It is now a schedule:
+
+- `model/agenda-rows.ts` (unit-tested) turns the range into rows: a day with
+  entries (all-day first, then by time), today always (empty or not), one
+  collapsed row per run of empty days ("Sin planes · 4–9 oct", split at a
+  month boundary) and a month label when the list crosses into another month.
+  It receives the date formatter's day math, since features may not import
+  date-fns. `formatDayRange` names the month once ("4–9 oct", "Oct 4–9").
+- A day is a date badge (weekday + number; today filled, with "HOY") beside
+  its entries; an entry row (`agenda-entry-row.tsx`) is a time column (start
+  and end, or "Todo el día"), the title and a meta line with the source icon
+  (event, task, reminder), place and a non-default status. The list ends with
+  "Seguir en {mes}", and the arrows move a month at a time (to today when the
+  target month is the current one). The range (30 days from the anchor) reads
+  the anchor's month cache and the next one, both already kept by the
+  coordinator.
+- Wide windows (medium and expanded) put `AgendaSidePanel` beside Agenda and
+  Day: a mini month (`CalendarMonthView mini`, a dot marks busy days; a tap
+  moves the view there), the period's counts by source and its days without
+  plans, and "Lo siguiente" (the first entry still ahead, with "Hoy"/"Mañana"
+  or the date) or, when nothing is pending, a create button. Month keeps its
+  own day column; Week needs the whole width.
+- The header controls are one cluster that matches the view switcher (same
+  height, same `surface-secondary` track): previous, "Hoy", next. "Hoy" is a
+  raised chip with an accent dot when the visible period does not contain
+  today, and flat when it does; the arrows' labels name their step (day,
+  week, month). The subtitle names the period ("3 oct – 2 nov") in Week and
+  Agenda. Moving a month in Month also moves the selected day to the 1st (or
+  today), so the day column never shows a day of another month.
+- Day: all-day entries sit in their own row on top instead of being drawn at
+  the hour their timestamp happens to have, every entry of an hour is shown
+  (the old timeline showed only the first), the current hour is marked with
+  an accent rule, and an empty hour creates an event at that hour (the event
+  form keeps a non-midnight time it is opened with).
+
+**Desktop context menu.** The WebView's own right-click menu (Back, Reload,
+Inspect Element, and Cut/Copy/Paste/Insert Emoji in fields) is refused
+across the window. Tauri 2 has no switch for it (the maintainers point to
+the DOM `contextmenu` event); `src-tauri/src/context_menu.rs` is a small
+plugin whose `js_init_script` prevents it in the capture phase before any
+page code runs, in every webview and on every platform. Selection and the
+keyboard shortcuts (Ctrl+C/V/X/A) are untouched, because only the
+`contextmenu` event is cancelled.
+
