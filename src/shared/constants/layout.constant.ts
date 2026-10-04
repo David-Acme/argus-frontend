@@ -29,4 +29,10 @@ export const OVERLAY_CHROME_HEIGHT = 210;
 
 export const OVERLAY_BODY_MIN_HEIGHT = 160;
 
+export const OVERLAY_RING_GUTTER = 6;
+
+export const DIALOG_INSET = 24;
+
+export const SHEET_INSET = 20;
+
 export const TOAST_MAX_WIDTH = 440;

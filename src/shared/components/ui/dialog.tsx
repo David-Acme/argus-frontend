@@ -5,7 +5,7 @@ import { cn } from '@/shared/libs/utils';
 import { dialogIn, dialogOut, overlayIn, overlayOut } from '@/shared/libs/animations';
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import { Fragment, type ComponentProps, type ReactNode } from 'react';
-import { Platform, Text, View, type GestureResponderEvent, type ViewProps } from 'react-native';
+import { Platform, View, type GestureResponderEvent, type ViewProps } from 'react-native';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
 const Dialog = DialogPrimitive.Root;
@@ -40,7 +40,7 @@ function DialogOverlay({
     <FullWindowOverlay>
       <DialogPrimitive.Overlay
         className={cn(
-          'bg-overlay absolute top-0 right-0 bottom-0 left-0 z-50 flex items-center justify-center p-2',
+          'bg-overlay absolute top-0 right-0 bottom-0 left-0 z-50 flex items-center justify-center p-3 sm:p-6',
           Platform.select({
             web: 'animate-in fade-in-0 fixed cursor-default [&>*]:cursor-auto [&>[role=dialog]]:flex [&>[role=dialog]]:max-h-full [&>[role=dialog]]:w-full [&>[role=dialog]]:flex-col [&>[role=dialog]]:items-center',
           }),
@@ -68,11 +68,19 @@ function DialogContent({
   portalHost,
   children,
   dismissible = true,
+  closeLabel = 'Close',
+  onEscapeKeyDown,
   ...props
 }: ComponentProps<typeof DialogPrimitive.Content> & {
   portalHost?: string;
   dismissible?: boolean;
+  closeLabel?: string;
 }) {
+  const escape: typeof onEscapeKeyDown = (event) => {
+    onEscapeKeyDown?.(event);
+    if (!dismissible) event.preventDefault();
+  };
+
   return (
     <DialogPortal hostName={portalHost}>
       <DialogOverlay closeOnPress={dismissible}>
@@ -85,23 +93,20 @@ function DialogContent({
             }),
             className
           )}
+          onEscapeKeyDown={escape}
           {...props}>
           <>{children}</>
           <DialogPrimitive.Close
             disabled={!dismissible}
+            accessibilityRole="button"
+            accessibilityLabel={closeLabel}
             className={cn(
-              'absolute right-4 top-4 rounded',
-              dismissible ? 'opacity-70 active:opacity-100' : 'opacity-40',
-              Platform.select({
-                web: 'ring-offset-background focus:ring-ring data-[state=open]:bg-accent transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none',
-              })
+              'bg-surface-secondary absolute top-5 right-5 size-8 items-center justify-center rounded-full',
+              dismissible ? 'active:opacity-70' : 'opacity-40',
+              Platform.select({ web: 'hover:bg-border transition-colors' })
             )}
-            hitSlop={12}>
-            <Icon
-              name="x"
-              className={cn('text-accent-foreground web:pointer-events-none size-4 shrink-0')}
-            />
-            <Text className="sr-only">Close</Text>
+            hitSlop={8}>
+            <Icon name="x" className="text-foreground-secondary web:pointer-events-none size-4 shrink-0" />
           </DialogPrimitive.Close>
         </DialogPrimitive.Content>
       </DialogOverlay>

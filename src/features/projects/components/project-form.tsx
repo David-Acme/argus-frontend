@@ -110,6 +110,7 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
     <AdaptiveDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSubmit={submitting ? undefined : () => void submit()}
       title={project ? t('common.edit') : t('screens.projects.new-project')}
       closeLabel={t('common.close')}
       footer={

@@ -116,6 +116,7 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
     <AdaptiveDialog
       open={open}
       onOpenChange={onOpenChange}
+      onSubmit={submitting ? undefined : () => void submit()}
       title={task ? t('common.edit') : t('screens.projects.new-task')}
       closeLabel={t('common.close')}
       footer={

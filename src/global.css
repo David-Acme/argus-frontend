@@ -148,6 +148,10 @@
     outline-offset: 2px;
   }
 
+  [role='dialog'][tabindex='-1']:focus {
+    outline: none;
+  }
+
   button:disabled,
   [role='button']:disabled,
   button[aria-disabled='true'],
