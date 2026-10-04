@@ -50,6 +50,20 @@ export const home = {
   'notifications-empty': 'No tienes notificaciones nuevas',
   'notifications-unread': '{count} sin leer',
   'notifications-read': 'Todo leído',
+  thread: {
+    count: '{count} avisos',
+    urgent: 'Urgente',
+    unread: 'Sin leer',
+    'show-history': 'Muestra los avisos anteriores',
+    'mark-read': 'Lo marca como leído',
+    phase: {
+      opened: 'Primer aviso',
+      escalated: 'Empeoró',
+      resolved: 'Resuelto',
+      daily: 'Resumen del día',
+      'after-quiet': 'Tras el descanso',
+    },
+  },
   calendar: 'Calendario',
   subtitle:
     'Los parámetros viajan por el store, así que la misma ruta sirve para cualquier escaneo.',

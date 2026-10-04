@@ -10,7 +10,7 @@ import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
 import { zoneService } from '@/core/services/zone.service';
-import { EVENT_MOSAIC_LIMIT, EVENT_SAMPLE_LIMIT } from '@/shared/constants';
+import { EVENT_MOSAIC_LIMIT, EVENT_SAMPLE_LIMIT, VIEW_CACHE_PAGE_SIZE } from '@/shared/constants';
 import { mosaicSince, projectActivity } from './view-cache/activity.projection';
 import {
   calendarMonthScope,
@@ -27,8 +27,6 @@ import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
 import { activityWindows, projectSummary } from './view-cache/summary.projection';
 
-const NOTIFICATION_PREVIEW_LIMIT = 8;
-
 const shared = <T>(source: Observable<T>): Observable<T> =>
   source.pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
@@ -40,7 +38,7 @@ function sessionSources(userId: string) {
     projects: shared(projectService.observeList()),
     tasks: shared(projectTaskService.observeAll()),
     reminders: shared(reminderService.observeForUser(userId)),
-    notifications: shared(notificationService.observeForUser(userId, NOTIFICATION_PREVIEW_LIMIT)),
+    notifications: shared(notificationService.observeForUser(userId, VIEW_CACHE_PAGE_SIZE)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
     events: shared(eventService.observeRecent(EVENT_SAMPLE_LIMIT)),
     users: shared(userService.observeDirectory()),

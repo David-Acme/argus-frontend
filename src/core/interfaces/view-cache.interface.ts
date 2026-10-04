@@ -93,6 +93,7 @@ export interface INotificationPreviewCacheRow {
   body: string;
   isRead: boolean;
   data: NotificationData;
+  createdAt: number;
 }
 
 export interface IDashboardCacheData {

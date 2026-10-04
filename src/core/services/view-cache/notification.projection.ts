@@ -3,7 +3,7 @@ import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
 import type { ViewWrite } from './projection';
 
-export type NotificationSource = Pick<NotificationModel, 'id' | 'type' | 'title' | 'body' | 'isRead' | 'data'>;
+export type NotificationSource = Pick<NotificationModel, 'id' | 'type' | 'title' | 'body' | 'isRead' | 'data' | 'createdAt'>;
 
 export type NotificationProjectionInput = {
   notifications: readonly NotificationSource[];
@@ -18,6 +18,7 @@ export function projectNotifications({ notifications, unread }: NotificationProj
     body: notification.body,
     isRead: notification.isRead,
     data: notification.data,
+    createdAt: notification.createdAt.getTime(),
   }));
   return [
     { key: VIEW_CACHE_KEYS.dashboardNotifications, rows },

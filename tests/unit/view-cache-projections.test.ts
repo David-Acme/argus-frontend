@@ -175,11 +175,29 @@ describe('people projection', () => {
 describe('notification projection', () => {
   test('previews and the unread count', () => {
     const writes = projectNotifications({
-      notifications: [{ id: 'n1', type: 'camera', title: 'Hi', body: 'There', isRead: false, data: { cameraId: 7 } }],
+      notifications: [
+        {
+          id: 'n1',
+          type: 'camera',
+          title: 'Hi',
+          body: 'There',
+          isRead: false,
+          data: { cameraId: 7 },
+          createdAt: new Date(1_790_000_000_000),
+        },
+      ],
       unread: 3,
     });
     expect(rowsOf(writes, 'dashboard.notifications')).toEqual([
-      { id: 'n1', type: 'camera', title: 'Hi', body: 'There', isRead: false, data: { cameraId: 7 } },
+      {
+        id: 'n1',
+        type: 'camera',
+        title: 'Hi',
+        body: 'There',
+        isRead: false,
+        data: { cameraId: 7 },
+        createdAt: 1_790_000_000_000,
+      },
     ]);
     expect(valueOf(writes, 'dashboard.unread')).toBe(3);
   });

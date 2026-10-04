@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import type { GuardDanger, GuardTimelineEntry } from '@/core/types';
 import { guardService } from '@/core/services/guard.service';
 import { Text } from '@/shared/components/ui/text';
+import { TimelineItem } from '@/shared/components/ui/timeline';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
@@ -84,20 +85,14 @@ function TimelineLine({ entry, last }: TimelineLineProps) {
   const strong = entry.type === 'decision' && entry.notified;
 
   return (
-    <View className="flex-row gap-3">
-      <View className="w-3 items-center">
-        <View className={cn('mt-1.5 size-2 rounded-full', strong ? 'bg-error' : 'bg-muted-foreground')} />
-        {last ? null : <View className="bg-border-subtle mt-1 w-px flex-1" />}
-      </View>
-      <View className="min-w-0 flex-1 flex-row gap-3 pb-3">
-        <Text variant="caption" className="w-12 tabular-nums">
-          {date.formatTime(new Date(entry.at * 1000))}
-        </Text>
-        <Text variant="body" className={cn('min-w-0 flex-1', strong && 'font-medium')}>
-          {describe(entry)}
-        </Text>
-      </View>
-    </View>
+    <TimelineItem last={last} dotClassName={strong ? 'bg-error' : undefined} className="flex-row gap-3">
+      <Text variant="caption" className="w-12 tabular-nums">
+        {date.formatTime(new Date(entry.at * 1000))}
+      </Text>
+      <Text variant="body" className={cn('min-w-0 flex-1', strong && 'font-medium')}>
+        {describe(entry)}
+      </Text>
+    </TimelineItem>
   );
 }
 

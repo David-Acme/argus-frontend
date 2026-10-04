@@ -19,7 +19,12 @@ import {
   EntryActionsMenu,
   entryPermissions,
 } from '@/features/agenda';
-import { NOTIFICATION_LENSES, unreadAfterReads } from '@/features/home/model/notification-optimistic';
+import { NOTIFICATION_LENSES } from '@/features/home/model/notification-optimistic';
+import {
+  groupNotifications,
+  unreadThreadCount,
+  type NotificationThread,
+} from '@/features/home/model/notification-threads';
 import { activityTrend } from '@/features/home/model/activity-trend';
 import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
@@ -59,7 +64,8 @@ export default function HomeScreen() {
   const now = useNow(60000);
   const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
   const { rows: notifications } = useOptimisticRows(syncedNotifications, NOTIFICATION_LENSES);
-  const unreadNotifications = unreadAfterReads(syncedUnread, syncedNotifications, notifications);
+  const threads = useMemo(() => groupNotifications(notifications), [notifications]);
+  const unreadNotifications = unreadThreadCount(threads, syncedUnread, syncedNotifications);
   const firstName = firstNameOf(user);
 
   const matches = useCallback(
@@ -100,6 +106,11 @@ export default function HomeScreen() {
     });
   }, []);
 
+  const readThread = useCallback(
+    (thread: NotificationThread) => markNotificationsRead(thread.unreadIds),
+    [markNotificationsRead]
+  );
+
   const renderActions = useCallback(
     (entry: CalendarEntry) => (
       <EntryActionsMenu
@@ -116,7 +127,15 @@ export default function HomeScreen() {
 
   return (
     <AppScreen
-      aside={<HomeAside cameras={cameraTiles} summary={summary} notifications={notifications} />}>
+      aside={
+        <HomeAside
+          cameras={cameraTiles}
+          summary={summary}
+          threads={threads}
+          now={now}
+          onReadThread={readThread}
+        />
+      }>
       <View className="gap-5">
         <View className="flex-row items-center justify-between gap-4">
           <Text variant={isShort ? 'headline' : 'display'} className="flex-1" numberOfLines={2}>
@@ -133,7 +152,8 @@ export default function HomeScreen() {
               }
               emptyLabel={t('screens.home.notifications-empty')}
               unreadCount={unreadNotifications}
-              items={notifications}
+              threads={threads}
+              now={now}
               onSeen={markNotificationsRead}
             />
             <IconButton

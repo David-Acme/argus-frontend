@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
-import type { ICameraCacheRow, INotificationPreviewCacheRow } from '@/core/interfaces';
+import type { ICameraCacheRow } from '@/core/interfaces';
 import type { DashboardSummary } from '@/core/types';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { usePermissions } from '@/shared/hooks/use-permissions';
@@ -10,14 +10,17 @@ import { GuardCard, useGuardMode } from '@/features/security';
 import { CameraGrid } from '@/features/home/components/camera-grid';
 import { RecentActivityCard } from '@/features/home/components/recent-activity-card';
 import { SummaryCard } from '@/features/home/components/summary-card';
+import type { NotificationThread } from '@/features/home/model/notification-threads';
 
 type HomeAsideProps = {
   cameras: readonly ICameraCacheRow[];
   summary: DashboardSummary;
-  notifications: readonly INotificationPreviewCacheRow[];
+  threads: readonly NotificationThread[];
+  now: number;
+  onReadThread: (thread: NotificationThread) => void;
 };
 
-export function HomeAside({ cameras, summary, notifications }: HomeAsideProps) {
+export function HomeAside({ cameras, summary, threads, now, onReadThread }: HomeAsideProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { role } = usePermissions();
@@ -75,7 +78,9 @@ export function HomeAside({ cameras, summary, notifications }: HomeAsideProps) {
       <RecentActivityCard
         title={t('screens.home.recent')}
         emptyLabel={t('screens.home.notifications-empty')}
-        items={notifications}
+        threads={threads}
+        now={now}
+        onRead={onReadThread}
       />
     </View>
   );
