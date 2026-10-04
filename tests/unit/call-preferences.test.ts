@@ -24,6 +24,12 @@ const defaults = {
   criticalBypass: true,
   mutedEnvironmentIds: [],
   updatedAt: 0,
+  agendaLeadMinutes: 10,
+  quietDays: 127,
+  ringSeconds: 45,
+  pushDelaySeconds: 4,
+  liveAnnounce: true,
+  lang: '',
 };
 
 describe('call preferences', () => {
@@ -84,12 +90,19 @@ describe('call preferences, per-person timings', () => {
     expect(quietDayOn(weekdays, 3)).toBe(true);
   });
 
-  test('the new fields are optional until the server sends them', () => {
-    expect(
-      callPreferencesSchema.parse({ ...defaults, ringSeconds: 45, lang: '' }).ringSeconds
-    ).toBe(45);
-    expect(callPreferencesSchema.parse(defaults).liveAnnounce).toBeUndefined();
+  test('the per-person fields are required and bounded like the server', () => {
+    expect(callPreferencesSchema.parse(defaults).ringSeconds).toBe(45);
+    const { liveAnnounce, ...missing } = defaults;
+    expect(liveAnnounce).toBe(true);
+    expect(callPreferencesSchema.safeParse(missing).success).toBe(false);
     expect(callPreferencesSchema.safeParse({ ...defaults, lang: 'fr' }).success).toBe(false);
     expect(callPreferencesSchema.safeParse({ ...defaults, quietDays: 128 }).success).toBe(false);
+    expect(callPreferencesSchema.safeParse({ ...defaults, agendaLeadMinutes: 20 }).success).toBe(
+      false
+    );
+    expect(callPreferencesSchema.safeParse({ ...defaults, ringSeconds: 10 }).success).toBe(false);
+    expect(callPreferencesSchema.safeParse({ ...defaults, pushDelaySeconds: 31 }).success).toBe(
+      false
+    );
   });
 });

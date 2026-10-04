@@ -218,12 +218,6 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
         ]
       : quietOptions;
   const resting = dndActive(preferences, now);
-  const showHow = [
-    preferences.ringSeconds,
-    preferences.pushDelaySeconds,
-    preferences.lang,
-    preferences.liveAnnounce,
-  ].some((value) => value !== undefined);
   const numbered = (values: readonly number[], unit: (value: number) => string) =>
     values.map((value) => ({ value: String(value), label: unit(value) }));
   const changeQuiet = (preset: QuietPreset) => {
@@ -256,74 +250,60 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
                   onChange={(mode) => changeTrigger(trigger, mode)}
                 />
               ))}
-              {preferences.agendaLeadMinutes !== undefined ? (
-                <ChoiceRow
-                  label={t('screens.voice.preferences.agenda-lead')}
-                  hint={t('screens.voice.preferences.agenda-lead-hint')}
-                  options={numbered(
-                    withCurrent(AGENDA_LEADS, preferences.agendaLeadMinutes),
-                    (minutes) =>
-                      minutes === 0
-                        ? t('screens.voice.preferences.at-start')
-                        : t('screens.voice.preferences.minutes', { count: String(minutes) })
-                  )}
-                  value={String(preferences.agendaLeadMinutes)}
-                  onChange={(value) => save({ agendaLeadMinutes: Number(value) })}
-                />
-              ) : null}
+              <ChoiceRow
+                label={t('screens.voice.preferences.agenda-lead')}
+                hint={t('screens.voice.preferences.agenda-lead-hint')}
+                options={numbered(
+                  withCurrent(AGENDA_LEADS, preferences.agendaLeadMinutes),
+                  (minutes) =>
+                    minutes === 0
+                      ? t('screens.voice.preferences.at-start')
+                      : t('screens.voice.preferences.minutes', { count: String(minutes) })
+                )}
+                value={String(preferences.agendaLeadMinutes)}
+                onChange={(value) => save({ agendaLeadMinutes: Number(value) })}
+              />
             </Group>
           </View>
 
           <View className={isWide ? 'min-w-0 flex-1' : undefined}>
-            {showHow ? (
-              <Group title={t('screens.voice.preferences.group-how')}>
-                {preferences.ringSeconds !== undefined ? (
-                  <ChoiceRow
-                    label={t('screens.voice.preferences.ring')}
-                    hint={t('screens.voice.preferences.ring-hint')}
-                    options={numbered(
-                      withCurrent(RING_SECONDS, preferences.ringSeconds),
-                      (seconds) =>
-                        t('screens.voice.preferences.seconds', { count: String(seconds) })
-                    )}
-                    value={String(preferences.ringSeconds)}
-                    onChange={(value) => save({ ringSeconds: Number(value) })}
-                  />
-                ) : null}
-                {preferences.pushDelaySeconds !== undefined ? (
-                  <ChoiceRow
-                    label={t('screens.voice.preferences.push-delay')}
-                    hint={t('screens.voice.preferences.push-delay-hint')}
-                    options={numbered(
-                      withCurrent(PUSH_DELAYS, preferences.pushDelaySeconds),
-                      (seconds) =>
-                        seconds === 0
-                          ? t('screens.voice.preferences.at-once')
-                          : t('screens.voice.preferences.seconds', { count: String(seconds) })
-                    )}
-                    value={String(preferences.pushDelaySeconds)}
-                    onChange={(value) => save({ pushDelaySeconds: Number(value) })}
-                  />
-                ) : null}
-                {preferences.lang !== undefined ? (
-                  <ChoiceRow
-                    label={t('screens.voice.preferences.lang-title')}
-                    hint={t('screens.voice.preferences.lang-hint')}
-                    options={languageOptions}
-                    value={preferences.lang}
-                    onChange={(lang) => save({ lang })}
-                  />
-                ) : null}
-                {preferences.liveAnnounce !== undefined ? (
-                  <ToggleRow
-                    label={t('screens.voice.preferences.live-announce')}
-                    hint={t('screens.voice.preferences.live-announce-hint')}
-                    value={preferences.liveAnnounce}
-                    onChange={(liveAnnounce) => save({ liveAnnounce })}
-                  />
-                ) : null}
-              </Group>
-            ) : null}
+            <Group title={t('screens.voice.preferences.group-how')}>
+              <ChoiceRow
+                label={t('screens.voice.preferences.ring')}
+                hint={t('screens.voice.preferences.ring-hint')}
+                options={numbered(withCurrent(RING_SECONDS, preferences.ringSeconds), (seconds) =>
+                  t('screens.voice.preferences.seconds', { count: String(seconds) })
+                )}
+                value={String(preferences.ringSeconds)}
+                onChange={(value) => save({ ringSeconds: Number(value) })}
+              />
+              <ChoiceRow
+                label={t('screens.voice.preferences.push-delay')}
+                hint={t('screens.voice.preferences.push-delay-hint')}
+                options={numbered(
+                  withCurrent(PUSH_DELAYS, preferences.pushDelaySeconds),
+                  (seconds) =>
+                    seconds === 0
+                      ? t('screens.voice.preferences.at-once')
+                      : t('screens.voice.preferences.seconds', { count: String(seconds) })
+                )}
+                value={String(preferences.pushDelaySeconds)}
+                onChange={(value) => save({ pushDelaySeconds: Number(value) })}
+              />
+              <ChoiceRow
+                label={t('screens.voice.preferences.lang-title')}
+                hint={t('screens.voice.preferences.lang-hint')}
+                options={languageOptions}
+                value={preferences.lang}
+                onChange={(lang) => save({ lang })}
+              />
+              <ToggleRow
+                label={t('screens.voice.preferences.live-announce')}
+                hint={t('screens.voice.preferences.live-announce-hint')}
+                value={preferences.liveAnnounce}
+                onChange={(liveAnnounce) => save({ liveAnnounce })}
+              />
+            </Group>
 
             <Group title={t('screens.voice.preferences.group-quiet')}>
               <ChoiceRow
@@ -333,7 +313,7 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
                 value={quiet}
                 onChange={changeQuiet}
               />
-              {preferences.quietDays !== undefined && quiet !== 'off' ? (
+              {quiet !== 'off' ? (
                 <QuietDays
                   mask={preferences.quietDays}
                   onChange={(quietDays) => save({ quietDays })}
