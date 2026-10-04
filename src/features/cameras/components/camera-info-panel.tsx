@@ -5,7 +5,8 @@ import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { cameraStatusOf, type CameraCardStatus } from '@/features/cameras/components/camera-card';
+import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
+import { STATUS_DOT, STATUS_LABEL } from '@/features/cameras/model/camera-status';
 
 type CameraInfoPanelProps = {
   camera: ICameraCacheRow;
@@ -25,17 +26,7 @@ const DRIVER_LABEL = {
   rtsp: 'screens.cameras.driver-rtsp',
 } as const satisfies Record<CameraDriverKind, TranslationKey>;
 
-const STATUS_LABEL = {
-  online: 'screens.cameras.status.online',
-  offline: 'screens.cameras.status.offline',
-  disabled: 'screens.cameras.status.disabled',
-} as const satisfies Record<CameraCardStatus, TranslationKey>;
 
-const STATUS_DOT: Record<CameraCardStatus, string> = {
-  online: 'bg-success',
-  offline: 'bg-error',
-  disabled: 'bg-muted-foreground',
-};
 
 function InfoRow({ label, value }: InfoRowProps) {
   return (
@@ -73,6 +64,18 @@ export function CameraInfoPanel({ camera, device, streamOnly, className }: Camer
       />
       {camera.retentionDays != null ? (
         <InfoRow label={t('screens.cameras.form.retention')} value={String(camera.retentionDays)} />
+      ) : null}
+      {device?.sdCard ? (
+        <InfoRow
+          label={t('screens.cameras.info.sd-card')}
+          value={
+            device.sdCard.status === 'normal'
+              ? t('screens.cameras.info.sd-free', { free: device.sdCard.free, total: device.sdCard.total })
+              : device.sdCard.status === 'offline'
+                ? t('screens.cameras.info.sd-none')
+                : device.sdCard.status
+          }
+        />
       ) : null}
       {streamOnly ? (
         <Text variant="caption" className="bg-surface-secondary rounded-2xl px-3 py-2.5">

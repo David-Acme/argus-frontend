@@ -16,6 +16,7 @@ export interface ICameraCreate {
   retentionDays?: number;
   streamPath?: string;
   subStreamPath?: string;
+  catalogId?: string;
 }
 
 export type ICameraUpdate = Partial<ICameraCreate> & { isEnabled?: boolean };

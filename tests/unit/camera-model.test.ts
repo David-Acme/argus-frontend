@@ -37,6 +37,7 @@ const camera: ICameraCacheRow = {
   resolution: '',
   streamPath: '',
   subStreamPath: '',
+  catalogId: '',
   zones: [zone],
 };
 

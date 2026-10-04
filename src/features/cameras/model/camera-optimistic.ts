@@ -38,6 +38,7 @@ const cameraLens = defineLens<ICameraCacheRow, CameraIntentValues>({
       isEnabled: values.isEnabled ?? row.isEnabled,
       streamPath: values.streamPath ?? row.streamPath,
       subStreamPath: values.subStreamPath ?? row.subStreamPath,
+      catalogId: values.catalogId ?? row.catalogId,
     };
   },
   create: (recordId, values) =>
@@ -62,6 +63,7 @@ const cameraLens = defineLens<ICameraCacheRow, CameraIntentValues>({
           resolution: '',
           streamPath: values.streamPath ?? '',
           subStreamPath: values.subStreamPath ?? '',
+          catalogId: values.catalogId ?? '',
           zones: [],
         },
 });

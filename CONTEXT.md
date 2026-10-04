@@ -1836,6 +1836,7 @@ page code runs, in every webview and on every platform. Selection and the
 keyboard shortcuts (Ctrl+C/V/X/A) are untouched, because only the
 `contextmenu` event is cancelled.
 
+
 ## Sessions in the profile, the owner's access view, single-use invitations (2026-10-03)
 
 David moved "Sesiones y dispositivos" out of Configuración into the profile
@@ -1897,3 +1898,50 @@ Guard posture is per environment now (backend 2f669111, `services/guard/CONTEXT.
 - **Voice.** The call situation lists each environment's posture when there are several ("Vigilancia por entorno: Casa, modo noche; Trattoria, abierto al público"). `app.set_guard_mode` may carry `environment` (a name or a place word from the call); `matchEnvironment` resolves it by exact name, then name words, then kind words, refuses an ambiguous or unknown place (the call corrects itself aloud with the names it knows) and treats a command with no place as every environment.
 - **Why "entorno".** The owner's word for it; "lugar" stays in hints where it reads more naturally.
 - Golden fixtures for the new routes are recorded by MAIN; `HTTP_CONTRACTS` gains `GET /guard/environments` once they exist (the test needs a recording).
+
+### Cameras: a model catalog, a connection test, a screen that fills, and calls through a camera (2026-10-04)
+
+- **Creating a camera is four steps** (`components/camera-form.tsx`, `model/camera-form-steps.ts`):
+  model, connection, test, details; an edit starts at the connection. The model step is
+  a searchable grid of `GET /camera/catalog` (`hooks/use-camera-catalog.ts`, a cached remote
+  resource) with brand, form and feature chips (`model/camera-catalog.ts`, unit-tested).
+  Picking a model fills the driver, port, user, paths and `catalogId` (kept in the camera's
+  `config`, projected as `catalogId`). The test step calls `POST /camera/probe` and words each
+  step for the user (`model/camera-probe.ts`): unreachable, port refused, wrong user, wrong path,
+  no cloud password for the speaker. A failed test does not block saving ("Continuar de todos
+  modos"): a camera may be installed before it is plugged in. Save stays optimistic.
+- **Product pictures are our own drawings.** `components/camera-illustration.tsx` draws each
+  form factor (pan-tilt, outdoor pan-tilt, cube, bullet, turret, dome, doorbell) as line art in
+  `react-native-svg` from the theme tokens, so it follows light and dark. No vendor image is
+  copied or hot-linked.
+- **The cameras screen** (`screens/cameras-screen.tsx`) reads `GET /camera/overview` every 15 s
+  while focused (`hooks/use-camera-overview.ts`): per camera last seen, picture health, sub-stream
+  size/fps/bitrate, viewers and last detection, plus the recent detections (the synced `event`
+  table that used to feed that list has no writer). A toolbar searches, filters by status, sorts
+  (name, status, recent activity) and switches grid/list (remembered in storage); the grid picks
+  the column count that leaves the fewest empty slots (`gridColumns`), and one camera on a wide
+  window is a featured card. On wide windows the right rail is the summary with a per-camera
+  status list and stretches to the grid's height; the detections panel ends the main column.
+  The "add camera" tile and the activity mosaic are gone from this screen (the mosaic moved to
+  `features/home`, its only reader). GUARD2's `useCameraEnvironmentIndex` puts the environment
+  on each card when the install has several, and `CameraEnvironmentPanel` sits in the detail.
+- **Calls through a camera** (`services/camera-call.service.ts`, `hooks/use-camera-call.ts`,
+  `components/camera-call-panel.tsx`): "Llamar por la cámara" (full duplex), "Solo enviar audio"
+  (hold to talk, the camera's sound ducked while held), "Escuchar" (listen only) and the typed
+  announcement. The talk leg is its own `/media` socket: `camera:talk:start {cameraId,
+  sampleRate: 16000}`, then binary frames `[0xA8, 0x01, 0, 0] + PCM16LE`; mute sends silence so
+  the line stays open. The listen leg subscribes to the sub stream and decodes the camera's FLAC
+  track itself (`model/camera-audio.ts`: go2rtc writes verbatim 16-bit frames, so no codec is
+  needed on any platform; checked against a live capture: 660 Hz in, 660 Hz out). Capture and
+  playback reuse the voice feature's mic (`createVoiceMic` from `features/voice`): echo
+  cancellation on web (`getUserMedia`), Android `VOICE_COMMUNICATION` + AEC, iOS voice chat, with
+  the camera audio played through the same path so the canceller has the reference. The
+  microphone only starts from a button press (or the card's mic button, which opens the detail
+  with `?talk=1`), never while an Argus call is live, and not where `voiceCallSupported()` is
+  false (listening still works). Who may talk is `cameraActionAccessForRole` in
+  `shared/libs/role-access.ts`, mirrored from `kCameraActionAccess` and pinned by
+  `tests/unit/role-access-contract.test.ts`. Levels, mute, volume (0-200 %), listen toggle and a
+  latency hint (queue + packet) are on the panel.
+- **Device controls no longer need PTZ**: a bullet camera keeps privacy, LED, night vision and
+  motion; motion sensitivity (low/normal/high) is in the settings sheet, saved PTZ positions are
+  buttons under the pad with "save position", and the device panel shows the SD card.

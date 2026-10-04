@@ -19,7 +19,43 @@ type Box = {
   contentStart: number;
 };
 
+export type Fmp4AudioTrack = {
+  codec: string;
+  trackId: number;
+  timescale: number;
+  sampleRate: number;
+  channels: number;
+};
+
 const NON_SYNC_FLAG = 0x00010000;
+
+export function parseAudioInit(bytes: Uint8Array): Fmp4AudioTrack | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const moov = boxes(view, 0, bytes.byteLength).find((box) => box.type === 'moov');
+  if (!moov) return null;
+  for (const trak of boxes(view, moov.contentStart, moov.end)) {
+    if (trak.type !== 'trak') continue;
+    const trakBoxes = boxes(view, trak.contentStart, trak.end);
+    const tkhd = trakBoxes.find((box) => box.type === 'tkhd');
+    const mdia = trakBoxes.find((box) => box.type === 'mdia');
+    if (!tkhd || !mdia) continue;
+    const mdiaBoxes = boxes(view, mdia.contentStart, mdia.end);
+    const hdlr = mdiaBoxes.find((box) => box.type === 'hdlr');
+    const mdhd = mdiaBoxes.find((box) => box.type === 'mdhd');
+    if (!hdlr || !mdhd || fourCc(view, hdlr.contentStart + 8) !== 'soun') continue;
+    const trackId = view.getUint32(tkhd.contentStart + (view.getUint8(tkhd.contentStart) === 1 ? 20 : 12));
+    const timescale = view.getUint32(mdhd.contentStart + (view.getUint8(mdhd.contentStart) === 1 ? 20 : 12));
+    const minf = mdiaBoxes.find((box) => box.type === 'minf');
+    const stbl = minf ? boxes(view, minf.contentStart, minf.end).find((box) => box.type === 'stbl') : undefined;
+    const stsd = stbl ? boxes(view, stbl.contentStart, stbl.end).find((box) => box.type === 'stsd') : undefined;
+    const entry = stsd ? boxes(view, stsd.contentStart + 8, stsd.end)[0] : undefined;
+    if (!entry || timescale <= 0) continue;
+    const channels = view.getUint16(entry.contentStart + 16);
+    const sampleRate = view.getUint32(entry.contentStart + 24) >>> 16;
+    return { codec: entry.type, trackId, timescale, sampleRate: sampleRate || timescale, channels: channels || 1 };
+  }
+  return null;
+}
 
 export function parseInit(bytes: Uint8Array): Fmp4Init | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);

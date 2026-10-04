@@ -5,7 +5,7 @@ import type {
 } from '@/core/interfaces';
 import type { CalendarEntry, DashboardProjectCard, DashboardSummary } from '@/core/types';
 import { EMPTY_DASHBOARD_SUMMARY, VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useViewCacheRows, useViewCacheValue } from './use-cached-rows';
+import { useViewCacheRows, useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 
 export function useDashboardData(): IDashboardCacheData {
   const cameraTiles = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);

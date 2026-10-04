@@ -77,6 +77,7 @@ export function projectCameras({ cameras, zones, streams }: CameraProjectionInpu
     resolution: resolutionByCamera.get(camera.id) ?? '',
     streamPath: configText(camera.config, 'streamPath'),
     subStreamPath: configText(camera.config, 'subStreamPath'),
+    catalogId: configText(camera.config, 'catalogId'),
     zones: zonesByCamera.get(camera.id) ?? [],
   }));
   return [{ key: VIEW_CACHE_KEYS.cameraList, rows, limit: VIEW_CACHE_LIST_LIMIT }];

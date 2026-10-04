@@ -1,20 +1,54 @@
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import type { ICameraCacheRow } from '@/core/interfaces';
-import type { CameraDriverKind, CameraRecordMode, TranslationKey } from '@/core/types';
+import type { CameraDriverKind, CameraFormFactor, TranslationKey } from '@/core/types';
+import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
+import {
+  formatRelative,
+  healthOf,
+  objectLabelKey,
+  relativeTime,
+  streamSummary,
+  type CameraView,
+} from '@/features/cameras/model/camera-overview';
+import { HEALTH_LABEL, STATUS_DOT, STATUS_LABEL, STATUS_TEXT, healthNeedsAttention } from '@/features/cameras/model/camera-status';
 import { Icon } from '@/shared/components/ui/icon';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
-import { StatusBadge } from '@/shared/components/ui/status-badge';
 
-export type CameraCardStatus = 'online' | 'offline' | 'disabled';
+export type CameraCardVariant = 'grid' | 'featured' | 'row';
 
 type CameraCardProps = {
-  item: ICameraCacheRow;
+  view: CameraView;
+  variant: CameraCardVariant;
+  formFactor: CameraFormFactor;
+  canTalk: boolean;
+  now: number;
   pending?: boolean;
   thumbnail?: string;
+  badge?: ReactNode;
   onPress: (id: string) => void;
+  onTalk: (id: string) => void;
+};
+
+type PreviewProps = {
+  view: CameraView;
+  formFactor: CameraFormFactor;
+  thumbnail?: string;
+  compact?: boolean;
+};
+
+type FactProps = {
+  icon: 'clock' | 'activity' | 'video' | 'eye' | 'shield';
+  text: string;
+  tone?: 'muted' | 'strong' | 'warning';
+};
+
+type CameraFactsProps = {
+  view: CameraView;
+  now: number;
 };
 
 const PREVIEW_ASPECT = 16 / 9;
@@ -25,115 +59,239 @@ const DRIVER_LABEL = {
   rtsp: 'screens.cameras.driver-rtsp',
 } as const satisfies Record<CameraDriverKind, TranslationKey>;
 
-const RECORD_LABEL = {
-  events: 'screens.cameras.form.record-events',
-  continuous: 'screens.cameras.form.record-continuous',
-} as const satisfies Record<CameraRecordMode, TranslationKey>;
-
-const STATUS_LABEL = {
-  online: 'screens.cameras.status.online',
-  offline: 'screens.cameras.status.offline',
-  disabled: 'screens.cameras.status.disabled',
-} as const satisfies Record<CameraCardStatus, TranslationKey>;
-
 const PREVIEW_LABEL = {
   online: 'screens.cameras.preview-hint',
   offline: 'screens.cameras.preview-offline',
   disabled: 'screens.cameras.preview-disabled',
-} as const satisfies Record<CameraCardStatus, TranslationKey>;
+} as const satisfies Record<CameraView['status'], TranslationKey>;
 
-const STATUS_DOT: Record<CameraCardStatus, string> = {
-  online: 'bg-success',
-  offline: 'bg-error',
-  disabled: 'bg-muted-foreground',
-};
-
-const STATUS_TEXT: Record<CameraCardStatus, string> = {
-  online: 'text-success',
-  offline: 'text-error-strong',
-  disabled: 'text-muted-foreground',
-};
-
-export function cameraStatusOf(item: Pick<ICameraCacheRow, 'isEnabled' | 'isOnline'>): CameraCardStatus {
-  if (!item.isEnabled) return 'disabled';
-  return item.isOnline ? 'online' : 'offline';
+function Fact({ icon, text, tone = 'muted' }: FactProps) {
+  return (
+    <View className="min-w-0 flex-row items-center gap-1.5">
+      <Icon
+        name={icon}
+        className={cn('size-3.5', tone === 'warning' ? 'text-warning-strong' : 'text-muted-foreground')}
+      />
+      <Text
+        variant="caption"
+        numberOfLines={1}
+        className={cn(
+          'min-w-0 shrink',
+          tone === 'strong' && 'text-foreground-secondary',
+          tone === 'warning' && 'text-warning-strong',
+        )}>
+        {text}
+      </Text>
+    </View>
+  );
 }
 
-export const CameraCard = memo(function CameraCard({ item, pending = false, thumbnail, onPress }: CameraCardProps) {
+function Preview({ view, formFactor, thumbnail, compact = false }: PreviewProps) {
   const { t } = useTranslation();
-  const status = cameraStatusOf(item);
+  const { status, live } = view;
+  const health = healthOf(live);
+  const viewers = live?.viewers ?? 0;
+  return (
+    <View
+      className={cn(
+        'bg-surface-secondary dark:bg-card-secondary w-full items-center justify-center overflow-hidden',
+        compact ? 'rounded-xl' : 'rounded-2xl',
+      )}
+      style={{ aspectRatio: PREVIEW_ASPECT }}>
+      {thumbnail && status === 'online' ? (
+        <Image
+          source={{ uri: thumbnail }}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+          className="absolute inset-0 h-full w-full"
+        />
+      ) : (
+        <View className={cn('items-center', compact ? 'gap-0' : 'gap-1.5', status !== 'online' && 'opacity-60')}>
+          <CameraIllustration formFactor={formFactor} size={compact ? 52 : 92} />
+          {compact ? null : (
+            <Text variant="micro" numberOfLines={1}>
+              {t(PREVIEW_LABEL[status])}
+            </Text>
+          )}
+        </View>
+      )}
+      {compact ? null : (
+        <>
+          <StatusBadge
+            label={t(STATUS_LABEL[status])}
+            surface="card"
+            dotClassName={STATUS_DOT[status]}
+            className="absolute left-3 top-3"
+            textClassName={STATUS_TEXT[status]}
+          />
+          {status === 'online' && healthNeedsAttention(health) ? (
+            <StatusBadge
+              label={t(HEALTH_LABEL[health])}
+              icon="triangle-alert"
+              surface="card"
+              iconClassName="text-warning-strong"
+              textClassName="text-warning-strong"
+              className="absolute right-3 top-3"
+            />
+          ) : null}
+          {viewers > 0 ? (
+            <StatusBadge
+              label={String(viewers)}
+              icon="eye"
+              surface="card"
+              className="absolute bottom-3 left-3"
+            />
+          ) : null}
+        </>
+      )}
+    </View>
+  );
+}
+
+function CameraFacts({ view, now }: CameraFactsProps) {
+  const { t } = useTranslation();
+  const { live, lastEvent, status } = view;
+  const seen = relativeTime(live?.lastSeenAt ?? 0, now);
+  const seenText =
+    status === 'disabled'
+      ? t('screens.cameras.card.paused')
+      : seen
+        ? t('screens.cameras.card.seen', { when: formatRelative(t, seen) })
+        : t('screens.cameras.card.not-seen');
+  const event = lastEvent ? relativeTime(lastEvent.at, now) : null;
+  const eventText = lastEvent
+    ? [
+        t(objectLabelKey(lastEvent.label)),
+        lastEvent.zoneName,
+        formatRelative(t, event),
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : t('screens.cameras.card.no-events');
+  const stream = streamSummary(live);
+
+  return (
+    <View className="gap-1">
+      <Fact icon="clock" text={seenText} tone={status === 'offline' ? 'warning' : 'muted'} />
+      <Fact icon="activity" text={eventText} tone={lastEvent ? 'strong' : 'muted'} />
+      {stream ? <Fact icon="video" text={stream} /> : null}
+    </View>
+  );
+}
+
+export const CameraCard = memo(function CameraCard({
+  view,
+  variant,
+  formFactor,
+  canTalk,
+  now,
+  pending = false,
+  thumbnail,
+  badge,
+  onPress,
+  onTalk,
+}: CameraCardProps) {
+  const { t } = useTranslation();
+  const { isCompact, isExpanded } = useWindowClass();
+  const { camera, status } = view;
   const statusLabel = t(STATUS_LABEL[status]);
-  const subtitle = [item.modelLabel, t(DRIVER_LABEL[item.driver])]
-    .filter(Boolean)
-    .join(' · ');
+  const subtitle = [camera.modelLabel, t(DRIVER_LABEL[camera.driver])].filter(Boolean).join(' · ');
   const zonesLabel =
-    item.zones.length === 1
+    camera.zones.length === 1
       ? t('screens.cameras.zones-count-one')
-      : t('screens.cameras.zones-count', { count: String(item.zones.length) });
+      : t('screens.cameras.zones-count', { count: String(camera.zones.length) });
+  const recordLabel =
+    camera.recordMode === 'continuous'
+      ? t('screens.cameras.form.record-continuous')
+      : t('screens.cameras.form.record-events');
+  const talk =
+    canTalk && status === 'online' ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('screens.cameras.call.talk-to', { name: camera.name })}
+        onPress={() => onTalk(camera.id)}
+        hitSlop={6}
+        className="bg-surface-secondary dark:bg-card-secondary size-9 items-center justify-center rounded-full active:opacity-70">
+        <Icon name="mic" className="text-foreground size-4" />
+      </Pressable>
+    ) : null;
+  const badges = (
+    <View className="flex-row flex-wrap gap-2">
+      <StatusBadge icon="video" label={recordLabel} />
+      <StatusBadge icon="shield" label={zonesLabel} />
+      {badge}
+    </View>
+  );
+  const pressableClass = cn(
+    'bg-card rounded-3xl shadow-md shadow-black/[0.05] active:opacity-80 web:hover:opacity-95',
+    pending && 'opacity-60',
+  );
+
+  if (variant === 'row') {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${camera.name}, ${statusLabel}`}
+        accessibilityState={{ busy: pending, disabled: pending }}
+        disabled={pending}
+        onPress={() => onPress(camera.id)}
+        className={cn(pressableClass, 'flex-row items-center gap-3 p-2.5 pr-3')}>
+        <View className="w-28 shrink-0">
+          <Preview view={view} formFactor={formFactor} thumbnail={thumbnail} compact />
+        </View>
+        <View className="min-w-0 flex-1 gap-0.5">
+          <View className="flex-row items-center gap-2">
+            <View className={cn('size-2 rounded-full', STATUS_DOT[status])} />
+            <Text variant="label" numberOfLines={1} className="min-w-0 shrink">
+              {camera.name}
+            </Text>
+          </View>
+          <Text variant="caption" numberOfLines={1}>
+            {subtitle}
+          </Text>
+        </View>
+        {isCompact ? null : (
+          <View className="min-w-0 flex-[1.4]">
+            <CameraFacts view={view} now={now} />
+          </View>
+        )}
+        {isExpanded ? badges : null}
+        {talk}
+        <Icon name="chevron-right" className="text-muted-foreground size-4" />
+      </Pressable>
+    );
+  }
+
+  const details = (
+    <View className={cn('gap-2.5', variant === 'featured' ? 'min-w-0 flex-1 justify-center py-2 pr-2' : 'px-1 pb-1')}>
+      <View className="flex-row items-start gap-2">
+        <View className="min-w-0 flex-1 gap-0.5">
+          <Text variant={variant === 'featured' ? 'headline' : 'subhead'} numberOfLines={1}>
+            {camera.name}
+          </Text>
+          <Text variant="caption" numberOfLines={1}>
+            {subtitle || t('screens.cameras.device')}
+          </Text>
+        </View>
+        {talk}
+      </View>
+      <CameraFacts view={view} now={now} />
+      {badges}
+    </View>
+  );
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${item.name}, ${statusLabel}`}
+      accessibilityLabel={`${camera.name}, ${statusLabel}`}
       accessibilityState={{ busy: pending, disabled: pending }}
       disabled={pending}
-      onPress={() => onPress(item.id)}
-      className={cn(
-        'bg-card flex-1 gap-3 rounded-3xl p-3 shadow-md shadow-black/[0.05] active:opacity-80 web:hover:opacity-95',
-        pending && 'opacity-60',
-      )}>
-      <View
-        className="bg-surface-secondary w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl"
-        style={{ aspectRatio: PREVIEW_ASPECT }}>
-        {thumbnail && status === 'online' ? (
-          <Image
-            source={{ uri: thumbnail }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-            className="absolute inset-0 h-full w-full"
-          />
-        ) : (
-          <>
-            <View className="bg-card size-14 items-center justify-center rounded-full shadow-sm shadow-black/[0.05]">
-              <Icon
-                name={status === 'online' ? item.icon : 'wifi-off'}
-                className={cn(
-                  'size-6',
-                  status === 'online' ? 'text-foreground' : 'text-muted-foreground',
-                )}
-              />
-            </View>
-            <Text variant="micro" numberOfLines={1}>
-              {t(PREVIEW_LABEL[status])}
-            </Text>
-          </>
-        )}
-        <StatusBadge
-          label={statusLabel}
-          surface="card"
-          dotClassName={STATUS_DOT[status]}
-          className="absolute left-3 top-3"
-          textClassName={STATUS_TEXT[status]}
-        />
+      onPress={() => onPress(camera.id)}
+      className={cn(pressableClass, variant === 'featured' ? 'flex-row items-stretch gap-5 p-3' : 'flex-1 gap-3 p-3')}>
+      <View className={variant === 'featured' ? 'w-[58%]' : undefined}>
+        <Preview view={view} formFactor={formFactor} thumbnail={thumbnail} />
       </View>
-      <View className="gap-0.5 px-1">
-        <Text variant="subhead" numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text variant="caption" numberOfLines={1}>
-          {subtitle || t('screens.cameras.device')}
-        </Text>
-        <View className="flex-row items-center gap-1.5">
-          <Icon name="wifi" className="text-muted-foreground size-3.5" />
-          <Text variant="caption" numberOfLines={1}>
-            {item.ip}
-          </Text>
-        </View>
-      </View>
-      <View className="flex-row flex-wrap gap-2 px-1 pb-1">
-        <StatusBadge icon="video" label={t(RECORD_LABEL[item.recordMode])} />
-        <StatusBadge icon="shield" label={zonesLabel} />
-      </View>
+      {details}
     </Pressable>
   );
 });

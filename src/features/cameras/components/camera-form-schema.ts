@@ -37,6 +37,7 @@ export const cameraFormSchema = z
     recordMode: z.enum(['events', 'continuous']),
     streamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
     subStreamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
+    catalogId: z.string(),
     isEdit: z.boolean(),
   })
   .superRefine((values, ctx) => {
@@ -76,6 +77,7 @@ export function cameraFormDefaults(driver: CameraDriverKind, isEdit: boolean): C
     recordMode: 'events',
     streamPath: '',
     subStreamPath: '',
+    catalogId: '',
     isEdit,
   };
 }

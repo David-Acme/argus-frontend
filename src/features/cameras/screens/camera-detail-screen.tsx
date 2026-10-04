@@ -1,13 +1,19 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { ICameraDeviceStatus, IZoneCacheRow } from '@/core/interfaces';
-import type { CameraStreamQuality, MenuOption, TranslationKey } from '@/core/types';
+import type { CameraStreamQuality, MenuOption } from '@/core/types';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import { CameraCallPanel } from '@/features/cameras/components/camera-call-panel';
 import { CameraControlPanel } from '@/features/cameras/components/camera-control-panel';
+import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
+import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
+import { CameraEnvironmentPanel } from '@/features/security';
+import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
+import { cameraActionAccessForRole } from '@/shared/libs/role-access';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
 import { CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
@@ -16,7 +22,8 @@ import { CameraTalkSheet } from '@/features/cameras/components/camera-talk-sheet
 import { CameraZonesPanel } from '@/features/cameras/components/camera-zones-panel';
 import { ZoneForm } from '@/features/cameras/components/zone-form';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
-import { cameraStatusOf, type CameraCardStatus } from '@/features/cameras/components/camera-card';
+import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
+import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { IconButton } from '@/shared/components/ui/icon-button';
@@ -31,17 +38,12 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 
 type CameraAction = 'edit' | 'toggle' | 'delete';
 
-const STATUS_LABEL = {
-  online: 'screens.cameras.status.online',
-  offline: 'screens.cameras.status.offline',
-  disabled: 'screens.cameras.status.disabled',
-} as const satisfies Record<CameraCardStatus, TranslationKey>;
 
 export default function CameraDetailScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { can } = usePermissions();
+  const { id, talk } = useLocalSearchParams<{ id: string; talk?: string }>();
+  const { can, role } = usePermissions();
   const { isExpanded, isMedium, isWide } = useWindowClass();
   const [editOpen, setEditOpen] = useState(false);
   const [zoneOpen, setZoneOpen] = useState(false);
@@ -51,11 +53,14 @@ export default function CameraDetailScreen() {
   const [showZones, setShowZones] = useState(true);
   const [quality, setQuality] = useState<CameraStreamQuality>('sub');
   const { run: move, pending: moving } = useServiceAction();
+  const call = useCameraCall(id);
+  const autoCalled = useRef(false);
 
   const { cameras, isPendingZone } = useCameraRows();
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const zones = useMemo(() => camera?.zones ?? [], [camera]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
+  const canUpdate = can('camera', 'update');
   const loadDevice = useCallback(() => cameraControlService.status(id), [id]);
   const loadFeatures = useCallback(() => cameraControlService.capabilities(id), [id]);
   const deviceResource = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.cameraDevice, scope: id, load: loadDevice });
@@ -64,14 +69,31 @@ export default function CameraDetailScreen() {
     scope: id,
     load: loadFeatures,
   });
+  const loadPresets = useCallback(() => cameraControlService.presets(id), [id]);
+  const presetResource = useRemoteResource<unknown>({
+    cacheKey: VIEW_CACHE_KEYS.cameraPresets,
+    scope: id,
+    load: loadPresets,
+    enabled: features?.presets === true && canUpdate,
+  });
+  const presets = useMemo(() => parsePresets(presetResource.data), [presetResource.data]);
+  const reloadPresets = presetResource.reload;
   const device = deviceResource.data;
   const mutateDevice = deviceResource.mutate;
   const applyDevice = useCallback((status: ICameraDeviceStatus | null) => mutateDevice(() => status), [mutateDevice]);
 
-  const canUpdate = can('camera', 'update');
+
   const canDelete = can('camera', 'delete');
   const streamOnly = features?.streamOnly === true;
-  const controllable = canUpdate && features?.ptz === true;
+  const controllable =
+    canUpdate &&
+    features != null &&
+    [features.ptz, features.privacy, features.led, features.dayNight, features.motion, features.alarm].some(
+      (value) => value === true,
+    );
+  const canTalk = cameraActionAccessForRole(role).talk && features?.talk === true;
+  const micSupported = voiceCallSupported();
+  const startCall = call.start;
 
   const actions = useMemo<MenuOption<CameraAction>[]>(() => {
     const options: MenuOption<CameraAction>[] = [];
@@ -147,6 +169,25 @@ export default function CameraDetailScreen() {
     [id, move, t],
   );
 
+  const gotoPreset = useCallback(
+    (preset: CameraPreset) =>
+      void move({
+        call: () => cameraControlService.preset(id, { action: 'goto', id: preset.id }),
+        errorTitle: t('screens.cameras.device-offline'),
+      }),
+    [id, move, t],
+  );
+
+  const savePreset = useCallback(async () => {
+    const saved = await move({
+      call: () =>
+        cameraControlService.preset(id, { action: 'save', name: nextPresetName(presets, t('screens.cameras.preset-name')) }),
+      success: t('screens.cameras.preset-saved'),
+      errorTitle: t('screens.cameras.device-offline'),
+    });
+    if (saved) void reloadPresets();
+  }, [id, move, presets, reloadPresets, t]);
+
   const openZone = useCallback((target: string) => {
     setZoneId(target);
     setZoneOpen(true);
@@ -168,6 +209,12 @@ export default function CameraDetailScreen() {
     [t],
   );
 
+  useEffect(() => {
+    if (talk !== '1' || autoCalled.current || !canTalk || !micSupported || isVoiceCallActive()) return;
+    autoCalled.current = true;
+    startCall('call', true);
+  }, [canTalk, micSupported, startCall, talk]);
+
   if (!camera) return <Redirect href="/cameras" />;
 
   const status = cameraStatusOf(camera);
@@ -186,7 +233,7 @@ export default function CameraDetailScreen() {
     />
   );
   const info = (
-    <CameraInfoPanel camera={camera} device={device} streamOnly={streamOnly} className={controllable ? undefined : stretch} />
+    <CameraInfoPanel camera={camera} device={device} streamOnly={streamOnly} />
   );
   const control =
     controllable && features ? (
@@ -196,11 +243,24 @@ export default function CameraDetailScreen() {
         moving={moving}
         onStep={step}
         onCenter={center}
-        onTalk={() => setTalkOpen(true)}
         onSettings={() => setSettingsOpen(true)}
+        presets={presets}
+        onGotoPreset={gotoPreset}
+        onSavePreset={() => void savePreset()}
         className={stretch}
       />
     ) : null;
+  const callPanel =
+    camera.isEnabled && features ? (
+      <CameraCallPanel
+        controls={call}
+        canTalk={canTalk}
+        micSupported={micSupported}
+        argusCallActive={isVoiceCallActive()}
+        onAnnounce={canTalk ? () => setTalkOpen(true) : undefined}
+      />
+    ) : null;
+  const environment = <CameraEnvironmentPanel cameraId={camera.id} className={controllable ? undefined : stretch} />;
   const zonesPanel = (
     <CameraZonesPanel
       zones={zones}
@@ -245,8 +305,10 @@ export default function CameraDetailScreen() {
                 {live}
                 {zonesPanel}
               </View>
-              <View className="w-[340px] shrink-0 gap-5">
+              <View className="w-[360px] shrink-0 gap-5">
+                {callPanel}
                 {info}
+                {environment}
                 {control}
               </View>
             </View>
@@ -255,7 +317,9 @@ export default function CameraDetailScreen() {
               {live}
               <View className="grow flex-row items-stretch gap-5">
                 <View className="min-w-0 flex-1 gap-5">
+                  {callPanel}
                   {info}
+                  {environment}
                   {control}
                 </View>
                 <View className="min-w-0 flex-1 gap-5">{zonesPanel}</View>
@@ -264,7 +328,9 @@ export default function CameraDetailScreen() {
           ) : (
             <View className="gap-4">
               {live}
+              {callPanel}
               {info}
+              {environment}
               {control}
               {zonesPanel}
             </View>

@@ -88,6 +88,14 @@ import UserMinus from 'lucide-react-native/icons/user-minus';
 import UserPlus from 'lucide-react-native/icons/user-plus';
 import Users from 'lucide-react-native/icons/users';
 import Video from 'lucide-react-native/icons/video';
+import LayoutGrid from 'lucide-react-native/icons/layout-grid';
+import List from 'lucide-react-native/icons/list';
+import ArrowUpDown from 'lucide-react-native/icons/arrow-up-down';
+import PhoneCall from 'lucide-react-native/icons/phone-call';
+import VolumeX from 'lucide-react-native/icons/volume-x';
+import HardDrive from 'lucide-react-native/icons/hard-drive';
+import ImageDown from 'lucide-react-native/icons/image-down';
+import AudioLines from 'lucide-react-native/icons/audio-lines';
 import Volume2 from 'lucide-react-native/icons/volume-2';
 import Wifi from 'lucide-react-native/icons/wifi';
 import WifiOff from 'lucide-react-native/icons/wifi-off';
@@ -188,4 +196,12 @@ export const ICONS = {
   utensils: Utensils,
   warehouse: Warehouse,
   'map-pin': MapPin,
+  'layout-grid': LayoutGrid,
+  list: List,
+  'arrow-up-down': ArrowUpDown,
+  'phone-call': PhoneCall,
+  'volume-x': VolumeX,
+  'hard-drive': HardDrive,
+  'image-down': ImageDown,
+  'audio-lines': AudioLines,
 } as const;

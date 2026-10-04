@@ -2,6 +2,9 @@ import { z } from 'zod';
 import type {
   IApiError,
   ICameraCapabilities,
+  ICameraCatalog,
+  ICameraOverview,
+  ICameraProbeResult,
   ICreateDeviceLoginResponse,
   IDeviceLoginStatusResponse,
   IInvitationRecord,
@@ -64,7 +67,110 @@ export const cameraCapabilitiesSchema = z.object({
   motion: z.boolean().optional(),
   autoTrack: z.boolean().optional(),
   alarm: z.boolean().optional(),
+  sdCard: z.boolean().optional(),
+  streamOnly: z.boolean().optional(),
+  catalogId: z.string().optional(),
 }) satisfies z.ZodType<ICameraCapabilities>;
+
+const cameraFeatures = z.object({
+  ptz: z.boolean(),
+  presets: z.boolean(),
+  autoTrack: z.boolean(),
+  microphone: z.boolean(),
+  speaker: z.boolean(),
+  siren: z.boolean(),
+  privacy: z.boolean(),
+  led: z.boolean(),
+  dayNight: z.boolean(),
+  motion: z.boolean(),
+  sdCard: z.boolean(),
+});
+
+export const cameraCatalogSchema = z.object({
+  models: z.array(
+    z.object({
+      id: z.string(),
+      brand: z.string(),
+      manufacturer: z.string(),
+      model: z.string(),
+      driver: z.enum(['tapo', 'onvif', 'rtsp']),
+      formFactor: z.enum(['pan-tilt', 'outdoor-pan-tilt', 'cube', 'bullet', 'turret', 'dome', 'doorbell']),
+      outdoor: z.boolean(),
+      generic: z.boolean(),
+      resolution: z.string(),
+      subResolution: z.string(),
+      defaults: z.object({
+        port: z.number(),
+        onvifPort: z.number(),
+        username: z.string(),
+        streamPath: z.string(),
+        subStreamPath: z.string(),
+      }),
+      features: cameraFeatures,
+      note: z.string(),
+    }),
+  ),
+}) satisfies z.ZodType<ICameraCatalog>;
+
+const cameraDetectionSchema = z.object({
+  id: z.string(),
+  cameraId: z.number(),
+  at: z.number(),
+  rule: z.string(),
+  severity: z.string(),
+  label: z.string(),
+  zoneName: z.string(),
+});
+
+export const cameraOverviewSchema = z.object({
+  cameras: z.array(
+    z.object({
+      id: z.number(),
+      lastSeenAt: z.number(),
+      sampledAt: z.number(),
+      health: z.string(),
+      width: z.number(),
+      height: z.number(),
+      viewers: z.number(),
+      stream: z
+        .object({
+          codec: z.string(),
+          profile: z.string(),
+          audio: z.string(),
+          width: z.number(),
+          height: z.number(),
+          fps: z.number(),
+          kbps: z.number(),
+        })
+        .nullable(),
+      mainActive: z.boolean(),
+      lastEvent: cameraDetectionSchema.nullable(),
+    }),
+  ),
+  events: z.array(cameraDetectionSchema),
+}) satisfies z.ZodType<ICameraOverview>;
+
+export const cameraProbeSchema = z.object({
+  ok: z.boolean(),
+  steps: z.array(
+    z.object({
+      id: z.enum(['network', 'main', 'sub', 'device', 'talk']),
+      status: z.enum(['ok', 'failed', 'skipped', 'warning']),
+      code: z.string(),
+      detail: z.string(),
+    }),
+  ),
+  stream: z.object({
+    videoCodec: z.string(),
+    audioCodec: z.string(),
+    width: z.number(),
+    height: z.number(),
+    subWidth: z.number().optional(),
+    subHeight: z.number().optional(),
+  }),
+  device: z.object({ model: z.string().optional(), firmware: z.string().optional() }),
+  catalogId: z.string(),
+}) satisfies z.ZodType<ICameraProbeResult>;
 
 export const guardEnvironmentSchema = z.object({
   id: z.number(),

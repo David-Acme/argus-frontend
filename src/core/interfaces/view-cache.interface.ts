@@ -42,6 +42,7 @@ export interface ICameraCacheRow {
   resolution: string;
   streamPath: string;
   subStreamPath: string;
+  catalogId: string;
   zones: readonly IZoneCacheRow[];
 }
 

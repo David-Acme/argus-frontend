@@ -19,6 +19,10 @@ export const CAMERA_LIVE_BACKGROUND = '#000000';
 
 export const CAMERA_THUMBNAIL_REFRESH_MS = 30000;
 
+export const CAMERA_OVERVIEW_REFRESH_MS = 15000;
+
+export const CAMERA_DENSITY_STORAGE_KEY = 'cameras.density';
+
 export const CAMERA_DRIVER_SPECS = {
   tapo: {
     port: 554,
@@ -28,7 +32,7 @@ export const CAMERA_DRIVER_SPECS = {
     customPaths: false,
   },
   onvif: {
-    port: 80,
+    port: 554,
     username: 'admin',
     manufacturer: '',
     requiresCloud: false,

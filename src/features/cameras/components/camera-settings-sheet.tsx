@@ -1,4 +1,9 @@
 import { View } from 'react-native';
+import {
+  MOTION_SENSITIVITY,
+  sensitivityLevel,
+  type MotionSensitivityLevel,
+} from '@/features/cameras/model/camera-presets';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 import type { ICameraCapabilities, ICameraDeviceStatus, ICameraSettings } from '@/core/interfaces';
 import type { DayNightMode, MenuOption } from '@/core/types';
@@ -27,6 +32,7 @@ function optimisticStatus(status: ICameraDeviceStatus | null, body: ICameraSetti
     motionEnabled: body.motion ?? status?.motionEnabled,
     autoTrackEnabled: body.autoTrack ?? status?.autoTrackEnabled,
     dayNightMode: body.dayNight ?? status?.dayNightMode,
+    motionSensitivity: body.motionSensitivity ?? status?.motionSensitivity,
   };
 }
 
@@ -47,6 +53,12 @@ export function CameraSettingsSheet({
     { value: 'night', label: t('screens.cameras.day-night-night') },
   ];
   const dayNight = (status?.dayNightMode as DayNightMode) ?? 'auto';
+  const sensitivityOptions: MenuOption<MotionSensitivityLevel>[] = [
+    { value: 'low', label: t('screens.cameras.sensitivity-low') },
+    { value: 'normal', label: t('screens.cameras.sensitivity-normal') },
+    { value: 'high', label: t('screens.cameras.sensitivity-high') },
+  ];
+  const sensitivity = sensitivityLevel(status?.motionSensitivity);
 
   const apply = async (body: ICameraSettings) => {
     const previous = status;
@@ -93,6 +105,25 @@ export function CameraSettingsSheet({
             disabled={busy}
             onChange={(motion) => void apply({ motion })}
           />
+        ) : null}
+        {features?.motion !== false && status?.motionEnabled !== false ? (
+          <View className="flex-row items-center justify-between py-2.5">
+            <Text variant="body">{t('screens.cameras.sensitivity')}</Text>
+            <AdaptiveSelect
+              options={sensitivityOptions}
+              value={sensitivity}
+              onChange={(level) => void apply({ motion: true, motionSensitivity: MOTION_SENSITIVITY[level] })}
+              title={t('screens.cameras.sensitivity')}
+              closeLabel={t('common.close')}
+              searchPlaceholder={t('screens.home.search-placeholder')}
+              emptyLabel={t('screens.cameras.zones-empty')}
+              trigger={
+                <Button variant="outline" size="sm" disabled={busy}>
+                  <Text>{sensitivityOptions.find((option) => option.value === sensitivity)?.label}</Text>
+                </Button>
+              }
+            />
+          </View>
         ) : null}
         {features?.autoTrack !== false ? (
           <ToggleRow

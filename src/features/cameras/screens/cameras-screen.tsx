@@ -1,73 +1,190 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import type { ICameraEventCacheRow } from '@/core/interfaces';
+import type { ICameraCacheRow } from '@/core/interfaces';
+import { storageService } from '@/core/services/storage';
 import { CameraCardGrid } from '@/features/cameras/components/camera-card-grid';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/components/camera-summary';
+import { CameraToolbar } from '@/features/cameras/components/camera-toolbar';
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
-import { cameraStatusOf } from '@/features/cameras/components/camera-card';
+import { CAMERA_DENSITY_STORAGE_KEY } from '@/features/cameras/constants';
+import { useCameraCatalog } from '@/features/cameras/hooks/use-camera-catalog';
+import { useCameraOverview } from '@/features/cameras/hooks/use-camera-overview';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { useCameraThumbnails } from '@/features/cameras/hooks/use-camera-thumbnails';
-import { ActivityCard } from '@/shared/components/activity/activity-card';
-import { IconButton } from '@/shared/components/ui/icon-button';
-import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
+import { findCatalogModel, formFactorOf } from '@/features/cameras/model/camera-catalog';
+import {
+  cameraViews,
+  countViews,
+  healthOf,
+  selectViews,
+  type CameraDensity,
+  type CameraSort,
+  type CameraStatusFilter,
+} from '@/features/cameras/model/camera-overview';
+import { healthNeedsAttention } from '@/features/cameras/model/camera-status';
+import { useCameraEnvironmentIndex } from '@/features/security';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
+import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { Button } from '@/shared/components/ui/button';
+import { EmptyState } from '@/shared/components/ui/empty-state';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { AppScreen, ScreenHeader } from '@/shared/components/layout';
-import { EmptyState } from '@/shared/components/ui/empty-state';
+import { cameraActionAccessForRole, hasAccess } from '@/shared/libs/role-access';
 
-const SUMMARY_PANEL_WIDTH = 280;
+const RAIL_WIDTH = 320;
+const CLOCK_TICK_MS = 30000;
+
+function readDensity(): CameraDensity {
+  try {
+    return storageService.getString(CAMERA_DENSITY_STORAGE_KEY) === 'list' ? 'list' : 'grid';
+  } catch {
+    return 'grid';
+  }
+}
 
 export default function CamerasScreen() {
   const router = useRouter();
-  const { summary, activityLevels } = useDashboardData();
-  const recentEvents = useViewCacheRows<ICameraEventCacheRow>(VIEW_CACHE_KEYS.cameraEvents);
   const { t } = useTranslation();
   const { isCompact, isExpanded } = useWindowClass();
   const { can, role } = usePermissions();
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<CameraStatusFilter>('all');
+  const [sort, setSort] = useState<CameraSort>('name');
+  const [density, setDensity] = useState<CameraDensity>(readDensity);
+  const [now, setNow] = useState(Date.now);
 
-  const { cameras: items, isPendingCamera } = useCameraRows();
-  const thumbnails = useCameraThumbnails(items);
+  const { cameras, isPendingCamera } = useCameraRows();
+  const overview = useCameraOverview();
+  const { models } = useCameraCatalog();
+  const thumbnails = useCameraThumbnails(cameras);
+  const environments = useCameraEnvironmentIndex();
   const canCreate = can('camera', 'create');
+  const canTalk = cameraActionAccessForRole(role).talk;
+  const readsEvents = hasAccess(role, 'event', 'read');
 
-  const counts = useMemo<CameraSummaryCounts>(() => {
+  const views = useMemo(() => cameraViews(cameras, overview), [cameras, overview]);
+  const counts = useMemo(() => countViews(views), [views]);
+  const visible = useMemo(() => selectViews(views, { query, status, sort }), [query, sort, status, views]);
+  const cameraNames = useMemo(() => new Map(cameras.map((camera) => [camera.id, camera.name])), [cameras]);
+  const summary = useMemo<CameraSummaryCounts>(() => {
     const next: CameraSummaryCounts = {
-      total: items.length,
-      online: 0,
-      offline: 0,
-      disabled: 0,
+      total: views.length,
+      online: counts.online,
+      offline: counts.offline,
+      disabled: counts.disabled,
       zones: 0,
       events: 0,
       continuous: 0,
+      detectionsToday: 0,
+      watching: 0,
+      attention: 0,
     };
-    for (const item of items) {
-      next[cameraStatusOf(item)] += 1;
-      next.zones += item.zones.length;
-      next[item.recordMode] += 1;
+    const startOfToday = new Date(now).setHours(0, 0, 0, 0);
+    for (const view of views) {
+      next.zones += view.camera.zones.length;
+      next[view.camera.recordMode] += 1;
+      next.watching += view.live?.viewers ?? 0;
+      if (view.status === 'online' && healthNeedsAttention(healthOf(view.live))) next.attention += 1;
     }
+    next.detectionsToday = (overview?.events ?? []).filter((event) => event.at >= startOfToday).length;
     return next;
-  }, [items]);
+  }, [counts, now, overview, views]);
+
+  const formFactorFor = useCallback(
+    (camera: ICameraCacheRow) =>
+      formFactorOf(models, { catalogId: camera.catalogId, driver: camera.driver, model: camera.model }),
+    [models],
+  );
+  const canTalkOf = useCallback(
+    (camera: ICameraCacheRow) => {
+      if (!canTalk || camera.driver !== 'tapo' || !camera.cloudUsername) return false;
+      const model = findCatalogModel(models, {
+        catalogId: camera.catalogId,
+        driver: camera.driver,
+        model: camera.model,
+      });
+      return model == null || model.features.speaker;
+    },
+    [canTalk, models],
+  );
+
+  const badgeOf = useCallback(
+    (camera: ICameraCacheRow) => {
+      const environment = environments.get(camera.id);
+      if (!environment?.several) return null;
+      return <StatusBadge icon={environment.armed ? 'shield-check' : 'home'} label={environment.name} />;
+    },
+    [environments],
+  );
 
   const openCamera = useCallback((id: string) => router.push(`/cameras/${id}`), [router]);
+  const talkTo = useCallback((id: string) => router.push(`/cameras/${id}?talk=1`), [router]);
   const openForm = useCallback(() => setFormOpen(true), []);
+  const changeDensity = useCallback((next: CameraDensity) => {
+    setDensity(next);
+    try {
+      storageService.set(CAMERA_DENSITY_STORAGE_KEY, next);
+    } catch {
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   const detections = (
     <RecentDetections
-      title={t('screens.cameras.detections.title')}
-      emptyLabel={t('screens.cameras.detections.empty')}
-      emptyHint={t('screens.cameras.detections.empty-hint')}
-      events={recentEvents}
-      className={isExpanded ? 'flex-1' : 'min-h-56'}
+      events={overview?.events ?? []}
+      cameraNames={cameraNames}
+      now={now}
+      readable={readsEvents}
+      limit={isExpanded ? 14 : 6}
+      className={isExpanded ? 'flex-1' : undefined}
+      onOpen={openCamera}
     />
   );
+
+  const grid =
+    visible.length === 0 ? (
+      <EmptyState
+        variant="panel"
+        icon="search"
+        title={t('screens.cameras.no-match')}
+        hint={t('screens.cameras.no-match-hint')}
+        action={
+          <Button
+            variant="outline"
+            onPress={() => {
+              setQuery('');
+              setStatus('all');
+            }}>
+            <Text>{t('screens.cameras.catalog.clear')}</Text>
+          </Button>
+        }
+      />
+    ) : (
+      <CameraCardGrid
+        views={visible}
+        density={density}
+        now={now}
+        formFactorOf={formFactorFor}
+        canTalkOf={canTalkOf}
+        badgeOf={badgeOf}
+        isPending={isPendingCamera}
+        thumbnails={thumbnails}
+        onSelect={openCamera}
+        onTalk={talkTo}
+      />
+    );
 
   return (
     <AppScreen
@@ -78,17 +195,13 @@ export default function CamerasScreen() {
           title={t('screens.cameras.title')}
           subtitle={t('screens.cameras.subtitle', {
             online: String(counts.online),
-            total: String(items.length),
+            total: String(cameras.length),
           })}
           onBack={() => router.back()}
-          action={
-            canCreate ? (
-              <IconButton icon="plus" label={t('screens.cameras.connect')} onPress={openForm} />
-            ) : null
-          }
+          action={canCreate ? <IconButton icon="plus" label={t('screens.cameras.connect')} onPress={openForm} /> : null}
         />
       }>
-      {items.length === 0 ? (
+      {cameras.length === 0 ? (
         <View className="flex-1">
           <EmptyState
             icon="video"
@@ -107,34 +220,48 @@ export default function CamerasScreen() {
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
-          contentContainerClassName="pb-6">
-          <View className={isExpanded ? 'flex-row items-stretch gap-6' : 'gap-4'}>
-            <View className="gap-4" style={isExpanded ? { width: SUMMARY_PANEL_WIDTH } : undefined}>
-              <CameraSummary counts={counts} layout={isExpanded ? 'panel' : 'strip'} compact={isCompact} />
-              {isExpanded ? detections : null}
+          contentContainerClassName="grow pb-6">
+          {isExpanded ? (
+            <View className="grow flex-row items-stretch gap-6">
+              <View className="min-w-0 flex-1 gap-4">
+                <CameraToolbar
+                  query={query}
+                  status={status}
+                  sort={sort}
+                  density={density}
+                  counts={counts}
+                  compact={false}
+                  onQueryChange={setQuery}
+                  onStatusChange={setStatus}
+                  onSortChange={setSort}
+                  onDensityChange={changeDensity}
+                />
+                {grid}
+                {detections}
+              </View>
+              <View className="gap-4" style={{ width: RAIL_WIDTH }}>
+                <CameraSummary counts={summary} layout="panel" views={views} now={now} className="flex-1" onOpen={openCamera} />
+              </View>
             </View>
-            <View className={isExpanded ? 'min-w-0 flex-1 gap-4' : 'gap-4'}>
-              <CameraCardGrid
-                items={items}
-                isPending={isPendingCamera}
-                thumbnails={thumbnails}
-                onSelect={openCamera}
-                createLabel={t('screens.cameras.connect')}
-                createHint={t('screens.cameras.add-tile-hint')}
-                onCreate={canCreate ? openForm : undefined}
+          ) : (
+            <View className="gap-4">
+              <CameraSummary counts={summary} layout="strip" />
+              <CameraToolbar
+                query={query}
+                status={status}
+                sort={sort}
+                density={density}
+                counts={counts}
+                compact={isCompact}
+                onQueryChange={setQuery}
+                onStatusChange={setStatus}
+                onSortChange={setSort}
+                onDensityChange={changeDensity}
               />
-              <ActivityCard
-                title={t('screens.home.activity-events', { count: String(summary.eventsCurrent) })}
-                delta={String(summary.eventsCurrent)}
-                direction="flat"
-                levels={activityLevels}
-                action={role === 'owner' ? t('screens.home.activity-action') : undefined}
-                onAction={() => router.push('/security')}
-                className={isExpanded ? 'flex-1' : undefined}
-              />
-              {isExpanded ? null : detections}
+              {grid}
+              {detections}
             </View>
-          </View>
+          )}
         </ScrollView>
       )}
 

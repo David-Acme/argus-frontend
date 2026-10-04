@@ -61,6 +61,21 @@ export function guardAccessForRole(role: UserRole): GuardAccess {
   };
 }
 
+export type CameraActionAccess = {
+  talk: boolean;
+};
+
+const CAMERA_ACTION_ACCESS: Record<UserRole, CameraActionAccess> = {
+  owner: { talk: true },
+  resident: { talk: true },
+  guard: { talk: true },
+  guest: { talk: false },
+};
+
+export function cameraActionAccessForRole(role: UserRole): CameraActionAccess {
+  return CAMERA_ACTION_ACCESS[role];
+}
+
 export type SessionAccess = {
   view: boolean;
   revoke: boolean;

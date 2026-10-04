@@ -1,5 +1,9 @@
 import type {
   ICameraCapabilities,
+  ICameraCatalog,
+  ICameraOverview,
+  ICameraProbeInput,
+  ICameraProbeResult,
   ICameraDeviceStatus,
   ICameraPreset,
   ICameraPtz,
@@ -41,6 +45,18 @@ class CameraControlService {
 
   snapshot(id: string): Promise<IServiceResponse<ICameraSnapshot>> {
     return httpService.get(`/camera/${id}/snapshot`);
+  }
+
+  catalog(): Promise<IServiceResponse<ICameraCatalog>> {
+    return httpService.get('/camera/catalog');
+  }
+
+  overview(): Promise<IServiceResponse<ICameraOverview>> {
+    return httpService.get('/camera/overview');
+  }
+
+  probe(body: ICameraProbeInput): Promise<IServiceResponse<ICameraProbeResult>> {
+    return httpService.post('/camera/probe', body);
   }
 }
 

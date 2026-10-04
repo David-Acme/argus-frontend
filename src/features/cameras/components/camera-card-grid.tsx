@@ -1,55 +1,82 @@
+import { useState, type ReactNode } from 'react';
+import { View, type LayoutChangeEvent } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
+import type { CameraFormFactor } from '@/core/types';
 import { CameraCard } from '@/features/cameras/components/camera-card';
-import { CreateTile } from '@/shared/components/ui/create-tile';
+import { gridColumns, type CameraDensity, type CameraView } from '@/features/cameras/model/camera-overview';
 import { ResponsiveGrid } from '@/shared/components/ui/responsive-grid';
 
 type CameraCardGridProps = {
-  items: readonly ICameraCacheRow[];
-  isPending?: (item: ICameraCacheRow) => boolean;
+  views: readonly CameraView[];
+  density: CameraDensity;
+  now: number;
+  formFactorOf: (camera: ICameraCacheRow) => CameraFormFactor;
+  canTalkOf: (camera: ICameraCacheRow) => boolean;
+  badgeOf?: (camera: ICameraCacheRow) => ReactNode;
+  isPending?: (camera: ICameraCacheRow) => boolean;
   thumbnails?: ReadonlyMap<string, string>;
   onSelect: (id: string) => void;
-  createLabel: string;
-  createHint: string;
-  onCreate?: () => void;
+  onTalk: (id: string) => void;
 };
 
-export function cameraColumnsFor(width: number): number {
-  if (width >= 1180) return 4;
-  if (width >= 840) return 3;
-  if (width >= 520) return 2;
-  return 1;
-}
+const FEATURED_MIN_WIDTH = 900;
 
 export function CameraCardGrid({
-  items,
+  views,
+  density,
+  now,
+  formFactorOf,
+  canTalkOf,
+  badgeOf,
   isPending,
   thumbnails,
   onSelect,
-  createLabel,
-  createHint,
-  onCreate,
+  onTalk,
 }: CameraCardGridProps) {
-  const slots = items.length + (onCreate ? 1 : 0);
-  return (
-    <ResponsiveGrid
-      id="cameras"
-      items={items}
-      keyOf={(item) => item.id}
-      renderItem={(item) => (
-        <CameraCard
-          item={item}
-          pending={isPending?.(item) ?? false}
-          thumbnail={thumbnails?.get(item.id)}
-          onPress={onSelect}
-        />
-      )}
-      columnsFor={(width, count) => Math.min(cameraColumnsFor(width), Math.max(1, slots), Math.max(2, count))}
-      gap={16}
-      trailing={
-        onCreate
-          ? (width) => <CreateTile label={createLabel} hint={createHint} style={{ width }} onPress={onCreate} />
-          : undefined
-      }
+  const [width, setWidth] = useState(0);
+
+  const onLayout = (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width);
+
+  const card = (view: CameraView, variant: 'grid' | 'featured' | 'row') => (
+    <CameraCard
+      view={view}
+      variant={variant}
+      formFactor={formFactorOf(view.camera)}
+      canTalk={canTalkOf(view.camera)}
+      now={now}
+      pending={isPending?.(view.camera) ?? false}
+      thumbnail={thumbnails?.get(view.camera.id)}
+      badge={badgeOf?.(view.camera)}
+      onPress={onSelect}
+      onTalk={onTalk}
     />
+  );
+
+  if (density === 'list') {
+    return (
+      <View className="gap-2.5">
+        {views.map((view) => (
+          <View key={view.camera.id}>{card(view, 'row')}</View>
+        ))}
+      </View>
+    );
+  }
+
+  const [only] = views;
+  if (views.length === 1 && only && width >= FEATURED_MIN_WIDTH) {
+    return <View onLayout={onLayout}>{card(only, 'featured')}</View>;
+  }
+
+  return (
+    <View onLayout={onLayout}>
+      <ResponsiveGrid
+        id="cameras"
+        items={views}
+        keyOf={(view) => view.camera.id}
+        renderItem={(view) => card(view, 'grid')}
+        columnsFor={gridColumns}
+        gap={16}
+      />
+    </View>
   );
 }
