@@ -28,7 +28,10 @@ type AdaptiveDialogProps = {
   dismissible?: boolean;
   contentClassName?: string;
   onSubmit?: () => void;
+  size?: AdaptiveDialogSize;
 };
+
+type AdaptiveDialogSize = 'default' | 'wide';
 
 type SubmitKeyEvent = Parameters<typeof submitsDialog>[0] & {
   nativeEvent?: { isComposing?: boolean };
@@ -36,9 +39,16 @@ type SubmitKeyEvent = Parameters<typeof submitsDialog>[0] & {
 };
 
 const DIALOG_WIDTH_CLASS = {
-  compact: 'sm:max-w-[520px]',
-  medium: 'sm:max-w-[560px]',
-  expanded: 'sm:max-w-[620px]',
+  default: {
+    compact: 'sm:max-w-[520px]',
+    medium: 'sm:max-w-[560px]',
+    expanded: 'sm:max-w-[620px]',
+  },
+  wide: {
+    compact: 'sm:max-w-[520px]',
+    medium: 'sm:max-w-[760px]',
+    expanded: 'sm:max-w-[920px]',
+  },
 } as const;
 
 export function AdaptiveDialog({
@@ -53,6 +63,7 @@ export function AdaptiveDialog({
   dismissible = true,
   contentClassName,
   onSubmit,
+  size = 'default',
 }: AdaptiveDialogProps) {
   const { isCompact, windowClass } = useWindowClass();
   const [overflowing, setOverflowing] = useState(false);
@@ -94,7 +105,7 @@ export function AdaptiveDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
-        className={cn('gap-0', DIALOG_WIDTH_CLASS[windowClass], contentClassName)}
+        className={cn('gap-0', DIALOG_WIDTH_CLASS[size][windowClass], contentClassName)}
         dismissible={dismissible}
         closeLabel={closeLabel}
         {...(submitKeys ? { onKeyDownCapture } : null)}>
