@@ -37,13 +37,13 @@ export function ProjectCard({
   }, [progress, progressValue]);
 
   return (
-    <View className={cn('min-w-0', className)}>
+    <View className={cn('min-w-0 flex-1', className)}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${title}. ${description}`}
-        className="active:opacity-80"
+        className="flex-1 active:opacity-80"
         onPress={onPress}>
-        <View className="bg-card overflow-hidden rounded-3xl p-3 shadow-md shadow-black/[0.06]">
+        <View className="bg-card flex-1 overflow-hidden rounded-3xl p-3 shadow-md shadow-black/[0.06]">
           <View className="bg-surface-secondary h-[104px] justify-between rounded-md p-3">
             <View className="bg-card size-8 items-center justify-center rounded-full">
               <Icon name="list-todo" className="text-foreground-secondary size-4" />
@@ -58,14 +58,14 @@ export function ProjectCard({
               <Text variant="micro">{tasksLabel}</Text>
             </View>
           </View>
-          <View className="px-1.5 pt-3 pb-1.5">
+          <View className="flex-1 px-1.5 pt-3 pb-1.5">
             <Text variant="body" className="font-semibold" numberOfLines={1}>
               {title}
             </Text>
             <Text variant="caption" className="mt-0.5" numberOfLines={2}>
               {description}
             </Text>
-            <View className="mt-3 flex-row items-center gap-2.5">
+            <View className="mt-auto flex-row items-center gap-2.5 pt-3">
               <View className="bg-border-subtle h-[5px] flex-1 overflow-hidden rounded-full">
                 <Animated.View className="bg-interactive h-full rounded-full" style={progressStyle} />
               </View>
