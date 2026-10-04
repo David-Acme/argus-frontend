@@ -124,8 +124,22 @@ export const settingsOwnerSchema = z.object({
           })
         )
         .optional(),
+      unit: z.string().optional(),
+      pendingRestart: z.boolean().optional(),
     })
   ),
+  configured: z.boolean().optional(),
+  configFile: z.string().optional(),
+  capabilities: z.array(z.string()).optional(),
+  profile: z
+    .object({
+      id: z.string(),
+      origin: z.enum(['recommended', 'owner', 'reverted']),
+      appliedAt: z.number(),
+      keys: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
 }) satisfies z.ZodType<SettingsOwner>;
 
 export const settingsOverviewSchema = z.object({
@@ -184,6 +198,15 @@ export const settingsProfilesSchema = z.object({
     rules: z.array(recommendationRuleSchema),
     fallback: z.string(),
   }),
+  firstRun: z
+    .object({
+      profile: z.string(),
+      state: z.enum(['applied', 'reverted']),
+      appliedAt: z.number(),
+      owners: z.array(z.object({ service: settingsOwnerName, keys: z.array(z.string()) })),
+    })
+    .nullable()
+    .optional(),
 }) satisfies z.ZodType<SettingsProfiles>;
 
 const profileKeyStatus = z.enum(['applied', 'unchanged', 'rejected', 'unreachable']);

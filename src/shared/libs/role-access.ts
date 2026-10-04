@@ -79,12 +79,3 @@ const SESSION_ACCESS: Record<UserRole, SessionAccess> = {
 export function sessionAccessForRole(role: UserRole): SessionAccess {
   return SESSION_ACCESS[role];
 }
-
-export type SettingsAccess = {
-  catalog: boolean;
-  sessions: boolean;
-};
-
-export function settingsAccessForRole(role: UserRole): SettingsAccess {
-  return { catalog: role === 'owner', sessions: sessionAccessForRole(role).view };
-}

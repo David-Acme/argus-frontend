@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { settingsService } from '@/features/settings/services/settings.service';
-import type { SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
+import type { SettingChange, SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
@@ -15,8 +15,7 @@ import {
 
 type SettingsChangeInput = {
   owner: SettingsOwnerName;
-  key: string;
-  value: string;
+  changes: readonly SettingChange[];
 };
 
 type UseSettingsOptions = {
@@ -33,9 +32,10 @@ function withValue(overview: SettingsOverview, input: SettingsChangeInput): Sett
         ? owner
         : {
             ...owner,
-            settings: owner.settings.map((setting) =>
-              setting.key === input.key ? { ...setting, value: input.value } : setting
-            ),
+            settings: owner.settings.map((setting) => {
+              const change = input.changes.find((candidate) => candidate.key === setting.key);
+              return change ? { ...setting, value: change.value } : setting;
+            }),
           }
     ),
   };
@@ -65,9 +65,7 @@ export function useSettings({ enabled = true }: UseSettingsOptions = {}) {
         before = previous ?? EMPTY;
         return withValue(before, input);
       });
-      const result = await settingsService.update(input.owner, [
-        { key: input.key, value: input.value },
-      ]);
+      const result = await settingsService.update(input.owner, input.changes);
       if (result.ok && result.info) {
         const { catalog } = result.info;
         mutate((latest) => withCatalogs(latest ?? EMPTY, [catalog]));

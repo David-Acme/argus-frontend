@@ -17,7 +17,10 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import ChevronUp from 'lucide-react-native/icons/chevron-up';
 import Clock3 from 'lucide-react-native/icons/clock-3';
 import DoorOpen from 'lucide-react-native/icons/door-open';
+import Copy from 'lucide-react-native/icons/copy';
+import Cpu from 'lucide-react-native/icons/cpu';
 import Download from 'lucide-react-native/icons/download';
+import FileCog from 'lucide-react-native/icons/file-cog';
 import Eye from 'lucide-react-native/icons/eye';
 import Filter from 'lucide-react-native/icons/funnel';
 import Flashlight from 'lucide-react-native/icons/flashlight';
@@ -60,6 +63,7 @@ import Shield from 'lucide-react-native/icons/shield';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import Siren from 'lucide-react-native/icons/siren';
 import SkipForward from 'lucide-react-native/icons/skip-forward';
+import RotateCcw from 'lucide-react-native/icons/rotate-ccw';
 import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import Sofa from 'lucide-react-native/icons/sofa';
 import Sparkles from 'lucide-react-native/icons/sparkles';
@@ -72,7 +76,9 @@ import Trees from 'lucide-react-native/icons/trees';
 import TrendingDown from 'lucide-react-native/icons/trending-down';
 import TrendingUp from 'lucide-react-native/icons/trending-up';
 import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
+import Undo2 from 'lucide-react-native/icons/undo-2';
 import Unlink from 'lucide-react-native/icons/unlink';
+import Upload from 'lucide-react-native/icons/upload';
 import User from 'lucide-react-native/icons/user';
 import UserCheck from 'lucide-react-native/icons/user-check';
 import UserMinus from 'lucide-react-native/icons/user-minus';
@@ -142,6 +148,12 @@ export const ICONS = {
   video: Video,
   'volume-2': Volume2,
   download: Download,
+  upload: Upload,
+  copy: Copy,
+  cpu: Cpu,
+  'file-cog': FileCog,
+  'rotate-ccw': RotateCcw,
+  'undo-2': Undo2,
   play: Play,
   square: Square,
   wifi: Wifi,

@@ -9,3 +9,5 @@ export const PROFILE_ICONS: Readonly<Record<string, IconName>> = {
 export const PROFILE_FALLBACK_ICON: IconName = 'sliders';
 
 export const PROFILE_TARGETS_SHOWN = 4;
+
+export const SETTINGS_MODE_STORAGE_KEY = 'settings.mode';

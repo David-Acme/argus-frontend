@@ -36,12 +36,27 @@ export interface Setting {
   value: string;
   fallback: string;
   choiceStates?: ChoiceState[];
+  unit?: string;
+  pendingRestart?: boolean;
+}
+
+export type ProfileOrigin = 'recommended' | 'owner' | 'reverted';
+
+export interface ProfileMarker {
+  id: string;
+  origin: ProfileOrigin;
+  appliedAt: number;
+  keys: string[];
 }
 
 export interface SettingsOwner {
   service: SettingsOwnerName;
   reachable: boolean;
   settings: Setting[];
+  configured?: boolean;
+  configFile?: string;
+  capabilities?: string[];
+  profile?: ProfileMarker | null;
 }
 
 export interface SettingsOverview {
@@ -129,9 +144,24 @@ export interface ProfileRecommendation {
   fallback: string;
 }
 
+export type FirstRunStateName = 'applied' | 'reverted';
+
+export interface FirstRunOwner {
+  service: SettingsOwnerName;
+  keys: string[];
+}
+
+export interface FirstRunState {
+  profile: string;
+  state: FirstRunStateName;
+  appliedAt: number;
+  owners: FirstRunOwner[];
+}
+
 export interface SettingsProfiles {
   profiles: SettingsProfile[];
   recommendation: ProfileRecommendation;
+  firstRun?: FirstRunState | null;
 }
 
 export interface ProfileKeyResult {

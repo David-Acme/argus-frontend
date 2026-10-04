@@ -1275,6 +1275,59 @@ value.
   cost) with a chevron. Medium: three cards in a row. Expanded: the cards
   also list up to four of the profile's target values.
 
+### Configuración: simple and advanced modes (2026-10-03)
+
+David found the advanced mode "not working" and asked for a more technical
+Configuración with a simple and an advanced mode, the machine's
+recommendation by default, and the advanced mode as a direct view of every
+microservice's `.toml`.
+
+- **Why "advanced" showed nothing.** Reproduced on the desktop against the
+  sandbox: `GET /settings` answered `owners: []`, so both levels rendered the
+  same empty state and the switch looked dead. No owner was wired: the
+  running deploy's owner configs predate argus-settings (no `[rpc]` listener,
+  no settings caller, no `config.settings.toml`) and the native templates
+  leave `rpc.address` empty. With scratch owners wired, the old switch did
+  work. The backend now lists every owner, `configured: false` included, and
+  the app names them ("Sin conectar a Configuración: …" with the
+  re-provisioning hint) instead of painting nothing; backend
+  `argus-deploy/CONTEXT.md` has the operator path. A second defect made
+  some advanced keys unusable: a stepper over `llm.seed` (0..2^31) or the
+  `gpu_layers` keys (-1..999) needed hundreds of taps. Ranges over 400 steps
+  are now a numeric field.
+- **Two modes, persisted per viewer** (`useSettingsMode`, MMKV/localStorage
+  key `settings.mode`, default `simple`). Sencillo: the first-run banner, the
+  connection notice, the Perfil cards and each connected service's basic
+  keys (the old Básico). Avanzado (`components/technical/`): every key of
+  every owner, with search (key, label, hint, service, accent-insensitive),
+  view chips (all, changed from factory, restart keys), service chips and a
+  summary line. Each service header shows its status, the `.toml` path
+  (selectable), the GPU capability, the profile marker, export/import and,
+  when restart keys were saved, how many wait for `argus-<service>` to
+  restart. Each row shows label, mono key, hint, type, unit, range and step,
+  factory value, when it applies, "Cambiada" and "Espera un reinicio"
+  badges, its control and "Volver a <factory>" (a PATCH with the fallback).
+  Choice install states keep their option list.
+- **No restart from the app.** The architecture has no safe restart path
+  (the deploy's containers restart on crash, a native run has no
+  supervisor), so a restart key says "Se aplica al reiniciar el servicio"
+  and, once saved, "Espera un reinicio" until the owner boots with it.
+- **Export/import** (`model/settings-catalog.ts`, unit-tested): export is
+  `{ format: "argus.settings/1", service, exportedAt, settings }` for one
+  service (catalog keys only, so never a secret), shown as selectable text
+  with Copy on web/desktop. Import parses a pasted export, refuses another
+  service, a foreign format or more than 64 changes, ignores unknown keys,
+  previews from → to and applies one PATCH (the owner validates all or
+  nothing). No clipboard or file-picker module was added for this.
+- **First run.** argus-settings applies the recommended profile once per
+  owner on a fresh installation (state in each owner's `[settings_profile]`,
+  see backend `services/settings/CONTEXT.md`). `GET /settings/profiles`
+  carries `firstRun`; the banner says what was applied and when, with
+  "Deshacer" (`POST /settings/profiles/recommended/revert`), which restores
+  the factory value of each key that still holds what the recommendation set.
+- **Configuración is owner-only again**; sessions moved to the profile
+  (SESSIONS2). The screen enables its hooks from `role === 'owner'`.
+
 ### Your voice: confirmed voice enrollment (2026-10-03)
 
 The profile has a "Tu voz / Your voice" section (`features/voiceprint`,

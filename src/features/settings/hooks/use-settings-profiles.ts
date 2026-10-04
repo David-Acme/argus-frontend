@@ -10,6 +10,7 @@ import type {
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runOptimistic, type OptimisticRefusal } from '@/shared/libs/optimistic-action';
+import { runServiceAction } from '@/shared/libs/service-action';
 import { settingsService } from '@/features/settings/services/settings.service';
 import {
   profileIntents,
@@ -65,6 +66,7 @@ export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsP
     enabled,
   });
   const [applying, setApplying] = useState<string | null>(null);
+  const [reverting, setReverting] = useState(false);
   const profiles = useMemo(() => readableProfiles(data), [data]);
 
   const apply = useCallback(
@@ -89,8 +91,25 @@ export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsP
     [onCatalogs, reload]
   );
 
+  const revert = useCallback(async () => {
+    setReverting(true);
+    try {
+      const result = await runServiceAction({
+        call: () => settingsService.revertRecommended(),
+        success: t('screens.settings.first-run.reverted'),
+        errorTitle: t('screens.settings.first-run.revert-failed'),
+      });
+      if (result?.info) onCatalogs(returnedCatalogs(result.info));
+    } finally {
+      setReverting(false);
+      void reload();
+    }
+  }, [onCatalogs, reload]);
+
   return {
     profiles,
+    reverting,
+    revert,
     loading: status === 'loading' || (data !== null && profiles === null),
     failed: status === 'failed',
     applying,

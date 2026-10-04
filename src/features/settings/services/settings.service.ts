@@ -25,6 +25,10 @@ class SettingsService {
     return httpService.get<SettingsProfiles>('/settings/profiles');
   }
 
+  revertRecommended(): Promise<IServiceResponse<ProfileApplyResult>> {
+    return httpService.post<ProfileApplyResult>('/settings/profiles/recommended/revert', {});
+  }
+
   applyProfile(id: string): Promise<IServiceResponse<ProfileApplyResult>> {
     return httpService.post<ProfileApplyResult>(
       `/settings/profiles/${encodeURIComponent(id)}/apply`,
