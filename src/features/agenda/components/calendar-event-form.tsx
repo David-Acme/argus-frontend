@@ -3,7 +3,11 @@ import { useCallback, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { ICalendarEventCreate, ICalendarEventFormRecord } from '@/core/interfaces';
+import type {
+  ICalendarEventCreate,
+  ICalendarEventFormRecord,
+  ICalendarEventUpdate,
+} from '@/core/interfaces';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -116,15 +120,27 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
         : undefined,
   });
 
+  const updateBody = (values: EventValues, saved: ICalendarEventFormRecord): ICalendarEventUpdate => {
+    const body = eventBody(values);
+    return {
+      ...body,
+      location: body.location ?? (saved.location ? null : undefined),
+      description: body.description ?? (saved.description ? null : undefined),
+      endsAt: body.endsAt ?? (saved.endsAt ? null : undefined),
+    };
+  };
+
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values) =>
-      event ? calendarEventService.update(event.id, eventBody(values)) : calendarEventService.create(eventBody(values)),
+    request: (values, idempotencyKey) =>
+      event
+        ? calendarEventService.update(event.id, updateBody(values, event))
+        : calendarEventService.create(eventBody(values), idempotencyKey),
     optimistic: (values) => ({
       intents: [
         event
-          ? { table: 'calendar_event', kind: 'update', recordId: event.id, values: eventBody(values) }
+          ? { table: 'calendar_event', kind: 'update', recordId: event.id, values: updateBody(values, event) }
           : { table: 'calendar_event', kind: 'create', values: eventBody(values) },
       ],
       success: t('screens.agenda.event-saved'),

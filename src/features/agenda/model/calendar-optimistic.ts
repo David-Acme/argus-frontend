@@ -1,17 +1,23 @@
-import type { ICalendarEventCreate, IProjectTaskCreate } from '@/core/interfaces';
+import type {
+  ICalendarEventUpdate,
+  IProjectTaskCreate,
+  IProjectTaskUpdate,
+} from '@/core/interfaces';
 import type { AgendaStatus, CalendarEntry, CalendarSource, ProjectTaskStatus } from '@/core/types';
 import { defineLens, isPendingRecordId, type OptimisticLens } from '@/shared/libs/optimistic';
 import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-actions';
+
+type TaskIntentValues = IProjectTaskUpdate & Pick<IProjectTaskCreate, 'projectId'>;
 
 const recordIdFor = (entry: CalendarEntry, source: CalendarSource): string | null =>
   entry.source === source ? calendarEntryRecordId(entry) : null;
 
 const optionalText = (
-  value: string | undefined,
+  value: string | null | undefined,
   fallback: string | undefined
 ): string | undefined => (value === undefined ? fallback : value || undefined);
 
-const msFromSeconds = (value: number | undefined): number | null =>
+const msFromSeconds = (value: number | null | undefined): number | null =>
   value == null ? null : value * 1000;
 
 export function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus {
@@ -20,7 +26,7 @@ export function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus
   return 'upcoming';
 }
 
-const calendarEventLens = defineLens<CalendarEntry, ICalendarEventCreate>({
+const calendarEventLens = defineLens<CalendarEntry, ICalendarEventUpdate>({
   table: 'calendar_event',
   recordIdOf: (entry) => recordIdFor(entry, 'event'),
   patch: (entry, values) => ({
@@ -50,14 +56,14 @@ const calendarEventLens = defineLens<CalendarEntry, ICalendarEventCreate>({
         },
 });
 
-const calendarTaskLens = defineLens<CalendarEntry, IProjectTaskCreate>({
+const calendarTaskLens = defineLens<CalendarEntry, TaskIntentValues>({
   table: 'project_task',
   recordIdOf: (entry) => recordIdFor(entry, 'task'),
   patch: (entry, values) => ({
     ...entry,
     title: values.title ?? entry.title,
     status: values.status === undefined ? entry.status : agendaStatusOf(values.status),
-    startsAt: values.dueAt === undefined ? entry.startsAt : values.dueAt * 1000,
+    startsAt: values.dueAt == null ? entry.startsAt : values.dueAt * 1000,
   }),
   create: (recordId, values) =>
     values.dueAt == null

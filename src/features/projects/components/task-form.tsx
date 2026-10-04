@@ -3,7 +3,11 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
-import type { IProjectTaskCacheRow, IProjectTaskCreate } from '@/core/interfaces';
+import type {
+  IProjectTaskCacheRow,
+  IProjectTaskCreate,
+  IProjectTaskUpdate,
+} from '@/core/interfaces';
 import { projectTaskService } from '@/core/services/project-task.service';
 import type { ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -39,14 +43,22 @@ const schema = z.object({
 
 type TaskValues = z.infer<typeof schema>;
 
-type TaskBody = Required<Pick<IProjectTaskCreate, 'title' | 'status' | 'priority'>> &
-  Pick<IProjectTaskCreate, 'dueAt'>;
+const dueSeconds = (values: TaskValues): number | undefined =>
+  values.dueAt == null ? undefined : Math.round(values.dueAt / 1000);
 
-const taskBody = (values: TaskValues): TaskBody => ({
+const createBody = (values: TaskValues, projectId: string): IProjectTaskCreate => ({
+  projectId: Number(projectId),
   title: values.title,
   status: values.status,
   priority: values.priority,
-  dueAt: values.dueAt == null ? undefined : Math.round(values.dueAt / 1000),
+  dueAt: dueSeconds(values),
+});
+
+const updateBody = (values: TaskValues, saved: IProjectTaskCacheRow): IProjectTaskUpdate => ({
+  title: values.title,
+  status: values.status,
+  priority: values.priority,
+  dueAt: dueSeconds(values) ?? (saved.dueAt == null ? undefined : null),
 });
 
 export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 'todo' }: TaskFormProps) {
@@ -75,15 +87,15 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values) =>
+    request: (values, idempotencyKey) =>
       task
-        ? projectTaskService.update(task.id, taskBody(values))
-        : projectTaskService.create({ ...taskBody(values), projectId: Number(projectId) }),
+        ? projectTaskService.update(task.id, updateBody(values, task))
+        : projectTaskService.create(createBody(values, projectId), idempotencyKey),
     optimistic: (values) => ({
       intents: [
         task
-          ? { table: 'project_task', kind: 'update', recordId: task.id, values: taskBody(values) }
-          : { table: 'project_task', kind: 'create', values: { ...taskBody(values), projectId: Number(projectId) } },
+          ? { table: 'project_task', kind: 'update', recordId: task.id, values: updateBody(values, task) }
+          : { table: 'project_task', kind: 'create', values: createBody(values, projectId) },
       ],
       success: t('screens.projects.task-saved'),
     }),
@@ -143,7 +155,7 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
                     value={field.value == null ? null : new Date(field.value)}
                     placeholder={t('screens.projects.task-due-none')}
                     onChange={(day) => field.onChange(date.startOfDay(day).getTime())}
-                    onClear={task?.dueAt == null ? () => field.onChange(null) : undefined}
+                    onClear={() => field.onChange(null)}
                   />
                 </FormItem>
               )}

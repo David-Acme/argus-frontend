@@ -3,11 +3,14 @@ import type {
   IProjectCreate,
   IProjectTaskCacheRow,
   IProjectTaskCreate,
+  IProjectTaskUpdate,
 } from '@/core/interfaces';
 import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 
-const secondsToMs = (value: number | undefined, fallback: number | null): number | null =>
-  value === undefined ? fallback : value * 1000;
+type TaskIntentValues = IProjectTaskUpdate & Pick<IProjectTaskCreate, 'projectId'>;
+
+const secondsToMs = (value: number | null | undefined, fallback: number | null): number | null =>
+  value === undefined ? fallback : value === null ? null : value * 1000;
 
 export const projectLens: OptimisticLens<IProjectCacheRow> = defineLens<
   IProjectCacheRow,
@@ -31,7 +34,7 @@ export const projectLens: OptimisticLens<IProjectCacheRow> = defineLens<
 });
 
 export function projectTaskLens(projectId: string): OptimisticLens<IProjectTaskCacheRow> {
-  return defineLens<IProjectTaskCacheRow, IProjectTaskCreate>({
+  return defineLens<IProjectTaskCacheRow, TaskIntentValues>({
     table: 'project_task',
     recordIdOf: (row) => row.id,
     patch: (row, values) => ({
