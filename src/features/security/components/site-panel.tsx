@@ -133,7 +133,7 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
           onChange={(next) => void onUpdate({ profile: next })}
           accessibilityLabel={t('screens.security.site.profile')}
         />
-        <Text variant="caption" className="px-1">
+        <Text variant="caption">
           {t(`screens.security.site.profile-hint.${profile}`)}
         </Text>
       </View>
@@ -164,7 +164,7 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
             onChange={(next) => void onUpdate({ closedMode: next })}
             accessibilityLabel={t('screens.security.site.closed')}
           />
-          <Text variant="caption" className="px-1">
+          <Text variant="caption">
             {t('screens.security.site.closed-hint')}
           </Text>
         </View>
@@ -187,7 +187,7 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
             />
           }
         />
-        <Text variant="caption" className="px-1">
+        <Text variant="caption">
           {t('screens.security.site.digest-hint')}
         </Text>
       </View>

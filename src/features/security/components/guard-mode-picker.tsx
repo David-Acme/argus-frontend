@@ -40,7 +40,7 @@ export function GuardModePicker({ state, pending, onSelect, readOnly = false }: 
               isCompact ? 'w-full' : 'grow basis-[48%]',
               active
                 ? 'bg-interactive border-interactive'
-                : cn('bg-card border-border-subtle', hover)
+                : cn('bg-card dark:bg-card-secondary border-border-subtle', hover)
             )}>
             <View
               className={cn(

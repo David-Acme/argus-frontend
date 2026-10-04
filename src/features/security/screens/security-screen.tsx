@@ -18,7 +18,6 @@ import { Panel } from '@/shared/components/ui/panel';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useGuard } from '@/features/security/hooks/use-guard';
 import { guardAccessForRole } from '@/shared/libs/role-access';
@@ -29,7 +28,6 @@ export default function SecurityScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
-  const bottomInset = useBottomNavInset();
   const role = useAuthStore((state) => state.user?.role);
   const access = guardAccessForRole(role ?? 'guest');
   const guard = useGuard(access.review);
@@ -48,7 +46,7 @@ export default function SecurityScreen() {
       ongoing={ongoing}
       ongoingLabel={t('screens.security.status.active')}
       activeGuests={activeGuests}
-      pendingReviews={pendingReviews}
+      pendingReviews={access.review ? pendingReviews : undefined}
     />
   );
 
@@ -89,7 +87,7 @@ export default function SecurityScreen() {
     <Panel
       title={t('screens.security.episodes.title')}
       description={t('screens.security.episodes.description')}
-      count={pendingReviews}
+      count={access.review ? pendingReviews : undefined}
       className={className}>
       <EpisodeList
         episodes={guard.episodes}
@@ -118,12 +116,12 @@ export default function SecurityScreen() {
       <View className="min-w-0 flex-1 gap-5">
         {heroSection}
         {modeSection}
-        {siteSection()}
-        {cameraSection('flex-1')}
+        {siteSection('flex-1')}
       </View>
       <View className="min-w-0 flex-1 gap-5">
-        {episodeSection('flex-1')}
-        {guestSection()}
+        {episodeSection()}
+        {cameraSection()}
+        {guestSection('flex-1')}
       </View>
     </View>
   ) : isMedium ? (
@@ -189,29 +187,31 @@ export default function SecurityScreen() {
     ) : (
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: bottomInset + 24 }}
+        contentContainerClassName="grow pb-6"
         showsVerticalScrollIndicator={false}>
         {access.review ? ownerLayout : memberLayout}
       </ScrollView>
     );
 
   return (
-    <AppScreen
-      scrollable={false}
-      bottomNav={false}
-      header={
-        <ScreenHeader
-          title={t('screens.security.title')}
-          subtitle={t('screens.security.subtitle')}
-          onBack={() => router.back()}
-        />
-      }>
-      {body}
+    <>
+      <AppScreen
+        scrollable={false}
+        bottomNav={false}
+        header={
+          <ScreenHeader
+            title={t('screens.security.title')}
+            subtitle={t('screens.security.subtitle')}
+            onBack={() => router.back()}
+          />
+        }>
+        {body}
+      </AppScreen>
       <ExpectedGuestForm
         open={guestFormOpen}
         onOpenChange={setGuestFormOpen}
         onSubmit={guard.addGuest}
       />
-    </AppScreen>
+    </>
   );
 }

@@ -12,7 +12,7 @@ type GuardStatusHeroProps = {
   ongoing: number;
   ongoingLabel: string;
   activeGuests: number;
-  pendingReviews: number;
+  pendingReviews?: number;
 };
 
 type GuardStatProps = {
@@ -110,12 +110,14 @@ export function GuardStatusHero({
           label={t('screens.security.status.guests')}
           highlight={activeGuests > 0}
         />
-        <GuardStat
-          icon="check-circle"
-          value={pendingReviews}
-          label={t('screens.security.status.pending')}
-          highlight={pendingReviews > 0}
-        />
+        {pendingReviews === undefined ? null : (
+          <GuardStat
+            icon="check-circle"
+            value={pendingReviews}
+            label={t('screens.security.status.pending')}
+            highlight={pendingReviews > 0}
+          />
+        )}
       </View>
       <Text variant="caption">{t('screens.security.mode.note')}</Text>
     </Panel>

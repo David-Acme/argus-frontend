@@ -219,6 +219,8 @@ export const security = {
     spoke: 'Habló por el altavoz',
     sounded: 'Sonó la alarma',
     'alerts-count': '{count} avisos',
+    'show-more': 'Ver {count} más',
+    'show-less': 'Ver menos',
     lasted: 'Duró {duration}',
     'show-timeline': 'Ver cómo fue',
     'hide-timeline': 'Ocultar',
