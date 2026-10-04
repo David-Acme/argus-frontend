@@ -756,7 +756,7 @@ cd src-tauri && cargo check
 | `src/features/cameras/services/camera-media.service.ts` | Socket `/media` (argus-camera): subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
 | `src/features/cameras/components/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
-| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `VirtualList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `ConfirmDialog`, `Toaster` |
+| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `VirtualList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
 | `src/app/welcome/` | Onboarding routes (nested Stack with fade + progress), one-line re-exports of `features/auth` screens: `index` (greeting), `pairing/` (mobile QR / desktop code), `face/` (MLKit guidance, mobile-only), `voice/` (onboarding call, mobile-only) |
 | `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
 | `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |
@@ -764,7 +764,7 @@ cd src-tauri && cargo check
 | `src/app/(app)/_layout.tsx` | Signed-in group: `EntryGate` (session guard + entry resolver with the branded splash) around `AppShell` (nav rail mounted once) and the group's Stack |
 | `src/app/(app)/index.tsx` | Home dashboard |
 | `src/app/(app)/agenda/` · `projects/` · `cameras/` · `people/` · `users/` · `profile/` · `security/` · `settings/` | Tabs principales: calendario mes/semana/día, proyectos+tareas, cámaras (+`[id]`: PTZ/zonas/talk), directorio Guard, gestión Owner + QR invitación, perfil |
-| `src/features/home/` | Home dashboard: camera grid/tile, project grid, today's agenda, summary, Novedades, notifications popover |
+| `src/features/home/` | Home dashboard: camera grid/tile, project grid, today's agenda, summary, and the notifications (Novedades + bell popover) as threads by `threadKey`, styled by urgency and read per thread (`model/notification-threads.ts`, unit-tested) |
 | `src/features/voiceprint/` | "Tu voz" in the profile: voiceprint status (`useRemoteResource`), consented phrase-by-phrase enrollment (`model/enrollment.ts` reducer), "Try it" verification and delete; recorder platform split (`services/voice-recorder.{native,web}.ts`: argus-mic / getUserMedia+MediaRecorder) and the in-memory 16 kHz WAV + base64 encoder (`model/wav.ts`), both unit-tested |
 | `src/features/settings/` | Configuración: every owner's catalog from argus-settings; TTS engine/variant/voice settings as an option list with bundled voice previews (`constants/tts-preview-clips.{web,native}.ts`, Ogg/Opus vs M4A/AAC), install states and on-demand install (`model/tts-preview.ts`, unit-tested) |
 | `src/shared/components/layout/` | App chrome and screen layout: `AppShell`, `AppScreen`, `ScreenHeader`, `NavRail`, `BottomNav`/`GlobalBottomNav`, `ComposeFab`, `CenteredScreen`, `OfflineBanner` |

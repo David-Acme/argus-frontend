@@ -1477,3 +1477,82 @@ Edits are optimistic over the remote-resource caches: `use-guard.ts`'s
 the service, settles the cache with the server's answer, or restores the
 snapshot and shows the refusal toast. Editors are mounted only while open,
 so their draft state is initialised from props without effects.
+
+### Notification threads, the Security layout and the core follow-ups (2026-10-03)
+
+**Notifications without noise.** Guard and the camera fallback send
+notifications whose `data` carries `threadKey`, `urgency` (`passive`,
+`active`, `time_sensitive`, `critical`), `phase` (`opened`, `escalated`,
+`daily`, `after_quiet`; `resolved` is understood but guard never sends it),
+`kind`, `episodeId`, `cameraName`, `reasons` and `lang` (backend
+`services/guard/CONTEXT.md`, "Notifications people read"). The bell popover
+and the Novedades card group them (`features/home/model/notification-threads.ts`,
+unit-tested; the row is `notification-thread-row.tsx`):
+
+- Rows sharing a `threadKey` are one thread led by its newest row; a row
+  without one is its own thread, so older notifications render as before.
+  Threads keep the order of their newest row (the projection's rows arrive
+  newest first).
+- The title and body are the server's words in the reader's language. The
+  app adds only the time, the latest phase (shown for a thread of several
+  rows, or when it is not the first alert) and the count: "19:12 · Empeoró ·
+  3 avisos".
+- Urgency is the highest the thread reached and styles the icon tile only:
+  critical red with an "Urgente" label (colour is never the only signal),
+  time-sensitive amber, active neutral, passive quiet (muted icon and
+  title). The icon names the kind: an episode is a shield, tamper a warning,
+  a summary history (a moon after quiet hours), the camera fallback a video,
+  anything else the bell.
+- Read state is per thread: a thread is unread while any of its rows is.
+  Opening the bell marks every unread row of the previewed threads read (they
+  stay highlighted while it is open); pressing a thread in Novedades marks it
+  read and, when it has more than one row, unfolds its timeline
+  (`TimelineItem`, `shared/components/ui/timeline.tsx`, shared with the
+  episode timeline). Both go through `runOptimistic`, one `notification`
+  update intent per row.
+- The badge and the popover summary count unread threads plus the unread
+  rows beyond the cached window, each counted once because its thread is
+  unknown (`unreadThreadCount`). The window is `VIEW_CACHE_PAGE_SIZE` rows
+  (it was 8) so four threads keep their history, and the cache rows carry
+  `createdAt` in ms.
+- The sandbox has no supported way to seed guard notifications
+  (`CreateNotifications` is guard's gRPC call under guard's own credential),
+  so the visual check used a temporary local patch with demo rows, reverted
+  before the commit. Echoing the updated ids from `PATCH /notification/read`
+  was left out: a read intent already settles on evidence (its patch is a
+  no-op on the synced row), so the echo would change the contract without a
+  visible gain.
+
+**Security layout.** On wide windows the owner's columns are hero, mode and
+place on the left, and episodes, cameras and expected visits on the right;
+the last panel of each column takes the slack (rule 12d). The episode feed
+used to be the stretched first panel of its column, so an empty feed pushed
+the visits below a tall blank card and a long one stretched the other column
+into blank space. The feed shows three cards to the owner (their review chips
+make them tall) and five to residents and guards, behind "Ver N más".
+Residents and guards see no "Por revisar" tile or count, since they cannot
+review. The screen hides the bottom nav, so its scroll view pads 24 px, not
+the nav inset. Mode cards nested in the Mode panel use
+`dark:bg-card-secondary`, and the `radio` and `menuitem` roles get the same
+focus ring and pointer cursor as buttons (`global.css`).
+
+**Phone width.** UIUX's 209b8a7 (dialogs beside `AppScreen`) holds: home,
+agenda, projects, people and access, settings and profile at 420 px show no
+stray gaps. The members panel's dashed invite tile now sits 12 px inside its
+card (at 6 px its corners crossed the card's), and an off switch in dark mode
+draws its knob in `foreground-secondary`.
+
+**Core follow-ups.**
+
+- Transport refusals read like people: `INVALID_RESPONSE`,
+  `CERT_NOT_TRUSTED`, `FINGERPRINT_MISMATCH`, `STORAGE_ERROR` and a calmer
+  `TIMEOUT` (`shared/libs/service-error.ts`). The face screens map any code
+  they do not know to that vocabulary or to a calm generic line, never to
+  the backend's wording.
+- Edit forms clear: an emptied due date, end time, place or note is sent as
+  `null` when the saved row had one (omitted otherwise), the lenses read
+  `null` as cleared, and a task's due date can be cleared at any time.
+- `runOptimistic` draws one idempotency key per user action and hands it to
+  every attempt (`call(idempotencyKey)`; Retry reuses it). `useFormSubmit`
+  passes it to `request(values, key)` and the productivity creates send it
+  (backend 52cf522d).
