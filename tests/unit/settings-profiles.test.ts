@@ -164,6 +164,14 @@ describe('settings profiles', () => {
     ).toBe(false);
   });
 
+  test('an answer cached before the recommendation carried its rules is not painted', () => {
+    const { profile, reason, hardware, rule, missed } = listing.recommendation;
+    const older = { profile, reason, hardware, rule, missed };
+    expect(settingsProfilesSchema.safeParse({ ...listing, recommendation: older }).success).toBe(
+      false
+    );
+  });
+
   test('a profile intent lands on its setting row and nowhere else', () => {
     const rows = settingRows(overview);
     expect(rows).toHaveLength(2);

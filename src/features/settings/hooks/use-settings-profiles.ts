@@ -1,6 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { settingsProfilesSchema } from '@/core/contracts/http.contract';
 import { t, tk } from '@/core/i18n';
-import type { ProfileApplyResult, SettingsOwner, SettingsProfile } from '@/core/types';
+import type {
+  ProfileApplyResult,
+  SettingsOwner,
+  SettingsProfile,
+  SettingsProfiles,
+} from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runOptimistic, type OptimisticRefusal } from '@/shared/libs/optimistic-action';
@@ -48,6 +54,10 @@ function refusalOf(result: ProfileApplyResult): OptimisticRefusal | null {
   };
 }
 
+function readableProfiles(data: SettingsProfiles | null): SettingsProfiles | null {
+  return data !== null && settingsProfilesSchema.safeParse(data).success ? data : null;
+}
+
 export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsProfilesOptions) {
   const { data, status, reload } = useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.settingsProfiles,
@@ -55,6 +65,7 @@ export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsP
     enabled,
   });
   const [applying, setApplying] = useState<string | null>(null);
+  const profiles = useMemo(() => readableProfiles(data), [data]);
 
   const apply = useCallback(
     async (profile: SettingsProfile) => {
@@ -79,8 +90,8 @@ export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsP
   );
 
   return {
-    profiles: data,
-    loading: status === 'loading',
+    profiles,
+    loading: status === 'loading' || (data !== null && profiles === null),
     failed: status === 'failed',
     applying,
     reload,

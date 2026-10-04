@@ -139,7 +139,7 @@ export function ProfileCard({
         ) : null}
       </View>
 
-      {fit ? <ProfileFit fit={fit} /> : null}
+      {fit && (fit.recommended || !compact) ? <ProfileFit fit={fit} /> : null}
 
       {detailed ? (
         <View className="gap-1.5">
