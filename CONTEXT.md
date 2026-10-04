@@ -1418,11 +1418,11 @@ with tests. The decisions that outlive the commits:
   camera list watches the columns its projection declares
   (`CAMERA_SOURCE_FIELDS`); early migration steps name the columns later
   steps add, and a replay test guards it.
-- **Open**: the invitation `resolve` call still sends the token over
-  trust-any TLS before the fingerprint check (needs a pinned trust-any in
-  the native modules); the app sends no stable `User-Agent`, and the backend
-  binds refresh tokens to the exact agent string, so an OS or library update
-  can log a phone out (adding one would log every session out once).
+- **Closed since** (see "Sessions and devices" below): the invitation
+  `resolve` call is pinned to the QR's CA fingerprint and host before the
+  token leaves the device, and every transport sends a stable
+  `User-Agent: Argus/1 (<platform>)`; the backend moves each existing
+  session to it once, on its next refresh.
 
 ## Calls with Argus (2026-10-03)
 
@@ -1596,3 +1596,78 @@ draws its knob in `foreground-secondary`.
   every attempt (`call(idempotencyKey)`; Retry reuses it). `useFormSubmit`
   passes it to `request(values, key)` and the productivity creates send it
   (backend 52cf522d).
+
+## Sessions and devices (2026-10-03)
+
+Every role can see where its account is open and close any of it, in real
+time, from Configuración ("Sesiones y dispositivos") and from the profile.
+Backend contract: argus-auth `GET /auth/sessions`, `DELETE
+/auth/sessions/{id}`, `DELETE /auth/sessions?scope=others|all`; a session is
+one refresh-token family with an opaque 32-hex id.
+
+- **Client identity on every request.** The backend binds a session to
+  `HMAC(User-Agent|IP)`, so the agent string must not change with an OS or
+  library update and must be byte-identical on HTTP and on the `/sync`
+  upgrade. Mobile sends it from JS (`core/services/net/client-identity.ts`,
+  unit-tested; `net.native.ts` merges it into every request, the pinned
+  request and every socket, overriding any spelling a caller passed):
+  `User-Agent: Argus/1 (android|ios)`, `X-Argus-Client:
+  <platform>/<expoConfig.version>`, `X-Argus-Device: <encodeURIComponent of
+  Constants.deviceName>` (control characters collapsed, 64 characters). JS
+  is enough on mobile because OkHttp and URLSession take the header as
+  given, so no native rebuild was needed for it and expo-constants was
+  already a dependency. The desktop's identity belongs to Rust
+  (`src-tauri/src/net/identity.rs`): `Argus/1 (desktop)`, the crate version
+  and the machine's pretty hostname (`/etc/machine-info`, else the kernel
+  hostname; `scutil` on macOS, `COMPUTERNAME` on Windows), set as reqwest
+  default headers, on the WebSocket handshake and on pairing; the WebView
+  cannot override them. The desktop says `desktop`, never `web`. Existing
+  sessions migrate once: the first request with the new agent gets a 401,
+  and the normal one-refresh-on-401 is accepted by the backend as a legacy
+  → stable transition from the same address.
+- **The section** (`features/settings/components/sessions/`,
+  `hooks/use-sessions.ts`, `hooks/use-session-labels.ts`, `model/sessions.ts`,
+  `services/sessions.service.ts`): "Este dispositivo" first, as a card with
+  "Cerrar sesión en este dispositivo"; then "Móviles" (android, ios) and
+  "Escritorio" (desktop, web), each row with the device name or a platform
+  fallback, the platform, the last activity ("Activo ahora" under two
+  minutes, then minutes, hours, days, then a date) and since when; an
+  unidentified platform gets its own group only when it has rows. Wide
+  windows put the card and the bulk actions in a 300 px column beside the
+  list; phones stack card, list, actions. The list is a `useRemoteResource`
+  under `auth.sessions` (paints the last answer, refetches on focus), parsed
+  with the zod schema in `core/contracts/session.contract.ts`.
+- **Closing.** One row closes at once, without a dialog: the row leaves
+  through the shared optimistic layer (table `session`, a delete intent),
+  and a refusal brings it back with the toast; closing your own phone from
+  the desktop is the safe direction and easy to redo. "Cerrar las demás
+  sesiones", "Cerrar todas (incluida esta)" and closing this device confirm
+  first. Closing this device is the profile's logout with a notice
+  (`authService.logout('closed-here')`); "all" is
+  `authService.logoutEverywhere()`, which the profile also offers under
+  "Cerrar sesión".
+- **Real time.** `AuthContextChanged` frames that carry a `reason` are
+  session signals, read by `readSessionSignal` in the router (role changes
+  keep their path). `sessionsChanged` reaches `synchronizeService
+  .onSessionsChanged`, and an open section refetches. `sessionRevoked`
+  ends the session through `sessionService.endSession('closed-here')`:
+  the calm toast "Se cerró la sesión de este dispositivo", the same clear as
+  a local logout, and the entry gate lands on the login screen. The notice
+  shows once even when the HTTP answer and the frame both arrive.
+- **Configuración for every role.** `/settings` is open to all roles
+  (`settingsAccessForRole`: the catalog stays owner-only, the sessions
+  section is for everyone), mirrored from the backend's `kSessionAccess`
+  by `tests/unit/role-access-contract.test.ts`. Non-owners see only the
+  sessions section, and the owner-only loads do not run for them.
+- **Invitations are pinned before the token leaves.** `invite.service`
+  sends `resolve` through `netService.requestPinned(request, { caFingerprint,
+  host })` (`invitationResolveRequest`, unit-tested); `trustAny` is gone
+  from the Nitro spec. Android checks, inside the TLS handshake, that a
+  certificate in the presented chain has the QR's SHA-256 fingerprint and
+  that the chain validates to it alone, and the hostname verifier requires
+  the QR host among the leaf's DNS SANs; iOS does the same with
+  `SecTrustSetAnchorCertificates` + `SecPolicyCreateSSL(true, host)`. A
+  refusal happens before any byte of the request is written and surfaces
+  as `FINGERPRINT_MISMATCH`, which the invitation screen explains ("Este
+  servidor no es el de la invitación… No se envió nada"). The desktop has
+  no invitation path (enrolment is mobile-only), so it never sends a token.

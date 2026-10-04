@@ -8,14 +8,22 @@ import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
+import { t } from '@/core/i18n';
 import { useAuthStore } from '@/core/stores/auth.store';
+import { useToastStore } from '@/core/stores/toast.store';
 import {
   NET_STORAGE_KEYS,
   SESSION_TOKEN_PERSIST_ATTEMPTS,
   SESSION_TOKEN_PERSIST_RETRY_MS,
   SESSION_USER_KEY,
 } from '@/shared/constants';
-import type { AuthStatus, NetPairedInstance, SessionCredential, SessionRefreshOutcome } from '@/core/types';
+import type {
+  AuthStatus,
+  NetPairedInstance,
+  SessionCredential,
+  SessionEndNotice,
+  SessionRefreshOutcome,
+} from '@/core/types';
 import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
 const REFRESH_PATH = '/auth/refresh-token';
@@ -106,6 +114,13 @@ class SessionService {
     });
     this.clearing = clearing;
     return clearing;
+  }
+
+  endSession(notice: SessionEndNotice): Promise<void> {
+    if (this.clearing) return this.clearing;
+    if (useAuthStore.getState().status !== 'signed-in') return Promise.resolve();
+    useToastStore.getState().show('info', t(`screens.sessions.notice.${notice}`));
+    return this.clearSession();
   }
 
   private async performClear(): Promise<void> {

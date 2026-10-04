@@ -14,6 +14,7 @@ import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/share
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
+import { runServiceAction } from '@/shared/libs/service-action';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
@@ -74,6 +75,24 @@ export default function ProfileScreen() {
     router.replace('/');
   }, [router, t]);
 
+  const signOutEverywhere = useCallback(async () => {
+    setLeaving(true);
+    try {
+      await runServiceAction({
+        confirm: {
+          title: t('screens.sessions.confirm-all-title'),
+          description: t('screens.sessions.confirm-all-description'),
+          confirmLabel: t('screens.sessions.sign-out-everywhere'),
+          intent: 'danger',
+        },
+        call: () => authService.logoutEverywhere(),
+        errorTitle: t('screens.sessions.close-error'),
+      });
+    } finally {
+      setLeaving(false);
+    }
+  }, [t]);
+
   const unpair = useCallback(async () => {
     const accepted = await confirm({
       title: t('screens.profile.unpair-confirm-title'),
@@ -115,8 +134,8 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {IS_NATIVE ? (
-          <SettingsGroup title={t('screens.profile.devices')}>
+        <SettingsGroup title={t('screens.profile.devices')}>
+          {IS_NATIVE ? (
             <ListRow
               icon="monitor"
               title={t('screens.profile.connect-device')}
@@ -124,8 +143,15 @@ export default function ProfileScreen() {
               chevron
               onPress={() => router.push('/approve')}
             />
-          </SettingsGroup>
-        ) : null}
+          ) : null}
+          <ListRow
+            icon="monitor-smartphone"
+            title={t('screens.sessions.manage-sessions')}
+            subtitle={t('screens.sessions.manage-sessions-hint')}
+            chevron
+            onPress={() => router.push('/settings')}
+          />
+        </SettingsGroup>
 
         <SettingsGroup title={t('screens.voiceprint.section')}>
           <VoiceprintPanel />
@@ -173,10 +199,15 @@ export default function ProfileScreen() {
           />
         </SettingsGroup>
 
-        <Button variant="outline" size="lg" loading={leaving} onPress={signOut}>
-          <Icon name="log-out" />
-          <Text>{t('screens.profile.sign-out')}</Text>
-        </Button>
+        <View className="gap-2">
+          <Button variant="outline" size="lg" loading={leaving} onPress={signOut}>
+            <Icon name="log-out" />
+            <Text>{t('screens.profile.sign-out')}</Text>
+          </Button>
+          <Button variant="ghost" disabled={leaving} onPress={signOutEverywhere}>
+            <Text className="text-error-strong">{t('screens.sessions.sign-out-everywhere')}</Text>
+          </Button>
+        </View>
       </View>
     </AppScreen>
   );

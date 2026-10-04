@@ -564,6 +564,9 @@ for Watermelon nor make an HTTP list request just because it mounted.
   `/users` (users + invitation metadata); Guard sees `/people` (directory only);
   Resident/Guest see their own profile only. Reuse
   `shared/libs/people-access.ts` instead of scattering role checks.
+- Every role manages its own sessions: `/settings` is open to all roles, the
+  catalog inside stays owner-only (`settingsAccessForRole`), and
+  `sessionAccessForRole` mirrors the backend's `kSessionAccess`.
 - Which role may open which screen is one table, `shared/libs/route-access.ts`
   (`routeFallback(path, role)`): the `(app)` layout redirects with it and the
   nav hides the tabs it refuses. A screen never checks its own role.

@@ -1,7 +1,13 @@
 import { database } from '@/core/database';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
-import type { SessionRefreshOutcome, SyncOperation, SyncUserPatch } from '@/core/types';
+import type {
+  SessionEndNotice,
+  SessionRefreshOutcome,
+  SessionSignal,
+  SyncOperation,
+  SyncUserPatch,
+} from '@/core/types';
 import { SYNC_TABLE_KEYS } from '@/core/types';
 import type { IAuditLogEntry, IInitialInfo, ISocketEmitDto } from '@/core/interfaces';
 import { AuditLogPager } from './audit-log-pager';
@@ -27,6 +33,7 @@ type SessionActions = {
   refreshSession: () => Promise<SessionRefreshOutcome>;
   clearSession: () => Promise<void>;
   updateUser: (partial: SyncUserPatch) => void;
+  endSession: (notice: SessionEndNotice) => Promise<void>;
 };
 
 class SynchronizeService {
@@ -54,6 +61,7 @@ class SynchronizeService {
   private readonly rows: SyncRowPager;
   private readonly audit: AuditLogPager;
   private readonly live: LiveFrameApplier;
+  private readonly sessionsChangedListeners = new Set<() => void>();
 
   constructor() {
     this.cursors = new SyncCursorStore(() => String(this.authStore?.getState().user?.id ?? ''));
@@ -83,6 +91,7 @@ class SynchronizeService {
       auditFailure: (scope, error) => this.channel.rejectAudit(scope, error),
       liveFrame: (frame) => this.live.receive(frame),
       authContextChanged: (info) => this.onAuthContextChanged(info),
+      sessionSignal: (signal) => this.onSessionSignal(signal),
     });
     this.rows = new SyncRowPager({
       request: (dto) => this.channel.requestSync(dto),
@@ -167,6 +176,13 @@ class SynchronizeService {
 
   onBinary(listener: (data: ArrayBuffer) => void): () => void {
     return this.router.onBinary(listener);
+  }
+
+  onSessionsChanged(listener: () => void): () => void {
+    this.sessionsChangedListeners.add(listener);
+    return () => {
+      this.sessionsChangedListeners.delete(listener);
+    };
   }
 
   onConnect(callback: () => void): () => void {
@@ -344,6 +360,15 @@ class SynchronizeService {
       return;
     }
     if (context.requiresResync) this.startContextResync();
+  }
+
+  private onSessionSignal(signal: SessionSignal): void {
+    if (signal.reason === 'sessionsChanged') {
+      this.sessionsChangedListeners.forEach((listener) => listener());
+      return;
+    }
+    if (this.authStore?.getState().status !== 'signed-in') return;
+    void this.sessionActions?.endSession('closed-here');
   }
 
   private startContextResync(): void {

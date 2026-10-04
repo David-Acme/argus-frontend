@@ -37,6 +37,10 @@ import Mic from 'lucide-react-native/icons/mic';
 import MicOff from 'lucide-react-native/icons/mic-off';
 import Minus from 'lucide-react-native/icons/minus';
 import Monitor from 'lucide-react-native/icons/monitor';
+import MonitorSmartphone from 'lucide-react-native/icons/monitor-smartphone';
+import Smartphone from 'lucide-react-native/icons/smartphone';
+import Laptop from 'lucide-react-native/icons/laptop';
+import Globe from 'lucide-react-native/icons/globe';
 import Moon from 'lucide-react-native/icons/moon';
 import MoreHorizontal from 'lucide-react-native/icons/ellipsis';
 import Package from 'lucide-react-native/icons/package';
@@ -104,6 +108,10 @@ export const ICONS = {
   mic: Mic,
   'mic-off': MicOff,
   monitor: Monitor,
+  'monitor-smartphone': MonitorSmartphone,
+  smartphone: Smartphone,
+  laptop: Laptop,
+  globe: Globe,
   moon: Moon,
   'pie-chart': PieChart,
   minus: Minus,

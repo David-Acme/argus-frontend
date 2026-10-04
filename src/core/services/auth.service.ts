@@ -14,6 +14,7 @@ import type {
   IResponseStatusDto,
   IServiceResponse,
 } from '@/core/interfaces';
+import type { SessionEndNotice, SessionRevokeResult } from '@/core/types';
 
 const LOGIN_PATH = '/auth/login';
 const REGISTER_PATH = '/auth/register';
@@ -21,6 +22,7 @@ const SERVER_STATUS_PATH = '/pairing/status';
 const STATUS_PATH = '/auth/status';
 const LOGOUT_PATH = '/auth/logout';
 const DEVICE_LOGIN_PATH = '/auth/device-login';
+const SESSIONS_PATH = '/auth/sessions';
 
 const DEVICE_LOGIN_PROOF_HEADER = 'X-Argus-Login-Proof';
 
@@ -62,13 +64,20 @@ class AuthService {
     return httpService.get<IResponseStatusDto>(STATUS_PATH);
   }
 
-  async logout(): Promise<void> {
+  async logout(notice?: SessionEndNotice): Promise<void> {
     const revoke = httpService.patch<{ updated: boolean } | null>(LOGOUT_PATH).catch(() => undefined);
     await Promise.race([
       revoke,
       new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_REVOKE_TIMEOUT_MS)),
     ]);
-    await sessionService.clearSession();
+    if (notice) await sessionService.endSession(notice);
+    else await sessionService.clearSession();
+  }
+
+  async logoutEverywhere(): Promise<IServiceResponse<SessionRevokeResult>> {
+    const response = await httpService.delete<SessionRevokeResult>(`${SESSIONS_PATH}?scope=all`);
+    if (response.ok) await sessionService.endSession('closed-everywhere');
+    return response;
   }
 
   async createDeviceLogin(): Promise<IServiceResponse<ICreateDeviceLoginResponse>> {

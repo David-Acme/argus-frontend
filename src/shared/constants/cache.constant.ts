@@ -45,6 +45,7 @@ export const VIEW_CACHE_KEYS = {
   guardEpisodes: 'guard.episodes',
   guardEpisode: 'guard.episode',
   voiceprintStatus: 'voiceprint.status',
+  authSessions: 'auth.sessions',
 } as const;
 
 export const buildViewCacheStorageKey = (

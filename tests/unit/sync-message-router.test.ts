@@ -16,6 +16,7 @@ const recordingHandlers = (calls: unknown[][]): SyncFrameHandlers => ({
   auditFailure: (scope, error) => calls.push(['auditFailure', scope, error]),
   liveFrame: (frame) => calls.push(['liveFrame', frame.operation]),
   authContextChanged: (info) => calls.push(['authContextChanged', info]),
+  sessionSignal: (signal) => calls.push(['sessionSignal', signal]),
 });
 
 describe('auditScopeOfRequest', () => {
@@ -91,6 +92,32 @@ describe('SyncMessageRouter', () => {
       ['listener'],
       ['liveFrame', SYNC_OPERATION.Add],
       ['auditResponse', 'global', { info: [] }],
+    ]);
+  });
+
+  test('an AuthContextChanged that names a session reason is a session signal, not a role change', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    const sessionId = 'a'.repeat(32);
+    const role = { id: 4, name: 'Ana', role: 'resident', isActive: true, resync: true };
+    router.route(
+      JSON.stringify({
+        operation: SYNC_OPERATION.AuthContextChanged,
+        info: { reason: 'sessionRevoked', sessionId, resync: false },
+      })
+    );
+    router.route(
+      JSON.stringify({ operation: SYNC_OPERATION.AuthContextChanged, info: { reason: 'sessionsChanged', resync: false } })
+    );
+    router.route(JSON.stringify({ operation: SYNC_OPERATION.AuthContextChanged, info: role }));
+    router.route(
+      JSON.stringify({ operation: SYNC_OPERATION.AuthContextChanged, info: { reason: 'sessionRevoked', sessionId: 'x' } })
+    );
+    expect(calls).toEqual([
+      ['sessionSignal', { reason: 'sessionRevoked', sessionId }],
+      ['sessionSignal', { reason: 'sessionsChanged' }],
+      ['authContextChanged', role],
+      ['authContextChanged', { reason: 'sessionRevoked', sessionId: 'x' }],
     ]);
   });
 });

@@ -13,12 +13,17 @@ describe('routeFallback', () => {
     expect(routeFallback('/people', 'guard')).toBeNull();
     expect(routeFallback('/security', 'guard')).toBeNull();
     expect(routeFallback('/users', 'guard')).toBe('/profile');
-    expect(routeFallback('/settings', 'guard')).toBe('/profile');
+    expect(routeFallback('/settings', 'guard')).toBeNull();
   });
 
   test('guest is sent home from security and to profile elsewhere', () => {
     expect(routeFallback('/security', 'guest')).toBe('/');
     expect(routeFallback('/people', 'guest')).toBe('/profile');
     expect(routeFallback('/agenda', 'guest')).toBeNull();
+  });
+
+  test('every role reaches settings for its own sessions', () => {
+    expect(routeFallback('/settings', 'resident')).toBeNull();
+    expect(routeFallback('/settings', 'guest')).toBeNull();
   });
 });

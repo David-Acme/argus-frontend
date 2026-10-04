@@ -60,3 +60,30 @@ export function guardAccessForRole(role: UserRole): GuardAccess {
     review: role === 'owner',
   };
 }
+
+export type SessionAccess = {
+  view: boolean;
+  revoke: boolean;
+};
+
+const OWN_SESSIONS: SessionAccess = { view: true, revoke: true };
+
+const SESSION_ACCESS: Record<UserRole, SessionAccess> = {
+  owner: OWN_SESSIONS,
+  resident: OWN_SESSIONS,
+  guard: OWN_SESSIONS,
+  guest: OWN_SESSIONS,
+};
+
+export function sessionAccessForRole(role: UserRole): SessionAccess {
+  return SESSION_ACCESS[role];
+}
+
+export type SettingsAccess = {
+  catalog: boolean;
+  sessions: boolean;
+};
+
+export function settingsAccessForRole(role: UserRole): SettingsAccess {
+  return { catalog: role === 'owner', sessions: sessionAccessForRole(role).view };
+}

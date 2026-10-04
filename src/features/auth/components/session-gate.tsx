@@ -22,6 +22,7 @@ export function SessionGate({ children }: SessionGateProps) {
       refreshSession: () => sessionService.refreshSession(),
       clearSession: () => sessionService.clearSession(),
       updateUser: (partial) => sessionService.updateUser(partial),
+      endSession: (notice) => sessionService.endSession(notice),
     });
 
     void sessionService

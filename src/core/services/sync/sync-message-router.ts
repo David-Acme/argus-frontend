@@ -5,7 +5,8 @@ import type {
   ISynchronizedResponse,
   IWsMessage,
 } from '@/core/interfaces';
-import type { AuditLogScope, SyncOperation } from '@/core/types';
+import type { AuditLogScope, SessionSignal, SyncOperation } from '@/core/types';
+import { readSessionSignal } from '@/core/contracts/session.contract';
 import { SYNC_AUDIT_REQUEST_TYPE, SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/shared/constants';
 import { SYNC_ERROR_SUFFIX, SYNC_REQUEST_TYPE, SYNC_VOICE_PREFIX } from './sync-constants';
 import { SyncRequestError } from './sync-request-error';
@@ -20,6 +21,7 @@ export type SyncFrameHandlers = {
   auditFailure: (scope: AuditLogScope, error: Error) => void;
   liveFrame: (frame: ISocketEmitDto) => void;
   authContextChanged: (info: unknown) => void;
+  sessionSignal: (signal: SessionSignal) => void;
 };
 
 export const auditScopeOfRequest = (requestType: string): AuditLogScope | null => {
@@ -113,9 +115,12 @@ export class SyncMessageRouter {
       case SYNC_OPERATION.Log:
         this.handlers.liveFrame(emit);
         break;
-      case SYNC_OPERATION.AuthContextChanged:
-        this.handlers.authContextChanged(emit.info);
+      case SYNC_OPERATION.AuthContextChanged: {
+        const signal = readSessionSignal(emit.info);
+        if (signal) this.handlers.sessionSignal(signal);
+        else this.handlers.authContextChanged(emit.info);
         break;
+      }
     }
   }
 

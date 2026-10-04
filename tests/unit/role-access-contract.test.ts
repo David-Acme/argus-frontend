@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import type { UserRole } from '@/core/types';
-import { hasAccess, type Permission } from '@/shared/libs/role-access';
+import { hasAccess, sessionAccessForRole, type Permission } from '@/shared/libs/role-access';
 
 const backend = join(import.meta.dir, '../../../backend/packages');
 const roleAccess = readFileSync(join(backend, 'lib/auth/src/auth/role-access.hxx'), 'utf8');
@@ -61,6 +61,52 @@ describe('role access mirrors the backend kTableAccess', () => {
               (backendAccess.get(role)?.get(table) ?? []).map((perm) => `${table}:${perm}`)
             );
       expect(app.sort()).toEqual(server.sort());
+    });
+  }
+});
+
+function roleMasks(): Map<string, Set<UserRole>> {
+  const masks = roleAccess.matchAll(/inline constexpr std::uint8_t (\w+)\s*=\s*([^;]+);/g);
+  return new Map(
+    [...masks].map(([, name = '', body = '']) => [
+      name,
+      new Set([...body.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(([, role = '']) => role.toLowerCase() as UserRole)),
+    ])
+  );
+}
+
+function sessionRoutes(): Map<string, Set<UserRole>> {
+  const masks = roleMasks();
+  const start = roleAccess.indexOf('kSessionAccess');
+  const block = start === -1 ? '' : roleAccess.slice(start, roleAccess.indexOf('}};', start));
+  const rows = block.matchAll(/\{\.path = "([^"]+)", \.method = drogon::(\w+), \.roles = ([^}]+)\}/g);
+  return new Map(
+    [...rows].map(([, path = '', method = '', roles = '']) => {
+      const named = masks.get(roles.trim());
+      const inline = [...roles.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(([, role = '']) => role.toLowerCase() as UserRole);
+      return [`${method} ${path}`, new Set(named ?? inline)];
+    })
+  );
+}
+
+describe('session access mirrors the backend kSessionAccess', () => {
+  const routes = sessionRoutes();
+
+  test('the parser sees the three session routes', () => {
+    expect([...routes.keys()].sort()).toEqual([
+      'Delete /auth/sessions',
+      'Delete /auth/sessions/{id}',
+      'Get /auth/sessions',
+    ]);
+  });
+
+  for (const role of ROLES) {
+    test(`${role} reads and revokes its own sessions exactly as the backend allows`, () => {
+      const allowed = (route: string) => role === 'owner' || (routes.get(route)?.has(role) ?? false);
+      expect(sessionAccessForRole(role)).toEqual({
+        view: allowed('Get /auth/sessions'),
+        revoke: allowed('Delete /auth/sessions') && allowed('Delete /auth/sessions/{id}'),
+      });
     });
   }
 });
