@@ -739,10 +739,10 @@ cd src-tauri && cargo check
 | `src/core/types/{view-cache,audit-log}.type.ts` | Uniones y tipos auxiliares de cache/auditoría; siempre importar desde el barrel de tipos |
 | `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (15 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |
 | `src/features/voice/` | Voice feature: `services/voice` (`voiceService`: mic PCM over the sync socket on every platform with `voiceCallSupported()`, TTS playback, action results, mute, resume after a lost socket), call screen with action chips and an in-call camera card, call pill (mounted everywhere), `useCall`, `useCallBridge` (camera names + situation note, actions run in order), avatar; web audio worklets in `public/voice/` |
-| `src/core/services/invite/` | Invitaciones: `create` (Owner), `accept` pre-CA (trust-any + fingerprint) |
+| `src/core/services/invite/` | Invitaciones: `create` (Owner), `accept` pre-CA over a request pinned to the QR's CA fingerprint and host (`requestPinned`) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
 | `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
-| `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo), `trustAny` para TOFU |
+| `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo); `pin` on a request trusts only a chain that leads to the given CA fingerprint and names the given host |
 | `src/core/database/` | WatermelonDB: adapters (`native`/`web`), `schema`, `migrations`, typed `collection()` |
 | `src/core/database/tables/` | One file per table: `tableSchema` + `Model` + the `TABLES` registry |
 | `src/core/services/database.service.ts` | `DatabaseService<K>` base class (protected query primitives) |

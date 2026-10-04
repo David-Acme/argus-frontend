@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { holdInviteToken } from '@/features/auth/model/invite-slot';
 
-type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error';
+type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error' | 'mismatch';
 
 function InvitationScreen() {
   const router = useRouter();
@@ -43,7 +43,7 @@ function InvitationScreen() {
       void inviteService.accept(qr).then((response) => {
         if (!active) return;
         if (!response.ok || !response.info) {
-          setPhase('error');
+          setPhase(response.errors?.code === 'FINGERPRINT_MISMATCH' ? 'mismatch' : 'error');
           return;
         }
         setPhase('accepted');
@@ -92,13 +92,18 @@ function InvitationScreen() {
           </View>
         ) : null}
 
-        {phase === 'error' ? (
+        {phase === 'error' || phase === 'mismatch' ? (
           <View className="gap-3">
-            <View className="flex-row items-center gap-3">
-              <Icon name="triangle-alert" className="text-error-strong size-5" />
-              <Text variant="body" className="text-error-strong flex-1">
-                {t('screens.invitation.error')}
-              </Text>
+            <View className="flex-row items-start gap-3">
+              <Icon name="triangle-alert" className="text-error-strong mt-0.5 size-5" />
+              <View className="min-w-0 flex-1 gap-1">
+                <Text variant="body" className="text-error-strong">
+                  {phase === 'mismatch' ? t('screens.invitation.mismatch-title') : t('screens.invitation.error')}
+                </Text>
+                {phase === 'mismatch' ? (
+                  <Text variant="caption">{t('screens.invitation.mismatch-hint')}</Text>
+                ) : null}
+              </View>
             </View>
             <Button variant="outline" onPress={retry}>
               <Text>{t('common.retry')}</Text>

@@ -79,6 +79,11 @@ export interface NetHttpRequest {
   files?: NetHttpFile[];
 }
 
+export interface NetPin {
+  caFingerprint: string;
+  host: string;
+}
+
 export interface NetHttpResult {
   status: number;
   headers: Record<string, string>;

@@ -153,8 +153,8 @@ public class HybridArgusNet: HybridArgusNetSpec {
   private static func requestInternal(
     options: NetHttpRequest, caPem: String, allowedHost: String
   ) async throws -> NetHttpResult {
-    let trustAny = options.trustAny ?? false
-    if !trustAny {
+    let pin = options.pin
+    if pin == nil {
       guard !caPem.isEmpty else {
         throw netError("PAIRING_REQUIRED|Server is not paired yet")
       }
@@ -184,14 +184,13 @@ public class HybridArgusNet: HybridArgusNetSpec {
       request.httpBody = options.body.data(using: .utf8)
     }
 
-    let session: URLSession
-    if trustAny {
-      session = URLSession(
-        configuration: .ephemeral, delegate: TrustAnyDelegate(), delegateQueue: nil)
+    let result: (Data, URLResponse)
+    if let pin {
+      result = try await Self.pinnedData(for: request, pin: pin)
     } else {
-      session = try Self.strictSession(for: caPem)
+      result = try await Self.strictSession(for: caPem).data(for: request)
     }
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = result
 
     var headers: [String: String] = [:]
     if let httpResponse = response as? HTTPURLResponse {
@@ -203,6 +202,20 @@ public class HybridArgusNet: HybridArgusNetSpec {
       status: Double((response as? HTTPURLResponse)?.statusCode ?? 0),
       headers: headers,
       body: String(data: data, encoding: .utf8) ?? "")
+  }
+
+  private static func pinnedData(for request: URLRequest, pin: NetPin) async throws -> (Data, URLResponse) {
+    let delegate = PinnedDelegate(caFingerprint: pin.caFingerprint, host: pin.host)
+    let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
+    defer { session.finishTasksAndInvalidate() }
+    do {
+      return try await session.data(for: request)
+    } catch {
+      if delegate.refused {
+        throw netError("FINGERPRINT_MISMATCH|The server is not the one in the invitation")
+      }
+      throw netError("NETWORK_ERROR|\(error.localizedDescription)")
+    }
   }
 
   private static func strictSession(for caPem: String) throws -> URLSession {
@@ -291,6 +304,76 @@ private final class TrustAnyDelegate: NSObject, URLSessionTaskDelegate {
       completionHandler(.useCredential, URLCredential(trust: trust))
     } else {
       completionHandler(.performDefaultHandling, nil)
+    }
+  }
+}
+
+private final class PinnedDelegate: NSObject, URLSessionTaskDelegate {
+  private let expected: String
+  private let host: String
+  private let lock = NSLock()
+  private var refusedFlag = false
+
+  init(caFingerprint: String, host: String) {
+    self.expected = caFingerprint.uppercased()
+    self.host = host
+  }
+
+  var refused: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return refusedFlag
+  }
+
+  private func refuse(_ completionHandler: (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    lock.lock()
+    refusedFlag = true
+    lock.unlock()
+    completionHandler(.cancelAuthenticationChallenge, nil)
+  }
+
+  func urlSession(
+    _ session: URLSession,
+    task: URLSessionTask,
+    willPerformHTTPRedirection response: HTTPURLResponse,
+    newRequest request: URLRequest,
+    completionHandler: @escaping (URLRequest?) -> Void
+  ) {
+    completionHandler(nil)
+  }
+
+  func urlSession(
+    _ session: URLSession,
+    didReceive challenge: URLAuthenticationChallenge,
+    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+  ) {
+    guard
+      challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+      let trust = challenge.protectionSpace.serverTrust
+    else {
+      refuse(completionHandler)
+      return
+    }
+
+    let chain = (SecTrustCopyCertificateChain(trust) as? [SecCertificate]) ?? []
+    let anchor = chain.first { certificate in
+      let der = SecCertificateCopyData(certificate) as Data
+      return SHA256.hash(data: der).map { String(format: "%02X", $0) }.joined() == expected
+    }
+    guard let anchor else {
+      refuse(completionHandler)
+      return
+    }
+
+    SecTrustSetPolicies(trust, SecPolicyCreateSSL(true, host as CFString))
+    SecTrustSetAnchorCertificates(trust, [anchor] as CFArray)
+    SecTrustSetAnchorCertificatesOnly(trust, true)
+
+    var error: CFError?
+    if SecTrustEvaluateWithError(trust, &error) {
+      completionHandler(.useCredential, URLCredential(trust: trust))
+    } else {
+      refuse(completionHandler)
     }
   }
 }

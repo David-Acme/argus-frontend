@@ -12,7 +12,7 @@ import {
   toNetError,
 } from './net-persistence';
 import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
-import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing } from '@/core/types';
+import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing, NetPin } from '@/core/types';
 
 const ignoreClosed = (): void => undefined;
 
@@ -59,9 +59,9 @@ class WebArgusNetService implements IArgusNetService {
     }
   }
 
-  async requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult> {
+  async requestPinned(_options: NetHttpRequest, _pin: NetPin): Promise<NetHttpResult> {
     throw toNetError(
-      new Error('NOT_SUPPORTED|Trust-any requests are not supported on desktop yet'),
+      new Error('NOT_SUPPORTED|Invitation enrollment is available on mobile devices'),
       'NETWORK_ERROR',
     );
   }

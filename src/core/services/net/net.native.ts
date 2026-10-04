@@ -21,6 +21,7 @@ import type {
   NetPairInput,
   NetPairedInstance,
   NetPairing,
+  NetPin,
 } from '@/core/types';
 
 const net = createArgusNet();
@@ -160,7 +161,7 @@ class NativeArgusNetService implements IArgusNetService {
     }
   }
 
-  async requestTrustAny(options: NetHttpRequest): Promise<NetHttpResult> {
+  async requestPinned(options: NetHttpRequest, pin: NetPin): Promise<NetHttpResult> {
     try {
       return await net.request({
         url: options.url,
@@ -168,7 +169,7 @@ class NativeArgusNetService implements IArgusNetService {
         headers: options.headers ?? {},
         body: options.body ?? '',
         files: options.files ?? [],
-        trustAny: true,
+        pin: { caFingerprint: pin.caFingerprint, host: pin.host },
       });
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');

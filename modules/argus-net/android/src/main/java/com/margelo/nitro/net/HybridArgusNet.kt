@@ -18,6 +18,7 @@ import java.net.InetAddress
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executor
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
@@ -49,6 +51,9 @@ private const val DISCOVERY_SETTLE_MS = 1500L
 private const val PAIRING_ROUTE = "/pairing"
 private const val DEFAULT_HOST = "argus.local"
 private const val PAIRING_PATH = "/pairing"
+private const val SAN_DNS_NAME = 2
+
+private class PinMismatchException(message: String) : CertificateException(message)
 
 @DoNotStrip
 class HybridArgusNet : HybridArgusNetSpec() {
@@ -282,11 +287,11 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
   private suspend fun requestInternal(options: NetHttpRequest): NetHttpResult =
     withContext(Dispatchers.IO) {
-      val trustAny = options.trustAny == true
-      if (!trustAny && caPem.isEmpty()) {
+      val pin = options.pin
+      if (pin == null && caPem.isEmpty()) {
         throw netError("PAIRING_REQUIRED", "Server is not paired yet")
       }
-      val client = if (trustAny) trustAllClient() else strictClient()
+      val client = if (pin != null) pinnedClient(pin) else strictClient()
       val builder = Request.Builder().url(options.url)
       options.headers.forEach { (key, value) -> builder.header(key, value) }
 
@@ -305,7 +310,9 @@ class HybridArgusNet : HybridArgusNetSpec() {
         }
       }
 
-      client.newCall(request).execute().use { response ->
+      val call = client.newCall(request)
+      val executed = if (pin == null) call.execute() else executePinned(call)
+      executed.use { response ->
         val responseBody = response.body?.string() ?: ""
         val outHeaders = LinkedHashMap<String, String>()
         response.headers.forEach { (name, value) -> outHeaders[name] = value }
@@ -457,6 +464,77 @@ class HybridArgusNet : HybridArgusNetSpec() {
       )
       .connectTimeout(10, TimeUnit.SECONDS)
       .readTimeout(30, TimeUnit.SECONDS)
+      .build()
+  }
+
+  private fun executePinned(call: okhttp3.Call): okhttp3.Response {
+    try {
+      return call.execute()
+    } catch (error: java.io.IOException) {
+      if (isPinRefusal(error)) {
+        throw netError("FINGERPRINT_MISMATCH", "The server is not the one in the invitation")
+      }
+      throw netError("NETWORK_ERROR", error.message ?: "Network error")
+    }
+  }
+
+  private fun isPinRefusal(error: Throwable): Boolean =
+    generateSequence(error) { it.cause }.any {
+      it is PinMismatchException || it is javax.net.ssl.SSLPeerUnverifiedException
+    }
+
+  private fun sha256Hex(bytes: ByteArray): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02X".format(it) }
+
+  private fun anchoredTrustManager(anchor: X509Certificate): X509TrustManager {
+    val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+      load(null)
+      setCertificateEntry("argus-pin", anchor)
+    }
+    val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+    factory.init(keyStore)
+    return factory.trustManagers.filterIsInstance<X509TrustManager>().first()
+  }
+
+  private fun leafNamesHost(session: SSLSession, host: String): Boolean {
+    val leaf = runCatching { session.peerCertificates.firstOrNull() as? X509Certificate }.getOrNull()
+      ?: return false
+    val names = runCatching { leaf.subjectAlternativeNames }.getOrNull() ?: return false
+    return names.any { entry ->
+      entry.size >= 2 && entry[0] == SAN_DNS_NAME && (entry[1] as? String).equals(host, ignoreCase = true)
+    }
+  }
+
+  private fun pinnedClient(pin: NetPin): OkHttpClient {
+    val expected = pin.caFingerprint.uppercase()
+    val pinned = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+        throw CertificateException("Client certificates are not accepted")
+      }
+
+      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+        val presented = chain.orEmpty()
+        val anchor = presented.firstOrNull { sha256Hex(it.encoded) == expected }
+          ?: throw PinMismatchException("No certificate in the chain matches the invitation")
+        try {
+          anchoredTrustManager(anchor).checkServerTrusted(presented, authType)
+        } catch (error: CertificateException) {
+          throw PinMismatchException(error.message ?: "The chain does not lead to the invitation's CA")
+        }
+      }
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+    }
+    val sslContext = SSLContext.getInstance("TLS")
+    sslContext.init(null, arrayOf<TrustManager>(pinned), SecureRandom())
+
+    return OkHttpClient.Builder()
+      .sslSocketFactory(sslContext.socketFactory, pinned)
+      .hostnameVerifier { _, session -> leafNamesHost(session, pin.host) }
+      .followRedirects(false)
+      .followSslRedirects(false)
+      .connectTimeout(8, TimeUnit.SECONDS)
+      .readTimeout(8, TimeUnit.SECONDS)
       .build()
   }
 

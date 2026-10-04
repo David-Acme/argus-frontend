@@ -30,13 +30,18 @@ export interface NetHttpFile {
   contentType: string;
 }
 
+export interface NetPin {
+  caFingerprint: string;
+  host: string;
+}
+
 export interface NetHttpRequest {
   url: string;
   method: string;
   headers: Record<string, string>;
   body: string;
   files: NetHttpFile[];
-  trustAny?: boolean;
+  pin?: NetPin;
 }
 
 export interface NetHttpResult {

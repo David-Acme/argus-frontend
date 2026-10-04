@@ -1,7 +1,7 @@
 import { httpService } from '@/core/services/http';
 import { errorResponse, readEnvelope } from '@/core/services/http/http-envelope';
 import { netService } from '@/core/services/net';
-import { validateInvitationResolution } from './invitation-resolution';
+import { invitationResolveRequest, validateInvitationResolution } from './invitation-resolution';
 import type {
   IInviteAcceptResult,
   IInviteCreateInput,
@@ -29,12 +29,8 @@ class InviteService {
   async accept(qr: InvitationQrPayload): Promise<IServiceResponse<IInviteAcceptResult>> {
     let raw;
     try {
-      raw = await netService.requestTrustAny({
-        url: `https://${qr.ip}:${qr.port}${INVITATION_PATH}/resolve`,
-        method: 'POST',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: qr.token }),
-      });
+      const { request, pin } = invitationResolveRequest(qr);
+      raw = await netService.requestPinned(request, pin);
     } catch (error) {
       const netError = error as { code?: string; message?: string };
       return errorResponse(0, netError.code ?? 'NETWORK_ERROR', netError.message ?? 'Network error');

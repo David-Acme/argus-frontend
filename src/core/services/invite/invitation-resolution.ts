@@ -1,5 +1,7 @@
 import type { IInviteAcceptResult } from '@/core/interfaces';
-import type { InvitationQrPayload, InviteRole } from '@/core/types';
+import type { InvitationQrPayload, InviteRole, NetHttpRequest, NetPin } from '@/core/types';
+
+const RESOLVE_PATH = '/invitation/resolve';
 
 const INVITE_ROLES: readonly InviteRole[] = ['resident', 'guard', 'guest'];
 const FINGERPRINT_PATTERN = /^[0-9A-Fa-f]{64}$/;
@@ -49,3 +51,13 @@ export const validateInvitationResolution = (
     port: result.port,
   };
 };
+
+export const invitationResolveRequest = (qr: InvitationQrPayload): { request: NetHttpRequest; pin: NetPin } => ({
+  request: {
+    url: `https://${qr.ip}:${qr.port}${RESOLVE_PATH}`,
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: qr.token }),
+  },
+  pin: { caFingerprint: qr.caFingerprint, host: qr.host },
+});
