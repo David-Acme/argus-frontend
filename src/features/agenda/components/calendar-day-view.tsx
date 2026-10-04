@@ -1,6 +1,7 @@
 import { useMemo, type ReactElement, type ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
+import { calendarEntryState } from '@/core/services/view-cache';
 import { AgendaEntryRow } from '@/features/agenda/components/agenda-entry-row';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
@@ -23,18 +24,19 @@ type CalendarDayViewProps = {
 
 type EntryListProps = Pick<
   CalendarDayViewProps,
-  'compact' | 'onSelect' | 'onLongPress' | 'renderActions' | 'renderContextMenu'
+  'now' | 'compact' | 'onSelect' | 'onLongPress' | 'renderActions' | 'renderContextMenu'
 > & { entries: readonly CalendarEntry[] };
 
 const slotHover = Platform.select({ web: 'hover:bg-surface-secondary/60', default: '' });
 
-function EntryList({ entries, compact, onSelect, onLongPress, renderActions, renderContextMenu }: EntryListProps) {
+function EntryList({ entries, now, compact, onSelect, onLongPress, renderActions, renderContextMenu }: EntryListProps) {
   return (
     <View className="gap-2">
       {entries.map((entry) => (
         <AgendaEntryRow
           key={entry.id}
           entry={entry}
+          state={calendarEntryState(entry, now)}
           compact={compact}
           onPress={onSelect ? () => onSelect(entry) : undefined}
           onLongPress={onLongPress ? () => onLongPress(entry) : undefined}
@@ -79,7 +81,7 @@ export function CalendarDayView({
     () => date.timelineHours([...byHour.keys(), ...(currentHour == null ? [] : [currentHour])]),
     [byHour, currentHour, date]
   );
-  const listProps = { compact, onSelect, onLongPress, renderActions, renderContextMenu };
+  const listProps = { now, compact, onSelect, onLongPress, renderActions, renderContextMenu };
   const gutter = compact ? 'w-12' : 'w-16';
 
   return (

@@ -3,7 +3,8 @@ import type {
   IProjectTaskCalendarCacheSource,
   IReminderCacheSource,
 } from '@/core/interfaces';
-import type { AgendaStatus, CalendarEntry } from '@/core/types';
+import type { AgendaStatus, CalendarEntry, CalendarEntryState } from '@/core/types';
+import { CALENDAR_OPEN_EVENT_MS } from '@/shared/constants/calendar.constant';
 import {
   VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
   VIEW_CACHE_CALENDAR_LEAD_DAYS,
@@ -90,6 +91,32 @@ export const toCalendarEntries = (
 
   return entries.sort((left, right) => left.startsAt - right.startsAt);
 };
+
+const TASK_STATE: Record<AgendaStatus, CalendarEntryState> = {
+  upcoming: 'todo',
+  active: 'doing',
+  complete: 'done',
+};
+
+function eventStateAt(entry: CalendarEntry, now: number): CalendarEntryState {
+  if (entry.isAllDay) {
+    if (now < startOfDay(new Date(entry.startsAt))) return 'upcoming';
+    const lastDay = new Date(Math.max(entry.startsAt, entry.endsAt ?? entry.startsAt));
+    return now > endOfDay(lastDay) ? 'ended' : 'today';
+  }
+  if (now < entry.startsAt) return 'upcoming';
+  const endsAt = entry.endsAt && entry.endsAt > entry.startsAt ? entry.endsAt : entry.startsAt + CALENDAR_OPEN_EVENT_MS;
+  return now < endsAt ? 'ongoing' : 'ended';
+}
+
+export function calendarEntryState(entry: CalendarEntry, now: number): CalendarEntryState {
+  if (entry.source === 'task') return TASK_STATE[entry.status];
+  if (entry.source === 'reminder') {
+    if (entry.status === 'complete') return 'done';
+    return now < entry.startsAt ? 'upcoming' : 'overdue';
+  }
+  return eventStateAt(entry, now);
+}
 
 export const calendarMonths = (anchor: Date): Date[] =>
   [-1, 0, 1].map((offset) => new Date(anchor.getFullYear(), anchor.getMonth() + offset, 1));

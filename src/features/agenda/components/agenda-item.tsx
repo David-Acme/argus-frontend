@@ -1,16 +1,17 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import type { AgendaStatus } from '@/core/types';
+import type { CalendarEntryState } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { ENTRY_STATE_RAIL, entryStateLabelKey } from '@/features/agenda/model/entry-state';
 
 type AgendaItemProps = {
   title: string;
   time: string;
   note?: string;
-  status: AgendaStatus;
+  state: CalendarEntryState;
   onPress?: () => void;
   onLongPress?: () => void;
   actions?: ReactNode;
@@ -18,17 +19,11 @@ type AgendaItemProps = {
   pending?: boolean;
 };
 
-const RAIL_CLASS: Record<AgendaStatus, string> = {
-  upcoming: 'bg-interactive',
-  active: 'bg-accent',
-  complete: 'bg-success',
-};
-
 export function AgendaItem({
   title,
   time,
   note,
-  status,
+  state,
   onPress,
   onLongPress,
   actions,
@@ -36,11 +31,7 @@ export function AgendaItem({
   pending = false,
 }: AgendaItemProps) {
   const { t } = useTranslation();
-  const statusLabel = {
-    upcoming: t('screens.home.status-upcoming'),
-    active: t('screens.home.status-active'),
-    complete: t('screens.home.status-complete'),
-  }[status];
+  const statusLabel = t(entryStateLabelKey(state));
 
   const pressable = (
     <Pressable
@@ -50,7 +41,7 @@ export function AgendaItem({
       disabled={pending}
       onPress={onPress}
       onLongPress={onLongPress}>
-      <View className={cn('w-[3px]', RAIL_CLASS[status])} />
+      <View className={cn('w-[3px]', ENTRY_STATE_RAIL[state])} />
       <View className="min-w-0 flex-1 gap-1 p-3">
         <View className="flex-row items-start justify-between gap-3">
           <Text className="flex-1 text-body font-semibold leading-5" numberOfLines={1}>

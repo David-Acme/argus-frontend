@@ -2,6 +2,7 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useCallback, useMemo, type ReactElement, type ReactNode } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
+import { calendarEntryState } from '@/core/services/view-cache';
 import { AgendaEntryRow } from '@/features/agenda/components/agenda-entry-row';
 import { agendaRows, type AgendaRow } from '@/features/agenda/model/agenda-rows';
 import { Icon } from '@/shared/components/ui/icon';
@@ -179,6 +180,7 @@ export function CalendarAgendaView({
                 <AgendaEntryRow
                   key={entry.id}
                   entry={entry}
+                  state={calendarEntryState(entry, now)}
                   compact={compact}
                   onPress={onSelect ? () => onSelect(entry) : undefined}
                   onLongPress={onLongPress ? () => onLongPress(entry) : undefined}
@@ -193,13 +195,14 @@ export function CalendarAgendaView({
         </View>
       );
     },
-    [compact, date, freeLabel, onCreateDay, onLongPress, onSelect, renderActions, renderContextMenu, t, today]
+    [compact, date, freeLabel, onCreateDay, onLongPress, onSelect, renderActions, renderContextMenu, now, t, today]
   );
 
   return (
     <LegendList
       data={rows}
       renderItem={renderItem}
+      extraData={now}
       keyExtractor={(item) => item.key}
       estimatedItemSize={AGENDA_ENTRY_ESTIMATE}
       getItemType={(item) => item.kind}

@@ -16,3 +16,5 @@ export const WEEK_HOUR_HEIGHT = 56;
 export const AGENDA_ENTRY_ESTIMATE = 76;
 export const SCROLLBAR_GUTTER = 14;
 export const DAY_LIST_ROW_ESTIMATE = 48;
+
+export const CALENDAR_OPEN_EVENT_MS = 3_600_000;

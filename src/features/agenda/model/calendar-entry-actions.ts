@@ -1,4 +1,4 @@
-import type { CalendarEntry } from '@/core/types';
+import type { CalendarEntry, CalendarEntryState } from '@/core/types';
 import type { Href } from 'expo-router';
 
 export type CalendarEntryAction = 'edit' | 'delete' | 'toggle';
@@ -19,9 +19,7 @@ export type CalendarEntryDetailLabels = {
   event: string;
   task: string;
   reminder: string;
-  upcoming: string;
-  active: string;
-  complete: string;
+  state: Record<CalendarEntryState, string>;
 };
 
 type CalendarEntryPermissions = {
@@ -54,22 +52,26 @@ export function calendarEntryDetailDialogLayout(): {
   };
 }
 
-export function calendarEntryDetailRows(
-  entry: CalendarEntry,
-  labels: CalendarEntryDetailLabels,
-  formatDate: (value: number) => string,
-  formatTime: (entry: CalendarEntry) => string
-): readonly CalendarEntryDetailRow[] {
+export type CalendarEntryDetailInput = {
+  entry: CalendarEntry;
+  state: CalendarEntryState;
+  labels: CalendarEntryDetailLabels;
+  formatDate: (value: number) => string;
+  formatTime: (entry: CalendarEntry) => string;
+};
+
+export function calendarEntryDetailRows({
+  entry,
+  state,
+  labels,
+  formatDate,
+  formatTime,
+}: CalendarEntryDetailInput): readonly CalendarEntryDetailRow[] {
   const sourceLabel = {
     event: labels.event,
     task: labels.task,
     reminder: labels.reminder,
   }[entry.source];
-  const statusLabel = {
-    upcoming: labels.upcoming,
-    active: labels.active,
-    complete: labels.complete,
-  }[entry.status];
   const rows: CalendarEntryDetailRow[] = [
     { id: 'type', label: labels.type, value: sourceLabel },
     { id: 'date', label: labels.date, value: formatDate(entry.startsAt) },
@@ -78,7 +80,7 @@ export function calendarEntryDetailRows(
       label: labels.time,
       value: entry.isAllDay ? labels.allDay : formatTime(entry),
     },
-    { id: 'status', label: labels.status, value: statusLabel },
+    { id: 'status', label: labels.status, value: labels.state[state] },
   ];
 
   if (entry.location) rows.push({ id: 'location', label: labels.location, value: entry.location });

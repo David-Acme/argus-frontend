@@ -1,26 +1,22 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import type { AgendaStatus, CalendarEntry, CalendarSource, IconName } from '@/core/types';
+import type { CalendarEntry, CalendarEntryState, CalendarSource, IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { isPendingEntry } from '@/features/agenda/model/calendar-optimistic';
+import { ENTRY_STATE_RAIL, entryStateLabelKey, isQuietEntryState } from '@/features/agenda/model/entry-state';
 
 type AgendaEntryRowProps = {
   entry: CalendarEntry;
+  state: CalendarEntryState;
   compact: boolean;
   onPress?: () => void;
   onLongPress?: () => void;
   actions?: ReactNode;
   contextMenu?: (trigger: ReactElement) => ReactNode;
-};
-
-const RAIL_CLASS: Record<AgendaStatus, string> = {
-  upcoming: 'bg-interactive',
-  active: 'bg-accent',
-  complete: 'bg-success',
 };
 
 const SOURCE_ICON: Record<CalendarSource, IconName> = {
@@ -31,6 +27,7 @@ const SOURCE_ICON: Record<CalendarSource, IconName> = {
 
 export function AgendaEntryRow({
   entry,
+  state,
   compact,
   onPress,
   onLongPress,
@@ -44,8 +41,8 @@ export function AgendaEntryRow({
   const start = entry.isAllDay ? t('screens.agenda.event-all-day') : date.formatTime(new Date(entry.startsAt));
   const end = !entry.isAllDay && entry.endsAt ? date.formatTime(new Date(entry.endsAt)) : null;
   const sourceLabel = t(`screens.agenda.entry-${entry.source}`);
-  const statusLabel = t(`screens.agenda.status-${entry.status}`);
-  const meta = [sourceLabel, entry.location, entry.status === 'upcoming' ? null : statusLabel].filter(
+  const statusLabel = t(entryStateLabelKey(state));
+  const meta = [sourceLabel, entry.location, isQuietEntryState(state) ? null : statusLabel].filter(
     (part): part is string => Boolean(part)
   );
 
@@ -57,7 +54,7 @@ export function AgendaEntryRow({
       disabled={pending}
       onPress={onPress}
       onLongPress={onLongPress}>
-      <View className={cn('w-[3px] self-stretch', RAIL_CLASS[entry.status])} />
+      <View className={cn('w-[3px] self-stretch', ENTRY_STATE_RAIL[state])} />
       <View className={cn('justify-center py-3 pl-3', compact ? 'w-[68px]' : 'w-28 pl-4')}>
         <Text variant="label" className={cn('font-semibold', done && 'text-foreground-secondary')} numberOfLines={1}>
           {start}

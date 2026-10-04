@@ -1,2 +1,2 @@
-export { calendarMonthScope } from './calendar.projection';
+export { calendarEntryState, calendarMonthScope } from './calendar.projection';
 export { filterPeople } from './people.projection';

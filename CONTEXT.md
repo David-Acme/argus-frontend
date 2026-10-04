@@ -1791,6 +1791,22 @@ gets it:
   around the dialog from `sm` up, and the Radix wrapper that takes focus on a
   click in the empty part of a dialog no longer draws WebKit's focus outline.
 
+**Entry state follows the clock.** The cached `CalendarEntry.status` is the
+time-free fact the sync knows (a reminder completed, a task's own status); an
+event's cached status said nothing, so every event and every open reminder
+read "Próximo" all day. What a row shows is `calendarEntryState(entry, now)`
+(`core/services/view-cache/calendar.projection.ts`, unit-tested), resolved at
+render with the screen's `useNow` ticker, so labels change without a new
+projection or a cache write: an event is `upcoming` → `ongoing` → `ended`
+(no end time counts as one hour, `CALENDAR_OPEN_EVENT_MS`, the usual default
+duration of a calendar event); an all-day event is `today` on its days and
+`ended` after; a reminder is `upcoming`, `overdue` once past, `done` when
+completed; a task keeps its own status (`todo`, `doing`, `done`). Labels are
+`screens.agenda.state-*`, and the rail colour comes from
+`features/agenda/model/entry-state.ts` (overdue is the warning fill, ended the
+border colour). The home "Hoy" timeline, every agenda mode and the detail
+dialog read the same function.
+
 **Agenda.** The Agenda mode was a stack of one dashed "Nada este día" row per
 empty day. It is now a schedule:
 

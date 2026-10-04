@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { ICameraCacheRow } from '@/core/interfaces';
+import type { CalendarEntry } from '@/core/types';
 import type { ProjectionContext, ViewWrite } from '@/core/services/view-cache/projection';
 import { activityLevels, projectActivity } from '@/core/services/view-cache/activity.projection';
 import {
+  calendarEntryState,
   calendarMonthScope,
   projectAgenda,
   projectCalendar,
@@ -307,5 +309,73 @@ describe('calendar projections', () => {
       ['task:t1', 'active'],
       ['reminder:r1', 'upcoming'],
     ]);
+  });
+});
+
+describe('calendar entry state', () => {
+  const at = (hour: number, minute = 0, day = 15) => new Date(2026, 9, day, hour, minute).getTime();
+  const entry = (overrides: Partial<CalendarEntry>): CalendarEntry => ({
+    id: 'event:1',
+    source: 'event',
+    title: 'Visit',
+    startsAt: at(9),
+    endsAt: at(10),
+    isAllDay: false,
+    status: 'upcoming',
+    ...overrides,
+  });
+
+  test('a timed event is upcoming, ongoing, then ended', () => {
+    const event = entry({});
+    expect(calendarEntryState(event, at(8, 59))).toBe('upcoming');
+    expect(calendarEntryState(event, at(9))).toBe('ongoing');
+    expect(calendarEntryState(event, at(9, 59))).toBe('ongoing');
+    expect(calendarEntryState(event, at(10))).toBe('ended');
+  });
+
+  test('a timed event without an end stays ongoing for an hour', () => {
+    const event = entry({ endsAt: null });
+    expect(calendarEntryState(event, at(9, 30))).toBe('ongoing');
+    expect(calendarEntryState(event, at(10, 1))).toBe('ended');
+  });
+
+  test('an all-day event is today on its days and ended after', () => {
+    const single = entry({ isAllDay: true, startsAt: at(0), endsAt: null });
+    expect(calendarEntryState(single, at(23, 59, 14))).toBe('upcoming');
+    expect(calendarEntryState(single, at(0))).toBe('today');
+    expect(calendarEntryState(single, at(23, 59))).toBe('today');
+    expect(calendarEntryState(single, at(0, 0, 16))).toBe('ended');
+    const spanning = entry({ isAllDay: true, startsAt: at(0), endsAt: at(0, 0, 17) });
+    expect(calendarEntryState(spanning, at(12, 0, 16))).toBe('today');
+    expect(calendarEntryState(spanning, at(0, 0, 18))).toBe('ended');
+  });
+
+  test('a reminder is upcoming, overdue once past, done when completed', () => {
+    const reminder = entry({ id: 'reminder:1', source: 'reminder', endsAt: null });
+    expect(calendarEntryState(reminder, at(8))).toBe('upcoming');
+    expect(calendarEntryState(reminder, at(9))).toBe('overdue');
+    expect(calendarEntryState({ ...reminder, status: 'complete' }, at(8))).toBe('done');
+    expect(calendarEntryState({ ...reminder, status: 'complete' }, at(12))).toBe('done');
+  });
+
+  test('a task keeps its own status whatever the time', () => {
+    const task = entry({ id: 'task:1', source: 'task', isAllDay: true, endsAt: null });
+    expect(calendarEntryState(task, at(0, 0, 20))).toBe('todo');
+    expect(calendarEntryState({ ...task, status: 'active' }, at(0, 0, 10))).toBe('doing');
+    expect(calendarEntryState({ ...task, status: 'complete' }, at(0, 0, 20))).toBe('done');
+  });
+
+  test('the projected reminder turns overdue as time passes, with no new projection', () => {
+    const [reminder] = rowsOf(
+      projectAgenda(
+        { events: [], reminders: [{ id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false }], tasks: [] },
+        ctx,
+      ),
+      'dashboard.agenda',
+      'today',
+    ) as CalendarEntry[];
+    if (!reminder) throw new Error('no reminder');
+    expect(calendarEntryState(reminder, at(17))).toBe('upcoming');
+    expect(calendarEntryState(reminder, at(18, 1))).toBe('overdue');
   });
 });

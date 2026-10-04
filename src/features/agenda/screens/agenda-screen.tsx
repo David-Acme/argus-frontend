@@ -354,6 +354,7 @@ export default function ScheduleScreen() {
       />
       <CalendarEntryDetail
         entry={detailEntry}
+        now={now}
         open={detailEntry !== null}
         onOpenChange={(open) => {
           if (!open) setDetailEntry(null);

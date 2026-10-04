@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
+import { calendarEntryState } from '@/core/services/view-cache';
 import type { CalendarEntry } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
@@ -13,20 +14,22 @@ import {
 
 type CalendarEntryDetailProps = {
   entry: CalendarEntry | null;
+  now: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function CalendarEntryDetail({ entry, open, onOpenChange }: CalendarEntryDetailProps) {
+export function CalendarEntryDetail({ entry, now, open, onOpenChange }: CalendarEntryDetailProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const dialogLayout = calendarEntryDetailDialogLayout();
   const rows = useMemo(() => {
     if (!entry) return [];
 
-    return calendarEntryDetailRows(
+    return calendarEntryDetailRows({
       entry,
-      {
+      state: calendarEntryState(entry, now),
+      labels: {
         type: t('screens.agenda.detail-type'),
         status: t('screens.agenda.detail-status'),
         date: t('screens.agenda.event-day'),
@@ -36,15 +39,22 @@ export function CalendarEntryDetail({ entry, open, onOpenChange }: CalendarEntry
         event: t('screens.agenda.entry-event'),
         task: t('screens.agenda.entry-task'),
         reminder: t('screens.agenda.entry-reminder'),
-        upcoming: t('screens.agenda.status-upcoming'),
-        active: t('screens.agenda.status-active'),
-        complete: t('screens.agenda.status-complete'),
+        state: {
+          upcoming: t('screens.agenda.state-upcoming'),
+          ongoing: t('screens.agenda.state-ongoing'),
+          today: t('screens.agenda.state-today'),
+          ended: t('screens.agenda.state-ended'),
+          overdue: t('screens.agenda.state-overdue'),
+          todo: t('screens.agenda.state-todo'),
+          doing: t('screens.agenda.state-doing'),
+          done: t('screens.agenda.state-done'),
+        },
       },
-      (value) => date.formatFullDate(new Date(value)),
-      (item) =>
-        date.formatTimeRange(new Date(item.startsAt), item.endsAt ? new Date(item.endsAt) : null)
-    );
-  }, [date, entry, t]);
+      formatDate: (value) => date.formatFullDate(new Date(value)),
+      formatTime: (item) =>
+        date.formatTimeRange(new Date(item.startsAt), item.endsAt ? new Date(item.endsAt) : null),
+    });
+  }, [date, entry, now, t]);
 
   return (
     <AdaptiveDialog

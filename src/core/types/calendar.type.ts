@@ -4,6 +4,16 @@ export type CalendarView = 'month' | 'week' | 'day' | 'agenda';
 
 export type CalendarSource = 'event' | 'reminder' | 'task';
 
+export type CalendarEntryState =
+  | 'upcoming'
+  | 'ongoing'
+  | 'today'
+  | 'ended'
+  | 'overdue'
+  | 'todo'
+  | 'doing'
+  | 'done';
+
 export type CalendarEntry = {
   id: string;
   source: CalendarSource;
