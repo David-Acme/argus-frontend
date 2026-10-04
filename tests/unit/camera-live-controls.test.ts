@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { liveAudioLevel, liveAudioReason, storedMuted } from '@/features/cameras/model/camera-live-audio';
 import { capabilitiesFromRow, hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { optimisticStatus } from '@/features/cameras/model/camera-device';
 import {
@@ -144,5 +145,19 @@ describe('device settings', () => {
     };
     expect(optimisticStatus(status, { frameRate: 30 }).video?.frameRate).toBe(30);
     expect(optimisticStatus(status, { led: true }).video?.frameRate).toBe(15);
+  });
+});
+
+describe('live camera audio', () => {
+  test('plays by default, and the user, an Argus call or a camera call silence it', () => {
+    const base = { muted: false, argusCall: false, cameraCall: false };
+    expect(liveAudioReason(base)).toBe('on');
+    expect(liveAudioLevel(base)).toBe(1);
+    expect(liveAudioReason({ ...base, argusCall: true })).toBe('argus-call');
+    expect(liveAudioLevel({ ...base, argusCall: true })).toBe(0);
+    expect(liveAudioReason({ ...base, cameraCall: true })).toBe('camera-call');
+    expect(liveAudioReason({ ...base, muted: true, argusCall: true })).toBe('muted');
+    expect(storedMuted(null)).toBe(false);
+    expect(storedMuted(true)).toBe(true);
   });
 });

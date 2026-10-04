@@ -5,6 +5,7 @@ import {
   enterWindowFullscreen,
   exitWindowFullscreen,
   onWindowFullscreenExit,
+  releaseWindowOrientation,
 } from '../services/window-fullscreen';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { IS_NATIVE } from '@/shared/constants';
@@ -29,6 +30,8 @@ export function CameraFullscreen({ open, onClose, children }: CameraFullscreenPr
       void exitWindowFullscreen();
     };
   }, [open]);
+
+  useEffect(() => () => void releaseWindowOrientation(), []);
 
   return (
     <Modal

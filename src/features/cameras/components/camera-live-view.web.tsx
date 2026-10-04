@@ -6,6 +6,7 @@ import type { CameraStreamQuality, CameraStreamState } from '@/core/types';
 import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
+import { WebCameraAudio } from '@/features/cameras/components/web-camera-audio';
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
 import { cn } from '@/shared/libs/utils';
 
@@ -19,6 +20,9 @@ type CameraLiveStreamProps = {
   className?: string;
   onStats?: (stats: ICameraLiveStats) => void;
   onState?: (state: CameraStreamState) => void;
+  audioLevel?: number;
+  audioUnlock?: number;
+  onAudioBlocked?: (blocked: boolean) => void;
 };
 
 type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
@@ -52,9 +56,13 @@ export function CameraLiveStream({
   className,
   onStats,
   onState,
+  audioLevel = 0,
+  audioUnlock = 0,
+  onAudioBlocked,
 }: CameraLiveStreamProps) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const session = useRef<ICameraMediaSession | null>(null);
+  const audio = useRef<WebCameraAudio | null>(null);
   const [unsupported, setUnsupported] = useState(() => !WebCameraPlayer.supported);
   const [status, setStatus] = useState<StreamStatus | null>(null);
   const streamKey = `${cameraId}:${quality}`;
@@ -63,6 +71,8 @@ export function CameraLiveStream({
   const retry = useCallback(() => session.current?.retry(), []);
   const reportStats = useEffectEvent((stats: ICameraLiveStats) => onStats?.(stats));
   const reportState = useEffectEvent((state: CameraStreamState) => onState?.(state));
+  const reportBlocked = useEffectEvent((blocked: boolean) => onAudioBlocked?.(blocked));
+  const currentLevel = useEffectEvent(() => audioLevel);
 
   useEffect(() => {
     if (unsupported || !active) return;
@@ -81,9 +91,16 @@ export function CameraLiveStream({
       onFirstFrame: () => update({ painted: true }),
       onUnsupported: () => setUnsupported(true),
     });
+    const sound = new WebCameraAudio((blocked) => reportBlocked(blocked));
+    sound.setLevel(currentLevel());
+    audio.current = sound;
     const sink: ICameraMediaSink = {
       resetStream: () => player.reset(),
-      pushFragment: (type, _keyframe, data) => player.push(type, data),
+      pushFragment: (type, _keyframe, data) => {
+        if (type === 1) sound.init(new Uint8Array(data));
+        else sound.push(new Uint8Array(data));
+        player.push(type, data);
+      },
       bufferedBytes: () => player.buffered(),
     };
 
@@ -117,8 +134,19 @@ export function CameraLiveStream({
       session.current?.close();
       session.current = null;
       player.dispose();
+      sound.dispose();
+      audio.current = null;
+      reportBlocked(false);
     };
   }, [active, cameraId, quality, streamKey, unsupported]);
+
+  useEffect(() => {
+    audio.current?.setLevel(audioLevel);
+  }, [audioLevel]);
+
+  useEffect(() => {
+    if (audioUnlock > 0) audio.current?.unlock();
+  }, [audioUnlock]);
 
   return (
     <View

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ICameraLiveStats } from '@/core/interfaces';
 import type { CameraStreamQuality, CameraStreamState } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
@@ -9,6 +10,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { CameraLiveView } from './camera-live-view';
 import { PtzPad } from '@/features/cameras/components/ptz-pad';
+import type { CameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 
 export type CameraPtzControls = {
@@ -27,6 +29,7 @@ type CameraLiveStageProps = {
   ptz: CameraPtzControls | null;
   showPad: boolean;
   fullscreenControls?: ReactNode;
+  audio: CameraLiveAudio;
   onStats: (stats: ICameraLiveStats) => void;
   onState: (state: CameraStreamState) => void;
   onToggleFullscreen: () => void;
@@ -42,11 +45,16 @@ export function CameraLiveStage({
   ptz,
   showPad,
   fullscreenControls,
+  audio,
   onStats,
   onState,
   onToggleFullscreen,
 }: CameraLiveStageProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const hasAudio = live && stats?.audio === true;
+  const silencedByCall = audio.reason === 'argus-call' || audio.reason === 'camera-call';
+  const audioLabel = audio.muted || audio.blocked ? t('screens.cameras.live.unmute') : t('screens.cameras.live.mute');
   const statsLabel =
     stats && stats.width > 0
       ? stats.fps > 0
@@ -75,8 +83,18 @@ export function CameraLiveStage({
         className={fullscreen ? 'rounded-none' : undefined}
         onStats={onStats}
         onState={onState}
+        audioLevel={audio.level}
+        audioUnlock={audio.unlockKey}
+        onAudioBlocked={audio.setBlocked}
       />
-      <View pointerEvents="box-none" className="absolute inset-0">
+      <View
+        pointerEvents="box-none"
+        className="absolute"
+        style={
+          fullscreen
+            ? { top: insets.top, bottom: insets.bottom, left: insets.left, right: insets.right }
+            : { top: 0, bottom: 0, left: 0, right: 0 }
+        }>
         {live && statsLabel ? (
           <View
             pointerEvents="none"
@@ -108,6 +126,39 @@ export function CameraLiveStage({
           <View pointerEvents="box-none" className="absolute inset-x-0 bottom-4 items-center">
             <View className="bg-card/90 w-56 rounded-2xl">{fullscreenControls}</View>
           </View>
+        ) : null}
+        {hasAudio && audio.blocked && audio.level > 0 ? (
+          <View pointerEvents="box-none" className="absolute inset-0 items-center justify-center">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('screens.cameras.live.tap-for-sound')}
+              onPress={audio.unlock}
+              className="bg-card/95 flex-row items-center gap-2 rounded-full px-4 py-2.5 shadow-sm shadow-black/[0.12] active:opacity-80">
+              <Icon name="volume-2" className="text-foreground size-5" />
+              <Text variant="label">{t('screens.cameras.live.tap-for-sound')}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {hasAudio && silencedByCall && !audio.muted ? (
+          <View
+            pointerEvents="none"
+            className="bg-card/90 absolute bottom-4 right-[116px] flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
+            <Icon name="volume-x" className="text-foreground-secondary size-3.5" />
+            <Text variant="micro" className="text-foreground">
+              {audio.reason === 'argus-call'
+                ? t('screens.cameras.live.silenced-argus-call')
+                : t('screens.cameras.live.silenced-camera-call')}
+            </Text>
+          </View>
+        ) : null}
+        {hasAudio ? (
+          <IconButton
+            icon={audio.muted || audio.blocked || silencedByCall ? 'volume-x' : 'volume-2'}
+            label={audioLabel}
+            accessibilityState={{ checked: !audio.muted }}
+            onPress={audio.toggle}
+            className="bg-card/90 absolute bottom-3 right-16"
+          />
         ) : null}
         <IconButton
           icon={fullscreen ? 'minimize' : 'maximize'}

@@ -20,6 +20,9 @@ type CameraLiveStreamProps = {
   className?: string;
   onStats?: (stats: ICameraLiveStats) => void;
   onState?: (state: CameraStreamState) => void;
+  audioLevel?: number;
+  audioUnlock?: number;
+  onAudioBlocked?: (blocked: boolean) => void;
 };
 
 type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
@@ -45,6 +48,7 @@ export function CameraLiveStream({
   className,
   onStats,
   onState,
+  audioLevel = 0,
 }: CameraLiveStreamProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
   const session = useRef<ICameraMediaSession | null>(null);
@@ -107,6 +111,7 @@ export function CameraLiveStream({
       <ArgusCameraView
         hybridRef={callback(bindPlayer)}
         active={active}
+        muted={audioLevel <= 0}
         style={{ width: '100%', height: '100%' }}
       />
       {overlay}

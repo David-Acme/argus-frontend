@@ -74,6 +74,12 @@
       "expo-secure-store",
       "expo-asset",
       [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "DEFAULT"
+        }
+      ],
+      [
         "@livekit/react-native-expo-plugin",
         {
           "android": {

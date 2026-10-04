@@ -14,6 +14,7 @@ import { CameraLiveStage, type CameraPtzControls } from '@/features/cameras/comp
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraZonesOverlay } from '@/features/cameras/components/camera-zones-overlay';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
+import type { CameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import type { CameraLiveStageState } from '@/features/cameras/hooks/use-camera-live-stage';
 import type { CameraQualityControls } from '@/features/cameras/hooks/use-camera-quality';
 import type { CameraPreset } from '@/features/cameras/model/camera-presets';
@@ -31,6 +32,7 @@ type CameraLivePanelProps = {
   showZones: boolean;
   quality: CameraQualityControls;
   stage: CameraLiveStageState;
+  audio: CameraLiveAudio;
   video: ICameraVideoProfile | null;
   canControl: boolean;
   canEnable: boolean;
@@ -49,6 +51,7 @@ type CameraLiveFullscreenProps = {
   quality: CameraQualityControls;
   ptz: CameraPtzControls | null;
   stage: CameraLiveStageState;
+  audio: CameraLiveAudio;
 };
 
 type StageViewProps = CameraLiveFullscreenProps & {
@@ -100,7 +103,7 @@ function QualitySwitch({ quality }: QualitySwitchProps) {
   );
 }
 
-function StageView({ cameraId, zones, showZones, quality, ptz, stage, inFullscreen }: StageViewProps) {
+function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, inFullscreen }: StageViewProps) {
   return (
     <CameraLiveStage
       cameraId={cameraId}
@@ -112,6 +115,7 @@ function StageView({ cameraId, zones, showZones, quality, ptz, stage, inFullscre
       ptz={ptz}
       showPad={stage.showPad}
       fullscreenControls={<QualitySwitch quality={quality} />}
+      audio={audio}
       onStats={stage.handleStats}
       onState={stage.handleState}
       onToggleFullscreen={() => stage.setFullscreen(!inFullscreen)}
@@ -135,6 +139,7 @@ export function CameraLivePanel({
   showZones,
   quality,
   stage,
+  audio,
   video,
   canControl,
   canEnable,
@@ -171,6 +176,7 @@ export function CameraLivePanel({
           quality={quality}
           ptz={ptz}
           stage={stage}
+          audio={audio}
           inFullscreen={false}
         />
       )}

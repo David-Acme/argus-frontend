@@ -110,7 +110,6 @@ export class CameraCall {
   }
 
   async pressToTalk(): Promise<void> {
-    if (this.options.mode === 'listen') return;
     this.pushHeld = true;
     this.update({ talking: true });
     if (!this.socket) await this.openLine();

@@ -2081,13 +2081,28 @@ unfolds its timeline.
   optimistically through `PATCH /camera/{id}/settings {frameRate}` and rolled
   back on a refusal); anyone else, or a camera with one rate, reads "Esta
   cámara emite a N fps". The owner's C225 offers 15, 20 and 25 fps.
-- **Audio, explicit.** The audio panel offers up to three actions, each shown
-  only when it can work: "Escuchar" (listen only, a new `listen` call mode
-  that never opens the speaker line; shown when the catalog says the camera
-  has a microphone or the stream carries an audio track), "Hablar" (hold to
-  talk) and "Llamada" (full duplex), the last two only with `talk` (Tapo plus
-  the cloud password) and the role's `cameraActionAccessForRole(role).talk`.
-  A Tapo camera without the cloud password says how to enable talking.
+- **The camera is heard by default.** The live view plays the camera
+  microphone from the fMP4 it already receives (the FLAC track argus-camera
+  muxes beside the video), so listening opens nothing: no second stream, never
+  the 8800 talk line, and nothing a viewer does can hold the line Argus needs
+  for guard announcements or a call. On the web and desktop
+  `components/web-camera-audio.ts` decodes the verbatim FLAC frames
+  (`model/camera-audio.ts`) and schedules them on its own `AudioContext`
+  (≤ 0.6 s ahead, reset when late); on Android the native view's new `muted`
+  prop sets ExoPlayer's volume; iOS's `AVSampleBufferDisplayLayer` renders no
+  audio yet. A mute button sits on the video, remembered per device
+  (`cameras.audio.muted`, `hooks/use-camera-live-audio.ts`), shown only when
+  the stream carries audio. The camera is silenced while the user is in a
+  call with Argus (`useVoiceCallActive` from `features/voice`) or in a call
+  through the camera (that call plays its own echo-cancelled copy), with a
+  chip saying why, and comes back after (`model/camera-live-audio.ts`,
+  unit-tested). If the WebView refuses to start audio (autoplay policy), the
+  video shows "Toca para activar el sonido" and the tap resumes it.
+  WebKitGTK on the desktop allowed it without a tap.
+- **Talking.** "Hablar" (hold to talk) and "Llamada" (full duplex) appear only
+  with `talk` (Tapo plus the cloud password) and the role's
+  `cameraActionAccessForRole(role).talk`; a Tapo camera without the cloud
+  password says how to enable talking. The separate "Escuchar" action is gone.
 - **Controls on the video.** The PTZ pad sits on the picture (hidden by
   default on phones, toggled by "Mover"); saved positions and "Guardar
   posición" are under the video. The device settings (privacy, motion and its
@@ -2102,9 +2117,13 @@ unfolds its timeline.
   state (`hooks/use-camera-live-stage.ts`) live in the detail screen, beside
   `AppScreen`: going fullscreen resizes the window, the screen switches layout
   and remounts the live panel, and a modal inside the panel closed itself the
-  moment it opened from a 420 px window. On a phone the modal allows
-  every orientation and hides the system bars; the app cannot force landscape
-  without `expo-screen-orientation`, so turning the phone does it.
+  moment it opened from a 420 px window. On a phone (shortest screen
+  side under 600) entering fullscreen locks landscape with
+  `expo-screen-orientation` and leaving it locks portrait; the previous lock
+  comes back when the detail screen unmounts. Tablets rotate freely. The
+  stage's overlays sit inside the safe-area insets in fullscreen.
+  `expo-screen-orientation` and the `muted` prop are native changes: the
+  Android/iOS dev client must be rebuilt.
 
 ## Calls over WebRTC (2026-10-04)
 

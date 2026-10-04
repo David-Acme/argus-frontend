@@ -17,10 +17,9 @@ export type CameraLiveStageState = {
 
 type LiveStageInput = {
   quality: CameraQualityControls;
-  onStats: (stats: ICameraLiveStats) => void;
 };
 
-export function useCameraLiveStage({ quality, onStats }: LiveStageInput): CameraLiveStageState {
+export function useCameraLiveStage({ quality }: LiveStageInput): CameraLiveStageState {
   const { isCompact } = useWindowClass();
   const [fullscreen, setFullscreen] = useState(false);
   const [showPad, setShowPad] = useState(() => !isCompact);
@@ -28,13 +27,7 @@ export function useCameraLiveStage({ quality, onStats }: LiveStageInput): Camera
   const [live, setLive] = useState(false);
   const observe = quality.observe;
 
-  const handleStats = useCallback(
-    (next: ICameraLiveStats) => {
-      setStats(next);
-      onStats(next);
-    },
-    [onStats],
-  );
+  const handleStats = useCallback((next: ICameraLiveStats) => setStats(next), []);
 
   const handleState = useCallback(
     (state: CameraStreamState) => {

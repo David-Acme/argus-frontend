@@ -31,6 +31,10 @@ export async function exitWindowFullscreen(): Promise<void> {
   }
 }
 
+export function releaseWindowOrientation(): Promise<void> {
+  return Promise.resolve();
+}
+
 export function onWindowFullscreenExit(listener: ExitListener): () => void {
   const onKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape') listener();

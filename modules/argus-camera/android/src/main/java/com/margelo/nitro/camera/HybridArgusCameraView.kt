@@ -26,6 +26,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
   }
   private var player: ExoPlayer? = null
   private var activeState = true
+  private var mutedState = true
 
   override val view: View
     get() = playerView
@@ -36,6 +37,15 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
       activeState = value
       player?.playWhenReady = value
     }
+
+  override var muted: Boolean
+    get() = mutedState
+    set(value) {
+      mutedState = value
+      runOnMain { player?.volume = volumeOf(value) }
+    }
+
+  private fun volumeOf(muted: Boolean): Float = if (muted) 0f else 1f
 
   override fun resetStream() {
     runOnMain { releasePlayer() }
@@ -66,6 +76,7 @@ class HybridArgusCameraView(context: Context) : HybridArgusCameraViewSpec() {
           .build(),
       )
       .build()
+    exo.volume = volumeOf(mutedState)
     player = exo
     playerView.player = exo
     exo.setMediaItem(MediaItem.fromUri(CameraDataSource.LIVE_URI))

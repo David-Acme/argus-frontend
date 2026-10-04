@@ -10,7 +10,6 @@ import { cn } from '@/shared/libs/utils';
 
 type CameraCallPanelProps = {
   controls: CameraCallControls;
-  canListen: boolean;
   canTalk: boolean;
   talkHint?: string | null;
   micSupported: boolean;
@@ -132,7 +131,6 @@ function AudioAction({ icon, label, hint, primary = false, disabled = false, onP
 
 export function CameraCallPanel({
   controls,
-  canListen,
   canTalk,
   talkHint,
   micSupported,
@@ -153,45 +151,36 @@ export function CameraCallPanel({
   const closedKey = snapshot?.closedReason ? CLOSED_LABEL[snapshot.closedReason] : undefined;
   const notice = errorKey ? t(errorKey) : closedKey ? t(closedKey) : null;
   const pushMode = snapshot?.mode === 'push';
-  const listenMode = snapshot?.mode === 'listen';
   const live = snapshot != null && snapshot.state !== 'idle';
 
   if (!snapshot) {
-    if (!canListen && !canTalk) return null;
+    if (!canTalk) {
+      if (!talkHint) return null;
+      return (
+        <Panel title={t('screens.cameras.call.title')} className={className}>
+          <Text variant="caption">{talkHint}</Text>
+        </Panel>
+      );
+    }
     return (
-      <Panel
-        title={canTalk ? t('screens.cameras.call.title') : t('screens.cameras.call.listen-title')}
-        description={canTalk ? t('screens.cameras.call.description') : t('screens.cameras.call.listen-description')}
-        className={className}>
+      <Panel title={t('screens.cameras.call.title')} description={t('screens.cameras.call.description')} className={className}>
         <View className="gap-2">
           <View className="flex-row flex-wrap gap-2">
-            {canListen ? (
-              <AudioAction
-                icon="ear"
-                label={t('screens.cameras.call.listen')}
-                hint={t('screens.cameras.call.listen-hint')}
-                onPress={() => controls.start('listen', true)}
-              />
-            ) : null}
-            {canTalk ? (
-              <AudioAction
-                icon="mic"
-                label={t('screens.cameras.call.push')}
-                hint={t('screens.cameras.call.push-hint')}
-                disabled={blockedReason != null}
-                onPress={() => controls.start('push', canListen)}
-              />
-            ) : null}
-            {canTalk ? (
-              <AudioAction
-                icon="phone"
-                label={t('screens.cameras.call.call')}
-                hint={t('screens.cameras.call.call-hint')}
-                disabled={blockedReason != null}
-                primary
-                onPress={() => controls.start('call', true)}
-              />
-            ) : null}
+            <AudioAction
+              icon="mic"
+              label={t('screens.cameras.call.push')}
+              hint={t('screens.cameras.call.push-hint')}
+              disabled={blockedReason != null}
+              onPress={() => controls.start('push', true)}
+            />
+            <AudioAction
+              icon="phone"
+              label={t('screens.cameras.call.call')}
+              hint={t('screens.cameras.call.call-hint')}
+              disabled={blockedReason != null}
+              primary
+              onPress={() => controls.start('call', true)}
+            />
           </View>
           {onAnnounce ? (
             <Button variant="ghost" size="sm" onPress={onAnnounce} className="self-start">
@@ -200,8 +189,7 @@ export function CameraCallPanel({
             </Button>
           ) : null}
           {blockedReason ? <Text variant="caption">{blockedReason}</Text> : null}
-          {!canTalk && canListen && talkHint ? <Text variant="caption">{talkHint}</Text> : null}
-          {canTalk ? <Text variant="micro">{t('screens.cameras.call.echo-hint')}</Text> : null}
+          <Text variant="micro">{t('screens.cameras.call.echo-hint')}</Text>
         </View>
       </Panel>
     );
@@ -210,20 +198,14 @@ export function CameraCallPanel({
   const status =
     snapshot.state === 'connecting'
       ? t('screens.cameras.call.connecting')
-      : listenMode
-        ? t('screens.cameras.call.listening')
-        : pushMode
+      : pushMode
           ? snapshot.talking
             ? t('screens.cameras.call.talking')
             : t('screens.cameras.call.push-ready')
           : snapshot.muted
             ? t('screens.cameras.call.muted')
             : t('screens.cameras.call.in-call');
-  const title = listenMode
-    ? t('screens.cameras.call.listen-title')
-    : pushMode
-      ? t('screens.cameras.call.push')
-      : t('screens.cameras.call.call');
+  const title = pushMode ? t('screens.cameras.call.push') : t('screens.cameras.call.call');
 
   return (
     <Panel
@@ -239,7 +221,7 @@ export function CameraCallPanel({
         {snapshot.listening ? (
           <LevelMeter icon="volume-2" label={t('screens.cameras.call.camera-level')} level={snapshot.cameraLevel} />
         ) : null}
-        {canTalk && !listenMode ? (
+        {canTalk ? (
           <LevelMeter icon="mic" label={t('screens.cameras.call.mic-level')} level={snapshot.micLevel} />
         ) : null}
         {notice ? (
@@ -264,7 +246,7 @@ export function CameraCallPanel({
           </Pressable>
         ) : null}
         <View className="flex-row flex-wrap items-center justify-center gap-3">
-          {!pushMode && !listenMode ? (
+          {!pushMode ? (
             <RoundButton
               icon={snapshot.muted ? 'mic-off' : 'mic'}
               label={snapshot.muted ? t('screens.cameras.call.unmute') : t('screens.cameras.call.mute')}
@@ -272,14 +254,12 @@ export function CameraCallPanel({
               onPress={() => controls.setMuted(!snapshot.muted)}
             />
           ) : null}
-          {!listenMode ? (
-            <RoundButton
-              icon={snapshot.listening ? 'volume-2' : 'volume-x'}
-              label={snapshot.listening ? t('screens.cameras.call.stop-listening') : t('screens.cameras.call.listen')}
-              active={!snapshot.listening}
-              onPress={() => controls.setListening(!snapshot.listening)}
-            />
-          ) : null}
+          <RoundButton
+            icon={snapshot.listening ? 'volume-2' : 'volume-x'}
+            label={snapshot.listening ? t('screens.cameras.call.stop-listening') : t('screens.cameras.call.listen')}
+            active={!snapshot.listening}
+            onPress={() => controls.setListening(!snapshot.listening)}
+          />
           <RoundButton
             icon="minus"
             label={t('screens.cameras.call.volume-down')}
@@ -293,12 +273,7 @@ export function CameraCallPanel({
             label={t('screens.cameras.call.volume-up')}
             onPress={() => controls.setVolume(snapshot.volume + 0.25)}
           />
-          <RoundButton
-            icon={listenMode ? 'x' : 'phone-off'}
-            label={listenMode ? t('screens.cameras.call.stop-listening') : t('screens.cameras.call.end')}
-            danger
-            onPress={controls.end}
-          />
+          <RoundButton icon="phone-off" label={t('screens.cameras.call.end')} danger onPress={controls.end} />
         </View>
       </View>
     </Panel>

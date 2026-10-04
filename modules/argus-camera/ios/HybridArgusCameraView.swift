@@ -8,6 +8,8 @@ public final class HybridArgusCameraView: HybridArgusCameraViewSpec {
     didSet { view.setActive(active) }
   }
 
+  public var muted: Bool = true
+
   public func resetStream() throws {
     view.reset()
   }

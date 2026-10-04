@@ -2,7 +2,7 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { ICameraCapabilities, ICameraDeviceStatus, ICameraLiveStats, IZoneCacheRow } from '@/core/interfaces';
+import type { ICameraCapabilities, ICameraDeviceStatus, IZoneCacheRow } from '@/core/interfaces';
 import type { MenuOption } from '@/core/types';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
@@ -11,6 +11,7 @@ import { CameraCallPanel } from '@/features/cameras/components/camera-call-panel
 import { CameraControlPanel } from '@/features/cameras/components/camera-control-panel';
 import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
 import { useCameraDeviceSettings } from '@/features/cameras/hooks/use-camera-device-settings';
+import { useCameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-stage';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
@@ -53,14 +54,13 @@ export default function CameraDetailScreen() {
   const [zoneId, setZoneId] = useState('');
   const [talkOpen, setTalkOpen] = useState(false);
   const [showZones, setShowZones] = useState(true);
-  const [streamAudio, setStreamAudio] = useState(false);
   const quality = useCameraQuality(id);
-  const noteStats = useCallback((stats: ICameraLiveStats) => setStreamAudio(stats.audio), []);
-  const stage = useCameraLiveStage({ quality, onStats: noteStats });
   const { run: move, pending: moving } = useServiceAction();
   const { cameras, isPendingZone } = useCameraRows();
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const call = useCameraCall(id);
+  const stage = useCameraLiveStage({ quality });
+  const audio = useCameraLiveAudio(call.snapshot != null && call.snapshot.state !== 'idle');
   const autoCalled = useRef(false);
 
 
@@ -106,7 +106,6 @@ export default function CameraDetailScreen() {
   const controllable = canUpdate && hasDeviceControls(features);
   const mayTalk = cameraActionAccessForRole(role).talk;
   const canTalk = mayTalk && features?.talk === true;
-  const canListen = features?.microphone === true || streamAudio;
   const talkHint =
     mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true
       ? t('screens.cameras.call.needs-cloud')
@@ -257,6 +256,7 @@ export default function CameraDetailScreen() {
       showZones={showZones}
       quality={quality}
       stage={stage}
+      audio={audio}
       video={device?.video ?? null}
       canControl={canUpdate}
       canEnable={canUpdate}
@@ -286,7 +286,6 @@ export default function CameraDetailScreen() {
     camera.isEnabled && features ? (
       <CameraCallPanel
         controls={call}
-        canListen={canListen}
         canTalk={canTalk}
         talkHint={talkHint}
         micSupported={micSupported}
@@ -380,6 +379,7 @@ export default function CameraDetailScreen() {
           quality={quality}
           ptz={ptz}
           stage={stage}
+          audio={audio}
         />
       ) : null}
       <CameraForm open={editOpen} onOpenChange={setEditOpen} camera={camera} />
