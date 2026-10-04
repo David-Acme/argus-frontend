@@ -45,9 +45,10 @@ export const home = {
   agenda: 'Agenda',
   notifications: 'Notificaciones',
   'notifications-empty': 'No tienes notificaciones nuevas',
-  'notifications-unread': '{count} sin leer',
-  'notifications-read': 'Todo leído',
-  'notifications-mark-all': 'Marcar todo como leído',
+  'notifications-new': '{count} nuevas',
+  'notifications-new-one': '1 nueva',
+  'notifications-caught-up': 'Todo al día',
+  'notifications-open-hint': 'Al abrirlas quedan leídas',
   thread: {
     count: '{count} avisos',
     urgent: 'Urgente',

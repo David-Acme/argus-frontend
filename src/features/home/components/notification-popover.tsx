@@ -1,49 +1,63 @@
+import { useState } from 'react';
 import { View } from 'react-native';
-import { Button } from '@/shared/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Text } from '@/shared/components/ui/text';
 import { IconButton } from '@/shared/components/ui/icon-button';
+import { useTranslation } from '@/shared/hooks/use-translation';
 import { NotificationThreadRow } from '@/features/home/components/notification-thread-row';
-import type { NotificationThread } from '@/features/home/model/notification-threads';
+import {
+  unreadIdsOf,
+  withUnreadSnapshot,
+  type NotificationThread,
+} from '@/features/home/model/notification-threads';
 
 type NotificationPopoverProps = {
-  label: string;
-  title: string;
-  summary: string;
-  emptyLabel: string;
-  markAllLabel: string;
   unreadCount: number;
   threads: readonly NotificationThread[];
   now: number;
-  onReadThread: (thread: NotificationThread) => void;
-  onReadAll: () => void;
+  onOpen: () => void;
 };
+
+type OpenedSnapshot = { ids: ReadonlySet<string>; count: number };
 
 const PREVIEW_LIMIT = 4;
 
-export function NotificationPopover({
-  label,
-  title,
-  summary,
-  emptyLabel,
-  markAllLabel,
-  unreadCount,
-  threads,
-  now,
-  onReadThread,
-  onReadAll,
-}: NotificationPopoverProps) {
-  const preview = threads.slice(0, PREVIEW_LIMIT);
+const NO_SNAPSHOT: OpenedSnapshot = { ids: new Set(), count: 0 };
+
+export function NotificationPopover({ unreadCount, threads, now, onOpen }: NotificationPopoverProps) {
+  const { t } = useTranslation();
+  const [opened, setOpened] = useState<OpenedSnapshot>(NO_SNAPSHOT);
+  const preview = withUnreadSnapshot(threads.slice(0, PREVIEW_LIMIT), opened.ids);
+  const summary =
+    opened.count === 0
+      ? t('screens.home.notifications-caught-up')
+      : opened.count === 1
+        ? t('screens.home.notifications-new-one')
+        : t('screens.home.notifications-new', { count: String(opened.count) });
+
+  const openChange = (open: boolean) => {
+    if (!open) {
+      setOpened(NO_SNAPSHOT);
+      return;
+    }
+    setOpened({ ids: new Set(unreadIdsOf(threads)), count: unreadCount });
+    if (unreadCount > 0) onOpen();
+  };
 
   return (
-    <Popover>
+    <Popover onOpenChange={openChange}>
       <PopoverTrigger asChild>
-        <IconButton icon="bell" label={label} badge={unreadCount} />
+        <IconButton
+          icon="bell"
+          label={t('screens.home.notifications')}
+          accessibilityHint={unreadCount > 0 ? t('screens.home.notifications-open-hint') : undefined}
+          badge={unreadCount}
+        />
       </PopoverTrigger>
       <PopoverContent sideOffset={2}>
         <View className="flex-row items-center justify-between gap-3">
           <Text variant="body" className="font-semibold">
-            {title}
+            {t('screens.home.notifications')}
           </Text>
           <Text variant="caption" className="text-foreground-secondary">
             {summary}
@@ -52,29 +66,15 @@ export function NotificationPopover({
 
         {preview.length === 0 ? (
           <Text variant="caption" className="text-foreground-secondary mt-2">
-            {emptyLabel}
+            {t('screens.home.notifications-empty')}
           </Text>
         ) : (
           <View className="mt-3 gap-2">
             {preview.map((thread) => (
-              <NotificationThreadRow
-                key={thread.key}
-                thread={thread}
-                now={now}
-                compact
-                onRead={onReadThread}
-              />
+              <NotificationThreadRow key={thread.key} thread={thread} now={now} compact />
             ))}
           </View>
         )}
-
-        {unreadCount > 0 ? (
-          <View className="border-border-subtle mt-3 flex-row justify-end border-t pt-2">
-            <Button variant="ghost" size="sm" onPress={onReadAll}>
-              <Text>{markAllLabel}</Text>
-            </Button>
-          </View>
-        ) : null}
       </PopoverContent>
     </Popover>
   );

@@ -111,3 +111,16 @@ export function unreadThreadCount(
 export function unreadIdsOf(threads: readonly Pick<NotificationThread, 'unreadIds'>[]): string[] {
   return threads.flatMap((thread) => thread.unreadIds);
 }
+
+export function withUnreadSnapshot(
+  threads: readonly NotificationThread[],
+  seen: ReadonlySet<string>
+): readonly NotificationThread[] {
+  if (seen.size === 0) return threads;
+  return threads.map((thread) => {
+    const unreadIds = thread.entries
+      .filter((entry) => !entry.isRead || seen.has(entry.id))
+      .map((entry) => entry.id);
+    return unreadIds.length === thread.unreadIds.length ? thread : { ...thread, unreadIds };
+  });
+}

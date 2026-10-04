@@ -45,9 +45,10 @@ export const home = {
   agenda: 'Agenda',
   notifications: 'Notifications',
   'notifications-empty': 'You have no new notifications',
-  'notifications-unread': '{count} unread',
-  'notifications-read': 'All caught up',
-  'notifications-mark-all': 'Mark all as read',
+  'notifications-new': '{count} new',
+  'notifications-new-one': '1 new',
+  'notifications-caught-up': 'All caught up',
+  'notifications-open-hint': 'Opening them marks them as read',
   thread: {
     count: '{count} updates',
     urgent: 'Urgent',

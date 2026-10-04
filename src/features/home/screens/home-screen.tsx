@@ -150,20 +150,10 @@ export default function HomeScreen() {
           </Text>
           <View className="flex-row gap-2">
             <NotificationPopover
-              label={t('screens.home.notifications')}
-              title={t('screens.home.notifications')}
-              summary={
-                unreadNotifications > 0
-                  ? t('screens.home.notifications-unread', { count: String(unreadNotifications) })
-                  : t('screens.home.notifications-read')
-              }
-              emptyLabel={t('screens.home.notifications-empty')}
-              markAllLabel={t('screens.home.notifications-mark-all')}
               unreadCount={unreadNotifications}
               threads={threads}
               now={now}
-              onReadThread={readThread}
-              onReadAll={() => void readAll()}
+              onOpen={() => void readAll()}
             />
             <IconButton
               icon="calendar"

@@ -1181,11 +1181,11 @@ the result of the user's action at once and reconciles with the synced row.
   Undo toast (6 s, the toast's own lifetime) instead of a confirm dialog;
   project deletion (cascades), user deactivation and invitation revocation
   keep their confirm.
-- **Notifications.** Opening the bell no longer reads anything (owner
-  decision, 2026-10-03): a preview is not a read. A thread is read when it is
-  tapped (bell or Novedades) or through the bell's "Marcar todo como leído",
-  which reads every unread row of the user in WatermelonDB, not only the
-  cached window. Both go through `runOptimistic`.
+- **Notifications.** Opening the bell reads every unread row of the user in
+  WatermelonDB, not only the cached window (owner decision 2026-10-04,
+  reversing the 2026-10-03 "a preview is not a read"); there is no "Marcar
+  todo como leído" button any more. A tap on a thread in Novedades reads that
+  thread. Both go through `runOptimistic`.
 - **Motion.** Rows enter without per-item animations; feedback comes from the
   pressed control and the dimmed pending state. Reanimated 4.5 on Fabric keeps
   the old frame of a `layout={LinearTransition}` view when Reduce Motion is on
@@ -1624,9 +1624,9 @@ unit-tested; the row is `notification-thread-row.tsx`):
   a summary history (a moon after quiet hours), the camera fallback a video,
   anything else the bell.
 - Read state is per thread: a thread is unread while any of its rows is.
-  Opening the bell reads nothing; pressing a thread (in the bell or in
-  Novedades) marks it read and, in Novedades, when it has more than one row,
-  unfolds its timeline
+  Opening the bell reads every unread notification of the user (revised
+  2026-10-04, see "Calmer corners"); pressing a thread in Novedades marks it
+  read and, when it has more than one row, unfolds its timeline
   (`TimelineItem`, `shared/components/ui/timeline.tsx`, shared with the
   episode timeline). Both go through `runOptimistic`, one `notification`
   update intent per row.
@@ -2031,6 +2031,20 @@ corners. The scale is now, in `global.css` `@theme` (one change, every
   `rounded-full` override.
 - No literal `rounded-[Npx]` is left in `src/`; a new surface picks a token
   by its role in the table.
+
+**The bell reads what it shows.** Opening the notifications popover marks
+every unread notification of the user read (`readAll`: the unread ids in
+WatermelonDB plus the visible threads', one `runOptimistic` with an intent
+per row and one `PATCH /notification/read`). The badge clears at once. The
+popover keeps the highlight of what was new while it stays open: it takes a
+snapshot of the unread ids when it opens and overlays it on the rows
+(`withUnreadSnapshot`, unit-tested), and its summary says "N nuevas" from
+the badge count at that moment; closing drops the snapshot, so the next open
+shows them read. A notification that arrives while the popover is open stays
+unread until the next open. The bell's rows are no longer pressable and the
+"Marcar todo como leído" button is gone; the bell carries the hint "Al
+abrirlas quedan leídas". Novedades keeps the tap that reads a thread and
+unfolds its timeline.
 
 ## The camera live view: full quality, honest frame rate, explicit audio, fullscreen (2026-10-04)
 

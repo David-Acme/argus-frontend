@@ -8,6 +8,7 @@ import {
   unreadIdsOf,
   unreadThreadCount,
   urgencyOf,
+  withUnreadSnapshot,
 } from '@/features/home/model/notification-threads';
 
 function row(
@@ -128,5 +129,28 @@ describe('notification threads', () => {
     const shown = synced.map((entry) => (entry.id === '2' ? entry : { ...entry, isRead: true }));
     expect(unreadThreadCount(groupNotifications(shown), 3, synced)).toBe(1);
     expect(unreadThreadCount(groupNotifications([]), 0, [])).toBe(0);
+  });
+
+  test('rows seen unread when the bell opened keep their highlight while it stays open', () => {
+    const before = groupNotifications([
+      episode('4', 'escalated', 'critical'),
+      episode('3', 'opened', 'active', { isRead: true }),
+      row('2'),
+      row('1', {}, { isRead: true }),
+    ]);
+    const seen = new Set(unreadIdsOf(before));
+    const read = groupNotifications([
+      episode('4', 'escalated', 'critical', { isRead: true }),
+      episode('3', 'opened', 'active', { isRead: true }),
+      row('2', {}, { isRead: true }),
+      row('1', {}, { isRead: true }),
+    ]);
+    expect(read.map(isThreadRead)).toEqual([true, true, true]);
+
+    const shown = withUnreadSnapshot(read, seen);
+    expect(shown.map(isThreadRead)).toEqual([false, false, true]);
+    expect(shown[0]?.unreadIds).toEqual(['4']);
+    expect(shown[2]).toBe(read[2]);
+    expect(withUnreadSnapshot(read, new Set())).toBe(read);
   });
 });
