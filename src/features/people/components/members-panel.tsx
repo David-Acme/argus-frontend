@@ -31,6 +31,7 @@ export function MembersPanel({
   onInvite,
 }: MembersPanelProps) {
   const { t } = useTranslation();
+  const fillTile = users.length <= FILL_TILE_UNTIL;
 
   return (
     <Panel className="flex-1 gap-1 p-1.5">
@@ -68,12 +69,14 @@ export function MembersPanel({
         );
       })}
       {onInvite ? (
-        <CreateTile
-          layout={users.length <= FILL_TILE_UNTIL ? 'fill' : 'row'}
-          label={t('screens.users.invite-someone')}
-          hint={users.length <= FILL_TILE_UNTIL ? t('screens.users.invite-hint') : undefined}
-          onPress={onInvite}
-        />
+        <View className={fillTile ? 'flex-1 p-1.5' : 'p-1.5'}>
+          <CreateTile
+            layout={fillTile ? 'fill' : 'row'}
+            label={t('screens.users.invite-someone')}
+            hint={fillTile ? t('screens.users.invite-hint') : undefined}
+            onPress={onInvite}
+          />
+        </View>
       ) : null}
     </Panel>
   );

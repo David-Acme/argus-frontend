@@ -29,7 +29,13 @@ export function Switch({ value, onChange, accessibilityLabel, disabled = false }
         value ? 'bg-interactive' : 'bg-border',
         disabled && 'opacity-50'
       )}>
-      <Animated.View className="bg-card size-6 rounded-full shadow-sm shadow-black/20" style={knob} />
+      <Animated.View
+        className={cn(
+          'bg-card size-6 rounded-full shadow-sm shadow-black/20',
+          !value && 'dark:bg-foreground-secondary'
+        )}
+        style={knob}
+      />
     </Pressable>
   );
 }
