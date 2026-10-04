@@ -1328,50 +1328,31 @@ microservice's `.toml`.
 - **Configuración is owner-only again**; sessions moved to the profile
   (SESSIONS2). The screen enables its hooks from `role === 'owner'`.
 
-### Your voice: confirmed voice enrollment (2026-10-03)
+### Voices: learned by Argus, never enrolled (2026-10-03, revised)
 
-The profile has a "Tu voz / Your voice" section (`features/voiceprint`,
-rendered by `features/profile` through the feature's index). argus-identity
-links a person's voice to them once, under a confirmed enrollment, and the
-voice call uses it as a hint about who is speaking — never as a password.
-The backend design, its measurements and its threat model live in
-`backend/services/identity/CONTEXT.md` ("Voiceprints").
+The first cut had a "Tu voz / Your voice" section in the profile with a
+consented, phrase-by-phrase enrollment and "Try it". David decided that the
+user must not see it: voice recognition is an internal capability of a
+system whose data never leaves the user's computer, so nothing is asked,
+enabled or shown to the person. `features/voiceprint` (the panel, the
+enrollment reducer, the WAV encoder, the recorders, the problem copy and
+their tests) and the `/voiceprint/me` routes are gone; argus-identity now
+learns each holder's voice passively from their own calls (the gates live
+in `backend/services/identity/CONTEXT.md`, "Voiceprints"). `argus-mic`
+stays: the call uses it.
 
-- **States** come from `GET /voiceprint/me` through `useRemoteResource`
-  (`VIEW_CACHE_KEYS.voiceprintStatus`): loading or failed (tap to retry),
-  unavailable on the server, enrolled (date, "Try it", "Delete"), stale
-  after a server model change ("Enroll again"), not enrolled, and "use your
-  phone" where this device cannot record. A privacy line under the section
-  says what is kept.
-- **Enrollment** is a dialog driven by a pure reducer
-  (`model/enrollment.ts`, unit-tested): explicit consent first (three plain
-  statements and a switch; the server records the consent version), then a
-  server challenge with three phrases in the app's language, recorded and
-  sent one at a time (`POST /voiceprint/me/sample` with the challenge and
-  the phrase index). Each phrase gets its verdict at once — too short, too
-  noisy, distorted — and is retaken in place; once the three are accepted the
-  dialog confirms (`POST /voiceprint/me`). A mixed set (two speakers) starts
-  the phrases over, an expired challenge or a voice already linked to
-  someone else goes back to consent. The result is written into the cached
-  status, so the section flips without a refetch.
-- **Deletion** confirms, flips the cached status optimistically and rolls
-  back on a refusal (`useVoiceprint().remove`). "Try it" records any phrase
-  and shows whether the server recognized the voice and the similarity.
-- **Audio** never leaves the device as a file: a recording becomes a
-  16 kHz mono 16-bit WAV in memory (`model/wav.ts`: chunk joining, float to
-  PCM, the header, base64 — all unit-tested) and travels base64 in JSON,
-  because the desktop's request path reads multipart files from disk.
-  Native records with the `argus-mic` Nitro module at 16 kHz after
-  `expo-audio`'s permission prompt; web/desktop use `getUserMedia` +
-  `MediaRecorder` and resample with an `OfflineAudioContext`
-  (`services/voice-recorder.{native,web}.ts`, imported by relative path
-  like every platform-split module inside a feature). A WebView without
-  `getUserMedia`/`MediaRecorder` reports itself unsupported and the section
-  points to the phone. Recordings stop by themselves after 10 s (8 s for
-  "Try it"), and closing a dialog cancels the microphone.
-- Server refusals map to copy by their catalog message
-  (`model/voiceprint-problem.ts`), which the backend pins in its catalog
-  test; every problem has es/en copy (a unit test checks both).
+What is left in the app is the owner's view, minimal on purpose: in
+Personas y accesos the per-user access dialog (`UserSessionsDialog`'s
+`extra` slot, filled by `users-screen.tsx`) shows "Argus reconoce su voz ·
+Desde el <fecha>" with "Olvidar voz" when, and only when, Argus already
+recognizes that person (`features/people/components/voice-recognition-row`,
+`hooks/use-voice-recognition`, `services/voiceprint.service`). The directory
+is `GET /voiceprint/users` through `useRemoteResource`
+(`VIEW_CACHE_KEYS.voiceprintUsers`), parsed by
+`core/contracts/voiceprint.contract.ts` (unit-tested); forgetting confirms,
+removes the row from the cached directory at once, rolls back on a refusal,
+and treats 404 (nothing learned) as done. There is no learning state and no
+enrollment anywhere.
 
 ### Cameras: live view, recovery and edits (2026-10-03)
 

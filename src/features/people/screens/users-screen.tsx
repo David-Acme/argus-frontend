@@ -27,6 +27,7 @@ import { InvitationsPanel } from '@/features/people/components/invitations-panel
 import { ManagedUserDialog } from '@/features/people/components/managed-user-dialog';
 import { MembersPanel } from '@/features/people/components/members-panel';
 import { RoleAccessCard } from '@/features/people/components/role-access-card';
+import { VoiceRecognitionRow } from '@/features/people/components/voice-recognition-row';
 import { roleOptions } from '@/features/people/components/user-options';
 import { useInvitationPreview } from '@/features/people/hooks/use-invitation-preview';
 import {
@@ -261,6 +262,12 @@ export default function UsersScreen() {
           }
           onDisable={(sessions) => setActive(inspectedUser, false, sessions)}
           onEnable={() => setActive(inspectedUser, true, [])}
+          extra={
+            <VoiceRecognitionRow
+              userId={Number(inspectedUser.id)}
+              name={fullName(inspectedUser)}
+            />
+          }
         />
       ) : null}
       {editing ? (

@@ -81,4 +81,14 @@ export const users = {
   'access-of': 'Sesiones y acceso de {name}',
   'unknown-user': 'Usuario {id}',
   'unknown-role': 'Fuera del directorio',
+  voice: {
+    recognized: 'Argus reconoce su voz',
+    'recognized-since': 'Desde el {date}',
+    forget: 'Olvidar voz',
+    'forget-title': '¿Olvidar la voz de {name}?',
+    'forget-description':
+      'Argus borrará lo que aprendió de su voz en este equipo. Si vuelve a hablar con Argus, irá reconociéndola de nuevo.',
+    forgotten: 'Argus olvidó la voz de {name}',
+    'forget-error': 'No se pudo olvidar la voz',
+  },
 } as const;

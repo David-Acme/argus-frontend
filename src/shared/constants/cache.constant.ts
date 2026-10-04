@@ -43,7 +43,7 @@ export const VIEW_CACHE_KEYS = {
   guardCameras: 'guard.cameras',
   guardEpisodes: 'guard.episodes',
   guardEpisode: 'guard.episode',
-  voiceprintStatus: 'voiceprint.status',
+  voiceprintUsers: 'voiceprint.users',
   authSessions: 'auth.sessions',
   authUserSessions: 'auth.user-sessions',
 } as const;

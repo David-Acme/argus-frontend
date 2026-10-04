@@ -17,4 +17,3 @@ export * from './camera-control.interface';
 export * from './audit-log.interface';
 export * from './view-cache.interface';
 export * from './camera-media.interface';
-export * from './voiceprint.interface';

@@ -80,4 +80,14 @@ export const users = {
   'access-of': 'Sessions and access for {name}',
   'unknown-user': 'User {id}',
   'unknown-role': 'Not in the directory',
+  voice: {
+    recognized: 'Argus recognizes their voice',
+    'recognized-since': 'Since {date}',
+    forget: 'Forget voice',
+    'forget-title': "Forget {name}'s voice?",
+    'forget-description':
+      'Argus will delete what it learned about their voice on this computer. If they talk to Argus again, it will slowly recognize them again.',
+    forgotten: "Argus forgot {name}'s voice",
+    'forget-error': 'The voice could not be forgotten',
+  },
 };
