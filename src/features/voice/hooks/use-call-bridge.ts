@@ -5,7 +5,7 @@ import { guardService } from '@/core/services/guard.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { voiceService } from '@/features/voice/services/voice';
 import { useAuthStore } from '@/core/stores';
-import type { CalendarEntry, GuardMode, GuardModeState, VoiceAction, VoiceActionOutcome } from '@/core/types';
+import type { CalendarEntry, GuardEnvironment, GuardMode, VoiceAction, VoiceActionOutcome } from '@/core/types';
 import { GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { serviceErrorKey } from '@/shared/libs/service-error';
@@ -19,6 +19,7 @@ import { buildCallSituation, spokenDetail, type CallSituationEvent } from '@/fea
 import { callCameraEvent, detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
+import { matchEnvironment } from '@/features/security';
 
 const RECENT_NOTIFICATIONS = 5;
 const CALL_ROUTE = '/call';
@@ -57,15 +58,15 @@ export function useCallBridge(): void {
     const guardView = guardAccessForRole(user.role).view;
     const events: CallSituationEvent[] = [];
     const seen = new Set<string>();
-    let fetchedMode: GuardMode | null = null;
+    let fetchedGuard: readonly GuardEnvironment[] = [];
     let lastSituation = '';
     let timer: ReturnType<typeof setTimeout> | null = null;
     let primed = false;
     let live = true;
 
-    const guardMode = (): GuardMode | null => {
-      if (!guardView) return null;
-      return viewCacheService.readValue<GuardModeState>(VIEW_CACHE_KEYS.guardMode)?.mode ?? fetchedMode;
+    const guard = (): readonly GuardEnvironment[] => {
+      if (!guardView) return [];
+      return viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments) ?? fetchedGuard;
     };
 
     const pushSituation = () => {
@@ -73,7 +74,7 @@ export function useCallBridge(): void {
       if (!live) return;
       const text = buildCallSituation({
         t,
-        guardMode: guardMode(),
+        guard: guard(),
         agenda: viewCacheService.read<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today'),
         agendaItems: CALL_SITUATION_AGENDA_ITEMS,
         events,
@@ -120,10 +121,10 @@ export function useCallBridge(): void {
 
     announce();
     pushSituation();
-    if (guardView && !viewCacheService.readValue<GuardModeState>(VIEW_CACHE_KEYS.guardMode)) {
-      void guardService.mode().then((result) => {
+    if (guardView && !viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments)) {
+      void guardService.environments().then((result) => {
         if (!live || !result.ok || !result.info) return;
-        fetchedMode = result.info.mode;
+        fetchedGuard = result.info;
         scheduleSituation();
       });
     }
@@ -137,7 +138,7 @@ export function useCallBridge(): void {
       viewCacheService.subscribe(VIEW_CACHE_KEYS.dashboardNotifications, undefined, announce),
       viewCacheService.subscribe(VIEW_CACHE_KEYS.dashboardAgenda, 'today', scheduleSituation),
       viewCacheService.subscribe(VIEW_CACHE_KEYS.cameraList, undefined, scheduleSituation),
-      viewCacheService.subscribe(VIEW_CACHE_KEYS.guardMode, undefined, scheduleSituation),
+      viewCacheService.subscribe(VIEW_CACHE_KEYS.guardEnvironments, undefined, scheduleSituation),
     ];
     return () => {
       live = false;
@@ -172,15 +173,31 @@ export function useCallBridge(): void {
       }
       const mode = action.arguments.mode;
       if (!isGuardMode(mode)) return failed(t('screens.voice.actions.detail.bad-mode'));
-      const result = await guardService.setMode(mode);
-      if (!result.ok) {
+      const hint = typeof action.arguments.environment === 'string' ? action.arguments.environment : '';
+      let environments = viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments);
+      if (hint && !environments) {
+        const listed = await guardService.environments();
+        environments = listed.info;
+      }
+      const match = matchEnvironment(environments ?? [], hint);
+      if (match.kind === 'unknown') {
+        const names = (environments ?? []).map((environment) => environment.name).join(', ');
+        return failed(t('screens.voice.actions.detail.unknown-environment', { names }));
+      }
+      const target = match.kind === 'one' ? match.environment : undefined;
+      const result = await guardService.setMode(mode, target?.id);
+      if (!result.ok || !result.info) {
         const message = t(serviceErrorKey(result.errors));
         toast.error(message);
         return failed(message);
       }
-      const current = viewCacheService.readValue<GuardModeState>(VIEW_CACHE_KEYS.guardMode);
-      if (current) viewCacheService.writeValue(VIEW_CACHE_KEYS.guardMode, { ...current, mode });
-      toast.success(t('screens.voice.actions.guard-mode', { mode: t(`screens.security.mode.${mode}`) }));
+      viewCacheService.writeValue(VIEW_CACHE_KEYS.guardEnvironments, result.info);
+      const label = t(`screens.security.mode.${mode}`);
+      toast.success(
+        target
+          ? t('screens.voice.actions.guard-mode-place', { name: target.name, mode: label })
+          : t('screens.voice.actions.guard-mode', { mode: label })
+      );
       return { ok: true, detail: null };
     };
     let queue = Promise.resolve();

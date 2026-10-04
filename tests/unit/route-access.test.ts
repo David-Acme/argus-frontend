@@ -20,6 +20,8 @@ describe('routeFallback', () => {
     expect(routeFallback('/security', 'guest')).toBe('/');
     expect(routeFallback('/people', 'guest')).toBe('/profile');
     expect(routeFallback('/agenda', 'guest')).toBeNull();
+    expect(routeFallback('/security/3', 'guest')).toBe('/');
+    expect(routeFallback('/security/3', 'guard')).toBeNull();
   });
 
   test('configuration is the owner\'s alone; sessions live in every profile', () => {

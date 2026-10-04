@@ -6,18 +6,64 @@ export type GuardDanger = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
 export type GuardFeedbackLabel = 'useful' | 'false_alarm' | 'not_now';
 
-export interface GuardModeState {
+export type GuardEnvironmentKind = 'home' | 'office' | 'commercial' | 'restaurant' | 'warehouse' | 'outdoor';
+
+export type GuardQuietPolicy = 'inherit' | 'custom' | 'off';
+
+export type GuardClosedMode = 'away' | 'armed';
+
+export interface GuardEnvironment {
+  id: number;
+  name: string;
+  kind: GuardEnvironmentKind;
+  isDefault: boolean;
   mode: GuardMode;
   effectiveMode: GuardMode;
   occupancy: GuardOccupancy;
   publicPresent: boolean;
   staffOnly: boolean;
-  profile?: GuardSiteProfile;
+  scheduleEnabled: boolean;
+  asleep: string;
+  open: string;
+  staffed: string;
+  closedMode: GuardClosedMode;
+  digestHour: number;
+  quietPolicy: GuardQuietPolicy;
+  quietStartHour: number;
+  quietEndHour: number;
+  cameraIds: number[];
+  modeUpdatedAt: number;
+  updatedAt: number;
 }
+
+export type GuardEnvironmentPatch = Partial<
+  Pick<
+    GuardEnvironment,
+    | 'name'
+    | 'kind'
+    | 'scheduleEnabled'
+    | 'asleep'
+    | 'open'
+    | 'staffed'
+    | 'closedMode'
+    | 'digestHour'
+    | 'quietPolicy'
+    | 'quietStartHour'
+    | 'quietEndHour'
+  >
+>;
+
+export type GuardEnvironmentCreate = GuardEnvironmentPatch & {
+  name: string;
+  kind: GuardEnvironmentKind;
+};
+
+export type GuardHoursKind = 'asleep' | 'staffed' | 'open';
 
 export interface GuardExpectedGuest {
   id: number;
   cameraId: number;
+  environmentId: number;
   personId: number;
   hostUserId: number;
   description: string;
@@ -28,26 +74,10 @@ export interface GuardExpectedGuest {
 
 export interface GuardExpectedGuestCreate {
   description: string;
+  environmentId?: number;
   hours: number;
   oneTime: boolean;
 }
-
-export type GuardSiteProfile = 'home' | 'office' | 'commercial';
-
-export type GuardClosedMode = 'away' | 'armed';
-
-export interface GuardSite {
-  profile: GuardSiteProfile;
-  scheduleEnabled: boolean;
-  asleep: string;
-  open: string;
-  staffed: string;
-  closedMode: GuardClosedMode;
-  digestHour: number;
-  updatedAt: number;
-}
-
-export type GuardSitePatch = Partial<Omit<GuardSite, 'updatedAt'>>;
 
 export type GuardCameraRole =
   | 'other'
@@ -67,10 +97,13 @@ export interface GuardCameraContext {
   outdoor: boolean;
   publicArea: boolean;
   activeHours: string;
+  environmentId: number;
   updatedAt: number;
 }
 
-export type GuardCameraContextUpdate = Omit<GuardCameraContext, 'cameraId' | 'updatedAt'>;
+export type GuardCameraContextUpdate = Omit<GuardCameraContext, 'cameraId' | 'updatedAt' | 'environmentId'> & {
+  environmentId?: number;
+};
 
 export type GuardReason =
   | 'weapon'
@@ -123,6 +156,7 @@ export interface GuardEpisode {
   spoke: boolean;
   sounded: boolean;
   status: string;
+  environmentId: number;
 }
 
 export interface GuardEpisodePage {
@@ -147,3 +181,18 @@ export type GuardTimelineEntry =
 export interface GuardEpisodeDetail extends GuardEpisode {
   timeline: GuardTimelineEntry[];
 }
+
+export interface CameraEnvironmentBadge {
+  environmentId: number;
+  name: string;
+  kind: GuardEnvironmentKind;
+  mode: GuardMode;
+  effectiveMode: GuardMode;
+  armed: boolean;
+  several: boolean;
+}
+
+export type EnvironmentMatch =
+  | { kind: 'all' }
+  | { kind: 'one'; environment: GuardEnvironment }
+  | { kind: 'unknown' };

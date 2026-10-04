@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
-import type { GuardClosedMode, GuardSite, GuardSitePatch, GuardSiteProfile } from '@/core/types';
+import type {
+  GuardClosedMode,
+  GuardEnvironment,
+  GuardEnvironmentPatch,
+  GuardHoursKind,
+  GuardQuietPolicy,
+} from '@/core/types';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
@@ -10,34 +16,55 @@ import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { HoursEditor } from '@/features/security/components/hours-editor';
-import {
-  DIGEST_HOUR_OPTIONS,
-  SITE_PROFILE_ICONS,
-  SITE_PROFILES,
-  WEEK_DAY_KEYS,
-} from '@/features/security/constants';
+import { DIGEST_HOUR_OPTIONS, QUIET_HOUR_OPTIONS, WEEK_DAY_KEYS } from '@/features/security/constants';
+import { ENVIRONMENT_PRESETS, HOURS_BY_KIND } from '@/features/security/model/environment-presets';
 import { parseHours, summarizeHours } from '@/features/security/model/hours';
-import {
-  SITE_HOURS_BY_PROFILE,
-  SITE_PRESETS,
-  type SiteHoursKind,
-} from '@/features/security/model/site-presets';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
-type SitePanelProps = {
-  site: GuardSite | null;
-  onUpdate: (patch: GuardSitePatch) => Promise<boolean>;
+type EnvironmentSettingsPanelProps = {
+  environment: GuardEnvironment;
+  onUpdate?: (patch: GuardEnvironmentPatch) => Promise<boolean>;
   className?: string;
 };
 
 type HoursRowProps = {
-  kind: SiteHoursKind;
+  kind: GuardHoursKind;
   summary: string | null;
-  onPress: () => void;
+  onPress?: () => void;
+};
+
+type HourSelectProps = {
+  label: string;
+  value: number;
+  disabled: boolean;
+  onChange: (hour: number) => void;
 };
 
 const rowHover = Platform.select({ web: 'hover:bg-surface-secondary/60', default: '' });
+
+const clock = (hour: number) => `${String(hour).padStart(2, '0')}:00`;
+
+function HourSelect({ label, value, disabled, onChange }: HourSelectProps) {
+  const { t } = useTranslation();
+  const options = QUIET_HOUR_OPTIONS.map((hour) => ({ value: String(hour), label: clock(hour) }));
+  return (
+    <View className="min-w-0 flex-1 gap-1">
+      <Text variant="micro">{label}</Text>
+      <AdaptiveSelect
+        options={options}
+        value={String(value)}
+        onChange={(next) => onChange(Number(next))}
+        title={label}
+        closeLabel={t('common.close')}
+        searchPlaceholder={t('screens.security.hours.pick-time')}
+        emptyLabel={t('screens.security.hours.pick-time')}
+        filterThreshold={options.length + 1}
+        trigger={<SelectField label={clock(value)} disabled={disabled} />}
+      />
+    </View>
+  );
+}
 
 function HoursRow({ kind, summary, onPress }: HoursRowProps) {
   const { t } = useTranslation();
@@ -46,6 +73,8 @@ function HoursRow({ kind, summary, onPress }: HoursRowProps) {
       accessibilityRole="button"
       accessibilityLabel={t(`screens.security.site.hours.${kind}`)}
       accessibilityHint={t(`screens.security.site.hours-hint.${kind}`)}
+      accessibilityState={{ disabled: onPress === undefined }}
+      disabled={onPress === undefined}
       onPress={onPress}
       className={cn('-mx-2 flex-row items-center gap-3 rounded-2xl px-2 py-2.5 active:opacity-70', rowHover)}>
       <View className="bg-surface-secondary size-9 items-center justify-center rounded-full">
@@ -59,24 +88,27 @@ function HoursRow({ kind, summary, onPress }: HoursRowProps) {
           {summary ?? t('screens.security.site.hours-empty')}
         </Text>
       </View>
-      <Icon name="chevron-right" className="text-muted-foreground size-4" />
+      {onPress ? <Icon name="chevron-right" className="text-muted-foreground size-4" /> : null}
     </Pressable>
   );
 }
 
-export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
+export function EnvironmentSettingsPanel({ environment, onUpdate, className }: EnvironmentSettingsPanelProps) {
   const { t } = useTranslation();
-  const [editing, setEditing] = useState<SiteHoursKind | null>(null);
-  const profile: GuardSiteProfile = site?.profile ?? 'home';
-  const kinds = SITE_HOURS_BY_PROFILE[profile];
-  const hasHours = kinds.some((kind) => (site?.[kind] ?? '').trim().length > 0);
+  const [editing, setEditing] = useState<GuardHoursKind | null>(null);
+  const readOnly = onUpdate === undefined;
+  const kind = environment.kind;
+  const kinds = HOURS_BY_KIND[kind];
+  const hasHours = kinds.some((hoursKind) => environment[hoursKind].trim().length > 0);
+  const update = (patch: GuardEnvironmentPatch) => {
+    if (onUpdate) void onUpdate(patch);
+  };
 
-  const profileOptions = useMemo(
+  const quietOptions = useMemo(
     () =>
-      SITE_PROFILES.map((value) => ({
+      (['inherit', 'custom', 'off'] as const).map((value) => ({
         value,
-        label: t(`screens.security.site.profiles.${value}`),
-        icon: SITE_PROFILE_ICONS[value],
+        label: t(`screens.security.site.quiet-policies.${value}`),
       })),
     [t]
   );
@@ -102,8 +134,8 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
     [t]
   );
 
-  const summary = (kind: SiteHoursKind): string | null => {
-    const windows = parseHours(site?.[kind] ?? '');
+  const summary = (hoursKind: GuardHoursKind): string | null => {
+    const windows = parseHours(environment[hoursKind]);
     if (windows.length === 0) return null;
     return summarizeHours(windows, {
       day: (day) => t(`screens.security.site.days.${WEEK_DAY_KEYS[day] ?? 'mon'}`),
@@ -111,57 +143,54 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
     });
   };
 
-  const applyPreset = () => void onUpdate({ ...SITE_PRESETS[profile], scheduleEnabled: true });
+  const applyPreset = () => update({ ...ENVIRONMENT_PRESETS[kind], scheduleEnabled: true });
 
-  const saveHours = (kind: SiteHoursKind, spec: string) => {
-    const patch: GuardSitePatch = {};
-    patch[kind] = spec;
+  const saveHours = async (hoursKind: GuardHoursKind, spec: string): Promise<boolean> => {
+    if (!onUpdate) return false;
+    const patch: GuardEnvironmentPatch = {};
+    patch[hoursKind] = spec;
     return onUpdate(patch);
   };
 
-  const digestValue = String(site?.digestHour ?? -1);
+  const digestValue = String(environment.digestHour);
 
   return (
     <Panel
       title={t('screens.security.site.title')}
       description={t('screens.security.site.description')}
       className={className}>
-      <View className="gap-1.5">
-        <SegmentedControl
-          options={profileOptions}
-          value={profile}
-          onChange={(next) => void onUpdate({ profile: next })}
-          accessibilityLabel={t('screens.security.site.profile')}
-        />
-        <Text variant="caption">
-          {t(`screens.security.site.profile-hint.${profile}`)}
-        </Text>
-      </View>
       <ToggleRow
         label={t('screens.security.site.schedule')}
         hint={t('screens.security.site.schedule-hint')}
-        value={site?.scheduleEnabled ?? false}
-        disabled={site == null}
-        onChange={(next) => void onUpdate({ scheduleEnabled: next })}
+        value={environment.scheduleEnabled}
+        disabled={readOnly}
+        onChange={(next) => update({ scheduleEnabled: next })}
       />
-      <View className={cn('gap-0.5', site?.scheduleEnabled === false && 'opacity-60')}>
-        {kinds.map((kind) => (
-          <HoursRow key={kind} kind={kind} summary={summary(kind)} onPress={() => setEditing(kind)} />
+      <View className={cn('gap-0.5', !environment.scheduleEnabled && 'opacity-60')}>
+        {kinds.map((hoursKind) => (
+          <HoursRow
+            key={hoursKind}
+            kind={hoursKind}
+            summary={summary(hoursKind)}
+            onPress={readOnly ? undefined : () => setEditing(hoursKind)}
+          />
         ))}
       </View>
-      {!hasHours ? (
+      {!hasHours && !readOnly ? (
         <Button variant="secondary" size="sm" className="self-start" onPress={applyPreset}>
           <Icon name="sparkles" />
           <Text>{t('screens.security.site.preset')}</Text>
         </Button>
       ) : null}
-      {profile !== 'home' ? (
+      {kind !== 'home' ? (
         <View className="gap-1.5">
           <Text variant="label">{t('screens.security.site.closed')}</Text>
           <SegmentedControl<GuardClosedMode>
             options={closedOptions}
-            value={site?.closedMode ?? 'away'}
-            onChange={(next) => void onUpdate({ closedMode: next })}
+            value={environment.closedMode}
+            onChange={(next) => {
+              if (!readOnly) update({ closedMode: next });
+            }}
             accessibilityLabel={t('screens.security.site.closed')}
           />
           <Text variant="caption">
@@ -174,7 +203,7 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
         <AdaptiveSelect
           options={digestOptions}
           value={digestValue}
-          onChange={(next) => void onUpdate({ digestHour: Number(next) })}
+          onChange={(next) => update({ digestHour: Number(next) })}
           title={t('screens.security.site.digest')}
           closeLabel={t('common.close')}
           searchPlaceholder={t('screens.security.hours.pick-time')}
@@ -183,13 +212,41 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
           trigger={
             <SelectField
               label={digestOptions.find((option) => option.value === digestValue)?.label}
-              disabled={site == null}
+              disabled={readOnly}
             />
           }
         />
         <Text variant="caption">
           {t('screens.security.site.digest-hint')}
         </Text>
+      </View>
+      <View className="gap-1.5">
+        <Text variant="label">{t('screens.security.site.quiet')}</Text>
+        <SegmentedControl<GuardQuietPolicy>
+          options={quietOptions}
+          value={environment.quietPolicy}
+          onChange={(next) => {
+            if (!readOnly) update({ quietPolicy: next });
+          }}
+          accessibilityLabel={t('screens.security.site.quiet')}
+        />
+        {environment.quietPolicy === 'custom' ? (
+          <View className="flex-row gap-3">
+            <HourSelect
+              label={t('screens.security.site.quiet-from')}
+              value={environment.quietStartHour}
+              disabled={readOnly}
+              onChange={(hour) => update({ quietStartHour: hour })}
+            />
+            <HourSelect
+              label={t('screens.security.site.quiet-to')}
+              value={environment.quietEndHour}
+              disabled={readOnly}
+              onChange={(hour) => update({ quietEndHour: hour })}
+            />
+          </View>
+        ) : null}
+        <Text variant="caption">{t('screens.security.site.quiet-hint')}</Text>
       </View>
       {editing ? (
         <HoursEditor
@@ -199,7 +256,7 @@ export function SitePanel({ site, onUpdate, className }: SitePanelProps) {
           }}
           title={t('screens.security.hours.title', { kind: t(`screens.security.site.hours.${editing}`) })}
           description={t(`screens.security.site.hours-hint.${editing}`)}
-          spec={site?.[editing] ?? ''}
+          spec={environment[editing]}
           onSave={(spec) => saveHours(editing, spec)}
         />
       ) : null}

@@ -6,7 +6,7 @@ import { SectionHeader } from '@/shared/components/ui/section-header';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { guardAccessForRole } from '@/shared/libs/role-access';
-import { GuardCard, useGuardMode } from '@/features/security';
+import { GuardCard, useGuardEnvironments } from '@/features/security';
 import { CameraGrid } from '@/features/home/components/camera-grid';
 import { RecentActivityCard } from '@/features/home/components/recent-activity-card';
 import { SummaryCard } from '@/features/home/components/summary-card';
@@ -25,7 +25,7 @@ export function HomeAside({ cameras, summary, threads, now, onReadThread }: Home
   const { t } = useTranslation();
   const { role } = usePermissions();
   const guardAccess = guardAccessForRole(role);
-  const guardMode = useGuardMode(guardAccess.view).data;
+  const guardEnvironments = useGuardEnvironments(guardAccess.view).data;
 
   return (
     <View className="flex-1 gap-5">
@@ -46,7 +46,7 @@ export function HomeAside({ cameras, summary, threads, now, onReadThread }: Home
       </View>
 
       {guardAccess.view ? (
-        <GuardCard state={guardMode} onPress={() => router.push('/security')} />
+        <GuardCard environments={guardEnvironments} onPress={() => router.push('/security')} />
       ) : null}
 
       <SummaryCard

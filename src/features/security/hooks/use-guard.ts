@@ -1,21 +1,27 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { t } from '@/core/i18n';
-import type { IServiceResponse } from '@/core/interfaces';
+import type { ICameraCacheRow, IServiceResponse } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
+import { useAuthStore } from '@/core/stores';
 import type {
+  CameraEnvironmentBadge,
   GuardCameraContext,
   GuardCameraContextUpdate,
+  GuardEnvironment,
+  GuardEnvironmentCreate,
+  GuardEnvironmentPatch,
   GuardEpisode,
   GuardExpectedGuest,
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
   GuardMode,
-  GuardSite,
-  GuardSitePatch,
 } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { runServiceAction } from '@/shared/libs/service-action';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
+import { guardAccessForRole } from '@/shared/libs/role-access';
+import { runServiceAction } from '@/shared/libs/service-action';
+import { cameraEnvironmentIndex, withCameraIn, withMode } from '@/features/security/model/environments';
 
 type OptimisticRemote<T, R> = {
   mutate: (update: (previous: T | null) => T | null) => void;
@@ -25,14 +31,13 @@ type OptimisticRemote<T, R> = {
   success?: string;
 };
 
-const loadMode = () => guardService.mode();
+export type PendingMode = { mode: GuardMode; environmentId: number | null };
+
+const ALL_SCOPE = 'all';
+
+const loadEnvironments = () => guardService.environments();
 const loadGuests = () => guardService.expectedGuests();
-const loadSite = () => guardService.site();
 const loadCameras = () => guardService.cameras();
-const loadEpisodes = async () => {
-  const result = await guardService.episodes();
-  return { ...result, info: result.info?.rows ?? null };
-};
 
 async function optimisticRemote<T, R>(action: OptimisticRemote<T, R>): Promise<boolean> {
   let snapshot: T | null = null;
@@ -50,10 +55,7 @@ async function optimisticRemote<T, R>(action: OptimisticRemote<T, R>): Promise<b
   return true;
 }
 
-function replaceCamera(
-  rows: GuardCameraContext[] | null,
-  next: GuardCameraContext
-): GuardCameraContext[] {
+function replaceCamera(rows: GuardCameraContext[] | null, next: GuardCameraContext): GuardCameraContext[] {
   const others = (rows ?? []).filter((row) => row.cameraId !== next.cameraId);
   return [...others, next].sort((left, right) => left.cameraId - right.cameraId);
 }
@@ -62,39 +64,165 @@ function replaceEpisode(rows: GuardEpisode[] | null, next: GuardEpisode): GuardE
   return (rows ?? []).map((row) => (row.kind === next.kind && row.id === next.id ? next : row));
 }
 
-export function useGuardMode(enabled: boolean) {
-  return useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardMode, load: loadMode, enabled });
+function replaceEnvironment(rows: GuardEnvironment[] | null, next: GuardEnvironment): GuardEnvironment[] {
+  const list = rows ?? [];
+  return list.some((row) => row.id === next.id)
+    ? list.map((row) => (row.id === next.id ? next : row))
+    : [...list, next];
 }
 
-export function useGuard(owner: boolean) {
-  const mode = useGuardMode(true);
-  const guests = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardGuests, load: loadGuests });
-  const site = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardSite, load: loadSite, enabled: owner });
+export function useGuardEnvironments(enabled: boolean) {
+  return useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardEnvironments, load: loadEnvironments, enabled });
+}
+
+export function useCameraEnvironmentIndex(): ReadonlyMap<string, CameraEnvironmentBadge> {
+  const role = useAuthStore((state) => state.user?.role);
+  const environments = useGuardEnvironments(guardAccessForRole(role ?? 'guest').view).data;
+  const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
+  return useMemo(
+    () =>
+      cameraEnvironmentIndex(
+        environments ?? [],
+        cameras.map((camera) => camera.id)
+      ),
+    [environments, cameras]
+  );
+}
+
+export function useCameraPlacement(owner: boolean, enabled = true) {
+  const environments = useGuardEnvironments(enabled);
   const cameras = useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.guardCameras,
     load: loadCameras,
-    enabled: owner,
+    enabled: owner && enabled,
   });
-  const episodes = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardEpisodes, load: loadEpisodes });
-  const [pendingMode, setPendingMode] = useState<GuardMode | null>(null);
-  const reloadMode = mode.reload;
-  const reloadGuests = guests.reload;
-  const mutateGuests = guests.mutate;
-  const mutateSite = site.mutate;
+  const reloadEnvironments = environments.reload;
   const mutateCameras = cameras.mutate;
+  const mutateEnvironments = environments.mutate;
+
+  const updateCamera = useCallback(
+    async (cameraId: number, body: GuardCameraContextUpdate): Promise<boolean> => {
+      const target = body.environmentId;
+      let before: GuardEnvironment[] | null = null;
+      if (target !== undefined) {
+        mutateEnvironments((previous) => {
+          before = previous;
+          return previous ? withCameraIn(previous, cameraId, target) : previous;
+        });
+      }
+      const saved = await optimisticRemote<GuardCameraContext[], GuardCameraContext>({
+        mutate: mutateCameras,
+        apply: (previous) =>
+          replaceCamera(previous, {
+            ...body,
+            cameraId,
+            environmentId:
+              target ?? previous?.find((row) => row.cameraId === cameraId)?.environmentId ?? 0,
+            updatedAt: Date.now() / 1000,
+          }),
+        call: () => guardService.setCamera(cameraId, body),
+        settle: (current, info) => replaceCamera(current, info),
+        success: t('screens.security.cameras.saved'),
+      });
+      if (!saved && target !== undefined) mutateEnvironments(() => before);
+      if (saved && target !== undefined) void reloadEnvironments();
+      return saved;
+    },
+    [mutateCameras, mutateEnvironments, reloadEnvironments]
+  );
+
+  return {
+    environments,
+    contexts: cameras.data ?? [],
+    reloadContexts: cameras.reload,
+    updateCamera,
+  };
+}
+
+export function useGuard(owner: boolean, environmentId?: number) {
+  const placement = useCameraPlacement(owner);
+  const environments = placement.environments;
+  const guests = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardGuests, load: loadGuests });
+  const loadEpisodes = useCallback(async () => {
+    const result = await guardService.episodes(environmentId);
+    return { ...result, info: result.info?.rows ?? null };
+  }, [environmentId]);
+  const episodes = useRemoteResource({
+    cacheKey: VIEW_CACHE_KEYS.guardEpisodes,
+    scope: environmentId === undefined ? ALL_SCOPE : String(environmentId),
+    load: loadEpisodes,
+  });
+  const [pendingMode, setPendingMode] = useState<PendingMode | null>(null);
+  const reloadEnvironments = environments.reload;
+  const reloadGuests = guests.reload;
+  const reloadCameras = placement.reloadContexts;
+  const mutateEnvironments = environments.mutate;
+  const mutateGuests = guests.mutate;
   const mutateEpisodes = episodes.mutate;
 
   const setMode = useCallback(
-    async (next: GuardMode) => {
-      setPendingMode(next);
-      const result = await runServiceAction({
-        call: () => guardService.setMode(next),
-        success: t('screens.security.mode.saved', { mode: t(`screens.security.mode.${next}`) }),
+    async (mode: GuardMode, target?: GuardEnvironment): Promise<boolean> => {
+      setPendingMode({ mode, environmentId: target?.id ?? null });
+      const label = t(`screens.security.mode.${mode}`);
+      const saved = await optimisticRemote<GuardEnvironment[], GuardEnvironment[]>({
+        mutate: mutateEnvironments,
+        apply: (previous) => (previous ? withMode(previous, mode, target?.id) : previous),
+        call: () => guardService.setMode(mode, target?.id),
+        settle: (_current, info) => info,
+        success: target
+          ? t('screens.security.environments.mode-saved', { name: target.name, mode: label })
+          : t('screens.security.environments.mode-saved-all', { mode: label }),
       });
       setPendingMode(null);
-      if (result) await reloadMode();
+      return saved;
     },
-    [reloadMode]
+    [mutateEnvironments]
+  );
+
+  const createEnvironment = useCallback(
+    async (body: GuardEnvironmentCreate): Promise<GuardEnvironment | null> => {
+      const result = await runServiceAction({
+        call: () => guardService.createEnvironment(body),
+        success: t('screens.security.environments.created', { name: body.name }),
+      });
+      const created = result?.info ?? null;
+      if (created) mutateEnvironments((previous) => replaceEnvironment(previous, created));
+      return created;
+    },
+    [mutateEnvironments]
+  );
+
+  const updateEnvironment = useCallback(
+    (environment: GuardEnvironment, patch: GuardEnvironmentPatch): Promise<boolean> =>
+      optimisticRemote<GuardEnvironment[], GuardEnvironment>({
+        mutate: mutateEnvironments,
+        apply: (previous) => replaceEnvironment(previous, { ...environment, ...patch }),
+        call: () => guardService.updateEnvironment(environment.id, patch),
+        settle: (current, info) => replaceEnvironment(current, info),
+      }),
+    [mutateEnvironments]
+  );
+
+  const removeEnvironment = useCallback(
+    async (environment: GuardEnvironment): Promise<boolean> => {
+      const result = await runServiceAction({
+        confirm: {
+          title: t('screens.security.environments.remove-title', { name: environment.name }),
+          description: t('screens.security.environments.remove-description'),
+          confirmLabel: t('screens.security.environments.remove'),
+          intent: 'danger',
+        },
+        call: () => guardService.removeEnvironment(environment.id),
+        success: t('screens.security.environments.removed', { name: environment.name }),
+      });
+      if (!result?.info) return false;
+      const remaining = result.info;
+      mutateEnvironments(() => remaining);
+      void reloadCameras();
+      void reloadGuests();
+      return true;
+    },
+    [mutateEnvironments, reloadCameras, reloadGuests]
   );
 
   const addGuest = useCallback(
@@ -126,32 +254,6 @@ export function useGuard(owner: boolean) {
     [mutateGuests]
   );
 
-  const updateSite = useCallback(
-    async (patch: GuardSitePatch): Promise<boolean> => {
-      const saved = await optimisticRemote<GuardSite, GuardSite>({
-        mutate: mutateSite,
-        apply: (previous) => (previous ? { ...previous, ...patch } : previous),
-        call: () => guardService.updateSite(patch),
-        settle: (_current, info) => info,
-      });
-      if (saved) await reloadMode();
-      return saved;
-    },
-    [mutateSite, reloadMode]
-  );
-
-  const updateCamera = useCallback(
-    (cameraId: number, body: GuardCameraContextUpdate): Promise<boolean> =>
-      optimisticRemote<GuardCameraContext[], GuardCameraContext>({
-        mutate: mutateCameras,
-        apply: (previous) => replaceCamera(previous, { ...body, cameraId, updatedAt: Date.now() / 1000 }),
-        call: () => guardService.setCamera(cameraId, body),
-        settle: (current, info) => replaceCamera(current, info),
-        success: t('screens.security.cameras.saved'),
-      }),
-    [mutateCameras]
-  );
-
   const reviewEpisode = useCallback(
     (episode: GuardEpisode, label: GuardFeedbackLabel): Promise<boolean> =>
       optimisticRemote<GuardEpisode[], GuardEpisode>({
@@ -166,20 +268,22 @@ export function useGuard(owner: boolean) {
   );
 
   return {
-    mode: mode.data,
+    environments: environments.data ?? [],
+    environmentsReady: environments.data != null,
     guests: guests.data ?? [],
-    site: site.data,
-    cameras: cameras.data ?? [],
+    cameras: placement.contexts,
     episodes: episodes.data ?? [],
     loadedAt: guests.loadedAt,
-    failed: mode.status === 'failed',
+    failed: environments.status === 'failed',
     pendingMode,
-    reload: reloadMode,
+    reload: reloadEnvironments,
     setMode,
+    createEnvironment,
+    updateEnvironment,
+    removeEnvironment,
     addGuest,
     removeGuest,
-    updateSite,
-    updateCamera,
+    updateCamera: placement.updateCamera,
     reviewEpisode,
   };
 }

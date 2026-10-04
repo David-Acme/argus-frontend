@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import type { GuardExpectedGuestCreate } from '@/core/types';
+import type { GuardEnvironment, GuardExpectedGuestCreate } from '@/core/types';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
@@ -14,15 +14,26 @@ type ExpectedGuestFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (body: GuardExpectedGuestCreate) => Promise<boolean>;
+  environments?: readonly GuardEnvironment[];
 };
+
+const EVERYWHERE = '0';
 
 const DESCRIPTION_MAX = 200;
 
-export function ExpectedGuestForm({ open, onOpenChange, onSubmit }: ExpectedGuestFormProps) {
+export function ExpectedGuestForm({ open, onOpenChange, onSubmit, environments = [] }: ExpectedGuestFormProps) {
   const { t } = useTranslation();
   const [description, setDescription] = useState('');
   const [hours, setHours] = useState(String(GUARD_GUEST_DEFAULT_HOURS));
   const [oneTime, setOneTime] = useState(false);
+  const [place, setPlace] = useState(EVERYWHERE);
+  const placeOptions = useMemo(
+    () => [
+      { value: EVERYWHERE, label: t('screens.security.environments.all') },
+      ...environments.map((environment) => ({ value: String(environment.id), label: environment.name })),
+    ],
+    [environments, t]
+  );
   const [saving, setSaving] = useState(false);
   const trimmed = description.trim();
 
@@ -40,6 +51,7 @@ export function ExpectedGuestForm({ open, onOpenChange, onSubmit }: ExpectedGues
       setDescription('');
       setHours(String(GUARD_GUEST_DEFAULT_HOURS));
       setOneTime(false);
+      setPlace(EVERYWHERE);
     }
     onOpenChange(next);
   };
@@ -47,7 +59,12 @@ export function ExpectedGuestForm({ open, onOpenChange, onSubmit }: ExpectedGues
   const submit = async () => {
     if (trimmed.length === 0) return;
     setSaving(true);
-    const saved = await onSubmit({ description: trimmed, hours: Number(hours), oneTime });
+    const saved = await onSubmit({
+      description: trimmed,
+      hours: Number(hours),
+      oneTime,
+      ...(place === EVERYWHERE ? {} : { environmentId: Number(place) }),
+    });
     setSaving(false);
     if (saved) change(false);
   };
@@ -56,6 +73,7 @@ export function ExpectedGuestForm({ open, onOpenChange, onSubmit }: ExpectedGues
     <AdaptiveDialog
       open={open}
       onOpenChange={change}
+      onSubmit={submit}
       title={t('screens.security.guests.form-title')}
       closeLabel={t('common.close')}
       footer={
@@ -89,6 +107,17 @@ export function ExpectedGuestForm({ open, onOpenChange, onSubmit }: ExpectedGues
             accessibilityLabel={t('screens.security.guests.duration')}
           />
         </View>
+        {environments.length > 1 ? (
+          <View className="gap-1.5">
+            <Text variant="label">{t('screens.security.environments.filter')}</Text>
+            <SegmentedControl
+              options={placeOptions}
+              value={place}
+              onChange={setPlace}
+              accessibilityLabel={t('screens.security.environments.filter')}
+            />
+          </View>
+        ) : null}
         <View className="gap-1">
           <ToggleRow label={t('screens.security.guests.one-time')} value={oneTime} onChange={setOneTime} />
           <Text variant="caption" className="px-1">

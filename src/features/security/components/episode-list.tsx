@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import type { GuardCameraContext, GuardEpisode, GuardFeedbackLabel } from '@/core/types';
+import type { GuardCameraContext, GuardEnvironment, GuardEpisode, GuardFeedbackLabel } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Icon } from '@/shared/components/ui/icon';
@@ -15,10 +15,11 @@ type EpisodeListProps = {
   episodes: readonly GuardEpisode[];
   cameras: readonly ICameraCacheRow[];
   contexts: readonly GuardCameraContext[];
+  environments?: readonly GuardEnvironment[];
   onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
 };
 
-export function EpisodeList({ episodes, cameras, contexts, onReview }: EpisodeListProps) {
+export function EpisodeList({ episodes, cameras, contexts, environments = [], onReview }: EpisodeListProps) {
   const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
   const names = useMemo(
@@ -28,6 +29,13 @@ export function EpisodeList({ episodes, cameras, contexts, onReview }: EpisodeLi
   const byCamera = useMemo(
     () => new Map(contexts.map((context) => [context.cameraId, context])),
     [contexts]
+  );
+  const places = useMemo(
+    () =>
+      environments.length > 1
+        ? new Map(environments.map((environment) => [environment.id, environment.name]))
+        : new Map<number, string>(),
+    [environments]
   );
   const pageSize = onReview ? EPISODE_PAGE_SIZE.review : EPISODE_PAGE_SIZE.read;
   const hidden = Math.max(0, episodes.length - pageSize);
@@ -52,11 +60,14 @@ export function EpisodeList({ episodes, cameras, contexts, onReview }: EpisodeLi
           <EpisodeCard
             key={episodeKey(episode)}
             episode={episode}
-            cameraName={
+            cameraName={[
               names.get(String(episode.cameraId)) ??
-              (episode.cameraName ||
-                t('screens.security.cameras.edit-title', { name: String(episode.cameraId) }))
-            }
+                (episode.cameraName ||
+                  t('screens.security.cameras.edit-title', { name: String(episode.cameraId) })),
+              places.get(episode.environmentId),
+            ]
+              .filter((part): part is string => Boolean(part))
+              .join(' · ')}
             context={byCamera.get(episode.cameraId) ?? null}
             onReview={onReview}
           />

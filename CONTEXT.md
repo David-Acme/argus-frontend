@@ -1904,3 +1904,15 @@ expiration date.
 - The four owner routes are not in `HTTP_CONTRACTS` yet: their zod schemas
   (`userSessionsOverviewSchema`, `authSessionListSchema`,
   `sessionRevokeResultSchema`) are registered once MAIN records the goldens.
+
+## Security by environment (2026-10-04)
+
+Guard posture is per environment now (backend 2f669111, `services/guard/CONTEXT.md` "Environments"): a home, a restaurant, an office, each with its own kind, mode, hours, closed mode, daily summary and quiet hours, and every camera in exactly one (unlisted cameras live in the default environment).
+
+- **Data.** One remote resource, `guard.environments` (`GET /guard/environments`, zod-checked in `guardService`, contract `guardEnvironmentSchema`), carries config, live posture and `cameraIds`; it replaces `guard.mode` and `guard.site`. `POST /guard/mode {mode, environmentId?}` answers the whole list, so `setMode` applies `withMode` optimistically and settles from the answer. Episodes are a scoped cache (`guard.episodes`, scope `all` or the environment id) loaded with `?environmentId=`.
+- **Screens.** `/security` is the overview: the hero (stats and "Todos los entornos", the all-environments mode chips, shown only with several environments), the environment cards (kind, effective mode, posture, hours, cameras, ongoing episodes; owners get the dashed "Nuevo entorno" tile) and the episodes and expected visits. `/security/[id]` is one environment: mode cards, cameras and what each looks at (owner), its episodes, and "Horario y resúmenes" (hours, closed mode, daily summary, quiet hours inherit/custom/off), read-only for residents and guards; edit and remove live in the header menu (the default cannot be removed). `routeFallback` applies a route's rule to its nested paths, so a guest cannot open `/security/3`.
+- **Camera detail.** `CameraEnvironmentPanel({ cameraId, className })` ("Entorno y vigilancia") and `useCameraEnvironmentIndex()` (camera id → environment badge, `several` false with one environment) are exported for features/cameras (CAMERA2 hosts them); the camera context editor gains the environment choice.
+- **Expected visits** can be scoped to one environment from the form when there are several.
+- **Voice.** The call situation lists each environment's posture when there are several ("Vigilancia por entorno: Casa, modo noche; Trattoria, abierto al público"). `app.set_guard_mode` may carry `environment` (a name or a place word from the call); `matchEnvironment` resolves it by exact name, then name words, then kind words, refuses an ambiguous or unknown place (the call corrects itself aloud with the names it knows) and treats a command with no place as every environment.
+- **Why "entorno".** The owner's word for it; "lugar" stays in hints where it reads more naturally.
+- Golden fixtures for the new routes are recorded by MAIN; `HTTP_CONTRACTS` gains `GET /guard/environments` once they exist (the test needs a recording).

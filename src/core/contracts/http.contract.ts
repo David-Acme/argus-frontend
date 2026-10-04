@@ -9,8 +9,8 @@ import type {
   IUserManagementRecord,
 } from '@/core/interfaces';
 import type {
+  GuardEnvironment,
   GuardExpectedGuest,
-  GuardModeState,
   ProfileApplyResult,
   SettingsOverview,
   SettingsOwner,
@@ -66,13 +66,31 @@ export const cameraCapabilitiesSchema = z.object({
   alarm: z.boolean().optional(),
 }) satisfies z.ZodType<ICameraCapabilities>;
 
-export const guardModeStateSchema = z.object({
+export const guardEnvironmentSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  kind: z.enum(['home', 'office', 'commercial', 'restaurant', 'warehouse', 'outdoor']),
+  isDefault: z.boolean(),
   mode: guardMode,
   effectiveMode: guardMode,
   occupancy: z.enum(['manual', 'armed', 'open', 'staffed', 'closed', 'asleep']),
   publicPresent: z.boolean(),
   staffOnly: z.boolean(),
-}) satisfies z.ZodType<GuardModeState>;
+  scheduleEnabled: z.boolean(),
+  asleep: z.string(),
+  open: z.string(),
+  staffed: z.string(),
+  closedMode: z.enum(['away', 'armed']),
+  digestHour: z.number(),
+  quietPolicy: z.enum(['inherit', 'custom', 'off']),
+  quietStartHour: z.number(),
+  quietEndHour: z.number(),
+  cameraIds: z.array(z.number()),
+  modeUpdatedAt: z.number(),
+  updatedAt: z.number(),
+}) satisfies z.ZodType<GuardEnvironment>;
+
+export const guardEnvironmentListSchema = z.array(guardEnvironmentSchema);
 
 export const guardExpectedGuestSchema = z.object({
   id: z.number(),
@@ -83,6 +101,7 @@ export const guardExpectedGuestSchema = z.object({
   oneTime: z.boolean(),
   validFrom: z.number(),
   validUntil: z.number(),
+  environmentId: z.number().default(0),
 }) satisfies z.ZodType<GuardExpectedGuest>;
 
 const settingsOwnerName = z.enum([
@@ -274,7 +293,6 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'POST /auth/device-login': deviceLoginCreatedSchema,
   'GET /auth/device-login/{1}': deviceLoginStatusSchema,
   'GET /camera/{1}/capabilities': cameraCapabilitiesSchema,
-  'GET /guard/mode': guardModeStateSchema,
   'GET /guard/expected-guests': z.array(guardExpectedGuestSchema),
   'GET /settings': settingsOverviewSchema,
   'GET /user': z.array(userManagementRecordSchema),

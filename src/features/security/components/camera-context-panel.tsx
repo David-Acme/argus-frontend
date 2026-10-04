@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import type { GuardCameraContext, GuardCameraContextUpdate } from '@/core/types';
+import type { GuardCameraContext, GuardCameraContextUpdate, GuardEnvironment } from '@/core/types';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Icon } from '@/shared/components/ui/icon';
 import { Panel } from '@/shared/components/ui/panel';
@@ -15,6 +15,8 @@ import { cn } from '@/shared/libs/utils';
 type CameraContextPanelProps = {
   cameras: readonly ICameraCacheRow[];
   contexts: readonly GuardCameraContext[];
+  environments: readonly GuardEnvironment[];
+  environment: GuardEnvironment;
   onSave: (cameraId: number, body: GuardCameraContextUpdate) => Promise<boolean>;
   className?: string;
 };
@@ -74,7 +76,14 @@ function CameraRow({ camera, context, onPress }: CameraRowProps) {
   );
 }
 
-export function CameraContextPanel({ cameras, contexts, onSave, className }: CameraContextPanelProps) {
+export function CameraContextPanel({
+  cameras,
+  contexts,
+  environments,
+  environment,
+  onSave,
+  className,
+}: CameraContextPanelProps) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<ICameraCacheRow | null>(null);
   const byCamera = useMemo(
@@ -86,16 +95,16 @@ export function CameraContextPanel({ cameras, contexts, onSave, className }: Cam
 
   return (
     <Panel
-      title={t('screens.security.cameras.title')}
-      description={t('screens.security.cameras.description')}
+      title={t('screens.security.environments.cameras-title')}
+      description={t('screens.security.environments.cameras-description')}
       count={cameras.length - described}
       className={className}>
       {cameras.length === 0 ? (
         <EmptyState
           variant="panel"
           icon="camera"
-          title={t('screens.security.cameras.empty')}
-          hint={t('screens.security.cameras.empty-hint')}
+          title={t('screens.security.environments.empty-cameras')}
+          hint={t('screens.security.environments.empty-cameras-hint')}
         />
       ) : (
         <View className="gap-0.5">
@@ -118,6 +127,8 @@ export function CameraContextPanel({ cameras, contexts, onSave, className }: Cam
           }}
           cameraName={editing.name}
           context={editingContext}
+          environments={environments}
+          environmentId={environment.id}
           onSave={(body) => onSave(Number(editing.id), body)}
         />
       ) : null}

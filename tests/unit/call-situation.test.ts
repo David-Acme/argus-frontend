@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { CalendarEntry } from '@/core/types';
+import type { CalendarEntry, GuardEnvironment } from '@/core/types';
 import { buildCallSituation, clockOf, spokenDetail } from '@/features/voice/model/call-situation';
 
 const t = ((key: string, params?: Record<string, string | number>) =>
@@ -18,11 +18,36 @@ const entry = (id: string, title: string, startsAt: number, extra: Partial<Calen
   ...extra,
 });
 
+const place = (id: number, name: string, extra: Partial<GuardEnvironment> = {}): GuardEnvironment => ({
+  id,
+  name,
+  kind: 'home',
+  isDefault: id === 1,
+  mode: 'home',
+  effectiveMode: 'home',
+  occupancy: 'manual',
+  publicPresent: false,
+  staffOnly: false,
+  scheduleEnabled: false,
+  asleep: '',
+  open: '',
+  staffed: '',
+  closedMode: 'away',
+  digestHour: 21,
+  quietPolicy: 'inherit',
+  quietStartHour: 22,
+  quietEndHour: 7,
+  cameraIds: [],
+  modeUpdatedAt: 0,
+  updatedAt: 0,
+  ...extra,
+});
+
 describe('buildCallSituation', () => {
   test('says the guard mode, the pending agenda in order and the events of the call', () => {
     const text = buildCallSituation({
       t,
-      guardMode: 'away',
+      guard: [place(1, 'Casa', { mode: 'away', effectiveMode: 'away' })],
       agenda: [
         entry('b', 'Cena', at(21, 0)),
         entry('a', 'Dentista', at(10, 0), { status: 'complete' }),
@@ -45,13 +70,33 @@ describe('buildCallSituation', () => {
   test('a free day says so and a role without the guard leaves the mode out', () => {
     const text = buildCallSituation({
       t,
-      guardMode: null,
+      guard: [],
       agenda: [],
       agendaItems: 4,
       events: [],
       offlineCameras: [],
     });
     expect(text.split('\n')).toEqual(['screens.voice.situation.header', 'screens.voice.situation.agenda-empty']);
+  });
+});
+
+describe('the guard line names every environment when there are several', () => {
+  test('each place says its posture', () => {
+    const text = buildCallSituation({
+      t,
+      guard: [
+        place(1, 'Casa', { mode: 'night', effectiveMode: 'night' }),
+        place(2, 'Trattoria', { occupancy: 'open' }),
+        place(3, 'Oficina', { occupancy: 'closed', effectiveMode: 'armed' }),
+      ],
+      agenda: [],
+      agendaItems: 4,
+      events: [],
+      offlineCameras: [],
+    });
+    expect(text.split('\n')[1]).toBe(
+      'screens.voice.situation.guard-places{"items":"screens.voice.situation.guard-place{\\"name\\":\\"Casa\\",\\"mode\\":\\"screens.voice.situation.modes.night\\"}; screens.voice.situation.guard-place-open{\\"name\\":\\"Trattoria\\"}; screens.voice.situation.guard-place-closed{\\"name\\":\\"Oficina\\",\\"mode\\":\\"screens.voice.situation.modes.armed\\"}"}'
+    );
   });
 });
 

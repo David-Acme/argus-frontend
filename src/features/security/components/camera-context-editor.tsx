@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
-import type { GuardCameraContext, GuardCameraContextUpdate, GuardCameraRole } from '@/core/types';
+import type {
+  GuardCameraContext,
+  GuardCameraContextUpdate,
+  GuardCameraRole,
+  GuardEnvironment,
+} from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
@@ -9,6 +14,7 @@ import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { HoursFields } from '@/features/security/components/hours-fields';
 import {
+  ENVIRONMENT_KIND_ICONS,
   CAMERA_ROLE_ICONS,
   CAMERA_ROLE_KEYS,
   CAMERA_ROLE_OUTDOOR,
@@ -24,6 +30,8 @@ type CameraContextEditorProps = {
   onOpenChange: (open: boolean) => void;
   cameraName: string;
   context: GuardCameraContext | null;
+  environments: readonly GuardEnvironment[];
+  environmentId: number | null;
   onSave: (body: GuardCameraContextUpdate) => Promise<boolean>;
 };
 
@@ -33,13 +41,15 @@ type Draft = {
   publicArea: boolean;
   ownHours: boolean;
   windows: HoursWindow[];
+  environmentId: number | null;
 };
 
 const tileHover = Platform.select({ web: 'hover:bg-surface-secondary/70', default: '' });
 
-function draftFrom(context: GuardCameraContext | null): Draft {
+function draftFrom(context: GuardCameraContext | null, environmentId: number | null): Draft {
   const windows = parseHours(context?.activeHours ?? '');
   return {
+    environmentId,
     role: context?.role ?? 'other',
     outdoor: context?.outdoor ?? false,
     publicArea: context?.publicArea ?? false,
@@ -53,11 +63,13 @@ export function CameraContextEditor({
   onOpenChange,
   cameraName,
   context,
+  environments,
+  environmentId,
   onSave,
 }: CameraContextEditorProps) {
   const { t } = useTranslation();
   const { isCompact } = useWindowClass();
-  const [draft, setDraft] = useState<Draft>(() => draftFrom(context));
+  const [draft, setDraft] = useState<Draft>(() => draftFrom(context, environmentId));
   const [saving, setSaving] = useState(false);
   const invalid = draft.ownHours && draft.windows.some((window) => window.start === window.end);
 
@@ -96,6 +108,7 @@ export function CameraContextEditor({
       outdoor: draft.outdoor,
       publicArea: draft.publicArea,
       activeHours: draft.ownHours ? formatHours(draft.windows) : '',
+      ...(draft.environmentId === null ? {} : { environmentId: draft.environmentId }),
     });
     setSaving(false);
     if (saved) onOpenChange(false);
@@ -118,6 +131,42 @@ export function CameraContextEditor({
         </>
       }>
       <View className="gap-5">
+        {environments.length > 1 ? (
+          <View className="gap-2">
+            <Text variant="label">{t('screens.security.cameras.environment')}</Text>
+            <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-2">
+              {environments.map((environment) => {
+                const active = draft.environmentId === environment.id;
+                return (
+                  <Pressable
+                    key={environment.id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: active }}
+                    onPress={() => setDraft((current) => ({ ...current, environmentId: environment.id }))}
+                    className={cn(
+                      'min-h-12 flex-row items-center gap-2 rounded-2xl border px-3 py-2 active:opacity-80',
+                      isCompact ? 'basis-[47%] grow' : 'basis-[31%] grow',
+                      active ? 'bg-interactive border-interactive' : cn('bg-card border-border-subtle', tileHover)
+                    )}>
+                    <Icon
+                      name={ENVIRONMENT_KIND_ICONS[environment.kind]}
+                      className={cn('size-4', active ? 'text-foreground-on-interactive' : 'text-foreground-secondary')}
+                    />
+                    <Text
+                      variant="label"
+                      numberOfLines={1}
+                      className={cn('flex-1', active ? 'text-foreground-on-interactive' : 'text-foreground')}>
+                      {environment.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text variant="caption" className="px-1">
+              {t('screens.security.cameras.environment-hint')}
+            </Text>
+          </View>
+        ) : null}
         <View className="gap-2">
           <Text variant="label">{t('screens.security.cameras.role')}</Text>
           <View accessibilityRole="radiogroup" className="flex-row flex-wrap gap-2">

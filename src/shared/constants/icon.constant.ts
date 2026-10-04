@@ -73,6 +73,9 @@ import Store from 'lucide-react-native/icons/store';
 import Sun from 'lucide-react-native/icons/sun';
 import Trash2 from 'lucide-react-native/icons/trash-2';
 import Trees from 'lucide-react-native/icons/trees';
+import Utensils from 'lucide-react-native/icons/utensils';
+import Warehouse from 'lucide-react-native/icons/warehouse';
+import MapPin from 'lucide-react-native/icons/map-pin';
 import TrendingDown from 'lucide-react-native/icons/trending-down';
 import TrendingUp from 'lucide-react-native/icons/trending-up';
 import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
@@ -182,4 +185,7 @@ export const ICONS = {
   sofa: Sofa,
   store: Store,
   trees: Trees,
+  utensils: Utensils,
+  warehouse: Warehouse,
+  'map-pin': MapPin,
 } as const;

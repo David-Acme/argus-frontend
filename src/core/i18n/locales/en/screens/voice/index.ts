@@ -33,6 +33,7 @@ export const voice = {
   actions: {
     'camera-missing': 'Argus could not find that camera.',
     'guard-mode': 'Argus switched security to {mode}.',
+    'guard-mode-place': 'Argus set {name} to {mode} mode.',
     'show-camera': 'Camera {name}',
     'show-camera-any': 'Camera from the alert',
     open: 'Open {screen}',
@@ -45,6 +46,7 @@ export const voice = {
       'camera-missing': 'I cannot find that camera',
       'no-access': 'you do not have access to that section',
       'bad-mode': 'that guard mode does not exist',
+      'unknown-environment': 'I do not know which place that is; there is {names}',
       failed: 'something failed in the app',
     },
     screens: {
@@ -70,6 +72,12 @@ export const voice = {
       armed: 'armed, maximum alert',
     },
     'guard-mode': 'Guard mode: {mode}.',
+    'guard-places': 'Security by environment: {items}.',
+    'guard-place': '{name}, {mode} mode',
+    'guard-place-open': '{name}, open to the public',
+    'guard-place-staffed': '{name}, staff only',
+    'guard-place-closed': '{name}, closed ({mode} mode)',
+    'guard-place-asleep': '{name}, resting (night mode)',
     agenda: 'Today\'s agenda: {items}.',
     'agenda-more': 'Today\'s agenda: {items}; and {count} more.',
     'agenda-empty': 'Today\'s agenda is free.',

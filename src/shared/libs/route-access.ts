@@ -15,6 +15,6 @@ const ROUTE_RULES: Readonly<Record<string, RouteRule>> = {
 };
 
 export function routeFallback(pathname: string, role: UserRole): RouteRule['fallback'] | null {
-  const rule = ROUTE_RULES[pathname];
+  const rule = ROUTE_RULES[pathname] ?? ROUTE_RULES[`/${pathname.split('/')[1] ?? ''}`];
   return rule && !rule.allows(role) ? rule.fallback : null;
 }

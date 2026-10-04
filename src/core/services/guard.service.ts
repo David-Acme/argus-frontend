@@ -1,3 +1,4 @@
+import { guardEnvironmentListSchema, guardEnvironmentSchema } from '@/core/contracts/http.contract';
 import type { IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import type {
@@ -5,24 +6,61 @@ import type {
   GuardCameraContextUpdate,
   GuardEpisode,
   GuardEpisodeDetail,
+  GuardEnvironment,
+  GuardEnvironmentCreate,
+  GuardEnvironmentPatch,
   GuardEpisodePage,
   GuardExpectedGuest,
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
   GuardMode,
-  GuardModeState,
-  GuardSite,
-  GuardSitePatch,
 } from '@/core/types';
 import { GUARD_LIST_LIMIT } from '@/shared/constants';
 
+function checked<T>(result: IServiceResponse<unknown>, parse: (info: unknown) => T | null): IServiceResponse<T> {
+  if (!result.ok) return { status: result.status, ok: false, info: null, errors: result.errors };
+  const info = parse(result.info);
+  if (info === null) {
+    return {
+      status: result.status,
+      ok: false,
+      info: null,
+      errors: { code: 'INVALID_RESPONSE', message: 'The guard answered an unexpected shape' },
+    };
+  }
+  return { status: result.status, ok: true, info, errors: null };
+}
+
+const environmentList = (info: unknown): GuardEnvironment[] | null => {
+  const parsed = guardEnvironmentListSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
+const environmentOne = (info: unknown): GuardEnvironment | null => {
+  const parsed = guardEnvironmentSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
 class GuardService {
-  mode(): Promise<IServiceResponse<GuardModeState>> {
-    return httpService.get<GuardModeState>('/guard/mode');
+  async environments(): Promise<IServiceResponse<GuardEnvironment[]>> {
+    return checked(await httpService.get<unknown>('/guard/environments'), environmentList);
   }
 
-  setMode(mode: GuardMode): Promise<IServiceResponse<{ mode: GuardMode }>> {
-    return httpService.post<{ mode: GuardMode }>('/guard/mode', { mode });
+  async createEnvironment(body: GuardEnvironmentCreate): Promise<IServiceResponse<GuardEnvironment>> {
+    return checked(await httpService.post<unknown>('/guard/environments', body), environmentOne);
+  }
+
+  async updateEnvironment(id: number, patch: GuardEnvironmentPatch): Promise<IServiceResponse<GuardEnvironment>> {
+    return checked(await httpService.patch<unknown>(`/guard/environments/${id}`, patch), environmentOne);
+  }
+
+  async removeEnvironment(id: number): Promise<IServiceResponse<GuardEnvironment[]>> {
+    return checked(await httpService.delete<unknown>(`/guard/environments/${id}`), environmentList);
+  }
+
+  async setMode(mode: GuardMode, environmentId?: number): Promise<IServiceResponse<GuardEnvironment[]>> {
+    const body = environmentId === undefined ? { mode } : { mode, environmentId };
+    return checked(await httpService.post<unknown>('/guard/mode', body), environmentList);
   }
 
   expectedGuests(): Promise<IServiceResponse<GuardExpectedGuest[]>> {
@@ -37,14 +75,6 @@ class GuardService {
     return httpService.delete<{ removed: boolean }>(`/guard/expected-guests?id=${id}`);
   }
 
-  site(): Promise<IServiceResponse<GuardSite>> {
-    return httpService.get<GuardSite>('/guard/site');
-  }
-
-  updateSite(patch: GuardSitePatch): Promise<IServiceResponse<GuardSite>> {
-    return httpService.patch<GuardSite>('/guard/site', patch);
-  }
-
   cameras(): Promise<IServiceResponse<GuardCameraContext[]>> {
     return httpService.get<GuardCameraContext[]>('/guard/cameras');
   }
@@ -53,8 +83,9 @@ class GuardService {
     return httpService.put<GuardCameraContext>(`/guard/cameras/${cameraId}`, body);
   }
 
-  episodes(): Promise<IServiceResponse<GuardEpisodePage>> {
-    return httpService.get<GuardEpisodePage>(`/guard/episodes?limit=${GUARD_LIST_LIMIT}`);
+  episodes(environmentId?: number): Promise<IServiceResponse<GuardEpisodePage>> {
+    const scope = environmentId === undefined ? '' : `&environmentId=${environmentId}`;
+    return httpService.get<GuardEpisodePage>(`/guard/episodes?limit=${GUARD_LIST_LIMIT}${scope}`);
   }
 
   episode(id: number): Promise<IServiceResponse<GuardEpisodeDetail>> {

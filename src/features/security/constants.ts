@@ -1,4 +1,4 @@
-import type { GuardCameraRole, GuardMode, GuardReason, GuardSiteProfile, IconName } from '@/core/types';
+import type { GuardCameraRole, GuardEnvironmentKind, GuardMode, GuardReason, IconName } from '@/core/types';
 
 export const GUARD_MODE_ICONS: Readonly<Record<GuardMode, IconName>> = {
   home: 'home',
@@ -13,13 +13,27 @@ export const GUARD_GUEST_DEFAULT_HOURS = 4;
 
 export const EPISODE_PAGE_SIZE = { review: 3, read: 5 } as const;
 
-export const SITE_PROFILES: readonly GuardSiteProfile[] = ['home', 'office', 'commercial'];
+export const ENVIRONMENT_KINDS: readonly GuardEnvironmentKind[] = [
+  'home',
+  'office',
+  'commercial',
+  'restaurant',
+  'warehouse',
+  'outdoor',
+];
 
-export const SITE_PROFILE_ICONS: Readonly<Record<GuardSiteProfile, IconName>> = {
+export const ENVIRONMENT_KIND_ICONS: Readonly<Record<GuardEnvironmentKind, IconName>> = {
   home: 'home',
   office: 'building',
   commercial: 'store',
+  restaurant: 'utensils',
+  warehouse: 'warehouse',
+  outdoor: 'trees',
 };
+
+export const ENVIRONMENT_NAME_MAX = 60;
+
+export const QUIET_HOUR_OPTIONS: readonly number[] = Array.from({ length: 24 }, (_, hour) => hour);
 
 export const CAMERA_ROLES: readonly GuardCameraRole[] = [
   'entrance',

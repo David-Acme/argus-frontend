@@ -44,7 +44,9 @@ export function CallActionChips({ actions }: CallActionChipsProps) {
     }
     const mode = String(action.arguments.mode ?? '');
     const key = `screens.security.mode.${mode}`;
-    return t('screens.voice.actions.set-guard-mode', { mode: tk(key) === key ? mode : tk(key) });
+    const label = t('screens.voice.actions.set-guard-mode', { mode: tk(key) === key ? mode : tk(key) });
+    const place = typeof action.arguments.environment === 'string' ? action.arguments.environment.trim() : '';
+    return place ? `${place} · ${label}` : label;
   };
 
   if (visible.length === 0) return null;

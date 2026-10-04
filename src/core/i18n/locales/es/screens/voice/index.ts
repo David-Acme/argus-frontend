@@ -33,6 +33,7 @@ export const voice = {
   actions: {
     'camera-missing': 'Argus no encontró esa cámara.',
     'guard-mode': 'Argus cambió la vigilancia a {mode}.',
+    'guard-mode-place': 'Argus puso {name} en modo {mode}.',
     'show-camera': 'Cámara {name}',
     'show-camera-any': 'Cámara del aviso',
     open: 'Abrir {screen}',
@@ -45,6 +46,7 @@ export const voice = {
       'camera-missing': 'no encuentro esa cámara',
       'no-access': 'no tienes acceso a esa sección',
       'bad-mode': 'ese modo de vigilancia no existe',
+      'unknown-environment': 'no sé qué lugar es; tengo {names}',
       failed: 'algo falló en la app',
     },
     screens: {
@@ -70,6 +72,12 @@ export const voice = {
       armed: 'armado, máxima alerta',
     },
     'guard-mode': 'Modo de vigilancia: {mode}.',
+    'guard-places': 'Vigilancia por entorno: {items}.',
+    'guard-place': '{name}, modo {mode}',
+    'guard-place-open': '{name}, abierto al público',
+    'guard-place-staffed': '{name}, solo personal',
+    'guard-place-closed': '{name}, cerrado (modo {mode})',
+    'guard-place-asleep': '{name}, descansando (modo noche)',
     agenda: 'Agenda de hoy: {items}.',
     'agenda-more': 'Agenda de hoy: {items}; y {count} más.',
     'agenda-empty': 'La agenda de hoy está libre.',
