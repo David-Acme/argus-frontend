@@ -20,7 +20,6 @@ type NotificationThreadRowProps = {
   thread: NotificationThread;
   now: number;
   compact?: boolean;
-  fresh?: boolean;
   expandable?: boolean;
   onRead?: (thread: NotificationThread) => void;
 };
@@ -112,7 +111,6 @@ export function NotificationThreadRow({
   thread,
   now,
   compact = false,
-  fresh = false,
   expandable = false,
   onRead,
 }: NotificationThreadRowProps) {
@@ -164,7 +162,7 @@ export function NotificationThreadRow({
           tone.tile
         )}>
         <Icon name={iconOf(thread)} className={cn('size-4', tone.icon)} />
-        {read && !fresh ? null : (
+        {read ? null : (
           <View
             className={cn(
               'border-card absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2',
@@ -223,7 +221,7 @@ export function NotificationThreadRow({
 
   const className = cn(
     'flex-row items-start gap-3 rounded-2xl',
-    compact ? 'py-1' : '-mx-2 px-2 py-2'
+    compact ? '-mx-2 px-2 py-1.5' : '-mx-2 px-2 py-2'
   );
 
   if (!pressable) return <View className={className}>{content}</View>;

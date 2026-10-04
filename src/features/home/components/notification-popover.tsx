@@ -1,24 +1,22 @@
-import { useState } from 'react';
 import { View } from 'react-native';
+import { Button } from '@/shared/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Text } from '@/shared/components/ui/text';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { NotificationThreadRow } from '@/features/home/components/notification-thread-row';
-import {
-  isThreadRead,
-  unreadIdsOf,
-  type NotificationThread,
-} from '@/features/home/model/notification-threads';
+import type { NotificationThread } from '@/features/home/model/notification-threads';
 
 type NotificationPopoverProps = {
   label: string;
   title: string;
   summary: string;
   emptyLabel: string;
+  markAllLabel: string;
   unreadCount: number;
   threads: readonly NotificationThread[];
   now: number;
-  onSeen?: (ids: readonly string[]) => void;
+  onReadThread: (thread: NotificationThread) => void;
+  onReadAll: () => void;
 };
 
 const PREVIEW_LIMIT = 4;
@@ -28,27 +26,17 @@ export function NotificationPopover({
   title,
   summary,
   emptyLabel,
+  markAllLabel,
   unreadCount,
   threads,
   now,
-  onSeen,
+  onReadThread,
+  onReadAll,
 }: NotificationPopoverProps) {
-  const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set());
   const preview = threads.slice(0, PREVIEW_LIMIT);
 
-  const markSeen = (open: boolean) => {
-    if (!open) {
-      setFresh(new Set());
-      return;
-    }
-    const unread = preview.filter((thread) => !isThreadRead(thread));
-    setFresh(new Set(unread.map((thread) => thread.key)));
-    const ids = unreadIdsOf(unread);
-    if (ids.length > 0) onSeen?.(ids);
-  };
-
   return (
-    <Popover onOpenChange={markSeen}>
+    <Popover>
       <PopoverTrigger asChild>
         <IconButton icon="bell" label={label} badge={unreadCount} />
       </PopoverTrigger>
@@ -74,11 +62,19 @@ export function NotificationPopover({
                 thread={thread}
                 now={now}
                 compact
-                fresh={fresh.has(thread.key)}
+                onRead={onReadThread}
               />
             ))}
           </View>
         )}
+
+        {unreadCount > 0 ? (
+          <View className="border-border-subtle mt-3 flex-row justify-end border-t pt-2">
+            <Button variant="ghost" size="sm" onPress={onReadAll}>
+              <Text>{markAllLabel}</Text>
+            </Button>
+          </View>
+        ) : null}
       </PopoverContent>
     </Popover>
   );

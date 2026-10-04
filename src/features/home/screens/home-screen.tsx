@@ -22,6 +22,7 @@ import {
 import { NOTIFICATION_LENSES } from '@/features/home/model/notification-optimistic';
 import {
   groupNotifications,
+  unreadIdsOf,
   unreadThreadCount,
   type NotificationThread,
 } from '@/features/home/model/notification-threads';
@@ -32,7 +33,7 @@ import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/shared/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useNow } from '@/features/home/hooks/use-now';
+import { useNow } from '@/shared/hooks/use-now';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -106,6 +107,12 @@ export default function HomeScreen() {
     });
   }, []);
 
+  const readAll = useCallback(async () => {
+    const synced = user ? await notificationService.unreadIdsForUser(String(user.id)) : [];
+    const ids = [...new Set([...synced, ...unreadIdsOf(threads)])];
+    if (ids.length > 0) markNotificationsRead(ids);
+  }, [markNotificationsRead, threads, user]);
+
   const readThread = useCallback(
     (thread: NotificationThread) => markNotificationsRead(thread.unreadIds),
     [markNotificationsRead]
@@ -151,10 +158,12 @@ export default function HomeScreen() {
                   : t('screens.home.notifications-read')
               }
               emptyLabel={t('screens.home.notifications-empty')}
+              markAllLabel={t('screens.home.notifications-mark-all')}
               unreadCount={unreadNotifications}
               threads={threads}
               now={now}
-              onSeen={markNotificationsRead}
+              onReadThread={readThread}
+              onReadAll={() => void readAll()}
             />
             <IconButton
               icon="calendar"

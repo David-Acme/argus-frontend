@@ -17,6 +17,11 @@ class NotificationService extends DatabaseService<'notification'> {
     );
   }
 
+  async unreadIdsForUser(userId: string): Promise<string[]> {
+    const rows = await this.fetchMany([Q.where('user_id', userId), Q.where('is_read', false)]);
+    return rows.map((row) => row.id);
+  }
+
   markRead(ids: readonly string[]): Promise<IServiceResponse<unknown>> {
     return httpService.patch('/notification/read', { ids: ids.map(Number) });
   }

@@ -50,6 +50,7 @@ export const home = {
   'notifications-empty': 'You have no new notifications',
   'notifications-unread': '{count} unread',
   'notifications-read': 'All caught up',
+  'notifications-mark-all': 'Mark all as read',
   thread: {
     count: '{count} updates',
     urgent: 'Urgent',
