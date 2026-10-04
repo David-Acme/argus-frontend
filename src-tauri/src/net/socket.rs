@@ -159,6 +159,7 @@ pub async fn open(
       .map_err(|error| format!("NETWORK_ERROR|Invalid header value: {error}"))?;
     request.headers_mut().insert(name, value);
   }
+  super::identity::apply(request.headers_mut());
 
   let connector = Connector::Rustls(Arc::new(tls));
   let handshake = tokio::time::timeout(

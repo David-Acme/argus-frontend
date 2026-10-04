@@ -31,6 +31,7 @@ pub async fn pair(input: PairInput) -> Result<Pairing, String> {
     .danger_accept_invalid_certs(true)
     .danger_accept_invalid_hostnames(true)
     .redirect(reqwest::redirect::Policy::none())
+    .default_headers(super::identity::headers().clone())
     .connect_timeout(CONNECT_TIMEOUT)
     .timeout(PAIRING_TIMEOUT)
     .build()

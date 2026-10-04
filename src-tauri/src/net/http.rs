@@ -8,6 +8,7 @@ use reqwest::dns::{Name, Resolve, Resolving};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::identity;
 use super::trust::Trust;
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -84,6 +85,7 @@ fn strict_client(ca_pem: &str, allowed_host: &str, ip: &str) -> Result<reqwest::
     .tls_built_in_root_certs(false)
     .add_root_certificate(cert)
     .dns_resolver(Arc::new(resolver))
+    .default_headers(identity::headers().clone())
     .https_only(true)
     .redirect(reqwest::redirect::Policy::none())
     .connect_timeout(CONNECT_TIMEOUT)
@@ -175,7 +177,7 @@ pub async fn request(request: HttpRequest, trust: &Trust) -> Result<HttpResult, 
     .map_err(|e| format!("NETWORK_ERROR|Invalid method: {e}"))?;
 
   let mut builder = client.request(method, &request.url);
-  for (key, value) in &request.headers {
+  for (key, value) in request.headers.iter().filter(|(key, _)| !identity::owns(key)) {
     builder = builder.header(key, value);
   }
 

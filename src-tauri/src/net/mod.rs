@@ -1,5 +1,6 @@
 pub mod discover;
 pub mod http;
+pub mod identity;
 pub mod pair;
 pub mod secure;
 pub mod socket;

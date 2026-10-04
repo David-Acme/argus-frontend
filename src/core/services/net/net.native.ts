@@ -1,6 +1,7 @@
 import { createArgusNet } from 'argus-net';
 import type { ArgusSocket, NetSocketOptions } from 'argus-net';
-import { DISCOVERY_TIMEOUT_MS } from '@/shared/constants';
+import Constants from 'expo-constants';
+import { DISCOVERY_TIMEOUT_MS, IS_IOS } from '@/shared/constants';
 import type { IArgusNetService } from '@/core/interfaces';
 import {
   clearInstance,
@@ -12,6 +13,7 @@ import {
   updateInstanceAddress,
 } from './net-persistence';
 import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
+import { clientIdentityHeaders, withClientIdentity } from './client-identity';
 import type {
   NetAdoptInput,
   NetDiscovery,
@@ -26,6 +28,15 @@ import type {
 
 const net = createArgusNet();
 let configuredKey: string | null = null;
+
+const CLIENT_IDENTITY = clientIdentityHeaders({
+  platform: IS_IOS ? 'ios' : 'android',
+  appVersion: Constants.expoConfig?.version ?? '',
+  deviceName: Constants.deviceName ?? null,
+});
+
+const identified = (headers: Record<string, string> | undefined): Record<string, string> =>
+  withClientIdentity(headers, CLIENT_IDENTITY);
 
 const fingerprintMismatch = (): NetError => ({
   code: 'FINGERPRINT_MISMATCH',
@@ -89,7 +100,7 @@ class NativeArgusNetService implements IArgusNetService {
       net.request({
         url: options.url,
         method: options.method,
-        headers: options.headers ?? {},
+        headers: identified(options.headers),
         body: options.body ?? '',
         files: options.files ?? [],
       });
@@ -149,7 +160,7 @@ class NativeArgusNetService implements IArgusNetService {
       await net.request({
         url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
         method: 'GET',
-        headers: {},
+        headers: identified(undefined),
         body: '',
         files: [],
       });
@@ -166,7 +177,7 @@ class NativeArgusNetService implements IArgusNetService {
       return await net.request({
         url: options.url,
         method: options.method,
-        headers: options.headers ?? {},
+        headers: identified(options.headers),
         body: options.body ?? '',
         files: options.files ?? [],
         pin: { caFingerprint: pin.caFingerprint, host: pin.host },
@@ -187,15 +198,16 @@ class NativeArgusNetService implements IArgusNetService {
       configuredKey = key;
       net.configure(instance.caPem, instance.host, instance.ip);
     }
+    const identifiedOptions = { ...options, headers: identified(options.headers) };
     try {
-      return await net.openSocket(options);
+      return await net.openSocket(identifiedOptions);
     } catch (error) {
       const failure = toNetError(error, 'NETWORK_ERROR');
       if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
         throw failure;
       }
       try {
-        return await net.openSocket(options);
+        return await net.openSocket(identifiedOptions);
       } catch (retryError) {
         throw toNetError(retryError, 'NETWORK_ERROR');
       }

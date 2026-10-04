@@ -367,6 +367,12 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   `scripts/link-argus-modules.mjs`. `argus-face` detects faces by **file URI**
   (`detectFaces(jpegUri)` → `FaceFrame { luminance, faces }`, normalized 0..1,
   top-left origin) — MLKit on Android (GMS), Vision on iOS.
+- **Client identity on every request**: `User-Agent: Argus/1 (<platform>)`,
+  `X-Argus-Client: <platform>/<version>` and `X-Argus-Device` (percent-encoded
+  name) on every HTTP request and socket upgrade, byte-identical across
+  transports because the backend binds a session to the agent string.
+  Mobile adds them in `net.native.ts` (`net/client-identity.ts`), the desktop
+  in Rust (`src-tauri/src/net/identity.rs`); the desktop says `desktop`.
 - **Cross-device login (desktop QR)**: `POST /auth/device-login` creates a
   short-lived challenge bound to the DESKTOP device hash; the mobile approves it
   (`POST .../approve`, JWT) and the backend issues a session bound to that hash;
