@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import { Fragment, useEffect, type ComponentProps, type ReactNode } from 'react';
-import { Platform, View, type GestureResponderEvent, type ViewStyle } from 'react-native';
+import { Platform, View, useWindowDimensions, type GestureResponderEvent, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -19,11 +19,13 @@ import { Text } from '@/shared/components/ui/text';
 import {
   IS_IOS,
   IS_NATIVE,
+  IS_WEB,
   SHEET_DISMISS_DISTANCE,
   SHEET_DISMISS_VELOCITY,
   SHEET_DIM_TRAVEL,
   SHEET_OVERDRAG_RESISTANCE,
   SHEET_SETTLE_SPRING,
+  SHEET_WEB_TOP_GAP,
 } from '@/shared/constants';
 import { useKeyboardProgress } from '@/shared/hooks/use-keyboard-progress';
 import { overlayIn, overlayOut, sheetIn, sheetOut } from '@/shared/libs/animations';
@@ -105,6 +107,7 @@ function SheetContent({
   ...props
 }: SheetContentProps) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { open, onOpenChange } = DialogPrimitive.useRootContext();
   const { offset: keyboardOffset } = useKeyboardProgress();
   const translateY = useSharedValue(0);
@@ -182,7 +185,10 @@ function SheetContent({
                 }),
                 className
               )}
-              style={{ paddingBottom: insets.bottom + 20 }}
+              style={{
+                paddingBottom: insets.bottom + 20,
+                ...(IS_WEB ? { maxHeight: windowHeight - SHEET_WEB_TOP_GAP } : null),
+              }}
               {...props}>
               {showHandle ? (
                 <View className="bg-border mx-auto h-1 w-10 rounded-full" accessible={false} />
