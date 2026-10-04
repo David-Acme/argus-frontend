@@ -13,6 +13,7 @@ export const common = {
   },
   back: 'Volver',
   'open-settings': 'Abrir ajustes',
+  and: 'y',
   'allow-camera': 'Permitir cámara',
   'mic-permission-denied': 'Permiso de micrófono denegado',
   'mic-start-failed': 'No se pudo iniciar el micrófono',

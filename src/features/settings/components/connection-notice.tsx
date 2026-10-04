@@ -5,7 +5,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ownerStatus } from '@/features/settings/model/settings-catalog';
-import { ownerName } from '@/features/settings/model/setting-text';
+import { ownerName, spokenList } from '@/features/settings/model/setting-text';
 
 type ConnectionNoticeProps = {
   owners: readonly SettingsOwner[];
@@ -26,12 +26,12 @@ export function ConnectionNotice({ owners, onRetry, onDetails }: ConnectionNotic
         <View className="min-w-0 flex-1 gap-1">
           {unreachable.length > 0 ? (
             <Text variant="caption" className="text-foreground">
-              {t('screens.settings.connection.unreachable', { names: unreachable.join(', ') })}
+              {t('screens.settings.connection.unreachable', { names: spokenList(unreachable, t('common.and')) })}
             </Text>
           ) : null}
           {unconfigured.length > 0 ? (
             <Text variant="caption" className="text-foreground">
-              {t('screens.settings.connection.unconfigured', { names: unconfigured.join(', ') })}
+              {t('screens.settings.connection.unconfigured', { names: spokenList(unconfigured, t('common.and')) })}
             </Text>
           ) : null}
           {unconfigured.length > 0 ? (

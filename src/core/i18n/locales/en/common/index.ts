@@ -14,6 +14,7 @@ export const common = {
   },
   back: 'Back',
   'open-settings': 'Open settings',
+  and: 'and',
   'allow-camera': 'Allow camera',
   'mic-permission-denied': 'Microphone permission denied',
   'mic-start-failed': 'Could not start the microphone',

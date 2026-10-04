@@ -66,3 +66,8 @@ export function rangeText(setting: Setting): string {
     ? t('screens.settings.technical.range-step', { range, step: numberText(setting, setting.step) })
     : range;
 }
+
+export function spokenList(items: readonly string[], conjunction: string): string {
+  if (items.length < 2) return items.join('');
+  return `${items.slice(0, -1).join(', ')} ${conjunction} ${items[items.length - 1]}`;
+}
