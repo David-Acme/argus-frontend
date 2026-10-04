@@ -201,6 +201,11 @@ pub async fn request(request: HttpRequest, trust: &Trust) -> Result<HttpResult, 
   Ok(HttpResult { status, headers, body })
 }
 
+pub fn pinned_client(url: &str, trust: &Trust) -> Result<reqwest::Client, String> {
+  ensure_allowed_host(url, &trust.host)?;
+  strict_client(&trust.ca_pem, &trust.host, &trust.ip)
+}
+
 pub async fn probe(url: &str, trust: &Trust, ip: &str) -> Result<(), String> {
   ip.parse::<IpAddr>()
     .map_err(|_| "HOST_NOT_ALLOWED|The candidate address is not an IP".to_string())?;

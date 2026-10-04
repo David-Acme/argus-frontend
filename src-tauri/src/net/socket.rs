@@ -13,13 +13,21 @@ use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::protocol::Message;
-use tokio_tungstenite::{client_async_tls_with_config, Connector};
+use tokio_tungstenite::{client_async_tls_with_config, Connector, MaybeTlsStream, WebSocketStream};
 
 use super::trust::Trust;
 
 type SocketSender = mpsc::Sender<Message>;
 type SocketMap = Arc<Mutex<HashMap<String, SocketSender>>>;
 type SocketChannel = Channel;
+pub type PinnedStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+pub struct PinnedConnect<'a> {
+  pub url: &'a str,
+  pub headers: &'a HashMap<String, String>,
+  pub timeout: Duration,
+  pub identify: bool,
+}
 
 const FRAME_OPEN: u8 = 0;
 const FRAME_TEXT: u8 = 1;
@@ -111,8 +119,8 @@ fn build_tls_config(ca_pem: &str) -> Result<rustls::ClientConfig, String> {
     .with_no_client_auth())
 }
 
-fn validate_target(options: &SocketOpenOptions, trust: &Trust) -> Result<(url::Url, SocketAddr), String> {
-  let url = url::Url::parse(&options.url)
+fn validate_target(target: &str, trust: &Trust) -> Result<(url::Url, SocketAddr), String> {
+  let url = url::Url::parse(target)
     .map_err(|error| format!("NETWORK_ERROR|Invalid WebSocket URL: {error}"))?;
   let host = url
     .host_str()
@@ -133,17 +141,12 @@ fn validate_target(options: &SocketOpenOptions, trust: &Trust) -> Result<(url::U
   Ok((url, SocketAddr::new(ip, port)))
 }
 
-pub async fn open(
-  state: State<'_, SocketState>,
-  options: SocketOpenOptions,
-  on_event: SocketChannel,
-) -> Result<(), String> {
+pub async fn connect_pinned(target: PinnedConnect<'_>) -> Result<PinnedStream, String> {
   let trust = super::trust::paired()?;
-  let (url, address) = validate_target(&options, &trust)?;
+  let (url, address) = validate_target(target.url, &trust)?;
   let tls = build_tls_config(&trust.ca_pem)?;
-  let timeout = connect_timeout(options.connect_timeout_ms);
 
-  let stream = tokio::time::timeout(timeout, TcpStream::connect(address))
+  let stream = tokio::time::timeout(target.timeout, TcpStream::connect(address))
     .await
     .map_err(|_| "NETWORK_ERROR|WebSocket connection timeout".to_string())?
     .map_err(parse_error)?;
@@ -152,18 +155,20 @@ pub async fn open(
     .as_str()
     .into_client_request()
     .map_err(parse_error)?;
-  for (key, value) in &options.headers {
+  for (key, value) in target.headers {
     let name = http::header::HeaderName::try_from(key)
       .map_err(|error| format!("NETWORK_ERROR|Invalid header name: {error}"))?;
     let value = http::header::HeaderValue::try_from(value)
       .map_err(|error| format!("NETWORK_ERROR|Invalid header value: {error}"))?;
     request.headers_mut().insert(name, value);
   }
-  super::identity::apply(request.headers_mut());
+  if target.identify {
+    super::identity::apply(request.headers_mut());
+  }
 
   let connector = Connector::Rustls(Arc::new(tls));
   let handshake = tokio::time::timeout(
-    timeout,
+    target.timeout,
     client_async_tls_with_config(request, stream, None, Some(connector)),
   )
   .await
@@ -175,6 +180,21 @@ pub async fn open(
     }
     error => parse_error(error),
   })?;
+  Ok(socket)
+}
+
+pub async fn open(
+  state: State<'_, SocketState>,
+  options: SocketOpenOptions,
+  on_event: SocketChannel,
+) -> Result<(), String> {
+  let socket = connect_pinned(PinnedConnect {
+    url: &options.url,
+    headers: &options.headers,
+    timeout: connect_timeout(options.connect_timeout_ms),
+    identify: true,
+  })
+  .await?;
 
   let (mut writer, mut reader) = socket.split();
   let (sender, mut receiver) = mpsc::channel::<Message>(SEND_QUEUE);

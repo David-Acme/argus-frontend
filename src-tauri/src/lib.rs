@@ -2,6 +2,7 @@ mod context_menu;
 #[cfg(target_os = "linux")]
 mod media;
 mod net;
+mod rtc;
 
 use std::time::Duration;
 
@@ -11,6 +12,8 @@ use net::pair::{pair, PairExpectation, PairInput};
 use net::secure::{delete_from_webview as secure_delete, get as secure_get, set_from_webview as secure_set};
 use net::socket::{close as socket_close, open as socket_open, send_binary as socket_send_binary,
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
+use rtc::protocol::{DataRequest, JoinRequest, RtcEvent};
+use rtc::RtcState;
 use tauri::ipc::{Channel, Request};
 use tauri::State;
 #[cfg(target_os = "linux")]
@@ -96,12 +99,38 @@ fn argus_socket_close(state: State<'_, SocketState>, socket_id: String, code: f6
   socket_close(state, socket_id, code, reason)
 }
 
+#[tauri::command]
+async fn argus_rtc_join(
+  state: State<'_, RtcState>,
+  request: JoinRequest,
+  on_event: Channel<RtcEvent>,
+) -> Result<(), String> {
+  rtc::join(&state, request, on_event).await
+}
+
+#[tauri::command]
+async fn argus_rtc_microphone(state: State<'_, RtcState>, enabled: bool) -> Result<(), String> {
+  rtc::set_microphone(&state, enabled).await
+}
+
+#[tauri::command]
+async fn argus_rtc_send(state: State<'_, RtcState>, request: DataRequest) -> Result<(), String> {
+  rtc::send(&state, request).await
+}
+
+#[tauri::command]
+async fn argus_rtc_leave(state: State<'_, RtcState>) -> Result<(), String> {
+  rtc::leave(&state).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   let _ = rustls::crypto::ring::default_provider().install_default();
+  rtc::transport::install();
   tauri::Builder::default()
     .plugin(context_menu::plugin())
     .manage(SocketState::default())
+    .manage(RtcState::default())
     .setup(|app| {
       #[cfg(target_os = "linux")]
       if let Some(window) = app.get_webview_window("main") {
@@ -123,6 +152,10 @@ pub fn run() {
       argus_socket_send_text,
       argus_socket_send_binary,
       argus_socket_close,
+      argus_rtc_join,
+      argus_rtc_microphone,
+      argus_rtc_send,
+      argus_rtc_leave,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

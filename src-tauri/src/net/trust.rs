@@ -59,6 +59,13 @@ pub fn relocate(ip: &str) -> Result<(), String> {
   secure::set("net.ip", ip)
 }
 
+#[cfg(test)]
+pub fn seed(trust: Trust) {
+  if let Ok(mut cache) = CACHE.lock() {
+    *cache = Some(trust);
+  }
+}
+
 pub fn forget() {
   GENERATION.fetch_add(1, Ordering::AcqRel);
   if let Ok(mut cache) = CACHE.lock() {
