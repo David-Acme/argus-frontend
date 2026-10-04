@@ -100,6 +100,14 @@ import Volume2 from 'lucide-react-native/icons/volume-2';
 import Wifi from 'lucide-react-native/icons/wifi';
 import WifiOff from 'lucide-react-native/icons/wifi-off';
 import X from 'lucide-react-native/icons/x';
+import Maximize from 'lucide-react-native/icons/maximize';
+import Minimize from 'lucide-react-native/icons/minimize';
+import Move from 'lucide-react-native/icons/move';
+import Ear from 'lucide-react-native/icons/ear';
+import EyeOff from 'lucide-react-native/icons/eye-off';
+import Lightbulb from 'lucide-react-native/icons/lightbulb';
+import SunMoon from 'lucide-react-native/icons/sun-moon';
+import Gauge from 'lucide-react-native/icons/gauge';
 
 export const ICONS = {
   activity: Activity,
@@ -204,4 +212,12 @@ export const ICONS = {
   'hard-drive': HardDrive,
   'image-down': ImageDown,
   'audio-lines': AudioLines,
+  maximize: Maximize,
+  minimize: Minimize,
+  move: Move,
+  ear: Ear,
+  'eye-off': EyeOff,
+  lightbulb: Lightbulb,
+  'sun-moon': SunMoon,
+  gauge: Gauge,
 } as const;

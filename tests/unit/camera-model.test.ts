@@ -38,6 +38,7 @@ const camera: ICameraCacheRow = {
   streamPath: '',
   subStreamPath: '',
   catalogId: '',
+  capabilities: [],
   zones: [zone],
 };
 

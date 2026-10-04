@@ -1991,3 +1991,59 @@ server setup again), with "Ver detalles" switching to Avanzado. There the
 owner's header names the missing address and credential of
 `argus-<service>`, the `.toml` that still holds its settings, the scripts to
 run and the two services to restart.
+
+## The camera live view: full quality, honest frame rate, explicit audio, fullscreen (2026-10-04)
+
+- **Capabilities arrive with the camera row.** argus-camera now stores the
+  camera's capabilities in the `capabilities` column as a list of names
+  (`["ptz","presets","talk","microphone",…]` or `["streamOnly"]`), rewrites it
+  whenever the driver, model, catalog entry or cloud password changes, and
+  audits it, so the row the sync delivers is enough. The projection carries it
+  as `ICameraCacheRow.capabilities`; `model/camera-capabilities.ts`
+  (`resolveCapabilities`) prefers the synced list and falls back to
+  `GET /camera/{id}/capabilities` only while the row's list is empty (a server
+  that has not reconciled it yet). The detail screen also reloads the device
+  status and capabilities when the row's driver, address, catalog or
+  capability list changes, so switching a camera from RTSP to Tapo shows the
+  PTZ pad and the talk controls without reopening the screen.
+- **Quality.** "Alta" is the camera's main stream (what argus-camera's
+  LiveView role serves) and "Fluida" the sub stream. Phones start on Fluida,
+  every other window on Alta; a choice is remembered per device and camera
+  (`cameras.quality.<id>` in storage, `hooks/use-camera-quality.ts`). Two
+  stalls within a minute on Alta switch to Fluida for this visit with a note
+  and a "Volver a Alta" action (`model/camera-stream-quality.ts`, unit-tested);
+  the stored choice is untouched. The app cannot tell mobile data or the
+  tunnel apart yet: no network-type module is linked, and adding one needs a
+  dev-client rebuild.
+- **What the picture is.** `model/stream-meter.ts` reads the size from the
+  init segment's `tkhd` and the frame rate from the video samples' durations
+  (their mean, because Tapo timestamps are irregular: a capture of the C225
+  sub stream has a most common gap of 50 ms but 15.1 fps on average), and
+  whether the stream carries audio. The media session reports it through
+  `events.onStats`; the video shows it as a chip ("2688×1520 · 15 fps").
+- **Frame rate.** The device status carries `video {frameRate, frameRates,
+  resolution, resolutions}` from the Tapo encoder. Who may update the camera
+  picks among the offered rates of 10 fps and up (`CameraFrameRate`, applied
+  optimistically through `PATCH /camera/{id}/settings {frameRate}` and rolled
+  back on a refusal); anyone else, or a camera with one rate, reads "Esta
+  cámara emite a N fps". The owner's C225 offers 15, 20 and 25 fps.
+- **Audio, explicit.** The audio panel offers up to three actions, each shown
+  only when it can work: "Escuchar" (listen only, a new `listen` call mode
+  that never opens the speaker line; shown when the catalog says the camera
+  has a microphone or the stream carries an audio track), "Hablar" (hold to
+  talk) and "Llamada" (full duplex), the last two only with `talk` (Tapo plus
+  the cloud password) and the role's `cameraActionAccessForRole(role).talk`.
+  A Tapo camera without the cloud password says how to enable talking.
+- **Controls on the video.** The PTZ pad sits on the picture (hidden by
+  default on phones, toggled by "Mover"); saved positions and "Guardar
+  posición" are under the video. The device settings (privacy, motion and its
+  sensitivity, auto-tracking, LED, night vision) are inline in "Ajustes de la
+  cámara" instead of a sheet. There is no click-to-center: Tapo's
+  `motorMove` coordinates have no documented mapping to the picture.
+- **Fullscreen.** The button on the video opens the same stage (badge, stats,
+  PTZ, quality) in a full-window `Modal`; on the desktop it also makes the
+  Tauri window fullscreen (`core:window:allow-set-fullscreen`), on the web the
+  document; Escape, the browser's own exit or the button closes it
+  (`services/window-fullscreen.{web,native}.ts`). On a phone the modal allows
+  every orientation and hides the system bars; the app cannot force landscape
+  without `expo-screen-orientation`, so turning the phone does it.

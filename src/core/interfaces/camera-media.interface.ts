@@ -9,6 +9,14 @@ export interface ICameraMediaSink {
 export interface ICameraMediaEvents {
   onState?: (state: CameraStreamState) => void;
   onError?: (code: string, message: string) => void;
+  onStats?: (stats: ICameraLiveStats) => void;
+}
+
+export interface ICameraLiveStats {
+  width: number;
+  height: number;
+  fps: number;
+  audio: boolean;
 }
 
 export interface ICameraMediaOpenInput {

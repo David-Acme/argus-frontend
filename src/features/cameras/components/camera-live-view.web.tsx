@@ -1,7 +1,7 @@
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
-import type { ICameraMediaSession, ICameraMediaSink } from '@/core/interfaces';
+import type { ICameraMediaSession, ICameraMediaSink, ICameraLiveStats } from '@/core/interfaces';
 import type { CameraStreamQuality, CameraStreamState } from '@/core/types';
 import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
@@ -15,7 +15,10 @@ type CameraLiveStreamProps = {
   quality?: CameraStreamQuality;
   overlay?: ReactNode;
   fill?: boolean;
+  compactStatus?: boolean;
   className?: string;
+  onStats?: (stats: ICameraLiveStats) => void;
+  onState?: (state: CameraStreamState) => void;
 };
 
 type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
@@ -45,7 +48,10 @@ export function CameraLiveStream({
   quality = 'sub',
   overlay,
   fill = false,
+  compactStatus,
   className,
+  onStats,
+  onState,
 }: CameraLiveStreamProps) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const session = useRef<ICameraMediaSession | null>(null);
@@ -55,6 +61,8 @@ export function CameraLiveStream({
   const current = status?.key === streamKey ? status : null;
 
   const retry = useCallback(() => session.current?.retry(), []);
+  const reportStats = useEffectEvent((stats: ICameraLiveStats) => onStats?.(stats));
+  const reportState = useEffectEvent((state: CameraStreamState) => onState?.(state));
 
   useEffect(() => {
     if (unsupported || !active) return;
@@ -90,7 +98,13 @@ export function CameraLiveStream({
         quality,
         fastStart: true,
         sink,
-        events: { onState: (state) => update({ state }) },
+        events: {
+          onState: (state) => {
+            update({ state });
+            reportState(state);
+          },
+          onStats: (stats) => reportStats(stats),
+        },
       })
       .then((opened) => {
         if (mounted) session.current = opened;
@@ -116,7 +130,7 @@ export function CameraLiveStream({
       <CameraLiveStatus
         state={unsupported ? 'unsupported' : (current?.state ?? 'connecting')}
         painted={current?.painted ?? false}
-        compact={fill}
+        compact={compactStatus ?? fill}
         onRetry={retry}
       />
     </View>

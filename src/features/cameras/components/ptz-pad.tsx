@@ -7,14 +7,16 @@ import { cn } from '@/shared/libs/utils';
 type PtzPadProps = {
   labels: { up: string; down: string; left: string; right: string; center: string };
   disabled?: boolean;
+  compact?: boolean;
   onStep: (direction: number) => void;
   onCenter: () => void;
 };
 
-export function PtzPad({ labels, disabled, onStep, onCenter }: PtzPadProps) {
+export function PtzPad({ labels, disabled, compact = false, onStep, onCenter }: PtzPadProps) {
   const button = cn(
-    'bg-card size-12 items-center justify-center rounded-2xl shadow-sm shadow-black/[0.08]',
-    disabled ? 'opacity-40' : 'active:opacity-70'
+    'items-center justify-center rounded-2xl shadow-sm shadow-black/[0.08]',
+    compact ? 'bg-card/90 size-11' : 'bg-card size-12',
+    disabled ? 'opacity-40' : 'active:opacity-70 web:hover:bg-surface-secondary'
   );
 
   return (

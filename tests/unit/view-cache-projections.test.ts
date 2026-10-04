@@ -51,6 +51,7 @@ const camera = (id: string, overrides: Partial<CameraSource> = {}): CameraSource
   retentionDays: null,
   isOnline: true,
   isEnabled: true,
+  capabilities: [],
   config: {},
   ...overrides,
 });
@@ -94,9 +95,19 @@ describe('camera projection', () => {
     expect(JSON.stringify(second)).not.toContain('secret');
   });
 
+  test('a camera row carries the capabilities the server synced, so a driver change reaches the detail live', () => {
+    const writes = projectCameras({
+      cameras: [camera('6', { capabilities: ['ptz', 'presets', 'talk'] })],
+      zones: [],
+      streams: [],
+    });
+    const [patio] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
+    expect(patio?.capabilities).toEqual(['ptz', 'presets', 'talk']);
+  });
+
   test('the camera list watches every column its rows read', () => {
     expect(CAMERA_SOURCE_COLUMNS).toEqual(
-      expect.arrayContaining(['driver', 'port', 'username', 'cloud_username', 'retention_days', 'config', 'is_online']),
+      expect.arrayContaining(['driver', 'port', 'username', 'cloud_username', 'retention_days', 'capabilities', 'config', 'is_online']),
     );
     expect(CAMERA_SOURCE_COLUMNS).toHaveLength(CAMERA_SOURCE_FIELDS.length);
   });

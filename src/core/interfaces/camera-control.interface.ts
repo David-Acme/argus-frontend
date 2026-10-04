@@ -28,6 +28,7 @@ export interface ICameraSettings {
   autoTrack?: boolean;
   alarm?: boolean;
   alarmVolume?: number;
+  frameRate?: number;
 }
 
 export interface ICameraDeviceStatus {
@@ -42,6 +43,15 @@ export interface ICameraDeviceStatus {
   dayNightMode?: string | null;
   motionSensitivity?: number;
   sdCard?: ICameraSdCard;
+  video?: ICameraVideoProfile;
+}
+
+export interface ICameraVideoProfile {
+  resolution: string;
+  frameRate: number;
+  encoding: string;
+  frameRates: number[];
+  resolutions: string[];
 }
 
 export interface ICameraSdCard {
@@ -59,6 +69,7 @@ export interface ICameraCapabilities {
   ptz?: boolean;
   presets?: boolean;
   talk?: boolean;
+  microphone?: boolean;
   privacy?: boolean;
   led?: boolean;
   dayNight?: boolean;

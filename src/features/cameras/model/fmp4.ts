@@ -3,6 +3,8 @@ export type Fmp4Init = {
   description: Uint8Array;
   timescale: number;
   trackId: number;
+  width: number;
+  height: number;
 };
 
 export type Fmp4Sample = {
@@ -77,6 +79,9 @@ function parseVideoTrack(view: DataView, bytes: Uint8Array, trak: Box): Fmp4Init
   if (!tkhd || !mdia) return null;
   const tkhdVersion = view.getUint8(tkhd.contentStart);
   const trackId = view.getUint32(tkhd.contentStart + (tkhdVersion === 1 ? 20 : 12));
+  const sizeAt = tkhd.contentStart + (tkhdVersion === 1 ? 88 : 76);
+  const width = sizeAt + 8 <= tkhd.end ? view.getUint32(sizeAt) >>> 16 : 0;
+  const height = sizeAt + 8 <= tkhd.end ? view.getUint32(sizeAt + 4) >>> 16 : 0;
 
   const mdiaBoxes = boxes(view, mdia.contentStart, mdia.end);
   const hdlr = mdiaBoxes.find((box) => box.type === 'hdlr');
@@ -93,7 +98,7 @@ function parseVideoTrack(view: DataView, bytes: Uint8Array, trak: Box): Fmp4Init
 
   for (const entry of boxes(view, stsd.contentStart + 8, stsd.end)) {
     const config = sampleEntryConfig(view, bytes, entry);
-    if (config && timescale > 0) return { ...config, timescale, trackId };
+    if (config && timescale > 0) return { ...config, timescale, trackId, width, height };
   }
   return null;
 }

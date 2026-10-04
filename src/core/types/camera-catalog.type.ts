@@ -24,7 +24,7 @@ export type CameraProbeStepId = 'network' | 'main' | 'sub' | 'device' | 'talk';
 
 export type CameraProbeStepStatus = 'ok' | 'failed' | 'skipped' | 'warning';
 
-export type CameraTalkMode = 'call' | 'push';
+export type CameraTalkMode = 'call' | 'push' | 'listen';
 
 export type CameraCallState = 'idle' | 'connecting' | 'live' | 'ending';
 

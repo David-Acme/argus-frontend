@@ -67,6 +67,7 @@ export const cameraCapabilitiesSchema = z.object({
   ptz: z.boolean().optional(),
   presets: z.boolean().optional(),
   talk: z.boolean().optional(),
+  microphone: z.boolean().optional(),
   privacy: z.boolean().optional(),
   led: z.boolean().optional(),
   dayNight: z.boolean().optional(),

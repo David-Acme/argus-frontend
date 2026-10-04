@@ -18,6 +18,7 @@ export const CAMERA_SOURCE_FIELDS = [
   'retentionDays',
   'isOnline',
   'isEnabled',
+  'capabilities',
   'config',
 ] as const satisfies readonly (keyof CameraModel)[];
 
@@ -78,6 +79,7 @@ export function projectCameras({ cameras, zones, streams }: CameraProjectionInpu
     streamPath: configText(camera.config, 'streamPath'),
     subStreamPath: configText(camera.config, 'subStreamPath'),
     catalogId: configText(camera.config, 'catalogId'),
+    capabilities: camera.capabilities,
     zones: zonesByCamera.get(camera.id) ?? [],
   }));
   return [{ key: VIEW_CACHE_KEYS.cameraList, rows, limit: VIEW_CACHE_LIST_LIMIT }];

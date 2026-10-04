@@ -64,6 +64,7 @@ const cameraLens = defineLens<ICameraCacheRow, CameraIntentValues>({
           streamPath: values.streamPath ?? '',
           subStreamPath: values.subStreamPath ?? '',
           catalogId: values.catalogId ?? '',
+          capabilities: [],
           zones: [],
         },
 });

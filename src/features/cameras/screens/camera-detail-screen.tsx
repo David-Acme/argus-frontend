@@ -2,14 +2,17 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { ICameraDeviceStatus, IZoneCacheRow } from '@/core/interfaces';
-import type { CameraStreamQuality, MenuOption } from '@/core/types';
+import type { ICameraCapabilities, ICameraDeviceStatus, ICameraLiveStats, IZoneCacheRow } from '@/core/interfaces';
+import type { MenuOption } from '@/core/types';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 import { CameraCallPanel } from '@/features/cameras/components/camera-call-panel';
 import { CameraControlPanel } from '@/features/cameras/components/camera-control-panel';
 import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
+import { useCameraDeviceSettings } from '@/features/cameras/hooks/use-camera-device-settings';
+import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
+import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
 import { CameraEnvironmentPanel } from '@/features/security';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
@@ -17,7 +20,6 @@ import { cameraActionAccessForRole } from '@/shared/libs/role-access';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
 import { CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
-import { CameraSettingsSheet } from '@/features/cameras/components/camera-settings-sheet';
 import { CameraTalkSheet } from '@/features/cameras/components/camera-talk-sheet';
 import { CameraZonesPanel } from '@/features/cameras/components/camera-zones-panel';
 import { ZoneForm } from '@/features/cameras/components/zone-form';
@@ -48,27 +50,38 @@ export default function CameraDetailScreen() {
   const [editOpen, setEditOpen] = useState(false);
   const [zoneOpen, setZoneOpen] = useState(false);
   const [zoneId, setZoneId] = useState('');
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [talkOpen, setTalkOpen] = useState(false);
   const [showZones, setShowZones] = useState(true);
-  const [quality, setQuality] = useState<CameraStreamQuality>('sub');
+  const [streamAudio, setStreamAudio] = useState(false);
+  const quality = useCameraQuality(id);
   const { run: move, pending: moving } = useServiceAction();
+  const { cameras, isPendingZone } = useCameraRows();
+  const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const call = useCameraCall(id);
   const autoCalled = useRef(false);
 
-  const { cameras, isPendingZone } = useCameraRows();
-  const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
+
   const zones = useMemo(() => camera?.zones ?? [], [camera]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
   const canUpdate = can('camera', 'update');
   const loadDevice = useCallback(() => cameraControlService.status(id), [id]);
   const loadFeatures = useCallback(() => cameraControlService.capabilities(id), [id]);
   const deviceResource = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.cameraDevice, scope: id, load: loadDevice });
-  const { data: features } = useRemoteResource({
+  const featureResource = useRemoteResource<ICameraCapabilities>({
     cacheKey: VIEW_CACHE_KEYS.cameraCapabilities,
     scope: id,
     load: loadFeatures,
   });
+  const features = useMemo(
+    () => resolveCapabilities(camera?.capabilities ?? [], featureResource.data),
+    [camera?.capabilities, featureResource.data],
+  );
+  const deviceSignature = camera
+    ? [camera.driver, camera.ip, camera.port, camera.catalogId, camera.model, ...camera.capabilities].join('|')
+    : '';
+  const reloadFeatures = featureResource.reload;
+  const reloadDevice = deviceResource.reload;
+  const seenSignature = useRef(deviceSignature);
   const loadPresets = useCallback(() => cameraControlService.presets(id), [id]);
   const presetResource = useRemoteResource<unknown>({
     cacheKey: VIEW_CACHE_KEYS.cameraPresets,
@@ -81,17 +94,20 @@ export default function CameraDetailScreen() {
   const device = deviceResource.data;
   const mutateDevice = deviceResource.mutate;
   const applyDevice = useCallback((status: ICameraDeviceStatus | null) => mutateDevice(() => status), [mutateDevice]);
+  const deviceSettings = useCameraDeviceSettings({ cameraId: id, status: device, onApplied: applyDevice });
+  const applySettings = deviceSettings.apply;
 
 
   const canDelete = can('camera', 'delete');
   const streamOnly = features?.streamOnly === true;
-  const controllable =
-    canUpdate &&
-    features != null &&
-    [features.ptz, features.privacy, features.led, features.dayNight, features.motion, features.alarm].some(
-      (value) => value === true,
-    );
-  const canTalk = cameraActionAccessForRole(role).talk && features?.talk === true;
+  const controllable = canUpdate && hasDeviceControls(features);
+  const mayTalk = cameraActionAccessForRole(role).talk;
+  const canTalk = mayTalk && features?.talk === true;
+  const canListen = features?.microphone === true || streamAudio;
+  const talkHint =
+    mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true
+      ? t('screens.cameras.call.needs-cloud')
+      : null;
   const micSupported = voiceCallSupported();
   const startCall = call.start;
 
@@ -188,6 +204,10 @@ export default function CameraDetailScreen() {
     if (saved) void reloadPresets();
   }, [id, move, presets, reloadPresets, t]);
 
+  const changeFrameRate = useCallback((frameRate: number) => void applySettings({ frameRate }), [applySettings]);
+
+  const noteStats = useCallback((stats: ICameraLiveStats) => setStreamAudio(stats.audio), []);
+
   const openZone = useCallback((target: string) => {
     setZoneId(target);
     setZoneOpen(true);
@@ -210,6 +230,13 @@ export default function CameraDetailScreen() {
   );
 
   useEffect(() => {
+    if (seenSignature.current === deviceSignature) return;
+    seenSignature.current = deviceSignature;
+    void reloadFeatures();
+    void reloadDevice();
+  }, [deviceSignature, reloadDevice, reloadFeatures]);
+
+  useEffect(() => {
     if (talk !== '1' || autoCalled.current || !canTalk || !micSupported || isVoiceCallActive()) return;
     autoCalled.current = true;
     startCall('call', true);
@@ -226,9 +253,16 @@ export default function CameraDetailScreen() {
       zones={zones}
       showZones={showZones}
       quality={quality}
+      video={device?.video ?? null}
+      canControl={canUpdate}
       canEnable={canUpdate}
+      ptz={canUpdate && features?.ptz ? { moving, onStep: step, onCenter: center } : null}
+      presets={
+        canUpdate && features?.presets ? { presets, onGoto: gotoPreset, onSave: () => void savePreset() } : null
+      }
       onShowZonesChange={setShowZones}
-      onQualityChange={setQuality}
+      onFrameRate={changeFrameRate}
+      onStats={noteStats}
       onEnable={() => void setEnabled(camera.id, camera.name, true)}
     />
   );
@@ -240,13 +274,8 @@ export default function CameraDetailScreen() {
       <CameraControlPanel
         features={features}
         device={device}
-        moving={moving}
-        onStep={step}
-        onCenter={center}
-        onSettings={() => setSettingsOpen(true)}
-        presets={presets}
-        onGotoPreset={gotoPreset}
-        onSavePreset={() => void savePreset()}
+        controls={deviceSettings}
+        deviceFailed={deviceResource.status === 'failed'}
         className={stretch}
       />
     ) : null;
@@ -254,7 +283,9 @@ export default function CameraDetailScreen() {
     camera.isEnabled && features ? (
       <CameraCallPanel
         controls={call}
+        canListen={canListen}
         canTalk={canTalk}
+        talkHint={talkHint}
         micSupported={micSupported}
         argusCallActive={isVoiceCallActive()}
         onAnnounce={canTalk ? () => setTalkOpen(true) : undefined}
@@ -340,14 +371,6 @@ export default function CameraDetailScreen() {
 
       <CameraForm open={editOpen} onOpenChange={setEditOpen} camera={camera} />
       <CameraTalkSheet open={talkOpen} onOpenChange={setTalkOpen} cameraId={camera.id} />
-      <CameraSettingsSheet
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        cameraId={camera.id}
-        status={device}
-        features={features}
-        onApplied={applyDevice}
-      />
       <ZoneForm open={zoneOpen} onOpenChange={setZoneOpen} cameraId={camera.id} zone={zone} zones={zones} />
     </AppScreen>
   );

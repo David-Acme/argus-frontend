@@ -1,9 +1,9 @@
 import { ArgusCameraView, type ArgusCameraViewMethods } from 'argus-camera';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { callback } from 'react-native-nitro-modules';
-import type { ICameraMediaSession, ICameraMediaSink } from '@/core/interfaces';
+import type { ICameraMediaSession, ICameraMediaSink, ICameraLiveStats } from '@/core/interfaces';
 import type { CameraStreamQuality, CameraStreamState } from '@/core/types';
 import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
@@ -16,7 +16,10 @@ type CameraLiveStreamProps = {
   quality?: CameraStreamQuality;
   overlay?: ReactNode;
   fill?: boolean;
+  compactStatus?: boolean;
   className?: string;
+  onStats?: (stats: ICameraLiveStats) => void;
+  onState?: (state: CameraStreamState) => void;
 };
 
 type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
@@ -38,7 +41,10 @@ export function CameraLiveStream({
   quality = 'sub',
   overlay,
   fill = false,
+  compactStatus,
   className,
+  onStats,
+  onState,
 }: CameraLiveStreamProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
   const session = useRef<ICameraMediaSession | null>(null);
@@ -51,6 +57,8 @@ export function CameraLiveStream({
   }, []);
 
   const retry = useCallback(() => session.current?.retry(), []);
+  const reportStats = useEffectEvent((stats: ICameraLiveStats) => onStats?.(stats));
+  const reportState = useEffectEvent((state: CameraStreamState) => onState?.(state));
 
   useEffect(() => {
     const numericId = Number(cameraId);
@@ -69,12 +77,15 @@ export function CameraLiveStream({
         quality,
         sink,
         events: {
-          onState: (state) =>
+          onState: (state) => {
             setStatus((previous) => ({
               key: streamKey,
               state,
               painted: state === 'live' || (previous?.key === streamKey && previous.painted),
-            })),
+            }));
+            reportState(state);
+          },
+          onStats: (stats) => reportStats(stats),
         },
       })
       .then((opened) => {
@@ -102,7 +113,7 @@ export function CameraLiveStream({
       <CameraLiveStatus
         state={current?.state ?? 'connecting'}
         painted={current?.painted ?? false}
-        compact={fill}
+        compact={compactStatus ?? fill}
         onRetry={retry}
       />
     </View>

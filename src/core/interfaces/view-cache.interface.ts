@@ -1,4 +1,5 @@
 import type {
+  CameraCapabilities,
   CameraDriverKind,
   CameraRecordMode,
   CalendarEntry,
@@ -43,6 +44,7 @@ export interface ICameraCacheRow {
   streamPath: string;
   subStreamPath: string;
   catalogId: string;
+  capabilities: CameraCapabilities;
   zones: readonly IZoneCacheRow[];
 }
 

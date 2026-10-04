@@ -19,6 +19,7 @@ import {
   CAMERA_STREAM_WS_PATH,
 } from '@/features/cameras/constants';
 import { FragmentAssembler } from '@/features/cameras/model/fragment-assembler';
+import { StreamMeter, type StreamStats } from '@/features/cameras/model/stream-meter';
 import {
   isStalled,
   refusalOf,
@@ -55,6 +56,7 @@ class CameraMediaSession implements ICameraMediaSession {
   private ackTimer: ReturnType<typeof setInterval> | null = null;
   private watchdogTimer: ReturnType<typeof setInterval> | null = null;
   private readonly assembler = new FragmentAssembler();
+  private readonly meter = new StreamMeter();
 
   constructor(private readonly input: ICameraMediaOpenInput) {}
 
@@ -269,13 +271,16 @@ class CameraMediaSession implements ICameraMediaSession {
 
     if (type === INIT_FRAME_TYPE) {
       this.assembler.reset();
-      this.input.sink.pushFragment(INIT_FRAME_TYPE, true, payload.slice().buffer);
+      const init = payload.slice();
+      this.reportStats(this.meter.init(init));
+      this.input.sink.pushFragment(INIT_FRAME_TYPE, true, init.buffer);
       return;
     }
     if (type !== MEDIA_FRAME_TYPE) return;
 
     if (this.assembler.pendingBytes() === 0) this.fragmentKey = keyframe;
     for (const fragment of this.assembler.push(payload)) {
+      if (this.input.events?.onStats) this.reportStats(this.meter.fragment(fragment));
       this.input.sink.pushFragment(MEDIA_FRAME_TYPE, this.fragmentKey, fragment.buffer);
       this.fragmentKey = false;
     }
@@ -287,6 +292,10 @@ class CameraMediaSession implements ICameraMediaSession {
       this.publish('live');
     }
     this.flushAck();
+  }
+
+  private reportStats(stats: StreamStats | null): void {
+    if (stats) this.input.events?.onStats?.(stats);
   }
 
   private flushAck(): void {

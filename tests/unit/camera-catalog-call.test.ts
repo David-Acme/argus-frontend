@@ -92,6 +92,7 @@ function camera(id: string, partial: Partial<ICameraCacheRow> = {}): ICameraCach
     streamPath: '',
     subStreamPath: '',
     catalogId: '',
+    capabilities: [],
     zones: [],
     ...partial,
   };
