@@ -74,3 +74,20 @@ export type IncomingCallCancel = {
   callId: string;
   reason: IncomingCallCancelReason;
 };
+
+export type CallMode = 'call' | 'notify' | 'off';
+
+export type CallTrigger = 'guardCritical' | 'guardIntruder' | 'guardEscalation' | 'guardArrival' | 'agenda' | 'assistant';
+
+export type CallPreferences = Record<CallTrigger, CallMode> & {
+  userId: number;
+  enabled: boolean;
+  quietStartHour: number;
+  quietEndHour: number;
+  dndUntil: number;
+  criticalBypass: boolean;
+  mutedEnvironmentIds: number[];
+  updatedAt: number;
+};
+
+export type CallPreferencesPatch = Partial<Omit<CallPreferences, 'userId' | 'updatedAt'>>;

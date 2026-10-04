@@ -5,6 +5,7 @@ import type { LanguagePreference, NetPairedInstance, ThemePreference, UserRole }
 import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
 import { SessionsSection } from '@/features/sessions';
+import { CallPreferencesSection } from '@/features/voice';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
@@ -108,6 +109,10 @@ export default function ProfileScreen() {
             accessibilityLabel={t('screens.profile.language-label')}
           />
         </View>
+      </SettingsGroup>
+
+      <SettingsGroup title={t('screens.voice.preferences.title')}>
+        <CallPreferencesSection />
       </SettingsGroup>
 
       <SettingsGroup title={t('screens.profile.server')}>

@@ -49,6 +49,7 @@ export const VIEW_CACHE_KEYS = {
   voiceprintUsers: 'voiceprint.users',
   authSessions: 'auth.sessions',
   authUserSessions: 'auth.user-sessions',
+  callPreferences: 'voice.call-preferences',
 } as const;
 
 export const buildViewCacheStorageKey = (

@@ -1,4 +1,5 @@
 export { CallPill } from './components/call-pill';
+export { CallPreferencesSection } from './components/call-preferences-section';
 export { CallSurface } from './components/call-surface';
 export { VoiceWebNotice } from './components/voice-web-notice';
 export { useCall } from './hooks/use-call';
