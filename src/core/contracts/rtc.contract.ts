@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import type { CallPreferences, IncomingCall, IncomingCallCancel, RtcClaimedCall, RtcTokenGrant } from '@/core/types';
+import type {
+  CallPreferences,
+  IncomingCall,
+  IncomingCallCancel,
+  RtcClaimedCall,
+  RtcTokenGrant,
+} from '@/core/types';
 
 export const RTC_CALL_ID_PATTERN = /^(rtc-[0-9a-f]{32}|call-\d+)$/;
 
@@ -65,4 +71,10 @@ export const callPreferencesSchema = z.object({
   criticalBypass: z.boolean(),
   mutedEnvironmentIds: z.array(z.number().int().positive()),
   updatedAt: z.number().int().nonnegative(),
+  agendaLeadMinutes: z.number().int().min(0).max(240).optional(),
+  quietDays: z.number().int().min(0).max(127).optional(),
+  ringSeconds: z.number().int().min(5).max(300).optional(),
+  pushDelaySeconds: z.number().int().min(0).max(120).optional(),
+  liveAnnounce: z.boolean().optional(),
+  lang: z.enum(['', 'es', 'en']).optional(),
 }) satisfies z.ZodType<CallPreferences>;

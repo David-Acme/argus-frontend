@@ -66,3 +66,30 @@ describe('call preferences', () => {
     expect(toggledEnvironments({ mutedEnvironmentIds: [3] }, 3, true)).toEqual([3]);
   });
 });
+
+describe('call preferences, per-person timings', () => {
+  test('a server value outside the presets is still offered', async () => {
+    const { withCurrent, RING_SECONDS } = await import('@/features/voice/model/call-preferences');
+    expect(withCurrent(RING_SECONDS, 45)).toEqual([20, 30, 45, 60, 90]);
+    expect(withCurrent(RING_SECONDS, 50)).toEqual([20, 30, 45, 50, 60, 90]);
+  });
+
+  test('quiet days toggle one bit per weekday, Sunday is bit 0', async () => {
+    const { quietDayOn, toggledQuietDay, ALL_DAYS } =
+      await import('@/features/voice/model/call-preferences');
+    expect(quietDayOn(ALL_DAYS, 0)).toBe(true);
+    const weekdays = toggledQuietDay(toggledQuietDay(ALL_DAYS, 0), 6);
+    expect(weekdays).toBe(0b0111110);
+    expect(quietDayOn(weekdays, 0)).toBe(false);
+    expect(quietDayOn(weekdays, 3)).toBe(true);
+  });
+
+  test('the new fields are optional until the server sends them', () => {
+    expect(
+      callPreferencesSchema.parse({ ...defaults, ringSeconds: 45, lang: '' }).ringSeconds
+    ).toBe(45);
+    expect(callPreferencesSchema.parse(defaults).liveAnnounce).toBeUndefined();
+    expect(callPreferencesSchema.safeParse({ ...defaults, lang: 'fr' }).success).toBe(false);
+    expect(callPreferencesSchema.safeParse({ ...defaults, quietDays: 128 }).success).toBe(false);
+  });
+});

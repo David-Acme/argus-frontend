@@ -111,10 +111,6 @@ export default function ProfileScreen() {
         </View>
       </SettingsGroup>
 
-      <SettingsGroup title={t('screens.voice.preferences.title')}>
-        <CallPreferencesSection />
-      </SettingsGroup>
-
       <SettingsGroup title={t('screens.profile.server')}>
         {instance ? (
           <ListRow
@@ -154,6 +150,7 @@ export default function ProfileScreen() {
       </View>
 
       <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
+      <CallPreferencesSection />
     </AppScreen>
   );
 }

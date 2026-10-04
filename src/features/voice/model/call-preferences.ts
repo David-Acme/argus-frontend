@@ -1,4 +1,4 @@
-import type { CallPreferences, CallTrigger } from '@/core/types';
+import type { CallLanguage, CallPreferences, CallTrigger } from '@/core/types';
 
 export const CALL_TRIGGERS: readonly CallTrigger[] = [
   'guardCritical',
@@ -73,4 +73,24 @@ export function toggledEnvironments(
 export function dndChoiceOf(preferences: Pick<CallPreferences, 'dndUntil'>, now: Date): DndChoice {
   if (!dndActive(preferences, now.getTime())) return 'off';
   return Math.abs(preferences.dndUntil - dndUntilFor('morning', now)) < 60 ? 'morning' : 'hour';
+}
+
+export const AGENDA_LEADS: readonly number[] = [0, 5, 10, 15, 30, 60];
+export const RING_SECONDS: readonly number[] = [20, 30, 45, 60, 90];
+export const PUSH_DELAYS: readonly number[] = [0, 4, 10, 30];
+export const CALL_LANGUAGES: readonly CallLanguage[] = ['', 'es', 'en'];
+export const WEEK_DAYS = [1, 2, 3, 4, 5, 6, 0] as const;
+export const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+export const ALL_DAYS = 127;
+
+export function withCurrent(presets: readonly number[], current: number): number[] {
+  return presets.includes(current) ? [...presets] : [...presets, current].sort((a, b) => a - b);
+}
+
+export function quietDayOn(mask: number, day: number): boolean {
+  return (mask & (1 << day)) !== 0;
+}
+
+export function toggledQuietDay(mask: number, day: number): number {
+  return mask ^ (1 << day);
 }

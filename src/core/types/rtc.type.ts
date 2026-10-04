@@ -88,6 +88,14 @@ export type CallPreferences = Record<CallTrigger, CallMode> & {
   criticalBypass: boolean;
   mutedEnvironmentIds: number[];
   updatedAt: number;
+  agendaLeadMinutes?: number;
+  quietDays?: number;
+  ringSeconds?: number;
+  pushDelaySeconds?: number;
+  liveAnnounce?: boolean;
+  lang?: CallLanguage;
 };
+
+export type CallLanguage = '' | 'es' | 'en';
 
 export type CallPreferencesPatch = Partial<Omit<CallPreferences, 'userId' | 'updatedAt'>>;
