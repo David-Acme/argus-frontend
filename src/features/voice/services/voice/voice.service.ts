@@ -157,6 +157,7 @@ class VoiceService {
   private callId: string | null = null;
   private callReason: string | null = null;
   private pendingSends: { type: string; payload: unknown }[] = [];
+  private claiming = false;
   private readonly handlers: Readonly<Record<string, FrameHandler>> = this.buildHandlers();
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
 
@@ -249,7 +250,10 @@ class VoiceService {
   }
 
   private async startRealtime(session: number, request: RtcTokenRequest): Promise<boolean> {
-    const answer = await requestCallToken(request);
+    this.claiming = true;
+    const answer = await requestCallToken(request).finally(() => {
+      this.claiming = false;
+    });
     if (!this.isCurrent(session)) return true;
     if (answer.kind === 'fallback') return false;
     if (answer.kind === 'outcome') {
@@ -745,6 +749,7 @@ class VoiceService {
     if (
       !parsed.success ||
       !this.active ||
+      this.claiming ||
       this.callId !== parsed.data.callId ||
       this.transport !== 'none'
     )

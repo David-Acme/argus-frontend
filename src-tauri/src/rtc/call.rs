@@ -42,6 +42,7 @@ struct EventLoop {
   agent_identity: String,
   sink: EventSink,
   remote_level: Option<JoinHandle<()>>,
+  followed: Option<String>,
   closing: Arc<AtomicBool>,
 }
 
@@ -79,6 +80,11 @@ impl EventLoop {
   }
 
   fn follow_agent_audio(&mut self, track: RemoteAudioTrack) {
+    let sid = track.sid().to_string();
+    if self.followed.as_deref() == Some(sid.as_str()) {
+      return;
+    }
+    self.followed = Some(sid);
     if let Some(previous) = self.remote_level.take() {
       previous.abort();
     }
@@ -102,6 +108,7 @@ impl EventLoop {
   }
 
   fn drop_agent_audio(&mut self) {
+    self.followed = None;
     if let Some(previous) = self.remote_level.take() {
       previous.abort();
     }
@@ -196,6 +203,7 @@ impl Call {
       agent_identity: options.agent_identity.clone(),
       sink: sink.clone(),
       remote_level: None,
+      followed: None,
       closing: closing.clone(),
     };
     sink(RtcEvent::State { state: CallState::Connected, reason: None });

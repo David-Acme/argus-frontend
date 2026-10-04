@@ -106,9 +106,12 @@ export function CallSurface({
             tone={muted ? 'active' : 'neutral'}
             onPress={onToggleMute}
           />
-          {speaking ? (
-            <CallControl icon="hand" label={t('screens.voice.interrupt')} onPress={onInterrupt} />
-          ) : null}
+          <CallControl
+            icon="hand"
+            label={t('screens.voice.interrupt')}
+            disabled={!speaking}
+            onPress={onInterrupt}
+          />
           <CallControl
             icon="phone-off"
             label={t('screens.voice.hang-up')}

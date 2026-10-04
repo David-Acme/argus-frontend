@@ -13,6 +13,7 @@ const posted: Posted[] = [];
 const sentFrames: { type: string; payload: unknown }[] = [];
 const operationListeners = new Map<number, (message: ISocketEmitDto) => void>();
 let tokenAnswers: IServiceResponse<unknown>[] = [];
+let deferredAnswer: Promise<IServiceResponse<unknown>> | null = null;
 let realtimeSupported = true;
 
 class FakeCall implements IRealtimeCall {
@@ -50,6 +51,11 @@ mock.module('expo-audio', () => ({
 mock.module('@/features/voice/services/rtc/rtc-token', () => ({
   requestCallToken: async (body: unknown) => {
     posted.push({ url: '/rtc/token', body });
+    if (deferredAnswer) {
+      const pending = deferredAnswer;
+      deferredAnswer = null;
+      return readTokenAnswer(await pending);
+    }
     return readTokenAnswer(
       tokenAnswers.shift() ?? {
         status: 503,
@@ -310,6 +316,26 @@ describe('Argus calls you', () => {
     expect(voiceService.snapshot.callReason).toBe('Persona desconocida · Patio');
     expect(voiceService.snapshot.transport).toBe('rtc');
     unsubscribe();
+  });
+
+  test('the cancel that follows our own claim does not end the call', async () => {
+    let answer: (value: IServiceResponse<unknown>) => void = () => undefined;
+    deferredAnswer = new Promise<IServiceResponse<unknown>>((resolve) => {
+      answer = resolve;
+    });
+    operationListeners.get(8)?.(ring() as unknown as ISocketEmitDto);
+    await settle();
+    operationListeners.get(9)?.({
+      operation: 9,
+      option: 'notification',
+      info: { callId: 'call-41', reason: 'answered_elsewhere' },
+    } as unknown as ISocketEmitDto);
+    expect(voiceService.snapshot.error).toBeNull();
+    answer(grant('call-41'));
+    await settle();
+    await settle();
+    expect(voiceService.snapshot.transport).toBe('rtc');
+    expect(voiceService.snapshot.isActive).toBe(true);
   });
 
   test('a ring in the background, an expired ring or a ring during a call is left to the server', async () => {

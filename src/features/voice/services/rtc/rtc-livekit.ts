@@ -20,6 +20,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   private listener: Listener = () => undefined;
   private audioElements: HTMLMediaElement[] = [];
   private levelTimer: ReturnType<typeof setInterval> | null = null;
+  private followedSid: string | null = null;
 
   constructor(private readonly options: LivekitCallOptions) {}
 
@@ -134,6 +135,8 @@ export class LivekitRealtimeCall implements IRealtimeCall {
 
   private followAgentAudio(track: RemoteTrack, participant: RemoteParticipant): void {
     if (participant.identity !== this.agentIdentity || track.kind !== 'audio') return;
+    if (track.sid === this.followedSid) return;
+    this.followedSid = track.sid ?? null;
     if (this.options.attachAudio) {
       const element = track.attach();
       element.style.display = 'none';
@@ -154,6 +157,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   }
 
   private dropAgentAudio(): void {
+    this.followedSid = null;
     if (this.levelTimer !== null) {
       clearInterval(this.levelTimer);
       this.levelTimer = null;
