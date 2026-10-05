@@ -103,6 +103,18 @@ export const privacy = {
   },
   household: {
     title: 'Household privacy',
+    signal: {
+      presence: 'Presence at home',
+      faceCameras: 'Recognize people on the cameras',
+      voiceLearning: 'Learn voices',
+      cameraAudio: 'Camera audio',
+    },
+    'signal-hint': {
+      presence: 'Uses “home” or “away” for those who allow it, to decide whom to warn first.',
+      faceCameras: 'Cameras name those who allow it; everyone else is seen as someone from home, without a name.',
+      voiceLearning: 'Argus learns the voices of those who allow it in their calls. Turning it off erases them all.',
+      cameraAudio: 'Camera microphones turn on only if everyone allows it.',
+    },
     hint: 'Turn a feature off for everyone. You cannot turn it on for someone else: each person decides their own.',
     pending: '{count} undecided',
     'all-decided': 'Everyone has decided',

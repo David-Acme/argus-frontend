@@ -90,13 +90,13 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
           <SwitchRow
             key={signal}
             icon={PRIVACY_SIGNAL_ICONS[signal]}
-            label={t(`screens.privacy.signal.${signal}`)}
+            label={t(`screens.privacy.household.signal.${signal}`)}
             hint={
               signal === 'cameraAudio' && directory.household.cameraAudio
                 ? audioHeld > 0
                   ? t('screens.privacy.household.audio-held', { count: String(audioHeld) })
                   : t('screens.privacy.household.audio-on')
-                : t(`screens.privacy.signal-hint.${signal}`)
+                : t(`screens.privacy.household.signal-hint.${signal}`)
             }
             value={directory.household[signal]}
             onChange={(value) => void setSwitch(signal, value)}

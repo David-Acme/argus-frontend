@@ -104,6 +104,18 @@ export const privacy = {
   },
   household: {
     title: 'Privacidad de la casa',
+    signal: {
+      presence: 'Presencia en casa',
+      faceCameras: 'Reconocer a las personas en las cámaras',
+      voiceLearning: 'Aprender voces',
+      cameraAudio: 'Audio de las cámaras',
+    },
+    'signal-hint': {
+      presence: 'Usa “en casa” o “fuera” de quienes lo permiten para decidir a quién avisar primero.',
+      faceCameras: 'Las cámaras nombran a quienes lo permiten; al resto lo ven como alguien de casa, sin nombre.',
+      voiceLearning: 'Argus aprende la voz de quienes lo permiten en sus llamadas. Al apagarlo se borran todas.',
+      cameraAudio: 'Los micrófonos de las cámaras se encienden solo si todas las personas lo permiten.',
+    },
     hint: 'Apaga una función para todos. No puedes encenderla por otra persona: cada quien decide la suya.',
     pending: '{count} sin decidir',
     'all-decided': 'Todos decidieron',
