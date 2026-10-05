@@ -5,6 +5,7 @@ import type {
   RtcCallState,
   RtcEndReason,
   RtcTokenAnswer,
+  SessionRevokeCause,
   VoicePhase,
 } from '@/core/types';
 import { rtcTokenGrantSchema } from '@/core/contracts/rtc.contract';
@@ -171,4 +172,22 @@ export function decodeUtf8(bytes: Uint8Array): string {
     }
   }
   return text;
+}
+
+const REVOKE_CAUSES: readonly SessionRevokeCause[] = [
+  'logout',
+  'revoked',
+  'revokedByOwner',
+  'refreshTokenReuse',
+  'accountDisabled',
+];
+
+export type RtcRevocation = { cause: SessionRevokeCause | null };
+
+export function readRevocation(type: string, payload: unknown): RtcRevocation | null {
+  if (type !== VOICE_DONE_TYPE || typeof payload !== 'object' || payload === null) return null;
+  const record = payload as Record<string, unknown>;
+  if (record.reason !== 'revoked') return null;
+  const cause = REVOKE_CAUSES.find((known) => known === record.cause) ?? null;
+  return { cause };
 }

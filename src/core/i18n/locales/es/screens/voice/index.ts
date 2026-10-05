@@ -167,6 +167,7 @@ export const voice = {
     'call-taken': 'Contestaste esta llamada en otro dispositivo.',
     'call-missed': 'Esta llamada ya terminó.',
     'session-revoked': 'Se cerró la sesión de este dispositivo.',
+    'account-disabled': 'Tu cuenta fue desactivada.',
     connection: 'No hay conexión con tu servidor Argus.',
     generic: 'Argus no puede atender la llamada ahora.',
     unavailable: 'El micrófono no está disponible.',

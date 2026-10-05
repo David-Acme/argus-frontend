@@ -24,6 +24,9 @@ describe('voiceErrorMessage', () => {
     expect(voiceErrorMessage('SESSION_REVOKED|closed', t)).toBe(
       'screens.voice.errors.session-revoked'
     );
+    expect(voiceErrorMessage('ACCOUNT_DISABLED|off', t)).toBe(
+      'screens.voice.errors.account-disabled'
+    );
   });
 
   test('anything else is the generic message', () => {

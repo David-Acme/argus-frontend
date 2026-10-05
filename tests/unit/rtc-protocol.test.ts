@@ -7,6 +7,7 @@ import {
   incomingCallLive,
   pinnedRtcUrl,
   readAgentState,
+  readRevocation,
   readRtcData,
   readTokenAnswer,
   rtcPhase,
@@ -150,6 +151,19 @@ describe('transport details', () => {
     expect(decodeUtf8(encodeUtf8(text))).toBe(text);
     expect(Array.from(encodeUtf8('ñ'))).toEqual([0xc3, 0xb1]);
     expect(decodeUtf8(Uint8Array.from([0x80]))).toBe('�');
+  });
+});
+
+describe('revocation', () => {
+  test('argus.done with reason revoked names its cause', () => {
+    expect(readRevocation('voice:done', { reason: 'revoked', cause: 'revokedByOwner' })).toEqual({
+      cause: 'revokedByOwner',
+    });
+    expect(readRevocation('voice:done', { reason: 'revoked', cause: 'weird' })).toEqual({
+      cause: null,
+    });
+    expect(readRevocation('voice:done', { reason: 'timeout' })).toBeNull();
+    expect(readRevocation('voice:stt', { reason: 'revoked' })).toBeNull();
   });
 });
 

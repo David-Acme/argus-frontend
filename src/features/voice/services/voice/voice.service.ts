@@ -36,6 +36,7 @@ import {
 import { voiceLevel } from '@/features/voice/model/voice-level';
 import {
   incomingCallLive,
+  readRevocation,
   readAgentState,
   readRtcData,
   rtcPhase,
@@ -43,6 +44,7 @@ import {
 } from '@/features/voice/model/rtc-protocol';
 import { createRealtimeCall, rtcCallSupported } from '@/features/voice/services/rtc';
 import { requestCallToken } from '@/features/voice/services/rtc/rtc-token';
+import { endRevokedSession } from '@/features/voice/services/voice/voice-session-end';
 import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
 import {
   INITIAL_CALL_BOUNDARY,
@@ -56,6 +58,7 @@ import {
 } from '@/features/voice/model/voice-action-log';
 import type {
   IncomingCall,
+  SessionRevokeCause,
   RtcAgentState,
   RtcCallOutcome,
   RtcCallState,
@@ -112,6 +115,7 @@ const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(
 const MIC_FRAME_SAMPLES = (VOICE_SAMPLE_RATE * VOICE_MIC_FRAME_MS) / 1000;
 const SOCKET_CHECK_INTERVAL_MS = 1000;
 const PENDING_SENDS_MAX = 20;
+const REVOKED_FAREWELL_MAX_MS = 4000;
 const OUTCOME_ERRORS: Readonly<Record<RtcCallOutcome, string>> = {
   'not-found': 'CALL_NOT_FOUND|The call is no longer there',
   taken: 'CALL_TAKEN|The call was answered on another device',
@@ -158,6 +162,8 @@ class VoiceService {
   private callReason: string | null = null;
   private pendingSends: { type: string; payload: unknown }[] = [];
   private claiming = false;
+  private revoked: { cause: SessionRevokeCause | null } | null = null;
+  private revokedTimer: ReturnType<typeof setTimeout> | null = null;
   private waitingCall: IncomingCall | null = null;
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly handlers: Readonly<Record<string, FrameHandler>> = this.buildHandlers();
@@ -198,6 +204,7 @@ class VoiceService {
 
   async start(options: VoiceStartOptions = {}): Promise<void> {
     if (this.active) return;
+    this.finishRevoked();
     this.session += 1;
     const session = this.session;
     this.active = true;
@@ -308,7 +315,10 @@ class VoiceService {
     if (this.session !== session || this.transport !== 'rtc') return;
     if (event.kind === 'data') {
       const frame = readRtcData(event.topic, event.payload);
-      if (frame) this.handlers[frame.type]?.(frame.payload);
+      if (!frame) return;
+      const revocation = readRevocation(frame.type, frame.payload);
+      if (revocation) this.beginRevoked(revocation.cause);
+      else this.handlers[frame.type]?.(frame.payload);
       return;
     }
     if (event.kind === 'level') {
@@ -331,6 +341,10 @@ class VoiceService {
       this.applyRtcPhase();
       return;
     }
+    if (this.revoked) {
+      this.finishRevoked();
+      return;
+    }
     if (!this.active || event.reason === 'local') return;
     const ended = END_ERRORS[event.reason ?? 'lost'];
     if (ended) {
@@ -342,6 +356,31 @@ class VoiceService {
       return;
     }
     void this.resumeRealtime(session);
+  }
+
+  private beginRevoked(cause: SessionRevokeCause | null): void {
+    if (this.revoked) return;
+    this.revoked = { cause };
+    this.resuming = false;
+    this.revokedTimer = setTimeout(() => this.finishRevoked(), REVOKED_FAREWELL_MAX_MS);
+  }
+
+  private finishRevoked(): void {
+    const revoked = this.revoked;
+    if (!revoked) return;
+    this.revoked = null;
+    if (this.revokedTimer !== null) clearTimeout(this.revokedTimer);
+    this.revokedTimer = null;
+    this.error =
+      revoked.cause === 'accountDisabled'
+        ? 'ACCOUNT_DISABLED|This account was disabled'
+        : 'SESSION_REVOKED|This session was closed';
+    this.phase = 'error';
+    this.active = false;
+    this.liveCameraId = null;
+    this.leaveRealtime(true);
+    this.notify();
+    endRevokedSession(revoked.cause);
   }
 
   private applyRtcPhase(): void {
@@ -411,6 +450,11 @@ class VoiceService {
 
   stop(): void {
     this.clearWaiting();
+    if (this.revoked) {
+      this.active = false;
+      this.notify();
+      return;
+    }
     if (!this.active && !this.serverSession) return;
     this.active = false;
     this.endServerSession();

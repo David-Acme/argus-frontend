@@ -80,6 +80,10 @@ mock.module('@/core/services/sync', () => ({
     },
   },
 }));
+const endedSessions: (string | null)[] = [];
+mock.module('@/features/voice/services/voice/voice-session-end', () => ({
+  endRevokedSession: (cause: string | null) => endedSessions.push(cause),
+}));
 mock.module('@/features/voice/services/rtc', () => ({
   rtcCallSupported: () => realtimeSupported,
   createRealtimeCall: () => call,
@@ -239,6 +243,48 @@ describe('a WebRTC call', () => {
     call.listener({ kind: 'state', state: 'disconnected', reason: 'revoked' });
     expect(voiceService.snapshot.phase).toBe('error');
     expect(voiceService.snapshot.error).toStartWith('SESSION_REVOKED');
+  });
+
+  test('a revoked session hears the farewell, then ends without resuming', async () => {
+    endedSessions.length = 0;
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    call.listener({
+      kind: 'data',
+      topic: 'argus.done',
+      payload: '{"reason":"revoked","cause":"logout"}',
+    });
+    call.listener({
+      kind: 'data',
+      topic: 'argus.assistant',
+      payload: '{"text":"Tu sesión se ha cerrado, cuelgo.","turnId":9}',
+    });
+    expect(voiceService.snapshot.isActive).toBe(true);
+    expect(call.left).toBe(0);
+    voiceService.stop();
+    expect(call.left).toBe(0);
+    expect(call.sent).toHaveLength(0);
+    call.listener({ kind: 'state', state: 'disconnected', reason: 'revoked' });
+    await settle();
+    expect(voiceService.snapshot.error).toStartWith('SESSION_REVOKED');
+    expect(call.left).toBe(1);
+    expect(call.sent).toHaveLength(0);
+    expect(posted).toHaveLength(1);
+    expect(endedSessions).toEqual(['logout']);
+  });
+
+  test('a disabled account ends with its own wording when the room is deleted', async () => {
+    endedSessions.length = 0;
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    call.listener({
+      kind: 'data',
+      topic: 'argus.done',
+      payload: '{"reason":"revoked","cause":"accountDisabled"}',
+    });
+    call.listener({ kind: 'state', state: 'disconnected', reason: 'ended' });
+    expect(voiceService.snapshot.error).toStartWith('ACCOUNT_DISABLED');
+    expect(endedSessions).toEqual(['accountDisabled']);
   });
 
   test('a lost connection resumes the same call', async () => {

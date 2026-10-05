@@ -167,6 +167,7 @@ export const voice = {
     'call-taken': 'You answered this call on another device.',
     'call-missed': 'This call has already ended.',
     'session-revoked': 'This device was signed out.',
+    'account-disabled': 'Your account was disabled.',
     connection: 'There is no connection to your Argus server.',
     generic: 'Argus cannot take the call right now.',
     unavailable: 'The microphone is not available.',
