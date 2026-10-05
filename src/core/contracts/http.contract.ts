@@ -4,7 +4,11 @@ import {
   sessionRevokeResultSchema,
   userSessionsOverviewSchema,
 } from '@/core/contracts/session.contract';
-import { visitorDetailSchema, visitorListSchema, visitorSettingsSchema } from '@/core/contracts/visitor.contract';
+import { visitorListSchema, visitorSettingsSchema } from '@/core/contracts/visitor.contract';
+import { heartbeatSchema } from '@/core/contracts/heartbeat.contract';
+import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
+import { incidentResponseListSchema } from '@/core/contracts/response.contract';
+import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
 import { presenceOverviewSchema } from '@/core/contracts/presence.contract';
 import { voiceprintDirectorySchema } from '@/core/contracts/voiceprint.contract';
 import type {
@@ -425,8 +429,13 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /voiceprint/users': voiceprintDirectorySchema,
   'GET /guard/presence': presenceOverviewSchema,
   'GET /visitor': visitorListSchema,
-  'GET /visitor/{1}': visitorDetailSchema,
   'GET /visitor-settings': visitorSettingsSchema,
   'GET /user': z.array(userManagementRecordSchema),
   'GET /invitation': z.array(invitationRecordSchema),
+  'GET /sync/heartbeat': heartbeatSchema,
+  'GET /privacy/me': privacyMeSchema,
+  'GET /privacy/users': privacyDirectorySchema,
+  'GET /guard/safety': safetyStatusSchema,
+  'POST /guard/panic': panicResultSchema,
+  'GET /notification/responses': incidentResponseListSchema,
 };

@@ -70,7 +70,7 @@ function roleMasks(): Map<string, Set<UserRole>> {
   return new Map(
     [...masks].map(([, name = '', body = '']) => [
       name,
-      new Set([...body.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(([, role = '']) => role.toLowerCase() as UserRole)),
+      new Set([...body.matchAll(/UserRole::(\w+)/g)].map(([, role = '']) => role.toLowerCase() as UserRole)),
     ])
   );
 }
