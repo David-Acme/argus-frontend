@@ -171,6 +171,8 @@ export const voice = {
     'call-resolved': 'It was resolved; the call is no longer needed.',
     'session-revoked': 'This device was signed out.',
     'account-disabled': 'Your account was disabled.',
+    'too-many-calls': 'You already have two calls open with Argus. Hang up one to start another.',
+    'rtc-unavailable': 'Calls are not available on your server right now. Try again in a little while.',
     connection: 'There is no connection to your Argus server.',
     generic: 'Argus cannot take the call right now.',
     unavailable: 'The microphone is not available.',

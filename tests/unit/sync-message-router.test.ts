@@ -5,7 +5,7 @@ import {
   readErrorFrame,
   type SyncFrameHandlers,
 } from '@/core/services/sync/sync-message-router';
-import { isSyncRequestError } from '@/core/services/sync/sync-request-error';
+import { isSyncRequestError, retriesSyncFailure } from '@/core/services/sync/sync-request-error';
 import { SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/shared/constants';
 
 const recordingHandlers = (calls: unknown[][]): SyncFrameHandlers => ({
@@ -54,6 +54,19 @@ describe('SyncMessageRouter', () => {
     router.route(JSON.stringify({ type: 'sync_error', status: 409, error: 'old' }));
     expect(calls[0]?.[0]).toBe('syncFailure');
     expect(isSyncRequestError(calls[0]?.[1], 409)).toBe(true);
+  });
+
+  test('a 503 from a server shutting down rejects the request and is retried, a 401 is not', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    router.route(JSON.stringify({ type: 'sync_error', status: 503, error: 'shutting down' }));
+    router.route(JSON.stringify({ type: 'sync_audit_log_error', status: 503, error: 'shutting down' }));
+    expect(calls.map((call) => call[0])).toEqual(['syncFailure', 'auditFailure']);
+    expect(isSyncRequestError(calls[0]?.[1], 503)).toBe(true);
+    expect(retriesSyncFailure(calls[0]?.[1])).toBe(true);
+    expect(retriesSyncFailure(calls[1]?.[2])).toBe(true);
+    router.route(JSON.stringify({ type: 'sync_error', status: 401, error: 'expired' }));
+    expect(retriesSyncFailure(calls[2]?.[1])).toBe(false);
   });
 
   test('an audit error rejects only its scope', () => {

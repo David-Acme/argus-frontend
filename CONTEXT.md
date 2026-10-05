@@ -2622,3 +2622,62 @@ window, the end detection and the loading/error state; components render.
   the dashboard's counts and top-N. They are small and bounded. The people
   directory moved to `InfiniteList` only because `VirtualList` is gone.
 
+
+## Backend audit follow-ups: media access, viewer limits, retention, biometric erase (2026-10-05)
+
+The backend audit branch (`claude/argus-backend-audit-l5zqp4`) changed several
+contracts the app reads; the app follows them as below.
+
+- **The `/media` socket renews its access in band.** argus-camera re-checks
+  every live-view socket and closes it with 1008 `session_expired`,
+  `role_changed` or `slow_consumer`. `services/camera-media-session.ts` (the
+  session, with its dependencies injected so it is unit-tested against a fake
+  socket) watches the access token in the auth store and, while a socket is
+  open, sends `{"type":"camera:auth","payload":{"token":…}}` after each
+  rotation, at most once per 10.5 s (the server allows one per 10 s; later
+  rotations within the window send only the newest token). `camera:auth:ok`
+  adopts the token, `camera:auth_error` 429 waits out the window and sends
+  again, 400/409 are left alone (the socket keeps playing). A
+  `session_expired` close refreshes the token the socket was opened with
+  (`refreshSession(failed)`, so a token that already rotated is not rotated
+  again) and reconnects at once; a rejected refresh ends the view with
+  "Tu sesión terminó". `role_changed` and `slow_consumer` reconnect at once
+  without a refresh: the new socket is judged with the new role, so a role
+  that lost the camera ends on the subscribe's 403. Two quick reconnects
+  without media fall back to the normal backoff. Pure rules:
+  `model/media-access.ts`.
+- **Notices.** `CameraLiveNotice` (`camera-disabled`, `viewers-total`,
+  `viewers-camera`, `viewers-user`, `session-ended`) travels beside the stream
+  state (`onNotice`) and replaces the placeholder copy while there is no
+  picture. `camera:subscribe` 409 is a disabled camera (final, no retries); a
+  429 `too_many_viewers[_for_camera]` keeps the busy retry and names the
+  limit. A WebRTC offer refused with `too_many_viewers*` keeps the reason
+  (`rtcRefusalReason`), announces it and falls back to the WebSocket; the
+  notice clears once a picture plays.
+- **Connection test and edits.** `POST /camera/probe` answers 422 when stored
+  passwords would be used against another address and 429 while a test runs;
+  the test step words both (`probeRefusalOf`). Because `PATCH /camera` with a
+  new `ip` and no password clears both passwords, the edit form keeps the
+  stored address (`storedIp`/`storedPort`) and, when the address changes,
+  requires the password again (when the camera has a user) and the cloud
+  password (Tapo), with a note explaining why (`credentialsToRetype`). A 500
+  "could not be encrypted" is renamed `CAMERA_SECRET_NOT_SEALED` and gets its
+  own toast copy.
+- **Retention.** The details step has "Conservar evidencias (días)" (new
+  cameras start at 30) and "Hay un incidente documentado": 0-60 days, 0-120
+  with the incident; clearing the incident brings a longer value back to 60,
+  as the server does. The flag lives in the camera's `config` and is projected
+  as `retentionIncident`.
+- **Guard and Guest camera rows** arrive without address or user
+  (`ip ""`, `port 0`, `config "{}"`): `cameraAddressLabel` hides the address
+  row and the header drops the empty IP.
+- **Biometric erase** (Owner, in the per-user access dialog of `/users`):
+  `DELETE /user/{id}/biometrics` behind a danger confirmation that says the
+  person stays and can sign in by QR until they register their face again;
+  the button shows progress (not optimistic) and the toast gives the counts.
+  The voice directory cache drops the person at once.
+- **Calls.** `POST /rtc/token` 429 (two calls per user) and an unanswerable
+  `RTC_UNAVAILABLE` have their own call-screen copy; an outgoing call still
+  falls back to the `/sync` PCM path on 503.
+- **Sync during shutdown.** A `<type>_error` 503 rejects the pending request
+  and the sync retries with backoff (`retriesSyncFailure`: everything but 401).

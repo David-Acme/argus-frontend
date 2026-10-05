@@ -23,7 +23,7 @@ import { LiveFrameApplier } from './live-frame-applier';
 import { ProjectionEpoch } from './projection-epoch';
 import { ownsProjection, ProjectionOwnerStore, type ProjectionOwner } from './projection-owner';
 import { userPatchFromRows, userPatchesFromAudit } from './session-user-patch';
-import { SYNC_CATCH_UP_DELAY_MS, SYNC_STATUS_UNAUTHORIZED } from './sync-constants';
+import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
 import { withoutCreatedCursor } from './sync-cursor';
@@ -31,7 +31,7 @@ import { SyncCursorStore } from './sync-cursor-store';
 import { destroyAllRows } from './sync-db-utils';
 import { SyncMessageRouter } from './sync-message-router';
 import { SyncRequestChannel } from './sync-request-channel';
-import { errorMessage, isSyncRequestError } from './sync-request-error';
+import { errorMessage, retriesSyncFailure } from './sync-request-error';
 import { SyncRowPager } from './sync-row-pager';
 
 type AuthStoreApi = typeof UseAuthStoreHook;
@@ -351,7 +351,7 @@ class SynchronizeService {
       this.syncError = errorMessage(error);
       const projectionReady = this.readyEpoch === epoch && this.epoch.isCurrent(epoch);
       if (!projectionReady || !this.live.resume()) this.live.pause();
-      if (this.epoch.isCurrent(epoch) && !isSyncRequestError(error, SYNC_STATUS_UNAUTHORIZED)) {
+      if (this.epoch.isCurrent(epoch) && retriesSyncFailure(error)) {
         const wait = backoffDelay(this.syncRetryAttempt);
         this.syncRetryAttempt += 1;
         this.scheduleSync(wait);

@@ -17,5 +17,7 @@ export function voiceErrorMessage(error: string | null, t: TranslateFn): string 
   if (code === 'CALL_RESOLVED') return t('screens.voice.errors.call-resolved');
   if (code === 'SESSION_REVOKED') return t('screens.voice.errors.session-revoked');
   if (code === 'ACCOUNT_DISABLED') return t('screens.voice.errors.account-disabled');
+  if (code === 'TOO_MANY_REQUESTS') return t('screens.voice.errors.too-many-calls');
+  if (code === 'RTC_UNAVAILABLE') return t('screens.voice.errors.rtc-unavailable');
   return t('screens.voice.errors.generic');
 }

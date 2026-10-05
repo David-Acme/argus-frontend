@@ -29,6 +29,15 @@ describe('voiceErrorMessage', () => {
     );
   });
 
+  test('too many calls and an unavailable call service are worded apart', () => {
+    expect(voiceErrorMessage('TOO_MANY_REQUESTS|too many calls at once', t)).toBe(
+      'screens.voice.errors.too-many-calls'
+    );
+    expect(voiceErrorMessage('RTC_UNAVAILABLE|Argus cannot take this call here', t)).toBe(
+      'screens.voice.errors.rtc-unavailable'
+    );
+  });
+
   test('a call another person attends, or that resolved, says so', () => {
     const tp = ((key: string, params?: { name: string }) =>
       params ? `${key}:${params.name}` : key) as never;

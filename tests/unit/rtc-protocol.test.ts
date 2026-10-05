@@ -79,6 +79,10 @@ describe('token answer', () => {
       kind: 'refused',
       code: 'UNAUTHORIZED',
     });
+    expect(readTokenAnswer(failure(429, 'TOO_MANY_REQUESTS'))).toMatchObject({
+      kind: 'refused',
+      code: 'TOO_MANY_REQUESTS',
+    });
     expect(readTokenAnswer({ status: 0, ok: false, info: null, errors: null })).toMatchObject({
       kind: 'refused',
       code: 'NETWORK_ERROR',
