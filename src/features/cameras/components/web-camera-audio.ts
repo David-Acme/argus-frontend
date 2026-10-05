@@ -13,6 +13,8 @@ export class WebCameraAudio {
   private level = 0;
   private nextTime = 0;
   private disposed = false;
+  private stream: MediaStream | null = null;
+  private streamSource: MediaStreamAudioSourceNode | null = null;
 
   constructor(private readonly onBlocked: BlockedListener) {}
 
@@ -31,6 +33,11 @@ export class WebCameraAudio {
     }
   }
 
+  attachStream(stream: MediaStream | null): void {
+    this.stream = stream;
+    this.connectStream();
+  }
+
   setLevel(level: number): void {
     this.level = level;
     if (level > 0) this.ensureContext();
@@ -45,6 +52,9 @@ export class WebCameraAudio {
 
   dispose(): void {
     this.disposed = true;
+    this.streamSource?.disconnect();
+    this.streamSource = null;
+    this.stream = null;
     const context = this.context;
     this.context = null;
     this.gain = null;
@@ -60,7 +70,18 @@ export class WebCameraAudio {
     this.context = context;
     this.gain = gain;
     context.onstatechange = () => this.report(context);
+    this.connectStream();
     this.unlock();
+  }
+
+  private connectStream(): void {
+    this.streamSource?.disconnect();
+    this.streamSource = null;
+    const context = this.context;
+    const stream = this.stream;
+    if (!context || !this.gain || !stream || stream.getAudioTracks().length === 0) return;
+    this.streamSource = context.createMediaStreamSource(stream);
+    this.streamSource.connect(this.gain);
   }
 
   private report(context: AudioContext): void {

@@ -17,6 +17,7 @@ import type {
   ICameraCatalog,
   ICameraOverview,
   ICameraProbeResult,
+  ICameraWebRtcAnswer,
   ICreateDeviceLoginResponse,
   IDeviceLoginStatusResponse,
   IInvitationRecord,
@@ -184,6 +185,13 @@ export const cameraProbeSchema = z.object({
   device: z.object({ model: z.string().optional(), firmware: z.string().optional() }),
   catalogId: z.string(),
 }) satisfies z.ZodType<ICameraProbeResult>;
+
+export const cameraWebRtcAnswerSchema = z.object({
+  type: z.literal('answer'),
+  sdp: z.string().startsWith('v=0'),
+  quality: z.enum(['main', 'sub']),
+  audio: z.boolean(),
+}) satisfies z.ZodType<ICameraWebRtcAnswer>;
 
 export const guardEnvironmentSchema = z.object({
   id: z.number(),

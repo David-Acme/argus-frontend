@@ -10,6 +10,7 @@ import type {
   ICameraSettings,
   ICameraSnapshot,
   ICameraTalk,
+  ICameraWebRtcOffer,
   IServiceResponse,
 } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
@@ -41,6 +42,10 @@ class CameraControlService {
 
   settings(id: string, body: ICameraSettings): Promise<IServiceResponse<ICameraDeviceStatus>> {
     return httpService.patch(`/camera/${id}/settings`, body);
+  }
+
+  webrtc(id: number, body: ICameraWebRtcOffer): Promise<IServiceResponse<unknown>> {
+    return httpService.post(`/camera/${id}/webrtc`, body);
   }
 
   snapshot(id: string): Promise<IServiceResponse<ICameraSnapshot>> {

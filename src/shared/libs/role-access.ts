@@ -63,13 +63,14 @@ export function guardAccessForRole(role: UserRole): GuardAccess {
 
 export type CameraActionAccess = {
   talk: boolean;
+  watch: boolean;
 };
 
 const CAMERA_ACTION_ACCESS: Record<UserRole, CameraActionAccess> = {
-  owner: { talk: true },
-  resident: { talk: true },
-  guard: { talk: true },
-  guest: { talk: false },
+  owner: { talk: true, watch: true },
+  resident: { talk: true, watch: true },
+  guard: { talk: true, watch: true },
+  guest: { talk: false, watch: true },
 };
 
 export function cameraActionAccessForRole(role: UserRole): CameraActionAccess {

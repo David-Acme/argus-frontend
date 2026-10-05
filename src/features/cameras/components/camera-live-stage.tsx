@@ -60,6 +60,12 @@ export function CameraLiveStage({
           })
         : t('screens.cameras.live.stats-size', { width: String(stats.width), height: String(stats.height) })
       : null;
+  const transportLabel = stats
+    ? t(stats.transport === 'webrtc' ? 'screens.cameras.live.transport-webrtc' : 'screens.cameras.live.transport-ws')
+    : null;
+  const transportHint = stats
+    ? t(stats.transport === 'webrtc' ? 'screens.cameras.live.transport-webrtc-hint' : 'screens.cameras.live.transport-ws-hint')
+    : '';
 
   return (
     <View
@@ -93,11 +99,18 @@ export function CameraLiveStage({
         {live && statsLabel ? (
           <View
             pointerEvents="none"
+            accessible
+            accessibilityLabel={`${statsLabel}. ${transportHint}`}
             className="bg-card/90 absolute right-3 top-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
             <Icon name="gauge" className="text-foreground-secondary size-3.5" />
             <Text variant="micro" className="text-foreground font-semibold">
               {statsLabel}
             </Text>
+            {transportLabel ? (
+              <Text variant="micro" className="text-foreground-secondary">
+                {`· ${transportLabel}`}
+              </Text>
+            ) : null}
           </View>
         ) : null}
         {live && ptz && showPad ? (

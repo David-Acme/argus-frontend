@@ -2130,6 +2130,65 @@ unfolds its timeline.
   `expo-screen-orientation` and the `muted` prop are native changes: the
   Android/iOS dev client must be rebuilt.
 
+## The camera live view over WebRTC, the WebSocket as fallback (2026-10-05)
+
+David asked that the live view always try WebRTC first; the fMP4 `/media`
+socket stays, and is used only when WebRTC cannot be established or drops
+for good. The picture comes straight from argus-camera's go2rtc (backend
+`services/camera/CONTEXT.md`, "The live view prefers WebRTC"); argus-camera
+only answers the offer (`POST /camera/{id}/webrtc`, `cameraControlService.webrtc`,
+answer checked by `cameraWebRtcAnswerSchema`).
+
+- **Who decides the transport.** `services/camera-live.service.ts`
+  (`cameraLiveService`, `ICameraLiveService`) is the only caller of both
+  transports: it opens a WebRTC session first when the platform has one and
+  no recent failure is cooling down (`model/camera-transport.ts`,
+  unit-tested), and the fMP4 session (`camera-media.service.ts`, unchanged)
+  otherwise. WebRTC that paints no frame within 5 s, a refused or failed
+  offer, or a peer that ends `failed`/`closed` falls back to the WebSocket at
+  once. A WebRTC view that drops after painting reconnects over WebRTC once
+  (state `reconnecting`), then falls back. Each failure moves the next try
+  out (30 s doubling to 5 min, process-wide), so the next views open on the
+  WebSocket straight away; a view already on the WebSocket tries WebRTC again
+  in the background when that time comes and hands over without a blank
+  frame when WebRTC paints (the socket closes only then). A success clears
+  the backoff.
+- **Platforms.** `services/camera-rtc/` is platform-split:
+  `camera-rtc.web.ts` uses the browser's `RTCPeerConnection` (feature
+  detected; Tauri on Linux runs WebKitGTK, which has none without GStreamer's
+  `webrtcbin`, so the desktop goes straight to the WebSocket and never shows a
+  failure — measured: the chip says "WS" and Alta and Fluida play as before;
+  WebView2 and WKWebView have it), `camera-rtc.native.ts` loads
+  `@livekit/react-native-webrtc` lazily and answers unsupported while the dev
+  client lacks `WebRTCModule`. `camera-rtc-session.ts` is the shared session:
+  two `recvonly` transceivers, one HTTP exchange, then `getStats` every
+  250 ms until the first decoded frame and every second after that for the
+  size, the frame rate (decoded frames over time) and whether audio packets
+  still arrive; five seconds without a decoded frame is a stall.
+- **What renders.** `components/camera-rtc-video.{web,native}.tsx`: a muted
+  `<video>` on the web (the camera's audio goes through the same
+  `WebCameraAudio` context as the fMP4 audio, via `attachStream`, so mute,
+  level and "Toca para activar el sonido" are unchanged), `RTCView` on
+  phones (audio plays through WebRTC's own output; mute disables the remote
+  audio track). The live views keep the canvas/native player mounted and
+  show whichever transport is live, so the zones overlay, PTZ, quality,
+  fullscreen and mute work the same on both.
+- **The chip says which.** The stats chip on the video adds "· WebRTC" or
+  "· WS" (`screens.cameras.live.transport-*`, with a spoken hint), from
+  `ICameraLiveStats.transport`.
+- **Remote.** Through the tunnel WebRTC has no route (no TURN yet), so the
+  first view of a session waits up to 5 s before playing over the WebSocket;
+  later views skip WebRTC until the backoff ends.
+- **Phones not verified here.** The native path type-checks and shares the
+  session code the browser test exercised, but no phone ran it in this
+  change; Android's audio routing for a camera stream (no `AudioSession`
+  is started) is the first thing to check on a device.
+- **Tests.** `tests/unit/camera-transport.test.ts` (choice, backoff, stats
+  reading), `tests/unit/camera-live-transport.test.ts` (the coordinator
+  against fake transports: unsupported, live, refused, no frame, drop and
+  reconnect, background upgrade), and the role mirror now covers
+  `CameraAction::Watch`.
+
 ## Calls over WebRTC (2026-10-04)
 
 David decided that Argus's voice travels over WebRTC through a self-hosted

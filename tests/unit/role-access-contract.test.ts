@@ -137,14 +137,15 @@ function cameraActionRoles(): Map<string, Set<UserRole>> {
 describe('camera actions mirror the backend kCameraActionAccess', () => {
   const actions = cameraActionRoles();
 
-  test('the parser sees the talk action', () => {
-    expect([...actions.keys()]).toEqual(['talk']);
+  test('the parser sees the talk and watch actions', () => {
+    expect([...actions.keys()]).toEqual(['talk', 'watch']);
   });
 
   for (const role of ROLES) {
-    test(`${role} talks through a camera exactly as the backend allows`, () => {
+    test(`${role} talks through and watches a camera exactly as the backend allows`, () => {
       expect(cameraActionAccessForRole(role)).toEqual({
         talk: role === 'owner' || (actions.get('talk')?.has(role) ?? false),
+        watch: role === 'owner' || (actions.get('watch')?.has(role) ?? false),
       });
     });
   }
