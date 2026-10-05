@@ -2,6 +2,7 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
+import { ResponseCard } from '@/features/response';
 import { CallCameraCard } from '@/features/voice/components/call-camera-card';
 import { CallSurface } from '@/features/voice/components/call-surface';
 import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
@@ -45,6 +46,7 @@ function CallScreen() {
       transcript={call.transcript}
       actions={call.actions}
       reason={call.callReason}
+      situation={call.responseId ? <ResponseCard responseId={call.responseId} compact /> : null}
       waitingReason={call.waitingCall?.reason ?? null}
       onAnswerWaiting={answerWaiting}
       onDismissWaiting={dismissWaiting}

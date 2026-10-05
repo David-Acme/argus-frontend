@@ -25,6 +25,7 @@ type CallSurfaceProps = {
   onDismissWaiting?: () => void;
   header?: ReactNode;
   camera?: ReactNode;
+  situation?: ReactNode;
   onToggleMute: () => void;
   onInterrupt: () => void;
   onHangUp: () => void;
@@ -44,6 +45,7 @@ export function CallSurface({
   onDismissWaiting,
   header,
   camera,
+  situation,
   onToggleMute,
   onInterrupt,
   onHangUp,
@@ -109,6 +111,7 @@ export function CallSurface({
       </View>
 
       <View className="min-h-32 justify-end gap-4 pb-6">
+        {situation}
         <CallTranscript lines={transcript} />
         <CallActionChips actions={actions} />
       </View>
