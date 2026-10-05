@@ -96,8 +96,11 @@ export const REASON_KEYS = {
   area_in_use: 'area-in-use',
   passerby: 'passerby',
   brief: 'brief',
+  watchlist: 'watchlist',
 } as const satisfies Record<GuardReason, string>;
 
 export const WEEK_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 export const DIGEST_HOUR_OPTIONS: readonly number[] = [-1, ...Array.from({ length: 24 }, (_, hour) => hour)];
+
+export const EPISODE_MARKED_RETENTION_DAYS = 120;

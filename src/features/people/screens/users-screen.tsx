@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { inviteService } from '@/core/services/invite';
@@ -29,6 +30,7 @@ import { MembersPanel } from '@/features/people/components/members-panel';
 import { RoleAccessCard } from '@/features/people/components/role-access-card';
 import { VoiceRecognitionRow } from '@/features/people/components/voice-recognition-row';
 import { HouseholdPrivacyPanel, UserPrivacyRow } from '@/features/privacy';
+import { VisitorsPreviewPanel } from '@/features/visitors';
 import { roleOptions } from '@/features/people/components/user-options';
 import { useInvitationPreview } from '@/features/people/hooks/use-invitation-preview';
 import {
@@ -42,6 +44,7 @@ const MINUTE_MS = 60_000;
 
 export default function UsersScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { isWide } = useWindowClass();
   const currentUserId = String(useAuthStore((state) => state.user?.id ?? ''));
   const [editing, setEditing] = useState<IPeopleDirectoryCacheRow | null>(null);
@@ -217,6 +220,15 @@ export default function UsersScreen() {
               onOpenAccess={(user) => setInspecting(Number(user.id))}
               onInvite={() => setInviteOpen(true)}
             />
+          </View>
+
+          <View className="gap-3">
+            <SectionHeader
+              title={t('screens.visitors.section')}
+              action={t('screens.visitors.see-all')}
+              onAction={() => router.push('/users/visitors')}
+            />
+            <VisitorsPreviewPanel />
           </View>
 
           <View className={cn(isWide && 'flex-1', 'gap-3')}>

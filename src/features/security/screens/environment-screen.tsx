@@ -143,6 +143,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
         cameras={allCameras}
         contexts={guard.cameras}
         onReview={access.review ? guard.reviewEpisode : undefined}
+        onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
       />
     </Panel>
   );

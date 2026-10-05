@@ -16,9 +16,10 @@ import { profile } from './profile';
 import { security } from './security';
 import { settings } from './settings';
 import { sessions } from './sessions';
-import { privacy } from './privacy';
 import { response } from './response';
+import { privacy } from './privacy';
 import { safety } from './safety';
+import { visitors } from './visitors';
 
 export const screens = {
   home,
@@ -40,5 +41,7 @@ export const screens = {
   settings,
   sessions,
   response,
+  privacy,
   safety,
+  visitors,
 } as const;

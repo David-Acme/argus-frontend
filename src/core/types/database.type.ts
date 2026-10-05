@@ -26,7 +26,7 @@ export type CameraRecordMode = 'events' | 'continuous';
 
 export type CameraDriverKind = 'tapo' | 'onvif' | 'rtsp';
 
-export type ZoneType = 'monitor' | 'alert' | 'exclude';
+export type ZoneType = 'monitor' | 'alert' | 'exclude' | 'privacy';
 
 export type DayNightMode = 'auto' | 'day' | 'night';
 

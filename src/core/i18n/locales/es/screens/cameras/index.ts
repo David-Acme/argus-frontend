@@ -92,6 +92,9 @@ export const cameras = {
   'zone-monitor': 'Vigilar',
   'zone-alert': 'Alertar',
   'zone-exclude': 'Ignorar',
+  'zone-privacy': 'Máscara de privacidad',
+  'zone-privacy-hint':
+    "Argus no analiza ni guarda lo que hay dentro: la calle, la vereda o la ventana del vecino.",
   'zone-color': 'Color',
   'zone-points': 'Toca la imagen para marcar el área',
   'zone-points-count': '{count} puntos',

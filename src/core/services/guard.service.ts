@@ -128,6 +128,10 @@ class GuardService {
   reviewEpisode(id: number, label: GuardFeedbackLabel): Promise<IServiceResponse<GuardEpisode>> {
     return httpService.post<GuardEpisode>(`/guard/episodes/${id}/review`, { label });
   }
+
+  retainEpisode(id: number, retain: boolean): Promise<IServiceResponse<GuardEpisode>> {
+    return httpService.post<GuardEpisode>(`/guard/episodes/${id}/retain`, { retain });
+  }
 }
 
 export const guardService = new GuardService();

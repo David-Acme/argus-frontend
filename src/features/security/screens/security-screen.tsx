@@ -104,6 +104,7 @@ export default function SecurityScreen() {
         contexts={guard.cameras}
         environments={guard.environments}
         onReview={access.review ? guard.reviewEpisode : undefined}
+        onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
       />
     </Panel>
   );

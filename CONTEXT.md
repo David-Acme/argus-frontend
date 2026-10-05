@@ -2221,65 +2221,6 @@ platform, then leaves in its own change.
   `argus-voice` (synthetic tone or a recorded clip, data both ways, mute,
   leave) and through the pinned TLS front.
 
-## Intruder response: who is told, who is attending, is it real (2026-10-04, RESPONSE)
-
-The backend decides who an alert reaches and in what order: argus-guard owns
-the per-environment list, and the notification call engine runs the steps
-(`backend/services/guard/CONTEXT.md`, "Who is called";
-`backend/services/notification/CONTEXT.md`, "Intruder response"). The app
-does three things.
-
-**The list, in Seguridad → environment.** `ResponseRecipientsPanel` and
-`EmergencyContactsPanel` (`features/security`) read
-`GET /guard/environments/{id}/response` through `useRemoteResource`, scoped
-by environment, so the last answer paints first.
-- The Owner edits: per person, Llamar / Solo avisar / Nada, and earlier or
-  later. Moving someone who shares a step gives them a step of their own;
-  someone alone joins the neighbouring step (`model/response-recipients.ts`,
-  unit-tested).
-- The Owner also sets a guard's duty, the wait between steps, the emergency
-  number and up to ten contacts.
-- Every edit is optimistic, saved as one `PUT` of the whole list, then
-  reconciled with the server's answer, or reloaded with a toast.
-- Residents and Guards see only their own row and the contacts. A Guard
-  toggles their own duty (`POST …/duty`). During staffed hours the switch
-  shows "En horario de personal: de guardia" and is locked on.
-- The add-contact dialog renders beside `AppScreen` (rule 12d).
-
-**The live response.** `features/response` holds a small zustand store of
-`IncidentResponse` rows.
-- It is fed by `/sync` operation 10 (`response_update`, subscribed once from
-  the feature with `synchronizeService.on`) and by `GET
-  /notification/responses` on focus.
-- A frame never replaces a newer one (`updatedAt`).
-- The store resets when the signed-in user changes.
-- Open responses, and closed ones for fifteen minutes, show as
-  `ResponseStrip` at the top of Inicio.
-- `ResponseCard` is exported for the call surface (RTC-APP renders it
-  `compact` when a call carries a `responseId`).
-The card shows:
-- the kind and the place;
-- who is attending ("Pedro está atendiendo", "Lo estás atendiendo tú"), the
-  step being called, or "Nadie ha contestado";
-- the live camera, behind a button so it never streams on its own;
-- for a discreet member, "Quédate dentro y no abras";
-- Es real / Falsa alarma.
-
-**The verdict.** "Falsa alarma" asks for confirmation first, because it
-stops everyone else's ring, and is then applied optimistically. The
-optimistic row keeps the server's `updatedAt`, so the server's answer always
-wins the merge. "Es real" reaches everyone left at critical urgency
-(server-side). Once confirmed or unanswered (`showContacts`), the card shows
-the emergency button, which opens the phone with `tel:`, and each contact
-with one-tap call and SMS. Argus never places a phone call itself.
-
-Tests: `tests/unit/response-model.test.ts` (headlines, tones, who may
-decide, the optimistic merge, contacts gating, phone links, visibility, the
-zod contract) and `tests/unit/response-recipients.test.ts` (steps, moves,
-modes, duty, the saved body, phone validation). The HTTP schemas live in
-`core/contracts/response.contract.ts`; they join `HTTP_CONTRACTS` once MAIN
-records the goldens for the five new routes.
-
 ## Privacy consent before anything is processed (2026-10-04)
 
 David asked for a clear consent notice before Argus processes anything about
@@ -2326,22 +2267,6 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
   acknowledgement (outside people's faces, camera signs, limited retention)
   before it is enabled. The per-person access dialog shows that person's
   choices read-only: the owner can never change them on someone's behalf.
-
-### Presence in People and access (2026-10, safety wave)
-
-argus-guard keeps, per user and environment, whether they are home, away or
-unknown, and only for users who consented (backend `services/guard/CONTEXT.md`,
-"Presence"). The Owner's `/users` list shows it as a chip under each active
-member (`features/people/components/presence-chip.tsx`): a dot and "En casa
-desde las 18:42", "Fuera desde el 3 oct" or "Desconocido". The time appears
-when the change happened today, the day otherwise (`model/presence.ts`,
-`presenceOf`, unit-tested). The chip is deliberately coarse: no source, no
-environment breakdown, no place. Someone without a row (no consent, or no
-signal yet) reads unknown, never away. The answer of `GET /guard/presence`
-comes through `useRemoteResource` (view cache first, refetch on focus) and
-is read-only, so it has no optimistic layer. `ListRow` gained an optional
-`footer` (and `footerLabel` for its spoken label) so a chip sits under the
-subtitle without competing with the row's actions on a 420 px phone.
 
 ## Safety nets: dead man's switch, panic, duress (2026-10-04, WATCHDOG)
 
@@ -2462,3 +2387,47 @@ comes through `useRemoteResource` (view cache first, refetch on focus) and
 is read-only, so it has no optimistic layer. `ListRow` gained an optional
 `footer` (and `footerLabel` for its spoken label) so a chip sits under the
 subtitle without competing with the row's actions on a 420 px phone.
+
+## People seen: the Owner's gallery of recurring visitors (2026-10-04, STRANGERS)
+
+identity remembers faces that come back and are not the household's
+(`backend/services/identity/CONTEXT.md`, "Recurring visitors"). The app side
+is `features/visitors`:
+
+- **Where**: a "Personas vistas" section on `/users` (the latest six, a "Ver
+  todas" action) and two Owner routes, `/users/visitors` (the gallery) and
+  `/users/visitors/[id]` (one person). `/users` is already Owner-only in
+  `route-access.ts`, so the routes inherit it. Guard may read named visitors
+  through the API (`kVisitorAccess`); the app does not show them to a Guard yet.
+- **Off by default**: while `household_privacy.visitor_recognition` is off
+  the section and the gallery show why and an "Activar" button that opens
+  ONBOARD-CONSENT's `VisitorAcknowledgementDialog` and calls
+  `useVisitorRecognitionSwitch().enable()` only from its confirmation, the same
+  record the Privacidad panel writes.
+- **Data**: the list, the settings and each detail are server-only answers
+  read with `useRemoteResource` (view cache `visitor.list`,
+  `visitor.settings`, `visitor.detail.<id>`), so the last answer paints first.
+  Visitors are not in WatermelonDB on purpose: they are never synced.
+  Renaming, typing, merging, deleting a person or a sample and changing the
+  retention update that cache optimistically and roll back on a refusal;
+  merge and split reload once the server answers, since they create or
+  remove people.
+- **Faces**: `useVisitorCrop` asks a one-use capability and keeps the data URI
+  only in that component's state, gone when it unmounts or the key changes —
+  the portrait rule (12c). No image is cached or persisted.
+- **Gallery**: search (name, note, number), filter chips (todas, con nombre,
+  sin nombre, en vigilancia), a responsive grid (2–6 columns from a 150 px
+  tile), a merge mode (tap the person to keep, then the ones to fold into it)
+  and the retention control (7/15/30/45/60 days, the server allows 1–60).
+- **Detail**: the face, visits, first and last seen and the visit pattern
+  ("Suele venir los martes hacia las 10:00"); a form for name, type (chips,
+  watchlist warns it alerts at once) and note; the saved faces, with select →
+  "Separar en otra persona" and per-face delete; the visit timeline with the
+  camera names from the cached camera list.
+- **Zone editor**: a fourth zone type, "Máscara de privacidad", drawn like the
+  others, with a hint, and shown on the live overlay as an opaque dark polygon
+  (`PRIVACY_MASK_COLOR`). The camera blanks it out of every analysis frame and
+  stored picture.
+- **Seguridad**: an Owner's expanded episode can be kept as an incident for
+  120 days (`POST /guard/episodes/{id}/retain`), the rest expire after 30; the
+  `watchlist` reason reads "en tu lista de vigilancia".

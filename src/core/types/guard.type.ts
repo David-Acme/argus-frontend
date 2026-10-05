@@ -124,7 +124,8 @@ export type GuardReason =
   | 'staff_hours'
   | 'area_in_use'
   | 'passerby'
-  | 'brief';
+  | 'brief'
+  | 'watchlist';
 
 export type GuardEpisodeKind = 'person' | 'camera';
 
@@ -152,6 +153,7 @@ export interface GuardEpisode {
   groupId: number;
   reviewLabel: GuardFeedbackLabel | '';
   reviewedAt: number;
+  retainUntil?: number;
   resolution: GuardEpisodeResolution;
   spoke: boolean;
   sounded: boolean;

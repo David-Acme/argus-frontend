@@ -17,9 +17,17 @@ type EpisodeListProps = {
   contexts: readonly GuardCameraContext[];
   environments?: readonly GuardEnvironment[];
   onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
+  onRetain?: (episode: GuardEpisode, retain: boolean) => void;
 };
 
-export function EpisodeList({ episodes, cameras, contexts, environments = [], onReview }: EpisodeListProps) {
+export function EpisodeList({
+  episodes,
+  cameras,
+  contexts,
+  environments = [],
+  onReview,
+  onRetain,
+}: EpisodeListProps) {
   const { t } = useTranslation();
   const [showAll, setShowAll] = useState(false);
   const names = useMemo(
@@ -70,6 +78,7 @@ export function EpisodeList({ episodes, cameras, contexts, environments = [], on
               .join(' · ')}
             context={byCamera.get(episode.cameraId) ?? null}
             onReview={onReview}
+            onRetain={onRetain}
           />
         ))}
       </View>

@@ -38,6 +38,7 @@ export function CameraZonesPanel({
     monitor: t('screens.cameras.zone-monitor'),
     alert: t('screens.cameras.zone-alert'),
     exclude: t('screens.cameras.zone-exclude'),
+    privacy: t('screens.cameras.zone-privacy'),
   };
 
   return (

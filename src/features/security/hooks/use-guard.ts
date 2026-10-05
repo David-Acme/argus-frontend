@@ -21,6 +21,7 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { runServiceAction } from '@/shared/libs/service-action';
+import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
 import { cameraEnvironmentIndex, withCameraIn, withMode } from '@/features/security/model/environments';
 import { askDisarmPin, safetyService } from '@/features/safety';
 
@@ -274,6 +275,22 @@ export function useGuard(owner: boolean, environmentId?: number) {
     [mutateEpisodes]
   );
 
+  const retainEpisode = useCallback(
+    (episode: GuardEpisode, retain: boolean): Promise<boolean> =>
+      optimisticRemote<GuardEpisode[], GuardEpisode>({
+        mutate: mutateEpisodes,
+        apply: (previous) =>
+          replaceEpisode(previous, {
+            ...episode,
+            retainUntil: retain ? episode.firstSeen + EPISODE_MARKED_RETENTION_DAYS * 86400 : 0,
+          }),
+        call: () => guardService.retainEpisode(episode.id, retain),
+        settle: (current, info) => replaceEpisode(current, info),
+        success: t(retain ? 'screens.security.episodes.retain-saved' : 'screens.security.episodes.retain-released'),
+      }),
+    [mutateEpisodes]
+  );
+
   return {
     environments: environments.data ?? [],
     environmentsReady: environments.data != null,
@@ -292,5 +309,6 @@ export function useGuard(owner: boolean, environmentId?: number) {
     removeGuest,
     updateCamera: placement.updateCamera,
     reviewEpisode,
+    retainEpisode,
   };
 }

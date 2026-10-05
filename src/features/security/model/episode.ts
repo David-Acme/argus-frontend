@@ -1,6 +1,7 @@
 import type { GuardEpisode, GuardReason } from '@/core/types';
 
 const RAISING: readonly GuardReason[] = [
+  'watchlist',
   'weapon',
   'after_hours',
   'nobody_home',

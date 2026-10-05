@@ -22,6 +22,7 @@ type EpisodeCardProps = {
   cameraName: string;
   context: GuardCameraContext | null;
   onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
+  onRetain?: (episode: GuardEpisode, retain: boolean) => void;
 };
 
 type ReviewOption = { value: GuardFeedbackLabel; key: 'useful' | 'false-alarm' | 'not-now' };
@@ -35,7 +36,7 @@ const REVIEW_OPTIONS: readonly ReviewOption[] = [
 const chipHover = Platform.select({ web: 'hover:bg-surface-secondary', default: '' });
 const linkHover = Platform.select({ web: 'hover:opacity-80', default: '' });
 
-export function EpisodeCard({ episode, cameraName, context, onReview }: EpisodeCardProps) {
+export function EpisodeCard({ episode, cameraName, context, onReview, onRetain }: EpisodeCardProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const [expanded, setExpanded] = useState(false);
@@ -47,6 +48,7 @@ export function EpisodeCard({ episode, cameraName, context, onReview }: EpisodeC
   const lasted = durationSeconds(episode);
   const reasons = episode.notified ? raisingReasons(episode) : calmingReasons(episode);
   const shown = reasons.length > 0 ? reasons : raisingReasons(episode);
+  const retained = (episode.retainUntil ?? 0) > 0;
 
   const title = camera
     ? t(
@@ -179,6 +181,28 @@ export function EpisodeCard({ episode, cameraName, context, onReview }: EpisodeC
             <Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="text-muted-foreground size-4" />
           </Pressable>
           {expanded ? <EpisodeTimeline episodeId={episode.id} /> : null}
+          {expanded && onRetain ? (
+            <View className="gap-1">
+              <Pressable
+                accessibilityRole="switch"
+                accessibilityState={{ checked: retained }}
+                onPress={() => onRetain(episode, !retained)}
+                className={cn('min-h-9 flex-row items-center gap-2 self-start active:opacity-70', linkHover)}>
+                <Icon
+                  name={retained ? 'check' : 'download'}
+                  className={retained ? 'text-success size-4' : 'text-foreground-secondary size-4'}
+                />
+                <Text variant="label" className="text-foreground-secondary">
+                  {retained
+                    ? t('screens.security.episodes.retained-until', {
+                        date: date.formatFullDate(new Date((episode.retainUntil ?? 0) * 1000)),
+                      })
+                    : t('screens.security.episodes.retain')}
+                </Text>
+              </Pressable>
+              <Text variant="micro">{t('screens.security.episodes.retain-hint')}</Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
     </View>

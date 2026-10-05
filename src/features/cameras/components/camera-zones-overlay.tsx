@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 import type { IZoneCacheRow } from '@/core/interfaces';
-import { OVERLAY_STROKE_COLOR } from '@/shared/constants';
+import { OVERLAY_STROKE_COLOR, PRIVACY_MASK_COLOR } from '@/shared/constants';
 import { ZONE_COLORS } from '@/features/cameras/constants';
 
 type CameraZonesOverlayProps = {
@@ -30,6 +30,19 @@ export function CameraZonesOverlay({ zones }: CameraZonesOverlayProps) {
               const points = zone.points
                 .map((point) => `${point.x * size.width},${point.y * size.height}`)
                 .join(' ');
+              if (zone.zoneType === 'privacy')
+                return (
+                  <Polygon
+                    key={zone.id}
+                    points={points}
+                    fill={PRIVACY_MASK_COLOR}
+                    fillOpacity={0.85}
+                    stroke={OVERLAY_STROKE_COLOR}
+                    strokeOpacity={0.7}
+                    strokeDasharray="2 4"
+                    strokeWidth={2}
+                  />
+                );
               return (
                 <Polygon
                   key={zone.id}

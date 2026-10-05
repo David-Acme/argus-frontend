@@ -92,6 +92,9 @@ export const cameras = {
   'zone-monitor': 'Monitor',
   'zone-alert': 'Alert',
   'zone-exclude': 'Ignore',
+  'zone-privacy': 'Privacy mask',
+  'zone-privacy-hint':
+    "Argus neither analyses nor keeps what is inside: the street, the pavement or a neighbour's window.",
   'zone-color': 'Color',
   'zone-points': 'Tap the frame to mark the area',
   'zone-points-count': '{count} points',

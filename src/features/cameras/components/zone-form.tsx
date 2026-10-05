@@ -41,7 +41,7 @@ type ZoneFormProps = {
 
 const schema = z.object({
   name: z.string().trim().min(1, 'common.validation.required').max(120, 'common.validation.too-long'),
-  zoneType: z.enum(['monitor', 'alert', 'exclude']),
+  zoneType: z.enum(['monitor', 'alert', 'exclude', 'privacy']),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'common.validation.invalid-color'),
   points: z
     .array(z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }))
@@ -84,6 +84,7 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone, zones = [] }: Zon
       { value: 'monitor', label: t('screens.cameras.zone-monitor') },
       { value: 'alert', label: t('screens.cameras.zone-alert') },
       { value: 'exclude', label: t('screens.cameras.zone-exclude') },
+      { value: 'privacy', label: t('screens.cameras.zone-privacy') },
     ],
     [t]
   );
@@ -160,6 +161,9 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone, zones = [] }: Zon
                       <SelectField label={typeLabel(field.value)} />
                     }
                   />
+                  {field.value === 'privacy' ? (
+                    <Text variant="caption">{t('screens.cameras.zone-privacy-hint')}</Text>
+                  ) : null}
                   <FormMessage />
                 </FormItem>
               )}

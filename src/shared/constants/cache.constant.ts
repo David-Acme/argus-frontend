@@ -55,6 +55,9 @@ export const VIEW_CACHE_KEYS = {
   privacyMe: 'privacy.me',
   privacyDirectory: 'privacy.users',
   safetyStatus: 'safety.status',
+  visitors: 'visitor.list',
+  visitorDetail: 'visitor.detail',
+  visitorSettings: 'visitor.settings',
 } as const;
 
 export const buildViewCacheStorageKey = (
