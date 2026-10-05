@@ -23,8 +23,8 @@ class HttpService {
     return this.request<T>('PUT', path, JSON.stringify(body ?? {}), undefined, config);
   }
 
-  async delete<T>(path: string, config?: IHttpConfig): Promise<IServiceResponse<T>> {
-    return this.request<T>('DELETE', path, undefined, undefined, config);
+  async delete<T>(path: string, body?: unknown, config?: IHttpConfig): Promise<IServiceResponse<T>> {
+    return this.request<T>('DELETE', path, body === undefined ? undefined : JSON.stringify(body), undefined, config);
   }
 
   async postMultipart<T>(

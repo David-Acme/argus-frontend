@@ -74,6 +74,7 @@ export interface GuardExpectedGuest {
 
 export interface GuardExpectedGuestCreate {
   description: string;
+  cameraId?: number;
   environmentId?: number;
   hours: number;
   oneTime: boolean;

@@ -1,14 +1,25 @@
 import { describe, expect, test } from 'bun:test';
 import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
-import { digitsOnly, holdComplete, holdProgress, pinDraftProblem } from '@/features/safety/model/safety';
+import { digitsOnly, holdComplete, holdProgress, pinDraftProblem, trivialPin } from '@/features/safety/model/safety';
 
 describe('PIN drafts', () => {
   test('both codes are 4 to 8 digits and different', () => {
-    expect(pinDraftProblem('1234', '9876')).toBeNull();
-    expect(pinDraftProblem('123', '9876')).toBe('disarm-format');
-    expect(pinDraftProblem('1234', '98a6')).toBe('duress-format');
-    expect(pinDraftProblem('1234', '1234')).toBe('same');
-    expect(pinDraftProblem('123456789', '9876')).toBe('disarm-format');
+    expect(pinDraftProblem('4719', '8352')).toBeNull();
+    expect(pinDraftProblem('471', '8352')).toBe('disarm-format');
+    expect(pinDraftProblem('4719', '83a2')).toBe('duress-format');
+    expect(pinDraftProblem('4719', '4719')).toBe('same');
+    expect(pinDraftProblem('471952683', '8352')).toBe('disarm-format');
+  });
+
+  test('codes the server refuses as trivial are caught before sending', () => {
+    expect(pinDraftProblem('1234', '8352')).toBe('disarm-trivial');
+    expect(pinDraftProblem('4719', '7777')).toBe('duress-trivial');
+    for (const pin of ['1111', '1234', '4321', '7890', '0987', '9012', '2109', '1212', '123123', '45674567']) {
+      expect(trivialPin(pin)).toBe(true);
+    }
+    for (const pin of ['4719', '1243', '8352', '135792', '13579']) {
+      expect(trivialPin(pin)).toBe(false);
+    }
   });
 
   test('typing keeps digits only, at most eight', () => {

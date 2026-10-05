@@ -10,7 +10,9 @@ export const safety = {
   },
   disarm: {
     title: 'Disarm code',
-    description: 'Enter your code to switch to Home.',
+    description: 'Enter your code to lower the guard.',
+    'current-title': 'Confirm with your code',
+    'current-description': 'Enter your current code to make this change.',
     pin: 'Code',
     confirm: 'Disarm',
   },
@@ -23,6 +25,7 @@ export const safety = {
     duress: 'Duress code',
     'duress-hint': 'Different from the normal one. Use it only if someone forces you.',
     same: 'It must be different from the normal code.',
+    trivial: 'It is too easy to guess. Avoid runs like 1234 or 1111.',
     create: 'Create my codes',
     change: 'Change my codes',
     set: 'Turning guarding off will ask for your code.',

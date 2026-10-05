@@ -300,7 +300,9 @@ class HybridArgusNet : HybridArgusNetSpec() {
       } else {
         when (options.method.uppercase()) {
           "GET" -> builder.get().build()
-          "DELETE" -> builder.delete().build()
+          "DELETE" ->
+            if (options.body.isEmpty()) builder.delete().build()
+            else builder.delete(stringBody(options.body)).build()
           else -> {
             val requestBody =
               if (options.body.isEmpty()) stringBody("")

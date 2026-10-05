@@ -12,6 +12,8 @@ export function DisarmPinDialog() {
   const { t } = useTranslation();
   const open = useDisarmPinStore((state) => state.open);
   const answer = useDisarmPinStore((state) => state.answer);
+  const purpose = useDisarmPinStore((state) => state.purpose);
+  const current = purpose === 'current';
   const [pin, setPin] = useState('');
   const valid = PIN_PATTERN.test(pin);
 
@@ -30,8 +32,8 @@ export function DisarmPinDialog() {
       onOpenChange={(next) => {
         if (!next) close(null);
       }}
-      title={t('screens.safety.disarm.title')}
-      description={t('screens.safety.disarm.description')}
+      title={t(current ? 'screens.safety.disarm.current-title' : 'screens.safety.disarm.title')}
+      description={t(current ? 'screens.safety.disarm.current-description' : 'screens.safety.disarm.description')}
       closeLabel={t('common.cancel')}
       onSubmit={submit}
       footer={
@@ -40,7 +42,7 @@ export function DisarmPinDialog() {
             <Text>{t('common.cancel')}</Text>
           </Button>
           <Button disabled={!valid} onPress={submit}>
-            <Text>{t('screens.safety.disarm.confirm')}</Text>
+            <Text>{t(current ? 'common.continue' : 'screens.safety.disarm.confirm')}</Text>
           </Button>
         </View>
       }>

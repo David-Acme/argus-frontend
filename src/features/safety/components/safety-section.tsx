@@ -19,8 +19,21 @@ type SafetySectionProps = {
 export function SafetySection({ className }: SafetySectionProps) {
   const { t } = useTranslation();
   const role = useAuthStore((state) => state.user?.role ?? 'guest');
-  const { status, setDuressEnabled, savePins, removePins } = useSafety();
+  const { status, setDuressEnabled, confirmCurrentPin, savePins, removePins } = useSafety();
   const [pinsOpen, setPinsOpen] = useState(false);
+  const [currentPin, setCurrentPin] = useState<string | undefined>(undefined);
+
+  const openPins = async () => {
+    const confirmed = await confirmCurrentPin();
+    if (confirmed === null) return;
+    setCurrentPin(confirmed);
+    setPinsOpen(true);
+  };
+
+  const changePinsOpen = (next: boolean) => {
+    if (!next) setCurrentPin(undefined);
+    setPinsOpen(next);
+  };
   const owner = role === 'owner';
   const disarms = role === 'owner' || role === 'resident';
 
@@ -53,7 +66,7 @@ export function SafetySection({ className }: SafetySectionProps) {
             icon="key-round"
             title={status.hasPin ? t('screens.safety.pins.change') : t('screens.safety.pins.create')}
             subtitle={status.hasPin ? t('screens.safety.pins.set') : t('screens.safety.pins.unset')}
-            onPress={() => setPinsOpen(true)}
+            onPress={() => void openPins()}
           />
           {status.hasPin ? (
             <ListRow
@@ -66,7 +79,11 @@ export function SafetySection({ className }: SafetySectionProps) {
         </View>
       ) : null}
 
-      <PinSetupDialog open={pinsOpen} onOpenChange={setPinsOpen} onSave={savePins} />
+      <PinSetupDialog
+        open={pinsOpen}
+        onOpenChange={changePinsOpen}
+        onSave={(pins) => savePins(pins, currentPin)}
+      />
     </Panel>
   );
 }

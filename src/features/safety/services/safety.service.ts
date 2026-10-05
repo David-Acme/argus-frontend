@@ -25,16 +25,19 @@ class SafetyService {
     return this.remember(parsed(await httpService.get<unknown>(SAFETY), safetyStatusSchema));
   }
 
-  async setDuressEnabled(duressEnabled: boolean): Promise<IServiceResponse<SafetyStatus>> {
-    return this.remember(parsed(await httpService.patch<unknown>(SAFETY, { duressEnabled }), safetyStatusSchema));
+  async setDuressEnabled(duressEnabled: boolean, currentPin?: string): Promise<IServiceResponse<SafetyStatus>> {
+    const body = currentPin === undefined ? { duressEnabled } : { duressEnabled, currentPin };
+    return this.remember(parsed(await httpService.patch<unknown>(SAFETY, body), safetyStatusSchema));
   }
 
-  async setPins(pins: SafetyPins): Promise<IServiceResponse<SafetyStatus>> {
-    return this.remember(parsed(await httpService.put<unknown>(PIN, pins), safetyStatusSchema));
+  async setPins(pins: SafetyPins, currentPin?: string): Promise<IServiceResponse<SafetyStatus>> {
+    const body = currentPin === undefined ? pins : { ...pins, currentPin };
+    return this.remember(parsed(await httpService.put<unknown>(PIN, body), safetyStatusSchema));
   }
 
-  async removePins(): Promise<IServiceResponse<SafetyStatus>> {
-    return this.remember(parsed(await httpService.delete<unknown>(PIN), safetyStatusSchema));
+  async removePins(currentPin?: string): Promise<IServiceResponse<SafetyStatus>> {
+    const body = currentPin === undefined ? undefined : { currentPin };
+    return this.remember(parsed(await httpService.delete<unknown>(PIN, body), safetyStatusSchema));
   }
 
   async panic(environmentId?: number): Promise<IServiceResponse<PanicResult>> {

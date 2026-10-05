@@ -176,6 +176,8 @@ export default function SecurityScreen() {
         onOpenChange={setGuestFormOpen}
         onSubmit={guard.addGuest}
         environments={guard.environments}
+        cameras={cameras}
+        arrivalRequired={role !== 'owner'}
       />
       {creating ? <EnvironmentFormDialog open onOpenChange={setCreating} onSubmit={create} /> : null}
     </>

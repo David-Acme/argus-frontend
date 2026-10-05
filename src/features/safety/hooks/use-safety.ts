@@ -6,8 +6,12 @@ import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { confirm } from '@/shared/libs/confirm';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { safetyService } from '@/features/safety/services/safety.service';
+import { askCurrentPin } from '@/features/safety/stores/disarm-pin.store';
 
 const load = () => safetyService.status();
+
+const currentPinIfSet = async (required: boolean): Promise<string | null | undefined> =>
+  required ? askCurrentPin() : undefined;
 
 export function useSafety() {
   const { data, mutate } = useRemoteResource<SafetyStatus>({ cacheKey: VIEW_CACHE_KEYS.safetyStatus, load });
@@ -31,9 +35,11 @@ export function useSafety() {
         });
         if (!accepted) return false;
       }
+      const currentPin = await currentPinIfSet(!enabled && data?.hasPin === true);
+      if (currentPin === null) return false;
       const previous = data;
       mutate((current) => (current ? { ...current, duressEnabled: enabled } : current));
-      const result = await runServiceAction({ call: () => safetyService.setDuressEnabled(enabled) });
+      const result = await runServiceAction({ call: () => safetyService.setDuressEnabled(enabled, currentPin) });
       if (!result?.info) {
         mutate(() => previous);
         return false;
@@ -43,10 +49,15 @@ export function useSafety() {
     [data, mutate, settle]
   );
 
+  const confirmCurrentPin = useCallback(
+    (): Promise<string | null | undefined> => currentPinIfSet(data?.hasPin === true),
+    [data?.hasPin]
+  );
+
   const savePins = useCallback(
-    async (pins: SafetyPins): Promise<boolean> => {
+    async (pins: SafetyPins, currentPin?: string): Promise<boolean> => {
       const result = await runServiceAction({
-        call: () => safetyService.setPins(pins),
+        call: () => safetyService.setPins(pins, currentPin),
         success: t('screens.safety.pins.saved'),
       });
       return settle(result?.info);
@@ -55,17 +66,18 @@ export function useSafety() {
   );
 
   const removePins = useCallback(async (): Promise<boolean> => {
-    const result = await runServiceAction({
-      confirm: {
-        title: t('screens.safety.pins.remove-title'),
-        description: t('screens.safety.pins.remove-description'),
-        confirmLabel: t('screens.safety.pins.remove'),
-        intent: 'danger',
-      },
-      call: () => safetyService.removePins(),
+    const accepted = await confirm({
+      title: t('screens.safety.pins.remove-title'),
+      description: t('screens.safety.pins.remove-description'),
+      confirmLabel: t('screens.safety.pins.remove'),
+      intent: 'danger',
     });
+    if (!accepted) return false;
+    const currentPin = await currentPinIfSet(data?.hasPin === true);
+    if (currentPin === null) return false;
+    const result = await runServiceAction({ call: () => safetyService.removePins(currentPin) });
     return settle(result?.info);
-  }, [settle]);
+  }, [data?.hasPin, settle]);
 
-  return { status: data, setDuressEnabled, savePins, removePins };
+  return { status: data, setDuressEnabled, confirmCurrentPin, savePins, removePins };
 }

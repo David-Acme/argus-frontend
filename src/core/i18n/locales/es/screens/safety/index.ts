@@ -10,7 +10,9 @@ export const safety = {
   },
   disarm: {
     title: 'Código para desactivar',
-    description: 'Escribe tu código para pasar a En casa.',
+    description: 'Escribe tu código para bajar la vigilancia.',
+    'current-title': 'Confirma con tu código',
+    'current-description': 'Escribe tu código actual para hacer este cambio.',
     pin: 'Código',
     confirm: 'Desactivar',
   },
@@ -23,6 +25,7 @@ export const safety = {
     duress: 'Código de coacción',
     'duress-hint': 'Distinto del normal. Úsalo solo si alguien te obliga.',
     same: 'Tiene que ser distinto del código normal.',
+    trivial: 'Es demasiado fácil de adivinar. Evita series como 1234 o 1111.',
     create: 'Crear mis códigos',
     change: 'Cambiar mis códigos',
     set: 'Desactivar la vigilancia te pedirá tu código.',

@@ -25,6 +25,7 @@ import { runServiceAction } from '@/shared/libs/service-action';
 import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
 import { cameraEnvironmentIndex, withCameraIn, withMode } from '@/features/security/model/environments';
 import { askDisarmPin, safetyService } from '@/features/safety';
+import { modeLowers } from '@/features/security/model/mode-change';
 
 type OptimisticRemote<T, R> = {
   mutate: (update: (previous: T | null) => T | null) => void;
@@ -172,7 +173,7 @@ export function useGuard(owner: boolean, environmentId?: number) {
   const setMode = useCallback(
     async (mode: GuardMode, target?: GuardEnvironment): Promise<boolean> => {
       let pin: string | undefined;
-      if (mode === 'home' && (await safetyService.disarmNeedsPin())) {
+      if (modeLowers(mode, environments.data, target?.id) && (await safetyService.disarmNeedsPin())) {
         const entered = await askDisarmPin();
         if (entered === null) return false;
         pin = entered;
@@ -191,7 +192,7 @@ export function useGuard(owner: boolean, environmentId?: number) {
       setPendingMode(null);
       return saved;
     },
-    [mutateEnvironments]
+    [environments.data, mutateEnvironments]
   );
 
   const createEnvironment = useCallback(

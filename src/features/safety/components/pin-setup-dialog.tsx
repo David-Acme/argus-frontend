@@ -21,6 +21,13 @@ export function PinSetupDialog({ open, onOpenChange, onSave }: PinSetupDialogPro
   const [saving, setSaving] = useState(false);
   const problem = pinDraftProblem(disarmPin, duressPin);
   const showSame = problem === 'same';
+  const disarmHint =
+    problem === 'disarm-trivial' ? t('screens.safety.pins.trivial') : t('screens.safety.pins.disarm-hint');
+  const duressHint = showSame
+    ? t('screens.safety.pins.same')
+    : problem === 'duress-trivial'
+      ? t('screens.safety.pins.trivial')
+      : t('screens.safety.pins.duress-hint');
 
   const reset = () => {
     setDisarmPin('');
@@ -61,14 +68,14 @@ export function PinSetupDialog({ open, onOpenChange, onSave }: PinSetupDialogPro
       <View className="gap-4">
         <PinField
           label={t('screens.safety.pins.disarm')}
-          hint={t('screens.safety.pins.disarm-hint')}
+          hint={disarmHint}
           value={disarmPin}
           onChange={setDisarmPin}
           autoFocus
         />
         <PinField
           label={t('screens.safety.pins.duress')}
-          hint={showSame ? t('screens.safety.pins.same') : t('screens.safety.pins.duress-hint')}
+          hint={duressHint}
           value={duressPin}
           onChange={setDuressPin}
           onSubmit={() => void save()}
