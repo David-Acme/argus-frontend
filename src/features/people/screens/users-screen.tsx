@@ -22,6 +22,7 @@ import {
   useConnectedDevices,
   UserSessionsDialog,
 } from '@/features/sessions';
+import { BiometricEraseRow } from '@/features/people/components/biometric-erase-row';
 import { InvitationDialog } from '@/features/people/components/invitation-dialog';
 import { InvitationPreviewDialog } from '@/features/people/components/invitation-preview-dialog';
 import { InvitationsPanel } from '@/features/people/components/invitations-panel';
@@ -287,6 +288,7 @@ export default function UsersScreen() {
                 userId={Number(inspectedUser.id)}
                 name={fullName(inspectedUser)}
               />
+              <BiometricEraseRow userId={Number(inspectedUser.id)} name={fullName(inspectedUser)} />
             </>
           }
         />

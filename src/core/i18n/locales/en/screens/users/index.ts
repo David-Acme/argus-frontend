@@ -80,6 +80,19 @@ export const users = {
   'access-of': 'Sessions and access for {name}',
   'unknown-user': 'User {id}',
   'unknown-role': 'Not in the directory',
+  biometrics: {
+    title: 'Biometric data',
+    hint: 'Their face, their portraits and what Argus learned from their voice.',
+    erase: 'Erase biometric data',
+    erasing: 'Erasing…',
+    'confirm-title': 'Erase the biometric data of {name}?',
+    'confirm-description':
+      'Argus will erase their face, their portraits and what it learned from their voice. This cannot be undone. {name} stays in the home with their account, but will need to register their face again; meanwhile they can sign in with a QR code from another device.',
+    erased: 'Biometric data of {name} erased',
+    'erased-counts': 'Faces: {faces} · Portraits: {portraits} · Voice samples: {samples}',
+    'erased-nothing': 'There was no biometric data stored.',
+    error: 'The biometric data could not be erased',
+  },
   voice: {
     recognized: 'Argus recognizes their voice',
     'recognized-since': 'Since {date}',

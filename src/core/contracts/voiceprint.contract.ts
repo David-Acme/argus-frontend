@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { VoiceprintDirectory } from '@/core/types';
+import type { BiometricErasure, VoiceprintDirectory } from '@/core/types';
 
 const unixSeconds = z.number().int().nonnegative();
 
@@ -13,3 +13,12 @@ export const voiceprintDirectorySchema = z.object({
     })
   ),
 }) satisfies z.ZodType<VoiceprintDirectory>;
+
+const count = z.number().int().nonnegative();
+
+export const biometricErasureSchema = z.object({
+  faces: count,
+  portraits: count,
+  voiceProfile: z.boolean(),
+  voiceSamples: count,
+}) satisfies z.ZodType<BiometricErasure>;

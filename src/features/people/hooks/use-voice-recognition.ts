@@ -4,6 +4,7 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { withoutVoice } from '@/features/people/model/biometric-erase';
 import { voiceprintService } from '@/features/people/services/voiceprint.service';
 
 export type ForgetVoiceInput = {
@@ -14,11 +15,6 @@ export type ForgetVoiceInput = {
 const NOTHING_LEARNED = 404;
 
 const loadDirectory = () => voiceprintService.directory();
-
-function without(directory: VoiceprintDirectory | null, userId: number): VoiceprintDirectory | null {
-  if (!directory) return directory;
-  return { ...directory, recognized: directory.recognized.filter((voice) => voice.userId !== userId) };
-}
 
 export function useVoiceRecognition(userId: number) {
   const { t } = useTranslation();
@@ -46,7 +42,7 @@ export function useVoiceRecognition(userId: number) {
         call: async () => {
           mutate((previous) => {
             before = previous;
-            return without(previous, subject);
+            return withoutVoice(previous, subject);
           });
           const answer = await voiceprintService.forget(subject);
           if (answer.ok || answer.status === NOTHING_LEARNED) return { ...answer, ok: true };

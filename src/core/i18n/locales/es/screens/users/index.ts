@@ -81,6 +81,19 @@ export const users = {
   'access-of': 'Sesiones y acceso de {name}',
   'unknown-user': 'Usuario {id}',
   'unknown-role': 'Fuera del directorio',
+  biometrics: {
+    title: 'Datos biométricos',
+    hint: 'Su rostro, sus retratos y lo que Argus aprendió de su voz.',
+    erase: 'Borrar datos biométricos',
+    erasing: 'Borrando…',
+    'confirm-title': '¿Borrar los datos biométricos de {name}?',
+    'confirm-description':
+      'Argus borrará su rostro, sus retratos y lo que aprendió de su voz. Esto no se puede deshacer. {name} seguirá en la casa con su cuenta, pero tendrá que registrar su rostro de nuevo; mientras tanto puede entrar con un código QR desde otro dispositivo.',
+    erased: 'Datos biométricos de {name} borrados',
+    'erased-counts': 'Rostros: {faces} · Retratos: {portraits} · Muestras de voz: {samples}',
+    'erased-nothing': 'No había datos biométricos guardados.',
+    error: 'No se pudieron borrar los datos biométricos',
+  },
   voice: {
     recognized: 'Argus reconoce su voz',
     'recognized-since': 'Desde el {date}',
