@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView, View } from 'react-native';
 import type { IZoneCacheRow } from '@/core/interfaces';
 import type { ZoneType } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
@@ -19,7 +20,7 @@ type CameraZonesPanelProps = {
   onCreate: () => void;
   onEdit: (zoneId: string) => void;
   onDelete: (zone: IZoneCacheRow) => void;
-  className?: string;
+  fill?: boolean;
 };
 
 export function CameraZonesPanel({
@@ -31,9 +32,16 @@ export function CameraZonesPanel({
   onCreate,
   onEdit,
   onDelete,
-  className,
+  fill = false,
 }: CameraZonesPanelProps) {
   const { t } = useTranslation();
+  const ordered = useMemo(
+    () =>
+      [...zones].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+      ),
+    [zones]
+  );
   const typeLabels: Record<ZoneType, string> = {
     monitor: t('screens.cameras.zone-monitor'),
     alert: t('screens.cameras.zone-alert'),
@@ -45,7 +53,7 @@ export function CameraZonesPanel({
     <Panel
       title={t('screens.cameras.zones')}
       count={zones.length}
-      className={className}
+      className={fill ? 'min-h-72 flex-1 basis-0' : undefined}
       action={
         canCreate && zones.length > 0 ? (
           <Button variant="outline" size="sm" onPress={onCreate}>
@@ -70,11 +78,17 @@ export function CameraZonesPanel({
           }
         />
       ) : (
-        <View className="gap-2">
-          {zones.map((zone) => {
+        <ScrollView
+          className={fill ? 'min-h-0 flex-1' : undefined}
+          contentContainerClassName="gap-2"
+          scrollEnabled={fill}
+          showsVerticalScrollIndicator={fill}>
+          {ordered.map((zone) => {
             const pending = isPending(zone);
             return (
-              <View key={zone.id} className={cn('flex-row items-center gap-2', pending && 'opacity-60')}>
+              <View
+                key={zone.id}
+                className={cn('flex-row items-center gap-2', pending && 'opacity-60')}>
                 <View className="min-w-0 flex-1">
                   <ZoneRow
                     id={zone.id}
@@ -83,7 +97,9 @@ export function CameraZonesPanel({
                     pointsLabel={
                       pending
                         ? t('screens.cameras.zone-pending')
-                        : t('screens.cameras.zone-points-count', { count: String(zone.points.length) })
+                        : t('screens.cameras.zone-points-count', {
+                            count: String(zone.points.length),
+                          })
                     }
                     color={zone.color}
                     onPress={canEdit && !pending ? onEdit : undefined}
@@ -102,7 +118,7 @@ export function CameraZonesPanel({
               </View>
             );
           })}
-        </View>
+        </ScrollView>
       )}
     </Panel>
   );
