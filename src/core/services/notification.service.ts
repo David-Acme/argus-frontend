@@ -5,6 +5,7 @@ import type { IServiceResponse } from '@/core/interfaces';
 import type { KeysetPage, KeysetWindow } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
+import { readBatches } from './notification-read-batches';
 import { DatabaseService, type KeysetQuery } from './database.service';
 
 const FEED_COLUMNS = ['type', 'title', 'body', 'data', 'is_read', 'read_at'];
@@ -36,8 +37,13 @@ class NotificationService extends DatabaseService<'notification'> {
     return rows.map((row) => row.id);
   }
 
-  markRead(ids: readonly string[]): Promise<IServiceResponse<unknown>> {
-    return httpService.patch('/notification/read', { ids: ids.map(Number) });
+  async markRead(ids: readonly string[]): Promise<IServiceResponse<unknown>> {
+    let last: IServiceResponse<unknown> = { ok: true, status: 200, info: null, errors: null };
+    for (const batch of readBatches(ids)) {
+      last = await httpService.patch('/notification/read', { ids: batch });
+      if (!last.ok) return last;
+    }
+    return last;
   }
 
   observeUnreadCountForUser(userId: string): Observable<number> {
