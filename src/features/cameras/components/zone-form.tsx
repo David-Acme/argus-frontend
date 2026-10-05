@@ -65,7 +65,8 @@ export function ZoneForm({ open, onOpenChange, cameraId, zone, zones = [] }: Zon
   const form = useForm<ZoneFormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', zoneType: 'monitor', color: ZONE_COLORS[0], points: [] },
-    mode: 'onBlur',
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
   });
   const others = useMemo(() => zones.filter((item) => item.id !== zone?.id), [zone?.id, zones]);
 

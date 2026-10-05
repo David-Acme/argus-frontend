@@ -282,7 +282,7 @@ export default function CameraDetailScreen() {
       onCreate={() => openZone('')}
       onEdit={openZone}
       onDelete={removeZone}
-      className={stretch}
+      className={zones.length > 0 ? stretch : undefined}
     />
   );
 
