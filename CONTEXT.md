@@ -2326,3 +2326,19 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
   acknowledgement (outside people's faces, camera signs, limited retention)
   before it is enabled. The per-person access dialog shows that person's
   choices read-only: the owner can never change them on someone's behalf.
+
+### Presence in People and access (2026-10, safety wave)
+
+argus-guard keeps, per user and environment, whether they are home, away or
+unknown, and only for users who consented (backend `services/guard/CONTEXT.md`,
+"Presence"). The Owner's `/users` list shows it as a chip under each active
+member (`features/people/components/presence-chip.tsx`): a dot and "En casa
+desde las 18:42", "Fuera desde el 3 oct" or "Desconocido". The time appears
+when the change happened today, the day otherwise (`model/presence.ts`,
+`presenceOf`, unit-tested). The chip is deliberately coarse: no source, no
+environment breakdown, no place. Someone without a row (no consent, or no
+signal yet) reads unknown, never away. The answer of `GET /guard/presence`
+comes through `useRemoteResource` (view cache first, refetch on focus) and
+is read-only, so it has no optimistic layer. `ListRow` gained an optional
+`footer` (and `footerLabel` for its spoken label) so a chip sits under the
+subtitle without competing with the row's actions on a 420 px phone.
