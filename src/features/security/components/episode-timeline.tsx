@@ -35,9 +35,16 @@ function useEntryText() {
       return t('screens.security.episodes.timeline.verifying');
     }
     if (entry.type === 'decision') {
-      const times = entry.count > 1 ? ` ${t('screens.security.episodes.timeline.times', { count: String(entry.count) })}` : '';
+      const times =
+        entry.count > 1
+          ? ` ${t('screens.security.episodes.timeline.times', { count: String(entry.count) })}`
+          : '';
       if (entry.notified)
-        return t('screens.security.episodes.timeline.decision-alerted', { danger: danger(entry.danger) }) + times;
+        return (
+          t('screens.security.episodes.timeline.decision-alerted', {
+            danger: danger(entry.danger),
+          }) + times
+        );
       switch (entry.suppression) {
         case 'thread_suppressed':
           return t('screens.security.episodes.timeline.decision-repeat') + times;
@@ -52,30 +59,64 @@ function useEntryText() {
         case 'belief_gate':
           return t('screens.security.episodes.timeline.decision-belief') + times;
         default:
-          return t('screens.security.episodes.timeline.decision-silent', { danger: danger(entry.danger) }) + times;
+          return (
+            t('screens.security.episodes.timeline.decision-silent', {
+              danger: danger(entry.danger),
+            }) + times
+          );
       }
     }
-    const label = (() => {
-      switch (entry.action) {
-        case 'notify':
-          return t('screens.security.episodes.timeline.action-notify');
-        case 'announce':
-          return t('screens.security.episodes.timeline.action-announce');
-        case 'greet':
-          return t('screens.security.episodes.timeline.action-greet');
-        case 'greet_listen':
-          return t('screens.security.episodes.timeline.action-greet-listen');
-        case 'greet_reply':
-          return t('screens.security.episodes.timeline.action-greet-reply');
-        case 'alarm':
-          return t('screens.security.episodes.timeline.action-alarm');
-        case 'siren_arm':
-          return t('screens.security.episodes.timeline.action-siren-arm');
-        default:
-          return t('screens.security.episodes.timeline.action-siren-disarm');
-      }
-    })();
-    return SENT.has(entry.status) ? label : `${label} (${t('screens.security.episodes.timeline.not-sent')})`;
+    const sent = SENT.has(entry.status);
+    switch (entry.action) {
+      case 'notify':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-notify'
+            : 'screens.security.episodes.timeline.failed-notify'
+        );
+      case 'announce':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-announce'
+            : 'screens.security.episodes.timeline.failed-announce'
+        );
+      case 'greet':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-greet'
+            : 'screens.security.episodes.timeline.failed-greet'
+        );
+      case 'greet_listen':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-greet-listen'
+            : 'screens.security.episodes.timeline.failed-greet-listen'
+        );
+      case 'greet_reply':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-greet-reply'
+            : 'screens.security.episodes.timeline.failed-greet-reply'
+        );
+      case 'alarm':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-alarm'
+            : 'screens.security.episodes.timeline.failed-alarm'
+        );
+      case 'siren_arm':
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-siren-arm'
+            : 'screens.security.episodes.timeline.failed-siren-arm'
+        );
+      default:
+        return t(
+          sent
+            ? 'screens.security.episodes.timeline.action-siren-disarm'
+            : 'screens.security.episodes.timeline.failed-siren-disarm'
+        );
+    }
   };
 }
 
@@ -85,7 +126,10 @@ function TimelineLine({ entry, last }: TimelineLineProps) {
   const strong = entry.type === 'decision' && entry.notified;
 
   return (
-    <TimelineItem last={last} dotClassName={strong ? 'bg-error' : undefined} className="flex-row gap-3">
+    <TimelineItem
+      last={last}
+      dotClassName={strong ? 'bg-error' : undefined}
+      className="flex-row gap-3">
       <Text variant="caption" className="w-12 tabular-nums">
         {date.formatTime(new Date(entry.at * 1000))}
       </Text>
@@ -113,7 +157,11 @@ export function EpisodeTimeline({ episodeId }: EpisodeTimelineProps) {
   return (
     <View className="pt-1">
       {timeline.map((entry, index) => (
-        <TimelineLine key={`${entry.type}-${entry.at}-${index}`} entry={entry} last={index === timeline.length - 1} />
+        <TimelineLine
+          key={`${entry.type}-${entry.at}-${index}`}
+          entry={entry}
+          last={index === timeline.length - 1}
+        />
       ))}
     </View>
   );
