@@ -29,6 +29,18 @@ describe('voiceErrorMessage', () => {
     );
   });
 
+  test('a call another person attends, or that resolved, says so', () => {
+    const tp = ((key: string, params?: { name: string }) =>
+      params ? `${key}:${params.name}` : key) as never;
+    expect(voiceErrorMessage('CALL_ATTENDED|Ana', tp)).toBe(
+      'screens.voice.errors.call-attended:Ana'
+    );
+    expect(voiceErrorMessage('CALL_ATTENDED|', tp)).toBe(
+      'screens.voice.errors.call-attended-someone'
+    );
+    expect(voiceErrorMessage('CALL_RESOLVED|done', tp)).toBe('screens.voice.errors.call-resolved');
+  });
+
   test('anything else is the generic message', () => {
     expect(voiceErrorMessage(null, t)).toBe('screens.voice.errors.generic');
     expect(voiceErrorMessage('VOICE_UNAVAILABLE|503', t)).toBe('screens.voice.errors.generic');

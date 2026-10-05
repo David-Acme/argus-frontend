@@ -166,6 +166,9 @@ export const voice = {
   errors: {
     'call-taken': 'You answered this call on another device.',
     'call-missed': 'This call has already ended.',
+    'call-attended': '{name} is already handling this.',
+    'call-attended-someone': 'Someone at home is already handling this.',
+    'call-resolved': 'It was resolved; the call is no longer needed.',
     'session-revoked': 'This device was signed out.',
     'account-disabled': 'Your account was disabled.',
     connection: 'There is no connection to your Argus server.',

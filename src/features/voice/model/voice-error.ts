@@ -8,6 +8,13 @@ export function voiceErrorMessage(error: string | null, t: TranslateFn): string 
   if (code === 'CALL_TAKEN') return t('screens.voice.errors.call-taken');
   if (code === 'CALL_EXPIRED' || code === 'CALL_NOT_FOUND')
     return t('screens.voice.errors.call-missed');
+  if (code === 'CALL_ATTENDED') {
+    const name = error?.split('|')[1]?.trim() ?? '';
+    return name
+      ? t('screens.voice.errors.call-attended', { name })
+      : t('screens.voice.errors.call-attended-someone');
+  }
+  if (code === 'CALL_RESOLVED') return t('screens.voice.errors.call-resolved');
   if (code === 'SESSION_REVOKED') return t('screens.voice.errors.session-revoked');
   if (code === 'ACCOUNT_DISABLED') return t('screens.voice.errors.account-disabled');
   return t('screens.voice.errors.generic');

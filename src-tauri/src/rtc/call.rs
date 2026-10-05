@@ -341,10 +341,18 @@ mod live_tests {
     let started = Instant::now();
     let call = Call::join(
       CallOptions { url, token, agent_identity: agent, audio: AudioChoice::File(clip.into()) },
-      Arc::new(move |event| match &event {
-        RtcEvent::Level { .. } => {}
-        other => println!("{:>6} ms {}", started.elapsed().as_millis(), serde_json::to_string(other).unwrap()),
-      }),
+      {
+        let speaking = std::sync::atomic::AtomicBool::new(false);
+        Arc::new(move |event| match &event {
+          RtcEvent::Level { remote, .. } => {
+            let loud = *remote > 0.05;
+            if speaking.swap(loud, std::sync::atomic::Ordering::AcqRel) != loud {
+              println!("{:>6} ms agent audio {}", started.elapsed().as_millis(), if loud { "starts" } else { "stops" });
+            }
+          }
+          other => println!("{:>6} ms {}", started.elapsed().as_millis(), serde_json::to_string(other).unwrap()),
+        })
+      },
     )
     .await
     .expect("joins the call");

@@ -58,6 +58,7 @@ import {
 } from '@/features/voice/model/voice-action-log';
 import type {
   IncomingCall,
+  IncomingCallCancel,
   SessionRevokeCause,
   RtcAgentState,
   RtcCallOutcome,
@@ -121,6 +122,11 @@ const OUTCOME_ERRORS: Readonly<Record<RtcCallOutcome, string>> = {
   taken: 'CALL_TAKEN|The call was answered on another device',
   expired: 'CALL_EXPIRED|The call was missed',
 };
+function cancelError(cancel: IncomingCallCancel): string {
+  if (cancel.reason === 'attended') return `CALL_ATTENDED|${cancel.attendedBy ?? ''}`;
+  if (cancel.reason === 'resolved') return 'CALL_RESOLVED|The situation was resolved';
+  return OUTCOME_ERRORS[cancel.reason === 'expired' ? 'expired' : 'taken'];
+}
 const END_ERRORS: Partial<Record<RtcEndReason, string>> = {
   revoked: 'SESSION_REVOKED|This session was closed',
   replaced: 'CALL_TAKEN|The call continued on another device',
@@ -160,6 +166,7 @@ class VoiceService {
   private agentState: RtcAgentState | null = null;
   private callId: string | null = null;
   private callReason: string | null = null;
+  private responseId: number | null = null;
   private pendingSends: { type: string; payload: unknown }[] = [];
   private claiming = false;
   private revoked: { cause: SessionRevokeCause | null } | null = null;
@@ -213,6 +220,7 @@ class VoiceService {
     this.pendingSends = [];
     this.callId = options.callId ?? null;
     this.callReason = options.reason ?? null;
+    this.responseId = options.responseId ?? null;
     this.agentState = null;
     this.rtcState = 'connecting';
     this.sttText = '';
@@ -786,7 +794,11 @@ class VoiceService {
       if (call.callId !== this.callId) this.holdWaiting(call);
       return;
     }
-    void this.start({ callId: call.callId, reason: call.reason });
+    void this.start({
+      callId: call.callId,
+      reason: call.reason,
+      responseId: call.responseId ?? null,
+    });
     for (const listener of this.incomingListeners) listener(call);
   }
 
@@ -814,7 +826,11 @@ class VoiceService {
     if (!call) return;
     this.clearWaiting();
     this.stop();
-    void this.start({ callId: call.callId, reason: call.reason });
+    void this.start({
+      callId: call.callId,
+      reason: call.reason,
+      responseId: call.responseId ?? null,
+    });
   }
 
   dismissWaiting(): void {
@@ -838,9 +854,7 @@ class VoiceService {
       this.transport !== 'none'
     )
       return;
-    this.fail(OUTCOME_ERRORS[parsed.data.reason === 'expired' ? 'expired' : 'taken'], {
-      serverGone: true,
-    });
+    this.fail(cancelError(parsed.data), { serverGone: true });
   }
 
   private bindSocket(): void {
@@ -897,6 +911,7 @@ class VoiceService {
       error: this.error,
       transport: this.transport,
       callReason: this.callReason,
+      responseId: this.responseId,
       waitingCall: this.waitingCall,
     };
   }

@@ -46,12 +46,18 @@ export const incomingCallSchema = z.object({
   environmentName: optionalText,
   lang: z.string().default('es'),
   expiresAt: z.number().int().positive(),
+  responseId: optionalId,
+  discreet: z.boolean().default(false),
+  offers: z.array(z.string()).default([]),
 }) satisfies z.ZodType<IncomingCall, unknown>;
 
 export const incomingCallCancelSchema = z.object({
   callId,
-  reason: z.enum(['answered_elsewhere', 'expired', 'resolved', 'declined']),
-}) satisfies z.ZodType<IncomingCallCancel>;
+  reason: z.enum(['answered_elsewhere', 'expired', 'resolved', 'declined', 'attended']),
+  claimedBy: optionalText,
+  attendedBy: optionalText,
+  responseId: optionalId,
+}) satisfies z.ZodType<IncomingCallCancel, unknown>;
 
 const callMode = z.enum(['call', 'notify', 'off']);
 const hourOrOff = z.number().int().min(-1).max(23);

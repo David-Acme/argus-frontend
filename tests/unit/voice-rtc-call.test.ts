@@ -384,6 +384,21 @@ describe('Argus calls you', () => {
     expect(voiceService.snapshot.isActive).toBe(true);
   });
 
+  test('a ring attended by someone else ends before our claim with their name', async () => {
+    let answer: (value: IServiceResponse<unknown>) => void = () => undefined;
+    deferredAnswer = new Promise<IServiceResponse<unknown>>((resolve) => {
+      answer = resolve;
+    });
+    operationListeners.get(8)?.(
+      ring({ responseId: 7, discreet: true, offers: ['camera'] }) as unknown as ISocketEmitDto
+    );
+    await settle();
+    expect(voiceService.snapshot.responseId).toBe(7);
+    answer({ status: 409, ok: false, info: null, errors: { code: 'CALL_TAKEN', message: '' } });
+    await settle();
+    expect(voiceService.snapshot.error).toStartWith('CALL_TAKEN');
+  });
+
   test('a ring during a live call waits for the user instead of joining', async () => {
     tokenAnswers = [grant(userCall), grant('call-42')];
     await voiceService.start();

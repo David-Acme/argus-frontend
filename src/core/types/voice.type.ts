@@ -76,6 +76,7 @@ export type VoiceSnapshot = {
   error: string | null;
   transport: VoiceTransport;
   callReason: string | null;
+  responseId: number | null;
   waitingCall: IncomingCall | null;
 };
 
@@ -84,4 +85,5 @@ export type VoiceTransport = 'none' | 'sync' | 'rtc';
 export type VoiceStartOptions = {
   callId?: string;
   reason?: string | null;
+  responseId?: number | null;
 };

@@ -66,13 +66,19 @@ export type IncomingCall = {
   environmentName?: string | null;
   lang: string;
   expiresAt: number;
+  responseId?: number | null;
+  discreet: boolean;
+  offers: string[];
 };
 
-export type IncomingCallCancelReason = 'answered_elsewhere' | 'expired' | 'resolved' | 'declined';
+export type IncomingCallCancelReason = 'answered_elsewhere' | 'expired' | 'resolved' | 'declined' | 'attended';
 
 export type IncomingCallCancel = {
   callId: string;
   reason: IncomingCallCancelReason;
+  claimedBy?: string | null;
+  attendedBy?: string | null;
+  responseId?: number | null;
 };
 
 export type CallMode = 'call' | 'notify' | 'off';
