@@ -91,4 +91,11 @@ export const users = {
     forgotten: 'Argus olvidó la voz de {name}',
     'forget-error': 'No se pudo olvidar la voz',
   },
+  presence: {
+    home: 'En casa',
+    away: 'Fuera',
+    unknown: 'Desconocido',
+    'since-time': '{state} desde las {time}',
+    'since-day': '{state} desde el {date}',
+  },
 } as const;

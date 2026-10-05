@@ -10,6 +10,8 @@ type ListRowProps = {
   subtitle?: string;
   icon?: IconName;
   trailing?: ReactNode;
+  footer?: ReactNode;
+  footerLabel?: string;
   destructive?: boolean;
   chevron?: boolean;
   disabled?: boolean;
@@ -23,6 +25,8 @@ export function ListRow({
   subtitle,
   icon,
   trailing,
+  footer,
+  footerLabel,
   destructive = false,
   chevron = false,
   disabled = false,
@@ -54,6 +58,7 @@ export function ListRow({
             {subtitle}
           </Text>
         ) : null}
+        {footer ? <View className="pt-1">{footer}</View> : null}
       </View>
       {trailing}
       {chevron ? <Icon name="chevron-right" className="text-muted-foreground size-5" /> : null}
@@ -67,7 +72,7 @@ export function ListRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
+      accessibilityLabel={[title, subtitle, footerLabel].filter(Boolean).join('. ')}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}

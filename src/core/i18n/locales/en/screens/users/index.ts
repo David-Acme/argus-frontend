@@ -90,4 +90,11 @@ export const users = {
     forgotten: "Argus forgot {name}'s voice",
     'forget-error': 'The voice could not be forgotten',
   },
+  presence: {
+    home: 'At home',
+    away: 'Away',
+    unknown: 'Unknown',
+    'since-time': '{state} since {time}',
+    'since-day': '{state} since {date}',
+  },
 };

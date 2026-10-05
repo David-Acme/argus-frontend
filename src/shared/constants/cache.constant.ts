@@ -48,6 +48,7 @@ export const VIEW_CACHE_KEYS = {
   guardEpisodes: 'guard.episodes',
   guardEpisode: 'guard.episode',
   voiceprintUsers: 'voiceprint.users',
+  presence: 'guard.presence',
   authSessions: 'auth.sessions',
   authUserSessions: 'auth.user-sessions',
   callPreferences: 'voice.call-preferences',

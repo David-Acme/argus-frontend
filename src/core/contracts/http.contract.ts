@@ -4,6 +4,7 @@ import {
   sessionRevokeResultSchema,
   userSessionsOverviewSchema,
 } from '@/core/contracts/session.contract';
+import { presenceOverviewSchema } from '@/core/contracts/presence.contract';
 import { voiceprintDirectorySchema } from '@/core/contracts/voiceprint.contract';
 import type {
   IApiError,
@@ -421,6 +422,7 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /settings': settingsOverviewSchema,
   'GET /settings/profiles': settingsProfilesSchema,
   'GET /voiceprint/users': voiceprintDirectorySchema,
+  'GET /guard/presence': presenceOverviewSchema,
   'GET /user': z.array(userManagementRecordSchema),
   'GET /invitation': z.array(invitationRecordSchema),
 };

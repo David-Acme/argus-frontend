@@ -11,6 +11,8 @@ import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useSessionLabels } from '@/features/sessions';
+import { PresenceChip } from '@/features/people/components/presence-chip';
+import { usePresence } from '@/features/people/hooks/use-presence';
 
 type MembersPanelProps = {
   users: readonly IPeopleDirectoryCacheRow[];
@@ -33,6 +35,7 @@ export function MembersPanel({
 }: MembersPanelProps) {
   const { t } = useTranslation();
   const { deviceCount } = useSessionLabels(0);
+  const presenceOf = usePresence(true);
 
   const statusOf = (user: IPeopleDirectoryCacheRow) => {
     if (!user.isActive) return t('screens.sessions.admin.account-disabled');
@@ -48,6 +51,7 @@ export function MembersPanel({
       {users.map((user) => {
         const self = user.id === currentUserId;
         const name = [user.name, user.lastName].filter(Boolean).join(' ');
+        const presence = user.isActive ? presenceOf(Number(user.id)) : null;
         return (
           <ListRow
             key={user.id}
@@ -55,6 +59,8 @@ export function MembersPanel({
             title={name}
             subtitle={`${roleLabel(user.role)} · ${statusOf(user)}`}
             onPress={() => onOpenAccess(user)}
+            footer={presence ? <PresenceChip state={presence.state} label={presence.label} /> : undefined}
+            footerLabel={presence?.label}
             trailing={
               <View className="flex-row items-center gap-1">
                 {self ? (
