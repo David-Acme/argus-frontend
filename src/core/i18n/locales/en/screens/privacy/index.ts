@@ -86,7 +86,7 @@ export const privacy = {
       'Faces and voices are biometric data, which {laws} treats as sensitive data. Argus stores them as numeric patterns, not recordings. Your registration photo stays in private storage and is never synced to phones.',
     'retention-title': 'How long data is kept',
     'retention-body':
-      'Argus does not record video continuously: images of security events are erased on their own. Strangers’ faces: 30 days without being seen again. Learned voice: up to 180 days, erased when you withdraw permission. Presence: only the current state, erased when you withdraw permission or after 30 days without change. In {country}, the rules ask that video surveillance recordings be kept {videoDays} days (at most {videoMaxDays}) and up to {incidentDays} days when they show a possible incident.',
+      'Argus does not record video continuously: images and the history of security events are kept 30 days (the owner chooses 1 to 60), and 120 days for marked incidents. Unnamed faces: 30 days without being seen again (1 to 60). Learned voice: up to 180 days, erased when you withdraw permission. Presence: only the current state, erased when you withdraw permission or after 30 days without change. In {country}, the rules ask that video surveillance recordings be kept {videoDays} days (at most {videoMaxDays}) and up to {incidentDays} days when they show a possible incident.',
     'choices-title': 'You decide',
     'choices-body':
       'You choose what you allow: presence, recognition on the cameras, voice learning and camera audio. Change it any time in Profile > Privacy; without your permission those features stay off for you. The owner can turn a feature off for the whole household, never on for you, and can see what you chose.',
@@ -142,7 +142,7 @@ export const privacy = {
       'Argus will process the faces of outside people to recognize them as recurring. This is third parties’ biometric data.',
     'visitors-ack-sign': 'You must put up a visible camera sign.',
     'visitors-ack-retention':
-      'Retention is limited: an unnamed visitor is erased after 30 days unseen, and turning the feature off erases them within hours. Only small face crops are kept, never video.',
+      'Retention is limited: an unnamed visitor is erased after 30 days unseen (configurable from 1 to 60), and turning the feature off erases them within hours. Only small face crops are kept, never video.',
     'visitors-ack-confirm': 'I understand and accept',
     'visitors-off-title': 'Stop recognizing visitors?',
     'visitors-off-description':

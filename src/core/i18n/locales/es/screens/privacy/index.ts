@@ -87,7 +87,7 @@ export const privacy = {
       'El rostro y la voz son datos biométricos, que {laws} considera datos sensibles. Argus los guarda como patrones numéricos, no como grabaciones. La foto de tu registro queda en almacenamiento privado y nunca se sincroniza a los teléfonos.',
     'retention-title': 'Cuánto tiempo se guardan',
     'retention-body':
-      'Argus no graba video de forma continua: las imágenes de eventos de seguridad se borran solas. Rostros de desconocidos: 30 días sin volver a verlos. Voz aprendida: hasta 180 días, y se borra al retirar tu permiso. Presencia: solo el estado actual, borrado al retirar tu permiso o tras 30 días sin cambios. En {country}, la normativa pide conservar las grabaciones de videovigilancia {videoDays} días (máximo {videoMaxDays}) y hasta {incidentDays} días si muestran un posible incidente.',
+      'Argus no graba video de forma continua: las imágenes y el historial de eventos de seguridad se guardan 30 días (el propietario elige entre 1 y 60) y 120 días los incidentes marcados. Rostros sin nombre: 30 días sin volver a verlos (entre 1 y 60). Voz aprendida: hasta 180 días, y se borra al retirar tu permiso. Presencia: solo el estado actual, borrado al retirar tu permiso o tras 30 días sin cambios. En {country}, la normativa pide conservar las grabaciones de videovigilancia {videoDays} días (máximo {videoMaxDays}) y hasta {incidentDays} días si muestran un posible incidente.',
     'choices-title': 'Tú decides',
     'choices-body':
       'Eliges qué permites: presencia, reconocimiento en las cámaras, aprendizaje de voz y audio de las cámaras. Lo cambias cuando quieras en Perfil > Privacidad; sin tu permiso esas funciones quedan apagadas para ti. El propietario puede apagar una función para toda la casa, pero nunca encenderla por ti, y ve qué elegiste.',
@@ -144,7 +144,7 @@ export const privacy = {
       'Argus procesará rostros de personas externas para reconocerlas como recurrentes. Son datos biométricos de terceros.',
     'visitors-ack-sign': 'Debes poner un aviso visible de zona videovigilada.',
     'visitors-ack-retention':
-      'La conservación es limitada: un visitante sin nombre se borra tras 30 días sin verlo, y al apagar la función se borran en unas horas. Solo se guardan recortes pequeños del rostro, nunca video.',
+      'La conservación es limitada: un visitante sin nombre se borra tras 30 días sin verlo (configurable entre 1 y 60), y al apagar la función se borran en unas horas. Solo se guardan recortes pequeños del rostro, nunca video.',
     'visitors-ack-confirm': 'Entiendo y acepto',
     'visitors-off-title': '¿Dejar de reconocer visitantes?',
     'visitors-off-description':
