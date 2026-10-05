@@ -11,7 +11,8 @@ import { IS_ANDROID, IS_NATIVE } from '@/shared/constants';
 import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
 import { faceErrorMessage } from '@/features/auth/model/face-error';
 import { CameraView } from 'expo-camera';
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+import { consentDraft } from '@/features/privacy';
 import { useCallback, useState } from 'react';
 import { Linking, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,6 +52,8 @@ export default function FaceScreen() {
   const cameraArea = { top: insets.top, height: Math.max(sheetTop - insets.top, 120) };
 
   if (!IS_NATIVE) return <FaceWebNotice mode={mode} />;
+  if (enrolling && !consentDraft.peek() && phase !== 'submitting')
+    return <Redirect href={{ pathname: '/welcome/privacy', params: { mode } }} />;
 
   if (showIntro) {
     return (

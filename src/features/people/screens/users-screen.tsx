@@ -28,6 +28,7 @@ import { ManagedUserDialog } from '@/features/people/components/managed-user-dia
 import { MembersPanel } from '@/features/people/components/members-panel';
 import { RoleAccessCard } from '@/features/people/components/role-access-card';
 import { VoiceRecognitionRow } from '@/features/people/components/voice-recognition-row';
+import { HouseholdPrivacyPanel, UserPrivacyRow } from '@/features/privacy';
 import { roleOptions } from '@/features/people/components/user-options';
 import { useInvitationPreview } from '@/features/people/hooks/use-invitation-preview';
 import {
@@ -177,6 +178,10 @@ export default function UsersScreen() {
               <SectionHeader title={t('screens.users.role-access-title')} />
               <RoleAccessCard roleLabel={roleLabel} counts={roleCounts} />
             </View>
+            <View className="gap-3">
+              <SectionHeader title={t('screens.privacy.household.title')} />
+              <HouseholdPrivacyPanel />
+            </View>
             <View className={cn(isWide && 'flex-1', 'gap-3')}>
               <SectionHeader
                 title={t('screens.users.invitations')}
@@ -264,10 +269,13 @@ export default function UsersScreen() {
           onDisable={(sessions) => setActive(inspectedUser, false, sessions)}
           onEnable={() => setActive(inspectedUser, true, [])}
           extra={
-            <VoiceRecognitionRow
-              userId={Number(inspectedUser.id)}
-              name={fullName(inspectedUser)}
-            />
+            <>
+              <UserPrivacyRow userId={Number(inspectedUser.id)} />
+              <VoiceRecognitionRow
+                userId={Number(inspectedUser.id)}
+                name={fullName(inspectedUser)}
+              />
+            </>
           }
         />
       ) : null}

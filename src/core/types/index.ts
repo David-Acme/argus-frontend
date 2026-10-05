@@ -32,3 +32,4 @@ export * from './settings.type';
 export * from './voiceprint.type';
 export * from './rtc.type';
 export * from './response.type';
+export * from './privacy.type';

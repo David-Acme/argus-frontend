@@ -51,6 +51,8 @@ export const VIEW_CACHE_KEYS = {
   authSessions: 'auth.sessions',
   authUserSessions: 'auth.user-sessions',
   callPreferences: 'voice.call-preferences',
+  privacyMe: 'privacy.me',
+  privacyDirectory: 'privacy.users',
 } as const;
 
 export const buildViewCacheStorageKey = (

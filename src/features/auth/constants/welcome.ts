@@ -10,6 +10,6 @@ export const WELCOME_REDUCED_STEP_MS = 450;
 
 export const WELCOME_ICON_DRIFT_PX = 5;
 export const WELCOME_ICON_DRIFT_DURATION_MS = 1100;
-export const ONBOARDING_STEPS = { pairing: 1, face: 2, voice: 3, total: 3 } as const;
+export const ONBOARDING_STEPS = { pairing: 1, privacy: 2, face: 3, voice: 4, total: 4 } as const;
 
 export const SPLASH_SLOW_MS = 6000;

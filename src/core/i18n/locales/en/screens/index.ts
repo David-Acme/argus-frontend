@@ -16,6 +16,7 @@ import { profile } from './profile';
 import { security } from './security';
 import { settings } from './settings';
 import { sessions } from './sessions';
+import { privacy } from './privacy';
 import { response } from './response';
 
 export const screens = {

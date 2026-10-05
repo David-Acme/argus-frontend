@@ -48,7 +48,7 @@ function InvitationScreen() {
         }
         setPhase('accepted');
         holdInviteToken(qr.token);
-        router.replace({ pathname: '/welcome/face', params: { mode: 'invite-enroll' } });
+        router.replace({ pathname: '/welcome/privacy', params: { mode: 'invite-enroll' } });
       });
     });
     return () => {

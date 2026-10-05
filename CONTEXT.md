@@ -2279,3 +2279,50 @@ zod contract) and `tests/unit/response-recipients.test.ts` (steps, moves,
 modes, duty, the saved body, phone validation). The HTTP schemas live in
 `core/contracts/response.contract.ts`; they join `HTTP_CONTRACTS` once MAIN
 records the goldens for the five new routes.
+
+## Privacy consent before anything is processed (2026-10-04)
+
+David asked for a clear consent notice before Argus processes anything about
+a person, with Peru as the target market (Ley N° 29733, its reglamento D.S. N°
+016-2024-JUS and the videovigilancia Directive N° 01-2020-JUS/DGTAIPD) and a
+pre-beta "tal cual" disclaimer accepted in the same flow. The backend side is
+identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
+"Privacy choices"); the host-level notice lives in the setup scripts.
+
+- **`features/privacy`** is the slice: the consent form, the full notice and
+  terms dialog, the per-signal toggle list, the profile section, the in-app
+  gate, the owner's household panel with the visitor-recognition
+  acknowledgement, and the per-person row of the owner's access dialog. Copy
+  is `screens.privacy.*` (es first, en). The country's laws, authority and
+  retention days are data (`constants/privacy.ts`, `PRIVACY_JURISDICTIONS`),
+  pinned against the backend's `scripts/privacy/jurisdictions.tsv` by
+  `tests/unit/privacy-consent.test.ts`, which also pins the notice version
+  against identity's `kPrivacyNoticeVersion`.
+- **Onboarding.** Owner enrolment and invitation enrolment now pass through
+  `/welcome/privacy` (step 2 of 4) before the face step. The choices are held
+  in memory (`consentDraft`, never persisted) because there is no account to
+  store them on yet; the face step refuses to open without a draft, and right
+  after registration succeeds `submitConsentDraft` sends `PUT /privacy/me`.
+  Until that write lands the server treats the person as undecided, which
+  means every signal off, so nothing is processed before consent. "No acepto"
+  drops the draft (and the held invitation token) and returns to the welcome
+  screen without creating an account. If the write fails, the person is told
+  and the gate asks again with the same choices.
+- **The gate.** `PrivacyGate` wraps the signed-in shell: when `GET
+  /privacy/me` says undecided or an older notice, it shows the consent form
+  full screen instead of the app (existing accounts meet it once). Declining
+  there signs the device out. The answer is cached like any remote resource
+  (`privacy.me`), so a decided user paints the app at once.
+- **Perfil > Privacidad.** Every role reviews and changes the four choices
+  (presence, recognition on cameras, voice learning, camera audio) with one
+  honest line each, sees when they accepted, and opens the full notice and
+  terms. Turning off voice learning or presence confirms first, because the
+  server erases what it learned. A signal the owner switched off for the
+  household shows as off and disabled, with the reason.
+- **The owner.** Personas y accesos gains "Privacidad de la casa": the four
+  household switches (turning one off confirms and applies to everyone), how
+  many people have not decided, whether camera audio is held and by how many
+  people, and "Reconocer visitantes recurrentes", which opens an
+  acknowledgement (outside people's faces, camera signs, limited retention)
+  before it is enabled. The per-person access dialog shows that person's
+  choices read-only: the owner can never change them on someone's behalf.

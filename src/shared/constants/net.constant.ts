@@ -8,6 +8,7 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   user: 7044,
   'portrait-preview': 7044,
   voiceprint: 7044,
+  privacy: 7044,
   camera: 7026,
   zone: 7026,
   media: 7026,

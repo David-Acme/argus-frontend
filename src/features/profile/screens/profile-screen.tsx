@@ -6,6 +6,7 @@ import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
 import { SessionsSection } from '@/features/sessions';
 import { CallPreferencesSection } from '@/features/voice';
+import { PrivacySection } from '@/features/privacy';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
@@ -151,6 +152,7 @@ export default function ProfileScreen() {
 
       <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
       <CallPreferencesSection />
+      <PrivacySection />
     </AppScreen>
   );
 }

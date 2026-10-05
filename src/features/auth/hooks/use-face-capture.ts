@@ -9,6 +9,7 @@ import { useFaceGuide } from '@/features/auth/hooks/use-face-guide';
 import { faceErrorFromUnknown, type FaceError } from '@/features/auth/model/face-error';
 import { clearInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { submitConsentDraft } from '@/features/auth/model/consent-submit';
 
 type Phase = 'guide' | 'countdown' | 'submitting';
 
@@ -100,6 +101,7 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
           : await authService.login(uri);
         if (response.ok && response.info) {
           clearInviteToken();
+          if (enrolling) await submitConsentDraft(t);
           const already = response.info.alreadyRegistered === true;
           const isOwner = response.info.role === 'owner';
           if (already && !isOwner) {

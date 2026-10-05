@@ -40,7 +40,7 @@ function EntryRedirect() {
   if (destination === null) return <BrandSplash />;
   if (destination === 'unreachable') return <ServerUnreachable onRetry={retry} />;
   if (destination === 'welcome') return <Redirect href="/welcome" />;
-  if (destination === 'owner-enroll') return <Redirect href="/welcome/face?mode=owner-enroll" />;
+  if (destination === 'owner-enroll') return <Redirect href={{ pathname: '/welcome/privacy', params: { mode: 'owner-enroll' } }} />;
   return IS_NATIVE ? <Redirect href="/welcome/face?mode=login" /> : <Redirect href="/login" />;
 }
 
