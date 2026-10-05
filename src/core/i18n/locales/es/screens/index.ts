@@ -18,6 +18,7 @@ import { settings } from './settings';
 import { sessions } from './sessions';
 import { privacy } from './privacy';
 import { response } from './response';
+import { safety } from './safety';
 
 export const screens = {
   home,
@@ -39,4 +40,5 @@ export const screens = {
   settings,
   sessions,
   response,
+  safety,
 } as const;

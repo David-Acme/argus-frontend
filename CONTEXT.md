@@ -2342,3 +2342,123 @@ comes through `useRemoteResource` (view cache first, refetch on focus) and
 is read-only, so it has no optimistic layer. `ListRow` gained an optional
 `footer` (and `footerLabel` for its spoken label) so a chip sits under the
 subtitle without competing with the row's actions on a 420 px phone.
+
+## Safety nets: dead man's switch, panic, duress (2026-10-04, WATCHDOG)
+
+- **Dead man's switch** (`core/services/heartbeat/`). argus-sync sends
+  `Heartbeat` (operation 11) after `InitialInfo`, answers the app's
+  `{type:"heartbeat"}` (sent every `intervalSeconds`, 60) and pushes one
+  when the user's presence changes; `GET /sync/heartbeat` answers the same
+  for the background task. `HeartbeatEngine` keeps the last one (MMKV
+  `app.watchdog.last-heartbeat`) and hands `planFor()` to the platform alarm:
+  on native, `expo-notifications` keeps ONE local notification
+  (`argus-deadman`) scheduled `graceSeconds` (45 min) after the last
+  heartbeat while `armed`, and cancels it when not. `armed` is true only
+  when presence says *away*; home or unknown never arm, so a phone at home
+  next to a server stopped on purpose never alarms. The text is calm and
+  opens the app: "Argus no responde" / "No sé nada de Argus desde las 03:12.
+  Abre la app para comprobarlo." (Android channel `argus-watchdog`, high
+  importance; iOS `timeSensitive`).
+- **Background limits.** A phone that is away rarely has a live socket, so
+  the reschedule also comes from `expo-background-task` (`argus-heartbeat-check`,
+  every 15 min at best: WorkManager on Android, BGTaskScheduler on iOS,
+  which runs when the system decides) and from a data push
+  (`argus-heartbeat-push`, `Notifications.registerTaskAsync`) once the relay
+  has an APNs/FCM leg. 45 minutes tolerates two missed wake-ups; a
+  force-quit iOS app hears nothing and may alarm, and opening the app
+  settles it. **New native modules (expo-notifications, expo-background-task,
+  expo-task-manager) and their config plugins: a dev-client rebuild is
+  required.**
+- **Desktop/web** has no background: `OfflineBanner` switches its text to
+  "Argus no responde desde las HH:MM" once the socket has been down for
+  `socketGraceSeconds` (180 s), measured from the later of the last
+  heartbeat and this disconnect, so a Wi-Fi blip or a server restart says
+  only the usual "Sin conexión" (`watchdogNotice`, unit-tested).
+- **Panic** (`features/safety`, `PanicButton` in Perfil > Seguridad
+  personal, every role). A 2-second hold with a filling bar (`PANIC_HOLD_MS`),
+  released early it does nothing; screen readers use the long-press action.
+  `POST /guard/panic`; the device plays nothing and only says "Aviso enviado
+  en silencio". The backend never rings the person who pressed it.
+- **Duress codes.** The owner switches them on in the same panel; Owner and
+  Residents then set a normal and a duress code (`PinSetupDialog`). When the
+  user has codes, switching any environment to En casa asks for one first
+  (`askDisarmPin` + the global `DisarmPinDialog` in the root layout) and
+  sends it as `pin`; the duress code produces exactly the same result on
+  screen, and the backend alerts the rest of the household silently
+  (backend `services/guard/CONTEXT.md`, "Panic and duress", for the threat
+  model). Arming never asks.
+
+## Intruder response: who is told, who is attending, is it real (2026-10-04, RESPONSE)
+
+The backend decides who an alert reaches and in what order: argus-guard owns
+the per-environment list, and the notification call engine runs the steps
+(`backend/services/guard/CONTEXT.md`, "Who is called";
+`backend/services/notification/CONTEXT.md`, "Intruder response"). The app
+does three things.
+
+**The list, in Seguridad → environment.** `ResponseRecipientsPanel` and
+`EmergencyContactsPanel` (`features/security`) read
+`GET /guard/environments/{id}/response` through `useRemoteResource`, scoped
+by environment, so the last answer paints first.
+- The Owner edits: per person, Llamar / Solo avisar / Nada, and earlier or
+  later. Moving someone who shares a step gives them a step of their own;
+  someone alone joins the neighbouring step (`model/response-recipients.ts`,
+  unit-tested).
+- The Owner also sets a guard's duty, the wait between steps, the emergency
+  number and up to ten contacts.
+- Every edit is optimistic, saved as one `PUT` of the whole list, then
+  reconciled with the server's answer, or reloaded with a toast.
+- Residents and Guards see only their own row and the contacts. A Guard
+  toggles their own duty (`POST …/duty`). During staffed hours the switch
+  shows "En horario de personal: de guardia" and is locked on.
+- The add-contact dialog renders beside `AppScreen` (rule 12d).
+
+**The live response.** `features/response` holds a small zustand store of
+`IncidentResponse` rows.
+- It is fed by `/sync` operation 10 (`response_update`, subscribed once from
+  the feature with `synchronizeService.on`) and by `GET
+  /notification/responses` on focus.
+- A frame never replaces a newer one (`updatedAt`).
+- The store resets when the signed-in user changes.
+- Open responses, and closed ones for fifteen minutes, show as
+  `ResponseStrip` at the top of Inicio.
+- `ResponseCard` is exported for the call surface (RTC-APP renders it
+  `compact` when a call carries a `responseId`).
+The card shows:
+- the kind and the place;
+- who is attending ("Pedro está atendiendo", "Lo estás atendiendo tú"), the
+  step being called, or "Nadie ha contestado";
+- the live camera, behind a button so it never streams on its own;
+- for a discreet member, "Quédate dentro y no abras";
+- Es real / Falsa alarma.
+
+**The verdict.** "Falsa alarma" asks for confirmation first, because it
+stops everyone else's ring, and is then applied optimistically. The
+optimistic row keeps the server's `updatedAt`, so the server's answer always
+wins the merge. "Es real" reaches everyone left at critical urgency
+(server-side). Once confirmed or unanswered (`showContacts`), the card shows
+the emergency button, which opens the phone with `tel:`, and each contact
+with one-tap call and SMS. Argus never places a phone call itself.
+
+Tests: `tests/unit/response-model.test.ts` (headlines, tones, who may
+decide, the optimistic merge, contacts gating, phone links, visibility, the
+zod contract) and `tests/unit/response-recipients.test.ts` (steps, moves,
+modes, duty, the saved body, phone validation). The HTTP schemas live in
+`core/contracts/response.contract.ts`; they join `HTTP_CONTRACTS` once MAIN
+records the goldens for the five new routes.
+
+### Presence in People and access (2026-10, safety wave)
+
+argus-guard keeps, per user and environment, whether they are home, away or
+unknown, and only for users who consented (backend `services/guard/CONTEXT.md`,
+"Presence"). The Owner's `/users` list shows it as a chip under each active
+member (`features/people/components/presence-chip.tsx`): a dot and "En casa
+desde las 18:42", "Fuera desde el 3 oct" or "Desconocido". The time appears
+when the change happened today, the day otherwise (`model/presence.ts`,
+`presenceOf`, unit-tested). The chip is deliberately coarse: no source, no
+environment breakdown, no place. Someone without a row (no consent, or no
+signal yet) reads unknown, never away. The answer of `GET /guard/presence`
+comes through `useRemoteResource` (view cache first, refetch on focus) and
+is read-only, so it has no optimistic layer. `ListRow` gained an optional
+`footer` (and `footerLabel` for its spoken label) so a chip sits under the
+subtitle without competing with the row's actions on a 420 px phone.

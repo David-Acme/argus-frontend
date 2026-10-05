@@ -7,6 +7,7 @@ import { SettingsGroup } from '@/features/profile/components/settings-group';
 import { SessionsSection } from '@/features/sessions';
 import { CallPreferencesSection } from '@/features/voice';
 import { PrivacySection } from '@/features/privacy';
+import { SafetySection } from '@/features/safety';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
@@ -151,6 +152,7 @@ export default function ProfileScreen() {
       </View>
 
       <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
+      <SafetySection />
       <CallPreferencesSection />
       <PrivacySection />
     </AppScreen>

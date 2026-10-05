@@ -87,8 +87,12 @@ class GuardService {
     return checked(await httpService.delete<unknown>(`/guard/environments/${id}`), environmentList);
   }
 
-  async setMode(mode: GuardMode, environmentId?: number): Promise<IServiceResponse<GuardEnvironment[]>> {
-    const body = environmentId === undefined ? { mode } : { mode, environmentId };
+  async setMode(mode: GuardMode, environmentId?: number, pin?: string): Promise<IServiceResponse<GuardEnvironment[]>> {
+    const body = {
+      mode,
+      ...(environmentId === undefined ? {} : { environmentId }),
+      ...(pin === undefined ? {} : { pin }),
+    };
     return checked(await httpService.post<unknown>('/guard/mode', body), environmentList);
   }
 

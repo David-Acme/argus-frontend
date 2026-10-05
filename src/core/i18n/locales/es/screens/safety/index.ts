@@ -1,0 +1,42 @@
+export const safety = {
+  title: 'Seguridad personal',
+  subtitle: 'Para pedir ayuda sin que nadie lo note.',
+  panic: {
+    label: 'Botón de pánico',
+    hint: 'Mantén pulsado 2 segundos. Avisa a tu casa en silencio; este teléfono no suena.',
+    sending: 'Enviando aviso…',
+    sent: 'Aviso enviado en silencio.',
+    failed: 'No se pudo enviar. Vuelve a mantenerlo pulsado.',
+  },
+  disarm: {
+    title: 'Código para desactivar',
+    description: 'Escribe tu código para pasar a En casa.',
+    pin: 'Código',
+    confirm: 'Desactivar',
+  },
+  pins: {
+    title: 'Tus códigos',
+    description:
+      'El código normal desactiva la vigilancia. El de coacción hace lo mismo a la vista, pero avisa en silencio a tu casa.',
+    disarm: 'Código normal',
+    'disarm-hint': 'De 4 a 8 cifras.',
+    duress: 'Código de coacción',
+    'duress-hint': 'Distinto del normal. Úsalo solo si alguien te obliga.',
+    same: 'Tiene que ser distinto del código normal.',
+    create: 'Crear mis códigos',
+    change: 'Cambiar mis códigos',
+    set: 'Desactivar la vigilancia te pedirá tu código.',
+    unset: 'Sin códigos, pasar a En casa no pide nada.',
+    saved: 'Códigos guardados',
+    remove: 'Quitar mis códigos',
+    'remove-title': '¿Quitar tus códigos?',
+    'remove-description': 'Pasar a En casa dejará de pedir código y perderás el código de coacción.',
+  },
+  owner: {
+    toggle: 'Códigos de desactivación',
+    hint: 'Cada persona que puede desactivar la vigilancia elige un código normal y uno de coacción.',
+    'off-title': '¿Desactivar los códigos?',
+    'off-description': 'Se borrarán los códigos de todas las personas y nadie podrá pedir ayuda con el de coacción.',
+    'off-confirm': 'Desactivar',
+  },
+} as const;

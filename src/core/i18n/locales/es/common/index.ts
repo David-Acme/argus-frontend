@@ -7,6 +7,13 @@ export const common = {
     title: 'Sin conexión con Argus',
     description: 'Mostrando lo último guardado en este dispositivo.',
   },
+  watchdog: {
+    'banner-title': 'Argus no responde desde las {time}',
+    'banner-description': 'Puede que el servidor esté apagado o sin red. Si no hay nadie en casa, pide a alguien que lo compruebe.',
+    'alarm-title': 'Argus no responde',
+    'alarm-body': 'No sé nada de Argus desde las {time}. Abre la app para comprobarlo.',
+    channel: 'Avisos de Argus sin conexión',
+  },
   'server-unreachable': {
     title: 'No encontramos tu servidor Argus',
     description: 'Comprueba que el servidor esté encendido y que este dispositivo esté en la misma red.',

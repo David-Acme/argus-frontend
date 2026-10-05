@@ -1,0 +1,42 @@
+export const safety = {
+  title: 'Personal safety',
+  subtitle: 'Ask for help without anyone noticing.',
+  panic: {
+    label: 'Panic button',
+    hint: 'Hold for 2 seconds. Your household is alerted silently; this phone makes no sound.',
+    sending: 'Sending the alert…',
+    sent: 'Alert sent silently.',
+    failed: 'It could not be sent. Hold it again.',
+  },
+  disarm: {
+    title: 'Disarm code',
+    description: 'Enter your code to switch to Home.',
+    pin: 'Code',
+    confirm: 'Disarm',
+  },
+  pins: {
+    title: 'Your codes',
+    description:
+      'Your normal code turns guarding off. The duress code looks exactly the same, but silently alerts your household.',
+    disarm: 'Normal code',
+    'disarm-hint': '4 to 8 digits.',
+    duress: 'Duress code',
+    'duress-hint': 'Different from the normal one. Use it only if someone forces you.',
+    same: 'It must be different from the normal code.',
+    create: 'Create my codes',
+    change: 'Change my codes',
+    set: 'Turning guarding off will ask for your code.',
+    unset: 'Without codes, switching to Home asks for nothing.',
+    saved: 'Codes saved',
+    remove: 'Remove my codes',
+    'remove-title': 'Remove your codes?',
+    'remove-description': 'Switching to Home will stop asking for a code and your duress code will be gone.',
+  },
+  owner: {
+    toggle: 'Disarm codes',
+    hint: 'Everyone who can turn guarding off picks a normal code and a duress code.',
+    'off-title': 'Turn codes off?',
+    'off-description': 'Everyone’s codes will be deleted and nobody will be able to ask for help with a duress code.',
+    'off-confirm': 'Turn off',
+  },
+} as const;

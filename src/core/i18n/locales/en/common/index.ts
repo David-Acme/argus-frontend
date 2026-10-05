@@ -8,6 +8,13 @@ export const common = {
     title: 'No connection to Argus',
     description: 'Showing what this device saved last.',
   },
+  watchdog: {
+    'banner-title': 'Argus hasn’t answered since {time}',
+    'banner-description': 'The server may be off or offline. If nobody is home, ask someone to check on it.',
+    'alarm-title': 'Argus isn’t answering',
+    'alarm-body': 'No word from Argus since {time}. Open the app to check.',
+    channel: 'Argus offline alerts',
+  },
   'server-unreachable': {
     title: 'Your Argus server is out of reach',
     description: 'Make sure the server is on and that this device is on the same network.',

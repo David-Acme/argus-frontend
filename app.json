@@ -86,6 +86,14 @@
             "audioType": "communication"
           }
         }
+      ],
+      "expo-background-task",
+      [
+        "expo-notifications",
+        {
+          "color": "#F4F1ED",
+          "enableBackgroundRemoteNotifications": true
+        }
       ]
     ],
     "experiments": {

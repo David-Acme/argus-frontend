@@ -34,3 +34,4 @@ export * from './presence.type';
 export * from './rtc.type';
 export * from './response.type';
 export * from './privacy.type';
+export * from './watchdog.type';

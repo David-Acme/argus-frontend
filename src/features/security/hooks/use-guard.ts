@@ -22,6 +22,7 @@ import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { cameraEnvironmentIndex, withCameraIn, withMode } from '@/features/security/model/environments';
+import { askDisarmPin, safetyService } from '@/features/safety';
 
 type OptimisticRemote<T, R> = {
   mutate: (update: (previous: T | null) => T | null) => void;
@@ -162,12 +163,18 @@ export function useGuard(owner: boolean, environmentId?: number) {
 
   const setMode = useCallback(
     async (mode: GuardMode, target?: GuardEnvironment): Promise<boolean> => {
+      let pin: string | undefined;
+      if (mode === 'home' && (await safetyService.disarmNeedsPin())) {
+        const entered = await askDisarmPin();
+        if (entered === null) return false;
+        pin = entered;
+      }
       setPendingMode({ mode, environmentId: target?.id ?? null });
       const label = t(`screens.security.mode.${mode}`);
       const saved = await optimisticRemote<GuardEnvironment[], GuardEnvironment[]>({
         mutate: mutateEnvironments,
         apply: (previous) => (previous ? withMode(previous, mode, target?.id) : previous),
-        call: () => guardService.setMode(mode, target?.id),
+        call: () => guardService.setMode(mode, target?.id, pin),
         settle: (_current, info) => info,
         success: target
           ? t('screens.security.environments.mode-saved', { name: target.name, mode: label })

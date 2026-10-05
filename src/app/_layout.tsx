@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GlobalBottomNav } from '@/shared/components/layout/global-bottom-nav';
 import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
+import { DisarmPinDialog } from '@/features/safety';
 import { Toaster } from '@/shared/components/ui/toaster';
 import { OfflineBanner } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
@@ -55,6 +56,7 @@ export default function RootLayout() {
               <CallPill />
               <OfflineBanner />
               <ConfirmDialog />
+              <DisarmPinDialog />
               <Toaster />
               <PortalHost />
             </ThemeProvider>

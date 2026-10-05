@@ -54,6 +54,7 @@ export const VIEW_CACHE_KEYS = {
   callPreferences: 'voice.call-preferences',
   privacyMe: 'privacy.me',
   privacyDirectory: 'privacy.users',
+  safetyStatus: 'safety.status',
 } as const;
 
 export const buildViewCacheStorageKey = (
