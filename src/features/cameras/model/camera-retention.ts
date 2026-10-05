@@ -17,7 +17,7 @@ export type CredentialRetype = {
 
 type AddressValues = Pick<
   CameraFormValues,
-  'isEdit' | 'ip' | 'port' | 'storedIp' | 'storedPort' | 'username' | 'driver'
+  'isEdit' | 'ip' | 'port' | 'storedIp' | 'storedPort' | 'driver'
 >;
 
 export function retentionCap(incident: boolean): number {
@@ -54,7 +54,7 @@ export function credentialsToRetype(values: AddressValues): CredentialRetype {
   const changed = addressChanged(values);
   return {
     addressChanged: changed,
-    password: changed && values.username.trim().length > 0,
+    password: changed,
     cloudPassword: changed && CAMERA_DRIVER_SPECS[values.driver].requiresCloud,
   };
 }

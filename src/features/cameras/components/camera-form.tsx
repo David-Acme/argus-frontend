@@ -169,7 +169,8 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
   const modelText = useWatch({ control: form.control, name: 'model' });
   const ipText = useWatch({ control: form.control, name: 'ip' });
   const portText = useWatch({ control: form.control, name: 'port' });
-  const usernameText = useWatch({ control: form.control, name: 'username' });
+  const noPassword = useWatch({ control: form.control, name: 'noPassword' });
+  const noCloudPassword = useWatch({ control: form.control, name: 'noCloudPassword' });
   const storedIp = useWatch({ control: form.control, name: 'storedIp' });
   const storedPort = useWatch({ control: form.control, name: 'storedPort' });
   const retype = credentialsToRetype({
@@ -178,7 +179,6 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
     port: portText,
     storedIp,
     storedPort,
-    username: usernameText,
     driver,
   });
   const spec = CAMERA_DRIVER_SPECS[driver];
@@ -208,7 +208,8 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
     setProbing(false);
     if (!response.ok || !response.info) {
       setProbeFailed(true);
-      setProbeRefusal(probeRefusalOf(response));
+      const values = form.getValues();
+      setProbeRefusal(probeRefusalOf(response, values.noPassword || values.noCloudPassword));
       return;
     }
     const result = response.info;
@@ -322,6 +323,8 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
       isEdit: true,
       storedIp: camera.ip,
       storedPort: String(camera.port),
+      noPassword: false,
+      noCloudPassword: false,
     });
   }, [open, camera, form]);
 
@@ -433,17 +436,54 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                       label={t('screens.cameras.password-label')}
                       secureTextEntry
                       placeholder={isEdit && !retype.password ? '••••••••' : undefined}
+                      editable={!(retype.password && noPassword)}
                       autoCapitalize="none"
                       autoCorrect={false}
                     />
                   </View>
                 </View>
                 {retype.addressChanged ? (
-                  <View className="bg-surface-secondary dark:bg-card-secondary flex-row gap-2.5 rounded-2xl px-3 py-2.5">
-                    <Icon name="key-round" className="text-foreground-secondary mt-0.5 size-4" />
-                    <Text variant="caption" className="flex-1">
-                      {t('screens.cameras.address-changed')}
-                    </Text>
+                  <View className="bg-surface-secondary dark:bg-card-secondary gap-1 rounded-2xl px-3 py-2.5">
+                    <View className="flex-row gap-2.5">
+                      <Icon name="key-round" className="text-foreground-secondary mt-0.5 size-4" />
+                      <Text variant="caption" className="flex-1">
+                        {t('screens.cameras.address-changed')}
+                      </Text>
+                    </View>
+                    <FormField
+                      control={form.control}
+                      name="noPassword"
+                      render={({ field }) => (
+                        <ToggleRow
+                          label={t('screens.cameras.no-password')}
+                          hint={t('screens.cameras.no-password-hint')}
+                          value={field.value}
+                          onChange={(next) => {
+                            field.onChange(next);
+                            if (next) form.setValue('password', '');
+                            void form.trigger('password');
+                          }}
+                        />
+                      )}
+                    />
+                    {retype.cloudPassword ? (
+                      <FormField
+                        control={form.control}
+                        name="noCloudPassword"
+                        render={({ field }) => (
+                          <ToggleRow
+                            label={t('screens.cameras.no-cloud-password')}
+                            hint={t('screens.cameras.no-cloud-password-hint')}
+                            value={field.value}
+                            onChange={(next) => {
+                              field.onChange(next);
+                              if (next) form.setValue('cloudPassword', '');
+                              void form.trigger('cloudPassword');
+                            }}
+                          />
+                        )}
+                      />
+                    ) : null}
                   </View>
                 ) : null}
                 {spec.requiresCloud ? (
@@ -467,6 +507,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                           label={t('screens.cameras.cloud-password')}
                           secureTextEntry
                           placeholder={isEdit && !retype.cloudPassword ? '••••••••' : undefined}
+                          editable={!(retype.cloudPassword && noCloudPassword)}
                           autoCapitalize="none"
                           autoCorrect={false}
                         />

@@ -54,12 +54,16 @@ export function hasMicrophone(result: ICameraProbeResult): boolean {
   return result.stream.audioCodec.length > 0;
 }
 
-export type ProbeRefusal = 'stored-elsewhere' | 'busy';
+export type ProbeRefusal = 'stored-elsewhere' | 'busy' | 'no-password';
 
 const STORED_ELSEWHERE = /stored address/i;
 
-export function probeRefusalOf(response: Pick<IServiceResponse<unknown>, 'status' | 'errors'>): ProbeRefusal | null {
+export function probeRefusalOf(
+  response: Pick<IServiceResponse<unknown>, 'status' | 'errors'>,
+  optedOutOfPassword = false,
+): ProbeRefusal | null {
   if (response.status === 429) return 'busy';
-  if (response.status === 422 && STORED_ELSEWHERE.test(response.errors?.message ?? '')) return 'stored-elsewhere';
+  if (response.status === 422 && STORED_ELSEWHERE.test(response.errors?.message ?? ''))
+    return optedOutOfPassword ? 'no-password' : 'stored-elsewhere';
   return null;
 }

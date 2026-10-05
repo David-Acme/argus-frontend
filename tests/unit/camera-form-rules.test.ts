@@ -77,10 +77,23 @@ describe('a new camera address needs its passwords again', () => {
     expect(issues({ ...values, password: 'secret', cloudPassword: 'cloud' })).toEqual([]);
   });
 
-  test('a new port counts as a new address, and a camera without a user needs no password', () => {
+  test('a new port counts as a new address, for any driver', () => {
     expect(credentialsToRetype(edited({ port: '2020' })).addressChanged).toBe(true);
     const rtsp = edited({ driver: 'rtsp', username: '', ip: '192.168.1.41' });
-    expect(credentialsToRetype(rtsp)).toEqual({ addressChanged: true, password: false, cloudPassword: false });
+    expect(credentialsToRetype(rtsp)).toEqual({ addressChanged: true, password: true, cloudPassword: false });
+    expect(issues(rtsp)).toEqual(['password:screens.cameras.retype-password']);
+  });
+
+  test('saying the camera has no password lets an empty password through, and only that one', () => {
+    const moved = edited({ ip: '192.168.1.41', noPassword: true });
+    expect(issues(moved)).toEqual(['cloudPassword:screens.cameras.retype-password']);
+    expect(issues({ ...moved, noCloudPassword: true })).toEqual([]);
+    expect(issues({ ...moved, noPassword: false, noCloudPassword: true })).toEqual([
+      'password:screens.cameras.retype-password',
+    ]);
+    const body = cameraBodyOf({ ...moved, noCloudPassword: true });
+    expect(body.password).toBeUndefined();
+    expect(body.cloudPassword).toBeUndefined();
   });
 
   test('a new camera never counts as moved', () => {
@@ -104,6 +117,12 @@ describe('camera refusals', () => {
       probeRefusalOf({ status: 429, errors: { code: 'TOO_MANY_REQUESTS', message: 'A connection test is already running' } }),
     ).toBe('busy');
     expect(probeRefusalOf({ status: 422, errors: { code: 'VALIDATION_ERROR', message: 'ip is invalid' } })).toBeNull();
+    expect(
+      probeRefusalOf(
+        { status: 422, errors: { code: 'VALIDATION_ERROR', message: "only tested against the camera's stored address" } },
+        true,
+      ),
+    ).toBe('no-password');
   });
 
   test('a password the server could not encrypt gets its own words', () => {

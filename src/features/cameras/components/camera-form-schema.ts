@@ -44,15 +44,17 @@ export const cameraFormSchema = z
     isEdit: z.boolean(),
     storedIp: z.string(),
     storedPort: z.string(),
+    noPassword: z.boolean(),
+    noCloudPassword: z.boolean(),
   })
   .superRefine((values, ctx) => {
     const retention = retentionIssue(values.retentionDays, values.retentionIncident);
     if (retention) ctx.addIssue({ code: 'custom', path: ['retentionDays'], message: retention });
     const retype = credentialsToRetype(values);
-    if (retype.password && values.password.length === 0) {
+    if (retype.password && !values.noPassword && values.password.length === 0) {
       ctx.addIssue({ code: 'custom', path: ['password'], message: 'screens.cameras.retype-password' });
     }
-    if (retype.cloudPassword && values.cloudPassword.length === 0) {
+    if (retype.cloudPassword && !values.noCloudPassword && values.cloudPassword.length === 0) {
       ctx.addIssue({ code: 'custom', path: ['cloudPassword'], message: 'screens.cameras.retype-password' });
     }
     if (!CAMERA_DRIVER_SPECS[values.driver].requiresCloud) return;
@@ -97,5 +99,7 @@ export function cameraFormDefaults(driver: CameraDriverKind, isEdit: boolean): C
     isEdit,
     storedIp: '',
     storedPort: '',
+    noPassword: false,
+    noCloudPassword: false,
   };
 }

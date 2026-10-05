@@ -27,6 +27,7 @@ type CameraProbePanelProps = {
 const REFUSAL_ICON: Record<ProbeRefusal, IconName> = {
   'stored-elsewhere': 'key-round',
   busy: 'clock',
+  'no-password': 'key-round',
 };
 
 type ProbeStepRowProps = {

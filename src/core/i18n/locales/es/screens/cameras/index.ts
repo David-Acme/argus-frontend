@@ -74,6 +74,11 @@ export const cameras = {
   'retype-password': 'Vuelve a escribir la contraseña',
   'address-changed':
     'Cambiaste la dirección de la cámara. Por seguridad, Argus solo usa la contraseña guardada en la dirección donde la configuraste, así que escríbela de nuevo.',
+  'no-password': 'Esta cámara no usa contraseña',
+  'no-password-hint': 'Si la dejas vacía, se borra la contraseña que estaba guardada.',
+  'no-cloud-password': 'No usar la contraseña de la cuenta Tapo',
+  'no-cloud-password-hint':
+    'Si la dejas vacía, se borra la que estaba guardada y Argus no podrá hablar por el altavoz de la cámara.',
   retention: {
     label: 'Conservar evidencias (días)',
     hint: 'La norma peruana de videovigilancia pide 30 días por defecto y 60 como máximo. Con 0 no se guarda nada.',
@@ -267,6 +272,8 @@ export const cameras = {
   },
   probe: {
     'stored-elsewhere': 'Para probar la nueva dirección, escribe otra vez la contraseña de la cámara.',
+    'no-password':
+      'La prueba no puede comprobar una cámara sin contraseña en una dirección nueva. Puedes continuar y guardarla igual.',
     busy: 'Ya hay una prueba de conexión en curso. Espera a que termine y vuelve a intentarlo.',
     running: 'Probando la conexión…',
     'running-hint': 'Argus habla con la cámara como lo hará al guardarla. Tarda unos segundos.',

@@ -74,6 +74,11 @@ export const cameras = {
   'retype-password': 'Type the password again',
   'address-changed':
     'You changed the camera address. For safety, Argus only uses the saved password at the address where you set it up, so type it again.',
+  'no-password': 'This camera has no password',
+  'no-password-hint': 'Leaving it empty clears any stored password.',
+  'no-cloud-password': 'Do not use the Tapo account password',
+  'no-cloud-password-hint':
+    'Leaving it empty clears the stored one, and Argus will not be able to talk through the camera speaker.',
   retention: {
     label: 'Keep evidence (days)',
     hint: 'Peru’s video surveillance rules ask for 30 days by default and 60 at most. 0 keeps nothing.',
@@ -265,6 +270,7 @@ export const cameras = {
   },
   probe: {
     'stored-elsewhere': 'To test the new address, type the camera password again.',
+    'no-password': 'The test cannot check a camera without a password at a new address. You can continue and save it anyway.',
     busy: 'A connection test is already running. Wait for it to finish and try again.',
     running: 'Testing the connection…',
     'running-hint': 'Argus talks to the camera the way it will once saved. It takes a few seconds.',

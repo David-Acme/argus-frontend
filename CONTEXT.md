@@ -2666,8 +2666,12 @@ contracts the app reads; the app follows them as below.
   the test step words both (`probeRefusalOf`). Because `PATCH /camera` with a
   new `ip` and no password clears both passwords, the edit form keeps the
   stored address (`storedIp`/`storedPort`) and, when the address changes,
-  requires the password again (when the camera has a user) and the cloud
-  password (Tapo), with a note explaining why (`credentialsToRetype`). A 500
+  requires the password again and the cloud password (Tapo), with a note
+  explaining why (`credentialsToRetype`). "Esta cámara no usa contraseña" (and
+  "No usar la contraseña de la cuenta Tapo") opt out explicitly: the field
+  stays empty and the save clears the stored password; the connection test,
+  which cannot tell an intended empty password from "use the stored one",
+  then says it cannot check the new address and lets the user continue. A 500
   "could not be encrypted" is renamed `CAMERA_SECRET_NOT_SEALED` and gets its
   own toast copy.
 - **Retention.** The details step has "Conservar evidencias (días)" (new
