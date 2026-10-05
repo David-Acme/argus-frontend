@@ -57,6 +57,12 @@ describe('response headline', () => {
       key: 'false-alarm',
       name: 'Ana',
     });
+    expect(headlineOf({ ...base, state: 'false_alarm', verdictBy: { userId: 3, name: 'Ana' } }, 3)).toEqual({
+      key: 'false-alarm-self',
+    });
+    expect(headlineOf({ ...base, state: 'confirmed', verdictBy: { userId: 1, name: 'Laura' } }, 1)).toEqual({
+      key: 'confirmed-self',
+    });
     expect(headlineOf({ ...base, state: 'unanswered' }, 1)).toEqual({ key: 'unanswered' });
     expect(toneOf({ ...base, state: 'expired' })).toBe('resolved');
     expect(toneOf({ ...base, state: 'confirmed' })).toBe('confirmed');

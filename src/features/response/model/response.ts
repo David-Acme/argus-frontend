@@ -8,7 +8,9 @@ export type ResponseHeadline =
   | { key: 'attended-self' }
   | { key: 'attended'; name: string }
   | { key: 'confirmed'; name: string }
+  | { key: 'confirmed-self' }
   | { key: 'false-alarm'; name: string }
+  | { key: 'false-alarm-self' }
   | { key: 'expired' };
 
 const OPEN_STATES = new Set<IncidentResponse['state']>(['active', 'attended', 'unanswered', 'confirmed']);
@@ -22,9 +24,13 @@ export function isOpen(response: IncidentResponse): boolean {
 export function headlineOf(response: IncidentResponse, selfId: number): ResponseHeadline {
   switch (response.state) {
     case 'false_alarm':
-      return { key: 'false-alarm', name: response.verdictBy?.name ?? '' };
+      return response.verdictBy?.userId === selfId
+        ? { key: 'false-alarm-self' }
+        : { key: 'false-alarm', name: response.verdictBy?.name ?? '' };
     case 'confirmed':
-      return { key: 'confirmed', name: response.verdictBy?.name ?? '' };
+      return response.verdictBy?.userId === selfId
+        ? { key: 'confirmed-self' }
+        : { key: 'confirmed', name: response.verdictBy?.name ?? '' };
     case 'expired':
       return { key: 'expired' };
     case 'unanswered':

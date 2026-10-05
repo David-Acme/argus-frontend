@@ -58,11 +58,18 @@ const KIND_KEYS = {
   guard_tamper: 'tamper',
 } as const satisfies Readonly<Record<IncidentResponse['kind'], string>>;
 
-const TONE_ICON: Readonly<Record<ResponseTone, string>> = {
-  urgent: 'bg-error/15 text-error-strong',
-  confirmed: 'bg-error/15 text-error-strong',
-  attended: 'bg-accent-soft text-accent-strong',
-  resolved: 'bg-surface-secondary text-foreground-secondary',
+const TONE_BADGE: Readonly<Record<ResponseTone, string>> = {
+  urgent: 'bg-error/15',
+  confirmed: 'bg-error/15',
+  attended: 'bg-accent-soft',
+  resolved: 'bg-surface-secondary',
+};
+
+const TONE_GLYPH: Readonly<Record<ResponseTone, string>> = {
+  urgent: 'text-error-strong',
+  confirmed: 'text-error-strong',
+  attended: 'text-accent-strong',
+  resolved: 'text-foreground-secondary',
 };
 
 function ContactRow({ contact }: ContactRowProps) {
@@ -119,6 +126,10 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
         return t('screens.response.headline.confirmed', { name: headline.name });
       case 'false-alarm':
         return t('screens.response.headline.false-alarm', { name: headline.name });
+      case 'confirmed-self':
+        return t('screens.response.headline.confirmed-self');
+      case 'false-alarm-self':
+        return t('screens.response.headline.false-alarm-self');
       case 'attended-self':
         return t('screens.response.headline.attended-self');
       case 'unanswered':
@@ -139,11 +150,11 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
       accessibilityRole="summary"
       className={cn('bg-card gap-3 rounded-3xl p-4 shadow-md shadow-black/[0.05]', className)}>
       <View className="flex-row items-center gap-3">
-        <View className={cn('size-10 items-center justify-center rounded-full', TONE_ICON[tone])}>
-          <Icon name={KIND_ICONS[response.kind]} className={cn('size-5', TONE_ICON[tone])} />
+        <View className={cn('size-10 items-center justify-center rounded-full', TONE_BADGE[tone])}>
+          <Icon name={KIND_ICONS[response.kind]} className={cn('size-5', TONE_GLYPH[tone])} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text variant="label" numberOfLines={1}>
+          <Text variant="label" numberOfLines={2}>
             {t(`screens.response.kind.${KIND_KEYS[response.kind]}`)}
             {place ? ` · ${place}` : ''}
           </Text>

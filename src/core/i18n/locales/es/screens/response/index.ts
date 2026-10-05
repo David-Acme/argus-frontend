@@ -13,6 +13,8 @@ export const response = {
     unanswered: 'Nadie ha contestado. Avisa a un contacto.',
     confirmed: '{name} confirmó que es real',
     'false-alarm': '{name} lo marcó como falsa alarma',
+    'confirmed-self': 'Confirmaste que es real',
+    'false-alarm-self': 'Lo marcaste como falsa alarma',
     expired: 'Terminó sin respuesta',
   },
   real: 'Es real',

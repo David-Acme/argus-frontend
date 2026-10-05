@@ -69,7 +69,7 @@ function RecipientRow({
           <Text variant="label" numberOfLines={1}>
             {recipient.name}
           </Text>
-          <Text variant="caption" numberOfLines={1}>
+          <Text variant="caption" numberOfLines={2}>
             {detail}
           </Text>
         </View>

@@ -13,6 +13,8 @@ export const response = {
     unanswered: 'Nobody answered. Reach a contact.',
     confirmed: '{name} confirmed it is real',
     'false-alarm': '{name} marked it a false alarm',
+    'confirmed-self': 'You confirmed it is real',
+    'false-alarm-self': 'You marked it a false alarm',
     expired: 'Ended without an answer',
   },
   real: 'It is real',
