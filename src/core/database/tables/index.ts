@@ -6,7 +6,11 @@ import { CALENDAR_EVENT_SCHEMA, CalendarEventModel } from './calendar-event.tabl
 import { CAMERA_SCHEMA, CameraModel } from './camera.table';
 import { CAMERA_STREAM_SCHEMA, CameraStreamModel } from './camera-stream.table';
 import { EVENT_SCHEMA, EventModel } from './event.table';
-import { NOTIFICATION_SCHEMA, NotificationModel } from './notification.table';
+import {
+  NOTIFICATION_FEED_INDEX_SQL,
+  NOTIFICATION_SCHEMA,
+  NotificationModel,
+} from './notification.table';
 import { PERSON_SCHEMA, PersonModel } from './person.table';
 import { PROJECT_MEMBER_SCHEMA, ProjectMemberModel } from './project-member.table';
 import { PROJECT_SCHEMA, ProjectModel } from './project.table';
@@ -61,6 +65,7 @@ export {
   CALENDAR_EVENT_SCHEMA,
   CALENDAR_EVENT_SHARE_SCHEMA,
   EVENT_SCHEMA,
+  NOTIFICATION_FEED_INDEX_SQL,
   PERSON_SCHEMA,
   PROJECT_MEMBER_SCHEMA,
   PROJECT_SCHEMA,

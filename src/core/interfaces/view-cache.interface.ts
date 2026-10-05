@@ -103,7 +103,6 @@ export interface IDashboardCacheData {
   cameraTiles: readonly ICameraCacheRow[];
   projects: readonly DashboardProjectCard[];
   today: readonly CalendarEntry[];
-  notifications: readonly INotificationPreviewCacheRow[];
   unreadNotifications: number;
   summary: DashboardSummary;
   activityLevels: readonly (readonly number[])[];

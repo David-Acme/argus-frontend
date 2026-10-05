@@ -1,4 +1,3 @@
-import { LegendList } from '@legendapp/list/react-native';
 import { useCallback, useMemo, type ReactElement, type ReactNode } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { CalendarEntry } from '@/core/types';
@@ -6,9 +5,11 @@ import { calendarEntryState } from '@/core/services/view-cache';
 import { AgendaEntryRow } from '@/features/agenda/components/agenda-entry-row';
 import { agendaRows, type AgendaRow } from '@/features/agenda/model/agenda-rows';
 import { Icon } from '@/shared/components/ui/icon';
+import { InfiniteList } from '@/shared/components/ui/infinite-list';
 import { Text } from '@/shared/components/ui/text';
 import { AGENDA_ENTRY_ESTIMATE, IS_WEB, SCROLLBAR_GUTTER } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
+import type { InfiniteListState } from '@/shared/hooks/use-infinite-list';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
@@ -19,8 +20,7 @@ type CalendarAgendaViewProps = {
   to: number;
   now: number;
   compact: boolean;
-  continueLabel: string;
-  onContinue: () => void;
+  paging: InfiniteListState;
   onSelect?: (entry: CalendarEntry) => void;
   onLongPress?: (entry: CalendarEntry) => void;
   onCreateDay?: (day: Date) => void;
@@ -33,6 +33,10 @@ type DateBadgeProps = {
   isToday: boolean;
   compact: boolean;
 };
+
+const rowKey = (row: AgendaRow) => row.key;
+
+const rowType = (row: AgendaRow) => row.kind;
 
 const rowHover = Platform.select({ web: 'hover:bg-surface-secondary/70', default: '' });
 
@@ -69,8 +73,7 @@ export function CalendarAgendaView({
   to,
   now,
   compact,
-  continueLabel,
-  onContinue,
+  paging,
   onSelect,
   onLongPress,
   onCreateDay,
@@ -94,7 +97,7 @@ export function CalendarAgendaView({
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: AgendaRow }) => {
+    (item: AgendaRow) => {
       if (item.kind === 'month') {
         return (
           <View className="flex-row items-center gap-3 pt-5 pb-3">
@@ -199,29 +202,18 @@ export function CalendarAgendaView({
   );
 
   return (
-    <LegendList
+    <InfiniteList
       data={rows}
+      keyOf={rowKey}
       renderItem={renderItem}
-      extraData={now}
-      keyExtractor={(item) => item.key}
       estimatedItemSize={AGENDA_ENTRY_ESTIMATE}
-      getItemType={(item) => item.kind}
-      contentContainerStyle={{ paddingTop: 4, paddingBottom: bottomInset, paddingRight: IS_WEB ? SCROLLBAR_GUTTER : 0 }}
-      ListFooterComponent={
-        <View className={cn('flex-row pt-2', compact ? 'pl-[60px]' : 'pl-[72px]')}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onContinue}
-            className={cn('flex-row items-center gap-1.5 rounded-full px-3 py-2 active:opacity-70', rowHover)}>
-            <Text variant="caption" className="text-foreground-secondary font-semibold">
-              {continueLabel}
-            </Text>
-            <Icon name="chevron-right" className="text-foreground-secondary size-4" />
-          </Pressable>
-        </View>
-      }
-      recycleItems
-      showsVerticalScrollIndicator={false}
+      getItemType={rowType}
+      paging={paging}
+      endLabel={t('screens.agenda.list-end')}
+      paddingTop={4}
+      paddingBottom={bottomInset}
+      paddingRight={IS_WEB ? SCROLLBAR_GUTTER : 0}
+      recycle
     />
   );
 }

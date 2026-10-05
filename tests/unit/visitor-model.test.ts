@@ -1,6 +1,15 @@
 import { describe, expect, test } from 'bun:test';
-import type { VisitorList, VisitorSummary } from '@/core/types';
-import { filterVisitors, mergedInto, patchVisitor, withoutVisitors } from '@/features/visitors/model/visitor';
+import type { VisitorSummary } from '@/core/types';
+import {
+  compareVisitors,
+  filterVisitors,
+  mergedInto,
+  patchVisitor,
+  VISITOR_ALL_SCOPE,
+  visitorFeedScope,
+  visitorQueryOf,
+  withoutVisitors,
+} from '@/features/visitors/model/visitor';
 
 const visitor = (id: number, patch: Partial<VisitorSummary> = {}): VisitorSummary => ({
   id,
@@ -17,8 +26,6 @@ const visitor = (id: number, patch: Partial<VisitorSummary> = {}): VisitorSummar
   ...patch,
 });
 
-const list = (visitors: VisitorSummary[]): VisitorList => ({ recognitionEnabled: true, visitors });
-
 describe('visitor gallery model', () => {
   test('filters by kind and searches name, note and number', () => {
     const all = [
@@ -34,16 +41,38 @@ describe('visitor gallery model', () => {
   });
 
   test('merging folds visits, samples, dates and cameras into the kept person', () => {
-    const merged = mergedInto(list([visitor(1), visitor(2, { visitCount: 3 })]), visitor(1), [2]);
-    expect(merged?.visitors).toHaveLength(1);
-    expect(merged?.visitors[0]).toMatchObject({ id: 1, visitCount: 4, sampleCount: 2, firstSeenAt: 100, lastSeenAt: 400 });
-    expect(merged?.visitors[0]?.cameraIds).toEqual([1, 2]);
+    const merged = mergedInto([visitor(1), visitor(2, { visitCount: 3 })], visitor(1), [2]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({
+      id: 1,
+      visitCount: 4,
+      sampleCount: 2,
+      firstSeenAt: 100,
+      lastSeenAt: 400,
+    });
+    expect(merged[0]?.cameraIds).toEqual([1, 2]);
   });
 
   test('patches and removals leave the other people untouched', () => {
-    const start = list([visitor(1), visitor(2)]);
-    expect(patchVisitor(start, 2, { name: 'Ana' })?.visitors.map((item) => item.name)).toEqual(['', 'Ana']);
-    expect(withoutVisitors(start, [1])?.visitors.map((item) => item.id)).toEqual([2]);
-    expect(patchVisitor(null, 1, { name: 'x' })).toBeNull();
+    const start = [visitor(1), visitor(2)];
+    expect(patchVisitor(start, 2, { name: 'Ana' }).map((item) => item.name)).toEqual(['', 'Ana']);
+    expect(withoutVisitors(start, [1]).map((item) => item.id)).toEqual([2]);
+  });
+
+  test('a feed scope names the filter and the normalised search, and reads back', () => {
+    expect(visitorFeedScope({ filter: 'all', search: '' })).toBe(VISITOR_ALL_SCOPE);
+    expect(visitorFeedScope({ filter: 'named', search: '  Ana María ' })).toBe('named|ana maría');
+    expect(visitorQueryOf('named|ana maría')).toEqual({ filter: 'named', search: 'ana maría' });
+    expect(visitorQueryOf('watchlist|a|b')).toEqual({ filter: 'watchlist', search: 'a|b' });
+    expect(visitorQueryOf('bogus|x')).toEqual({ filter: 'all', search: 'x' });
+  });
+
+  test('the gallery order is the server order: last seen first, then the newer id', () => {
+    const rows = [
+      visitor(1, { lastSeenAt: 50 }),
+      visitor(3, { lastSeenAt: 90 }),
+      visitor(2, { lastSeenAt: 90 }),
+    ];
+    expect([...rows].sort(compareVisitors).map((item) => item.id)).toEqual([3, 2, 1]);
   });
 });

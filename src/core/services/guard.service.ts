@@ -15,10 +15,12 @@ import type {
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
   GuardMode,
+  RemotePage,
   EnvironmentResponseConfig,
   EnvironmentResponseUpdate,
 } from '@/core/types';
-import { GUARD_LIST_LIMIT } from '@/shared/constants';
+import { GUARD_EPISODES_ALL_SCOPE, GUARD_LIST_LIMIT, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { RemoteFeed } from './paging';
 
 function checked<T>(result: IServiceResponse<unknown>, parse: (info: unknown) => T | null): IServiceResponse<T> {
   if (!result.ok) return { status: result.status, ok: false, info: null, errors: result.errors };
@@ -116,9 +118,17 @@ class GuardService {
     return httpService.put<GuardCameraContext>(`/guard/cameras/${cameraId}`, body);
   }
 
-  episodes(environmentId?: number): Promise<IServiceResponse<GuardEpisodePage>> {
-    const scope = environmentId === undefined ? '' : `&environmentId=${environmentId}`;
-    return httpService.get<GuardEpisodePage>(`/guard/episodes?limit=${GUARD_LIST_LIMIT}${scope}`);
+  async episodePage(
+    scope: string,
+    before: number | null,
+  ): Promise<IServiceResponse<RemotePage<GuardEpisode, number>>> {
+    const environment = scope === GUARD_EPISODES_ALL_SCOPE ? '' : `&environmentId=${scope}`;
+    const cursor = before === null ? '' : `&before=${before + 1}`;
+    const result = await httpService.get<GuardEpisodePage>(
+      `/guard/episodes?limit=${GUARD_LIST_LIMIT}${environment}${cursor}`,
+    );
+    if (!result.ok || !result.info) return { ...result, info: null };
+    return { ...result, info: { rows: result.info.rows, next: result.info.nextBefore } };
   }
 
   episode(id: number): Promise<IServiceResponse<GuardEpisodeDetail>> {
@@ -135,3 +145,15 @@ class GuardService {
 }
 
 export const guardService = new GuardService();
+
+export const guardEpisodeKey = (episode: Pick<GuardEpisode, 'kind' | 'id'>): string =>
+  `${episode.kind}-${episode.id}`;
+
+export const guardEpisodeFeed = new RemoteFeed<GuardEpisode, number>({
+  key: VIEW_CACHE_KEYS.guardEpisodes,
+  keyOf: guardEpisodeKey,
+  compare: (left, right) =>
+    right.lastSeen - left.lastSeen || guardEpisodeKey(left).localeCompare(guardEpisodeKey(right)),
+  fetch: (scope, before) => guardService.episodePage(scope, before),
+  pinned: [GUARD_EPISODES_ALL_SCOPE],
+});

@@ -42,7 +42,7 @@ function timestampParam(value: string | undefined): number | null {
 
 export default function ScheduleScreen() {
   const router = useRouter();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
   const { new: newParam, edit: editParam, at: atParam } = useLocalSearchParams<AgendaParams>();
@@ -73,11 +73,12 @@ export default function ScheduleScreen() {
   const usesContextMenu = IS_NATIVE && !usesActionSheet;
   const bottomNavInset = useBottomNavInset();
   const now = useNow(60000);
-  const { range, entries, monthEntries, selectedDayEntries } = useAgendaEntries({
-    view,
-    anchor,
-    selectedDay,
-  });
+  const { range, listRange, entries, monthEntries, selectedDayEntries, agendaPaging } =
+    useAgendaEntries({
+      view,
+      anchor,
+      selectedDay,
+    });
   const showsToday = now >= range.from && now <= range.to;
   const sidePanel = isWide && (view === 'agenda' || view === 'day');
 
@@ -133,9 +134,6 @@ export default function ScheduleScreen() {
       : view === 'month'
         ? date.formatYear(anchor)
         : date.formatDayRange(new Date(range.from), new Date(range.to));
-
-  const nextMonth = date.formatMonth(date.addMonths(anchor, 1));
-  const nextMonthName = language === 'es' ? nextMonth.toLocaleLowerCase('es') : nextMonth;
 
   const createEvent = useCallback((at: Date | null) => {
     setEditingEventId('');
@@ -301,12 +299,11 @@ export default function ScheduleScreen() {
               <View className="min-h-0 min-w-0 flex-1">
                 <CalendarAgendaView
                   entries={entries}
-                  from={range.from}
-                  to={range.to}
+                  from={listRange.from}
+                  to={listRange.to}
+                  paging={agendaPaging}
                   now={now}
                   compact={isCompact}
-                  continueLabel={t('screens.agenda.continue-month', { month: nextMonthName })}
-                  onContinue={() => step(1)}
                   renderActions={renderActions}
                   onSelect={handlers.onSelect}
                   onLongPress={handlers.onLongPress}

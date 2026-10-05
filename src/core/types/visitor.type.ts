@@ -21,9 +21,15 @@ export interface VisitorSummary {
   cameraIds: number[];
 }
 
+export interface VisitorCursor {
+  lastSeenAt: number;
+  id: number;
+}
+
 export interface VisitorList {
   recognitionEnabled: boolean;
   visitors: VisitorSummary[];
+  nextCursor?: VisitorCursor | null;
 }
 
 export interface VisitorSample {

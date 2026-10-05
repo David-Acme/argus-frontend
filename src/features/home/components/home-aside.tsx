@@ -3,8 +3,10 @@ import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import type { DashboardSummary } from '@/core/types';
 import { SectionHeader } from '@/shared/components/ui/section-header';
+import type { InfiniteListState } from '@/shared/hooks/use-infinite-list';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { GuardCard, useGuardEnvironments } from '@/features/security';
 import { CameraGrid } from '@/features/home/components/camera-grid';
@@ -16,14 +18,23 @@ type HomeAsideProps = {
   cameras: readonly ICameraCacheRow[];
   summary: DashboardSummary;
   threads: readonly NotificationThread[];
+  paging: InfiniteListState;
   now: number;
   onReadThread: (thread: NotificationThread) => void;
 };
 
-export function HomeAside({ cameras, summary, threads, now, onReadThread }: HomeAsideProps) {
+export function HomeAside({
+  cameras,
+  summary,
+  threads,
+  paging,
+  now,
+  onReadThread,
+}: HomeAsideProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { role } = usePermissions();
+  const { isWide } = useWindowClass();
   const guardAccess = guardAccessForRole(role);
   const guardEnvironments = useGuardEnvironments(guardAccess.view).data;
 
@@ -79,6 +90,8 @@ export function HomeAside({ cameras, summary, threads, now, onReadThread }: Home
         title={t('screens.home.recent')}
         emptyLabel={t('screens.home.notifications-empty')}
         threads={threads}
+        paging={paging}
+        fill={isWide}
         now={now}
         onRead={onReadThread}
       />

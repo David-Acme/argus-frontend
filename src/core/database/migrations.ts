@@ -9,6 +9,7 @@ import {
   CALENDAR_EVENT_SCHEMA,
   CALENDAR_EVENT_SHARE_SCHEMA,
   EVENT_SCHEMA,
+  NOTIFICATION_FEED_INDEX_SQL,
   PERSON_SCHEMA,
   PROJECT_MEMBER_SCHEMA,
   PROJECT_SCHEMA,
@@ -70,6 +71,10 @@ export const migrations = schemaMigrations({
           'create index if not exists "project_task_due_at" on "project_task" ("due_at");'
         ),
       ],
+    },
+    {
+      toVersion: 8,
+      steps: [unsafeExecuteSql(NOTIFICATION_FEED_INDEX_SQL)],
     },
   ],
 });

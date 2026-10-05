@@ -1,8 +1,13 @@
 import { useEffect, useMemo } from 'react';
-import { calendarMonthScope } from '@/core/services/view-cache';
+import { agendaScope, calendarMonthScope } from '@/core/services/view-cache';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
-import type { CalendarEntry, CalendarView } from '@/core/types';
+import type { AgendaFeed, CalendarEntry, CalendarView } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import {
+  useInfiniteList,
+  usePagedView,
+  type InfiniteListState,
+} from '@/shared/hooks/use-infinite-list';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
@@ -17,9 +22,11 @@ type AgendaEntriesInput = {
 
 type AgendaEntries = {
   range: { from: number; to: number };
+  listRange: { from: number; to: number };
   entries: readonly CalendarEntry[];
   monthEntries: readonly CalendarEntry[];
   selectedDayEntries: readonly CalendarEntry[];
+  agendaPaging: InfiniteListState;
 };
 
 function mergeById(
@@ -44,14 +51,35 @@ export function useAgendaEntries({ view, anchor, selectedDay }: AgendaEntriesInp
     VIEW_CACHE_KEYS.calendarEntries,
     calendarMonthScope(nextMonth)
   );
+  const agenda = usePagedView<CalendarEntry, AgendaFeed>(
+    VIEW_CACHE_KEYS.calendarAgenda,
+    agendaScope(anchor),
+    view === 'agenda'
+  );
+  const agendaFeed = agenda.snapshot;
+  const agendaPaging = useInfiniteList({
+    count: agendaFeed?.to ?? 0,
+    hasMore: agenda.hasMore,
+    loadMore: agenda.loadMore,
+  });
   const cached = useMemo(
     () => (view === 'agenda' ? mergeById(current, following) : current),
     [current, following, view]
   );
-  const { rows } = useOptimisticRows(cached, CALENDAR_LENSES, byStart);
+  const { rows: monthRows } = useOptimisticRows(cached, CALENDAR_LENSES, byStart);
+  const { rows: agendaRows } = useOptimisticRows(agenda.rows, CALENDAR_LENSES, byStart);
+  const fromFeed = view === 'agenda' && agendaFeed != null;
+  const listRange = useMemo(
+    () => (fromFeed && agendaFeed ? { from: agendaFeed.from, to: agendaFeed.to } : range),
+    [agendaFeed, fromFeed, range]
+  );
+  const listRows = fromFeed ? agendaRows : monthRows;
   const entries = useMemo(
-    () => rows.filter((entry) => entry.startsAt >= range.from && entry.startsAt <= range.to),
-    [range.from, range.to, rows]
+    () =>
+      listRows.filter(
+        (entry) => entry.startsAt >= listRange.from && entry.startsAt <= listRange.to
+      ),
+    [listRange.from, listRange.to, listRows]
   );
   const selectedDayEntries = useMemo(
     () =>
@@ -65,5 +93,5 @@ export function useAgendaEntries({ view, anchor, selectedDay }: AgendaEntriesInp
     viewCacheCoordinatorService.watchCalendarMonth(anchor);
   }, [anchor]);
 
-  return { range, entries, monthEntries: rows, selectedDayEntries };
+  return { range, listRange, entries, monthEntries: monthRows, selectedDayEntries, agendaPaging };
 }

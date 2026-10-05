@@ -1,30 +1,40 @@
-import { type ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import { View } from 'react-native';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
+import { CreateTile } from '@/shared/components/ui/create-tile';
+import { InfiniteList } from '@/shared/components/ui/infinite-list';
+import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { cn } from '@/shared/libs/utils';
-import { CreateTile } from '@/shared/components/ui/create-tile';
-import { Panel } from '@/shared/components/ui/panel';
+import { useTaskLaneFill } from '@/features/projects/components/task-board';
 
 type TaskLaneProps = {
   label: string;
-  count: number;
   toneClassName: string;
   emptyLabel: string;
   addLabel: string;
+  tasks: readonly IProjectTaskCacheRow[];
+  renderTask: (task: IProjectTaskCacheRow) => ReactElement;
   onAdd?: () => void;
-  children: ReactNode;
 };
+
+const TASK_ROW_ESTIMATE = 76;
+const TASK_ROW_GAP = 8;
+const LANE_LIST_MAX_HEIGHT = 520;
+
+const taskKey = (task: IProjectTaskCacheRow) => task.id;
 
 export function TaskLane({
   label,
-  count,
   toneClassName,
   emptyLabel,
   addLabel,
+  tasks,
+  renderTask,
   onAdd,
-  children,
 }: TaskLaneProps) {
-  const empty = count === 0;
+  const fill = useTaskLaneFill();
+  const empty = tasks.length === 0;
 
   return (
     <Panel className="flex-1 gap-3">
@@ -35,11 +45,23 @@ export function TaskLane({
         </Text>
         <View className="bg-surface-secondary min-w-6 items-center rounded-full px-2 py-0.5">
           <Text variant="micro" className="text-foreground-secondary tabular-nums">
-            {String(count)}
+            {String(tasks.length)}
           </Text>
         </View>
       </View>
-      {empty ? null : <View className="gap-2">{children}</View>}
+      {empty ? null : (
+        <View className={fill ? 'min-h-0 flex-1 basis-0' : undefined}>
+          <InfiniteList
+            data={tasks}
+            keyOf={taskKey}
+            renderItem={renderTask}
+            estimatedItemSize={TASK_ROW_ESTIMATE}
+            gap={TASK_ROW_GAP}
+            maxHeight={fill ? undefined : LANE_LIST_MAX_HEIGHT}
+            scrollIndicator
+          />
+        </View>
+      )}
       {onAdd ? (
         <CreateTile label={addLabel} onPress={onAdd} layout={empty ? 'fill' : 'row'} />
       ) : empty ? (

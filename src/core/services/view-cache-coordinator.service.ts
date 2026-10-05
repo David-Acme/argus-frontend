@@ -10,17 +10,29 @@ import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
 import { zoneService } from '@/core/services/zone.service';
-import { EVENT_MOSAIC_LIMIT, EVENT_SAMPLE_LIMIT, VIEW_CACHE_PAGE_SIZE } from '@/shared/constants';
+import type { AgendaWindow, KeysetWindow } from '@/core/types';
+import {
+  AGENDA_FEED_INITIAL_WEEKS,
+  AGENDA_FEED_STEP_WEEKS,
+  EVENT_MOSAIC_LIMIT,
+  EVENT_SAMPLE_LIMIT,
+  NOTIFICATION_FEED_SCOPE,
+  VIEW_CACHE_KEYS,
+} from '@/shared/constants';
 import { mosaicSince, projectActivity } from './view-cache/activity.projection';
 import {
+  agendaScope,
+  agendaSpan,
   calendarMonthScope,
   calendarWindow,
   projectAgenda,
+  projectAgendaFeed,
   projectCalendar,
   todayRange,
 } from './view-cache/calendar.projection';
 import { projectCameras } from './view-cache/camera.projection';
-import { projectNotifications } from './view-cache/notification.projection';
+import { projectNotificationFeed } from './view-cache/notification.projection';
+import { PagedView, type IPagedView } from './view-cache/paged-view';
 import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
 import { startOfNextDay } from './view-cache/dates';
@@ -38,7 +50,6 @@ function sessionSources(userId: string) {
     projects: shared(projectService.observeList()),
     tasks: shared(projectTaskService.observeAll()),
     reminders: shared(reminderService.observeForUser(userId)),
-    notifications: shared(notificationService.observeForUser(userId, VIEW_CACHE_PAGE_SIZE)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
     events: shared(eventService.observeRecent(EVENT_SAMPLE_LIMIT)),
     users: shared(userService.observeDirectory()),
@@ -68,10 +79,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       ctx,
     ),
     startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
-    startProjection(
-      { sources: () => ({ notifications: sources.notifications, unread: sources.unread }), project: projectNotifications },
-      ctx,
-    ),
     startProjection(
       {
         sources: () => ({
@@ -110,6 +117,69 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
   ];
 }
 
+export type PagedViewKey =
+  typeof VIEW_CACHE_KEYS.notificationFeed | typeof VIEW_CACHE_KEYS.calendarAgenda;
+
+const sameKeyset = (left: KeysetWindow, right: KeysetWindow): boolean =>
+  left.through?.id === right.through?.id && left.through?.value === right.through?.value;
+
+function startPagedViews(
+  sources: SessionSources,
+  ctx: ProjectionContext,
+): Record<PagedViewKey, IPagedView> {
+  return {
+    [VIEW_CACHE_KEYS.notificationFeed]: new PagedView<KeysetWindow>(
+      {
+        key: VIEW_CACHE_KEYS.notificationFeed,
+        warm: [NOTIFICATION_FEED_SCOPE],
+        initial: () => ({ through: null }),
+        open: (scope, window, context) =>
+          startProjection(
+            {
+              sources: () => ({
+                page: notificationService.observeFeedPage(context.userId, window),
+                unread: sources.unread,
+              }),
+              project: (values) => projectNotificationFeed(values, scope),
+            },
+            context,
+          ),
+        extend: (_scope, window, context) =>
+          notificationService.nextFeedWindow(context.userId, window),
+        same: sameKeyset,
+      },
+      ctx,
+    ),
+    [VIEW_CACHE_KEYS.calendarAgenda]: new PagedView<AgendaWindow>(
+      {
+        key: VIEW_CACHE_KEYS.calendarAgenda,
+        warm: [agendaScope(ctx.now)],
+        initial: () => ({ weeks: AGENDA_FEED_INITIAL_WEEKS }),
+        open: (scope, window, context) => {
+          const range = agendaSpan(scope, window);
+          return startProjection(
+            {
+              sources: () => ({
+                events: calendarEventService.observeRange(range.from, range.to),
+                reminders: sources.reminders,
+                tasks: projectTaskService.observeDueRange(range.from, range.to),
+                eventsLater: calendarEventService.observeAnyStartingAfter(range.to),
+                tasksLater: projectTaskService.observeAnyDueAfter(range.to),
+              }),
+              project: (values) => projectAgendaFeed(values, scope, range),
+            },
+            context,
+          );
+        },
+        extend: (_scope, window) =>
+          Promise.resolve({ weeks: window.weeks + AGENDA_FEED_STEP_WEEKS }),
+        same: (left, right) => left.weeks === right.weeks,
+      },
+      ctx,
+    ),
+  };
+}
+
 class ViewCacheCoordinatorService {
   private userId: string | null = null;
   private sources: SessionSources | null = null;
@@ -118,17 +188,51 @@ class ViewCacheCoordinatorService {
   private calendarScope: string | null = null;
   private calendarAnchor: Date | null = null;
   private nextDayTimer: ReturnType<typeof setTimeout> | null = null;
+  private paged: Record<PagedViewKey, IPagedView> | null = null;
+  private readonly pageHolders = new Map<
+    string,
+    { key: PagedViewKey; scope: string; count: number }
+  >();
 
   start(userId: number | string): void {
     const nextUserId = String(userId);
     if (this.userId === nextUserId) return;
     this.stop();
     this.userId = nextUserId;
-    this.sources = sessionSources(nextUserId);
+    const sources = sessionSources(nextUserId);
+    this.sources = sources;
+    const paged = startPagedViews(sources, { userId: nextUserId, now: new Date() });
+    this.paged = paged;
+    for (const holder of this.pageHolders.values()) {
+      for (let index = 0; index < holder.count; index += 1) paged[holder.key].watch(holder.scope);
+    }
     this.refresh();
   }
 
+  watchPages(key: PagedViewKey, scope: string): void {
+    const id = `${key}|${scope}`;
+    const holder = this.pageHolders.get(id) ?? { key, scope, count: 0 };
+    holder.count += 1;
+    this.pageHolders.set(id, holder);
+    this.paged?.[key].watch(scope);
+  }
+
+  releasePages(key: PagedViewKey, scope: string): void {
+    const id = `${key}|${scope}`;
+    const holder = this.pageHolders.get(id);
+    if (!holder) return;
+    holder.count -= 1;
+    if (holder.count <= 0) this.pageHolders.delete(id);
+    this.paged?.[key].release(scope);
+  }
+
+  extendPages(key: PagedViewKey, scope: string): Promise<boolean> {
+    return this.paged ? this.paged[key].extend(scope) : Promise.resolve(false);
+  }
+
   stop(): void {
+    if (this.paged) Object.values(this.paged).forEach((view) => view.stop());
+    this.paged = null;
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.subscriptions = [];
     this.calendarSubscription?.unsubscribe();

@@ -19,9 +19,8 @@ import {
   EntryActionsMenu,
   entryPermissions,
 } from '@/features/agenda';
-import { NOTIFICATION_LENSES } from '@/features/home/model/notification-optimistic';
+import { useNotificationFeed } from '@/features/home/hooks/use-notification-feed';
 import {
-  groupNotifications,
   unreadIdsOf,
   unreadThreadCount,
   type NotificationThread,
@@ -57,7 +56,6 @@ export default function HomeScreen() {
     cameraTiles,
     projects,
     today,
-    notifications: syncedNotifications,
     unreadNotifications: syncedUnread,
     summary,
     activityLevels,
@@ -65,8 +63,11 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const now = useNow(60000);
   const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
-  const { rows: notifications } = useOptimisticRows(syncedNotifications, NOTIFICATION_LENSES);
-  const threads = useMemo(() => groupNotifications(notifications), [notifications]);
+  const {
+    synced: syncedNotifications,
+    threads,
+    paging: notificationPaging,
+  } = useNotificationFeed();
   const unreadNotifications = unreadThreadCount(threads, syncedUnread, syncedNotifications);
   const firstName = firstNameOf(user);
 
@@ -140,6 +141,7 @@ export default function HomeScreen() {
           cameras={cameraTiles}
           summary={summary}
           threads={threads}
+          paging={notificationPaging}
           now={now}
           onReadThread={readThread}
         />

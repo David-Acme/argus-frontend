@@ -421,6 +421,15 @@ projections subscribe to those observables; screens read MMKV snapshots.
   `sql` steps: a desktop database created before v7 keeps an unindexed
   in-memory `due_at` (queries unchanged, only a scan), and a fresh one gets
   the binary index from the schema.
+- **`notification (user_id, created_at)` is indexed (schema v8, 2026-10-05).**
+  The notification feed pages one user's rows newest first, so the index is
+  composite. A `tableSchema` column can only carry a single-column
+  `isIndexed`, so `NOTIFICATION_SCHEMA` appends the statement through
+  `unsafeSql` (fresh installs) and v8 runs the same
+  `NOTIFICATION_FEED_INDEX_SQL` (upgrades). Both end with the same
+  `notification_user_created` index, and
+  `tests/unit/database-migrations.test.ts` checks that the keyset page plans
+  through it.
 - `jsi: true` is safe — it falls back to the async bridge with a warning.
 
 ### Verification
@@ -2463,9 +2472,11 @@ is `features/visitors`:
   ONBOARD-CONSENT's `VisitorAcknowledgementDialog` and calls
   `useVisitorRecognitionSwitch().enable()` only from its confirmation, the same
   record the Privacidad panel writes.
-- **Data**: the list, the settings and each detail are server-only answers
-  read with `useRemoteResource` (view cache `visitor.list`,
-  `visitor.settings`, `visitor.detail.<id>`), so the last answer paints first.
+- **Data**: the gallery is a server-paged feed (`visitorFeed`, view cache
+  `visitor.feed.<filter>|<search>`, see "Lists that end only when the data
+  does"); the settings and each detail are server-only answers read with
+  `useRemoteResource` (`visitor.settings`, `visitor.detail.<id>`), so the last
+  answer paints first.
   Visitors are not in WatermelonDB on purpose: they are never synced.
   Renaming, typing, merging, deleting a person or a sample and changing the
   retention update that cache optimistically and roll back on a refusal;
@@ -2490,3 +2501,124 @@ is `features/visitors`:
 - **Seguridad**: an Owner's expanded episode can be kept as an incident for
   120 days (`POST /guard/episodes/{id}/retain`), the rest expire after 30; the
   `watchlist` reason reads "en tu lista de vigilancia".
+
+## Lists that end only when the data does (2026-10-05, INFINITE)
+
+David asked for long lists that never show their end until there really is
+nothing more, that paint local data at once and load more as you scroll, and
+for one reusable piece instead of a copy per screen. The layering stays the
+one in rule 12: services own every query, cursor and fetch; hooks hold the
+window, the end detection and the loading/error state; components render.
+
+### The pieces
+
+- **Keyset paging in the service base.** `DatabaseService.observeKeysetPage`
+  and `nextKeysetWindow` (`core/services/database.service.ts`, clauses in
+  `core/services/paging/keyset.ts`) page a local query over a stable order:
+  the sort column, then `id` as the tie-break. A window is either the first
+  page (`take(pageSize + 1)`, so `hasMore` is known without a count) or
+  "everything up to the cursor" (`keysetThrough`) plus a one-row probe beyond
+  it (`keysetAfter`). The window is held by a cursor value, never a row count.
+  A row synced in above the cursor joins the window, and nothing the user is
+  looking at drops off the bottom. There is no offset/skip anywhere.
+  `tests/unit/infinite-paging.test.ts` runs the real clauses through
+  WatermelonDB's matcher. It covers both orders, every pivot, ties broken by
+  id, page-by-page traversal across equal timestamps, and inserts while a
+  window is open.
+- **Paged views in the coordinator.** A windowed list is still a view-cache
+  projection, so MMKV keeps painting the first frame. `PagedView`
+  (`core/services/view-cache/paged-view.ts`) holds one window per scope. It
+  opens the projection, reopens it on `extend`, counts watchers, and on the
+  last release shrinks a warm scope back to its first page (so MMKV holds one
+  page, not everything ever scrolled) or closes a cold one. The coordinator
+  exposes `watchPages` / `extendPages` / `releasePages`. Watch requests made
+  before a session starts are replayed when it does. Two views use it today:
+  `notification.feed` (keyset) and `calendar.agenda` (a span of weeks).
+- **Remote feeds.** `RemoteFeed` (`core/services/paging/remote-feed.ts`) is
+  the same idea for server-only lists. It stores `{rows, next}` in the view
+  cache per scope. `refresh` re-reads the head and keeps the pages already
+  scrolled (and their cursor) unless the head says there is nothing more,
+  which drops a stale tail. `loadMore` is single-flight, appends, dedupes by
+  key and re-sorts. A page that brings nothing new ends the feed instead of
+  looping. `focus(scope)` keeps only the current scope and the pinned ones in
+  MMKV, so a search does not leave one cache entry per keystroke.
+  `mutateAll` applies an optimistic edit to every cached scope and returns
+  its undo. Pure merges (`mergeHead`, `mergeTail`) are unit-tested.
+- **One hook file** (`shared/hooks/use-infinite-list.ts`):
+  `useInfiniteList({count, hasMore, loadMore, endAfter})` is the state
+  machine: in flight, failed and retry, and it settles only once the rows
+  actually arrive, so one scroll never fires two pages. `usePagedView` and
+  `useRemoteFeed` adapt the two sources. The footer decision is the pure
+  `infiniteFooter` (`shared/libs/infinite-list.ts`): `loading` while more may
+  exist, `error` with a retry after a failed page, and `end` only when the
+  source is exhausted and the list is long enough for an end marker to mean
+  something (`endAfter`).
+- **`InfiniteList`** (`shared/components/ui/infinite-list.tsx`, replacing
+  `VirtualList`) wraps LegendList. It renders only what is visible. The footer
+  shows skeleton rows while more may exist, an error with "Reintentar", or the
+  end line ("No hay más", or the screen's own `endLabel`). It fills its parent
+  by default, or takes its natural height up to `maxHeight` for a list inside
+  a panel on a phone. It accepts columns, a header and a custom skeleton.
+  Rows are not recycled unless the caller says they are stateless (`recycle`),
+  because a recycled episode or notification card would carry another row's
+  expanded state.
+
+### Traps found on the desktop
+
+- `flex: 1` is `flex-basis: 0%`, and in a column whose height is not definite
+  the browser falls back to the content size: the list grew to its content
+  and the page scrolled instead of the panel. Every fill chain uses a definite
+  zero basis (`basis-0`, `flexBasis: 0`), the same fix the zones panel had.
+- LegendList fires `onEndReached` once and then gates it until the user
+  scrolls out of the zone, and on web it never calls `onContentSizeChange`.
+  A list whose new page still does not fill the viewport would have waited
+  forever. `InfiniteList` listens to the list's own `isNearEnd` state and
+  re-checks it whenever a load settles.
+- A capped list sized from the first content estimate clipped real rows that
+  were taller. Capped lists use `maxHeight` and keep their natural height.
+- LegendList pads every column of a grid by half the gap and never
+  compensates, so a multi-column list is wrapped in a view that bleeds the
+  gap back. A page-level grid moves its web scrollbar gutter into the page
+  margin.
+
+### What each list does now
+
+- **Novedades** (home): the notification feed, 40 at a time, grouped into
+  threads over the loaded window. It fills the aside on wide screens and is
+  capped on a phone. The same projection writes the dashboard's top 40 and
+  the unread count, so the separate notifications query is gone.
+- **Lo que ha pasado** (Vigilancia and each environment): the guard episode
+  feed, 30 per page with the server's `nextBefore`. The server cursor is a
+  strict `last_seen < before` in seconds, so the client asks for
+  `before + 1`: it overlaps by one second and dedupes, and an episode sharing
+  the boundary second is never skipped. The panel fills the column (the
+  expanded layout now fills the screen) and is capped on a phone. The old
+  "Ver N más" button and its badge are gone. The badge counted episodes to
+  review while the button counted hidden ones, so they disagreed. The count
+  to review stays in the hero.
+- **Zones** (camera detail): all of the camera's zones are already in the
+  camera snapshot, so this is virtualization only, no paging. The list fills
+  the column on wide layouts and is capped at 440 on a phone.
+- **Tasks**: each lane is a virtualized list that fills the board on side-by-
+  side layouts (the board fills the screen) and is capped on a phone, with
+  "Añadir tarea" pinned below it. The "Terminadas" lane grows forever, which
+  is why this was worth doing. A scrolling lane clips a row dragged out of
+  it, so dragging now lifts a ghost into a board-level layer (`TaskGhostLayer`)
+  while the original row is hidden. The ghost's origin comes from the gesture
+  itself (`absoluteX - x`), and its width from the row's layout.
+- **Projects** (aside): the in-memory project list, capped at 420 so many
+  projects scroll above "Próximas fechas" instead of stretching the column.
+- **Personas vistas** (gallery): a server-paged grid (60 per page) with the
+  filter and the search on the server (identity's keyset `GET /visitor`).
+  While a new search or filter is on its way, the cached first page is
+  filtered locally so the grid never goes blank, and typing is debounced
+  (250 ms). The preview row in People reads the same feed's first page.
+- **Agenda list**: the agenda feed starts at the anchor day for five weeks
+  and grows by four as you scroll. It ends ("No hay nada más previsto") when
+  no event, reminder or due task exists after the window, so an empty future
+  is not an endless list of "Sin planes". The month grid keeps its date
+  window and its neighbour months.
+- Not paged on purpose: environments, household users, settings, presets and
+  the dashboard's counts and top-N. They are small and bounded. The people
+  directory moved to `InfiniteList` only because `VirtualList` is gone.
+

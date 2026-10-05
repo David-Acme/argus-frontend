@@ -25,7 +25,7 @@ import { EnvironmentSettingsPanel } from '@/features/security/components/environ
 import { EpisodeList } from '@/features/security/components/episode-list';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { ResponseRecipientsPanel } from '@/features/security/components/response-recipients-panel';
-import { ENVIRONMENT_KIND_ICONS } from '@/features/security/constants';
+import { ENVIRONMENT_KIND_ICONS, EPISODE_LIST_MAX_HEIGHT } from '@/features/security/constants';
 import { useEnvironmentResponse } from '@/features/security/hooks/use-environment-response';
 import { useGuard, useGuardEnvironments } from '@/features/security/hooks/use-guard';
 import { camerasIn, postureKey } from '@/features/security/model/environments';
@@ -136,12 +136,16 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
     />
   );
 
-  const episodeSection = (className?: string) => (
-    <Panel title={t('screens.security.environments.episodes-title')} className={className}>
+  const episodeSection = (fill: boolean) => (
+    <Panel
+      title={t('screens.security.environments.episodes-title')}
+      className={fill ? 'min-h-[420px] flex-1 basis-0' : undefined}>
       <EpisodeList
         episodes={guard.episodes}
         cameras={allCameras}
         contexts={guard.cameras}
+        paging={guard.episodePaging}
+        maxHeight={fill ? undefined : EPISODE_LIST_MAX_HEIGHT}
         onReview={access.review ? guard.reviewEpisode : undefined}
         onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
       />
@@ -158,7 +162,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       <View className="min-w-0 flex-1 gap-5">
         {contactsSection()}
         {cameraSection()}
-        {episodeSection('flex-1')}
+        {episodeSection(true)}
       </View>
     </View>
   ) : isMedium ? (
@@ -172,7 +176,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
         {settingsSection('min-w-0 flex-1')}
         {cameraSection('min-w-0 flex-1')}
       </View>
-      {episodeSection('flex-1')}
+      {episodeSection(true)}
     </View>
   ) : (
     <View className="flex-1 gap-5">
@@ -180,7 +184,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       {recipientsSection()}
       {contactsSection()}
       {cameraSection()}
-      {episodeSection()}
+      {episodeSection(false)}
       {settingsSection('flex-1')}
     </View>
   );

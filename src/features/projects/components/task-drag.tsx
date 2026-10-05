@@ -1,10 +1,10 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
   withSpring,
   withTiming,
   type SharedValue,
@@ -13,12 +13,28 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { IS_NATIVE } from '@/shared/constants';
 import { laneAtPosition } from '@/features/projects/model/task-lanes';
 
+export type TaskGhostRect = {
+  x: number;
+  y: number;
+  width: number;
+};
+
+export type TaskGhost = TaskGhostRect & {
+  taskId: string;
+  node: ReactNode;
+};
+
 export type TaskDragState = {
   lanes: number;
   origin: SharedValue<number>;
   span: SharedValue<number>;
   hoverLane: SharedValue<number>;
   sourceLane: SharedValue<number>;
+  ghostX: SharedValue<number>;
+  ghostY: SharedValue<number>;
+  ghostTaskId: string | null;
+  lift: (ghost: TaskGhost) => void;
+  settle: (taskId: string) => void;
   drop: (taskId: string, lane: number) => void;
   markDrag: () => void;
   pressAllowed: () => boolean;
@@ -38,11 +54,19 @@ type DraggableTaskProps = {
   children: ReactNode;
 };
 
+type TaskGhostLayerProps = {
+  ghost: TaskGhost | null;
+  offsetX: SharedValue<number>;
+  offsetY: SharedValue<number>;
+};
+
 const LONG_PRESS_MS = 280;
 const POINTER_SLOP = 6;
 const SETTLE_SPRING = { damping: 22, stiffness: 260, mass: 0.8 };
 
 const TaskDragContext = createContext<TaskDragState | null>(null);
+
+const HIDDEN = { opacity: 0 } as const;
 
 export function createPressGuard(windowMs: number): PressGuard {
   let lastDragAt = 0;
@@ -90,14 +114,41 @@ export function TaskDropZone({ index, children }: TaskDropZoneProps) {
   );
 }
 
+export function TaskGhostLayer({ ghost, offsetX, offsetY }: TaskGhostLayerProps) {
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: offsetX.value }, { translateY: offsetY.value }, { scale: 1.03 }],
+  }));
+
+  if (!ghost) return null;
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', left: ghost.x, top: ghost.y, width: ghost.width, zIndex: 50 },
+        style,
+      ]}>
+      {ghost.node}
+    </Animated.View>
+  );
+}
+
 export function DraggableTask({ taskId, lane, disabled = false, children }: DraggableTaskProps) {
   const drag = useContext(TaskDragContext);
   const reduceMotion = useReducedMotion();
-  const offsetX = useSharedValue(0);
-  const offsetY = useSharedValue(0);
-  const lifted = useSharedValue(0);
+  const rowWidth = useSharedValue(0);
   const dragging = useSharedValue(false);
   const enabled = drag != null && !disabled;
+  const hidden = drag?.ghostTaskId === taskId;
+
+  const liftRow = useCallback(
+    (x: number, y: number, width: number) => drag?.lift({ taskId, node: children, x, y, width }),
+    [children, drag, taskId]
+  );
+
+  const measure = (event: LayoutChangeEvent) => {
+    rowWidth.value = event.nativeEvent.layout.width;
+  };
 
   const gesture = useMemo(() => {
     const pan = Gesture.Pan().enabled(enabled);
@@ -105,17 +156,19 @@ export function DraggableTask({ taskId, lane, disabled = false, children }: Drag
       ? pan.activateAfterLongPress(LONG_PRESS_MS)
       : pan.minDistance(POINTER_SLOP);
     return activated
-      .onStart(() => {
+      .onStart((event) => {
         if (!drag) return;
         dragging.value = true;
-        lifted.value = reduceMotion ? 1 : withTiming(1, { duration: 120 });
+        drag.ghostX.value = 0;
+        drag.ghostY.value = 0;
         drag.sourceLane.value = lane;
+        scheduleOnRN(liftRow, event.absoluteX - event.x, event.absoluteY - event.y, rowWidth.value);
         scheduleOnRN(drag.markDrag);
       })
       .onUpdate((event) => {
         if (!drag) return;
-        offsetX.value = event.translationX;
-        offsetY.value = event.translationY;
+        drag.ghostX.value = event.translationX;
+        drag.ghostY.value = event.translationY;
         drag.hoverLane.value = laneAtPosition(
           event.absoluteX,
           drag.origin.value,
@@ -133,38 +186,36 @@ export function DraggableTask({ taskId, lane, disabled = false, children }: Drag
         );
         if (target >= 0 && target !== lane) {
           scheduleOnRN(drag.drop, taskId, target);
-          offsetX.value = withDelay(400, withTiming(0, { duration: 0 }));
-          offsetY.value = withDelay(400, withTiming(0, { duration: 0 }));
+          scheduleOnRN(drag.settle, taskId);
           return;
         }
-        offsetX.value = reduceMotion ? 0 : withSpring(0, SETTLE_SPRING);
-        offsetY.value = reduceMotion ? 0 : withSpring(0, SETTLE_SPRING);
+        if (reduceMotion) {
+          drag.ghostX.value = 0;
+          drag.ghostY.value = 0;
+          scheduleOnRN(drag.settle, taskId);
+          return;
+        }
+        drag.ghostX.value = withSpring(0, SETTLE_SPRING);
+        drag.ghostY.value = withSpring(0, SETTLE_SPRING, (finished) => {
+          if (finished) scheduleOnRN(drag.settle, taskId);
+        });
       })
       .onFinalize(() => {
         if (!drag || !dragging.value) return;
         dragging.value = false;
-        lifted.value = reduceMotion ? 0 : withTiming(0, { duration: 160 });
         scheduleOnRN(drag.markDrag);
         drag.hoverLane.value = -1;
         drag.sourceLane.value = -1;
       });
-  }, [drag, dragging, enabled, lane, lifted, offsetX, offsetY, reduceMotion, taskId]);
-
-  const style = useAnimatedStyle(() => ({
-    zIndex: lifted.value > 0 ? 20 : 0,
-    opacity: 1 - lifted.value * 0.08,
-    transform: [
-      { translateX: offsetX.value },
-      { translateY: offsetY.value },
-      { scale: 1 + lifted.value * 0.03 },
-    ],
-  }));
+  }, [drag, dragging, enabled, lane, liftRow, reduceMotion, rowWidth, taskId]);
 
   if (!drag) return children;
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View style={style}>{children}</Animated.View>
+      <View onLayout={measure} style={hidden ? HIDDEN : undefined}>
+        {children}
+      </View>
     </GestureDetector>
   );
 }

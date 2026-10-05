@@ -3,7 +3,13 @@ import type {
   IProjectTaskCalendarCacheSource,
   IReminderCacheSource,
 } from '@/core/interfaces';
-import type { AgendaStatus, CalendarEntry, CalendarEntryState } from '@/core/types';
+import type {
+  AgendaFeed,
+  AgendaStatus,
+  AgendaWindow,
+  CalendarEntry,
+  CalendarEntryState,
+} from '@/core/types';
 import { CALENDAR_OPEN_EVENT_MS } from '@/shared/constants/calendar.constant';
 import {
   VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
@@ -11,7 +17,7 @@ import {
   VIEW_CACHE_CALENDAR_MONTH_DAYS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants/cache.constant';
-import { endOfDay, startOfDay } from './dates';
+import { addDays, endOfDay, startOfDay } from './dates';
 import type { ProjectionContext, ViewWrite } from './projection';
 
 export type CalendarProjectionInput = {
@@ -150,4 +156,27 @@ export function projectAgenda(input: CalendarProjectionInput, { now }: Projectio
       limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
     },
   ];
+}
+
+export const agendaScope = (anchor: Date): string => String(startOfDay(anchor));
+
+export const agendaSpan = (scope: string, { weeks }: AgendaWindow): Range => {
+  const first = new Date(Number(scope));
+  return { from: startOfDay(first), to: endOfDay(addDays(first, weeks * 7 - 1)) };
+};
+
+export type AgendaFeedInput = CalendarProjectionInput & {
+  eventsLater: boolean;
+  tasksLater: boolean;
+};
+
+export function projectAgendaFeed(input: AgendaFeedInput, scope: string, range: Range): ViewWrite[] {
+  const remindersLater = input.reminders.some((reminder) => reminder.scheduledAt.getTime() > range.to);
+  const value: AgendaFeed = {
+    rows: toCalendarEntries(input.events, input.reminders, input.tasks, range.from, range.to),
+    hasMore: input.eventsLater || input.tasksLater || remindersLater,
+    from: range.from,
+    to: range.to,
+  };
+  return [{ key: VIEW_CACHE_KEYS.calendarAgenda, scope, value }];
 }

@@ -38,6 +38,11 @@ export const common = {
   share: 'Compartir',
   saving: 'Guardando…',
   loading: 'Cargando',
+  list: {
+    'loading-more': 'Cargando más',
+    end: 'No hay más',
+    error: 'No se pudo cargar más',
+  },
   validation: {
     required: 'Este campo es obligatorio',
     'too-short': 'Demasiado corto',

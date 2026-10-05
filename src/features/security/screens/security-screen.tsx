@@ -15,12 +15,14 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { guardAccessForRole } from '@/shared/libs/role-access';
+import { cn } from '@/shared/libs/utils';
 import { EnvironmentFormDialog } from '@/features/security/components/environment-form-dialog';
 import { EnvironmentsPanel } from '@/features/security/components/environments-panel';
 import { EpisodeList } from '@/features/security/components/episode-list';
 import { ExpectedGuestForm } from '@/features/security/components/expected-guest-form';
 import { ExpectedGuestList } from '@/features/security/components/expected-guest-list';
 import { SecurityHero } from '@/features/security/components/security-hero';
+import { EPISODE_LIST_MAX_HEIGHT } from '@/features/security/constants';
 import { useGuard } from '@/features/security/hooks/use-guard';
 import { needsReview } from '@/features/security/model/episode';
 
@@ -92,17 +94,18 @@ export default function SecurityScreen() {
     </Panel>
   );
 
-  const episodeSection = (className?: string) => (
+  const episodeSection = (fill: boolean, className?: string) => (
     <Panel
       title={t('screens.security.episodes.title')}
       description={t('screens.security.episodes.description')}
-      count={access.review ? pendingReviews : undefined}
-      className={className}>
+      className={cn(fill && 'min-h-[420px] flex-1 basis-0', className)}>
       <EpisodeList
         episodes={guard.episodes}
         cameras={cameras}
         contexts={guard.cameras}
         environments={guard.environments}
+        paging={guard.episodePaging}
+        maxHeight={fill ? undefined : EPISODE_LIST_MAX_HEIGHT}
         onReview={access.review ? guard.reviewEpisode : undefined}
         onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
       />
@@ -110,14 +113,14 @@ export default function SecurityScreen() {
   );
 
   const layout = isExpanded ? (
-    <View className="flex-row items-stretch gap-5">
+    <View className="flex-1 flex-row items-stretch gap-5">
       <View className="min-w-0 flex-1 gap-5">
         {heroSection}
         {environmentsSection('flex-1')}
       </View>
       <View className="min-w-0 flex-1 gap-5">
-        {episodeSection()}
-        {guestSection('flex-1')}
+        {episodeSection(true)}
+        {guestSection()}
       </View>
     </View>
   ) : isMedium ? (
@@ -125,7 +128,7 @@ export default function SecurityScreen() {
       {heroSection}
       {environmentsSection()}
       <View className="flex-1 flex-row items-stretch gap-5">
-        {episodeSection('min-w-0 flex-1')}
+        {episodeSection(true, 'min-w-0')}
         {guestSection('min-w-0 flex-1')}
       </View>
     </View>
@@ -133,7 +136,7 @@ export default function SecurityScreen() {
     <View className="flex-1 gap-5">
       {heroSection}
       {environmentsSection()}
-      {episodeSection()}
+      {episodeSection(false)}
       {guestSection('flex-1')}
     </View>
   );

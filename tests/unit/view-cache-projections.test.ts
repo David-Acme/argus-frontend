@@ -5,8 +5,11 @@ import type { ProjectionContext, ViewWrite } from '@/core/services/view-cache/pr
 import { activityLevels, projectActivity } from '@/core/services/view-cache/activity.projection';
 import {
   calendarEntryState,
+  agendaScope,
+  agendaSpan,
   calendarMonthScope,
   projectAgenda,
+  projectAgendaFeed,
   projectCalendar,
 } from '@/core/services/view-cache/calendar.projection';
 import {
@@ -15,10 +18,11 @@ import {
   projectCameras,
   type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
-import { projectNotifications } from '@/core/services/view-cache/notification.projection';
+import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
 import { activityWindows, projectSummary } from '@/core/services/view-cache/summary.projection';
+import { VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
 import { MOSAIC_COLUMNS, MOSAIC_ROWS } from '@/shared/constants/dashboard.constant';
 
 const now = new Date(2026, 9, 15, 10, 30);
@@ -30,8 +34,10 @@ const rowsOf = (writes: readonly ViewWrite[], key: string, scope?: string) => {
   return write.rows;
 };
 
-const valueOf = (writes: readonly ViewWrite[], key: string) => {
-  const write = writes.find((item) => item.key === key);
+const valueOf = (writes: readonly ViewWrite[], key: string, scope?: string) => {
+  const write = writes.find(
+    (item) => item.key === key && (scope === undefined || item.scope === scope)
+  );
   if (!write || !('value' in write)) throw new Error(`no value for ${key}`);
   return write.value;
 };
@@ -185,34 +191,128 @@ describe('people projection', () => {
   });
 });
 
-describe('notification projection', () => {
-  test('previews and the unread count', () => {
-    const writes = projectNotifications({
-      notifications: [
-        {
-          id: 'n1',
-          type: 'camera',
-          title: 'Hi',
-          body: 'There',
-          isRead: false,
-          data: { cameraId: 7 },
-          createdAt: new Date(1_790_000_000_000),
-        },
-      ],
-      unread: 3,
-    });
-    expect(rowsOf(writes, 'dashboard.notifications')).toEqual([
+describe('agenda feed projection', () => {
+  test('the scope is the first day and each window adds whole weeks', () => {
+    const scope = agendaScope(new Date(2026, 9, 15, 18, 0));
+    expect(scope).toBe(String(new Date(2026, 9, 15).getTime()));
+    const span = agendaSpan(scope, { weeks: 2 });
+    expect(span.from).toBe(new Date(2026, 9, 15).getTime());
+    expect(span.to).toBe(new Date(2026, 9, 29).getTime() - 1);
+  });
+
+  const event = (id: string, title: string, startsAt: Date) => ({
+    id,
+    title,
+    startsAt,
+    endsAt: null,
+    isAllDay: false,
+    color: '',
+    location: '',
+    description: '',
+    projectId: null,
+  });
+
+  test('writes the entries inside the span under its scope', () => {
+    const scope = agendaScope(now);
+    const range = agendaSpan(scope, { weeks: 1 });
+    const writes = projectAgendaFeed(
       {
-        id: 'n1',
-        type: 'camera',
-        title: 'Hi',
-        body: 'There',
-        isRead: false,
-        data: { cameraId: 7 },
-        createdAt: 1_790_000_000_000,
+        events: [
+          event('1', 'Inside', new Date(2026, 9, 16, 9)),
+          event('2', 'Outside', new Date(2026, 9, 23, 9)),
+        ],
+        reminders: [],
+        tasks: [],
+        eventsLater: true,
+        tasksLater: false,
       },
-    ]);
+      scope,
+      range
+    );
+    const feed = valueOf(writes, 'calendar.agenda', scope) as {
+      rows: CalendarEntry[];
+      hasMore: boolean;
+      to: number;
+    };
+    expect(feed.rows.map((entry) => entry.title)).toEqual(['Inside']);
+    expect(feed.hasMore).toBe(true);
+    expect(feed.to).toBe(range.to);
+  });
+
+  test('ends only when nothing is scheduled after the span', () => {
+    const scope = agendaScope(now);
+    const range = agendaSpan(scope, { weeks: 1 });
+    const hasMore = (input: { eventsLater: boolean; tasksLater: boolean; reminderAt?: Date }) =>
+      (
+        valueOf(
+          projectAgendaFeed(
+            {
+              events: [],
+              reminders: input.reminderAt
+                ? [{ id: 'r', title: 'Later', scheduledAt: input.reminderAt, isCompleted: false }]
+                : [],
+              tasks: [],
+              eventsLater: input.eventsLater,
+              tasksLater: input.tasksLater,
+            },
+            scope,
+            range
+          ),
+          'calendar.agenda',
+          scope
+        ) as { hasMore: boolean }
+      ).hasMore;
+    expect(hasMore({ eventsLater: false, tasksLater: false })).toBe(false);
+    expect(hasMore({ eventsLater: false, tasksLater: true })).toBe(true);
+    expect(
+      hasMore({ eventsLater: false, tasksLater: false, reminderAt: new Date(2027, 0, 1) })
+    ).toBe(true);
+    expect(
+      hasMore({ eventsLater: false, tasksLater: false, reminderAt: new Date(2026, 9, 16) })
+    ).toBe(false);
+  });
+});
+
+describe('notification projection', () => {
+  const source = {
+    id: 'n1',
+    type: 'camera',
+    title: 'Hi',
+    body: 'There',
+    isRead: false,
+    data: { cameraId: 7 },
+    createdAt: new Date(1_790_000_000_000),
+  };
+  const row = {
+    id: 'n1',
+    type: 'camera',
+    title: 'Hi',
+    body: 'There',
+    isRead: false,
+    data: { cameraId: 7 },
+    createdAt: 1_790_000_000_000,
+  };
+
+  test('the feed window, the dashboard previews and the unread count', () => {
+    const writes = projectNotificationFeed(
+      { page: { rows: [source], hasMore: true }, unread: 3 },
+      'all'
+    );
+    expect(valueOf(writes, 'notification.feed', 'all')).toEqual({ rows: [row], hasMore: true });
+    expect(rowsOf(writes, 'dashboard.notifications')).toEqual([row]);
     expect(valueOf(writes, 'dashboard.unread')).toBe(3);
+  });
+
+  test('the dashboard keeps one page however far the feed was scrolled', () => {
+    const rows = Array.from({ length: VIEW_CACHE_PAGE_SIZE + 25 }, (_, index) => ({
+      ...source,
+      id: `n${index}`,
+    }));
+    const writes = projectNotificationFeed({ page: { rows, hasMore: false }, unread: 0 }, 'all');
+    expect(rowsOf(writes, 'dashboard.notifications')).toHaveLength(VIEW_CACHE_PAGE_SIZE);
+    expect((valueOf(writes, 'notification.feed', 'all') as { rows: unknown[] }).rows).toHaveLength(
+      rows.length
+    );
   });
 });
 

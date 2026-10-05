@@ -1,5 +1,6 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import type { ProjectTaskModel } from '@/core/database';
 import type {
   IProjectTaskCreate,
@@ -36,6 +37,12 @@ class ProjectTaskService extends DatabaseService<'project_task'> {
         Q.where('status', Q.oneOf(['backlog', 'todo', 'doing'])),
         Q.sortBy('due_at', Q.asc),
       ],
+    );
+  }
+
+  observeAnyDueAfter(afterMs: number): Observable<boolean> {
+    return this.observeMany([Q.where('due_at', Q.gt(afterMs)), Q.take(1)]).pipe(
+      map((rows) => rows.length > 0),
     );
   }
 

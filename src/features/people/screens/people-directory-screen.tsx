@@ -11,7 +11,7 @@ import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Text } from '@/shared/components/ui/text';
-import { VirtualList } from '@/shared/components/ui/virtual-list';
+import { InfiniteList } from '@/shared/components/ui/infinite-list';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
@@ -24,6 +24,8 @@ const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard',
 const roleKey = (role: UserRole) => `screens.users.role-${role}` as const;
 
 const PERSON_ROW_HEIGHT = 60;
+
+const personKey = (person: IPeopleDirectoryCacheRow) => person.id;
 
 export default function PeopleDirectoryScreen() {
   const { t } = useTranslation();
@@ -45,6 +47,19 @@ export default function PeopleDirectoryScreen() {
       setSelected(person);
     },
     [resetPortrait]
+  );
+
+  const renderPerson = useCallback(
+    (person: IPeopleDirectoryCacheRow) => (
+      <ListRow
+        icon="user"
+        title={[person.name, person.lastName].filter(Boolean).join(' ')}
+        subtitle={`${t(roleKey(person.role))} · ${person.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
+        chevron
+        onPress={() => openPerson(person)}
+      />
+    ),
+    [openPerson, t]
   );
 
   const closeDetails = useCallback(() => {
@@ -84,20 +99,13 @@ export default function PeopleDirectoryScreen() {
             <SectionHeader title={t('screens.users.people-directory')} count={filtered.length} />
             <Panel className="flex-1 p-1.5">
               {filtered.length > 0 ? (
-                <VirtualList
+                <InfiniteList
                   data={filtered}
-                  keyOf={(person) => person.id}
+                  keyOf={personKey}
                   estimatedItemSize={PERSON_ROW_HEIGHT}
                   paddingBottom={bottomInset}
-                  renderItem={(person) => (
-                    <ListRow
-                      icon="user"
-                      title={[person.name, person.lastName].filter(Boolean).join(' ')}
-                      subtitle={`${t(roleKey(person.role))} · ${person.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
-                      chevron
-                      onPress={() => openPerson(person)}
-                    />
-                  )}
+                  renderItem={renderPerson}
+                  recycle
                 />
               ) : (
                 <EmptyState variant="panel" icon="users" title={t('screens.users.no-people')} />

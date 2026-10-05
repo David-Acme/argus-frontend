@@ -39,6 +39,11 @@ export const common = {
   share: 'Share',
   saving: 'Saving…',
   loading: 'Loading',
+  list: {
+    'loading-more': 'Loading more',
+    end: 'Nothing more',
+    error: 'Could not load more',
+  },
   validation: {
     required: 'This field is required',
     'too-short': 'Too short',

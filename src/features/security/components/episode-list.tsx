@@ -1,35 +1,44 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import type { GuardCameraContext, GuardEnvironment, GuardEpisode, GuardFeedbackLabel } from '@/core/types';
-import { Button } from '@/shared/components/ui/button';
+import type {
+  GuardCameraContext,
+  GuardEnvironment,
+  GuardEpisode,
+  GuardFeedbackLabel,
+} from '@/core/types';
 import { EmptyState } from '@/shared/components/ui/empty-state';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
-import { EpisodeCard } from '@/features/security/components/episode-card';
-import { EPISODE_PAGE_SIZE } from '@/features/security/constants';
-import { episodeKey } from '@/features/security/model/episode';
+import { InfiniteList } from '@/shared/components/ui/infinite-list';
+import type { InfiniteListState } from '@/shared/hooks/use-infinite-list';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { EpisodeCard } from '@/features/security/components/episode-card';
+import { EPISODE_ROW_ESTIMATE } from '@/features/security/constants';
+import { episodeKey } from '@/features/security/model/episode';
 
 type EpisodeListProps = {
   episodes: readonly GuardEpisode[];
   cameras: readonly ICameraCacheRow[];
   contexts: readonly GuardCameraContext[];
   environments?: readonly GuardEnvironment[];
+  paging: InfiniteListState;
+  maxHeight?: number;
   onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
   onRetain?: (episode: GuardEpisode, retain: boolean) => void;
 };
+
+const NO_ENVIRONMENTS: readonly GuardEnvironment[] = [];
 
 export function EpisodeList({
   episodes,
   cameras,
   contexts,
-  environments = [],
+  environments = NO_ENVIRONMENTS,
+  paging,
+  maxHeight,
   onReview,
   onRetain,
 }: EpisodeListProps) {
   const { t } = useTranslation();
-  const [showAll, setShowAll] = useState(false);
   const names = useMemo(
     () => new Map(cameras.map((camera) => [camera.id, camera.name])),
     [cameras]
@@ -45,9 +54,26 @@ export function EpisodeList({
         : new Map<number, string>(),
     [environments]
   );
-  const pageSize = onReview ? EPISODE_PAGE_SIZE.review : EPISODE_PAGE_SIZE.read;
-  const hidden = Math.max(0, episodes.length - pageSize);
-  const shown = showAll ? episodes : episodes.slice(0, pageSize);
+
+  const renderEpisode = useCallback(
+    (episode: GuardEpisode) => (
+      <EpisodeCard
+        episode={episode}
+        cameraName={[
+          names.get(String(episode.cameraId)) ??
+            (episode.cameraName ||
+              t('screens.security.cameras.edit-title', { name: String(episode.cameraId) })),
+          places.get(episode.environmentId),
+        ]
+          .filter((part): part is string => Boolean(part))
+          .join(' · ')}
+        context={byCamera.get(episode.cameraId) ?? null}
+        onReview={onReview}
+        onRetain={onRetain}
+      />
+    ),
+    [byCamera, names, onRetain, onReview, places, t]
+  );
 
   if (episodes.length === 0) {
     return (
@@ -62,41 +88,17 @@ export function EpisodeList({
   }
 
   return (
-    <View className="min-h-56 gap-1">
-      <View className="-mx-3 gap-1">
-        {shown.map((episode) => (
-          <EpisodeCard
-            key={episodeKey(episode)}
-            episode={episode}
-            cameraName={[
-              names.get(String(episode.cameraId)) ??
-                (episode.cameraName ||
-                  t('screens.security.cameras.edit-title', { name: String(episode.cameraId) })),
-              places.get(episode.environmentId),
-            ]
-              .filter((part): part is string => Boolean(part))
-              .join(' · ')}
-            context={byCamera.get(episode.cameraId) ?? null}
-            onReview={onReview}
-            onRetain={onRetain}
-          />
-        ))}
-      </View>
-      {hidden > 0 ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="self-start"
-          accessibilityState={{ expanded: showAll }}
-          onPress={() => setShowAll((all) => !all)}>
-          <Text>
-            {showAll
-              ? t('screens.security.episodes.show-less')
-              : t('screens.security.episodes.show-more', { count: String(hidden) })}
-          </Text>
-          <Icon name={showAll ? 'chevron-up' : 'chevron-down'} />
-        </Button>
-      ) : null}
+    <View className={maxHeight == null ? '-mx-3 min-h-56 flex-1 basis-0' : '-mx-3'}>
+      <InfiniteList
+        data={episodes}
+        keyOf={episodeKey}
+        renderItem={renderEpisode}
+        estimatedItemSize={EPISODE_ROW_ESTIMATE}
+        gap={4}
+        paging={paging}
+        maxHeight={maxHeight}
+        scrollIndicator
+      />
     </View>
   );
 }

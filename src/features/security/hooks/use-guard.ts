@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { t } from '@/core/i18n';
 import type { ICameraCacheRow, IServiceResponse } from '@/core/interfaces';
-import { guardService } from '@/core/services/guard.service';
+import { guardEpisodeFeed, guardService } from '@/core/services/guard.service';
 import { useAuthStore } from '@/core/stores';
 import type {
   CameraEnvironmentBadge,
@@ -16,8 +16,9 @@ import type {
   GuardFeedbackLabel,
   GuardMode,
 } from '@/core/types';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { GUARD_EPISODES_ALL_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { runServiceAction } from '@/shared/libs/service-action';
@@ -35,7 +36,7 @@ type OptimisticRemote<T, R> = {
 
 export type PendingMode = { mode: GuardMode; environmentId: number | null };
 
-const ALL_SCOPE = 'all';
+const EPISODE_END_AFTER = 8;
 
 const loadEnvironments = () => guardService.environments();
 const loadGuests = () => guardService.expectedGuests();
@@ -145,14 +146,15 @@ export function useGuard(owner: boolean, environmentId?: number) {
   const placement = useCameraPlacement(owner);
   const environments = placement.environments;
   const guests = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardGuests, load: loadGuests });
-  const loadEpisodes = useCallback(async () => {
-    const result = await guardService.episodes(environmentId);
-    return { ...result, info: result.info?.rows ?? null };
-  }, [environmentId]);
-  const episodes = useRemoteResource({
-    cacheKey: VIEW_CACHE_KEYS.guardEpisodes,
-    scope: environmentId === undefined ? ALL_SCOPE : String(environmentId),
-    load: loadEpisodes,
+  const episodes = useRemoteFeed(
+    guardEpisodeFeed,
+    environmentId === undefined ? GUARD_EPISODES_ALL_SCOPE : String(environmentId)
+  );
+  const episodePaging = useInfiniteList({
+    count: episodes.rows.length,
+    hasMore: episodes.hasMore,
+    loadMore: episodes.loadMore,
+    endAfter: EPISODE_END_AFTER,
   });
   const [pendingMode, setPendingMode] = useState<PendingMode | null>(null);
   const reloadEnvironments = environments.reload;
@@ -160,7 +162,12 @@ export function useGuard(owner: boolean, environmentId?: number) {
   const reloadCameras = placement.reloadContexts;
   const mutateEnvironments = environments.mutate;
   const mutateGuests = guests.mutate;
-  const mutateEpisodes = episodes.mutate;
+  const mutateFeed = episodes.mutate;
+  const mutateEpisodes = useCallback(
+    (update: (previous: GuardEpisode[] | null) => GuardEpisode[] | null) =>
+      mutateFeed((rows) => update([...rows]) ?? []),
+    [mutateFeed]
+  );
 
   const setMode = useCallback(
     async (mode: GuardMode, target?: GuardEnvironment): Promise<boolean> => {
@@ -296,7 +303,8 @@ export function useGuard(owner: boolean, environmentId?: number) {
     environmentsReady: environments.data != null,
     guests: guests.data ?? [],
     cameras: placement.contexts,
-    episodes: episodes.data ?? [],
+    episodes: episodes.rows,
+    episodePaging,
     loadedAt: guests.loadedAt,
     failed: environments.status === 'failed',
     pendingMode,

@@ -11,7 +11,9 @@ export const GUARD_GUEST_HOURS: readonly number[] = [1, 2, 4, 8, 12, 24];
 
 export const GUARD_GUEST_DEFAULT_HOURS = 4;
 
-export const EPISODE_PAGE_SIZE = { review: 3, read: 5 } as const;
+export const EPISODE_ROW_ESTIMATE = 180;
+
+export const EPISODE_LIST_MAX_HEIGHT = 560;
 
 export const ENVIRONMENT_KINDS: readonly GuardEnvironmentKind[] = [
   'home',

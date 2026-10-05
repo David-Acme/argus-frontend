@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { projectTaskService } from '@/core/services/project-task.service';
@@ -32,6 +32,7 @@ import {
   groupTasksByLane,
   statusForLane,
   TASK_LANES,
+  type TaskLaneKey,
   upcomingTasks,
 } from '@/features/projects/model/task-lanes';
 
@@ -119,36 +120,46 @@ export default function ProjectsScreen() {
     [changeStatus, tasks]
   );
 
-  const renderTask = (task: IProjectTaskCacheRow, laneIndex: number) => {
-    const status = task.status as ProjectTaskStatus;
-    const priority = task.priority as ProjectTaskPriority;
-    const pending = isPendingTask(task);
-    return (
-      <DraggableTask
-        key={task.id}
-        taskId={task.id}
-        lane={laneIndex}
-        disabled={pending || !canUpdateTask}>
-        <TaskRow
-          title={task.title}
-          status={status}
-          priority={priority}
-          priorityLabel={labels.priority[priority]}
-          due={task.dueAt == null ? undefined : date.formatDayMonth(new Date(task.dueAt))}
-          overdue={task.dueAt != null && task.dueAt < today}
-          statusTag={
-            status === 'backlog' || status === 'canceled' ? labels.status[status] : undefined
-          }
-          statusOptions={labels.statusOptions}
-          statusMenuTitle={t('screens.projects.select-status')}
-          closeLabel={t('screens.projects.close')}
-          pending={pending}
-          onChangeStatus={(next) => changeStatus(task.id, next)}
-          onPress={() => openTask(task.id)}
-        />
-      </DraggableTask>
-    );
-  };
+  const renderTask = useCallback(
+    (task: IProjectTaskCacheRow, laneIndex: number) => {
+      const status = task.status as ProjectTaskStatus;
+      const priority = task.priority as ProjectTaskPriority;
+      const pending = isPendingTask(task);
+      return (
+        <DraggableTask taskId={task.id} lane={laneIndex} disabled={pending || !canUpdateTask}>
+          <TaskRow
+            title={task.title}
+            status={status}
+            priority={priority}
+            priorityLabel={labels.priority[priority]}
+            due={task.dueAt == null ? undefined : date.formatDayMonth(new Date(task.dueAt))}
+            overdue={task.dueAt != null && task.dueAt < today}
+            statusTag={
+              status === 'backlog' || status === 'canceled' ? labels.status[status] : undefined
+            }
+            statusOptions={labels.statusOptions}
+            statusMenuTitle={t('screens.projects.select-status')}
+            closeLabel={t('screens.projects.close')}
+            pending={pending}
+            onChangeStatus={(next) => changeStatus(task.id, next)}
+            onPress={() => openTask(task.id)}
+          />
+        </DraggableTask>
+      );
+    },
+    [canUpdateTask, changeStatus, date, isPendingTask, labels, openTask, t, today]
+  );
+
+  const laneRenderers = useMemo(
+    () =>
+      Object.fromEntries(
+        TASK_LANES.map((lane, laneIndex) => [
+          lane.key,
+          (task: IProjectTaskCacheRow) => renderTask(task, laneIndex),
+        ])
+      ) as Record<TaskLaneKey, (task: IProjectTaskCacheRow) => ReactElement>,
+    [renderTask]
+  );
 
   return (
     <>
@@ -235,17 +246,17 @@ export default function ProjectsScreen() {
               />
 
               <TaskBoard onMoveTask={canUpdateTask ? moveTask : undefined}>
-                {TASK_LANES.map((lane, laneIndex) => (
+                {TASK_LANES.map((lane) => (
                   <TaskLane
                     key={lane.key}
                     label={labels.lane[lane.key]}
-                    count={lanes[lane.key].length}
                     toneClassName={lane.toneClassName}
                     emptyLabel={t('screens.projects.lane-empty')}
                     addLabel={t('screens.projects.add-task')}
-                    onAdd={canCreateTask ? () => openNewTask(lane.createStatus) : undefined}>
-                    {lanes[lane.key].map((task) => renderTask(task, laneIndex))}
-                  </TaskLane>
+                    tasks={lanes[lane.key]}
+                    renderTask={laneRenderers[lane.key]}
+                    onAdd={canCreateTask ? () => openNewTask(lane.createStatus) : undefined}
+                  />
                 ))}
               </TaskBoard>
             </>

@@ -12,10 +12,20 @@ import { errorResponse } from '@/core/services/http/http-envelope';
 import type {
   VisitorCategory,
   VisitorCropImage,
+  VisitorCursor,
   VisitorDetail,
-  VisitorList,
+  RemotePage,
   VisitorSettings,
+  VisitorSummary,
 } from '@/core/types';
+import { RemoteFeed } from '@/core/services/paging';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { VISITOR_PAGE_SIZE } from '@/features/visitors/constants';
+import {
+  compareVisitors,
+  VISITOR_ALL_SCOPE,
+  visitorQueryOf,
+} from '@/features/visitors/model/visitor';
 
 export type VisitorUpdate = {
   name?: string;
@@ -35,8 +45,26 @@ function parsed<T>(response: IServiceResponse<unknown>, schema: z.ZodType<T>): I
 }
 
 class VisitorService {
-  async list(): Promise<IServiceResponse<VisitorList>> {
-    return parsed(await httpService.get<unknown>('/visitor'), visitorListSchema);
+  async page(
+    scope: string,
+    cursor: VisitorCursor | null
+  ): Promise<IServiceResponse<RemotePage<VisitorSummary, VisitorCursor>>> {
+    const { filter, search } = visitorQueryOf(scope);
+    const params = new URLSearchParams({ limit: String(VISITOR_PAGE_SIZE), filter });
+    if (search) params.set('q', search);
+    if (cursor) {
+      params.set('beforeSeen', String(cursor.lastSeenAt));
+      params.set('beforeId', String(cursor.id));
+    }
+    const result = parsed(
+      await httpService.get<unknown>(`/visitor?${params.toString()}`),
+      visitorListSchema
+    );
+    if (!result.ok || !result.info) return { ...result, info: null };
+    return {
+      ...result,
+      info: { rows: result.info.visitors, next: result.info.nextCursor ?? null },
+    };
   }
 
   async detail(id: number): Promise<IServiceResponse<VisitorDetail>> {
@@ -89,3 +117,11 @@ class VisitorService {
 }
 
 export const visitorService = new VisitorService();
+
+export const visitorFeed = new RemoteFeed<VisitorSummary, VisitorCursor>({
+  key: VIEW_CACHE_KEYS.visitors,
+  keyOf: (visitor) => String(visitor.id),
+  compare: compareVisitors,
+  fetch: (scope, cursor) => visitorService.page(scope, cursor),
+  pinned: [VISITOR_ALL_SCOPE],
+});

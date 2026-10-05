@@ -2,19 +2,33 @@ import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { NotificationModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
+import type { KeysetPage, KeysetWindow } from '@/core/types';
 import { httpService } from '@/core/services/http';
-import { DatabaseService } from './database.service';
+import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
+import { DatabaseService, type KeysetQuery } from './database.service';
+
+const FEED_COLUMNS = ['type', 'title', 'body', 'data', 'is_read', 'read_at'];
 
 class NotificationService extends DatabaseService<'notification'> {
   constructor() {
     super('notification');
   }
 
-  observeForUser(userId: string, limit = 50): Observable<NotificationModel[]> {
-    return this.observeManyWithColumns(
-      ['type', 'title', 'body', 'data', 'is_read', 'read_at'],
-      [Q.where('user_id', userId), Q.sortBy('created_at', Q.desc), Q.take(limit)],
-    );
+  observeFeedPage(userId: string, window: KeysetWindow): Observable<KeysetPage<NotificationModel>> {
+    return this.observeKeysetPage(this.feedQuery(userId), window);
+  }
+
+  nextFeedWindow(userId: string, window: KeysetWindow): Promise<KeysetWindow> {
+    return this.nextKeysetWindow(this.feedQuery(userId), window);
+  }
+
+  private feedQuery(userId: string): KeysetQuery {
+    return {
+      clauses: [Q.where('user_id', userId)],
+      sort: { column: 'created_at', order: 'desc' },
+      columns: FEED_COLUMNS,
+      pageSize: NOTIFICATION_FEED_PAGE_SIZE,
+    };
   }
 
   async unreadIdsForUser(userId: string): Promise<string[]> {

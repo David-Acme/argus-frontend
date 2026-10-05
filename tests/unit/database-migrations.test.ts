@@ -103,3 +103,47 @@ describe('the task due date index', () => {
     expect(() => db.exec(encodeMigrationSteps(steps))).not.toThrow();
   });
 });
+
+describe('the notification feed index', () => {
+  const indexesOf = (db: Database): string[] =>
+    (
+      db.query("select name from pragma_index_list('notification')").all() as { name: string }[]
+    ).map((row) => row.name);
+
+  const feedPlan = (db: Database): string =>
+    (
+      db
+        .query(
+          "explain query plan select * from notification where user_id = '1' and (created_at < 5 or (created_at = 5 and id < '9')) order by created_at desc, id desc limit 41"
+        )
+        .all() as { detail: string }[]
+    )
+      .map((row) => row.detail)
+      .join(' | ');
+
+  const insert = (db: Database) =>
+    db
+      .query(
+        'insert into notification (id, _changed, _status, user_id, type, title, body, data, is_read, read_at, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run('1', '', 'synced', '1', 'camera', 'Hi', 'There', '{}', 0, null, 1);
+
+  test('a fresh database creates it and the feed page reads through it', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(indexesOf(db)).toContain('notification_user_created');
+    expect(feedPlan(db)).toContain('notification_user_created');
+  });
+
+  test('a version 7 database gains it through the migration and keeps its rows', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    db.exec('drop index "notification_user_created";');
+    insert(db);
+    const steps = stepsForMigration({ migrations, fromVersion: 7, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+    expect(indexesOf(db)).toContain('notification_user_created');
+    expect(db.query('select count(*) as n from notification').get()).toEqual({ n: 1 });
+  });
+});

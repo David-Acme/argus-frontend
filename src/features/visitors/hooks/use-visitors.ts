@@ -1,11 +1,27 @@
-import { useCallback } from 'react';
-import type { VisitorList, VisitorSettings, VisitorSummary } from '@/core/types';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { VisitorSettings, VisitorSummary } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
+import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { mergedInto, patchVisitor, withoutVisitors } from '@/features/visitors/model/visitor';
-import { type VisitorUpdate, visitorService } from '@/features/visitors/services/visitor.service';
+import type { RemoteFeedSnapshot } from '@/core/services/paging';
+import { VISITOR_PAGE_SIZE, VISITOR_SEARCH_DEBOUNCE_MS } from '@/features/visitors/constants';
+import {
+  filterVisitors,
+  mergedInto,
+  patchVisitor,
+  VISITOR_ALL_SCOPE,
+  visitorFeedScope,
+  withoutVisitors,
+  type VisitorQuery,
+} from '@/features/visitors/model/visitor';
+import {
+  type VisitorUpdate,
+  visitorFeed,
+  visitorService,
+} from '@/features/visitors/services/visitor.service';
 
 export type RenameVisitorInput = {
   visitor: VisitorSummary;
@@ -17,42 +33,76 @@ export type MergeVisitorsInput = {
   sourceIds: number[];
 };
 
-const loadVisitors = () => visitorService.list();
 const loadSettings = () => visitorService.settings();
+
+const NO_VISITORS: readonly VisitorSummary[] = [];
+
+export function useVisitorFeed({ filter, search }: VisitorQuery) {
+  const [settled, setSettled] = useState(search);
+  const scope = visitorFeedScope({ filter, search: settled });
+  const feed = useRemoteFeed(visitorFeed, scope);
+  const base = useViewCacheValue<RemoteFeedSnapshot<VisitorSummary, unknown>>(
+    visitorFeed.key,
+    VISITOR_ALL_SCOPE
+  );
+  const pending = feed.status === 'loading' || settled !== search;
+  const rows = useMemo(
+    () => (pending ? filterVisitors(base?.rows ?? NO_VISITORS, filter, search) : feed.rows),
+    [base, feed.rows, filter, pending, search]
+  );
+  const paging = useInfiniteList({
+    count: feed.rows.length,
+    hasMore: pending || feed.hasMore,
+    loadMore: feed.loadMore,
+    endAfter: VISITOR_PAGE_SIZE,
+  });
+
+  useEffect(() => {
+    if (search === settled) return;
+    const timer = setTimeout(() => setSettled(search), VISITOR_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search, settled]);
+
+  return {
+    rows,
+    paging,
+    status: feed.status,
+    known: base != null || feed.status === 'ready',
+    reload: feed.reload,
+  };
+}
 
 export function useVisitors() {
   const { t } = useTranslation();
-  const list = useRemoteResource<VisitorList>({ cacheKey: VIEW_CACHE_KEYS.visitors, load: loadVisitors });
   const settings = useRemoteResource<VisitorSettings>({
     cacheKey: VIEW_CACHE_KEYS.visitorSettings,
     load: loadSettings,
   });
   const { run, pending } = useServiceAction();
-  const { mutate, reload } = list;
+  const { reload: reloadSettings, mutate: mutateSettings } = settings;
+
+  const reload = useCallback(async () => {
+    await Promise.all([visitorFeed.refresh(VISITOR_ALL_SCOPE), reloadSettings()]);
+  }, [reloadSettings]);
 
   const update = useCallback(
     async ({ visitor, update: change }: RenameVisitorInput) => {
-      let before: VisitorList | null = null;
       const result = await run({
         call: async () => {
-          mutate((previous) => {
-            before = previous;
-            return patchVisitor(previous, visitor.id, change);
-          });
+          const undo = visitorFeed.mutateAll((rows) => patchVisitor(rows, visitor.id, change));
           const answer = await visitorService.update(visitor.id, change);
-          if (!answer.ok) mutate(() => before);
+          if (!answer.ok) undo();
           return answer;
         },
         errorTitle: t('screens.visitors.save-error'),
       });
       return result?.info ?? null;
     },
-    [mutate, run, t]
+    [run, t]
   );
 
   const remove = useCallback(
     async (visitor: VisitorSummary, label: string) => {
-      let before: VisitorList | null = null;
       const result = await run({
         confirm: {
           title: t('screens.visitors.delete-title', { name: label }),
@@ -61,12 +111,9 @@ export function useVisitors() {
           intent: 'danger',
         },
         call: async () => {
-          mutate((previous) => {
-            before = previous;
-            return withoutVisitors(previous, [visitor.id]);
-          });
+          const undo = visitorFeed.mutateAll((rows) => withoutVisitors(rows, [visitor.id]));
           const answer = await visitorService.remove(visitor.id);
-          if (!answer.ok) mutate(() => before);
+          if (!answer.ok) undo();
           return answer;
         },
         success: t('screens.visitors.deleted', { name: label }),
@@ -74,12 +121,11 @@ export function useVisitors() {
       });
       return result !== null;
     },
-    [mutate, run, t]
+    [run, t]
   );
 
   const merge = useCallback(
     async ({ target, sourceIds }: MergeVisitorsInput) => {
-      let before: VisitorList | null = null;
       const result = await run({
         confirm: {
           title: t('screens.visitors.merge-title'),
@@ -88,21 +134,18 @@ export function useVisitors() {
           intent: 'warning',
         },
         call: async () => {
-          mutate((previous) => {
-            before = previous;
-            return mergedInto(previous, target, sourceIds);
-          });
+          const undo = visitorFeed.mutateAll((rows) => mergedInto(rows, target, sourceIds));
           const answer = await visitorService.merge(target.id, sourceIds);
-          if (!answer.ok) mutate(() => before);
+          if (!answer.ok) undo();
           return answer;
         },
         success: t('screens.visitors.merged'),
         errorTitle: t('screens.visitors.merge-error'),
       });
-      if (result) void reload();
+      if (result) void visitorFeed.refresh(VISITOR_ALL_SCOPE);
       return result?.info ?? null;
     },
-    [mutate, reload, run, t]
+    [run, t]
   );
 
   const setRetention = useCallback(
@@ -110,24 +153,22 @@ export function useVisitors() {
       let before: VisitorSettings | null = null;
       const result = await run({
         call: async () => {
-          settings.mutate((previous) => {
+          mutateSettings((previous) => {
             before = previous;
             return previous ? { ...previous, unnamedRetentionDays: days } : previous;
           });
           const answer = await visitorService.updateSettings(days);
-          if (!answer.ok) settings.mutate(() => before);
+          if (!answer.ok) mutateSettings(() => before);
           return answer;
         },
         errorTitle: t('screens.visitors.retention-error'),
       });
       return result !== null;
     },
-    [run, settings, t]
+    [mutateSettings, run, t]
   );
 
   return {
-    list: list.data,
-    status: list.status,
     settings: settings.data,
     pending,
     reload,

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type {
   VisitorCropCapability,
   VisitorCropImage,
+  VisitorCursor,
   VisitorDetail,
   VisitorList,
   VisitorSettings,
@@ -35,9 +36,15 @@ export const visitorSummarySchema = z.object({
   cameraIds: z.array(z.number().int().nonnegative()),
 }) satisfies z.ZodType<VisitorSummary>;
 
+export const visitorCursorSchema = z.object({
+  lastSeenAt: unixSeconds,
+  id,
+}) satisfies z.ZodType<VisitorCursor>;
+
 export const visitorListSchema = z.object({
   recognitionEnabled: z.boolean(),
   visitors: z.array(visitorSummarySchema),
+  nextCursor: visitorCursorSchema.nullable().optional(),
 }) satisfies z.ZodType<VisitorList>;
 
 export const visitorDetailSchema = visitorSummarySchema.extend({

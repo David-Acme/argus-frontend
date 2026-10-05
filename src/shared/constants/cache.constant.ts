@@ -10,6 +10,14 @@ export const VIEW_CACHE_CALENDAR_LEAD_DAYS = 6;
 
 export const VIEW_CACHE_CALENDAR_ENTRY_LIMIT = 400;
 
+export const NOTIFICATION_FEED_PAGE_SIZE = 40;
+
+export const NOTIFICATION_FEED_SCOPE = 'all';
+
+export const AGENDA_FEED_INITIAL_WEEKS = 5;
+
+export const AGENDA_FEED_STEP_WEEKS = 4;
+
 export const EMPTY_DASHBOARD_SUMMARY = {
   camerasTotal: 0,
   camerasOnline: 0,
@@ -27,9 +35,11 @@ export const VIEW_CACHE_KEYS = {
   dashboardProjects: 'dashboard.projects',
   dashboardActivity: 'dashboard.activity',
   dashboardUnread: 'dashboard.unread',
+  notificationFeed: 'notification.feed',
   cameraList: 'camera.list',
   cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
+  calendarAgenda: 'calendar.agenda',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
   peopleUsers: 'people.users',
@@ -45,7 +55,7 @@ export const VIEW_CACHE_KEYS = {
   guardResponse: 'guard.response',
   guardGuests: 'guard.guests',
   guardCameras: 'guard.cameras',
-  guardEpisodes: 'guard.episodes',
+  guardEpisodes: 'guard.episode-feed',
   guardEpisode: 'guard.episode',
   voiceprintUsers: 'voiceprint.users',
   presence: 'guard.presence',
@@ -55,7 +65,7 @@ export const VIEW_CACHE_KEYS = {
   privacyMe: 'privacy.me',
   privacyDirectory: 'privacy.users',
   safetyStatus: 'safety.status',
-  visitors: 'visitor.list',
+  visitors: 'visitor.feed',
   visitorDetail: 'visitor.detail',
   visitorSettings: 'visitor.settings',
 } as const;

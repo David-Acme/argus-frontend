@@ -508,6 +508,21 @@ for Watermelon nor make an HTTP list request just because it mounted.
   snapshot carries every camera with its zones and stream resolution (list,
   dashboard and detail read it). The people search filters the cached
   directory in memory (`filterPeople`), never a query per keystroke.
+- **Long lists page; they never show their end early.** A list that can grow
+  renders through `InfiniteList` (`shared/components/ui/infinite-list.tsx`)
+  with the state from `useInfiniteList` (`shared/hooks/use-infinite-list.ts`).
+  Its source is one of three. A local keyset view
+  (`DatabaseService.observeKeysetPage`/`nextKeysetWindow`, the sort column
+  plus `id`, a cursor-held window, never offset/skip) served as a coordinator
+  paged view (`watchPages`/`extendPages`/`releasePages`, read with
+  `usePagedView`). A server cursor feed (`RemoteFeed` in
+  `core/services/paging/`, read with `useRemoteFeed`). Or rows already in
+  memory (virtualization only). The footer shows skeletons while more may
+  exist, an error with retry, and the end only when the source is exhausted.
+  A list inside a panel fills it with a definite zero basis or takes `maxHeight`
+  on a phone; rows recycle only when stateless. Small bounded lists
+  (environments, household users, settings, presets) are not paged. See
+  CONTEXT.md "Lists that end only when the data does".
 - The coordinator writes base snapshots whenever Watermelon changes and keeps
   the default cache fresh before navigation. A next-midnight refresh rebuilds
   date-derived dashboard/day snapshots.
@@ -771,6 +786,8 @@ cd src-tauri && cargo check
 | `src/core/database/tables/` | One file per table: `tableSchema` + `Model` + the `TABLES` registry |
 | `src/core/services/database.service.ts` | `DatabaseService<K>` base class (protected query primitives) |
 | `src/core/services/{domain}.service.ts` | Data services — the only code that reads the database |
+| `src/core/services/paging/` · `src/core/services/view-cache/paged-view.ts` | Paging: keyset clauses (`keysetThrough`/`keysetAfter`), `RemoteFeed` for server cursors, and the coordinator's per-scope windows |
+| `src/shared/hooks/use-infinite-list.ts` · `src/shared/components/ui/infinite-list.tsx` | `useInfiniteList`/`usePagedView`/`useRemoteFeed` and the LegendList-based `InfiniteList` (skeleton, retry, end only when exhausted, fill or `maxHeight`) |
 | `src/shared/hooks/use-cached-rows.ts` | Lectura síncrona de snapshots MMKV por revisión (`useViewCacheRows` / `useViewCacheValue`) |
 | `src/shared/libs/optimistic.ts` · `optimistic-action.ts` · `src/shared/hooks/use-optimistic-rows.ts` | Optimistic UI: the intent registry and its pure merge/settle functions, `runOptimistic` (confirm, undo, rollback, retry toast) and the hook that overlays intents on view-cache rows through feature lenses |
 | `src/shared/constants/database.constant.ts` | `DATABASE_NAME`, `SCHEMA_VERSION` |
@@ -780,7 +797,7 @@ cd src-tauri && cargo check
 | `src/features/cameras/services/camera-media.service.ts` | Socket `/media` (argus-camera): subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
 | `src/features/cameras/components/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
-| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `VirtualList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
+| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `InfiniteList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
 | `src/app/welcome/` | Onboarding routes (nested Stack with fade + progress), one-line re-exports of `features/auth` screens: `index` (greeting), `pairing/` (mobile QR / desktop code), `face/` (MLKit guidance, mobile-only), `voice/` (onboarding call, mobile-only) |
 | `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
 | `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |

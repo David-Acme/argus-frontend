@@ -58,6 +58,7 @@ export const agenda = {
   'next-week': 'Semana siguiente',
   'free-range': 'Sin planes · {range}',
   'today-free': 'Nada previsto para hoy',
+  'list-end': 'No hay nada más previsto',
   'summary-title': 'En este periodo',
   'summary-events': 'Eventos',
   'summary-tasks': 'Tareas',
@@ -65,5 +66,4 @@ export const agenda = {
   'summary-free-days': 'Días sin planes',
   'next-title': 'Lo siguiente',
   'next-empty': 'Nada pendiente en estos días.',
-  'continue-month': 'Seguir en {month}',
 } as const;

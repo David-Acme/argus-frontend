@@ -288,8 +288,6 @@ export const security = {
     spoke: 'Spoke over the speaker',
     sounded: 'Alarm sounded',
     'alerts-count': '{count} alerts',
-    'show-more': 'Show {count} more',
-    'show-less': 'Show less',
     lasted: 'Lasted {duration}',
     'show-timeline': 'See how it went',
     'hide-timeline': 'Hide',
