@@ -50,6 +50,7 @@ const ERROR_LABEL: Record<string, TranslationKey> = {
   refused: 'screens.cameras.call.error-refused',
   network: 'screens.cameras.call.error-network',
   'no-session': 'screens.cameras.call.error-network',
+  'session-ended': 'screens.cameras.call.error-session-ended',
   'mic-denied': 'screens.cameras.call.error-mic-denied',
   'mic-unavailable': 'screens.cameras.call.error-mic-unavailable',
 };
@@ -59,6 +60,8 @@ const CLOSED_LABEL: Record<string, TranslationKey> = {
   limit: 'screens.cameras.call.closed-limit',
   line_lost: 'screens.cameras.call.closed-line-lost',
   session_revoked: 'screens.cameras.call.closed-revoked',
+  session_expired: 'screens.cameras.call.closed-revoked',
+  role_changed: 'screens.cameras.call.error-forbidden',
 };
 
 function LevelMeter({ icon, label, level }: LevelMeterProps) {

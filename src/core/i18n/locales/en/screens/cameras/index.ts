@@ -385,6 +385,7 @@ export const cameras = {
     'error-no-speaker': 'This camera has no speaker Argus can use.',
     'error-refused': 'The camera did not take the call. Check your Tapo account password.',
     'error-network': 'The connection to Argus was lost.',
+    'error-session-ended': 'Your session ended. Sign in again to talk through the camera.',
     'error-mic-denied': 'No permission to use the microphone.',
     'error-mic-unavailable': 'The microphone is not available.',
     'closed-idle': 'The line closed after a while of silence.',

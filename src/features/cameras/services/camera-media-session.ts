@@ -15,14 +15,7 @@ import {
   CAMERA_STREAM_WATCHDOG_MS,
 } from '@/features/cameras/constants';
 import { FragmentAssembler } from '@/features/cameras/model/fragment-assembler';
-import {
-  authFrame,
-  mediaCloseAction,
-  readAuthReply,
-  renewalDelayMs,
-  subscribeNotice,
-  type MediaFrame,
-} from '@/features/cameras/model/media-access';
+import { mediaCloseAction, subscribeNotice, type MediaFrame } from '@/features/cameras/model/media-access';
 import { StreamMeter, type StreamStats } from '@/features/cameras/model/stream-meter';
 import {
   isStalled,
@@ -31,13 +24,11 @@ import {
   stateAfterFailure,
   type SubscribeRefusal,
 } from '@/features/cameras/model/stream-recovery';
+import { MediaAccessRenewal, type MediaAccessDeps } from '@/features/cameras/services/media-access-renewal';
 
-export type CameraMediaDeps = {
+export type CameraMediaDeps = MediaAccessDeps & {
   openSocket: (accessToken: string) => Promise<IArgusSocket>;
-  credential: () => SessionCredential;
   refresh: (failed: SessionCredential) => Promise<SessionRefreshOutcome>;
-  watchAccessToken: (listener: (accessToken: string | null) => void) => () => void;
-  renewIntervalMs: number;
 };
 
 const KEYFRAME_FLAG = 0x01;
@@ -65,15 +56,10 @@ export class CameraMediaSession implements ICameraMediaSession {
   private fragmentKey = false;
   private state: CameraStreamState | null = null;
   private notice: CameraLiveNotice | null = null;
-  private socketCredential: SessionCredential | null = null;
-  private renewSentAt = 0;
-  private renewingWith: string | null = null;
-  private pendingCredential: SessionCredential | null = null;
   private accessCloses = 0;
-  private stopWatching: (() => void) | null = null;
+  private access: MediaAccessRenewal | null = null;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
-  private renewTimer: ReturnType<typeof setTimeout> | null = null;
   private ackTimer: ReturnType<typeof setInterval> | null = null;
   private watchdogTimer: ReturnType<typeof setInterval> | null = null;
   private readonly assembler = new FragmentAssembler();
@@ -87,7 +73,9 @@ export class CameraMediaSession implements ICameraMediaSession {
   start(): CameraMediaSession {
     this.ackTimer = setInterval(() => this.flushAck(), CAMERA_STREAM_ACK_INTERVAL_MS);
     this.watchdogTimer = setInterval(() => this.watchStall(), CAMERA_STREAM_WATCHDOG_MS);
-    this.stopWatching = this.deps.watchAccessToken(() => this.scheduleRenewal());
+    this.access = new MediaAccessRenewal(this.deps, (status) =>
+      this.input.events?.onError?.('CAMERA_AUTH_REFUSED', String(status)),
+    );
     void this.connect();
     return this;
   }
@@ -107,10 +95,9 @@ export class CameraMediaSession implements ICameraMediaSession {
     if (this.watchdogTimer) clearInterval(this.watchdogTimer);
     this.ackTimer = null;
     this.watchdogTimer = null;
-    this.stopWatching?.();
-    this.stopWatching = null;
     this.unsubscribe();
     this.detachSocket();
+    this.access?.dispose();
     this.publish('closed');
   }
 
@@ -131,21 +118,12 @@ export class CameraMediaSession implements ICameraMediaSession {
     this.retryTimer = null;
   }
 
-  private clearRenewal(): void {
-    if (this.renewTimer) clearTimeout(this.renewTimer);
-    this.renewTimer = null;
-    this.renewSentAt = 0;
-    this.renewingWith = null;
-    this.pendingCredential = null;
-  }
-
   private detachSocket(): void {
     if (this.connectTimer) clearTimeout(this.connectTimer);
     this.connectTimer = null;
-    this.clearRenewal();
+    this.access?.detach();
     const socket = this.socket;
     this.socket = null;
-    this.socketCredential = null;
     this.subId = null;
     this.pendingAck = 0;
     this.opened = false;
@@ -179,7 +157,7 @@ export class CameraMediaSession implements ICameraMediaSession {
     }
 
     this.socket = socket;
-    this.socketCredential = credential;
+    this.access?.attach(socket, credential);
     this.connectTimer = setTimeout(() => {
       if (this.socket === socket && !this.opened) this.fail('retry');
     }, CAMERA_STREAM_CONNECT_TIMEOUT_MS);
@@ -187,7 +165,7 @@ export class CameraMediaSession implements ICameraMediaSession {
       if (this.socket !== socket) return;
       this.opened = true;
       this.subscribe();
-      this.scheduleRenewal();
+      this.access?.opened();
     };
     socket.onMessage = (message, data) => {
       if (this.socket !== socket) return;
@@ -203,7 +181,7 @@ export class CameraMediaSession implements ICameraMediaSession {
     socket.onClose = (code, reason) => {
       if (this.socket !== socket) return;
       const action = mediaCloseAction(code, reason);
-      if (action === 'refresh') void this.refreshAndRetry(this.socketCredential ?? credential);
+      if (action === 'refresh') void this.refreshAndRetry(this.access?.credential ?? credential);
       else if (action === 'reconnect') this.reconnectNow();
       else this.fail('retry');
     };
@@ -235,44 +213,6 @@ export class CameraMediaSession implements ICameraMediaSession {
       return;
     }
     this.fail('retry');
-  }
-
-  private scheduleRenewal(): void {
-    if (this.closed || !this.socket || !this.opened || this.renewTimer) return;
-    const delay = renewalDelayMs(this.renewSentAt, Date.now(), this.deps.renewIntervalMs);
-    this.renewTimer = setTimeout(() => {
-      this.renewTimer = null;
-      this.renew();
-    }, delay);
-  }
-
-  private renew(): void {
-    if (this.closed || !this.socket || !this.opened) return;
-    const credential = this.deps.credential();
-    const token = credential.accessToken;
-    const current = this.renewingWith ?? this.socketCredential?.accessToken ?? null;
-    if (!token || token === current) return;
-    this.renewSentAt = Date.now();
-    this.renewingWith = token;
-    this.pendingCredential = credential;
-    this.socket.sendText(authFrame(token));
-  }
-
-  private handleAuthReply(frame: ServerFrame): boolean {
-    const reply = readAuthReply(frame);
-    if (!reply) return false;
-    if (reply.kind === 'renewed') {
-      if (this.pendingCredential) this.socketCredential = this.pendingCredential;
-      this.pendingCredential = null;
-      this.renewingWith = null;
-      this.scheduleRenewal();
-      return true;
-    }
-    this.pendingCredential = null;
-    this.renewingWith = null;
-    if (reply.kind === 'throttled') this.scheduleRenewal();
-    else this.input.events?.onError?.('CAMERA_AUTH_REFUSED', String(reply.status));
-    return true;
   }
 
   private fail(refusal: SubscribeRefusal): void {
@@ -345,7 +285,7 @@ export class CameraMediaSession implements ICameraMediaSession {
     } catch {
       return;
     }
-    if (this.handleAuthReply(frame)) return;
+    if (this.access?.handle(frame)) return;
     if (frame.type === 'camera:ready' && frame.payload?.subId != null) {
       this.subId = frame.payload.subId;
       return;

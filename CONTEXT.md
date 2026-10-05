@@ -2645,7 +2645,14 @@ contracts the app reads; the app follows them as below.
   without a refresh: the new socket is judged with the new role, so a role
   that lost the camera ends on the subscribe's 403. Two quick reconnects
   without media fall back to the normal backoff. Pure rules:
-  `model/media-access.ts`.
+  `model/media-access.ts`. The renewal itself is one class,
+  `services/media-access-renewal.ts`, used by both `/media` users: the live
+  view session and the talk line (`services/camera-call-session.ts`, the call
+  with injected dependencies; `camera-call.service.ts` only wires them). The
+  talk line reopens after `session_expired` (refresh first) or `role_changed`
+  while a call or a held push-to-talk wants it, at most twice before
+  `camera:talk:ready`, and a rejected refresh ends the call as
+  "Tu sesión terminó".
 - **Notices.** `CameraLiveNotice` (`camera-disabled`, `viewers-total`,
   `viewers-camera`, `viewers-user`, `session-ended`) travels beside the stream
   state (`onNotice`) and replaces the placeholder copy while there is no

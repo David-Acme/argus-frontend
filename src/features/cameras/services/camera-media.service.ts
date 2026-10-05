@@ -6,7 +6,7 @@ import { useAuthStore } from '@/core/stores';
 import { CAMERA_STREAM_AUTH_RENEW_MS, CAMERA_STREAM_WS_PATH } from '@/features/cameras/constants';
 import { CameraMediaSession, type CameraMediaDeps } from '@/features/cameras/services/camera-media-session';
 
-const mediaDeps: CameraMediaDeps = {
+export const mediaDeps: CameraMediaDeps = {
   openSocket: async (accessToken) => {
     const instance = await netService.instance();
     if (!instance) throw new Error('CAMERA_STREAM_NO_SESSION');
