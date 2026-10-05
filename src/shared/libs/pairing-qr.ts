@@ -6,6 +6,10 @@ import {
   PAIRING_QR_REQUIRED_KEYS,
 } from '@/shared/constants';
 
+export function normalizePairingCode(value: string): string {
+  return value.replace(/[\s-]/g, '').toUpperCase();
+}
+
 const isHexFingerprint = (value: unknown): boolean =>
   typeof value === 'string' && PAIRING_FINGERPRINT_PATTERN.test(value);
 
@@ -29,7 +33,7 @@ export function parsePairingQr(raw: string): QrPairingPayload | null {
     return null;
   }
   if (scheme !== 'https') return null;
-  if (typeof code !== 'string' || !PAIRING_CODE_PATTERN.test(code)) return null;
+  if (typeof code !== 'string' || !isPairingCode(code)) return null;
   if (!isHexFingerprint(instanceId) || !isHexFingerprint(caFingerprint)) return null;
   if (!isHexFingerprint(serverFingerprint)) return null;
 
@@ -37,7 +41,7 @@ export function parsePairingQr(raw: string): QrPairingPayload | null {
     host,
     port,
     scheme,
-    code,
+    code: normalizePairingCode(code),
     instanceId,
     caFingerprint,
     serverFingerprint,
@@ -49,7 +53,7 @@ export function parsePairingQr(raw: string): QrPairingPayload | null {
 }
 
 export function isPairingCode(value: string): boolean {
-  return PAIRING_CODE_PATTERN.test(value.trim());
+  return PAIRING_CODE_PATTERN.test(normalizePairingCode(value));
 }
 
 export function hostLabel(host: string): string {

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { pairWithQr } from '@/core/services/net/net-pairing';
 import { netService } from '@/core/services/net';
-import { parsePairingQr, isPairingCode } from '@/shared/libs/pairing-qr';
+import { isPairingCode, normalizePairingCode, parsePairingQr } from '@/shared/libs/pairing-qr';
 import { routePortsOf } from '@/core/services/net/net-routes';
 import { ARGUS_HOST, ARGUS_PAIRING_PORT } from '@/shared/constants';
 import type { NetError, QrPairingPayload } from '@/core/types';
@@ -88,7 +88,7 @@ export function usePairingFlow(): PairingFlowResult {
         setQr(parsed);
         await pairWithQr(parsed);
       } else if (isPairingCode(value)) {
-        await pairWithCode(value, address);
+        await pairWithCode(normalizePairingCode(value), address);
       } else {
         throw { code: 'INVALID_PAIRING_CODE', message: 'Invalid pairing code' } as NetError;
       }

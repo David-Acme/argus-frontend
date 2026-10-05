@@ -10,5 +10,5 @@ export const PAIRING_QR_REQUIRED_KEYS = [
   'serverFingerprint',
 ] as const;
 
-export const PAIRING_CODE_PATTERN = /^[0-9A-Fa-f]{8,12}$/;
+export const PAIRING_CODE_PATTERN = /^(?:[0-9A-F]{8,12}|[A-Z2-7]{26,32})$/;
 export const PAIRING_FINGERPRINT_PATTERN = /^[0-9A-Fa-f]{64}$/;

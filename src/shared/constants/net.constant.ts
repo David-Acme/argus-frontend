@@ -42,6 +42,7 @@ export const NET_STORAGE_KEYS = {
   routes: 'net.routes',
   accessToken: 'net.accessToken',
   refreshToken: 'net.refreshToken',
+  deviceCredential: 'net.deviceCredential',
 } as const;
 
 export const NET_TRUST_KEYS: readonly string[] = [

@@ -27,6 +27,9 @@ export function faceErrorMessage(error: FaceError, t: TranslateFn): string {
   ) {
     return detail.includes('empty') ? t('screens.face.error-empty-image') : t('screens.face.error-image-too-large');
   }
+  if (error.code === 'LIVENESS_CHECK_FAILED') return t('screens.face.error-liveness');
+  if (error.code === 'LIVENESS_UNAVAILABLE') return t('screens.face.error-liveness-unavailable');
+  if (error.code === 'FACE_QUALITY_INSUFFICIENT') return t('screens.face.error-face-quality');
   if (detail.includes('face not detected')) return t('screens.face.error-face-not-detected');
   if (error.code === 'UNAUTHORIZED' || detail.includes('face not recognized')) {
     return t('screens.face.error-face-not-recognized');

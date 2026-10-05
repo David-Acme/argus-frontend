@@ -34,6 +34,18 @@ describe('faceErrorMessage', () => {
     );
   });
 
+  test('a refused liveness or quality check guides the person instead of calling them unknown', () => {
+    expect(
+      faceErrorMessage({ code: 'LIVENESS_CHECK_FAILED', message: 'The face did not pass the liveness check' }, t)
+    ).toBe('screens.face.error-liveness');
+    expect(faceErrorMessage({ code: 'LIVENESS_UNAVAILABLE', message: '' }, t)).toBe(
+      'screens.face.error-liveness-unavailable'
+    );
+    expect(
+      faceErrorMessage({ code: 'FACE_QUALITY_INSUFFICIENT', message: 'One clear, well-lit face is required' }, t)
+    ).toBe('screens.face.error-face-quality');
+  });
+
   test('face outcomes keep their own guidance', () => {
     expect(faceErrorMessage({ code: 'UNAUTHORIZED', message: 'Face not recognized' }, t)).toBe(
       'screens.face.error-face-not-recognized'

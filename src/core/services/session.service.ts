@@ -1,5 +1,6 @@
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
+import { cleanDeviceCredential, setDeviceCredential } from '@/core/services/net/device-credential';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
 import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
@@ -39,6 +40,13 @@ export type SessionBootstrapResult = SessionPairingState & {
 };
 
 type AuthTokens = Pick<IAuthSession, 'accessToken' | 'refreshToken'>;
+
+type PersistRetry = {
+  tokens: AuthTokens;
+  credential: string | null | undefined;
+  version: number;
+  attempt: number;
+};
 
 class SessionService {
   private initialization: Promise<SessionBootstrapResult> | null = null;
@@ -81,6 +89,7 @@ class SessionService {
 
   async establish(session: IAuthSession): Promise<void> {
     this.sessionVersion += 1;
+    setDeviceCredential(session.deviceSecret);
     useAuthStore.getState().setSession(session);
     viewCacheService.setUserId(session.user.id);
     viewCacheCoordinatorService.start(session.user.id);
@@ -133,6 +142,7 @@ class SessionService {
     } catch (error) {
       log.error('session', 'the local projection was not wiped; the next sync rebuilds it', error);
     } finally {
+      setDeviceCredential(null);
       useAuthStore.getState().clear();
       viewCacheService.setUserId(null);
       try {
@@ -146,23 +156,27 @@ class SessionService {
 
   private async restore(): Promise<SessionBootstrapResult> {
     try {
-      const [instance, accessToken, refreshToken, user] = await Promise.all([
+      const [instance, accessToken, refreshToken, storedCredential, user] = await Promise.all([
         netService.instance(),
         secureStorageService.getStringAsync(NET_STORAGE_KEYS.accessToken),
         secureStorageService.getStringAsync(NET_STORAGE_KEYS.refreshToken),
+        secureStorageService.getStringAsync(NET_STORAGE_KEYS.deviceCredential),
         Promise.resolve(storageService.getObject<IAuthUser>(SESSION_USER_KEY)),
       ]);
 
+      const deviceSecret = cleanDeviceCredential(storedCredential);
       const session =
         instance && accessToken && refreshToken && user
-          ? { accessToken, refreshToken, user }
+          ? { accessToken, refreshToken, deviceSecret, user }
           : null;
+
+      setDeviceCredential(session ? deviceSecret : null);
 
       useAuthStore.getState().hydrate(session);
       viewCacheService.setUserId(session?.user.id ?? null);
       if (session) viewCacheCoordinatorService.start(session.user.id);
 
-      if (!session && (accessToken || refreshToken || user)) {
+      if (!session && (accessToken || refreshToken || storedCredential || user)) {
         try {
           storageService.remove(SESSION_USER_KEY);
         } catch {
@@ -227,7 +241,7 @@ class SessionService {
 
   private async persistSession(session: IAuthSession): Promise<void> {
     this.persistUser(session.user);
-    await this.persistTokens(session);
+    await this.persistTokens(session, cleanDeviceCredential(session.deviceSecret));
   }
 
   private persistUser(user: IAuthUser): void {
@@ -237,7 +251,7 @@ class SessionService {
     }
   }
 
-  private persistTokens(tokens: AuthTokens, attempt = 1): Promise<void> {
+  private persistTokens(tokens: AuthTokens, credential?: string | null, attempt = 1): Promise<void> {
     const version = this.sessionVersion;
     this.secureStorageQueue = this.secureStorageQueue
       .catch(() => undefined)
@@ -245,22 +259,32 @@ class SessionService {
         await Promise.all([
           secureStorageService.setStringAsync(NET_STORAGE_KEYS.accessToken, tokens.accessToken),
           secureStorageService.setStringAsync(NET_STORAGE_KEYS.refreshToken, tokens.refreshToken),
+          ...this.credentialWrites(credential),
         ]);
       })
       .catch((error: unknown) => {
         log.error('session', `tokens were not persisted (attempt ${attempt})`, error);
-        if (attempt < SESSION_TOKEN_PERSIST_ATTEMPTS) this.schedulePersistRetry(tokens, version, attempt + 1);
+        if (attempt < SESSION_TOKEN_PERSIST_ATTEMPTS) {
+          this.schedulePersistRetry({ tokens, credential, version, attempt: attempt + 1 });
+        }
       });
     return this.secureStorageQueue;
   }
 
-  private schedulePersistRetry(tokens: AuthTokens, version: number, attempt: number): void {
+  private credentialWrites(credential: string | null | undefined): Promise<void>[] {
+    if (credential === undefined) return [];
+    if (credential === null) return [secureStorageService.deleteAsync(NET_STORAGE_KEYS.deviceCredential)];
+    return [secureStorageService.setStringAsync(NET_STORAGE_KEYS.deviceCredential, credential)];
+  }
+
+  private schedulePersistRetry(retry: PersistRetry): void {
+    const { tokens, credential, version, attempt } = retry;
     this.cancelPersistRetry();
     this.persistRetry = setTimeout(() => {
       this.persistRetry = null;
       const stillCurrent =
         version === this.sessionVersion && useAuthStore.getState().refreshToken === tokens.refreshToken;
-      if (stillCurrent) void this.persistTokens(tokens, attempt);
+      if (stillCurrent) void this.persistTokens(tokens, credential, attempt);
     }, SESSION_TOKEN_PERSIST_RETRY_MS * attempt);
   }
 
@@ -276,6 +300,7 @@ class SessionService {
         await Promise.all([
           secureStorageService.deleteAsync(NET_STORAGE_KEYS.accessToken),
           secureStorageService.deleteAsync(NET_STORAGE_KEYS.refreshToken),
+          secureStorageService.deleteAsync(NET_STORAGE_KEYS.deviceCredential),
         ]);
       });
     this.secureStorageQueue = this.secureStorageQueue.catch(() => undefined);

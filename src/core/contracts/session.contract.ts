@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type {
   AuthSession,
   AuthSessionList,
+  DeviceLoginDetails,
   SessionRevokeCause,
   SessionRevokeResult,
   SessionSignal,
@@ -20,6 +21,16 @@ export const authSessionSchema = z.object({
   expiresAt: unixSeconds,
   current: z.boolean(),
 }) satisfies z.ZodType<AuthSession>;
+
+export const deviceLoginDetailsSchema = z.object({
+  challengeId: z.string().min(1),
+  platform: z.enum(['android', 'ios', 'desktop', 'web', 'unknown']),
+  deviceName: z.string(),
+  origin: z.enum(['lan', 'loopback', 'tunnel', 'external', 'unknown']),
+  ipAddress: z.string(),
+  createdAt: unixSeconds,
+  expiresAt: unixSeconds,
+}) satisfies z.ZodType<DeviceLoginDetails>;
 
 export const authSessionListSchema = z.object({
   sessions: z.array(authSessionSchema),

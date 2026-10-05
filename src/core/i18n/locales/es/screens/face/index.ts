@@ -23,6 +23,11 @@ export const face = {
   'error-image-too-large': 'La foto es demasiado grande para enviarla. Inténtalo de nuevo.',
   'error-face-not-detected': 'No se detectó un rostro claro en la foto. Busca buena luz e inténtalo de nuevo.',
   'error-face-not-recognized': 'No se pudo reconocer este rostro.',
+  'error-liveness':
+    'No pudimos confirmar que eres tú en persona. Mira directo a la cámara, sin fotos ni pantallas delante, e inténtalo otra vez.',
+  'error-liveness-unavailable':
+    'El acceso con tu cara no está disponible ahora mismo. Entra con el código QR desde otro dispositivo o inténtalo más tarde.',
+  'error-face-quality': 'Necesitamos ver solo tu cara, bien iluminada y de frente. Acércate un poco e inténtalo de nuevo.',
   'error-network': 'No se pudo enviar la foto al servidor. Comprueba la conexión y vuelve a intentarlo.',
   'web-only-title': 'Registro facial en el móvil',
   'already-registered': 'Ya estás registrado en el sistema como {name}. Te hemos iniciado sesión.',

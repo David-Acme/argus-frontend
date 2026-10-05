@@ -14,6 +14,7 @@ import {
 } from './net-persistence';
 import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
 import { clientIdentityHeaders, withClientIdentity } from './client-identity';
+import { withDeviceCredential } from './device-credential';
 import type {
   NetAdoptInput,
   NetDiscovery,
@@ -37,6 +38,9 @@ const CLIENT_IDENTITY = clientIdentityHeaders({
 
 const identified = (headers: Record<string, string> | undefined): Record<string, string> =>
   withClientIdentity(headers, CLIENT_IDENTITY);
+
+const authenticated = (headers: Record<string, string> | undefined): Record<string, string> =>
+  withDeviceCredential(identified(headers));
 
 const fingerprintMismatch = (): NetError => ({
   code: 'FINGERPRINT_MISMATCH',
@@ -100,7 +104,7 @@ class NativeArgusNetService implements IArgusNetService {
       net.request({
         url: options.url,
         method: options.method,
-        headers: identified(options.headers),
+        headers: authenticated(options.headers),
         body: options.body ?? '',
         files: options.files ?? [],
       });
@@ -198,7 +202,7 @@ class NativeArgusNetService implements IArgusNetService {
       configuredKey = key;
       net.configure(instance.caPem, instance.host, instance.ip);
     }
-    const identifiedOptions = { ...options, headers: identified(options.headers) };
+    const identifiedOptions = { ...options, headers: authenticated(options.headers) };
     try {
       return await net.openSocket(identifiedOptions);
     } catch (error) {

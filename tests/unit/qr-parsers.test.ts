@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { buildLoginQr, parseLoginQr } from '@/features/auth/model/login-qr';
 import { buildInvitationQr, parseInvitationQr } from '@/shared/libs/invitation-qr';
-import { hostLabel, isPairingCode, parsePairingQr } from '@/shared/libs/pairing-qr';
+import { hostLabel, isPairingCode, normalizePairingCode, parsePairingQr } from '@/shared/libs/pairing-qr';
 
 const HEX = 'a'.repeat(64);
 
@@ -30,6 +30,9 @@ describe('pairing QR', () => {
     expect(parsePairingQr(JSON.stringify({ ...valid, port: 70000 }))).toBeNull();
     expect(parsePairingQr(JSON.stringify({ ...valid, scheme: 'http' }))).toBeNull();
     expect(parsePairingQr(JSON.stringify({ ...valid, code: 'xyz' }))).toBeNull();
+    expect(parsePairingQr(JSON.stringify({ ...valid, code: 'mfrggzdfmztwq2lknnwg23tpoa' }))?.code).toBe(
+      'MFRGGZDFMZTWQ2LKNNWG23TPOA'
+    );
     expect(parsePairingQr(JSON.stringify({ ...valid, caFingerprint: 'abc' }))).toBeNull();
     const { serverFingerprint: _omitted, ...missing } = valid;
     expect(parsePairingQr(JSON.stringify(missing))).toBeNull();
@@ -38,6 +41,11 @@ describe('pairing QR', () => {
   test('codes and host labels', () => {
     expect(isPairingCode(' ab12cd34 ')).toBe(true);
     expect(isPairingCode('ab12')).toBe(false);
+    expect(isPairingCode('MFRGGZDFMZTWQ2LKNNWG23TPOA')).toBe(true);
+    expect(isPairingCode('mfrg-gzdf mztw-q2lk nnwg-23tp oa')).toBe(true);
+    expect(isPairingCode('MFRGGZDFMZTWQ2LKNNWG23TPO1')).toBe(false);
+    expect(isPairingCode('MFRGGZDFMZTWQ2LKNNWG23TPO')).toBe(false);
+    expect(normalizePairingCode(' mfrg-gzdf mztw ')).toBe('MFRGGZDFMZTW');
     expect(hostLabel('argus.local')).toBe('argus');
     expect(hostLabel('10.0.2.2')).toBe('10.0.2.2');
   });

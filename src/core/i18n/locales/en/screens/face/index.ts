@@ -23,6 +23,11 @@ export const face = {
   'error-image-too-large': 'The photo is too large to send. Please try again.',
   'error-face-not-detected': 'No clear face was found in the photo. Find better light and try again.',
   'error-face-not-recognized': 'This face could not be recognized.',
+  'error-liveness':
+    'We could not confirm it is you in person. Look straight at the camera, with no photos or screens in front, and try again.',
+  'error-liveness-unavailable':
+    'Signing in with your face is not available right now. Use the QR code from another device or try again later.',
+  'error-face-quality': 'We need to see only your face, well lit and facing the camera. Move a little closer and try again.',
   'error-network': 'The photo could not be sent to the server. Check the connection and try again.',
   'web-only-title': 'Face registration on your phone',
   'already-registered': 'You are already registered as {name}. We signed you in.',

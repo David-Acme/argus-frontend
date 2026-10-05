@@ -27,6 +27,18 @@ export type AuthSession = {
   current: boolean;
 };
 
+export type SessionOrigin = 'lan' | 'loopback' | 'tunnel' | 'external' | 'unknown';
+
+export type DeviceLoginDetails = {
+  challengeId: string;
+  platform: SessionPlatform;
+  deviceName: string;
+  origin: SessionOrigin;
+  ipAddress: string;
+  createdAt: number;
+  expiresAt: number;
+};
+
 export type AuthSessionList = {
   sessions: AuthSession[];
 };

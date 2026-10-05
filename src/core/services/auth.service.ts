@@ -1,3 +1,4 @@
+import { deviceLoginDetailsSchema } from '@/core/contracts/session.contract';
 import { createLoginProof } from '@/core/services/device-login';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
@@ -14,7 +15,7 @@ import type {
   IResponseStatusDto,
   IServiceResponse,
 } from '@/core/interfaces';
-import type { SessionEndNotice, SessionRevokeResult } from '@/core/types';
+import type { DeviceLoginDetails, SessionEndNotice, SessionRevokeResult } from '@/core/types';
 
 const LOGIN_PATH = '/auth/login';
 const REGISTER_PATH = '/auth/register';
@@ -82,20 +83,38 @@ class AuthService {
 
   async createDeviceLogin(): Promise<IServiceResponse<ICreateDeviceLoginResponse>> {
     const proof = await createLoginProof().catch(() => null);
+    if (!proof) {
+      return errorResponse(0, 'LOGIN_PROOF_UNAVAILABLE', 'This device cannot create a login proof');
+    }
     const response = await httpService.post<ICreateDeviceLoginResponse>(
       DEVICE_LOGIN_PATH,
-      proof ? { pollHash: proof.pollHash } : {},
+      { pollHash: proof.pollHash },
       { skipAuthRetry: true },
     );
-    if (response.ok && response.info && proof) {
+    if (response.ok && response.info) {
       this.loginProofs.clear();
       this.loginProofs.set(response.info.challengeId, proof.proof);
     }
     return response;
   }
 
+  async deviceLoginDetails(id: string): Promise<IServiceResponse<DeviceLoginDetails>> {
+    const response = await httpService.get<unknown>(
+      `${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/details`,
+    );
+    if (!response.ok) return { ...response, info: null };
+    const result = deviceLoginDetailsSchema.safeParse(response.info);
+    if (!result.success) {
+      return errorResponse(response.status, 'INVALID_RESPONSE', 'The login request is not in the expected shape');
+    }
+    return { ...response, info: result.data };
+  }
+
   async approveDeviceLogin(id: string): Promise<IServiceResponse<{ approved: boolean } | null>> {
-    return httpService.post<{ approved: boolean } | null>(`${DEVICE_LOGIN_PATH}/${id}/approve`, {});
+    return httpService.post<{ approved: boolean } | null>(
+      `${DEVICE_LOGIN_PATH}/${encodeURIComponent(id)}/approve`,
+      {},
+    );
   }
 
   async pollDeviceLogin(id: string): Promise<IServiceResponse<IDeviceLoginStatusResponse>> {
@@ -114,6 +133,7 @@ class AuthService {
     await sessionService.establish({
       accessToken,
       refreshToken,
+      deviceSecret: info.device_secret ?? null,
       user: { id: userId, name: info.name ?? '—', role, isActive: true, personId: null },
     });
     return response;
@@ -130,6 +150,7 @@ class AuthService {
     return {
       accessToken: dto.accessToken,
       refreshToken: dto.refreshToken,
+      deviceSecret: dto.device_secret ?? null,
       user: {
         id: dto.userId,
         name: dto.name,

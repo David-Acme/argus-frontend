@@ -8,6 +8,7 @@ export interface IResponseLoginDto {
   role: UserRole;
   personId: number | null;
   alreadyRegistered?: boolean;
+  device_secret?: string;
 }
 
 export interface IResponseStatusDto {
@@ -42,4 +43,5 @@ export interface IDeviceLoginStatusResponse {
   userId?: number;
   name?: string;
   role?: UserRole;
+  device_secret?: string;
 }

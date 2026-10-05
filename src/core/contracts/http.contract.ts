@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   authSessionListSchema,
+  deviceLoginDetailsSchema,
   sessionRevokeResultSchema,
   userSessionsOverviewSchema,
 } from '@/core/contracts/session.contract';
@@ -68,6 +69,7 @@ export const deviceLoginStatusSchema = z.object({
   userId: z.number().optional(),
   name: z.string().optional(),
   role: userRole.optional(),
+  device_secret: z.string().optional(),
 }) satisfies z.ZodType<IDeviceLoginStatusResponse>;
 
 export const cameraCapabilitiesSchema = z.object({
@@ -427,6 +429,7 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /auth/status': authStatusSchema,
   'POST /auth/device-login': deviceLoginCreatedSchema,
   'GET /auth/device-login/{1}': deviceLoginStatusSchema,
+  'GET /auth/device-login/{1}/details': deviceLoginDetailsSchema,
   'GET /auth/sessions': authSessionListSchema,
   'DELETE /auth/sessions': sessionRevokeResultSchema,
   'DELETE /auth/sessions/{1}': sessionRevokeResultSchema,

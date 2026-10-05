@@ -12,6 +12,7 @@ import {
   toNetError,
 } from './net-persistence';
 import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
+import { withDeviceCredential } from './device-credential';
 import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing, NetPin } from '@/core/types';
 
 const ignoreClosed = (): void => undefined;
@@ -49,7 +50,7 @@ class WebArgusNetService implements IArgusNetService {
         request: {
           url: options.url,
           method: options.method,
-          headers: options.headers ?? {},
+          headers: withDeviceCredential(options.headers),
           body: options.body ?? '',
           files: options.files ?? [],
         },
@@ -189,7 +190,7 @@ class TauriSocket implements IArgusSocket {
         options: {
           socketId: this.socketId,
           url: options.url,
-          headers: options.headers ?? {},
+          headers: withDeviceCredential(options.headers),
           connectTimeoutMs: options.connectTimeoutMs ?? 8000,
         },
         onEvent: channel,

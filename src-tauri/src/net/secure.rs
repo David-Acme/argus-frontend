@@ -2,7 +2,7 @@ use keyring::{Entry, Error as KeyringError};
 
 const SERVICE: &str = "argus-desktop";
 const USER: &str = "argus";
-const WEBVIEW_KEYS: [&str; 7] = [
+const WEBVIEW_KEYS: [&str; 8] = [
   "net.paired",
   "net.port",
   "net.instanceId",
@@ -10,6 +10,7 @@ const WEBVIEW_KEYS: [&str; 7] = [
   "net.routes",
   "net.accessToken",
   "net.refreshToken",
+  "net.deviceCredential",
 ];
 const TRUST_KEYS: [&str; 4] = [
   "net.caPem",
