@@ -9,6 +9,7 @@ export const SYNC_OPERATION = {
   AuthContextChanged: 7,
   CallIncoming: 8,
   CallCancel: 9,
+  ResponseUpdate: 10,
 } as const;
 
 export const SYNC_AUDIT_CURSORS_PREFIX = 'app.sync.audit.';

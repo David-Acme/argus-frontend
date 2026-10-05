@@ -18,11 +18,15 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { guardAccessForRole } from '@/shared/libs/role-access';
 import { CameraContextPanel } from '@/features/security/components/camera-context-panel';
+import { EmergencyContactDialog } from '@/features/security/components/emergency-contact-dialog';
+import { EmergencyContactsPanel } from '@/features/security/components/emergency-contacts-panel';
 import { EnvironmentFormDialog } from '@/features/security/components/environment-form-dialog';
 import { EnvironmentSettingsPanel } from '@/features/security/components/environment-settings-panel';
 import { EpisodeList } from '@/features/security/components/episode-list';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
+import { ResponseRecipientsPanel } from '@/features/security/components/response-recipients-panel';
 import { ENVIRONMENT_KIND_ICONS } from '@/features/security/constants';
+import { useEnvironmentResponse } from '@/features/security/hooks/use-environment-response';
 import { useGuard, useGuardEnvironments } from '@/features/security/hooks/use-guard';
 import { camerasIn, postureKey } from '@/features/security/model/environments';
 
@@ -37,10 +41,14 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
   const role = useAuthStore((state) => state.user?.role);
+  const selfId = useAuthStore((state) => state.user?.id ?? 0);
   const access = guardAccessForRole(role ?? 'guest');
   const guard = useGuard(access.review, environment.id);
   const allCameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [editing, setEditing] = useState(false);
+  const [addingContact, setAddingContact] = useState(false);
+  const owner = role === 'owner';
+  const response = useEnvironmentResponse(environment.id, owner);
   const current = guard.environments.find((item) => item.id === environment.id) ?? environment;
   const cameras = camerasIn(current, guard.environments, allCameras);
   const pending = guard.pendingMode?.environmentId === current.id ? guard.pendingMode.mode : null;
@@ -103,6 +111,31 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       />
     ) : null;
 
+  const recipientsSection = (className?: string) => (
+    <ResponseRecipientsPanel
+      config={response.config}
+      failed={response.status === 'failed'}
+      editable={owner}
+      selfId={selfId}
+      onMode={(userId, mode) => void response.setMode(userId, mode)}
+      onMove={(userId, direction) => void response.move(userId, direction)}
+      onDuty={(userId, onDuty) => void response.setDuty(userId, onDuty)}
+      onStepSeconds={(seconds) => void response.setStepSeconds(seconds)}
+      className={className}
+    />
+  );
+
+  const contactsSection = (className?: string) => (
+    <EmergencyContactsPanel
+      config={response.config}
+      editable={owner}
+      onContacts={response.setContacts}
+      onEmergency={response.setEmergency}
+      onAdd={() => setAddingContact(true)}
+      className={className}
+    />
+  );
+
   const episodeSection = (className?: string) => (
     <Panel title={t('screens.security.environments.episodes-title')} className={className}>
       <EpisodeList
@@ -118,9 +151,11 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
     <View className="flex-1 flex-row items-stretch gap-5">
       <View className="min-w-0 flex-1 gap-5">
         {modeSection}
+        {recipientsSection()}
         {settingsSection('flex-1')}
       </View>
       <View className="min-w-0 flex-1 gap-5">
+        {contactsSection()}
         {cameraSection()}
         {episodeSection('flex-1')}
       </View>
@@ -128,6 +163,10 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   ) : isMedium ? (
     <View className="flex-1 gap-5">
       {modeSection}
+      <View className="flex-row items-stretch gap-5">
+        {recipientsSection('min-w-0 flex-1')}
+        {contactsSection('min-w-0 flex-1')}
+      </View>
       <View className="flex-row items-stretch gap-5">
         {settingsSection('min-w-0 flex-1')}
         {cameraSection('min-w-0 flex-1')}
@@ -137,6 +176,8 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   ) : (
     <View className="flex-1 gap-5">
       {modeSection}
+      {recipientsSection()}
+      {contactsSection()}
       {cameraSection()}
       {episodeSection()}
       {settingsSection('flex-1')}
@@ -182,6 +223,13 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       </AppScreen>
       {editing ? (
         <EnvironmentFormDialog open onOpenChange={setEditing} environment={current} onSubmit={rename} />
+      ) : null}
+      {owner ? (
+        <EmergencyContactDialog
+          open={addingContact}
+          onOpenChange={setAddingContact}
+          onSave={(contact) => void response.setContacts([...(response.config?.contacts ?? []), contact])}
+        />
       ) : null}
     </>
   );

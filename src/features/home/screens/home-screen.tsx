@@ -29,6 +29,7 @@ import {
 import { activityTrend } from '@/features/home/model/activity-trend';
 import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
+import { ResponseStrip } from '@/features/response';
 import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
@@ -162,6 +163,8 @@ export default function HomeScreen() {
             />
           </View>
         </View>
+
+        <ResponseStrip />
 
         <DashboardSearchField
           placeholder={t('screens.home.search-placeholder')}

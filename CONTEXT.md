@@ -2220,3 +2220,62 @@ platform, then leaves in its own change.
   (`rtc::call::live_tests`) that join a real LiveKit with a bot posing as
   `argus-voice` (synthetic tone or a recorded clip, data both ways, mute,
   leave) and through the pinned TLS front.
+
+## Intruder response: who is told, who is attending, is it real (2026-10-04, RESPONSE)
+
+The backend decides who an alert reaches and in what order: argus-guard owns
+the per-environment list, and the notification call engine runs the steps
+(`backend/services/guard/CONTEXT.md`, "Who is called";
+`backend/services/notification/CONTEXT.md`, "Intruder response"). The app
+does three things.
+
+**The list, in Seguridad → environment.** `ResponseRecipientsPanel` and
+`EmergencyContactsPanel` (`features/security`) read
+`GET /guard/environments/{id}/response` through `useRemoteResource`, scoped
+by environment, so the last answer paints first.
+- The Owner edits: per person, Llamar / Solo avisar / Nada, and earlier or
+  later. Moving someone who shares a step gives them a step of their own;
+  someone alone joins the neighbouring step (`model/response-recipients.ts`,
+  unit-tested).
+- The Owner also sets a guard's duty, the wait between steps, the emergency
+  number and up to ten contacts.
+- Every edit is optimistic, saved as one `PUT` of the whole list, then
+  reconciled with the server's answer, or reloaded with a toast.
+- Residents and Guards see only their own row and the contacts. A Guard
+  toggles their own duty (`POST …/duty`). During staffed hours the switch
+  shows "En horario de personal: de guardia" and is locked on.
+- The add-contact dialog renders beside `AppScreen` (rule 12d).
+
+**The live response.** `features/response` holds a small zustand store of
+`IncidentResponse` rows.
+- It is fed by `/sync` operation 10 (`response_update`, subscribed once from
+  the feature with `synchronizeService.on`) and by `GET
+  /notification/responses` on focus.
+- A frame never replaces a newer one (`updatedAt`).
+- The store resets when the signed-in user changes.
+- Open responses, and closed ones for fifteen minutes, show as
+  `ResponseStrip` at the top of Inicio.
+- `ResponseCard` is exported for the call surface (RTC-APP renders it
+  `compact` when a call carries a `responseId`).
+The card shows:
+- the kind and the place;
+- who is attending ("Pedro está atendiendo", "Lo estás atendiendo tú"), the
+  step being called, or "Nadie ha contestado";
+- the live camera, behind a button so it never streams on its own;
+- for a discreet member, "Quédate dentro y no abras";
+- Es real / Falsa alarma.
+
+**The verdict.** "Falsa alarma" asks for confirmation first, because it
+stops everyone else's ring, and is then applied optimistically. The
+optimistic row keeps the server's `updatedAt`, so the server's answer always
+wins the merge. "Es real" reaches everyone left at critical urgency
+(server-side). Once confirmed or unanswered (`showContacts`), the card shows
+the emergency button, which opens the phone with `tel:`, and each contact
+with one-tap call and SMS. Argus never places a phone call itself.
+
+Tests: `tests/unit/response-model.test.ts` (headlines, tones, who may
+decide, the optimistic merge, contacts gating, phone links, visibility, the
+zod contract) and `tests/unit/response-recipients.test.ts` (steps, moves,
+modes, duty, the saved body, phone validation). The HTTP schemas live in
+`core/contracts/response.contract.ts`; they join `HTTP_CONTRACTS` once MAIN
+records the goldens for the five new routes.

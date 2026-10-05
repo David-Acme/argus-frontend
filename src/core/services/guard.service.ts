@@ -1,4 +1,5 @@
 import { guardEnvironmentListSchema, guardEnvironmentSchema } from '@/core/contracts/http.contract';
+import { environmentResponseSchema } from '@/core/contracts/response.contract';
 import type { IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import type {
@@ -14,6 +15,8 @@ import type {
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
   GuardMode,
+  EnvironmentResponseConfig,
+  EnvironmentResponseUpdate,
 } from '@/core/types';
 import { GUARD_LIST_LIMIT } from '@/shared/constants';
 
@@ -41,7 +44,33 @@ const environmentOne = (info: unknown): GuardEnvironment | null => {
   return parsed.success ? parsed.data : null;
 };
 
+const responseConfig = (info: unknown): EnvironmentResponseConfig | null => {
+  const parsed = environmentResponseSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
 class GuardService {
+  async response(environmentId: number): Promise<IServiceResponse<EnvironmentResponseConfig>> {
+    return checked(await httpService.get<unknown>(`/guard/environments/${environmentId}/response`), responseConfig);
+  }
+
+  async setResponse(
+    environmentId: number,
+    body: EnvironmentResponseUpdate
+  ): Promise<IServiceResponse<EnvironmentResponseConfig>> {
+    return checked(
+      await httpService.put<unknown>(`/guard/environments/${environmentId}/response`, body),
+      responseConfig
+    );
+  }
+
+  async setDuty(environmentId: number, onDuty: boolean): Promise<IServiceResponse<EnvironmentResponseConfig>> {
+    return checked(
+      await httpService.post<unknown>(`/guard/environments/${environmentId}/duty`, { onDuty }),
+      responseConfig
+    );
+  }
+
   async environments(): Promise<IServiceResponse<GuardEnvironment[]>> {
     return checked(await httpService.get<unknown>('/guard/environments'), environmentList);
   }
