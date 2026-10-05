@@ -108,7 +108,15 @@ export const cameraCatalogSchema = z.object({
       manufacturer: z.string(),
       model: z.string(),
       driver: z.enum(['tapo', 'onvif', 'rtsp']),
-      formFactor: z.enum(['pan-tilt', 'outdoor-pan-tilt', 'cube', 'bullet', 'turret', 'dome', 'doorbell']),
+      formFactor: z.enum([
+        'pan-tilt',
+        'outdoor-pan-tilt',
+        'cube',
+        'bullet',
+        'turret',
+        'dome',
+        'doorbell',
+      ]),
       outdoor: z.boolean(),
       generic: z.boolean(),
       resolution: z.string(),
@@ -122,7 +130,7 @@ export const cameraCatalogSchema = z.object({
       }),
       features: cameraFeatures,
       note: z.string(),
-    }),
+    })
   ),
 }) satisfies z.ZodType<ICameraCatalog>;
 
@@ -159,7 +167,7 @@ export const cameraOverviewSchema = z.object({
         .nullable(),
       mainActive: z.boolean(),
       lastEvent: cameraDetectionSchema.nullable(),
-    }),
+    })
   ),
   events: z.array(cameraDetectionSchema),
 }) satisfies z.ZodType<ICameraOverview>;
@@ -172,7 +180,7 @@ export const cameraProbeSchema = z.object({
       status: z.enum(['ok', 'failed', 'skipped', 'warning']),
       code: z.string(),
       detail: z.string(),
-    }),
+    })
   ),
   stream: z.object({
     videoCodec: z.string(),

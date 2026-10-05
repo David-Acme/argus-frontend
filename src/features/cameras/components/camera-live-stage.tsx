@@ -49,7 +49,10 @@ export function CameraLiveStage({
   const insets = useSafeAreaInsets();
   const hasAudio = live && stats?.audio === true;
   const silencedByCall = audio.reason === 'argus-call' || audio.reason === 'camera-call';
-  const audioLabel = audio.muted || audio.blocked ? t('screens.cameras.live.unmute') : t('screens.cameras.live.mute');
+  const audioLabel =
+    audio.muted || audio.blocked
+      ? t('screens.cameras.live.unmute')
+      : t('screens.cameras.live.mute');
   const statsLabel =
     stats && stats.width > 0
       ? stats.fps > 0
@@ -58,13 +61,24 @@ export function CameraLiveStage({
             height: String(stats.height),
             fps: String(stats.fps),
           })
-        : t('screens.cameras.live.stats-size', { width: String(stats.width), height: String(stats.height) })
+        : t('screens.cameras.live.stats-size', {
+            width: String(stats.width),
+            height: String(stats.height),
+          })
       : null;
   const transportLabel = stats
-    ? t(stats.transport === 'webrtc' ? 'screens.cameras.live.transport-webrtc' : 'screens.cameras.live.transport-ws')
+    ? t(
+        stats.transport === 'webrtc'
+          ? 'screens.cameras.live.transport-webrtc'
+          : 'screens.cameras.live.transport-ws'
+      )
     : null;
   const transportHint = stats
-    ? t(stats.transport === 'webrtc' ? 'screens.cameras.live.transport-webrtc-hint' : 'screens.cameras.live.transport-ws-hint')
+    ? t(
+        stats.transport === 'webrtc'
+          ? 'screens.cameras.live.transport-webrtc-hint'
+          : 'screens.cameras.live.transport-ws-hint'
+      )
     : '';
 
   return (
@@ -101,7 +115,7 @@ export function CameraLiveStage({
             pointerEvents="none"
             accessible
             accessibilityLabel={`${statsLabel}. ${transportHint}`}
-            className="bg-card/90 absolute right-3 top-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
+            className="bg-card/90 absolute top-3 right-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
             <Icon name="gauge" className="text-foreground-secondary size-3.5" />
             <Text variant="micro" className="text-foreground font-semibold">
               {statsLabel}
@@ -160,7 +174,7 @@ export function CameraLiveStage({
         {hasAudio && silencedByCall && !audio.muted ? (
           <View
             pointerEvents="none"
-            className="bg-card/90 absolute bottom-4 right-[116px] flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
+            className="bg-card/90 absolute right-[116px] bottom-4 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
             <Icon name="volume-x" className="text-foreground-secondary size-3.5" />
             <Text variant="micro" className="text-foreground">
               {audio.reason === 'argus-call'
@@ -175,14 +189,18 @@ export function CameraLiveStage({
             label={audioLabel}
             accessibilityState={{ checked: !audio.muted }}
             onPress={audio.toggle}
-            className="bg-card/90 absolute bottom-3 right-16"
+            className="bg-card/90 absolute right-16 bottom-3"
           />
         ) : null}
         <IconButton
           icon={fullscreen ? 'minimize' : 'maximize'}
-          label={fullscreen ? t('screens.cameras.live.exit-fullscreen') : t('screens.cameras.live.fullscreen')}
+          label={
+            fullscreen
+              ? t('screens.cameras.live.exit-fullscreen')
+              : t('screens.cameras.live.fullscreen')
+          }
           onPress={onToggleFullscreen}
-          className="bg-card/90 absolute bottom-3 right-3"
+          className="bg-card/90 absolute right-3 bottom-3"
         />
       </View>
     </View>

@@ -1,6 +1,9 @@
 import { decodeFlacFrame } from '@/features/cameras/model/camera-audio';
 import { parseAudioInit, parseFragment, type Fmp4AudioTrack } from '@/features/cameras/model/fmp4';
-import { LIVE_AUDIO_LEAD_S, LIVE_AUDIO_MAX_LAG_S } from '@/features/cameras/model/camera-live-audio';
+import {
+  LIVE_AUDIO_LEAD_S,
+  LIVE_AUDIO_MAX_LAG_S,
+} from '@/features/cameras/model/camera-live-audio';
 
 type BlockedListener = (blocked: boolean) => void;
 
@@ -41,13 +44,17 @@ export class WebCameraAudio {
   setLevel(level: number): void {
     this.level = level;
     if (level > 0) this.ensureContext();
-    if (this.gain && this.context) this.gain.gain.setTargetAtTime(level, this.context.currentTime, 0.05);
+    if (this.gain && this.context)
+      this.gain.gain.setTargetAtTime(level, this.context.currentTime, 0.05);
   }
 
   unlock(): void {
     const context = this.context;
     if (!context) return;
-    void context.resume().then(() => this.report(context)).catch(() => this.report(context));
+    void context
+      .resume()
+      .then(() => this.report(context))
+      .catch(() => this.report(context));
   }
 
   dispose(): void {
@@ -95,7 +102,8 @@ export class WebCameraAudio {
     const channel = buffer.getChannelData(0);
     for (let index = 0; index < pcm.length; index += 1) channel[index] = (pcm[index] ?? 0) / 32768;
     const now = context.currentTime;
-    if (this.nextTime < now || this.nextTime - now > LIVE_AUDIO_MAX_LAG_S) this.nextTime = now + LIVE_AUDIO_LEAD_S;
+    if (this.nextTime < now || this.nextTime - now > LIVE_AUDIO_MAX_LAG_S)
+      this.nextTime = now + LIVE_AUDIO_LEAD_S;
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(this.gain);

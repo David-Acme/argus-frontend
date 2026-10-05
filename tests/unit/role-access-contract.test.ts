@@ -3,7 +3,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import type { UserRole } from '@/core/types';
-import { cameraActionAccessForRole, hasAccess, sessionAccessForRole, type Permission } from '@/shared/libs/role-access';
+import {
+  cameraActionAccessForRole,
+  hasAccess,
+  sessionAccessForRole,
+  type Permission,
+} from '@/shared/libs/role-access';
 
 const backend = join(import.meta.dir, '../../../backend/packages');
 const roleAccess = readFileSync(join(backend, 'lib/auth/src/auth/role-access.hxx'), 'utf8');
@@ -22,7 +27,9 @@ function permissionSets(): Map<string, Permission[]> {
   return new Map(
     [...sets].map(([, name = '', body = '']) => [
       name,
-      [...body.matchAll(/RolePermission::(\w+)/g)].map(([, perm = '']) => perm.toLowerCase() as Permission),
+      [...body.matchAll(/RolePermission::(\w+)/g)].map(
+        ([, perm = '']) => perm.toLowerCase() as Permission
+      ),
     ])
   );
 }
@@ -33,7 +40,9 @@ function backendTable(): Map<UserRole, Map<string, Permission[]>> {
   const start = roleAccess.indexOf('kTableAccess');
   const block = roleAccess.slice(start, roleAccess.indexOf('};', start));
   const table = new Map<UserRole, Map<string, Permission[]>>();
-  for (const [, role = '', body = ''] of block.matchAll(/\{UserRole::(\w+),\s*\{([\s\S]*?)\}\}\}?,?\s*(?=\{UserRole|$)/g)) {
+  for (const [, role = '', body = ''] of block.matchAll(
+    /\{UserRole::(\w+),\s*\{([\s\S]*?)\}\}\}?,?\s*(?=\{UserRole|$)/g
+  )) {
     const entries = [...body.matchAll(/\{TableName::(\w+), (\w+)\}/g)].map(
       ([, symbol = '', set = '']) => [wire.get(symbol) ?? symbol, sets.get(set) ?? []] as const
     );
@@ -70,7 +79,11 @@ function roleMasks(): Map<string, Set<UserRole>> {
   return new Map(
     [...masks].map(([, name = '', body = '']) => [
       name,
-      new Set([...body.matchAll(/UserRole::(\w+)/g)].map(([, role = '']) => role.toLowerCase() as UserRole)),
+      new Set(
+        [...body.matchAll(/UserRole::(\w+)/g)].map(
+          ([, role = '']) => role.toLowerCase() as UserRole
+        )
+      ),
     ])
   );
 }
@@ -79,11 +92,15 @@ function sessionRoutes(): Map<string, Set<UserRole>> {
   const masks = roleMasks();
   const start = roleAccess.indexOf('kSessionAccess');
   const block = start === -1 ? '' : roleAccess.slice(start, roleAccess.indexOf('}};', start));
-  const rows = block.matchAll(/\{\.path = "([^"]+)", \.method = drogon::(\w+), \.roles = ([^}]+)\}/g);
+  const rows = block.matchAll(
+    /\{\.path = "([^"]+)", \.method = drogon::(\w+), \.roles = ([^}]+)\}/g
+  );
   return new Map(
     [...rows].map(([, path = '', method = '', roles = '']) => {
       const named = masks.get(roles.trim());
-      const inline = [...roles.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(([, role = '']) => role.toLowerCase() as UserRole);
+      const inline = [...roles.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(
+        ([, role = '']) => role.toLowerCase() as UserRole
+      );
       return [`${method} ${path}`, new Set(named ?? inline)];
     })
   );
@@ -106,7 +123,8 @@ describe('session access mirrors the backend kSessionAccess', () => {
 
   for (const role of ROLES) {
     test(`${role} reads and revokes sessions exactly as the backend allows`, () => {
-      const allowed = (route: string) => role === 'owner' || (routes.get(route)?.has(role) ?? false);
+      const allowed = (route: string) =>
+        role === 'owner' || (routes.get(route)?.has(role) ?? false);
       expect(sessionAccessForRole(role)).toEqual({
         view: allowed('Get /auth/sessions'),
         revoke: allowed('Delete /auth/sessions') && allowed('Delete /auth/sessions/{id}'),
@@ -124,11 +142,15 @@ function cameraActionRoles(): Map<string, Set<UserRole>> {
   const masks = roleMasks();
   const start = roleAccess.indexOf('kCameraActionAccess');
   const block = start === -1 ? '' : roleAccess.slice(start, roleAccess.indexOf('}};', start));
-  const rows = block.matchAll(/\{\.action = CameraAction::(\w+), \.segment = "[^"]+", \.method = drogon::\w+, \.roles = ([^}]+)\}/g);
+  const rows = block.matchAll(
+    /\{\.action = CameraAction::(\w+), \.segment = "[^"]+", \.method = drogon::\w+, \.roles = ([^}]+)\}/g
+  );
   return new Map(
     [...rows].map(([, action = '', roles = '']) => {
       const named = masks.get(roles.trim());
-      const inline = [...roles.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(([, role = '']) => role.toLowerCase() as UserRole);
+      const inline = [...roles.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(
+        ([, role = '']) => role.toLowerCase() as UserRole
+      );
       return [action.toLowerCase(), new Set(named ?? inline)];
     })
   );
