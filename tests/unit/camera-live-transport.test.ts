@@ -6,7 +6,7 @@ import type {
   ICameraRtcOpenInput,
   ICameraRtcSession,
 } from '@/core/interfaces';
-import type { CameraStreamState, CameraTransport } from '@/core/types';
+import type { CameraLiveNotice, CameraStreamState, CameraTransport } from '@/core/types';
 import * as constants from '@/features/cameras/constants';
 
 const FIRST_FRAME_MS = 40;
@@ -39,7 +39,7 @@ class FakeWs implements ICameraMediaSession {
 }
 
 let rtcSupported = true;
-let rtcPlan: 'answer' | 'refuse' = 'answer';
+let rtcPlan: 'answer' | 'refuse' | 'full' = 'answer';
 const rtcSessions: FakeRtc[] = [];
 const wsSessions: FakeWs[] = [];
 
@@ -57,6 +57,7 @@ mock.module('@/features/cameras/services/camera-rtc', () => ({
     supported: () => rtcSupported,
     open: async (input: ICameraRtcOpenInput) => {
       if (rtcPlan === 'refuse') throw new Error('webrtc_unavailable');
+      if (rtcPlan === 'full') throw new Error('too_many_viewers_for_user');
       const session = new FakeRtc(input);
       rtcSessions.push(session);
       return session;
@@ -80,6 +81,7 @@ type Recorded = {
   transports: CameraTransport[];
   stats: ICameraLiveStats[];
   streams: unknown[];
+  notices: (CameraLiveNotice | null)[];
 };
 
 const sink = {
@@ -95,7 +97,7 @@ async function waitFor(condition: () => boolean, limitMs: number): Promise<void>
 }
 
 function open() {
-  const recorded: Recorded = { states: [], transports: [], stats: [], streams: [] };
+  const recorded: Recorded = { states: [], transports: [], stats: [], streams: [], notices: [] };
   const session = cameraLiveService.open({
     cameraId: 6,
     quality: 'main',
@@ -106,6 +108,7 @@ function open() {
       onTransport: (transport) => recorded.transports.push(transport),
       onStats: (stats) => recorded.stats.push(stats),
       onRtcStream: (stream) => recorded.streams.push(stream),
+      onNotice: (notice) => recorded.notices.push(notice),
     },
   });
   return { session, recorded };
@@ -170,6 +173,28 @@ describe('the live view prefers WebRTC and falls back to the WebSocket', () => {
     expect(wsSessions).toHaveLength(2);
     first.session.close();
     second.session.close();
+  });
+
+  test('a WebRTC viewer limit names itself, falls back, and clears once the WebSocket plays', async () => {
+    rtcPlan = 'full';
+    const { session, recorded } = open();
+    await sleep(5);
+    expect(recorded.notices).toEqual(['viewers-user']);
+    expect(wsSessions).toHaveLength(1);
+    expect(recorded.transports).toEqual(['ws']);
+    wsSessions[0]?.input.events?.onNotice?.(null);
+    wsSessions[0]?.input.events?.onState?.('live');
+    expect(recorded.notices).toEqual(['viewers-user', null]);
+    session.close();
+  });
+
+  test('a WebSocket refused for a full camera reports that limit', async () => {
+    rtcSupported = false;
+    const { session, recorded } = open();
+    await sleep(5);
+    wsSessions[0]?.input.events?.onNotice?.('viewers-camera');
+    expect(recorded.notices).toEqual(['viewers-camera']);
+    session.close();
   });
 
   test('no first frame within the window falls back to the WebSocket', async () => {

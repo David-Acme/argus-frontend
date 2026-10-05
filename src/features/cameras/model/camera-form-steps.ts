@@ -1,5 +1,6 @@
-import type { ICameraCreate, ICameraProbeInput, ICameraUpdate } from '@/core/interfaces';
+import type { ICameraCreate, ICameraProbeInput, ICameraUpdate, IServiceResponse } from '@/core/interfaces';
 import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
+import { parseRetentionDays } from '@/features/cameras/model/camera-retention';
 import type { CameraFormValues } from '@/features/cameras/components/camera-form-schema';
 
 export type CameraFormStep = 'model' | 'connection' | 'test' | 'details';
@@ -31,7 +32,7 @@ export function connectionFields(values: Pick<CameraFormValues, 'driver'>): Came
   return fields;
 }
 
-export const DETAIL_FIELDS: readonly CameraFormField[] = ['name', 'icon', 'recordMode'];
+export const DETAIL_FIELDS: readonly CameraFormField[] = ['name', 'icon', 'recordMode', 'retentionDays', 'retentionIncident'];
 
 export function probeInputOf(values: CameraFormValues, cameraId?: string): ICameraProbeInput {
   const spec = CAMERA_DRIVER_SPECS[values.driver];
@@ -65,7 +66,10 @@ export function cameraBodyOf(values: CameraFormValues): ICameraCreate & ICameraU
     cloudUsername: spec.requiresCloud ? values.cloudUsername : '',
     icon: values.icon,
     catalogId: values.catalogId,
+    retentionIncident: values.retentionIncident,
   };
+  const retentionDays = parseRetentionDays(values.retentionDays);
+  if (retentionDays !== null && Number.isInteger(retentionDays)) body.retentionDays = retentionDays;
   if (spec.customPaths) {
     body.streamPath = values.streamPath;
     body.subStreamPath = values.subStreamPath;
@@ -73,4 +77,11 @@ export function cameraBodyOf(values: CameraFormValues): ICameraCreate & ICameraU
   if (values.password) body.password = values.password;
   if (values.cloudPassword) body.cloudPassword = values.cloudPassword;
   return body;
+}
+
+const SECRET_NOT_SEALED = /could not be encrypted/i;
+
+export function withCameraWriteCode<T>(response: IServiceResponse<T>): IServiceResponse<T> {
+  if (response.ok || response.status !== 500 || !SECRET_NOT_SEALED.test(response.errors?.message ?? '')) return response;
+  return { ...response, errors: { code: 'CAMERA_SECRET_NOT_SEALED', message: response.errors?.message ?? '' } };
 }

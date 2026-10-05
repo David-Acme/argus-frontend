@@ -3,6 +3,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNod
 import { View } from 'react-native';
 import type { ICameraLiveSession, ICameraMediaSink, ICameraLiveStats } from '@/core/interfaces';
 import type {
+  CameraLiveNotice,
   CameraRtcStream,
   CameraStreamQuality,
   CameraStreamState,
@@ -40,6 +41,7 @@ type StreamStatus = {
   painted: boolean;
   transport: CameraTransport | null;
   rtcStream: CameraRtcStream | null;
+  notice: CameraLiveNotice | null;
 };
 
 const CANVAS_STYLE = {
@@ -103,6 +105,7 @@ export function CameraLiveStream({
           painted: same ? previous.painted : false,
           transport: same ? previous.transport : null,
           rtcStream: same ? previous.rtcStream : null,
+          notice: same ? previous.notice : null,
           ...next,
         };
       });
@@ -152,6 +155,7 @@ export function CameraLiveStream({
           sound.attachStream(stream instanceof MediaStream ? stream : null);
           update({ rtcStream: stream });
         },
+        onNotice: (notice) => update({ notice }),
       },
     });
     opened.setAudioEnabled(currentLevel() > 0);
@@ -195,6 +199,7 @@ export function CameraLiveStream({
       <CameraLiveStatus
         state={unsupported ? 'unsupported' : (current?.state ?? 'connecting')}
         painted={current?.painted ?? false}
+        notice={current?.notice ?? null}
         compact={compactStatus ?? fill}
         onRetry={retry}
       />

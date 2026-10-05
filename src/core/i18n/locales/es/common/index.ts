@@ -69,6 +69,7 @@ export const common = {
     'too-many-requests': 'Demasiados intentos. Espera unos minutos y vuelve a probar.',
     'unavailable': 'Argus no está disponible ahora mismo. Inténtalo en un momento.',
     'camera-unreachable': 'La cámara no responde. Revisa que esté encendida y en la red.',
+    'camera-secret': 'No pudimos proteger la contraseña de la cámara en el servidor, así que no se guardó. Inténtalo de nuevo en un momento.',
     'remote-not-allowed': 'Esto solo se puede hacer desde la red de tu casa.',
     'bad-request': 'Argus no pudo procesar esa petición.',
     'pairing-required': 'Empareja tu dispositivo con el servidor primero',

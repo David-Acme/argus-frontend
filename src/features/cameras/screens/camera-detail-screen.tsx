@@ -293,7 +293,7 @@ export default function CameraDetailScreen() {
       header={
         <ScreenHeader
           title={camera.name}
-          subtitle={[camera.ip, t(STATUS_LABEL[status])].join(' · ')}
+          subtitle={[camera.ip, t(STATUS_LABEL[status])].filter(Boolean).join(' · ')}
           onBack={() => router.back()}
           action={
             actions.length === 0 ? null : (

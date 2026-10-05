@@ -14,6 +14,8 @@ export const CAMERA_STREAM_OFFLINE_AFTER_ATTEMPTS = 3;
 export const CAMERA_STREAM_CONNECT_TIMEOUT_MS = 8000;
 export const CAMERA_STREAM_STALL_MS = 8000;
 export const CAMERA_STREAM_WATCHDOG_MS = 2000;
+export const CAMERA_STREAM_AUTH_RENEW_MS = 10500;
+export const CAMERA_STREAM_POLICY_CLOSE = 1008;
 
 export const CAMERA_RTC_FIRST_FRAME_MS = 5000;
 export const CAMERA_RTC_PROBE_MS = 250;
@@ -71,3 +73,7 @@ export const CAMERA_ICONS: readonly IconName[] = [
   'key-round',
   'wifi',
 ];
+
+export const CAMERA_RETENTION_DEFAULT_DAYS = 30;
+export const CAMERA_RETENTION_MAX_DAYS = 60;
+export const CAMERA_RETENTION_INCIDENT_MAX_DAYS = 120;

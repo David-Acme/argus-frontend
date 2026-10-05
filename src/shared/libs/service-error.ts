@@ -19,6 +19,7 @@ const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   BAD_GATEWAY: 'common.errors.unavailable',
   INTERNAL_ERROR: 'common.errors.server-error',
   CAMERA_UNREACHABLE: 'common.errors.camera-unreachable',
+  CAMERA_SECRET_NOT_SEALED: 'common.errors.camera-secret',
   REMOTE_NOT_ALLOWED: 'common.errors.remote-not-allowed',
   PAIRING_REQUIRED: 'common.errors.pairing-required',
   INVALID_RESPONSE: 'common.errors.invalid-response',

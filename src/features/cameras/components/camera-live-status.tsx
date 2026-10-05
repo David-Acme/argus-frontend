@@ -1,5 +1,5 @@
 import { ActivityIndicator, View } from 'react-native';
-import type { CameraStreamState, IconName, TranslationKey } from '@/core/types';
+import type { CameraLiveNotice, CameraStreamState, IconName, TranslationKey } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
@@ -11,6 +11,7 @@ export type CameraLiveState = CameraStreamState | 'unsupported' | 'disabled';
 type CameraLiveStatusProps = {
   state: CameraLiveState;
   painted: boolean;
+  notice?: CameraLiveNotice | null;
   compact?: boolean;
   onRetry?: () => void;
 };
@@ -54,10 +55,43 @@ const PLACEHOLDERS: Record<CameraLiveState, Placeholder> = {
   closed: { icon: 'video', title: 'screens.cameras.live.connecting' },
 };
 
-export function CameraLiveStatus({ state, painted, compact = false, onRetry }: CameraLiveStatusProps) {
+const NOTICES: Record<CameraLiveNotice, Placeholder> = {
+  'camera-disabled': {
+    icon: 'video',
+    title: 'screens.cameras.live.notice.disabled',
+    hint: 'screens.cameras.live.notice.disabled-hint',
+  },
+  'viewers-total': {
+    icon: 'users',
+    title: 'screens.cameras.live.notice.viewers-total',
+    hint: 'screens.cameras.live.notice.viewers-total-hint',
+  },
+  'viewers-camera': {
+    icon: 'users',
+    title: 'screens.cameras.live.notice.viewers-camera',
+    hint: 'screens.cameras.live.notice.viewers-camera-hint',
+  },
+  'viewers-user': {
+    icon: 'layout-grid',
+    title: 'screens.cameras.live.notice.viewers-user',
+    hint: 'screens.cameras.live.notice.viewers-user-hint',
+  },
+  'session-ended': {
+    icon: 'log-out',
+    title: 'screens.cameras.live.notice.session-ended',
+    hint: 'screens.cameras.live.notice.session-ended-hint',
+  },
+};
+
+function placeholderFor(state: CameraLiveState, notice: CameraLiveNotice | null | undefined): Placeholder {
+  if (notice && state !== 'unsupported' && state !== 'disabled') return NOTICES[notice];
+  return PLACEHOLDERS[state];
+}
+
+export function CameraLiveStatus({ state, painted, notice, compact = false, onRetry }: CameraLiveStatusProps) {
   const { t } = useTranslation();
   const picture = painted && (state === 'live' || state === 'reconnecting' || state === 'connecting');
-  const placeholder = PLACEHOLDERS[state];
+  const placeholder = placeholderFor(state, notice);
 
   if (picture) {
     return (

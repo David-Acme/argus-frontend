@@ -1,4 +1,4 @@
-import type { ICameraProbeResult, ICameraProbeStep } from '@/core/interfaces';
+import type { ICameraProbeResult, ICameraProbeStep, IServiceResponse } from '@/core/interfaces';
 import type { CameraProbeStepId, TranslationKey } from '@/core/types';
 
 export type ProbeVerdict = 'ok' | 'warning' | 'failed';
@@ -52,4 +52,14 @@ export function probeResolution(result: ICameraProbeResult): string {
 
 export function hasMicrophone(result: ICameraProbeResult): boolean {
   return result.stream.audioCodec.length > 0;
+}
+
+export type ProbeRefusal = 'stored-elsewhere' | 'busy';
+
+const STORED_ELSEWHERE = /stored address/i;
+
+export function probeRefusalOf(response: Pick<IServiceResponse<unknown>, 'status' | 'errors'>): ProbeRefusal | null {
+  if (response.status === 429) return 'busy';
+  if (response.status === 422 && STORED_ELSEWHERE.test(response.errors?.message ?? '')) return 'stored-elsewhere';
+  return null;
 }

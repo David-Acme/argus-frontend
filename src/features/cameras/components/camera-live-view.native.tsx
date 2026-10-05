@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { callback } from 'react-native-nitro-modules';
 import type { ICameraLiveSession, ICameraMediaSink, ICameraLiveStats } from '@/core/interfaces';
 import type {
+  CameraLiveNotice,
   CameraRtcStream,
   CameraStreamQuality,
   CameraStreamState,
@@ -39,6 +40,7 @@ type StreamStatus = {
   painted: boolean;
   transport: CameraTransport | null;
   rtcStream: CameraRtcStream | null;
+  notice: CameraLiveNotice | null;
 };
 
 export function CameraLiveView(props: CameraLiveViewProps) {
@@ -87,6 +89,7 @@ export function CameraLiveStream({
           painted: same ? previous.painted : false,
           transport: same ? previous.transport : null,
           rtcStream: same ? previous.rtcStream : null,
+          notice: same ? previous.notice : null,
           ...next,
         };
       });
@@ -110,6 +113,7 @@ export function CameraLiveStream({
               painted: state === 'live' || (same && previous.painted),
               transport: same ? previous.transport : null,
               rtcStream: same ? previous.rtcStream : null,
+              notice: same ? previous.notice : null,
             };
           });
           reportState(state);
@@ -117,6 +121,7 @@ export function CameraLiveStream({
         onStats: (stats) => reportStats(stats),
         onTransport: (transport) => update({ transport }),
         onRtcStream: (stream) => update({ rtcStream: stream }),
+        onNotice: (notice) => update({ notice }),
       },
     });
     opened.setAudioEnabled(currentLevel() > 0);
@@ -147,6 +152,7 @@ export function CameraLiveStream({
       <CameraLiveStatus
         state={current?.state ?? 'connecting'}
         painted={current?.painted ?? false}
+        notice={current?.notice ?? null}
         compact={compactStatus ?? fill}
         onRetry={retry}
       />

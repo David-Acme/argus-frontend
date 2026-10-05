@@ -6,7 +6,7 @@ import type {
   ICameraRtcSession,
   ICameraPictureStats,
 } from '@/core/interfaces';
-import type { CameraStreamState, CameraTransport } from '@/core/types';
+import type { CameraLiveNotice, CameraStreamState, CameraTransport } from '@/core/types';
 import { log } from '@/core/services/log';
 import { CAMERA_RTC_FIRST_FRAME_MS, CAMERA_RTC_RECONNECTS } from '@/features/cameras/constants';
 import {
@@ -16,6 +16,7 @@ import {
   INITIAL_RTC_BACKOFF,
   type RtcBackoff,
 } from '@/features/cameras/model/camera-transport';
+import { viewerLimitNotice } from '@/features/cameras/model/media-access';
 import { cameraMediaService } from '@/features/cameras/services/camera-media.service';
 import { cameraRtcService } from '@/features/cameras/services/camera-rtc';
 
@@ -33,6 +34,7 @@ class CameraLiveSession implements ICameraLiveSession {
   private ws: ICameraMediaSession | null = null;
   private wsGeneration = 0;
   private state: CameraStreamState | null = null;
+  private notice: CameraLiveNotice | null = null;
   private audioEnabled = true;
   private firstFrameTimer: ReturnType<typeof setTimeout> | null = null;
   private upgradeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -78,6 +80,12 @@ class CameraLiveSession implements ICameraLiveSession {
     if (this.state === state) return;
     this.state = state;
     this.input.events?.onState?.(state);
+  }
+
+  private announce(notice: CameraLiveNotice | null): void {
+    if (this.notice === notice) return;
+    this.notice = notice;
+    this.input.events?.onNotice?.(notice);
   }
 
   private useTransport(transport: CameraTransport): void {
@@ -163,6 +171,7 @@ class CameraLiveSession implements ICameraLiveSession {
     this.upgradeTimer = null;
     this.closeWs();
     this.useTransport('webrtc');
+    this.announce(null);
     this.publish('live');
   }
 
@@ -180,6 +189,8 @@ class CameraLiveSession implements ICameraLiveSession {
     log.debug('camera-live', 'WebRTC unavailable, using the WebSocket', reason);
     rtcBackoff = afterRtcFailure(rtcBackoff, Date.now());
     this.closeRtc();
+    const notice = viewerLimitNotice(reason);
+    if (notice && this.transport !== 'ws') this.announce(notice);
     if (attempt === 'upgrade' && this.ws) {
       this.scheduleUpgrade();
       return;
@@ -205,6 +216,9 @@ class CameraLiveSession implements ICameraLiveSession {
           },
           onStats: (stats) => {
             if (current() && this.transport === 'ws') this.reportStats(stats, 'ws');
+          },
+          onNotice: (notice) => {
+            if (current() && this.transport === 'ws') this.announce(notice);
           },
         },
       })

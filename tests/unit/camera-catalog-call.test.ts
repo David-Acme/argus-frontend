@@ -86,6 +86,7 @@ function camera(id: string, partial: Partial<ICameraCacheRow> = {}): ICameraCach
     modelLabel: 'TP-Link C225',
     recordMode: 'events',
     retentionDays: null,
+    retentionIncident: false,
     isOnline: true,
     isEnabled: true,
     resolution: '',

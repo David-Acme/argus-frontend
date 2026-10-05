@@ -101,6 +101,24 @@ describe('camera projection', () => {
     expect(JSON.stringify(second)).not.toContain('secret');
   });
 
+  test('the incident retention flag comes from the config, and a stripped row reads as no incident', () => {
+    const writes = projectCameras({
+      cameras: [
+        camera('1', { retentionDays: 90, config: { retentionIncident: true } }),
+        camera('2', { ip: '', port: 0, username: '', cloudUsername: '', config: {} }),
+        camera('3', { config: { retentionIncident: 'yes' } }),
+      ],
+      zones: [],
+      streams: [],
+    });
+    const [incident, stripped, odd] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
+    expect(incident?.retentionIncident).toBe(true);
+    expect(incident?.retentionDays).toBe(90);
+    expect(stripped?.retentionIncident).toBe(false);
+    expect(stripped?.ip).toBe('');
+    expect(odd?.retentionIncident).toBe(false);
+  });
+
   test('a camera row carries the capabilities the server synced, so a driver change reaches the detail live', () => {
     const writes = projectCameras({
       cameras: [camera('6', { capabilities: ['ptz', 'presets', 'talk'] })],

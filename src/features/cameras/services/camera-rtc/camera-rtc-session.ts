@@ -15,6 +15,7 @@ import {
   type RtcStatsReading,
   type RtcStatsReport,
 } from '@/features/cameras/model/camera-transport';
+import { rtcRefusalReason } from '@/features/cameras/model/media-access';
 
 export type RtcTrack = {
   kind: string;
@@ -78,7 +79,7 @@ class CameraRtcSession implements ICameraRtcSession {
       sdp: offer.sdp,
       quality: this.input.quality,
     });
-    if (!response.ok) throw new Error(response.errors?.code ?? `CAMERA_RTC_${response.status}`);
+    if (!response.ok) throw new Error(rtcRefusalReason(response.status, response.errors));
     const answer = readAnswer(response.info);
     if (this.closed) return;
     await this.peer.setRemoteDescription({ type: 'answer', sdp: answer.sdp });

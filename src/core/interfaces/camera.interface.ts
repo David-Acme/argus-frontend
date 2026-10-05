@@ -14,6 +14,7 @@ export interface ICameraCreate {
   icon?: string;
   recordMode?: CameraRecordMode;
   retentionDays?: number;
+  retentionIncident?: boolean;
   streamPath?: string;
   subStreamPath?: string;
   catalogId?: string;

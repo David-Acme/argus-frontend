@@ -2,7 +2,13 @@ import { ActivityIndicator, View } from 'react-native';
 import { useUniwind } from 'uniwind';
 import type { ICameraProbeResult, ICameraProbeStep } from '@/core/interfaces';
 import type { CameraProbeStepStatus, IconName } from '@/core/types';
-import { hasMicrophone, probeResolution, probeStepCopy, probeVerdict } from '@/features/cameras/model/camera-probe';
+import {
+  hasMicrophone,
+  probeResolution,
+  probeStepCopy,
+  probeVerdict,
+  type ProbeRefusal,
+} from '@/features/cameras/model/camera-probe';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
@@ -14,7 +20,13 @@ type CameraProbePanelProps = {
   running: boolean;
   result: ICameraProbeResult | null;
   failedToRun: boolean;
+  refusal?: ProbeRefusal | null;
   onRetry: () => void;
+};
+
+const REFUSAL_ICON: Record<ProbeRefusal, IconName> = {
+  'stored-elsewhere': 'key-round',
+  busy: 'clock',
 };
 
 type ProbeStepRowProps = {
@@ -49,7 +61,7 @@ function ProbeStepRow({ step }: ProbeStepRowProps) {
   );
 }
 
-export function CameraProbePanel({ running, result, failedToRun, onRetry }: CameraProbePanelProps) {
+export function CameraProbePanel({ running, result, failedToRun, refusal, onRetry }: CameraProbePanelProps) {
   const { t } = useTranslation();
   const { theme } = useUniwind();
   const spinner = colorTokens[theme === 'dark' ? 'dark' : 'light']['muted-foreground'];
@@ -69,9 +81,9 @@ export function CameraProbePanel({ running, result, failedToRun, onRetry }: Came
   if (!result) {
     return (
       <View className="bg-surface-secondary dark:bg-card-secondary items-center gap-3 rounded-2xl px-4 py-6">
-        <Icon name="wifi-off" className="text-muted-foreground size-6" />
+        <Icon name={refusal ? REFUSAL_ICON[refusal] : 'wifi-off'} className="text-muted-foreground size-6" />
         <Text variant="label" className="text-center">
-          {t('screens.cameras.probe.not-run')}
+          {refusal ? t(`screens.cameras.probe.${refusal}`) : t('screens.cameras.probe.not-run')}
         </Text>
         <Button variant="outline" size="sm" onPress={onRetry}>
           <Text>{t('screens.cameras.probe.retry')}</Text>

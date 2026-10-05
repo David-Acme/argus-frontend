@@ -1,4 +1,5 @@
 import type {
+  CameraLiveNotice,
   CameraRtcStream,
   CameraStreamQuality,
   CameraStreamState,
@@ -26,6 +27,7 @@ export interface ICameraMediaEvents {
   onState?: (state: CameraStreamState) => void;
   onError?: (code: string, message: string) => void;
   onStats?: (stats: ICameraPictureStats) => void;
+  onNotice?: (notice: CameraLiveNotice | null) => void;
 }
 
 export interface ICameraMediaOpenInput {
@@ -50,6 +52,7 @@ export interface ICameraLiveEvents {
   onStats?: (stats: ICameraLiveStats) => void;
   onTransport?: (transport: CameraTransport) => void;
   onRtcStream?: (stream: CameraRtcStream | null) => void;
+  onNotice?: (notice: CameraLiveNotice | null) => void;
 }
 
 export interface ICameraLiveOpenInput {

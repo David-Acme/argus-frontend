@@ -60,3 +60,10 @@ export function isPrivateAddress(text: string): boolean {
 export function isStreamPath(text: string): boolean {
   return text.length === 0 || (text.length <= STREAM_PATH_MAX && STREAM_PATH.test(text));
 }
+
+export function cameraAddressLabel(camera: { ip: string; port: number }): string | null {
+  const ip = camera.ip.trim();
+  if (ip.length === 0) return null;
+  const host = ip.includes(':') ? `[${ip}]` : ip;
+  return camera.port > 0 ? `${host}:${camera.port}` : ip;
+}

@@ -38,6 +38,7 @@ export interface ICameraCacheRow {
   modelLabel: string;
   recordMode: CameraRecordMode;
   retentionDays: number | null;
+  retentionIncident: boolean;
   isOnline: boolean;
   isEnabled: boolean;
   resolution: string;

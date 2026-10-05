@@ -4,6 +4,7 @@ import type { CameraDriverKind } from '@/core/types';
 
 import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
 import { isLiteralAddress, isPrivateAddress, isStreamPath } from '@/features/cameras/model/camera-address';
+import { credentialsToRetype, retentionIssue, RETENTION_DEFAULT_DAYS } from '@/features/cameras/model/camera-retention';
 
 export const cameraFormSchema = z
   .object({
@@ -38,9 +39,22 @@ export const cameraFormSchema = z
     streamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
     subStreamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
     catalogId: z.string(),
+    retentionDays: z.string().trim(),
+    retentionIncident: z.boolean(),
     isEdit: z.boolean(),
+    storedIp: z.string(),
+    storedPort: z.string(),
   })
   .superRefine((values, ctx) => {
+    const retention = retentionIssue(values.retentionDays, values.retentionIncident);
+    if (retention) ctx.addIssue({ code: 'custom', path: ['retentionDays'], message: retention });
+    const retype = credentialsToRetype(values);
+    if (retype.password && values.password.length === 0) {
+      ctx.addIssue({ code: 'custom', path: ['password'], message: 'screens.cameras.retype-password' });
+    }
+    if (retype.cloudPassword && values.cloudPassword.length === 0) {
+      ctx.addIssue({ code: 'custom', path: ['cloudPassword'], message: 'screens.cameras.retype-password' });
+    }
     if (!CAMERA_DRIVER_SPECS[values.driver].requiresCloud) return;
     if (values.cloudUsername.length === 0) {
       ctx.addIssue({
@@ -78,6 +92,10 @@ export function cameraFormDefaults(driver: CameraDriverKind, isEdit: boolean): C
     streamPath: '',
     subStreamPath: '',
     catalogId: '',
+    retentionDays: isEdit ? '' : String(RETENTION_DEFAULT_DAYS),
+    retentionIncident: false,
     isEdit,
+    storedIp: '',
+    storedPort: '',
   };
 }

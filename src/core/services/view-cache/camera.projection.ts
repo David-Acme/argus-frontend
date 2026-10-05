@@ -33,6 +33,8 @@ const configText = (config: CameraSource['config'], key: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
+const configFlag = (config: CameraSource['config'], key: string): boolean => config[key] === true;
+
 export type ZoneSource = Pick<ZoneModel, 'id' | 'cameraId' | 'name' | 'points' | 'zoneType' | 'color' | 'isEnabled'>;
 
 export type CameraStreamSource = Pick<CameraStreamModel, 'cameraId' | 'resolution'>;
@@ -73,6 +75,7 @@ export function projectCameras({ cameras, zones, streams }: CameraProjectionInpu
     modelLabel: [camera.manufacturer, camera.model].filter(Boolean).join(' '),
     recordMode: camera.recordMode,
     retentionDays: camera.retentionDays,
+    retentionIncident: configFlag(camera.config, 'retentionIncident'),
     isOnline: camera.isOnline,
     isEnabled: camera.isEnabled,
     resolution: resolutionByCamera.get(camera.id) ?? '',

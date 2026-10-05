@@ -5,6 +5,7 @@ import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cameraAddressLabel } from '@/features/cameras/model/camera-address';
 import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
 import { STATUS_DOT, STATUS_LABEL } from '@/features/cameras/model/camera-status';
 
@@ -26,8 +27,6 @@ const DRIVER_LABEL = {
   rtsp: 'screens.cameras.driver-rtsp',
 } as const satisfies Record<CameraDriverKind, TranslationKey>;
 
-
-
 function InfoRow({ label, value }: InfoRowProps) {
   return (
     <View className="min-h-9 flex-row items-center justify-between gap-3">
@@ -43,6 +42,7 @@ export function CameraInfoPanel({ camera, device, streamOnly, className }: Camer
   const { t } = useTranslation();
   const status = cameraStatusOf(camera);
   const model = device?.model || camera.modelLabel;
+  const address = cameraAddressLabel(camera);
 
   return (
     <Panel title={t('screens.cameras.info.title')} className={className}>
@@ -50,7 +50,7 @@ export function CameraInfoPanel({ camera, device, streamOnly, className }: Camer
         <Text variant="caption">{t('screens.cameras.info.status')}</Text>
         <StatusBadge label={t(STATUS_LABEL[status])} dotClassName={STATUS_DOT[status]} />
       </View>
-      <InfoRow label={t('screens.cameras.info.address')} value={`${camera.ip}:${camera.port}`} />
+      {address ? <InfoRow label={t('screens.cameras.info.address')} value={address} /> : null}
       <InfoRow label={t('screens.cameras.info.driver')} value={t(DRIVER_LABEL[camera.driver])} />
       {model ? <InfoRow label={t('screens.cameras.info.model')} value={model} /> : null}
       {device?.firmware ? <InfoRow label={t('screens.cameras.info.firmware')} value={device.firmware} /> : null}
@@ -63,7 +63,12 @@ export function CameraInfoPanel({ camera, device, streamOnly, className }: Camer
         }
       />
       {camera.retentionDays != null ? (
-        <InfoRow label={t('screens.cameras.form.retention')} value={String(camera.retentionDays)} />
+        <InfoRow
+          label={t('screens.cameras.form.retention')}
+          value={t(camera.retentionIncident ? 'screens.cameras.retention.value-incident' : 'screens.cameras.retention.value', {
+            days: String(camera.retentionDays),
+          })}
+        />
       ) : null}
       {device?.sdCard ? (
         <InfoRow

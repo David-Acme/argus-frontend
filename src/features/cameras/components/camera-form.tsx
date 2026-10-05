@@ -25,8 +25,11 @@ import {
   nextStep,
   previousStep,
   probeInputOf,
+  withCameraWriteCode,
   type CameraFormStep,
 } from '@/features/cameras/model/camera-form-steps';
+import { probeRefusalOf, type ProbeRefusal } from '@/features/cameras/model/camera-probe';
+import { credentialsToRetype, RETENTION_DEFAULT_DAYS, retentionWithIncident } from '@/features/cameras/model/camera-retention';
 import { cameraIntentValues } from '@/features/cameras/model/camera-optimistic';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
@@ -40,6 +43,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
+import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -149,6 +153,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
   const [probing, setProbing] = useState(false);
   const [probe, setProbe] = useState<ICameraProbeResult | null>(null);
   const [probeFailed, setProbeFailed] = useState(false);
+  const [probeRefusal, setProbeRefusal] = useState<ProbeRefusal | null>(null);
   const probeRun = useRef(0);
   const [openedFor, setOpenedFor] = useState<string | null>(null);
   const { models, loading, failed, reload } = useCameraCatalog(open);
@@ -162,6 +167,20 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
   const driver = useWatch({ control: form.control, name: 'driver' });
   const catalogId = useWatch({ control: form.control, name: 'catalogId' });
   const modelText = useWatch({ control: form.control, name: 'model' });
+  const ipText = useWatch({ control: form.control, name: 'ip' });
+  const portText = useWatch({ control: form.control, name: 'port' });
+  const usernameText = useWatch({ control: form.control, name: 'username' });
+  const storedIp = useWatch({ control: form.control, name: 'storedIp' });
+  const storedPort = useWatch({ control: form.control, name: 'storedPort' });
+  const retype = credentialsToRetype({
+    isEdit,
+    ip: ipText,
+    port: portText,
+    storedIp,
+    storedPort,
+    username: usernameText,
+    driver,
+  });
   const spec = CAMERA_DRIVER_SPECS[driver];
   const selectedModel = useMemo(
     () => findCatalogModel(models, { catalogId, driver, model: modelText }),
@@ -182,12 +201,14 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
     probeRun.current = run;
     setProbing(true);
     setProbeFailed(false);
+    setProbeRefusal(null);
     setProbe(null);
     const response = await cameraControlService.probe(probeInputOf(form.getValues(), camera?.id));
     if (run !== probeRun.current) return;
     setProbing(false);
     if (!response.ok || !response.info) {
       setProbeFailed(true);
+      setProbeRefusal(probeRefusalOf(response));
       return;
     }
     const result = response.info;
@@ -225,7 +246,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
     formScroll,
     request: (values) => {
       const body = cameraBodyOf(values);
-      return camera ? cameraService.update(camera.id, body) : cameraService.create(body);
+      return (camera ? cameraService.update(camera.id, body) : cameraService.create(body)).then(withCameraWriteCode);
     },
     optimistic: (values) => ({
       intents: [
@@ -296,7 +317,11 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
       streamPath: camera.streamPath,
       subStreamPath: camera.subStreamPath,
       catalogId: camera.catalogId,
+      retentionDays: camera.retentionDays == null ? '' : String(camera.retentionDays),
+      retentionIncident: camera.retentionIncident,
       isEdit: true,
+      storedIp: camera.ip,
+      storedPort: String(camera.port),
     });
   }, [open, camera, form]);
 
@@ -307,6 +332,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
       setProbe(null);
       setProbing(false);
       setProbeFailed(false);
+      setProbeRefusal(null);
       setChoosingModel(false);
       setStep(steps[0] ?? 'connection');
     }
@@ -406,12 +432,20 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                       name="password"
                       label={t('screens.cameras.password-label')}
                       secureTextEntry
-                      placeholder={isEdit ? '••••••••' : undefined}
+                      placeholder={isEdit && !retype.password ? '••••••••' : undefined}
                       autoCapitalize="none"
                       autoCorrect={false}
                     />
                   </View>
                 </View>
+                {retype.addressChanged ? (
+                  <View className="bg-surface-secondary dark:bg-card-secondary flex-row gap-2.5 rounded-2xl px-3 py-2.5">
+                    <Icon name="key-round" className="text-foreground-secondary mt-0.5 size-4" />
+                    <Text variant="caption" className="flex-1">
+                      {t('screens.cameras.address-changed')}
+                    </Text>
+                  </View>
+                ) : null}
                 {spec.requiresCloud ? (
                   <View className="gap-2">
                     <View className="flex-row flex-wrap gap-3">
@@ -432,7 +466,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                           name="cloudPassword"
                           label={t('screens.cameras.cloud-password')}
                           secureTextEntry
-                          placeholder={isEdit ? '••••••••' : undefined}
+                          placeholder={isEdit && !retype.cloudPassword ? '••••••••' : undefined}
                           autoCapitalize="none"
                           autoCorrect={false}
                         />
@@ -476,6 +510,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                 running={probing}
                 result={probe}
                 failedToRun={probeFailed}
+                refusal={probeRefusal}
                 onRetry={() => void runProbe()}
               />
             ) : null}
@@ -541,6 +576,34 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                       />
                       <FormMessage />
                     </FormItem>
+                  )}
+                />
+                <View className="gap-1.5">
+                  <FormTextField
+                    control={form.control}
+                    name="retentionDays"
+                    label={t('screens.cameras.retention.label')}
+                    placeholder={String(RETENTION_DEFAULT_DAYS)}
+                    keyboardType="number-pad"
+                  />
+                  <Text variant="caption">{t('screens.cameras.retention.hint')}</Text>
+                </View>
+                <FormField
+                  control={form.control}
+                  name="retentionIncident"
+                  render={({ field }) => (
+                    <ToggleRow
+                      label={t('screens.cameras.retention.incident')}
+                      hint={t('screens.cameras.retention.incident-hint')}
+                      value={field.value}
+                      onChange={(next) => {
+                        field.onChange(next);
+                        const days = form.getValues('retentionDays');
+                        const clamped = retentionWithIncident(days, next);
+                        if (clamped !== days) form.setValue('retentionDays', clamped);
+                        void form.trigger('retentionDays');
+                      }}
+                    />
                   )}
                 />
               </View>
