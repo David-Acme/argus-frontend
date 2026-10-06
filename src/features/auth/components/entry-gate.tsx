@@ -4,9 +4,11 @@ import { authService } from '@/core/services/auth.service';
 import { sessionService } from '@/core/services/session.service';
 import { useAuthStore } from '@/core/stores';
 import { IS_NATIVE } from '@/shared/constants';
+import { useEnabledModules } from '@/shared/hooks/use-modules';
 import { routeFallback } from '@/shared/libs/route-access';
 import { BrandSplash } from '@/features/auth/components/brand-splash';
 import { ServerUnreachable } from '@/features/auth/components/server-unreachable';
+import { nextHref } from '@/features/auth/model/onboarding-flow';
 
 type EntryDestination = 'welcome' | 'owner-enroll' | 'login' | 'unreachable';
 
@@ -40,7 +42,7 @@ function EntryRedirect() {
   if (destination === null) return <BrandSplash />;
   if (destination === 'unreachable') return <ServerUnreachable onRetry={retry} />;
   if (destination === 'welcome') return <Redirect href="/welcome" />;
-  if (destination === 'owner-enroll') return <Redirect href={{ pathname: '/welcome/privacy', params: { mode: 'owner-enroll' } }} />;
+  if (destination === 'owner-enroll') return <Redirect href={nextHref('owner', 'pair', { native: IS_NATIVE }) ?? '/welcome'} />;
   return IS_NATIVE ? <Redirect href="/welcome/face?mode=login" /> : <Redirect href="/login" />;
 }
 
@@ -48,8 +50,9 @@ export function EntryGate({ children }: PropsWithChildren) {
   const status = useAuthStore((state) => state.status);
   const role = useAuthStore((state) => state.user?.role ?? 'guest');
   const pathname = usePathname();
+  const enabledModules = useEnabledModules();
   if (status === 'signed-in') {
-    const fallback = routeFallback(pathname, role);
+    const fallback = routeFallback(pathname, role, enabledModules);
     return fallback ? <Redirect href={fallback} /> : children;
   }
   if (status === 'loading') return <BrandSplash />;

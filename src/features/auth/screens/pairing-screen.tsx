@@ -13,7 +13,6 @@ import { itemIn } from '@/shared/libs/animations';
 import { useQrScanStore } from '@/core/stores';
 import { hostLabel } from '@/shared/libs/pairing-qr';
 import { IS_NATIVE } from '@/shared/constants';
-import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import type { NetErrorCode, TranslationKey } from '@/core/types';
 import { useRouter } from 'expo-router';
@@ -89,13 +88,7 @@ export default function PairingScreen() {
   return (
     <CenteredScreen maxWidth={448} className="items-stretch">
       <NativeOnlyAnimatedView entering={itemIn.delay(delayOf(0))} className="gap-1.5">
-        {IS_NATIVE ? (
-          <OnboardingSteps
-            current={ONBOARDING_STEPS.pairing}
-            total={ONBOARDING_STEPS.total}
-            className="mb-4"
-          />
-        ) : null}
+        <OnboardingSteps flow="owner" step="pair" className="mb-4" />
         <Text variant="title">{t('screens.pairing.title')}</Text>
         <Text variant="caption" className="text-foreground-secondary">
           {t('screens.pairing.subtitle')}

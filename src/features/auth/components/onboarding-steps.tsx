@@ -1,35 +1,44 @@
 import { View } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
+import { IS_NATIVE } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { progressOf, type OnboardingFlowId, type OnboardingStepId } from '@/features/auth/model/onboarding-flow';
 
 type OnboardingStepsProps = {
-  current: number;
-  total: number;
+  flow: OnboardingFlowId;
+  step: OnboardingStepId;
   className?: string;
 };
 
-export function OnboardingSteps({ current, total, className }: OnboardingStepsProps) {
+export function OnboardingSteps({ flow, step, className }: OnboardingStepsProps) {
   const { t } = useTranslation();
-  const label = t('common.step', { current: String(current), total: String(total) });
+  const progress = progressOf(flow, step, { native: IS_NATIVE });
+  if (!progress) return null;
+  const { current, total, steps } = progress;
+  const position = t('common.step', { current: String(current), total: String(total) });
+  const name = t(steps[current - 1]?.label ?? 'screens.welcome.steps.pair');
   return (
     <View
       accessibilityRole="progressbar"
-      accessibilityLabel={label}
+      accessibilityLabel={`${position}. ${name}`}
       accessibilityValue={{ min: 1, max: total, now: current }}
       className={cn('flex-row items-center gap-3', className)}>
-      <View className="flex-row gap-1.5">
-        {Array.from({ length: total }, (_, index) => (
+      <View className="flex-row items-center gap-1.5">
+        {steps.map((item, index) => (
           <View
-            key={index}
+            key={item.id}
             className={cn(
-              'h-1.5 w-7 rounded-full',
-              index < current ? 'bg-interactive' : 'bg-border'
+              'h-1.5 rounded-full',
+              index + 1 === current ? 'bg-accent w-9' : 'w-5',
+              index + 1 < current ? 'bg-interactive' : index + 1 > current ? 'bg-border' : null
             )}
           />
         ))}
       </View>
-      <Text variant="micro">{label}</Text>
+      <Text variant="micro" numberOfLines={1} className="shrink">
+        {`${position} · ${name}`}
+      </Text>
     </View>
   );
 }

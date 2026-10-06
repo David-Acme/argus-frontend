@@ -5,6 +5,7 @@ import { Text } from '@/shared/components/ui/text';
 import { colorTokens, IS_TAURI } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { SPLASH_SLOW_MS } from '@/features/auth/constants/welcome';
+import { BrandMark } from '@/features/auth/components/brand-mark';
 
 export function BrandSplash() {
   const { t } = useTranslation();
@@ -21,12 +22,7 @@ export function BrandSplash() {
     <View
       className="bg-background flex-1 items-center justify-center gap-5 px-8"
       accessibilityLabel="Argus">
-      <View className="bg-interactive size-24 items-center justify-center rounded-4xl shadow-lg shadow-black/10">
-        <View className="border-foreground-on-interactive size-12 items-center justify-center rounded-full border-[3px]">
-          <View className="bg-foreground-on-interactive absolute left-2.5 size-1.5 rounded-full" />
-          <View className="bg-foreground-on-interactive absolute right-2.5 size-1.5 rounded-full" />
-        </View>
-      </View>
+      <BrandMark />
       <Text variant="title">Argus</Text>
       <ActivityIndicator color={spinner} accessibilityLabel={t('common.loading')} />
       {slow ? (

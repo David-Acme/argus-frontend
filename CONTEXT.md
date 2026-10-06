@@ -2692,3 +2692,164 @@ contracts the app reads; the app follows them as below.
   falls back to the `/sync` PCM path on 503.
 - **Sync during shutdown.** A `<type>_error` 503 rejects the pending request
   and the sync retries with backoff (`retriesSyncFailure`: everything but 401).
+
+## First-run welcome and selectable modules (2026-10-05, WELCOME)
+
+David asked for a first-run welcome that is warm, clear, concise and very
+attractive, data-driven steppers for a new Owner and for invited people, and
+module selection with hardware limits, dependencies and real install
+progress that survives leaving the app. Backend contract:
+`backend/docs/history/plans/modules-and-welcome-plan.md` (argus-settings is
+the module manager; `/modules` REST; `/sync` operation 12 `module_update`).
+
+### What the research changed
+
+- **Short, skippable, one idea per screen.** Current onboarding guidance
+  (Apple's HIG summaries, Appcues, NN/g) converges on 3–7 steps with visible
+  progress and only the steps that need a decision; teaching happens later
+  and in context (progressive onboarding). So the flows stay at five and four
+  steps, the module and "meet Argus" steps are skippable, and what the user
+  learns afterwards lives in a getting-started checklist on Inicio rather
+  than in more welcome screens. Checklists measurably lift completion
+  (Hotjar's segmented checklist, +26 %), and each module brings its own
+  first steps from the catalog.
+- **Lead with the privacy promise.** Local-first security brands (eufy's
+  "your data stays on your device") put local processing in the first
+  sentence; Argus's promise card on the welcome says "Todo se queda en tu
+  casa" with the concrete what (cameras, voice, face, on your server).
+- **Long waits.** NN/g: show percent done for anything over ~10 s, never let
+  the bar go backwards, give time remaining generously, let long work run in
+  the background and announce completion. Hence: a determinate bar with
+  percent, MB of MB, speed and a rounded ETA ("unos 7 min"), a merge that
+  never decreases progress within a job, installs that run on the server
+  while the flow continues, and a toast plus the server's notification when
+  a job ends or fails. Pause, resume and cancel are always next to the bar.
+- Sources: nngroup.com/articles/progress-indicators,
+  nngroup.com/articles/designing-for-waits-and-interruptions,
+  smashingmagazine.com (animated progress indicators),
+  appcues.com/blog/mobile-onboarding-best-practices,
+  eufy.com/privacy-commitment, home-assistant.io/getting-started/integration.
+
+### The welcome
+
+- The hero (`features/auth/components/welcome-hero.tsx`) is the brand mark
+  (extracted to `brand-mark.tsx`, also used by the splash) inside three
+  concentric rings: a dashed `border` outer ring, an arena middle ring that
+  breathes (opacity and 3.5 % scale, 4.2 s), and a filled `accent-soft`
+  core. Three white chips (video, mic, scan-face) orbit on the outer ring
+  once a minute and counter-rotate so the icons stay upright: the house's
+  senses, all around Argus. Reduce motion stops the orbit and the breath; the
+  layout is identical. No glows: fills and borders only, in both themes.
+- Copy: "Hola, soy Argus", one line of what it does, the promise card (lock
+  tile + "Todo se queda en tu casa" + what stays), one primary "Comenzar",
+  "Tengo una invitación" on phones, and the network requirement. Staged
+  `BlurReveal` entrances as before. Phones stack hero over text; landscape
+  tablets (≥ 900) and desktops put the hero left and the text right.
+
+### Flows as data
+
+`features/auth/model/onboarding-flow.ts` (unit-tested in
+`tests/unit/onboarding-flow.test.ts`). The pairing, invitation, privacy,
+face, modules and call screens ask it for the next route and render
+`OnboardingSteps flow step`, which now shows the segments (done, current
+wider in arena, upcoming) and "Paso 4 de 5 · Módulos". The face step
+continues to `modules` for an Owner and to `meet` for an invited person; the
+entry gate's "server without an owner" redirect is the step after `pair`.
+The desktop sees only `pair`, so no stepper there. The old
+`ONBOARDING_STEPS` constant is gone.
+
+### Modules
+
+- **State.** `ModuleEngine` (`core/services/modules/`) keeps the catalog in
+  the view cache (`modules.catalog`, per user), so every screen paints the
+  last answer at once. It refetches on start, on every socket reconnect and
+  when the app returns to the foreground, applies `module_update` frames
+  (a full module, or `{modules:[{id,enabled}]}` for the enabled set, ignored
+  while `settled:false`), and polls `GET /modules` every 3 s only while a job
+  runs and the socket is down. A 404 marks the server as not offering
+  modules: the step and the settings page say so and nothing is hidden.
+- **Monotonic progress.** For one job id, `bytesDone` and `progress` only
+  grow; a job the app saw `done` is not reopened by an older answer;
+  failures and cancellations are taken as the server says.
+- **Choosing.** Cards show icon, name, one-line value, the size still to
+  download (or "Sin descargas"), the hardware verdict ("Tu servidor lo mueve
+  bien" / "Funcionará, pero más despacio" / "Tu servidor no alcanza…") with
+  its reasons worded from codes (or shown as given when the server already
+  sends a sentence), requirements that are still off, and badges (Incluido,
+  Activo, Recomendado, Próximamente). Recommended modules (verdict ok) start
+  selected. Selecting a module selects what it needs ("Lo necesita
+  Informes, así que también se instala"), deselecting drops what needs it.
+  The footer sums the bytes, shows the free disk (red when it would not fit
+  with 10 % headroom, which also disables the button) and says the install
+  continues on the server. "Instalar y continuar" queues one install per
+  module in dependency order and moves on; refusals are named in a toast and
+  retried from Configuración.
+- **Settings › Modules** (`/settings/modules`, Owner; reached from a summary
+  card at the top of Configuración and from the home chip): the same cards
+  with live progress and their actions — Pausar/Cancelar while installing,
+  Reanudar, Reintentar on failure (with a human message per reason code),
+  and the lifecycle actions below. Wide
+  windows add "Tu servidor" (free disk, memory each module asks for) and
+  "Cómo funciona". Provisioned components show the server command to run.
+- **Inicio.** `ModulesProgressChip` (Owner, while a job runs, is paused or
+  failed; opens Settings › Modules) and `GettingStartedCard` (the enabled
+  modules' first steps plus "Elige qué hará Argus" while only the core is
+  on; a tap marks a step done and opens its route; "Ocultar" hides the
+  current items, and new items of a module enabled later bring it back).
+  State per user in storage (`app.modules.getting-started.<userId>`).
+- **Gating.** Cameras, Seguridad and visitors belong to `surveillance`;
+  Agenda and Proyectos to `productivity`. Disabled modules disappear from
+  the nav, the compose button, the home sections (activity card, cameras
+  aside, guard card, Hoy, proyectos, the response strip) and the people
+  page's visitors; their routes redirect home; their synced rows stay.
+
+### Lifecycle: disable, uninstall, purge, reinstall (owner requirement, spec 8cceef29)
+
+- **Four states, said plainly**: "No instalado", "Activo", "Desactivado ·
+  tus datos se conservan" (hint: it comes back at once, no downloads) and
+  "Desinstalado · tus datos se conservan" (hint: reinstall and your data
+  comes back, also shown on the welcome cards). An older server without
+  `lifecycle` is read as active / disabled (files present) / not installed.
+- **Actions** (`lifecycleButtons`): active → Desactivar, Desinstalar;
+  disabled → Activar (the install route, instant), Desinstalar;
+  uninstalled with data → Reinstalar, Borrar mis datos; not installed →
+  Instalar. `POST /modules/{id}/release` is gone.
+- **Uninstall.** Refused locally before asking for `core`, a module an
+  enabled one requires ("Primero desactiva Informes…", the same words for a
+  server `MODULE_REQUIRED_BY`) and a running job. The app asks `GET
+  /modules/{id}/data`: nothing held → one confirmation; data held (or the
+  answer failed, so it errs on keeping) → a dialog listing it ("3 cámaras,
+  128 eventos, 2,1 GB de evidencias y archivos") with "Conservar mis datos"
+  selected and "Borrar también mis datos" beside it. Choosing to delete
+  shows that it is irreversible, asks for the module name typed (case,
+  accents and outer spaces ignored) and, when the Owner has a safety code,
+  asks for it through the shared PIN prompt after the dialog closes. The
+  purge is a server job, so its progress shows like an install.
+- **Local purge.** `dataPurgedAt` newer than this device's stamp → drop the
+  module's WatermelonDB tables, forget their sync cursors and pull them
+  again (rows created after a reinstall come back; purged ones do not). A
+  device offline during the purge does it on its next `GET /modules`.
+  Only the Owner's catalog carries `dataPurgedAt` today; other roles keep
+  their rows hidden behind the disabled module until the server sends the
+  stamp to them too (open question for the backend).
+
+### Pending
+
+- `GET /modules` and `GET /modules/{id}/data` are not in `HTTP_CONTRACTS`
+  yet: their zod schemas are ready (`moduleListSchema`, `moduleDataSchema`)
+  and join the map once MAIN records the goldens. The same goes for the
+  `POST /modules/{id}/{install,pause,resume,cancel,disable,uninstall}`
+  answers (`moduleActionResultSchema`).
+- `tests/unit/wire-vocabulary.test.ts` expects `ModuleUpdate = 12` in the
+  backend's `sync-operation.hxx`, and `tests/unit/modules-contract.test.ts`
+  compares `MODULE_API_PREFIXES` with `kModuleRoutes` in `role-access.hxx`
+  (skipped while the header does not have it).
+- Hardware reason and job failure codes are the ones argus-settings
+  confirmed (board, 22:20): hardware `ram_below_minimum`,
+  `ram_below_recommended`, `disk_insufficient`, `cpu_feature_missing`,
+  `gpu_missing`; jobs `hardware_insufficient`, `host_only`,
+  `health_check_failed`, `dependency_failed`, `owner_unreachable`,
+  `interrupted`, `disk_full`, `network`, `source_unavailable`,
+  `checksum_mismatch`. A code the app does not know reads as a calm generic
+  line. Enabled-set frames may carry a `version`; an older one than the
+  last applied is dropped.

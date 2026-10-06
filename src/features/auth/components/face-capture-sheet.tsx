@@ -4,12 +4,13 @@ import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { FaceError } from '@/features/auth/model/face-error';
+import type { OnboardingFlowId } from '@/features/auth/model/onboarding-flow';
 
 type FaceCaptureSheetProps = {
   enrolling: boolean;
+  flow: OnboardingFlowId;
   title: string;
   hint: string | null;
   error: FaceError | null;
@@ -23,6 +24,7 @@ type FaceCaptureSheetProps = {
 
 export function FaceCaptureSheet({
   enrolling,
+  flow,
   title,
   hint,
   error,
@@ -42,7 +44,7 @@ export function FaceCaptureSheet({
       onLayout={onLayout}>
       <View className="gap-3">
         {enrolling ? (
-          <OnboardingSteps current={ONBOARDING_STEPS.face} total={ONBOARDING_STEPS.total} />
+          <OnboardingSteps flow={flow} step="face" />
         ) : null}
         <Text variant="headline" numberOfLines={1} maxFontSizeMultiplier={1.25}>
           {title}

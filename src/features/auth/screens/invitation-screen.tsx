@@ -12,6 +12,8 @@ import { Redirect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { holdInviteToken } from '@/features/auth/model/invite-slot';
+import { nextHref } from '@/features/auth/model/onboarding-flow';
+import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 
 type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error' | 'mismatch';
 
@@ -48,7 +50,7 @@ function InvitationScreen() {
         }
         setPhase('accepted');
         holdInviteToken(qr.token);
-        router.replace({ pathname: '/welcome/privacy', params: { mode: 'invite-enroll' } });
+        router.replace(nextHref('invited', 'invitation', { native: IS_NATIVE }) ?? '/');
       });
     });
     return () => {
@@ -64,6 +66,7 @@ function InvitationScreen() {
   return (
     <CenteredScreen maxWidth={448} className="items-stretch">
       <View className="gap-1.5">
+        <OnboardingSteps flow="invited" step="invitation" className="mb-4" />
         <Text variant="title">{t('screens.invitation.title')}</Text>
         <Text variant="caption" className="text-foreground-secondary">
           {t('screens.invitation.subtitle')}

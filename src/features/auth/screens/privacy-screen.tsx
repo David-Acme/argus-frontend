@@ -4,33 +4,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PrivacyChoices } from '@/core/types';
 import { ConsentForm, NO_CHOICES, consentDraft } from '@/features/privacy';
 import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
-import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
+import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';
 import { clearInviteToken } from '@/features/auth/model/invite-slot';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toast } from '@/shared/libs/toast';
-
-const ENROLL_MODES = ['owner-enroll', 'invite-enroll'] as const;
-
-type EnrollMode = (typeof ENROLL_MODES)[number];
-
-const enrollModeOf = (value: string | undefined): EnrollMode =>
-  ENROLL_MODES.find((mode) => mode === value) ?? 'owner-enroll';
+import { IS_NATIVE } from '@/shared/constants';
 
 export default function PrivacyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const enrollMode = enrollModeOf(mode);
+  const flow = flowOf({ mode });
 
   const accept = (choices: PrivacyChoices) => {
     consentDraft.set(choices);
-    router.replace({ pathname: '/welcome/face', params: { mode: enrollMode } });
+    router.replace(nextHref(flow, 'privacy', { native: IS_NATIVE }) ?? '/');
   };
 
   const decline = () => {
     consentDraft.take();
-    if (enrollMode === 'invite-enroll') clearInviteToken();
+    if (flow === 'invited') clearInviteToken();
     toast.info(
       t('screens.privacy.consent.decline-onboarding-title'),
       t('screens.privacy.consent.decline-onboarding-description')
@@ -47,7 +41,7 @@ export default function PrivacyScreen() {
           variant="onboarding"
           initial={consentDraft.peek() ?? NO_CHOICES}
           header={
-            <OnboardingSteps current={ONBOARDING_STEPS.privacy} total={ONBOARDING_STEPS.total} />
+            <OnboardingSteps flow={flow} step="privacy" />
           }
           onAccept={accept}
           onDecline={decline}

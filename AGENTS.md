@@ -648,6 +648,61 @@ for Watermelon nor make an HTTP list request just because it mounted.
   adds `dark:bg-card-secondary`, because dark mode cannot show the shadow
   that separates them in light.
 
+### 12e. Onboarding flows and modules
+
+- **A flow is data.** `features/auth/model/onboarding-flow.ts` declares each
+  flow as steps `{ id, screen, label, when, skippable }`: Owner `pair →
+  privacy → face → modules → meet`, invited `invitation → privacy → face →
+  meet`. Screens never hard-code the next route or a step count: they call
+  `nextHref(flow, step, { native })` and render `<OnboardingSteps flow step />`,
+  which hides itself when a platform sees fewer than two steps (the desktop
+  only pairs). The flow travels in the route as `mode`
+  (`owner-enroll`/`invite-enroll`, privacy and face) or `flow` (the rest);
+  `flowOf` reads either. A new step is one entry in `ONBOARDING_FLOWS` and a
+  screen.
+- **Modules are server-authoritative.** `core/services/modules/` owns them:
+  `modules.service.ts` (`GET /modules`, `POST /modules/{id}/{action}`, zod in
+  `core/contracts/modules.contract.ts`), `module-state.ts` (pure merges:
+  progress never decreases for one job, a `done` job is never reopened by a
+  stale answer, frames, dependency plans, route → module) and
+  `module-engine.ts` (`ModuleEngine`, dependencies injected so it is
+  unit-tested). The engine paints the cached catalog (view cache
+  `modules.catalog`), refetches on start, reconnect and foreground, follows
+  `/sync` operation 12 (`ModuleUpdate`), polls every `MODULE_POLL_MS` only
+  while a job runs and the socket is down, and announces done/failed
+  transitions. UI reads `useModuleCatalog` / `useEnabledModules` /
+  `useModuleEnabled` (`shared/hooks/use-modules.ts`).
+- **Gating.** `MODULE_APP_ROUTES` names each module's screens and
+  `routeFallback(path, role, enabledModules)` sends a disabled module's
+  screens home; nav tabs, compose actions and home sections ask the same
+  question. An unknown enabled set (first launch, a server without
+  `/modules`) hides nothing. `MODULE_API_PREFIXES` mirrors the backend's
+  `kModuleRoutes` (`tests/unit/modules-contract.test.ts`); a 403
+  `MODULE_DISABLED` from any request is reported by `http-refusal.ts`, the
+  engine marks that module off and refetches, and the toast reads
+  `common.errors.module-disabled`. Synced data of a disabled module stays in
+  WatermelonDB.
+- `features/modules` holds the UI: the welcome step (`ModulesStepScreen`,
+  composed by `features/auth`'s `OnboardingModulesScreen`), Settings ›
+  Modules (`/settings/modules`, `ModulesScreen`), the settings summary card,
+  the home progress chip and getting-started checklist, and the global
+  `ModuleNotices`. Wording of sizes, speed, ETA, verdicts and failure reasons
+  is pure (`model/module-text.ts`), unit-tested.
+- **Lifecycle.** A module is `not_installed`, `active`, `disabled` or
+  `uninstalled_data_kept`; `model/module-lifecycle.ts` decides the wording,
+  the buttons (Activar, Desactivar, Desinstalar, Reinstalar, Borrar mis
+  datos, and pause/resume/cancel/retry while a job runs), the refusals
+  checked before asking (core, a module another one needs, a running job)
+  and the uninstall mode: no data → one `confirm`; data → `UninstallDialog`
+  with what `GET /modules/{id}/data` reports and "Conservar mis datos" by
+  default; purging needs the module name typed and, when the Owner has
+  one, the safety PIN (`askCurrentPin` from `features/safety`). When a
+  module's `dataPurgedAt` is newer than the stamp this device stored
+  (`app.modules.purged.<userId>`), the engine drops that module's synced
+  tables (`MODULE_SYNC_TABLES`) through `synchronizeService.dropTables`,
+  which forgets their cursors and pulls them again; the stamp is stored
+  only after the drop succeeded.
+
 ### 13. Avatar procedural (asistente visual)
 
 - El avatar de Argus es un **bubble-head 2D procedural** renderizado con
@@ -780,6 +835,8 @@ cd src-tauri && cargo check
 | `src-tauri/src/rtc/` | Desktop call in Rust: LiveKit SDK with `PlatformAudio` (WebRTC ADM + AEC/NS/AGC), pinned signalling transport, events on a Tauri `Channel` |
 | `src/core/services/invite/` | Invitaciones: `create` (Owner), `accept` pre-CA over a request pinned to the QR's CA fingerprint and host (`requestPinned`) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
+| `src/core/services/modules/` · `src/core/contracts/modules.contract.ts` | Selectable modules: HTTP + zod, pure merges, `ModuleEngine` (cache first, `/sync` op 12, poll only while a job runs offline), route/API → module maps |
+| `src/features/modules/` | Modules UI: welcome step, Settings › Modules, summary card, home progress chip and getting-started checklist, transition toasts |
 | `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
 | `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo); `pin` on a request trusts only a chain that leads to the given CA fingerprint and names the given host |
 | `src/core/database/` | WatermelonDB: adapters (`native`/`web`), `schema`, `migrations`, typed `collection()` |
@@ -798,7 +855,7 @@ cd src-tauri && cargo check
 | `src/features/cameras/components/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `InfiniteList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
-| `src/app/welcome/` | Onboarding routes (nested Stack with fade + progress), one-line re-exports of `features/auth` screens: `index` (greeting), `pairing/` (mobile QR / desktop code), `face/` (MLKit guidance, mobile-only), `voice/` (onboarding call, mobile-only) |
+| `src/app/welcome/` | Onboarding routes (nested Stack with fade), one-line re-exports of `features/auth` screens: `index` (the welcome hero), `pairing/`, `invitation/`, `privacy/`, `face/`, `modules/`, `voice/` (the last five mobile-only); order and step counts come from `features/auth/model/onboarding-flow.ts` |
 | `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
 | `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |
 | `src/app/qr/index.tsx` | QR scan route (`features/qr`; native-only, web → redirect to `/`) |

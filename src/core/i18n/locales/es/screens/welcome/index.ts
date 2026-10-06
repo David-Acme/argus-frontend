@@ -1,9 +1,21 @@
 export const welcome = {
-  title: 'Bienvenido a Argus',
-  subtitle: 'Tu asistente local, privado y a tu lado.',
+  title: 'Hola, soy Argus',
+  subtitle: 'Cuido tu casa, te ayudo con tu día y te escucho cuando me hablas.',
+  promise: 'Todo se queda en tu casa',
+  'promise-hint': 'Tus cámaras, tu voz y tu rostro se procesan en tu propio servidor. Nada sale a la nube.',
+  'hero-label': 'Argus en tu casa: cámaras, voz y rostro procesados en tu propio servidor',
   requirement: 'Necesitas tu servidor Argus encendido y este dispositivo en la misma red.',
   cta: 'Comenzar',
   'join-invitation': 'Tengo una invitación',
   'splash-slow': 'Argus está tardando más de lo normal en abrir.',
   'splash-keyring': 'Si el sistema te pide desbloquear el llavero, hazlo para continuar.',
+  skip: 'Saltar por ahora',
+  steps: {
+    pair: 'Vincular',
+    invitation: 'Invitación',
+    privacy: 'Privacidad',
+    face: 'Tu rostro',
+    modules: 'Módulos',
+    meet: 'Conoce a Argus',
+  },
 } as const;

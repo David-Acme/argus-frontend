@@ -10,6 +10,8 @@ import { faceErrorFromUnknown, type FaceError } from '@/features/auth/model/face
 import { clearInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { submitConsentDraft } from '@/features/auth/model/consent-submit';
+import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';
+import { IS_NATIVE } from '@/shared/constants';
 
 type Phase = 'guide' | 'countdown' | 'submitting';
 
@@ -112,7 +114,9 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
             redirectTimer.current = setTimeout(() => router.replace('/'), 2800);
             return;
           }
-          router.replace(enrolling ? '/welcome/voice' : '/');
+          const next = enrolling ? nextHref(flowOf({ mode }), 'face', { native: IS_NATIVE }) : null;
+          if (next) router.replace(next);
+          else router.replace('/');
           return;
         }
         const apiError = response.errors ?? {

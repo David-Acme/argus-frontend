@@ -8,3 +8,4 @@ export { default as OnboardingCallScreen } from './screens/onboarding-call-scree
 export { default as PairingScreen } from './screens/pairing-screen';
 export { default as PrivacyScreen } from './screens/privacy-screen';
 export { default as WelcomeScreen } from './screens/welcome-screen';
+export { default as OnboardingModulesScreen } from './screens/onboarding-modules-screen';

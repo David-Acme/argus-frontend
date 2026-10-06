@@ -8,7 +8,7 @@ import { FaceWebNotice } from '@/features/auth/components/face-web-notice';
 import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 import { useFaceCapture } from '@/features/auth/hooks/use-face-capture';
 import { IS_ANDROID, IS_NATIVE } from '@/shared/constants';
-import { ONBOARDING_STEPS } from '@/features/auth/constants/welcome';
+import { flowOf } from '@/features/auth/model/onboarding-flow';
 import { faceErrorMessage } from '@/features/auth/model/face-error';
 import { CameraView } from 'expo-camera';
 import { Redirect, useLocalSearchParams } from 'expo-router';
@@ -23,6 +23,7 @@ export default function FaceScreen() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const { mode = 'owner-enroll' } = useLocalSearchParams<{ mode?: string }>();
+  const flow = flowOf({ mode });
   const [sheetHeight, setSheetHeight] = useState(0);
   const {
     t,
@@ -61,11 +62,7 @@ export default function FaceScreen() {
         className="bg-background flex-1 justify-center px-6"
         style={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
         {enrolling ? (
-          <OnboardingSteps
-            current={ONBOARDING_STEPS.face}
-            total={ONBOARDING_STEPS.total}
-            className="mb-8 w-full max-w-md self-center"
-          />
+          <OnboardingSteps flow={flow} step="face" className="mb-8 w-full max-w-md self-center" />
         ) : null}
         <FaceIntro enrolling={enrolling} requesting={requesting} onStart={start} />
       </View>
@@ -131,6 +128,7 @@ export default function FaceScreen() {
 
       <FaceCaptureSheet
         enrolling={enrolling}
+        flow={flow}
         title={t(titleKey)}
         hint={hintKey ? t(hintKey) : null}
         error={error}
