@@ -1,7 +1,7 @@
 import { authService } from '@/core/services/auth.service';
 import { netService } from '@/core/services/net';
 import { useAuthStore, useLocaleStore } from '@/core/stores';
-import type { LanguagePreference, NetPairedInstance, ThemePreference, UserRole } from '@/core/types';
+import type { LanguagePreference, NetPairedInstance, ThemePreference } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
 import { SessionsSection } from '@/features/sessions';
@@ -18,11 +18,10 @@ import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
+import { roleLabelOf } from '@/shared/libs/role-label';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-
-const roleKey = (role: UserRole) => `screens.users.role-${role}` as const;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -149,7 +148,7 @@ export default function ProfileScreen() {
             {user?.name ?? '—'}
           </Text>
           <Text variant="label" className="text-foreground-secondary">
-            {user ? t(roleKey(user.role)) : '—'}
+            {user ? roleLabelOf(user.role, t) : '—'}
           </Text>
         </View>
       </View>

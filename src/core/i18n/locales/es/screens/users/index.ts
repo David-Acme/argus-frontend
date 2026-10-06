@@ -49,6 +49,7 @@ export const users = {
   'role-access-title': 'Qué puede hacer cada rol',
   'role-manages': 'Gestiona',
   'role-views': 'Ve',
+  'role-unknown': 'Rol sin reconocer',
   'role-module-off': 'Necesita {module}, que está apagado',
   'invite-role-off-title': 'No se puede invitar con este rol',
   'invite-role-off': 'Para invitar a alguien como {role} hace falta {module}. Actívalo primero.',

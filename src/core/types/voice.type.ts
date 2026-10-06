@@ -64,6 +64,8 @@ export type VoiceTranscriptLine = {
   text: string;
 };
 
+export type VoiceCameraView = 'live' | 'snapshot';
+
 export type VoiceSnapshot = {
   phase: VoicePhase;
   isActive: boolean;
@@ -73,6 +75,7 @@ export type VoiceSnapshot = {
   transcript: readonly VoiceTranscriptLine[];
   actions: readonly VoiceActionRecord[];
   liveCameraId: string | null;
+  liveCameraView: VoiceCameraView;
   error: string | null;
   transport: VoiceTransport;
   callReason: string | null;

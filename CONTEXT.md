@@ -2896,3 +2896,112 @@ and is omitted at 0. The dialog also says that personal-safety history
   `checksum_mismatch`. A code the app does not know reads as a calm generic
   line. Enabled-set frames may carry a `version`; an older one than the
   last applied is dropped.
+
+## Live context, capabilities and roles that grow (2026-10-06, CONTEXT wave)
+
+Backend plan: `backend/docs/history/plans/context-roles-tools-quality-plan.md`.
+The app stopped reading modules over HTTP and stopped guessing what a person
+may do; both come from the socket, and the app only hides what the server
+already refuses.
+
+### The context
+
+- `InitialInfo.info.context` (and `ContextUpdate`, operation 13, whenever the
+  role, a module or a capability changes) carries `{userId, role, roleActive,
+  capabilities[], roles[{id, module, active}], modules[{id, name{es,en},
+  summary{es,en}, intro{es,en}, roles[], enabled, lifecycle, dataPurgedAt}],
+  ownerCatalog?}`. `readContext` is tolerant (an `id` for `userId`, a `context`
+  wrapper, an absent `roleActive` reads as active so a missing flag never locks
+  anyone out); an unknown role reads as `role: null` and is granted nothing.
+- `ContextEngine` caches it per user (`app.context`) and the cache survives a
+  context resync (`viewCacheService.clear(ACCESS_CACHE_KEYS)`), because a role
+  change makes the server send the context and the resync wipe in an order the
+  app cannot rely on. A frame for another user, a malformed one or one older
+  than the last `version` is ignored. A 403 `MODULE_DISABLED` turns that module
+  off locally until the server's frame arrives.
+- `GET /modules`, its focus refetch and its 3 s poll are gone (the 404
+  "server without modules" state with them). Progress for the Owner still
+  arrives as `ModuleUpdate`; actions stay HTTP. Names and summaries keep both
+  languages in `ModuleRecord.texts` and are resolved at read time, so a
+  language change needs no frame.
+- Before any context exists only the core shows (`coreCapabilities(role)`,
+  a pinned copy of the baseline), and `EntryGate` holds the splash for up to
+  3 s on a module route so a deep link is not lost to a context that is
+  about to arrive.
+
+### Capabilities
+
+- `useCapabilities()` replaces `usePermissions`, `people-access` and the
+  per-role guard and camera helpers. The vocabulary is `CAPABILITY`, pinned
+  to the backend table by `capability-contract.test.ts`, which also pins every
+  role x module grant and the core fallback, so a capability added or moved in
+  the backend fails here.
+- Panic (`safety.panic`) is baseline: always on the profile and on the
+  inactive-role screen. Duress and codes need `safety.duress` and the module.
+  `reminders.read/write` are baseline for every role and mean the person's own
+  rows only (another user's reminder answers 404, no Owner override), so the app
+  offers no view of other people's reminders.
+- Call: the in-call context (camera names, guard situation, today's agenda)
+  and the assistant's actions follow `camera.view`, `guard.read`,
+  `agenda.read`, `guard.mode.set`; `app.open` accepts the new `modules` screen
+  (`?module=<id>` focuses a module and opens its data screen when it is
+  uninstalled with data kept) and `app.show_camera` accepts `view: snapshot`
+  (a still instead of live video). `/call` needs `assistant.voice`, or
+  `calls.join` when it answers a call.
+- Which module a notification kind, a settings owner, a privacy signal or a
+  call trigger belongs to is data in the app (`notification-modules.ts`,
+  `settings-modules.ts`, `PRIVACY_SIGNAL_MODULE`, `TRIGGER_MODULES`). The
+  privacy flag `applicable` is read when the server sends it and derived from
+  the active modules otherwise; stored choices are never changed by it.
+
+### The inactive role
+
+A role whose module is off keeps its account and the server grants it the
+baseline only. Inicio becomes `features/access`' screen: the welcome's orbit
+hero (now the shared `OrbitHero`, with the module's icon and a moon), "Tu rol
+de Guardia se activará cuando la casa vuelva a usar Vigilancia", panic, a
+request to the Owner, the profile and sign-out. Nothing else is offered, not
+even reminders (the server still allows them; the brief says profile and panic
+only), and the tabs, compose button and call route close.
+
+### Reminders on Inicio
+
+`features/reminders`: pending first and overdue marked, done ones folded,
+create, edit, complete and delete (undo toast) through `/reminder`, optimistic.
+The projection `reminder.list` is core and never gated. The agenda keeps
+showing reminders with productivity; Inicio's Today no longer repeats them.
+
+### Impact, requests, invitations and the activity
+
+- `DisableDialog` and the uninstall dialog start from `GET
+  /modules/{id}/impact` (what stops, who holds the role, invitations revoked,
+  data kept). Reassignment is sent as `reassign` and `MODULE_ROLES_HELD`
+  reopens the preview. The envelope reader keeps the list form of `errors`.
+- Role pickers (supervisor decision): invitations list an off module's roles
+  disabled with "needs X, which is off" and explain a 409 `ROLE_INACTIVE`;
+  role change lists them selectable, after the active ones, and says the role
+  will be on hold. An invitation closed by a module shows its reason to the
+  inviter and, through 410 `INVITATION_MODULE_DISABLED`, to the invitee.
+- Requests: any non-Owner asks (`modules.request`) once a day per module; the
+  Owner's `module_request` notification offers "Activar X" (POST install).
+- Activity (`/settings/activity`, Owner): period presets and a custom range,
+  module, person and action filters, keyset paging with the cursor the server
+  returns, sentences built from `{table, action, module, newData.event}`.
+
+### Welcome order (supervisor, interim)
+
+Owner: `pair -> privacy (consent + core signals, surveillance sent off) ->
+face -> modules -> module-privacy (only the signals of the modules chosen,
+second PUT /privacy/me) -> meet`. Consent stays before the biometric step
+(Ley 29733); the second step drops out, and its count, when no chosen module
+has signals. Invited: unchanged, all four signals, privacy before the face.
+
+### Local plumbing
+
+- Database version 9 adds `user_invitation.revoked_reason/revoked_module`
+  (migration tested on a version 8 database). The typed-routes file
+  `.expo/types/router.d.ts` is generated and ignored; the routes added here
+  (`/welcome/module-privacy`, `/settings/activity`) were added to it by hand in
+  this tree and a dev server regenerates them.
+- `shared/components/ui/orbit-hero.tsx` and `brand-mark.tsx` are shared by the
+  welcome and the inactive-role screen.

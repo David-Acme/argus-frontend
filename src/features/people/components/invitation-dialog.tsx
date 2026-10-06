@@ -11,6 +11,7 @@ import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { offModuleOfRole } from '@/shared/libs/capabilities';
 import { buildInvitationQr } from '@/shared/libs/invitation-qr';
+import { roleLabelOf } from '@/shared/libs/role-label';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
 import { useCallback, useMemo, useState } from 'react';
@@ -39,7 +40,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
       if (answer.errors?.code === 'ROLE_INACTIVE') {
         toast.error(
           t('screens.users.invite-role-off-title'),
-          t('screens.users.invite-role-off', { role: t(`screens.users.role-${role}`), module: moduleOff(role) ?? '' })
+          t('screens.users.invite-role-off', { role: roleLabelOf(role, t), module: moduleOff(role) ?? '' })
         );
       } else {
         toastServiceError(answer.errors);

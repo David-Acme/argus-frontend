@@ -3,6 +3,7 @@ import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn } from '@/core/types';
 import { accessView } from '@/shared/libs/capabilities';
+import { roleLabelOf } from '@/shared/libs/role-label';
 import { inactiveRoleCopy, inactiveRoleOf } from '@/features/access/model/inactive-role';
 import { accessFor, noContextView, viewFor } from './support/access-fixtures';
 
@@ -60,5 +61,14 @@ describe('inactive role', () => {
     if (!inactive) return;
     expect(inactiveRoleCopy(inactive, es).title).toBe('Esta versión de Argus no conoce tu rol');
     expect(view.capabilities.size).toBe(0);
+  });
+});
+
+describe('role labels', () => {
+  test('every known role has its name and an unknown one never shows its raw text', () => {
+    expect(roleLabelOf('owner', es)).toBe('Propietario');
+    expect(roleLabelOf('guard', en)).toBe('Guard');
+    expect(roleLabelOf('astronaut', es)).toBe('Rol sin reconocer');
+    expect(roleLabelOf('unknown', en)).toBe('Unrecognized role');
   });
 });

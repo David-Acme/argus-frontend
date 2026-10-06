@@ -1,5 +1,6 @@
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { InviteRole, MenuOption, TranslateFn, UserRole } from '@/core/types';
+import { roleLabelOf } from '@/shared/libs/role-label';
 
 export type ManagedUserDialogProps = {
   user: IPeopleDirectoryCacheRow;
@@ -36,7 +37,7 @@ export const roleOptions = (t: TranslateFn, moduleOff: RoleModuleOff = nothingOf
   activeFirst(
     (['owner', 'resident', 'guard', 'guest'] as const).map((role) => ({
       value: role,
-      label: t(`screens.users.role-${role}`),
+      label: roleLabelOf(role, t),
       description: hintOf(t, moduleOff(role)),
     }))
   );
@@ -47,7 +48,7 @@ export const inviteRoleOptions = (t: TranslateFn, moduleOff: RoleModuleOff = not
       const off = moduleOff(role);
       return {
         value: role,
-        label: t(`screens.users.role-${role}`),
+        label: roleLabelOf(role, t),
         description: hintOf(t, off),
         disabled: off !== null,
       };

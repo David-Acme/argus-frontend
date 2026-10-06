@@ -2,7 +2,7 @@ import type { ICameraCacheRow } from '@/core/interfaces';
 import { peopleAccessOf, type AccessView } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 
-export type AppScreen = 'home' | 'agenda' | 'projects' | 'cameras' | 'security' | 'people' | 'settings';
+export type AppScreen = 'home' | 'agenda' | 'projects' | 'cameras' | 'security' | 'people' | 'settings' | 'modules';
 
 const SCREEN_ROUTES: Readonly<Record<Exclude<AppScreen, 'people'>, string>> = {
   home: '/',
@@ -11,6 +11,7 @@ const SCREEN_ROUTES: Readonly<Record<Exclude<AppScreen, 'people'>, string>> = {
   cameras: '/cameras',
   security: '/security',
   settings: '/settings',
+  modules: '/settings/modules',
 };
 
 const normalized = (text: string): string =>
@@ -52,10 +53,15 @@ const peopleRoute = (view: AccessView): string | null => {
   return action === 'directory' ? '/people' : null;
 };
 
-export function routeForScreen(screen: string, view: AccessView): string | null {
+const MODULE_ID = /^[a-z0-9-]+$/;
+
+export function routeForScreen(screen: string, view: AccessView, moduleId?: string): string | null {
   const route = screen === 'people' ? peopleRoute(view) : ((SCREEN_ROUTES as Record<string, string>)[screen] ?? null);
-  return route !== null && routeFallback(route, view) === null ? route : null;
+  if (route === null || routeFallback(route, view) !== null) return null;
+  return screen === 'modules' && moduleId && MODULE_ID.test(moduleId) ? `${route}?module=${moduleId}` : route;
 }
+
+export const cameraViewOf = (value: unknown): 'live' | 'snapshot' => (value === 'snapshot' ? 'snapshot' : 'live');
 
 export function detectedClasses(data: Record<string, unknown>): string[] {
   const objects = Array.isArray(data.objects) ? data.objects : [];

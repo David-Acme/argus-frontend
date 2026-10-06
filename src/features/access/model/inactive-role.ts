@@ -1,5 +1,6 @@
 import type { TranslateFn, UserRole } from '@/core/types';
 import type { AccessView } from '@/shared/libs/capabilities';
+import { roleLabelOf } from '@/shared/libs/role-label';
 
 export type InactiveRole =
   | { kind: 'module'; role: UserRole; moduleId: string; moduleName: string }
@@ -27,7 +28,7 @@ export function inactiveRoleCopy(inactive: InactiveRole, t: TranslateFn): Inacti
   if (inactive.kind === 'module') {
     return {
       title: t('screens.access.inactive.title', {
-        role: t(`screens.users.role-${inactive.role}`),
+        role: roleLabelOf(inactive.role, t),
         module: inactive.moduleName,
       }),
       body: t('screens.access.inactive.body'),

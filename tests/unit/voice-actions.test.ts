@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { parseVoiceAction } from '@/features/voice/services/voice/voice-frames';
-import { callCameraEvent, detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
+import {
+  callCameraEvent,
+  cameraViewOf,
+  detectedClasses,
+  resolveCameraId,
+  routeForScreen,
+} from '@/features/voice/model/voice-actions';
 import { viewFor } from './support/access-fixtures';
 
 const cameras = [
@@ -40,6 +46,23 @@ describe('routeForScreen', () => {
     expect(routeForScreen('cameras', viewFor('owner', { modules: ['productivity'] }))).toBeNull();
     expect(routeForScreen('security', viewFor('guard', { modules: [] }))).toBeNull();
     expect(routeForScreen('home', viewFor('guard', { modules: [] }))).toBe('/');
+  });
+});
+
+describe('what the assistant can point to', () => {
+  test('the modules screen is the owner\'s, with the module it was asked about when it is a real id', () => {
+    expect(routeForScreen('modules', viewFor('owner'))).toBe('/settings/modules');
+    expect(routeForScreen('modules', viewFor('owner'), 'surveillance')).toBe('/settings/modules?module=surveillance');
+    expect(routeForScreen('modules', viewFor('owner'), '../x?y=1')).toBe('/settings/modules');
+    expect(routeForScreen('modules', viewFor('resident'), 'surveillance')).toBeNull();
+    expect(routeForScreen('home', viewFor('owner'), 'surveillance')).toBe('/');
+  });
+
+  test('a camera is shown live unless a snapshot was asked for', () => {
+    expect(cameraViewOf('snapshot')).toBe('snapshot');
+    expect(cameraViewOf('live')).toBe('live');
+    expect(cameraViewOf(undefined)).toBe('live');
+    expect(cameraViewOf(3)).toBe('live');
   });
 });
 

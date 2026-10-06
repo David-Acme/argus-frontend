@@ -581,8 +581,22 @@ for Watermelon nor make an HTTP list request just because it mounted.
 
 - Roles shape the local projection, not merely the buttons: Owner sees
   `/users` (users + invitation metadata); Guard sees `/people` (directory only);
-  Resident/Guest see their own profile only. Reuse
-  `shared/libs/people-access.ts` instead of scattering role checks.
+  Resident/Guest see their own profile only. Reuse `peopleAccessOf(view)` from
+  `shared/libs/capabilities.ts` instead of scattering role checks.
+- **One question, one hook: `useCapabilities()`** (`shared/hooks/use-capabilities.ts`).
+  What a person may use now is the backend's `capabilitiesFor(role, activeModules)`
+  list, which arrives in the live context (below); every screen asks it
+  (`has(CAPABILITY.cameraView)`, `moduleActive(id)`, `can(table, permission)`,
+  `guard`, `people`, `cameraActions`) and never reads a role or a module list
+  itself. The pure side is `shared/libs/capabilities.ts` (`accessView`,
+  `tableAllowed`, `isRoleOffered`, `offModuleOfRole`) and the vocabulary is
+  `shared/constants/capability.constant.ts`, pinned by
+  `tests/unit/capability-contract.test.ts` to the backend's
+  `packages/lib/auth/src/auth/capability.hxx`. Before any context exists only
+  the core is shown (`coreCapabilities(role)`); a role whose module is off
+  (`roleActive: false`) gets the baseline only, and a role this build does not
+  know gets nothing and is never defaulted to Guest. The server stays the
+  authority: the app only hides.
 - Every role manages its own sessions from `/profile` ("Sesiones y
   dispositivos", `features/sessions`); `/settings` is the Owner's alone. The
   Owner also sees every user's sessions in `/users` ("Dispositivos
@@ -590,8 +604,10 @@ for Watermelon nor make an HTTP list request just because it mounted.
   accounts off or back on. `sessionAccessForRole` mirrors the backend's
   `kSessionAccess`, owner rows included (`manageOthers`).
 - Which role may open which screen is one table, `shared/libs/route-access.ts`
-  (`routeFallback(path, role)`): the `(app)` layout redirects with it and the
-  nav hides the tabs it refuses. A screen never checks its own role.
+  (`routeFallback(path, view)`): the `(app)` layout redirects with it and the
+  nav hides the tabs it refuses. A screen never checks its own role. A role
+  whose module is off reaches only Inicio (the calm inactive-role screen,
+  `features/access`) and the profile.
 - The HTTP DTOs the app reads have zod schemas in `core/contracts/http.contract.ts`,
   each tied to its TypeScript type with `satisfies z.ZodType<T>`;
   `tests/unit/http-contract.test.ts` validates every recorded backend response
@@ -652,31 +668,38 @@ for Watermelon nor make an HTTP list request just because it mounted.
 
 - **A flow is data.** `features/auth/model/onboarding-flow.ts` declares each
   flow as steps `{ id, screen, label, when, skippable }`: Owner `pair →
-  privacy → face → modules → meet`, invited `invitation → privacy → face →
-  meet`. Screens never hard-code the next route or a step count: they call
-  `nextHref(flow, step, { native })` and render `<OnboardingSteps flow step />`,
+  privacy → face → modules → module-privacy → meet`, invited `invitation →
+  privacy → face → meet`. Screens never hard-code the next route or a step
+  count: they call `nextHref(flow, step, { native, moduleSignals })` and
+  render `<OnboardingSteps flow step />`,
   which hides itself when a platform sees fewer than two steps (the desktop
   only pairs). The flow travels in the route as `mode`
   (`owner-enroll`/`invite-enroll`, privacy and face) or `flow` (the rest);
   `flowOf` reads either. A new step is one entry in `ONBOARDING_FLOWS` and a
   screen.
-- **Modules are server-authoritative.** `core/services/modules/` owns them:
-  `modules.service.ts` (`GET /modules`, `POST /modules/{id}/{action}`, zod in
-  `core/contracts/modules.contract.ts`), `module-state.ts` (pure merges:
-  progress never decreases for one job, a `done` job is never reopened by a
-  stale answer, frames, dependency plans, route → module) and
-  `module-engine.ts` (`ModuleEngine`, dependencies injected so it is
-  unit-tested). The engine paints the cached catalog (view cache
-  `modules.catalog`), refetches on start, reconnect and foreground, follows
-  `/sync` operation 12 (`ModuleUpdate`), polls every `MODULE_POLL_MS` only
-  while a job runs and the socket is down, and announces done/failed
-  transitions. UI reads `useModuleCatalog` / `useEnabledModules` /
-  `useModuleEnabled` (`shared/hooks/use-modules.ts`).
+- **Modules and the user's context come from the socket.**
+  `core/services/context/` (`ContextEngine`) reads the context of
+  `InitialInfo` (`{userId, role, roleActive, capabilities, roles, modules,
+  ownerCatalog?}`) and the additive `ContextUpdate` (operation 13), caches it
+  per user (`app.context`, kept across a context resync) and hands the modules
+  to `core/services/modules/` (`ModuleEngine`: the catalog in the view cache
+  `modules.catalog`, `ModuleUpdate` (12) progress frames, the actions over HTTP
+  (`modules.service.ts`, zod in `core/contracts/modules.contract.ts`), pure
+  merges in `module-state.ts`). There is no `GET /modules` call, focus refetch
+  or poll: an offline device paints the cached context and reconciles on the
+  next frame. Names, summaries and the intro of a module arrive per language
+  and are resolved with the app language (`module-text.ts`). UI reads
+  `useCapabilities` (gating) and `useModuleCatalog` (the Owner's cards).
+  `startAccess` in `session.service.ts` starts both engines before the view
+  cache coordinator, and the coordinator reads nothing from the tables of a
+  module that is off (`ModuleSourceGate`, kept locally, pulled again when the
+  module returns).
 - **Gating.** `MODULE_APP_ROUTES` names each module's screens and
-  `routeFallback(path, role, enabledModules)` sends a disabled module's
-  screens home; nav tabs, compose actions and home sections ask the same
-  question. An unknown enabled set (first launch, a server without
-  `/modules`) hides nothing. `MODULE_API_PREFIXES` mirrors the backend's
+  `routeFallback(path, view)` sends a disabled module's screens home; nav tabs,
+  compose actions, home sections, the profile (panic always; duress and codes
+  with surveillance), call triggers, privacy signals, the Owner's settings
+  groups and the notification kinds ask the same question. Before the first
+  context only the core shows. `MODULE_API_PREFIXES` mirrors the backend's
   `kModuleRoutes` (`tests/unit/modules-contract.test.ts`); a 403
   `MODULE_DISABLED` from any request is reported by `http-refusal.ts`, the
   engine marks that module off and refetches, and the toast reads
@@ -708,6 +731,32 @@ for Watermelon nor make an HTTP list request just because it mounted.
   tables (`MODULE_SYNC_TABLES`) through `synchronizeService.dropTables`,
   which forgets their cursors and pulls them again; the stamp is stored
   only after the drop succeeded.
+- **Impact before disabling or uninstalling.** Both read
+  `GET /modules/{id}/impact?action=` first (`DisableDialog`, and the
+  `UninstallDialog` in its `simple`/`choose`/`erase` modes with
+  `ImpactSummary`): what stops, who holds a role of the module, the pending
+  invitations that will be revoked and what data stays. An uninstall with role
+  holders asks for a new role for each (`reassign`, from the roles the server
+  offers) and a 409 `MODULE_ROLES_HELD` reopens the preview. An older server
+  without the route falls back to the plain confirmation.
+- **Requests, roles and reasons.** A non-Owner asks the Owner for a module
+  (`POST /modules/{id}/request`, once a day per module: profile and the
+  inactive-role screen) and the Owner's `module_request` notification carries
+  an Activate action. Role pickers show the roles of an off module with a
+  hint (disabled for invitations, selectable and listed last for a role
+  change). An invitation closed because its module went off says so to the
+  inviter (`revokedReason`/`revokedModule`, local migration 9) and, as a 410
+  `INVITATION_MODULE_DISABLED`, to the invitee, whose invitation screen
+  explains it. The list form of `errors` is read by `readEnvelope`
+  (`IApiError.list`).
+- **Welcome.** The Owner consents (core signals only) before the face, and
+  after the modules answers for the signals of the modules chosen
+  (`module-privacy`, dropped from the flow and its count when none has
+  signals). Module cards carry the intro of the catalog.
+- **Reminders and the activity.** Reminders are core: `features/reminders`
+  (Inicio always; `/reminder` HTTP, optimistic, own rows only) and the Owner's
+  `features/activity` (`GET /sync/activity`, keyset paging, filters) are
+  slices of their own.
 
 ### 13. Avatar procedural (asistente visual)
 
@@ -841,8 +890,13 @@ cd src-tauri && cargo check
 | `src-tauri/src/rtc/` | Desktop call in Rust: LiveKit SDK with `PlatformAudio` (WebRTC ADM + AEC/NS/AGC), pinned signalling transport, events on a Tauri `Channel` |
 | `src/core/services/invite/` | Invitaciones: `create` (Owner), `accept` pre-CA over a request pinned to the QR's CA fingerprint and host (`requestPinned`) |
 | `src/core/stores/auth.store.ts` | Sesión (zustand, auto-bootstrap al importarse; tokens secure-storage, user storageService) |
-| `src/core/services/modules/` · `src/core/contracts/modules.contract.ts` | Selectable modules: HTTP + zod, pure merges, `ModuleEngine` (cache first, `/sync` op 12, poll only while a job runs offline), route/API → module maps |
-| `src/features/modules/` | Modules UI: welcome step, Settings › Modules, summary card, home progress chip and getting-started checklist, transition toasts |
+| `src/core/services/context/` · `src/core/contracts/context.contract.ts` | The live user context: `ContextEngine` reads `InitialInfo.context` and `ContextUpdate` (13), caches it per user and feeds the module catalog and the view-cache gate |
+| `src/shared/libs/capabilities.ts` · `src/shared/hooks/use-capabilities.ts` · `src/shared/constants/capability.constant.ts` | `useCapabilities()` and its pure side: the server's capability list, the active modules, roles of off modules, table permissions |
+| `src/core/services/modules/` · `src/core/contracts/modules.contract.ts` | Selectable modules: HTTP actions + zod, pure merges, `ModuleEngine` (the catalog from the context, `/sync` op 12 progress, no `GET /modules`), impact and request calls, route/API → module maps |
+| `src/features/modules/` | Modules UI: welcome step with intros, Settings › Modules (impact, uninstall with reassignment), requests, the Owner's Activate action, summary card, home progress chip and getting-started checklist, transition toasts |
+| `src/features/access/` | The calm screen of an inactive role (Inicio when `roleActive` is false) |
+| `src/features/reminders/` | Reminders on Inicio: list, create, edit, complete, delete |
+| `src/features/activity/` | The Owner's activity history |
 | `src/core/services/sync/` | Sync autónomo: bootstrap/altas/bajas (`createdAt`) + parches `audit_log`/`user_audit_log` por id (`audit-log-*`), mappers, DB utils y socket platform-split |
 | `modules/argus-net/` | Nitro module: `ArgusNet` (HTTP) + `ArgusSocket` (WebSocket nativo); `pin` on a request trusts only a chain that leads to the given CA fingerprint and names the given host |
 | `src/core/database/` | WatermelonDB: adapters (`native`/`web`), `schema`, `migrations`, typed `collection()` |
@@ -861,7 +915,7 @@ cd src-tauri && cargo check
 | `src/features/cameras/components/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
 | `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `InfiniteList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
-| `src/app/welcome/` | Onboarding routes (nested Stack with fade), one-line re-exports of `features/auth` screens: `index` (the welcome hero), `pairing/`, `invitation/`, `privacy/`, `face/`, `modules/`, `voice/` (the last five mobile-only); order and step counts come from `features/auth/model/onboarding-flow.ts` |
+| `src/app/welcome/` | Onboarding routes (nested Stack with fade), one-line re-exports of `features/auth` screens: `index` (the welcome hero), `pairing/`, `invitation/`, `privacy/`, `face/`, `modules/`, `module-privacy/`, `voice/` (the last six mobile-only); order and step counts come from `features/auth/model/onboarding-flow.ts` |
 | `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
 | `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |
 | `src/app/qr/index.tsx` | QR scan route (`features/qr`; native-only, web → redirect to `/`) |

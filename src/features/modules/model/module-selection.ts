@@ -76,6 +76,11 @@ export const sortModules = (modules: readonly ModuleRecord[]): ModuleRecord[] =>
     .sort((a, b) => KIND_ORDER[a.module.kind] - KIND_ORDER[b.module.kind] || a.index - b.index)
     .map(({ module }) => module);
 
+export function focusedFirst(modules: readonly ModuleRecord[], focusId: string | null | undefined): ModuleRecord[] {
+  const focused = modules.find((module) => module.id === focusId);
+  return focused ? [focused, ...modules.filter((module) => module !== focused)] : [...modules];
+}
+
 export function addedByOf(
   catalog: ModuleCatalog | null,
   selection: readonly string[],

@@ -74,6 +74,7 @@ import type {
   VoiceActionRecord,
   VoiceContext,
   VoicePhase,
+  VoiceCameraView,
   VoiceSnapshot,
   VoiceTranscriptLine,
 } from '@/core/types';
@@ -142,6 +143,7 @@ class VoiceService {
   private boundary: CallBoundary = INITIAL_CALL_BOUNDARY;
   private actions: readonly VoiceActionRecord[] = [];
   private liveCameraId: string | null = null;
+  private liveCameraView: VoiceCameraView = 'live';
   private session = 0;
   private phase: VoicePhase = 'idle';
   private sttText = '';
@@ -510,9 +512,11 @@ class VoiceService {
     this.notify();
   }
 
-  showCamera(cameraId: string | null): void {
-    if (this.liveCameraId === cameraId) return;
-    this.liveCameraId = this.active ? cameraId : null;
+  showCamera(cameraId: string | null, view: VoiceCameraView = 'live'): void {
+    const next = this.active ? cameraId : null;
+    if (this.liveCameraId === next && (next === null || this.liveCameraView === view)) return;
+    this.liveCameraId = next;
+    this.liveCameraView = next === null ? 'live' : view;
     this.notify();
   }
 
@@ -908,6 +912,7 @@ class VoiceService {
       transcript: this.transcript,
       actions: this.actions,
       liveCameraId: this.liveCameraId,
+      liveCameraView: this.liveCameraView,
       error: this.error,
       transport: this.transport,
       callReason: this.callReason,

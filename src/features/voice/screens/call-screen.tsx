@@ -57,6 +57,7 @@ function CallScreen() {
           <CallCameraCard
             cameraId={liveCamera.id}
             name={liveCamera.name}
+            view={call.liveCameraView}
             onClose={closeCamera}
             onOpen={openCamera}
           />

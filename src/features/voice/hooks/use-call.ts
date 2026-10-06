@@ -46,6 +46,7 @@ export function useCall(options: VoiceStartOptions = {}) {
     transcript: session.transcript,
     actions: session.actions,
     liveCameraId: session.liveCameraId,
+    liveCameraView: session.liveCameraView,
     callReason: session.callReason,
     responseId: session.responseId,
     waitingCall: session.waitingCall,

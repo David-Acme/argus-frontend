@@ -1,10 +1,11 @@
 import { View } from 'react-native';
-import type { ModuleImpact, TranslationKey } from '@/core/types';
+import type { ModuleImpact } from '@/core/types';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Icon } from '@/shared/components/ui/icon';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { roleLabelOf } from '@/shared/libs/role-label';
 import {
   holderName,
   invitationsOf,
@@ -22,24 +23,9 @@ type ImpactSummaryProps = {
   onChoose: (userId: number, role: string) => void;
 };
 
-const roleKey = (role: string): TranslationKey | null => {
-  switch (role) {
-    case 'owner':
-    case 'resident':
-    case 'guard':
-    case 'guest':
-      return `screens.users.role-${role}`;
-    default:
-      return null;
-  }
-};
-
 export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose }: ImpactSummaryProps) {
   const { t, language } = useTranslation();
-  const roleLabel = (role: string) => {
-    const key = roleKey(role);
-    return key ? t(key) : role;
-  };
+  const roleLabel = (role: string) => roleLabelOf(role, t);
   const invitations = invitationsOf(impact.invitations);
   const reassign = needsReassign(impact);
   const options = impact.reassignRoles.map((role) => ({ value: role, label: roleLabel(role) }));

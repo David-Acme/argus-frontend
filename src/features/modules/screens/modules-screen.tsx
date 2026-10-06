@@ -1,4 +1,5 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import type { ModuleAction, ModuleRecord } from '@/core/types';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
@@ -17,7 +18,7 @@ import { DisableDialog } from '@/features/modules/components/disable-dialog';
 import { useModuleDisable } from '@/features/modules/hooks/use-module-disable';
 import { useModuleUninstall } from '@/features/modules/hooks/use-module-uninstall';
 import { lifecycleButtons } from '@/features/modules/model/module-lifecycle';
-import { sortModules } from '@/features/modules/model/module-selection';
+import { focusedFirst, sortModules } from '@/features/modules/model/module-selection';
 import { formatMegabytes } from '@/features/modules/model/module-text';
 
 type ModuleActionsProps = {
@@ -127,8 +128,18 @@ export default function ModulesScreen() {
   const { catalog, modules, status, pending, run } = useModules();
   const uninstall = useModuleUninstall(catalog);
   const disable = useModuleDisable();
-  const sorted = sortModules(modules);
+  const { module: focusId } = useLocalSearchParams<{ module?: string }>();
+  const sorted = focusedFirst(sortModules(modules), focusId);
+  const opened = useRef(false);
+  const focused = focusId ? modules.find((module) => module.id === focusId) : undefined;
+  const startUninstall = uninstall.start;
   const back = () => (router.canGoBack() ? router.back() : router.replace('/settings'));
+
+  useEffect(() => {
+    if (opened.current || !focused || focused.lifecycle !== 'uninstalled_data_kept') return;
+    opened.current = true;
+    void startUninstall(focused);
+  }, [focused, startUninstall]);
 
   return (
     <>

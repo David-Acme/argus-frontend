@@ -64,9 +64,12 @@ export const voice = {
       security: 'Vigilancia',
       people: 'Personas',
       settings: 'Ajustes',
+      modules: 'Módulos',
     },
   },
   camera: {
+    'snapshot-loading': 'Cargando la imagen…',
+    'snapshot-failed': 'No se pudo cargar la imagen',
     open: 'Abrir la cámara {name}',
     close: 'Cerrar la cámara',
   },

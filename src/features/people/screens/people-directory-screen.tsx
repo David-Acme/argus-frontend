@@ -16,12 +16,12 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { roleLabelOf } from '@/shared/libs/role-label';
 import { PersonDetailsDialog } from '@/features/people/components/person-details-dialog';
 import { usePortraitVerification } from '@/features/people/hooks/use-portrait-verification';
 
 const ROLE_FILTERS: readonly (UserRole | 'all')[] = ['all', 'resident', 'guard', 'guest', 'owner'];
 
-const roleKey = (role: UserRole) => `screens.users.role-${role}` as const;
 
 const PERSON_ROW_HEIGHT = 60;
 
@@ -54,7 +54,7 @@ export default function PeopleDirectoryScreen() {
       <ListRow
         icon="user"
         title={[person.name, person.lastName].filter(Boolean).join(' ')}
-        subtitle={`${t(roleKey(person.role))} · ${person.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
+        subtitle={`${roleLabelOf(person.role, t)} · ${person.isActive ? t('screens.users.active') : t('screens.users.inactive')}`}
         chevron
         onPress={() => openPerson(person)}
       />
@@ -88,7 +88,7 @@ export default function PeopleDirectoryScreen() {
             <FilterChips
               options={ROLE_FILTERS.map((item) => ({
                 value: item,
-                label: item === 'all' ? t('screens.users.all-roles') : t(roleKey(item)),
+                label: item === 'all' ? t('screens.users.all-roles') : roleLabelOf(item, t),
               }))}
               value={role}
               onChange={setRole}
@@ -117,7 +117,7 @@ export default function PeopleDirectoryScreen() {
 
       <PersonDetailsDialog
         person={selected}
-        roleLabel={selected ? t(roleKey(selected.role)) : ''}
+        roleLabel={selected ? roleLabelOf(selected.role, t) : ''}
         portraitUri={portrait.uri}
         portraitLoading={portrait.loading}
         onVerify={() => {

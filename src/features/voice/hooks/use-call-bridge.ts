@@ -15,7 +15,13 @@ import {
   CALL_SITUATION_EVENTS,
 } from '@/features/voice/constants/voice';
 import { buildCallSituation, spokenDetail, type CallSituationEvent } from '@/features/voice/model/call-situation';
-import { callCameraEvent, detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
+import {
+  callCameraEvent,
+  cameraViewOf,
+  detectedClasses,
+  resolveCameraId,
+  routeForScreen,
+} from '@/features/voice/model/voice-actions';
 import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
@@ -182,12 +188,16 @@ export function useCallBridge(): void {
           toast.error(t('screens.voice.actions.camera-missing'));
           return failed(t('screens.voice.actions.detail.camera-missing'));
         }
-        if (onCallScreen.current) voiceService.showCamera(id);
+        if (onCallScreen.current) voiceService.showCamera(id, cameraViewOf(action.arguments.view));
         else router.push(`/cameras/${id}`);
         return { ok: true, detail: null };
       }
       if (action.name === 'app.open') {
-        const route = routeForScreen(String(action.arguments.screen ?? ''), accessRef.current);
+        const route = routeForScreen(
+          String(action.arguments.screen ?? ''),
+          accessRef.current,
+          typeof action.arguments.module === 'string' ? action.arguments.module : undefined
+        );
         if (!route) return failed(t('screens.voice.actions.detail.no-access'));
         router.push(route as never);
         return { ok: true, detail: null };

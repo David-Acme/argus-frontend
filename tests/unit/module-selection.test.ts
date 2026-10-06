@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { ModuleCatalog, ModuleJob, ModuleRecord } from '@/core/types';
 import {
+  focusedFirst,
   addedByOf,
   defaultSelection,
   isChoosable,
@@ -159,5 +160,24 @@ describe('getting started', () => {
   test('a stored state is read defensively', () => {
     expect(readChecklistState(null)).toEqual(EMPTY_CHECKLIST);
     expect(readChecklistState({ hidden: ['a', 3], done: 'x' })).toEqual({ hidden: ['a'], done: [] });
+  });
+});
+
+describe('the module a link points to', () => {
+  const first = module({ id: 'core', kind: 'core' });
+  const second = module({ id: 'surveillance' });
+  const third = module({ id: 'productivity' });
+
+  test('comes first and the others keep their order', () => {
+    expect(focusedFirst([first, second, third], 'productivity').map((item) => item.id)).toEqual([
+      'productivity',
+      'core',
+      'surveillance',
+    ]);
+  });
+
+  test('an unknown or missing module changes nothing', () => {
+    expect(focusedFirst([first, second], 'agronomy').map((item) => item.id)).toEqual(['core', 'surveillance']);
+    expect(focusedFirst([first, second], undefined).map((item) => item.id)).toEqual(['core', 'surveillance']);
   });
 });
