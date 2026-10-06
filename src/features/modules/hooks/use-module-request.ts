@@ -49,6 +49,10 @@ export function useModuleRequest() {
         toast.info(t('screens.modules.request.active', { name }));
         return;
       }
+      if (outcome === 'installing') {
+        toast.info(t('screens.modules.request.installing', { name }));
+        return;
+      }
       toastServiceError(response.errors, t('screens.modules.request.failed'));
     },
     [key, requested, t]

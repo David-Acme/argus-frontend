@@ -8,6 +8,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { roleLabelOf } from '@/shared/libs/role-label';
 import {
   holderName,
+  impactIsPartial,
   invitationsOf,
   keepsRunningOf,
   needsReassign,
@@ -34,6 +35,15 @@ export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose
 
   return (
     <View className="gap-4">
+      {impactIsPartial(impact) ? (
+        <View accessibilityRole="alert" className="bg-warning/15 flex-row items-start gap-2 rounded-2xl p-3">
+          <Icon name="triangle-alert" className="text-warning-strong mt-0.5 size-4" />
+          <Text variant="caption" className="min-w-0 flex-1">
+            {t('screens.modules.impact.partial')}
+          </Text>
+        </View>
+      ) : null}
+
       <View className="bg-surface-secondary dark:bg-card-secondary gap-2 rounded-2xl p-3">
         <Text variant="label">{t('screens.modules.impact.stops-title')}</Text>
         {impact.stops.length === 0 ? (

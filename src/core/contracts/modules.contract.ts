@@ -345,6 +345,7 @@ export const moduleImpactSchema = z
       )
       .catch([]),
     keepsRunning: keepsRunningList,
+    unreachable: z.array(z.string()).catch([]),
     roleHolders: z
       .array(
         z.object({

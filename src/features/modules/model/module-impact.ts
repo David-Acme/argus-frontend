@@ -75,6 +75,8 @@ export function keepsRunningOf(impact: ModuleImpact, language: LanguageCode): Ke
   });
 }
 
+export const impactIsPartial = (impact: ModuleImpact): boolean => impact.unreachable.length > 0;
+
 export const impactHasEffects = (impact: ModuleImpact): boolean =>
   impact.stops.length > 0 ||
   impact.keepsRunning.length > 0 ||

@@ -2,12 +2,13 @@ import type { IServiceResponse } from '@/core/interfaces';
 import type { ModuleRecord, ModuleRequestAnswer } from '@/core/types';
 import { MODULE_IDS } from '@/shared/constants';
 
-export type RequestOutcome = 'sent' | 'again' | 'active' | 'soon' | 'failed';
+export type RequestOutcome = 'sent' | 'again' | 'active' | 'installing' | 'soon' | 'failed';
 
 export function requestOutcome(response: IServiceResponse<ModuleRequestAnswer>): RequestOutcome {
   if (response.ok) return response.info?.duplicate ? 'again' : 'sent';
   if (response.errors?.code === 'MODULE_COMING_SOON') return 'soon';
   if (response.errors?.code === 'CONFLICT') return 'active';
+  if (response.errors?.code === 'MODULE_JOB_RUNNING') return 'installing';
   return 'failed';
 }
 

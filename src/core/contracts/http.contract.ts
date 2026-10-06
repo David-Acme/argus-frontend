@@ -12,7 +12,13 @@ import { incidentResponseListSchema } from '@/core/contracts/response.contract';
 import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
 import { presenceOverviewSchema } from '@/core/contracts/presence.contract';
 import { voiceprintDirectorySchema } from '@/core/contracts/voiceprint.contract';
-import { moduleDataAnswerSchema, moduleListSchema } from '@/core/contracts/modules.contract';
+import { activityPageSchema } from '@/core/contracts/activity.contract';
+import {
+  moduleDataAnswerSchema,
+  moduleImpactSchema,
+  moduleListSchema,
+  moduleRequestSchema,
+} from '@/core/contracts/modules.contract';
 import type {
   IApiError,
   ICameraCapabilities,
@@ -462,4 +468,8 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /notification/responses': incidentResponseListSchema,
   'GET /modules': moduleListSchema,
   'GET /modules/{1}/data': moduleDataAnswerSchema,
+  'GET /modules/{1}/impact': moduleImpactSchema,
+  'POST /modules/{1}/request': moduleRequestSchema,
+  'GET /sync/activity': activityPageSchema,
+  'PATCH /user/{1}': userManagementRecordSchema,
 };

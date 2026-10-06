@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { readActivityPage } from '@/core/contracts/activity.contract';
 import { envelopeSchema, HTTP_CONTRACTS } from '@/core/contracts/http.contract';
+import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 
 type Probe = {
   method: string;
@@ -36,6 +38,8 @@ const recorded = probes.filter(
   (probe) => probe.route !== '/health' && probe.response.json !== null && typeof probe.response.json === 'object'
 );
 
+const AWAITING_GOLDEN: ReadonlySet<string> = new Set(['GET /modules/{1}/impact', 'POST /modules/{1}/request']);
+
 describe('backend fixtures honour the app contracts', () => {
   test('there are recordings to check', () => {
     expect(recorded.length).toBeGreaterThan(50);
@@ -48,12 +52,19 @@ describe('backend fixtures honour the app contracts', () => {
     expect(failures).toEqual([]);
   });
 
+  const successesOf = (route: string) =>
+    recorded.filter(
+      (probe) =>
+        `${probe.method} ${probe.route}` === route && probe.response.status >= 200 && probe.response.status < 300
+    );
+
   for (const [route, schema] of Object.entries(HTTP_CONTRACTS)) {
+    if (AWAITING_GOLDEN.has(route) && successesOf(route).length === 0) {
+      test.todo(`${route} matches the shape the app reads (no golden recorded yet)`, () => undefined);
+      continue;
+    }
     test(`${route} matches the shape the app reads`, () => {
-      const successes = recorded.filter(
-        (probe) =>
-          `${probe.method} ${probe.route}` === route && probe.response.status >= 200 && probe.response.status < 300
-      );
+      const successes = successesOf(route);
       expect(successes.length).toBeGreaterThan(0);
       for (const probe of successes) {
         const envelope = envelopeSchema.parse(probe.response.json);
@@ -62,4 +73,38 @@ describe('backend fixtures honour the app contracts', () => {
       }
     });
   }
+
+  test('a route waiting for its golden leaves the waiting list once it is recorded', () => {
+    const recordedNow = [...AWAITING_GOLDEN].filter((route) => successesOf(route).length > 0);
+    expect(recordedNow).toEqual([]);
+  });
+
+  test('every route waiting for a golden has a contract to check it with', () => {
+    expect([...AWAITING_GOLDEN].filter((route) => !(route in HTTP_CONTRACTS))).toEqual([]);
+  });
+
+  test('every activity item the backend recorded is read, none is dropped', () => {
+    const pages = successesOf('GET /sync/activity');
+    expect(pages.length).toBeGreaterThan(0);
+    for (const probe of pages) {
+      const info = unmask(envelopeSchema.parse(probe.response.json).info) as { items: unknown[] };
+      expect(info.items.length).toBeGreaterThan(0);
+      expect(readActivityPage(info)?.rows).toHaveLength(info.items.length);
+    }
+  });
+
+  test('the privacy answers carry the applicable signals the app reads', () => {
+    for (const [route, schema] of [
+      ['GET /privacy/me', privacyMeSchema],
+      ['GET /privacy/users', privacyDirectorySchema],
+    ] as const) {
+      const answers = successesOf(route);
+      expect(answers.length).toBeGreaterThan(0);
+      for (const probe of answers) {
+        const info = unmask(envelopeSchema.parse(probe.response.json).info);
+        const read = schema.parse(info);
+        expect(read.applicable).toEqual({ presence: true, faceCameras: true, voiceLearning: true, cameraAudio: true });
+      }
+    }
+  });
 });

@@ -171,6 +171,7 @@ export type ModuleImpact = {
   refusal: { code: string; message: string } | null;
   stops: ModuleImpactStop[];
   keepsRunning: ModuleKeepsRunning[];
+  unreachable: string[];
   roleHolders: ModuleRoleHolder[];
   roleEffect: ModuleRoleEffect;
   reassignRoles: string[];

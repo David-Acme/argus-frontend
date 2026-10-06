@@ -49,6 +49,20 @@ describe('readEnvelope', () => {
     expect(readEnvelope(409, envelope({ errors: [{ code: 1 }] })).errors?.code).toBe('CONFLICT');
   });
 
+  test('the refusal of an uninstall while people hold the role keeps one holder per entry', () => {
+    const list = [
+      { code: 'MODULE_ROLES_HELD', message: 'People hold roles of this module; give each a new role to uninstall it' },
+      { code: 'ROLE_HOLDER', message: '7:guard' },
+      { code: 'ROLE_HOLDER', message: '9:guard' },
+    ];
+    const read = readEnvelope(409, envelope({ status: 409, info: null, errors: list }));
+    expect(read.errors?.code).toBe('MODULE_ROLES_HELD');
+    expect(read.errors?.list?.filter((entry) => entry.code === 'ROLE_HOLDER').map((entry) => entry.message)).toEqual([
+      '7:guard',
+      '9:guard',
+    ]);
+  });
+
   test('a 2xx answer that carries errors is a refusal', () => {
     const errors = { code: 'CONFLICT', message: 'Already changed' };
     expect(readEnvelope(200, envelope({ info: null, errors })).ok).toBe(false);

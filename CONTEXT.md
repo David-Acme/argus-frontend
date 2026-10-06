@@ -3014,8 +3014,37 @@ showing reminders with productivity; Inicio's Today no longer repeats them.
   going until someone attends them) is shown as "Sigue funcionando" from the
   JSON in both dialogs, in the app's language with the other as fallback, and
   no sentence of it is written in the app. A missing or malformed field reads
-  as nothing to keep. Wired to the posted shape; the route itself is verified
-  against the committed code and goldens when EFFECTS commits it.
+  as nothing to keep. `impact.unreachable` (the owners that did not answer)
+  shows a "this preview may be incomplete" notice in both dialogs, so a partial
+  preview is never presented as complete.
+- Verified against the committed backend (settings `f809d687`, identity
+  `bd8e71ff`, notification `2b547bb5`, `response-module-impact-dto.cc`,
+  `module-engine-impact.cc`, `uninstall-module-dto.cc`): the impact answer
+  (`stops` in the module's `effects` order with `count` null when no owner
+  reported it, `roleEffect` none/inactive/reassign_required, `refusal` MODULE_CORE,
+  MODULE_REQUIRED_BY or MODULE_JOB_RUNNING), `reassign` as `{ "<userId>": "<role>" }`
+  with no Owner role, the 409 `MODULE_ROLES_HELD` list (`ROLE_HOLDER`
+  `<userId>:<role>` per holder), the request answer `{moduleId, requested: true,
+  duplicate}` and its refusals (409 `MODULE_COMING_SOON`, `MODULE_JOB_RUNNING`
+  shown as "it is being installed", `CONFLICT` already on, 503), the Owner's
+  `module_request` notification (type and kind `module_request`, data `moduleId`,
+  `requestedByName`, `action: enable_module`; the Enable button posts the
+  install; the kind is core, `kModuleKinds` has no request kind), the 410
+  `INVITATION_MODULE_DISABLED` list (`MODULE_ID` entry) on resolve and
+  register, the invitation rows' `revokedReason`/`revokedModule`, the privacy
+  `applicable` object on `GET /privacy/me` and `/privacy/users`, and
+  `GET /sync/activity` (module, userId, action, from, to in seconds, limit up
+  to 200, cursor, items and `nextCursor`).
+- Goldens (backend `b6cf00ce`): `GET /sync/activity` (owner 200),
+  `GET /privacy/me` and `/privacy/users` (with `applicable`) and
+  `PATCH /user/{id}` (with `roleActive`) are recorded and checked field by
+  field (`tests/unit/http-contract.test.ts` also fails if an activity item is
+  dropped by the reader). `GET /modules/{id}/impact` and
+  `POST /modules/{id}/request` have a contract in `HTTP_CONTRACTS` but only
+  error recordings (422 without `action`, 404 unknown module), so they wait in
+  `AWAITING_GOLDEN` (shown as todo); once a 200 is recorded the test checks it
+  and fails until the route leaves the list. The 409s (`MODULE_COMING_SOON`,
+  `MODULE_ROLES_HELD`) and the reminder success rows are unrecorded too.
 - Role pickers (supervisor decision): invitations list an off module's roles
   disabled with "needs X, which is off" and explain a 409 `ROLE_INACTIVE`;
   role change lists them selectable, after the active ones, and says the role

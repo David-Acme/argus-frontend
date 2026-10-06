@@ -37,6 +37,7 @@ describe('module requests', () => {
     expect(requestOutcome(answer({ moduleId: 'm', requested: true, duplicate: true }))).toBe('again');
     expect(requestOutcome(answer(null, 'MODULE_COMING_SOON'))).toBe('soon');
     expect(requestOutcome(answer(null, 'CONFLICT'))).toBe('active');
+    expect(requestOutcome(answer(null, 'MODULE_JOB_RUNNING'))).toBe('installing');
     expect(requestOutcome(answer(null, 'SERVICE_UNAVAILABLE'))).toBe('failed');
   });
 

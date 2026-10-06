@@ -6,6 +6,7 @@ import type { ModuleImpact, TranslateFn } from '@/core/types';
 import {
   holderName,
   impactHasEffects,
+  impactIsPartial,
   invitationsOf,
   keepsRunningOf,
   needsReassign,
@@ -42,6 +43,7 @@ const wire = {
   ],
   data: { owners: [{ owner: 'camera', reachable: true, reported: true, items: [{ kind: 'cameras', count: 3 }], bytes: 1000 }] },
   filesBytes: 2_400_000_000,
+  unreachable: [] as string[],
   keepsRunning: [
     {
       id: 'safety_alerts',
@@ -122,6 +124,22 @@ describe('what keeps running', () => {
     const quiet = { stops: [], roleHolders: [], invitations: [] };
     expect(impactHasEffects(read({ ...quiet, keepsRunning: [] }))).toBe(false);
     expect(impactHasEffects(read(quiet))).toBe(true);
+  });
+});
+
+describe('a partial preview', () => {
+  test('names no owner when every service answered and flags the preview as partial when one did not', () => {
+    expect(read().unreachable).toEqual([]);
+    expect(impactIsPartial(read())).toBe(false);
+    const partial = read({ unreachable: ['identity', 'guard'] });
+    expect(partial.unreachable).toEqual(['identity', 'guard']);
+    expect(impactIsPartial(partial)).toBe(true);
+  });
+
+  test('a missing or malformed field reads as complete rather than failing the preview', () => {
+    const { unreachable: _omitted, ...without } = wire;
+    expect(readModuleImpact(without)?.unreachable).toEqual([]);
+    expect(read({ unreachable: 'identity' }).unreachable).toEqual([]);
   });
 });
 
