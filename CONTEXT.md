@@ -2875,12 +2875,15 @@ and is omitted at 0. The dialog also says that personal-safety history
 
 ### Pending
 
-- `GET /modules` is in `HTTP_CONTRACTS` and checked against the recorded
-  owner, resident and guest answers (backend `scripts/fixtures/http/settings.json`).
-  `GET /modules/{id}/data` and the `POST /modules/{id}/*` actions have only
-  refusals recorded (the sandbox probes an unknown module id, 404), so their
-  schemas (`moduleDataSchema`, `moduleActionResultSchema`) join the map once
-  a successful answer is recorded.
+- `GET /modules` (owner, resident and guest recordings) and
+  `GET /modules/{id}/data` (the Owner's answer for `productivity`) are in
+  `HTTP_CONTRACTS` and checked against backend
+  `scripts/fixtures/http/settings.json`.
+- The `POST /modules/{id}/{install,pause,resume,cancel,disable,uninstall}`
+  actions stay out of `HTTP_CONTRACTS` on purpose: they change the server's
+  state, so recording a success would make the goldens depend on the order
+  they run in. Their answers are parsed by `moduleActionResultSchema` and
+  covered by `tests/unit/modules-contract.test.ts` with documented shapes.
 - `tests/unit/wire-vocabulary.test.ts` (`ModuleUpdate = 12`, the `/modules`
   port) and `tests/unit/modules-contract.test.ts` (`MODULE_API_PREFIXES`
   against `kModuleRoutes`) pass against the committed backend.

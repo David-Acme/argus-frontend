@@ -225,8 +225,11 @@ export const moduleDataSchema = z.array(
   })
 ) satisfies z.ZodType<ModuleDataOwner[]>;
 
+export const moduleDataAnswerSchema = z
+  .union([moduleDataSchema, z.object({ owners: moduleDataSchema }).transform((answer) => answer.owners)])
+  .transform((owners): ModuleDataOwner[] => owners) satisfies z.ZodType<ModuleDataOwner[]>;
+
 export const readModuleData = (info: unknown): ModuleDataOwner[] | null => {
-  const list = typeof info === 'object' && info !== null && !Array.isArray(info) && 'owners' in info ? info.owners : info;
-  const parsed = moduleDataSchema.safeParse(list);
+  const parsed = moduleDataAnswerSchema.safeParse(info);
   return parsed.success ? parsed.data : null;
 };
