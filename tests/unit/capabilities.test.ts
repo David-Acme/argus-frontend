@@ -14,6 +14,7 @@ import {
 } from '@/shared/libs/capabilities';
 import { roleAreas } from '@/features/people/model/role-areas';
 import { inviteRoleOptions, roleOptions } from '@/features/people/components/user-options';
+import { hasAccess, sessionAccessForRole } from '@/shared/libs/role-access';
 import { accessFor, moduleRecord, noContextView, viewFor } from './support/access-fixtures';
 
 const labels = ((key: string) => key) as unknown as TranslateFn;
@@ -163,5 +164,13 @@ describe('roles of modules', () => {
 
   test('a module carries its roles in the fixture the screens read', () => {
     expect(moduleRecord({ roles: ['guard'] }).roles).toEqual(['guard']);
+  });
+});
+
+describe('a role this build does not know', () => {
+  test('is granted nothing by any table or session rule and never throws', () => {
+    const unknown = 'astronaut' as never;
+    expect(hasAccess(unknown, 'camera', 'read')).toBe(false);
+    expect(sessionAccessForRole(unknown)).toEqual({ view: false, revoke: false, manageOthers: false });
   });
 });

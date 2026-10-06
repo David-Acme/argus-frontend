@@ -78,7 +78,7 @@ const REMINDER_TABLES: ReadonlySet<string> = new Set<TableName>(['reminder', 're
 
 export const moduleOfTable = (table: TableName): string | null => TABLE_MODULES.get(table) ?? null;
 
-export const coreCapabilities = (role: UserRole | null): readonly Capability[] => (role ? CORE_CAPABILITIES[role] : []);
+export const coreCapabilities = (role: UserRole | null): readonly Capability[] => (role ? (CORE_CAPABILITIES[role] ?? []) : []);
 
 export function accessView(
   access: AppAccess | null,

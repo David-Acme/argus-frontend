@@ -46,7 +46,7 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
 
 export function hasAccess(role: UserRole, table: TableName, permission: Permission): boolean {
   if (role === 'owner') return true;
-  return TABLE_ACCESS[role][table]?.includes(permission) ?? false;
+  return TABLE_ACCESS[role]?.[table]?.includes(permission) ?? false;
 }
 
 export type SessionAccess = {
@@ -64,6 +64,8 @@ const SESSION_ACCESS: Record<UserRole, SessionAccess> = {
   guest: OWN_SESSIONS,
 };
 
+const NO_SESSIONS: SessionAccess = { view: false, revoke: false, manageOthers: false };
+
 export function sessionAccessForRole(role: UserRole): SessionAccess {
-  return SESSION_ACCESS[role];
+  return SESSION_ACCESS[role] ?? NO_SESSIONS;
 }
