@@ -54,7 +54,15 @@ describe('notification kinds against the backend vocabulary', () => {
   });
 
   test('a kind the backend does not list is core, agenda_reminder and guard_duress included', () => {
-    for (const kind of ['agenda_reminder', 'guard_duress', 'guard_panic', 'guard_response', 'assistant_reminder']) {
+    for (const kind of [
+      'agenda_reminder',
+      'guard_duress',
+      'guard_panic',
+      'guard_response',
+      'assistant_reminder',
+      'assistant_task',
+      'module_request',
+    ]) {
       expect(kinds.has(kind)).toBe(false);
       expect(moduleOfNotification(row(kind))).toBe(MODULE_IDS.core);
     }
@@ -83,7 +91,15 @@ describe('the notification feed hides only the kinds of an inactive module', () 
 
   test('reminders and duress stay visible with surveillance and productivity both off', () => {
     const coreOnly = (id: string) => id === MODULE_IDS.core;
-    for (const kind of ['agenda_reminder', 'assistant_reminder', 'guard_duress', 'guard_panic', 'module_request', 'call']) {
+    for (const kind of [
+      'agenda_reminder',
+      'assistant_reminder',
+      'assistant_task',
+      'guard_duress',
+      'guard_panic',
+      'module_request',
+      'call',
+    ]) {
       expect(notificationVisible(row(kind), coreOnly)).toBe(true);
     }
     expect(notificationVisible(row(undefined, 'camera'), coreOnly)).toBe(true);

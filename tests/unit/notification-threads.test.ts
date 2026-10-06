@@ -4,6 +4,7 @@ import {
   groupNotifications,
   isThreadRead,
   missedCallId,
+  moduleRequestOf,
   phaseOf,
   threadKeyOf,
   unreadIdsOf,
@@ -11,6 +12,7 @@ import {
   urgencyOf,
   withUnreadSnapshot,
 } from '@/features/home/model/notification-threads';
+import { moduleOfNotification, notificationVisible } from '@/features/home/model/notification-modules';
 
 function row(
   id: string,
@@ -164,5 +166,93 @@ describe('notification threads', () => {
     expect(forged && missedCallId(forged)).toBeNull();
     const [other] = groupNotifications([row('11', { kind: 'guard_episode', callId: 'call-41' })]);
     expect(other && missedCallId(other)).toBeNull();
+  });
+});
+
+describe('a request the assistant kept for a module that was off', () => {
+  const done = row(
+    '51',
+    { kind: 'assistant_task', commandId: 'intent:42:done' },
+    { type: 'assistant_task', title: 'Tu petición está lista', body: 'Agendé tu reunión del jueves.' }
+  );
+  const failed = row(
+    '52',
+    { kind: 'assistant_task', commandId: 'intent:43:failed' },
+    { type: 'assistant_task', title: 'No pude completar tu petición', body: 'La guardé como recordatorio.' }
+  );
+  const coreOnly = (moduleId: string) => moduleId === 'core';
+
+  test('is a plain text row of its own with the title and body the backend wrote and no action', () => {
+    const [thread, ...others] = groupNotifications([done]);
+    expect(others).toEqual([]);
+    expect(thread?.key).toBe('row:51');
+    expect(thread?.kind).toBe('assistant_task');
+    expect(thread?.urgency).toBeNull();
+    expect(thread?.phase).toBeNull();
+    expect(thread?.latest.title).toBe('Tu petición está lista');
+    expect(thread?.latest.body).toBe('Agendé tu reunión del jueves.');
+    expect(thread && moduleRequestOf(thread)).toBeNull();
+    expect(thread && missedCallId(thread)).toBeNull();
+  });
+
+  test('every request is its own thread, so a failure never hides the earlier success', () => {
+    expect(groupNotifications([failed, done]).map((thread) => thread.latest.id)).toEqual(['52', '51']);
+  });
+
+  test('is core: it is shown with every optional module off', () => {
+    expect(moduleOfNotification(done)).toBe('core');
+    expect(notificationVisible(done, coreOnly)).toBe(true);
+    expect(notificationVisible(failed, coreOnly)).toBe(true);
+  });
+
+  test('starts unread and is read once like any other row', () => {
+    const threads = groupNotifications([done, failed]);
+    expect(threads.every((thread) => !isThreadRead(thread))).toBe(true);
+    expect(unreadIdsOf(threads)).toEqual(['51', '52']);
+  });
+});
+
+describe('a notification of a type this build does not know', () => {
+  const future = row(
+    '60',
+    { kind: 'house_summary', nested: { a: 1 }, list: [1, 2] },
+    { type: 'something_new_in_the_future', title: 'Resumen', body: 'Texto nuevo' }
+  );
+  const odd = [
+    row('61', {}, { type: 'x', title: 'Sin datos', body: '' }),
+    row('62', { kind: 5, threadKey: 7, urgency: {}, phase: null }, { type: 'y', title: 'Datos raros' }),
+    row('63', { kind: '   ', threadKey: '   ' }, { type: '', title: 'Vacíos' }),
+  ];
+  const coreOnly = (moduleId: string) => moduleId === 'core';
+
+  test('is kept with its own title and body and nothing is dropped', () => {
+    const rows = [future, ...odd];
+    const threads = groupNotifications(rows);
+    expect(threads).toHaveLength(rows.length);
+    expect(threads.map((thread) => thread.latest.id)).toEqual(['60', '61', '62', '63']);
+    expect(threads[0]?.latest.title).toBe('Resumen');
+    expect(threads[0]?.latest.body).toBe('Texto nuevo');
+  });
+
+  test('has no action and no urgency or phase it could be mistaken for', () => {
+    for (const thread of groupNotifications([future, ...odd])) {
+      expect(moduleRequestOf(thread)).toBeNull();
+      expect(missedCallId(thread)).toBeNull();
+      expect(thread.urgency).toBeNull();
+      expect(thread.phase).toBeNull();
+    }
+  });
+
+  test('is core and never hidden, even with every optional module off', () => {
+    for (const unknown of [future, ...odd]) {
+      expect(moduleOfNotification(unknown)).toBe('core');
+      expect(notificationVisible(unknown, coreOnly)).toBe(true);
+    }
+  });
+
+  test('a kind the app does not know is shown as a plain row, not as an error', () => {
+    const [thread] = groupNotifications([future]);
+    expect(thread?.kind).toBe('house_summary');
+    expect(thread?.key).toBe('row:60');
   });
 });

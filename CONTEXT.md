@@ -2958,7 +2958,14 @@ already refuses.
   when the two differ: seven kinds belong to a module (six to surveillance,
   `agenda_event` to productivity) and every other kind, `agenda_reminder` and
   `guard_duress` included, is core, so the feed hides only the kinds of an
-  inactive module and reminders and duress alerts are always shown. The
+  inactive module and reminders and duress alerts are always shown.
+  `assistant_task` (the result of a request the assistant kept while a module
+  was off: type and kind `assistant_task`, data `{kind, commandId}`, title and
+  body already in the user's language) is core too and is a plain text row: it
+  has no `threadKey`, so each one is its own thread, and no action. A row of a
+  type or kind this build does not know renders the same way (bell, the
+  row's own title and body); nothing in the feed switches on `type`
+  (`tests/unit/notification-threads.test.ts`). The
   privacy flag `applicable` is read when the server sends it and derived from
   the active modules otherwise; stored choices are never changed by it.
 
