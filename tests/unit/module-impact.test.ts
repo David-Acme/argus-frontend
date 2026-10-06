@@ -7,6 +7,7 @@ import {
   holderName,
   impactHasEffects,
   invitationsOf,
+  keepsRunningOf,
   needsReassign,
   reassignBody,
   reassignComplete,
@@ -41,6 +42,15 @@ const wire = {
   ],
   data: { owners: [{ owner: 'camera', reachable: true, reported: true, items: [{ kind: 'cameras', count: 3 }], bytes: 1000 }] },
   filesBytes: 2_400_000_000,
+  keepsRunning: [
+    {
+      id: 'safety_alerts',
+      text: {
+        es: 'Las alertas de pánico o coacción en curso seguirán hasta que alguien las atienda.',
+        en: 'Panic or duress alerts already raised keep going until someone attends them.',
+      },
+    },
+  ],
 };
 
 const read = (patch: Record<string, unknown> = {}): ModuleImpact => {
@@ -73,6 +83,45 @@ describe('impact contract', () => {
   test('refuses what is not an impact', () => {
     expect(readModuleImpact(null)).toBeNull();
     expect(readModuleImpact({ moduleId: 'x', action: 'explode' })).toBeNull();
+  });
+});
+
+describe('what keeps running', () => {
+  test('reads the item and shows its text verbatim in the language of the app', () => {
+    const impact = read();
+    expect(impact.keepsRunning).toEqual(wire.keepsRunning);
+    expect(keepsRunningOf(impact, 'es')).toEqual([
+      { id: 'safety_alerts', text: 'Las alertas de pánico o coacción en curso seguirán hasta que alguien las atienda.' },
+    ]);
+    expect(keepsRunningOf(impact, 'en')[0]?.text).toBe(
+      'Panic or duress alerts already raised keep going until someone attends them.'
+    );
+  });
+
+  test('it is the same for a disable and an uninstall', () => {
+    expect(read({ action: 'disable', roleEffect: 'inactive' }).keepsRunning).toEqual(wire.keepsRunning);
+    expect(read({ action: 'uninstall' }).keepsRunning).toEqual(wire.keepsRunning);
+  });
+
+  test('a language the server did not write falls back to the other one', () => {
+    const impact = read({ keepsRunning: [{ id: 'safety_alerts', text: { es: 'Solo en español' } }] });
+    expect(keepsRunningOf(impact, 'en')[0]?.text).toBe('Solo en español');
+  });
+
+  test('a module with nothing to keep, a missing field or a malformed item reads as empty', () => {
+    expect(read({ keepsRunning: [] }).keepsRunning).toEqual([]);
+    const { keepsRunning: _omitted, ...without } = wire;
+    expect(readModuleImpact(without)?.keepsRunning).toEqual([]);
+    expect(read({ keepsRunning: 'safety' }).keepsRunning).toEqual([]);
+    expect(read({ keepsRunning: [{ id: 'x', text: {} }, { id: 'y' }, 7, wire.keepsRunning[0]] }).keepsRunning).toEqual(
+      wire.keepsRunning
+    );
+  });
+
+  test('a line to keep is an effect on its own, so the preview is not skipped', () => {
+    const quiet = { stops: [], roleHolders: [], invitations: [] };
+    expect(impactHasEffects(read({ ...quiet, keepsRunning: [] }))).toBe(false);
+    expect(impactHasEffects(read(quiet))).toBe(true);
   });
 });
 
@@ -111,7 +160,7 @@ describe('impact words and decisions', () => {
 
   test('knows when there is nothing to tell', () => {
     expect(impactHasEffects(read())).toBe(true);
-    expect(impactHasEffects(read({ stops: [], roleHolders: [], invitations: [] }))).toBe(false);
+    expect(impactHasEffects(read({ stops: [], roleHolders: [], invitations: [], keepsRunning: [] }))).toBe(false);
     expect(impactHasEffects(read({ stops: [], roleHolders: [] }))).toBe(true);
   });
 });

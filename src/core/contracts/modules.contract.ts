@@ -6,6 +6,7 @@ import type {
   ModuleEnabledFlag,
   ModuleFrame,
   ModuleImpact,
+  ModuleKeepsRunning,
   ModuleRequestAnswer,
   ModuleGettingStartedStep,
   ModuleHardware,
@@ -307,6 +308,21 @@ const optionalId = z
   .nullish()
   .transform((value) => (value == null || value === '' || Number.isNaN(Number(value)) ? null : Number(value)));
 
+const keepsRunningItem = z.object({
+  id: z.string(),
+  text: z.object({ es: z.string().optional(), en: z.string().optional() }),
+});
+
+const keepsRunningList = z
+  .array(z.unknown())
+  .catch([])
+  .transform((items): ModuleKeepsRunning[] =>
+    items.flatMap((item) => {
+      const parsed = keepsRunningItem.safeParse(item);
+      return parsed.success && (parsed.data.text.es || parsed.data.text.en) ? [parsed.data] : [];
+    })
+  );
+
 export const moduleImpactSchema = z
   .object({
     moduleId: z.string(),
@@ -328,6 +344,7 @@ export const moduleImpactSchema = z
         })
       )
       .catch([]),
+    keepsRunning: keepsRunningList,
     roleHolders: z
       .array(
         z.object({

@@ -1,4 +1,12 @@
-import type { ModuleImpact, ModuleImpactInvitation, ModuleImpactStop, ModuleRoleHolder, TranslateFn, TranslationKey } from '@/core/types';
+import type {
+  LanguageCode,
+  ModuleImpact,
+  ModuleImpactInvitation,
+  ModuleImpactStop,
+  ModuleRoleHolder,
+  TranslateFn,
+  TranslationKey,
+} from '@/core/types';
 
 const STOP_KEYS: Readonly<Record<string, TranslationKey>> = {
   live_views: 'screens.modules.impact.stops.live_views',
@@ -55,8 +63,23 @@ export function invitationsOf(invitations: readonly ModuleImpactInvitation[]): I
   };
 }
 
+export type KeepsRunningLine = {
+  id: string;
+  text: string;
+};
+
+export function keepsRunningOf(impact: ModuleImpact, language: LanguageCode): KeepsRunningLine[] {
+  return impact.keepsRunning.flatMap((item) => {
+    const text = item.text[language] || item.text.es || item.text.en;
+    return text ? [{ id: item.id, text }] : [];
+  });
+}
+
 export const impactHasEffects = (impact: ModuleImpact): boolean =>
-  impact.stops.length > 0 || impact.roleHolders.length > 0 || impact.invitations.length > 0;
+  impact.stops.length > 0 ||
+  impact.keepsRunning.length > 0 ||
+  impact.roleHolders.length > 0 ||
+  impact.invitations.length > 0;
 
 export function refusalOf(impact: ModuleImpact): string | null {
   return impact.allowed ? null : (impact.refusal?.code ?? 'REFUSED');

@@ -2990,6 +2990,13 @@ showing reminders with productivity; Inicio's Today no longer repeats them.
   /modules/{id}/impact` (what stops, who holds the role, invitations revoked,
   data kept). Reassignment is sent as `reassign` and `MODULE_ROLES_HELD`
   reopens the preview. The envelope reader keeps the list form of `errors`.
+  `impact.keepsRunning = [{id, text: {es, en}}]` (the same for disable and
+  uninstall; surveillance says that panic and duress alerts already raised keep
+  going until someone attends them) is shown as "Sigue funcionando" from the
+  JSON in both dialogs, in the app's language with the other as fallback, and
+  no sentence of it is written in the app. A missing or malformed field reads
+  as nothing to keep. Wired to the posted shape; the route itself is verified
+  against the committed code and goldens when EFFECTS commits it.
 - Role pickers (supervisor decision): invitations list an off module's roles
   disabled with "needs X, which is off" and explain a 409 `ROLE_INACTIVE`;
   role change lists them selectable, after the active ones, and says the role

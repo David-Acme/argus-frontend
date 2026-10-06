@@ -159,12 +159,18 @@ export type ModuleImpactInvitation = {
 
 export type ModuleRoleEffect = 'inactive' | 'reassign_required' | 'none';
 
+export type ModuleKeepsRunning = {
+  id: string;
+  text: LocalizedText;
+};
+
 export type ModuleImpact = {
   moduleId: string;
   action: ModuleImpactAction;
   allowed: boolean;
   refusal: { code: string; message: string } | null;
   stops: ModuleImpactStop[];
+  keepsRunning: ModuleKeepsRunning[];
   roleHolders: ModuleRoleHolder[];
   roleEffect: ModuleRoleEffect;
   reassignRoles: string[];

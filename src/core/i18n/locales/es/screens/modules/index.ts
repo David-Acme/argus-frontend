@@ -124,6 +124,7 @@ export const modules = {
       agenda_calls: 'Se cancelan las llamadas y avisos de tu agenda',
       other: 'Dejan de funcionar otras tareas de {module}',
     },
+    'keeps-running-title': 'Sigue funcionando',
     'stops-title': 'Qué se detiene',
     'nothing-stops': 'No se detiene nada que esté en marcha.',
     'holders-title': 'Quién se ve afectado',

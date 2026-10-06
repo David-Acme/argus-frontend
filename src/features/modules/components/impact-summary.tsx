@@ -9,6 +9,7 @@ import { roleLabelOf } from '@/shared/libs/role-label';
 import {
   holderName,
   invitationsOf,
+  keepsRunningOf,
   needsReassign,
   stopText,
   type ReassignChoices,
@@ -27,6 +28,7 @@ export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose
   const { t, language } = useTranslation();
   const roleLabel = (role: string) => roleLabelOf(role, t);
   const invitations = invitationsOf(impact.invitations);
+  const keepsRunning = keepsRunningOf(impact, language);
   const reassign = needsReassign(impact);
   const options = impact.reassignRoles.map((role) => ({ value: role, label: roleLabel(role) }));
 
@@ -47,6 +49,20 @@ export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose
           ))
         )}
       </View>
+
+      {keepsRunning.length > 0 ? (
+        <View className="bg-surface-secondary dark:bg-card-secondary gap-2 rounded-2xl p-3">
+          <Text variant="label">{t('screens.modules.impact.keeps-running-title')}</Text>
+          {keepsRunning.map((line) => (
+            <View key={line.id} className="flex-row items-start gap-2">
+              <Icon name="shield-check" className="text-accent-strong mt-0.5 size-3.5" />
+              <Text variant="caption" className="min-w-0 flex-1">
+                {line.text}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       {impact.roleHolders.length > 0 ? (
         <View className="bg-surface-secondary dark:bg-card-secondary gap-2 rounded-2xl p-3">

@@ -124,6 +124,7 @@ export const modules = {
       agenda_calls: 'Calls and notices from your agenda are cancelled',
       other: 'Other tasks of {module} stop',
     },
+    'keeps-running-title': 'Keeps running',
     'stops-title': 'What stops',
     'nothing-stops': 'Nothing that is running stops.',
     'holders-title': 'Who is affected',
