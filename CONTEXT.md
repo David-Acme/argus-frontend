@@ -2859,6 +2859,20 @@ The desktop sees only `pair`, so no stepper there. The old
 - `/modules` is served by argus-settings, so `ARGUS_DEFAULT_ROUTE_PORTS`
   gains `modules: 7045` (the route-baseline mirror test caught it).
 
+### What a module holds, in words
+
+`dataSummary` (`model/module-lifecycle.ts`) words every kind
+`GET /modules/{id}/data` reports, plural-aware in es and en, summed across
+owners (evidence photos come from both camera and guard): cameras, zones,
+evidence photos, camera actions, environments, recorded visits, saved
+incidents, surveillance decisions, expected guests, people seen, saved
+visitor faces, visitor passes, projects, tasks, project members, calendar
+events, shared events and the change history (owner `sync`, "El historial
+de cambios"). An unknown kind becomes "N elementos", listed last. `bytes`
+counts database rows only, so it reads "aprox. 2,1 GB en la base de datos"
+and is omitted at 0. The dialog also says that personal-safety history
+(panic, duress), codes and reminders are always kept.
+
 ### Pending
 
 - `GET /modules` and `GET /modules/{id}/data` are not in `HTTP_CONTRACTS`

@@ -113,6 +113,7 @@ describe('removal and purge', () => {
     expect(failureText('remove_failed', 'mystery', es)).toContain('Una parte de Argus');
     expect(failureText('disk_full', 'camera', es)).toBe(es('screens.modules.failure.disk_full'));
     expect(ownerName('tts', es)).toBe('La voz de Argus');
+    expect(ownerName('sync', es)).toBe('El historial de cambios');
     expect(ownerName(null, en)).toBe('A part of Argus');
   });
 });

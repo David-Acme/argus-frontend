@@ -111,6 +111,12 @@ export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogPr
               </Text>
             </View>
           ))}
+          <View className="flex-row items-start gap-2 pt-1">
+            <Icon name="shield-check" className="text-muted-foreground mt-0.5 size-3.5" />
+            <Text variant="caption" className="min-w-0 flex-1">
+              {t('screens.modules.data.kept')}
+            </Text>
+          </View>
         </View>
 
         {erase ? null : (

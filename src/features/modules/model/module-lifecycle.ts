@@ -124,40 +124,54 @@ export type PurgeGate = {
 export const purgeReady = ({ typed, name }: PurgeGate): boolean => typedNameMatches(typed, name);
 
 const DATA_KINDS = [
-  'camera',
-  'zone',
-  'event',
-  'episode',
-  'visitor',
-  'environment',
-  'project',
-  'task',
-  'calendar_event',
+  'cameras',
+  'zones',
+  'evidence_photos',
+  'camera_actions',
+  'environments',
+  'episodes',
+  'incidents',
+  'decisions',
+  'expected_guests',
+  'visitors',
+  'visitor_face_samples',
+  'visits',
+  'projects',
+  'tasks',
+  'project_members',
+  'calendar_events',
+  'calendar_shares',
+  'change_history',
 ] as const;
 
-type DataKind = (typeof DATA_KINDS)[number];
+type DataKind = (typeof DATA_KINDS)[number] | 'items';
 
 const isDataKind = (kind: string): kind is DataKind => (DATA_KINDS as readonly string[]).includes(kind);
 
-const kindOf = (kind: string) => kind.trim().toLowerCase().replace(/[\s-]+/g, '_').replace(/s$/, '');
+const kindOf = (kind: string): DataKind => {
+  const code = kind.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return isDataKind(code) ? code : 'items';
+};
 
 export function dataSummary(
   owners: readonly ModuleDataOwner[],
   language: LanguageCode,
   t: TranslateFn
 ): string[] {
-  const counts = new Map<string, number>();
+  const counts = new Map<DataKind, number>();
   owners.forEach((owner) =>
     owner.items.forEach((item) => {
-      if (item.count > 0) counts.set(kindOf(item.kind), (counts.get(kindOf(item.kind)) ?? 0) + item.count);
+      const kind = kindOf(item.kind);
+      if (item.count > 0) counts.set(kind, (counts.get(kind) ?? 0) + item.count);
     })
   );
-  const parts = [...counts.entries()].map(([kind, count]) => {
-    const shown = new Intl.NumberFormat(language === 'es' ? 'es-ES' : 'en-US').format(count);
-    if (!isDataKind(kind)) return `${shown} ${kind.replace(/_/g, ' ')}`;
-    const key: `screens.modules.data.${DataKind}.${'one' | 'other'}` = `screens.modules.data.${kind}.${count === 1 ? 'one' : 'other'}`;
-    return t(key, { count: shown });
-  });
+  const format = new Intl.NumberFormat(language === 'es' ? 'es-ES' : 'en-US');
+  const parts = [...counts.entries()]
+    .sort(([left], [right]) => Number(left === 'items') - Number(right === 'items'))
+    .map(([kind, count]) => {
+      const key: `screens.modules.data.${DataKind}.${'one' | 'other'}` = `screens.modules.data.${kind}.${count === 1 ? 'one' : 'other'}`;
+      return t(key, { count: format.format(count) });
+    });
   const bytes = owners.reduce((total, owner) => total + owner.bytes, 0);
   if (bytes > 0) parts.push(t('screens.modules.data.bytes', { size: formatBytes(bytes, language) }));
   return parts;

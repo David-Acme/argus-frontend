@@ -140,21 +140,65 @@ describe('uninstall rules', () => {
     expect(purgeReady({ typed: 'otra', name: 'Vigilancia' })).toBe(false);
   });
 
-  test('what a module holds is summed per kind across owners', () => {
+  test('what a module holds is summed per kind across owners, in plain words', () => {
+    const owner = (name: string, items: { kind: string; count: number }[], bytes = 0) => ({
+      owner: name,
+      reachable: true,
+      reported: true,
+      items,
+      bytes,
+    });
     const owners = [
-      { owner: 'camera', reachable: true, reported: true, items: [{ kind: 'camera', count: 3 }, { kind: 'events', count: 100 }], bytes: 2 * 1024 ** 3 },
-      { owner: 'guard', reachable: true, reported: true, items: [{ kind: 'event', count: 28 }, { kind: 'zone', count: 1 }, { kind: 'widget', count: 2 }], bytes: 104_857_600 },
+      owner('camera', [
+        { kind: 'cameras', count: 3 },
+        { kind: 'zones', count: 1 },
+        { kind: 'evidence_photos', count: 40 },
+        { kind: 'camera_actions', count: 0 },
+      ], 2 * 1024 ** 3),
+      owner('guard', [
+        { kind: 'evidence_photos', count: 88 },
+        { kind: 'episodes', count: 12 },
+        { kind: 'mystery', count: 2 },
+      ], 104_857_600),
+      owner('sync', [{ kind: 'change_history', count: 1 }]),
     ];
     expect(dataSummary(owners, 'es', es)).toEqual([
       '3 cámaras',
-      '128 eventos',
       '1 zona',
-      '2 widget',
-      '2,1 GB de evidencias y archivos',
+      '128 fotos de evidencia',
+      '12 visitas registradas',
+      '1 cambio en el historial',
+      '2 elementos',
+      'aprox. 2,1 GB en la base de datos',
     ]);
-    expect(dataSummary([{ owner: 'camera', reachable: true, reported: true, items: [{ kind: 'camera', count: 1 }], bytes: 0 }], 'en', en)).toEqual([
-      '1 camera',
-    ]);
+    expect(
+      dataSummary(
+        [
+          owner('identity', [{ kind: 'visitors', count: 1 }, { kind: 'visitor_face_samples', count: 4 }, { kind: 'visits', count: 1200 }]),
+          owner('productivity', [{ kind: 'projects', count: 2 }, { kind: 'calendar_shares', count: 1 }]),
+        ],
+        'en',
+        en
+      )
+    ).toEqual(['1 person seen', '4 saved visitor faces', '1,200 visitor passes', '2 projects', '1 shared event']);
+  });
+
+  test('every documented kind has a label in both languages', () => {
+    const kinds = [
+      'cameras', 'zones', 'evidence_photos', 'camera_actions', 'environments', 'episodes', 'incidents', 'decisions',
+      'expected_guests', 'visitors', 'visitor_face_samples', 'visits', 'projects', 'tasks', 'project_members',
+      'calendar_events', 'calendar_shares', 'change_history',
+    ];
+    for (const kind of kinds) {
+      const items = [{ owner: 'x', reachable: true, reported: true, items: [{ kind, count: 2 }], bytes: 0 }];
+      expect(dataSummary(items, 'es', es)[0]).not.toContain('elementos');
+      expect(dataSummary(items, 'en', en)[0]).not.toContain('items');
+    }
+  });
+
+  test('the dialog says what is always kept, and sync has a friendly name', () => {
+    expect(es('screens.modules.data.kept')).toContain('recordatorios');
+    expect(en('screens.modules.data.kept')).toContain('panic');
   });
 });
 

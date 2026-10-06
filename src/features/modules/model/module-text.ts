@@ -161,6 +161,7 @@ const OWNER_KEYS: Readonly<Record<string, TranslationKey>> = {
   tts: 'screens.modules.owners.tts',
   llm: 'screens.modules.owners.llm',
   notification: 'screens.modules.owners.notification',
+  sync: 'screens.modules.owners.sync',
 };
 
 export const ownerName = (owner: string | null, t: TranslateFn): string =>
