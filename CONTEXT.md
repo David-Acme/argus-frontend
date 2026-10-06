@@ -2875,15 +2875,15 @@ and is omitted at 0. The dialog also says that personal-safety history
 
 ### Pending
 
-- `GET /modules` and `GET /modules/{id}/data` are not in `HTTP_CONTRACTS`
-  yet: their zod schemas are ready (`moduleListSchema`, `moduleDataSchema`)
-  and join the map once MAIN records the goldens. The same goes for the
-  `POST /modules/{id}/{install,pause,resume,cancel,disable,uninstall}`
-  answers (`moduleActionResultSchema`).
-- `tests/unit/wire-vocabulary.test.ts` expects `ModuleUpdate = 12` in the
-  backend's `sync-operation.hxx`, and `tests/unit/modules-contract.test.ts`
-  compares `MODULE_API_PREFIXES` with `kModuleRoutes` in `role-access.hxx`
-  (skipped while the header does not have it).
+- `GET /modules` is in `HTTP_CONTRACTS` and checked against the recorded
+  owner, resident and guest answers (backend `scripts/fixtures/http/settings.json`).
+  `GET /modules/{id}/data` and the `POST /modules/{id}/*` actions have only
+  refusals recorded (the sandbox probes an unknown module id, 404), so their
+  schemas (`moduleDataSchema`, `moduleActionResultSchema`) join the map once
+  a successful answer is recorded.
+- `tests/unit/wire-vocabulary.test.ts` (`ModuleUpdate = 12`, the `/modules`
+  port) and `tests/unit/modules-contract.test.ts` (`MODULE_API_PREFIXES`
+  against `kModuleRoutes`) pass against the committed backend.
 - Hardware reason and job failure codes are the ones argus-settings
   confirmed (board, 22:20): hardware `ram_below_minimum`,
   `ram_below_recommended`, `disk_insufficient`, `cpu_feature_missing`,
