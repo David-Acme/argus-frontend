@@ -37,6 +37,8 @@ const BASELINE: readonly string[] = [
   C.heartbeatRead,
   C.modulesRead,
   C.safetyPanic,
+  C.safetyRead,
+  C.safetyRespond,
   C.remindersRead,
   C.remindersWrite,
 ];
@@ -74,7 +76,6 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
     C.guardGuestsWrite,
     C.safetyDuress,
     C.responseDuty,
-    C.safetyRead,
     C.visitorsRead,
     C.guardAdmin,
     C.visitorsManage,
@@ -91,10 +92,9 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
     C.guardModeSet,
     C.guardGuestsWrite,
     C.safetyDuress,
-    C.safetyRead,
   ],
-  guard: [C.cameraView, C.cameraTalk, C.zonesRead, C.eventsRead, C.guardRead, C.responseDuty, C.safetyRead, C.visitorsRead],
-  guest: [C.cameraView, C.safetyRead],
+  guard: [C.cameraView, C.cameraTalk, C.zonesRead, C.eventsRead, C.guardRead, C.responseDuty, C.visitorsRead],
+  guest: [C.cameraView],
 };
 
 const PRODUCTIVITY: Readonly<Record<UserRole, readonly string[]>> = {

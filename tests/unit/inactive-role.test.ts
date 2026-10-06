@@ -77,7 +77,6 @@ const MODULE_BOUND: readonly string[] = [
   CAPABILITY.guardGuestsWrite,
   CAPABILITY.guardAdmin,
   CAPABILITY.responseDuty,
-  CAPABILITY.safetyRead,
   CAPABILITY.safetyDuress,
   CAPABILITY.visitorsRead,
   CAPABILITY.visitorsManage,
@@ -112,6 +111,7 @@ describe('what the inactive-role screen offers', () => {
     expect(inactive).not.toBeNull();
     if (!inactive) return;
     expect(inactiveRoleOffers(guard, inactive)).toEqual({
+      alerts: true,
       reminders: { editable: true },
       panic: true,
       moduleRequest: { moduleId: 'surveillance', moduleName: 'Vigilancia' },
@@ -123,6 +123,7 @@ describe('what the inactive-role screen offers', () => {
   test('the screen model has no other offer', () => {
     if (!inactive) throw new Error('the guard is inactive');
     expect(Object.keys(inactiveRoleOffers(guard, inactive)).sort()).toEqual([
+      'alerts',
       'moduleRequest',
       'panic',
       'profile',
@@ -153,6 +154,11 @@ describe('what the inactive-role screen offers', () => {
     ).toBeNull();
   });
 
+  test('the alert strip follows safety.respond', () => {
+    if (!inactive) throw new Error('the guard is inactive');
+    expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.safetyRespond), inactive).alerts).toBe(false);
+  });
+
   test('panic and the module request follow their capabilities', () => {
     if (!inactive) throw new Error('the guard is inactive');
     expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.safetyPanic), inactive).panic).toBe(false);
@@ -166,6 +172,7 @@ describe('what the inactive-role screen offers', () => {
     expect(paused).toEqual({ kind: 'paused', role: 'guest' });
     if (!paused) return;
     expect(inactiveRoleOffers(view, paused)).toEqual({
+      alerts: true,
       reminders: { editable: true },
       panic: true,
       moduleRequest: null,
@@ -180,6 +187,7 @@ describe('what the inactive-role screen offers', () => {
     expect(unknown).toEqual({ kind: 'unknown' });
     if (!unknown) return;
     expect(inactiveRoleOffers(view, unknown)).toEqual({
+      alerts: false,
       reminders: null,
       panic: false,
       moduleRequest: null,

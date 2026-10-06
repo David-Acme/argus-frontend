@@ -33,6 +33,8 @@ const BASELINE: readonly Capability[] = [
   CAPABILITY.heartbeatRead,
   CAPABILITY.modulesRead,
   CAPABILITY.safetyPanic,
+  CAPABILITY.safetyRead,
+  CAPABILITY.safetyRespond,
   CAPABILITY.remindersRead,
   CAPABILITY.remindersWrite,
 ];

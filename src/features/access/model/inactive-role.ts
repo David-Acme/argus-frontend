@@ -42,6 +42,7 @@ export function inactiveRoleCopy(inactive: InactiveRole, t: TranslateFn): Inacti
 }
 
 export type InactiveRoleOffers = {
+  alerts: boolean;
   reminders: { editable: boolean } | null;
   panic: boolean;
   moduleRequest: { moduleId: string; moduleName: string } | null;
@@ -51,6 +52,7 @@ export type InactiveRoleOffers = {
 
 export function inactiveRoleOffers(view: AccessView, inactive: InactiveRole): InactiveRoleOffers {
   return {
+    alerts: hasCapability(view, CAPABILITY.safetyRespond),
     reminders: hasCapability(view, CAPABILITY.remindersRead)
       ? { editable: hasCapability(view, CAPABILITY.remindersWrite) }
       : null,

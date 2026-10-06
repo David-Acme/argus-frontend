@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { readIncidentResponse } from '@/core/contracts/response.contract';
 import type { IncidentResponse } from '@/core/types';
+import { CAPABILITY } from '@/shared/constants';
 import {
+  alertsFor,
   canDecide,
   contactsOf,
   emergencyOf,
@@ -13,6 +15,8 @@ import {
   visibleResponses,
   withVerdict,
 } from '@/features/response/model/response';
+import { accessFor, viewFor } from './support/access-fixtures';
+import { accessView } from '@/shared/libs/capabilities';
 
 const base: IncidentResponse = {
   id: 7,
@@ -133,5 +137,52 @@ describe('response contract', () => {
     expect(readIncidentResponse(base)).toEqual(base);
     expect(readIncidentResponse({ ...base, state: 'ringing' })).toBeNull();
     expect(readIncidentResponse({ ...base, mine: undefined })).toBeNull();
+  });
+});
+
+describe('the alert strip follows safety.respond and the alerts addressed to the user', () => {
+  const panic: IncidentResponse = { ...base, id: 9, kind: 'guard_panic', cameraId: 0, state: 'active' };
+  const NOW = 1000;
+  const alerts = { [panic.id]: panic };
+
+  test('an inactive guard with a live alert sees it', () => {
+    const guard = viewFor('guard', { modules: ['productivity'] });
+    expect(guard.roleActive).toBe(false);
+    expect(alertsFor(guard, alerts, NOW).map((alert) => alert.id)).toEqual([9]);
+  });
+
+  test('a user with no alert sees no strip, whatever the role state', () => {
+    expect(alertsFor(viewFor('guard', { modules: ['productivity'] }), {}, NOW)).toEqual([]);
+    expect(alertsFor(viewFor('resident'), {}, NOW)).toEqual([]);
+  });
+
+  test('a resident with surveillance off still sees the alert raised for them', () => {
+    const resident = viewFor('resident', { modules: [] });
+    expect(resident.roleActive).toBe(true);
+    expect(resident.capabilities.has(CAPABILITY.guardRead)).toBe(false);
+    expect(alertsFor(resident, alerts, NOW).map((alert) => alert.id)).toEqual([9]);
+  });
+
+  test('every role that holds safety.respond sees it, owner included', () => {
+    for (const role of ['owner', 'resident', 'guard', 'guest'] as const) {
+      expect(alertsFor(viewFor(role), alerts, NOW)).toHaveLength(1);
+    }
+  });
+
+  test('without safety.respond nothing is shown, and a role this build does not know holds nothing', () => {
+    const stripped = viewFor('guard');
+    const without = { ...stripped, capabilities: new Set([...stripped.capabilities].filter((id) => id !== CAPABILITY.safetyRespond)) };
+    expect(alertsFor(without, alerts, NOW)).toEqual([]);
+    const unknown = accessView({ ...accessFor('guest'), role: null, roleActive: false, capabilities: [] }, 'guest');
+    expect(alertsFor(unknown, alerts, NOW)).toEqual([]);
+  });
+
+  test('a closed alert fades from the strip after fifteen minutes and an open one never does', () => {
+    const closed = { ...panic, id: 10, state: 'false_alarm' as const, updatedAt: NOW };
+    const open = { ...panic, id: 11, state: 'attended' as const, updatedAt: NOW };
+    const view = viewFor('guard', { modules: [] });
+    const later = NOW + 16 * 60;
+    expect(alertsFor(view, { 10: closed, 11: open }, NOW + 60).map((alert) => alert.id)).toEqual([11, 10]);
+    expect(alertsFor(view, { 10: closed, 11: open }, later).map((alert) => alert.id)).toEqual([11]);
   });
 });

@@ -607,8 +607,10 @@ for Watermelon nor make an HTTP list request just because it mounted.
   (`routeFallback(path, view)`): the `(app)` layout redirects with it and the
   nav hides the tabs it refuses. A screen never checks its own role. A role
   whose module is off reaches only Inicio (the calm inactive-role screen,
-  `features/access`: panic, the person's own reminders, the module request,
-  profile and sign-out, each by its baseline capability) and the profile.
+  `features/access`: the alerts raised for the person (`safety.respond`),
+  panic, the person's own reminders, the module request, profile and sign-out,
+  each by its baseline capability) and the profile. `/call` follows
+  `calls.join` for that role, so the call an alert rings can be answered.
 - The HTTP DTOs the app reads have zod schemas in `core/contracts/http.contract.ts`,
   each tied to its TypeScript type with `satisfies z.ZodType<T>`;
   `tests/unit/http-contract.test.ts` validates every recorded backend response

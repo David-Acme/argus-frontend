@@ -56,7 +56,7 @@ function HomeContent() {
   const { t, language } = useTranslation();
   const date = useDateFormatter();
   const { isShort } = useWindowClass();
-  const { can, has, guard } = useCapabilities();
+  const { can, has } = useCapabilities();
   const {
     cameraTiles,
     projects,
@@ -179,7 +179,7 @@ function HomeContent() {
           </View>
         </View>
 
-        {guard.view ? <ResponseStrip /> : null}
+        <ResponseStrip />
 
         <ModulesProgressChip />
 

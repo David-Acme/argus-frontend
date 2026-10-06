@@ -2936,8 +2936,9 @@ already refuses.
   to the backend table by `capability-contract.test.ts`, which also pins every
   role x module grant and the core fallback, so a capability added or moved in
   the backend fails here.
-- Panic (`safety.panic`) is baseline: always on the profile and on the
-  inactive-role screen. Duress and codes need `safety.duress` and the module.
+- Panic (`safety.panic`), `safety.read` and `safety.respond` are baseline
+  (the backend moved `safety.read` from surveillance to core): panic is always
+  on the profile and on the inactive-role screen. Duress and codes need `safety.duress` and the module.
   `reminders.read/write` are baseline for every role and mean the person's own
   rows only (another user's reminder answers 404, no Owner override), so the app
   offers no view of other people's reminders.
@@ -2976,6 +2977,24 @@ the backend keeps all four for an inactive role (`roleGranted` lets a mask with
 the baseline bit through while its module is core, which is always enabled).
 Nothing module-bound is offered, and the tabs, compose button and call route
 close.
+
+### Alerts raised for the user, whatever the role or module state
+
+Answering a raised alert (acknowledge, "voy en camino", resolve, the
+`guard_response` verdict, `GET /guard/safety`) is scoped to the recipient, not
+to the role: the server returns 404 to anyone the alert was not delivered to,
+and the backend keeps those routes reachable with surveillance off and for an
+inactive role (`safety.respond`, `safety.read` and `safety.panic` are core
+baseline capabilities, `kCoreRoutes` holds `POST /guard/panic` and
+`GET /guard/safety`). The app therefore gates the alert strip by
+`safety.respond` and by the existence of an alert addressed to the user
+(`alertsFor(view, responses, now)`), never by `guard.read` or a role check: it
+is on Inicio and, first thing, on the inactive-role screen. `/call` for a role
+whose module is off follows `calls.join` (`routeFallback`), so the call an
+alert rings can be answered; the call screen still asks `assistant.voice` for
+a call the user starts. A live camera in an alert card needs `camera.view`.
+`guard_panic` and `guard_duress` kinds are core, so their notifications are
+always visible.
 
 ### Reminders on Inicio
 

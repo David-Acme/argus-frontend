@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { CAPABILITY } from '@/shared/constants';
 import { routeFallback, routeModuleEnabled } from '@/shared/libs/route-access';
 import { noContextView, viewFor } from './support/access-fixtures';
 
@@ -90,5 +91,21 @@ describe('routeFallback for a role whose module is off', () => {
     expect(routeFallback('/security', guard)).toBe('/');
     expect(routeFallback('/cameras', guard)).toBe('/');
     expect(routeFallback('/settings', guard)).toBe('/');
+  });
+
+  test('the call route follows calls.join, so the call an alert rings can be answered', () => {
+    expect(guard.capabilities.has(CAPABILITY.callsJoin)).toBe(true);
+    expect(routeFallback('/call', guard)).toBeNull();
+    expect(routeFallback('/call?callId=12', guard)).toBeNull();
+  });
+
+  test('without calls.join the call route stays closed for a role whose module is off', () => {
+    const without = { ...guard, capabilities: new Set([...guard.capabilities].filter((id) => id !== CAPABILITY.callsJoin)) };
+    expect(routeFallback('/call', without)).toBe('/');
+  });
+
+  test('nothing else opens for it because of the call rule', () => {
+    expect(routeFallback('/cameras', guard)).toBe('/');
+    expect(routeFallback('/call/other', guard)).toBe('/');
   });
 });

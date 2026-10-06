@@ -2,10 +2,11 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/core/stores';
 import type { IncidentResponse, ResponseVerdict } from '@/core/types';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runServiceAction } from '@/shared/libs/service-action';
-import { visibleResponses, withVerdict } from '@/features/response/model/response';
+import { alertsFor, canRespond, withVerdict } from '@/features/response/model/response';
 import { bindResponseFeed } from '@/features/response/services/response-feed';
 import { responseService } from '@/features/response/services/response.service';
 import { useResponseStore } from '@/features/response/stores/response.store';
@@ -19,6 +20,7 @@ async function refresh(): Promise<void> {
 
 function useResponseSession(): void {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const respond = canRespond(useAccessView());
   const owner = userId === null ? null : String(userId);
 
   useEffect(() => {
@@ -28,16 +30,17 @@ function useResponseSession(): void {
 
   useFocusEffect(
     useCallback(() => {
-      if (owner !== null) void refresh();
-    }, [owner])
+      if (owner !== null && respond) void refresh();
+    }, [owner, respond])
   );
 }
 
 export function useResponses(): IncidentResponse[] {
   useResponseSession();
   const responses = useResponseStore((state) => state.responses);
+  const view = useAccessView();
   const nowSeconds = Math.floor(useNow(CLOCK_MS) / 1000);
-  return useMemo(() => visibleResponses(responses, nowSeconds), [responses, nowSeconds]);
+  return useMemo(() => alertsFor(view, responses, nowSeconds), [view, responses, nowSeconds]);
 }
 
 export function useResponse(responseId: number | null | undefined): IncidentResponse | null {

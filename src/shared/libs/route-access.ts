@@ -1,5 +1,5 @@
 import { moduleOfAppRoute } from '@/core/services/modules/module-state';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, type Capability } from '@/shared/constants';
 import {
   guardAccessOf,
   hasCapability,
@@ -32,11 +32,21 @@ const EXACT_RULES: Readonly<Record<string, RouteRule>> = {
 
 const INACTIVE_ROLE_ROUTES: ReadonlySet<string> = new Set(['/', '/profile']);
 
+const INACTIVE_ROLE_CAPABILITY_ROUTES: Readonly<Record<string, Capability>> = {
+  '/call': CAPABILITY.callsJoin,
+};
+
 const pathOf = (pathname: string): string => pathname.split(/[?#]/)[0] ?? pathname;
+
+function inactiveRoleMayOpen(path: string, view: AccessView): boolean {
+  if (INACTIVE_ROLE_ROUTES.has(path)) return true;
+  const capability = INACTIVE_ROLE_CAPABILITY_ROUTES[path];
+  return capability !== undefined && hasCapability(view, capability);
+}
 
 export function routeFallback(pathname: string, view: AccessView): RouteFallback | null {
   const path = pathOf(pathname);
-  if (!view.roleActive) return INACTIVE_ROLE_ROUTES.has(path) ? null : '/';
+  if (!view.roleActive) return inactiveRoleMayOpen(path, view) ? null : '/';
   const segment = ROUTE_RULES[`/${path.split('/')[1] ?? ''}`];
   const exact = EXACT_RULES[path];
   if (segment && !segment.allows(view)) return segment.fallback;

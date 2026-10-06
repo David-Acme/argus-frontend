@@ -13,6 +13,7 @@ import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { ModuleRequestButton, moduleIcon } from '@/features/modules';
 import { RemindersSection } from '@/features/reminders';
+import { ResponseStrip } from '@/features/response';
 import { PanicButton } from '@/features/safety';
 import { useSignOut } from '@/features/sessions';
 import {
@@ -60,6 +61,7 @@ export default function InactiveRoleScreen() {
 
   return (
     <AppScreen>
+      {offers.alerts ? <ResponseStrip className="w-full max-w-lg self-center pb-2" /> : null}
       <View
         className={cn(
           'w-full flex-1 justify-center self-center py-6',

@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { CameraLiveView } from '@/features/cameras';
@@ -102,6 +103,7 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
   const { t } = useTranslation();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
   const decide = useResponseVerdict();
+  const { cameraActions } = useCapabilities();
   const [pending, setPending] = useState<'real' | 'false_alarm' | null>(null);
   const [watching, setWatching] = useState(false);
   const headline = headlineOf(response, selfId);
@@ -110,7 +112,7 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
   const emergency = emergencyOf(response);
   const contacts = contactsOf(response);
   const open = isOpen(response);
-  const showCamera = !compact && open && response.cameraId > 0;
+  const showCamera = !compact && open && response.cameraId > 0 && cameraActions.watch;
   const headlineText = (() => {
     switch (headline.key) {
       case 'calling':

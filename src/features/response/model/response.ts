@@ -1,4 +1,6 @@
 import type { IncidentResponse, ResponseContact, ResponseVerdict } from '@/core/types';
+import { CAPABILITY } from '@/shared/constants';
+import { hasCapability, type AccessView } from '@/shared/libs/capabilities';
 
 export type ResponseTone = 'urgent' | 'attended' | 'resolved' | 'confirmed';
 
@@ -86,6 +88,16 @@ export function visibleResponses(
   return Object.values(responses)
     .filter((response) => isOpen(response) || nowSeconds - response.updatedAt < CLOSED_VISIBLE_SECONDS)
     .sort((left, right) => Number(isOpen(right)) - Number(isOpen(left)) || right.createdAt - left.createdAt);
+}
+
+export const canRespond = (view: AccessView): boolean => hasCapability(view, CAPABILITY.safetyRespond);
+
+export function alertsFor(
+  view: AccessView,
+  responses: Readonly<Record<number, IncidentResponse>>,
+  nowSeconds: number
+): IncidentResponse[] {
+  return canRespond(view) ? visibleResponses(responses, nowSeconds) : [];
 }
 
 export function withVerdict(
