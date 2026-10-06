@@ -8,12 +8,14 @@ import { SessionsSection } from '@/features/sessions';
 import { CallPreferencesSection } from '@/features/voice';
 import { PrivacySection } from '@/features/privacy';
 import { SafetySection } from '@/features/safety';
+import { ModuleRequestsSection } from '@/features/modules';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/shared/constants';
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { useRouter } from 'expo-router';
@@ -26,6 +28,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t, language } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const { roleActive } = useCapabilities();
   const languagePreference = useLocaleStore((state) => state.preference);
   const setLanguage = useLocaleStore((state) => state.setLanguage);
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
@@ -153,8 +156,9 @@ export default function ProfileScreen() {
 
       <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
       <SafetySection />
-      <CallPreferencesSection />
+      {roleActive ? <CallPreferencesSection /> : null}
       <PrivacySection />
+      <ModuleRequestsSection />
     </AppScreen>
   );
 }

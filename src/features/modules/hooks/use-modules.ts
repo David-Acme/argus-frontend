@@ -30,15 +30,6 @@ export function useModules(): ModulesState {
 
   const confirmFor = useCallback(
     (module: ModuleRecord, action: ModuleAction) => {
-      if (action === 'disable') {
-        return {
-          title: t('screens.modules.confirm-disable-title', { name: module.name }),
-          description: t('screens.modules.confirm-disable-description'),
-          confirmLabel: t('screens.modules.actions.disable'),
-          cancelLabel: t('common.cancel'),
-          intent: 'warning' as const,
-        };
-      }
       if (action === 'cancel') {
         return {
           title: t('screens.modules.confirm-cancel-title', { name: module.name }),

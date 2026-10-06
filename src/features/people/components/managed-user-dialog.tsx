@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import type { IUserManagementUpdate } from '@/core/interfaces';
 import type { UserRole } from '@/core/types';
@@ -10,7 +10,8 @@ import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { isRoleOffered } from '@/shared/libs/capabilities';
+import { offModuleOfRole } from '@/shared/libs/capabilities';
+import { toast } from '@/shared/libs/toast';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { userManagementService } from '@/features/people/services/user-management.service';
 import {
@@ -24,7 +25,14 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
   const [lastName, setLastName] = useState(user.lastName);
   const [role, setRole] = useState<UserRole>(user.role);
   const view = useAccessView();
-  const options = useMemo(() => roleOptions(t, (candidate) => isRoleOffered(view, candidate), user.role), [t, user.role, view]);
+  const moduleOff = useCallback(
+    (candidate: string) => {
+      const moduleId = offModuleOfRole(view, candidate);
+      return moduleId === null ? null : (view.moduleNames.get(moduleId) ?? moduleId);
+    },
+    [view]
+  );
+  const options = useMemo(() => roleOptions(t, moduleOff), [moduleOff, t]);
 
   const save = () => {
     if (!name.trim()) return;
@@ -35,7 +43,10 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
       call: () => userManagementService.update(Number(user.id), values),
       success: t('screens.users.user-saved'),
     }).then((response) => {
-      if (response) onSaved();
+      if (!response) return;
+      onSaved();
+      const off = moduleOff(role);
+      if (role !== user.role && off !== null) toast.info(t('screens.users.role-saved-paused', { module: off }));
     });
   };
 

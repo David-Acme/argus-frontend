@@ -37,6 +37,18 @@ describe('readEnvelope', () => {
     expect(readEnvelope(200, 'null').errors?.code).toBe('INVALID_RESPONSE');
   });
 
+  test('a list of refusals keeps the first as the answer and every one beside it', () => {
+    const list = [
+      { code: 'INVITATION_MODULE_DISABLED', message: 'Revoked' },
+      { code: 'MODULE_ID', message: 'surveillance' },
+    ];
+    const read = readEnvelope(410, envelope({ status: 410, info: null, errors: list }));
+    expect(read.ok).toBe(false);
+    expect(read.errors).toEqual({ code: 'INVITATION_MODULE_DISABLED', message: 'Revoked', list });
+    expect(readEnvelope(409, envelope({ errors: [] })).errors?.code).toBe('CONFLICT');
+    expect(readEnvelope(409, envelope({ errors: [{ code: 1 }] })).errors?.code).toBe('CONFLICT');
+  });
+
   test('a 2xx answer that carries errors is a refusal', () => {
     const errors = { code: 'CONFLICT', message: 'Already changed' };
     expect(readEnvelope(200, envelope({ info: null, errors })).ok).toBe(false);

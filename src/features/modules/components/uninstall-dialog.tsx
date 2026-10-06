@@ -8,12 +8,14 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import type { UninstallTarget } from '@/features/modules/hooks/use-module-uninstall';
+import { ImpactSummary } from '@/features/modules/components/impact-summary';
+import { reassignComplete, type ReassignChoices } from '@/features/modules/model/module-impact';
 import { dataSummary, purgeReady } from '@/features/modules/model/module-lifecycle';
 
 type UninstallDialogProps = {
   target: UninstallTarget | null;
   onClose: () => void;
-  onSubmit: (keepData: boolean) => void;
+  onSubmit: (keepData: boolean, choices: ReassignChoices) => void;
 };
 
 type ChoiceProps = {
@@ -55,19 +57,23 @@ function Choice({ selected, title, hint, danger = false, onPress }: ChoiceProps)
 export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogProps) {
   const { t, language } = useTranslation();
   const erase = target?.mode === 'erase';
+  const simple = target?.mode === 'simple';
   const [purge, setPurge] = useState(erase);
   const [typed, setTyped] = useState('');
+  const [choices, setChoices] = useState<ReassignChoices>({});
   const module = target?.module ?? null;
   const name = module?.name || module?.id || '';
   const summary = target?.owners ? dataSummary(target.owners, language, t) : [];
-  const purging = erase || purge;
-  const ready = !purging || purgeReady({ typed, name });
+  const purging = erase || (!simple && purge);
+  const impact = target?.impact ?? null;
+  const ready = (!purging || purgeReady({ typed, name })) && (impact === null || reassignComplete(impact, choices));
 
   const finish = (submit: boolean) => {
     if (submit && !ready) return;
     setPurge(false);
     setTyped('');
-    if (submit) onSubmit(!purging);
+    setChoices({});
+    if (submit) onSubmit(!purging, choices);
     else onClose();
   };
 
@@ -78,10 +84,18 @@ export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogPr
         if (!next) finish(false);
       }}
       title={
-        erase ? t('screens.modules.uninstall.erase-title', { name }) : t('screens.modules.uninstall.data-title', { name })
+        erase
+          ? t('screens.modules.uninstall.erase-title', { name })
+          : simple
+            ? t('screens.modules.impact.uninstall-title', { name })
+            : t('screens.modules.uninstall.data-title', { name })
       }
       description={
-        erase ? t('screens.modules.uninstall.erase-description') : t('screens.modules.uninstall.data-description')
+        erase
+          ? t('screens.modules.uninstall.erase-description')
+          : simple
+            ? t('screens.modules.impact.uninstall-description')
+            : t('screens.modules.uninstall.data-description')
       }
       closeLabel={t('common.cancel')}
       onSubmit={() => finish(true)}
@@ -96,6 +110,16 @@ export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogPr
         </View>
       }>
       <View className="gap-4">
+        {impact ? (
+          <ImpactSummary
+            impact={impact}
+            moduleName={name}
+            uninstall
+            choices={choices}
+            onChoose={(userId, role) => setChoices((current) => ({ ...current, [String(userId)]: role }))}
+          />
+        ) : null}
+        {simple ? null : (
         <View className="bg-surface-secondary dark:bg-card-secondary gap-1.5 rounded-2xl p-3">
           <Text variant="caption" className="text-foreground-secondary">
             {target?.owners ? t('screens.modules.uninstall.holds') : t('screens.modules.uninstall.data-unknown')}
@@ -118,8 +142,9 @@ export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogPr
             </Text>
           </View>
         </View>
+        )}
 
-        {erase ? null : (
+        {erase || simple ? null : (
           <View accessibilityRole="radiogroup" className="gap-2">
             <Choice
               selected={!purge}

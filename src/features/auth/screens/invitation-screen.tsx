@@ -8,21 +8,30 @@ import { Text } from '@/shared/components/ui/text';
 import { IS_NATIVE } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { parseInvitationQr } from '@/shared/libs/invitation-qr';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { holdInviteToken } from '@/features/auth/model/invite-slot';
+import {
+  invitationRevokedBy,
+  invitationRevokedText,
+  type InvitationRevoked,
+} from '@/features/auth/model/invitation-refusal';
 import { nextHref } from '@/features/auth/model/onboarding-flow';
 import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 
-type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error' | 'mismatch';
+type InvitationPhase = 'idle' | 'resolving' | 'accepted' | 'error' | 'mismatch' | 'revoked';
 
 function InvitationScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const status = useQrScanStore((state) => state.status);
   const value = useQrScanStore((state) => state.value);
-  const [phase, setPhase] = useState<InvitationPhase>('idle');
+  const params = useLocalSearchParams<{ revoked?: string }>();
+  const [phase, setPhase] = useState<InvitationPhase>(params.revoked ? 'revoked' : 'idle');
+  const [revoked, setRevoked] = useState<InvitationRevoked | null>(
+    params.revoked ? { moduleId: params.revoked === 'none' ? null : params.revoked } : null
+  );
 
   const openScanner = useCallback(() => {
     useQrScanStore.getState().open({ purpose: 'invite' });
@@ -45,7 +54,9 @@ function InvitationScreen() {
       void inviteService.accept(qr).then((response) => {
         if (!active) return;
         if (!response.ok || !response.info) {
-          setPhase(response.errors?.code === 'FINGERPRINT_MISMATCH' ? 'mismatch' : 'error');
+          const refusal = invitationRevokedBy(response.errors);
+          if (refusal) setRevoked(refusal);
+          setPhase(refusal ? 'revoked' : response.errors?.code === 'FINGERPRINT_MISMATCH' ? 'mismatch' : 'error');
           return;
         }
         setPhase('accepted');
@@ -92,6 +103,24 @@ function InvitationScreen() {
           <View className="flex-row items-center gap-3 py-1">
             <Icon name="check-circle" className="text-success size-5" />
             <Text>{t('screens.invitation.accepted')}</Text>
+          </View>
+        ) : null}
+
+        {phase === 'revoked' ? (
+          <View className="gap-3">
+            <View className="flex-row items-start gap-3">
+              <Icon name="triangle-alert" className="text-warning-strong mt-0.5 size-5" />
+              <View className="min-w-0 flex-1 gap-1">
+                <Text variant="body">{t('screens.invitation.revoked.title')}</Text>
+                <Text variant="caption">{revoked ? invitationRevokedText(revoked, t) : ''}</Text>
+                <Text variant="caption" className="text-foreground-secondary">
+                  {t('screens.invitation.revoked.hint')}
+                </Text>
+              </View>
+            </View>
+            <Button variant="outline" onPress={() => router.replace('/welcome')}>
+              <Text>{t('screens.invitation.revoked.back')}</Text>
+            </Button>
           </View>
         ) : null}
 

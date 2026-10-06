@@ -2,7 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
-import type { PrivacyMe } from '@/core/types';
+import type { ModuleCatalog, PrivacyMe } from '@/core/types';
+import { moduleRecord } from './support/access-fixtures';
 import { PRIVACY_JURISDICTIONS, PRIVACY_NOTICE_VERSION } from '@/features/privacy/constants/privacy';
 import {
   NO_CHOICES,
@@ -11,7 +12,9 @@ import {
   cameraAudioHeldBy,
   coreSignals,
   onlyCoreChoices,
+  chosenModuleIds,
   signalsOfModules,
+  signalsToAsk,
   consentDraft,
   decisionOf,
   effectiveOf,
@@ -166,5 +169,43 @@ describe('privacy signals by module', () => {
     const flagged = privacyMeSchema.safeParse({ ...me, applicable: { ...ALL, presence: false } });
     expect(flagged.data?.applicable?.presence).toBe(false);
     expect(flagged.data?.choices.presence).toBe(true);
+  });
+});
+
+describe('what the owner is asked after choosing modules', () => {
+  const catalog = (...modules: Parameters<typeof moduleRecord>[0][]): ModuleCatalog => ({
+    fetchedAt: 1,
+    modules: [moduleRecord({ id: 'core', kind: 'core', enabled: true }), ...modules.map((patch) => moduleRecord(patch))],
+  });
+  const installing = {
+    id: '1',
+    kind: 'install' as const,
+    state: 'downloading' as const,
+    progress: 0.1,
+    bytesDone: 1,
+    bytesTotal: 10,
+    bytesPerSecond: 1,
+    etaSeconds: null,
+    reason: null,
+    owner: null,
+  };
+
+  test('nothing when no module was chosen or the catalog is unknown', () => {
+    expect(signalsToAsk(null)).toEqual([]);
+    expect(signalsToAsk(catalog({ id: 'surveillance' }, { id: 'productivity' }))).toEqual([]);
+  });
+
+  test('the signals of a module that is on or being installed', () => {
+    expect(signalsToAsk(catalog({ id: 'surveillance', enabled: true }))).toEqual(['presence', 'faceCameras', 'cameraAudio']);
+    expect(signalsToAsk(catalog({ id: 'surveillance', job: installing }))).toEqual(['presence', 'faceCameras', 'cameraAudio']);
+    expect(chosenModuleIds(catalog({ id: 'surveillance', job: installing }, { id: 'productivity', enabled: true }))).toEqual([
+      'surveillance',
+      'productivity',
+    ]);
+  });
+
+  test('a module with no signals asks nothing and a removal in progress is not a choice', () => {
+    expect(signalsToAsk(catalog({ id: 'productivity', enabled: true }))).toEqual([]);
+    expect(signalsToAsk(catalog({ id: 'surveillance', job: { ...installing, kind: 'uninstall' } }))).toEqual([]);
   });
 });

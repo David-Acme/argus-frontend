@@ -2,10 +2,11 @@ import type { TranslationKey } from '@/core/types';
 
 export type OnboardingFlowId = 'owner' | 'invited';
 
-export type OnboardingStepId = 'pair' | 'invitation' | 'privacy' | 'face' | 'modules' | 'meet';
+export type OnboardingStepId = 'pair' | 'invitation' | 'privacy' | 'face' | 'modules' | 'module-privacy' | 'meet';
 
 export type OnboardingContext = {
   native: boolean;
+  moduleSignals?: boolean | null;
 };
 
 export type OnboardingScreen =
@@ -14,6 +15,7 @@ export type OnboardingScreen =
   | '/welcome/privacy'
   | '/welcome/face'
   | '/welcome/modules'
+  | '/welcome/module-privacy'
   | '/welcome/voice';
 
 export type OnboardingStep = {
@@ -37,6 +39,7 @@ export type OnboardingProgress = {
 
 const always = () => true;
 const nativeOnly = (context: OnboardingContext) => context.native;
+const nativeWithModuleSignals = (context: OnboardingContext) => context.native && context.moduleSignals !== false;
 
 const STEP: Readonly<Record<OnboardingStepId, OnboardingStep>> = {
   pair: { id: 'pair', screen: '/welcome/pairing', label: 'screens.welcome.steps.pair', when: always, skippable: false },
@@ -62,11 +65,18 @@ const STEP: Readonly<Record<OnboardingStepId, OnboardingStep>> = {
     when: nativeOnly,
     skippable: true,
   },
+  'module-privacy': {
+    id: 'module-privacy',
+    screen: '/welcome/module-privacy',
+    label: 'screens.welcome.steps.module-privacy',
+    when: nativeWithModuleSignals,
+    skippable: true,
+  },
   meet: { id: 'meet', screen: '/welcome/voice', label: 'screens.welcome.steps.meet', when: nativeOnly, skippable: true },
 };
 
 export const ONBOARDING_FLOWS: Readonly<Record<OnboardingFlowId, readonly OnboardingStep[]>> = {
-  owner: [STEP.pair, STEP.privacy, STEP.face, STEP.modules, STEP.meet],
+  owner: [STEP.pair, STEP.privacy, STEP.face, STEP.modules, STEP['module-privacy'], STEP.meet],
   invited: [STEP.invitation, STEP.privacy, STEP.face, STEP.meet],
 };
 
@@ -74,6 +84,13 @@ const ENROLL_MODE: Readonly<Record<OnboardingFlowId, string>> = {
   owner: 'owner-enroll',
   invited: 'invite-enroll',
 };
+
+export function signalsKnownAt(flow: OnboardingFlowId, stepId: OnboardingStepId): boolean {
+  const steps = ONBOARDING_FLOWS[flow];
+  const known = steps.findIndex((step) => step.id === 'module-privacy');
+  const at = steps.findIndex((step) => step.id === stepId);
+  return known >= 0 && at >= known;
+}
 
 export function flowOf(params: { mode?: string; flow?: string }): OnboardingFlowId {
   if (params.flow === 'owner' || params.flow === 'invited') return params.flow;

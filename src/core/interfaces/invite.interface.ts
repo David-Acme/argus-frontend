@@ -16,7 +16,10 @@ export interface IInviteCreated {
   createdAt: number;
 }
 
-export type IInvitationRecord = Omit<IInviteCreated, 'token'>;
+export type IInvitationRecord = Omit<IInviteCreated, 'token'> & {
+  revokedReason?: string | null;
+  revokedModule?: string | null;
+};
 
 export interface IInviteAcceptResult {
   instanceId: string;

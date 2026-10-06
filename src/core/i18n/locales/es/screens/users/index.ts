@@ -49,6 +49,10 @@ export const users = {
   'role-access-title': 'Qué puede hacer cada rol',
   'role-manages': 'Gestiona',
   'role-views': 'Ve',
+  'role-module-off': 'Necesita {module}, que está apagado',
+  'invite-role-off-title': 'No se puede invitar con este rol',
+  'invite-role-off': 'Para invitar a alguien como {role} hace falta {module}. Actívalo primero.',
+  'role-saved-paused': 'Rol guardado. Se activará cuando vuelva {module}.',
   'role-paused': 'En pausa: vuelve cuando {module} esté activo',
   'role-only-own': 'Solo su perfil y sus avisos',
   'role-members': '{count} con este rol',
@@ -71,6 +75,10 @@ export const users = {
     used: 'Usada',
     closed: 'Cerrada sin usar',
     lapsed: 'Caducó sin usarse',
+  },
+  'invitation-reason': {
+    module: 'Revocada porque se desactivó {module}',
+    'module-long': 'Se revocó porque se desactivó {module}. Ya no sirve y no volverá.',
   },
   'invitation-state': {
     waiting: 'Esperando a que la escaneen',

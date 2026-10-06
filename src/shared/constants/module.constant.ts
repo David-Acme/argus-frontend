@@ -22,7 +22,7 @@ export const MODULE_SYNC_TABLES = {
 
 export const MODULE_PURGE_STAMPS_KEY = 'app.modules.purged.';
 
-export const MODULE_POLL_MS = 3000;
+export const MODULE_REQUESTED_KEY = 'app.modules.requested.';
 
 export const MODULE_ROUTE = '/modules';
 

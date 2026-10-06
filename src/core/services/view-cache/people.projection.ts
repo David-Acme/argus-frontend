@@ -8,7 +8,8 @@ export type UserSource = Pick<UserModel, 'id' | 'name' | 'lastName' | 'role' | '
 export type InvitationSource = Pick<
   UserInvitationModel,
   'id' | 'role' | 'maxRedemptions' | 'redemptionCount' | 'expiresAt' | 'createdBy' | 'revokedAt' | 'createdAt'
->;
+> &
+  Partial<Pick<UserInvitationModel, 'revokedReason' | 'revokedModule'>>;
 
 export type PeopleProjectionInput = {
   users: readonly UserSource[];
@@ -35,6 +36,8 @@ export function projectPeople({ users, invitations }: PeopleProjectionInput): Vi
     expiresAt: toSeconds(invitation.expiresAt),
     createdBy: Number(invitation.createdBy),
     revokedAt: invitation.revokedAt ? toSeconds(invitation.revokedAt) : null,
+    revokedReason: invitation.revokedReason ?? null,
+    revokedModule: invitation.revokedModule ?? null,
     createdAt: toSeconds(invitation.createdAt),
   }));
   return [

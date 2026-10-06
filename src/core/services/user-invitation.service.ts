@@ -17,6 +17,8 @@ class UserInvitationService extends DatabaseService<'user_invitation'> {
         'expires_at',
         'created_by',
         'revoked_at',
+        'revoked_reason',
+        'revoked_module',
         'updated_at',
       ],
       [Q.sortBy('created_at', Q.desc)],

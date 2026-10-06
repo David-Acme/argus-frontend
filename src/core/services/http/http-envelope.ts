@@ -3,7 +3,7 @@ import type { IApiError, IServiceResponse } from '@/core/interfaces';
 type Envelope = {
   status?: number;
   info?: unknown;
-  errors?: IApiError | null;
+  errors?: IApiError | readonly IApiError[] | null;
 };
 
 const STATUS_CODES: Readonly<Record<number, string>> = {
@@ -46,6 +46,9 @@ const isApiError = (value: unknown): value is IApiError =>
   typeof (value as IApiError).code === 'string' &&
   typeof (value as IApiError).message === 'string';
 
+const isApiErrorList = (value: unknown): value is readonly IApiError[] =>
+  Array.isArray(value) && value.length > 0 && value.every(isApiError);
+
 export function readEnvelope<T>(status: number, raw: string): IServiceResponse<T> {
   const envelope = parseEnvelope(raw);
   if (!envelope) {
@@ -56,8 +59,10 @@ export function readEnvelope<T>(status: number, raw: string): IServiceResponse<T
   if (isSuccess(status) && !envelope.errors) {
     return { status, ok: true, info: (envelope.info as T | null) ?? null, errors: null };
   }
-  const errors = isApiError(envelope.errors)
+  const errors: IApiError = isApiError(envelope.errors)
     ? envelope.errors
-    : { code: statusErrorCode(status), message: `HTTP ${status}` };
+    : isApiErrorList(envelope.errors)
+      ? { code: envelope.errors[0]!.code, message: envelope.errors[0]!.message, list: envelope.errors.map(({ code, message }) => ({ code, message })) }
+      : { code: statusErrorCode(status), message: `HTTP ${status}` };
   return { status, ok: false, info: null, errors };
 }

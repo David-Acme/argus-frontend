@@ -9,4 +9,16 @@ export const invitation = {
   'mismatch-title': 'Este servidor no es el de la invitación.',
   'mismatch-hint':
     'No se envió nada. Asegúrate de estar en la red de casa y pide al administrador que te muestre la invitación otra vez.',
+  revoked: {
+    title: 'Esta invitación ya no sirve',
+    hint: 'Pídele a quien te invitó una nueva cuando vuelva a estar activo.',
+    back: 'Volver al inicio',
+  },
+  'revoked-module': 'Se revocó porque se apagó {module} en esa casa. Una invitación revocada no vuelve a usarse.',
+  modules: {
+    surveillance: 'Vigilancia',
+    productivity: 'Productividad',
+    agronomy: 'Agronomía',
+    other: 'un módulo',
+  },
 } as const;

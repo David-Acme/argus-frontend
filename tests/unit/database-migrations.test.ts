@@ -87,7 +87,7 @@ describe('the task due date index', () => {
       'insert into project_task (id, _changed, _status, project_id, title, status, priority, due_at, sort_order, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('1', '', 'synced', '3', 'Fix the gate', 'todo', 'low', 1500, 1, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 6, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 6, toVersion: 8 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -99,7 +99,7 @@ describe('the task due date index', () => {
   test('replaying the migration twice is harmless', () => {
     const db = new Database(':memory:');
     db.exec(encodeSchema(schema));
-    const steps = stepsForMigration({ migrations, fromVersion: 6, toVersion: SCHEMA_VERSION }) ?? [];
+    const steps = stepsForMigration({ migrations, fromVersion: 6, toVersion: 8 }) ?? [];
     expect(() => db.exec(encodeMigrationSteps(steps))).not.toThrow();
   });
 });
@@ -140,10 +140,55 @@ describe('the notification feed index', () => {
     db.exec(encodeSchema(schema));
     db.exec('drop index "notification_user_created";');
     insert(db);
-    const steps = stepsForMigration({ migrations, fromVersion: 7, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 7, toVersion: 8 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
     expect(indexesOf(db)).toContain('notification_user_created');
     expect(db.query('select count(*) as n from notification').get()).toEqual({ n: 1 });
+  });
+});
+
+describe('the invitation revocation reason', () => {
+  const columnsOf = (db: Database): string[] =>
+    (db.query("select name from pragma_table_info('user_invitation')").all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const withoutReason = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'user_invitation') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => column !== 'revoked_reason' && column !== 'revoked_module')
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 8, tables } as AppSchema;
+  };
+
+  test('a fresh database has both columns', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(columnsOf(db)).toEqual(expect.arrayContaining(['revoked_reason', 'revoked_module']));
+  });
+
+  test('a version 8 database gains them through the migration and keeps its invitations', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(withoutReason()));
+    expect(columnsOf(db)).not.toContain('revoked_reason');
+    db.query(
+      'insert into user_invitation (id, _changed, _status, role, max_redemptions, redemption_count, expires_at, created_by, revoked_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('4', '', 'synced', 'guest', 1, 0, 9, '1', null, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 8, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(columnsOf(db)).toEqual(expect.arrayContaining(['revoked_reason', 'revoked_module']));
+    expect(db.query('select count(*) as n, max(revoked_reason) as reason from user_invitation').get()).toEqual({
+      n: 1,
+      reason: null,
+    });
   });
 });

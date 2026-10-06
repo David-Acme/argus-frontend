@@ -131,6 +131,11 @@ export function isRoleOffered(view: AccessView, role: string): boolean {
   return moduleId === null || isModuleActive(view, moduleId);
 }
 
+export function offModuleOfRole(view: AccessView, role: string): string | null {
+  const moduleId = moduleOfRole(view, role);
+  return moduleId !== null && !isModuleActive(view, moduleId) ? moduleId : null;
+}
+
 export function tableAllowed(view: AccessView, table: TableName, permission: Permission): boolean {
   if (REMINDER_TABLES.has(table)) {
     return hasCapability(view, permission === 'read' ? CAPABILITY.remindersRead : CAPABILITY.remindersWrite);

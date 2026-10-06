@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { useAuthStore } from '@/core/stores';
+import { useRouter } from 'expo-router';
 import type { SettingChange, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
+import { ListRow } from '@/shared/components/ui/list-row';
+import { Panel } from '@/shared/components/ui/panel';
+import { CAPABILITY } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { ConnectionNotice } from '@/features/settings/components/connection-notice';
@@ -36,7 +40,9 @@ const basicSettings = (owner: SettingsOwner) => owner.settings.filter((setting) 
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const { isWide } = useWindowClass();
-  const isOwner = useAuthStore((state) => state.user?.role === 'owner');
+  const router = useRouter();
+  const { has } = useCapabilities();
+  const isOwner = has(CAPABILITY.settingsManage);
   const { overview, loading, failed, reload, change, replaceCatalogs } = useSettings({ enabled: isOwner });
   const profiles = useSettingsProfiles({ enabled: isOwner, onCatalogs: replaceCatalogs });
   const { mode, choose } = useSettingsMode();
@@ -136,6 +142,17 @@ export default function SettingsScreen() {
           </View>
 
           {isOwner ? <ModulesSummaryCard /> : null}
+          {isOwner && has(CAPABILITY.activityRead) ? (
+            <Panel className="p-1.5">
+              <ListRow
+                icon="history"
+                title={t('screens.activity.entry')}
+                subtitle={t('screens.activity.entry-hint')}
+                chevron
+                onPress={() => router.push('/settings/activity')}
+              />
+            </Panel>
+          ) : null}
 
           {firstRun?.state === 'applied' ? (
             <FirstRunBanner firstRun={firstRun} reverting={profiles.reverting} onRevert={() => void profiles.revert()} />

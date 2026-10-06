@@ -1,12 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { moduleEngine, modulesService } from '@/core/services/modules';
 import type { IApiError } from '@/core/interfaces';
-import type { ModuleCatalog, ModuleDataOwner, ModuleRecord } from '@/core/types';
+import type { ModuleCatalog, ModuleDataOwner, ModuleImpact, ModuleRecord } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
 import { askCurrentPin } from '@/features/safety';
+import { impactHasEffects, reassignBody, refusalOf, type ReassignChoices } from '@/features/modules/model/module-impact';
 import {
   blockMessage,
   pinStep,
@@ -20,6 +21,7 @@ export type UninstallTarget = {
   module: ModuleRecord;
   mode: UninstallMode;
   owners: ModuleDataOwner[] | null;
+  impact: ModuleImpact | null;
 };
 
 export function useModuleUninstall(catalog: ModuleCatalog | null) {
@@ -36,11 +38,17 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
     [catalog, t]
   );
 
+  const start = useRef<(module: ModuleRecord) => Promise<void>>(async () => undefined);
+
   const send = useCallback(
-    async (module: ModuleRecord, keepData: boolean) => {
+    async (module: ModuleRecord, keepData: boolean, reassign?: Record<string, string>) => {
       let pin: string | undefined;
       for (;;) {
-        const result = await moduleEngine.act(module.id, 'uninstall', pin === undefined ? { keepData } : { keepData, pin });
+        const result = await moduleEngine.act(module.id, 'uninstall', {
+          keepData,
+          ...(pin === undefined ? {} : { pin }),
+          ...(reassign ? { reassign } : {}),
+        });
         if (result.ok) {
           toast.info(
             keepData
@@ -48,6 +56,11 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
               : t('screens.modules.uninstall.purge-started', { name: module.name })
           );
           return true;
+        }
+        if (result.errors?.code === 'MODULE_ROLES_HELD') {
+          toast.warning(t('screens.modules.action-failed'), t('screens.modules.impact.roles-held'));
+          void start.current(module);
+          return false;
         }
         const step = pinStep(result.errors?.code);
         if (step === 'locked') {
@@ -75,7 +88,7 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
     [send]
   );
 
-  const start = useCallback(
+  const begin = useCallback(
     async (module: ModuleRecord) => {
       const block = uninstallBlock(catalog, module);
       if (block) {
@@ -83,11 +96,22 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
         return;
       }
       setChecking(module.id);
-      const answer = await modulesService.data(module.id);
+      const erasing = module.lifecycle === 'uninstalled_data_kept';
+      const impactAnswer = erasing ? null : await modulesService.impact(module.id, 'uninstall');
+      const impact = impactAnswer?.ok ? impactAnswer.info : null;
+      const answer = impact ? null : await modulesService.data(module.id);
       setChecking(null);
-      const owners = answer.ok ? answer.info : null;
+      if (impact && refusalOf(impact)) {
+        toast.warning(t('screens.modules.action-failed'), t('screens.modules.impact.refused', { reason: impact.refusal?.message ?? '' }));
+        return;
+      }
+      const owners = impact ? impact.data : answer?.ok ? answer.info : null;
       const mode = uninstallMode(module, owners);
-      if (mode === 'simple' && answer.ok) {
+      if (mode === 'simple' && impact && impactHasEffects(impact)) {
+        setTarget({ module, mode: 'simple', owners, impact });
+        return;
+      }
+      if (mode === 'simple' && (impact || answer?.ok)) {
         const accepted = await confirm({
           title: t('screens.modules.uninstall.title', { name: module.name }),
           description: t('screens.modules.uninstall.simple-description'),
@@ -98,22 +122,24 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
         if (accepted) await send(module, true);
         return;
       }
-      setTarget({ module, mode: mode === 'simple' ? 'choose' : mode, owners });
+      setTarget({ module, mode: mode === 'simple' ? 'choose' : mode, owners, impact });
     },
     [catalog, send, t]
   );
 
+  start.current = begin;
+
   const close = useCallback(() => setTarget(null), []);
 
   const submit = useCallback(
-    async (keepData: boolean) => {
+    async (keepData: boolean, choices: ReassignChoices) => {
       if (!target) return;
-      const { module } = target;
+      const { module, impact } = target;
       setTarget(null);
-      await send(module, keepData);
+      await send(module, keepData, impact ? reassignBody(impact, choices) : undefined);
     },
     [send, target]
   );
 
-  return { target, checking, start, close, submit, retry };
+  return { target, checking, start: begin, close, submit, retry };
 }

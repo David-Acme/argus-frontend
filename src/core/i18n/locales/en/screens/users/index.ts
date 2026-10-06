@@ -49,6 +49,10 @@ export const users = {
   'role-access-title': 'What each role can do',
   'role-manages': 'Manages',
   'role-views': 'Views',
+  'role-module-off': 'Needs {module}, which is off',
+  'invite-role-off-title': 'This role cannot be invited',
+  'invite-role-off': 'To invite someone as {role} you need {module}. Turn it on first.',
+  'role-saved-paused': 'Role saved. It switches on when {module} is back.',
   'role-paused': 'Paused: returns when {module} is on',
   'role-only-own': 'Only their profile and notices',
   'role-members': '{count} with this role',
@@ -70,6 +74,10 @@ export const users = {
     used: 'Used',
     closed: 'Closed unused',
     lapsed: 'Lapsed unused',
+  },
+  'invitation-reason': {
+    module: 'Revoked because {module} was turned off',
+    'module-long': 'It was revoked because {module} was turned off. It no longer works and will not come back.',
   },
   'invitation-state': {
     waiting: 'Waiting to be scanned',

@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PrivacyChoices } from '@/core/types';
-import { ConsentForm, NO_CHOICES, consentDraft } from '@/features/privacy';
+import { ConsentForm, NO_CHOICES, consentDraft, coreSignals, onlyCoreChoices } from '@/features/privacy';
 import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';
 import { clearInviteToken } from '@/features/auth/model/invite-slot';
@@ -16,9 +16,10 @@ export default function PrivacyScreen() {
   const { t } = useTranslation();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const flow = flowOf({ mode });
+  const signals = flow === 'owner' ? coreSignals() : undefined;
 
   const accept = (choices: PrivacyChoices) => {
-    consentDraft.set(choices);
+    consentDraft.set(flow === 'owner' ? onlyCoreChoices(choices) : choices);
     router.replace(nextHref(flow, 'privacy', { native: IS_NATIVE }) ?? '/');
   };
 
@@ -40,6 +41,7 @@ export default function PrivacyScreen() {
         <ConsentForm
           variant="onboarding"
           initial={consentDraft.peek() ?? NO_CHOICES}
+          signals={signals}
           header={
             <OnboardingSteps flow={flow} step="privacy" />
           }

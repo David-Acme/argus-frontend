@@ -13,6 +13,8 @@ import { ModuleCard } from '@/features/modules/components/module-card';
 import { ModuleCardSkeleton } from '@/features/modules/components/module-card-skeleton';
 import { useModules } from '@/features/modules/hooks/use-modules';
 import { UninstallDialog } from '@/features/modules/components/uninstall-dialog';
+import { DisableDialog } from '@/features/modules/components/disable-dialog';
+import { useModuleDisable } from '@/features/modules/hooks/use-module-disable';
 import { useModuleUninstall } from '@/features/modules/hooks/use-module-uninstall';
 import { lifecycleButtons } from '@/features/modules/model/module-lifecycle';
 import { sortModules } from '@/features/modules/model/module-selection';
@@ -23,6 +25,7 @@ type ModuleActionsProps = {
   pending: string | null;
   checking: string | null;
   onRun: (module: ModuleRecord, action: ModuleAction) => void;
+  onDisable: (module: ModuleRecord) => void;
   onUninstall: (module: ModuleRecord) => void;
   onRetryUninstall: (module: ModuleRecord) => void;
 };
@@ -33,26 +36,29 @@ type ServerFactsProps = {
 
 const columnsFor = (width: number) => (width >= 700 ? 2 : 1);
 
-function ModuleActions({ module, pending, checking, onRun, onUninstall, onRetryUninstall }: ModuleActionsProps) {
+function ModuleActions({ module, pending, checking, onRun, onDisable, onUninstall, onRetryUninstall }: ModuleActionsProps) {
   const { t } = useTranslation();
   const buttons = lifecycleButtons(module);
   return (
     <>
       {buttons.map((button) => {
         const uninstall = button.action === 'uninstall';
+        const disable = button.action === 'disable';
         return (
           <Button
             key={button.choice}
             size="sm"
             variant={button.tone === 'primary' ? 'default' : button.tone === 'secondary' ? 'outline' : 'ghost'}
-            loading={uninstall ? checking === module.id : pending === `${module.id}:${button.action}`}
+            loading={uninstall || disable ? checking === module.id : pending === `${module.id}:${button.action}`}
             disabled={pending !== null || checking !== null}
             onPress={() =>
               button.choice === 'retry' && uninstall
                 ? onRetryUninstall(module)
                 : uninstall
                   ? onUninstall(module)
-                  : onRun(module, button.action)
+                  : disable
+                    ? onDisable(module)
+                    : onRun(module, button.action)
             }>
             <Text>{t(button.label)}</Text>
           </Button>
@@ -120,6 +126,7 @@ export default function ModulesScreen() {
   const { t } = useTranslation();
   const { catalog, modules, status, pending, run } = useModules();
   const uninstall = useModuleUninstall(catalog);
+  const disable = useModuleDisable();
   const sorted = sortModules(modules);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/settings'));
 
@@ -145,8 +152,9 @@ export default function ModulesScreen() {
                 <ModuleActions
                   module={module}
                   pending={pending}
-                  checking={uninstall.checking}
+                  checking={uninstall.checking ?? disable.checking}
                   onRun={(target, action) => void run(target, action)}
+                  onDisable={(target) => void disable.start(target)}
                   onUninstall={(target) => void uninstall.start(target)}
                   onRetryUninstall={(target) => void uninstall.retry(target)}
                 />
@@ -171,11 +179,17 @@ export default function ModulesScreen() {
         </View>
       )}
     </AppScreen>
+    <DisableDialog
+      target={disable.target}
+      busy={disable.busy}
+      onClose={disable.close}
+      onConfirm={() => void disable.confirm()}
+    />
     <UninstallDialog
       key={uninstall.target ? `${uninstall.target.module.id}:${uninstall.target.mode}` : 'closed'}
       target={uninstall.target}
       onClose={uninstall.close}
-      onSubmit={(keepData) => void uninstall.submit(keepData)}
+      onSubmit={(keepData, choices) => void uninstall.submit(keepData, choices)}
     />
     </>
   );

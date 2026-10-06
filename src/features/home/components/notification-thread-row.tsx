@@ -9,9 +9,11 @@ import { TimelineItem } from '@/shared/components/ui/timeline';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { ModuleEnableAction } from '@/features/modules';
 import {
   isThreadRead,
   missedCallId,
+  moduleRequestOf,
   phaseOf,
   type NotificationPhase,
   type NotificationThread,
@@ -69,6 +71,7 @@ const KIND_ICONS: Readonly<Record<string, IconName>> = {
   camera_fallback: 'video',
   camera_fallback_digest: 'history',
   call: 'phone',
+  module_request: 'blocks',
 };
 
 const PHASE_KEYS = {
@@ -129,6 +132,7 @@ export function NotificationThreadRow({
   const callId = onRead ? missedCallId(thread) : null;
   const pressable = canExpand || callId !== null || (onRead != null && !read);
   const critical = thread.urgency === 'critical';
+  const request = moduleRequestOf(thread);
 
   const stamp = (at: number): string | null => {
     if (!at) return null;
@@ -207,6 +211,11 @@ export function NotificationThreadRow({
             {critical && meta.length > 0 ? ' · ' : null}
             {meta.join(' · ')}
           </Text>
+        ) : null}
+        {request ? (
+          <View className="pt-1.5">
+            <ModuleEnableAction moduleId={request.moduleId} onEnabled={() => onRead?.(thread)} />
+          </View>
         ) : null}
         {expanded ? (
           <View className="pt-2">

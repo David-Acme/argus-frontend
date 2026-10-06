@@ -85,6 +85,8 @@ export const common = {
     'module-busy': 'Ya hay una instalación en marcha para este módulo.',
     'module-required': 'Otro módulo activo lo necesita. Apaga primero ese módulo.',
     'module-core': 'El núcleo de Argus siempre está activo.',
+    'module-roles-held': 'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
+    'role-inactive': 'Tu rol está en pausa mientras ese módulo esté apagado.',
     unknown: 'Algo salió mal',
   },
 } as const;

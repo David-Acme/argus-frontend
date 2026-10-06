@@ -11,6 +11,8 @@ export const USER_INVITATION_SCHEMA = tableSchema({
     { name: 'expires_at', type: 'number' },
     { name: 'created_by', type: 'string', isIndexed: true },
     { name: 'revoked_at', type: 'number', isOptional: true },
+    { name: 'revoked_reason', type: 'string', isOptional: true },
+    { name: 'revoked_module', type: 'string', isOptional: true },
     { name: 'created_at', type: 'number' },
     { name: 'updated_at', type: 'number' },
   ],
@@ -25,6 +27,8 @@ export class UserInvitationModel extends Model {
   @date('expires_at') expiresAt!: Date;
   @field('created_by') createdBy!: string;
   @date('revoked_at') revokedAt!: Date | null;
+  @field('revoked_reason') revokedReason!: string | null;
+  @field('revoked_module') revokedModule!: string | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 }

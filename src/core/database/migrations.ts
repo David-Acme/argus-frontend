@@ -76,5 +76,17 @@ export const migrations = schemaMigrations({
       toVersion: 8,
       steps: [unsafeExecuteSql(NOTIFICATION_FEED_INDEX_SQL)],
     },
+    {
+      toVersion: 9,
+      steps: [
+        addColumns({
+          table: 'user_invitation',
+          columns: [
+            { name: 'revoked_reason', type: 'string', isOptional: true },
+            { name: 'revoked_module', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

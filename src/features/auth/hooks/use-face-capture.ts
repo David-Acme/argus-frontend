@@ -8,6 +8,8 @@ import { FACE_CAPTURE_READY_TIMEOUT_MS, FACE_CAPTURE_SETTLE_MS, FACE_MANUAL_CAPT
 import { useFaceGuide } from '@/features/auth/hooks/use-face-guide';
 import { faceErrorFromUnknown, type FaceError } from '@/features/auth/model/face-error';
 import { clearInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
+import { invitationRevokedBy } from '@/features/auth/model/invitation-refusal';
+import { consentDraft } from '@/features/privacy';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { submitConsentDraft } from '@/features/auth/model/consent-submit';
 import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';
@@ -130,6 +132,13 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
           message: apiError.message,
           fields: apiError.fields,
         });
+        const revoked = enrolling && inviteToken ? invitationRevokedBy(apiError) : null;
+        if (revoked) {
+          clearInviteToken();
+          consentDraft.take();
+          router.replace({ pathname: '/welcome/invitation', params: { revoked: revoked.moduleId ?? 'none' } });
+          return;
+        }
         setPhase('guide');
         setError({ ...apiError, status: response.status });
       } catch (submitError) {

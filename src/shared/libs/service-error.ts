@@ -33,6 +33,8 @@ const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   MODULE_JOB_RUNNING: 'common.errors.module-busy',
   MODULE_REQUIRED_BY: 'common.errors.module-required',
   MODULE_CORE: 'common.errors.module-core',
+  MODULE_ROLES_HELD: 'common.errors.module-roles-held',
+  ROLE_INACTIVE: 'common.errors.role-inactive',
 };
 
 export function serviceErrorKey(error: IApiError | null | undefined): TranslationKey {

@@ -6,9 +6,10 @@ import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { invitationStateOf } from '@/features/people/model/people-optimistic';
+import { invitationClosingOf, invitationStateOf } from '@/features/people/model/people-optimistic';
 
 type InvitationsPanelProps = {
   invitations: readonly IInvitationRecord[];
@@ -20,6 +21,7 @@ type InvitationsPanelProps = {
 export function InvitationsPanel({ invitations, now, roleLabel, onRevoke }: InvitationsPanelProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
+  const view = useAccessView();
 
   return (
     <Panel className="min-h-40 flex-1 gap-1 p-1.5">
@@ -34,15 +36,24 @@ export function InvitationsPanel({ invitations, now, roleLabel, onRevoke }: Invi
       {invitations.map((invitation) => {
         const state = invitationStateOf(invitation, now);
         const usable = state === 'waiting';
+        const closing = state === 'closed' ? invitationClosingOf(invitation) : null;
+        const reason = closing
+          ? t('screens.users.invitation-reason.module', {
+              module: view.moduleNames.get(closing.moduleId) ?? closing.moduleId,
+            })
+          : null;
         return (
           <ListRow
             key={invitation.id}
             icon="qr-code"
             title={roleLabel(invitation.role)}
-            subtitle={t('screens.users.invitation-summary', {
-              state: t(`screens.users.invitation-row.${state}`),
-              date: date.formatDayMonth(new Date(invitation.createdAt * 1000)),
-            })}
+            subtitle={
+              reason ??
+              t('screens.users.invitation-summary', {
+                state: t(`screens.users.invitation-row.${state}`),
+                date: date.formatDayMonth(new Date(invitation.createdAt * 1000)),
+              })
+            }
             trailing={
               <>
                 <Text variant="caption" className={usable ? 'text-success' : undefined}>

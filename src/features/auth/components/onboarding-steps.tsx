@@ -3,7 +3,14 @@ import { Text } from '@/shared/components/ui/text';
 import { IS_NATIVE } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { progressOf, type OnboardingFlowId, type OnboardingStepId } from '@/features/auth/model/onboarding-flow';
+import { useModuleCatalog } from '@/features/modules';
+import { signalsToAsk } from '@/features/privacy';
+import {
+  progressOf,
+  signalsKnownAt,
+  type OnboardingFlowId,
+  type OnboardingStepId,
+} from '@/features/auth/model/onboarding-flow';
 
 type OnboardingStepsProps = {
   flow: OnboardingFlowId;
@@ -13,7 +20,9 @@ type OnboardingStepsProps = {
 
 export function OnboardingSteps({ flow, step, className }: OnboardingStepsProps) {
   const { t } = useTranslation();
-  const progress = progressOf(flow, step, { native: IS_NATIVE });
+  const catalog = useModuleCatalog();
+  const moduleSignals = signalsKnownAt(flow, step) ? signalsToAsk(catalog).length > 0 : null;
+  const progress = progressOf(flow, step, { native: IS_NATIVE, moduleSignals });
   if (!progress) return null;
   const { current, total, steps } = progress;
   const position = t('common.step', { current: String(current), total: String(total) });

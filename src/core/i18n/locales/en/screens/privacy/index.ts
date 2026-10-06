@@ -2,6 +2,17 @@ export const privacy = {
   title: 'Privacy',
   subtitle: 'You decide what Argus does with your data. Change it whenever you like.',
   step: 'Privacy',
+  modules: {
+    eyebrow: 'One last adjustment',
+    title: 'Your choices for what you just picked',
+    intro:
+      'This only applies to the modules you turned on. Everything starts off: whatever you do not turn on stays off for you, and you can change it in your profile any time.',
+    'for-modules': 'For {modules}',
+    save: 'Save and continue',
+    later: 'Not now',
+    loading: 'One moment…',
+    'save-failed': 'Your choices could not be saved. You can do it later from your profile.',
+  },
   consent: {
     eyebrow: 'Before you start',
     title: 'Your privacy, your call',

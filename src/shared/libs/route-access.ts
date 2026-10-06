@@ -27,6 +27,7 @@ const ROUTE_RULES: Readonly<Record<string, RouteRule>> = {
 
 const EXACT_RULES: Readonly<Record<string, RouteRule>> = {
   '/users/visitors': { allows: (view) => hasCapability(view, CAPABILITY.visitorsRead), fallback: '/' },
+  '/settings/activity': { allows: (view) => hasCapability(view, CAPABILITY.activityRead), fallback: '/profile' },
 };
 
 const INACTIVE_ROLE_ROUTES: ReadonlySet<string> = new Set(['/', '/profile']);

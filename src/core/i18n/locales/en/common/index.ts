@@ -86,6 +86,8 @@ export const common = {
     'module-busy': 'This module is already being installed.',
     'module-required': 'Another active module needs it. Switch that module off first.',
     'module-core': 'The Argus core is always on.',
+    'module-roles-held': 'Someone holds a role of this module. Choose a new role for them and try again.',
+    'role-inactive': 'Your role is on hold while that module is off.',
     unknown: 'Something went wrong',
   },
 };

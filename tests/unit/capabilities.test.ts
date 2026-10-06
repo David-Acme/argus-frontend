@@ -9,6 +9,7 @@ import {
   isRoleOffered,
   moduleOfRole,
   moduleOfTable,
+  offModuleOfRole,
   tableAllowed,
 } from '@/shared/libs/capabilities';
 import { roleAreas } from '@/features/people/model/role-areas';
@@ -120,18 +121,34 @@ describe('roles of modules', () => {
     expect(isRoleOffered(view, 'guest')).toBe(true);
   });
 
-  test('pickers drop roles of inactive modules but keep the current role of an edited person', () => {
+  test('the invitation picker shows a role of an off module disabled with the module named', () => {
     const off = viewFor('owner', { modules: [] });
-    const offered = (role: string) => isRoleOffered(off, role);
-    expect(roleOptions(labels, offered).map((option) => option.value)).toEqual(['owner', 'resident', 'guest']);
-    expect(roleOptions(labels, offered, 'guard').map((option) => option.value)).toEqual([
-      'owner',
-      'resident',
-      'guard',
-      'guest',
-    ]);
-    expect(inviteRoleOptions(labels, offered).map((option) => option.value)).toEqual(['resident', 'guest']);
+    const moduleOff = (role: string) => (offModuleOfRole(off, role) ? 'Vigilancia' : null);
+    const invite = inviteRoleOptions(labels, moduleOff);
+    expect(invite.map((option) => option.value)).toEqual(['resident', 'guest', 'guard']);
+    expect(invite.find((option) => option.value === 'guard')).toMatchObject({
+      disabled: true,
+      description: 'screens.users.role-module-off',
+    });
+    expect(invite.find((option) => option.value === 'resident')?.disabled).toBe(false);
     expect(inviteRoleOptions(labels).map((option) => option.value)).toEqual(['resident', 'guard', 'guest']);
+  });
+
+  test('the role change picker keeps inactive roles selectable, with the hint, after the active ones', () => {
+    const off = viewFor('owner', { modules: [] });
+    const moduleOff = (role: string) => (offModuleOfRole(off, role) ? 'Vigilancia' : null);
+    const options = roleOptions(labels, moduleOff);
+    expect(options.map((option) => option.value)).toEqual(['owner', 'resident', 'guest', 'guard']);
+    const guard = options.find((option) => option.value === 'guard');
+    expect(guard?.disabled).toBeUndefined();
+    expect(guard?.description).toBe('screens.users.role-module-off');
+    expect(roleOptions(labels).map((option) => option.value)).toEqual(['owner', 'resident', 'guard', 'guest']);
+  });
+
+  test('which module is off for a role', () => {
+    expect(offModuleOfRole(viewFor('owner', { modules: [] }), 'guard')).toBe('surveillance');
+    expect(offModuleOfRole(viewFor('owner'), 'guard')).toBeNull();
+    expect(offModuleOfRole(viewFor('owner', { modules: [] }), 'resident')).toBeNull();
   });
 
   test('the access card lists areas of active modules only and names why a role is paused', () => {

@@ -91,6 +91,17 @@ export function groupNotifications(
   return [...byKey].flatMap(([key, entries]) => toThread(key, entries) ?? []);
 }
 
+export type ModuleRequestThread = {
+  moduleId: string;
+  requestedByName: string | null;
+};
+
+export function moduleRequestOf(thread: Pick<NotificationThread, 'kind' | 'latest'>): ModuleRequestThread | null {
+  if (thread.kind !== 'module_request') return null;
+  const moduleId = textField(thread.latest, 'moduleId');
+  return moduleId ? { moduleId, requestedByName: textField(thread.latest, 'requestedByName') } : null;
+}
+
 const CALL_ID = /^call-\d+$/;
 
 export function missedCallId(thread: Pick<NotificationThread, 'kind' | 'latest'>): string | null {

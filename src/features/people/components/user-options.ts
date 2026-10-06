@@ -22,29 +22,34 @@ export type InvitationPreview = {
   value: string;
 };
 
-export type RoleOffer = (role: string) => boolean;
+export type RoleModuleOff = (role: string) => string | null;
 
-const everyRole: RoleOffer = () => true;
+const nothingOff: RoleModuleOff = () => null;
 
-export const roleOptions = (
-  t: TranslateFn,
-  offered: RoleOffer = everyRole,
-  keep?: UserRole
-): MenuOption<UserRole>[] =>
-  (
-    [
-      { value: 'owner', label: t('screens.users.role-owner') },
-      { value: 'resident', label: t('screens.users.role-resident') },
-      { value: 'guard', label: t('screens.users.role-guard') },
-      { value: 'guest', label: t('screens.users.role-guest') },
-    ] satisfies MenuOption<UserRole>[]
-  ).filter((option) => option.value === keep || offered(option.value));
+const hintOf = (t: TranslateFn, moduleOff: string | null): string | undefined =>
+  moduleOff ? t('screens.users.role-module-off', { module: moduleOff }) : undefined;
 
-export const inviteRoleOptions = (t: TranslateFn, offered: RoleOffer = everyRole): MenuOption<InviteRole>[] =>
-  (
-    [
-      { value: 'resident', label: t('screens.users.role-resident') },
-      { value: 'guard', label: t('screens.users.role-guard') },
-      { value: 'guest', label: t('screens.users.role-guest') },
-    ] satisfies MenuOption<InviteRole>[]
-  ).filter((option) => offered(option.value));
+const activeFirst = <T extends string>(options: MenuOption<T>[]): MenuOption<T>[] =>
+  [...options.filter((option) => !option.description), ...options.filter((option) => option.description)];
+
+export const roleOptions = (t: TranslateFn, moduleOff: RoleModuleOff = nothingOff): MenuOption<UserRole>[] =>
+  activeFirst(
+    (['owner', 'resident', 'guard', 'guest'] as const).map((role) => ({
+      value: role,
+      label: t(`screens.users.role-${role}`),
+      description: hintOf(t, moduleOff(role)),
+    }))
+  );
+
+export const inviteRoleOptions = (t: TranslateFn, moduleOff: RoleModuleOff = nothingOff): MenuOption<InviteRole>[] =>
+  activeFirst(
+    (['resident', 'guard', 'guest'] as const).map((role) => {
+      const off = moduleOff(role);
+      return {
+        value: role,
+        label: t(`screens.users.role-${role}`),
+        description: hintOf(t, off),
+        disabled: off !== null,
+      };
+    })
+  );

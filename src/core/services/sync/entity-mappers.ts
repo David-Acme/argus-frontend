@@ -64,6 +64,8 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     expiresAt: toMs,
     createdBy: toStr,
     revokedAt: toOptMs,
+    revokedReason: toOptStr,
+    revokedModule: toOptStr,
     createdAt: toMs,
     updatedAt: toMs,
   },

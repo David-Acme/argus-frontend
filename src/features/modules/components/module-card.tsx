@@ -8,6 +8,7 @@ import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { HostCommandNote } from '@/features/modules/components/host-command-note';
+import { ModuleIntro } from '@/features/modules/components/module-intro';
 import { ModuleProgress } from '@/features/modules/components/module-progress';
 import { lifecycleCopy } from '@/features/modules/model/module-lifecycle';
 import { unmetRequirements } from '@/features/modules/model/module-selection';
@@ -30,6 +31,7 @@ type ModuleCardProps = {
   recommended?: boolean;
   addedBy?: string | null;
   lifecycle?: boolean;
+  intro?: boolean;
   onToggle?: () => void;
   actions?: ReactNode;
   className?: string;
@@ -49,6 +51,7 @@ export function ModuleCard({
   recommended = false,
   addedBy = null,
   lifecycle = false,
+  intro = false,
   onToggle,
   actions,
   className,
@@ -115,7 +118,9 @@ export function ModuleCard({
             </Text>
             {badge ? <StatusBadge label={badge.label} icon={badge.icon} /> : null}
           </View>
-          {module.summary ? (
+          {intro ? (
+            <ModuleIntro module={module} />
+          ) : module.summary ? (
             <Text variant="caption" className="text-foreground-secondary" numberOfLines={3}>
               {module.summary}
             </Text>

@@ -8,7 +8,8 @@ import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { InvitationPreview } from '@/features/people/components/user-options';
-import { invitationStateOf } from '@/features/people/model/people-optimistic';
+import { invitationClosingOf, invitationStateOf } from '@/features/people/model/people-optimistic';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 
 type InvitationPreviewDialogProps = {
   preview: InvitationPreview | null;
@@ -26,6 +27,8 @@ export function InvitationPreviewDialog({
   onDismiss,
 }: InvitationPreviewDialogProps) {
   const { t } = useTranslation();
+  const view = useAccessView();
+  const closing = record ? invitationClosingOf(record) : null;
   const state = preview
     ? invitationStateOf(
         record ?? {
@@ -68,7 +71,11 @@ export function InvitationPreviewDialog({
                 className={state === 'used' ? 'text-success size-10' : 'text-foreground-secondary size-10'}
               />
               <Text variant="label" className="text-center">
-                {t(`screens.users.invitation-state.${state}`)}
+                {closing
+                  ? t('screens.users.invitation-reason.module-long', {
+                      module: view.moduleNames.get(closing.moduleId) ?? closing.moduleId,
+                    })
+                  : t(`screens.users.invitation-state.${state}`)}
               </Text>
             </View>
           )}

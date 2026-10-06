@@ -16,6 +16,7 @@ export const welcome = {
     privacy: 'Privacidad',
     face: 'Tu rostro',
     modules: 'Módulos',
+    'module-privacy': 'Privacidad de módulos',
     meet: 'Conoce a Argus',
   },
 } as const;

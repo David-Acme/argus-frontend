@@ -125,6 +125,52 @@ export type ModuleAction = 'install' | 'pause' | 'resume' | 'cancel' | 'disable'
 export type ModuleUninstall = {
   keepData: boolean;
   pin?: string;
+  reassign?: Record<string, string>;
+};
+
+export type ModuleRequestAnswer = {
+  moduleId: string;
+  requested: boolean;
+  duplicate: boolean;
+};
+
+export type ModuleImpactAction = 'disable' | 'uninstall';
+
+export type ModuleImpactStop = {
+  kind: string;
+  count: number | null;
+};
+
+export type ModuleRoleHolder = {
+  userId: number;
+  name: string;
+  lastName: string | null;
+  role: string;
+  isActive: boolean;
+};
+
+export type ModuleImpactInvitation = {
+  id: number;
+  role: string;
+  createdBy: number | null;
+  createdByName: string;
+  expiresAt: number;
+};
+
+export type ModuleRoleEffect = 'inactive' | 'reassign_required' | 'none';
+
+export type ModuleImpact = {
+  moduleId: string;
+  action: ModuleImpactAction;
+  allowed: boolean;
+  refusal: { code: string; message: string } | null;
+  stops: ModuleImpactStop[];
+  roleHolders: ModuleRoleHolder[];
+  roleEffect: ModuleRoleEffect;
+  reassignRoles: string[];
+  invitations: ModuleImpactInvitation[];
+  data: ModuleDataOwner[];
+  filesBytes: number;
 };
 
 export type ModuleDataItem = {

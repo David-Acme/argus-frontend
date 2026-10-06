@@ -39,3 +39,4 @@ export * from './visitor.type';
 export * from './paging.type';
 export * from './modules.type';
 export * from './access.type';
+export * from './activity.type';

@@ -98,6 +98,7 @@ export function ModulesStepScreen({ header, onNext }: ModulesStepScreenProps) {
                   <ModuleCard
                     module={module}
                     catalog={catalog}
+                    intro
                     selectable={isChoosable(module)}
                     selected={selection.includes(module.id)}
                     recommended={isRecommended(module)}

@@ -13,7 +13,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { hasCapability } from '@/shared/libs/capabilities';
 import { cn } from '@/shared/libs/utils';
-import { moduleIcon } from '@/features/modules';
+import { ModuleRequestButton, moduleIcon } from '@/features/modules';
 import { PanicButton } from '@/features/safety';
 import { useSignOut } from '@/features/sessions';
 import {
@@ -112,6 +112,9 @@ export default function InactiveRoleScreen() {
             blur={false}
             className={isWide ? 'items-start' : 'w-full items-center'}>
             <View className={cn('w-full max-w-md gap-2', isWide ? 'items-start' : 'items-stretch')}>
+              {inactive.kind === 'module' ? (
+                <ModuleRequestButton moduleId={inactive.moduleId} name={inactive.moduleName} />
+              ) : null}
               <Button onPress={() => router.push('/profile')}>
                 <Icon name="user" />
                 <Text>{t('screens.access.inactive.profile')}</Text>

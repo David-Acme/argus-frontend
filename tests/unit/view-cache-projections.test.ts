@@ -192,7 +192,18 @@ describe('people projection', () => {
       { id: '1', name: 'Ana', lastName: 'Ruiz', role: 'owner', isActive: true, createdAt: 2000, updatedAt: 3000 },
     ]);
     expect(rowsOf(writes, 'people.invitations')).toEqual([
-      { id: 7, role: 'guest', maxRedemptions: 1, redemptionCount: 0, expiresAt: 9, createdBy: 1, revokedAt: null, createdAt: 4 },
+      {
+        id: 7,
+        role: 'guest',
+        maxRedemptions: 1,
+        redemptionCount: 0,
+        expiresAt: 9,
+        createdBy: 1,
+        revokedAt: null,
+        revokedReason: null,
+        revokedModule: null,
+        createdAt: 4,
+      },
     ]);
   });
 

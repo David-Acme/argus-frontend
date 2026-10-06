@@ -23,6 +23,7 @@ import { visitors } from './visitors';
 import { modules } from './modules';
 import { access } from './access';
 import { reminders } from './reminders';
+import { activity } from './activity';
 
 export const screens = {
   home,
@@ -50,4 +51,5 @@ export const screens = {
   modules,
   access,
   reminders,
+  activity,
 };

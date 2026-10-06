@@ -5,6 +5,8 @@ import type {
   ModuleLifecycle,
   ModuleEnabledFlag,
   ModuleFrame,
+  ModuleImpact,
+  ModuleRequestAnswer,
   ModuleGettingStartedStep,
   ModuleHardware,
   LocalizedText,
@@ -297,6 +299,79 @@ export const moduleDataSchema = z.array(
 export const moduleDataAnswerSchema = z
   .union([moduleDataSchema, z.object({ owners: moduleDataSchema }).transform((answer) => answer.owners)])
   .transform((owners): ModuleDataOwner[] => owners) satisfies z.ZodType<ModuleDataOwner[]>;
+
+const optionalId = z
+  .union([z.number(), z.string()])
+  .nullish()
+  .transform((value) => (value == null || value === '' || Number.isNaN(Number(value)) ? null : Number(value)));
+
+export const moduleImpactSchema = z
+  .object({
+    moduleId: z.string(),
+    action: z.enum(['disable', 'uninstall']),
+    allowed: z.boolean().catch(true),
+    refusal: z
+      .object({ code: z.string(), message: z.string().catch('') })
+      .nullish()
+      .transform((value) => value ?? null)
+      .catch(null),
+    stops: z
+      .array(
+        z.object({
+          kind: z.string(),
+          count: z
+            .number()
+            .nullish()
+            .transform((value) => value ?? null),
+        })
+      )
+      .catch([]),
+    roleHolders: z
+      .array(
+        z.object({
+          userId: z.number().int(),
+          name: z.string().catch(''),
+          lastName: z
+            .string()
+            .nullish()
+            .transform((value) => (value ? value : null)),
+          role: z.string(),
+          isActive: z.boolean().catch(true),
+        })
+      )
+      .catch([]),
+    roleEffect: z.enum(['inactive', 'reassign_required', 'none']).catch('none'),
+    reassignRoles: z.array(z.string()).catch([]),
+    invitations: z
+      .array(
+        z.object({
+          id: z.number().int(),
+          role: z.string(),
+          createdBy: optionalId,
+          createdByName: z.string().catch(''),
+          expiresAt: z.number().catch(0),
+        })
+      )
+      .catch([]),
+    data: moduleDataAnswerSchema.catch([]),
+    filesBytes: bytes,
+  }) satisfies z.ZodType<ModuleImpact>;
+
+export const moduleRequestSchema = z.object({
+  moduleId: z.string(),
+  requested: z.boolean().catch(true),
+  duplicate: z.boolean().catch(false),
+}) satisfies z.ZodType<ModuleRequestAnswer>;
+
+export const readModuleRequest = (info: unknown): ModuleRequestAnswer | null => {
+  const parsed = moduleRequestSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
+export const readModuleImpact = (info: unknown): ModuleImpact | null => {
+  const parsed = moduleImpactSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
 
 export const readModuleData = (info: unknown): ModuleDataOwner[] | null => {
   const parsed = moduleDataAnswerSchema.safeParse(info);

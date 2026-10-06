@@ -9,37 +9,57 @@ import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { isRoleOffered } from '@/shared/libs/capabilities';
+import { offModuleOfRole } from '@/shared/libs/capabilities';
 import { buildInvitationQr } from '@/shared/libs/invitation-qr';
+import { toastServiceError } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { type InvitationDialogProps, inviteRoleOptions } from '@/features/people/components/user-options';
 
 export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: InvitationDialogProps) {
   const { t } = useTranslation();
   const [role, setRole] = useState<InviteRole>('resident');
-  const { run, pending: saving } = useServiceAction();
+  const [saving, setSaving] = useState(false);
   const view = useAccessView();
-  const roles = useMemo(() => inviteRoleOptions(t, (candidate) => isRoleOffered(view, candidate)), [t, view]);
+  const moduleOff = useCallback(
+    (candidate: string) => {
+      const moduleId = offModuleOfRole(view, candidate);
+      return moduleId === null ? null : (view.moduleNames.get(moduleId) ?? moduleId);
+    },
+    [view]
+  );
+  const roles = useMemo(() => inviteRoleOptions(t, moduleOff), [moduleOff, t]);
 
   const create = useCallback(async () => {
-    const response = await run({ call: () => inviteService.create({ role }) });
-    if (!response?.info) return;
+    setSaving(true);
+    const answer = await inviteService.create({ role });
+    setSaving(false);
+    if (!answer.ok || !answer.info) {
+      if (answer.errors?.code === 'ROLE_INACTIVE') {
+        toast.error(
+          t('screens.users.invite-role-off-title'),
+          t('screens.users.invite-role-off', { role: t(`screens.users.role-${role}`), module: moduleOff(role) ?? '' })
+        );
+      } else {
+        toastServiceError(answer.errors);
+      }
+      return;
+    }
+    const created = answer.info;
     const instance = await netService.instance();
     if (!instance) {
-      void inviteService.revoke(response.info.id);
+      void inviteService.revoke(created.id);
       toast.error(t('common.errors.pairing-required'));
       return;
     }
     onOpenChange(false);
     onCreated({
-      invitationId: response.info.id,
-      role: response.info.role,
-      expiresAt: response.info.expiresAt,
+      invitationId: created.id,
+      role: created.role,
+      expiresAt: created.expiresAt,
       value: buildInvitationQr({
-        token: response.info.token,
+        token: created.token,
         host: instance.host,
         ip: instance.ip,
         port: instance.port,
@@ -49,7 +69,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
       }),
     });
     onSaved();
-  }, [onCreated, onOpenChange, onSaved, role, run, t]);
+  }, [moduleOff, onCreated, onOpenChange, onSaved, role, t]);
 
   return (
     <AdaptiveDialog

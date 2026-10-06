@@ -9,6 +9,7 @@ export interface IApiError {
   code: string;
   message: string;
   fields?: Record<string, string[]>;
+  list?: readonly { code: string; message: string }[];
 }
 
 export interface IServiceResponse<T> {

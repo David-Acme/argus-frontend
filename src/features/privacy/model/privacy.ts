@@ -1,4 +1,12 @@
-import type { HouseholdPrivacy, PrivacyChoices, PrivacyMe, PrivacySignal, PrivacyState } from '@/core/types';
+import { isJobOpen } from '@/core/services/modules/module-state';
+import type {
+  HouseholdPrivacy,
+  ModuleCatalog,
+  PrivacyChoices,
+  PrivacyMe,
+  PrivacySignal,
+  PrivacyState,
+} from '@/core/types';
 import { PRIVACY_NOTICE_VERSION, PRIVACY_SIGNALS, PRIVACY_SIGNAL_MODULE } from '@/features/privacy/constants/privacy';
 
 export const NO_CHOICES: PrivacyChoices = {
@@ -21,6 +29,15 @@ export function applicableSignals(
 
 export const signalsOfModules = (moduleIds: readonly string[]): PrivacySignal[] =>
   PRIVACY_SIGNALS.filter((signal) => moduleIds.includes(PRIVACY_SIGNAL_MODULE[signal]));
+
+export function chosenModuleIds(catalog: ModuleCatalog | null): string[] {
+  return (catalog?.modules ?? [])
+    .filter((module) => module.kind !== 'core' && (module.enabled || (module.job?.kind === 'install' && isJobOpen(module.job))))
+    .map((module) => module.id);
+}
+
+export const signalsToAsk = (catalog: ModuleCatalog | null): PrivacySignal[] =>
+  signalsOfModules(chosenModuleIds(catalog));
 
 export const coreSignals = (): PrivacySignal[] => signalsOfModules(['core']);
 

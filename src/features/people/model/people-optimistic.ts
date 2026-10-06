@@ -41,6 +41,18 @@ export function invitationStateOf(invitation: InvitationLifecycle, nowMs: number
   return 'waiting';
 }
 
+export type InvitationClosing = {
+  reason: 'module';
+  moduleId: string;
+};
+
+export function invitationClosingOf(
+  invitation: Pick<IInvitationRecord, 'revokedAt' | 'revokedReason' | 'revokedModule'>
+): InvitationClosing | null {
+  if (invitation.revokedAt == null || invitation.revokedReason !== 'module_disabled' || !invitation.revokedModule) return null;
+  return { reason: 'module', moduleId: invitation.revokedModule };
+}
+
 export function isInvitationUsable(invitation: IInvitationRecord, nowMs: number): boolean {
   return invitationStateOf(invitation, nowMs) === 'waiting';
 }
