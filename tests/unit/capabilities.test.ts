@@ -3,10 +3,8 @@ import type { TranslateFn } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import {
   accessView,
-  hasAnyCapability,
   hasCapability,
   isModuleActive,
-  isRoleOffered,
   moduleOfRole,
   moduleOfTable,
   offModuleOfRole,
@@ -42,7 +40,7 @@ describe('access view', () => {
     expect(view.ready).toBe(true);
     expect(hasCapability(view, CAPABILITY.guardModeSet)).toBe(true);
     expect(hasCapability(view, CAPABILITY.usersManage)).toBe(false);
-    expect(hasAnyCapability(view, [CAPABILITY.usersManage, CAPABILITY.agendaWrite])).toBe(true);
+    expect(hasCapability(view, CAPABILITY.agendaWrite)).toBe(true);
   });
 
   test('a role whose module is off keeps the baseline and is inactive', () => {
@@ -111,15 +109,15 @@ describe('roles of modules', () => {
     const off = viewFor('owner', { modules: ['productivity'] });
     expect(moduleOfRole(on, 'guard')).toBe('surveillance');
     expect(moduleOfRole(on, 'resident')).toBe('core');
-    expect(isRoleOffered(on, 'guard')).toBe(true);
-    expect(isRoleOffered(off, 'guard')).toBe(false);
-    expect(isRoleOffered(off, 'resident')).toBe(true);
+    expect(offModuleOfRole(on, 'guard')).toBeNull();
+    expect(offModuleOfRole(off, 'guard')).toBe('surveillance');
+    expect(offModuleOfRole(off, 'resident')).toBeNull();
   });
 
   test('even before the context the guard role is known to belong to surveillance', () => {
     const view = noContextView('owner');
-    expect(isRoleOffered(view, 'guard')).toBe(false);
-    expect(isRoleOffered(view, 'guest')).toBe(true);
+    expect(offModuleOfRole(view, 'guard')).toBe('surveillance');
+    expect(offModuleOfRole(view, 'guest')).toBeNull();
   });
 
   test('the invitation picker shows a role of an off module disabled with the module named', () => {

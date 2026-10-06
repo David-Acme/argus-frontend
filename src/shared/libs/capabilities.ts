@@ -118,18 +118,10 @@ export function accessView(
 
 export const hasCapability = (view: AccessView, capability: Capability): boolean => view.capabilities.has(capability);
 
-export const hasAnyCapability = (view: AccessView, capabilities: readonly Capability[]): boolean =>
-  capabilities.some((capability) => view.capabilities.has(capability));
-
 export const isModuleActive = (view: AccessView, moduleId: string): boolean =>
   moduleId === MODULE_IDS.core || view.activeModules.has(moduleId);
 
 export const moduleOfRole = (view: AccessView, role: string): string | null => view.roleModules.get(role) ?? null;
-
-export function isRoleOffered(view: AccessView, role: string): boolean {
-  const moduleId = moduleOfRole(view, role);
-  return moduleId === null || isModuleActive(view, moduleId);
-}
 
 export function offModuleOfRole(view: AccessView, role: string): string | null {
   const moduleId = moduleOfRole(view, role);
