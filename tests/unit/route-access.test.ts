@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { routeFallback } from '@/shared/libs/route-access';
+import { routeFallback, routeModuleEnabled } from '@/shared/libs/route-access';
 
 describe('routeFallback', () => {
   test('owner reaches settings and users but not the guard directory', () => {
@@ -28,5 +28,31 @@ describe('routeFallback', () => {
     expect(routeFallback('/settings', 'resident')).toBe('/profile');
     expect(routeFallback('/settings', 'guest')).toBe('/profile');
     expect(routeFallback('/profile', 'guest')).toBeNull();
+  });
+});
+
+describe('routeFallback with modules', () => {
+  const coreOnly = new Set(['core']);
+
+  test('a disabled module sends its screens home', () => {
+    expect(routeFallback('/cameras', 'owner', coreOnly)).toBe('/');
+    expect(routeFallback('/cameras/4', 'owner', coreOnly)).toBe('/');
+    expect(routeFallback('/security', 'owner', coreOnly)).toBe('/');
+    expect(routeFallback('/users/visitors', 'owner', coreOnly)).toBe('/');
+    expect(routeFallback('/agenda', 'resident', coreOnly)).toBe('/');
+    expect(routeFallback('/projects', 'owner', new Set(['core', 'surveillance']))).toBe('/');
+  });
+
+  test('screens outside modules and enabled modules are untouched', () => {
+    expect(routeFallback('/users', 'owner', coreOnly)).toBeNull();
+    expect(routeFallback('/settings/modules', 'owner', coreOnly)).toBeNull();
+    expect(routeFallback('/agenda', 'owner', new Set(['core', 'productivity']))).toBeNull();
+  });
+
+  test('an unknown enabled set hides nothing, and role rules still win', () => {
+    expect(routeFallback('/cameras', 'owner', null)).toBeNull();
+    expect(routeFallback('/settings/modules', 'guest', null)).toBe('/profile');
+    expect(routeModuleEnabled('/agenda?new=event', coreOnly)).toBe(false);
+    expect(routeModuleEnabled('/call', coreOnly)).toBe(true);
   });
 });

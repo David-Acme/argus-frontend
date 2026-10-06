@@ -37,3 +37,4 @@ export * from './privacy.type';
 export * from './response.type';
 export * from './visitor.type';
 export * from './paging.type';
+export * from './modules.type';

@@ -9,6 +9,7 @@ import type {
   SyncCursors,
   SyncDeletedRows,
   SyncOperation,
+  SyncTableKey,
   SyncUserPatch,
 } from '@/core/types';
 import { SYNC_TABLE_KEYS } from '@/core/types';
@@ -26,7 +27,7 @@ import { userPatchFromRows, userPatchesFromAudit } from './session-user-patch';
 import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
-import { withoutCreatedCursor } from './sync-cursor';
+import { withoutCreatedCursor, withoutTables } from './sync-cursor';
 import { SyncCursorStore } from './sync-cursor-store';
 import { destroyAllRows } from './sync-db-utils';
 import { SyncMessageRouter } from './sync-message-router';
@@ -221,6 +222,18 @@ class SynchronizeService {
   async syncOnce(): Promise<void> {
     if (this.contextSync) return this.contextSync;
     return this.startSync();
+  }
+
+  async dropTables(tables: readonly SyncTableKey[]): Promise<void> {
+    if (tables.length === 0) return;
+    const drop = this.clearChain.then(async () => {
+      await Promise.allSettled([this.activeSync, this.contextSync, this.live.settled]);
+      this.cursors.save(withoutTables(this.cursors.load(), tables));
+      await destroyAllRows(tables);
+    });
+    this.clearChain = drop.catch(() => undefined);
+    await drop;
+    if (this.isSocketConnected) void this.syncOnce();
   }
 
   clearLocalProjection(userId: number | string | null): Promise<void> {

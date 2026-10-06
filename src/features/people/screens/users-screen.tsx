@@ -9,7 +9,7 @@ import type { AuthSession, UserRole } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Text } from '@/shared/components/ui/text';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { MODULE_IDS, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -32,6 +32,7 @@ import { RoleAccessCard } from '@/features/people/components/role-access-card';
 import { VoiceRecognitionRow } from '@/features/people/components/voice-recognition-row';
 import { HouseholdPrivacyPanel, UserPrivacyRow } from '@/features/privacy';
 import { VisitorsPreviewPanel } from '@/features/visitors';
+import { useModuleEnabled } from '@/shared/hooks/use-modules';
 import { roleOptions } from '@/features/people/components/user-options';
 import { useInvitationPreview } from '@/features/people/hooks/use-invitation-preview';
 import {
@@ -45,6 +46,7 @@ const MINUTE_MS = 60_000;
 
 export default function UsersScreen() {
   const { t } = useTranslation();
+  const surveillance = useModuleEnabled(MODULE_IDS.surveillance);
   const router = useRouter();
   const { isWide } = useWindowClass();
   const currentUserId = String(useAuthStore((state) => state.user?.id ?? ''));
@@ -223,14 +225,16 @@ export default function UsersScreen() {
             />
           </View>
 
-          <View className="gap-3">
-            <SectionHeader
-              title={t('screens.visitors.section')}
-              action={t('screens.visitors.see-all')}
-              onAction={() => router.push('/users/visitors')}
-            />
-            <VisitorsPreviewPanel />
-          </View>
+          {surveillance ? (
+            <View className="gap-3">
+              <SectionHeader
+                title={t('screens.visitors.section')}
+                action={t('screens.visitors.see-all')}
+                onAction={() => router.push('/users/visitors')}
+              />
+              <VisitorsPreviewPanel />
+            </View>
+          ) : null}
 
           <View className={cn(isWide && 'flex-1', 'gap-3')}>
             <SectionHeader

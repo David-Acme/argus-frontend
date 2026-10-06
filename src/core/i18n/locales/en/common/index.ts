@@ -79,6 +79,12 @@ export const common = {
     'fingerprint-mismatch': 'This is not the server you paired with, so the app did not connect.',
     storage: 'The data saved on this device could not be read. Try again.',
     'account-disabled': 'Your account is turned off. Ask the Argus owner to turn it back on.',
+    'module-disabled': 'That part of Argus is switched off. The owner can turn it on in Settings › Modules.',
+    'module-hardware': 'Your server does not have enough resources for this module.',
+    'module-coming-soon': 'This module is not available yet.',
+    'module-busy': 'This module is already being installed.',
+    'module-required': 'Another active module needs it. Switch that module off first.',
+    'module-core': 'The Argus core is always on.',
     unknown: 'Something went wrong',
   },
 };

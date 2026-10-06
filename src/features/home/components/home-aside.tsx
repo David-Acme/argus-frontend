@@ -6,8 +6,10 @@ import { SectionHeader } from '@/shared/components/ui/section-header';
 import type { InfiniteListState } from '@/shared/hooks/use-infinite-list';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useModuleEnabled } from '@/shared/hooks/use-modules';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { guardAccessForRole } from '@/shared/libs/role-access';
+import { MODULE_IDS } from '@/shared/constants';
 import { GuardCard, useGuardEnvironments } from '@/features/security';
 import { CameraGrid } from '@/features/home/components/camera-grid';
 import { RecentActivityCard } from '@/features/home/components/recent-activity-card';
@@ -35,11 +37,14 @@ export function HomeAside({
   const { t } = useTranslation();
   const { role } = usePermissions();
   const { isWide } = useWindowClass();
+  const surveillance = useModuleEnabled(MODULE_IDS.surveillance);
+  const productivity = useModuleEnabled(MODULE_IDS.productivity);
   const guardAccess = guardAccessForRole(role);
-  const guardEnvironments = useGuardEnvironments(guardAccess.view).data;
+  const guardEnvironments = useGuardEnvironments(guardAccess.view && surveillance).data;
 
   return (
     <View className="flex-1 gap-5">
+      {surveillance ? (
       <View className="gap-3">
         <SectionHeader
           title={t('screens.home.cameras_section')}
@@ -55,14 +60,15 @@ export function HomeAside({
           onSelect={(id) => router.push(`/cameras/${id}`)}
         />
       </View>
+      ) : null}
 
-      {guardAccess.view ? (
+      {guardAccess.view && surveillance ? (
         <GuardCard environments={guardEnvironments} onPress={() => router.push('/security')} />
       ) : null}
 
       <SummaryCard
         title={t('screens.home.overview')}
-        items={[
+        items={([
           {
             icon: 'video',
             label: t('screens.home.cameras'),
@@ -83,7 +89,11 @@ export function HomeAside({
             label: t('screens.home.events-week'),
             value: String(summary.eventsCurrent),
           },
-        ]}
+        ] as const).filter(
+          (item) =>
+            ((item.icon !== 'video' && item.icon !== 'activity') || surveillance) &&
+            (item.icon !== 'list-todo' || productivity)
+        )}
       />
 
       <RecentActivityCard

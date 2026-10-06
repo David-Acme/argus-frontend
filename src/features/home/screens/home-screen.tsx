@@ -29,6 +29,9 @@ import { activityTrend } from '@/features/home/model/activity-trend';
 import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ResponseStrip } from '@/features/response';
+import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
+import { useModuleEnabled } from '@/shared/hooks/use-modules';
+import { MODULE_IDS } from '@/shared/constants';
 import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
@@ -60,6 +63,8 @@ export default function HomeScreen() {
     summary,
     activityLevels,
   } = useDashboardData();
+  const surveillance = useModuleEnabled(MODULE_IDS.surveillance);
+  const productivity = useModuleEnabled(MODULE_IDS.productivity);
   const [query, setQuery] = useState('');
   const now = useNow(60000);
   const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
@@ -158,15 +163,21 @@ export default function HomeScreen() {
               now={now}
               onOpen={() => void readAll()}
             />
-            <IconButton
-              icon="calendar"
-              label={t('screens.home.calendar')}
-              onPress={() => router.push('/agenda')}
-            />
+            {productivity ? (
+              <IconButton
+                icon="calendar"
+                label={t('screens.home.calendar')}
+                onPress={() => router.push('/agenda')}
+              />
+            ) : null}
           </View>
         </View>
 
-        <ResponseStrip />
+        {surveillance ? <ResponseStrip /> : null}
+
+        <ModulesProgressChip />
+
+        <GettingStartedCard />
 
         <DashboardSearchField
           placeholder={t('screens.home.search-placeholder')}
@@ -175,6 +186,7 @@ export default function HomeScreen() {
           onChangeText={setQuery}
         />
 
+        {surveillance ? (
         <ActivityCard
           title={
             noCameras
@@ -187,6 +199,10 @@ export default function HomeScreen() {
           action={noCameras ? t('screens.cameras.connect') : t('screens.home.activity-action')}
           onAction={() => router.push(noCameras ? '/cameras?new=camera' : '/cameras')}
         />
+        ) : null}
+
+        {productivity ? (
+        <>
 
         <View className="gap-3">
           <SectionHeader
@@ -241,6 +257,8 @@ export default function HomeScreen() {
             />
           )}
         </View>
+        </>
+        ) : null}
       </View>
     </AppScreen>
   );

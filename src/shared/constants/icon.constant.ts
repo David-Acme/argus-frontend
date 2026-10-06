@@ -108,6 +108,12 @@ import EyeOff from 'lucide-react-native/icons/eye-off';
 import Lightbulb from 'lucide-react-native/icons/lightbulb';
 import SunMoon from 'lucide-react-native/icons/sun-moon';
 import Gauge from 'lucide-react-native/icons/gauge';
+import Pause from 'lucide-react-native/icons/pause';
+import Lock from 'lucide-react-native/icons/lock';
+import Sprout from 'lucide-react-native/icons/sprout';
+import Blocks from 'lucide-react-native/icons/blocks';
+import Circle from 'lucide-react-native/icons/circle';
+import ListChecks from 'lucide-react-native/icons/list-checks';
 
 export const ICONS = {
   activity: Activity,
@@ -220,4 +226,10 @@ export const ICONS = {
   lightbulb: Lightbulb,
   'sun-moon': SunMoon,
   gauge: Gauge,
+  pause: Pause,
+  lock: Lock,
+  sprout: Sprout,
+  blocks: Blocks,
+  circle: Circle,
+  'list-checks': ListChecks,
 } as const;

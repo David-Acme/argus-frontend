@@ -69,6 +69,7 @@ export const VIEW_CACHE_KEYS = {
   visitors: 'visitor.feed',
   visitorDetail: 'visitor.detail',
   visitorSettings: 'visitor.settings',
+  moduleCatalog: 'modules.catalog',
 } as const;
 
 export const buildViewCacheStorageKey = (

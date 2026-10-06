@@ -20,6 +20,7 @@ import { response } from './response';
 import { privacy } from './privacy';
 import { safety } from './safety';
 import { visitors } from './visitors';
+import { modules } from './modules';
 
 export const screens = {
   home,
@@ -44,4 +45,5 @@ export const screens = {
   privacy,
   safety,
   visitors,
+  modules,
 } as const;

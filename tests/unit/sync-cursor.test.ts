@@ -12,6 +12,7 @@ import {
   rangeFrom,
   secondsOf,
   withoutCreatedCursor,
+  withoutTables,
 } from '@/core/services/sync/sync-cursor';
 import { SYNC_PROJECTION_VERSION } from '@/core/services/sync/sync-constants';
 import type { SyncCreatedRows, SyncCursors, SyncDeletedRows } from '@/core/types';
@@ -234,5 +235,12 @@ describe('page rows and cursor advance', () => {
       deletedId: 6,
     });
     expect(cursors.event).toEqual({ createdStart: 1, deletedBaseline: true });
+  });
+});
+
+describe('withoutTables', () => {
+  test('forgets only the cursors of the dropped tables so they are pulled again', () => {
+    const cursors = { camera: { createdAt: 5 }, zone: { createdAt: 6 }, project: { createdAt: 7 } } as never;
+    expect(withoutTables(cursors, ['camera', 'zone'])).toEqual({ project: { createdAt: 7 } } as never);
   });
 });

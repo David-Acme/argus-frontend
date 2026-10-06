@@ -24,6 +24,7 @@ import { useSettings } from '@/features/settings/hooks/use-settings';
 import { useSettingsMode, type SettingsMode } from '@/features/settings/hooks/use-settings-mode';
 import { useSettingsProfiles } from '@/features/settings/hooks/use-settings-profiles';
 import { ownerStatus } from '@/features/settings/model/settings-catalog';
+import { ModulesSummaryCard } from '@/features/modules';
 
 type Transfer = {
   owner: SettingsOwner;
@@ -133,6 +134,8 @@ export default function SettingsScreen() {
               />
             </View>
           </View>
+
+          {isOwner ? <ModulesSummaryCard /> : null}
 
           {firstRun?.state === 'applied' ? (
             <FirstRunBanner firstRun={firstRun} reverting={profiles.reverting} onRevert={() => void profiles.revert()} />

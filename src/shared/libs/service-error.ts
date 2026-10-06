@@ -27,6 +27,12 @@ const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   FINGERPRINT_MISMATCH: 'common.errors.fingerprint-mismatch',
   STORAGE_ERROR: 'common.errors.storage',
   ACCOUNT_DISABLED: 'common.errors.account-disabled',
+  MODULE_DISABLED: 'common.errors.module-disabled',
+  MODULE_HARDWARE_INSUFFICIENT: 'common.errors.module-hardware',
+  MODULE_COMING_SOON: 'common.errors.module-coming-soon',
+  MODULE_JOB_RUNNING: 'common.errors.module-busy',
+  MODULE_REQUIRED_BY: 'common.errors.module-required',
+  MODULE_CORE: 'common.errors.module-core',
 };
 
 export function serviceErrorKey(error: IApiError | null | undefined): TranslationKey {

@@ -11,6 +11,7 @@ export const SYNC_OPERATION = {
   CallCancel: 9,
   ResponseUpdate: 10,
   Heartbeat: 11,
+  ModuleUpdate: 12,
 } as const;
 
 export const SYNC_AUDIT_CURSORS_PREFIX = 'app.sync.audit.';

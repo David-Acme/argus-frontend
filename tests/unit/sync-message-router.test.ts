@@ -108,6 +108,15 @@ describe('SyncMessageRouter', () => {
     ]);
   });
 
+  test('a module_update frame reaches only its listeners and no sync handler', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    router.on(SYNC_OPERATION.ModuleUpdate, (frame) => calls.push(['module', frame.info]));
+    router.route(JSON.stringify({ operation: 12, option: 'module_update', info: { modules: [] } }));
+    expect(SYNC_OPERATION.ModuleUpdate).toBe(12);
+    expect(calls).toEqual([['module', { modules: [] }]]);
+  });
+
   test('an AuthContextChanged that names a session reason is a session signal, not a role change', () => {
     const calls: unknown[][] = [];
     const router = new SyncMessageRouter(recordingHandlers(calls));

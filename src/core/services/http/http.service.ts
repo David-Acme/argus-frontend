@@ -3,6 +3,7 @@ import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { httpAuth } from './http-auth';
 import { errorResponse, readEnvelope } from './http-envelope';
+import { reportRefusal } from './http-refusal';
 import type { IHttpConfig, IServiceResponse } from '@/core/interfaces';
 
 class HttpService {
@@ -77,7 +78,9 @@ class HttpService {
       }
     }
 
-    return readEnvelope<T>(result.status, result.body);
+    const response = readEnvelope<T>(result.status, result.body);
+    if (!response.ok) reportRefusal(path, response.errors);
+    return response;
   }
 
   private buildHeaders(withFile: boolean, accessToken: string | null): Record<string, string> {

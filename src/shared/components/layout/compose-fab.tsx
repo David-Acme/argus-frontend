@@ -16,9 +16,11 @@ import {
   NAV_RAIL_WIDTH,
   colorTokens,
 } from '@/shared/constants';
+import { useEnabledModules } from '@/shared/hooks/use-modules';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { itemIn } from '@/shared/libs/animations';
+import { routeModuleEnabled } from '@/shared/libs/route-access';
 import { cn } from '@/shared/libs/utils';
 
 type ComposeFabProps = {
@@ -32,6 +34,7 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
   const { t } = useTranslation();
   const { theme } = useUniwind();
   const { can } = usePermissions();
+  const enabledModules = useEnabledModules();
   const [open, setOpen] = useState(false);
   const iconColor = colorTokens[theme === 'dark' ? 'dark' : 'light']['foreground-on-interactive'];
 
@@ -47,8 +50,12 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
 
   const actions = useMemo(
     () =>
-      COMPOSE_ACTIONS.filter((action) => !action.table || can(action.table, 'create')),
-    [can]
+      COMPOSE_ACTIONS.filter(
+        (action) =>
+          (!action.table || can(action.table, 'create')) &&
+          routeModuleEnabled(action.route, enabledModules)
+      ),
+    [can, enabledModules]
   );
 
   const close = () => setOpen(false);

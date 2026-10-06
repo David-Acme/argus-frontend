@@ -78,6 +78,12 @@ export const common = {
     'fingerprint-mismatch': 'Este servidor no es el que vinculaste, así que la app no se ha conectado.',
     storage: 'No se pudieron leer los datos guardados en este dispositivo. Inténtalo de nuevo.',
     'account-disabled': 'Tu cuenta está desactivada. Pide al propietario de Argus que la vuelva a activar.',
+    'module-disabled': 'Esa parte de Argus está apagada. El propietario puede activarla en Configuración › Módulos.',
+    'module-hardware': 'Tu servidor no tiene recursos suficientes para este módulo.',
+    'module-coming-soon': 'Este módulo todavía no está disponible.',
+    'module-busy': 'Ya hay una instalación en marcha para este módulo.',
+    'module-required': 'Otro módulo activo lo necesita. Apaga primero ese módulo.',
+    'module-core': 'El núcleo de Argus siempre está activo.',
     unknown: 'Algo salió mal',
   },
 } as const;

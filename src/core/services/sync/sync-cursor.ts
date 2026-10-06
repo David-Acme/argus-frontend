@@ -175,3 +175,8 @@ export const advanceRowCursors = (
   }
   return more;
 };
+
+export const withoutTables = (cursors: SyncCursors, tables: readonly SyncTableKey[]): SyncCursors =>
+  Object.fromEntries(
+    Object.entries(cursors).filter(([table]) => !tables.includes(table as SyncTableKey))
+  ) as SyncCursors;
