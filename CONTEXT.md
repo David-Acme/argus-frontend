@@ -2966,10 +2966,16 @@ already refuses.
 A role whose module is off keeps its account and the server grants it the
 baseline only. Inicio becomes `features/access`' screen: the welcome's orbit
 hero (now the shared `OrbitHero`, with the module's icon and a moon), "Tu rol
-de Guardia se activará cuando la casa vuelva a usar Vigilancia", panic, a
-request to the Owner, the profile and sign-out. Nothing else is offered, not
-even reminders (the server still allows them; the brief says profile and panic
-only), and the tabs, compose button and call route close.
+de Guardia se activará cuando la casa vuelva a usar Vigilancia", panic, the
+person's own reminders (the same `RemindersSection` as Inicio: read, complete,
+edit, delete, owner decision), a request to the Owner, the profile and
+sign-out. Everything on it is gated by a baseline capability
+(`inactiveRoleOffers(view, inactive)`: `reminders.read` shows the section,
+`reminders.write` makes it editable, `safety.panic`, `modules.request`), and
+the backend keeps all four for an inactive role (`roleGranted` lets a mask with
+the baseline bit through while its module is core, which is always enabled).
+Nothing module-bound is offered, and the tabs, compose button and call route
+close.
 
 ### Reminders on Inicio
 

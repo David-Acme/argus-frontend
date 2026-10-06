@@ -6,14 +6,13 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { OrbitHero, type OrbitItem } from '@/shared/components/ui/orbit-hero';
 import { Text } from '@/shared/components/ui/text';
-import { CAPABILITY } from '@/shared/constants';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { hasCapability } from '@/shared/libs/capabilities';
 import { cn } from '@/shared/libs/utils';
 import { ModuleRequestButton, moduleIcon } from '@/features/modules';
+import { RemindersSection } from '@/features/reminders';
 import { PanicButton } from '@/features/safety';
 import { useSignOut } from '@/features/sessions';
 import {
@@ -25,7 +24,7 @@ import {
   INACTIVE_REVEAL_MS,
   INACTIVE_REVEAL_STEP_MS,
 } from '@/features/access/constants/inactive-role';
-import { inactiveRoleCopy, inactiveRoleOf } from '@/features/access/model/inactive-role';
+import { inactiveRoleCopy, inactiveRoleOf, inactiveRoleOffers } from '@/features/access/model/inactive-role';
 
 export default function InactiveRoleScreen() {
   const router = useRouter();
@@ -56,7 +55,7 @@ export default function InactiveRoleScreen() {
           { icon: 'moon', angle: 205 },
           { icon: 'lock', angle: 325 },
         ];
-  const offersPanic = hasCapability(view, CAPABILITY.safetyPanic);
+  const offers = inactiveRoleOffers(view, inactive);
   const delay = (step: number) => (reduceMotion ? 0 : step * INACTIVE_REVEAL_STEP_MS);
 
   return (
@@ -94,7 +93,7 @@ export default function InactiveRoleScreen() {
             </View>
           </BlurReveal>
 
-          {offersPanic ? (
+          {offers.panic ? (
             <BlurReveal delay={delay(2)} duration={INACTIVE_REVEAL_MS} blur={false} className="w-full max-w-md">
               <View className="bg-card gap-3 rounded-3xl p-4 shadow-sm shadow-black/[0.04]">
                 <View className="flex-row items-center gap-2">
@@ -106,14 +105,20 @@ export default function InactiveRoleScreen() {
             </BlurReveal>
           ) : null}
 
+          {offers.reminders ? (
+            <BlurReveal delay={delay(3)} duration={INACTIVE_REVEAL_MS} blur={false} className="w-full max-w-md">
+              <RemindersSection query="" />
+            </BlurReveal>
+          ) : null}
+
           <BlurReveal
-            delay={delay(3)}
+            delay={delay(4)}
             duration={INACTIVE_REVEAL_MS}
             blur={false}
             className={isWide ? 'items-start' : 'w-full items-center'}>
             <View className={cn('w-full max-w-md gap-2', isWide ? 'items-start' : 'items-stretch')}>
-              {inactive.kind === 'module' ? (
-                <ModuleRequestButton moduleId={inactive.moduleId} name={inactive.moduleName} />
+              {offers.moduleRequest ? (
+                <ModuleRequestButton moduleId={offers.moduleRequest.moduleId} name={offers.moduleRequest.moduleName} />
               ) : null}
               <Button onPress={() => router.push('/profile')}>
                 <Icon name="user" />

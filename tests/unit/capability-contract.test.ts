@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { UserRole } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import { coreCapabilities } from '@/shared/libs/capabilities';
-import { serverCapabilities } from './support/access-fixtures';
+import { accessFor, serverCapabilities } from './support/access-fixtures';
 
 const authSource = join(import.meta.dir, '../../../backend/packages/lib/auth/src/auth');
 const readSource = (name: string) => {
@@ -101,6 +101,21 @@ describe.skipIf(!present)('capabilities mirror the backend role_access table', (
       expect([...(coreCapabilities(role) as readonly string[])].sort()).toEqual(granted(role, [], true).sort());
     });
   }
+
+  for (const role of ['resident', 'guard', 'guest'] as const) {
+    test(`the capabilities the app fixtures give an inactive ${role} are what the backend grants`, () => {
+      const modules = ['surveillance', 'productivity'];
+      expect([...accessFor(role, { roleActive: false, modules }).capabilities].sort()).toEqual(
+        granted(role, modules, false).sort()
+      );
+    });
+  }
+
+  test('a guard whose module is off is given what the backend grants an inactive guard', () => {
+    expect([...accessFor('guard', { modules: ['productivity'] }).capabilities].sort()).toEqual(
+      granted('guard', ['productivity'], false).sort()
+    );
+  });
 
   test('an inactive role keeps only the baseline capabilities', () => {
     const baseline = specs().filter((spec) => spec.mask.baseline).map((spec) => spec.id);

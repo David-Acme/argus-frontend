@@ -2,9 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn } from '@/core/types';
+import { CAPABILITY } from '@/shared/constants';
 import { accessView } from '@/shared/libs/capabilities';
 import { roleLabelOf } from '@/shared/libs/role-label';
-import { inactiveRoleCopy, inactiveRoleOf } from '@/features/access/model/inactive-role';
+import { inactiveRoleCopy, inactiveRoleOf, inactiveRoleOffers } from '@/features/access/model/inactive-role';
 import { accessFor, noContextView, viewFor } from './support/access-fixtures';
 
 const es = ((key: string, params?: Record<string, string>) =>
@@ -61,6 +62,130 @@ describe('inactive role', () => {
     if (!inactive) return;
     expect(inactiveRoleCopy(inactive, es).title).toBe('Esta versión de Argus no conoce tu rol');
     expect(view.capabilities.size).toBe(0);
+  });
+});
+
+const MODULE_BOUND: readonly string[] = [
+  CAPABILITY.cameraView,
+  CAPABILITY.cameraTalk,
+  CAPABILITY.cameraManage,
+  CAPABILITY.zonesRead,
+  CAPABILITY.zonesWrite,
+  CAPABILITY.eventsRead,
+  CAPABILITY.guardRead,
+  CAPABILITY.guardModeSet,
+  CAPABILITY.guardGuestsWrite,
+  CAPABILITY.guardAdmin,
+  CAPABILITY.responseDuty,
+  CAPABILITY.safetyRead,
+  CAPABILITY.safetyDuress,
+  CAPABILITY.visitorsRead,
+  CAPABILITY.visitorsManage,
+  CAPABILITY.presenceRead,
+  CAPABILITY.agendaRead,
+  CAPABILITY.agendaWrite,
+  CAPABILITY.projectsRead,
+  CAPABILITY.projectsWrite,
+  CAPABILITY.directoryRead,
+  CAPABILITY.peopleRead,
+  CAPABILITY.peopleWrite,
+  CAPABILITY.memoryManage,
+  CAPABILITY.usersManage,
+  CAPABILITY.invitationsManage,
+  CAPABILITY.privacyHousehold,
+  CAPABILITY.settingsManage,
+  CAPABILITY.modulesManage,
+  CAPABILITY.activityRead,
+  CAPABILITY.assistantVoice,
+];
+
+const withoutCapability = (view: ReturnType<typeof viewFor>, ...removed: string[]) => ({
+  ...view,
+  capabilities: new Set([...view.capabilities].filter((capability) => !removed.includes(capability))),
+});
+
+describe('what the inactive-role screen offers', () => {
+  const guard = viewFor('guard', { modules: ['productivity'] });
+  const inactive = inactiveRoleOf(guard);
+
+  test('reminders, panic, the module request, the profile and sign-out, each by its baseline capability', () => {
+    expect(inactive).not.toBeNull();
+    if (!inactive) return;
+    expect(inactiveRoleOffers(guard, inactive)).toEqual({
+      reminders: { editable: true },
+      panic: true,
+      moduleRequest: { moduleId: 'surveillance', moduleName: 'Vigilancia' },
+      profile: true,
+      signOut: true,
+    });
+  });
+
+  test('the screen model has no other offer', () => {
+    if (!inactive) throw new Error('the guard is inactive');
+    expect(Object.keys(inactiveRoleOffers(guard, inactive)).sort()).toEqual([
+      'moduleRequest',
+      'panic',
+      'profile',
+      'reminders',
+      'signOut',
+    ]);
+  });
+
+  test('nothing module-bound reaches an inactive role: no camera, guard, agenda, projects, visitors, directory, activity or settings', () => {
+    for (const role of ['resident', 'guard', 'guest'] as const) {
+      const view = viewFor(role, { roleActive: false });
+      expect(view.roleActive).toBe(false);
+      expect([...view.capabilities].filter((capability) => MODULE_BOUND.includes(capability))).toEqual([]);
+      expect(view.capabilities.has(CAPABILITY.remindersRead)).toBe(true);
+      expect(view.capabilities.has(CAPABILITY.remindersWrite)).toBe(true);
+      expect(view.capabilities.has(CAPABILITY.safetyPanic)).toBe(true);
+    }
+  });
+
+  test('reminders follow reminders.read and are editable only with reminders.write', () => {
+    if (!inactive) throw new Error('the guard is inactive');
+    expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.remindersWrite), inactive).reminders).toEqual({
+      editable: false,
+    });
+    expect(
+      inactiveRoleOffers(withoutCapability(guard, CAPABILITY.remindersRead, CAPABILITY.remindersWrite), inactive)
+        .reminders
+    ).toBeNull();
+  });
+
+  test('panic and the module request follow their capabilities', () => {
+    if (!inactive) throw new Error('the guard is inactive');
+    expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.safetyPanic), inactive).panic).toBe(false);
+    expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.modulesRequest), inactive).moduleRequest).toBeNull();
+  });
+
+  test('a role on hold without a module has no request to make but keeps its reminders and panic', () => {
+    const access = { ...accessFor('guest', { roleActive: false }), roles: [], modules: [] };
+    const view = accessView(access, 'guest');
+    const paused = inactiveRoleOf(view);
+    expect(paused).toEqual({ kind: 'paused', role: 'guest' });
+    if (!paused) return;
+    expect(inactiveRoleOffers(view, paused)).toEqual({
+      reminders: { editable: true },
+      panic: true,
+      moduleRequest: null,
+      profile: true,
+      signOut: true,
+    });
+  });
+
+  test('a role this build does not know offers the profile and sign-out only', () => {
+    const view = accessView({ ...accessFor('guest'), role: null, roleActive: false, capabilities: [] }, 'guest');
+    const unknown = inactiveRoleOf(view);
+    expect(unknown).toEqual({ kind: 'unknown' });
+    if (!unknown) return;
+    expect(inactiveRoleOffers(view, unknown)).toEqual({
+      reminders: null,
+      panic: false,
+      moduleRequest: null,
+      profile: true,
+      signOut: true,
+    });
   });
 });
 
