@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { introFor, localizedCatalog, localizedModule } from '@/core/services/modules/module-text';
+import { introFor, localizedCatalog, localizedModule, roleMovesNoteOf } from '@/core/services/modules/module-text';
 import { moduleRecord } from './support/access-fixtures';
 
 const texts = {
@@ -39,5 +39,27 @@ describe('module intro in the app language', () => {
     expect(introFor({ intro: { es: body('es') } }, 'en')?.what).toBe('es');
     expect(introFor({ intro: { en: body('en') } }, 'es')?.what).toBe('en');
     expect(introFor({ intro: null }, 'es')).toBeNull();
+  });
+});
+
+describe('the sentence about the people an uninstall already moved', () => {
+  const note = {
+    es: 'La desinstalación no terminó. Gus ya tiene su nuevo rol y lo conserva; el módulo sigue instalado.',
+    en: 'The uninstall did not finish. Gus already has the new role and keeps it; the module is still installed.',
+  };
+
+  test('is shown as the server wrote it, in the language of the app, only for a failed or cancelled job', () => {
+    expect(roleMovesNoteOf({ state: 'failed', roleMovesNote: note }, 'es')).toBe(note.es);
+    expect(roleMovesNoteOf({ state: 'cancelled', roleMovesNote: note }, 'en')).toBe(note.en);
+    expect(roleMovesNoteOf({ state: 'removing', roleMovesNote: note }, 'es')).toBeNull();
+    expect(roleMovesNoteOf({ state: 'done', roleMovesNote: note }, 'es')).toBeNull();
+  });
+
+  test('falls back to the other language and to nothing', () => {
+    expect(roleMovesNoteOf({ state: 'failed', roleMovesNote: { es: 'Solo español' } }, 'en')).toBe('Solo español');
+    expect(roleMovesNoteOf({ state: 'failed', roleMovesNote: { en: 'English only' } }, 'es')).toBe('English only');
+    expect(roleMovesNoteOf({ state: 'failed', roleMovesNote: null }, 'es')).toBeNull();
+    expect(roleMovesNoteOf(null, 'es')).toBeNull();
+    expect(roleMovesNoteOf(undefined, 'en')).toBeNull();
   });
 });

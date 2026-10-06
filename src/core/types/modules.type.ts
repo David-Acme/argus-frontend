@@ -28,6 +28,13 @@ export type ModuleHardware = {
 
 export type ModuleJobKind = 'install' | 'uninstall' | 'purge';
 
+export type ModuleRoleMove = {
+  userId: number;
+  name: string;
+  from: string;
+  to: string;
+};
+
 export type ModuleJob = {
   id: string;
   kind: ModuleJobKind;
@@ -39,6 +46,8 @@ export type ModuleJob = {
   etaSeconds: number | null;
   reason: string | null;
   owner: string | null;
+  roleMoves: ModuleRoleMove[];
+  roleMovesNote: LocalizedText | null;
 };
 
 export type ModuleGettingStartedStep = {
@@ -172,6 +181,7 @@ export type ModuleImpact = {
   stops: ModuleImpactStop[];
   keepsRunning: ModuleKeepsRunning[];
   unreachable: string[];
+  roleMoves: ModuleRoleMove[];
   roleHolders: ModuleRoleHolder[];
   roleEffect: ModuleRoleEffect;
   reassignRoles: string[];
@@ -200,4 +210,5 @@ export type ModuleTransition = {
   state: 'done' | 'failed';
   reason: string | null;
   owner: string | null;
+  note: string | null;
 };

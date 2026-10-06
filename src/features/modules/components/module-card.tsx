@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { isJobOpen } from '@/core/services/modules/module-state';
+import { roleMovesNoteOf } from '@/core/services/modules/module-text';
 import type { ModuleCatalog, ModuleRecord } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
@@ -57,6 +58,7 @@ export function ModuleCard({
   className,
 }: ModuleCardProps) {
   const { t, language } = useTranslation();
+  const roleMovesNote = roleMovesNoteOf(module.job, language);
   const status = moduleStatus(module);
   const muted = status === 'coming-soon' || status === 'blocked';
   const hardware = module.hardware;
@@ -211,6 +213,15 @@ export function ModuleCard({
               {failureText(module.job.reason, module.job.owner, t)}
             </Text>
           ) : null}
+        </View>
+      ) : null}
+
+      {roleMovesNote ? (
+        <View className="bg-surface-secondary dark:bg-card-secondary flex-row items-start gap-2 rounded-2xl p-3">
+          <Icon name="users" className="text-muted-foreground mt-0.5 size-3.5" />
+          <Text variant="caption" className="min-w-0 flex-1">
+            {roleMovesNote}
+          </Text>
         </View>
       ) : null}
 

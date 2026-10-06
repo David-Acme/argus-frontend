@@ -13,6 +13,7 @@ import {
   reassignBody,
   reassignComplete,
   refusalOf,
+  roleMoveText,
   stopText,
 } from '@/features/modules/model/module-impact';
 
@@ -44,6 +45,7 @@ const wire = {
   data: { owners: [{ owner: 'camera', reachable: true, reported: true, items: [{ kind: 'cameras', count: 3 }], bytes: 1000 }] },
   filesBytes: 2_400_000_000,
   unreachable: [] as string[],
+  roleMoves: [] as { userId: number; name: string; from: string; to: string }[],
   keepsRunning: [
     {
       id: 'safety_alerts',
@@ -124,6 +126,41 @@ describe('what keeps running', () => {
     const quiet = { stops: [], roleHolders: [], invitations: [] };
     expect(impactHasEffects(read({ ...quiet, keepsRunning: [] }))).toBe(false);
     expect(impactHasEffects(read(quiet))).toBe(true);
+  });
+});
+
+describe('the people an unfinished uninstall already moved', () => {
+  const moves = [
+    { userId: 7, name: 'Gus', from: 'guard', to: 'resident' },
+    { userId: 9, name: '', from: 'guard', to: 'guest' },
+  ];
+
+  test('reads them and says each move in the language of the app', () => {
+    const impact = read({ roleMoves: moves, roleHolders: [], roleEffect: 'none' });
+    expect(impact.roleMoves).toEqual(moves);
+    expect(roleMoveText(moves[0]!, es)).toBe('Gus · Guardia → Residente');
+    expect(roleMoveText(moves[0]!, en)).toBe('Gus · Guard → Resident');
+    expect(roleMoveText(moves[1]!, es)).toBe('#9 · Guardia → Invitado');
+    expect(roleMoveText({ userId: 7, name: 'Gus', from: '', to: 'resident' }, es)).toBe('Gus · Residente');
+  });
+
+  test('a missing field reads as nobody moved and a malformed item is dropped', () => {
+    const { roleMoves: _omitted, ...without } = wire;
+    expect(readModuleImpact(without)?.roleMoves).toEqual([]);
+    expect(read({ roleMoves: [moves[0], { name: 'x' }, 'y'] }).roleMoves).toEqual([moves[0]!]);
+    expect(read({ roleMoves: 7 }).roleMoves).toEqual([]);
+  });
+
+  test('moves to explain are an effect on their own, so the preview is not skipped', () => {
+    const quiet = { stops: [], roleHolders: [], invitations: [], keepsRunning: [], roleEffect: 'none' };
+    expect(impactHasEffects(read({ ...quiet, roleMoves: [] }))).toBe(false);
+    expect(impactHasEffects(read({ ...quiet, roleMoves: moves }))).toBe(true);
+  });
+
+  test('nothing is offered to undo them: the people are not holders again', () => {
+    const impact = read({ roleMoves: moves, roleHolders: [], roleEffect: 'none' });
+    expect(needsReassign(impact)).toBe(false);
+    expect(reassignBody(impact, {})).toBeUndefined();
   });
 });
 

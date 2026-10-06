@@ -125,6 +125,8 @@ export const modules = {
       other: 'Other tasks of {module} stop',
     },
     partial: 'Not every service could be reached, so this preview may be incomplete.',
+    'moved-title': 'Already moved to a new role',
+    'moved-hint': 'These changes stay even if the uninstall does not finish.',
     'keeps-running-title': 'Keeps running',
     'stops-title': 'What stops',
     'nothing-stops': 'Nothing that is running stops.',

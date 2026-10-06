@@ -26,6 +26,8 @@ const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   etaSeconds: 12,
   reason: null,
   owner: null,
+  roleMoves: [],
+  roleMovesNote: null,
   ...patch,
 });
 
@@ -129,11 +131,32 @@ describe('transitions', () => {
   test('report a job that finished or failed while it was followed', () => {
     const before = catalog([module({ job: job() })]);
     expect(jobTransitions(before, catalog([module({ job: job({ state: 'done' }) })]), 'es')).toEqual([
-      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'done', reason: null, owner: null },
+      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'done', reason: null, owner: null, note: null },
     ]);
     expect(jobTransitions(before, catalog([module({ job: job({ state: 'failed', reason: 'disk_full' }) })]), 'es')).toEqual([
-      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'failed', reason: 'disk_full', owner: null },
+      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'failed', reason: 'disk_full', owner: null, note: null },
     ]);
+  });
+
+  test('carry the sentence about the people already moved when an uninstall fails', () => {
+    const before = catalog([module({ job: job({ kind: 'uninstall', state: 'removing' }) })]);
+    const failed = job({
+      kind: 'uninstall',
+      state: 'failed',
+      reason: 'owner_unreachable',
+      roleMoves: [{ userId: 7, name: 'Gus', from: 'guard', to: 'resident' }],
+      roleMovesNote: {
+        es: 'La desinstalación no terminó. Gus ya tiene su nuevo rol y lo conserva; el módulo sigue instalado.',
+        en: 'The uninstall did not finish. Gus already has the new role and keeps it; the module is still installed.',
+      },
+    });
+    const next = catalog([module({ job: failed })]);
+    expect(jobTransitions(before, next, 'es')[0]?.note).toBe(
+      'La desinstalación no terminó. Gus ya tiene su nuevo rol y lo conserva; el módulo sigue instalado.'
+    );
+    expect(jobTransitions(before, next, 'en')[0]?.note).toBe(
+      'The uninstall did not finish. Gus already has the new role and keeps it; the module is still installed.'
+    );
   });
 
   test('stay quiet on the first answer and on a job already finished', () => {

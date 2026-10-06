@@ -91,6 +91,35 @@ describe('module contract', () => {
     expect(readModuleList([{ ...wireModule, job: { ...wireModule.job, state: 'removing' } }])?.[0]?.job?.state).toBe('removing');
   });
 
+  test('a failed uninstall carries who was moved and the sentence to show, both read tolerantly', () => {
+    const moves = [
+      { userId: 7, name: 'Gus', from: 'guard', to: 'resident' },
+      { userId: 9, name: 'Gaby', from: 'guard', to: 'guest' },
+    ];
+    const note = { es: 'No terminó. Gus ya tiene su nuevo rol.', en: 'It did not finish. Gus has the new role.' };
+    const withMoves = readModuleList([
+      { ...wireModule, job: { ...wireModule.job, kind: 'uninstall', state: 'failed', roleMoves: moves, roleMovesNote: note } },
+    ])?.[0]?.job;
+    expect(withMoves?.roleMoves).toEqual(moves);
+    expect(withMoves?.roleMovesNote).toEqual(note);
+    const bare = readModuleList([wireModule])?.[0]?.job;
+    expect(bare?.roleMoves).toEqual([]);
+    expect(bare?.roleMovesNote).toBeNull();
+    const odd = readModuleList([
+      {
+        ...wireModule,
+        job: {
+          ...wireModule.job,
+          roleMoves: [moves[0], { userId: 'x' }, 3, { userId: 4, to: 'guest' }],
+          roleMovesNote: { es: '', en: '' },
+        },
+      },
+    ])?.[0]?.job;
+    expect(odd?.roleMoves).toEqual([moves[0]!, { userId: 4, name: '', from: '', to: 'guest' }]);
+    expect(odd?.roleMovesNote).toBeNull();
+    expect(readModuleList([{ ...wireModule, job: { ...wireModule.job, roleMoves: 'Gus' } }])?.[0]?.job?.roleMoves).toEqual([]);
+  });
+
   test('job kind defaults to install and is kept for uninstall and purge', () => {
     expect(readModuleList([wireModule])?.[0]?.job?.kind).toBe('install');
     expect(readModuleList([{ ...wireModule, job: { ...wireModule.job, kind: 'purge' } }])?.[0]?.job?.kind).toBe('purge');

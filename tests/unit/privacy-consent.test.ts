@@ -188,6 +188,8 @@ describe('what the owner is asked after choosing modules', () => {
     etaSeconds: null,
     reason: null,
     owner: null,
+    roleMoves: [],
+    roleMovesNote: null,
   };
 
   test('nothing when no module was chosen or the catalog is unknown', () => {

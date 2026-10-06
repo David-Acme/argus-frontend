@@ -1,4 +1,4 @@
-import type { LanguageCode, LocalizedText, ModuleCatalog, ModuleIntro, ModuleRecord } from '@/core/types';
+import type { LanguageCode, LocalizedText, ModuleCatalog, ModuleIntro, ModuleJob, ModuleRecord } from '@/core/types';
 
 const pick = (text: LocalizedText, language: LanguageCode, fallback: string): string =>
   text[language] ?? text.es ?? text.en ?? fallback;
@@ -20,4 +20,12 @@ export function introFor(module: Pick<ModuleRecord, 'intro'>, language: Language
   const intro = module.intro;
   if (!intro) return null;
   return intro[language] ?? intro.any ?? intro.es ?? intro.en ?? null;
+}
+
+export function roleMovesNoteOf(
+  job: Pick<ModuleJob, 'state' | 'roleMovesNote'> | null | undefined,
+  language: LanguageCode
+): string | null {
+  if (!job || !job.roleMovesNote || (job.state !== 'failed' && job.state !== 'cancelled')) return null;
+  return job.roleMovesNote[language] || job.roleMovesNote.es || job.roleMovesNote.en || null;
 }

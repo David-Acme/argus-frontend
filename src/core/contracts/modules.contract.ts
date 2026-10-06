@@ -7,6 +7,7 @@ import type {
   ModuleFrame,
   ModuleImpact,
   ModuleKeepsRunning,
+  ModuleRoleMove,
   ModuleRequestAnswer,
   ModuleGettingStartedStep,
   ModuleHardware,
@@ -24,6 +25,23 @@ const optionalText = z
   .string()
   .nullish()
   .transform((value) => (value && value.length > 0 ? value : null));
+
+const roleMoveItem = z.object({
+  userId: z.number().int(),
+  name: z.string().catch(''),
+  from: z.string().catch(''),
+  to: z.string(),
+});
+
+const roleMovesList = z
+  .array(z.unknown())
+  .catch([])
+  .transform((items): ModuleRoleMove[] =>
+    items.flatMap((item) => {
+      const parsed = roleMoveItem.safeParse(item);
+      return parsed.success ? [parsed.data] : [];
+    })
+  );
 
 export const moduleJobSchema = z
   .object({
@@ -53,6 +71,12 @@ export const moduleJobSchema = z
       .transform((value) => (value == null || value < 0 ? null : value)),
     reason: optionalText,
     owner: optionalText,
+    roleMoves: roleMovesList,
+    roleMovesNote: z
+      .object({ es: z.string().optional(), en: z.string().optional() })
+      .nullish()
+      .transform((value) => (value && (value.es || value.en) ? value : null))
+      .catch(null),
   })
   .transform(
     (job): ModuleJob => ({ ...job, progress: Math.min(1, Math.max(0, job.progress)) })
@@ -346,6 +370,7 @@ export const moduleImpactSchema = z
       .catch([]),
     keepsRunning: keepsRunningList,
     unreachable: z.array(z.string()).catch([]),
+    roleMoves: roleMovesList,
     roleHolders: z
       .array(
         z.object({

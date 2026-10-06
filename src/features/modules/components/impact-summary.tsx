@@ -12,6 +12,7 @@ import {
   invitationsOf,
   keepsRunningOf,
   needsReassign,
+  roleMoveText,
   stopText,
   type ReassignChoices,
 } from '@/features/modules/model/module-impact';
@@ -71,6 +72,23 @@ export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose
               </Text>
             </View>
           ))}
+        </View>
+      ) : null}
+
+      {impact.roleMoves.length > 0 ? (
+        <View className="bg-surface-secondary dark:bg-card-secondary gap-2 rounded-2xl p-3">
+          <Text variant="label">{t('screens.modules.impact.moved-title')}</Text>
+          {impact.roleMoves.map((move) => (
+            <View key={move.userId} className="flex-row items-center gap-2">
+              <Icon name="users" className="text-muted-foreground size-3.5" />
+              <Text variant="caption" className="min-w-0 flex-1" numberOfLines={1}>
+                {roleMoveText(move, t)}
+              </Text>
+            </View>
+          ))}
+          <Text variant="caption" className="text-foreground-secondary">
+            {t('screens.modules.impact.moved-hint')}
+          </Text>
         </View>
       ) : null}
 

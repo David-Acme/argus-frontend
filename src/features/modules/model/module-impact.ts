@@ -1,9 +1,11 @@
+import { roleLabelOf } from '@/shared/libs/role-label';
 import type {
   LanguageCode,
   ModuleImpact,
   ModuleImpactInvitation,
   ModuleImpactStop,
   ModuleRoleHolder,
+  ModuleRoleMove,
   TranslateFn,
   TranslationKey,
 } from '@/core/types';
@@ -30,6 +32,12 @@ export function stopText(stop: ModuleImpactStop, moduleName: string, t: Translat
 
 export const holderName = (holder: Pick<ModuleRoleHolder, 'name' | 'lastName' | 'userId'>): string =>
   [holder.name, holder.lastName].filter(Boolean).join(' ') || `#${holder.userId}`;
+
+export function roleMoveText(move: ModuleRoleMove, t: TranslateFn): string {
+  const who = move.name || `#${move.userId}`;
+  const to = roleLabelOf(move.to, t);
+  return move.from ? `${who} · ${roleLabelOf(move.from, t)} → ${to}` : `${who} · ${to}`;
+}
 
 export type ReassignChoices = Readonly<Record<string, string>>;
 
@@ -80,6 +88,7 @@ export const impactIsPartial = (impact: ModuleImpact): boolean => impact.unreach
 export const impactHasEffects = (impact: ModuleImpact): boolean =>
   impact.stops.length > 0 ||
   impact.keepsRunning.length > 0 ||
+  impact.roleMoves.length > 0 ||
   impact.roleHolders.length > 0 ||
   impact.invitations.length > 0;
 

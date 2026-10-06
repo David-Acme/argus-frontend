@@ -22,7 +22,7 @@ export function ModuleNotices() {
           transition.kind === 'install'
             ? t('screens.modules.failed-toast', { name: transition.name })
             : `${t(jobLabelKey(transition))} · ${transition.name}`;
-        toast.error(title, failureText(transition.reason, transition.owner, t), {
+        toast.error(title, [failureText(transition.reason, transition.owner, t), transition.note].filter(Boolean).join(' '), {
           label: t('screens.modules.actions.retry'),
           onPress: () => router.push(MODULE_SETTINGS_PATH),
         });

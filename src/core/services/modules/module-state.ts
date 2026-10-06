@@ -11,7 +11,7 @@ import type {
   ModuleTransition,
   SyncTableKey,
 } from '@/core/types';
-import { localizedModule } from './module-text';
+import { localizedModule, roleMovesNoteOf } from './module-text';
 import { MODULE_API_PREFIXES, MODULE_APP_ROUTES, MODULE_IDS, MODULE_SYNC_TABLES } from '@/shared/constants';
 
 const RUNNING: ReadonlySet<ModuleJobState> = new Set([
@@ -200,7 +200,17 @@ export function jobTransitions(
     if (!job || !earlier || earlier.id !== job.id || !isJobOpen(earlier)) return [];
     if (job.state !== 'done' && job.state !== 'failed') return [];
     const name = localizedModule(module, language).name;
-    return [{ id: module.id, name, kind: job.kind, state: job.state, reason: job.reason, owner: job.owner }];
+    return [
+      {
+        id: module.id,
+        name,
+        kind: job.kind,
+        state: job.state,
+        reason: job.reason,
+        owner: job.owner,
+        note: roleMovesNoteOf(job, language),
+      },
+    ];
   });
 }
 
@@ -265,6 +275,8 @@ const pendingJob = (state: ModuleJobState, previous: ModuleJob | null, kind: Mod
   etaSeconds: null,
   reason: null,
   owner: null,
+  roleMoves: previous?.roleMoves ?? [],
+  roleMovesNote: null,
 });
 
 export function optimisticPatch(module: ModuleRecord, action: ModuleAction): Partial<ModuleRecord> {

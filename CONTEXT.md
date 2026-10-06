@@ -3035,16 +3035,26 @@ showing reminders with productivity; Inicio's Today no longer repeats them.
   `applicable` object on `GET /privacy/me` and `/privacy/users`, and
   `GET /sync/activity` (module, userId, action, from, to in seconds, limit up
   to 200, cursor, items and `nextCursor`).
-- Goldens (backend `b6cf00ce`): `GET /sync/activity` (owner 200),
-  `GET /privacy/me` and `/privacy/users` (with `applicable`) and
-  `PATCH /user/{id}` (with `roleActive`) are recorded and checked field by
-  field (`tests/unit/http-contract.test.ts` also fails if an activity item is
-  dropped by the reader). `GET /modules/{id}/impact` and
-  `POST /modules/{id}/request` have a contract in `HTTP_CONTRACTS` but only
-  error recordings (422 without `action`, 404 unknown module), so they wait in
-  `AWAITING_GOLDEN` (shown as todo); once a 200 is recorded the test checks it
-  and fails until the route leaves the list. The 409s (`MODULE_COMING_SOON`,
-  `MODULE_ROLES_HELD`) and the reminder success rows are unrecorded too.
+- Goldens (backend `b6cf00ce`, `592a205d`): every route above is recorded and
+  checked field by field in `tests/unit/http-contract.test.ts`: the impact
+  answers (surveillance disable and uninstall, one with a real holder and a
+  pending invitation, productivity disable, the refused core), the request 200
+  and its 409s, the uninstall 409 `MODULE_ROLES_HELD` (a list, which
+  `envelopeSchema` now accepts) and the 202 (the bare job with `roleMoves`),
+  `GET /sync/activity`, the privacy `applicable`, `PATCH /user/{id}` with
+  `roleActive`, the module-revoked invitation row and the reminder rows, which
+  carry every field the sync mapper reads. The test fails if a reader drops an
+  item of any list. Not recorded: `POST /invitation/resolve` 410 (needs the
+  paired flag in the sandbox; verified in code) and request 409
+  `MODULE_JOB_RUNNING`.
+- People an uninstall already moved (backend `e8f34ba1`): the roles are
+  persisted before the job exists and never rolled back. The job carries
+  `roleMoves [{userId, name, from, to}]` and, when it failed or was cancelled,
+  `roleMovesNote {es, en}`, a sentence the card and the failure toast show as
+  written (`roleMovesNoteOf`, the app's language first); the impact carries
+  `roleMoves` too (the moves of an unfinished uninstall) and the dialogs list
+  them under "Ya cambiaron de rol". Both are read tolerantly (absent reads as
+  none) and nothing offers to undo them.
 - Role pickers (supervisor decision): invitations list an off module's roles
   disabled with "needs X, which is off" and explain a 409 `ROLE_INACTIVE`;
   role change lists them selectable, after the active ones, and says the role

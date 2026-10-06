@@ -23,6 +23,8 @@ const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   etaSeconds: 75,
   reason: null,
   owner: null,
+  roleMoves: [],
+  roleMovesNote: null,
   ...patch,
 });
 

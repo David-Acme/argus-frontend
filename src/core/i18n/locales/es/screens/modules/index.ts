@@ -125,6 +125,8 @@ export const modules = {
       other: 'Dejan de funcionar otras tareas de {module}',
     },
     partial: 'No se pudo consultar a todos los servicios, así que esta vista previa puede estar incompleta.',
+    'moved-title': 'Ya cambiaron de rol',
+    'moved-hint': 'Estos cambios se quedan aunque la desinstalación no termine.',
     'keeps-running-title': 'Sigue funcionando',
     'stops-title': 'Qué se detiene',
     'nothing-stops': 'No se detiene nada que esté en marcha.',

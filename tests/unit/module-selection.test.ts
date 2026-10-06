@@ -63,6 +63,8 @@ const running: ModuleJob = {
   etaSeconds: 9,
   reason: null,
   owner: null,
+  roleMoves: [],
+  roleMovesNote: null,
 };
 
 const core = module({ id: 'core', kind: 'core', enabled: true, requires: [], sizeBytes: 0, hardware: null });

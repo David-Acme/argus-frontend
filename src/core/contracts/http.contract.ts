@@ -16,6 +16,7 @@ import { activityPageSchema } from '@/core/contracts/activity.contract';
 import {
   moduleDataAnswerSchema,
   moduleImpactSchema,
+  moduleActionResultSchema,
   moduleListSchema,
   moduleRequestSchema,
 } from '@/core/contracts/modules.contract';
@@ -51,10 +52,12 @@ export const apiErrorSchema = z.object({
   fields: z.record(z.string(), z.array(z.string())).optional(),
 }) satisfies z.ZodType<IApiError>;
 
+const apiErrorEntrySchema = z.object({ code: z.string(), message: z.string() });
+
 export const envelopeSchema = z.object({
   status: z.number().int(),
   info: z.unknown(),
-  errors: apiErrorSchema.nullable(),
+  errors: z.union([apiErrorSchema, z.array(apiErrorEntrySchema).min(1)]).nullable(),
 });
 
 export const authStatusSchema = z.object({
@@ -470,6 +473,7 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /modules/{1}/data': moduleDataAnswerSchema,
   'GET /modules/{1}/impact': moduleImpactSchema,
   'POST /modules/{1}/request': moduleRequestSchema,
+  'POST /modules/{1}/uninstall': moduleActionResultSchema,
   'GET /sync/activity': activityPageSchema,
   'PATCH /user/{1}': userManagementRecordSchema,
 };

@@ -55,6 +55,8 @@ const job = (state: ModuleJob['state']): ModuleJob => ({
   etaSeconds: 5,
   reason: null,
   owner: null,
+  roleMoves: [],
+  roleMovesNote: null,
 });
 
 const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ fetchedAt: 0, modules });
