@@ -28,7 +28,7 @@ export function readChecklistState(value: unknown): ChecklistState {
 }
 
 export function needsModuleChoice(catalog: ModuleCatalog | null): boolean {
-  if (!catalog?.supported) return false;
+  if (!catalog) return false;
   const available = catalog.modules.filter((module) => module.kind === 'available');
   return available.length > 0 && available.every((module) => !module.enabled && !isJobOpen(module.job));
 }

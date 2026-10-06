@@ -154,6 +154,39 @@ describe('module contract', () => {
   });
 });
 
+describe('module intro and roles', () => {
+  const read = (patch: Record<string, unknown>) => readModuleList([{ ...wireModule, ...patch }])?.[0];
+
+  test('a module without intro or roles reads as having neither', () => {
+    expect(read({})?.intro).toBeNull();
+    expect(read({})?.roles).toEqual([]);
+  });
+
+  test('an intro is one text, one body or a body per language', () => {
+    expect(read({ intro: 'Cuida la casa' })?.intro).toEqual({ any: { what: 'Cuida la casa', examples: [] } });
+    expect(read({ intro: { what: 'Cuida la casa', examples: ['Ver el patio', ' ', 3] } })?.intro).toEqual({
+      any: { what: 'Cuida la casa', examples: ['Ver el patio'] },
+    });
+    expect(
+      read({ intro: { es: { what: 'Cuida', examples: ['a'] }, en: { what: 'Watches', examples: ['b'] } } })?.intro
+    ).toEqual({ es: { what: 'Cuida', examples: ['a'] }, en: { what: 'Watches', examples: ['b'] } });
+    expect(read({ intro: { es: {}, en: 4 } })?.intro).toBeNull();
+  });
+
+  test('roles are the names the module brings and anything else is dropped', () => {
+    expect(read({ roles: ['guard'] })?.roles).toEqual(['guard']);
+    expect(read({ roles: 'guard' })?.roles).toEqual([]);
+  });
+
+  test('names and summaries per language keep both texts and read the first as the default', () => {
+    const module = read({ name: { es: 'Vigilancia', en: 'Surveillance' }, summary: { en: 'Cameras' } });
+    expect(module?.name).toBe('Vigilancia');
+    expect(module?.summary).toBe('Cameras');
+    expect(module?.texts).toEqual({ name: { es: 'Vigilancia', en: 'Surveillance' }, summary: { en: 'Cameras' } });
+    expect(read({})?.texts).toBeNull();
+  });
+});
+
 const roleAccess = join(import.meta.dir, '../../../backend/packages/lib/auth/src/auth/role-access.hxx');
 const header = existsSync(roleAccess) ? readFileSync(roleAccess, 'utf8') : '';
 

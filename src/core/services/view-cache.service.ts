@@ -103,12 +103,13 @@ class ViewCacheService {
     this.notify(target);
   }
 
-  clear(): void {
+  clear(keep: readonly ViewCacheKey[] = []): void {
+    const kept = keep.map((key) => this.keyOf(key));
     for (const key of storageService.getAllKeys()) {
-      if (key.startsWith(VIEW_CACHE_PREFIX)) {
-        storageService.remove(key);
-        this.notify(key);
-      }
+      if (!key.startsWith(VIEW_CACHE_PREFIX)) continue;
+      if (kept.some((base) => key === base || key.startsWith(`${base}.`))) continue;
+      storageService.remove(key);
+      this.notify(key);
     }
   }
 }

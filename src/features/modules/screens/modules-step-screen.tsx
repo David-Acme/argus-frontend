@@ -36,7 +36,7 @@ export function ModulesStepScreen({ header, onNext }: ModulesStepScreenProps) {
   const { t, language } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isWide } = useWindowClass();
-  const { catalog, modules, status, reload } = useModules();
+  const { catalog, modules, status } = useModules();
   const [touched, setTouched] = useState<string[] | null>(null);
   const [starting, setStarting] = useState(false);
   const selection = touched ?? defaultSelection(catalog);
@@ -116,16 +116,9 @@ export function ModulesStepScreen({ header, onNext }: ModulesStepScreenProps) {
             <View className="bg-card rounded-3xl py-6">
               <EmptyState
                 variant="panel"
-                icon={status === 'failed' ? 'wifi-off' : 'check-circle'}
-                title={status === 'failed' ? t('screens.modules.load-failed') : t('screens.modules.unsupported-title')}
-                hint={status === 'failed' ? undefined : t('screens.modules.unsupported-hint')}
-                action={
-                  status === 'failed' ? (
-                    <Button size="sm" variant="outline" onPress={() => void reload()}>
-                      <Text>{t('common.retry')}</Text>
-                    </Button>
-                  ) : undefined
-                }
+                icon="wifi-off"
+                title={t('screens.modules.waiting-title')}
+                hint={t('screens.modules.waiting-hint')}
               />
             </View>
           )}

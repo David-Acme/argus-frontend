@@ -1,38 +1,32 @@
-import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { moduleEngine } from '@/core/services/modules';
 import type { ModuleAction, ModuleCatalog, ModuleRecord } from '@/core/types';
-import { useModuleCatalog } from '@/shared/hooks/use-modules';
+import { CONTEXT_WAIT_MS } from '@/shared/constants';
+import { useExpiry } from '@/shared/hooks/use-expiry';
+import { useModuleCatalog } from '@/features/modules/hooks/use-module-catalog';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runServiceAction } from '@/shared/libs/service-action';
 
-export type ModuleListStatus = 'loading' | 'ready' | 'failed' | 'unsupported';
+export type ModuleListStatus = 'loading' | 'ready' | 'waiting';
 
 export type ModulesState = {
   catalog: ModuleCatalog | null;
   modules: ModuleRecord[];
   status: ModuleListStatus;
   pending: string | null;
-  reload: () => Promise<void>;
   run: (module: ModuleRecord, action: ModuleAction) => Promise<boolean>;
 };
 
-const statusOf = (catalog: ModuleCatalog | null, failed: boolean): ModuleListStatus => {
-  if (catalog && !catalog.supported) return 'unsupported';
+const statusOf = (catalog: ModuleCatalog | null, waitedOut: boolean): ModuleListStatus => {
   if (catalog && catalog.modules.length > 0) return 'ready';
-  return failed ? 'failed' : 'loading';
+  return waitedOut ? 'waiting' : 'loading';
 };
 
 export function useModules(): ModulesState {
   const { t } = useTranslation();
   const catalog = useModuleCatalog();
-  const [failed, setFailed] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
-
-  const reload = useCallback(async () => {
-    const ok = await moduleEngine.refresh();
-    setFailed(!ok);
-  }, []);
+  const waitedOut = useExpiry(catalog === null || catalog.modules.length === 0, CONTEXT_WAIT_MS);
 
   const confirmFor = useCallback(
     (module: ModuleRecord, action: ModuleAction) => {
@@ -76,18 +70,11 @@ export function useModules(): ModulesState {
     [confirmFor, t]
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload])
-  );
-
   return {
     catalog,
     modules: catalog?.modules ?? [],
-    status: statusOf(catalog, failed),
+    status: statusOf(catalog, waitedOut),
     pending,
-    reload,
     run,
   };
 }

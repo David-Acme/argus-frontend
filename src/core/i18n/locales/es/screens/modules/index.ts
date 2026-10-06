@@ -176,9 +176,8 @@ export const modules = {
   'footer-none': 'Sin descargas: se activan al momento',
   'background-note': 'La instalación sigue en tu servidor aunque cierres la app.',
   queued: 'Instalación en marcha',
-  'unsupported-title': 'Todo listo por ahora',
-  'unsupported-hint': 'Tu servidor aún no ofrece módulos para elegir. Lo que tiene ya está activo.',
-  'load-failed': 'No se pudo leer la lista de módulos.',
+  'waiting-title': 'Esperando a tu servidor',
+  'waiting-hint': 'La lista de módulos llegará en cuanto Argus se conecte con tu casa.',
   'start-failed': 'No se pudo empezar a instalar {names}.',
   server: {
     title: 'Tu servidor',

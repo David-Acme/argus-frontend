@@ -1,4 +1,6 @@
 import type {
+  AppContext,
+  LanguageCode,
   ModuleAction,
   ModuleCatalog,
   ModuleEnabledFlag,
@@ -9,6 +11,7 @@ import type {
   ModuleTransition,
   SyncTableKey,
 } from '@/core/types';
+import { localizedModule } from './module-text';
 import { MODULE_API_PREFIXES, MODULE_APP_ROUTES, MODULE_IDS, MODULE_SYNC_TABLES } from '@/shared/constants';
 
 const RUNNING: ReadonlySet<ModuleJobState> = new Set([
@@ -46,6 +49,9 @@ export function mergeModule(previous: ModuleRecord | undefined, next: ModuleReco
     return {
       ...previous,
       name: next.name || previous.name,
+      summary: next.summary || previous.summary,
+      intro: next.intro ?? previous.intro,
+      roles: next.roles.length > 0 ? next.roles : previous.roles,
       enabled: next.enabled,
       lifecycle: next.enabled ? 'active' : previous.lifecycle === 'active' ? 'disabled' : previous.lifecycle,
       dataPurgedAt: latestStamp(previous.dataPurgedAt, next.dataPurgedAt),
@@ -60,22 +66,35 @@ export function replaceCatalog(
   now: number
 ): ModuleCatalog {
   const byId = new Map((previous?.modules ?? []).map((module) => [module.id, module]));
-  return { supported: true, fetchedAt: now, modules: modules.map((module) => mergeModule(byId.get(module.id), module)) };
+  return { fetchedAt: now, modules: modules.map((module) => mergeModule(byId.get(module.id), module)) };
 }
 
-export const unsupportedCatalog = (now: number): ModuleCatalog => ({ supported: false, fetchedAt: now, modules: [] });
+export function catalogOfContext(context: Pick<AppContext, 'modules' | 'ownerCatalog'>): ModuleRecord[] {
+  if (!context.ownerCatalog) return context.modules;
+  const briefs = new Map(context.modules.map((module) => [module.id, module]));
+  return context.ownerCatalog.map((module) => {
+    const brief = briefs.get(module.id);
+    if (!brief) return module;
+    return {
+      ...module,
+      summary: module.summary || brief.summary,
+      intro: module.intro ?? brief.intro,
+      roles: module.roles.length > 0 ? module.roles : brief.roles,
+    };
+  });
+}
 
 export function upsertModule(catalog: ModuleCatalog | null, module: ModuleRecord, now: number): ModuleCatalog {
-  const base = catalog ?? { supported: true, fetchedAt: now, modules: [] };
+  const base = catalog ?? { fetchedAt: now, modules: [] };
   const index = base.modules.findIndex((candidate) => candidate.id === module.id);
-  if (index < 0) return { ...base, supported: true, modules: [...base.modules, module] };
+  if (index < 0) return { ...base, modules: [...base.modules, module] };
   const modules = base.modules.slice();
   modules[index] = mergeModule(base.modules[index], module);
-  return { ...base, supported: true, modules };
+  return { ...base, modules };
 }
 
 export function applyEnabledFlags(catalog: ModuleCatalog | null, flags: readonly ModuleEnabledFlag[], now: number): ModuleCatalog {
-  const base = catalog ?? { supported: true, fetchedAt: now, modules: [] };
+  const base = catalog ?? { fetchedAt: now, modules: [] };
   const byId = new Map(flags.map((flag) => [flag.id, flag.enabled]));
   const known = new Set(base.modules.map((module) => module.id));
   const stamps = new Map(flags.map((flag) => [flag.id, flag.dataPurgedAt ?? null]));
@@ -97,6 +116,9 @@ export function applyEnabledFlags(catalog: ModuleCatalog | null, flags: readonly
         id: flag.id,
         name: '',
         summary: '',
+        texts: null,
+        intro: null,
+        roles: [],
         kind: flag.id === MODULE_IDS.core ? 'core' : 'available',
         lifecycle: flag.enabled ? 'active' : 'not_installed',
         enabled: flag.enabled,
@@ -112,7 +134,7 @@ export function applyEnabledFlags(catalog: ModuleCatalog | null, flags: readonly
         detailed: false,
       })
     );
-  return { ...base, supported: true, modules: [...updated, ...added] };
+  return { ...base, modules: [...updated, ...added] };
 }
 
 export function applyFrame(catalog: ModuleCatalog | null, frame: ModuleFrame, now: number): ModuleCatalog {
@@ -143,14 +165,6 @@ export function patchModule(
   };
 }
 
-export function enabledModuleIds(catalog: ModuleCatalog | null): ReadonlySet<string> | null {
-  if (!catalog || !catalog.supported || catalog.modules.length === 0) return null;
-  return new Set([MODULE_IDS.core, ...catalog.modules.filter((module) => module.enabled).map((module) => module.id)]);
-}
-
-export const isModuleEnabled = (enabled: ReadonlySet<string> | null, moduleId: string): boolean =>
-  enabled === null || enabled.has(moduleId);
-
 const segmentOf = (path: string): string => path.replace(/^\/+/, '').split(/[/?#]/)[0] ?? '';
 
 export function moduleOfApiPath(path: string): string | null {
@@ -170,10 +184,11 @@ export function moduleOfAppRoute(pathname: string): string | null {
 export const runningModules = (catalog: ModuleCatalog | null): ModuleRecord[] =>
   (catalog?.modules ?? []).filter((module) => isJobRunning(module.job));
 
-export const needsPolling = (catalog: ModuleCatalog | null, socketConnected: boolean): boolean =>
-  !socketConnected && runningModules(catalog).length > 0;
-
-export function jobTransitions(previous: ModuleCatalog | null, next: ModuleCatalog | null): ModuleTransition[] {
+export function jobTransitions(
+  previous: ModuleCatalog | null,
+  next: ModuleCatalog | null,
+  language: LanguageCode
+): ModuleTransition[] {
   if (!previous || !next) return [];
   const before = new Map(previous.modules.map((module) => [module.id, module.job]));
   return next.modules.flatMap((module): ModuleTransition[] => {
@@ -181,7 +196,8 @@ export function jobTransitions(previous: ModuleCatalog | null, next: ModuleCatal
     const earlier = before.get(module.id);
     if (!job || !earlier || earlier.id !== job.id || !isJobOpen(earlier)) return [];
     if (job.state !== 'done' && job.state !== 'failed') return [];
-    return [{ id: module.id, name: module.name, kind: job.kind, state: job.state, reason: job.reason, owner: job.owner }];
+    const name = localizedModule(module, language).name;
+    return [{ id: module.id, name, kind: job.kind, state: job.state, reason: job.reason, owner: job.owner }];
   });
 }
 

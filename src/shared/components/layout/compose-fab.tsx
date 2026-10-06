@@ -16,10 +16,10 @@ import {
   NAV_RAIL_WIDTH,
   colorTokens,
 } from '@/shared/constants';
-import { useEnabledModules } from '@/shared/hooks/use-modules';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { itemIn } from '@/shared/libs/animations';
+import { tableAllowed } from '@/shared/libs/capabilities';
 import { routeModuleEnabled } from '@/shared/libs/route-access';
 import { cn } from '@/shared/libs/utils';
 
@@ -33,8 +33,7 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { theme } = useUniwind();
-  const { can } = usePermissions();
-  const enabledModules = useEnabledModules();
+  const view = useAccessView();
   const [open, setOpen] = useState(false);
   const iconColor = colorTokens[theme === 'dark' ? 'dark' : 'light']['foreground-on-interactive'];
 
@@ -52,10 +51,11 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
     () =>
       COMPOSE_ACTIONS.filter(
         (action) =>
-          (!action.table || can(action.table, 'create')) &&
-          routeModuleEnabled(action.route, enabledModules)
+          view.roleActive &&
+          (!action.table || tableAllowed(view, action.table, 'create')) &&
+          routeModuleEnabled(action.route, view)
       ),
-    [can, enabledModules]
+    [view]
   );
 
   const close = () => setOpen(false);

@@ -1,6 +1,6 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
-import type { UserRole } from '@/core/types';
-import { peopleAccessForRole } from '@/shared/libs/people-access';
+import { peopleAccessOf, type AccessView } from '@/shared/libs/capabilities';
+import { routeFallback } from '@/shared/libs/route-access';
 
 export type AppScreen = 'home' | 'agenda' | 'projects' | 'cameras' | 'security' | 'people' | 'settings';
 
@@ -46,15 +46,15 @@ export function resolveCameraId({ requested, cameras, lastEventCameraId }: Resol
   return null;
 }
 
-export function routeForScreen(screen: string, role: UserRole): string | null {
-  if (screen === 'people') {
-    const action = peopleAccessForRole(role).profileAction;
-    if (action === 'manage') return '/users';
-    if (action === 'directory') return '/people';
-    return null;
-  }
-  if (screen === 'settings' && role !== 'owner') return null;
-  return (SCREEN_ROUTES as Record<string, string>)[screen] ?? null;
+const peopleRoute = (view: AccessView): string | null => {
+  const action = peopleAccessOf(view).profileAction;
+  if (action === 'manage') return '/users';
+  return action === 'directory' ? '/people' : null;
+};
+
+export function routeForScreen(screen: string, view: AccessView): string | null {
+  const route = screen === 'people' ? peopleRoute(view) : ((SCREEN_ROUTES as Record<string, string>)[screen] ?? null);
+  return route !== null && routeFallback(route, view) === null ? route : null;
 }
 
 export function detectedClasses(data: Record<string, unknown>): string[] {

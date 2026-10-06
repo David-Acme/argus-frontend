@@ -2,9 +2,11 @@ import { Redirect, usePathname } from 'expo-router';
 import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
 import { authService } from '@/core/services/auth.service';
 import { sessionService } from '@/core/services/session.service';
+import { moduleOfAppRoute } from '@/core/services/modules/module-state';
 import { useAuthStore } from '@/core/stores';
-import { IS_NATIVE } from '@/shared/constants';
-import { useEnabledModules } from '@/shared/hooks/use-modules';
+import { CONTEXT_WAIT_MS, IS_NATIVE } from '@/shared/constants';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
+import { useExpiry } from '@/shared/hooks/use-expiry';
 import { routeFallback } from '@/shared/libs/route-access';
 import { BrandSplash } from '@/features/auth/components/brand-splash';
 import { ServerUnreachable } from '@/features/auth/components/server-unreachable';
@@ -48,11 +50,13 @@ function EntryRedirect() {
 
 export function EntryGate({ children }: PropsWithChildren) {
   const status = useAuthStore((state) => state.status);
-  const role = useAuthStore((state) => state.user?.role ?? 'guest');
   const pathname = usePathname();
-  const enabledModules = useEnabledModules();
+  const view = useAccessView();
+  const pending = status === 'signed-in' && !view.ready && moduleOfAppRoute(pathname) !== null;
+  const waitedOut = useExpiry(pending, CONTEXT_WAIT_MS);
   if (status === 'signed-in') {
-    const fallback = routeFallback(pathname, role, enabledModules);
+    if (pending && !waitedOut) return <BrandSplash />;
+    const fallback = routeFallback(pathname, view);
     return fallback ? <Redirect href={fallback} /> : children;
   }
   if (status === 'loading') return <BrandSplash />;

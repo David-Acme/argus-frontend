@@ -4,12 +4,10 @@ import type { ICameraCacheRow } from '@/core/interfaces';
 import type { DashboardSummary } from '@/core/types';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import type { InfiniteListState } from '@/shared/hooks/use-infinite-list';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useModuleEnabled } from '@/shared/hooks/use-modules';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { guardAccessForRole } from '@/shared/libs/role-access';
-import { MODULE_IDS } from '@/shared/constants';
+import { CAPABILITY } from '@/shared/constants';
 import { GuardCard, useGuardEnvironments } from '@/features/security';
 import { CameraGrid } from '@/features/home/components/camera-grid';
 import { RecentActivityCard } from '@/features/home/components/recent-activity-card';
@@ -35,16 +33,14 @@ export function HomeAside({
 }: HomeAsideProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { role } = usePermissions();
+  const { has, can, guard } = useCapabilities();
   const { isWide } = useWindowClass();
-  const surveillance = useModuleEnabled(MODULE_IDS.surveillance);
-  const productivity = useModuleEnabled(MODULE_IDS.productivity);
-  const guardAccess = guardAccessForRole(role);
-  const guardEnvironments = useGuardEnvironments(guardAccess.view && surveillance).data;
+  const watchesCameras = has(CAPABILITY.cameraView);
+  const guardEnvironments = useGuardEnvironments(guard.view).data;
 
   return (
     <View className="flex-1 gap-5">
-      {surveillance ? (
+      {watchesCameras ? (
       <View className="gap-3">
         <SectionHeader
           title={t('screens.home.cameras_section')}
@@ -62,7 +58,7 @@ export function HomeAside({
       </View>
       ) : null}
 
-      {guardAccess.view && surveillance ? (
+      {guard.view ? (
         <GuardCard environments={guardEnvironments} onPress={() => router.push('/security')} />
       ) : null}
 
@@ -91,8 +87,9 @@ export function HomeAside({
           },
         ] as const).filter(
           (item) =>
-            ((item.icon !== 'video' && item.icon !== 'activity') || surveillance) &&
-            (item.icon !== 'list-todo' || productivity)
+            ((item.icon !== 'video' && item.icon !== 'activity') || watchesCameras) &&
+            (item.icon !== 'list-todo' || can('project_task', 'read')) &&
+            (item.icon !== 'bell' || has(CAPABILITY.remindersRead))
         )}
       />
 

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { storageService } from '@/core/services/storage';
 import { useAuthStore } from '@/core/stores';
 import { MODULE_GETTING_STARTED_KEY, MODULE_SETTINGS_PATH } from '@/shared/constants';
-import { useModuleCatalog } from '@/shared/hooks/use-modules';
+import { useModuleCatalog } from '@/features/modules/hooks/use-module-catalog';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import {
   checklistItems,

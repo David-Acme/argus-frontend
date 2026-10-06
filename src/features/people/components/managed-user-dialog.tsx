@@ -8,7 +8,9 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { isRoleOffered } from '@/shared/libs/capabilities';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { userManagementService } from '@/features/people/services/user-management.service';
 import {
@@ -21,7 +23,8 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
   const [name, setName] = useState(user.name);
   const [lastName, setLastName] = useState(user.lastName);
   const [role, setRole] = useState<UserRole>(user.role);
-  const options = useMemo(() => roleOptions(t), [t]);
+  const view = useAccessView();
+  const options = useMemo(() => roleOptions(t, (candidate) => isRoleOffered(view, candidate), user.role), [t, user.role, view]);
 
   const save = () => {
     if (!name.trim()) return;

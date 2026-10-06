@@ -1,4 +1,4 @@
-import { readModuleActionResult, readModuleData, readModuleList } from '@/core/contracts/modules.contract';
+import { readModuleActionResult, readModuleData } from '@/core/contracts/modules.contract';
 import type { IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import type { ModuleAction, ModuleDataOwner, ModuleJob, ModuleRecord, ModuleUninstall } from '@/core/types';
@@ -18,10 +18,6 @@ function checked<T>(result: IServiceResponse<unknown>, read: (info: unknown) => 
 }
 
 class ModulesService {
-  async list(): Promise<IServiceResponse<ModuleRecord[]>> {
-    return checked(await httpService.get<unknown>(MODULE_ROUTE), readModuleList);
-  }
-
   async data(id: string): Promise<IServiceResponse<ModuleDataOwner[]>> {
     return checked(await httpService.get<unknown>(`${MODULE_ROUTE}/${encodeURIComponent(id)}/data`), readModuleData);
   }

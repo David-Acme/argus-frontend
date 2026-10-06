@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { useAuthStore } from '@/core/stores';
 import type { GuardEnvironment, GuardEnvironmentCreate } from '@/core/types';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { Button } from '@/shared/components/ui/button';
@@ -12,9 +11,9 @@ import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { guardAccessForRole } from '@/shared/libs/role-access';
 import { cn } from '@/shared/libs/utils';
 import { EnvironmentFormDialog } from '@/features/security/components/environment-form-dialog';
 import { EnvironmentsPanel } from '@/features/security/components/environments-panel';
@@ -30,8 +29,7 @@ export default function SecurityScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
-  const role = useAuthStore((state) => state.user?.role);
-  const access = guardAccessForRole(role ?? 'guest');
+  const { guard: access, isOwner } = useCapabilities();
   const guard = useGuard(access.review);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [guestFormOpen, setGuestFormOpen] = useState(false);
@@ -177,7 +175,7 @@ export default function SecurityScreen() {
         onSubmit={guard.addGuest}
         environments={guard.environments}
         cameras={cameras}
-        arrivalRequired={role !== 'owner'}
+        arrivalRequired={!isOwner}
       />
       {creating ? <EnvironmentFormDialog open onOpenChange={setCreating} onSubmit={create} /> : null}
     </>

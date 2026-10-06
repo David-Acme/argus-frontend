@@ -11,7 +11,7 @@ import { CALENDAR_DEFAULT_VIEW, IS_NATIVE } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
@@ -62,7 +62,7 @@ export default function ScheduleScreen() {
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
-  const { can } = usePermissions();
+  const { can } = useCapabilities();
   const canCreate = can('calendar_event', 'create');
   const usesActionSheet = shouldUseAdaptiveMenuSheet({
     isCompact,

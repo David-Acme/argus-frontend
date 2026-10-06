@@ -1,6 +1,8 @@
 import { readModuleFrame } from '@/core/contracts/modules.contract';
 import type { IServiceResponse } from '@/core/interfaces';
 import type {
+  AppContext,
+  LanguageCode,
   ModuleAction,
   ModuleCatalog,
   ModuleJob,
@@ -10,14 +12,13 @@ import type {
 } from '@/core/types';
 import {
   applyFrame,
+  catalogOfContext,
   jobTransitions,
   moduleOfApiPath,
-  needsPolling,
   optimisticPatch,
   purgeDecision,
   patchModule,
   replaceCatalog,
-  unsupportedCatalog,
   upsertModule,
   withJob,
 } from './module-state';
@@ -25,7 +26,6 @@ import {
 type Unsubscribe = () => void;
 
 export type ModuleEngineDeps = {
-  load: () => Promise<IServiceResponse<ModuleRecord[]>>;
   act: (id: string, action: ModuleAction, body?: ModuleUninstall) => Promise<IServiceResponse<ModuleRecord | ModuleJob>>;
   purges: {
     read: (session: string) => Record<string, number>;
@@ -38,16 +38,10 @@ export type ModuleEngineDeps = {
   };
   socket: {
     onFrame: (listener: (info: unknown) => void) => Unsubscribe;
-    onConnect: (listener: () => void) => Unsubscribe;
-    onDisconnect: (listener: () => void) => Unsubscribe;
-    isConnected: () => boolean;
   };
-  onForeground: (listener: () => void) => Unsubscribe;
   onRefusal: (listener: (path: string) => void) => Unsubscribe;
-  setTimer: (run: () => void, ms: number) => unknown;
-  clearTimer: (handle: unknown) => void;
   now: () => number;
-  pollMs: number;
+  language: () => LanguageCode;
 };
 
 const isRecord = (value: ModuleRecord | ModuleJob): value is ModuleRecord => 'lifecycle' in value;
@@ -55,8 +49,6 @@ const isRecord = (value: ModuleRecord | ModuleJob): value is ModuleRecord => 'li
 export class ModuleEngine {
   private session: string | null = null;
   private offs: Unsubscribe[] = [];
-  private timer: unknown = null;
-  private inFlight: Promise<boolean> | null = null;
   private enabledVersion = -1;
   private purging: Promise<void> | null = null;
   private readonly transitionListeners = new Set<(transition: ModuleTransition) => void>();
@@ -72,22 +64,13 @@ export class ModuleEngine {
     this.stop();
     this.session = session;
     this.enabledVersion = -1;
-    this.offs = [
-      this.deps.socket.onFrame((info) => this.receive(info)),
-      this.deps.socket.onConnect(() => void this.refresh()),
-      this.deps.socket.onDisconnect(() => this.schedulePoll()),
-      this.deps.onForeground(() => void this.refresh()),
-      this.deps.onRefusal((path) => this.refused(path)),
-    ];
-    void this.refresh();
+    this.offs = [this.deps.socket.onFrame((info) => this.receive(info)), this.deps.onRefusal((path) => this.refused(path))];
   }
 
   stop(): void {
     this.offs.forEach((off) => off());
     this.offs = [];
     this.session = null;
-    this.inFlight = null;
-    this.cancelPoll();
   }
 
   current(): ModuleCatalog | null {
@@ -99,30 +82,10 @@ export class ModuleEngine {
     return () => this.transitionListeners.delete(listener);
   }
 
-  refresh(): Promise<boolean> {
-    if (!this.session) return Promise.resolve(false);
-    if (this.inFlight) return this.inFlight;
-    const session = this.session;
-    const run = this.deps
-      .load()
-      .then((result) => {
-        if (this.session !== session) return false;
-        if (result.ok && result.info) {
-          this.write(replaceCatalog(this.current(), result.info, this.deps.now()));
-          return true;
-        }
-        if (result.status === 404 && !result.errors?.code.startsWith('MODULE_')) {
-          this.write(unsupportedCatalog(this.deps.now()));
-          return true;
-        }
-        return false;
-      })
-      .finally(() => {
-        if (this.inFlight === run) this.inFlight = null;
-        if (this.session === session) this.schedulePoll();
-      });
-    this.inFlight = run;
-    return run;
+  applyContext(context: AppContext): void {
+    if (!this.session) return;
+    const previous = context.role === 'owner' ? this.current() : null;
+    this.write(replaceCatalog(previous, catalogOfContext(context), this.deps.now()));
   }
 
   receive(info: unknown): void {
@@ -134,7 +97,6 @@ export class ModuleEngine {
       this.enabledVersion = frame.version;
     }
     this.write(applyFrame(this.current(), frame, this.deps.now()));
-    this.schedulePoll();
   }
 
   async act(
@@ -158,20 +120,18 @@ export class ModuleEngine {
           : withJob(this.current(), id, result.info)
       );
     }
-    void this.refresh();
     return result;
   }
 
   private refused(path: string): void {
     const moduleId = moduleOfApiPath(path);
     if (moduleId) this.write(patchModule(this.current(), moduleId, { enabled: false }));
-    void this.refresh();
   }
 
   private write(next: ModuleCatalog | null): void {
     const previous = this.current();
     this.deps.cache.write(next);
-    jobTransitions(previous, next).forEach((transition) =>
+    jobTransitions(previous, next, this.deps.language()).forEach((transition) =>
       this.transitionListeners.forEach((listener) => listener(transition))
     );
     void this.reconcilePurges();
@@ -194,19 +154,5 @@ export class ModuleEngine {
       });
     this.purging = run;
     return run;
-  }
-
-  private schedulePoll(): void {
-    this.cancelPoll();
-    if (!this.session || !needsPolling(this.current(), this.deps.socket.isConnected())) return;
-    this.timer = this.deps.setTimer(() => {
-      this.timer = null;
-      void this.refresh();
-    }, this.deps.pollMs);
-  }
-
-  private cancelPoll(): void {
-    if (this.timer !== null) this.deps.clearTimer(this.timer);
-    this.timer = null;
   }
 }

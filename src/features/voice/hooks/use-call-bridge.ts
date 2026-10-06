@@ -6,8 +6,7 @@ import { viewCacheService } from '@/core/services/view-cache.service';
 import { voiceService } from '@/features/voice/services/voice';
 import { useAuthStore } from '@/core/stores';
 import type { CalendarEntry, GuardEnvironment, GuardMode, VoiceAction, VoiceActionOutcome } from '@/core/types';
-import { GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
-import { guardAccessForRole } from '@/shared/libs/role-access';
+import { CAPABILITY, GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { serviceErrorKey } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
 import {
@@ -17,6 +16,7 @@ import {
 } from '@/features/voice/constants/voice';
 import { buildCallSituation, spokenDetail, type CallSituationEvent } from '@/features/voice/model/call-situation';
 import { callCameraEvent, detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
+import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 import { matchEnvironment } from '@/features/security';
@@ -32,6 +32,13 @@ export function useCallBridge(): void {
   const pathname = usePathname();
   const { t, tk } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const view = useAccessView();
+  const { cameraActions, guard: guardAccess, has } = useCapabilities();
+  const watchesCameras = cameraActions.watch;
+  const readsGuard = guardAccess.view;
+  const setsGuardMode = guardAccess.setMode;
+  const readsAgenda = has(CAPABILITY.agendaRead);
+  const accessRef = useRef(view);
   const { isActive } = useVoiceSession();
   const lastEventCamera = useRef<string | null>(null);
   const onCallScreen = useRef(pathname === CALL_ROUTE);
@@ -41,9 +48,15 @@ export function useCallBridge(): void {
   }, [pathname]);
 
   useEffect(() => {
+    accessRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
     if (!isActive || !user) return;
-    const cameras = () => viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
+    const cameras = () =>
+      watchesCameras ? viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList) : [];
     const sendCameras = () => {
+      if (!watchesCameras) return;
       const names = cameras().map((camera) => camera.name);
       voiceService.sendContext({
         kind: 'note',
@@ -55,7 +68,6 @@ export function useCallBridge(): void {
     };
     sendCameras();
 
-    const guardView = guardAccessForRole(user.role).view;
     const events: CallSituationEvent[] = [];
     const seen = new Set<string>();
     let fetchedGuard: readonly GuardEnvironment[] = [];
@@ -65,7 +77,7 @@ export function useCallBridge(): void {
     let live = true;
 
     const guard = (): readonly GuardEnvironment[] => {
-      if (!guardView) return [];
+      if (!readsGuard) return [];
       return viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments) ?? fetchedGuard;
     };
 
@@ -75,7 +87,7 @@ export function useCallBridge(): void {
       const text = buildCallSituation({
         t,
         guard: guard(),
-        agenda: viewCacheService.read<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today'),
+        agenda: readsAgenda ? viewCacheService.read<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today') : [],
         agendaItems: CALL_SITUATION_AGENDA_ITEMS,
         events,
         offlineCameras: cameras()
@@ -121,7 +133,7 @@ export function useCallBridge(): void {
 
     announce();
     pushSituation();
-    if (guardView && !viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments)) {
+    if (readsGuard && !viewCacheService.readValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments)) {
       void guardService.environments().then((result) => {
         if (!live || !result.ok || !result.info) return;
         fetchedGuard = result.info;
@@ -145,7 +157,7 @@ export function useCallBridge(): void {
       if (timer !== null) clearTimeout(timer);
       for (const unsubscribe of unsubscribers) unsubscribe();
     };
-  }, [isActive, user, t, tk]);
+  }, [isActive, user, t, tk, watchesCameras, readsGuard, readsAgenda]);
 
   useEffect(() => {
     if (!user) return;
@@ -159,6 +171,7 @@ export function useCallBridge(): void {
     const failed = (detail: string): VoiceActionOutcome => ({ ok: false, detail: spokenDetail(detail) });
     const run = async (action: VoiceAction): Promise<VoiceActionOutcome> => {
       if (action.name === 'app.show_camera') {
+        if (!watchesCameras) return failed(t('screens.voice.actions.detail.no-access'));
         const id = resolveCameraId({
           requested: typeof action.arguments.camera === 'string' ? action.arguments.camera : '',
           cameras: viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList),
@@ -173,11 +186,12 @@ export function useCallBridge(): void {
         return { ok: true, detail: null };
       }
       if (action.name === 'app.open') {
-        const route = routeForScreen(String(action.arguments.screen ?? ''), user.role);
+        const route = routeForScreen(String(action.arguments.screen ?? ''), accessRef.current);
         if (!route) return failed(t('screens.voice.actions.detail.no-access'));
         router.push(route as never);
         return { ok: true, detail: null };
       }
+      if (!setsGuardMode) return failed(t('screens.voice.actions.detail.no-access'));
       const mode = action.arguments.mode;
       if (!isGuardMode(mode)) return failed(t('screens.voice.actions.detail.bad-mode'));
       const hint = typeof action.arguments.environment === 'string' ? action.arguments.environment : '';
@@ -214,5 +228,5 @@ export function useCallBridge(): void {
         voiceService.completeAction(action.id, outcome);
       });
     });
-  }, [router, t, user]);
+  }, [router, setsGuardMode, t, user, watchesCameras]);
 }

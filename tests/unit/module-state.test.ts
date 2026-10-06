@@ -2,14 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   applyFrame,
   bytesToFetch,
-  enabledModuleIds,
   installPlan,
-  isModuleEnabled,
   jobTransitions,
   mergeJob,
   moduleOfApiPath,
   moduleOfAppRoute,
-  needsPolling,
   optimisticPatch,
   purgeDecision,
   syncTablesOf,
@@ -36,6 +33,9 @@ const module = (patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
   id: 'surveillance',
   name: 'Vigilancia',
   summary: 'Cámaras',
+  texts: null,
+  intro: null,
+  roles: [],
   kind: 'available',
   lifecycle: 'not_installed',
   enabled: false,
@@ -54,7 +54,7 @@ const module = (patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
 
 const core = module({ id: 'core', name: 'Núcleo', kind: 'core', enabled: true, requires: [], sizeBytes: 0 });
 
-const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ supported: true, fetchedAt: 1, modules });
+const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ fetchedAt: 1, modules });
 
 describe('job progress never goes backwards', () => {
   test('an older answer for the same job keeps the larger progress', () => {
@@ -112,19 +112,7 @@ describe('live frames', () => {
   });
 });
 
-describe('the enabled set', () => {
-  test('is unknown until the server answered, so nothing is hidden', () => {
-    expect(enabledModuleIds(null)).toBeNull();
-    expect(enabledModuleIds({ supported: false, fetchedAt: 0, modules: [] })).toBeNull();
-    expect(isModuleEnabled(null, 'surveillance')).toBe(true);
-  });
-
-  test('holds the core and the enabled modules', () => {
-    const enabled = enabledModuleIds(catalog([core, module(), module({ id: 'productivity', enabled: true })]));
-    expect([...(enabled ?? [])].sort()).toEqual(['core', 'productivity']);
-    expect(isModuleEnabled(enabled, 'surveillance')).toBe(false);
-  });
-
+describe('the module maps', () => {
   test('maps API paths and app routes to their module', () => {
     expect(moduleOfApiPath('/camera/3/snapshot')).toBe('surveillance');
     expect(moduleOfApiPath('/visitor-crop/x/content')).toBe('surveillance');
@@ -137,31 +125,21 @@ describe('the enabled set', () => {
   });
 });
 
-describe('polling', () => {
-  test('only while a job runs and the socket is down', () => {
-    const running = catalog([module({ job: job() })]);
-    expect(needsPolling(running, false)).toBe(true);
-    expect(needsPolling(running, true)).toBe(false);
-    expect(needsPolling(catalog([module({ job: job({ state: 'paused' }) })]), false)).toBe(false);
-    expect(needsPolling(catalog([module({ job: job({ state: 'done' }) })]), false)).toBe(false);
-  });
-});
-
 describe('transitions', () => {
   test('report a job that finished or failed while it was followed', () => {
     const before = catalog([module({ job: job() })]);
-    expect(jobTransitions(before, catalog([module({ job: job({ state: 'done' }) })]))).toEqual([
+    expect(jobTransitions(before, catalog([module({ job: job({ state: 'done' }) })]), 'es')).toEqual([
       { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'done', reason: null, owner: null },
     ]);
-    expect(jobTransitions(before, catalog([module({ job: job({ state: 'failed', reason: 'disk_full' }) })]))).toEqual([
+    expect(jobTransitions(before, catalog([module({ job: job({ state: 'failed', reason: 'disk_full' }) })]), 'es')).toEqual([
       { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'failed', reason: 'disk_full', owner: null },
     ]);
   });
 
   test('stay quiet on the first answer and on a job already finished', () => {
-    expect(jobTransitions(null, catalog([module({ job: job({ state: 'done' }) })]))).toEqual([]);
+    expect(jobTransitions(null, catalog([module({ job: job({ state: 'done' }) })]), 'es')).toEqual([]);
     const done = catalog([module({ job: job({ state: 'done' }) })]);
-    expect(jobTransitions(done, done)).toEqual([]);
+    expect(jobTransitions(done, done, 'es')).toEqual([]);
   });
 });
 

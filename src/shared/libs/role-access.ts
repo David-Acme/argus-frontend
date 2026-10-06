@@ -25,6 +25,8 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     notification: READ_UPDATE,
   },
   guard: {
+    reminder: FULL,
+    reminder_detail: FULL,
     camera: READ,
     camera_stream: READ,
     zone: READ,
@@ -34,6 +36,8 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     notification: READ_UPDATE,
   },
   guest: {
+    reminder: FULL,
+    reminder_detail: FULL,
     camera: READ,
     user: READ,
     notification: READ_UPDATE,
@@ -43,38 +47,6 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
 export function hasAccess(role: UserRole, table: TableName, permission: Permission): boolean {
   if (role === 'owner') return true;
   return TABLE_ACCESS[role][table]?.includes(permission) ?? false;
-}
-
-export type GuardAccess = {
-  view: boolean;
-  setMode: boolean;
-  manageGuests: boolean;
-  review: boolean;
-};
-
-export function guardAccessForRole(role: UserRole): GuardAccess {
-  return {
-    view: role === 'owner' || role === 'resident' || role === 'guard',
-    setMode: role === 'owner' || role === 'resident',
-    manageGuests: role === 'owner' || role === 'resident',
-    review: role === 'owner',
-  };
-}
-
-export type CameraActionAccess = {
-  talk: boolean;
-  watch: boolean;
-};
-
-const CAMERA_ACTION_ACCESS: Record<UserRole, CameraActionAccess> = {
-  owner: { talk: true, watch: true },
-  resident: { talk: true, watch: true },
-  guard: { talk: true, watch: true },
-  guest: { talk: false, watch: true },
-};
-
-export function cameraActionAccessForRole(role: UserRole): CameraActionAccess {
-  return CAMERA_ACTION_ACCESS[role];
 }
 
 export type SessionAccess = {

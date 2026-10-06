@@ -1,5 +1,3 @@
-
-
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { InviteRole, MenuOption, TranslateFn, UserRole } from '@/core/types';
 
@@ -24,15 +22,29 @@ export type InvitationPreview = {
   value: string;
 };
 
-export const roleOptions = (t: TranslateFn): MenuOption<UserRole>[] => [
-  { value: 'owner', label: t('screens.users.role-owner') },
-  { value: 'resident', label: t('screens.users.role-resident') },
-  { value: 'guard', label: t('screens.users.role-guard') },
-  { value: 'guest', label: t('screens.users.role-guest') },
-];
+export type RoleOffer = (role: string) => boolean;
 
-export const inviteRoleOptions = (t: TranslateFn): MenuOption<InviteRole>[] => [
-  { value: 'resident', label: t('screens.users.role-resident') },
-  { value: 'guard', label: t('screens.users.role-guard') },
-  { value: 'guest', label: t('screens.users.role-guest') },
-];
+const everyRole: RoleOffer = () => true;
+
+export const roleOptions = (
+  t: TranslateFn,
+  offered: RoleOffer = everyRole,
+  keep?: UserRole
+): MenuOption<UserRole>[] =>
+  (
+    [
+      { value: 'owner', label: t('screens.users.role-owner') },
+      { value: 'resident', label: t('screens.users.role-resident') },
+      { value: 'guard', label: t('screens.users.role-guard') },
+      { value: 'guest', label: t('screens.users.role-guest') },
+    ] satisfies MenuOption<UserRole>[]
+  ).filter((option) => option.value === keep || offered(option.value));
+
+export const inviteRoleOptions = (t: TranslateFn, offered: RoleOffer = everyRole): MenuOption<InviteRole>[] =>
+  (
+    [
+      { value: 'resident', label: t('screens.users.role-resident') },
+      { value: 'guard', label: t('screens.users.role-guard') },
+      { value: 'guest', label: t('screens.users.role-guest') },
+    ] satisfies MenuOption<InviteRole>[]
+  ).filter((option) => offered(option.value));

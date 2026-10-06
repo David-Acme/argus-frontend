@@ -118,7 +118,7 @@ function ServerFacts({ modules }: ServerFactsProps) {
 export default function ModulesScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { catalog, modules, status, pending, reload, run } = useModules();
+  const { catalog, modules, status, pending, run } = useModules();
   const uninstall = useModuleUninstall(catalog);
   const sorted = sortModules(modules);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/settings'));
@@ -164,16 +164,9 @@ export default function ModulesScreen() {
         <View className="bg-card rounded-3xl py-6">
           <EmptyState
             variant="panel"
-            icon={status === 'failed' ? 'wifi-off' : 'blocks'}
-            title={status === 'failed' ? t('screens.modules.load-failed') : t('screens.modules.unsupported-title')}
-            hint={status === 'failed' ? undefined : t('screens.modules.unsupported-hint')}
-            action={
-              status === 'failed' ? (
-                <Button size="sm" variant="outline" onPress={() => void reload()}>
-                  <Text>{t('common.retry')}</Text>
-                </Button>
-              ) : undefined
-            }
+            icon="wifi-off"
+            title={t('screens.modules.waiting-title')}
+            hint={t('screens.modules.waiting-hint')}
           />
         </View>
       )}

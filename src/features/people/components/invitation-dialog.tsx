@@ -7,7 +7,9 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { isRoleOffered } from '@/shared/libs/capabilities';
 import { buildInvitationQr } from '@/shared/libs/invitation-qr';
 import { toast } from '@/shared/libs/toast';
 import { useCallback, useMemo, useState } from 'react';
@@ -19,7 +21,8 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
   const { t } = useTranslation();
   const [role, setRole] = useState<InviteRole>('resident');
   const { run, pending: saving } = useServiceAction();
-  const roles = useMemo(() => inviteRoleOptions(t), [t]);
+  const view = useAccessView();
+  const roles = useMemo(() => inviteRoleOptions(t, (candidate) => isRoleOffered(view, candidate)), [t, view]);
 
   const create = useCallback(async () => {
     const response = await run({ call: () => inviteService.create({ role }) });

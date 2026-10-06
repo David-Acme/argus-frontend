@@ -30,14 +30,13 @@ import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ResponseStrip } from '@/features/response';
 import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
-import { useModuleEnabled } from '@/shared/hooks/use-modules';
-import { MODULE_IDS } from '@/shared/constants';
+import { CAPABILITY } from '@/shared/constants';
 import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useRouter } from 'expo-router';
@@ -54,7 +53,7 @@ export default function HomeScreen() {
   const { t, language } = useTranslation();
   const date = useDateFormatter();
   const { isShort } = useWindowClass();
-  const { can } = usePermissions();
+  const { can, has, guard } = useCapabilities();
   const {
     cameraTiles,
     projects,
@@ -63,8 +62,9 @@ export default function HomeScreen() {
     summary,
     activityLevels,
   } = useDashboardData();
-  const surveillance = useModuleEnabled(MODULE_IDS.surveillance);
-  const productivity = useModuleEnabled(MODULE_IDS.productivity);
+  const watchesCameras = has(CAPABILITY.cameraView);
+  const readsAgenda = has(CAPABILITY.agendaRead);
+  const readsProjects = can('project', 'read');
   const [query, setQuery] = useState('');
   const now = useNow(60000);
   const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
@@ -163,7 +163,7 @@ export default function HomeScreen() {
               now={now}
               onOpen={() => void readAll()}
             />
-            {productivity ? (
+            {readsAgenda ? (
               <IconButton
                 icon="calendar"
                 label={t('screens.home.calendar')}
@@ -173,7 +173,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {surveillance ? <ResponseStrip /> : null}
+        {guard.view ? <ResponseStrip /> : null}
 
         <ModulesProgressChip />
 
@@ -186,7 +186,7 @@ export default function HomeScreen() {
           onChangeText={setQuery}
         />
 
-        {surveillance ? (
+        {watchesCameras ? (
         <ActivityCard
           title={
             noCameras
@@ -201,9 +201,7 @@ export default function HomeScreen() {
         />
         ) : null}
 
-        {productivity ? (
-        <>
-
+        {readsAgenda ? (
         <View className="gap-3">
           <SectionHeader
             title={t('screens.home.today')}
@@ -226,7 +224,9 @@ export default function HomeScreen() {
             }
           />
         </View>
+        ) : null}
 
+        {readsProjects ? (
         <View className="gap-3">
           <SectionHeader
             title={t('screens.home.projects')}
@@ -257,7 +257,6 @@ export default function HomeScreen() {
             />
           )}
         </View>
-        </>
         ) : null}
       </View>
     </AppScreen>

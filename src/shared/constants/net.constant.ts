@@ -21,6 +21,7 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   'project-member': 7027,
   'calendar-event': 7027,
   'calendar-event-share': 7027,
+  reminder: 7027,
   notification: 7028,
   'notification-token': 7028,
   guard: 7039,

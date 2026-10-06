@@ -2,15 +2,14 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { useAuthStore } from '@/core/stores';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { guardAccessForRole } from '@/shared/libs/role-access';
 import { cn } from '@/shared/libs/utils';
 import { CameraContextEditor } from '@/features/security/components/camera-context-editor';
 import {
@@ -30,8 +29,7 @@ type CameraEnvironmentPanelProps = {
 export function CameraEnvironmentPanel({ cameraId, className }: CameraEnvironmentPanelProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const role = useAuthStore((state) => state.user?.role) ?? 'guest';
-  const access = guardAccessForRole(role);
+  const { guard: access } = useCapabilities();
   const owner = access.review;
   const placement = useCameraPlacement(owner, access.view);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);

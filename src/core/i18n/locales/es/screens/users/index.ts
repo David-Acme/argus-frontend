@@ -49,6 +49,7 @@ export const users = {
   'role-access-title': 'Qué puede hacer cada rol',
   'role-manages': 'Gestiona',
   'role-views': 'Ve',
+  'role-paused': 'En pausa: vuelve cuando {module} esté activo',
   'role-only-own': 'Solo su perfil y sus avisos',
   'role-members': '{count} con este rol',
   'area-cameras': 'Cámaras',

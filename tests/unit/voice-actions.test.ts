@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { parseVoiceAction } from '@/features/voice/services/voice/voice-frames';
 import { callCameraEvent, detectedClasses, resolveCameraId, routeForScreen } from '@/features/voice/model/voice-actions';
+import { viewFor } from './support/access-fixtures';
 
 const cameras = [
   { id: '1', name: 'Entrada principal' },
@@ -25,12 +26,20 @@ describe('resolveCameraId', () => {
 
 describe('routeForScreen', () => {
   test('people follows the directory right and settings stays with the owner', () => {
-    expect(routeForScreen('people', 'owner')).toBe('/users');
-    expect(routeForScreen('people', 'guard')).toBe('/people');
-    expect(routeForScreen('people', 'resident')).toBeNull();
-    expect(routeForScreen('settings', 'resident')).toBeNull();
-    expect(routeForScreen('agenda', 'guest')).toBe('/agenda');
-    expect(routeForScreen('nowhere', 'owner')).toBeNull();
+    expect(routeForScreen('people', viewFor('owner'))).toBe('/users');
+    expect(routeForScreen('people', viewFor('guard'))).toBe('/people');
+    expect(routeForScreen('people', viewFor('resident'))).toBeNull();
+    expect(routeForScreen('settings', viewFor('resident'))).toBeNull();
+    expect(routeForScreen('settings', viewFor('owner'))).toBe('/settings');
+    expect(routeForScreen('agenda', viewFor('resident'))).toBe('/agenda');
+    expect(routeForScreen('nowhere', viewFor('owner'))).toBeNull();
+  });
+
+  test('a screen of a module that is off or that the role cannot read is not opened', () => {
+    expect(routeForScreen('agenda', viewFor('guest'))).toBeNull();
+    expect(routeForScreen('cameras', viewFor('owner', { modules: ['productivity'] }))).toBeNull();
+    expect(routeForScreen('security', viewFor('guard', { modules: [] }))).toBeNull();
+    expect(routeForScreen('home', viewFor('guard', { modules: [] }))).toBe('/');
   });
 });
 

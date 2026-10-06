@@ -3,12 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import type { UserRole } from '@/core/types';
-import {
-  cameraActionAccessForRole,
-  hasAccess,
-  sessionAccessForRole,
-  type Permission,
-} from '@/shared/libs/role-access';
+import { hasAccess, sessionAccessForRole, type Permission } from '@/shared/libs/role-access';
 
 const backend = join(import.meta.dir, '../../../backend/packages');
 const roleAccess = readFileSync(join(backend, 'lib/auth/src/auth/role-access.hxx'), 'utf8');
@@ -75,17 +70,23 @@ describe('role access mirrors the backend kTableAccess', () => {
 });
 
 function roleMasks(): Map<string, Set<UserRole>> {
-  const masks = roleAccess.matchAll(/inline constexpr std::uint8_t (\w+)\s*=\s*([^;]+);/g);
-  return new Map(
-    [...masks].map(([, name = '', body = '']) => [
-      name,
-      new Set(
-        [...body.matchAll(/UserRole::(\w+)/g)].map(
-          ([, role = '']) => role.toLowerCase() as UserRole
-        )
-      ),
-    ])
+  const bodies = new Map(
+    [...roleAccess.matchAll(/inline constexpr (?:std::uint8_t|RoleMask) (\w+)\s*=\s*([^;]+);/g)].map(
+      ([, name = '', body = '']) => [name, body] as const
+    )
   );
+  const resolve = (name: string, seen: ReadonlySet<string> = new Set()): Set<UserRole> => {
+    const body = bodies.get(name);
+    if (body === undefined || seen.has(name)) return new Set();
+    const roles = new Set<UserRole>(
+      [...body.matchAll(/UserRole::(\w+)/g)].map(([, role = '']) => role.toLowerCase() as UserRole)
+    );
+    for (const [reference] of body.matchAll(/\bk\w+/g)) {
+      for (const role of resolve(reference, new Set([...seen, name]))) roles.add(role);
+    }
+    return roles;
+  };
+  return new Map([...bodies.keys()].map((name) => [name, resolve(name)]));
 }
 
 function sessionRoutes(): Map<string, Set<UserRole>> {
@@ -133,41 +134,6 @@ describe('session access mirrors the backend kSessionAccess', () => {
           allowed('Get /auth/users/{id}/sessions') &&
           allowed('Delete /auth/users/{id}/sessions') &&
           allowed('Delete /auth/users/{id}/sessions/{id}'),
-      });
-    });
-  }
-});
-
-function cameraActionRoles(): Map<string, Set<UserRole>> {
-  const masks = roleMasks();
-  const start = roleAccess.indexOf('kCameraActionAccess');
-  const block = start === -1 ? '' : roleAccess.slice(start, roleAccess.indexOf('}};', start));
-  const rows = block.matchAll(
-    /\{\.action = CameraAction::(\w+), \.segment = "[^"]+", \.method = drogon::\w+, \.roles = ([^}]+)\}/g
-  );
-  return new Map(
-    [...rows].map(([, action = '', roles = '']) => {
-      const named = masks.get(roles.trim());
-      const inline = [...roles.matchAll(/roleBit\(UserRole::(\w+)\)/g)].map(
-        ([, role = '']) => role.toLowerCase() as UserRole
-      );
-      return [action.toLowerCase(), new Set(named ?? inline)];
-    })
-  );
-}
-
-describe('camera actions mirror the backend kCameraActionAccess', () => {
-  const actions = cameraActionRoles();
-
-  test('the parser sees the talk and watch actions', () => {
-    expect([...actions.keys()]).toEqual(['talk', 'watch']);
-  });
-
-  for (const role of ROLES) {
-    test(`${role} talks through and watches a camera exactly as the backend allows`, () => {
-      expect(cameraActionAccessForRole(role)).toEqual({
-        talk: role === 'owner' || (actions.get('talk')?.has(role) ?? false),
-        watch: role === 'owner' || (actions.get('watch')?.has(role) ?? false),
       });
     });
   }

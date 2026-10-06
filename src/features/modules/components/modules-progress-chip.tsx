@@ -6,7 +6,7 @@ import type { ModuleRecord } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { MODULE_SETTINGS_PATH } from '@/shared/constants';
-import { useModuleCatalog } from '@/shared/hooks/use-modules';
+import { useModuleCatalog } from '@/features/modules/hooks/use-module-catalog';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { ModuleProgress } from '@/features/modules/components/module-progress';

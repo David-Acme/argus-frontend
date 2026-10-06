@@ -49,6 +49,7 @@ export const users = {
   'role-access-title': 'What each role can do',
   'role-manages': 'Manages',
   'role-views': 'Views',
+  'role-paused': 'Paused: returns when {module} is on',
   'role-only-own': 'Only their profile and notices',
   'role-members': '{count} with this role',
   'area-cameras': 'Cameras',

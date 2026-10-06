@@ -19,7 +19,6 @@ import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
 import { CameraEnvironmentPanel } from '@/features/security';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
-import { cameraActionAccessForRole } from '@/shared/libs/role-access';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
 import { CameraLiveFullscreen, CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
@@ -32,8 +31,8 @@ import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { IconButton } from '@/shared/components/ui/icon-button';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -48,7 +47,7 @@ export default function CameraDetailScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { id, talk } = useLocalSearchParams<{ id: string; talk?: string }>();
-  const { can, role } = usePermissions();
+  const { can, has } = useCapabilities();
   const { isExpanded, isMedium, isWide } = useWindowClass();
   const [editOpen, setEditOpen] = useState(false);
   const [zoneOpen, setZoneOpen] = useState(false);
@@ -105,7 +104,7 @@ export default function CameraDetailScreen() {
   const canDelete = can('camera', 'delete');
   const streamOnly = features?.streamOnly === true;
   const controllable = canUpdate && hasDeviceControls(features);
-  const mayTalk = cameraActionAccessForRole(role).talk;
+  const mayTalk = has(CAPABILITY.cameraTalk);
   const canTalk = mayTalk && features?.talk === true;
   const talkHint =
     mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true

@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { t } from '@/core/i18n';
 import type { ICameraCacheRow, IServiceResponse } from '@/core/interfaces';
 import { guardEpisodeFeed, guardService } from '@/core/services/guard.service';
-import { useAuthStore } from '@/core/stores';
 import type {
   CameraEnvironmentBadge,
   GuardCameraContext,
@@ -18,9 +17,9 @@ import type {
 } from '@/core/types';
 import { GUARD_EPISODES_ALL_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
-import { guardAccessForRole } from '@/shared/libs/role-access';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
 import { cameraEnvironmentIndex, withCameraIn, withMode } from '@/features/security/model/environments';
@@ -80,8 +79,8 @@ export function useGuardEnvironments(enabled: boolean) {
 }
 
 export function useCameraEnvironmentIndex(): ReadonlyMap<string, CameraEnvironmentBadge> {
-  const role = useAuthStore((state) => state.user?.role);
-  const environments = useGuardEnvironments(guardAccessForRole(role ?? 'guest').view).data;
+  const { guard } = useCapabilities();
+  const environments = useGuardEnvironments(guard.view).data;
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   return useMemo(
     () =>

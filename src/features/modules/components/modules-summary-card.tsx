@@ -4,7 +4,7 @@ import { isJobOpen } from '@/core/services/modules';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { MODULE_SETTINGS_PATH } from '@/shared/constants';
-import { useModuleCatalog } from '@/shared/hooks/use-modules';
+import { useModuleCatalog } from '@/features/modules/hooks/use-module-catalog';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ModuleProgress } from '@/features/modules/components/module-progress';
 import { moduleIcon } from '@/features/modules/model/module-text';
@@ -13,7 +13,6 @@ export function ModulesSummaryCard() {
   const router = useRouter();
   const { t } = useTranslation();
   const catalog = useModuleCatalog();
-  if (catalog && !catalog.supported) return null;
   const modules = catalog?.modules ?? [];
   const active = modules.filter((module) => module.enabled || module.kind === 'core');
   const installing = modules.find((module) => isJobOpen(module.job));

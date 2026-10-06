@@ -20,3 +20,4 @@ export * from './voice.constant';
 export * from './optimistic.constant';
 export * from './watchdog.constant';
 export * from './module.constant';
+export * from './capability.constant';

@@ -31,10 +31,10 @@ import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { CAPABILITY } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { cameraActionAccessForRole, hasAccess } from '@/shared/libs/role-access';
 
 const RAIL_WIDTH = 320;
 const CLOCK_TICK_MS = 30000;
@@ -51,7 +51,7 @@ export default function CamerasScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isCompact, isExpanded } = useWindowClass();
-  const { can, role } = usePermissions();
+  const { can, has } = useCapabilities();
   const { new: newParam } = useLocalSearchParams<{ new?: string }>();
   const [formOpen, setFormOpen] = useState(newParam === 'camera');
   const [query, setQuery] = useState('');
@@ -66,8 +66,8 @@ export default function CamerasScreen() {
   const thumbnails = useCameraThumbnails(cameras);
   const environments = useCameraEnvironmentIndex();
   const canCreate = can('camera', 'create');
-  const canTalk = cameraActionAccessForRole(role).talk;
-  const readsEvents = hasAccess(role, 'event', 'read');
+  const canTalk = has(CAPABILITY.cameraTalk);
+  const readsEvents = can('event', 'read');
 
   const views = useMemo(() => cameraViews(cameras, overview), [cameras, overview]);
   const counts = useMemo(() => countViews(views), [views]);

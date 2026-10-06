@@ -32,6 +32,9 @@ const module = (patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
   id: 'surveillance',
   name: 'Vigilancia',
   summary: '',
+  texts: null,
+  intro: null,
+  roles: [],
   kind: 'available',
   lifecycle: 'not_installed',
   enabled: false,
@@ -65,7 +68,7 @@ const core = module({ id: 'core', kind: 'core', enabled: true, requires: [], siz
 const productivity = module({ id: 'productivity', name: 'Agenda', sizeBytes: 0, hardware: hardware('slow') });
 const reports = module({ id: 'reports', name: 'Informes', requires: ['surveillance'], sizeBytes: 1024 ** 3 });
 const agronomy = module({ id: 'agronomy', kind: 'coming_soon', sizeBytes: 0, hardware: null });
-const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ supported: true, fetchedAt: 0, modules });
+const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ fetchedAt: 0, modules });
 const all = catalog([agronomy, reports, productivity, module(), core]);
 
 describe('choosing modules', () => {
@@ -136,7 +139,7 @@ describe('getting started', () => {
     expect(checklistItems(fresh, EMPTY_CHECKLIST, options)[0]?.id).toBe(CHOOSE_MODULES_ID);
     expect(checklistItems(fresh, EMPTY_CHECKLIST, { ...options, owner: false })).toEqual([]);
     expect(needsModuleChoice(catalog([core, module({ job: running })]))).toBe(false);
-    expect(needsModuleChoice({ supported: false, fetchedAt: 0, modules: [] })).toBe(false);
+    expect(needsModuleChoice(null)).toBe(false);
   });
 
   test('done steps stay ticked and a dismissed list returns only with new steps', () => {

@@ -25,6 +25,9 @@ const module = (patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
   id: 'surveillance',
   name: 'Vigilancia',
   summary: '',
+  texts: null,
+  intro: null,
+  roles: [],
   kind: 'available',
   lifecycle: 'active',
   enabled: true,
@@ -54,7 +57,7 @@ const job = (state: ModuleJob['state']): ModuleJob => ({
   owner: null,
 });
 
-const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ supported: true, fetchedAt: 0, modules });
+const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ fetchedAt: 0, modules });
 const choices = (record: ModuleRecord) => lifecycleButtons(record).map((button) => `${button.choice}:${button.action}`);
 
 describe('lifecycle wording', () => {

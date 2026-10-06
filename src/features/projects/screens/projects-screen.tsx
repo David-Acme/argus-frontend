@@ -11,7 +11,7 @@ import { EmptyState } from '@/shared/components/ui/empty-state';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { screenIn } from '@/shared/libs/animations';
@@ -53,7 +53,7 @@ export default function ProjectsScreen() {
   const [newTaskStatus, setNewTaskStatus] = useState<ProjectTaskStatus>('todo');
   const [pendingTaskId, setPendingTaskId] = useState(taskParam ?? '');
   const { isExpanded } = useWindowClass();
-  const { can } = usePermissions();
+  const { can } = useCapabilities();
   const labels = useTaskLabels();
   const { projects, tasks, activeId, activePending, progress, isPendingTask } =
     useProjectsData(selectedId);

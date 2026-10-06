@@ -1,12 +1,10 @@
 import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { useAuthStore } from '@/core/stores';
 import type { DashboardTab } from '@/core/types';
 import { DASHBOARD_TABS, DASHBOARD_TAB_ROUTE } from '@/shared/constants';
-import { peopleAccessForRole } from '@/shared/libs/people-access';
+import { peopleAccessOf, tableAllowed } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
-import { useEnabledModules } from '@/shared/hooks/use-modules';
-import { usePermissions } from '@/shared/hooks/use-permissions';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 type DashboardNavigation = {
@@ -19,10 +17,8 @@ export function useDashboardNavigation(): DashboardNavigation {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { canRead } = usePermissions();
-  const role = useAuthStore((state) => state.user?.role) ?? 'guest';
-  const peopleAction = peopleAccessForRole(role).profileAction;
-  const enabledModules = useEnabledModules();
+  const view = useAccessView();
+  const peopleAction = peopleAccessOf(view).profileAction;
 
   const routeOf = useCallback(
     (tab: DashboardTab) => (tab === 'people' && peopleAction === 'manage' ? '/users' : DASHBOARD_TAB_ROUTE[tab]),
@@ -33,9 +29,9 @@ export function useDashboardNavigation(): DashboardNavigation {
     () =>
       DASHBOARD_TABS.filter(
         (item) =>
-          (!item.table || canRead(item.table)) && routeFallback(routeOf(item.tab), role, enabledModules) === null
+          (!item.table || tableAllowed(view, item.table, 'read')) && routeFallback(routeOf(item.tab), view) === null
       ),
-    [canRead, enabledModules, role, routeOf]
+    [routeOf, view]
   );
 
   const labels = useMemo(

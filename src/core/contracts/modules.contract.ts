@@ -7,8 +7,12 @@ import type {
   ModuleFrame,
   ModuleGettingStartedStep,
   ModuleHardware,
+  LocalizedText,
+  ModuleIntro,
+  ModuleIntros,
   ModuleJob,
   ModuleRecord,
+  ModuleTexts,
 } from '@/core/types';
 
 const bytes = z.number().nonnegative().catch(0);
@@ -86,6 +90,60 @@ const gettingStartedSchema = z.union([
 
 const moduleId = z.string().regex(/^[a-z0-9-]+$/);
 
+const textOf = (...candidates: unknown[]): string =>
+  candidates.find((candidate): candidate is string => typeof candidate === 'string' && candidate.trim().length > 0)?.trim() ?? '';
+
+const textsOf = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim())
+    : [];
+
+const introOf = (value: unknown): ModuleIntro | null => {
+  if (typeof value === 'string') return value.trim() ? { what: value.trim(), examples: [] } : null;
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  const what = textOf(raw.what, raw.text, raw.summary, raw.description);
+  const examples = textsOf(raw.examples ?? raw.items);
+  return what || examples.length > 0 ? { what, examples } : null;
+};
+
+type TextField = { text: string; map: LocalizedText | null };
+
+const textFieldOf = (value: unknown): TextField => {
+  if (typeof value === 'string') return { text: value, map: null };
+  if (!value || typeof value !== 'object') return { text: '', map: null };
+  const raw = value as Record<string, unknown>;
+  const map: LocalizedText = {};
+  if (typeof raw.es === 'string') map.es = raw.es;
+  if (typeof raw.en === 'string') map.en = raw.en;
+  return { text: map.es ?? map.en ?? '', map: map.es !== undefined || map.en !== undefined ? map : null };
+};
+
+const textsOfFields = (name: TextField, summary: TextField): ModuleTexts | null =>
+  name.map || summary.map ? { name: name.map ?? {}, summary: summary.map ?? {} } : null;
+
+const textFieldSchema = z.unknown().optional().transform(textFieldOf);
+
+export const moduleIntroSchema = z.unknown().optional().transform((value): ModuleIntros | null => {
+  if (value && typeof value === 'object' && ('es' in value || 'en' in value)) {
+    const map = value as Record<string, unknown>;
+    const intros: ModuleIntros = {};
+    const es = introOf(map.es);
+    const en = introOf(map.en);
+    if (es) intros.es = es;
+    if (en) intros.en = en;
+    return es || en ? intros : null;
+  }
+  const intro = introOf(value);
+  return intro ? { any: intro } : null;
+});
+
+export const moduleRolesSchema = z
+  .array(z.string().min(1))
+  .nullish()
+  .transform((roles) => roles ?? [])
+  .catch([]);
+
 export const moduleComponentSchema = z.object({
   id: z.string(),
   owner: z.string().catch(''),
@@ -113,9 +171,11 @@ export const lifecycleOf = (enabled: boolean, installedBytes: number): ModuleLif
 export const moduleDetailSchema = z
   .object({
     id: moduleId,
-    name: z.string(),
-    summary: z.string().catch(''),
+    name: textFieldSchema,
+    summary: textFieldSchema,
     kind: z.enum(['core', 'available', 'coming_soon']),
+    intro: moduleIntroSchema,
+    roles: moduleRolesSchema,
     lifecycle: lifecycleSchema.optional(),
     enabled: z.boolean(),
     hasData: z.boolean().catch(false),
@@ -130,6 +190,9 @@ export const moduleDetailSchema = z
   })
   .transform((module): ModuleRecord => ({
     ...module,
+    name: module.name.text,
+    summary: module.summary.text,
+    texts: textsOfFields(module.name, module.summary),
     lifecycle: module.lifecycle ?? lifecycleOf(module.enabled, module.installedBytes),
     gettingStarted: module.gettingStarted.map((step, index) => ({
       ...step,
@@ -141,7 +204,10 @@ export const moduleDetailSchema = z
 export const moduleBriefSchema = z
   .object({
     id: moduleId,
-    name: z.string().catch(''),
+    name: textFieldSchema,
+    summary: textFieldSchema,
+    intro: moduleIntroSchema,
+    roles: moduleRolesSchema,
     enabled: z.boolean(),
     lifecycle: lifecycleSchema.optional(),
     dataPurgedAt: purgeStamp,
@@ -149,8 +215,11 @@ export const moduleBriefSchema = z
   .transform(
     (module): ModuleRecord => ({
       id: module.id,
-      name: module.name,
-      summary: '',
+      name: module.name.text,
+      summary: module.summary.text,
+      texts: textsOfFields(module.name, module.summary),
+      intro: module.intro,
+      roles: module.roles,
       kind: module.id === 'core' ? 'core' : 'available',
       lifecycle: module.lifecycle ?? (module.enabled ? 'active' : 'not_installed'),
       enabled: module.enabled,

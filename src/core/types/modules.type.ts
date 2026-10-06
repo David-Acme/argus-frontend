@@ -62,10 +62,34 @@ export type ModuleComponent = {
   reason: string | null;
 };
 
+export type ModuleIntro = {
+  what: string;
+  examples: string[];
+};
+
+export type ModuleIntros = {
+  any?: ModuleIntro;
+  es?: ModuleIntro;
+  en?: ModuleIntro;
+};
+
+export type LocalizedText = {
+  es?: string;
+  en?: string;
+};
+
+export type ModuleTexts = {
+  name: LocalizedText;
+  summary: LocalizedText;
+};
+
 export type ModuleRecord = {
   id: string;
   name: string;
   summary: string;
+  texts: ModuleTexts | null;
+  intro: ModuleIntros | null;
+  roles: string[];
   kind: ModuleKind;
   lifecycle: ModuleLifecycle;
   enabled: boolean;
@@ -92,7 +116,6 @@ export type ModuleFrame =
   | { kind: 'enabled'; modules: ModuleEnabledFlag[]; version: number | null };
 
 export type ModuleCatalog = {
-  supported: boolean;
   modules: ModuleRecord[];
   fetchedAt: number;
 };

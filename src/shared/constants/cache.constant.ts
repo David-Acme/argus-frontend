@@ -70,7 +70,10 @@ export const VIEW_CACHE_KEYS = {
   visitorDetail: 'visitor.detail',
   visitorSettings: 'visitor.settings',
   moduleCatalog: 'modules.catalog',
+  appContext: 'app.context',
 } as const;
+
+export const ACCESS_CACHE_KEYS = [VIEW_CACHE_KEYS.appContext, VIEW_CACHE_KEYS.moduleCatalog] as const;
 
 export const buildViewCacheStorageKey = (
   userId: string,
