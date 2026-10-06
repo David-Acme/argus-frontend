@@ -1,0 +1,7 @@
+export const INACTIVE_ORBIT_PERIOD_MS = 120000;
+export const INACTIVE_BREATH_MS = 6400;
+export const INACTIVE_ORBIT_CHIP = 44;
+export const INACTIVE_HERO_MAX = 260;
+export const INACTIVE_HERO_MIN = 200;
+export const INACTIVE_REVEAL_STEP_MS = 260;
+export const INACTIVE_REVEAL_MS = 700;

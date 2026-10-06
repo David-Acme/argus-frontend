@@ -7,7 +7,7 @@ import { readRefreshResponse, settledRefresh } from '@/core/services/http/refres
 import { registerHttpAuth } from '@/core/services/http';
 import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
-import { contextEngine } from '@/core/services/context';
+import { applyCachedAccess, contextEngine } from '@/core/services/context';
 import { moduleEngine } from '@/core/services/modules';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
@@ -94,14 +94,15 @@ class SessionService {
     setDeviceCredential(session.deviceSecret);
     useAuthStore.getState().setSession(session);
     viewCacheService.setUserId(session.user.id);
-    viewCacheCoordinatorService.start(session.user.id);
     this.startAccess(session.user.id);
+    viewCacheCoordinatorService.start(session.user.id);
     await this.persistSession(session);
   }
 
   private startAccess(userId: number | string): void {
     moduleEngine.start(String(userId));
     contextEngine.start(String(userId));
+    applyCachedAccess();
   }
 
   refreshSession(failed?: SessionCredential): Promise<SessionRefreshOutcome> {
@@ -185,8 +186,8 @@ class SessionService {
       useAuthStore.getState().hydrate(session);
       viewCacheService.setUserId(session?.user.id ?? null);
       if (session) {
-        viewCacheCoordinatorService.start(session.user.id);
         this.startAccess(session.user.id);
+        viewCacheCoordinatorService.start(session.user.id);
       }
 
       if (!session && (accessToken || refreshToken || storedCredential || user)) {

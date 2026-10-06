@@ -1,4 +1,5 @@
 import type { DashboardTab, IconName, TableName } from '@/core/types';
+import { CAPABILITY, type Capability } from './capability.constant';
 
 export const MOSAIC_COLUMNS = 13;
 export const MOSAIC_ROWS = 6;
@@ -67,11 +68,12 @@ export const COMPOSE_ACTIONS: readonly {
     | '/welcome/voice'
     | '/call';
   table?: TableName;
+  capability?: Capability;
 }[] = [
   { id: 'event', icon: 'calendar', route: '/agenda?new=event', table: 'calendar_event' },
   { id: 'project', icon: 'list-todo', route: '/projects?new=project', table: 'project' },
   { id: 'camera', icon: 'video', route: '/cameras?new=camera', table: 'camera' },
-  { id: 'voice', icon: 'sparkles', route: '/call' },
+  { id: 'voice', icon: 'sparkles', route: '/call', capability: CAPABILITY.assistantVoice },
 ];
 
 export const BOTTOM_NAV_HEIGHT = 60;

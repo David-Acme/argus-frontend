@@ -13,6 +13,8 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useSessionLabels } from '@/features/sessions';
 import { PresenceChip } from '@/features/people/components/presence-chip';
 import { usePresence } from '@/features/people/hooks/use-presence';
+import { CAPABILITY } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 
 type MembersPanelProps = {
   users: readonly IPeopleDirectoryCacheRow[];
@@ -35,7 +37,9 @@ export function MembersPanel({
 }: MembersPanelProps) {
   const { t } = useTranslation();
   const { deviceCount } = useSessionLabels(0);
-  const presenceOf = usePresence(true);
+  const { has } = useCapabilities();
+  const readsPresence = has(CAPABILITY.presenceRead);
+  const presenceOf = usePresence(readsPresence);
 
   const statusOf = (user: IPeopleDirectoryCacheRow) => {
     if (!user.isActive) return t('screens.sessions.admin.account-disabled');
@@ -51,7 +55,7 @@ export function MembersPanel({
       {users.map((user) => {
         const self = user.id === currentUserId;
         const name = [user.name, user.lastName].filter(Boolean).join(' ');
-        const presence = user.isActive ? presenceOf(Number(user.id)) : null;
+        const presence = readsPresence && user.isActive ? presenceOf(Number(user.id)) : null;
         return (
           <ListRow
             key={user.id}

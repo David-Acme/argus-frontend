@@ -105,6 +105,7 @@ export function useCallBridge(): void {
     };
 
     const announce = () => {
+      if (!watchesCameras) return;
       const rows = viewCacheService
         .rowsSnapshot<INotificationPreviewCacheRow>(VIEW_CACHE_KEYS.dashboardNotifications)
         .slice(0, RECENT_NOTIFICATIONS);

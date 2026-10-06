@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { useAuthStore } from '@/core/stores';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
+import { CAPABILITY, MODULE_IDS } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { PanicButton } from '@/features/safety/components/panic-button';
@@ -18,8 +19,11 @@ type SafetySectionProps = {
 
 export function SafetySection({ className }: SafetySectionProps) {
   const { t } = useTranslation();
-  const role = useAuthStore((state) => state.user?.role ?? 'guest');
-  const { status, setDuressEnabled, confirmCurrentPin, savePins, removePins } = useSafety();
+  const { has, moduleActive } = useCapabilities();
+  const surveillance = moduleActive(MODULE_IDS.surveillance);
+  const { status, setDuressEnabled, confirmCurrentPin, savePins, removePins } = useSafety({
+    enabled: surveillance && has(CAPABILITY.safetyRead),
+  });
   const [pinsOpen, setPinsOpen] = useState(false);
   const [currentPin, setCurrentPin] = useState<string | undefined>(undefined);
 
@@ -34,8 +38,8 @@ export function SafetySection({ className }: SafetySectionProps) {
     if (!next) setCurrentPin(undefined);
     setPinsOpen(next);
   };
-  const owner = role === 'owner';
-  const disarms = role === 'owner' || role === 'resident';
+  const managesDuress = surveillance && has(CAPABILITY.guardAdmin) && has(CAPABILITY.safetyDuress);
+  const keepsPins = surveillance && has(CAPABILITY.safetyDuress);
 
   return (
     <Panel className={cn('gap-4 p-5', className)}>
@@ -49,9 +53,9 @@ export function SafetySection({ className }: SafetySectionProps) {
         </View>
       </View>
 
-      <PanicButton />
+      {has(CAPABILITY.safetyPanic) ? <PanicButton /> : null}
 
-      {owner && status ? (
+      {managesDuress && status ? (
         <ToggleRow
           label={t('screens.safety.owner.toggle')}
           hint={t('screens.safety.owner.hint')}
@@ -60,7 +64,7 @@ export function SafetySection({ className }: SafetySectionProps) {
         />
       ) : null}
 
-      {disarms && status?.duressEnabled ? (
+      {keepsPins && status?.duressEnabled ? (
         <View className="gap-1">
           <ListRow
             icon="key-round"

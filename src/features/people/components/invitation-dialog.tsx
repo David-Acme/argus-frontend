@@ -78,7 +78,7 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
             onChange={setRole}
             title={t('screens.users.role')}
             closeLabel={t('common.close')}
-            searchPlaceholder={t('screens.home.search-placeholder')}
+            searchPlaceholder={t('common.search')}
             emptyLabel={t('screens.users.no-results')}
             trigger={<SelectField label={roles.find((option) => option.value === role)?.label} />}
           />

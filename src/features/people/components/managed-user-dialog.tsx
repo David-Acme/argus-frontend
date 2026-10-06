@@ -88,7 +88,7 @@ export function ManagedUserDialog({ user, open, onOpenChange, onSaved }: Managed
             onChange={setRole}
             title={t('screens.users.role')}
             closeLabel={t('common.close')}
-            searchPlaceholder={t('screens.home.search-placeholder')}
+            searchPlaceholder={t('common.search')}
             emptyLabel={t('screens.users.no-results')}
             trigger={<SelectField label={options.find((option) => option.value === role)?.label} />}
           />

@@ -9,6 +9,13 @@ export const PRIVACY_SIGNALS: readonly PrivacySignal[] = [
   'cameraAudio',
 ];
 
+export const PRIVACY_SIGNAL_MODULE = {
+  presence: 'surveillance',
+  faceCameras: 'surveillance',
+  voiceLearning: 'core',
+  cameraAudio: 'surveillance',
+} as const satisfies Record<PrivacySignal, string>;
+
 export const PRIVACY_SIGNAL_ICONS = {
   presence: 'home',
   faceCameras: 'scan-face',

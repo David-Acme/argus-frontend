@@ -30,6 +30,7 @@ export const common = {
     es: 'Español',
     en: 'English',
   },
+  search: 'Search…',
   close: 'Close',
   save: 'Save',
   cancel: 'Cancel',

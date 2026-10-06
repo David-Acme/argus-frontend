@@ -134,8 +134,35 @@ export interface ICalendarEventFormRecord {
 export interface IReminderCacheSource {
   id: string;
   title: string;
+  description: string;
   scheduledAt: Date;
   isCompleted: boolean;
+  completedAt: Date | null;
+  recurrenceRule: string | null;
+}
+
+export interface IReminderCacheRow {
+  id: string;
+  title: string;
+  description: string;
+  scheduledAt: number;
+  isCompleted: boolean;
+  completedAt: number | null;
+  recurrenceRule: string | null;
+}
+
+export interface IReminderCreate {
+  title: string;
+  description?: string;
+  scheduledAt: number;
+  recurrenceRule?: string;
+}
+
+export interface IReminderUpdate {
+  title?: string;
+  description?: string | null;
+  scheduledAt?: number;
+  isCompleted?: boolean;
 }
 
 export interface IProjectTaskCalendarCacheSource {

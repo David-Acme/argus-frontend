@@ -13,8 +13,12 @@ const load = () => safetyService.status();
 const currentPinIfSet = async (required: boolean): Promise<string | null | undefined> =>
   required ? askCurrentPin() : undefined;
 
-export function useSafety() {
-  const { data, mutate } = useRemoteResource<SafetyStatus>({ cacheKey: VIEW_CACHE_KEYS.safetyStatus, load });
+type UseSafetyOptions = {
+  enabled?: boolean;
+};
+
+export function useSafety({ enabled = true }: UseSafetyOptions = {}) {
+  const { data, mutate } = useRemoteResource<SafetyStatus>({ cacheKey: VIEW_CACHE_KEYS.safetyStatus, load, enabled });
 
   const settle = useCallback(
     (next: SafetyStatus | null | undefined) => {

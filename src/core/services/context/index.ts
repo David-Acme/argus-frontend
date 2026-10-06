@@ -5,8 +5,10 @@ import { synchronizeService } from '@/core/services/sync/synchronize.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { useAuthStore } from '@/core/stores';
 import type { AppAccess } from '@/core/types';
+import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { SYNC_OPERATION, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { ContextEngine } from './context-engine';
+import { activeModulesOf, gainedModules } from './context-state';
 
 export const contextEngine = new ContextEngine({
   cache: {
@@ -25,9 +27,27 @@ export const contextEngine = new ContextEngine({
   now: () => Date.now(),
 });
 
-useAuthStore.subscribe((state) => {
-  if (state.status === 'signed-out') contextEngine.stop();
+let known = activeModulesOf(null);
+
+contextEngine.onChange((access) => {
+  const active = activeModulesOf(access);
+  const gained = gainedModules(known, active);
+  known = active;
+  viewCacheCoordinatorService.setActiveModules(active);
+  if (gained.length > 0) void synchronizeService.syncOnce();
 });
 
-export { accessOf, isStaleContext, withModuleOff } from './context-state';
+export function applyCachedAccess(): void {
+  known = activeModulesOf(contextEngine.current());
+  viewCacheCoordinatorService.setActiveModules(known);
+}
+
+useAuthStore.subscribe((state) => {
+  if (state.status !== 'signed-out') return;
+  contextEngine.stop();
+  known = null;
+  viewCacheCoordinatorService.setActiveModules(null);
+});
+
+export { accessOf, activeModulesOf, gainedModules, isStaleContext, withModuleOff } from './context-state';
 export { ContextEngine, type ContextEngineDeps } from './context-engine';

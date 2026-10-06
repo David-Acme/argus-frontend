@@ -7,12 +7,14 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { ConsentForm } from '@/features/privacy/components/consent-form';
 import { usePrivacy } from '@/features/privacy/hooks/use-privacy';
+import { usePrivacySignals } from '@/features/privacy/hooks/use-privacy-signals';
 import { consentDraft, needsConsent, NO_CHOICES } from '@/features/privacy/model/privacy';
 
 export function PrivacyGate({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { me, decide } = usePrivacy();
+  const signals = usePrivacySignals(me?.applicable);
   const [submitting, setSubmitting] = useState(false);
 
   const accept = async (choices: PrivacyChoices) => {
@@ -43,6 +45,7 @@ export function PrivacyGate({ children }: PropsWithChildren) {
           variant={me.decided ? 'updated' : 'review'}
           initial={me.decided ? me.choices : (consentDraft.peek() ?? NO_CHOICES)}
           household={me.household}
+          signals={signals}
           submitting={submitting}
           onAccept={(choices) => void accept(choices)}
           onDecline={() => void decline()}

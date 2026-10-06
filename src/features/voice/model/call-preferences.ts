@@ -9,6 +9,18 @@ export const CALL_TRIGGERS: readonly CallTrigger[] = [
   'assistant',
 ];
 
+const TRIGGER_MODULES: Readonly<Record<CallTrigger, string>> = {
+  guardCritical: 'surveillance',
+  guardIntruder: 'surveillance',
+  guardEscalation: 'surveillance',
+  guardArrival: 'surveillance',
+  agenda: 'productivity',
+  assistant: 'core',
+};
+
+export const triggersOf = (moduleActive: (moduleId: string) => boolean): CallTrigger[] =>
+  CALL_TRIGGERS.filter((trigger) => moduleActive(TRIGGER_MODULES[trigger]));
+
 export type QuietPreset = 'off' | 'night' | 'late' | 'custom';
 
 export type DndChoice = 'off' | 'hour' | 'morning';

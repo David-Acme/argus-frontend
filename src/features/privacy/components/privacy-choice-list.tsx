@@ -8,16 +8,23 @@ import { blockedByHousehold } from '@/features/privacy/model/privacy';
 
 type PrivacyChoiceListProps = {
   choices: PrivacyChoices;
+  signals?: readonly PrivacySignal[];
   household?: PrivacyChoices;
   disabled?: boolean;
   onChange: (signal: PrivacySignal, value: boolean) => void;
 };
 
-export function PrivacyChoiceList({ choices, household, disabled, onChange }: PrivacyChoiceListProps) {
+export function PrivacyChoiceList({
+  choices,
+  signals = PRIVACY_SIGNALS,
+  household,
+  disabled,
+  onChange,
+}: PrivacyChoiceListProps) {
   const { t } = useTranslation();
   return (
     <View className="gap-1">
-      {PRIVACY_SIGNALS.map((signal) => {
+      {signals.map((signal) => {
         const blocked = household ? blockedByHousehold(household, signal) : false;
         const hint = t(`screens.privacy.signal-hint.${signal}`);
         return (

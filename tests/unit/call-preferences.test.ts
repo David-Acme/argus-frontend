@@ -7,6 +7,7 @@ import {
   quietHoursFor,
   quietPresetOf,
   toggledEnvironments,
+  triggersOf,
 } from '@/features/voice/model/call-preferences';
 
 const defaults = {
@@ -104,5 +105,27 @@ describe('call preferences, per-person timings', () => {
     expect(callPreferencesSchema.safeParse({ ...defaults, pushDelaySeconds: 31 }).success).toBe(
       false
     );
+  });
+});
+
+describe('call triggers by module', () => {
+  test('every module brings its own triggers and the core keeps the assistant one', () => {
+    expect(triggersOf(() => true)).toEqual([
+      'guardCritical',
+      'guardIntruder',
+      'guardEscalation',
+      'guardArrival',
+      'agenda',
+      'assistant',
+    ]);
+    expect(triggersOf((id) => id === 'core')).toEqual(['assistant']);
+    expect(triggersOf((id) => id === 'core' || id === 'productivity')).toEqual(['agenda', 'assistant']);
+    expect(triggersOf((id) => id === 'core' || id === 'surveillance')).toEqual([
+      'guardCritical',
+      'guardIntruder',
+      'guardEscalation',
+      'guardArrival',
+      'assistant',
+    ]);
   });
 });

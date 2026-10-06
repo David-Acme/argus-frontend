@@ -11,6 +11,7 @@ import { cn } from '@/shared/libs/utils';
 import { PrivacyChoiceList } from '@/features/privacy/components/privacy-choice-list';
 import { PrivacyNoticeDialog } from '@/features/privacy/components/privacy-notice-dialog';
 import { usePrivacy } from '@/features/privacy/hooks/use-privacy';
+import { usePrivacySignals } from '@/features/privacy/hooks/use-privacy-signals';
 
 type PrivacySectionProps = {
   className?: string;
@@ -20,6 +21,7 @@ export function PrivacySection({ className }: PrivacySectionProps) {
   const { t } = useTranslation();
   const dates = useDateFormatter();
   const { me, status, setChoice, reload } = usePrivacy();
+  const signals = usePrivacySignals(me?.applicable);
   const [noticeOpen, setNoticeOpen] = useState(false);
 
   const header = (
@@ -42,6 +44,7 @@ export function PrivacySection({ className }: PrivacySectionProps) {
           <View className="px-1">
             <PrivacyChoiceList
               choices={me.choices}
+              signals={signals}
               household={me.household}
               onChange={(signal, value) => void setChoice(signal, value)}
             />

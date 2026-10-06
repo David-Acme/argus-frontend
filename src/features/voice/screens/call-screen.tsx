@@ -8,7 +8,8 @@ import { CallSurface } from '@/features/voice/components/call-surface';
 import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
 import { argusCallSupported, voiceService } from '@/features/voice/services/voice';
 import { storageService } from '@/core/services/storage';
-import { VIEW_CACHE_KEYS, VOICE_MIC_CONSENT_KEY } from '@/shared/constants';
+import { CAPABILITY, VIEW_CACHE_KEYS, VOICE_MIC_CONSENT_KEY } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
@@ -71,6 +72,9 @@ function CallScreen() {
 
 export default function CallRoute() {
   const authStatus = useAuthStore((state) => state.status);
-  if (authStatus !== 'signed-in') return <Redirect href="/" />;
+  const params = useLocalSearchParams<{ callId?: string }>();
+  const { has } = useCapabilities();
+  const allowed = has(params.callId ? CAPABILITY.callsJoin : CAPABILITY.assistantVoice);
+  if (authStatus !== 'signed-in' || !allowed) return <Redirect href="/" />;
   return argusCallSupported() ? <CallScreen /> : <VoiceWebNotice />;
 }

@@ -19,7 +19,7 @@ import {
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { itemIn } from '@/shared/libs/animations';
-import { tableAllowed } from '@/shared/libs/capabilities';
+import { hasCapability, tableAllowed } from '@/shared/libs/capabilities';
 import { routeModuleEnabled } from '@/shared/libs/route-access';
 import { cn } from '@/shared/libs/utils';
 
@@ -53,12 +53,15 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
         (action) =>
           view.roleActive &&
           (!action.table || tableAllowed(view, action.table, 'create')) &&
+          (!action.capability || hasCapability(view, action.capability)) &&
           routeModuleEnabled(action.route, view)
       ),
     [view]
   );
 
   const close = () => setOpen(false);
+
+  if (actions.length === 0) return null;
 
   const stackPosition =
     anchor === 'bar'

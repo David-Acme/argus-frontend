@@ -174,7 +174,7 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
                     onChange={field.onChange}
                     title={t('screens.projects.task-status')}
                     closeLabel={t('common.close')}
-                    searchPlaceholder={t('screens.home.search-placeholder')}
+                    searchPlaceholder={t('common.search')}
                     emptyLabel={t('screens.projects.no-results')}
                     trigger={
                       <SelectField
@@ -199,7 +199,7 @@ export function TaskForm({ open, onOpenChange, projectId, task, defaultStatus = 
                     onChange={field.onChange}
                     title={t('screens.projects.task-priority')}
                     closeLabel={t('common.close')}
-                    searchPlaceholder={t('screens.home.search-placeholder')}
+                    searchPlaceholder={t('common.search')}
                     emptyLabel={t('screens.projects.no-results')}
                     trigger={
                       <SelectField

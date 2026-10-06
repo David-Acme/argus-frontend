@@ -5,9 +5,11 @@ import {
   NOTIFICATION_FEED_SCOPE,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useInfiniteList, usePagedView } from '@/shared/hooks/use-infinite-list';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { NOTIFICATION_LENSES } from '@/features/home/model/notification-optimistic';
+import { notificationVisible } from '@/features/home/model/notification-modules';
 import { groupNotifications } from '@/features/home/model/notification-threads';
 
 export function useNotificationFeed() {
@@ -15,8 +17,12 @@ export function useNotificationFeed() {
     VIEW_CACHE_KEYS.notificationFeed,
     NOTIFICATION_FEED_SCOPE
   );
+  const { moduleActive } = useCapabilities();
   const { rows } = useOptimisticRows(feed.rows, NOTIFICATION_LENSES);
-  const threads = useMemo(() => groupNotifications(rows), [rows]);
+  const threads = useMemo(
+    () => groupNotifications(rows.filter((row) => notificationVisible(row, moduleActive))),
+    [moduleActive, rows]
+  );
   const paging = useInfiniteList({
     count: feed.rows.length,
     hasMore: feed.hasMore,

@@ -13,6 +13,7 @@ import { useUniwind } from 'uniwind';
 import { BlurReveal } from '@/shared/components/ui/blur-reveal';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
+import { OrbitHero } from '@/shared/components/ui/orbit-hero';
 import { MorphIcon } from '@/shared/components/ui/morph-icon';
 import { Text } from '@/shared/components/ui/text';
 import { colorTokens, IS_NATIVE } from '@/shared/constants';
@@ -21,14 +22,17 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { LanguageSwitch } from '@/features/auth/components/language-switch';
-import { WelcomeHero } from '@/features/auth/components/welcome-hero';
 import {
+  WELCOME_BREATH_MS,
   WELCOME_CTA_DELAY_MS,
   WELCOME_CTA_DURATION_MS,
   WELCOME_HERO_MAX,
   WELCOME_HERO_MIN,
   WELCOME_ICON_DRIFT_DURATION_MS,
   WELCOME_ICON_DRIFT_PX,
+  WELCOME_ORBIT_CHIP,
+  WELCOME_ORBIT_ITEMS,
+  WELCOME_ORBIT_PERIOD_MS,
   WELCOME_REDUCED_DURATION_MS,
   WELCOME_REDUCED_STEP_MS,
   WELCOME_SUBTITLE_DELAY_MS,
@@ -99,7 +103,14 @@ export default function WelcomeScreen() {
             isShort ? 'gap-6' : 'gap-10'
           )}>
           <BlurReveal delay={delay(0, 0)} duration={duration(900)} blur={false} scale>
-            <WelcomeHero size={heroSize} label={t('screens.welcome.hero-label')} />
+            <OrbitHero
+              size={heroSize}
+              label={t('screens.welcome.hero-label')}
+              items={WELCOME_ORBIT_ITEMS}
+              orbitMs={WELCOME_ORBIT_PERIOD_MS}
+              breathMs={WELCOME_BREATH_MS}
+              chipSize={WELCOME_ORBIT_CHIP}
+            />
           </BlurReveal>
 
           <View className={cn('gap-6', side ? 'max-w-md flex-1 items-start' : 'w-full items-center')}>

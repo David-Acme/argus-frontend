@@ -17,6 +17,7 @@ import {
   EVENT_MOSAIC_LIMIT,
   EVENT_SAMPLE_LIMIT,
   NOTIFICATION_FEED_SCOPE,
+  MODULE_IDS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants';
 import { mosaicSince, projectActivity } from './view-cache/activity.projection';
@@ -32,9 +33,11 @@ import {
 } from './view-cache/calendar.projection';
 import { projectCameras } from './view-cache/camera.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
+import { ModuleSourceGate } from './view-cache/module-source-gate';
 import { PagedView, type IPagedView } from './view-cache/paged-view';
 import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
+import { projectReminders } from './view-cache/reminder.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
 import { activityWindows, projectSummary } from './view-cache/summary.projection';
@@ -42,16 +45,21 @@ import { activityWindows, projectSummary } from './view-cache/summary.projection
 const shared = <T>(source: Observable<T>): Observable<T> =>
   source.pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
+const moduleGate = new ModuleSourceGate();
+
+const SURVEILLANCE = MODULE_IDS.surveillance;
+const PRODUCTIVITY = MODULE_IDS.productivity;
+
 function sessionSources(userId: string) {
   return {
-    cameras: shared(cameraService.observeList()),
-    zones: shared(zoneService.observeForCache()),
-    streams: shared(cameraStreamService.observePrimaries()),
-    projects: shared(projectService.observeList()),
-    tasks: shared(projectTaskService.observeAll()),
+    cameras: shared(moduleGate.of(SURVEILLANCE, cameraService.observeList(), [])),
+    zones: shared(moduleGate.of(SURVEILLANCE, zoneService.observeForCache(), [])),
+    streams: shared(moduleGate.of(SURVEILLANCE, cameraStreamService.observePrimaries(), [])),
+    projects: shared(moduleGate.of(PRODUCTIVITY, projectService.observeList(), [])),
+    tasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeAll(), [])),
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
-    events: shared(eventService.observeRecent(EVENT_SAMPLE_LIMIT)),
+    events: shared(moduleGate.of(SURVEILLANCE, eventService.observeRecent(EVENT_SAMPLE_LIMIT), [])),
     users: shared(userService.observeDirectory()),
     invitations: shared(userInvitationService.observeList()),
   };
@@ -79,11 +87,12 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
       ctx,
     ),
     startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
+    startProjection({ sources: () => ({ reminders: sources.reminders }), project: projectReminders }, ctx),
     startProjection(
       {
         sources: () => ({
           events: sources.events,
-          mosaic: eventService.observeOccurredSince(mosaicSince(ctx.now), EVENT_MOSAIC_LIMIT),
+          mosaic: moduleGate.of(SURVEILLANCE, eventService.observeOccurredSince(mosaicSince(ctx.now), EVENT_MOSAIC_LIMIT), []),
         }),
         project: projectActivity,
       },
@@ -96,8 +105,8 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           reminders: sources.reminders,
           projects: sources.projects,
           tasks: sources.tasks,
-          eventsCurrent: eventService.observeCountBetween(windows.current.from, windows.current.to),
-          eventsPrevious: eventService.observeCountBetween(windows.previous.from, windows.previous.to),
+          eventsCurrent: moduleGate.of(SURVEILLANCE, eventService.observeCountBetween(windows.current.from, windows.current.to), 0),
+          eventsPrevious: moduleGate.of(SURVEILLANCE, eventService.observeCountBetween(windows.previous.from, windows.previous.to), 0),
         }),
         project: projectSummary,
       },
@@ -106,9 +115,9 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     startProjection(
       {
         sources: () => ({
-          events: calendarEventService.observeRange(from, to),
+          events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(from, to), []),
           reminders: sources.reminders,
-          tasks: projectTaskService.observeDueRange(from, to),
+          tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(from, to), []),
         }),
         project: projectAgenda,
       },
@@ -160,11 +169,11 @@ function startPagedViews(
           return startProjection(
             {
               sources: () => ({
-                events: calendarEventService.observeRange(range.from, range.to),
+                events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(range.from, range.to), []),
                 reminders: sources.reminders,
-                tasks: projectTaskService.observeDueRange(range.from, range.to),
-                eventsLater: calendarEventService.observeAnyStartingAfter(range.to),
-                tasksLater: projectTaskService.observeAnyDueAfter(range.to),
+                tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(range.from, range.to), []),
+                eventsLater: moduleGate.of(PRODUCTIVITY, calendarEventService.observeAnyStartingAfter(range.to), false),
+                tasksLater: moduleGate.of(PRODUCTIVITY, projectTaskService.observeAnyDueAfter(range.to), false),
               }),
               project: (values) => projectAgendaFeed(values, scope, range),
             },
@@ -207,6 +216,10 @@ class ViewCacheCoordinatorService {
       for (let index = 0; index < holder.count; index += 1) paged[holder.key].watch(holder.scope);
     }
     this.refresh();
+  }
+
+  setActiveModules(ids: ReadonlySet<string> | null): void {
+    moduleGate.set(ids);
   }
 
   watchPages(key: PagedViewKey, scope: string): void {
@@ -257,9 +270,9 @@ class ViewCacheCoordinatorService {
     this.calendarSubscription = startProjection(
       {
         sources: () => ({
-          events: calendarEventService.observeRange(window.from, window.to),
+          events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(window.from, window.to), []),
           reminders: sources.reminders,
-          tasks: projectTaskService.observeDueRange(window.from, window.to),
+          tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(window.from, window.to), []),
         }),
         project: (values) => projectCalendar(values, anchor),
         tracked: ['calendar.entries'],

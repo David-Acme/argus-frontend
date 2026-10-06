@@ -3,8 +3,10 @@ import { settingsService } from '@/features/settings/services/settings.service';
 import type { SettingChange, SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { toastServiceError } from '@/shared/libs/service-error';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
+import { withActiveOwners } from '@/features/settings/model/settings-modules';
 import { hasInstallingChoice } from '@/features/settings/model/tts-preview';
 import {
   SETTING_LENSES,
@@ -53,9 +55,10 @@ export function useSettings({ enabled = true }: UseSettingsOptions = {}) {
   const installing = hasInstallingChoice(base);
   const rows = useMemo(() => settingRows(base), [base]);
   const { rows: merged } = useOptimisticRows(rows, SETTING_LENSES);
+  const { moduleActive } = useCapabilities();
   const overview = useMemo(
-    () => (merged === rows ? base : withSettingRows(base, merged)),
-    [base, merged, rows]
+    () => withActiveOwners(merged === rows ? base : withSettingRows(base, merged), moduleActive),
+    [base, merged, moduleActive, rows]
   );
 
   const change = useCallback(

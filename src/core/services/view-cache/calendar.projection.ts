@@ -20,9 +20,11 @@ import {
 import { addDays, endOfDay, startOfDay } from './dates';
 import type { ProjectionContext, ViewWrite } from './projection';
 
+export type CalendarReminder = Pick<IReminderCacheSource, 'id' | 'title' | 'scheduledAt' | 'isCompleted'>;
+
 export type CalendarProjectionInput = {
   events: readonly ICalendarEventCacheSource[];
-  reminders: readonly IReminderCacheSource[];
+  reminders: readonly CalendarReminder[];
   tasks: readonly IProjectTaskCalendarCacheSource[];
 };
 
@@ -38,7 +40,7 @@ export const calendarMonthRange = (value: Date): Range => ({
 
 export const toCalendarEntries = (
   events: readonly ICalendarEventCacheSource[],
-  reminders: readonly IReminderCacheSource[],
+  reminders: readonly CalendarReminder[],
   tasks: readonly IProjectTaskCalendarCacheSource[],
   from: number,
   to: number,

@@ -41,6 +41,7 @@ export const VIEW_CACHE_KEYS = {
   cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
   calendarAgenda: 'calendar.agenda',
+  reminderList: 'reminder.list',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
   peopleUsers: 'people.users',

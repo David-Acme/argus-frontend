@@ -26,17 +26,20 @@ import {
   type NotificationThread,
 } from '@/features/home/model/notification-threads';
 import { activityTrend } from '@/features/home/model/activity-trend';
+import { searchPlaceholder } from '@/features/home/model/home-search';
 import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ResponseStrip } from '@/features/response';
+import { InactiveRoleScreen } from '@/features/access';
 import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
+import { RemindersSection } from '@/features/reminders';
 import { CAPABILITY } from '@/shared/constants';
 import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
-import { useCapabilities } from '@/shared/hooks/use-capabilities';
+import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useRouter } from 'expo-router';
@@ -47,7 +50,7 @@ function firstNameOf(user: IAuthUser | null): string {
   return user?.name?.trim().split(/\s+/)[0] ?? '';
 }
 
-export default function HomeScreen() {
+function HomeContent() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const { t, language } = useTranslation();
@@ -64,7 +67,7 @@ export default function HomeScreen() {
   } = useDashboardData();
   const watchesCameras = has(CAPABILITY.cameraView);
   const readsAgenda = has(CAPABILITY.agendaRead);
-  const readsProjects = can('project', 'read');
+  const readsProjects = has(CAPABILITY.projectsRead);
   const [query, setQuery] = useState('');
   const now = useNow(60000);
   const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
@@ -84,7 +87,10 @@ export default function HomeScreen() {
 
   const todayRows = useMemo(
     () =>
-      todayEntries.filter((entry) => date.sameDay(new Date(entry.startsAt), new Date(now)) && matches(entry.title)),
+      todayEntries.filter(
+        (entry) =>
+          entry.source !== 'reminder' && date.sameDay(new Date(entry.startsAt), new Date(now)) && matches(entry.title)
+      ),
     [date, matches, now, todayEntries]
   );
   const visibleProjects = useMemo(
@@ -180,11 +186,16 @@ export default function HomeScreen() {
         <GettingStartedCard />
 
         <DashboardSearchField
-          placeholder={t('screens.home.search-placeholder')}
+          placeholder={searchPlaceholder(
+            { reminders: has(CAPABILITY.remindersRead), events: readsAgenda, projects: readsProjects },
+            t
+          )}
           filterLabel={t('screens.home.see-all')}
           value={query}
           onChangeText={setQuery}
         />
+
+        <RemindersSection query={query} />
 
         {watchesCameras ? (
         <ActivityCard
@@ -261,4 +272,9 @@ export default function HomeScreen() {
       </View>
     </AppScreen>
   );
+}
+
+export default function HomeScreen() {
+  const view = useAccessView();
+  return view.roleActive ? <HomeContent /> : <InactiveRoleScreen />;
 }

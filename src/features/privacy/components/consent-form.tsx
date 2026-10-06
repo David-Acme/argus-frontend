@@ -15,6 +15,7 @@ type ConsentFormProps = {
   variant: ConsentFormVariant;
   initial: PrivacyChoices;
   household?: PrivacyChoices;
+  signals?: readonly PrivacySignal[];
   submitting?: boolean;
   header?: React.ReactNode;
   onAccept: (choices: PrivacyChoices) => void;
@@ -33,6 +34,7 @@ export function ConsentForm({
   variant,
   initial,
   household,
+  signals,
   submitting,
   header,
   onAccept,
@@ -82,7 +84,13 @@ export function ConsentForm({
           <Text variant="headline">{t('screens.privacy.consent.choices-title')}</Text>
           <Text variant="caption">{t('screens.privacy.consent.choices-hint')}</Text>
         </View>
-        <PrivacyChoiceList choices={choices} household={household} disabled={submitting} onChange={change} />
+        <PrivacyChoiceList
+          choices={choices}
+          signals={signals}
+          household={household}
+          disabled={submitting}
+          onChange={change}
+        />
       </View>
 
       <View className="gap-3">

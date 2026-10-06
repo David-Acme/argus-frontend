@@ -609,7 +609,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                         onChange={field.onChange}
                         title={t('screens.cameras.form.record-mode')}
                         closeLabel={t('common.close')}
-                        searchPlaceholder={t('screens.home.search-placeholder')}
+                        searchPlaceholder={t('common.search')}
                         emptyLabel={t('screens.cameras.zones-empty')}
                         trigger={
                           <SelectField label={recordOptions.find((option) => option.value === field.value)?.label} />

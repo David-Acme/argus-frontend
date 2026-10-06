@@ -4,8 +4,9 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { PRIVACY_SIGNALS, PRIVACY_SIGNAL_ICONS } from '@/features/privacy/constants/privacy';
+import { PRIVACY_SIGNAL_ICONS } from '@/features/privacy/constants/privacy';
 import { usePrivacyDirectory } from '@/features/privacy/hooks/use-privacy-directory';
+import { usePrivacySignals } from '@/features/privacy/hooks/use-privacy-signals';
 
 type UserPrivacyRowProps = {
   userId: number;
@@ -15,6 +16,7 @@ export function UserPrivacyRow({ userId }: UserPrivacyRowProps) {
   const { t } = useTranslation();
   const dates = useDateFormatter();
   const { directory } = usePrivacyDirectory();
+  const signals = usePrivacySignals(directory?.applicable);
   const state = directory?.users.find((user) => user.userId === userId);
 
   if (!state) return null;
@@ -38,7 +40,7 @@ export function UserPrivacyRow({ userId }: UserPrivacyRowProps) {
       </View>
       {state.decided ? (
         <View className="flex-row flex-wrap gap-2">
-          {PRIVACY_SIGNALS.map((signal) => {
+          {signals.map((signal) => {
             const on = state.choices[signal];
             return (
               <View

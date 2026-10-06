@@ -29,6 +29,7 @@ export const common = {
     es: 'Español',
     en: 'English',
   },
+  search: 'Buscar…',
   close: 'Cerrar',
   save: 'Guardar',
   cancel: 'Cancelar',

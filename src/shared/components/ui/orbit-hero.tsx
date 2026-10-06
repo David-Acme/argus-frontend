@@ -7,28 +7,32 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import type { IconName } from '@/core/types';
+import { BrandMark } from '@/shared/components/ui/brand-mark';
 import { Icon } from '@/shared/components/ui/icon';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
-import { BrandMark } from '@/features/auth/components/brand-mark';
-import {
-  WELCOME_BREATH_MS,
-  WELCOME_ORBIT_CHIP,
-  WELCOME_ORBIT_ITEMS,
-  WELCOME_ORBIT_PERIOD_MS,
-} from '@/features/auth/constants/welcome';
 
-type WelcomeHeroProps = {
+export type OrbitItem = {
+  icon: IconName;
+  angle: number;
+};
+
+type OrbitHeroProps = {
   size: number;
   label: string;
+  items: readonly OrbitItem[];
+  orbitMs: number;
+  breathMs: number;
+  chipSize: number;
 };
 
 const RINGS = [1, 0.74, 0.5] as const;
 
-export function WelcomeHero({ size, label }: WelcomeHeroProps) {
+export function OrbitHero({ size, label, items, orbitMs, breathMs, chipSize }: OrbitHeroProps) {
   const reduceMotion = useReduceMotion();
   const turn = useSharedValue(0);
   const breath = useSharedValue(0);
-  const radius = size / 2 - WELCOME_ORBIT_CHIP / 2;
+  const radius = size / 2 - chipSize / 2;
 
   const orbitStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
   const uprightStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${-turn.value}deg` }] }));
@@ -44,13 +48,13 @@ export function WelcomeHero({ size, label }: WelcomeHeroProps) {
       return;
     }
     turn.value = 0;
-    turn.value = withRepeat(withTiming(360, { duration: WELCOME_ORBIT_PERIOD_MS, easing: Easing.linear }), -1, false);
+    turn.value = withRepeat(withTiming(360, { duration: orbitMs, easing: Easing.linear }), -1, false);
     breath.value = withRepeat(
-      withTiming(1, { duration: WELCOME_BREATH_MS, easing: Easing.inOut(Easing.sin) }),
+      withTiming(1, { duration: breathMs, easing: Easing.inOut(Easing.sin) }),
       -1,
       true
     );
-  }, [breath, reduceMotion, turn]);
+  }, [breath, breathMs, orbitMs, reduceMotion, turn]);
 
   return (
     <View
@@ -77,17 +81,17 @@ export function WelcomeHero({ size, label }: WelcomeHeroProps) {
         pointerEvents="none"
         style={[{ width: size, height: size }, orbitStyle]}
         className="absolute left-0 top-0">
-        {WELCOME_ORBIT_ITEMS.map((item) => {
+        {items.map((item) => {
           const radians = (item.angle * Math.PI) / 180;
           return (
             <Animated.View
               key={item.icon}
               style={[
                 {
-                  width: WELCOME_ORBIT_CHIP,
-                  height: WELCOME_ORBIT_CHIP,
-                  left: size / 2 + radius * Math.cos(radians) - WELCOME_ORBIT_CHIP / 2,
-                  top: size / 2 + radius * Math.sin(radians) - WELCOME_ORBIT_CHIP / 2,
+                  width: chipSize,
+                  height: chipSize,
+                  left: size / 2 + radius * Math.cos(radians) - chipSize / 2,
+                  top: size / 2 + radius * Math.sin(radians) - chipSize / 2,
                 },
                 uprightStyle,
               ]}

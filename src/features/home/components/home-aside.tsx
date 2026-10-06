@@ -33,7 +33,7 @@ export function HomeAside({
 }: HomeAsideProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { has, can, guard } = useCapabilities();
+  const { has, guard } = useCapabilities();
   const { isWide } = useWindowClass();
   const watchesCameras = has(CAPABILITY.cameraView);
   const guardEnvironments = useGuardEnvironments(guard.view).data;
@@ -88,7 +88,7 @@ export function HomeAside({
         ] as const).filter(
           (item) =>
             ((item.icon !== 'video' && item.icon !== 'activity') || watchesCameras) &&
-            (item.icon !== 'list-todo' || can('project_task', 'read')) &&
+            (item.icon !== 'list-todo' || has(CAPABILITY.projectsRead)) &&
             (item.icon !== 'bell' || has(CAPABILITY.remindersRead))
         )}
       />

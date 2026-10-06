@@ -11,7 +11,6 @@ import { useCallPreferences } from '@/features/voice/hooks/use-call-preferences'
 import {
   AGENDA_LEADS,
   CALL_LANGUAGES,
-  CALL_TRIGGERS,
   DAY_KEYS,
   PUSH_DELAYS,
   RING_SECONDS,
@@ -25,6 +24,7 @@ import {
   quietPresetOf,
   toggledEnvironments,
   toggledQuietDay,
+  triggersOf,
   withCurrent,
   type QuietPreset,
 } from '@/features/voice/model/call-preferences';
@@ -34,7 +34,8 @@ import { Panel } from '@/shared/components/ui/panel';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { MODULE_IDS, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
@@ -138,6 +139,10 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
   const { isWide } = useWindowClass();
   const date = useDateFormatter();
   const { preferences, status, update, reload } = useCallPreferences();
+  const { moduleActive } = useCapabilities();
+  const surveillance = moduleActive(MODULE_IDS.surveillance);
+  const productivity = moduleActive(MODULE_IDS.productivity);
+  const triggers = useMemo(() => triggersOf(moduleActive), [moduleActive]);
   const now = useNow(DND_TICK_MS);
   const environments =
     useViewCacheValue<GuardEnvironment[]>(VIEW_CACHE_KEYS.guardEnvironments) ?? [];
@@ -240,7 +245,7 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
         <View className={isWide ? 'flex-row gap-6' : undefined}>
           <View className={isWide ? 'min-w-0 flex-1' : undefined}>
             <Group title={t('screens.voice.preferences.group-when')}>
-              {CALL_TRIGGERS.map((trigger) => (
+              {triggers.map((trigger) => (
                 <ChoiceRow
                   key={trigger}
                   label={t(`screens.voice.preferences.trigger.${trigger}`)}
@@ -250,6 +255,7 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
                   onChange={(mode) => changeTrigger(trigger, mode)}
                 />
               ))}
+              {productivity ? (
               <ChoiceRow
                 label={t('screens.voice.preferences.agenda-lead')}
                 hint={t('screens.voice.preferences.agenda-lead-hint')}
@@ -263,6 +269,7 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
                 value={String(preferences.agendaLeadMinutes)}
                 onChange={(value) => save({ agendaLeadMinutes: Number(value) })}
               />
+              ) : null}
             </Group>
           </View>
 
@@ -319,12 +326,14 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
                   onChange={(quietDays) => save({ quietDays })}
                 />
               ) : null}
+              {surveillance ? (
               <ToggleRow
                 label={t('screens.voice.preferences.critical-bypass')}
                 hint={t('screens.voice.preferences.critical-bypass-hint')}
                 value={preferences.criticalBypass}
                 onChange={(criticalBypass) => save({ criticalBypass })}
               />
+              ) : null}
               <ChoiceRow
                 label={t('screens.voice.preferences.dnd-title')}
                 hint={
@@ -340,7 +349,7 @@ export function CallPreferencesSection({ className }: CallPreferencesSectionProp
               />
             </Group>
 
-            {environments.length > 1 ? (
+            {surveillance && environments.length > 1 ? (
               <Group title={t('screens.voice.preferences.group-places')}>
                 {environments.map((environment) => (
                   <ToggleRow

@@ -6,11 +6,14 @@ import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
+import { MODULE_IDS } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { PRIVACY_SIGNALS, PRIVACY_SIGNAL_ICONS } from '@/features/privacy/constants/privacy';
+import { PRIVACY_SIGNAL_ICONS } from '@/features/privacy/constants/privacy';
 import { usePrivacyDirectory } from '@/features/privacy/hooks/use-privacy-directory';
+import { usePrivacySignals } from '@/features/privacy/hooks/use-privacy-signals';
 import { cameraAudioHeldBy } from '@/features/privacy/model/privacy';
 import { VisitorAcknowledgementDialog } from '@/features/privacy/components/visitor-acknowledgement-dialog';
 
@@ -43,6 +46,8 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
   const { t } = useTranslation();
   const dates = useDateFormatter();
   const { directory, status, setSwitch, reload } = usePrivacyDirectory();
+  const signals = usePrivacySignals(directory?.applicable);
+  const { moduleActive } = useCapabilities();
   const [acknowledging, setAcknowledging] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -86,7 +91,7 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
         </View>
       </View>
       <View className="gap-1 px-1">
-        {PRIVACY_SIGNALS.map((signal) => (
+        {signals.map((signal) => (
           <SwitchRow
             key={signal}
             icon={PRIVACY_SIGNAL_ICONS[signal]}
@@ -102,6 +107,7 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
             onChange={(value) => void setSwitch(signal, value)}
           />
         ))}
+        {moduleActive(MODULE_IDS.surveillance) ? (
         <SwitchRow
           icon="users"
           label={t('screens.privacy.household.visitors')}
@@ -118,6 +124,7 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
             value ? setAcknowledging(true) : void setSwitch('visitorRecognition', false)
           }
         />
+        ) : null}
       </View>
       <VisitorAcknowledgementDialog
         open={acknowledging}

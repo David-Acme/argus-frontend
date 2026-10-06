@@ -24,10 +24,12 @@ export const privacyMeSchema = z.object({
   ...privacyStateShape,
   currentNoticeVersion: z.number().int().positive(),
   household: privacyChoicesSchema,
+  applicable: privacyChoicesSchema.optional(),
 }) satisfies z.ZodType<PrivacyMe>;
 
 export const privacyDirectorySchema = z.object({
   currentNoticeVersion: z.number().int().positive(),
+  applicable: privacyChoicesSchema.optional(),
   household: privacyChoicesSchema.extend({ visitorRecognition: z.boolean() }),
   householdUpdatedAt: unixSeconds.nullable(),
   visitorAcknowledgedAt: unixSeconds.nullable(),

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { authService } from '@/core/services/auth.service';
 import { synchronizeService } from '@/core/services/sync';
 import type { AuthSession, AuthSessionList, SessionRevokeResult } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -10,6 +9,7 @@ import { confirm } from '@/shared/libs/confirm';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { overviewOf, SESSION_LENSES } from '@/features/sessions/model/sessions';
+import { useSignOut } from '@/features/sessions/hooks/use-sign-out';
 import { sessionsService } from '@/features/sessions/services/sessions.service';
 
 type SessionBusy = 'here' | 'others' | 'all' | null;
@@ -115,21 +115,7 @@ export function useSessions({ enabled = true }: UseSessionsOptions = {}) {
     }
   }, [t]);
 
-  const closeHere = useCallback(async () => {
-    const accepted = await confirm({
-      title: t('screens.sessions.confirm-here-title'),
-      description: t('screens.sessions.confirm-here-description'),
-      confirmLabel: t('screens.sessions.close-here'),
-      intent: 'warning',
-    });
-    if (!accepted) return;
-    setBusy('here');
-    try {
-      await authService.logout('closed-here');
-    } finally {
-      setBusy(null);
-    }
-  }, [t]);
+  const { signOut: closeHere, signingOut } = useSignOut();
 
   useEffect(() => {
     if (!enabled) return;
@@ -147,7 +133,7 @@ export function useSessions({ enabled = true }: UseSessionsOptions = {}) {
     now,
     loading: status === 'loading',
     failed: status === 'failed' && data == null,
-    busy,
+    busy: busy ?? (signingOut ? ('here' as const) : null),
     reload,
     closeOne,
     closeOthers,

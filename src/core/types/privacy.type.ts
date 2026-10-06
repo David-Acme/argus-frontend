@@ -15,6 +15,7 @@ export interface PrivacyState {
 export interface PrivacyMe extends PrivacyState {
   currentNoticeVersion: number;
   household: PrivacyChoices;
+  applicable?: PrivacyChoices;
 }
 
 export interface HouseholdPrivacy extends PrivacyChoices {
@@ -27,6 +28,7 @@ export interface UserPrivacy extends PrivacyState {
 
 export interface PrivacyDirectory {
   currentNoticeVersion: number;
+  applicable?: PrivacyChoices;
   household: HouseholdPrivacy;
   householdUpdatedAt: number | null;
   visitorAcknowledgedAt: number | null;

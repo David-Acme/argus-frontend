@@ -6,7 +6,12 @@ import type { PrivacyMe } from '@/core/types';
 import { PRIVACY_JURISDICTIONS, PRIVACY_NOTICE_VERSION } from '@/features/privacy/constants/privacy';
 import {
   NO_CHOICES,
+  answeredChoices,
+  applicableSignals,
   cameraAudioHeldBy,
+  coreSignals,
+  onlyCoreChoices,
+  signalsOfModules,
   consentDraft,
   decisionOf,
   effectiveOf,
@@ -105,5 +110,61 @@ describe('privacy consent model', () => {
       }).success
     ).toBe(true);
     expect(privacyMeSchema.safeParse({ ...undecided, household: {} }).success).toBe(false);
+  });
+});
+
+describe('privacy signals by module', () => {
+  const surveillanceOn = (id: string) => id === 'core' || id === 'surveillance';
+  const coreOnly = (id: string) => id === 'core';
+
+  test('presence, recognition on cameras and camera audio belong to surveillance and voice to the core', () => {
+    expect(coreSignals()).toEqual(['voiceLearning']);
+    expect(signalsOfModules(['surveillance'])).toEqual(['presence', 'faceCameras', 'cameraAudio']);
+    expect(signalsOfModules(['productivity'])).toEqual([]);
+  });
+
+  test('only the signals of active modules are asked, whatever the server flag says', () => {
+    expect(applicableSignals(undefined, surveillanceOn)).toEqual(['presence', 'faceCameras', 'voiceLearning', 'cameraAudio']);
+    expect(applicableSignals(undefined, coreOnly)).toEqual(['voiceLearning']);
+    expect(applicableSignals({ ...ALL, presence: false }, surveillanceOn)).toEqual([
+      'faceCameras',
+      'voiceLearning',
+      'cameraAudio',
+    ]);
+    expect(applicableSignals(ALL, coreOnly)).toEqual(['voiceLearning']);
+  });
+
+  test('a signal that is not applicable keeps its stored value when the others are answered', () => {
+    const stored = { presence: true, faceCameras: false, voiceLearning: true, cameraAudio: true };
+    const answers = { presence: false, faceCameras: true, voiceLearning: false, cameraAudio: false };
+    expect(answeredChoices(stored, ['voiceLearning'], answers)).toEqual({
+      presence: true,
+      faceCameras: false,
+      voiceLearning: false,
+      cameraAudio: true,
+    });
+  });
+
+  test('the first consent sends the surveillance signals off whatever the form held', () => {
+    expect(onlyCoreChoices(ALL)).toEqual({ presence: false, faceCameras: false, voiceLearning: true, cameraAudio: false });
+    expect(onlyCoreChoices(NO_CHOICES)).toEqual(NO_CHOICES);
+  });
+
+  test('the server flag is read when present and optional otherwise', () => {
+    const me = {
+      decided: true,
+      noticeVersion: 1,
+      current: true,
+      decidedAt: 1,
+      updatedAt: 1,
+      choices: ALL,
+      effective: ALL,
+      currentNoticeVersion: 1,
+      household: ALL,
+    };
+    expect(privacyMeSchema.safeParse(me).data?.applicable).toBeUndefined();
+    const flagged = privacyMeSchema.safeParse({ ...me, applicable: { ...ALL, presence: false } });
+    expect(flagged.data?.applicable?.presence).toBe(false);
+    expect(flagged.data?.choices.presence).toBe(true);
   });
 });

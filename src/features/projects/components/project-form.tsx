@@ -166,7 +166,7 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
                     onChange={field.onChange}
                     title={t('screens.projects.project-status')}
                     closeLabel={t('common.close')}
-                    searchPlaceholder={t('screens.home.search-placeholder')}
+                    searchPlaceholder={t('common.search')}
                     emptyLabel={t('screens.projects.no-results')}
                     trigger={
                       <SelectField

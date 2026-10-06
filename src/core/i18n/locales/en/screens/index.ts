@@ -21,6 +21,8 @@ import { privacy } from './privacy';
 import { safety } from './safety';
 import { visitors } from './visitors';
 import { modules } from './modules';
+import { access } from './access';
+import { reminders } from './reminders';
 
 export const screens = {
   home,
@@ -46,4 +48,6 @@ export const screens = {
   safety,
   visitors,
   modules,
+  access,
+  reminders,
 };

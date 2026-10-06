@@ -1,5 +1,5 @@
 import type { HouseholdPrivacy, PrivacyChoices, PrivacyMe, PrivacySignal, PrivacyState } from '@/core/types';
-import { PRIVACY_NOTICE_VERSION, PRIVACY_SIGNALS } from '@/features/privacy/constants/privacy';
+import { PRIVACY_NOTICE_VERSION, PRIVACY_SIGNALS, PRIVACY_SIGNAL_MODULE } from '@/features/privacy/constants/privacy';
 
 export const NO_CHOICES: PrivacyChoices = {
   presence: false,
@@ -9,6 +9,33 @@ export const NO_CHOICES: PrivacyChoices = {
 };
 
 export type PrivacyDecision = PrivacyChoices & { noticeVersion: number };
+
+export function applicableSignals(
+  applicable: PrivacyChoices | undefined,
+  moduleActive: (moduleId: string) => boolean
+): PrivacySignal[] {
+  return PRIVACY_SIGNALS.filter(
+    (signal) => (applicable?.[signal] ?? true) && moduleActive(PRIVACY_SIGNAL_MODULE[signal])
+  );
+}
+
+export const signalsOfModules = (moduleIds: readonly string[]): PrivacySignal[] =>
+  PRIVACY_SIGNALS.filter((signal) => moduleIds.includes(PRIVACY_SIGNAL_MODULE[signal]));
+
+export const coreSignals = (): PrivacySignal[] => signalsOfModules(['core']);
+
+export function answeredChoices(
+  stored: PrivacyChoices,
+  asked: readonly PrivacySignal[],
+  answers: PrivacyChoices
+): PrivacyChoices {
+  return Object.fromEntries(
+    PRIVACY_SIGNALS.map((signal) => [signal, asked.includes(signal) ? answers[signal] : stored[signal]])
+  ) as PrivacyChoices;
+}
+
+export const onlyCoreChoices = (choices: PrivacyChoices): PrivacyChoices =>
+  answeredChoices(NO_CHOICES, coreSignals(), choices);
 
 export function decisionOf(choices: PrivacyChoices): PrivacyDecision {
   return { noticeVersion: PRIVACY_NOTICE_VERSION, ...choices };

@@ -1,4 +1,5 @@
 import type { AppAccess, AppContext } from '@/core/types';
+import { MODULE_IDS } from '@/shared/constants';
 
 export const accessOf = (context: AppContext, now: number): AppAccess => ({
   userId: context.userId,
@@ -17,6 +18,14 @@ export const isStaleContext = (previous: AppAccess | null, next: Pick<AppContext
   previous.version !== null &&
   next.version !== null &&
   next.version < previous.version;
+
+export const activeModulesOf = (access: AppAccess | null): ReadonlySet<string> | null =>
+  access === null
+    ? null
+    : new Set([MODULE_IDS.core, ...access.modules.filter((module) => module.enabled).map((module) => module.id)]);
+
+export const gainedModules = (before: ReadonlySet<string> | null, after: ReadonlySet<string> | null): string[] =>
+  after === null ? [] : [...after].filter((id) => before === null || !before.has(id));
 
 export const belongsTo = (session: string, context: Pick<AppContext, 'userId'>): boolean =>
   String(context.userId) === session;
