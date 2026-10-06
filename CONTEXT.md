@@ -2840,6 +2840,25 @@ The desktop sees only `pair`, so no stepper there. The old
   updates reach every socket as a module or enabled-set frame), and a merge
   never lowers a stamp, so every device drops the purged tables.
 
+### Aligned with argus-settings' final shapes (services/settings/CONTEXT.md, "Modules")
+
+- Uninstall body `{keepData, pin?}`; jobs `{id, kind, state, progress,
+  bytesDone, bytesTotal, bytesPerSecond, etaSeconds, reason, owner}` with
+  the states `removing` ("Liberando espacio") and `purging` ("Borrando tus
+  datos"); `freeDiskMb` may be null (shown as "—"). The four owner failures
+  name the part of Argus involved (`ownerName`: camera → "Las cámaras", vlm
+  → "La visión", stt → "El oído de Argus", tts → "La voz de Argus", llm →
+  "El asistente", …; an unknown owner reads "Una parte de Argus").
+- `GET /modules/{id}/data` owners carry `reachable`/`reported`; any owner
+  that did not answer makes the uninstall offer the keep/delete choice, so
+  data is never assumed absent.
+- A component with `source: provisioned`, reported, not `installed`, shows
+  "Una parte se instala en el servidor" with its `hostCommand` selectable
+  and, where the WebView has a clipboard, a Copiar button
+  (`HostCommandNote`). Only the Owner's catalog carries components.
+- `/modules` is served by argus-settings, so `ARGUS_DEFAULT_ROUTE_PORTS`
+  gains `modules: 7045` (the route-baseline mirror test caught it).
+
 ### Pending
 
 - `GET /modules` and `GET /modules/{id}/data` are not in `HTTP_CONTRACTS`

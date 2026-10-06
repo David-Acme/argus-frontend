@@ -58,6 +58,7 @@ const running: ModuleJob = {
   bytesPerSecond: 1,
   etaSeconds: 9,
   reason: null,
+  owner: null,
 };
 
 const core = module({ id: 'core', kind: 'core', enabled: true, requires: [], sizeBytes: 0, hardware: null });

@@ -4,7 +4,7 @@ import { moduleEngine } from '@/core/services/modules';
 import { t } from '@/core/i18n';
 import { MODULE_SETTINGS_PATH } from '@/shared/constants';
 import { toast } from '@/shared/libs/toast';
-import { failureKey, jobLabelKey } from '@/features/modules/model/module-text';
+import { failureText, jobLabelKey } from '@/features/modules/model/module-text';
 
 export function ModuleNotices() {
   useEffect(
@@ -22,7 +22,7 @@ export function ModuleNotices() {
           transition.kind === 'install'
             ? t('screens.modules.failed-toast', { name: transition.name })
             : `${t(jobLabelKey(transition))} · ${transition.name}`;
-        toast.error(title, t(failureKey(transition.reason)), {
+        toast.error(title, failureText(transition.reason, transition.owner, t), {
           label: t('screens.modules.actions.retry'),
           onPress: () => router.push(MODULE_SETTINGS_PATH),
         });

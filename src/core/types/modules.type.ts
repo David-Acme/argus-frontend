@@ -11,6 +11,8 @@ export type ModuleJobState =
   | 'verifying'
   | 'activating'
   | 'health_check'
+  | 'removing'
+  | 'purging'
   | 'done'
   | 'paused'
   | 'failed'
@@ -21,7 +23,7 @@ export type ModuleHardware = {
   reasons: string[];
   minRamMb: number;
   recommendedRamMb: number;
-  freeDiskMb: number;
+  freeDiskMb: number | null;
 };
 
 export type ModuleJobKind = 'install' | 'uninstall' | 'purge';
@@ -36,6 +38,7 @@ export type ModuleJob = {
   bytesPerSecond: number;
   etaSeconds: number | null;
   reason: string | null;
+  owner: string | null;
 };
 
 export type ModuleGettingStartedStep = {
@@ -49,11 +52,14 @@ export type ModuleComponent = {
   id: string;
   owner: string;
   source: 'download' | 'provisioned';
+  reachable: boolean;
+  reported: boolean;
   state: string;
   bytesPresent: number;
   bytesTotal: number;
   ready: boolean;
   hostCommand: string | null;
+  reason: string | null;
 };
 
 export type ModuleRecord = {
@@ -105,6 +111,8 @@ export type ModuleDataItem = {
 
 export type ModuleDataOwner = {
   owner: string;
+  reachable: boolean;
+  reported: boolean;
   items: ModuleDataItem[];
   bytes: number;
 };
@@ -115,4 +123,5 @@ export type ModuleTransition = {
   kind: ModuleJobKind;
   state: 'done' | 'failed';
   reason: string | null;
+  owner: string | null;
 };

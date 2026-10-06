@@ -75,7 +75,7 @@ function ServerFacts({ modules }: ServerFactsProps) {
               <View className="min-w-0 flex-1">
                 <Text variant="caption">{t('screens.modules.server.disk')}</Text>
                 <Text variant="label" className="tabular-nums">
-                  {formatMegabytes(hardware.freeDiskMb, language)}
+                  {hardware.freeDiskMb === null ? '—' : formatMegabytes(hardware.freeDiskMb, language)}
                 </Text>
               </View>
             </View>

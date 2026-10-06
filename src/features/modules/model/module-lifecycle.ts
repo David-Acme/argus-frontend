@@ -101,7 +101,8 @@ export type UninstallMode = 'simple' | 'choose' | 'erase';
 
 export function uninstallMode(module: ModuleRecord, owners: readonly ModuleDataOwner[] | null): UninstallMode {
   if (module.lifecycle === 'uninstalled_data_kept') return 'erase';
-  return holdsData(module, owners) ? 'choose' : 'simple';
+  const unknown = owners === null || owners.some((owner) => !owner.reachable || !owner.reported);
+  return unknown || holdsData(module, owners) ? 'choose' : 'simple';
 }
 
 const fold = (value: string): string =>

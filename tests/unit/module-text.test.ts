@@ -7,7 +7,9 @@ import {
   failureKey,
   formatBytes,
   hardwareReasonText,
+  failureText,
   hostCommands,
+  ownerName,
   jobLabelKey,
   moduleStatus,
   percentOf,
@@ -28,6 +30,7 @@ const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   bytesPerSecond: 4_404_019,
   etaSeconds: 390,
   reason: null,
+  owner: null,
   ...patch,
 });
 
@@ -95,6 +98,25 @@ describe('job wording follows its kind', () => {
   });
 });
 
+describe('removal and purge', () => {
+  test('the new states read as what happens to the user', () => {
+    expect(progressLine(job({ kind: 'uninstall', state: 'removing', bytesTotal: 0 }), 'es', es)).toBe('Liberando espacio');
+    expect(progressLine(job({ kind: 'purge', state: 'purging', bytesTotal: 0 }), 'es', es)).toBe('Borrando tus datos');
+    expect(progressLine(job({ kind: 'uninstall', state: 'removing', bytesTotal: 0 }), 'en', en)).toBe('Freeing space');
+  });
+
+  test('owner failures name the part of Argus involved', () => {
+    expect(failureText('remove_unsupported', 'vlm', es)).toBe(
+      'La visión todavía no sabe desinstalar sus archivos. Actualiza Argus en el servidor y reintenta.'
+    );
+    expect(failureText('purge_failed', 'camera', en)).toBe('The cameras could not delete its data. Retry: it continues with what is left.');
+    expect(failureText('remove_failed', 'mystery', es)).toContain('Una parte de Argus');
+    expect(failureText('disk_full', 'camera', es)).toBe(es('screens.modules.failure.disk_full'));
+    expect(ownerName('tts', es)).toBe('La voz de Argus');
+    expect(ownerName(null, en)).toBe('A part of Argus');
+  });
+});
+
 describe('reasons become human sentences', () => {
   test('known failure codes have their own message, the rest a calm one', () => {
     expect(failureKey('disk_full')).toBe('screens.modules.failure.disk_full');
@@ -131,14 +153,26 @@ describe('module status', () => {
 
 
   test('host commands are shown only for provisioned parts not ready yet', () => {
-    const component = { id: 'detector', owner: 'camera', state: 'missing', bytesPresent: 0, bytesTotal: 1, hostCommand: 'x' };
+    const component = {
+      id: 'detector',
+      owner: 'camera',
+      reachable: true,
+      reported: true,
+      state: 'missing',
+      bytesPresent: 0,
+      bytesTotal: 1,
+      hostCommand: 'x',
+      reason: null,
+    };
     expect(
       hostCommands(
         module({
           components: [
             { ...component, source: 'provisioned', ready: false },
             { ...component, id: 'vision', source: 'download', ready: false, hostCommand: 'y' },
-            { ...component, id: 'done', source: 'provisioned', ready: true, hostCommand: 'z' },
+            { ...component, id: 'done', source: 'provisioned', state: 'installed', ready: false, hostCommand: 'z' },
+            { ...component, id: 'silent', source: 'provisioned', reported: false, ready: false, hostCommand: 'w' },
+            { ...component, id: 'twin', source: 'provisioned', ready: false },
           ],
         })
       )

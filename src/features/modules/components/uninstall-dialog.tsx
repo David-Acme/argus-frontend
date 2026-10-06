@@ -100,6 +100,9 @@ export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogPr
           <Text variant="caption" className="text-foreground-secondary">
             {target?.owners ? t('screens.modules.uninstall.holds') : t('screens.modules.uninstall.data-unknown')}
           </Text>
+          {target?.owners?.some((owner) => !owner.reachable || !owner.reported) ? (
+            <Text variant="caption">{t('screens.modules.uninstall.data-unknown')}</Text>
+          ) : null}
           {summary.map((line) => (
             <View key={line} className="flex-row items-center gap-2">
               <Icon name="hard-drive" className="text-muted-foreground size-3.5" />

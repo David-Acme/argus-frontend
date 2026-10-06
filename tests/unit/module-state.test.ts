@@ -28,6 +28,7 @@ const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   bytesPerSecond: 50,
   etaSeconds: 12,
   reason: null,
+  owner: null,
   ...patch,
 });
 
@@ -150,10 +151,10 @@ describe('transitions', () => {
   test('report a job that finished or failed while it was followed', () => {
     const before = catalog([module({ job: job() })]);
     expect(jobTransitions(before, catalog([module({ job: job({ state: 'done' }) })]))).toEqual([
-      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'done', reason: null },
+      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'done', reason: null, owner: null },
     ]);
     expect(jobTransitions(before, catalog([module({ job: job({ state: 'failed', reason: 'disk_full' }) })]))).toEqual([
-      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'failed', reason: 'disk_full' },
+      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'failed', reason: 'disk_full', owner: null },
     ]);
   });
 

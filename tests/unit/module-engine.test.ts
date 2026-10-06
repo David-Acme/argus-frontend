@@ -13,6 +13,7 @@ const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   bytesPerSecond: 10,
   etaSeconds: 75,
   reason: null,
+  owner: null,
   ...patch,
 });
 

@@ -29,6 +29,8 @@ export const moduleJobSchema = z
       'verifying',
       'activating',
       'health_check',
+      'removing',
+      'purging',
       'done',
       'paused',
       'failed',
@@ -43,6 +45,7 @@ export const moduleJobSchema = z
       .nullish()
       .transform((value) => (value == null || value < 0 ? null : value)),
     reason: optionalText,
+    owner: optionalText,
   })
   .transform(
     (job): ModuleJob => ({ ...job, progress: Math.min(1, Math.max(0, job.progress)) })
@@ -53,7 +56,7 @@ export const moduleHardwareSchema = z.object({
   reasons: z.array(z.string()).catch([]),
   minRamMb: bytes,
   recommendedRamMb: bytes,
-  freeDiskMb: bytes,
+  freeDiskMb: z.number().nonnegative().nullable().catch(null),
 }) satisfies z.ZodType<ModuleHardware>;
 
 const gettingStartedSchema = z.union([
@@ -87,11 +90,14 @@ export const moduleComponentSchema = z.object({
   id: z.string(),
   owner: z.string().catch(''),
   source: z.enum(['download', 'provisioned']).catch('download'),
+  reachable: z.boolean().catch(true),
+  reported: z.boolean().catch(true),
   state: z.string().catch(''),
   bytesPresent: bytes,
   bytesTotal: bytes,
   ready: z.boolean().catch(false),
   hostCommand: optionalText,
+  reason: optionalText,
 }) satisfies z.ZodType<ModuleComponent>;
 
 const lifecycleSchema = z.enum(['not_installed', 'active', 'disabled', 'uninstalled_data_kept']);
@@ -212,6 +218,8 @@ export const readModuleActionResult = (info: unknown): ModuleRecord | ModuleJob 
 export const moduleDataSchema = z.array(
   z.object({
     owner: z.string(),
+    reachable: z.boolean().catch(true),
+    reported: z.boolean().catch(true),
     items: z.array(z.object({ kind: z.string(), count: z.number().nonnegative() })).catch([]),
     bytes: bytes,
   })

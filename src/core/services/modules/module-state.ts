@@ -18,6 +18,8 @@ const RUNNING: ReadonlySet<ModuleJobState> = new Set([
   'verifying',
   'activating',
   'health_check',
+  'removing',
+  'purging',
 ]);
 
 const TERMINAL: ReadonlySet<ModuleJobState> = new Set(['done', 'failed', 'cancelled']);
@@ -179,7 +181,7 @@ export function jobTransitions(previous: ModuleCatalog | null, next: ModuleCatal
     const earlier = before.get(module.id);
     if (!job || !earlier || earlier.id !== job.id || !isJobOpen(earlier)) return [];
     if (job.state !== 'done' && job.state !== 'failed') return [];
-    return [{ id: module.id, name: module.name, kind: job.kind, state: job.state, reason: job.reason }];
+    return [{ id: module.id, name: module.name, kind: job.kind, state: job.state, reason: job.reason, owner: job.owner }];
   });
 }
 
@@ -243,6 +245,7 @@ const pendingJob = (state: ModuleJobState, previous: ModuleJob | null, kind: Mod
   bytesPerSecond: 0,
   etaSeconds: null,
   reason: null,
+  owner: null,
 });
 
 export function optimisticPatch(module: ModuleRecord, action: ModuleAction): Partial<ModuleRecord> {

@@ -15,6 +15,7 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   camera: 7026,
   zone: 7026,
   media: 7026,
+  modules: 7045,
   project: 7027,
   'project-task': 7027,
   'project-member': 7027,

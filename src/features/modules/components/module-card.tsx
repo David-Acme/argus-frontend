@@ -7,11 +7,12 @@ import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { HostCommandNote } from '@/features/modules/components/host-command-note';
 import { ModuleProgress } from '@/features/modules/components/module-progress';
 import { lifecycleCopy } from '@/features/modules/model/module-lifecycle';
 import { unmetRequirements } from '@/features/modules/model/module-selection';
 import {
-  failureKey,
+  failureText,
   formatBytes,
   hardwareReasonText,
   hostCommands,
@@ -202,26 +203,13 @@ export function ModuleCard({
           <ModuleProgress job={module.job} />
           {module.job.state === 'failed' ? (
             <Text variant="caption" className="text-error-strong">
-              {t(failureKey(module.job.reason))}
+              {failureText(module.job.reason, module.job.owner, t)}
             </Text>
           ) : null}
         </View>
       ) : null}
 
-      {commands.length > 0 ? (
-        <View className="gap-1.5">
-          <Text variant="caption" className="text-foreground-secondary">
-            {t('screens.modules.host-command')}
-          </Text>
-          {commands.map((command) => (
-            <View key={command} className="bg-surface-secondary dark:bg-card-secondary rounded-xl px-3 py-2">
-              <Text variant="caption" selectable className="text-foreground font-mono">
-                {command}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
+      {commands.length > 0 ? <HostCommandNote commands={commands} /> : null}
 
       {actions ? <View className="flex-row flex-wrap items-center justify-end gap-2">{actions}</View> : null}
     </View>

@@ -87,6 +87,8 @@ const JOB_KEYS: Readonly<Record<ModuleJobState, TranslationKey>> = {
   verifying: 'screens.modules.job.verifying',
   activating: 'screens.modules.job.activating',
   health_check: 'screens.modules.job.health_check',
+  removing: 'screens.modules.job.removing',
+  purging: 'screens.modules.job.purging',
   done: 'screens.modules.job.done',
   paused: 'screens.modules.job.paused',
   failed: 'screens.modules.job.failed',
@@ -109,7 +111,14 @@ const KIND_KEYS: Readonly<Record<Exclude<ModuleJob['kind'], 'install'>, { runnin
 };
 
 export function jobLabelKey(job: Pick<ModuleJob, 'kind' | 'state'>): TranslationKey {
-  if (job.kind === 'install' || job.state === 'paused' || job.state === 'cancelled' || job.state === 'queued') {
+  if (
+    job.kind === 'install' ||
+    job.state === 'paused' ||
+    job.state === 'cancelled' ||
+    job.state === 'queued' ||
+    job.state === 'removing' ||
+    job.state === 'purging'
+  ) {
     return jobStateKey(job.state);
   }
   const keys = KIND_KEYS[job.kind];
@@ -142,6 +151,37 @@ const codeOf = (reason: string) => reason.trim().toLowerCase().replace(/[\s-]+/g
 export const failureKey = (reason: string | null): TranslationKey =>
   (reason ? FAILURE_KEYS[codeOf(reason)] : undefined) ?? 'screens.modules.failure.unknown';
 
+const OWNER_KEYS: Readonly<Record<string, TranslationKey>> = {
+  camera: 'screens.modules.owners.camera',
+  guard: 'screens.modules.owners.guard',
+  identity: 'screens.modules.owners.identity',
+  productivity: 'screens.modules.owners.productivity',
+  vlm: 'screens.modules.owners.vlm',
+  stt: 'screens.modules.owners.stt',
+  tts: 'screens.modules.owners.tts',
+  llm: 'screens.modules.owners.llm',
+  notification: 'screens.modules.owners.notification',
+};
+
+export const ownerName = (owner: string | null, t: TranslateFn): string =>
+  t((owner ? OWNER_KEYS[owner.trim().toLowerCase()] : undefined) ?? 'screens.modules.owners.other');
+
+export function failureText(reason: string | null, owner: string | null, t: TranslateFn): string {
+  const part = ownerName(owner, t);
+  switch (reason ? codeOf(reason) : '') {
+    case 'remove_failed':
+      return t('screens.modules.failure.remove_failed', { part });
+    case 'remove_unsupported':
+      return t('screens.modules.failure.remove_unsupported', { part });
+    case 'purge_failed':
+      return t('screens.modules.failure.purge_failed', { part });
+    case 'purge_unsupported':
+      return t('screens.modules.failure.purge_unsupported', { part });
+    default:
+      return t(failureKey(reason));
+  }
+}
+
 const looksLikeSentence = (reason: string) => /\s/.test(reason.trim());
 
 export function hardwareReasonText(
@@ -152,7 +192,7 @@ export function hardwareReasonText(
 ): string {
   const min = formatMegabytes(hardware.minRamMb, language);
   const recommended = formatMegabytes(hardware.recommendedRamMb, language);
-  const free = formatMegabytes(hardware.freeDiskMb, language);
+  const free = formatMegabytes(hardware.freeDiskMb ?? 0, language);
   switch (codeOf(reason)) {
     case 'ram_below_minimum':
       return t('screens.modules.reason.ram_below_minimum', { min });
@@ -209,7 +249,16 @@ export function moduleNames(ids: readonly string[], modules: readonly ModuleReco
 }
 
 
-export const hostCommands = (module: ModuleRecord): string[] =>
-  module.components
-    .filter((component) => component.source === 'provisioned' && !component.ready && component.hostCommand)
-    .map((component) => component.hostCommand ?? '');
+export const hostCommands = (module: ModuleRecord): string[] => [
+  ...new Set(
+    module.components
+      .filter(
+        (component) =>
+          component.source === 'provisioned' &&
+          component.reported &&
+          component.state !== 'installed' &&
+          component.hostCommand !== null
+      )
+      .map((component) => component.hostCommand ?? '')
+  ),
+];

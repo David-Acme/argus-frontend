@@ -51,6 +51,7 @@ const job = (state: ModuleJob['state']): ModuleJob => ({
   bytesPerSecond: 1,
   etaSeconds: 5,
   reason: null,
+  owner: null,
 });
 
 const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ supported: true, fetchedAt: 0, modules });
@@ -118,10 +119,14 @@ describe('uninstall rules', () => {
   });
 
   test('without data it is one confirmation, with data a choice, after a kept uninstall an erase', () => {
+    const owner = { owner: 'camera', reachable: true, reported: true };
     expect(uninstallMode(module(), [])).toBe('simple');
-    expect(uninstallMode(module(), [{ owner: 'camera', items: [{ kind: 'camera', count: 0 }], bytes: 0 }])).toBe('simple');
+    expect(uninstallMode(module(), [{ ...owner, items: [{ kind: 'camera', count: 0 }], bytes: 0 }])).toBe('simple');
     expect(uninstallMode(module({ hasData: true }), [])).toBe('choose');
-    expect(uninstallMode(module(), [{ owner: 'camera', items: [], bytes: 2048 }])).toBe('choose');
+    expect(uninstallMode(module(), [{ ...owner, items: [], bytes: 2048 }])).toBe('choose');
+    expect(uninstallMode(module(), [{ ...owner, reachable: false, items: [], bytes: 0 }])).toBe('choose');
+    expect(uninstallMode(module(), [{ ...owner, reported: false, items: [], bytes: 0 }])).toBe('choose');
+    expect(uninstallMode(module(), null)).toBe('choose');
     expect(uninstallMode(module({ lifecycle: 'uninstalled_data_kept' }), null)).toBe('erase');
     expect(holdsData(module(), null)).toBe(false);
   });
@@ -137,8 +142,8 @@ describe('uninstall rules', () => {
 
   test('what a module holds is summed per kind across owners', () => {
     const owners = [
-      { owner: 'camera', items: [{ kind: 'camera', count: 3 }, { kind: 'events', count: 100 }], bytes: 2 * 1024 ** 3 },
-      { owner: 'guard', items: [{ kind: 'event', count: 28 }, { kind: 'zone', count: 1 }, { kind: 'widget', count: 2 }], bytes: 104_857_600 },
+      { owner: 'camera', reachable: true, reported: true, items: [{ kind: 'camera', count: 3 }, { kind: 'events', count: 100 }], bytes: 2 * 1024 ** 3 },
+      { owner: 'guard', reachable: true, reported: true, items: [{ kind: 'event', count: 28 }, { kind: 'zone', count: 1 }, { kind: 'widget', count: 2 }], bytes: 104_857_600 },
     ];
     expect(dataSummary(owners, 'es', es)).toEqual([
       '3 cámaras',
@@ -147,7 +152,7 @@ describe('uninstall rules', () => {
       '2 widget',
       '2,1 GB de evidencias y archivos',
     ]);
-    expect(dataSummary([{ owner: 'camera', items: [{ kind: 'camera', count: 1 }], bytes: 0 }], 'en', en)).toEqual([
+    expect(dataSummary([{ owner: 'camera', reachable: true, reported: true, items: [{ kind: 'camera', count: 1 }], bytes: 0 }], 'en', en)).toEqual([
       '1 camera',
     ]);
   });

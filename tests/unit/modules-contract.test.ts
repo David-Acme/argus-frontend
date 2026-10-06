@@ -23,10 +23,23 @@ const wireModule = {
     bytesPerSecond: 4_000_000,
     etaSeconds: 350,
     reason: null,
+    owner: null,
   },
   gettingStarted: ['Conecta tu primera cámara', { id: 'zones', title: 'Dibuja una zona', hint: 'Marca la puerta', route: '/cameras' }],
   components: [
-    { id: 'detector', owner: 'camera', source: 'provisioned', state: 'missing', bytesPresent: 0, bytesTotal: 10, ready: false, hostCommand: 'scripts/setup.sh --yolo' },
+    {
+      id: 'detector',
+      owner: 'camera',
+      source: 'provisioned',
+      reachable: true,
+      reported: true,
+      state: 'missing',
+      bytesPresent: 0,
+      bytesTotal: 10,
+      ready: false,
+      hostCommand: 'scripts/setup.sh --yolo',
+      reason: null,
+    },
   ],
 };
 
@@ -54,10 +67,28 @@ describe('module contract', () => {
   });
 
   test('reads what a module holds, bare or wrapped', () => {
-    const owners = [{ owner: 'camera', items: [{ kind: 'camera', count: 3 }], bytes: 10 }];
+    const owners = [{ owner: 'camera', reachable: true, reported: true, items: [{ kind: 'camera', count: 3 }], bytes: 10 }];
     expect(readModuleData(owners)).toEqual(owners);
     expect(readModuleData({ owners })).toEqual(owners);
+    expect(readModuleData({ owners: [{ owner: 'guard', reachable: false, reported: true, items: [], bytes: 0 }] })?.[0]?.reachable).toBe(false);
     expect(readModuleData({ nope: 1 })).toBeNull();
+  });
+
+  test('matches the documented owner shape: removal states, failing owner, unreadable disk', () => {
+    const [module] =
+      readModuleList({
+        modules: [
+          {
+            ...wireModule,
+            hardware: { ...wireModule.hardware, freeDiskMb: null },
+            job: { ...wireModule.job, kind: 'uninstall', state: 'failed', reason: 'remove_unsupported', owner: 'vlm', etaSeconds: null },
+          },
+        ],
+      }) ?? [];
+    expect(module?.hardware?.freeDiskMb).toBeNull();
+    expect(module?.job).toMatchObject({ kind: 'uninstall', state: 'failed', reason: 'remove_unsupported', owner: 'vlm' });
+    expect(readModuleList([{ ...wireModule, job: { ...wireModule.job, kind: 'purge', state: 'purging' } }])?.[0]?.job?.state).toBe('purging');
+    expect(readModuleList([{ ...wireModule, job: { ...wireModule.job, state: 'removing' } }])?.[0]?.job?.state).toBe('removing');
   });
 
   test('job kind defaults to install and is kept for uninstall and purge', () => {
