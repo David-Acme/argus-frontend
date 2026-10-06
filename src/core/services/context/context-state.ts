@@ -12,6 +12,11 @@ export const accessOf = (context: AppContext, now: number): AppAccess => ({
   receivedAt: now,
 });
 
+export const sameAccess = (left: AppAccess | null, right: AppAccess | null): boolean =>
+  left !== null &&
+  right !== null &&
+  JSON.stringify({ ...left, receivedAt: 0 }) === JSON.stringify({ ...right, receivedAt: 0 });
+
 export const isStaleContext = (previous: AppAccess | null, next: Pick<AppContext, 'userId' | 'version'>): boolean =>
   previous !== null &&
   previous.userId === next.userId &&

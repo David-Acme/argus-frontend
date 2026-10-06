@@ -69,6 +69,9 @@ export function replaceCatalog(
   return { fetchedAt: now, modules: modules.map((module) => mergeModule(byId.get(module.id), module)) };
 }
 
+export const sameModules = (left: ModuleCatalog | null, right: ModuleCatalog | null): boolean =>
+  left !== null && right !== null && JSON.stringify(left.modules) === JSON.stringify(right.modules);
+
 export function catalogOfContext(context: Pick<AppContext, 'modules' | 'ownerCatalog'>): ModuleRecord[] {
   if (!context.ownerCatalog) return context.modules;
   const briefs = new Map(context.modules.map((module) => [module.id, module]));

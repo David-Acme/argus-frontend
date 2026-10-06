@@ -18,6 +18,7 @@ import {
   optimisticPatch,
   purgeDecision,
   patchModule,
+  sameModules,
   replaceCatalog,
   upsertModule,
   withJob,
@@ -130,6 +131,10 @@ export class ModuleEngine {
 
   private write(next: ModuleCatalog | null): void {
     const previous = this.current();
+    if (sameModules(previous, next)) {
+      void this.reconcilePurges();
+      return;
+    }
     this.deps.cache.write(next);
     jobTransitions(previous, next, this.deps.language()).forEach((transition) =>
       this.transitionListeners.forEach((listener) => listener(transition))

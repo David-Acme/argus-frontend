@@ -79,6 +79,16 @@ describe('context engine', () => {
     expect(h.changes).toHaveLength(2);
   });
 
+  test('the same context again keeps the cached value and only tells the modules', () => {
+    const h = harness();
+    h.engine.start('7');
+    h.initial({ id: 7, role: 'resident', isActive: true, context: wire() });
+    const first = h.cache.value;
+    h.update(wire());
+    expect(h.cache.value).toBe(first);
+    expect(h.applied).toHaveLength(2);
+  });
+
   test('a frame without a context, for another user or malformed is ignored', () => {
     const h = harness();
     h.engine.start('7');

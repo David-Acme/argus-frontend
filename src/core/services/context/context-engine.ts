@@ -1,6 +1,6 @@
 import { readContext } from '@/core/contracts/context.contract';
 import type { AppAccess, AppContext } from '@/core/types';
-import { accessOf, belongsTo, isStaleContext, withModuleOff } from './context-state';
+import { accessOf, belongsTo, isStaleContext, sameAccess, withModuleOff } from './context-state';
 
 type Unsubscribe = () => void;
 
@@ -65,7 +65,9 @@ export class ContextEngine {
     const context = readContext(info);
     if (!context || !belongsTo(session, context)) return false;
     if (isStaleContext(this.current(), context)) return false;
-    const access = accessOf(context, this.deps.now());
+    const fresh = accessOf(context, this.deps.now());
+    const previous = this.current();
+    const access = sameAccess(previous, fresh) && previous ? previous : fresh;
     this.deps.cache.write(access);
     this.deps.modules.applyContext(context);
     this.listeners.forEach((listener) => listener(access));

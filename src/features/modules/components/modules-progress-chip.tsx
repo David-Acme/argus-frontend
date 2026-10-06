@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { isJobOpen } from '@/core/services/modules';
-import { useAuthStore } from '@/core/stores';
 import type { ModuleRecord } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { MODULE_SETTINGS_PATH } from '@/shared/constants';
+import { CAPABILITY, MODULE_SETTINGS_PATH } from '@/shared/constants';
+import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useModuleCatalog } from '@/features/modules/hooks/use-module-catalog';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
@@ -21,7 +21,8 @@ const attentionOf = (modules: readonly ModuleRecord[]): ModuleRecord | null =>
 export function ModulesProgressChip() {
   const router = useRouter();
   const { t } = useTranslation();
-  const owner = useAuthStore((state) => state.user?.role === 'owner');
+  const { has } = useCapabilities();
+  const owner = has(CAPABILITY.modulesManage);
   const catalog = useModuleCatalog();
   const module = owner ? attentionOf(catalog?.modules ?? []) : null;
   const job = module?.job ?? null;

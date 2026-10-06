@@ -248,6 +248,23 @@ describe('module engine', () => {
     expect(h.transitions.map((item) => [item.name, item.state])).toEqual([['Surveillance', 'done']]);
   });
 
+  test('a context that changes nothing does not rewrite the cache', () => {
+    const h = harness();
+    let writes = 0;
+    const write = h.cache;
+    h.engine.start('7');
+    h.engine.applyContext(context({ ownerCatalog: [module()] }));
+    const first = write.value;
+    Object.defineProperty(write, 'value', {
+      get: () => first,
+      set: () => {
+        writes += 1;
+      },
+    });
+    h.engine.applyContext(context({ ownerCatalog: [module()] }));
+    expect(writes).toBe(0);
+  });
+
   test('stops listening on stop, and a new session starts clean', () => {
     const h = harness();
     h.engine.start('7');
