@@ -35,6 +35,9 @@ export function mergeJob(previous: ModuleJob | null, next: ModuleJob | null): Mo
   return { ...next, bytesDone, progress };
 }
 
+const latestStamp = (left: number | null, right: number | null | undefined): number | null =>
+  Math.max(left ?? 0, right ?? 0) || null;
+
 export function mergeModule(previous: ModuleRecord | undefined, next: ModuleRecord): ModuleRecord {
   if (!previous) return next;
   if (!next.detailed && previous.detailed) {
@@ -43,6 +46,7 @@ export function mergeModule(previous: ModuleRecord | undefined, next: ModuleReco
       name: next.name || previous.name,
       enabled: next.enabled,
       lifecycle: next.enabled ? 'active' : previous.lifecycle === 'active' ? 'disabled' : previous.lifecycle,
+      dataPurgedAt: latestStamp(previous.dataPurgedAt, next.dataPurgedAt),
     };
   }
   return { ...next, job: mergeJob(previous.job, next.job) };
@@ -72,15 +76,18 @@ export function applyEnabledFlags(catalog: ModuleCatalog | null, flags: readonly
   const base = catalog ?? { supported: true, fetchedAt: now, modules: [] };
   const byId = new Map(flags.map((flag) => [flag.id, flag.enabled]));
   const known = new Set(base.modules.map((module) => module.id));
-  const updated = base.modules.map((module): ModuleRecord =>
-    byId.has(module.id) && byId.get(module.id) !== module.enabled
+  const stamps = new Map(flags.map((flag) => [flag.id, flag.dataPurgedAt ?? null]));
+  const updated = base.modules.map((module): ModuleRecord => {
+    const stamp = latestStamp(module.dataPurgedAt, stamps.get(module.id));
+    const stamped = stamp === module.dataPurgedAt ? module : { ...module, dataPurgedAt: stamp };
+    return byId.has(module.id) && byId.get(module.id) !== module.enabled
       ? {
-          ...module,
+          ...stamped,
           enabled: byId.get(module.id) === true,
           lifecycle: byId.get(module.id) === true ? 'active' : module.lifecycle === 'active' ? 'disabled' : module.lifecycle,
         }
-      : module
-  );
+      : stamped;
+  });
   const added = flags
     .filter((flag) => !known.has(flag.id))
     .map(
@@ -92,7 +99,7 @@ export function applyEnabledFlags(catalog: ModuleCatalog | null, flags: readonly
         lifecycle: flag.enabled ? 'active' : 'not_installed',
         enabled: flag.enabled,
         hasData: false,
-        dataPurgedAt: null,
+        dataPurgedAt: flag.dataPurgedAt ?? null,
         requires: [],
         sizeBytes: 0,
         installedBytes: 0,
@@ -172,7 +179,7 @@ export function jobTransitions(previous: ModuleCatalog | null, next: ModuleCatal
     const earlier = before.get(module.id);
     if (!job || !earlier || earlier.id !== job.id || !isJobOpen(earlier)) return [];
     if (job.state !== 'done' && job.state !== 'failed') return [];
-    return [{ id: module.id, name: module.name, state: job.state, reason: job.reason }];
+    return [{ id: module.id, name: module.name, kind: job.kind, state: job.state, reason: job.reason }];
   });
 }
 
@@ -226,8 +233,9 @@ export function bytesToFetch(catalog: ModuleCatalog | null, ids: readonly string
     .reduce((total, module) => total + Math.max(0, module.sizeBytes - module.installedBytes), 0);
 }
 
-const pendingJob = (state: ModuleJobState, previous: ModuleJob | null): ModuleJob => ({
+const pendingJob = (state: ModuleJobState, previous: ModuleJob | null, kind: ModuleJob['kind'] = 'install'): ModuleJob => ({
   id: previous?.id ?? 'pending',
+  kind: previous?.kind ?? kind,
   state,
   progress: previous?.progress ?? 0,
   bytesDone: previous?.bytesDone ?? 0,
@@ -250,7 +258,7 @@ export function optimisticPatch(module: ModuleRecord, action: ModuleAction): Par
     case 'disable':
       return { enabled: false, lifecycle: 'disabled' };
     case 'uninstall':
-      return { job: pendingJob('queued', null) };
+      return { job: pendingJob('queued', null, 'uninstall') };
   }
 }
 

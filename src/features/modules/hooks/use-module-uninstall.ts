@@ -1,13 +1,20 @@
 import { useCallback, useState } from 'react';
 import { moduleEngine, modulesService } from '@/core/services/modules';
 import type { IApiError } from '@/core/interfaces';
-import type { ModuleCatalog, ModuleDataOwner, ModuleRecord, ModuleUninstall } from '@/core/types';
+import type { ModuleCatalog, ModuleDataOwner, ModuleRecord } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
-import { askCurrentPin, safetyService } from '@/features/safety';
-import { blockMessage, uninstallBlock, uninstallMode, type UninstallMode } from '@/features/modules/model/module-lifecycle';
+import { askCurrentPin } from '@/features/safety';
+import {
+  blockMessage,
+  pinStep,
+  retryBody,
+  uninstallBlock,
+  uninstallMode,
+  type UninstallMode,
+} from '@/features/modules/model/module-lifecycle';
 
 export type UninstallTarget = {
   module: ModuleRecord;
@@ -30,20 +37,42 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
   );
 
   const send = useCallback(
-    async (module: ModuleRecord, body: ModuleUninstall) => {
-      const result = await moduleEngine.act(module.id, 'uninstall', body);
-      if (!result.ok) {
-        refusal(module, result.errors);
-        return false;
+    async (module: ModuleRecord, keepData: boolean) => {
+      let pin: string | undefined;
+      for (;;) {
+        const result = await moduleEngine.act(module.id, 'uninstall', pin === undefined ? { keepData } : { keepData, pin });
+        if (result.ok) {
+          toast.info(
+            keepData
+              ? t('screens.modules.uninstall.done', { name: module.name })
+              : t('screens.modules.uninstall.purge-started', { name: module.name })
+          );
+          return true;
+        }
+        const step = pinStep(result.errors?.code);
+        if (step === 'locked') {
+          toast.error(t('screens.modules.action-failed'), t('screens.modules.uninstall.pin-locked'));
+          return false;
+        }
+        if (step === 'refused') {
+          refusal(module, result.errors);
+          return false;
+        }
+        if (step === 'invalid') toast.warning(t('screens.modules.uninstall.pin-invalid'));
+        const entered = await askCurrentPin();
+        if (entered === null) return false;
+        pin = entered;
       }
-      toast.info(
-        body.keepData
-          ? t('screens.modules.uninstall.done', { name: module.name })
-          : t('screens.modules.uninstall.purge-started', { name: module.name })
-      );
-      return true;
     },
     [refusal, t]
+  );
+
+  const retry = useCallback(
+    async (module: ModuleRecord) => {
+      const body = retryBody(module.job);
+      if (body) await send(module, body.keepData);
+    },
+    [send]
   );
 
   const start = useCallback(
@@ -66,7 +95,7 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
           cancelLabel: t('common.cancel'),
           intent: 'warning',
         });
-        if (accepted) await send(module, { keepData: true });
+        if (accepted) await send(module, true);
         return;
       }
       setTarget({ module, mode: mode === 'simple' ? 'choose' : mode, owners });
@@ -81,20 +110,10 @@ export function useModuleUninstall(catalog: ModuleCatalog | null) {
       if (!target) return;
       const { module } = target;
       setTarget(null);
-      if (keepData) {
-        await send(module, { keepData: true });
-        return;
-      }
-      let pin: string | undefined;
-      if (await safetyService.disarmNeedsPin()) {
-        const entered = await askCurrentPin();
-        if (entered === null) return;
-        pin = entered;
-      }
-      await send(module, pin === undefined ? { keepData: false } : { keepData: false, pin });
+      await send(module, keepData);
     },
     [send, target]
   );
 
-  return { target, checking, start, close, submit };
+  return { target, checking, start, close, submit, retry };
 }

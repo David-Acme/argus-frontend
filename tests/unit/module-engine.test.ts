@@ -5,6 +5,7 @@ import type { ModuleAction, ModuleCatalog, ModuleJob, ModuleRecord, ModuleTransi
 
 const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   id: '1',
+  kind: 'install',
   state: 'downloading',
   progress: 0.25,
   bytesDone: 250,

@@ -2822,16 +2822,23 @@ The desktop sees only `pair`, so no stepper there. The old
   128 eventos, 2,1 GB de evidencias y archivos") with "Conservar mis datos"
   selected and "Borrar también mis datos" beside it. Choosing to delete
   shows that it is irreversible, asks for the module name typed (case,
-  accents and outer spaces ignored) and, when the Owner has a safety code,
-  asks for it through the shared PIN prompt after the dialog closes. The
-  purge is a server job, so its progress shows like an install.
+  accents and outer spaces ignored). The request goes without a PIN; only
+  when the server answers 403 `PIN_REQUIRED` does the shared PIN prompt
+  open, and the request is repeated with `{pin}` (`PIN_INVALID`: "Ese
+  código no es correcto", ask again; 429 `PIN_LOCKED`: wait). An Owner
+  without a code confirms with the typed name alone; the app no longer asks
+  `/guard/safety`, which belongs to the surveillance module. The purge is a
+  server job (`kind: purge`; uninstalls are `kind: uninstall`) with its own
+  wording ("Borrando tus datos", "Datos borrados"), and Reintentar repeats
+  the kind that failed.
 - **Local purge.** `dataPurgedAt` newer than this device's stamp → drop the
   module's WatermelonDB tables, forget their sync cursors and pull them
   again (rows created after a reinstall come back; purged ones do not). A
   device offline during the purge does it on its next `GET /modules`.
-  Only the Owner's catalog carries `dataPurgedAt` today; other roles keep
-  their rows hidden behind the disabled module until the server sends the
-  stamp to them too (open question for the backend).
+  Every role receives `dataPurgedAt` and `lifecycle` (non-owners in the
+  brief list `[{id, name, enabled, lifecycle, dataPurgedAt}]`, and purge
+  updates reach every socket as a module or enabled-set frame), and a merge
+  never lowers a stamp, so every device drops the purged tables.
 
 ### Pending
 

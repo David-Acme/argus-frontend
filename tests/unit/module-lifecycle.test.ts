@@ -8,7 +8,9 @@ import {
   holdsData,
   lifecycleButtons,
   lifecycleCopy,
+  pinStep,
   purgeReady,
+  retryBody,
   typedNameMatches,
   uninstallBlock,
   uninstallMode,
@@ -41,6 +43,7 @@ const module = (patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
 
 const job = (state: ModuleJob['state']): ModuleJob => ({
   id: '1',
+  kind: 'install',
   state,
   progress: 0.5,
   bytesDone: 5,
@@ -93,6 +96,8 @@ describe('lifecycle actions', () => {
     expect(choices(module({ job: job('downloading') }))).toEqual(['cancel:cancel', 'pause:pause']);
     expect(choices(module({ job: job('paused') }))).toEqual(['cancel:cancel', 'resume:resume']);
     expect(choices(module({ job: job('failed') }))).toEqual(['cancel:cancel', 'retry:install']);
+    expect(choices(module({ job: { ...job('failed'), kind: 'uninstall' } }))).toEqual(['cancel:cancel', 'retry:uninstall']);
+    expect(choices(module({ job: { ...job('failed'), kind: 'purge' } }))).toEqual(['cancel:cancel', 'retry:uninstall']);
     expect(choices(module({ job: job('done') }))).toEqual(['uninstall:uninstall', 'disable:disable']);
     expect(choices(module({ kind: 'core' }))).toEqual([]);
     expect(choices(module({ kind: 'coming_soon' }))).toEqual([]);
@@ -145,5 +150,28 @@ describe('uninstall rules', () => {
     expect(dataSummary([{ owner: 'camera', items: [{ kind: 'camera', count: 1 }], bytes: 0 }], 'en', en)).toEqual([
       '1 camera',
     ]);
+  });
+});
+
+describe('retry and PIN', () => {
+  test('a retry repeats the kind of the job that failed', () => {
+    expect(retryBody({ ...job('failed'), kind: 'purge' })).toEqual({ keepData: false });
+    expect(retryBody({ ...job('failed'), kind: 'uninstall' })).toEqual({ keepData: true });
+    expect(retryBody(job('failed'))).toBeNull();
+    expect(retryBody(null)).toBeNull();
+  });
+
+  test('the server decides when a PIN is needed', () => {
+    expect(pinStep('PIN_REQUIRED')).toBe('prompt');
+    expect(pinStep('PIN_INVALID')).toBe('invalid');
+    expect(pinStep('PIN_LOCKED')).toBe('locked');
+    expect(pinStep('MODULE_REQUIRED_BY')).toBe('refused');
+    expect(pinStep(undefined)).toBe('refused');
+  });
+
+  test('pin copy explains a wrong code, a lock and that the name is enough without a PIN', () => {
+    expect(es('screens.modules.uninstall.pin-invalid')).toBe('Ese código no es correcto. Inténtalo otra vez.');
+    expect(en('screens.modules.uninstall.pin-locked')).toBe('Too many attempts with the code. Wait a few minutes and try again.');
+    expect(es('screens.modules.uninstall.pin-needed')).toContain('escribir el nombre basta');
   });
 });

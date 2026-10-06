@@ -10,7 +10,7 @@ import { useModuleCatalog } from '@/shared/hooks/use-modules';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { ModuleProgress } from '@/features/modules/components/module-progress';
-import { jobStateKey, percentOf } from '@/features/modules/model/module-text';
+import { jobLabelKey, percentOf } from '@/features/modules/model/module-text';
 
 const attentionOf = (modules: readonly ModuleRecord[]): ModuleRecord | null =>
   modules.find((module) => module.job?.state === 'failed') ??
@@ -33,7 +33,7 @@ export function ModulesProgressChip() {
       ? t('screens.modules.paused-chip', { name: module.name })
       : t('screens.modules.installing-chip', {
         name: module.name,
-        state: t(jobStateKey(job.state)),
+        state: t(jobLabelKey(job)),
         percent: `${percentOf(job.progress)} %`,
       });
 

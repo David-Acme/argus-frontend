@@ -38,6 +38,10 @@ export const modules = {
     failed: 'No se pudo instalar',
     cancelled: 'Cancelado',
   },
+  'job-kind': {
+    uninstall: { running: 'Desinstalando', done: 'Desinstalado', failed: 'No se pudo desinstalar' },
+    purge: { running: 'Borrando tus datos', done: 'Datos borrados', failed: 'No se pudieron borrar los datos' },
+  },
   amount: '{done} de {total}',
   speed: '{speed}/s',
   eta: {
@@ -99,7 +103,9 @@ export const modules = {
     confirm: 'Desinstalar',
     'confirm-purge': 'Borrar para siempre',
     'required-by': 'Primero desactiva {names}: lo necesita para funcionar.',
-    'pin-needed': 'Si tienes un código de seguridad, te lo pediremos antes de borrar.',
+    'pin-invalid': 'Ese código no es correcto. Inténtalo otra vez.',
+    'pin-locked': 'Demasiados intentos con el código. Espera unos minutos y vuelve a probar.',
+    'pin-needed': 'Si tienes un código de seguridad, te lo pediremos antes de borrar; si no, escribir el nombre basta.',
     done: '{name} se está desinstalando',
     'purge-started': 'Borrando los datos de {name}',
   },

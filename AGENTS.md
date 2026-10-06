@@ -695,8 +695,14 @@ for Watermelon nor make an HTTP list request just because it mounted.
   checked before asking (core, a module another one needs, a running job)
   and the uninstall mode: no data → one `confirm`; data → `UninstallDialog`
   with what `GET /modules/{id}/data` reports and "Conservar mis datos" by
-  default; purging needs the module name typed and, when the Owner has
-  one, the safety PIN (`askCurrentPin` from `features/safety`). When a
+  default; purging needs the module name typed. The uninstall is sent
+  without a PIN; a 403 `PIN_REQUIRED` opens the shared PIN prompt
+  (`askCurrentPin` from `features/safety`) and retries with `{pin}`,
+  `PIN_INVALID` says so and asks again, `PIN_LOCKED` explains the wait
+  (`pinStep`). Jobs carry `kind` (`install`, `uninstall`, `purge`) and
+  Reintentar repeats that kind (`retryBody`). Every role receives
+  `dataPurgedAt` (owner catalog, brief list, module or enabled-set frames),
+  so every device purges. When a
   module's `dataPurgedAt` is newer than the stamp this device stored
   (`app.modules.purged.<userId>`), the engine drops that module's synced
   tables (`MODULE_SYNC_TABLES`) through `synchronizeService.dropTables`,

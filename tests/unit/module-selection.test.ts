@@ -50,6 +50,7 @@ const module = (patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
 
 const running: ModuleJob = {
   id: '1',
+  kind: 'install',
   state: 'downloading',
   progress: 0.1,
   bytesDone: 1,

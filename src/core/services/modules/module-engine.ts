@@ -50,7 +50,7 @@ export type ModuleEngineDeps = {
   pollMs: number;
 };
 
-const isRecord = (value: ModuleRecord | ModuleJob): value is ModuleRecord => 'kind' in value;
+const isRecord = (value: ModuleRecord | ModuleJob): value is ModuleRecord => 'lifecycle' in value;
 
 export class ModuleEngine {
   private session: string | null = null;

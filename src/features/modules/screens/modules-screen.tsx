@@ -24,6 +24,7 @@ type ModuleActionsProps = {
   checking: string | null;
   onRun: (module: ModuleRecord, action: ModuleAction) => void;
   onUninstall: (module: ModuleRecord) => void;
+  onRetryUninstall: (module: ModuleRecord) => void;
 };
 
 type ServerFactsProps = {
@@ -32,7 +33,7 @@ type ServerFactsProps = {
 
 const columnsFor = (width: number) => (width >= 700 ? 2 : 1);
 
-function ModuleActions({ module, pending, checking, onRun, onUninstall }: ModuleActionsProps) {
+function ModuleActions({ module, pending, checking, onRun, onUninstall, onRetryUninstall }: ModuleActionsProps) {
   const { t } = useTranslation();
   const buttons = lifecycleButtons(module);
   return (
@@ -46,7 +47,13 @@ function ModuleActions({ module, pending, checking, onRun, onUninstall }: Module
             variant={button.tone === 'primary' ? 'default' : button.tone === 'secondary' ? 'outline' : 'ghost'}
             loading={uninstall ? checking === module.id : pending === `${module.id}:${button.action}`}
             disabled={pending !== null || checking !== null}
-            onPress={() => (uninstall ? onUninstall(module) : onRun(module, button.action))}>
+            onPress={() =>
+              button.choice === 'retry' && uninstall
+                ? onRetryUninstall(module)
+                : uninstall
+                  ? onUninstall(module)
+                  : onRun(module, button.action)
+            }>
             <Text>{t(button.label)}</Text>
           </Button>
         );
@@ -141,6 +148,7 @@ export default function ModulesScreen() {
                   checking={uninstall.checking}
                   onRun={(target, action) => void run(target, action)}
                   onUninstall={(target) => void uninstall.start(target)}
+                  onRetryUninstall={(target) => void uninstall.retry(target)}
                 />
               }
             />

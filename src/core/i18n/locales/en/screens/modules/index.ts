@@ -38,6 +38,10 @@ export const modules = {
     failed: 'Could not install',
     cancelled: 'Cancelled',
   },
+  'job-kind': {
+    uninstall: { running: 'Uninstalling', done: 'Uninstalled', failed: 'Could not uninstall' },
+    purge: { running: 'Deleting your data', done: 'Data deleted', failed: 'Could not delete the data' },
+  },
   amount: '{done} of {total}',
   speed: '{speed}/s',
   eta: {
@@ -99,7 +103,9 @@ export const modules = {
     confirm: 'Uninstall',
     'confirm-purge': 'Delete for good',
     'required-by': 'Turn off {names} first: it needs this module to work.',
-    'pin-needed': 'If you have a security code, we will ask for it before deleting.',
+    'pin-invalid': 'That code is not right. Try again.',
+    'pin-locked': 'Too many attempts with the code. Wait a few minutes and try again.',
+    'pin-needed': 'If you have a security code, we will ask for it before deleting; otherwise typing the name is enough.',
     done: '{name} is being uninstalled',
     'purge-started': 'Deleting the data of {name}',
   },

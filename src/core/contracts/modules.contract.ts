@@ -21,6 +21,7 @@ const optionalText = z
 export const moduleJobSchema = z
   .object({
     id: z.union([z.string(), z.number()]).transform(String),
+    kind: z.enum(['install', 'uninstall', 'purge']).catch('install').optional().transform((value) => value ?? 'install'),
     state: z.enum([
       'queued',
       'checking',
@@ -95,6 +96,11 @@ export const moduleComponentSchema = z.object({
 
 const lifecycleSchema = z.enum(['not_installed', 'active', 'disabled', 'uninstalled_data_kept']);
 
+const purgeStamp = z
+  .number()
+  .nullish()
+  .transform((value) => (value && value > 0 ? value : null));
+
 export const lifecycleOf = (enabled: boolean, installedBytes: number): ModuleLifecycle =>
   enabled ? 'active' : installedBytes > 0 ? 'disabled' : 'not_installed';
 
@@ -107,10 +113,7 @@ export const moduleDetailSchema = z
     lifecycle: lifecycleSchema.optional(),
     enabled: z.boolean(),
     hasData: z.boolean().catch(false),
-    dataPurgedAt: z
-      .number()
-      .nullish()
-      .transform((value) => (value && value > 0 ? value : null)),
+    dataPurgedAt: purgeStamp,
     requires: z.array(moduleId).catch([]),
     sizeBytes: bytes,
     installedBytes: bytes,
@@ -130,17 +133,23 @@ export const moduleDetailSchema = z
   })) satisfies z.ZodType<ModuleRecord>;
 
 export const moduleBriefSchema = z
-  .object({ id: moduleId, name: z.string().catch(''), enabled: z.boolean() })
+  .object({
+    id: moduleId,
+    name: z.string().catch(''),
+    enabled: z.boolean(),
+    lifecycle: lifecycleSchema.optional(),
+    dataPurgedAt: purgeStamp,
+  })
   .transform(
     (module): ModuleRecord => ({
       id: module.id,
       name: module.name,
       summary: '',
       kind: module.id === 'core' ? 'core' : 'available',
-      lifecycle: module.enabled ? 'active' : 'not_installed',
+      lifecycle: module.lifecycle ?? (module.enabled ? 'active' : 'not_installed'),
       enabled: module.enabled,
       hasData: false,
-      dataPurgedAt: null,
+      dataPurgedAt: module.dataPurgedAt,
       requires: [],
       sizeBytes: 0,
       installedBytes: 0,
@@ -167,7 +176,7 @@ export const moduleListSchema = z
 export const moduleEnabledFlagsSchema = z.object({
   settled: z.boolean().optional(),
   version: z.number().optional(),
-  modules: z.array(z.object({ id: moduleId, enabled: z.boolean() })),
+  modules: z.array(z.object({ id: moduleId, enabled: z.boolean(), dataPurgedAt: purgeStamp.optional() })),
 }) satisfies z.ZodType<{ settled?: boolean; version?: number; modules: ModuleEnabledFlag[] }>;
 
 export const moduleActionResultSchema = z.union([
@@ -191,7 +200,7 @@ export const readModuleFrame = (info: unknown): ModuleFrame | null => {
   }
   const wrapped = z.object({ module: moduleDetailSchema }).safeParse(info);
   if (wrapped.success) return { kind: 'module', module: wrapped.data.module };
-  const module = moduleDetailSchema.safeParse(info);
+  const module = moduleSchema.safeParse(info);
   return module.success ? { kind: 'module', module: module.data } : null;
 };
 

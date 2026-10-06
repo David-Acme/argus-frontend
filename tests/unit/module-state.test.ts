@@ -20,6 +20,7 @@ import type { ModuleCatalog, ModuleJob, ModuleRecord } from '@/core/types';
 
 const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   id: '7',
+  kind: 'install',
   state: 'downloading',
   progress: 0.4,
   bytesDone: 400,
@@ -149,10 +150,10 @@ describe('transitions', () => {
   test('report a job that finished or failed while it was followed', () => {
     const before = catalog([module({ job: job() })]);
     expect(jobTransitions(before, catalog([module({ job: job({ state: 'done' }) })]))).toEqual([
-      { id: 'surveillance', name: 'Vigilancia', state: 'done', reason: null },
+      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'done', reason: null },
     ]);
     expect(jobTransitions(before, catalog([module({ job: job({ state: 'failed', reason: 'disk_full' }) })]))).toEqual([
-      { id: 'surveillance', name: 'Vigilancia', state: 'failed', reason: 'disk_full' },
+      { id: 'surveillance', name: 'Vigilancia', kind: 'install', state: 'failed', reason: 'disk_full' },
     ]);
   });
 
@@ -219,6 +220,25 @@ describe('local purge', () => {
     });
     expect(purgeDecision(purged, { surveillance: 900, productivity: 100 }).drop).toEqual([]);
     expect(purgeDecision(catalog([module()]), {}).drop).toEqual([]);
+  });
+
+  test('every role learns a purge: from its brief list or from an enabled-set frame', () => {
+    const brief = module({ detailed: false, summary: '', hardware: null, dataPurgedAt: 700 });
+    expect(purgeDecision(replaceCatalog(null, [brief], 1), {}).drop).toEqual(['surveillance']);
+    const framed = applyFrame(
+      catalog([module({ detailed: false })]),
+      { kind: 'enabled', version: null, modules: [{ id: 'surveillance', enabled: false, dataPurgedAt: 800 }] },
+      2
+    );
+    expect(framed.modules[0]?.dataPurgedAt).toBe(800);
+    expect(purgeDecision(framed, { surveillance: 700 }).drop).toEqual(['surveillance']);
+    const older = applyFrame(framed, { kind: 'enabled', version: null, modules: [{ id: 'surveillance', enabled: false }] }, 3);
+    expect(older.modules[0]?.dataPurgedAt).toBe(800);
+  });
+
+  test('a brief answer keeps the newest purge stamp it knew', () => {
+    const next = replaceCatalog(catalog([module({ dataPurgedAt: 900 })]), [module({ detailed: false, dataPurgedAt: 100 })], 4);
+    expect(next.modules[0]?.dataPurgedAt).toBe(900);
   });
 
   test('maps modules to the synced tables they own', () => {

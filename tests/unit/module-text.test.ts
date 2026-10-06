@@ -8,6 +8,7 @@ import {
   formatBytes,
   hardwareReasonText,
   hostCommands,
+  jobLabelKey,
   moduleStatus,
   percentOf,
   progressFacts,
@@ -19,6 +20,7 @@ const en = ((key: string, params?: Record<string, string>) => translate(localeDi
 
 const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   id: '1',
+  kind: 'install',
   state: 'downloading',
   progress: 0.426,
   bytesDone: 1_288_490_189,
@@ -80,6 +82,16 @@ describe('sizes, speed and time read like people talk', () => {
   test('a paused or verifying job drops speed and time', () => {
     expect(progressLine(job({ state: 'paused' }), 'es', es)).toBe('En pausa · 1,2 GB de 2,8 GB');
     expect(progressLine(job({ state: 'verifying', bytesTotal: 0 }), 'en', en)).toBe('Verifying files');
+  });
+});
+
+describe('job wording follows its kind', () => {
+  test('uninstall and purge jobs say what they do', () => {
+    expect(progressLine(job({ kind: 'purge', state: 'activating', bytesTotal: 0 }), 'es', es)).toBe('Borrando tus datos');
+    expect(es(jobLabelKey({ kind: 'uninstall', state: 'failed' }))).toBe('No se pudo desinstalar');
+    expect(en(jobLabelKey({ kind: 'purge', state: 'done' }))).toBe('Data deleted');
+    expect(es(jobLabelKey({ kind: 'purge', state: 'paused' }))).toBe('En pausa');
+    expect(es(jobLabelKey({ kind: 'install', state: 'failed' }))).toBe('No se pudo instalar');
   });
 });
 

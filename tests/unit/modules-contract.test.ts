@@ -60,6 +60,22 @@ describe('module contract', () => {
     expect(readModuleData({ nope: 1 })).toBeNull();
   });
 
+  test('job kind defaults to install and is kept for uninstall and purge', () => {
+    expect(readModuleList([wireModule])?.[0]?.job?.kind).toBe('install');
+    expect(readModuleList([{ ...wireModule, job: { ...wireModule.job, kind: 'purge' } }])?.[0]?.job?.kind).toBe('purge');
+  });
+
+  test('non-owners get lifecycle and the purge stamp, also as a frame', () => {
+    const [brief] = readModuleList([{ id: 'surveillance', name: 'Vigilancia', enabled: false, lifecycle: 'uninstalled_data_kept', dataPurgedAt: 1759700000 }]) ?? [];
+    expect(brief?.lifecycle).toBe('uninstalled_data_kept');
+    expect(brief?.dataPurgedAt).toBe(1759700000);
+    expect(brief?.detailed).toBe(false);
+    const frame = readModuleFrame({ id: 'surveillance', name: 'Vigilancia', enabled: false, lifecycle: 'not_installed', dataPurgedAt: 1759700001 });
+    expect(frame?.kind === 'module' ? frame.module.dataPurgedAt : null).toBe(1759700001);
+    const flags = readModuleFrame({ modules: [{ id: 'surveillance', enabled: false, dataPurgedAt: 5 }] });
+    expect(flags?.kind === 'enabled' ? flags.modules[0]?.dataPurgedAt : null).toBe(5);
+  });
+
   test('reads the brief list other roles get', () => {
     const modules = readModuleList([{ id: 'core', name: 'Núcleo', enabled: true }, { id: 'productivity', name: 'Agenda', enabled: false }]);
     expect(modules?.map((module) => [module.id, module.kind, module.enabled, module.detailed])).toEqual([
@@ -101,9 +117,9 @@ describe('module contract', () => {
 
   test('reads an action answer as a job or a module', () => {
     const asJob = readModuleActionResult(wireModule.job);
-    expect(asJob && 'state' in asJob && !('kind' in asJob)).toBe(true);
+    expect(asJob && 'state' in asJob && !('lifecycle' in asJob)).toBe(true);
     const asModule = readModuleActionResult({ module: wireModule });
-    expect(asModule && 'kind' in asModule).toBe(true);
+    expect(asModule && 'lifecycle' in asModule).toBe(true);
   });
 });
 

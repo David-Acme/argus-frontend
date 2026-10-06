@@ -24,8 +24,11 @@ export type ModuleHardware = {
   freeDiskMb: number;
 };
 
+export type ModuleJobKind = 'install' | 'uninstall' | 'purge';
+
 export type ModuleJob = {
   id: string;
+  kind: ModuleJobKind;
   state: ModuleJobState;
   progress: number;
   bytesDone: number;
@@ -75,6 +78,7 @@ export type ModuleRecord = {
 export type ModuleEnabledFlag = {
   id: string;
   enabled: boolean;
+  dataPurgedAt?: number | null;
 };
 
 export type ModuleFrame =
@@ -108,6 +112,7 @@ export type ModuleDataOwner = {
 export type ModuleTransition = {
   id: string;
   name: string;
+  kind: ModuleJobKind;
   state: 'done' | 'failed';
   reason: string | null;
 };

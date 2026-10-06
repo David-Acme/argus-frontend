@@ -4,8 +4,10 @@ import type {
   ModuleAction,
   ModuleCatalog,
   ModuleDataOwner,
+  ModuleJob,
   ModuleLifecycle,
   ModuleRecord,
+  ModuleUninstall,
   TranslateFn,
   TranslationKey,
 } from '@/core/types';
@@ -53,7 +55,9 @@ const BUTTON: Readonly<Record<LifecycleChoice, LifecycleButton>> = {
 export function lifecycleButtons(module: ModuleRecord): LifecycleButton[] {
   if (module.kind !== 'available') return [];
   const state = module.job?.state;
-  if (state === 'failed') return [BUTTON.cancel, BUTTON.retry];
+  if (state === 'failed') {
+    return [BUTTON.cancel, { ...BUTTON.retry, action: module.job?.kind === 'install' ? 'install' : 'uninstall' }];
+  }
   if (state === 'paused') return [BUTTON.cancel, BUTTON.resume];
   if (isJobOpen(module.job)) return [BUTTON.cancel, BUTTON.pause];
   switch (module.lifecycle) {
@@ -156,4 +160,16 @@ export function dataSummary(
   const bytes = owners.reduce((total, owner) => total + owner.bytes, 0);
   if (bytes > 0) parts.push(t('screens.modules.data.bytes', { size: formatBytes(bytes, language) }));
   return parts;
+}
+
+export const retryBody = (job: ModuleJob | null): ModuleUninstall | null =>
+  job?.kind === 'purge' ? { keepData: false } : job?.kind === 'uninstall' ? { keepData: true } : null;
+
+export type PinStep = 'prompt' | 'invalid' | 'locked' | 'refused';
+
+export function pinStep(code: string | null | undefined): PinStep {
+  if (code === 'PIN_REQUIRED') return 'prompt';
+  if (code === 'PIN_INVALID') return 'invalid';
+  if (code === 'PIN_LOCKED') return 'locked';
+  return 'refused';
 }

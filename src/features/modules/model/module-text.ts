@@ -71,7 +71,7 @@ export function progressFacts(job: ModuleJob, language: LanguageCode): ProgressF
 
 export function progressLine(job: ModuleJob, language: LanguageCode, t: TranslateFn): string {
   const facts = progressFacts(job, language);
-  const parts: string[] = [t(jobStateKey(job.state))];
+  const parts: string[] = [t(jobLabelKey(job))];
   if (facts.amount) parts.push(t('screens.modules.amount', facts.amount));
   if (facts.speed) parts.push(t('screens.modules.speed', { speed: facts.speed }));
   if (facts.eta) {
@@ -94,6 +94,27 @@ const JOB_KEYS: Readonly<Record<ModuleJobState, TranslationKey>> = {
 };
 
 export const jobStateKey = (state: ModuleJobState): TranslationKey => JOB_KEYS[state];
+
+const KIND_KEYS: Readonly<Record<Exclude<ModuleJob['kind'], 'install'>, { running: TranslationKey; done: TranslationKey; failed: TranslationKey }>> = {
+  uninstall: {
+    running: 'screens.modules.job-kind.uninstall.running',
+    done: 'screens.modules.job-kind.uninstall.done',
+    failed: 'screens.modules.job-kind.uninstall.failed',
+  },
+  purge: {
+    running: 'screens.modules.job-kind.purge.running',
+    done: 'screens.modules.job-kind.purge.done',
+    failed: 'screens.modules.job-kind.purge.failed',
+  },
+};
+
+export function jobLabelKey(job: Pick<ModuleJob, 'kind' | 'state'>): TranslationKey {
+  if (job.kind === 'install' || job.state === 'paused' || job.state === 'cancelled' || job.state === 'queued') {
+    return jobStateKey(job.state);
+  }
+  const keys = KIND_KEYS[job.kind];
+  return job.state === 'done' ? keys.done : job.state === 'failed' ? keys.failed : keys.running;
+}
 
 const VERDICT_KEYS: Readonly<Record<ModuleVerdict, TranslationKey>> = {
   ok: 'screens.modules.verdict.ok',
