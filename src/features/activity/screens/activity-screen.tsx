@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import type { ActivityFilter, ActivityItem } from '@/core/types';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
@@ -53,45 +53,76 @@ export default function ActivityScreen() {
 
   const back = () => (router.canGoBack() ? router.back() : router.replace('/settings'));
 
+  const filters = (
+    <View className="pb-3">
+      <ActivityFilters filter={filter} modules={modules} people={people} onChange={setFilter} />
+    </View>
+  );
+
   return (
     <AppScreen
       bottomNav={false}
       scrollable={false}
       header={<ScreenHeader title={t('screens.activity.title')} subtitle={t('screens.activity.subtitle')} onBack={back} />}>
-      <View className="min-h-0 flex-1 gap-4">
-        <ActivityFilters filter={filter} modules={modules} people={people} onChange={setFilter} />
-        <Panel className="min-h-56 flex-1 basis-0 p-1.5">
-          {feed.status === 'failed' && feed.rows.length === 0 ? (
-            <EmptyState
-              variant="inline"
-              icon="history"
-              title={t('screens.activity.unavailable')}
-              action={
-                <Button size="sm" variant="outline" onPress={() => void feed.reload()}>
-                  <Text>{t('common.retry')}</Text>
-                </Button>
-              }
-            />
-          ) : feed.status === 'ready' && feed.rows.length === 0 ? (
-            <EmptyState
-              variant="inline"
-              icon="history"
-              title={t('screens.activity.empty')}
-              hint={t('screens.activity.empty-hint')}
-            />
+      {feed.rows.length === 0 ? (
+        <ScrollView className="min-h-0 flex-1" contentContainerClassName="pb-6" showsVerticalScrollIndicator={false}>
+          {filters}
+          {feed.status === 'loading' ? (
+            <Panel className="gap-2 p-3">
+              <ActivitySkeleton />
+              <ActivitySkeleton />
+              <ActivitySkeleton />
+            </Panel>
           ) : (
-            <InfiniteList
-              data={feed.rows}
-              keyOf={activityKey}
-              renderItem={render}
-              estimatedItemSize={ROW_ESTIMATE}
-              paging={feed.paging}
-              gap={2}
-              scrollIndicator
-            />
+            <Panel className="py-4">
+              {feed.status === 'failed' ? (
+                <EmptyState
+                  variant="inline"
+                  icon="history"
+                  title={t('screens.activity.unavailable')}
+                  action={
+                    <Button size="sm" variant="outline" onPress={() => void feed.reload()}>
+                      <Text>{t('common.retry')}</Text>
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  variant="inline"
+                  icon="history"
+                  title={t('screens.activity.empty')}
+                  hint={t('screens.activity.empty-hint')}
+                />
+              )}
+            </Panel>
           )}
-        </Panel>
-      </View>
+        </ScrollView>
+      ) : (
+        <View className="min-h-0 flex-1">
+          <InfiniteList
+            data={feed.rows}
+            keyOf={activityKey}
+            renderItem={render}
+            estimatedItemSize={ROW_ESTIMATE}
+            paging={feed.paging}
+            header={filters}
+            gap={2}
+            scrollIndicator
+          />
+        </View>
+      )}
     </AppScreen>
+  );
+}
+
+function ActivitySkeleton() {
+  return (
+    <View className="flex-row items-center gap-3 px-3 py-2">
+      <View className="bg-surface-secondary size-10 rounded-full" />
+      <View className="flex-1 gap-2">
+        <View className="bg-surface-secondary h-3 w-3/4 rounded-full" />
+        <View className="bg-surface-secondary h-2.5 w-1/3 rounded-full opacity-70" />
+      </View>
+    </View>
   );
 }

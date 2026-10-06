@@ -173,6 +173,15 @@ describe('module intro and roles', () => {
     expect(read({ intro: { es: {}, en: 4 } })?.intro).toBeNull();
   });
 
+  test('a brief entry may say what kind of module it is without becoming a detailed one', () => {
+    const [brief] = readModuleList([{ id: 'agronomy', name: 'Agronomía', kind: 'coming_soon', enabled: false }]) ?? [];
+    expect(brief).toMatchObject({ id: 'agronomy', kind: 'coming_soon', detailed: false });
+    const [core] = readModuleList([{ id: 'core', name: 'Núcleo', enabled: true }]) ?? [];
+    expect(core).toMatchObject({ kind: 'core', detailed: false });
+    const [owner] = readModuleList([wireModule]) ?? [];
+    expect(owner?.detailed).toBe(true);
+  });
+
   test('roles are the names the module brings and anything else is dropped', () => {
     expect(read({ roles: ['guard'] })?.roles).toEqual(['guard']);
     expect(read({ roles: 'guard' })?.roles).toEqual([]);

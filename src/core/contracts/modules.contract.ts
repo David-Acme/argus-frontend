@@ -208,6 +208,7 @@ export const moduleBriefSchema = z
     id: moduleId,
     name: textFieldSchema,
     summary: textFieldSchema,
+    kind: z.enum(['core', 'available', 'coming_soon']).optional(),
     intro: moduleIntroSchema,
     roles: moduleRolesSchema,
     enabled: z.boolean(),
@@ -222,7 +223,7 @@ export const moduleBriefSchema = z
       texts: textsOfFields(module.name, module.summary),
       intro: module.intro,
       roles: module.roles,
-      kind: module.id === 'core' ? 'core' : 'available',
+      kind: module.kind ?? (module.id === 'core' ? 'core' : 'available'),
       lifecycle: module.lifecycle ?? (module.enabled ? 'active' : 'not_installed'),
       enabled: module.enabled,
       hasData: false,
@@ -239,7 +240,8 @@ export const moduleBriefSchema = z
   ) satisfies z.ZodType<ModuleRecord>;
 
 export const moduleSchema = z.unknown().transform((value, context): ModuleRecord => {
-  const detailed = typeof value === 'object' && value !== null && 'kind' in value;
+  const detailed =
+    typeof value === 'object' && value !== null && 'kind' in value && ('sizeBytes' in value || 'hardware' in value);
   const parsed = (detailed ? moduleDetailSchema : moduleBriefSchema).safeParse(value);
   if (parsed.success) return parsed.data;
   context.addIssue({ code: 'custom', message: 'not a module' });

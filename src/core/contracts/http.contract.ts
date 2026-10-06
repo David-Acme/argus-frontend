@@ -423,6 +423,8 @@ export const invitationRecordSchema = z.object({
   expiresAt: z.number(),
   createdBy: z.number(),
   revokedAt: z.number().nullable(),
+  revokedReason: z.string().nullish(),
+  revokedModule: z.string().nullish(),
   createdAt: z.number(),
 }) satisfies z.ZodType<IInvitationRecord>;
 
