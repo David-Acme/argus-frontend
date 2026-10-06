@@ -2951,6 +2951,13 @@ already refuses.
 - Which module a notification kind, a settings owner, a privacy signal or a
   call trigger belongs to is data in the app (`notification-modules.ts`,
   `settings-modules.ts`, `PRIVACY_SIGNAL_MODULE`, `TRIGGER_MODULES`). The
+  kind map is one constant, `NOTIFICATION_KIND_MODULES`, and
+  `tests/unit/notification-kind-contract.test.ts` reads the backend's
+  `services/notification/src/shared/vocabulary/notification-kind.hxx` and fails
+  when the two differ: seven kinds belong to a module (six to surveillance,
+  `agenda_event` to productivity) and every other kind, `agenda_reminder` and
+  `guard_duress` included, is core, so the feed hides only the kinds of an
+  inactive module and reminders and duress alerts are always shown. The
   privacy flag `applicable` is read when the server sends it and derived from
   the active modules otherwise; stored choices are never changed by it.
 
@@ -2988,9 +2995,9 @@ showing reminders with productivity; Inicio's Today no longer repeats them.
   module, person and action filters, keyset paging with the cursor the server
   returns, sentences built from `{table, action, module, newData.event}`.
 
-### Welcome order (supervisor, interim)
+### Welcome order (final, accepted by the owner)
 
-Owner: `pair -> privacy (consent + core signals, surveillance sent off) ->
+Owner: `pair -> privacy (notice, face consent and core signals, surveillance sent off) ->
 face -> modules -> module-privacy (only the signals of the modules chosen,
 second PUT /privacy/me) -> meet`. Consent stays before the biometric step
 (Ley 29733); the second step drops out, and its count, when no chosen module

@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { moduleOfOwner, withActiveOwners } from '@/features/settings/model/settings-modules';
-import { moduleOfNotification, notificationVisible } from '@/features/home/model/notification-modules';
 
 const owner = (service: SettingsOwnerName) => ({ service, settings: [] }) as unknown as SettingsOwner;
 
@@ -32,29 +31,5 @@ describe('settings groups by module', () => {
 
   test('with every module on the same overview is kept as it is', () => {
     expect(withActiveOwners(overview, () => true)).toBe(overview);
-  });
-});
-
-describe('notification kinds by module', () => {
-  const row = (type: string, kind?: string) => ({ type, data: kind ? { kind } : {} });
-
-  test('guard and camera kinds belong to surveillance and agenda kinds to productivity', () => {
-    expect(moduleOfNotification(row('camera', 'guard_episode'))).toBe('surveillance');
-    expect(moduleOfNotification(row('camera'))).toBe('surveillance');
-    expect(moduleOfNotification(row('system', 'agenda_event'))).toBe('productivity');
-  });
-
-  test('panic, calls, reminders and module requests are core', () => {
-    expect(moduleOfNotification(row('camera', 'guard_panic'))).toBe('core');
-    expect(moduleOfNotification(row('call', 'call'))).toBe('core');
-    expect(moduleOfNotification(row('reminder', 'assistant_reminder'))).toBe('core');
-    expect(moduleOfNotification(row('module_request', 'module_request'))).toBe('core');
-    expect(moduleOfNotification(row('system'))).toBe('core');
-  });
-
-  test('a notification is hidden only while its module is off, and kept otherwise', () => {
-    expect(notificationVisible(row('camera', 'guard_episode'), surveillanceOff)).toBe(false);
-    expect(notificationVisible(row('camera', 'guard_panic'), surveillanceOff)).toBe(true);
-    expect(notificationVisible(row('camera', 'guard_episode'), () => true)).toBe(true);
   });
 });
