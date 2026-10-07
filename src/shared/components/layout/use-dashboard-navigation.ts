@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import type { DashboardTab } from '@/core/types';
-import { DASHBOARD_TABS, DASHBOARD_TAB_ROUTE } from '@/shared/constants';
+import { DASHBOARD_TABS, DASHBOARD_TAB_ROUTE, SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { peopleAccessOf, tableAllowed } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
@@ -37,8 +37,8 @@ export function useDashboardNavigation(): DashboardNavigation {
   const labels = useMemo(
     () => ({
       home: t('screens.home.home'),
-      schedule: t('screens.agenda.schedule'),
-      projects: t('screens.projects.title'),
+      schedule: t(SCREEN_TITLE_KEYS.agenda),
+      projects: t(SCREEN_TITLE_KEYS.projects),
       people: t('screens.profile.people'),
       settings: t('screens.settings.title'),
       profile: t('screens.home.profile'),

@@ -1,4 +1,4 @@
-import type { DashboardTab, IconName, TableName } from '@/core/types';
+import type { ComposeActionId, DashboardTab, IconName, TableName, TranslationKey } from '@/core/types';
 import { CAPABILITY, type Capability } from './capability.constant';
 
 export const PANEL_PARAM = 'panel';
@@ -63,22 +63,30 @@ export const DASHBOARD_TABS: readonly {
 ];
 
 export const COMPOSE_ACTIONS: readonly {
-  id: string;
+  id: ComposeActionId;
   icon: IconName;
-  route:
-    | '/agenda?new=event'
-    | '/projects?new=project'
-    | '/cameras?new=camera'
-    | '/welcome/voice'
-    | '/call';
+  route: '/agenda' | '/projects' | '/cameras' | '/call';
   table?: TableName;
   capability?: Capability;
 }[] = [
-  { id: 'event', icon: 'calendar', route: '/agenda?new=event', table: 'calendar_event' },
-  { id: 'project', icon: 'list-todo', route: '/projects?new=project', table: 'project' },
-  { id: 'camera', icon: 'video', route: '/cameras?new=camera', table: 'camera' },
+  { id: 'event', icon: 'calendar', route: '/agenda', table: 'calendar_event' },
+  { id: 'project', icon: 'list-todo', route: '/projects', table: 'project' },
+  { id: 'camera', icon: 'video', route: '/cameras', table: 'camera' },
   { id: 'voice', icon: 'sparkles', route: '/call', capability: CAPABILITY.assistantVoice },
 ];
+
+export const SCREEN_TITLE_KEYS = {
+  agenda: 'screens.agenda.schedule',
+  projects: 'screens.projects.title',
+  cameras: 'screens.cameras.title',
+} as const satisfies Record<'agenda' | 'projects' | 'cameras', TranslationKey>;
+
+export const COMPOSE_ACTION_LABEL_KEYS: Record<ComposeActionId, TranslationKey> = {
+  event: SCREEN_TITLE_KEYS.agenda,
+  project: SCREEN_TITLE_KEYS.projects,
+  camera: SCREEN_TITLE_KEYS.cameras,
+  voice: 'screens.home.talk',
+};
 
 export const BOTTOM_NAV_HEIGHT = 60;
 

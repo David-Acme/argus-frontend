@@ -75,7 +75,7 @@ describe('routeFallback with modules', () => {
 
   test('a module route query does not hide the module from the check', () => {
     const view = viewFor('owner', coreOnly);
-    expect(routeModuleEnabled('/agenda?new=event', view)).toBe(false);
+    expect(routeModuleEnabled('/agenda?edit=event-1', view)).toBe(false);
     expect(routeModuleEnabled('/call', view)).toBe(true);
   });
 });

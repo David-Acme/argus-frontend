@@ -4,7 +4,7 @@ import { deepLinkPath } from '@/app/+native-intent';
 describe('deep link allow-list', () => {
   test('known screens pass through without their query', () => {
     expect(deepLinkPath('argus://cameras/12')).toBe('/cameras/12');
-    expect(deepLinkPath('argus://agenda?new=event')).toBe('/agenda');
+    expect(deepLinkPath('argus://agenda?edit=event-1')).toBe('/agenda');
     expect(deepLinkPath('/security')).toBe('/security');
     expect(deepLinkPath('https://argus.local/projects/')).toBe('/projects');
     expect(deepLinkPath('argus://')).toBe('/');

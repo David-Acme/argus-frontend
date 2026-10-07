@@ -10,6 +10,7 @@ import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
+import { SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -36,7 +37,7 @@ import {
   upcomingTasks,
 } from '@/features/projects/model/task-lanes';
 
-type ProjectsParams = { new?: string; id?: string; task?: string };
+type ProjectsParams = { id?: string; task?: string };
 
 const UPCOMING_LIMIT = 6;
 
@@ -44,9 +45,9 @@ export default function ProjectsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const { new: newParam, id: idParam, task: taskParam } = useLocalSearchParams<ProjectsParams>();
+  const { id: idParam, task: taskParam } = useLocalSearchParams<ProjectsParams>();
   const [selectedId, setSelectedId] = useState(idParam ?? '');
-  const [projectFormOpen, setProjectFormOpen] = useState(newParam === 'project');
+  const [projectFormOpen, setProjectFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(false);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState('');
@@ -186,7 +187,7 @@ export default function ProjectsScreen() {
               label={t('common.back')}
               onPress={() => router.replace('/')}
             />
-            <Text variant="title">{t('screens.projects.title')}</Text>
+            <Text variant="title">{t(SCREEN_TITLE_KEYS.projects)}</Text>
             {canCreateProject ? (
               <IconButton
                 icon="plus"

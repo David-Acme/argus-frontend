@@ -1,14 +1,11 @@
 import type { DashboardProjectCard } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ProjectCard } from '@/features/home/components/project-card';
-import { CreateTile } from '@/shared/components/ui/create-tile';
 import { ResponsiveGrid } from '@/shared/components/ui/responsive-grid';
 
 type ProjectGridProps = {
   projects: readonly DashboardProjectCard[];
   onSelect: (id: string) => void;
-  createLabel?: string;
-  onCreate?: () => void;
 };
 
 function columnsFor(width: number): number {
@@ -18,7 +15,7 @@ function columnsFor(width: number): number {
   return 1;
 }
 
-export function ProjectGrid({ projects, onSelect, createLabel, onCreate }: ProjectGridProps) {
+export function ProjectGrid({ projects, onSelect }: ProjectGridProps) {
   const { t } = useTranslation();
   return (
     <ResponsiveGrid
@@ -41,11 +38,6 @@ export function ProjectGrid({ projects, onSelect, createLabel, onCreate }: Proje
       )}
       columnsFor={columnsFor}
       gap={12}
-      trailing={
-        onCreate && createLabel
-          ? (width) => <CreateTile label={createLabel} style={{ width }} onPress={onCreate} />
-          : undefined
-      }
     />
   );
 }

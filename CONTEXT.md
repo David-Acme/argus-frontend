@@ -3101,3 +3101,36 @@ has signals. Invited: unchanged, all four signals, privacy before the face.
   this tree and a dev server regenerates them.
 - `shared/components/ui/orbit-hero.tsx` and `brand-mark.tsx` are shared by the
   welcome and the inactive-role screen.
+
+### Navigation names its destination (2026-10-07, order from David)
+
+A navigation entry opens a view, never a form: the compose "+" menu, the home
+cards and every other cross-screen shortcut say where they go and push that
+route alone. An explicit create control inside its own screen (the "+" of
+Agenda, Proyectos and Cámaras, a board create tile, a form title) keeps
+opening its form, and the edit entries (`?edit=`, `?task=` from the entry
+menus) keep opening the form of the row the user tapped.
+
+- `COMPOSE_ACTIONS` (`shared/constants/dashboard.constant.ts`) carries plain
+  destinations (`/agenda`, `/projects`, `/cameras`, `/call`).
+  `SCREEN_TITLE_KEYS` is the one source of the three destination titles — the
+  Agenda, Proyectos and Cámaras screens render it as their own header, the nav
+  labels Agenda and Proyectos with it, and the Inicio shortcuts that name a
+  destination read it too (the projects empty-state action, the free-hour cell
+  of Hoy, the camera-activity card) — and `COMPOSE_ACTION_LABEL_KEYS` names each
+  compose entry with the key of the screen its route opens
+  (`screens.agenda.schedule`, `screens.projects.title`, `screens.cameras.title`;
+  `voice` keeps `screens.home.talk`).
+  `tests/unit/shared/constants/compose-actions.test.ts` pins that: no route
+  carries a query, and each entry's label key is the `SCREEN_TITLE_KEYS` key of
+  the screen at its route slug, so a header rename cannot leave the "+" naming
+  another screen.
+- The Inicio projects grid has no trailing create tile: a "+" always means
+  create, and the section header's "Ver todos" already opens `/projects`.
+- Inicio follows the same rule: the free-hour cell of Hoy opens the agenda
+  (`TodayAgenda` prop `onOpenAgenda`, the label is the agenda title), the
+  projects card and its empty-state action open `/projects` named "Proyectos".
+- `?new=` is gone: no route produces it and the agenda, projects and cameras
+  screens no longer read it. `?at=` stays, because
+  `calendarEntryEditHref` still sends `/agenda?edit=<id>&at=<startsAt>` so an
+  event opens on the day it happens.

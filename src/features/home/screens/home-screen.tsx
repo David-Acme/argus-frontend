@@ -35,7 +35,7 @@ import { ResponseStrip } from '@/features/response';
 import { InactiveRoleScreen } from '@/features/access';
 import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
 import { RemindersSection } from '@/features/reminders';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
@@ -233,11 +233,7 @@ function HomeContent() {
               const href = calendarEntryEditHref(entry);
               router.push(href ?? '/agenda');
             }}
-            onCreateAt={
-              can('calendar_event', 'create')
-                ? (at) => router.push(`/agenda?new=event&at=${at}`)
-                : undefined
-            }
+            onOpenAgenda={() => router.push('/agenda')}
           />
         </View>
         ) : null}
@@ -257,19 +253,15 @@ function HomeContent() {
               title={t('screens.projects.empty')}
               hint={t('screens.projects.empty-hint')}
               action={
-                can('project', 'create') ? (
-                  <Button size="sm" onPress={() => router.push('/projects?new=project')}>
-                    <Text>{t('screens.projects.new-project')}</Text>
-                  </Button>
-                ) : undefined
+                <Button size="sm" onPress={() => router.push('/projects')}>
+                  <Text>{t(SCREEN_TITLE_KEYS.projects)}</Text>
+                </Button>
               }
             />
           ) : (
             <ProjectGrid
               projects={visibleProjects}
               onSelect={(id) => router.push(`/projects?id=${id}`)}
-              createLabel={t('screens.projects.new-project')}
-              onCreate={can('project', 'create') ? () => router.push('/projects?new=project') : undefined}
             />
           )}
         </View>

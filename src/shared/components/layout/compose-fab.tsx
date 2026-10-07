@@ -12,6 +12,7 @@ import {
   BOTTOM_NAV_GAP,
   BOTTOM_NAV_HEIGHT,
   COMPOSE_ACTIONS,
+  COMPOSE_ACTION_LABEL_KEYS,
   COMPOSE_ITEM_STAGGER_MS,
   NAV_RAIL_WIDTH,
   colorTokens,
@@ -37,12 +38,12 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
   const [open, setOpen] = useState(false);
   const iconColor = colorTokens[theme === 'dark' ? 'dark' : 'light']['foreground-on-interactive'];
 
-  const labels: Record<string, string> = useMemo(
+  const labels = useMemo(
     () => ({
-      event: t('screens.agenda.new-event'),
-      project: t('screens.projects.new-project'),
-      camera: t('screens.cameras.connect'),
-      voice: t('screens.home.talk'),
+      event: t(COMPOSE_ACTION_LABEL_KEYS.event),
+      project: t(COMPOSE_ACTION_LABEL_KEYS.project),
+      camera: t(COMPOSE_ACTION_LABEL_KEYS.camera),
+      voice: t(COMPOSE_ACTION_LABEL_KEYS.voice),
     }),
     [t]
   );
@@ -52,7 +53,7 @@ export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
       COMPOSE_ACTIONS.filter(
         (action) =>
           view.roleActive &&
-          (!action.table || tableAllowed(view, action.table, 'create')) &&
+          (!action.table || tableAllowed(view, action.table, 'read')) &&
           (!action.capability || hasCapability(view, action.capability)) &&
           routeModuleEnabled(action.route, view)
       ),

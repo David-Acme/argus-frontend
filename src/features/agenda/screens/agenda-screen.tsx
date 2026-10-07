@@ -7,7 +7,7 @@ import type { CalendarEntry, CalendarView } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { CALENDAR_DEFAULT_VIEW, IS_NATIVE } from '@/shared/constants';
+import { CALENDAR_DEFAULT_VIEW, IS_NATIVE, SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
@@ -33,7 +33,7 @@ import {
   entryPermissions,
 } from '@/features/agenda/model/calendar-entry-actions';
 
-type AgendaParams = { new?: string; edit?: string; at?: string };
+type AgendaParams = { edit?: string; at?: string };
 
 function timestampParam(value: string | undefined): number | null {
   const at = Number(value);
@@ -45,7 +45,7 @@ export default function ScheduleScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
-  const { new: newParam, edit: editParam, at: atParam } = useLocalSearchParams<AgendaParams>();
+  const { edit: editParam, at: atParam } = useLocalSearchParams<AgendaParams>();
   const atMs = timestampParam(atParam);
   const initialDay = useMemo(
     () => date.startOfDay(atMs == null ? new Date() : new Date(atMs)),
@@ -54,10 +54,8 @@ export default function ScheduleScreen() {
   const [anchor, setAnchor] = useState(initialDay);
   const [view, setView] = useState<CalendarView>(() => CALENDAR_DEFAULT_VIEW[windowClass]);
   const [selectedDay, setSelectedDay] = useState(initialDay);
-  const [eventFormOpen, setEventFormOpen] = useState(newParam === 'event');
-  const [createAt, setCreateAt] = useState<Date | null>(() =>
-    newParam === 'event' && atMs != null ? new Date(atMs) : null
-  );
+  const [eventFormOpen, setEventFormOpen] = useState(false);
+  const [createAt, setCreateAt] = useState<Date | null>(null);
   const [editingEventId, setEditingEventId] = useState('');
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
@@ -221,7 +219,7 @@ export default function ScheduleScreen() {
             label={t('common.back')}
             onPress={() => router.replace('/')}
           />
-          <Text variant="title">{t('screens.agenda.schedule')}</Text>
+          <Text variant="title">{t(SCREEN_TITLE_KEYS.agenda)}</Text>
           {canCreate ? (
             <IconButton
               icon="plus"

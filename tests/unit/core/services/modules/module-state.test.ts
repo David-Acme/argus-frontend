@@ -123,7 +123,7 @@ describe('the module maps', () => {
     expect(moduleOfAppRoute('/cameras/4')).toBe('surveillance');
     expect(moduleOfAppRoute('/users/visitors')).toBe('surveillance');
     expect(moduleOfAppRoute('/users')).toBeNull();
-    expect(moduleOfAppRoute('/agenda?new=event')).toBe('productivity');
+    expect(moduleOfAppRoute('/agenda?edit=event-1')).toBe('productivity');
   });
 });
 

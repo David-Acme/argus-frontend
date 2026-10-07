@@ -4,6 +4,7 @@ import type { CalendarEntry } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
+import { SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { calendarEntryState } from '@/core/services/view-cache';
@@ -16,7 +17,7 @@ type TodayAgendaProps = {
   formatTime: (entry: CalendarEntry) => string;
   renderActions: (entry: CalendarEntry) => ReactNode;
   onSelect: (entry: CalendarEntry) => void;
-  onCreateAt?: (at: number) => void;
+  onOpenAgenda?: () => void;
 };
 
 type HourRowProps = {
@@ -50,19 +51,13 @@ function NowMarker({ label }: { label: string }) {
   );
 }
 
-function hourStart(day: Date, hour: number): number {
-  const at = new Date(day);
-  at.setHours(hour, 0, 0, 0);
-  return at.getTime();
-}
-
 export function TodayAgenda({
   entries,
   now,
   formatTime,
   renderActions,
   onSelect,
-  onCreateAt,
+  onOpenAgenda,
 }: TodayAgendaProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
@@ -126,9 +121,9 @@ export function TodayAgenda({
             {slot.length === 0 && !current ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${t('screens.agenda.new-event')} ${date.formatHour(hour)}`}
-                disabled={!onCreateAt}
-                onPress={() => onCreateAt?.(hourStart(today, hour))}
+                accessibilityLabel={`${t(SCREEN_TITLE_KEYS.agenda)} ${date.formatHour(hour)}`}
+                disabled={!onOpenAgenda}
+                onPress={() => onOpenAgenda?.()}
                 className="group h-11 justify-center rounded-2xl px-3 web:hover:bg-surface-secondary">
                 <View className="border-border-subtle border-t border-dashed" />
               </Pressable>

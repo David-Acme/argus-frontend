@@ -125,7 +125,7 @@ describe('getting started', () => {
   const steps = module({
     enabled: true,
     gettingStarted: [
-      { id: 'surveillance:0', title: 'Conecta una cámara', hint: '', route: '/cameras?new=camera' },
+      { id: 'surveillance:0', title: 'Conecta una cámara', hint: '', route: '/cameras' },
       { id: 'surveillance:1', title: 'Dibuja una zona', hint: '', route: null },
     ],
   });

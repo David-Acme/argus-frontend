@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
@@ -36,7 +36,7 @@ import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -57,8 +57,7 @@ export default function CamerasScreen() {
   const { t } = useTranslation();
   const { isCompact, isExpanded } = useWindowClass();
   const { can, has } = useCapabilities();
-  const { new: newParam } = useLocalSearchParams<{ new?: string }>();
-  const [formOpen, setFormOpen] = useState(newParam === 'camera');
+  const [formOpen, setFormOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<CameraStatusFilter>('all');
   const [sort, setSort] = useState<CameraSort>('name');
@@ -206,7 +205,7 @@ export default function CamerasScreen() {
       bottomNav={false}
       header={
         <ScreenHeader
-          title={t('screens.cameras.title')}
+          title={t(SCREEN_TITLE_KEYS.cameras)}
           subtitle={t('screens.cameras.subtitle', {
             online: String(counts.online),
             total: String(cameras.length),
