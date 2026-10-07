@@ -17,7 +17,7 @@ export const BOTTOM_NAV_TRAVEL = 24;
 
 export const NAV_FADE_MS = 220;
 
-export const EMPTY_STATE_MAX_WIDTH = 460;
+export const EMPTY_STATE_TEXT_MAX_WIDTH = 460;
 
 export const BOTTOM_NAV_MAX_WIDTH = 560;
 
