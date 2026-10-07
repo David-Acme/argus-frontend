@@ -27,6 +27,7 @@ import {
   type NotificationThread,
 } from '@/features/home/model/notification-threads';
 import { activityTrend } from '@/features/home/model/activity-trend';
+import { cameraActivityAction } from '@/features/home/model/camera-activity-action';
 import { searchPlaceholder } from '@/features/home/model/home-search';
 import { HomeAside } from '@/features/home/components/home-aside';
 import { EmptyState } from '@/shared/components/ui/empty-state';
@@ -114,6 +115,7 @@ function HomeContent() {
   const trend = useMemo(() => activityTrend(summary, language), [language, summary]);
 
   const noCameras = summary.camerasTotal === 0;
+  const cameraAction = cameraActivityAction(noCameras);
 
   const markNotificationsRead = useCallback((ids: readonly string[]) => {
     void runOptimistic({
@@ -210,8 +212,8 @@ function HomeContent() {
           delta={trend.label}
           direction={trend.direction}
           levels={activityLevels}
-          action={noCameras ? t('screens.cameras.connect') : t('screens.home.activity-action')}
-          onAction={() => router.push(noCameras ? '/cameras?new=camera' : '/cameras')}
+          action={t(cameraAction.labelKey)}
+          onAction={() => router.push(cameraAction.href)}
         />
         ) : null}
 
