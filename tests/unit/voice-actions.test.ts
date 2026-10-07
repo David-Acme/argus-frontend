@@ -7,7 +7,9 @@ import {
   resolveCameraId,
   routeForScreen,
 } from '@/features/voice/model/voice-actions';
-import { viewFor } from './support/access-fixtures';
+import { CAPABILITY } from '@/shared/constants';
+import { accessView } from '@/shared/libs/capabilities';
+import { accessFor, noContextView, viewFor } from './support/access-fixtures';
 
 const cameras = [
   { id: '1', name: 'Entrada principal' },
@@ -58,6 +60,47 @@ describe('what the assistant can point to', () => {
     expect(routeForScreen('home', viewFor('owner'), 'surveillance')).toBe('/');
   });
 
+  test('the notifications open the home screen, where the bell and the news are, with no module in the way', () => {
+    expect(routeForScreen('notifications', viewFor('owner'))).toBe('/');
+    expect(routeForScreen('notifications', viewFor('owner'), 'surveillance')).toBe('/');
+    expect(routeForScreen('notifications', viewFor('owner'), '')).toBe('/');
+  });
+
+  test('every role gets the notifications, with every optional module off', () => {
+    for (const role of ['owner', 'resident', 'guard', 'guest'] as const) {
+      expect(routeForScreen('notifications', viewFor(role))).toBe('/');
+      expect(routeForScreen('notifications', viewFor(role, { modules: [] }))).toBe('/');
+    }
+  });
+
+  test('a role whose module is off still gets the notifications and nothing else it could not open', () => {
+    const guard = viewFor('guard', { modules: [] });
+    expect(guard.roleActive).toBe(false);
+    expect(routeForScreen('notifications', guard)).toBe('/');
+    expect(routeForScreen('security', guard)).toBeNull();
+    expect(routeForScreen('cameras', guard)).toBeNull();
+    expect(routeForScreen('people', guard)).toBeNull();
+  });
+
+  test('the notifications follow notifications.read and nothing opens before the role is known', () => {
+    const resident = viewFor('resident');
+    const without = {
+      ...resident,
+      capabilities: new Set([...resident.capabilities].filter((id) => id !== CAPABILITY.notificationsRead)),
+    };
+    expect(routeForScreen('notifications', without)).toBeNull();
+    const unknown = accessView({ ...accessFor('guest'), role: null, roleActive: false, capabilities: [] }, 'guest');
+    expect(routeForScreen('notifications', unknown)).toBeNull();
+    expect(routeForScreen('notifications', noContextView('guest'))).toBe('/');
+  });
+
+  test('a screen the app does not know still falls back to nothing, notifications spelled another way included', () => {
+    expect(routeForScreen('notification', viewFor('owner'))).toBeNull();
+    expect(routeForScreen('Notifications', viewFor('owner'))).toBeNull();
+    expect(routeForScreen('', viewFor('owner'))).toBeNull();
+    expect(routeForScreen('notifications/../settings', viewFor('owner'))).toBeNull();
+  });
+
   test('a camera is shown live unless a snapshot was asked for', () => {
     expect(cameraViewOf('snapshot')).toBe('snapshot');
     expect(cameraViewOf('live')).toBe('live');
@@ -72,6 +115,11 @@ describe('voice actions on the wire', () => {
       id: '3',
       name: 'app.open',
       arguments: { screen: 'agenda' },
+    });
+    expect(parseVoiceAction({ id: 5, name: 'app.open', arguments: { screen: 'notifications' } })).toEqual({
+      id: '5',
+      name: 'app.open',
+      arguments: { screen: 'notifications' },
     });
     expect(parseVoiceAction({ id: 3, name: 'app.delete_everything', arguments: {} })).toBeNull();
     expect(parseVoiceAction({ name: 'app.open' })).toBeNull();

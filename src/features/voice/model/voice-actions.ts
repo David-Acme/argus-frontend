@@ -1,8 +1,18 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { peopleAccessOf, type AccessView } from '@/shared/libs/capabilities';
+import { CAPABILITY, type Capability } from '@/shared/constants';
+import { hasCapability, peopleAccessOf, type AccessView } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 
-export type AppScreen = 'home' | 'agenda' | 'projects' | 'cameras' | 'security' | 'people' | 'settings' | 'modules';
+export type AppScreen =
+  | 'home'
+  | 'agenda'
+  | 'projects'
+  | 'cameras'
+  | 'security'
+  | 'people'
+  | 'settings'
+  | 'modules'
+  | 'notifications';
 
 const SCREEN_ROUTES: Readonly<Record<Exclude<AppScreen, 'people'>, string>> = {
   home: '/',
@@ -12,6 +22,11 @@ const SCREEN_ROUTES: Readonly<Record<Exclude<AppScreen, 'people'>, string>> = {
   security: '/security',
   settings: '/settings',
   modules: '/settings/modules',
+  notifications: '/',
+};
+
+const SCREEN_CAPABILITIES: Readonly<Partial<Record<AppScreen, Capability>>> = {
+  notifications: CAPABILITY.notificationsRead,
 };
 
 const normalized = (text: string): string =>
@@ -56,6 +71,8 @@ const peopleRoute = (view: AccessView): string | null => {
 const MODULE_ID = /^[a-z0-9-]+$/;
 
 export function routeForScreen(screen: string, view: AccessView, moduleId?: string): string | null {
+  const needed = (SCREEN_CAPABILITIES as Record<string, Capability | undefined>)[screen];
+  if (needed !== undefined && !hasCapability(view, needed)) return null;
   const route = screen === 'people' ? peopleRoute(view) : ((SCREEN_ROUTES as Record<string, string>)[screen] ?? null);
   if (route === null || routeFallback(route, view) !== null) return null;
   return screen === 'modules' && moduleId && MODULE_ID.test(moduleId) ? `${route}?module=${moduleId}` : route;

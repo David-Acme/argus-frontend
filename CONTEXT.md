@@ -2944,7 +2944,12 @@ already refuses.
   offers no view of other people's reminders.
 - Call: the in-call context (camera names, guard situation, today's agenda)
   and the assistant's actions follow `camera.view`, `guard.read`,
-  `agenda.read`, `guard.mode.set`; `app.open` accepts the new `modules` screen
+  `agenda.read`, `guard.mode.set`; `app.open` accepts the `notifications` screen
+  (backend `e433e571`: arguments `{screen: "notifications"}`, a `module` key is
+  ignored; it opens Inicio, where the bell and Novedades are, because the
+  panel is an uncontrolled popover with no route of its own, and it follows
+  `notifications.read`, so every role gets it, an inactive one included) and
+  the new `modules` screen
   (`?module=<id>` focuses a module and opens its data screen when it is
   uninstalled with data kept) and `app.show_camera` accepts `view: snapshot`
   (a still instead of live video). `/call` needs `assistant.voice`, or
