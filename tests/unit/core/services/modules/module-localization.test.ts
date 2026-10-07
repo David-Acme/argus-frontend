@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { introFor, localizedCatalog, localizedModule, roleMovesNoteOf } from '@/core/services/modules/module-text';
-import { moduleRecord } from './support/access-fixtures';
+import { moduleRecord } from '@tests/support/access-fixtures';
 
 const texts = {
   name: { es: 'Vigilancia', en: 'Surveillance' },

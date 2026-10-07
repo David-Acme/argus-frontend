@@ -9,7 +9,7 @@ import {
 } from '@/features/voice/model/voice-actions';
 import { CAPABILITY } from '@/shared/constants';
 import { accessView } from '@/shared/libs/capabilities';
-import { accessFor, noContextView, viewFor } from './support/access-fixtures';
+import { accessFor, noContextView, viewFor } from '@tests/support/access-fixtures';
 
 const cameras = [
   { id: '1', name: 'Entrada principal' },

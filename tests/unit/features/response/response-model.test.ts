@@ -15,7 +15,7 @@ import {
   visibleResponses,
   withVerdict,
 } from '@/features/response/model/response';
-import { accessFor, viewFor } from './support/access-fixtures';
+import { accessFor, viewFor } from '@tests/support/access-fixtures';
 import { accessView } from '@/shared/libs/capabilities';
 
 const base: IncidentResponse = {

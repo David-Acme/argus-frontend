@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { NET_STORAGE_KEYS, NET_TRUST_KEYS } from '@/shared/constants/net.constant';
 
-const secureRs = readFileSync(join(import.meta.dir, '../../src-tauri/src/net/secure.rs'), 'utf8');
+const secureRs = readFileSync(join(import.meta.dir, '../../../../../src-tauri/src/net/secure.rs'), 'utf8');
 
 const keysOf = (name: string): string[] => {
   const start = secureRs.indexOf(`${name}:`);
@@ -27,7 +27,7 @@ describe('desktop secure-storage allow-list', () => {
   test('the webview can neither write nor delete a trust key', () => {
     expect(secureRs).toContain('pub fn set_from_webview');
     expect(secureRs).toContain('pub fn delete_from_webview');
-    const libRs = readFileSync(join(import.meta.dir, '../../src-tauri/src/lib.rs'), 'utf8');
+    const libRs = readFileSync(join(import.meta.dir, '../../../../../src-tauri/src/lib.rs'), 'utf8');
     expect(libRs).toContain('delete_from_webview as secure_delete');
     expect(libRs).toContain('set_from_webview as secure_set');
   });

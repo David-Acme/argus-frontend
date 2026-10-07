@@ -15,7 +15,7 @@ import {
   usesChoiceList,
 } from '@/features/settings/model/tts-preview';
 
-const CLIP_DIR = join(import.meta.dir, '../../src/assets/audio/tts-previews');
+const CLIP_DIR = join(import.meta.dir, '../../../../src/assets/audio/tts-previews');
 
 function choiceSetting(key: string, choices: string[], value: string, choiceStates?: ChoiceState[]): Setting {
   return {
@@ -61,7 +61,7 @@ describe('voice preview clips', () => {
   test('both platform manifests name every clip', () => {
     for (const platform of ['web', 'native']) {
       const manifest = readFileSync(
-        join(import.meta.dir, `../../src/features/settings/constants/tts-preview-clips.${platform}.ts`),
+        join(import.meta.dir, `../../../../src/features/settings/constants/tts-preview-clips.${platform}.ts`),
         'utf8'
       );
       for (const id of ttsPreviewClipIds()) expect(manifest).toContain(`'${id}':`);

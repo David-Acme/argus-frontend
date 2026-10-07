@@ -13,7 +13,7 @@ import {
 import { roleAreas } from '@/features/people/model/role-areas';
 import { inviteRoleOptions, roleOptions } from '@/features/people/components/user-options';
 import { hasAccess, sessionAccessForRole } from '@/shared/libs/role-access';
-import { accessFor, moduleRecord, noContextView, viewFor } from './support/access-fixtures';
+import { accessFor, moduleRecord, noContextView, viewFor } from '@tests/support/access-fixtures';
 
 const labels = ((key: string) => key) as unknown as TranslateFn;
 

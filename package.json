@@ -32,7 +32,7 @@
     "ios": "expo start -c --ios",
     "web": "expo start -c --web",
     "lint": "expo lint",
-    "test": "tsc -p tests && bun test tests/unit",
+    "test": "tsc -p tests && bun test tests/unit tests/contracts",
     "check:comments": "bun scripts/check-comments.ts",
     "check:boundaries": "bun scripts/check-boundaries.ts",
     "verify": "bun run check:comments && bun run check:boundaries && tsc --noEmit && bun run lint && bun run test",

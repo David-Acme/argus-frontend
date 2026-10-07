@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { ContextEngine, type ContextEngineDeps } from '@/core/services/context/context-engine';
 import { accessOf, isStaleContext, withModuleOff } from '@/core/services/context/context-state';
 import type { AppAccess, AppContext } from '@/core/types';
-import { accessFor } from './support/access-fixtures';
+import { accessFor } from '@tests/support/access-fixtures';
 
 const wire = (userId = 7, extra: Record<string, unknown> = {}) => ({
   userId,

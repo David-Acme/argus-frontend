@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { CAPABILITY } from '@/shared/constants';
 import { routeFallback, routeModuleEnabled } from '@/shared/libs/route-access';
-import { noContextView, viewFor } from './support/access-fixtures';
+import { noContextView, viewFor } from '@tests/support/access-fixtures';
 
 const everything = { modules: ['surveillance', 'productivity'] };
 const coreOnly = { modules: [] };

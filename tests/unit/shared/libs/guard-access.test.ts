@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { cameraActionsOf, guardAccessOf, peopleAccessOf } from '@/shared/libs/capabilities';
-import { noContextView, viewFor } from './support/access-fixtures';
+import { noContextView, viewFor } from '@tests/support/access-fixtures';
 
 describe('guardAccessOf', () => {
   test('the owner sees, changes, manages visits and reviews decisions', () => {

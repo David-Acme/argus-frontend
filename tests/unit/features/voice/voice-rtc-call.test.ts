@@ -90,7 +90,7 @@ mock.module('@/features/voice/services/rtc', () => ({
 }));
 const micModule = join(
   import.meta.dir,
-  '../../src/features/voice/services/voice/voice-platform.ts'
+  '../../../../src/features/voice/services/voice/voice-platform.ts'
 );
 const fakeMic = {
   start: () => undefined,

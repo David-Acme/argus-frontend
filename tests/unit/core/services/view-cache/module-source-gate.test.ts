@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { BehaviorSubject } from 'rxjs';
 import { ModuleSourceGate } from '@/core/services/view-cache/module-source-gate';
 import { activeModulesOf, gainedModules } from '@/core/services/context/context-state';
-import { accessFor } from './support/access-fixtures';
+import { accessFor } from '@tests/support/access-fixtures';
 
 describe('module source gate', () => {
   test('is open for everything until the context says which modules are on', () => {

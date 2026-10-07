@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 import type { ModuleCatalog, PrivacyMe } from '@/core/types';
-import { moduleRecord } from './support/access-fixtures';
+import { moduleRecord } from '@tests/support/access-fixtures';
 import { PRIVACY_JURISDICTIONS, PRIVACY_NOTICE_VERSION } from '@/features/privacy/constants/privacy';
 import {
   NO_CHOICES,
@@ -22,7 +22,7 @@ import {
   withChoice,
 } from '@/features/privacy/model/privacy';
 
-const backend = join(import.meta.dir, '../../../backend');
+const backend = join(import.meta.dir, '../../../../../backend');
 
 const ALL = { presence: true, faceCameras: true, voiceLearning: true, cameraAudio: true };
 

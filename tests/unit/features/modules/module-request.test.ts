@@ -10,7 +10,7 @@ import {
   withRequest,
 } from '@/features/modules/model/module-request';
 import { moduleRequestOf, groupNotifications } from '@/features/home/model/notification-threads';
-import { moduleRecord } from './support/access-fixtures';
+import { moduleRecord } from '@tests/support/access-fixtures';
 
 const answer = (info: ModuleRequestAnswer | null, code?: string): IServiceResponse<ModuleRequestAnswer> =>
   info

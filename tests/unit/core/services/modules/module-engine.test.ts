@@ -10,7 +10,7 @@ import type {
   ModuleTransition,
   UserRole,
 } from '@/core/types';
-import { moduleRecord } from './support/access-fixtures';
+import { moduleRecord } from '@tests/support/access-fixtures';
 
 const job = (patch: Partial<ModuleJob> = {}): ModuleJob => ({
   id: '1',

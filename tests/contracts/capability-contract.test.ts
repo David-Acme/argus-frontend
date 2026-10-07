@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { UserRole } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import { coreCapabilities } from '@/shared/libs/capabilities';
-import { accessFor, serverCapabilities } from './support/access-fixtures';
+import { accessFor, serverCapabilities } from '@tests/support/access-fixtures';
 
 const authSource = join(import.meta.dir, '../../../backend/packages/lib/auth/src/auth');
 const readSource = (name: string) => {

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { NOTIFICATIONS_PANEL, NOTIFICATIONS_PANEL_HREF, PANEL_PARAM } from '@/shared/constants';
 import { panelRequestOf } from '@/features/home/model/notification-panel';
 import { routeFallback } from '@/shared/libs/route-access';
-import { viewFor } from './support/access-fixtures';
+import { viewFor } from '@tests/support/access-fixtures';
 
 const paramsOf = (href: string): Record<string, string> =>
   Object.fromEntries(new URL(href, 'https://argus.local').searchParams.entries());

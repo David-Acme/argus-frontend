@@ -6,7 +6,7 @@ import { CAPABILITY } from '@/shared/constants';
 import { accessView } from '@/shared/libs/capabilities';
 import { roleLabelOf } from '@/shared/libs/role-label';
 import { inactiveRoleCopy, inactiveRoleOf, inactiveRoleOffers } from '@/features/access/model/inactive-role';
-import { accessFor, noContextView, viewFor } from './support/access-fixtures';
+import { accessFor, noContextView, viewFor } from '@tests/support/access-fixtures';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;

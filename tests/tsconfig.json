@@ -2,7 +2,12 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "types": ["bun"],
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"],
+      "@tests/*": ["tests/*"]
+    }
   },
   "include": ["**/*.ts", "../src/**/*.ts", "../src/**/*.tsx", "../*.d.ts", "../expo-env.d.ts", "../uniwind-types.d.ts"]
 }
