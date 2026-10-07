@@ -21,6 +21,20 @@ export const EMPTY_STATE_TEXT_MAX_WIDTH = 460;
 
 export const BOTTOM_NAV_MAX_WIDTH = 560;
 
+export const BOTTOM_NAV_SIDE_MARGIN = 20;
+
+export const BOTTOM_NAV_ROW_GAP = 12;
+
+export const BOTTOM_NAV_PADDING = 8;
+
+export const BOTTOM_NAV_TAB_SIZE = 44;
+
+export const BOTTOM_NAV_TAB_MIN = 32;
+
+export const BOTTOM_NAV_FAB_SIZE = 60;
+
+export const BOTTOM_NAV_FAB_COMPACT = 52;
+
 export const CENTERED_SCREEN_MAX_WIDTH = 512;
 
 export const OVERLAY_BODY_HEIGHT_RATIO = 0.62;

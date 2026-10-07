@@ -2,13 +2,14 @@ import { type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { DashboardTab } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
-import type { DASHBOARD_TABS } from '@/shared/constants';
+import { BOTTOM_NAV_TAB_SIZE, type DASHBOARD_TABS } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 
 type BottomNavProps = {
   tabs: typeof DASHBOARD_TABS;
   active: DashboardTab;
   labels: Record<DashboardTab, string>;
+  tabSize: number;
   onNavigate: (tab: DashboardTab) => void;
   compose: ReactNode;
 };
@@ -17,6 +18,7 @@ export function BottomNav({
   tabs,
   active,
   labels,
+  tabSize,
   onNavigate,
   compose,
 }: BottomNavProps) {
@@ -31,8 +33,10 @@ export function BottomNav({
               accessibilityRole="button"
               accessibilityState={{ selected }}
               accessibilityLabel={labels[item.tab]}
+              style={{ width: tabSize, height: tabSize }}
+              hitSlop={{ top: (BOTTOM_NAV_TAB_SIZE - tabSize) / 2 + 2, bottom: (BOTTOM_NAV_TAB_SIZE - tabSize) / 2 + 2 }}
               className={cn(
-                'size-11 items-center justify-center rounded-full active:opacity-70',
+                'items-center justify-center rounded-full active:opacity-70',
                 selected ? 'bg-surface shadow-sm shadow-black/10' : 'bg-transparent'
               )}
               onPress={() => onNavigate(item.tab)}>

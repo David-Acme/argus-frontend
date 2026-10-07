@@ -1,6 +1,6 @@
 import { usePathname } from 'expo-router';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { selectBottomNavVisible, useNavigationStore } from '@/core/stores';
@@ -15,6 +15,7 @@ import {
 import { useDashboardNavigation } from '@/shared/components/layout/use-dashboard-navigation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { easeOutCubic } from '@/shared/libs/animations';
+import { bottomNavMetrics } from '@/shared/components/layout/bottom-nav-metrics';
 import { ComposeFab } from '@/shared/components/layout/compose-fab';
 import { BottomNav } from '@/shared/components/layout/bottom-nav';
 
@@ -25,6 +26,8 @@ export function GlobalBottomNav() {
   const insets = useSafeAreaInsets();
   const { tabs, labels, navigate } = useDashboardNavigation();
   const { usesNavRail } = useWindowClass();
+  const { width } = useWindowDimensions();
+  const metrics = bottomNavMetrics({ width, tabCount: tabs.length });
   const owned = useNavigationStore((state) => state.owner !== null);
   const visible = useNavigationStore(selectBottomNavVisible) && !usesNavRail;
   const progress = useSharedValue(0);
@@ -53,8 +56,9 @@ export function GlobalBottomNav() {
           tabs={tabs}
           active={active}
           labels={labels}
+          tabSize={metrics.tab}
           onNavigate={navigate}
-          compose={<ComposeFab />}
+          compose={<ComposeFab size={metrics.fab} />}
         />
       </View>
     </Animated.View>

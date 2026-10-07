@@ -39,7 +39,7 @@ export function ThisDeviceCard({
           <Text variant="body" numberOfLines={1} className="font-medium">
             {name}
           </Text>
-          <Text variant="caption" numberOfLines={1}>
+          <Text variant="caption" numberOfLines={2}>
             {detail}
           </Text>
         </View>
