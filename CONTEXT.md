@@ -3150,3 +3150,40 @@ paint at all — `react-native-svg`'s `WebShape.setNativeProps` drops the incomi
 `d` (it merges only `props.style`) — so there the glyph only ever changes on a
 mount, which is exactly what the route key guarantees; the web morph paints
 again since the U12 fix (next section).
+
+### The morph paints on the web again (2026-10-07, U12 fix)
+
+`react-native-svg`'s web `WebShape.setNativeProps` merges only `this.props`,
+`lastMergedProps` and `props.style`, so the `d` a caller passes is never part of
+the merged props: every frame of the morph repainted the mount-time path (U10's probe recorded
+94 such writes on open, all byte-identical to the plus; the U12 pre-fix re-run recorded 47–48
+per open/close, again all identical).
+The web build could therefore change the glyph only on a mount. The wrapper is
+now platform-split under its own folder (`shared/components/ui/morph-icon/`, the
+`index.ts` barrel in front of the pair — the alias `@/…/morph-icon` needs a
+module without a platform suffix to resolve, and eslint's import resolver does
+not apply `.native`/`.web`; that missing barrel is the cause the lint failure
+named, "Unable to resolve path to module '@/shared/components/ui/morph-icon'",
+until it existed, and the pair imports each other relatively):
+`morph-icon.native.tsx` is the morphicons React Native component, byte-identical
+to the old shared file; `morph-icon.web.tsx` renders `Svg`/`Path` with the `d` of
+React state and drives it with `morphicons/dom`'s `createMorph`
+(`morph-icon-driver.ts`) over a sink that writes through the state setter — one
+re-render per animation frame instead of `setNativeProps`. The driver drops a
+value identical to the one already painted, so the mount write is a no-op, and a
+reduced-motion snap (`reducedMotion="user"` reads `prefers-reduced-motion`,
+`"always"` always snaps) lands in a single paint with no frames in between. The
+web wrapper's imperative `morphTo` falls back to the `spring` prop through
+`springRef`, as the native library does, so a ref call without a spring is not
+`snappy` on web while it is `smooth` on native. Rejected alternative: morphicons'
+own DOM renderer (`morphicons/react`) on web, which would have swapped
+react-native-svg for a raw `<svg>` in the web tree (a different DOM and a11y
+shape from every other icon in the app) to spare the per-frame re-render. The
+behaviour is pinned by
+`tests/unit/shared/components/ui/morph-icon/morph-icon-driver.test.ts`: the
+driver must paint many distinct paths into the callback and settle on the
+target's canonical `d`, must snap under reduced motion, and must let `set` cancel
+a flight in progress. The wrapper itself is covered in that file only by a source
+scan (it renders `d` from React state and never calls `setNativeProps`); this repo
+has no DOM component harness, so the wrapper's runtime behaviour is left to the
+committed e2e suite (U5).

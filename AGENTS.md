@@ -934,7 +934,7 @@ cd src-tauri && cargo check
 | `src/features/qr/` | QR scanner: `useQrScanner` (permission, detection, hand-back to the scan store) + the screen and its components |
 | `src/shared/constants/qr.constant.ts` | `QR_SCAN_PURPOSES`, `QR_SCAN_FEEDBACK`, scan timings |
 | `src/shared/constants/morph-icon.constant.ts` | `MORPH_ICONS` — registro de iconos animables (datos `lucide` para morphicons) |
-| `src/shared/components/ui/morph-icon.tsx` | Icono animado (morphicons): morphs por `setNativeProps`, `reducedMotion="user"`, ref `morphTo`/`set` |
+| `src/shared/components/ui/morph-icon/` | Icono animado (morphicons): `index.tsx` + `morph-icon.{native,web}.tsx`; en nativo morphs por `setNativeProps`; en web `morph-icon-driver.ts` pinta cada frame con el `d` por estado de React, `reducedMotion="user"`, ref `morphTo`/`set` |
 | `src/core/types/qr.type.ts` | `QrScanPurpose`, `QrScanStatus`, `QrScanFeedback`, `QrScanConfig` |
 | `src/shared/hooks/use-reduce-motion.ts` | OS "reduce motion" setting, live |
 | `src/core/stores/` | Zustand stores (barrel): `auth`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` (the avatar store lives in `features/voice/stores`) |
