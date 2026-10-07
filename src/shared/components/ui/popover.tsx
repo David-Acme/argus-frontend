@@ -59,4 +59,6 @@ function PopoverContent({
   );
 }
 
-export { Popover, PopoverClose, PopoverContent, PopoverTrigger };
+type PopoverTriggerRef = PopoverPrimitive.TriggerRef;
+
+export { Popover, PopoverClose, PopoverContent, PopoverTrigger, type PopoverTriggerRef };

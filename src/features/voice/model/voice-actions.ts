@@ -1,5 +1,5 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { CAPABILITY, type Capability } from '@/shared/constants';
+import { CAPABILITY, NOTIFICATIONS_PANEL_HREF, type Capability } from '@/shared/constants';
 import { hasCapability, peopleAccessOf, type AccessView } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 
@@ -22,7 +22,7 @@ const SCREEN_ROUTES: Readonly<Record<Exclude<AppScreen, 'people'>, string>> = {
   security: '/security',
   settings: '/settings',
   modules: '/settings/modules',
-  notifications: '/',
+  notifications: NOTIFICATIONS_PANEL_HREF,
 };
 
 const SCREEN_CAPABILITIES: Readonly<Partial<Record<AppScreen, Capability>>> = {

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger, type PopoverTriggerRef } from '@/shared/components/ui/popover';
 import { Text } from '@/shared/components/ui/text';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -16,6 +16,7 @@ type NotificationPopoverProps = {
   threads: readonly NotificationThread[];
   now: number;
   onOpen: () => void;
+  openRequest?: boolean;
 };
 
 type OpenedSnapshot = { ids: ReadonlySet<string>; count: number };
@@ -24,9 +25,23 @@ const PREVIEW_LIMIT = 4;
 
 const NO_SNAPSHOT: OpenedSnapshot = { ids: new Set(), count: 0 };
 
-export function NotificationPopover({ unreadCount, threads, now, onOpen }: NotificationPopoverProps) {
+export function NotificationPopover({ unreadCount, threads, now, onOpen, openRequest = false }: NotificationPopoverProps) {
   const { t } = useTranslation();
   const [opened, setOpened] = useState<OpenedSnapshot>(NO_SNAPSHOT);
+  const triggerRef = useRef<PopoverTriggerRef>(null);
+  const frame = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (openRequest) frame.current = requestAnimationFrame(() => triggerRef.current?.open());
+  }, [openRequest]);
+
+  useEffect(
+    () => () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current);
+    },
+    []
+  );
+
   const preview = withUnreadSnapshot(threads.slice(0, PREVIEW_LIMIT), opened.ids);
   const summary =
     opened.count === 0
@@ -46,7 +61,7 @@ export function NotificationPopover({ unreadCount, threads, now, onOpen }: Notif
 
   return (
     <Popover onOpenChange={openChange}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild ref={triggerRef}>
         <IconButton
           icon="bell"
           label={t('screens.home.notifications')}

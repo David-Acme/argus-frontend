@@ -20,6 +20,7 @@ import {
   entryPermissions,
 } from '@/features/agenda';
 import { useNotificationFeed } from '@/features/home/hooks/use-notification-feed';
+import { useNotificationPanel } from '@/features/home/hooks/use-notification-panel';
 import {
   unreadIdsOf,
   unreadThreadCount,
@@ -57,6 +58,7 @@ function HomeContent() {
   const date = useDateFormatter();
   const { isShort } = useWindowClass();
   const { can, has } = useCapabilities();
+  const panelRequested = useNotificationPanel(has(CAPABILITY.notificationsRead));
   const {
     cameraTiles,
     projects,
@@ -168,6 +170,7 @@ function HomeContent() {
               threads={threads}
               now={now}
               onOpen={() => void readAll()}
+              openRequest={panelRequested}
             />
             {readsAgenda ? (
               <IconButton

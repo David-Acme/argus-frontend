@@ -2946,10 +2946,16 @@ already refuses.
   and the assistant's actions follow `camera.view`, `guard.read`,
   `agenda.read`, `guard.mode.set`; `app.open` accepts the `notifications` screen
   (backend `e433e571`: arguments `{screen: "notifications"}`, a `module` key is
-  ignored; it opens Inicio, where the bell and Novedades are, because the
-  panel is an uncontrolled popover with no route of its own, and it follows
-  `notifications.read`, so every role gets it, an inactive one included) and
-  the new `modules` screen
+  ignored; it opens Inicio at `/?panel=notifications`, which opens the bell's
+  panel once and then clears the param so back and a reload never reopen it
+  (`panelRequestOf` decides, `useNotificationPanel` clears it with
+  `router.setParams`, `NotificationPopover` opens through its trigger ref after
+  a frame); it follows `notifications.read`, so every role gets it, an
+  inactive one included. Only the decision and the route are tested; the ref
+  wiring (the trigger ref reaching the bell through React 19's ref prop) and
+  the one-frame delay before the panel opens have no test, because the project
+  has no component renderer and no emulator may run, so where the panel lands
+  on a freshly mounted Inicio is unverified) and the new `modules` screen
   (`?module=<id>` focuses a module and opens its data screen when it is
   uninstalled with data kept) and `app.show_camera` accepts `view: snapshot`
   (a still instead of live video). `/call` needs `assistant.voice`, or

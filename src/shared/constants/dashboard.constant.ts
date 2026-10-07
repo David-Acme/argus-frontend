@@ -1,6 +1,10 @@
 import type { DashboardTab, IconName, TableName } from '@/core/types';
 import { CAPABILITY, type Capability } from './capability.constant';
 
+export const PANEL_PARAM = 'panel';
+export const NOTIFICATIONS_PANEL = 'notifications';
+export const NOTIFICATIONS_PANEL_HREF = `/?${PANEL_PARAM}=${NOTIFICATIONS_PANEL}`;
+
 export const MOSAIC_COLUMNS = 13;
 export const MOSAIC_ROWS = 6;
 

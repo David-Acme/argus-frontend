@@ -60,23 +60,24 @@ describe('what the assistant can point to', () => {
     expect(routeForScreen('home', viewFor('owner'), 'surveillance')).toBe('/');
   });
 
-  test('the notifications open the home screen, where the bell and the news are, with no module in the way', () => {
-    expect(routeForScreen('notifications', viewFor('owner'))).toBe('/');
-    expect(routeForScreen('notifications', viewFor('owner'), 'surveillance')).toBe('/');
-    expect(routeForScreen('notifications', viewFor('owner'), '')).toBe('/');
+  test('the notifications open the home screen with its panel asked for once, with no module in the way', () => {
+    expect(routeForScreen('notifications', viewFor('owner'))).toBe('/?panel=notifications');
+    expect(routeForScreen('notifications', viewFor('owner'), 'surveillance')).toBe('/?panel=notifications');
+    expect(routeForScreen('notifications', viewFor('owner'), '')).toBe('/?panel=notifications');
+    expect(routeForScreen('home', viewFor('owner'))).toBe('/');
   });
 
   test('every role gets the notifications, with every optional module off', () => {
     for (const role of ['owner', 'resident', 'guard', 'guest'] as const) {
-      expect(routeForScreen('notifications', viewFor(role))).toBe('/');
-      expect(routeForScreen('notifications', viewFor(role, { modules: [] }))).toBe('/');
+      expect(routeForScreen('notifications', viewFor(role))).toBe('/?panel=notifications');
+      expect(routeForScreen('notifications', viewFor(role, { modules: [] }))).toBe('/?panel=notifications');
     }
   });
 
   test('a role whose module is off still gets the notifications and nothing else it could not open', () => {
     const guard = viewFor('guard', { modules: [] });
     expect(guard.roleActive).toBe(false);
-    expect(routeForScreen('notifications', guard)).toBe('/');
+    expect(routeForScreen('notifications', guard)).toBe('/?panel=notifications');
     expect(routeForScreen('security', guard)).toBeNull();
     expect(routeForScreen('cameras', guard)).toBeNull();
     expect(routeForScreen('people', guard)).toBeNull();
@@ -91,7 +92,7 @@ describe('what the assistant can point to', () => {
     expect(routeForScreen('notifications', without)).toBeNull();
     const unknown = accessView({ ...accessFor('guest'), role: null, roleActive: false, capabilities: [] }, 'guest');
     expect(routeForScreen('notifications', unknown)).toBeNull();
-    expect(routeForScreen('notifications', noContextView('guest'))).toBe('/');
+    expect(routeForScreen('notifications', noContextView('guest'))).toBe('/?panel=notifications');
   });
 
   test('a screen the app does not know still falls back to nothing, notifications spelled another way included', () => {
