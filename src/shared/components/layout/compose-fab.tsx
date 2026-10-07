@@ -1,5 +1,5 @@
 import { Portal } from '@rn-primitives/portal';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -30,6 +30,11 @@ type ComposeFabProps = {
 };
 
 export function ComposeFab({ size = 60, anchor = 'bar' }: ComposeFabProps) {
+  const pathname = usePathname();
+  return <ComposeFabMenu key={pathname} size={size} anchor={anchor} />;
+}
+
+function ComposeFabMenu({ size, anchor }: Required<ComposeFabProps>) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();

@@ -3134,3 +3134,19 @@ menus) keep opening the form of the row the user tapped.
   screens no longer read it. `?at=` stays, because
   `calendarEntryEditHref` still sends `/agenda?edit=<id>&at=<startsAt>` so an
   event opens on the day it happens.
+
+### The compose menu belongs to the route (2026-10-07, U10 fix)
+
+The compose FAB is one instance owned above the navigator
+(`GlobalBottomNav` in the root layout, `NavRail` in `AppShell`), so its local
+`open` state used to survive every navigation: leaving a screen with the menu
+open carried the menu — and its "x" — into the next screen, where nothing was
+open. `ComposeFab` now reads `usePathname()` and renders the menu component
+keyed by the pathname, so a route change unmounts the menu and its state and
+the arrived screen always mounts the closed glyph ('plus'). The spring still
+plays for an in-screen open/close; a navigation always cuts it, which is the
+point ("never leave a frozen mid-spring"). On the web build the morph cannot
+paint at all — `react-native-svg`'s `WebShape.setNativeProps` drops the incoming
+`d` (it merges only `props.style`) — so there the glyph only ever changes on a
+mount, which is exactly what the route key guarantees; the web morph paints
+again since the U12 fix (next section).
