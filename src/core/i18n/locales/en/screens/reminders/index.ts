@@ -1,7 +1,5 @@
 export const reminders = {
   title: 'Reminders',
-  new: 'New reminder',
-  'new-action': 'New',
   edit: 'Edit reminder',
   'title-field': 'What to remember',
   'title-placeholder': 'Call the doctor',
@@ -13,7 +11,7 @@ export const reminders = {
   'save-failed': 'The reminder could not be saved',
   'delete-failed': 'The reminder could not be deleted',
   empty: 'Nothing is pending',
-  'empty-hint': 'Ask Argus "remind me…" or create one here.',
+  'empty-hint': 'Ask Argus "remind me…" and it will show up here.',
   'no-matches': 'No reminder matches',
   'when-today': 'Today · {time}',
   'when-tomorrow': 'Tomorrow · {time}',

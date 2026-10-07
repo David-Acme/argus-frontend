@@ -8,7 +8,6 @@ import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Text } from '@/shared/components/ui/text';
 import { CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ReminderDialog } from '@/features/reminders/components/reminder-dialog';
@@ -24,12 +23,10 @@ const CLOCK_TICK_MS = 60_000;
 
 export function RemindersSection({ query }: RemindersSectionProps) {
   const { t } = useTranslation();
-  const date = useDateFormatter();
   const now = useNow(CLOCK_TICK_MS);
   const { has } = useCapabilities();
   const { groups, complete, remove } = useReminders();
   const [editing, setEditing] = useState<IReminderCacheRow | null>(null);
-  const [creating, setCreating] = useState(false);
   const [showDone, setShowDone] = useState(false);
 
   if (!has(CAPABILITY.remindersRead)) return null;
@@ -54,12 +51,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
 
   return (
     <View className="gap-3">
-      <SectionHeader
-        title={t('screens.reminders.title')}
-        count={groups.pending.length}
-        action={editable ? t('screens.reminders.new-action') : undefined}
-        onAction={() => setCreating(true)}
-      />
+      <SectionHeader title={t('screens.reminders.title')} count={groups.pending.length} />
       {empty ? (
         <EmptyState
           fill={false}
@@ -88,17 +80,16 @@ export function RemindersSection({ query }: RemindersSectionProps) {
           ) : null}
         </Panel>
       )}
-      <ReminderDialog
-        key={editing ? editing.id : creating ? 'new' : 'closed'}
-        open={editing !== null || creating}
-        onOpenChange={(open) => {
-          if (open) return;
-          setEditing(null);
-          setCreating(false);
-        }}
-        reminder={editing}
-        startsAt={date.startOfDay(new Date(now))}
-      />
+      {editing ? (
+        <ReminderDialog
+          key={editing.id}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditing(null);
+          }}
+          reminder={editing}
+        />
+      ) : null}
     </View>
   );
 }

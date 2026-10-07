@@ -26,7 +26,6 @@ import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { DayPickerField } from '@/features/agenda';
 import {
-  createBody,
   isEmptyUpdate,
   REMINDER_DESCRIPTION_MAX,
   REMINDER_TITLE_MAX,
@@ -36,8 +35,7 @@ import {
 type ReminderDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  reminder: IReminderCacheRow | null;
-  startsAt: Date;
+  reminder: IReminderCacheRow;
 };
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -51,7 +49,7 @@ const schema = z.object({
 
 type ReminderValues = z.infer<typeof schema>;
 
-export function ReminderDialog({ open, onOpenChange, reminder, startsAt }: ReminderDialogProps) {
+export function ReminderDialog({ open, onOpenChange, reminder }: ReminderDialogProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const formScroll = useFormScroll();
@@ -70,14 +68,14 @@ export function ReminderDialog({ open, onOpenChange, reminder, startsAt }: Remin
 
   useEffect(() => {
     if (!open) return;
-    const at = reminder ? new Date(reminder.scheduledAt) : startsAt;
+    const at = new Date(reminder.scheduledAt);
     form.reset({
-      title: reminder?.title ?? '',
-      description: reminder?.description ?? '',
-      time: reminder ? date.formatInputTime(at) : date.defaultInputTime(at),
+      title: reminder.title,
+      description: reminder.description,
+      time: date.formatInputTime(at),
       day: date.startOfDay(at).getTime(),
     });
-  }, [date, form, open, reminder, startsAt]);
+  }, [date, form, open, reminder]);
 
   const day = useWatch({ control: form.control, name: 'day' });
 
@@ -90,20 +88,13 @@ export function ReminderDialog({ open, onOpenChange, reminder, startsAt }: Remin
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values, idempotencyKey) => {
-      if (!reminder) return reminderService.create(createBody(draftOf(values)), idempotencyKey);
+    request: (values) => {
       const body = updateBody(reminder, draftOf(values));
       return isEmptyUpdate(body)
         ? Promise.resolve({ status: 200, ok: true, info: null, errors: null })
         : reminderService.update(reminder.id, body);
     },
     optimistic: (values) => {
-      if (!reminder) {
-        return {
-          intents: [{ table: 'reminder', kind: 'create', values: createBody(draftOf(values)) }],
-          success: t('screens.reminders.saved'),
-        };
-      }
       const body = updateBody(reminder, draftOf(values));
       return {
         intents: isEmptyUpdate(body) ? [] : [{ table: 'reminder', kind: 'update', recordId: reminder.id, values: body }],
@@ -127,7 +118,7 @@ export function ReminderDialog({ open, onOpenChange, reminder, startsAt }: Remin
       onOpenChange={handleOpenChange}
       dismissible={!submitting}
       onSubmit={submitting ? undefined : () => void submit()}
-      title={reminder ? t('screens.reminders.edit') : t('screens.reminders.new')}
+      title={t('screens.reminders.edit')}
       closeLabel={t('common.close')}
       footer={
         <>

@@ -151,13 +151,6 @@ export interface IReminderCacheRow {
   recurrenceRule: string | null;
 }
 
-export interface IReminderCreate {
-  title: string;
-  description?: string;
-  scheduledAt: number;
-  recurrenceRule?: string;
-}
-
 export interface IReminderUpdate {
   title?: string;
   description?: string | null;

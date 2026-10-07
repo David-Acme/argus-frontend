@@ -1,7 +1,7 @@
-import type { IReminderCacheRow, IReminderCreate, IReminderUpdate } from '@/core/interfaces';
+import type { IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
 import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 
-const reminderLens = defineLens<IReminderCacheRow, IReminderUpdate & Partial<IReminderCreate>>({
+const reminderLens = defineLens<IReminderCacheRow, IReminderUpdate>({
   table: 'reminder',
   recordIdOf: (row) => row.id,
   patch: (row, values) => ({
@@ -13,18 +13,7 @@ const reminderLens = defineLens<IReminderCacheRow, IReminderUpdate & Partial<IRe
     completedAt:
       values.isCompleted === undefined ? row.completedAt : values.isCompleted ? Date.now() : null,
   }),
-  create: (recordId, values) =>
-    values.scheduledAt === undefined
-      ? null
-      : {
-          id: recordId,
-          title: values.title ?? '',
-          description: values.description ?? '',
-          scheduledAt: values.scheduledAt * 1000,
-          isCompleted: false,
-          completedAt: null,
-          recurrenceRule: values.recurrenceRule ?? null,
-        },
+  create: () => null,
 });
 
 export const REMINDER_LENSES: readonly OptimisticLens<IReminderCacheRow>[] = [reminderLens];

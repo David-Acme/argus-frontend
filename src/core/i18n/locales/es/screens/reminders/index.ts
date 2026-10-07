@@ -1,7 +1,5 @@
 export const reminders = {
   title: 'Recordatorios',
-  new: 'Nuevo recordatorio',
-  'new-action': 'Nuevo',
   edit: 'Editar recordatorio',
   'title-field': 'Qué recordar',
   'title-placeholder': 'Llamar al médico',
@@ -13,7 +11,7 @@ export const reminders = {
   'save-failed': 'No se pudo guardar el recordatorio',
   'delete-failed': 'No se pudo eliminar el recordatorio',
   empty: 'No tienes nada pendiente',
-  'empty-hint': 'Pídele a Argus «recuérdame…» o crea uno aquí.',
+  'empty-hint': 'Pídele a Argus «recuérdame…» y aparecerá aquí.',
   'no-matches': 'Ningún recordatorio coincide',
   'when-today': 'Hoy · {time}',
   'when-tomorrow': 'Mañana · {time}',

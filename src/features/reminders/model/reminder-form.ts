@@ -1,4 +1,4 @@
-import type { IReminderCacheRow, IReminderCreate, IReminderUpdate } from '@/core/interfaces';
+import type { IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
 
 export const REMINDER_TITLE_MAX = 200;
 export const REMINDER_DESCRIPTION_MAX = 2000;
@@ -27,15 +27,6 @@ export function draftIssues(draft: ReminderDraft): DraftIssue[] {
   if (draft.description.trim().length > REMINDER_DESCRIPTION_MAX) issues.push('description-long');
   if (!Number.isFinite(draft.at) || draft.at <= 0) issues.push('time-invalid');
   return issues;
-}
-
-export function createBody(draft: ReminderDraft): IReminderCreate {
-  const description = draft.description.trim();
-  return {
-    title: draft.title.trim(),
-    ...(description ? { description } : {}),
-    scheduledAt: seconds(draft.at),
-  };
 }
 
 export function updateBody(saved: IReminderCacheRow, draft: ReminderDraft): IReminderUpdate {

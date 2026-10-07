@@ -1,8 +1,8 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { ReminderModel } from '@/core/database';
-import type { IReminderCreate, IReminderUpdate, IServiceResponse } from '@/core/interfaces';
-import { httpService, idempotentConfig } from '@/core/services/http';
+import type { IReminderUpdate, IServiceResponse } from '@/core/interfaces';
+import { httpService } from '@/core/services/http';
 import { DatabaseService } from './database.service';
 
 class ReminderService extends DatabaseService<'reminder'> {
@@ -15,10 +15,6 @@ class ReminderService extends DatabaseService<'reminder'> {
       ['title', 'description', 'scheduled_at', 'recurrence_rule', 'is_completed', 'completed_at'],
       [Q.where('target_user_id', userId), Q.sortBy('scheduled_at', Q.asc)],
     );
-  }
-
-  create(body: IReminderCreate, idempotencyKey?: string): Promise<IServiceResponse<unknown>> {
-    return httpService.post('/reminder', body, idempotentConfig(idempotencyKey));
   }
 
   update(id: string, body: IReminderUpdate): Promise<IServiceResponse<unknown>> {

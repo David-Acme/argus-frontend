@@ -7,7 +7,6 @@ import type { TranslateFn } from '@/core/types';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
-  createBody,
   draftIssues,
   draftOf,
   isEmptyUpdate,
@@ -90,14 +89,6 @@ describe('reminder form', () => {
     expect(draftIssues({ title: 'a', description: '', at: NOW })).toEqual([]);
   });
 
-  test('a new reminder is sent in seconds, trimmed and without empty notes', () => {
-    expect(createBody({ title: '  Pagar luz ', description: ' ', at: NOW + 400 })).toEqual({
-      title: 'Pagar luz',
-      scheduledAt: Math.round((NOW + 400) / 1000),
-    });
-    expect(createBody({ title: 'Pagar luz', description: 'Recibo azul', at: NOW }).description).toBe('Recibo azul');
-  });
-
   test('an edit sends only what changed and nothing when nothing did', () => {
     const saved = row({ description: 'Pedir cita' });
     expect(updateBody(saved, draftOf(saved, NOW))).toEqual({});
@@ -148,7 +139,7 @@ describe('reminder projection and optimistic rows', () => {
     ...patch,
   });
 
-  test('completing shows at once, deleting removes the row and a create appears in time order', () => {
+  test('completing shows at once, deleting removes the row and a create never shows: Argus alone creates reminders', () => {
     const rows = [row(), row({ id: '2', scheduledAt: NOW + 2 * HOUR })];
     const done = applyIntents(rows, [intent({ values: { isCompleted: true } })], REMINDER_LENSES, byScheduled);
     expect(done[0]?.isCompleted).toBe(true);
@@ -161,7 +152,7 @@ describe('reminder projection and optimistic rows', () => {
       REMINDER_LENSES,
       byScheduled
     );
-    expect(created.map((item) => item.id)).toEqual(['1', 'pending-9', '2']);
+    expect(created.map((item) => item.id)).toEqual(['1', '2']);
   });
 
   test('an edit changes the title and the time on the row while the server answers', () => {
