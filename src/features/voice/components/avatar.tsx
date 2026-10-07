@@ -37,6 +37,47 @@ type AvatarProps = {
 
 export type { AvatarProps };
 
+type NoiseInput = {
+  elapsedMs: number;
+  seed: number;
+  axis: number;
+  interval: number;
+};
+
+function smoothstep(value: number): number {
+  'worklet';
+  return value * value * (3 - 2 * value);
+}
+
+function hash(value: number): number {
+  'worklet';
+  const raw = Math.sin(value * 127.1 + 311.7) * 43758.5453;
+  return (raw - Math.floor(raw)) * 2 - 1;
+}
+
+function noise({ elapsedMs, seed, axis, interval }: NoiseInput): number {
+  'worklet';
+  const progress = elapsedMs / interval;
+  const step = Math.floor(progress);
+  const blend = smoothstep(progress - step);
+  const previous = hash(step * 3 + axis + seed);
+  const next = hash((step + 1) * 3 + axis + seed);
+  return previous + (next - previous) * blend;
+}
+
+function saccade(elapsedMs: number, axis: number): number {
+  'worklet';
+  if (elapsedMs <= 0) return 0;
+  const interval = 1100;
+  const duration = 140;
+  const step = Math.floor(elapsedMs / interval);
+  const progress = (elapsedMs - step * interval) / duration;
+  const blend = smoothstep(Math.min(progress, 1));
+  const previous = step === 0 ? 0 : hash((step - 1) * 2 + axis + 17.29);
+  const next = hash(step * 2 + axis + 17.29);
+  return previous + (next - previous) * blend;
+}
+
 const motionCode = (motion: AvatarExpression['eyeMotion'] | AvatarExpression['bodyMotion']) =>
   motion === 'slowDrift' || motion === 'microSaccades' ? 1 : motion === 'shake' ? 2 : 0;
 
@@ -214,35 +255,11 @@ export default function Avatar({
     const bodyMotion = bodyMotionSV.value;
     const eyeMotion = eyeMotionSV.value;
     const seed = headXSV.value * 0.71 + headYSV.value * 1.13 + headZSV.value * 1.37;
-    const smoothstep = (value: number) => value * value * (3 - 2 * value);
-    const hash = (value: number) => {
-      const raw = Math.sin(value * 127.1 + 311.7) * 43758.5453;
-      return (raw - Math.floor(raw)) * 2 - 1;
-    };
-    const noise = (axis: number, interval: number) => {
-      const progress = elapsedMs / interval;
-      const step = Math.floor(progress);
-      const blend = smoothstep(progress - step);
-      const previous = hash(step * 3 + axis + seed);
-      const next = hash((step + 1) * 3 + axis + seed);
-      return previous + (next - previous) * blend;
-    };
-    const saccade = (axis: number) => {
-      if (elapsedMs <= 0) return 0;
-      const interval = 1100;
-      const duration = 140;
-      const step = Math.floor(elapsedMs / interval);
-      const progress = (elapsedMs - step * interval) / duration;
-      const blend = smoothstep(Math.min(progress, 1));
-      const previous = step === 0 ? 0 : hash((step - 1) * 2 + axis + 17.29);
-      const next = hash(step * 2 + axis + 17.29);
-      return previous + (next - previous) * blend;
-    };
 
     if (bodyMotion === 1) {
-      bodyOffsetXSV.value = noise(3, 2900) * 1.45 * strength;
-      bodyOffsetYSV.value = noise(4, 3700) * 1.1 * strength;
-      ambientRotationSV.value = noise(2, 4100) * 0.45 * strength;
+      bodyOffsetXSV.value = noise({ elapsedMs, seed, axis: 3, interval: 2900 }) * 1.45 * strength;
+      bodyOffsetYSV.value = noise({ elapsedMs, seed, axis: 4, interval: 3700 }) * 1.1 * strength;
+      ambientRotationSV.value = noise({ elapsedMs, seed, axis: 2, interval: 4100 }) * 0.45 * strength;
     } else if (bodyMotion === 2) {
       bodyOffsetXSV.value = (Math.sin(time * 31) + Math.sin(time * 53) * 0.45) * 1.35 * strength;
       bodyOffsetYSV.value = (Math.sin(time * 37) + Math.sin(time * 61) * 0.4) * 1.1 * strength;
@@ -254,8 +271,8 @@ export default function Avatar({
     }
 
     if (eyeMotion === 1) {
-      eyeOffsetXSV.value = saccade(0) * 1.5 * strength;
-      eyeOffsetYSV.value = saccade(1) * 0.9 * strength;
+      eyeOffsetXSV.value = saccade(elapsedMs, 0) * 1.5 * strength;
+      eyeOffsetYSV.value = saccade(elapsedMs, 1) * 0.9 * strength;
     } else if (eyeMotion === 2) {
       eyeOffsetXSV.value = (Math.sin(time * 47) + Math.sin(time * 71) * 0.45) * 1.2 * strength;
       eyeOffsetYSV.value = (Math.sin(time * 59) + Math.sin(time * 83) * 0.4) * 0.8 * strength;
