@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@rn-primitives/dialog';
-import { Fragment, useEffect, type ComponentProps, type ReactNode } from 'react';
-import { Platform, View, useWindowDimensions, type GestureResponderEvent, type ViewStyle } from 'react-native';
+import { Fragment, useEffect, useRef, type ComponentProps, type ReactNode } from 'react';
+import { Platform, View, useWindowDimensions, type GestureResponderEvent, type PointerEvent, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -65,10 +65,17 @@ function SheetOverlay({
   dismissible?: boolean;
 }) {
   const { onOpenChange } = DialogPrimitive.useRootContext();
+  const pressedOnBackdrop = useRef(false);
+
+  function onOverlayPointerDown(event: PointerEvent) {
+    pressedOnBackdrop.current = event.target === event.currentTarget;
+  }
 
   function onOverlayPress(event: GestureResponderEvent) {
     onPress?.(event);
-    if (dismissible && event.target === event.currentTarget && !event.isDefaultPrevented()) {
+    const fromBackdrop = pressedOnBackdrop.current;
+    pressedOnBackdrop.current = false;
+    if (dismissible && fromBackdrop && event.target === event.currentTarget && !event.isDefaultPrevented()) {
       onOpenChange(false);
     }
   }
@@ -82,8 +89,9 @@ function SheetOverlay({
           className
         )}
         {...props}
+        {...(IS_WEB ? { onPointerDown: onOverlayPointerDown } : null)}
         closeOnPress={dismissible}
-        onPress={Platform.select({ web: onOverlayPress, native: onPress })}
+        onPress={IS_WEB ? onOverlayPress : onPress}
         asChild={IS_NATIVE}>
         <NativeOnlyAnimatedView
           entering={overlayIn}
@@ -178,6 +186,9 @@ function SheetContent({
               sheetHeight.value = event.nativeEvent.layout.height;
             }}>
             <DialogPrimitive.Content
+              onInteractOutside={(event) => {
+                if (!dismissible) event.preventDefault();
+              }}
               className={cn(
                 'bg-card w-full gap-4 rounded-t-4xl px-5 pt-3 shadow-2xl shadow-black/25',
                 Platform.select({

@@ -1,11 +1,11 @@
 import { Icon } from '@/shared/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
-import { IS_IOS, IS_NATIVE } from '@/shared/constants';
+import { IS_IOS, IS_NATIVE, IS_WEB } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 import { dialogIn, dialogOut, overlayIn, overlayOut } from '@/shared/libs/animations';
 import * as DialogPrimitive from '@rn-primitives/dialog';
-import { Fragment, type ComponentProps, type ReactNode } from 'react';
-import { Platform, View, type GestureResponderEvent, type ViewProps } from 'react-native';
+import { Fragment, useRef, type ComponentProps, type ReactNode } from 'react';
+import { Platform, View, type GestureResponderEvent, type PointerEvent, type ViewProps } from 'react-native';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 
 const Dialog = DialogPrimitive.Root;
@@ -28,10 +28,17 @@ function DialogOverlay({
   children?: ReactNode;
 }) {
   const { onOpenChange } = DialogPrimitive.useRootContext();
+  const pressedOnBackdrop = useRef(false);
+
+  function onOverlayPointerDown(event: PointerEvent) {
+    pressedOnBackdrop.current = event.target === event.currentTarget;
+  }
 
   function onOverlayPress(event: GestureResponderEvent) {
     onPress?.(event);
-    if (closeOnPress && event.target === event.currentTarget && !event.isDefaultPrevented()) {
+    const fromBackdrop = pressedOnBackdrop.current;
+    pressedOnBackdrop.current = false;
+    if (closeOnPress && fromBackdrop && event.target === event.currentTarget && !event.isDefaultPrevented()) {
       onOpenChange(false);
     }
   }
@@ -47,8 +54,9 @@ function DialogOverlay({
           className
         )}
         {...props}
+        {...(IS_WEB ? { onPointerDown: onOverlayPointerDown } : null)}
         closeOnPress={closeOnPress}
-        onPress={Platform.select({ web: onOverlayPress, native: onPress })}
+        onPress={IS_WEB ? onOverlayPress : onPress}
         asChild={IS_NATIVE}>
         <NativeOnlyAnimatedView entering={overlayIn} exiting={overlayOut} as="Pressable">
           <NativeOnlyAnimatedView
@@ -80,11 +88,15 @@ function DialogContent({
     onEscapeKeyDown?.(event);
     if (!dismissible) event.preventDefault();
   };
+  const outside: ComponentProps<typeof DialogPrimitive.Content>['onInteractOutside'] = (event) => {
+    if (!dismissible) event.preventDefault();
+  };
 
   return (
     <DialogPortal hostName={portalHost}>
       <DialogOverlay closeOnPress={dismissible}>
         <DialogPrimitive.Content
+          onInteractOutside={outside}
           className={cn(
             'bg-background border-border z-50 mx-auto flex w-full flex-col gap-4 rounded-3xl border p-6 shadow-lg shadow-black/5 sm:max-w-lg',
             Platform.select({
