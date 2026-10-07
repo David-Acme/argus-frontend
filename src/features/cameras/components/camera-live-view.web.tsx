@@ -1,7 +1,12 @@
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
-import type { ICameraLiveSession, ICameraMediaSink, ICameraLiveStats } from '@/core/interfaces';
+import type {
+  CameraLiveTransportPolicy,
+  ICameraLiveSession,
+  ICameraMediaSink,
+  ICameraLiveStats,
+} from '@/core/interfaces';
 import type {
   CameraLiveNotice,
   CameraRtcStream,
@@ -22,6 +27,7 @@ type CameraLiveStreamProps = {
   cameraId: string;
   active: boolean;
   quality?: CameraStreamQuality;
+  transport?: CameraLiveTransportPolicy;
   overlay?: ReactNode;
   fill?: boolean;
   compactStatus?: boolean;
@@ -65,6 +71,7 @@ export function CameraLiveStream({
   cameraId,
   active,
   quality = 'sub',
+  transport = 'auto',
   overlay,
   fill = false,
   compactStatus,
@@ -135,6 +142,7 @@ export function CameraLiveStream({
     const opened = cameraLiveService.open({
       cameraId: numericId,
       quality,
+      transport,
       fastStart: true,
       sink,
       events: {
@@ -170,7 +178,7 @@ export function CameraLiveStream({
       audio.current = null;
       reportBlocked(false);
     };
-  }, [active, cameraId, quality, streamKey, unsupported]);
+  }, [active, cameraId, quality, streamKey, transport, unsupported]);
 
   useEffect(() => {
     audio.current?.setLevel(audioLevel);

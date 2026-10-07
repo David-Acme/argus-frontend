@@ -31,7 +31,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bg }}>
-      <SystemBars style={isDark ? 'light' : 'dark'} />
+      <SystemBars style={isDark ? 'light' : 'dark'} hidden={false} />
       <SessionGate>
         <KeyboardProvider>
           <SafeAreaProvider>

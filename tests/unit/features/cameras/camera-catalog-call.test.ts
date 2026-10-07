@@ -9,7 +9,7 @@ import {
   megapixelsOf,
 } from '@/features/cameras/model/camera-catalog';
 import { cameraBodyOf, connectionFields, formSteps, nextStep, previousStep, probeInputOf } from '@/features/cameras/model/camera-form-steps';
-import { cameraViews, countViews, gridColumns, relativeTime, selectViews, streamSummary } from '@/features/cameras/model/camera-overview';
+import { cameraViews, countViews, gridColumns, livePreviewIds, relativeTime, selectViews, streamSummary } from '@/features/cameras/model/camera-overview';
 import { nextPresetName, parsePresets, sensitivityLevel } from '@/features/cameras/model/camera-presets';
 import { probeStepCopy, probeVerdict } from '@/features/cameras/model/camera-probe';
 import { cameraFormDefaults } from '@/features/cameras/components/camera-form-schema';
@@ -229,6 +229,9 @@ describe('cameras overview', () => {
     expect(selectViews(views, { query: '', status: 'all', sort: 'activity' }).map((v) => v.camera.id)).toEqual(['2', '1', '3']);
     expect(selectViews(views, { query: '192.168.1.1', status: 'all', sort: 'name' }).map((v) => v.camera.id)).toEqual(['1']);
     expect(streamSummary(views[0]!.live)).toBe('1280×720 · 15 fps · 1.4 Mbps');
+    expect([...livePreviewIds(views, { budget: 2, isPending: () => false })]).toEqual(['1']);
+    expect([...livePreviewIds(views, { budget: 2, isPending: (item) => item.id === '1' })]).toEqual([]);
+    expect([...livePreviewIds(views, { budget: 0, isPending: () => false })]).toEqual([]);
   });
 
   test('relative time and grid columns', () => {

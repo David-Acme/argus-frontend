@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ICameraLiveStats } from '@/core/interfaces';
@@ -12,7 +12,7 @@ import { CameraLiveView } from './camera-live-view';
 import { PtzPad } from '@/features/cameras/components/ptz-pad';
 import type { CameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
-import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
+import { CAMERA_FULLSCREEN_CONTROLS_HIDE_MS, CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 
 type CameraLiveStageProps = {
   cameraId: string;
@@ -21,6 +21,7 @@ type CameraLiveStageProps = {
   stats: ICameraLiveStats | null;
   live: boolean;
   fullscreen: boolean;
+  flush?: boolean;
   ptz: CameraPtzControls | null;
   showPad: boolean;
   fullscreenControls?: ReactNode;
@@ -37,6 +38,7 @@ export function CameraLiveStage({
   stats,
   live,
   fullscreen,
+  flush = false,
   ptz,
   showPad,
   fullscreenControls,
@@ -47,8 +49,12 @@ export function CameraLiveStage({
 }: CameraLiveStageProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const [controlsShown, setControlsShown] = useState(true);
+  const [armed, setArmed] = useState(0);
+  const moving = ptz?.moving ?? false;
   const hasAudio = live && stats?.audio === true;
   const silencedByCall = audio.reason === 'argus-call' || audio.reason === 'camera-call';
+  const controls = !fullscreen || controlsShown;
   const audioLabel =
     audio.muted || audio.blocked
       ? t('screens.cameras.live.unmute')
@@ -66,24 +72,29 @@ export function CameraLiveStage({
             height: String(stats.height),
           })
       : null;
-  const transportLabel = stats
-    ? t(
-        stats.transport === 'webrtc'
-          ? 'screens.cameras.live.transport-webrtc'
-          : 'screens.cameras.live.transport-ws'
-      )
-    : null;
-  const transportHint = stats
-    ? t(
-        stats.transport === 'webrtc'
-          ? 'screens.cameras.live.transport-webrtc-hint'
-          : 'screens.cameras.live.transport-ws-hint'
-      )
-    : '';
+
+  useEffect(() => {
+    if (!fullscreen || !controlsShown || moving) return;
+    const timer = setTimeout(() => setControlsShown(false), CAMERA_FULLSCREEN_CONTROLS_HIDE_MS);
+    return () => clearTimeout(timer);
+  }, [armed, controlsShown, fullscreen, moving]);
+
+  const reveal = () => {
+    setArmed((value) => value + 1);
+    setControlsShown(true);
+  };
+
+  const toggleControls = () => {
+    if (controlsShown) setControlsShown(false);
+    else reveal();
+  };
 
   return (
     <View
-      className={cn('w-full overflow-hidden', fullscreen ? 'flex-1' : 'rounded-2xl')}
+      className={cn(
+        'w-full overflow-hidden',
+        fullscreen ? 'flex-1' : flush ? 'rounded-t-3xl' : 'rounded-2xl'
+      )}
       style={
         fullscreen
           ? { backgroundColor: CAMERA_LIVE_BACKGROUND }
@@ -95,39 +106,46 @@ export function CameraLiveStage({
         overlay={overlay}
         fill
         compactStatus={false}
-        className={fullscreen ? 'rounded-none' : undefined}
+        className={fullscreen || flush ? 'rounded-none' : undefined}
         onStats={onStats}
         onState={onState}
         audioLevel={audio.level}
         audioUnlock={audio.unlockKey}
         onAudioBlocked={audio.setBlocked}
       />
+      {fullscreen ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('screens.cameras.live.toggle-controls')}
+          onPress={toggleControls}
+          className="absolute inset-0"
+        />
+      ) : null}
       <View
         pointerEvents="box-none"
+        onStartShouldSetResponderCapture={() => {
+          if (fullscreen) reveal();
+          return false;
+        }}
         className="absolute"
         style={
           fullscreen
             ? { top: insets.top, bottom: insets.bottom, left: insets.left, right: insets.right }
             : { top: 0, bottom: 0, left: 0, right: 0 }
         }>
-        {live && statsLabel ? (
+        {controls && live && statsLabel ? (
           <View
             pointerEvents="none"
             accessible
-            accessibilityLabel={`${statsLabel}. ${transportHint}`}
+            accessibilityLabel={statsLabel}
             className="bg-card/90 absolute top-3 right-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
             <Icon name="gauge" className="text-foreground-secondary size-3.5" />
             <Text variant="micro" className="text-foreground font-semibold">
               {statsLabel}
             </Text>
-            {transportLabel ? (
-              <Text variant="micro" className="text-foreground-secondary">
-                {`· ${transportLabel}`}
-              </Text>
-            ) : null}
           </View>
         ) : null}
-        {live && ptz && showPad ? (
+        {controls && live && ptz && showPad ? (
           <View className="absolute bottom-3 left-3">
             <PtzPad
               compact
@@ -154,7 +172,7 @@ export function CameraLiveStage({
             </View>
           </View>
         ) : null}
-        {fullscreen && fullscreenControls ? (
+        {controls && fullscreen && fullscreenControls ? (
           <View pointerEvents="box-none" className="absolute inset-x-0 bottom-4 items-center">
             <View className="bg-card/90 w-56 rounded-2xl">{fullscreenControls}</View>
           </View>
@@ -171,7 +189,7 @@ export function CameraLiveStage({
             </Pressable>
           </View>
         ) : null}
-        {hasAudio && silencedByCall && !audio.muted ? (
+        {controls && hasAudio && silencedByCall && !audio.muted ? (
           <View
             pointerEvents="none"
             className="bg-card/90 absolute right-[116px] bottom-4 flex-row items-center gap-1.5 rounded-full px-2.5 py-1">
@@ -183,7 +201,7 @@ export function CameraLiveStage({
             </Text>
           </View>
         ) : null}
-        {hasAudio ? (
+        {controls && hasAudio ? (
           <IconButton
             icon={audio.muted || audio.blocked || silencedByCall ? 'volume-x' : 'volume-2'}
             label={audioLabel}
@@ -192,16 +210,18 @@ export function CameraLiveStage({
             className="bg-card/90 absolute right-16 bottom-3"
           />
         ) : null}
-        <IconButton
-          icon={fullscreen ? 'minimize' : 'maximize'}
-          label={
-            fullscreen
-              ? t('screens.cameras.live.exit-fullscreen')
-              : t('screens.cameras.live.fullscreen')
-          }
-          onPress={onToggleFullscreen}
-          className="bg-card/90 absolute right-3 bottom-3"
-        />
+        {controls ? (
+          <IconButton
+            icon={fullscreen ? 'minimize' : 'maximize'}
+            label={
+              fullscreen
+                ? t('screens.cameras.live.exit-fullscreen')
+                : t('screens.cameras.live.fullscreen')
+            }
+            onPress={onToggleFullscreen}
+            className="bg-card/90 absolute right-3 bottom-3"
+          />
+        ) : null}
       </View>
     </View>
   );

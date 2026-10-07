@@ -8,7 +8,11 @@ import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/components/camera-summary';
 import { CameraToolbar } from '@/features/cameras/components/camera-toolbar';
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
-import { CAMERA_DENSITY_STORAGE_KEY } from '@/features/cameras/constants';
+import {
+  CAMERA_DENSITY_STORAGE_KEY,
+  CAMERA_LIVE_PREVIEWS_COMPACT,
+  CAMERA_LIVE_PREVIEWS_WIDE,
+} from '@/features/cameras/constants';
 import { useCameraCatalog } from '@/features/cameras/hooks/use-camera-catalog';
 import { useCameraOverview } from '@/features/cameras/hooks/use-camera-overview';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
@@ -18,6 +22,7 @@ import {
   cameraViews,
   countViews,
   healthOf,
+  livePreviewIds,
   selectViews,
   type CameraDensity,
   type CameraSort,
@@ -72,6 +77,14 @@ export default function CamerasScreen() {
   const views = useMemo(() => cameraViews(cameras, overview), [cameras, overview]);
   const counts = useMemo(() => countViews(views), [views]);
   const visible = useMemo(() => selectViews(views, { query, status, sort }), [query, sort, status, views]);
+  const livePreviews = useMemo(
+    () =>
+      livePreviewIds(visible, {
+        budget: isCompact ? CAMERA_LIVE_PREVIEWS_COMPACT : CAMERA_LIVE_PREVIEWS_WIDE,
+        isPending: isPendingCamera,
+      }),
+    [isCompact, isPendingCamera, visible],
+  );
   const cameraNames = useMemo(() => new Map(cameras.map((camera) => [camera.id, camera.name])), [cameras]);
   const summary = useMemo<CameraSummaryCounts>(() => {
     const next: CameraSummaryCounts = {
@@ -181,6 +194,7 @@ export default function CamerasScreen() {
         badgeOf={badgeOf}
         isPending={isPendingCamera}
         thumbnails={thumbnails}
+        livePreviews={livePreviews}
         onSelect={openCamera}
         onTalk={talkTo}
       />

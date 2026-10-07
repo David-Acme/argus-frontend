@@ -1,6 +1,7 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useCallback, useState, type ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import type { CameraDriverKind, CameraFormFactor, TranslationKey } from '@/core/types';
+import type { CameraDriverKind, CameraFormFactor, CameraStreamState, TranslationKey } from '@/core/types';
+import { CameraLiveView } from './camera-live-view';
 import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
 import {
   formatRelative,
@@ -28,6 +29,7 @@ type CameraCardProps = {
   now: number;
   pending?: boolean;
   thumbnail?: string;
+  livePreview?: boolean;
   badge?: ReactNode;
   onPress: (id: string) => void;
   onTalk: (id: string) => void;
@@ -37,6 +39,7 @@ type PreviewProps = {
   view: CameraView;
   formFactor: CameraFormFactor;
   thumbnail?: string;
+  live?: boolean;
   compact?: boolean;
 };
 
@@ -86,11 +89,14 @@ function Fact({ icon, text, tone = 'muted' }: FactProps) {
   );
 }
 
-function Preview({ view, formFactor, thumbnail, compact = false }: PreviewProps) {
+function Preview({ view, formFactor, thumbnail, live = false, compact = false }: PreviewProps) {
   const { t } = useTranslation();
-  const { status, live } = view;
-  const health = healthOf(live);
-  const viewers = live?.viewers ?? 0;
+  const { camera, status } = view;
+  const health = healthOf(view.live);
+  const viewers = view.live?.viewers ?? 0;
+  const streaming = live && status === 'online';
+  const [painted, setPainted] = useState(false);
+  const onState = useCallback((state: CameraStreamState) => setPainted(state === 'live'), []);
   return (
     <View
       className={cn(
@@ -115,6 +121,11 @@ function Preview({ view, formFactor, thumbnail, compact = false }: PreviewProps)
           )}
         </View>
       )}
+      {streaming ? (
+        <View pointerEvents="none" className="absolute inset-0" style={{ opacity: painted ? 1 : 0 }}>
+          <CameraLiveView cameraId={camera.id} quality="sub" transport="ws" fill compactStatus onState={onState} />
+        </View>
+      ) : null}
       {compact ? null : (
         <>
           <StatusBadge
@@ -187,6 +198,7 @@ export const CameraCard = memo(function CameraCard({
   now,
   pending = false,
   thumbnail,
+  livePreview = false,
   badge,
   onPress,
   onTalk,
@@ -289,7 +301,7 @@ export const CameraCard = memo(function CameraCard({
       onPress={() => onPress(camera.id)}
       className={cn(pressableClass, variant === 'featured' ? 'flex-row items-stretch gap-5 p-3' : 'flex-1 gap-3 p-3')}>
       <View className={variant === 'featured' ? 'w-[58%]' : undefined}>
-        <Preview view={view} formFactor={formFactor} thumbnail={thumbnail} />
+        <Preview view={view} formFactor={formFactor} thumbnail={thumbnail} live={livePreview} />
       </View>
       {details}
     </Pressable>

@@ -15,6 +15,7 @@ type CameraCardGridProps = {
   badgeOf?: (camera: ICameraCacheRow) => ReactNode;
   isPending?: (camera: ICameraCacheRow) => boolean;
   thumbnails?: ReadonlyMap<string, string>;
+  livePreviews?: ReadonlySet<string>;
   onSelect: (id: string) => void;
   onTalk: (id: string) => void;
 };
@@ -30,6 +31,7 @@ export function CameraCardGrid({
   badgeOf,
   isPending,
   thumbnails,
+  livePreviews,
   onSelect,
   onTalk,
 }: CameraCardGridProps) {
@@ -46,6 +48,7 @@ export function CameraCardGrid({
       now={now}
       pending={isPending?.(view.camera) ?? false}
       thumbnail={thumbnails?.get(view.camera.id)}
+      livePreview={variant !== 'row' && (livePreviews?.has(view.camera.id) ?? false)}
       badge={badgeOf?.(view.camera)}
       onPress={onSelect}
       onTalk={onTalk}

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import type {
+  CameraLiveTransportPolicy,
   ICameraLiveStats,
   ICameraMediaOpenInput,
   ICameraMediaSession,
@@ -96,11 +97,12 @@ async function waitFor(condition: () => boolean, limitMs: number): Promise<void>
   while (!condition() && Date.now() < until) await sleep(5);
 }
 
-function open() {
+function open(transport: CameraLiveTransportPolicy = 'auto') {
   const recorded: Recorded = { states: [], transports: [], stats: [], streams: [], notices: [] };
   const session = cameraLiveService.open({
     cameraId: 6,
     quality: 'main',
+    transport,
     fastStart: true,
     sink,
     events: {
@@ -242,5 +244,19 @@ describe('the live view prefers WebRTC and falls back to the WebSocket', () => {
     expect(recorded.transports).toEqual(['ws', 'webrtc']);
     expect(recorded.states).toEqual(['connecting', 'live']);
     session.close();
+  });
+
+  test('a preview pinned to the WebSocket never opens WebRTC, not even after the backoff', async () => {
+    const { session, recorded } = open('ws');
+    await sleep(5);
+    expect(rtcSessions).toHaveLength(0);
+    expect(wsSessions).toHaveLength(1);
+    expect(recorded.transports).toEqual(['ws']);
+    wsSessions[0]?.input.events?.onState?.('live');
+    await sleep(BACKOFF_MAX_MS + 10);
+    expect(rtcSessions).toHaveLength(0);
+    expect(recorded.states).toEqual(['live']);
+    session.close();
+    expect(wsSessions[0]?.closed).toBe(true);
   });
 });

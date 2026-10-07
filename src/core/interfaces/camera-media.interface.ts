@@ -55,9 +55,12 @@ export interface ICameraLiveEvents {
   onNotice?: (notice: CameraLiveNotice | null) => void;
 }
 
+export type CameraLiveTransportPolicy = 'auto' | 'ws';
+
 export interface ICameraLiveOpenInput {
   cameraId: number;
   quality: CameraStreamQuality;
+  transport?: CameraLiveTransportPolicy;
   fastStart?: boolean;
   sink: ICameraMediaSink;
   events?: ICameraLiveEvents;

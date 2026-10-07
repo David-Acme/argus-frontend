@@ -7,6 +7,7 @@ import { Panel } from '@/shared/components/ui/panel';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { CameraFrameRate } from '@/features/cameras/components/camera-frame-rate';
 import { CameraFullscreen } from '@/features/cameras/components/camera-fullscreen';
@@ -54,6 +55,7 @@ type CameraLiveFullscreenProps = {
 
 type StageViewProps = CameraLiveFullscreenProps & {
   inFullscreen: boolean;
+  flush?: boolean;
 };
 
 type QualitySwitchProps = {
@@ -101,7 +103,7 @@ function QualitySwitch({ quality }: QualitySwitchProps) {
   );
 }
 
-function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, inFullscreen }: StageViewProps) {
+function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, inFullscreen, flush = false }: StageViewProps) {
   return (
     <CameraLiveStage
       cameraId={cameraId}
@@ -110,6 +112,7 @@ function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, inF
       stats={stage.stats}
       live={stage.live}
       fullscreen={inFullscreen}
+      flush={flush}
       ptz={ptz}
       showPad={stage.showPad}
       fullscreenControls={<QualitySwitch quality={quality} />}
@@ -146,6 +149,7 @@ export function CameraLivePanel({
   className,
 }: CameraLivePanelProps) {
   const { t } = useTranslation();
+  const { isCompact } = useWindowClass();
   const { fullscreen, showPad, stats, setShowPad } = stage;
   const activeZones = zones.filter((zone) => zone.isEnabled).length;
 
@@ -164,16 +168,19 @@ export function CameraLivePanel({
           <Text variant="caption">{t('screens.cameras.live.in-fullscreen')}</Text>
         </View>
       ) : (
-        <StageView
-          cameraId={cameraId}
-          zones={zones}
-          showZones={showZones}
-          quality={quality}
-          ptz={ptz}
-          stage={stage}
-          audio={audio}
-          inFullscreen={false}
-        />
+        <View className={cn(isCompact && '-mx-3 -mt-3')}>
+          <StageView
+            cameraId={cameraId}
+            zones={zones}
+            showZones={showZones}
+            quality={quality}
+            ptz={ptz}
+            stage={stage}
+            audio={audio}
+            inFullscreen={false}
+            flush={isCompact}
+          />
+        </View>
       )}
 
       <View className="min-h-10 flex-row flex-wrap items-center gap-2 px-1">

@@ -85,6 +85,20 @@ export function cameraViews(
   });
 }
 
+export type LivePreviewBudget = {
+  budget: number;
+  isPending: (camera: ICameraCacheRow) => boolean;
+};
+
+export function livePreviewIds(views: readonly CameraView[], { budget, isPending }: LivePreviewBudget): ReadonlySet<string> {
+  const ids: string[] = [];
+  for (const view of views) {
+    if (ids.length >= budget) break;
+    if (view.status === 'online' && !isPending(view.camera)) ids.push(view.camera.id);
+  }
+  return new Set(ids);
+}
+
 export function countViews(views: readonly CameraView[]): CameraCounts {
   const counts: CameraCounts = { all: views.length, online: 0, offline: 0, disabled: 0 };
   for (const view of views) counts[view.status] += 1;

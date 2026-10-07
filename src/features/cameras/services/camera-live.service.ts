@@ -42,6 +42,10 @@ class CameraLiveSession implements ICameraLiveSession {
   constructor(private readonly input: ICameraLiveOpenInput) {}
 
   start(): CameraLiveSession {
+    if (this.input.transport === 'ws') {
+      this.startWs();
+      return this;
+    }
     const choice = firstTransport({
       rtcSupported: cameraRtcService.supported(),
       backoff: rtcBackoff,
@@ -230,7 +234,7 @@ class CameraLiveSession implements ICameraLiveSession {
   }
 
   private scheduleUpgrade(): void {
-    if (this.closed || !cameraRtcService.supported()) return;
+    if (this.closed || this.input.transport === 'ws' || !cameraRtcService.supported()) return;
     if (this.upgradeTimer) clearTimeout(this.upgradeTimer);
     const delay = Math.max(0, rtcBackoff.retryAt - Date.now());
     this.upgradeTimer = setTimeout(() => {
