@@ -4,7 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Vibration } from 'react-native';
 import { authService } from '@/core/services/auth.service';
 import { log } from '@/core/services/log';
-import { FACE_CAPTURE_READY_TIMEOUT_MS, FACE_CAPTURE_SETTLE_MS, FACE_MANUAL_CAPTURE_DELAY_MS } from '@/features/auth/constants/face';
+import {
+  FACE_CAPTURE_READY_TIMEOUT_MS,
+  FACE_CAPTURE_SETTLE_MS,
+  FACE_MANUAL_CAPTURE_DELAY_MS,
+  FACE_STUCK_SUGGESTION_MS,
+} from '@/features/auth/constants/face';
 import { useFaceGuide } from '@/features/auth/hooks/use-face-guide';
 import { faceErrorFromUnknown, type FaceError } from '@/features/auth/model/face-error';
 import { clearInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
@@ -43,6 +48,7 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
   const [requesting, setRequesting] = useState(false);
   const [asked, setAsked] = useState(false);
   const [manualAvailable, setManualAvailable] = useState(false);
+  const [stuck, setStuck] = useState(false);
 
   const granted = permission?.granted === true;
   const denied = asked && permission !== null && !permission.granted && !permission.canAskAgain;
@@ -248,6 +254,15 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
     };
   }, [cameraActive, phase]);
 
+  useEffect(() => {
+    if (!cameraActive || phase !== 'guide' || notice !== null) return;
+    const timer = setTimeout(() => setStuck(true), FACE_STUCK_SUGGESTION_MS);
+    return () => {
+      clearTimeout(timer);
+      setStuck(false);
+    };
+  }, [cameraActive, phase, notice]);
+
   const captureManually = useCallback(() => {
     captureAttemptRef.current += 1;
     phaseRef.current = 'countdown';
@@ -279,6 +294,7 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
     error,
     notice,
     manualAvailable,
+    stuck,
     guide,
     cameraActive,
     handleCameraReady,

@@ -56,13 +56,18 @@ describe('createMorphDriver', () => {
     expect(painted).toEqual([]);
 
     driver.morphTo(X, 'smooth');
-    pump(180, 16.7);
+    pump(30, 16.7);
+    expect(pendingFrames.length).toBeGreaterThan(0);
+    pump(150, 16.7);
 
     expect(painted.length).toBeGreaterThan(10);
     expect(new Set(painted).size).toBeGreaterThan(10);
     expect(painted[0]).not.toBe(xD);
     expect(painted.at(-1)).toBe(xD);
     expect(pendingFrames.length).toBe(0);
+    const settled = painted.length;
+    pump(60, 16.7);
+    expect(painted.length).toBe(settled);
     driver.destroy();
   });
 

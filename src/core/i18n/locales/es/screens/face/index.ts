@@ -49,4 +49,7 @@ export const face = {
     'Crea la cuenta desde tu teléfono escaneando el código QR del servidor. En este equipo solo se inicia sesión con el código de emparejamiento.',
   'web-only-login':
     'Inicia sesión con tu teléfono: escanea el código QR que muestra este equipo para entrar automáticamente.',
+  'back-to-start': 'Volver al inicio',
+  'qr-login': 'Entrar con el código QR',
+  'stuck-hint': '¿No vemos tu cara? Entra con el código QR y escanéalo desde tu otro dispositivo.',
 } as const;

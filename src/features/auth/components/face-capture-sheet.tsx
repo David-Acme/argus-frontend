@@ -1,4 +1,5 @@
 import { View, type LayoutChangeEvent } from 'react-native';
+import type { ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
 import { Button } from '@/shared/components/ui/button';
@@ -19,6 +20,7 @@ type FaceCaptureSheetProps = {
   submitting: boolean;
   manualCapture: boolean;
   onManualCapture: () => void;
+  alternatives: ReactNode;
   onLayout: (event: LayoutChangeEvent) => void;
 };
 
@@ -33,6 +35,7 @@ export function FaceCaptureSheet({
   submitting,
   manualCapture,
   onManualCapture,
+  alternatives,
   onLayout,
 }: FaceCaptureSheetProps) {
   const { t } = useTranslation();
@@ -115,6 +118,8 @@ export function FaceCaptureSheet({
             </Text>
           )}
         </View>
+
+        {alternatives}
       </View>
     </View>
   );

@@ -1,16 +1,10 @@
 import { IS_WEB } from '@/shared/constants';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
+import { revealStyle } from '@/shared/components/ui/blur-reveal-style';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-const BLUR_INITIAL_PX = 14;
 const EASE_OUT = Easing.out(Easing.cubic);
 
 type BlurRevealProps = {
@@ -37,19 +31,15 @@ export function BlurReveal({
     progress.value = withDelay(delay, withTiming(1, { duration, easing: EASE_OUT }));
   }, [delay, duration, progress]);
 
-  const style = useAnimatedStyle(() => {
-    if (reduceMotion) return { opacity: progress.value };
-    const blurPx = (1 - progress.value) * BLUR_INITIAL_PX;
-    return {
-      opacity: progress.value,
-      ...(scale ? { transform: [{ scale: 0.96 + 0.04 * progress.value }] } : {}),
-      ...(blur
-        ? IS_WEB
-          ? { filter: [{ blur: `${blurPx.toFixed(1)}px` }] }
-          : { filter: [{ blur: blurPx }] }
-        : {}),
-    };
-  });
+  const style = useAnimatedStyle(() =>
+    revealStyle({
+      blur,
+      scale,
+      platform: IS_WEB ? 'web' : 'native',
+      progress: progress.value,
+      reduceMotion,
+    })
+  );
 
   return (
     <Animated.View className={className} style={style}>

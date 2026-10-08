@@ -5,9 +5,10 @@ import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
 import { QrCode } from '@/shared/components/ui/qr-code';
 import { buildLoginQr } from '@/features/auth/model/login-qr';
+import { loginEntry, loginPollOutcome } from '@/features/auth/model/login-entry';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { IS_NATIVE, QR_COLORS } from '@/shared/constants';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
@@ -19,6 +20,8 @@ type Phase = 'loading' | 'waiting-owner' | 'qr' | 'approved' | 'expired' | 'erro
 export default function LoginScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { method } = useLocalSearchParams<{ method?: string }>();
+  const entry = loginEntry({ isNative: IS_NATIVE, method });
   const [phase, setPhase] = useState<Phase>('loading');
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,12 +49,13 @@ export default function LoginScreen() {
     const tick = async () => {
       const res = await authService.pollDeviceLogin(id);
       if (res.ok && res.info) {
-        if (res.info.status === 'approved' && res.info.accessToken && res.info.refreshToken) {
+        const outcome = loginPollOutcome(res.info);
+        if (outcome === 'approved') {
           stopPolling();
           setPhase('approved');
           return;
         }
-        if (res.info.status === 'expired') {
+        if (outcome === 'expired') {
           stopPolling();
           setChallengeId(null);
           setPhase('expired');
@@ -64,6 +68,7 @@ export default function LoginScreen() {
   }, [stopPolling]);
 
   useEffect(() => {
+    if (entry !== 'qr') return;
     let active = true;
     const boot = async () => {
       const res = await authService.serverStatus();
@@ -77,7 +82,7 @@ export default function LoginScreen() {
       active = false;
       stopPolling();
     };
-  }, [createChallenge, stopPolling]);
+  }, [createChallenge, entry, stopPolling]);
 
   useEffect(() => {
     if (phase === 'qr' && challengeId) startPolling(challengeId);
@@ -102,7 +107,7 @@ export default function LoginScreen() {
     void createChallenge();
   }, [createChallenge]);
 
-  if (IS_NATIVE) return <Redirect href="/welcome/face?mode=login" />;
+  if (entry === 'face') return <Redirect href="/welcome/face?mode=login" />;
 
   return (
     <CenteredScreen maxWidth={448}>

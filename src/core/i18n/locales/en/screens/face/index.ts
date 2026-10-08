@@ -49,4 +49,7 @@ export const face = {
     'Create the account from your phone by scanning the server QR code. On this computer you can only sign in with the pairing code.',
   'web-only-login':
     'Sign in with your phone: scan the QR code shown on this computer to enter automatically.',
+  'back-to-start': 'Back to the start',
+  'qr-login': 'Sign in with the QR code',
+  'stuck-hint': 'Can’t see your face? Sign in with the QR code and scan it from your other device.',
 };

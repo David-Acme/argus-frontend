@@ -40,7 +40,10 @@ export const MorphIcon = forwardRef<MorphHandle, MorphIconProps>(
     const driverRef = useRef<MorphDriver | null>(null);
     const previousIconRef = useRef(icon);
     const springRef = useRef(spring);
-    springRef.current = spring;
+
+    useEffect(() => {
+      springRef.current = spring;
+    }, [spring]);
 
     useImperativeHandle(
       ref,
