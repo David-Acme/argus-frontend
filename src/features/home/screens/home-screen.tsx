@@ -26,10 +26,11 @@ import {
   unreadThreadCount,
   type NotificationThread,
 } from '@/features/home/model/notification-threads';
-import { activityTrend } from '@/features/home/model/activity-trend';
+import { cameraActivity } from '@/features/home/model/camera-activity';
 import { cameraActivityAction } from '@/features/home/model/camera-activity-action';
 import { searchPlaceholder } from '@/features/home/model/home-search';
 import { HomeAside } from '@/features/home/components/home-aside';
+import { useCameraOverview } from '@/features/cameras';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ResponseStrip } from '@/features/response';
 import { InactiveRoleScreen } from '@/features/access';
@@ -55,7 +56,7 @@ function firstNameOf(user: IAuthUser | null): string {
 function HomeContent() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const date = useDateFormatter();
   const { isShort } = useWindowClass();
   const { can, has } = useCapabilities();
@@ -66,9 +67,9 @@ function HomeContent() {
     today,
     unreadNotifications: syncedUnread,
     summary,
-    activityLevels,
   } = useDashboardData();
   const watchesCameras = has(CAPABILITY.cameraView);
+  const overview = useCameraOverview(watchesCameras);
   const readsAgenda = has(CAPABILITY.agendaRead);
   const readsProjects = has(CAPABILITY.projectsRead);
   const [query, setQuery] = useState('');
@@ -112,7 +113,7 @@ function HomeContent() {
     [date, t]
   );
 
-  const trend = useMemo(() => activityTrend(summary, language), [language, summary]);
+  const activity = useMemo(() => cameraActivity(overview?.events ?? [], now), [now, overview]);
 
   const noCameras = summary.camerasTotal === 0;
   const cameraAction = cameraActivityAction(noCameras);
@@ -155,6 +156,7 @@ function HomeContent() {
         <HomeAside
           cameras={cameraTiles}
           summary={summary}
+          detections={activity.recent}
           threads={threads}
           paging={notificationPaging}
           now={now}
@@ -207,11 +209,11 @@ function HomeContent() {
           title={
             noCameras
               ? t('screens.home.activity-no-cameras')
-              : t('screens.home.activity-events', { count: String(summary.eventsCurrent) })
+              : t('screens.home.activity-detections', { count: String(activity.recent) })
           }
-          delta={trend.label}
-          direction={trend.direction}
-          levels={activityLevels}
+          delta={t('screens.home.activity-detections-today', { count: String(activity.today) })}
+          direction="flat"
+          levels={activity.levels}
           action={t(cameraAction.labelKey)}
           onAction={() => router.push(cameraAction.href)}
         />

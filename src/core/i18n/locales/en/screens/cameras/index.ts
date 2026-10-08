@@ -217,6 +217,15 @@ export const cameras = {
   'preview-offline': 'No signal right now',
   'preview-disabled': 'Monitoring paused',
   'add-tile-hint': 'Tapo, ONVIF or RTSP on your local network',
+  lab: {
+    hint: 'Camera-free lab: system bars and the live pill',
+    insets: 'Top {top} · left {left}',
+    open: 'Open full screen',
+    toggle: 'Toggle controls',
+    placeholder: 'Video placeholder',
+    hide: 'Tap to hide the controls',
+    show: 'Tap to show the controls',
+  },
   steps: {
     model: 'Model',
     connection: 'Connection',

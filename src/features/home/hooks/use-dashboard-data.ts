@@ -10,7 +10,6 @@ export function useDashboardData(): IDashboardCacheData {
   const unreadNotifications = useViewCacheValue<number>(VIEW_CACHE_KEYS.dashboardUnread) ?? 0;
   const summary =
     useViewCacheValue<DashboardSummary>(VIEW_CACHE_KEYS.dashboardSummary) ?? EMPTY_DASHBOARD_SUMMARY;
-  const activityLevels = useViewCacheRows<readonly number[]>(VIEW_CACHE_KEYS.dashboardActivity);
 
   return {
     cameraTiles,
@@ -18,6 +17,5 @@ export function useDashboardData(): IDashboardCacheData {
     today,
     unreadNotifications,
     summary,
-    activityLevels,
   };
 }

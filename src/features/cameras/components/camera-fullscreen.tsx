@@ -1,5 +1,7 @@
+import { Portal } from '@rn-primitives/portal';
 import { useEffect, useEffectEvent, type ReactNode } from 'react';
-import { Modal, View } from 'react-native';
+import { BackHandler, StyleSheet } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { SystemBars } from 'react-native-edge-to-edge';
 import {
   enterWindowFullscreen,
@@ -7,7 +9,7 @@ import {
   onWindowFullscreenExit,
   releaseWindowOrientation,
 } from '../services/window-fullscreen';
-import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
+import { CAMERA_FULLSCREEN_FADE_MS, CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { IS_NATIVE } from '@/shared/constants';
 
 type CameraFullscreenProps = {
@@ -16,7 +18,7 @@ type CameraFullscreenProps = {
   children: ReactNode;
 };
 
-const ORIENTATIONS = ['portrait', 'landscape', 'landscape-left', 'landscape-right'] as const;
+const OVERLAY_STYLE = [StyleSheet.absoluteFill, { backgroundColor: CAMERA_LIVE_BACKGROUND }];
 
 export function CameraFullscreen({ open, onClose, children }: CameraFullscreenProps) {
   const close = useEffectEvent(() => onClose());
@@ -31,20 +33,25 @@ export function CameraFullscreen({ open, onClose, children }: CameraFullscreenPr
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !IS_NATIVE) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      close();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [open]);
+
   useEffect(() => () => void releaseWindowOrientation(), []);
 
+  if (!open) return null;
+
   return (
-    <Modal
-      visible={open}
-      animationType="fade"
-      onRequestClose={onClose}
-      supportedOrientations={[...ORIENTATIONS]}
-      statusBarTranslucent
-      navigationBarTranslucent>
-      {IS_NATIVE && open ? <SystemBars hidden /> : null}
-      <View className="flex-1" style={{ backgroundColor: CAMERA_LIVE_BACKGROUND }}>
+    <Portal name="camera-fullscreen">
+      {IS_NATIVE ? <SystemBars hidden /> : null}
+      <Animated.View entering={FadeIn.duration(CAMERA_FULLSCREEN_FADE_MS)} style={OVERLAY_STYLE}>
         {children}
-      </View>
-    </Modal>
+      </Animated.View>
+    </Portal>
   );
 }

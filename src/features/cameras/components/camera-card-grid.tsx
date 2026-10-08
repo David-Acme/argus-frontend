@@ -48,7 +48,7 @@ export function CameraCardGrid({
       now={now}
       pending={isPending?.(view.camera) ?? false}
       thumbnail={thumbnails?.get(view.camera.id)}
-      livePreview={variant !== 'row' && (livePreviews?.has(view.camera.id) ?? false)}
+      livePreview={livePreviews?.has(view.camera.id) ?? false}
       badge={badgeOf?.(view.camera)}
       onPress={onSelect}
       onTalk={onTalk}

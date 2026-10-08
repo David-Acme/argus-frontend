@@ -8,17 +8,19 @@ import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 
 const loadOverview = () => cameraControlService.overview();
 
-export function useCameraOverview(): ICameraOverview | null {
+export function useCameraOverview(enabled = true): ICameraOverview | null {
   const { data, reload } = useRemoteResource<ICameraOverview>({
     cacheKey: VIEW_CACHE_KEYS.cameraOverview,
     load: loadOverview,
+    enabled,
   });
 
   useFocusEffect(
     useCallback(() => {
+      if (!enabled) return;
       const timer = setInterval(() => void reload(), CAMERA_OVERVIEW_REFRESH_MS);
       return () => clearInterval(timer);
-    }, [reload]),
+    }, [enabled, reload]),
   );
 
   return data;

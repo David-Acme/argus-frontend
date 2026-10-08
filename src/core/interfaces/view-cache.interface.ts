@@ -106,7 +106,6 @@ export interface IDashboardCacheData {
   today: readonly CalendarEntry[];
   unreadNotifications: number;
   summary: DashboardSummary;
-  activityLevels: readonly (readonly number[])[];
 }
 
 export interface ICalendarEventCacheSource {

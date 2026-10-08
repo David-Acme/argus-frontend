@@ -1,6 +1,7 @@
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
+import type { EdgeInsets } from 'react-native-safe-area-context';
 import type {
   CameraLiveTransportPolicy,
   ICameraLiveSession,
@@ -28,12 +29,15 @@ type CameraLiveStreamProps = {
   active: boolean;
   quality?: CameraStreamQuality;
   transport?: CameraLiveTransportPolicy;
+  isolatedBackoff?: boolean;
   overlay?: ReactNode;
   fill?: boolean;
   compactStatus?: boolean;
   className?: string;
   onStats?: (stats: ICameraLiveStats) => void;
   onState?: (state: CameraStreamState) => void;
+  statusHidden?: boolean;
+  statusInsets?: EdgeInsets;
   audioLevel?: number;
   audioUnlock?: number;
   onAudioBlocked?: (blocked: boolean) => void;
@@ -72,12 +76,15 @@ export function CameraLiveStream({
   active,
   quality = 'sub',
   transport = 'auto',
+  isolatedBackoff = false,
   overlay,
   fill = false,
   compactStatus,
   className,
   onStats,
   onState,
+  statusHidden,
+  statusInsets,
   audioLevel = 0,
   audioUnlock = 0,
   onAudioBlocked,
@@ -143,6 +150,7 @@ export function CameraLiveStream({
       cameraId: numericId,
       quality,
       transport,
+      isolatedBackoff,
       fastStart: true,
       sink,
       events: {
@@ -178,7 +186,7 @@ export function CameraLiveStream({
       audio.current = null;
       reportBlocked(false);
     };
-  }, [active, cameraId, quality, streamKey, transport, unsupported]);
+  }, [active, cameraId, quality, streamKey, transport, isolatedBackoff, unsupported]);
 
   useEffect(() => {
     audio.current?.setLevel(audioLevel);
@@ -209,6 +217,8 @@ export function CameraLiveStream({
         painted={current?.painted ?? false}
         notice={current?.notice ?? null}
         compact={compactStatus ?? fill}
+        hidden={statusHidden}
+        insets={statusInsets}
         onRetry={retry}
       />
     </View>

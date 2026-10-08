@@ -62,6 +62,7 @@ export interface ICameraLiveOpenInput {
   quality: CameraStreamQuality;
   transport?: CameraLiveTransportPolicy;
   fastStart?: boolean;
+  isolatedBackoff?: boolean;
   sink: ICameraMediaSink;
   events?: ICameraLiveEvents;
 }

@@ -2,6 +2,7 @@ import { memo, useCallback, useState, type ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import type { CameraDriverKind, CameraFormFactor, CameraStreamState, TranslationKey } from '@/core/types';
 import { CameraLiveView } from './camera-live-view';
+import { CAMERA_PREVIEW_TRANSPORT, previewPaints } from '@/features/cameras/model/camera-preview';
 import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
 import {
   formatRelative,
@@ -96,7 +97,7 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
   const viewers = view.live?.viewers ?? 0;
   const streaming = live && status === 'online';
   const [painted, setPainted] = useState(false);
-  const onState = useCallback((state: CameraStreamState) => setPainted(state === 'live'), []);
+  const onState = useCallback((state: CameraStreamState) => setPainted(previewPaints(state)), []);
   return (
     <View
       className={cn(
@@ -123,7 +124,15 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
       )}
       {streaming ? (
         <View pointerEvents="none" className="absolute inset-0" style={{ opacity: painted ? 1 : 0 }}>
-          <CameraLiveView cameraId={camera.id} quality="sub" transport="ws" fill compactStatus onState={onState} />
+          <CameraLiveView
+            cameraId={camera.id}
+            quality="sub"
+            transport={CAMERA_PREVIEW_TRANSPORT.policy}
+            isolatedBackoff={CAMERA_PREVIEW_TRANSPORT.isolatedBackoff}
+            fill
+            compactStatus
+            onState={onState}
+          />
         </View>
       ) : null}
       {compact ? null : (
@@ -249,7 +258,7 @@ export const CameraCard = memo(function CameraCard({
         onPress={() => onPress(camera.id)}
         className={cn(pressableClass, 'flex-row items-center gap-3 p-2.5 pr-3')}>
         <View className="w-28 shrink-0">
-          <Preview view={view} formFactor={formFactor} thumbnail={thumbnail} compact />
+          <Preview view={view} formFactor={formFactor} thumbnail={thumbnail} live={livePreview} compact />
         </View>
         <View className="min-w-0 flex-1 gap-0.5">
           <View className="flex-row items-center gap-2">

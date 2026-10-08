@@ -217,6 +217,15 @@ export const cameras = {
   'preview-offline': 'Sin señal ahora mismo',
   'preview-disabled': 'Vigilancia en pausa',
   'add-tile-hint': 'Tapo, ONVIF o RTSP en tu red local',
+  lab: {
+    hint: 'Laboratorio sin cámara: barras del sistema y píldora en vivo',
+    insets: 'Arriba {top} · izquierda {left}',
+    open: 'Abrir pantalla completa',
+    toggle: 'Alternar controles',
+    placeholder: 'Marcador de vídeo',
+    hide: 'Toca para ocultar los controles',
+    show: 'Toca para mostrar los controles',
+  },
   steps: {
     model: 'Modelo',
     connection: 'Conexión',

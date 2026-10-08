@@ -1,10 +1,12 @@
 import { ActivityIndicator, View } from 'react-native';
+import type { EdgeInsets } from 'react-native-safe-area-context';
 import type { CameraLiveNotice, CameraStreamState, IconName, TranslationKey } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cn } from '@/shared/libs/utils';
 
 export type CameraLiveState = CameraStreamState | 'unsupported' | 'disabled';
 
@@ -13,8 +15,12 @@ type CameraLiveStatusProps = {
   painted: boolean;
   notice?: CameraLiveNotice | null;
   compact?: boolean;
+  hidden?: boolean;
+  insets?: EdgeInsets;
   onRetry?: () => void;
 };
+
+const PILL_MARGIN = 12;
 
 type Placeholder = {
   icon: IconName | null;
@@ -88,14 +94,28 @@ function placeholderFor(state: CameraLiveState, notice: CameraLiveNotice | null 
   return PLACEHOLDERS[state];
 }
 
-export function CameraLiveStatus({ state, painted, notice, compact = false, onRetry }: CameraLiveStatusProps) {
+export function CameraLiveStatus({
+  state,
+  painted,
+  notice,
+  compact = false,
+  hidden = false,
+  insets,
+  onRetry,
+}: CameraLiveStatusProps) {
   const { t } = useTranslation();
   const picture = painted && (state === 'live' || state === 'reconnecting' || state === 'connecting');
   const placeholder = placeholderFor(state, notice);
+  const corner = insets ? { top: PILL_MARGIN + insets.top, left: PILL_MARGIN + insets.left } : undefined;
+
+  if (hidden && picture) return null;
 
   if (picture) {
     return (
-      <View pointerEvents="none" className="absolute left-3 top-3">
+      <View
+        pointerEvents="none"
+        className={cn('absolute', corner ? undefined : 'left-3 top-3')}
+        style={corner}>
         {state === 'live' ? (
           <StatusBadge
             surface="card"

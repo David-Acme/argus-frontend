@@ -109,6 +109,8 @@ export function CameraLiveStage({
         className={fullscreen || flush ? 'rounded-none' : undefined}
         onStats={onStats}
         onState={onState}
+        statusHidden={fullscreen && !controlsShown}
+        statusInsets={fullscreen ? insets : undefined}
         audioLevel={audio.level}
         audioUnlock={audio.unlockKey}
         onAudioBlocked={audio.setBlocked}

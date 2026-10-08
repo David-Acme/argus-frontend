@@ -17,6 +17,7 @@ import type { NotificationThread } from '@/features/home/model/notification-thre
 type HomeAsideProps = {
   cameras: readonly ICameraCacheRow[];
   summary: DashboardSummary;
+  detections: number;
   threads: readonly NotificationThread[];
   paging: InfiniteListState;
   now: number;
@@ -26,6 +27,7 @@ type HomeAsideProps = {
 export function HomeAside({
   cameras,
   summary,
+  detections,
   threads,
   paging,
   now,
@@ -82,8 +84,8 @@ export function HomeAside({
           },
           {
             icon: 'activity',
-            label: t('screens.home.events-week'),
-            value: String(summary.eventsCurrent),
+            label: t('screens.home.detections-recent'),
+            value: String(detections),
           },
         ] as const).filter(
           (item) =>

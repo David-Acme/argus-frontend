@@ -38,8 +38,11 @@ class CameraLiveSession implements ICameraLiveSession {
   private audioEnabled = true;
   private firstFrameTimer: ReturnType<typeof setTimeout> | null = null;
   private upgradeTimer: ReturnType<typeof setTimeout> | null = null;
+  private backoff: RtcBackoff = INITIAL_RTC_BACKOFF;
 
-  constructor(private readonly input: ICameraLiveOpenInput) {}
+  constructor(private readonly input: ICameraLiveOpenInput) {
+    if (input.isolatedBackoff !== true) this.backoff = rtcBackoff;
+  }
 
   start(): CameraLiveSession {
     if (this.input.transport === 'ws') {
@@ -48,7 +51,7 @@ class CameraLiveSession implements ICameraLiveSession {
     }
     const choice = firstTransport({
       rtcSupported: cameraRtcService.supported(),
-      backoff: rtcBackoff,
+      backoff: this.backoff,
       now: Date.now(),
     });
     if (choice === 'webrtc') this.tryRtc('first');
@@ -169,7 +172,8 @@ class CameraLiveSession implements ICameraLiveSession {
     this.firstFrameTimer = null;
     this.rtcLive = true;
     this.reconnects = 0;
-    rtcBackoff = afterRtcSuccess();
+    this.backoff = afterRtcSuccess();
+    if (this.input.isolatedBackoff !== true) rtcBackoff = this.backoff;
     if (this.rtc) this.input.events?.onRtcStream?.(this.rtc.stream);
     if (this.upgradeTimer) clearTimeout(this.upgradeTimer);
     this.upgradeTimer = null;
@@ -191,7 +195,8 @@ class CameraLiveSession implements ICameraLiveSession {
 
   private rtcFailed(attempt: RtcAttempt, reason: string): void {
     log.debug('camera-live', 'WebRTC unavailable, using the WebSocket', reason);
-    rtcBackoff = afterRtcFailure(rtcBackoff, Date.now());
+    this.backoff = afterRtcFailure(this.backoff, Date.now());
+    if (this.input.isolatedBackoff !== true) rtcBackoff = this.backoff;
     this.closeRtc();
     const notice = viewerLimitNotice(reason);
     if (notice && this.transport !== 'ws') this.announce(notice);
@@ -236,7 +241,7 @@ class CameraLiveSession implements ICameraLiveSession {
   private scheduleUpgrade(): void {
     if (this.closed || this.input.transport === 'ws' || !cameraRtcService.supported()) return;
     if (this.upgradeTimer) clearTimeout(this.upgradeTimer);
-    const delay = Math.max(0, rtcBackoff.retryAt - Date.now());
+    const delay = Math.max(0, this.backoff.retryAt - Date.now());
     this.upgradeTimer = setTimeout(() => {
       this.upgradeTimer = null;
       if (!this.closed && this.transport === 'ws') this.tryRtc('upgrade');

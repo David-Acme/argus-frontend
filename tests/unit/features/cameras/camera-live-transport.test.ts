@@ -97,12 +97,13 @@ async function waitFor(condition: () => boolean, limitMs: number): Promise<void>
   while (!condition() && Date.now() < until) await sleep(5);
 }
 
-function open(transport: CameraLiveTransportPolicy = 'auto') {
+function open(transport: CameraLiveTransportPolicy = 'auto', isolatedBackoff = false) {
   const recorded: Recorded = { states: [], transports: [], stats: [], streams: [], notices: [] };
   const session = cameraLiveService.open({
     cameraId: 6,
     quality: 'main',
     transport,
+    isolatedBackoff,
     fastStart: true,
     sink,
     events: {
@@ -258,5 +259,23 @@ describe('the live view prefers WebRTC and falls back to the WebSocket', () => {
     expect(recorded.states).toEqual(['live']);
     session.close();
     expect(wsSessions[0]?.closed).toBe(true);
+  });
+
+  test('a preview that fails on its own backoff leaves the shared one alone, so the next view still starts on WebRTC', async () => {
+    rtcPlan = 'refuse';
+    const preview = open('auto', true);
+    await sleep(5);
+    expect(preview.recorded.transports).toEqual(['ws']);
+    expect(wsSessions).toHaveLength(1);
+    preview.session.close();
+
+    rtcPlan = 'answer';
+    const { recorded } = open();
+    await sleep(5);
+    expect(rtcSessions).toHaveLength(1);
+    expect(wsSessions).toHaveLength(1);
+    rtcSessions[0]?.input.events.onLive();
+    expect(recorded.transports).toEqual(['webrtc']);
+    expect(recorded.states).toEqual(['connecting', 'live']);
   });
 });

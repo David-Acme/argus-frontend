@@ -2,6 +2,7 @@ import { ArgusCameraView, type ArgusCameraViewMethods } from 'argus-camera';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
+import type { EdgeInsets } from 'react-native-safe-area-context';
 import { callback } from 'react-native-nitro-modules';
 import type {
   CameraLiveTransportPolicy,
@@ -27,12 +28,15 @@ type CameraLiveStreamProps = {
   active: boolean;
   quality?: CameraStreamQuality;
   transport?: CameraLiveTransportPolicy;
+  isolatedBackoff?: boolean;
   overlay?: ReactNode;
   fill?: boolean;
   compactStatus?: boolean;
   className?: string;
   onStats?: (stats: ICameraLiveStats) => void;
   onState?: (state: CameraStreamState) => void;
+  statusHidden?: boolean;
+  statusInsets?: EdgeInsets;
   audioLevel?: number;
   audioUnlock?: number;
   onAudioBlocked?: (blocked: boolean) => void;
@@ -59,12 +63,15 @@ export function CameraLiveStream({
   active,
   quality = 'sub',
   transport = 'auto',
+  isolatedBackoff = false,
   overlay,
   fill = false,
   compactStatus,
   className,
   onStats,
   onState,
+  statusHidden,
+  statusInsets,
   audioLevel = 0,
 }: CameraLiveStreamProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
@@ -110,6 +117,7 @@ export function CameraLiveStream({
       cameraId: numericId,
       quality,
       transport,
+      isolatedBackoff,
       sink,
       events: {
         onState: (state) => {
@@ -139,7 +147,7 @@ export function CameraLiveStream({
       opened.close();
       session.current = null;
     };
-  }, [active, cameraId, player, quality, streamKey, transport]);
+  }, [active, cameraId, player, quality, streamKey, transport, isolatedBackoff]);
 
   useEffect(() => {
     session.current?.setAudioEnabled(audioLevel > 0);
@@ -162,6 +170,8 @@ export function CameraLiveStream({
         painted={current?.painted ?? false}
         notice={current?.notice ?? null}
         compact={compactStatus ?? fill}
+        hidden={statusHidden}
+        insets={statusInsets}
         onRetry={retry}
       />
     </View>
