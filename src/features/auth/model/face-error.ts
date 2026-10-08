@@ -1,8 +1,26 @@
 import type { IApiError } from '@/core/interfaces';
-import type { TranslateFn } from '@/core/types';
+import type { TranslateFn, TranslationKey } from '@/core/types';
 import { serviceErrorKey } from '@/shared/libs/service-error';
 
 export type FaceError = IApiError & { status?: number };
+
+const UNREACHABLE_DETAILS = [
+  'connectexception',
+  'failed to connect',
+  'could not connect',
+  'cannot connect',
+  'econnrefused',
+  'connection refused',
+  'no route to host',
+  'network is unreachable',
+  'timed out',
+];
+
+export function faceNetworkKey(detail: string): TranslationKey {
+  return UNREACHABLE_DETAILS.some((marker) => detail.includes(marker))
+    ? 'common.server-unreachable.description'
+    : 'screens.face.error-network';
+}
 
 export function faceErrorFromUnknown(error: unknown, fallbackCode: string): FaceError {
   if (error && typeof error === 'object') {
@@ -34,9 +52,8 @@ export function faceErrorMessage(error: FaceError, t: TranslateFn): string {
   if (error.code === 'UNAUTHORIZED' || detail.includes('face not recognized')) {
     return t('screens.face.error-face-not-recognized');
   }
-  if (error.code === 'NETWORK_ERROR' || error.code === 'PAIRING_REQUIRED') {
-    return t('screens.face.error-network');
-  }
+  if (error.code === 'PAIRING_REQUIRED') return t('screens.face.error-network');
+  if (error.code === 'NETWORK_ERROR') return t(faceNetworkKey(detail));
   const known = serviceErrorKey(error);
   return known === 'common.errors.unknown' ? t('screens.face.error') : t(known);
 }

@@ -54,4 +54,25 @@ describe('faceErrorMessage', () => {
       'screens.face.error-network'
     );
   });
+
+  test('a refused connection to the stored address reads as a server that is not there', () => {
+    expect(
+      faceErrorMessage(
+        {
+          code: 'NETWORK_ERROR',
+          message: 'java.net.ConnectException: Failed to connect to /192.168.18.205:7024',
+        },
+        t
+      )
+    ).toBe('common.server-unreachable.description');
+    expect(
+      faceErrorMessage({ code: 'NETWORK_ERROR', message: 'Could not connect to the server.' }, t)
+    ).toBe('common.server-unreachable.description');
+    expect(faceErrorMessage({ code: 'NETWORK_ERROR', message: 'upload aborted' }, t)).toBe(
+      'screens.face.error-network'
+    );
+    expect(faceErrorMessage({ code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' }, t)).toBe(
+      'screens.face.error-network'
+    );
+  });
 });

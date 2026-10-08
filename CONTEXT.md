@@ -3187,3 +3187,28 @@ a flight in progress. The wrapper itself is covered in that file only by a sourc
 scan (it renders `d` from React state and never calls `setNativeProps`); this repo
 has no DOM component harness, so the wrapper's runtime behaviour is left to the
 committed e2e suite (U5).
+
+### The paired address heals itself (2026-10-07, the 7024 face-login finding)
+
+A device can carry a stored pairing whose route ports are stale (the emulator held
+`routes.auth = 7024`, the retired gateway, and the face login dialled it). `portFor`
+(`core/services/net/net-routes.ts`) reads `instance.routes[segment] ?? ARGUS_DEFAULT_ROUTE_PORTS`
+`[segment] ?? instance.port`, so only the stored routes can carry a dead port: neither QR
+carries one (the login QR is just the challenge id) and the defaults say auth 7042.
+
+What the code does about it now:
+
+- A refused request or socket open runs one rediscovery. When the announcement carries a
+  different port for a segment, `relocatedInstance` merges — announced values win, and a
+  segment the announcement merely omits keeps its stored port — and the write is committed only
+  after `/pairing/status` answers over the stored CA (`holdsPairedCa`). The request and the
+  socket are then retried at the refreshed port (`urlAt` rewrites the port of the caller's URL,
+  keeping its scheme, host and path, and only for a segment the route table names: a segment it
+  does not name — an external or relay URL — is left exactly as the caller built it, and the
+  first attempt is never rewritten at all, only the retry after a rediscovery); the http layer
+  repeats the same heal for a `NETWORK_ERROR`
+  after `refreshAddress()` reports a change, which is what covers the Tauri transport.
+- A rediscovery that just failed is not repeated for `REDISCOVERY_MEMO_MS` (10 s), so a server
+  that is simply off pays one discovery timeout before "the server is out of reach", not two.
+- Residual exposure: the identity check proves the server, not the announcement's honesty, so
+  an announced *wrong* port would still be adopted; an omitted one no longer is.

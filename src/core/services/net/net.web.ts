@@ -11,7 +11,7 @@ import {
   savePairingMetadata,
   toNetError,
 } from './net-persistence';
-import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
+import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
 import { withDeviceCredential } from './device-credential';
 import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing, NetPin } from '@/core/types';
 
@@ -68,6 +68,21 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async openSocket(options: NetSocketOptions): Promise<IArgusSocket> {
+    try {
+      return await this.openSocketOnce(options);
+    } catch (error) {
+      if (!(await this.refreshAddress())) throw toNetError(error, 'NETWORK_ERROR');
+      const target = await loadInstance();
+      if (!target) throw toNetError(error, 'NETWORK_ERROR');
+      try {
+        return await this.openSocketOnce({ ...options, url: urlAt(options.url, target) });
+      } catch (retryError) {
+        throw toNetError(retryError, 'NETWORK_ERROR');
+      }
+    }
+  }
+
+  private async openSocketOnce(options: NetSocketOptions): Promise<IArgusSocket> {
     const socketId = `sync-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const socket = new TauriSocket(socketId);
     await socket.open(options);

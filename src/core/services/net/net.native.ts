@@ -12,7 +12,7 @@ import {
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
-import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl } from './net-routes';
+import { mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
 import { clientIdentityHeaders, withClientIdentity } from './client-identity';
 import { withDeviceCredential } from './device-credential';
 import type {
@@ -49,6 +49,7 @@ const fingerprintMismatch = (): NetError => ({
 
 class NativeArgusNetService implements IArgusNetService {
   private rediscovery: Promise<boolean> | null = null;
+  private lastRediscoveryFailureAt = 0;
 
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
     try {
@@ -100,9 +101,9 @@ class NativeArgusNetService implements IArgusNetService {
       configuredKey = key;
       net.configure(instance.caPem, instance.host, instance.ip);
     }
-    const send = (): Promise<NetHttpResult> =>
+    const send = (url: string): Promise<NetHttpResult> =>
       net.request({
-        url: options.url,
+        url,
         method: options.method,
         headers: authenticated(options.headers),
         body: options.body ?? '',
@@ -110,14 +111,14 @@ class NativeArgusNetService implements IArgusNetService {
       });
 
     try {
-      return await send();
+      return await send(options.url);
     } catch (error) {
       const failure = toNetError(error, 'NETWORK_ERROR');
       if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
         throw failure;
       }
       try {
-        return await send();
+        return await send(urlAt(options.url, (await loadInstance()) ?? instance));
       } catch (retryError) {
         throw toNetError(retryError, 'NETWORK_ERROR');
       }
@@ -135,9 +136,19 @@ class NativeArgusNetService implements IArgusNetService {
 
   private rediscover(currentIp: string): Promise<boolean> {
     if (this.rediscovery) return this.rediscovery;
-    const attempt = this.relocate(currentIp).finally(() => {
-      if (this.rediscovery === attempt) this.rediscovery = null;
-    });
+    if (!mayRediscover(this.lastRediscoveryFailureAt, Date.now())) return Promise.resolve(false);
+    const attempt = this.relocate(currentIp)
+      .then((moved) => {
+        if (!moved) this.lastRediscoveryFailureAt = Date.now();
+        return moved;
+      })
+      .catch((error: unknown) => {
+        this.lastRediscoveryFailureAt = Date.now();
+        throw error;
+      })
+      .finally(() => {
+        if (this.rediscovery === attempt) this.rediscovery = null;
+      });
     this.rediscovery = attempt;
     return attempt;
   }
@@ -202,16 +213,19 @@ class NativeArgusNetService implements IArgusNetService {
       configuredKey = key;
       net.configure(instance.caPem, instance.host, instance.ip);
     }
-    const identifiedOptions = { ...options, headers: authenticated(options.headers) };
+    const identified = { ...options, headers: authenticated(options.headers) };
     try {
-      return await net.openSocket(identifiedOptions);
+      return await net.openSocket(identified);
     } catch (error) {
       const failure = toNetError(error, 'NETWORK_ERROR');
       if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
         throw failure;
       }
       try {
-        return await net.openSocket(identifiedOptions);
+        return await net.openSocket({
+          ...identified,
+          url: urlAt(options.url, (await loadInstance()) ?? instance),
+        });
       } catch (retryError) {
         throw toNetError(retryError, 'NETWORK_ERROR');
       }

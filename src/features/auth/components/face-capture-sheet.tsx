@@ -105,10 +105,10 @@ export function FaceCaptureSheet({
               <Icon name="refresh-cw" className="text-accent-strong size-5" />
               <Text maxFontSizeMultiplier={1.25}>{t('screens.face.sending')}</Text>
             </View>
-          ) : manualCapture ? (
+          ) : manualCapture || error ? (
             <Button variant="outline" onPress={onManualCapture}>
-              <Icon name="camera" />
-              <Text>{t('screens.face.manual-capture')}</Text>
+              <Icon name={error ? 'refresh-cw' : 'camera'} />
+              <Text>{t(error ? 'common.retry' : 'screens.face.manual-capture')}</Text>
             </Button>
           ) : (
             <Text
