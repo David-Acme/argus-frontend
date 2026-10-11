@@ -36,6 +36,8 @@ export const BOTTOM_NAV_FAB_SIZE = 60;
 export const BOTTOM_NAV_FAB_COMPACT = 52;
 
 export const CENTERED_SCREEN_MAX_WIDTH = 512;
+export const CENTERED_SCREEN_TOP_GAP = 48;
+export const CENTERED_SCREEN_KEYBOARD_GAP = 24;
 
 export const OVERLAY_BODY_HEIGHT_RATIO = 0.62;
 
