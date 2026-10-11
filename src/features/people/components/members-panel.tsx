@@ -10,6 +10,7 @@ import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { useSessionLabels } from '@/features/sessions';
 import { PresenceChip } from '@/features/people/components/presence-chip';
 import { usePresence } from '@/features/people/hooks/use-presence';
@@ -36,6 +37,7 @@ export function MembersPanel({
   onInvite,
 }: MembersPanelProps) {
   const { t } = useTranslation();
+  const { isCompact } = useWindowClass();
   const { deviceCount } = useSessionLabels(0);
   const { has } = useCapabilities();
   const readsPresence = has(CAPABILITY.presenceRead);
@@ -70,13 +72,23 @@ export function MembersPanel({
                 {self ? (
                   <StatusBadge label={t('screens.users.you')} className="self-center" />
                 ) : null}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  accessibilityLabel={`${t('common.edit')} ${name}`}
-                  onPress={() => onEdit(user)}>
-                  <Text>{t('common.edit')}</Text>
-                </Button>
+                {isCompact ? (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    accessibilityLabel={`${t('common.edit')} ${name}`}
+                    onPress={() => onEdit(user)}>
+                    <Icon name="pencil" className="text-foreground-secondary size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    accessibilityLabel={`${t('common.edit')} ${name}`}
+                    onPress={() => onEdit(user)}>
+                    <Text>{t('common.edit')}</Text>
+                  </Button>
+                )}
                 <Button
                   size="icon"
                   variant="ghost"
