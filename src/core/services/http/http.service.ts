@@ -1,4 +1,4 @@
-import type { HttpMethod, NetHttpFile } from '@/core/types';
+import type { HttpMethod, NetHttpFile, NetHttpResult, NetPairedInstance } from '@/core/types';
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import { httpAuth } from './http-auth';
@@ -53,18 +53,28 @@ class HttpService {
     if (!instance) return errorResponse(0, 'PAIRING_REQUIRED', 'No paired instance');
 
     const credential = httpAuth().credential();
-    let result;
-    try {
-      result = await netService.request({
-        url: serviceUrl(instance, path),
+    const send = (target: typeof instance): Promise<NetHttpResult> =>
+      netService.request({
+        url: serviceUrl(target, path),
         method,
         headers: { ...this.buildHeaders(Boolean(files), credential.accessToken), ...config.headers },
         body,
         files,
       });
+    let result;
+    try {
+      result = await send(instance);
     } catch (error) {
       const netError = error as { code?: string; message?: string };
-      return errorResponse(0, netError.code ?? 'NETWORK_ERROR', netError.message ?? 'Network error');
+      const failure = netError.code ?? 'NETWORK_ERROR';
+      const relocated = failure === 'NETWORK_ERROR' ? await this.relocatedInstance() : null;
+      if (!relocated) return errorResponse(0, failure, netError.message ?? 'Network error');
+      try {
+        result = await send(relocated);
+      } catch (retryError) {
+        const retryNetError = retryError as { code?: string; message?: string };
+        return errorResponse(0, retryNetError.code ?? 'NETWORK_ERROR', retryNetError.message ?? 'Network error');
+      }
     }
 
     if (result.status === 401 && !config.skipAuthRetry) {
@@ -81,6 +91,14 @@ class HttpService {
     const response = readEnvelope<T>(result.status, result.body);
     if (!response.ok) reportRefusal(path, response.errors);
     return response;
+  }
+
+  private async relocatedInstance(): Promise<NetPairedInstance | null> {
+    try {
+      return (await netService.refreshAddress()) ? await netService.instance() : null;
+    } catch {
+      return null;
+    }
   }
 
   private buildHeaders(withFile: boolean, accessToken: string | null): Record<string, string> {
