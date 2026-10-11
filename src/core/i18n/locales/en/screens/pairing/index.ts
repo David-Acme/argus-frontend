@@ -1,8 +1,7 @@
 export const pairing = {
   title: 'Link your server',
-  subtitle:
-    'On its first start, your Argus server shows a QR code and a pairing code. Scan the QR or type the code.',
-  'link-server': 'Link server',
+  subtitle: "Scan your Argus server's QR code or type its pairing code.",
+  requirement: 'Your server must be on and this phone on the same Wi-Fi.',
   scan: 'Scan QR code',
   parsing: 'Validating the code…',
   discovering: 'Searching for the server on the network…',
@@ -20,11 +19,11 @@ export const pairing = {
   'address-hint': 'The IP of the computer running Argus. Use it when your network cannot find it on its own.',
   errors: {
     'invalid-address': 'Enter a valid IP, for example 192.168.1.20.',
-    'invalid-code': 'Invalid code.',
+    'invalid-code': "That code doesn't match your server's. Check it character by character.",
     'already-paired': 'This server is already linked.',
     declined: 'You are still connected to the previous server. The change was not confirmed on this computer.',
-    'not-found': 'Server not found on the network.',
+    'not-found': "I can't find your server on this network. Check that it is on and on the same Wi-Fi, or enter its address.",
     'fingerprint-mismatch': 'The server does not match the scanned code.',
-    network: 'Could not reach the server.',
+    network: "I couldn't reach your server. Check that it is on and on the same network, then try again.",
   },
 };

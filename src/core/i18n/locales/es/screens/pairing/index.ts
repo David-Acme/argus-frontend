@@ -1,8 +1,7 @@
 export const pairing = {
   title: 'Vincula tu servidor',
-  subtitle:
-    'Al arrancar por primera vez, tu servidor Argus muestra un código QR y un código de vinculación. Escanea el QR o escribe el código.',
-  'link-server': 'Vincular servidor',
+  subtitle: 'Escanea el código QR de tu servidor Argus o escribe su código de vinculación.',
+  requirement: 'Tu servidor debe estar encendido y este teléfono en la misma red Wi-Fi.',
   scan: 'Escanear código QR',
   parsing: 'Validando el código…',
   discovering: 'Buscando el servidor en la red…',
@@ -20,11 +19,11 @@ export const pairing = {
   'address-hint': 'La IP del equipo donde corre Argus. Úsala si tu red no permite descubrirlo solo.',
   errors: {
     'invalid-address': 'Escribe una IP válida, por ejemplo 192.168.1.20.',
-    'invalid-code': 'Código inválido.',
+    'invalid-code': 'Ese código no coincide con el de tu servidor. Revísalo letra por letra.',
     'already-paired': 'Este servidor ya está vinculado.',
     declined: 'Sigues conectado al servidor de antes. El cambio no se confirmó en este equipo.',
-    'not-found': 'No se encontró el servidor en la red.',
+    'not-found': 'No encuentro tu servidor en esta red. Revisa que esté encendido y en la misma Wi-Fi, o escribe su dirección.',
     'fingerprint-mismatch': 'El servidor no coincide con el código escaneado.',
-    network: 'No se pudo conectar con el servidor.',
+    network: 'No pude conectar con tu servidor. Revisa que esté encendido y en la misma red, y vuelve a intentarlo.',
   },
 } as const;
