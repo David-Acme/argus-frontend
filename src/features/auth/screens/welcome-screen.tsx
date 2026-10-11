@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ScrollView, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -13,7 +13,6 @@ import { useUniwind } from 'uniwind';
 import { BlurReveal } from '@/shared/components/ui/blur-reveal';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
-import { OrbitHero } from '@/shared/components/ui/orbit-hero';
 import { MorphIcon } from '@/shared/components/ui/morph-icon';
 import { Text } from '@/shared/components/ui/text';
 import { colorTokens, IS_NATIVE } from '@/shared/constants';
@@ -22,17 +21,18 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { LanguageSwitch } from '@/features/auth/components/language-switch';
+import { WelcomeHero } from '@/features/auth/components/welcome-mascot/welcome-hero';
+import { MASCOT_STAGE } from '@/features/auth/constants/welcome-mascot';
 import {
-  WELCOME_BREATH_MS,
+  WELCOME_COMPACT_GAP,
+  WELCOME_TOP_BAR,
   WELCOME_CTA_DELAY_MS,
   WELCOME_CTA_DURATION_MS,
-  WELCOME_HERO_MAX,
-  WELCOME_HERO_MIN,
+  WELCOME_HERO_SCALE_MAX,
+  WELCOME_HERO_SCALE_MIN,
+  WELCOME_HERO_SIDE_MAX,
   WELCOME_ICON_DRIFT_DURATION_MS,
   WELCOME_ICON_DRIFT_PX,
-  WELCOME_ORBIT_CHIP,
-  WELCOME_ORBIT_ITEMS,
-  WELCOME_ORBIT_PERIOD_MS,
   WELCOME_REDUCED_DURATION_MS,
   WELCOME_REDUCED_STEP_MS,
   WELCOME_SUBTITLE_DELAY_MS,
@@ -51,11 +51,23 @@ export default function WelcomeScreen() {
   const { theme } = useUniwind();
   const { isExpanded, isShort, isLandscape } = useWindowClass();
   const side = isExpanded || (isLandscape && !isShort && width >= 900);
-  const heroSize = Math.round(
-    Math.max(
-      WELCOME_HERO_MIN,
-      Math.min(WELCOME_HERO_MAX, side ? height * 0.46 : Math.min(width - 96, height * (isShort ? 0.34 : 0.38)))
-    )
+  const [copyHeight, setCopyHeight] = useState(0);
+  const stackRoom =
+    height - insets.top - insets.bottom - WELCOME_TOP_BAR - copyHeight - WELCOME_COMPACT_GAP * 2;
+  const heroRoom = side
+    ? Math.min(
+        (height * 0.55) / MASCOT_STAGE.height,
+        (width * 0.45) / MASCOT_STAGE.width,
+        WELCOME_HERO_SIDE_MAX
+      )
+    : Math.min(
+        (width - 48) / MASCOT_STAGE.width,
+        (copyHeight > 0 ? stackRoom : height * 0.36) / MASCOT_STAGE.height
+      );
+  const heroScale = Math.max(WELCOME_HERO_SCALE_MIN, Math.min(WELCOME_HERO_SCALE_MAX, heroRoom));
+  const handleCopyLayout = useCallback(
+    (event: LayoutChangeEvent) => setCopyHeight(Math.ceil(event.nativeEvent.layout.height)),
+    []
   );
   const iconDrift = useSharedValue(0);
   const iconStyle = useAnimatedStyle(() => ({ transform: [{ translateX: iconDrift.value }] }));
@@ -78,7 +90,10 @@ export default function WelcomeScreen() {
       return;
     }
     iconDrift.value = withRepeat(
-      withTiming(WELCOME_ICON_DRIFT_PX, { duration: WELCOME_ICON_DRIFT_DURATION_MS, easing: Easing.inOut(Easing.cubic) }),
+      withTiming(WELCOME_ICON_DRIFT_PX, {
+        duration: WELCOME_ICON_DRIFT_DURATION_MS,
+        easing: Easing.inOut(Easing.cubic),
+      }),
       -1,
       true
     );
@@ -92,28 +107,24 @@ export default function WelcomeScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: 'center',
-          paddingTop: insets.top + (isShort ? 56 : 72),
-          paddingBottom: insets.bottom + 24,
+          paddingTop: insets.top + WELCOME_TOP_BAR,
+          paddingBottom: insets.bottom + WELCOME_COMPACT_GAP,
           paddingHorizontal: 24,
         }}>
         <View
           className={cn(
             'w-full self-center',
-            side ? 'max-w-5xl flex-row items-center justify-center gap-16' : 'max-w-lg items-center',
-            isShort ? 'gap-6' : 'gap-10'
+            side
+              ? 'max-w-5xl flex-row items-center justify-center gap-16'
+              : 'max-w-lg items-center gap-6'
           )}>
-          <BlurReveal delay={delay(0, 0)} duration={duration(900)} blur={false} scale>
-            <OrbitHero
-              size={heroSize}
-              label={t('screens.welcome.hero-label')}
-              items={WELCOME_ORBIT_ITEMS}
-              orbitMs={WELCOME_ORBIT_PERIOD_MS}
-              breathMs={WELCOME_BREATH_MS}
-              chipSize={WELCOME_ORBIT_CHIP}
-            />
-          </BlurReveal>
+          <WelcomeHero scale={heroScale} label={t('screens.welcome.hero-label')} />
 
-          <View className={cn('gap-6', side ? 'max-w-md flex-1 items-start' : 'w-full items-center')}>
+          <View
+            onLayout={side ? undefined : handleCopyLayout}
+            className={cn(
+              side ? 'max-w-md flex-1 items-start gap-6' : 'w-full items-center gap-5'
+            )}>
             <BlurReveal
               delay={delay(WELCOME_TITLE_DELAY_MS, WELCOME_REDUCED_STEP_MS / 3)}
               duration={duration(WELCOME_TITLE_DURATION_MS)}
@@ -124,7 +135,10 @@ export default function WelcomeScreen() {
                 </Text>
                 <Text
                   variant="subhead"
-                  className={cn('text-foreground-secondary max-w-md', side ? 'text-left' : 'text-center')}>
+                  className={cn(
+                    'text-foreground-secondary max-w-md',
+                    side ? 'text-left' : 'text-center'
+                  )}>
                   {t('screens.welcome.subtitle')}
                 </Text>
               </View>
@@ -149,13 +163,19 @@ export default function WelcomeScreen() {
             </BlurReveal>
 
             <BlurReveal
-              delay={delay(WELCOME_CTA_DELAY_MS, WELCOME_REDUCED_STEP_MS + WELCOME_REDUCED_STEP_MS / 3)}
+              delay={delay(
+                WELCOME_CTA_DELAY_MS,
+                WELCOME_REDUCED_STEP_MS + WELCOME_REDUCED_STEP_MS / 3
+              )}
               duration={duration(WELCOME_CTA_DURATION_MS)}
               blur={false}
               scale
               className={side ? 'items-start' : 'w-full items-center'}>
               <View className={cn('w-full max-w-md gap-3', side ? 'items-start' : 'items-stretch')}>
-                <Button onPress={handleStart} size="lg" className={cn('gap-3', side ? 'min-w-56' : null)}>
+                <Button
+                  onPress={handleStart}
+                  size="lg"
+                  className={cn('gap-3', side ? 'min-w-56' : null)}>
                   <Text>{t('screens.welcome.cta')}</Text>
                   <Animated.View style={iconStyle}>
                     <MorphIcon name="arrow-right" size={20} color={iconColor} />
@@ -167,15 +187,14 @@ export default function WelcomeScreen() {
                     <Text>{t('screens.welcome.join-invitation')}</Text>
                   </Button>
                 ) : null}
-                <Text variant="caption" className={cn('max-w-sm', side ? 'text-left' : 'self-center text-center')}>
-                  {t('screens.welcome.requirement')}
-                </Text>
               </View>
             </BlurReveal>
           </View>
         </View>
       </ScrollView>
-      <View className="absolute right-0 top-0" style={{ paddingTop: insets.top + 12, paddingRight: 16 }}>
+      <View
+        className="absolute top-0 right-0"
+        style={{ paddingTop: insets.top + 12, paddingRight: 16 }}>
         <LanguageSwitch />
       </View>
     </View>

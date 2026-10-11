@@ -13,13 +13,8 @@ export const WELCOME_ICON_DRIFT_DURATION_MS = 1100;
 
 export const SPLASH_SLOW_MS = 6000;
 
-export const WELCOME_ORBIT_PERIOD_MS = 64000;
-export const WELCOME_BREATH_MS = 4200;
-export const WELCOME_HERO_MAX = 300;
-export const WELCOME_HERO_MIN = 220;
-export const WELCOME_ORBIT_CHIP = 44;
-export const WELCOME_ORBIT_ITEMS = [
-  { icon: 'video', angle: 205 },
-  { icon: 'mic', angle: 325 },
-  { icon: 'scan-face', angle: 85 },
-] as const;
+export const WELCOME_HERO_SCALE_MIN = 0.55;
+export const WELCOME_HERO_SCALE_MAX = 1.15;
+export const WELCOME_HERO_SIDE_MAX = 1.3;
+export const WELCOME_TOP_BAR = 56;
+export const WELCOME_COMPACT_GAP = 24;

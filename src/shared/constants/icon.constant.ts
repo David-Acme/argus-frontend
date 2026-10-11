@@ -5,6 +5,7 @@ import Banknote from 'lucide-react-native/icons/banknote';
 import Bell from 'lucide-react-native/icons/bell';
 import Briefcase from 'lucide-react-native/icons/briefcase';
 import Building2 from 'lucide-react-native/icons/building-2';
+import CalendarCheck from 'lucide-react-native/icons/calendar-check';
 import CalendarDays from 'lucide-react-native/icons/calendar-days';
 import Camera from 'lucide-react-native/icons/camera';
 import Car from 'lucide-react-native/icons/car';
@@ -121,6 +122,7 @@ export const ICONS = {
   'arrow-up-right': ArrowUpRight,
   bell: Bell,
   calendar: CalendarDays,
+  'calendar-check': CalendarCheck,
   camera: Camera,
   'check-circle': CheckCircle2,
   clock: Clock3,

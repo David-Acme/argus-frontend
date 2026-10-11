@@ -132,5 +132,10 @@
     "@radix-ui/react-focus-scope": "1.1.16",
     "@radix-ui/react-portal": "1.1.17",
     "@radix-ui/react-presence": "1.1.10"
+  },
+  "reanimated": {
+    "staticFeatureFlags": {
+      "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
   }
 }
