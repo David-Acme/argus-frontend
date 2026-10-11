@@ -27,7 +27,6 @@ type CallSurfaceProps = {
   camera?: ReactNode;
   situation?: ReactNode;
   onToggleMute: () => void;
-  onInterrupt: () => void;
   onHangUp: () => void;
   onRetry: () => void;
 };
@@ -47,7 +46,6 @@ export function CallSurface({
   camera,
   situation,
   onToggleMute,
-  onInterrupt,
   onHangUp,
   onRetry,
 }: CallSurfaceProps) {
@@ -132,12 +130,6 @@ export function CallSurface({
             label={muted ? t('screens.voice.unmute') : t('screens.voice.mute')}
             tone={muted ? 'active' : 'neutral'}
             onPress={onToggleMute}
-          />
-          <CallControl
-            icon="hand"
-            label={t('screens.voice.interrupt')}
-            disabled={!speaking}
-            onPress={onInterrupt}
           />
           <CallControl
             icon="phone-off"

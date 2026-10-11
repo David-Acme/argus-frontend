@@ -2270,8 +2270,9 @@ platform, then leaves in its own change.
 - **Live findings (2026-10-04).** argus-notification fans `call_cancel
   {answered_elsewhere}` out as soon as a call is claimed, and it reached the
   claiming desktop before its own token answer, so a cancel is ignored while
-  this device's claim is in flight. The interrupt control keeps its slot
-  (disabled while Argus is silent) so the hang-up button never moves under a
+  this device's claim is in flight. The manual interrupt control was removed
+  on 2026-10-11 — interruption is by voice alone, through the server's VAD
+  barge-in — and the hang-up control keeps its slot so it never moves under a
   finger. A ring during a live call (the user turned `liveAnnounce` off) is
   held as a banner, 'Argus tiene otra llamada para ti', with Atender (ends the
   current call, answers the new one) and Ahora no.

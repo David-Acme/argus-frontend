@@ -19,10 +19,6 @@ export function useVoiceSession() {
     voiceService.stop();
   }, []);
 
-  const interrupt = useCallback(() => {
-    voiceService.interrupt();
-  }, []);
-
   const skip = useCallback(() => {
     voiceService.skip();
   }, []);
@@ -32,7 +28,7 @@ export function useVoiceSession() {
   }, []);
 
   return useMemo(
-    () => ({ ...state, start, stop, interrupt, skip, setMuted }),
-    [state, start, stop, interrupt, skip, setMuted]
+    () => ({ ...state, start, stop, skip, setMuted }),
+    [state, start, stop, skip, setMuted]
   );
 }

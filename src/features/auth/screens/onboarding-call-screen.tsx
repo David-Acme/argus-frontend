@@ -46,7 +46,6 @@ function OnboardingCall() {
         </View>
       }
       onToggleMute={call.toggleMute}
-      onInterrupt={call.interrupt}
       onHangUp={finish}
       onRetry={call.retry}
     />

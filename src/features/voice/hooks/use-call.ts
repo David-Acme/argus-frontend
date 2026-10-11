@@ -17,7 +17,7 @@ const AVATAR_BY_PHASE: Readonly<Record<VoicePhase, AvatarState>> = {
 export function useCall(options: VoiceStartOptions = {}) {
   const session = useVoiceSession();
   const callId = options.callId;
-  const { start, stop, setMuted, interrupt } = session;
+  const { start, stop, setMuted } = session;
   const setAvatarState = useAvatarStore((state) => state.setState);
 
   useEffect(() => {
@@ -51,7 +51,6 @@ export function useCall(options: VoiceStartOptions = {}) {
     responseId: session.responseId,
     waitingCall: session.waitingCall,
     toggleMute,
-    interrupt,
     retry,
   };
 }

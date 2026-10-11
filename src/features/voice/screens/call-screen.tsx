@@ -64,7 +64,6 @@ function CallScreen() {
         ) : null
       }
       onToggleMute={call.toggleMute}
-      onInterrupt={call.interrupt}
       onHangUp={hangUp}
       onRetry={call.retry}
     />
