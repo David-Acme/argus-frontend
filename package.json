@@ -40,7 +40,7 @@
     "web:build": "expo export --platform web",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-argus-modules.mjs && bun scripts/patch-expo-camera.mjs"
+    "postinstall": "bun scripts/link-argus-modules.mjs && bun scripts/patch-argus-modules.mjs && bun scripts/patch-expo-camera.mjs && bun scripts/patch-livekit-audio.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
