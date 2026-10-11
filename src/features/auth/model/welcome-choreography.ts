@@ -133,10 +133,11 @@ export type TimerBook = {
 };
 
 export function createTimerBook(clock: TimerClock): TimerBook {
+  const { setTimeout: schedule, clearTimeout: cancel } = clock;
   const live = new Set<TimerHandle>();
   return {
     after(ms, run) {
-      const handle = clock.setTimeout(() => {
+      const handle = schedule(() => {
         live.delete(handle);
         run();
       }, ms);
@@ -145,7 +146,7 @@ export function createTimerBook(clock: TimerClock): TimerBook {
     },
     size: () => live.size,
     clear() {
-      live.forEach((handle) => clock.clearTimeout(handle));
+      live.forEach((handle) => cancel(handle));
       live.clear();
     },
   };

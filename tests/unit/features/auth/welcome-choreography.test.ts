@@ -177,4 +177,35 @@ describe('the timer book keeps only live handles', () => {
     expect(book.size()).toBe(0);
     expect(pending()).toBe(0);
   });
+
+  test('the clock functions are never invoked as methods of the clock object', () => {
+    let violated = false;
+    const live = new Map<ReturnType<typeof setTimeout>, () => void>();
+    let next = 0;
+    const fake = {
+      setTimeout: function (this: unknown, run: () => void, _ms: number) {
+        if (this === fake) {
+          violated = true;
+          throw new TypeError('Illegal invocation');
+        }
+        const handle = next++ as unknown as ReturnType<typeof setTimeout>;
+        live.set(handle, run);
+        return handle;
+      },
+      clearTimeout: function (this: unknown, handle: ReturnType<typeof setTimeout>) {
+        if (this === fake) {
+          violated = true;
+          throw new TypeError('Illegal invocation');
+        }
+        live.delete(handle);
+      },
+    };
+    const book = createTimerBook(fake);
+    book.after(10, () => undefined);
+    book.after(20, () => undefined);
+    expect(book.size()).toBe(2);
+    book.clear();
+    expect(violated).toBe(false);
+    expect(book.size()).toBe(0);
+  });
 });
