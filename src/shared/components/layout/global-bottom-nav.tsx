@@ -10,6 +10,7 @@ import {
   BOTTOM_NAV_MAX_WIDTH,
   BOTTOM_NAV_TRAVEL,
   DASHBOARD_ROUTE_TAB,
+  EDGE_FADE_HEIGHT,
   NAV_FADE_MS,
 } from '@/shared/constants';
 import { useDashboardNavigation } from '@/shared/components/layout/use-dashboard-navigation';
@@ -18,6 +19,7 @@ import { easeOutCubic } from '@/shared/libs/animations';
 import { bottomNavMetrics } from '@/shared/components/layout/bottom-nav-metrics';
 import { ComposeFab } from '@/shared/components/layout/compose-fab';
 import { BottomNav } from '@/shared/components/layout/bottom-nav';
+import { EdgeFade } from '@/shared/components/layout/edge-fade';
 
 let hasIntroduced = false;
 
@@ -47,6 +49,14 @@ export function GlobalBottomNav() {
   if (!owned && !hasIntroduced) return null;
 
   return (
+    <>
+    <Animated.View pointerEvents="none" className="absolute right-0 bottom-0 left-0" style={style}>
+      <EdgeFade
+        edge="bottom"
+        solid={insets.bottom + BOTTOM_NAV_GAP + metrics.fab / 2}
+        fade={metrics.fab / 2 + EDGE_FADE_HEIGHT}
+      />
+    </Animated.View>
     <Animated.View
       pointerEvents={visible ? 'box-none' : 'none'}
       className="absolute right-0 left-0 items-center px-5"
@@ -62,5 +72,6 @@ export function GlobalBottomNav() {
         />
       </View>
     </Animated.View>
+    </>
   );
 }
