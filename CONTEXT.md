@@ -2732,14 +2732,22 @@ the module manager; `/modules` REST; `/sync` operation 12 `module_update`).
 
 ### The welcome
 
-- The hero (`features/auth/components/welcome-hero.tsx`) is the brand mark
-  (extracted to `brand-mark.tsx`, also used by the splash) inside three
-  concentric rings: a dashed `border` outer ring, an arena middle ring that
-  breathes (opacity and 3.5 % scale, 4.2 s), and a filled `accent-soft`
-  core. Three white chips (video, mic, scan-face) orbit on the outer ring
-  once a minute and counter-rotate so the icons stay upright: the house's
-  senses, all around Argus. Reduce motion stops the orbit and the breath; the
-  layout is identical. No glows: fills and borders only, in both themes.
+- The hero is a mascot drawn in code (`features/auth/components/welcome-mascot/`:
+  body, eyes, props, figure, orbit chip and track as views and code paths — no
+  image assets): it greets with a hello bubble, dresses itself (hat and lens),
+  then tours its three module chips — Seguridad (escudo), Productividad and the
+  coming-soon Agronomía — leaning in to inspect each one before settling into
+  the orbit. The whole play is data (`welcome-choreography.ts` steps) run by
+  one timer book that keeps only live handles, so a screen left open stays
+  bounded; `use-frame-budget` measures the first frames and rests the mascot
+  when the phone cannot hold the animation, and reduce motion starts at that
+  same rest pose (hat on, lens up, every chip revealed). The screen sizes the
+  stage from the room the copy leaves (its height measured with `onLayout`,
+  the side layout from the window width). No glows: fills and borders only, in
+  both themes.
+- Known follow-up, deferred at the demo freeze (2026-10-10): one `accessible`
+  stage in `welcome-hero.tsx` hides the module chips, the hello bubble and the
+  unlabeled replay from screen readers; the frontend pass takes it.
 - Copy: "Hola, soy Argus", one line of what it does, the promise card (lock
   tile + "Todo se queda en tu casa" + what stays), one primary "Comenzar",
   "Tengo una invitación" on phones, and the network requirement. Staged
@@ -2983,8 +2991,9 @@ already refuses.
 ### The inactive role
 
 A role whose module is off keeps its account and the server grants it the
-baseline only. Inicio becomes `features/access`' screen: the welcome's orbit
-hero (now the shared `OrbitHero`, with the module's icon and a moon), "Tu rol
+baseline only. Inicio becomes `features/access`' screen: the shared `OrbitHero`
+(the ring the welcome used before the mascot, with the module's icon and a
+moon), "Tu rol
 de Guardia se activará cuando la casa vuelva a usar Vigilancia", panic, the
 person's own reminders (the same `RemindersSection` as Inicio: read, complete,
 edit, delete, owner decision), a request to the Owner, the profile and
@@ -3099,8 +3108,9 @@ has signals. Invited: unchanged, all four signals, privacy before the face.
   `.expo/types/router.d.ts` is generated and ignored; the routes added here
   (`/welcome/module-privacy`, `/settings/activity`) were added to it by hand in
   this tree and a dev server regenerates them.
-- `shared/components/ui/orbit-hero.tsx` and `brand-mark.tsx` are shared by the
-  welcome and the inactive-role screen.
+- `shared/components/ui/orbit-hero.tsx` and `brand-mark.tsx` serve the
+  inactive-role screen; the welcome left the ring for the mascot on
+  2026-10-10.
 
 ### Navigation names its destination (2026-10-07, order from David)
 
