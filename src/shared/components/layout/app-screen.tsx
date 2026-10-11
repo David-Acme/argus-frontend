@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CONTENT_MAX_WIDTH, EDGE_FADE_HEIGHT } from '@/shared/constants';
+import { CONTENT_MAX_WIDTH } from '@/shared/constants';
 import { EdgeFade } from '@/shared/components/layout/edge-fade';
 import { useBottomNav } from '@/shared/components/layout/use-bottom-nav';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
@@ -28,6 +28,7 @@ export function AppScreen({
   const insets = useSafeAreaInsets();
   const { windowClass, isExpanded, isShort, isWide } = useWindowClass();
   const bottomInset = useBottomNavInset();
+  const topPad = isShort ? 8 : isExpanded ? 20 : 18;
 
   useBottomNav(bottomNav);
 
@@ -49,7 +50,7 @@ export function AppScreen({
       className="w-full flex-1 self-center px-5 lg:px-8"
       style={{
         maxWidth: CONTENT_MAX_WIDTH[windowClass],
-        paddingTop: insets.top + (isShort ? 8 : isExpanded ? 20 : 18),
+        paddingTop: insets.top + topPad,
         paddingBottom: scrollable ? 0 : insets.bottom,
       }}>
       {header}
@@ -68,7 +69,7 @@ export function AppScreen({
         showsVerticalScrollIndicator={false}>
         {content}
       </ScrollView>
-      {insets.top > 0 ? <EdgeFade edge="top" solid={insets.top} fade={EDGE_FADE_HEIGHT} /> : null}
+      {insets.top > 0 ? <EdgeFade edge="top" solid={insets.top} fade={topPad} /> : null}
     </View>
   );
 }
