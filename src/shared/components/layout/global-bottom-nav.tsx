@@ -50,28 +50,28 @@ export function GlobalBottomNav() {
 
   return (
     <>
-    <Animated.View pointerEvents="none" className="absolute right-0 bottom-0 left-0" style={style}>
-      <EdgeFade
-        edge="bottom"
-        solid={insets.bottom + BOTTOM_NAV_GAP + metrics.fab / 2}
-        fade={metrics.fab / 2 + EDGE_FADE_HEIGHT}
-      />
-    </Animated.View>
-    <Animated.View
-      pointerEvents={visible ? 'box-none' : 'none'}
-      className="absolute right-0 left-0 items-center px-5"
-      style={[{ bottom: insets.bottom + BOTTOM_NAV_GAP }, style]}>
-      <View style={{ width: '100%', maxWidth: BOTTOM_NAV_MAX_WIDTH }}>
-        <BottomNav
-          tabs={tabs}
-          active={active}
-          labels={labels}
-          tabSize={metrics.tab}
-          onNavigate={navigate}
-          compose={<ComposeFab size={metrics.fab} />}
+      <Animated.View pointerEvents="none" className="absolute right-0 bottom-0 left-0" style={style}>
+        <EdgeFade
+          edge="bottom"
+          solid={insets.bottom + BOTTOM_NAV_GAP + metrics.fab / 2}
+          fade={metrics.fab / 2 + EDGE_FADE_HEIGHT}
         />
-      </View>
-    </Animated.View>
+      </Animated.View>
+      <Animated.View
+        pointerEvents={visible ? 'box-none' : 'none'}
+        className="absolute right-0 left-0 items-center px-5"
+        style={[{ bottom: insets.bottom + BOTTOM_NAV_GAP }, style]}>
+        <View style={{ width: '100%', maxWidth: BOTTOM_NAV_MAX_WIDTH }}>
+          <BottomNav
+            tabs={tabs}
+            active={active}
+            labels={labels}
+            tabSize={metrics.tab}
+            onNavigate={navigate}
+            compose={<ComposeFab size={metrics.fab} />}
+          />
+        </View>
+      </Animated.View>
     </>
   );
 }
