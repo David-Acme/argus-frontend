@@ -34,7 +34,8 @@ function HourRow({ label, current, children }: HourRowProps) {
     <View className="flex-row items-start gap-3">
       <Text
         variant="label"
-        className={cn('w-14 pt-3 tabular-nums', current ? 'text-accent-strong' : 'text-foreground-secondary')}>
+        numberOfLines={1}
+        className={cn('w-18 pt-3 tabular-nums', current ? 'text-accent-strong' : 'text-foreground-secondary')}>
         {label}
       </Text>
       <View className="min-w-0 flex-1 gap-2">{children}</View>
@@ -96,7 +97,7 @@ export function TodayAgenda({
       {allDay.length > 0 ? (
         <View className="flex-row items-start gap-3 pb-1">
           <View
-            className="w-14 items-start pt-3.5"
+            className="w-18 items-start pt-3.5"
             accessible
             accessibilityLabel={t('screens.agenda.event-all-day')}>
             <Icon name="sun" className="text-foreground-secondary size-4" />
