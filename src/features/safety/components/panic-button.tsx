@@ -68,15 +68,15 @@ export function PanicButton({ environmentId, className }: PanicButtonProps) {
         onPressIn={start}
         onPressOut={release}
         disabled={state === 'sending'}
-        className="border-error/40 bg-card dark:bg-card-secondary min-h-14 flex-row items-center gap-3 overflow-hidden rounded-2xl border px-4">
+        className="border-error/40 bg-card dark:bg-card-secondary min-h-14 flex-row items-center justify-center gap-2.5 overflow-hidden rounded-2xl border px-12">
         <Animated.View pointerEvents="none" className="bg-error/15 absolute inset-y-0 left-0" style={fillStyle} />
         <Icon name="siren" className="text-error-strong size-5" />
-        <Text variant="subhead" className="text-error-strong flex-1">
+        <Text variant="subhead" className="text-error-strong text-center">
           {t('screens.safety.panic.label')}
         </Text>
-        {state === 'sent' ? <Icon name="check" className="text-success size-5" /> : null}
+        {state === 'sent' ? <Icon name="check" className="text-success absolute right-4 size-5" /> : null}
       </Pressable>
-      <Text variant="caption" accessibilityLiveRegion="polite">
+      <Text variant="caption" className="text-center" accessibilityLiveRegion="polite">
         {caption}
       </Text>
     </View>
