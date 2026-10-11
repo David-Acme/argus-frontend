@@ -71,6 +71,7 @@ export const VIEW_CACHE_KEYS = {
   visitorDetail: 'visitor.detail',
   visitorSettings: 'visitor.settings',
   moduleCatalog: 'modules.catalog',
+  gettingStartedSignals: 'modules.getting-started.signals',
   appContext: 'app.context',
   activityFeed: 'activity.feed',
 } as const;

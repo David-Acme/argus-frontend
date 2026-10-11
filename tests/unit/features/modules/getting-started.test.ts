@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import { projectGettingStarted } from '@/core/services/view-cache/getting-started.projection';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import {
   EMPTY_CHECKLIST,
   EMPTY_SIGNALS,
@@ -28,5 +30,27 @@ describe('getting-started steps follow the household data', () => {
     expect(merged.done).toEqual(['guard-mode', 'add-camera']);
     expect(merged.hidden).toEqual(['meet-argus']);
     expect(withSignals(EMPTY_CHECKLIST, EMPTY_SIGNALS)).toBe(EMPTY_CHECKLIST);
+  });
+
+  test('the view-cache payload carries exactly the model signal shape', () => {
+    const writes = projectGettingStarted({
+      cameras: [1],
+      zones: [1, 2],
+      events: 3,
+      projects: [1],
+      people: [1, 2],
+      invitations: [1],
+    });
+    const write = writes.find((item) => item.key === VIEW_CACHE_KEYS.gettingStartedSignals);
+    if (!write || !('value' in write)) throw new Error('no getting-started signals written');
+    expect(Object.keys(write.value as object).sort()).toEqual(Object.keys(EMPTY_SIGNALS).sort());
+    expect(write.value).toEqual({
+      cameras: 1,
+      zones: 2,
+      events: 3,
+      projects: 1,
+      people: 2,
+      invitations: 1,
+    });
   });
 });

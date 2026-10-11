@@ -108,6 +108,15 @@ export interface IDashboardCacheData {
   summary: DashboardSummary;
 }
 
+export interface IChecklistSignalsCache {
+  cameras: number;
+  zones: number;
+  events: number;
+  projects: number;
+  people: number;
+  invitations: number;
+}
+
 export interface ICalendarEventCacheSource {
   id: string;
   title: string;

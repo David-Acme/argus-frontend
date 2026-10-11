@@ -32,6 +32,7 @@ import {
   todayRange,
 } from './view-cache/calendar.projection';
 import { projectCameras } from './view-cache/camera.projection';
+import { projectGettingStarted } from './view-cache/getting-started.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
 import { ModuleSourceGate } from './view-cache/module-source-gate';
 import { PagedView, type IPagedView } from './view-cache/paged-view';
@@ -109,6 +110,20 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           eventsPrevious: moduleGate.of(SURVEILLANCE, eventService.observeCountBetween(windows.previous.from, windows.previous.to), 0),
         }),
         project: projectSummary,
+      },
+      ctx,
+    ),
+    startProjection(
+      {
+        sources: () => ({
+          cameras: sources.cameras,
+          zones: sources.zones,
+          events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeCount(), 0),
+          projects: sources.projects,
+          people: sources.users,
+          invitations: sources.invitations,
+        }),
+        project: projectGettingStarted,
       },
       ctx,
     ),

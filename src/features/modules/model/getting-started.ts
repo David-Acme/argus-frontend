@@ -1,4 +1,5 @@
 import { isJobOpen } from '@/core/services/modules/module-state';
+import type { IChecklistSignalsCache } from '@/core/interfaces';
 import type { ModuleCatalog } from '@/core/types';
 
 export type ChecklistItem = {
@@ -86,14 +87,7 @@ export function markDone(state: ChecklistState, id: string): ChecklistState {
   return state.done.includes(id) ? state : { ...state, done: [...state.done, id] };
 }
 
-export type ChecklistSignals = {
-  cameras: number;
-  zones: number;
-  events: number;
-  projects: number;
-  people: number;
-  invitations: number;
-};
+export type ChecklistSignals = IChecklistSignalsCache;
 
 export const EMPTY_SIGNALS: ChecklistSignals = { cameras: 0, zones: 0, events: 0, projects: 0, people: 0, invitations: 0 };
 

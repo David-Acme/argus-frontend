@@ -18,11 +18,12 @@ import {
   projectCameras,
   type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
+import { projectGettingStarted } from '@/core/services/view-cache/getting-started.projection';
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
 import { activityWindows, projectSummary } from '@/core/services/view-cache/summary.projection';
-import { VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
+import { VIEW_CACHE_KEYS, VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
 import { MOSAIC_COLUMNS, MOSAIC_ROWS } from '@/shared/constants/dashboard.constant';
 
 const now = new Date(2026, 9, 15, 10, 30);
@@ -517,5 +518,45 @@ describe('calendar entry state', () => {
     if (!reminder) throw new Error('no reminder');
     expect(calendarEntryState(reminder, at(17))).toBe('upcoming');
     expect(calendarEntryState(reminder, at(18, 1))).toBe('overdue');
+  });
+});
+
+describe('getting-started signals', () => {
+  test('each source is counted into the cache payload', () => {
+    const writes = projectGettingStarted({
+      cameras: [1, 2],
+      zones: [],
+      events: 7,
+      projects: [1],
+      people: [1, 2, 3],
+      invitations: [],
+    });
+    expect(valueOf(writes, VIEW_CACHE_KEYS.gettingStartedSignals)).toEqual({
+      cameras: 2,
+      zones: 0,
+      events: 7,
+      projects: 1,
+      people: 3,
+      invitations: 0,
+    });
+  });
+
+  test('an empty session writes zeroes', () => {
+    const writes = projectGettingStarted({
+      cameras: [],
+      zones: [],
+      events: 0,
+      projects: [],
+      people: [],
+      invitations: [],
+    });
+    expect(valueOf(writes, VIEW_CACHE_KEYS.gettingStartedSignals)).toEqual({
+      cameras: 0,
+      zones: 0,
+      events: 0,
+      projects: 0,
+      people: 0,
+      invitations: 0,
+    });
   });
 });
