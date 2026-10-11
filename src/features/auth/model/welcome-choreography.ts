@@ -118,3 +118,35 @@ export function welcomeTimeline(count: number): WelcomeTimeline {
   const events = [...opening, ...reveals, ...closing].sort((a, b) => a.at - b.at);
   return { events, inspectFrom: end + timing.inspectLead };
 }
+
+export type TimerHandle = ReturnType<typeof setTimeout>;
+
+export type TimerClock = {
+  setTimeout: (run: () => void, ms: number) => TimerHandle;
+  clearTimeout: (handle: TimerHandle) => void;
+};
+
+export type TimerBook = {
+  after: (ms: number, run: () => void) => TimerHandle;
+  size: () => number;
+  clear: () => void;
+};
+
+export function createTimerBook(clock: TimerClock): TimerBook {
+  const live = new Set<TimerHandle>();
+  return {
+    after(ms, run) {
+      const handle = clock.setTimeout(() => {
+        live.delete(handle);
+        run();
+      }, ms);
+      live.add(handle);
+      return handle;
+    },
+    size: () => live.size,
+    clear() {
+      live.forEach((handle) => clock.clearTimeout(handle));
+      live.clear();
+    },
+  };
+}

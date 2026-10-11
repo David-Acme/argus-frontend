@@ -3,6 +3,7 @@ import { MASCOT_TIMING } from '@/features/auth/constants/welcome-mascot';
 import {
   INITIAL_POSE,
   applyEvent,
+  createTimerBook,
   inspection,
   restingPose,
   welcomeTimeline,
@@ -27,24 +28,22 @@ export function useWelcomeChoreography(count: number, still: boolean): WelcomeCh
 
   useEffect(() => {
     if (still) return;
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    const timers = createTimerBook({ setTimeout, clearTimeout });
     const schedule = (events: readonly ChoreographyEvent[]) => {
       events.forEach((item) => {
-        timers.push(setTimeout(() => setPose((current) => applyEvent(current, item)), item.at));
+        timers.after(item.at, () => setPose((current) => applyEvent(current, item)));
       });
     };
     const inspect = (look: number, at: number) => {
-      timers.push(
-        setTimeout(() => {
-          schedule(inspection(look % count, 0, MASCOT_TIMING.orbitHold));
-          inspect(look + 1, MASCOT_TIMING.inspectEvery);
-        }, at)
-      );
+      timers.after(at, () => {
+        schedule(inspection(look % count, 0, MASCOT_TIMING.orbitHold));
+        inspect(look + 1, MASCOT_TIMING.inspectEvery);
+      });
     };
     const timeline = welcomeTimeline(count);
     schedule(timeline.events);
     inspect(0, timeline.inspectFrom);
-    return () => timers.forEach((timer) => clearTimeout(timer));
+    return () => timers.clear();
   }, [count, run, still]);
 
   return { pose: still ? restingPose(count) : pose, replay, run };

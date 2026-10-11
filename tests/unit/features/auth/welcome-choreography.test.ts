@@ -9,6 +9,7 @@ import {
 import {
   INITIAL_POSE,
   applyEvent,
+  createTimerBook,
   inspection,
   restingPose,
   welcomeTimeline,
@@ -111,5 +112,69 @@ describe('the module orbit is a tilted ring', () => {
     const right = gazeDirection(0);
     expect(right.x).toBeCloseTo(1, 5);
     expect(gazeDirection(90).y).toBeCloseTo(0.53, 5);
+  });
+});
+
+describe('the timer book keeps only live handles', () => {
+  const fakeClock = () => {
+    const live = new Map<ReturnType<typeof setTimeout>, () => void>();
+    let next = 0;
+    return {
+      clock: {
+        setTimeout: (run: () => void, _ms: number) => {
+          const handle = next++ as unknown as ReturnType<typeof setTimeout>;
+          live.set(handle, run);
+          return handle;
+        },
+        clearTimeout: (handle: ReturnType<typeof setTimeout>) => {
+          live.delete(handle);
+        },
+      },
+      fireOne: () => {
+        const first = live.entries().next();
+        if (first.done) return false;
+        const [handle, run] = first.value;
+        live.delete(handle);
+        run();
+        return true;
+      },
+      pending: () => live.size,
+    };
+  };
+
+  test('a fired handle leaves the book, so a screen left open stays bounded', () => {
+    const { clock, fireOne, pending } = fakeClock();
+    const book = createTimerBook(clock);
+    const count = 3;
+    const schedule = (events: readonly { at: number }[]) => {
+      events.forEach((item) => book.after(item.at, () => undefined));
+    };
+    const inspect = (look: number, at: number) => {
+      book.after(at, () => {
+        schedule(inspection(look % count, 0, MASCOT_TIMING.orbitHold));
+        inspect(look + 1, MASCOT_TIMING.inspectEvery);
+      });
+    };
+    const timeline = welcomeTimeline(count);
+    schedule(timeline.events);
+    inspect(0, timeline.inspectFrom);
+    for (let step = 0; step < 5000; step += 1) {
+      if (!fireOne()) break;
+    }
+    expect(book.size()).toBeLessThanOrEqual(4);
+    book.clear();
+    expect(book.size()).toBe(0);
+    expect(pending()).toBe(0);
+  });
+
+  test('clearing drops every live handle and the clock agrees', () => {
+    const { clock, pending } = fakeClock();
+    const book = createTimerBook(clock);
+    book.after(10, () => undefined);
+    book.after(20, () => undefined);
+    expect(book.size()).toBe(2);
+    book.clear();
+    expect(book.size()).toBe(0);
+    expect(pending()).toBe(0);
   });
 });
