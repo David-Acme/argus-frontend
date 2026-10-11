@@ -85,3 +85,30 @@ export const dismissChecklist = (state: ChecklistState, items: readonly Checklis
 export function markDone(state: ChecklistState, id: string): ChecklistState {
   return state.done.includes(id) ? state : { ...state, done: [...state.done, id] };
 }
+
+export type ChecklistSignals = {
+  cameras: number;
+  zones: number;
+  events: number;
+  projects: number;
+  people: number;
+  invitations: number;
+};
+
+export const EMPTY_SIGNALS: ChecklistSignals = { cameras: 0, zones: 0, events: 0, projects: 0, people: 0, invitations: 0 };
+
+export function completedBySignals(signals: ChecklistSignals): ReadonlySet<string> {
+  const done = new Set<string>();
+  if (signals.cameras > 0) done.add('add-camera');
+  if (signals.zones > 0) done.add('draw-zone');
+  if (signals.events > 0) done.add('first-event');
+  if (signals.projects > 0) done.add('first-project');
+  if (signals.people > 1 || signals.invitations > 0) done.add('invite-people');
+  return done;
+}
+
+export function withSignals(state: ChecklistState, signals: ChecklistSignals): ChecklistState {
+  const extra = [...completedBySignals(signals)].filter((id) => !state.done.includes(id));
+  return extra.length === 0 ? state : { ...state, done: [...state.done, ...extra] };
+}
+
