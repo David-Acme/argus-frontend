@@ -1,8 +1,15 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 type AppStateListener = (state: string) => void;
+type NetworkListener = (state: { isConnected?: boolean; isInternetReachable?: boolean }) => void;
 const appStateListeners = new Set<AppStateListener>();
-const removed = new Set<AppStateListener>();
+const removedAppState = new Set<AppStateListener>();
+const networkListeners = new Set<NetworkListener>();
+const removedNetwork = new Set<NetworkListener>();
+let installedState: { isConnected?: boolean; isInternetReachable?: boolean } = {
+  isConnected: true,
+  isInternetReachable: true,
+};
 
 mock.module('react-native', () => ({
   Platform: {
@@ -16,47 +23,120 @@ mock.module('react-native', () => ({
       return {
         remove: () => {
           appStateListeners.delete(listener);
-          removed.add(listener);
+          removedAppState.add(listener);
         },
       };
     },
   },
 }));
 
+mock.module('expo-network', () => ({
+  getNetworkStateAsync: async () => installedState,
+  addNetworkStateListener: (listener: NetworkListener) => {
+    networkListeners.add(listener);
+    return {
+      remove: () => {
+        networkListeners.delete(listener);
+        removedNetwork.add(listener);
+      },
+    };
+  },
+}));
+
 const { watchReconnectOpportunities } = await import('@/core/services/sync/sync-reconnect-watch');
 
+const fireAppState = (state: string): void => {
+  for (const listener of appStateListeners) listener(state);
+};
+
+const fireNetwork = (state: { isConnected?: boolean; isInternetReachable?: boolean }): void => {
+  for (const listener of networkListeners) listener(state);
+};
+
+const settled = async (): Promise<void> => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
+
 describe('the reconnect watch', () => {
-  test('coming to the foreground retries and staying in the background does not', () => {
+  test('coming to the foreground retries and staying in the background does not', async () => {
+    let retries = 0;
+    const removedBefore = removedAppState.size;
+    const stop = watchReconnectOpportunities(() => {
+      retries += 1;
+    });
+    await settled();
+
+    fireAppState('background');
+    expect(retries).toBe(0);
+    fireAppState('active');
+    expect(retries).toBe(1);
+
+    stop();
+    expect(removedAppState.size).toBe(removedBefore + 1);
+    expect(appStateListeners.size).toBe(0);
+  });
+
+  test('a network that returns retries once, and repeats of the same state do not', async () => {
     let retries = 0;
     const stop = watchReconnectOpportunities(() => {
       retries += 1;
     });
-    const listener = [...appStateListeners][0];
+    await settled();
 
-    listener?.('background');
+    fireNetwork({ isConnected: true, isInternetReachable: true });
     expect(retries).toBe(0);
-    listener?.('active');
+
+    fireNetwork({ isConnected: false, isInternetReachable: false });
+    expect(retries).toBe(0);
+    fireNetwork({ isConnected: false, isInternetReachable: false });
+    expect(retries).toBe(0);
+
+    fireNetwork({ isConnected: true, isInternetReachable: true });
+    expect(retries).toBe(1);
+    fireNetwork({ isConnected: true, isInternetReachable: true });
     expect(retries).toBe(1);
 
     stop();
-    expect(removed.size).toBe(1);
-    expect(appStateListeners.size).toBe(0);
   });
 
-  test('the web online event retries, and a second install is a no-op', () => {
+  test('a watch installed while the network is down still sees it return', async () => {
     let retries = 0;
+    installedState = { isConnected: false, isInternetReachable: false };
+    const stop = watchReconnectOpportunities(() => {
+      retries += 1;
+    });
+    await settled();
+
+    fireNetwork({ isConnected: true, isInternetReachable: true });
+
+    expect(retries).toBe(1);
+    installedState = { isConnected: true, isInternetReachable: true };
+    stop();
+  });
+
+  test('after the cleanup nothing fires, and a second install is a no-op', async () => {
+    let retries = 0;
+    const removedBefore = removedNetwork.size;
     const first = watchReconnectOpportunities(() => {
       retries += 1;
     });
     const second = watchReconnectOpportunities(() => {
       retries += 1;
     });
+    await settled();
     expect(appStateListeners.size).toBe(1);
-
-    globalThis.dispatchEvent(new Event('online'));
-    expect(retries).toBe(1);
+    expect(networkListeners.size).toBe(1);
 
     first();
     second();
+    expect(removedNetwork.size).toBe(removedBefore + 1);
+
+    fireAppState('active');
+    fireNetwork({ isConnected: false, isInternetReachable: false });
+    fireNetwork({ isConnected: true, isInternetReachable: true });
+
+    expect(retries).toBe(0);
+    expect(networkListeners.size).toBe(0);
   });
 });

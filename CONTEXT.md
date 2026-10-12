@@ -3373,3 +3373,32 @@ every enabled mounted hook, domains or none, so the session hooks (through
 `use-responses` subscribes `resourceSignal.onReconnected` itself because it
 keeps its own store instead of a view-cache key, so its refresh is one line
 against the same signal.
+
+### One network source, and the leak it removed (2026-10-12, U5b)
+
+The first cut of the watch hand-rolled `window.addEventListener('online', ...)`
+beside AppState, and stored the call's return value in a variable it then
+tested: what the DOM's `addEventListener` returns is `undefined`, the test
+never passed, and the cleanup never removed the listener — so after a logout
+and a login a second one stacked. The gate kept it harmless, but a guard that
+reads as if it works is worse than none. The hand-rolled listener is gone:
+`expo-network` is the one network source on every platform, including the web,
+where its shim re-emits `navigator.onLine` changes through the same
+subscription, and what cleanup calls is that subscription's own `remove()`.
+`expo-network` is installed through `bunx expo install` so its version tracks
+SDK 57, and it is the reason the Android dev client has to be rebuilt once.
+
+The rule it implements is the plan's: fire when the network becomes reachable
+after it was not, and ignore repeats of the same state, so the 30 s the backoff
+climbs to while a phone has no network is not paid again when the network
+returns. Reachability is `isConnected` and not `isInternetReachable === false`,
+and `getNetworkStateAsync()` seeds the previous state at install, because an
+app that launched while offline would otherwise never see its network return.
+The same once-only `watching` guard covers AppState, the network subscription
+and a second install, and the tests mock `expo-network` to pin the offline →
+online edge, the repeats, the seeded install and the cleanup
+(`tests/unit/core/services/sync/sync-reconnect-watch.test.ts`). The on-device
+timing test the review suggested needs a reachable server, which the owner's
+rule keeps down; what is verified here is the module building into the app, the
+bundle rendering with its web shim under the Tauri CSP, and the behaviour in
+tests.
