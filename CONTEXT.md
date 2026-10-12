@@ -3391,14 +3391,19 @@ SDK 57, and it is the reason the Android dev client has to be rebuilt once.
 The rule it implements is the plan's: fire when the network becomes reachable
 after it was not, and ignore repeats of the same state, so the 30 s the backoff
 climbs to while a phone has no network is not paid again when the network
-returns. Reachability is `isConnected` and not `isInternetReachable === false`,
-and `getNetworkStateAsync()` seeds the previous state at install, because an
-app that launched while offline would otherwise never see its network return.
-The same once-only `watching` guard covers AppState, the network subscription
-and a second install, and the tests mock `expo-network` to pin the offline →
-online edge, the repeats, the seeded install and the cleanup
-(`tests/unit/core/services/sync/sync-reconnect-watch.test.ts`). The on-device
-timing test the review suggested needs a reachable server, which the owner's
-rule keeps down; what is verified here is the module building into the app, the
-bundle rendering with its web shim under the Tauri CSP, and the behaviour in
-tests.
+returns. Reachability keys on `isConnected` **alone**: Argus is local, so a home
+whose WAN is down — or a LAN that never had internet at all — has the server
+perfectly reachable while `isInternetReachable` reports false, and keying on it
+would leave the watch silent exactly when it matters. A change of interface type
+while connected (Wi-Fi to cellular, Wi-Fi to ethernet) counts as a return too,
+because a new interface means the old socket is very likely dead; an emission
+that carries no type is not a change. `getNetworkStateAsync()` seeds the
+previous state and type at install, because an app that launched while offline
+would otherwise never see its network return. The same once-only `watching`
+guard covers AppState, the network subscription and a second install, and the
+tests mock `expo-network` to pin the offline → online edge, the repeats, the
+seeded install, a local network with no internet at all, an interface change, and
+the cleanup (`tests/unit/core/services/sync/sync-reconnect-watch.test.ts`). The
+on-device Wi-Fi-toggle timing measurement needs a reachable backend and is
+pending; it rides the first two-device session, together with the rest of
+section 0's acceptance tests.

@@ -1,14 +1,20 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 type AppStateListener = (state: string) => void;
-type NetworkListener = (state: { isConnected?: boolean; isInternetReachable?: boolean }) => void;
+type NetworkState = {
+  isConnected?: boolean;
+  isInternetReachable?: boolean;
+  type?: string;
+};
+type NetworkListener = (state: NetworkState) => void;
 const appStateListeners = new Set<AppStateListener>();
 const removedAppState = new Set<AppStateListener>();
 const networkListeners = new Set<NetworkListener>();
 const removedNetwork = new Set<NetworkListener>();
-let installedState: { isConnected?: boolean; isInternetReachable?: boolean } = {
+let installedState: NetworkState = {
   isConnected: true,
   isInternetReachable: true,
+  type: 'WIFI',
 };
 
 mock.module('react-native', () => ({
@@ -49,7 +55,7 @@ const fireAppState = (state: string): void => {
   for (const listener of appStateListeners) listener(state);
 };
 
-const fireNetwork = (state: { isConnected?: boolean; isInternetReachable?: boolean }): void => {
+const fireNetwork = (state: NetworkState): void => {
   for (const listener of networkListeners) listener(state);
 };
 
@@ -96,6 +102,44 @@ describe('the reconnect watch', () => {
     expect(retries).toBe(1);
     fireNetwork({ isConnected: true, isInternetReachable: true });
     expect(retries).toBe(1);
+
+    stop();
+  });
+
+  test('a local network with no internet at all still fires on the return', async () => {
+    let retries = 0;
+    const stop = watchReconnectOpportunities(() => {
+      retries += 1;
+    });
+    await settled();
+
+    fireNetwork({ isConnected: false, isInternetReachable: false, type: 'WIFI' });
+    expect(retries).toBe(0);
+
+    fireNetwork({ isConnected: true, isInternetReachable: false, type: 'WIFI' });
+    expect(retries).toBe(1);
+
+    stop();
+  });
+
+  test('an interface change while connected fires once, and a repeat of it does not', async () => {
+    let retries = 0;
+    const stop = watchReconnectOpportunities(() => {
+      retries += 1;
+    });
+    await settled();
+
+    fireNetwork({ isConnected: true, isInternetReachable: true, type: 'WIFI' });
+    expect(retries).toBe(0);
+
+    fireNetwork({ isConnected: true, isInternetReachable: true, type: 'CELLULAR' });
+    expect(retries).toBe(1);
+
+    fireNetwork({ isConnected: true, isInternetReachable: true, type: 'CELLULAR' });
+    expect(retries).toBe(1);
+
+    fireNetwork({ isConnected: true, isInternetReachable: true, type: 'ETHERNET' });
+    expect(retries).toBe(2);
 
     stop();
   });
