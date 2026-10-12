@@ -35,7 +35,8 @@
     "test": "tsc -p tests && bun test tests/unit tests/contracts",
     "check:comments": "bun scripts/check-comments.ts",
     "check:boundaries": "bun scripts/check-boundaries.ts",
-    "verify": "bun run check:comments && bun run check:boundaries && tsc --noEmit && bun run lint && bun run test",
+    "check:bundle": "bun scripts/probe-web-bundle.ts",
+    "verify": "bun run check:comments && bun run check:boundaries && tsc --noEmit && bun run lint && bun run test && bun run check:bundle",
     "clean": "rm -rf .expo node_modules",
     "web:build": "expo export --platform web",
     "desktop:dev": "tauri dev",
@@ -121,6 +122,7 @@
     "eslint-config-expo": "~57.0.1",
     "expo-mcp": "~0.2.1",
     "nitrogen": "^0.36.5",
+    "playwright-core": "^1.64.0",
     "prettier": "^3.9.5",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "~6.0.3"

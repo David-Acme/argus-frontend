@@ -1,0 +1,124 @@
+import { readFileSync } from 'node:fs';
+import { extname, join, normalize } from 'node:path';
+import { chromium } from 'playwright-core';
+
+const ROOT = join(import.meta.dir, '..');
+const DIST = join(ROOT, 'dist');
+const CHROMIUM = process.env.ARGUS_CHROMIUM ?? '/usr/bin/chromium';
+const BOUNDARY_TEXT = 'Something went wrong';
+const EXPORT_TIMEOUT_MS = 300000;
+const READY_TIMEOUT_MS = 20000;
+const SETTLE_MS = 2500;
+
+type AllowedConsoleError = { match: RegExp; why: string };
+
+const ALLOWED: readonly AllowedConsoleError[] = [];
+
+const runExport = async (): Promise<void> => {
+  const exported = Bun.spawn(['bun', 'run', 'web:build'], {
+    cwd: ROOT,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  });
+  const kill = setTimeout(() => exported.kill(), EXPORT_TIMEOUT_MS);
+  const [stdout, stderr] = await Promise.all([
+    new Response(exported.stdout).text(),
+    new Response(exported.stderr).text(),
+  ]);
+  const exitCode = await exported.exited;
+  clearTimeout(kill);
+  if (exitCode !== 0) {
+    const tail = `${stdout}${stderr}`.trim().split('\n').slice(-15).join('\n');
+    throw new Error(`web:build failed with ${exitCode}\n${tail}`);
+  }
+};
+
+const contentPolicy = (): string => {
+  const config = JSON.parse(
+    readFileSync(join(ROOT, 'src-tauri', 'tauri.conf.json'), 'utf8')
+  ) as { app?: { security?: { csp?: Record<string, string> } } };
+  const csp = config.app?.security?.csp;
+  if (!csp) throw new Error('tauri.conf.json declares no app.security.csp');
+  return Object.entries(csp)
+    .map(([directive, value]) => `${directive} ${value}`)
+    .join('; ');
+};
+
+const bundleServer = (csp: string) =>
+  Bun.serve({
+    port: 0,
+    fetch(request) {
+      const path = normalize(decodeURIComponent(new URL(request.url).pathname));
+      const target = extname(path) ? join(DIST, path) : join(DIST, 'index.html');
+      return new Response(Bun.file(target), {
+        headers: { 'Content-Security-Policy': csp },
+      });
+    },
+  });
+
+const excerpt = (text: string): string => text.replace(/\s+/g, ' ').trim().slice(0, 160);
+
+const main = async (): Promise<void> => {
+  const startedAt = Date.now();
+  await runExport();
+  const exportedAt = Date.now();
+  const server = bundleServer(contentPolicy());
+  const browser = await chromium.launch({ executablePath: CHROMIUM });
+  try {
+    const page = await browser.newPage();
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+    page.on('pageerror', (error) => consoleErrors.push(String(error)));
+
+    await page.goto(`http://127.0.0.1:${server.port}/`, { waitUntil: 'load' });
+    let rendered = '';
+    try {
+      await page.waitForFunction(
+        () => ((document.getElementById('root')?.innerText ?? '').trim().length > 0),
+        undefined,
+        { timeout: READY_TIMEOUT_MS }
+      );
+    } catch {
+      rendered = '';
+    }
+    await page.waitForTimeout(SETTLE_MS);
+    rendered =
+      rendered ||
+      (await page.evaluate(() => document.getElementById('root')?.innerText ?? ''));
+
+    const unexpected = consoleErrors.filter(
+      (text) => !ALLOWED.some((allowed) => allowed.match.test(text))
+    );
+    const failures: string[] = [];
+    if (rendered.trim().length === 0) {
+      failures.push(`the root never rendered within ${READY_TIMEOUT_MS} ms`);
+    }
+    if (rendered.includes(BOUNDARY_TEXT)) {
+      failures.push(`the root shows the error boundary: ${excerpt(rendered)}`);
+    }
+    for (const text of unexpected) failures.push(`console.error: ${excerpt(text)}`);
+
+    if (failures.length > 0) {
+      for (const failure of failures) console.error(`probe-web-bundle: ${failure}`);
+      process.exitCode = 1;
+      return;
+    }
+    for (const text of consoleErrors) {
+      const allowed = ALLOWED.find((entry) => entry.match.test(text));
+      console.log(`probe-web-bundle: allowed: ${excerpt(text)} (${allowed?.why ?? ''})`);
+    }
+    const exportSeconds = ((exportedAt - startedAt) / 1000).toFixed(1);
+    const probeSeconds = ((Date.now() - exportedAt) / 1000).toFixed(1);
+    console.log(
+      `probe-web-bundle: the bundle rendered under the Tauri CSP with no console error ` +
+        `(export ${exportSeconds}s, probe ${probeSeconds}s, root: ${excerpt(rendered)})`
+    );
+  } finally {
+    await browser.close();
+    server.stop(true);
+  }
+};
+
+await main();

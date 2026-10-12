@@ -3266,3 +3266,25 @@ connection reset or a truncated body after the request was written — still rea
 change, since the heal has matched `NETWORK_ERROR` from the start, and closing it means a
 distinct code (`NetErrorCode`, the `net-persistence` list and `service-error.ts` together),
 recorded here for whenever the plan wants it.
+
+### The bundle probe: what chromium checks and Bun and Hermes do not (2026-10-12, H5)
+
+A frontend unit headed for the desktop is accepted only after its exported bundle renders in a
+real browser. `scripts/probe-web-bundle.ts` (`bun run check:bundle`, the last step of `verify`)
+exports the bundle through `web:build`, serves `dist/` with the CSP **read** from
+`src-tauri/tauri.conf.json` — one `Content-Security-Policy` header on every response, the way
+the Tauri webview applies it, never a copy that can drift — loads `/` in `/usr/bin/chromium`
+through playwright-core, and fails on three things: the root never renders, the root shows
+expo-router's error boundary ("Something went wrong"), or a console error or page error fires
+that the allowlist does not name. The allowlist is empty and an entry added later states its
+reason in the code, so the gate never silences a class of message silently.
+
+It exists because that class of bug is invisible to every other gate: `clock.setTimeout(...)`
+invoked as a method threw `TypeError: Illegal invocation` in browsers and WebKit while Hermes
+tolerated it, so Android painted while the desktop window stopped at the error boundary
+(`e0e2abd` fixed it, and no gate could have caught it). Proven by reintroducing that line: the
+probe exits 1 naming the boundary and the `Object.after` page error, and returns to 0 once it is
+reverted, with the root's own text in the passing line ("Hi, I am Argus …"). Wall time on this
+machine is about 7 s (a warm export ~3 s, the probe ~3 s), so it rides `verify` without a named
+opt-out. `ARGUS_CHROMIUM` overrides the browser path; a missing one fails the probe rather than
+skipping it.

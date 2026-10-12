@@ -254,7 +254,18 @@ zero as each domain moved into its feature folder, and was deleted.
   them). `tests/setup.ts` stubs what the constants barrel pulls in
   (`react-native`'s `Platform`, the lucide icons read from
   `icon.constant.ts`, `window`). A fix to pure logic lands with its test.
-- `bun run verify` runs every gate: comments, typecheck, lint, tests.
+- Every unit headed for the desktop is accepted only after its exported web
+  bundle renders in a real browser: `bun run check:bundle`
+  (`scripts/probe-web-bundle.ts`) exports `dist/` through `web:build`, serves
+  it with the CSP read from `src-tauri/tauri.conf.json`, loads `/` in
+  `/usr/bin/chromium` through playwright-core, and fails when the root never
+  renders, when it shows expo-router's error boundary, or when a console
+  error or page error fires that the allowlist does not name (the allowlist
+  is empty). Bun and Hermes do not check `this` on timers; chromium and
+  WebKit do, which is how `clock.setTimeout(...)` as a method painted on
+  Android and stopped the desktop at the error boundary (`e0e2abd`).
+- `bun run verify` runs every gate: comments, typecheck, lint, tests, and the
+  bundle probe.
 
 ### 11. Networking layer (Nitro + Tauri + secure-storage)
 
@@ -838,7 +849,8 @@ bun run lint           # expo lint
 bunx tsc --noEmit      # typecheck (must be 0 errors)
 bun run test           # unit tests (tests/unit, bun test)
 bun run check:comments # rule 10b gate; --fix removes comments
-bun run verify         # comments + typecheck + lint + tests
+bun run check:bundle   # exports the bundle, serves it under the Tauri CSP, loads it in chromium
+bun run verify         # comments + typecheck + lint + tests + the bundle probe
 bun run web:build      # expo export --platform web → dist/ (for Tauri)
 bun run desktop:dev    # tauri dev (Linux requires webkit2gtk-4.1)
 bun run desktop:build  # tauri build
