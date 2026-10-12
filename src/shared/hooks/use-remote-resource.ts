@@ -1,9 +1,9 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createReloadGate, resourceSignal } from '@/core/services/sync/resource-signal';
+import { createReloadGate, matchesResourceMatch, resourceSignal } from '@/core/services/sync/resource-signal';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { ResourceDomain, ViewCacheKey } from '@/core/types';
+import type { ResourceMatch, ViewCacheKey } from '@/core/types';
 import { useViewCacheValue } from './use-cached-rows';
 
 type RemoteResourceOptions<T> = {
@@ -11,25 +11,25 @@ type RemoteResourceOptions<T> = {
   scope?: string;
   load: () => Promise<IServiceResponse<T>>;
   enabled?: boolean;
-  domains?: readonly ResourceDomain[];
+  resources?: readonly ResourceMatch[];
 };
 
 export type RemoteResourceStatus = 'idle' | 'loading' | 'ready' | 'failed';
 
-const NO_DOMAINS: readonly ResourceDomain[] = [];
+const NO_RESOURCES: readonly ResourceMatch[] = [];
 
 export function useRemoteResource<T>({
   cacheKey,
   scope,
   load,
   enabled = true,
-  domains = NO_DOMAINS,
+  resources = NO_RESOURCES,
 }: RemoteResourceOptions<T>) {
   const data = useViewCacheValue<T>(cacheKey, scope);
   const [failed, setFailed] = useState(false);
   const [loadedAt, setLoadedAt] = useState(Date.now);
   const generation = useRef(0);
-  const domainsRef = useRef(domains);
+  const resourcesRef = useRef(resources);
 
   const run = useCallback(async () => {
     const current = generation.current + 1;
@@ -63,19 +63,21 @@ export function useRemoteResource<T>({
     }, [enabled, reload]),
   );
 
-  const domainKey = domains.join('|');
+  const resourceKey = resources
+    .map((resource) => `${resource.domain}:${resource.scope ?? ''}`)
+    .join('|');
 
   useEffect(() => {
-    domainsRef.current = domains;
-  }, [domains]);
+    resourcesRef.current = resources;
+  }, [resources]);
 
   useEffect(() => {
-    if (!enabled || domainKey === '') return undefined;
+    if (!enabled || resourceKey === '') return undefined;
     return resourceSignal.onChanged((notice) => {
-      if (!domainsRef.current.includes(notice.domain)) return;
+      if (!matchesResourceMatch(resourcesRef.current, notice)) return;
       void reload();
     });
-  }, [domainKey, enabled, reload]);
+  }, [enabled, reload, resourceKey]);
 
   useEffect(() => {
     if (!enabled) return undefined;

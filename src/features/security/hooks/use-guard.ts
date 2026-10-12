@@ -14,7 +14,7 @@ import type {
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
   GuardMode,
-  ResourceDomain,
+  ResourceMatch,
 } from '@/core/types';
 import { GUARD_EPISODES_ALL_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
@@ -37,7 +37,7 @@ type OptimisticRemote<T, R> = {
 
 export type PendingMode = { mode: GuardMode; environmentId: number | null };
 
-const GUARD_DOMAINS: readonly ResourceDomain[] = ['guard'];
+const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'environments' }];
 
 const EPISODE_END_AFTER = 8;
 
@@ -82,7 +82,7 @@ export function useGuardEnvironments(enabled: boolean) {
     cacheKey: VIEW_CACHE_KEYS.guardEnvironments,
     load: loadEnvironments,
     enabled,
-    domains: GUARD_DOMAINS,
+    resources: GUARD_ENVIRONMENTS,
   });
 }
 
@@ -106,6 +106,7 @@ export function useCameraPlacement(owner: boolean, enabled = true) {
     cacheKey: VIEW_CACHE_KEYS.guardCameras,
     load: loadCameras,
     enabled: owner && enabled,
+    resources: GUARD_ENVIRONMENTS,
   });
   const reloadEnvironments = environments.reload;
   const mutateCameras = cameras.mutate;

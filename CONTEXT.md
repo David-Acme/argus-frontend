@@ -3317,11 +3317,13 @@ costs one reload per device, and `createReloadGate` keeps at most one reload
 of a hook in flight and turns anything arriving during it into exactly one
 follow-up.
 
-`useRemoteResource` takes `domains` and reloads when a notice names one of
-them; `useRemoteFeed` takes the same as its fourth argument. Both also reload
+`useRemoteResource` takes `resources` — the `ResourceMatch` pairs (`{domain,
+scope?}`) the answer depends on, a pair without a scope matching the whole
+domain — and reloads when a notice matches one of them; `useRemoteFeed` takes
+the same as its fourth argument. Both also reload
 when the socket reconnects after a disconnect — the frame is never replayed,
 so reconnect is the catch-up — and not on the first connect, which would only
-double the mount's own load. A hook that declares no domains is untouched. The
+double the mount's own load. A hook that declares no resources is untouched. The
 signal module is deliberately free of engine imports (the binding carries
 those), so a screen that only wants the signal does not pull the sync engine
 into its bundle. `tests/unit/core/services/sync/resource-signal.test.ts` and
@@ -3368,7 +3370,7 @@ triggers and its idempotence pinned beside it. The desktop needs nothing on the
 Rust side for this: the same AppState transition drives it.
 
 R24 rides the same signal the frames do: the reconnect reload now fires for
-every enabled mounted hook, domains or none, so the session hooks (through
+every enabled mounted hook, resources or none, so the session hooks (through
 `useRemoteResource`) and `use-responses` catch up without a second mechanism.
 `use-responses` subscribes `resourceSignal.onReconnected` itself because it
 keeps its own store instead of a view-cache key, so its refresh is one line

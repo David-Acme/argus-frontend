@@ -3,8 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PagedViewKey } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import type { RemoteFeed, RemoteFeedSnapshot } from '@/core/services/paging';
-import { createReloadGate, resourceSignal } from '@/core/services/sync/resource-signal';
-import type { InfiniteFooter, PagedRows, ResourceDomain } from '@/core/types';
+import { createReloadGate, matchesResourceMatch, resourceSignal } from '@/core/services/sync/resource-signal';
+import type { InfiniteFooter, PagedRows, ResourceMatch } from '@/core/types';
 import { infiniteFooter } from '@/shared/libs/infinite-list';
 import { useViewCacheValue } from './use-cached-rows';
 import type { RemoteResourceStatus } from './use-remote-resource';
@@ -115,11 +115,11 @@ export function useRemoteFeed<T, C>(
   feed: RemoteFeed<T, C>,
   scope: string,
   enabled = true,
-  domains: readonly ResourceDomain[] = []
+  resources: readonly ResourceMatch[] = []
 ) {
   const snapshot = useViewCacheValue<RemoteFeedSnapshot<T, C>>(feed.key, scope);
   const [failed, setFailed] = useState(false);
-  const domainsRef = useRef(domains);
+  const resourcesRef = useRef(resources);
 
   const run = useCallback(async () => {
     setFailed(!(await feed.refresh(scope)));
@@ -149,19 +149,21 @@ export function useRemoteFeed<T, C>(
     if (enabled) feed.focus(scope);
   }, [enabled, feed, scope]);
 
-  const domainKey = domains.join('|');
+  const resourceKey = resources
+    .map((resource) => `${resource.domain}:${resource.scope ?? ''}`)
+    .join('|');
 
   useEffect(() => {
-    domainsRef.current = domains;
-  }, [domains]);
+    resourcesRef.current = resources;
+  }, [resources]);
 
   useEffect(() => {
-    if (!enabled || domainKey === '') return undefined;
+    if (!enabled || resourceKey === '') return undefined;
     return resourceSignal.onChanged((notice) => {
-      if (!domainsRef.current.includes(notice.domain)) return;
+      if (!matchesResourceMatch(resourcesRef.current, notice)) return;
       void reload();
     });
-  }, [domainKey, enabled, reload]);
+  }, [enabled, reload, resourceKey]);
 
   useEffect(() => {
     if (!enabled) return undefined;

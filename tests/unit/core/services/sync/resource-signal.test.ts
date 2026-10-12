@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { createReloadGate, createResourceSignal, readResourceNotice } from '@/core/services/sync/resource-signal';
+import { createReloadGate, createResourceSignal, matchesResourceMatch, readResourceNotice } from '@/core/services/sync/resource-signal';
 import type { ResourceNotice } from '@/core/types';
 
 const fakeClock = () => {
@@ -159,5 +159,17 @@ describe('reading a resource notice', () => {
     expect(readResourceNotice({ domain: 'camera' })).toBeNull();
     expect(readResourceNotice(null)).toBeNull();
     expect(readResourceNotice('camera')).toBeNull();
+  });
+});
+
+describe('matching a resource notice', () => {
+  const incidents: ResourceNotice = { domain: 'guard', scope: 'incidents', ids: [] };
+
+  test('a scope-less match takes its whole domain and a scoped one takes only its own', () => {
+    expect(matchesResourceMatch([{ domain: 'guard' }], incidents)).toBe(true);
+    expect(matchesResourceMatch([{ domain: 'guard', scope: 'incidents' }], incidents)).toBe(true);
+    expect(matchesResourceMatch([{ domain: 'guard', scope: 'environments' }], incidents)).toBe(false);
+    expect(matchesResourceMatch([{ domain: 'camera' }], incidents)).toBe(false);
+    expect(matchesResourceMatch([], incidents)).toBe(false);
   });
 });

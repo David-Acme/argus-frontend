@@ -1,5 +1,5 @@
 import { RESOURCE_COALESCE_MS, RESOURCE_DOMAINS, RESOURCE_SCOPES } from '@/shared/constants';
-import type { ResourceDomain, ResourceNotice, ResourceScope } from '@/core/types';
+import type { ResourceDomain, ResourceMatch, ResourceNotice, ResourceScope } from '@/core/types';
 
 export type ResourceClock = {
   setTimeout: (run: () => void, ms: number) => ReturnType<typeof setTimeout>;
@@ -102,4 +102,15 @@ export function readResourceNotice(info: unknown): ResourceNotice | null {
     ? value.ids.filter((id): id is number => typeof id === 'number' && Number.isInteger(id) && id > 0)
     : [];
   return { domain, scope, ids };
+}
+
+export function matchesResourceMatch(
+  resources: readonly ResourceMatch[],
+  notice: ResourceNotice
+): boolean {
+  return resources.some(
+    (resource) =>
+      resource.domain === notice.domain &&
+      (resource.scope === undefined || resource.scope === notice.scope)
+  );
 }

@@ -556,16 +556,17 @@ for Watermelon nor make an HTTP list request just because it mounted.
   spinner.
 - Data that only the server answers (settings, guard, camera device status
   and capabilities) is read with `useRemoteResource({ cacheKey, scope?, load,
-  enabled?, domains? })` (`shared/hooks/use-remote-resource.ts`): it paints the
+  enabled?, resources? })` (`shared/hooks/use-remote-resource.ts`): it paints the
   last answer from the view cache, refetches on focus, ignores stale answers, and
   `mutate` updates the cache optimistically. `load` must be stable (a
-  module-level arrow or a `useCallback`), and so must `domains`: it declares
-  the resource domains the answer depends on, and the hook reloads when a
-  `ResourceChanged` frame names one of them — coalesced at the source, one
-  reload in flight, one follow-up at most. Every enabled mounted hook, domains
-  or none, also reloads when the socket reconnects after a disconnect, which is
-  the catch-up for the frames a device missed; a first connect reloads nothing.
-  `useRemoteFeed` takes the same domains as its fourth argument. A
+  module-level arrow or a `useCallback`), and so must `resources`: it declares
+  the `ResourceMatch` pairs (`{ domain, scope? }`) the answer depends on, and
+  the hook reloads when a `ResourceChanged` frame matches one of them —
+  coalesced at the source, one reload in flight, one follow-up at most; a pair
+  without a scope matches the whole domain. Every enabled mounted hook,
+  resources or none, also reloads when the socket reconnects after a disconnect,
+  which is the catch-up for the frames a device missed; a first connect reloads
+  nothing. `useRemoteFeed` takes the same resources as its fourth argument. A
   server action goes through
   `runServiceAction({ confirm?, call, success?, errorTitle? })`
   (`shared/libs/service-action.ts`: confirm, call, error or success toast,
