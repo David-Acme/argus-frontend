@@ -62,7 +62,7 @@ pub fn request_error(error: reqwest::Error) -> String {
   if is_certificate_error(&error) {
     return format!("CERT_NOT_TRUSTED|{error}");
   }
-  if error.is_timeout() {
+  if error.is_timeout() && !error.is_connect() {
     return format!("TIMEOUT|{error}");
   }
   format!("NETWORK_ERROR|{error}")
@@ -213,4 +213,61 @@ pub async fn probe(url: &str, trust: &Trust, ip: &str) -> Result<(), String> {
   let client = strict_client(&trust.ca_pem, &trust.host, ip)?;
   client.get(url).send().await.map_err(request_error)?;
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use std::net::TcpListener;
+  use std::sync::mpsc;
+  use std::time::Duration;
+
+  use super::request_error;
+
+  fn url_of(listener: &TcpListener) -> String {
+    format!("http://{}/", listener.local_addr().expect("a bound address"))
+  }
+
+  #[tokio::test]
+  async fn a_connection_that_never_completed_is_a_network_error() {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a free port");
+    let url = url_of(&listener);
+    drop(listener);
+
+    let error = reqwest::Client::builder()
+      .connect_timeout(Duration::from_millis(500))
+      .build()
+      .expect("a client")
+      .get(url)
+      .send()
+      .await
+      .expect_err("nothing listens on the port");
+
+    assert!(request_error(error).starts_with("NETWORK_ERROR|"));
+  }
+
+  #[tokio::test]
+  async fn an_answer_that_never_arrives_is_a_timeout() {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a free port");
+    let url = url_of(&listener);
+    let (release, held) = mpsc::channel::<()>();
+    let holder = std::thread::spawn(move || {
+      if let Ok((stream, _)) = listener.accept() {
+        let _ = held.recv_timeout(Duration::from_secs(10));
+        drop(stream);
+      }
+    });
+
+    let error = reqwest::Client::builder()
+      .read_timeout(Duration::from_millis(500))
+      .build()
+      .expect("a client")
+      .get(url)
+      .send()
+      .await
+      .expect_err("the server never answers");
+
+    assert!(request_error(error).starts_with("TIMEOUT|"));
+    let _ = release.send(());
+    holder.join().expect("the holder thread returns");
+  }
 }

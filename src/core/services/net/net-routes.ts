@@ -55,7 +55,7 @@ export function mayRediscover(lastFailureAt: number, now: number): boolean {
 }
 
 export function addressUnreachable(code: string): boolean {
-  return code === 'NETWORK_ERROR' || code === 'TIMEOUT';
+  return code === 'NETWORK_ERROR';
 }
 
 export const SERVER_IDENTITY_PATH = '/pairing/status';

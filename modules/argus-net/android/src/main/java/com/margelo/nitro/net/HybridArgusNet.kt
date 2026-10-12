@@ -313,7 +313,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
       }
 
       val call = client.newCall(request)
-      val executed = if (pin == null) call.execute() else executePinned(call)
+      val executed = executeClassified(call, pin != null)
       executed.use { response ->
         val responseBody = response.body?.string() ?: ""
         val outHeaders = LinkedHashMap<String, String>()
@@ -469,16 +469,19 @@ class HybridArgusNet : HybridArgusNetSpec() {
       .build()
   }
 
-  private fun executePinned(call: okhttp3.Call): okhttp3.Response {
+  private fun executeClassified(call: okhttp3.Call, pinned: Boolean): okhttp3.Response {
     try {
       return call.execute()
     } catch (error: java.io.IOException) {
-      if (isPinRefusal(error)) {
+      if (pinned && isPinRefusal(error)) {
         throw netError("FINGERPRINT_MISMATCH", "The server is not the one in the invitation")
       }
-      throw netError("NETWORK_ERROR", error.message ?: "Network error")
+      throw netError(transportCode(error), error.message ?: "Network error")
     }
   }
+
+  private fun transportCode(error: java.io.IOException): String =
+    if (error is java.net.SocketTimeoutException) "TIMEOUT" else "NETWORK_ERROR"
 
   private fun isPinRefusal(error: Throwable): Boolean =
     generateSequence(error) { it.cause }.any {

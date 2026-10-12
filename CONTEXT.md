@@ -3217,32 +3217,52 @@ What the code does about it now:
   keeping its scheme, host and path, and only for a segment the route table names: a segment it
   does not name — an external or relay URL — is left exactly as the caller built it, and the
   first attempt is never rewritten at all, only the retry after a rediscovery); the http layer
-  repeats the same heal for a transport failure that means the address never answered
-  (`addressUnreachable`), which is what covers the Tauri transport.
+  repeats the same heal for a transport failure that proves the connection was never
+  established (`addressUnreachable`), which is what covers the Tauri transport.
 - A rediscovery that just failed is not repeated for `REDISCOVERY_MEMO_MS` (10 s), so a server
   that is simply off pays one discovery timeout before "the server is out of reach", not two.
 - Residual exposure: the identity check proves the server, not the announcement's honesty, so
   an announced *wrong* port would still be adopted; an omitted one no longer is.
 
-### The heal also answers a connect timeout (2026-10-12, the demo-night network move)
+### The heal answers a connect timeout, and only a proven connect failure (2026-10-12, the demo-night network move)
 
 The desktop kept keyring `argus:net.ip` on the old LAN address after the laptop changed
 networks, and every request failed with "Could not prepare access." The heal chain was already
-complete — `refreshAddress()` → `argus_relocate` (the Rust probe answers under the pinned CA,
-then `trust::relocate` writes `net.ip`) → the request retried with the trust re-read — but it
-opened only for a failure classified `NETWORK_ERROR`. Rust reports a *connect timeout* as
-`TIMEOUT` (`src-tauri/src/net/http.rs`, the 10 s connect timeout), and a stale address on a
-network that drops the SYN rather than refusing or unrouting it produces exactly that, so
-nothing rediscovered, the keyring stayed stale and the failure repeated. `addressUnreachable`
-(`net-routes.ts`) is now the one predicate for "the address never answered" — `NETWORK_ERROR`
-and `TIMEOUT` — and `http.service.ts` and both platforms' `request`/`openSocket` gates read it.
-An answer from the server never adopts another address: `CERT_NOT_TRUSTED`, `UNAUTHORIZED`,
-`HOST_NOT_ALLOWED`, the pairing codes and the storage faults are settled facts, and a wrong
-certificate must not be answered by following an announcement elsewhere.
+complete — `refreshAddress()` → `argus_relocate`, where Rust probes the candidate under the
+pinned CA and `trust::relocate` writes `net.ip`, then the request retried with the trust
+re-read — but it opened only for a failure classified `NETWORK_ERROR`. A stale address on a
+network that drops the SYN rather than refusing or unrouting it produces a *connect timeout*
+instead, and the desktop labelled every timeout `TIMEOUT`, so nothing rediscovered, the keyring
+stayed stale and the failure repeated.
 
-Because the trigger is wider, the desktop's `refreshAddress()` now carries the memo and the
-single-flight the native service always had (`rediscover`/`relocate`, `mayRediscover`), so a
-server that is merely off still costs one discovery per window, not one per request. Pinned by
-`tests/unit/core/services/net/net-web.test.ts` and `net-native.test.ts` (relocate on a moved
-address, the refused candidate leaves the stored address untouched, single-flight, both memo
-paths) and by the `addressUnreachable` table in `net-routes.test.ts`.
+The gate now opens only on a failure that proves the connection was never established: a retry
+may re-send a non-idempotent request, so a read or response timeout — the server may have
+executed it — must never redial. Each transport reports that rule:
+
+- desktop (`src-tauri/src/net/http.rs`): `is_timeout() && !is_connect()` is `TIMEOUT`; a connect
+  failure, its own timeout included, is `NETWORK_ERROR`; certificate failures keep their code.
+- Android (`modules/argus-net` Kotlin): a `SocketTimeoutException` is `TIMEOUT` — OkHttp's read
+  timeout; its 4.12 jar ships no connect-timeout class and wraps connect failures as
+  `ConnectException("Failed to connect…")`, which is a `NETWORK_ERROR` — and everything else
+  keeps `NETWORK_ERROR`. The classification now covers the strict path too, which used to let
+  the raw `IOException` through to the keyword fallback.
+- iOS (`modules/argus-net` Swift): `NSURLErrorTimedOut` is `TIMEOUT` — URLSession cannot tell a
+  connect timeout from a read timeout, so a timeout never heals there — and everything else
+  keeps `NETWORK_ERROR`.
+
+`addressUnreachable` (`net-routes.ts`) is the one predicate the gates read, and it names only
+`NETWORK_ERROR`. The trigger is still wider than c127611's, so the desktop's `refreshAddress()`
+keeps the memo and single-flight the native service always had (`mayRediscover`): a server that
+is merely off costs one discovery per window, not one per request. Pinned by
+`net-routes.test.ts` (the code table), `http-service.test.ts` (a read timeout is reported once,
+unretried), `net-web.test.ts` and `net-native.test.ts` (a refused connection relocates and
+retries, a read timeout and a certificate refusal do not, single-flight, both memo paths), and
+`http.rs`'s own tests over loopback (a refused connection is `NETWORK_ERROR`; an answer that
+never arrives is `TIMEOUT`).
+
+Residual, named rather than fixed: a failure that is neither connect-phase nor a timeout — a
+connection reset or a truncated body after the request was written — still reads
+`NETWORK_ERROR` on all three transports, so it can still heal and re-send. That predates this
+change, since the heal has matched `NETWORK_ERROR` from the start, and closing it means a
+distinct code (`NetErrorCode`, the `net-persistence` list and `service-error.ts` together),
+recorded here for whenever the plan wants it.

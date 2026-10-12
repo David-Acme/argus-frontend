@@ -9,7 +9,7 @@ const STATUS_URL = 'https://argus.local:7042/auth/status';
 const store = new Map<string, string>();
 let configuredIp: string | null = null;
 let requestUrls: string[] = [];
-let failKind: 'timeout' | 'certificate' = 'timeout';
+let failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
 let discovery: NetDiscovery | null = null;
 let discoveryCalls = 0;
 
@@ -45,9 +45,7 @@ mock.module('argus-net', () => ({
     },
     request: async ({ url }: { url: string }) => {
       requestUrls.push(url);
-      if (configuredIp === OLD_IP) {
-        throw failKind === 'certificate' ? 'CERT_NOT_TRUSTED|bad certificate' : 'TIMEOUT|connect timed out';
-      }
+      if (configuredIp === OLD_IP) throw failure;
       return { status: 200, headers: {}, body: JSON.stringify({ status: 200, info: { id: 1 }, errors: null }) };
     },
     openSocket: async () => {
@@ -109,7 +107,7 @@ describe('the phone net service against a moved server', () => {
     requestUrls = [];
     discovery = null;
     discoveryCalls = 0;
-    failKind = 'timeout';
+    failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
     await seed();
   });
 
@@ -117,7 +115,7 @@ describe('the phone net service against a moved server', () => {
     setSystemTime();
   });
 
-  test('a request that timed out rediscovers once and is retried at the announced address', async () => {
+  test('a refused connection rediscovers once and the request is retried at the announced address', async () => {
     discovery = announcement(NEW_IP);
 
     const result = await request();
@@ -129,9 +127,21 @@ describe('the phone net service against a moved server', () => {
     expect(store.get('net.ip')).toBe(NEW_IP);
   });
 
+  test('a read timeout is reported without redialling the address', async () => {
+    discovery = announcement(NEW_IP);
+    failure = 'TIMEOUT|Read timed out';
+
+    await expect(request()).rejects.toMatchObject({ code: 'TIMEOUT' });
+
+    expect(discoveryCalls).toBe(0);
+    expect(requestUrls).toEqual([STATUS_URL]);
+    expect(configuredIp).toBe(OLD_IP);
+    expect(store.get('net.ip')).toBe(OLD_IP);
+  });
+
   test('a certificate refusal is reported without adopting another address', async () => {
     discovery = announcement(NEW_IP);
-    failKind = 'certificate';
+    failure = 'CERT_NOT_TRUSTED|bad certificate';
 
     await expect(request()).rejects.toMatchObject({ code: 'CERT_NOT_TRUSTED' });
 
@@ -143,10 +153,10 @@ describe('the phone net service against a moved server', () => {
   test('a rediscovery that found nothing is not repeated inside the window', async () => {
     discovery = announcement(OLD_IP);
 
-    await expect(request()).rejects.toMatchObject({ code: 'TIMEOUT' });
+    await expect(request()).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
     expect(discoveryCalls).toBe(1);
 
-    await expect(request()).rejects.toMatchObject({ code: 'TIMEOUT' });
+    await expect(request()).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
     expect(discoveryCalls).toBe(1);
   });
 });

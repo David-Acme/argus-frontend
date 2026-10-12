@@ -14,6 +14,14 @@ private func netError(_ message: String) -> NSError {
     userInfo: [NSLocalizedDescriptionKey: message])
 }
 
+private func netErrorFrom(_ error: Error) -> NSError {
+  let nsError = error as NSError
+  if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorTimedOut {
+    return netError("TIMEOUT|\(error.localizedDescription)")
+  }
+  return netError("NETWORK_ERROR|\(error.localizedDescription)")
+}
+
 public class HybridArgusNet: HybridArgusNetSpec {
   private var caPem = ""
   private var allowedHost = defaultHost
@@ -188,7 +196,11 @@ public class HybridArgusNet: HybridArgusNetSpec {
     if let pin {
       result = try await Self.pinnedData(for: request, pin: pin)
     } else {
-      result = try await Self.strictSession(for: caPem).data(for: request)
+      do {
+        result = try await Self.strictSession(for: caPem).data(for: request)
+      } catch {
+        throw netErrorFrom(error)
+      }
     }
     let (data, response) = result
 
@@ -214,7 +226,7 @@ public class HybridArgusNet: HybridArgusNetSpec {
       if delegate.refused {
         throw netError("FINGERPRINT_MISMATCH|The server is not the one in the invitation")
       }
-      throw netError("NETWORK_ERROR|\(error.localizedDescription)")
+      throw netErrorFrom(error)
     }
   }
 

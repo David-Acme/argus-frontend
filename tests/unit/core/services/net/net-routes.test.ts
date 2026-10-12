@@ -98,13 +98,13 @@ describe('relocatedInstance', () => {
 });
 
 describe('addressUnreachable', () => {
-  test('a failure that means the address never answered may relocate', () => {
+  test('a failure that proves the connection was never established may relocate', () => {
     expect(addressUnreachable('NETWORK_ERROR')).toBe(true);
-    expect(addressUnreachable('TIMEOUT')).toBe(true);
   });
 
-  test('an answer from the server, or a local failure, never relocates', () => {
+  test('an answer from the server, a timeout whose phase is not provably the connect, or a local failure never relocates', () => {
     const settled: NetErrorCode[] = [
+      'TIMEOUT',
       'CERT_NOT_TRUSTED',
       'UNAUTHORIZED',
       'HOST_NOT_ALLOWED',

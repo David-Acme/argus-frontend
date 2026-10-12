@@ -72,16 +72,13 @@ describe('the http service on a stale paired address', () => {
     ]);
   });
 
-  test('a request that timed out heals the address the same way', async () => {
+  test('a read timeout reports the failure without redialling the address', async () => {
     failCode = 'TIMEOUT';
-    const response = await httpService.get<{ id: number }>('/auth/login');
+    const response = await httpService.get('/auth/login');
 
-    expect(response.ok).toBe(true);
-    expect(response.info).toEqual({ id: 1 });
-    expect(calls).toEqual([
-      'https://argus.local:7024/auth/login',
-      'https://argus.local:7042/auth/login',
-    ]);
+    expect(response.ok).toBe(false);
+    expect(response.errors?.code).toBe('TIMEOUT');
+    expect(calls).toEqual(['https://argus.local:7024/auth/login']);
   });
 
   test('when discovery finds nothing the failure is reported once, not retried', async () => {
