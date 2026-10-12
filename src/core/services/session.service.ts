@@ -7,6 +7,7 @@ import { readRefreshResponse, settledRefresh } from '@/core/services/http/refres
 import { registerHttpAuth } from '@/core/services/http';
 import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
+import { bindResourceSignal } from '@/core/services/sync/resource-signal-binding';
 import { applyCachedAccess, contextEngine } from '@/core/services/context';
 import { moduleEngine } from '@/core/services/modules';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
@@ -102,6 +103,7 @@ class SessionService {
   private startAccess(userId: number | string): void {
     moduleEngine.start(String(userId));
     contextEngine.start(String(userId));
+    bindResourceSignal();
     applyCachedAccess();
   }
 

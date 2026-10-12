@@ -3294,3 +3294,36 @@ as a 500). Residual: the probe renders the unpaired first screen (the welcome he
 crash that needs a paired session — behind login, behind a role, behind a module — is not
 exercised; extending it to a mocked paired session (mockIPC-style) is a candidate for the
 frontend quality programme.
+
+### Resource changes: the client side (2026-10-12, the real-time plan's 2.2)
+
+`ResourceChanged` (operation 14) is the one frame for state a screen re-reads
+over HTTP. Its payload is `{domain, scope, ids?}`; `readResourceNotice`
+(`core/services/sync/resource-signal.ts`) accepts only a pair this build knows
+— `RESOURCE_DOMAINS` and `RESOURCE_SCOPES` in
+`shared/constants/resource.constant.ts`, mirrored from
+`packages/contracts/sync/src/sync/resource-change.hxx` and pinned by
+`tests/contracts/resource-contract.test.ts` — so a newer server's frame is
+ignored rather than misread.
+
+`bindResourceSignal` (`core/services/sync/resource-signal-binding.ts`, started
+once by `sessionService.startAccess` beside the other engines) subscribes the
+frame through `synchronizeService.on` — the router already fans every
+operation out to its subscribers, which is how `ResponseUpdate` is consumed —
+and the connection's disconnect/connect pair as well. `createResourceSignal`
+coalesces per domain and scope on a trailing edge (`RESOURCE_COALESCE_MS`,
+300 ms), so a burst of frames — an episode touched many times, a module job —
+costs one reload per device, and `createReloadGate` keeps at most one reload
+of a hook in flight and turns anything arriving during it into exactly one
+follow-up.
+
+`useRemoteResource` takes `domains` and reloads when a notice names one of
+them; `useRemoteFeed` takes the same as its fourth argument. Both also reload
+when the socket reconnects after a disconnect — the frame is never replayed,
+so reconnect is the catch-up — and not on the first connect, which would only
+double the mount's own load. A hook that declares no domains is untouched. The
+signal module is deliberately free of engine imports (the binding carries
+those), so a screen that only wants the signal does not pull the sync engine
+into its bundle. `tests/unit/core/services/sync/resource-signal.test.ts` and
+`resource-signal-binding.test.ts` pin the coalescer against a fake clock, the
+reload gate, the read of a frame, and both reconnect cases.

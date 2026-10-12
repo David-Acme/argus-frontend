@@ -21,3 +21,4 @@ export * from './optimistic.constant';
 export * from './watchdog.constant';
 export * from './module.constant';
 export * from './capability.constant';
+export * from './resource.constant';

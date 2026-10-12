@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PagedViewKey } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import type { RemoteFeed, RemoteFeedSnapshot } from '@/core/services/paging';
-import type { InfiniteFooter, PagedRows } from '@/core/types';
+import { createReloadGate, resourceSignal } from '@/core/services/sync/resource-signal';
+import type { InfiniteFooter, PagedRows, ResourceDomain } from '@/core/types';
 import { infiniteFooter } from '@/shared/libs/infinite-list';
 import { useViewCacheValue } from './use-cached-rows';
 import type { RemoteResourceStatus } from './use-remote-resource';
@@ -110,13 +111,26 @@ export function usePagedView<T, S extends PagedRows<T> = PagedRows<T>>(
   };
 }
 
-export function useRemoteFeed<T, C>(feed: RemoteFeed<T, C>, scope: string, enabled = true) {
+export function useRemoteFeed<T, C>(
+  feed: RemoteFeed<T, C>,
+  scope: string,
+  enabled = true,
+  domains: readonly ResourceDomain[] = []
+) {
   const snapshot = useViewCacheValue<RemoteFeedSnapshot<T, C>>(feed.key, scope);
   const [failed, setFailed] = useState(false);
+  const domainsRef = useRef(domains);
 
-  const reload = useCallback(async () => {
+  const run = useCallback(async () => {
     setFailed(!(await feed.refresh(scope)));
   }, [feed, scope]);
+
+  const gateRef = useRef<{ run: () => Promise<void>; reload: () => Promise<void> } | null>(null);
+
+  const reload = useCallback((): Promise<void> => {
+    if (gateRef.current?.run !== run) gateRef.current = { run, reload: createReloadGate(run) };
+    return gateRef.current.reload();
+  }, [run]);
 
   const loadMore = useCallback(() => feed.loadMore(scope), [feed, scope]);
 
@@ -134,6 +148,27 @@ export function useRemoteFeed<T, C>(feed: RemoteFeed<T, C>, scope: string, enabl
   useEffect(() => {
     if (enabled) feed.focus(scope);
   }, [enabled, feed, scope]);
+
+  const domainKey = domains.join('|');
+
+  useEffect(() => {
+    domainsRef.current = domains;
+  }, [domains]);
+
+  useEffect(() => {
+    if (!enabled || domainKey === '') return undefined;
+    return resourceSignal.onChanged((notice) => {
+      if (!domainsRef.current.includes(notice.domain)) return;
+      void reload();
+    });
+  }, [domainKey, enabled, reload]);
+
+  useEffect(() => {
+    if (!enabled || domainKey === '') return undefined;
+    return resourceSignal.onReconnected(() => {
+      void reload();
+    });
+  }, [domainKey, enabled, reload]);
 
   const status: RemoteResourceStatus = !enabled
     ? 'idle'
