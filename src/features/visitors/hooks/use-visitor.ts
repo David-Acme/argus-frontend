@@ -14,6 +14,7 @@ export function useVisitor(id: number) {
     scope: String(id),
     load,
     enabled: id > 0,
+    resources: [{ domain: 'identity', scope: 'visitors', id }],
   });
   const { run, pending } = useServiceAction();
   const { mutate } = detail;

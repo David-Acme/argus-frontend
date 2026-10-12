@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { VisitorSettings, VisitorSummary } from '@/core/types';
+import type { ResourceMatch, VisitorSettings, VisitorSummary } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list';
@@ -35,12 +35,14 @@ export type MergeVisitorsInput = {
 
 const loadSettings = () => visitorService.settings();
 
+const VISITORS_RESOURCES: readonly ResourceMatch[] = [{ domain: 'identity', scope: 'visitors' }];
+
 const NO_VISITORS: readonly VisitorSummary[] = [];
 
 export function useVisitorFeed({ filter, search }: VisitorQuery) {
   const [settled, setSettled] = useState(search);
   const scope = visitorFeedScope({ filter, search: settled });
-  const feed = useRemoteFeed(visitorFeed, scope);
+  const feed = useRemoteFeed(visitorFeed, scope, true, VISITORS_RESOURCES);
   const base = useViewCacheValue<RemoteFeedSnapshot<VisitorSummary, unknown>>(
     visitorFeed.key,
     VISITOR_ALL_SCOPE
@@ -77,6 +79,7 @@ export function useVisitors() {
   const settings = useRemoteResource<VisitorSettings>({
     cacheKey: VIEW_CACHE_KEYS.visitorSettings,
     load: loadSettings,
+    resources: VISITORS_RESOURCES,
   });
   const { run, pending } = useServiceAction();
   const { reload: reloadSettings, mutate: mutateSettings } = settings;
