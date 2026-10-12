@@ -13,6 +13,7 @@ let releaseDiscovery: (() => void) | null = null;
 let relocateFails = false;
 let discoveryCalls = 0;
 const relocateCalls: { url: string; ip: string }[] = [];
+const socketChannels: { onmessage: ((payload: ArrayBuffer) => void) | null }[] = [];
 
 mock.module('@/core/services/secure-storage', () => ({
   secureStorageService: {
@@ -41,6 +42,10 @@ mock.module('@tauri-apps/api/core', () => ({
     if (command === 'argus_relocate') {
       relocateCalls.push({ url: String(args?.url), ip: String(args?.ip) });
       if (relocateFails) throw 'CERT_NOT_TRUSTED|The candidate did not answer under the paired CA';
+      return undefined;
+    }
+    if (command === 'argus_socket_open') {
+      socketChannels.push(args?.onEvent as (typeof socketChannels)[number]);
       return undefined;
     }
     throw `UNEXPECTED_COMMAND|${command}`;
@@ -158,5 +163,30 @@ describe('the desktop net service against a moved server', () => {
     expect(discoveryCalls).toBe(1);
     expect(await netService.refreshAddress()).toBe(false);
     expect(discoveryCalls).toBe(1);
+  });
+
+  test('the close frame the desktop host sends for a silent peer is an ordinary socket close', async () => {
+    await seed({ auth: 7024 });
+    const socket = await netService.openSocket({
+      url: 'wss://argus.local:7025/sync',
+      headers: {},
+    });
+    const reason = 'Peer stopped answering';
+    const encoded = new TextEncoder().encode(reason);
+    const frame = new Uint8Array(5 + encoded.length);
+    frame[0] = 4;
+    new DataView(frame.buffer).setUint32(1, 1006);
+    frame.set(encoded, 5);
+
+    let code = 0;
+    let closed = '';
+    socket.onClose = (value, text) => {
+      code = value;
+      closed = text ?? '';
+    };
+    socketChannels.at(-1)?.onmessage?.(frame.buffer as ArrayBuffer);
+
+    expect(code).toBe(1006);
+    expect(closed).toBe(reason);
   });
 });

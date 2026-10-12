@@ -41,6 +41,17 @@ const SEND_QUEUE: usize = 512;
 const CONNECT_TIMEOUT_MIN_MS: f64 = 1_000.0;
 const CONNECT_TIMEOUT_MAX_MS: f64 = 60_000.0;
 
+#[derive(Clone, Copy)]
+struct SocketTimings {
+  ping: Duration,
+  silence: Duration,
+}
+
+const DEFAULT_TIMINGS: SocketTimings = SocketTimings {
+  ping: PING_INTERVAL,
+  silence: PEER_SILENCE_LIMIT,
+};
+
 #[derive(Clone, Default)]
 pub struct SocketState {
   pub sockets: SocketMap,
@@ -60,10 +71,6 @@ fn send_frame(channel: &SocketChannel, kind: u8, payload: &[u8]) -> bool {
   frame.push(kind);
   frame.extend_from_slice(payload);
   channel.send(InvokeResponseBody::Raw(frame)).is_ok()
-}
-
-fn send_text_frame(channel: &SocketChannel, kind: u8, text: &str) -> bool {
-  send_frame(channel, kind, text.as_bytes())
 }
 
 fn enqueue(sender: &SocketSender, message: Message) -> Result<(), String> {
@@ -183,6 +190,84 @@ pub async fn connect_pinned(target: PinnedConnect<'_>) -> Result<PinnedStream, S
   Ok(socket)
 }
 
+async fn pump<E>(
+  socket: PinnedStream,
+  mut receiver: mpsc::Receiver<Message>,
+  mut emit: E,
+  timings: SocketTimings,
+) -> (i32, String)
+where
+  E: FnMut(u8, &[u8]) -> bool,
+{
+  let (mut writer, mut reader) = socket.split();
+  let mut close_code = 1000;
+  let mut close_reason = String::new();
+  let mut last_heard = Instant::now();
+  let mut ping =
+    tokio::time::interval_at(tokio::time::Instant::now() + timings.ping, timings.ping);
+  loop {
+    tokio::select! {
+      _ = ping.tick() => {
+        if last_heard.elapsed() > timings.silence {
+          close_code = 1006;
+          close_reason = "Peer stopped answering".to_string();
+          break;
+        }
+        if !matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(Message::Ping(Default::default()))).await, Ok(Ok(()))) {
+          close_code = 1006;
+          close_reason = "Ping failed".to_string();
+          break;
+        }
+      }
+      outgoing = receiver.recv() => {
+        match outgoing {
+          Some(message) => {
+            if !matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(message)).await, Ok(Ok(()))) {
+              close_code = 1006;
+              close_reason = "Write failed".to_string();
+              break;
+            }
+          }
+          None => break,
+        }
+      }
+      incoming = reader.next() => {
+        if matches!(incoming, Some(Ok(_))) {
+          last_heard = Instant::now();
+        }
+        let delivered = match incoming {
+          Some(Ok(Message::Text(message))) => emit(FRAME_TEXT, message.as_bytes()),
+          Some(Ok(Message::Binary(data))) => emit(FRAME_BINARY, &data),
+          Some(Ok(Message::Close(frame))) => {
+            if let Some(frame) = frame {
+              close_code = i32::from(u16::from(frame.code));
+              close_reason = frame.reason.to_string();
+            }
+            break;
+          }
+          Some(Ok(Message::Ping(data))) => {
+            matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(Message::Pong(data))).await, Ok(Ok(())))
+          }
+          Some(Ok(Message::Pong(_) | Message::Frame(_))) => true,
+          Some(Err(error)) => {
+            emit(FRAME_ERROR, format!("NETWORK_ERROR|{error}").as_bytes());
+            close_code = 1006;
+            close_reason = error.to_string();
+            break;
+          }
+          None => break,
+        };
+        if !delivered {
+          close_code = 1001;
+          close_reason = "Listener is gone".to_string();
+          break;
+        }
+      }
+    }
+  }
+  (close_code, close_reason)
+}
+
 pub async fn open(
   state: State<'_, SocketState>,
   options: SocketOpenOptions,
@@ -196,81 +281,22 @@ pub async fn open(
   })
   .await?;
 
-  let (mut writer, mut reader) = socket.split();
-  let (sender, mut receiver) = mpsc::channel::<Message>(SEND_QUEUE);
+  let (sender, receiver) = mpsc::channel::<Message>(SEND_QUEUE);
   state.sockets.lock().map_err(|_| "NETWORK_ERROR|Socket state poisoned".to_string())?
-    .insert(options.socket_id.clone(), sender);
+    .insert(options.socket_id.clone(), sender.clone());
 
   send_frame(&on_event, FRAME_OPEN, &[]);
 
   let socket_id = options.socket_id.clone();
   let sockets = state.sockets.clone();
   tokio::spawn(async move {
-    let mut close_code = 1000;
-    let mut close_reason = String::new();
-    let mut last_heard = Instant::now();
-    let mut ping = tokio::time::interval_at(tokio::time::Instant::now() + PING_INTERVAL, PING_INTERVAL);
-    loop {
-      tokio::select! {
-        _ = ping.tick() => {
-          if last_heard.elapsed() > PEER_SILENCE_LIMIT {
-            close_code = 1006;
-            close_reason = "Peer stopped answering".to_string();
-            break;
-          }
-          if !matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(Message::Ping(Default::default()))).await, Ok(Ok(()))) {
-            close_code = 1006;
-            close_reason = "Ping failed".to_string();
-            break;
-          }
-        }
-        outgoing = receiver.recv() => {
-          match outgoing {
-            Some(message) => {
-              if !matches!(tokio::time::timeout(WRITE_TIMEOUT, writer.send(message)).await, Ok(Ok(()))) {
-                close_code = 1006;
-                close_reason = "Write failed".to_string();
-                break;
-              }
-            }
-            None => break,
-          }
-        }
-        incoming = reader.next() => {
-          if matches!(incoming, Some(Ok(_))) {
-            last_heard = Instant::now();
-          }
-          let delivered = match incoming {
-            Some(Ok(Message::Text(message))) => send_text_frame(&on_event, FRAME_TEXT, &message),
-            Some(Ok(Message::Binary(data))) => send_frame(&on_event, FRAME_BINARY, &data),
-            Some(Ok(Message::Close(frame))) => {
-              if let Some(frame) = frame {
-                close_code = i32::from(u16::from(frame.code));
-                close_reason = frame.reason.to_string();
-              }
-              break;
-            }
-            Some(Ok(Message::Ping(data))) => {
-              let _ = tokio::time::timeout(WRITE_TIMEOUT, writer.send(Message::Pong(data))).await;
-              true
-            }
-            Some(Ok(Message::Pong(_) | Message::Frame(_))) => true,
-            Some(Err(error)) => {
-              send_text_frame(&on_event, FRAME_ERROR, &format!("NETWORK_ERROR|{error}"));
-              close_code = 1006;
-              close_reason = error.to_string();
-              break;
-            }
-            None => break,
-          };
-          if !delivered {
-            close_code = 1001;
-            close_reason = "Listener is gone".to_string();
-            break;
-          }
-        }
-      }
-    }
+    let (close_code, close_reason) = pump(
+      socket,
+      receiver,
+      |kind, payload| send_frame(&on_event, kind, payload),
+      DEFAULT_TIMINGS,
+    )
+    .await;
     if let Ok(mut sockets) = sockets.lock() {
       sockets.remove(&socket_id);
     }
@@ -311,4 +337,61 @@ pub fn close(state: State<'_, SocketState>, socket_id: String, code: f64, reason
     let _ = sender.try_send(Message::Close(Some(frame)));
   }
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use std::sync::{Arc, Mutex};
+  use std::time::Duration;
+
+  use tokio::sync::mpsc;
+
+  use super::{pump, SocketTimings};
+
+  #[tokio::test]
+  async fn a_peer_that_stops_answering_is_closed_as_peer_silence() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+      .await
+      .expect("a free port");
+    let address = listener.local_addr().expect("a bound address");
+    let server = tokio::spawn(async move {
+      let Ok((stream, _)) = listener.accept().await else {
+        return;
+      };
+      let Ok(_socket) = tokio_tungstenite::accept_async(stream).await else {
+        return;
+      };
+      std::future::pending::<()>().await;
+    });
+
+    let (stream, _) = tokio_tungstenite::connect_async(format!("ws://{address}/"))
+      .await
+      .expect("the WebSocket handshake");
+    let (sender, receiver) = mpsc::channel(4);
+    let frames: Arc<Mutex<Vec<(u8, Vec<u8>)>>> = Arc::new(Mutex::new(Vec::new()));
+    let captured = frames.clone();
+
+    let (code, reason) = pump(
+      stream,
+      receiver,
+      move |kind, payload| {
+        captured
+          .lock()
+          .expect("the frame list")
+          .push((kind, payload.to_vec()));
+        true
+      },
+      SocketTimings {
+        ping: Duration::from_millis(40),
+        silence: Duration::from_millis(100),
+      },
+    )
+    .await;
+
+    assert_eq!(code, 1006);
+    assert_eq!(reason, "Peer stopped answering");
+    assert!(frames.lock().expect("the frame list").is_empty());
+    drop(sender);
+    server.abort();
+  }
 }
