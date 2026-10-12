@@ -22,6 +22,7 @@ export type SyncFrameHandlers = {
   liveFrame: (frame: ISocketEmitDto) => void;
   authContextChanged: (info: unknown) => void;
   sessionSignal: (signal: SessionSignal) => void;
+  contextUpdate: (info: unknown) => void;
 };
 
 export const auditScopeOfRequest = (requestType: string): AuditLogScope | null => {
@@ -121,6 +122,9 @@ export class SyncMessageRouter {
         else this.handlers.authContextChanged(emit.info);
         break;
       }
+      case SYNC_OPERATION.ContextUpdate:
+        this.handlers.contextUpdate(emit.info);
+        break;
     }
   }
 

@@ -17,6 +17,7 @@ const recordingHandlers = (calls: unknown[][]): SyncFrameHandlers => ({
   liveFrame: (frame) => calls.push(['liveFrame', frame.operation]),
   authContextChanged: (info) => calls.push(['authContextChanged', info]),
   sessionSignal: (signal) => calls.push(['sessionSignal', signal]),
+  contextUpdate: (info) => calls.push(['contextUpdate', info]),
 });
 
 describe('auditScopeOfRequest', () => {
@@ -105,6 +106,18 @@ describe('SyncMessageRouter', () => {
       ['listener'],
       ['liveFrame', SYNC_OPERATION.Add],
       ['auditResponse', 'global', { info: [] }],
+    ]);
+  });
+
+  test('a context_update reaches the engine listener and the session reaction', () => {
+    const calls: unknown[][] = [];
+    const router = new SyncMessageRouter(recordingHandlers(calls));
+    router.on(SYNC_OPERATION.ContextUpdate, (frame) => calls.push(['listener', frame.info]));
+    router.route(JSON.stringify({ operation: 13, option: 'user', info: { userId: 7, role: 'guest' } }));
+    expect(SYNC_OPERATION.ContextUpdate).toBe(13);
+    expect(calls).toEqual([
+      ['listener', { userId: 7, role: 'guest' }],
+      ['contextUpdate', { userId: 7, role: 'guest' }],
     ]);
   });
 

@@ -2942,6 +2942,18 @@ already refuses.
   app cannot rely on. A frame for another user, a malformed one or one older
   than the last `version` is ignored. A 403 `MODULE_DISABLED` turns that module
   off locally until the server's frame arrives.
+- **A context that names another role requests the same resync the role-change
+  frame does** (R17's client half). The server's `AuthContextChanged{resync}` is
+  best effort: when that call fails, the 60 s revalidation still applies the new
+  role and sends the context alone, and without this leg the app would keep the
+  old role's routes and a projection built for the old role. `onContextUpdate`
+  in `synchronize.service.ts` reads the context of operation 13 (and of
+  `InitialInfo`'s wrapper) through `contextRoleChange`
+  (`core/services/sync/context-role-change.ts`, pure and unit-tested), stores the
+  role with `updateUser` and then resyncs - once per change, because the store
+  is written before the resync, so a repeated frame finds no difference and a
+  frame for another user, an unknown role or a context with no role is not a
+  change at all.
 - `GET /modules`, its focus refetch and its 3 s poll are gone (the 404
   "server without modules" state with them). Progress for the Owner still
   arrives as `ModuleUpdate`; actions stay HTTP. Names and summaries keep both

@@ -16,6 +16,7 @@ import { SYNC_TABLE_KEYS } from '@/core/types';
 import type { IAuditLogEntry, IInitialInfo, ISocketEmitDto } from '@/core/interfaces';
 import { AuditLogPager } from './audit-log-pager';
 import { parseAuthContext } from './auth-context';
+import { contextRoleChange } from './context-role-change';
 import { GRANT_TABLES } from './grant-scope';
 import { GrantScopePager } from './grant-scope-pager';
 import { sweepRevokedGrants } from './grant-sweep';
@@ -104,6 +105,7 @@ class SynchronizeService {
       liveFrame: (frame) => this.live.receive(frame),
       authContextChanged: (info) => this.onAuthContextChanged(info),
       sessionSignal: (signal) => this.onSessionSignal(signal),
+      contextUpdate: (info) => this.onContextUpdate(info),
     });
     this.rows = new SyncRowPager({
       request: (dto) => this.channel.requestSync(dto),
@@ -432,6 +434,14 @@ class SynchronizeService {
       return;
     }
     if (context.requiresResync) this.startContextResync();
+  }
+
+  private onContextUpdate(info: unknown): void {
+    const user = this.authStore?.getState().user;
+    const change = contextRoleChange(info, user ? { id: user.id, role: user.role } : null);
+    if (!change) return;
+    this.sessionActions?.updateUser(change);
+    this.startContextResync();
   }
 
   private onSessionSignal(signal: SessionSignal): void {
