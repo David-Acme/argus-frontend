@@ -7,6 +7,7 @@ import type {
   SettingsProfile,
   SettingsProfiles,
 } from '@/core/types';
+import { SETTINGS_VALUES } from '@/features/settings/hooks/use-settings';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runOptimistic, type OptimisticRefusal } from '@/shared/libs/optimistic-action';
@@ -64,6 +65,7 @@ export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsP
     cacheKey: VIEW_CACHE_KEYS.settingsProfiles,
     load: loadProfiles,
     enabled,
+    resources: SETTINGS_VALUES,
   });
   const [applying, setApplying] = useState<string | null>(null);
   const [reverting, setReverting] = useState(false);

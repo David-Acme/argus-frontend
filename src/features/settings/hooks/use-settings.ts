@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { settingsService } from '@/features/settings/services/settings.service';
-import type { SettingChange, SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
+import type { ResourceMatch, SettingChange, SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
@@ -45,11 +45,14 @@ function withValue(overview: SettingsOverview, input: SettingsChangeInput): Sett
 
 const loadOverview = () => settingsService.overview();
 
+export const SETTINGS_VALUES: readonly ResourceMatch[] = [{ domain: 'settings', scope: 'values' }];
+
 export function useSettings({ enabled = true }: UseSettingsOptions = {}) {
   const { data, status, reload, mutate } = useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.settingsOverview,
     load: loadOverview,
     enabled,
+    resources: SETTINGS_VALUES,
   });
   const base = data ?? EMPTY;
   const installing = hasInstallingChoice(base);
