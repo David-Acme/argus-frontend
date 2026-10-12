@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, resolve, sep } from 'node:path';
 import { chromium } from 'playwright-core';
 
 const ROOT = join(import.meta.dir, '..');
 const DIST = join(ROOT, 'dist');
+const DIST_ROOT = resolve(DIST);
 const CHROMIUM = process.env.ARGUS_CHROMIUM ?? '/usr/bin/chromium';
 const BOUNDARY_TEXT = 'Something went wrong';
 const EXPORT_TIMEOUT_MS = 300000;
@@ -46,11 +47,22 @@ const contentPolicy = (): string => {
 
 const bundleServer = (csp: string) =>
   Bun.serve({
+    hostname: '127.0.0.1',
     port: 0,
-    fetch(request) {
+    async fetch(request) {
+      const notFound = () =>
+        new Response('Not found', {
+          status: 404,
+          headers: { 'Content-Security-Policy': csp },
+        });
       const path = normalize(decodeURIComponent(new URL(request.url).pathname));
-      const target = extname(path) ? join(DIST, path) : join(DIST, 'index.html');
-      return new Response(Bun.file(target), {
+      const target = extname(path)
+        ? resolve(DIST_ROOT, `.${path}`)
+        : join(DIST_ROOT, 'index.html');
+      if (target !== DIST_ROOT && !target.startsWith(`${DIST_ROOT}${sep}`)) return notFound();
+      const file = Bun.file(target);
+      if (!(await file.exists())) return notFound();
+      return new Response(file, {
         headers: { 'Content-Security-Policy': csp },
       });
     },

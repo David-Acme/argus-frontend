@@ -3287,4 +3287,10 @@ probe exits 1 naming the boundary and the `Object.after` page error, and returns
 reverted, with the root's own text in the passing line ("Hi, I am Argus …"). Wall time on this
 machine is about 7 s (a warm export ~3 s, the probe ~3 s), so it rides `verify` without a named
 opt-out. `ARGUS_CHROMIUM` overrides the browser path; a missing one fails the probe rather than
-skipping it.
+skipping it. The static server binds `127.0.0.1` only, resolves every target under `dist/` and
+refuses by construction anything outside it, and answers 404 for a missing file instead of
+handing `Bun.file` a path that does not exist (a `Response` built from one throws, which served
+as a 500). Residual: the probe renders the unpaired first screen (the welcome hero) only, so a
+crash that needs a paired session — behind login, behind a role, behind a module — is not
+exercised; extending it to a mocked paired session (mockIPC-style) is a candidate for the
+frontend quality programme.
