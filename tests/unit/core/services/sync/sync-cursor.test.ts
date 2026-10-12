@@ -15,9 +15,10 @@ import {
   withoutTables,
 } from '@/core/services/sync/sync-cursor';
 import { SYNC_PROJECTION_VERSION } from '@/core/services/sync/sync-constants';
+import { groupLiveEvents, syncTableKeyOf } from '@/core/services/sync/live-frame-batch';
 import type { SyncCreatedRows, SyncCursors, SyncDeletedRows } from '@/core/types';
 import { SYNC_TABLE_KEYS } from '@/core/types';
-import { SYNC_PAGE_SIZE } from '@/shared/constants';
+import { SYNC_OPERATION, SYNC_PAGE_SIZE } from '@/shared/constants';
 
 describe('secondsOf', () => {
   test('numbers and numeric strings are floored, anything else is zero', () => {
@@ -243,5 +244,18 @@ describe('withoutTables', () => {
   test('forgets only the cursors of the dropped tables so they are pulled again', () => {
     const cursors = { camera: { createdAt: 5 }, zone: { createdAt: 6 }, project: { createdAt: 7 } } as never;
     expect(withoutTables(cursors, ['camera', 'zone'])).toEqual({ project: { createdAt: 7 } } as never);
+  });
+});
+
+describe('a table this build does not know', () => {
+  test('is never grouped into a live batch', () => {
+    expect(syncTableKeyOf('event')).toBeNull();
+    expect(syncTableKeyOf('camera')).toBe('camera');
+    const { created, deleted } = groupLiveEvents([
+      { operation: SYNC_OPERATION.Add, option: 'event', info: { id: 1 } },
+      { operation: SYNC_OPERATION.Delete, option: 'event', info: { id: 2, deletedAt: 3 } },
+    ] as never);
+    expect(created.size).toBe(0);
+    expect(deleted.size).toBe(0);
   });
 });

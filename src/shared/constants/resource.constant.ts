@@ -4,6 +4,7 @@ export const RESOURCE_SCOPES = [
   'device',
   'zones',
   'status',
+  'overview',
   'environments',
   'incidents',
   'episodes',

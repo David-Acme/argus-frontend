@@ -27,5 +27,8 @@ describe('a table this build does not know', () => {
   test('is never mapped and never throws', () => {
     expect(knowsTable('event')).toBe(false);
     expect(knowsTable('camera')).toBe(true);
+    expect(knowsTable('toString')).toBe(false);
+    expect(knowsTable('constructor')).toBe(false);
+    expect(knowsTable('__proto__')).toBe(false);
   });
 });

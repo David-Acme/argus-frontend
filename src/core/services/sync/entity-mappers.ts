@@ -210,7 +210,7 @@ const JSON_COLUMNS = new Set(['capabilities', 'config', 'points', 'file_paths', 
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
-export const knowsTable = (key: string): key is SyncTableKey => key in TABLE_MAPS;
+export const knowsTable = (key: string): key is SyncTableKey => Object.hasOwn(TABLE_MAPS, key);
 
 export const toDirtyRaw = (key: SyncTableKey, row: Record<string, unknown>): Record<string, unknown> => {
   const raw: Record<string, unknown> = { id: String(row.id) };
