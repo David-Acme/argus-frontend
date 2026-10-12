@@ -28,6 +28,7 @@ import { ACCESS_CACHE_KEYS } from '@/shared/constants';
 import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
+import { watchReconnectOpportunities } from './sync-reconnect-watch';
 import { withoutCreatedCursor, withoutTables } from './sync-cursor';
 import { SyncCursorStore } from './sync-cursor-store';
 import { destroyAllRows } from './sync-db-utils';
@@ -167,6 +168,7 @@ class SynchronizeService {
         void this.connection.connect();
       if (state.status === 'signed-out' && prev.status === 'signed-in') this.disconnect();
     });
+    watchReconnectOpportunities(() => this.retryNow());
     if (store.getState().status === 'signed-in') void this.connection.connect();
   }
 
@@ -176,6 +178,11 @@ class SynchronizeService {
     if (this.connection.hasSocket) return true;
     if (!this.authStore || this.authStore.getState().status !== 'signed-in') return false;
     return this.connection.connect();
+  }
+
+  retryNow(): void {
+    this.connection.retryNow();
+    this.requestCatchUp();
   }
 
   send(type: string, payload?: unknown): void {

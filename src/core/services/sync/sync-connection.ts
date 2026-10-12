@@ -4,6 +4,7 @@ import { serviceUrl } from '@/core/services/net/net-routes';
 import type { SessionRefreshOutcome } from '@/core/types';
 import { SYNC_WS_CONNECT_TIMEOUT_MS, SYNC_WS_PATH } from '@/shared/constants';
 import { backoffDelay } from './sync-backoff';
+import { connectGate } from './sync-connect-gate';
 import { openSocket } from './sync-socket';
 
 export type SyncConnectionHooks = {
@@ -66,9 +67,14 @@ export class SyncConnection {
   }
 
   async connect(): Promise<boolean> {
-    if (this.hooks.isClearing()) return false;
-    if (this.connecting) return this.connecting;
-    if (this.socket) return true;
+    const gate = connectGate({
+      clearing: this.hooks.isClearing(),
+      hasSocket: this.socket != null,
+      connecting: this.connecting != null,
+    });
+    if (gate === 'refuse') return false;
+    if (gate === 'reuse') return true;
+    if (gate === 'join') return this.connecting ?? false;
 
     this.manualClose = false;
     const attempt = this.openConnection();
@@ -77,6 +83,14 @@ export class SyncConnection {
     });
     this.connecting = tracked;
     return tracked;
+  }
+
+  retryNow(): void {
+    if (this.manualClose || this.hooks.isClearing()) return;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    this.reconnectAttempt = 0;
+    void this.connect();
   }
 
   halt(): void {

@@ -562,9 +562,10 @@ for Watermelon nor make an HTTP list request just because it mounted.
   module-level arrow or a `useCallback`), and so must `domains`: it declares
   the resource domains the answer depends on, and the hook reloads when a
   `ResourceChanged` frame names one of them — coalesced at the source, one
-  reload in flight, one follow-up at most — and once more when the socket
-  reconnects after a disconnect, which is the catch-up for the frames a device
-  missed. `useRemoteFeed` takes the same domains as its fourth argument. A
+  reload in flight, one follow-up at most. Every enabled mounted hook, domains
+  or none, also reloads when the socket reconnects after a disconnect, which is
+  the catch-up for the frames a device missed; a first connect reloads nothing.
+  `useRemoteFeed` takes the same domains as its fourth argument. A
   server action goes through
   `runServiceAction({ confirm?, call, success?, errorTitle? })`
   (`shared/libs/service-action.ts`: confirm, call, error or success toast,

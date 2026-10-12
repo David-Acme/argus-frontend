@@ -78,11 +78,11 @@ export function useRemoteResource<T>({
   }, [domainKey, enabled, reload]);
 
   useEffect(() => {
-    if (!enabled || domainKey === '') return undefined;
+    if (!enabled) return undefined;
     return resourceSignal.onReconnected(() => {
       void reload();
     });
-  }, [domainKey, enabled, reload]);
+  }, [enabled, reload]);
 
   const status: RemoteResourceStatus = !enabled
     ? 'idle'

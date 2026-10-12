@@ -3348,3 +3348,28 @@ probe renders, and dispatching one through the real signal in the page would
 need a debug hook the shipped bundle must not carry. The lint rule, not the
 probe, is the guard of record here, named so this residual is never mistaken
 for coverage.
+
+### Reconnect on the app's own terms (2026-10-12, R22 and R24 of 2.4)
+
+The sync layer had no foreground and no network listener, so a socket that died
+while the app was suspended waited out the backoff (up to 30 s, and a timer
+frozen by the suspension resumes stale). `watchReconnectOpportunities`
+(`core/services/sync/sync-reconnect-watch.ts`, installed once from
+`synchronizeService.bind`) fires when AppState turns active — on the web that
+is the visibility transition — and on the browser's `online` event, and calls
+`synchronizeService.retryNow()`: the pending backoff is cancelled, the attempt
+counter reset, `connect()` re-entered, and a catch-up sync requested, so a
+device that missed frames while suspended converges at once. What keeps that
+from opening a second socket is the one decision `connectGate` owns: an open
+socket is reused, an attempt in flight is joined, a clearing session is
+refused, and only an idle connection opens — pinned by
+`tests/unit/core/services/sync/sync-connect-gate.test.ts`, with the watch's two
+triggers and its idempotence pinned beside it. The desktop needs nothing on the
+Rust side for this: the same AppState transition drives it.
+
+R24 rides the same signal the frames do: the reconnect reload now fires for
+every enabled mounted hook, domains or none, so the session hooks (through
+`useRemoteResource`) and `use-responses` catch up without a second mechanism.
+`use-responses` subscribes `resourceSignal.onReconnected` itself because it
+keeps its own store instead of a view-cache key, so its refresh is one line
+against the same signal.

@@ -1,5 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo } from 'react';
+import { resourceSignal } from '@/core/services/sync/resource-signal';
 import { useAuthStore } from '@/core/stores';
 import type { IncidentResponse, ResponseVerdict } from '@/core/types';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
@@ -27,6 +28,13 @@ function useResponseSession(): void {
     bindResponseFeed();
     if (useResponseStore.getState().ownerId !== owner) useResponseStore.getState().resetFor(owner);
   }, [owner]);
+
+  useEffect(() => {
+    if (owner === null || !respond) return undefined;
+    return resourceSignal.onReconnected(() => {
+      void refresh();
+    });
+  }, [owner, respond]);
 
   useFocusEffect(
     useCallback(() => {
