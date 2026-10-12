@@ -1,4 +1,4 @@
-export const RESOURCE_DOMAINS = ['camera', 'guard', 'productivity', 'identity', 'settings'] as const;
+export const RESOURCE_DOMAINS = ['camera', 'guard', 'productivity', 'identity', 'settings', 'activity'] as const;
 
 export const RESOURCE_SCOPES = [
   'device',
@@ -20,6 +20,7 @@ export const RESOURCE_SCOPES = [
   'values',
   'voiceprints',
   'presence',
+  'entries',
 ] as const;
 
 export const RESOURCE_COALESCE_MS = 300;
