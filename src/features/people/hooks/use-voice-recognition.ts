@@ -1,11 +1,13 @@
 import { useCallback, useMemo } from 'react';
-import type { RecognizedVoice, VoiceprintDirectory } from '@/core/types';
+import type { RecognizedVoice, ResourceMatch, VoiceprintDirectory } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { withoutVoice } from '@/features/people/model/biometric-erase';
 import { voiceprintService } from '@/features/people/services/voiceprint.service';
+
+const VOICEPRINTS: readonly ResourceMatch[] = [{ domain: 'identity', scope: 'voiceprints' }];
 
 export type ForgetVoiceInput = {
   userId: number;
@@ -21,6 +23,7 @@ export function useVoiceRecognition(userId: number) {
   const { data, mutate } = useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.voiceprintUsers,
     load: loadDirectory,
+    resources: VOICEPRINTS,
   });
   const { run, pending } = useServiceAction();
 

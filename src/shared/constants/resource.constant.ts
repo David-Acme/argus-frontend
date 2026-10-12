@@ -18,6 +18,8 @@ export const RESOURCE_SCOPES = [
   'privacy_choice',
   'visitors',
   'values',
+  'voiceprints',
+  'presence',
 ] as const;
 
 export const RESOURCE_COALESCE_MS = 300;
