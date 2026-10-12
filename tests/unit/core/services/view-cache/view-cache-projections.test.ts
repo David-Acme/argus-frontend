@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import type { CalendarEntry } from '@/core/types';
 import type { ProjectionContext, ViewWrite } from '@/core/services/view-cache/projection';
-import { activityLevels, projectActivity } from '@/core/services/view-cache/activity.projection';
+import { activityLevels } from '@/core/services/view-cache/activity.projection';
 import {
   calendarEntryState,
   agendaScope,
@@ -22,7 +22,7 @@ import { projectGettingStarted } from '@/core/services/view-cache/getting-starte
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
-import { activityWindows, projectSummary } from '@/core/services/view-cache/summary.projection';
+import { projectSummary } from '@/core/services/view-cache/summary.projection';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
 import { MOSAIC_COLUMNS, MOSAIC_ROWS } from '@/shared/constants/dashboard.constant';
 
@@ -361,24 +361,10 @@ describe('activity projection', () => {
     const levels = activityLevels([{ occurredAt: at(16, 9) }], now);
     expect(levels.flat().every((value) => value === 0)).toBe(true);
   });
-
-  test('recent events come newest first', () => {
-    const writes = projectActivity(
-      {
-        events: [
-          { id: 'old', summary: 'a', severity: 'info', occurredAt: at(10, 8) },
-          { id: 'new', summary: 'b', severity: 'critical', occurredAt: at(15, 8) },
-        ],
-        mosaic: [],
-      },
-      ctx,
-    );
-    expect((rowsOf(writes, 'camera.events') as { id: string }[]).map((row) => row.id)).toEqual(['new', 'old']);
-  });
 });
 
 describe('summary projection', () => {
-  test('counts the two activity windows and open work', () => {
+  test('counts what the home cards show', () => {
     const writes = projectSummary(
       {
         cameras: [
@@ -388,8 +374,6 @@ describe('summary projection', () => {
         reminders: [{ isCompleted: false }, { isCompleted: true }],
         projects: [{ status: 'active' }, { status: 'archived' }],
         tasks: [{ status: 'todo' }, { status: 'done' }, { status: 'canceled' }],
-        eventsCurrent: 1,
-        eventsPrevious: 2,
       },
     );
     expect(valueOf(writes, 'dashboard.summary')).toEqual({
@@ -398,17 +382,7 @@ describe('summary projection', () => {
       remindersPending: 1,
       projectsActive: 1,
       tasksOpen: 1,
-      eventsCurrent: 1,
-      eventsPrevious: 2,
     });
-  });
-
-  test('the two activity windows are back-to-back weeks that end tonight', () => {
-    const { current, previous } = activityWindows(now);
-    expect(current.from).toBe(new Date(2026, 9, 9).getTime());
-    expect(current.to).toBe(new Date(2026, 9, 16).getTime());
-    expect(previous.from).toBe(new Date(2026, 9, 2).getTime());
-    expect(previous.to).toBe(current.from);
   });
 });
 

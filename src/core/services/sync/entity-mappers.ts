@@ -183,16 +183,6 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     createdAt: toMs,
     updatedAt: toMs,
   },
-  event: {
-    eventType: toStr,
-    severity: toStr,
-    source: toStr,
-    summary: toStr,
-    details: toObject,
-    occurredAt: toMs,
-    createdAt: toMs,
-    updatedAt: toMs,
-  },
   person: {
     userId: toOptStr,
     name: toStr,
@@ -219,6 +209,8 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
 const JSON_COLUMNS = new Set(['capabilities', 'config', 'points', 'file_paths', 'data', 'details']);
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+
+export const knowsTable = (key: string): key is SyncTableKey => key in TABLE_MAPS;
 
 export const toDirtyRaw = (key: SyncTableKey, row: Record<string, unknown>): Record<string, unknown> => {
   const raw: Record<string, unknown> = { id: String(row.id) };

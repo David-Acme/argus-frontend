@@ -29,11 +29,11 @@ describe('module source gate', () => {
     const surveillance: string[][] = [];
     const productivity: string[][] = [];
     gate.of('surveillance', new BehaviorSubject(['camera']), []).subscribe((rows) => surveillance.push(rows));
-    gate.of('productivity', new BehaviorSubject(['event']), []).subscribe((rows) => productivity.push(rows));
+    gate.of('productivity', new BehaviorSubject(['reminder']), []).subscribe((rows) => productivity.push(rows));
     gate.set(new Set(['core', 'productivity']));
     gate.set(new Set(['productivity', 'core']));
     expect(surveillance).toEqual([['camera'], []]);
-    expect(productivity).toEqual([['event']]);
+    expect(productivity).toEqual([['reminder']]);
   });
 
   test('a core source is never gated away by a restricted set', () => {

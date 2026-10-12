@@ -1,5 +1,5 @@
 import type { TableName, UserRole } from '@/core/types';
-import { MODULE_IDS } from '@/shared/constants';
+import { CAPABILITY, MODULE_IDS } from '@/shared/constants';
 import { isModuleActive, moduleOfRole, type AccessView } from '@/shared/libs/capabilities';
 import { hasAccess } from '@/shared/libs/role-access';
 
@@ -15,8 +15,10 @@ const TABLE_AREAS: readonly { area: RoleArea; table: TableName; moduleId: string
   { area: 'cameras', table: 'camera', moduleId: MODULE_IDS.surveillance },
   { area: 'agenda', table: 'calendar_event', moduleId: MODULE_IDS.productivity },
   { area: 'projects', table: 'project', moduleId: MODULE_IDS.productivity },
-  { area: 'activity', table: 'event', moduleId: MODULE_IDS.surveillance },
 ];
+
+const readsEvents = (view: AccessView): boolean =>
+  view.capabilities.has(CAPABILITY.eventsRead);
 
 export function roleAreas(view: AccessView, role: UserRole): RoleAreas {
   const bringer = moduleOfRole(view, role);
@@ -28,6 +30,8 @@ export function roleAreas(view: AccessView, role: UserRole): RoleAreas {
     if (hasAccess(role, table, 'create')) manages.push(area);
     else if (hasAccess(role, table, 'read')) views.push(area);
   }
+  if (isModuleActive(view, MODULE_IDS.surveillance) && readsEvents(view))
+    views.push('activity');
   if (role === 'owner') {
     manages.push('people');
     if (isModuleActive(view, MODULE_IDS.surveillance)) manages.push('security');

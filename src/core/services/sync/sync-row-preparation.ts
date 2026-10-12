@@ -1,7 +1,7 @@
 import type { Model } from '@nozbe/watermelondb';
 import { collection } from '@/core/database';
 import type { SyncCreatedRows, SyncDeletedRows } from '@/core/types';
-import { toDirtyRaw, toModelProps } from './entity-mappers';
+import { knowsTable, toDirtyRaw, toModelProps } from './entity-mappers';
 import { existingByServerId, type PreparedOperation } from './sync-db-utils';
 
 export type SyncCreateMode = 'upsert' | 'insert';
@@ -13,7 +13,7 @@ export async function prepareSyncRows(
 ): Promise<PreparedOperation[]> {
   const operations: PreparedOperation[] = [];
   for (const [key, rows] of deleted) {
-    if (rows.length === 0) continue;
+    if (rows.length === 0 || !knowsTable(key)) continue;
     const existing = await existingByServerId(
       key,
       rows.map((row) => String(row.id))
@@ -21,7 +21,7 @@ export async function prepareSyncRows(
     existing.forEach((record) => operations.push(() => record.prepareDestroyPermanently()));
   }
   for (const [key, rows] of created) {
-    if (rows.length === 0) continue;
+    if (rows.length === 0 || !knowsTable(key)) continue;
     const removed = new Set((deleted.get(key) ?? []).map((row) => String(row.id)));
     const latest = new Map<string, Record<string, unknown>>();
     for (const row of rows) {

@@ -177,26 +177,26 @@ describe('deleted baselines', () => {
   });
 
   test('a response marks the baseline and seeds an empty deletion start only', () => {
-    const cursors: SyncCursors = { camera: {}, zone: { deletedStart: 5, deletedId: 1 }, event: {} };
+    const cursors: SyncCursors = { camera: {}, reminder: { deletedStart: 5, deletedId: 1 } };
     applyDeletedBaselines(
-      ['camera', 'zone', 'event', 'person'],
+      ['camera', 'reminder', 'zone', 'person'],
       {
         camera: { created: [], deleted: [], lastSyncDate: { deleted: 77, deletedId: 4 } },
-        zone: { created: [], deleted: [], lastSyncDate: { deleted: 99, deletedId: 8 } },
-        event: { created: [], deleted: [], lastSyncDate: { deleted: 0 } },
+        reminder: { created: [], deleted: [], lastSyncDate: { deleted: 99, deletedId: 8 } },
+        zone: { created: [], deleted: [], lastSyncDate: { deleted: 0 } },
       },
       cursors
     );
     expect(cursors.camera).toEqual({ deletedBaseline: true, deletedStart: 77, deletedId: 4 });
-    expect(cursors.zone).toEqual({ deletedBaseline: true, deletedStart: 5, deletedId: 1 });
-    expect(cursors.event).toEqual({ deletedBaseline: true });
+    expect(cursors.reminder).toEqual({ deletedBaseline: true, deletedStart: 5, deletedId: 1 });
+    expect(cursors.zone).toEqual({ deletedBaseline: true });
     expect(cursors.person).toBeUndefined();
   });
 });
 
 describe('page rows and cursor advance', () => {
   test('only tables present in the response are collected, non arrays become empty', () => {
-    const { created, deleted } = collectPageRows(['camera', 'zone', 'event'], {
+    const { created, deleted } = collectPageRows(['camera', 'zone', 'zone'], {
       camera: { created: [{ id: 1 }], deleted: [{ id: 2, deletedAt: 3 }] },
       zone: { created: null as never, deleted: null as never },
     });
@@ -213,28 +213,29 @@ describe('page rows and cursor advance', () => {
     }));
     const created: SyncCreatedRows = new Map([
       ['camera', full],
-      ['zone', [{ id: 5, createdAt: 50 }]],
-      ['event', []],
+      ['reminder', [{ id: 5, createdAt: 50 }]],
+      ['zone', []],
     ]);
     const deleted: SyncDeletedRows = new Map([
       ['camera', []],
-      ['zone', [{ id: 6, deletedAt: 60 }]],
-      ['event', []],
+      ['reminder', [{ id: 6, deletedAt: 60 }]],
+      ['zone', []],
     ]);
-    const cursors: SyncCursors = { event: { createdStart: 1, deletedBaseline: true } };
+    const cursors: SyncCursors = { reminder: { createdStart: 1, deletedBaseline: true } };
     const more = advanceRowCursors(created, deleted, cursors);
     expect(more).toEqual(['camera']);
     expect(cursors.camera).toEqual({
       createdStart: 1000 + SYNC_PAGE_SIZE - 1,
       createdId: SYNC_PAGE_SIZE,
     });
-    expect(cursors.zone).toEqual({
+    expect(cursors.reminder).toEqual({
       createdStart: 50,
       createdId: 5,
+      deletedBaseline: true,
       deletedStart: 60,
       deletedId: 6,
     });
-    expect(cursors.event).toEqual({ createdStart: 1, deletedBaseline: true });
+    expect(cursors.zone).toEqual({});
   });
 });
 

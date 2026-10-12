@@ -1,23 +1,11 @@
-import type { EventModel } from '@/core/database';
-import type { ICameraEventCacheRow } from '@/core/interfaces';
-import type { EventSeverity } from '@/core/types';
-import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
-import { MOSAIC_COLUMNS, MOSAIC_ROWS, RECENT_EVENT_LIMIT } from '@/shared/constants/dashboard.constant';
-import { addDays, calendarDaysBetween, startOfDay } from './dates';
-import type { ProjectionContext, ViewWrite } from './projection';
+import { MOSAIC_COLUMNS, MOSAIC_ROWS } from '@/shared/constants/dashboard.constant';
+import { calendarDaysBetween } from './dates';
 
-export type EventSource = Pick<EventModel, 'id' | 'summary' | 'severity' | 'occurredAt'>;
-
-export type ActivityProjectionInput = {
-  events: readonly EventSource[];
-  mosaic: readonly Pick<EventSource, 'occurredAt'>[];
-};
-
-export const mosaicSince = (now: Date): number => startOfDay(addDays(now, -(MOSAIC_COLUMNS - 1)));
+export type ActivityLevelSource = { occurredAt: Date };
 
 const BAND_HOURS = 24 / MOSAIC_ROWS;
 
-export function activityLevels(events: readonly Pick<EventSource, 'occurredAt'>[], now: Date): number[][] {
+export function activityLevels(events: readonly ActivityLevelSource[], now: Date): number[][] {
   const counts = Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
   let peak = 0;
   for (const event of events) {
@@ -32,20 +20,4 @@ export function activityLevels(events: readonly Pick<EventSource, 'occurredAt'>[
     peak = Math.max(peak, next);
   }
   return peak === 0 ? counts : counts.map((row) => row.map((value) => Math.ceil((value / peak) * 3)));
-}
-
-export function projectActivity({ events, mosaic }: ActivityProjectionInput, { now }: ProjectionContext): ViewWrite[] {
-  const recent: ICameraEventCacheRow[] = [...events]
-    .sort((left, right) => right.occurredAt.getTime() - left.occurredAt.getTime())
-    .slice(0, RECENT_EVENT_LIMIT)
-    .map((event) => ({
-      id: event.id,
-      summary: event.summary,
-      severity: event.severity as EventSeverity,
-      occurredAt: event.occurredAt.getTime(),
-    }));
-  return [
-    { key: VIEW_CACHE_KEYS.dashboardActivity, rows: activityLevels(mosaic, now) },
-    { key: VIEW_CACHE_KEYS.cameraEvents, rows: recent },
-  ];
 }

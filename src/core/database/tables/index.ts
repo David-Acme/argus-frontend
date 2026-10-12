@@ -5,7 +5,6 @@ import {
 import { CALENDAR_EVENT_SCHEMA, CalendarEventModel } from './calendar-event.table';
 import { CAMERA_SCHEMA, CameraModel } from './camera.table';
 import { CAMERA_STREAM_SCHEMA, CameraStreamModel } from './camera-stream.table';
-import { EVENT_SCHEMA, EventModel } from './event.table';
 import {
   NOTIFICATION_FEED_INDEX_SQL,
   NOTIFICATION_SCHEMA,
@@ -34,7 +33,6 @@ const TABLES = [
   { schema: PROJECT_SCHEMA, model: ProjectModel },
   { schema: PROJECT_MEMBER_SCHEMA, model: ProjectMemberModel },
   { schema: PROJECT_TASK_SCHEMA, model: ProjectTaskModel },
-  { schema: EVENT_SCHEMA, model: EventModel },
   { schema: PERSON_SCHEMA, model: PersonModel },
   { schema: NOTIFICATION_SCHEMA, model: NotificationModel },
 ] as const;
@@ -48,7 +46,6 @@ export {
   CalendarEventShareModel,
   CameraModel,
   CameraStreamModel,
-  EventModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,
@@ -64,7 +61,6 @@ export {
 export {
   CALENDAR_EVENT_SCHEMA,
   CALENDAR_EVENT_SHARE_SCHEMA,
-  EVENT_SCHEMA,
   NOTIFICATION_FEED_INDEX_SQL,
   PERSON_SCHEMA,
   PROJECT_MEMBER_SCHEMA,

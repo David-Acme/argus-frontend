@@ -20,6 +20,4 @@ export type DashboardSummary = {
   remindersPending: number;
   projectsActive: number;
   tasksOpen: number;
-  eventsCurrent: number;
-  eventsPrevious: number;
 };

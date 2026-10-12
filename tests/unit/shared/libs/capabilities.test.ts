@@ -152,7 +152,8 @@ describe('roles of modules', () => {
 
   test('the access card lists areas of active modules only and names why a role is paused', () => {
     const on = roleAreas(viewFor('resident'), 'resident');
-    expect(on.manages).toEqual(['cameras', 'agenda', 'projects', 'activity']);
+    expect(on.manages).toEqual(['cameras', 'agenda', 'projects']);
+    expect(on.views).toEqual(['activity']);
     const off = viewFor('owner', { modules: ['productivity'] });
     expect(roleAreas(off, 'resident').manages).toEqual(['agenda', 'projects']);
     expect(roleAreas(off, 'guard')).toEqual({ manages: [], views: [], pausedBy: 'surveillance' });

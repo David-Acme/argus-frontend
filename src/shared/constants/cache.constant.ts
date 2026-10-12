@@ -25,8 +25,6 @@ export const EMPTY_DASHBOARD_SUMMARY = {
   remindersPending: 0,
   projectsActive: 0,
   tasksOpen: 0,
-  eventsCurrent: 0,
-  eventsPrevious: 0,
 } as const;
 
 export const VIEW_CACHE_KEYS = {

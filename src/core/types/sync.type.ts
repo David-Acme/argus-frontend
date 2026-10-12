@@ -14,7 +14,6 @@ export const SYNC_TABLE_KEYS = [
   'project',
   'project_member',
   'project_task',
-  'event',
   'person',
   'notification',
 ] as const;

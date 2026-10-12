@@ -3,7 +3,6 @@ import type {
   CalendarEventShareModel,
   CameraModel,
   CameraStreamModel,
-  EventModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,
@@ -49,7 +48,6 @@ export type CameraConfig = Record<string, unknown>;
 
 export type NotificationData = Record<string, unknown>;
 
-export type EventDetails = Record<string, unknown>;
 
 export type ModelMap = {
   user: UserModel;
@@ -64,7 +62,6 @@ export type ModelMap = {
   project: ProjectModel;
   project_member: ProjectMemberModel;
   project_task: ProjectTaskModel;
-  event: EventModel;
   person: PersonModel;
   notification: NotificationModel;
 };

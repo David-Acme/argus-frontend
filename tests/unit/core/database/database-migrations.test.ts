@@ -192,3 +192,75 @@ describe('the invitation revocation reason', () => {
     });
   });
 });
+
+describe('the retired event table', () => {
+  const eventTableOf = (db: Database): string[] =>
+    (
+      db.query("select name from sqlite_master where type = 'table' and name = 'event'").all() as {
+        name: string;
+      }[]
+    ).map((row) => row.name);
+
+  const eventColumns = (db: Database): string[] =>
+    (db.query("select name from pragma_table_info('event')").all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const onVersionNine = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).filter(([name]) => name !== 'event')
+    );
+    return { ...schema, version: 9, tables } as AppSchema;
+  };
+
+  test('a device that still had the empty table comes out of the migration without it', () => {
+    const db = new Database(':memory:');
+    const nine = onVersionNine();
+    db.exec(
+      encodeSchema({
+        ...nine,
+        tables: {
+          ...nine.tables,
+          event: {
+            name: 'event',
+            columns: {},
+            columnArray: [
+              { name: 'id', type: 'string' },
+              { name: 'event_type', type: 'string', isIndexed: true },
+              { name: 'severity', type: 'string', isIndexed: true },
+              { name: 'source', type: 'string' },
+              { name: 'summary', type: 'string' },
+              { name: 'details', type: 'string' },
+              { name: 'occurred_at', type: 'number', isIndexed: true },
+              { name: 'created_at', type: 'number' },
+              { name: 'updated_at', type: 'number' },
+            ],
+          },
+        },
+      } as AppSchema)
+    );
+    expect(eventTableOf(db)).toEqual(['event']);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 9, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(eventTableOf(db)).toEqual([]);
+  });
+
+  test('a stray row in it does not stop the migration', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    db.exec(
+      "create table if not exists 'event' ('id' text primary key not null, 'event_type' text not null)"
+    );
+    db.query("insert into 'event' ('id', 'event_type') values (?, ?)").run('1', 'person');
+    expect(eventColumns(db)).toContain('event_type');
+
+    const steps = stepsForMigration({ migrations, fromVersion: 9, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(eventTableOf(db)).toEqual([]);
+  });
+});

@@ -71,7 +71,7 @@ export default function CamerasScreen() {
   const environments = useCameraEnvironmentIndex();
   const canCreate = can('camera', 'create');
   const canTalk = has(CAPABILITY.cameraTalk);
-  const readsEvents = can('event', 'read');
+  const readsEvents = has(CAPABILITY.eventsRead);
 
   const views = useMemo(() => cameraViews(cameras, overview), [cameras, overview]);
   const counts = useMemo(() => countViews(views), [views]);

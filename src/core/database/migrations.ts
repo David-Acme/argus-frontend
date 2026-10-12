@@ -8,7 +8,6 @@ import type { TableSchema } from '@nozbe/watermelondb';
 import {
   CALENDAR_EVENT_SCHEMA,
   CALENDAR_EVENT_SHARE_SCHEMA,
-  EVENT_SCHEMA,
   NOTIFICATION_FEED_INDEX_SQL,
   PERSON_SCHEMA,
   PROJECT_MEMBER_SCHEMA,
@@ -30,7 +29,19 @@ export const migrations = schemaMigrations({
         fromSchema(CALENDAR_EVENT_SCHEMA),
         fromSchema(PROJECT_SCHEMA),
         fromSchema(PROJECT_TASK_SCHEMA),
-        fromSchema(EVENT_SCHEMA),
+        createTable({
+          name: 'event',
+          columns: [
+            { name: 'event_type', type: 'string', isIndexed: true },
+            { name: 'severity', type: 'string', isIndexed: true },
+            { name: 'source', type: 'string' },
+            { name: 'summary', type: 'string' },
+            { name: 'details', type: 'string' },
+            { name: 'occurred_at', type: 'number', isIndexed: true },
+            { name: 'created_at', type: 'number' },
+            { name: 'updated_at', type: 'number' },
+          ],
+        }),
         fromSchema(PERSON_SCHEMA, ['status']),
       ],
     },
@@ -87,6 +98,10 @@ export const migrations = schemaMigrations({
           ],
         }),
       ],
+    },
+    {
+      toVersion: 10,
+      steps: [unsafeExecuteSql('drop table if exists "event";')],
     },
   ],
 });

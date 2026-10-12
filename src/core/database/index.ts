@@ -12,7 +12,6 @@ export {
   CalendarEventShareModel,
   CameraModel,
   CameraStreamModel,
-  EventModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,

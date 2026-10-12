@@ -2,7 +2,6 @@ import { shareReplay, type Observable, type Subscription } from 'rxjs';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { cameraService } from '@/core/services/camera.service';
 import { cameraStreamService } from '@/core/services/camera-stream.service';
-import { eventService } from '@/core/services/event.service';
 import { notificationService } from '@/core/services/notification.service';
 import { projectService } from '@/core/services/project.service';
 import { projectTaskService } from '@/core/services/project-task.service';
@@ -14,13 +13,10 @@ import type { AgendaWindow, KeysetWindow } from '@/core/types';
 import {
   AGENDA_FEED_INITIAL_WEEKS,
   AGENDA_FEED_STEP_WEEKS,
-  EVENT_MOSAIC_LIMIT,
-  EVENT_SAMPLE_LIMIT,
   NOTIFICATION_FEED_SCOPE,
   MODULE_IDS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants';
-import { mosaicSince, projectActivity } from './view-cache/activity.projection';
 import {
   agendaScope,
   agendaSpan,
@@ -41,7 +37,7 @@ import { projectProjects } from './view-cache/project.projection';
 import { projectReminders } from './view-cache/reminder.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
-import { activityWindows, projectSummary } from './view-cache/summary.projection';
+import { projectSummary } from './view-cache/summary.projection';
 
 const shared = <T>(source: Observable<T>): Observable<T> =>
   source.pipe(shareReplay({ bufferSize: 1, refCount: true }));
@@ -60,7 +56,6 @@ function sessionSources(userId: string) {
     tasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeAll(), [])),
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
-    events: shared(moduleGate.of(SURVEILLANCE, eventService.observeRecent(EVENT_SAMPLE_LIMIT), [])),
     users: shared(userService.observeDirectory()),
     invitations: shared(userInvitationService.observeList()),
   };
@@ -70,7 +65,6 @@ type SessionSources = ReturnType<typeof sessionSources>;
 
 function startSessionProjections(sources: SessionSources, ctx: ProjectionContext): Subscription[] {
   const { from, to } = todayRange(ctx.now);
-  const windows = activityWindows(ctx.now);
   return [
     startProjection(
       {
@@ -92,22 +86,10 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     startProjection(
       {
         sources: () => ({
-          events: sources.events,
-          mosaic: moduleGate.of(SURVEILLANCE, eventService.observeOccurredSince(mosaicSince(ctx.now), EVENT_MOSAIC_LIMIT), []),
-        }),
-        project: projectActivity,
-      },
-      ctx,
-    ),
-    startProjection(
-      {
-        sources: () => ({
           cameras: sources.cameras,
           reminders: sources.reminders,
           projects: sources.projects,
           tasks: sources.tasks,
-          eventsCurrent: moduleGate.of(SURVEILLANCE, eventService.observeCountBetween(windows.current.from, windows.current.to), 0),
-          eventsPrevious: moduleGate.of(SURVEILLANCE, eventService.observeCountBetween(windows.previous.from, windows.previous.to), 0),
         }),
         project: projectSummary,
       },

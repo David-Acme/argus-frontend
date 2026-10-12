@@ -26,7 +26,7 @@
 | Media | `expo-camera` (barcode/QR + face capture, mobile), `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar procedural). `@shopify/react-native-skia` eliminado (2026-10: dependencia, `postinstall` y `public/canvaskit.wasm`) |
 | Platform | `common.constant.ts` → `IS_WEB` / `IS_NATIVE` / `IS_ANDROID` / `IS_IOS` / `IS_TAURI` |
 | State | Zustand v5 — 8 stores: `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
-| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 15 tables mirroring the role-scoped backend sync surface |
+| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 14 tables mirroring the role-scoped backend sync surface |
 | Storage | `react-native-mmkv` (native) / localStorage (web) via `storageService`; **secrets** (caPem, JWT) via `secureStorageService` (`expo-secure-store` on mobile / `keyring` crate on Tauri) |
 | Icons | `lucide-react-native` — **centralized** in `icon.constant.ts` only |
 | i18n | Custom engine (`core/i18n`): typed keys, `useTranslation()` + imperative `t()`, `useLocaleStore` |
@@ -370,12 +370,15 @@ projections subscribe to those observables; screens read MMKV snapshots.
 
 ### Schema decisions
 
-- **15 tables** = exactly the backend's sync surface (`SYNC_TABLE_KEYS` in
-  `core/types/sync.type.ts`): `user`, `user_invitation`, `camera`,
-  `camera_stream`, `zone`, `reminder`, `reminder_detail`, `calendar_event`,
-  `calendar_event_share`, `project`, `project_member`, `project_task`,
-  `event`, `person`, `notification`. `context_note` has no local table (not
-  synced).
+- **14 tables** = the synced half of the backend's table surface
+  (`SYNC_TABLE_KEYS` in `core/types/sync.type.ts`): `user`, `user_invitation`,
+  `camera`, `camera_stream`, `zone`, `reminder`, `reminder_detail`,
+  `calendar_event`, `calendar_event_share`, `project`, `project_member`,
+  `project_task`, `person`, `notification`. The backend's `event` table has no
+  local table any more and is not pulled (schema v10 drops it): nothing ever
+  wrote it, the detections the screens show come from `GET /camera/overview`,
+  and the backend keeps serving it empty only for apps already installed
+  (the plan's D8). `context_note` has no local table either (not synced).
 - **snake_case columns, camelCase model properties.** `created_at`/`updated_at`
   are snake_case by hard requirement, and a schema with two snake columns among
   twelve camel ones is worse than one convention. This **reverses** decision 3 of
@@ -1557,7 +1560,7 @@ path, knows the house it is talking about, and reports what it did.
   sync with the code. Corrections: the "Current state" section no longer
   describes the post-reset empty shell — it documents the full route map,
   core services and UI families; WatermelonDB documented
-  at its real **15 tables** matching `SYNC_TABLE_KEYS` (this section still
+  at its real **14 tables** matching `SYNC_TABLE_KEYS` (this section still
   said 7); networking phases closed (native WS `ArgusSocket` + Tauri socket
   commands, `http.service`, pairing/invite/login QR all shipped); root
   navigation corrected to the actual `fade` crossfade (the doc claimed
