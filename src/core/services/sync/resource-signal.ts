@@ -108,9 +108,14 @@ export function matchesResourceMatch(
   resources: readonly ResourceMatch[],
   notice: ResourceNotice
 ): boolean {
-  return resources.some(
-    (resource) =>
-      resource.domain === notice.domain &&
-      (resource.scope === undefined || resource.scope === notice.scope)
-  );
+  return resources.some((resource) => {
+    if (resource.domain !== notice.domain) return false;
+    if (resource.scope !== undefined && resource.scope !== notice.scope) return false;
+    if (resource.id === undefined) return true;
+    return notice.ids.length === 0 || notice.ids.includes(resource.id);
+  });
+}
+
+export function resourceMatchKey(resource: ResourceMatch): string {
+  return `${resource.domain}:${resource.scope ?? ''}:${resource.id ?? ''}`;
 }

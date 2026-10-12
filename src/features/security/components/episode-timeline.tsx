@@ -147,6 +147,7 @@ export function EpisodeTimeline({ episodeId }: EpisodeTimelineProps) {
     cacheKey: VIEW_CACHE_KEYS.guardEpisode,
     scope: String(episodeId),
     load,
+    resources: [{ domain: 'guard', scope: 'episodes', id: episodeId }],
   });
   const timeline = detail.data?.timeline ?? [];
 

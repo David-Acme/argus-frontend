@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PagedViewKey } from '@/core/services/view-cache-coordinator.service';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import type { RemoteFeed, RemoteFeedSnapshot } from '@/core/services/paging';
-import { createReloadGate, matchesResourceMatch, resourceSignal } from '@/core/services/sync/resource-signal';
+import { createReloadGate, matchesResourceMatch, resourceMatchKey, resourceSignal } from '@/core/services/sync/resource-signal';
 import type { InfiniteFooter, PagedRows, ResourceMatch } from '@/core/types';
 import { infiniteFooter } from '@/shared/libs/infinite-list';
 import { useViewCacheValue } from './use-cached-rows';
@@ -149,9 +149,7 @@ export function useRemoteFeed<T, C>(
     if (enabled) feed.focus(scope);
   }, [enabled, feed, scope]);
 
-  const resourceKey = resources
-    .map((resource) => `${resource.domain}:${resource.scope ?? ''}`)
-    .join('|');
+  const resourceKey = resources.map(resourceMatchKey).join('|');
 
   useEffect(() => {
     resourcesRef.current = resources;

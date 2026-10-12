@@ -172,4 +172,24 @@ describe('matching a resource notice', () => {
     expect(matchesResourceMatch([{ domain: 'camera' }], incidents)).toBe(false);
     expect(matchesResourceMatch([], incidents)).toBe(false);
   });
+
+  test('a match that names an id takes only the notice that names it', () => {
+    const pair = [{ domain: 'guard', scope: 'episodes', id: 12 }] as const;
+    expect(matchesResourceMatch(pair, { domain: 'guard', scope: 'episodes', ids: [12] })).toBe(true);
+    expect(matchesResourceMatch(pair, { domain: 'guard', scope: 'episodes', ids: [11, 12] })).toBe(
+      true
+    );
+    expect(matchesResourceMatch(pair, { domain: 'guard', scope: 'episodes', ids: [11] })).toBe(
+      false
+    );
+    expect(matchesResourceMatch(pair, { domain: 'guard', scope: 'environments', ids: [12] })).toBe(
+      false
+    );
+  });
+
+  test('a notice without ids reaches every match of its pair, ids or none', () => {
+    const purge: ResourceNotice = { domain: 'guard', scope: 'episodes', ids: [] };
+    expect(matchesResourceMatch([{ domain: 'guard', scope: 'episodes' }], purge)).toBe(true);
+    expect(matchesResourceMatch([{ domain: 'guard', scope: 'episodes', id: 12 }], purge)).toBe(true);
+  });
 });

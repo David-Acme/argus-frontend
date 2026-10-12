@@ -39,6 +39,7 @@ export type PendingMode = { mode: GuardMode; environmentId: number | null };
 
 const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'environments' }];
 const GUARD_EXPECTED_VISITS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'expected_visits' }];
+const GUARD_EPISODES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'episodes' }];
 
 const EPISODE_END_AFTER = 8;
 
@@ -162,7 +163,9 @@ export function useGuard(owner: boolean, environmentId?: number) {
   });
   const episodes = useRemoteFeed(
     guardEpisodeFeed,
-    environmentId === undefined ? GUARD_EPISODES_ALL_SCOPE : String(environmentId)
+    environmentId === undefined ? GUARD_EPISODES_ALL_SCOPE : String(environmentId),
+    true,
+    GUARD_EPISODES
   );
   const episodePaging = useInfiniteList({
     count: episodes.rows.length,

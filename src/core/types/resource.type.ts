@@ -6,6 +6,7 @@ export type ResourceScope = (typeof RESOURCE_SCOPES)[number];
 export type ResourceMatch = {
   domain: ResourceDomain;
   scope?: ResourceScope;
+  id?: number;
 };
 
 export type ResourceNotice = {

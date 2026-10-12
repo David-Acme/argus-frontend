@@ -3318,8 +3318,10 @@ of a hook in flight and turns anything arriving during it into exactly one
 follow-up.
 
 `useRemoteResource` takes `resources` — the `ResourceMatch` pairs (`{domain,
-scope?}`) the answer depends on, a pair without a scope matching the whole
-domain — and reloads when a notice matches one of them; `useRemoteFeed` takes
+scope?, id?}`) the answer depends on, a pair without a scope matching the whole
+domain and a pair with an `id` answering only a notice that names it or names
+no ids at all (the scope-wide notice a purge sends) — and reloads when a notice
+matches one of them; `useRemoteFeed` takes
 the same as its fourth argument. Both also reload
 when the socket reconnects after a disconnect — the frame is never replayed,
 so reconnect is the catch-up — and not on the first connect, which would only

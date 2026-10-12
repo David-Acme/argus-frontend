@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createReloadGate, matchesResourceMatch, resourceSignal } from '@/core/services/sync/resource-signal';
+import { createReloadGate, matchesResourceMatch, resourceMatchKey, resourceSignal } from '@/core/services/sync/resource-signal';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { IServiceResponse } from '@/core/interfaces';
 import type { ResourceMatch, ViewCacheKey } from '@/core/types';
@@ -63,9 +63,7 @@ export function useRemoteResource<T>({
     }, [enabled, reload]),
   );
 
-  const resourceKey = resources
-    .map((resource) => `${resource.domain}:${resource.scope ?? ''}`)
-    .join('|');
+  const resourceKey = resources.map(resourceMatchKey).join('|');
 
   useEffect(() => {
     resourcesRef.current = resources;
