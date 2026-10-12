@@ -3327,3 +3327,24 @@ those), so a screen that only wants the signal does not pull the sync engine
 into its bundle. `tests/unit/core/services/sync/resource-signal.test.ts` and
 `resource-signal-binding.test.ts` pin the coalescer against a fake clock, the
 reload gate, the read of a frame, and both reconnect cases.
+
+The clock the coalescer schedules with is guarded twice, because this failure
+mode has reached a commit twice. The call site destructures the injected clock
+and calls it as a plain function, the way `e0e2abd` fixed the welcome timers
+(`const { setTimeout: schedule } = clock`), and the default clock hands over an
+arrow that calls the global as a plain function as well. The structural guard
+of record lives in `eslint.config.js`: a `no-restricted-syntax` rule fails any
+member call of `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`,
+`requestAnimationFrame` or `cancelAnimationFrame` whose object is not
+`globalThis` or `window`, so the shape that threw `TypeError: Illegal
+invocation` in WebKit and chromium cannot come back through a gate that only
+runs bun, which does not enforce `this` on timers.
+`tests/unit/core/services/sync/resource-clock.test.ts` runs the production
+default clock under a global `setTimeout` that throws exactly like a browser
+when it is called as a member, and `resource-signal.test.ts` pins the coalescer
+over an injected fake. The shipped bundle is **not** exercised on this path:
+no `ResourceChanged` frame reaches the unpaired welcome screen the chromium
+probe renders, and dispatching one through the real signal in the page would
+need a debug hook the shipped bundle must not carry. The lint rule, not the
+probe, is the guard of record here, named so this residual is never mistaken
+for coverage.

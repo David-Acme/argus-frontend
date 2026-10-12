@@ -14,9 +14,10 @@ export type ResourceSignal = {
 };
 
 export function createResourceSignal(
-  clock: ResourceClock = { setTimeout },
+  clock: ResourceClock = { setTimeout: (run, ms) => setTimeout(run, ms) },
   coalesceMs: number = RESOURCE_COALESCE_MS
 ): ResourceSignal {
+  const { setTimeout: schedule } = clock;
   const changedListeners = new Set<(notice: ResourceNotice) => void>();
   const reconnectListeners = new Set<() => void>();
   const pending = new Map<string, ResourceNotice>();
@@ -45,7 +46,7 @@ export function createResourceSignal(
       const ids = new Set<number>([...(held?.ids ?? []), ...notice.ids]);
       pending.set(key, { ...notice, ids: [...ids] });
       if (timer != null) return;
-      timer = clock.setTimeout(flush, coalesceMs);
+      timer = schedule(flush, coalesceMs);
     },
     reconnected() {
       for (const listener of reconnectListeners) listener();

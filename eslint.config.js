@@ -14,6 +14,12 @@ const SOURCE_SYNTAX = [
     selector: "ImportDeclaration[source.value='react'] > ImportNamespaceSpecifier",
     message: 'Import React APIs by name.',
   },
+  {
+    selector:
+      "CallExpression[callee.type='MemberExpression'][callee.property.name=/^(setTimeout|clearTimeout|setInterval|clearInterval|requestAnimationFrame|cancelAnimationFrame)$/]:not([callee.object.name='globalThis']):not([callee.object.name='window'])",
+    message:
+      'A timer called as a method of another object throws "Illegal invocation" in browsers and WebKit (Hermes tolerates it): call it as a plain function or through globalThis.',
+  },
 ];
 
 const TYPE_SCALE_SYNTAX = [
