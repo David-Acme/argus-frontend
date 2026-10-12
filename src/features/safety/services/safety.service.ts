@@ -2,13 +2,13 @@ import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.c
 import type { IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
+import { needsPin, watchSafetyMemo } from '@/features/safety/services/safety-memo';
 import type { PanicResult, SafetyPins, SafetyStatus } from '@/core/types';
 import type { z } from 'zod';
 
 const SAFETY = '/guard/safety';
 const PIN = '/guard/safety/pin';
 const PANIC = '/guard/panic';
-
 function parsed<T>(response: IServiceResponse<unknown>, schema: z.ZodType<T>): IServiceResponse<T> {
   if (!response.ok) return { ...response, info: null };
   const result = schema.safeParse(response.info);
@@ -46,9 +46,16 @@ class SafetyService {
   }
 
   async disarmNeedsPin(): Promise<boolean> {
-    if (this.known) return this.known.hasPin;
-    const answer = await this.status();
-    return answer.info?.hasPin ?? false;
+    if (this.known) return needsPin(this.known, null);
+    try {
+      return needsPin(null, await this.status());
+    } catch {
+      return needsPin(null, null);
+    }
+  }
+
+  forget(): void {
+    this.known = null;
   }
 
   private remember(response: IServiceResponse<SafetyStatus>): IServiceResponse<SafetyStatus> {
@@ -58,3 +65,5 @@ class SafetyService {
 }
 
 export const safetyService = new SafetyService();
+
+watchSafetyMemo(safetyService);

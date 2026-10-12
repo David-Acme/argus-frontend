@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { t } from '@/core/i18n';
-import type { SafetyPins, SafetyStatus } from '@/core/types';
+import type { ResourceMatch, SafetyPins, SafetyStatus } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { confirm } from '@/shared/libs/confirm';
@@ -10,6 +10,11 @@ import { askCurrentPin } from '@/features/safety/stores/disarm-pin.store';
 
 const load = () => safetyService.status();
 
+const SAFETY_RESOURCES: readonly ResourceMatch[] = [
+  { domain: 'guard', scope: 'safety_pin' },
+  { domain: 'guard', scope: 'duress' },
+];
+
 const currentPinIfSet = async (required: boolean): Promise<string | null | undefined> =>
   required ? askCurrentPin() : undefined;
 
@@ -18,7 +23,12 @@ type UseSafetyOptions = {
 };
 
 export function useSafety({ enabled = true }: UseSafetyOptions = {}) {
-  const { data, mutate } = useRemoteResource<SafetyStatus>({ cacheKey: VIEW_CACHE_KEYS.safetyStatus, load, enabled });
+  const { data, mutate } = useRemoteResource<SafetyStatus>({
+    cacheKey: VIEW_CACHE_KEYS.safetyStatus,
+    load,
+    enabled,
+    resources: SAFETY_RESOURCES,
+  });
 
   const settle = useCallback(
     (next: SafetyStatus | null | undefined) => {

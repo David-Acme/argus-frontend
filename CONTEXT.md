@@ -2339,6 +2339,17 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
 
 ## Safety nets: dead man's switch, panic, duress (2026-10-04, WATCHDOG)
 
+- **The PIN memo never outlives a change made elsewhere** (2026-10-12). 
+  `safetyService` caches the last `GET /guard/safety` answer so a disarm does not
+  pay a round trip, and that cache is what told a desktop "no PIN is set" after the
+  phone had set one: it disarmed without asking and the server refused the mode
+  change. The cache is now forgotten by `{guard, safety_pin}` and `{guard, duress}`
+  notices (the same resource notices every other screen rides), by a reconnect -
+  a notice missed while the socket was down cannot leave it stale - and by nothing
+  else; `disarmNeedsPin()` answers "ask for the PIN" whenever it has to ask the
+  server and cannot (a refusal, a missing answer, or a thrown transport), because
+  skipping the question is the one wrong answer.
+
 - **Dead man's switch** (`core/services/heartbeat/`). argus-sync sends
   `Heartbeat` (operation 11) after `InitialInfo`, answers the app's
   `{type:"heartbeat"}` (sent every `intervalSeconds`, 60) and pushes one
