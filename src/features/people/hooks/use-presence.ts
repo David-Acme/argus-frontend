@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ResourceMatch } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
@@ -10,6 +11,8 @@ export type LabelledPresence = PresenceView & { label: string };
 
 const loadPresence = () => presenceService.overview();
 
+const PRESENCE_RESOURCES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'presence' }];
+
 export function usePresence(enabled: boolean) {
   const { t } = useTranslation();
   const dates = useDateFormatter();
@@ -17,6 +20,7 @@ export function usePresence(enabled: boolean) {
     cacheKey: VIEW_CACHE_KEYS.presence,
     load: loadPresence,
     enabled,
+    resources: PRESENCE_RESOURCES,
   });
 
   return useMemo(() => {
