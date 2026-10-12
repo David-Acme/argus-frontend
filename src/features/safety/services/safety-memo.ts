@@ -1,8 +1,8 @@
 import type { IServiceResponse } from '@/core/interfaces';
 import { resourceSignal } from '@/core/services/sync/resource-signal';
-import type { ResourceNotice, SafetyStatus } from '@/core/types';
+import type { ResourceNotice, ResourceScope, SafetyStatus } from '@/core/types';
 
-const PIN_SCOPES: readonly string[] = ['safety_pin', 'duress'];
+const PIN_SCOPES: readonly ResourceScope[] = ['safety_pin', 'duress'];
 
 export function forgetsPinMemo(notice: ResourceNotice): boolean {
   return notice.domain === 'guard' && PIN_SCOPES.includes(notice.scope);

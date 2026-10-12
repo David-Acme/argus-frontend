@@ -3422,3 +3422,26 @@ the cleanup (`tests/unit/core/services/sync/sync-reconnect-watch.test.ts`). The
 on-device Wi-Fi-toggle timing measurement needs a reachable backend and is
 pending; it rides the first two-device session, together with the rest of
 section 0's acceptance tests.
+
+## Testing (2026-10-12)
+
+**A test that touches a service pulls its transport, and the transport has a
+bun landmine.** `src/core/services/net/index.ts` re-exports `'./net'`, which
+resolves only through tsconfig `moduleSuffixes` (`net.native.ts` /
+`net.web.ts`) — and bun does not support `moduleSuffixes` yet (it says so on
+every run). A test file that imports the safety service, or anything through
+the `@/core/services/http` barrel, therefore drags in the real net barrel and
+fails with `Cannot find module './net'`, or worse with a misattributed
+`Export named 'httpService' not found in module .../http/index.ts` when a
+dependent module links against the half-loaded barrel. It is order-dependent:
+the file is green alone and red in the full suite, so it is easy to blame the
+wrong thing. The house pattern is to mock the net layer —
+`mock.module('@/core/services/net', () => ({ netService: { instance, refreshAddress, request } }))`,
+exactly as `tests/unit/core/services/http/http-service.test.ts` does (it also
+registers the http auth bridge with `registerHttpAuth`) — and mocking the http
+barrel or injecting a transport into the service are both worse: the first
+replaces every export of the barrel for the whole run, the second adds a seam
+that exists only for tests. The durable answer, when a rule can be separated
+from its transport, is to put the rule in a leaf module: `safety-memo.ts` holds
+the PIN memo's rule and imports nothing but types and the signal, so its suite
+needs no mock at all.
