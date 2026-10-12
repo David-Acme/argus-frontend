@@ -38,6 +38,7 @@ type OptimisticRemote<T, R> = {
 export type PendingMode = { mode: GuardMode; environmentId: number | null };
 
 const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'environments' }];
+const GUARD_EXPECTED_VISITS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'expected_visits' }];
 
 const EPISODE_END_AFTER = 8;
 
@@ -154,7 +155,11 @@ export function useCameraPlacement(owner: boolean, enabled = true) {
 export function useGuard(owner: boolean, environmentId?: number) {
   const placement = useCameraPlacement(owner);
   const environments = placement.environments;
-  const guests = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardGuests, load: loadGuests });
+  const guests = useRemoteResource({
+    cacheKey: VIEW_CACHE_KEYS.guardGuests,
+    load: loadGuests,
+    resources: GUARD_EXPECTED_VISITS,
+  });
   const episodes = useRemoteFeed(
     guardEpisodeFeed,
     environmentId === undefined ? GUARD_EPISODES_ALL_SCOPE : String(environmentId)

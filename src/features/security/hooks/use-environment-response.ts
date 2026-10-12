@@ -1,6 +1,11 @@
 import { useCallback } from 'react';
 import { guardService } from '@/core/services/guard.service';
-import type { EnvironmentResponseConfig, RecipientMode, ResponseContact } from '@/core/types';
+import type {
+  EnvironmentResponseConfig,
+  RecipientMode,
+  ResourceMatch,
+  ResponseContact,
+} from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -15,6 +20,8 @@ import {
 
 type ConfigEdit = (config: EnvironmentResponseConfig) => EnvironmentResponseConfig;
 
+const GUARD_RESPONSES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'responses' }];
+
 export function useEnvironmentResponse(environmentId: number, owner: boolean) {
   const { t } = useTranslation();
   const load = useCallback(() => guardService.response(environmentId), [environmentId]);
@@ -22,6 +29,7 @@ export function useEnvironmentResponse(environmentId: number, owner: boolean) {
     cacheKey: VIEW_CACHE_KEYS.guardResponse,
     scope: String(environmentId),
     load,
+    resources: GUARD_RESPONSES,
   });
 
   const save = useCallback(
