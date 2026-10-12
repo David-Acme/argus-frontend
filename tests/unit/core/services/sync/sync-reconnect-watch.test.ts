@@ -106,6 +106,28 @@ describe('the reconnect watch', () => {
     stop();
   });
 
+  test('an emission without a type does not erase the interface it remembered', async () => {
+    let retries = 0;
+    const stop = watchReconnectOpportunities(() => {
+      retries += 1;
+    });
+    await settled();
+
+    fireNetwork({ isConnected: true, type: 'WIFI' });
+    expect(retries).toBe(0);
+
+    fireNetwork({ isConnected: true });
+    expect(retries).toBe(0);
+
+    fireNetwork({ isConnected: true, type: 'CELLULAR' });
+    expect(retries).toBe(1);
+
+    fireNetwork({ isConnected: true, type: 'CELLULAR' });
+    expect(retries).toBe(1);
+
+    stop();
+  });
+
   test('a local network with no internet at all still fires on the return', async () => {
     let retries = 0;
     const stop = watchReconnectOpportunities(() => {

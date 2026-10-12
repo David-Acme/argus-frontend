@@ -31,7 +31,7 @@ export function watchReconnectOpportunities(retry: () => void): () => void {
         state.type !== undefined &&
         state.type !== lastType);
     wasReachable = reachable;
-    lastType = state.type;
+    if (state.type !== undefined) lastType = state.type;
     if (returned) retry();
   });
 

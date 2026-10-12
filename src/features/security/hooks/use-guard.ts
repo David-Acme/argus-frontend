@@ -14,6 +14,7 @@ import type {
   GuardExpectedGuestCreate,
   GuardFeedbackLabel,
   GuardMode,
+  ResourceDomain,
 } from '@/core/types';
 import { GUARD_EPISODES_ALL_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
@@ -35,6 +36,8 @@ type OptimisticRemote<T, R> = {
 };
 
 export type PendingMode = { mode: GuardMode; environmentId: number | null };
+
+const GUARD_DOMAINS: readonly ResourceDomain[] = ['guard'];
 
 const EPISODE_END_AFTER = 8;
 
@@ -75,7 +78,12 @@ function replaceEnvironment(rows: GuardEnvironment[] | null, next: GuardEnvironm
 }
 
 export function useGuardEnvironments(enabled: boolean) {
-  return useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.guardEnvironments, load: loadEnvironments, enabled });
+  return useRemoteResource({
+    cacheKey: VIEW_CACHE_KEYS.guardEnvironments,
+    load: loadEnvironments,
+    enabled,
+    domains: GUARD_DOMAINS,
+  });
 }
 
 export function useCameraEnvironmentIndex(): ReadonlyMap<string, CameraEnvironmentBadge> {
