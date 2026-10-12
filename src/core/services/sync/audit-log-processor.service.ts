@@ -1,11 +1,13 @@
 import type { IAuditLogEntry } from '@/core/interfaces';
-import type { AuditLogApplyResult, AuditPatch, SyncTableKey } from '@/core/types';
+import type { AuditLogApplyResult, AuditLogRecordUpdate, AuditPatch, SyncTableKey } from '@/core/types';
 import { database } from '@/core/database';
+import { optimisticRegistry } from '@/shared/libs/optimistic';
 import { batchPrepared, existingByServerId, type PreparedOperation } from './sync-db-utils';
 import { toAuditPatch } from './audit-log-patch';
 
 export type PreparedAuditLogs = AuditLogApplyResult & {
   operations: PreparedOperation[];
+  updated: AuditLogRecordUpdate[];
 };
 
 const byId = (left: IAuditLogEntry, right: IAuditLogEntry): number =>
@@ -30,6 +32,7 @@ class AuditLogProcessorService {
     const operations: PreparedOperation[] = [];
     const affected: SyncTableKey[] = [];
     const missing = new Set<SyncTableKey>();
+    const updated: AuditLogRecordUpdate[] = [];
     for (const [key, patches] of grouped) {
       const existing = await existingByServerId(key, [...patches.keys()]);
       let touched = false;
@@ -40,18 +43,20 @@ class AuditLogProcessorService {
           continue;
         }
         touched = true;
+        updated.push({ table: key, recordId: patch.recordId });
         operations.push(() => record.prepareUpdate((row) => Object.assign(row, patch.props)));
       }
       if (touched) affected.push(key);
     }
 
-    return { operations, affected, missing: [...missing] };
+    return { operations, affected, missing: [...missing], updated };
   }
 
   apply(entries: IAuditLogEntry[]): Promise<AuditLogApplyResult> {
     return database.write(async () => {
-      const { operations, affected, missing } = await this.prepare(entries);
+      const { operations, affected, missing, updated } = await this.prepare(entries);
       await batchPrepared(operations);
+      if (updated.length > 0) optimisticRegistry.serverRows(updated);
       return { affected, missing };
     });
   }

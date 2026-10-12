@@ -293,6 +293,41 @@ describe('OptimisticRegistry lifecycle', () => {
     expect(store.snapshot()).toEqual([]);
   });
 
+  test('a server update for the record clears a confirmed intent at once', () => {
+    const { store } = registry();
+    const intent = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
+    store.confirm(intent.id);
+    store.serverRows([{ table: 'project_task', recordId: '1' }]);
+    expect(store.snapshot()).toEqual([]);
+    expect(applyIntents(base, store.snapshot(), lenses)).toBe(base);
+  });
+
+  test('a server update leaves an unconfirmed intent and other records alone', () => {
+    const { store } = registry();
+    const pending = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '1',
+      values: { status: 'done' },
+    });
+    const confirmed = store.begin({
+      table: 'project_task',
+      kind: 'update',
+      recordId: '2',
+      values: { status: 'done' },
+    });
+    store.confirm(confirmed.id);
+    store.serverRows([{ table: 'project_task', recordId: '1' }]);
+    expect(store.snapshot().map((intent) => intent.id)).toEqual([pending.id, confirmed.id]);
+    store.serverRows([{ table: 'project_task', recordId: '2' }]);
+    expect(store.snapshot().map((intent) => intent.id)).toEqual([pending.id]);
+  });
+
   test('confirming twice or after a rollback changes nothing', () => {
     const { store } = registry();
     const intent = store.begin({

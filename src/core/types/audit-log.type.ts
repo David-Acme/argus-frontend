@@ -30,3 +30,8 @@ export type AuditLogApplyResult = {
   affected: SyncTableKey[];
   missing: SyncTableKey[];
 };
+
+export type AuditLogRecordUpdate = {
+  table: SyncTableKey;
+  recordId: string;
+};

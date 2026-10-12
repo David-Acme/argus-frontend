@@ -1,6 +1,7 @@
 import { database } from '@/core/database';
 import type { IAuditLogEntry, ISocketEmitDto } from '@/core/interfaces';
-import type { AuditLogScope, SyncCreatedRows, SyncDeletedRows } from '@/core/types';
+import type { AuditLogRecordUpdate, AuditLogScope, SyncCreatedRows, SyncDeletedRows } from '@/core/types';
+import { optimisticRegistry } from '@/shared/libs/optimistic';
 import { auditLogProcessorService } from './audit-log-processor.service';
 import { emptyLiveAuditHigh, freshLiveAuditEntries, groupLiveEvents } from './live-frame-batch';
 import type { ProjectionEpoch } from './projection-epoch';
@@ -110,6 +111,7 @@ export class LiveFrameApplier {
     this.auditHigh = fresh.high;
     const entries = fresh.entries;
     let missing = 0;
+    let updated: AuditLogRecordUpdate[] = [];
     await database.write(async () => {
       if (!this.deps.epoch.isCurrent(epoch)) return;
       await batchPrepared(await prepareSyncRows(created, deleted, 'insert'));
@@ -117,8 +119,10 @@ export class LiveFrameApplier {
       const prepared = await auditLogProcessorService.prepare(entries);
       await batchPrepared(prepared.operations);
       missing = prepared.missing.length;
+      updated = prepared.updated;
     });
     if (!this.deps.epoch.isCurrent(epoch)) return;
+    if (updated.length > 0) optimisticRegistry.serverRows(updated);
     this.deps.onUserRows(created.get('user'));
     await this.deps.onGrants(created, deleted);
     this.deps.onUserAudit(entries);

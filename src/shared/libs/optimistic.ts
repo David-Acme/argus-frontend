@@ -49,6 +49,11 @@ export type OptimisticRegistryOptions = {
   graceMs: number;
 };
 
+export type OptimisticServerRow = {
+  readonly table: OptimisticTable;
+  readonly recordId: string;
+};
+
 export function defineLens<Row, V extends object>(
   lens: TypedOptimisticLens<Row, V>
 ): OptimisticLens<Row> {
@@ -280,6 +285,17 @@ export class OptimisticRegistry {
       this.settling.add(id);
       this.expireAfter(id, this.options.graceMs);
     }
+  }
+
+  serverRows(rows: readonly OptimisticServerRow[]): void {
+    if (rows.length === 0 || this.intents.length === 0) return;
+    const keys = new Set(rows.map((row) => intentKey(row.table, row.recordId)));
+    const spoken = this.intents
+      .filter(
+        (intent) => intent.confirmed && keys.has(intentKey(intent.table, intent.recordId))
+      )
+      .map((intent) => intent.id);
+    if (spoken.length > 0) this.drop(spoken);
   }
 
   bindSession(session: string | null): void {

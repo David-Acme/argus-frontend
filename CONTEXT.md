@@ -1186,6 +1186,18 @@ the result of the user's action at once and reconciles with the synced row.
   grace so every projection catches up; a delete, whose absence proves
   nothing, and any intent the sync never proves, expire after 60 s. A user
   change clears the registry (session boundary, like the view cache).
+- **The server's own word on a record ends the overlay at once.** Waiting for
+  the patch to become a no-op was too patient: a remote change to the same
+  record — another member editing the same task, another device marking the
+  same notification read — left the synced row carrying values the local
+  intent kept overwriting, so the other side's change stayed invisible for up
+  to the 60 s fallback. Every applied audit-log update now names the records
+  it wrote (`AuditLogProcessorService.prepare` → `updated`, the one seam both
+  the live frames and the paged catch-up go through), and
+  `optimisticRegistry.serverRows(...)` drops the *confirmed* intents for those
+  records. A pending intent keeps its optimistic display — its request is
+  still in flight — and its own echo comes back as one of these updates, so
+  nothing relies on the 60 s window any more.
 - **Refusals.** `runOptimistic` rolls the intent back and toasts the reason;
   a network, timeout or 5xx refusal carries a Retry action that replays the
   same request (forms close on valid input, so Retry is what keeps the typed
