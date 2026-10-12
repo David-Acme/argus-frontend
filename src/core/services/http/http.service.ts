@@ -1,6 +1,6 @@
 import type { HttpMethod, NetHttpFile, NetHttpResult, NetPairedInstance } from '@/core/types';
 import { netService } from '@/core/services/net';
-import { serviceUrl } from '@/core/services/net/net-routes';
+import { serviceUrl, addressUnreachable } from '@/core/services/net/net-routes';
 import { httpAuth } from './http-auth';
 import { errorResponse, readEnvelope } from './http-envelope';
 import { reportRefusal } from './http-refusal';
@@ -67,7 +67,7 @@ class HttpService {
     } catch (error) {
       const netError = error as { code?: string; message?: string };
       const failure = netError.code ?? 'NETWORK_ERROR';
-      const relocated = failure === 'NETWORK_ERROR' ? await this.relocatedInstance() : null;
+      const relocated = addressUnreachable(failure) ? await this.relocatedInstance() : null;
       if (!relocated) return errorResponse(0, failure, netError.message ?? 'Network error');
       try {
         result = await send(relocated);

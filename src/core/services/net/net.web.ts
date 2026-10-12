@@ -11,13 +11,16 @@ import {
   savePairingMetadata,
   toNetError,
 } from './net-persistence';
-import { relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
+import { mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
 import { withDeviceCredential } from './device-credential';
 import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing, NetPin } from '@/core/types';
 
 const ignoreClosed = (): void => undefined;
 
 class WebArgusNetService implements IArgusNetService {
+  private rediscovery: Promise<boolean> | null = null;
+  private lastRediscoveryFailureAt = 0;
+
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
     try {
       return await invoke<NetDiscovery>('argus_discover', { timeoutMs });
@@ -91,7 +94,31 @@ class WebArgusNetService implements IArgusNetService {
 
   async refreshAddress(): Promise<boolean> {
     const instance = await loadInstance();
-    if (!instance) return false;
+    return instance ? this.rediscover(instance.ip) : false;
+  }
+
+  private rediscover(currentIp: string): Promise<boolean> {
+    if (this.rediscovery) return this.rediscovery;
+    if (!mayRediscover(this.lastRediscoveryFailureAt, Date.now())) return Promise.resolve(false);
+    const attempt = this.relocate(currentIp)
+      .then((moved) => {
+        if (!moved) this.lastRediscoveryFailureAt = Date.now();
+        return moved;
+      })
+      .catch((error: unknown) => {
+        this.lastRediscoveryFailureAt = Date.now();
+        throw error;
+      })
+      .finally(() => {
+        if (this.rediscovery === attempt) this.rediscovery = null;
+      });
+    this.rediscovery = attempt;
+    return attempt;
+  }
+
+  private async relocate(currentIp: string): Promise<boolean> {
+    const instance = await loadInstance();
+    if (!instance || instance.ip !== currentIp) return false;
     let found: NetDiscovery;
     try {
       found = await this.discover();

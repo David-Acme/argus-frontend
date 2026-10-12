@@ -3217,9 +3217,32 @@ What the code does about it now:
   keeping its scheme, host and path, and only for a segment the route table names: a segment it
   does not name — an external or relay URL — is left exactly as the caller built it, and the
   first attempt is never rewritten at all, only the retry after a rediscovery); the http layer
-  repeats the same heal for a `NETWORK_ERROR`
-  after `refreshAddress()` reports a change, which is what covers the Tauri transport.
+  repeats the same heal for a transport failure that means the address never answered
+  (`addressUnreachable`), which is what covers the Tauri transport.
 - A rediscovery that just failed is not repeated for `REDISCOVERY_MEMO_MS` (10 s), so a server
   that is simply off pays one discovery timeout before "the server is out of reach", not two.
 - Residual exposure: the identity check proves the server, not the announcement's honesty, so
   an announced *wrong* port would still be adopted; an omitted one no longer is.
+
+### The heal also answers a connect timeout (2026-10-12, the demo-night network move)
+
+The desktop kept keyring `argus:net.ip` on the old LAN address after the laptop changed
+networks, and every request failed with "Could not prepare access." The heal chain was already
+complete — `refreshAddress()` → `argus_relocate` (the Rust probe answers under the pinned CA,
+then `trust::relocate` writes `net.ip`) → the request retried with the trust re-read — but it
+opened only for a failure classified `NETWORK_ERROR`. Rust reports a *connect timeout* as
+`TIMEOUT` (`src-tauri/src/net/http.rs`, the 10 s connect timeout), and a stale address on a
+network that drops the SYN rather than refusing or unrouting it produces exactly that, so
+nothing rediscovered, the keyring stayed stale and the failure repeated. `addressUnreachable`
+(`net-routes.ts`) is now the one predicate for "the address never answered" — `NETWORK_ERROR`
+and `TIMEOUT` — and `http.service.ts` and both platforms' `request`/`openSocket` gates read it.
+An answer from the server never adopts another address: `CERT_NOT_TRUSTED`, `UNAUTHORIZED`,
+`HOST_NOT_ALLOWED`, the pairing codes and the storage faults are settled facts, and a wrong
+certificate must not be answered by following an announcement elsewhere.
+
+Because the trigger is wider, the desktop's `refreshAddress()` now carries the memo and the
+single-flight the native service always had (`rediscover`/`relocate`, `mayRediscover`), so a
+server that is merely off still costs one discovery per window, not one per request. Pinned by
+`tests/unit/core/services/net/net-web.test.ts` and `net-native.test.ts` (relocate on a moved
+address, the refused candidate leaves the stored address untouched, single-flight, both memo
+paths) and by the `addressUnreachable` table in `net-routes.test.ts`.

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { mayRediscover, REDISCOVERY_MEMO_MS, relocatedInstance, serviceUrl, urlAt, urlPath } from '@/core/services/net/net-routes';
-import type { NetPairedInstance } from '@/core/types';
+import { addressUnreachable, mayRediscover, REDISCOVERY_MEMO_MS, relocatedInstance, serviceUrl, urlAt, urlPath } from '@/core/services/net/net-routes';
+import type { NetErrorCode, NetPairedInstance } from '@/core/types';
 
 const paired: NetPairedInstance = {
   host: 'argus.local',
@@ -94,5 +94,28 @@ describe('relocatedInstance', () => {
       ],
     } as never);
     expect(candidate).toBeNull();
+  });
+});
+
+describe('addressUnreachable', () => {
+  test('a failure that means the address never answered may relocate', () => {
+    expect(addressUnreachable('NETWORK_ERROR')).toBe(true);
+    expect(addressUnreachable('TIMEOUT')).toBe(true);
+  });
+
+  test('an answer from the server, or a local failure, never relocates', () => {
+    const settled: NetErrorCode[] = [
+      'CERT_NOT_TRUSTED',
+      'UNAUTHORIZED',
+      'HOST_NOT_ALLOWED',
+      'PAIRING_REQUIRED',
+      'FINGERPRINT_MISMATCH',
+      'INVALID_PAIRING_CODE',
+      'PAIRING_DECLINED',
+      'ALREADY_PAIRED',
+      'DISCOVERY_NOT_FOUND',
+      'STORAGE_ERROR',
+    ];
+    for (const code of settled) expect(addressUnreachable(code)).toBe(false);
   });
 });

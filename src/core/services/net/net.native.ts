@@ -12,7 +12,7 @@ import {
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
-import { mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
+import { addressUnreachable, mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
 import { clientIdentityHeaders, withClientIdentity } from './client-identity';
 import { withDeviceCredential } from './device-credential';
 import type {
@@ -114,7 +114,7 @@ class NativeArgusNetService implements IArgusNetService {
       return await send(options.url);
     } catch (error) {
       const failure = toNetError(error, 'NETWORK_ERROR');
-      if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
+      if (!addressUnreachable(failure.code) || !(await this.rediscover(instance.ip))) {
         throw failure;
       }
       try {
@@ -218,7 +218,7 @@ class NativeArgusNetService implements IArgusNetService {
       return await net.openSocket(identified);
     } catch (error) {
       const failure = toNetError(error, 'NETWORK_ERROR');
-      if (failure.code !== 'NETWORK_ERROR' || !(await this.rediscover(instance.ip))) {
+      if (!addressUnreachable(failure.code) || !(await this.rediscover(instance.ip))) {
         throw failure;
       }
       try {

@@ -54,6 +54,10 @@ export function mayRediscover(lastFailureAt: number, now: number): boolean {
   return lastFailureAt === 0 || now - lastFailureAt >= REDISCOVERY_MEMO_MS;
 }
 
+export function addressUnreachable(code: string): boolean {
+  return code === 'NETWORK_ERROR' || code === 'TIMEOUT';
+}
+
 export const SERVER_IDENTITY_PATH = '/pairing/status';
 
 const routesDiffer = (stored: NetRoutePorts, announced: NetRoutePorts): boolean =>
