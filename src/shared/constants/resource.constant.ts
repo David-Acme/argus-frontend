@@ -3,6 +3,7 @@ export const RESOURCE_DOMAINS = ['camera', 'guard', 'productivity', 'identity'] 
 export const RESOURCE_SCOPES = [
   'device',
   'zones',
+  'status',
   'environments',
   'incidents',
   'episodes',

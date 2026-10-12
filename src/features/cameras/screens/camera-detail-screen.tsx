@@ -70,7 +70,12 @@ export default function CameraDetailScreen() {
   const canUpdate = can('camera', 'update');
   const loadDevice = useCallback(() => cameraControlService.status(id), [id]);
   const loadFeatures = useCallback(() => cameraControlService.capabilities(id), [id]);
-  const deviceResource = useRemoteResource({ cacheKey: VIEW_CACHE_KEYS.cameraDevice, scope: id, load: loadDevice });
+  const deviceResource = useRemoteResource({
+    cacheKey: VIEW_CACHE_KEYS.cameraDevice,
+    scope: id,
+    load: loadDevice,
+    resources: [{ domain: 'camera', scope: 'status', id: Number(id) }],
+  });
   const featureResource = useRemoteResource<ICameraCapabilities>({
     cacheKey: VIEW_CACHE_KEYS.cameraCapabilities,
     scope: id,
@@ -92,6 +97,7 @@ export default function CameraDetailScreen() {
     scope: id,
     load: loadPresets,
     enabled: features?.presets === true && canUpdate,
+    resources: [{ domain: 'camera', scope: 'status', id: Number(id) }],
   });
   const presets = useMemo(() => parsePresets(presetResource.data), [presetResource.data]);
   const reloadPresets = presetResource.reload;
