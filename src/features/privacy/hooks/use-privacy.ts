@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { PrivacyChoices, PrivacyMe, PrivacySignal } from '@/core/types';
+import type { PrivacyChoices, PrivacyMe, PrivacySignal, ResourceMatch } from '@/core/types';
 import { privacyService } from '@/features/privacy/services/privacy.service';
 import { decisionOf, effectiveOf, withChoice } from '@/features/privacy/model/privacy';
 import { PRIVACY_NOTICE_VERSION } from '@/features/privacy/constants/privacy';
@@ -26,12 +26,15 @@ const WITHDRAW_CONFIRMATION = {
   },
 } as const;
 
+const PRIVACY_CHOICE: readonly ResourceMatch[] = [{ domain: 'identity', scope: 'privacy_choice' }];
+
 export function usePrivacy({ enabled = true }: UsePrivacyOptions = {}) {
   const { t } = useTranslation();
   const { data, status, mutate, reload } = useRemoteResource<PrivacyMe>({
     cacheKey: VIEW_CACHE_KEYS.privacyMe,
     load,
     enabled,
+    resources: PRIVACY_CHOICE,
   });
 
   const decide = useCallback(

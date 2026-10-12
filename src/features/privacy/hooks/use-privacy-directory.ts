@@ -1,5 +1,11 @@
 import { useCallback } from 'react';
-import type { HouseholdPrivacy, HouseholdPrivacyPatch, PrivacyDirectory, PrivacySignal } from '@/core/types';
+import type {
+  HouseholdPrivacy,
+  HouseholdPrivacyPatch,
+  PrivacyDirectory,
+  PrivacySignal,
+  ResourceMatch,
+} from '@/core/types';
 import { privacyService } from '@/features/privacy/services/privacy.service';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
@@ -38,12 +44,15 @@ function patched(directory: PrivacyDirectory | null, patch: HouseholdPrivacyPatc
   return { ...directory, household };
 }
 
+const PRIVACY_HOUSEHOLD: readonly ResourceMatch[] = [{ domain: 'identity', scope: 'privacy_household' }];
+
 export function usePrivacyDirectory({ enabled = true }: UsePrivacyDirectoryOptions = {}) {
   const { t } = useTranslation();
   const { data, status, mutate, reload } = useRemoteResource<PrivacyDirectory>({
     cacheKey: VIEW_CACHE_KEYS.privacyDirectory,
     load,
     enabled,
+    resources: PRIVACY_HOUSEHOLD,
   });
 
   const save = useCallback(
