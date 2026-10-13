@@ -135,6 +135,15 @@ describe('the desktop net service against a moved server', () => {
     expect((await netService.instance())?.route).toBe('relay');
   });
 
+  test('a probe at home sends nothing through the cloud', async () => {
+    await seed({ auth: 7024 });
+    await netService.rememberRemote(REMOTE);
+    answers = () => true;
+
+    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home' });
+    expect(probedUrls).toEqual(['https://argus.local:7044/pairing/status']);
+  });
+
   test('on the relay, a candidate address is still checked on the LAN', async () => {
     await seed({ auth: 7024 });
     await netService.rememberRemote(REMOTE);

@@ -89,6 +89,8 @@ export const DISCOVERY_TIMEOUT_MS = 6000;
 
 export const NET_ROUTE_PROBE_TIMEOUT_MS = 4000;
 
+export const NET_ROUTE_RELAY_HEAD_START_MS = 1500;
+
 export const NET_STORAGE_KEYS = {
   paired: 'net.paired',
   caPem: 'net.caPem',

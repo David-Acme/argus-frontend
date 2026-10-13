@@ -169,12 +169,14 @@ describe('the phone net service against a moved server', () => {
     );
   });
 
-  test('a probe at home keeps the LAN', async () => {
+  test('a probe at home keeps the LAN, and nothing crosses the cloud', async () => {
     await netService.rememberRemote(REMOTE);
     answers = () => true;
+    calls = [];
 
     expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home' });
     expect((await netService.instance())?.route).toBe('lan');
+    expect(calls.filter((call) => call.startsWith('request|'))).toEqual([`request|${LAN_STATUS_URL}`]);
   });
 
   test('a failed connect away from home moves the route to the relay once', async () => {

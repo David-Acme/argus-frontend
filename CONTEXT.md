@@ -587,12 +587,19 @@ What this step lands:
   - `link` and `since` are read, not kept. They describe the link right now.
 
 - **The probes choose the route** (`net/net-route-probe.ts`).
-  - `measureRoute` asks `/pairing/status` twice, in parallel: on the LAN
-    (the paired host and port, even while the route is the relay) and on
-    the identity service's device name. Each answer is bounded by
-    `NET_ROUTE_PROBE_TIMEOUT_MS` (4 s), and any HTTP answer under the
-    pinned CA counts as reached. `chooseRoute` decides. A LAN that answers
-    decides alone, and the relay is not waited for.
+  - `measureRoute` asks `/pairing/status` on the LAN first: the paired
+    host and port, even while the route is the relay. The LAN gets a head
+    start of `NET_ROUTE_RELAY_HEAD_START_MS` (1.5 s). The identity
+    service's device name is asked only when the LAN fails, or when it has
+    not answered by the end of the head start. A LAN that answers in time
+    never touches the relay. So when everyone is at home, nothing crosses
+    the cloud (argus-cloud `docs/plan.md`, section 0).
+  - Each answer is bounded by `NET_ROUTE_PROBE_TIMEOUT_MS` (4 s), and any
+    HTTP answer under the pinned CA counts as reached. `chooseRoute`
+    decides. A LAN that answers within its 4 s still wins over a relay that
+    answered first.
+  - The clock is a parameter (`NetProbeTimings`), so the tests drive the
+    head start with a fake clock.
   - `NetRouteKeeper` runs one probe at a time. It first waits for a
     rediscovery in flight: the native module holds one configuration, and
     a relocation and a probe must not reconfigure it under each other.

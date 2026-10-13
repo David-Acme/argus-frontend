@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { NetPairedInstance } from '@/core/types';
+import type { NetProbeClock } from '@/core/services/net/net-route-probe';
+import type { NetPairedInstance, NetRouteChoice } from '@/core/types';
 
 mock.module('@/core/services/secure-storage', () => ({
   secureStorageService: {
@@ -31,8 +32,71 @@ const instance: NetPairedInstance = {
 
 const { remote: _remote, ...withoutRemote } = instance;
 
-const refused = (): Promise<never> => Promise.reject(new Error('NETWORK_ERROR|unreachable'));
-const silent = (): Promise<never> => new Promise<never>(() => undefined);
+const settle = async (): Promise<void> => {
+  for (let tick = 0; tick < 20; tick += 1) await Promise.resolve();
+};
+
+class FakeClock implements NetProbeClock {
+  now = 0;
+  private readonly timers: { at: number; fire: () => void; live: boolean }[] = [];
+
+  after(ms: number, fire: () => void): () => void {
+    const timer = { at: this.now + ms, fire, live: true };
+    this.timers.push(timer);
+    return () => {
+      timer.live = false;
+    };
+  }
+
+  async advance(ms: number): Promise<void> {
+    const target = this.now + ms;
+    for (;;) {
+      await settle();
+      const due = this.timers.filter((timer) => timer.live && timer.at <= target).sort((a, b) => a.at - b.at);
+      const next = due[0];
+      if (!next) break;
+      next.live = false;
+      this.now = next.at;
+      next.fire();
+    }
+    this.now = target;
+    await settle();
+  }
+}
+
+interface Answer {
+  promise: Promise<void>;
+  answer: () => void;
+  refuse: () => void;
+}
+
+function pending(): Answer {
+  const handlers = { answer: (): void => undefined, refuse: (): void => undefined };
+  const promise = new Promise<void>((resolve, reject) => {
+    handlers.answer = () => resolve();
+    handlers.refuse = () => reject(new Error('NETWORK_ERROR|unreachable'));
+  });
+  return { promise, answer: () => handlers.answer(), refuse: () => handlers.refuse() };
+}
+
+function harness(target: NetPairedInstance = instance) {
+  const clock = new FakeClock();
+  const lan = pending();
+  const relay = pending();
+  const calls: { url: string; at: number }[] = [];
+  const outcome: { choice: NetRouteChoice | null } = { choice: null };
+  const done = measureRoute(
+    target,
+    (url) => {
+      calls.push({ url, at: clock.now });
+      return url === LAN ? lan.promise : relay.promise;
+    },
+    { timeoutMs: 4000, headStartMs: 1500, clock }
+  ).then((choice) => {
+    outcome.choice = choice;
+  });
+  return { clock, lan, relay, calls, done, outcome };
+}
 
 describe('the route probe', () => {
   test('asks the paired host on the LAN and the identity service by its device name', () => {
@@ -42,52 +106,79 @@ describe('the route probe', () => {
     expect(probeUrls({ ...instance, remote: { homeId: HOME.toUpperCase(), domain: DOMAIN } }).relay).toBeNull();
   });
 
-  test('the LAN wins as soon as it answers, without waiting for the relay', async () => {
-    let relayAnswered = false;
-    const choice = await measureRoute(
-      instance,
-      (url) =>
-        url === LAN
-          ? Promise.resolve()
-          : new Promise((resolve) =>
-              setTimeout(() => {
-                relayAnswered = true;
-                resolve(undefined);
-              }, 200)
-            ),
-      60_000
-    );
-    expect(choice).toEqual({ mode: 'lan', status: 'home' });
-    expect(relayAnswered).toBe(false);
+  test('a LAN that answers within the head start never touches the relay', async () => {
+    const h = harness();
+    await h.clock.advance(1000);
+    h.lan.answer();
+    await h.clock.advance(5000);
+    await h.done;
+
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'home' });
+    expect(h.calls).toEqual([{ url: LAN, at: 0 }]);
   });
 
-  test('the relay is chosen only when the LAN does not answer and the relay does', async () => {
-    const choice = await measureRoute(instance, (url) => (url === RELAY ? Promise.resolve() : refused()), 50);
-    expect(choice).toEqual({ mode: 'relay', status: 'cloud' });
+  test('a LAN that fails fast starts the relay at once', async () => {
+    const h = harness();
+    await h.clock.advance(10);
+    h.lan.refuse();
+    await h.clock.advance(0);
+
+    expect(h.calls).toEqual([
+      { url: LAN, at: 0 },
+      { url: RELAY, at: 10 },
+    ]);
+    h.relay.answer();
+    await h.clock.advance(0);
+    await h.done;
+    expect(h.outcome.choice).toEqual({ mode: 'relay', status: 'cloud' });
+  });
+
+  test('a slow LAN lets the relay start when the head start ends, and still wins if it answers', async () => {
+    const h = harness();
+    await h.clock.advance(1499);
+    expect(h.calls).toEqual([{ url: LAN, at: 0 }]);
+    await h.clock.advance(1);
+    expect(h.calls).toEqual([
+      { url: LAN, at: 0 },
+      { url: RELAY, at: 1500 },
+    ]);
+
+    h.relay.answer();
+    await h.clock.advance(500);
+    expect(h.outcome.choice).toBeNull();
+    h.lan.answer();
+    await h.clock.advance(0);
+    await h.done;
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'home' });
+  });
+
+  test('a LAN that never answers times out, and then the relay decides', async () => {
+    const h = harness();
+    await h.clock.advance(1500);
+    h.relay.answer();
+    await h.clock.advance(2499);
+    expect(h.outcome.choice).toBeNull();
+    await h.clock.advance(1);
+    await h.done;
+    expect(h.outcome.choice).toEqual({ mode: 'relay', status: 'cloud' });
   });
 
   test('a home that answers neither way is unreachable, and the LAN stays the route', async () => {
-    expect(await measureRoute(instance, refused, 50)).toEqual({ mode: 'lan', status: 'unreachable' });
+    const h = harness();
+    h.lan.refuse();
+    await h.clock.advance(0);
+    h.relay.refuse();
+    await h.clock.advance(0);
+    await h.done;
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'unreachable' });
   });
 
   test('without a usable profile only the LAN is asked', async () => {
-    const asked: string[] = [];
-    const choice = await measureRoute(
-      withoutRemote,
-      (url) => {
-        asked.push(url);
-        return refused();
-      },
-      50
-    );
-    expect(asked).toEqual([LAN]);
-    expect(choice).toEqual({ mode: 'lan', status: 'unreachable' });
-  });
-
-  test('an answer that never comes counts as a failure once the probe times out', async () => {
-    const started = Date.now();
-    const choice = await measureRoute(instance, (url) => (url === RELAY ? Promise.resolve() : silent()), 30);
-    expect(choice).toEqual({ mode: 'relay', status: 'cloud' });
-    expect(Date.now() - started).toBeLessThan(1000);
+    const h = harness(withoutRemote);
+    h.lan.refuse();
+    await h.clock.advance(5000);
+    await h.done;
+    expect(h.calls).toEqual([{ url: LAN, at: 0 }]);
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'unreachable' });
   });
 });

@@ -1,4 +1,4 @@
-import { NET_ROUTE_PROBE_TIMEOUT_MS } from '@/shared/constants';
+import { NET_ROUTE_PROBE_TIMEOUT_MS, NET_ROUTE_RELAY_HEAD_START_MS } from '@/shared/constants';
 import type { NetPairedInstance, NetProbeOutcome, NetRouteChoice } from '@/core/types';
 import { loadInstance, rememberRoute } from './net-persistence';
 import { chooseRoute, usableRemote } from './net-route-choice';
@@ -18,33 +18,83 @@ export function probeUrls(instance: NetPairedInstance): NetProbeUrls {
   };
 }
 
-function outcomeOf(attempt: Promise<unknown>, timeoutMs: number): Promise<NetProbeOutcome> {
+export interface NetProbeClock {
+  after(ms: number, fire: () => void): () => void;
+}
+
+export interface NetProbeTimings {
+  timeoutMs: number;
+  headStartMs: number;
+  clock: NetProbeClock;
+}
+
+const systemClock: NetProbeClock = {
+  after: (ms, fire) => {
+    const timer = setTimeout(fire, ms);
+    return () => clearTimeout(timer);
+  },
+};
+
+export const NET_PROBE_TIMINGS: NetProbeTimings = {
+  timeoutMs: NET_ROUTE_PROBE_TIMEOUT_MS,
+  headStartMs: NET_ROUTE_RELAY_HEAD_START_MS,
+  clock: systemClock,
+};
+
+function outcomeOf(attempt: Promise<unknown>, timings: NetProbeTimings): Promise<NetProbeOutcome> {
   return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve('failed'), timeoutMs);
+    const cancel = timings.clock.after(timings.timeoutMs, () => resolve('failed'));
     attempt.then(
       () => {
-        clearTimeout(timer);
+        cancel();
         resolve('reached');
       },
       () => {
-        clearTimeout(timer);
+        cancel();
         resolve('failed');
       }
     );
   });
 }
 
+function relayAfterHeadStart(
+  lan: Promise<NetProbeOutcome>,
+  startRelay: () => Promise<NetProbeOutcome>,
+  timings: NetProbeTimings
+): Promise<NetProbeOutcome> {
+  return new Promise((resolve) => {
+    let started = false;
+    let cancelHeadStart: () => void = () => undefined;
+    const start = (): void => {
+      if (started) return;
+      started = true;
+      cancelHeadStart();
+      void startRelay().then(resolve);
+    };
+    cancelHeadStart = timings.clock.after(timings.headStartMs, start);
+    void lan.then((outcome) => {
+      if (outcome !== 'reached') start();
+      else if (!started) {
+        cancelHeadStart();
+        resolve('absent');
+      }
+    });
+  });
+}
+
 export async function measureRoute(
   instance: NetPairedInstance,
   reach: NetReach,
-  timeoutMs: number = NET_ROUTE_PROBE_TIMEOUT_MS
+  timings: NetProbeTimings = NET_PROBE_TIMINGS
 ): Promise<NetRouteChoice> {
   const urls = probeUrls(instance);
-  const relay: Promise<NetProbeOutcome> = urls.relay
-    ? outcomeOf(reach(urls.relay), timeoutMs)
+  const lan = outcomeOf(reach(urls.lan), timings);
+  const relayUrl = urls.relay;
+  const relay: Promise<NetProbeOutcome> = relayUrl
+    ? relayAfterHeadStart(lan, () => outcomeOf(reach(relayUrl), timings), timings)
     : Promise.resolve('absent');
-  const lan = await outcomeOf(reach(urls.lan), timeoutMs);
-  return chooseRoute({ lan, relay: lan === 'reached' ? 'absent' : await relay });
+  const lanOutcome = await lan;
+  return chooseRoute({ lan: lanOutcome, relay: lanOutcome === 'reached' ? 'absent' : await relay });
 }
 
 export class NetRouteKeeper {
