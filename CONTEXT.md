@@ -1196,9 +1196,29 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   - `calendarEventService.observeRecurring()` (the rows with a rule, one shared
     `series` source) and the household zone feed the today, month and agenda-feed
     projections. `toCalendarEntries` expands each event whose rule parses into the
-    occurrences that start inside the window (at most `RECURRENCE_OCCURRENCE_LIMIT`
-    per series), in the household zone. Entries carry instants, so they are shown in
-    the device zone.
+    occurrences that start inside the window, in the household zone. Entries carry
+    instants, so they are shown in the device zone.
+  - The expansion is lazy and windowed: only the requested window is computed,
+    nothing ahead of it. Each request carries its own guard, `occurrenceLimitFor`:
+    the window's days at one occurrence a day (daily is the finest rule) plus a
+    margin of 7. So no window the app requests is ever cut, however far the agenda
+    list has been extended. Reaching the guard would mean a rule finer than daily;
+    the projection then keeps the first occurrences and says so through
+    `log.debug('calendar', …)`, in dev builds only.
+  - The agenda list is cumulative: every "load more" recomputes from the first day to
+    `weeks × 7`. The cost of recomputing a two-year window (735 days) with 20 series
+    was measured on the development laptop (bun, median of 15 runs):
+
+    | Rules, zone | Median |
+    |---|---|
+    | 20 mixed rules, household zone = device zone | 2.1 ms |
+    | 20 mixed rules, another household zone (Intl) | 13.8 ms |
+    | 20 daily rules, household zone = device zone | 8.8 ms |
+    | 20 daily rules, another household zone (Intl) | 49.7 ms |
+
+    The worst case is over the 16 ms frame, so paging the agenda is a recorded
+    follow-up. `calendar-recurrence.test.ts` keeps the mixed case under one frame and
+    the worst case under a guard of 8 frames.
   - An event whose rule the app cannot read (the event DTO checks only its length) is
     one plain entry at its start. A range row without a rule wins over a stale series
     row.
@@ -1207,12 +1227,20 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     keeps the series' own start, end and rule.
   - The agenda feed has more while a series continues, which is always, because the
     grammar has no end.
-- **An occurrence edits the series.** The form opens on the series' own start, so
-  saving a new title does not move the series to the tapped day, and a hint says the
-  change applies to every occurrence. The menu says "Editar la serie" and "Eliminar
-  todas las repeticiones". An optimistic patch of an occurrence changes only its text
-  fields; its times come back when the event row changes and the series re-expands.
-  Reminders are not expanded: the agenda shows a reminder once, at its current time.
+- **An occurrence edits the series; there are no single-occurrence exceptions.**
+  Exceptions are a recorded follow-up.
+  - The form opens on the series' own start, so saving a new title does not move the
+    series to the tapped day. Its title is "Editar la serie", and its hint reads
+    "… Lo que cambies se aplica a toda la serie."
+  - In the menu, "Editar la serie" and "Eliminar todas las repeticiones" both carry
+    the line "Se aplica a toda la serie".
+  - Deleting a series asks first, in a danger confirm whose text reads "Se aplica a
+    toda la serie: se eliminan todas sus repeticiones, también las pasadas."
+    (`seriesDeleteConfirm`). The Undo toast still follows. A single event keeps going
+    straight to Undo.
+  - An optimistic patch of an occurrence changes only its text fields. Its times come
+    back when the event row changes and the series re-expands.
+  - Reminders are not expanded: the agenda shows a reminder once, at its current time.
 - **Reminder repeat.**
   - The edit dialog has a repeat picker (No se repite, Cada día, Cada semana, Cada mes,
     Cada año) and, when it repeats, an interval field with the backend DTO's own check
@@ -1232,6 +1260,9 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     `scheduledAt`. After a clamp (a monthly rule on the 31st, a yearly one on
     29 February) it can land on a clamped day the backend would not pick. The audit
     diff of the real row then replaces it, because the intent drops on the server's row.
+    `reminders.test.ts` plays both cases, from the prediction to the correction: after
+    February the 31st is predicted as the 28th, and in the next leap year 29 February is
+    predicted as the 28th.
 
 ### Snooze (F6, 2026-10-13)
 

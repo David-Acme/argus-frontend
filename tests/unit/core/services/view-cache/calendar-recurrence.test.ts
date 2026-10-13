@@ -8,6 +8,9 @@ import {
   projectAgendaFeed,
   toCalendarEntries,
 } from '@/core/services/view-cache/calendar.projection';
+import { AGENDA_FEED_INITIAL_WEEKS, AGENDA_FEED_STEP_WEEKS } from '@/shared/constants/cache.constant';
+import { deviceTimeZone } from '@/shared/hooks/use-date-formatter/date';
+import { occurrenceLimitFor } from '@/shared/libs/recurrence';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -122,5 +125,85 @@ describe('recurring events in the agenda', () => {
     };
     expect(feed([])).toBe(false);
     expect(feed([event()])).toBe(true);
+  });
+});
+
+const feedRows = (writes: ViewWrite[]): CalendarEntry[] => {
+  const [write] = writes;
+  return write && 'value' in write ? (write.value as { rows: CalendarEntry[] }).rows : [];
+};
+
+const loadMores = (weeks: number): number => Math.ceil((weeks - AGENDA_FEED_INITIAL_WEEKS) / AGENDA_FEED_STEP_WEEKS);
+
+describe('the occurrence guard is sized per request', () => {
+  test('the guard is the window in days at one occurrence a day, plus a margin', () => {
+    const from = Date.UTC(2026, 0, 1);
+    expect(occurrenceLimitFor({ from, to: from + DAY - 1 })).toBe(8);
+    expect(occurrenceLimitFor({ from, to: from + 365 * DAY - 1 })).toBe(372);
+    expect(occurrenceLimitFor({ from, to: from - 1 })).toBe(0);
+  });
+
+  test('a long cumulative agenda window with a daily rule returns every occurrence, none cut', () => {
+    const scope = agendaScope(new Date(2026, 9, 1));
+    const weeks = AGENDA_FEED_INITIAL_WEEKS + loadMores(3 * 52) * AGENDA_FEED_STEP_WEEKS;
+    const span = agendaSpan(scope, { weeks });
+    const daily = event({
+      id: 'd1',
+      startsAt: new Date(2026, 8, 1, 7, 30),
+      endsAt: null,
+      recurrenceRule: 'FREQ=DAILY',
+    });
+    const rows = feedRows(
+      projectAgendaFeed(
+        { events: [], reminders: [], tasks: [], series: [daily], zone: null, eventsLater: false, tasksLater: false },
+        scope,
+        span
+      )
+    );
+    expect(weeks).toBeGreaterThanOrEqual(3 * 52);
+    expect(rows).toHaveLength(weeks * 7);
+    expect(new Date(rows[0]?.startsAt ?? 0).getDate()).toBe(1);
+    expect(new Date(rows.at(-1)?.startsAt ?? 0).getTime()).toBeLessThanOrEqual(span.to);
+    expect(new Set(rows.map((row) => row.id)).size).toBe(rows.length);
+  });
+});
+
+describe('the cumulative recompute of a two-year agenda', () => {
+  const RUNS = 7;
+  const FRAME_MS = 16;
+  const WORST_CASE_GUARD_MS = 8 * FRAME_MS;
+  const MIXED = ['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=WEEKLY;INTERVAL=2', 'FREQ=MONTHLY', 'FREQ=YEARLY'];
+
+  const twentySeries = (ruleOf: (index: number) => string): ICalendarEventCacheSource[] =>
+    Array.from({ length: 20 }, (_, index) =>
+      event({
+        id: `s${index}`,
+        startsAt: new Date(2026, 8, 1 + (index % 7), 6 + (index % 12), 15),
+        endsAt: null,
+        recurrenceRule: ruleOf(index),
+      })
+    );
+
+  const medianMs = (series: ICalendarEventCacheSource[], zone: string | null): number => {
+    const scope = agendaScope(new Date(2026, 9, 1));
+    const span = agendaSpan(scope, { weeks: AGENDA_FEED_INITIAL_WEEKS + loadMores(2 * 52) * AGENDA_FEED_STEP_WEEKS });
+    const input = { events: [], reminders: [], tasks: [], series, zone, eventsLater: false, tasksLater: false };
+    projectAgendaFeed(input, scope, span);
+    const times = Array.from({ length: RUNS }, () => {
+      const started = performance.now();
+      projectAgendaFeed(input, scope, span);
+      return performance.now() - started;
+    }).sort((left, right) => left - right);
+    return times[Math.floor(RUNS / 2)] ?? Number.POSITIVE_INFINITY;
+  };
+
+  const otherZone = (): string => (deviceTimeZone() === 'Europe/Madrid' ? 'America/New_York' : 'Europe/Madrid');
+
+  test('twenty series of mixed rules in the household zone recompute within one frame', () => {
+    expect(medianMs(twentySeries((index) => MIXED[index % MIXED.length] ?? 'FREQ=WEEKLY'), null)).toBeLessThan(FRAME_MS);
+  });
+
+  test('twenty daily series through a household zone that is not the device zone stay under the regression guard', () => {
+    expect(medianMs(twentySeries(() => 'FREQ=DAILY'), otherZone())).toBeLessThan(WORST_CASE_GUARD_MS);
   });
 });

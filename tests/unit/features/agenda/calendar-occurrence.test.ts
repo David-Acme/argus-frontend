@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { localeDictionaries } from '@/core/i18n/locales';
 import type { CalendarEntry } from '@/core/types';
 import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
@@ -6,6 +7,7 @@ import {
   calendarEntryEditHref,
   calendarEntryRecordId,
   isOccurrence,
+  seriesDeleteConfirm,
   type CalendarEntryDetailLabels,
 } from '@/features/agenda/model/calendar-entry-actions';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
@@ -82,6 +84,22 @@ describe('an occurrence addresses its event', () => {
     const rows = [occurrence(0), occurrence(1), plain];
     const left = applyIntents(rows, [intent({ kind: 'delete' })], CALENDAR_LENSES, byStart);
     expect(left.map((entry) => entry.id)).toEqual(['event:12']);
+  });
+
+  test('deleting a series asks first and says it applies to the whole series; a single event goes straight to undo', () => {
+    const labels = { title: 'Delete Piano?', description: 'Applies to the whole series', confirmLabel: 'Delete every occurrence' };
+    expect(seriesDeleteConfirm(occurrence(1), labels)).toEqual({ ...labels, intent: 'danger' });
+    expect(seriesDeleteConfirm(plain, labels)).toBeUndefined();
+  });
+
+  test('the series actions read "se aplica a toda la serie" in Spanish and say the same in English', () => {
+    const { es, en } = localeDictionaries;
+    expect(es.screens.agenda['applies-to-series']).toBe('Se aplica a toda la serie');
+    expect(es.screens.agenda['series-hint']).toContain('se aplica a toda la serie');
+    expect(es.screens.agenda['delete-series-body']).toStartWith('Se aplica a toda la serie');
+    expect(en.screens.agenda['applies-to-series']).toBe('Applies to the whole series');
+    expect(en.screens.agenda['series-hint']).toContain('applies to the whole series');
+    expect(en.screens.agenda['delete-series-body']).toStartWith('Applies to the whole series');
   });
 
   test('the detail says how the event repeats', () => {

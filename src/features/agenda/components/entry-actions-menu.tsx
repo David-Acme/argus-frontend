@@ -21,6 +21,7 @@ import {
   availableCalendarEntryActions,
   calendarEntryRecordId,
   isOccurrence,
+  seriesDeleteConfirm,
   shouldShowCalendarEntryOverflow,
   type CalendarEntryAction,
 } from '@/features/agenda/model/calendar-entry-actions';
@@ -70,7 +71,12 @@ export function EntryActionsMenu({
     if (pending) return list;
     for (const action of availableCalendarEntryActions(entry, { canEdit, canDelete, canShare })) {
       if (action === 'edit' && onEdit) {
-        list.push({ value: action, label: series ? t('screens.agenda.edit-series') : t('common.edit'), icon: 'pencil' });
+        list.push({
+          value: action,
+          label: series ? t('screens.agenda.edit-series') : t('common.edit'),
+          description: series ? t('screens.agenda.applies-to-series') : undefined,
+          icon: 'pencil',
+        });
       }
       if (action === 'share' && onShare) {
         list.push({ value: action, label: t('screens.agenda.share'), icon: 'users' });
@@ -89,6 +95,7 @@ export function EntryActionsMenu({
         list.push({
           value: action,
           label: series ? t('screens.agenda.delete-series') : t('common.delete'),
+          description: series ? t('screens.agenda.applies-to-series') : undefined,
           icon: 'trash',
           destructive: true,
         });
@@ -117,6 +124,11 @@ export function EntryActionsMenu({
     }
 
     await runOptimistic({
+      confirm: seriesDeleteConfirm(entry, {
+        title: t('screens.agenda.delete-event-title', { name: entry.title }),
+        description: t('screens.agenda.delete-series-body'),
+        confirmLabel: t('screens.agenda.delete-series'),
+      }),
       intents: [{ table: isEvent ? 'calendar_event' : 'project_task', kind: 'delete', recordId }],
       call: () => (isEvent ? calendarEventService.remove(recordId) : projectTaskService.remove(recordId)),
       undo: { title: series ? t('screens.agenda.deleted-series') : t('screens.agenda.deleted'), description: entry.title },

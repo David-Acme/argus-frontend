@@ -1,4 +1,4 @@
-import type { CalendarEntry, CalendarEntryState } from '@/core/types';
+import type { CalendarEntry, CalendarEntryState, ConfirmRequest } from '@/core/types';
 import type { Href } from 'expo-router';
 
 export type CalendarEntryAction = 'edit' | 'delete' | 'toggle' | 'share';
@@ -113,6 +113,13 @@ export function calendarEntryRecordId(entry: Pick<CalendarEntry, 'id'>): string 
 }
 
 export const isOccurrence = (entry: Pick<CalendarEntry, 'series'>): boolean => entry.series !== undefined;
+
+export type SeriesDeleteLabels = Pick<ConfirmRequest, 'title' | 'description' | 'confirmLabel'>;
+
+export const seriesDeleteConfirm = (
+  entry: Pick<CalendarEntry, 'series'>,
+  labels: SeriesDeleteLabels
+): ConfirmRequest | undefined => (isOccurrence(entry) ? { ...labels, intent: 'danger' } : undefined);
 
 export function availableCalendarEntryActions(
   entry: CalendarEntry,

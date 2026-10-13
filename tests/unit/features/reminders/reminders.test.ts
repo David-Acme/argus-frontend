@@ -5,7 +5,7 @@ import { translate } from '@/core/i18n/translate';
 import { projectReminders } from '@/core/services/view-cache/reminder.projection';
 import type { TranslateFn } from '@/core/types';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
-import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
+import { applyIntents, OptimisticRegistry, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
   draftIssues,
   draftOf,
@@ -28,7 +28,7 @@ import {
   snoozeBodyOf,
   snoozeOptions,
 } from '@/features/reminders/model/reminder-snooze';
-import { intlZoneClock } from '@/shared/libs/recurrence';
+import { firstOccurrenceAfter, intlZoneClock, parseRecurrenceRule } from '@/shared/libs/recurrence';
 import { matchesReminder, reminderTiming, reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
 import { searchKinds, searchPlaceholder } from '@/features/home/model/home-search';
 
@@ -190,6 +190,79 @@ describe('reminder repeat', () => {
       REMINDER_LENSES
     );
     expect(rolled).toMatchObject({ isCompleted: false, scheduledAt: Date.UTC(2026, 9, 12, 13, 0, 0) });
+  });
+});
+
+describe('the instant roll and the audit diff that corrects it', () => {
+  const lima = () => {
+    const clock = intlZoneClock('America/Lima');
+    if (!clock) throw new Error('this runtime does not know America/Lima');
+    return clock;
+  };
+  const at = (year: number, month: number, day: number, hour: number): number =>
+    lima().epochOf({ year, month, day, hour, minute: 0, second: 0 });
+
+  type RollCase = { rule: string; anchor: number; scheduledAt: number; predicted: number; server: number };
+
+  function playRoll({ rule, anchor, scheduledAt, predicted, server }: RollCase) {
+    const clock = lima();
+    const now = scheduledAt + HOUR;
+    const shown = row({ id: '31', scheduledAt, recurrenceRule: rule });
+    const parsed = parseRecurrenceRule(rule);
+    if (!parsed) throw new Error(`not a rule: ${rule}`);
+    expect(rolledSchedule({ row: shown, now, clock })).toBe(predicted);
+    expect(firstOccurrenceAfter({ rule: parsed, anchor, moment: Math.max(scheduledAt, now), clock })).toBe(server);
+
+    const registry = new OptimisticRegistry({ schedule: () => () => undefined, ttlMs: 60_000, graceMs: 600 });
+    const begun = registry.begin({
+      table: 'reminder',
+      kind: 'update',
+      recordId: shown.id,
+      values: { scheduledAt: Math.round(predicted / 1000) },
+    });
+    registry.confirm(begun.id);
+    expect(applyIntents([shown], registry.snapshot(), REMINDER_LENSES)[0]).toMatchObject({
+      scheduledAt: predicted,
+      isCompleted: false,
+    });
+
+    const synced = { ...shown, scheduledAt: server };
+    registry.serverRows([{ table: 'reminder', recordId: shown.id }]);
+    expect(registry.snapshot()).toEqual([]);
+    expect(applyIntents([synced], registry.snapshot(), REMINDER_LENSES)[0]).toMatchObject({
+      scheduledAt: server,
+      isCompleted: false,
+    });
+  }
+
+  test('a monthly rule on the 31st: the app predicts the 28th after February, and the audit puts back the 31st', () => {
+    playRoll({
+      rule: 'FREQ=MONTHLY',
+      anchor: at(2026, 1, 31, 9),
+      scheduledAt: at(2026, 2, 28, 9),
+      predicted: at(2026, 3, 28, 9),
+      server: at(2026, 3, 31, 9),
+    });
+  });
+
+  test('a yearly rule on 29 February: the app predicts the 28th of the next leap year, and the audit puts back the 29th', () => {
+    playRoll({
+      rule: 'FREQ=YEARLY',
+      anchor: at(2024, 2, 29, 10),
+      scheduledAt: at(2027, 2, 28, 10),
+      predicted: at(2028, 2, 28, 10),
+      server: at(2028, 2, 29, 10),
+    });
+  });
+
+  test('when the anchor and the time agree, the prediction is already the server day', () => {
+    playRoll({
+      rule: 'FREQ=MONTHLY',
+      anchor: at(2026, 1, 15, 9),
+      scheduledAt: at(2026, 2, 15, 9),
+      predicted: at(2026, 3, 15, 9),
+      server: at(2026, 3, 15, 9),
+    });
   });
 });
 

@@ -19,9 +19,10 @@ import {
   VIEW_CACHE_CALENDAR_MONTH_DAYS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants/cache.constant';
-import { RECURRENCE_OCCURRENCE_LIMIT } from '@/shared/constants/recurrence.constant';
+import { log } from '@/core/services/log';
 import {
   firstOccurrenceAfter,
+  occurrenceLimitFor,
   occurrencesBetween,
   parseRecurrenceRule,
   zoneClock,
@@ -82,14 +83,13 @@ function occurrenceEntries({ event, rule, text }: RecurringEvent, range: Range, 
   const anchor = event.startsAt.getTime();
   const endsAt = event.endsAt?.getTime() ?? null;
   const series = { startsAt: anchor, endsAt, rule: text };
-  return occurrencesBetween({
-    rule,
-    anchor,
-    from: range.from,
-    to: range.to,
-    clock,
-    limit: RECURRENCE_OCCURRENCE_LIMIT,
-  }).map((startsAt) => ({
+  const limit = occurrenceLimitFor(range);
+  const starts = occurrencesBetween({ rule, anchor, from: range.from, to: range.to, clock, limit: limit + 1 });
+  if (starts.length > limit) {
+    log.debug('calendar', `occurrence limit ${limit} reached for event ${event.id} in ${range.from}..${range.to}`);
+    starts.length = limit;
+  }
+  return starts.map((startsAt) => ({
     ...eventEntry(event, startsAt, endsAt === null ? null : startsAt + (endsAt - anchor)),
     id: occurrenceId(event.id, startsAt),
     series,

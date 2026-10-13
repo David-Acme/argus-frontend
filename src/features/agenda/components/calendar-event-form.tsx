@@ -168,7 +168,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
       onOpenChange={handleOpenChange}
       dismissible={!submitting}
       onSubmit={submitting ? undefined : () => void submit()}
-      title={event ? t('common.edit') : t('screens.agenda.new-event')}
+      title={seriesLabel ? t('screens.agenda.edit-series') : event ? t('common.edit') : t('screens.agenda.new-event')}
       closeLabel={t('common.close')}
       footer={
         <>

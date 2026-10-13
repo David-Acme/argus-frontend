@@ -1,8 +1,10 @@
 import type { RecurrenceFrequency, RecurrenceRule, TranslateFn, WallTime, ZoneClock } from '@/core/types';
 import {
+  RECURRENCE_FINEST_PER_DAY,
   RECURRENCE_FREQUENCIES,
   RECURRENCE_INTERVAL_MAX,
   RECURRENCE_INTERVAL_MIN,
+  RECURRENCE_LIMIT_MARGIN,
   RECURRENCE_OFFSET_CACHE_LIMIT,
   RECURRENCE_SEARCH_LIMIT,
 } from '@/shared/constants';
@@ -220,6 +222,9 @@ export function sameTimeTomorrow(moment: number, clock: ZoneClock): number {
   const tomorrow = civilFromDays(dayNumberOf(now) + 1);
   return clock.epochOf({ ...tomorrow, hour: now.hour, minute: now.minute, second: now.second });
 }
+
+export const occurrenceLimitFor = ({ from, to }: { from: number; to: number }): number =>
+  to < from ? 0 : Math.ceil((to - from + 1) / DAY_MS) * RECURRENCE_FINEST_PER_DAY + RECURRENCE_LIMIT_MARGIN;
 
 export function occurrencesBetween({ rule, anchor, from, to, clock, limit }: OccurrenceWindowInput): number[] {
   if (anchor > to || from > to) return [];
