@@ -53,6 +53,22 @@ export function appendAssistantText(
   return next;
 }
 
+export const UNHEARD_TEXT = '…';
+
+export type TranscriptCorrection = {
+  lines: readonly VoiceTranscriptLine[];
+  replaced: string | null;
+};
+
+export function correctLastUserLine(lines: readonly VoiceTranscriptLine[], text: string): TranscriptCorrection {
+  const index = lines.findLastIndex((line) => line.role === 'user');
+  const current = index === -1 ? undefined : lines[index];
+  if (!current) return { lines, replaced: null };
+  const next = lines.slice();
+  next[index] = { ...current, text: text.trim() || UNHEARD_TEXT };
+  return { lines: next, replaced: current.text };
+}
+
 export function lastAssistantText(lines: readonly VoiceTranscriptLine[]): string {
   return lines.findLast((line) => line.role === 'assistant')?.text ?? '';
 }

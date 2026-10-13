@@ -2631,10 +2631,11 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
   (backend `services/guard/CONTEXT.md`, "Panic and duress", for the threat
   model). Arming never asks.
 
-### The duress phrase and the reach of an alert (F4, 2026-10-13)
+### The duress phrase, the reach of an alert and the withheld turn (F4, 2026-10-13)
 
 Backend: `services/guard/CONTEXT.md`, "The duress phrase (voice, 2026-10-13, F4)" and
-"A household of one".
+"A household of one"; `services/voice/CONTEXT.md`, "The correction frame (frontend
+contract)".
 
 - **The phrase.** While the duress switch is on, the Owner gets "Elegir / Cambiar la frase
   de coacción" and, once one is set, "Quitar la frase de coacción" in Perfil > Seguridad
@@ -2666,11 +2667,30 @@ Backend: `services/guard/CONTEXT.md`, "The duress phrase (voice, 2026-10-13, F4)
   as `unknown`. Turning duress on while it is `nobody` asks first, and "Activar
   igualmente" goes ahead: the backend keeps that terminal alert as designed (guard's
   DESIGN FORK (a)).
-- Tests: `safety-model.test.ts` (the phrase rules, the reach, the contract stripping
-  an echoed phrase) and `safety-phrase.test.ts` (the body sent, and no trace in the
-  answer or the memo, including a refusal). The e2e spec `duress-phrase.e2e.ts` is
-  written and not run: it sets a phrase with no copy in `localStorage`, and warns
-  before turning duress on with nobody to reach.
+- **The withheld voice turn.** When argus-llm withholds a turn (the duress screen), the
+  app never keeps the words. There are two paths:
+  - *Direct*: the server sends `…` as the final transcript, and it is shown like any
+    other turn.
+  - *Correction*: words already shown are followed by `voice:stt_correction` on `/sync`,
+    or by LiveKit topic `argus.stt_correction`, both carrying `{text}`. The app replaces
+    the most recent final user line in place (`correctLastUserLine`; a blank text still
+    becomes `…`), never adds a bubble, and overwrites the live caption (`sttText`) when
+    it still holds those words. A correction before any final transcript of the call is
+    ignored.
+  - The transcript lives only in `VoiceService` memory, so nothing on disk ever held
+    the words.
+  - *A second unheard turn in a row* gets no `voice:stt`: the app receives `voice:event`
+    alone, or a correction followed by `voice:event` when the words were shown. Argus
+    stays silent then. On the socket transport, which has no agent state, the app went
+    to "thinking" on the shown words, so a `voice:event` that follows a correction of
+    the current turn returns it to listening. On LiveKit the agent state already does.
+- Tests: `safety-model.test.ts` (the phrase rules, the reach, the contract stripping an
+  echoed phrase), `safety-phrase.test.ts` (the body sent, and no trace in the answer or
+  the memo, including a refusal), `voice-transcript.test.ts` (the in-place correction),
+  `voice-rtc-call.test.ts` (both paths, the ignored early correction, the second unheard
+  turn, the socket transport back to listening). The e2e spec `duress-phrase.e2e.ts` is
+  written and not run: it sets a phrase with no copy in `localStorage`, and warns before
+  turning duress on with nobody to reach.
 
 ## Intruder response: who is told, who is attending, is it real (2026-10-04, RESPONSE)
 

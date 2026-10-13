@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, setSystemTime, test } from 'bun:test';
 import { join } from 'node:path';
 import type { IRealtimeCall, IServiceResponse, ISocketEmitDto } from '@/core/interfaces';
 import type { RtcEvent, RtcJoin } from '@/core/types';
@@ -12,6 +12,7 @@ type Posted = { url: string; body: unknown };
 const posted: Posted[] = [];
 const sentFrames: { type: string; payload: unknown }[] = [];
 const operationListeners = new Map<number, (message: ISocketEmitDto) => void>();
+const typeListeners = new Map<string, (payload: unknown) => void>();
 let tokenAnswers: IServiceResponse<unknown>[] = [];
 let deferredAnswer: Promise<IServiceResponse<unknown>> | null = null;
 let realtimeSupported = true;
@@ -72,7 +73,10 @@ mock.module('@/core/services/sync', () => ({
     isSocketConnected: true,
     send: (type: string, payload: unknown) => sentFrames.push({ type, payload }),
     sendBinary: () => undefined,
-    onType: () => () => undefined,
+    onType: (type: string, listener: (payload: unknown) => void) => {
+      typeListeners.set(type, listener);
+      return () => undefined;
+    },
     onBinary: () => () => undefined,
     on: (operation: number, listener: (message: ISocketEmitDto) => void) => {
       operationListeners.set(operation, listener);
@@ -439,3 +443,88 @@ describe('Argus calls you', () => {
     expect(voiceService.snapshot.waitingCall?.callId).toBe('call-42');
   });
 });
+
+describe('a withheld turn leaves no trace of the words', () => {
+  beforeEach(() => {
+    setSystemTime(new Date(Date.now() + 60_000));
+  });
+
+  afterEach(() => {
+    setSystemTime();
+  });
+
+  const words = 'rojo verde azul';
+  const userTexts = () =>
+    voiceService.snapshot.transcript.filter((line) => line.role === 'user').map((line) => line.text);
+  const traceOfWords = () => JSON.stringify(voiceService.snapshot).includes(words);
+  const data = (topic: string, payload: unknown) =>
+    call.listener({ kind: 'data', topic, payload: JSON.stringify(payload) });
+  const frame = (type: string, payload: unknown) => {
+    const listener = typeListeners.get(type);
+    if (!listener) throw new Error(`no listener for ${type}`);
+    listener(payload);
+  };
+
+  test('the direct path shows the ellipsis the server sent, and the words never arrive', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    data('argus.stt', { text: words.slice(0, 5), final: false });
+    data('argus.stt', { text: '…', final: true });
+    expect(userTexts()).toEqual(['…']);
+    expect(voiceService.snapshot.sttText).toBe('…');
+    expect(traceOfWords()).toBe(false);
+  });
+
+  test('a correction replaces the shown words in place, with no second bubble', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    data('argus.stt', { text: words, final: true });
+    expect(userTexts()).toEqual([words]);
+    data('argus.stt_correction', { text: '…' });
+    data('argus.turn', { id: 4 });
+    data('argus.assistant', { text: '¿Perdona? No te he entendido.', turnId: 4 });
+    expect(userTexts()).toEqual(['…']);
+    expect(voiceService.snapshot.sttText).toBe('…');
+    expect(voiceService.snapshot.transcript.map((line) => line.role)).toEqual(['user', 'assistant']);
+    expect(traceOfWords()).toBe(false);
+  });
+
+  test('a correction before any final transcript of the call is ignored', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    data('argus.stt_correction', { text: '…' });
+    expect(voiceService.snapshot.transcript).toEqual([]);
+  });
+
+  test('a second unheard turn in a row: an event alone adds nothing, and a correction then an event removes the words', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    data('argus.stt', { text: '…', final: true });
+    data('argus.event', { reaction: 'confused', intensity: 0.6 });
+    data('argus.turn', { id: 5 });
+    data('argus.assistant', { text: '¿Perdona?', turnId: 5 });
+    data('argus.event', { reaction: 'confused', intensity: 0.6 });
+    expect(userTexts()).toEqual(['…']);
+    data('argus.stt', { text: words, final: true });
+    data('argus.stt_correction', { text: '…' });
+    data('argus.event', { reaction: 'confused', intensity: 0.6 });
+    expect(userTexts()).toEqual(['…', '…']);
+    expect(voiceService.snapshot.transcript.filter((line) => line.role === 'assistant')).toHaveLength(1);
+    expect(traceOfWords()).toBe(false);
+  });
+
+  test('on the socket transport the silent turn goes back to listening instead of waiting for a reply', async () => {
+    realtimeSupported = false;
+    await voiceService.start();
+    expect(voiceService.snapshot.transport).toBe('sync');
+    expect(voiceService.snapshot.phase).toBe('listening');
+    frame('voice:stt', { text: words, final: true });
+    expect(voiceService.snapshot.phase).toBe('thinking');
+    frame('voice:stt_correction', { text: '…' });
+    frame('voice:event', { reaction: 'confused', intensity: 0.6 });
+    expect(voiceService.snapshot.phase).toBe('listening');
+    expect(userTexts()).toEqual(['…']);
+    expect(traceOfWords()).toBe(false);
+  });
+});
+

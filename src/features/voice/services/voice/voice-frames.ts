@@ -20,6 +20,11 @@ export function parseSttFrame(payload: unknown): VoiceSttFrame | null {
   return { text: record.text, final: record.final === true };
 }
 
+export function parseSttCorrection(payload: unknown): string | null {
+  const text = asRecord(payload)?.text;
+  return typeof text === 'string' ? text : null;
+}
+
 export function parseAssistantText(payload: unknown): string | null {
   const text = asRecord(payload)?.text;
   return typeof text === 'string' ? text : null;

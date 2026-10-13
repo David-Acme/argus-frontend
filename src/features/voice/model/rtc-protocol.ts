@@ -20,12 +20,14 @@ import {
   VOICE_MUTE_TYPE,
   VOICE_SKIP_TYPE,
   VOICE_STOP_TYPE,
+  VOICE_STT_CORRECTION_TYPE,
   VOICE_STT_TYPE,
   VOICE_TURN_TYPE,
 } from '@/features/voice/constants/voice';
 
 export const RTC_INBOUND_TOPICS: Readonly<Record<string, string>> = {
   'argus.stt': VOICE_STT_TYPE,
+  'argus.stt_correction': VOICE_STT_CORRECTION_TYPE,
   'argus.assistant': VOICE_ASSISTANT_TYPE,
   'argus.turn': VOICE_TURN_TYPE,
   'argus.interrupted': VOICE_INTERRUPTED_TYPE,

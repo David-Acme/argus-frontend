@@ -24,6 +24,7 @@ import {
   VOICE_SKIP_TYPE,
   VOICE_START_TYPE,
   VOICE_STOP_TYPE,
+  VOICE_STT_CORRECTION_TYPE,
   VOICE_STT_TYPE,
   VOICE_TRANSCRIPT_MAX_LINES,
   VOICE_TURN_TYPE,
@@ -82,6 +83,7 @@ import { log } from '@/core/services/log';
 import { createVoiceMic } from './voice-platform';
 import {
   parseAssistantText,
+  parseSttCorrection,
   parseSttFrame,
   parseTurnId,
   parseVoiceAction,
@@ -91,6 +93,7 @@ import { VoicePlayout } from '@/features/voice/services/voice/voice-playout';
 import {
   appendAssistantText,
   appendUserLine,
+  correctLastUserLine,
   lastAssistantText,
 } from '@/features/voice/services/voice/voice-transcript';
 import {
@@ -153,6 +156,7 @@ class VoiceService {
   private gate: TurnGate = INITIAL_TURN_GATE;
   private localTurn = 0;
   private userLines = 0;
+  private withheldTurn: number | null = null;
   private micPending: Int16Array[] = [];
   private micPendingSamples = 0;
   private lastSocketCheckAt = 0;
@@ -232,6 +236,7 @@ class VoiceService {
     this.gate = INITIAL_TURN_GATE;
     this.localTurn = 0;
     this.userLines = 0;
+    this.withheldTurn = null;
     this.actions = [];
     this.liveCameraId = null;
     this.resetMicPending();
@@ -719,10 +724,29 @@ class VoiceService {
         }
         this.notify();
       },
+      [VOICE_STT_CORRECTION_TYPE]: (payload) => {
+        const text = parseSttCorrection(payload);
+        if (text === null || this.fromPreviousCall() || this.userLines === 0) return;
+        const corrected = correctLastUserLine(this.transcript, text);
+        if (corrected.replaced === null) return;
+        this.transcript = corrected.lines;
+        if (this.sttText.trim() === corrected.replaced) this.sttText = text;
+        this.withheldTurn = this.localTurn;
+        this.notify();
+      },
       [VOICE_EVENT_TYPE]: (payload) => {
         if (this.fromPreviousCall()) return;
         const p = payload as IVoiceReactionPayload;
         useAvatarStore.getState().react(p.reaction, p.intensity ?? 0);
+        if (
+          this.transport !== 'rtc' &&
+          this.active &&
+          this.phase === 'thinking' &&
+          this.withheldTurn === this.localTurn
+        ) {
+          this.phase = 'listening';
+          this.notify();
+        }
       },
       [VOICE_TURN_TYPE]: (payload) => {
         const id = parseTurnId(payload);
