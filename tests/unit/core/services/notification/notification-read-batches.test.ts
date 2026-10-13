@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readBatches } from '@/core/services/notification-read-batches';
+import { readBatches } from '@/core/services/notification';
 
 describe('readBatches', () => {
   test('a read-all above the server limit is split into batches of at most 500 ids', () => {

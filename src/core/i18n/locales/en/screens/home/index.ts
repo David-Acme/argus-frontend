@@ -52,12 +52,16 @@ export const home = {
   'notifications-new-one': '1 new',
   'notifications-caught-up': 'All caught up',
   'notifications-open-hint': 'Opening them marks them as read',
+  'notification-deleted': 'Notification deleted',
+  'notification-delete-failed': 'The notification could not be deleted',
+  'notification-delete-partial': 'Some updates could not be deleted',
   thread: {
     count: '{count} updates',
     urgent: 'Urgent',
     unread: 'Unread',
     'show-history': 'Shows the earlier updates',
     'mark-read': 'Marks it as read',
+    delete: 'Delete notification: {title}',
     phase: {
       opened: 'First alert',
       escalated: 'Escalated',

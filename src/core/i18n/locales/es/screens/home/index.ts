@@ -52,12 +52,16 @@ export const home = {
   'notifications-new-one': '1 nueva',
   'notifications-caught-up': 'Todo al día',
   'notifications-open-hint': 'Al abrirlas quedan leídas',
+  'notification-deleted': 'Notificación borrada',
+  'notification-delete-failed': 'No se pudo borrar la notificación',
+  'notification-delete-partial': 'Algunos avisos no se pudieron borrar',
   thread: {
     count: '{count} avisos',
     urgent: 'Urgente',
     unread: 'Sin leer',
     'show-history': 'Muestra los avisos anteriores',
     'mark-read': 'Lo marca como leído',
+    delete: 'Borrar notificación: {title}',
     phase: {
       opened: 'Primer aviso',
       escalated: 'Empeoró',

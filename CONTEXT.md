@@ -1137,6 +1137,35 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
 - `CalendarEntry.ownerId` is set for events only, so the Share action can tell the
   owner from everyone else.
 
+### Deleting a notification (F6, 2026-10-13)
+
+- Each row of Novedades (a thread) has a delete button, a ghost icon button beside the
+  row rather than inside its pressable, so it stays a control of its own for a screen
+  reader; its name carries the title ("Delete notification: …"), so two rows never share
+  one. The bell's preview is unchanged. The button shows while `can('notification',
+  'delete')`, which every role holds (`role-access.ts`, mirroring the backend's
+  `kTableAccess`).
+- Deleting a thread deletes every notification it shows: one `DELETE
+  /notification/{id}` per entry, in order (`notificationService.remove`), behind the Undo
+  toast reminders, events and tasks use. The rows leave at once through delete intents
+  on `NOTIFICATION_LENSES` (`threadDeleteIntents`). Entries of the thread that the loaded
+  window does not reach are not deleted, as a tap does not read them.
+- A 404 `NOT_FOUND` counts as deleted: another device got there first
+  (`removalResponse` in `core/services/notification/`). When only some rows are refused,
+  only those come back, with a toast (`refusals`). When every row is refused, everything
+  comes back and the first refusal is toasted, with Retry when it is retryable. A server
+  older than the route answers 404 `NOT_FOUND` as well, so on such a server the row comes
+  back when the intent expires (60 s), without a toast.
+- Other devices drop the row on the `Delete` frame (the generic delete path) or on the
+  user-audit diff that comes before it. `planAuditEntries` treats a diff whose current
+  `deletedAt` is set as a removal, for the tables whose pull has no deletion leg
+  (`SYNC_TABLES_WITHOUT_DELETIONS`, only `notification`). Those tables learn of a deletion
+  only this way, live or on the paged catch-up. It is still a removal when argus-sync's
+  compaction merged it with other fields. A removal of a row the device no longer has
+  is a no-op, never a missing target, so it asks for no context recovery. Whichever of
+  the two frames arrives first removes the row, and the other then finds nothing.
+  Patches of the same row before the removal are dropped, and later ones are ignored.
+
 ### People and access surfaces
 
 - `/profile` is the personal, Threads-inspired but Argus-adapted account view:

@@ -356,6 +356,18 @@ describe('notification projection', () => {
       rows.length
     );
   });
+
+  test('a notification deleted on another device leaves the feed, the previews and the unread count', () => {
+    const kept = { ...source, id: 'n2', title: 'Kept', isRead: true };
+    const before = projectNotificationFeed({ page: { rows: [source, kept], hasMore: false }, unread: 1 }, 'all');
+    expect(rowsOf(before, 'dashboard.notifications').map((item) => (item as { id: string }).id)).toEqual(['n1', 'n2']);
+
+    const after = projectNotificationFeed({ page: { rows: [kept], hasMore: false }, unread: 0 }, 'all');
+    const keptRow = { ...row, id: 'n2', title: 'Kept', isRead: true };
+    expect(valueOf(after, 'notification.feed', 'all')).toEqual({ rows: [keptRow], hasMore: false });
+    expect(rowsOf(after, 'dashboard.notifications')).toEqual([keptRow]);
+    expect(valueOf(after, 'dashboard.unread')).toBe(0);
+  });
 });
 
 describe('activity projection', () => {

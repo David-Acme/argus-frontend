@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import type { IconName } from '@/core/types';
+import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { TimelineItem } from '@/shared/components/ui/timeline';
@@ -26,6 +27,7 @@ type NotificationThreadRowProps = {
   compact?: boolean;
   expandable?: boolean;
   onRead?: (thread: NotificationThread) => void;
+  onDelete?: (thread: NotificationThread) => void;
 };
 
 type ThreadTone = { tile: string; icon: string; dot: string; title: string };
@@ -119,6 +121,7 @@ export function NotificationThreadRow({
   compact = false,
   expandable = false,
   onRead,
+  onDelete,
 }: NotificationThreadRowProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -235,13 +238,12 @@ export function NotificationThreadRow({
   );
 
   const className = cn(
-    'flex-row items-start gap-3 rounded-2xl',
-    compact ? '-mx-2 px-2 py-1.5' : '-mx-2 px-2 py-2'
+    'flex-row items-start gap-3 rounded-2xl px-2',
+    compact ? 'py-1.5' : 'py-2',
+    onDelete ? 'min-w-0 flex-1' : '-mx-2'
   );
 
-  if (!pressable) return <View className={className}>{content}</View>;
-
-  return (
+  const row = pressable ? (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -253,5 +255,22 @@ export function NotificationThreadRow({
       className={cn(className, 'active:bg-surface-secondary', rowHover)}>
       {content}
     </Pressable>
+  ) : (
+    <View className={className}>{content}</View>
+  );
+
+  if (!onDelete) return row;
+
+  return (
+    <View className="-mx-2 flex-row items-start">
+      {row}
+      <Button
+        variant="ghost"
+        size="icon"
+        accessibilityLabel={t('screens.home.thread.delete', { title: latest.title })}
+        onPress={() => onDelete(thread)}>
+        <Icon name="trash" className="text-muted-foreground size-4" />
+      </Button>
+    </View>
   );
 }

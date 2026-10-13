@@ -4,7 +4,7 @@ export type Permission = 'read' | 'create' | 'update' | 'delete';
 
 const FULL: Permission[] = ['read', 'create', 'update', 'delete'];
 const READ: Permission[] = ['read'];
-const READ_UPDATE: Permission[] = ['read', 'update'];
+const READ_UPDATE_DELETE: Permission[] = ['read', 'update', 'delete'];
 
 const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> = {
   owner: {},
@@ -19,7 +19,7 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     project_task: FULL,
     person: FULL,
     user: READ,
-    notification: READ_UPDATE,
+    notification: READ_UPDATE_DELETE,
   },
   guard: {
     reminder: FULL,
@@ -27,13 +27,13 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     zone: READ,
     person: READ,
     user: READ,
-    notification: READ_UPDATE,
+    notification: READ_UPDATE_DELETE,
   },
   guest: {
     reminder: FULL,
     camera: READ,
     user: READ,
-    notification: READ_UPDATE,
+    notification: READ_UPDATE_DELETE,
   },
 };
 

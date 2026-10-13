@@ -41,3 +41,4 @@ export * from './modules.type';
 export * from './access.type';
 export * from './activity.type';
 export * from './resource.type';
+export * from './notification.type';

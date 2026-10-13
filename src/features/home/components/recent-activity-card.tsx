@@ -16,6 +16,7 @@ type RecentActivityCardProps = {
   fill: boolean;
   now: number;
   onRead: (thread: NotificationThread) => void;
+  onDelete?: (thread: NotificationThread) => void;
 };
 
 const THREAD_ROW_ESTIMATE = 76;
@@ -31,12 +32,13 @@ export function RecentActivityCard({
   fill,
   now,
   onRead,
+  onDelete,
 }: RecentActivityCardProps) {
   const renderThread = useCallback(
     (thread: NotificationThread) => (
-      <NotificationThreadRow thread={thread} now={now} expandable onRead={onRead} />
+      <NotificationThreadRow thread={thread} now={now} expandable onRead={onRead} onDelete={onDelete} />
     ),
-    [now, onRead]
+    [now, onDelete, onRead]
   );
 
   return (

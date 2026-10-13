@@ -22,6 +22,7 @@ type HomeAsideProps = {
   paging: InfiniteListState;
   now: number;
   onReadThread: (thread: NotificationThread) => void;
+  onDeleteThread?: (thread: NotificationThread) => void;
 };
 
 export function HomeAside({
@@ -32,6 +33,7 @@ export function HomeAside({
   paging,
   now,
   onReadThread,
+  onDeleteThread,
 }: HomeAsideProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -103,6 +105,7 @@ export function HomeAside({
         fill={isWide}
         now={now}
         onRead={onReadThread}
+        onDelete={onDeleteThread}
       />
     </View>
   );

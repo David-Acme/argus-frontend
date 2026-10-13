@@ -1,55 +1,46 @@
 import type { IAuditLogEntry } from '@/core/interfaces';
-import type { AuditLogApplyResult, AuditLogRecordUpdate, AuditPatch, SyncTableKey } from '@/core/types';
+import type { AuditLogApplyResult, AuditLogRecordUpdate, SyncTableKey } from '@/core/types';
 import { database } from '@/core/database';
 import { optimisticRegistry } from '@/shared/libs/optimistic';
 import { batchPrepared, existingByServerId, type PreparedOperation } from './sync-db-utils';
-import { toAuditPatch } from './audit-log-patch';
+import { planAuditEntries } from './audit-log-patch';
 
 export type PreparedAuditLogs = AuditLogApplyResult & {
   operations: PreparedOperation[];
   updated: AuditLogRecordUpdate[];
 };
 
-const byId = (left: IAuditLogEntry, right: IAuditLogEntry): number =>
-  Number(left.id) - Number(right.id);
-
 class AuditLogProcessorService {
   async prepare(entries: IAuditLogEntry[]): Promise<PreparedAuditLogs> {
-    const grouped = new Map<SyncTableKey, Map<string, AuditPatch>>();
-
-    for (const entry of [...entries].sort(byId)) {
-      const patch = toAuditPatch(entry);
-      if (!patch || Object.keys(patch.props).length === 0) continue;
-      const patches = grouped.get(patch.key) ?? new Map<string, AuditPatch>();
-      const previous = patches.get(patch.recordId);
-      patches.set(
-        patch.recordId,
-        previous ? { ...patch, props: { ...previous.props, ...patch.props } } : patch
-      );
-      grouped.set(patch.key, patches);
-    }
+    const { patches, removals } = planAuditEntries(entries);
 
     const operations: PreparedOperation[] = [];
-    const affected: SyncTableKey[] = [];
+    const affected = new Set<SyncTableKey>();
     const missing = new Set<SyncTableKey>();
     const updated: AuditLogRecordUpdate[] = [];
-    for (const [key, patches] of grouped) {
-      const existing = await existingByServerId(key, [...patches.keys()]);
-      let touched = false;
-      for (const patch of patches.values()) {
+    for (const [key, byRecord] of patches) {
+      const existing = await existingByServerId(key, [...byRecord.keys()]);
+      for (const patch of byRecord.values()) {
         const record = existing.get(patch.recordId);
         if (!record) {
           missing.add(key);
           continue;
         }
-        touched = true;
+        affected.add(key);
         updated.push({ table: key, recordId: patch.recordId });
         operations.push(() => record.prepareUpdate((row) => Object.assign(row, patch.props)));
       }
-      if (touched) affected.push(key);
+    }
+    for (const [key, recordIds] of removals) {
+      const existing = await existingByServerId(key, [...recordIds]);
+      for (const [recordId, record] of existing) {
+        affected.add(key);
+        updated.push({ table: key, recordId });
+        operations.push(() => record.prepareDestroyPermanently());
+      }
     }
 
-    return { operations, affected, missing: [...missing], updated };
+    return { operations, affected: [...affected], missing: [...missing], updated };
   }
 
   apply(entries: IAuditLogEntry[]): Promise<AuditLogApplyResult> {

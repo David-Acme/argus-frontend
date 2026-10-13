@@ -35,3 +35,13 @@ export type AuditLogRecordUpdate = {
   table: SyncTableKey;
   recordId: string;
 };
+
+export type AuditRemoval = {
+  key: SyncTableKey;
+  recordId: string;
+};
+
+export type AuditPlan = {
+  patches: Map<SyncTableKey, Map<string, AuditPatch>>;
+  removals: Map<SyncTableKey, Set<string>>;
+};

@@ -79,7 +79,9 @@ function HomeContent() {
     synced: syncedNotifications,
     threads,
     paging: notificationPaging,
+    remove: removeThread,
   } = useNotificationFeed();
+  const deletesNotifications = can('notification', 'delete');
   const unreadNotifications = unreadThreadCount(threads, syncedUnread, syncedNotifications);
   const firstName = firstNameOf(user);
 
@@ -161,6 +163,7 @@ function HomeContent() {
           paging={notificationPaging}
           now={now}
           onReadThread={readThread}
+          onDeleteThread={deletesNotifications ? removeThread : undefined}
         />
       }>
       <View className="gap-5">

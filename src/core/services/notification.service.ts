@@ -2,10 +2,10 @@ import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { NotificationModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { KeysetPage, KeysetWindow } from '@/core/types';
+import type { KeysetPage, KeysetWindow, NotificationRemoval } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
-import { readBatches } from './notification-read-batches';
+import { readBatches, removalResponse, type RemovalAttempt } from './notification';
 import { DatabaseService, type KeysetQuery } from './database.service';
 
 const FEED_COLUMNS = ['type', 'title', 'body', 'data', 'is_read', 'read_at'];
@@ -44,6 +44,14 @@ class NotificationService extends DatabaseService<'notification'> {
       if (!last.ok) return last;
     }
     return last;
+  }
+
+  async remove(ids: readonly string[]): Promise<IServiceResponse<NotificationRemoval>> {
+    const attempts: RemovalAttempt[] = [];
+    for (const id of ids) {
+      attempts.push({ id, response: await httpService.delete(`/notification/${id}`) });
+    }
+    return removalResponse(attempts);
   }
 
   observeUnreadCountForUser(userId: string): Observable<number> {
