@@ -562,8 +562,6 @@ What it does not do yet, so behaviour today is exactly what it was:
   id. Where it should come from (the pairing answer, `/pairing/status`, the
   sync context, or an mDNS TXT key) is a contract between backend and app,
   waiting for a ruling.
-- **iOS does not admit a device name yet.** Swift's `allowedHost` check still
-  refuses every name but the paired host.
 - **Nothing runs the probes yet.** The triggers are a failed connect and a
   return to the foreground. A network change needs a network-type module and
   a dev-client rebuild (see "Cameras").
@@ -615,6 +613,17 @@ tests will once they can run.
   - `RelayHostsTest.kt` reads the vector file through the
     `argus.relayVectors` system property that `build.gradle` sets. Run it
     with `./gradlew :argus-net:testDebugUnitTest` from `android/`.
+- **iOS (Swift).** `RelayHosts.swift` is the rule. It compares names byte
+  for byte (UTF-8), so Swift's Unicode-aware string equality never enters.
+  - `configureRemote` keeps the profile beside the paired host.
+    `request` and `openSocket` refuse with `HOST_NOT_ALLOWED`, before any
+    connection, a URL that is not https or wss or whose host is neither the
+    paired host nor a device name. Sockets were not checked before.
+  - `StrictDelegate` sets the SSL policy for the host it was asked about.
+    The chain still anchors to the pinned CA alone. It follows no redirect,
+    like `PinnedDelegate`.
+  - Nothing builds or tests the iOS module on this machine. Once an iOS
+    test target exists, its tests read the same vector file.
 
 ### Verification
 - `bunx tsc --noEmit` and `bun run lint` → 0 errors. `cargo check` (src-tauri) → 0/0.

@@ -25,6 +25,7 @@ private func netErrorFrom(_ error: Error) -> NSError {
 public class HybridArgusNet: HybridArgusNetSpec {
   private var caPem = ""
   private var allowedHost = defaultHost
+  private var remote = RemoteProfile.unset
 
   private static let sessionCache = NSCache<NSString, URLSession>()
 
@@ -49,20 +50,32 @@ public class HybridArgusNet: HybridArgusNetSpec {
     try configure(caPem: caPem, allowedHost: allowedHost, ip: ip)
   }
 
+  func configureRemote(homeId: String, domain: String) throws -> Void {
+    remote = RemoteProfile(homeId: homeId, domain: domain)
+  }
+
   func request(options: NetHttpRequest) throws -> Promise<NetHttpResult> {
     let ca = caPem
     let host = allowedHost
-    return Promise.async { try await Self.requestInternal(options: options, caPem: ca, allowedHost: host) }
+    let profile = remote
+    return Promise.async {
+      try await Self.requestInternal(options: options, caPem: ca, allowedHost: host, remote: profile)
+    }
   }
 
   func openSocket(options: NetSocketOptions) throws -> Promise<(any HybridArgusSocketSpec)> {
     let ca = caPem
+    let host = allowedHost
+    let profile = remote
     return Promise.async {
       guard !ca.isEmpty else {
         throw netError("PAIRING_REQUIRED|Server is not paired yet")
       }
       guard let url = URL(string: options.url) else {
         throw netError("NETWORK_ERROR|Invalid socket URL")
+      }
+      guard RelayHosts.targetAdmission(url, pairedHost: host, remote: profile) != .refused else {
+        throw netError("HOST_NOT_ALLOWED|Host is not allowed")
       }
       var request = URLRequest(url: url)
       for (key, value) in options.headers ?? [:] {
@@ -159,7 +172,7 @@ public class HybridArgusNet: HybridArgusNetSpec {
   }
 
   private static func requestInternal(
-    options: NetHttpRequest, caPem: String, allowedHost: String
+    options: NetHttpRequest, caPem: String, allowedHost: String, remote: RemoteProfile
   ) async throws -> NetHttpResult {
     let pin = options.pin
     if pin == nil {
@@ -168,7 +181,7 @@ public class HybridArgusNet: HybridArgusNetSpec {
       }
       guard
         let target = URL(string: options.url),
-        target.host?.lowercased() == allowedHost.lowercased()
+        RelayHosts.targetAdmission(target, pairedHost: allowedHost, remote: remote) != .refused
       else {
         throw netError("HOST_NOT_ALLOWED|Host is not allowed")
       }
@@ -399,6 +412,16 @@ private final class StrictDelegate: NSObject, URLSessionTaskDelegate {
 
   func urlSession(
     _ session: URLSession,
+    task: URLSessionTask,
+    willPerformHTTPRedirection response: HTTPURLResponse,
+    newRequest request: URLRequest,
+    completionHandler: @escaping (URLRequest?) -> Void
+  ) {
+    completionHandler(nil)
+  }
+
+  func urlSession(
+    _ session: URLSession,
     didReceive challenge: URLAuthenticationChallenge,
     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
   ) {
@@ -410,6 +433,7 @@ private final class StrictDelegate: NSObject, URLSessionTaskDelegate {
       return
     }
 
+    SecTrustSetPolicies(trust, SecPolicyCreateSSL(true, challenge.protectionSpace.host as CFString))
     SecTrustSetAnchorCertificates(trust, [caCertificate] as CFArray)
     SecTrustSetAnchorCertificatesOnly(trust, true)
 
