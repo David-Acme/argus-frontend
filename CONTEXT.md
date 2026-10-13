@@ -1261,9 +1261,12 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
       clock's agreement test and a loose 100 ms sanity bound on the same worst case
       (`calendar-recurrence.test.ts`).
     - Paging the agenda stays the conditional follow-up F6c in the plan.
-  - An event whose rule the app cannot read (the event DTO checks only its length) is
-    one plain entry at its start. A range row without a rule wins over a stale series
-    row.
+  - An event whose rule the app cannot read is one plain entry at its start. Since
+    2026-10-13 the backend answers a 422 on create and edit to a non-empty rule the
+    reminders' parser cannot read (backend `services/productivity/CONTEXT.md`, "Event
+    repeat rules"), but rows stored before that can still carry one. An empty rule is
+    still stored, and reads as no rule. A range row without a rule wins over a stale
+    series row.
   - An occurrence's id is `event:<id>@<ISO start>`. `calendarEntryRecordId` drops the
     suffix, so edit, share and delete address the event, and `CalendarEntry.series`
     keeps the series' own start, end and rule.
