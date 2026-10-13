@@ -10,10 +10,13 @@ export type WatchdogNotice =
   | { kind: 'none' }
   | { kind: 'silent'; since: number };
 
+export type SafetyReach = 'others' | 'contacts' | 'nobody' | 'unknown';
+
 export type SafetyStatus = {
   duressEnabled: boolean;
   hasPin: boolean;
   hasPhrase: boolean;
+  alertsReach: SafetyReach | null;
 };
 
 export type PanicResult = {

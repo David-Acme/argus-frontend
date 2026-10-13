@@ -1,3 +1,4 @@
+import type { SafetyReach } from '@/core/types';
 import { PANIC_HOLD_MS } from '@/shared/constants';
 
 export const PIN_PATTERN = /^[0-9]{4,8}$/;
@@ -67,3 +68,11 @@ export function phraseProblem(phrase: string): PhraseProblem {
   const count = phraseWords(phrase).length;
   return count < PHRASE_MIN_WORDS || count > PHRASE_MAX_WORDS ? 'words' : null;
 }
+
+export type ReachNotice = 'nobody' | 'contacts' | 'unknown' | null;
+
+export const reachNotice = (reach: SafetyReach | null): ReachNotice =>
+  reach === 'nobody' || reach === 'contacts' || reach === 'unknown' ? reach : null;
+
+export const enableNeedsReachWarning = (reach: SafetyReach | null): boolean => reach === 'nobody';
+

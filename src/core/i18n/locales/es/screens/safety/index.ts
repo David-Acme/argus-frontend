@@ -67,4 +67,14 @@ export const safety = {
     'remove-description': 'Decir la frase a Argus dejará de avisar a tu casa.',
     removed: 'Frase quitada',
   },
+  reach: {
+    nobody:
+      'Si pides ayuda, el aviso no le llegaría a nadie: no hay otras personas en casa ni contactos de emergencia.',
+    contacts: 'Si pides ayuda, el aviso solo llegaría a los contactos de emergencia.',
+    unknown: 'No pudimos comprobar a quién le llegaría tu aviso.',
+    'enable-title': 'La alerta no le llegaría a nadie',
+    'enable-description':
+      'Ahora no hay otras personas en casa ni contactos de emergencia. Puedes activar los códigos igualmente: la alerta quedará registrada, pero nadie la recibirá hasta que haya alguien más.',
+    'enable-confirm': 'Activar igualmente',
+  },
 } as const;

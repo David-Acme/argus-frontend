@@ -1,10 +1,18 @@
 import { z } from 'zod';
-import type { PanicResult, SafetyStatus } from '@/core/types';
+import type { PanicResult, SafetyReach, SafetyStatus } from '@/core/types';
+
+const SAFETY_REACHES = ['others', 'contacts', 'nobody', 'unknown'] as const satisfies readonly SafetyReach[];
+
+const absentReach = (value: unknown): SafetyReach | null => (value === undefined || value === null ? null : 'unknown');
 
 export const safetyStatusSchema = z.object({
   duressEnabled: z.boolean(),
   hasPin: z.boolean(),
   hasPhrase: z.boolean().catch(false),
+  alertsReach: z
+    .enum(SAFETY_REACHES)
+    .nullable()
+    .catch((ctx) => absentReach(ctx.value)),
 }) satisfies z.ZodType<SafetyStatus, unknown>;
 
 export const panicResultSchema = z.object({

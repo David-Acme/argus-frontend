@@ -2631,9 +2631,10 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
   (backend `services/guard/CONTEXT.md`, "Panic and duress", for the threat
   model). Arming never asks.
 
-### The duress phrase (F4, 2026-10-13)
+### The duress phrase and the reach of an alert (F4, 2026-10-13)
 
-Backend: `services/guard/CONTEXT.md`, "The duress phrase (voice, 2026-10-13, F4)".
+Backend: `services/guard/CONTEXT.md`, "The duress phrase (voice, 2026-10-13, F4)" and
+"A household of one".
 
 - **The phrase.** While the duress switch is on, the Owner gets "Elegir / Cambiar la frase
   de coacción" and, once one is set, "Quitar la frase de coacción" in Perfil > Seguridad
@@ -2655,10 +2656,21 @@ Backend: `services/guard/CONTEXT.md`, "The duress phrase (voice, 2026-10-13, F4)
   is the zod-parsed answer, which strips every key it does not name. So even an answer
   that echoed the phrase would leave no copy. `hasPhrase` is the only trace, and the
   backend sends it only to holders of `safety.duress`.
-- Tests: `safety-model.test.ts` (the phrase rules, the contract stripping an
-  echoed phrase) and `safety-phrase.test.ts` (the body sent, and no trace in the
+- **Who an alert would reach.** `alertsReach` is shown in the panel:
+  - `nobody` is a warning: no one else in the household and no emergency contact;
+  - `contacts`: only the emergency contacts;
+  - `unknown`: it could not be checked;
+  - `others`: nothing is said.
+
+  An older server without the field claims nothing. A value the app does not know reads
+  as `unknown`. Turning duress on while it is `nobody` asks first, and "Activar
+  igualmente" goes ahead: the backend keeps that terminal alert as designed (guard's
+  DESIGN FORK (a)).
+- Tests: `safety-model.test.ts` (the phrase rules, the reach, the contract stripping
+  an echoed phrase) and `safety-phrase.test.ts` (the body sent, and no trace in the
   answer or the memo, including a refusal). The e2e spec `duress-phrase.e2e.ts` is
-  written and not run: it sets a phrase with no copy in `localStorage`.
+  written and not run: it sets a phrase with no copy in `localStorage`, and warns
+  before turning duress on with nobody to reach.
 
 ## Intruder response: who is told, who is attending, is it real (2026-10-04, RESPONSE)
 

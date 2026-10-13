@@ -67,4 +67,13 @@ export const safety = {
     'remove-description': 'Saying the phrase to Argus will no longer alert your household.',
     removed: 'Phrase removed',
   },
+  reach: {
+    nobody: 'If you ask for help, the alert would reach nobody: there is no one else in the household and no emergency contact.',
+    contacts: 'If you ask for help, the alert would only reach the emergency contacts.',
+    unknown: 'We could not check who your alert would reach.',
+    'enable-title': 'The alert would reach nobody',
+    'enable-description':
+      'Right now there is no one else in the household and no emergency contact. You can turn codes on anyway: the alert is recorded, but nobody receives it until someone else is here.',
+    'enable-confirm': 'Turn on anyway',
+  },
 } as const;

@@ -1,5 +1,5 @@
 import { connected, routes } from './support/harness';
-import { expect, test } from './support/devices';
+import { expect, openFirst, test } from './support/devices';
 
 const LIVE_MS = 2000;
 
@@ -55,4 +55,41 @@ test('the owner sets the duress phrase, sees that one is set, and no copy of the
   expect(kept).not.toContain(PHRASE);
 
   expect(second.escapes).toEqual([]);
+});
+
+test('turning duress on when the alert would reach nobody warns first, and goes ahead when asked to', async ({
+  app,
+  browser,
+  screen,
+}) => {
+  const baseUrl = app.baseUrl ?? '';
+  await routes(baseUrl, [
+    { method: 'GET', path: '/guard/safety', info: status({ duressEnabled: false, alertsReach: 'nobody' }) },
+    {
+      method: 'PATCH',
+      path: '/guard/safety',
+      info: status({ alertsReach: 'nobody' }),
+      sets: [{ method: 'GET', path: '/guard/safety', info: status({ alertsReach: 'nobody' }) }],
+    },
+  ]);
+  const escapes = await openFirst(browser, app);
+  await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
+
+  await screen.getByRole('button', 'Profile').first().click();
+  await expect(
+    screen.getByText(
+      'If you ask for help, the alert would reach nobody: there is no one else in the household and no emergency contact.',
+      { exact: true }
+    )
+  ).toBeVisible({ timeout: 10000 });
+  await screen.getByRole('switch', 'Disarm codes').click();
+  await expect(screen.getByText('The alert would reach nobody', { exact: true })).toBeVisible({ timeout: LIVE_MS });
+  await screen.getByText('Turn on anyway', { exact: true }).click();
+
+  await expect.poll(async () => (await recorded(baseUrl)).requests, { timeout: LIVE_MS }).toContain(
+    'PATCH /guard/safety @A'
+  );
+  expect(JSON.parse((await recorded(baseUrl)).bodies['PATCH /guard/safety @A'] ?? '{}')).toEqual({ duressEnabled: true });
+
+  expect(escapes).toEqual([]);
 });

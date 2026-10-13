@@ -2,11 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
 import {
   digitsOnly,
+  enableNeedsReachWarning,
   holdComplete,
   holdProgress,
   phraseProblem,
   phraseWords,
   pinDraftProblem,
+  reachNotice,
   trivialPin,
 } from '@/features/safety/model/safety';
 
@@ -72,18 +74,34 @@ describe('the duress phrase draft', () => {
   });
 });
 
-describe('the duress phrase status', () => {
-  test('the status reads hasPhrase, and an older server without it claims none', () => {
-    expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: true, hasPhrase: true })).toEqual({
-      duressEnabled: true,
-      hasPin: true,
-      hasPhrase: true,
-    });
+describe('who an alert would reach', () => {
+  test('nobody, only the contacts and an unknown answer are said; others needs no word', () => {
+    expect(reachNotice('nobody')).toBe('nobody');
+    expect(reachNotice('contacts')).toBe('contacts');
+    expect(reachNotice('unknown')).toBe('unknown');
+    expect(reachNotice('others')).toBeNull();
+    expect(reachNotice(null)).toBeNull();
+  });
+
+  test('turning duress on warns first only when the alert would reach nobody', () => {
+    expect(enableNeedsReachWarning('nobody')).toBe(true);
+    expect(enableNeedsReachWarning('contacts')).toBe(false);
+    expect(enableNeedsReachWarning(null)).toBe(false);
+  });
+
+  test('the status reads hasPhrase and alertsReach, and an older server without them claims nothing', () => {
+    expect(
+      safetyStatusSchema.parse({ duressEnabled: true, hasPin: true, hasPhrase: true, alertsReach: 'nobody' })
+    ).toEqual({ duressEnabled: true, hasPin: true, hasPhrase: true, alertsReach: 'nobody' });
     expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: false })).toEqual({
       duressEnabled: true,
       hasPin: false,
       hasPhrase: false,
+      alertsReach: null,
     });
+    expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: false, alertsReach: 'family' }).alertsReach).toBe(
+      'unknown'
+    );
   });
 
   test('a status never carries a phrase, even if an answer echoed one', () => {
@@ -91,9 +109,11 @@ describe('the duress phrase status', () => {
       duressEnabled: true,
       hasPin: true,
       hasPhrase: true,
+      alertsReach: 'others',
       duressPhrase: 'rojo verde azul',
     });
-    expect(Object.keys(status).sort()).toEqual(['duressEnabled', 'hasPhrase', 'hasPin']);
+    expect(Object.keys(status).sort()).toEqual(['alertsReach', 'duressEnabled', 'hasPhrase', 'hasPin']);
     expect(JSON.stringify(status)).not.toContain('rojo verde azul');
   });
 });
+

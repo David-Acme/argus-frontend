@@ -17,6 +17,7 @@ const known = (hasPin: boolean): SafetyStatus => ({
   duressEnabled: true,
   hasPin,
   hasPhrase: false,
+  alertsReach: null,
 });
 
 const answer = (

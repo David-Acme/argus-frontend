@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
+import type { TranslationKey } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
@@ -13,10 +14,17 @@ import { PanicButton } from '@/features/safety/components/panic-button';
 import { PhraseDialog } from '@/features/safety/components/phrase-dialog';
 import { PinSetupDialog } from '@/features/safety/components/pin-setup-dialog';
 import { useSafety } from '@/features/safety/hooks/use-safety';
+import { reachNotice, type ReachNotice } from '@/features/safety/model/safety';
 
 type SafetySectionProps = {
   className?: string;
 };
+
+const REACH_KEY = {
+  nobody: 'screens.safety.reach.nobody',
+  contacts: 'screens.safety.reach.contacts',
+  unknown: 'screens.safety.reach.unknown',
+} as const satisfies Record<Exclude<ReachNotice, null>, TranslationKey>;
 
 export function SafetySection({ className }: SafetySectionProps) {
   const { t } = useTranslation();
@@ -29,6 +37,7 @@ export function SafetySection({ className }: SafetySectionProps) {
   const [currentPin, setCurrentPin] = useState<string | undefined>(undefined);
   const [phraseOpen, setPhraseOpen] = useState(false);
   const [phrasePin, setPhrasePin] = useState<string | undefined>(undefined);
+  const notice = status ? reachNotice(status.alertsReach) : null;
 
   const openPins = async () => {
     const confirmed = await confirmCurrentPin();
@@ -69,6 +78,18 @@ export function SafetySection({ className }: SafetySectionProps) {
       </View>
 
       {has(CAPABILITY.safetyPanic) ? <PanicButton /> : null}
+
+      {notice ? (
+        <View className="bg-surface-secondary flex-row items-start gap-2.5 rounded-2xl px-3.5 py-3">
+          <Icon
+            name="triangle-alert"
+            className={cn('mt-0.5 size-4', notice === 'nobody' ? 'text-warning-strong' : 'text-foreground-secondary')}
+          />
+          <Text variant="caption" className="min-w-0 flex-1">
+            {t(REACH_KEY[notice])}
+          </Text>
+        </View>
+      ) : null}
 
       {managesDuress && status ? (
         <ToggleRow
