@@ -4,6 +4,7 @@ export const welcome = {
   promise: 'Todo se queda en tu casa',
   'promise-hint': 'Lo que ven tus cámaras, tu voz y tu rostro nunca salen de tu casa.',
   'hero-label': 'Argus te saluda con sus módulos: Seguridad, Productividad y Agronomía, que llega pronto.',
+  'hero-replay-hint': 'Tócalo para que Argus vuelva a saludarte.',
   hello: '¡Hola!',
   modules: {
     security: 'Seguridad',

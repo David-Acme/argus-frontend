@@ -89,12 +89,9 @@ export function WelcomeHero({ scale, label }: WelcomeHeroProps) {
   }, [bubble, pose.bubble]);
 
   return (
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={label}
-      style={{ width: MASCOT_STAGE.width * scale, height: MASCOT_STAGE.height * scale }}>
+    <View style={{ width: MASCOT_STAGE.width * scale, height: MASCOT_STAGE.height * scale }}>
       <Animated.View
+        aria-hidden
         pointerEvents="none"
         renderToHardwareTextureAndroid
         style={[
@@ -141,7 +138,10 @@ export function WelcomeHero({ scale, label }: WelcomeHeroProps) {
         />
       ))}
       <Pressable
-        accessible={false}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={t('screens.welcome.hero-replay-hint')}
         onPress={replay}
         style={{
           position: 'absolute',
@@ -168,6 +168,7 @@ export function WelcomeHero({ scale, label }: WelcomeHeroProps) {
         dark={theme === 'dark'}
       />
       <Animated.View
+        aria-hidden
         pointerEvents="none"
         className="bg-card border-border-subtle absolute rounded-2xl border px-4 py-2"
         style={[

@@ -34,6 +34,7 @@ export function OrbitTrack({ scale, half, shown, dark }: OrbitTrackProps) {
 
   return (
     <Animated.View
+      aria-hidden
       pointerEvents="none"
       renderToHardwareTextureAndroid
       style={[

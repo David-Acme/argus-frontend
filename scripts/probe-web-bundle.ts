@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
-import { chromium } from 'playwright-core';
+import { chromium, type Page } from 'playwright-core';
+import { welcome as welcomeEn } from '../src/core/i18n/locales/en/screens/welcome';
+import { welcome as welcomeEs } from '../src/core/i18n/locales/es/screens/welcome';
 
 const ROOT = join(import.meta.dir, '..');
 const DIST = join(ROOT, 'dist');
@@ -68,6 +70,24 @@ const bundleServer = (csp: string) =>
     },
   });
 
+const WELCOME_LOCALES = [welcomeEn, welcomeEs] as const;
+
+const heroFailures = async (page: Page): Promise<string[]> => {
+  const tree = await page.locator('#root').ariaSnapshot();
+  const locale = WELCOME_LOCALES.find((strings) => tree.includes(strings['hero-label']));
+  if (!locale) return [`the welcome hero exposes no element named by its label: ${excerpt(tree)}`];
+  const failures: string[] = [];
+  const named = await page.getByRole('button', { name: locale['hero-label'], exact: true }).count();
+  if (named !== 1) failures.push(`the welcome hero has ${named} buttons named by its label, not one`);
+  if (tree.includes(locale.modules.soon)) {
+    failures.push('the welcome hero exposes its decorative chips to assistive technology');
+  }
+  if (tree.includes(locale.hello)) {
+    failures.push('the welcome hero exposes its speech bubble to assistive technology');
+  }
+  return failures;
+};
+
 const excerpt = (text: string): string => text.replace(/\s+/g, ' ').trim().slice(0, 160);
 
 const main = async (): Promise<void> => {
@@ -111,6 +131,7 @@ const main = async (): Promise<void> => {
       failures.push(`the root shows the error boundary: ${excerpt(rendered)}`);
     }
     for (const text of unexpected) failures.push(`console.error: ${excerpt(text)}`);
+    if (failures.length === 0) failures.push(...(await heroFailures(page)));
 
     if (failures.length > 0) {
       for (const failure of failures) console.error(`probe-web-bundle: ${failure}`);

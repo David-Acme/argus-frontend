@@ -3357,6 +3357,14 @@ crash that needs a paired session — behind login, behind a role, behind a modu
 exercised; extending it to a mocked paired session (mockIPC-style) is a candidate for the
 frontend quality programme.
 
+The probe also reads the welcome hero's accessibility tree (Q2 of the plan's section 6,
+2026-10-12): the stage used to be one `role="image"` element, which hid the unlabeled replay
+button inside it while the speech bubble still leaked through on the web. Now the mascot's
+`Pressable` is the one accessible element (a button named by `screens.welcome.hero-label`, with
+`hero-replay-hint`), and the ground, the orbit tracks, the chips and the bubble are `aria-hidden`
+decoration whose content the label already says. The probe fails unless exactly one button carries
+that label and neither the chips' "coming soon" nor the bubble's greeting reaches the tree.
+
 ### Resource changes: the client side (2026-10-12, the real-time plan's 2.2)
 
 `ResourceChanged` (operation 14) is the one frame for state a screen re-reads

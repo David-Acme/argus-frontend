@@ -101,6 +101,7 @@ export function OrbitChip({
 
   return (
     <Animated.View
+      aria-hidden
       pointerEvents="none"
       style={[
         { position: 'absolute', left: 0, top: 0, width: chip, height: chip, zIndex: front ? 3 : 1 },
