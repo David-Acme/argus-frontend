@@ -24,6 +24,11 @@ export type OptimisticRefusal = {
   description?: string;
 };
 
+export type OptimisticNotice = {
+  title: string;
+  description?: string;
+};
+
 export type OptimisticAction<R> = {
   intents: readonly OptimisticIntentInput<object>[];
   call: (idempotencyKey: string) => Promise<IServiceResponse<R>>;
@@ -34,6 +39,7 @@ export type OptimisticAction<R> = {
   errorTitle?: string;
   onRefused?: () => void;
   refusals?: (info: R) => OptimisticRefusal | null;
+  refusalNotice?: (result: IServiceResponse<R>) => OptimisticNotice | null;
 };
 
 function sessionOf(userId: number | string | undefined): string | null {
@@ -91,6 +97,11 @@ export async function runOptimistic<R>(
   if (!result.ok) {
     rollback(begun);
     action.onRefused?.();
+    const notice = action.refusalNotice?.(result) ?? null;
+    if (notice) {
+      toast.info(notice.title, notice.description);
+      return null;
+    }
     const retry = isRetryableServiceError(result.errors)
       ? {
           label: t('common.retry'),

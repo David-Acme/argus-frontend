@@ -100,6 +100,31 @@ describe('runOptimistic', () => {
     expect(shown.at(-1)?.action).toBeUndefined();
   });
 
+  test('a refusal the caller recognises rolls back with a calm notice and no retry', async () => {
+    const conflict: IServiceResponse<null> = {
+      ok: false,
+      status: 409,
+      info: null,
+      errors: { code: 'CONFLICT', message: 'The reminder is already done' },
+    };
+    await runOptimistic({
+      intents: [{ table: 'reminder', kind: 'update', recordId: '3', values: { scheduledAt: 1_790_000_000 } }],
+      call: async () => conflict,
+      errorTitle: 'Could not snooze',
+      refusalNotice: (result) => (result.status === 409 ? { title: 'Already done', description: 'Nothing to snooze' } : null),
+    });
+    expect(optimisticRegistry.snapshot()).toEqual([]);
+    expect(shown.at(-1)).toEqual({ intent: 'info', title: 'Already done', description: 'Nothing to snooze', action: undefined });
+
+    await runOptimistic({
+      intents: [{ table: 'reminder', kind: 'update', recordId: '3', values: { scheduledAt: 1_790_000_000 } }],
+      call: async () => refused('FORBIDDEN'),
+      errorTitle: 'Could not snooze',
+      refusalNotice: (result) => (result.status === 409 ? { title: 'Already done' } : null),
+    });
+    expect(shown.at(-1)).toMatchObject({ intent: 'error', title: 'Could not snooze' });
+  });
+
   test('every attempt of one action carries the same idempotency key', async () => {
     const keys: string[] = [];
     await runOptimistic({

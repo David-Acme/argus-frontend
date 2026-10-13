@@ -186,6 +186,8 @@ export interface IReminderUpdate {
   recurrenceRule?: string | null;
 }
 
+export type IReminderSnooze = { minutes: number; tomorrow?: never } | { tomorrow: true; minutes?: never };
+
 export interface IProjectTaskCalendarCacheSource {
   id: string;
   title: string;

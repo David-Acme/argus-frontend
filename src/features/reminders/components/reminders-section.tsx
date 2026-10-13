@@ -25,7 +25,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
   const { t } = useTranslation();
   const now = useNow(CLOCK_TICK_MS);
   const { has } = useCapabilities();
-  const { groups, complete, stopRepeating, remove } = useReminders();
+  const { groups, complete, snooze, snoozeOptionsOf, stopRepeating, remove } = useReminders();
   const [editing, setEditing] = useState<IReminderCacheRow | null>(null);
   const [showDone, setShowDone] = useState(false);
 
@@ -43,8 +43,10 @@ export function RemindersSection({ query }: RemindersSectionProps) {
       reminder={reminder}
       now={now}
       editable={editable}
+      snoozeOptions={reminder.isCompleted ? [] : snoozeOptionsOf(reminder, now)}
       onToggle={(target, isDone) => void complete(target, isDone)}
       onEdit={setEditing}
+      onSnooze={(target, choice) => void snooze(target, choice)}
       onStopRepeating={(target) => void stopRepeating(target)}
       onDelete={(target) => void remove(target)}
     />

@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 import type { IReminderCacheRow } from '@/core/interfaces';
-import type { MenuOption } from '@/core/types';
+import type { MenuOption, TranslationKey } from '@/core/types';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
@@ -11,16 +11,26 @@ import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { cn } from '@/shared/libs/utils';
 import { repeatsOf } from '@/features/reminders/model/reminder-repeat';
 import { reminderTiming, reminderWhen } from '@/features/reminders/model/reminder-rows';
+import { isSnoozable, type SnoozeChoice, type SnoozeOption } from '@/features/reminders/model/reminder-snooze';
 
 type ReminderRowProps = {
   reminder: IReminderCacheRow;
   now: number;
   editable: boolean;
+  snoozeOptions: readonly SnoozeOption[];
   onToggle: (reminder: IReminderCacheRow, done: boolean) => void;
   onEdit: (reminder: IReminderCacheRow) => void;
+  onSnooze: (reminder: IReminderCacheRow, choice: SnoozeChoice) => void;
   onStopRepeating: (reminder: IReminderCacheRow) => void;
   onDelete: (reminder: IReminderCacheRow) => void;
 };
+
+const SNOOZE_LABEL = {
+  '10': 'screens.reminders.snooze-10',
+  '30': 'screens.reminders.snooze-30',
+  '60': 'screens.reminders.snooze-60',
+  tomorrow: 'screens.reminders.snooze-tomorrow',
+} as const satisfies Record<SnoozeChoice, TranslationKey>;
 
 type ReminderAction = 'edit' | 'stop-repeating' | 'delete';
 
@@ -28,8 +38,10 @@ export function ReminderRow({
   reminder,
   now,
   editable,
+  snoozeOptions,
   onToggle,
   onEdit,
+  onSnooze,
   onStopRepeating,
   onDelete,
 }: ReminderRowProps) {
@@ -45,6 +57,13 @@ export function ReminderRow({
   const options: MenuOption<ReminderAction>[] = [{ value: 'edit', label: t('common.edit'), icon: 'pencil' }];
   if (repeats) options.push({ value: 'stop-repeating', label: t('screens.reminders.stop-repeating'), icon: 'repeat-off' });
   options.push({ value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true });
+
+  const snoozable = editable && !pending && isSnoozable(timing) && snoozeOptions.length > 0;
+  const snoozeMenu: MenuOption<SnoozeChoice>[] = snoozeOptions.map(({ choice, at }) => ({
+    value: choice,
+    label: t(SNOOZE_LABEL[choice]),
+    description: t('screens.reminders.snooze-at', { time: date.formatTime(new Date(at)) }),
+  }));
 
   const select = (action: ReminderAction) => {
     if (action === 'edit') onEdit(reminder);
@@ -94,6 +113,23 @@ export function ReminderRow({
           </Text>
         </View>
       </Pressable>
+      {snoozable ? (
+        <AdaptiveMenu
+          options={snoozeMenu}
+          onSelect={(choice) => onSnooze(reminder, choice)}
+          title={t('screens.reminders.snooze')}
+          closeLabel={t('common.close')}
+          trigger={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('screens.reminders.snooze-label', { title: reminder.title })}
+              hitSlop={6}
+              className="size-10 items-center justify-center active:opacity-60">
+              <Icon name="alarm-clock" className="text-muted-foreground size-4" />
+            </Pressable>
+          }
+        />
+      ) : null}
       {editable && !pending ? (
         <AdaptiveMenu
           options={options}

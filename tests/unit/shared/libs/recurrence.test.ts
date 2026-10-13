@@ -13,6 +13,7 @@ import {
   occurrencesBetween,
   parseRecurrenceRule,
   recurrenceLabel,
+  sameTimeTomorrow,
   zoneClock,
 } from '@/shared/libs/recurrence';
 
@@ -191,6 +192,16 @@ describe('occurrences in a window', () => {
       clock.epochOf(wallFrom('2026-10-12T08:00:00'))
     );
     expect(firstOccurrenceAfter({ rule: weekly, anchor, moment: anchor - 1, clock })).toBe(anchor);
+  });
+
+  test('the same time tomorrow keeps the wall clock of the zone, as the backend snooze does', () => {
+    const newYork = clockIn('America/New_York');
+    const saturday = newYork.epochOf(wallFrom('2026-03-07T08:00:00'));
+    expect(wallText(newYork.wallOf(sameTimeTomorrow(saturday, newYork)))).toBe('2026-03-08T08:00:00');
+    expect(sameTimeTomorrow(saturday, newYork) - saturday).toBe(23 * 3_600_000);
+    expect(wallText(clock.wallOf(sameTimeTomorrow(clock.epochOf(wallFrom('2026-12-31T21:15:30')), clock)))).toBe(
+      '2027-01-01T21:15:30'
+    );
   });
 
   test('an unknown zone falls back to the device clock', () => {

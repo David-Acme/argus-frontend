@@ -1,4 +1,5 @@
 import Activity from 'lucide-react-native/icons/activity';
+import AlarmClock from 'lucide-react-native/icons/alarm-clock';
 import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import ArrowUpRight from 'lucide-react-native/icons/arrow-up-right';
 import Banknote from 'lucide-react-native/icons/banknote';
@@ -120,6 +121,7 @@ import ListChecks from 'lucide-react-native/icons/list-checks';
 
 export const ICONS = {
   activity: Activity,
+  'alarm-clock': AlarmClock,
   'arrow-left': ArrowLeft,
   'arrow-up-right': ArrowUpRight,
   bell: Bell,

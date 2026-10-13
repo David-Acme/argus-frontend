@@ -1233,6 +1233,29 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     29 February) it can land on a clamped day the backend would not pick. The audit
     diff of the real row then replaces it, because the intent drops on the server's row.
 
+### Snooze (F6, 2026-10-13)
+
+- An open reminder that is due today or overdue has a snooze button beside its menu
+  (`alarm-clock`). Its name carries the title ("Posponer …"), so two rows never share
+  one. It opens the presets 10 minutos, 30 minutos, 1 hora and Mañana, each with the
+  time it lands on.
+- Each preset calls `POST /reminder/{id}/snooze` with `{minutes}` or `{tomorrow: true}`,
+  exactly one of the two, as the backend DTO demands. The backend counts minutes from
+  its own now, and tomorrow is the same wall time on the next day of the later of the
+  reminder's time and now, in the host's zone.
+- The row moves at once. Minutes are added to the device's now, and tomorrow uses
+  `sameTimeTomorrow` (`shared/libs/recurrence.ts`, the backend function of the same
+  name) in the household zone. The audit diff of the real row replaces the
+  prediction.
+- **No snooze moves a reminder earlier.** A minute preset shows only when it lands
+  after the reminder's own time, so a reminder due in five hours offers only Mañana.
+  A reminder due on a later day, or a completed one, shows no snooze; it is edited
+  instead.
+- A completed reminder answers 409 `CONFLICT`, because another device completed it
+  first. `isAlreadyDone` recognises that answer, and `runOptimistic`'s
+  `refusalNotice` turns it into a calm info toast ("Ya estaba hecho"), with no error
+  and no retry. The row's time comes back, and the completion arrives through sync.
+
 ### People and access surfaces
 
 - `/profile` is the personal, Threads-inspired but Argus-adapted account view:

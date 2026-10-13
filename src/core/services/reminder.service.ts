@@ -1,7 +1,7 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { ReminderModel } from '@/core/database';
-import type { IReminderUpdate, IServiceResponse } from '@/core/interfaces';
+import type { IReminderSnooze, IReminderUpdate, IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import { DatabaseService } from './database.service';
 
@@ -19,6 +19,10 @@ class ReminderService extends DatabaseService<'reminder'> {
 
   update(id: string, body: IReminderUpdate): Promise<IServiceResponse<unknown>> {
     return httpService.patch(`/reminder/${id}`, body);
+  }
+
+  snooze(id: string, body: IReminderSnooze): Promise<IServiceResponse<unknown>> {
+    return httpService.post(`/reminder/${id}/snooze`, body);
   }
 
   remove(id: string): Promise<IServiceResponse<unknown>> {

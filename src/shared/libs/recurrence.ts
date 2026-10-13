@@ -215,6 +215,12 @@ export function firstOccurrenceAfter({ rule, anchor, moment, clock }: FirstOccur
   return index === null ? null : occurrenceOf(series, index);
 }
 
+export function sameTimeTomorrow(moment: number, clock: ZoneClock): number {
+  const now = clock.wallOf(moment);
+  const tomorrow = civilFromDays(dayNumberOf(now) + 1);
+  return clock.epochOf({ ...tomorrow, hour: now.hour, minute: now.minute, second: now.second });
+}
+
 export function occurrencesBetween({ rule, anchor, from, to, clock, limit }: OccurrenceWindowInput): number[] {
   if (anchor > to || from > to) return [];
   const series = seriesOf(rule, anchor, clock);

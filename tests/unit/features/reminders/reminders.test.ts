@@ -22,6 +22,12 @@ import {
   repeatsOf,
   rolledSchedule,
 } from '@/features/reminders/model/reminder-repeat';
+import {
+  isAlreadyDone,
+  isSnoozable,
+  snoozeBodyOf,
+  snoozeOptions,
+} from '@/features/reminders/model/reminder-snooze';
 import { intlZoneClock } from '@/shared/libs/recurrence';
 import { matchesReminder, reminderTiming, reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
 import { searchKinds, searchPlaceholder } from '@/features/home/model/home-search';
@@ -184,6 +190,71 @@ describe('reminder repeat', () => {
       REMINDER_LENSES
     );
     expect(rolled).toMatchObject({ isCompleted: false, scheduledAt: Date.UTC(2026, 9, 12, 13, 0, 0) });
+  });
+});
+
+describe('reminder snooze', () => {
+  const lima = () => {
+    const clock = intlZoneClock('America/Lima');
+    if (!clock) throw new Error('this runtime does not know America/Lima');
+    return clock;
+  };
+  const MINUTE = 60_000;
+
+  test('an overdue reminder offers every preset, each later than now', () => {
+    const due = row({ scheduledAt: NOW - HOUR });
+    const options = snoozeOptions({ row: due, now: NOW, clock: lima() });
+    expect(options.map((option) => option.choice)).toEqual(['10', '30', '60', 'tomorrow']);
+    expect(options.map((option) => option.at)).toEqual([NOW + 10 * MINUTE, NOW + 30 * MINUTE, NOW + HOUR, NOW + DAY]);
+  });
+
+  test('a snooze never moves a reminder earlier than its own time', () => {
+    const soon = row({ scheduledAt: NOW + 20 * MINUTE });
+    expect(snoozeOptions({ row: soon, now: NOW, clock: lima() }).map((option) => option.choice)).toEqual([
+      '30',
+      '60',
+      'tomorrow',
+    ]);
+    const evening = row({ scheduledAt: NOW + 5 * HOUR });
+    const [tomorrow] = snoozeOptions({ row: evening, now: NOW, clock: lima() });
+    expect(tomorrow).toEqual({ choice: 'tomorrow', at: NOW + 5 * HOUR + DAY });
+  });
+
+  test('tomorrow keeps the household wall clock across a change of offset', () => {
+    const newYork = intlZoneClock('America/New_York');
+    if (!newYork) throw new Error('this runtime does not know America/New_York');
+    const saturday = Date.UTC(2026, 2, 7, 13, 0, 0);
+    const [, , , tomorrow] = snoozeOptions({ row: row({ scheduledAt: saturday }), now: saturday + 1000, clock: newYork });
+    expect(tomorrow).toEqual({ choice: 'tomorrow', at: Date.UTC(2026, 2, 8, 12, 0, 1) });
+  });
+
+  test('the body names minutes or tomorrow, never both', () => {
+    expect(snoozeBodyOf('10')).toEqual({ minutes: 10 });
+    expect(snoozeBodyOf('60')).toEqual({ minutes: 60 });
+    expect(snoozeBodyOf('tomorrow')).toEqual({ tomorrow: true });
+  });
+
+  test('only an open reminder that is due today or overdue offers a snooze', () => {
+    expect(isSnoozable(reminderTiming(row({ scheduledAt: NOW - HOUR }), NOW, date))).toBe(true);
+    expect(isSnoozable(reminderTiming(row({ scheduledAt: NOW + HOUR }), NOW, date))).toBe(true);
+    expect(isSnoozable(reminderTiming(row({ scheduledAt: NOW + 2 * DAY }), NOW, date))).toBe(false);
+    expect(isSnoozable(reminderTiming(row({ scheduledAt: NOW - HOUR, isCompleted: true }), NOW, date))).toBe(false);
+  });
+
+  test('a 409 conflict is the already-done answer, and nothing else is', () => {
+    expect(isAlreadyDone({ status: 409, errors: { code: 'CONFLICT', message: 'The reminder is already done' } })).toBe(true);
+    expect(isAlreadyDone({ status: 409, errors: { code: 'MODULE_JOB_RUNNING', message: 'busy' } })).toBe(false);
+    expect(isAlreadyDone({ status: 404, errors: { code: 'NOT_FOUND', message: 'gone' } })).toBe(false);
+  });
+
+  test('the snoozed time shows on the row at once and the reminder stays open', () => {
+    const due = row({ scheduledAt: NOW - HOUR });
+    const [snoozed] = applyIntents(
+      [due],
+      [intentFor({ values: { scheduledAt: Math.round((NOW + 30 * MINUTE) / 1000) } })],
+      REMINDER_LENSES
+    );
+    expect(snoozed).toMatchObject({ scheduledAt: NOW + 30 * MINUTE, isCompleted: false });
   });
 });
 
