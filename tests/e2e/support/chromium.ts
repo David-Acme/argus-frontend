@@ -31,9 +31,12 @@ const launch = (): Promise<string> => {
       '--disable-component-update',
       '--disable-sync',
       '--metrics-recording-only',
+      '--force-prefers-reduced-motion',
+      '--lang=en-US',
+      '--font-render-hinting=none',
       'about:blank',
     ],
-    { stdio: ['ignore', 'ignore', 'pipe'] }
+    { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, TZ: 'America/Lima', LANG: 'en_US.UTF-8' } }
   );
   const endpoint = new Promise<string>((resolve, reject) => {
     let seen = '';

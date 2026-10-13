@@ -3575,6 +3575,18 @@ pieces:
   `module-dialogs.e2e.ts` (uninstalling a module that holds data lists what it
   keeps, keeps it by default, and deletes it only once the module's name is typed
   - case and outer spaces ignored - sending `{keepData: false}`).
+- **Visual regression** (item 6, `visual.e2e.ts`): Home, Projects and Security
+  (populated: an environment, an episode, an alert, a project) and the welcome,
+  each at phone (390x844), tablet (834x1112) and desktop (1280x800) width,
+  compared with the PNGs committed in `tests/e2e/visual.e2e.ts-snapshots/`
+  (named `<screen>-<width>-desktop-web-linux.png`: they belong to this Linux
+  Chromium and its fonts). Determinism: a fixed clock (`support/clock.ts`), the
+  browser started in `America/Lima`, `en-US`, reduced motion and no font
+  hinting, the pointer parked away from tooltips, and the welcome's animated
+  mascot masked. Tolerance is 40 pixels: three clean runs in a row pass, and a
+  one-word label change on Home (239 pixels) fails. When a screen changes on
+  purpose, `bun run test:e2e:update-screens` rebuilds the bundle and rewrites the
+  baselines; look at each image before committing it.
 - A product finding from the modules flow: with productivity off, Home keeps its
   Today and Projects sections (and their buttons); only the navigation hides them.
 - **Accessibility** (item 5, `accessibility.e2e.ts`, read from Chromium's own
