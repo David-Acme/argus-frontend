@@ -1,5 +1,5 @@
 import { extname, join, normalize, resolve, sep } from 'node:path';
-import { FakeArgus } from './fake-argus';
+import { FakeArgus, type DeviceFrame, type RouteSpec } from './fake-argus';
 
 const DIST_ROOT = resolve(join(import.meta.dir, '..', '..', '..', 'dist'));
 
@@ -21,9 +21,21 @@ const bundleFile = async (pathname: string): Promise<Response> => {
   return new Response(file);
 };
 
-const control = (url: URL): Response => {
+const control = async (url: URL, request: Request): Promise<Response> => {
   const device = url.searchParams.get('device') ?? '';
   switch (url.pathname) {
+    case '/__e2e/routes':
+      argus.define((await request.json()) as RouteSpec[]);
+      return Response.json({ ok: true });
+    case '/__e2e/store':
+      argus.store(url.searchParams.get('table') ?? '', (await request.json()) as Parameters<FakeArgus['store']>[1]);
+      return Response.json({ ok: true });
+    case '/__e2e/emit':
+      argus.emit((await request.json()) as DeviceFrame[]);
+      return Response.json({ ok: true });
+    case '/__e2e/reset':
+      argus.reset();
+      return Response.json({ ok: true });
     case '/__e2e/health':
       return Response.json({ ok: true });
     case '/__e2e/drop':
@@ -52,10 +64,10 @@ const server = Bun.serve<{ device: string }>({
       if (!device || !argus.accepts(device)) return new Response('refused', { status: 503 });
       return bun.upgrade(request, { data: { device } }) ? undefined : new Response('upgrade failed', { status: 400 });
     }
-    if (url.pathname.startsWith('/__e2e/')) return control(url);
+    if (url.pathname.startsWith('/__e2e/')) return control(url, request);
     if (url.pathname.startsWith('/__api/')) {
       const path = `${url.pathname.slice('/__api'.length)}${url.search}`;
-      return argus.api(request.method, path, await request.text());
+      return argus.api(request.method, path, await request.text(), request.headers.get('x-e2e-device') ?? '');
     }
     return bundleFile(url.pathname);
   },

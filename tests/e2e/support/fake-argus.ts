@@ -5,6 +5,20 @@ export type DeviceSocket = ServerWebSocket<{ device: string }>;
 
 type Row = Record<string, unknown> & { id: number; createdAt: number };
 
+export type DeviceFrame = { device?: string; frame: unknown; close?: boolean };
+
+export type RouteSpec = {
+  method: string;
+  path: string;
+  device?: string;
+  status?: number;
+  info?: unknown;
+  errors?: unknown;
+  emits?: DeviceFrame[];
+  sets?: RouteSpec[];
+  modules?: Record<string, boolean>;
+};
+
 type SyncBody = { created?: { startTime?: number; startId?: number }; requiredCreate?: boolean; findLastDeleted?: boolean };
 
 const OPERATION = {
@@ -20,27 +34,28 @@ export const OWNER = { id: 1, name: 'Ana', role: 'owner', isActive: true, person
 
 const text = (es: string, en: string) => ({ es, en });
 
-const moduleBrief = (id: string, name: { es: string; en: string }) => ({
+const moduleBrief = (id: string, name: { es: string; en: string }, enabled: boolean) => ({
   id,
   name,
   summary: text('', ''),
   kind: id === 'core' ? 'core' : 'available',
   intro: null,
   roles: [],
-  enabled: true,
-  lifecycle: 'active',
+  enabled,
+  lifecycle: enabled ? 'active' : 'disabled',
   dataPurgedAt: null,
 });
 
-export const ownerContext = () => ({
+export const ownerContext = (enabled: Readonly<Record<string, boolean>> = {}) => ({
   userId: OWNER.id,
   role: OWNER.role,
   roleActive: true,
   capabilities: Object.values(CAPABILITY),
   roles: [{ id: 'owner', module: 'core', active: true }],
   modules: [
-    moduleBrief('core', text('Asistente y hogar', 'Assistant and home')),
-    moduleBrief('productivity', text('Productividad', 'Productivity')),
+    moduleBrief('core', text('Asistente y hogar', 'Assistant and home'), true),
+    moduleBrief('productivity', text('Productividad', 'Productivity'), enabled.productivity ?? true),
+    moduleBrief('surveillance', text('Vigilancia', 'Surveillance'), enabled.surveillance ?? true),
   ],
   version: 1,
 });
@@ -54,9 +69,29 @@ export class FakeArgus {
   private readonly tables = new Map<string, Row[]>();
   private readonly sockets = new Set<DeviceSocket>();
   private readonly refusedUntil = new Map<string, number>();
+  private readonly routes = new Map<string, RouteSpec>();
+  private readonly enabled: Record<string, boolean> = {};
   private nextId = 100;
   private clock = 0;
   readonly requests: string[] = [];
+
+  constructor() {
+    this.reset();
+  }
+
+  reset(): void {
+    this.routes.clear();
+    this.refusedUntil.clear();
+    for (const key of Object.keys(this.enabled)) delete this.enabled[key];
+    this.tables.clear();
+    this.tables.set('user', [
+      { id: OWNER.id, name: OWNER.name, lastName: 'Ruiz', role: OWNER.role, lang: 'es', isActive: true, createdAt: 1790000000, updatedAt: 1790000000 },
+    ]);
+  }
+
+  store(table: string, row: Row): void {
+    this.tables.set(table, [...this.rows(table).filter((existing) => existing.id !== row.id), row]);
+  }
 
   accepts(device: string): boolean {
     return (this.refusedUntil.get(device) ?? 0) <= Date.now();
@@ -68,7 +103,7 @@ export class FakeArgus {
       JSON.stringify({
         operation: OPERATION.InitialInfo,
         option: 'user',
-        info: { id: OWNER.id, role: OWNER.role, isActive: true, context: ownerContext() },
+        info: { id: OWNER.id, role: OWNER.role, isActive: true, context: this.context() },
       })
     );
   }
@@ -110,6 +145,46 @@ export class FakeArgus {
     }
   }
 
+  context(): ReturnType<typeof ownerContext> {
+    return ownerContext(this.enabled);
+  }
+
+  define(specs: readonly RouteSpec[]): void {
+    for (const spec of specs) this.routes.set(this.key(spec.method, spec.path, spec.device), spec);
+  }
+
+  emit(frames: readonly DeviceFrame[]): void {
+    for (const { device, frame, close } of frames) {
+      const added = frame as { operation?: number; option?: string; info?: Row };
+      if (added.operation === OPERATION.Add && added.option && added.info) this.store(added.option, added.info);
+      const message = JSON.stringify(frame);
+      for (const socket of [...this.sockets]) {
+        if (device && socket.data.device !== device) continue;
+        socket.send(message);
+        if (close) {
+          socket.close(1000, 'closed by the e2e harness');
+          this.sockets.delete(socket);
+        }
+      }
+    }
+  }
+
+  private key(method: string, path: string, device?: string): string {
+    return `${method.toUpperCase()} ${path}${device ? ` @${device}` : ''}`;
+  }
+
+  private answer(spec: RouteSpec): Response {
+    if (spec.sets) this.define(spec.sets);
+    if (spec.modules) Object.assign(this.enabled, spec.modules);
+    const status = spec.status ?? 200;
+    const response = status === 204 ? new Response(null, { status }) : envelope(status, spec.info ?? null, spec.errors ?? null);
+    if (spec.emits) {
+      const frames = spec.emits;
+      setTimeout(() => this.emit(frames), 0);
+    }
+    return response;
+  }
+
   drop(device: string): number {
     let dropped = 0;
     for (const socket of [...this.sockets]) {
@@ -133,10 +208,17 @@ export class FakeArgus {
     return this.tables.get(table) ?? [];
   }
 
-  async api(method: string, path: string, body: string): Promise<Response> {
-    this.requests.push(`${method} ${path}`);
+  async api(method: string, path: string, body: string, device: string): Promise<Response> {
+    this.requests.push(`${method} ${path}${device ? ` @${device}` : ''}`);
+    const bare = path.split('?')[0] ?? path;
+    const spec =
+      this.routes.get(this.key(method, path, device)) ??
+      this.routes.get(this.key(method, bare, device)) ??
+      this.routes.get(this.key(method, path)) ??
+      this.routes.get(this.key(method, bare));
+    if (spec) return this.answer(spec);
     if (method === 'POST' && path === '/project') return this.createProject(body);
-    if (method === 'GET' && path.startsWith('/modules')) return envelope(200, { modules: ownerContext().modules });
+    if (method === 'GET' && bare === '/modules') return envelope(200, { modules: this.context().modules });
     return envelope(404, null, { code: 'NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
   }
 

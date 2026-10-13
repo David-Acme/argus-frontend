@@ -3548,6 +3548,25 @@ pieces:
   OAuth and model providers an agent step would use (none here), the readiness
   probe of the app URL (loopback) and the Playwright browser download, which the
   CDP connection avoids.
+- **The section-2 flows** (item 3, each two-device, each with the mutation that
+  fails it): `sessions.e2e.ts` (a session closed on A ends B at once and A's list
+  updates; no `AuthContextChanged` frame fails it), `people.e2e.ts` (a member
+  enrolled elsewhere appears on both People screens; the person row travels with
+  it, though no screen reads the `person` table yet), `activity.e2e.ts` (A's
+  project reaches B's activity history), `modules.e2e.ts` (productivity turned off
+  on A leaves B's projects and agenda at once; an edit made to a project while it
+  was off is on B after it comes back, which only the R26 re-pull delivers: the
+  client without it fails), `guard.e2e.ts` (the mode chosen on A is B's mode; an
+  episode a camera opens reaches both), `safety.e2e.ts` (codes created on A are
+  known to B, so B asks for them), `presence.e2e.ts` (who is home changes on both
+  People screens). Silencing `ResourceChanged` fails activity, mode, episodes,
+  codes and presence; silencing `Add`, `AuthContextChanged`, `ModuleUpdate` and
+  `ContextUpdate` fails people, sessions and modules. The fake answers each test
+  from `RouteSpec`s (`/__e2e/routes`: an answer per method, path and device, the
+  answers it replaces, the frames it pushes and the module flags it flips), and
+  `/__e2e/reset` clears it before every test.
+- A product finding from the modules flow: with productivity off, Home keeps its
+  Today and Projects sections (and their buttons); only the navigation hides them.
 - Findings this harness surfaced for the accessibility pass: the project dialog
   exposes its title but none of its fields to the accessibility tree, so the test
   reaches the name field by placeholder and Save by text.

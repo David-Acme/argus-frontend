@@ -1,7 +1,5 @@
-import { connected, control, NOT_LOOPBACK, projectNames, projectRows, setVisibility } from './support/harness';
-import { expect, test } from './support/devices';
-import { installTauriShim } from './support/tauri-shim';
-import { ownerDevice } from './support/seed';
+import { connected, control, projectNames, projectRows, setVisibility } from './support/harness';
+import { expect, openFirst, test } from './support/devices';
 
 const LIVE_MS = 2000;
 
@@ -16,13 +14,8 @@ test('a project created on one device appears on the other, live, after a backgr
   second,
 }) => {
   const baseUrl = app.baseUrl ?? '';
-  const escapes: string[] = [];
-  await browser.route(NOT_LOOPBACK, (route) => {
-    escapes.push(route.request.url);
-    return route.abort();
-  });
-  await browser.addInitScript(installTauriShim, ownerDevice('A'));
-  await app.open('/');
+  const escapes = await openFirst(browser, app);
+  await second.open();
 
   const open = async (): Promise<void> => {
     await screen.getByRole('button', 'Projects').first().click();

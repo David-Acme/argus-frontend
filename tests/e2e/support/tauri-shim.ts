@@ -57,7 +57,7 @@ export function installTauriShim(seed: ShimSeed): void {
     const method = input.method.toUpperCase();
     const response = await fetch(`/__api${pathOf(input.url)}`, {
       method,
-      headers: input.headers ?? {},
+      headers: { ...(input.headers ?? {}), 'x-e2e-device': seed.device },
       body: method === 'GET' || method === 'HEAD' ? undefined : (input.body ?? ''),
     });
     const headers: Record<string, string> = {};
