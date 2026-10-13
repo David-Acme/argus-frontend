@@ -2,6 +2,7 @@ node_modules/
 
 .expo/
 dist/
+tests/e2e/.e2e/
 web-build/
 
 /android

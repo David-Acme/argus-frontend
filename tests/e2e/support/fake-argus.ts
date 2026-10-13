@@ -1,0 +1,197 @@
+import type { ServerWebSocket } from 'bun';
+import { CAPABILITY } from '../../../src/shared/constants/capability.constant';
+
+export type DeviceSocket = ServerWebSocket<{ device: string }>;
+
+type Row = Record<string, unknown> & { id: number; createdAt: number };
+
+type SyncBody = { created?: { startTime?: number; startId?: number }; requiredCreate?: boolean; findLastDeleted?: boolean };
+
+const OPERATION = {
+  InitialInfo: 0,
+  Synchronize: 1,
+  SynchronizeAuditLog: 2,
+  SynchronizeUserAuditLog: 3,
+  Add: 4,
+  Heartbeat: 11,
+} as const;
+
+export const OWNER = { id: 1, name: 'Ana', role: 'owner', isActive: true, personId: null } as const;
+
+const text = (es: string, en: string) => ({ es, en });
+
+const moduleBrief = (id: string, name: { es: string; en: string }) => ({
+  id,
+  name,
+  summary: text('', ''),
+  kind: id === 'core' ? 'core' : 'available',
+  intro: null,
+  roles: [],
+  enabled: true,
+  lifecycle: 'active',
+  dataPurgedAt: null,
+});
+
+export const ownerContext = () => ({
+  userId: OWNER.id,
+  role: OWNER.role,
+  roleActive: true,
+  capabilities: Object.values(CAPABILITY),
+  roles: [{ id: 'owner', module: 'core', active: true }],
+  modules: [
+    moduleBrief('core', text('Asistente y hogar', 'Assistant and home')),
+    moduleBrief('productivity', text('Productividad', 'Productivity')),
+  ],
+  version: 1,
+});
+
+const envelope = (status: number, info: unknown, errors: unknown = null): Response =>
+  Response.json({ status, info, errors }, { status });
+
+const seconds = (): number => Math.floor(Date.now() / 1000);
+
+export class FakeArgus {
+  private readonly tables = new Map<string, Row[]>();
+  private readonly sockets = new Set<DeviceSocket>();
+  private readonly refusedUntil = new Map<string, number>();
+  private nextId = 100;
+  private clock = 0;
+  readonly requests: string[] = [];
+
+  accepts(device: string): boolean {
+    return (this.refusedUntil.get(device) ?? 0) <= Date.now();
+  }
+
+  open(socket: DeviceSocket): void {
+    this.sockets.add(socket);
+    socket.send(
+      JSON.stringify({
+        operation: OPERATION.InitialInfo,
+        option: 'user',
+        info: { id: OWNER.id, role: OWNER.role, isActive: true, context: ownerContext() },
+      })
+    );
+  }
+
+  close(socket: DeviceSocket): void {
+    this.sockets.delete(socket);
+  }
+
+  receive(socket: DeviceSocket, raw: string): void {
+    let message: { type?: string; payload?: unknown };
+    try {
+      message = JSON.parse(raw) as typeof message;
+    } catch {
+      return;
+    }
+    switch (message.type) {
+      case 'sync':
+        socket.send(JSON.stringify({ operation: OPERATION.Synchronize, option: 'sync', info: this.synchronize(message.payload) }));
+        return;
+      case 'sync_audit_log':
+        socket.send(JSON.stringify({ operation: OPERATION.SynchronizeAuditLog, option: 'audit_log', info: this.audit(message.payload) }));
+        return;
+      case 'sync_user_audit_log':
+        socket.send(
+          JSON.stringify({ operation: OPERATION.SynchronizeUserAuditLog, option: 'user_audit_log', info: this.audit(message.payload) })
+        );
+        return;
+      case 'heartbeat':
+        socket.send(
+          JSON.stringify({
+            operation: OPERATION.Heartbeat,
+            option: 'heartbeat',
+            info: { at: seconds(), intervalSeconds: 60, graceSeconds: 120, socketGraceSeconds: 30, armed: false, presence: 'home' },
+          })
+        );
+        return;
+      default:
+        return;
+    }
+  }
+
+  drop(device: string): number {
+    let dropped = 0;
+    for (const socket of [...this.sockets]) {
+      if (socket.data.device !== device) continue;
+      socket.close(1001, 'dropped by the e2e harness');
+      this.sockets.delete(socket);
+      dropped += 1;
+    }
+    return dropped;
+  }
+
+  refuse(device: string, ms: number): void {
+    this.refusedUntil.set(device, Date.now() + ms);
+  }
+
+  connected(device: string): number {
+    return [...this.sockets].filter((socket) => socket.data.device === device).length;
+  }
+
+  rows(table: string): Row[] {
+    return this.tables.get(table) ?? [];
+  }
+
+  async api(method: string, path: string, body: string): Promise<Response> {
+    this.requests.push(`${method} ${path}`);
+    if (method === 'POST' && path === '/project') return this.createProject(body);
+    if (method === 'GET' && path.startsWith('/modules')) return envelope(200, { modules: ownerContext().modules });
+    return envelope(404, null, { code: 'NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
+  }
+
+  private createProject(body: string): Response {
+    const input = (JSON.parse(body || '{}') ?? {}) as Record<string, unknown>;
+    const at = this.tick();
+    const row: Row = {
+      id: this.nextId++,
+      ownerId: OWNER.id,
+      name: String(input.name ?? ''),
+      description: String(input.description ?? ''),
+      status: String(input.status ?? 'active'),
+      color: String(input.color ?? 'blue'),
+      startsAt: input.startsAt ?? null,
+      targetAt: input.targetAt ?? null,
+      createdAt: at,
+      updatedAt: at,
+      deletedAt: null,
+    };
+    this.tables.set('project', [...this.rows('project'), row]);
+    this.broadcast({ operation: OPERATION.Add, option: 'project', info: row });
+    return envelope(201, row);
+  }
+
+  private tick(): number {
+    this.clock = Math.max(this.clock + 1, seconds());
+    return this.clock;
+  }
+
+  private broadcast(frame: unknown): void {
+    const message = JSON.stringify(frame);
+    for (const socket of this.sockets) socket.send(message);
+  }
+
+  private synchronize(payload: unknown): Record<string, unknown> {
+    const request = (payload ?? {}) as Record<string, SyncBody>;
+    const response: Record<string, unknown> = {};
+    for (const [table, body] of Object.entries(request)) {
+      if (body.findLastDeleted) {
+        response[table] = { created: [], deleted: [], lastSyncDate: {} };
+        continue;
+      }
+      const start = Number(body.created?.startTime ?? 0);
+      const startId = Number(body.created?.startId ?? 0);
+      const created = this.rows(table).filter(
+        (row) => row.createdAt > start || (row.createdAt === start && row.id > startId)
+      );
+      response[table] = { created, deleted: [] };
+    }
+    return response;
+  }
+
+  private audit(payload: unknown): Record<string, unknown> {
+    const request = (payload ?? {}) as { findLast?: boolean; endId?: number };
+    if (request.findLast) return { info: [], watermarkId: 0 };
+    return { info: [], nextCursorId: Number(request.endId ?? 0) };
+  }
+}

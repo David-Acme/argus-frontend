@@ -3504,3 +3504,50 @@ that exists only for tests. The durable answer, when a rule can be separated
 from its transport, is to put the rule in a leaf module: `safety-memo.ts` holds
 the PIN memo's rule and imports nothing but types and the signal, so its suite
 needs no mock at all.
+
+### End-to-end: two devices against a scripted Argus (2026-10-12, section 6 item 2)
+
+`bun run test:e2e` (and the tail of `bun run verify`, which reuses the bundle the
+probe just exported) runs `tests/e2e/` with tester-army's `e2e` runner and its
+`@e2e-dev/web` engine, pinned exactly (`e2e@0.19.0`, `@e2e-dev/web@0.14.0`). The
+pieces:
+
+- **The app is the exported web bundle, signed in.** `support/tauri-shim.ts` is
+  an init script that plays the Tauri IPC the desktop build speaks
+  (`__TAURI_INTERNALS__`): secure storage lives in the context's `localStorage`,
+  seeded once per device with a paired instance and an Owner session
+  (`support/seed.ts`); `argus_request` becomes a same-origin `fetch` to
+  `/__api<path>`, and `argus_socket_*` a WebSocket to `/__sync?device=<id>`, with
+  the open, text, binary and close frames the real socket channel delivers.
+- **Argus is scripted.** `support/serve.ts` (Bun) binds `127.0.0.1` on the port
+  the runner allocates, serves `dist/`, and runs `support/fake-argus.ts`:
+  `InitialInfo` with an Owner context (core and productivity), the `sync` pull
+  with created-row cursors, empty audit watermarks, `POST /project` that stores
+  the row and pushes the `Add` to every socket, and a 404 envelope for anything
+  else. `/__e2e/*` is the test's control: drop a device's sockets, refuse its
+  reconnects for a while, count its sockets, read the stored rows. Nothing
+  reaches a real Argus service, and both devices abort and record every request
+  that is not to `127.0.0.1` (the test asserts there were none).
+- **Two devices.** The engine's `browser` is device A; the `second` fixture
+  (`support/devices.ts`) opens device B as another context in the same Chromium,
+  which `support/chromium.ts` starts from `/usr/bin/chromium` (or
+  `ARGUS_CHROMIUM`) and hands to the engine over CDP, so the engine never
+  downloads a browser.
+- **The section-0 test** (`two-device.e2e.ts`): a project created through A's
+  form appears in B's list within 2 s; with B hidden (page visibility) and its
+  socket dropped while the change is made, it appears within 2 s of B coming
+  back to the foreground; and after a reconnect that missed the change (B dropped
+  and refused for 3 s), it appears within 2 s of B being connected again.
+  Mutations that each break one link fail it: no live `Add` from the server fails
+  the first leg, a client without the foreground reconnect (R22) fails the
+  second, and a server whose pull returns nothing fails the catch-up.
+- **No model, no telemetry.** The tests have no agent steps, so no model is
+  configured. Telemetry is off three ways: `E2E_TELEMETRY_DISABLED=1` and
+  `DO_NOT_TRACK=1` in the scripts, and `e2e telemetry disable` on this machine.
+  The package's other network code is the PostHog telemetry client (off), the
+  OAuth and model providers an agent step would use (none here), the readiness
+  probe of the app URL (loopback) and the Playwright browser download, which the
+  CDP connection avoids.
+- Findings this harness surfaced for the accessibility pass: the project dialog
+  exposes its title but none of its fields to the accessibility tree, so the test
+  reaches the name field by placeholder and Save by text.
