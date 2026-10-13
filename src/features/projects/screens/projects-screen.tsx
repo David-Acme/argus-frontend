@@ -3,14 +3,14 @@ import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { projectTaskService } from '@/core/services/project-task.service';
-import type { IProjectTaskCacheRow } from '@/core/interfaces';
+import type { IPeopleDirectoryCacheRow, IProjectMemberCacheRow, IProjectTaskCacheRow } from '@/core/interfaces';
 import type { ProjectStatus, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { SCREEN_TITLE_KEYS } from '@/shared/constants';
+import { SCREEN_TITLE_KEYS, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -20,6 +20,13 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { ProjectAside } from '@/features/projects/components/project-aside';
 import { ProjectBoardHeader } from '@/features/projects/components/project-board-header';
 import { ProjectForm } from '@/features/projects/components/project-form';
+import { ProjectMembersDialog } from '@/features/projects/components/project-members-dialog';
+import { ownsProject, projectAccessOf, worksOnProject } from '@/features/projects/model/project-access';
+import { projectMemberLens } from '@/features/projects/model/project-member-optimistic';
+import { useAuthStore } from '@/core/stores';
+import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { peopleAccessOf } from '@/shared/libs/capabilities';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { TaskBoard } from '@/features/projects/components/task-board';
 import { DraggableTask } from '@/features/projects/components/task-drag';
@@ -53,8 +60,12 @@ export default function ProjectsScreen() {
   const [editingTaskId, setEditingTaskId] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState<ProjectTaskStatus>('todo');
   const [pendingTaskId, setPendingTaskId] = useState(taskParam ?? '');
+  const [membersOpen, setMembersOpen] = useState(false);
+  const userId = String(useAuthStore((state) => state.user?.id ?? ''));
   const { isExpanded } = useWindowClass();
-  const { can } = useCapabilities();
+  const capabilities = useCapabilities();
+  const directoryVisible = peopleAccessOf(capabilities).receivesDirectory;
+  const { can } = capabilities;
   const labels = useTaskLabels();
   const { projects, tasks, activeId, activePending, progress, isPendingTask } =
     useProjectsData(selectedId);
@@ -72,9 +83,17 @@ export default function ProjectsScreen() {
   );
   const activeProject = projects.find((project) => project.id === activeId);
   const activeStatus = (activeProject?.status ?? 'active') as ProjectStatus;
+  const members = useViewCacheRows<IProjectMemberCacheRow>(VIEW_CACHE_KEYS.projectMembers, activeId);
+  const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
+  const memberLenses = useMemo(() => [projectMemberLens(activeId, people)], [activeId, people]);
+  const memberRows = useOptimisticRows(members, memberLenses);
+  const ownerId = activeProject?.ownerId ?? '';
+  const access = useMemo(() => projectAccessOf({ ownerId, userId, members }), [members, ownerId, userId]);
+  const canWork = useMemo(() => worksOnProject(access), [access]);
+  const managesMembers = ownsProject(access) && directoryVisible;
   const canCreateProject = can('project', 'create');
-  const canCreateTask = can('project_task', 'create') && activeId.length > 0 && !activePending;
-  const canUpdateTask = can('project_task', 'update');
+  const canCreateTask = can('project_task', 'create') && canWork && activeId.length > 0 && !activePending;
+  const canUpdateTask = can('project_task', 'update') && canWork;
   const countLabel = t('screens.projects.task-count', {
     done: String(progress.done),
     total: String(progress.total),
@@ -239,10 +258,14 @@ export default function ProjectsScreen() {
                 editLabel={t('common.edit')}
                 newTaskLabel={t('screens.projects.new-task')}
                 onEdit={
-                  can('project', 'update') && activeId && !activePending
+                  can('project', 'update') && worksOnProject(access) && activeId && !activePending
                     ? () => openProjectForm(true)
                     : undefined
                 }
+                membersLabel={t('screens.projects.members')}
+                memberCount={memberRows.rows.length}
+                onMembers={managesMembers && !activePending ? () => setMembersOpen(true) : undefined}
+                notice={access === 'view' ? t('screens.projects.read-only') : undefined}
                 onNewTask={canCreateTask ? () => openNewTask('todo') : undefined}
               />
 
@@ -273,7 +296,20 @@ export default function ProjectsScreen() {
           if (!open) setEditingProject(false);
         }}
         project={editingProject ? (activeProject ?? null) : null}
+        canDelete={ownsProject(access)}
       />
+      {activeProject ? (
+        <ProjectMembersDialog
+          open={membersOpen}
+          onOpenChange={setMembersOpen}
+          projectId={activeProject.id}
+          projectName={activeProject.name}
+          ownerId={activeProject.ownerId}
+          members={memberRows.rows}
+          isPending={memberRows.isPending}
+          people={people}
+        />
+      ) : null}
       {activeId ? (
         <TaskForm
           open={taskFormOpen}

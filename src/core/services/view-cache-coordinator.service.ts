@@ -1,8 +1,10 @@
 import { shareReplay, type Observable, type Subscription } from 'rxjs';
 import { calendarEventService } from '@/core/services/calendar-event.service';
+import { calendarEventShareService } from '@/core/services/calendar-event-share.service';
 import { cameraService } from '@/core/services/camera.service';
 import { notificationService } from '@/core/services/notification.service';
 import { projectService } from '@/core/services/project.service';
+import { projectMemberService } from '@/core/services/project-member.service';
 import { projectTaskService } from '@/core/services/project-task.service';
 import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
@@ -26,6 +28,7 @@ import {
   projectCalendar,
   todayRange,
 } from './view-cache/calendar.projection';
+import { projectCalendarShares } from './view-cache/calendar-share.projection';
 import { projectCameras } from './view-cache/camera.projection';
 import { projectGettingStarted } from './view-cache/getting-started.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
@@ -52,6 +55,8 @@ function sessionSources(userId: string) {
     zones: shared(moduleGate.of(SURVEILLANCE, zoneService.observeForCache(), [])),
     projects: shared(moduleGate.of(PRODUCTIVITY, projectService.observeList(), [])),
     tasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeAll(), [])),
+    members: shared(moduleGate.of(PRODUCTIVITY, projectMemberService.observeAll(), [])),
+    calendarShares: shared(moduleGate.of(PRODUCTIVITY, calendarEventShareService.observeAll(), [])),
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
     users: shared(userService.observeDirectory()),
@@ -73,9 +78,22 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     ),
     startProjection(
       {
-        sources: () => ({ projects: sources.projects, tasks: sources.tasks }),
+        sources: () => ({
+          projects: sources.projects,
+          tasks: sources.tasks,
+          members: sources.members,
+          users: sources.users,
+        }),
         project: projectProjects,
-        tracked: ['project.tasks'],
+        tracked: ['project.tasks', 'project.members'],
+      },
+      ctx,
+    ),
+    startProjection(
+      {
+        sources: () => ({ shares: sources.calendarShares, users: sources.users }),
+        project: projectCalendarShares,
+        tracked: ['calendar.event.shares'],
       },
       ctx,
     ),

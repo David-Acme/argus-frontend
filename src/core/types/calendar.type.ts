@@ -27,6 +27,7 @@ export type CalendarEntry = {
   location?: string;
   description?: string;
   projectId?: string | null;
+  ownerId?: string;
 };
 
 export type AgendaWindow = { weeks: number };

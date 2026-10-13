@@ -60,9 +60,18 @@ export interface IZoneCacheRow {
 
 export interface IProjectCacheRow {
   id: string;
+  ownerId: string;
   name: string;
   description: string;
   status: string;
+}
+
+export interface IProjectMemberCacheRow {
+  id: string;
+  projectId: string;
+  userId: string;
+  name: string;
+  access: string;
 }
 
 export interface IProjectTaskCacheRow {
@@ -118,6 +127,7 @@ export interface IChecklistSignalsCache {
 
 export interface ICalendarEventCacheSource {
   id: string;
+  ownerId: string;
   title: string;
   startsAt: Date;
   endsAt: Date | null;
@@ -126,6 +136,14 @@ export interface ICalendarEventCacheSource {
   location: string;
   description: string;
   projectId: string | null;
+}
+
+export interface ICalendarEventShareCacheRow {
+  id: string;
+  calendarEventId: string;
+  userId: string;
+  name: string;
+  access: string;
 }
 
 export interface ICalendarEventFormRecord {

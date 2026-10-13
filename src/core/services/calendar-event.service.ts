@@ -24,6 +24,7 @@ class CalendarEventService extends DatabaseService<'calendar_event'> {
   observeRange(fromMs: number, toMs: number): Observable<CalendarEventModel[]> {
     return this.observeManyWithColumns(
       [
+        'owner_id',
         'title',
         'starts_at',
         'ends_at',

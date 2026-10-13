@@ -19,6 +19,10 @@ type ProjectBoardHeaderProps = {
   newTaskLabel: string;
   onEdit?: () => void;
   onNewTask?: () => void;
+  membersLabel: string;
+  memberCount: number;
+  onMembers?: () => void;
+  notice?: string;
 };
 
 export function ProjectBoardHeader({
@@ -33,6 +37,10 @@ export function ProjectBoardHeader({
   newTaskLabel,
   onEdit,
   onNewTask,
+  membersLabel,
+  memberCount,
+  onMembers,
+  notice,
 }: ProjectBoardHeaderProps) {
   const ratio = Math.max(0, Math.min(1, progress));
 
@@ -55,8 +63,14 @@ export function ProjectBoardHeader({
             </Text>
           ) : null}
         </View>
-        {onEdit || onNewTask ? (
+        {onEdit || onNewTask || onMembers ? (
           <View className="flex-row items-center gap-2">
+            {onMembers ? (
+              <Button variant="outline" size="sm" accessibilityLabel={membersLabel} onPress={onMembers}>
+                <Icon name="users" className="text-foreground size-4" />
+                <Text>{memberCount > 0 ? `${membersLabel} · ${memberCount}` : membersLabel}</Text>
+              </Button>
+            ) : null}
             {onEdit ? (
               <Button variant="ghost" size="icon" accessibilityLabel={editLabel} onPress={onEdit}>
                 <Icon name="square-pen" className="text-muted-foreground size-4" />
@@ -71,6 +85,11 @@ export function ProjectBoardHeader({
           </View>
         ) : null}
       </View>
+      {notice ? (
+        <Text variant="caption" className="text-foreground-secondary">
+          {notice}
+        </Text>
+      ) : null}
       <View className="gap-2">
         <View className="flex-row items-center justify-between gap-3">
           <Text variant="label" className="tabular-nums">

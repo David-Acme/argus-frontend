@@ -53,6 +53,7 @@ export const toCalendarEntries = (
     entries.push({
       id: `event:${event.id}`,
       source: 'event',
+      ownerId: event.ownerId,
       title: event.title,
       startsAt,
       endsAt: event.endsAt?.getTime() ?? null,

@@ -34,6 +34,7 @@ type ProjectFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   project?: IProjectCacheRow | null;
+  canDelete?: boolean;
 };
 
 const schema = z.object({
@@ -50,7 +51,7 @@ const projectBody = (values: ProjectValues): IProjectCreate => ({
   status: values.status,
 });
 
-export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
+export function ProjectForm({ open, onOpenChange, project, canDelete = true }: ProjectFormProps) {
   const { t } = useTranslation();
   const { projectStatusOptions: statusOptions } = useTaskLabels();
   const formScroll = useFormScroll();
@@ -115,7 +116,7 @@ export function ProjectForm({ open, onOpenChange, project }: ProjectFormProps) {
       closeLabel={t('common.close')}
       footer={
         <>
-          {project ? (
+          {project && canDelete ? (
             <Button variant="ghost" onPress={remove} disabled={submitting}>
               <Text className="text-error-strong">{t('common.delete')}</Text>
             </Button>

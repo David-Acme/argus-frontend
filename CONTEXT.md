@@ -1112,6 +1112,31 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   `tests/unit/grant-scope.test.ts`. The coordinator observes the resulting projection and refreshes
   MMKV before the user enters a view.
 
+### Sharing: project members and event shares (F6, 2026-10-13)
+
+- The owner alone manages a share. The backend checks `ownerId == actor` for
+  every create, update and removal of a `project_member` or a
+  `calendar_event_share` row, and the screens follow it: the Members button and
+  the agenda's Share action appear only to the owner.
+- The picker lists the household directory, which only the Owner reads, so the
+  owner-only check is also gated by `peopleAccessOf(view).receivesDirectory`. A
+  Resident who owns a project therefore sees no picker. The backend would accept
+  an add by id, but the app has no list to pick from; that is an owner decision,
+  not a bug.
+- A grantee receives its own grant row, not the others' (R21). `projectAccessOf`
+  reads that row to decide edit, view or none, which drives the read-only notice
+  and the hidden controls.
+- Changes are optimistic: `runOptimistic` with `project_member` or
+  `calendar_event_share` intents, shaped by `projectMemberLens` and
+  `calendarShareLens`. A pending row is dimmed and refuses actions. The two view
+  caches are `project.members` (scope: project id) and `calendar.event.shares`
+  (scope: event id, tracked so a scope left with no rows is emptied).
+- One dialog serves both: `shared/components/sharing/share-members-dialog.tsx`.
+  Each feature supplies its labels, its candidates (`shareCandidates`, which
+  checks the table's read permission) and its mutations.
+- `CalendarEntry.ownerId` is set for events only, so the Share action can tell the
+  owner from everyone else.
+
 ### People and access surfaces
 
 - `/profile` is the personal, Threads-inspired but Argus-adapted account view:

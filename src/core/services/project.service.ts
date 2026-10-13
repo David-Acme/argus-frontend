@@ -12,7 +12,7 @@ class ProjectService extends DatabaseService<'project'> {
 
   observeList(): Observable<ProjectModel[]> {
     return this.observeManyWithColumns(
-      ['name', 'description', 'status', 'color', 'target_at'],
+      ['owner_id', 'name', 'description', 'status', 'color', 'target_at'],
       [Q.sortBy('created_at', Q.desc)],
     );
   }

@@ -133,25 +133,42 @@ describe('camera projection', () => {
 });
 
 describe('project projection', () => {
-  test('tasks are scoped per project and cards carry progress', () => {
+  test('tasks and members are scoped per project and cards carry progress', () => {
     const writes = projectProjects({
       projects: [
-        { id: 'p1', name: 'Home', description: '', status: 'active' },
-        { id: 'p2', name: 'Empty', description: '', status: 'active' },
+        { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active' },
+        { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active' },
       ],
       tasks: [
         { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
         { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: new Date(1000) },
       ],
+      members: [
+        { id: 'm1', projectId: 'p1', userId: '2', access: 'edit' },
+        { id: 'm2', projectId: 'p1', userId: '9', access: 'view' },
+      ],
+      users: [
+        { id: '1', name: 'Ana', lastName: 'Ruiz' },
+        { id: '2', name: 'Luis', lastName: '' },
+      ],
     });
+    expect(rowsOf(writes, 'project.list')).toEqual([
+      { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active' },
+      { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active' },
+    ]);
     expect(rowsOf(writes, 'project.tasks', 'p1')).toEqual([
       { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
       { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: 1000 },
     ]);
     expect(rowsOf(writes, 'project.tasks', 'p2')).toEqual([]);
+    expect(rowsOf(writes, 'project.members', 'p1')).toEqual([
+      { id: 'm1', projectId: 'p1', userId: '2', name: 'Luis', access: 'edit' },
+      { id: 'm2', projectId: 'p1', userId: '9', name: '', access: 'view' },
+    ]);
+    expect(rowsOf(writes, 'project.members', 'p2')).toEqual([]);
     expect(rowsOf(writes, 'dashboard.projects')).toEqual([
-      { id: 'p1', name: 'Home', description: '', status: 'active', done: 1, total: 2, progress: 0.5 },
-      { id: 'p2', name: 'Empty', description: '', status: 'active', done: 0, total: 0, progress: 0 },
+      { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active', done: 1, total: 2, progress: 0.5 },
+      { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active', done: 0, total: 0, progress: 0 },
     ]);
   });
 });
@@ -226,6 +243,7 @@ describe('agenda feed projection', () => {
 
   const event = (id: string, title: string, startsAt: Date) => ({
     id,
+    ownerId: '1',
     title,
     startsAt,
     endsAt: null,
@@ -385,6 +403,7 @@ describe('calendar projections', () => {
     events: [
       {
         id: 'e1',
+        ownerId: '1',
         title: 'Visit',
         startsAt: new Date(2026, 10, 20, 9),
         endsAt: null,

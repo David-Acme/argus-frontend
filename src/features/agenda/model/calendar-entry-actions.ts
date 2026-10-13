@@ -1,7 +1,7 @@
 import type { CalendarEntry, CalendarEntryState } from '@/core/types';
 import type { Href } from 'expo-router';
 
-export type CalendarEntryAction = 'edit' | 'delete' | 'toggle';
+export type CalendarEntryAction = 'edit' | 'delete' | 'toggle' | 'share';
 export type CalendarEventFormAction = 'cancel' | 'save';
 export type CalendarEntryDetailRow = {
   id: 'type' | 'date' | 'time' | 'status' | 'location';
@@ -25,7 +25,17 @@ export type CalendarEntryDetailLabels = {
 type CalendarEntryPermissions = {
   canEdit: boolean;
   canDelete: boolean;
+  canShare?: boolean;
 };
+
+export type CalendarShareViewer = {
+  userId: string;
+  canManageShares: boolean;
+};
+
+export function canShareCalendarEntry(entry: CalendarEntry, viewer: CalendarShareViewer): boolean {
+  return entry.source === 'event' && viewer.canManageShares && entry.ownerId === viewer.userId;
+}
 
 type CanFn = (table: 'project_task' | 'calendar_event', permission: 'update' | 'delete') => boolean;
 
@@ -100,13 +110,14 @@ export function calendarEntryRecordId(entry: CalendarEntry): string {
 
 export function availableCalendarEntryActions(
   entry: CalendarEntry,
-  { canEdit, canDelete }: CalendarEntryPermissions
+  { canEdit, canDelete, canShare = false }: CalendarEntryPermissions
 ): CalendarEntryAction[] {
   if (entry.source === 'reminder') return [];
 
   const actions: CalendarEntryAction[] = [];
   if (canEdit) actions.push('edit');
   if (entry.source === 'task' && canEdit) actions.push('toggle');
+  if (canShare) actions.push('share');
   if (canDelete) actions.push('delete');
   return actions;
 }

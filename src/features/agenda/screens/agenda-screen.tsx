@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { ICalendarEventFormRecord } from '@/core/interfaces';
+import { useAuthStore } from '@/core/stores';
 import type { CalendarEntry, CalendarView } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { IconButton } from '@/shared/components/ui/icon-button';
@@ -15,11 +16,13 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
+import { peopleAccessOf } from '@/shared/libs/capabilities';
 import { screenIn } from '@/shared/libs/animations';
 import { AgendaSidePanel } from '@/features/agenda/components/agenda-side-panel';
 import { CalendarAgendaView } from '@/features/agenda/components/calendar-agenda-view';
 import { CalendarDayView } from '@/features/agenda/components/calendar-day-view';
 import { CalendarEntryDetail } from '@/features/agenda/components/calendar-entry-detail';
+import { CalendarEventShareDialog } from '@/features/agenda/components/calendar-event-share-dialog';
 import { CalendarEventForm } from '@/features/agenda/components/calendar-event-form';
 import { CalendarHeader } from '@/features/agenda/components/calendar-header';
 import { CalendarViewSwitcher } from '@/features/agenda/components/calendar-view-switcher';
@@ -30,6 +33,7 @@ import { useAgendaEntries } from '@/features/agenda/hooks/use-agenda-entries';
 import {
   calendarEntryEditHref,
   calendarEntryRecordId,
+  canShareCalendarEntry,
   entryPermissions,
 } from '@/features/agenda/model/calendar-entry-actions';
 
@@ -60,8 +64,18 @@ export default function ScheduleScreen() {
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
-  const { can } = useCapabilities();
+  const [shareEntry, setShareEntry] = useState<CalendarEntry | null>(null);
+  const capabilities = useCapabilities();
+  const canManageShares = peopleAccessOf(capabilities).receivesDirectory;
+  const { can } = capabilities;
   const canCreate = can('calendar_event', 'create');
+  const userId = String(useAuthStore((state) => state.user?.id ?? ''));
+  const shareViewer = useMemo(() => ({ userId, canManageShares }), [canManageShares, userId]);
+  const shareableEntry = useCallback(
+    (entry: CalendarEntry) => canShareCalendarEntry(entry, shareViewer),
+    [shareViewer]
+  );
+  const openShare = useCallback((entry: CalendarEntry) => setShareEntry(entry), []);
   const usesActionSheet = shouldUseAdaptiveMenuSheet({
     isCompact,
     isExpanded,
@@ -155,9 +169,15 @@ export default function ScheduleScreen() {
 
   const renderActions = useCallback(
     (entry: CalendarEntry) => (
-      <EntryActionsMenu entry={entry} {...entryPermissions(entry, can)} onEdit={editEntry} />
+      <EntryActionsMenu
+        entry={entry}
+        {...entryPermissions(entry, can)}
+        canShare={shareableEntry(entry)}
+        onEdit={editEntry}
+        onShare={openShare}
+      />
     ),
-    [can, editEntry]
+    [can, editEntry, openShare, shareableEntry]
   );
 
   const renderContextMenu = useCallback(
@@ -165,11 +185,13 @@ export default function ScheduleScreen() {
       <EntryActionsMenu
         entry={entry}
         {...entryPermissions(entry, can)}
+        canShare={shareableEntry(entry)}
         onEdit={editEntry}
+        onShare={openShare}
         contextTrigger={trigger}
       />
     ),
-    [can, editEntry]
+    [can, editEntry, openShare, shareableEntry]
   );
 
   const handlers: EntryHandlers = {
@@ -359,11 +381,24 @@ export default function ScheduleScreen() {
         <EntryActionsMenu
           entry={actionEntry}
           {...entryPermissions(actionEntry, can)}
+          canShare={shareableEntry(actionEntry)}
           onEdit={editEntry}
+          onShare={openShare}
           open
           onOpenChange={(open) => {
             if (!open) setActionEntry(null);
           }}
+        />
+      ) : null}
+      {shareEntry ? (
+        <CalendarEventShareDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setShareEntry(null);
+          }}
+          eventId={calendarEntryRecordId(shareEntry)}
+          eventTitle={shareEntry.title}
+          ownerId={shareEntry.ownerId ?? ''}
         />
       ) : null}
     </AppScreen>

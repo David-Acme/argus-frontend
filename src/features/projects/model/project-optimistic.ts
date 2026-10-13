@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/core/stores';
 import type {
   IProjectCacheRow,
   IProjectCreate,
@@ -27,6 +28,7 @@ export const projectLens: OptimisticLens<IProjectCacheRow> = defineLens<
   }),
   create: (recordId, values) => ({
     id: recordId,
+    ownerId: String(useAuthStore.getState().user?.id ?? ''),
     name: values.name ?? '',
     description: values.description ?? '',
     status: values.status ?? 'active',

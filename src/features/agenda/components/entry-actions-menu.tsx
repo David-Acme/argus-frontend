@@ -30,8 +30,10 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
   onEdit?: (entry: CalendarEntry) => void;
+  onShare?: (entry: CalendarEntry) => void;
   canEdit: boolean;
   canDelete: boolean;
+  canShare?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   contextTrigger?: ReactElement;
@@ -40,8 +42,10 @@ type EntryActionsMenuProps = {
 export function EntryActionsMenu({
   entry,
   onEdit,
+  onShare,
   canEdit,
   canDelete,
+  canShare = false,
   open,
   onOpenChange,
   contextTrigger,
@@ -62,9 +66,12 @@ export function EntryActionsMenu({
   const options = ((): MenuOption<CalendarEntryAction>[] => {
     const list: MenuOption<CalendarEntryAction>[] = [];
     if (pending) return list;
-    for (const action of availableCalendarEntryActions(entry, { canEdit, canDelete })) {
+    for (const action of availableCalendarEntryActions(entry, { canEdit, canDelete, canShare })) {
       if (action === 'edit' && onEdit) {
         list.push({ value: action, label: t('common.edit'), icon: 'pencil' });
+      }
+      if (action === 'share' && onShare) {
+        list.push({ value: action, label: t('screens.agenda.share'), icon: 'users' });
       }
       if (action === 'toggle') {
         list.push({
@@ -86,6 +93,10 @@ export function EntryActionsMenu({
   const run = async (action: CalendarEntryAction) => {
     if (action === 'edit') {
       onEdit?.(entry);
+      return;
+    }
+    if (action === 'share') {
+      onShare?.(entry);
       return;
     }
 

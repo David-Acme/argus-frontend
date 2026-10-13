@@ -42,6 +42,8 @@ export const VIEW_CACHE_KEYS = {
   reminderList: 'reminder.list',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
+  projectMembers: 'project.members',
+  calendarEventShares: 'calendar.event.shares',
   peopleUsers: 'people.users',
   peopleInvitations: 'people.invitations',
   settingsOverview: 'settings.overview',

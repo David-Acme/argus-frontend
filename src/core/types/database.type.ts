@@ -29,6 +29,8 @@ export type DayNightMode = 'auto' | 'day' | 'night';
 
 export type EventSeverity = 'info' | 'warning' | 'critical';
 
+export type ShareAccess = 'view' | 'edit';
+
 export type ProjectStatus = 'planned' | 'active' | 'paused' | 'done' | 'canceled';
 
 export type ProjectTaskStatus = 'backlog' | 'todo' | 'doing' | 'done' | 'canceled';
