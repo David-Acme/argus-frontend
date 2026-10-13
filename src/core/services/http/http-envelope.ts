@@ -43,12 +43,19 @@ const isApiError = (value: unknown): value is IApiError =>
 const isApiErrorList = (value: unknown): value is readonly IApiError[] =>
   Array.isArray(value) && value.length > 0 && value.every(isApiError);
 
+const serverRefusal = (error: IApiError): IApiError =>
+  error.code === 'ROUTE_NOT_FOUND' ? { ...error, code: 'UNREACHABLE_ROUTE' } : error;
+
 function carriedError(errors: unknown): IApiError | null {
-  if (isApiError(errors)) return errors;
+  if (isApiError(errors)) return serverRefusal(errors);
   if (!isApiErrorList(errors)) return null;
   const [first] = errors;
   if (!first) return null;
-  return { code: first.code, message: first.message, list: errors.map(({ code, message }) => ({ code, message })) };
+  return serverRefusal({
+    code: first.code,
+    message: first.message,
+    list: errors.map(({ code, message }) => ({ code, message })),
+  });
 }
 
 const isEnvelope = (body: Body): boolean => typeof body.status === 'number' && 'info' in body && 'errors' in body;

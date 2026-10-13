@@ -24,6 +24,12 @@ const envelopeNotFound: NetHttpResult = {
   body: JSON.stringify({ status: 404, info: null, errors: { code: 'NOT_FOUND', message: 'Notification not found' } }),
 };
 
+const routeNotFound: NetHttpResult = {
+  status: 404,
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ status: 404, info: null, errors: { code: 'ROUTE_NOT_FOUND', message: 'Path not found' } }),
+};
+
 let reply: NetHttpResult = htmlNotFound;
 
 mock.module('@/core/services/net', () => ({
@@ -47,18 +53,39 @@ registerHttpAuth({
 const THREAD = '/notification/thread/guard%3Aepisode%3A41';
 
 describe('a 404 is the NOT_FOUND of the server only inside the Argus envelope', () => {
-  test('a server answering an HTML 404 page is an unreachable route', async () => {
+  test('an HTML 404 page, which no Argus service sends, is an unreachable route', async () => {
     reply = htmlNotFound;
     const response = await httpService.delete(THREAD);
     expect(response.ok).toBe(false);
     expect(response.errors?.code).toBe('UNREACHABLE_ROUTE');
   });
 
-  test('a server answering the envelope 404 gives its own NOT_FOUND', async () => {
+  test('the envelope 404 of a handler gives the NOT_FOUND of the server', async () => {
     reply = envelopeNotFound;
     const response = await httpService.delete(THREAD);
     expect(response.ok).toBe(false);
     expect(response.errors).toEqual({ code: 'NOT_FOUND', message: 'Notification not found' });
+  });
+});
+
+describe('a server that has no such route answers ROUTE_NOT_FOUND', () => {
+  test('the app reads it as an unreachable route, never as NOT_FOUND', async () => {
+    reply = routeNotFound;
+    const response = await httpService.delete(THREAD);
+    expect(response.ok).toBe(false);
+    expect(response.errors).toEqual({ code: 'UNREACHABLE_ROUTE', message: 'Path not found' });
+  });
+
+  test('a thread delete on such a server brings the thread back with the error toast', async () => {
+    reply = routeNotFound;
+    const response = await httpService.delete(THREAD);
+    expect(removalSettled(response)).toBe(false);
+    expect(threadRemovalResult([response])).toEqual({
+      status: 404,
+      ok: false,
+      info: null,
+      errors: { code: 'UNREACHABLE_ROUTE', message: 'Path not found' },
+    });
   });
 });
 

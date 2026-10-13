@@ -38,6 +38,24 @@ describe('readEnvelope', () => {
     expect(readEnvelope(405, '<html>405</html>').errors?.code).toBe('UNREACHABLE_ROUTE');
   });
 
+  test('the backend answer for a route it does not have, ROUTE_NOT_FOUND, is an unreachable route', () => {
+    const unmatched = { code: 'ROUTE_NOT_FOUND', message: 'Path not found' };
+    expect(readEnvelope(404, envelope({ status: 404, info: null, errors: unmatched }))).toEqual({
+      status: 404,
+      ok: false,
+      info: null,
+      errors: { code: 'UNREACHABLE_ROUTE', message: 'Path not found' },
+    });
+    expect(readEnvelope(404, envelope({ status: 404, info: null, errors: [unmatched] })).errors?.code).toBe(
+      'UNREACHABLE_ROUTE'
+    );
+  });
+
+  test('a server older than ROUTE_NOT_FOUND still answers NOT_FOUND for a missing route', () => {
+    const older = { code: 'NOT_FOUND', message: 'Path not found' };
+    expect(readEnvelope(404, envelope({ status: 404, info: null, errors: older })).errors).toEqual(older);
+  });
+
   test('a refusal without the envelope names only how far it got', () => {
     expect(readEnvelope(502, '<html>Bad gateway</html>').errors?.code).toBe('BAD_GATEWAY');
     expect(readEnvelope(503, '').errors?.code).toBe('SERVICE_UNAVAILABLE');

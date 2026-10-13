@@ -1167,13 +1167,16 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   it is retryable. That includes a 404 without the envelope (an HTML page, a proxy's
   page, an empty body): it is `UNREACHABLE_ROUTE` (see "Only the Argus envelope speaks
   for the server"), so its toast says the server did not answer as Argus.
-- What the envelope rule cannot tell apart: since 2026-09-21 every service answers a
-  route it does not have with the envelope itself, `NOT_FOUND` "Path not found" (backend
-  `ErrorHandler::unmatchedRoute`), the same code the thread route answers for a thread
-  with no live row (`NotificationNotFound`). A server older than the thread route still
-  reads as done, and the thread is forgotten on this device only. Telling the two apart
-  needs a code of its own for an unmatched route on the backend; the app does not match
-  on the message text.
+- A server older than the thread route answers with the envelope, never with an HTML
+  page: every service has answered a route it does not have through backend
+  `ErrorHandler::unmatchedRoute` since 2026-09-21. Since the backend's ROUTE_NOT_FOUND
+  change (2026-10-13, backend `packages/lib/http/CONTEXT.md`, "An unmatched route answers
+  ROUTE_NOT_FOUND") that answer carries `ROUTE_NOT_FOUND`, which the app reads as
+  `UNREACHABLE_ROUTE`: the thread comes back with the error toast. A server between those
+  two dates answers `NOT_FOUND` "Path not found", the code the thread route answers for
+  a thread with no live row (`NotificationNotFound`), so it still reads as done and the
+  thread is forgotten on this device only. The app does not match on the message text;
+  the upgrade order in "Only the Argus envelope speaks for the server" closes that case.
 - Other devices drop the row on the `Delete` frame (the generic delete path) or on the
   user-audit diff that comes before it. `planAuditEntries` treats a diff whose current
   `deletedAt` is set as a removal, for the tables whose pull has no deletion leg
@@ -1767,23 +1770,32 @@ server, on every call:
   `TOO_MANY_REQUESTS`, `BAD_GATEWAY`, `SERVICE_UNAVAILABLE`, `DEADLINE_EXCEEDED`,
   `INTERNAL_ERROR`), retryable as before (`foreignRefusalCode`);
 - every other status is `UNREACHABLE_ROUTE`: something answered, but not the Argus
-  route the app called. Drogon's HTML 404 page, a proxy's page and an empty 404 all land
-  here, never on `NOT_FOUND`. The toast says "The server did not answer as Argus. It may
-  need an update.", and it is not retryable;
+  route the app called. A proxy's page and an empty 404 land here, never on `NOT_FOUND`,
+  and so would Drogon's own HTML 404 page, which no Argus service has sent since
+  2026-09-21. The toast says "The server did not answer as Argus. It may need an
+  update.", and it is not retryable;
 - a 2xx whose `errors` carries no code is `INVALID_RESPONSE`, like any 2xx body the app
   cannot read.
 
 So a rule that reads a server code (`removalSettled` on `NOT_FOUND`, the snooze's
 `CONFLICT`, a module request's `CONFLICT`) can no longer be met by a page the server did
-not write. The backend's own answer to a route it does not have is still the envelope,
-`NOT_FOUND` "Path not found" (`ErrorHandler::unmatchedRoute`, every service since
-2026-09-21), so that answer still reads as the server's `NOT_FOUND` ("Deleting a
-notification" says what that leaves open). The call grant reads `UNREACHABLE_ROUTE` like
-the envelope 404: a server without the RTC route falls back to the PCM call. Tests:
-`http-envelope.test.ts`, and
-`http-foreign-refusal.test.ts`, which runs the real http service over two fakes of the
-net layer, one answering Drogon's HTML 404 and one the envelope 404: only the second is
-`NOT_FOUND`, and only the second settles a thread delete.
+not write.
+
+A server answers a route it does not have with the envelope itself
+(`ErrorHandler::unmatchedRoute`, every service since 2026-09-21). Since the backend's
+ROUTE_NOT_FOUND change (2026-10-13) it carries `ROUTE_NOT_FOUND` "Path not found", and
+`readEnvelope` turns that code into `UNREACHABLE_ROUTE`, never `NOT_FOUND`. A server
+from before that change answers `NOT_FOUND` "Path not found", which reads as the
+server's `NOT_FOUND` ("Deleting a notification" says what that leaves open).
+
+Upgrade the server before the app: a new app against a server that predates ROUTE_NOT_FOUND reads a missing route as NOT_FOUND.
+
+The call grant reads `UNREACHABLE_ROUTE` like the envelope 404: a server without the RTC
+route falls back to the PCM call. Tests: `http-envelope.test.ts`, and
+`http-foreign-refusal.test.ts`, which runs the real http service over three fakes of the
+net layer: Drogon's HTML 404, a handler's envelope 404, and the envelope
+`ROUTE_NOT_FOUND` of a server that has no such route. Only the envelope 404 is
+`NOT_FOUND`, and only it settles a thread delete.
 
 ## Calls with Argus (2026-10-03)
 
