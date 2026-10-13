@@ -3551,3 +3551,34 @@ pieces:
 - Findings this harness surfaced for the accessibility pass: the project dialog
   exposes its title but none of its fields to the accessibility tree, so the test
   reaches the name field by placeholder and Save by text.
+
+### Device checklist (section 6 item 7, Q3; needs real phones, not run by agents)
+
+What the web harness and the unit suites cannot prove, to be walked on hardware
+before a release that touches these areas. Each line is pass/fail with the device,
+OS version and build noted.
+
+1. **Camera live audio, Android and iOS.** Open a camera with a microphone in
+   Cámaras; audio stays off until the explicit toggle; turning it on plays within
+   2 s with no echo from the phone's own speaker; muting and leaving the screen
+   stop it; a backgrounded app releases the audio session.
+2. **Camera live view over WebRTC, both phones, on Wi-Fi and on mobile data
+   through the tunnel.** First frame within 3 s on the LAN; the WebSocket fallback
+   takes over when WebRTC is blocked (deny UDP on the router) and the badge says
+   so; quality switch main/sub and the stall fallback work; fullscreen rotates.
+3. **Calls with Argus over WebRTC** from both phones: the call connects, the
+   in-call camera card shows, and hanging up releases the microphone (the OS
+   indicator goes off).
+4. **The QR sheet with the keyboard open.** On a small Android phone and on an
+   iPhone with the software keyboard up, the cross-device QR login sheet and the
+   invitation sheet keep their QR and their primary button visible; the sheet
+   scrolls rather than covering the input; dismissing the keyboard restores it.
+5. **The iOS build of the camera media module** (`modules/`): a clean
+   `expo prebuild` and a device build succeed, the live view and talk work on an
+   iPhone, and the app does not crash when camera permission is denied.
+6. **Screen readers on the welcome hero** (Q2): TalkBack and VoiceOver reach one
+   element, the mascot button, read its label and hint, and a double tap replays
+   the greeting; the chips and the bubble are not reachable.
+7. **Two-device check on hardware** (section 0): phone and desktop side by side,
+   same account, the change on one appears on the other within 2 s, after a
+   background/foreground cycle of the phone, and after airplane mode on and off.
