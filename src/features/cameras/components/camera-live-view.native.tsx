@@ -19,6 +19,7 @@ import type {
 } from '@/core/types';
 import { cameraLiveService } from '@/features/cameras/services/camera-live.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
+import { nativePlayerMuted } from '@/features/cameras/model/camera-live-audio';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraRtcVideo } from './camera-rtc-video';
 import { cn } from '@/shared/libs/utils';
@@ -160,7 +161,7 @@ export function CameraLiveStream({
       <ArgusCameraView
         hybridRef={callback(bindPlayer)}
         active={active}
-        muted={audioLevel <= 0 || showRtc}
+        muted={nativePlayerMuted({ level: audioLevel, transport: current?.transport ?? null })}
         style={{ width: '100%', height: '100%', opacity: showRtc ? 0 : 1 }}
       />
       <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />

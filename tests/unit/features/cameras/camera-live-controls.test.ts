@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { ptzHold, ptzStep, reachedLimit } from '@/features/cameras/model/camera-ptz';
-import { liveAudioLevel, liveAudioReason, storedMuted } from '@/features/cameras/model/camera-live-audio';
+import {
+  liveAudioLevel,
+  liveAudioPlayable,
+  liveAudioReason,
+  nativePlayerMuted,
+  storedMuted,
+} from '@/features/cameras/model/camera-live-audio';
 import { capabilitiesFromRow, hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import {
   defaultQuality,
@@ -143,6 +149,23 @@ describe('live camera audio', () => {
     expect(liveAudioReason({ ...base, muted: true, argusCall: true })).toBe('muted');
     expect(storedMuted(null)).toBe(false);
     expect(storedMuted(true)).toBe(true);
+  });
+
+  test('the native player sounds only while audio is on and WebRTC is not the one playing', () => {
+    expect(nativePlayerMuted({ level: 1, transport: 'ws' })).toBe(false);
+    expect(nativePlayerMuted({ level: 1, transport: null })).toBe(false);
+    expect(nativePlayerMuted({ level: 0, transport: 'ws' })).toBe(true);
+    expect(nativePlayerMuted({ level: 0, transport: null })).toBe(true);
+    expect(nativePlayerMuted({ level: 1, transport: 'webrtc' })).toBe(true);
+    expect(nativePlayerMuted({ level: 0, transport: 'webrtc' })).toBe(true);
+  });
+
+  test('the mute control shows only where the live player can play the camera', () => {
+    expect(liveAudioPlayable({ transport: 'webrtc', fragmentAudio: false })).toBe(true);
+    expect(liveAudioPlayable({ transport: 'webrtc', fragmentAudio: true })).toBe(true);
+    expect(liveAudioPlayable({ transport: 'ws', fragmentAudio: true })).toBe(true);
+    expect(liveAudioPlayable({ transport: 'ws', fragmentAudio: false })).toBe(false);
+    expect(liveAudioPlayable({ transport: null, fragmentAudio: true })).toBe(false);
   });
 });
 

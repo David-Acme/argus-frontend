@@ -12,7 +12,12 @@ import { CameraLiveView } from './camera-live-view';
 import { PtzPad } from '@/features/cameras/components/ptz-pad';
 import type { CameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
-import { CAMERA_FULLSCREEN_CONTROLS_HIDE_MS, CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
+import {
+  CAMERA_FRAGMENT_AUDIO,
+  CAMERA_FULLSCREEN_CONTROLS_HIDE_MS,
+  CAMERA_LIVE_BACKGROUND,
+} from '@/features/cameras/constants';
+import { liveAudioPlayable } from '@/features/cameras/model/camera-live-audio';
 
 type CameraLiveStageProps = {
   cameraId: string;
@@ -52,7 +57,10 @@ export function CameraLiveStage({
   const [controlsShown, setControlsShown] = useState(true);
   const [armed, setArmed] = useState(0);
   const moving = ptz?.moving ?? false;
-  const hasAudio = live && stats?.audio === true;
+  const hasAudio =
+    live &&
+    stats?.audio === true &&
+    liveAudioPlayable({ transport: stats.transport, fragmentAudio: CAMERA_FRAGMENT_AUDIO });
   const silencedByCall = audio.reason === 'argus-call' || audio.reason === 'camera-call';
   const controls = !fullscreen || controlsShown;
   const audioLabel =

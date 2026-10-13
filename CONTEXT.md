@@ -2330,7 +2330,14 @@ unfolds its timeline.
   prop sets ExoPlayer's volume; iOS's `AVSampleBufferDisplayLayer` renders no
   audio yet. A mute button sits on the video, remembered per device
   (`cameras.audio.muted`, `hooks/use-camera-live-audio.ts`), shown only when
-  the stream carries audio. The camera is silenced while the user is in a
+  the stream carries audio and the view that is playing can sound it:
+  WebRTC everywhere, and the fMP4 player on the web, the desktop and Android,
+  but never on iOS while its native player renders no audio
+  (`liveAudioPlayable` with `CAMERA_FRAGMENT_AUDIO`). The native view's
+  `muted` comes from `nativePlayerMuted`: silent while the camera's audio is
+  off, and while the WebRTC view is the one playing, so the camera is never
+  heard twice. Both decisions live in `model/camera-live-audio.ts` and are
+  unit-tested (2026-10-13, F1). The camera is silenced while the user is in a
   call with Argus (`useVoiceCallActive` from `features/voice`) or in a call
   through the camera (that call plays its own echo-cancelled copy), with a
   chip saying why, and comes back after (`model/camera-live-audio.ts`,

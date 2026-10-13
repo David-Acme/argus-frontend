@@ -1,4 +1,5 @@
 import type { IconName } from '@/core/types';
+import { IS_IOS } from '@/shared/constants';
 
 export const CAMERA_STREAM_WS_PATH = '/media';
 
@@ -26,6 +27,8 @@ export const CAMERA_RTC_BACKOFF_BASE_MS = 30000;
 export const CAMERA_RTC_BACKOFF_MAX_MS = 300000;
 
 export const CAMERA_LIVE_BACKGROUND = '#000000';
+
+export const CAMERA_FRAGMENT_AUDIO = !IS_IOS;
 
 export const CAMERA_THUMBNAIL_REFRESH_MS = 30000;
 
