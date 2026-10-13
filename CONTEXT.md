@@ -3577,9 +3577,27 @@ pieces:
   - case and outer spaces ignored - sending `{keepData: false}`).
 - A product finding from the modules flow: with productivity off, Home keeps its
   Today and Projects sections (and their buttons); only the navigation hides them.
-- Findings this harness surfaced for the accessibility pass: the project dialog
-  exposes its title but none of its fields to the accessibility tree, so the test
-  reaches the name field by placeholder and Save by text.
+- **Accessibility** (item 5, `accessibility.e2e.ts`, read from Chromium's own
+  accessibility tree over CDP - `support/accessibility.ts` - because Playwright's
+  aria snapshot does not descend into these portalled dialogs, while the
+  browser's tree, which is what a screen reader reads, does). Two checks: the
+  project dialog names every field by its visible label, and on Home, Projects,
+  Security, an environment, People, Profile, Settings, Activity and Modules every
+  control has a name and no two different controls share one (radios in
+  different groups and the two "New project" buttons, which do the same thing,
+  excepted). What they found and what changed:
+  - form fields were named by their placeholder or not at all: `FormControl` now
+    hands its child `aria-labelledby` the visible `FormLabel` (plus
+    `aria-describedby` and `aria-invalid` while the field has an error), and
+    `SelectField` inside a form item speaks "Status: Active";
+  - the hidden phone tab bar stayed in the tree and the tab order on desktop
+    (every navigation button twice): `GlobalBottomNav` renders nothing where the
+    navigation rail is used, and is `aria-hidden` whenever it is hidden;
+  - repeated, ambiguous names: the module cards' actions say which module
+    ("Turn off: Productivity"), a lane's add button says which lane ("Add task to
+    To do"), Home's section links say which section ("See all: Today"), and the
+    search field's filter button, which had no action and was announced as
+    "See all", is gone until a filter exists.
 
 ### Device checklist (section 6 item 7, Q3; needs real phones, not run by agents)
 

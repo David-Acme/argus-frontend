@@ -1,4 +1,5 @@
 export const modules = {
+  'action-of': '{action}: {module}',
   title: 'Módulos',
   subtitle: 'Elige qué hace Argus en tu casa. Todo se instala y se procesa en tu servidor.',
   'step-title': '¿Qué quieres que haga Argus?',

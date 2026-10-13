@@ -46,7 +46,7 @@ export function GlobalBottomNav() {
   }));
 
   const active: DashboardTab = DASHBOARD_ROUTE_TAB[pathname] ?? 'home';
-  if (!owned && !hasIntroduced) return null;
+  if (usesNavRail || (!owned && !hasIntroduced)) return null;
 
   return (
     <>
@@ -59,6 +59,8 @@ export function GlobalBottomNav() {
       </Animated.View>
       <Animated.View
         pointerEvents={visible ? 'box-none' : 'none'}
+        aria-hidden={!visible}
+        importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
         className="absolute right-0 left-0 items-center px-5"
         style={[{ bottom: insets.bottom + BOTTOM_NAV_GAP }, style]}>
         <View style={{ width: '100%', maxWidth: BOTTOM_NAV_MAX_WIDTH }}>

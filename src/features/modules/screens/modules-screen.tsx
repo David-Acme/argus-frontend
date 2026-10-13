@@ -52,6 +52,7 @@ function ModuleActions({ module, pending, checking, onRun, onDisable, onUninstal
             variant={button.tone === 'primary' ? 'default' : button.tone === 'secondary' ? 'outline' : 'ghost'}
             loading={uninstall || disable ? checking === module.id : pending === `${module.id}:${button.action}`}
             disabled={pending !== null || checking !== null}
+            accessibilityLabel={t('screens.modules.action-of', { action: t(button.label), module: module.name })}
             onPress={() =>
               button.choice === 'retry' && uninstall
                 ? onRetryUninstall(module)

@@ -197,7 +197,6 @@ function HomeContent() {
             { reminders: has(CAPABILITY.remindersRead), events: readsAgenda, projects: readsProjects },
             t
           )}
-          filterLabel={t('screens.home.see-all')}
           value={query}
           onChangeText={setQuery}
         />
@@ -224,6 +223,7 @@ function HomeContent() {
           <SectionHeader
             title={t('screens.home.today')}
             action={t('screens.home.see-all')}
+            actionLabel={t('screens.home.see-all-of', { section: t('screens.home.today') })}
             onAction={() => router.push('/agenda')}
           />
           <TodayAgenda
@@ -245,6 +245,7 @@ function HomeContent() {
           <SectionHeader
             title={t('screens.home.projects')}
             action={projects.length > 0 ? t('screens.home.see-all') : undefined}
+            actionLabel={t('screens.home.see-all-of', { section: t('screens.home.projects') })}
             onAction={() => router.push('/projects')}
           />
           {visibleProjects.length === 0 ? (

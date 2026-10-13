@@ -24,6 +24,7 @@ export const home = {
   'today-agenda': 'Agenda de hoy',
   'today-tasks': 'Tareas de hoy',
   'see-all': 'Ver todo',
+  'see-all-of': 'Ver todo: {section}',
   'empty-agenda': 'Tu agenda está despejada',
   'empty-agenda-hint': 'Los recordatorios y eventos sincronizados aparecerán aquí.',
   'preview-label': 'Vista previa del dashboard',

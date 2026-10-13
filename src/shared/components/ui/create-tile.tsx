@@ -7,6 +7,7 @@ type CreateTileLayout = 'tile' | 'fill' | 'row';
 
 type CreateTileProps = {
   label: string;
+  accessibilityLabel?: string;
   hint?: string;
   onPress: () => void;
   layout?: CreateTileLayout;
@@ -21,11 +22,11 @@ const SURFACE: Record<CreateTileLayout, string> = {
 
 const BADGE: Record<CreateTileLayout, string> = { tile: 'size-12', fill: 'size-10', row: 'size-6' };
 
-export function CreateTile({ label, hint, onPress, layout = 'tile', style }: CreateTileProps) {
+export function CreateTile({ label, accessibilityLabel, hint, onPress, layout = 'tile', style }: CreateTileProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
       style={style}
       className={cn('border-border border-2 border-dashed active:opacity-70', SURFACE[layout])}>

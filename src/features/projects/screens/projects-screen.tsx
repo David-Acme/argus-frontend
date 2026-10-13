@@ -254,6 +254,7 @@ export default function ProjectsScreen() {
                     toneClassName={lane.toneClassName}
                     emptyLabel={t('screens.projects.lane-empty')}
                     addLabel={t('screens.projects.add-task')}
+                    addAccessibilityLabel={t('screens.projects.add-task-to', { lane: labels.lane[lane.key] })}
                     tasks={lanes[lane.key]}
                     renderTask={laneRenderers[lane.key]}
                     onAdd={canCreateTask ? () => openNewTask(lane.createStatus) : undefined}

@@ -50,6 +50,7 @@ export const projects = {
   'lane-finished': 'Finished',
   'lane-empty': 'Nothing here',
   'add-task': 'Add task',
+  'add-task-to': 'Add task to {lane}',
   'all-projects': 'All projects',
   'progress-percent': '{percent}% complete',
   'project-status-planned': 'Planned',

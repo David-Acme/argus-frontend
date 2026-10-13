@@ -6,11 +6,12 @@ type SectionHeaderProps = {
   title: string;
   count?: number;
   action?: string;
+  actionLabel?: string;
   onAction?: () => void;
   className?: string;
 };
 
-export function SectionHeader({ title, count, action, onAction, className }: SectionHeaderProps) {
+export function SectionHeader({ title, count, action, actionLabel, onAction, className }: SectionHeaderProps) {
   return (
     <View className={cn('flex-row items-center gap-2', className)}>
       <Text variant="headline" className="min-w-0 shrink" numberOfLines={1}>
@@ -27,7 +28,7 @@ export function SectionHeader({ title, count, action, onAction, className }: Sec
       {action ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={action}
+          accessibilityLabel={actionLabel ?? action}
           hitSlop={8}
           className="web:hover:opacity-70 min-h-9 justify-center rounded-full active:opacity-60"
           disabled={!onAction}

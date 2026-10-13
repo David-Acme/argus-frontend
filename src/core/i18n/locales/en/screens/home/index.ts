@@ -24,6 +24,7 @@ export const home = {
   'today-agenda': "Today's agenda",
   'today-tasks': "Today's tasks",
   'see-all': 'See all',
+  'see-all-of': 'See all: {section}',
   'empty-agenda': 'Your agenda is clear',
   'empty-agenda-hint': 'Synced reminders and events will appear here.',
   'preview-label': 'Dashboard preview',

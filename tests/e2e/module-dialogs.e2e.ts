@@ -78,7 +78,7 @@ test('uninstalling a module that holds data keeps it by default and deletes it o
 
   await screen.getByRole('button', 'Settings').first().click();
   await screen.getByRole('button', 'Modules. Choose what Argus does and follow each installation.').click();
-  await screen.getByRole('button', 'Uninstall').first().click();
+  await screen.getByRole('button', 'Uninstall: Productivity').click();
 
   await expect(screen.getByText('15 items', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Keep my data', { exact: true })).toBeVisible();

@@ -1,12 +1,17 @@
 import {
+  Children,
+  cloneElement,
   createContext,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
   useId,
   useMemo,
   useRef,
+  useState,
   type ComponentProps,
+  type ReactElement,
 } from 'react';
 import { View, type ScrollView, type ViewProps } from 'react-native';
 import {
@@ -42,9 +47,13 @@ function FormField<
   );
 }
 
-type FormItemContextValue = { id: string };
+type FormItemContextValue = { id: string; label: string | null; setLabel: (label: string | null) => void };
 
 const FormItemContext = createContext<FormItemContextValue>({} as FormItemContextValue);
+
+function useFormItemLabel(): string | null {
+  return useContext(FormItemContext).label ?? null;
+}
 
 function useFormField() {
   const fieldContext = useContext(FormFieldContext);
@@ -116,7 +125,8 @@ function FormItem({ className, ...props }: ViewProps & { className?: string }) {
   const ref = useRef<View>(null);
   const fieldContext = useContext(FormFieldContext);
   const scrollContext = useContext(FormScrollContext);
-  const value = useMemo(() => ({ id }), [id]);
+  const [label, setLabel] = useState<string | null>(null);
+  const value = useMemo(() => ({ id, label, setLabel }), [id, label]);
 
   useEffect(() => {
     if (!scrollContext || !fieldContext.name) return;
@@ -131,22 +141,49 @@ function FormItem({ className, ...props }: ViewProps & { className?: string }) {
   );
 }
 
-function FormLabel({ className, ...props }: ComponentProps<typeof Text>) {
+function FormLabel({ className, children, ...props }: ComponentProps<typeof Text>) {
   const { error, formItemId } = useFormField();
+  const { setLabel } = useContext(FormItemContext);
+  const text = typeof children === 'string' ? children : null;
+
+  useEffect(() => {
+    setLabel?.(text);
+    return () => setLabel?.(null);
+  }, [setLabel, text]);
 
   return (
     <Text
       nativeID={formItemId}
       className={cn('text-caption font-medium', error && 'text-error-strong', className)}
-      {...props}
-    />
+      {...props}>
+      {children}
+    </Text>
   );
 }
 
+type LabelledProps = {
+  accessibilityLabel?: string;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
+};
+
 function FormControl({ children, ...props }: ViewProps) {
+  const { error, formItemId, formMessageId } = useFormField();
+  const label = useFormItemLabel();
+  const labelled = Children.map(children, (child) => {
+    if (!isValidElement<LabelledProps>(child)) return child;
+    const own = child.props;
+    return cloneElement(child as ReactElement<LabelledProps>, {
+      accessibilityLabel: own.accessibilityLabel ?? label ?? undefined,
+      'aria-labelledby': own['aria-labelledby'] ?? (label ? formItemId : undefined),
+      'aria-describedby': own['aria-describedby'] ?? (error ? formMessageId : undefined),
+      'aria-invalid': own['aria-invalid'] ?? (error ? true : undefined),
+    });
+  });
   return (
     <View accessible={false} {...props}>
-      {children}
+      {labelled}
     </View>
   );
 }
@@ -183,6 +220,7 @@ function FormMessage({ className, children, ...props }: ComponentProps<typeof Te
 }
 
 export {
+  useFormItemLabel,
   Form,
   FormControl,
   FormDescription,

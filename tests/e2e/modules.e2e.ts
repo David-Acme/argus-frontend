@@ -58,7 +58,7 @@ test('a module turned off on one device leaves the other at once, and comes back
 
   await screen.getByRole('button', 'Settings').first().click();
   await screen.getByRole('button', 'Modules. Choose what Argus does and follow each installation.').click();
-  await screen.getByRole('button', 'Turn off').first().click();
+  await screen.getByRole('button', 'Turn off: Productivity').click();
   await screen.getByText('Turn off', { exact: true }).last().click();
 
   await expect.poll(() => onProjects(second.page), { timeout: LIVE_MS }).toBe(0);

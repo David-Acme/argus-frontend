@@ -13,6 +13,7 @@ type TaskLaneProps = {
   toneClassName: string;
   emptyLabel: string;
   addLabel: string;
+  addAccessibilityLabel?: string;
   tasks: readonly IProjectTaskCacheRow[];
   renderTask: (task: IProjectTaskCacheRow) => ReactElement;
   onAdd?: () => void;
@@ -29,6 +30,7 @@ export function TaskLane({
   toneClassName,
   emptyLabel,
   addLabel,
+  addAccessibilityLabel,
   tasks,
   renderTask,
   onAdd,
@@ -63,7 +65,7 @@ export function TaskLane({
         </View>
       )}
       {onAdd ? (
-        <CreateTile label={addLabel} onPress={onAdd} layout={empty ? 'fill' : 'row'} />
+        <CreateTile label={addLabel} accessibilityLabel={addAccessibilityLabel} onPress={onAdd} layout={empty ? 'fill' : 'row'} />
       ) : empty ? (
         <View className="border-border-subtle min-h-[140px] flex-1 items-center justify-center rounded-xl border-2 border-dashed px-4 py-6">
           <Text variant="caption">{emptyLabel}</Text>

@@ -4,7 +4,7 @@ import { Input } from '@/shared/components/ui/input';
 
 type DashboardSearchFieldProps = {
   placeholder: string;
-  filterLabel: string;
+  filterLabel?: string;
   value?: string;
   onChangeText?: (value: string) => void;
   onFilter?: () => void;
@@ -29,13 +29,15 @@ export function DashboardSearchField({
         value={value}
         onChangeText={onChangeText}
       />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={filterLabel}
-        className="size-9 items-center justify-center rounded-full active:opacity-60"
-        onPress={onFilter}>
-        <Icon name="filter" className="text-foreground-secondary size-5" />
-      </Pressable>
+      {onFilter && filterLabel ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={filterLabel}
+          className="size-9 items-center justify-center rounded-full active:opacity-60"
+          onPress={onFilter}>
+          <Icon name="filter" className="text-foreground-secondary size-5" />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
