@@ -3677,3 +3677,8 @@ OS version and build noted.
 7. **Two-device check on hardware** (section 0): phone and desktop side by side,
    same account, the change on one appears on the other within 2 s, after a
    background/foreground cycle of the phone, and after airplane mode on and off.
+8. **Recording playback, the optional FLAC upgrade** (argus-recorder design note, fork 3). Only when
+   FLAC is switched on as the recorder's audio codec: an fMP4 HLS clip with FLAC audio plays on
+   Android (ExoPlayer / Media3), iOS (AVPlayer), the desktop webview (WebKitGTK) and Chromium. The
+   default is AAC-LC at 64 kb/s, mono, which needs no device check. Chromium and WebKitGTK are also
+   smoke-checked in the e2e harness for whichever codec ships. If any target fails, FLAC stays off.
