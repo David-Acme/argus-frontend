@@ -17,9 +17,16 @@ export function routePortsOf(routes: readonly NetRoute[]): NetRoutePorts {
   return ports;
 }
 
+function ownedPort(table: Readonly<NetRoutePorts>, segment: string): number | undefined {
+  return Object.hasOwn(table, segment) ? table[segment] : undefined;
+}
+
+function routePort(instance: NetPairedInstance, segment: string): number | undefined {
+  return ownedPort(instance.routes, segment) ?? ownedPort(ARGUS_DEFAULT_ROUTE_PORTS, segment);
+}
+
 export function portFor(instance: NetPairedInstance, path: string): number {
-  const segment = routeSegment(path);
-  return instance.routes[segment] ?? ARGUS_DEFAULT_ROUTE_PORTS[segment] ?? instance.port;
+  return routePort(instance, routeSegment(path)) ?? instance.port;
 }
 
 export function serviceUrl(instance: NetPairedInstance, path: string, scheme: 'https' | 'wss' = 'https'): string {
@@ -55,8 +62,7 @@ export function urlWithPort(url: string, port: number): string {
 
 export function urlAt(url: string, instance: NetPairedInstance): string {
   if (isRelayHost(urlHost(url), instance.remote?.domain ?? ARGUS_RELAY_DOMAIN)) return url;
-  const segment = routeSegment(urlPath(url));
-  const port = instance.routes[segment] ?? ARGUS_DEFAULT_ROUTE_PORTS[segment];
+  const port = routePort(instance, routeSegment(urlPath(url)));
   return port ? urlWithPort(url, port) : url;
 }
 

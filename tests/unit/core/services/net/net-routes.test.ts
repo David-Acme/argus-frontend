@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { addressUnreachable, mayRediscover, REDISCOVERY_MEMO_MS, relocatedInstance, serviceUrl, urlAt, urlPath } from '@/core/services/net/net-routes';
+import { addressUnreachable, mayRediscover, portFor, REDISCOVERY_MEMO_MS, relocatedInstance, serviceUrl, urlAt, urlPath } from '@/core/services/net/net-routes';
 import type { NetErrorCode, NetPairedInstance } from '@/core/types';
 
 const paired: NetPairedInstance = {
@@ -117,6 +117,30 @@ describe('addressUnreachable', () => {
       'STORAGE_ERROR',
     ];
     for (const code of settled) expect(addressUnreachable(code)).toBe(false);
+  });
+});
+
+describe('a segment the route tables do not own', () => {
+  const inherited = ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'];
+
+  test('falls back to the pairing port, never to a function from the prototype', () => {
+    for (const segment of inherited) {
+      const port = portFor(paired, `/${segment}`);
+      expect([segment, typeof port, port]).toEqual([segment, 'number', paired.port]);
+      expect(serviceUrl(paired, `/${segment}/x`)).toBe(`https://argus.local:${paired.port}/${segment}/x`);
+    }
+  });
+
+  test('a discovered route of that name is still read, because the instance owns it', () => {
+    const owned: NetPairedInstance = { ...paired, routes: { ...paired.routes, constructor: 9100 } };
+    expect(portFor(owned, '/constructor')).toBe(9100);
+  });
+
+  test('the address heal leaves such a url as the caller built it', () => {
+    for (const segment of inherited) {
+      const url = `https://argus.local:7123/${segment}`;
+      expect(urlAt(url, paired)).toBe(url);
+    }
   });
 });
 
