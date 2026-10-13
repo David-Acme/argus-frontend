@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 
+use super::relay::RemoteProfile;
 use super::secure;
 
 #[derive(Clone)]
@@ -8,6 +9,25 @@ pub struct Trust {
   pub ca_pem: String,
   pub host: String,
   pub ip: String,
+  pub remote: Option<RemoteProfile>,
+}
+
+impl Trust {
+  pub fn admits(&self, host: &str) -> bool {
+    host.eq_ignore_ascii_case(&self.host) || super::relay::admitted_by(host, self.remote.as_ref())
+  }
+
+  pub fn is_relay(&self, host: &str) -> bool {
+    !host.eq_ignore_ascii_case(&self.host) && super::relay::admitted_by(host, self.remote.as_ref())
+  }
+}
+
+fn remote_profile() -> Result<Option<RemoteProfile>, String> {
+  let profile = RemoteProfile {
+    home_id: read("net.remoteHomeId")?,
+    domain: read("net.remoteDomain")?,
+  };
+  Ok(profile.usable().then_some(profile))
 }
 
 pub struct PinnedServer<'a> {
@@ -33,6 +53,7 @@ pub fn paired() -> Result<Trust, String> {
     ca_pem: read("net.caPem")?,
     host: read("net.host")?,
     ip: read("net.ip")?,
+    remote: remote_profile()?,
   };
   if trust.ca_pem.is_empty() || trust.host.is_empty() || trust.ip.is_empty() {
     return Err("PAIRING_REQUIRED|Server is not paired yet".to_string());

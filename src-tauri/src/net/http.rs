@@ -35,7 +35,7 @@ impl Resolve for PinnedResolver {
       }
     }
     Box::pin(async move {
-      let addrs = tokio::net::lookup_host(host.clone()).await?.collect::<Vec<_>>();
+      let addrs = tokio::net::lookup_host((host.as_str(), 0)).await?.collect::<Vec<_>>();
       Ok(Box::new(addrs.into_iter()) as Box<dyn Iterator<Item = SocketAddr> + Send>)
     })
   }
@@ -100,12 +100,12 @@ fn strict_client(ca_pem: &str, allowed_host: &str, ip: &str) -> Result<reqwest::
   Ok(client)
 }
 
-fn ensure_allowed_host(url: &str, allowed_host: &str) -> Result<(), String> {
+fn ensure_allowed_host(url: &str, trust: &Trust) -> Result<(), String> {
   let host = reqwest::Url::parse(url)
     .ok()
     .and_then(|u| u.host_str().map(str::to_lowercase))
     .unwrap_or_default();
-  if host != allowed_host.to_lowercase() {
+  if host.is_empty() || !trust.admits(&host) {
     return Err("HOST_NOT_ALLOWED|Host is not allowed".to_string());
   }
   Ok(())
@@ -171,7 +171,7 @@ async fn multipart_form(request: &HttpRequest) -> Result<reqwest::multipart::For
 
 pub async fn request(request: HttpRequest, trust: &Trust) -> Result<HttpResult, String> {
   let client = strict_client(&trust.ca_pem, &trust.host, &trust.ip)?;
-  ensure_allowed_host(&request.url, &trust.host)?;
+  ensure_allowed_host(&request.url, trust)?;
 
   let method = reqwest::Method::from_bytes(request.method.to_uppercase().as_bytes())
     .map_err(|e| format!("NETWORK_ERROR|Invalid method: {e}"))?;
@@ -202,14 +202,14 @@ pub async fn request(request: HttpRequest, trust: &Trust) -> Result<HttpResult, 
 }
 
 pub fn pinned_client(url: &str, trust: &Trust) -> Result<reqwest::Client, String> {
-  ensure_allowed_host(url, &trust.host)?;
+  ensure_allowed_host(url, trust)?;
   strict_client(&trust.ca_pem, &trust.host, &trust.ip)
 }
 
 pub async fn probe(url: &str, trust: &Trust, ip: &str) -> Result<(), String> {
   ip.parse::<IpAddr>()
     .map_err(|_| "HOST_NOT_ALLOWED|The candidate address is not an IP".to_string())?;
-  ensure_allowed_host(url, &trust.host)?;
+  ensure_allowed_host(url, trust)?;
   let client = strict_client(&trust.ca_pem, &trust.host, ip)?;
   client.get(url).send().await.map_err(request_error)?;
   Ok(())
@@ -217,14 +217,87 @@ pub async fn probe(url: &str, trust: &Trust, ip: &str) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-  use std::net::TcpListener;
+  use std::net::{SocketAddr, TcpListener};
   use std::sync::mpsc;
   use std::time::Duration;
 
-  use super::request_error;
+  use reqwest::dns::{Name, Resolve};
+
+  use super::super::relay::RemoteProfile;
+  use super::super::trust::Trust;
+  use super::{ensure_allowed_host, request_error, PinnedResolver};
+
+  const HOME: &str = "0123456789abcdef0123456789abcdef";
 
   fn url_of(listener: &TcpListener) -> String {
     format!("http://{}/", listener.local_addr().expect("a bound address"))
+  }
+
+  fn remote() -> RemoteProfile {
+    RemoteProfile {
+      home_id: HOME.to_string(),
+      domain: "argus-tunnel.lynk.page".to_string(),
+    }
+  }
+
+  fn trust_with(remote: Option<RemoteProfile>) -> Trust {
+    Trust {
+      ca_pem: String::new(),
+      host: "argus.local".to_string(),
+      ip: "192.168.1.20".to_string(),
+      remote,
+    }
+  }
+
+  fn refused(url: &str, trust: &Trust) -> bool {
+    ensure_allowed_host(url, trust).is_err_and(|error| error.starts_with("HOST_NOT_ALLOWED|"))
+  }
+
+  #[test]
+  fn the_paired_host_is_admitted_as_before() {
+    assert!(ensure_allowed_host("https://argus.local:7044/pairing/status", &trust_with(None)).is_ok());
+    assert!(ensure_allowed_host("https://ARGUS.LOCAL:7044/pairing/status", &trust_with(Some(remote()))).is_ok());
+    assert!(refused("https://argus.example:7044/pairing/status", &trust_with(None)));
+  }
+
+  #[test]
+  fn a_device_name_is_admitted_only_for_this_home_and_its_services() {
+    let away = trust_with(Some(remote()));
+    for service in super::super::relay::HOME_SERVICES {
+      let url = format!("https://{service}--{HOME}.argus-tunnel.lynk.page/x");
+      assert!(ensure_allowed_host(&url, &away).is_ok(), "{url}");
+      assert!(refused(&url, &trust_with(None)), "{url}");
+    }
+    assert!(refused("https://sync--fedcba9876543210fedcba9876543210.argus-tunnel.lynk.page/sync", &away));
+    assert!(refused(&format!("https://turn--{HOME}.argus-tunnel.lynk.page/"), &away));
+    assert!(refused(&format!("https://x.sync--{HOME}.argus-tunnel.lynk.page/sync"), &away));
+    assert!(refused(&format!("https://sync--{HOME}.argus-tunnel.lynk.page.example.com/sync"), &away));
+    assert!(refused("https://argus-tunnel.lynk.page/sync", &away));
+    assert!(refused("not a url", &away));
+  }
+
+  fn resolver() -> PinnedResolver {
+    PinnedResolver {
+      allowed_host: "argus.local".to_string(),
+      ip: "192.168.1.20".parse().ok(),
+    }
+  }
+
+  async fn resolved(host: &str) -> Vec<SocketAddr> {
+    let name: Name = host.parse().expect("a host name");
+    resolver().resolve(name).await.expect("the name resolves").collect()
+  }
+
+  #[tokio::test]
+  async fn the_paired_host_resolves_to_the_paired_address() {
+    assert_eq!(resolved("ARGUS.local").await, vec!["192.168.1.20:0".parse::<SocketAddr>().expect("an address")]);
+  }
+
+  #[tokio::test]
+  async fn any_other_name_is_resolved_by_the_system() {
+    let addrs = resolved("localhost").await;
+    assert!(!addrs.is_empty());
+    assert!(addrs.iter().all(|addr| addr.ip().is_loopback()));
   }
 
   #[tokio::test]

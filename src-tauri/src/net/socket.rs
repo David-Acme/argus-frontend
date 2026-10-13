@@ -126,13 +126,20 @@ fn build_tls_config(ca_pem: &str) -> Result<rustls::ClientConfig, String> {
     .with_no_client_auth())
 }
 
-fn validate_target(target: &str, trust: &Trust) -> Result<(url::Url, SocketAddr), String> {
+#[derive(Debug, PartialEq, Eq)]
+enum SocketAddress {
+  Paired(SocketAddr),
+  Relay(String, u16),
+}
+
+fn validate_target(target: &str, trust: &Trust) -> Result<(url::Url, SocketAddress), String> {
   let url = url::Url::parse(target)
     .map_err(|error| format!("NETWORK_ERROR|Invalid WebSocket URL: {error}"))?;
   let host = url
     .host_str()
-    .ok_or_else(|| "NETWORK_ERROR|WebSocket URL has no host".to_string())?;
-  if host.to_lowercase() != trust.host.to_lowercase() {
+    .ok_or_else(|| "NETWORK_ERROR|WebSocket URL has no host".to_string())?
+    .to_lowercase();
+  if !trust.admits(&host) {
     return Err("HOST_NOT_ALLOWED|Host is not allowed".to_string());
   }
   if url.scheme() != "wss" {
@@ -141,11 +148,21 @@ fn validate_target(target: &str, trust: &Trust) -> Result<(url::Url, SocketAddr)
   let port = url
     .port_or_known_default()
     .ok_or_else(|| "NETWORK_ERROR|WebSocket URL has no port".to_string())?;
+  if trust.is_relay(&host) {
+    return Ok((url, SocketAddress::Relay(host, port)));
+  }
   let ip = trust
     .ip
     .parse()
     .map_err(|error| format!("NETWORK_ERROR|Invalid paired IP: {error}"))?;
-  Ok((url, SocketAddr::new(ip, port)))
+  Ok((url, SocketAddress::Paired(SocketAddr::new(ip, port))))
+}
+
+async fn connect_address(address: SocketAddress) -> std::io::Result<TcpStream> {
+  match address {
+    SocketAddress::Paired(address) => TcpStream::connect(address).await,
+    SocketAddress::Relay(host, port) => TcpStream::connect((host.as_str(), port)).await,
+  }
 }
 
 pub async fn connect_pinned(target: PinnedConnect<'_>) -> Result<PinnedStream, String> {
@@ -153,7 +170,7 @@ pub async fn connect_pinned(target: PinnedConnect<'_>) -> Result<PinnedStream, S
   let (url, address) = validate_target(target.url, &trust)?;
   let tls = build_tls_config(&trust.ca_pem)?;
 
-  let stream = tokio::time::timeout(target.timeout, TcpStream::connect(address))
+  let stream = tokio::time::timeout(target.timeout, connect_address(address))
     .await
     .map_err(|_| "NETWORK_ERROR|WebSocket connection timeout".to_string())?
     .map_err(parse_error)?;
@@ -346,7 +363,52 @@ mod tests {
 
   use tokio::sync::mpsc;
 
-  use super::{pump, SocketTimings};
+  use super::super::relay::RemoteProfile;
+  use super::super::trust::Trust;
+  use super::{pump, validate_target, SocketAddress, SocketTimings};
+
+  const HOME: &str = "0123456789abcdef0123456789abcdef";
+
+  fn trust_with(remote: Option<RemoteProfile>) -> Trust {
+    Trust {
+      ca_pem: String::new(),
+      host: "argus.local".to_string(),
+      ip: "192.168.1.20".to_string(),
+      remote,
+    }
+  }
+
+  fn away() -> Trust {
+    trust_with(Some(RemoteProfile {
+      home_id: HOME.to_string(),
+      domain: "argus-tunnel.lynk.page".to_string(),
+    }))
+  }
+
+  #[test]
+  fn the_paired_host_dials_the_paired_address() {
+    let (_, address) = validate_target("wss://argus.local:7025/sync", &away()).expect("the paired host");
+    assert_eq!(address, SocketAddress::Paired("192.168.1.20:7025".parse().expect("an address")));
+  }
+
+  #[test]
+  fn a_device_name_dials_itself_through_the_relay() {
+    let name = format!("sync--{HOME}.argus-tunnel.lynk.page");
+    let (_, address) = validate_target(&format!("wss://{name}/sync"), &away()).expect("a device name");
+    assert_eq!(address, SocketAddress::Relay(name, 443));
+  }
+
+  #[test]
+  fn a_name_this_home_does_not_own_is_refused() {
+    let refused = |url: &str, trust: &Trust| {
+      validate_target(url, trust).is_err_and(|error| error.starts_with("HOST_NOT_ALLOWED|"))
+    };
+    assert!(refused(&format!("wss://sync--{HOME}.argus-tunnel.lynk.page/sync"), &trust_with(None)));
+    assert!(refused("wss://sync--fedcba9876543210fedcba9876543210.argus-tunnel.lynk.page/sync", &away()));
+    assert!(refused(&format!("wss://rtc--{HOME}.argus-tunnel.lynk.page/sync"), &away()));
+    assert!(refused(&format!("wss://a.sync--{HOME}.argus-tunnel.lynk.page/sync"), &away()));
+    assert!(refused("wss://argus-tunnel.lynk.page/sync", &away()));
+  }
 
   #[tokio::test]
   async fn a_peer_that_stops_answering_is_closed_as_peer_silence() {

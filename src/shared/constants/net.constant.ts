@@ -100,6 +100,8 @@ export const NET_STORAGE_KEYS = {
   accessToken: 'net.accessToken',
   refreshToken: 'net.refreshToken',
   deviceCredential: 'net.deviceCredential',
+  remoteHomeId: 'net.remoteHomeId',
+  remoteDomain: 'net.remoteDomain',
 } as const;
 
 export const NET_TRUST_KEYS: readonly string[] = [

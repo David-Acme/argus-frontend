@@ -562,10 +562,8 @@ What it does not do yet, so behaviour today is exactly what it was:
   id. Where it should come from (the pairing answer, `/pairing/status`, the
   sync context, or an mDNS TXT key) is a contract between backend and app,
   waiting for a ruling.
-- **The native transports accept only the paired host.** Rust's
-  `ensure_allowed_host`, Swift's `allowedHost` and OkHttp's hostname verifier
-  all refuse every other name. A device name must be admitted on all three,
-  for exactly the paired home's names, under the same pinned CA.
+- **Only the desktop admits a device name so far.** Swift's `allowedHost` and
+  OkHttp's hostname verifier still refuse every name but the paired host.
 - **Nothing runs the probes yet.** The triggers are a failed connect and a
   return to the foreground. A network change needs a network-type module and
   a dev-client rebuild (see "Cameras").
@@ -573,6 +571,30 @@ What it does not do yet, so behaviour today is exactly what it was:
   unreachable.
 
 The error mapping is unchanged (`readEnvelope`, `toNetError`).
+
+#### Which names a transport admits
+
+The rule is the same on every transport. Besides the paired host, a transport
+admits a name only when it is exactly `<service>--<home-id>.<domain>`. The
+service must be one of the eight, and the home id and domain must be this
+instance's remote profile (`net.remoteHomeId`, `net.remoteDomain`). There is
+never a wildcard and never a suffix match. The chain must still validate
+against the pinned CA alone, and the system's trust store is never consulted.
+`tests/vectors/relay-hosts.json` holds the vectors: 8 admitted names and 34
+refused ones. The TypeScript, Rust and Kotlin tests read it, and the Swift
+tests will once they can run.
+
+- **Desktop (Rust).** `net/relay.rs` is the rule.
+  - `Trust` carries the remote profile. It is read from the keyring beside
+    the pinned CA, and only a usable profile is kept.
+  - The webview writes the two keys. Writing either one forgets the cached
+    trust.
+  - `ensure_allowed_host` (HTTP) and `validate_target` (sockets) admit the
+    paired host or a device name. Nothing else.
+  - The paired host still dials its paired address. A device name is
+    resolved by the system's DNS.
+  - rustls checks the device name against a root store that holds only the
+    pinned CA.
 
 ### Verification
 - `bunx tsc --noEmit` and `bun run lint` → 0 errors. `cargo check` (src-tauri) → 0/0.

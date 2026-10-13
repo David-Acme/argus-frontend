@@ -3,6 +3,7 @@ pub mod discover;
 pub mod http;
 pub mod identity;
 pub mod pair;
+pub mod relay;
 pub mod secure;
 pub mod socket;
 pub mod trust;

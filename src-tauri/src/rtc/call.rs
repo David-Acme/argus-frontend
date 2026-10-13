@@ -335,6 +335,7 @@ mod live_tests {
       ca_pem: std::fs::read_to_string(ca).expect("CA readable"),
       host: "argus.local".to_string(),
       ip: "127.0.0.1".to_string(),
+      remote: None,
     });
     super::super::transport::install();
     let url = super::super::protocol::pinned_url(&url, "argus.local").expect("pinned url");
@@ -374,6 +375,7 @@ mod live_tests {
       ca_pem: std::fs::read_to_string(ca).expect("CA readable"),
       host: "argus.local".to_string(),
       ip: "127.0.0.1".to_string(),
+      remote: None,
     });
     super::super::transport::install();
     let url = super::super::protocol::pinned_url(&tls_url, "argus.local").expect("pinned url");

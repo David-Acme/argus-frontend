@@ -2,7 +2,7 @@ use keyring::{Entry, Error as KeyringError};
 
 const SERVICE: &str = "argus-desktop";
 const USER: &str = "argus";
-const WEBVIEW_KEYS: [&str; 8] = [
+const WEBVIEW_KEYS: [&str; 10] = [
   "net.paired",
   "net.port",
   "net.instanceId",
@@ -11,6 +11,8 @@ const WEBVIEW_KEYS: [&str; 8] = [
   "net.accessToken",
   "net.refreshToken",
   "net.deviceCredential",
+  "net.remoteHomeId",
+  "net.remoteDomain",
 ];
 const TRUST_KEYS: [&str; 4] = [
   "net.caPem",
@@ -18,9 +20,14 @@ const TRUST_KEYS: [&str; 4] = [
   "net.host",
   "net.ip",
 ];
+const REMOTE_KEYS: [&str; 2] = ["net.remoteHomeId", "net.remoteDomain"];
 
 fn is_trust_key(key: &str) -> bool {
   TRUST_KEYS.contains(&key)
+}
+
+fn shapes_trust(key: &str) -> bool {
+  is_trust_key(key) || REMOTE_KEYS.contains(&key)
 }
 
 fn entry(key: &str) -> Result<Entry, String> {
@@ -31,7 +38,7 @@ fn entry(key: &str) -> Result<Entry, String> {
 }
 
 fn forget_trust_of(key: &str) {
-  if is_trust_key(key) {
+  if shapes_trust(key) {
     super::trust::forget();
   }
 }
