@@ -324,6 +324,10 @@ Installed **without sudo** in the user home (Arch Linux, no system JDK/SDK):
 - First build is slow (~10-20 min, Maven deps + native compile); later builds
   reuse the Gradle daemon. To build without Metro: `bunx expo run:android
   --no-bundler`, then `bun run dev`.
+- ONLY ONE frontend worktree does Android/Gradle builds, with its own copy
+  (`cp -a --no-preserve=links`), reused by whichever track needs Gradle. The
+  other frontend worktrees, which only run bun/tsc/tests/e2e, keep the
+  hardlinks, because none of those tools write into `node_modules`.
 
 ## Backend relationship
 
