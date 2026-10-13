@@ -1,2 +1,8 @@
 export { readBatches } from './notification-read-batches';
-export { removalResponse, type RemovalAttempt } from './notification-removal';
+export {
+  belongsToThread,
+  notificationThreadKey,
+  removalSettled,
+  threadRemovalPaths,
+  threadRemovalResult,
+} from './notification-removal';

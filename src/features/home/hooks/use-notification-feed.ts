@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { notificationService } from '@/core/services/notification.service';
+import { useAuthStore } from '@/core/stores';
 import {
   NOTIFICATION_FEED_PAGE_SIZE,
   NOTIFICATION_FEED_SCOPE,
@@ -13,15 +14,15 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import {
   NOTIFICATION_LENSES,
-  removalRefusal,
   threadDeleteIntents,
-  threadIdsOf,
+  threadTargetOf,
 } from '@/features/home/model/notification-optimistic';
 import { notificationVisible } from '@/features/home/model/notification-modules';
 import { groupNotifications, type NotificationThread } from '@/features/home/model/notification-threads';
 
 export function useNotificationFeed() {
   const { t } = useTranslation();
+  const userId = String(useAuthStore((state) => state.user?.id ?? ''));
   const feed = usePagedView<INotificationPreviewCacheRow>(
     VIEW_CACHE_KEYS.notificationFeed,
     NOTIFICATION_FEED_SCOPE
@@ -43,12 +44,11 @@ export function useNotificationFeed() {
     (thread: NotificationThread) =>
       void runOptimistic({
         intents: threadDeleteIntents(thread),
-        call: () => notificationService.remove(threadIdsOf(thread)),
+        call: () => notificationService.removeThread(threadTargetOf(thread, userId)),
         undo: { title: t('screens.home.notification-deleted'), description: thread.latest.title },
         errorTitle: t('screens.home.notification-delete-failed'),
-        refusals: (info) => removalRefusal(info, t('screens.home.notification-delete-partial')),
       }),
-    [t]
+    [t, userId]
   );
 
   return { synced: feed.rows, threads, paging, remove };

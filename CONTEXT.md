@@ -1145,17 +1145,29 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   one. The bell's preview is unchanged. The button shows while `can('notification',
   'delete')`, which every role holds (`role-access.ts`, mirroring the backend's
   `kTableAccess`).
-- Deleting a thread deletes every notification it shows: one `DELETE
-  /notification/{id}` per entry, in order (`notificationService.remove`), behind the Undo
-  toast reminders, events and tasks use. The rows leave at once through delete intents
-  on `NOTIFICATION_LENSES` (`threadDeleteIntents`). Entries of the thread that the loaded
-  window does not reach are not deleted, as a tap does not read them.
-- A 404 `NOT_FOUND` counts as deleted: another device got there first
-  (`removalResponse` in `core/services/notification/`). When only some rows are refused,
-  only those come back, with a toast (`refusals`). When every row is refused, everything
-  comes back and the first refusal is toasted, with Retry when it is retryable. A server
-  older than the route answers 404 `NOT_FOUND` as well, so on such a server the row comes
-  back when the intent expires (60 s), without a toast.
+- Deleting a thread is one request, behind the Undo toast reminders, events and tasks
+  use:
+  - A thread with a key sends `DELETE /notification/thread/{threadKey}`, with the key
+    URL-encoded (`notificationService.removeThread`, `threadRemovalPaths`). The server
+    deletes every live notification of the caller in that thread, the entries past the
+    loaded page included.
+  - A row without a key is its own thread and sends `DELETE /notification/{id}`.
+  - The thread key is `notificationThreadKey`: `data.threadKey` as a trimmed, non-blank
+    string. It is the rule the Novedades grouping (`threadKeyOf`) and the server both
+    apply.
+- The rows leave at once through delete intents on `NOTIFICATION_LENSES`
+  (`threadDeleteIntents`).
+- A 204 is done. So is a 404 `NOT_FOUND`: the server has no live row of that thread left
+  for the caller, because another device got there first (`removalSettled`). On either
+  answer the service forgets the thread's local rows, every one including those past
+  the loaded page (`belongsToThread`), so the thread cannot come back when its intents
+  expire. The Delete frames that follow then find nothing, which is a no-op.
+- Any other refusal brings the whole thread back with the error toast, and Retry when
+  it is retryable.
+- A server older than the thread route answers Drogon's own 404 page, which the
+  envelope reader turns into `NOT_FOUND`. The app would take that as done and forget the
+  thread on this device only. The app and the server ship together, so this is a
+  deployment mismatch, not a path the app guards against.
 - Other devices drop the row on the `Delete` frame (the generic delete path) or on the
   user-audit diff that comes before it. `planAuditEntries` treats a diff whose current
   `deletedAt` is set as a removal, for the tables whose pull has no deletion leg

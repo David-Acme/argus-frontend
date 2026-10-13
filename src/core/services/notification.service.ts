@@ -1,11 +1,12 @@
 import { Q } from '@nozbe/watermelondb';
+import type { Clause } from '@nozbe/watermelondb/QueryDescription';
 import type { Observable } from 'rxjs';
 import type { NotificationModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { KeysetPage, KeysetWindow, NotificationRemoval } from '@/core/types';
+import type { KeysetPage, KeysetWindow, NotificationThreadTarget } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
-import { readBatches, removalResponse, type RemovalAttempt } from './notification';
+import { belongsToThread, readBatches, threadRemovalPaths, threadRemovalResult } from './notification';
 import { DatabaseService, type KeysetQuery } from './database.service';
 
 const FEED_COLUMNS = ['type', 'title', 'body', 'data', 'is_read', 'read_at'];
@@ -46,12 +47,25 @@ class NotificationService extends DatabaseService<'notification'> {
     return last;
   }
 
-  async remove(ids: readonly string[]): Promise<IServiceResponse<NotificationRemoval>> {
-    const attempts: RemovalAttempt[] = [];
-    for (const id of ids) {
-      attempts.push({ id, response: await httpService.delete(`/notification/${id}`) });
-    }
-    return removalResponse(attempts);
+  async removeThread(target: NotificationThreadTarget): Promise<IServiceResponse<null>> {
+    const responses: IServiceResponse<unknown>[] = [];
+    for (const path of threadRemovalPaths(target)) responses.push(await httpService.delete(path));
+    const result = threadRemovalResult(responses);
+    if (result.ok) await this.forgetThread(target);
+    return result;
+  }
+
+  private async forgetThread(target: NotificationThreadTarget): Promise<void> {
+    const candidates = await this.fetchMany(this.threadClauses(target));
+    const rows = candidates.filter((row) => belongsToThread(row, target));
+    if (rows.length === 0) return;
+    await this.write(() => this.collection.database.batch(rows.map((row) => row.prepareDestroyPermanently())));
+  }
+
+  private threadClauses({ userId, threadKey, ids }: NotificationThreadTarget): Clause[] {
+    if (threadKey === null) return [Q.where('user_id', userId), Q.where('id', Q.oneOf([...ids]))];
+    const needle = Q.sanitizeLikeString(JSON.stringify(threadKey).slice(1, -1));
+    return [Q.where('user_id', userId), Q.where('data', Q.like(`%${needle}%`))];
   }
 
   observeUnreadCountForUser(userId: string): Observable<number> {

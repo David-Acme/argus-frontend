@@ -3,9 +3,8 @@ import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { applyIntents, OptimisticRegistry } from '@/shared/libs/optimistic';
 import {
   NOTIFICATION_LENSES,
-  removalRefusal,
   threadDeleteIntents,
-  threadIdsOf,
+  threadTargetOf,
 } from '@/features/home/model/notification-optimistic';
 import { groupNotifications } from '@/features/home/model/notification-threads';
 
@@ -29,10 +28,10 @@ const episode = (id: string) => row(id, { threadKey: 'guard:episode:7', kind: 'g
 const feed = [episode('30'), row('20'), episode('10')];
 
 describe('notification delete intents', () => {
-  test('a thread is deleted by one intent per entry it shows', () => {
+  test('a thread is hidden by one intent per entry it shows and deleted by its thread key', () => {
     const [thread] = groupNotifications(feed);
     if (!thread) throw new Error('expected the episode thread');
-    expect(threadIdsOf(thread)).toEqual(['30', '10']);
+    expect(threadTargetOf(thread, '1')).toEqual({ userId: '1', threadKey: 'guard:episode:7', ids: ['30', '10'] });
     expect(threadDeleteIntents(thread)).toEqual([
       { table: 'notification', kind: 'delete', recordId: '30' },
       { table: 'notification', kind: 'delete', recordId: '10' },
@@ -77,15 +76,17 @@ describe('notification delete intents', () => {
   });
 });
 
-describe('a removal the server refused in part', () => {
-  test('only the refused ids come back, under the given title', () => {
-    expect(removalRefusal({ refused: ['10'] }, 'Some updates could not be deleted')).toEqual({
-      recordIds: ['10'],
-      title: 'Some updates could not be deleted',
-    });
+describe('the thread a delete addresses', () => {
+  test('a row without a thread key is its own thread, addressed by its id', () => {
+    const lone = groupNotifications(feed).find((item) => item.key === 'row:20');
+    if (!lone) throw new Error('expected the lone row');
+    expect(threadTargetOf(lone, '1')).toEqual({ userId: '1', threadKey: null, ids: ['20'] });
   });
 
-  test('nothing refused is no refusal', () => {
-    expect(removalRefusal({ refused: [] }, 'unused')).toBeNull();
+  test('a padded key is the trimmed key, as the server compares it', () => {
+    const [padded] = groupNotifications([row('5', { threadKey: '  camera:fallback:3 ' })]);
+    if (!padded) throw new Error('expected the padded thread');
+    expect(padded.key).toBe('thread:camera:fallback:3');
+    expect(threadTargetOf(padded, '1').threadKey).toBe('camera:fallback:3');
   });
 });

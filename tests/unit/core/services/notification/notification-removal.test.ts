@@ -1,8 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import type { IServiceResponse } from '@/core/interfaces';
-import { removalResponse } from '@/core/services/notification';
+import {
+  belongsToThread,
+  notificationThreadKey,
+  removalSettled,
+  threadRemovalPaths,
+  threadRemovalResult,
+} from '@/core/services/notification';
 
-const gone: IServiceResponse<unknown> = { status: 204, ok: true, info: null, errors: null };
+const deleted: IServiceResponse<unknown> = { status: 204, ok: true, info: null, errors: null };
 
 const notFound: IServiceResponse<unknown> = {
   status: 404,
@@ -18,50 +24,86 @@ const offline: IServiceResponse<unknown> = {
   errors: { code: 'NETWORK_ERROR', message: 'offline' },
 };
 
-describe('removalResponse', () => {
-  test('every row deleted answers ok with nothing refused', () => {
-    expect(removalResponse([{ id: '1', response: gone }, { id: '2', response: gone }])).toEqual({
-      status: 200,
-      ok: true,
-      info: { refused: [] },
-      errors: null,
-    });
-  });
+const routeMissing: IServiceResponse<unknown> = {
+  status: 404,
+  ok: false,
+  info: null,
+  errors: { code: 'ROUTE_NOT_FOUND', message: 'no route' },
+};
 
-  test('a row the server no longer has counts as deleted, since another device got there first', () => {
-    expect(removalResponse([{ id: '1', response: notFound }]).info).toEqual({ refused: [] });
-  });
+const episode = 'guard:episode:41';
 
-  test('a refusal of some rows names only those, so only they come back', () => {
-    const response = removalResponse([
-      { id: '1', response: gone },
-      { id: '2', response: offline },
-      { id: '3', response: notFound },
+describe('deleting a whole thread', () => {
+  test('a thread is one request for its key, however many entries the page has loaded', () => {
+    const loaded = Array.from({ length: 3 }, (_, index) => String(index + 1));
+    expect(threadRemovalPaths({ threadKey: episode, ids: loaded })).toEqual([
+      '/notification/thread/guard%3Aepisode%3A41',
     ]);
-    expect(response.ok).toBe(true);
-    expect(response.info).toEqual({ refused: ['2'] });
+    expect(threadRemovalPaths({ threadKey: 'a b/c', ids: [] })).toEqual(['/notification/thread/a%20b%2Fc']);
   });
 
-  test('a refusal of every row is the first refusal itself, so it can be retried', () => {
-    expect(removalResponse([{ id: '1', response: offline }, { id: '2', response: offline }])).toEqual({
+  test('a row without a thread key is deleted by its id', () => {
+    expect(threadRemovalPaths({ threadKey: null, ids: ['20'] })).toEqual(['/notification/20']);
+  });
+
+  test('the server answering 204 is done', () => {
+    expect(removalSettled(deleted)).toBe(true);
+    expect(threadRemovalResult([deleted])).toEqual({ status: 200, ok: true, info: null, errors: null });
+  });
+
+  test('a 404 not found counts as done: no live row of that thread is left on the server', () => {
+    expect(removalSettled(notFound)).toBe(true);
+    expect(threadRemovalResult([notFound])).toEqual({ status: 200, ok: true, info: null, errors: null });
+  });
+
+  test('any other refusal is the refusal itself, so the rows come back and Retry is offered', () => {
+    expect(removalSettled(routeMissing)).toBe(false);
+    expect(threadRemovalResult([offline])).toEqual({
       status: 0,
       ok: false,
       info: null,
       errors: { code: 'NETWORK_ERROR', message: 'offline' },
     });
+    expect(threadRemovalResult([deleted, routeMissing]).ok).toBe(false);
+  });
+});
+
+describe('the local rows a thread delete forgets', () => {
+  const pageSize = 4;
+  const local = [
+    ...Array.from({ length: pageSize + 3 }, (_, index) => ({
+      id: String(100 + index),
+      data: { threadKey: index % 2 === 0 ? episode : ` ${episode} ` },
+    })),
+    { id: '200', data: { threadKey: 'guard:episode:42' } },
+    { id: '201', data: { threadKey: 41 } },
+    { id: '202', data: {} },
+  ];
+
+  test('every local row of the thread goes, the ones past the loaded page included', () => {
+    const loaded = local.slice(0, pageSize).map((row) => row.id);
+    const target = { threadKey: episode, ids: loaded };
+    expect(local.filter((row) => belongsToThread(row, target)).map((row) => row.id)).toEqual([
+      '100',
+      '101',
+      '102',
+      '103',
+      '104',
+      '105',
+      '106',
+    ]);
   });
 
-  test('a 404 that is not the not-found refusal is still a refusal', () => {
-    const routeMissing: IServiceResponse<unknown> = {
-      status: 404,
-      ok: false,
-      info: null,
-      errors: { code: 'ROUTE_NOT_FOUND', message: 'no route' },
-    };
-    expect(removalResponse([{ id: '1', response: routeMissing }]).ok).toBe(false);
+  test('a row thread forgets only its own row', () => {
+    expect(local.filter((row) => belongsToThread(row, { threadKey: null, ids: ['202'] })).map((row) => row.id)).toEqual([
+      '202',
+    ]);
   });
 
-  test('nothing to delete is nothing refused', () => {
-    expect(removalResponse([]).info).toEqual({ refused: [] });
+  test('the key is a trimmed string, never a number or a blank', () => {
+    expect(notificationThreadKey({ threadKey: '  guard:episode:41 ' })).toBe(episode);
+    expect(notificationThreadKey({ threadKey: 41 })).toBeNull();
+    expect(notificationThreadKey({ threadKey: '   ' })).toBeNull();
+    expect(notificationThreadKey(null)).toBeNull();
   });
 });

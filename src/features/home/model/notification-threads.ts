@@ -1,4 +1,5 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
+import { notificationThreadKey } from '@/core/services/notification';
 
 export const NOTIFICATION_URGENCIES = ['passive', 'active', 'time_sensitive', 'critical'] as const;
 
@@ -38,7 +39,7 @@ function member<T extends string>(vocabulary: readonly T[], value: string | null
 }
 
 export function threadKeyOf(row: NotificationRow): string {
-  const threadKey = textField(row, 'threadKey');
+  const threadKey = notificationThreadKey(row.data);
   return threadKey ? `thread:${threadKey}` : `row:${row.id}`;
 }
 

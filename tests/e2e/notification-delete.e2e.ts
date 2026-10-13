@@ -1,6 +1,7 @@
 import type { Page } from 'playwright-core';
 import { connected, routes, store } from './support/harness';
 import { expect, openFirst, test } from './support/devices';
+import { NOTIFICATION_FEED_PAGE_SIZE } from '../../src/shared/constants/cache.constant';
 
 const at = Math.floor(Date.now() / 1000);
 
@@ -103,3 +104,84 @@ test('a delete whose Delete frame never arrives still leaves the other device, b
   expect(escapes).toEqual([]);
   expect(second.escapes).toEqual([]);
 });
+
+const EPISODE = 'guard:episode:41';
+
+const EPISODE_PATH = `/notification/thread/${encodeURIComponent(EPISODE)}`;
+
+const episodeEntry = (id: number) => ({
+  ...notification(id, `Motion in the yard ${id}`),
+  data: { threadKey: EPISODE, kind: 'guard_episode' },
+});
+
+const episodeAudit = (auditId: number, id: number) => ({
+  frame: { ...auditFrame(id).frame, info: { ...auditFrame(id).frame.info, id: auditId } },
+});
+
+test('a thread longer than the loaded page is deleted by its key, and every entry leaves both devices', async ({
+  app,
+  browser,
+  screen,
+  second,
+}) => {
+  const baseUrl = app.baseUrl ?? '';
+  const ids = Array.from({ length: NOTIFICATION_FEED_PAGE_SIZE + 5 }, (_, index) => 700 + index);
+  for (const id of ids) await store(baseUrl, 'notification', episodeEntry(id));
+  await store(baseUrl, 'notification', notification(800, 'Water bill due'));
+  await routes(baseUrl, [
+    {
+      method: 'DELETE',
+      path: EPISODE_PATH,
+      status: 204,
+      emits: ids.flatMap((id, index) => [episodeAudit(10 + index, id), deleteFrame(id)]),
+    },
+  ]);
+  const escapes = await openFirst(browser, app);
+  await second.open();
+  await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
+  await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
+
+  const latest = deleteLabel(`Motion in the yard ${ids.at(-1) ?? 0}`);
+  await expect.poll(() => countButtons(second.page, latest), { timeout: 10000 }).toBe(1);
+  await screen.getByRole('button', latest).click();
+  await expect(screen.getByRole('button', latest)).toBeHidden({ timeout: LIVE_MS });
+
+  await expect.poll(() => requests(baseUrl), { timeout: UNDO_MS + LIVE_MS }).toContain(`DELETE ${EPISODE_PATH} @A`);
+  const sent = await requests(baseUrl);
+  expect(sent.filter((line) => line.startsWith('DELETE /notification/'))).toEqual([`DELETE ${EPISODE_PATH} @A`]);
+  await expect.poll(() => countButtons(second.page, latest), { timeout: LIVE_MS }).toBe(0);
+  expect(await countButtons(second.page, deleteLabel('Water bill due'))).toBe(1);
+  await expect(screen.getByRole('button', deleteLabel('Water bill due'))).toBeVisible();
+
+  expect(escapes).toEqual([]);
+  expect(second.escapes).toEqual([]);
+});
+
+test('a thread the server no longer has counts as deleted, with no error', async ({ app, browser, screen }) => {
+  const baseUrl = app.baseUrl ?? '';
+  await store(baseUrl, 'notification', episodeEntry(901));
+  await store(baseUrl, 'notification', episodeEntry(902));
+  await routes(baseUrl, [
+    {
+      method: 'DELETE',
+      path: EPISODE_PATH,
+      status: 404,
+      errors: { code: 'NOT_FOUND', message: 'Notification not found' },
+    },
+  ]);
+  const escapes = await openFirst(browser, app);
+  await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
+
+  const latest = deleteLabel('Motion in the yard 902');
+  await expect(screen.getByRole('button', latest)).toBeVisible({ timeout: 10000 });
+  await screen.getByRole('button', latest).click();
+
+  await expect.poll(() => requests(baseUrl), { timeout: UNDO_MS + LIVE_MS }).toContain(`DELETE ${EPISODE_PATH} @A`);
+  await expect(screen.getByText('The notification could not be deleted', { exact: true })).toBeHidden({
+    timeout: LIVE_MS,
+  });
+  await expect(screen.getByRole('button', latest)).toBeHidden();
+
+  expect(escapes).toEqual([]);
+});
+

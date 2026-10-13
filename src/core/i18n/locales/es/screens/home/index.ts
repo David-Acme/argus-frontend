@@ -54,7 +54,6 @@ export const home = {
   'notifications-open-hint': 'Al abrirlas quedan leídas',
   'notification-deleted': 'Notificación borrada',
   'notification-delete-failed': 'No se pudo borrar la notificación',
-  'notification-delete-partial': 'Algunos avisos no se pudieron borrar',
   thread: {
     count: '{count} avisos',
     urgent: 'Urgente',
