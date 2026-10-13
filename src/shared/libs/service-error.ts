@@ -23,6 +23,7 @@ const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   REMOTE_NOT_ALLOWED: 'common.errors.remote-not-allowed',
   PAIRING_REQUIRED: 'common.errors.pairing-required',
   INVALID_RESPONSE: 'common.errors.invalid-response',
+  UNREACHABLE_ROUTE: 'common.errors.unreachable-route',
   CERT_NOT_TRUSTED: 'common.errors.cert-not-trusted',
   FINGERPRINT_MISMATCH: 'common.errors.fingerprint-mismatch',
   STORAGE_ERROR: 'common.errors.storage',

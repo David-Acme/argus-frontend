@@ -88,6 +88,7 @@ export const common = {
     'bad-request': 'Argus no pudo procesar esa petición.',
     'pairing-required': 'Empareja tu dispositivo con el servidor primero',
     'invalid-response': 'Argus respondió algo que la app no entiende. Inténtalo de nuevo o actualiza la app.',
+    'unreachable-route': 'El servidor no respondió como Argus. Puede que necesite actualizarse.',
     'cert-not-trusted': 'No se pudo comprobar que este servidor sea tu Argus. Vuelve a vincular el dispositivo.',
     'fingerprint-mismatch': 'Este servidor no es el que vinculaste, así que la app no se ha conectado.',
     storage: 'No se pudieron leer los datos guardados en este dispositivo. Inténtalo de nuevo.',

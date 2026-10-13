@@ -99,7 +99,7 @@ export function readTokenAnswer(result: IServiceResponse<unknown>): RtcTokenAnsw
   const code = result.errors?.code ?? '';
   const outcome = OUTCOMES[code];
   if (outcome) return { kind: 'outcome', outcome };
-  if (result.status === 404 && code === 'NOT_FOUND') return { kind: 'fallback' };
+  if (code === 'UNREACHABLE_ROUTE' || (result.status === 404 && code === 'NOT_FOUND')) return { kind: 'fallback' };
   if (result.status === 503 && (code === 'RTC_UNAVAILABLE' || code === 'SERVICE_UNAVAILABLE'))
     return { kind: 'fallback' };
   return { kind: 'refused', code: code || 'NETWORK_ERROR', message: result.errors?.message ?? '' };

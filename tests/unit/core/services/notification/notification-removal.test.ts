@@ -28,7 +28,7 @@ const routeMissing: IServiceResponse<unknown> = {
   status: 404,
   ok: false,
   info: null,
-  errors: { code: 'ROUTE_NOT_FOUND', message: 'no route' },
+  errors: { code: 'UNREACHABLE_ROUTE', message: 'HTTP 404' },
 };
 
 const episode = 'guard:episode:41';

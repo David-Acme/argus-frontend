@@ -1157,17 +1157,23 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     apply.
 - The rows leave at once through delete intents on `NOTIFICATION_LENSES`
   (`threadDeleteIntents`).
-- A 204 is done. So is a 404 `NOT_FOUND`: the server has no live row of that thread left
-  for the caller, because another device got there first (`removalSettled`). On either
-  answer the service forgets the thread's local rows, every one including those past
-  the loaded page (`belongsToThread`), so the thread cannot come back when its intents
-  expire. The Delete frames that follow then find nothing, which is a no-op.
+- A 204 is done. So is a 404 whose body is the Argus envelope carrying `NOT_FOUND`: the
+  server has no live row of that thread left for the caller, because another device got
+  there first (`removalSettled`). On either answer the service forgets the thread's local
+  rows, every one including those past the loaded page (`belongsToThread`), so the thread
+  cannot come back when its intents expire. The Delete frames that follow then find
+  nothing, which is a no-op.
 - Any other refusal brings the whole thread back with the error toast, and Retry when
-  it is retryable.
-- A server older than the thread route answers Drogon's own 404 page, which the
-  envelope reader turns into `NOT_FOUND`. The app would take that as done and forget the
-  thread on this device only. The app and the server ship together, so this is a
-  deployment mismatch, not a path the app guards against.
+  it is retryable. That includes a 404 without the envelope (an HTML page, a proxy's
+  page, an empty body): it is `UNREACHABLE_ROUTE` (see "Only the Argus envelope speaks
+  for the server"), so its toast says the server did not answer as Argus.
+- What the envelope rule cannot tell apart: since 2026-09-21 every service answers a
+  route it does not have with the envelope itself, `NOT_FOUND` "Path not found" (backend
+  `ErrorHandler::unmatchedRoute`), the same code the thread route answers for a thread
+  with no live row (`NotificationNotFound`). A server older than the thread route still
+  reads as done, and the thread is forgotten on this device only. Telling the two apart
+  needs a code of its own for an unmatched route on the backend; the app does not match
+  on the message text.
 - Other devices drop the row on the `Delete` frame (the generic delete path) or on the
   user-audit diff that comes before it. `planAuditEntries` treats a diff whose current
   `deletedAt` is set as a removal, for the tables whose pull has no deletion leg
@@ -1703,7 +1709,10 @@ with tests. The decisions that outlive the commits:
   envelope-less refusal by its status (a proxy 502 is `BAD_GATEWAY`, an empty
   503 `SERVICE_UNAVAILABLE`), a refresh that is only unavailable surfaces as
   503 instead of a misleading 401, and desktop errors are `CODE|message`
-  (`TIMEOUT` is a code now; the old `'401'` substring rule is gone).
+  (`TIMEOUT` is a code now; the old `'401'` substring rule is gone). Since
+  2026-10-13 only the transport statuses keep a name; every other
+  envelope-less refusal is `UNREACHABLE_ROUTE` ("Only the Argus envelope speaks
+  for the server").
 - **Rust owns whom the desktop trusts.** `argus_pair` checks the QR's
   fingerprint before it pins anything and writes the four trust keys itself;
   relocation goes through `argus_relocate`. A compromised WebView can still
@@ -1743,6 +1752,35 @@ with tests. The decisions that outlive the commits:
   token leaves the device, and every transport sends a stable
   `User-Agent: Argus/1 (<platform>)`; the backend moves each existing
   session to it once, on its next refresh.
+
+### Only the Argus envelope speaks for the server (2026-10-13)
+
+A refusal is the server's own only when its body is the backend's envelope,
+`{status, info, errors}` with `errors` carrying a code (one error, or a list whose
+entries all have a code and a message). Then `readEnvelope` passes that code through,
+`NOT_FOUND` included. A body that is not that envelope never yields a code of the
+server, on every call:
+- 408, 429, 502, 503, 504 and the other 5xx keep their transport names (`TIMEOUT`,
+  `TOO_MANY_REQUESTS`, `BAD_GATEWAY`, `SERVICE_UNAVAILABLE`, `DEADLINE_EXCEEDED`,
+  `INTERNAL_ERROR`), retryable as before (`foreignRefusalCode`);
+- every other status is `UNREACHABLE_ROUTE`: something answered, but not the Argus
+  route the app called. Drogon's HTML 404 page, a proxy's page and an empty 404 all land
+  here, never on `NOT_FOUND`. The toast says "The server did not answer as Argus. It may
+  need an update.", and it is not retryable;
+- a 2xx whose `errors` carries no code is `INVALID_RESPONSE`, like any 2xx body the app
+  cannot read.
+
+So a rule that reads a server code (`removalSettled` on `NOT_FOUND`, the snooze's
+`CONFLICT`, a module request's `CONFLICT`) can no longer be met by a page the server did
+not write. The backend's own answer to a route it does not have is still the envelope,
+`NOT_FOUND` "Path not found" (`ErrorHandler::unmatchedRoute`, every service since
+2026-09-21), so that answer still reads as the server's `NOT_FOUND` ("Deleting a
+notification" says what that leaves open). The call grant reads `UNREACHABLE_ROUTE` like
+the envelope 404: a server without the RTC route falls back to the PCM call. Tests:
+`http-envelope.test.ts`, and
+`http-foreign-refusal.test.ts`, which runs the real http service over two fakes of the
+net layer, one answering Drogon's HTML 404 and one the envelope 404: only the second is
+`NOT_FOUND`, and only the second settles a thread delete.
 
 ## Calls with Argus (2026-10-03)
 

@@ -89,6 +89,7 @@ export const common = {
     'bad-request': 'Argus could not process that request.',
     'pairing-required': 'Pair your device with the server first',
     'invalid-response': 'Argus answered in a way the app does not understand. Try again or update the app.',
+    'unreachable-route': 'The server did not answer as Argus. It may need an update.',
     'cert-not-trusted': 'This server could not be confirmed as your Argus. Pair the device again.',
     'fingerprint-mismatch': 'This is not the server you paired with, so the app did not connect.',
     storage: 'The data saved on this device could not be read. Try again.',

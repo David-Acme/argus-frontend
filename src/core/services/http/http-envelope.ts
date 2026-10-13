@@ -1,27 +1,21 @@
 import type { IApiError, IServiceResponse } from '@/core/interfaces';
 
-type Envelope = {
-  status?: number;
+type Body = {
+  status?: unknown;
   info?: unknown;
-  errors?: IApiError | readonly IApiError[] | null;
+  errors?: unknown;
 };
 
-const STATUS_CODES: Readonly<Record<number, string>> = {
-  400: 'BAD_REQUEST',
-  401: 'UNAUTHORIZED',
-  403: 'FORBIDDEN',
-  404: 'NOT_FOUND',
+const TRANSPORT_CODES: Readonly<Record<number, string>> = {
   408: 'TIMEOUT',
-  409: 'CONFLICT',
-  422: 'VALIDATION_ERROR',
   429: 'TOO_MANY_REQUESTS',
   502: 'BAD_GATEWAY',
   503: 'SERVICE_UNAVAILABLE',
   504: 'DEADLINE_EXCEEDED',
 };
 
-export function statusErrorCode(status: number): string {
-  return STATUS_CODES[status] ?? (status >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST');
+export function foreignRefusalCode(status: number): string {
+  return TRANSPORT_CODES[status] ?? (status >= 500 ? 'INTERNAL_ERROR' : 'UNREACHABLE_ROUTE');
 }
 
 export function errorResponse(status: number, code: string, message: string): IServiceResponse<never> {
@@ -30,11 +24,11 @@ export function errorResponse(status: number, code: string, message: string): IS
 
 const isSuccess = (status: number): boolean => status >= 200 && status < 300;
 
-function parseEnvelope(raw: string): Envelope | null {
+function parseBody(raw: string): Body | null {
   if (!raw) return {};
   try {
     const parsed: unknown = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? (parsed as Envelope) : null;
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? (parsed as Body) : null;
   } catch {
     return null;
   }
@@ -49,20 +43,28 @@ const isApiError = (value: unknown): value is IApiError =>
 const isApiErrorList = (value: unknown): value is readonly IApiError[] =>
   Array.isArray(value) && value.length > 0 && value.every(isApiError);
 
+function carriedError(errors: unknown): IApiError | null {
+  if (isApiError(errors)) return errors;
+  if (!isApiErrorList(errors)) return null;
+  const [first] = errors;
+  if (!first) return null;
+  return { code: first.code, message: first.message, list: errors.map(({ code, message }) => ({ code, message })) };
+}
+
+const isEnvelope = (body: Body): boolean => typeof body.status === 'number' && 'info' in body && 'errors' in body;
+
 export function readEnvelope<T>(status: number, raw: string): IServiceResponse<T> {
-  const envelope = parseEnvelope(raw);
-  if (!envelope) {
-    return isSuccess(status)
-      ? errorResponse(status, 'INVALID_RESPONSE', 'Invalid JSON response')
-      : errorResponse(status, statusErrorCode(status), `HTTP ${status}`);
+  const body = parseBody(raw);
+  if (isSuccess(status)) {
+    if (!body) return errorResponse(status, 'INVALID_RESPONSE', 'Invalid JSON response');
+    if (!body.errors) return { status, ok: true, info: (body.info as T | null) ?? null, errors: null };
+    const refusal = carriedError(body.errors);
+    return refusal
+      ? { status, ok: false, info: null, errors: refusal }
+      : errorResponse(status, 'INVALID_RESPONSE', 'Unreadable errors in a success answer');
   }
-  if (isSuccess(status) && !envelope.errors) {
-    return { status, ok: true, info: (envelope.info as T | null) ?? null, errors: null };
-  }
-  const errors: IApiError = isApiError(envelope.errors)
-    ? envelope.errors
-    : isApiErrorList(envelope.errors)
-      ? { code: envelope.errors[0]!.code, message: envelope.errors[0]!.message, list: envelope.errors.map(({ code, message }) => ({ code, message })) }
-      : { code: statusErrorCode(status), message: `HTTP ${status}` };
-  return { status, ok: false, info: null, errors };
+  const refusal = body && isEnvelope(body) ? carriedError(body.errors) : null;
+  return refusal
+    ? { status, ok: false, info: null, errors: refusal }
+    : errorResponse(status, foreignRefusalCode(status), `HTTP ${status}`);
 }

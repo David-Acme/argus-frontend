@@ -55,6 +55,8 @@ describe('token answer', () => {
 
   test('an old server or an absent LiveKit falls back to the PCM call', () => {
     expect(readTokenAnswer(failure(404, 'NOT_FOUND'))).toEqual({ kind: 'fallback' });
+    expect(readTokenAnswer(failure(404, 'UNREACHABLE_ROUTE'))).toEqual({ kind: 'fallback' });
+    expect(readTokenAnswer(failure(405, 'UNREACHABLE_ROUTE'))).toEqual({ kind: 'fallback' });
     expect(readTokenAnswer(failure(503, 'RTC_UNAVAILABLE'))).toEqual({ kind: 'fallback' });
     expect(readTokenAnswer(failure(503, 'SERVICE_UNAVAILABLE'))).toEqual({ kind: 'fallback' });
   });
