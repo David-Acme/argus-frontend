@@ -9,8 +9,13 @@ import {
   toCalendarEntries,
 } from '@/core/services/view-cache/calendar.projection';
 import { AGENDA_FEED_INITIAL_WEEKS, AGENDA_FEED_STEP_WEEKS } from '@/shared/constants/cache.constant';
-import { deviceTimeZone } from '@/shared/hooks/use-date-formatter/date';
 import { occurrenceLimitFor } from '@/shared/libs/recurrence';
+import {
+  RECOMPUTE_WEEKS,
+  otherHouseholdZone,
+  recomputeMedianMs,
+  twentySeries,
+} from '@tests/support/agenda-recompute';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -169,40 +174,11 @@ describe('the occurrence guard is sized per request', () => {
 });
 
 describe('the cumulative recompute of a two-year agenda', () => {
-  const RUNS = 9;
-  const FRAME_MS = 16;
-  const MIXED = ['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=WEEKLY;INTERVAL=2', 'FREQ=MONTHLY', 'FREQ=YEARLY'];
+  const SANITY_MS = 100;
 
-  const twentySeries = (ruleOf: (index: number) => string): ICalendarEventCacheSource[] =>
-    Array.from({ length: 20 }, (_, index) =>
-      event({
-        id: `s${index}`,
-        startsAt: new Date(2026, 8, 1 + (index % 7), 6 + (index % 12), 15),
-        endsAt: null,
-        recurrenceRule: ruleOf(index),
-      })
-    );
-
-  const medianMs = (series: ICalendarEventCacheSource[], zone: string | null): number => {
-    const scope = agendaScope(new Date(2026, 9, 1));
-    const span = agendaSpan(scope, { weeks: AGENDA_FEED_INITIAL_WEEKS + loadMores(2 * 52) * AGENDA_FEED_STEP_WEEKS });
-    const input = { events: [], reminders: [], tasks: [], series, zone, eventsLater: false, tasksLater: false };
-    projectAgendaFeed(input, scope, span);
-    const times = Array.from({ length: RUNS }, () => {
-      const started = performance.now();
-      projectAgendaFeed(input, scope, span);
-      return performance.now() - started;
-    }).sort((left, right) => left - right);
-    return times[Math.floor(RUNS / 2)] ?? Number.POSITIVE_INFINITY;
-  };
-
-  const otherZone = (): string => (deviceTimeZone() === 'Europe/Madrid' ? 'America/New_York' : 'Europe/Madrid');
-
-  test('twenty series of mixed rules in the household zone recompute within one frame', () => {
-    expect(medianMs(twentySeries((index) => MIXED[index % MIXED.length] ?? 'FREQ=WEEKLY'), null)).toBeLessThan(FRAME_MS);
-  });
-
-  test('735 days of twenty daily series in a household zone that is not the device zone recompute within one frame', () => {
-    expect(medianMs(twentySeries(() => 'FREQ=DAILY'), otherZone())).toBeLessThanOrEqual(FRAME_MS);
+  test('twenty daily series in a household zone that is not the device zone stay under a loose sanity bound', () => {
+    expect(RECOMPUTE_WEEKS * 7).toBe(735);
+    const series = twentySeries(() => 'FREQ=DAILY');
+    expect(recomputeMedianMs({ series, zone: otherHouseholdZone(), runs: 5 })).toBeLessThanOrEqual(SANITY_MS);
   });
 });

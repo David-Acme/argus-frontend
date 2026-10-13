@@ -254,6 +254,10 @@ zero as each domain moved into its feature folder, and was deleted.
   them). `tests/setup.ts` stubs what the constants barrel pulls in
   (`react-native`'s `Platform`, the lucide icons read from
   `icon.constant.ts`, `window`). A fix to pure logic lands with its test.
+- A test that asserts a time budget is a bench. It lives under `tests/bench/`, is
+  run by `bun run test:bench` in the integration build, and stays out of
+  `bun run verify`, which must stay deterministic on a busy machine. `verify` keeps
+  the same case under a loose sanity bound instead.
 - Every unit headed for the desktop is accepted only after its exported web
   bundle renders in a real browser: `bun run check:bundle`
   (`scripts/probe-web-bundle.ts`) exports `dist/` through `web:build`, serves
@@ -859,6 +863,7 @@ bun run web            # expo start -c --web
 bun run lint           # expo lint
 bunx tsc --noEmit      # typecheck (must be 0 errors)
 bun run test           # unit tests (tests/unit, bun test)
+bun run test:bench     # timing benches (tests/bench); the integration build runs them, verify does not
 bun run check:comments # rule 10b gate; --fix removes comments
 bun run check:bundle   # exports the bundle, serves it under the Tauri CSP, loads it in chromium
 bun run verify         # comments + typecheck + lint + tests + the bundle probe

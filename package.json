@@ -33,6 +33,7 @@
     "web": "expo start -c --web",
     "lint": "expo lint",
     "test": "tsc -p tests && bun test tests/unit tests/contracts",
+    "test:bench": "bun test tests/bench",
     "check:comments": "bun scripts/check-comments.ts",
     "check:boundaries": "bun scripts/check-boundaries.ts",
     "check:bundle": "bun scripts/probe-web-bundle.ts",

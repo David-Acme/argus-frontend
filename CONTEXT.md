@@ -1234,9 +1234,13 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
       cold run takes about 31 ms, so most of that is first-run JIT.
     - Of the warm 10.3 ms, about 5.2 ms computes the 14,700 occurrences, 4.2 ms
       builds their ISO ids and 0.8 ms sorts them.
-    - `calendar-recurrence.test.ts` holds the mixed case and the worst case (20
-      daily rules in another household zone, 735 days, median of 9 runs) at or
-      under one 16 ms frame.
+    - `bun run test:bench` (`tests/bench/agenda-recurrence.test.ts`, run by the
+      integration build) holds the mixed case and the worst case (20 daily rules
+      in another household zone, 735 days, median of 9 runs) at or under one 16 ms
+      frame.
+    - `bun run verify` stays deterministic on a busy machine. It keeps the cached
+      clock's agreement test and a loose 100 ms sanity bound on the same worst case
+      (`calendar-recurrence.test.ts`).
     - Paging the agenda stays the conditional follow-up F6c in the plan.
   - An event whose rule the app cannot read (the event DTO checks only its length) is
     one plain entry at its start. A range row without a rule wins over a stale series
