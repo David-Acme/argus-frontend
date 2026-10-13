@@ -293,7 +293,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   `https://<service>--<home-id>.argus-tunnel.lynk.page<path>`, when the
   instance's `route` is `relay` and it carries a usable `remote` profile
   (`net/net-route-choice.ts`, `ARGUS_ROUTE_SERVICES`; CONTEXT.md "Local-first
-  route choice"). A server mDNS cannot
+  route choice"). That profile comes from the sync context's `remote`, and
+  `netService.rememberRemote` keeps it. A server mDNS cannot
   see (another subnet, a network that drops multicast, the Android emulator at
   `10.0.2.2`) is paired by its address on the pairing screen and uses the
   default ports.

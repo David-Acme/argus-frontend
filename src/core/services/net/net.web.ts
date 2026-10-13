@@ -9,11 +9,22 @@ import {
   loadInstance,
   rememberInstanceAddress,
   savePairingMetadata,
+  saveRemote,
   toNetError,
 } from './net-persistence';
 import { mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
 import { withDeviceCredential } from './device-credential';
-import type { NetAdoptInput, NetDiscovery, NetHttpRequest, NetHttpResult, NetPairInput, NetPairedInstance, NetPairing, NetPin } from '@/core/types';
+import type {
+  NetAdoptInput,
+  NetDiscovery,
+  NetHttpRequest,
+  NetHttpResult,
+  NetPairInput,
+  NetPairedInstance,
+  NetPairing,
+  NetPin,
+  NetRemoteProfile,
+} from '@/core/types';
 
 const ignoreClosed = (): void => undefined;
 
@@ -95,6 +106,10 @@ class WebArgusNetService implements IArgusNetService {
   async refreshAddress(): Promise<boolean> {
     const instance = await loadInstance();
     return instance ? this.rediscover(instance.ip) : false;
+  }
+
+  async rememberRemote(remote: NetRemoteProfile): Promise<boolean> {
+    return saveRemote(remote);
   }
 
   private rediscover(currentIp: string): Promise<boolean> {

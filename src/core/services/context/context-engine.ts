@@ -1,5 +1,5 @@
 import { readContext } from '@/core/contracts/context.contract';
-import type { AppAccess, AppContext } from '@/core/types';
+import type { AppAccess, AppContext, NetRemoteState } from '@/core/types';
 import { accessOf, belongsTo, isStaleContext, sameAccess, withModuleOff } from './context-state';
 
 type Unsubscribe = () => void;
@@ -12,6 +12,9 @@ export type ContextEngineDeps = {
   modules: {
     applyContext: (context: AppContext) => void;
     moduleOfPath: (path: string) => string | null;
+  };
+  remote: {
+    remember: (remote: NetRemoteState) => void;
   };
   socket: {
     onInitialInfo: (listener: (info: unknown) => void) => Unsubscribe;
@@ -70,6 +73,7 @@ export class ContextEngine {
     const access = sameAccess(previous, fresh) && previous ? previous : fresh;
     this.deps.cache.write(access);
     this.deps.modules.applyContext(context);
+    if (context.remote) this.deps.remote.remember(context.remote);
     this.listeners.forEach((listener) => listener(access));
     return true;
   }

@@ -112,6 +112,13 @@ export interface NetRemoteProfile {
   domain: string;
 }
 
+export type NetRemoteLink = 'up' | 'connecting' | 'down';
+
+export interface NetRemoteState extends NetRemoteProfile {
+  link: NetRemoteLink;
+  since: number;
+}
+
 export interface NetRouteProbe {
   lan: NetProbeOutcome;
   relay: NetProbeOutcome;

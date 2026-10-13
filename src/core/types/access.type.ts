@@ -1,5 +1,6 @@
 import type { UserRole } from './database.type';
 import type { ModuleRecord } from './modules.type';
+import type { NetRemoteState } from './net.type';
 
 export type AccessRole = {
   id: string;
@@ -21,4 +22,5 @@ export type AppAccess = {
 
 export type AppContext = Omit<AppAccess, 'receivedAt'> & {
   ownerCatalog: ModuleRecord[] | null;
+  remote: NetRemoteState | null;
 };

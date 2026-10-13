@@ -1,5 +1,7 @@
+import { log } from '@/core/services/log';
 import { moduleEngine } from '@/core/services/modules';
 import { moduleOfApiPath } from '@/core/services/modules/module-state';
+import { netService } from '@/core/services/net';
 import { onRefusal } from '@/core/services/http';
 import { synchronizeService } from '@/core/services/sync/synchronize.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
@@ -18,6 +20,13 @@ export const contextEngine = new ContextEngine({
   modules: {
     applyContext: (context) => moduleEngine.applyContext(context),
     moduleOfPath: moduleOfApiPath,
+  },
+  remote: {
+    remember: (remote) => {
+      netService.rememberRemote(remote).catch((error: unknown) => {
+        log.error('net', 'the home id was not kept; the next context brings it again', error);
+      });
+    },
   },
   socket: {
     onInitialInfo: (listener) => synchronizeService.on(SYNC_OPERATION.InitialInfo, (frame) => listener(frame.info)),

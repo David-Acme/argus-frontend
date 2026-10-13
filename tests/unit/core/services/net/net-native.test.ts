@@ -59,7 +59,11 @@ mock.module('argus-net', () => ({
 }));
 
 const { netService } = await import('@/core/services/net/net.native');
-const { clearInstance, savePairing, savePairingMetadata } = await import('@/core/services/net/net-persistence');
+const { clearInstance, savePairing, savePairingMetadata, storedInstance } = await import(
+  '@/core/services/net/net-persistence'
+);
+
+const REMOTE = { homeId: '0123456789abcdef0123456789abcdef', domain: 'argus-tunnel.lynk.page' };
 
 const pairing = {
   caPem: 'pem',
@@ -130,6 +134,43 @@ describe('the phone net service against a moved server', () => {
     setSystemTime();
   });
 
+  test('a home id the context brings is kept once, and the next request hands it to the native module', async () => {
+    await netService.unpair();
+    await seed();
+    discovery = announcement(NEW_IP);
+
+    expect(await netService.rememberRemote(REMOTE)).toBe(true);
+    expect(await netService.rememberRemote(REMOTE)).toBe(false);
+    expect(store.get('net.remoteHomeId')).toBe(REMOTE.homeId);
+    expect(store.get('net.remoteDomain')).toBe(REMOTE.domain);
+    expect((await netService.instance())?.remote).toEqual(REMOTE);
+
+    await request();
+
+    expect(configuredRemote).toEqual([REMOTE.homeId, REMOTE.domain]);
+  });
+
+  test('an unusable profile is not kept, and neither is one for an app that is not paired', async () => {
+    expect(await netService.rememberRemote({ ...REMOTE, homeId: REMOTE.homeId.toUpperCase() })).toBe(false);
+    expect(store.has('net.remoteHomeId')).toBe(false);
+    await netService.unpair();
+    expect(await netService.rememberRemote(REMOTE)).toBe(false);
+    expect(store.has('net.remoteHomeId')).toBe(false);
+  });
+
+  test('a new pairing and an unpairing both forget the remote profile', async () => {
+    await netService.rememberRemote(REMOTE);
+    await seed();
+    expect(store.has('net.remoteHomeId')).toBe(false);
+    expect(store.has('net.remoteDomain')).toBe(false);
+    expect((await netService.instance())?.remote).toBeUndefined();
+
+    await netService.rememberRemote(REMOTE);
+    await netService.unpair();
+    expect(store.has('net.remoteHomeId')).toBe(false);
+    expect(store.has('net.remoteDomain')).toBe(false);
+  });
+
   test('a refused connection rediscovers once and the request is retried at the announced address', async () => {
     discovery = announcement(NEW_IP);
 
@@ -173,5 +214,32 @@ describe('the phone net service against a moved server', () => {
 
     await expect(request()).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
     expect(discoveryCalls).toBe(1);
+  });
+});
+
+describe('the paired instance read when the app starts', () => {
+  const stored = {
+    'net.caPem': 'pem',
+    'net.host': 'argus.local',
+    'net.ip': OLD_IP,
+    'net.port': '7044',
+    'net.remoteHomeId': REMOTE.homeId,
+    'net.remoteDomain': REMOTE.domain,
+  };
+
+  test('carries the remote profile that was kept', () => {
+    expect(storedInstance(stored)?.remote).toEqual(REMOTE);
+  });
+
+  test('leaves out a profile that is not usable or not whole', () => {
+    expect(storedInstance({ ...stored, 'net.remoteHomeId': REMOTE.homeId.toUpperCase() })?.remote).toBeUndefined();
+    expect(storedInstance({ ...stored, 'net.remoteDomain': null })?.remote).toBeUndefined();
+    expect(storedInstance({ ...stored, 'net.remoteHomeId': null })?.remote).toBeUndefined();
+    expect(storedInstance({ ...stored, 'net.remoteDomain': 'localhost' })?.remote).toBeUndefined();
+  });
+
+  test('is nothing without the pinned server', () => {
+    expect(storedInstance({ ...stored, 'net.caPem': null })).toBeNull();
+    expect(storedInstance({ ...stored, 'net.ip': '' })).toBeNull();
   });
 });

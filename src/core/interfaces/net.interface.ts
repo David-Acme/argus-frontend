@@ -7,6 +7,7 @@ import type {
   NetPairedInstance,
   NetPairing,
   NetPin,
+  NetRemoteProfile,
 } from '@/core/types';
 import type { NetSocketOptions } from 'argus-net';
 import type { IArgusSocket } from './socket.interface';
@@ -19,6 +20,7 @@ export interface IArgusNetService {
   requestPinned(options: NetHttpRequest, pin: NetPin): Promise<NetHttpResult>;
   openSocket(options: NetSocketOptions): Promise<IArgusSocket>;
   refreshAddress(): Promise<boolean>;
+  rememberRemote(remote: NetRemoteProfile): Promise<boolean>;
   isPaired(): Promise<boolean>;
   instance(): Promise<NetPairedInstance | null>;
   unpair(): Promise<void>;

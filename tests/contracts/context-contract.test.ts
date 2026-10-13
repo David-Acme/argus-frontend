@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readContext, userRoleOf } from '@/core/contracts/context.contract';
+import type { NetRemoteState } from '@/core/types';
 
 const surveillance = {
   id: 'surveillance',
@@ -25,6 +26,13 @@ const context = {
     { id: 'guard', module: 'surveillance', active: true },
   ],
   modules: [{ id: 'core', name: { es: 'Asistente y hogar', en: 'Assistant and home' }, summary: {}, roles: [], enabled: true, lifecycle: 'active', dataPurgedAt: null }, surveillance],
+};
+
+const remote: NetRemoteState = {
+  homeId: '0123456789abcdef0123456789abcdef',
+  domain: 'argus-tunnel.lynk.page',
+  link: 'connecting',
+  since: 1760371200,
 };
 
 describe('the live user context', () => {
@@ -108,6 +116,34 @@ describe('the live user context', () => {
     expect(readContext(context)?.timeZone).toBeNull();
     expect(readContext({ ...context, timeZone: '  ' })?.timeZone).toBeNull();
     expect(readContext({ ...context, timeZone: 5 })?.timeZone).toBeNull();
+  });
+
+  test('the home id, relay domain and link are read once the tunnel has reported', () => {
+    expect(readContext({ ...context, remote })?.remote).toEqual(remote);
+    expect(readContext({ id: 7, role: 'guard', isActive: true, context: { ...context, remote } })?.remote).toEqual(remote);
+    expect(readContext(context)?.remote).toBeNull();
+    expect(readContext({ ...context, remote: null })?.remote).toBeNull();
+  });
+
+  test('a malformed remote is dropped and the rest of the context stays', () => {
+    const malformed: unknown[] = [
+      'up',
+      { ...remote, homeId: remote.homeId.toUpperCase() },
+      { ...remote, homeId: remote.homeId.slice(1) },
+      { ...remote, domain: 'localhost' },
+      { ...remote, domain: 'ARGUS-TUNNEL.LYNK.PAGE' },
+      { ...remote, domain: 'argus-tunnel.lynk.page.' },
+      { ...remote, link: 'sideways' },
+      { ...remote, since: 0 },
+      { ...remote, since: 1.5 },
+      { ...remote, since: '1760371200' },
+      { homeId: remote.homeId, domain: remote.domain },
+    ];
+    for (const value of malformed) {
+      const read = readContext({ ...context, remote: value });
+      expect([value, read?.remote]).toEqual([value, null]);
+      expect(read?.userId).toBe(7);
+    }
   });
 
   test('refuses what is not a context', () => {

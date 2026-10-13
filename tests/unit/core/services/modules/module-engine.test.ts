@@ -44,6 +44,7 @@ const context = (
   modules: patch.modules ?? [],
   version: null,
   ownerCatalog: patch.ownerCatalog ?? null,
+  remote: null,
 });
 
 const ok = <T>(info: T): IServiceResponse<T> => ({ status: 200, ok: true, info, errors: null });

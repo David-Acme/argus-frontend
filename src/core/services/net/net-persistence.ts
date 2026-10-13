@@ -8,14 +8,55 @@ import type {
   NetPairExpectation,
   NetPairedInstance,
   NetPairing,
+  NetRemoteProfile,
   NetRoutePorts,
 } from '@/core/types';
+import { usableRemote } from './net-route-choice';
 
 let cachedInstance: NetPairedInstance | null | undefined;
+
+const STORED_INSTANCE_KEYS = [
+  NET_STORAGE_KEYS.caPem,
+  NET_STORAGE_KEYS.host,
+  NET_STORAGE_KEYS.ip,
+  NET_STORAGE_KEYS.port,
+  NET_STORAGE_KEYS.caFingerprint,
+  NET_STORAGE_KEYS.instanceId,
+  NET_STORAGE_KEYS.pairedAt,
+  NET_STORAGE_KEYS.routes,
+  NET_STORAGE_KEYS.remoteHomeId,
+  NET_STORAGE_KEYS.remoteDomain,
+] as const;
+
+export type StoredInstance = Readonly<Partial<Record<(typeof STORED_INSTANCE_KEYS)[number], string | null>>>;
 
 export async function isPaired(): Promise<boolean> {
   if (cachedInstance !== undefined) return cachedInstance !== null;
   return (await secureStorageService.getStringAsync(NET_STORAGE_KEYS.paired)) === 'true';
+}
+
+export function storedInstance(stored: StoredInstance): NetPairedInstance | null {
+  const caPem = stored[NET_STORAGE_KEYS.caPem];
+  const host = stored[NET_STORAGE_KEYS.host];
+  const ip = stored[NET_STORAGE_KEYS.ip];
+  const port = stored[NET_STORAGE_KEYS.port];
+  if (!caPem || !host || !ip || !port) return null;
+
+  const remote = {
+    homeId: stored[NET_STORAGE_KEYS.remoteHomeId] ?? '',
+    domain: stored[NET_STORAGE_KEYS.remoteDomain] ?? '',
+  };
+  return {
+    host,
+    ip,
+    port: Number(port),
+    caPem,
+    caFingerprint: stored[NET_STORAGE_KEYS.caFingerprint] ?? '',
+    instanceId: stored[NET_STORAGE_KEYS.instanceId] ?? '',
+    pairedAt: Number(stored[NET_STORAGE_KEYS.pairedAt] ?? 0),
+    routes: parseRoutes(stored[NET_STORAGE_KEYS.routes] ?? null),
+    ...(usableRemote(remote) ? { remote } : {}),
+  };
 }
 
 export async function loadInstance(): Promise<NetPairedInstance | null> {
@@ -26,35 +67,24 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
     return null;
   }
 
-  const [caPem, host, ip, port, caFingerprint, instanceId, pairedAt, routes] = await Promise.all(
-    [
-      NET_STORAGE_KEYS.caPem,
-      NET_STORAGE_KEYS.host,
-      NET_STORAGE_KEYS.ip,
-      NET_STORAGE_KEYS.port,
-      NET_STORAGE_KEYS.caFingerprint,
-      NET_STORAGE_KEYS.instanceId,
-      NET_STORAGE_KEYS.pairedAt,
-      NET_STORAGE_KEYS.routes,
-    ].map((key) => secureStorageService.getStringAsync(key))
+  const values = await Promise.all(STORED_INSTANCE_KEYS.map((key) => secureStorageService.getStringAsync(key)));
+  cachedInstance = storedInstance(
+    Object.fromEntries(STORED_INSTANCE_KEYS.map((key, index) => [key, values[index] ?? null]))
   );
-
-  if (!caPem || !host || !ip || !port) {
-    cachedInstance = null;
-    return null;
-  }
-
-  cachedInstance = {
-    host,
-    ip,
-    port: Number(port),
-    caPem,
-    caFingerprint: caFingerprint ?? '',
-    instanceId: instanceId ?? '',
-    pairedAt: Number(pairedAt ?? 0),
-    routes: parseRoutes(routes ?? null),
-  };
   return cachedInstance;
+}
+
+const sameRemote = (left: NetRemoteProfile | undefined, right: NetRemoteProfile): boolean =>
+  left !== undefined && left.homeId === right.homeId && left.domain === right.domain;
+
+export async function saveRemote(remote: NetRemoteProfile): Promise<boolean> {
+  if (!usableRemote(remote)) return false;
+  const instance = await loadInstance();
+  if (!instance || sameRemote(instance.remote, remote)) return false;
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.remoteHomeId, remote.homeId);
+  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.remoteDomain, remote.domain);
+  if (cachedInstance) cachedInstance = { ...cachedInstance, remote: { homeId: remote.homeId, domain: remote.domain } };
+  return true;
 }
 
 function parseRoutes(raw: string | null): NetRoutePorts {
@@ -95,6 +125,8 @@ export async function savePairingMetadata(input: NetAdoptInput): Promise<void> {
   const { pairing, host, ip, routes } = input;
   const pairedAt = Date.now();
   cachedInstance = undefined;
+  await secureStorageService.deleteAsync(NET_STORAGE_KEYS.remoteHomeId);
+  await secureStorageService.deleteAsync(NET_STORAGE_KEYS.remoteDomain);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.port, String(pairing.port));
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.instanceId, pairing.instanceId);
   await secureStorageService.setStringAsync(NET_STORAGE_KEYS.pairedAt, String(pairedAt));

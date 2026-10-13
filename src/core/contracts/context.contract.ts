@@ -1,8 +1,11 @@
 import { z } from 'zod';
-import type { AppContext, ModuleRecord, UserRole } from '@/core/types';
+import { usableRemote } from '@/core/services/net/net-route-choice';
+import type { AppContext, ModuleRecord, NetRemoteLink, NetRemoteState, UserRole } from '@/core/types';
 import { moduleListSchema, moduleSchema } from './modules.contract';
 
 const USER_ROLES: readonly string[] = ['owner', 'resident', 'guard', 'guest'];
+
+const REMOTE_LINKS = ['up', 'connecting', 'down'] as const satisfies readonly NetRemoteLink[];
 
 export const userRoleOf = (value: unknown): UserRole | null =>
   typeof value === 'string' && USER_ROLES.includes(value) ? (value as UserRole) : null;
@@ -33,6 +36,20 @@ const rolesSchema = z
   .transform((roles) => roles ?? [])
   .catch([]);
 
+const remoteSchema = z
+  .object({
+    homeId: z.string(),
+    domain: z.string(),
+    link: z.enum(REMOTE_LINKS),
+    since: z.number().int().positive(),
+  })
+  .refine((remote) => usableRemote(remote))
+  .nullish()
+  .transform((remote): NetRemoteState | null =>
+    remote ? { homeId: remote.homeId, domain: remote.domain, link: remote.link, since: remote.since } : null
+  )
+  .catch(null);
+
 const contextSchema = z
   .object({
     userId: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().positive()),
@@ -48,6 +65,7 @@ const contextSchema = z
       .nullish()
       .transform((zone) => zone?.trim() || null)
       .catch(null),
+    remote: remoteSchema,
   })
   .transform(
     (context): AppContext => ({
@@ -60,6 +78,7 @@ const contextSchema = z
       ownerCatalog: context.ownerCatalog,
       version: context.version,
       timeZone: context.timeZone,
+      remote: context.remote,
     })
   );
 

@@ -9,6 +9,7 @@ import {
   loadInstance,
   matchesExpectation,
   savePairing,
+  saveRemote,
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
@@ -25,6 +26,7 @@ import type {
   NetPairedInstance,
   NetPairing,
   NetPin,
+  NetRemoteProfile,
 } from '@/core/types';
 
 const net = createArgusNet();
@@ -139,6 +141,10 @@ class NativeArgusNetService implements IArgusNetService {
   async refreshAddress(): Promise<boolean> {
     const instance = await loadInstance();
     return instance ? this.rediscover(instance.ip) : false;
+  }
+
+  async rememberRemote(remote: NetRemoteProfile): Promise<boolean> {
+    return saveRemote(remote);
   }
 
   private async settledRediscovery(): Promise<void> {

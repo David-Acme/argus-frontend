@@ -561,11 +561,33 @@ What this step lands:
   answer and the relay does. When neither answers the status is
   `unreachable`, and the LAN stays the route to retry.
 
+- **The home id comes from the sync context** (ruled 2026-10-13, backend
+  4ddb0fc7). `remote: {homeId, domain, link, since}` rides in `InitialInfo`'s
+  `info.context` and in every `ContextUpdate`, once the home's tunnel client
+  has reported (backend `services/sync/CONTEXT.md`, "Remote access in the
+  context").
+  - `readContext` (`core/contracts/context.contract.ts`) checks it like the
+    backend does. The home id and domain must be usable (`usableRemote`),
+    `link` one of `up`, `connecting`, `down`, and `since` a positive integer.
+    Anything else reads as no remote, and the rest of the context stays.
+  - `ContextEngine` hands a context's remote to `netService.rememberRemote`.
+    `saveRemote` (`net-persistence.ts`) writes `net.remoteHomeId` and
+    `net.remoteDomain` only for a paired app and only when they changed, and
+    `loadInstance` reads them back into `NetPairedInstance.remote` at the
+    next start. So an app paired before this field existed gets it the first
+    time it connects at home. Away from home it then still knows the names to
+    try.
+  - A context without `remote` changes nothing kept. The field is absent
+    until the tunnel reports, and absent again after argus-sync restarts.
+  - A new pairing deletes both keys, and so does unpairing. One home's
+    profile never outlives its pairing.
+  - The native modules get the profile with the trust configuration
+    (`configureRemote`). The desktop's Rust reads the same two keys from the
+    keyring, and writing either one forgets its cached trust.
+  - `link` and `since` are read, not kept. They describe the link right now.
+
 What it does not do yet, so behaviour today is exactly what it was:
-- **No instance carries `remote` or `route`.** Nothing tells the app its home
-  id. Where it should come from (the pairing answer, `/pairing/status`, the
-  sync context, or an mDNS TXT key) is a contract between backend and app,
-  waiting for a ruling.
+- **No instance carries `route`.** Nothing chooses the relay yet.
 - **Nothing runs the probes yet.** The triggers are a failed connect and a
   return to the foreground. A network change needs a network-type module and
   a dev-client rebuild (see "Cameras").

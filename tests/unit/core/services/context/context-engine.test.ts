@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { ContextEngine, type ContextEngineDeps } from '@/core/services/context/context-engine';
 import { accessOf, isStaleContext, withModuleOff } from '@/core/services/context/context-state';
-import type { AppAccess, AppContext } from '@/core/types';
+import type { AppAccess, AppContext, NetRemoteState } from '@/core/types';
 import { accessFor } from '@tests/support/access-fixtures';
 
 const wire = (userId = 7, extra: Record<string, unknown> = {}) => ({
@@ -17,10 +17,18 @@ const wire = (userId = 7, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+const REMOTE: NetRemoteState = {
+  homeId: '0123456789abcdef0123456789abcdef',
+  domain: 'argus-tunnel.lynk.page',
+  link: 'up',
+  since: 1760371200,
+};
+
 type Harness = {
   engine: ContextEngine;
   cache: { value: AppAccess | null };
   applied: AppContext[];
+  remembered: NetRemoteState[];
   initial: (info: unknown) => void;
   update: (info: unknown) => void;
   refuse: (path: string) => void;
@@ -29,7 +37,7 @@ type Harness = {
 
 function harness(cached: AppAccess | null = null): Harness {
   const listeners: Record<string, (value?: unknown) => void> = {};
-  const h = { cache: { value: cached }, applied: [], changes: [] } as unknown as Harness;
+  const h = { cache: { value: cached }, applied: [], remembered: [], changes: [] } as unknown as Harness;
   const on = (name: string) => (listener: (value?: unknown) => void) => {
     listeners[name] = listener;
     return () => delete listeners[name];
@@ -40,6 +48,7 @@ function harness(cached: AppAccess | null = null): Harness {
       applyContext: (context) => h.applied.push(context),
       moduleOfPath: (path) => (path.startsWith('/camera') ? 'surveillance' : null),
     },
+    remote: { remember: (remote) => h.remembered.push(remote) },
     socket: { onInitialInfo: on('initial'), onContextUpdate: on('update') },
     onRefusal: on('refusal') as ContextEngineDeps['onRefusal'],
     now: () => 500,
@@ -123,6 +132,32 @@ describe('context engine', () => {
     expect(h.engine.current()?.modules.find((module) => module.id === 'core')?.enabled).toBe(true);
   });
 
+  test('the home id and relay domain a context carries are handed to the net layer', () => {
+    const h = harness();
+    h.engine.start('7');
+    h.initial({ id: 7, role: 'resident', isActive: true, context: wire(7, { remote: REMOTE }) });
+    h.update(wire(7, { remote: { ...REMOTE, link: 'down', since: REMOTE.since + 90 } }));
+    expect(h.remembered).toEqual([REMOTE, { ...REMOTE, link: 'down', since: REMOTE.since + 90 }]);
+  });
+
+  test('a context with no remote or a malformed one hands nothing on and still applies', () => {
+    const h = harness();
+    h.engine.start('7');
+    h.initial({ id: 7, role: 'resident', isActive: true, context: wire() });
+    h.update(wire(7, { remote: { ...REMOTE, homeId: REMOTE.homeId.toUpperCase() } }));
+    h.update(wire(7, { remote: { ...REMOTE, link: 'sideways' } }));
+    expect(h.remembered).toEqual([]);
+    expect(h.applied).toHaveLength(3);
+    expect(h.applied.map((context) => context.remote)).toEqual([null, null, null]);
+  });
+
+  test('another user\'s context never hands its remote on', () => {
+    const h = harness();
+    h.engine.start('7');
+    h.update(wire(9, { remote: REMOTE }));
+    expect(h.remembered).toEqual([]);
+  });
+
   test('stops listening on stop', () => {
     const h = harness();
     h.engine.start('7');
@@ -151,6 +186,6 @@ describe('context state', () => {
 
   test('accessOf keeps the fields the screens read and stamps the arrival', () => {
     const { receivedAt: _unused, ...rest } = accessFor('guest');
-    expect(accessOf({ ...rest, ownerCatalog: null }, 9).receivedAt).toBe(9);
+    expect(accessOf({ ...rest, ownerCatalog: null, remote: null }, 9).receivedAt).toBe(9);
   });
 });
