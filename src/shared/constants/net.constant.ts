@@ -87,6 +87,8 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
 
 export const DISCOVERY_TIMEOUT_MS = 6000;
 
+export const NET_ROUTE_PROBE_TIMEOUT_MS = 4000;
+
 export const NET_STORAGE_KEYS = {
   paired: 'net.paired',
   caPem: 'net.caPem',

@@ -9,6 +9,7 @@ import type {
   NetPairedInstance,
   NetPairing,
   NetRemoteProfile,
+  NetRouteMode,
   NetRoutePorts,
 } from '@/core/types';
 import { usableRemote } from './net-route-choice';
@@ -76,6 +77,10 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
 
 const sameRemote = (left: NetRemoteProfile | undefined, right: NetRemoteProfile): boolean =>
   left !== undefined && left.homeId === right.homeId && left.domain === right.domain;
+
+export function rememberRoute(route: NetRouteMode): void {
+  if (cachedInstance) cachedInstance = { ...cachedInstance, route };
+}
 
 export async function saveRemote(remote: NetRemoteProfile): Promise<boolean> {
   if (!usableRemote(remote)) return false;

@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, mock, setSystemTime, test } from 'bun:test';
-import { REDISCOVERY_MEMO_MS } from '@/core/services/net/net-routes';
+import { REDISCOVERY_MEMO_MS, serviceUrl } from '@/core/services/net/net-routes';
 import type { NetDiscovery } from '@/core/types';
 
 const OLD_IP = '192.168.18.205';
@@ -13,6 +13,8 @@ let requestUrls: string[] = [];
 let failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
 let discovery: NetDiscovery | null = null;
 let discoveryCalls = 0;
+let calls: string[] = [];
+let answers: ((url: string) => boolean) | null = null;
 
 mock.module('@/core/services/secure-storage', () => ({
   secureStorageService: {
@@ -40,16 +42,19 @@ mock.module('argus-net', () => ({
     },
     configure: (_caPem: string, _host: string, ip: string) => {
       configuredIp = ip;
+      calls.push(`configure|${ip}`);
     },
     configureRemote: (homeId: string, domain: string) => {
       configuredRemote = [homeId, domain];
+      calls.push(`configureRemote|${homeId}|${domain}`);
     },
     pair: async () => {
       throw 'UNEXPECTED_CALL|pair';
     },
     request: async ({ url }: { url: string }) => {
       requestUrls.push(url);
-      if (configuredIp === OLD_IP) throw failure;
+      calls.push(`request|${url}`);
+      if (answers ? !answers(url) : configuredIp === OLD_IP) throw failure;
       return { status: 200, headers: {}, body: JSON.stringify({ status: 200, info: { id: 1 }, errors: null }) };
     },
     openSocket: async () => {
@@ -64,6 +69,9 @@ const { clearInstance, savePairing, savePairingMetadata, storedInstance } = awai
 );
 
 const REMOTE = { homeId: '0123456789abcdef0123456789abcdef', domain: 'argus-tunnel.lynk.page' };
+const RELAY_STATUS_URL = `https://identity--${REMOTE.homeId}.${REMOTE.domain}/pairing/status`;
+const LAN_STATUS_URL = 'https://argus.local:7044/pairing/status';
+const throughRelay = (url: string): boolean => url.includes(`--${REMOTE.homeId}.${REMOTE.domain}/`);
 
 const pairing = {
   caPem: 'pem',
@@ -116,8 +124,95 @@ describe('the phone net service against a moved server', () => {
     discovery = null;
     discoveryCalls = 0;
     configuredRemote = null;
+    calls = [];
+    answers = null;
     failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
     await seed();
+  });
+
+  test('a new home id reaches the native module before the next request goes out', async () => {
+    answers = () => true;
+    await netService.unpair();
+    await seed();
+    await netService.rememberRemote(REMOTE);
+    await request();
+    const moved = { homeId: 'fedcba9876543210fedcba9876543210', domain: REMOTE.domain };
+    calls = [];
+
+    expect(await netService.rememberRemote(moved)).toBe(true);
+    await request();
+
+    const configured = calls.indexOf(`configureRemote|${moved.homeId}|${moved.domain}`);
+    const sent = calls.findIndex((call) => call.startsWith('request|'));
+    expect(configured).toBeGreaterThanOrEqual(0);
+    expect(configured).toBeLessThan(sent);
+    expect(configuredRemote).toEqual([moved.homeId, moved.domain]);
+  });
+
+  test('a probe away from home picks the relay, and the native module knows the profile before it dials it', async () => {
+    await netService.unpair();
+    await seed();
+    await netService.rememberRemote(REMOTE);
+    answers = throughRelay;
+    calls = [];
+
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud' });
+
+    const configured = calls.indexOf(`configureRemote|${REMOTE.homeId}|${REMOTE.domain}`);
+    expect(configured).toBeGreaterThanOrEqual(0);
+    expect(configured).toBeLessThan(calls.indexOf(`request|${RELAY_STATUS_URL}`));
+    expect(calls).toContain(`request|${LAN_STATUS_URL}`);
+    const instance = await netService.instance();
+    expect(instance?.route).toBe('relay');
+    expect(instance && serviceUrl(instance, '/auth/status')).toBe(
+      `https://auth--${REMOTE.homeId}.${REMOTE.domain}/auth/status`
+    );
+  });
+
+  test('a probe at home keeps the LAN', async () => {
+    await netService.rememberRemote(REMOTE);
+    answers = () => true;
+
+    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home' });
+    expect((await netService.instance())?.route).toBe('lan');
+  });
+
+  test('a failed connect away from home moves the route to the relay once', async () => {
+    await netService.rememberRemote(REMOTE);
+    answers = throughRelay;
+
+    expect(await netService.refreshAddress()).toBe(true);
+    expect((await netService.instance())?.route).toBe('relay');
+    expect(await netService.refreshAddress()).toBe(false);
+    expect((await netService.instance())?.route).toBe('relay');
+  });
+
+  test('a home found again on the LAN wins over the relay, and its address is checked on the LAN', async () => {
+    await netService.rememberRemote(REMOTE);
+    answers = throughRelay;
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud' });
+    answers = (url) => throughRelay(url) || configuredIp === NEW_IP;
+    discovery = announcement(NEW_IP);
+    calls = [];
+
+    expect(await netService.refreshAddress()).toBe(true);
+
+    expect(calls).toContain(`request|${LAN_STATUS_URL}`);
+    expect(calls.some((call) => call.startsWith('request|') && throughRelay(call.slice('request|'.length)))).toBe(false);
+    const instance = await netService.instance();
+    expect(instance?.route).toBe('lan');
+    expect(instance?.ip).toBe(NEW_IP);
+  });
+
+  test('the instance waits for a probe in flight', async () => {
+    await netService.rememberRemote(REMOTE);
+    answers = throughRelay;
+
+    const probe = netService.probeRoute();
+    const instance = await netService.instance();
+
+    expect(instance?.route).toBe('relay');
+    expect(await probe).toEqual({ mode: 'relay', status: 'cloud' });
   });
 
   test('the native transport is told there is no remote profile while the instance carries none', async () => {

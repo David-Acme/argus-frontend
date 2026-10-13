@@ -8,12 +8,21 @@ import {
   isPaired,
   loadInstance,
   matchesExpectation,
+  rememberRoute,
   savePairing,
   saveRemote,
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
-import { addressUnreachable, mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
+import { NetRouteKeeper } from './net-route-probe';
+import {
+  addressUnreachable,
+  lanServiceUrl,
+  mayRediscover,
+  relocatedInstance,
+  SERVER_IDENTITY_PATH,
+  urlAt,
+} from './net-routes';
 import { clientIdentityHeaders, withClientIdentity } from './client-identity';
 import { withDeviceCredential } from './device-credential';
 import type {
@@ -27,6 +36,7 @@ import type {
   NetPairing,
   NetPin,
   NetRemoteProfile,
+  NetRouteChoice,
 } from '@/core/types';
 
 const net = createArgusNet();
@@ -67,6 +77,10 @@ const configureFor = (target: NativeConfiguration): void => {
 class NativeArgusNetService implements IArgusNetService {
   private rediscovery: Promise<boolean> | null = null;
   private lastRediscoveryFailureAt = 0;
+  private readonly routes = new NetRouteKeeper(
+    (url) => this.reach(url),
+    () => this.settledRediscovery()
+  );
 
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
     try {
@@ -108,6 +122,7 @@ class NativeArgusNetService implements IArgusNetService {
 
   async request(options: NetHttpRequest): Promise<NetHttpResult> {
     await this.settledRediscovery();
+    await this.routes.settled();
     const instance = await loadInstance();
     if (!instance) {
       throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
@@ -140,7 +155,24 @@ class NativeArgusNetService implements IArgusNetService {
 
   async refreshAddress(): Promise<boolean> {
     const instance = await loadInstance();
-    return instance ? this.rediscover(instance.ip) : false;
+    if (!instance) return false;
+    if (await this.rediscover(instance.ip).catch(() => false)) {
+      rememberRoute('lan');
+      return true;
+    }
+    const choice = await this.routes.probe().catch(() => null);
+    return choice !== null && choice.mode !== (instance.route ?? 'lan');
+  }
+
+  probeRoute(): Promise<NetRouteChoice | null> {
+    return this.routes.probe();
+  }
+
+  private async reach(url: string): Promise<NetHttpResult> {
+    const instance = await loadInstance();
+    if (!instance) throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
+    configureFor(instance);
+    return net.request({ url, method: 'GET', headers: identified(undefined), body: '', files: [] });
   }
 
   async rememberRemote(remote: NetRemoteProfile): Promise<boolean> {
@@ -190,7 +222,7 @@ class NativeArgusNetService implements IArgusNetService {
     net.configure(candidate.caPem, candidate.host, candidate.ip);
     try {
       await net.request({
-        url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
+        url: lanServiceUrl(candidate, SERVER_IDENTITY_PATH),
         method: 'GET',
         headers: identified(undefined),
         body: '',
@@ -221,6 +253,7 @@ class NativeArgusNetService implements IArgusNetService {
 
   async openSocket(options: NetSocketOptions): Promise<ArgusSocket> {
     await this.settledRediscovery();
+    await this.routes.settled();
     const instance = await loadInstance();
     if (!instance) {
       throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
@@ -250,6 +283,7 @@ class NativeArgusNetService implements IArgusNetService {
   }
 
   async instance(): Promise<NetPairedInstance | null> {
+    await this.routes.settled();
     return loadInstance();
   }
 

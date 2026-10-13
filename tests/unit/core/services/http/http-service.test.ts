@@ -14,7 +14,15 @@ const stale: NetPairedInstance = {
 
 const fresh: NetPairedInstance = { ...stale, routes: { auth: 7042 } };
 
+const HOME = '0123456789abcdef0123456789abcdef';
+const away: NetPairedInstance = {
+  ...stale,
+  remote: { homeId: HOME, domain: 'argus-tunnel.lynk.page' },
+  route: 'relay',
+};
+
 let current: NetPairedInstance = stale;
+let refreshed: NetPairedInstance = fresh;
 let found = true;
 let failCode = 'NETWORK_ERROR';
 const calls: string[] = [];
@@ -29,7 +37,7 @@ mock.module('@/core/services/net', () => ({
   netService: {
     instance: async () => current,
     refreshAddress: async () => {
-      if (found) current = fresh;
+      if (found) current = refreshed;
       return found;
     },
     request: async ({ url }: { url: string }) => {
@@ -56,6 +64,7 @@ registerHttpAuth({
 describe('the http service on a stale paired address', () => {
   beforeEach(() => {
     current = stale;
+    refreshed = fresh;
     found = true;
     failCode = 'NETWORK_ERROR';
     calls.length = 0;
@@ -88,6 +97,17 @@ describe('the http service on a stale paired address', () => {
     expect(response.ok).toBe(false);
     expect(response.errors?.code).toBe('NETWORK_ERROR');
     expect(calls).toEqual(['https://argus.local:7024/auth/login']);
+  });
+
+  test('a failed connect that moved the route to the relay is retried at the device name', async () => {
+    refreshed = away;
+    const response = await httpService.get<{ id: number }>('/auth/login');
+
+    expect(response.ok).toBe(true);
+    expect(calls).toEqual([
+      'https://argus.local:7024/auth/login',
+      `https://auth--${HOME}.argus-tunnel.lynk.page/auth/login`,
+    ]);
   });
 
   test('a refusal that came from the server never adopts another address', async () => {

@@ -35,6 +35,15 @@ export function serviceUrl(instance: NetPairedInstance, path: string, scheme: 'h
   return `${scheme}://${instance.host}:${portFor(instance, path)}${path}`;
 }
 
+export function lanServiceUrl(instance: NetPairedInstance, path: string): string {
+  return serviceUrl({ ...instance, route: 'lan' }, path);
+}
+
+export function rerouted(url: string, instance: NetPairedInstance): string {
+  const scheme = url.slice(0, 4).toLowerCase() === 'wss:' ? 'wss' : 'https';
+  return serviceUrl(instance, urlPath(url), scheme);
+}
+
 export function urlPath(url: string): string {
   const authorityStart = url.indexOf('://');
   const rest = authorityStart < 0 ? url : url.slice(authorityStart + 3);

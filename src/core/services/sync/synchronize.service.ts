@@ -1,4 +1,5 @@
 import { database } from '@/core/database';
+import { netService } from '@/core/services/net';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { useAuthStore as UseAuthStoreHook } from '@/core/stores/auth.store';
 import type {
@@ -30,6 +31,7 @@ import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
 import { watchReconnectOpportunities } from './sync-reconnect-watch';
+import { openSocket } from './sync-socket';
 import { withoutCreatedCursor, withoutTables } from './sync-cursor';
 import { SyncCursorStore } from './sync-cursor-store';
 import { destroyAllRows } from './sync-db-utils';
@@ -79,6 +81,7 @@ class SynchronizeService {
   constructor() {
     this.cursors = new SyncCursorStore(() => String(this.authStore?.getState().user?.id ?? ''));
     this.connection = new SyncConnection({
+      openSocket,
       accessToken: () => this.authStore?.getState().accessToken,
       isClearing: () => this.clearing,
       onAttach: () => this.live.pause(),
@@ -170,8 +173,24 @@ class SynchronizeService {
         void this.connection.connect();
       if (state.status === 'signed-out' && prev.status === 'signed-in') this.disconnect();
     });
-    watchReconnectOpportunities(() => this.retryNow());
-    if (store.getState().status === 'signed-in') void this.connection.connect();
+    watchReconnectOpportunities(() => {
+      void this.followRoute();
+      this.retryNow();
+    });
+    if (store.getState().status === 'signed-in') {
+      void this.followRoute();
+      void this.connection.connect();
+    }
+  }
+
+  private async followRoute(): Promise<void> {
+    let choice;
+    try {
+      choice = await netService.probeRoute();
+    } catch {
+      return;
+    }
+    if (choice) this.connection.followRoute(choice.mode);
   }
 
   async ensureConnected(): Promise<boolean> {

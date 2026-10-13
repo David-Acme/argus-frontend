@@ -586,11 +586,38 @@ What this step lands:
     keyring, and writing either one forgets its cached trust.
   - `link` and `since` are read, not kept. They describe the link right now.
 
-What it does not do yet, so behaviour today is exactly what it was:
-- **No instance carries `route`.** Nothing chooses the relay yet.
-- **Nothing runs the probes yet.** The triggers are a failed connect and a
-  return to the foreground. A network change needs a network-type module and
-  a dev-client rebuild (see "Cameras").
+- **The probes choose the route** (`net/net-route-probe.ts`).
+  - `measureRoute` asks `/pairing/status` twice, in parallel: on the LAN
+    (the paired host and port, even while the route is the relay) and on
+    the identity service's device name. Each answer is bounded by
+    `NET_ROUTE_PROBE_TIMEOUT_MS` (4 s), and any HTTP answer under the
+    pinned CA counts as reached. `chooseRoute` decides. A LAN that answers
+    decides alone, and the relay is not waited for.
+  - `NetRouteKeeper` runs one probe at a time. It first waits for a
+    rediscovery in flight: the native module holds one configuration, and
+    a relocation and a probe must not reconfigure it under each other.
+  - The chosen mode is kept in memory only (`instance.route`). Every start
+    decides again.
+  - **A failed connect.** `refreshAddress()` first rediscovers the home on
+    the LAN. A home found at a new address wins and the route is the LAN.
+    Otherwise it probes, and answers true when the route changed. The HTTP
+    wrapper then rebuilds the URL (`serviceUrl` follows the route), the
+    sync reconnect dials the new route, and the desktop socket retry uses
+    `rerouted`.
+  - **The foreground.** The sync service probes when it binds with a
+    session, at launch, and on every reconnect opportunity: a return to
+    the foreground, and the network return the watch already had.
+    `netService.instance()` and the native request and socket wait for a
+    probe in flight, so the first URLs after launch already use the
+    decided route.
+  - When a probe moves the route while the sync socket is open on the
+    other one, `SyncConnection.followRoute` recycles the socket, for
+    instance back to the LAN when the home answers there again.
+  - A relocation always checks its candidate on the LAN URL
+    (`lanServiceUrl`), never through the relay.
+  - None of this needs a network-type module.
+
+What it does not do yet:
 - **The calm status is not shown yet:** at home, through the cloud,
   unreachable.
 

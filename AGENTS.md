@@ -294,7 +294,10 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   instance's `route` is `relay` and it carries a usable `remote` profile
   (`net/net-route-choice.ts`, `ARGUS_ROUTE_SERVICES`; CONTEXT.md "Local-first
   route choice"). That profile comes from the sync context's `remote`, and
-  `netService.rememberRemote` keeps it. A server mDNS cannot
+  `netService.rememberRemote` keeps it. The route comes from the probes
+  (`net/net-route-probe.ts`): a failed connect (`refreshAddress`) and a
+  return to the foreground choose between the LAN and the relay, and the
+  LAN wins whenever it answers. A server mDNS cannot
   see (another subnet, a network that drops multicast, the Android emulator at
   `10.0.2.2`) is paired by its address on the pairing screen and uses the
   default ports.

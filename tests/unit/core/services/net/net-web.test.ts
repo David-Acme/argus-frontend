@@ -14,6 +14,10 @@ let relocateFails = false;
 let discoveryCalls = 0;
 const relocateCalls: { url: string; ip: string }[] = [];
 const socketChannels: { onmessage: ((payload: ArrayBuffer) => void) | null }[] = [];
+const probedUrls: string[] = [];
+const openedUrls: string[] = [];
+let answers: (url: string) => boolean = () => false;
+let socketAnswers: (url: string) => boolean = () => true;
 
 mock.module('@/core/services/secure-storage', () => ({
   secureStorageService: {
@@ -45,14 +49,26 @@ mock.module('@tauri-apps/api/core', () => ({
       return undefined;
     }
     if (command === 'argus_socket_open') {
+      const url = String((args?.options as { url?: string } | undefined)?.url);
+      openedUrls.push(url);
+      if (!socketAnswers(url)) throw 'NETWORK_ERROR|The socket could not connect';
       socketChannels.push(args?.onEvent as (typeof socketChannels)[number]);
       return undefined;
+    }
+    if (command === 'argus_request') {
+      const url = String((args?.request as { url?: string } | undefined)?.url);
+      probedUrls.push(url);
+      if (!answers(url)) throw 'NETWORK_ERROR|The home did not answer';
+      return { status: 200, headers: {}, body: '' };
     }
     throw `UNEXPECTED_COMMAND|${command}`;
   },
 }));
 
 const { netService } = await import('@/core/services/net/net.web');
+
+const REMOTE = { homeId: '0123456789abcdef0123456789abcdef', domain: 'argus-tunnel.lynk.page' };
+const throughRelay = (url: string): boolean => url.includes(`--${REMOTE.homeId}.${REMOTE.domain}/`);
 const { clearInstance, savePairingMetadata } = await import('@/core/services/net/net-persistence');
 
 const pairing = {
@@ -100,6 +116,50 @@ describe('the desktop net service against a moved server', () => {
     relocateFails = false;
     discoveryCalls = 0;
     relocateCalls.length = 0;
+    probedUrls.length = 0;
+    openedUrls.length = 0;
+    answers = () => false;
+    socketAnswers = () => true;
+  });
+
+  test('a failed connect away from home moves the route to the relay', async () => {
+    await seed({ auth: 7024 });
+    await netService.rememberRemote(REMOTE);
+    discoveryFails = true;
+    answers = throughRelay;
+
+    expect(await netService.refreshAddress()).toBe(true);
+    expect(probedUrls.sort()).toEqual(
+      ['https://argus.local:7044/pairing/status', `https://identity--${REMOTE.homeId}.${REMOTE.domain}/pairing/status`].sort()
+    );
+    expect((await netService.instance())?.route).toBe('relay');
+  });
+
+  test('on the relay, a candidate address is still checked on the LAN', async () => {
+    await seed({ auth: 7024 });
+    await netService.rememberRemote(REMOTE);
+    answers = throughRelay;
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud' });
+    discovery = announcement(NEW_IP, [{ path: '/pairing', port: 7044 }]);
+
+    expect(await netService.refreshAddress()).toBe(true);
+    expect(relocateCalls).toEqual([{ url: 'https://argus.local:7044/pairing/status', ip: NEW_IP }]);
+    expect((await netService.instance())?.route).toBe('lan');
+  });
+
+  test('a socket that could not connect reopens at the device name once the route moved', async () => {
+    await seed({ auth: 7024 });
+    await netService.rememberRemote(REMOTE);
+    discoveryFails = true;
+    answers = throughRelay;
+    socketAnswers = throughRelay;
+
+    await netService.openSocket({ url: 'wss://argus.local:7025/sync', headers: {} });
+
+    expect(openedUrls).toEqual([
+      'wss://argus.local:7025/sync',
+      `wss://sync--${REMOTE.homeId}.${REMOTE.domain}/sync`,
+    ]);
   });
 
   afterAll(() => {

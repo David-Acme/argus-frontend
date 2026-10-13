@@ -1,13 +1,14 @@
+import type { NetSocketOptions } from 'argus-net';
 import type { IArgusSocket } from '@/core/interfaces';
 import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
-import type { SessionRefreshOutcome } from '@/core/types';
+import type { NetRouteMode, SessionRefreshOutcome } from '@/core/types';
 import { SYNC_WS_CONNECT_TIMEOUT_MS, SYNC_WS_PATH } from '@/shared/constants';
 import { backoffDelay } from './sync-backoff';
 import { connectGate } from './sync-connect-gate';
-import { openSocket } from './sync-socket';
 
 export type SyncConnectionHooks = {
+  openSocket: (options: NetSocketOptions) => Promise<IArgusSocket>;
   accessToken: () => string | null | undefined;
   isClearing: () => boolean;
   onAttach: () => void;
@@ -20,6 +21,7 @@ export type SyncConnectionHooks = {
 
 export class SyncConnection {
   private socket: IArgusSocket | null = null;
+  private socketRoute: NetRouteMode | null = null;
   private generation = 0;
   private abandonCurrent: ((reason: string) => void) | null = null;
   private connected = false;
@@ -105,9 +107,14 @@ export class SyncConnection {
     this.abandonCurrent?.(reason);
   }
 
+  followRoute(route: NetRouteMode): void {
+    if (this.socket && this.socketRoute !== route) this.recycle('The route to the home changed');
+  }
+
   release(): void {
     const socket = this.socket;
     this.socket = null;
+    this.socketRoute = null;
     socket?.close(1000, '');
     this.reconnectAttempt = 0;
   }
@@ -133,7 +140,7 @@ export class SyncConnection {
 
     let socket: IArgusSocket;
     try {
-      socket = await openSocket({
+      socket = await this.hooks.openSocket({
         url: serviceUrl(instance, SYNC_WS_PATH, 'wss'),
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -154,6 +161,7 @@ export class SyncConnection {
     }
 
     this.socket = socket;
+    this.socketRoute = instance.route ?? 'lan';
     this.hooks.onAttach();
     return this.watch(socket, accessToken);
   }
@@ -182,6 +190,7 @@ export class SyncConnection {
         if (this.abandonCurrent === abandon) this.abandonCurrent = null;
         if (this.socket === socket) {
           this.socket = null;
+          this.socketRoute = null;
           this.hooks.onLost(new Error(`Socket closed (${code}): ${reason}`));
           this.setConnected(false);
         }

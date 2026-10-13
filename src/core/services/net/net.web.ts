@@ -8,11 +8,13 @@ import {
   isPaired,
   loadInstance,
   rememberInstanceAddress,
+  rememberRoute,
   savePairingMetadata,
   saveRemote,
   toNetError,
 } from './net-persistence';
-import { mayRediscover, relocatedInstance, SERVER_IDENTITY_PATH, serviceUrl, urlAt } from './net-routes';
+import { NetRouteKeeper } from './net-route-probe';
+import { lanServiceUrl, mayRediscover, relocatedInstance, rerouted, SERVER_IDENTITY_PATH } from './net-routes';
 import { withDeviceCredential } from './device-credential';
 import type {
   NetAdoptInput,
@@ -24,6 +26,7 @@ import type {
   NetPairing,
   NetPin,
   NetRemoteProfile,
+  NetRouteChoice,
 } from '@/core/types';
 
 const ignoreClosed = (): void => undefined;
@@ -31,6 +34,10 @@ const ignoreClosed = (): void => undefined;
 class WebArgusNetService implements IArgusNetService {
   private rediscovery: Promise<boolean> | null = null;
   private lastRediscoveryFailureAt = 0;
+  private readonly routes = new NetRouteKeeper(
+    (url) => this.reach(url),
+    () => this.settledRediscovery()
+  );
 
   async discover(timeoutMs: number = DISCOVERY_TIMEOUT_MS): Promise<NetDiscovery> {
     try {
@@ -89,7 +96,7 @@ class WebArgusNetService implements IArgusNetService {
       const target = await loadInstance();
       if (!target) throw toNetError(error, 'NETWORK_ERROR');
       try {
-        return await this.openSocketOnce({ ...options, url: urlAt(options.url, target) });
+        return await this.openSocketOnce({ ...options, url: rerouted(options.url, target) });
       } catch (retryError) {
         throw toNetError(retryError, 'NETWORK_ERROR');
       }
@@ -105,11 +112,31 @@ class WebArgusNetService implements IArgusNetService {
 
   async refreshAddress(): Promise<boolean> {
     const instance = await loadInstance();
-    return instance ? this.rediscover(instance.ip) : false;
+    if (!instance) return false;
+    if (await this.rediscover(instance.ip).catch(() => false)) {
+      rememberRoute('lan');
+      return true;
+    }
+    const choice = await this.routes.probe().catch(() => null);
+    return choice !== null && choice.mode !== (instance.route ?? 'lan');
+  }
+
+  probeRoute(): Promise<NetRouteChoice | null> {
+    return this.routes.probe();
+  }
+
+  private reach(url: string): Promise<NetHttpResult> {
+    return invoke<NetHttpResult>('argus_request', {
+      request: { url, method: 'GET', headers: {}, body: '', files: [] },
+    });
   }
 
   async rememberRemote(remote: NetRemoteProfile): Promise<boolean> {
     return saveRemote(remote);
+  }
+
+  private async settledRediscovery(): Promise<void> {
+    if (this.rediscovery) await this.rediscovery.catch(() => false);
   }
 
   private rediscover(currentIp: string): Promise<boolean> {
@@ -149,7 +176,7 @@ class WebArgusNetService implements IArgusNetService {
   private async relocateTo(candidate: NetPairedInstance): Promise<boolean> {
     try {
       await invoke<void>('argus_relocate', {
-        url: serviceUrl(candidate, SERVER_IDENTITY_PATH),
+        url: lanServiceUrl(candidate, SERVER_IDENTITY_PATH),
         ip: candidate.ip,
       });
       return true;
@@ -163,6 +190,7 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async instance(): Promise<NetPairedInstance | null> {
+    await this.routes.settled();
     return loadInstance();
   }
 
