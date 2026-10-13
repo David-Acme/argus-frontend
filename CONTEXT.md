@@ -562,8 +562,8 @@ What it does not do yet, so behaviour today is exactly what it was:
   id. Where it should come from (the pairing answer, `/pairing/status`, the
   sync context, or an mDNS TXT key) is a contract between backend and app,
   waiting for a ruling.
-- **Only the desktop admits a device name so far.** Swift's `allowedHost` and
-  OkHttp's hostname verifier still refuse every name but the paired host.
+- **iOS does not admit a device name yet.** Swift's `allowedHost` check still
+  refuses every name but the paired host.
 - **Nothing runs the probes yet.** The triggers are a failed connect and a
   return to the foreground. A network change needs a network-type module and
   a dev-client rebuild (see "Cameras").
@@ -595,6 +595,26 @@ tests will once they can run.
     resolved by the system's DNS.
   - rustls checks the device name against a root store that holds only the
     pinned CA.
+- **Android (Kotlin).** `RelayHosts.kt` is the rule, pure Kotlin with no
+  Android import.
+  - `configureRemote(homeId, domain)` (spec `ArgusNet.nitro.ts`) hands the
+    module the remote profile. `net.native.ts` sends it with the trust
+    configuration, from the instance's `remote`. Until an instance carries
+    one it sends two empty strings, which admit nothing. A new pairing sends
+    them too, so the old home's profile never outlives its pairing.
+  - Before any strict request or socket, `targetAdmission` refuses with
+    `HOST_NOT_ALLOWED` a URL that is not https or wss, or whose host is
+    neither the paired host nor a device name.
+  - The hostname verifier accepts the paired host as before. It accepts a
+    device name only when the leaf certificate's SAN is exactly that name.
+    The tunnel PKI issues one certificate per service with that single SAN.
+    The trust manager still holds only the pinned CA.
+  - The strict client follows no redirect, like the desktop's.
+  - The paired host still dials its paired address. A device name is
+    resolved by the system's DNS.
+  - `RelayHostsTest.kt` reads the vector file through the
+    `argus.relayVectors` system property that `build.gradle` sets. Run it
+    with `./gradlew :argus-net:testDebugUnitTest` from `android/`.
 
 ### Verification
 - `bunx tsc --noEmit` and `bun run lint` → 0 errors. `cargo check` (src-tauri) → 0/0.

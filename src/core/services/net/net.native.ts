@@ -47,6 +47,21 @@ const fingerprintMismatch = (): NetError => ({
   message: 'The server fingerprint does not match the scanned QR',
 });
 
+type NativeConfiguration = Pick<NetPairedInstance, 'caPem' | 'host' | 'ip' | 'remote'>;
+
+const configurationKey = (target: NativeConfiguration): string =>
+  [target.caPem, target.host, target.ip, target.remote?.homeId ?? '', target.remote?.domain ?? ''].join('|');
+
+const applyConfiguration = (target: NativeConfiguration): void => {
+  net.configure(target.caPem, target.host, target.ip);
+  net.configureRemote(target.remote?.homeId ?? '', target.remote?.domain ?? '');
+  configuredKey = configurationKey(target);
+};
+
+const configureFor = (target: NativeConfiguration): void => {
+  if (configurationKey(target) !== configuredKey) applyConfiguration(target);
+};
+
 class NativeArgusNetService implements IArgusNetService {
   private rediscovery: Promise<boolean> | null = null;
   private lastRediscoveryFailureAt = 0;
@@ -69,8 +84,7 @@ class NativeArgusNetService implements IArgusNetService {
     }
     if (!matchesExpectation(pairing, expect)) throw fingerprintMismatch();
     try {
-      configuredKey = `${pairing.caPem}|${host}|${ip}`;
-      net.configure(pairing.caPem, host, ip);
+      applyConfiguration({ caPem: pairing.caPem, host, ip });
       await savePairing({ pairing, host, ip, routes });
       return pairing;
     } catch (error) {
@@ -82,7 +96,8 @@ class NativeArgusNetService implements IArgusNetService {
     const { pairing, host, ip } = input;
     try {
       net.configureVerified(pairing.caPem, pairing.caFingerprint, host, ip);
-      configuredKey = `${pairing.caPem}|${host}|${ip}`;
+      net.configureRemote('', '');
+      configuredKey = configurationKey({ caPem: pairing.caPem, host, ip });
       await savePairing(input);
     } catch (error) {
       throw toNetError(error, 'NETWORK_ERROR');
@@ -96,11 +111,7 @@ class NativeArgusNetService implements IArgusNetService {
       throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
     }
 
-    const key = `${instance.caPem}|${instance.host}|${instance.ip}`;
-    if (key !== configuredKey) {
-      configuredKey = key;
-      net.configure(instance.caPem, instance.host, instance.ip);
-    }
+    configureFor(instance);
     const send = (url: string): Promise<NetHttpResult> =>
       net.request({
         url,
@@ -208,11 +219,7 @@ class NativeArgusNetService implements IArgusNetService {
     if (!instance) {
       throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
     }
-    const key = `${instance.caPem}|${instance.host}|${instance.ip}`;
-    if (key !== configuredKey) {
-      configuredKey = key;
-      net.configure(instance.caPem, instance.host, instance.ip);
-    }
+    configureFor(instance);
     const identified = { ...options, headers: authenticated(options.headers) };
     try {
       return await net.openSocket(identified);

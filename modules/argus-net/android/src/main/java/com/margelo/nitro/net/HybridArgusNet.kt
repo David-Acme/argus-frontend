@@ -61,6 +61,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
   private var caPem: String = ""
   private var allowedHost: String = DEFAULT_HOST
   private var ip: String = ""
+  private var remote: RemoteProfile = RemoteProfile("", "")
 
   @Volatile
   private var cachedClient: CachedStrictClient? = null
@@ -88,8 +89,21 @@ class HybridArgusNet : HybridArgusNetSpec() {
     configure(caPem, allowedHost, ip)
   }
 
+  override fun configureRemote(homeId: String, domain: String) {
+    val profile = RemoteProfile(homeId, domain)
+    if (profile == remote) return
+    remote = profile
+    cachedClient = null
+  }
+
   private fun netError(code: String, message: String): IllegalStateException =
     IllegalStateException("$code|$message")
+
+  private fun requireAdmittedTarget(url: String) {
+    if (RelayHosts.targetAdmission(url, allowedHost, remote) == HostAdmission.Refused) {
+      throw netError("HOST_NOT_ALLOWED", "Host is not allowed")
+    }
+  }
 
   override fun request(options: NetHttpRequest): Promise<NetHttpResult> {
     return Promise.async { requestInternal(options) }
@@ -100,6 +114,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
       if (caPem.isEmpty()) {
         throw netError("PAIRING_REQUIRED", "Server is not paired yet")
       }
+      requireAdmittedTarget(options.url)
       ArgusSocket(strictClient(), options.url, options.headers, options.connectTimeoutMs)
     }
   }
@@ -291,6 +306,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
       if (pin == null && caPem.isEmpty()) {
         throw netError("PAIRING_REQUIRED", "Server is not paired yet")
       }
+      if (pin == null) requireAdmittedTarget(options.url)
       val client = if (pin != null) pinnedClient(pin) else strictClient()
       val builder = Request.Builder().url(options.url)
       options.headers.forEach { (key, value) -> builder.header(key, value) }
@@ -426,7 +442,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
   }
 
   private fun strictClient(): OkHttpClient {
-    val config = "$caPem|$allowedHost|$ip"
+    val config = "$caPem|$allowedHost|$ip|${remote.homeId}|${remote.domain}"
     cachedClient?.let { cached ->
       if (cached.config == config) return cached.client
     }
@@ -437,6 +453,9 @@ class HybridArgusNet : HybridArgusNetSpec() {
   }
 
   private fun buildStrictClient(): OkHttpClient {
+    val pairedHost = allowedHost
+    val pairedIp = ip
+    val profile = remote
     val certFactory = CertificateFactory.getInstance("X.509")
     val ca = certFactory.generateCertificate(ByteArrayInputStream(caPem.toByteArray(Charsets.US_ASCII)))
     val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
@@ -452,18 +471,26 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
     return OkHttpClient.Builder()
       .sslSocketFactory(sslContext.socketFactory, trustManager)
-      .hostnameVerifier { hostname, _ -> hostname.equals(allowedHost, ignoreCase = true) }
+      .hostnameVerifier { hostname, session ->
+        when (RelayHosts.admission(hostname, pairedHost, profile)) {
+          HostAdmission.Paired -> true
+          HostAdmission.Relay -> leafNamesHost(session, hostname)
+          HostAdmission.Refused -> false
+        }
+      }
       .dns(
         object : Dns {
           override fun lookup(hostname: String): List<InetAddress> {
-            return if (hostname.equals(allowedHost, ignoreCase = true)) {
-              listOf(InetAddress.getByName(ip))
+            return if (hostname.equals(pairedHost, ignoreCase = true)) {
+              listOf(InetAddress.getByName(pairedIp))
             } else {
               Dns.SYSTEM.lookup(hostname)
             }
           }
         },
       )
+      .followRedirects(false)
+      .followSslRedirects(false)
       .connectTimeout(10, TimeUnit.SECONDS)
       .readTimeout(30, TimeUnit.SECONDS)
       .build()

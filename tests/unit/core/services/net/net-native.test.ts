@@ -8,6 +8,7 @@ const STATUS_URL = 'https://argus.local:7042/auth/status';
 
 const store = new Map<string, string>();
 let configuredIp: string | null = null;
+let configuredRemote: string[] | null = null;
 let requestUrls: string[] = [];
 let failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
 let discovery: NetDiscovery | null = null;
@@ -39,6 +40,9 @@ mock.module('argus-net', () => ({
     },
     configure: (_caPem: string, _host: string, ip: string) => {
       configuredIp = ip;
+    },
+    configureRemote: (homeId: string, domain: string) => {
+      configuredRemote = [homeId, domain];
     },
     pair: async () => {
       throw 'UNEXPECTED_CALL|pair';
@@ -107,8 +111,19 @@ describe('the phone net service against a moved server', () => {
     requestUrls = [];
     discovery = null;
     discoveryCalls = 0;
+    configuredRemote = null;
     failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
     await seed();
+  });
+
+  test('the native transport is told there is no remote profile while the instance carries none', async () => {
+    await netService.unpair();
+    await seed();
+    discovery = announcement(NEW_IP);
+
+    await request();
+
+    expect(configuredRemote).toEqual(['', '']);
   });
 
   afterAll(() => {

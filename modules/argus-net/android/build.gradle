@@ -107,6 +107,12 @@ android {
     disable "GradleCompatible"
   }
 
+  testOptions {
+    unitTests.all {
+      systemProperty "argus.relayVectors", file("../../../tests/vectors/relay-hosts.json").absolutePath
+    }
+  }
+
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8
@@ -134,4 +140,7 @@ dependencies {
   implementation project(":react-native-nitro-modules")
 
   implementation "com.squareup.okhttp3:okhttp:4.12.0"
+
+  testImplementation "junit:junit:4.13.2"
+  testImplementation "org.json:json:20180813"
 }

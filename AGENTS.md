@@ -336,7 +336,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   - **Cache** the TLS client/session (OkHttp by config fingerprint; URLSession by
     CA; reqwest by CA) — never recreate per request. `configure()` is **idempotent**:
     only invalidates the cache if the config changed. In JS, `net.native.ts` skips
-    `configure` when the config is already applied (key `caPem|host|ip`); `net-persistence.ts`
+    `configure` and `configureRemote` when the config is already applied (key
+    `caPem|host|ip|homeId|domain`); `net-persistence.ts`
     caches the bound instance in memory (invalidated in `savePairing`/`clearInstance`)
     to avoid re-reading secure-storage on every request.
   - **Verify the pairing (all 3 platforms)**: the `serverProof` must match the

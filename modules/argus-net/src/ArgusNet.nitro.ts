@@ -71,6 +71,7 @@ export interface ArgusNet extends HybridObject<{ ios: 'swift', android: 'kotlin'
   pair(host: string, ip: string, port: number, code: string): Promise<NetPairing>;
   configure(caPem: string, allowedHost: string, ip: string): void;
   configureVerified(caPem: string, caFingerprint: string, allowedHost: string, ip: string): void;
+  configureRemote(homeId: string, domain: string): void;
   request(options: NetHttpRequest): Promise<NetHttpResult>;
   openSocket(options: NetSocketOptions): Promise<ArgusSocket>;
 }
