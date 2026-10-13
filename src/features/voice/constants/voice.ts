@@ -11,6 +11,7 @@ export const VOICE_START_TYPE = 'voice:start';
 export const VOICE_STOP_TYPE = 'voice:stop';
 export const VOICE_SKIP_TYPE = 'voice:skip';
 export const VOICE_STT_TYPE = 'voice:stt';
+export const VOICE_STT_CORRECTION_TYPE = 'voice:stt_correction';
 export const VOICE_ASSISTANT_TYPE = 'voice:assistant';
 export const VOICE_EVENT_TYPE = 'voice:event';
 export const VOICE_TURN_TYPE = 'voice:turn';

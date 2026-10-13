@@ -14,6 +14,7 @@ export type VoiceEventType =
   | 'voice:skip'
   | 'voice:answer'
   | 'voice:stt'
+  | 'voice:stt_correction'
   | 'voice:assistant'
   | 'voice:event'
   | 'voice:turn'
