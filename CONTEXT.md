@@ -2793,6 +2793,20 @@ contract)".
     stays silent then. On the socket transport, which has no agent state, the app went
     to "thinking" on the shown words, so a `voice:event` that follows a correction of
     the current turn returns it to listening. On LiveKit the agent state already does.
+- **The alert's two times (2026-10-13).** Every safety alert's notification carries
+  `deliveredAt`, when guard received it, and `saidAt`, when the words were heard: a
+  number for a spoken duress alert, `null` for a panic or a duress code (backend
+  `services/guard/CONTEXT.md`, "Two times per spoken alert"). Both are epoch seconds in
+  the notification's `data`, kept verbatim by argus-notification and read from `/sync`.
+  - The Novedades row and the bell's preview show both for a spoken duress alert,
+    labelled, "Dicha 14:32 · Recibida 14:35" ("Said … · Received …"), because a retried
+    raise can arrive minutes after the words. An alert with only a receipt shows that one
+    time, unlabelled, like any other row. A row without `deliveredAt` keeps its
+    `createdAt`.
+  - `alertTimesOf` reads the two (a whole positive number, or absent), and `rowTimes`
+    builds the labels for the row and for each entry of its history
+    (`notification-threads.ts`); `notification-threads.test.ts` covers both, the
+    malformed values and the es and en labels.
 - Tests: `safety-model.test.ts` (the phrase rules, the reach, the contract stripping an
   echoed phrase), `safety-phrase.test.ts` (the body sent, and no trace in the answer or
   the memo, including a refusal), `voice-transcript.test.ts` (the in-place correction),

@@ -1,11 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
+import { localeDictionaries } from '@/core/i18n/locales';
+import { translate } from '@/core/i18n/translate';
 import {
+  alertTimesOf,
   groupNotifications,
   isThreadRead,
   missedCallId,
   moduleRequestOf,
   phaseOf,
+  rowTimes,
   threadKeyOf,
   unreadIdsOf,
   unreadThreadCount,
@@ -254,5 +258,57 @@ describe('a notification of a type this build does not know', () => {
     const [thread] = groupNotifications([future]);
     expect(thread?.kind).toBe('house_summary');
     expect(thread?.key).toBe('row:60');
+  });
+});
+
+describe('a safety alert carries the time it was said and the time it was received', () => {
+  const said = 1_790_000_000;
+  const received = 1_790_000_030;
+  const safety = (id: string, data: Record<string, unknown>) =>
+    row(id, { threadKey: `guard:safety:${id}`, kind: 'guard_duress', phase: 'opened', urgency: 'critical', ...data });
+  const labels = {
+    stamp: (at: number) => `t${at / 1000}`,
+    said: (time: string) => `said ${time}`,
+    delivered: (time: string) => `received ${time}`,
+  };
+
+  test('a spoken duress alert has both, in milliseconds, and a panic or a duress code only the receipt', () => {
+    expect(alertTimesOf(safety('1', { saidAt: said, deliveredAt: received }))).toEqual({
+      saidAt: said * 1000,
+      deliveredAt: received * 1000,
+    });
+    expect(alertTimesOf(safety('2', { saidAt: null, deliveredAt: received }))).toEqual({
+      saidAt: null,
+      deliveredAt: received * 1000,
+    });
+  });
+
+  test('a row without a receipt time is not a safety alert, and a time that is not a whole positive number is absent', () => {
+    expect(alertTimesOf(row('3', { kind: 'guard_episode' }))).toBeNull();
+    expect(alertTimesOf(safety('4', { deliveredAt: String(received) }))).toBeNull();
+    expect(alertTimesOf(safety('5', { deliveredAt: 0 }))).toBeNull();
+    expect(alertTimesOf(safety('6', { saidAt: -1, deliveredAt: received }))?.saidAt).toBeNull();
+    expect(alertTimesOf(safety('7', { saidAt: 1.5, deliveredAt: received }))?.saidAt).toBeNull();
+  });
+
+  test('the row shows both times, labelled, when the alert has both, and one plain time otherwise', () => {
+    expect(rowTimes(safety('8', { saidAt: said, deliveredAt: received }), labels)).toEqual([
+      `said t${said}`,
+      `received t${received}`,
+    ]);
+    expect(rowTimes(safety('9', { saidAt: null, deliveredAt: received }), labels)).toEqual([`t${received}`]);
+    expect(rowTimes(row('10'), labels)).toEqual(['t10']);
+    expect(rowTimes(row('11'), { ...labels, stamp: () => null })).toEqual([]);
+  });
+
+  test('the labels read in es and en', () => {
+    expect(translate(localeDictionaries.es, 'screens.home.thread.said-at', { time: '14:32' })).toBe('Dicha 14:32');
+    expect(translate(localeDictionaries.es, 'screens.home.thread.delivered-at', { time: '14:35' })).toBe(
+      'Recibida 14:35'
+    );
+    expect(translate(localeDictionaries.en, 'screens.home.thread.said-at', { time: '2:32 PM' })).toBe('Said 2:32 PM');
+    expect(translate(localeDictionaries.en, 'screens.home.thread.delivered-at', { time: '2:35 PM' })).toBe(
+      'Received 2:35 PM'
+    );
   });
 });

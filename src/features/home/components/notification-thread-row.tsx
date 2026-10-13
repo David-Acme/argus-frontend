@@ -16,6 +16,7 @@ import {
   missedCallId,
   moduleRequestOf,
   phaseOf,
+  rowTimes,
   type NotificationPhase,
   type NotificationThread,
   type NotificationUrgency,
@@ -35,7 +36,7 @@ type ThreadTone = { tile: string; icon: string; dot: string; title: string };
 type TimelineEntryProps = {
   entry: INotificationPreviewCacheRow;
   last: boolean;
-  stamp: (at: number) => string | null;
+  times: (row: INotificationPreviewCacheRow) => string[];
   phaseLabel: (phase: NotificationPhase) => string;
 };
 
@@ -91,9 +92,9 @@ function iconOf(thread: NotificationThread): IconName {
   return (thread.kind && KIND_ICONS[thread.kind]) || 'bell';
 }
 
-function TimelineEntry({ entry, last, stamp, phaseLabel }: TimelineEntryProps) {
+function TimelineEntry({ entry, last, times, phaseLabel }: TimelineEntryProps) {
   const phase = phaseOf(entry);
-  const meta = [stamp(entry.createdAt), phase ? phaseLabel(phase) : null].filter(
+  const meta = [...times(entry), phase ? phaseLabel(phase) : null].filter(
     (part): part is string => part !== null
   );
   return (
@@ -142,10 +143,16 @@ export function NotificationThreadRow({
     const value = new Date(at);
     return date.sameDay(value, new Date(now)) ? date.formatTime(value) : date.formatDayMonth(value);
   };
+  const times = (row: INotificationPreviewCacheRow): string[] =>
+    rowTimes(row, {
+      stamp,
+      said: (time) => t('screens.home.thread.said-at', { time }),
+      delivered: (time) => t('screens.home.thread.delivered-at', { time }),
+    });
   const phaseLabel = (phase: NotificationPhase) =>
     t(`screens.home.thread.phase.${PHASE_KEYS[phase]}`);
   const meta = [
-    stamp(latest.createdAt),
+    ...times(latest),
     thread.phase && (count > 1 || thread.phase !== 'opened') ? phaseLabel(thread.phase) : null,
     count > 1 ? t('screens.home.thread.count', { count: String(count) }) : null,
   ].filter((part): part is string => part !== null);
@@ -227,7 +234,7 @@ export function NotificationThreadRow({
                 key={entry.id}
                 entry={entry}
                 last={index === older.length - 1}
-                stamp={stamp}
+                times={times}
                 phaseLabel={phaseLabel}
               />
             ))}

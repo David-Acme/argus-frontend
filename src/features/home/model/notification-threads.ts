@@ -103,6 +103,41 @@ export function moduleRequestOf(thread: Pick<NotificationThread, 'kind' | 'lates
   return moduleId ? { moduleId, requestedByName: textField(thread.latest, 'requestedByName') } : null;
 }
 
+export type AlertTimes = {
+  saidAt: number | null;
+  deliveredAt: number;
+};
+
+function epochMsField(row: NotificationRow, field: string): number | null {
+  const value = row.data[field];
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value * 1000 : null;
+}
+
+export function alertTimesOf(row: NotificationRow): AlertTimes | null {
+  const deliveredAt = epochMsField(row, 'deliveredAt');
+  return deliveredAt === null ? null : { saidAt: epochMsField(row, 'saidAt'), deliveredAt };
+}
+
+export type RowTimeLabels = {
+  stamp: (at: number) => string | null;
+  said: (time: string) => string;
+  delivered: (time: string) => string;
+};
+
+const present = (value: string | null): string[] => (value === null ? [] : [value]);
+
+export function rowTimes(
+  row: NotificationRow & Pick<INotificationPreviewCacheRow, 'createdAt'>,
+  labels: RowTimeLabels
+): string[] {
+  const times = alertTimesOf(row);
+  if (!times) return present(labels.stamp(row.createdAt));
+  const delivered = labels.stamp(times.deliveredAt);
+  const said = times.saidAt === null ? null : labels.stamp(times.saidAt);
+  if (said === null || delivered === null) return present(delivered);
+  return [labels.said(said), labels.delivered(delivered)];
+}
+
 const CALL_ID = /^call-\d+$/;
 
 export function missedCallId(thread: Pick<NotificationThread, 'kind' | 'latest'>): string | null {

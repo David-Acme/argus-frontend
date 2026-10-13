@@ -61,6 +61,8 @@ export const home = {
     'show-history': 'Muestra los avisos anteriores',
     'mark-read': 'Lo marca como leído',
     delete: 'Borrar notificación: {title}',
+    'said-at': 'Dicha {time}',
+    'delivered-at': 'Recibida {time}',
     phase: {
       opened: 'Primer aviso',
       escalated: 'Empeoró',

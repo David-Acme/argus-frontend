@@ -61,6 +61,8 @@ export const home = {
     'show-history': 'Shows the earlier updates',
     'mark-read': 'Marks it as read',
     delete: 'Delete notification: {title}',
+    'said-at': 'Said {time}',
+    'delivered-at': 'Received {time}',
     phase: {
       opened: 'First alert',
       escalated: 'Escalated',
