@@ -72,6 +72,11 @@ export function replaceCatalog(
 export const sameModules = (left: ModuleCatalog | null, right: ModuleCatalog | null): boolean =>
   left !== null && right !== null && JSON.stringify(left.modules) === JSON.stringify(right.modules);
 
+export function reenabledModules(previous: ModuleCatalog | null, next: ModuleCatalog | null): string[] {
+  const wasOff = new Set((previous?.modules ?? []).filter((module) => !module.enabled).map((module) => module.id));
+  return (next?.modules ?? []).filter((module) => module.enabled && wasOff.has(module.id)).map((module) => module.id);
+}
+
 export function catalogOfContext(context: Pick<AppContext, 'modules' | 'ownerCatalog'>): ModuleRecord[] {
   if (!context.ownerCatalog) return context.modules;
   const briefs = new Map(context.modules.map((module) => [module.id, module]));

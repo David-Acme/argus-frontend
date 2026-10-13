@@ -2,13 +2,11 @@ import type {
   CalendarEventModel,
   CalendarEventShareModel,
   CameraModel,
-  CameraStreamModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,
   ProjectModel,
   ProjectTaskModel,
-  ReminderDetailModel,
   ReminderModel,
   UserModel,
   UserInvitationModel,
@@ -28,8 +26,6 @@ export type CameraDriverKind = 'tapo' | 'onvif' | 'rtsp';
 export type ZoneType = 'monitor' | 'alert' | 'exclude' | 'privacy';
 
 export type DayNightMode = 'auto' | 'day' | 'night';
-
-export type ReminderDetailStatus = 'pending' | 'in_progress' | 'done' | 'blocked';
 
 export type EventSeverity = 'info' | 'warning' | 'critical';
 
@@ -53,10 +49,8 @@ export type ModelMap = {
   user: UserModel;
   user_invitation: UserInvitationModel;
   camera: CameraModel;
-  camera_stream: CameraStreamModel;
   zone: ZoneModel;
   reminder: ReminderModel;
-  reminder_detail: ReminderDetailModel;
   calendar_event: CalendarEventModel;
   calendar_event_share: CalendarEventShareModel;
   project: ProjectModel;

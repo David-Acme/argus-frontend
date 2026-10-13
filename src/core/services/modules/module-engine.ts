@@ -18,6 +18,7 @@ import {
   optimisticPatch,
   purgeDecision,
   patchModule,
+  reenabledModules,
   sameModules,
   replaceCatalog,
   upsertModule,
@@ -136,10 +137,16 @@ export class ModuleEngine {
       return;
     }
     this.deps.cache.write(next);
+    this.repull(reenabledModules(previous, next));
     jobTransitions(previous, next, this.deps.language()).forEach((transition) =>
       this.transitionListeners.forEach((listener) => listener(transition))
     );
     void this.reconcilePurges();
+  }
+
+  private repull(moduleIds: readonly string[]): void {
+    if (moduleIds.length === 0 || !this.session) return;
+    void this.deps.dropModuleData(moduleIds).catch(() => undefined);
   }
 
   reconcilePurges(): Promise<void> {

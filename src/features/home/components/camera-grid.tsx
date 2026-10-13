@@ -29,7 +29,6 @@ export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
             ip={camera.ip}
             isOnline={camera.isOnline}
             isEnabled={camera.isEnabled}
-            resolution={camera.resolution}
             recordMode={camera.recordMode}
             onPress={onSelect ? () => onSelect(camera.id) : undefined}
           />

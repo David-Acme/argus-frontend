@@ -26,7 +26,7 @@
 | Media | `expo-camera` (barcode/QR + face capture, mobile), `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar procedural). `@shopify/react-native-skia` eliminado (2026-10: dependencia, `postinstall` y `public/canvaskit.wasm`) |
 | Platform | `common.constant.ts` → `IS_WEB` / `IS_NATIVE` / `IS_ANDROID` / `IS_IOS` / `IS_TAURI` |
 | State | Zustand v5 — 8 stores: `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
-| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 14 tables mirroring the role-scoped backend sync surface |
+| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 12 tables mirroring the role-scoped backend sync surface |
 | Storage | `react-native-mmkv` (native) / localStorage (web) via `storageService`; **secrets** (caPem, JWT) via `secureStorageService` (`expo-secure-store` on mobile / `keyring` crate on Tauri) |
 | Icons | `lucide-react-native` — **centralized** in `icon.constant.ts` only |
 | i18n | Custom engine (`core/i18n`): typed keys, `useTranslation()` + imperative `t()`, `useLocaleStore` |
@@ -370,15 +370,20 @@ projections subscribe to those observables; screens read MMKV snapshots.
 
 ### Schema decisions
 
-- **14 tables** = the synced half of the backend's table surface
+- **12 tables** = the synced half of the backend's table surface
   (`SYNC_TABLE_KEYS` in `core/types/sync.type.ts`): `user`, `user_invitation`,
-  `camera`, `camera_stream`, `zone`, `reminder`, `reminder_detail`,
-  `calendar_event`, `calendar_event_share`, `project`, `project_member`,
-  `project_task`, `person`, `notification`. The backend's `event` table has no
-  local table any more and is not pulled (schema v10 drops it): nothing ever
-  wrote it, the detections the screens show come from `GET /camera/overview`,
-  and the backend keeps serving it empty only for apps already installed
-  (the plan's D8). `context_note` has no local table either (not synced).
+  `camera`, `zone`, `reminder`, `calendar_event`, `calendar_event_share`,
+  `project`, `project_member`, `project_task`, `person`, `notification`. The
+  backend's `event` table has no local table any more and is not pulled
+  (schema v10 drops it): nothing ever wrote it, the detections the screens
+  show come from `GET /camera/overview`. `camera_stream` and `reminder_detail`
+  went the same way (schema v11 drops both, a stray row included): neither has
+  a writer on the server, and the camera row no longer carries a stream
+  resolution. The backend keeps serving all three only for apps already
+  installed (the plan's D8). `context_note` has no local table either (not
+  synced). `person` carries household persons only, live: identity sends an
+  `Add` with the household row on enrolment and a field diff on every update,
+  in the same eleven fields the pull serves; visitors never travel in it.
 - **snake_case columns, camelCase model properties.** `created_at`/`updated_at`
   are snake_case by hard requirement, and a schema with two snake columns among
   twelve camel ones is worse than one convention. This **reverses** decision 3 of
@@ -2874,6 +2879,17 @@ The desktop sees only `pair`, so no stepper there. The old
   brief list `[{id, name, enabled, lifecycle, dataPurgedAt}]`, and purge
   updates reach every socket as a module or enabled-set frame), and a merge
   never lowers a stamp, so every device drops the purged tables.
+- **Re-enable re-pulls.** While a module is off the server skips its tables
+  in the audit pulls, but the audit cursor is one watermark for every table
+  and keeps advancing, so an edit made in that window would never reach the
+  device. When a module goes from off to on (a `module_update` frame, a
+  context, or a cached catalog that last saw it off), `ModuleEngine` drops
+  that module's local tables and their cursors and pulls them again from
+  zero, the same path as the local purge. The rows come back in their
+  current state, so no diff from the window is needed, and the shared audit
+  watermark carries on from there. A module seen for the first time already
+  enabled is a bootstrap and re-pulls nothing
+  (`tests/unit/core/services/sync/module-reenable-window.test.ts`).
 
 ### Aligned with argus-settings' final shapes (services/settings/CONTEXT.md, "Modules")
 

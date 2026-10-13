@@ -10,10 +10,8 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
   owner: {},
   resident: {
     camera: FULL,
-    camera_stream: FULL,
     zone: FULL,
     reminder: FULL,
-    reminder_detail: FULL,
     calendar_event: FULL,
     calendar_event_share: FULL,
     project: FULL,
@@ -25,9 +23,7 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
   },
   guard: {
     reminder: FULL,
-    reminder_detail: FULL,
     camera: READ,
-    camera_stream: READ,
     zone: READ,
     person: READ,
     user: READ,
@@ -35,7 +31,6 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
   },
   guest: {
     reminder: FULL,
-    reminder_detail: FULL,
     camera: READ,
     user: READ,
     notification: READ_UPDATE,

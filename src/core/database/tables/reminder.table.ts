@@ -1,6 +1,5 @@
-import { associations, Model, tableSchema, type Query } from '@nozbe/watermelondb';
-import { children, date, field, text } from '@nozbe/watermelondb/decorators';
-import type { ReminderDetailModel } from './reminder-detail.table';
+import { Model, tableSchema } from '@nozbe/watermelondb';
+import { date, field, text } from '@nozbe/watermelondb/decorators';
 
 export const REMINDER_SCHEMA = tableSchema({
   name: 'reminder',
@@ -21,11 +20,6 @@ export const REMINDER_SCHEMA = tableSchema({
 export class ReminderModel extends Model {
   static table = 'reminder';
 
-  static associations = associations([
-    'reminder_detail',
-    { type: 'has_many', foreignKey: 'reminder_id' },
-  ]);
-
   @field('created_by') createdBy!: string | null;
   @field('target_user_id') targetUserId!: string;
   @text('title') title!: string;
@@ -36,6 +30,4 @@ export class ReminderModel extends Model {
   @date('completed_at') completedAt!: Date | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
-
-  @children('reminder_detail') details!: Query<ReminderDetailModel>;
 }

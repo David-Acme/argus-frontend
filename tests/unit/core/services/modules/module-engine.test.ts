@@ -306,4 +306,46 @@ describe('module engine', () => {
     await h.engine.reconcilePurges();
     expect(h.stamps['7']).toEqual({ surveillance: 500 });
   });
+  test('a module that comes back on re-pulls its own tables once, and nothing else does', async () => {
+    const h = harness();
+    h.engine.start('7');
+    h.engine.applyContext(
+      context({
+        ownerCatalog: [
+          module({ enabled: true, lifecycle: 'active' }),
+          module({ id: 'productivity', name: 'Productividad', enabled: true, lifecycle: 'active' }),
+        ],
+      })
+    );
+    await settle();
+    expect(h.dropped).toEqual([]);
+    h.frame({ modules: [{ id: 'surveillance', enabled: false }, { id: 'productivity', enabled: true }] });
+    await settle();
+    expect(h.dropped).toEqual([]);
+    h.frame({ modules: [{ id: 'surveillance', enabled: false }, { id: 'productivity', enabled: true }] });
+    await settle();
+    expect(h.dropped).toEqual([]);
+    h.frame({ modules: [{ id: 'surveillance', enabled: true }, { id: 'productivity', enabled: true }] });
+    await settle();
+    expect(h.dropped).toEqual([['surveillance']]);
+    h.frame({ modules: [{ id: 'surveillance', enabled: true }, { id: 'productivity', enabled: true }] });
+    await settle();
+    expect(h.dropped).toEqual([['surveillance']]);
+  });
+
+  test('a module first seen enabled is a bootstrap, not a re-enable', async () => {
+    const h = harness();
+    h.engine.start('7');
+    h.engine.applyContext(context({ ownerCatalog: [module({ enabled: true, lifecycle: 'active' })] }));
+    await settle();
+    expect(h.dropped).toEqual([]);
+  });
+
+  test('a module the cache last saw off is re-pulled when the next context says it is on', async () => {
+    const h = harness({ fetchedAt: 1, modules: [module({ enabled: false, lifecycle: 'disabled' })] });
+    h.engine.start('7');
+    h.engine.applyContext(context({ ownerCatalog: [module({ enabled: true, lifecycle: 'active' })] }));
+    await settle();
+    expect(h.dropped).toEqual([['surveillance']]);
+  });
 });

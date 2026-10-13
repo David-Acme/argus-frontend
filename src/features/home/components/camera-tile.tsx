@@ -11,7 +11,6 @@ type CameraTileProps = {
   ip: string;
   isOnline: boolean;
   isEnabled: boolean;
-  resolution?: string;
   recordMode?: string;
   onPress?: () => void;
 };
@@ -22,7 +21,6 @@ export function CameraTile({
   ip,
   isOnline,
   isEnabled,
-  resolution,
   recordMode,
   onPress,
 }: CameraTileProps) {
@@ -53,12 +51,7 @@ export function CameraTile({
             className={cn('size-4', offline ? 'text-muted-foreground' : 'text-foreground')}
           />
         </View>
-        <View className="flex-row items-center gap-1.5">
-          <View className={cn('size-2 rounded-full', offline ? 'bg-muted-foreground' : 'bg-success')} />
-          {resolution ? (
-            <Text className="text-muted-foreground text-micro font-medium">{resolution}</Text>
-          ) : null}
-        </View>
+        <View className={cn('size-2 rounded-full', offline ? 'bg-muted-foreground' : 'bg-success')} />
       </View>
       <View className="gap-0.5">
         <Text variant="label" className="font-semibold" numberOfLines={1}>

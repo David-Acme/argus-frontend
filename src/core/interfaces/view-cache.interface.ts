@@ -41,7 +41,6 @@ export interface ICameraCacheRow {
   retentionIncident: boolean;
   isOnline: boolean;
   isEnabled: boolean;
-  resolution: string;
   streamPath: string;
   subStreamPath: string;
   catalogId: string;

@@ -16,7 +16,7 @@ export const MODULE_API_PREFIXES: Readonly<Record<string, readonly string[]>> = 
 };
 
 export const MODULE_SYNC_TABLES = {
-  surveillance: ['camera', 'camera_stream', 'zone'],
+  surveillance: ['camera', 'zone'],
   productivity: ['project', 'project_member', 'project_task', 'calendar_event', 'calendar_event_share'],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 

@@ -1,4 +1,4 @@
-import type { CameraModel, CameraStreamModel, ZoneModel } from '@/core/database';
+import type { CameraModel, ZoneModel } from '@/core/database';
 import type { ICameraCacheRow, IZoneCacheRow } from '@/core/interfaces';
 import type { IconName } from '@/core/types';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
@@ -37,15 +37,12 @@ const configFlag = (config: CameraSource['config'], key: string): boolean => con
 
 export type ZoneSource = Pick<ZoneModel, 'id' | 'cameraId' | 'name' | 'points' | 'zoneType' | 'color' | 'isEnabled'>;
 
-export type CameraStreamSource = Pick<CameraStreamModel, 'cameraId' | 'resolution'>;
-
 export type CameraProjectionInput = {
   cameras: readonly CameraSource[];
   zones: readonly ZoneSource[];
-  streams: readonly CameraStreamSource[];
 };
 
-export function projectCameras({ cameras, zones, streams }: CameraProjectionInput): ViewWrite[] {
+export function projectCameras({ cameras, zones }: CameraProjectionInput): ViewWrite[] {
   const zonesByCamera = new Map<string, IZoneCacheRow[]>();
   for (const zone of zones) {
     const bucket = zonesByCamera.get(zone.cameraId) ?? [];
@@ -60,7 +57,6 @@ export function projectCameras({ cameras, zones, streams }: CameraProjectionInpu
     });
     zonesByCamera.set(zone.cameraId, bucket);
   }
-  const resolutionByCamera = new Map(streams.map((stream) => [stream.cameraId, stream.resolution]));
   const rows: ICameraCacheRow[] = cameras.map((camera) => ({
     id: camera.id,
     driver: camera.driver,
@@ -78,7 +74,6 @@ export function projectCameras({ cameras, zones, streams }: CameraProjectionInpu
     retentionIncident: configFlag(camera.config, 'retentionIncident'),
     isOnline: camera.isOnline,
     isEnabled: camera.isEnabled,
-    resolution: resolutionByCamera.get(camera.id) ?? '',
     streamPath: configText(camera.config, 'streamPath'),
     subStreamPath: configText(camera.config, 'subStreamPath'),
     catalogId: configText(camera.config, 'catalogId'),

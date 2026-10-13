@@ -63,7 +63,6 @@ const cameraLens = defineLens<ICameraCacheRow, CameraIntentValues>({
           retentionIncident: values.retentionIncident ?? false,
           isOnline: false,
           isEnabled: true,
-          resolution: '',
           streamPath: values.streamPath ?? '',
           subStreamPath: values.subStreamPath ?? '',
           catalogId: values.catalogId ?? '',

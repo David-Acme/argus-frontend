@@ -64,25 +64,22 @@ const camera = (id: string, overrides: Partial<CameraSource> = {}): CameraSource
 });
 
 describe('camera projection', () => {
-  test('one row per camera carries its zones, stream resolution and labels', () => {
+  test('one row per camera carries its zones and labels', () => {
     const writes = projectCameras({
       cameras: [camera('1'), camera('2', { icon: 'camera', manufacturer: '', isOnline: false })],
       zones: [
         { id: 'z1', cameraId: '1', name: 'Door', points: [], zoneType: 'alert', color: '#fff', isEnabled: true },
         { id: 'z2', cameraId: '1', name: 'Yard', points: [], zoneType: 'monitor', color: '#000', isEnabled: false },
       ],
-      streams: [{ cameraId: '2', resolution: '1080p' }],
     });
     expect(writes).toHaveLength(1);
     const [first, second] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
     expect(first?.icon).toBe('video');
     expect(first?.modelLabel).toBe('tapo C200');
     expect(first?.zones.map((zone) => zone.id)).toEqual(['z1', 'z2']);
-    expect(first?.resolution).toBe('');
     expect(second?.icon).toBe('camera');
     expect(second?.modelLabel).toBe('C200');
     expect(second?.zones).toEqual([]);
-    expect(second?.resolution).toBe('1080p');
     expect(first?.streamPath).toBe('');
   });
 
@@ -93,7 +90,6 @@ describe('camera projection', () => {
         camera('2', { config: { streamPath: 7, password: 'secret' } }),
       ],
       zones: [],
-      streams: [],
     });
     const [first, second] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
     expect(first?.streamPath).toBe('/Streaming/Channels/101');
@@ -110,7 +106,6 @@ describe('camera projection', () => {
         camera('3', { config: { retentionIncident: 'yes' } }),
       ],
       zones: [],
-      streams: [],
     });
     const [incident, stripped, odd] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
     expect(incident?.retentionIncident).toBe(true);
@@ -124,7 +119,6 @@ describe('camera projection', () => {
     const writes = projectCameras({
       cameras: [camera('6', { capabilities: ['ptz', 'presets', 'talk'] })],
       zones: [],
-      streams: [],
     });
     const [patio] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
     expect(patio?.capabilities).toEqual(['ptz', 'presets', 'talk']);

@@ -87,7 +87,7 @@ describe('table permissions', () => {
   test('reminders follow their own capability, for every role', () => {
     for (const role of ['owner', 'resident', 'guard', 'guest'] as const) {
       expect(tableAllowed(viewFor(role, { modules: [] }), 'reminder', 'read')).toBe(true);
-      expect(tableAllowed(viewFor(role, { modules: [] }), 'reminder_detail', 'update')).toBe(true);
+      expect(tableAllowed(viewFor(role, { modules: [] }), 'reminder', 'update')).toBe(true);
     }
   });
 

@@ -11,7 +11,7 @@
   (file-based routing), Tailwind CSS v4 via **Uniwind**, React Native Reusables
   (`@rn-primitives`), `react-native-mmkv` (native storage), `lucide-react-native`
   (icons, centralized), `zustand` v5 (8 stores), **WatermelonDB 0.28** (local DB,
-  14 tables), `rxjs` (service observables → view-cache projections → React via `useViewCacheRows`), `zod` +
+  12 tables), `rxjs` (service observables → view-cache projections → React via `useViewCacheRows`), `zod` +
   `react-hook-form` (forms), custom i18n engine (es/en). The React Compiler is on
   (`app.json` → `experiments.reactCompiler`).
 - **Media/Platform**: `expo-camera` (barcode/QR + face capture, mobile),
@@ -910,7 +910,7 @@ cd src-tauri && cargo check
 | `src/core/services/view-cache/` | Proyecciones puras por dominio (`*.projection.ts`), `projection.ts` (`ViewProjection`, `applyWrites`, `startProjection`) |
 | `src/core/interfaces/{view-cache,audit-log}.interface.ts` | Contratos de snapshots de vista y payloads de auditoría; siempre importar desde el barrel de interfaces |
 | `src/core/types/{view-cache,audit-log}.type.ts` | Uniones y tipos auxiliares de cache/auditoría; siempre importar desde el barrel de tipos |
-| `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (14 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |
+| `src/core/types/sync.type.ts` | `SYNC_TABLE_KEYS` (12 tablas) + cursores normales `createdAt` y de auditoría `{lastId, watermarkId}` por usuario |
 | `src/features/voice/` | Voice feature: `services/voice` (`voiceService`: mic PCM over the sync socket on every platform with `voiceCallSupported()`, TTS playback, action results, mute, resume after a lost socket), call screen with action chips and an in-call camera card, call pill (mounted everywhere), `useCall`, `useCallBridge` (camera names + situation note, actions run in order), avatar; web audio worklets in `public/voice/` |
 | `src/features/voice/services/rtc/` | WebRTC call (`IRealtimeCall`): LiveKit React Native (native), `livekit-client` (browser), the Rust client through `argus_rtc_*` (Tauri); `PinnedWebSocket` routes the LiveKit signalling over the pinned `ArgusSocket`; `rtc-token.ts` asks argus-sync for the room token |
 | `src-tauri/src/rtc/` | Desktop call in Rust: LiveKit SDK with `PlatformAudio` (WebRTC ADM + AEC/NS/AGC), pinned signalling transport, events on a Tauri `Channel` |

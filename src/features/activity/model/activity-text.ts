@@ -2,10 +2,8 @@ import type { ActivityItem, IconName, TranslateFn, TranslationKey } from '@/core
 
 const THINGS: Readonly<Record<string, { key: TranslationKey; icon: IconName }>> = {
   camera: { key: 'screens.activity.thing.camera', icon: 'video' },
-  camera_stream: { key: 'screens.activity.thing.camera_stream', icon: 'video' },
   zone: { key: 'screens.activity.thing.zone', icon: 'scan-face' },
   reminder: { key: 'screens.activity.thing.reminder', icon: 'bell' },
-  reminder_detail: { key: 'screens.activity.thing.reminder_detail', icon: 'bell' },
   calendar_event: { key: 'screens.activity.thing.calendar_event', icon: 'calendar' },
   calendar_event_share: { key: 'screens.activity.thing.calendar_event_share', icon: 'calendar' },
   project: { key: 'screens.activity.thing.project', icon: 'list-todo' },

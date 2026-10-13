@@ -7,7 +7,6 @@ import type {
   CameraRecordMode,
 } from '@/core/types';
 import { sanitizeObject, sanitizeStringArray } from './sanitizers';
-import type { CameraStreamModel } from './camera-stream.table';
 import type { ZoneModel } from './zone.table';
 
 export const CAMERA_SCHEMA = tableSchema({
@@ -37,7 +36,6 @@ export class CameraModel extends Model {
   static table = 'camera';
 
   static associations = associations(
-    ['camera_stream', { type: 'has_many', foreignKey: 'camera_id' }],
     ['zone', { type: 'has_many', foreignKey: 'camera_id' }],
   );
 
@@ -59,6 +57,5 @@ export class CameraModel extends Model {
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 
-  @children('camera_stream') streams!: Query<CameraStreamModel>;
   @children('zone') zones!: Query<ZoneModel>;
 }

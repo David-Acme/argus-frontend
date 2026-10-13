@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, test } from 'bun:test';
-import type { AppSchema } from '@nozbe/watermelondb';
+import { tableSchema, type AppSchema } from '@nozbe/watermelondb';
 import { encodeMigrationSteps, encodeSchema } from '@nozbe/watermelondb/adapters/sqlite/encodeSchema';
 import { stepsForMigration } from '@nozbe/watermelondb/Schema/migrations/stepsForMigration';
 import { migrations } from '@/core/database/migrations';
@@ -262,5 +262,99 @@ describe('the retired event table', () => {
     db.exec(encodeMigrationSteps(steps ?? []));
 
     expect(eventTableOf(db)).toEqual([]);
+  });
+});
+
+describe('the retired camera_stream and reminder_detail tables', () => {
+  const RETIRED = ['camera_stream', 'reminder_detail'];
+
+  const retiredTablesOf = (db: Database): string[] =>
+    (
+      db
+        .query(
+          "select name from sqlite_master where type = 'table' and name in ('camera_stream', 'reminder_detail') order by name"
+        )
+        .all() as { name: string }[]
+    ).map((row) => row.name);
+
+  const onVersionTen = (): AppSchema => ({
+    ...schema,
+    version: 10,
+    tables: {
+      ...schema.tables,
+      camera_stream: tableSchema({
+        name: 'camera_stream',
+        columns: [
+          { name: 'camera_id', type: 'string', isIndexed: true },
+          { name: 'label', type: 'string' },
+          { name: 'url', type: 'string' },
+          { name: 'resolution', type: 'string' },
+          { name: 'fps', type: 'number' },
+          { name: 'codec', type: 'string' },
+          { name: 'is_primary', type: 'boolean' },
+          { name: 'is_enabled', type: 'boolean' },
+          { name: 'created_at', type: 'number' },
+          { name: 'updated_at', type: 'number' },
+        ],
+      }),
+      reminder_detail: tableSchema({
+        name: 'reminder_detail',
+        columns: [
+          { name: 'reminder_id', type: 'string', isIndexed: true },
+          { name: 'created_by', type: 'string', isIndexed: true, isOptional: true },
+          { name: 'content', type: 'string' },
+          { name: 'status', type: 'string' },
+          { name: 'file_paths', type: 'string' },
+          { name: 'created_at', type: 'number' },
+          { name: 'updated_at', type: 'number' },
+        ],
+      }),
+    },
+  } as AppSchema);
+
+  const migrateFromTen = (db: Database) => {
+    const steps = stepsForMigration({ migrations, fromVersion: 10, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+  };
+
+  test('the current schema no longer declares them', () => {
+    for (const name of RETIRED) expect(Object.keys(schema.tables)).not.toContain(name);
+  });
+
+  test('a device on version 10 with both tables empty comes out of the migration without them', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(onVersionTen()));
+    expect(retiredTablesOf(db)).toEqual(RETIRED);
+
+    migrateFromTen(db);
+
+    expect(retiredTablesOf(db)).toEqual([]);
+  });
+
+  test('a stray row in either table does not stop the migration, and the rest of the data stays', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(onVersionTen()));
+    db.query(
+      'insert into camera_stream (id, _changed, _status, camera_id, label, url, resolution, fps, codec, is_primary, is_enabled, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', '2', 'main', 'rtsp://x', '1080p', 25, 'h264', 1, 1, 1, 1);
+    db.query(
+      'insert into reminder_detail (id, _changed, _status, reminder_id, created_by, content, status, file_paths, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('3', '', 'synced', '4', null, 'note', 'pending', '[]', 1, 1);
+    db.query(
+      'insert into reminder (id, _changed, _status, created_by, target_user_id, title, description, scheduled_at, recurrence_rule, is_completed, completed_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('4', '', 'synced', null, '7', 'Water the plants', '', 5, null, 0, null, 1, 1);
+
+    migrateFromTen(db);
+
+    expect(retiredTablesOf(db)).toEqual([]);
+    expect(db.query('select count(*) as n from reminder').get()).toEqual({ n: 1 });
+  });
+
+  test('replaying the drop on a database that never had them is harmless', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(() => migrateFromTen(db)).not.toThrow();
+    expect(retiredTablesOf(db)).toEqual([]);
   });
 });

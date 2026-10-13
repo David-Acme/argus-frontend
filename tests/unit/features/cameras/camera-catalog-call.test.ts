@@ -89,7 +89,6 @@ function camera(id: string, partial: Partial<ICameraCacheRow> = {}): ICameraCach
     retentionIncident: false,
     isOnline: true,
     isEnabled: true,
-    resolution: '',
     streamPath: '',
     subStreamPath: '',
     catalogId: '',

@@ -28,10 +28,8 @@ export const activity = {
   },
   thing: {
     camera: 'a camera',
-    camera_stream: 'a camera stream',
     zone: 'a zone',
     reminder: 'a reminder',
-    reminder_detail: 'a reminder note',
     calendar_event: 'a calendar event',
     calendar_event_share: 'a shared event',
     project: 'a project',

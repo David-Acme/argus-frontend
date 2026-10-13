@@ -35,7 +35,6 @@ const camera: ICameraCacheRow = {
   retentionIncident: false,
   isOnline: true,
   isEnabled: true,
-  resolution: '',
   streamPath: '',
   subStreamPath: '',
   catalogId: '',

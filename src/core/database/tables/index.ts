@@ -4,7 +4,6 @@ import {
 } from './calendar-event-share.table';
 import { CALENDAR_EVENT_SCHEMA, CalendarEventModel } from './calendar-event.table';
 import { CAMERA_SCHEMA, CameraModel } from './camera.table';
-import { CAMERA_STREAM_SCHEMA, CameraStreamModel } from './camera-stream.table';
 import {
   NOTIFICATION_FEED_INDEX_SQL,
   NOTIFICATION_SCHEMA,
@@ -14,7 +13,6 @@ import { PERSON_SCHEMA, PersonModel } from './person.table';
 import { PROJECT_MEMBER_SCHEMA, ProjectMemberModel } from './project-member.table';
 import { PROJECT_SCHEMA, ProjectModel } from './project.table';
 import { PROJECT_TASK_SCHEMA, ProjectTaskModel } from './project-task.table';
-import { REMINDER_DETAIL_SCHEMA, ReminderDetailModel } from './reminder-detail.table';
 import { REMINDER_SCHEMA, ReminderModel } from './reminder.table';
 import { USER_SCHEMA, UserModel } from './user.table';
 import { USER_INVITATION_SCHEMA, UserInvitationModel } from './user-invitation.table';
@@ -24,10 +22,8 @@ const TABLES = [
   { schema: USER_SCHEMA, model: UserModel },
   { schema: USER_INVITATION_SCHEMA, model: UserInvitationModel },
   { schema: CAMERA_SCHEMA, model: CameraModel },
-  { schema: CAMERA_STREAM_SCHEMA, model: CameraStreamModel },
   { schema: ZONE_SCHEMA, model: ZoneModel },
   { schema: REMINDER_SCHEMA, model: ReminderModel },
-  { schema: REMINDER_DETAIL_SCHEMA, model: ReminderDetailModel },
   { schema: CALENDAR_EVENT_SCHEMA, model: CalendarEventModel },
   { schema: CALENDAR_EVENT_SHARE_SCHEMA, model: CalendarEventShareModel },
   { schema: PROJECT_SCHEMA, model: ProjectModel },
@@ -45,13 +41,11 @@ export {
   CalendarEventModel,
   CalendarEventShareModel,
   CameraModel,
-  CameraStreamModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,
   ProjectModel,
   ProjectTaskModel,
-  ReminderDetailModel,
   ReminderModel,
   UserModel,
   UserInvitationModel,

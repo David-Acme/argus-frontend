@@ -103,5 +103,12 @@ export const migrations = schemaMigrations({
       toVersion: 10,
       steps: [unsafeExecuteSql('drop table if exists "event";')],
     },
+    {
+      toVersion: 11,
+      steps: [
+        unsafeExecuteSql('drop table if exists "camera_stream";'),
+        unsafeExecuteSql('drop table if exists "reminder_detail";'),
+      ],
+    },
   ],
 });

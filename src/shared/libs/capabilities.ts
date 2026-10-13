@@ -76,7 +76,7 @@ const TABLE_MODULES: ReadonlyMap<string, string> = new Map(
   Object.entries(MODULE_SYNC_TABLES).flatMap(([moduleId, tables]) => tables.map((table): [string, string] => [table, moduleId]))
 );
 
-const REMINDER_TABLES: ReadonlySet<string> = new Set<TableName>(['reminder', 'reminder_detail']);
+const REMINDER_TABLES: ReadonlySet<string> = new Set<TableName>(['reminder']);
 
 export const moduleOfTable = (table: TableName): string | null => TABLE_MODULES.get(table) ?? null;
 

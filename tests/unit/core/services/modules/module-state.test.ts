@@ -244,7 +244,7 @@ describe('local purge', () => {
   });
 
   test('maps modules to the synced tables they own', () => {
-    expect(syncTablesOf(['surveillance', 'core'])).toEqual(['camera', 'camera_stream', 'zone']);
+    expect(syncTablesOf(['surveillance', 'core'])).toEqual(['camera', 'zone']);
     expect(syncTablesOf(['productivity'])).toContain('calendar_event_share');
   });
 });

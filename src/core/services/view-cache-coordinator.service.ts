@@ -1,7 +1,6 @@
 import { shareReplay, type Observable, type Subscription } from 'rxjs';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { cameraService } from '@/core/services/camera.service';
-import { cameraStreamService } from '@/core/services/camera-stream.service';
 import { notificationService } from '@/core/services/notification.service';
 import { projectService } from '@/core/services/project.service';
 import { projectTaskService } from '@/core/services/project-task.service';
@@ -51,7 +50,6 @@ function sessionSources(userId: string) {
   return {
     cameras: shared(moduleGate.of(SURVEILLANCE, cameraService.observeList(), [])),
     zones: shared(moduleGate.of(SURVEILLANCE, zoneService.observeForCache(), [])),
-    streams: shared(moduleGate.of(SURVEILLANCE, cameraStreamService.observePrimaries(), [])),
     projects: shared(moduleGate.of(PRODUCTIVITY, projectService.observeList(), [])),
     tasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeAll(), [])),
     reminders: shared(reminderService.observeForUser(userId)),
@@ -68,7 +66,7 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
   return [
     startProjection(
       {
-        sources: () => ({ cameras: sources.cameras, zones: sources.zones, streams: sources.streams }),
+        sources: () => ({ cameras: sources.cameras, zones: sources.zones }),
         project: projectCameras,
       },
       ctx,
