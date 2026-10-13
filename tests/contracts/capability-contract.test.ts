@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { UserRole } from '@/core/types';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, CAPABILITY_MODULE, type Capability } from '@/shared/constants';
 import { coreCapabilities } from '@/shared/libs/capabilities';
 import { accessFor, serverCapabilities } from '@tests/support/access-fixtures';
 
@@ -81,6 +81,14 @@ const present = specs().length > 0;
 describe.skipIf(!present)('capabilities mirror the backend role_access table', () => {
   test('the app names exactly the capabilities the backend knows', () => {
     expect((Object.values(CAPABILITY) as string[]).sort()).toEqual(specs().map((spec) => spec.id).sort());
+  });
+
+  test('every capability belongs to the module the backend gives it', () => {
+    const client = Object.fromEntries(
+      (Object.values(CAPABILITY) as Capability[]).map((id) => [id, CAPABILITY_MODULE[id] ?? 'core'])
+    );
+    const server = Object.fromEntries(specs().map((spec) => [spec.id, spec.module]));
+    expect(client).toEqual(server);
   });
 
   for (const role of ROLES) {

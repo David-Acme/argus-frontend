@@ -3587,8 +3587,15 @@ pieces:
   one-word label change on Home (239 pixels) fails. When a screen changes on
   purpose, `bun run test:e2e:update-screens` rebuilds the bundle and rewrites the
   baselines; look at each image before committing it.
-- A product finding from the modules flow: with productivity off, Home keeps its
-  Today and Projects sections (and their buttons); only the navigation hides them.
+- A module that is off vanishes from every screen live, not only from the
+  navigation (2026-10-13): `hasCapability` grants a capability only while the
+  module it belongs to is active in the context (`CAPABILITY_MODULE`, the client
+  mirror of `capability.hxx`'s modules, pinned by the capability contract test).
+  The server already drops a module's capabilities from the `ContextUpdate` it
+  sends when the module goes off; the client no longer depends on that arriving
+  with the same frame, so Home's Today and Projects sections leave on B as soon as
+  the context says the module is off (`modules.e2e.ts`, which fails without the
+  gate).
 - **Accessibility** (item 5, `accessibility.e2e.ts`, read from Chromium's own
   accessibility tree over CDP - `support/accessibility.ts` - because Playwright's
   aria snapshot does not descend into these portalled dialogs, while the

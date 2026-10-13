@@ -43,6 +43,15 @@ describe('access view', () => {
     expect(hasCapability(view, CAPABILITY.agendaWrite)).toBe(true);
   });
 
+  test('a module capability the context still lists is withheld while its module is off', () => {
+    const access = accessFor('owner', { modules: ['surveillance'] });
+    const stale = accessView({ ...access, capabilities: [...access.capabilities, CAPABILITY.projectsRead, CAPABILITY.agendaRead] }, 'owner');
+    expect(hasCapability(stale, CAPABILITY.projectsRead)).toBe(false);
+    expect(hasCapability(stale, CAPABILITY.agendaRead)).toBe(false);
+    expect(hasCapability(stale, CAPABILITY.cameraView)).toBe(true);
+    expect(hasCapability(stale, CAPABILITY.remindersRead)).toBe(true);
+  });
+
   test('a role whose module is off keeps the baseline and is inactive', () => {
     const guard = viewFor('guard', { modules: ['productivity'] });
     expect(guard.roleActive).toBe(false);

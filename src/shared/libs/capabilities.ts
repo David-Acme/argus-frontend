@@ -1,6 +1,6 @@
 import { localizedModule } from '@/core/services/modules/module-text';
 import type { AppAccess, LanguageCode, TableName, UserRole } from '@/core/types';
-import { CAPABILITY, MODULE_IDS, MODULE_SYNC_TABLES, type Capability } from '@/shared/constants';
+import { CAPABILITY, CAPABILITY_MODULE, MODULE_IDS, MODULE_SYNC_TABLES, type Capability } from '@/shared/constants';
 import { hasAccess, type Permission } from './role-access';
 
 export type AccessView = {
@@ -118,7 +118,10 @@ export function accessView(
   };
 }
 
-export const hasCapability = (view: AccessView, capability: Capability): boolean => view.capabilities.has(capability);
+export const hasCapability = (view: AccessView, capability: Capability): boolean => {
+  const moduleId = CAPABILITY_MODULE[capability];
+  return view.capabilities.has(capability) && (moduleId === undefined || isModuleActive(view, moduleId));
+};
 
 export const isModuleActive = (view: AccessView, moduleId: string): boolean =>
   moduleId === MODULE_IDS.core || view.activeModules.has(moduleId);

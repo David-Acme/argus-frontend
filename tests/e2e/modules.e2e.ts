@@ -21,6 +21,12 @@ const moduleRoutes: RouteSpec[] = [
   { method: 'POST', path: '/modules/productivity/install', modules: { productivity: true }, emits: switchFrames(true) },
 ];
 
+const homeProductivity = async (page: Page): Promise<number> =>
+  (await page.getByRole('heading', { name: 'Today', exact: true }).count()) +
+  (await page.getByRole('heading', { name: 'Projects', exact: true }).count()) +
+  (await page.getByRole('button', { name: 'See all: Today', exact: true }).count()) +
+  (await page.getByRole('button', { name: 'See all: Projects', exact: true }).count());
+
 const onProjects = (page: Page): Promise<number> => page.getByRole('button', { name: 'New project', exact: true }).count();
 
 const at = Math.floor(Date.now() / 1000);
@@ -63,6 +69,7 @@ test('a module turned off on one device leaves the other at once, and comes back
 
   await expect.poll(() => onProjects(second.page), { timeout: LIVE_MS }).toBe(0);
   await expect.poll(() => second.page.getByRole('button', { name: 'Schedule', exact: true }).count()).toBe(0);
+  await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(0);
 
   await store(baseUrl, 'project', { ...renamed, name: 'Huerto comunitario' });
 
@@ -70,6 +77,7 @@ test('a module turned off on one device leaves the other at once, and comes back
   await expect
     .poll(() => second.page.getByRole('button', { name: 'Schedule', exact: true }).count(), { timeout: LIVE_MS })
     .toBeGreaterThan(0);
+  await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(4);
   await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await expect.poll(() => second.page.getByRole('button', { name: /^Huerto comunitario, / }).count(), { timeout: LIVE_MS }).toBe(1);
   await expect.poll(() => second.page.getByRole('button', { name: /^Huerto, / }).count()).toBe(0);

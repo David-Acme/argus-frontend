@@ -47,4 +47,26 @@ export const CAPABILITY = {
 
 export type Capability = (typeof CAPABILITY)[keyof typeof CAPABILITY];
 
+export const CAPABILITY_MODULE: Readonly<Partial<Record<Capability, string>>> = {
+  [CAPABILITY.cameraView]: 'surveillance',
+  [CAPABILITY.cameraTalk]: 'surveillance',
+  [CAPABILITY.cameraManage]: 'surveillance',
+  [CAPABILITY.zonesRead]: 'surveillance',
+  [CAPABILITY.zonesWrite]: 'surveillance',
+  [CAPABILITY.eventsRead]: 'surveillance',
+  [CAPABILITY.guardRead]: 'surveillance',
+  [CAPABILITY.guardModeSet]: 'surveillance',
+  [CAPABILITY.guardGuestsWrite]: 'surveillance',
+  [CAPABILITY.guardAdmin]: 'surveillance',
+  [CAPABILITY.responseDuty]: 'surveillance',
+  [CAPABILITY.safetyDuress]: 'surveillance',
+  [CAPABILITY.visitorsRead]: 'surveillance',
+  [CAPABILITY.visitorsManage]: 'surveillance',
+  [CAPABILITY.presenceRead]: 'surveillance',
+  [CAPABILITY.agendaRead]: 'productivity',
+  [CAPABILITY.agendaWrite]: 'productivity',
+  [CAPABILITY.projectsRead]: 'productivity',
+  [CAPABILITY.projectsWrite]: 'productivity',
+};
+
 export const CONTEXT_WAIT_MS = 3000;
