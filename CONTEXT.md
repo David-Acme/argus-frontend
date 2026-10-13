@@ -3874,3 +3874,8 @@ OS version and build noted.
    Android (ExoPlayer / Media3), iOS (AVPlayer), the desktop webview (WebKitGTK) and Chromium. The
    default is AAC-LC at 64 kb/s, mono, which needs no device check. Chromium and WebKitGTK are also
    smoke-checked in the e2e harness for whichever codec ships. If any target fails, FLAC stays off.
+9. **Camera live audio on iOS's native player** (F1, 2026-10-13). The native player in
+   `modules/argus-camera` (`AVSampleBufferDisplayLayer`) renders no audio. Over the WebSocket, an
+   iPhone therefore hears nothing and shows no mute control (`liveAudioPlayable`). Closing this
+   needs native work: an audio renderer for the FLAC track that honours `muted`. It also needs an
+   iOS build host. Once built, the check is item 1 on an iPhone over the WebSocket transport.
