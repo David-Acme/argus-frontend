@@ -366,7 +366,7 @@ describe('summary projection', () => {
           { isOnline: true, isEnabled: false },
         ],
         reminders: [{ isCompleted: false }, { isCompleted: true }],
-        projects: [{ status: 'active' }, { status: 'archived' }],
+        projects: [{ status: 'active' }, { status: 'planned' }, { status: 'paused' }, { status: 'done' }, { status: 'canceled' }],
         tasks: [{ status: 'todo' }, { status: 'done' }, { status: 'canceled' }],
       },
     );

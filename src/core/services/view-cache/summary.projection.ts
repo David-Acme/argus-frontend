@@ -18,7 +18,7 @@ export function projectSummary(input: SummaryProjectionInput): ViewWrite[] {
     camerasTotal: input.cameras.length,
     camerasOnline: input.cameras.filter((camera) => camera.isEnabled && camera.isOnline).length,
     remindersPending: input.reminders.filter((reminder) => !reminder.isCompleted).length,
-    projectsActive: input.projects.filter((project) => project.status !== 'archived').length,
+    projectsActive: input.projects.filter((project) => project.status === 'active').length,
     tasksOpen: input.tasks.filter(isOpenTask).length,
   };
   return [{ key: VIEW_CACHE_KEYS.dashboardSummary, value: summary }];
