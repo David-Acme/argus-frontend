@@ -3579,14 +3579,18 @@ pieces:
   (populated: an environment, an episode, an alert, a project) and the welcome,
   each at phone (390x844), tablet (834x1112) and desktop (1280x800) width,
   compared with the PNGs committed in `tests/e2e/visual.e2e.ts-snapshots/`
-  (named `<screen>-<width>-desktop-web-linux.png`: they belong to this Linux
-  Chromium and its fonts). Determinism: a fixed clock (`support/clock.ts`), the
+  (named `<screen>-<width>-<os>-<arch>-chromium<major>-desktop-web-<os>.png`:
+  each set belongs to one platform's Chromium and fonts; this machine's
+  `linux-x64-chromium153` set is the reference). A platform with no set of its
+  own skips the six tests with a message naming the command that records one, so
+  `verify` stays green there; a platform that has a set and lacks one image
+  fails, as it should. Determinism: a fixed clock (`support/clock.ts`), the
   browser started in `America/Lima`, `en-US`, reduced motion and no font
   hinting, the pointer parked away from tooltips, and the welcome's animated
   mascot masked. Tolerance is 40 pixels: three clean runs in a row pass, and a
   one-word label change on Home (239 pixels) fails. When a screen changes on
-  purpose, `bun run test:e2e:update-screens` rebuilds the bundle and rewrites the
-  baselines; look at each image before committing it.
+  purpose, or on a new platform, `bun run test:e2e:update-screens` rebuilds the
+  bundle and writes this platform's set; look at each image before committing it.
 - A module that is off vanishes from every screen live, not only from the
   navigation (2026-10-13): `hasCapability` grants a capability only while the
   module it belongs to is active in the context (`CAPABILITY_MODULE`, the client
