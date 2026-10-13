@@ -42,6 +42,11 @@ export const activity = {
     user_invitation: 'una invitación',
     other: 'un elemento ({table})',
   },
+  named: {
+    project: 'el proyecto «{title}»',
+    project_task: 'la tarea «{title}»',
+    calendar_event: 'el evento «{title}»',
+  },
   module: {
     enabled: '{who} activó {module}',
     disabled: '{who} desactivó {module}',

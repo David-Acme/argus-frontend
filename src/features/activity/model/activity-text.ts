@@ -16,6 +16,19 @@ const THINGS: Readonly<Record<string, { key: TranslationKey; icon: IconName }>> 
   user_invitation: { key: 'screens.activity.thing.user_invitation', icon: 'qr-code' },
 };
 
+function namedThing(table: string, title: string, t: TranslateFn): string | null {
+  switch (table) {
+    case 'project':
+      return t('screens.activity.named.project', { title });
+    case 'project_task':
+      return t('screens.activity.named.project_task', { title });
+    case 'calendar_event':
+      return t('screens.activity.named.calendar_event', { title });
+    default:
+      return null;
+  }
+}
+
 type ModuleEventName =
   | 'enabled'
   | 'disabled'
@@ -75,6 +88,11 @@ export function moduleEventOf(item: Pick<ActivityItem, 'newData' | 'oldData'>): 
   return typeof event === 'string' ? event.trim().toLowerCase() : null;
 }
 
+export function titleOf(item: Pick<ActivityItem, 'newData'>): string | null {
+  const title = asObject(item.newData)?.title;
+  return typeof title === 'string' && title.trim() !== '' ? title.trim() : null;
+}
+
 export const whoOf = (item: Pick<ActivityItem, 'userId'>, names: ReadonlyMap<number, string>, t: TranslateFn): string =>
   names.get(item.userId) ?? t('screens.users.unknown-user', { id: String(item.userId) });
 
@@ -87,7 +105,10 @@ export function describeActivity(item: ActivityItem, context: ActivityContext): 
     return { icon: 'blocks', title: t(`screens.activity.module.${name}`, { who, module: context.moduleName(item.module) }) };
   }
   const thing = THINGS[item.table];
-  const text = thing ? t(thing.key) : t('screens.activity.thing.other', { table: item.table || '?' });
+  const title = titleOf(item);
+  const named = title ? namedThing(item.table, title, t) : null;
+  const text =
+    named ?? (thing ? t(thing.key) : t('screens.activity.thing.other', { table: item.table || '?' }));
   const verb = item.action === 'create' || item.action === 'delete' || item.action === 'read' ? item.action : 'update';
   return { icon: thing?.icon ?? 'history', title: t(`screens.activity.sentence.${verb}`, { who, thing: text }) };
 }

@@ -139,6 +139,34 @@ describe('activity sentences', () => {
     );
   });
 
+  test('every productivity kind the server journals reads as a sentence, in both languages', () => {
+    const say = (patch: Partial<ActivityItem>, lang: TranslateFn = es) =>
+      describeActivity(item({ module: 'productivity', newData: null, ...patch }), { names, moduleName, t: lang }).title;
+    expect(say({ table: 'reminder', action: 'create', module: 'core' })).toBe('Ana Ruiz creó un recordatorio');
+    expect(say({ table: 'reminder', action: 'delete', module: 'core' }, en)).toBe('Ana Ruiz deleted a reminder');
+    expect(say({ table: 'project_member', action: 'update' })).toBe('Ana Ruiz cambió un miembro de un proyecto');
+    expect(say({ table: 'calendar_event_share', action: 'delete' }, en)).toBe('Ana Ruiz deleted a shared event');
+    expect(say({ table: 'project', action: 'update' })).toBe('Ana Ruiz cambió un proyecto');
+    expect(say({ table: 'user', action: 'update', module: 'core' })).toBe('Ana Ruiz cambió una cuenta');
+  });
+
+  test('a shared project, task or event is named by its title, and nothing else is', () => {
+    const say = (patch: Partial<ActivityItem>, lang: TranslateFn = es) =>
+      describeActivity(item({ module: 'productivity', ...patch }), { names, moduleName, t: lang }).title;
+    expect(say({ table: 'project', action: 'create', newData: { title: 'Mudanza' } })).toBe(
+      'Ana Ruiz creó el proyecto «Mudanza»'
+    );
+    expect(say({ table: 'project_task', action: 'update', newData: { title: 'Embalar libros' } }, en)).toBe(
+      'Ana Ruiz changed the task “Embalar libros”'
+    );
+    expect(say({ table: 'calendar_event', action: 'delete', newData: '{"title":"Cumpleaños"}' })).toBe(
+      'Ana Ruiz eliminó el evento «Cumpleaños»'
+    );
+    expect(say({ table: 'reminder', action: 'create', newData: { title: 'Pastilla' } })).toBe('Ana Ruiz creó un recordatorio');
+    expect(say({ table: 'project', action: 'update', newData: { title: '   ' } })).toBe('Ana Ruiz cambió un proyecto');
+    expect(say({ table: 'project', action: 'update', newData: { title: 7 } })).toBe('Ana Ruiz cambió un proyecto');
+  });
+
   test('a person the directory does not know is named by number and an unknown table says so', () => {
     expect(describeActivity(item({ userId: 99, table: 'strange_table' }), { names, moduleName, t: es }).title).toBe(
       'Usuario 99 creó un elemento (strange_table)'

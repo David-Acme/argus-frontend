@@ -3117,6 +3117,14 @@ showing reminders with productivity; Inicio's Today no longer repeats them.
   `applicable` object on `GET /privacy/me` and `/privacy/users`, and
   `GET /sync/activity` (module, userId, action, from, to in seconds, limit up
   to 200, cursor, items and `nextCursor`).
+- Activity sentences (`features/activity/model/activity-text.ts`, R19b
+  2026-10-12): productivity now journals every create, update and delete of
+  projects, tasks, memberships, events, shares and reminders, each with who,
+  kind, table, record and time and no content. A shared project, task or event
+  may carry its `title` in `newData`, and only then does the line name it ("Ana
+  creó el proyecto «Mudanza»", `screens.activity.named.*`); any other table, or
+  a title that is not text, falls back to the generic thing, so the client never
+  shows more than the server's allowlist lets through.
 - Goldens (backend `b6cf00ce`, `592a205d`): every route above is recorded and
   checked field by field in `tests/unit/http-contract.test.ts`: the impact
   answers (surveillance disable and uninstall, one with a real holder and a
