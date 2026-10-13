@@ -1213,7 +1213,8 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     plus each change placed to the second.
   - `tests/unit/shared/libs/recurrence.test.ts` runs every case of the backend's
     `scripts/fixtures/recurrence/cases.json` through both clocks. It reads
-    `ARGUS_RECURRENCE_FIXTURE`, or else `../backend/` beside this repo, and fails
+    `ARGUS_RECURRENCE_FIXTURE`, or else the backend root (`ARGUS_BACKEND_DIR`, or
+    `../backend/` beside this repo), and fails
     naming the path when the file is missing. So a change to the backend's math fails
     here until the app follows it.
 - **The agenda expands repeating events.**
@@ -3721,6 +3722,22 @@ that exists only for tests. The durable answer, when a rule can be separated
 from its transport, is to put the rule in a leaf module: `safety-memo.ts` holds
 the PIN memo's rule and imports nothing but types and the signal, so its suite
 needs no mock at all.
+
+**Tests that read the backend find it through one root.** Nine suites pin the
+app to backend files: the wire vocabulary, the role-access, capability, resource,
+modules and notification-kind contracts, the recorded HTTP fixtures, the privacy
+notice and the recurrence fixture. `tests/support/backend-dir.ts` resolves the
+root:
+- `ARGUS_BACKEND_DIR` when it is set;
+- otherwise the backend beside this frontend checkout (`../backend`).
+
+A checkout with no backend beside it, such as a worktree, sets the variable:
+`ARGUS_BACKEND_DIR=/path/to/backend bun run test`. When neither root
+exists, every one of those suites fails with the same message naming the variable,
+never with an `ENOENT` or a silent skip. A suite that skips because one file is
+missing (an older backend without `capability.hxx`) still skips. The recurrence
+suite keeps its own `ARGUS_RECURRENCE_FIXTURE`, which overrides the path to the
+fixture file alone.
 
 ### End-to-end: two devices against a scripted Argus (2026-10-12, section 6 item 2)
 

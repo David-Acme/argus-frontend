@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { backendPath } from '@tests/support/backend-dir';
 import { readActivityPage } from '@/core/contracts/activity.contract';
 import { moduleActionResultSchema, moduleImpactSchema, readModuleList } from '@/core/contracts/modules.contract';
 import { envelopeSchema, HTTP_CONTRACTS } from '@/core/contracts/http.contract';
@@ -15,7 +16,7 @@ type Probe = {
   response: { status: number; json: unknown };
 };
 
-const FIXTURES = join(import.meta.dir, '../../../backend/scripts/fixtures/http');
+const FIXTURES = backendPath('scripts/fixtures/http');
 const MASKED_STRINGS = new Set(['accessToken', 'refreshToken', 'token', 'capability', 'challengeId']);
 
 const probes: Probe[] = readdirSync(FIXTURES)

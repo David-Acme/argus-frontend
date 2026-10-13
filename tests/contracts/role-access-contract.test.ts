@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { backendPath } from '@tests/support/backend-dir';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import type { UserRole } from '@/core/types';
 import { hasAccess, sessionAccessForRole, type Permission } from '@/shared/libs/role-access';
 
-const backend = join(import.meta.dir, '../../../backend/packages');
+const backend = backendPath('packages');
 const roleAccess = readFileSync(join(backend, 'lib/auth/src/auth/role-access.hxx'), 'utf8');
 const tableNames = readFileSync(join(backend, 'contracts/sync/src/sync/table-name.hxx'), 'utf8');
 

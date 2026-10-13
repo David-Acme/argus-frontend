@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { backendPath } from '@tests/support/backend-dir';
 import { SYNC_OPERATION } from '@/shared/constants';
 import { RESOURCE_DOMAINS, RESOURCE_SCOPES } from '@/shared/constants';
 
-const backend = join(import.meta.dir, '../../../backend/packages');
+const backend = backendPath('packages');
 const header = readFileSync(join(backend, 'contracts/sync/src/sync/resource-change.hxx'), 'utf8');
 const operations = readFileSync(join(backend, 'contracts/sync/src/sync/sync-operation.hxx'), 'utf8');
 

@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { backendPath } from '@tests/support/backend-dir';
 import type { UserRole } from '@/core/types';
 import { CAPABILITY, CAPABILITY_MODULE, type Capability } from '@/shared/constants';
 import { coreCapabilities } from '@/shared/libs/capabilities';
 import { accessFor, serverCapabilities } from '@tests/support/access-fixtures';
 
-const authSource = join(import.meta.dir, '../../../backend/packages/lib/auth/src/auth');
+const authSource = backendPath('packages/lib/auth/src/auth');
 const readSource = (name: string) => {
   const path = join(authSource, name);
   return existsSync(path) ? readFileSync(path, 'utf8') : '';

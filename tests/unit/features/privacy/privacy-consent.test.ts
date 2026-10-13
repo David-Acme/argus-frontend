@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { backendRoot } from '@tests/support/backend-dir';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 import type { ModuleCatalog, PrivacyMe } from '@/core/types';
 import { moduleRecord } from '@tests/support/access-fixtures';
@@ -22,7 +23,7 @@ import {
   withChoice,
 } from '@/features/privacy/model/privacy';
 
-const backend = join(import.meta.dir, '../../../../../backend');
+const backend = backendRoot();
 
 const ALL = { presence: true, faceCameras: true, voiceLearning: true, cameraAudio: true };
 

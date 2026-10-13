@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { backendPath } from '@tests/support/backend-dir';
 import { readModuleActionResult, readModuleData, readModuleFrame, readModuleList } from '@/core/contracts/modules.contract';
 import { MODULE_API_PREFIXES } from '@/shared/constants';
 
@@ -225,7 +225,7 @@ describe('module intro and roles', () => {
   });
 });
 
-const roleAccess = join(import.meta.dir, '../../../backend/packages/lib/auth/src/auth/role-access.hxx');
+const roleAccess = backendPath('packages/lib/auth/src/auth/role-access.hxx');
 const header = existsSync(roleAccess) ? readFileSync(roleAccess, 'utf8') : '';
 
 describe('gated API prefixes match the backend', () => {

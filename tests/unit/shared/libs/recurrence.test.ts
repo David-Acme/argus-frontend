@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { backendPath } from '@tests/support/backend-dir';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn, WallTime, ZoneClock } from '@/core/types';
@@ -33,9 +33,8 @@ type SeriesCase = {
 
 type Fixture = { cases: SeriesCase[]; invalid: string[] };
 
-const FRONTEND_ROOT = join(import.meta.dir, '../../../..');
 const FIXTURE_PATH =
-  process.env.ARGUS_RECURRENCE_FIXTURE ?? join(FRONTEND_ROOT, '../backend/scripts/fixtures/recurrence/cases.json');
+  process.env.ARGUS_RECURRENCE_FIXTURE ?? backendPath('scripts/fixtures/recurrence/cases.json');
 
 function readFixture(): Fixture | string {
   if (!existsSync(FIXTURE_PATH)) {

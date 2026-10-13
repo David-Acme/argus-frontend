@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { backendPath } from '@tests/support/backend-dir';
 import {
   NOTIFICATION_KIND_MODULES,
   moduleOfNotification,
@@ -8,11 +8,10 @@ import {
 } from '@/features/home/model/notification-modules';
 import { MODULE_IDS } from '@/shared/constants';
 
-const headerPath = join(
-  import.meta.dir,
-  '../../../backend/services/notification/src/shared/vocabulary/notification-kind.hxx'
+const header = readFileSync(
+  backendPath('services/notification/src/shared/vocabulary/notification-kind.hxx'),
+  'utf8'
 );
-const header = existsSync(headerPath) ? readFileSync(headerPath, 'utf8') : '';
 
 function moduleConstants(): Map<string, string> {
   return new Map(

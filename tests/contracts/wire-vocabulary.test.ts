@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { backendRoot } from '@tests/support/backend-dir';
 import * as voice from '@/features/voice/constants/voice';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import { ARGUS_DEFAULT_ROUTE_PORTS } from '@/shared/constants/net.constant';
 import { SYNC_OPERATION } from '@/shared/constants/sync.constant';
 
-const backend = join(import.meta.dir, '../../../backend');
+const backend = backendRoot();
 const read = (path: string) => readFileSync(join(backend, path), 'utf8');
 
 describe('wire vocabulary matches the backend', () => {
