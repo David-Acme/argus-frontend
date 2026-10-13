@@ -7,7 +7,9 @@ import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { isPendingRecordId } from '@/shared/libs/optimistic';
+import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { cn } from '@/shared/libs/utils';
+import { repeatsOf } from '@/features/reminders/model/reminder-repeat';
 import { reminderTiming, reminderWhen } from '@/features/reminders/model/reminder-rows';
 
 type ReminderRowProps = {
@@ -16,22 +18,39 @@ type ReminderRowProps = {
   editable: boolean;
   onToggle: (reminder: IReminderCacheRow, done: boolean) => void;
   onEdit: (reminder: IReminderCacheRow) => void;
+  onStopRepeating: (reminder: IReminderCacheRow) => void;
   onDelete: (reminder: IReminderCacheRow) => void;
 };
 
-type ReminderAction = 'edit' | 'delete';
+type ReminderAction = 'edit' | 'stop-repeating' | 'delete';
 
-export function ReminderRow({ reminder, now, editable, onToggle, onEdit, onDelete }: ReminderRowProps) {
+export function ReminderRow({
+  reminder,
+  now,
+  editable,
+  onToggle,
+  onEdit,
+  onStopRepeating,
+  onDelete,
+}: ReminderRowProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const pending = isPendingRecordId(reminder.id);
   const timing = reminderTiming(reminder, now, date);
   const overdue = timing === 'overdue';
   const when = reminderWhen(reminder, now, date, t);
-  const options: MenuOption<ReminderAction>[] = [
-    { value: 'edit', label: t('common.edit'), icon: 'pencil' },
-    { value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true },
-  ];
+  const repeats = repeatsOf(reminder);
+  const repeat = recurrenceLabel(reminder.recurrenceRule, t);
+  const caption = [overdue ? t('screens.reminders.overdue') : null, when, repeat].filter(Boolean).join(' · ');
+  const options: MenuOption<ReminderAction>[] = [{ value: 'edit', label: t('common.edit'), icon: 'pencil' }];
+  if (repeats) options.push({ value: 'stop-repeating', label: t('screens.reminders.stop-repeating'), icon: 'repeat-off' });
+  options.push({ value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true });
+
+  const select = (action: ReminderAction) => {
+    if (action === 'edit') onEdit(reminder);
+    else if (action === 'stop-repeating') onStopRepeating(reminder);
+    else onDelete(reminder);
+  };
 
   return (
     <View className={cn('min-h-14 flex-row items-center gap-1 rounded-2xl px-1', pending && 'opacity-60')}>
@@ -53,7 +72,7 @@ export function ReminderRow({ reminder, now, editable, onToggle, onEdit, onDelet
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${reminder.title}. ${when}`}
+        accessibilityLabel={`${reminder.title}. ${caption}`}
         disabled={!editable || pending}
         onPress={() => onEdit(reminder)}
         className="min-w-0 flex-1 gap-0.5 py-2 active:opacity-70">
@@ -63,14 +82,22 @@ export function ReminderRow({ reminder, now, editable, onToggle, onEdit, onDelet
           className={cn('font-medium', reminder.isCompleted && 'text-muted-foreground line-through')}>
           {reminder.title}
         </Text>
-        <Text variant="caption" className={cn(overdue && 'text-error-strong')} numberOfLines={1}>
-          {overdue ? `${t('screens.reminders.overdue')} · ${when}` : when}
-        </Text>
+        <View className="flex-row items-center gap-1">
+          {repeats ? (
+            <Icon
+              name="repeat"
+              className={cn('size-3.5', overdue ? 'text-error-strong' : 'text-muted-foreground')}
+            />
+          ) : null}
+          <Text variant="caption" className={cn('min-w-0 flex-1', overdue && 'text-error-strong')} numberOfLines={1}>
+            {caption}
+          </Text>
+        </View>
       </Pressable>
       {editable && !pending ? (
         <AdaptiveMenu
           options={options}
-          onSelect={(action) => (action === 'edit' ? onEdit(reminder) : onDelete(reminder))}
+          onSelect={select}
           title={reminder.title}
           closeLabel={t('common.close')}
           trigger={

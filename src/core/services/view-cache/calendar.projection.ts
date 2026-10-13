@@ -9,6 +9,8 @@ import type {
   AgendaWindow,
   CalendarEntry,
   CalendarEntryState,
+  RecurrenceRule,
+  ZoneClock,
 } from '@/core/types';
 import { CALENDAR_OPEN_EVENT_MS } from '@/shared/constants/calendar.constant';
 import {
@@ -17,6 +19,13 @@ import {
   VIEW_CACHE_CALENDAR_MONTH_DAYS,
   VIEW_CACHE_KEYS,
 } from '@/shared/constants/cache.constant';
+import { RECURRENCE_OCCURRENCE_LIMIT } from '@/shared/constants/recurrence.constant';
+import {
+  firstOccurrenceAfter,
+  occurrencesBetween,
+  parseRecurrenceRule,
+  zoneClock,
+} from '@/shared/libs/recurrence';
 import { addDays, endOfDay, startOfDay } from './dates';
 import type { ProjectionContext, ViewWrite } from './projection';
 
@@ -26,9 +35,90 @@ export type CalendarProjectionInput = {
   events: readonly ICalendarEventCacheSource[];
   reminders: readonly CalendarReminder[];
   tasks: readonly IProjectTaskCalendarCacheSource[];
+  series?: readonly ICalendarEventCacheSource[];
+  zone?: string | null;
 };
 
 type Range = { from: number; to: number };
+
+type RecurringEvent = {
+  event: ICalendarEventCacheSource;
+  rule: RecurrenceRule;
+  text: string;
+};
+
+function recurringEvents({ events, series = [] }: CalendarProjectionInput): Map<string, RecurringEvent> {
+  const recurring = new Map<string, RecurringEvent>();
+  for (const event of [...series, ...events]) {
+    const text = event.recurrenceRule ?? null;
+    const rule = parseRecurrenceRule(text);
+    if (rule && text) recurring.set(event.id, { event, rule, text });
+    else recurring.delete(event.id);
+  }
+  return recurring;
+}
+
+const occurrenceId = (eventId: string, startsAt: number): string =>
+  `event:${eventId}@${new Date(startsAt).toISOString()}`;
+
+function eventEntry(event: ICalendarEventCacheSource, startsAt: number, endsAt: number | null): CalendarEntry {
+  return {
+    id: `event:${event.id}`,
+    source: 'event',
+    ownerId: event.ownerId,
+    title: event.title,
+    startsAt,
+    endsAt,
+    isAllDay: event.isAllDay,
+    status: 'upcoming',
+    color: event.color || undefined,
+    location: event.location || undefined,
+    description: event.description || undefined,
+    projectId: event.projectId,
+  };
+}
+
+function occurrenceEntries({ event, rule, text }: RecurringEvent, range: Range, clock: ZoneClock): CalendarEntry[] {
+  const anchor = event.startsAt.getTime();
+  const endsAt = event.endsAt?.getTime() ?? null;
+  const series = { startsAt: anchor, endsAt, rule: text };
+  return occurrencesBetween({
+    rule,
+    anchor,
+    from: range.from,
+    to: range.to,
+    clock,
+    limit: RECURRENCE_OCCURRENCE_LIMIT,
+  }).map((startsAt) => ({
+    ...eventEntry(event, startsAt, endsAt === null ? null : startsAt + (endsAt - anchor)),
+    id: occurrenceId(event.id, startsAt),
+    series,
+  }));
+}
+
+function eventEntries(input: CalendarProjectionInput, range: Range): CalendarEntry[] {
+  const recurring = recurringEvents(input);
+  const entries: CalendarEntry[] = [];
+  for (const event of input.events) {
+    if (recurring.has(event.id)) continue;
+    const startsAt = event.startsAt.getTime();
+    if (startsAt < range.from || startsAt > range.to) continue;
+    entries.push(eventEntry(event, startsAt, event.endsAt?.getTime() ?? null));
+  }
+  if (recurring.size === 0) return entries;
+  const clock = zoneClock(input.zone);
+  for (const series of recurring.values()) entries.push(...occurrenceEntries(series, range, clock));
+  return entries;
+}
+
+function seriesContinueAfter(input: CalendarProjectionInput, moment: number): boolean {
+  const recurring = recurringEvents(input);
+  if (recurring.size === 0) return false;
+  const clock = zoneClock(input.zone);
+  return [...recurring.values()].some(
+    ({ event, rule }) => firstOccurrenceAfter({ rule, anchor: event.startsAt.getTime(), moment, clock }) !== null
+  );
+}
 
 export const calendarMonthScope = (value: Date): string =>
   `month.${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
@@ -38,33 +128,9 @@ export const calendarMonthRange = (value: Date): Range => ({
   to: new Date(value.getFullYear(), value.getMonth(), 1 + VIEW_CACHE_CALENDAR_MONTH_DAYS).getTime() - 1,
 });
 
-export const toCalendarEntries = (
-  events: readonly ICalendarEventCacheSource[],
-  reminders: readonly CalendarReminder[],
-  tasks: readonly IProjectTaskCalendarCacheSource[],
-  from: number,
-  to: number,
-): CalendarEntry[] => {
-  const entries: CalendarEntry[] = [];
-
-  for (const event of events) {
-    const startsAt = event.startsAt.getTime();
-    if (startsAt < from || startsAt > to) continue;
-    entries.push({
-      id: `event:${event.id}`,
-      source: 'event',
-      ownerId: event.ownerId,
-      title: event.title,
-      startsAt,
-      endsAt: event.endsAt?.getTime() ?? null,
-      isAllDay: event.isAllDay,
-      status: 'upcoming',
-      color: event.color || undefined,
-      location: event.location || undefined,
-      description: event.description || undefined,
-      projectId: event.projectId,
-    });
-  }
+export const toCalendarEntries = (input: CalendarProjectionInput, { from, to }: Range): CalendarEntry[] => {
+  const { reminders, tasks } = input;
+  const entries = eventEntries(input, { from, to });
 
   for (const reminder of reminders) {
     const startsAt = reminder.scheduledAt.getTime();
@@ -141,7 +207,7 @@ export function projectCalendar(input: CalendarProjectionInput, anchor: Date): V
     return {
       key: VIEW_CACHE_KEYS.calendarEntries,
       scope: calendarMonthScope(month),
-      rows: toCalendarEntries(input.events, input.reminders, input.tasks, range.from, range.to),
+      rows: toCalendarEntries(input, range),
       limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
     };
   });
@@ -150,12 +216,11 @@ export function projectCalendar(input: CalendarProjectionInput, anchor: Date): V
 export const todayRange = (now: Date): Range => ({ from: startOfDay(now), to: endOfDay(now) });
 
 export function projectAgenda(input: CalendarProjectionInput, { now }: ProjectionContext): ViewWrite[] {
-  const { from, to } = todayRange(now);
   return [
     {
       key: VIEW_CACHE_KEYS.dashboardAgenda,
       scope: 'today',
-      rows: toCalendarEntries(input.events, input.reminders, input.tasks, from, to),
+      rows: toCalendarEntries(input, todayRange(now)),
       limit: VIEW_CACHE_CALENDAR_ENTRY_LIMIT,
     },
   ];
@@ -176,8 +241,8 @@ export type AgendaFeedInput = CalendarProjectionInput & {
 export function projectAgendaFeed(input: AgendaFeedInput, scope: string, range: Range): ViewWrite[] {
   const remindersLater = input.reminders.some((reminder) => reminder.scheduledAt.getTime() > range.to);
   const value: AgendaFeed = {
-    rows: toCalendarEntries(input.events, input.reminders, input.tasks, range.from, range.to),
-    hasMore: input.eventsLater || input.tasksLater || remindersLater,
+    rows: toCalendarEntries(input, range),
+    hasMore: input.eventsLater || input.tasksLater || remindersLater || seriesContinueAfter(input, range.to),
     from: range.from,
     to: range.to,
   };

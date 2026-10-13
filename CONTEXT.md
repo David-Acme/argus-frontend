@@ -1166,6 +1166,73 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   the two frames arrives first removes the row, and the other then finds nothing.
   Patches of the same row before the removal are dropped, and later ones are ignored.
 
+### Recurring reminders and repeating events (F6, 2026-10-13)
+
+- **The household zone** is the context's `timeZone` (the IANA name the backend host
+  runs in, sent on `InitialInfo` and `ContextUpdate`). `readContext` reads a blank or
+  non-string value as `null`, and `AppAccess.timeZone` is optional, so an access cached
+  before the field existed stays valid. `contextEngine.onChange` and `applyCachedAccess`
+  hand it to `viewCacheCoordinatorService.setHouseholdZone`, and sign-out clears it.
+  Without it, or with a zone this runtime does not know, the device zone is used.
+- **One occurrence math, the backend's.** `shared/libs/recurrence.ts` ports
+  `services/productivity/src/shared/services/recurrence/recurrence.cc`:
+  - The grammar is the same: uppercase `FREQ` (`DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`),
+    an optional `INTERVAL` from 1 to 999, each key at most once, and no trailing `;`.
+  - The steps are the same. Each occurrence keeps the anchor's wall clock, a day past
+    the end of a month clamps to its last day and comes back the next month, and
+    29 February clamps in common years.
+  - The search is the same: "the first occurrence strictly after", estimated and then
+    walked.
+  - Wall time in the device zone goes through `Date`. Any other zone goes through
+    `Intl.DateTimeFormat.formatToParts`, sampling the offset a day before and a day
+    after. A repeated hour takes the earliest instant, and a skipped hour moves
+    forward, as `mktime` and `Date` do.
+  - `tests/unit/shared/libs/recurrence.test.ts` runs every case of the backend's
+    `scripts/fixtures/recurrence/cases.json` through both clocks. It reads
+    `ARGUS_RECURRENCE_FIXTURE`, or else `../backend/` beside this repo, and fails
+    naming the path when the file is missing. So a change to the backend's math fails
+    here until the app follows it.
+- **The agenda expands repeating events.**
+  - `calendarEventService.observeRecurring()` (the rows with a rule, one shared
+    `series` source) and the household zone feed the today, month and agenda-feed
+    projections. `toCalendarEntries` expands each event whose rule parses into the
+    occurrences that start inside the window (at most `RECURRENCE_OCCURRENCE_LIMIT`
+    per series), in the household zone. Entries carry instants, so they are shown in
+    the device zone.
+  - An event whose rule the app cannot read (the event DTO checks only its length) is
+    one plain entry at its start. A range row without a rule wins over a stale series
+    row.
+  - An occurrence's id is `event:<id>@<ISO start>`. `calendarEntryRecordId` drops the
+    suffix, so edit, share and delete address the event, and `CalendarEntry.series`
+    keeps the series' own start, end and rule.
+  - The agenda feed has more while a series continues, which is always, because the
+    grammar has no end.
+- **An occurrence edits the series.** The form opens on the series' own start, so
+  saving a new title does not move the series to the tapped day, and a hint says the
+  change applies to every occurrence. The menu says "Editar la serie" and "Eliminar
+  todas las repeticiones". An optimistic patch of an occurrence changes only its text
+  fields; its times come back when the event row changes and the series re-expands.
+  Reminders are not expanded: the agenda shows a reminder once, at its current time.
+- **Reminder repeat.**
+  - The edit dialog has a repeat picker (No se repite, Cada día, Cada semana, Cada mes,
+    Cada año) and, when it repeats, an interval field with the backend DTO's own check
+    (a whole number from 1 to 999, `isIntervalText`).
+  - The body carries `recurrenceRule` only when the picker changed. A rule the app
+    cannot read therefore survives an edit of the title.
+  - "No se repite" sends `null`, which the backend reads as "stop" while keeping
+    `scheduledAt`. "Dejar de repetir" is in the row menu (immediate, with a toast), and
+    the dialog has a shortcut that sets the picker to none.
+  - Rows show the rule ("Cada semana") with a repeat icon.
+- **Completing a recurring reminder** still sends `{isCompleted: true}`. The backend
+  rolls it to `firstOccurrenceAfter(rule, recurrence_anchor, max(scheduledAt, now))`
+  and keeps it open.
+  - The optimistic intent shows that roll at once, with the same math in the household
+    zone and a toast ("Hecho. Próxima vez: …").
+  - `recurrence_anchor` is not synced, so the prediction anchors on the row's
+    `scheduledAt`. After a clamp (a monthly rule on the 31st, a yearly one on
+    29 February) it can land on a clamped day the backend would not pick. The audit
+    diff of the real row then replaces it, because the intent drops on the server's row.
+
 ### People and access surfaces
 
 - `/profile` is the personal, Threads-inspired but Argus-adapted account view:

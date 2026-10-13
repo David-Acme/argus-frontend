@@ -34,12 +34,15 @@ contextEngine.onChange((access) => {
   const gained = gainedModules(known, active);
   known = active;
   viewCacheCoordinatorService.setActiveModules(active);
+  viewCacheCoordinatorService.setHouseholdZone(access.timeZone ?? null);
   if (gained.length > 0) void synchronizeService.syncOnce();
 });
 
 export function applyCachedAccess(): void {
-  known = activeModulesOf(contextEngine.current());
+  const access = contextEngine.current();
+  known = activeModulesOf(access);
   viewCacheCoordinatorService.setActiveModules(known);
+  viewCacheCoordinatorService.setHouseholdZone(access?.timeZone ?? null);
 }
 
 useAuthStore.subscribe((state) => {
@@ -47,6 +50,7 @@ useAuthStore.subscribe((state) => {
   contextEngine.stop();
   known = null;
   viewCacheCoordinatorService.setActiveModules(null);
+  viewCacheCoordinatorService.setHouseholdZone(null);
 });
 
 export { accessOf, activeModulesOf, gainedModules, isStaleContext, withModuleOff } from './context-state';

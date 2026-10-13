@@ -1,4 +1,4 @@
-import { shareReplay, type Observable, type Subscription } from 'rxjs';
+import { BehaviorSubject, shareReplay, type Observable, type Subscription } from 'rxjs';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { calendarEventShareService } from '@/core/services/calendar-event-share.service';
 import { cameraService } from '@/core/services/camera.service';
@@ -45,6 +45,7 @@ const shared = <T>(source: Observable<T>): Observable<T> =>
   source.pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
 const moduleGate = new ModuleSourceGate();
+const householdZone = new BehaviorSubject<string | null>(null);
 
 const SURVEILLANCE = MODULE_IDS.surveillance;
 const PRODUCTIVITY = MODULE_IDS.productivity;
@@ -57,6 +58,8 @@ function sessionSources(userId: string) {
     tasks: shared(moduleGate.of(PRODUCTIVITY, projectTaskService.observeAll(), [])),
     members: shared(moduleGate.of(PRODUCTIVITY, projectMemberService.observeAll(), [])),
     calendarShares: shared(moduleGate.of(PRODUCTIVITY, calendarEventShareService.observeAll(), [])),
+    series: shared(moduleGate.of(PRODUCTIVITY, calendarEventService.observeRecurring(), [])),
+    zone: householdZone.asObservable(),
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
     users: shared(userService.observeDirectory()),
@@ -131,6 +134,8 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(from, to), []),
           reminders: sources.reminders,
           tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(from, to), []),
+          series: sources.series,
+          zone: sources.zone,
         }),
         project: projectAgenda,
       },
@@ -187,6 +192,8 @@ function startPagedViews(
                 tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(range.from, range.to), []),
                 eventsLater: moduleGate.of(PRODUCTIVITY, calendarEventService.observeAnyStartingAfter(range.to), false),
                 tasksLater: moduleGate.of(PRODUCTIVITY, projectTaskService.observeAnyDueAfter(range.to), false),
+                series: sources.series,
+                zone: sources.zone,
               }),
               project: (values) => projectAgendaFeed(values, scope, range),
             },
@@ -233,6 +240,10 @@ class ViewCacheCoordinatorService {
 
   setActiveModules(ids: ReadonlySet<string> | null): void {
     moduleGate.set(ids);
+  }
+
+  setHouseholdZone(zone: string | null): void {
+    if (householdZone.value !== zone) householdZone.next(zone);
   }
 
   watchPages(key: PagedViewKey, scope: string): void {
@@ -286,6 +297,8 @@ class ViewCacheCoordinatorService {
           events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(window.from, window.to), []),
           reminders: sources.reminders,
           tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(window.from, window.to), []),
+          series: sources.series,
+          zone: sources.zone,
         }),
         project: (values) => projectCalendar(values, anchor),
         tracked: ['calendar.entries'],

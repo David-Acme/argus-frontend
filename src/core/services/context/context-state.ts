@@ -9,6 +9,7 @@ export const accessOf = (context: AppContext, now: number): AppAccess => ({
   roles: context.roles,
   modules: context.modules,
   version: context.version,
+  timeZone: context.timeZone ?? null,
   receivedAt: now,
 });
 

@@ -23,6 +23,7 @@ import {
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { FormTextField } from '@/shared/components/ui/form-text-field';
+import { Icon } from '@/shared/components/ui/icon';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { DayPickerField } from '@/features/agenda/components/day-picker-field';
@@ -31,6 +32,7 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { calendarEventFormActions } from '@/features/agenda/model/calendar-entry-actions';
 
 type CalendarEventFormProps = {
@@ -108,6 +110,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
 
   const allDay = useWatch({ control: form.control, name: 'isAllDay' });
   const day = useWatch({ control: form.control, name: 'day' });
+  const seriesLabel = recurrenceLabel(event?.recurrenceRule, t);
 
   const eventBody = (values: EventValues): ICalendarEventCreate => ({
     title: values.title,
@@ -189,6 +192,15 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
       <FormScrollView formScroll={formScroll} maxHeight={bodyHeight}>
         <Form {...form}>
           <View className="gap-3.5 pb-1">
+            {seriesLabel ? (
+              <View className="bg-surface-secondary flex-row items-center gap-2 rounded-xl px-3 py-2.5">
+                <Icon name="repeat" className="text-muted-foreground size-4" />
+                <Text variant="caption" className="flex-1">
+                  {t('screens.agenda.series-hint', { repeat: seriesLabel })}
+                </Text>
+              </View>
+            ) : null}
+
             <FormTextField
               control={form.control}
               name="title"

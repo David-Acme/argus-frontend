@@ -56,6 +56,8 @@ import Play from 'lucide-react-native/icons/play';
 import Plus from 'lucide-react-native/icons/plus';
 import QrCode from 'lucide-react-native/icons/qr-code';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Repeat from 'lucide-react-native/icons/repeat';
+import RepeatOff from 'lucide-react-native/icons/repeat-off';
 import ScanBarcode from 'lucide-react-native/icons/scan-barcode';
 import ScanFace from 'lucide-react-native/icons/scan-face';
 import Search from 'lucide-react-native/icons/search';
@@ -151,6 +153,8 @@ export const ICONS = {
   phone: Phone,
   plus: Plus,
   'refresh-cw': RefreshCw,
+  repeat: Repeat,
+  'repeat-off': RepeatOff,
   'log-out': LogOut,
   'wifi-off': WifiOff,
   'qr-code': QrCode,

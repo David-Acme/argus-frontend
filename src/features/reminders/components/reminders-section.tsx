@@ -25,7 +25,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
   const { t } = useTranslation();
   const now = useNow(CLOCK_TICK_MS);
   const { has } = useCapabilities();
-  const { groups, complete, remove } = useReminders();
+  const { groups, complete, stopRepeating, remove } = useReminders();
   const [editing, setEditing] = useState<IReminderCacheRow | null>(null);
   const [showDone, setShowDone] = useState(false);
 
@@ -45,6 +45,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
       editable={editable}
       onToggle={(target, isDone) => void complete(target, isDone)}
       onEdit={setEditing}
+      onStopRepeating={(target) => void stopRepeating(target)}
       onDelete={(target) => void remove(target)}
     />
   );

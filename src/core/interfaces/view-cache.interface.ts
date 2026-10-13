@@ -136,6 +136,7 @@ export interface ICalendarEventCacheSource {
   location: string;
   description: string;
   projectId: string | null;
+  recurrenceRule?: string | null;
 }
 
 export interface ICalendarEventShareCacheRow {
@@ -154,6 +155,7 @@ export interface ICalendarEventFormRecord {
   isAllDay: boolean;
   location: string;
   description: string;
+  recurrenceRule?: string | null;
 }
 
 export interface IReminderCacheSource {
@@ -181,6 +183,7 @@ export interface IReminderUpdate {
   description?: string | null;
   scheduledAt?: number;
   isCompleted?: boolean;
+  recurrenceRule?: string | null;
 }
 
 export interface IProjectTaskCalendarCacheSource {

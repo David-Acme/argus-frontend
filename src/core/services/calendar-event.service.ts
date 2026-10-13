@@ -10,6 +10,19 @@ import type {
 import { DatabaseService } from './database.service';
 import { httpService, idempotentConfig } from '@/core/services/http';
 
+const CALENDAR_SOURCE_COLUMNS = [
+  'owner_id',
+  'title',
+  'starts_at',
+  'ends_at',
+  'is_all_day',
+  'color',
+  'project_id',
+  'location',
+  'description',
+  'recurrence_rule',
+];
+
 class CalendarEventService extends DatabaseService<'calendar_event'> {
   constructor() {
     super('calendar_event');
@@ -22,24 +35,19 @@ class CalendarEventService extends DatabaseService<'calendar_event'> {
   }
 
   observeRange(fromMs: number, toMs: number): Observable<CalendarEventModel[]> {
-    return this.observeManyWithColumns(
-      [
-        'owner_id',
-        'title',
-        'starts_at',
-        'ends_at',
-        'is_all_day',
-        'color',
-        'project_id',
-        'location',
-        'description',
-      ],
-      [
-        Q.where('starts_at', Q.gte(fromMs)),
-        Q.where('starts_at', Q.lte(toMs)),
-        Q.sortBy('starts_at', Q.asc),
-      ],
-    );
+    return this.observeManyWithColumns(CALENDAR_SOURCE_COLUMNS, [
+      Q.where('starts_at', Q.gte(fromMs)),
+      Q.where('starts_at', Q.lte(toMs)),
+      Q.sortBy('starts_at', Q.asc),
+    ]);
+  }
+
+  observeRecurring(): Observable<CalendarEventModel[]> {
+    return this.observeManyWithColumns(CALENDAR_SOURCE_COLUMNS, [
+      Q.where('recurrence_rule', Q.notEq(null)),
+      Q.where('recurrence_rule', Q.notEq('')),
+      Q.sortBy('starts_at', Q.asc),
+    ]);
   }
 
   observeForOwner(ownerId: string): Observable<CalendarEventModel[]> {

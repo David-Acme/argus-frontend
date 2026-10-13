@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { recurrenceLabel } from '@/shared/libs/recurrence';
 import {
   calendarEntryDetailDialogLayout,
   calendarEntryDetailRows,
@@ -49,6 +50,7 @@ export function CalendarEntryDetail({ entry, now, open, onOpenChange }: Calendar
           doing: t('screens.agenda.state-doing'),
           done: t('screens.agenda.state-done'),
         },
+        repeat: { label: t('screens.agenda.detail-repeat'), value: recurrenceLabel(entry.series?.rule, t) },
       },
       formatDate: (value) => date.formatFullDate(new Date(value)),
       formatTime: (item) =>

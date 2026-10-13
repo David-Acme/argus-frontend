@@ -19,7 +19,7 @@ import { enIN } from 'date-fns/locale/en-IN';
 import { enNZ } from 'date-fns/locale/en-NZ';
 import { enUS } from 'date-fns/locale/en-US';
 import { es } from 'date-fns/locale/es';
-import type { CalendarView, LanguageCode } from '@/core/types';
+import type { CalendarView, LanguageCode, WallTime } from '@/core/types';
 import { DAYS_PER_WEEK, MONTH_GRID_ROWS } from '@/shared/constants/calendar.constant';
 import { TIMELINE_HOURS } from '@/shared/constants/dashboard.constant';
 
@@ -183,4 +183,49 @@ export function createDateFormatter(
     minuteOf: (value) => value.getMinutes(),
     isSameMonth,
   };
+}
+
+export type ZoneWallReader = (epochMs: number) => WallTime;
+
+const WALL_PARTS = ['year', 'month', 'day', 'hour', 'minute', 'second'] as const;
+
+const isWallPart = (type: string): type is keyof WallTime => (WALL_PARTS as readonly string[]).includes(type);
+
+export function zoneWallReader(zone: string): ZoneWallReader | null {
+  let formatter: Intl.DateTimeFormat;
+  try {
+    formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    });
+  } catch {
+    return null;
+  }
+  const read: ZoneWallReader = (epochMs) => {
+    const wall: WallTime = { year: Number.NaN, month: Number.NaN, day: Number.NaN, hour: Number.NaN, minute: Number.NaN, second: Number.NaN };
+    let afternoon: boolean | null = null;
+    for (const part of formatter.formatToParts(new Date(epochMs))) {
+      if (part.type === 'dayPeriod') afternoon = /p/i.test(part.value);
+      else if (isWallPart(part.type)) wall[part.type] = Number(part.value);
+    }
+    wall.hour %= 24;
+    if (afternoon !== null) wall.hour = (wall.hour % 12) + (afternoon ? 12 : 0);
+    return wall;
+  };
+  const probe = read(0);
+  return WALL_PARTS.every((key) => Number.isFinite(probe[key])) ? read : null;
+}
+
+export function deviceTimeZone(): string | null {
+  try {
+    return new Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
+  } catch {
+    return null;
+  }
 }

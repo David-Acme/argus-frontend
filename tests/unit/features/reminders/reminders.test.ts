@@ -13,6 +13,16 @@ import {
   updateBody,
 } from '@/features/reminders/model/reminder-form';
 import { REMINDER_LENSES, byScheduled } from '@/features/reminders/model/reminder-optimistic';
+import {
+  isIntervalText,
+  NO_REPEAT,
+  repeatChoiceOf,
+  repeatDraftOf,
+  repeatFromChoice,
+  repeatsOf,
+  rolledSchedule,
+} from '@/features/reminders/model/reminder-repeat';
+import { intlZoneClock } from '@/shared/libs/recurrence';
 import { matchesReminder, reminderTiming, reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
 import { searchKinds, searchPlaceholder } from '@/features/home/model/home-search';
 
@@ -41,6 +51,16 @@ const row = (patch: Partial<IReminderCacheRow> = {}): IReminderCacheRow => ({
   isCompleted: false,
   completedAt: null,
   recurrenceRule: null,
+  ...patch,
+});
+
+const intentFor = (patch: Partial<OptimisticIntent>): OptimisticIntent => ({
+  id: 'i1',
+  table: 'reminder',
+  kind: 'update',
+  recordId: '1',
+  values: {},
+  confirmed: false,
   ...patch,
 });
 
@@ -103,7 +123,67 @@ describe('reminder form', () => {
   });
 
   test('a new draft starts at the time the screen offers', () => {
-    expect(draftOf(null, NOW)).toEqual({ title: '', description: '', at: NOW });
+    expect(draftOf(null, NOW)).toEqual({ title: '', description: '', at: NOW, repeat: NO_REPEAT });
+  });
+});
+
+describe('reminder repeat', () => {
+  const weekly = row({ recurrenceRule: 'FREQ=WEEKLY' });
+
+  test('the picker starts from the saved rule, and a rule the app cannot read starts as no repeat', () => {
+    expect(repeatDraftOf('FREQ=MONTHLY;INTERVAL=2')).toEqual({ frequency: 'MONTHLY', interval: 2 });
+    expect(repeatChoiceOf(repeatDraftOf('FREQ=DAILY'))).toBe('DAILY');
+    expect(repeatDraftOf(null)).toEqual(NO_REPEAT);
+    expect(repeatDraftOf('FREQ=WEEKLY;BYDAY=MO')).toEqual(NO_REPEAT);
+    expect(repeatsOf(weekly)).toBe(true);
+    expect(repeatsOf(row())).toBe(false);
+  });
+
+  test('an edit sends the rule only when the picker changed it', () => {
+    const draft = draftOf(weekly, NOW);
+    expect(updateBody(weekly, draft)).toEqual({});
+    expect(updateBody(weekly, { ...draft, repeat: repeatFromChoice('WEEKLY', ' 2 ') })).toEqual({
+      recurrenceRule: 'FREQ=WEEKLY;INTERVAL=2',
+    });
+    expect(updateBody(row(), { ...draftOf(row(), NOW), repeat: repeatFromChoice('DAILY', '1') })).toEqual({
+      recurrenceRule: 'FREQ=DAILY',
+    });
+    const unknown = row({ recurrenceRule: 'FREQ=WEEKLY;BYDAY=MO' });
+    expect(updateBody(unknown, { ...draftOf(unknown, NOW), title: 'Otro' })).toEqual({ title: 'Otro' });
+  });
+
+  test('no repeat stops the series and keeps the time', () => {
+    const body = updateBody(weekly, { ...draftOf(weekly, NOW), repeat: repeatFromChoice('none', '7') });
+    expect(body).toEqual({ recurrenceRule: null });
+    const [stopped] = applyIntents([weekly], [intentFor({ values: { ...body } })], REMINDER_LENSES);
+    expect(stopped).toMatchObject({ recurrenceRule: null, scheduledAt: weekly.scheduledAt, isCompleted: false });
+  });
+
+  test('the interval is a whole number from 1 to 999, as the backend checks it', () => {
+    expect(['1', ' 12 ', '999'].map(isIntervalText)).toEqual([true, true, true]);
+    expect(['0', '1000', '', '2.5', '-3', 'dos'].map(isIntervalText)).toEqual([false, false, false, false, false, false]);
+    expect(draftIssues({ title: 'a', description: '', at: NOW, repeat: repeatFromChoice('WEEKLY', '0') })).toEqual([
+      'interval-invalid',
+    ]);
+    expect(draftIssues({ title: 'a', description: '', at: NOW, repeat: repeatFromChoice('none', '0') })).toEqual([]);
+  });
+
+  test('completing a recurring reminder rolls it to its next occurrence, still open', () => {
+    const lima = intlZoneClock('America/Lima');
+    if (!lima) throw new Error('this runtime does not know America/Lima');
+    const monday = Date.UTC(2026, 9, 5, 13, 0, 0);
+    const due = row({ scheduledAt: monday, recurrenceRule: 'FREQ=WEEKLY' });
+    const next = rolledSchedule({ row: due, now: monday - HOUR, clock: lima });
+    expect(next).toBe(Date.UTC(2026, 9, 12, 13, 0, 0));
+    const missed = rolledSchedule({ row: due, now: Date.UTC(2026, 9, 20, 15, 0, 0), clock: lima });
+    expect(missed).toBe(Date.UTC(2026, 9, 26, 13, 0, 0));
+    expect(rolledSchedule({ row: row(), now: NOW, clock: lima })).toBeNull();
+    const [rolled] = applyIntents(
+      [due],
+      [intentFor({ values: { scheduledAt: Math.round((next ?? 0) / 1000) } })],
+      REMINDER_LENSES
+    );
+    expect(rolled).toMatchObject({ isCompleted: false, scheduledAt: Date.UTC(2026, 9, 12, 13, 0, 0) });
   });
 });
 

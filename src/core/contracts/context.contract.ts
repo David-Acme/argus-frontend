@@ -43,6 +43,11 @@ const contextSchema = z
     modules: z.array(moduleSchema),
     ownerCatalog: moduleListSchema.nullish().transform((list) => list ?? null).catch(null),
     version: z.number().nullish().transform((value) => value ?? null),
+    timeZone: z
+      .string()
+      .nullish()
+      .transform((zone) => zone?.trim() || null)
+      .catch(null),
   })
   .transform(
     (context): AppContext => ({
@@ -54,6 +59,7 @@ const contextSchema = z
       modules: context.modules satisfies ModuleRecord[],
       ownerCatalog: context.ownerCatalog,
       version: context.version,
+      timeZone: context.timeZone,
     })
   );
 

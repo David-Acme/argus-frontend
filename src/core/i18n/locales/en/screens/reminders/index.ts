@@ -23,4 +23,12 @@ export const reminders = {
   'mark-done': 'Mark as done',
   'mark-pending': 'Mark as pending',
   options: 'Options',
+  repeat: 'Repeat',
+  'interval-daily': 'Days between reminders',
+  'interval-weekly': 'Weeks between reminders',
+  'interval-monthly': 'Months between reminders',
+  'interval-yearly': 'Years between reminders',
+  'stop-repeating': 'Stop repeating',
+  'stopped-repeating': 'It no longer repeats. It keeps its time.',
+  rolled: 'Done. Next time: {when}',
 } as const;

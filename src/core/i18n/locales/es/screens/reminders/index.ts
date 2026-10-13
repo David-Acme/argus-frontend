@@ -23,4 +23,12 @@ export const reminders = {
   'mark-done': 'Marcar como hecho',
   'mark-pending': 'Marcar como pendiente',
   options: 'Opciones',
+  repeat: 'Repetir',
+  'interval-daily': 'Cada cuántos días',
+  'interval-weekly': 'Cada cuántas semanas',
+  'interval-monthly': 'Cada cuántos meses',
+  'interval-yearly': 'Cada cuántos años',
+  'stop-repeating': 'Dejar de repetir',
+  'stopped-repeating': 'Ya no se repite. Se queda a la misma hora.',
+  rolled: 'Hecho. Próxima vez: {when}',
 } as const;

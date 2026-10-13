@@ -15,6 +15,12 @@ export type CalendarEntryState =
   | 'doing'
   | 'done';
 
+export type CalendarSeries = {
+  startsAt: number;
+  endsAt: number | null;
+  rule: string;
+};
+
 export type CalendarEntry = {
   id: string;
   source: CalendarSource;
@@ -28,6 +34,7 @@ export type CalendarEntry = {
   description?: string;
   projectId?: string | null;
   ownerId?: string;
+  series?: CalendarSeries;
 };
 
 export type AgendaWindow = { weeks: number };

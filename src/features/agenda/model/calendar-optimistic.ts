@@ -5,7 +5,7 @@ import type {
 } from '@/core/interfaces';
 import type { AgendaStatus, CalendarEntry, CalendarSource, ProjectTaskStatus } from '@/core/types';
 import { defineLens, isPendingRecordId, type OptimisticLens } from '@/shared/libs/optimistic';
-import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-actions';
+import { calendarEntryRecordId, isOccurrence } from '@/features/agenda/model/calendar-entry-actions';
 
 type TaskIntentValues = IProjectTaskUpdate & Pick<IProjectTaskCreate, 'projectId'>;
 
@@ -29,15 +29,21 @@ export function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus
 const calendarEventLens = defineLens<CalendarEntry, ICalendarEventUpdate>({
   table: 'calendar_event',
   recordIdOf: (entry) => recordIdFor(entry, 'event'),
-  patch: (entry, values) => ({
-    ...entry,
-    title: values.title ?? entry.title,
-    startsAt: values.startsAt === undefined ? entry.startsAt : values.startsAt * 1000,
-    endsAt: values.endsAt === undefined ? entry.endsAt : msFromSeconds(values.endsAt),
-    isAllDay: values.isAllDay ?? entry.isAllDay,
-    location: optionalText(values.location, entry.location),
-    description: optionalText(values.description, entry.description),
-  }),
+  patch: (entry, values) => {
+    const described: CalendarEntry = {
+      ...entry,
+      title: values.title ?? entry.title,
+      location: optionalText(values.location, entry.location),
+      description: optionalText(values.description, entry.description),
+    };
+    if (isOccurrence(entry)) return described;
+    return {
+      ...described,
+      startsAt: values.startsAt === undefined ? entry.startsAt : values.startsAt * 1000,
+      endsAt: values.endsAt === undefined ? entry.endsAt : msFromSeconds(values.endsAt),
+      isAllDay: values.isAllDay ?? entry.isAllDay,
+    };
+  },
   create: (recordId, values) =>
     values.startsAt === undefined
       ? null

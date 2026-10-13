@@ -20,6 +20,7 @@ import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import {
   availableCalendarEntryActions,
   calendarEntryRecordId,
+  isOccurrence,
   shouldShowCalendarEntryOverflow,
   type CalendarEntryAction,
 } from '@/features/agenda/model/calendar-entry-actions';
@@ -60,6 +61,7 @@ export function EntryActionsMenu({
   });
   const usesContextMenu = IS_NATIVE && !usesSheet;
   const isEvent = entry.source === 'event';
+  const series = isOccurrence(entry);
   const recordId = calendarEntryRecordId(entry);
   const pending = isPendingRecordId(recordId);
 
@@ -68,7 +70,7 @@ export function EntryActionsMenu({
     if (pending) return list;
     for (const action of availableCalendarEntryActions(entry, { canEdit, canDelete, canShare })) {
       if (action === 'edit' && onEdit) {
-        list.push({ value: action, label: t('common.edit'), icon: 'pencil' });
+        list.push({ value: action, label: series ? t('screens.agenda.edit-series') : t('common.edit'), icon: 'pencil' });
       }
       if (action === 'share' && onShare) {
         list.push({ value: action, label: t('screens.agenda.share'), icon: 'users' });
@@ -84,7 +86,12 @@ export function EntryActionsMenu({
         });
       }
       if (action === 'delete') {
-        list.push({ value: action, label: t('common.delete'), icon: 'trash', destructive: true });
+        list.push({
+          value: action,
+          label: series ? t('screens.agenda.delete-series') : t('common.delete'),
+          icon: 'trash',
+          destructive: true,
+        });
       }
     }
     return list;
@@ -112,7 +119,7 @@ export function EntryActionsMenu({
     await runOptimistic({
       intents: [{ table: isEvent ? 'calendar_event' : 'project_task', kind: 'delete', recordId }],
       call: () => (isEvent ? calendarEventService.remove(recordId) : projectTaskService.remove(recordId)),
-      undo: { title: t('screens.agenda.deleted'), description: entry.title },
+      undo: { title: series ? t('screens.agenda.deleted-series') : t('screens.agenda.deleted'), description: entry.title },
     });
   };
 

@@ -12,6 +12,7 @@ const reminderLens = defineLens<IReminderCacheRow, IReminderUpdate>({
     isCompleted: values.isCompleted ?? row.isCompleted,
     completedAt:
       values.isCompleted === undefined ? row.completedAt : values.isCompleted ? Date.now() : null,
+    recurrenceRule: values.recurrenceRule === undefined ? row.recurrenceRule : values.recurrenceRule || null,
   }),
   create: () => null,
 });

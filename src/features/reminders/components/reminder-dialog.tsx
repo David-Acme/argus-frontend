@@ -5,7 +5,9 @@ import { View } from 'react-native';
 import { z } from 'zod';
 import type { IReminderCacheRow } from '@/core/interfaces';
 import { reminderService } from '@/core/services/reminder.service';
+import type { MenuOption, RecurrenceFrequency, TranslationKey } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
+import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
 import {
   Form,
@@ -18,12 +20,15 @@ import {
 } from '@/shared/components/ui/form';
 import { FormScrollView } from '@/shared/components/ui/form-scroll-view';
 import { FormTextField } from '@/shared/components/ui/form-text-field';
+import { Icon } from '@/shared/components/ui/icon';
+import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { formatRecurrenceRule, recurrenceLabel } from '@/shared/libs/recurrence';
 import { DayPickerField } from '@/features/agenda';
 import {
   isEmptyUpdate,
@@ -31,6 +36,15 @@ import {
   REMINDER_TITLE_MAX,
   updateBody,
 } from '@/features/reminders/model/reminder-form';
+import {
+  isIntervalText,
+  REPEAT_CHOICES,
+  repeatChoiceOf,
+  repeatDraftOf,
+  repeatFromChoice,
+  repeatsOf,
+  type RepeatChoice,
+} from '@/features/reminders/model/reminder-repeat';
 
 type ReminderDialogProps = {
   open: boolean;
@@ -40,12 +54,26 @@ type ReminderDialogProps = {
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const schema = z.object({
-  title: z.string().trim().min(1, 'common.validation.required').max(REMINDER_TITLE_MAX, 'common.validation.too-long'),
-  description: z.string().trim().max(REMINDER_DESCRIPTION_MAX, 'common.validation.too-long'),
-  time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-time'),
-  day: z.number(),
-});
+const INTERVAL_LABEL = {
+  DAILY: 'screens.reminders.interval-daily',
+  WEEKLY: 'screens.reminders.interval-weekly',
+  MONTHLY: 'screens.reminders.interval-monthly',
+  YEARLY: 'screens.reminders.interval-yearly',
+} as const satisfies Record<RecurrenceFrequency, TranslationKey>;
+
+const schema = z
+  .object({
+    title: z.string().trim().min(1, 'common.validation.required').max(REMINDER_TITLE_MAX, 'common.validation.too-long'),
+    description: z.string().trim().max(REMINDER_DESCRIPTION_MAX, 'common.validation.too-long'),
+    time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-time'),
+    day: z.number(),
+    repeat: z.enum(REPEAT_CHOICES),
+    interval: z.string(),
+  })
+  .refine((values) => values.repeat === 'none' || isIntervalText(values.interval), {
+    path: ['interval'],
+    message: 'common.validation.interval-range',
+  });
 
 type ReminderValues = z.infer<typeof schema>;
 
@@ -62,6 +90,8 @@ export function ReminderDialog({ open, onOpenChange, reminder }: ReminderDialogP
       description: '',
       time: date.defaultInputTime(new Date()),
       day: date.startOfDay(new Date()).getTime(),
+      repeat: 'none',
+      interval: '1',
     },
     mode: 'onBlur',
   });
@@ -69,20 +99,32 @@ export function ReminderDialog({ open, onOpenChange, reminder }: ReminderDialogP
   useEffect(() => {
     if (!open) return;
     const at = new Date(reminder.scheduledAt);
+    const saved = repeatDraftOf(reminder.recurrenceRule);
     form.reset({
       title: reminder.title,
       description: reminder.description,
       time: date.formatInputTime(at),
       day: date.startOfDay(at).getTime(),
+      repeat: repeatChoiceOf(saved),
+      interval: String(saved.interval),
     });
   }, [date, form, open, reminder]);
 
   const day = useWatch({ control: form.control, name: 'day' });
+  const repeat = useWatch({ control: form.control, name: 'repeat' });
+  const repeatOptions: MenuOption<RepeatChoice>[] = REPEAT_CHOICES.map((choice) => ({
+    value: choice,
+    label:
+      choice === 'none'
+        ? t('common.recurrence.none')
+        : (recurrenceLabel(formatRecurrenceRule({ frequency: choice, interval: 1 }), t) ?? choice),
+  }));
 
   const draftOf = (values: ReminderValues) => ({
     title: values.title,
     description: values.description,
     at: date.atInputTime(new Date(values.day), values.time).getTime(),
+    repeat: repeatFromChoice(values.repeat, values.interval),
   });
 
   const { submitting, submit } = useFormSubmit({
@@ -157,6 +199,51 @@ export function ReminderDialog({ open, onOpenChange, reminder }: ReminderDialogP
               placeholder="09:00"
               keyboardType="numbers-and-punctuation"
             />
+
+            <FormField
+              control={form.control}
+              name="repeat"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('screens.reminders.repeat')}</FormLabel>
+                  <AdaptiveSelect
+                    options={repeatOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    title={t('screens.reminders.repeat')}
+                    closeLabel={t('common.close')}
+                    searchPlaceholder={t('common.search')}
+                    emptyLabel={t('common.recurrence.none')}
+                    trigger={
+                      <SelectField label={repeatOptions.find((option) => option.value === field.value)?.label} />
+                    }
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {repeat !== 'none' ? (
+              <FormTextField
+                control={form.control}
+                name="interval"
+                label={t(INTERVAL_LABEL[repeat])}
+                placeholder="1"
+                keyboardType="number-pad"
+                maxLength={3}
+              />
+            ) : null}
+
+            {repeat !== 'none' && repeatsOf(reminder) ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="self-start"
+                onPress={() => form.setValue('repeat', 'none', { shouldDirty: true })}>
+                <Icon name="repeat-off" className="text-foreground-secondary size-4" />
+                <Text>{t('screens.reminders.stop-repeating')}</Text>
+              </Button>
+            ) : null}
 
             <FormField
               control={form.control}

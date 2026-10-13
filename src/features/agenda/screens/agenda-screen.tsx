@@ -100,14 +100,17 @@ export default function ScheduleScreen() {
         candidate.source === 'event' && calendarEntryRecordId(candidate) === editingEventId
     );
     if (!entry) return null;
+    const startsAt = entry.series?.startsAt ?? entry.startsAt;
+    const endsAt = entry.series ? entry.series.endsAt : entry.endsAt;
     return {
       id: calendarEntryRecordId(entry),
       title: entry.title,
-      startsAt: new Date(entry.startsAt),
-      endsAt: entry.endsAt == null ? null : new Date(entry.endsAt),
+      startsAt: new Date(startsAt),
+      endsAt: endsAt == null ? null : new Date(endsAt),
       isAllDay: entry.isAllDay,
       location: entry.location ?? '',
       description: entry.description ?? '',
+      recurrenceRule: entry.series?.rule ?? null,
     };
   }, [editingEventId, entries]);
 

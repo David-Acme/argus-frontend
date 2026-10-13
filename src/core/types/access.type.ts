@@ -15,6 +15,7 @@ export type AppAccess = {
   roles: AccessRole[];
   modules: ModuleRecord[];
   version: number | null;
+  timeZone?: string | null;
   receivedAt: number;
 };
 

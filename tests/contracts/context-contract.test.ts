@@ -100,6 +100,16 @@ describe('the live user context', () => {
     expect(readContext({ ...context, version: 12 })?.version).toBe(12);
   });
 
+  test('the household zone is read when it comes and is optional when it does not', () => {
+    expect(readContext({ ...context, timeZone: 'America/Lima' })?.timeZone).toBe('America/Lima');
+    expect(readContext({ id: 7, role: 'guard', isActive: true, context: { ...context, timeZone: 'Europe/Madrid' } })?.timeZone).toBe(
+      'Europe/Madrid'
+    );
+    expect(readContext(context)?.timeZone).toBeNull();
+    expect(readContext({ ...context, timeZone: '  ' })?.timeZone).toBeNull();
+    expect(readContext({ ...context, timeZone: 5 })?.timeZone).toBeNull();
+  });
+
   test('refuses what is not a context', () => {
     expect(readContext(null)).toBeNull();
     expect(readContext({ id: 7, role: 'owner', isActive: true })).toBeNull();

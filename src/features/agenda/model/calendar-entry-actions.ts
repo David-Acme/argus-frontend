@@ -4,7 +4,7 @@ import type { Href } from 'expo-router';
 export type CalendarEntryAction = 'edit' | 'delete' | 'toggle' | 'share';
 export type CalendarEventFormAction = 'cancel' | 'save';
 export type CalendarEntryDetailRow = {
-  id: 'type' | 'date' | 'time' | 'status' | 'location';
+  id: 'type' | 'date' | 'time' | 'status' | 'repeat' | 'location';
   label: string;
   value: string;
 };
@@ -20,6 +20,7 @@ export type CalendarEntryDetailLabels = {
   task: string;
   reminder: string;
   state: Record<CalendarEntryState, string>;
+  repeat?: { label: string; value: string | null };
 };
 
 type CalendarEntryPermissions = {
@@ -93,6 +94,7 @@ export function calendarEntryDetailRows({
     { id: 'status', label: labels.status, value: labels.state[state] },
   ];
 
+  if (labels.repeat?.value) rows.push({ id: 'repeat', label: labels.repeat.label, value: labels.repeat.value });
   if (entry.location) rows.push({ id: 'location', label: labels.location, value: entry.location });
   return rows;
 }
@@ -104,9 +106,13 @@ export function compareDayEntries(
   return Number(right.isAllDay) - Number(left.isAllDay) || left.startsAt - right.startsAt;
 }
 
-export function calendarEntryRecordId(entry: CalendarEntry): string {
-  return entry.id.slice(entry.id.indexOf(':') + 1);
+export function calendarEntryRecordId(entry: Pick<CalendarEntry, 'id'>): string {
+  const recordId = entry.id.slice(entry.id.indexOf(':') + 1);
+  const occurrence = recordId.indexOf('@');
+  return occurrence < 0 ? recordId : recordId.slice(0, occurrence);
 }
+
+export const isOccurrence = (entry: Pick<CalendarEntry, 'series'>): boolean => entry.series !== undefined;
 
 export function availableCalendarEntryActions(
   entry: CalendarEntry,
