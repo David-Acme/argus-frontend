@@ -79,6 +79,7 @@ export interface ICameraCapabilities {
   sdCard?: boolean;
   streamOnly?: boolean;
   catalogId?: string;
+  holdRenewMs?: number;
 }
 
 export interface ICameraCatalogDefaults {

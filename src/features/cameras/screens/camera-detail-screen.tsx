@@ -16,6 +16,7 @@ import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-sta
 import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
+import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
 import { CameraEnvironmentPanel } from '@/features/security';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
@@ -59,7 +60,6 @@ export default function CameraDetailScreen() {
   const { cameras, isPendingZone } = useCameraRows();
   const camera = useMemo(() => cameras.find((item) => item.id === id) ?? null, [cameras, id]);
   const call = useCameraCall(id);
-  const ptzControls = useCameraPtz(id);
   const stage = useCameraLiveStage({ quality });
   const audio = useCameraLiveAudio(call.snapshot != null && call.snapshot.state !== 'idle');
   const autoCalled = useRef(false);
@@ -85,6 +85,7 @@ export default function CameraDetailScreen() {
     () => resolveCapabilities(camera?.capabilities ?? [], featureResource.data),
     [camera?.capabilities, featureResource.data],
   );
+  const ptzControls = useCameraPtz(id, ptzHoldRenewMs(features));
   const deviceSignature = camera
     ? [camera.driver, camera.ip, camera.port, camera.catalogId, camera.model, ...camera.capabilities].join('|')
     : '';

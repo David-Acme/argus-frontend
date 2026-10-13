@@ -29,7 +29,7 @@ export function resolveCapabilities(
 ): ICameraCapabilities | null {
   const synced = capabilitiesFromRow(row);
   if (!synced) return remote;
-  return { ...synced, catalogId: remote?.catalogId };
+  return { ...synced, catalogId: remote?.catalogId, holdRenewMs: remote?.holdRenewMs };
 }
 
 export function hasDeviceControls(capabilities: ICameraCapabilities | null): boolean {

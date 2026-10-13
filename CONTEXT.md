@@ -2538,7 +2538,30 @@ unfolds its timeline.
   sends `stop` (`model/camera-ptz.ts`, `hooks/use-camera-ptz.ts`, unit-tested;
   calls are queued so a stop never overtakes its start). When the server
   answers `limit: true` that arrow dims and the video says the camera cannot
-  turn further. There is no "Centrar": the C225 exposes no home position
+  turn further.
+- **A hold that outlasts the camera's lease** (reviewer ruling, 2026-10-13,
+  option a). An ONVIF move carries a 2-second timeout, so the camera stops by
+  itself when a `stop` is lost (argus-camera CONTEXT, the ONVIF driver). Such
+  a camera announces `holdRenewMs` on `GET /camera/{id}/capabilities`, the
+  same answer the app already reads `catalogId` from (the synced row's list
+  holds only flag names). While the hold lasts the app re-sends the same
+  `{angle}` every `holdRenewMs`. A camera that announces nothing, Tapo among
+  them, gets today's single move. The release sends `{stop: true}` and
+  cancels the interval. Leaving `active` (any other state, `inactive`
+  included) ends the hold the same way: the interval is cancelled and a stop
+  goes out best-effort through the same queue. Coming back to `active`
+  restores nothing, and the user presses again (reviewer ruling,
+  2026-10-13). The camera's own 2-second timeout stays the safety net if
+  that stop never arrives. A release after the hold has ended sends nothing
+  and raises no error, because the stop already went out. Unmounting cancels
+  the interval and sends the stop directly, as before. A renewal is
+  silent: no toast and no `moving` flicker, so an
+  offline camera does not raise one error a second. It is skipped while the
+  previous move is still in flight, so renewals never queue up ahead of the
+  stop. The value is honoured only as a finite number between 250 ms and
+  60 s (`ptzHoldRenewMs`), because a tiny or overflowing interval would flood
+  the camera. The driver is `model/ptz-hold.ts` (`createPtzHold`, timers
+  injected), unit-tested in `tests/unit/features/cameras/ptz-hold.test.ts`. There is no "Centrar": the C225 exposes no home position
   locally (argus-camera CONTEXT, "Pan and tilt, measured"). The device
   settings (privacy, motion and its sensitivity, auto-tracking, LED, night
   vision) are inline in "Ajustes de la cámara".

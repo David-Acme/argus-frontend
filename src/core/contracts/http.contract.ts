@@ -96,6 +96,7 @@ export const cameraCapabilitiesSchema = z.object({
   sdCard: z.boolean().optional(),
   streamOnly: z.boolean().optional(),
   catalogId: z.string().optional(),
+  holdRenewMs: z.number().optional(),
 }) satisfies z.ZodType<ICameraCapabilities>;
 
 const cameraFeatures = z.object({
