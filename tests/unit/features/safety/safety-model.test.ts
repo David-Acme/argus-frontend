@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
+import { localeDictionaries } from '@/core/i18n/locales';
+import { translate } from '@/core/i18n/translate';
 import {
+  ENABLE_REACH_WARNING_COPY,
   digitsOnly,
-  enableNeedsReachWarning,
+  enableReachWarning,
   holdComplete,
   holdProgress,
   phraseProblem,
@@ -11,6 +14,52 @@ import {
   reachNotice,
   trivialPin,
 } from '@/features/safety/model/safety';
+
+const REACH_WORDS = {
+  es: {
+    contacts: 'contactos de emergencia',
+    household: 'casa',
+    panic: 'pánico',
+    duress: 'coacción',
+    noContact: 'ni contactos de emergencia',
+  },
+  en: {
+    contacts: 'emergency contacts',
+    household: 'household',
+    panic: 'panic',
+    duress: 'duress',
+    noContact: 'no emergency contact',
+  },
+} as const;
+
+describe('the warning before turning duress on, in es and en', () => {
+  for (const language of ['es', 'en'] as const) {
+    const dictionary = localeDictionaries[language];
+    const words = REACH_WORDS[language];
+
+    test(`${language}: on contacts it says a panic reaches the contacts and a duress alert only the household`, () => {
+      const title = translate(dictionary, ENABLE_REACH_WARNING_COPY.contacts.title);
+      const description = translate(dictionary, ENABLE_REACH_WARNING_COPY.contacts.description);
+      expect(title.toLowerCase()).toContain(words.duress);
+      for (const word of [words.panic, words.contacts, words.duress, words.household]) {
+        expect(description.toLowerCase()).toContain(word);
+      }
+      const notice = translate(dictionary, 'screens.safety.reach.contacts').toLowerCase();
+      for (const word of [words.panic, words.contacts, words.duress, words.household]) {
+        expect(notice).toContain(word);
+      }
+    });
+
+    test(`${language}: on nobody it keeps its own warning, with no contact to fall back on`, () => {
+      const title = translate(dictionary, ENABLE_REACH_WARNING_COPY.nobody.title);
+      const description = translate(dictionary, ENABLE_REACH_WARNING_COPY.nobody.description);
+      expect(title).not.toBe(translate(dictionary, ENABLE_REACH_WARNING_COPY.contacts.title));
+      expect(description).not.toBe(translate(dictionary, ENABLE_REACH_WARNING_COPY.contacts.description));
+      expect(description.toLowerCase()).toContain(words.noContact);
+      expect(description.toLowerCase()).not.toContain(words.panic);
+    });
+  }
+});
 
 describe('PIN drafts', () => {
   test('both codes are 4 to 8 digits and different', () => {
@@ -83,10 +132,12 @@ describe('who an alert would reach', () => {
     expect(reachNotice(null)).toBeNull();
   });
 
-  test('turning duress on warns first only when the alert would reach nobody', () => {
-    expect(enableNeedsReachWarning('nobody')).toBe(true);
-    expect(enableNeedsReachWarning('contacts')).toBe(false);
-    expect(enableNeedsReachWarning(null)).toBe(false);
+  test('turning duress on warns first when a duress alert would reach nobody: on nobody and on contacts', () => {
+    expect(enableReachWarning('nobody')).toBe('nobody');
+    expect(enableReachWarning('contacts')).toBe('contacts');
+    expect(enableReachWarning('others')).toBeNull();
+    expect(enableReachWarning('unknown')).toBeNull();
+    expect(enableReachWarning(null)).toBeNull();
   });
 
   test('the status reads hasPhrase and alertsReach, and an older server without them claims nothing', () => {

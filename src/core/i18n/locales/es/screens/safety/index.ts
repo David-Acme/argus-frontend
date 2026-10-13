@@ -70,11 +70,15 @@ export const safety = {
   reach: {
     nobody:
       'Si pides ayuda, el aviso no le llegaría a nadie: no hay otras personas en casa ni contactos de emergencia.',
-    contacts: 'Si pides ayuda, el aviso solo llegaría a los contactos de emergencia.',
+    contacts:
+      'El pánico llega a tus contactos de emergencia: Argus te los muestra para que los llames. Un código o una frase de coacción solo avisa a las personas de la casa, y no hay nadie más, así que una alerta de coacción no le llegaría a nadie.',
     unknown: 'No pudimos comprobar a quién le llegaría tu aviso.',
     'enable-title': 'La alerta no le llegaría a nadie',
     'enable-description':
       'Ahora no hay otras personas en casa ni contactos de emergencia. Puedes activar los códigos igualmente: la alerta quedará registrada, pero nadie la recibirá hasta que haya alguien más.',
+    'enable-contacts-title': 'La alerta de coacción no le llegaría a nadie',
+    'enable-contacts-description':
+      'El pánico llega a tus contactos de emergencia: Argus te los muestra para que los llames. Un código o una frase de coacción solo avisa a las personas de la casa, y ahora no hay nadie más. Puedes activar los códigos igualmente: la alerta quedará registrada, pero nadie la recibirá hasta que haya alguien más.',
     'enable-confirm': 'Activar igualmente',
   },
 } as const;

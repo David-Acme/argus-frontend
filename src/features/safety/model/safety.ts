@@ -1,4 +1,4 @@
-import type { SafetyReach } from '@/core/types';
+import type { SafetyReach, TranslationKey } from '@/core/types';
 import { PANIC_HOLD_MS } from '@/shared/constants';
 
 export const PIN_PATTERN = /^[0-9]{4,8}$/;
@@ -74,5 +74,16 @@ export type ReachNotice = 'nobody' | 'contacts' | 'unknown' | null;
 export const reachNotice = (reach: SafetyReach | null): ReachNotice =>
   reach === 'nobody' || reach === 'contacts' || reach === 'unknown' ? reach : null;
 
-export const enableNeedsReachWarning = (reach: SafetyReach | null): boolean => reach === 'nobody';
+export type EnableReachWarning = 'nobody' | 'contacts' | null;
+
+export const enableReachWarning = (reach: SafetyReach | null): EnableReachWarning =>
+  reach === 'nobody' || reach === 'contacts' ? reach : null;
+
+export const ENABLE_REACH_WARNING_COPY = {
+  nobody: { title: 'screens.safety.reach.enable-title', description: 'screens.safety.reach.enable-description' },
+  contacts: {
+    title: 'screens.safety.reach.enable-contacts-title',
+    description: 'screens.safety.reach.enable-contacts-description',
+  },
+} as const satisfies Record<Exclude<EnableReachWarning, null>, { title: TranslationKey; description: TranslationKey }>;
 

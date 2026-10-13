@@ -69,11 +69,15 @@ export const safety = {
   },
   reach: {
     nobody: 'If you ask for help, the alert would reach nobody: there is no one else in the household and no emergency contact.',
-    contacts: 'If you ask for help, the alert would only reach the emergency contacts.',
+    contacts:
+      'A panic reaches your emergency contacts: Argus shows them to you so you can call them. A duress code or phrase only alerts the household, and there is no one else in it, so a duress alert would reach nobody.',
     unknown: 'We could not check who your alert would reach.',
     'enable-title': 'The alert would reach nobody',
     'enable-description':
       'Right now there is no one else in the household and no emergency contact. You can turn codes on anyway: the alert is recorded, but nobody receives it until someone else is here.',
+    'enable-contacts-title': 'A duress alert would reach nobody',
+    'enable-contacts-description':
+      'A panic reaches your emergency contacts: Argus shows them to you so you can call them. A duress code or phrase only alerts the household, and right now there is no one else in it. You can turn codes on anyway: the alert is recorded, but nobody receives it until someone else is here.',
     'enable-confirm': 'Turn on anyway',
   },
 } as const;

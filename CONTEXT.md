@@ -2763,14 +2763,19 @@ contract)".
   backend sends it only to holders of `safety.duress`.
 - **Who an alert would reach.** `alertsReach` is shown in the panel:
   - `nobody` is a warning: no one else in the household and no emergency contact;
-  - `contacts`: only the emergency contacts;
+  - `contacts`: a panic reaches the emergency contacts, a duress alert reaches nobody;
   - `unknown`: it could not be checked;
   - `others`: nothing is said.
 
   An older server without the field claims nothing. A value the app does not know reads
-  as `unknown`. Turning duress on while it is `nobody` asks first, and "Activar
-  igualmente" goes ahead: the backend keeps that terminal alert as designed (guard's
-  DESIGN FORK (a)).
+  as `unknown`. Turning duress on while it is `nobody` or `contacts` asks first, and
+  "Activar igualmente" goes ahead: the backend keeps that terminal alert as designed
+  (guard's DESIGN FORK (a)). On `contacts` the warning and the notice say the difference
+  plainly (2026-10-13): a panic reaches the emergency contacts, which Argus shows to the
+  actor because it cannot dial them, while a duress code or phrase only alerts the
+  household, which here is nobody (guard's "A household of one": the actor's phone must
+  not change). `enableReachWarning` picks the warning and `ENABLE_REACH_WARNING_COPY`
+  its words; `safety-model.test.ts` checks both reach values in es and en.
 - **The withheld voice turn.** When argus-llm withholds a turn (the duress screen), the
   app never keeps the words. There are two paths:
   - *Direct*: the server sends `…` as the final transcript, and it is shown like any

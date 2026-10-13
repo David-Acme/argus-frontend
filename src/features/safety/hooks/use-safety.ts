@@ -5,7 +5,7 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { confirm } from '@/shared/libs/confirm';
 import { runServiceAction } from '@/shared/libs/service-action';
-import { enableNeedsReachWarning } from '@/features/safety/model/safety';
+import { ENABLE_REACH_WARNING_COPY, enableReachWarning } from '@/features/safety/model/safety';
 import { safetyService } from '@/features/safety/services/safety.service';
 import { askCurrentPin } from '@/features/safety/stores/disarm-pin.store';
 
@@ -41,10 +41,12 @@ export function useSafety({ enabled = true }: UseSafetyOptions = {}) {
 
   const setDuressEnabled = useCallback(
     async (enabled: boolean): Promise<boolean> => {
-      if (enabled && enableNeedsReachWarning(data?.alertsReach ?? null)) {
+      const warning = enabled ? enableReachWarning(data?.alertsReach ?? null) : null;
+      if (warning) {
+        const copy = ENABLE_REACH_WARNING_COPY[warning];
         const accepted = await confirm({
-          title: t('screens.safety.reach.enable-title'),
-          description: t('screens.safety.reach.enable-description'),
+          title: t(copy.title),
+          description: t(copy.description),
           confirmLabel: t('screens.safety.reach.enable-confirm'),
           intent: 'warning',
         });
