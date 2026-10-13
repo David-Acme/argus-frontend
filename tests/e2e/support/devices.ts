@@ -2,7 +2,7 @@ import { test as base, type Browser as WebBrowser } from '@e2e-dev/web';
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright-core';
 import { cdpEndpoint } from './chromium';
 import { control, NOT_LOOPBACK } from './harness';
-import { installTauriShim } from './tauri-shim';
+import { installTauriShim, type ShimSeed } from './tauri-shim';
 import { ownerDevice } from './seed';
 
 export type SecondDevice = {
@@ -35,13 +35,17 @@ export const test = base.extend<{ second: SecondDevice }>({
 
 export { expect } from 'e2e';
 
-export const openFirst = async (browser: WebBrowser, app: { open: (path?: string) => Promise<void> }): Promise<string[]> => {
+export const openFirst = async (
+  browser: WebBrowser,
+  app: { open: (path?: string) => Promise<void> },
+  seed: ShimSeed = ownerDevice('A')
+): Promise<string[]> => {
   const escapes: string[] = [];
   await browser.route(NOT_LOOPBACK, (route) => {
     escapes.push(route.request.url);
     return route.abort();
   });
-  await browser.addInitScript(installTauriShim, ownerDevice('A'));
+  await browser.addInitScript(installTauriShim, seed);
   await app.open('/');
   return escapes;
 };

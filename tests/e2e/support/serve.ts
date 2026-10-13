@@ -27,6 +27,9 @@ const control = async (url: URL, request: Request): Promise<Response> => {
     case '/__e2e/routes':
       argus.define((await request.json()) as RouteSpec[]);
       return Response.json({ ok: true });
+    case '/__e2e/context':
+      argus.patchContext((await request.json()) as Record<string, unknown>);
+      return Response.json({ ok: true });
     case '/__e2e/store':
       argus.store(url.searchParams.get('table') ?? '', (await request.json()) as Parameters<FakeArgus['store']>[1]);
       return Response.json({ ok: true });
@@ -48,7 +51,7 @@ const control = async (url: URL, request: Request): Promise<Response> => {
     case '/__e2e/rows':
       return Response.json({ rows: argus.rows(url.searchParams.get('table') ?? '') });
     case '/__e2e/requests':
-      return Response.json({ requests: argus.requests });
+      return Response.json({ requests: argus.requests, bodies: argus.bodies });
     default:
       return new Response('Not found', { status: 404 });
   }

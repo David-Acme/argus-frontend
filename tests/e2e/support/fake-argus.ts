@@ -71,9 +71,11 @@ export class FakeArgus {
   private readonly refusedUntil = new Map<string, number>();
   private readonly routes = new Map<string, RouteSpec>();
   private readonly enabled: Record<string, boolean> = {};
+  private contextPatch: Record<string, unknown> = {};
   private nextId = 100;
   private clock = 0;
   readonly requests: string[] = [];
+  readonly bodies: Record<string, string> = {};
 
   constructor() {
     this.reset();
@@ -83,6 +85,9 @@ export class FakeArgus {
     this.routes.clear();
     this.refusedUntil.clear();
     for (const key of Object.keys(this.enabled)) delete this.enabled[key];
+    this.contextPatch = {};
+    this.requests.length = 0;
+    for (const key of Object.keys(this.bodies)) delete this.bodies[key];
     this.tables.clear();
     this.tables.set('user', [
       { id: OWNER.id, name: OWNER.name, lastName: 'Ruiz', role: OWNER.role, lang: 'es', isActive: true, createdAt: 1790000000, updatedAt: 1790000000 },
@@ -103,7 +108,7 @@ export class FakeArgus {
       JSON.stringify({
         operation: OPERATION.InitialInfo,
         option: 'user',
-        info: { id: OWNER.id, role: OWNER.role, isActive: true, context: this.context() },
+        info: { id: OWNER.id, role: this.context().role, isActive: true, context: this.context() },
       })
     );
   }
@@ -145,8 +150,12 @@ export class FakeArgus {
     }
   }
 
-  context(): ReturnType<typeof ownerContext> {
-    return ownerContext(this.enabled);
+  context(): Record<string, unknown> {
+    return { ...ownerContext(this.enabled), ...this.contextPatch };
+  }
+
+  patchContext(patch: Record<string, unknown>): void {
+    this.contextPatch = { ...this.contextPatch, ...patch };
   }
 
   define(specs: readonly RouteSpec[]): void {
@@ -209,7 +218,9 @@ export class FakeArgus {
   }
 
   async api(method: string, path: string, body: string, device: string): Promise<Response> {
-    this.requests.push(`${method} ${path}${device ? ` @${device}` : ''}`);
+    const line = `${method} ${path}${device ? ` @${device}` : ''}`;
+    this.requests.push(line);
+    if (body) this.bodies[line] = body;
     const bare = path.split('?')[0] ?? path;
     const spec =
       this.routes.get(this.key(method, path, device)) ??
@@ -218,7 +229,7 @@ export class FakeArgus {
       this.routes.get(this.key(method, bare));
     if (spec) return this.answer(spec);
     if (method === 'POST' && path === '/project') return this.createProject(body);
-    if (method === 'GET' && bare === '/modules') return envelope(200, { modules: this.context().modules });
+    if (method === 'GET' && bare === '/modules') return envelope(200, { modules: ownerContext(this.enabled).modules });
     return envelope(404, null, { code: 'NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
   }
 

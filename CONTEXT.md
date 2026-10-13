@@ -3565,6 +3565,16 @@ pieces:
   from `RouteSpec`s (`/__e2e/routes`: an answer per method, path and device, the
   answers it replaces, the frames it pushes and the module flags it flips), and
   `/__e2e/reset` clears it before every test.
+- **Critical screens** (item 4, one device each): `welcome.e2e.ts` (an unpaired
+  desktop greets with exactly one labeled hero button, which replays, and Get
+  started leads to the pairing step whose Continue waits for a code),
+  `inactive-role.e2e.ts` (a guard whose module is off sees the on-hold home with
+  what still works, the panic button among it, and reaches the profile),
+  `response.e2e.ts` (an alert raised for the user sits on Home with its two
+  answers; a false alarm is confirmed, sent and clears the card),
+  `module-dialogs.e2e.ts` (uninstalling a module that holds data lists what it
+  keeps, keeps it by default, and deletes it only once the module's name is typed
+  - case and outer spaces ignored - sending `{keepData: false}`).
 - A product finding from the modules flow: with productivity off, Home keeps its
   Today and Projects sections (and their buttons); only the navigation hides them.
 - Findings this harness surfaced for the accessibility pass: the project dialog

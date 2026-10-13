@@ -21,3 +21,5 @@ export const ownerDevice = (device: string): ShimSeed => ({
     'argus-storage:app.session.user': JSON.stringify(OWNER),
   },
 });
+
+export const unpairedDevice = (device: string): ShimSeed => ({ device, secure: {}, local: {} });
