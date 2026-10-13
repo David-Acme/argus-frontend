@@ -169,9 +169,8 @@ describe('the occurrence guard is sized per request', () => {
 });
 
 describe('the cumulative recompute of a two-year agenda', () => {
-  const RUNS = 7;
+  const RUNS = 9;
   const FRAME_MS = 16;
-  const WORST_CASE_GUARD_MS = 8 * FRAME_MS;
   const MIXED = ['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=WEEKLY;INTERVAL=2', 'FREQ=MONTHLY', 'FREQ=YEARLY'];
 
   const twentySeries = (ruleOf: (index: number) => string): ICalendarEventCacheSource[] =>
@@ -203,7 +202,7 @@ describe('the cumulative recompute of a two-year agenda', () => {
     expect(medianMs(twentySeries((index) => MIXED[index % MIXED.length] ?? 'FREQ=WEEKLY'), null)).toBeLessThan(FRAME_MS);
   });
 
-  test('twenty daily series through a household zone that is not the device zone stay under the regression guard', () => {
-    expect(medianMs(twentySeries(() => 'FREQ=DAILY'), otherZone())).toBeLessThan(WORST_CASE_GUARD_MS);
+  test('735 days of twenty daily series in a household zone that is not the device zone recompute within one frame', () => {
+    expect(medianMs(twentySeries(() => 'FREQ=DAILY'), otherZone())).toBeLessThanOrEqual(FRAME_MS);
   });
 });

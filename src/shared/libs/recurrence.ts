@@ -6,6 +6,7 @@ import {
   RECURRENCE_INTERVAL_MIN,
   RECURRENCE_LIMIT_MARGIN,
   RECURRENCE_OFFSET_CACHE_LIMIT,
+  RECURRENCE_OFFSET_STEP_MS,
   RECURRENCE_SEARCH_LIMIT,
 } from '@/shared/constants';
 import { deviceTimeZone, zoneWallReader, type ZoneWallReader } from '@/shared/hooks/use-date-formatter/date';
@@ -117,16 +118,58 @@ const LOCAL_CLOCK: ZoneClock = {
   epochOf: (wall) => new Date(wall.year, wall.month - 1, wall.day, wall.hour, wall.minute, wall.second).getTime(),
 };
 
-function intlClockOf(wallOf: ZoneWallReader): ZoneClock {
-  const offsets = new Map<number, number>();
-  const offsetAt = (epochMs: number): number => {
+type OffsetChange = { at: number; before: number; after: number };
+
+function intlClockOf(readWall: ZoneWallReader): ZoneClock {
+  const samples = new Map<number, number>();
+  const changes = new Map<number, OffsetChange>();
+  const measured = (epochMs: number): number => {
     const second = Math.floor(epochMs / SECOND_MS) * SECOND_MS;
-    const known = offsets.get(second);
+    return wallAsUtc(readWall(second)) - second;
+  };
+  const sampleAt = (step: number): number => {
+    const known = samples.get(step);
     if (known !== undefined) return known;
-    const offset = wallAsUtc(wallOf(second)) - second;
-    if (offsets.size >= RECURRENCE_OFFSET_CACHE_LIMIT) offsets.clear();
-    offsets.set(second, offset);
+    if (samples.size >= RECURRENCE_OFFSET_CACHE_LIMIT) {
+      samples.clear();
+      changes.clear();
+    }
+    const offset = measured(step * RECURRENCE_OFFSET_STEP_MS);
+    samples.set(step, offset);
     return offset;
+  };
+  const changeWithin = (step: number, before: number, after: number): OffsetChange => {
+    const known = changes.get(step);
+    if (known) return known;
+    let low = step * RECURRENCE_OFFSET_STEP_MS;
+    let high = low + RECURRENCE_OFFSET_STEP_MS;
+    while (high - low > SECOND_MS) {
+      const middle = low + Math.floor((high - low) / (2 * SECOND_MS)) * SECOND_MS;
+      if (measured(middle) === before) low = middle;
+      else high = middle;
+    }
+    const change = { at: high, before, after };
+    changes.set(step, change);
+    return change;
+  };
+  const offsetAt = (epochMs: number): number => {
+    const step = Math.floor(epochMs / RECURRENCE_OFFSET_STEP_MS);
+    const before = sampleAt(step);
+    const after = sampleAt(step + 1);
+    if (before === after) return before;
+    const change = changeWithin(step, before, after);
+    return epochMs < change.at ? change.before : change.after;
+  };
+  const wallOf = (epochMs: number): WallTime => {
+    const shifted = new Date(epochMs + offsetAt(epochMs));
+    return {
+      year: shifted.getUTCFullYear(),
+      month: shifted.getUTCMonth() + 1,
+      day: shifted.getUTCDate(),
+      hour: shifted.getUTCHours(),
+      minute: shifted.getUTCMinutes(),
+      second: shifted.getUTCSeconds(),
+    };
   };
   const epochOf = (wall: WallTime): number => {
     const local = wallAsUtc(wall);

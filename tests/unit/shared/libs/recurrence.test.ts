@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn, WallTime, ZoneClock } from '@/core/types';
+import { zoneWallReader } from '@/shared/hooks/use-date-formatter/date';
 import {
   firstOccurrenceAfter,
   formatRecurrenceRule,
@@ -209,5 +210,47 @@ describe('occurrences in a window', () => {
     const local = zoneClock('Mars/Olympus_Mons');
     const at = new Date(2026, 9, 5, 8, 0, 0).getTime();
     expect(local.epochOf(local.wallOf(at))).toBe(at);
+  });
+});
+
+describe('the zone clock caches each zone offset change', () => {
+  const HOUR_MS = 3_600_000;
+  const AWKWARD_ZONES = [
+    'Europe/Madrid',
+    'America/New_York',
+    'Australia/Lord_Howe',
+    'Asia/Kathmandu',
+    'Pacific/Chatham',
+    'Africa/Casablanca',
+    'America/Sao_Paulo',
+  ];
+
+  for (const zone of AWKWARD_ZONES) {
+    test(`${zone}: the cached wall time is the formatter's at every probe over two years`, () => {
+      const reader = zoneWallReader(zone);
+      if (!reader) throw new Error(`this runtime does not know the zone ${zone}`);
+      const clock = clockIn(zone);
+      const from = Date.UTC(2026, 0, 1);
+      const to = Date.UTC(2028, 0, 1);
+      for (let at = from; at < to; at += 97 * 60_000 + 13_000) {
+        expect(wallText(clock.wallOf(at))).toBe(wallText(reader(at)));
+      }
+    });
+  }
+
+  test('an offset change is placed to the second', () => {
+    const newYork = clockIn('America/New_York');
+    const spring = Date.UTC(2026, 2, 8, 7, 0, 0);
+    expect(wallText(newYork.wallOf(spring - 1000))).toBe('2026-03-08T01:59:59');
+    expect(wallText(newYork.wallOf(spring))).toBe('2026-03-08T03:00:00');
+    const autumn = Date.UTC(2026, 10, 1, 6, 0, 0);
+    expect(wallText(newYork.wallOf(autumn - 1000))).toBe('2026-11-01T01:59:59');
+    expect(wallText(newYork.wallOf(autumn))).toBe('2026-11-01T01:00:00');
+    const lordHowe = clockIn('Australia/Lord_Howe');
+    const halfHour = Date.UTC(2026, 3, 4, 15, 0, 0);
+    expect(newYork.epochOf(wallFrom('2026-03-08T02:30:00'))).toBe(spring + 30 * 60_000);
+    expect(newYork.epochOf(wallFrom('2026-11-01T01:30:00'))).toBe(autumn - 30 * 60_000);
+    expect(lordHowe.wallOf(halfHour - 1000).minute).toBe(59);
+    expect(lordHowe.epochOf(lordHowe.wallOf(halfHour + HOUR_MS))).toBe(halfHour + HOUR_MS);
   });
 });

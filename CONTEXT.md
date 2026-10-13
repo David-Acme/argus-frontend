@@ -1187,6 +1187,18 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     `Intl.DateTimeFormat.formatToParts`, sampling the offset a day before and a day
     after. A repeated hour takes the earliest instant, and a skipped hour moves
     forward, as `mktime` and `Date` do.
+  - **Each zone caches its offset changes** (`intlClockOf`). The offset is sampled
+    once per UTC day (`RECURRENCE_OFFSET_STEP_MS`). Where two neighbouring samples
+    differ, a bisect places the change to the second. Both are cached per zone for
+    the session, cleared past `RECURRENCE_OFFSET_CACHE_LIMIT` sampled days.
+    `offsetAt` is then two map lookups, and `wallOf` is the instant shifted by its
+    offset; the formatter runs only to fill the cache. This assumes no zone changes
+    its offset twice within one day, which holds for every zone in use; Casablanca's
+    two Ramadan changes are a month apart.
+  - `recurrence.test.ts` checks the cached clock against the formatter itself:
+    every ~97 minutes over 2026–2027 in Madrid, New York, Lord Howe (a 30-minute
+    change), Kathmandu (+05:45), Chatham (+12:45/+13:45), Casablanca and São Paulo,
+    plus each change placed to the second.
   - `tests/unit/shared/libs/recurrence.test.ts` runs every case of the backend's
     `scripts/fixtures/recurrence/cases.json` through both clocks. It reads
     `ARGUS_RECURRENCE_FIXTURE`, or else `../backend/` beside this repo, and fails
@@ -1207,18 +1219,25 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     `log.debug('calendar', …)`, in dev builds only.
   - The agenda list is cumulative: every "load more" recomputes from the first day to
     `weeks × 7`. The cost of recomputing a two-year window (735 days) with 20 series
-    was measured on the development laptop (bun, median of 15 runs):
+    was measured on the development laptop (AMD Ryzen 7 5825U, 16 threads, bun
+    1.3.14, median of 15 runs after a warm-up run). The table gives it before and
+    after the zone-offset cache:
 
-    | Rules, zone | Median |
-    |---|---|
-    | 20 mixed rules, household zone = device zone | 2.1 ms |
-    | 20 mixed rules, another household zone (Intl) | 13.8 ms |
-    | 20 daily rules, household zone = device zone | 8.8 ms |
-    | 20 daily rules, another household zone (Intl) | 49.7 ms |
+    | Rules, zone | Before | After |
+    |---|---|---|
+    | 20 mixed rules, household zone = device zone | 2.1 ms | 2.4 ms |
+    | 20 mixed rules, another household zone (Intl) | 13.8 ms | 2.9 ms |
+    | 20 daily rules, household zone = device zone | 8.8 ms | 9.1 ms |
+    | 20 daily rules, another household zone (Intl) | 49.7 ms | 10.3 ms |
 
-    The worst case is over the 16 ms frame, so paging the agenda is a recorded
-    follow-up. `calendar-recurrence.test.ts` keeps the mixed case under one frame and
-    the worst case under a guard of 8 frames.
+    - The first, cold run of the worst case takes about 41 ms; the device zone's
+      cold run takes about 31 ms, so most of that is first-run JIT.
+    - Of the warm 10.3 ms, about 5.2 ms computes the 14,700 occurrences, 4.2 ms
+      builds their ISO ids and 0.8 ms sorts them.
+    - `calendar-recurrence.test.ts` holds the mixed case and the worst case (20
+      daily rules in another household zone, 735 days, median of 9 runs) at or
+      under one 16 ms frame.
+    - Paging the agenda stays the conditional follow-up F6c in the plan.
   - An event whose rule the app cannot read (the event DTO checks only its length) is
     one plain entry at its start. A range row without a rule wins over a stale series
     row.
