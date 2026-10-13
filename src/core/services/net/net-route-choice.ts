@@ -1,4 +1,4 @@
-import { ARGUS_ROUTE_SERVICES } from '@/shared/constants';
+import { ARGUS_HOME_SERVICES, ARGUS_ROUTE_SERVICES } from '@/shared/constants';
 import type { HomeService, NetRemoteProfile, NetRouteChoice, NetRouteProbe } from '@/core/types';
 
 const HOME_ID = /^[0-9a-f]{32}$/;
@@ -24,6 +24,11 @@ export function relayAuthority(remote: NetRemoteProfile | undefined, segment: st
   const service = serviceOfSegment(segment);
   if (!service || !usableRemote(remote)) return null;
   return deviceName(service, remote);
+}
+
+export function admittedRelayHost(host: string, remote: NetRemoteProfile | undefined): boolean {
+  if (!usableRemote(remote)) return false;
+  return ARGUS_HOME_SERVICES.some((service) => host === deviceName(service, remote));
 }
 
 export function isRelayHost(host: string, domain: string): boolean {
