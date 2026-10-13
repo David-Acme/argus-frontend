@@ -73,27 +73,48 @@ mod tests {
     remote: RemoteProfile,
     admitted: Vec<String>,
     refused: Vec<String>,
+    usable: Vec<RemoteProfile>,
+    unusable: Vec<RemoteProfile>,
+  }
+
+  fn text(value: &serde_json::Value, key: &str) -> String {
+    value[key].as_str().expect("a string field").to_string()
+  }
+
+  fn profile(value: &serde_json::Value) -> RemoteProfile {
+    RemoteProfile {
+      home_id: text(value, "homeId"),
+      domain: text(value, "domain"),
+    }
+  }
+
+  fn entries(document: &serde_json::Value, key: &str) -> Vec<serde_json::Value> {
+    document[key].as_array().expect("a list field").clone()
   }
 
   fn vectors() -> Vectors {
     let document: serde_json::Value = serde_json::from_str(VECTORS).expect("the vector file is JSON");
-    let text = |key: &str| document[key].as_str().expect("a string field").to_string();
-    let list = |key: &str| -> Vec<String> {
-      document[key]
-        .as_array()
-        .expect("a list field")
+    let hosts = |key: &str| -> Vec<String> {
+      entries(&document, key)
         .iter()
         .map(|value| value.as_str().expect("a string entry").to_string())
         .collect()
     };
+    let profiles = |key: &str| -> Vec<RemoteProfile> { entries(&document, key).iter().map(profile).collect() };
     Vectors {
-      remote: RemoteProfile {
-        home_id: text("homeId"),
-        domain: text("domain"),
-      },
-      admitted: list("admitted"),
-      refused: list("refused"),
+      remote: profile(&document),
+      admitted: hosts("admitted"),
+      refused: hosts("refused"),
+      usable: profiles("usableProfiles"),
+      unusable: profiles("unusableProfiles"),
     }
+  }
+
+  fn names_of(profile: &RemoteProfile) -> Vec<String> {
+    HOME_SERVICES
+      .iter()
+      .map(|service| format!("{service}--{}.{}", profile.home_id, profile.domain))
+      .collect()
   }
 
   #[test]
@@ -129,6 +150,30 @@ mod tests {
       assert!(!admitted_by(host, None));
       assert!(!admitted(host, &uppercase));
       assert!(!admitted(host, &no_domain));
+    }
+  }
+
+  #[test]
+  fn a_usable_profile_admits_each_of_its_device_names() {
+    let vectors = vectors();
+    assert!(vectors.usable.len() >= 5);
+    for profile in &vectors.usable {
+      assert!(profile.usable(), "{profile:?} should be usable");
+      for host in names_of(profile) {
+        assert!(admitted(&host, profile), "{host} should be admitted");
+      }
+    }
+  }
+
+  #[test]
+  fn an_unusable_profile_admits_nothing_not_even_its_own_names() {
+    let vectors = vectors();
+    assert!(vectors.unusable.len() >= 20);
+    for profile in &vectors.unusable {
+      assert!(!profile.usable(), "{profile:?} should be unusable");
+      for host in names_of(profile) {
+        assert!(!admitted(&host, profile), "{host:?} should be refused");
+      }
     }
   }
 }

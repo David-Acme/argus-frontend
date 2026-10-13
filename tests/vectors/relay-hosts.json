@@ -46,5 +46,117 @@
     " auth--0123456789abcdef0123456789abcdef.argus-tunnel.lynk.page",
     "argus.local",
     ""
+  ],
+  "usableProfiles": [
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "fedcba9876543210fedcba9876543210",
+      "domain": "relay.example"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "a.bc"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.dddddddddddddddddddddddddddddddddddddddddddddddddddddddd.page"
+    }
+  ],
+  "unusableProfiles": [
+    {
+      "homeId": "0123456789ABCDEF0123456789ABCDEF",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcde",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef0",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdeg",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef-123456789abcdef",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "",
+      "domain": "argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": ""
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "localhost"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "ARGUS-TUNNEL.LYNK.PAGE"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnel.lynk.page."
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": ".argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnel..lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "-argus-tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnel-.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnel.lynk.p4ge"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnel.lynk.p"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus_tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus tunnel.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "argus-tunnеl.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "*.lynk.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.page"
+    },
+    {
+      "homeId": "0123456789abcdef0123456789abcdef",
+      "domain": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.page"
+    }
   ]
 }

@@ -3,13 +3,18 @@ import type { HomeService, NetRemoteProfile, NetRouteChoice, NetRouteProbe } fro
 
 const HOME_ID = /^[0-9a-f]{32}$/;
 const DOMAIN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+const DOMAIN_MAX_LENGTH = 253;
 
 export function isHomeId(value: string): boolean {
   return HOME_ID.test(value);
 }
 
+function isDomain(value: string): boolean {
+  return value.length <= DOMAIN_MAX_LENGTH && DOMAIN.test(value);
+}
+
 export function usableRemote(remote: NetRemoteProfile | undefined): remote is NetRemoteProfile {
-  return remote !== undefined && isHomeId(remote.homeId) && DOMAIN.test(remote.domain);
+  return remote !== undefined && isHomeId(remote.homeId) && isDomain(remote.domain);
 }
 
 export function serviceOfSegment(segment: string): HomeService | null {
