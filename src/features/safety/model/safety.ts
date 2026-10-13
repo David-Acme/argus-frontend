@@ -40,3 +40,30 @@ export const holdProgress = (pressedAt: number | null, now: number, holdMs = PAN
 
 export const holdComplete = (pressedAt: number | null, now: number, holdMs = PANIC_HOLD_MS): boolean =>
   holdProgress(pressedAt, now, holdMs) >= 1;
+
+export const PHRASE_MIN_WORDS = 3;
+export const PHRASE_MAX_WORDS = 12;
+export const PHRASE_MAX_BYTES = 200;
+
+export type PhraseProblem = 'words' | 'digits' | 'characters' | 'long' | null;
+
+export const phraseWords = (phrase: string): string[] => phrase.normalize('NFC').match(/[\p{L}\p{N}]+/gu) ?? [];
+
+const utf8Bytes = (text: string): number =>
+  Array.from(text).reduce((total, character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return total + (code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4);
+  }, 0);
+
+const isControl = (character: string): boolean => {
+  const code = character.codePointAt(0) ?? 0;
+  return code < 0x20 || code === 0x7f;
+};
+
+export function phraseProblem(phrase: string): PhraseProblem {
+  if (utf8Bytes(phrase) > PHRASE_MAX_BYTES) return 'long';
+  if (/[0-9]/.test(phrase)) return 'digits';
+  if (Array.from(phrase).some(isControl)) return 'characters';
+  const count = phraseWords(phrase).length;
+  return count < PHRASE_MIN_WORDS || count > PHRASE_MAX_WORDS ? 'words' : null;
+}

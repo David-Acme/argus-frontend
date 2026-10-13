@@ -13,13 +13,19 @@ const notice = (scope: ResourceNotice['scope']): ResourceNotice => ({
   ids: [],
 });
 
+const known = (hasPin: boolean): SafetyStatus => ({
+  duressEnabled: true,
+  hasPin,
+  hasPhrase: false,
+});
+
 const answer = (
   hasPin: boolean,
   ok = true
 ): IServiceResponse<SafetyStatus> => ({
   status: ok ? 200 : 0,
   ok,
-  info: ok ? { duressEnabled: true, hasPin } : null,
+  info: ok ? known(hasPin) : null,
   errors: null,
 });
 
@@ -65,8 +71,8 @@ describe('the safety PIN memo', () => {
   });
 
   test('a memo answers, and a server that cannot answer asks for the PIN', () => {
-    expect(needsPin({ duressEnabled: true, hasPin: true }, null)).toBe(true);
-    expect(needsPin({ duressEnabled: true, hasPin: false }, null)).toBe(false);
+    expect(needsPin(known(true), null)).toBe(true);
+    expect(needsPin(known(false), null)).toBe(false);
     expect(needsPin(null, answer(true))).toBe(true);
     expect(needsPin(null, answer(false))).toBe(false);
 

@@ -10,6 +10,7 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { PanicButton } from '@/features/safety/components/panic-button';
+import { PhraseDialog } from '@/features/safety/components/phrase-dialog';
 import { PinSetupDialog } from '@/features/safety/components/pin-setup-dialog';
 import { useSafety } from '@/features/safety/hooks/use-safety';
 
@@ -21,11 +22,13 @@ export function SafetySection({ className }: SafetySectionProps) {
   const { t } = useTranslation();
   const { has, moduleActive } = useCapabilities();
   const surveillance = moduleActive(MODULE_IDS.surveillance);
-  const { status, setDuressEnabled, confirmCurrentPin, savePins, removePins } = useSafety({
+  const { status, setDuressEnabled, confirmCurrentPin, savePins, removePins, savePhrase, clearPhrase } = useSafety({
     enabled: surveillance && has(CAPABILITY.safetyRead),
   });
   const [pinsOpen, setPinsOpen] = useState(false);
   const [currentPin, setCurrentPin] = useState<string | undefined>(undefined);
+  const [phraseOpen, setPhraseOpen] = useState(false);
+  const [phrasePin, setPhrasePin] = useState<string | undefined>(undefined);
 
   const openPins = async () => {
     const confirmed = await confirmCurrentPin();
@@ -37,6 +40,18 @@ export function SafetySection({ className }: SafetySectionProps) {
   const changePinsOpen = (next: boolean) => {
     if (!next) setCurrentPin(undefined);
     setPinsOpen(next);
+  };
+
+  const openPhrase = async () => {
+    const confirmed = await confirmCurrentPin();
+    if (confirmed === null) return;
+    setPhrasePin(confirmed);
+    setPhraseOpen(true);
+  };
+
+  const changePhraseOpen = (next: boolean) => {
+    if (!next) setPhrasePin(undefined);
+    setPhraseOpen(next);
   };
   const managesDuress = surveillance && has(CAPABILITY.guardAdmin) && has(CAPABILITY.safetyDuress);
   const keepsPins = surveillance && has(CAPABILITY.safetyDuress);
@@ -83,10 +98,42 @@ export function SafetySection({ className }: SafetySectionProps) {
         </View>
       ) : null}
 
+      {managesDuress && status?.duressEnabled ? (
+        <View className="gap-1">
+          <ListRow
+            icon="messages-square"
+            title={status.hasPhrase ? t('screens.safety.phrase.change') : t('screens.safety.phrase.create')}
+            subtitle={status.hasPhrase ? t('screens.safety.phrase.set') : t('screens.safety.phrase.unset')}
+            onPress={() => void openPhrase()}
+          />
+          {status.hasPhrase ? (
+            <ListRow
+              icon="trash"
+              title={t('screens.safety.phrase.remove')}
+              destructive
+              onPress={() => void clearPhrase()}
+            />
+          ) : null}
+        </View>
+      ) : keepsPins && status?.duressEnabled ? (
+        <ListRow
+          icon="messages-square"
+          title={t('screens.safety.phrase.title')}
+          subtitle={status.hasPhrase ? t('screens.safety.phrase.set-other') : t('screens.safety.phrase.unset-other')}
+        />
+      ) : null}
+
       <PinSetupDialog
         open={pinsOpen}
         onOpenChange={changePinsOpen}
         onSave={(pins) => savePins(pins, currentPin)}
+      />
+
+      <PhraseDialog
+        open={phraseOpen}
+        replacing={status?.hasPhrase === true}
+        onOpenChange={changePhraseOpen}
+        onSave={(phrase) => savePhrase(phrase, phrasePin)}
       />
     </Panel>
   );

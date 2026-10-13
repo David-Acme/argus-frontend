@@ -93,5 +93,41 @@ export function useSafety({ enabled = true }: UseSafetyOptions = {}) {
     return settle(result?.info);
   }, [data?.hasPin, settle]);
 
-  return { status: data, setDuressEnabled, confirmCurrentPin, savePins, removePins };
+  const savePhrase = useCallback(
+    async (phrase: string, currentPin?: string): Promise<boolean> => {
+      const result = await runServiceAction({
+        call: () => safetyService.setPhrase(phrase, currentPin),
+        success: t('screens.safety.phrase.saved'),
+      });
+      return settle(result?.info);
+    },
+    [settle]
+  );
+
+  const clearPhrase = useCallback(async (): Promise<boolean> => {
+    const accepted = await confirm({
+      title: t('screens.safety.phrase.remove-title'),
+      description: t('screens.safety.phrase.remove-description'),
+      confirmLabel: t('screens.safety.phrase.remove'),
+      intent: 'danger',
+    });
+    if (!accepted) return false;
+    const currentPin = await currentPinIfSet(data?.hasPin === true);
+    if (currentPin === null) return false;
+    const result = await runServiceAction({
+      call: () => safetyService.setPhrase(null, currentPin),
+      success: t('screens.safety.phrase.removed'),
+    });
+    return settle(result?.info);
+  }, [data?.hasPin, settle]);
+
+  return {
+    status: data,
+    setDuressEnabled,
+    confirmCurrentPin,
+    savePins,
+    removePins,
+    savePhrase,
+    clearPhrase,
+  };
 }

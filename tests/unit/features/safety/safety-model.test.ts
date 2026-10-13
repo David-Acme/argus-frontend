@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
-import { digitsOnly, holdComplete, holdProgress, pinDraftProblem, trivialPin } from '@/features/safety/model/safety';
+import {
+  digitsOnly,
+  holdComplete,
+  holdProgress,
+  phraseProblem,
+  phraseWords,
+  pinDraftProblem,
+  trivialPin,
+} from '@/features/safety/model/safety';
 
 describe('PIN drafts', () => {
   test('both codes are 4 to 8 digits and different', () => {
@@ -44,5 +52,48 @@ describe('safety contracts', () => {
     expect(safetyStatusSchema.safeParse({ duressEnabled: 'yes', hasPin: false }).success).toBe(false);
     expect(panicResultSchema.safeParse({ alertId: 4, sent: true, repeated: false }).success).toBe(true);
     expect(panicResultSchema.safeParse({ alertId: 0, sent: true, repeated: false }).success).toBe(false);
+  });
+});
+
+describe('the duress phrase draft', () => {
+  test('a phrase is 3 to 12 words, as the server counts them', () => {
+    expect(phraseProblem('la lluvia de abril trae flores')).toBeNull();
+    expect(phraseProblem('rojo, verde; azul!')).toBeNull();
+    expect(phraseWords('  Señor   Ñandú, ¿qué tal?  ')).toEqual(['Señor', 'Ñandú', 'qué', 'tal']);
+    expect(phraseProblem('dos palabras')).toBe('words');
+    expect(phraseProblem('   ')).toBe('words');
+    expect(phraseProblem(Array.from({ length: 13 }, () => 'palabra').join(' '))).toBe('words');
+  });
+
+  test('digits, control characters and more than 200 bytes are refused before sending', () => {
+    expect(phraseProblem('tengo 3 gatos negros')).toBe('digits');
+    expect(phraseProblem('rojo verde\nazul')).toBe('characters');
+    expect(phraseProblem(Array.from({ length: 12 }, () => 'ñandúñandúñandú').join(' '))).toBe('long');
+  });
+});
+
+describe('the duress phrase status', () => {
+  test('the status reads hasPhrase, and an older server without it claims none', () => {
+    expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: true, hasPhrase: true })).toEqual({
+      duressEnabled: true,
+      hasPin: true,
+      hasPhrase: true,
+    });
+    expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: false })).toEqual({
+      duressEnabled: true,
+      hasPin: false,
+      hasPhrase: false,
+    });
+  });
+
+  test('a status never carries a phrase, even if an answer echoed one', () => {
+    const status = safetyStatusSchema.parse({
+      duressEnabled: true,
+      hasPin: true,
+      hasPhrase: true,
+      duressPhrase: 'rojo verde azul',
+    });
+    expect(Object.keys(status).sort()).toEqual(['duressEnabled', 'hasPhrase', 'hasPin']);
+    expect(JSON.stringify(status)).not.toContain('rojo verde azul');
   });
 });

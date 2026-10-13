@@ -4,7 +4,8 @@ import type { PanicResult, SafetyStatus } from '@/core/types';
 export const safetyStatusSchema = z.object({
   duressEnabled: z.boolean(),
   hasPin: z.boolean(),
-}) satisfies z.ZodType<SafetyStatus>;
+  hasPhrase: z.boolean().catch(false),
+}) satisfies z.ZodType<SafetyStatus, unknown>;
 
 export const panicResultSchema = z.object({
   alertId: z.number().int().positive(),

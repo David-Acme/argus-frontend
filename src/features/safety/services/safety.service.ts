@@ -30,6 +30,13 @@ class SafetyService {
     return this.remember(parsed(await httpService.patch<unknown>(SAFETY, body), safetyStatusSchema));
   }
 
+  async setPhrase(phrase: string | null, currentPin?: string): Promise<IServiceResponse<SafetyStatus>> {
+    const body = currentPin === undefined
+      ? { duressEnabled: true, duressPhrase: phrase }
+      : { duressEnabled: true, duressPhrase: phrase, currentPin };
+    return this.remember(parsed(await httpService.patch<unknown>(SAFETY, body), safetyStatusSchema));
+  }
+
   async setPins(pins: SafetyPins, currentPin?: string): Promise<IServiceResponse<SafetyStatus>> {
     const body = currentPin === undefined ? pins : { ...pins, currentPin };
     return this.remember(parsed(await httpService.put<unknown>(PIN, body), safetyStatusSchema));

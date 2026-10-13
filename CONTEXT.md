@@ -2631,6 +2631,35 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
   (backend `services/guard/CONTEXT.md`, "Panic and duress", for the threat
   model). Arming never asks.
 
+### The duress phrase (F4, 2026-10-13)
+
+Backend: `services/guard/CONTEXT.md`, "The duress phrase (voice, 2026-10-13, F4)".
+
+- **The phrase.** While the duress switch is on, the Owner gets "Elegir / Cambiar la frase
+  de coacción" and, once one is set, "Quitar la frase de coacción" in Perfil > Seguridad
+  personal.
+  - Each sends `PATCH /guard/safety {duressEnabled: true, duressPhrase}`, with a string to
+    set and `null` to clear. Like the PIN dialog, the caller's own code is asked first
+    when they have one (`confirmCurrentPin`), because the backend demands it to change or
+    clear the phrase while duress is on.
+  - `PhraseDialog` checks what the backend DTO checks, before sending
+    (`phraseProblem`): 3 to 12 words (letters and numbers, NFC), no ASCII digits, no
+    control characters, at most 200 UTF-8 bytes.
+  - Residents who hold `safety.duress` see a read-only row saying whether a phrase is
+    set: they say it, and the Owner tells them what it is.
+  - Switching duress off deletes the phrase with the codes, and its confirmation now
+    says so.
+- **The phrase is never kept on the device.** It lives only in the dialog's state,
+  cleared when the dialog closes and after a save. It travels in one request body. The
+  safety status the app caches (view cache `safetyStatus`, and `SafetyService`'s memo)
+  is the zod-parsed answer, which strips every key it does not name. So even an answer
+  that echoed the phrase would leave no copy. `hasPhrase` is the only trace, and the
+  backend sends it only to holders of `safety.duress`.
+- Tests: `safety-model.test.ts` (the phrase rules, the contract stripping an
+  echoed phrase) and `safety-phrase.test.ts` (the body sent, and no trace in the
+  answer or the memo, including a refusal). The e2e spec `duress-phrase.e2e.ts` is
+  written and not run: it sets a phrase with no copy in `localStorage`.
+
 ## Intruder response: who is told, who is attending, is it real (2026-10-04, RESPONSE)
 
 The backend decides who an alert reaches and in what order: argus-guard owns
@@ -3722,6 +3751,23 @@ that exists only for tests. The durable answer, when a rule can be separated
 from its transport, is to put the rule in a leaf module: `safety-memo.ts` holds
 the PIN memo's rule and imports nothing but types and the signal, so its suite
 needs no mock at all.
+
+**A partial mock fixes a module's names for the rest of the run.** bun keeps the
+export names of a specifier's first `mock.module`. A later file that imports a name
+that mock left out fails to link with `Export named '…' not found`, and mocking the
+module again with that name does not bring it back. Two suites did this
+(2026-10-13):
+- `optimistic-action.test.ts` mocked the http barrel with `newIdempotencyKey`
+  alone, so the duress phrase suite, which bun runs after it, could not import
+  `httpService`;
+- the phrase suite mocked `resource-signal` with `resourceSignal` alone, so the
+  `resource-clock`, `resource-signal` and `resource-signal-binding` suites could not
+  import their factories.
+
+Both now mock the net layer only, the house pattern above. The net barrel is safe to
+mock because bun cannot load the real one anyway. bun's file order is not
+alphabetical, so a leak like this shows only in `bun run test`, never in the file
+alone.
 
 **Tests that read the backend find it through one root.** Nine suites pin the
 app to backend files: the wire vocabulary, the role-access, capability, resource,

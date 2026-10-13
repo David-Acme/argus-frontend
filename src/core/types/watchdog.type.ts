@@ -13,6 +13,7 @@ export type WatchdogNotice =
 export type SafetyStatus = {
   duressEnabled: boolean;
   hasPin: boolean;
+  hasPhrase: boolean;
 };
 
 export type PanicResult = {

@@ -30,11 +30,13 @@ mock.module('@/core/stores', () => ({
 
 mock.module('@/core/i18n', () => ({ t: (key: string) => key }));
 
-let drawnKeys = 0;
-mock.module('@/core/services/http', () => ({
-  newIdempotencyKey: () => {
-    drawnKeys += 1;
-    return `key-${drawnKeys}`;
+mock.module('@/core/services/net', () => ({
+  netService: {
+    instance: async () => null,
+    refreshAddress: async () => false,
+    request: async () => {
+      throw { code: 'NETWORK_ERROR', message: 'no network in this suite' };
+    },
   },
 }));
 
