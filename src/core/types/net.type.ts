@@ -91,6 +91,37 @@ export interface NetHttpResult {
   body: string;
 }
 
+export type HomeService =
+  | 'auth'
+  | 'identity'
+  | 'sync'
+  | 'camera'
+  | 'productivity'
+  | 'notification'
+  | 'guard'
+  | 'settings';
+
+export type NetRouteMode = 'lan' | 'relay';
+
+export type NetRouteStatus = 'home' | 'cloud' | 'unreachable';
+
+export type NetProbeOutcome = 'reached' | 'failed' | 'absent';
+
+export interface NetRemoteProfile {
+  homeId: string;
+  domain: string;
+}
+
+export interface NetRouteProbe {
+  lan: NetProbeOutcome;
+  relay: NetProbeOutcome;
+}
+
+export interface NetRouteChoice {
+  mode: NetRouteMode;
+  status: NetRouteStatus;
+}
+
 export interface NetPairedInstance {
   host: string;
   ip: string;
@@ -100,6 +131,8 @@ export interface NetPairedInstance {
   instanceId: string;
   pairedAt: number;
   routes: NetRoutePorts;
+  remote?: NetRemoteProfile;
+  route?: NetRouteMode;
 }
 
 export interface NetError {

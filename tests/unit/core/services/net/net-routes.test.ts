@@ -119,3 +119,38 @@ describe('addressUnreachable', () => {
     for (const code of settled) expect(addressUnreachable(code)).toBe(false);
   });
 });
+
+describe('the relay route', () => {
+  const homeId = '0123456789abcdef0123456789abcdef';
+  const remote = { homeId, domain: 'argus-tunnel.lynk.page' };
+
+  test('a relay route with a usable remote profile dials the service by its device name', () => {
+    const away: NetPairedInstance = { ...paired, remote, route: 'relay' };
+    expect(serviceUrl(away, '/pairing/status')).toBe(`https://identity--${homeId}.argus-tunnel.lynk.page/pairing/status`);
+    expect(serviceUrl(away, '/sync', 'wss')).toBe(`wss://sync--${homeId}.argus-tunnel.lynk.page/sync`);
+    expect(serviceUrl(away, '/rtc/token')).toBe(`https://sync--${homeId}.argus-tunnel.lynk.page/rtc/token`);
+    expect(serviceUrl(away, '/notification-token')).toBe(`https://notification--${homeId}.argus-tunnel.lynk.page/notification-token`);
+  });
+
+  test('without a usable remote profile, or on the LAN route, the url is the LAN one it always was', () => {
+    const lan = 'https://argus.local:7044/pairing/status';
+    expect(serviceUrl({ ...paired, route: 'relay' }, '/pairing/status')).toBe(lan);
+    expect(serviceUrl({ ...paired, remote, route: 'lan' }, '/pairing/status')).toBe(lan);
+    expect(serviceUrl({ ...paired, remote }, '/pairing/status')).toBe(lan);
+    expect(serviceUrl({ ...paired, remote: { ...remote, homeId: 'NOT-A-HOME' }, route: 'relay' }, '/pairing/status')).toBe(lan);
+    expect(serviceUrl({ ...paired, remote: { ...remote, domain: '' }, route: 'relay' }, '/pairing/status')).toBe(lan);
+  });
+
+  test('a segment no home service serves keeps the LAN url on the relay route', () => {
+    const away: NetPairedInstance = { ...paired, remote, route: 'relay' };
+    expect(serviceUrl(away, '/health')).toBe('https://argus.local:7044/health');
+  });
+
+  test('the address heal never rewrites a relay url', () => {
+    const away: NetPairedInstance = { ...paired, remote, route: 'relay' };
+    const relayed = `https://sync--${homeId}.argus-tunnel.lynk.page/sync`;
+    expect(urlAt(relayed, away)).toBe(relayed);
+    expect(urlAt(relayed, paired)).toBe(relayed);
+    expect(urlAt('https://argus.local:9999/pairing/status', away)).toBe('https://argus.local:7044/pairing/status');
+  });
+});

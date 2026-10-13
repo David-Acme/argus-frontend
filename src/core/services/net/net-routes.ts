@@ -1,5 +1,6 @@
-import { ARGUS_DEFAULT_ROUTE_PORTS } from '@/shared/constants';
+import { ARGUS_DEFAULT_ROUTE_PORTS, ARGUS_RELAY_DOMAIN } from '@/shared/constants';
 import type { NetDiscovery, NetPairedInstance, NetRoute, NetRoutePorts } from '@/core/types';
+import { isRelayHost, relayAuthority } from './net-route-choice';
 
 export function routeSegment(path: string): string {
   const trimmed = path.replace(/^\/+/, '');
@@ -22,6 +23,8 @@ export function portFor(instance: NetPairedInstance, path: string): number {
 }
 
 export function serviceUrl(instance: NetPairedInstance, path: string, scheme: 'https' | 'wss' = 'https'): string {
+  const relay = instance.route === 'relay' ? relayAuthority(instance.remote, routeSegment(path)) : null;
+  if (relay) return `${scheme}://${relay}${path}`;
   return `${scheme}://${instance.host}:${portFor(instance, path)}${path}`;
 }
 
@@ -30,6 +33,14 @@ export function urlPath(url: string): string {
   const rest = authorityStart < 0 ? url : url.slice(authorityStart + 3);
   const pathStart = rest.indexOf('/');
   return pathStart < 0 ? '/' : rest.slice(pathStart);
+}
+
+export function urlHost(url: string): string {
+  const authorityStart = url.indexOf('://');
+  const rest = authorityStart < 0 ? url : url.slice(authorityStart + 3);
+  const pathStart = rest.indexOf('/');
+  const authority = pathStart < 0 ? rest : rest.slice(0, pathStart);
+  return authority.replace(/:\d+$/, '');
 }
 
 export function urlWithPort(url: string, port: number): string {
@@ -43,6 +54,7 @@ export function urlWithPort(url: string, port: number): string {
 }
 
 export function urlAt(url: string, instance: NetPairedInstance): string {
+  if (isRelayHost(urlHost(url), instance.remote?.domain ?? ARGUS_RELAY_DOMAIN)) return url;
   const segment = routeSegment(urlPath(url));
   const port = instance.routes[segment] ?? ARGUS_DEFAULT_ROUTE_PORTS[segment];
   return port ? urlWithPort(url, port) : url;

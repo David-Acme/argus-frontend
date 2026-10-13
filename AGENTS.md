@@ -288,7 +288,12 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   stores it (`net.routes`, segment → port). Every URL is built with
   `serviceUrl(instance, path)` from `net/net-routes.ts`: the discovered port
   for the path's leading segment, else `ARGUS_DEFAULT_ROUTE_PORTS`, else the
-  pairing port. Never concatenate `instance.port` by hand. A server mDNS cannot
+  pairing port. Never concatenate `instance.port` by hand. Away from home the
+  same call answers the service's device name,
+  `https://<service>--<home-id>.argus-tunnel.lynk.page<path>`, when the
+  instance's `route` is `relay` and it carries a usable `remote` profile
+  (`net/net-route-choice.ts`, `ARGUS_ROUTE_SERVICES`; CONTEXT.md "Local-first
+  route choice"). A server mDNS cannot
   see (another subnet, a network that drops multicast, the Android emulator at
   `10.0.2.2`) is paired by its address on the pairing screen and uses the
   default ports.

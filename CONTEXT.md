@@ -523,6 +523,57 @@ src/core/services/secure-storage/   → secrets (caPem, JWT)
   document is hidden. `http.service.ts` is the HTTP wrapper; there is no
   separate websocket wrapper.
 
+### Local-first route choice (D2, 2026-10-13)
+
+The app reaches its home on the LAN when it can and through the cloud relay when
+it cannot. Away from home every home service has its own device name,
+`<service>--<home-id>.argus-tunnel.lynk.page` (argus-cloud `docs/protocol.md`,
+section 2.4, and `docs/plan.md`, section 4b). On the relay the app's TLS still
+ends at the home and still pins the home's CA. The relay forwards ciphertext by
+the name alone.
+
+What this step lands:
+- **The route model.**
+  - `HomeService` is the closed set of eight services the home client
+    dispatches (auth, identity, sync, camera, productivity, notification,
+    guard, settings).
+  - `ARGUS_ROUTE_SERVICES` maps each route segment to the service that serves
+    it.
+  - `ARGUS_SERVICE_DEFAULT_PORTS` gives each service its default LAN port.
+  - A unit test keeps both tables equal to `ARGUS_DEFAULT_ROUTE_PORTS`, so a
+    segment, its LAN port and its device name cannot drift apart. The
+    backend's route baseline is where the ownership was read: `/pairing` and
+    `/invitation` belong to identity, and `/rtc` to sync.
+- **The URL.** `serviceUrl` stays the one place a URL is built. It answers the
+  device name, with no port (443), only when the instance's `route` is `relay`
+  and it carries a usable `remote` profile: a 32-hex home id and a domain name.
+  For anything else it answers the LAN URL it always did. That includes a
+  segment no home service serves (`/health`), the LAN route, and a missing or
+  malformed profile.
+- **The heal.** `urlAt`, the address heal's port rewrite, never touches a
+  relay URL. A device name has no LAN port to refresh.
+- **The choice.** `chooseRoute` (`net/net-route-choice.ts`) is the rule. The
+  LAN wins whenever it answers. The relay is used only when the LAN does not
+  answer and the relay does. When neither answers the status is
+  `unreachable`, and the LAN stays the route to retry.
+
+What it does not do yet, so behaviour today is exactly what it was:
+- **No instance carries `remote` or `route`.** Nothing tells the app its home
+  id. Where it should come from (the pairing answer, `/pairing/status`, the
+  sync context, or an mDNS TXT key) is a contract between backend and app,
+  waiting for a ruling.
+- **The native transports accept only the paired host.** Rust's
+  `ensure_allowed_host`, Swift's `allowedHost` and OkHttp's hostname verifier
+  all refuse every other name. A device name must be admitted on all three,
+  for exactly the paired home's names, under the same pinned CA.
+- **Nothing runs the probes yet.** The triggers are a failed connect and a
+  return to the foreground. A network change needs a network-type module and
+  a dev-client rebuild (see "Cameras").
+- **The calm status is not shown yet:** at home, through the cloud,
+  unreachable.
+
+The error mapping is unchanged (`readEnvelope`, `toNetError`).
+
 ### Verification
 - `bunx tsc --noEmit` and `bun run lint` → 0 errors. `cargo check` (src-tauri) → 0/0.
   `bunx expo prebuild --platform android` + `bunx expo run:android` → compiles and runs
