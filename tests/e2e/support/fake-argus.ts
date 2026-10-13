@@ -230,7 +230,7 @@ export class FakeArgus {
     if (spec) return this.answer(spec);
     if (method === 'POST' && path === '/project') return this.createProject(body);
     if (method === 'GET' && bare === '/modules') return envelope(200, { modules: ownerContext(this.enabled).modules });
-    return envelope(404, null, { code: 'NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
+    return envelope(404, null, { code: 'ROUTE_NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
   }
 
   private createProject(body: string): Response {
