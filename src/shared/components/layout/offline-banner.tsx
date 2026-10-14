@@ -8,6 +8,8 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useOfflineNotice } from '@/shared/components/layout/use-offline-notice';
 import { useWatchdogNotice } from '@/shared/components/layout/use-watchdog-notice';
+import { NET_ROUTE_STATUS_VIEWS } from '@/shared/constants';
+import { useRelayRefusalAlert, useRouteStatus } from '@/shared/hooks/use-route-status';
 import { useTranslation } from '@/shared/hooks/use-translation';
 
 const lastHeardLabel = (at: number, language: string): string => {
@@ -22,9 +24,22 @@ export function OfflineBanner() {
   const insets = useSafeAreaInsets();
   const offline = useOfflineNotice();
   const watchdog = useWatchdogNotice();
+  const routeStatus = useRouteStatus();
+  useRelayRefusalAlert();
+  const route =
+    routeStatus === 'unreachable' || routeStatus === 'remote-unavailable' ? NET_ROUTE_STATUS_VIEWS[routeStatus] : null;
   const [retrying, setRetrying] = useState(false);
 
   if (!offline) return null;
+
+  const silent = watchdog.kind === 'silent';
+  const title = silent
+    ? t('common.watchdog.banner-title', { time: lastHeardLabel(watchdog.since, language) })
+    : t(route?.title ?? 'common.offline.title');
+  const description = silent
+    ? t('common.watchdog.banner-description')
+    : t(route?.detail ?? 'common.offline.description');
+  const icon = !silent && route ? route.icon : 'wifi-off';
 
   const retry = async () => {
     setRetrying(true);
@@ -33,26 +48,17 @@ export function OfflineBanner() {
   };
 
   return (
-    <View
-      pointerEvents="box-none"
-      className="absolute inset-x-0 top-0 z-40 items-center px-4"
-      style={{ paddingTop: insets.top + 8 }}>
+    <View className="items-center px-4 pb-2" style={{ paddingTop: insets.top + 8 }}>
       <Animated.View
         entering={FadeInUp.duration(220)}
         exiting={FadeOutUp.duration(180)}
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
         className="bg-card border-border w-full max-w-[520px] flex-row items-center gap-3 rounded-2xl border py-2 pr-2 pl-4 shadow-md shadow-black/10">
-        <Icon name="wifi-off" className="text-warning-strong size-5" />
+        <Icon name={icon} className="text-warning-strong size-5" />
         <View className="min-w-0 flex-1">
-          <Text variant="label">
-            {watchdog.kind === 'silent'
-              ? t('common.watchdog.banner-title', { time: lastHeardLabel(watchdog.since, language) })
-              : t('common.offline.title')}
-          </Text>
-          <Text variant="caption">
-            {watchdog.kind === 'silent' ? t('common.watchdog.banner-description') : t('common.offline.description')}
-          </Text>
+          <Text variant="label">{title}</Text>
+          <Text variant="caption">{description}</Text>
         </View>
         <Button size="sm" variant="ghost" loading={retrying} onPress={retry}>
           <Text>{t('common.retry')}</Text>

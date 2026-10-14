@@ -2,6 +2,7 @@ import '../global.css';
 import { IS_NATIVE, NAV_FADE_MS } from '@/shared/constants';
 import { NAV_THEME, BG_COLORS } from '@/shared/components/layout/navigation-theme';
 import { getThemePreference } from '@/shared/hooks/use-theme-preference';
+import { View } from 'react-native';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { PortalHost } from '@rn-primitives/portal';
@@ -36,25 +37,27 @@ export default function RootLayout() {
         <KeyboardProvider>
           <SafeAreaProvider>
             <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  animation: 'fade',
-                  animationDuration: NAV_FADE_MS,
-                  animationTypeForReplace: 'push',
-                  contentStyle: { backgroundColor: bg },
-                }}>
-                <Stack.Protected guard={IS_NATIVE}>
-                  <Stack.Screen name="qr" />
-                  <Stack.Screen name="approve" />
-                </Stack.Protected>
-                <Stack.Screen name="welcome" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="(app)" />
-              </Stack>
+              <View style={{ flex: 1 }}>
+                <OfflineBanner />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    animation: 'fade',
+                    animationDuration: NAV_FADE_MS,
+                    animationTypeForReplace: 'push',
+                    contentStyle: { backgroundColor: bg },
+                  }}>
+                  <Stack.Protected guard={IS_NATIVE}>
+                    <Stack.Screen name="qr" />
+                    <Stack.Screen name="approve" />
+                  </Stack.Protected>
+                  <Stack.Screen name="welcome" />
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="(app)" />
+                </Stack>
+              </View>
               <GlobalBottomNav />
               <CallPill />
-              <OfflineBanner />
               <ConfirmDialog />
               <DisarmPinDialog />
               <Toaster />

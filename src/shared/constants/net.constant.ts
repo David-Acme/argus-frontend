@@ -1,4 +1,4 @@
-import type { HomeService } from '@/core/types';
+import type { HomeService, IconName, NetRouteStatus, TranslationKey } from '@/core/types';
 
 export const ARGUS_HOST = 'argus.local';
 export const ARGUS_PAIRING_PORT = 7044;
@@ -90,6 +90,27 @@ export const DISCOVERY_TIMEOUT_MS = 6000;
 export const NET_ROUTE_PROBE_TIMEOUT_MS = 4000;
 
 export const NET_ROUTE_RELAY_HEAD_START_MS = 1500;
+
+export interface NetRouteStatusView {
+  icon: IconName;
+  title: TranslationKey;
+  detail: TranslationKey;
+}
+
+export const NET_ROUTE_STATUS_VIEWS: Readonly<Record<NetRouteStatus, NetRouteStatusView>> = {
+  home: { icon: 'home', title: 'common.route.home', detail: 'common.route.home-detail' },
+  cloud: { icon: 'cloud', title: 'common.route.cloud', detail: 'common.route.cloud-detail' },
+  unreachable: {
+    icon: 'wifi-off',
+    title: 'common.route.unreachable',
+    detail: 'common.route.unreachable-detail',
+  },
+  'remote-unavailable': {
+    icon: 'cloud-off',
+    title: 'common.route.remote-unavailable',
+    detail: 'common.route.remote-unavailable-detail',
+  },
+};
 
 export const NET_STORAGE_KEYS = {
   paired: 'net.paired',

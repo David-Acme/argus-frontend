@@ -4,6 +4,7 @@ import { useAuthStore, useLocaleStore } from '@/core/stores';
 import type { LanguagePreference, NetPairedInstance, ThemePreference } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
+import { pairedSinceLabel } from '@/features/profile/services/paired-since';
 import { SessionsSection } from '@/features/sessions';
 import { CallPreferencesSection } from '@/features/voice';
 import { PrivacySection } from '@/features/privacy';
@@ -13,9 +14,10 @@ import { Icon } from '@/shared/components/ui/icon';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
-import { IS_NATIVE, LANGUAGE_OPTIONS, THEME_ICONS, THEME_OPTIONS } from '@/shared/constants';
+import { IS_NATIVE, LANGUAGE_OPTIONS, NET_ROUTE_STATUS_VIEWS, THEME_ICONS, THEME_OPTIONS } from '@/shared/constants';
 import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
+import { useRouteStatus } from '@/shared/hooks/use-route-status';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
 import { roleLabelOf } from '@/shared/libs/role-label';
@@ -33,6 +35,8 @@ export default function ProfileScreen() {
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
   const [instance, setInstance] = useState<NetPairedInstance | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const routeStatus = useRouteStatus();
+  const route = routeStatus ? NET_ROUTE_STATUS_VIEWS[routeStatus] : null;
 
   const themeOptions = useMemo(
     () =>
@@ -51,9 +55,7 @@ export default function ProfileScreen() {
       })),
     [t],
   );
-  const pairedSince = instance?.pairedAt
-    ? new Date(instance.pairedAt).toLocaleDateString(language, { dateStyle: 'medium' })
-    : null;
+  const pairedSince = pairedSinceLabel(instance?.pairedAt ?? 0, language);
 
   const changeTheme = useCallback((value: ThemePreference) => {
     setThemePreference(value);
@@ -125,6 +127,7 @@ export default function ProfileScreen() {
             }
           />
         ) : null}
+        {instance && route ? <ListRow icon={route.icon} title={t(route.title)} subtitle={t(route.detail)} /> : null}
         <ListRow
           icon="unlink"
           title={t('screens.profile.unpair')}
