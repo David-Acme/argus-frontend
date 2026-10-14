@@ -1,5 +1,8 @@
 package com.davidacme.argus.push
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.charset.StandardCharsets
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -24,6 +27,29 @@ class SealedEnvelopeTest {
         assertEquals(164, envelope.ciphertext.size)
         assertEquals(54, envelope.associatedData.size)
         assertArrayEquals(fcmCall.copyOfRange(0, 54), envelope.associatedData)
+    }
+
+    @Test
+    fun parsesA255CharacterAsciiTokenBuiltInTheTest() {
+        val token = "t".repeat(255)
+        val payload = ByteBuffer.allocate(16 + 1 + 1 + 1 + 4 + 1 + 2 + token.length + 2 + 32 + 2 + 16)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .put(ByteArray(16))
+            .put(1.toByte())
+            .put(2.toByte())
+            .put(1.toByte())
+            .putInt(60)
+            .put(0.toByte())
+            .putShort(token.length.toShort())
+            .put(token.toByteArray(StandardCharsets.US_ASCII))
+            .putShort(32.toShort())
+            .put(ByteArray(32))
+            .putShort(16.toShort())
+            .put(ByteArray(16))
+            .array()
+        val envelope = assertNotNull(SealedEnvelope.parse(payload))!!
+        assertEquals(token, envelope.token)
+        assertEquals(255, envelope.token.length)
     }
 
     @Test
