@@ -9,11 +9,12 @@ import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { ListRow } from '@/shared/components/ui/list-row';
 import { Panel } from '@/shared/components/ui/panel';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, IS_TAURI } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { ConnectionNotice } from '@/features/settings/components/connection-notice';
+import { DesktopAutostartRow } from '@/features/settings/components/desktop-autostart-row';
 import { FirstRunBanner } from '@/features/settings/components/first-run-banner';
 import { ProfilePreviewDialog } from '@/features/settings/components/profile/profile-preview-dialog';
 import { SettingsProfileSection } from '@/features/settings/components/profile/settings-profile-section';
@@ -142,6 +143,7 @@ export default function SettingsScreen() {
           </View>
 
           {isOwner ? <ModulesSummaryCard /> : null}
+          {IS_TAURI ? <DesktopAutostartRow /> : null}
           {isOwner && has(CAPABILITY.activityRead) ? (
             <Panel className="p-1.5">
               <ListRow

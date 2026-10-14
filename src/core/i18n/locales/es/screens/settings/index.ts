@@ -13,6 +13,13 @@ export const settings = {
   'more-advanced': 'Hay {count} opciones técnicas más en este servicio.',
   'show-advanced': 'Ver en modo avanzado',
   'count-all': '{count} opciones',
+  desktop: {
+    autostart: {
+      label: 'Abrir Argus al iniciar sesión',
+      hint: 'Apagado salvo que lo actives. Argus se abre al encender este equipo, y al cerrar su ventana sigue en la bandeja.',
+      failed: 'No se pudo cambiar este ajuste.',
+    },
+  },
   mode: {
     label: 'Modo de Configuración',
     simple: 'Sencillo',

@@ -13,6 +13,13 @@ export const settings = {
   'more-advanced': 'This service has {count} more technical options.',
   'show-advanced': 'Show in advanced mode',
   'count-all': '{count} options',
+  desktop: {
+    autostart: {
+      label: 'Open Argus when I sign in',
+      hint: 'Off unless you turn it on. Argus opens when this computer starts, and closing its window keeps it running in the tray.',
+      failed: 'The setting could not be changed.',
+    },
+  },
   mode: {
     label: 'Settings mode',
     simple: 'Simple',
