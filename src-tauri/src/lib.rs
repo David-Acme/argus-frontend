@@ -146,6 +146,9 @@ pub fn run() {
   let _ = rustls::crypto::ring::default_provider().install_default();
   rtc::transport::install();
   tauri::Builder::default()
+    .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+      tray::report(tray::show_main(app));
+    }))
     .plugin(context_menu::plugin())
     .plugin(tauri_plugin_notification::init())
     .plugin(autostart::plugin())
