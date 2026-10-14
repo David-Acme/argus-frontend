@@ -37,6 +37,7 @@ const HASH_EXTENSIONS = new Set(['.properties', '.toml', '.podspec']);
 const SILENT_EXTENSIONS = new Set(['.json', '.md', '.png', '.lock', '.txt', '.ogg', '.m4a', '.wav']);
 const SILENT_FILES = new Set(['LICENSE', '.prettierrc']);
 const GENERATED_FILES = new Set(['uniwind-types.d.ts']);
+const INLINE_CODE = /<(script|style)\b/i;
 const TRIPLE_SLASH_DIRECTIVE = /^\/\/\/\s*<(reference|amd-module|amd-dependency)\b/;
 
 function scriptComments(path: string, text: string, kind: ts.ScriptKind): Range[] {
@@ -270,6 +271,11 @@ for (const path of files) {
   try {
     text = readFileSync(path, 'utf8');
   } catch {
+    continue;
+  }
+  if (path.endsWith('.html') && INLINE_CODE.test(text)) {
+    unknown += 1;
+    process.stdout.write(`${path}: inline <script> or <style>; move the code to its own file\n`);
     continue;
   }
   const ranges = commentsOf(path, text);
