@@ -594,15 +594,45 @@ What this step lands:
     not answered by the end of the head start. A LAN that answers in time
     never touches the relay. So when everyone is at home, nothing crosses
     the cloud (argus-cloud `docs/plan.md`, section 0).
-  - Each answer is bounded by `NET_ROUTE_PROBE_TIMEOUT_MS` (4 s), and any
-    HTTP answer under the pinned CA counts as reached. `chooseRoute`
-    decides. A LAN that answers within its 4 s still wins over a relay that
-    answered first.
+  - Each probe goes through the transport's own `probe` call (desktop
+    `argus_probe`, Android and iOS `ArgusNet.probe`). It resolves the name,
+    opens the TCP connection, makes the TLS handshake under the pinned CA,
+    and sends `GET /pairing/status`. Any HTTP answer counts as `reached`.
+    Otherwise it names the class of the failure (reviewer's ruling,
+    2026-10-13):
+    - `dns`: the name did not resolve.
+    - `connect`: no TCP connection, refused or timed out before one existed.
+    - `tls-peer-closed`: TCP worked, then the peer closed, reset or stayed
+      silent during the handshake or the answer.
+    - `pin`: the chain does not lead to the pinned CA, or the leaf does not
+      name the host. The reply then carries the address and the SHA-256 of
+      the leaf the peer presented.
+  - The probe carries the device identity headers and never a credential:
+    no `Authorization`, no cookie, no `X-Argus-Device-Credential`. The
+    desktop command takes no headers at all. Android and iOS drop those
+    three even if a caller passes them. `/pairing/status` needs none, so a
+    stranger at the paired address learns nothing of value.
+  - Each probe is bounded by `NET_ROUTE_PROBE_TIMEOUT_MS` (4 s), which the
+    native call enforces per phase. A reply that never comes reads as
+    `connect` one second later. `chooseRoute` decides. A LAN that answers
+    within its 4 s still wins over a relay that answered first.
   - The clock is a parameter (`NetProbeTimings`), so the tests drive the
     head start with a fake clock.
   - `NetRouteKeeper` runs one probe at a time. It first waits for a
     rediscovery in flight: the native module holds one configuration, and
     a relocation and a probe must not reconfigure it under each other.
+  - **A LAN that fails the pin.** Away from home, a foreign network that
+    reuses the home's IP range is normal, so this counts as "the LAN did
+    not answer", plus a warning in the log with the address and the
+    fingerprint seen. The keeper remembers it. The route goes to the relay
+    when there is a profile, even if the relay failed too, and never back
+    to that LAN address until a later probe passes the pin. Without a
+    profile the route stays unset and requests still go to the paired
+    address. The pin stops them in the handshake before a byte of the
+    request leaves, and they follow sync's reconnect backoff. They start
+    no loop of their own: a certificate refusal is `CERT_NOT_TRUSTED`, not
+    `NETWORK_ERROR`, so it never triggers a rediscovery. Each pin failure
+    is logged once per change of state, never once per request.
   - The chosen mode is kept in memory only (`instance.route`). Every start
     decides again.
   - **A failed connect.** `refreshAddress()` first rediscovers the home on
@@ -624,9 +654,42 @@ What this step lands:
     (`lanServiceUrl`), never through the relay.
   - None of this needs a network-type module.
 
-What it does not do yet:
-- **The calm status is not shown yet:** at home, through the cloud,
-  unreachable.
+- **The calm status** (argus-cloud `docs/plan.md`, section 4b, "Visible
+  states"). The app shows a state in words, never a raw error. There are
+  four, and `chooseRoute` gives each one:
+  - `home`: the LAN answered. "Conectado en casa".
+  - `cloud`: the LAN did not answer and the relay did. "Conectado por la
+    nube".
+  - `unreachable`: the LAN did not answer, and the relay reached the cloud
+    but not the home (`tls-peer-closed`: the relay closes on the SNI of a
+    home with no link, or the home never answers). "No puedo conectar con
+    Argus en casa".
+  - `remote-unavailable`: the LAN did not answer, and the cloud itself was
+    not reached (`dns`, `connect`), or there was no relay to try because
+    the app knows no usable profile. "Acceso remoto no disponible".
+  - A relay that fails the pin is no calm state. It can be an attack, so it
+    is never shown as unreachable. The choice carries `relayRefused`, the
+    log carries an error once per change, and the app raises the existing
+    fingerprint alert ("Este servidor no es el que vinculaste…") the way a
+    request error is shown (`useRelayRefusalAlert`, a toast). The status is
+    then empty.
+  - The link state in the sync context never decides. Away from home it is
+    as old as the last connection.
+  - `NetRouteKeeper` keeps the last choice and tells its listeners when it
+    changes (`netService.routeChoice`, `onRouteChoice`). A relocation
+    found on the LAN records `home`. An unpairing forgets the choice.
+  - `useRouteStatus` (`shared/hooks`) reads it. Profile, under "Servidor",
+    shows the state as a row with its icon (`home`, `cloud`, `wifi-off`,
+    `cloud-off`; `NET_ROUTE_STATUS_VIEWS`). The offline banner carries the
+    two states without a connection instead of its generic "Sin conexión
+    con Argus". The watchdog's silent notice still wins over both.
+  - The sync service probes on every sign-in as well as at bind. A session
+    restored after bind used to wait for a failed connect before the first
+    probe, so a phone at home never learned it was at home.
+  - `tests/e2e/route-status.e2e.ts` puts the app in each state at phone
+    width. The Tauri shim cuts hosts off (`__e2e_unreachable__`), and the
+    seed carries the remote profile. With `ARGUS_E2E_ROUTE_SHOTS=<dir>` it
+    saves one screenshot per state.
 
 The error mapping is unchanged (`readEnvelope`, `toNetError`).
 
@@ -653,6 +716,11 @@ tests will once they can run.
     resolved by the system's DNS.
   - rustls checks the device name against a root store that holds only the
     pinned CA.
+  - `net/probe.rs` is the probe (`argus_probe`). It goes step by step over
+    std sockets and rustls in a blocking thread, so each step names its own
+    failure. A verifier that wraps the pinned one records the leaf it was
+    shown. Its tests and `http.rs`'s pin test run local rustls servers from
+    `tests/vectors/tls.json` (`net/test_tls.rs`).
 - **Android (Kotlin).** `RelayHosts.kt` is the rule, pure Kotlin with no
   Android import.
   - `configureRemote(homeId, domain)` (spec `ArgusNet.nitro.ts`) hands the
@@ -673,6 +741,15 @@ tests will once they can run.
   - `RelayHostsTest.kt` reads the vector file through the
     `argus.relayVectors` system property that `build.gradle` sets. Run it
     with `./gradlew :argus-net:testDebugUnitTest` from `android/`.
+  - The strict client and the probe live in `StrictTransport.kt`, plain
+    JVM code the unit tests drive against local TLS servers. The TLS
+    material is `tests/vectors/tls.json`: a test CA, a leaf it signs, a
+    leaf from another CA and a leaf that names another host, also read by
+    the desktop's tests (`argus.tlsVectors`). The paired host answers to
+    the pinned CA alone, as the client always has. A device name must also
+    be the leaf's exact SAN. A certificate refusal on the strict client is
+    `CERT_NOT_TRUSTED` (`StrictTransport.codeOf`); it used to read as
+    `NETWORK_ERROR`.
 - **iOS (Swift).** `RelayHosts.swift` is the rule. It compares names byte
   for byte (UTF-8), so Swift's Unicode-aware string equality never enters.
   - `configureRemote` keeps the profile beside the paired host.
@@ -682,6 +759,10 @@ tests will once they can run.
   - `StrictDelegate` sets the SSL policy for the host it was asked about.
     The chain still anchors to the pinned CA alone. It follows no redirect,
     like `PinnedDelegate`.
+  - `RouteProbe.swift` is the probe, over `NWConnection`. A failure before
+    the TLS verify block runs is `dns` or `connect`, and one after it is
+    `tls-peer-closed`. A verify block that refuses is `pin`. It is unbuilt
+    on this machine, like the rest of the module.
   - Nothing builds or tests the iOS module on this machine. Once an iOS
     test target exists, its tests read the same vector file.
 
