@@ -1,11 +1,13 @@
 import type { NetError, NetErrorCode } from '@/core/types';
 
+export const showsDesktopAutostart = (platform: { isTauri: boolean }): boolean => platform.isTauri;
+
 export type AutostartOutcome = {
   enabled: boolean;
   error: NetError | null;
 };
 
-const FALLBACK_CODE: NetErrorCode = 'NETWORK_ERROR';
+const FALLBACK_CODE: NetErrorCode = 'DESKTOP_SHELL_ERROR';
 
 const isNetError = (value: unknown): value is NetError =>
   typeof value === 'object' && value !== null && 'code' in value && 'message' in value;

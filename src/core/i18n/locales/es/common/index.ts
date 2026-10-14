@@ -111,6 +111,7 @@ export const common = {
     'module-core': 'El núcleo de Argus siempre está activo.',
     'module-roles-held': 'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
     'role-inactive': 'Tu rol está en pausa mientras ese módulo esté apagado.',
+    'desktop-shell': 'El escritorio no pudo cambiar este ajuste.',
     unknown: 'Algo salió mal',
   },
 } as const;

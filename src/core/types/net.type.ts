@@ -12,7 +12,8 @@ export type NetErrorCode =
   | 'DISCOVERY_NOT_FOUND'
   | 'NETWORK_ERROR'
   | 'TIMEOUT'
-  | 'STORAGE_ERROR';
+  | 'STORAGE_ERROR'
+  | 'DESKTOP_SHELL_ERROR';
 
 export interface NetRoute {
   path: string;

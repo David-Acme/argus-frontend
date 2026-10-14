@@ -60,6 +60,6 @@ describe('desktop shell autostart', () => {
     } catch (error) {
       thrown = error;
     }
-    expect(thrown).toEqual({ code: 'AUTOSTART_ERROR', message: 'the desktop entry could not be written' });
+    expect(thrown).toEqual({ code: 'DESKTOP_SHELL_ERROR', message: 'the desktop entry could not be written' });
   });
 });

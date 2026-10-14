@@ -112,6 +112,7 @@ export const common = {
     'module-core': 'The Argus core is always on.',
     'module-roles-held': 'Someone holds a role of this module. Choose a new role for them and try again.',
     'role-inactive': 'Your role is on hold while that module is off.',
+    'desktop-shell': 'The desktop could not change this setting.',
     unknown: 'Something went wrong',
   },
 };

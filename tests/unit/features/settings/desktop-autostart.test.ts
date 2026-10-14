@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { asNetError, commitAutostart } from '@/features/settings/model/desktop-autostart';
+import { asNetError, commitAutostart, showsDesktopAutostart } from '@/features/settings/model/desktop-autostart';
 
 describe('desktop autostart toggle', () => {
   test('a saved change keeps the chosen state and reports no error', async () => {
@@ -25,12 +25,17 @@ describe('desktop autostart toggle', () => {
     const outcome = await commitAutostart(true, async () => {
       throw new Error('bridge gone');
     });
-    expect(outcome).toEqual({ enabled: false, error: { code: 'NETWORK_ERROR', message: '' } });
+    expect(outcome).toEqual({ enabled: false, error: { code: 'DESKTOP_SHELL_ERROR', message: '' } });
   });
 
   test('a net error passes through unchanged and anything else is a network error', () => {
     expect(asNetError({ code: 'TIMEOUT', message: 'slow' })).toEqual({ code: 'TIMEOUT', message: 'slow' });
-    expect(asNetError('oops')).toEqual({ code: 'NETWORK_ERROR', message: '' });
-    expect(asNetError(null)).toEqual({ code: 'NETWORK_ERROR', message: '' });
+    expect(asNetError('oops')).toEqual({ code: 'DESKTOP_SHELL_ERROR', message: '' });
+    expect(asNetError(null)).toEqual({ code: 'DESKTOP_SHELL_ERROR', message: '' });
+  });
+
+  test('the row is shown only in the Tauri desktop shell, so mobile and web never render it', () => {
+    expect(showsDesktopAutostart({ isTauri: false })).toBe(false);
+    expect(showsDesktopAutostart({ isTauri: true })).toBe(true);
   });
 });

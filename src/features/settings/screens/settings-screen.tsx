@@ -15,6 +15,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { ConnectionNotice } from '@/features/settings/components/connection-notice';
 import { DesktopAutostartRow } from '@/features/settings/components/desktop-autostart-row';
+import { showsDesktopAutostart } from '@/features/settings/model/desktop-autostart';
 import { FirstRunBanner } from '@/features/settings/components/first-run-banner';
 import { ProfilePreviewDialog } from '@/features/settings/components/profile/profile-preview-dialog';
 import { SettingsProfileSection } from '@/features/settings/components/profile/settings-profile-section';
@@ -143,7 +144,7 @@ export default function SettingsScreen() {
           </View>
 
           {isOwner ? <ModulesSummaryCard /> : null}
-          {IS_TAURI ? <DesktopAutostartRow /> : null}
+          {showsDesktopAutostart({ isTauri: IS_TAURI }) ? <DesktopAutostartRow /> : null}
           {isOwner && has(CAPABILITY.activityRead) ? (
             <Panel className="p-1.5">
               <ListRow
