@@ -56,8 +56,8 @@ test('declining hands the decline to the main webview and waits for its result',
     await expect.poll(() => callsOf(callWindow.page), { timeout: 10000 }).toEqual([
       { command: 'argus_call_decline', args: { callId: CALL_ID } },
     ]);
-    await expect(callWindow.page.getByRole('button', { name: 'Rechazar' })).toBeDisabled();
-    await expect(callWindow.page.getByRole('button', { name: 'Contestar' })).toBeDisabled();
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Rechazar' }).isDisabled()).toBe(true);
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Contestar' }).isDisabled()).toBe(true);
   } finally {
     await callWindow.close();
   }
@@ -74,8 +74,8 @@ test('a decline the server refuses keeps the window and lets the owner try again
       (window as unknown as { __argusCallIpc: { emit: (event: string) => void } }).__argusCallIpc.emit('argus-call-decline-failed')
     );
     await expect.poll(() => callWindow.page.getByRole('status').textContent(), { timeout: 10000 }).toContain('No se pudo rechazar');
-    await expect(callWindow.page.getByRole('button', { name: 'Rechazar' })).toBeEnabled();
-    await expect(callWindow.page.getByRole('button', { name: 'Contestar' })).toBeEnabled();
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Rechazar' }).isDisabled()).toBe(false);
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Contestar' }).isDisabled()).toBe(false);
   } finally {
     await callWindow.close();
   }
@@ -90,7 +90,7 @@ test('a decline with the main webview gone says the call will close by itself', 
     await expect.poll(() => callWindow.page.getByRole('status').textContent(), { timeout: 10000 }).toBe(
       'No se pudo rechazar; la llamada se cerrará sola'
     );
-    await expect(callWindow.page.getByRole('button', { name: 'Rechazar' })).toBeDisabled();
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Rechazar' }).isDisabled()).toBe(true);
   } finally {
     await callWindow.close();
   }
@@ -104,9 +104,9 @@ test('a cancelled call silences the ring, offers no action and asks for nothing'
     await callWindow.page.evaluate(() =>
       (window as unknown as { __argusCallIpc: { emit: (event: string) => void } }).__argusCallIpc.emit('argus-call-cancelled')
     );
-    await expect(callWindow.page.getByRole('button', { name: 'Contestar' })).toBeDisabled();
-    await expect(callWindow.page.getByRole('button', { name: 'Rechazar' })).toBeDisabled();
-    await expect(callWindow.page.getByRole('status')).toHaveText('La llamada ya no está activa.');
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Contestar' }).isDisabled()).toBe(true);
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Rechazar' }).isDisabled()).toBe(true);
+    await expect.poll(async () => (await callWindow.page.getByRole('status').textContent())?.trim()).toBe('La llamada ya no está activa.');
     expect(await callsOf(callWindow.page)).toEqual([]);
   } finally {
     await callWindow.close();
@@ -118,8 +118,8 @@ test('a window without a valid call id offers no action', async ({ app }) => {
   await control(baseUrl, 'reset');
   const callWindow = await openCallWindow(baseUrl, NO_FAILURES, 'callId=..%2Fetc');
   try {
-    await expect(callWindow.page.getByRole('status')).toHaveText('Llamada no válida.');
-    await expect(callWindow.page.getByRole('button', { name: 'Contestar' })).toBeDisabled();
+    await expect.poll(async () => (await callWindow.page.getByRole('status').textContent())?.trim()).toBe('Llamada no válida.');
+    await expect.poll(() => callWindow.page.getByRole('button', { name: 'Contestar' }).isDisabled()).toBe(true);
     expect(await callsOf(callWindow.page)).toEqual([]);
   } finally {
     await callWindow.close();
