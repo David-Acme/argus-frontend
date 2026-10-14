@@ -9,6 +9,9 @@ const DECLINE_EVENT = 'argus-call-decline';
 const DECLINE_PATH = '/rtc/decline';
 
 export type LinkPath = (link: string) => string;
+export type DeclineTransport = {
+  post: (path: string, body: { callId: string }) => Promise<{ ok: boolean }>;
+};
 export type Navigate = (path: string) => void;
 
 export const navigateInApp: Navigate = (path) => {
@@ -20,21 +23,24 @@ export function openLink(link: string, linkPath: LinkPath, navigate: Navigate = 
   navigate(linkPath(link));
 }
 
-export async function declineCall(callId: string): Promise<void> {
+export async function declineCall(callId: string, transport: DeclineTransport = httpService): Promise<void> {
   let ok = false;
   try {
-    ok = (await httpService.post(DECLINE_PATH, { callId })).ok;
+    ok = (await transport.post(DECLINE_PATH, { callId })).ok;
   } catch {
     ok = false;
   }
   await invoke('argus_call_decline_result', { callId, ok }).catch(() => undefined);
 }
 
-export async function startDesktopBridge(linkPath: LinkPath): Promise<UnlistenFn> {
+export async function startDesktopBridge(
+  linkPath: LinkPath,
+  transport: DeclineTransport = httpService
+): Promise<UnlistenFn> {
   const stops = await Promise.all([
     listen<{ link: string }>(OPEN_LINK_EVENT, (event) => openLink(event.payload.link, linkPath)),
     listen<{ callId: string }>(DECLINE_EVENT, (event) => {
-      void declineCall(event.payload.callId);
+      void declineCall(event.payload.callId, transport);
     }),
   ]);
   await emit(READY_EVENT);
