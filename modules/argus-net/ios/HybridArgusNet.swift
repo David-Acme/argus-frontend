@@ -63,6 +63,36 @@ public class HybridArgusNet: HybridArgusNetSpec {
     }
   }
 
+  func probe(options: NetProbeRequest) throws -> Promise<NetProbeResult> {
+    let ca = caPem
+    let host = allowedHost
+    let profile = remote
+    return Promise.async {
+      guard !ca.isEmpty else {
+        throw netError("PAIRING_REQUIRED|Server is not paired yet")
+      }
+      guard
+        let url = URL(string: options.url),
+        RelayHosts.targetAdmission(url, pairedHost: host, remote: profile) != .refused,
+        let target = url.host?.lowercased()
+      else {
+        throw netError("HOST_NOT_ALLOWED|Host is not allowed")
+      }
+      guard let anchor = Self.certificateFromPem(ca) else {
+        throw netError("CERT_NOT_TRUSTED|Invalid CA certificate")
+      }
+      let probe = RouteProbe(
+        target: RouteProbeTarget(
+          url: url,
+          host: target,
+          port: UInt16(url.port ?? 443),
+          headers: options.headers,
+          timeout: options.timeoutMs / 1000,
+          anchor: anchor))
+      return await probe.run()
+    }
+  }
+
   func openSocket(options: NetSocketOptions) throws -> Promise<(any HybridArgusSocketSpec)> {
     let ca = caPem
     let host = allowedHost
