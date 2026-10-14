@@ -1,5 +1,5 @@
 import '../global.css';
-import { IS_NATIVE, NAV_FADE_MS } from '@/shared/constants';
+import { IS_NATIVE, IS_TAURI, NAV_FADE_MS } from '@/shared/constants';
 import { NAV_THEME, BG_COLORS } from '@/shared/components/layout/navigation-theme';
 import { getThemePreference } from '@/shared/hooks/use-theme-preference';
 import { View } from 'react-native';
@@ -19,6 +19,8 @@ import { Toaster } from '@/shared/components/ui/toaster';
 import { OfflineBanner } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
 import { CallPill } from '@/features/voice';
+import { startDesktopBridge } from '@/core/services/desktop/desktop-bridge';
+import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
@@ -28,6 +30,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     Uniwind.setTheme(getThemePreference());
+  }, []);
+
+  useEffect(() => {
+    if (!IS_TAURI) return;
+    const stopping = startDesktopBridge(deepLinkPath);
+    return () => {
+      void stopping.then((stop) => stop(), () => undefined);
+    };
   }, []);
 
   return (
