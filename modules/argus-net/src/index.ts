@@ -19,5 +19,6 @@ export type {
   NetHttpRequest,
   NetHttpResult,
   NetPairing,
+  NetProbeResult,
   NetSocketOptions,
 } from './ArgusNet.nitro';

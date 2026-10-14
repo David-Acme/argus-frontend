@@ -50,6 +50,18 @@ export interface NetHttpResult {
   body: string;
 }
 
+export interface NetProbeRequest {
+  url: string;
+  headers: Record<string, string>;
+  timeoutMs: number;
+}
+
+export interface NetProbeResult {
+  outcome: string;
+  address: string;
+  fingerprint: string;
+}
+
 export interface NetSocketOptions {
   url: string;
   headers?: Record<string, string>;
@@ -73,5 +85,6 @@ export interface ArgusNet extends HybridObject<{ ios: 'swift', android: 'kotlin'
   configureVerified(caPem: string, caFingerprint: string, allowedHost: string, ip: string): void;
   configureRemote(homeId: string, domain: string): void;
   request(options: NetHttpRequest): Promise<NetHttpResult>;
+  probe(options: NetProbeRequest): Promise<NetProbeResult>;
   openSocket(options: NetSocketOptions): Promise<ArgusSocket>;
 }
