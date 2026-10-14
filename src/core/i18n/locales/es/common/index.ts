@@ -7,6 +7,16 @@ export const common = {
     title: 'Sin conexión con Argus',
     description: 'Mostrando lo último guardado en este dispositivo.',
   },
+  route: {
+    home: 'Conectado en casa',
+    'home-detail': 'Por tu red local.',
+    cloud: 'Conectado por la nube',
+    'cloud-detail': 'Estás fuera de casa. La conexión sigue cifrada hasta tu casa.',
+    unreachable: 'No puedo conectar con Argus en casa',
+    'unreachable-detail': 'Ni por tu red ni por la nube. Mostrando lo último guardado en este dispositivo.',
+    'remote-unavailable': 'Acceso remoto no disponible',
+    'remote-unavailable-detail': 'Fuera de casa no puedo llegar a Argus. Mostrando lo último guardado en este dispositivo.',
+  },
   watchdog: {
     'banner-title': 'Argus no responde desde las {time}',
     'banner-description': 'Puede que el servidor esté apagado o sin red. Si no hay nadie en casa, pide a alguien que lo compruebe.',

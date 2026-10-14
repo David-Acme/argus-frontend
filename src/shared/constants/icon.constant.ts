@@ -103,6 +103,8 @@ import AudioLines from 'lucide-react-native/icons/audio-lines';
 import Volume2 from 'lucide-react-native/icons/volume-2';
 import Wifi from 'lucide-react-native/icons/wifi';
 import WifiOff from 'lucide-react-native/icons/wifi-off';
+import Cloud from 'lucide-react-native/icons/cloud';
+import CloudOff from 'lucide-react-native/icons/cloud-off';
 import X from 'lucide-react-native/icons/x';
 import Maximize from 'lucide-react-native/icons/maximize';
 import Minimize from 'lucide-react-native/icons/minimize';
@@ -159,6 +161,8 @@ export const ICONS = {
   'repeat-off': RepeatOff,
   'log-out': LogOut,
   'wifi-off': WifiOff,
+  cloud: Cloud,
+  'cloud-off': CloudOff,
   'qr-code': QrCode,
   'scan-barcode': ScanBarcode,
   'scan-face': ScanFace,

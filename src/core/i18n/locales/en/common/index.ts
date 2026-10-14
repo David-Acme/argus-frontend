@@ -8,6 +8,16 @@ export const common = {
     title: 'No connection to Argus',
     description: 'Showing what this device saved last.',
   },
+  route: {
+    home: 'Connected at home',
+    'home-detail': 'Over your home network.',
+    cloud: 'Connected through the cloud',
+    'cloud-detail': 'You are away from home. The connection stays encrypted all the way to your home.',
+    unreachable: 'I can’t reach Argus at home',
+    'unreachable-detail': 'Neither on your network nor through the cloud. Showing what this device saved last.',
+    'remote-unavailable': 'Remote access unavailable',
+    'remote-unavailable-detail': 'Away from home I can’t reach Argus. Showing what this device saved last.',
+  },
   watchdog: {
     'banner-title': 'Argus hasn’t answered since {time}',
     'banner-description': 'The server may be off or offline. If nobody is home, ask someone to check on it.',
