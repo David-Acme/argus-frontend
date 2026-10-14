@@ -32,6 +32,11 @@ describe('check-comments on html and binary assets', () => {
     expect(run.status).toBe(0);
   });
 
+  test('an html page that loads its script from its own file passes', () => {
+    const run = gateOver({ 'public/call/index.html': '<html><body><script src="call-window.js"></script></body></html>\n' });
+    expect(run.status).toBe(0);
+  });
+
   test('an html page with an inline script fails and names the file', () => {
     const run = gateOver({ 'public/call/index.html': '<html><script>// note\nconst a = 1;</script></html>\n' });
     expect(run.status).toBe(1);
