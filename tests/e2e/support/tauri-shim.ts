@@ -13,6 +13,7 @@ export function installTauriShim(seed: ShimSeed): void {
 
   const SECURE_KEY = '__e2e_secure__';
   const SEEDED_KEY = '__e2e_seeded__';
+  const CUT_KEY = '__e2e_unreachable__';
   if (window.localStorage.getItem(SEEDED_KEY) !== seed.device) {
     for (const [key, value] of Object.entries(seed.local)) window.localStorage.setItem(key, value);
     window.localStorage.setItem(SECURE_KEY, JSON.stringify(seed.secure));
@@ -35,6 +36,25 @@ export function installTauriShim(seed: ShimSeed): void {
     return slash < 0 ? '/' : rest.slice(slash);
   };
 
+  const hostOf = (url: string): string => {
+    const start = url.indexOf('://');
+    const rest = start < 0 ? url : url.slice(start + 3);
+    const end = rest.search(/[/:?#]/);
+    return (end < 0 ? rest : rest.slice(0, end)).toLowerCase();
+  };
+
+  const cutOff = (url: string): string | null => {
+    const cuts = JSON.parse(window.localStorage.getItem(CUT_KEY) ?? '{}') as Record<string, string>;
+    const host = hostOf(url);
+    const cut = Object.keys(cuts).find((name) => host === name || host.endsWith(`.${name}`));
+    return cut === undefined ? null : (cuts[cut] ?? null);
+  };
+
+  const probe = (args: Args): { outcome: string; address: string; fingerprint: string } => {
+    const outcome = cutOff(String(args.url)) ?? 'reached';
+    return { outcome, address: outcome === 'dns' ? '' : '127.0.0.1:443', fingerprint: '' };
+  };
+
   const deliver = (socket: ShimSocket, kind: number, body: Uint8Array): void => {
     const frame = new Uint8Array(body.length + 1);
     frame[0] = kind;
@@ -54,6 +74,7 @@ export function installTauriShim(seed: ShimSeed): void {
 
   const request = async (args: Args): Promise<unknown> => {
     const input = args.request as { url: string; method: string; headers?: Record<string, string>; body?: string };
+    if (cutOff(input.url) !== null) throw new Error('NETWORK_ERROR|the e2e harness cut this host off');
     const method = input.method.toUpperCase();
     const response = await fetch(`/__api${pathOf(input.url)}`, {
       method,
@@ -69,6 +90,7 @@ export function installTauriShim(seed: ShimSeed): void {
 
   const openSocket = (args: Args): Promise<null> => {
     const options = args.options as { socketId: string; url: string };
+    if (cutOff(options.url) !== null) return Promise.reject(new Error('NETWORK_ERROR|the e2e harness cut this host off'));
     const channel = (args.onEvent as { id: number }).id;
     const path = pathOf(options.url);
     const query = path.includes('?') ? `&${path.slice(path.indexOf('?') + 1)}` : '';
@@ -121,6 +143,8 @@ export function installTauriShim(seed: ShimSeed): void {
       }
       case 'argus_request':
         return request(args);
+      case 'argus_probe':
+        return probe(args);
       case 'argus_socket_open':
         return openSocket(args);
       case 'argus_socket_send_text':
