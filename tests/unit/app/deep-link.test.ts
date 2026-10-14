@@ -28,6 +28,15 @@ describe('deep link allow-list', () => {
     expect(deepLinkPath('argus://agenda?callId=call-41')).toBe('/agenda');
   });
 
+  test('a notification link keeps only a numeric notification id', () => {
+    expect(deepLinkPath('argus://notification?notificationId=42')).toBe('/notification?notificationId=42');
+    expect(deepLinkPath('argus://notification?x=1&notificationId=42&y=2')).toBe('/notification?notificationId=42');
+    expect(deepLinkPath('argus://notification')).toBe('/');
+    expect(deepLinkPath('argus://notification?notificationId=../x')).toBe('/');
+    expect(deepLinkPath('argus://notification?notificationId=42abc')).toBe('/');
+    expect(deepLinkPath('argus://cameras/12?notificationId=42')).toBe('/cameras/12');
+  });
+
   test('anything else lands on the entry route', () => {
     expect(deepLinkPath('argus://welcome/face?mode=invite-enroll&inviteToken=x')).toBe('/');
     expect(deepLinkPath('argus://approve')).toBe('/');

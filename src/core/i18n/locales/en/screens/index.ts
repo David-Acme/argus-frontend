@@ -24,6 +24,7 @@ import { modules } from './modules';
 import { access } from './access';
 import { reminders } from './reminders';
 import { activity } from './activity';
+import { notification } from './notification';
 
 export const screens = {
   home,
@@ -52,4 +53,5 @@ export const screens = {
   access,
   reminders,
   activity,
+  notification,
 };
