@@ -15,7 +15,7 @@ const BODY = {
   provider: 'fcm',
   publicKey: 'A'.repeat(43),
   keyId: 'B'.repeat(22),
-};
+} as const;
 
 describe('the widened notification token registration', () => {
   test('the provider set is the one the backend names', () => {
