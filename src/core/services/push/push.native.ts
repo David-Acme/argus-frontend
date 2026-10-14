@@ -45,9 +45,9 @@ class NativePushService implements IPushService {
         provider: PROVIDER,
       });
       const answer = await httpService.post('/notification-token', body);
-      if (!answer.ok) log.warn('push', 'the device token was not registered', answer.errors?.code);
+      if (!answer.ok) log.error('push', 'the device token was not registered', answer.errors?.code);
     } catch (error) {
-      log.warn('push', 'the device token was not registered', error);
+      log.error('push', 'the device token was not registered', error);
     }
   }
 
@@ -57,7 +57,7 @@ class NativePushService implements IPushService {
     try {
       native = this.module();
     } catch (error) {
-      log.warn('push', 'the native push module is unavailable; nothing to unpair', error);
+      log.error('push', 'the native push module is unavailable; nothing to unpair', error);
       return;
     }
     await unpairPush({
@@ -84,7 +84,7 @@ class NativePushService implements IPushService {
       });
       this.declineBound = true;
     } catch (error) {
-      log.warn('push', 'the native decline listener is unavailable', error);
+      log.error('push', 'the native decline listener is unavailable', error);
     }
   }
 

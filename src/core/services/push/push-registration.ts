@@ -33,7 +33,7 @@ async function attempt<T>(step: string, action: () => Promise<T>): Promise<T | n
   try {
     return await action();
   } catch (error) {
-    log.warn('push', `${step} failed; the unpair goes on`, error);
+    log.error('push', `${step} failed; the unpair goes on`, error);
     return null;
   }
 }
