@@ -1,5 +1,5 @@
 import { ARGUS_HOME_SERVICES, ARGUS_ROUTE_SERVICES } from '@/shared/constants';
-import type { HomeService, NetRemoteProfile, NetRouteChoice, NetRouteProbe } from '@/core/types';
+import type { HomeService, NetRemoteProfile, NetRouteChoice, NetRouteProbe, NetRouteStatus } from '@/core/types';
 
 const HOME_ID = /^[0-9a-f]{32}$/;
 const DOMAIN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
@@ -43,7 +43,11 @@ export function isRelayHost(host: string, domain: string): boolean {
 }
 
 export function chooseRoute(probe: NetRouteProbe): NetRouteChoice {
-  if (probe.lan === 'reached') return { mode: 'lan', status: 'home' };
-  if (probe.relay === 'reached') return { mode: 'relay', status: 'cloud' };
-  return { mode: 'lan', status: 'unreachable' };
+  if (probe.lan === 'reached') return { mode: 'lan', status: 'home', relayRefused: false };
+  if (probe.relay === 'reached') return { mode: 'relay', status: 'cloud', relayRefused: false };
+  const lanSuspect = probe.lan === 'pin';
+  if (probe.relay === 'pin') return { mode: lanSuspect ? null : 'lan', status: null, relayRefused: true };
+  const status: NetRouteStatus = probe.relay === 'tls-peer-closed' ? 'unreachable' : 'remote-unavailable';
+  if (!lanSuspect) return { mode: 'lan', status, relayRefused: false };
+  return { mode: probe.relay === 'absent' ? null : 'relay', status, relayRefused: false };
 }

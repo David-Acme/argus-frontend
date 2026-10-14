@@ -15,6 +15,18 @@ let discovery: NetDiscovery | null = null;
 let discoveryCalls = 0;
 let calls: string[] = [];
 let answers: ((url: string) => boolean) | null = null;
+let probeOutcome: ((url: string) => string) | null = null;
+let probeHeaders: Record<string, string>[] = [];
+let warnings: string[] = [];
+let errors: string[] = [];
+
+mock.module('@/core/services/log', () => ({
+  log: {
+    error: (_scope: string, message: string) => errors.push(message),
+    warn: (_scope: string, message: string) => warnings.push(message),
+    debug: () => undefined,
+  },
+}));
 
 mock.module('@/core/services/secure-storage', () => ({
   secureStorageService: {
@@ -56,6 +68,13 @@ mock.module('argus-net', () => ({
       calls.push(`request|${url}`);
       if (answers ? !answers(url) : configuredIp === OLD_IP) throw failure;
       return { status: 200, headers: {}, body: JSON.stringify({ status: 200, info: { id: 1 }, errors: null }) };
+    },
+    probe: async ({ url, headers }: { url: string; headers: Record<string, string> }) => {
+      calls.push(`probe|${url}`);
+      probeHeaders.push(headers);
+      const reached = answers ? answers(url) : configuredIp !== OLD_IP;
+      const outcome = probeOutcome ? probeOutcome(url) : reached ? 'reached' : 'connect';
+      return { outcome, address: `${configuredIp}:7044`, fingerprint: outcome === 'pin' ? 'AB12' : '' };
     },
     openSocket: async () => {
       throw 'UNEXPECTED_CALL|openSocket';
@@ -118,6 +137,7 @@ describe('the phone net service against a moved server', () => {
   beforeEach(async () => {
     clock += REDISCOVERY_MEMO_MS;
     setSystemTime(new Date(clock));
+    await netService.unpair();
     await clearInstance();
     store.clear();
     requestUrls = [];
@@ -126,6 +146,10 @@ describe('the phone net service against a moved server', () => {
     configuredRemote = null;
     calls = [];
     answers = null;
+    probeOutcome = null;
+    probeHeaders = [];
+    warnings = [];
+    errors = [];
     failure = 'NETWORK_ERROR|Failed to connect to /192.168.18.205:7042';
     await seed();
   });
@@ -156,12 +180,12 @@ describe('the phone net service against a moved server', () => {
     answers = throughRelay;
     calls = [];
 
-    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud' });
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
 
     const configured = calls.indexOf(`configureRemote|${REMOTE.homeId}|${REMOTE.domain}`);
     expect(configured).toBeGreaterThanOrEqual(0);
-    expect(configured).toBeLessThan(calls.indexOf(`request|${RELAY_STATUS_URL}`));
-    expect(calls).toContain(`request|${LAN_STATUS_URL}`);
+    expect(configured).toBeLessThan(calls.indexOf(`probe|${RELAY_STATUS_URL}`));
+    expect(calls).toContain(`probe|${LAN_STATUS_URL}`);
     const instance = await netService.instance();
     expect(instance?.route).toBe('relay');
     expect(instance && serviceUrl(instance, '/auth/status')).toBe(
@@ -174,9 +198,9 @@ describe('the phone net service against a moved server', () => {
     answers = () => true;
     calls = [];
 
-    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home' });
+    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home', relayRefused: false });
     expect((await netService.instance())?.route).toBe('lan');
-    expect(calls.filter((call) => call.startsWith('request|'))).toEqual([`request|${LAN_STATUS_URL}`]);
+    expect(calls.filter((call) => call.startsWith('probe|'))).toEqual([`probe|${LAN_STATUS_URL}`]);
   });
 
   test('a failed connect away from home moves the route to the relay once', async () => {
@@ -192,7 +216,7 @@ describe('the phone net service against a moved server', () => {
   test('a home found again on the LAN wins over the relay, and its address is checked on the LAN', async () => {
     await netService.rememberRemote(REMOTE);
     answers = throughRelay;
-    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud' });
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
     answers = (url) => throughRelay(url) || configuredIp === NEW_IP;
     discovery = announcement(NEW_IP);
     calls = [];
@@ -200,10 +224,83 @@ describe('the phone net service against a moved server', () => {
     expect(await netService.refreshAddress()).toBe(true);
 
     expect(calls).toContain(`request|${LAN_STATUS_URL}`);
-    expect(calls.some((call) => call.startsWith('request|') && throughRelay(call.slice('request|'.length)))).toBe(false);
+    expect(calls.some((call) => throughRelay(call.slice(call.indexOf('|') + 1)))).toBe(false);
     const instance = await netService.instance();
     expect(instance?.route).toBe('lan');
     expect(instance?.ip).toBe(NEW_IP);
+  });
+
+  test('the route choice reaches its listeners once per change and is forgotten on unpair', async () => {
+    await netService.unpair();
+    await seed();
+    await netService.rememberRemote(REMOTE);
+    const seen: (string | null)[] = [];
+    const stop = netService.onRouteChoice(() => seen.push(netService.routeChoice()?.status ?? null));
+
+    answers = throughRelay;
+    await netService.probeRoute();
+    await netService.probeRoute();
+    answers = () => true;
+    await netService.probeRoute();
+    await netService.unpair();
+    stop();
+    await netService.probeRoute();
+
+    expect(seen).toEqual(['cloud', 'home', null]);
+    expect(netService.routeChoice()).toBeNull();
+  });
+
+  test('a probe sends the device identity and never a credential', async () => {
+    await netService.rememberRemote(REMOTE);
+    answers = throughRelay;
+    await netService.probeRoute();
+
+    expect(probeHeaders.length).toBe(2);
+    for (const headers of probeHeaders) {
+      const names = Object.keys(headers).map((name) => name.toLowerCase());
+      expect(names).toContain('x-argus-client');
+      expect(names.filter((name) => ['authorization', 'cookie', 'x-argus-device-credential'].includes(name))).toEqual([]);
+    }
+  });
+
+  test('a LAN that fails the pin is set aside for the relay until it answers under the pin, and is logged once', async () => {
+    await netService.rememberRemote(REMOTE);
+    probeOutcome = (url) => (throughRelay(url) ? 'connect' : 'pin');
+
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'remote-unavailable', relayRefused: false });
+    probeOutcome = (url) => (throughRelay(url) ? 'connect' : 'connect');
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'remote-unavailable', relayRefused: false });
+    probeOutcome = (url) => (throughRelay(url) ? 'connect' : 'pin');
+    await netService.probeRoute();
+    expect((await netService.instance())?.route).toBe('relay');
+    expect(warnings.length).toBe(1);
+    expect(warnings[0]).toContain(`${OLD_IP}:7044`);
+    expect(warnings[0]).toContain('AB12');
+
+    probeOutcome = () => 'reached';
+    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home', relayRefused: false });
+    expect((await netService.instance())?.route).toBe('lan');
+  });
+
+  test('a LAN that fails the pin with no profile leaves no route, and remote access is unavailable', async () => {
+    await netService.unpair();
+    await seed();
+    probeOutcome = () => 'pin';
+
+    expect(await netService.probeRoute()).toEqual({ mode: null, status: 'remote-unavailable', relayRefused: false });
+    expect((await netService.instance())?.route).toBeUndefined();
+    expect(calls.filter((call) => call.startsWith('probe|'))).toEqual([`probe|${LAN_STATUS_URL}`]);
+  });
+
+  test('a relay that fails the pin raises the refusal, logged once, and shows no calm state', async () => {
+    await netService.rememberRemote(REMOTE);
+    probeOutcome = (url) => (throughRelay(url) ? 'pin' : 'connect');
+
+    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: null, relayRefused: true });
+    await netService.probeRoute();
+    expect(errors.length).toBe(1);
+    expect(errors[0]).toContain('AB12');
+    expect(netService.routeChoice()?.relayRefused).toBe(true);
   });
 
   test('the instance waits for a probe in flight', async () => {
@@ -214,7 +311,7 @@ describe('the phone net service against a moved server', () => {
     const instance = await netService.instance();
 
     expect(instance?.route).toBe('relay');
-    expect(await probe).toEqual({ mode: 'relay', status: 'cloud' });
+    expect(await probe).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
   });
 
   test('the native transport is told there is no remote profile while the instance carries none', async () => {

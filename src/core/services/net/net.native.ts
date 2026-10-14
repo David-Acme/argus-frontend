@@ -1,20 +1,19 @@
 import { createArgusNet } from 'argus-net';
 import type { ArgusSocket, NetSocketOptions } from 'argus-net';
 import Constants from 'expo-constants';
-import { DISCOVERY_TIMEOUT_MS, IS_IOS } from '@/shared/constants';
+import { DISCOVERY_TIMEOUT_MS, IS_IOS, NET_ROUTE_PROBE_TIMEOUT_MS } from '@/shared/constants';
 import type { IArgusNetService } from '@/core/interfaces';
 import {
   clearInstance,
   isPaired,
   loadInstance,
   matchesExpectation,
-  rememberRoute,
   savePairing,
   saveRemote,
   toNetError,
   updateInstanceAddress,
 } from './net-persistence';
-import { NetRouteKeeper } from './net-route-probe';
+import { NetRouteKeeper, readingOf } from './net-route-probe';
 import {
   addressUnreachable,
   lanServiceUrl,
@@ -35,6 +34,7 @@ import type {
   NetPairedInstance,
   NetPairing,
   NetPin,
+  NetProbeReading,
   NetRemoteProfile,
   NetRouteChoice,
 } from '@/core/types';
@@ -157,22 +157,30 @@ class NativeArgusNetService implements IArgusNetService {
     const instance = await loadInstance();
     if (!instance) return false;
     if (await this.rediscover(instance.ip).catch(() => false)) {
-      rememberRoute('lan');
+      this.routes.record({ mode: 'lan', status: 'home', relayRefused: false });
       return true;
     }
     const choice = await this.routes.probe().catch(() => null);
-    return choice !== null && choice.mode !== (instance.route ?? 'lan');
+    return choice !== null && (choice.mode ?? 'lan') !== (instance.route ?? 'lan');
   }
 
   probeRoute(): Promise<NetRouteChoice | null> {
     return this.routes.probe();
   }
 
-  private async reach(url: string): Promise<NetHttpResult> {
+  routeChoice(): NetRouteChoice | null {
+    return this.routes.current();
+  }
+
+  onRouteChoice(listener: () => void): () => void {
+    return this.routes.onChange(listener);
+  }
+
+  private async reach(url: string): Promise<NetProbeReading> {
     const instance = await loadInstance();
     if (!instance) throw { code: 'PAIRING_REQUIRED', message: 'Server is not paired yet' } as NetError;
     configureFor(instance);
-    return net.request({ url, method: 'GET', headers: identified(undefined), body: '', files: [] });
+    return readingOf(await net.probe({ url, headers: identified(undefined), timeoutMs: NET_ROUTE_PROBE_TIMEOUT_MS }));
   }
 
   async rememberRemote(remote: NetRemoteProfile): Promise<boolean> {
@@ -289,6 +297,7 @@ class NativeArgusNetService implements IArgusNetService {
 
   async unpair(): Promise<void> {
     configuredKey = null;
+    this.routes.forget();
     await clearInstance();
   }
 }

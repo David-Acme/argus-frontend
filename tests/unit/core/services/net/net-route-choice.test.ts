@@ -99,24 +99,62 @@ describe('the route tables agree', () => {
 });
 
 describe('the route choice', () => {
-  const outcomes: NetProbeOutcome[] = ['reached', 'failed', 'absent'];
+  const failures: NetProbeOutcome[] = ['dns', 'connect', 'tls-peer-closed', 'pin', 'absent'];
+  const everything: NetProbeOutcome[] = ['reached', ...failures];
+  const lanMisses: NetProbeOutcome[] = ['dns', 'connect', 'tls-peer-closed', 'absent'];
 
   test('the LAN wins whenever it answers', () => {
-    for (const relay of outcomes) {
-      expect(chooseRoute({ lan: 'reached', relay })).toEqual({ mode: 'lan', status: 'home' });
+    for (const relay of everything) {
+      expect(chooseRoute({ lan: 'reached', relay })).toEqual({ mode: 'lan', status: 'home', relayRefused: false });
     }
   });
 
   test('the relay is used only when the LAN does not answer and the relay does', () => {
-    expect(chooseRoute({ lan: 'failed', relay: 'reached' })).toEqual({ mode: 'relay', status: 'cloud' });
-    expect(chooseRoute({ lan: 'absent', relay: 'reached' })).toEqual({ mode: 'relay', status: 'cloud' });
+    for (const lan of failures) {
+      expect(chooseRoute({ lan, relay: 'reached' })).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
+    }
   });
 
-  test('when neither answers the home is unreachable and the LAN stays the route to retry', () => {
-    for (const lan of ['failed', 'absent'] as const) {
-      for (const relay of ['failed', 'absent'] as const) {
-        expect(chooseRoute({ lan, relay })).toEqual({ mode: 'lan', status: 'unreachable' });
+  test('a relay that fails at the cloud, or no relay at all, means remote access is unavailable', () => {
+    for (const lan of lanMisses) {
+      for (const relay of ['dns', 'connect', 'absent'] as const) {
+        expect(chooseRoute({ lan, relay })).toEqual({ mode: 'lan', status: 'remote-unavailable', relayRefused: false });
       }
     }
+  });
+
+  test('a relay that reached the cloud but not the home means the home is unreachable', () => {
+    for (const lan of lanMisses) {
+      expect(chooseRoute({ lan, relay: 'tls-peer-closed' })).toEqual({
+        mode: 'lan',
+        status: 'unreachable',
+        relayRefused: false,
+      });
+    }
+  });
+
+  test('a relay that fails the pin is no calm state, but a refusal to raise', () => {
+    for (const lan of lanMisses) {
+      expect(chooseRoute({ lan, relay: 'pin' })).toEqual({ mode: 'lan', status: null, relayRefused: true });
+    }
+    expect(chooseRoute({ lan: 'pin', relay: 'pin' })).toEqual({ mode: null, status: null, relayRefused: true });
+  });
+
+  test('a LAN that fails the pin is set aside: the relay when there is a profile, no route when there is none', () => {
+    expect(chooseRoute({ lan: 'pin', relay: 'connect' })).toEqual({
+      mode: 'relay',
+      status: 'remote-unavailable',
+      relayRefused: false,
+    });
+    expect(chooseRoute({ lan: 'pin', relay: 'tls-peer-closed' })).toEqual({
+      mode: 'relay',
+      status: 'unreachable',
+      relayRefused: false,
+    });
+    expect(chooseRoute({ lan: 'pin', relay: 'absent' })).toEqual({
+      mode: null,
+      status: 'remote-unavailable',
+      relayRefused: false,
+    });
   });
 });

@@ -15,6 +15,7 @@ let discoveryCalls = 0;
 const relocateCalls: { url: string; ip: string }[] = [];
 const socketChannels: { onmessage: ((payload: ArrayBuffer) => void) | null }[] = [];
 const probedUrls: string[] = [];
+const probeArgs: Record<string, unknown>[] = [];
 const openedUrls: string[] = [];
 let answers: (url: string) => boolean = () => false;
 let socketAnswers: (url: string) => boolean = () => true;
@@ -55,11 +56,11 @@ mock.module('@tauri-apps/api/core', () => ({
       socketChannels.push(args?.onEvent as (typeof socketChannels)[number]);
       return undefined;
     }
-    if (command === 'argus_request') {
-      const url = String((args?.request as { url?: string } | undefined)?.url);
+    if (command === 'argus_probe') {
+      const url = String(args?.url);
       probedUrls.push(url);
-      if (!answers(url)) throw 'NETWORK_ERROR|The home did not answer';
-      return { status: 200, headers: {}, body: '' };
+      probeArgs.push(args ?? {});
+      return { outcome: answers(url) ? 'reached' : 'connect', address: '127.0.0.1:7044', fingerprint: '' };
     }
     throw `UNEXPECTED_COMMAND|${command}`;
   },
@@ -117,6 +118,7 @@ describe('the desktop net service against a moved server', () => {
     discoveryCalls = 0;
     relocateCalls.length = 0;
     probedUrls.length = 0;
+    probeArgs.length = 0;
     openedUrls.length = 0;
     answers = () => false;
     socketAnswers = () => true;
@@ -140,15 +142,16 @@ describe('the desktop net service against a moved server', () => {
     await netService.rememberRemote(REMOTE);
     answers = () => true;
 
-    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home' });
+    expect(await netService.probeRoute()).toEqual({ mode: 'lan', status: 'home', relayRefused: false });
     expect(probedUrls).toEqual(['https://argus.local:7044/pairing/status']);
+    expect(probeArgs.map((args) => Object.keys(args).sort())).toEqual([['timeoutMs', 'url']]);
   });
 
   test('on the relay, a candidate address is still checked on the LAN', async () => {
     await seed({ auth: 7024 });
     await netService.rememberRemote(REMOTE);
     answers = throughRelay;
-    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud' });
+    expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
     discovery = announcement(NEW_IP, [{ path: '/pairing', port: 7044 }]);
 
     expect(await netService.refreshAddress()).toBe(true);

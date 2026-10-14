@@ -169,18 +169,19 @@ class SynchronizeService {
     this.authStore = store;
     this.sessionActions = sessionActions;
     store.subscribe((state, prev) => {
-      if (state.status === 'signed-in' && prev.status !== 'signed-in')
-        void this.connection.connect();
+      if (state.status === 'signed-in' && prev.status !== 'signed-in') this.openSession();
       if (state.status === 'signed-out' && prev.status === 'signed-in') this.disconnect();
     });
     watchReconnectOpportunities(() => {
       void this.followRoute();
       this.retryNow();
     });
-    if (store.getState().status === 'signed-in') {
-      void this.followRoute();
-      void this.connection.connect();
-    }
+    if (store.getState().status === 'signed-in') this.openSession();
+  }
+
+  private openSession(): void {
+    void this.followRoute();
+    void this.connection.connect();
   }
 
   private async followRoute(): Promise<void> {
@@ -190,7 +191,7 @@ class SynchronizeService {
     } catch {
       return;
     }
-    if (choice) this.connection.followRoute(choice.mode);
+    if (choice) this.connection.followRoute(choice.mode ?? 'lan');
   }
 
   async ensureConnected(): Promise<boolean> {

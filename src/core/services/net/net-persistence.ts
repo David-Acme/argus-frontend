@@ -78,8 +78,10 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
 const sameRemote = (left: NetRemoteProfile | undefined, right: NetRemoteProfile): boolean =>
   left !== undefined && left.homeId === right.homeId && left.domain === right.domain;
 
-export function rememberRoute(route: NetRouteMode): void {
-  if (cachedInstance) cachedInstance = { ...cachedInstance, route };
+export function rememberRoute(route: NetRouteMode | null): void {
+  if (!cachedInstance) return;
+  const { route: _previous, ...instance } = cachedInstance;
+  cachedInstance = route ? { ...instance, route } : instance;
 }
 
 export async function saveRemote(remote: NetRemoteProfile): Promise<boolean> {

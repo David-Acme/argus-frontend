@@ -1,19 +1,18 @@
 import { invoke, Channel } from '@tauri-apps/api/core';
-import type { NetSocketOptions } from 'argus-net';
+import type { NetProbeResult, NetSocketOptions } from 'argus-net';
 
-import { DISCOVERY_TIMEOUT_MS, NET_TRUST_KEYS } from '@/shared/constants';
+import { DISCOVERY_TIMEOUT_MS, NET_ROUTE_PROBE_TIMEOUT_MS, NET_TRUST_KEYS } from '@/shared/constants';
 import type { IArgusNetService, IArgusSocket } from '@/core/interfaces';
 import {
   clearInstance,
   isPaired,
   loadInstance,
   rememberInstanceAddress,
-  rememberRoute,
   savePairingMetadata,
   saveRemote,
   toNetError,
 } from './net-persistence';
-import { NetRouteKeeper } from './net-route-probe';
+import { NetRouteKeeper, readingOf } from './net-route-probe';
 import { lanServiceUrl, mayRediscover, relocatedInstance, rerouted, SERVER_IDENTITY_PATH } from './net-routes';
 import { withDeviceCredential } from './device-credential';
 import type {
@@ -25,6 +24,7 @@ import type {
   NetPairedInstance,
   NetPairing,
   NetPin,
+  NetProbeReading,
   NetRemoteProfile,
   NetRouteChoice,
 } from '@/core/types';
@@ -114,21 +114,27 @@ class WebArgusNetService implements IArgusNetService {
     const instance = await loadInstance();
     if (!instance) return false;
     if (await this.rediscover(instance.ip).catch(() => false)) {
-      rememberRoute('lan');
+      this.routes.record({ mode: 'lan', status: 'home', relayRefused: false });
       return true;
     }
     const choice = await this.routes.probe().catch(() => null);
-    return choice !== null && choice.mode !== (instance.route ?? 'lan');
+    return choice !== null && (choice.mode ?? 'lan') !== (instance.route ?? 'lan');
   }
 
   probeRoute(): Promise<NetRouteChoice | null> {
     return this.routes.probe();
   }
 
-  private reach(url: string): Promise<NetHttpResult> {
-    return invoke<NetHttpResult>('argus_request', {
-      request: { url, method: 'GET', headers: {}, body: '', files: [] },
-    });
+  routeChoice(): NetRouteChoice | null {
+    return this.routes.current();
+  }
+
+  onRouteChoice(listener: () => void): () => void {
+    return this.routes.onChange(listener);
+  }
+
+  private async reach(url: string): Promise<NetProbeReading> {
+    return readingOf(await invoke<NetProbeResult>('argus_probe', { url, timeoutMs: NET_ROUTE_PROBE_TIMEOUT_MS }));
   }
 
   async rememberRemote(remote: NetRemoteProfile): Promise<boolean> {
@@ -195,6 +201,7 @@ class WebArgusNetService implements IArgusNetService {
   }
 
   async unpair(): Promise<void> {
+    this.routes.forget();
     await clearInstance(NET_TRUST_KEYS);
   }
 }

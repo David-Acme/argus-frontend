@@ -103,9 +103,17 @@ export type HomeService =
 
 export type NetRouteMode = 'lan' | 'relay';
 
-export type NetRouteStatus = 'home' | 'cloud' | 'unreachable';
+export type NetRouteStatus = 'home' | 'cloud' | 'unreachable' | 'remote-unavailable';
 
-export type NetProbeOutcome = 'reached' | 'failed' | 'absent';
+export type NetProbeFailure = 'dns' | 'connect' | 'tls-peer-closed' | 'pin';
+
+export type NetProbeOutcome = 'reached' | 'absent' | NetProbeFailure;
+
+export interface NetProbeReading {
+  outcome: NetProbeOutcome;
+  address: string;
+  fingerprint: string;
+}
 
 export interface NetRemoteProfile {
   homeId: string;
@@ -125,8 +133,9 @@ export interface NetRouteProbe {
 }
 
 export interface NetRouteChoice {
-  mode: NetRouteMode;
-  status: NetRouteStatus;
+  mode: NetRouteMode | null;
+  status: NetRouteStatus | null;
+  relayRefused: boolean;
 }
 
 export interface NetPairedInstance {

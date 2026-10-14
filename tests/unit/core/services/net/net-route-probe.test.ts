@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
-import type { NetProbeClock } from '@/core/services/net/net-route-probe';
-import type { NetPairedInstance, NetRouteChoice } from '@/core/types';
+import type { NetProbeClock, NetRouteReadings } from '@/core/services/net/net-route-probe';
+import type { NetPairedInstance, NetProbeOutcome, NetProbeReading, NetRouteChoice } from '@/core/types';
 
 mock.module('@/core/services/secure-storage', () => ({
   secureStorageService: {
@@ -11,7 +11,8 @@ mock.module('@/core/services/secure-storage', () => ({
   },
 }));
 
-const { measureRoute, probeUrls } = await import('@/core/services/net/net-route-probe');
+const { measureRoute, probeUrls, readingOf } = await import('@/core/services/net/net-route-probe');
+const { chooseRoute } = await import('@/core/services/net/net-route-choice');
 
 const HOME = '0123456789abcdef0123456789abcdef';
 const DOMAIN = 'argus-tunnel.lynk.page';
@@ -65,18 +66,25 @@ class FakeClock implements NetProbeClock {
 }
 
 interface Answer {
-  promise: Promise<void>;
-  answer: () => void;
-  refuse: () => void;
+  promise: Promise<NetProbeReading>;
+  answer: (outcome?: NetProbeOutcome) => void;
+  throwOut: () => void;
 }
 
 function pending(): Answer {
-  const handlers = { answer: (): void => undefined, refuse: (): void => undefined };
-  const promise = new Promise<void>((resolve, reject) => {
-    handlers.answer = () => resolve();
-    handlers.refuse = () => reject(new Error('NETWORK_ERROR|unreachable'));
+  const handlers = {
+    answer: (_outcome: NetProbeOutcome): void => undefined,
+    throwOut: (): void => undefined,
+  };
+  const promise = new Promise<NetProbeReading>((resolve, reject) => {
+    handlers.answer = (outcome) => resolve({ outcome, address: '127.0.0.1:7044', fingerprint: '' });
+    handlers.throwOut = () => reject(new Error('NETWORK_ERROR|the native probe failed'));
   });
-  return { promise, answer: () => handlers.answer(), refuse: () => handlers.refuse() };
+  return {
+    promise,
+    answer: (outcome = 'reached') => handlers.answer(outcome),
+    throwOut: () => handlers.throwOut(),
+  };
 }
 
 function harness(target: NetPairedInstance = instance) {
@@ -84,7 +92,7 @@ function harness(target: NetPairedInstance = instance) {
   const lan = pending();
   const relay = pending();
   const calls: { url: string; at: number }[] = [];
-  const outcome: { choice: NetRouteChoice | null } = { choice: null };
+  const outcome: { choice: NetRouteChoice | null; readings: NetRouteReadings | null } = { choice: null, readings: null };
   const done = measureRoute(
     target,
     (url) => {
@@ -92,8 +100,9 @@ function harness(target: NetPairedInstance = instance) {
       return url === LAN ? lan.promise : relay.promise;
     },
     { timeoutMs: 4000, headStartMs: 1500, clock }
-  ).then((choice) => {
-    outcome.choice = choice;
+  ).then((readings) => {
+    outcome.readings = readings;
+    outcome.choice = chooseRoute({ lan: readings.lan.outcome, relay: readings.relay.outcome });
   });
   return { clock, lan, relay, calls, done, outcome };
 }
@@ -106,6 +115,15 @@ describe('the route probe', () => {
     expect(probeUrls({ ...instance, remote: { homeId: HOME.toUpperCase(), domain: DOMAIN } }).relay).toBeNull();
   });
 
+  test('a native reply is read into its class, and an unknown class reads as connect', () => {
+    expect(readingOf({ outcome: 'tls-peer-closed', address: '10.0.0.2:443', fingerprint: '' })).toEqual({
+      outcome: 'tls-peer-closed',
+      address: '10.0.0.2:443',
+      fingerprint: '',
+    });
+    expect(readingOf({ outcome: 'sideways' }).outcome).toBe('connect');
+  });
+
   test('a LAN that answers within the head start never touches the relay', async () => {
     const h = harness();
     await h.clock.advance(1000);
@@ -113,14 +131,14 @@ describe('the route probe', () => {
     await h.clock.advance(5000);
     await h.done;
 
-    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'home' });
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'home', relayRefused: false });
     expect(h.calls).toEqual([{ url: LAN, at: 0 }]);
   });
 
   test('a LAN that fails fast starts the relay at once', async () => {
     const h = harness();
     await h.clock.advance(10);
-    h.lan.refuse();
+    h.lan.answer('connect');
     await h.clock.advance(0);
 
     expect(h.calls).toEqual([
@@ -130,7 +148,7 @@ describe('the route probe', () => {
     h.relay.answer();
     await h.clock.advance(0);
     await h.done;
-    expect(h.outcome.choice).toEqual({ mode: 'relay', status: 'cloud' });
+    expect(h.outcome.choice).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
   });
 
   test('a slow LAN lets the relay start when the head start ends, and still wins if it answers', async () => {
@@ -149,36 +167,57 @@ describe('the route probe', () => {
     h.lan.answer();
     await h.clock.advance(0);
     await h.done;
-    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'home' });
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'home', relayRefused: false });
   });
 
-  test('a LAN that never answers times out, and then the relay decides', async () => {
+  test('a native probe that never answers reads as connect once its backstop runs out', async () => {
     const h = harness();
     await h.clock.advance(1500);
     h.relay.answer();
-    await h.clock.advance(2499);
+    await h.clock.advance(3499);
     expect(h.outcome.choice).toBeNull();
     await h.clock.advance(1);
     await h.done;
-    expect(h.outcome.choice).toEqual({ mode: 'relay', status: 'cloud' });
+    expect(h.outcome.readings?.lan.outcome).toBe('connect');
+    expect(h.outcome.choice).toEqual({ mode: 'relay', status: 'cloud', relayRefused: false });
   });
 
-  test('a home that answers neither way is unreachable, and the LAN stays the route', async () => {
+  test('a native probe that throws reads as connect', async () => {
     const h = harness();
-    h.lan.refuse();
+    h.lan.throwOut();
     await h.clock.advance(0);
-    h.relay.refuse();
+    h.relay.answer('dns');
     await h.clock.advance(0);
     await h.done;
-    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'unreachable' });
+    expect(h.outcome.readings?.lan.outcome).toBe('connect');
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'remote-unavailable', relayRefused: false });
   });
 
-  test('without a usable profile only the LAN is asked', async () => {
+  test('each class the relay names reaches the choice, with its address and fingerprint', async () => {
+    const expected: Record<string, NetRouteChoice> = {
+      dns: { mode: 'lan', status: 'remote-unavailable', relayRefused: false },
+      connect: { mode: 'lan', status: 'remote-unavailable', relayRefused: false },
+      'tls-peer-closed': { mode: 'lan', status: 'unreachable', relayRefused: false },
+      pin: { mode: 'lan', status: null, relayRefused: true },
+    };
+    for (const [relayOutcome, choice] of Object.entries(expected)) {
+      const h = harness();
+      h.lan.answer('connect');
+      await h.clock.advance(0);
+      h.relay.answer(relayOutcome as NetProbeOutcome);
+      await h.clock.advance(0);
+      await h.done;
+      expect([relayOutcome, h.outcome.choice]).toEqual([relayOutcome, choice]);
+      expect(h.outcome.readings?.relay.address).toBe('127.0.0.1:7044');
+    }
+  });
+
+  test('without a usable profile only the LAN is asked, and remote access is unavailable', async () => {
     const h = harness(withoutRemote);
-    h.lan.refuse();
+    h.lan.answer('connect');
     await h.clock.advance(5000);
     await h.done;
     expect(h.calls).toEqual([{ url: LAN, at: 0 }]);
-    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'unreachable' });
+    expect(h.outcome.choice).toEqual({ mode: 'lan', status: 'remote-unavailable', relayRefused: false });
   });
 });

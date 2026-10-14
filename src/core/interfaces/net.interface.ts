@@ -22,6 +22,8 @@ export interface IArgusNetService {
   openSocket(options: NetSocketOptions): Promise<IArgusSocket>;
   refreshAddress(): Promise<boolean>;
   probeRoute(): Promise<NetRouteChoice | null>;
+  routeChoice(): NetRouteChoice | null;
+  onRouteChoice(listener: () => void): () => void;
   rememberRemote(remote: NetRemoteProfile): Promise<boolean>;
   isPaired(): Promise<boolean>;
   instance(): Promise<NetPairedInstance | null>;
