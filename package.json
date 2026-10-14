@@ -66,6 +66,7 @@
     "argus-face": "file:./modules/argus-face",
     "argus-mic": "file:./modules/argus-mic",
     "argus-net": "file:./modules/argus-net",
+    "argus-push": "file:./modules/argus-push",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

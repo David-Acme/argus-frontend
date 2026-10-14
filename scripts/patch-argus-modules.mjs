@@ -23,6 +23,7 @@ const modules = [
   { name: 'argus-mic', className: 'ArgusMicPackage', packagePath: 'com.margelo.nitro.mic', manual: true },
   { name: 'argus-face', className: 'ArgusFacePackage', packagePath: 'com.margelo.nitro.face', manual: true },
   { name: 'argus-camera', className: 'ArgusCameraPackage', packagePath: 'com.margelo.nitro.camera', manual: true },
+  { name: 'argus-push', className: 'ArgusPushPackage', packagePath: 'com.margelo.nitro.push', manual: true },
 ];
 
 if (existsSync(settingsPath)) {

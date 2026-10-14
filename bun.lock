@@ -23,6 +23,7 @@
         "argus-face": "file:./modules/argus-face",
         "argus-mic": "file:./modules/argus-mic",
         "argus-net": "file:./modules/argus-net",
+        "argus-push": "file:./modules/argus-push",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "date-fns": "^4.4.0",
@@ -838,6 +839,8 @@
     "argus-mic": ["argus-mic@file:modules/argus-mic", { "dependencies": { "react-native-nitro-modules": "*" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }],
 
     "argus-net": ["argus-net@file:modules/argus-net", { "dependencies": { "react-native-nitro-modules": "*" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }],
+
+    "argus-push": ["argus-push@file:modules/argus-push", { "dependencies": { "react-native-nitro-modules": "*" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }],
 
     "aria-hidden": ["aria-hidden@1.2.6", "", { "dependencies": { "tslib": "^2.0.0" } }, "sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA=="],
 
