@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
 import type { NetProbeClock, NetRouteReadings } from '@/core/services/net/net-route-probe';
 import type { NetPairedInstance, NetProbeOutcome, NetProbeReading, NetRouteChoice } from '@/core/types';
 
@@ -13,6 +13,7 @@ mock.module('@/core/services/secure-storage', () => ({
 
 const { measureRoute, probeUrls, readingOf } = await import('@/core/services/net/net-route-probe');
 const { chooseRoute } = await import('@/core/services/net/net-route-choice');
+const { log } = await import('@/core/services/log');
 
 const HOME = '0123456789abcdef0123456789abcdef';
 const DOMAIN = 'argus-tunnel.lynk.page';
@@ -122,6 +123,19 @@ describe('the route probe', () => {
       fingerprint: '',
     });
     expect(readingOf({ outcome: 'sideways' }).outcome).toBe('connect');
+  });
+
+  test('an unknown native class is logged once per class, and still reads as connect', () => {
+    const warn = spyOn(log, 'warn').mockImplementation(() => undefined);
+    try {
+      expect(readingOf({ outcome: 'probe-class-x' }).outcome).toBe('connect');
+      readingOf({ outcome: 'probe-class-x' });
+      expect(warn).toHaveBeenCalledTimes(1);
+      readingOf({ outcome: 'probe-class-y' });
+      expect(warn).toHaveBeenCalledTimes(2);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   test('a LAN that answers within the head start never touches the relay', async () => {

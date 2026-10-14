@@ -28,11 +28,24 @@ export function probeUrls(instance: NetPairedInstance): NetProbeUrls {
   };
 }
 
-export const readingOf = (reply: { outcome: string; address?: string; fingerprint?: string }): NetProbeReading => ({
-  outcome: PROBE_OUTCOMES.find((outcome) => outcome === reply.outcome) ?? 'connect',
-  address: reply.address ?? '',
-  fingerprint: reply.fingerprint ?? '',
-});
+const unknownOutcomesLogged = new Set<string>();
+
+export const readingOf = (reply: { outcome: string; address?: string; fingerprint?: string }): NetProbeReading => {
+  const known = PROBE_OUTCOMES.find((outcome) => outcome === reply.outcome);
+  if (known === undefined && !unknownOutcomesLogged.has(reply.outcome)) {
+    unknownOutcomesLogged.add(reply.outcome);
+    log.warn(
+      'net',
+      `the native probe answered ${reply.outcome}, a class this build does not know; it reads as connect, ` +
+        'so the native and JS probe contracts differ'
+    );
+  }
+  return {
+    outcome: known ?? 'connect',
+    address: reply.address ?? '',
+    fingerprint: reply.fingerprint ?? '',
+  };
+};
 
 const silent = (outcome: NetProbeOutcome): NetProbeReading => ({ outcome, address: '', fingerprint: '' });
 
