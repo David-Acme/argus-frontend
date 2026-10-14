@@ -15,30 +15,41 @@ import com.google.crypto.tink.proto.KeyStatusType
 import com.google.crypto.tink.proto.Keyset
 import com.google.crypto.tink.proto.OutputPrefixType
 import com.google.protobuf.ByteString
+import org.json.JSONArray
 import org.json.JSONObject
-import org.junit.Assert.assertArrayEquals
-import org.junit.Ignore
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class SealedPushOpenerTest {
-    @Ignore("waiting: the cloud's regenerated push-sealed.json lands on the cloud track; copy it to src/test/resources and remove this")
     @Test
-    fun opensTheCloudSealedVector() {
+    fun opensEveryCloudSealedCase() {
         HybridConfig.register()
         val file = JSONObject(javaClass.getResource("/push-sealed.json")!!.readText())
         val sealing = file.getJSONObject("sealing")
-        val vector = file.getJSONArray("vectors").getJSONObject(0)
+        val keyId = sealing.getString("keyId")
         val decrypt = recipientDecrypt(
             hex(sealing.getString("recipientPrivateHex")),
             hex(sealing.getString("recipientPublicHex")),
         )
-        val envelope = assertNotNullEnvelope(hex(vector.getString("payloadHex")))
-        val opened = SealedPushOpener(decrypt, sealing.getString("keyId")).open(envelope)
-        assertArrayEquals(hex(sealing.getString("plaintextHex")), opened)
+        val payloads = payloadsByName(file.getJSONArray("vectors"))
+        val cases = sealing.getJSONArray("cases")
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val name = case.getString("name")
+            val envelope = requireNotNull(SealedEnvelope.parse(payloads.getValue(case.getString("vector")))) { name }
+            assertEquals(name, case.getString("encHex"), envelope.enc.hex())
+            assertEquals(name, case.getString("ciphertextHex"), envelope.ciphertext.hex())
+            assertEquals(name, case.getString("prefixHex"), envelope.associatedData.hex())
+            assertEquals(name, case.getString("infoHex"), SealedPushInfo.build(keyId, envelope.associatedData).hex())
+            assertEquals(name, case.getString("plaintextHex"), SealedPushOpener(decrypt, keyId).open(envelope)?.hex())
+        }
     }
 
-    private fun assertNotNullEnvelope(payload: ByteArray): SealedEnvelope =
-        requireNotNull(SealedEnvelope.parse(payload))
+    private fun payloadsByName(vectors: JSONArray): Map<String, ByteArray> =
+        (0 until vectors.length()).associate { index ->
+            val vector = vectors.getJSONObject(index)
+            vector.getString("name") to hex(vector.getString("payloadHex"))
+        }
 
     private fun recipientDecrypt(privateKey: ByteArray, publicKey: ByteArray): HybridDecrypt {
         val params = HpkeParams.newBuilder()
@@ -74,4 +85,6 @@ class SealedPushOpenerTest {
 
     private fun hex(text: String): ByteArray =
         ByteArray(text.length / 2) { index -> text.substring(index * 2, index * 2 + 2).toInt(16).toByte() }
+
+    private fun ByteArray?.hex(): String? = this?.joinToString("") { "%02x".format(it) }
 }
