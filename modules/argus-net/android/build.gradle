@@ -110,6 +110,7 @@ android {
   testOptions {
     unitTests.all {
       systemProperty "argus.relayVectors", file("../../../tests/vectors/relay-hosts.json").absolutePath
+      systemProperty "argus.tlsVectors", file("../../../tests/vectors/tls.json").absolutePath
     }
   }
 

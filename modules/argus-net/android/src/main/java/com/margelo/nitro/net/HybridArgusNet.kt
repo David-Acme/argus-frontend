@@ -14,7 +14,6 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import java.net.InetAddress
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -26,13 +25,11 @@ import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.Dns
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -51,7 +48,6 @@ private const val DISCOVERY_SETTLE_MS = 1500L
 private const val PAIRING_ROUTE = "/pairing"
 private const val DEFAULT_HOST = "argus.local"
 private const val PAIRING_PATH = "/pairing"
-private const val SAN_DNS_NAME = 2
 
 private class PinMismatchException(message: String) : CertificateException(message)
 
@@ -64,9 +60,10 @@ class HybridArgusNet : HybridArgusNetSpec() {
   private var remote: RemoteProfile = RemoteProfile("", "")
 
   @Volatile
-  private var cachedClient: CachedStrictClient? = null
+  private var cachedTransport: StrictTransport? = null
 
-  private class CachedStrictClient(val config: String, val client: OkHttpClient)
+  @Volatile
+  private var cachedConfig: TransportConfig? = null
 
   override fun discover(timeoutMs: Double): Promise<NetDiscovery> {
     return Promise.async { discoverInternal(timeoutMs) }
@@ -81,7 +78,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     this.caPem = caPem
     this.allowedHost = allowedHost
     this.ip = ip
-    cachedClient = null
   }
 
   override fun configureVerified(caPem: String, caFingerprint: String, allowedHost: String, ip: String) {
@@ -93,7 +89,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     val profile = RemoteProfile(homeId, domain)
     if (profile == remote) return
     remote = profile
-    cachedClient = null
   }
 
   private fun netError(code: String, message: String): IllegalStateException =
@@ -107,6 +102,18 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
   override fun request(options: NetHttpRequest): Promise<NetHttpResult> {
     return Promise.async { requestInternal(options) }
+  }
+
+  override fun probe(options: NetProbeRequest): Promise<NetProbeResult> {
+    return Promise.async {
+      withContext(Dispatchers.IO) {
+        if (caPem.isEmpty()) {
+          throw netError("PAIRING_REQUIRED", "Server is not paired yet")
+        }
+        val reply = transport().probe(options.url, options.headers, options.timeoutMs.toLong())
+        NetProbeResult(outcome = reply.outcome, address = reply.address, fingerprint = reply.fingerprint)
+      }
+    }
   }
 
   override fun openSocket(options: NetSocketOptions): Promise<HybridArgusSocketSpec> {
@@ -441,60 +448,17 @@ class HybridArgusNet : HybridArgusNetSpec() {
     }
   }
 
-  private fun strictClient(): OkHttpClient {
-    val config = "$caPem|$allowedHost|$ip|${remote.homeId}|${remote.domain}"
-    cachedClient?.let { cached ->
-      if (cached.config == config) return cached.client
-    }
-
-    val client = buildStrictClient()
-    cachedClient = CachedStrictClient(config, client)
-    return client
+  private fun transport(): StrictTransport {
+    val config = TransportConfig(caPem = caPem, pairedHost = allowedHost, pairedIp = ip, remote = remote)
+    val cached = cachedTransport
+    if (cached != null && cachedConfig == config) return cached
+    val fresh = StrictTransport(config)
+    cachedTransport = fresh
+    cachedConfig = config
+    return fresh
   }
 
-  private fun buildStrictClient(): OkHttpClient {
-    val pairedHost = allowedHost
-    val pairedIp = ip
-    val profile = remote
-    val certFactory = CertificateFactory.getInstance("X.509")
-    val ca = certFactory.generateCertificate(ByteArrayInputStream(caPem.toByteArray(Charsets.US_ASCII)))
-    val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-      load(null)
-      setCertificateEntry("argus", ca)
-    }
-    val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-    trustManagerFactory.init(keyStore)
-    val trustManager = trustManagerFactory.trustManagers.filterIsInstance<X509TrustManager>().first()
-
-    val sslContext = SSLContext.getInstance("TLS")
-    sslContext.init(null, arrayOf<TrustManager>(trustManager), SecureRandom())
-
-    return OkHttpClient.Builder()
-      .sslSocketFactory(sslContext.socketFactory, trustManager)
-      .hostnameVerifier { hostname, session ->
-        when (RelayHosts.admission(hostname, pairedHost, profile)) {
-          HostAdmission.Paired -> true
-          HostAdmission.Relay -> leafNamesHost(session, hostname)
-          HostAdmission.Refused -> false
-        }
-      }
-      .dns(
-        object : Dns {
-          override fun lookup(hostname: String): List<InetAddress> {
-            return if (hostname.equals(pairedHost, ignoreCase = true)) {
-              listOf(InetAddress.getByName(pairedIp))
-            } else {
-              Dns.SYSTEM.lookup(hostname)
-            }
-          }
-        },
-      )
-      .followRedirects(false)
-      .followSslRedirects(false)
-      .connectTimeout(10, TimeUnit.SECONDS)
-      .readTimeout(30, TimeUnit.SECONDS)
-      .build()
-  }
+  private fun strictClient(): OkHttpClient = transport().client
 
   private fun executeClassified(call: okhttp3.Call, pinned: Boolean): okhttp3.Response {
     try {
@@ -503,20 +467,14 @@ class HybridArgusNet : HybridArgusNetSpec() {
       if (pinned && isPinRefusal(error)) {
         throw netError("FINGERPRINT_MISMATCH", "The server is not the one in the invitation")
       }
-      throw netError(transportCode(error), error.message ?: "Network error")
+      throw netError(StrictTransport.codeOf(error), error.message ?: "Network error")
     }
   }
-
-  private fun transportCode(error: java.io.IOException): String =
-    if (error is java.net.SocketTimeoutException) "TIMEOUT" else "NETWORK_ERROR"
 
   private fun isPinRefusal(error: Throwable): Boolean =
     generateSequence(error) { it.cause }.any {
       it is PinMismatchException || it is javax.net.ssl.SSLPeerUnverifiedException
     }
-
-  private fun sha256Hex(bytes: ByteArray): String =
-    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02X".format(it) }
 
   private fun anchoredTrustManager(anchor: X509Certificate): X509TrustManager {
     val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
@@ -528,15 +486,6 @@ class HybridArgusNet : HybridArgusNetSpec() {
     return factory.trustManagers.filterIsInstance<X509TrustManager>().first()
   }
 
-  private fun leafNamesHost(session: SSLSession, host: String): Boolean {
-    val leaf = runCatching { session.peerCertificates.firstOrNull() as? X509Certificate }.getOrNull()
-      ?: return false
-    val names = runCatching { leaf.subjectAlternativeNames }.getOrNull() ?: return false
-    return names.any { entry ->
-      entry.size >= 2 && entry[0] == SAN_DNS_NAME && (entry[1] as? String).equals(host, ignoreCase = true)
-    }
-  }
-
   private fun pinnedClient(pin: NetPin): OkHttpClient {
     val expected = pin.caFingerprint.uppercase()
     val pinned = object : X509TrustManager {
@@ -546,7 +495,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
       override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
         val presented = chain.orEmpty()
-        val anchor = presented.firstOrNull { sha256Hex(it.encoded) == expected }
+        val anchor = presented.firstOrNull { StrictTransport.sha256Hex(it.encoded) == expected }
           ?: throw PinMismatchException("No certificate in the chain matches the invitation")
         try {
           anchoredTrustManager(anchor).checkServerTrusted(presented, authType)
@@ -562,7 +511,7 @@ class HybridArgusNet : HybridArgusNetSpec() {
 
     return OkHttpClient.Builder()
       .sslSocketFactory(sslContext.socketFactory, pinned)
-      .hostnameVerifier { _, session -> leafNamesHost(session, pin.host) }
+      .hostnameVerifier { _, session -> StrictTransport.leafNamesHost(session, pin.host) }
       .followRedirects(false)
       .followSslRedirects(false)
       .connectTimeout(8, TimeUnit.SECONDS)
