@@ -34,7 +34,7 @@ const SCRIPT_KINDS: Record<string, ts.ScriptKind> = {
 
 const HASH_FILES = new Set(['.gitignore', '.npmrc', 'CMakeLists.txt']);
 const HASH_EXTENSIONS = new Set(['.properties', '.toml', '.podspec']);
-const SILENT_EXTENSIONS = new Set(['.json', '.md', '.png', '.lock', '.txt', '.ogg', '.m4a']);
+const SILENT_EXTENSIONS = new Set(['.json', '.md', '.png', '.lock', '.txt', '.ogg', '.m4a', '.wav']);
 const SILENT_FILES = new Set(['LICENSE', '.prettierrc']);
 const GENERATED_FILES = new Set(['uniwind-types.d.ts']);
 const TRIPLE_SLASH_DIRECTIVE = /^\/\/\/\s*<(reference|amd-module|amd-dependency)\b/;
@@ -214,7 +214,7 @@ function commentsOf(path: string, text: string): Range[] | null {
   if (extension in C_FAMILY) return cFamilyComments(text, C_FAMILY[extension]);
   if (HASH_FILES.has(name)) return hashComments(text, name !== 'CMakeLists.txt');
   if (HASH_EXTENSIONS.has(extension)) return hashComments(text, extension === '.properties');
-  if (extension === '.xml' || extension === '.plist') return xmlComments(text);
+  if (extension === '.xml' || extension === '.plist' || extension === '.html') return xmlComments(text);
   return null;
 }
 
