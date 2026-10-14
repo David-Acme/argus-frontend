@@ -1,0 +1,20 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["argus", "push"],
+  "ios": {
+    "iosModuleName": "ArgusPush"
+  },
+  "android": {
+    "androidNamespace": ["push"],
+    "androidCxxLibName": "ArgusPush"
+  },
+  "autolinking": {
+    "ArgusPush": {
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridArgusPush"
+      }
+    }
+  },
+  "ignorePaths": ["**/node_modules"]
+}

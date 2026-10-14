@@ -1,0 +1,31 @@
+package com.davidacme.argus.push
+
+import java.util.Locale
+
+internal object PushText {
+    const val TITLE = "Argus"
+
+    fun isSpanish(): Boolean = Locale.getDefault().language == "es"
+
+    fun generic(spanish: Boolean, urgent: Boolean): String =
+        when {
+            spanish && urgent -> "Tienes un aviso importante. Abre Argus para verlo."
+            spanish -> "Tienes un aviso nuevo. Abre Argus para verlo."
+            urgent -> "You have an important notice. Open Argus to see it."
+            else -> "You have a new notice. Open Argus to see it."
+        }
+
+    fun callTitle(spanish: Boolean): String = if (spanish) "Llamada de Argus" else "Argus is calling"
+
+    fun answer(spanish: Boolean): String = if (spanish) "Contestar" else "Answer"
+
+    fun decline(spanish: Boolean): String = if (spanish) "Rechazar" else "Decline"
+
+    fun channelName(channelId: String, spanish: Boolean): String =
+        when (channelId) {
+            PushChannels.CRITICAL -> if (spanish) "Avisos críticos" else "Critical alerts"
+            PushChannels.TIME_SENSITIVE -> if (spanish) "Avisos importantes" else "Time-sensitive alerts"
+            PushChannels.NORMAL -> if (spanish) "Avisos" else "Alerts"
+            else -> if (spanish) "Llamadas" else "Calls"
+        }
+}

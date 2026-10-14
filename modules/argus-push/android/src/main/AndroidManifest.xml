@@ -1,0 +1,36 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+  <application>
+    <service
+        android:name="com.davidacme.argus.push.ArgusMessagingService"
+        android:exported="false">
+      <intent-filter android:priority="100">
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+      </intent-filter>
+    </service>
+
+    <service
+        android:name="com.davidacme.argus.push.ArgusConnectionService"
+        android:exported="true"
+        android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+      <intent-filter>
+        <action android:name="android.telecom.ConnectionService" />
+      </intent-filter>
+    </service>
+
+    <activity
+        android:name="com.davidacme.argus.push.CallActivity"
+        android:exported="false"
+        android:excludeFromRecents="true"
+        android:showWhenLocked="true"
+        android:turnScreenOn="true"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
+    <receiver
+        android:name="com.davidacme.argus.push.PushActionReceiver"
+        android:exported="false" />
+  </application>
+</manifest>
