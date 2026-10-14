@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Argus</title>
+    <link rel="stylesheet" href="call-window.css" />
+  </head>
+  <body>
+    <main class="call">
+      <header class="caption" data-tauri-drag-region>
+        <p class="kicker">Argus</p>
+        <p class="title">Argus te está llamando</p>
+      </header>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <div class="actions">
+        <button id="decline" type="button" class="action decline">Rechazar</button>
+        <button id="answer" type="button" class="action answer">Contestar</button>
+      </div>
+    </main>
+    <audio id="ringtone" src="ringtone.wav" preload="auto" loop></audio>
+    <script src="call-window.js"></script>
+  </body>
+</html>
