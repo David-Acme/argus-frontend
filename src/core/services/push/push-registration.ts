@@ -11,11 +11,14 @@ export type PushRegistrationInput = {
   provider: PushProvider;
 };
 
+export const UNREGISTER_TIMEOUT_MS = 5000;
+
 export type PushUnpairPort = {
   storedToken(): Promise<string | null>;
   unregister(removal: NotificationTokenRemoval): Promise<void>;
   deleteToken(): Promise<void>;
   deleteKeys(): Promise<void>;
+  unregisterTimeoutMs?: number;
 };
 
 export function registrationBodyOf(input: PushRegistrationInput): NotificationTokenBody {
@@ -49,9 +52,20 @@ export function forwardPendingDeclines(take: () => string[], emit: (callId: stri
   for (const callId of callIds) emit(callId);
 }
 
+function withDeadline<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('the request timed out')), ms);
+  });
+  return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
+}
+
 export async function unpairPush(port: PushUnpairPort): Promise<void> {
   const token = await attempt('reading the stored token', () => port.storedToken());
-  if (token) await attempt('unregistering the token', () => port.unregister({ token }));
+  if (token)
+    await attempt('unregistering the token', () =>
+      withDeadline(port.unregister({ token }), port.unregisterTimeoutMs ?? UNREGISTER_TIMEOUT_MS)
+    );
   await attempt('deleting the FCM token', () => port.deleteToken());
   await attempt('deleting the keys', () => port.deleteKeys());
 }

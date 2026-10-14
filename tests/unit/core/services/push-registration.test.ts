@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   forwardPendingDeclines,
   registrationBodyOf,
+  UNREGISTER_TIMEOUT_MS,
   unpairPush,
   type PushUnpairPort,
 } from '@/core/services/push/push-registration';
@@ -87,6 +88,27 @@ describe('the unpair order', () => {
     const { port, calls } = recorder(undefined, null);
     await unpairPush(port);
     expect(calls).toEqual(['deleteToken', 'deleteKeys']);
+  });
+
+  test('a DELETE that times out does not stop the keyset deletion', async () => {
+    const calls: string[] = [];
+    const port: PushUnpairPort = {
+      storedToken: async () => 'fcm-token-1',
+      unregister: () => new Promise<void>(() => undefined),
+      deleteToken: async () => {
+        calls.push('deleteToken');
+      },
+      deleteKeys: async () => {
+        calls.push('deleteKeys');
+      },
+      unregisterTimeoutMs: 10,
+    };
+    await unpairPush(port);
+    expect(calls).toEqual(['deleteToken', 'deleteKeys']);
+  });
+
+  test('the DELETE has its own deadline of five seconds', () => {
+    expect(UNREGISTER_TIMEOUT_MS).toBe(5000);
   });
 
   test('an unregister the home refuses does not stop the local cleanup', async () => {
