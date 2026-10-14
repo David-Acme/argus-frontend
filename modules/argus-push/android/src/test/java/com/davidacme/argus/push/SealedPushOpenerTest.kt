@@ -14,7 +14,7 @@ import com.google.crypto.tink.proto.KeyData
 import com.google.crypto.tink.proto.KeyStatusType
 import com.google.crypto.tink.proto.Keyset
 import com.google.crypto.tink.proto.OutputPrefixType
-import com.google.protobuf.ByteString
+import com.google.crypto.tink.shaded.protobuf.ByteString
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
