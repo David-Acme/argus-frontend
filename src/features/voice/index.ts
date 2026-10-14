@@ -3,6 +3,7 @@ export { CallPreferencesSection } from './components/call-preferences-section';
 export { CallSurface } from './components/call-surface';
 export { VoiceWebNotice } from './components/voice-web-notice';
 export { useCall } from './hooks/use-call';
+export { useCallPush } from './hooks/use-call-push';
 export { useVoiceCallActive } from './hooks/use-voice-call-active';
 export { default as CallScreen } from './screens/call-screen';
 export { argusCallSupported, createVoiceMic, voiceCallSupported } from './services/voice';

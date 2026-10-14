@@ -50,6 +50,10 @@ mock.module('expo-audio', () => ({
   requestRecordingPermissionsAsync: async () => ({ granted: true }),
 }));
 mock.module('@/features/voice/services/rtc/rtc-token', () => ({
+  requestCallDecline: async (body: unknown) => {
+    posted.push({ url: '/rtc/decline', body });
+    return { kind: 'declined' as const };
+  },
   requestCallToken: async (body: unknown) => {
     posted.push({ url: '/rtc/token', body });
     if (deferredAnswer) {

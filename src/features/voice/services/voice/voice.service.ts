@@ -44,7 +44,8 @@ import {
   rtcTopicOf,
 } from '@/features/voice/model/rtc-protocol';
 import { createRealtimeCall, rtcCallSupported } from '@/features/voice/services/rtc';
-import { requestCallToken } from '@/features/voice/services/rtc/rtc-token';
+import { requestCallDecline, requestCallToken } from '@/features/voice/services/rtc/rtc-token';
+import { declineOncePerSession } from '@/features/voice/model/call-decline';
 import { endRevokedSession } from '@/features/voice/services/voice/voice-session-end';
 import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
 import {
@@ -179,6 +180,8 @@ class VoiceService {
   private revokedTimer: ReturnType<typeof setTimeout> | null = null;
   private waitingCall: IncomingCall | null = null;
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
+  private closedCallId: string | null = null;
+  private readonly declineOnce = declineOncePerSession((callId) => requestCallDecline({ callId }));
   private readonly handlers: Readonly<Record<string, FrameHandler>> = this.buildHandlers();
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
 
@@ -228,6 +231,7 @@ class VoiceService {
     this.callReason = options.reason ?? null;
     this.responseId = options.responseId ?? null;
     this.agentState = null;
+    this.closedCallId = null;
     this.rtcState = 'connecting';
     this.sttText = '';
     this.transcript = [];
@@ -867,6 +871,17 @@ class VoiceService {
     this.notify();
   }
 
+  async declineCall(callId: string): Promise<void> {
+    if (this.waitingCall?.callId === callId) this.clearWaiting();
+    if (this.active && this.callId === callId) {
+      this.stop();
+      return;
+    }
+    this.notify();
+    const answer = await this.declineOnce(callId);
+    if (answer !== null && answer.kind !== 'declined') devLog('decline refused', callId, answer);
+  }
+
   private handleIncomingCancel(info: unknown): void {
     const parsed = incomingCallCancelSchema.safeParse(info);
     if (parsed.success && this.waitingCall?.callId === parsed.data.callId) {
@@ -882,7 +897,9 @@ class VoiceService {
       this.transport !== 'none'
     )
       return;
-    this.fail(cancelError(parsed.data), { serverGone: true });
+    this.error = cancelError(parsed.data);
+    this.closedCallId = parsed.data.callId;
+    this.stop();
   }
 
   private bindSocket(): void {
@@ -942,6 +959,7 @@ class VoiceService {
       callReason: this.callReason,
       responseId: this.responseId,
       waitingCall: this.waitingCall,
+      closedCallId: this.closedCallId,
     };
   }
 

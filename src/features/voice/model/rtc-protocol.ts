@@ -3,12 +3,13 @@ import type {
   RtcAgentState,
   RtcCallOutcome,
   RtcCallState,
+  RtcDeclineAnswer,
   RtcEndReason,
   RtcTokenAnswer,
   SessionRevokeCause,
   VoicePhase,
 } from '@/core/types';
-import { rtcTokenGrantSchema } from '@/core/contracts/rtc.contract';
+import { callDeclinedSchema, rtcTokenGrantSchema } from '@/core/contracts/rtc.contract';
 import {
   VOICE_ACTION_RESULT_TYPE,
   VOICE_ACTION_TYPE,
@@ -102,6 +103,19 @@ export function readTokenAnswer(result: IServiceResponse<unknown>): RtcTokenAnsw
   if (code === 'UNREACHABLE_ROUTE' || (result.status === 404 && code === 'NOT_FOUND')) return { kind: 'fallback' };
   if (result.status === 503 && (code === 'RTC_UNAVAILABLE' || code === 'SERVICE_UNAVAILABLE'))
     return { kind: 'fallback' };
+  return { kind: 'refused', code: code || 'NETWORK_ERROR', message: result.errors?.message ?? '' };
+}
+
+export function readDeclineAnswer(result: IServiceResponse<unknown>): RtcDeclineAnswer {
+  if (result.ok) {
+    const answer = callDeclinedSchema.safeParse(result.info);
+    return answer.success && answer.data.declined
+      ? { kind: 'declined' }
+      : { kind: 'refused', code: 'INVALID_RESPONSE', message: 'The decline answer has an unexpected shape' };
+  }
+  const code = result.errors?.code ?? '';
+  const outcome = OUTCOMES[code];
+  if (outcome) return { kind: 'outcome', outcome };
   return { kind: 'refused', code: code || 'NETWORK_ERROR', message: result.errors?.message ?? '' };
 }
 

@@ -50,6 +50,7 @@ export function useCall(options: VoiceStartOptions = {}) {
     callReason: session.callReason,
     responseId: session.responseId,
     waitingCall: session.waitingCall,
+    closedCallId: session.closedCallId,
     toggleMute,
     retry,
   };

@@ -39,6 +39,10 @@ function CallScreen() {
     if (firstCall) storageService.set(VOICE_MIC_CONSENT_KEY, true);
   }, [firstCall]);
 
+  useEffect(() => {
+    if (call.closedCallId !== null && call.closedCallId === params.callId) hangUp();
+  }, [call.closedCallId, hangUp, params.callId]);
+
   return (
     <CallSurface
       phase={call.phase}
