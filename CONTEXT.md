@@ -62,7 +62,7 @@
 ## Native system bars
 
 - `react-native-edge-to-edge` (installed via `bunx expo install`), config plugin
-  in `app.json`: `parentTheme: "Default"` + `enforceNavigationBarContrast: false`
+  in `app.config.ts`: `parentTheme: "Default"` + `enforceNavigationBarContrast: false`
   (makes the Android **button** navigation bar fully transparent so it follows
   the app background; default is semi-opaque). Plugin options require a
   development build (not Expo Go) — `expo-dev-client` is installed.
@@ -308,6 +308,15 @@ max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
   environment" below.
 
 ## Android development environment
+
+- **Firebase (push).** `app.config.ts` sets `android.googleServicesFile` from the
+  environment variable `ARGUS_GOOGLE_SERVICES_FILE`, which names the
+  `google-services.json` on the developer's machine. Without the variable the
+  Android build has no Firebase configuration: push (FCM) is off and prebuild
+  warns through `process.emitWarning`, it does not fail. The file is never
+  copied into the repository; prebuild writes its one copy into the gitignored
+  `android/` tree. The FCM data message carries only `e` (base64 of the sealed
+  envelope); urgency lives inside the sealed intent.
 
 Installed **without sudo** in the user home (Arch Linux, no system JDK/SDK):
 
@@ -2820,7 +2829,7 @@ platform, then leaves in its own change.
   later phase.
 - **Consent.** The microphone is asked for only when a call starts; the first
   call shows "Argus usa tu micrófono solo durante la llamada…" under the
-  status (storage `voice.mic-consent-shown`). `app.json` gives iOS
+  status (storage `voice.mic-consent-shown`). `app.config.ts` gives iOS
   `UIBackgroundModes: audio` and the microphone text, Android
   `BLUETOOTH_CONNECT`, `WAKE_LOCK` and `ACCESS_NETWORK_STATE`, and the LiveKit
   Expo plugin's `communication` audio type. A dev-client rebuild is required.

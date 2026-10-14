@@ -13,7 +13,7 @@
   (icons, centralized), `zustand` v5 (8 stores), **WatermelonDB 0.28** (local DB,
   12 tables), `rxjs` (service observables → view-cache projections → React via `useViewCacheRows`), `zod` +
   `react-hook-form` (forms), custom i18n engine (es/en). The React Compiler is on
-  (`app.json` → `experiments.reactCompiler`).
+  (`app.config.ts` → `experiments.reactCompiler`).
 - **Media/Platform**: `expo-camera` (barcode/QR + face capture, mobile),
   `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar
   procedural). Platform/Tauri flags centralized in
@@ -157,7 +157,7 @@ src/core/stores/qr-scan.store.ts
   component**: `<SystemBars style={isDark ? 'light' : 'dark'} />`. It replaces
   the deprecated `expo-status-bar`/`expo-navigation-bar` APIs in edge-to-edge
   apps, handling the status bar (notification bar) + Android navigation-bar
-  buttons. Config plugin in `app.json` (`parentTheme: "Default"`,
+  buttons. Config plugin in `app.config.ts` (`parentTheme: "Default"`,
   `enforceNavigationBarContrast: false` for a fully transparent button nav bar
   that follows the app background). NOTE: plugin options require a development
   build (not Expo Go).
@@ -861,7 +861,7 @@ for Watermelon nor make an HTTP list request just because it mounted.
   locale → returns the key as last resort. Never crashes.
 - **Copy held by stores carries keys, never rendered text** (`QR_SCAN_PURPOSES`,
   `QrScanConfig`): translate at render time, so the store stays language-agnostic.
-- `app.json` native plugin strings (`cameraPermission`) are NOT runtime-translatable.
+- `app.config.ts` native plugin strings (`cameraPermission`) are NOT runtime-translatable.
 
 ## Commands
 
@@ -986,6 +986,7 @@ cd src-tauri && cargo check
 | `src/shared/hooks/use-theme-preference.ts` | Theme preference get/set |
 | `src/shared/components/layout/navigation-theme.ts` | `NAV_THEME` + `BG_COLORS` (React Navigation) |
 | `src/global.css` | OKLCH tokens + aliases + base/utilities |
+| `app.config.ts` | Expo config (replaces `app.json`). `ARGUS_GOOGLE_SERVICES_FILE` sets `android.googleServicesFile`; unset, the Android build has no Firebase and push is off, with a `process.emitWarning` at prebuild. The file is never copied into the repository |
 | `src/app/+native-intent.ts` | Deep-link allow-list: signed-in screens and `/cameras/<id>` pass (query and hash dropped), anything else goes to `/` |
 | `src/app/_layout.tsx` | Root layout: theme init, `SystemBars`, `SessionGate`, guards native-only, Stack con crossfade (`fade`) + overlays globales (nav, confirm, toaster) |
 | `CONTEXT.md` | Full project history and decisions |
