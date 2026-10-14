@@ -48,7 +48,7 @@ fn is_certificate_error(error: &(dyn StdError + 'static)) -> bool {
       return true;
     }
     if let Some(inner) = cause.downcast_ref::<std::io::Error>().and_then(std::io::Error::get_ref) {
-      if inner.downcast_ref::<rustls::Error>().is_some() {
+      if is_certificate_error(inner) {
         return true;
       }
     }
@@ -224,8 +224,9 @@ mod tests {
   use reqwest::dns::{Name, Resolve};
 
   use super::super::relay::RemoteProfile;
+  use super::super::test_tls::{credential_free, serve, Behaviour, Vectors};
   use super::super::trust::Trust;
-  use super::{ensure_allowed_host, request_error, PinnedResolver};
+  use super::{ensure_allowed_host, request, request_error, HttpRequest, PinnedResolver};
 
   const HOME: &str = "0123456789abcdef0123456789abcdef";
 
@@ -298,6 +299,36 @@ mod tests {
     let addrs = resolved("localhost").await;
     assert!(!addrs.is_empty());
     assert!(addrs.iter().all(|addr| addr.ip().is_loopback()));
+  }
+
+  #[tokio::test]
+  async fn a_server_that_fails_the_pin_refuses_the_request_before_any_header_leaves() {
+    let vectors = Vectors::load();
+    let server = serve(&vectors.rogue, Behaviour::Answer);
+    let trust = Trust {
+      ca_pem: vectors.ca.clone(),
+      host: vectors.lan_host.clone(),
+      ip: "127.0.0.1".to_string(),
+      remote: None,
+    };
+    let refused = request(
+      HttpRequest {
+        url: format!("https://{}:{}/auth/status", vectors.lan_host, server.port),
+        method: "GET".to_string(),
+        headers: std::collections::HashMap::from([("Authorization".to_string(), "Bearer e2e-secret".to_string())]),
+        body: String::new(),
+        files: Vec::new(),
+      },
+      &trust,
+    )
+    .await
+    .err()
+    .unwrap_or_default();
+    let seen = server.finish();
+    assert!(refused.starts_with("CERT_NOT_TRUSTED|"), "{refused}");
+    assert!(seen.plaintext.is_empty());
+    assert!(credential_free(&seen.raw));
+    assert!(!String::from_utf8_lossy(&seen.raw).contains("e2e-secret"));
   }
 
   #[tokio::test]

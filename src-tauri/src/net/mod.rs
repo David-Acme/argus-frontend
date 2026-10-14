@@ -3,9 +3,12 @@ pub mod discover;
 pub mod http;
 pub mod identity;
 pub mod pair;
+pub mod probe;
 pub mod relay;
 pub mod secure;
 pub mod socket;
+#[cfg(test)]
+mod test_tls;
 pub mod trust;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]

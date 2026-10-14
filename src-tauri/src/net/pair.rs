@@ -84,7 +84,7 @@ where
 
   let ca_pem = info.get("caPem").and_then(Value::as_str).unwrap_or("").to_string();
   let der = der_from_pem(&ca_pem).ok_or_else(|| "CERT_NOT_TRUSTED|Invalid CA certificate".to_string())?;
-  if !sha256_hex_upper(&der).eq_ignore_ascii_case(&ca_fingerprint) {
+  if !super::probe::fingerprint(&der).eq_ignore_ascii_case(&ca_fingerprint) {
     return Err("FINGERPRINT_MISMATCH|The server CA does not match the pairing code".to_string());
   }
 
@@ -135,13 +135,6 @@ fn der_from_pem(pem: &str) -> Option<Vec<u8>> {
     .filter(|line| !line.is_empty() && !line.starts_with("-----"))
     .collect();
   base64::engine::general_purpose::STANDARD.decode(base64).ok()
-}
-
-fn sha256_hex_upper(data: &[u8]) -> String {
-  use sha2::{Digest, Sha256};
-
-  let digest = Sha256::digest(data);
-  digest.iter().map(|byte| format!("{byte:02X}")).collect()
 }
 
 fn random_hex(bytes: usize) -> Result<String, String> {

@@ -9,6 +9,7 @@ use std::time::Duration;
 use net::discover::discover;
 use net::http::{probe as http_probe, request as http_request, HttpRequest, HttpResult};
 use net::pair::{pair, PairExpectation, PairInput};
+use net::probe::{probe as route_probe, ProbeReply, ProbeTarget};
 use net::secure::{delete_from_webview as secure_delete, get as secure_get, set_from_webview as secure_set};
 use net::socket::{close as socket_close, open as socket_open, send_binary as socket_send_binary,
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
@@ -21,6 +22,8 @@ use tauri::Manager;
 
 const DISCOVERY_MIN_MS: f64 = 1_000.0;
 const DISCOVERY_MAX_MS: f64 = 30_000.0;
+const PROBE_MIN_MS: f64 = 100.0;
+const PROBE_MAX_MS: f64 = 10_000.0;
 
 async fn blocking<T: Send + 'static>(work: impl FnOnce() -> Result<T, String> + Send + 'static) -> Result<T, String> {
   tauri::async_runtime::spawn_blocking(work)
@@ -51,6 +54,14 @@ async fn argus_pair(
 async fn argus_request(request: HttpRequest) -> Result<HttpResult, String> {
   let trust = blocking(net::trust::paired).await?;
   http_request(request, &trust).await
+}
+
+#[tauri::command]
+async fn argus_probe(url: String, timeout_ms: f64) -> Result<ProbeReply, String> {
+  let trust = blocking(net::trust::paired).await?;
+  let ms = if timeout_ms.is_finite() { timeout_ms.clamp(PROBE_MIN_MS, PROBE_MAX_MS) } else { PROBE_MAX_MS };
+  let timeout = Duration::from_millis(ms as u64);
+  blocking(move || route_probe(&ProbeTarget { url: &url, timeout }, &trust)).await
 }
 
 #[tauri::command]
@@ -144,6 +155,7 @@ pub fn run() {
       argus_discover,
       argus_pair,
       argus_request,
+      argus_probe,
       argus_relocate,
       argus_secure_get,
       argus_secure_set,
