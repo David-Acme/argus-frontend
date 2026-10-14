@@ -17,6 +17,8 @@ import com.margelo.nitro.NitroModules
 import com.margelo.nitro.core.NullType
 import com.margelo.nitro.core.Promise
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @DoNotStrip
 class HybridArgusPush : HybridArgusPushSpec() {
@@ -82,8 +84,12 @@ class HybridArgusPush : HybridArgusPushSpec() {
 
   private fun fetchToken(context: Context): String? {
     val token = try {
-      awaitTask(firebaseMessaging().token)
+      Tasks.await(firebaseMessaging().token, FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     } catch (error: IllegalStateException) {
+      return null
+    } catch (error: ExecutionException) {
+      return null
+    } catch (error: TimeoutException) {
       return null
     }
     PushStore(context).saveToken(token)
@@ -107,3 +113,5 @@ class HybridArgusPush : HybridArgusPushSpec() {
       throw IllegalStateException("PUSH_DISABLED|Push is not configured in this build")
     }
 }
+
+private const val FETCH_TIMEOUT_SECONDS = 10L
