@@ -11,4 +11,4 @@ export function createPush(): ArgusPush {
   return modules.createHybridObject<ArgusPush>('ArgusPush');
 }
 
-export type { ArgusPush } from './ArgusPush.nitro';
+export type { ArgusPush, ArgusPushKeys } from './ArgusPush.nitro';

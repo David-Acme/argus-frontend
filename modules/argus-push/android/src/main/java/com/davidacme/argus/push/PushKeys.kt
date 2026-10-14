@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.Base64
 import com.google.crypto.tink.BinaryKeysetWriter
 import com.google.crypto.tink.CleartextKeysetHandle
+import com.google.crypto.tink.HybridDecrypt
 import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.hybrid.HybridConfig
 import com.google.crypto.tink.hybrid.HpkeKeyTemplates
 import com.google.crypto.tink.integration.android.AndroidKeysetManager
 import com.google.crypto.tink.proto.HpkePublicKey
@@ -21,12 +23,17 @@ internal class PushKeys(context: Context) {
 
     fun publicKey(): ByteArray = rawPublicKey(handle().publicKeysetHandle)
 
+    fun hybridDecrypt(): HybridDecrypt {
+        HybridConfig.register()
+        return handle().getPrimitive(HybridDecrypt::class.java)
+    }
+
     fun keyId(): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(publicKey())
         return Base64.encodeToString(digest.copyOf(KEY_ID_BYTES), BASE64URL)
     }
 
-    fun wipe() {
+    fun delete() {
         appContext.getSharedPreferences(KEYSET_PREFS, Context.MODE_PRIVATE).edit().clear().apply()
     }
 

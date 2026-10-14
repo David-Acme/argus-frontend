@@ -14,10 +14,14 @@ internal class PushStore(context: Context) {
         prefs.edit().putString(KEY_TOKEN, token).apply()
     }
 
-    fun fullScreenExplanationShown(): Boolean = prefs.getBoolean(KEY_FULL_SCREEN_SHOWN, false)
+    fun clearToken() {
+        prefs.edit().remove(KEY_TOKEN).apply()
+    }
 
-    fun markFullScreenExplanationShown() {
-        prefs.edit().putBoolean(KEY_FULL_SCREEN_SHOWN, true).apply()
+    fun fullScreenExplained(): Boolean = prefs.getBoolean(KEY_FULL_SCREEN_EXPLAINED, false)
+
+    fun setFullScreenExplained(value: Boolean) {
+        prefs.edit().putBoolean(KEY_FULL_SCREEN_EXPLAINED, value).apply()
     }
 
     @Synchronized
@@ -40,15 +44,6 @@ internal class PushStore(context: Context) {
     fun remember(key: String, nowSeconds: Long) {
         val seen = DedupRules.prune(readSeen(), nowSeconds) + (key to nowSeconds)
         writeSeen(seen)
-    }
-
-    @Synchronized
-    fun clearDurable() {
-        prefs.edit()
-            .remove(KEY_TOKEN)
-            .remove(KEY_DECLINES)
-            .remove(KEY_SEEN)
-            .apply()
     }
 
     private fun readDeclines(): List<String> {
@@ -76,6 +71,6 @@ internal class PushStore(context: Context) {
         const val KEY_TOKEN = "token"
         const val KEY_DECLINES = "declines"
         const val KEY_SEEN = "seen"
-        const val KEY_FULL_SCREEN_SHOWN = "fullScreenExplanationShown"
+        const val KEY_FULL_SCREEN_EXPLAINED = "fullScreenExplained"
     }
 }

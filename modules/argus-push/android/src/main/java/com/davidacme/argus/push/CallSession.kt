@@ -14,6 +14,9 @@ internal object CallSession {
     private var active: ActiveCall? = null
     private var connection: ArgusConnection? = null
 
+    @Volatile
+    var declineListener: ((String) -> Unit)? = null
+
     private class ActiveCall(val callId: String, val expiry: Runnable)
 
     fun ring(context: Context, callId: String, expiresAtSeconds: Long) {
@@ -61,7 +64,7 @@ internal object CallSession {
         val app = context.applicationContext
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.REJECTED)
-        PushStore(app).addDecline(callId)
+        deliverDecline(app, callId)
     }
 
     fun cancel(context: Context, callId: String) {
@@ -83,6 +86,15 @@ internal object CallSession {
         }
         releaseCall(context.applicationContext, ended.callId)
         ended.endWith(DisconnectCause.LOCAL)
+    }
+
+    private fun deliverDecline(context: Context, callId: String) {
+        val listener = declineListener
+        if (listener == null) {
+            PushStore(context).addDecline(callId)
+            return
+        }
+        runCatching { listener(callId) }.onFailure { PushStore(context).addDecline(callId) }
     }
 
     private fun expire(context: Context, callId: String) {

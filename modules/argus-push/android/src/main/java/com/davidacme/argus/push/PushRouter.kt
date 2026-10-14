@@ -9,16 +9,14 @@ internal class PushRouter(private val context: Context) {
 
     fun route(data: Map<String, String>) {
         val now = System.currentTimeMillis() / MILLIS
-        val urgency = data["urgency"].orEmpty()
-        val envelope = data["envelope"]?.let(::decodeEnvelope)
+        val envelope = data[ENVELOPE_KEY]?.let(::decodeEnvelope)
         if (envelope == null) {
-            showGeneric(urgency, now, deliveryKey = null)
+            showGeneric(now, deliveryKey = null)
             return
         }
-        val plain = SealedPushOpener.open(envelope)
-        val intent = plain?.let { PushIntent.parse(String(it, Charsets.UTF_8)) }
+        val intent = openSealed(envelope)?.let { PushIntent.parse(String(it, Charsets.UTF_8)) }
         if (intent == null) {
-            showGeneric(urgency, now, deliveryKey = envelope.deliveryId.joinToString("") { "%02x".format(it) })
+            showGeneric(now, deliveryKey = envelope.deliveryId.joinToString("") { "%02x".format(it) })
             return
         }
         if (DedupRules.isExpired(intent.expiresAtSeconds, now)) return
@@ -30,6 +28,12 @@ internal class PushRouter(private val context: Context) {
             PushIntent.KIND_CALL -> routeCall(intent, now)
         }
     }
+
+    private fun openSealed(envelope: SealedEnvelope): ByteArray? =
+        runCatching {
+            val keys = PushKeys(context)
+            SealedPushOpener(keys.hybridDecrypt(), keys.keyId()).open(envelope)
+        }.getOrNull()
 
     private fun showAlert(intent: PushIntent) {
         val channel = PushChannels.forUrgency(intent.urgency)
@@ -53,15 +57,14 @@ internal class PushRouter(private val context: Context) {
         CallSession.ring(context, callId, intent.expiresAtSeconds)
     }
 
-    private fun showGeneric(urgency: String, now: Long, deliveryKey: String?) {
+    private fun showGeneric(now: Long, deliveryKey: String?) {
         if (deliveryKey != null) {
             val key = "delivery:$deliveryKey"
             if (store.isSeen(key, now)) return
             store.remember(key, now)
         }
-        val channel = PushChannels.forUrgency(urgency)
-        val body = PushText.generic(PushText.isSpanish(), channel != PushChannels.NORMAL)
-        PushNotifier.postAlert(context, deliveryKey ?: "generic-$now", channel, body, null)
+        val body = PushText.generic(PushText.isSpanish(), urgent = false)
+        PushNotifier.postAlert(context, deliveryKey ?: "generic-$now", PushChannels.NORMAL, body, null)
     }
 
     private fun decodeEnvelope(encoded: String): SealedEnvelope? =
@@ -73,5 +76,6 @@ internal class PushRouter(private val context: Context) {
 
     private companion object {
         const val MILLIS = 1000L
+        const val ENVELOPE_KEY = "e"
     }
 }
