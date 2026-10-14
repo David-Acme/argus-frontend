@@ -1,8 +1,14 @@
+mod autostart;
+mod bridge;
+mod call_window;
 mod context_menu;
 #[cfg(target_os = "linux")]
 mod media;
 mod net;
+mod notify;
 mod rtc;
+mod sync_link;
+mod tray;
 
 use std::time::Duration;
 
@@ -16,7 +22,7 @@ use net::socket::{close as socket_close, open as socket_open, send_binary as soc
 use rtc::protocol::{DataRequest, JoinRequest, RtcEvent};
 use rtc::RtcState;
 use tauri::ipc::{Channel, Request};
-use tauri::State;
+use tauri::{AppHandle, State};
 #[cfg(target_os = "linux")]
 use tauri::Manager;
 
@@ -25,7 +31,7 @@ const DISCOVERY_MAX_MS: f64 = 30_000.0;
 const PROBE_MIN_MS: f64 = 100.0;
 const PROBE_MAX_MS: f64 = 10_000.0;
 
-async fn blocking<T: Send + 'static>(work: impl FnOnce() -> Result<T, String> + Send + 'static) -> Result<T, String> {
+pub(crate) async fn blocking<T: Send + 'static>(work: impl FnOnce() -> Result<T, String> + Send + 'static) -> Result<T, String> {
   tauri::async_runtime::spawn_blocking(work)
     .await
     .map_err(|e| format!("STORAGE_ERROR|{e}"))?
@@ -88,11 +94,12 @@ async fn argus_secure_delete(key: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn argus_socket_open(
+  app: AppHandle,
   state: State<'_, SocketState>,
   options: SocketOpenOptions,
   on_event: Channel,
 ) -> Result<(), String> {
-  socket_open(state, options, on_event).await
+  socket_open(app, state, options, on_event).await
 }
 
 #[tauri::command]
@@ -140,9 +147,17 @@ pub fn run() {
   rtc::transport::install();
   tauri::Builder::default()
     .plugin(context_menu::plugin())
+    .plugin(tauri_plugin_notification::init())
+    .plugin(autostart::plugin())
     .manage(SocketState::default())
     .manage(RtcState::default())
+    .manage(sync_link::SyncLinkState::default())
+    .manage(call_window::CallWindowState::default())
+    .manage(bridge::BridgeState::default())
+    .on_window_event(tray::on_window_event)
     .setup(|app| {
+      tray::report(tray::install(app.handle()));
+      bridge::listen_ready(app.handle());
       #[cfg(target_os = "linux")]
       if let Some(window) = app.get_webview_window("main") {
         window.with_webview(|webview| media::allow_app_microphone(&webview.inner()))?;
@@ -168,6 +183,11 @@ pub fn run() {
       argus_rtc_microphone,
       argus_rtc_send,
       argus_rtc_leave,
+      call_window::argus_call_answer,
+      call_window::argus_call_decline,
+      call_window::argus_call_decline_result,
+      autostart::argus_autostart_get,
+      autostart::argus_autostart_set,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -8,7 +8,7 @@ use futures_util::{SinkExt, StreamExt};
 use rustls::pki_types::CertificateDer;
 use serde::Deserialize;
 use tauri::ipc::{Channel, InvokeBody, InvokeResponseBody, Request};
-use tauri::State;
+use tauri::{AppHandle, State};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
@@ -16,6 +16,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio_tungstenite::{client_async_tls_with_config, Connector, MaybeTlsStream, WebSocketStream};
 
 use super::trust::Trust;
+use crate::sync_link;
 
 type SocketSender = mpsc::Sender<Message>;
 type SocketMap = Arc<Mutex<HashMap<String, SocketSender>>>;
@@ -286,6 +287,7 @@ where
 }
 
 pub async fn open(
+  app: AppHandle,
   state: State<'_, SocketState>,
   options: SocketOpenOptions,
   on_event: SocketChannel,
@@ -304,18 +306,31 @@ pub async fn open(
 
   send_frame(&on_event, FRAME_OPEN, &[]);
 
+  let is_sync = sync_link::watches(&options.url);
+  if is_sync {
+    sync_link::opened(&app);
+  }
+
   let socket_id = options.socket_id.clone();
   let sockets = state.sockets.clone();
   tokio::spawn(async move {
     let (close_code, close_reason) = pump(
       socket,
       receiver,
-      |kind, payload| send_frame(&on_event, kind, payload),
+      |kind, payload| {
+        if is_sync && kind == FRAME_TEXT {
+          sync_link::on_frame(&app, payload);
+        }
+        send_frame(&on_event, kind, payload)
+      },
       DEFAULT_TIMINGS,
     )
     .await;
     if let Ok(mut sockets) = sockets.lock() {
       sockets.remove(&socket_id);
+    }
+    if is_sync {
+      sync_link::closed(&app);
     }
     send_close_frame(&on_event, close_code, &close_reason);
   });
