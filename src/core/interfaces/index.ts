@@ -19,3 +19,4 @@ export * from './view-cache.interface';
 export * from './camera-media.interface';
 export * from './rtc.interface';
 export * from './watchdog.interface';
+export * from './push.interface';

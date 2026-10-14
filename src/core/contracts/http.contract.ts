@@ -13,6 +13,11 @@ import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.c
 import { presenceOverviewSchema } from '@/core/contracts/presence.contract';
 import { voiceprintDirectorySchema } from '@/core/contracts/voiceprint.contract';
 import { activityPageSchema } from '@/core/contracts/activity.contract';
+import { callDeclinedSchema } from '@/core/contracts/rtc.contract';
+import {
+  notificationTokenRegisteredSchema,
+  notificationTokenRemovedSchema,
+} from '@/core/contracts/push.contract';
 import {
   moduleDataAnswerSchema,
   moduleImpactSchema,
@@ -477,4 +482,7 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'POST /modules/{1}/uninstall': moduleActionResultSchema,
   'GET /sync/activity': activityPageSchema,
   'PATCH /user/{1}': userManagementRecordSchema,
+  'POST /notification-token': notificationTokenRegisteredSchema,
+  'DELETE /notification-token': notificationTokenRemovedSchema,
+  'POST /rtc/decline': callDeclinedSchema,
 };

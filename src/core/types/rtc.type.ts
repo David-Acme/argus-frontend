@@ -54,6 +54,15 @@ export type RtcTokenAnswer =
   | { kind: 'outcome'; outcome: RtcCallOutcome }
   | { kind: 'refused'; code: string; message: string };
 
+export type RtcDeclineRequest = {
+  callId: string;
+};
+
+export type RtcDeclineAnswer =
+  | { kind: 'declined' }
+  | { kind: 'outcome'; outcome: RtcCallOutcome }
+  | { kind: 'refused'; code: string; message: string };
+
 export type IncomingCall = {
   callId: string;
   reason: string;

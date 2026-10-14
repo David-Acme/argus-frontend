@@ -1,4 +1,5 @@
 import { authService } from '@/core/services/auth.service';
+import { pushService } from '@/core/services/push';
 import { netService } from '@/core/services/net';
 import { useAuthStore, useLocaleStore } from '@/core/stores';
 import type { LanguagePreference, NetPairedInstance, ThemePreference } from '@/core/types';
@@ -78,6 +79,7 @@ export default function ProfileScreen() {
     });
     if (!accepted) return;
     setLeaving(true);
+    await pushService.unpair();
     await authService.logout();
     await netService.unpair();
     router.replace('/');

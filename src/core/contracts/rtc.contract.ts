@@ -4,12 +4,21 @@ import type {
   IncomingCall,
   IncomingCallCancel,
   RtcClaimedCall,
+  RtcDeclineRequest,
   RtcTokenGrant,
 } from '@/core/types';
 
 export const RTC_CALL_ID_PATTERN = /^(rtc-[0-9a-f]{32}|call-\d+)$/;
 
 const callId = z.string().regex(RTC_CALL_ID_PATTERN);
+
+export const callDeclineRequestSchema = z.object({
+  callId,
+}) satisfies z.ZodType<RtcDeclineRequest>;
+
+export const callDeclinedSchema = z.object({
+  declined: z.boolean(),
+});
 const optionalId = z.number().int().positive().nullish();
 const optionalText = z.string().nullish();
 const callKind = z.enum(['guard_episode', 'agenda', 'assistant']);

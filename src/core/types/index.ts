@@ -43,3 +43,4 @@ export * from './activity.type';
 export * from './resource.type';
 export * from './notification.type';
 export * from './recurrence.type';
+export * from './push.type';
