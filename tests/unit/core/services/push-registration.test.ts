@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { registrationBodyOf, unpairPush, type PushUnpairPort } from '@/core/services/push/push-registration';
+import {
+  forwardPendingDeclines,
+  registrationBodyOf,
+  unpairPush,
+  type PushUnpairPort,
+} from '@/core/services/push/push-registration';
 
 const KEYS = { publicKey: 'A'.repeat(43), keyId: 'B'.repeat(22) };
 
@@ -100,5 +105,32 @@ describe('the unpair order', () => {
     const { port, calls } = recorder('storedToken');
     await unpairPush(port);
     expect(calls).toEqual(['deleteToken', 'deleteKeys']);
+  });
+});
+
+describe('the pending declines', () => {
+  test('every decline the native store holds is emitted, in the order it was stored', () => {
+    const emitted: string[] = [];
+    forwardPendingDeclines(() => ['call-41', `rtc-${'a'.repeat(32)}`], (callId) => emitted.push(callId));
+    expect(emitted).toEqual(['call-41', `rtc-${'a'.repeat(32)}`]);
+  });
+
+  test('an empty store emits nothing', () => {
+    const emitted: string[] = [];
+    forwardPendingDeclines(() => [], (callId) => emitted.push(callId));
+    expect(emitted).toEqual([]);
+  });
+
+  test('a store that cannot be read emits nothing and does not throw', () => {
+    const emitted: string[] = [];
+    expect(() =>
+      forwardPendingDeclines(
+        () => {
+          throw new Error('native store unavailable');
+        },
+        (callId) => emitted.push(callId)
+      )
+    ).not.toThrow();
+    expect(emitted).toEqual([]);
   });
 });

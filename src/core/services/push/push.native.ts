@@ -5,7 +5,7 @@ import { httpService } from '@/core/services/http';
 import { log } from '@/core/services/log';
 import type { NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { IS_ANDROID } from '@/shared/constants';
-import { registrationBodyOf, unpairPush } from './push-registration';
+import { forwardPendingDeclines, registrationBodyOf, unpairPush } from './push-registration';
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;
@@ -76,12 +76,22 @@ class NativePushService implements IPushService {
     };
   }
 
+  drainDeclines(): void {
+    if (!IS_ANDROID) return;
+    forwardPendingDeclines(
+      () => this.module().takeDeclines(),
+      (callId) => this.emitDecline(callId)
+    );
+  }
+
+  private emitDecline(callId: string): void {
+    for (const listener of this.declineListeners) listener(callId);
+  }
+
   private bindDecline(): void {
     if (this.declineBound || !IS_ANDROID) return;
     try {
-      this.module().setDeclineListener((callId) => {
-        for (const listener of this.declineListeners) listener(callId);
-      });
+      this.module().setDeclineListener((callId) => this.emitDecline(callId));
       this.declineBound = true;
     } catch (error) {
       log.error('push', 'the native decline listener is unavailable', error);

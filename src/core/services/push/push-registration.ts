@@ -38,6 +38,17 @@ async function attempt<T>(step: string, action: () => Promise<T>): Promise<T | n
   }
 }
 
+export function forwardPendingDeclines(take: () => string[], emit: (callId: string) => void): void {
+  let callIds: string[];
+  try {
+    callIds = take();
+  } catch (error) {
+    log.error('push', 'the pending declines could not be read', error);
+    return;
+  }
+  for (const callId of callIds) emit(callId);
+}
+
 export async function unpairPush(port: PushUnpairPort): Promise<void> {
   const token = await attempt('reading the stored token', () => port.storedToken());
   if (token) await attempt('unregistering the token', () => port.unregister({ token }));

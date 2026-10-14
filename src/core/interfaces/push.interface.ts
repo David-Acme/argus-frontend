@@ -9,10 +9,12 @@ export interface IArgusPushNative {
   deleteToken(): Promise<void>;
   deleteKeys(): Promise<void>;
   setDeclineListener(listener: (callId: string) => void): void;
+  takeDeclines(): string[];
 }
 
 export interface IPushService {
   register(): Promise<void>;
   unpair(): Promise<void>;
   onDecline(listener: (callId: string) => void): () => void;
+  drainDeclines(): void;
 }
