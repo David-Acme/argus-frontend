@@ -5,9 +5,10 @@ import android.util.Base64
 import com.google.crypto.tink.BinaryKeysetWriter
 import com.google.crypto.tink.CleartextKeysetHandle
 import com.google.crypto.tink.HybridDecrypt
+import com.google.crypto.tink.KeyTemplate
 import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.hybrid.HpkeParameters
 import com.google.crypto.tink.hybrid.HybridConfig
-import com.google.crypto.tink.hybrid.HpkeKeyTemplates
 import com.google.crypto.tink.integration.android.AndroidKeysetManager
 import com.google.crypto.tink.proto.HpkePublicKey
 import com.google.crypto.tink.proto.Keyset
@@ -40,10 +41,20 @@ internal class PushKeys(context: Context) {
     private fun handle(): KeysetHandle =
         AndroidKeysetManager.Builder()
             .withSharedPref(appContext, KEYSET_NAME, KEYSET_PREFS)
-            .withKeyTemplate(HpkeKeyTemplates.DHKEM_X25519_HKDF_SHA256_HKDF_SHA256_CHACHA20_POLY1305_RAW)
+            .withKeyTemplate(hpkeKeyTemplate())
             .withMasterKeyUri(MASTER_KEY_URI)
             .build()
             .keysetHandle
+
+    private fun hpkeKeyTemplate(): KeyTemplate =
+        KeyTemplate.createFrom(
+            HpkeParameters.builder()
+                .setKemId(HpkeParameters.KemId.DHKEM_X25519_HKDF_SHA256)
+                .setKdfId(HpkeParameters.KdfId.HKDF_SHA256)
+                .setAeadId(HpkeParameters.AeadId.CHACHA20_POLY1305)
+                .setVariant(HpkeParameters.Variant.NO_PREFIX)
+                .build()
+        )
 
     private fun rawPublicKey(publicHandle: KeysetHandle): ByteArray {
         val out = ByteArrayOutputStream()

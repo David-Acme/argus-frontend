@@ -5,7 +5,6 @@ import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -16,7 +15,7 @@ class SealedEnvelopeTest {
 
     @Test
     fun parsesTheCloudFcmCallVector() {
-        val envelope = assertNotNull(SealedEnvelope.parse(fcmCall))!!
+        val envelope = requireNotNull(SealedEnvelope.parse(fcmCall))
         assertEquals(SealedEnvelope.PROVIDER_FCM, envelope.provider)
         assertEquals(SealedEnvelope.KIND_CALL, envelope.kind)
         assertEquals(1, envelope.priority)
@@ -47,7 +46,7 @@ class SealedEnvelopeTest {
             .putShort(16.toShort())
             .put(ByteArray(16))
             .array()
-        val envelope = assertNotNull(SealedEnvelope.parse(payload))!!
+        val envelope = requireNotNull(SealedEnvelope.parse(payload))
         assertEquals(token, envelope.token)
         assertEquals(255, envelope.token.length)
     }
