@@ -32,6 +32,9 @@ export const voice = {
   'waiting-title': 'Argus has another call for you',
   'waiting-answer': 'Answer',
   'waiting-dismiss': 'Not now',
+  'ring-answer': 'Answer',
+  'ring-decline': 'Decline',
+  'ring-critical': 'Critical alert',
   context: {
     cameras: 'Cameras in the house: {names}.',
     'no-cameras': 'The house has no connected cameras.',

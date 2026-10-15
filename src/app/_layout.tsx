@@ -18,7 +18,7 @@ import { DisarmPinDialog } from '@/features/safety';
 import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
-import { CallPill, useDesktopBridge } from '@/features/voice';
+import { CallPill, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
 import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
 
@@ -61,6 +61,7 @@ export default function RootLayout() {
               </View>
               <GlobalBottomNav />
               <CallPill />
+              <IncomingCallSurface />
               <ConfirmDialog />
               <DisarmPinDialog />
               <Toaster />
