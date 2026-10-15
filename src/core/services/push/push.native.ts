@@ -6,7 +6,7 @@ import { useAuthStore } from '@/core/stores';
 import { log } from '@/core/services/log';
 import type { NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { IS_ANDROID } from '@/shared/constants';
-import { forwardPendingDeclines, isSessionMissing, registrationBodyOf, unpairPush } from './push-registration';
+import { forwardPendingDeclines, hasSession, isSessionMissing, registrationBodyOf, unpairPush } from './push-registration';
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;
@@ -32,7 +32,7 @@ class NativePushService implements IPushService {
   private declineBound = false;
 
   async register(): Promise<void> {
-    if (!IS_ANDROID || useAuthStore.getState().status !== 'signed-in') return;
+    if (!IS_ANDROID || !hasSession(useAuthStore.getState().status)) return;
     try {
       const native = this.module();
       const token = await native.storedToken();

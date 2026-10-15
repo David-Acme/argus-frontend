@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { AuthStatus } from '@/core/types';
 import {
   forwardPendingDeclines,
+  hasSession,
   isSessionMissing,
   registrationBodyOf,
   registrationDue,
@@ -191,5 +192,16 @@ describe('the device token is registered when a session is established', () => {
 
   test('a new session after sign-out registers again', () => {
     expect(registrationsOf(['signed-in', 'signed-out', 'signed-in'])).toBe(2);
+  });
+});
+
+describe('the registration request needs a session', () => {
+  test('no session, so no request is made', () => {
+    expect(hasSession('loading')).toBe(false);
+    expect(hasSession('signed-out')).toBe(false);
+  });
+
+  test('a session allows the request', () => {
+    expect(hasSession('signed-in')).toBe(true);
   });
 });

@@ -20,8 +20,12 @@ export function isSessionMissing(code: string | null | undefined): boolean {
   return code != null && SESSION_MISSING_CODES.has(code);
 }
 
+export function hasSession(status: AuthStatus): boolean {
+  return status === 'signed-in';
+}
+
 export function registrationDue(previous: AuthStatus | null, next: AuthStatus): boolean {
-  return next === 'signed-in' && previous !== 'signed-in';
+  return hasSession(next) && !(previous !== null && hasSession(previous));
 }
 
 export type PushUnpairPort = {
