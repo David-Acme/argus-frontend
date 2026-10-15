@@ -31,6 +31,33 @@ class PushIntentTest {
     }
 
     @Test
+    fun aNotificationKindIsReadAsAnAlert() {
+        val intent = PushIntent.parse(
+            """{"intentId":"intent-0006","kind":"notification","urgency":"critical","exp":1791000060}""",
+        )
+        assertEquals(PushIntent.KIND_ALERT, intent?.kind)
+        assertEquals("critical", intent?.urgency)
+    }
+
+    @Test
+    fun parsesTheEpisodeAndRingFollows() {
+        val intent = PushIntent.parse(
+            """{"intentId":"intent-0007","kind":"alert","urgency":"critical","episode":"guard:panic:7","ringFollows":true,"exp":1791000060}""",
+        )
+        assertEquals("guard:panic:7", intent?.episode)
+        assertTrue(intent?.ringFollows ?: false)
+    }
+
+    @Test
+    fun episodeAndRingFollowsDefaultWhenAbsent() {
+        val intent = PushIntent.parse(
+            """{"intentId":"intent-0008","kind":"alert","urgency":"critical","exp":1791000060}""",
+        )
+        assertEquals("", intent?.episode)
+        assertFalse(intent?.ringFollows ?: true)
+    }
+
+    @Test
     fun refusesAnIntentWithoutExpiry() {
         assertNull(PushIntent.parse("""{"intentId":"intent-0004","kind":"alert"}"""))
     }
