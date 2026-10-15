@@ -1,43 +1,46 @@
-import { afterEach, describe, expect, jest, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { useToastStore } from '@/core/stores/toast.store';
-import { TOAST_ACTION_MS, TOAST_DEFAULT_MS, TOAST_MAX_VISIBLE } from '@/shared/constants';
-
-afterEach(() => {
-  jest.useRealTimers();
-  useToastStore.getState().clear();
-});
 
 describe('toast store', () => {
-  test('a plain toast carries no action and leaves after the default time', () => {
-    jest.useFakeTimers();
-    const id = useToastStore.getState().show('success', 'Saved');
-    const [item] = useToastStore.getState().items;
-    expect(item).toEqual({ id, intent: 'success', title: 'Saved', description: undefined });
-    expect(item && 'action' in item).toBe(false);
-    jest.advanceTimersByTime(TOAST_DEFAULT_MS);
-    expect(useToastStore.getState().items).toHaveLength(0);
+  beforeEach(() => {
+    useToastStore.setState({ items: [], parked: [] });
   });
 
-  test('an action toast keeps its action and stays for the longer action time', () => {
-    jest.useFakeTimers();
-    let pressed = 0;
-    const action = { label: 'Undo', onPress: () => (pressed += 1) };
-    useToastStore.getState().show('info', 'Task deleted', undefined, action);
-    jest.advanceTimersByTime(TOAST_DEFAULT_MS);
-    const [item] = useToastStore.getState().items;
-    expect(item?.action?.label).toBe('Undo');
-    item?.action?.onPress();
-    expect(pressed).toBe(1);
-    jest.advanceTimersByTime(TOAST_ACTION_MS - TOAST_DEFAULT_MS);
+  test('an error toast with an action is parked when it is dismissed, so it can be reopened', () => {
+    const id = useToastStore.getState().show('error', 'Reintenta', 'No se guardó', { label: 'Reintentar', onPress: () => {} });
+    useToastStore.getState().dismiss(id);
     expect(useToastStore.getState().items).toHaveLength(0);
+    expect(useToastStore.getState().parked.map((item) => item.title)).toEqual(['Reintenta']);
   });
 
-  test('only the newest toasts stay visible', () => {
-    for (let index = 0; index < TOAST_MAX_VISIBLE + 2; index += 1) {
-      useToastStore.getState().show('info', `Toast ${index}`);
-    }
-    const titles = useToastStore.getState().items.map((item) => item.title);
-    expect(titles).toHaveLength(TOAST_MAX_VISIBLE);
-    expect(titles.at(-1)).toBe(`Toast ${TOAST_MAX_VISIBLE + 1}`);
+  test('an info toast with an action (undo) is not parked: its time limit is its end', () => {
+    const id = useToastStore.getState().show('info', 'Borrado', undefined, { label: 'Deshacer', onPress: () => {} });
+    useToastStore.getState().dismiss(id);
+    expect(useToastStore.getState().parked).toHaveLength(0);
+  });
+
+  test('an error toast without an action is not parked', () => {
+    const id = useToastStore.getState().show('error', 'Algo falló');
+    useToastStore.getState().dismiss(id);
+    expect(useToastStore.getState().parked).toHaveLength(0);
+  });
+
+  test('reopening a parked toast shows it again and removes it from the parked list', () => {
+    const id = useToastStore.getState().show('error', 'Reintenta', undefined, { label: 'Reintentar', onPress: () => {} });
+    useToastStore.getState().dismiss(id);
+    const parkedId = useToastStore.getState().parked[0].id;
+    useToastStore.getState().reopenParked(parkedId);
+    expect(useToastStore.getState().parked).toHaveLength(0);
+    expect(useToastStore.getState().items.map((item) => item.title)).toEqual(['Reintenta']);
+  });
+
+  test('an error toast with an action pushed out by a newer one is parked, not lost', () => {
+    const { show } = useToastStore.getState();
+    show('error', 'Primero', undefined, { label: 'Reintentar', onPress: () => {} });
+    show('info', 'Segundo');
+    show('info', 'Tercero');
+    show('info', 'Cuarto');
+    expect(useToastStore.getState().items).toHaveLength(3);
+    expect(useToastStore.getState().parked.map((item) => item.title)).toEqual(['Primero']);
   });
 });
