@@ -1,7 +1,6 @@
 import { notificationTokenBodySchema } from '@/core/contracts/push.contract';
 import type { ArgusPushKeys } from '@/core/interfaces';
-import type { AuthStatus } from '@/core/types';
-import type { NotificationTokenBody, NotificationTokenRemoval, PushProvider } from '@/core/types';
+import type { AuthStatus, NotificationTokenBody, NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { log } from '@/core/services/log';
 
 export type PushRegistrationInput = {
