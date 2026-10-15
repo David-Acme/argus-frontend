@@ -50,6 +50,10 @@ internal object CallSession {
         }
         replaced.first?.let { releaseCall(app, it) }
         replaced.second?.endWith(DisconnectCause.OTHER)
+        if (episode.isNotEmpty()) {
+            PushStore(app).markRingStarted(episode, System.currentTimeMillis() / MILLIS)
+            RealarmScheduler.cancel(app, episode)
+        }
         ringer.start(app)
         TelecomCalls.addIncoming(app, callId)
         PushNotifier.postCall(app, callId, PushNotifier.canUseFullScreen(app), timeoutMillis)

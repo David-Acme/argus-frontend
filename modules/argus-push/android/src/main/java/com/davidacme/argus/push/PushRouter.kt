@@ -2,14 +2,11 @@ package com.davidacme.argus.push
 
 import android.content.Context
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.util.Base64
 import org.json.JSONObject
 
 internal class PushRouter(private val context: Context) {
     private val store = PushStore(context)
-    private val handler = Handler(Looper.getMainLooper())
 
     fun route(data: Map<String, String>) {
         val now = System.currentTimeMillis() / MILLIS
@@ -81,16 +78,13 @@ internal class PushRouter(private val context: Context) {
             AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink)
             AlertVerdict.Silent -> PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
             AlertVerdict.SilentUntilRingOrAlarm -> {
-                PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
-                handler.postDelayed({
-                    if (!CallSession.isRingingFor(episode.orEmpty())) {
-                        PushNotifier.cancelAlert(context, tag)
-                        PushNotifier.postAlert(context, tag, channel, copy, deepLink)
-                    }
-                }, AlertSilence.RING_GRACE_MS)
+                if (episode == null) {
+                    PushNotifier.postAlert(context, tag, channel, copy, deepLink)
+                } else {
+                    PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
+                    RealarmScheduler.schedule(context, tag, episode, channel, copy, deepLink, System.currentTimeMillis())
+                }
             }
-        }
-    }
         }
     }
 

@@ -39,5 +39,9 @@
     <receiver
         android:name="com.davidacme.argus.push.PushActionReceiver"
         android:exported="false" />
+
+    <receiver
+        android:name="com.davidacme.argus.push.RealarmReceiver"
+        android:exported="false" />
   </application>
 </manifest>

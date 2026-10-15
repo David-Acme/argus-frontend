@@ -65,6 +65,15 @@ internal class PushStore(context: Context) {
         prefs.edit().putString(KEY_SEEN, box.seal(obj.toString().toByteArray(Charsets.UTF_8))).apply()
     }
 
+    fun markRingStarted(episode: String, nowSeconds: Long) {
+        if (episode.isEmpty()) return
+        prefs.edit().putLong(ringKey(episode), nowSeconds).apply()
+    }
+
+    fun ringStarted(episode: String): Boolean = episode.isNotEmpty() && prefs.contains(ringKey(episode))
+
+    private fun ringKey(episode: String): String = KEY_RING_PREFIX + episode
+
     private companion object {
         const val PREFS = "argus.push.state"
         const val STORE_KEY_ALIAS = "argus.push.store"
@@ -72,5 +81,6 @@ internal class PushStore(context: Context) {
         const val KEY_DECLINES = "declines"
         const val KEY_SEEN = "seen"
         const val KEY_FULL_SCREEN_EXPLAINED = "fullScreenExplained"
+        const val KEY_RING_PREFIX = "ring:"
     }
 }
