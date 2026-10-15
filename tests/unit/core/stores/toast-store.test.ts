@@ -34,7 +34,7 @@ describe('toast store', () => {
   test('reopening a parked toast shows it again and removes it from the parked list', () => {
     const id = useToastStore.getState().show('error', 'Reintenta', undefined, { label: 'Reintentar', onPress: () => {} });
     useToastStore.getState().dismiss(id);
-    const parkedId = useToastStore.getState().parked[0].id;
+    const parkedId = useToastStore.getState().parked.map((item) => item.id)[0] ?? '';
     useToastStore.getState().reopenParked(parkedId);
     expect(useToastStore.getState().parked).toHaveLength(0);
     expect(useToastStore.getState().items.map((item) => item.title)).toEqual(['Reintenta']);
