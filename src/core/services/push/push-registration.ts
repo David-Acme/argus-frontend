@@ -24,6 +24,12 @@ export function hasSession(status: AuthStatus): boolean {
   return status === 'signed-in';
 }
 
+export function onTokenRotated(status: AuthStatus, register: () => void): boolean {
+  if (!hasSession(status)) return false;
+  register();
+  return true;
+}
+
 export function registrationDue(previous: AuthStatus | null, next: AuthStatus): boolean {
   return hasSession(next) && !(previous !== null && hasSession(previous));
 }

@@ -6,7 +6,14 @@ import { useAuthStore } from '@/core/stores';
 import { log } from '@/core/services/log';
 import type { NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { IS_ANDROID } from '@/shared/constants';
-import { forwardPendingDeclines, hasSession, isSessionMissing, registrationBodyOf, unpairPush } from './push-registration';
+import {
+  forwardPendingDeclines,
+  hasSession,
+  isSessionMissing,
+  onTokenRotated,
+  registrationBodyOf,
+  unpairPush,
+} from './push-registration';
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;
@@ -30,9 +37,12 @@ class NativePushService implements IPushService {
   private native: IArgusPushNative | null = null;
   private readonly declineListeners = new Set<(callId: string) => void>();
   private declineBound = false;
+  private tokenBound = false;
 
   async register(): Promise<void> {
-    if (!IS_ANDROID || !hasSession(useAuthStore.getState().status)) return;
+    if (!IS_ANDROID) return;
+    this.bindToken();
+    if (!hasSession(useAuthStore.getState().status)) return;
     try {
       const native = this.module();
       const token = await native.storedToken();
@@ -98,6 +108,18 @@ class NativePushService implements IPushService {
       this.declineBound = true;
     } catch (error) {
       log.error('push', 'the native decline listener is unavailable', error);
+    }
+  }
+
+  private bindToken(): void {
+    if (this.tokenBound) return;
+    try {
+      this.module().setTokenListener(() => {
+        onTokenRotated(useAuthStore.getState().status, () => void this.register());
+      });
+      this.tokenBound = true;
+    } catch (error) {
+      log.error('push', 'the native token listener is unavailable', error);
     }
   }
 

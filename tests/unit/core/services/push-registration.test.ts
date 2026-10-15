@@ -4,6 +4,7 @@ import {
   forwardPendingDeclines,
   hasSession,
   isSessionMissing,
+  onTokenRotated,
   registrationBodyOf,
   registrationDue,
   UNREGISTER_TIMEOUT_MS,
@@ -203,5 +204,20 @@ describe('the registration request needs a session', () => {
 
   test('a session allows the request', () => {
     expect(hasSession('signed-in')).toBe(true);
+  });
+});
+
+describe('a token rotation during a session registers the new token', () => {
+  test('a rotation mid-session causes exactly one new registration', () => {
+    let registrations = 0;
+    expect(onTokenRotated('signed-in', () => { registrations += 1; })).toBe(true);
+    expect(registrations).toBe(1);
+  });
+
+  test('a rotation with no session causes no registration', () => {
+    let registrations = 0;
+    expect(onTokenRotated('signed-out', () => { registrations += 1; })).toBe(false);
+    expect(onTokenRotated('loading', () => { registrations += 1; })).toBe(false);
+    expect(registrations).toBe(0);
   });
 });

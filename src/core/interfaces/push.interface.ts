@@ -9,6 +9,7 @@ export interface IArgusPushNative {
   deleteToken(): Promise<void>;
   deleteKeys(): Promise<void>;
   setDeclineListener(listener: (callId: string) => void): void;
+  setTokenListener(listener: (token: string) => void): void;
   takeDeclines(): string[];
   fullScreenExplained(): boolean;
   setFullScreenExplained(value: boolean): void;
