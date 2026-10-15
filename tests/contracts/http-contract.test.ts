@@ -28,14 +28,64 @@ const MASKED_SAMPLES: Readonly<Record<string, string>> = {
   '<masked-hex64>': '0'.repeat(64),
 };
 
-function unmask(value: unknown, key = ''): unknown {
+const ARRAY_KEY = '<VOLATILE:array>';
+const EMPTY_KEY = '<VOLATILE:mayBeEmpty>';
+const VOLATILE_PREFIX = '<VOLATILE:';
+
+const SAMPLE_BY_TYPE: ReadonlyMap<string, () => unknown> = new Map([
+  ['number', () => 1],
+  ['string', () => 'x'],
+  ['boolean', () => false],
+  ['object', () => ({})],
+  ['array', () => []],
+  ['null', () => null],
+]);
+
+const isVolatileMarker = (value: unknown): value is string =>
+  typeof value === 'string' && value.startsWith(VOLATILE_PREFIX) && value.endsWith('>');
+
+function alternativesOf(marker: string): string[] {
+  return marker.slice(VOLATILE_PREFIX.length, -1).split('|');
+}
+
+function sampleOf(type: string): unknown {
+  const sample = SAMPLE_BY_TYPE.get(type);
+  if (sample === undefined) throw new Error(`unknown volatile marker type: ${type}`);
+  return sample();
+}
+
+function alternativeCount(value: unknown): number {
+  if (isVolatileMarker(value)) return alternativesOf(value).length;
+  if (Array.isArray(value)) return Math.max(1, ...value.map(alternativeCount));
+  if (value && typeof value === 'object') return Math.max(1, ...Object.values(value).map(alternativeCount));
+  return 1;
+}
+
+function unmask(value: unknown, pick = 0, key = ''): unknown {
   if (typeof value === 'string' && value in MASKED_SAMPLES) return MASKED_SAMPLES[value];
   if (typeof value === 'string' && value.startsWith('<masked')) return MASKED_STRINGS.has(key) ? value : 0;
-  if (Array.isArray(value)) return value.map((item) => unmask(item, key));
+  if (isVolatileMarker(value)) {
+    const alternatives = alternativesOf(value);
+    return sampleOf(alternatives[pick % alternatives.length] ?? '');
+  }
+  if (Array.isArray(value)) return value.map((item) => unmask(item, pick, key));
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([field, item]) => [field, unmask(item, field)]));
+    const record = value as Record<string, unknown>;
+    if (ARRAY_KEY in record) {
+      const element = record[ARRAY_KEY];
+      return element === null ? [] : [unmask(element, pick, key)];
+    }
+    return Object.fromEntries(
+      Object.entries(record)
+        .filter(([field]) => field !== EMPTY_KEY)
+        .map(([field, item]) => [field, unmask(item, pick, field)])
+    );
   }
   return value;
+}
+
+function variantsOf(value: unknown): unknown[] {
+  return Array.from({ length: alternativeCount(value) }, (_, pick) => unmask(value, pick));
 }
 
 const recorded = probes.filter(
@@ -66,8 +116,10 @@ describe('backend fixtures honour the app contracts', () => {
       expect(successes.length).toBeGreaterThan(0);
       for (const probe of successes) {
         const envelope = envelopeSchema.parse(probe.response.json);
-        const parsed = schema.safeParse(unmask(envelope.info));
-        expect(parsed.success ? null : `${probe.probe}: ${parsed.error.message}`).toBeNull();
+        for (const info of variantsOf(envelope.info)) {
+          const parsed = schema.safeParse(info);
+          expect(parsed.success ? null : `${probe.probe}: ${parsed.error.message}`).toBeNull();
+        }
       }
     });
   }
