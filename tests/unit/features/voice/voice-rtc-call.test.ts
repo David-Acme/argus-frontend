@@ -358,7 +358,7 @@ describe('Argus calls you', () => {
     },
   });
 
-  test('in the foreground the ring answers at once with the reason', async () => {
+  test('a ring in the foreground waits for the user: the reason is shown and nothing is claimed', async () => {
     tokenAnswers = [grant('call-41')];
     const rang: string[] = [];
     const unsubscribe = voiceService.onIncoming((incoming) => rang.push(incoming.callId));
@@ -366,10 +366,23 @@ describe('Argus calls you', () => {
     await settle();
     await settle();
     expect(rang).toEqual(['call-41']);
+    expect(posted).toHaveLength(0);
+    expect(voiceService.snapshot.waitingCall?.callId).toBe('call-41');
+    expect(voiceService.snapshot.waitingCall?.reason).toBe('Persona desconocida · Patio');
+    expect(voiceService.snapshot.isActive).toBe(false);
+    unsubscribe();
+  });
+
+  test('answering the waiting ring claims it and joins the call', async () => {
+    tokenAnswers = [grant('call-41')];
+    operationListeners.get(8)?.(ring() as unknown as ISocketEmitDto);
+    await settle();
+    voiceService.answerWaiting();
+    await settle();
+    await settle();
     expect(posted[0]).toEqual({ url: '/rtc/token', body: { callId: 'call-41' } });
     expect(voiceService.snapshot.callReason).toBe('Persona desconocida · Patio');
     expect(voiceService.snapshot.transport).toBe('rtc');
-    unsubscribe();
   });
 
   test('the cancel that follows our own claim does not end the call', async () => {
@@ -378,6 +391,8 @@ describe('Argus calls you', () => {
       answer = resolve;
     });
     operationListeners.get(8)?.(ring() as unknown as ISocketEmitDto);
+    await settle();
+    voiceService.answerWaiting();
     await settle();
     operationListeners.get(9)?.({
       operation: 9,
@@ -392,7 +407,7 @@ describe('Argus calls you', () => {
     expect(voiceService.snapshot.isActive).toBe(true);
   });
 
-  test('a ring attended by someone else ends before our claim with their name', async () => {
+  test('a ring answered by another device ends before our claim, with their name', async () => {
     let answer: (value: IServiceResponse<unknown>) => void = () => undefined;
     deferredAnswer = new Promise<IServiceResponse<unknown>>((resolve) => {
       answer = resolve;
@@ -401,7 +416,9 @@ describe('Argus calls you', () => {
       ring({ responseId: 7, discreet: true, offers: ['camera'] }) as unknown as ISocketEmitDto
     );
     await settle();
-    expect(voiceService.snapshot.responseId).toBe(7);
+    expect(voiceService.snapshot.waitingCall?.responseId).toBe(7);
+    voiceService.answerWaiting();
+    await settle();
     answer({ status: 409, ok: false, info: null, errors: { code: 'CALL_TAKEN', message: '' } });
     await settle();
     expect(voiceService.snapshot.error).toStartWith('CALL_TAKEN');
