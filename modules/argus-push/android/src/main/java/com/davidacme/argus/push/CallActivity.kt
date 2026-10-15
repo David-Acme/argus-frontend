@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +14,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -29,6 +31,7 @@ class CallActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        showOverLockScreen()
         val callId = intent.getStringExtra(PushActions.EXTRA_CALL_ID)
         if (callId.isNullOrEmpty()) {
             finishAndRemoveTask()
@@ -46,6 +49,15 @@ class CallActivity : Activity() {
         }
         setContentView(callLayout(callId, display))
         detachEnd = CallSession.watchEnd(callId) { runOnUiThread { finishAndRemoveTask() } }
+    }
+
+    private fun showOverLockScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+        }
     }
 
     override fun onDestroy() {
