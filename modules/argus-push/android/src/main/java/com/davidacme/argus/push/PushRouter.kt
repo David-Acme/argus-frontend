@@ -69,21 +69,24 @@ internal class PushRouter(private val context: Context) {
     private fun postSystemAlert(intent: PushIntent, channel: String, copy: AlertCopy, deepLink: String?) {
         val episode = intent.episode.takeIf { it.isNotEmpty() }
         val tag = intent.intentId
-        when (AlertSilence.decide(
+        val verdict = AlertSilence.decide(
             critical = intent.urgency == "critical",
             ringFollows = intent.ringFollows,
             activeRingEpisode = CallSession.activeEpisode(),
             alertEpisode = episode,
             exactAlarmsAllowed = RealarmScheduler.exactAlarmsAllowed(context),
-        )) {
+        )
+        when (verdict) {
             AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink)
             AlertVerdict.Silent -> PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
             AlertVerdict.SilentUntilRingOrAlarm -> {
-                if (episode == null) {
-                    PushNotifier.postAlert(context, tag, channel, copy, deepLink)
-                } else {
+                val scheduled = episode != null && RealarmScheduler.schedule(
+                    context, tag, episode, channel, copy, deepLink, System.currentTimeMillis(),
+                )
+                if (AlertSilence.afterScheduling(verdict, scheduled) == AlertVerdict.SilentUntilRingOrAlarm) {
                     PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
-                    RealarmScheduler.schedule(context, tag, episode, channel, copy, deepLink, System.currentTimeMillis())
+                } else {
+                    PushNotifier.postAlert(context, tag, channel, copy, deepLink)
                 }
             }
         }

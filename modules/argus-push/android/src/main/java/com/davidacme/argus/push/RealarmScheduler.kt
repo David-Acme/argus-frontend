@@ -26,8 +26,8 @@ internal object RealarmScheduler {
         copy: AlertCopy,
         deepLink: String?,
         nowMillis: Long,
-    ) {
-        val manager = context.getSystemService(AlarmManager::class.java) ?: return
+    ): Boolean {
+        val manager = context.getSystemService(AlarmManager::class.java) ?: return false
         val intent = Intent(context, RealarmReceiver::class.java)
             .putExtra(EXTRA_TAG, tag)
             .putExtra(EXTRA_EPISODE, episode)
@@ -44,7 +44,12 @@ internal object RealarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag(),
         )
         val at = RealarmDecision.triggerAtMillis(nowMillis)
-        manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+        return try {
+            manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+            true
+        } catch (error: SecurityException) {
+            false
+        }
     }
 
     fun exactAlarmsAllowed(context: Context): Boolean {

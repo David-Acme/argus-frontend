@@ -18,6 +18,9 @@ internal object AlertSilence {
         return AlertVerdict.FullAlarm
     }
 
+    fun afterScheduling(verdict: AlertVerdict, scheduled: Boolean): AlertVerdict =
+        if (verdict == AlertVerdict.SilentUntilRingOrAlarm && !scheduled) AlertVerdict.FullAlarm else verdict
+
     fun alarmDue(verdict: AlertVerdict, ringStarted: Boolean, elapsedMs: Long): Boolean =
         verdict == AlertVerdict.SilentUntilRingOrAlarm && !ringStarted && elapsedMs >= RING_GRACE_MS
 }

@@ -83,6 +83,20 @@ class AlertSilenceTest {
     }
 
     @Test
+    fun aSilentAlertIsPostedOnlyWhenItsAlarmWasScheduled() {
+        assertEquals(
+            AlertVerdict.SilentUntilRingOrAlarm,
+            AlertSilence.afterScheduling(AlertVerdict.SilentUntilRingOrAlarm, scheduled = true),
+        )
+        assertEquals(
+            AlertVerdict.FullAlarm,
+            AlertSilence.afterScheduling(AlertVerdict.SilentUntilRingOrAlarm, scheduled = false),
+        )
+        assertEquals(AlertVerdict.FullAlarm, AlertSilence.afterScheduling(AlertVerdict.FullAlarm, scheduled = false))
+        assertEquals(AlertVerdict.Silent, AlertSilence.afterScheduling(AlertVerdict.Silent, scheduled = false))
+    }
+
+    @Test
     fun withoutExactAlarmsAPanicAlertAlwaysAlarms() {
         assertEquals(
             AlertVerdict.FullAlarm,
