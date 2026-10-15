@@ -23,4 +23,10 @@ class PushTokenEventsTest {
         PushTokenEvents.listener = null
         PushTokenEvents.rotated("rotated-token-2")
     }
+
+    @Test
+    fun aListenerThatFailsDoesNotFailTheRotation() {
+        PushTokenEvents.listener = { throw IllegalStateException("no JS runtime") }
+        PushTokenEvents.rotated("rotated-token-3")
+    }
 }

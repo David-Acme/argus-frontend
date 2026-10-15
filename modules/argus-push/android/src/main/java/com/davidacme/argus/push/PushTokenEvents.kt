@@ -5,6 +5,7 @@ internal object PushTokenEvents {
     var listener: ((String) -> Unit)? = null
 
     fun rotated(token: String) {
-        listener?.invoke(token)
+        val current = listener ?: return
+        runCatching { current(token) }
     }
 }
