@@ -2,6 +2,7 @@ import { NitroModules } from 'react-native-nitro-modules';
 import { getLanguage } from '@/core/i18n';
 import type { IArgusPushNative, IPushService } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
+import { useAuthStore } from '@/core/stores';
 import { log } from '@/core/services/log';
 import type { NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { IS_ANDROID } from '@/shared/constants';
@@ -31,7 +32,7 @@ class NativePushService implements IPushService {
   private declineBound = false;
 
   async register(): Promise<void> {
-    if (!IS_ANDROID) return;
+    if (!IS_ANDROID || useAuthStore.getState().status !== 'signed-in') return;
     try {
       const native = this.module();
       const token = await native.storedToken();

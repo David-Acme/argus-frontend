@@ -1,5 +1,6 @@
 import { notificationTokenBodySchema } from '@/core/contracts/push.contract';
 import type { ArgusPushKeys } from '@/core/interfaces';
+import type { AuthStatus } from '@/core/types';
 import type { NotificationTokenBody, NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { log } from '@/core/services/log';
 
@@ -17,6 +18,10 @@ const SESSION_MISSING_CODES: ReadonlySet<string> = new Set(['PAIRING_REQUIRED', 
 
 export function isSessionMissing(code: string | null | undefined): boolean {
   return code != null && SESSION_MISSING_CODES.has(code);
+}
+
+export function registrationDue(previous: AuthStatus | null, next: AuthStatus): boolean {
+  return next === 'signed-in' && previous !== 'signed-in';
 }
 
 export type PushUnpairPort = {

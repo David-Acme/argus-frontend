@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
+import type { AuthStatus } from '@/core/types';
 import {
   forwardPendingDeclines,
   isSessionMissing,
   registrationBodyOf,
+  registrationDue,
   UNREGISTER_TIMEOUT_MS,
   unpairPush,
   type PushUnpairPort,
@@ -169,5 +171,25 @@ describe('the device token before a session exists', () => {
     expect(isSessionMissing('CALL_TAKEN')).toBe(false);
     expect(isSessionMissing(undefined)).toBe(false);
     expect(isSessionMissing(null)).toBe(false);
+  });
+});
+
+describe('the device token is registered when a session is established', () => {
+  const registrationsOf = (statuses: AuthStatus[]): number =>
+    statuses.reduce<{ previous: AuthStatus | null; count: number }>(
+      (acc, next) => ({ previous: next, count: acc.count + (registrationDue(acc.previous, next) ? 1 : 0) }),
+      { previous: null, count: 0 }
+    ).count;
+
+  test('no session means no registration at all', () => {
+    expect(registrationsOf(['loading', 'signed-out', 'signed-out'])).toBe(0);
+  });
+
+  test('a session established registers exactly once, however many renders follow', () => {
+    expect(registrationsOf(['loading', 'signed-out', 'signed-in', 'signed-in', 'signed-in'])).toBe(1);
+  });
+
+  test('a new session after sign-out registers again', () => {
+    expect(registrationsOf(['signed-in', 'signed-out', 'signed-in'])).toBe(2);
   });
 });
