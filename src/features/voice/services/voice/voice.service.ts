@@ -826,11 +826,7 @@ class VoiceService {
       if (call.callId !== this.callId) this.holdWaiting(call);
       return;
     }
-    void this.start({
-      callId: call.callId,
-      reason: call.reason,
-      responseId: call.responseId ?? null,
-    });
+    this.holdWaiting(call);
     for (const listener of this.incomingListeners) listener(call);
   }
 
