@@ -2,6 +2,12 @@ const CALL_ID_PATTERN = /^(rtc-[0-9a-f]{32}|call-\d+)$/;
 const CANCEL_EVENT = 'argus-call-cancelled';
 const DECLINE_FAILED_EVENT = 'argus-call-decline-failed';
 const MAIN_GONE_TEXT = 'No se pudo rechazar; la llamada se cerrará sola';
+const REFUSED_TEXT = 'No se pudo rechazar. Inténtalo de nuevo.';
+const ENDED_TEXTS = new Map([
+  ['CALL_NOT_FOUND', 'La llamada ya no está activa.'],
+  ['CALL_EXPIRED', 'La llamada ya terminó.'],
+  ['CALL_TAKEN', 'Otra persona ya contestó.'],
+]);
 
 const callId = new URLSearchParams(window.location.search).get('callId') ?? '';
 const ringtone = document.getElementById('ringtone');
@@ -56,10 +62,10 @@ const decline = async () => {
   try {
     await invoke('argus_call_decline', { callId });
   } catch (error) {
-    if (String(error).startsWith('MAIN_UNAVAILABLE|')) {
+    if (describe(error).startsWith('MAIN_UNAVAILABLE|')) {
       mainGone();
     } else {
-      declineRefused(describe(error));
+      declineRefused();
     }
   }
 };
@@ -70,10 +76,25 @@ const mainGone = () => {
   setStatus(MAIN_GONE_TEXT);
 };
 
-const declineRefused = (reason) => {
-  setStatus(`No se pudo rechazar. Inténtalo de nuevo. ${reason}`.trim());
+const declineRefused = () => {
+  setStatus(REFUSED_TEXT);
   setBusy(false);
   startRinging();
+};
+
+const callEnded = (text) => {
+  stopRinging();
+  setBusy(true);
+  setStatus(text);
+};
+
+const declineFailed = (code) => {
+  const ended = ENDED_TEXTS.get(code);
+  if (ended === undefined) {
+    declineRefused();
+  } else {
+    callEnded(ended);
+  }
 };
 
 const cancelled = () => {
@@ -86,7 +107,7 @@ if (CALL_ID_PATTERN.test(callId)) {
   answerButton.addEventListener('click', answer);
   declineButton.addEventListener('click', decline);
   listen(CANCEL_EVENT, cancelled);
-  listen(DECLINE_FAILED_EVENT, () => declineRefused(''));
+  listen(DECLINE_FAILED_EVENT, (event) => declineFailed(event.payload));
   startRinging();
 } else {
   setBusy(true);
