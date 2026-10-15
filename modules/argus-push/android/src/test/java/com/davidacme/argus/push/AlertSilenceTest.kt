@@ -10,20 +10,26 @@ class AlertSilenceTest {
 
     @Test
     fun alertThenRingStaysSilentUntilTheRingStarts() {
-        val verdict = AlertSilence.decide(critical = true, ringFollows = true, activeRingEpisode = null, alertEpisode = episode)
+        val verdict = AlertSilence.decide(
+            critical = true, ringFollows = true, activeRingEpisode = null, alertEpisode = episode, exactAlarmsAllowed = true,
+        )
         assertEquals(AlertVerdict.SilentUntilRingOrAlarm, verdict)
         assertFalse(AlertSilence.alarmDue(verdict, ringStarted = true, elapsedMs = 2_000L))
     }
 
     @Test
     fun ringThenAlertIsSilentForTheSameEpisode() {
-        val verdict = AlertSilence.decide(critical = true, ringFollows = false, activeRingEpisode = episode, alertEpisode = episode)
+        val verdict = AlertSilence.decide(
+            critical = true, ringFollows = false, activeRingEpisode = episode, alertEpisode = episode, exactAlarmsAllowed = true,
+        )
         assertEquals(AlertVerdict.Silent, verdict)
     }
 
     @Test
     fun ringFollowsWithTheRingNeverArrivingAlarmsAtEightSeconds() {
-        val verdict = AlertSilence.decide(critical = true, ringFollows = true, activeRingEpisode = null, alertEpisode = episode)
+        val verdict = AlertSilence.decide(
+            critical = true, ringFollows = true, activeRingEpisode = null, alertEpisode = episode, exactAlarmsAllowed = true,
+        )
         assertFalse(AlertSilence.alarmDue(verdict, ringStarted = false, elapsedMs = 7_999L))
         assertTrue(AlertSilence.alarmDue(verdict, ringStarted = false, elapsedMs = AlertSilence.RING_GRACE_MS))
     }
@@ -32,11 +38,15 @@ class AlertSilenceTest {
     fun aNonCriticalAlertAlwaysAlarms() {
         assertEquals(
             AlertVerdict.FullAlarm,
-            AlertSilence.decide(critical = false, ringFollows = true, activeRingEpisode = episode, alertEpisode = episode),
+            AlertSilence.decide(
+                critical = false, ringFollows = true, activeRingEpisode = episode, alertEpisode = episode, exactAlarmsAllowed = true,
+            ),
         )
         assertEquals(
             AlertVerdict.FullAlarm,
-            AlertSilence.decide(critical = false, ringFollows = false, activeRingEpisode = episode, alertEpisode = episode),
+            AlertSilence.decide(
+                critical = false, ringFollows = false, activeRingEpisode = episode, alertEpisode = episode, exactAlarmsAllowed = true,
+            ),
         )
     }
 
@@ -44,11 +54,15 @@ class AlertSilenceTest {
     fun aRingForAnotherEpisodeDoesNotSilenceTheAlert() {
         assertEquals(
             AlertVerdict.FullAlarm,
-            AlertSilence.decide(critical = true, ringFollows = false, activeRingEpisode = "guard:panic:8", alertEpisode = episode),
+            AlertSilence.decide(
+                critical = true, ringFollows = false, activeRingEpisode = "guard:panic:8", alertEpisode = episode, exactAlarmsAllowed = true,
+            ),
         )
         assertEquals(
             AlertVerdict.FullAlarm,
-            AlertSilence.decide(critical = true, ringFollows = false, activeRingEpisode = null, alertEpisode = episode),
+            AlertSilence.decide(
+                critical = true, ringFollows = false, activeRingEpisode = null, alertEpisode = episode, exactAlarmsAllowed = true,
+            ),
         )
     }
 
@@ -56,11 +70,31 @@ class AlertSilenceTest {
     fun aCriticalAlertWithoutAnEpisodeAlarms() {
         assertEquals(
             AlertVerdict.FullAlarm,
-            AlertSilence.decide(critical = true, ringFollows = false, activeRingEpisode = null, alertEpisode = null),
+            AlertSilence.decide(
+                critical = true, ringFollows = false, activeRingEpisode = null, alertEpisode = null, exactAlarmsAllowed = true,
+            ),
         )
         assertEquals(
             AlertVerdict.FullAlarm,
-            AlertSilence.decide(critical = true, ringFollows = false, activeRingEpisode = episode, alertEpisode = null),
+            AlertSilence.decide(
+                critical = true, ringFollows = false, activeRingEpisode = episode, alertEpisode = null, exactAlarmsAllowed = true,
+            ),
+        )
+    }
+
+    @Test
+    fun withoutExactAlarmsAPanicAlertAlwaysAlarms() {
+        assertEquals(
+            AlertVerdict.FullAlarm,
+            AlertSilence.decide(
+                critical = true, ringFollows = true, activeRingEpisode = null, alertEpisode = episode, exactAlarmsAllowed = false,
+            ),
+        )
+        assertEquals(
+            AlertVerdict.FullAlarm,
+            AlertSilence.decide(
+                critical = true, ringFollows = false, activeRingEpisode = episode, alertEpisode = episode, exactAlarmsAllowed = false,
+            ),
         )
     }
 }

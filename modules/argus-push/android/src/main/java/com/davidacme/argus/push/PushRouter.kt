@@ -74,6 +74,7 @@ internal class PushRouter(private val context: Context) {
             ringFollows = intent.ringFollows,
             activeRingEpisode = CallSession.activeEpisode(),
             alertEpisode = episode,
+            exactAlarmsAllowed = RealarmScheduler.exactAlarmsAllowed(context),
         )) {
             AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink)
             AlertVerdict.Silent -> PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)

@@ -10,8 +10,9 @@ internal object AlertSilence {
         ringFollows: Boolean,
         activeRingEpisode: String?,
         alertEpisode: String?,
+        exactAlarmsAllowed: Boolean,
     ): AlertVerdict {
-        if (!critical) return AlertVerdict.FullAlarm
+        if (!critical || !exactAlarmsAllowed) return AlertVerdict.FullAlarm
         if (ringFollows) return AlertVerdict.SilentUntilRingOrAlarm
         if (alertEpisode != null && alertEpisode == activeRingEpisode) return AlertVerdict.Silent
         return AlertVerdict.FullAlarm
