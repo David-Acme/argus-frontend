@@ -18,6 +18,11 @@ internal object CallSession {
     @Volatile
     var declineListener: ((String) -> Unit)? = null
 
+    fun isRingingFor(episode: String): Boolean =
+        episode.isNotEmpty() && synchronized(lock) { active?.info?.episode == episode }
+
+    fun activeEpisode(): String? = synchronized(lock) { active?.info?.episode?.takeIf { it.isNotEmpty() } }
+
     private class ActiveCall(val info: RingInfo, val expiry: Runnable, val startedAtMillis: Long) {
         val callId: String get() = info.callId
     }

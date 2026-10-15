@@ -2,11 +2,14 @@ package com.davidacme.argus.push
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import org.json.JSONObject
 
 internal class PushRouter(private val context: Context) {
     private val store = PushStore(context)
+    private val handler = Handler(Looper.getMainLooper())
 
     fun route(data: Map<String, String>) {
         val now = System.currentTimeMillis() / MILLIS
@@ -62,7 +65,32 @@ internal class PushRouter(private val context: Context) {
         if (banner) {
             if (route.alarm) AlertAlarm.sound(context)
         } else {
-            PushNotifier.postAlert(context, intent.intentId, channel, copy, deepLink)
+            postSystemAlert(intent, channel, copy, deepLink)
+        }
+    }
+
+    private fun postSystemAlert(intent: PushIntent, channel: String, copy: AlertCopy, deepLink: String?) {
+        val episode = intent.episode.takeIf { it.isNotEmpty() }
+        val tag = intent.intentId
+        when (AlertSilence.decide(
+            critical = intent.urgency == "critical",
+            ringFollows = intent.ringFollows,
+            activeRingEpisode = CallSession.activeEpisode(),
+            alertEpisode = episode,
+        )) {
+            AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink)
+            AlertVerdict.Silent -> PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
+            AlertVerdict.SilentUntilRingOrAlarm -> {
+                PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
+                handler.postDelayed({
+                    if (!CallSession.isRingingFor(episode.orEmpty())) {
+                        PushNotifier.cancelAlert(context, tag)
+                        PushNotifier.postAlert(context, tag, channel, copy, deepLink)
+                    }
+                }, AlertSilence.RING_GRACE_MS)
+            }
+        }
+    }
         }
     }
 
@@ -92,6 +120,7 @@ internal class PushRouter(private val context: Context) {
                 expiresAtSeconds = intent.expiresAtSeconds,
                 reason = intent.reason,
                 critical = intent.urgency == "critical",
+                episode = intent.episode,
             ),
         )
     }

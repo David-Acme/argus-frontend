@@ -10,6 +10,7 @@ internal object PushChannels {
     const val TIME_SENSITIVE = "argus-time-sensitive"
     const val NORMAL = "argus-normal"
     const val CALLS = "argus-calls"
+    const val SILENT_ALERTS = "argus-alerts-silent"
 
     fun forUrgency(urgency: String): String =
         when (urgency) {
@@ -27,12 +28,19 @@ internal object PushChannels {
             channel(TIME_SENSITIVE, NotificationManager.IMPORTANCE_HIGH, spanish),
             channel(NORMAL, NotificationManager.IMPORTANCE_DEFAULT, spanish),
             silentCalls(spanish),
+            silentAlerts(spanish),
         )
         manager.createNotificationChannels(channels)
     }
 
     private fun channel(id: String, importance: Int, spanish: Boolean): NotificationChannel =
         NotificationChannel(id, PushText.channelName(id, spanish), importance)
+
+    private fun silentAlerts(spanish: Boolean): NotificationChannel =
+        NotificationChannel(SILENT_ALERTS, PushText.channelName(SILENT_ALERTS, spanish), NotificationManager.IMPORTANCE_HIGH).apply {
+            setSound(null, null)
+            enableVibration(false)
+        }
 
     private fun silentCalls(spanish: Boolean): NotificationChannel =
         NotificationChannel(CALLS, PushText.channelName(CALLS, spanish), NotificationManager.IMPORTANCE_HIGH).apply {

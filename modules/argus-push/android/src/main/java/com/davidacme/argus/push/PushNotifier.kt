@@ -38,6 +38,10 @@ internal object PushNotifier {
         NotificationManagerCompat.from(context).notify(tag, ALERT_NOTIFICATION_ID, builder.build())
     }
 
+    fun cancelAlert(context: Context, tag: String) {
+        NotificationManagerCompat.from(context).cancel(tag, ALERT_NOTIFICATION_ID)
+    }
+
     fun postCall(context: Context, callId: String, fullScreen: Boolean, timeoutMillis: Long) {
         PushChannels.ensure(context)
         val spanish = PushText.isSpanish()

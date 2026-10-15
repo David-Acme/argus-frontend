@@ -5,6 +5,7 @@ internal data class RingInfo(
     val expiresAtSeconds: Long,
     val reason: String,
     val critical: Boolean,
+    val episode: String = "",
 )
 
 internal data class RingDisplay(
