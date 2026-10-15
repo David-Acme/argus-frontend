@@ -69,26 +69,29 @@ internal class PushRouter(private val context: Context) {
     private fun postSystemAlert(intent: PushIntent, channel: String, copy: AlertCopy, deepLink: String?) {
         val episode = intent.episode.takeIf { it.isNotEmpty() }
         val tag = intent.intentId
+        val activeEpisode = CallSession.activeEpisode()
+        val exactAllowed = RealarmScheduler.exactAlarmsAllowed(context)
         val verdict = AlertSilence.decide(
             critical = intent.urgency == "critical",
             ringFollows = intent.ringFollows,
-            activeRingEpisode = CallSession.activeEpisode(),
+            activeRingEpisode = activeEpisode,
             alertEpisode = episode,
-            exactAlarmsAllowed = RealarmScheduler.exactAlarmsAllowed(context),
+            exactAlarmsAllowed = exactAllowed,
         )
-        when (verdict) {
+        val scheduled = verdict == AlertVerdict.SilentUntilRingOrAlarm && episode != null &&
+            RealarmScheduler.schedule(context, tag, episode, channel, copy, deepLink, System.currentTimeMillis())
+        val placed = AlertSilence.afterScheduling(verdict, scheduled)
+        PushLog.info(
+            "alert decision kind=${intent.kind} urgency=${intent.urgency} " +
+                "episode=${if (episode == null) "absent" else "present"} ringFollows=${intent.ringFollows} " +
+                "activeRingEpisodeMatch=${episode != null && episode == activeEpisode} " +
+                "exactAllowed=$exactAllowed verdict=$placed " +
+                "scheduled=${if (verdict == AlertVerdict.SilentUntilRingOrAlarm) scheduled else "n/a"}",
+        )
+        when (placed) {
             AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink)
-            AlertVerdict.Silent -> PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
-            AlertVerdict.SilentUntilRingOrAlarm -> {
-                val scheduled = episode != null && RealarmScheduler.schedule(
-                    context, tag, episode, channel, copy, deepLink, System.currentTimeMillis(),
-                )
-                if (AlertSilence.afterScheduling(verdict, scheduled) == AlertVerdict.SilentUntilRingOrAlarm) {
-                    PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
-                } else {
-                    PushNotifier.postAlert(context, tag, channel, copy, deepLink)
-                }
-            }
+            AlertVerdict.Silent, AlertVerdict.SilentUntilRingOrAlarm ->
+                PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
         }
     }
 
