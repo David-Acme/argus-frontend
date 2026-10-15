@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { offlineTransition, type OfflineView } from '@/shared/libs/offline-transition';
+import { offlineTransition, type OfflineView } from '@/shared/components/layout/offline-transition';
 
 const unreachable: OfflineView = { key: 'unreachable', title: 'No puedo conectar', description: 'Local', icon: 'wifi-off' };
 const remote: OfflineView = { key: 'remote-unavailable', title: 'Acceso remoto', description: 'Fuera', icon: 'cloud-off' };

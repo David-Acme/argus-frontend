@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Pressable } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import { useWatchdogNotice } from '@/shared/components/layout/use-watchdog-notic
 import { NET_ROUTE_STATUS_VIEWS } from '@/shared/constants';
 import { useRelayRefusalAlert, useRouteStatus } from '@/shared/hooks/use-route-status';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { offlineTransition, type OfflineView } from '@/shared/libs/offline-transition';
+import { offlineTransition, type OfflineView } from '@/shared/components/layout/offline-transition';
 import { toast } from '@/shared/libs/toast';
 
 const lastHeardLabel = (at: number, language: string): string => {
@@ -36,21 +36,23 @@ export function OfflineBanner() {
   const toastId = useOfflineToastStore((state) => state.toastId);
   const toastOpen = useToastStore((state) => state.items.some((item) => item.id === toastId));
 
-  const view: OfflineView | null = !offline
-    ? null
-    : watchdog.kind === 'silent'
-      ? {
-          key: 'watchdog',
-          title: t('common.watchdog.banner-title', { time: lastHeardLabel(watchdog.since, language) }),
-          description: t('common.watchdog.banner-description'),
-          icon: 'wifi-off',
-        }
-      : {
-          key: route && routeStatus ? routeStatus : 'offline',
-          title: t(route?.title ?? 'common.offline.title'),
-          description: t(route?.detail ?? 'common.offline.description'),
-          icon: route?.icon ?? 'wifi-off',
-        };
+  const view = useMemo<OfflineView | null>(() => {
+    if (!offline) return null;
+    if (watchdog.kind === 'silent') {
+      return {
+        key: 'watchdog',
+        title: t('common.watchdog.banner-title', { time: lastHeardLabel(watchdog.since, language) }),
+        description: t('common.watchdog.banner-description'),
+        icon: 'wifi-off',
+      };
+    }
+    return {
+      key: route && routeStatus ? routeStatus : 'offline',
+      title: t(route?.title ?? 'common.offline.title'),
+      description: t(route?.detail ?? 'common.offline.description'),
+      icon: route?.icon ?? 'wifi-off',
+    };
+  }, [offline, watchdog, route, routeStatus, t, language]);
 
   const previous = useRef<OfflineView | null>(null);
 
