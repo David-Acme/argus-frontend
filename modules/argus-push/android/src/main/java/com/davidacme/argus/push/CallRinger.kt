@@ -22,7 +22,10 @@ internal class CallRinger {
     @Synchronized
     fun start(context: Context) {
         if (player != null || activeVibrator != null) return
-        val plan = RingDecision.plan(ringerMode(context), vibrateWhileRinging(context))
+        val mode = ringerMode(context)
+        val vibrateWhile = vibrateWhileRinging(context)
+        val plan = RingDecision.plan(mode, vibrateWhile)
+        android.util.Log.i(PushLog.TAG, "ring decision mode=$mode vibrateWhileRinging=$vibrateWhile sound=${plan.sound} vibration=${plan.vibration}")
         if (plan.sound) startSound(context)
         if (plan.vibration == RingVibration.Repeating) startVibration(context)
     }
