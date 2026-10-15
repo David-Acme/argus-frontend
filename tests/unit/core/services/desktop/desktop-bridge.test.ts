@@ -5,7 +5,8 @@ type Call = { command: string; args: unknown };
 
 const invoked: Call[] = [];
 const posted: { path: string; body: unknown }[] = [];
-let postOutcome: 'accepted' | 'refused' | 'unreachable' = 'accepted';
+let postOutcome: 'accepted' | 'refused' | 'unreachable' | 'expired' | 'taken' | 'not-found' = 'accepted';
+const REFUSED_CODES: Record<string, string> = { expired: 'CALL_EXPIRED', taken: 'CALL_TAKEN', 'not-found': 'CALL_NOT_FOUND' };
 
 mock.module('@tauri-apps/api/core', () => ({
   invoke: async (command: string, args?: unknown) => {
@@ -30,7 +31,9 @@ const transport: DeclineTransport = {
   post: async (path, body) => {
     posted.push({ path, body });
     if (postOutcome === 'unreachable') throw new Error('NETWORK_ERROR|offline');
-    return { ok: postOutcome === 'accepted' };
+    if (postOutcome === 'accepted') return { ok: true, errors: null };
+    const code = REFUSED_CODES[postOutcome];
+    return { ok: false, errors: code === undefined ? null : { code } };
   },
 };
 
@@ -51,19 +54,32 @@ describe('the desktop decline', () => {
 
   test('an accepted decline reports ok to the shell, which closes the call window', async () => {
     await declineCall('call-7', transport);
-    expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: true } }]);
+    expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: true, code: null } }]);
   });
 
   test('a refused decline reports not ok, so the shell keeps the window', async () => {
     postOutcome = 'refused';
     await declineCall('call-7', transport);
-    expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: false } }]);
+    expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: false, code: null } }]);
+  });
+
+  test('a decline the server refuses for a call that is gone reports the server code, never the text', async () => {
+    for (const [outcome, code] of [
+      ['expired', 'CALL_EXPIRED'],
+      ['taken', 'CALL_TAKEN'],
+      ['not-found', 'CALL_NOT_FOUND'],
+    ] as const) {
+      postOutcome = outcome;
+      invoked.length = 0;
+      await declineCall('call-7', transport);
+      expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: false, code } }]);
+    }
   });
 
   test('a decline that cannot reach the server reports not ok', async () => {
     postOutcome = 'unreachable';
     await declineCall('call-7', transport);
-    expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: false } }]);
+    expect(invoked).toEqual([{ command: 'argus_call_decline_result', args: { callId: 'call-7', ok: false, code: null } }]);
   });
 });
 

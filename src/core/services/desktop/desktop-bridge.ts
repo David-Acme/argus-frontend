@@ -9,8 +9,9 @@ const DECLINE_EVENT = 'argus-call-decline';
 const DECLINE_PATH = '/rtc/decline';
 
 export type LinkPath = (link: string) => string;
+export type DeclineResponse = { ok: boolean; errors: { code: string } | null };
 export type DeclineTransport = {
-  post: (path: string, body: { callId: string }) => Promise<{ ok: boolean }>;
+  post: (path: string, body: { callId: string }) => Promise<DeclineResponse>;
 };
 export type Navigate = (path: string) => void;
 
@@ -25,12 +26,15 @@ export function openLink(link: string, linkPath: LinkPath, navigate: Navigate = 
 
 export async function declineCall(callId: string, transport: DeclineTransport = httpService): Promise<void> {
   let ok = false;
+  let code: string | null = null;
   try {
-    ok = (await transport.post(DECLINE_PATH, { callId })).ok;
+    const response = await transport.post(DECLINE_PATH, { callId });
+    ok = response.ok;
+    code = response.errors?.code ?? null;
   } catch {
     ok = false;
   }
-  await invoke('argus_call_decline_result', { callId, ok }).catch(() => undefined);
+  await invoke('argus_call_decline_result', { callId, ok, code: ok ? null : code }).catch(() => undefined);
 }
 
 export async function startDesktopBridge(
