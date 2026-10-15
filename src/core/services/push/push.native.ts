@@ -5,7 +5,7 @@ import { httpService } from '@/core/services/http';
 import { log } from '@/core/services/log';
 import type { NotificationTokenRemoval, PushProvider } from '@/core/types';
 import { IS_ANDROID } from '@/shared/constants';
-import { forwardPendingDeclines, registrationBodyOf, unpairPush } from './push-registration';
+import { forwardPendingDeclines, isSessionMissing, registrationBodyOf, unpairPush } from './push-registration';
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;
@@ -45,7 +45,9 @@ class NativePushService implements IPushService {
         provider: PROVIDER,
       });
       const answer = await httpService.post('/notification-token', body);
-      if (!answer.ok) log.error('push', 'the device token was not registered', answer.errors?.code);
+      if (!answer.ok && !isSessionMissing(answer.errors?.code)) {
+        log.error('push', 'the device token was not registered', answer.errors?.code);
+      }
     } catch (error) {
       log.error('push', 'the device token was not registered', error);
     }

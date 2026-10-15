@@ -13,6 +13,12 @@ export type PushRegistrationInput = {
 
 export const UNREGISTER_TIMEOUT_MS = 5000;
 
+const SESSION_MISSING_CODES: ReadonlySet<string> = new Set(['PAIRING_REQUIRED', 'UNAUTHORIZED']);
+
+export function isSessionMissing(code: string | null | undefined): boolean {
+  return code != null && SESSION_MISSING_CODES.has(code);
+}
+
 export type PushUnpairPort = {
   storedToken(): Promise<string | null>;
   unregister(removal: NotificationTokenRemoval): Promise<void>;

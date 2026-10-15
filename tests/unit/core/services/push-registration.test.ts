@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   forwardPendingDeclines,
+  isSessionMissing,
   registrationBodyOf,
   UNREGISTER_TIMEOUT_MS,
   unpairPush,
@@ -154,5 +155,19 @@ describe('the pending declines', () => {
       )
     ).not.toThrow();
     expect(emitted).toEqual([]);
+  });
+});
+
+describe('the device token before a session exists', () => {
+  test('a refusal for a missing session is expected, so it is not reported as an error', () => {
+    expect(isSessionMissing('PAIRING_REQUIRED')).toBe(true);
+    expect(isSessionMissing('UNAUTHORIZED')).toBe(true);
+  });
+
+  test('any other refusal, or none, is still reported', () => {
+    expect(isSessionMissing('NETWORK_ERROR')).toBe(false);
+    expect(isSessionMissing('CALL_TAKEN')).toBe(false);
+    expect(isSessionMissing(undefined)).toBe(false);
+    expect(isSessionMissing(null)).toBe(false);
   });
 });
