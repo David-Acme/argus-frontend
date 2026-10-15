@@ -1,8 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 
-import { httpService } from '@/core/services/http';
-
 const READY_EVENT = 'argus-bridge-ready';
 const OPEN_LINK_EVENT = 'argus-open-link';
 const DECLINE_EVENT = 'argus-call-decline';
@@ -24,7 +22,7 @@ export function openLink(link: string, linkPath: LinkPath, navigate: Navigate = 
   navigate(linkPath(link));
 }
 
-export async function declineCall(callId: string, transport: DeclineTransport = httpService): Promise<void> {
+export async function declineCall(callId: string, transport: DeclineTransport): Promise<void> {
   let ok = false;
   let code: string | null = null;
   try {
@@ -37,10 +35,7 @@ export async function declineCall(callId: string, transport: DeclineTransport = 
   await invoke('argus_call_decline_result', { callId, ok, code: ok ? null : code }).catch(() => undefined);
 }
 
-export async function startDesktopBridge(
-  linkPath: LinkPath,
-  transport: DeclineTransport = httpService
-): Promise<UnlistenFn> {
+export async function startDesktopBridge(linkPath: LinkPath, transport: DeclineTransport): Promise<UnlistenFn> {
   const stops = await Promise.all([
     listen<{ link: string }>(OPEN_LINK_EVENT, (event) => openLink(event.payload.link, linkPath)),
     listen<{ callId: string }>(DECLINE_EVENT, (event) => {
