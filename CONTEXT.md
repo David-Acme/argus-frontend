@@ -2818,10 +2818,15 @@ platform, then leaves in its own change.
   Barge-in is the agent's: the microphone stays open while Argus speaks and
   echo cancellation keeps Argus out of it.
 - **Argus calls you.** `call_incoming` (operation 8, option `notification`)
-  answers at once when the app is in the foreground and no call is live: the
-  service claims the call with the token route, the bridge opens `/call`, and
-  the pill and the call screen show "Argus te llama · <reason>". A
-  `call_cancel` (9) only matters before the claim. The push deep link
+  is never answered on its own. With no call live, the service holds it in the
+  waiting state (`holdWaiting`) and the global `IncomingCallSurface` (mounted in
+  the root layout, so it shows on any screen except `/call`) shows "Argus te
+  llama · <reason>" with "Contestar" and "Rechazar". Only "Contestar" calls
+  `answerWaiting`, which claims the token and joins; the microphone opens only
+  then. "Rechazar" calls `declineCall`. A critical ring (`urgency: critical`)
+  shows its reason prominently under "Alerta crítica" and vibrates until it is
+  answered or ends, without the user opening the mic. A `call_cancel` (9) only
+  matters before the claim. The push deep link
   `argus://call?callId=<id>` passes the allow-list with its call id only
   (`+native-intent.ts`), and a missed call's notification (`kind: "call"`)
   reopens it from Novedades (`missedCallId`). Native CallKit /
