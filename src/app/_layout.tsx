@@ -16,7 +16,7 @@ import { GlobalBottomNav } from '@/shared/components/layout/global-bottom-nav';
 import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { DisarmPinDialog } from '@/features/safety';
 import { Toaster } from '@/shared/components/ui/toaster';
-import { OfflineBanner, ParkedToastIndicator } from '@/shared/components/layout';
+import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
 import { CallPill, useDesktopBridge } from '@/features/voice';
 import { deepLinkPath } from './+native-intent';
@@ -41,8 +41,7 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
               <View style={{ flex: 1 }}>
-                <OfflineBanner />
-                <ParkedToastIndicator />
+                <TopNoticeBar />
                 <Stack
                   screenOptions={{
                     headerShown: false,
