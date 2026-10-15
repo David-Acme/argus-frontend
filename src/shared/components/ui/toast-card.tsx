@@ -1,9 +1,12 @@
 import { Pressable, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import type { IconName, ToastItem } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import { TOAST_SWIPE_PX } from '@/shared/constants';
 import { itemIn, overlayOut } from '@/shared/libs/animations';
 import { cn } from '@/shared/libs/utils';
 
@@ -29,9 +32,30 @@ const ACCENT: Record<ToastItem['intent'], string> = {
 
 export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
   const { action } = item;
+  const offsetX = useSharedValue(0);
+  const offsetY = useSharedValue(0);
+
+  const swipe = Gesture.Pan()
+    .onUpdate((event) => {
+      offsetX.value = event.translationX;
+      offsetY.value = Math.min(0, event.translationY);
+    })
+    .onEnd((event) => {
+      if (event.translationY < -TOAST_SWIPE_PX || Math.abs(event.translationX) > TOAST_SWIPE_PX) {
+        scheduleOnRN(onDismiss, item.id);
+        return;
+      }
+      offsetX.value = withSpring(0);
+      offsetY.value = withSpring(0);
+    });
+
+  const motion = useAnimatedStyle(() => ({
+    transform: [{ translateX: offsetX.value }, { translateY: offsetY.value }],
+  }));
 
   return (
-    <Animated.View entering={itemIn} exiting={overlayOut}>
+    <GestureDetector gesture={swipe}>
+    <Animated.View entering={itemIn} exiting={overlayOut} style={motion}>
       <View
         aria-live={item.intent === 'error' ? 'assertive' : 'polite'}
         className="bg-card border-border-subtle flex-row items-center gap-3 rounded-2xl border p-3.5 shadow-lg shadow-black/15">
@@ -67,5 +91,6 @@ export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
         ) : null}
       </View>
     </Animated.View>
+    </GestureDetector>
   );
 }
