@@ -46,16 +46,6 @@ internal class PushKeys(context: Context) {
             .build()
             .keysetHandle
 
-    private fun hpkeKeyTemplate(): KeyTemplate =
-        KeyTemplate.createFrom(
-            HpkeParameters.builder()
-                .setKemId(HpkeParameters.KemId.DHKEM_X25519_HKDF_SHA256)
-                .setKdfId(HpkeParameters.KdfId.HKDF_SHA256)
-                .setAeadId(HpkeParameters.AeadId.CHACHA20_POLY1305)
-                .setVariant(HpkeParameters.Variant.NO_PREFIX)
-                .build()
-        )
-
     private fun rawPublicKey(publicHandle: KeysetHandle): ByteArray {
         val out = ByteArrayOutputStream()
         CleartextKeysetHandle.write(publicHandle, BinaryKeysetWriter.withOutputStream(out))
@@ -65,10 +55,24 @@ internal class PushKeys(context: Context) {
     }
 
     companion object {
+        init {
+            HybridConfig.register()
+        }
+
         const val BASE64URL = Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
         private const val KEY_ID_BYTES = 16
         private const val KEYSET_NAME = "argus_push_keyset"
         private const val KEYSET_PREFS = "argus_push_keyset_prefs"
         private const val MASTER_KEY_URI = "android-keystore://argus_push_master_key"
+
+            internal fun hpkeKeyTemplate(): KeyTemplate =
+                KeyTemplate.createFrom(
+                    HpkeParameters.builder()
+                        .setKemId(HpkeParameters.KemId.DHKEM_X25519_HKDF_SHA256)
+                        .setKdfId(HpkeParameters.KdfId.HKDF_SHA256)
+                        .setAeadId(HpkeParameters.AeadId.CHACHA20_POLY1305)
+                        .setVariant(HpkeParameters.Variant.NO_PREFIX)
+                        .build()
+                )
     }
 }
