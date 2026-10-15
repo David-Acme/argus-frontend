@@ -36,7 +36,6 @@ export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
   const offsetY = useSharedValue(0);
 
   const swipe = Gesture.Pan()
-    .enabled(action === undefined)
     .onUpdate((event) => {
       offsetX.value = event.translationX;
       offsetY.value = Math.min(0, event.translationY);

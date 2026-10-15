@@ -19,6 +19,12 @@ describe('toast store', () => {
     expect(useToastStore.getState().parked).toHaveLength(0);
   });
 
+  test('a warning toast with an action (the offline one) is not parked: its own dot reopens it', () => {
+    const id = useToastStore.getState().show('warning', 'Sin conexión', undefined, { label: 'Reintentar', onPress: () => {} });
+    useToastStore.getState().dismiss(id);
+    expect(useToastStore.getState().parked).toHaveLength(0);
+  });
+
   test('an error toast without an action is not parked', () => {
     const id = useToastStore.getState().show('error', 'Algo falló');
     useToastStore.getState().dismiss(id);
