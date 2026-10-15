@@ -6,6 +6,8 @@ internal object PushTokenEvents {
 
     fun rotated(token: String) {
         val current = listener ?: return
-        runCatching { current(token) }
+        runCatching { current(token) }.onFailure {
+            PushLog.warn("the token listener failed; the rotated token is saved for the next start")
+        }
     }
 }

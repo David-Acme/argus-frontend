@@ -94,7 +94,10 @@ internal object CallSession {
             PushStore(context).addDecline(callId)
             return
         }
-        runCatching { listener(callId) }.onFailure { PushStore(context).addDecline(callId) }
+        runCatching { listener(callId) }.onFailure {
+            PushLog.warn("the decline listener failed; the decline is kept for the next start")
+            PushStore(context).addDecline(callId)
+        }
     }
 
     private fun expire(context: Context, callId: String) {
