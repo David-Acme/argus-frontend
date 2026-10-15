@@ -157,7 +157,7 @@ pub fn argus_call_decline(app: AppHandle, call_id: String) -> Result<(), String>
 }
 
 #[tauri::command]
-pub fn argus_call_decline_result(app: AppHandle, call_id: String, ok: bool) -> Result<(), String> {
+pub fn argus_call_decline_result(app: AppHandle, call_id: String, ok: bool, code: Option<String>) -> Result<(), String> {
   if !valid_call_id(&call_id) {
     return Err(INVALID_CALL.to_string());
   }
@@ -168,7 +168,7 @@ pub fn argus_call_decline_result(app: AppHandle, call_id: String, ok: bool) -> R
     return Ok(());
   }
   app
-    .emit_to(EventTarget::webview_window(LABEL), DECLINE_FAILED_EVENT, ())
+    .emit_to(EventTarget::webview_window(LABEL), DECLINE_FAILED_EVENT, code.unwrap_or_default())
     .map_err(failure)
 }
 
