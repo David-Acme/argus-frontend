@@ -33,6 +33,9 @@ class FakeCall implements IRealtimeCall {
   async setMicrophone(enabled: boolean): Promise<void> {
     this.microphone.push(enabled);
   }
+  microphoneOn(): boolean {
+    return this.microphone.at(-1) ?? true;
+  }
   async send(topic: string, payload: string): Promise<void> {
     this.sent.push({ topic, payload });
   }

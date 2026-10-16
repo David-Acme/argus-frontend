@@ -23,6 +23,10 @@ export class TauriRealtimeCall implements IRealtimeCall {
     await invoke('argus_rtc_microphone', { enabled });
   }
 
+  microphoneOn(): boolean {
+    return false;
+  }
+
   async send(topic: string, payload: string): Promise<void> {
     await invoke('argus_rtc_send', { request: { topic, payload } });
   }

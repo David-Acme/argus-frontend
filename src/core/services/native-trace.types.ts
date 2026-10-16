@@ -18,4 +18,6 @@ export type TraceOutcome =
   | 'ended'
   | 'left'
   | 'failed'
-  | 'queued';
+  | 'queued'
+  | 'background'
+  | 'foreground';

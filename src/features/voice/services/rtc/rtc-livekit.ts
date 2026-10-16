@@ -96,6 +96,10 @@ export class LivekitRealtimeCall implements IRealtimeCall {
     await this.room?.localParticipant.setMicrophoneEnabled(enabled);
   }
 
+  microphoneOn(): boolean {
+    return this.room?.localParticipant.isMicrophoneEnabled ?? false;
+  }
+
   async send(topic: string, payload: string): Promise<void> {
     const room = this.room;
     if (!room) throw new Error('RTC_NOT_CONNECTED|No call');

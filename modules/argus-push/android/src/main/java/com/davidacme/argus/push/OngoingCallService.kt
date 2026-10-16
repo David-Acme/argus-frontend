@@ -39,8 +39,10 @@ internal class OngoingCallService : Service() {
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
             )
+            NativeTrace.record("ongoing", "shown", "fgs-phone-call-microphone")
         } else {
             startForeground(ID, notification)
+            NativeTrace.record("ongoing", "fallback", "fgs-untyped")
         }
     }
 

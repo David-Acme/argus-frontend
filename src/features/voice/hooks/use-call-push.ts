@@ -11,6 +11,7 @@ export function useCallPush(): void {
     pushService.drainDeclines();
     const resume = AppState.addEventListener('change', (state) => {
       if (state === 'active') pushService.drainDeclines();
+      voiceService.traceAppState(state);
     });
     return () => {
       unsubscribe();

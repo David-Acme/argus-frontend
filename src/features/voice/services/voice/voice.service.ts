@@ -5,6 +5,7 @@ import { withTiming } from 'react-native-reanimated';
 import { synchronizeService } from '@/core/services/sync';
 import type { IRealtimeCall, IVoiceMic, IVoiceReactionPayload } from '@/core/interfaces';
 import { traceEvent } from '@/core/services/native-trace';
+import { micTraceReason } from '@/features/voice/model/mic-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
 import { sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
@@ -905,6 +906,12 @@ class VoiceService {
     if (!this.waitingCall) return;
     this.clearWaiting();
     this.notify();
+  }
+
+  traceAppState(state: string): void {
+    const call = this.rtc;
+    if (!call || this.transport !== 'rtc') return;
+    traceEvent('voice', state === 'background' ? 'background' : 'foreground', micTraceReason(call.microphoneOn()));
   }
 
   async declineCall(callId: string): Promise<void> {
