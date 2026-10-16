@@ -16,19 +16,26 @@ describe('leaving the call screen', () => {
     expect(order).toEqual(['stop', 'back']);
   });
 
-  test('a ring answered from the lock screen with nothing to return to goes to the background', () => {
-    const order: string[] = [];
-    leaveCall(effectsFor(false, true, order));
-    expect(order).toEqual(['stop', 'background']);
-  });
-
   test('an in-app call with no history stays on its route and never backgrounds the app', () => {
     const order: string[] = [];
     leaveCall(effectsFor(false, false, order));
     expect(order).toEqual(['stop']);
   });
 
-  test('leaving prefers going back over backgrounding, even when entered from outside', () => {
-    expect(leaveAction({ canGoBack: true, enteredFromOutside: true })).toBe('back');
+  test('a call entered from outside with history pops /call first, then goes to the background, never back into the app', () => {
+    const order: string[] = [];
+    leaveCall(effectsFor(true, true, order));
+    expect(order).toEqual(['stop', 'back', 'background']);
+  });
+
+  test('a call entered from outside with nothing to return to goes straight to the background', () => {
+    const order: string[] = [];
+    leaveCall(effectsFor(false, true, order));
+    expect(order).toEqual(['stop', 'background']);
+  });
+
+  test('an outside call backgrounds even when the app has history under it', () => {
+    expect(leaveAction({ canGoBack: true, enteredFromOutside: true })).toBe('background');
+    expect(leaveAction({ canGoBack: true, enteredFromOutside: false })).toBe('back');
   });
 });
