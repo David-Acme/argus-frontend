@@ -8,6 +8,7 @@ import { traceEvent } from '@/core/services/native-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
 import { sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
+import { cancelOutcomeOf } from '@/features/voice/model/call-end';
 import { VOICE_HANGUP_FLUSH_MS } from '@/features/voice/constants/hangup';
 import {
   CALL_ACTIONS_KEPT,
@@ -150,6 +151,7 @@ class VoiceService {
   private capturing = false;
   private active = false;
   private serverSession = false;
+  private claimedCallId: string | null = null;
   private boundary: CallBoundary = INITIAL_CALL_BOUNDARY;
   private actions: readonly VoiceActionRecord[] = [];
   private liveCameraId: string | null = null;
@@ -294,11 +296,13 @@ class VoiceService {
 
   private async startRealtime(session: number, request: RtcTokenRequest): Promise<boolean> {
     traceEvent('voice', 'start', request.callId ? 'call' : 'assistant');
+    this.claimedCallId = null;
     this.claiming = true;
     const answer = await requestCallToken(request).finally(() => {
       this.claiming = false;
     });
     if (!this.isCurrent(session)) return true;
+    if (answer.kind === 'granted') this.claimedCallId = answer.grant.callId;
     if (answer.kind === 'fallback') {
       traceEvent('voice', 'fallback', 'no-rtc-grant');
       return false;
@@ -491,6 +495,7 @@ class VoiceService {
   }
 
   stop(): void {
+    traceEvent('voice', 'stop', traceReasonOf(`active-${this.active}-session-${this.serverSession}-transport-${this.transport}`));
     this.clearWaiting();
     if (this.revoked) {
       this.active = false;
@@ -920,7 +925,13 @@ class VoiceService {
       this.transport !== 'none'
     )
       return;
-    this.error = cancelError(parsed.data);
+    const outcome = cancelOutcomeOf({
+      reason: parsed.data.reason,
+      callId: parsed.data.callId,
+      claimedCallId: this.claimedCallId,
+    });
+    if (outcome === 'ignore') return;
+    this.error = outcome === 'taken' ? cancelError(parsed.data) : null;
     this.closedCallId = parsed.data.callId;
     this.closedReason = endReasonOfCancel(parsed.data.reason);
     this.stop();

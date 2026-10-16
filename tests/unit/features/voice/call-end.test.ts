@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  cancelOutcomeOf,
   callEndAction,
   dispatchCallEnd,
   ENDED_HOLD_MS,
@@ -44,5 +45,22 @@ describe('how a call ends on the screen', () => {
     expect(formatCallDuration(9_999)).toBe('00:09');
     expect(formatCallDuration(65_000)).toBe('01:05');
     expect(formatCallDuration(-5)).toBe('00:00');
+  });
+});
+
+describe('a cancel arriving while the call is open on this device', () => {
+  test('the answer this device made is not reported as taken by another device', () => {
+    expect(cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: 'call-7' })).toBe('ignore');
+  });
+
+  test('an answer by another device is reported as taken', () => {
+    expect(cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: null })).toBe('taken');
+    expect(cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: 'call-8' })).toBe('taken');
+  });
+
+  test('a call the server already settled closes without an error', () => {
+    for (const reason of ['expired', 'declined', 'resolved', 'attended'] as const) {
+      expect(cancelOutcomeOf({ reason, callId: 'call-7', claimedCallId: null })).toBe('close');
+    }
   });
 });

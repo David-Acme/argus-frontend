@@ -12,4 +12,5 @@ export type TraceOutcome =
   | 'start'
   | 'joined'
   | 'sent'
+  | 'stop'
   | 'fallback';

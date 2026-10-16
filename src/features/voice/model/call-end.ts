@@ -30,3 +30,14 @@ export function formatCallDuration(ms: number): string {
   const seconds = totalSeconds % 60;
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
+
+export type CancelOutcome = 'ignore' | 'taken' | 'close';
+
+export function cancelOutcomeOf(input: {
+  reason: IncomingCancelReason;
+  callId: string;
+  claimedCallId: string | null;
+}): CancelOutcome {
+  if (input.reason !== 'answered_elsewhere') return 'close';
+  return input.claimedCallId === input.callId ? 'ignore' : 'taken';
+}
