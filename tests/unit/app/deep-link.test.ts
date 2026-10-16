@@ -2,6 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import { deepLinkPath } from '@/app/+native-intent';
 
 describe('deep link allow-list', () => {
+  test('an outside call answer keeps its outside flag, and an answer without it stays without it', () => {
+    expect(deepLinkPath('argus://call?callId=call-7&outside=1')).toBe('/call?callId=call-7&outside=1');
+    expect(deepLinkPath('argus://call?callId=call-7')).toBe('/call?callId=call-7');
+  });
+
   test('known screens pass through without their query', () => {
     expect(deepLinkPath('argus://cameras/12')).toBe('/cameras/12');
     expect(deepLinkPath('argus://agenda?edit=event-1')).toBe('/agenda');

@@ -9,6 +9,7 @@ const ALLOWED_PATHS: readonly RegExp[] = [
 
 const CALL_PATH = '/call';
 const CALL_ID = /[?&]callId=((?:rtc-[0-9a-f]{32})|(?:call-\d+))(?:[&#]|$)/;
+const OUTSIDE = /[?&]outside=1(?:[&#]|$)/;
 const NOTIFICATION_PATH = '/notification';
 const NOTIFICATION_ID = /[?&]notificationId=(\d{1,19})(?:[&#]|$)/;
 
@@ -22,7 +23,8 @@ export function deepLinkPath(link: string): string {
   if (!path || !ALLOWED_PATHS.some((pattern) => pattern.test(path))) return '/';
   if (path === CALL_PATH) {
     const callId = CALL_ID.exec(link)?.[1];
-    return callId ? `${CALL_PATH}?callId=${callId}` : path;
+    if (!callId) return path;
+    return OUTSIDE.test(link) ? `${CALL_PATH}?callId=${callId}&outside=1` : `${CALL_PATH}?callId=${callId}`;
   }
   if (path === NOTIFICATION_PATH) {
     const notificationId = NOTIFICATION_ID.exec(link)?.[1];
