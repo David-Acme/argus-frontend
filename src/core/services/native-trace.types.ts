@@ -14,4 +14,6 @@ export type TraceOutcome =
   | 'sent'
   | 'stop'
   | 'cleared'
-  | 'fallback';
+  | 'fallback'
+  | 'ended'
+  | 'left';

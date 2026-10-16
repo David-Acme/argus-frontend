@@ -42,8 +42,14 @@ function CallScreen() {
       leaveCall({
         stopVoice: () => voiceService.stop(),
         canGoBack: () => router.canGoBack(),
-        goBack: () => router.back(),
-        sendToBackground: () => pushService.sendToBackground(),
+        goBack: () => {
+          traceEvent('route', 'left', 'back');
+          router.back();
+        },
+        sendToBackground: () => {
+          traceEvent('route', 'left', 'background');
+          pushService.sendToBackground();
+        },
         enteredFromOutside,
       }),
     [router, enteredFromOutside],
@@ -51,8 +57,10 @@ function CallScreen() {
   const hangUp = useCallback(() => {
     if (endedDurationMs !== null) return;
     voiceService.stop();
-    setEndedDurationMs(startedAt.current === null ? 0 : Date.now() - startedAt.current);
-  }, [endedDurationMs]);
+    const durationMs = startedAt.current === null ? 0 : Date.now() - startedAt.current;
+    traceEvent('route', 'ended', `outside-${enteredFromOutside ? 1 : 0}-hold-${ENDED_HOLD_MS}`);
+    setEndedDurationMs(durationMs);
+  }, [endedDurationMs, enteredFromOutside]);
   const closeCamera = useCallback(() => voiceService.showCamera(null), []);
   const answerWaiting = useCallback(() => voiceService.answerWaiting(), []);
   const dismissWaiting = useCallback(() => voiceService.dismissWaiting(), []);
