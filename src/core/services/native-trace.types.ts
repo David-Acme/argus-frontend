@@ -11,4 +11,5 @@ export type TraceOutcome =
   | 'redirect'
   | 'start'
   | 'joined'
+  | 'sent'
   | 'fallback';

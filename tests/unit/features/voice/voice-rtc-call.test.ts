@@ -243,6 +243,7 @@ describe('a WebRTC call', () => {
     await voiceService.start();
     voiceService.stop();
     await settle();
+    await new Promise((resolve) => setTimeout(resolve, 450));
     expect(call.sent.map((frame) => frame.topic)).toEqual(['argus.hangup']);
     expect(call.left).toBe(1);
     expect(voiceService.snapshot.phase).toBe('idle');

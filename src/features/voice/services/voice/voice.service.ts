@@ -7,6 +7,8 @@ import type { IRealtimeCall, IVoiceMic, IVoiceReactionPayload } from '@/core/int
 import { traceEvent } from '@/core/services/native-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
+import { sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
+import { VOICE_HANGUP_FLUSH_MS } from '@/features/voice/constants/hangup';
 import {
   CALL_ACTIONS_KEPT,
   VOICE_ACTION_RESULT_TYPE,
@@ -634,12 +636,16 @@ class VoiceService {
     this.transport = 'none';
     voiceLevel.value = withTiming(0, { duration: VOICE_ENVELOPE_RELEASE_MS });
     if (!call) return;
-    const hangup = hangUp
-      ? call.send('argus.hangup', '{}').catch(() => undefined)
-      : Promise.resolve();
-    void hangup
-      .then(() => call.leave())
-      .catch((reason: unknown) => devLog('rtc leave failed:', reason));
+    if (!hangUp) {
+      call.leave().catch((reason: unknown) => devLog('rtc leave failed:', reason));
+      return;
+    }
+    sendHangupThenLeave({
+      call,
+      flushMs: VOICE_HANGUP_FLUSH_MS,
+      wait: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+      onSent: (sent) => traceEvent('voice', sent ? 'sent' : 'error', sent ? 'hangup' : 'hangup-send-failed'),
+    }).catch((reason: unknown) => devLog('rtc leave failed:', reason));
   }
 
   private finishCall(): void {
