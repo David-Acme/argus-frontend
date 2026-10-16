@@ -3,6 +3,7 @@ export { CallPreferencesSection } from './components/call-preferences-section';
 export { CallSurface } from './components/call-surface';
 export { IncomingCallSurface } from './components/incoming-call-surface';
 export { VoiceWebNotice } from './components/voice-web-notice';
+export { callLockedId, callLockRedirect } from './model/call-lock';
 export { useCall } from './hooks/use-call';
 export { useCallPush } from './hooks/use-call-push';
 export { useDesktopBridge } from './hooks/use-desktop-bridge';

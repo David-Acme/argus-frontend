@@ -17,12 +17,18 @@ import { CALL_ROUTE_WAIT_MS, callRouteDecision } from '@/features/voice/model/ca
 import { dispatchCallEnd, ENDED_HOLD_MS } from '@/features/voice/model/call-end';
 import { pushService } from '@/core/services/push';
 import { leaveCall } from '@/features/voice/model/leave-call';
+import { setCallLock } from '@/features/voice/model/call-lock';
 
 function CallScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ callId?: string; outside?: string }>();
   const enteredFromOutside = params.outside === '1';
+  useEffect(() => {
+    if (!enteredFromOutside || !params.callId) return;
+    setCallLock(params.callId);
+    return () => setCallLock(null);
+  }, [enteredFromOutside, params.callId]);
   const call = useCall(params.callId ? { callId: params.callId } : {});
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);

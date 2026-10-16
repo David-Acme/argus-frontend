@@ -7,7 +7,7 @@ import { SystemBars } from 'react-native-edge-to-edge';
 import { ThemeProvider } from 'expo-router/react-navigation';
 import { PortalHost } from '@rn-primitives/portal';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { Stack } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { Uniwind, useUniwind } from 'uniwind';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -18,7 +18,7 @@ import { DisarmPinDialog } from '@/features/safety';
 import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
-import { CallPill, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
+import { CallPill, callLockedId, callLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
 import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
@@ -33,6 +33,13 @@ export default function RootLayout() {
   }, []);
 
   useDesktopBridge(deepLinkPath);
+
+  const pathname = usePathname();
+  const router = useRouter();
+  useEffect(() => {
+    const href = callLockRedirect(pathname, callLockedId());
+    if (href) router.replace(href);
+  }, [pathname, router]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bg }}>
