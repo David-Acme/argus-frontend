@@ -7,22 +7,30 @@ import org.junit.Test
 
 class CallEndPlanTest {
     @Test
-    fun aCancelOfTheRingingCallStopsTheRingerFinishesTheScreenAndCancelsItsNotification() {
-        val plan = CallEndPlan.forEnd(wasRinging = true, callId = "call-79")
+    fun aCancelOfTheRingingCallStopsTheRingerFinishesTheScreenAndCancelsTheCallNotification() {
+        val plan = CallEndPlan.forEnd(wasRinging = true, answered = false)
 
         assertTrue(plan.stopRinger)
         assertTrue(plan.finishScreen)
-        assertEquals("call-call-79", plan.notificationTag)
-        assertEquals(2, plan.notificationId)
+        assertTrue(plan.cancelNotification)
+        assertEquals(OngoingCall.ID, plan.notificationId)
     }
 
     @Test
-    fun aCancelOfACallThatIsNotRingingStillFinishesTheScreenAndCancelsItsNotification() {
-        val plan = CallEndPlan.forEnd(wasRinging = false, callId = "call-76")
+    fun anAnsweredCallKeepsItsCallNotificationSoTheOngoingCallReplacesItWithoutAGap() {
+        val plan = CallEndPlan.forEnd(wasRinging = true, answered = true)
+
+        assertTrue(plan.stopRinger)
+        assertFalse(plan.cancelNotification)
+        assertEquals(OngoingCall.ID, plan.notificationId)
+    }
+
+    @Test
+    fun aCancelOfACallThatIsNotRingingStillFinishesTheScreenAndCancelsTheCallNotification() {
+        val plan = CallEndPlan.forEnd(wasRinging = false, answered = false)
 
         assertFalse(plan.stopRinger)
         assertTrue(plan.finishScreen)
-        assertEquals("call-call-76", plan.notificationTag)
-        assertEquals(2, plan.notificationId)
+        assertTrue(plan.cancelNotification)
     }
 }

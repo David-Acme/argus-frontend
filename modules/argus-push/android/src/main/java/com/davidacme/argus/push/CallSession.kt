@@ -3,8 +3,6 @@ package com.davidacme.argus.push
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.telecom.CallAudioState
-import android.telecom.Connection
 import android.telecom.DisconnectCause
 
 internal object CallSession {
@@ -14,7 +12,6 @@ internal object CallSession {
     private val ringer = CallRinger()
     private val lock = Any()
     private var active: ActiveCall? = null
-    private var connection: ArgusConnection? = null
     private var answeredCallId: String? = null
     private val endWatchers = mutableMapOf<String, () -> Unit>()
 
@@ -47,18 +44,15 @@ internal object CallSession {
             val expiry = Runnable { expire(app, callId) }
             active = ActiveCall(info, expiry, System.currentTimeMillis())
             handler.postDelayed(expiry, timeoutMillis)
-            val previousConnection = connection
-            connection = null
-            Pair(previous?.callId, previousConnection)
+            previous?.callId
         }
-        replaced.first?.let { releaseCall(app, it) }
-        replaced.second?.endWith(DisconnectCause.OTHER)
+        replaced?.let { releaseCall(app, it) }
         if (info.episode.isNotEmpty()) {
             PushStore(app).markRingStarted(info.episode, System.currentTimeMillis() / MILLIS)
             RealarmScheduler.cancel(app, info.episode)
         }
         ringer.start(app)
-        TelecomCalls.addIncoming(app, callId)
+        TelecomCall.addIncoming(app, callId)
         PushNotifier.postCall(app, callId, PushNotifier.canUseFullScreen(app), timeoutMillis)
     }
 
@@ -73,44 +67,28 @@ internal object CallSession {
         }
     }
 
-    fun ringingCallId(): String? = synchronized(lock) { active?.callId }
-
-    fun telecomActive(): Boolean = synchronized(lock) { connection?.state == Connection.STATE_ACTIVE }
+    fun telecomActive(): Boolean = TelecomCall.isActive()
 
     fun routeAudio(speaker: Boolean) {
-        val current = synchronized(lock) { connection } ?: return
-        current.route(speaker)
-    }
-
-    fun attach(context: Context, callId: String, value: ArgusConnection) {
-        val matched = synchronized(lock) {
-            if (active?.callId == callId) {
-                connection = value
-                true
-            } else {
-                false
-            }
-        }
-        NativeTrace.record("telecom", if (matched) "attached" else "orphan", "incoming")
-        if (!matched) value.endWith(DisconnectCause.OTHER)
+        TelecomCall.route(speaker)
     }
 
     fun answer(context: Context, callId: String) {
         val app = context.applicationContext
-        releaseCall(app, callId)
-        synchronized(lock) { answeredCallId = callId }
-        val telecom = synchronized(lock) { connection }?.takeIf { it.callId == callId }
-        telecom?.setActive()
-        NativeTrace.record("telecom", if (telecom != null) "active" else "absent", "answer")
+        val first = synchronized(lock) {
+            (answeredCallId != callId).also { if (it) answeredCallId = callId }
+        }
+        if (!first) return
+        releaseCall(app, callId, answered = true)
         val fromOutside = !PushActivityTracker.appInForeground()
         PushActions.openCall(app, callId, enteredFromOutside = fromOutside)
-        OngoingCall.show(app, callId, enteredFromOutside = fromOutside)
+        TelecomCall.answer(callId) { OngoingCall.show(app, callId, enteredFromOutside = fromOutside) }
     }
 
     fun decline(context: Context, callId: String) {
         val app = context.applicationContext
         releaseCall(app, callId)
-        takeConnection(callId)?.endWith(DisconnectCause.REJECTED)
+        TelecomCall.end(DisconnectCause.REJECTED)
         deliverDecline(app, callId)
     }
 
@@ -118,7 +96,7 @@ internal object CallSession {
         val app = context.applicationContext
         releaseCall(app, callId)
         if (answeredCallMatches(synchronized(lock) { answeredCallId }, callId)) return
-        takeConnection(callId)?.endWith(DisconnectCause.OTHER)
+        TelecomCall.end(DisconnectCause.OTHER)
         CallFinish.finish(app, callId)
         CallAudio.restore(app)
     }
@@ -126,33 +104,29 @@ internal object CallSession {
     fun endActive(context: Context) {
         val app = context.applicationContext
         CallControls.hangUp()
-        val callId = synchronized(lock) { active?.callId ?: connection?.callId }
+        val callId = synchronized(lock) { (active?.callId ?: answeredCallId).also { answeredCallId = null } }
         CallFinish.finish(app, callId)
-        if (callId == null) return
-        releaseCall(app, callId)
-        takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
+        if (callId != null) releaseCall(app, callId)
+        TelecomCall.end(DisconnectCause.LOCAL)
         CallAudio.restore(app)
     }
 
     fun endAnswered(context: Context) {
         val app = context.applicationContext
-        val callId = synchronized(lock) { connection?.takeIf { it.state == Connection.STATE_ACTIVE }?.callId }
+        val callId = synchronized(lock) { answeredCallId.also { answeredCallId = null } }
         CallFinish.finish(app, callId)
         if (callId == null) return
-        takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
-        NativeTrace.record("telecom", "disconnected", "local")
+        TelecomCall.end(DisconnectCause.LOCAL)
         CallAudio.restore(app)
     }
 
-    fun connectionEnded(context: Context, ended: ArgusConnection) {
+    fun systemEnded(context: Context, callId: String) {
+        val app = context.applicationContext
         CallControls.hangUp()
-        synchronized(lock) {
-            if (connection === ended) connection = null
-        }
-        releaseCall(context.applicationContext, ended.callId)
-        ended.endWith(DisconnectCause.LOCAL)
-        CallFinish.finish(context.applicationContext, ended.callId)
-        CallAudio.restore(context)
+        synchronized(lock) { if (answeredCallId == callId) answeredCallId = null }
+        releaseCall(app, callId)
+        CallFinish.finish(app, callId)
+        CallAudio.restore(app)
     }
 
     private fun deliverDecline(context: Context, callId: String) {
@@ -172,10 +146,10 @@ internal object CallSession {
 
     private fun expire(context: Context, callId: String) {
         if (!releaseCall(context, callId)) return
-        takeConnection(callId)?.endWith(DisconnectCause.MISSED)
+        TelecomCall.end(DisconnectCause.MISSED)
     }
 
-    private fun releaseCall(context: Context, callId: String): Boolean {
+    private fun releaseCall(context: Context, callId: String, answered: Boolean = false): Boolean {
         val (matched, watcher) = synchronized(lock) {
             val current = active
             val matched = if (current != null && current.callId == callId) {
@@ -187,31 +161,14 @@ internal object CallSession {
             }
             Pair(matched, endWatchers[callId])
         }
-        val plan = CallEndPlan.forEnd(wasRinging = matched, callId = callId)
+        val plan = CallEndPlan.forEnd(wasRinging = matched, answered = answered)
         if (plan.stopRinger) ringer.stop(context)
         PushNotifier.cancelCall(context, plan)
         PushLog.info("call $callId released: ringing=$matched screen=${watcher != null}")
         if (plan.finishScreen) watcher?.invoke()
         return matched
     }
-
-    private fun takeConnection(callId: String): ArgusConnection? =
-        synchronized(lock) {
-            val current = connection?.takeIf { it.callId == callId }
-            if (current != null) connection = null
-            current
-        }
 }
-
-internal fun audioRouteOf(speaker: Boolean, supportedMask: Int): Int =
-    when {
-        speaker -> CallAudioState.ROUTE_SPEAKER
-        supportedMask and CallAudioState.ROUTE_BLUETOOTH != 0 -> CallAudioState.ROUTE_BLUETOOTH
-        else -> CallAudioState.ROUTE_WIRED_OR_EARPIECE
-    }
-
-internal fun incomingCallIdOf(requested: String?, ringing: String?): String =
-    requested?.takeIf { it.isNotEmpty() } ?: ringing.orEmpty()
 
 internal fun answeredCallMatches(answeredCallId: String?, callId: String): Boolean =
     answeredCallId != null && answeredCallId == callId

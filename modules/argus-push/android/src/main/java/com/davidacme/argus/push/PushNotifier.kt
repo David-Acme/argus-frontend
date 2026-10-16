@@ -60,11 +60,11 @@ internal object PushNotifier {
         if (fullScreen) {
             builder.setFullScreenIntent(activity(context, requestCode(callId, FULL_SCREEN), callIntent(context, PushActions.ACTION_SHOW_CALL, callId)), true)
         }
-        NotificationManagerCompat.from(context).notify(CallEndPlan.tagFor(callId), CallEndPlan.NOTIFICATION_ID, builder.build())
+        NotificationManagerCompat.from(context).notify(CallEndPlan.NOTIFICATION_ID, builder.build())
     }
 
     fun cancelCall(context: Context, plan: CallEnd) {
-        NotificationManagerCompat.from(context).cancel(plan.notificationTag, plan.notificationId)
+        if (plan.cancelNotification) NotificationManagerCompat.from(context).cancel(plan.notificationId)
     }
 
     private fun callIntent(context: Context, action: String, callId: String): Intent =
