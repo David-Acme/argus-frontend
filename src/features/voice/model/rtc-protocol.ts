@@ -200,6 +200,10 @@ const REVOKE_CAUSES: readonly SessionRevokeCause[] = [
 
 export type RtcRevocation = { cause: SessionRevokeCause | null };
 
+export function isSessionRevocation(revocation: RtcRevocation): boolean {
+  return revocation.cause !== null;
+}
+
 export function readRevocation(type: string, payload: unknown): RtcRevocation | null {
   if (type !== VOICE_DONE_TYPE || typeof payload !== 'object' || payload === null) return null;
   const record = payload as Record<string, unknown>;

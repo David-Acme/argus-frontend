@@ -42,6 +42,7 @@ import {
 import { voiceLevel } from '@/features/voice/model/voice-level';
 import {
   incomingCallLive,
+  isSessionRevocation,
   readRevocation,
   readAgentState,
   readRtcData,
@@ -363,7 +364,8 @@ class VoiceService {
       const frame = readRtcData(event.topic, event.payload);
       if (!frame) return;
       const revocation = readRevocation(frame.type, frame.payload);
-      if (revocation) this.beginRevoked(revocation.cause);
+      if (revocation && isSessionRevocation(revocation)) this.beginRevoked(revocation.cause);
+      else if (revocation) this.finishCall();
       else this.handlers[frame.type]?.(frame.payload);
       return;
     }

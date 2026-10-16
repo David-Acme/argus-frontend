@@ -1,3 +1,4 @@
+import type { RtcRevocation } from '@/features/voice/model/rtc-protocol';
 import { describe, expect, test } from 'bun:test';
 import { incomingCallCancelSchema, incomingCallSchema } from '@/core/contracts/rtc.contract';
 import {
@@ -7,6 +8,7 @@ import {
   incomingCallLive,
   pinnedRtcUrl,
   readAgentState,
+  isSessionRevocation,
   readRevocation,
   readRtcData,
   readTokenAnswer,
@@ -170,6 +172,13 @@ describe('revocation', () => {
     });
     expect(readRevocation('voice:done', { reason: 'timeout' })).toBeNull();
     expect(readRevocation('voice:stt', { reason: 'revoked' })).toBeNull();
+  });
+
+  test('a done that says revoked for a call end is not a session revocation', () => {
+    const call = readRevocation('voice:done', { reason: 'revoked', cause: 'ended' });
+    expect(call).toEqual({ cause: null });
+    expect(isSessionRevocation(call as RtcRevocation)).toBe(false);
+    expect(isSessionRevocation({ cause: 'accountDisabled' })).toBe(true);
   });
 });
 
