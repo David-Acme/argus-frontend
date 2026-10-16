@@ -9,7 +9,8 @@ import { PortalHost } from '@rn-primitives/portal';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { Uniwind, useUniwind } from 'uniwind';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GlobalBottomNav } from '@/shared/components/layout/global-bottom-nav';
@@ -18,7 +19,7 @@ import { DisarmPinDialog } from '@/features/safety';
 import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
-import { CallPill, callLockedId, callLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
+import { CallPill, currentCallLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
 import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
@@ -36,10 +37,17 @@ export default function RootLayout() {
 
   const pathname = usePathname();
   const router = useRouter();
+  const [keyguardCheck, setKeyguardCheck] = useState(0);
   useEffect(() => {
-    const href = callLockRedirect(pathname, callLockedId());
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setKeyguardCheck((tick) => tick + 1);
+    });
+    return () => subscription.remove();
+  }, []);
+  useEffect(() => {
+    const href = currentCallLockRedirect(pathname);
     if (href) router.replace(href);
-  }, [pathname, router]);
+  }, [pathname, router, keyguardCheck]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bg }}>

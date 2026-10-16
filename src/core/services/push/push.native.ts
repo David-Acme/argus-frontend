@@ -121,6 +121,26 @@ class NativePushService implements IPushService {
     }
   }
 
+  isKeyguardLocked(): boolean {
+    if (!IS_ANDROID) return false;
+    try {
+      return this.module().isKeyguardLocked();
+    } catch (error) {
+      log.error('push', 'the keyguard state could not be read', error);
+      return true;
+    }
+  }
+
+  overKeyguard(): boolean {
+    if (!IS_ANDROID) return false;
+    try {
+      return this.module().overKeyguard();
+    } catch (error) {
+      log.error('push', 'the over-keyguard state could not be read', error);
+      return false;
+    }
+  }
+
   drainDeclines(): void {
     if (!IS_ANDROID) return;
     forwardPendingDeclines(

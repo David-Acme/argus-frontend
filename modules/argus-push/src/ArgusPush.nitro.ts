@@ -16,6 +16,8 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   takeDeclines(): string[];
   endActiveCall(): void;
   sendToBackground(): void;
+  isKeyguardLocked(): boolean;
+  overKeyguard(): boolean;
   exactAlarmsAllowed(): boolean;
   openExactAlarmSettings(): void;
   canUseFullScreenIntent(): boolean;

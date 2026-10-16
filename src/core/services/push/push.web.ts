@@ -6,6 +6,8 @@ const unsupported: IPushService = {
   onDecline: () => () => undefined,
   drainDeclines: () => undefined,
   sendToBackground: () => undefined,
+  isKeyguardLocked: () => false,
+  overKeyguard: () => false,
   notificationsPermitted: async () => false,
   requestNotificationsPermission: async () => false,
   exactAlarmsAllowed: () => false,
