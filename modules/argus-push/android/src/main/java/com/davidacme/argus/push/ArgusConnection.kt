@@ -7,6 +7,7 @@ import android.telecom.DisconnectCause
 internal class ArgusConnection(private val context: Context, val callId: String) : Connection() {
     init {
         setConnectionProperties(PROPERTY_SELF_MANAGED)
+        setAudioModeIsVoip(true)
     }
 
     override fun onAnswer() {

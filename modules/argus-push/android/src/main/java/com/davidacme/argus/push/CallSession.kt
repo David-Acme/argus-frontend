@@ -80,6 +80,7 @@ internal object CallSession {
                 false
             }
         }
+        NativeTrace.record("telecom", if (matched) "attached" else "orphan", "incoming")
         if (!matched) value.endWith(DisconnectCause.OTHER)
     }
 
@@ -87,7 +88,9 @@ internal object CallSession {
         val app = context.applicationContext
         releaseCall(app, callId)
         synchronized(lock) { answeredCallId = callId }
-        synchronized(lock) { connection }?.takeIf { it.callId == callId }?.setActive()
+        val telecom = synchronized(lock) { connection }?.takeIf { it.callId == callId }
+        telecom?.setActive()
+        NativeTrace.record("telecom", if (telecom != null) "active" else "absent", "answer")
         val fromOutside = !PushActivityTracker.appInForeground()
         PushActions.openCall(app, callId, enteredFromOutside = fromOutside)
         OngoingCall.show(app, callId, enteredFromOutside = fromOutside)
