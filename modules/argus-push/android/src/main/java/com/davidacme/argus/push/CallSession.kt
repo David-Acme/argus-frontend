@@ -77,7 +77,7 @@ internal object CallSession {
         val app = context.applicationContext
         releaseCall(app, callId)
         synchronized(lock) { connection }?.takeIf { it.callId == callId }?.setActive()
-        PushActions.openCall(app, callId)
+        PushActions.openCall(app, callId, enteredFromOutside = !PushActivityTracker.appInForeground())
     }
 
     fun decline(context: Context, callId: String) {

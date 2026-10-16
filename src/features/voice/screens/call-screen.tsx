@@ -21,7 +21,8 @@ import { leaveCall } from '@/features/voice/model/leave-call';
 function CallScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{ callId?: string }>();
+  const params = useLocalSearchParams<{ callId?: string; outside?: string }>();
+  const enteredFromOutside = params.outside === '1';
   const call = useCall(params.callId ? { callId: params.callId } : {});
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
@@ -35,8 +36,9 @@ function CallScreen() {
         canGoBack: () => router.canGoBack(),
         goBack: () => router.back(),
         sendToBackground: () => pushService.sendToBackground(),
+        enteredFromOutside,
       }),
-    [router],
+    [router, enteredFromOutside],
   );
   const hangUp = useCallback(() => {
     if (endedDurationMs !== null) return;

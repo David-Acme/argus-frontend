@@ -55,7 +55,7 @@ internal class PushRouter(private val context: Context) {
             channel != PushChannels.NORMAL,
         )
         val critical = channel == PushChannels.CRITICAL
-        val foreground = AppForeground.isForeground(context)
+        val foreground = PushActivityTracker.appInForeground()
         val route = AlertSurface.route(foreground, PushAlertEvents.bound(), critical)
         val banner = route.inAppBanner && PushAlertEvents.deliver(alertJson(intent.intentId, copy, critical, deepLink))
         PushLog.info("alert type=${intent.type} public=${copy.publicTitle} foreground=$foreground banner=$banner")

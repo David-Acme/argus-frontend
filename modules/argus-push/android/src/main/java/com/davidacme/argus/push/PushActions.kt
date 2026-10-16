@@ -3,6 +3,7 @@ package com.davidacme.argus.push
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import java.net.URLEncoder
 
 internal object PushActions {
     const val ACTION_ANSWER = "com.davidacme.argus.push.ANSWER"
@@ -10,8 +11,8 @@ internal object PushActions {
     const val ACTION_SHOW_CALL = "com.davidacme.argus.push.SHOW_CALL"
     const val EXTRA_CALL_ID = "com.davidacme.argus.push.CALL_ID"
 
-    fun openCall(context: Context, callId: String) {
-        open(context, "argus://call?callId=${Uri.encode(callId)}")
+    fun openCall(context: Context, callId: String, enteredFromOutside: Boolean) {
+        open(context, callDeepLink(callId, enteredFromOutside))
     }
 
     fun openNotification(context: Context, notificationId: String) {
@@ -35,4 +36,10 @@ internal object PushActions {
             .setPackage(context.packageName)
             .addCategory(Intent.CATEGORY_BROWSABLE)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+}
+
+internal fun callDeepLink(callId: String, enteredFromOutside: Boolean): String {
+    val encoded = URLEncoder.encode(callId, Charsets.UTF_8.name())
+    val outside = if (enteredFromOutside) "&outside=1" else ""
+    return "argus://call?callId=$encoded$outside"
 }

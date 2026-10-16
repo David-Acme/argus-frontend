@@ -10,18 +10,18 @@ object PushActivityTracker {
     private val installed = AtomicBoolean(false)
 
     @Volatile
-    private var resumed: WeakReference<Activity>? = null
+    private var appResumed: WeakReference<Activity>? = null
 
     fun install(application: Application) {
         if (!installed.compareAndSet(false, true)) return
         application.registerActivityLifecycleCallbacks(
             object : Application.ActivityLifecycleCallbacks {
                 override fun onActivityResumed(activity: Activity) {
-                    resumed = WeakReference(activity)
+                    if (activity !is CallActivity) appResumed = WeakReference(activity)
                 }
 
                 override fun onActivityPaused(activity: Activity) {
-                    if (resumed?.get() === activity) resumed = null
+                    if (appResumed?.get() === activity) appResumed = null
                 }
 
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
@@ -37,8 +37,10 @@ object PushActivityTracker {
         )
     }
 
+    fun appInForeground(): Boolean = appResumed?.get() != null
+
     fun moveToBackground(): Boolean {
-        val activity = resumed?.get() ?: return false
+        val activity = appResumed?.get() ?: return false
         return activity.moveTaskToBack(true)
     }
 }

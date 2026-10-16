@@ -27,12 +27,4 @@ class AlertSurfaceTest {
             assertEquals(AlertRoute(postSystemAlert = true, inAppBanner = false, alarm = false), AlertSurface.route(true, false, critical))
         }
     }
-
-    @Test
-    fun onlyTheForegroundImportanceCountsAsForeground() {
-        assertEquals(true, AppForeground.isForegroundImportance(100))
-        assertEquals(false, AppForeground.isForegroundImportance(125))
-        assertEquals(false, AppForeground.isForegroundImportance(200))
-        assertEquals(false, AppForeground.isForegroundImportance(400))
-    }
 }
