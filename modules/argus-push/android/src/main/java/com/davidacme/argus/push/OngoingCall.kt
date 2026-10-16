@@ -3,7 +3,6 @@ package com.davidacme.argus.push
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.media.AudioManager
 
 internal enum class OngoingCallAction { HangUp, Speaker, Mute }
 
@@ -75,7 +74,7 @@ internal object OngoingCall {
             manager.cancel(ID)
         }
         context.stopService(Intent(context, OngoingCallService::class.java))
-        CallControls.reset(context)
+        CallControls.reset()
         NativeTrace.record("ongoing", "cleared", "call-ended")
     }
 }
@@ -85,6 +84,9 @@ internal data class CallControlState(val speakerOn: Boolean, val muted: Boolean)
 internal object CallControls {
     private val lock = Any()
     private var state = CallControlState(speakerOn = false, muted = false)
+
+    @Volatile
+    var listener: ((String) -> Unit)? = null
 
     fun snapshot(): CallControlState = synchronized(lock) { state }
 
@@ -97,13 +99,47 @@ internal object CallControls {
 
     fun toggleMute(context: Context) {
         val next = synchronized(lock) { state.copy(muted = !state.muted).also { state = it } }
-        context.getSystemService(AudioManager::class.java)?.isMicrophoneMute = next.muted
         NativeTrace.record("telecom", "mute", if (next.muted) "on" else "off")
+        emit(if (next.muted) "mute-on" else "mute-off")
         OngoingCallService.refresh(context)
     }
 
-    fun reset(context: Context) {
-        val wasMuted = synchronized(lock) { state.muted.also { state = CallControlState(speakerOn = false, muted = false) } }
-        if (wasMuted) context.getSystemService(AudioManager::class.java)?.isMicrophoneMute = false
+    fun mutedByApp(context: Context, muted: Boolean) {
+        val changed = synchronized(lock) {
+            (state.muted != muted).also { if (it) state = state.copy(muted = muted) }
+        }
+        if (changed) OngoingCallService.refresh(context)
+    }
+
+    fun mutedBySystem(context: Context, muted: Boolean) {
+        val changed = synchronized(lock) {
+            (state.muted != muted).also { if (it) state = state.copy(muted = muted) }
+        }
+        if (!changed) return
+        NativeTrace.record("telecom", "mute", if (muted) "system-on" else "system-off")
+        emit(if (muted) "mute-on" else "mute-off")
+        OngoingCallService.refresh(context)
+    }
+
+    fun routedBySystem(context: Context, speakerOn: Boolean) {
+        val changed = synchronized(lock) {
+            (state.speakerOn != speakerOn).also { if (it) state = state.copy(speakerOn = speakerOn) }
+        }
+        if (changed) OngoingCallService.refresh(context)
+    }
+
+    fun hangUp() {
+        NativeTrace.record("telecom", "disconnected", "hangup-requested")
+        emit("hangup")
+    }
+
+    fun reset() {
+        synchronized(lock) { state = CallControlState(speakerOn = false, muted = false) }
+    }
+
+    private fun emit(action: String) {
+        runCatching { listener?.invoke(action) }.onFailure {
+            PushLog.warn("the call control listener failed for $action")
+        }
     }
 }

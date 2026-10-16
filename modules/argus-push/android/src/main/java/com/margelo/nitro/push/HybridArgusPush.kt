@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.davidacme.argus.push.CallControls
 import com.davidacme.argus.push.CallSession
 import com.davidacme.argus.push.KeyguardCall
 import com.davidacme.argus.push.ExactAlarms
@@ -99,6 +100,16 @@ class HybridArgusPush : HybridArgusPushSpec() {
 
   override fun endActiveCall() {
     CallSession.endActive(requireContext())
+  }
+
+  override fun setCallControlListener(listener: (action: String) -> Unit) {
+    CallControls.listener = listener
+  }
+
+  override fun telecomCallActive(): Boolean = CallSession.telecomActive()
+
+  override fun setCallMuted(muted: Boolean) {
+    CallControls.mutedByApp(requireContext(), muted)
   }
 
   override fun stopOngoingCall() {

@@ -24,6 +24,10 @@ internal object TelecomCalls {
                     .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
                     .build(),
             )
+            if (!telecom.isIncomingCallPermitted(handle)) {
+                NativeTrace.record("telecom", "failed", "incoming-not-permitted")
+                return
+            }
             val callExtras = Bundle().apply { putString(EXTRA_CALL_ID, callId) }
             val extras = Bundle().apply {
                 putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, Uri.fromParts("argus", callId, null))
@@ -31,9 +35,9 @@ internal object TelecomCalls {
             }
             telecom.addNewIncomingCall(handle, extras)
         } catch (error: SecurityException) {
-            return
+            NativeTrace.record("telecom", "failed", "security")
         } catch (error: IllegalStateException) {
-            return
+            NativeTrace.record("telecom", "failed", "illegal-state")
         }
     }
 

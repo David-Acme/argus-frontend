@@ -97,8 +97,18 @@ mock.module('@/core/services/sync', () => ({
   },
 }));
 const stoppedOngoing: number[] = [];
+const sharedMute: boolean[] = [];
+let callControl: (action: 'hangup' | 'mute-on' | 'mute-off') => void = () => undefined;
 mock.module('@/core/services/push', () => ({
-  pushService: { stopOngoingCall: () => stoppedOngoing.push(1) },
+  pushService: {
+    stopOngoingCall: () => stoppedOngoing.push(1),
+    onCallControl: (listener: typeof callControl) => {
+      callControl = listener;
+      return () => undefined;
+    },
+    setCallMuted: (muted: boolean) => sharedMute.push(muted),
+    telecomCallActive: () => false,
+  },
 }));
 const endedSessions: (string | null)[] = [];
 mock.module('@/features/voice/services/voice/voice-session-end', () => ({
@@ -254,6 +264,28 @@ describe('a WebRTC call', () => {
     expect(call.sent.map((frame) => frame.topic)).toEqual(['argus.hangup']);
     expect(call.left).toBe(1);
     expect(voiceService.snapshot.phase).toBe('idle');
+  });
+
+  test('the hang-up from the call notification or the system ends the call like the in-app hang-up', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    callControl('hangup');
+    await settle();
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    expect(call.sent.map((frame) => frame.topic)).toEqual(['argus.hangup']);
+    expect(call.left).toBe(1);
+    expect(voiceService.snapshot.phase).toBe('idle');
+  });
+
+  test('the mute from the call notification mutes the microphone and the app mute is shared back', async () => {
+    tokenAnswers = [grant(userCall)];
+    await voiceService.start();
+    sharedMute.length = 0;
+    callControl('mute-on');
+    expect(call.microphone.at(-1)).toBe(false);
+    callControl('mute-off');
+    expect(call.microphone.at(-1)).toBe(true);
+    expect(sharedMute).toEqual([true, false]);
   });
 
   test('argus.done ends the call', async () => {

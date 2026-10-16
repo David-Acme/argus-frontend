@@ -20,4 +20,5 @@ export type TraceOutcome =
   | 'failed'
   | 'queued'
   | 'background'
-  | 'foreground';
+  | 'foreground'
+  | 'mute';

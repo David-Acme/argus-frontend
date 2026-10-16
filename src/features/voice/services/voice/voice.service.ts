@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import { incomingCallCancelSchema, incomingCallSchema } from '@/core/contracts/rtc.contract';
 import { withTiming } from 'react-native-reanimated';
 import { synchronizeService } from '@/core/services/sync';
-import type { IRealtimeCall, IVoiceMic, IVoiceReactionPayload } from '@/core/interfaces';
+import type { CallControlAction, IRealtimeCall, IVoiceMic, IVoiceReactionPayload } from '@/core/interfaces';
 import { traceEvent } from '@/core/services/native-trace';
 import { micTraceReason } from '@/features/voice/model/mic-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
@@ -199,6 +199,16 @@ class VoiceService {
 
   constructor() {
     this.bindSocket();
+    pushService.onCallControl((action) => this.applyCallControl(action));
+  }
+
+  private applyCallControl(action: CallControlAction): void {
+    traceEvent('voice', action === 'hangup' ? 'stop' : 'mute', traceReasonOf(`call-control-${action}`));
+    if (action === 'hangup') {
+      this.stop();
+      return;
+    }
+    this.setMuted(action === 'mute-on');
   }
 
   get snapshot(): VoiceSnapshot {
@@ -535,6 +545,7 @@ class VoiceService {
     this.resetMicPending();
     if (this.serverSession) this.sendVoice(VOICE_MUTE_TYPE, { muted });
     if (this.transport === 'rtc') void this.rtc?.setMicrophone(!muted).catch(() => undefined);
+    pushService.setCallMuted(muted);
     this.notify();
   }
 

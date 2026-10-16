@@ -138,7 +138,8 @@ internal class OngoingCallService : Service() {
             builder.extras.putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true)
             if (ongoingCallStyleOf(Build.VERSION.SDK_INT, CallSession.telecomActive()) == OngoingCallStyle.Call) {
                 val person = Person.Builder().setName("Argus").setIcon(icon).setImportant(true).build()
-                builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
+                builder.setFullScreenIntent(open, false)
+                    .setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
                     .addAction(mute)
                     .addAction(speaker)
                 NativeTrace.record("ongoing", "shown", "call-style")

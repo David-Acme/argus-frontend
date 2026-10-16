@@ -1,7 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { NitroModules } from 'react-native-nitro-modules';
 import { getLanguage } from '@/core/i18n';
-import type { IArgusPushNative, IPushService } from '@/core/interfaces';
+import type { CallControlAction, IArgusPushNative, IPushService } from '@/core/interfaces';
+import { callControlActionOf } from './call-control';
 import { httpService } from '@/core/services/http';
 import { parseInAppAlert } from './in-app-alert';
 import { useInAppAlertStore } from '@/core/stores/in-app-alert.store';
@@ -42,12 +43,15 @@ class NativePushService implements IPushService {
   private declineBound = false;
   private tokenBound = false;
   private alertBound = false;
+  private callControlBound = false;
+  private readonly callControlListeners = new Set<(action: CallControlAction) => void>();
 
   bindListeners(): void {
     if (!IS_ANDROID) return;
     this.bindToken();
     this.bindAlert();
     this.bindDecline();
+    this.bindCallControl();
   }
 
   async register(): Promise<void> {
@@ -90,6 +94,33 @@ class NativePushService implements IPushService {
       deleteToken: () => native.deleteToken(),
       deleteKeys: () => native.deleteKeys(),
     });
+  }
+
+  onCallControl(listener: (action: CallControlAction) => void): () => void {
+    this.callControlListeners.add(listener);
+    this.bindCallControl();
+    return () => {
+      this.callControlListeners.delete(listener);
+    };
+  }
+
+  telecomCallActive(): boolean {
+    if (!IS_ANDROID) return false;
+    try {
+      return this.module().telecomCallActive();
+    } catch (error) {
+      log.error('push', 'the Telecom call state is unavailable', error);
+      return false;
+    }
+  }
+
+  setCallMuted(muted: boolean): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().setCallMuted(muted);
+    } catch (error) {
+      log.error('push', 'the call mute state could not be shared', error);
+    }
   }
 
   onDecline(listener: (callId: string) => void): () => void {
@@ -194,6 +225,20 @@ class NativePushService implements IPushService {
       this.declineBound = true;
     } catch (error) {
       log.error('push', 'the native decline listener is unavailable', error);
+    }
+  }
+
+  private bindCallControl(): void {
+    if (this.callControlBound || !IS_ANDROID) return;
+    try {
+      this.module().setCallControlListener((action) => {
+        const parsed = callControlActionOf(action);
+        if (!parsed) return;
+        for (const listener of this.callControlListeners) listener(parsed);
+      });
+      this.callControlBound = true;
+    } catch (error) {
+      log.error('push', 'the native call control listener is unavailable', error);
     }
   }
 

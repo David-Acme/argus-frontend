@@ -79,8 +79,7 @@ internal object CallSession {
 
     fun routeAudio(speaker: Boolean) {
         val current = synchronized(lock) { connection } ?: return
-        val supported = current.callAudioState?.supportedRouteMask ?: CallAudioState.ROUTE_WIRED_OR_EARPIECE
-        current.setAudioRoute(audioRouteOf(speaker, supported))
+        current.route(speaker)
     }
 
     fun attach(context: Context, callId: String, value: ArgusConnection) {
@@ -126,6 +125,7 @@ internal object CallSession {
 
     fun endActive(context: Context) {
         val app = context.applicationContext
+        CallControls.hangUp()
         val callId = synchronized(lock) { active?.callId ?: connection?.callId }
         CallFinish.finish(app, callId)
         if (callId == null) return
@@ -145,6 +145,7 @@ internal object CallSession {
     }
 
     fun connectionEnded(context: Context, ended: ArgusConnection) {
+        CallControls.hangUp()
         synchronized(lock) {
             if (connection === ended) connection = null
         }

@@ -3,6 +3,8 @@ export type ArgusPushKeys = {
   keyId: string;
 };
 
+export type CallControlAction = 'hangup' | 'mute-on' | 'mute-off';
+
 export interface IArgusPushNative {
   keys(): Promise<ArgusPushKeys>;
   storedToken(): Promise<string | null>;
@@ -11,6 +13,9 @@ export interface IArgusPushNative {
   setDeclineListener(listener: (callId: string) => void): void;
   setTokenListener(listener: (token: string) => void): void;
   setAlertListener(listener: (alertJson: string) => void): void;
+  setCallControlListener(listener: (action: string) => void): void;
+  telecomCallActive(): boolean;
+  setCallMuted(muted: boolean): void;
   takeDeclines(): string[];
   ackDecline(callId: string): void;
   sendToBackground(): void;
@@ -30,6 +35,9 @@ export interface IPushService {
   bindListeners(): void;
   unpair(): Promise<void>;
   onDecline(listener: (callId: string) => void): () => void;
+  onCallControl(listener: (action: CallControlAction) => void): () => void;
+  telecomCallActive(): boolean;
+  setCallMuted(muted: boolean): void;
   drainDeclines(): void;
   ackDecline(callId: string): void;
   sendToBackground(): void;
