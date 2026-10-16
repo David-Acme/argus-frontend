@@ -180,7 +180,7 @@ export default function PairingScreen() {
           ) : null}
 
           {(flow.phase === 'idle' || flow.phase === 'error') && !showAddress ? (
-            <Button variant="ghost" size="sm" onPress={handleOpenAddress}>
+            <Button variant="ghost" size="sm" className="h-auto min-h-10 py-2" onPress={handleOpenAddress}>
               <Text>{t('screens.pairing.address-open')}</Text>
             </Button>
           ) : null}
