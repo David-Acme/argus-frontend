@@ -6,10 +6,19 @@ import org.junit.Test
 
 class OngoingCallTest {
     @Test
-    fun theHangUpActionEndsTheOngoingCallAndNothingElseDoes() {
+    fun theOngoingCallActionsAreHangUpMuteAndSpeakerAndNothingElse() {
         assertEquals(OngoingCallAction.HangUp, ongoingCallActionOf(PushActions.ACTION_HANG_UP))
+        assertEquals(OngoingCallAction.Mute, ongoingCallActionOf(PushActions.ACTION_MUTE))
+        assertEquals(OngoingCallAction.Speaker, ongoingCallActionOf(PushActions.ACTION_SPEAKER))
         assertNull(ongoingCallActionOf(PushActions.ACTION_DECLINE))
         assertNull(ongoingCallActionOf(null))
+    }
+
+    @Test
+    fun theCallStyleIsUsedOnlyWhenTelecomHoldsAnActiveCallOnAndroidTwelveOrLater() {
+        assertEquals(OngoingCallStyle.Call, ongoingCallStyleOf(sdk = 36, telecomActive = true))
+        assertEquals(OngoingCallStyle.Plain, ongoingCallStyleOf(sdk = 36, telecomActive = false))
+        assertEquals(OngoingCallStyle.Plain, ongoingCallStyleOf(sdk = 30, telecomActive = true))
     }
 
     @Test
@@ -32,7 +41,13 @@ class OngoingCallTest {
 
     @Test
     fun theOngoingCallCopyFollowsTheDeviceLanguage() {
-        assertEquals(OngoingCallCopy("Llamada en curso", "Colgar"), ongoingCallCopy(spanish = true))
-        assertEquals(OngoingCallCopy("Call in progress", "Hang up"), ongoingCallCopy(spanish = false))
+        assertEquals(
+            OngoingCallCopy("Llamada con Argus", "Colgar", "Silenciar", "Activar micrófono", "Altavoz", "Auricular"),
+            ongoingCallCopy(spanish = true),
+        )
+        assertEquals(
+            OngoingCallCopy("Call with Argus", "Hang up", "Mute", "Unmute", "Speaker", "Earpiece"),
+            ongoingCallCopy(spanish = false),
+        )
     }
 }

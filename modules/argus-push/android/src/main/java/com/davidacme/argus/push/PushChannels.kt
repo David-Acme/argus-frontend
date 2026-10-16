@@ -11,7 +11,7 @@ internal object PushChannels {
     const val NORMAL = "argus-normal"
     const val CALLS = "argus-calls"
     const val SILENT_ALERTS = "argus-alerts-silent"
-    const val ONGOING = "argus-ongoing"
+    const val ONGOING = "argus-ongoing-call"
 
     fun forUrgency(urgency: String): String =
         when (urgency) {
@@ -39,7 +39,7 @@ internal object PushChannels {
         NotificationChannel(id, PushText.channelName(id, spanish), importance)
 
     private fun ongoing(spanish: Boolean): NotificationChannel =
-        NotificationChannel(ONGOING, PushText.channelName(ONGOING, spanish), NotificationManager.IMPORTANCE_LOW).apply {
+        NotificationChannel(ONGOING, PushText.channelName(ONGOING, spanish), NotificationManager.IMPORTANCE_DEFAULT).apply {
             setSound(null, null)
             enableVibration(false)
         }

@@ -3,6 +3,8 @@ package com.davidacme.argus.push
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.telecom.CallAudioState
+import android.telecom.Connection
 import android.telecom.DisconnectCause
 
 internal object CallSession {
@@ -71,6 +73,16 @@ internal object CallSession {
         }
     }
 
+    fun ringingCallId(): String? = synchronized(lock) { active?.callId }
+
+    fun telecomActive(): Boolean = synchronized(lock) { connection?.state == Connection.STATE_ACTIVE }
+
+    fun routeAudio(speaker: Boolean) {
+        val current = synchronized(lock) { connection } ?: return
+        val supported = current.callAudioState?.supportedRouteMask ?: CallAudioState.ROUTE_WIRED_OR_EARPIECE
+        current.setAudioRoute(audioRouteOf(speaker, supported))
+    }
+
     fun attach(context: Context, callId: String, value: ArgusConnection) {
         val matched = synchronized(lock) {
             if (active?.callId == callId) {
@@ -119,6 +131,16 @@ internal object CallSession {
         if (callId == null) return
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
+        CallAudio.restore(app)
+    }
+
+    fun endAnswered(context: Context) {
+        val app = context.applicationContext
+        val callId = synchronized(lock) { connection?.takeIf { it.state == Connection.STATE_ACTIVE }?.callId }
+        CallFinish.finish(app, callId)
+        if (callId == null) return
+        takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
+        NativeTrace.record("telecom", "disconnected", "local")
         CallAudio.restore(app)
     }
 
@@ -179,6 +201,16 @@ internal object CallSession {
             current
         }
 }
+
+internal fun audioRouteOf(speaker: Boolean, supportedMask: Int): Int =
+    when {
+        speaker -> CallAudioState.ROUTE_SPEAKER
+        supportedMask and CallAudioState.ROUTE_BLUETOOTH != 0 -> CallAudioState.ROUTE_BLUETOOTH
+        else -> CallAudioState.ROUTE_WIRED_OR_EARPIECE
+    }
+
+internal fun incomingCallIdOf(requested: String?, ringing: String?): String =
+    requested?.takeIf { it.isNotEmpty() } ?: ringing.orEmpty()
 
 internal fun answeredCallMatches(answeredCallId: String?, callId: String): Boolean =
     answeredCallId != null && answeredCallId == callId

@@ -3,18 +3,40 @@ package com.davidacme.argus.push
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 
-internal enum class OngoingCallAction { HangUp }
+internal enum class OngoingCallAction { HangUp, Speaker, Mute }
+
+internal enum class OngoingCallStyle { Call, Plain }
+
+internal fun ongoingCallStyleOf(sdk: Int, telecomActive: Boolean): OngoingCallStyle =
+    if (sdk >= 31 && telecomActive) OngoingCallStyle.Call else OngoingCallStyle.Plain
 
 internal enum class OngoingCallRoute { ForegroundService }
 
 internal fun ongoingCallActionOf(action: String?): OngoingCallAction? =
-    if (action == PushActions.ACTION_HANG_UP) OngoingCallAction.HangUp else null
+    when (action) {
+        PushActions.ACTION_HANG_UP -> OngoingCallAction.HangUp
+        PushActions.ACTION_SPEAKER -> OngoingCallAction.Speaker
+        PushActions.ACTION_MUTE -> OngoingCallAction.Mute
+        else -> null
+    }
 
-internal data class OngoingCallCopy(val title: String, val hangUp: String)
+internal data class OngoingCallCopy(
+    val title: String,
+    val hangUp: String,
+    val mute: String,
+    val unmute: String,
+    val speaker: String,
+    val earpiece: String,
+)
 
 internal fun ongoingCallCopy(spanish: Boolean): OngoingCallCopy =
-    if (spanish) OngoingCallCopy("Llamada en curso", "Colgar") else OngoingCallCopy("Call in progress", "Hang up")
+    if (spanish) {
+        OngoingCallCopy("Llamada con Argus", "Colgar", "Silenciar", "Activar micrófono", "Altavoz", "Auricular")
+    } else {
+        OngoingCallCopy("Call with Argus", "Hang up", "Mute", "Unmute", "Speaker", "Earpiece")
+    }
 
 internal fun ongoingCallRoute(): OngoingCallRoute = OngoingCallRoute.ForegroundService
 
@@ -53,6 +75,35 @@ internal object OngoingCall {
             manager.cancel(ID)
         }
         context.stopService(Intent(context, OngoingCallService::class.java))
+        CallControls.reset(context)
         NativeTrace.record("ongoing", "cleared", "call-ended")
+    }
+}
+
+internal data class CallControlState(val speakerOn: Boolean, val muted: Boolean)
+
+internal object CallControls {
+    private val lock = Any()
+    private var state = CallControlState(speakerOn = false, muted = false)
+
+    fun snapshot(): CallControlState = synchronized(lock) { state }
+
+    fun toggleSpeaker(context: Context) {
+        val next = synchronized(lock) { state.copy(speakerOn = !state.speakerOn).also { state = it } }
+        CallSession.routeAudio(next.speakerOn)
+        NativeTrace.record("telecom", "route", if (next.speakerOn) "speaker" else "earpiece")
+        OngoingCallService.refresh(context)
+    }
+
+    fun toggleMute(context: Context) {
+        val next = synchronized(lock) { state.copy(muted = !state.muted).also { state = it } }
+        context.getSystemService(AudioManager::class.java)?.isMicrophoneMute = next.muted
+        NativeTrace.record("telecom", "mute", if (next.muted) "on" else "off")
+        OngoingCallService.refresh(context)
+    }
+
+    fun reset(context: Context) {
+        val wasMuted = synchronized(lock) { state.muted.also { state = CallControlState(speakerOn = false, muted = false) } }
+        if (wasMuted) context.getSystemService(AudioManager::class.java)?.isMicrophoneMute = false
     }
 }

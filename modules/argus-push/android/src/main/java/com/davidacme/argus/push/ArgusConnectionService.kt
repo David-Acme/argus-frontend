@@ -10,10 +10,19 @@ class ArgusConnectionService : ConnectionService() {
         connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?,
     ): Connection {
-        val callId = request?.extras?.getString(TelecomCalls.EXTRA_CALL_ID).orEmpty()
+        val requested = request?.extras?.getString(TelecomCalls.EXTRA_CALL_ID)
+        NativeTrace.record("telecom", "start", if (requested.isNullOrEmpty()) "extras-missing" else "extras-present")
+        val callId = incomingCallIdOf(requested, CallSession.ringingCallId())
         val connection = ArgusConnection(applicationContext, callId)
         connection.setRinging()
         CallSession.attach(applicationContext, callId, connection)
         return connection
+    }
+
+    override fun onCreateIncomingConnectionFailed(
+        connectionManagerPhoneAccount: PhoneAccountHandle?,
+        request: ConnectionRequest?,
+    ) {
+        NativeTrace.record("telecom", "failed", "incoming")
     }
 }
