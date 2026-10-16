@@ -1,6 +1,13 @@
+import { secureRandomBytes, sha256Hex } from '@/core/services/crypto-random';
+
 export type LoginProof = {
   proof: string;
   pollHash: string;
+};
+
+export type LoginProofSources = {
+  randomBytes: (length: number) => Uint8Array;
+  sha256Hex: (text: string) => Promise<string>;
 };
 
 const PROOF_BYTES = 32;
@@ -8,10 +15,9 @@ const PROOF_BYTES = 32;
 const toHex = (bytes: Uint8Array): string =>
   Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 
-export async function createLoginProof(): Promise<LoginProof | null> {
-  const crypto = globalThis.crypto as Crypto | undefined;
-  if (!crypto?.subtle || typeof crypto.getRandomValues !== 'function') return null;
-  const proof = toHex(crypto.getRandomValues(new Uint8Array(PROOF_BYTES)));
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(proof));
-  return { proof, pollHash: toHex(new Uint8Array(digest)) };
+const PLATFORM_SOURCES: LoginProofSources = { randomBytes: secureRandomBytes, sha256Hex };
+
+export async function createLoginProof(sources: LoginProofSources = PLATFORM_SOURCES): Promise<LoginProof> {
+  const proof = toHex(sources.randomBytes(PROOF_BYTES));
+  return { proof, pollHash: await sources.sha256Hex(proof) };
 }
