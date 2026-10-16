@@ -23,11 +23,11 @@ class CallActivity : Activity() {
             return
         }
         if (!CallSession.isRinging(callId)) {
-            finish()
+            finishAndRemoveTask()
             return
         }
         setContentView(callLayout(callId))
-        detachEnd = CallSession.watchEnd(callId) { runOnUiThread { finish() } }
+        detachEnd = CallSession.watchEnd(callId) { runOnUiThread { finishAndRemoveTask() } }
     }
 
     override fun onDestroy() {
