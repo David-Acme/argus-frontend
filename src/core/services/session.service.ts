@@ -248,7 +248,7 @@ class SessionService {
 
   private async performRefresh(): Promise<SessionRefreshOutcome> {
     const { refreshToken } = useAuthStore.getState();
-    if (!refreshToken) return 'rejected';
+    if (!refreshToken) return 'unavailable';
     const version = this.sessionVersion;
 
     let instance: NetPairedInstance | null;
