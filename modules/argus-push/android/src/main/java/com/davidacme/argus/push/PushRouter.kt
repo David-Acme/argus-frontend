@@ -21,7 +21,10 @@ internal class PushRouter(private val context: Context) {
             return
         }
         PushLog.info("push received kind=${intent.kind} cancel=${intent.cancel}")
-        if (DedupRules.isExpired(intent.expiresAtSeconds, now)) return
+        if (DedupRules.dropsIntent(intent.kind, intent.cancel, intent.expiresAtSeconds, now)) {
+            PushLog.info("push dropped as expired kind=${intent.kind}")
+            return
+        }
         val intentKey = "intent:${intent.intentId}"
         if (store.isSeen(intentKey, now)) return
         store.remember(intentKey, now)

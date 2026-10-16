@@ -12,4 +12,9 @@ internal object DedupRules {
         seen.filterValues { nowSeconds - it < WINDOW_SECONDS }
 
     fun isExpired(expiresAtSeconds: Long, nowSeconds: Long): Boolean = expiresAtSeconds <= nowSeconds
+
+    fun dropsIntent(kind: String, cancel: Boolean, expiresAtSeconds: Long, nowSeconds: Long): Boolean {
+        if (kind == PushIntent.KIND_CALL && cancel) return false
+        return isExpired(expiresAtSeconds, nowSeconds)
+    }
 }
