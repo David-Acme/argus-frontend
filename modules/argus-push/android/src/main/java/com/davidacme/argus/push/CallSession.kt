@@ -13,6 +13,7 @@ internal object CallSession {
     private val lock = Any()
     private var active: ActiveCall? = null
     private var connection: ArgusConnection? = null
+    private var answeredCallId: String? = null
     private val endWatchers = mutableMapOf<String, () -> Unit>()
 
     @Volatile
@@ -85,6 +86,7 @@ internal object CallSession {
     fun answer(context: Context, callId: String) {
         val app = context.applicationContext
         releaseCall(app, callId)
+        synchronized(lock) { answeredCallId = callId }
         synchronized(lock) { connection }?.takeIf { it.callId == callId }?.setActive()
         PushActions.openCall(app, callId, enteredFromOutside = !PushActivityTracker.appInForeground())
     }
@@ -99,8 +101,9 @@ internal object CallSession {
     fun cancel(context: Context, callId: String) {
         val app = context.applicationContext
         releaseCall(app, callId)
+        if (answeredCallMatches(synchronized(lock) { answeredCallId }, callId)) return
         takeConnection(callId)?.endWith(DisconnectCause.OTHER)
-        KeyguardCall.callEnded()
+        KeyguardCall.callEnded(callId)
         CallAudio.restore(app)
     }
 
@@ -109,7 +112,7 @@ internal object CallSession {
         val callId = synchronized(lock) { active?.callId ?: connection?.callId } ?: return
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
-        KeyguardCall.callEnded()
+        KeyguardCall.callEnded(callId)
         CallAudio.restore(app)
     }
 
@@ -119,7 +122,7 @@ internal object CallSession {
         }
         releaseCall(context.applicationContext, ended.callId)
         ended.endWith(DisconnectCause.LOCAL)
-        KeyguardCall.callEnded()
+        KeyguardCall.callEnded(ended.callId)
         CallAudio.restore(context)
     }
 
@@ -167,3 +170,6 @@ internal object CallSession {
             current
         }
 }
+
+internal fun answeredCallMatches(answeredCallId: String?, callId: String): Boolean =
+    answeredCallId != null && answeredCallId == callId

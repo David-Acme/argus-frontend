@@ -18,15 +18,17 @@ object KeyguardCall {
     private var shown: WeakReference<Activity>? = null
 
     @Volatile
-    private var armed = false
+    private var armedCallId: String? = null
 
     fun showOverKeyguard(answeredFromOutside: Boolean, ended: Boolean): Boolean = answeredFromOutside && !ended
 
     fun shouldAttach(armed: Boolean, intentExtra: Boolean, isCallActivity: Boolean): Boolean =
         !isCallActivity && (armed || intentExtra)
 
-    fun arm() {
-        armed = true
+    fun disarmsFor(armedCallId: String?, callId: String): Boolean = armedCallId != null && armedCallId == callId
+
+    fun arm(callId: String) {
+        armedCallId = callId
     }
 
     fun isShown(): Boolean = shown?.get() != null
@@ -36,11 +38,11 @@ object KeyguardCall {
 
     fun onCreated(activity: Activity) {
         val extra = activity.intent?.getBooleanExtra(EXTRA_SHOW_OVER_LOCK, false) == true
-        if (shouldAttach(armed, extra, activity is CallActivity)) attach(activity)
+        if (shouldAttach(armedCallId != null, extra, activity is CallActivity)) attach(activity)
     }
 
     fun onResumed(activity: Activity) {
-        if (shown?.get() === activity || shouldAttach(armed, false, activity is CallActivity)) attach(activity)
+        if (shown?.get() === activity || shouldAttach(armedCallId != null, false, activity is CallActivity)) attach(activity)
     }
 
     fun attach(activity: Activity) {
@@ -68,8 +70,9 @@ object KeyguardCall {
         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
-    fun callEnded() {
-        armed = false
+    fun callEnded(callId: String) {
+        if (!disarmsFor(armedCallId, callId)) return
+        armedCallId = null
         main.post {
             val activity = shown?.get() ?: return@post
             release(activity)

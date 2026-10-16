@@ -12,12 +12,18 @@ object PushActivityTracker {
     @Volatile
     private var appResumed: WeakReference<Activity>? = null
 
+    @Volatile
+    private var appActivity: WeakReference<Activity>? = null
+
     fun install(application: Application) {
         if (!installed.compareAndSet(false, true)) return
         application.registerActivityLifecycleCallbacks(
             object : Application.ActivityLifecycleCallbacks {
                 override fun onActivityResumed(activity: Activity) {
-                    if (activity !is CallActivity) appResumed = WeakReference(activity)
+                    if (activity !is CallActivity) {
+                        appResumed = WeakReference(activity)
+                        appActivity = WeakReference(activity)
+                    }
                     KeyguardCall.onResumed(activity)
                 }
 
@@ -26,6 +32,7 @@ object PushActivityTracker {
                 }
 
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                    if (activity !is CallActivity) appActivity = WeakReference(activity)
                     KeyguardCall.onCreated(activity)
                 }
 
@@ -36,6 +43,7 @@ object PushActivityTracker {
                 override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
 
                 override fun onActivityDestroyed(activity: Activity) {
+                    if (appActivity?.get() === activity) appActivity = null
                     KeyguardCall.release(activity)
                 }
             },
@@ -43,6 +51,8 @@ object PushActivityTracker {
     }
 
     fun appInForeground(): Boolean = appResumed?.get() != null
+
+    fun appActivity(): Activity? = appActivity?.get()
 
     fun moveToBackground(): Boolean {
         val activity = appResumed?.get() ?: return false

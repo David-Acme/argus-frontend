@@ -16,7 +16,10 @@ internal object PushActions {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (KeyguardCall.showOverKeyguard(enteredFromOutside, ended = false)) {
             intent.putExtra(KeyguardCall.EXTRA_SHOW_OVER_LOCK, true)
-            KeyguardCall.arm()
+            KeyguardCall.arm(callId)
+            PushActivityTracker.appActivity()?.let { activity ->
+                activity.runOnUiThread { KeyguardCall.attach(activity) }
+            }
         }
         context.startActivity(intent)
     }

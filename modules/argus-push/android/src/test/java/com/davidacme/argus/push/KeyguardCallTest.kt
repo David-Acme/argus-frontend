@@ -24,4 +24,11 @@ class KeyguardCallTest {
         assertFalse(KeyguardCall.shouldAttach(armed = true, intentExtra = true, isCallActivity = true))
         assertFalse(KeyguardCall.shouldAttach(armed = false, intentExtra = false, isCallActivity = false))
     }
+
+    @Test
+    fun aCallEndsOnlyTheLockItArmed() {
+        assertTrue(KeyguardCall.disarmsFor(armedCallId = "call-1", callId = "call-1"))
+        assertFalse(KeyguardCall.disarmsFor(armedCallId = "call-1", callId = "call-2"))
+        assertFalse(KeyguardCall.disarmsFor(armedCallId = null, callId = "call-1"))
+    }
 }
