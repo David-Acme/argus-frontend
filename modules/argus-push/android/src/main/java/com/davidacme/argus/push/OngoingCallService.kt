@@ -7,13 +7,36 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
+import android.media.AudioManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 
 internal class OngoingCallService : Service() {
+    private val handler = Handler(Looper.getMainLooper())
+    private val captureProbe = object : Runnable {
+        override fun run() {
+            probeCapture()
+            handler.postDelayed(this, CAPTURE_PROBE_MS)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         PushChannels.ensure(this)
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(captureProbe)
+        super.onDestroy()
+    }
+
+    private fun probeCapture() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val configs = getSystemService(AudioManager::class.java)?.activeRecordingConfigurations ?: return
+        val silenced = configs.any { it.isClientSilenced }
+        NativeTrace.record("voice", "probe", "silenced-${if (silenced) 1 else 0}-configs-${configs.size}")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -29,6 +52,8 @@ internal class OngoingCallService : Service() {
         PushChannels.ensure(this)
         startOngoing(notificationFor(callId, outside))
         NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
+        handler.removeCallbacks(captureProbe)
+        handler.post(captureProbe)
         return START_NOT_STICKY
     }
 
@@ -76,6 +101,7 @@ internal class OngoingCallService : Service() {
     }
 
     companion object {
+        const val CAPTURE_PROBE_MS = 5_000L
         const val ACTION_START = "com.davidacme.argus.push.ONGOING_START"
         const val EXTRA_CALL_ID = "com.davidacme.argus.push.ONGOING_CALL_ID"
         const val EXTRA_OUTSIDE = "com.davidacme.argus.push.ONGOING_OUTSIDE"

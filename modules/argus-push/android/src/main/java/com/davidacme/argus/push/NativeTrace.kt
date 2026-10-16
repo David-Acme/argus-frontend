@@ -9,7 +9,7 @@ object NativeTrace {
     private val outcomes = setOf(
         "ok", "error", "partial", "absent", "refresh-rejected", "unavailable",
         "stay", "redirect", "start", "joined", "fallback", "sent", "stop", "shown", "cleared", "held", "released",
-        "ended", "left", "failed", "queued", "background", "foreground",
+        "ended", "left", "failed", "queued", "background", "foreground", "probe",
     )
     private val reasonShape = Regex("[a-z0-9-]{1,96}")
 
