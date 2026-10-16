@@ -1,4 +1,5 @@
 import { pushService } from '@/core/services/push';
+import { useAuthStore } from '@/core/stores';
 import { traceEvent } from '@/core/services/native-trace';
 import { callLockedId, callLockRedirect, callLockTraceReason, outsideCallIdFrom } from './call-lock';
 
@@ -11,6 +12,7 @@ export function currentCallLockRedirect(pathname: string): string | null {
   const keyguard = {
     overKeyguard: pushService.overKeyguard(),
     keyguardLocked: pushService.isKeyguardLocked(),
+    signedIn: useAuthStore.getState().status === 'signed-in',
   };
   const href = callLockRedirect(pathname, lockedId, keyguard);
   traceEvent(

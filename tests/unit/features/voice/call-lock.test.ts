@@ -3,9 +3,9 @@ import { callLockedId, callLockRedirect, callLockTraceReason, outsideCallIdFrom,
 
 afterEach(() => setCallLock(null));
 
-const LOCKED = { overKeyguard: true, keyguardLocked: true };
-const UNLOCKED = { overKeyguard: true, keyguardLocked: false };
-const NOT_OVER = { overKeyguard: false, keyguardLocked: true };
+const LOCKED = { overKeyguard: true, keyguardLocked: true, signedIn: true };
+const UNLOCKED = { overKeyguard: true, keyguardLocked: false, signedIn: true };
+const NOT_OVER = { overKeyguard: false, keyguardLocked: true, signedIn: true };
 
 describe('the call lock keeps the app on the call only while the keyguard is locked', () => {
   test('with no lock nothing is redirected', () => {
@@ -56,5 +56,13 @@ describe('the outside call the guard holds comes from the native side first', ()
     expect(callLockTraceReason({ onCall: false, held: true, over: true, locked: false })).toBe(
       'call-0-held-1-over-1-locked-0',
     );
+  });
+});
+
+describe('a signed-out device is never sent back into the call', () => {
+  test('signed out, the guard does not redirect, so the sign-in route is not looped', () => {
+    setCallLock('call-7');
+    expect(callLockRedirect('/agenda', callLockedId(), { ...LOCKED, signedIn: false })).toBeNull();
+    expect(callLockRedirect('/', callLockedId(), { ...LOCKED, signedIn: false })).toBeNull();
   });
 });

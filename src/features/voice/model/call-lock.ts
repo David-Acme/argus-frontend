@@ -11,9 +11,10 @@ export function callLockedId(): string | null {
 export function callLockRedirect(
   pathname: string,
   lockedId: string | null,
-  keyguard: { overKeyguard: boolean; keyguardLocked: boolean },
+  keyguard: { overKeyguard: boolean; keyguardLocked: boolean; signedIn: boolean },
 ): string | null {
   if (!lockedId || pathname === '/call') return null;
+  if (!keyguard.signedIn) return null;
   if (!keyguard.overKeyguard || !keyguard.keyguardLocked) return null;
   return `/call?callId=${encodeURIComponent(lockedId)}&outside=1`;
 }
