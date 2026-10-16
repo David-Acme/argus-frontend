@@ -40,6 +40,7 @@ export const voice = {
   'settings-audio-hint': 'The microphone follows the device you choose.',
   'settings-no-devices': 'The phone decides the audio for this call.',
   'settings-permissions': 'Permissions',
+  'settings-ready': 'All set for your calls.',
   'settings-route': 'Output and microphone',
   'settings-input': 'Microphone',
   'settings-output': 'Output',

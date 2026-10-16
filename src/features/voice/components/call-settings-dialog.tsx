@@ -48,7 +48,7 @@ function DeviceSection({ title, devices, onSelect, kindLabel }: DeviceSectionPro
 export function CallSettingsDialog({ open, onOpenChange, muted, onToggleMute }: CallSettingsDialogProps) {
   const { t } = useTranslation();
   const audio = useCallAudio(open);
-  const { permissions, request } = useDevicePermissions('call');
+  const { permissions, loaded, request } = useDevicePermissions('call');
   const groups = groupCallAudio(audio.devices);
   const kindLabel = (kind: CallAudioKind) => t(`screens.voice.device-${kind}`);
   const empty = audio.devices.length === 0;
@@ -85,10 +85,16 @@ export function CallSettingsDialog({ open, onOpenChange, muted, onToggleMute }: 
           ) : null}
           <ToggleRow label={t('screens.voice.mute')} value={muted} onChange={onToggleMute} />
         </View>
-        {permissions.length > 0 ? (
+        {loaded ? (
           <View className="gap-2">
             <Text variant="label">{t('screens.voice.settings-permissions')}</Text>
-            <PermissionList permissions={permissions} onRequest={request} density="compact" />
+            {permissions.length > 0 ? (
+              <PermissionList permissions={permissions} onRequest={request} density="compact" />
+            ) : (
+              <Text variant="caption" className="text-success">
+                {t('screens.voice.settings-ready')}
+              </Text>
+            )}
           </View>
         ) : null}
       </View>

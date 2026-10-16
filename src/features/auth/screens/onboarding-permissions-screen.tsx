@@ -18,10 +18,14 @@ export default function OnboardingPermissionsScreen() {
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ flow?: string; mode?: string }>();
   const flow = flowOf(params);
-  const { permissions, request } = useDevicePermissions('onboarding');
+  const { permissions, allGranted, request, requestRuntime } = useDevicePermissions('onboarding');
   const next = nextHref(flow, 'permissions', { native: IS_NATIVE });
 
   const goOn = useCallback(() => router.replace(next ?? '/'), [next, router]);
+  const allowAndGoOn = useCallback(async () => {
+    await requestRuntime();
+    goOn();
+  }, [goOn, requestRuntime]);
 
   if (!IS_NATIVE) return <Redirect href="/" />;
 
@@ -45,9 +49,14 @@ export default function OnboardingPermissionsScreen() {
         </View>
 
         <PermissionList permissions={permissions} onRequest={request} />
+        {allGranted ? (
+          <Text variant="caption" className="text-success">
+            {t('screens.welcome.permissions.ready')}
+          </Text>
+        ) : null}
 
         <View className="mt-auto gap-3">
-          <Button size="lg" onPress={goOn}>
+          <Button size="lg" onPress={() => void allowAndGoOn()}>
             <Text>{t('screens.welcome.permissions.continue')}</Text>
           </Button>
           <Button variant="ghost" onPress={goOn}>

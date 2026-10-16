@@ -19,6 +19,7 @@ export const welcome = {
   skip: 'Saltar por ahora',
   permissions: {
     eyebrow: 'Permisos',
+    ready: 'Todo listo. Argus podrá llamarte y oírte aunque estés usando otra app.',
     title: 'Antes de empezar',
     intro: 'Argus necesita estos permisos para avisarte a tiempo y atender sus llamadas.',
     continue: 'Continuar',
