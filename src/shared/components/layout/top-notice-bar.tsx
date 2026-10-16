@@ -51,7 +51,7 @@ export function TopNoticeBar() {
       key: route && routeStatus ? routeStatus : 'offline',
       title: t(route?.title ?? 'common.offline.title'),
       description: t(route?.detail ?? 'common.offline.description'),
-      icon: route?.icon ?? 'wifi-off',
+      icon: 'wifi-off',
     };
   }, [offline, watchdog, route, routeStatus, t, language]);
 
