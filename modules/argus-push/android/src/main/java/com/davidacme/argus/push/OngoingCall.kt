@@ -17,11 +17,7 @@ internal fun ongoingCallCopy(spanish: Boolean): OngoingCallCopy =
 
 internal fun ongoingCallRoute(): OngoingCallRoute = OngoingCallRoute.ForegroundService
 
-internal fun ongoingCallChannel(): String = PushChannels.CALLS
-
-internal fun ongoingCallStyle(sdk: Int): Boolean = sdk >= 31
-
-internal fun ongoingFullScreenIntent(callStyle: Boolean): Boolean = callStyle
+internal fun ongoingCallChannel(): String = PushChannels.ONGOING
 
 internal fun shouldRunOngoingService(answered: Boolean, ended: Boolean): Boolean = answered && !ended
 

@@ -2,7 +2,6 @@ package com.davidacme.argus.push
 
 import android.app.Notification
 import android.app.PendingIntent
-import android.app.Person
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -28,15 +27,8 @@ internal class OngoingCallService : Service() {
         }
         val outside = intent.getBooleanExtra(EXTRA_OUTSIDE, false)
         PushChannels.ensure(this)
-        val callStyle = ongoingCallStyle(Build.VERSION.SDK_INT)
-        try {
-            startOngoing(notificationFor(callId, outside, callStyle))
-            NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
-        } catch (refused: RuntimeException) {
-            NativeTrace.record("ongoing", "fallback", "plain-notification")
-            startOngoing(notificationFor(callId, outside, callStyle = false))
-            NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
-        }
+        startOngoing(notificationFor(callId, outside))
+        NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
         return START_NOT_STICKY
     }
 
@@ -52,7 +44,7 @@ internal class OngoingCallService : Service() {
         }
     }
 
-    private fun notificationFor(callId: String, outside: Boolean, callStyle: Boolean): Notification {
+    private fun notificationFor(callId: String, outside: Boolean): Notification {
         val copy = ongoingCallCopy(PushText.isSpanish())
         val open = PendingIntent.getActivity(
             this,
@@ -70,21 +62,15 @@ internal class OngoingCallService : Service() {
                 .putExtra(PushActions.EXTRA_CALL_ID, callId),
             FLAGS,
         )
-        val builder = Notification.Builder(this, ongoingCallChannel())
+        val icon = Icon.createWithResource(this, applicationInfo.icon)
+        return Notification.Builder(this, ongoingCallChannel())
             .setSmallIcon(applicationInfo.icon)
             .setContentTitle(copy.title)
             .setContentIntent(open)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_CALL)
-        if (callStyle) {
-            val person = Person.Builder().setName("Argus").setImportant(true).build()
-            builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
-            if (ongoingFullScreenIntent(callStyle)) builder.setFullScreenIntent(open, false)
-        } else {
-            val icon = Icon.createWithResource(this, applicationInfo.icon)
-            builder.addAction(Notification.Action.Builder(icon, copy.hangUp, hangUp).build())
-        }
-        return builder.build()
+            .addAction(Notification.Action.Builder(icon, copy.hangUp, hangUp).build())
+            .build()
     }
 
     companion object {

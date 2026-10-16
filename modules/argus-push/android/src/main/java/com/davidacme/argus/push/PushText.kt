@@ -43,6 +43,7 @@ internal object PushText {
             PushChannels.TIME_SENSITIVE -> if (spanish) "Avisos importantes" else "Time-sensitive alerts"
             PushChannels.NORMAL -> if (spanish) "Avisos" else "Alerts"
             PushChannels.SILENT_ALERTS -> if (spanish) "Avisos con el timbre" else "Alerts with the ring"
+            PushChannels.ONGOING -> if (spanish) "Llamada en curso" else "Call in progress"
             else -> if (spanish) "Llamadas" else "Calls"
         }
 }

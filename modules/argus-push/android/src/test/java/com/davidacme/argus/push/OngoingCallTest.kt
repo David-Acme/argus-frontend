@@ -26,14 +26,8 @@ class OngoingCallTest {
 
     @Test
     fun theOngoingCallPostsOnTheChannelThatTheChannelSetupCreates() {
-        assertEquals(PushChannels.CALLS, ongoingCallChannel())
-    }
-
-    @Test
-    fun aCallStyleOngoingNotificationAlwaysCarriesAFullScreenIntent() {
-        assertEquals(true, ongoingFullScreenIntent(ongoingCallStyle(34)))
-        assertEquals(false, ongoingCallStyle(29))
-        assertEquals(false, ongoingFullScreenIntent(ongoingCallStyle(29)))
+        assertEquals(PushChannels.ONGOING, ongoingCallChannel())
+        assertEquals(false, PushChannels.ONGOING == PushChannels.CALLS)
     }
 
     @Test
