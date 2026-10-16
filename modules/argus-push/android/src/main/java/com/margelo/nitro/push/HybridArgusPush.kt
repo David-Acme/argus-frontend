@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import com.davidacme.argus.push.CallSession
+import com.davidacme.argus.push.PushActivityTracker
 import com.davidacme.argus.push.PushAlertEvents
 import com.davidacme.argus.push.PushTokenEvents
 import com.davidacme.argus.push.PushKeys
@@ -68,6 +69,10 @@ class HybridArgusPush : HybridArgusPushSpec() {
   }
 
   override fun takeDeclines(): Array<String> = PushStore(requireContext()).takeDeclines().toTypedArray()
+
+  override fun sendToBackground() {
+    PushActivityTracker.moveToBackground()
+  }
 
   override fun endActiveCall() {
     CallSession.endActive(requireContext())

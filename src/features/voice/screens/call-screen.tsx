@@ -14,7 +14,8 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
 import { CALL_ROUTE_WAIT_MS, callRouteDecision } from '@/features/voice/model/call-route';
-import { ENDED_HOLD_MS } from '@/features/voice/model/call-end';
+import { dispatchCallEnd, ENDED_HOLD_MS } from '@/features/voice/model/call-end';
+import { pushService } from '@/core/services/push';
 import { leaveCall } from '@/features/voice/model/leave-call';
 
 function CallScreen() {
@@ -33,6 +34,7 @@ function CallScreen() {
         stopVoice: () => voiceService.stop(),
         canGoBack: () => router.canGoBack(),
         goBack: () => router.back(),
+        sendToBackground: () => pushService.sendToBackground(),
       }),
     [router],
   );
@@ -60,8 +62,9 @@ function CallScreen() {
   }, [call.phase]);
 
   useEffect(() => {
-    if (call.closedCallId !== null && call.closedCallId === params.callId) hangUp();
-  }, [call.closedCallId, hangUp, params.callId]);
+    if (call.closedCallId === null || call.closedCallId !== params.callId || call.closedReason === null) return;
+    dispatchCallEnd(call.closedReason, { showEnded: hangUp, closeNow: leave });
+  }, [call.closedCallId, call.closedReason, hangUp, leave, params.callId]);
 
   useEffect(() => {
     if (endedDurationMs === null) return;

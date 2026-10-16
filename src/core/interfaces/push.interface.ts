@@ -12,6 +12,7 @@ export interface IArgusPushNative {
   setTokenListener(listener: (token: string) => void): void;
   setAlertListener(listener: (alertJson: string) => void): void;
   takeDeclines(): string[];
+  sendToBackground(): void;
   fullScreenExplained(): boolean;
   setFullScreenExplained(value: boolean): void;
 }
@@ -21,4 +22,5 @@ export interface IPushService {
   unpair(): Promise<void>;
   onDecline(listener: (callId: string) => void): () => void;
   drainDeclines(): void;
+  sendToBackground(): void;
 }

@@ -5,6 +5,7 @@ const unsupported: IPushService = {
   unpair: async () => undefined,
   onDecline: () => () => undefined,
   drainDeclines: () => undefined,
+  sendToBackground: () => undefined,
 };
 
 export const pushService: IPushService = unsupported;

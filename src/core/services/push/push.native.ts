@@ -93,6 +93,15 @@ class NativePushService implements IPushService {
     };
   }
 
+  sendToBackground(): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().sendToBackground();
+    } catch (error) {
+      log.error('push', 'the app could not be sent to the background', error);
+    }
+  }
+
   drainDeclines(): void {
     if (!IS_ANDROID) return;
     forwardPendingDeclines(

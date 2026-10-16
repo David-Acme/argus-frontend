@@ -83,7 +83,10 @@ export type VoiceSnapshot = {
   responseId: number | null;
   waitingCall: IncomingCall | null;
   closedCallId: string | null;
+  closedReason: CallEndReason | null;
 };
+
+export type CallEndReason = 'answered-ended' | 'missed' | 'declined' | 'claimed-elsewhere';
 
 export type VoiceTransport = 'none' | 'sync' | 'rtc';
 

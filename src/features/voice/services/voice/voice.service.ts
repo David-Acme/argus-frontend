@@ -46,6 +46,8 @@ import {
 import { createRealtimeCall, rtcCallSupported } from '@/features/voice/services/rtc';
 import { requestCallDecline, requestCallToken } from '@/features/voice/services/rtc/rtc-token';
 import { declineOncePerSession } from '@/features/voice/model/call-decline';
+import { endReasonOfCancel } from '@/features/voice/model/call-end';
+import type { CallEndReason } from '@/core/types';
 import { endRevokedSession } from '@/features/voice/services/voice/voice-session-end';
 import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
 import {
@@ -181,6 +183,7 @@ class VoiceService {
   private waitingCall: IncomingCall | null = null;
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
   private closedCallId: string | null = null;
+  private closedReason: CallEndReason | null = null;
   private readonly declineOnce = declineOncePerSession((callId) => requestCallDecline({ callId }));
   private readonly handlers: Readonly<Record<string, FrameHandler>> = this.buildHandlers();
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
@@ -232,6 +235,7 @@ class VoiceService {
     this.responseId = options.responseId ?? null;
     this.agentState = null;
     this.closedCallId = null;
+    this.closedReason = null;
     this.rtcState = 'connecting';
     this.sttText = '';
     this.transcript = [];
@@ -895,6 +899,7 @@ class VoiceService {
       return;
     this.error = cancelError(parsed.data);
     this.closedCallId = parsed.data.callId;
+    this.closedReason = endReasonOfCancel(parsed.data.reason);
     this.stop();
   }
 
@@ -956,6 +961,7 @@ class VoiceService {
       responseId: this.responseId,
       waitingCall: this.waitingCall,
       closedCallId: this.closedCallId,
+      closedReason: this.closedReason,
     };
   }
 

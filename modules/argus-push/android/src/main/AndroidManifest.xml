@@ -29,6 +29,11 @@
         android:turnScreenOn="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
+    <provider
+        android:name="com.davidacme.argus.push.PushInitProvider"
+        android:authorities="${applicationId}.argus-push-init"
+        android:exported="false" />
+
     <receiver
         android:name="com.davidacme.argus.push.PushActionReceiver"
         android:exported="false" />

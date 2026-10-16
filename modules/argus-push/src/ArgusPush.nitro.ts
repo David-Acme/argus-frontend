@@ -15,6 +15,7 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   setAlertListener(listener: (alertJson: string) => void): void;
   takeDeclines(): string[];
   endActiveCall(): void;
+  sendToBackground(): void;
   canUseFullScreenIntent(): boolean;
   openFullScreenSettings(): void;
   fullScreenExplained(): boolean;

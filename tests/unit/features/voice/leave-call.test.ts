@@ -8,17 +8,19 @@ describe('leaving the call screen', () => {
       stopVoice: () => order.push('stop'),
       canGoBack: () => true,
       goBack: () => order.push('back'),
+      sendToBackground: () => order.push('background'),
     });
     expect(order).toEqual(['stop', 'back']);
   });
 
-  test('without a screen to return to, leaving stops the voice and stays where it is', () => {
+  test('without a screen to return to, leaving sends the app to the background, never home', () => {
     const order: string[] = [];
     leaveCall({
       stopVoice: () => order.push('stop'),
       canGoBack: () => false,
       goBack: () => order.push('back'),
+      sendToBackground: () => order.push('background'),
     });
-    expect(order).toEqual(['stop']);
+    expect(order).toEqual(['stop', 'background']);
   });
 });
