@@ -40,12 +40,13 @@ function QrManualEntry({ label, placeholder, invalid, onSubmit, startExpanded = 
   }
 
   return (
-    <View className="gap-2">
+    <View className="flex-row items-center gap-2">
       <Input
         value={value}
         onChangeText={setValue}
         placeholder={t(placeholder)}
         variant={invalid ? 'error' : 'default'}
+        className="min-w-0 flex-1"
         autoCapitalize="characters"
         autoComplete="off"
         autoCorrect={false}
@@ -55,8 +56,12 @@ function QrManualEntry({ label, placeholder, invalid, onSubmit, startExpanded = 
         onSubmitEditing={handleSubmit}
         accessibilityLabel={t(placeholder)}
       />
-      <Button disabled={trimmed.length === 0} onPress={handleSubmit}>
-        <Text>{t('common.continue')}</Text>
+      <Button
+        size="icon"
+        disabled={trimmed.length === 0}
+        onPress={handleSubmit}
+        accessibilityLabel={t('common.continue')}>
+        <Icon name="check" />
       </Button>
     </View>
   );
