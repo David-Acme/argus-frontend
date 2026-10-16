@@ -44,7 +44,7 @@ type AuthStoreApi = typeof UseAuthStoreHook;
 
 type SessionActions = {
   refreshSession: () => Promise<SessionRefreshOutcome>;
-  clearSession: () => Promise<void>;
+  clearSession: (origin?: string) => Promise<void>;
   updateUser: (partial: SyncUserPatch) => void;
   endSession: (notice: SessionEndNotice) => Promise<void>;
 };
@@ -92,7 +92,7 @@ class SynchronizeService {
       onText: (raw) => this.router.route(raw),
       onBinary: (data) => this.router.routeBinary(data),
       refreshSession: () => this.sessionActions?.refreshSession(),
-      clearSession: () => this.sessionActions?.clearSession(),
+      clearSession: () => this.sessionActions?.clearSession('sync-unauthorized'),
     });
     this.channel = new SyncRequestChannel({
       isOpen: () => this.connection.hasSocket,
@@ -425,7 +425,7 @@ class SynchronizeService {
 
   private onInitialInfo(info: IInitialInfo): void {
     if (this.authStore?.getState().status !== 'signed-in') {
-      void this.sessionActions?.clearSession();
+      void this.sessionActions?.clearSession('initial-info-not-signed-in');
       return;
     }
     this.sessionActions?.updateUser({ id: info.id, role: info.role, isActive: info.isActive });

@@ -72,7 +72,7 @@ class AuthService {
       new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_REVOKE_TIMEOUT_MS)),
     ]);
     if (notice) await sessionService.endSession(notice);
-    else await sessionService.clearSession();
+    else await sessionService.clearSession(undefined, 'logout');
   }
 
   async logoutEverywhere(): Promise<IServiceResponse<SessionRevokeResult>> {

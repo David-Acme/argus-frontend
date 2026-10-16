@@ -20,7 +20,7 @@ export function SessionGate({ children }: SessionGateProps) {
 
     synchronizeService.bind(useAuthStore, {
       refreshSession: () => sessionService.refreshSession(),
-      clearSession: () => sessionService.clearSession(),
+      clearSession: (origin) => sessionService.clearSession(undefined, origin ?? 'sync'),
       updateUser: (partial) => sessionService.updateUser(partial),
       endSession: (notice) => sessionService.endSession(notice),
     });

@@ -169,9 +169,10 @@ class SessionService {
     this.persistUser(user);
   }
 
-  clearSession(failed?: SessionCredential): Promise<void> {
+  clearSession(failed?: SessionCredential, origin = 'unknown'): Promise<void> {
     if (failed && failed.version !== this.sessionVersion) return Promise.resolve();
     if (this.clearing) return this.clearing;
+    traceEvent('session', 'cleared', traceReasonOf(origin));
     const clearing = this.performClear().finally(() => {
       if (this.clearing === clearing) this.clearing = null;
     });
@@ -183,7 +184,7 @@ class SessionService {
     if (this.clearing) return this.clearing;
     if (useAuthStore.getState().status !== 'signed-in') return Promise.resolve();
     useToastStore.getState().show('info', t(`screens.sessions.notice.${notice}`));
-    return this.clearSession();
+    return this.clearSession(undefined, `end-${notice}`);
   }
 
   private async performClear(): Promise<void> {
@@ -383,5 +384,5 @@ export const sessionService = new SessionService();
 registerHttpAuth({
   credential: () => sessionService.credential(),
   refreshSession: (failed) => sessionService.refreshSession(failed),
-  clearSession: (failed) => sessionService.clearSession(failed),
+  clearSession: (failed) => sessionService.clearSession(failed, 'http-refused'),
 });
