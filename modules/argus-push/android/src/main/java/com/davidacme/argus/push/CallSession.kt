@@ -100,6 +100,7 @@ internal object CallSession {
         val app = context.applicationContext
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.OTHER)
+        KeyguardCall.callEnded()
     }
 
     fun endActive(context: Context) {
@@ -107,6 +108,7 @@ internal object CallSession {
         val callId = synchronized(lock) { active?.callId ?: connection?.callId } ?: return
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
+        KeyguardCall.callEnded()
     }
 
     fun connectionEnded(context: Context, ended: ArgusConnection) {
@@ -115,6 +117,7 @@ internal object CallSession {
         }
         releaseCall(context.applicationContext, ended.callId)
         ended.endWith(DisconnectCause.LOCAL)
+        KeyguardCall.callEnded()
     }
 
     private fun deliverDecline(context: Context, callId: String) {

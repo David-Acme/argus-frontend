@@ -12,7 +12,12 @@ internal object PushActions {
     const val EXTRA_CALL_ID = "com.davidacme.argus.push.CALL_ID"
 
     fun openCall(context: Context, callId: String, enteredFromOutside: Boolean) {
-        open(context, callDeepLink(callId, enteredFromOutside))
+        val intent = appLinkIntent(context, callDeepLink(callId, enteredFromOutside))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (KeyguardCall.showOverKeyguard(enteredFromOutside, ended = false)) {
+            intent.putExtra(KeyguardCall.EXTRA_SHOW_OVER_LOCK, true)
+        }
+        context.startActivity(intent)
     }
 
     fun openNotification(context: Context, notificationId: String) {
