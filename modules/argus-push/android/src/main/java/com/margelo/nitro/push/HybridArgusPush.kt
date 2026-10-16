@@ -9,6 +9,7 @@ import com.davidacme.argus.push.CallSession
 import com.davidacme.argus.push.KeyguardCall
 import com.davidacme.argus.push.ExactAlarms
 import com.davidacme.argus.push.PushActivityTracker
+import com.davidacme.argus.push.SessionTrace
 import com.davidacme.argus.push.PushAlertEvents
 import com.davidacme.argus.push.PushTokenEvents
 import com.davidacme.argus.push.PushKeys
@@ -71,6 +72,10 @@ class HybridArgusPush : HybridArgusPushSpec() {
   }
 
   override fun takeDeclines(): Array<String> = PushStore(requireContext()).takeDeclines().toTypedArray()
+
+  override fun recordSession(phase: String, outcome: String, reason: String) {
+    SessionTrace.record(phase, outcome, reason)
+  }
 
   override fun exactAlarmsAllowed(): Boolean = ExactAlarms.allowed(requireContext())
 
