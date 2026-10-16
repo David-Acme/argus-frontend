@@ -26,6 +26,11 @@ class KeyguardCallTest {
     }
 
     @Test
+    fun theEndedStateStaysOverTheKeyguardForAShortHoldOnly() {
+        assertTrue(KeyguardCall.ENDED_HOLD_MS in 2_000L..5_000L)
+    }
+
+    @Test
     fun aCallEndsOnlyTheLockItArmed() {
         assertTrue(KeyguardCall.disarmsFor(armedCallId = "call-1", callId = "call-1"))
         assertFalse(KeyguardCall.disarmsFor(armedCallId = "call-1", callId = "call-2"))

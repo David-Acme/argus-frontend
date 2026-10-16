@@ -105,19 +105,17 @@ internal object CallSession {
         releaseCall(app, callId)
         if (answeredCallMatches(synchronized(lock) { answeredCallId }, callId)) return
         takeConnection(callId)?.endWith(DisconnectCause.OTHER)
-        KeyguardCall.callEnded(callId)
-        OngoingCall.clear(app)
+        CallFinish.finish(app, callId)
         CallAudio.restore(app)
     }
 
     fun endActive(context: Context) {
         val app = context.applicationContext
-        OngoingCall.clear(app)
-        val callId = synchronized(lock) { active?.callId ?: connection?.callId } ?: return
+        val callId = synchronized(lock) { active?.callId ?: connection?.callId }
+        CallFinish.finish(app, callId)
+        if (callId == null) return
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
-        KeyguardCall.callEnded(callId)
-        OngoingCall.clear(app)
         CallAudio.restore(app)
     }
 
@@ -127,8 +125,7 @@ internal object CallSession {
         }
         releaseCall(context.applicationContext, ended.callId)
         ended.endWith(DisconnectCause.LOCAL)
-        KeyguardCall.callEnded(ended.callId)
-        OngoingCall.clear(context.applicationContext)
+        CallFinish.finish(context.applicationContext, ended.callId)
         CallAudio.restore(context)
     }
 

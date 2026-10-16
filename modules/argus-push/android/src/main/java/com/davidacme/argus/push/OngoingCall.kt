@@ -22,6 +22,13 @@ internal fun ongoingCallChannel(): String = PushChannels.ONGOING
 
 internal fun shouldRunOngoingService(answered: Boolean, ended: Boolean): Boolean = answered && !ended
 
+internal object CallFinish {
+    fun finish(context: Context, callId: String?) {
+        OngoingCall.clear(context)
+        KeyguardCall.endCall(callId)
+    }
+}
+
 internal object OngoingCall {
     const val TAG = "argus-ongoing-call"
     const val ID = 7046

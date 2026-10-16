@@ -11,6 +11,7 @@ import java.lang.ref.WeakReference
 
 object KeyguardCall {
     const val EXTRA_SHOW_OVER_LOCK = "argus.push.showOverLock"
+    const val ENDED_HOLD_MS = 2_500L
 
     private val main by lazy { Handler(Looper.getMainLooper()) }
 
@@ -19,6 +20,8 @@ object KeyguardCall {
 
     @Volatile
     private var armedCallId: String? = null
+
+    private var pendingRelease: Runnable? = null
 
     fun showOverKeyguard(answeredFromOutside: Boolean, ended: Boolean): Boolean = answeredFromOutside && !ended
 
@@ -72,12 +75,16 @@ object KeyguardCall {
         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
-    fun callEnded(callId: String) {
-        if (!disarmsFor(armedCallId, callId)) return
+    fun endCall(callId: String?) {
+        if (callId != null && !disarmsFor(armedCallId, callId)) return
         armedCallId = null
-        main.post {
-            val activity = shown?.get() ?: return@post
-            release(activity)
+        if (shown?.get() == null) return
+        pendingRelease?.let { main.removeCallbacks(it) }
+        val releaseLater = Runnable {
+            pendingRelease = null
+            shown?.get()?.let { release(it) }
         }
+        pendingRelease = releaseLater
+        main.postDelayed(releaseLater, ENDED_HOLD_MS)
     }
 }

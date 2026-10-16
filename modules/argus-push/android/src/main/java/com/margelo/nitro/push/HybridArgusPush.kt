@@ -5,9 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.davidacme.argus.push.CallFinish
 import com.davidacme.argus.push.CallSession
 import com.davidacme.argus.push.KeyguardCall
-import com.davidacme.argus.push.OngoingCall
 import com.davidacme.argus.push.ExactAlarms
 import com.davidacme.argus.push.PushActivityTracker
 import com.davidacme.argus.push.NativeTrace
@@ -99,7 +99,7 @@ class HybridArgusPush : HybridArgusPushSpec() {
   }
 
   override fun stopOngoingCall() {
-    OngoingCall.clear(requireContext())
+    CallFinish.finish(requireContext(), null)
   }
 
   override fun canUseFullScreenIntent(): Boolean = PushNotifier.canUseFullScreen(requireContext())
