@@ -8,6 +8,7 @@ import { traceEvent } from '@/core/services/native-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
 import { sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
+import { pushService } from '@/core/services/push';
 import { cancelOutcomeOf } from '@/features/voice/model/call-end';
 import { VOICE_HANGUP_FLUSH_MS } from '@/features/voice/constants/hangup';
 import {
@@ -635,6 +636,7 @@ class VoiceService {
   }
 
   private leaveRealtime(serverGone: boolean): void {
+    pushService.stopOngoingCall();
     const call = this.rtc;
     const hangUp = this.serverSession && !serverGone;
     this.serverSession = false;

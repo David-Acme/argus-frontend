@@ -7,6 +7,7 @@ const unsupported: IPushService = {
   onDecline: () => () => undefined,
   drainDeclines: () => undefined,
   sendToBackground: () => undefined,
+  stopOngoingCall: () => undefined,
   isKeyguardLocked: () => false,
   overKeyguard: () => false,
   outsideCallId: () => '',

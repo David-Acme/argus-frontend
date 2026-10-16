@@ -93,6 +93,10 @@ mock.module('@/core/services/sync', () => ({
     },
   },
 }));
+const stoppedOngoing: number[] = [];
+mock.module('@/core/services/push', () => ({
+  pushService: { stopOngoingCall: () => stoppedOngoing.push(1) },
+}));
 const endedSessions: (string | null)[] = [];
 mock.module('@/features/voice/services/voice/voice-session-end', () => ({
   endRevokedSession: (cause: string | null) => endedSessions.push(cause),

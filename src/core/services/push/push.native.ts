@@ -118,6 +118,15 @@ class NativePushService implements IPushService {
     this.module().openExactAlarmSettings();
   }
 
+  stopOngoingCall(): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().stopOngoingCall();
+    } catch (error) {
+      log.error('push', 'the ongoing call could not be stopped', error);
+    }
+  }
+
   sendToBackground(): void {
     if (!IS_ANDROID) return;
     try {
