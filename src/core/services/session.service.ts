@@ -12,10 +12,14 @@ import {
 } from '@/core/services/http/refresh-response';
 import {
   decideRestore,
-  nullStoredKeys,
+  restoreFailureOf,
+  restoreReport,
   restoreRetryDelayMs,
-  type RestoreDecision,
-  type StoredSessionReading,
+  RESTORE_READ_ATTEMPTS,
+  type RestoreCause,
+  type RestoreFailure,
+  type RestoreReport,
+  type StoredSessionAttempt,
 } from '@/core/services/session-restore';
 import '@/core/services/native-trace-sink';
 import { traceEvent } from '@/core/services/native-trace';
@@ -48,17 +52,6 @@ import type {
 import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
 const REFRESH_PATH = '/auth/refresh-token';
-
-function restoreTraceOutcome(decision: RestoreDecision): TraceOutcome {
-  if (decision.kind === 'session') return 'ok';
-  return decision.kind === 'absent' ? 'absent' : 'partial';
-}
-
-function restoreTraceReason(decision: RestoreDecision, nullKeys: string[]): string {
-  if (decision.kind === 'session') return 'session';
-  if (decision.kind === 'absent') return 'none';
-  return traceReasonOf([decision.reason, ...nullKeys].join('-'));
-}
 
 function refreshTraceOutcome(outcome: SessionRefreshOutcome): TraceOutcome {
   if (outcome === 'refreshed') return 'ok';
@@ -97,9 +90,14 @@ class SessionService {
   private persistRetry: ReturnType<typeof setTimeout> | null = null;
   private sessionVersion = 0;
   private initialized = false;
+  private lastRestore: RestoreReport | null = null;
 
   get isInitialized(): boolean {
     return this.initialized;
+  }
+
+  restoreCause(): RestoreCause | null {
+    return this.lastRestore?.cause ?? null;
   }
 
   getAccessToken(): string | null {
@@ -130,6 +128,7 @@ class SessionService {
 
   async establish(session: IAuthSession): Promise<void> {
     this.sessionVersion += 1;
+    this.lastRestore = null;
     setDeviceCredential(session.deviceSecret);
     useAuthStore.getState().setSession(session);
     viewCacheService.setUserId(session.user.id);
@@ -189,6 +188,7 @@ class SessionService {
 
   private async performClear(): Promise<void> {
     this.sessionVersion += 1;
+    this.lastRestore = null;
     this.cancelPersistRetry();
     const userId = useAuthStore.getState().user?.id ?? null;
     viewCacheCoordinatorService.stop();
@@ -212,8 +212,19 @@ class SessionService {
   }
 
   private async restore(): Promise<SessionBootstrapResult> {
-    const reading = await this.readStoredSessionUntilReadable();
-    const decision = decideRestore(reading);
+    const attempt = await this.readStoredSession();
+    const report = restoreReport(attempt);
+    this.lastRestore = report;
+    for (const warning of report.warnings) log.warn('session', warning);
+    traceEvent('restore', report.outcome, report.reason);
+
+    const reading = attempt.reading;
+    if (!reading) {
+      useAuthStore.getState().clear();
+      return { ...(await this.getPairingState()), status: 'signed-out', restored: false };
+    }
+
+    const decision = report.decision ?? decideRestore(reading);
     const { instance, accessToken, refreshToken, deviceCredential, user } = reading;
     const deviceSecret = cleanDeviceCredential(deviceCredential);
     const session =
@@ -234,7 +245,6 @@ class SessionService {
       return { paired: false, instance: null, status: 'signed-out', restored: false };
     }
 
-    traceEvent('restore', restoreTraceOutcome(decision), restoreTraceReason(decision, nullStoredKeys(reading)));
     return {
       paired: instance !== null,
       instance,
@@ -243,8 +253,9 @@ class SessionService {
     };
   }
 
-  private async readStoredSessionUntilReadable(): Promise<StoredSessionReading> {
-    for (let attempt = 1; ; attempt += 1) {
+  private async readStoredSession(): Promise<StoredSessionAttempt> {
+    const failures: RestoreFailure[] = [];
+    for (let attempt = 1; attempt <= RESTORE_READ_ATTEMPTS; attempt += 1) {
       try {
         const [instance, accessToken, refreshToken, deviceCredential] = await Promise.all([
           netService.instance(),
@@ -253,12 +264,15 @@ class SessionService {
           secureStorageService.getStringAsync(NET_STORAGE_KEYS.deviceCredential),
         ]);
         const user = storageService.getObject<IAuthUser>(SESSION_USER_KEY);
-        return { instance, accessToken, refreshToken, deviceCredential, user };
-      } catch {
-        traceEvent('restore', 'error', 'read-error');
+        return { reading: { instance, accessToken, refreshToken, deviceCredential, user }, failures };
+      } catch (error) {
+        failures.push(restoreFailureOf(error));
+        log.error('session', `the stored session could not be read (attempt ${attempt})`, error);
+        if (attempt === RESTORE_READ_ATTEMPTS) break;
         await new Promise<void>((resolve) => setTimeout(resolve, restoreRetryDelayMs(attempt)));
       }
     }
+    return { reading: null, failures };
   }
 
   private async performRefresh(): Promise<SessionRefreshOutcome> {

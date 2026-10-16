@@ -33,6 +33,18 @@ mock.module('@/core/services/secure-storage', () => ({
   },
 }));
 
+mock.module('@/core/services/instance-storage', () => ({
+  instanceStorageService: {
+    getStringAsync: async (key: string) => store.get(key) ?? null,
+    setStringAsync: async (key: string, value: string) => {
+      store.set(key, value);
+    },
+    deleteAsync: async (key: string) => {
+      store.delete(key);
+    },
+  },
+}));
+
 mock.module('@tauri-apps/api/core', () => ({
   Channel: class {
     onmessage: ((payload: ArrayBuffer) => void) | null = null;

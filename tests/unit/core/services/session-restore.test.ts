@@ -2,10 +2,14 @@ import { describe, expect, test } from 'bun:test';
 import {
   decideRestore,
   nullStoredKeys,
+  restoreFailureOf,
+  restoreReport,
   restoreRetryDelayMs,
+  RESTORE_READ_ATTEMPTS,
   RESTORE_RETRY_CAP_MS,
   type StoredSessionReading,
 } from '@/core/services/session-restore';
+import { traceReasonOf } from '@/core/services/native-trace-reason';
 
 const instance = { host: 'argus.local', ip: '192.168.1.10', port: 7042 } as unknown as StoredSessionReading['instance'];
 const user = { id: 1, name: 'David' } as unknown as StoredSessionReading['user'];
@@ -59,6 +63,154 @@ describe('the restore retry after a failed read', () => {
   test('the wait never grows past the cap', () => {
     expect(restoreRetryDelayMs(20)).toBe(RESTORE_RETRY_CAP_MS);
     expect(restoreRetryDelayMs(0)).toBe(1_000);
+  });
+});
+
+describe('the restore report names the exact cause of a session that disappeared', () => {
+  test('a complete stored session restores and traces nothing else', () => {
+    const report = restoreReport({ reading: whole, failures: [] });
+    expect(report.cause).toBe('session');
+    expect(report.outcome).toBe('ok');
+    expect(report.reason).toBe('session');
+    expect(report.lostKeys).toEqual([]);
+    expect(report.warnings).toEqual([]);
+  });
+
+  test('an empty store is a fresh install, not a lost session', () => {
+    const report = restoreReport({
+      reading: { instance: null, accessToken: null, refreshToken: null, deviceCredential: null, user: null },
+      failures: [],
+    });
+    expect(report.cause).toBe('fresh');
+    expect(report.outcome).toBe('absent');
+    expect(report.reason).toBe('none');
+  });
+
+  test('a remembered account whose session secrets are gone is a vanished session', () => {
+    const report = restoreReport({
+      reading: { ...whole, accessToken: null, refreshToken: null, deviceCredential: null },
+      failures: [],
+    });
+    expect(report.cause).toBe('vanished');
+    expect(report.outcome).toBe('error');
+    expect(report.reason).toBe('keystore-lost-access-token-refresh-token-device-credential');
+    expect(report.lostKeys).toEqual(['access-token', 'refresh-token', 'device-credential']);
+  });
+
+  test('a vanished session names only the secrets that came back empty', () => {
+    const report = restoreReport({ reading: { ...whole, refreshToken: null }, failures: [] });
+    expect(report.cause).toBe('vanished');
+    expect(report.reason).toBe('keystore-lost-refresh-token');
+    expect(report.lostKeys).toEqual(['refresh-token']);
+  });
+
+  test('every warning logs the SecureStoreModule warning and the key name, never a value', () => {
+    const report = restoreReport({
+      reading: { ...whole, accessToken: null, refreshToken: null },
+      failures: [],
+    });
+    expect(report.warnings).toHaveLength(2);
+    const [access, refresh] = report.warnings;
+    expect(access).toContain('SecureStoreModule (ExpoSecureStore)');
+    expect(access).toContain("key 'net.accessToken'");
+    expect(refresh).toContain("key 'net.refreshToken'");
+    expect(report.warnings.join(' ')).not.toContain('refresh-value');
+  });
+
+  test('a lost pairing with its session intact is unpaired, not vanished', () => {
+    const report = restoreReport({ reading: { ...whole, instance: null }, failures: [] });
+    expect(report.cause).toBe('unpaired');
+    expect(report.outcome).toBe('partial');
+    expect(report.reason).toBe('instance');
+    expect(report.lostKeys).toEqual([]);
+  });
+
+  test('a stored session without its user row is incomplete', () => {
+    const report = restoreReport({ reading: { ...whole, user: null }, failures: [] });
+    expect(report.cause).toBe('incomplete');
+    expect(report.outcome).toBe('partial');
+    expect(report.reason).toBe('user');
+  });
+
+  test('an empty pairing with no user and no tokens names every lost key', () => {
+    const report = restoreReport({
+      reading: { instance: null, accessToken: null, refreshToken: null, deviceCredential: 'credential', user: null },
+      failures: [],
+    });
+    expect(report.cause).toBe('unpaired');
+    expect(report.reason).toBe('instance-access-token-refresh-token-user');
+    expect(report.warnings).toEqual([]);
+  });
+
+  test('every traced reason survives the trace shape', () => {
+    const readings: StoredSessionReading[] = [
+      whole,
+      { instance: null, accessToken: null, refreshToken: null, deviceCredential: null, user: null },
+      { ...whole, accessToken: null, refreshToken: null, deviceCredential: null },
+      { ...whole, refreshToken: null },
+      { ...whole, instance: null },
+      { ...whole, user: null },
+    ];
+    for (const reading of readings) {
+      const report = restoreReport({ reading, failures: [] });
+      expect(traceReasonOf(report.reason)).toBe(report.reason);
+      expect(report.reason.length).toBeLessThanOrEqual(64);
+    }
+  });
+});
+
+describe('a refused read maps to the keystore cause and the key the library names', () => {
+  test('a failed decryption names the key and the module', () => {
+    const failure = restoreFailureOf(
+      new Error(
+        "Could not decrypt the value for key 'net.accessToken' under keychain 'undefined'. Caused by: Failed to decrypt the entry",
+      ),
+    );
+    expect(failure.kind).toBe('decrypt');
+    expect(failure.key).toBe('net.accessToken');
+  });
+
+  test('a keystore access failure is a keystore cause', () => {
+    const failure = restoreFailureOf(
+      new Error(
+        "Could not decrypt the value for key 'net.refreshToken' under keychain 'undefined'. Caused by: An error occurred when accessing the keystore: KeyStore is not initialized",
+      ),
+    );
+    expect(failure.kind).toBe('keystore');
+    expect(failure.key).toBe('net.refreshToken');
+  });
+
+  test('an unknown refusal keeps the message and names no key', () => {
+    const failure = restoreFailureOf(new Error('something else went wrong'));
+    expect(failure).toEqual({ kind: 'unknown', key: null, message: 'something else went wrong' });
+  });
+
+  test('a read that never succeeds becomes an unreadable session, its key and kind in the reason', () => {
+    const report = restoreReport({
+      reading: null,
+      failures: [
+        restoreFailureOf(new Error("Could not decrypt the value for key 'net.accessToken' under keychain 'undefined'")),
+      ],
+    });
+    expect(report.cause).toBe('unreadable');
+    expect(report.outcome).toBe('error');
+    expect(report.reason).toBe('securestore-decrypt-access-token');
+    expect(report.warnings[0]).toContain('SecureStoreModule (ExpoSecureStore)');
+    expect(report.warnings[0]).toContain("key 'net.accessToken'");
+  });
+
+  test('a refusal the library does not name keeps a session reason', () => {
+    const report = restoreReport({
+      reading: null,
+      failures: [restoreFailureOf('the native module is unavailable')],
+    });
+    expect(report.reason).toBe('securestore-unknown-session');
+    expect(report.warnings).toHaveLength(1);
+  });
+
+  test('the read attempts are bounded', () => {
+    expect(RESTORE_READ_ATTEMPTS).toBeGreaterThan(1);
+    expect(RESTORE_READ_ATTEMPTS).toBeLessThanOrEqual(5);
   });
 });
 

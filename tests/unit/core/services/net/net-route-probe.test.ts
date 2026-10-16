@@ -11,6 +11,14 @@ mock.module('@/core/services/secure-storage', () => ({
   },
 }));
 
+mock.module('@/core/services/instance-storage', () => ({
+  instanceStorageService: {
+    getStringAsync: async () => null,
+    setStringAsync: async () => undefined,
+    deleteAsync: async () => undefined,
+  },
+}));
+
 const { measureRoute, probeUrls, readingOf } = await import('@/core/services/net/net-route-probe');
 const { chooseRoute } = await import('@/core/services/net/net-route-choice');
 const { log } = await import('@/core/services/log');

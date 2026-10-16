@@ -84,6 +84,7 @@ export default (_context: ConfigContext): ExpoConfig => {
           },
         },
       ],
+      './plugins/with-argus-backup-rules',
       'expo-secure-store',
       'expo-asset',
       [

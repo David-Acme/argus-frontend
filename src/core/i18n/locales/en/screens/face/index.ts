@@ -3,6 +3,9 @@ export const face = {
   'intro-enroll-body': 'Argus recognizes your face to open your session and to know who is home. The photo and its face print are stored only on your server and never leave your network.',
   'intro-login-title': 'Sign in with your face',
   'intro-login-body': 'Look at the camera and Argus will recognize you. The photo goes only to your server.',
+  'restore-title': 'Sign back in with your face',
+  'restore-body':
+    'Your session was lost when the app was reinstalled, but this device is still linked to your server. Look at the camera to get in — no pairing code needed.',
   'tip-light': 'Find good light, not backlit.',
   'tip-cover': 'Take off sunglasses, a cap or a mask.',
   'tip-front': 'Look straight ahead with the phone at face height.',

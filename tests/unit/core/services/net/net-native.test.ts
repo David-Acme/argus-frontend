@@ -41,6 +41,18 @@ mock.module('@/core/services/secure-storage', () => ({
   },
 }));
 
+mock.module('@/core/services/instance-storage', () => ({
+  instanceStorageService: {
+    getStringAsync: async (key: string) => store.get(key) ?? null,
+    setStringAsync: async (key: string, value: string) => {
+      store.set(key, value);
+    },
+    deleteAsync: async (key: string) => {
+      store.delete(key);
+    },
+  },
+}));
+
 mock.module('expo-constants', () => ({
   default: { expoConfig: { version: '1.2.3' }, deviceName: 'laptop' },
 }));

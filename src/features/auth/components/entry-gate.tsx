@@ -12,7 +12,7 @@ import { BrandSplash } from '@/features/auth/components/brand-splash';
 import { ServerUnreachable } from '@/features/auth/components/server-unreachable';
 import { nextHref } from '@/features/auth/model/onboarding-flow';
 
-type EntryDestination = 'welcome' | 'owner-enroll' | 'login' | 'unreachable';
+type EntryDestination = 'welcome' | 'owner-enroll' | 'login' | 'restore' | 'unreachable';
 
 async function resolveEntry(): Promise<EntryDestination> {
   const pairing = await sessionService.getPairingState();
@@ -20,7 +20,8 @@ async function resolveEntry(): Promise<EntryDestination> {
   if (!IS_NATIVE) return 'login';
   const status = await authService.serverStatus();
   if (!status.ok || !status.info) return 'unreachable';
-  return status.info.hasOwner ? 'login' : 'owner-enroll';
+  if (!status.info.hasOwner) return 'owner-enroll';
+  return sessionService.restoreCause() === 'vanished' ? 'restore' : 'login';
 }
 
 function EntryRedirect() {
@@ -45,6 +46,8 @@ function EntryRedirect() {
   if (destination === 'unreachable') return <ServerUnreachable onRetry={retry} />;
   if (destination === 'welcome') return <Redirect href="/welcome" />;
   if (destination === 'owner-enroll') return <Redirect href={nextHref('owner', 'pair', { native: IS_NATIVE }) ?? '/welcome'} />;
+  if (destination === 'restore')
+    return <Redirect href={{ pathname: '/welcome/face', params: { mode: 'login', restore: '1' } }} />;
   return IS_NATIVE ? <Redirect href="/welcome/face?mode=login" /> : <Redirect href="/login" />;
 }
 

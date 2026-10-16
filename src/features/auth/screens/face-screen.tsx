@@ -27,8 +27,9 @@ export default function FaceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const { mode = 'owner-enroll' } = useLocalSearchParams<{ mode?: string }>();
+  const { mode = 'owner-enroll', restore } = useLocalSearchParams<{ mode?: string; restore?: string }>();
   const flow = flowOf({ mode });
+  const restoring = restore === '1' && mode === 'login';
   const [sheetHeight, setSheetHeight] = useState(0);
   const {
     t,
@@ -49,7 +50,7 @@ export default function FaceScreen() {
     cameraActive,
     handleCameraReady,
     captureManually,
-  } = useFaceCapture({ mode });
+  } = useFaceCapture({ mode, restoring });
 
   const handleSheetLayout = useCallback((e: LayoutChangeEvent) => {
     setSheetHeight(e.nativeEvent.layout.height);
@@ -95,7 +96,7 @@ export default function FaceScreen() {
           {enrolling ? (
             <OnboardingSteps flow={flow} step="face" className="mb-8 w-full max-w-md self-center" />
           ) : null}
-          <FaceIntro enrolling={enrolling} requesting={requesting} onStart={start} />
+          <FaceIntro enrolling={enrolling} requesting={requesting} restoring={restoring} onStart={start} />
           <View className="mt-8 w-full max-w-md self-center">{alternativesNode}</View>
         </ScrollView>
       </View>

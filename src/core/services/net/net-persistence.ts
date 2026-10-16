@@ -1,3 +1,4 @@
+import { instanceStorageService } from '@/core/services/instance-storage';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { NET_STORAGE_KEYS } from '@/shared/constants';
 import type {
@@ -16,6 +17,12 @@ import { usableRemote } from './net-route-choice';
 
 let cachedInstance: NetPairedInstance | null | undefined;
 
+export const SESSION_STORAGE_KEYS: readonly string[] = [
+  NET_STORAGE_KEYS.accessToken,
+  NET_STORAGE_KEYS.refreshToken,
+  NET_STORAGE_KEYS.deviceCredential,
+];
+
 const STORED_INSTANCE_KEYS = [
   NET_STORAGE_KEYS.caPem,
   NET_STORAGE_KEYS.host,
@@ -33,7 +40,7 @@ export type StoredInstance = Readonly<Partial<Record<(typeof STORED_INSTANCE_KEY
 
 export async function isPaired(): Promise<boolean> {
   if (cachedInstance !== undefined) return cachedInstance !== null;
-  return (await secureStorageService.getStringAsync(NET_STORAGE_KEYS.paired)) === 'true';
+  return (await instanceStorageService.getStringAsync(NET_STORAGE_KEYS.paired)) === 'true';
 }
 
 export function storedInstance(stored: StoredInstance): NetPairedInstance | null {
@@ -68,7 +75,7 @@ export async function loadInstance(): Promise<NetPairedInstance | null> {
     return null;
   }
 
-  const values = await Promise.all(STORED_INSTANCE_KEYS.map((key) => secureStorageService.getStringAsync(key)));
+  const values = await Promise.all(STORED_INSTANCE_KEYS.map((key) => instanceStorageService.getStringAsync(key)));
   cachedInstance = storedInstance(
     Object.fromEntries(STORED_INSTANCE_KEYS.map((key, index) => [key, values[index] ?? null]))
   );
@@ -88,8 +95,8 @@ export async function saveRemote(remote: NetRemoteProfile): Promise<boolean> {
   if (!usableRemote(remote)) return false;
   const instance = await loadInstance();
   if (!instance || sameRemote(instance.remote, remote)) return false;
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.remoteHomeId, remote.homeId);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.remoteDomain, remote.domain);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.remoteHomeId, remote.homeId);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.remoteDomain, remote.domain);
   if (cachedInstance) cachedInstance = { ...cachedInstance, remote: { homeId: remote.homeId, domain: remote.domain } };
   return true;
 }
@@ -120,11 +127,11 @@ export function matchesExpectation(pairing: NetPairing, expect: NetPairExpectati
 export async function savePairing(input: NetAdoptInput): Promise<void> {
   const { pairing, host, ip } = input;
   cachedInstance = undefined;
-  await secureStorageService.deleteAsync(NET_STORAGE_KEYS.paired);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caPem, pairing.caPem);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.caFingerprint, pairing.caFingerprint);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.host, host);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, ip);
+  await instanceStorageService.deleteAsync(NET_STORAGE_KEYS.paired);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.caPem, pairing.caPem);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.caFingerprint, pairing.caFingerprint);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.host, host);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.ip, ip);
   await savePairingMetadata(input);
 }
 
@@ -132,13 +139,13 @@ export async function savePairingMetadata(input: NetAdoptInput): Promise<void> {
   const { pairing, host, ip, routes } = input;
   const pairedAt = Date.now();
   cachedInstance = undefined;
-  await secureStorageService.deleteAsync(NET_STORAGE_KEYS.remoteHomeId);
-  await secureStorageService.deleteAsync(NET_STORAGE_KEYS.remoteDomain);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.port, String(pairing.port));
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.instanceId, pairing.instanceId);
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.pairedAt, String(pairedAt));
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(routes));
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.paired, 'true');
+  await instanceStorageService.deleteAsync(NET_STORAGE_KEYS.remoteHomeId);
+  await instanceStorageService.deleteAsync(NET_STORAGE_KEYS.remoteDomain);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.port, String(pairing.port));
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.instanceId, pairing.instanceId);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.pairedAt, String(pairedAt));
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(routes));
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.paired, 'true');
 
   cachedInstance = {
     host,
@@ -153,12 +160,12 @@ export async function savePairingMetadata(input: NetAdoptInput): Promise<void> {
 }
 
 export async function updateInstanceAddress(update: NetAddressUpdate): Promise<void> {
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.ip, update.ip);
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.ip, update.ip);
   await rememberInstanceAddress(update);
 }
 
 export async function rememberInstanceAddress(update: NetAddressUpdate): Promise<void> {
-  await secureStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(update.routes));
+  await instanceStorageService.setStringAsync(NET_STORAGE_KEYS.routes, JSON.stringify(update.routes));
   if (cachedInstance) cachedInstance = { ...cachedInstance, ip: update.ip, routes: update.routes };
 }
 
@@ -166,7 +173,8 @@ export async function clearInstance(keep: readonly string[] = []): Promise<void>
   cachedInstance = null;
   for (const key of Object.values(NET_STORAGE_KEYS)) {
     if (keep.includes(key)) continue;
-    await secureStorageService.deleteAsync(key);
+    const store = SESSION_STORAGE_KEYS.includes(key) ? secureStorageService : instanceStorageService;
+    await store.deleteAsync(key);
   }
 }
 

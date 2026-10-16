@@ -7,12 +7,13 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 type FaceIntroProps = {
   enrolling: boolean;
   requesting: boolean;
+  restoring: boolean;
   onStart: () => void;
 };
 
 const TIPS = ['tip-light', 'tip-cover', 'tip-front'] as const;
 
-export function FaceIntro({ enrolling, requesting, onStart }: FaceIntroProps) {
+export function FaceIntro({ enrolling, requesting, restoring, onStart }: FaceIntroProps) {
   const { t } = useTranslation();
   return (
     <View className="w-full max-w-md gap-6 self-center">
@@ -21,10 +22,18 @@ export function FaceIntro({ enrolling, requesting, onStart }: FaceIntroProps) {
       </View>
       <View className="gap-2">
         <Text variant="title">
-          {enrolling ? t('screens.face.intro-enroll-title') : t('screens.face.intro-login-title')}
+          {restoring
+            ? t('screens.face.restore-title')
+            : enrolling
+              ? t('screens.face.intro-enroll-title')
+              : t('screens.face.intro-login-title')}
         </Text>
         <Text variant="body" className="text-foreground-secondary">
-          {enrolling ? t('screens.face.intro-enroll-body') : t('screens.face.intro-login-body')}
+          {restoring
+            ? t('screens.face.restore-body')
+            : enrolling
+              ? t('screens.face.intro-enroll-body')
+              : t('screens.face.intro-login-body')}
         </Text>
       </View>
       <View className="gap-2.5">

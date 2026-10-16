@@ -9,6 +9,14 @@ mock.module('@/core/services/secure-storage', () => ({
   },
 }));
 
+mock.module('@/core/services/instance-storage', () => ({
+  instanceStorageService: {
+    getStringAsync: async () => null,
+    setStringAsync: async () => undefined,
+    deleteAsync: async () => undefined,
+  },
+}));
+
 const { toNetError } = await import('@/core/services/net/net-persistence');
 
 describe('toNetError', () => {

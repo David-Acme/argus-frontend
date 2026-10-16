@@ -1,6 +1,7 @@
 export * from './storage.interface';
 export * from './net.interface';
 export * from './secure-storage.interface';
+export * from './instance-storage.interface';
 export * from './http.interface';
 export * from './session.interface';
 export * from './auth.interface';

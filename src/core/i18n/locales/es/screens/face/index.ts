@@ -3,6 +3,9 @@ export const face = {
   'intro-enroll-body': 'Argus te reconoce por la cara para abrir tu sesión y para saber quién está en casa. La foto y su huella facial se guardan solo en tu servidor y nunca salen de tu red.',
   'intro-login-title': 'Entra con tu rostro',
   'intro-login-body': 'Mira a la cámara y Argus te reconocerá. La foto se envía solo a tu servidor.',
+  'restore-title': 'Vuelve a entrar con tu rostro',
+  'restore-body':
+    'Tu sesión se perdió al reinstalar la app, pero este equipo sigue vinculado a tu servidor. Mira a la cámara y entra: no hace falta otro código de emparejamiento.',
   'tip-light': 'Busca buena luz, sin contraluz.',
   'tip-cover': 'Quítate gafas de sol, gorra o mascarilla.',
   'tip-front': 'Mira de frente y mantén el teléfono a la altura de la cara.',

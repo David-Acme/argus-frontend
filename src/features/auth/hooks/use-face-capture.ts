@@ -25,9 +25,10 @@ type Phase = 'guide' | 'countdown' | 'submitting';
 
 type FaceCaptureOptions = {
   mode: string;
+  restoring: boolean;
 };
 
-export function useFaceCapture({ mode }: FaceCaptureOptions) {
+export function useFaceCapture({ mode, restoring }: FaceCaptureOptions) {
   const router = useRouter();
   const enrolling = mode === 'owner-enroll' || mode === 'invite-enroll';
   const { t } = useTranslation();
@@ -45,7 +46,7 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
   const [capturing, setCapturing] = useState(false);
   const [error, setError] = useState<FaceError | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [started, setStarted] = useState(!enrolling);
+  const [started, setStarted] = useState(!enrolling && !restoring);
   const [requesting, setRequesting] = useState(false);
   const [asked, setAsked] = useState(false);
   const [manualAvailable, setManualAvailable] = useState(false);
