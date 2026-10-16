@@ -29,6 +29,12 @@ describe('voiceErrorMessage', () => {
     );
   });
 
+  test('an answer that fails to connect says so, and the retry is offered by the surface', () => {
+    expect(voiceErrorMessage('CALL_CONNECT_FAILED|network down', t)).toBe(
+      'screens.voice.errors.connect-failed'
+    );
+  });
+
   test('too many calls and an unavailable call service are worded apart', () => {
     expect(voiceErrorMessage('TOO_MANY_REQUESTS|too many calls at once', t)).toBe(
       'screens.voice.errors.too-many-calls'

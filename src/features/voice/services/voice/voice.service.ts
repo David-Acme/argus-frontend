@@ -254,7 +254,14 @@ class VoiceService {
     const realtime = rtcCallSupported();
     if (!(realtime && IS_TAURI) && !(await this.microphoneGranted(session))) return;
     if (realtime) {
-      const handled = await this.startRealtime(session, { callId: options.callId });
+      const handled = await this.startRealtime(session, { callId: options.callId }).catch(
+        (reason: unknown) => {
+          log.error('voice', 'the call could not be answered', reason);
+          if (this.isCurrent(session))
+            this.fail(`CALL_CONNECT_FAILED|${reason instanceof Error ? reason.message : String(reason)}`);
+          return true;
+        },
+      );
       if (handled || !this.isCurrent(session)) return;
       if (options.callId) {
         this.fail('RTC_UNAVAILABLE|Argus cannot take this call here');

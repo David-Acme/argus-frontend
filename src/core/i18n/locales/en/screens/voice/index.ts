@@ -181,6 +181,7 @@ export const voice = {
     'too-many-calls': 'You already have two calls open with Argus. Hang up one to start another.',
     'rtc-unavailable': 'Calls are not available on your server right now. Try again in a little while.',
     connection: 'There is no connection to your Argus server.',
+    'connect-failed': 'The call could not connect.',
     generic: 'Argus cannot take the call right now.',
     unavailable: 'The microphone is not available.',
     'permission-denied': 'No permission to use the microphone.',

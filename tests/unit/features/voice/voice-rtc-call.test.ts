@@ -16,6 +16,7 @@ const typeListeners = new Map<string, (payload: unknown) => void>();
 let tokenAnswers: IServiceResponse<unknown>[] = [];
 let deferredAnswer: Promise<IServiceResponse<unknown>> | null = null;
 let realtimeSupported = true;
+let throwNextToken = false;
 
 class FakeCall implements IRealtimeCall {
   joins: RtcJoin[] = [];
@@ -56,6 +57,10 @@ mock.module('@/features/voice/services/rtc/rtc-token', () => ({
   },
   requestCallToken: async (body: unknown) => {
     posted.push({ url: '/rtc/token', body });
+    if (throwNextToken) {
+      throwNextToken = false;
+      throw new Error('network down');
+    }
     if (deferredAnswer) {
       const pending = deferredAnswer;
       deferredAnswer = null;
@@ -145,6 +150,7 @@ beforeEach(() => {
   posted.length = 0;
   sentFrames.length = 0;
   tokenAnswers = [];
+  throwNextToken = false;
   setAppState('active');
   realtimeSupported = true;
   call = new FakeCall();
@@ -169,6 +175,13 @@ describe('a WebRTC call', () => {
     call.listener({ kind: 'state', state: 'connected', reason: null });
     expect(voiceService.snapshot.phase).toBe('listening');
     expect(sentFrames).toEqual([]);
+  });
+
+  test('an answer whose request throws ends in the error state, never waiting in connecting', async () => {
+    throwNextToken = true;
+    await voiceService.start({ callId: 'call-throws' });
+    expect(voiceService.snapshot.phase).toBe('error');
+    expect(voiceService.snapshot.error).toStartWith('CALL_CONNECT_FAILED|network down');
   });
 
   test('room data feeds the transcript and actions, app frames go back on topics', async () => {
