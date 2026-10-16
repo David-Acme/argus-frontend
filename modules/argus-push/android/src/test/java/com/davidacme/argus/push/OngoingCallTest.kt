@@ -13,6 +13,18 @@ class OngoingCallTest {
     }
 
     @Test
+    fun theOngoingCallIsAlwaysRunByTheForegroundServiceNeverPostedDirectly() {
+        assertEquals(OngoingCallRoute.ForegroundService, ongoingCallRoute())
+    }
+
+    @Test
+    fun theOngoingServiceRunsOnlyWhileTheAnsweredCallIsNotEnded() {
+        assertEquals(true, shouldRunOngoingService(answered = true, ended = false))
+        assertEquals(false, shouldRunOngoingService(answered = true, ended = true))
+        assertEquals(false, shouldRunOngoingService(answered = false, ended = false))
+    }
+
+    @Test
     fun theOngoingCallCopyFollowsTheDeviceLanguage() {
         assertEquals(OngoingCallCopy("Llamada en curso", "Colgar"), ongoingCallCopy(spanish = true))
         assertEquals(OngoingCallCopy("Call in progress", "Hang up"), ongoingCallCopy(spanish = false))
