@@ -14,13 +14,13 @@ export type LeaveCallEffects = {
 };
 
 export function leaveCall(effects: LeaveCallEffects): void {
-  effects.stopVoice();
   const canGoBack = effects.canGoBack();
   const action = leaveAction({ canGoBack, enteredFromOutside: effects.enteredFromOutside });
   if (action === 'background') {
     if (canGoBack) effects.goBack();
     effects.sendToBackground();
-  } else if (action === 'back') {
-    effects.goBack();
+    return;
   }
+  effects.stopVoice();
+  if (action === 'back') effects.goBack();
 }

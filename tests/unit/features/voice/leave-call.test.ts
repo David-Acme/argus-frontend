@@ -22,16 +22,16 @@ describe('leaving the call screen', () => {
     expect(order).toEqual(['stop']);
   });
 
-  test('a call entered from outside with history pops /call first, then goes to the background, never back into the app', () => {
+  test('a call entered from outside with history pops /call first, then goes to the background and keeps the call running', () => {
     const order: string[] = [];
     leaveCall(effectsFor(true, true, order));
-    expect(order).toEqual(['stop', 'back', 'background']);
+    expect(order).toEqual(['back', 'background']);
   });
 
-  test('a call entered from outside with nothing to return to goes straight to the background', () => {
+  test('a call entered from outside with nothing to return to goes straight to the background and keeps the call running', () => {
     const order: string[] = [];
     leaveCall(effectsFor(false, true, order));
-    expect(order).toEqual(['stop', 'background']);
+    expect(order).toEqual(['background']);
   });
 
   test('an outside call backgrounds even when the app has history under it', () => {
