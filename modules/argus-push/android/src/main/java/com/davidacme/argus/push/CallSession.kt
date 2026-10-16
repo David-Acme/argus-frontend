@@ -101,6 +101,7 @@ internal object CallSession {
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.OTHER)
         KeyguardCall.callEnded()
+        CallAudio.restore(app)
     }
 
     fun endActive(context: Context) {
@@ -109,6 +110,7 @@ internal object CallSession {
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
         KeyguardCall.callEnded()
+        CallAudio.restore(app)
     }
 
     fun connectionEnded(context: Context, ended: ArgusConnection) {
@@ -118,6 +120,7 @@ internal object CallSession {
         releaseCall(context.applicationContext, ended.callId)
         ended.endWith(DisconnectCause.LOCAL)
         KeyguardCall.callEnded()
+        CallAudio.restore(context)
     }
 
     private fun deliverDecline(context: Context, callId: String) {

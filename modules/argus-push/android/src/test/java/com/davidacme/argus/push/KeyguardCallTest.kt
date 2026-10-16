@@ -16,4 +16,12 @@ class KeyguardCallTest {
         assertFalse(KeyguardCall.showOverKeyguard(answeredFromOutside = false, ended = false))
         assertFalse(KeyguardCall.showOverKeyguard(answeredFromOutside = false, ended = true))
     }
+
+    @Test
+    fun theLockAppliesToTheFirstAppActivityAfterAnOutsideAnswer() {
+        assertTrue(KeyguardCall.shouldAttach(armed = true, intentExtra = false, isCallActivity = false))
+        assertTrue(KeyguardCall.shouldAttach(armed = false, intentExtra = true, isCallActivity = false))
+        assertFalse(KeyguardCall.shouldAttach(armed = true, intentExtra = true, isCallActivity = true))
+        assertFalse(KeyguardCall.shouldAttach(armed = false, intentExtra = false, isCallActivity = false))
+    }
 }

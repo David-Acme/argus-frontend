@@ -18,13 +18,16 @@ object PushActivityTracker {
             object : Application.ActivityLifecycleCallbacks {
                 override fun onActivityResumed(activity: Activity) {
                     if (activity !is CallActivity) appResumed = WeakReference(activity)
+                    KeyguardCall.onResumed(activity)
                 }
 
                 override fun onActivityPaused(activity: Activity) {
                     if (appResumed?.get() === activity) appResumed = null
                 }
 
-                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                    KeyguardCall.onCreated(activity)
+                }
 
                 override fun onActivityStarted(activity: Activity) = Unit
 
@@ -32,7 +35,9 @@ object PushActivityTracker {
 
                 override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
 
-                override fun onActivityDestroyed(activity: Activity) = Unit
+                override fun onActivityDestroyed(activity: Activity) {
+                    KeyguardCall.release(activity)
+                }
             },
         )
     }
