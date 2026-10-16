@@ -2,7 +2,15 @@ import type { TranslationKey } from '@/core/types';
 
 export type OnboardingFlowId = 'owner' | 'invited';
 
-export type OnboardingStepId = 'pair' | 'invitation' | 'privacy' | 'face' | 'modules' | 'module-privacy' | 'meet';
+export type OnboardingStepId =
+  | 'pair'
+  | 'invitation'
+  | 'privacy'
+  | 'face'
+  | 'permissions'
+  | 'modules'
+  | 'module-privacy'
+  | 'meet';
 
 export type OnboardingContext = {
   native: boolean;
@@ -14,6 +22,7 @@ export type OnboardingScreen =
   | '/welcome/invitation'
   | '/welcome/privacy'
   | '/welcome/face'
+  | '/welcome/permissions'
   | '/welcome/modules'
   | '/welcome/module-privacy'
   | '/welcome/voice';
@@ -58,6 +67,13 @@ const STEP: Readonly<Record<OnboardingStepId, OnboardingStep>> = {
     skippable: false,
   },
   face: { id: 'face', screen: '/welcome/face', label: 'screens.welcome.steps.face', when: nativeOnly, skippable: false },
+  permissions: {
+    id: 'permissions',
+    screen: '/welcome/permissions',
+    label: 'screens.welcome.steps.permissions',
+    when: nativeOnly,
+    skippable: true,
+  },
   modules: {
     id: 'modules',
     screen: '/welcome/modules',
@@ -76,8 +92,16 @@ const STEP: Readonly<Record<OnboardingStepId, OnboardingStep>> = {
 };
 
 export const ONBOARDING_FLOWS: Readonly<Record<OnboardingFlowId, readonly OnboardingStep[]>> = {
-  owner: [STEP.pair, STEP.privacy, STEP.face, STEP.modules, STEP['module-privacy'], STEP.meet],
-  invited: [STEP.invitation, STEP.privacy, STEP.face, STEP.meet],
+  owner: [
+    STEP.pair,
+    STEP.privacy,
+    STEP.face,
+    STEP.permissions,
+    STEP.modules,
+    STEP['module-privacy'],
+    STEP.meet,
+  ],
+  invited: [STEP.invitation, STEP.privacy, STEP.face, STEP.permissions, STEP.meet],
 };
 
 const ENROLL_MODE: Readonly<Record<OnboardingFlowId, string>> = {

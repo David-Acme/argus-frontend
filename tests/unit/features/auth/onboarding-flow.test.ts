@@ -20,13 +20,14 @@ describe('onboarding flows are data', () => {
       'pair',
       'privacy',
       'face',
+      'permissions',
       'modules',
       'module-privacy',
       'meet',
     ]);
-    expect(progressOf('owner', 'pair', phone)).toMatchObject({ current: 1, total: 6 });
-    expect(progressOf('owner', 'modules', phone)).toMatchObject({ current: 4, total: 6 });
-    expect(progressOf('owner', 'module-privacy', phone)).toMatchObject({ current: 5, total: 6 });
+    expect(progressOf('owner', 'pair', phone)).toMatchObject({ current: 1, total: 7 });
+    expect(progressOf('owner', 'modules', phone)).toMatchObject({ current: 5, total: 7 });
+    expect(progressOf('owner', 'module-privacy', phone)).toMatchObject({ current: 6, total: 7 });
   });
 
   test('consent comes before the face and the module answers after the modules', () => {
@@ -39,17 +40,24 @@ describe('onboarding flows are data', () => {
   test('the module answers drop out, and the count with them, when no chosen module has signals', () => {
     const none = { native: true, moduleSignals: false };
     const some = { native: true, moduleSignals: true };
-    expect(stepsOf('owner', none).map((step) => step.id)).toEqual(['pair', 'privacy', 'face', 'modules', 'meet']);
-    expect(stepsOf('owner', some)).toHaveLength(6);
-    expect(progressOf('owner', 'meet', none)).toMatchObject({ current: 5, total: 5 });
-    expect(progressOf('owner', 'meet', some)).toMatchObject({ current: 6, total: 6 });
+    expect(stepsOf('owner', none).map((step) => step.id)).toEqual([
+      'pair',
+      'privacy',
+      'face',
+      'permissions',
+      'modules',
+      'meet',
+    ]);
+    expect(stepsOf('owner', some)).toHaveLength(7);
+    expect(progressOf('owner', 'meet', none)).toMatchObject({ current: 6, total: 6 });
+    expect(progressOf('owner', 'meet', some)).toMatchObject({ current: 7, total: 7 });
     expect(nextHref('owner', 'modules', none)).toEqual({ pathname: '/welcome/voice', params: { flow: 'owner' } });
     expect(nextHref('owner', 'modules', some)).toEqual({ pathname: '/welcome/module-privacy', params: { flow: 'owner' } });
     expect(nextHref('owner', 'module-privacy', some)).toEqual({ pathname: '/welcome/voice', params: { flow: 'owner' } });
   });
 
   test('until the modules are chosen the count assumes the step', () => {
-    expect(progressOf('owner', 'privacy', { native: true, moduleSignals: null })).toMatchObject({ current: 2, total: 6 });
+    expect(progressOf('owner', 'privacy', { native: true, moduleSignals: null })).toMatchObject({ current: 2, total: 7 });
     expect(signalsKnownAt('owner', 'face')).toBe(false);
     expect(signalsKnownAt('owner', 'modules')).toBe(false);
     expect(signalsKnownAt('owner', 'module-privacy')).toBe(true);
@@ -63,8 +71,14 @@ describe('onboarding flows are data', () => {
   });
 
   test('an invited person never chooses modules', () => {
-    expect(ONBOARDING_FLOWS.invited.map((step) => step.id)).toEqual(['invitation', 'privacy', 'face', 'meet']);
-    expect(progressOf('invited', 'face', phone)).toMatchObject({ current: 3, total: 4 });
+    expect(ONBOARDING_FLOWS.invited.map((step) => step.id)).toEqual([
+      'invitation',
+      'privacy',
+      'face',
+      'permissions',
+      'meet',
+    ]);
+    expect(progressOf('invited', 'face', phone)).toMatchObject({ current: 3, total: 5 });
     expect(progressOf('invited', 'modules', phone)).toBeNull();
   });
 
@@ -77,7 +91,8 @@ describe('onboarding flows are data', () => {
   test('each step knows where the next one is', () => {
     expect(nextHref('owner', 'pair', phone)).toEqual({ pathname: '/welcome/privacy', params: { mode: 'owner-enroll' } });
     expect(nextHref('owner', 'privacy', phone)).toEqual({ pathname: '/welcome/face', params: { mode: 'owner-enroll' } });
-    expect(nextHref('owner', 'face', phone)).toEqual({ pathname: '/welcome/modules', params: { flow: 'owner' } });
+    expect(nextHref('owner', 'face', phone)).toEqual({ pathname: '/welcome/permissions', params: { flow: 'owner' } });
+    expect(nextHref('owner', 'permissions', phone)).toEqual({ pathname: '/welcome/modules', params: { flow: 'owner' } });
     expect(nextHref('owner', 'modules', phone)).toEqual({
       pathname: '/welcome/module-privacy',
       params: { flow: 'owner' },
@@ -87,7 +102,8 @@ describe('onboarding flows are data', () => {
       pathname: '/welcome/privacy',
       params: { mode: 'invite-enroll' },
     });
-    expect(nextHref('invited', 'face', phone)).toEqual({ pathname: '/welcome/voice', params: { flow: 'invited' } });
+    expect(nextHref('invited', 'face', phone)).toEqual({ pathname: '/welcome/permissions', params: { flow: 'invited' } });
+    expect(nextHref('invited', 'permissions', phone)).toEqual({ pathname: '/welcome/voice', params: { flow: 'invited' } });
   });
 
   test('the flow is read from either route parameter', () => {
@@ -103,6 +119,7 @@ describe('onboarding flows are data', () => {
     expect(isSkippable('owner', 'modules')).toBe(true);
     expect(isSkippable('owner', 'module-privacy')).toBe(true);
     expect(isSkippable('owner', 'meet')).toBe(true);
+    expect(isSkippable('owner', 'permissions')).toBe(true);
     expect(isSkippable('owner', 'privacy')).toBe(false);
     expect(isSkippable('invited', 'face')).toBe(false);
   });

@@ -6,6 +6,10 @@ const unsupported: IPushService = {
   onDecline: () => () => undefined,
   drainDeclines: () => undefined,
   sendToBackground: () => undefined,
+  notificationsPermitted: async () => false,
+  requestNotificationsPermission: async () => false,
+  exactAlarmsAllowed: () => false,
+  openExactAlarmSettings: () => undefined,
 };
 
 export const pushService: IPushService = unsupported;

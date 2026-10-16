@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import com.davidacme.argus.push.CallSession
+import com.davidacme.argus.push.ExactAlarms
 import com.davidacme.argus.push.PushActivityTracker
 import com.davidacme.argus.push.PushAlertEvents
 import com.davidacme.argus.push.PushTokenEvents
@@ -69,6 +70,12 @@ class HybridArgusPush : HybridArgusPushSpec() {
   }
 
   override fun takeDeclines(): Array<String> = PushStore(requireContext()).takeDeclines().toTypedArray()
+
+  override fun exactAlarmsAllowed(): Boolean = ExactAlarms.allowed(requireContext())
+
+  override fun openExactAlarmSettings() {
+    ExactAlarms.openSettings(requireContext())
+  }
 
   override fun sendToBackground() {
     PushActivityTracker.moveToBackground()

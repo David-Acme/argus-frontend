@@ -13,6 +13,8 @@ export interface IArgusPushNative {
   setAlertListener(listener: (alertJson: string) => void): void;
   takeDeclines(): string[];
   sendToBackground(): void;
+  exactAlarmsAllowed(): boolean;
+  openExactAlarmSettings(): void;
   fullScreenExplained(): boolean;
   setFullScreenExplained(value: boolean): void;
 }
@@ -23,4 +25,8 @@ export interface IPushService {
   onDecline(listener: (callId: string) => void): () => void;
   drainDeclines(): void;
   sendToBackground(): void;
+  notificationsPermitted(): Promise<boolean>;
+  requestNotificationsPermission(): Promise<boolean>;
+  exactAlarmsAllowed(): boolean;
+  openExactAlarmSettings(): void;
 }

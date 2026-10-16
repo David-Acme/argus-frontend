@@ -1,3 +1,4 @@
+import * as Notifications from 'expo-notifications';
 import { NitroModules } from 'react-native-nitro-modules';
 import { getLanguage } from '@/core/i18n';
 import type { IArgusPushNative, IPushService } from '@/core/interfaces';
@@ -91,6 +92,24 @@ class NativePushService implements IPushService {
     return () => {
       this.declineListeners.delete(listener);
     };
+  }
+
+  async notificationsPermitted(): Promise<boolean> {
+    return (await Notifications.getPermissionsAsync()).granted;
+  }
+
+  async requestNotificationsPermission(): Promise<boolean> {
+    return (await Notifications.requestPermissionsAsync()).granted;
+  }
+
+  exactAlarmsAllowed(): boolean {
+    if (!IS_ANDROID) return true;
+    return this.module().exactAlarmsAllowed();
+  }
+
+  openExactAlarmSettings(): void {
+    if (!IS_ANDROID) return;
+    this.module().openExactAlarmSettings();
   }
 
   sendToBackground(): void {
