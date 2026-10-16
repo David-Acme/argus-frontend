@@ -1,6 +1,6 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type { IArgusPushNative } from '@/core/interfaces';
-import { installTraceSink } from './native-trace';
+import { installTraceSink } from '@/core/services/native-trace';
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;

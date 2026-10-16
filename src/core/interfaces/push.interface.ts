@@ -27,6 +27,8 @@ export interface IArgusPushNative {
   startAssistantCall(): Promise<boolean>;
   callEndpoints(): string;
   selectCallEndpoint(id: string): void;
+  backgroundAllowed(): boolean;
+  requestBackground(): void;
   setCallMuted(muted: boolean): void;
   takeDeclines(): string[];
   ackDecline(callId: string): void;
@@ -68,4 +70,6 @@ export interface IPushService {
   openExactAlarmSettings(): void;
   fullScreenAllowed(): boolean;
   openFullScreenSettings(): void;
+  backgroundAllowed(): boolean;
+  requestBackground(): void;
 }

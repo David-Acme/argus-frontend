@@ -1,4 +1,4 @@
-export type DevicePermissionId = 'microphone' | 'notifications' | 'full-screen' | 'exact-alarms';
+export type DevicePermissionId = 'microphone' | 'notifications' | 'background' | 'full-screen' | 'exact-alarms';
 
 export type DevicePermission = {
   id: DevicePermissionId;

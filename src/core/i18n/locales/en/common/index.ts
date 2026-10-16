@@ -9,6 +9,8 @@ export const common = {
     'microphone-detail': 'So that Argus hears you during the call.',
     notifications: 'Notifications',
     'notifications-detail': 'So that alerts and calls reach you.',
+    background: 'Calls in the background',
+    'background-detail': 'So that Argus keeps hearing you when you leave the app.',
     'full-screen': 'Calls on the lock screen',
     'full-screen-detail': 'So you can answer Argus without unlocking the phone.',
     'exact-alarms': 'Exact alarms',

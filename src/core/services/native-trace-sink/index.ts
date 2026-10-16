@@ -1,0 +1,1 @@
+import './native-trace-sink';

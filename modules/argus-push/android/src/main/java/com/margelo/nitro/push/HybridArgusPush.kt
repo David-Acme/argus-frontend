@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.davidacme.argus.push.BackgroundAccess
+import com.davidacme.argus.push.BackgroundStep
 import com.davidacme.argus.push.TelecomCall
 import com.davidacme.argus.push.endpointsJson
 import com.davidacme.argus.push.CallControls
@@ -109,6 +111,12 @@ class HybridArgusPush : HybridArgusPushSpec() {
   }
 
   override fun telecomCallActive(): Boolean = CallSession.telecomActive()
+
+  override fun backgroundAllowed(): Boolean = BackgroundAccess.step(requireContext()) == BackgroundStep.Granted
+
+  override fun requestBackground() {
+    BackgroundAccess.request(requireContext())
+  }
 
   override fun callEndpoints(): String = endpointsJson(TelecomCall.endpointChoices())
 

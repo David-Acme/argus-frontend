@@ -191,6 +191,25 @@ class NativePushService implements IPushService {
     }
   }
 
+  backgroundAllowed(): boolean {
+    if (!IS_ANDROID) return true;
+    try {
+      return this.module().backgroundAllowed();
+    } catch (error) {
+      log.error('push', 'the background permission could not be read', error);
+      return true;
+    }
+  }
+
+  requestBackground(): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().requestBackground();
+    } catch (error) {
+      log.error('push', 'the background permission could not be requested', error);
+    }
+  }
+
   openFullScreenSettings(): void {
     if (!IS_ANDROID) return;
     try {

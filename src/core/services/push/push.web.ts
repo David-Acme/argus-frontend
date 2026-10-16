@@ -23,6 +23,8 @@ const unsupported: IPushService = {
   exactAlarmsAllowed: () => false,
   openExactAlarmSettings: () => undefined,
   fullScreenAllowed: () => true,
+  backgroundAllowed: () => true,
+  requestBackground: () => undefined,
   openFullScreenSettings: () => undefined,
 };
 

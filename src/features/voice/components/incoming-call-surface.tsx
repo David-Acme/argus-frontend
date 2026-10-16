@@ -53,7 +53,12 @@ export function IncomingCallSurface() {
   const visible = incomingSurfaceVisible(waitingCall, pathname);
   const critical = isCriticalRing(waitingCall?.urgency);
   const callId = waitingCall?.callId ?? null;
-  const [elapsedMs, setElapsedMs] = useState(0);
+  const [clock, setClock] = useState<{ callId: string | null; started: number; now: number }>({
+    callId: null,
+    started: 0,
+    now: 0,
+  });
+  const elapsedMs = clock.callId === callId ? clock.now - clock.started : 0;
 
   useEffect(() => {
     if (!visible || !critical) return;
@@ -64,8 +69,7 @@ export function IncomingCallSurface() {
   useEffect(() => {
     if (callId === null) return;
     const started = Date.now();
-    setElapsedMs(0);
-    const timer = setInterval(() => setElapsedMs(Date.now() - started), ELAPSED_TICK_MS);
+    const timer = setInterval(() => setClock({ callId, started, now: Date.now() }), ELAPSED_TICK_MS);
     return () => clearInterval(timer);
   }, [callId]);
 

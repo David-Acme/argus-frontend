@@ -17,6 +17,8 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   telecomCallActive(): boolean;
   startAssistantCall(): Promise<boolean>;
   callEndpoints(): string;
+  backgroundAllowed(): boolean;
+  requestBackground(): void;
   selectCallEndpoint(id: string): void;
   setCallMuted(muted: boolean): void;
   takeDeclines(): string[];

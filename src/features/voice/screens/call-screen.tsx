@@ -12,6 +12,7 @@ import { CAPABILITY, VIEW_CACHE_KEYS, VOICE_MIC_CONSENT_KEY } from '@/shared/con
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { useBackgroundAsk } from '@/features/voice/hooks/use-background-ask';
 import { useCall } from '@/features/voice/hooks/use-call';
 import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref, callRouteTraceReason } from '@/features/voice/model/call-route';
 import { outsideCallLockId } from '@/features/voice/model/call-lock-state';
@@ -73,6 +74,8 @@ function CallScreen() {
   useEffect(() => {
     if (firstCall) storageService.set(VOICE_MIC_CONSENT_KEY, true);
   }, [firstCall]);
+
+  useBackgroundAsk(call.phase === 'listening' || call.phase === 'thinking' || call.phase === 'speaking');
 
   useEffect(() => {
     if (startedAt.current !== null) return;

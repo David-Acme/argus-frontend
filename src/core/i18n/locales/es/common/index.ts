@@ -8,6 +8,8 @@ export const common = {
     'microphone-detail': 'Para que Argus te oiga durante la llamada.',
     notifications: 'Notificaciones',
     'notifications-detail': 'Para que las alertas y las llamadas te lleguen.',
+    background: 'Llamadas en segundo plano',
+    'background-detail': 'Para que Argus te siga oyendo cuando sales de la app.',
     'full-screen': 'Llamadas en pantalla bloqueada',
     'full-screen-detail': 'Para contestar a Argus sin desbloquear el teléfono.',
     'exact-alarms': 'Alarmas exactas',

@@ -5,12 +5,12 @@ export type PermissionPlatform = 'android' | 'ios' | 'desktop' | 'browser';
 export type PermissionPurpose = 'onboarding' | 'call';
 
 const PURPOSES: Record<PermissionPurpose, readonly DevicePermissionId[]> = {
-  onboarding: ['notifications', 'full-screen', 'exact-alarms'],
-  call: ['microphone', 'notifications', 'full-screen'],
+  onboarding: ['notifications', 'background', 'full-screen', 'exact-alarms'],
+  call: ['microphone', 'background', 'notifications', 'full-screen'],
 };
 
 const PLATFORMS: Record<PermissionPlatform, readonly DevicePermissionId[]> = {
-  android: ['microphone', 'notifications', 'full-screen', 'exact-alarms'],
+  android: ['microphone', 'notifications', 'background', 'full-screen', 'exact-alarms'],
   ios: ['microphone', 'notifications'],
   desktop: [],
   browser: [],

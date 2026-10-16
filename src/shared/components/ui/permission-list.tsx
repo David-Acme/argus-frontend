@@ -9,6 +9,7 @@ import { cn } from '@/shared/libs/utils';
 const ICONS: Record<DevicePermissionId, IconName> = {
   microphone: 'mic',
   notifications: 'bell',
+  background: 'phone-call',
   'full-screen': 'lock',
   'exact-alarms': 'alarm-clock',
 };

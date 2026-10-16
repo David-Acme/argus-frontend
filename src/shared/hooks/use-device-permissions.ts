@@ -15,6 +15,8 @@ async function granted(id: DevicePermissionId): Promise<boolean> {
       return (await getRecordingPermissionsAsync()).granted;
     case 'notifications':
       return pushService.notificationsPermitted();
+    case 'background':
+      return pushService.backgroundAllowed();
     case 'full-screen':
       return pushService.fullScreenAllowed();
     case 'exact-alarms':
@@ -33,6 +35,9 @@ async function request(id: DevicePermissionId): Promise<void> {
       if (!(await pushService.requestNotificationsPermission())) await Linking.openSettings();
       return;
     }
+    case 'background':
+      pushService.requestBackground();
+      return;
     case 'full-screen':
       pushService.openFullScreenSettings();
       return;
