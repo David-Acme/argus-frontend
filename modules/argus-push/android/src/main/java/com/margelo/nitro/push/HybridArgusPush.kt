@@ -74,6 +74,10 @@ class HybridArgusPush : HybridArgusPushSpec() {
 
   override fun takeDeclines(): Array<String> = PushStore(requireContext()).takeDeclines().toTypedArray()
 
+  override fun ackDecline(callId: String) {
+    PushStore(requireContext()).removeDecline(callId)
+  }
+
   override fun recordTrace(phase: String, outcome: String, reason: String) {
     NativeTrace.record(phase, outcome, reason)
   }

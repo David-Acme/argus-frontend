@@ -12,6 +12,7 @@ export interface IArgusPushNative {
   setTokenListener(listener: (token: string) => void): void;
   setAlertListener(listener: (alertJson: string) => void): void;
   takeDeclines(): string[];
+  ackDecline(callId: string): void;
   sendToBackground(): void;
   stopOngoingCall(): void;
   isKeyguardLocked(): boolean;
@@ -30,6 +31,7 @@ export interface IPushService {
   unpair(): Promise<void>;
   onDecline(listener: (callId: string) => void): () => void;
   drainDeclines(): void;
+  ackDecline(callId: string): void;
   sendToBackground(): void;
   stopOngoingCall(): void;
   isKeyguardLocked(): boolean;

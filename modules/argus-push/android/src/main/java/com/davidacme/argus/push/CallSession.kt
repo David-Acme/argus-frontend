@@ -131,13 +131,16 @@ internal object CallSession {
 
     private fun deliverDecline(context: Context, callId: String) {
         val listener = declineListener
-        if (listener == null) {
-            PushStore(context).addDecline(callId)
-            return
-        }
-        runCatching { listener(callId) }.onFailure {
-            PushLog.warn("the decline listener failed; the decline is kept for the next start")
-            PushStore(context).addDecline(callId)
+        when (declineRouteOf(listenerPresent = listener != null)) {
+            DeclineRoute.Listener -> runCatching { listener?.invoke(callId) }.onFailure {
+                PushLog.warn("the decline listener failed; the decline is kept for the next start")
+                PushStore(context).addDecline(callId)
+            }
+            DeclineRoute.Headless -> {
+                PushStore(context).addDecline(callId)
+                NativeTrace.record("decline", "queued", "awaiting-task")
+                if (!DeclineTask.start(context, callId)) NativeTrace.record("decline", "queued", "start-refused")
+            }
         }
     }
 

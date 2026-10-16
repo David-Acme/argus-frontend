@@ -31,6 +31,12 @@ internal class PushStore(context: Context) {
     }
 
     @Synchronized
+    fun removeDecline(callId: String) {
+        val declines = readDeclines().filter { it != callId }
+        prefs.edit().putString(KEY_DECLINES, JSONArray(declines).toString()).apply()
+    }
+
+    @Synchronized
     fun takeDeclines(): List<String> {
         val declines = readDeclines()
         prefs.edit().remove(KEY_DECLINES).apply()

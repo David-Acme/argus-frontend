@@ -26,6 +26,10 @@
     </service>
 
     <service
+        android:name="com.davidacme.argus.push.DeclineTaskService"
+        android:exported="false" />
+
+    <service
         android:name="com.davidacme.argus.push.OngoingCallService"
         android:exported="false"
         android:foregroundServiceType="phoneCall|microphone" />

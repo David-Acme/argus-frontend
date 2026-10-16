@@ -118,6 +118,15 @@ class NativePushService implements IPushService {
     this.module().openExactAlarmSettings();
   }
 
+  ackDecline(callId: string): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().ackDecline(callId);
+    } catch (error) {
+      log.error('push', 'the decline could not be acknowledged', error);
+    }
+  }
+
   stopOngoingCall(): void {
     if (!IS_ANDROID) return;
     try {

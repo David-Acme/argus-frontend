@@ -14,6 +14,7 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   setTokenListener(listener: (token: string) => void): void;
   setAlertListener(listener: (alertJson: string) => void): void;
   takeDeclines(): string[];
+  ackDecline(callId: string): void;
   endActiveCall(): void;
   stopOngoingCall(): void;
   sendToBackground(): void;
