@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { callLockedId, callLockRedirect, setCallLock } from '@/features/voice/model/call-lock';
+import { callLockedId, callLockRedirect, callLockTraceReason, outsideCallIdFrom, setCallLock } from '@/features/voice/model/call-lock';
 
 afterEach(() => setCallLock(null));
 
@@ -38,5 +38,23 @@ describe('the call lock keeps the app on the call only while the keyguard is loc
     setCallLock('call-7');
     setCallLock(null);
     expect(callLockRedirect('/agenda', callLockedId(), LOCKED)).toBeNull();
+  });
+});
+
+describe('the outside call the guard holds comes from the native side first', () => {
+  test('a call the native side holds locks the app even when the call screen never stored it', () => {
+    expect(callLockRedirect('/people', outsideCallIdFrom('call-9', null), LOCKED)).toBe('/call?callId=call-9&outside=1');
+  });
+
+  test('the native id wins over a stale store value, and an empty native id falls back to the store', () => {
+    expect(outsideCallIdFrom('call-9', 'call-7')).toBe('call-9');
+    expect(outsideCallIdFrom('', 'call-7')).toBe('call-7');
+    expect(outsideCallIdFrom('', null)).toBeNull();
+  });
+
+  test('every guard input is written as a flag, in a fixed order', () => {
+    expect(callLockTraceReason({ onCall: false, held: true, over: true, locked: false })).toBe(
+      'call-0-held-1-over-1-locked-0',
+    );
   });
 });

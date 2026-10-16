@@ -131,6 +131,16 @@ class NativePushService implements IPushService {
     }
   }
 
+  outsideCallId(): string {
+    if (!IS_ANDROID) return '';
+    try {
+      return this.module().outsideCallId();
+    } catch (error) {
+      log.error('push', 'the outside call could not be read', error);
+      return '';
+    }
+  }
+
   overKeyguard(): boolean {
     if (!IS_ANDROID) return false;
     try {

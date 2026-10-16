@@ -15,6 +15,7 @@ export interface IArgusPushNative {
   sendToBackground(): void;
   isKeyguardLocked(): boolean;
   overKeyguard(): boolean;
+  outsideCallId(): string;
   exactAlarmsAllowed(): boolean;
   openExactAlarmSettings(): void;
   fullScreenExplained(): boolean;
@@ -30,6 +31,7 @@ export interface IPushService {
   sendToBackground(): void;
   isKeyguardLocked(): boolean;
   overKeyguard(): boolean;
+  outsideCallId(): string;
   notificationsPermitted(): Promise<boolean>;
   requestNotificationsPermission(): Promise<boolean>;
   exactAlarmsAllowed(): boolean;

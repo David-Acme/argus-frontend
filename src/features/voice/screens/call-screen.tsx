@@ -14,7 +14,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
 import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref, callRouteTraceReason } from '@/features/voice/model/call-route';
-import { callLockedId } from '@/features/voice/model/call-lock';
+import { outsideCallLockId } from '@/features/voice/model/call-lock-state';
 import { traceEvent } from '@/core/services/native-trace';
 import { dispatchCallEnd, ENDED_HOLD_MS } from '@/features/voice/model/call-end';
 import { pushService } from '@/core/services/push';
@@ -156,7 +156,7 @@ export default function CallRoute() {
     ready,
     waitedOut,
     outside: params.outside === '1',
-    locked: callLockedId() !== null,
+    locked: outsideCallLockId() !== null,
   });
   useEffect(() => {
     traceEvent('route', decision === 'redirect' ? 'redirect' : 'stay', traceReason);

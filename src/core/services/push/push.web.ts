@@ -8,6 +8,7 @@ const unsupported: IPushService = {
   sendToBackground: () => undefined,
   isKeyguardLocked: () => false,
   overKeyguard: () => false,
+  outsideCallId: () => '',
   notificationsPermitted: async () => false,
   requestNotificationsPermission: async () => false,
   exactAlarmsAllowed: () => false,

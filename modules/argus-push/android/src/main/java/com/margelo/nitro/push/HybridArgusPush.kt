@@ -91,6 +91,8 @@ class HybridArgusPush : HybridArgusPushSpec() {
 
   override fun overKeyguard(): Boolean = KeyguardCall.isShown()
 
+  override fun outsideCallId(): String = KeyguardCall.outsideCallId().orEmpty()
+
   override fun endActiveCall() {
     CallSession.endActive(requireContext())
   }

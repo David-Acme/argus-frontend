@@ -5,7 +5,7 @@ import android.util.Log
 object NativeTrace {
     const val TAG = "ArgusTrace"
 
-    private val phases = setOf("restore", "refresh", "route", "voice")
+    private val phases = setOf("restore", "refresh", "route", "voice", "lock")
     private val outcomes = setOf(
         "ok", "error", "partial", "absent", "refresh-rejected", "unavailable",
         "stay", "redirect", "start", "joined", "fallback",

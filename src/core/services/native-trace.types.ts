@@ -1,4 +1,4 @@
-export type TracePhase = 'restore' | 'refresh' | 'route' | 'voice';
+export type TracePhase = 'restore' | 'refresh' | 'route' | 'voice' | 'lock';
 
 export type TraceOutcome =
   | 'ok'

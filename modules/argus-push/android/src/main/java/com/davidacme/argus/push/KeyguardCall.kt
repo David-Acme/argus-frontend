@@ -25,6 +25,8 @@ object KeyguardCall {
     fun shouldAttach(armed: Boolean, intentExtra: Boolean, isCallActivity: Boolean): Boolean =
         !isCallActivity && (armed || intentExtra)
 
+    fun outsideCallId(): String? = armedCallId
+
     fun disarmsFor(armedCallId: String?, callId: String): Boolean = armedCallId != null && armedCallId == callId
 
     fun arm(callId: String) {
