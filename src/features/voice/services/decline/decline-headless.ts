@@ -1,3 +1,4 @@
+import '@/core/services/session.service';
 import { pushService } from '@/core/services/push';
 import { traceEvent } from '@/core/services/native-trace';
 import { DECLINE_TASK_NAME, runDeclineTask } from '@/features/voice/model/decline-task';
