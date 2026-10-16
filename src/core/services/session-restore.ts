@@ -29,3 +29,13 @@ export function decideRestore(reading: StoredSessionReading): RestoreDecision {
 export function restoreRetryDelayMs(attempt: number): number {
   return Math.min(RESTORE_RETRY_CAP_MS, RESTORE_RETRY_BASE_MS * 2 ** Math.max(0, attempt - 1));
 }
+
+export function nullStoredKeys(reading: StoredSessionReading): string[] {
+  const names: string[] = [];
+  if (reading.instance === null) names.push('instance');
+  if (reading.accessToken === null) names.push('access-token');
+  if (reading.refreshToken === null) names.push('refresh-token');
+  if (reading.deviceCredential === null) names.push('device-credential');
+  if (reading.user === null) names.push('user');
+  return names;
+}

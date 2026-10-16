@@ -4326,3 +4326,11 @@ OS version and build noted.
    iPhone therefore hears nothing and shows no mute control (`liveAudioPlayable`). Closing this
    needs native work: an audio renderer for the FLAC track that honours `muted`. It also needs an
    iOS build host. Once built, the check is item 1 on an iPhone over the WebSocket transport.
+
+## Session tokens and the secure store (2026-10-16)
+
+- The access token, the refresh token and the device credential live in `expo-secure-store` (`src/core/services/secure-storage/secure-storage.native.ts`). The app passes no options, so Android uses the library defaults (no user authentication required).
+- The library deletes an entry it cannot read back and returns `null`: when the keystore key for the entry is missing (the "app reinstalled" branch), or when decryption fails with a bad padding, it removes the entry first. `KeyPermanentlyInvalidatedException` returns `null` without the removal. This is in `node_modules/expo-secure-store/android/.../SecureStoreModule.kt`, and it is the reason a restore can find a session half gone. Our own "never delete on a partial read" rule cannot stop a deletion that happens inside the library.
+- We do not mirror the tokens elsewhere (no plaintext copy in MMKV, the file system or the sync cache). A plaintext copy would weaken the session for every user and was rejected. When the library removes an entry, the user signs in again.
+- The restore trace names the stored keys that came back empty (`instance`, `access-token`, `refresh-token`, `device-credential`, `user`), never their values. When a restore is partial, the native logcat tag `SecureStoreModule` (the library's own warning, with the key name) says whether the library removed the entry or failed to decrypt it. Read both together to name the cause of the next occurrence.
+- A refresh with no token in memory, no paired instance or no answer from the server is `unavailable`. Only a server refusal (`rejected`) may clear the session (`src/core/services/http/refresh-response.ts`: `refreshOutcomeOf`, `mayClearSession`).

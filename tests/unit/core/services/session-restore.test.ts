@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { decideRestore, restoreRetryDelayMs, RESTORE_RETRY_CAP_MS, type StoredSessionReading } from '@/core/services/session-restore';
+import {
+  decideRestore,
+  nullStoredKeys,
+  restoreRetryDelayMs,
+  RESTORE_RETRY_CAP_MS,
+  type StoredSessionReading,
+} from '@/core/services/session-restore';
 
 const instance = { host: 'argus.local', ip: '192.168.1.10', port: 7042 } as unknown as StoredSessionReading['instance'];
 const user = { id: 1, name: 'David' } as unknown as StoredSessionReading['user'];
@@ -53,5 +59,25 @@ describe('the restore retry after a failed read', () => {
   test('the wait never grows past the cap', () => {
     expect(restoreRetryDelayMs(20)).toBe(RESTORE_RETRY_CAP_MS);
     expect(restoreRetryDelayMs(0)).toBe(1_000);
+  });
+});
+
+describe('the restore trace names the stored keys that came back empty, never their values', () => {
+  test('a complete read names nothing', () => {
+    expect(nullStoredKeys(whole)).toEqual([]);
+  });
+
+  test('each empty key is named by its short name', () => {
+    expect(nullStoredKeys({ ...whole, accessToken: null, refreshToken: null })).toEqual([
+      'access-token',
+      'refresh-token',
+    ]);
+    expect(nullStoredKeys({ ...whole, instance: null, user: null })).toEqual(['instance', 'user']);
+  });
+
+  test('the names never carry a value', () => {
+    const names = nullStoredKeys({ ...whole, deviceCredential: null });
+    expect(names).toEqual(['device-credential']);
+    expect(names.join(' ')).not.toContain('credential-value');
   });
 });

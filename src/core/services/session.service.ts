@@ -10,9 +10,16 @@ import {
   settledRefresh,
   type RefreshReading,
 } from '@/core/services/http/refresh-response';
-import { decideRestore, restoreRetryDelayMs, type RestoreDecision, type StoredSessionReading } from '@/core/services/session-restore';
+import {
+  decideRestore,
+  nullStoredKeys,
+  restoreRetryDelayMs,
+  type RestoreDecision,
+  type StoredSessionReading,
+} from '@/core/services/session-restore';
 import '@/core/services/native-trace-sink';
 import { traceEvent } from '@/core/services/native-trace';
+import { traceReasonOf } from '@/core/services/native-trace-reason';
 import type { TraceOutcome } from '@/core/services/native-trace.types';
 import { registerHttpAuth } from '@/core/services/http';
 import { log } from '@/core/services/log';
@@ -47,9 +54,10 @@ function restoreTraceOutcome(decision: RestoreDecision): TraceOutcome {
   return decision.kind === 'absent' ? 'absent' : 'partial';
 }
 
-function restoreTraceReason(decision: RestoreDecision): string {
+function restoreTraceReason(decision: RestoreDecision, nullKeys: string[]): string {
   if (decision.kind === 'session') return 'session';
-  return decision.kind === 'absent' ? 'none' : decision.reason;
+  if (decision.kind === 'absent') return 'none';
+  return traceReasonOf([decision.reason, ...nullKeys].join('-'));
 }
 
 function refreshTraceOutcome(outcome: SessionRefreshOutcome): TraceOutcome {
@@ -225,7 +233,7 @@ class SessionService {
       return { paired: false, instance: null, status: 'signed-out', restored: false };
     }
 
-    traceEvent('restore', restoreTraceOutcome(decision), restoreTraceReason(decision));
+    traceEvent('restore', restoreTraceOutcome(decision), restoreTraceReason(decision, nullStoredKeys(reading)));
     return {
       paired: instance !== null,
       instance,
