@@ -11,7 +11,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 
 internal object PushNotifier {
-    private const val CALL_NOTIFICATION_ID = 2
     private const val ALERT_NOTIFICATION_ID = 1
 
     fun canUseFullScreen(context: Context): Boolean {
@@ -57,14 +56,12 @@ internal object PushNotifier {
         if (fullScreen) {
             builder.setFullScreenIntent(activity(context, requestCode(callId, FULL_SCREEN), callIntent(context, PushActions.ACTION_SHOW_CALL, callId)), true)
         }
-        NotificationManagerCompat.from(context).notify(callTag(callId), CALL_NOTIFICATION_ID, builder.build())
+        NotificationManagerCompat.from(context).notify(CallEndPlan.tagFor(callId), CallEndPlan.NOTIFICATION_ID, builder.build())
     }
 
-    fun cancelCall(context: Context, callId: String) {
-        NotificationManagerCompat.from(context).cancel(callTag(callId), CALL_NOTIFICATION_ID)
+    fun cancelCall(context: Context, plan: CallEnd) {
+        NotificationManagerCompat.from(context).cancel(plan.notificationTag, plan.notificationId)
     }
-
-    private fun callTag(callId: String): String = "call-$callId"
 
     private fun callIntent(context: Context, action: String, callId: String): Intent =
         Intent(context, CallActivity::class.java)

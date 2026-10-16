@@ -8,6 +8,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 class CallActivity : Activity() {
+    private var detachEnd: (() -> Unit)? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val callId = intent.getStringExtra(PushActions.EXTRA_CALL_ID)
@@ -20,7 +22,18 @@ class CallActivity : Activity() {
             finish()
             return
         }
+        if (!CallSession.isRinging(callId)) {
+            finish()
+            return
+        }
         setContentView(callLayout(callId))
+        detachEnd = CallSession.watchEnd(callId) { runOnUiThread { finish() } }
+    }
+
+    override fun onDestroy() {
+        detachEnd?.invoke()
+        detachEnd = null
+        super.onDestroy()
     }
 
     private fun callLayout(callId: String): LinearLayout {

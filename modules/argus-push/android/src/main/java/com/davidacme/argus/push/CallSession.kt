@@ -13,6 +13,7 @@ internal object CallSession {
     private val lock = Any()
     private var active: ActiveCall? = null
     private var connection: ArgusConnection? = null
+    private val endWatchers = mutableMapOf<String, () -> Unit>()
 
     @Volatile
     var declineListener: ((String) -> Unit)? = null
@@ -39,6 +40,17 @@ internal object CallSession {
         ringer.start(app)
         TelecomCalls.addIncoming(app, callId)
         PushNotifier.postCall(app, callId, PushNotifier.canUseFullScreen(app), timeoutMillis)
+    }
+
+    fun isRinging(callId: String): Boolean = synchronized(lock) { active?.callId == callId }
+
+    fun watchEnd(callId: String, onEnd: () -> Unit): () -> Unit {
+        synchronized(lock) { endWatchers[callId] = onEnd }
+        return {
+            synchronized(lock) {
+                if (endWatchers[callId] === onEnd) endWatchers.remove(callId)
+            }
+        }
     }
 
     fun attach(context: Context, callId: String, value: ArgusConnection) {
@@ -106,18 +118,22 @@ internal object CallSession {
     }
 
     private fun releaseCall(context: Context, callId: String): Boolean {
-        val matched = synchronized(lock) {
+        val (matched, watcher) = synchronized(lock) {
             val current = active
-            if (current == null || current.callId != callId) {
-                false
-            } else {
+            val matched = if (current != null && current.callId == callId) {
                 handler.removeCallbacks(current.expiry)
                 active = null
                 true
+            } else {
+                false
             }
+            Pair(matched, endWatchers[callId])
         }
-        if (matched) ringer.stop(context)
-        PushNotifier.cancelCall(context, callId)
+        val plan = CallEndPlan.forEnd(wasRinging = matched, callId = callId)
+        if (plan.stopRinger) ringer.stop(context)
+        PushNotifier.cancelCall(context, plan)
+        PushLog.info("call $callId released: ringing=$matched screen=${watcher != null}")
+        if (plan.finishScreen) watcher?.invoke()
         return matched
     }
 

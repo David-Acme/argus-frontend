@@ -16,9 +16,11 @@ internal class PushRouter(private val context: Context) {
         }
         val intent = openSealed(envelope)?.let { PushIntent.parse(String(it, Charsets.UTF_8)) }
         if (intent == null) {
+            PushLog.info("push received without a readable intent")
             showGeneric(now, deliveryKey = envelope.deliveryId.joinToString("") { "%02x".format(it) })
             return
         }
+        PushLog.info("push received kind=${intent.kind} cancel=${intent.cancel}")
         if (DedupRules.isExpired(intent.expiresAtSeconds, now)) return
         val intentKey = "intent:${intent.intentId}"
         if (store.isSeen(intentKey, now)) return
@@ -48,6 +50,7 @@ internal class PushRouter(private val context: Context) {
             PushText.isSpanish(),
             channel != PushChannels.NORMAL,
         )
+        PushLog.info("alert type=${intent.type} public=${copy.publicTitle}")
         PushNotifier.postAlert(context, intent.intentId, channel, copy, deepLink)
     }
 
