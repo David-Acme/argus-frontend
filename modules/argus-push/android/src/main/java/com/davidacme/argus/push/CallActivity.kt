@@ -58,6 +58,8 @@ class CallActivity : Activity() {
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
         }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        NativeTrace.record("screen", "held", "ring")
     }
 
     override fun onDestroy() {
@@ -65,6 +67,8 @@ class CallActivity : Activity() {
         pulse?.cancel()
         detachEnd?.invoke()
         detachEnd = null
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        NativeTrace.record("screen", "released", "ring-ended")
         super.onDestroy()
     }
 
