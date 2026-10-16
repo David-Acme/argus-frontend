@@ -650,6 +650,10 @@ class VoiceService {
       flushMs: VOICE_HANGUP_FLUSH_MS,
       wait: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
       onSent: (sent) => traceEvent('voice', sent ? 'sent' : 'error', sent ? 'hangup' : 'hangup-send-failed'),
+      fallback: () => {
+        traceEvent('voice', 'stop', 'sync-fallback');
+        synchronizeService.send(VOICE_STOP_TYPE);
+      },
     }).catch((reason: unknown) => devLog('rtc leave failed:', reason));
   }
 
