@@ -17,6 +17,8 @@ internal object PushText {
 
     fun missedCallTitle(spanish: Boolean): String = if (spanish) "Llamada perdida" else "Missed call"
 
+    fun missedCallBody(spanish: Boolean): String = if (spanish) "Toca para ver quién llamó" else "Tap to see who called"
+
     fun callTitle(spanish: Boolean): String = if (spanish) "Llamada de Argus" else "Argus is calling"
 
     fun answer(spanish: Boolean): String = if (spanish) "Contestar" else "Answer"

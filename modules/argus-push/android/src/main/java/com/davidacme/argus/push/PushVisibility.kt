@@ -10,11 +10,17 @@ internal data class AlertCopy(
 internal object PushVisibility {
     const val MISSED_CALL_TYPE = "call"
 
-    fun alertCopy(type: String, title: String, body: String, spanish: Boolean, urgent: Boolean): AlertCopy =
-        AlertCopy(
+    fun alertCopy(type: String, title: String, body: String, spanish: Boolean, urgent: Boolean): AlertCopy {
+        if (type == MISSED_CALL_TYPE) {
+            val missed = PushText.missedCallTitle(spanish)
+            val prompt = PushText.missedCallBody(spanish)
+            return AlertCopy(title = missed, body = prompt, publicTitle = missed, publicBody = prompt)
+        }
+        return AlertCopy(
             title = title.ifEmpty { PushText.TITLE },
             body = body,
-            publicTitle = if (type == MISSED_CALL_TYPE) PushText.missedCallTitle(spanish) else PushText.TITLE,
+            publicTitle = PushText.TITLE,
             publicBody = PushText.generic(spanish, urgent),
         )
+    }
 }

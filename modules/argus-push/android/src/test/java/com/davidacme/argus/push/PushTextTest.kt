@@ -17,6 +17,12 @@ class PushTextTest {
     }
 
     @Test
+    fun missedCallPromptInBothLanguages() {
+        assertEquals("Toca para ver quién llamó", PushText.missedCallBody(spanish = true))
+        assertEquals("Tap to see who called", PushText.missedCallBody(spanish = false))
+    }
+
+    @Test
     fun urgencyMapsToChannels() {
         assertEquals(PushChannels.CRITICAL, PushChannels.forUrgency("critical"))
         assertEquals(PushChannels.TIME_SENSITIVE, PushChannels.forUrgency("time_sensitive"))

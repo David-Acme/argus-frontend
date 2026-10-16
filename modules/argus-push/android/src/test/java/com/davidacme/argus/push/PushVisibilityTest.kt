@@ -5,7 +5,7 @@ import org.junit.Test
 
 class PushVisibilityTest {
     @Test
-    fun aMissedCallKeepsItsDetailAndShowsOnlyTheMissedTitleLocked() {
+    fun aMissedCallShowsTheSameNoDetailCopyPrivateAndLocked() {
         val copy = PushVisibility.alertCopy(
             type = PushVisibility.MISSED_CALL_TYPE,
             title = "Llamada perdida · Persona desconocida en Patio",
@@ -13,14 +13,14 @@ class PushVisibilityTest {
             spanish = true,
             urgent = true,
         )
-        assertEquals("Llamada perdida · Persona desconocida en Patio", copy.title)
-        assertEquals("Te llamé porque hay alguien en el patio.", copy.body)
+        assertEquals("Llamada perdida", copy.title)
+        assertEquals("Toca para ver quién llamó", copy.body)
         assertEquals("Llamada perdida", copy.publicTitle)
-        assertEquals(PushText.generic(spanish = true, urgent = true), copy.publicBody)
+        assertEquals("Toca para ver quién llamó", copy.publicBody)
     }
 
     @Test
-    fun aMissedCallInEnglishUsesTheEnglishLockedTitle() {
+    fun aMissedCallInEnglishUsesTheEnglishNoDetailCopy() {
         val copy = PushVisibility.alertCopy(
             type = PushVisibility.MISSED_CALL_TYPE,
             title = "Missed call · Front door",
@@ -28,8 +28,10 @@ class PushVisibilityTest {
             spanish = false,
             urgent = false,
         )
+        assertEquals("Missed call", copy.title)
+        assertEquals("Tap to see who called", copy.body)
         assertEquals("Missed call", copy.publicTitle)
-        assertEquals(PushText.generic(spanish = false, urgent = false), copy.publicBody)
+        assertEquals("Tap to see who called", copy.publicBody)
     }
 
     @Test
