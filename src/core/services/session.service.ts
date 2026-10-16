@@ -4,6 +4,9 @@ import { cleanDeviceCredential, setDeviceCredential } from '@/core/services/net/
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
 import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
+import { decideRestore, restoreRetryDelayMs, type RestoreDecision, type StoredSessionReading } from '@/core/services/session-restore';
+import { traceSession } from '@/core/services/session-trace';
+import type { SessionTraceOutcome } from '@/core/services/session-trace.types';
 import { registerHttpAuth } from '@/core/services/http';
 import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
@@ -31,6 +34,26 @@ import type {
 import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
 const REFRESH_PATH = '/auth/refresh-token';
+
+function restoreTraceOutcome(decision: RestoreDecision): SessionTraceOutcome {
+  if (decision.kind === 'session') return 'ok';
+  return decision.kind === 'absent' ? 'absent' : 'partial';
+}
+
+function restoreTraceReason(decision: RestoreDecision): string {
+  if (decision.kind === 'session') return 'session';
+  return decision.kind === 'absent' ? 'none' : decision.reason;
+}
+
+function refreshTraceOutcome(outcome: SessionRefreshOutcome): SessionTraceOutcome {
+  if (outcome === 'refreshed') return 'ok';
+  return outcome === 'rejected' ? 'refresh-rejected' : 'unavailable';
+}
+
+function refreshTraceReason(outcome: SessionRefreshOutcome): string {
+  if (outcome === 'refreshed') return 'rotated';
+  return outcome === 'rejected' ? 'refused' : 'unreachable';
+}
 
 export type SessionPairingState = {
   paired: boolean;
@@ -112,9 +135,14 @@ class SessionService {
     if (settled) return Promise.resolve(settled);
     if (this.refreshing) return this.refreshing;
 
-    this.refreshing = this.performRefresh().finally(() => {
-      this.refreshing = null;
-    });
+    this.refreshing = this.performRefresh()
+      .then((outcome) => {
+        traceSession('refresh', refreshTraceOutcome(outcome), refreshTraceReason(outcome));
+        return outcome;
+      })
+      .finally(() => {
+        this.refreshing = null;
+      });
     return this.refreshing;
   }
 
@@ -168,47 +196,52 @@ class SessionService {
   }
 
   private async restore(): Promise<SessionBootstrapResult> {
+    const reading = await this.readStoredSessionUntilReadable();
+    const decision = decideRestore(reading);
+    const { instance, accessToken, refreshToken, deviceCredential, user } = reading;
+    const deviceSecret = cleanDeviceCredential(deviceCredential);
+    const session =
+      decision.kind === 'session' && instance && accessToken && refreshToken && user
+        ? { accessToken, refreshToken, deviceSecret, user }
+        : null;
+
     try {
-      const [instance, accessToken, refreshToken, storedCredential, user] = await Promise.all([
-        netService.instance(),
-        secureStorageService.getStringAsync(NET_STORAGE_KEYS.accessToken),
-        secureStorageService.getStringAsync(NET_STORAGE_KEYS.refreshToken),
-        secureStorageService.getStringAsync(NET_STORAGE_KEYS.deviceCredential),
-        Promise.resolve(storageService.getObject<IAuthUser>(SESSION_USER_KEY)),
-      ]);
-
-      const deviceSecret = cleanDeviceCredential(storedCredential);
-      const session =
-        instance && accessToken && refreshToken && user
-          ? { accessToken, refreshToken, deviceSecret, user }
-          : null;
-
       setDeviceCredential(session ? deviceSecret : null);
-
       useAuthStore.getState().hydrate(session);
       viewCacheService.setUserId(session?.user.id ?? null);
       if (session) {
         this.startAccess(session.user.id);
         viewCacheCoordinatorService.start(session.user.id);
       }
-
-      if (!session && (accessToken || refreshToken || storedCredential || user)) {
-        try {
-          storageService.remove(SESSION_USER_KEY);
-        } catch {
-        }
-        await this.deletePersistedTokens();
-      }
-
-      return {
-        paired: instance !== null,
-        instance,
-        status: session ? 'signed-in' : 'signed-out',
-        restored: session !== null,
-      };
     } catch {
       useAuthStore.getState().clear();
       return { paired: false, instance: null, status: 'signed-out', restored: false };
+    }
+
+    traceSession('restore', restoreTraceOutcome(decision), restoreTraceReason(decision));
+    return {
+      paired: instance !== null,
+      instance,
+      status: session ? 'signed-in' : 'signed-out',
+      restored: session !== null,
+    };
+  }
+
+  private async readStoredSessionUntilReadable(): Promise<StoredSessionReading> {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        const [instance, accessToken, refreshToken, deviceCredential] = await Promise.all([
+          netService.instance(),
+          secureStorageService.getStringAsync(NET_STORAGE_KEYS.accessToken),
+          secureStorageService.getStringAsync(NET_STORAGE_KEYS.refreshToken),
+          secureStorageService.getStringAsync(NET_STORAGE_KEYS.deviceCredential),
+        ]);
+        const user = storageService.getObject<IAuthUser>(SESSION_USER_KEY);
+        return { instance, accessToken, refreshToken, deviceCredential, user };
+      } catch {
+        traceSession('restore', 'error', 'read-error');
+        await new Promise<void>((resolve) => setTimeout(resolve, restoreRetryDelayMs(attempt)));
+      }
     }
   }
 
