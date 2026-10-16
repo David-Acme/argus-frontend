@@ -3,7 +3,13 @@ import { serviceUrl } from '@/core/services/net/net-routes';
 import { cleanDeviceCredential, setDeviceCredential } from '@/core/services/net/device-credential';
 import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
-import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
+import {
+  readRefreshResponse,
+  refreshOutcomeOf,
+  serverReplyOf,
+  settledRefresh,
+  type RefreshReading,
+} from '@/core/services/http/refresh-response';
 import { decideRestore, restoreRetryDelayMs, type RestoreDecision, type StoredSessionReading } from '@/core/services/session-restore';
 import '@/core/services/native-trace-sink';
 import { traceEvent } from '@/core/services/native-trace';
@@ -248,34 +254,40 @@ class SessionService {
 
   private async performRefresh(): Promise<SessionRefreshOutcome> {
     const { refreshToken } = useAuthStore.getState();
-    if (!refreshToken) return 'unavailable';
     const version = this.sessionVersion;
 
-    let instance: NetPairedInstance | null;
+    let instance: NetPairedInstance | null = null;
     try {
       instance = await netService.instance();
     } catch {
-      return 'unavailable';
-    }
-    if (!instance) return 'rejected';
-
-    let result;
-    try {
-      result = await netService.request({
-        url: serviceUrl(instance, REFRESH_PATH),
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-    } catch {
-      return 'unavailable';
+      instance = null;
     }
 
-    const reading = readRefreshResponse(result);
-    if (reading.outcome === 'rejected' && reading.accountDisabled) {
+    let reading: RefreshReading | null = null;
+    if (refreshToken && instance) {
+      try {
+        reading = readRefreshResponse(
+          await netService.request({
+            url: serviceUrl(instance, REFRESH_PATH),
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          }),
+        );
+      } catch {
+        reading = null;
+      }
+    }
+
+    if (reading?.outcome === 'rejected' && reading.accountDisabled) {
       void this.endSession('account-disabled');
     }
-    if (reading.outcome !== 'refreshed') return reading.outcome;
+    const outcome = refreshOutcomeOf({
+      refreshTokenInMemory: refreshToken !== null && refreshToken !== undefined && refreshToken !== '',
+      instancePaired: instance !== null,
+      server: reading ? serverReplyOf(reading) : null,
+    });
+    if (outcome !== 'refreshed' || reading?.outcome !== 'refreshed' || !refreshToken) return outcome;
     const { accessToken } = reading;
     const nextRefreshToken = reading.refreshToken ?? refreshToken;
 

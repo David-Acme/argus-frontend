@@ -43,3 +43,24 @@ export function readRefreshResponse({ status, body }: RefreshAnswer): RefreshRea
     return { outcome: 'unavailable' };
   }
 }
+
+export type ServerRefreshReply = 'rotated' | 'unavailable' | 'rejected';
+
+export function serverReplyOf(reading: RefreshReading): ServerRefreshReply {
+  if (reading.outcome === 'refreshed') return 'rotated';
+  return reading.outcome;
+}
+
+export function refreshOutcomeOf(input: {
+  refreshTokenInMemory: boolean;
+  instancePaired: boolean;
+  server: ServerRefreshReply | null;
+}): SessionRefreshOutcome {
+  if (!input.refreshTokenInMemory || !input.instancePaired || input.server === null) return 'unavailable';
+  if (input.server === 'rotated') return 'refreshed';
+  return input.server;
+}
+
+export function mayClearSession(outcome: SessionRefreshOutcome): boolean {
+  return outcome === 'rejected';
+}

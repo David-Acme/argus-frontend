@@ -4,6 +4,7 @@ import { netService } from '@/core/services/net';
 import { serviceUrl } from '@/core/services/net/net-routes';
 import type { NetRouteMode, SessionRefreshOutcome } from '@/core/types';
 import { SYNC_WS_CONNECT_TIMEOUT_MS, SYNC_WS_PATH } from '@/shared/constants';
+import { mayClearSession } from '@/core/services/http/refresh-response';
 import { backoffDelay } from './sync-backoff';
 import { connectGate } from './sync-connect-gate';
 
@@ -246,8 +247,11 @@ export class SyncConnection {
 
   private async recoverUnauthorized(failedToken: string): Promise<void> {
     const current = this.hooks.accessToken() ?? null;
-    const outcome = current !== null && current !== failedToken ? 'refreshed' : await this.hooks.refreshSession();
-    if (outcome === 'rejected') {
+    const outcome =
+      current !== null && current !== failedToken
+        ? 'refreshed'
+        : ((await this.hooks.refreshSession()) ?? 'unavailable');
+    if (mayClearSession(outcome)) {
       this.manualClose = true;
       await this.hooks.clearSession();
       return;

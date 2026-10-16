@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
+import {
+  mayClearSession,
+  readRefreshResponse,
+  refreshOutcomeOf,
+  serverReplyOf,
+  settledRefresh,
+} from '@/core/services/http/refresh-response';
 
 const body = (info: unknown) => JSON.stringify({ status: 200, info, errors: null });
 
@@ -63,5 +69,49 @@ describe('settledRefresh', () => {
     expect(settledRefresh({ accessToken: 'T2', version: 4 }, current)).toBeNull();
     expect(settledRefresh(undefined, current)).toBeNull();
     expect(settledRefresh({ accessToken: null, version: 4 }, { accessToken: null, version: 4 })).toBeNull();
+  });
+});
+
+describe('the refresh outcome is decided by the token in memory and the server reply, never by a local gap', () => {
+  const paired = { refreshTokenInMemory: true, instancePaired: true };
+
+  test('a server rotation refreshes the session', () => {
+    expect(refreshOutcomeOf({ ...paired, server: 'rotated' })).toBe('refreshed');
+  });
+
+  test('a server refusal rejects, and only that may clear the session', () => {
+    const outcome = refreshOutcomeOf({ ...paired, server: 'rejected' });
+    expect(outcome).toBe('rejected');
+    expect(mayClearSession(outcome)).toBe(true);
+  });
+
+  test('a server that is unavailable does not clear anything', () => {
+    const outcome = refreshOutcomeOf({ ...paired, server: 'unavailable' });
+    expect(outcome).toBe('unavailable');
+    expect(mayClearSession(outcome)).toBe(false);
+  });
+
+  test('no refresh token in memory is unavailable, not a rejection, so nothing is cleared', () => {
+    const outcome = refreshOutcomeOf({ refreshTokenInMemory: false, instancePaired: true, server: null });
+    expect(outcome).toBe('unavailable');
+    expect(mayClearSession(outcome)).toBe(false);
+  });
+
+  test('an unpaired device is unavailable, not a rejection, so nothing is cleared', () => {
+    const outcome = refreshOutcomeOf({ refreshTokenInMemory: true, instancePaired: false, server: null });
+    expect(outcome).toBe('unavailable');
+    expect(mayClearSession(outcome)).toBe(false);
+  });
+
+  test('a request that never got an answer is unavailable even when a token is held', () => {
+    const outcome = refreshOutcomeOf({ ...paired, server: null });
+    expect(outcome).toBe('unavailable');
+    expect(mayClearSession(outcome)).toBe(false);
+  });
+
+  test('a reading maps to the server reply it carries', () => {
+    expect(serverReplyOf({ outcome: 'refreshed', accessToken: 'a', refreshToken: null })).toBe('rotated');
+    expect(serverReplyOf({ outcome: 'rejected', accountDisabled: false })).toBe('rejected');
+    expect(serverReplyOf({ outcome: 'unavailable' })).toBe('unavailable');
   });
 });

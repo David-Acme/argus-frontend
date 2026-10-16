@@ -4,6 +4,7 @@ import { serviceUrl, addressUnreachable } from '@/core/services/net/net-routes';
 import { httpAuth } from './http-auth';
 import { errorResponse, readEnvelope } from './http-envelope';
 import { reportRefusal } from './http-refusal';
+import { mayClearSession } from './refresh-response';
 import type { IHttpConfig, IServiceResponse } from '@/core/interfaces';
 
 class HttpService {
@@ -82,7 +83,7 @@ class HttpService {
       if (outcome === 'refreshed') {
         return this.request<T>(method, path, body, files, { ...config, skipAuthRetry: true });
       }
-      if (outcome === 'rejected') void httpAuth().clearSession(credential);
+      if (mayClearSession(outcome)) void httpAuth().clearSession(credential);
       if (outcome === 'unavailable' && credential.accessToken) {
         return errorResponse(503, 'SERVICE_UNAVAILABLE', 'The session could not be renewed right now');
       }
