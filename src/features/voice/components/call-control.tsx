@@ -7,7 +7,7 @@ import { cn } from '@/shared/libs/utils';
 type CallControlProps = {
   icon: IconName;
   label: string;
-  tone?: 'neutral' | 'active' | 'danger';
+  tone?: 'neutral' | 'active' | 'danger' | 'success';
   disabled?: boolean;
   onPress: () => void;
 };
@@ -16,6 +16,7 @@ const TONES = {
   neutral: { circle: 'bg-surface-secondary', icon: 'text-foreground' },
   active: { circle: 'bg-interactive', icon: 'text-foreground-on-interactive' },
   danger: { circle: 'bg-error', icon: 'text-foreground-on-error' },
+  success: { circle: 'bg-success', icon: 'text-foreground-on-success' },
 } as const;
 
 export function CallControl({ icon, label, tone = 'neutral', disabled = false, onPress }: CallControlProps) {

@@ -11,6 +11,7 @@ import { voiceErrorMessage } from '@/features/voice/model/voice-error';
 import { CallActionChips } from '@/features/voice/components/call-action-chips';
 import { CallControl } from '@/features/voice/components/call-control';
 import { CallTranscript } from '@/features/voice/components/call-transcript';
+import { formatCallDuration } from '@/features/voice/model/call-end';
 
 type CallSurfaceProps = {
   phase: VoicePhase;
@@ -29,6 +30,7 @@ type CallSurfaceProps = {
   onToggleMute: () => void;
   onHangUp: () => void;
   onRetry: () => void;
+  endedDurationMs?: number | null;
 };
 
 export function CallSurface({
@@ -48,6 +50,7 @@ export function CallSurface({
   onToggleMute,
   onHangUp,
   onRetry,
+  endedDurationMs = null,
 }: CallSurfaceProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -92,13 +95,13 @@ export function CallSurface({
           </Text>
         ) : null}
         <Text variant="title" accessibilityRole="header">
-          {t(`screens.voice.status-${phase}`)}
+          {endedDurationMs === null ? t(`screens.voice.status-${phase}`) : t('screens.voice.ended-title')}
         </Text>
         <Text
           variant="caption"
           className="min-h-[18px] text-center"
           accessibilityLiveRegion="polite">
-          {hint ?? ''}
+          {endedDurationMs === null ? (hint ?? '') : formatCallDuration(endedDurationMs)}
         </Text>
       </View>
 
@@ -114,7 +117,7 @@ export function CallSurface({
         <CallActionChips actions={actions} />
       </View>
 
-      {phase === 'error' || phase === 'done' ? (
+      {endedDurationMs !== null ? null : phase === 'error' || phase === 'done' ? (
         <View className="flex-row justify-center gap-3">
           <Button variant="outline" size="lg" onPress={onHangUp}>
             <Text>{t('common.close')}</Text>

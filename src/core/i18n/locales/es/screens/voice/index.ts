@@ -6,6 +6,8 @@ export const voice = {
   'status-connecting': 'Conectando…',
   'status-reconnecting': 'Reconectando…',
   'status-listening': 'Te escucho',
+  'ended-title': 'Llamada finalizada',
+  'ring-status': 'Llamada de Argus · sonando · {time}',
   'status-thinking': 'Pensando…',
   'status-speaking': 'Hablando',
   'status-done': 'Llamada terminada',

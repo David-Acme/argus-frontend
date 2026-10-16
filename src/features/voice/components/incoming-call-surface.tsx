@@ -1,16 +1,48 @@
 import { useRouter, usePathname } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Vibration, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, {
+  cancelAnimation,
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button } from '@/shared/components/ui/button';
+import Avatar from '@/features/voice/components/avatar';
+import { CallControl } from '@/features/voice/components/call-control';
 import { Text } from '@/shared/components/ui/text';
+import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
+import { formatCallDuration } from '@/features/voice/model/call-end';
 import { incomingSurfaceVisible, isCriticalRing } from '@/features/voice/model/incoming-surface';
 import { voiceService } from '@/features/voice/services/voice';
 
 const ALERT_PATTERN = [0, 400, 200, 400];
+const PULSE_MS = 900;
+const ELAPSED_TICK_MS = 1000;
+
+function PulsingEmblem({ label }: { label: string }) {
+  const reduceMotion = useReduceMotion();
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    scale.value = withRepeat(withTiming(1.06, { duration: PULSE_MS }), -1, true);
+    return () => cancelAnimation(scale);
+  }, [reduceMotion, scale]);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Animated.View style={style}>
+      <Avatar size={160} accessibilityLabel={label} />
+    </Animated.View>
+  );
+}
 
 export function IncomingCallSurface() {
   const { t } = useTranslation();
@@ -20,12 +52,22 @@ export function IncomingCallSurface() {
   const { waitingCall } = useVoiceSession();
   const visible = incomingSurfaceVisible(waitingCall, pathname);
   const critical = isCriticalRing(waitingCall?.urgency);
+  const callId = waitingCall?.callId ?? null;
+  const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
     if (!visible || !critical) return;
     Vibration.vibrate(ALERT_PATTERN, true);
     return () => Vibration.cancel();
   }, [visible, critical]);
+
+  useEffect(() => {
+    if (callId === null) return;
+    const started = Date.now();
+    setElapsedMs(0);
+    const timer = setInterval(() => setElapsedMs(Date.now() - started), ELAPSED_TICK_MS);
+    return () => clearInterval(timer);
+  }, [callId]);
 
   if (!visible || !waitingCall) return null;
 
@@ -45,20 +87,22 @@ export function IncomingCallSurface() {
       accessibilityLiveRegion="assertive"
       className="bg-background absolute inset-0 items-center justify-center px-6"
       style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
-      <View className="bg-card w-full max-w-md gap-4 rounded-3xl p-6 shadow-lg shadow-black/15">
+      <View className="w-full max-w-md items-center gap-6">
         <Text variant="label" className={critical ? 'text-error-strong' : 'text-foreground-secondary'}>
           {critical ? t('screens.voice.ring-critical') : t('screens.voice.incoming-title')}
         </Text>
-        <Text variant="title" numberOfLines={3}>
-          {waitingCall.reason}
-        </Text>
-        <View className="flex-row gap-3">
-          <Button variant="outline" className="min-h-12 flex-1" onPress={decline}>
-            <Text>{t('screens.voice.ring-decline')}</Text>
-          </Button>
-          <Button className="min-h-12 flex-1" onPress={answer}>
-            <Text>{t('screens.voice.ring-answer')}</Text>
-          </Button>
+        <PulsingEmblem label={t('screens.voice.call-title')} />
+        <View className="items-center gap-2">
+          <Text variant="title" numberOfLines={3} className="text-center">
+            {waitingCall.reason}
+          </Text>
+          <Text variant="caption" className="text-foreground-secondary text-center">
+            {t('screens.voice.ring-status', { time: formatCallDuration(elapsedMs) })}
+          </Text>
+        </View>
+        <View className="flex-row justify-center gap-10 pt-2">
+          <CallControl icon="phone-off" label={t('screens.voice.ring-decline')} tone="danger" onPress={decline} />
+          <CallControl icon="phone" label={t('screens.voice.ring-answer')} tone="success" onPress={answer} />
         </View>
       </View>
     </Animated.View>

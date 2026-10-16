@@ -1,5 +1,5 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
 import { ResponseCard } from '@/features/response';
@@ -14,6 +14,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
 import { CALL_ROUTE_WAIT_MS, callRouteDecision } from '@/features/voice/model/call-route';
+import { ENDED_HOLD_MS } from '@/features/voice/model/call-end';
 import { leaveCall } from '@/features/voice/model/leave-call';
 
 function CallScreen() {
@@ -24,16 +25,22 @@ function CallScreen() {
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const liveCamera = cameras.find((camera) => camera.id === call.liveCameraId) ?? null;
-  const hangUp = useCallback(
+  const startedAt = useRef<number | null>(null);
+  const [endedDurationMs, setEndedDurationMs] = useState<number | null>(null);
+  const leave = useCallback(
     () =>
       leaveCall({
         stopVoice: () => voiceService.stop(),
         canGoBack: () => router.canGoBack(),
         goBack: () => router.back(),
-        goHome: () => router.replace('/'),
       }),
     [router],
   );
+  const hangUp = useCallback(() => {
+    if (endedDurationMs !== null) return;
+    voiceService.stop();
+    setEndedDurationMs(startedAt.current === null ? 0 : Date.now() - startedAt.current);
+  }, [endedDurationMs]);
   const closeCamera = useCallback(() => voiceService.showCamera(null), []);
   const answerWaiting = useCallback(() => voiceService.answerWaiting(), []);
   const dismissWaiting = useCallback(() => voiceService.dismissWaiting(), []);
@@ -48,8 +55,19 @@ function CallScreen() {
   }, [firstCall]);
 
   useEffect(() => {
+    if (startedAt.current !== null) return;
+    if (call.phase === 'listening' || call.phase === 'thinking' || call.phase === 'speaking') startedAt.current = Date.now();
+  }, [call.phase]);
+
+  useEffect(() => {
     if (call.closedCallId !== null && call.closedCallId === params.callId) hangUp();
   }, [call.closedCallId, hangUp, params.callId]);
+
+  useEffect(() => {
+    if (endedDurationMs === null) return;
+    const timer = setTimeout(leave, ENDED_HOLD_MS);
+    return () => clearTimeout(timer);
+  }, [endedDurationMs, leave]);
 
   return (
     <CallSurface
@@ -78,6 +96,7 @@ function CallScreen() {
       onToggleMute={call.toggleMute}
       onHangUp={hangUp}
       onRetry={call.retry}
+      endedDurationMs={endedDurationMs}
     />
   );
 }

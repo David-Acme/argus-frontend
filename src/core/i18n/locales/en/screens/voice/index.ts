@@ -5,6 +5,8 @@ export const voice = {
   'status-idle': 'Getting the call ready…',
   'status-connecting': 'Connecting…',
   'status-reconnecting': 'Reconnecting…',
+  'ended-title': 'Call ended',
+  'ring-status': 'Argus call · ringing · {time}',
   'status-listening': 'Listening',
   'status-thinking': 'Thinking…',
   'status-speaking': 'Speaking',
