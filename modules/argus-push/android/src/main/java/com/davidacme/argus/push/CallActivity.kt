@@ -59,6 +59,7 @@ class CallActivity : Activity() {
             addView(
                 Button(this@CallActivity).apply {
                     text = PushText.answer(spanish)
+                    minimumHeight = touchTargetPx()
                     setOnClickListener {
                         CallSession.answer(this@CallActivity, callId)
                         finish()
@@ -68,6 +69,7 @@ class CallActivity : Activity() {
             addView(
                 Button(this@CallActivity).apply {
                     text = PushText.decline(spanish)
+                    minimumHeight = touchTargetPx()
                     setOnClickListener {
                         CallSession.decline(this@CallActivity, callId)
                         finish()
@@ -77,7 +79,10 @@ class CallActivity : Activity() {
         }
     }
 
+    private fun touchTargetPx(): Int = (MIN_TOUCH_DP * resources.displayMetrics.density).toInt()
+
     private companion object {
+        const val MIN_TOUCH_DP = 48f
         const val PADDING = 48
         const val TITLE_SP = 28f
         const val SUBTITLE_SP = 18f

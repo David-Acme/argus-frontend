@@ -53,10 +53,10 @@ export function IncomingCallSurface() {
           {waitingCall.reason}
         </Text>
         <View className="flex-row gap-3">
-          <Button variant="outline" className="flex-1" onPress={decline}>
+          <Button variant="outline" className="min-h-12 flex-1" onPress={decline}>
             <Text>{t('screens.voice.ring-decline')}</Text>
           </Button>
-          <Button className="flex-1" onPress={answer}>
+          <Button className="min-h-12 flex-1" onPress={answer}>
             <Text>{t('screens.voice.ring-answer')}</Text>
           </Button>
         </View>

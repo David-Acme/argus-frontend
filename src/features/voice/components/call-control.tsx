@@ -21,23 +21,19 @@ const TONES = {
 export function CallControl({ icon, label, tone = 'neutral', disabled = false, onPress }: CallControlProps) {
   const colors = TONES[tone];
   return (
-    <View className="w-20 items-center gap-2">
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityState={{ disabled }}
-        disabled={disabled}
-        onPress={onPress}
-        className={cn(
-          'size-16 items-center justify-center rounded-full active:opacity-75',
-          colors.circle,
-          disabled && 'opacity-40'
-        )}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      className={cn('w-20 min-h-12 items-center gap-2 active:opacity-75', disabled && 'opacity-40')}>
+      <View className={cn('size-16 items-center justify-center rounded-full', colors.circle)}>
         <Icon name={icon} className={cn('size-7', colors.icon)} />
-      </Pressable>
+      </View>
       <Text variant="micro" className="text-center" numberOfLines={2}>
         {label}
       </Text>
-    </View>
+    </Pressable>
   );
 }
