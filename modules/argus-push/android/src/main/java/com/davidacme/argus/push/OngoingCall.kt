@@ -72,7 +72,7 @@ internal object OngoingCall {
     }
 
     fun repromote(context: Context) {
-        val state = OngoingCallService.demoted() ?: return
+        val state = OngoingCallService.demoted(context) ?: return
         try {
             context.startForegroundService(OngoingCallService.intent(context, state.callId, state.outside, state.assistant))
         } catch (refused: IllegalStateException) {

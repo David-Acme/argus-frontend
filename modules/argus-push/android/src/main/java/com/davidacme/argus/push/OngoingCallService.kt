@@ -1,5 +1,6 @@
 package com.davidacme.argus.push
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,6 +8,7 @@ import android.app.Person
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
 import android.media.AudioManager
@@ -75,16 +77,23 @@ internal class OngoingCallService : Service() {
     }
 
     private fun startOngoing(notification: Notification) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(
-                ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
-            )
-            NativeTrace.record("ongoing", "shown", "fgs-phone-call-microphone")
-        } else {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(ID, notification)
             NativeTrace.record("ongoing", "fallback", "fgs-untyped")
+            return
+        }
+        val types = ongoingServiceTypes(microphoneGranted(this))
+        try {
+            startForeground(ID, notification, types)
+            NativeTrace.record("ongoing", "shown", if ((types and MICROPHONE_TYPE) != 0) "fgs-phone-call-microphone" else "fgs-phone-call")
+        } catch (refused: SecurityException) {
+            try {
+                startForeground(ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL)
+                NativeTrace.record("ongoing", "fallback", "fgs-phone-call")
+            } catch (denied: SecurityException) {
+                NativeTrace.record("ongoing", "error", "fgs-refused")
+                stopSelf()
+            }
         }
     }
 
@@ -112,12 +121,15 @@ internal class OngoingCallService : Service() {
                 .putExtra(EXTRA_OUTSIDE, outside)
                 .putExtra(EXTRA_ASSISTANT, assistant)
 
-        fun demoted(): OngoingCallState? {
+        fun demoted(context: Context): OngoingCallState? {
             val state = current ?: return null
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return state
             val service = running?.get() ?: return state
-            return state.takeIf { service.foregroundServiceType == 0 }
+            return state.takeIf { needsPromotion(service.foregroundServiceType, microphoneGranted(context)) }
         }
+
+        fun microphoneGranted(context: Context): Boolean =
+            context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
         fun refresh(context: Context) {
             val state = current ?: return
@@ -186,3 +198,11 @@ internal class OngoingCallService : Service() {
             )
     }
 }
+
+internal const val MICROPHONE_TYPE = ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+
+internal fun ongoingServiceTypes(microphoneGranted: Boolean): Int =
+    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or (if (microphoneGranted) MICROPHONE_TYPE else 0)
+
+internal fun needsPromotion(currentTypes: Int, microphoneGranted: Boolean): Boolean =
+    currentTypes == 0 || (microphoneGranted && (currentTypes and MICROPHONE_TYPE) == 0)

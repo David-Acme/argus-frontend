@@ -13,6 +13,9 @@ import com.google.crypto.tink.integration.android.AndroidKeysetManager
 import com.google.crypto.tink.proto.HpkePublicKey
 import com.google.crypto.tink.proto.Keyset
 import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.security.GeneralSecurityException
+import java.security.KeyStore
 import java.security.MessageDigest
 
 internal class PushKeys(context: Context) {
@@ -39,12 +42,32 @@ internal class PushKeys(context: Context) {
     }
 
     private fun handle(): KeysetHandle =
+        try {
+            build()
+        } catch (unreadable: GeneralSecurityException) {
+            NativeTrace.record("restore", "error", "push-keys-unreadable")
+            discard()
+            build()
+        } catch (unreadable: IOException) {
+            NativeTrace.record("restore", "error", "push-keys-unreadable")
+            discard()
+            build()
+        }
+
+    private fun build(): KeysetHandle =
         AndroidKeysetManager.Builder()
             .withSharedPref(appContext, KEYSET_NAME, KEYSET_PREFS)
             .withKeyTemplate(hpkeKeyTemplate())
             .withMasterKeyUri(MASTER_KEY_URI)
             .build()
             .keysetHandle
+
+    private fun discard() {
+        appContext.getSharedPreferences(KEYSET_PREFS, Context.MODE_PRIVATE).edit().clear().commit()
+        runCatching {
+            KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }.deleteEntry(MASTER_KEY_ALIAS)
+        }
+    }
 
     private fun rawPublicKey(publicHandle: KeysetHandle): ByteArray {
         val out = ByteArrayOutputStream()
@@ -63,7 +86,9 @@ internal class PushKeys(context: Context) {
         private const val KEY_ID_BYTES = 16
         private const val KEYSET_NAME = "argus_push_keyset"
         private const val KEYSET_PREFS = "argus_push_keyset_prefs"
-        private const val MASTER_KEY_URI = "android-keystore://argus_push_master_key"
+        private const val MASTER_KEY_ALIAS = "argus_push_master_key"
+        private const val MASTER_KEY_URI = "android-keystore://$MASTER_KEY_ALIAS"
+        private const val ANDROID_KEYSTORE = "AndroidKeyStore"
 
             internal fun hpkeKeyTemplate(): KeyTemplate =
                 KeyTemplate.createFrom(

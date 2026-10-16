@@ -59,4 +59,20 @@ class OngoingCallTest {
             ongoingDeepLink(OngoingCallState("call-7", outside = true, assistant = false, startedAtMillis = 0L)),
         )
     }
+
+    @Test
+    fun theMicrophoneTypeIsClaimedOnlyOnceThePermissionIsGranted() {
+        val phoneCall = android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+        assertEquals(phoneCall, ongoingServiceTypes(microphoneGranted = false))
+        assertEquals(phoneCall or MICROPHONE_TYPE, ongoingServiceTypes(microphoneGranted = true))
+    }
+
+    @Test
+    fun aServiceIsPromotedAgainWhenItLostItsForegroundOrStillLacksTheMicrophone() {
+        val phoneCall = android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+        assertEquals(true, needsPromotion(currentTypes = 0, microphoneGranted = false))
+        assertEquals(true, needsPromotion(currentTypes = phoneCall, microphoneGranted = true))
+        assertEquals(false, needsPromotion(currentTypes = phoneCall, microphoneGranted = false))
+        assertEquals(false, needsPromotion(currentTypes = phoneCall or MICROPHONE_TYPE, microphoneGranted = true))
+    }
 }
