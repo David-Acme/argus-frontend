@@ -9,6 +9,7 @@ internal object PushActions {
     const val ACTION_ANSWER = "com.davidacme.argus.push.ANSWER"
     const val ACTION_DECLINE = "com.davidacme.argus.push.DECLINE"
     const val ACTION_SHOW_CALL = "com.davidacme.argus.push.SHOW_CALL"
+    const val ACTION_HANG_UP = "com.davidacme.argus.push.HANG_UP"
     const val EXTRA_CALL_ID = "com.davidacme.argus.push.CALL_ID"
 
     fun openCall(context: Context, callId: String, enteredFromOutside: Boolean) {

@@ -5,10 +5,10 @@ import android.util.Log
 object NativeTrace {
     const val TAG = "ArgusTrace"
 
-    private val phases = setOf("restore", "refresh", "route", "voice", "lock")
+    private val phases = setOf("restore", "refresh", "route", "voice", "lock", "ongoing")
     private val outcomes = setOf(
         "ok", "error", "partial", "absent", "refresh-rejected", "unavailable",
-        "stay", "redirect", "start", "joined", "fallback", "sent",
+        "stay", "redirect", "start", "joined", "fallback", "sent", "stop", "shown", "cleared",
     )
     private val reasonShape = Regex("[a-z0-9-]{1,96}")
 

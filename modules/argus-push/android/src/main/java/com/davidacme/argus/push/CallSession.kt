@@ -88,7 +88,9 @@ internal object CallSession {
         releaseCall(app, callId)
         synchronized(lock) { answeredCallId = callId }
         synchronized(lock) { connection }?.takeIf { it.callId == callId }?.setActive()
-        PushActions.openCall(app, callId, enteredFromOutside = !PushActivityTracker.appInForeground())
+        val fromOutside = !PushActivityTracker.appInForeground()
+        PushActions.openCall(app, callId, enteredFromOutside = fromOutside)
+        OngoingCall.show(app, callId, enteredFromOutside = fromOutside)
     }
 
     fun decline(context: Context, callId: String) {
@@ -104,6 +106,7 @@ internal object CallSession {
         if (answeredCallMatches(synchronized(lock) { answeredCallId }, callId)) return
         takeConnection(callId)?.endWith(DisconnectCause.OTHER)
         KeyguardCall.callEnded(callId)
+        OngoingCall.clear(app)
         CallAudio.restore(app)
     }
 
@@ -113,6 +116,7 @@ internal object CallSession {
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
         KeyguardCall.callEnded(callId)
+        OngoingCall.clear(app)
         CallAudio.restore(app)
     }
 
@@ -123,6 +127,7 @@ internal object CallSession {
         releaseCall(context.applicationContext, ended.callId)
         ended.endWith(DisconnectCause.LOCAL)
         KeyguardCall.callEnded(ended.callId)
+        OngoingCall.clear(context.applicationContext)
         CallAudio.restore(context)
     }
 
