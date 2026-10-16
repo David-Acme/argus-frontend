@@ -1,7 +1,7 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { useAuthStore } from '@/core/stores';
+import { useAuthStore, usePendingCallStore } from '@/core/stores';
 import { ResponseCard } from '@/features/response';
 import { CallCameraCard } from '@/features/voice/components/call-camera-card';
 import { CallSurface } from '@/features/voice/components/call-surface';
@@ -13,7 +13,7 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
-import { CALL_ROUTE_WAIT_MS, callRouteDecision } from '@/features/voice/model/call-route';
+import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref } from '@/features/voice/model/call-route';
 import { dispatchCallEnd, ENDED_HOLD_MS } from '@/features/voice/model/call-end';
 import { pushService } from '@/core/services/push';
 import { leaveCall } from '@/features/voice/model/leave-call';
@@ -129,10 +129,16 @@ function CallLoading() {
 
 export default function CallRoute() {
   const authStatus = useAuthStore((state) => state.status);
-  const params = useLocalSearchParams<{ callId?: string }>();
+  const params = useLocalSearchParams<{ callId?: string; outside?: string }>();
   const { has, ready } = useCapabilities();
   const [waitedOut, setWaitedOut] = useState(false);
   const allowed = has(params.callId ? CAPABILITY.callsJoin : CAPABILITY.assistantVoice);
+  const { callId, outside } = params;
+
+  useEffect(() => {
+    if (authStatus === 'signed-in' || !callId) return;
+    usePendingCallStore.getState().hold(callRouteHref({ callId, outside: outside === '1' }), Date.now());
+  }, [authStatus, callId, outside]);
 
   useEffect(() => {
     if (ready) return;

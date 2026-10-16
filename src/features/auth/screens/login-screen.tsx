@@ -1,4 +1,5 @@
 import { authService } from '@/core/services/auth.service';
+import { afterSignInHref } from '@/core/stores';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { CenteredScreen } from '@/shared/components/layout';
@@ -91,7 +92,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (phase !== 'approved') return;
-    const timer = setTimeout(() => router.replace('/'), 600);
+    const timer = setTimeout(() => router.replace(afterSignInHref()), 600);
     return () => clearTimeout(timer);
   }, [phase, router]);
 

@@ -12,3 +12,8 @@ export function callRouteDecision(input: {
   if (!input.ready && !input.waitedOut) return 'wait';
   return input.allowed ? 'render' : 'redirect';
 }
+
+export function callRouteHref(input: { callId: string; outside: boolean }): string {
+  const href = `/call?callId=${encodeURIComponent(input.callId)}`;
+  return input.outside ? `${href}&outside=1` : href;
+}

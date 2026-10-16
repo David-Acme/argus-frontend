@@ -7,3 +7,4 @@ export * from './toast.store';
 export * from './confirm.store';
 export * from './offline-toast.store';
 export * from './in-app-alert.store';
+export * from './pending-call.store';

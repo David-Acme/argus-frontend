@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Vibration } from 'react-native';
 import { authService } from '@/core/services/auth.service';
+import { afterSignInHref } from '@/core/stores';
 import { log } from '@/core/services/log';
 import {
   FACE_CAPTURE_READY_TIMEOUT_MS,
@@ -124,7 +125,7 @@ export function useFaceCapture({ mode }: FaceCaptureOptions) {
           }
           const next = enrolling ? nextHref(flowOf({ mode }), 'face', { native: IS_NATIVE }) : null;
           if (next) router.replace(next);
-          else router.replace('/');
+          else router.replace(afterSignInHref());
           return;
         }
         const apiError = response.errors ?? {
