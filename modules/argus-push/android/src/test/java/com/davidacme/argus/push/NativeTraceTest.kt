@@ -14,6 +14,8 @@ class NativeTraceTest {
             NativeTrace.line("route", "redirect", "signed-1-allowed-1-ready-0-waited-0-outside-1-locked-0"),
         )
         assertEquals("trace voice outcome=start reason=call", NativeTrace.line("voice", "start", "call"))
+        assertEquals("trace route outcome=ended reason=outside-1-hold-2000", NativeTrace.line("route", "ended", "outside-1-hold-2000"))
+        assertEquals("trace route outcome=left reason=background", NativeTrace.line("route", "left", "background"))
         assertEquals("trace screen outcome=held reason=ring", NativeTrace.line("screen", "held", "ring"))
         assertEquals("trace lock outcome=redirect reason=call-0-held-1-over-1-locked-1", NativeTrace.line("lock", "redirect", "call-0-held-1-over-1-locked-1"))
     }
