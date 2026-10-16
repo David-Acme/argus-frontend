@@ -21,13 +21,18 @@ export const BACKUP_RULES_FILE = `${BACKUP_RULES_NAME}.xml`;
 export const DATA_EXTRACTION_RULES_FILE = `${DATA_EXTRACTION_RULES_NAME}.xml`;
 
 export const KEYSTORE_KEYED_SHARED_PREFS: readonly string[] = ['SecureStore', 'argus_push_keyset_prefs'];
-export const BACKED_UP_FILE_DIRS: readonly string[] = ['mmkv'];
+
+export const INSTANCE_STORE_ID = 'argus-instance';
+export const BACKED_UP_FILE_PATHS: readonly string[] = [
+  `mmkv/${INSTANCE_STORE_ID}`,
+  `mmkv/${INSTANCE_STORE_ID}.crc`,
+];
 
 const XML_DECLARATION = '<?xml version="1.0" encoding="utf-8"?>';
 
 const RULE_BODY: readonly string[] = [
   '<include domain="sharedpref" path="."/>',
-  ...BACKED_UP_FILE_DIRS.map((path) => `<include domain="file" path="${path}"/>`),
+  ...BACKED_UP_FILE_PATHS.map((path) => `<include domain="file" path="${path}"/>`),
   ...KEYSTORE_KEYED_SHARED_PREFS.map((path) => `<exclude domain="sharedpref" path="${path}"/>`),
 ];
 

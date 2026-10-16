@@ -60,6 +60,20 @@ const SESSION_ENTRIES: readonly SessionEntry[] = [
 const SECURE_STORE_MODULE = 'SecureStoreModule (ExpoSecureStore)';
 const KEY_IN_MESSAGE = /for key '([^']+)'/;
 
+export type RestoreEntryInput = {
+  paired: boolean;
+  cause: RestoreCause | null;
+};
+
+export type RestoreEntry = 'restore' | 'login';
+
+const LOST_SESSION_CAUSES: readonly RestoreCause[] = ['vanished', 'unreadable', 'incomplete'];
+
+export function restoreEntryOf({ paired, cause }: RestoreEntryInput): RestoreEntry {
+  if (!paired || cause === null) return 'login';
+  return LOST_SESSION_CAUSES.includes(cause) ? 'restore' : 'login';
+}
+
 export function decideRestore(reading: StoredSessionReading): RestoreDecision {
   const { instance, accessToken, refreshToken, deviceCredential, user } = reading;
   if (instance && accessToken && refreshToken && user) return { kind: 'session' };
@@ -149,7 +163,7 @@ export function restoreReport(attempt: StoredSessionAttempt): RestoreReport {
   }
 
   const lostKeys = lostSessionKeys(reading);
-  const vanished = reading.user !== null && lostKeys.length > 0;
+  const vanished = lostKeys.length > 0 && (reading.user !== null || reading.instance !== null);
   if (vanished) {
     return {
       decision,

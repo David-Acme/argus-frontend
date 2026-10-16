@@ -987,7 +987,7 @@ cd src-tauri && cargo check
 | `src/shared/components/layout/navigation-theme.ts` | `NAV_THEME` + `BG_COLORS` (React Navigation) |
 | `src/global.css` | OKLCH tokens + aliases + base/utilities |
 | `app.config.ts` | Expo config (replaces `app.json`). `ARGUS_GOOGLE_SERVICES_FILE` sets `android.googleServicesFile`; unset, the Android build has no Firebase and push is off, with a `process.emitWarning` at prebuild. The file is never copied into the repository |
-| `plugins/with-argus-backup-rules.ts` | Android Auto Backup rules, listed **before** `expo-secure-store` so its mod overwrites the library's: excludes the keystore-keyed stores (`SecureStore` shared preferences, `argus_push_keyset_prefs`), keeps the rest of the preferences and the `mmkv` directory in the backup (`CONTEXT.md`, "A session lost to the keystore is recovered cleanly") |
+| `plugins/with-argus-backup-rules.ts` | Android Auto Backup rules, listed **before** `expo-secure-store` so its mod overwrites the library's: excludes the keystore-keyed stores (`SecureStore` shared preferences, `argus_push_keyset_prefs`) and backs up the pairing's own MMKV instance only (`mmkv/argus-instance` + `.crc`), never the shared `argus-storage` that holds the view caches (`CONTEXT.md`, "A session lost to the keystore is recovered cleanly") |
 | `src/app/+native-intent.ts` | Deep-link allow-list: signed-in screens and `/cameras/<id>` pass (query and hash dropped), anything else goes to `/` |
 | `src/app/_layout.tsx` | Root layout: theme init, `SystemBars`, `SessionGate`, guards native-only, Stack con crossfade (`fade`) + overlays globales (nav, confirm, toaster) |
 | `CONTEXT.md` | Full project history and decisions |

@@ -1,6 +1,7 @@
 import { Redirect, usePathname } from 'expo-router';
 import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
 import { authService } from '@/core/services/auth.service';
+import { restoreEntryOf } from '@/core/services/session-restore';
 import { sessionService } from '@/core/services/session.service';
 import { moduleOfAppRoute } from '@/core/services/modules/module-state';
 import { useAuthStore } from '@/core/stores';
@@ -21,7 +22,8 @@ async function resolveEntry(): Promise<EntryDestination> {
   const status = await authService.serverStatus();
   if (!status.ok || !status.info) return 'unreachable';
   if (!status.info.hasOwner) return 'owner-enroll';
-  return sessionService.restoreCause() === 'vanished' ? 'restore' : 'login';
+  const entry = restoreEntryOf({ paired: pairing.paired, cause: sessionService.restoreCause() });
+  return entry === 'restore' ? 'restore' : 'login';
 }
 
 function EntryRedirect() {

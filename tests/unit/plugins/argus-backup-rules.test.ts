@@ -3,9 +3,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ExpoConfig } from 'expo/config';
 import withArgusBackupRules, {
-  BACKED_UP_FILE_DIRS,
+  BACKED_UP_FILE_PATHS,
   BACKUP_RULES_RESOURCE,
   DATA_EXTRACTION_RULES_RESOURCE,
+  INSTANCE_STORE_ID,
   KEYSTORE_KEYED_SHARED_PREFS,
   backupRulesXml,
   dataExtractionRulesXml,
@@ -17,6 +18,13 @@ const pushKeysSource = readFileSync(
   join(ROOT, 'modules/argus-push/android/src/main/java/com/davidacme/argus/push/PushKeys.kt'),
   'utf8',
 );
+
+const instanceStoreSource = readFileSync(
+  join(ROOT, 'src/core/services/instance-storage/instance-storage.native.ts'),
+  'utf8',
+);
+
+const SHARED_STORE_ID = 'argus-storage';
 
 type Application = { $: Record<string, string> };
 
@@ -69,16 +77,45 @@ describe('the keystore-keyed stores stay out of Android Auto Backup', () => {
     expect(module).toContain('SHARED_PREFERENCES_NAME = "SecureStore"');
   });
 
-  test('every other preference and the mmkv store are still backed up', () => {
+  test('every other preference is still backed up', () => {
     const rules = backupRulesXml();
     expect(rules).toContain('<include domain="sharedpref" path="."/>');
-    for (const dir of BACKED_UP_FILE_DIRS) {
-      expect(rules).toContain(`<include domain="file" path="${dir}"/>`);
-    }
     const extraction = dataExtractionRulesXml();
     expect(extraction).toContain('<cloud-backup>');
     expect(extraction).toContain('<device-transfer>');
     expect(extraction.match(/<include domain="sharedpref" path="."\/>/g)).toHaveLength(2);
+  });
+
+  test('only the dedicated instance store is backed up out of the file domain', () => {
+    const rules = backupRulesXml();
+    expect([...BACKED_UP_FILE_PATHS].sort()).toEqual([
+      `mmkv/${INSTANCE_STORE_ID}`,
+      `mmkv/${INSTANCE_STORE_ID}.crc`,
+    ]);
+    for (const path of BACKED_UP_FILE_PATHS) {
+      expect(rules).toContain(`<include domain="file" path="${path}"/>`);
+      expect(dataExtractionRulesXml().match(new RegExp(`path="${path}"`, 'g'))).toHaveLength(2);
+    }
+  });
+
+  test('no other mmkv file, no whole mmkv directory and no shared store is backed up', () => {
+    const rules = backupRulesXml();
+    expect(rules).not.toContain('<include domain="file" path="mmkv"/>');
+    expect(rules).not.toContain('<include domain="file" path="."/>');
+    expect(rules).not.toContain('argus-storage');
+    const fileIncludes = rules.match(/<include domain="file" path="([^"]+)"\/>/g) ?? [];
+    expect(fileIncludes).toHaveLength(BACKED_UP_FILE_PATHS.length);
+    for (const include of fileIncludes) {
+      const path = include.replace(/.*path="([^"]+)".*/, '$1');
+      expect(path.startsWith(`mmkv/${INSTANCE_STORE_ID}`)).toBe(true);
+    }
+  });
+
+  test('the instance store id is the one the Android store creates', () => {
+    const declared = /INSTANCE_STORE_ID = '([^']+)'/.exec(instanceStoreSource);
+    expect(declared?.[1]).toBe(INSTANCE_STORE_ID);
+    expect(instanceStoreSource).toContain('createMMKV({ id: INSTANCE_STORE_ID })');
+    expect(instanceStoreSource).not.toContain(`id: '${SHARED_STORE_ID}'`);
   });
 
   test('both documents are well-formed and carry a single root', () => {

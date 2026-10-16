@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   decideRestore,
   nullStoredKeys,
+  restoreEntryOf,
   restoreFailureOf,
   restoreReport,
   restoreRetryDelayMs,
@@ -125,6 +126,16 @@ describe('the restore report names the exact cause of a session that disappeared
     expect(report.lostKeys).toEqual([]);
   });
 
+  test('a paired device whose secrets are gone is a vanished session, its user row backed up or not', () => {
+    const report = restoreReport({
+      reading: { instance, accessToken: null, refreshToken: null, deviceCredential: null, user: null },
+      failures: [],
+    });
+    expect(report.cause).toBe('vanished');
+    expect(report.reason).toBe('keystore-lost-access-token-refresh-token-device-credential');
+    expect(report.warnings).toHaveLength(3);
+  });
+
   test('a stored session without its user row is incomplete', () => {
     const report = restoreReport({ reading: { ...whole, user: null }, failures: [] });
     expect(report.cause).toBe('incomplete');
@@ -211,6 +222,43 @@ describe('a refused read maps to the keystore cause and the key the library name
   test('the read attempts are bounded', () => {
     expect(RESTORE_READ_ATTEMPTS).toBeGreaterThan(1);
     expect(RESTORE_READ_ATTEMPTS).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('a paired device that lost its session goes straight to the face screen', () => {
+  test('a vanished session re-enters with the face copy', () => {
+    expect(restoreEntryOf({ paired: true, cause: 'vanished' })).toBe('restore');
+  });
+
+  test('a refused read on a paired device re-enters with the face copy, never the plain login copy', () => {
+    expect(restoreEntryOf({ paired: true, cause: 'unreadable' })).toBe('restore');
+  });
+
+  test('an incomplete restore of a paired device re-enters with the face copy', () => {
+    expect(restoreEntryOf({ paired: true, cause: 'incomplete' })).toBe('restore');
+  });
+
+  test('an unpaired device is a login without the restore copy', () => {
+    expect(restoreEntryOf({ paired: false, cause: 'vanished' })).toBe('login');
+    expect(restoreEntryOf({ paired: false, cause: 'fresh' })).toBe('login');
+  });
+
+  test('a healthy session or a fresh install is a plain login', () => {
+    expect(restoreEntryOf({ paired: true, cause: 'session' })).toBe('login');
+    expect(restoreEntryOf({ paired: true, cause: 'fresh' })).toBe('login');
+    expect(restoreEntryOf({ paired: true, cause: null })).toBe('login');
+  });
+
+  test('every cause is answered once', () => {
+    const causes = ['session', 'fresh', 'vanished', 'unpaired', 'incomplete', 'unreadable'] as const;
+    expect(causes.map((cause) => restoreEntryOf({ paired: true, cause }))).toEqual([
+      'login',
+      'login',
+      'restore',
+      'login',
+      'restore',
+      'restore',
+    ]);
   });
 });
 
