@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import com.davidacme.argus.push.CallSession
+import com.davidacme.argus.push.PushAlertEvents
 import com.davidacme.argus.push.PushTokenEvents
 import com.davidacme.argus.push.PushKeys
 import com.davidacme.argus.push.PushNotifier
@@ -60,6 +61,10 @@ class HybridArgusPush : HybridArgusPushSpec() {
 
   override fun setTokenListener(listener: (token: String) -> Unit) {
     PushTokenEvents.listener = listener
+  }
+
+  override fun setAlertListener(listener: (alertJson: String) -> Unit) {
+    PushAlertEvents.listener = listener
   }
 
   override fun takeDeclines(): Array<String> = PushStore(requireContext()).takeDeclines().toTypedArray()

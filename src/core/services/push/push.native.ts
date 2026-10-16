@@ -2,6 +2,8 @@ import { NitroModules } from 'react-native-nitro-modules';
 import { getLanguage } from '@/core/i18n';
 import type { IArgusPushNative, IPushService } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
+import { parseInAppAlert } from './in-app-alert';
+import { useInAppAlertStore } from '@/core/stores/in-app-alert.store';
 import { useAuthStore } from '@/core/stores';
 import { log } from '@/core/services/log';
 import type { NotificationTokenRemoval, PushProvider } from '@/core/types';
@@ -38,10 +40,12 @@ class NativePushService implements IPushService {
   private readonly declineListeners = new Set<(callId: string) => void>();
   private declineBound = false;
   private tokenBound = false;
+  private alertBound = false;
 
   async register(): Promise<void> {
     if (!IS_ANDROID) return;
     this.bindToken();
+    this.bindAlert();
     if (!hasSession(useAuthStore.getState().status)) return;
     try {
       const native = this.module();
@@ -108,6 +112,19 @@ class NativePushService implements IPushService {
       this.declineBound = true;
     } catch (error) {
       log.error('push', 'the native decline listener is unavailable', error);
+    }
+  }
+
+  private bindAlert(): void {
+    if (this.alertBound) return;
+    try {
+      this.module().setAlertListener((json) => {
+        const alert = parseInAppAlert(json);
+        if (alert) useInAppAlertStore.getState().show(alert);
+      });
+      this.alertBound = true;
+    } catch (error) {
+      log.error('push', 'the native alert listener is unavailable', error);
     }
   }
 

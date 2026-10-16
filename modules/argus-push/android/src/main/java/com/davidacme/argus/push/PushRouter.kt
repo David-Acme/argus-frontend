@@ -3,6 +3,7 @@ package com.davidacme.argus.push
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
+import org.json.JSONObject
 
 internal class PushRouter(private val context: Context) {
     private val store = PushStore(context)
@@ -53,9 +54,26 @@ internal class PushRouter(private val context: Context) {
             PushText.isSpanish(),
             channel != PushChannels.NORMAL,
         )
-        PushLog.info("alert type=${intent.type} public=${copy.publicTitle}")
-        PushNotifier.postAlert(context, intent.intentId, channel, copy, deepLink)
+        val critical = channel == PushChannels.CRITICAL
+        val foreground = AppForeground.isForeground(context)
+        val route = AlertSurface.route(foreground, PushAlertEvents.bound(), critical)
+        val banner = route.inAppBanner && PushAlertEvents.deliver(alertJson(intent.intentId, copy, critical, deepLink))
+        PushLog.info("alert type=${intent.type} public=${copy.publicTitle} foreground=$foreground banner=$banner")
+        if (banner) {
+            if (route.alarm) AlertAlarm.sound(context)
+        } else {
+            PushNotifier.postAlert(context, intent.intentId, channel, copy, deepLink)
+        }
     }
+
+    private fun alertJson(intentId: String, copy: AlertCopy, critical: Boolean, deepLink: String?): String =
+        JSONObject()
+            .put("intentId", intentId)
+            .put("title", copy.title)
+            .put("body", copy.body)
+            .put("critical", critical)
+            .put("deepLink", deepLink.orEmpty())
+            .toString()
 
     private fun routeCall(intent: PushIntent, now: Long) {
         val callId = intent.callId

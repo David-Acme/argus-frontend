@@ -19,6 +19,7 @@ import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
 import { CallPill, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
+import { InAppAlertBanner } from '@/features/in-app-alert';
 import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
 
@@ -62,6 +63,7 @@ export default function RootLayout() {
               <GlobalBottomNav />
               <CallPill />
               <IncomingCallSurface />
+              <InAppAlertBanner />
               <ConfirmDialog />
               <DisarmPinDialog />
               <Toaster />

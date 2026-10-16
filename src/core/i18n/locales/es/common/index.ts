@@ -42,6 +42,7 @@ export const common = {
   },
   search: 'Buscar…',
   close: 'Cerrar',
+  'alert-view': 'Ver',
   save: 'Guardar',
   cancel: 'Cancelar',
   create: 'Crear',

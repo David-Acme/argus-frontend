@@ -12,6 +12,7 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   deleteKeys(): Promise<void>;
   setDeclineListener(listener: (callId: string) => void): void;
   setTokenListener(listener: (token: string) => void): void;
+  setAlertListener(listener: (alertJson: string) => void): void;
   takeDeclines(): string[];
   endActiveCall(): void;
   canUseFullScreenIntent(): boolean;
