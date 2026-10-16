@@ -1,11 +1,13 @@
 import { pushService } from '@/core/services/push';
 import { useAuthStore } from '@/core/stores';
 import { traceEvent } from '@/core/services/native-trace';
-import { callLockedId, callLockRedirect, callLockTraceReason, outsideCallIdFrom } from './call-lock';
+import { callLockedId, callLockTraceReason, decideCallLock, outsideCallIdFrom } from './call-lock';
 
 export function outsideCallLockId(): string | null {
   return outsideCallIdFrom(pushService.outsideCallId(), callLockedId());
 }
+
+let tracedDecision: string | null = null;
 
 export function currentCallLockRedirect(pathname: string): string | null {
   const lockedId = outsideCallLockId();
@@ -14,16 +16,17 @@ export function currentCallLockRedirect(pathname: string): string | null {
     keyguardLocked: pushService.isKeyguardLocked(),
     signedIn: useAuthStore.getState().status === 'signed-in',
   };
-  const href = callLockRedirect(pathname, lockedId, keyguard);
-  traceEvent(
-    'lock',
-    href ? 'redirect' : 'stay',
-    callLockTraceReason({
-      onCall: pathname === '/call',
-      held: lockedId !== null,
-      over: keyguard.overKeyguard,
-      locked: keyguard.keyguardLocked,
-    }),
-  );
-  return href;
+  const decision = decideCallLock({ pathname, lockedId, ...keyguard });
+  const flags = callLockTraceReason({
+    onCall: pathname === '/call',
+    held: lockedId !== null,
+    over: keyguard.overKeyguard,
+    locked: keyguard.keyguardLocked,
+  });
+  const key = `${decision.reason}-${flags}`;
+  if (key !== tracedDecision) {
+    tracedDecision = key;
+    traceEvent('lock', decision.href ? 'redirect' : 'stay', flags);
+  }
+  return decision.href;
 }

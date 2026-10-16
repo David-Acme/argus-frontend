@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { callLockedId, callLockRedirect, callLockTraceReason, outsideCallIdFrom, setCallLock } from '@/features/voice/model/call-lock';
+import { callLockedId, callLockRedirect, callLockTraceReason, decideCallLock, outsideCallIdFrom, setCallLock } from '@/features/voice/model/call-lock';
 
 afterEach(() => setCallLock(null));
 
@@ -64,5 +64,30 @@ describe('a signed-out device is never sent back into the call', () => {
     setCallLock('call-7');
     expect(callLockRedirect('/agenda', callLockedId(), { ...LOCKED, signedIn: false })).toBeNull();
     expect(callLockRedirect('/', callLockedId(), { ...LOCKED, signedIn: false })).toBeNull();
+  });
+});
+
+describe('one decision for the call lock and the route gate, with a single winner', () => {
+  const on = { pathname: '/agenda', lockedId: 'call-7', signedIn: true, overKeyguard: true, keyguardLocked: true };
+
+  test('a signed-out device is never redirected into the call, whatever else holds', () => {
+    expect(decideCallLock({ ...on, signedIn: false })).toEqual({ href: null, reason: 'signed-out' });
+  });
+
+  test('a call that is over releases the lock: no redirect', () => {
+    expect(decideCallLock({ ...on, lockedId: null })).toEqual({ href: null, reason: 'no-call' });
+  });
+
+  test('on the call route there is nothing to redirect', () => {
+    expect(decideCallLock({ ...on, pathname: '/call' })).toEqual({ href: null, reason: 'on-call' });
+  });
+
+  test('an unlocked or not-over-keyguard call does not redirect', () => {
+    expect(decideCallLock({ ...on, keyguardLocked: false })).toEqual({ href: null, reason: 'not-locked' });
+    expect(decideCallLock({ ...on, overKeyguard: false })).toEqual({ href: null, reason: 'not-locked' });
+  });
+
+  test('a signed-in, locked, over-keyguard call sends the app back to the call exactly once', () => {
+    expect(decideCallLock(on)).toEqual({ href: '/call?callId=call-7&outside=1', reason: 'redirect' });
   });
 });

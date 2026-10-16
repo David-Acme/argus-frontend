@@ -8,15 +8,32 @@ export function callLockedId(): string | null {
   return lockedCallId;
 }
 
+export type CallLockInput = {
+  pathname: string;
+  lockedId: string | null;
+  signedIn: boolean;
+  overKeyguard: boolean;
+  keyguardLocked: boolean;
+};
+
+export type CallLockReason = 'signed-out' | 'no-call' | 'on-call' | 'not-locked' | 'redirect';
+
+export type CallLockDecision = { href: string | null; reason: CallLockReason };
+
+export function decideCallLock(input: CallLockInput): CallLockDecision {
+  if (!input.signedIn) return { href: null, reason: 'signed-out' };
+  if (!input.lockedId) return { href: null, reason: 'no-call' };
+  if (input.pathname === '/call') return { href: null, reason: 'on-call' };
+  if (!input.overKeyguard || !input.keyguardLocked) return { href: null, reason: 'not-locked' };
+  return { href: `/call?callId=${encodeURIComponent(input.lockedId)}&outside=1`, reason: 'redirect' };
+}
+
 export function callLockRedirect(
   pathname: string,
   lockedId: string | null,
   keyguard: { overKeyguard: boolean; keyguardLocked: boolean; signedIn: boolean },
 ): string | null {
-  if (!lockedId || pathname === '/call') return null;
-  if (!keyguard.signedIn) return null;
-  if (!keyguard.overKeyguard || !keyguard.keyguardLocked) return null;
-  return `/call?callId=${encodeURIComponent(lockedId)}&outside=1`;
+  return decideCallLock({ pathname, lockedId, ...keyguard }).href;
 }
 
 export function outsideCallIdFrom(nativeId: string, storeId: string | null): string | null {
