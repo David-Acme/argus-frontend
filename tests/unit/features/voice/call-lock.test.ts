@@ -74,8 +74,13 @@ describe('one decision for the call lock and the route gate, with a single winne
     expect(decideCallLock({ ...on, signedIn: false })).toEqual({ href: null, reason: 'signed-out' });
   });
 
-  test('a call that is over releases the lock: no redirect', () => {
-    expect(decideCallLock({ ...on, lockedId: null })).toEqual({ href: null, reason: 'no-call' });
+  test('a call that is over, with the keyguard still locked, leaves the app instead of staying on household routes', () => {
+    expect(decideCallLock({ ...on, lockedId: null })).toEqual({ href: null, reason: 'leave' });
+  });
+
+  test('a call that is over, with the keyguard unlocked, releases the lock without leaving', () => {
+    expect(decideCallLock({ ...on, lockedId: null, keyguardLocked: false })).toEqual({ href: null, reason: 'no-call' });
+    expect(decideCallLock({ ...on, lockedId: null, overKeyguard: false })).toEqual({ href: null, reason: 'no-call' });
   });
 
   test('on the call route there is nothing to redirect', () => {

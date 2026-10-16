@@ -16,15 +16,16 @@ export type CallLockInput = {
   keyguardLocked: boolean;
 };
 
-export type CallLockReason = 'signed-out' | 'no-call' | 'on-call' | 'not-locked' | 'redirect';
+export type CallLockReason = 'signed-out' | 'no-call' | 'leave' | 'on-call' | 'not-locked' | 'redirect';
 
 export type CallLockDecision = { href: string | null; reason: CallLockReason };
 
 export function decideCallLock(input: CallLockInput): CallLockDecision {
   if (!input.signedIn) return { href: null, reason: 'signed-out' };
-  if (!input.lockedId) return { href: null, reason: 'no-call' };
+  const overLockedKeyguard = input.overKeyguard && input.keyguardLocked;
+  if (!input.lockedId) return { href: null, reason: overLockedKeyguard ? 'leave' : 'no-call' };
   if (input.pathname === '/call') return { href: null, reason: 'on-call' };
-  if (!input.overKeyguard || !input.keyguardLocked) return { href: null, reason: 'not-locked' };
+  if (!overLockedKeyguard) return { href: null, reason: 'not-locked' };
   return { href: `/call?callId=${encodeURIComponent(input.lockedId)}&outside=1`, reason: 'redirect' };
 }
 

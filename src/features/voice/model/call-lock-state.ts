@@ -26,7 +26,8 @@ export function currentCallLockRedirect(pathname: string): string | null {
   const key = `${decision.reason}-${flags}`;
   if (key !== tracedDecision) {
     tracedDecision = key;
-    traceEvent('lock', decision.href ? 'redirect' : 'stay', flags);
+    traceEvent('lock', decision.reason === 'leave' ? 'left' : decision.href ? 'redirect' : 'stay', flags);
   }
+  if (decision.reason === 'leave') pushService.sendToBackground();
   return decision.href;
 }
