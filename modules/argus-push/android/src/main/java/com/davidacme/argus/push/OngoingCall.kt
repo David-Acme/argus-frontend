@@ -1,5 +1,6 @@
 package com.davidacme.argus.push
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 
@@ -22,6 +23,9 @@ internal fun ongoingCallChannel(): String = PushChannels.ONGOING
 internal fun shouldRunOngoingService(answered: Boolean, ended: Boolean): Boolean = answered && !ended
 
 internal object OngoingCall {
+    const val TAG = "argus-ongoing-call"
+    const val ID = 7046
+
     fun show(context: Context, callId: String, enteredFromOutside: Boolean) {
         if (enteredFromOutside) KeyguardCall.arm(callId)
         PushChannels.ensure(context)
@@ -37,6 +41,10 @@ internal object OngoingCall {
     }
 
     fun clear(context: Context) {
+        context.getSystemService(NotificationManager::class.java)?.let { manager ->
+            manager.cancel(TAG, ID)
+            manager.cancel(ID)
+        }
         context.stopService(Intent(context, OngoingCallService::class.java))
         NativeTrace.record("ongoing", "cleared", "call-ended")
     }

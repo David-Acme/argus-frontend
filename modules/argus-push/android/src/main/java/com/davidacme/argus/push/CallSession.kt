@@ -112,6 +112,7 @@ internal object CallSession {
 
     fun endActive(context: Context) {
         val app = context.applicationContext
+        OngoingCall.clear(app)
         val callId = synchronized(lock) { active?.callId ?: connection?.callId } ?: return
         releaseCall(app, callId)
         takeConnection(callId)?.endWith(DisconnectCause.LOCAL)
