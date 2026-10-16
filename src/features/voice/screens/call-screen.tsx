@@ -1,5 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
 import { ResponseCard } from '@/features/response';
@@ -13,6 +14,7 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
+import { callRouteDecision } from '@/features/voice/model/call-route';
 import { leaveCall } from '@/features/voice/model/leave-call';
 
 function CallScreen() {
@@ -84,8 +86,10 @@ function CallScreen() {
 export default function CallRoute() {
   const authStatus = useAuthStore((state) => state.status);
   const params = useLocalSearchParams<{ callId?: string }>();
-  const { has } = useCapabilities();
+  const { has, ready } = useCapabilities();
   const allowed = has(params.callId ? CAPABILITY.callsJoin : CAPABILITY.assistantVoice);
-  if (authStatus !== 'signed-in' || !allowed) return <Redirect href="/" />;
+  const decision = callRouteDecision({ signedIn: authStatus === 'signed-in', ready, allowed });
+  if (decision === 'redirect') return <Redirect href="/" />;
+  if (decision === 'wait') return <View className="bg-background flex-1" />;
   return argusCallSupported() ? <CallScreen /> : <VoiceWebNotice />;
 }
