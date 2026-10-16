@@ -13,6 +13,7 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
+import { leaveCall } from '@/features/voice/model/leave-call';
 
 function CallScreen() {
   const router = useRouter();
@@ -22,10 +23,16 @@ function CallScreen() {
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const liveCamera = cameras.find((camera) => camera.id === call.liveCameraId) ?? null;
-  const hangUp = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/');
-  }, [router]);
+  const hangUp = useCallback(
+    () =>
+      leaveCall({
+        stopVoice: () => voiceService.stop(),
+        canGoBack: () => router.canGoBack(),
+        goBack: () => router.back(),
+        goHome: () => router.replace('/'),
+      }),
+    [router],
+  );
   const closeCamera = useCallback(() => voiceService.showCamera(null), []);
   const answerWaiting = useCallback(() => voiceService.answerWaiting(), []);
   const dismissWaiting = useCallback(() => voiceService.dismissWaiting(), []);
