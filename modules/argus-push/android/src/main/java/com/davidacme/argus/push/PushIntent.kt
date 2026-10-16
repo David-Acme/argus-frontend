@@ -14,6 +14,7 @@ internal data class PushIntent(
     val expiresAtSeconds: Long,
     val cancel: Boolean,
     val type: String = "",
+    val reason: String = "",
 ) {
     companion object {
         const val KIND_ALERT = "alert"
@@ -43,6 +44,7 @@ internal data class PushIntent(
                 expiresAtSeconds = expiresAt,
                 cancel = obj.optBoolean("cancel", false),
                 type = obj.optString("type"),
+                reason = obj.optString("reason"),
             )
         }
     }

@@ -44,4 +44,12 @@ class PushIntentTest {
     fun refusesMalformedJson() {
         assertNull(PushIntent.parse("{not json"))
     }
+
+    @Test
+    fun readsTheReasonOfACall() {
+        val intent = PushIntent.parse(
+            """{"intentId":"intent-0004","kind":"call","callId":"call-0002","reason":"Persona en la puerta","exp":1791000060}""",
+        )
+        assertEquals("Persona en la puerta", intent?.reason)
+    }
 }

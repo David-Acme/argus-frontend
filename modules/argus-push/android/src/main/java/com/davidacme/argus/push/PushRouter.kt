@@ -85,7 +85,15 @@ internal class PushRouter(private val context: Context) {
         }
         if (store.isSeen("cancel:$callId", now) || store.isSeen("call:$callId", now)) return
         store.remember("call:$callId", now)
-        CallSession.ring(context, callId, intent.expiresAtSeconds)
+        CallSession.ring(
+            context,
+            RingInfo(
+                callId = callId,
+                expiresAtSeconds = intent.expiresAtSeconds,
+                reason = intent.reason,
+                critical = intent.urgency == "critical",
+            ),
+        )
     }
 
     private fun showGeneric(now: Long, deliveryKey: String?) {

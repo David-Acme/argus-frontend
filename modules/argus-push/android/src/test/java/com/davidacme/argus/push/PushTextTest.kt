@@ -29,4 +29,12 @@ class PushTextTest {
         assertEquals(PushChannels.NORMAL, PushChannels.forUrgency("normal"))
         assertEquals(PushChannels.NORMAL, PushChannels.forUrgency(""))
     }
+
+    @Test
+    fun ringStatusAndClockForBothLanguages() {
+        assertEquals("Llamada de Argus · sonando · 00:04", PushText.ringStatus(spanish = true, time = PushText.clock(4_200L)))
+        assertEquals("Argus call · ringing · 01:05", PushText.ringStatus(spanish = false, time = PushText.clock(65_000L)))
+        assertEquals("00:00", PushText.clock(-10L))
+        assertEquals("Alerta crítica", PushText.criticalTitle(spanish = true))
+    }
 }

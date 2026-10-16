@@ -18,18 +18,26 @@ internal object CallSession {
     @Volatile
     var declineListener: ((String) -> Unit)? = null
 
-    private class ActiveCall(val callId: String, val expiry: Runnable)
+    private class ActiveCall(val info: RingInfo, val expiry: Runnable, val startedAtMillis: Long) {
+        val callId: String get() = info.callId
+    }
 
-    fun ring(context: Context, callId: String, expiresAtSeconds: Long) {
+    fun ringDisplay(callId: String): RingDisplay? =
+        synchronized(lock) {
+            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.reason, it.info.critical, it.startedAtMillis) }
+        }
+
+    fun ring(context: Context, info: RingInfo) {
         val app = context.applicationContext
-        val timeoutMillis = expiresAtSeconds * MILLIS - System.currentTimeMillis()
+        val callId = info.callId
+        val timeoutMillis = info.expiresAtSeconds * MILLIS - System.currentTimeMillis()
         if (timeoutMillis <= 0L) return
         val replaced = synchronized(lock) {
             if (active?.callId == callId) return
             val previous = active
             previous?.let { handler.removeCallbacks(it.expiry) }
             val expiry = Runnable { expire(app, callId) }
-            active = ActiveCall(callId, expiry)
+            active = ActiveCall(info, expiry, System.currentTimeMillis())
             handler.postDelayed(expiry, timeoutMillis)
             val previousConnection = connection
             connection = null

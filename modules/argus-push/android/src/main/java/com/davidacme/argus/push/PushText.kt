@@ -21,6 +21,18 @@ internal object PushText {
 
     fun callTitle(spanish: Boolean): String = if (spanish) "Llamada de Argus" else "Argus is calling"
 
+    fun incomingTitle(spanish: Boolean): String = if (spanish) "Argus te llama" else "Argus is calling"
+
+    fun criticalTitle(spanish: Boolean): String = if (spanish) "Alerta crítica" else "Critical alert"
+
+    fun ringStatus(spanish: Boolean, time: String): String =
+        if (spanish) "Llamada de Argus · sonando · $time" else "Argus call · ringing · $time"
+
+    fun clock(elapsedMillis: Long): String {
+        val totalSeconds = maxOf(0L, elapsedMillis / 1000L)
+        return "%02d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
+    }
+
     fun answer(spanish: Boolean): String = if (spanish) "Contestar" else "Answer"
 
     fun decline(spanish: Boolean): String = if (spanish) "Rechazar" else "Decline"
