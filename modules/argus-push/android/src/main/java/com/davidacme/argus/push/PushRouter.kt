@@ -41,7 +41,14 @@ internal class PushRouter(private val context: Context) {
         val deepLink = intent.notificationId.takeIf { it.isNotEmpty() }?.let {
             "argus://notification?notificationId=${Uri.encode(it)}"
         }
-        PushNotifier.postAlert(context, intent.intentId, channel, body, deepLink)
+        val copy = PushVisibility.alertCopy(
+            intent.type,
+            intent.title,
+            body,
+            PushText.isSpanish(),
+            channel != PushChannels.NORMAL,
+        )
+        PushNotifier.postAlert(context, intent.intentId, channel, copy, deepLink)
     }
 
     private fun routeCall(intent: PushIntent, now: Long) {
@@ -63,8 +70,14 @@ internal class PushRouter(private val context: Context) {
             if (store.isSeen(key, now)) return
             store.remember(key, now)
         }
-        val body = PushText.generic(PushText.isSpanish(), urgent = false)
-        PushNotifier.postAlert(context, deliveryKey ?: "generic-$now", PushChannels.NORMAL, body, null)
+        val copy = PushVisibility.alertCopy(
+            type = "",
+            title = "",
+            body = PushText.generic(PushText.isSpanish(), urgent = false),
+            spanish = PushText.isSpanish(),
+            urgent = false,
+        )
+        PushNotifier.postAlert(context, deliveryKey ?: "generic-$now", PushChannels.NORMAL, copy, null)
     }
 
     private fun decodeEnvelope(encoded: String): SealedEnvelope? =

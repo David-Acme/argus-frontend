@@ -15,6 +15,8 @@ internal object PushText {
             else -> "You have a new notice. Open Argus to see it."
         }
 
+    fun missedCallTitle(spanish: Boolean): String = if (spanish) "Llamada perdida" else "Missed call"
+
     fun callTitle(spanish: Boolean): String = if (spanish) "Llamada de Argus" else "Argus is calling"
 
     fun answer(spanish: Boolean): String = if (spanish) "Contestar" else "Answer"

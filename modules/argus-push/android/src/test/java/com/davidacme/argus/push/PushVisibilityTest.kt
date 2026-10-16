@@ -1,0 +1,55 @@
+package com.davidacme.argus.push
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class PushVisibilityTest {
+    @Test
+    fun aMissedCallKeepsItsDetailAndShowsOnlyTheMissedTitleLocked() {
+        val copy = PushVisibility.alertCopy(
+            type = PushVisibility.MISSED_CALL_TYPE,
+            title = "Llamada perdida · Persona desconocida en Patio",
+            body = "Te llamé porque hay alguien en el patio.",
+            spanish = true,
+            urgent = true,
+        )
+        assertEquals("Llamada perdida · Persona desconocida en Patio", copy.title)
+        assertEquals("Te llamé porque hay alguien en el patio.", copy.body)
+        assertEquals("Llamada perdida", copy.publicTitle)
+        assertEquals(PushText.generic(spanish = true, urgent = true), copy.publicBody)
+    }
+
+    @Test
+    fun aMissedCallInEnglishUsesTheEnglishLockedTitle() {
+        val copy = PushVisibility.alertCopy(
+            type = PushVisibility.MISSED_CALL_TYPE,
+            title = "Missed call · Front door",
+            body = "I called because someone is at the door.",
+            spanish = false,
+            urgent = false,
+        )
+        assertEquals("Missed call", copy.publicTitle)
+        assertEquals(PushText.generic(spanish = false, urgent = false), copy.publicBody)
+    }
+
+    @Test
+    fun anAlertWithAPlaceOrPersonLocksToTheGenericAppTitle() {
+        val copy = PushVisibility.alertCopy(
+            type = "camera",
+            title = "Patio: persona desconocida",
+            body = "Detectamos una persona en el patio.",
+            spanish = true,
+            urgent = true,
+        )
+        assertEquals("Patio: persona desconocida", copy.title)
+        assertEquals(PushText.TITLE, copy.publicTitle)
+        assertEquals(PushText.generic(spanish = true, urgent = true), copy.publicBody)
+    }
+
+    @Test
+    fun anAlertWithoutATitleFallsBackToTheAppTitle() {
+        val copy = PushVisibility.alertCopy(type = "", title = "", body = "Aviso", spanish = false, urgent = false)
+        assertEquals(PushText.TITLE, copy.title)
+        assertEquals(PushText.TITLE, copy.publicTitle)
+    }
+}

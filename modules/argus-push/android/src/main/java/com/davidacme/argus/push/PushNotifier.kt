@@ -20,14 +20,21 @@ internal object PushNotifier {
         return manager.canUseFullScreenIntent()
     }
 
-    fun postAlert(context: Context, tag: String, channelId: String, body: String, deepLink: String?) {
+    fun postAlert(context: Context, tag: String, channelId: String, copy: AlertCopy, deepLink: String?) {
         PushChannels.ensure(context)
+        val publicVersion = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(context.applicationInfo.icon)
+            .setContentTitle(copy.publicTitle)
+            .setContentText(copy.publicBody)
+            .build()
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(context.applicationInfo.icon)
-            .setContentTitle(PushText.TITLE)
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setContentTitle(copy.title)
+            .setContentText(copy.body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(copy.body))
             .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(publicVersion)
             .setContentIntent(activity(context, tag.hashCode(), PushActions.launchIntent(context, deepLink)))
         NotificationManagerCompat.from(context).notify(tag, ALERT_NOTIFICATION_ID, builder.build())
     }
