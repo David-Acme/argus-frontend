@@ -12,6 +12,11 @@ import android.os.Build
 import android.os.IBinder
 
 internal class OngoingCallService : Service() {
+    override fun onCreate() {
+        super.onCreate()
+        PushChannels.ensure(this)
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -22,7 +27,20 @@ internal class OngoingCallService : Service() {
             return START_NOT_STICKY
         }
         val outside = intent.getBooleanExtra(EXTRA_OUTSIDE, false)
-        val notification = notificationFor(callId, outside)
+        PushChannels.ensure(this)
+        val callStyle = ongoingCallStyle(Build.VERSION.SDK_INT)
+        try {
+            startOngoing(notificationFor(callId, outside, callStyle))
+            NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
+        } catch (refused: RuntimeException) {
+            NativeTrace.record("ongoing", "fallback", "plain-notification")
+            startOngoing(notificationFor(callId, outside, callStyle = false))
+            NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
+        }
+        return START_NOT_STICKY
+    }
+
+    private fun startOngoing(notification: Notification) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 ID,
@@ -32,11 +50,9 @@ internal class OngoingCallService : Service() {
         } else {
             startForeground(ID, notification)
         }
-        NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
-        return START_NOT_STICKY
     }
 
-    private fun notificationFor(callId: String, outside: Boolean): Notification {
+    private fun notificationFor(callId: String, outside: Boolean, callStyle: Boolean): Notification {
         val copy = ongoingCallCopy(PushText.isSpanish())
         val open = PendingIntent.getActivity(
             this,
@@ -54,15 +70,16 @@ internal class OngoingCallService : Service() {
                 .putExtra(PushActions.EXTRA_CALL_ID, callId),
             FLAGS,
         )
-        val builder = Notification.Builder(this, PushChannels.CALLS)
+        val builder = Notification.Builder(this, ongoingCallChannel())
             .setSmallIcon(applicationInfo.icon)
             .setContentTitle(copy.title)
             .setContentIntent(open)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_CALL)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (callStyle) {
             val person = Person.Builder().setName("Argus").setImportant(true).build()
             builder.setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
+            if (ongoingFullScreenIntent(callStyle)) builder.setFullScreenIntent(open, false)
         } else {
             val icon = Icon.createWithResource(this, applicationInfo.icon)
             builder.addAction(Notification.Action.Builder(icon, copy.hangUp, hangUp).build())

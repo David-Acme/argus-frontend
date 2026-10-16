@@ -17,11 +17,18 @@ internal fun ongoingCallCopy(spanish: Boolean): OngoingCallCopy =
 
 internal fun ongoingCallRoute(): OngoingCallRoute = OngoingCallRoute.ForegroundService
 
+internal fun ongoingCallChannel(): String = PushChannels.CALLS
+
+internal fun ongoingCallStyle(sdk: Int): Boolean = sdk >= 31
+
+internal fun ongoingFullScreenIntent(callStyle: Boolean): Boolean = callStyle
+
 internal fun shouldRunOngoingService(answered: Boolean, ended: Boolean): Boolean = answered && !ended
 
 internal object OngoingCall {
     fun show(context: Context, callId: String, enteredFromOutside: Boolean) {
         if (enteredFromOutside) KeyguardCall.arm(callId)
+        PushChannels.ensure(context)
         when (ongoingCallRoute()) {
             OngoingCallRoute.ForegroundService -> {
                 try {
