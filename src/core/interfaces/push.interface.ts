@@ -25,6 +25,7 @@ export interface IArgusPushNative {
 
 export interface IPushService {
   register(): Promise<void>;
+  bindListeners(): void;
   unpair(): Promise<void>;
   onDecline(listener: (callId: string) => void): () => void;
   drainDeclines(): void;

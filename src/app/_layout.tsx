@@ -21,6 +21,7 @@ import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
 import { CallPill, currentCallLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
+import { usePushListeners } from '@/features/notification';
 import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
 
@@ -34,6 +35,7 @@ export default function RootLayout() {
   }, []);
 
   useDesktopBridge(deepLinkPath);
+  usePushListeners();
 
   const pathname = usePathname();
   const router = useRouter();

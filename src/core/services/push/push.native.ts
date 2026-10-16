@@ -43,10 +43,16 @@ class NativePushService implements IPushService {
   private tokenBound = false;
   private alertBound = false;
 
-  async register(): Promise<void> {
+  bindListeners(): void {
     if (!IS_ANDROID) return;
     this.bindToken();
     this.bindAlert();
+    this.bindDecline();
+  }
+
+  async register(): Promise<void> {
+    if (!IS_ANDROID) return;
+    this.bindListeners();
     if (!hasSession(useAuthStore.getState().status)) return;
     try {
       const native = this.module();

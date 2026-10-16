@@ -2,6 +2,7 @@ import type { IPushService } from '@/core/interfaces';
 
 const unsupported: IPushService = {
   register: async () => undefined,
+  bindListeners: () => undefined,
   unpair: async () => undefined,
   onDecline: () => () => undefined,
   drainDeclines: () => undefined,
