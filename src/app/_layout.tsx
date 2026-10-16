@@ -19,6 +19,7 @@ import { DisarmPinDialog } from '@/features/safety';
 import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
+import { useAuthStore } from '@/core/stores';
 import { CallPill, currentCallLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
 import { usePushListeners } from '@/features/notification';
@@ -40,6 +41,7 @@ export default function RootLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const [keyguardCheck, setKeyguardCheck] = useState(0);
+  const signedIn = useAuthStore((state) => state.status === 'signed-in');
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') setKeyguardCheck((tick) => tick + 1);
@@ -49,7 +51,7 @@ export default function RootLayout() {
   useEffect(() => {
     const href = currentCallLockRedirect(pathname);
     if (href) router.replace(href);
-  }, [pathname, router, keyguardCheck]);
+  }, [pathname, router, keyguardCheck, signedIn]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bg }}>
