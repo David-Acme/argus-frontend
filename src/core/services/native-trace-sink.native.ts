@@ -1,6 +1,6 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type { IArgusPushNative } from '@/core/interfaces';
-import type { SessionTraceOutcome, SessionTracePhase } from './session-trace.types';
+import { installTraceSink } from './native-trace';
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;
@@ -18,9 +18,8 @@ function nativeTrace(): IArgusPushNative | null {
   return native;
 }
 
-export function traceSession(phase: SessionTracePhase, outcome: SessionTraceOutcome, reason: string): void {
-  try {
-    nativeTrace()?.recordSession(phase, outcome, reason);
-  } catch {
-  }
-}
+installTraceSink((phase, outcome, reason) => {
+  nativeTrace()?.recordTrace(phase, outcome, reason);
+});
+
+export {};

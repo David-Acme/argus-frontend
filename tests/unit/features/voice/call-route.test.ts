@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { afterSignInHref, usePendingCallStore } from '@/core/stores/pending-call.store';
-import { callRouteDecision, callRouteHref } from '@/features/voice/model/call-route';
+import { callRouteDecision, callRouteHref, callRouteTraceReason } from '@/features/voice/model/call-route';
 
 describe('the call route', () => {
   test('a signed-out device is sent home whatever else it knows', () => {
@@ -39,5 +39,13 @@ describe('a call answered while signed out', () => {
     usePendingCallStore.getState().hold(callRouteHref({ callId: 'call-114', outside: true }), 1_000);
     expect(afterSignInHref(2_000)).toBe('/call?callId=call-114&outside=1');
     expect(callRouteDecision({ signedIn: true, ready: true, waitedOut: false, allowed: true })).toBe('render');
+  });
+});
+
+describe('the call route trace reason', () => {
+  test('every route input is written as a flag, in a fixed order', () => {
+    expect(
+      callRouteTraceReason({ signedIn: true, allowed: true, ready: false, waitedOut: false, outside: true, locked: false }),
+    ).toBe('signed-1-allowed-1-ready-0-waited-0-outside-1-locked-0');
   });
 });

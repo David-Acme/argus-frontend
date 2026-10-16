@@ -5,8 +5,9 @@ import { secureStorageService } from '@/core/services/secure-storage';
 import { storageService } from '@/core/services/storage';
 import { readRefreshResponse, settledRefresh } from '@/core/services/http/refresh-response';
 import { decideRestore, restoreRetryDelayMs, type RestoreDecision, type StoredSessionReading } from '@/core/services/session-restore';
-import { traceSession } from '@/core/services/session-trace';
-import type { SessionTraceOutcome } from '@/core/services/session-trace.types';
+import '@/core/services/native-trace-sink';
+import { traceEvent } from '@/core/services/native-trace';
+import type { TraceOutcome } from '@/core/services/native-trace.types';
 import { registerHttpAuth } from '@/core/services/http';
 import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
@@ -35,7 +36,7 @@ import type { IAuthSession, IAuthUser } from '@/core/interfaces';
 
 const REFRESH_PATH = '/auth/refresh-token';
 
-function restoreTraceOutcome(decision: RestoreDecision): SessionTraceOutcome {
+function restoreTraceOutcome(decision: RestoreDecision): TraceOutcome {
   if (decision.kind === 'session') return 'ok';
   return decision.kind === 'absent' ? 'absent' : 'partial';
 }
@@ -45,7 +46,7 @@ function restoreTraceReason(decision: RestoreDecision): string {
   return decision.kind === 'absent' ? 'none' : decision.reason;
 }
 
-function refreshTraceOutcome(outcome: SessionRefreshOutcome): SessionTraceOutcome {
+function refreshTraceOutcome(outcome: SessionRefreshOutcome): TraceOutcome {
   if (outcome === 'refreshed') return 'ok';
   return outcome === 'rejected' ? 'refresh-rejected' : 'unavailable';
 }
@@ -137,7 +138,7 @@ class SessionService {
 
     this.refreshing = this.performRefresh()
       .then((outcome) => {
-        traceSession('refresh', refreshTraceOutcome(outcome), refreshTraceReason(outcome));
+        traceEvent('refresh', refreshTraceOutcome(outcome), refreshTraceReason(outcome));
         return outcome;
       })
       .finally(() => {
@@ -218,7 +219,7 @@ class SessionService {
       return { paired: false, instance: null, status: 'signed-out', restored: false };
     }
 
-    traceSession('restore', restoreTraceOutcome(decision), restoreTraceReason(decision));
+    traceEvent('restore', restoreTraceOutcome(decision), restoreTraceReason(decision));
     return {
       paired: instance !== null,
       instance,
@@ -239,7 +240,7 @@ class SessionService {
         const user = storageService.getObject<IAuthUser>(SESSION_USER_KEY);
         return { instance, accessToken, refreshToken, deviceCredential, user };
       } catch {
-        traceSession('restore', 'error', 'read-error');
+        traceEvent('restore', 'error', 'read-error');
         await new Promise<void>((resolve) => setTimeout(resolve, restoreRetryDelayMs(attempt)));
       }
     }

@@ -4,6 +4,8 @@ import { incomingCallCancelSchema, incomingCallSchema } from '@/core/contracts/r
 import { withTiming } from 'react-native-reanimated';
 import { synchronizeService } from '@/core/services/sync';
 import type { IRealtimeCall, IVoiceMic, IVoiceReactionPayload } from '@/core/interfaces';
+import { traceEvent } from '@/core/services/native-trace';
+import { traceReasonOf } from '@/core/services/native-trace-reason';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
 import {
   CALL_ACTIONS_KEPT,
@@ -289,17 +291,23 @@ class VoiceService {
   }
 
   private async startRealtime(session: number, request: RtcTokenRequest): Promise<boolean> {
+    traceEvent('voice', 'start', request.callId ? 'call' : 'assistant');
     this.claiming = true;
     const answer = await requestCallToken(request).finally(() => {
       this.claiming = false;
     });
     if (!this.isCurrent(session)) return true;
-    if (answer.kind === 'fallback') return false;
+    if (answer.kind === 'fallback') {
+      traceEvent('voice', 'fallback', 'no-rtc-grant');
+      return false;
+    }
     if (answer.kind === 'outcome') {
+      traceEvent('voice', 'error', traceReasonOf(`answer-${answer.outcome}`));
       this.fail(OUTCOME_ERRORS[answer.outcome], { serverGone: true });
       return true;
     }
     if (answer.kind === 'refused') {
+      traceEvent('voice', 'error', traceReasonOf(`refused-${answer.code}`));
       this.fail(`${answer.code}|${answer.message}`, { serverGone: true });
       return true;
     }
@@ -319,9 +327,11 @@ class VoiceService {
         { url: grant.url, token: grant.token, agentIdentity: grant.agentIdentity },
         (event) => this.handleRtcEvent(session, event)
       );
+      traceEvent('voice', 'joined', 'rtc');
     } catch (reason) {
       const raw = reason instanceof Error ? reason.message : String(reason);
       devLog('rtc join failed:', raw);
+      traceEvent('voice', 'error', 'rtc-join-failed');
       if (this.isCurrent(session))
         this.fail(raw.includes('|') ? raw : `RTC_UNAVAILABLE|${raw}`, { serverGone: true });
       return;

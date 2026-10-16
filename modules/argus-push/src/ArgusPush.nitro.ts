@@ -24,5 +24,5 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   openFullScreenSettings(): void;
   fullScreenExplained(): boolean;
   setFullScreenExplained(value: boolean): void;
-  recordSession(phase: string, outcome: string, reason: string): void;
+  recordTrace(phase: string, outcome: string, reason: string): void;
 }

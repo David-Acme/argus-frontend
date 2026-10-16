@@ -13,7 +13,9 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCall } from '@/features/voice/hooks/use-call';
-import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref } from '@/features/voice/model/call-route';
+import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref, callRouteTraceReason } from '@/features/voice/model/call-route';
+import { callLockedId } from '@/features/voice/model/call-lock';
+import { traceEvent } from '@/core/services/native-trace';
 import { dispatchCallEnd, ENDED_HOLD_MS } from '@/features/voice/model/call-end';
 import { pushService } from '@/core/services/push';
 import { leaveCall } from '@/features/voice/model/leave-call';
@@ -146,7 +148,19 @@ export default function CallRoute() {
     return () => clearTimeout(timer);
   }, [ready]);
 
-  const decision = callRouteDecision({ signedIn: authStatus === 'signed-in', ready, waitedOut, allowed });
+  const signedIn = authStatus === 'signed-in';
+  const decision = callRouteDecision({ signedIn, ready, waitedOut, allowed });
+  const traceReason = callRouteTraceReason({
+    signedIn,
+    allowed,
+    ready,
+    waitedOut,
+    outside: params.outside === '1',
+    locked: callLockedId() !== null,
+  });
+  useEffect(() => {
+    traceEvent('route', decision === 'redirect' ? 'redirect' : 'stay', traceReason);
+  }, [decision, traceReason]);
   if (decision === 'redirect') return <Redirect href="/" />;
   if (decision === 'wait') return <CallLoading />;
   return argusCallSupported() ? <CallScreen /> : <VoiceWebNotice />;
