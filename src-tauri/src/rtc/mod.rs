@@ -9,7 +9,7 @@ use tauri::ipc::Channel;
 use tokio::sync::Mutex;
 
 use call::{AudioChoice, Call, CallOptions, EventSink};
-use protocol::{pinned_url, DataRequest, JoinRequest, RtcEvent};
+use protocol::{pinned_url, AudioDevice, DataRequest, DeviceRequest, JoinRequest, RtcEvent};
 
 #[derive(Default)]
 pub struct RtcState {
@@ -50,6 +50,16 @@ pub async fn set_microphone(state: &RtcState, enabled: bool) -> Result<(), Strin
   let call = slot.as_ref().ok_or_else(|| "RTC_NOT_CONNECTED|No call".to_string())?;
   call.set_microphone(enabled);
   Ok(())
+}
+
+pub async fn devices(state: &RtcState) -> Vec<AudioDevice> {
+  state.call.lock().await.as_ref().map(Call::devices).unwrap_or_default()
+}
+
+pub async fn select_device(state: &RtcState, request: DeviceRequest) -> Result<(), String> {
+  let slot = state.call.lock().await;
+  let call = slot.as_ref().ok_or_else(|| "RTC_NOT_CONNECTED|No call".to_string())?;
+  call.select_device(request.direction, &request.id)
 }
 
 pub async fn send(state: &RtcState, request: DataRequest) -> Result<(), String> {

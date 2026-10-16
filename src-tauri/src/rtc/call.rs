@@ -28,7 +28,14 @@ pub struct CallOptions {
   pub audio: AudioChoice,
 }
 
+#[derive(Default)]
+struct DeviceSelection {
+  input: Option<String>,
+  output: Option<String>,
+}
+
 pub struct Call {
+  selection: std::sync::Mutex<DeviceSelection>,
   room: Arc<Room>,
   microphone: LocalTrackPublication,
   agent_identity: String,
@@ -221,7 +228,7 @@ impl Call {
     }
     let events = tokio::spawn(event_loop.run(events));
 
-    Ok(Call { room, microphone, agent_identity: options.agent_identity, audio, events, closing })
+    Ok(Call { selection: std::sync::Mutex::default(), room, microphone, agent_identity: options.agent_identity, audio, events, closing })
   }
 
   pub fn set_microphone(&self, enabled: bool) {
@@ -230,6 +237,21 @@ impl Call {
     } else {
       self.microphone.mute();
     }
+  }
+
+  pub fn devices(&self) -> Vec<super::protocol::AudioDevice> {
+    let selection = self.selection.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    self.audio.devices(selection.input.as_deref(), selection.output.as_deref())
+  }
+
+  pub fn select_device(&self, direction: super::protocol::AudioDirection, id: &str) -> Result<(), String> {
+    self.audio.select(direction, id)?;
+    let mut selection = self.selection.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    match direction {
+      super::protocol::AudioDirection::Input => selection.input = Some(id.to_string()),
+      super::protocol::AudioDirection::Output => selection.output = Some(id.to_string()),
+    }
+    Ok(())
   }
 
   pub async fn send(&self, topic: String, payload: String) -> Result<(), String> {

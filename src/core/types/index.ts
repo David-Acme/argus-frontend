@@ -13,6 +13,8 @@ export * from './sync.type';
 export * from './socket-emit.type';
 export * from './pairing.type';
 export * from './voice.type';
+export * from './call-audio.type';
+export * from './device-permission.type';
 export * from './onboarding.type';
 export * from './face.type';
 export * from './morph-icon.type';

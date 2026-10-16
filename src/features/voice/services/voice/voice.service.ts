@@ -203,6 +203,7 @@ class VoiceService {
   }
 
   private applyCallControl(action: CallControlAction): void {
+    if (action === 'endpoints') return;
     traceEvent('voice', action === 'hangup' ? 'stop' : 'mute', traceReasonOf(`call-control-${action}`));
     if (action === 'hangup') {
       this.stop();

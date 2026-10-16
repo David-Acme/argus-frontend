@@ -4,6 +4,8 @@ import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import ArrowUpRight from 'lucide-react-native/icons/arrow-up-right';
 import Banknote from 'lucide-react-native/icons/banknote';
 import Bell from 'lucide-react-native/icons/bell';
+import Bluetooth from 'lucide-react-native/icons/bluetooth';
+import Headphones from 'lucide-react-native/icons/headphones';
 import Briefcase from 'lucide-react-native/icons/briefcase';
 import Building2 from 'lucide-react-native/icons/building-2';
 import CalendarCheck from 'lucide-react-native/icons/calendar-check';
@@ -127,6 +129,8 @@ export const ICONS = {
   'arrow-left': ArrowLeft,
   'arrow-up-right': ArrowUpRight,
   bell: Bell,
+  bluetooth: Bluetooth,
+  headphones: Headphones,
   calendar: CalendarDays,
   'calendar-check': CalendarCheck,
   camera: Camera,

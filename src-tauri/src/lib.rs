@@ -19,7 +19,7 @@ use net::probe::{probe as route_probe, ProbeReply, ProbeTarget};
 use net::secure::{delete_from_webview as secure_delete, get as secure_get, set_from_webview as secure_set};
 use net::socket::{close as socket_close, open as socket_open, send_binary as socket_send_binary,
                   send_text as socket_send_text, SocketOpenOptions, SocketState};
-use rtc::protocol::{DataRequest, JoinRequest, RtcEvent};
+use rtc::protocol::{AudioDevice, DataRequest, DeviceRequest, JoinRequest, RtcEvent};
 use rtc::RtcState;
 use tauri::ipc::{Channel, Request};
 use tauri::{AppHandle, State};
@@ -132,6 +132,16 @@ async fn argus_rtc_microphone(state: State<'_, RtcState>, enabled: bool) -> Resu
 }
 
 #[tauri::command]
+async fn argus_rtc_devices(state: State<'_, RtcState>) -> Result<Vec<AudioDevice>, String> {
+  Ok(rtc::devices(&state).await)
+}
+
+#[tauri::command]
+async fn argus_rtc_select_device(state: State<'_, RtcState>, request: DeviceRequest) -> Result<(), String> {
+  rtc::select_device(&state, request).await
+}
+
+#[tauri::command]
 async fn argus_rtc_send(state: State<'_, RtcState>, request: DataRequest) -> Result<(), String> {
   rtc::send(&state, request).await
 }
@@ -184,6 +194,8 @@ pub fn run() {
       argus_socket_close,
       argus_rtc_join,
       argus_rtc_microphone,
+      argus_rtc_devices,
+      argus_rtc_select_device,
       argus_rtc_send,
       argus_rtc_leave,
       call_window::argus_call_answer,

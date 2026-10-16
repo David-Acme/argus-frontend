@@ -1,8 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { NitroModules } from 'react-native-nitro-modules';
 import { getLanguage } from '@/core/i18n';
-import type { CallControlAction, IArgusPushNative, IPushService } from '@/core/interfaces';
-import { callControlActionOf } from './call-control';
+import type { CallControlAction, CallEndpoint, IArgusPushNative, IPushService } from '@/core/interfaces';
+import { callControlActionOf, callEndpointsOf } from './call-control';
 import { httpService } from '@/core/services/http';
 import { parseInAppAlert } from './in-app-alert';
 import { useInAppAlertStore } from '@/core/stores/in-app-alert.store';
@@ -18,6 +18,8 @@ import {
   registrationBodyOf,
   unpairPush,
 } from './push-registration';
+
+const ASSISTANT_CALL_TIMEOUT_MS = 3000;
 
 interface NitroModulesProxyLike {
   createHybridObject<T>(name: string): T;
@@ -114,6 +116,36 @@ class NativePushService implements IPushService {
     }
   }
 
+  async startAssistantCall(): Promise<boolean> {
+    if (!IS_ANDROID) return false;
+    try {
+      const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ASSISTANT_CALL_TIMEOUT_MS));
+      return await Promise.race([this.module().startAssistantCall(), timeout]);
+    } catch (error) {
+      log.error('push', 'the assistant call could not be registered', error);
+      return false;
+    }
+  }
+
+  callEndpoints(): CallEndpoint[] {
+    if (!IS_ANDROID) return [];
+    try {
+      return callEndpointsOf(this.module().callEndpoints());
+    } catch (error) {
+      log.error('push', 'the call audio devices are unavailable', error);
+      return [];
+    }
+  }
+
+  selectCallEndpoint(id: string): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().selectCallEndpoint(id);
+    } catch (error) {
+      log.error('push', 'the call audio device could not be selected', error);
+    }
+  }
+
   setCallMuted(muted: boolean): void {
     if (!IS_ANDROID) return;
     try {
@@ -147,6 +179,25 @@ class NativePushService implements IPushService {
   openExactAlarmSettings(): void {
     if (!IS_ANDROID) return;
     this.module().openExactAlarmSettings();
+  }
+
+  fullScreenAllowed(): boolean {
+    if (!IS_ANDROID) return true;
+    try {
+      return this.module().canUseFullScreenIntent();
+    } catch (error) {
+      log.error('push', 'the full-screen permission could not be read', error);
+      return true;
+    }
+  }
+
+  openFullScreenSettings(): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().openFullScreenSettings();
+    } catch (error) {
+      log.error('push', 'the full-screen settings could not be opened', error);
+    }
   }
 
   ackDecline(callId: string): void {

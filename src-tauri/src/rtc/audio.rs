@@ -4,8 +4,10 @@ use std::path::{Path, PathBuf};
 use livekit::webrtc::audio_frame::AudioFrame;
 use livekit::webrtc::audio_source::native::NativeAudioSource;
 use livekit::webrtc::audio_source::{AudioSourceOptions, RtcAudioSource};
-use livekit::PlatformAudio;
+use livekit::{PlatformAudio, PlayoutDeviceId, RecordingDeviceId};
 use tokio::task::JoinHandle;
+
+use super::protocol::{AudioDevice, AudioDirection};
 
 pub const NATIVE_SAMPLE_RATE: u32 = 48_000;
 pub const FRAME_SAMPLES: usize = (NATIVE_SAMPLE_RATE / 100) as usize;
@@ -84,7 +86,42 @@ pub fn open(choice: AudioChoice) -> Result<AudioIo, String> {
   }
 }
 
+pub fn device_list(entries: Vec<(String, String)>, selected: Option<&str>, direction: AudioDirection) -> Vec<AudioDevice> {
+  entries
+    .into_iter()
+    .enumerate()
+    .map(|(index, (id, name))| AudioDevice {
+      active: selected.map_or(index == 0, |chosen| chosen == id),
+      id,
+      direction,
+      name,
+    })
+    .collect()
+}
+
 impl AudioIo {
+  pub fn devices(&self, input: Option<&str>, output: Option<&str>) -> Vec<AudioDevice> {
+    let AudioIo::Platform(platform) = self else {
+      return Vec::new();
+    };
+    let inputs = platform.recording_devices().map(|device| (device.id.to_string(), device.name)).collect();
+    let outputs = platform.playout_devices().map(|device| (device.id.to_string(), device.name)).collect();
+    let mut devices = device_list(inputs, input, AudioDirection::Input);
+    devices.extend(device_list(outputs, output, AudioDirection::Output));
+    devices
+  }
+
+  pub fn select(&self, direction: AudioDirection, id: &str) -> Result<(), String> {
+    let AudioIo::Platform(platform) = self else {
+      return Err("AUDIO_DEVICE_UNAVAILABLE|This call does not use the platform audio".to_string());
+    };
+    let result = match direction {
+      AudioDirection::Input => platform.switch_recording_device(&RecordingDeviceId::from_unchecked_guid(id)),
+      AudioDirection::Output => platform.switch_playout_device(&PlayoutDeviceId::from_unchecked_guid(id)),
+    };
+    result.map_err(|error| format!("AUDIO_DEVICE_UNAVAILABLE|{error}"))
+  }
+
   pub fn rtc_source(&self) -> RtcAudioSource {
     match self {
       AudioIo::Platform(platform) => platform.rtc_source(),
@@ -112,6 +149,16 @@ impl Drop for AudioIo {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn the_first_device_is_active_until_one_is_chosen() {
+    let entries = || vec![("a".to_string(), "Built-in".to_string()), ("b".to_string(), "Headset".to_string())];
+    let default = device_list(entries(), None, AudioDirection::Input);
+    assert!(default[0].active && !default[1].active);
+    let chosen = device_list(entries(), Some("b"), AudioDirection::Output);
+    assert!(!chosen[0].active && chosen[1].active);
+    assert_eq!(chosen[1].direction, AudioDirection::Output);
+  }
 
   #[test]
   fn raw_and_wav_pcm_read_the_same_samples() {

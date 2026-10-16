@@ -50,4 +50,13 @@ class OngoingCallTest {
             ongoingCallCopy(spanish = false),
         )
     }
+
+    @Test
+    fun anAssistantCallReopensTheAppAndAnIncomingCallReopensItsScreen() {
+        assertEquals(null, ongoingDeepLink(OngoingCallState("assistant-1", outside = false, assistant = true, startedAtMillis = 0L)))
+        assertEquals(
+            "argus://call?callId=call-7&outside=1",
+            ongoingDeepLink(OngoingCallState("call-7", outside = true, assistant = false, startedAtMillis = 0L)),
+        )
+    }
 }

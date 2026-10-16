@@ -45,6 +45,29 @@ pub struct JoinRequest {
   pub agent_identity: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum AudioDirection {
+  Input,
+  Output,
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioDevice {
+  pub id: String,
+  pub direction: AudioDirection,
+  pub name: String,
+  pub active: bool,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceRequest {
+  pub direction: AudioDirection,
+  pub id: String,
+}
+
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DataRequest {

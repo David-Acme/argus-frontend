@@ -23,6 +23,7 @@ object PushActivityTracker {
                     if (activity !is CallActivity) {
                         appResumed = WeakReference(activity)
                         appActivity = WeakReference(activity)
+                        OngoingCall.repromote(activity.applicationContext)
                     }
                     KeyguardCall.onResumed(activity)
                 }

@@ -15,6 +15,9 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
   setAlertListener(listener: (alertJson: string) => void): void;
   setCallControlListener(listener: (action: string) => void): void;
   telecomCallActive(): boolean;
+  startAssistantCall(): Promise<boolean>;
+  callEndpoints(): string;
+  selectCallEndpoint(id: string): void;
   setCallMuted(muted: boolean): void;
   takeDeclines(): string[];
   ackDecline(callId: string): void;

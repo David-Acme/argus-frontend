@@ -3,7 +3,16 @@ export type ArgusPushKeys = {
   keyId: string;
 };
 
-export type CallControlAction = 'hangup' | 'mute-on' | 'mute-off';
+export type CallControlAction = 'hangup' | 'mute-on' | 'mute-off' | 'endpoints';
+
+export type CallEndpointKind = 'earpiece' | 'speaker' | 'bluetooth' | 'wired' | 'streaming' | 'unknown';
+
+export type CallEndpoint = {
+  id: string;
+  kind: CallEndpointKind;
+  name: string;
+  active: boolean;
+};
 
 export interface IArgusPushNative {
   keys(): Promise<ArgusPushKeys>;
@@ -15,6 +24,9 @@ export interface IArgusPushNative {
   setAlertListener(listener: (alertJson: string) => void): void;
   setCallControlListener(listener: (action: string) => void): void;
   telecomCallActive(): boolean;
+  startAssistantCall(): Promise<boolean>;
+  callEndpoints(): string;
+  selectCallEndpoint(id: string): void;
   setCallMuted(muted: boolean): void;
   takeDeclines(): string[];
   ackDecline(callId: string): void;
@@ -25,6 +37,8 @@ export interface IArgusPushNative {
   outsideCallId(): string;
   exactAlarmsAllowed(): boolean;
   openExactAlarmSettings(): void;
+  canUseFullScreenIntent(): boolean;
+  openFullScreenSettings(): void;
   fullScreenExplained(): boolean;
   setFullScreenExplained(value: boolean): void;
   recordTrace(phase: string, outcome: string, reason: string): void;
@@ -37,6 +51,9 @@ export interface IPushService {
   onDecline(listener: (callId: string) => void): () => void;
   onCallControl(listener: (action: CallControlAction) => void): () => void;
   telecomCallActive(): boolean;
+  startAssistantCall(): Promise<boolean>;
+  callEndpoints(): CallEndpoint[];
+  selectCallEndpoint(id: string): void;
   setCallMuted(muted: boolean): void;
   drainDeclines(): void;
   ackDecline(callId: string): void;
@@ -49,4 +66,6 @@ export interface IPushService {
   requestNotificationsPermission(): Promise<boolean>;
   exactAlarmsAllowed(): boolean;
   openExactAlarmSettings(): void;
+  fullScreenAllowed(): boolean;
+  openFullScreenSettings(): void;
 }

@@ -15,7 +15,12 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 
-internal data class OngoingCallState(val callId: String, val outside: Boolean, val startedAtMillis: Long)
+internal data class OngoingCallState(
+    val callId: String,
+    val outside: Boolean,
+    val assistant: Boolean,
+    val startedAtMillis: Long,
+)
 
 internal class OngoingCallService : Service() {
     private val handler = Handler(Looper.getMainLooper())
@@ -34,6 +39,7 @@ internal class OngoingCallService : Service() {
     override fun onDestroy() {
         handler.removeCallbacks(captureProbe)
         current = null
+        running = null
         super.onDestroy()
     }
 
@@ -54,12 +60,15 @@ internal class OngoingCallService : Service() {
             return START_NOT_STICKY
         }
         val outside = intent.getBooleanExtra(EXTRA_OUTSIDE, false)
+        val assistant = intent.getBooleanExtra(EXTRA_ASSISTANT, false)
         PushChannels.ensure(this)
-        val state = current?.takeIf { it.callId == callId }
-            ?: OngoingCallState(callId, outside, System.currentTimeMillis())
+        val previous = current?.takeIf { it.callId == callId }
+        val state = previous ?: OngoingCallState(callId, outside, assistant, System.currentTimeMillis())
         current = state
+        running = java.lang.ref.WeakReference(this)
         startOngoing(build(this, state))
-        NativeTrace.record("ongoing", "shown", if (outside) "outside" else "inside")
+        NativeTrace.record("ongoing", "shown", if (previous != null) "repromoted" else if (outside) "outside" else "inside")
+        if (BackgroundAccess.restricted(this)) NativeTrace.record("ongoing", "restricted", "background-battery")
         handler.removeCallbacks(captureProbe)
         handler.post(captureProbe)
         return START_NOT_STICKY
@@ -84,18 +93,31 @@ internal class OngoingCallService : Service() {
         const val ACTION_START = "com.davidacme.argus.push.ONGOING_START"
         const val EXTRA_CALL_ID = "com.davidacme.argus.push.ONGOING_CALL_ID"
         const val EXTRA_OUTSIDE = "com.davidacme.argus.push.ONGOING_OUTSIDE"
+        const val EXTRA_ASSISTANT = "com.davidacme.argus.push.ONGOING_ASSISTANT"
         const val ID = 7046
+        const val ACCENT = 0xFF023C69.toInt()
         private const val EXTRA_REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
         private const val FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
         @Volatile
         private var current: OngoingCallState? = null
 
-        fun intent(context: Context, callId: String, outside: Boolean): Intent =
+        @Volatile
+        private var running: java.lang.ref.WeakReference<OngoingCallService>? = null
+
+        fun intent(context: Context, callId: String, outside: Boolean, assistant: Boolean): Intent =
             Intent(context, OngoingCallService::class.java)
                 .setAction(ACTION_START)
                 .putExtra(EXTRA_CALL_ID, callId)
                 .putExtra(EXTRA_OUTSIDE, outside)
+                .putExtra(EXTRA_ASSISTANT, assistant)
+
+        fun demoted(): OngoingCallState? {
+            val state = current ?: return null
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return state
+            val service = running?.get() ?: return state
+            return state.takeIf { service.foregroundServiceType == 0 }
+        }
 
         fun refresh(context: Context) {
             val state = current ?: return
@@ -108,7 +130,7 @@ internal class OngoingCallService : Service() {
             val open = PendingIntent.getActivity(
                 context,
                 0,
-                PushActions.launchIntent(context, callDeepLink(state.callId, state.outside)).apply {
+                PushActions.launchIntent(context, ongoingDeepLink(state)).apply {
                     if (state.outside) putExtra(KeyguardCall.EXTRA_SHOW_OVER_LOCK, true)
                 },
                 FLAGS,
@@ -127,6 +149,7 @@ internal class OngoingCallService : Service() {
             ).build()
             val builder = Notification.Builder(context, ongoingCallChannel())
                 .setSmallIcon(context.applicationInfo.icon)
+                .setColor(ACCENT)
                 .setContentTitle(copy.title)
                 .setContentIntent(open)
                 .setOngoing(true)

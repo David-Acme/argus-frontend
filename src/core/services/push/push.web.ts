@@ -7,6 +7,9 @@ const unsupported: IPushService = {
   onDecline: () => () => undefined,
   onCallControl: () => () => undefined,
   telecomCallActive: () => false,
+  startAssistantCall: async () => false,
+  callEndpoints: () => [],
+  selectCallEndpoint: () => undefined,
   setCallMuted: () => undefined,
   drainDeclines: () => undefined,
   sendToBackground: () => undefined,
@@ -19,6 +22,8 @@ const unsupported: IPushService = {
   requestNotificationsPermission: async () => false,
   exactAlarmsAllowed: () => false,
   openExactAlarmSettings: () => undefined,
+  fullScreenAllowed: () => true,
+  openFullScreenSettings: () => undefined,
 };
 
 export const pushService: IPushService = unsupported;

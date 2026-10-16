@@ -10,7 +10,7 @@ object NativeTrace {
         "ok", "error", "partial", "absent", "refresh-rejected", "unavailable",
         "stay", "redirect", "start", "joined", "fallback", "sent", "stop", "shown", "cleared", "held", "released",
         "ended", "left", "failed", "queued", "background", "foreground", "probe",
-        "attached", "orphan", "active", "disconnected", "route", "mute",
+        "attached", "orphan", "active", "disconnected", "route", "mute", "restricted",
     )
     private val reasonShape = Regex("[a-z0-9-]{1,96}")
 

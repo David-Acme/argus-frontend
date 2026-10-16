@@ -33,6 +33,7 @@ async function prepare(join: RtcJoin): Promise<RtcJoin> {
   if (!url) throw new Error('PAIRING_REQUIRED|Server is not paired yet');
   unpinOrigin?.();
   unpinOrigin = pinSocketOrigin(url);
+  if (!pushService.telecomCallActive()) await pushService.startAssistantCall();
   audioSessionOwned = !pushService.telecomCallActive();
   traceEvent('voice', 'start', audioSessionOwned ? 'audio-session-app' : 'audio-session-telecom');
   if (audioSessionOwned) {

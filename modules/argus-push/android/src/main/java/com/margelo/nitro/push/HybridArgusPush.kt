@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.davidacme.argus.push.TelecomCall
+import com.davidacme.argus.push.endpointsJson
 import com.davidacme.argus.push.CallControls
 import com.davidacme.argus.push.CallSession
 import com.davidacme.argus.push.KeyguardCall
@@ -107,6 +109,18 @@ class HybridArgusPush : HybridArgusPushSpec() {
   }
 
   override fun telecomCallActive(): Boolean = CallSession.telecomActive()
+
+  override fun callEndpoints(): String = endpointsJson(TelecomCall.endpointChoices())
+
+  override fun selectCallEndpoint(id: String) {
+    TelecomCall.select(id)
+  }
+
+  override fun startAssistantCall(): Promise<Boolean> {
+    val promise = Promise<Boolean>()
+    CallSession.startAssistant(requireContext()) { active -> promise.resolve(active) }
+    return promise
+  }
 
   override fun setCallMuted(muted: Boolean) {
     CallControls.mutedByApp(requireContext(), muted)

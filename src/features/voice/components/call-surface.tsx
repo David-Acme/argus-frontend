@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoiceActionRecord, VoicePhase, VoiceTranscriptLine } from '@/core/types';
@@ -10,6 +10,7 @@ import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { voiceErrorMessage } from '@/features/voice/model/voice-error';
 import { CallActionChips } from '@/features/voice/components/call-action-chips';
 import { CallControl } from '@/features/voice/components/call-control';
+import { CallSettingsDialog } from '@/features/voice/components/call-settings-dialog';
 import { CallTranscript } from '@/features/voice/components/call-transcript';
 import { formatCallDuration } from '@/features/voice/model/call-end';
 
@@ -55,6 +56,7 @@ export function CallSurface({
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isShort } = useWindowClass();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const speaking = phase === 'speaking';
   const hint =
     phase === 'error'
@@ -127,13 +129,14 @@ export function CallSurface({
           </Button>
         </View>
       ) : (
-        <View className="flex-row items-start justify-center gap-6">
+        <View className="flex-row items-start justify-center gap-4">
           <CallControl
             icon={muted ? 'mic-off' : 'mic'}
             label={muted ? t('screens.voice.unmute') : t('screens.voice.mute')}
             tone={muted ? 'active' : 'neutral'}
             onPress={onToggleMute}
           />
+          <CallControl icon="sliders" label={t('screens.voice.settings')} onPress={() => setSettingsOpen(true)} />
           <CallControl
             icon="phone-off"
             label={t('screens.voice.hang-up')}
@@ -142,6 +145,7 @@ export function CallSurface({
           />
         </View>
       )}
+      <CallSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} muted={muted} onToggleMute={onToggleMute} />
     </View>
   );
 }

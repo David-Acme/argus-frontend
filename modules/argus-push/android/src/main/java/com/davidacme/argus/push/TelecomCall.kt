@@ -28,15 +28,42 @@ internal object TelecomCall {
     private var callId: String? = null
     private var job: Job? = null
     private var endpoints: List<CallEndpointCompat> = emptyList()
+    private var routed: CallEndpointCompat? = null
     private var state = TelecomCallState.Idle
+    private var defaultRoutePending = false
 
     fun state(): TelecomCallState = synchronized(lock) { state }
 
     fun isActive(): Boolean = state() == TelecomCallState.Active
 
     fun addIncoming(context: Context, id: String) {
-        val calls = managerOf(context) ?: return
         val app = context.applicationContext
+        add(app, id, CallAttributesCompat.DIRECTION_INCOMING, onAnswer = { CallSession.answer(app, id) }) {}
+    }
+
+    fun addOutgoing(context: Context, id: String, ready: (Boolean) -> Unit) {
+        val app = context.applicationContext
+        val added = add(app, id, CallAttributesCompat.DIRECTION_OUTGOING, onAnswer = {}, failed = { ready(false) }) {
+            launch {
+                val result = runCatching { setActive() }.getOrNull()
+                val active = result is CallControlResult.Success
+                if (active) markActive(id)
+                NativeTrace.record("telecom", if (active) "active" else "failed", "outgoing")
+                ready(active)
+            }
+        }
+        if (!added) ready(false)
+    }
+
+    private fun add(
+        app: Context,
+        id: String,
+        direction: Int,
+        onAnswer: () -> Unit,
+        failed: () -> Unit = {},
+        attached: CallControlScope.() -> Unit,
+    ): Boolean {
+        val calls = managerOf(app) ?: return false
         end(DisconnectCause.OTHER)
         synchronized(lock) {
             callId = id
@@ -48,43 +75,76 @@ internal object TelecomCall {
                     CallAttributesCompat(
                         displayName = CALLER_NAME,
                         address = Uri.fromParts("argus", id, null),
-                        direction = CallAttributesCompat.DIRECTION_INCOMING,
+                        direction = direction,
                         callType = CallAttributesCompat.CALL_TYPE_AUDIO_CALL,
                         callCapabilities = CallAttributesCompat.SUPPORTS_SET_INACTIVE,
                     ),
-                    onAnswer = { CallSession.answer(app, id) },
+                    onAnswer = { onAnswer() },
                     onDisconnect = { cause -> onSystemDisconnect(app, id, cause) },
                     onSetActive = {},
                     onSetInactive = {},
                 ) {
                     synchronized(lock) { if (callId == id) control = this }
-                    NativeTrace.record("telecom", "attached", "incoming")
-                    launch { availableEndpoints.collect { list -> synchronized(lock) { endpoints = list } } }
+                    NativeTrace.record("telecom", "attached", if (direction == CallAttributesCompat.DIRECTION_OUTGOING) "outgoing" else "incoming")
+                    launch {
+                        availableEndpoints.collect { list ->
+                            synchronized(lock) { endpoints = list }
+                            if (list.isNotEmpty()) routeDefault()
+                            CallControls.endpointsChanged()
+                        }
+                    }
                     launch {
                         currentCallEndpoint.collect { endpoint ->
+                            synchronized(lock) { routed = endpoint }
                             CallControls.routedBySystem(app, endpoint.type == CallEndpointCompat.TYPE_SPEAKER)
+                            CallControls.endpointsChanged()
                         }
                     }
                     launch { isMuted.collect { muted -> CallControls.mutedBySystem(app, muted) } }
+                    attached()
                 }
             } catch (refused: CallException) {
                 NativeTrace.record("telecom", "failed", "add-call")
+                failed()
             } catch (unsupported: UnsupportedOperationException) {
                 NativeTrace.record("telecom", "failed", "unsupported")
+                failed()
             } catch (denied: SecurityException) {
                 NativeTrace.record("telecom", "failed", "security")
+                failed()
             } finally {
                 synchronized(lock) {
                     if (callId == id) {
                         control = null
                         callId = null
                         endpoints = emptyList()
+                        routed = null
                         state = TelecomCallState.Idle
                     }
                 }
             }
         }
         synchronized(lock) { job = started }
+        return true
+    }
+
+    private fun markActive(id: String) {
+        synchronized(lock) {
+            if (callId == id) {
+                state = TelecomCallState.Active
+                defaultRoutePending = true
+            }
+        }
+        routeDefault()
+    }
+
+    private fun routeDefault() {
+        val available = synchronized(lock) {
+            if (!defaultRoutePending || state != TelecomCallState.Active || endpoints.isEmpty()) return
+            defaultRoutePending = false
+            endpoints.map { it.type }
+        }
+        if (speakerByDefault(available)) route(speaker = true)
     }
 
     fun answer(id: String, then: () -> Unit) {
@@ -97,7 +157,7 @@ internal object TelecomCall {
         scope.launch {
             val result = runCatching { current.answer(CallAttributesCompat.CALL_TYPE_AUDIO_CALL) }.getOrNull()
             val answered = result is CallControlResult.Success
-            if (answered) synchronized(lock) { if (callId == id) state = TelecomCallState.Active }
+            if (answered) markActive(id)
             NativeTrace.record("telecom", if (answered) "active" else "failed", "answer")
             then()
         }
@@ -109,6 +169,7 @@ internal object TelecomCall {
             control = null
             callId = null
             endpoints = emptyList()
+            routed = null
             state = TelecomCallState.Idle
             held
         }
@@ -121,6 +182,27 @@ internal object TelecomCall {
             runCatching { current.disconnect(DisconnectCause(cause)) }
             NativeTrace.record("telecom", "disconnected", disconnectReasonOf(cause))
             previous?.cancel()
+        }
+    }
+
+    fun endpointChoices(): List<EndpointChoice> =
+        synchronized(lock) {
+            endpoints.map { endpoint ->
+                EndpointChoice(
+                    id = endpoint.identifier.toString(),
+                    kind = endpointKindOf(endpoint.type),
+                    name = endpoint.name.toString(),
+                    active = endpoint.identifier == routed?.identifier,
+                )
+            }
+        }
+
+    fun select(id: String) {
+        val (control, target) = synchronized(lock) { Pair(control, endpoints.firstOrNull { it.identifier.toString() == id }) }
+        if (control == null || target == null) return
+        scope.launch {
+            val result = runCatching { control.requestEndpointChange(target) }.getOrNull()
+            NativeTrace.record("telecom", if (result is CallControlResult.Success) "route" else "failed", endpointKindOf(target.type))
         }
     }
 
@@ -142,6 +224,7 @@ internal object TelecomCall {
                 control = null
                 callId = null
                 endpoints = emptyList()
+                routed = null
                 state = TelecomCallState.Idle
             }
             Pair(matched, if (matched) job.also { job = null } else null)
@@ -189,3 +272,31 @@ internal fun endpointFor(speaker: Boolean, available: List<Int>): Int? =
         CallEndpointCompat.TYPE_EARPIECE in available -> CallEndpointCompat.TYPE_EARPIECE
         else -> null
     }
+
+internal fun speakerByDefault(available: List<Int>): Boolean =
+    CallEndpointCompat.TYPE_SPEAKER in available &&
+        CallEndpointCompat.TYPE_BLUETOOTH !in available &&
+        CallEndpointCompat.TYPE_WIRED_HEADSET !in available
+
+internal data class EndpointChoice(val id: String, val kind: String, val name: String, val active: Boolean)
+
+internal fun endpointKindOf(type: Int): String =
+    when (type) {
+        CallEndpointCompat.TYPE_EARPIECE -> "earpiece"
+        CallEndpointCompat.TYPE_SPEAKER -> "speaker"
+        CallEndpointCompat.TYPE_BLUETOOTH -> "bluetooth"
+        CallEndpointCompat.TYPE_WIRED_HEADSET -> "wired"
+        CallEndpointCompat.TYPE_STREAMING -> "streaming"
+        else -> "unknown"
+    }
+
+internal fun endpointsJson(choices: List<EndpointChoice>): String =
+    org.json.JSONArray(
+        choices.map { choice ->
+            org.json.JSONObject()
+                .put("id", choice.id)
+                .put("kind", choice.kind)
+                .put("name", choice.name)
+                .put("active", choice.active)
+        },
+    ).toString()

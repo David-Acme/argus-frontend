@@ -108,6 +108,7 @@ mock.module('@/core/services/push', () => ({
     },
     setCallMuted: (muted: boolean) => sharedMute.push(muted),
     telecomCallActive: () => false,
+    startAssistantCall: async () => false,
   },
 }));
 const endedSessions: (string | null)[] = [];

@@ -85,6 +85,24 @@ internal object CallSession {
         TelecomCall.answer(callId) { OngoingCall.show(app, callId, enteredFromOutside = fromOutside) }
     }
 
+    fun startAssistant(context: Context, ready: (Boolean) -> Unit) {
+        val app = context.applicationContext
+        val existing = synchronized(lock) { answeredCallId != null || active != null }
+        if (existing) {
+            ready(TelecomCall.isActive())
+            return
+        }
+        val callId = "assistant-${System.currentTimeMillis()}"
+        val delivered = java.util.concurrent.atomic.AtomicBoolean(false)
+        synchronized(lock) { answeredCallId = callId }
+        TelecomCall.addOutgoing(app, callId) { active ->
+            if (!delivered.compareAndSet(false, true)) return@addOutgoing
+            val current = synchronized(lock) { answeredCallId == callId }
+            if (current) OngoingCall.show(app, callId, enteredFromOutside = false, assistant = true)
+            ready(active && current)
+        }
+    }
+
     fun decline(context: Context, callId: String) {
         val app = context.applicationContext
         releaseCall(app, callId)

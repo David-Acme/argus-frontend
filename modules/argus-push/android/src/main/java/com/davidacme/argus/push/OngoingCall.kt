@@ -41,6 +41,9 @@ internal fun ongoingCallRoute(): OngoingCallRoute = OngoingCallRoute.ForegroundS
 
 internal fun ongoingCallChannel(): String = PushChannels.ONGOING
 
+internal fun ongoingDeepLink(state: OngoingCallState): String? =
+    if (state.assistant) null else callDeepLink(state.callId, state.outside)
+
 internal fun shouldRunOngoingService(answered: Boolean, ended: Boolean): Boolean = answered && !ended
 
 internal object CallFinish {
@@ -54,17 +57,26 @@ internal object OngoingCall {
     const val TAG = "argus-ongoing-call"
     const val ID = 7046
 
-    fun show(context: Context, callId: String, enteredFromOutside: Boolean) {
+    fun show(context: Context, callId: String, enteredFromOutside: Boolean, assistant: Boolean = false) {
         if (enteredFromOutside) KeyguardCall.arm(callId)
         PushChannels.ensure(context)
         when (ongoingCallRoute()) {
             OngoingCallRoute.ForegroundService -> {
                 try {
-                    context.startForegroundService(OngoingCallService.intent(context, callId, enteredFromOutside))
+                    context.startForegroundService(OngoingCallService.intent(context, callId, enteredFromOutside, assistant))
                 } catch (refused: IllegalStateException) {
                     NativeTrace.record("ongoing", "error", "service-refused")
                 }
             }
+        }
+    }
+
+    fun repromote(context: Context) {
+        val state = OngoingCallService.demoted() ?: return
+        try {
+            context.startForegroundService(OngoingCallService.intent(context, state.callId, state.outside, state.assistant))
+        } catch (refused: IllegalStateException) {
+            NativeTrace.record("ongoing", "error", "repromote-refused")
         }
     }
 
@@ -126,6 +138,10 @@ internal object CallControls {
             (state.speakerOn != speakerOn).also { if (it) state = state.copy(speakerOn = speakerOn) }
         }
         if (changed) OngoingCallService.refresh(context)
+    }
+
+    fun endpointsChanged() {
+        emit("endpoints")
     }
 
     fun hangUp() {
