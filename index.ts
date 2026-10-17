@@ -1,6 +1,4 @@
-import { AppRegistry } from 'react-native';
-import { declineHeadlessTask, DECLINE_TASK_NAME } from '@/features/voice/services/decline/decline-headless';
-
-AppRegistry.registerHeadlessTask(DECLINE_TASK_NAME, () => declineHeadlessTask);
-
+import { registerDeclineHeadlessTask } from '@/features/voice/services/decline';
 import 'expo-router/entry';
+
+registerDeclineHeadlessTask();
