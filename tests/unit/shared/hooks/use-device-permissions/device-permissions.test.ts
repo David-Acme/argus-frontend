@@ -3,7 +3,7 @@ import {
   missingRuntime,
   permissionsFor,
   visiblePermissions,
-} from '@/shared/libs/device-permissions';
+} from '@/shared/hooks/use-device-permissions/device-permissions';
 
 describe('the device permissions each platform asks for', () => {
   test('Android asks the call permissions once, with background access last', () => {

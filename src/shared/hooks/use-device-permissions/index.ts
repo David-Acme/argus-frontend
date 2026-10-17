@@ -11,7 +11,7 @@ import {
   visiblePermissions,
   type PermissionPlatform,
   type PermissionPurpose,
-} from '@/shared/libs/device-permissions';
+} from '@/shared/hooks/use-device-permissions/device-permissions';
 
 const PLATFORM: PermissionPlatform = IS_ANDROID ? 'android' : IS_IOS ? 'ios' : IS_TAURI ? 'desktop' : 'browser';
 
