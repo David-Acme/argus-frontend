@@ -27,7 +27,7 @@ export default (_context: ConfigContext): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: 'com.davidacme.argus',
       infoPlist: {
-        UIBackgroundModes: ['audio'],
+        UIBackgroundModes: ['audio', 'voip'],
       },
     },
     android: {

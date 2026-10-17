@@ -4386,3 +4386,91 @@ OS version and build noted.
 - **Where it is decided.** `http.service.ts` applies the rule in `change`, the path behind `post`, `patch`, `put` and `delete`. `get` and `postMultipart` deliberately do not pass through it: the face login and registration screens explain a lost connection in their own words (`faceErrorMessage` reads `NETWORK_ERROR` itself, and both screens drive their own phase), and a login is not a change the person expects to see persisted. Every other write path — `runOptimistic` and `runServiceAction`, the forms, and the call sites that toast `serviceErrorKey` directly — gets the new copy from the shared error vocabulary (`serviceError.ts`: `WRITE_NOT_SENT` → `common.errors.write-not-sent`, `WRITE_UNCONFIRMED` → `common.errors.write-unconfirmed`, es and en) without a line of its own.
 - **A retry the person answers, never a background resend.** Both codes are retryable, so `runOptimistic` offers its Retry action, and the retry carries the same idempotency key as the first attempt. That is the only retry: nothing re-sends on its own, and the intent registry holds nothing while the app waits. `tests/unit/core/services/http/write-refusal.test.ts` pins the rule, `http-service.test.ts` pins which verbs pass through it (and that a multipart upload and a read do not), `service-error.test.ts` the copy in both languages plus the retry, and `optimistic-action.test.ts` that a refused write is said aloud and leaves no row behind.
 - **Residual, named rather than fixed.** The invitation enrolment (`inviteService.accept`) posts through `netService.requestPinned`, not through the HTTP wrapper, because it must trust the QR's own CA before the pairing is adopted, so a write it loses keeps the generic connection copy its own screen explains. It is the only change path outside the wrapper.
+
+## Argus calls on iOS: PushKit and CallKit, prepared (2026-10-16, the closing plan's Phase 2.4)
+
+**Unverified until a Mac build.** No Xcode, no device and no compiler for Swift exists on this
+machine, so nothing below was compiled, run or seen on screen. What was done here is the code,
+the config, the JS seam and its tests; the Mac build verifies the rest.
+
+- **The iOS side of `modules/argus-push/` is the mirror of the Android one** (`ios/`:
+  `ArgusPush.podspec`, `Bridge.h`, `HybridArgusPush.swift`, `VoipPushRegistry.swift`,
+  `PushRouter.swift`, `CallSession.swift`, `PushKeys.swift`, `SealedPushPayload.swift`,
+  `SealedPushOpener.swift`, `PushIntent.swift`, `PushStore.swift`, `PushTrace.swift`). The Nitro
+  spec now declares `ios: 'swift'` beside `android: 'kotlin'` and `nitro.json` registers
+  `HybridArgusPush` for iOS, so `createHybridObject('ArgusPush')` resolves to the Swift class on
+  an iPhone and to the Kotlin one on Android, exactly as before. `bunx nitrogen` was run and the
+  generated `HybridArgusPushSpec` names every method by the same spelling the Kotlin class
+  implements.
+- **The sealed payload arrives as three base64 fields.** argus-cloud's APNs VoIP body is
+  `{"prefix", "enc", "ct"}` (`src/feature/push/services/apns-message.cc`) — the same envelope the
+  FCM leg carries as the single `e` field, split into its prefix and its HPKE output.
+  `SealedPushPayload` parses the prefix with the Android bounds (16-byte delivery id, provider 3
+  and kind 2 only, priority 0/1, ≤64-byte collapse id, 1…512-byte token, nothing trailing) and
+  dedupes on `delivery:<hex>`, `intent:<id>`, `call:<id>` and `cancel:<id>` in `PushStore`, the
+  same keys and the same 24-hour window as `DedupRules`.
+- **The opener is the Android profile, spelled out.** HPKE base mode, DHKEM(X25519, HKDF-SHA256),
+  HKDF-SHA256, ChaCha20-Poly1305, `NitroModules`-free: `SealedPushOpener` implements Extract,
+  Expand and the two Labeled* functions over CryptoKit's HMAC/SHA256, builds the info
+  `argus.push.v1 ‖ 0x00 ‖ keyId ‖ 0x00 ‖ prefix`, and opens with an empty AAD. The same algorithm
+  in TypeScript decrypts all five cases of the tunnel's pinned `push-sealed.json` vectors on this
+  machine, which is the only check of the cryptography that exists without a Mac (the vectors'
+  recipient private key, `encHex`, `ciphertextHex` and `infoHex` reproduce their `plaintextHex`).
+  The two traps the vectors proved: HKDF-Extract over an empty salt is HMAC with 32 zero bytes,
+  never a library's "empty salt" shortcut, and the key and base_nonce expand **length-prefixed**
+  (32 and 12).
+- **The keys are a Keychain item, not a Tink keyset.** `PushKeys` holds one X25519 private key as
+  a generic-password item (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`), answers the raw
+  32-byte public key and `base64url(SHA-256(publicKey)[0…16])` as `keyId`, discards an item it
+  cannot read back, and `deleteKeys` removes it — so `/notification-token` receives
+  `{platform: "ios", provider: "apns_voip", publicKey, keyId}` with the same 43/22-character
+  shapes the backend validates (`register-notification-token-dto.cc`).
+- **A VoIP push becomes a CallKit incoming call.** `VoipPushRegistry` registers `desiredPushTypes
+  = [.voIP]` and reports the token; `PushRouter` decrypts the intent and either rings
+  (`CXProvider.reportNewIncomingCall`, caller name "Argus", handle = call id) or ends a ringing
+  call for a `cancel` intent; the ring expires at the intent's `exp`, reported `.unanswered`.
+- **Answer and end are the same JS events the Android module emits.** Answer fulfils the CallKit
+  action and opens `argus://call?callId=…&outside=1` (the Android `PushActions.openCall` mirror,
+  with `outside=1` when the app was not in the foreground), which the app's existing deep-link
+  allow-list and `/call` screen already handle. Ending an answered call from the CallKit UI emits
+  `hangup`; the mute control emits `mute-on`/`mute-off`; a route change emits `endpoints`; the app's
+  own `setCallMuted`/`stopOngoingCall` stay silent, as on Android. A declined ring reaches the JS
+  `onDecline` listener, or waits in the store until `drainDeclines()` — the same two paths the
+  Kotlin module has.
+- **CallKit owns the AVAudioSession while a call is up.** `provider(_:didActivate:)` sets
+  `playAndRecord`/`voiceChat` and activates the session, `didDeactivate` deactivates it, and
+  `telecomCallActive()` answers whether an answered CallKit call exists — so `rtc-call.native.ts`
+  treats the system call exactly as it treats Android's Telecom call (the assistant's own call is
+  registered as an outgoing CallKit call, and for `prepare`/`release` the CallKit session is the
+  one that counts). **The LiveKit audio path itself is untouched:** `call-audio.native.ts` still
+  selects `SessionCallAudio` on iOS, so the outputs list and the system route picker
+  (`AudioSession.showAudioRoutePicker`) stay the ones the call screen has.
+- **The JS platform split.** `src/core/services/push/push.ios.ts` is the iOS service and, like
+  `push.web.ts`, it is chosen by Metro's platform resolution (`metro-resolver` tries
+  `.{platform}{ext}` before `.native{ext}`), so `push.native.ts` — Android — is not loaded on an
+  iPhone and `push.web.ts` still answers on the web. The service itself lives in
+  `src/core/services/push/ios-push.ts`, takes its native accessor, its registration port (the HTTP
+  wrapper), the session status and the language as one options struct, and answers the
+  iOS-shaped questions (`isKeyguardLocked`/`overKeyguard` false, `outsideCallId` empty — CallKit
+  draws over the lock screen itself — background and full-screen permissions true, the notification
+  ones through `expo-notifications`).
+- **`UIBackgroundModes` gains `voip`** in `app.config.ts` beside `audio`; no Info.plist is edited
+  by hand. The alert leg on iOS stays where it is: alerts ride APNs and
+  `UNUserNotificationCenter`, not the VoIP push, so `setAlertListener` exists for the shared spec
+  surface and nothing in the Swift module delivers to it.
+- **Pins.** `tests/unit/core/services/push/ios-push.test.ts` drives the service with a fake native
+  port and pins the seam: the four call-control actions reach the listeners and anything else is
+  dropped, a decline is delivered and acknowledged, the registration body is
+  `ios`/`apns_voip`/the module's keys, a token rotation registers again, and unpair unregisters
+  and deletes. `tests/contracts/push-contract.test.ts` already pins the provider vocabulary
+  against the backend's.
+- **What the Mac build must prove, in order.** (1) The Swift module compiles and `pod install`
+  resolves `ArgusPush` with the regenerated `nitrogen/generated/ios` files; (2) PushKit delivers a
+  VoIP push and the CallKit report shows; (3) the ring, the answer opening the call screen, the
+  mute control and the hang-up reach `voiceService`'s handlers; (4) the audio flows with CallKit
+  holding the session while LiveKit's outputs and route picker still work; (5) a killed app woken
+  by a VoIP push still has its registry installed — the registry is created when the module object
+  is first used, which the root layout's `usePushListeners()` triggers at JS start, and whether
+  that is early enough for a cold launch (or whether an Expo AppDelegate subscriber is needed) is
+  a Mac-build question; (6) the provider-side payload key (`prefix`/`enc`/`ct`) against the cloud
+  sender.

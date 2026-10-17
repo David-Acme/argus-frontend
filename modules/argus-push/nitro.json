@@ -10,6 +10,10 @@
   },
   "autolinking": {
     "ArgusPush": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridArgusPush"
+      },
       "android": {
         "language": "kotlin",
         "implementationClassName": "HybridArgusPush"

@@ -5,7 +5,7 @@ export interface ArgusPushKeys {
   keyId: string;
 }
 
-export interface ArgusPush extends HybridObject<{ android: 'kotlin' }> {
+export interface ArgusPush extends HybridObject<{ android: 'kotlin'; ios: 'swift' }> {
   keys(): Promise<ArgusPushKeys>;
   storedToken(): Promise<string | null>;
   deleteToken(): Promise<void>;
