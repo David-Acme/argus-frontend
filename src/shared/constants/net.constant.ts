@@ -40,6 +40,7 @@ export const ARGUS_ROUTE_SERVICES: Readonly<Record<string, HomeService>> = {
   'visitor-crop': 'identity',
   camera: 'camera',
   zone: 'camera',
+  clip: 'camera',
   media: 'camera',
   modules: 'settings',
   project: 'productivity',
