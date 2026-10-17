@@ -18,6 +18,7 @@
     }
   },
   "include": [
+    "index.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "modules/**/*.ts",
