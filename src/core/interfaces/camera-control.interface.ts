@@ -227,6 +227,13 @@ export interface ICameraClips {
   clips: ICameraClipPayload[];
 }
 
+export interface ICameraRecordingState {
+  paused: boolean;
+  freeGb: number;
+  minFreeGb: number;
+  freeBytes: number;
+}
+
 export interface ICameraClipPreview {
   token: string;
   expiresAt: number;

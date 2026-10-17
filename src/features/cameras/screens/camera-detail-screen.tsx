@@ -25,8 +25,10 @@ import { useAppSirenEnabled } from '@/features/safety';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { ClipList } from '@/features/cameras/components/clip-list';
+import { RecordingPausedBanner } from '@/features/cameras/components/recording-paused-banner';
 import { ClipPlayer } from '../components/clip-player';
 import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
+import { useCameraRecording } from '@/features/cameras/hooks/use-camera-recording';
 import { useClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
@@ -78,6 +80,7 @@ export default function CameraDetailScreen() {
 
 
   const clipsState = useCameraClips(id, clipAccess.view);
+  const recording = useCameraRecording(clipAccess.view);
   const playback = useClipPlayback(id);
   const zones = useMemo(() => camera?.zones ?? [], [camera]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
@@ -416,6 +419,7 @@ export default function CameraDetailScreen() {
       }>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="grow pb-8">
         <Animated.View entering={screenIn} className="grow">
+          <RecordingPausedBanner state={recording} className="mb-5" />
           {isExpanded ? (
             <View className="grow flex-row items-stretch gap-6">
               <View className="min-w-0 flex-1 gap-5">

@@ -238,6 +238,11 @@ export const cameras = {
   'password-label': 'Contraseña de la cámara',
   advanced: 'Opciones avanzadas',
   'record-hint': 'Eventos graba sólo cuando detecta algo; continua graba siempre.',
+  'record-continuous-cost': '≈678 MB por hora por cámara, a la calidad por defecto (≈16,3 GB al día).',
+  'record-cost-note': 'Los modos por eventos y movimiento ocupan mucho menos espacio.',
+  'recording-paused': 'Grabación en pausa por falta de espacio',
+  'recording-paused-detail':
+    'Al disco le quedan {free} GB y Argus necesita al menos {min} GB libres para grabar. Libera espacio o borra clips antiguos: la grabación se reanuda sola.',
   'always-connected': 'La cámara queda conectada hasta que tú la elimines.',
   'delete-confirm-title': '¿Eliminar {name}?',
   'delete-confirm-body':

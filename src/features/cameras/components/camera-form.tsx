@@ -195,6 +195,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
         value: mode,
         label: t(recordModeLabelKey(mode)),
         ...(mode === 'events' ? { description: t('screens.cameras.record-hint') } : {}),
+        ...(mode === 'continuous' ? { description: t('screens.cameras.record-continuous-cost') } : {}),
       })),
     [t],
   );
@@ -618,6 +619,7 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
                           <SelectField label={recordOptions.find((option) => option.value === field.value)?.label} />
                         }
                       />
+                      <Text variant="caption">{t('screens.cameras.record-cost-note')}</Text>
                       <FormMessage />
                     </FormItem>
                   )}

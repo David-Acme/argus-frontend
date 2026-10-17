@@ -31,6 +31,7 @@ import type {
   ICameraCatalog,
   ICameraOverview,
   ICameraProbeResult,
+  ICameraRecordingState,
   ICameraWebRtcAnswer,
   ICreateDeviceLoginResponse,
   IDeviceLoginStatusResponse,
@@ -211,6 +212,13 @@ export const cameraProbeSchema = z.object({
   device: z.object({ model: z.string().optional(), firmware: z.string().optional() }),
   catalogId: z.string(),
 }) satisfies z.ZodType<ICameraProbeResult>;
+
+export const cameraRecordingStateSchema = z.object({
+  paused: z.boolean(),
+  freeGb: z.number(),
+  minFreeGb: z.number(),
+  freeBytes: z.number(),
+}) satisfies z.ZodType<ICameraRecordingState>;
 
 export const cameraWebRtcAnswerSchema = z.object({
   type: z.literal('answer'),
@@ -459,6 +467,7 @@ export const HTTP_CONTRACTS: Readonly<Record<string, z.ZodType>> = {
   'GET /camera/catalog': cameraCatalogSchema,
   'GET /camera/overview': cameraOverviewSchema,
   'POST /camera/probe': cameraProbeSchema,
+  'GET /camera/recording': cameraRecordingStateSchema,
   'GET /guard/environments': guardEnvironmentListSchema,
   'GET /guard/expected-guests': z.array(guardExpectedGuestSchema),
   'GET /settings': settingsOverviewSchema,

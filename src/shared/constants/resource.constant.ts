@@ -22,6 +22,7 @@ export const RESOURCE_SCOPES = [
   'presence',
   'entries',
   'clips',
+  'recording',
 ] as const;
 
 export const RESOURCE_COALESCE_MS = 300;

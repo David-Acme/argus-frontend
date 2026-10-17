@@ -2,6 +2,7 @@ import type {
   ICameraClipContent,
   ICameraClipPreview,
   ICameraClips,
+  ICameraRecordingState,
   IServiceResponse,
 } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
@@ -13,6 +14,10 @@ class CameraClipsService {
       ? `?before=${cursor.before}&beforeId=${cursor.beforeId}&limit=${CLIP_PAGE_SIZE}`
       : `?limit=${CLIP_PAGE_SIZE}`;
     return httpService.get(`/camera/${cameraId}/clips${query}`);
+  }
+
+  recording(): Promise<IServiceResponse<ICameraRecordingState>> {
+    return httpService.get('/camera/recording');
   }
 
   preview(cameraId: string, clipId: string): Promise<IServiceResponse<ICameraClipPreview>> {

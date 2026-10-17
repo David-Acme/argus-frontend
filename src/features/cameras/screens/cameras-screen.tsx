@@ -6,6 +6,7 @@ import { storageService } from '@/core/services/storage';
 import { CameraCardGrid } from '@/features/cameras/components/camera-card-grid';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/components/camera-summary';
+import { RecordingPausedBanner } from '@/features/cameras/components/recording-paused-banner';
 import { recordModeSummary } from '@/features/cameras/model/camera-record-mode';
 import { CameraToolbar } from '@/features/cameras/components/camera-toolbar';
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
@@ -16,6 +17,7 @@ import {
 } from '@/features/cameras/constants';
 import { useCameraCatalog } from '@/features/cameras/hooks/use-camera-catalog';
 import { useCameraOverview } from '@/features/cameras/hooks/use-camera-overview';
+import { useCameraRecording } from '@/features/cameras/hooks/use-camera-recording';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { useCameraThumbnails } from '@/features/cameras/hooks/use-camera-thumbnails';
 import { findCatalogModel, formFactorOf } from '@/features/cameras/model/camera-catalog';
@@ -57,7 +59,7 @@ export default function CamerasScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isCompact, isExpanded } = useWindowClass();
-  const { can, has } = useCapabilities();
+  const { can, has, clips: clipAccess } = useCapabilities();
   const [formOpen, setFormOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<CameraStatusFilter>('all');
@@ -67,6 +69,7 @@ export default function CamerasScreen() {
 
   const { cameras, isPendingCamera } = useCameraRows();
   const overview = useCameraOverview();
+  const recording = useCameraRecording(clipAccess.view);
   const { models } = useCameraCatalog();
   const thumbnails = useCameraThumbnails(cameras);
   const environments = useCameraEnvironmentIndex();
@@ -234,6 +237,7 @@ export default function CamerasScreen() {
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerClassName="grow pb-6">
+          <RecordingPausedBanner state={recording} className="mb-4" />
           {isExpanded ? (
             <View className="grow flex-row items-stretch gap-6">
               <View className="min-w-0 flex-1 gap-4">

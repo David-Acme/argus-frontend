@@ -53,6 +53,7 @@ export const VIEW_CACHE_KEYS = {
   cameraCatalog: 'camera.catalog',
   cameraOverview: 'camera.overview',
   cameraClips: 'camera.clips',
+  cameraRecording: 'camera.recording',
   cameraPresets: 'camera.presets',
   guardEnvironments: 'guard.environments',
   guardResponse: 'guard.response',
