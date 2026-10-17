@@ -301,8 +301,9 @@ max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
   `app.language` persistence, `es-*`/`en-*` prefix detection, es default + en.
 - Core areas built since the reset: auth (`auth.service` + `auth.store`),
   session (`session.service`), http (`http.service`), sync
-  (`core/services/sync/` + WatermelonDB mappers), view-cache (MMKV snapshots)
-  and voice (`voice.service`). Still pending: chat, workspace and settings.
+  (`core/services/sync/` + WatermelonDB mappers), view-cache (MMKV snapshots),
+  voice (`voice.service`) and settings (`features/settings/` + `/settings`).
+  Still pending: chat and workspace.
 - **Android builds working**: `bunx expo run:android` compiles and installs on
   a physical device (Redmi Note 11, `spes_global`). See "Android development
   environment" below.
@@ -802,7 +803,9 @@ tests will once they can run.
   Validated: `tsc`/`lint` 0 errors + negative type probes (wrong key, invalid
   params, missing `en` key all fail to compile).
 
-- **2026-08** — **WatermelonDB implemented** (persistence only; sync still pending).
+- **2026-08** — **WatermelonDB implemented** (persistence only; the
+  autonomous `/sync` layer landed afterwards — "Local-first views, granular
+  audits and responsive UX", below).
   7 tables mirroring `SynchronizedDto`, schema+model co-located per table, single
   `TABLES` registry, platform-split adapters (SQLite/JSI + LokiJS/IndexedDB), typed
   `collection()`. Architecture set by the user: **the database is read only through
