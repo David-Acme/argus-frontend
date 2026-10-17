@@ -67,7 +67,13 @@ describe('setting the duress phrase', () => {
         body: { duressEnabled: true, duressPhrase: phrase, currentPin: '4821' },
       },
     ]);
-    expect(result.info).toEqual({ duressEnabled: true, hasPin: true, hasPhrase: true, alertsReach: 'others' });
+    expect(result.info).toEqual({
+      duressEnabled: true,
+      hasPin: true,
+      hasPhrase: true,
+      alertsReach: 'others',
+      maskedCameras: [],
+    });
     expect(JSON.stringify(result)).not.toContain(phrase);
     expect(JSON.stringify(safetyService)).not.toContain(phrase);
   });

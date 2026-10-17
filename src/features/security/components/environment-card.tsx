@@ -120,6 +120,16 @@ export function EnvironmentCard({ environment, cameras, ongoing, onOpen }: Envir
             {cameraLine}
           </Text>
         </View>
+        {environment.maskedCameras.length > 0 ? (
+          <View className="flex-row items-center gap-1.5">
+            <Icon name="eye-off" className="text-warning-strong size-3.5" />
+            <Text variant="caption" numberOfLines={1} className="text-warning-strong flex-1">
+              {t('screens.security.mask.card', {
+                names: environment.maskedCameras.map((camera) => camera.name).join(', '),
+              })}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );

@@ -3,6 +3,7 @@ import type {
   EnvironmentMatch,
   GuardEnvironment,
   GuardEnvironmentKind,
+  GuardMaskedCamera,
   GuardMode,
 } from '@/core/types';
 
@@ -28,6 +29,23 @@ export function foldWords(text: string): string[] {
 
 export function defaultEnvironment(environments: readonly GuardEnvironment[]): GuardEnvironment | null {
   return environments.find((environment) => environment.isDefault) ?? environments[0] ?? null;
+}
+
+export function maskedInScope(
+  environments: readonly GuardEnvironment[] | null | undefined,
+  targetId?: number
+): GuardMaskedCamera[] {
+  const seen = new Set<number>();
+  const masked: GuardMaskedCamera[] = [];
+  for (const environment of environments ?? []) {
+    if (targetId !== undefined && environment.id !== targetId) continue;
+    for (const camera of environment.maskedCameras) {
+      if (seen.has(camera.cameraId)) continue;
+      seen.add(camera.cameraId);
+      masked.push(camera);
+    }
+  }
+  return masked;
 }
 
 export function environmentForCamera(

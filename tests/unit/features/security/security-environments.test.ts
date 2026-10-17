@@ -4,6 +4,7 @@ import {
   cameraEnvironmentIndex,
   camerasIn,
   environmentForCamera,
+  maskedInScope,
   matchEnvironment,
   sharedMode,
   withCameraIn,
@@ -30,6 +31,7 @@ const environment = (overrides: Partial<GuardEnvironment>): GuardEnvironment => 
   quietStartHour: 22,
   quietEndHour: 7,
   cameraIds: [],
+  maskedCameras: [],
   modeUpdatedAt: 0,
   updatedAt: 0,
   ...overrides,
@@ -93,5 +95,28 @@ describe('environments', () => {
     expect(matchEnvironment(all, 'me voy')).toEqual({ kind: 'all' });
     expect(matchEnvironment(all, '')).toEqual({ kind: 'all' });
     expect(matchEnvironment([home], 'oficina')).toEqual({ kind: 'all' });
+  });
+});
+
+describe('maskedInScope', () => {
+  const masked = (id: number, name: string) => ({ cameraId: id, name });
+
+  test('a target environment answers only its own masked cameras', () => {
+    const home = environment({ id: 1, maskedCameras: [masked(7, 'Gate')] });
+    const shop = environment({ id: 2, maskedCameras: [masked(9, 'Till')] });
+    expect(maskedInScope([home, shop], 1)).toEqual([masked(7, 'Gate')]);
+    expect(maskedInScope([home, shop], 2)).toEqual([masked(9, 'Till')]);
+  });
+
+  test('no target asks every environment, one entry per camera', () => {
+    const home = environment({ id: 1, maskedCameras: [masked(7, 'Gate'), masked(8, 'Yard')] });
+    const shop = environment({ id: 2, maskedCameras: [masked(7, 'Gate'), masked(9, 'Till')] });
+    expect(maskedInScope([home, shop])).toEqual([masked(7, 'Gate'), masked(8, 'Yard'), masked(9, 'Till')]);
+  });
+
+  test('nothing known is nothing masked', () => {
+    expect(maskedInScope(null)).toEqual([]);
+    expect(maskedInScope([])).toEqual([]);
+    expect(maskedInScope(undefined, 3)).toEqual([]);
   });
 });

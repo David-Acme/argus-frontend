@@ -1,3 +1,5 @@
+import type { GuardMaskedCamera } from './guard.type';
+
 export type HeartbeatPresence = 'home' | 'away' | 'unknown';
 
 export type GuardLiveness = 'alive' | 'stale' | 'unknown';
@@ -18,6 +20,7 @@ export type SafetyStatus = {
   hasPhrase: boolean;
   alertsReach: SafetyReach | null;
   appSirenEnabled?: boolean;
+  maskedCameras: GuardMaskedCamera[];
 };
 
 export type PanicResult = {

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { ICameraDeviceStatus, ICameraSettings } from '@/core/interfaces';
 import type { ConfirmRequest } from '@/core/types';
-import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import { cameraService } from '@/core/services/camera.service';
 import { optimisticStatus, resolvedStatus } from '@/features/cameras/model/camera-device';
 import { confirm } from '@/shared/libs/confirm';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
@@ -36,7 +36,7 @@ export function useCameraDeviceSettings({ cameraId, status, onApplied }: DeviceS
       setApplying(body);
       try {
         const response = await run({
-          call: () => cameraControlService.settings(cameraId, body),
+          call: () => cameraService.settings(cameraId, body),
           errorTitle: t('screens.cameras.device-refused'),
         });
         onApplied(resolvedStatus({ response, previous, body }));

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { modeLowers } from '@/features/security/model/mode-change';
+import { localeDictionaries } from '@/core/i18n/locales';
+import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
 
 const environments = [
   { id: 1, mode: 'armed' as const },
@@ -29,5 +30,34 @@ describe('modeLowers', () => {
   test('unknown environments never invent a lowering', () => {
     expect(modeLowers('night', null)).toBe(false);
     expect(modeLowers('away', environments, 99)).toBe(false);
+  });
+});
+
+describe('modeExpectsProtection', () => {
+  test('home does not, and every other mode does, as the server decides', () => {
+    expect(modeExpectsProtection('home')).toBe(false);
+    expect(modeExpectsProtection('night')).toBe(true);
+    expect(modeExpectsProtection('away')).toBe(true);
+    expect(modeExpectsProtection('armed')).toBe(true);
+  });
+});
+
+describe('the arming warning', () => {
+  const security = (
+    localeDictionaries.es as { screens: { security: { mask: Record<string, string> } } }
+  ).screens.security;
+
+  test('it is named, it carries the cameras and it never unmasks on its own', () => {
+    expect(security.mask['arm-title']).toBe('Cámaras en modo privacidad');
+    expect(security.mask['arm-body']).toBe('{names} no cubrirán nada mientras la lente esté cubierta.');
+    expect(security.mask['arm-anyway']).toBe('Armar igual');
+    expect(security.mask.unmask).toBe('Quitar privacidad');
+    expect(security.mask['unmask-title']).toBe('Modo privacidad');
+    expect(security.mask['unmask-body']).toBe(
+      '¿Quitar la privacidad de {name}? Argus vuelve a ver, escuchar y grabar.'
+    );
+    expect(security.mask.unmasked).toBe('Privacidad desactivada en {name}');
+    expect(security.mask.card).toBe('En modo privacidad: {names}');
+    expect(security.mask.title).toBe('Estas cámaras están en modo privacidad: no cubren su zona.');
   });
 });

@@ -7,7 +7,6 @@ import type {
   ICameraDeviceStatus,
   ICameraPreset,
   ICameraPtz,
-  ICameraSettings,
   ICameraSiren,
   ICameraSnapshot,
   ICameraTalk,
@@ -44,10 +43,6 @@ class CameraControlService {
 
   siren(body: ICameraSiren): Promise<IServiceResponse<CameraSirenResult>> {
     return httpService.post('/guard/siren', body);
-  }
-
-  settings(id: string, body: ICameraSettings): Promise<IServiceResponse<ICameraDeviceStatus>> {
-    return httpService.patch(`/camera/${id}/settings`, body);
   }
 
   webrtc(id: number, body: ICameraWebRtcOffer): Promise<IServiceResponse<unknown>> {

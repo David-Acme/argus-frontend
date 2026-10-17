@@ -25,6 +25,7 @@ import { EnvironmentSettingsPanel } from '@/features/security/components/environ
 import { EpisodeList } from '@/features/security/components/episode-list';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { ResponseRecipientsPanel } from '@/features/security/components/response-recipients-panel';
+import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-notice';
 import { ENVIRONMENT_KIND_ICONS, EPISODE_LIST_MAX_HEIGHT } from '@/features/security/constants';
 import { useEnvironmentResponse } from '@/features/security/hooks/use-environment-response';
 import { useGuard, useGuardEnvironments } from '@/features/security/hooks/use-guard';
@@ -41,8 +42,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
-  const { guard: access, isOwner: owner } = useCapabilities();
-  const guard = useGuard(access.review, environment.id);
+  const { guard: access, isOwner: owner, can } = useCapabilities();  const guard = useGuard(access.review, environment.id);
   const allCameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [editing, setEditing] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
@@ -85,6 +85,11 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
         onSelect={(mode) => void guard.setMode(mode, current)}
         readOnly={!access.setMode}
         accessibilityLabel={t('screens.security.environments.mode-title')}
+      />
+      <MaskedCamerasNotice
+        cameras={current.maskedCameras}
+        canUnmask={can('camera', 'update')}
+        onUnmasked={guard.reload}
       />
     </Panel>
   );

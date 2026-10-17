@@ -38,6 +38,7 @@ const place = (id: number, name: string, extra: Partial<GuardEnvironment> = {}):
   quietStartHour: 22,
   quietEndHour: 7,
   cameraIds: [],
+  maskedCameras: [],
   modeUpdatedAt: 0,
   updatedAt: 0,
   ...extra,

@@ -18,6 +18,7 @@ const known = (hasPin: boolean): SafetyStatus => ({
   hasPin,
   hasPhrase: false,
   alertsReach: null,
+  maskedCameras: [],
 });
 
 const answer = (

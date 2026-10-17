@@ -143,12 +143,13 @@ describe('who an alert would reach', () => {
   test('the status reads hasPhrase and alertsReach, and an older server without them claims nothing', () => {
     expect(
       safetyStatusSchema.parse({ duressEnabled: true, hasPin: true, hasPhrase: true, alertsReach: 'nobody' })
-    ).toEqual({ duressEnabled: true, hasPin: true, hasPhrase: true, alertsReach: 'nobody' });
+    ).toEqual({ duressEnabled: true, hasPin: true, hasPhrase: true, alertsReach: 'nobody', maskedCameras: [] });
     expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: false })).toEqual({
       duressEnabled: true,
       hasPin: false,
       hasPhrase: false,
       alertsReach: null,
+      maskedCameras: [],
     });
     expect(safetyStatusSchema.parse({ duressEnabled: true, hasPin: false, alertsReach: 'family' }).alertsReach).toBe(
       'unknown'
@@ -163,7 +164,7 @@ describe('who an alert would reach', () => {
       alertsReach: 'others',
       duressPhrase: 'rojo verde azul',
     });
-    expect(Object.keys(status).sort()).toEqual(['alertsReach', 'duressEnabled', 'hasPhrase', 'hasPin']);
+    expect(Object.keys(status).sort()).toEqual(['alertsReach', 'duressEnabled', 'hasPhrase', 'hasPin', 'maskedCameras']);
     expect(JSON.stringify(status)).not.toContain('rojo verde azul');
   });
 });

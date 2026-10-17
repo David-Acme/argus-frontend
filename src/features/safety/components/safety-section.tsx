@@ -15,6 +15,7 @@ import { PhraseDialog } from '@/features/safety/components/phrase-dialog';
 import { PinSetupDialog } from '@/features/safety/components/pin-setup-dialog';
 import { useSafety } from '@/features/safety/hooks/use-safety';
 import { reachNotice, type ReachNotice } from '@/features/safety/model/safety';
+import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-notice';
 
 type SafetySectionProps = {
   className?: string;
@@ -28,9 +29,9 @@ const REACH_KEY = {
 
 export function SafetySection({ className }: SafetySectionProps) {
   const { t } = useTranslation();
-  const { has, moduleActive } = useCapabilities();
+  const { has, moduleActive, can } = useCapabilities();
   const surveillance = moduleActive(MODULE_IDS.surveillance);
-  const { status, setDuressEnabled, confirmCurrentPin, savePins, removePins, savePhrase, clearPhrase } = useSafety({
+  const { status, reload, setDuressEnabled, confirmCurrentPin, savePins, removePins, savePhrase, clearPhrase } = useSafety({
     enabled: surveillance && has(CAPABILITY.safetyRead),
   });
   const [pinsOpen, setPinsOpen] = useState(false);
@@ -78,6 +79,12 @@ export function SafetySection({ className }: SafetySectionProps) {
       </View>
 
       {has(CAPABILITY.safetyPanic) ? <PanicButton /> : null}
+
+      <MaskedCamerasNotice
+        cameras={status?.maskedCameras ?? []}
+        canUnmask={can('camera', 'update')}
+        onUnmasked={() => void reload()}
+      />
 
       {notice ? (
         <View className="bg-surface-secondary flex-row items-start gap-2.5 rounded-2xl px-3.5 py-3">

@@ -12,6 +12,11 @@ export type GuardQuietPolicy = 'inherit' | 'custom' | 'off';
 
 export type GuardClosedMode = 'away' | 'armed';
 
+export type GuardMaskedCamera = {
+  cameraId: number;
+  name: string;
+};
+
 export interface GuardEnvironment {
   id: number;
   name: string;
@@ -32,6 +37,7 @@ export interface GuardEnvironment {
   quietStartHour: number;
   quietEndHour: number;
   cameraIds: number[];
+  maskedCameras: GuardMaskedCamera[];
   modeUpdatedAt: number;
   updatedAt: number;
 }

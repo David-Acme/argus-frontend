@@ -19,7 +19,7 @@ type UseSafetyOptions = {
 };
 
 export function useSafety({ enabled = true }: UseSafetyOptions = {}) {
-  const { data, mutate } = useRemoteResource<SafetyStatus>({
+  const { data, mutate, reload } = useRemoteResource<SafetyStatus>({
     cacheKey: VIEW_CACHE_KEYS.safetyStatus,
     load,
     enabled,
@@ -130,6 +130,7 @@ export function useSafety({ enabled = true }: UseSafetyOptions = {}) {
 
   return {
     status: data,
+    reload,
     setDuressEnabled,
     confirmCurrentPin,
     savePins,

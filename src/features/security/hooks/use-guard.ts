@@ -23,9 +23,10 @@ import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
-import { cameraEnvironmentIndex, withCameraIn, withMode } from '@/features/security/model/environments';
+import { cameraEnvironmentIndex, maskedInScope, withCameraIn, withMode } from '@/features/security/model/environments';
 import { askDisarmPin, safetyService } from '@/features/safety';
-import { modeLowers } from '@/features/security/model/mode-change';
+import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
+import { confirm } from '@/shared/libs/confirm';
 
 type OptimisticRemote<T, R> = {
   mutate: (update: (previous: T | null) => T | null) => void;
@@ -37,7 +38,10 @@ type OptimisticRemote<T, R> = {
 
 export type PendingMode = { mode: GuardMode; environmentId: number | null };
 
-const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'environments' }];
+const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [
+  { domain: 'guard', scope: 'environments' },
+  { domain: 'camera', scope: 'overview' },
+];
 const GUARD_EXPECTED_VISITS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'expected_visits' }];
 const GUARD_EPISODES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'episodes' }];
 
@@ -188,6 +192,18 @@ export function useGuard(owner: boolean, environmentId?: number) {
 
   const setMode = useCallback(
     async (mode: GuardMode, target?: GuardEnvironment): Promise<boolean> => {
+      const masked = maskedInScope(environments.data, target?.id);
+      if (modeExpectsProtection(mode) && masked.length > 0) {
+        const proceed = await confirm({
+          title: t('screens.security.mask.arm-title'),
+          description: t('screens.security.mask.arm-body', {
+            names: masked.map((camera) => camera.name).join(', '),
+          }),
+          confirmLabel: t('screens.security.mask.arm-anyway'),
+          intent: 'warning',
+        });
+        if (!proceed) return false;
+      }
       let pin: string | undefined;
       if (modeLowers(mode, environments.data, target?.id) && (await safetyService.disarmNeedsPin())) {
         const entered = await askDisarmPin();

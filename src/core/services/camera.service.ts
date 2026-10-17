@@ -1,7 +1,7 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { CameraModel } from '@/core/database';
-import type { ICameraCreate, ICameraUpdate, IServiceResponse } from '@/core/interfaces';
+import type { ICameraCreate, ICameraDeviceStatus, ICameraSettings, ICameraUpdate, IServiceResponse } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
 import { CAMERA_SOURCE_COLUMNS } from './view-cache/camera.projection';
 import { httpService } from '@/core/services/http';
@@ -32,6 +32,10 @@ class CameraService extends DatabaseService<'camera'> {
 
   update(id: string, body: ICameraUpdate): Promise<IServiceResponse<unknown>> {
     return httpService.patch(`/camera/${id}`, body);
+  }
+
+  settings(id: string, body: ICameraSettings): Promise<IServiceResponse<ICameraDeviceStatus>> {
+    return httpService.patch(`/camera/${id}/settings`, body);
   }
 
   remove(id: string): Promise<IServiceResponse<unknown>> {

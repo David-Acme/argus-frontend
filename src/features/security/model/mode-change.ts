@@ -23,3 +23,7 @@ export function modeLowers(
       (targetId === undefined || environment.id === targetId) && MODE_RANK[mode] < MODE_RANK[environment.mode]
   );
 }
+
+export function modeExpectsProtection(mode: GuardMode): boolean {
+  return MODE_RANK[mode] > MODE_RANK.home;
+}

@@ -10,7 +10,7 @@ import { visitorListSchema, visitorSettingsSchema } from '@/core/contracts/visit
 import { heartbeatSchema } from '@/core/contracts/heartbeat.contract';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 import { incidentResponseListSchema } from '@/core/contracts/response.contract';
-import { panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
+import { maskedCameraSchema, panicResultSchema, safetyStatusSchema } from '@/core/contracts/safety.contract';
 import { presenceOverviewSchema } from '@/core/contracts/presence.contract';
 import { voiceprintDirectorySchema } from '@/core/contracts/voiceprint.contract';
 import { activityPageSchema } from '@/core/contracts/activity.contract';
@@ -286,6 +286,7 @@ export const guardEnvironmentSchema = z.object({
   quietStartHour: z.number(),
   quietEndHour: z.number(),
   cameraIds: z.array(z.number()),
+  maskedCameras: z.array(maskedCameraSchema).catch([]),
   modeUpdatedAt: z.number(),
   updatedAt: z.number(),
 }) satisfies z.ZodType<GuardEnvironment>;

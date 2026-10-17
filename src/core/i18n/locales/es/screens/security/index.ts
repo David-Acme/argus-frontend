@@ -42,6 +42,17 @@ export const security = {
     'short-manual': 'Sin horario',
     'short-armed': 'Armado a mano',
   },
+  mask: {
+    title: 'Estas cámaras están en modo privacidad: no cubren su zona.',
+    card: 'En modo privacidad: {names}',
+    unmask: 'Quitar privacidad',
+    'unmask-title': 'Modo privacidad',
+    'unmask-body': '¿Quitar la privacidad de {name}? Argus vuelve a ver, escuchar y grabar.',
+    unmasked: 'Privacidad desactivada en {name}',
+    'arm-title': 'Cámaras en modo privacidad',
+    'arm-body': '{names} no cubrirán nada mientras la lente esté cubierta.',
+    'arm-anyway': 'Armar igual',
+  },
   environments: {
     title: 'Entornos',
     description: 'Cada entorno tiene su modo, su horario y sus cámaras.',
