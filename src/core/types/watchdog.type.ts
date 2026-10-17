@@ -17,6 +17,7 @@ export type SafetyStatus = {
   hasPin: boolean;
   hasPhrase: boolean;
   alertsReach: SafetyReach | null;
+  appSirenEnabled?: boolean;
 };
 
 export type PanicResult = {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   IDLE_SIREN,
+  sirenOffered,
   SIREN_COUNTDOWN_SECONDS,
   sirenCountdownFinished,
   sirenReducer,
@@ -14,6 +15,26 @@ const asked = sirenReducer(IDLE_SIREN, { kind: 'ask' });
 const counting = sirenReducer(asked, { kind: 'confirm', at: 1_000 });
 
 const tickAt = (state: SirenState, at: number): SirenState => sirenReducer(state, { kind: 'tick', at });
+
+describe('who is offered the siren', () => {
+  const offered = (allowed: boolean, supported: boolean, enabled: boolean | undefined) =>
+    sirenOffered({ allowed, supported, enabled });
+
+  test('resident and guard see it, a guest never, whatever the switch says', () => {
+    expect(offered(true, true, true)).toBe(true);
+    expect(offered(false, true, true)).toBe(false);
+    expect(offered(false, true, undefined)).toBe(false);
+  });
+
+  test('a camera with no siren feature is never offered one', () => {
+    expect(offered(true, false, true)).toBe(false);
+  });
+
+  test('the switch off hides the button, and a server that does not answer it keeps it', () => {
+    expect(offered(true, true, false)).toBe(false);
+    expect(offered(true, true, undefined)).toBe(true);
+  });
+});
 
 describe('the siren countdown', () => {
   test('the confirmation is one step, not the siren', () => {

@@ -13,6 +13,7 @@ export const safetyStatusSchema = z.object({
     .enum(SAFETY_REACHES)
     .nullable()
     .catch((ctx) => absentReach(ctx.value)),
+  appSirenEnabled: z.boolean().optional(),
 }) satisfies z.ZodType<SafetyStatus, unknown>;
 
 export const panicResultSchema = z.object({

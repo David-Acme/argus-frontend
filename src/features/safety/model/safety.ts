@@ -1,5 +1,10 @@
-import type { SafetyReach, TranslationKey } from '@/core/types';
+import type { ResourceMatch, SafetyReach, TranslationKey } from '@/core/types';
 import { PANIC_HOLD_MS } from '@/shared/constants';
+
+export const SAFETY_RESOURCES: readonly ResourceMatch[] = [
+  { domain: 'guard', scope: 'safety_pin' },
+  { domain: 'guard', scope: 'duress' },
+];
 
 export const PIN_PATTERN = /^[0-9]{4,8}$/;
 

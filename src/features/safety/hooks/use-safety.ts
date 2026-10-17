@@ -1,20 +1,15 @@
 import { useCallback } from 'react';
 import { t } from '@/core/i18n';
-import type { ResourceMatch, SafetyPins, SafetyStatus } from '@/core/types';
+import type { SafetyPins, SafetyStatus } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { confirm } from '@/shared/libs/confirm';
 import { runServiceAction } from '@/shared/libs/service-action';
-import { ENABLE_REACH_WARNING_COPY, enableReachWarning } from '@/features/safety/model/safety';
+import { ENABLE_REACH_WARNING_COPY, SAFETY_RESOURCES, enableReachWarning } from '@/features/safety/model/safety';
 import { safetyService } from '@/features/safety/services/safety.service';
 import { askCurrentPin } from '@/features/safety/stores/disarm-pin.store';
 
 const load = () => safetyService.status();
-
-const SAFETY_RESOURCES: readonly ResourceMatch[] = [
-  { domain: 'guard', scope: 'safety_pin' },
-  { domain: 'guard', scope: 'duress' },
-];
 
 const currentPinIfSet = async (required: boolean): Promise<string | null | undefined> =>
   required ? askCurrentPin() : undefined;

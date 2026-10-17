@@ -13,6 +13,15 @@ export type SirenAction =
   | { kind: 'stop' }
   | { kind: 'close' };
 
+export type SirenOffer = {
+  allowed: boolean;
+  supported: boolean;
+  enabled: boolean | undefined;
+};
+
+export const sirenOffered = (offer: SirenOffer): boolean =>
+  offer.allowed && offer.supported && offer.enabled !== false;
+
 export const sirenSounding = (until: number, at: number): boolean => until > Math.floor(at / 1000);
 
 export const sirenRemaining = (until: number, at: number): number => Math.max(0, Math.ceil(until - at / 1000));

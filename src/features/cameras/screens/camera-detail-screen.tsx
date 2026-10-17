@@ -16,10 +16,12 @@ import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-sta
 import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
 import { useCameraSiren } from '@/features/cameras/hooks/use-camera-siren';
+import { sirenOffered } from '@/features/cameras/model/siren';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
 import { CameraEnvironmentPanel } from '@/features/security';
+import { useAppSirenEnabled } from '@/features/safety';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { ClipList } from '@/features/cameras/components/clip-list';
@@ -126,7 +128,12 @@ export default function CameraDetailScreen() {
   const maySiren = has(CAPABILITY.cameraSiren);
   const mayTalk = has(CAPABILITY.cameraTalk);
   const canTalk = mayTalk && features?.talk === true;
-  const canSiren = maySiren && features?.alarm === true;
+  const appSirenEnabled = useAppSirenEnabled();
+  const canSiren = sirenOffered({
+    allowed: maySiren,
+    supported: features?.alarm === true,
+    enabled: appSirenEnabled,
+  });
   const talkHint =
     mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true
       ? t('screens.cameras.call.needs-cloud')
