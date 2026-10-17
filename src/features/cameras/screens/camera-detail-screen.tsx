@@ -440,6 +440,7 @@ export default function CameraDetailScreen() {
             <View className="grow gap-5">
               {live}
               {player}
+              {clipsPanel}
               <View className="grow flex-row items-stretch gap-5">
                 <View className="min-w-0 flex-1 gap-5">
                   {callPanel}
@@ -455,6 +456,7 @@ export default function CameraDetailScreen() {
             <View className="gap-4">
               {live}
               {player}
+              {clipsPanel}
               {callPanel}
               {sirenPanel}
               {info}
