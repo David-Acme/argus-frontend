@@ -102,6 +102,16 @@ describe('runOptimistic', () => {
     expect(shown.at(-1)?.action).toBeUndefined();
   });
 
+  test('a write the server never received is told as a lost change and leaves no row behind', async () => {
+    await runOptimistic({
+      intents: [{ table: 'reminder', kind: 'update', recordId: '3', values: { scheduledAt: 1_790_000_000 } }],
+      call: async () => refused('WRITE_NOT_SENT'),
+    });
+    expect(optimisticRegistry.snapshot()).toEqual([]);
+    expect(shown.at(-1)).toMatchObject({ intent: 'error', title: 'common.errors.write-not-sent' });
+    expect(shown.at(-1)?.action?.label).toBe('common.retry');
+  });
+
   test('a refusal the caller recognises rolls back with a calm notice and no retry', async () => {
     const conflict: IServiceResponse<null> = {
       ok: false,

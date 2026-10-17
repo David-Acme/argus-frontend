@@ -1,4 +1,5 @@
 import { t } from '@/core/i18n';
+import { WRITE_NOT_SENT, WRITE_UNCONFIRMED } from '@/core/services/http/write-refusal';
 import type { IApiError } from '@/core/interfaces';
 import type { ToastAction, TranslationKey } from '@/core/types';
 import { toast } from './toast';
@@ -6,6 +7,8 @@ import { toast } from './toast';
 const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   NETWORK_ERROR: 'common.errors.network',
   TIMEOUT: 'common.errors.timeout',
+  [WRITE_NOT_SENT]: 'common.errors.write-not-sent',
+  [WRITE_UNCONFIRMED]: 'common.errors.write-unconfirmed',
   DEADLINE_EXCEEDED: 'common.errors.timeout',
   UNAUTHORIZED: 'common.errors.unauthorized',
   FORBIDDEN: 'common.errors.forbidden',
@@ -50,6 +53,8 @@ const RETRYABLE_CODES: ReadonlySet<string> = new Set([
   'SERVICE_UNAVAILABLE',
   'BAD_GATEWAY',
   'INTERNAL_ERROR',
+  WRITE_NOT_SENT,
+  WRITE_UNCONFIRMED,
 ]);
 
 export function isRetryableServiceError(error: IApiError | null | undefined): boolean {

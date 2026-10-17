@@ -5,28 +5,42 @@ import { httpAuth } from './http-auth';
 import { errorResponse, readEnvelope } from './http-envelope';
 import { reportRefusal } from './http-refusal';
 import { mayClearSession } from './refresh-response';
+import { writeRefusal, writeRefusalCode } from './write-refusal';
 import type { IHttpConfig, IServiceResponse } from '@/core/interfaces';
+
+type HttpRequestInput = {
+  method: HttpMethod;
+  path: string;
+  body?: string;
+  files?: NetHttpFile[];
+  config?: IHttpConfig;
+};
 
 class HttpService {
 
   async get<T>(path: string, config?: IHttpConfig): Promise<IServiceResponse<T>> {
-    return this.request<T>('GET', path, undefined, undefined, config);
+    return this.request<T>({ method: 'GET', path, config });
   }
 
   async post<T>(path: string, body?: unknown, config?: IHttpConfig): Promise<IServiceResponse<T>> {
-    return this.request<T>('POST', path, JSON.stringify(body ?? {}), undefined, config);
+    return this.change<T>({ method: 'POST', path, body: JSON.stringify(body ?? {}), config });
   }
 
   async patch<T>(path: string, body?: unknown, config?: IHttpConfig): Promise<IServiceResponse<T>> {
-    return this.request<T>('PATCH', path, JSON.stringify(body ?? {}), undefined, config);
+    return this.change<T>({ method: 'PATCH', path, body: JSON.stringify(body ?? {}), config });
   }
 
   async put<T>(path: string, body?: unknown, config?: IHttpConfig): Promise<IServiceResponse<T>> {
-    return this.request<T>('PUT', path, JSON.stringify(body ?? {}), undefined, config);
+    return this.change<T>({ method: 'PUT', path, body: JSON.stringify(body ?? {}), config });
   }
 
   async delete<T>(path: string, body?: unknown, config?: IHttpConfig): Promise<IServiceResponse<T>> {
-    return this.request<T>('DELETE', path, body === undefined ? undefined : JSON.stringify(body), undefined, config);
+    return this.change<T>({
+      method: 'DELETE',
+      path,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      config,
+    });
   }
 
   async postMultipart<T>(
@@ -35,16 +49,20 @@ class HttpService {
     fields?: Record<string, string>,
     config?: IHttpConfig,
   ): Promise<IServiceResponse<T>> {
-    return this.request<T>('POST', path, JSON.stringify(fields ?? {}), [file], config);
+    return this.request<T>({ method: 'POST', path, body: JSON.stringify(fields ?? {}), files: [file], config });
   }
 
-  private async request<T>(
-    method: HttpMethod,
-    path: string,
-    body: string | undefined,
-    files: NetHttpFile[] | undefined,
-    config: IHttpConfig = {},
-  ): Promise<IServiceResponse<T>> {
+  private async change<T>(request: HttpRequestInput): Promise<IServiceResponse<T>> {
+    const response = await this.request<T>(request);
+    if (response.ok || !response.errors) return response;
+    const refusal = writeRefusal({ method: request.method, status: response.status, code: response.errors.code });
+    if (!refusal) return response;
+    return { ...response, errors: { ...response.errors, code: writeRefusalCode(refusal) } };
+  }
+
+  private async request<T>(input: HttpRequestInput): Promise<IServiceResponse<T>> {
+    const { method, path, body, files } = input;
+    const config = input.config ?? {};
     let instance;
     try {
       instance = await netService.instance();
@@ -81,7 +99,7 @@ class HttpService {
     if (result.status === 401 && !config.skipAuthRetry) {
       const outcome = await httpAuth().refreshSession(credential);
       if (outcome === 'refreshed') {
-        return this.request<T>(method, path, body, files, { ...config, skipAuthRetry: true });
+        return this.request<T>({ ...input, config: { ...config, skipAuthRetry: true } });
       }
       if (mayClearSession(outcome)) void httpAuth().clearSession(credential);
       if (outcome === 'unavailable' && credential.accessToken) {

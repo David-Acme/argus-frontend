@@ -102,6 +102,8 @@ export const common = {
   errors: {
     network: 'Could not connect to Argus',
     timeout: 'Argus took too long to answer. Try again.',
+    'write-not-sent': 'I can’t reach Argus, so the change was not sent. Try again when you have a connection.',
+    'write-unconfirmed': 'The connection to Argus dropped and I don’t know whether the change was sent. Check how it ended up before trying again.',
     unauthorized: 'Session expired, sign in again',
     forbidden: 'You do not have permission to do this',
     'not-found': 'Resource not found',
