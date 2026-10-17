@@ -1,7 +1,7 @@
 import { localizedModule } from '@/core/services/modules/module-text';
 import type { AppAccess, LanguageCode, TableName, UserRole } from '@/core/types';
 import { CAPABILITY, CAPABILITY_MODULE, MODULE_IDS, MODULE_SYNC_TABLES, type Capability } from '@/shared/constants';
-import { hasAccess, type Permission } from './role-access';
+import { clipAccessForRole, hasAccess, type ClipAccess, type Permission } from './role-access';
 
 export type AccessView = {
   ready: boolean;
@@ -184,6 +184,10 @@ export type CameraActionAccess = {
   watch: boolean;
   talk: boolean;
 };
+
+export function clipAccessOf(view: AccessView): ClipAccess {
+  return clipAccessForRole(view.role ?? 'guest', view.roleActive);
+}
 
 export function cameraActionsOf(view: AccessView): CameraActionAccess {
   const watch = view.roleActive && hasCapability(view, CAPABILITY.cameraView);

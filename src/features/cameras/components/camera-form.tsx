@@ -17,6 +17,7 @@ import {
 import { CAMERA_DRIVER_SPECS, CAMERA_ICONS } from '@/features/cameras/constants';
 import { useCameraCatalog } from '@/features/cameras/hooks/use-camera-catalog';
 import { catalogLabel, catalogPrefill, findCatalogModel } from '@/features/cameras/model/camera-catalog';
+import { recordModeLabelKey, recordModeOptions } from '@/features/cameras/model/camera-record-mode';
 import {
   DETAIL_FIELDS,
   cameraBodyOf,
@@ -189,10 +190,12 @@ export function CameraForm({ open, onOpenChange, camera, trigger }: CameraFormPr
   const visibleStep: CameraFormStep = choosingModel ? 'model' : step;
 
   const recordOptions = useMemo<MenuOption<CameraRecordMode>[]>(
-    () => [
-      { value: 'events', label: t('screens.cameras.form.record-events'), description: t('screens.cameras.record-hint') },
-      { value: 'continuous', label: t('screens.cameras.form.record-continuous') },
-    ],
+    () =>
+      recordModeOptions().map((mode) => ({
+        value: mode,
+        label: t(recordModeLabelKey(mode)),
+        ...(mode === 'events' ? { description: t('screens.cameras.record-hint') } : {}),
+      })),
     [t],
   );
 

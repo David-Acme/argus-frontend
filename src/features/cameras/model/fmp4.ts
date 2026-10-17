@@ -274,6 +274,17 @@ function toMicros(value: number, timescale: number): number {
   return Math.round((value * 1_000_000) / timescale);
 }
 
+export type Fmp4Box = {
+  type: string;
+  start: number;
+  end: number;
+};
+
+export function listBoxes(bytes: Uint8Array): Fmp4Box[] {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return boxes(view, 0, bytes.byteLength).map((box) => ({ type: box.type, start: box.start, end: box.end }));
+}
+
 function boxes(view: DataView, from: number, to: number): Box[] {
   const result: Box[] = [];
   let offset = from;

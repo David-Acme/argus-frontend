@@ -5,6 +5,7 @@ import { VIEW_CACHE_KEYS, type Capability } from '@/shared/constants';
 import {
   accessView,
   cameraActionsOf,
+  clipAccessOf,
   guardAccessOf,
   hasCapability,
   isModuleActive,
@@ -13,7 +14,7 @@ import {
   type CameraActionAccess,
   type GuardAccess,
 } from '@/shared/libs/capabilities';
-import type { Permission } from '@/shared/libs/role-access';
+import type { ClipAccess, Permission } from '@/shared/libs/role-access';
 import { useViewCacheValue } from './use-cached-rows';
 
 export type Capabilities = AccessView & {
@@ -23,6 +24,7 @@ export type Capabilities = AccessView & {
   isOwner: boolean;
   guard: GuardAccess;
   cameraActions: CameraActionAccess;
+  clips: ClipAccess;
 };
 
 export function useAccessView(): AccessView {
@@ -47,6 +49,7 @@ export function useCapabilities(): Capabilities {
       isOwner: view.role === 'owner' && view.roleActive,
       guard: guardAccessOf(view),
       cameraActions: cameraActionsOf(view),
+      clips: clipAccessOf(view),
     }),
     [can, has, moduleActive, view]
   );

@@ -35,7 +35,7 @@ export const cameraFormSchema = z
     cloudPassword: z.string().max(128, 'common.validation.too-long'),
     manufacturer: z.string().trim().max(80, 'common.validation.too-long'),
     model: z.string().trim().max(80, 'common.validation.too-long'),
-    recordMode: z.enum(['events', 'continuous']),
+    recordMode: z.enum(['off', 'motion', 'events', 'continuous']),
     streamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
     subStreamPath: z.string().trim().refine(isStreamPath, 'screens.cameras.stream-path-invalid'),
     catalogId: z.string(),

@@ -18,6 +18,7 @@ import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { recordModeLabelKey } from '@/features/cameras/model/camera-record-mode';
 import { cn } from '@/shared/libs/utils';
 
 export type CameraCardVariant = 'grid' | 'featured' | 'row';
@@ -221,10 +222,7 @@ export const CameraCard = memo(function CameraCard({
     camera.zones.length === 1
       ? t('screens.cameras.zones-count-one')
       : t('screens.cameras.zones-count', { count: String(camera.zones.length) });
-  const recordLabel =
-    camera.recordMode === 'continuous'
-      ? t('screens.cameras.form.record-continuous')
-      : t('screens.cameras.form.record-events');
+  const recordLabel = t(recordModeLabelKey(camera.recordMode));
   const talk =
     canTalk && status === 'online' ? (
       <Pressable

@@ -1,8 +1,8 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { ICameraCapabilities, ICameraDeviceStatus, IZoneCacheRow } from '@/core/interfaces';
+import type { ICameraCapabilities, ICameraClip, ICameraDeviceStatus, IZoneCacheRow } from '@/core/interfaces';
 import type { MenuOption } from '@/core/types';
 import { cameraService } from '@/core/services/camera.service';
 import { zoneService } from '@/core/services/zone.service';
@@ -21,6 +21,11 @@ import { nextPresetName, parsePresets, type CameraPreset } from '@/features/came
 import { CameraEnvironmentPanel } from '@/features/security';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import { CameraForm } from '@/features/cameras/components/camera-form';
+import { ClipList } from '@/features/cameras/components/clip-list';
+import { ClipPlayer } from '../components/clip-player';
+import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
+import { useClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
+import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
 import { CameraLiveFullscreen, CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
 import { CameraTalkSheet } from '@/features/cameras/components/camera-talk-sheet';
@@ -30,6 +35,7 @@ import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
 import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
+import { Text } from '@/shared/components/ui/text';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -48,7 +54,7 @@ export default function CameraDetailScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { id, talk } = useLocalSearchParams<{ id: string; talk?: string }>();
-  const { can, has } = useCapabilities();
+  const { can, has, clips: clipAccess } = useCapabilities();
   const { isExpanded, isMedium, isWide } = useWindowClass();
   const [editOpen, setEditOpen] = useState(false);
   const [zoneOpen, setZoneOpen] = useState(false);
@@ -65,6 +71,8 @@ export default function CameraDetailScreen() {
   const autoCalled = useRef(false);
 
 
+  const clipsState = useCameraClips(id, clipAccess.view);
+  const playback = useClipPlayback(id);
   const zones = useMemo(() => camera?.zones ?? [], [camera]);
   const zone = useMemo(() => zones.find((item) => item.id === zoneId) ?? null, [zones, zoneId]);
   const canUpdate = can('camera', 'update');
@@ -201,6 +209,26 @@ export default function CameraDetailScreen() {
     setZoneOpen(true);
   }, []);
 
+  const removeClip = useCallback(
+    (clip: ICameraClip) =>
+      void move({
+        confirm: {
+          title: t('screens.cameras.clips.delete-title'),
+          description: t('screens.cameras.clips.delete-description'),
+          confirmLabel: t('screens.cameras.clips.delete-confirm'),
+          intent: 'danger',
+        },
+        call: () => cameraClipsService.remove(id, clip.id),
+        success: t('screens.cameras.clips.deleted'),
+        errorTitle: t('screens.cameras.clips.delete-failed'),
+      }).then((result) => {
+        if (!result) return;
+        if (playback.clip?.id === clip.id) playback.close();
+        clipsState.forget(clip);
+      }),
+    [clipsState, id, move, playback, t],
+  );
+
   const removeZone = useCallback(
     (target: IZoneCacheRow) =>
       void runOptimistic({
@@ -277,6 +305,51 @@ export default function CameraDetailScreen() {
         onAnnounce={canTalk ? () => setTalkOpen(true) : undefined}
       />
     ) : null;
+  const player =
+    playback.file ||
+    playback.state === 'loading' ||
+    playback.state === 'failed' ||
+    playback.state === 'unsupported' ? (
+      <View className="bg-card gap-3 rounded-3xl p-4 shadow-md shadow-black/[0.05]">
+        {playback.file ? (
+          <ClipPlayer file={playback.file} onEnded={playback.close} />
+        ) : (
+          <Text variant="caption">
+            {playback.state === 'failed'
+              ? t('screens.cameras.clips.play-failed')
+              : t('screens.cameras.clips.loading')}
+          </Text>
+        )}
+        {playback.state === 'unsupported' ? (
+          <Text variant="caption">{t('screens.cameras.clips.unsupported')}</Text>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('screens.cameras.clips.close')}
+          onPress={playback.close}
+          className="items-center rounded-xl py-1 active:opacity-70">
+          <Text variant="caption">{t('screens.cameras.clips.close')}</Text>
+        </Pressable>
+      </View>
+    ) : null;
+
+  const clipsPanel = (
+    <ClipList
+      clips={clipsState.clips}
+      recordMode={camera.recordMode}
+      status={clipsState.status}
+      playable={clipAccess.view}
+      removable={clipAccess.remove}
+      hasMore={clipsState.hasMore}
+      loadingMore={clipsState.loadingMore}
+      activeClipId={playback.clip?.id ?? null}
+      onOpen={(clip) => playback.open(clip)}
+      onDelete={removeClip}
+      onLoadMore={clipsState.loadMore}
+      className={stretch}
+    />
+  );
+
   const environment = <CameraEnvironmentPanel cameraId={camera.id} className={controllable ? undefined : stretch} />;
   const zonesPanel = (
     <CameraZonesPanel
@@ -320,6 +393,8 @@ export default function CameraDetailScreen() {
             <View className="grow flex-row items-stretch gap-6">
               <View className="min-w-0 flex-1 gap-5">
                 {live}
+                {player}
+                {clipsPanel}
                 {zonesPanel}
               </View>
               <View className="w-[360px] shrink-0 gap-5">
@@ -332,6 +407,7 @@ export default function CameraDetailScreen() {
           ) : isMedium ? (
             <View className="grow gap-5">
               {live}
+              {player}
               <View className="grow flex-row items-stretch gap-5">
                 <View className="min-w-0 flex-1 gap-5">
                   {callPanel}
@@ -345,6 +421,7 @@ export default function CameraDetailScreen() {
           ) : (
             <View className="gap-4">
               {live}
+              {player}
               {callPanel}
               {info}
               {environment}

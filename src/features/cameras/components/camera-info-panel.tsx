@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import type { ICameraCacheRow, ICameraDeviceStatus } from '@/core/interfaces';
 import type { CameraDriverKind, TranslationKey } from '@/core/types';
+import { recordModeLabelKey } from '@/features/cameras/model/camera-record-mode';
 import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
@@ -56,11 +57,7 @@ export function CameraInfoPanel({ camera, device, streamOnly, className }: Camer
       {device?.firmware ? <InfoRow label={t('screens.cameras.info.firmware')} value={device.firmware} /> : null}
       <InfoRow
         label={t('screens.cameras.record-mode')}
-        value={
-          camera.recordMode === 'continuous'
-            ? t('screens.cameras.form.record-continuous')
-            : t('screens.cameras.form.record-events')
-        }
+        value={t(recordModeLabelKey(camera.recordMode))}
       />
       {camera.retentionDays != null ? (
         <InfoRow

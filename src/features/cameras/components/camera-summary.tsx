@@ -1,5 +1,5 @@
 import { Pressable, View } from 'react-native';
-import type { IconName } from '@/core/types';
+import type { CameraRecordMode, IconName } from '@/core/types';
 import { formatRelative, healthOf, relativeTime, type CameraView } from '@/features/cameras/model/camera-overview';
 import { HEALTH_LABEL, STATUS_DOT, STATUS_LABEL, healthNeedsAttention } from '@/features/cameras/model/camera-status';
 import { Icon } from '@/shared/components/ui/icon';
@@ -14,8 +14,7 @@ export type CameraSummaryCounts = {
   offline: number;
   disabled: number;
   zones: number;
-  events: number;
-  continuous: number;
+  recording: Record<CameraRecordMode, number>;
   detectionsToday: number;
   watching: number;
   attention: number;
@@ -188,7 +187,11 @@ export function CameraSummary({ counts, layout, views, now = 0, className, onOpe
         <SummaryRow icon="activity" label={t('screens.cameras.summary.detections-today')} value={counts.detectionsToday} />
         <SummaryRow icon="eye" label={t('screens.cameras.summary.watching')} value={counts.watching} />
         <SummaryRow icon="shield" label={t('screens.cameras.summary.zones')} value={counts.zones} />
-        <SummaryRow icon="video" label={t('screens.cameras.summary.continuous')} value={counts.continuous} />
+        <SummaryRow
+          icon="video"
+          label={t('screens.cameras.summary.continuous')}
+          value={counts.recording.continuous}
+        />
       </View>
       {views && views.length > 0 ? (
         <>

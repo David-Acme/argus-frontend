@@ -6,6 +6,7 @@ import { storageService } from '@/core/services/storage';
 import { CameraCardGrid } from '@/features/cameras/components/camera-card-grid';
 import { CameraForm } from '@/features/cameras/components/camera-form';
 import { CameraSummary, type CameraSummaryCounts } from '@/features/cameras/components/camera-summary';
+import { recordModeSummary } from '@/features/cameras/model/camera-record-mode';
 import { CameraToolbar } from '@/features/cameras/components/camera-toolbar';
 import { RecentDetections } from '@/features/cameras/components/recent-detections';
 import {
@@ -92,8 +93,7 @@ export default function CamerasScreen() {
       offline: counts.offline,
       disabled: counts.disabled,
       zones: 0,
-      events: 0,
-      continuous: 0,
+      recording: recordModeSummary(),
       detectionsToday: 0,
       watching: 0,
       attention: 0,
@@ -101,7 +101,7 @@ export default function CamerasScreen() {
     const startOfToday = new Date(now).setHours(0, 0, 0, 0);
     for (const view of views) {
       next.zones += view.camera.zones.length;
-      next[view.camera.recordMode] += 1;
+      next.recording[view.camera.recordMode] += 1;
       next.watching += view.live?.viewers ?? 0;
       if (view.status === 'online' && healthNeedsAttention(healthOf(view.live))) next.attention += 1;
     }

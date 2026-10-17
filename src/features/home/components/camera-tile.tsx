@@ -1,6 +1,8 @@
 import { Pressable, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
+import type { CameraRecordMode } from '@/core/types';
+import { recordModeLabelKey } from '@/features/cameras';
 import { cn } from '@/shared/libs/utils';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -11,7 +13,7 @@ type CameraTileProps = {
   ip: string;
   isOnline: boolean;
   isEnabled: boolean;
-  recordMode?: string;
+  recordMode?: CameraRecordMode;
   onPress?: () => void;
 };
 
@@ -33,10 +35,7 @@ export function CameraTile({
         ? 'screens.cameras.status.online'
         : 'screens.cameras.status.offline'
   );
-  const recordLabel =
-    recordMode === 'continuous'
-      ? t('screens.cameras.form.record-continuous')
-      : t('screens.cameras.form.record-events');
+  const recordLabel = t(recordModeLabelKey(recordMode ?? 'events'));
 
   return (
     <Pressable

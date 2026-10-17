@@ -19,7 +19,7 @@ export type UserLang = 'es' | 'en';
 
 export type PersonStatus = 'candidate' | 'known';
 
-export type CameraRecordMode = 'events' | 'continuous';
+export type CameraRecordMode = 'off' | 'motion' | 'events' | 'continuous';
 
 export type CameraDriverKind = 'tapo' | 'onvif' | 'rtsp';
 

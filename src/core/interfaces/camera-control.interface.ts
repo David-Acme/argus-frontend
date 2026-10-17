@@ -1,4 +1,5 @@
 import type {
+  CameraClipTrigger,
   CameraDriverKind,
   CameraFeatureKey,
   CameraFormFactor,
@@ -188,4 +189,46 @@ export interface ICameraOverview {
 export interface ICameraSnapshot {
   image: string;
   capturedAt: number;
+}
+
+export interface ICameraClipPayload {
+  id: number;
+  cameraId: number;
+  trigger: CameraClipTrigger;
+  contentType: string;
+  codec: string;
+  startedAt: number;
+  durationMs: number;
+  byteSize: number;
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface ICameraClip {
+  id: string;
+  cameraId: string;
+  trigger: CameraClipTrigger;
+  contentType: string;
+  codec: string;
+  startedAt: number;
+  durationMs: number;
+  byteSize: number;
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface ICameraClips {
+  cameraId: number;
+  clips: ICameraClipPayload[];
+}
+
+export interface ICameraClipPreview {
+  token: string;
+  expiresAt: number;
+}
+
+export interface ICameraClipContent {
+  mimeType: string;
+  base64: string;
+  durationMs: number;
 }

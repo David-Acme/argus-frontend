@@ -37,6 +37,25 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
   },
 };
 
+export type ClipAccess = {
+  view: boolean;
+  remove: boolean;
+};
+
+const NO_CLIPS: ClipAccess = { view: false, remove: false };
+
+const CLIP_ACCESS: Record<UserRole, ClipAccess> = {
+  owner: { view: true, remove: true },
+  resident: NO_CLIPS,
+  guard: { view: true, remove: false },
+  guest: NO_CLIPS,
+};
+
+export function clipAccessForRole(role: UserRole, roleActive: boolean): ClipAccess {
+  const access = CLIP_ACCESS[role] ?? NO_CLIPS;
+  return roleActive || role === 'owner' ? access : NO_CLIPS;
+}
+
 export function hasAccess(role: UserRole, table: TableName, permission: Permission): boolean {
   if (role === 'owner') return true;
   return TABLE_ACCESS[role]?.[table]?.includes(permission) ?? false;
