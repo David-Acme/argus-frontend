@@ -308,6 +308,7 @@ export default function CameraDetailScreen() {
         device={device}
         controls={deviceSettings}
         deviceFailed={deviceResource.status === 'failed'}
+        onRecheck={reloadDevice}
         className={stretch}
       />
     ) : null;

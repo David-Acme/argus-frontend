@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn } from '@/core/types';
@@ -12,6 +14,11 @@ const es = ((key: string, params?: Record<string, string>) =>
 const en = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.en, key as never, params as never)) as TranslateFn;
 
+const toggleSource = readFileSync(
+  join(import.meta.dir, '../../../../src/features/cameras/components/privacy-toggle.tsx'),
+  'utf8'
+);
+
 describe('the privacy state the settings row shows', () => {
   test('a state that is not known is unknown, never off', () => {
     expect(privacyStateOf(null)).toBe('unknown');
@@ -23,6 +30,25 @@ describe('the privacy state the settings row shows', () => {
   test('the unknown state has words of its own', () => {
     expect(es('screens.cameras.privacy-unknown')).toBe('Estado desconocido');
     expect(en('screens.cameras.privacy-unknown')).toBe('Unknown state');
+  });
+
+  test('an unknown state has no switch: it offers a re-read, and says so when the camera stays silent', () => {
+    expect(es('screens.cameras.privacy-recheck')).toBe('Volver a leer');
+    expect(en('screens.cameras.privacy-recheck')).toBe('Read again');
+    expect(es('screens.cameras.privacy-unknown-hint')).toBe(
+      'La cámara no informa su estado; revisa la app Tapo.'
+    );
+    expect(en('screens.cameras.privacy-unknown-hint')).toBe(
+      'The camera does not report its state; check the Tapo app.'
+    );
+
+    const unknownAt = toggleSource.indexOf("t('screens.cameras.privacy-unknown')");
+    const switchAt = toggleSource.indexOf('<Switch');
+    expect(unknownAt).toBeGreaterThan(-1);
+    expect(switchAt).toBeGreaterThan(unknownAt);
+    expect(toggleSource.match(/<Switch/g)).toHaveLength(1);
+    expect(toggleSource).toContain("t('screens.cameras.privacy-recheck')");
+    expect(toggleSource).toContain("t('screens.cameras.privacy-unknown-hint')");
   });
 });
 

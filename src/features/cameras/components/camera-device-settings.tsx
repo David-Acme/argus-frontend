@@ -18,6 +18,7 @@ type CameraDeviceSettingsProps = {
   features: ICameraCapabilities;
   status: ICameraDeviceStatus | null;
   controls: CameraDeviceSettingsControls;
+  onRecheck: () => Promise<void>;
 };
 
 type ChoiceRowProps<TValue extends string> = {
@@ -36,7 +37,7 @@ function ChoiceRow<TValue extends string>({ label, value, options, onChange }: C
   );
 }
 
-export function CameraDeviceSettings({ features, status, controls }: CameraDeviceSettingsProps) {
+export function CameraDeviceSettings({ features, status, controls, onRecheck }: CameraDeviceSettingsProps) {
   const { t } = useTranslation();
   const { apply, busy, privacyBusy } = controls;
   const dayNight = (status?.dayNightMode as DayNightMode | undefined) ?? 'auto';
@@ -52,6 +53,7 @@ export function CameraDeviceSettings({ features, status, controls }: CameraDevic
           value={status?.privacyEnabled}
           busy={privacyBusy}
           disabled={busy}
+          onRecheck={onRecheck}
           onChange={(privacy) =>
             void apply(
               { privacy },

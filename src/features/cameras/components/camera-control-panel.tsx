@@ -10,10 +10,11 @@ type CameraControlPanelProps = {
   device: ICameraDeviceStatus | null;
   controls: CameraDeviceSettingsControls;
   deviceFailed: boolean;
+  onRecheck: () => Promise<void>;
   className?: string;
 };
 
-export function CameraControlPanel({ features, device, controls, deviceFailed, className }: CameraControlPanelProps) {
+export function CameraControlPanel({ features, device, controls, deviceFailed, onRecheck, className }: CameraControlPanelProps) {
   const { t } = useTranslation();
   const subtitle = device?.model
     ? [device.model, device.firmware].filter(Boolean).join(' · ')
@@ -23,7 +24,7 @@ export function CameraControlPanel({ features, device, controls, deviceFailed, c
 
   return (
     <Panel title={t('screens.cameras.settings')} description={subtitle} className={className}>
-      <CameraDeviceSettings features={features} status={device} controls={controls} />
+      <CameraDeviceSettings features={features} status={device} controls={controls} onRecheck={onRecheck} />
       {features.ptz ? <Text variant="micro">{t('screens.cameras.ptz-on-video')}</Text> : null}
     </Panel>
   );

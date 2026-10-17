@@ -179,6 +179,8 @@ export const cameras = {
   settings: 'Camera settings',
   privacy: 'Privacy mode',
   'privacy-unknown': 'Unknown state',
+  'privacy-recheck': 'Read again',
+  'privacy-unknown-hint': 'The camera does not report its state; check the Tapo app.',
   'privacy-confirm': 'Argus will stop seeing, hearing and recording this camera.',
   led: 'Status LED',
   'day-night': 'Night vision',
