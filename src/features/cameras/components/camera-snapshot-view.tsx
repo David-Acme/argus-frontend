@@ -3,20 +3,23 @@ import { Image, View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 
 type CameraSnapshotViewProps = {
   cameraId: string;
+  privacy?: boolean;
 };
 
 const SNAPSHOT_ASPECT = 16 / 9;
 
-export function CameraSnapshotView({ cameraId }: CameraSnapshotViewProps) {
+export function CameraSnapshotView({ cameraId, privacy = false }: CameraSnapshotViewProps) {
   const { t } = useTranslation();
   const [image, setImage] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (privacy) return;
     let active = true;
     void cameraControlService.snapshot(cameraId).then((result) => {
       if (!active) return;
@@ -30,7 +33,9 @@ export function CameraSnapshotView({ cameraId }: CameraSnapshotViewProps) {
     return () => {
       active = false;
     };
-  }, [cameraId]);
+  }, [cameraId, privacy]);
+
+  if (privacy) return <CameraPrivacyPlaceholder />;
 
   return (
     <View

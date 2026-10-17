@@ -10,11 +10,12 @@ type CallCameraCardProps = {
   cameraId: string;
   name: string;
   view: VoiceCameraView;
+  privacy?: boolean;
   onClose: () => void;
   onOpen: () => void;
 };
 
-export function CallCameraCard({ cameraId, name, view, onClose, onOpen }: CallCameraCardProps) {
+export function CallCameraCard({ cameraId, name, view, privacy = false, onClose, onOpen }: CallCameraCardProps) {
   const { t } = useTranslation();
   return (
     <View className="bg-card w-full gap-3 rounded-3xl p-3 shadow-sm shadow-black/10">
@@ -26,7 +27,11 @@ export function CallCameraCard({ cameraId, name, view, onClose, onOpen }: CallCa
         <IconButton icon="arrow-up-right" label={t('screens.voice.camera.open', { name })} onPress={onOpen} />
         <IconButton icon="x" label={t('screens.voice.camera.close')} onPress={onClose} />
       </View>
-      {view === 'snapshot' ? <CameraSnapshotView cameraId={cameraId} /> : <CameraLiveView cameraId={cameraId} quality="sub" />}
+      {view === 'snapshot' ? (
+        <CameraSnapshotView cameraId={cameraId} privacy={privacy} />
+      ) : (
+        <CameraLiveView cameraId={cameraId} quality="sub" privacy={privacy} />
+      )}
     </View>
   );
 }

@@ -19,6 +19,7 @@ import { cameraLiveService } from '@/features/cameras/services/camera-live.servi
 import { cameraRtcService } from '@/features/cameras/services/camera-rtc';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
+import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
 import { CameraRtcVideo } from './camera-rtc-video';
 import { WebCameraAudio } from '@/features/cameras/components/web-camera-audio';
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
@@ -30,6 +31,7 @@ type CameraLiveStreamProps = {
   quality?: CameraStreamQuality;
   transport?: CameraLiveTransportPolicy;
   isolatedBackoff?: boolean;
+  privacy?: boolean;
   overlay?: ReactNode;
   fill?: boolean;
   compactStatus?: boolean;
@@ -77,6 +79,7 @@ export function CameraLiveStream({
   quality = 'sub',
   transport = 'auto',
   isolatedBackoff = false,
+  privacy = false,
   overlay,
   fill = false,
   compactStatus,
@@ -105,7 +108,7 @@ export function CameraLiveStream({
   const currentLevel = useEffectEvent(() => audioLevel);
 
   useEffect(() => {
-    if (unsupported || !active) return;
+    if (unsupported || !active || privacy) return;
     const target = canvas.current;
     const numericId = Number(cameraId);
     if (!target || !Number.isFinite(numericId) || numericId <= 0) return;
@@ -186,7 +189,7 @@ export function CameraLiveStream({
       audio.current = null;
       reportBlocked(false);
     };
-  }, [active, cameraId, quality, streamKey, transport, isolatedBackoff, unsupported]);
+  }, [active, cameraId, privacy, quality, streamKey, transport, isolatedBackoff, unsupported]);
 
   useEffect(() => {
     audio.current?.setLevel(audioLevel);
@@ -202,25 +205,31 @@ export function CameraLiveStream({
       testID={`camera-live-${cameraId}`}
       className={cn('overflow-hidden rounded-2xl', fill ? 'absolute inset-0' : 'w-full', className)}
       style={fill ? undefined : { aspectRatio: 16 / 9, backgroundColor: CAMERA_LIVE_BACKGROUND }}>
-      {unsupported ? null : (
-        <canvas
-          ref={canvas}
-          style={{ ...CANVAS_STYLE, visibility: showRtc ? 'hidden' : 'visible' }}
-        />
+      {privacy ? (
+        <CameraPrivacyPlaceholder fill />
+      ) : (
+        <>
+          {unsupported ? null : (
+            <canvas
+              ref={canvas}
+              style={{ ...CANVAS_STYLE, visibility: showRtc ? 'hidden' : 'visible' }}
+            />
+          )}
+          {unsupported ? null : (
+            <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />
+          )}
+          {overlay}
+          <CameraLiveStatus
+            state={unsupported ? 'unsupported' : (current?.state ?? 'connecting')}
+            painted={current?.painted ?? false}
+            notice={current?.notice ?? null}
+            compact={compactStatus ?? fill}
+            hidden={statusHidden}
+            insets={statusInsets}
+            onRetry={retry}
+          />
+        </>
       )}
-      {unsupported ? null : (
-        <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />
-      )}
-      {overlay}
-      <CameraLiveStatus
-        state={unsupported ? 'unsupported' : (current?.state ?? 'connecting')}
-        painted={current?.painted ?? false}
-        notice={current?.notice ?? null}
-        compact={compactStatus ?? fill}
-        hidden={statusHidden}
-        insets={statusInsets}
-        onRetry={retry}
-      />
     </View>
   );
 }

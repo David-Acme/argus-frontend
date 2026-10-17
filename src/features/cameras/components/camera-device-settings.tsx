@@ -5,6 +5,8 @@ import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { PrivacyToggle } from '@/features/cameras/components/privacy-toggle';
+import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 import type { CameraDeviceSettingsControls } from '@/features/cameras/hooks/use-camera-device-settings';
 import {
   MOTION_SENSITIVITY,
@@ -36,7 +38,7 @@ function ChoiceRow<TValue extends string>({ label, value, options, onChange }: C
 
 export function CameraDeviceSettings({ features, status, controls }: CameraDeviceSettingsProps) {
   const { t } = useTranslation();
-  const { apply, busy } = controls;
+  const { apply, busy, privacyBusy } = controls;
   const dayNight = (status?.dayNightMode as DayNightMode | undefined) ?? 'auto';
   const sensitivity = sensitivityLevel(status?.motionSensitivity);
   const unknown = status == null;
@@ -44,12 +46,23 @@ export function CameraDeviceSettings({ features, status, controls }: CameraDevic
   return (
     <View className="gap-0.5">
       {features.privacy ? (
-        <ToggleRow
+        <PrivacyToggle
           label={t('screens.cameras.privacy')}
           hint={t('screens.cameras.privacy-hint')}
-          value={status?.privacyEnabled ?? false}
-          disabled={busy || unknown}
-          onChange={(privacy) => void apply({ privacy })}
+          value={status?.privacyEnabled}
+          busy={privacyBusy}
+          disabled={busy}
+          onChange={(privacy) =>
+            void apply(
+              { privacy },
+              {
+                confirm: privacyApplyConfirm(privacy, {
+                  title: t('screens.cameras.privacy'),
+                  description: t('screens.cameras.privacy-confirm'),
+                }),
+              },
+            )
+          }
         />
       ) : null}
       {features.motion ? (

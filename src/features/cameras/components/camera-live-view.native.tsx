@@ -21,6 +21,7 @@ import { cameraLiveService } from '@/features/cameras/services/camera-live.servi
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { nativePlayerMuted } from '@/features/cameras/model/camera-live-audio';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
+import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
 import { CameraRtcVideo } from './camera-rtc-video';
 import { cn } from '@/shared/libs/utils';
 
@@ -30,6 +31,7 @@ type CameraLiveStreamProps = {
   quality?: CameraStreamQuality;
   transport?: CameraLiveTransportPolicy;
   isolatedBackoff?: boolean;
+  privacy?: boolean;
   overlay?: ReactNode;
   fill?: boolean;
   compactStatus?: boolean;
@@ -65,6 +67,7 @@ export function CameraLiveStream({
   quality = 'sub',
   transport = 'auto',
   isolatedBackoff = false,
+  privacy = false,
   overlay,
   fill = false,
   compactStatus,
@@ -93,7 +96,7 @@ export function CameraLiveStream({
 
   useEffect(() => {
     const numericId = Number(cameraId);
-    if (!player || !active || !Number.isFinite(numericId) || numericId <= 0) return;
+    if (privacy || !player || !active || !Number.isFinite(numericId) || numericId <= 0) return;
 
     const update = (next: Partial<Omit<StreamStatus, 'key'>>) =>
       setStatus((previous) => {
@@ -148,7 +151,7 @@ export function CameraLiveStream({
       opened.close();
       session.current = null;
     };
-  }, [active, cameraId, player, quality, streamKey, transport, isolatedBackoff]);
+  }, [active, cameraId, player, privacy, quality, streamKey, transport, isolatedBackoff]);
 
   useEffect(() => {
     session.current?.setAudioEnabled(audioLevel > 0);
@@ -158,23 +161,29 @@ export function CameraLiveStream({
     <View
       className={cn('overflow-hidden rounded-2xl', fill ? 'absolute inset-0' : 'w-full', className)}
       style={fill ? undefined : { aspectRatio: 16 / 9, backgroundColor: CAMERA_LIVE_BACKGROUND }}>
-      <ArgusCameraView
-        hybridRef={callback(bindPlayer)}
-        active={active}
-        muted={nativePlayerMuted({ level: audioLevel, transport: current?.transport ?? null })}
-        style={{ width: '100%', height: '100%', opacity: showRtc ? 0 : 1 }}
-      />
-      <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />
-      {overlay}
-      <CameraLiveStatus
-        state={current?.state ?? 'connecting'}
-        painted={current?.painted ?? false}
-        notice={current?.notice ?? null}
-        compact={compactStatus ?? fill}
-        hidden={statusHidden}
-        insets={statusInsets}
-        onRetry={retry}
-      />
+      {privacy ? (
+        <CameraPrivacyPlaceholder fill />
+      ) : (
+        <>
+          <ArgusCameraView
+            hybridRef={callback(bindPlayer)}
+            active={active}
+            muted={nativePlayerMuted({ level: audioLevel, transport: current?.transport ?? null })}
+            style={{ width: '100%', height: '100%', opacity: showRtc ? 0 : 1 }}
+          />
+          <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />
+          {overlay}
+          <CameraLiveStatus
+            state={current?.state ?? 'connecting'}
+            painted={current?.painted ?? false}
+            notice={current?.notice ?? null}
+            compact={compactStatus ?? fill}
+            hidden={statusHidden}
+            insets={statusInsets}
+            onRetry={retry}
+          />
+        </>
+      )}
     </View>
   );
 }

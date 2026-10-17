@@ -178,6 +178,8 @@ export const cameras = {
   device: 'Device',
   settings: 'Camera settings',
   privacy: 'Privacy mode',
+  'privacy-unknown': 'Unknown state',
+  'privacy-confirm': 'Argus will stop seeing, hearing and recording this camera.',
   led: 'Status LED',
   'day-night': 'Night vision',
   'day-night-auto': 'Automatic',
@@ -191,6 +193,8 @@ export const cameras = {
   'device-refused': 'The camera did not apply the change',
   'device-reading': 'Reading the camera’s state…',
   'privacy-hint': 'Covers the lens: Argus stops seeing and recording while it is on.',
+  'privacy-placeholder': 'In privacy mode',
+  'privacy-placeholder-hint': 'Argus does not see, hear or record this camera.',
   'motion-hint': 'The camera itself reports when something moves.',
   'auto-track-hint': 'The camera turns on its own to follow a person.',
   'ptz-on-video':

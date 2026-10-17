@@ -26,18 +26,21 @@ import {
 type ResponseCardProps = {
   responseId: number;
   compact?: boolean;
+  privacy?: boolean;
   className?: string;
 };
 
 type ResponseCardBodyProps = {
   response: IncidentResponse;
   compact: boolean;
+  privacy?: boolean;
   className?: string;
 };
 
 type ResponseCardForProps = {
   response: IncidentResponse;
   compact?: boolean;
+  privacy?: boolean;
   className?: string;
 };
 
@@ -99,7 +102,7 @@ function ContactRow({ contact }: ContactRowProps) {
   );
 }
 
-function ResponseCardBody({ response, compact, className }: ResponseCardBodyProps) {
+function ResponseCardBody({ response, compact, privacy = false, className }: ResponseCardBodyProps) {
   const { t } = useTranslation();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
   const decide = useResponseVerdict();
@@ -173,7 +176,9 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
         ) : null}
       </View>
 
-      {showCamera && watching ? <CameraLiveView cameraId={String(response.cameraId)} quality="sub" /> : null}
+      {showCamera && watching ? (
+        <CameraLiveView cameraId={String(response.cameraId)} quality="sub" privacy={privacy} />
+      ) : null}
 
       {response.mine?.discreet && open ? (
         <View className="bg-surface-secondary flex-row items-center gap-2 rounded-2xl px-3 py-2">
@@ -232,12 +237,12 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
   );
 }
 
-export function ResponseCard({ responseId, compact = false, className }: ResponseCardProps) {
+export function ResponseCard({ responseId, compact = false, privacy = false, className }: ResponseCardProps) {
   const response = useResponse(responseId);
   if (!response) return null;
-  return <ResponseCardBody response={response} compact={compact} className={className} />;
+  return <ResponseCardBody response={response} compact={compact} privacy={privacy} className={className} />;
 }
 
-export function ResponseCardFor({ response, compact = false, className }: ResponseCardForProps) {
-  return <ResponseCardBody response={response} compact={compact} className={className} />;
+export function ResponseCardFor({ response, compact = false, privacy = false, className }: ResponseCardForProps) {
+  return <ResponseCardBody response={response} compact={compact} privacy={privacy} className={className} />;
 }
