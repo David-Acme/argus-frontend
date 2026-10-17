@@ -16,6 +16,7 @@ type ClipListProps = {
   status: 'idle' | 'loading' | 'ready' | 'failed';
   playable: boolean;
   removable: boolean;
+  privacy?: boolean;
   hasMore: boolean;
   loadingMore: boolean;
   activeClipId: string | null;
@@ -31,6 +32,7 @@ export function ClipList({
   status,
   playable,
   removable,
+  privacy = false,
   hasMore,
   loadingMore,
   activeClipId,
@@ -45,7 +47,14 @@ export function ClipList({
 
   return (
     <Panel title={t('screens.cameras.clips.title')} count={clips.length} className={className}>
-      {!playable || !records ? (
+      {privacy ? (
+        <EmptyState
+          variant="panel"
+          icon="eye-off"
+          title={t('screens.cameras.clips.privacy')}
+          hint={t('screens.cameras.clips.privacy-hint')}
+        />
+      ) : !playable || !records ? (
         <EmptyState
           variant="panel"
           icon="video"

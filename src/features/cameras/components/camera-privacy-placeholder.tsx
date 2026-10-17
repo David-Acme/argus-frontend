@@ -1,18 +1,32 @@
 import { View } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
 type CameraPrivacyPlaceholderProps = {
   fill?: boolean;
+  compact?: boolean;
   className?: string;
 };
 
 const PLACEHOLDER_ASPECT = 16 / 9;
 
-export function CameraPrivacyPlaceholder({ fill = false, className }: CameraPrivacyPlaceholderProps) {
+export function CameraPrivacyPlaceholder({
+  fill = false,
+  compact = false,
+  className,
+}: CameraPrivacyPlaceholderProps) {
   const { t } = useTranslation();
+
+  if (compact) {
+    return (
+      <View className={cn('bg-surface-secondary items-center justify-center', fill ? 'absolute inset-0' : 'w-full rounded-2xl', className)}>
+        <StatusBadge label={t('screens.cameras.privacy-badge')} icon="eye-off" />
+      </View>
+    );
+  }
 
   return (
     <View

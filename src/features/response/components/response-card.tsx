@@ -9,7 +9,8 @@ import { Text } from '@/shared/components/ui/text';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
-import { CameraLiveView } from '@/features/cameras';
+import { CameraLiveView, useCameraPrivacy } from '@/features/cameras';
+import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 import { useResponse, useResponseVerdict } from '@/features/response/hooks/use-responses';
 import {
   canDecide,
@@ -26,21 +27,18 @@ import {
 type ResponseCardProps = {
   responseId: number;
   compact?: boolean;
-  privacy?: boolean;
   className?: string;
 };
 
 type ResponseCardBodyProps = {
   response: IncidentResponse;
   compact: boolean;
-  privacy?: boolean;
   className?: string;
 };
 
 type ResponseCardForProps = {
   response: IncidentResponse;
   compact?: boolean;
-  privacy?: boolean;
   className?: string;
 };
 
@@ -102,13 +100,15 @@ function ContactRow({ contact }: ContactRowProps) {
   );
 }
 
-function ResponseCardBody({ response, compact, privacy = false, className }: ResponseCardBodyProps) {
+function ResponseCardBody({ response, compact, className }: ResponseCardBodyProps) {
   const { t } = useTranslation();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
   const decide = useResponseVerdict();
   const { cameraActions } = useCapabilities();
+  const privacy = useCameraPrivacy(response.cameraId);
   const [pending, setPending] = useState<'real' | 'false_alarm' | null>(null);
   const [watching, setWatching] = useState(false);
+  const masked = cameraPrivacyMasked(privacy);
   const headline = headlineOf(response, selfId);
   const tone = toneOf(response);
   const place = placeOf(response);
@@ -177,7 +177,7 @@ function ResponseCardBody({ response, compact, privacy = false, className }: Res
       </View>
 
       {showCamera && watching ? (
-        <CameraLiveView cameraId={String(response.cameraId)} quality="sub" privacy={privacy} />
+        <CameraLiveView cameraId={String(response.cameraId)} quality="sub" privacy={masked} />
       ) : null}
 
       {response.mine?.discreet && open ? (
@@ -237,12 +237,12 @@ function ResponseCardBody({ response, compact, privacy = false, className }: Res
   );
 }
 
-export function ResponseCard({ responseId, compact = false, privacy = false, className }: ResponseCardProps) {
+export function ResponseCard({ responseId, compact = false, className }: ResponseCardProps) {
   const response = useResponse(responseId);
   if (!response) return null;
-  return <ResponseCardBody response={response} compact={compact} privacy={privacy} className={className} />;
+  return <ResponseCardBody response={response} compact={compact} className={className} />;
 }
 
-export function ResponseCardFor({ response, compact = false, privacy = false, className }: ResponseCardForProps) {
-  return <ResponseCardBody response={response} compact={compact} privacy={privacy} className={className} />;
+export function ResponseCardFor({ response, compact = false, className }: ResponseCardForProps) {
+  return <ResponseCardBody response={response} compact={compact} className={className} />;
 }

@@ -14,6 +14,7 @@ type CameraTileProps = {
   isOnline: boolean;
   isEnabled: boolean;
   recordMode?: CameraRecordMode;
+  masked?: boolean;
   onPress?: () => void;
 };
 
@@ -24,6 +25,7 @@ export function CameraTile({
   isOnline,
   isEnabled,
   recordMode,
+  masked = false,
   onPress,
 }: CameraTileProps) {
   const { t } = useTranslation();
@@ -60,9 +62,17 @@ export function CameraTile({
           {model || ip}
         </Text>
       </View>
-      {recordMode ? (
-        <StatusBadge label={recordLabel} />
-      ) : null}
+      <View className="flex-row flex-wrap gap-2">
+        {recordMode ? <StatusBadge label={recordLabel} /> : null}
+        {masked ? (
+          <StatusBadge
+            label={t('screens.cameras.privacy-badge')}
+            icon="eye-off"
+            iconClassName="text-warning-strong"
+            textClassName="text-warning-strong"
+          />
+        ) : null}
+      </View>
     </Pressable>
   );
 }

@@ -1,22 +1,24 @@
 import { View } from 'react-native';
-import { CameraLiveView, CameraSnapshotView } from '@/features/cameras';
+import { CameraLiveView, CameraSnapshotView, useCameraPrivacy } from '@/features/cameras';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import type { VoiceCameraView } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 
 type CallCameraCardProps = {
   cameraId: string;
   name: string;
   view: VoiceCameraView;
-  privacy?: boolean;
   onClose: () => void;
   onOpen: () => void;
 };
 
-export function CallCameraCard({ cameraId, name, view, privacy = false, onClose, onOpen }: CallCameraCardProps) {
+export function CallCameraCard({ cameraId, name, view, onClose, onOpen }: CallCameraCardProps) {
   const { t } = useTranslation();
+  const privacy = useCameraPrivacy(cameraId);
+  const masked = cameraPrivacyMasked(privacy);
   return (
     <View className="bg-card w-full gap-3 rounded-3xl p-3 shadow-sm shadow-black/10">
       <View className="flex-row items-center gap-2 px-1">
@@ -28,9 +30,9 @@ export function CallCameraCard({ cameraId, name, view, privacy = false, onClose,
         <IconButton icon="x" label={t('screens.voice.camera.close')} onPress={onClose} />
       </View>
       {view === 'snapshot' ? (
-        <CameraSnapshotView cameraId={cameraId} privacy={privacy} />
+        <CameraSnapshotView cameraId={cameraId} privacy={masked} />
       ) : (
-        <CameraLiveView cameraId={cameraId} quality="sub" privacy={privacy} />
+        <CameraLiveView cameraId={cameraId} quality="sub" privacy={masked} />
       )}
     </View>
   );

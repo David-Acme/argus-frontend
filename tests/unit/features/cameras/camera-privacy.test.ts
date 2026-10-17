@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { ICameraCacheRow, ICameraOverviewRow } from '@/core/interfaces';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
-import type { TranslateFn } from '@/core/types';
+import type { CameraPrivacyState, TranslateFn } from '@/core/types';
+import { cameraMasked, privacyOf } from '@/features/cameras/model/camera-overview';
 import { privacyStateOf } from '@/shared/libs/camera-privacy';
 import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 
@@ -81,5 +83,66 @@ describe('the placeholder the masked surfaces show', () => {
     expect(en('screens.cameras.privacy-placeholder')).toBe('In privacy mode');
     expect(es('screens.cameras.privacy-placeholder-hint')).toBe('Argus no ve, no escucha ni graba esta cámara.');
     expect(en('screens.cameras.privacy-placeholder-hint')).toBe('Argus does not see, hear or record this camera.');
+    expect(es('screens.cameras.privacy-badge')).toBe('Privacidad');
+    expect(en('screens.cameras.privacy-badge')).toBe('Privacy');
+    expect(es('screens.cameras.clips.privacy')).toBe('Esta cámara está en modo privacidad');
+    expect(es('screens.cameras.clips.privacy-hint')).toBe(
+      'Argus no graba mientras la lente esté cubierta; los clips vuelven al desactivarla.'
+    );
+    expect(en('screens.cameras.clips.privacy-hint')).toBe(
+      'Argus does not record while the lens is covered; clips return when it is turned off.'
+    );
+  });
+});
+
+const row = (privacyState: CameraPrivacyState): ICameraCacheRow => ({
+  id: '2',
+  driver: 'tapo',
+  icon: 'video',
+  name: 'Gate',
+  ip: '192.168.1.60',
+  port: 554,
+  username: '',
+  cloudUsername: '',
+  manufacturer: 'Tapo',
+  model: 'C225',
+  modelLabel: 'Tapo C225',
+  recordMode: 'events',
+  privacyState,
+  retentionDays: null,
+  retentionIncident: false,
+  isOnline: true,
+  isEnabled: true,
+  streamPath: '',
+  subStreamPath: '',
+  catalogId: '',
+  capabilities: [],
+  zones: [],
+});
+
+const liveRow = (privacyState: CameraPrivacyState): ICameraOverviewRow => ({
+  id: 2,
+  lastSeenAt: 1,
+  sampledAt: 1,
+  health: 'ok',
+  width: 1280,
+  height: 720,
+  viewers: 0,
+  stream: null,
+  mainActive: false,
+  privacyState,
+  lastEvent: null,
+});
+
+describe('the state the surfaces read', () => {
+  test('the synced row is the state, and the overview can only add a mask', () => {
+    expect(privacyOf({ camera: row('on'), live: null })).toBe('on');
+    expect(privacyOf({ camera: row('off'), live: null })).toBe('off');
+    expect(privacyOf({ camera: row('unknown'), live: null })).toBe('unknown');
+    expect(privacyOf({ camera: row('off'), live: liveRow('on') })).toBe('on');
+    expect(privacyOf({ camera: row('on'), live: liveRow('off') })).toBe('on');
+    expect(privacyOf({ camera: row('unknown'), live: liveRow('off') })).toBe('off');
+    expect(cameraMasked({ camera: row('on'), live: liveRow('unknown') })).toBe(true);
+    expect(cameraMasked({ camera: row('unknown'), live: liveRow('unknown') })).toBe(false);
   });
 });

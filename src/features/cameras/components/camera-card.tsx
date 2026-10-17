@@ -2,9 +2,11 @@ import { memo, useCallback, useState, type ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import type { CameraDriverKind, CameraFormFactor, CameraStreamState, TranslationKey } from '@/core/types';
 import { CameraLiveView } from './camera-live-view';
+import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
 import { CAMERA_PREVIEW_TRANSPORT, previewPaints } from '@/features/cameras/model/camera-preview';
 import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
 import {
+  cameraMasked,
   formatRelative,
   healthOf,
   objectLabelKey,
@@ -96,7 +98,8 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
   const { camera, status } = view;
   const health = healthOf(view.live);
   const viewers = view.live?.viewers ?? 0;
-  const streaming = live && status === 'online';
+  const masked = cameraMasked(view);
+  const streaming = !masked && live && status === 'online';
   const [painted, setPainted] = useState(false);
   const onState = useCallback((state: CameraStreamState) => setPainted(previewPaints(state)), []);
   return (
@@ -106,7 +109,9 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
         compact ? 'rounded-xl' : 'rounded-2xl',
       )}
       style={{ aspectRatio: PREVIEW_ASPECT }}>
-      {thumbnail && status === 'online' ? (
+      {masked ? (
+        <CameraPrivacyPlaceholder fill compact={compact} />
+      ) : thumbnail && status === 'online' ? (
         <Image
           source={{ uri: thumbnail }}
           resizeMode="cover"
@@ -145,7 +150,16 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
             className="absolute left-3 top-3"
             textClassName={STATUS_TEXT[status]}
           />
-          {status === 'online' && healthNeedsAttention(health) ? (
+          {masked ? (
+            <StatusBadge
+              label={t('screens.cameras.privacy-badge')}
+              icon="eye-off"
+              surface="card"
+              iconClassName="text-warning-strong"
+              textClassName="text-warning-strong"
+              className="absolute right-3 top-3"
+            />
+          ) : status === 'online' && healthNeedsAttention(health) ? (
             <StatusBadge
               label={t(HEALTH_LABEL[health])}
               icon="triangle-alert"
@@ -155,7 +169,7 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
               className="absolute right-3 top-3"
             />
           ) : null}
-          {viewers > 0 ? (
+          {viewers > 0 && !masked ? (
             <StatusBadge
               label={String(viewers)}
               icon="eye"
@@ -238,6 +252,9 @@ export const CameraCard = memo(function CameraCard({
     <View className="flex-row flex-wrap gap-2">
       <StatusBadge icon="video" label={recordLabel} />
       <StatusBadge icon="shield" label={zonesLabel} />
+      {cameraMasked(view) ? (
+        <StatusBadge icon="eye-off" label={t('screens.cameras.privacy-badge')} iconClassName="text-warning-strong" textClassName="text-warning-strong" />
+      ) : null}
       {badge}
     </View>
   );

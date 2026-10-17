@@ -42,6 +42,7 @@ import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
 import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
+import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { IconButton } from '@/shared/components/ui/icon-button';
@@ -52,6 +53,7 @@ import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { screenIn } from '@/shared/libs/animations';
+import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 
 type CameraAction = 'edit' | 'toggle' | 'delete';
@@ -277,6 +279,7 @@ export default function CameraDetailScreen() {
 
   if (!camera) return <Redirect href="/cameras" />;
 
+  const masked = cameraPrivacyMasked(camera.privacyState);
   const status = cameraStatusOf(camera);
   const stretch = isWide ? 'grow' : undefined;
   const ptz = canUpdate && features?.ptz ? ptzControls : null;
@@ -294,6 +297,7 @@ export default function CameraDetailScreen() {
       presets={
         canUpdate && features?.presets ? { presets, onGoto: gotoPreset, onSave: () => void savePreset() } : null
       }
+      privacy={masked}
       onShowZonesChange={setShowZones}
       onEnable={() => void setEnabled(camera.id, camera.name, true)}
     />
@@ -358,6 +362,7 @@ export default function CameraDetailScreen() {
       status={clipsState.status}
       playable={clipAccess.view}
       removable={clipAccess.remove}
+      privacy={masked}
       hasMore={clipsState.hasMore}
       loadingMore={clipsState.loadingMore}
       activeClipId={playback.clip?.id ?? null}
@@ -421,6 +426,15 @@ export default function CameraDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="grow pb-8">
         <Animated.View entering={screenIn} className="grow">
           <RecordingPausedBanner state={recording} className="mb-5" />
+          {masked ? (
+            <StatusBadge
+              icon="eye-off"
+              label={t('screens.cameras.privacy-badge')}
+              iconClassName="text-warning-strong"
+              textClassName="text-warning-strong"
+              className="mb-5"
+            />
+          ) : null}
           {isExpanded ? (
             <View className="grow flex-row items-stretch gap-6">
               <View className="min-w-0 flex-1 gap-5">
@@ -478,6 +492,7 @@ export default function CameraDetailScreen() {
           ptz={ptz}
           stage={stage}
           audio={audio}
+          privacy={masked}
         />
       ) : null}
       <CameraForm open={editOpen} onOpenChange={setEditOpen} camera={camera} />

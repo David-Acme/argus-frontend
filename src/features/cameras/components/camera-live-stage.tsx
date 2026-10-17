@@ -26,6 +26,7 @@ type CameraLiveStageProps = {
   stats: ICameraLiveStats | null;
   live: boolean;
   fullscreen: boolean;
+  privacy?: boolean;
   flush?: boolean;
   ptz: CameraPtzControls | null;
   showPad: boolean;
@@ -43,6 +44,7 @@ export function CameraLiveStage({
   stats,
   live,
   fullscreen,
+  privacy = false,
   flush = false,
   ptz,
   showPad,
@@ -112,6 +114,7 @@ export function CameraLiveStage({
         cameraId={cameraId}
         quality={quality}
         overlay={overlay}
+        privacy={privacy}
         fill
         compactStatus={false}
         className={fullscreen || flush ? 'rounded-none' : undefined}
@@ -220,7 +223,7 @@ export function CameraLiveStage({
             className="bg-card/90 absolute right-16 bottom-3"
           />
         ) : null}
-        {controls ? (
+        {controls && !privacy ? (
           <IconButton
             icon={fullscreen ? 'minimize' : 'maximize'}
             label={

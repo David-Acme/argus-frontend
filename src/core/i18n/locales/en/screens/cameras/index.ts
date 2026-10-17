@@ -117,6 +117,8 @@ export const cameras = {
     'empty-hint': 'Argus records around what it notices and around motion, once this camera records.',
     'unavailable': 'This camera does not record',
     'unavailable-hint': 'Turn recording on in the camera settings to keep clips here.',
+    'privacy': 'This camera is in privacy mode',
+    'privacy-hint': 'Argus does not record while the lens is covered; clips return when it is turned off.',
     loading: 'Loading clips',
     play: 'Play clip',
     close: 'Close',
@@ -197,6 +199,7 @@ export const cameras = {
   'privacy-hint': 'Covers the lens: Argus stops seeing and recording while it is on.',
   'privacy-placeholder': 'In privacy mode',
   'privacy-placeholder-hint': 'Argus does not see, hear or record this camera.',
+  'privacy-badge': 'Privacy',
   'motion-hint': 'The camera itself reports when something moves.',
   'auto-track-hint': 'The camera turns on its own to follow a person.',
   'ptz-on-video':

@@ -38,6 +38,7 @@ type CameraLivePanelProps = {
   canEnable: boolean;
   ptz: CameraPtzControls | null;
   presets: CameraPresetControls | null;
+  privacy?: boolean;
   onShowZonesChange: (show: boolean) => void;
   onEnable: () => void;
   className?: string;
@@ -51,6 +52,7 @@ type CameraLiveFullscreenProps = {
   ptz: CameraPtzControls | null;
   stage: CameraLiveStageState;
   audio: CameraLiveAudio;
+  privacy?: boolean;
 };
 
 type StageViewProps = CameraLiveFullscreenProps & {
@@ -103,7 +105,7 @@ function QualitySwitch({ quality }: QualitySwitchProps) {
   );
 }
 
-function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, inFullscreen, flush = false }: StageViewProps) {
+function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, privacy = false, inFullscreen, flush = false }: StageViewProps) {
   return (
     <CameraLiveStage
       cameraId={cameraId}
@@ -112,6 +114,7 @@ function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, inF
       stats={stage.stats}
       live={stage.live}
       fullscreen={inFullscreen}
+      privacy={privacy}
       flush={flush}
       ptz={ptz}
       showPad={stage.showPad}
@@ -144,6 +147,7 @@ export function CameraLivePanel({
   canEnable,
   ptz,
   presets,
+  privacy = false,
   onShowZonesChange,
   onEnable,
   className,
@@ -177,6 +181,7 @@ export function CameraLivePanel({
             ptz={ptz}
             stage={stage}
             audio={audio}
+            privacy={privacy}
             inFullscreen={false}
             flush={isCompact}
           />
