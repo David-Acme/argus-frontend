@@ -239,7 +239,7 @@ export const cameras = {
   advanced: 'Advanced options',
   'record-hint': 'Events records only when something happens; continuous always records.',
   'record-continuous-cost': '≈678 MB per hour per camera at the default quality (≈16.3 GB per day).',
-  'record-cost-note': 'Event and motion modes use much less space.',
+  'record-cost-note': 'Events or motion uses much less: it only records when something happens.',
   'recording-paused': 'Recording paused: little disk space',
   'recording-paused-detail':
     'The disk has {free} GB left and Argus needs at least {min} GB free to record. Free up space or delete old clips: recording resumes on its own.',
