@@ -29,9 +29,11 @@ import type {
   IApiError,
   ICameraCapabilities,
   ICameraCatalog,
+  ICameraDeviceStatus,
   ICameraOverview,
   ICameraProbeResult,
   ICameraRecordingState,
+  ICameraSettings,
   ICameraWebRtcAnswer,
   ICreateDeviceLoginResponse,
   IDeviceLoginStatusResponse,
@@ -219,6 +221,40 @@ export const cameraRecordingStateSchema = z.object({
   minFreeGb: z.number(),
   freeBytes: z.number(),
 }) satisfies z.ZodType<ICameraRecordingState>;
+
+export const cameraDeviceStatusSchema = z.object({
+  ok: z.boolean().optional(),
+  model: z.string().optional(),
+  firmware: z.string().optional(),
+  mac: z.string().optional(),
+  privacyEnabled: z.boolean().nullable().optional(),
+  ledEnabled: z.boolean().nullable().optional(),
+  motionEnabled: z.boolean().nullable().optional(),
+  autoTrackEnabled: z.boolean().nullable().optional(),
+  dayNightMode: z.string().nullable().optional(),
+  motionSensitivity: z.number().optional(),
+  sdCard: z.object({ status: z.string(), total: z.string(), free: z.string() }).optional(),
+  video: z
+    .object({
+      resolution: z.string(),
+      frameRate: z.number(),
+      encoding: z.string(),
+      frameRates: z.array(z.number()),
+      resolutions: z.array(z.string()),
+    })
+    .optional(),
+}) satisfies z.ZodType<ICameraDeviceStatus>;
+
+export const cameraSettingsSchema = z.object({
+  privacy: z.boolean().optional(),
+  led: z.boolean().optional(),
+  dayNight: z.enum(['auto', 'day', 'night']).optional(),
+  motion: z.boolean().optional(),
+  motionSensitivity: z.number().int().min(1).max(100).optional(),
+  autoTrack: z.boolean().optional(),
+  alarm: z.boolean().optional(),
+  alarmVolume: z.number().int().min(1).max(100).optional(),
+}) satisfies z.ZodType<ICameraSettings>;
 
 export const cameraWebRtcAnswerSchema = z.object({
   type: z.literal('answer'),
