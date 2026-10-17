@@ -47,3 +47,4 @@ export * from './resource.type';
 export * from './notification.type';
 export * from './recurrence.type';
 export * from './push.type';
+export * from './siren.type';

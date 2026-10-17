@@ -113,6 +113,7 @@ export const common = {
     'too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
     'unavailable': 'Argus is not available right now. Try again in a moment.',
     'camera-unreachable': 'The camera is not answering. Check that it is on and on the network.',
+    'app-siren-disabled': 'The siren from the app is off. The owner can enable it in Settings › Surveillance.',
     'camera-secret': 'The server could not protect the camera password, so nothing was saved. Try again in a moment.',
     'remote-not-allowed': 'This can only be done from your home network.',
     'bad-request': 'Argus could not process that request.',

@@ -28,14 +28,14 @@ describe('guardAccessOf', () => {
 });
 
 describe('cameraActionsOf', () => {
-  test('guests watch without talking and guards talk', () => {
-    expect(cameraActionsOf(viewFor('guest'))).toEqual({ watch: true, talk: false });
-    expect(cameraActionsOf(viewFor('guard'))).toEqual({ watch: true, talk: true });
-    expect(cameraActionsOf(viewFor('owner'))).toEqual({ watch: true, talk: true });
+  test('guests watch without talking and guards talk and sound the siren', () => {
+    expect(cameraActionsOf(viewFor('guest'))).toEqual({ watch: true, talk: false, siren: false });
+    expect(cameraActionsOf(viewFor('guard'))).toEqual({ watch: true, talk: true, siren: true });
+    expect(cameraActionsOf(viewFor('owner'))).toEqual({ watch: true, talk: true, siren: true });
   });
 
   test('no camera action without the module', () => {
-    expect(cameraActionsOf(viewFor('owner', { modules: [] }))).toEqual({ watch: false, talk: false });
+    expect(cameraActionsOf(viewFor('owner', { modules: [] }))).toEqual({ watch: false, talk: false, siren: false });
   });
 });
 

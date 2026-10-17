@@ -8,11 +8,13 @@ import type {
   ICameraPreset,
   ICameraPtz,
   ICameraSettings,
+  ICameraSiren,
   ICameraSnapshot,
   ICameraTalk,
   ICameraWebRtcOffer,
   IServiceResponse,
 } from '@/core/interfaces';
+import type { CameraSirenResult } from '@/core/types';
 import { httpService } from '@/core/services/http';
 
 class CameraControlService {
@@ -38,6 +40,10 @@ class CameraControlService {
 
   talk(id: string, body: ICameraTalk): Promise<IServiceResponse<unknown>> {
     return httpService.post(`/camera/${id}/talk`, body);
+  }
+
+  siren(body: ICameraSiren): Promise<IServiceResponse<CameraSirenResult>> {
+    return httpService.post('/guard/siren', body);
   }
 
   settings(id: string, body: ICameraSettings): Promise<IServiceResponse<ICameraDeviceStatus>> {

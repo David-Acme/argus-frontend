@@ -604,6 +604,10 @@ export const settings = {
       alarm_seconds: { label: 'Alarm length (s)', hint: 'How long the warning alarm sounds.' },
       arm_siren: { label: 'Siren when armed', hint: 'Allows the siren when the house is armed.' },
       siren_seconds: { label: 'Siren length (s)', hint: 'How long the siren sounds.' },
+      app_siren_enabled: {
+        label: 'Siren from the app',
+        hint: 'Lets the household sound a camera siren from the app. It is loud across the house: enable it only if you know when to use it.',
+      },
       greet_enabled: { label: 'Greet whoever arrives', hint: 'Argus talks with visitors.' },
       greet_known: { label: 'Greet known people', hint: 'Also greets people of the house.' },
       expected_guests: {

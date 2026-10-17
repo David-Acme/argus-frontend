@@ -26,6 +26,7 @@ export const CAPABILITY = {
   activityRead: 'activity.read',
   cameraView: 'camera.view',
   cameraTalk: 'camera.talk',
+  cameraSiren: 'camera.siren',
   cameraManage: 'camera.manage',
   zonesRead: 'zones.read',
   eventsRead: 'events.read',
@@ -50,6 +51,7 @@ export type Capability = (typeof CAPABILITY)[keyof typeof CAPABILITY];
 export const CAPABILITY_MODULE: Readonly<Partial<Record<Capability, string>>> = {
   [CAPABILITY.cameraView]: 'surveillance',
   [CAPABILITY.cameraTalk]: 'surveillance',
+  [CAPABILITY.cameraSiren]: 'surveillance',
   [CAPABILITY.cameraManage]: 'surveillance',
   [CAPABILITY.zonesRead]: 'surveillance',
   [CAPABILITY.zonesWrite]: 'surveillance',

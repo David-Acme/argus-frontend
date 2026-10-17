@@ -4474,3 +4474,47 @@ the config, the JS seam and its tests; the Mac build verifies the rest.
   that is early enough for a cold launch (or whether an Expo AppDelegate subscriber is needed) is
   a Mac-build question; (6) the provider-side payload key (`prefix`/`enc`/`ct`) against the cloud
   sender.
+
+## The app siren (2026-10-16, F5)
+
+The owner's decision (2026-10-16) follows Arlo and Doro: tapping **Sirena** asks
+once, confirming runs a five-second countdown with **Cancelar**, and Detener is
+one tap while it sounds. The server side is argus-guard (`POST /guard/siren`;
+`services/guard/CONTEXT.md`, "The app siren"); the app owns the countdown.
+
+`features/cameras/model/siren.ts` is the pure flow — a reducer
+(`sirenReducer(state, action)`: `ask`, `confirm`, `cancel`, `tick`,
+`activated`, `stop`, `close`) over `{phase, secondsLeft, startedAt, until}`
+from `core/types/siren.type.ts`, with `SIREN_COUNTDOWN_SECONDS = 5`,
+`sirenSecondsLeft`, `sirenSounding` and `sirenRemaining` beside it. Closing the
+sheet never silences the siren (`close` keeps `sounding`); `cancel` leaves the
+confirmation or the countdown without ever reaching the network; and a tick
+that changes no second returns the same state object, so the hook does not
+re-render five times a second. `tests/unit/features/cameras/siren.test.ts`
+drives the countdown, the cancel and the lease.
+
+`features/cameras/hooks/use-camera-siren.ts` is the seam: it dispatches the
+ticks every 200 ms, and when the countdown reaches zero it calls
+`cameraControlService.siren({cameraId, enabled: true})` **once** (a ref guards
+the activation) and adopts the `until` the server answers, so the app knows
+when the camera's own lease turns the siren off. A refused call toasts and
+returns to idle. Detener dispatches `stop` at once and sends `enabled: false`
+without waiting for the answer — one tap.
+
+`CameraSirenPanel` (camera detail, under the live view) shows the button, and
+while it sounds shows the remaining seconds and the Detener button, so Detener
+survives closing the sheet; `CameraSirenSheet` is the confirmation, the
+countdown ("5" down to "1") and the sounding state. The button appears with
+`has(CAPABILITY.cameraSiren)` (the camera action table's `CameraAction::Siren`,
+Resident and Guard, mirrored by `cameraActionsOf(view).siren`) and the camera's
+own `alarm` capability, which argus-camera maps from the catalog's `Siren`
+feature. Nothing else gates it: the owner's `guard.app_siren_enabled` is read
+by the server, so a press with the setting off answers 403
+`APP_SIREN_DISABLED` and the toast says the owner can enable it
+(`common.errors.app-siren-disabled`). The consent text the owner reads before
+turning it on is `screens.settings.guard.keys.app_siren_enabled.hint` in both
+locales.
+
+The camera persists no `sounding` flag yet (backend R8), so the app's
+sounding state is the lease it was answered, per device: a phone that did not
+sound it does not know it is sounding.

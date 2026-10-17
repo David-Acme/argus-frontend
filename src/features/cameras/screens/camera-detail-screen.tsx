@@ -15,6 +15,7 @@ import { useCameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-aud
 import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-stage';
 import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
+import { useCameraSiren } from '@/features/cameras/hooks/use-camera-siren';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
@@ -28,6 +29,8 @@ import { useClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
 import { CameraInfoPanel } from '@/features/cameras/components/camera-info-panel';
 import { CameraLiveFullscreen, CameraLivePanel } from '@/features/cameras/components/camera-live-panel';
+import { CameraSirenPanel } from '@/features/cameras/components/camera-siren-panel';
+import { CameraSirenSheet } from '@/features/cameras/components/camera-siren-sheet';
 import { CameraTalkSheet } from '@/features/cameras/components/camera-talk-sheet';
 import { CameraZonesPanel } from '@/features/cameras/components/camera-zones-panel';
 import { ZoneForm } from '@/features/cameras/components/zone-form';
@@ -60,6 +63,7 @@ export default function CameraDetailScreen() {
   const [zoneOpen, setZoneOpen] = useState(false);
   const [zoneId, setZoneId] = useState('');
   const [talkOpen, setTalkOpen] = useState(false);
+  const [sirenOpen, setSirenOpen] = useState(false);
   const [showZones, setShowZones] = useState(true);
   const quality = useCameraQuality(id);
   const { run: move } = useServiceAction();
@@ -119,12 +123,15 @@ export default function CameraDetailScreen() {
   const canDelete = can('camera', 'delete');
   const streamOnly = features?.streamOnly === true;
   const controllable = canUpdate && hasDeviceControls(features);
+  const maySiren = has(CAPABILITY.cameraSiren);
   const mayTalk = has(CAPABILITY.cameraTalk);
   const canTalk = mayTalk && features?.talk === true;
+  const canSiren = maySiren && features?.alarm === true;
   const talkHint =
     mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true
       ? t('screens.cameras.call.needs-cloud')
       : null;
+  const siren = useCameraSiren(id);
   const micSupported = voiceCallSupported();
   const startCall = call.start;
 
@@ -350,6 +357,19 @@ export default function CameraDetailScreen() {
     />
   );
 
+  const sirenPanel =
+    camera.isEnabled && (canSiren || siren.sounding) ? (
+      <CameraSirenPanel
+        controls={siren}
+        canSiren={canSiren}
+        onActivate={() => {
+          siren.ask();
+          setSirenOpen(true);
+        }}
+        className={stretch}
+      />
+    ) : null;
+
   const environment = <CameraEnvironmentPanel cameraId={camera.id} className={controllable ? undefined : stretch} />;
   const zonesPanel = (
     <CameraZonesPanel
@@ -399,6 +419,7 @@ export default function CameraDetailScreen() {
               </View>
               <View className="w-[360px] shrink-0 gap-5">
                 {callPanel}
+                {sirenPanel}
                 {info}
                 {environment}
                 {control}
@@ -411,6 +432,7 @@ export default function CameraDetailScreen() {
               <View className="grow flex-row items-stretch gap-5">
                 <View className="min-w-0 flex-1 gap-5">
                   {callPanel}
+                  {sirenPanel}
                   {info}
                   {environment}
                   {control}
@@ -423,6 +445,7 @@ export default function CameraDetailScreen() {
               {live}
               {player}
               {callPanel}
+              {sirenPanel}
               {info}
               {environment}
               {control}
@@ -445,6 +468,12 @@ export default function CameraDetailScreen() {
       ) : null}
       <CameraForm open={editOpen} onOpenChange={setEditOpen} camera={camera} />
       <CameraTalkSheet open={talkOpen} onOpenChange={setTalkOpen} cameraId={camera.id} />
+      <CameraSirenSheet
+        open={sirenOpen}
+        onOpenChange={setSirenOpen}
+        cameraName={camera.name}
+        controls={siren}
+      />
       <ZoneForm open={zoneOpen} onOpenChange={setZoneOpen} cameraId={camera.id} zone={zone} zones={zones} />
     </AppScreen>
   );

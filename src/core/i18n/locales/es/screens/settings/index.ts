@@ -661,6 +661,10 @@ export const settings = {
         hint: 'Permite la sirena cuando la casa está armada.',
       },
       siren_seconds: { label: 'Duración de la sirena (s)', hint: 'Cuánto suena la sirena.' },
+      app_siren_enabled: {
+        label: 'Sirena desde la app',
+        hint: 'Permite que el hogar haga sonar la sirena de una cámara desde la app. Suena a todo volumen en la casa: actívala solo si sabes cuándo usarla.',
+      },
       greet_enabled: { label: 'Saludar a quien llega', hint: 'Argus habla con las visitas.' },
       greet_known: {
         label: 'Saludar a conocidos',

@@ -183,6 +183,7 @@ export function guardAccessOf(view: AccessView): GuardAccess {
 export type CameraActionAccess = {
   watch: boolean;
   talk: boolean;
+  siren: boolean;
 };
 
 export function clipAccessOf(view: AccessView): ClipAccess {
@@ -191,5 +192,9 @@ export function clipAccessOf(view: AccessView): ClipAccess {
 
 export function cameraActionsOf(view: AccessView): CameraActionAccess {
   const watch = view.roleActive && hasCapability(view, CAPABILITY.cameraView);
-  return { watch, talk: watch && hasCapability(view, CAPABILITY.cameraTalk) };
+  return {
+    watch,
+    talk: watch && hasCapability(view, CAPABILITY.cameraTalk),
+    siren: watch && hasCapability(view, CAPABILITY.cameraSiren),
+  };
 }

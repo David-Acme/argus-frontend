@@ -67,6 +67,7 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
   owner: [
     C.cameraView,
     C.cameraTalk,
+    C.cameraSiren,
     C.cameraManage,
     C.zonesRead,
     C.eventsRead,
@@ -84,6 +85,7 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
   resident: [
     C.cameraView,
     C.cameraTalk,
+    C.cameraSiren,
     C.cameraManage,
     C.zonesRead,
     C.eventsRead,
@@ -93,7 +95,16 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
     C.guardGuestsWrite,
     C.safetyDuress,
   ],
-  guard: [C.cameraView, C.cameraTalk, C.zonesRead, C.eventsRead, C.guardRead, C.responseDuty, C.visitorsRead],
+  guard: [
+    C.cameraView,
+    C.cameraTalk,
+    C.cameraSiren,
+    C.zonesRead,
+    C.eventsRead,
+    C.guardRead,
+    C.responseDuty,
+    C.visitorsRead,
+  ],
   guest: [C.cameraView],
 };
 

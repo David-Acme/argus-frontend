@@ -66,6 +66,11 @@ export interface ICameraTalk {
   lang?: 'es' | 'en';
 }
 
+export interface ICameraSiren {
+  cameraId: number;
+  enabled: boolean;
+}
+
 export interface ICameraCapabilities {
   ptz?: boolean;
   presets?: boolean;
