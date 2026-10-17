@@ -1446,6 +1446,34 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
   the two frames arrives first removes the row, and the other then finds nothing.
   Patches of the same row before the removal are dropped, and later ones are ignored.
 
+### Reading a whole notification thread (D14 follow-up, 2026-10-16)
+
+- The tap in Novedades used to read a thread through `PATCH /notification/read`
+  with the ids the page had loaded, so the entries of that thread past the loaded
+  page stayed unread on the server. The backend now marks a whole thread
+  (`PATCH /notification/thread/{threadKey}/read`, D14), and the app sends that one
+  call per thread: the URL-encoded key in the path and the empty JSON body the
+  route's `ValidJsonFilter` asks for (`notificationReadCalls`,
+  `notificationService.markRead`). The server marks every unread row of the caller
+  in that thread, loaded or not.
+- A row without a key is its own thread and has no key the server knows, so the
+  by-id route stays for it, batched like before. `notificationReadCalls` is the one
+  place that decides which route a read takes, the way `threadRemovalPaths` does for
+  a delete.
+- The optimistic side is unchanged in shape: `notificationReadIntents` gives one
+  `notification` update intent per unread row the page shows, and a confirmed intent
+  leaves only on evidence (its patch is a no-op on the synced row). A refusal rolls
+  the intents back and the toast offers Retry with the same idempotency key; a PATCH
+  the server never received is named by the write-refusal copy (see "A write the
+  server never received is named, never queued").
+- The bell keeps reading every unread row of the user by id, not per thread: it is a
+  read-all that spans threads the device has not loaded (`unreadIdsForUser` plus the
+  window's unread ids).
+- The answer is 200 `{"updated": true}` for every key. An unknown key and a thread
+  already read change nothing and are not an error, and a key past the route's 128
+  characters is a validation refusal like `PATCH /notification/read`'s, so a stale
+  tap is a no-op, never a failure.
+
 ### Recurring reminders and repeating events (F6, 2026-10-13)
 
 - **The household zone** is the context's `timeZone` (the IANA name the backend host

@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/core/stores';
 import { notificationService } from '@/core/services/notification.service';
+import { notificationThreadKey } from '@/core/services/notification';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import type { IAuthUser } from '@/core/interfaces';
 import { ActivityCard } from '@/features/home/components/activity/activity-card';
@@ -9,7 +10,7 @@ import { NotificationPopover } from '@/features/home/components/notification-pop
 import { ProjectGrid } from '@/features/home/components/project-grid';
 import { TodayAgenda } from '@/features/home/components/today-agenda';
 import { SectionHeader } from '@/shared/components/ui/section-header';
-import type { CalendarEntry } from '@/core/types';
+import type { CalendarEntry, NotificationThreadTarget } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import {
@@ -26,6 +27,7 @@ import {
   unreadThreadCount,
   type NotificationThread,
 } from '@/features/home/model/notification-threads';
+import { notificationReadIntents } from '@/features/home/model/notification-optimistic';
 import { cameraActivity } from '@/features/home/model/camera-activity';
 import { cameraActivityAction } from '@/features/home/model/camera-activity-action';
 import { searchPlaceholder } from '@/features/home/model/home-search';
@@ -120,21 +122,28 @@ function HomeContent() {
   const noCameras = summary.camerasTotal === 0;
   const cameraAction = cameraActivityAction(noCameras);
 
-  const markNotificationsRead = useCallback((ids: readonly string[]) => {
-    void runOptimistic({
-      intents: ids.map((id) => ({ table: 'notification', kind: 'update', recordId: id, values: { isRead: true } })),
-      call: () => notificationService.markRead(ids),
-    });
-  }, []);
+  const markNotificationsRead = useCallback(
+    (target: Pick<NotificationThreadTarget, 'threadKey' | 'ids'>) => {
+      void runOptimistic({
+        intents: notificationReadIntents(target.ids),
+        call: () => notificationService.markRead(target),
+      });
+    },
+    []
+  );
 
   const readAll = useCallback(async () => {
     const synced = user ? await notificationService.unreadIdsForUser(String(user.id)) : [];
     const ids = [...new Set([...synced, ...unreadIdsOf(threads)])];
-    if (ids.length > 0) markNotificationsRead(ids);
+    if (ids.length > 0) markNotificationsRead({ threadKey: null, ids });
   }, [markNotificationsRead, threads, user]);
 
   const readThread = useCallback(
-    (thread: NotificationThread) => markNotificationsRead(thread.unreadIds),
+    (thread: NotificationThread) =>
+      markNotificationsRead({
+        threadKey: notificationThreadKey(thread.latest.data),
+        ids: thread.unreadIds,
+      }),
     [markNotificationsRead]
   );
 

@@ -18,6 +18,15 @@ export function threadDeleteIntents(
   return thread.entries.map((entry) => ({ table: 'notification', kind: 'delete', recordId: entry.id }));
 }
 
+export function notificationReadIntents(ids: readonly string[]): OptimisticIntentInput[] {
+  return ids.map((recordId) => ({
+    table: 'notification',
+    kind: 'update',
+    recordId,
+    values: { isRead: true },
+  }));
+}
+
 export const threadTargetOf = (
   thread: Pick<NotificationThread, 'latest' | 'entries'>,
   userId: string

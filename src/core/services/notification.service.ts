@@ -6,7 +6,7 @@ import type { IServiceResponse } from '@/core/interfaces';
 import type { KeysetPage, KeysetWindow, NotificationThreadTarget } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
-import { belongsToThread, readBatches, threadRemovalPaths, threadRemovalResult } from './notification';
+import { belongsToThread, notificationReadCalls, threadRemovalPaths, threadRemovalResult } from './notification';
 import { DatabaseService, type KeysetQuery } from './database.service';
 
 const FEED_COLUMNS = ['type', 'title', 'body', 'data', 'is_read', 'read_at'];
@@ -38,10 +38,12 @@ class NotificationService extends DatabaseService<'notification'> {
     return rows.map((row) => row.id);
   }
 
-  async markRead(ids: readonly string[]): Promise<IServiceResponse<unknown>> {
+  async markRead(
+    target: Pick<NotificationThreadTarget, 'threadKey' | 'ids'>
+  ): Promise<IServiceResponse<unknown>> {
     let last: IServiceResponse<unknown> = { ok: true, status: 200, info: null, errors: null };
-    for (const batch of readBatches(ids)) {
-      last = await httpService.patch('/notification/read', { ids: batch });
+    for (const call of notificationReadCalls(target)) {
+      last = await httpService.patch(call.path, call.body);
       if (!last.ok) return last;
     }
     return last;

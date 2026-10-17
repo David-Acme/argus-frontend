@@ -3,6 +3,7 @@ import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { applyIntents, OptimisticRegistry } from '@/shared/libs/optimistic';
 import {
   NOTIFICATION_LENSES,
+  notificationReadIntents,
   threadDeleteIntents,
   threadTargetOf,
 } from '@/features/home/model/notification-optimistic';
@@ -73,6 +74,32 @@ describe('notification delete intents', () => {
     const intents = registry();
     intents.begin({ table: 'reminder', kind: 'delete', recordId: '20' });
     expect(applyIntents(feed, intents.snapshot(), NOTIFICATION_LENSES)).toBe(feed);
+  });
+});
+
+describe('notification read intents', () => {
+  test('a thread read marks every unread entry the page shows, one intent each', () => {
+    const [thread] = groupNotifications(feed);
+    if (!thread) throw new Error('expected the episode thread');
+    expect(notificationReadIntents(thread.unreadIds)).toEqual([
+      { table: 'notification', kind: 'update', recordId: '30', values: { isRead: true } },
+      { table: 'notification', kind: 'update', recordId: '10', values: { isRead: true } },
+    ]);
+  });
+
+  test('the lens turns the whole thread read, and leaves the other thread alone', () => {
+    const intents = registry();
+    const [thread] = groupNotifications(feed);
+    if (!thread) throw new Error('expected the episode thread');
+    for (const intent of notificationReadIntents(thread.unreadIds)) intents.begin(intent);
+
+    const rows = applyIntents(feed, intents.snapshot(), NOTIFICATION_LENSES);
+    expect(rows.map((row) => [row.id, row.isRead])).toEqual([
+      ['30', true],
+      ['20', false],
+      ['10', true],
+    ]);
+    expect(groupNotifications(rows).find((item) => item.key === 'thread:guard:episode:7')?.unreadIds).toEqual([]);
   });
 });
 
