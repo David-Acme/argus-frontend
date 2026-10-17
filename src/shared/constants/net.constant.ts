@@ -69,6 +69,7 @@ export const ARGUS_DEFAULT_ROUTE_PORTS: Readonly<Record<string, number>> = {
   'visitor-crop': 7044,
   camera: 7026,
   zone: 7026,
+  clip: 7026,
   media: 7026,
   modules: 7045,
   project: 7027,

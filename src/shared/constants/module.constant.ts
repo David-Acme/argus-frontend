@@ -11,7 +11,7 @@ export const MODULE_APP_ROUTES: Readonly<Record<string, readonly string[]>> = {
 };
 
 export const MODULE_API_PREFIXES: Readonly<Record<string, readonly string[]>> = {
-  surveillance: ['camera', 'zone', 'media', 'guard', 'visitor', 'visitor-settings', 'visitor-crop'],
+  surveillance: ['camera', 'zone', 'clip', 'media', 'guard', 'visitor', 'visitor-settings', 'visitor-crop'],
   productivity: ['project', 'project-task', 'project-member', 'calendar-event', 'calendar-event-share'],
 };
 
