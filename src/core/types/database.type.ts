@@ -21,6 +21,10 @@ export type PersonStatus = 'candidate' | 'known';
 
 export type CameraRecordMode = 'off' | 'motion' | 'events' | 'continuous';
 
+export const CAMERA_PRIVACY_STATES = ['on', 'off', 'unknown'] as const;
+
+export type CameraPrivacyState = (typeof CAMERA_PRIVACY_STATES)[number];
+
 export type CameraDriverKind = 'tapo' | 'onvif' | 'rtsp';
 
 export type ZoneType = 'monitor' | 'alert' | 'exclude' | 'privacy';

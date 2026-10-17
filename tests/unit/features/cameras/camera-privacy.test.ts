@@ -4,10 +4,8 @@ import { join } from 'node:path';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn } from '@/core/types';
-import {
-  privacyApplyConfirm,
-  privacyStateOf,
-} from '@/features/cameras/model/camera-device';
+import { privacyStateOf } from '@/shared/libs/camera-privacy';
+import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;

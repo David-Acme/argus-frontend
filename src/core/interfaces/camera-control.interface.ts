@@ -3,6 +3,7 @@ import type {
   CameraDriverKind,
   CameraFeatureKey,
   CameraFormFactor,
+  CameraPrivacyState,
   CameraProbeStepId,
   CameraProbeStepStatus,
   DayNightMode,
@@ -183,6 +184,7 @@ export interface ICameraOverviewRow {
   viewers: number;
   stream: ICameraStreamStats | null;
   mainActive: boolean;
+  privacyState: CameraPrivacyState;
   lastEvent: ICameraDetection | null;
 }
 

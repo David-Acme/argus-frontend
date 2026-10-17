@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CAMERA_PRIVACY_STATES } from '@/core/types';
 import {
   authSessionListSchema,
   deviceLoginDetailsSchema,
@@ -53,6 +54,7 @@ import type {
 const userRole = z.enum(['owner', 'resident', 'guard', 'guest']);
 const inviteRole = z.enum(['resident', 'guard', 'guest']);
 const guardMode = z.enum(['home', 'away', 'night', 'armed']);
+const cameraPrivacyState = z.enum(CAMERA_PRIVACY_STATES);
 
 export const apiErrorSchema = z.object({
   code: z.string(),
@@ -187,6 +189,7 @@ export const cameraOverviewSchema = z.object({
         })
         .nullable(),
       mainActive: z.boolean(),
+      privacyState: cameraPrivacyState,
       lastEvent: cameraDetectionSchema.nullable(),
     })
   ),

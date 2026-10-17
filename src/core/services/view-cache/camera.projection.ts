@@ -2,6 +2,7 @@ import type { CameraModel, ZoneModel } from '@/core/database';
 import type { ICameraCacheRow, IZoneCacheRow } from '@/core/interfaces';
 import type { IconName } from '@/core/types';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
+import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
 import type { ViewWrite } from './projection';
 
 export const CAMERA_SOURCE_FIELDS = [
@@ -15,6 +16,7 @@ export const CAMERA_SOURCE_FIELDS = [
   'manufacturer',
   'model',
   'recordMode',
+  'privacyState',
   'retentionDays',
   'isOnline',
   'isEnabled',
@@ -70,6 +72,7 @@ export function projectCameras({ cameras, zones }: CameraProjectionInput): ViewW
     model: camera.model,
     modelLabel: [camera.manufacturer, camera.model].filter(Boolean).join(' '),
     recordMode: camera.recordMode,
+    privacyState: parseCameraPrivacyState(camera.privacyState),
     retentionDays: camera.retentionDays,
     retentionIncident: configFlag(camera.config, 'retentionIncident'),
     isOnline: camera.isOnline,

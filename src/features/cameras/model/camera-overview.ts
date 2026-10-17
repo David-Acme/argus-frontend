@@ -1,5 +1,5 @@
 import type { ICameraCacheRow, ICameraDetection, ICameraOverview, ICameraOverviewRow } from '@/core/interfaces';
-import type { CameraHealthState, TranslateFn, TranslationKey } from '@/core/types';
+import type { CameraHealthState, CameraPrivacyState, TranslateFn, TranslationKey } from '@/core/types';
 
 export type CameraStatus = 'online' | 'offline' | 'disabled';
 
@@ -57,6 +57,16 @@ export function cameraStatusOf(camera: Pick<ICameraCacheRow, 'isEnabled' | 'isOn
 export function healthOf(live: ICameraOverviewRow | null): CameraHealthState {
   const value = live?.health as CameraHealthState | undefined;
   return value && HEALTH_STATES.includes(value) ? value : 'unknown';
+}
+
+export function privacyOf(view: Pick<CameraView, 'camera' | 'live'>): CameraPrivacyState {
+  if (view.camera.privacyState === 'on' || view.live?.privacyState === 'on') return 'on';
+  if (view.camera.privacyState === 'off' || view.live?.privacyState === 'off') return 'off';
+  return 'unknown';
+}
+
+export function cameraMasked(view: Pick<CameraView, 'camera' | 'live'>): boolean {
+  return privacyOf(view) === 'on';
 }
 
 export function objectLabelKey(label: string): TranslationKey {

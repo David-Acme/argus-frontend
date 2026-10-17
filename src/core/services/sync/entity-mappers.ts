@@ -1,5 +1,6 @@
-import type { PersonStatus, SyncTableKey, UserLang } from '@/core/types';
+import type { CameraPrivacyState, PersonStatus, SyncTableKey, UserLang } from '@/core/types';
 import { sanitizeObject, sanitizeStringArray, sanitizeZonePoints } from '@/core/database/tables/sanitizers';
+import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
 
 export type FieldTransform = (value: unknown) => unknown;
 export type EntityFieldMap = Record<string, FieldTransform>;
@@ -33,6 +34,7 @@ const toOptMs = (v: unknown): number | null => {
 };
 const toPersonStatus = (v: unknown): PersonStatus => (v === 'candidate' ? 'candidate' : 'known');
 const toUserLang = (v: unknown): UserLang => (v === 'en' ? 'en' : 'es');
+const toCameraPrivacyState = (v: unknown): CameraPrivacyState => parseCameraPrivacyState(v);
 
 const parseJson = (v: unknown): unknown => {
   if (typeof v !== 'string') return v;
@@ -80,6 +82,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     port: toNum,
     username: toStr,
     recordMode: toStr,
+    privacyState: toCameraPrivacyState,
     retentionDays: toOptNum,
     capabilities: toStringArray,
     config: toObject,

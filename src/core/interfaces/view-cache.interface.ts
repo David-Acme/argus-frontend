@@ -1,6 +1,7 @@
 import type {
   CameraCapabilities,
   CameraDriverKind,
+  CameraPrivacyState,
   CameraRecordMode,
   CalendarEntry,
   DashboardProjectCard,
@@ -37,6 +38,7 @@ export interface ICameraCacheRow {
   model: string;
   modelLabel: string;
   recordMode: CameraRecordMode;
+  privacyState: CameraPrivacyState;
   retentionDays: number | null;
   retentionIncident: boolean;
   isOnline: boolean;

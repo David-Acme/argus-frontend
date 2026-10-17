@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
-import { privacyStateOf } from '@/features/cameras/model/camera-device';
+import { privacyStateOf } from '@/shared/libs/camera-privacy';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Switch } from '@/shared/components/ui/switch';
 import { Text } from '@/shared/components/ui/text';

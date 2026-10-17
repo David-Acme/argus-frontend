@@ -6,6 +6,7 @@ import { stepsForMigration } from '@nozbe/watermelondb/Schema/migrations/stepsFo
 import { migrations } from '@/core/database/migrations';
 import { schema } from '@/core/database/schema';
 import { SCHEMA_VERSION } from '@/shared/constants/database.constant';
+import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
 
 type Step =
   | { type: 'create_table'; schema: { name: string; columnArray: { name: string }[] } }
@@ -181,7 +182,7 @@ describe('the invitation revocation reason', () => {
       'insert into user_invitation (id, _changed, _status, role, max_redemptions, redemption_count, expires_at, created_by, revoked_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('4', '', 'synced', 'guest', 1, 0, 9, '1', null, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 8, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 8, toVersion: 9 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -241,7 +242,7 @@ describe('the retired event table', () => {
     );
     expect(eventTableOf(db)).toEqual(['event']);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 9, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 9, toVersion: 10 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -257,7 +258,7 @@ describe('the retired event table', () => {
     db.query("insert into 'event' ('id', 'event_type') values (?, ?)").run('1', 'person');
     expect(eventColumns(db)).toContain('event_type');
 
-    const steps = stepsForMigration({ migrations, fromVersion: 9, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 9, toVersion: 10 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -313,7 +314,7 @@ describe('the retired camera_stream and reminder_detail tables', () => {
   } as AppSchema);
 
   const migrateFromTen = (db: Database) => {
-    const steps = stepsForMigration({ migrations, fromVersion: 10, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 10, toVersion: 11 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
   };
@@ -356,5 +357,51 @@ describe('the retired camera_stream and reminder_detail tables', () => {
     db.exec(encodeSchema(schema));
     expect(() => migrateFromTen(db)).not.toThrow();
     expect(retiredTablesOf(db)).toEqual([]);
+  });
+});
+
+describe('the camera privacy state column', () => {
+  const cameraColumnsOf = (db: Database): string[] =>
+    (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const withoutPrivacyState = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'camera') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => column !== 'privacy_state')
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 11, tables } as AppSchema;
+  };
+
+  test('a fresh database has the column', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(cameraColumnsOf(db)).toContain('privacy_state');
+  });
+
+  test('a version 11 database gains it through the migration, and its cameras stay', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(withoutPrivacyState()));
+    expect(cameraColumnsOf(db)).not.toContain('privacy_state');
+    db.query(
+      'insert into camera (id, _changed, _status, name, manufacturer, model, ip, port, username, cloud_username, driver, icon, record_mode, retention_days, capabilities, config, is_enabled, is_online, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', 'Gate', 'tapo', 'C200', '10.0.0.5', 554, 'admin', '', 'tapo', 'video', 'events', null, '[]', '{}', 1, 1, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 11, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(cameraColumnsOf(db)).toContain('privacy_state');
+    expect(db.query('select name, privacy_state as privacyState from camera').get()).toEqual({
+      name: 'Gate',
+      privacyState: '',
+    });
+    expect(parseCameraPrivacyState('')).toBe('unknown');
   });
 });

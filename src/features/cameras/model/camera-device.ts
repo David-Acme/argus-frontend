@@ -5,8 +5,6 @@ import type {
 } from '@/core/interfaces';
 import type { ConfirmRequest } from '@/core/types';
 
-export type CameraPrivacyState = 'on' | 'off' | 'unknown';
-
 export function optimisticStatus(status: ICameraDeviceStatus | null, body: ICameraSettings): ICameraDeviceStatus {
   return {
     ...status,
@@ -28,12 +26,6 @@ export type DeviceStatusResolution = {
 export function resolvedStatus({ response, previous, body }: DeviceStatusResolution): ICameraDeviceStatus | null {
   if (!response) return previous;
   return response.info ?? optimisticStatus(previous, body);
-}
-
-export function privacyStateOf(value: boolean | null | undefined): CameraPrivacyState {
-  if (value === true) return 'on';
-  if (value === false) return 'off';
-  return 'unknown';
 }
 
 export type PrivacyConfirmCopy = {

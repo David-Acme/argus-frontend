@@ -4,6 +4,7 @@ import type {
   CameraCapabilities,
   CameraConfig,
   CameraDriverKind,
+  CameraPrivacyState,
   CameraRecordMode,
 } from '@/core/types';
 import { sanitizeObject, sanitizeStringArray } from './sanitizers';
@@ -22,6 +23,7 @@ export const CAMERA_SCHEMA = tableSchema({
     { name: 'driver', type: 'string', isIndexed: true },
     { name: 'icon', type: 'string' },
     { name: 'record_mode', type: 'string' },
+    { name: 'privacy_state', type: 'string' },
     { name: 'retention_days', type: 'number', isOptional: true },
     { name: 'capabilities', type: 'string' },
     { name: 'config', type: 'string' },
@@ -49,6 +51,7 @@ export class CameraModel extends Model {
   @field('driver') driver!: CameraDriverKind;
   @text('icon') icon!: string;
   @field('record_mode') recordMode!: CameraRecordMode;
+  @field('privacy_state') privacyState!: CameraPrivacyState;
   @field('retention_days') retentionDays!: number | null;
   @json('capabilities', sanitizeStringArray, { memo: true }) capabilities!: CameraCapabilities;
   @json('config', sanitizeObject) config!: CameraConfig;

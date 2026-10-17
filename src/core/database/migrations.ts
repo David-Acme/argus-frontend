@@ -110,5 +110,14 @@ export const migrations = schemaMigrations({
         unsafeExecuteSql('drop table if exists "reminder_detail";'),
       ],
     },
+    {
+      toVersion: 12,
+      steps: [
+        addColumns({
+          table: 'camera',
+          columns: [{ name: 'privacy_state', type: 'string' }],
+        }),
+      ],
+    },
   ],
 });

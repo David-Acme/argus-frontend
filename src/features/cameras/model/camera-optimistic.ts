@@ -59,6 +59,7 @@ const cameraLens = defineLens<ICameraCacheRow, CameraIntentValues>({
           model: values.model ?? '',
           modelLabel: modelLabelOf(values.manufacturer ?? '', values.model ?? ''),
           recordMode: values.recordMode ?? 'events',
+          privacyState: 'unknown',
           retentionDays: values.retentionDays ?? null,
           retentionIncident: values.retentionIncident ?? false,
           isOnline: false,

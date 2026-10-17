@@ -10,6 +10,7 @@ export const NOTIFICATION_KIND_MODULES: ReadonlyMap<string, string> = new Map([
   ['guard_arrival', MODULE_IDS.surveillance],
   ['camera_fallback', MODULE_IDS.surveillance],
   ['camera_fallback_digest', MODULE_IDS.surveillance],
+  ['camera_privacy_coverage', MODULE_IDS.surveillance],
   ['agenda_event', MODULE_IDS.productivity],
 ]);
 

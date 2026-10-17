@@ -55,6 +55,7 @@ const camera = (id: string, overrides: Partial<CameraSource> = {}): CameraSource
   manufacturer: 'tapo',
   model: 'C200',
   recordMode: 'events',
+  privacyState: 'unknown',
   retentionDays: null,
   isOnline: true,
   isEnabled: true,
