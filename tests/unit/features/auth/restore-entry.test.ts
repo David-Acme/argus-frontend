@@ -7,7 +7,7 @@ const source = (path: string): string => readFileSync(join(import.meta.dir, '../
 describe('the one-step re-entry after a lost session', () => {
   test('the entry gate asks the pure rule and opens the face screen with the restore flag', () => {
     const entryGate = source('features/auth/components/entry-gate.tsx');
-    expect(entryGate).toContain('restoreEntryOf({ paired: pairing.paired, cause: sessionService.restoreCause() })');
+    expect(entryGate).toContain('restoreEntryOf({ paired: pairing.paired, report: sessionService.restoreReport() })');
     expect(entryGate).toContain("params: { mode: 'login', restore: '1' }");
   });
 

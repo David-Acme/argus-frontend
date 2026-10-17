@@ -22,7 +22,7 @@ async function resolveEntry(): Promise<EntryDestination> {
   const status = await authService.serverStatus();
   if (!status.ok || !status.info) return 'unreachable';
   if (!status.info.hasOwner) return 'owner-enroll';
-  const entry = restoreEntryOf({ paired: pairing.paired, cause: sessionService.restoreCause() });
+  const entry = restoreEntryOf({ paired: pairing.paired, report: sessionService.restoreReport() });
   return entry === 'restore' ? 'restore' : 'login';
 }
 

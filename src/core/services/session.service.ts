@@ -16,7 +16,6 @@ import {
   restoreReport,
   restoreRetryDelayMs,
   RESTORE_READ_ATTEMPTS,
-  type RestoreCause,
   type RestoreFailure,
   type RestoreReport,
   type StoredSessionAttempt,
@@ -90,14 +89,14 @@ class SessionService {
   private persistRetry: ReturnType<typeof setTimeout> | null = null;
   private sessionVersion = 0;
   private initialized = false;
-  private lastRestore: RestoreReport | null = null;
+  private recordedRestore: RestoreReport | null = null;
 
   get isInitialized(): boolean {
     return this.initialized;
   }
 
-  restoreCause(): RestoreCause | null {
-    return this.lastRestore?.cause ?? null;
+  restoreReport(): RestoreReport | null {
+    return this.recordedRestore;
   }
 
   getAccessToken(): string | null {
@@ -128,7 +127,7 @@ class SessionService {
 
   async establish(session: IAuthSession): Promise<void> {
     this.sessionVersion += 1;
-    this.lastRestore = null;
+    this.recordedRestore = null;
     setDeviceCredential(session.deviceSecret);
     useAuthStore.getState().setSession(session);
     viewCacheService.setUserId(session.user.id);
@@ -188,7 +187,7 @@ class SessionService {
 
   private async performClear(): Promise<void> {
     this.sessionVersion += 1;
-    this.lastRestore = null;
+    this.recordedRestore = null;
     this.cancelPersistRetry();
     const userId = useAuthStore.getState().user?.id ?? null;
     viewCacheCoordinatorService.stop();
@@ -214,7 +213,7 @@ class SessionService {
   private async restore(): Promise<SessionBootstrapResult> {
     const attempt = await this.readStoredSession();
     const report = restoreReport(attempt);
-    this.lastRestore = report;
+    this.recordedRestore = report;
     for (const warning of report.warnings) log.warn('session', warning);
     traceEvent('restore', report.outcome, report.reason);
 

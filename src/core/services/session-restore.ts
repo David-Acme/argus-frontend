@@ -37,6 +37,7 @@ export type RestoreReport = {
   outcome: TraceOutcome;
   reason: string;
   lostKeys: string[];
+  remembered: boolean;
   warnings: string[];
 };
 
@@ -62,16 +63,15 @@ const KEY_IN_MESSAGE = /for key '([^']+)'/;
 
 export type RestoreEntryInput = {
   paired: boolean;
-  cause: RestoreCause | null;
+  report: RestoreReport | null;
 };
 
 export type RestoreEntry = 'restore' | 'login';
 
-const LOST_SESSION_CAUSES: readonly RestoreCause[] = ['vanished', 'unreadable', 'incomplete'];
-
-export function restoreEntryOf({ paired, cause }: RestoreEntryInput): RestoreEntry {
-  if (!paired || cause === null) return 'login';
-  return LOST_SESSION_CAUSES.includes(cause) ? 'restore' : 'login';
+export function restoreEntryOf({ paired, report }: RestoreEntryInput): RestoreEntry {
+  if (!paired || report === null) return 'login';
+  if (report.cause === 'vanished' || report.cause === 'unreadable') return 'restore';
+  return report.cause === 'incomplete' && report.remembered ? 'restore' : 'login';
 }
 
 export function decideRestore(reading: StoredSessionReading): RestoreDecision {
@@ -150,27 +150,40 @@ export function restoreReport(attempt: StoredSessionAttempt): RestoreReport {
       outcome: 'error',
       reason: traceReasonOf(`securestore-${failure?.kind ?? 'unreadable'}-${named ?? 'session'}`),
       lostKeys: [],
+      remembered: false,
       warnings: failureWarnings(failures),
     };
   }
 
   const decision = decideRestore(reading);
   if (decision.kind === 'session') {
-    return { decision, cause: 'session', outcome: 'ok', reason: 'session', lostKeys: [], warnings: [] };
+    return { decision, cause: 'session', outcome: 'ok', reason: 'session', lostKeys: [], remembered: true, warnings: [] };
   }
   if (decision.kind === 'absent') {
-    return { decision, cause: 'fresh', outcome: 'absent', reason: 'none', lostKeys: [], warnings: [] };
+    return { decision, cause: 'fresh', outcome: 'absent', reason: 'none', lostKeys: [], remembered: false, warnings: [] };
   }
 
   const lostKeys = lostSessionKeys(reading);
-  const vanished = lostKeys.length > 0 && (reading.user !== null || reading.instance !== null);
-  if (vanished) {
+  const remembered = reading.user !== null || reading.deviceCredential !== null;
+  if (decision.reason === 'missing-instance') {
+    return {
+      decision,
+      cause: 'unpaired',
+      outcome: 'partial',
+      reason: traceReasonOf(nullStoredKeys(reading).join('-') || decision.reason),
+      lostKeys,
+      remembered,
+      warnings: [],
+    };
+  }
+  if (lostKeys.length > 0 && remembered) {
     return {
       decision,
       cause: 'vanished',
       outcome: 'error',
       reason: traceReasonOf(`keystore-lost-${lostKeys.join('-')}`),
       lostKeys,
+      remembered,
       warnings: SESSION_ENTRIES.filter((entry) => entry.stored(reading) === null).map((entry) =>
         vanishedEntryWarning(entry.key)
       ),
@@ -179,10 +192,11 @@ export function restoreReport(attempt: StoredSessionAttempt): RestoreReport {
 
   return {
     decision,
-    cause: decision.reason === 'missing-instance' ? 'unpaired' : 'incomplete',
+    cause: 'incomplete',
     outcome: 'partial',
     reason: traceReasonOf(nullStoredKeys(reading).join('-') || decision.reason),
     lostKeys,
+    remembered,
     warnings: [],
   };
 }
