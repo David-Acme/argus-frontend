@@ -7,12 +7,14 @@ import {
   splitClipFile,
 } from '@/features/cameras/model/clip-media';
 import {
+  clipImageUri,
   clipOfRow,
   clipRowSubtitle,
   clipRowsOf,
   clipTriggerLabelKey,
   formatClipDuration,
   formatClipSize,
+  isImageClip,
   mergeClipPages,
   olderClipCursor,
 } from '@/features/cameras/model/camera-clips';
@@ -154,6 +156,19 @@ describe('clip rows', () => {
     expect(clipRowsOf({ cameraId: 4, clips: [] })).toEqual([]);
     expect(clipOfRow({ id: 0, cameraId: 4 })).toBeNull();
     expect(clipOfRow({ id: 3, cameraId: 4, trigger: 'bogus' })?.trigger).toBe('event');
+  });
+
+  test('tamper and look clips keep their trigger, and their pictures read as images', () => {
+    const frame = clipOfRow({ id: 5, cameraId: 4, trigger: 'tamper', contentType: 'image/jpeg', durationMs: 0 });
+    const crop = clipOfRow({ id: 6, cameraId: 4, trigger: 'look', contentType: 'image/jpeg' });
+    const video = clipOfRow({ id: 7, cameraId: 4, trigger: 'tamper', contentType: 'video/mp4' });
+    expect(frame?.trigger).toBe('tamper');
+    expect(crop?.trigger).toBe('look');
+    expect(frame && isImageClip(frame)).toBe(true);
+    expect(video && isImageClip(video)).toBe(false);
+    expect(clipTriggerLabelKey('tamper')).toBe('screens.cameras.clips.trigger.tamper');
+    expect(clipTriggerLabelKey('look')).toBe('screens.cameras.clips.trigger.look');
+    expect(clipImageUri('image/jpeg', 'AAAA')).toBe('data:image/jpeg;base64,AAAA');
   });
 
   test('pages merge once and the cursor walks backwards from the oldest row', () => {

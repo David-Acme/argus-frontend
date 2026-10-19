@@ -31,6 +31,7 @@ type CameraLiveStageProps = {
   ptz: CameraPtzControls | null;
   showPad: boolean;
   fullscreenControls?: ReactNode;
+  badge?: ReactNode;
   audio: CameraLiveAudio;
   onStats: (stats: ICameraLiveStats) => void;
   onState: (state: CameraStreamState) => void;
@@ -49,6 +50,7 @@ export function CameraLiveStage({
   ptz,
   showPad,
   fullscreenControls,
+  badge,
   audio,
   onStats,
   onState,
@@ -156,6 +158,11 @@ export function CameraLiveStage({
             <Text variant="micro" className="text-foreground font-semibold">
               {statsLabel}
             </Text>
+          </View>
+        ) : null}
+        {controls && live && badge ? (
+          <View pointerEvents="none" className="absolute top-3 left-3">
+            {badge}
           </View>
         ) : null}
         {controls && live && ptz && showPad ? (

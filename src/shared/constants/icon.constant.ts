@@ -124,6 +124,9 @@ import Sprout from 'lucide-react-native/icons/sprout';
 import Blocks from 'lucide-react-native/icons/blocks';
 import Circle from 'lucide-react-native/icons/circle';
 import ListChecks from 'lucide-react-native/icons/list-checks';
+import ScanEye from 'lucide-react-native/icons/scan-eye';
+import Wrench from 'lucide-react-native/icons/wrench';
+import Crosshair from 'lucide-react-native/icons/crosshair';
 
 export const ICONS = {
   activity: Activity,
@@ -252,4 +255,7 @@ export const ICONS = {
   blocks: Blocks,
   circle: Circle,
   'list-checks': ListChecks,
+  'scan-eye': ScanEye,
+  wrench: Wrench,
+  crosshair: Crosshair,
 } as const;

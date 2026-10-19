@@ -23,6 +23,8 @@ export const RESOURCE_SCOPES = [
   'entries',
   'clips',
   'recording',
+  'aim',
+  'maintenance',
 ] as const;
 
 export const RESOURCE_COALESCE_MS = 300;

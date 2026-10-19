@@ -24,6 +24,8 @@ type EpisodeListProps = {
   maxHeight?: number;
   onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
   onRetain?: (episode: GuardEpisode, retain: boolean) => void;
+  onClaim?: (episode: GuardEpisode) => Promise<boolean>;
+  evidence?: boolean;
 };
 
 const NO_ENVIRONMENTS: readonly GuardEnvironment[] = [];
@@ -37,6 +39,8 @@ export function EpisodeList({
   maxHeight,
   onReview,
   onRetain,
+  onClaim,
+  evidence = false,
 }: EpisodeListProps) {
   const { t } = useTranslation();
   const names = useMemo(
@@ -70,9 +74,11 @@ export function EpisodeList({
         context={byCamera.get(episode.cameraId) ?? null}
         onReview={onReview}
         onRetain={onRetain}
+        onClaim={onClaim}
+        evidence={evidence}
       />
     ),
-    [byCamera, names, onRetain, onReview, places, t]
+    [byCamera, evidence, names, onClaim, onRetain, onReview, places, t]
   );
 
   if (episodes.length === 0) {

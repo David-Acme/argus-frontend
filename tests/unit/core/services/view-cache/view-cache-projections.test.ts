@@ -119,6 +119,42 @@ describe('camera projection', () => {
     expect(odd?.retentionIncident).toBe(false);
   });
 
+  test('the aim settings come from the config so the toggles paint before the camera answers', () => {
+    const writes = projectCameras({
+      cameras: [
+        camera('1', {
+          config: {
+            homePreset: '3',
+            activeLook: true,
+            followIntruders: true,
+            patrol: false,
+            noAimSectors: [
+              { name: 'Vecino', panFrom: -40, panTo: -10, tiltFrom: -5, tiltTo: 20 },
+              { name: 'roto', panFrom: 'a' },
+            ],
+          },
+        }),
+        camera('2', { config: {} }),
+      ],
+      zones: [],
+    });
+    const [aimed, plain] = rowsOf(writes, 'camera.list') as ICameraCacheRow[];
+    expect(aimed?.aim).toEqual({
+      homePreset: '3',
+      activeLook: true,
+      followIntruders: true,
+      patrol: false,
+      noAimSectors: [{ name: 'Vecino', panFrom: -40, panTo: -10, tiltFrom: -5, tiltTo: 20 }],
+    });
+    expect(plain?.aim).toEqual({
+      homePreset: null,
+      activeLook: false,
+      followIntruders: false,
+      patrol: false,
+      noAimSectors: [],
+    });
+  });
+
   test('a camera row carries the capabilities the server synced, so a driver change reaches the detail live', () => {
     const writes = projectCameras({
       cameras: [camera('6', { capabilities: ['ptz', 'presets', 'talk'] })],

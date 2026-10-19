@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import type { IZoneCacheRow } from '@/core/interfaces';
 import type { IconName } from '@/core/types';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
+import { IconButton } from '@/shared/components/ui/icon-button';
 import { Panel } from '@/shared/components/ui/panel';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import { Text } from '@/shared/components/ui/text';
@@ -23,8 +25,11 @@ import type { CameraPreset } from '@/features/cameras/model/camera-presets';
 
 export type CameraPresetControls = {
   presets: readonly CameraPreset[];
+  homePreset: string | null;
   onGoto: (preset: CameraPreset) => void;
-  onSave: () => void;
+  onGoHome: (() => void) | null;
+  onSave: (() => void) | null;
+  onSetHome: ((preset: CameraPreset) => void) | null;
 };
 
 type CameraLivePanelProps = {
@@ -39,6 +44,8 @@ type CameraLivePanelProps = {
   ptz: CameraPtzControls | null;
   presets: CameraPresetControls | null;
   privacy?: boolean;
+  badge?: ReactNode;
+  sight?: ReactNode;
   onShowZonesChange: (show: boolean) => void;
   onEnable: () => void;
   className?: string;
@@ -53,11 +60,20 @@ type CameraLiveFullscreenProps = {
   stage: CameraLiveStageState;
   audio: CameraLiveAudio;
   privacy?: boolean;
+  badge?: ReactNode;
 };
 
 type StageViewProps = CameraLiveFullscreenProps & {
   inFullscreen: boolean;
   flush?: boolean;
+};
+
+type PresetButtonProps = {
+  preset: CameraPreset;
+  home: boolean;
+  disabled: boolean;
+  onGoto: (preset: CameraPreset) => void;
+  onSetHome: ((preset: CameraPreset) => void) | null;
 };
 
 type QualitySwitchProps = {
@@ -70,6 +86,32 @@ type ChipProps = {
   active: boolean;
   onPress: () => void;
 };
+
+function PresetButton({ preset, home, disabled, onGoto, onSetHome }: PresetButtonProps) {
+  const { t } = useTranslation();
+  const name = preset.name || preset.id;
+  return (
+    <View className="flex-row items-center">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        accessibilityLabel={home ? t('screens.cameras.sight.home-preset-named', { name }) : name}
+        onPress={() => onGoto(preset)}>
+        {home ? <Icon name="home" className="text-accent-strong size-4" /> : null}
+        <Text numberOfLines={1}>{name}</Text>
+      </Button>
+      {onSetHome && !home ? (
+        <IconButton
+          icon="crosshair"
+          label={t('screens.cameras.sight.set-home-named', { name })}
+          disabled={disabled}
+          onPress={() => onSetHome(preset)}
+        />
+      ) : null}
+    </View>
+  );
+}
 
 function Chip({ icon, label, active, onPress }: ChipProps) {
   return (
@@ -105,7 +147,19 @@ function QualitySwitch({ quality }: QualitySwitchProps) {
   );
 }
 
-function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, privacy = false, inFullscreen, flush = false }: StageViewProps) {
+function StageView({
+  cameraId,
+  zones,
+  showZones,
+  quality,
+  ptz,
+  stage,
+  audio,
+  privacy = false,
+  badge,
+  inFullscreen,
+  flush = false,
+}: StageViewProps) {
   return (
     <CameraLiveStage
       cameraId={cameraId}
@@ -119,6 +173,7 @@ function StageView({ cameraId, zones, showZones, quality, ptz, stage, audio, pri
       ptz={ptz}
       showPad={stage.showPad}
       fullscreenControls={<QualitySwitch quality={quality} />}
+      badge={badge}
       audio={audio}
       onStats={stage.handleStats}
       onState={stage.handleState}
@@ -148,6 +203,8 @@ export function CameraLivePanel({
   ptz,
   presets,
   privacy = false,
+  badge,
+  sight,
   onShowZonesChange,
   onEnable,
   className,
@@ -182,6 +239,7 @@ export function CameraLivePanel({
             stage={stage}
             audio={audio}
             privacy={privacy}
+            badge={badge}
             inFullscreen={false}
             flush={isCompact}
           />
@@ -224,18 +282,33 @@ export function CameraLivePanel({
         </View>
       ) : null}
 
+      {enabled && sight ? <View className="px-1">{sight}</View> : null}
+
       {enabled && presets ? (
         <View className="flex-row flex-wrap items-center gap-2 px-1">
           <Text variant="micro">{t('screens.cameras.presets')}</Text>
-          {presets.presets.map((preset) => (
-            <Button key={preset.id} variant="outline" size="sm" disabled={ptz?.moving} onPress={() => presets.onGoto(preset)}>
-              <Text numberOfLines={1}>{preset.name || preset.id}</Text>
+          {presets.onGoHome ? (
+            <Button variant="secondary" size="sm" disabled={ptz?.moving} onPress={presets.onGoHome}>
+              <Icon name="home" className="text-foreground size-4" />
+              <Text>{t('screens.cameras.sight.go-home')}</Text>
             </Button>
+          ) : null}
+          {presets.presets.map((preset) => (
+            <PresetButton
+              key={preset.id}
+              preset={preset}
+              home={preset.id === presets.homePreset}
+              disabled={ptz?.moving === true}
+              onGoto={presets.onGoto}
+              onSetHome={presets.onSetHome}
+            />
           ))}
-          <Button variant="ghost" size="sm" disabled={ptz?.moving} onPress={presets.onSave}>
-            <Icon name="plus" className="text-foreground size-4" />
-            <Text>{t('screens.cameras.preset-save')}</Text>
-          </Button>
+          {presets.onSave ? (
+            <Button variant="ghost" size="sm" disabled={ptz?.moving} onPress={presets.onSave}>
+              <Icon name="plus" className="text-foreground size-4" />
+              <Text>{t('screens.cameras.preset-save')}</Text>
+            </Button>
+          ) : null}
         </View>
       ) : null}
 

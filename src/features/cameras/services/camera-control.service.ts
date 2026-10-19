@@ -13,8 +13,23 @@ import type {
   ICameraWebRtcOffer,
   IServiceResponse,
 } from '@/core/interfaces';
-import type { CameraSirenResult } from '@/core/types';
+import type { CameraAim, CameraAimPatch, CameraLeaseAction, CameraSirenResult } from '@/core/types';
+import { cameraAimSchema } from '@/core/contracts/camera-sight.contract';
 import { httpService } from '@/core/services/http';
+
+function aimOf(result: IServiceResponse<unknown>): IServiceResponse<CameraAim> {
+  if (!result.ok) return { status: result.status, ok: false, info: null, errors: result.errors };
+  const parsed = cameraAimSchema.safeParse(result.info);
+  if (!parsed.success) {
+    return {
+      status: result.status,
+      ok: false,
+      info: null,
+      errors: { code: 'INVALID_RESPONSE', message: 'The camera answered an unexpected aim shape' },
+    };
+  }
+  return { status: result.status, ok: true, info: parsed.data, errors: null };
+}
 
 class CameraControlService {
   status(id: string): Promise<IServiceResponse<ICameraDeviceStatus>> {
@@ -31,6 +46,18 @@ class CameraControlService {
 
   preset(id: string, body: ICameraPreset): Promise<IServiceResponse<unknown>> {
     return httpService.patch(`/camera/${id}/preset`, body);
+  }
+
+  async aim(id: string): Promise<IServiceResponse<CameraAim>> {
+    return aimOf(await httpService.get<unknown>(`/camera/${id}/aim`));
+  }
+
+  async setAim(id: string, body: CameraAimPatch): Promise<IServiceResponse<CameraAim>> {
+    return aimOf(await httpService.patch<unknown>(`/camera/${id}/aim`, body));
+  }
+
+  async lease(id: string, action: CameraLeaseAction): Promise<IServiceResponse<CameraAim>> {
+    return aimOf(await httpService.post<unknown>(`/camera/${id}/ptz/lease`, { action }));
   }
 
   capabilities(id: string): Promise<IServiceResponse<ICameraCapabilities>> {

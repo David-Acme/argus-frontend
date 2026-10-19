@@ -133,6 +133,12 @@ export const common = {
     'module-roles-held': 'Someone holds a role of this module. Choose a new role for them and try again.',
     'role-inactive': 'Your role is on hold while that module is off.',
     'desktop-shell': 'The desktop could not change this setting.',
+    'guard-off-duty': 'You can move the camera only while you are on duty.',
+    'maintenance-off-duty': 'You can declare maintenance only while you are on duty.',
+    'maintenance-out-of-scope': 'You can declare maintenance only for the cameras of your environment.',
+    'presets-not-yours': 'Only the owner or a resident saves, deletes or sets positions.',
+    'camera-control-locked': 'Someone else is moving the camera.',
+    'not-a-tamper': 'This alert is not about a tampered camera.',
     unknown: 'Something went wrong',
   },
 };

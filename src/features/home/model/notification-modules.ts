@@ -6,6 +6,9 @@ type NotificationRow = Pick<INotificationPreviewCacheRow, 'data'>;
 export const NOTIFICATION_KIND_MODULES: ReadonlyMap<string, string> = new Map([
   ['guard_episode', MODULE_IDS.surveillance],
   ['guard_tamper', MODULE_IDS.surveillance],
+  ['guard_tamper_ask', MODULE_IDS.surveillance],
+  ['maintenance_view_check', MODULE_IDS.surveillance],
+  ['camera_maintenance_notice', MODULE_IDS.surveillance],
   ['guard_digest', MODULE_IDS.surveillance],
   ['guard_arrival', MODULE_IDS.surveillance],
   ['camera_fallback', MODULE_IDS.surveillance],

@@ -4,3 +4,7 @@ export { useCameraEnvironmentIndex, useGuardEnvironments } from './hooks/use-gua
 export { matchEnvironment } from './model/environments';
 export { default as EnvironmentScreen } from './screens/environment-screen';
 export { default as SecurityScreen } from './screens/security-screen';
+export { MaintenancePanel } from './components/maintenance-panel';
+export { SightNoticeActions } from './components/sight-notice-actions';
+export { useSightNotice } from './hooks/use-sight-notice';
+export { SIGHT_NOTICE_KINDS, evidenceTargetOf, sightNoticeOf } from './model/tamper-notice';

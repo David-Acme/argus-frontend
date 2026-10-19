@@ -51,3 +51,5 @@ export * from './push.type';
 export * from './siren.type';
 export * from './watch.type';
 export * from './proximity.type';
+export * from './camera-aim.type';
+export * from './maintenance.type';
