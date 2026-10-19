@@ -11,6 +11,7 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { ModuleEnableAction } from '@/features/modules';
+import { SightNoticeActions, useSightNotice } from '@/features/security';
 import {
   isThreadRead,
   missedCallId,
@@ -70,6 +71,9 @@ const TONES: Record<NotificationUrgency, ThreadTone> = {
 const KIND_ICONS: Readonly<Record<string, IconName>> = {
   guard_episode: 'shield',
   guard_tamper: 'triangle-alert',
+  guard_tamper_ask: 'eye-off',
+  maintenance_view_check: 'scan-eye',
+  camera_maintenance_notice: 'wrench',
   guard_digest: 'history',
   camera_fallback: 'video',
   camera_fallback_digest: 'history',
@@ -137,6 +141,8 @@ export function NotificationThreadRow({
   const pressable = canExpand || callId !== null || (onRead != null && !read);
   const critical = thread.urgency === 'critical';
   const request = moduleRequestOf(thread);
+  const sight = useSightNotice(thread.kind, latest.data);
+  const title = sight?.title ?? latest.title;
 
   const stamp = (at: number): string | null => {
     if (!at) return null;
@@ -160,7 +166,7 @@ export function NotificationThreadRow({
   const accessibilityLabel = [
     critical ? t('screens.home.thread.urgent') : null,
     read ? null : t('screens.home.thread.unread'),
-    latest.title,
+    title,
     latest.body,
     ...meta,
   ]
@@ -194,7 +200,7 @@ export function NotificationThreadRow({
       <View className="min-w-0 flex-1 gap-0.5">
         <View className="flex-row items-center gap-2">
           <Text variant="label" numberOfLines={1} className={cn('min-w-0 flex-1', tone.title)}>
-            {latest.title}
+            {title}
           </Text>
           {canExpand ? (
             <Icon
@@ -222,6 +228,7 @@ export function NotificationThreadRow({
             {meta.join(' · ')}
           </Text>
         ) : null}
+        {sight ? <SightNoticeActions notice={sight.notice} onAnswered={() => onRead?.(thread)} /> : null}
         {request ? (
           <View className="pt-1.5">
             <ModuleEnableAction moduleId={request.moduleId} onEnabled={() => onRead?.(thread)} />

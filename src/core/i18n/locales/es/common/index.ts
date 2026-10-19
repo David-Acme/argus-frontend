@@ -132,6 +132,12 @@ export const common = {
     'module-roles-held': 'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
     'role-inactive': 'Tu rol está en pausa mientras ese módulo esté apagado.',
     'desktop-shell': 'El escritorio no pudo cambiar este ajuste.',
+    'guard-off-duty': 'Solo puedes mover la cámara mientras estás de turno.',
+    'maintenance-off-duty': 'Solo puedes declarar un mantenimiento mientras estás de turno.',
+    'maintenance-out-of-scope': 'Solo puedes declarar mantenimiento para las cámaras de tu entorno.',
+    'presets-not-yours': 'Solo el propietario o un residente guarda, borra o fija posiciones.',
+    'camera-control-locked': 'Otra persona está moviendo la cámara.',
+    'not-a-tamper': 'Esta alerta no es de una cámara manipulada.',
     unknown: 'Algo salió mal',
   },
 } as const;

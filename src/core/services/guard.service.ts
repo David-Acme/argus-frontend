@@ -1,5 +1,10 @@
 import { guardEnvironmentListSchema, guardEnvironmentSchema } from '@/core/contracts/http.contract';
 import { environmentResponseSchema } from '@/core/contracts/response.contract';
+import {
+  maintenanceListSchema,
+  maintenanceWindowSchema,
+  tamperAskResultSchema,
+} from '@/core/contracts/camera-sight.contract';
 import type { IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import type {
@@ -16,6 +21,11 @@ import type {
   GuardFeedbackLabel,
   GuardMode,
   RemotePage,
+  MaintenanceDeclare,
+  MaintenanceList,
+  MaintenanceViewAnswer,
+  MaintenanceWindow,
+  TamperAskAnswer,
   EnvironmentResponseConfig,
   EnvironmentResponseUpdate,
 } from '@/core/types';
@@ -51,7 +61,56 @@ const responseConfig = (info: unknown): EnvironmentResponseConfig | null => {
   return parsed.success ? parsed.data : null;
 };
 
+const maintenanceList = (info: unknown): MaintenanceList | null => {
+  const parsed = maintenanceListSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
+const maintenanceOne = (info: unknown): MaintenanceWindow | null => {
+  const parsed = maintenanceWindowSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
+const tamperAnswered = (info: unknown): { answered: boolean } | null => {
+  const parsed = tamperAskResultSchema.safeParse(info);
+  return parsed.success ? parsed.data : null;
+};
+
+const MAINTENANCE_OFF_DUTY = 'MAINTENANCE_OFF_DUTY';
+
+function maintenanceRefusal<T>(result: IServiceResponse<T>): IServiceResponse<T> {
+  const refusal = result.errors;
+  if (result.ok || refusal === null || refusal.code !== 'GUARD_OFF_DUTY') return result;
+  return { ...result, errors: { ...refusal, code: MAINTENANCE_OFF_DUTY } };
+}
+
 class GuardService {
+  async maintenance(): Promise<IServiceResponse<MaintenanceList>> {
+    return checked(await httpService.get<unknown>('/guard/maintenance'), maintenanceList);
+  }
+
+  async declareMaintenance(body: MaintenanceDeclare): Promise<IServiceResponse<MaintenanceWindow>> {
+    return maintenanceRefusal(checked(await httpService.post<unknown>('/guard/maintenance', body), maintenanceOne));
+  }
+
+  async endMaintenance(id: number): Promise<IServiceResponse<MaintenanceWindow>> {
+    return checked(await httpService.delete<unknown>(`/guard/maintenance/${id}`), maintenanceOne);
+  }
+
+  async answerMaintenanceView(id: number, body: MaintenanceViewAnswer): Promise<IServiceResponse<MaintenanceWindow>> {
+    return checked(await httpService.post<unknown>(`/guard/maintenance/${id}/view`, body), maintenanceOne);
+  }
+
+  async claimTamper(incidentId: number): Promise<IServiceResponse<MaintenanceWindow>> {
+    return maintenanceRefusal(
+      checked(await httpService.post<unknown>(`/guard/incidents/${incidentId}/mine`, {}), maintenanceOne),
+    );
+  }
+
+  async answerTamperAsk(askId: number, answer: TamperAskAnswer): Promise<IServiceResponse<{ answered: boolean }>> {
+    return checked(await httpService.post<unknown>(`/guard/tamper/asks/${askId}`, { answer }), tamperAnswered);
+  }
+
   async response(environmentId: number): Promise<IServiceResponse<EnvironmentResponseConfig>> {
     return checked(await httpService.get<unknown>(`/guard/environments/${environmentId}/response`), responseConfig);
   }

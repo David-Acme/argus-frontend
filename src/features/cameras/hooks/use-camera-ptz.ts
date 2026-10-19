@@ -54,7 +54,7 @@ export function useCameraPtz(cameraId: string, holdRenewMs: number | null): Came
       enqueue(direction, () =>
         run({
           call: () => cameraControlService.move(cameraId, body),
-          errorTitle: t('screens.cameras.device-offline'),
+          errorTitle: t('screens.cameras.sight.move-failed'),
         }),
       ),
     [cameraId, enqueue, run, t],

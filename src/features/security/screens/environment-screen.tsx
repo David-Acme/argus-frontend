@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import type { GuardEnvironment, GuardEnvironmentCreate, MenuOption } from '@/core/types';
+import type { GuardEnvironment, GuardEnvironmentCreate, GuardEpisode, MenuOption } from '@/core/types';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
@@ -29,6 +29,7 @@ import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-
 import { ENVIRONMENT_KIND_ICONS, EPISODE_LIST_MAX_HEIGHT } from '@/features/security/constants';
 import { useEnvironmentResponse } from '@/features/security/hooks/use-environment-response';
 import { useGuard, useGuardEnvironments } from '@/features/security/hooks/use-guard';
+import { claimTamper } from '@/features/security/hooks/use-maintenance';
 import { camerasIn, postureKey } from '@/features/security/model/environments';
 
 type EnvironmentAction = 'edit' | 'remove';
@@ -42,7 +43,8 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
-  const { guard: access, isOwner: owner, can } = useCapabilities();  const guard = useGuard(access.review, environment.id);
+  const { guard: access, isOwner: owner, can, clips: clipAccess } = useCapabilities();
+  const guard = useGuard(access.review, environment.id);
   const allCameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [editing, setEditing] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
@@ -50,6 +52,8 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const current = guard.environments.find((item) => item.id === environment.id) ?? environment;
   const cameras = camerasIn(current, guard.environments, allCameras);
   const pending = guard.pendingMode?.environmentId === current.id ? guard.pendingMode.mode : null;
+
+  const claimEpisode = (episode: GuardEpisode) => claimTamper(episode.id);
 
   const actions: MenuOption<EnvironmentAction>[] = [
     { value: 'edit', label: t('screens.security.environments.edit'), icon: 'pencil' },
@@ -151,6 +155,8 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
         maxHeight={fill ? undefined : EPISODE_LIST_MAX_HEIGHT}
         onReview={access.review ? guard.reviewEpisode : undefined}
         onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
+        onClaim={access.maintenance ? claimEpisode : undefined}
+        evidence={clipAccess.view}
       />
     </Panel>
   );

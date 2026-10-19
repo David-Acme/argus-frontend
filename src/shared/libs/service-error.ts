@@ -41,6 +41,12 @@ const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   MODULE_ROLES_HELD: 'common.errors.module-roles-held',
   ROLE_INACTIVE: 'common.errors.role-inactive',
   DESKTOP_SHELL_ERROR: 'common.errors.desktop-shell',
+  GUARD_OFF_DUTY: 'common.errors.guard-off-duty',
+  MAINTENANCE_OFF_DUTY: 'common.errors.maintenance-off-duty',
+  MAINTENANCE_OUT_OF_SCOPE: 'common.errors.maintenance-out-of-scope',
+  PRESETS_NOT_YOURS: 'common.errors.presets-not-yours',
+  CAMERA_CONTROL_LOCKED: 'common.errors.camera-control-locked',
+  NOT_A_TAMPER: 'common.errors.not-a-tamper',
 };
 
 export function serviceErrorKey(error: IApiError | null | undefined): TranslationKey {

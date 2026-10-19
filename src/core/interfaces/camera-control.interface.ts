@@ -17,7 +17,7 @@ export interface ICameraPtz {
 }
 
 export interface ICameraPreset {
-  action: 'goto' | 'save' | 'delete';
+  action: 'goto' | 'save' | 'delete' | 'set_home' | 'go_home';
   id?: string;
   name?: string;
 }

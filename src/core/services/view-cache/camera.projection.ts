@@ -1,6 +1,6 @@
 import type { CameraModel, ZoneModel } from '@/core/database';
 import type { ICameraCacheRow, IZoneCacheRow } from '@/core/interfaces';
-import type { IconName } from '@/core/types';
+import type { CameraAimConfig, CameraNoAimSector, IconName } from '@/core/types';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
 import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
 import type { ViewWrite } from './projection';
@@ -37,6 +37,32 @@ const configText = (config: CameraSource['config'], key: string): string => {
 };
 
 const configFlag = (config: CameraSource['config'], key: string): boolean => config[key] === true;
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+
+const finite = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+
+function sectorOf(value: unknown): CameraNoAimSector | null {
+  if (!isRecord(value)) return null;
+  const panFrom = finite(value.panFrom);
+  const panTo = finite(value.panTo);
+  const tiltFrom = finite(value.tiltFrom);
+  const tiltTo = finite(value.tiltTo);
+  if (panFrom === null || panTo === null || tiltFrom === null || tiltTo === null) return null;
+  return { name: typeof value.name === 'string' ? value.name : '', panFrom, panTo, tiltFrom, tiltTo };
+}
+
+export function cameraAimConfigOf(config: Readonly<Record<string, unknown>>): CameraAimConfig {
+  const home = config.homePreset;
+  const sectors = Array.isArray(config.noAimSectors) ? config.noAimSectors : [];
+  return {
+    homePreset: typeof home === 'string' && home.length > 0 ? home : typeof home === 'number' ? String(home) : null,
+    activeLook: config.activeLook === true,
+    followIntruders: config.followIntruders === true,
+    patrol: config.patrol === true,
+    noAimSectors: sectors.map(sectorOf).filter((sector): sector is CameraNoAimSector => sector !== null),
+  };
+}
 
 export type ZoneSource = Pick<ZoneModel, 'id' | 'cameraId' | 'name' | 'points' | 'zoneType' | 'color' | 'isEnabled'>;
 
@@ -83,6 +109,7 @@ export function projectCameras({ cameras, zones }: CameraProjectionInput): ViewW
     subStreamPath: configText(camera.config, 'subStreamPath'),
     catalogId: configText(camera.config, 'catalogId'),
     capabilities: camera.capabilities,
+    aim: cameraAimConfigOf(camera.config),
     zones: zonesByCamera.get(camera.id) ?? [],
   }));
   return [{ key: VIEW_CACHE_KEYS.cameraList, rows, limit: VIEW_CACHE_LIST_LIMIT }];

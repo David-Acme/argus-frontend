@@ -6,3 +6,5 @@ export { useCameraOverview } from './hooks/use-camera-overview';
 export { useCameraPrivacy } from './hooks/use-camera-privacy';
 export { CameraLabScreen } from './screens/camera-lab-screen';
 export { recordModeLabelKey } from './model/camera-record-mode';
+export { TamperEvidenceView } from './components/tamper-evidence-view';
+export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';

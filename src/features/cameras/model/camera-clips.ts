@@ -12,6 +12,8 @@ const TRIGGER_LABEL: Record<CameraClipTrigger, TranslationKey> = {
   motion: 'screens.cameras.clips.trigger.motion',
   event: 'screens.cameras.clips.trigger.event',
   continuous: 'screens.cameras.clips.trigger.continuous',
+  tamper: 'screens.cameras.clips.trigger.tamper',
+  look: 'screens.cameras.clips.trigger.look',
 };
 
 function toInt(value: unknown, fallback = 0): number {
@@ -22,8 +24,14 @@ function toText(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
+const KNOWN_TRIGGERS: readonly CameraClipTrigger[] = ['motion', 'event', 'continuous', 'tamper', 'look'];
+
 function triggerOf(value: unknown): CameraClipTrigger {
-  return value === 'motion' || value === 'continuous' ? value : 'event';
+  return KNOWN_TRIGGERS.find((trigger) => trigger === value) ?? 'event';
+}
+
+export function isImageClip(clip: Pick<ICameraClip, 'contentType'>): boolean {
+  return clip.contentType.startsWith('image/');
 }
 
 export function clipOfRow(row: unknown): ICameraClip | null {
@@ -94,4 +102,8 @@ export function clipRowSubtitle(t: TranslateFn, clip: ICameraClip, at: string): 
   ]
     .filter(Boolean)
     .join(' · ');
+}
+
+export function clipImageUri(contentType: string, base64: string): string {
+  return `data:${contentType};base64,${base64}`;
 }

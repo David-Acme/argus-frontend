@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ICameraClip, ICameraClipContent } from '@/core/interfaces';
 import { clipDurationMs, clipPaceSteps, decodeBase64, splitClipFile, type ClipFile } from '@/features/cameras/model/clip-media';
 import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
+import { clipImageUri, isImageClip } from '@/features/cameras/model/camera-clips';
 
 export type ClipPlaybackState = 'idle' | 'loading' | 'ready' | 'failed' | 'unsupported';
 
@@ -9,6 +10,7 @@ export type ClipPlayback = {
   state: ClipPlaybackState;
   clip: ICameraClip | null;
   file: ClipFile | null;
+  image: string | null;
   open: (clip: ICameraClip) => void;
   close: () => void;
 };
@@ -21,6 +23,7 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
   const [state, setState] = useState<ClipPlaybackState>('idle');
   const [clip, setClip] = useState<ICameraClip | null>(null);
   const [file, setFile] = useState<ClipFile | null>(null);
+  const [image, setImage] = useState<string | null>(null);
   const run = useRef(0);
 
   const open = useCallback(
@@ -29,6 +32,7 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
       run.current = current;
       setClip(next);
       setFile(null);
+      setImage(null);
       setState('loading');
       void (async () => {
         const preview = await cameraClipsService.preview(cameraId, next.id);
@@ -41,6 +45,11 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
         if (current !== run.current) return;
         if (!content.ok || !content.info) {
           setState('failed');
+          return;
+        }
+        if (isImageClip(next)) {
+          setImage(clipImageUri(content.info.mimeType || next.contentType, content.info.base64));
+          setState('ready');
           return;
         }
         const split = splitClipFile(clipContentBytes(content.info));
@@ -59,11 +68,12 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
   const close = useCallback(() => {
     run.current += 1;
     setFile(null);
+    setImage(null);
     setClip(null);
     setState('idle');
   }, []);
 
-  return { state, clip, file, open, close };
+  return { state, clip, file, image, open, close };
 }
 
 export type ClipSink = {

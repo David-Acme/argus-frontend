@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { ICameraCapabilities, ICameraClip, ICameraDeviceStatus, IZoneCacheRow } from '@/core/interfaces';
 import type { MenuOption } from '@/core/types';
@@ -13,14 +13,18 @@ import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
 import { useCameraDeviceSettings } from '@/features/cameras/hooks/use-camera-device-settings';
 import { useCameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
 import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-stage';
+import { useCameraAim, useViewerLease } from '@/features/cameras/hooks/use-camera-aim';
 import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
+import { CameraAimPanel } from '@/features/cameras/components/camera-aim-panel';
+import { CameraSightBadge } from '@/features/cameras/components/camera-sight-badge';
+import { CameraSightStatus } from '@/features/cameras/components/camera-sight-status';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
 import { useCameraSiren } from '@/features/cameras/hooks/use-camera-siren';
 import { sirenOffered } from '@/features/cameras/model/siren';
 import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
-import { CameraEnvironmentPanel } from '@/features/security';
+import { CameraEnvironmentPanel, MaintenancePanel } from '@/features/security';
 import { useAppSirenEnabled } from '@/features/safety';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import { CameraForm } from '@/features/cameras/components/camera-form';
@@ -63,7 +67,7 @@ export default function CameraDetailScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { id, talk } = useLocalSearchParams<{ id: string; talk?: string }>();
-  const { can, has, clips: clipAccess } = useCapabilities();
+  const { can, has, clips: clipAccess, cameraActions, guard: guardAccess } = useCapabilities();
   const { isExpanded, isMedium, isWide } = useWindowClass();
   const [editOpen, setEditOpen] = useState(false);
   const [zoneOpen, setZoneOpen] = useState(false);
@@ -116,7 +120,7 @@ export default function CameraDetailScreen() {
     cacheKey: VIEW_CACHE_KEYS.cameraPresets,
     scope: id,
     load: loadPresets,
-    enabled: features?.presets === true && canUpdate,
+    enabled: features?.presets === true && cameraActions.aim,
     resources: [{ domain: 'camera', scope: 'status', id: Number(id) }],
   });
   const presets = useMemo(() => parsePresets(presetResource.data), [presetResource.data]);
@@ -125,6 +129,11 @@ export default function CameraDetailScreen() {
   const mutateDevice = deviceResource.mutate;
   const applyDevice = useCallback((status: ICameraDeviceStatus | null) => mutateDevice(() => status), [mutateDevice]);
   const deviceSettings = useCameraDeviceSettings({ cameraId: id, status: device, onApplied: applyDevice });
+  const aimable = features?.ptz === true;
+  const aimControls = useCameraAim({ cameraId: id, synced: camera?.aim, enabled: aimable && cameraActions.watch });
+  const reloadAim = aimControls.reload;
+  const ptzAllowed = cameraActions.aim && aimable && camera?.isEnabled === true;
+  useViewerLease(id, ptzAllowed && stage.showPad && stage.live, aimControls.apply);
 
 
   const canDelete = can('camera', 'delete');
@@ -207,9 +216,35 @@ export default function CameraDetailScreen() {
     (preset: CameraPreset) =>
       void move({
         call: () => cameraControlService.preset(id, { action: 'goto', id: preset.id }),
-        errorTitle: t('screens.cameras.device-offline'),
+        errorTitle: t('screens.cameras.sight.move-failed'),
       }),
     [id, move, t],
+  );
+
+  const goHome = useCallback(
+    () =>
+      void move({
+        call: () => cameraControlService.preset(id, { action: 'go_home' }),
+        errorTitle: t('screens.cameras.sight.move-failed'),
+      }),
+    [id, move, t],
+  );
+
+  const setHome = useCallback(
+    async (preset: CameraPreset) => {
+      const saved = await move({
+        confirm: {
+          title: t('screens.cameras.sight.set-home-title', { name: preset.name || preset.id }),
+          description: t('screens.cameras.sight.set-home-body'),
+          confirmLabel: t('screens.cameras.sight.set-home'),
+        },
+        call: () => cameraControlService.preset(id, { action: 'set_home', id: preset.id }),
+        success: t('screens.cameras.sight.home-saved'),
+        errorTitle: t('screens.cameras.sight.home-failed'),
+      });
+      if (saved) void reloadAim();
+    },
+    [id, move, reloadAim, t],
   );
 
   const savePreset = useCallback(async () => {
@@ -217,7 +252,7 @@ export default function CameraDetailScreen() {
       call: () =>
         cameraControlService.preset(id, { action: 'save', name: nextPresetName(presets, t('screens.cameras.preset-name')) }),
       success: t('screens.cameras.preset-saved'),
-      errorTitle: t('screens.cameras.device-offline'),
+      errorTitle: t('screens.cameras.preset-save-failed'),
     });
     if (saved) void reloadPresets();
   }, [id, move, presets, reloadPresets, t]);
@@ -282,7 +317,9 @@ export default function CameraDetailScreen() {
   const masked = cameraPrivacyMasked(camera.privacyState);
   const status = cameraStatusOf(camera);
   const stretch = isWide ? 'grow' : undefined;
-  const ptz = canUpdate && features?.ptz ? ptzControls : null;
+  const ptz = ptzAllowed ? ptzControls : null;
+  const badge = aimable ? <CameraSightBadge activity={aimControls.activity} /> : null;
+  const sight = aimable ? <CameraSightStatus controls={aimControls} /> : null;
   const live = (
     <CameraLivePanel
       cameraId={camera.id}
@@ -295,9 +332,20 @@ export default function CameraDetailScreen() {
       canEnable={canUpdate}
       ptz={ptz}
       presets={
-        canUpdate && features?.presets ? { presets, onGoto: gotoPreset, onSave: () => void savePreset() } : null
+        cameraActions.aim && features?.presets
+          ? {
+              presets,
+              homePreset: aimControls.homePreset,
+              onGoto: gotoPreset,
+              onGoHome: aimControls.homePreset ? goHome : null,
+              onSave: cameraActions.managePresets ? () => void savePreset() : null,
+              onSetHome: cameraActions.managePresets ? (preset) => void setHome(preset) : null,
+            }
+          : null
       }
       privacy={masked}
+      badge={badge}
+      sight={sight}
       onShowZonesChange={setShowZones}
       onEnable={() => void setEnabled(camera.id, camera.name, true)}
     />
@@ -329,11 +377,23 @@ export default function CameraDetailScreen() {
     ) : null;
   const player =
     playback.file ||
+    playback.image ||
     playback.state === 'loading' ||
     playback.state === 'failed' ||
     playback.state === 'unsupported' ? (
       <View className="bg-card gap-3 rounded-3xl p-4 shadow-md shadow-black/[0.05]">
-        {playback.file ? (
+        {playback.image ? (
+          <View className="w-full overflow-hidden rounded-2xl" style={{ aspectRatio: 16 / 9 }}>
+            <Image
+              source={{ uri: playback.image }}
+              resizeMode="contain"
+              accessible
+              accessibilityLabel={t('screens.cameras.clips.image')}
+              accessibilityIgnoresInvertColors
+              className="absolute inset-0 h-full w-full"
+            />
+          </View>
+        ) : playback.file ? (
           <ClipPlayer file={playback.file} onEnded={playback.close} />
         ) : (
           <Text variant="caption">
@@ -387,6 +447,8 @@ export default function CameraDetailScreen() {
     ) : null;
 
   const environment = <CameraEnvironmentPanel cameraId={camera.id} className={controllable ? undefined : stretch} />;
+  const aimPanel = canUpdate && aimable ? <CameraAimPanel controls={aimControls} /> : null;
+  const maintenancePanel = guardAccess.maintenance ? <MaintenancePanel cameraId={camera.id} /> : null;
   const zonesPanel = (
     <CameraZonesPanel
       zones={zones}
@@ -448,6 +510,8 @@ export default function CameraDetailScreen() {
                 {sirenPanel}
                 {info}
                 {environment}
+                {maintenancePanel}
+                {aimPanel}
                 {control}
               </View>
             </View>
@@ -462,9 +526,13 @@ export default function CameraDetailScreen() {
                   {sirenPanel}
                   {info}
                   {environment}
+                  {maintenancePanel}
                   {control}
                 </View>
-                <View className="min-w-0 flex-1 gap-5">{zonesPanel}</View>
+                <View className="min-w-0 flex-1 gap-5">
+                  {aimPanel}
+                  {zonesPanel}
+                </View>
               </View>
             </View>
           ) : (
@@ -476,6 +544,8 @@ export default function CameraDetailScreen() {
               {sirenPanel}
               {info}
               {environment}
+              {maintenancePanel}
+              {aimPanel}
               {control}
               {zonesPanel}
             </View>
@@ -493,6 +563,7 @@ export default function CameraDetailScreen() {
           stage={stage}
           audio={audio}
           privacy={masked}
+          badge={badge}
         />
       ) : null}
       <CameraForm open={editOpen} onOpenChange={setEditOpen} camera={camera} />

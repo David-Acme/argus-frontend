@@ -48,3 +48,5 @@ export * from './notification.type';
 export * from './recurrence.type';
 export * from './push.type';
 export * from './siren.type';
+export * from './camera-aim.type';
+export * from './maintenance.type';

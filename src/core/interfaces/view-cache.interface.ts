@@ -1,4 +1,5 @@
 import type {
+  CameraAimConfig,
   CameraCapabilities,
   CameraDriverKind,
   CameraPrivacyState,
@@ -48,6 +49,7 @@ export interface ICameraCacheRow {
   subStreamPath: string;
   catalogId: string;
   capabilities: CameraCapabilities;
+  aim?: CameraAimConfig;
   zones: readonly IZoneCacheRow[];
 }
 

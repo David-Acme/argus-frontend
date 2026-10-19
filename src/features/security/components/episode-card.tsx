@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
+import { TamperEvidenceView } from '@/features/cameras';
+import { Button } from '@/shared/components/ui/button';
 import type { GuardCameraContext, GuardEpisode, GuardFeedbackLabel, IconName } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { DangerBadge } from '@/features/security/components/danger-badge';
 import { EpisodeTimeline } from '@/features/security/components/episode-timeline';
 import { CAMERA_ROLE_ICONS, REASON_KEYS } from '@/features/security/constants';
+import { TAMPER_STATUS_KEYS, tamperStatusOf } from '@/features/security/model/tamper-notice';
 import {
   calmingReasons,
   durationSeconds,
@@ -23,6 +26,8 @@ type EpisodeCardProps = {
   context: GuardCameraContext | null;
   onReview?: (episode: GuardEpisode, label: GuardFeedbackLabel) => void;
   onRetain?: (episode: GuardEpisode, retain: boolean) => void;
+  onClaim?: (episode: GuardEpisode) => Promise<boolean>;
+  evidence?: boolean;
 };
 
 type ReviewOption = { value: GuardFeedbackLabel; key: 'useful' | 'false-alarm' | 'not-now' };
@@ -36,10 +41,20 @@ const REVIEW_OPTIONS: readonly ReviewOption[] = [
 const chipHover = Platform.select({ web: 'hover:bg-surface-secondary', default: '' });
 const linkHover = Platform.select({ web: 'hover:opacity-80', default: '' });
 
-export function EpisodeCard({ episode, cameraName, context, onReview, onRetain }: EpisodeCardProps) {
+export function EpisodeCard({
+  episode,
+  cameraName,
+  context,
+  onReview,
+  onRetain,
+  onClaim,
+  evidence = false,
+}: EpisodeCardProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const [expanded, setExpanded] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
   const outcome = episodeOutcome(episode);
   const camera = episode.kind === 'camera';
   const active = episode.state === 'active';
@@ -50,14 +65,9 @@ export function EpisodeCard({ episode, cameraName, context, onReview, onRetain }
   const shown = reasons.length > 0 ? reasons : raisingReasons(episode);
   const retained = (episode.retainUntil ?? 0) > 0;
 
+  const tamperStatus = tamperStatusOf(episode.status);
   const title = camera
-    ? t(
-        `screens.security.episodes.tamper.${
-          episode.status === 'covered' || episode.status === 'moved' || episode.status === 'blurred'
-            ? episode.status
-            : 'other'
-        }`
-      )
+    ? t(`screens.security.episodes.tamper.${tamperStatus ? TAMPER_STATUS_KEYS[tamperStatus] : 'other'}`)
     : episode.subject === 'several'
       ? t('screens.security.episodes.subject.several', { count: String(Math.max(2, episode.people)) })
       : t(`screens.security.episodes.subject.${episode.subject === '' ? 'stranger' : episode.subject}`);
@@ -72,6 +82,14 @@ export function EpisodeCard({ episode, cameraName, context, onReview, onRetain }
     outcome === 'alerted' && episode.notifyCount > 1
       ? `${t('screens.security.episodes.outcome.alerted')} · ${t('screens.security.episodes.alerts-count', { count: String(episode.notifyCount) })}`
       : t(`screens.security.episodes.outcome.${outcome}`);
+
+  const claim = async () => {
+    if (!onClaim) return;
+    setClaiming(true);
+    const done = await onClaim(episode);
+    setClaiming(false);
+    if (done) setClaimed(true);
+  };
 
   const meta = [
     cameraName,
@@ -141,6 +159,18 @@ export function EpisodeCard({ episode, cameraName, context, onReview, onRetain }
           })}
         </Text>
       ) : null}
+      {camera ? (
+        <View className="gap-2 pl-[52px]">
+          <TamperEvidenceView target={{ cameraId: episode.cameraId, onsetAt: episode.firstSeen }} enabled={evidence} />
+          {onClaim && active && !claimed ? (
+            <Button variant="outline" size="sm" className="self-start" loading={claiming} onPress={() => void claim()}>
+              <Icon name="wrench" className="text-foreground size-4" />
+              <Text>{t('screens.security.tamper.claim')}</Text>
+            </Button>
+          ) : null}
+          {claimed ? <Text variant="caption">{t('screens.security.tamper.claimed')}</Text> : null}
+        </View>
+      ) : null}
       {onReview && episode.kind === 'person' && episode.notified ? (
         <View className="gap-1.5 pl-[52px]">
           <Text variant="micro">{t('screens.security.episodes.review-prompt')}</Text>
@@ -181,6 +211,14 @@ export function EpisodeCard({ episode, cameraName, context, onReview, onRetain }
             <Icon name={expanded ? 'chevron-up' : 'chevron-down'} className="text-muted-foreground size-4" />
           </Pressable>
           {expanded ? <EpisodeTimeline episodeId={episode.id} /> : null}
+          {expanded && evidence ? (
+            <TamperEvidenceView
+              target={{ cameraId: episode.cameraId, onsetAt: episode.firstSeen }}
+              enabled
+              looks
+              quiet
+            />
+          ) : null}
           {expanded && onRetain ? (
             <View className="gap-1">
               <Pressable

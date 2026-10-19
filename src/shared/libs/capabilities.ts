@@ -168,6 +168,8 @@ export type GuardAccess = {
   setMode: boolean;
   manageGuests: boolean;
   review: boolean;
+  maintenance: boolean;
+  answerTamper: boolean;
 };
 
 export function guardAccessOf(view: AccessView): GuardAccess {
@@ -177,6 +179,8 @@ export function guardAccessOf(view: AccessView): GuardAccess {
     setMode: reads && hasCapability(view, CAPABILITY.guardModeSet),
     manageGuests: reads && hasCapability(view, CAPABILITY.guardGuestsWrite),
     review: reads && hasCapability(view, CAPABILITY.guardAdmin),
+    maintenance: reads,
+    answerTamper: reads && tableAllowed(view, 'camera', 'update'),
   };
 }
 
@@ -184,6 +188,8 @@ export type CameraActionAccess = {
   watch: boolean;
   talk: boolean;
   siren: boolean;
+  aim: boolean;
+  managePresets: boolean;
 };
 
 export function clipAccessOf(view: AccessView): ClipAccess {
@@ -196,5 +202,7 @@ export function cameraActionsOf(view: AccessView): CameraActionAccess {
     watch,
     talk: watch && hasCapability(view, CAPABILITY.cameraTalk),
     siren: watch && hasCapability(view, CAPABILITY.cameraSiren),
+    aim: watch && (hasCapability(view, CAPABILITY.cameraAim) || tableAllowed(view, 'camera', 'update')),
+    managePresets: watch && tableAllowed(view, 'camera', 'update'),
   };
 }
