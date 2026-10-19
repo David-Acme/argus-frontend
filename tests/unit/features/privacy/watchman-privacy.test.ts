@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
-import type { HouseholdPrivacy, PrivacyMe, PrivacyState, TranslateFn } from '@/core/types';
+import type { HouseholdPrivacy, PrivacyMe, PrivacyState, TranslateFn, TranslationKey } from '@/core/types';
 import { PRIVACY_JURISDICTION } from '@/features/privacy/constants/privacy';
 import {
   decisionOf,
@@ -103,8 +103,8 @@ describe('the household watchman', () => {
       'watchman-ack-retention',
     ]) {
       expect(dialog).toContain(`'${point}'`);
-      expect(es(`screens.privacy.household.${point}`).length).toBeGreaterThan(20);
-      expect(en(`screens.privacy.household.${point}`).length).toBeGreaterThan(20);
+      expect(es(`screens.privacy.household.${point}` as TranslationKey).length).toBeGreaterThan(20);
+      expect(en(`screens.privacy.household.${point}` as TranslationKey).length).toBeGreaterThan(20);
     }
     expect(es('screens.privacy.household.watchman-ack-rest')).toContain('sin audio');
     expect(en('screens.privacy.household.watchman-ack-rest')).toContain('no audio');

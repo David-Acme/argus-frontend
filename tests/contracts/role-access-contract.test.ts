@@ -37,7 +37,7 @@ function backendTable(): Map<UserRole, Map<string, Permission[]>> {
   const block = roleAccess.slice(start, roleAccess.indexOf('};', start));
   const table = new Map<UserRole, Map<string, Permission[]>>();
   for (const [, role = '', body = ''] of block.matchAll(
-    /\{UserRole::(\w+),\s*\{([\s\S]*?)\}\}\}?,?\s*(?=\{UserRole|$)/g
+    /\{UserRole::(\w+),\s*\{([\s\S]*?\})\}\}?,?\s*(?=\{UserRole|$)/g
   )) {
     const entries = [...body.matchAll(/\{TableName::(\w+), (\w+)\}/g)].map(
       ([, symbol = '', set = '']) => [wire.get(symbol) ?? symbol, sets.get(set) ?? []] as const

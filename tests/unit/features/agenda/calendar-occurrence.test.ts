@@ -158,7 +158,8 @@ describe('an occurrence addresses its event', () => {
 describe('one occurrence of a series', () => {
   test('an occurrence knows the start it was given by the series, a single event has none', () => {
     expect(occurrenceOf(occurrence(2))).toBe(START + 2 * WEEK);
-    expect(occurrenceOf({ ...occurrence(2), startsAt: START + 2 * WEEK + 3_600_000 })).toBe(START + 2 * WEEK);
+    const moved: CalendarEntry = { ...occurrence(2), startsAt: START + 2 * WEEK + 3_600_000 };
+    expect(occurrenceOf(moved)).toBe(START + 2 * WEEK);
     expect(occurrenceOf(plain)).toBeNull();
   });
 

@@ -180,7 +180,7 @@ describe('a WebRTC call', () => {
     await voiceService.start();
     expect(posted).toEqual([{ url: '/rtc/token', body: { callId: undefined } }]);
     expect(call.joins).toEqual([
-      { url: 'wss://argus.local:7046', token: 'jwt', agentIdentity: 'argus-voice' },
+      { url: 'wss://argus.local:7046', token: 'jwt', agentIdentity: 'argus-voice', iceServers: [] },
     ]);
     expect(voiceService.snapshot.transport).toBe('rtc');
     expect(voiceService.snapshot.phase).toBe('connecting');

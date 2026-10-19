@@ -43,9 +43,13 @@ function useWatchClock(running: boolean): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!running) return undefined;
-    setNow(Date.now());
-    const timer = setInterval(() => setNow(Date.now()), CLOCK_MS);
-    return () => clearInterval(timer);
+    const tick = () => setNow(Date.now());
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, CLOCK_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
   }, [running]);
   return now;
 }

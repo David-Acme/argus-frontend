@@ -22,7 +22,7 @@ export const VOICE_MUTE_TYPE = 'voice:mute';
 export const VOICE_CONTEXT_TYPE = 'voice:context';
 export const VOICE_ACTION_NAMES = ['app.show_camera', 'app.open', 'app.set_guard_mode'] as const;
 export const VOICE_DONE_TYPE = 'voice:done';
-export const VOICE_HANDOFF_TYPE = 'voice:handoff';
+export const VOICE_HANDOFF_KIND = 'voice:handoff';
 
 export const CALL_TRANSCRIPT_VISIBLE = 4;
 export const CALL_ACTIONS_VISIBLE = 3;

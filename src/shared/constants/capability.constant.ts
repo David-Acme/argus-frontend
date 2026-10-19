@@ -36,6 +36,7 @@ export const CAPABILITY = {
   zonesWrite: 'zones.write',
   guardModeSet: 'guard.mode.set',
   guardGuestsWrite: 'guard.guests.write',
+  guardMaintenance: 'guard.maintenance',
   safetyDuress: 'safety.duress',
   responseDuty: 'response.duty',
   visitorsRead: 'visitors.read',
@@ -46,6 +47,8 @@ export const CAPABILITY = {
   agendaWrite: 'agenda.write',
   projectsRead: 'projects.read',
   projectsWrite: 'projects.write',
+  proximityOwn: 'proximity.own',
+  proximityManage: 'proximity.manage',
 } as const;
 
 export type Capability = (typeof CAPABILITY)[keyof typeof CAPABILITY];
@@ -62,6 +65,9 @@ export const CAPABILITY_MODULE: Readonly<Partial<Record<Capability, string>>> = 
   [CAPABILITY.guardRead]: 'surveillance',
   [CAPABILITY.guardModeSet]: 'surveillance',
   [CAPABILITY.guardGuestsWrite]: 'surveillance',
+  [CAPABILITY.guardMaintenance]: 'surveillance',
+  [CAPABILITY.proximityOwn]: 'surveillance',
+  [CAPABILITY.proximityManage]: 'surveillance',
   [CAPABILITY.guardAdmin]: 'surveillance',
   [CAPABILITY.responseDuty]: 'surveillance',
   [CAPABILITY.safetyDuress]: 'surveillance',

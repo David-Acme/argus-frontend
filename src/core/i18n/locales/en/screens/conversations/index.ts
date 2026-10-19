@@ -36,4 +36,4 @@ export const conversations = {
     phone: 'From the phone',
     laptop: 'From the laptop',
   },
-};
+} as const;

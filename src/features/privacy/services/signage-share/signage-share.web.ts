@@ -1,7 +1,7 @@
 import type { SignageShareInput, SignageShareOutcome } from '@/features/privacy/model/signage';
 import { signageHtml, signageText } from '@/features/privacy/model/signage';
 
-export const SIGNAGE_SHARE_ACTION = 'print' as const;
+export const SIGNAGE_SHARE_ACTION: 'share' | 'print' = 'print';
 
 const PRINT_SETTLE_MS = 1000;
 

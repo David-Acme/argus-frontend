@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
-import type { TranslateFn } from '@/core/types';
+import type { TranslateFn, TranslationKey } from '@/core/types';
 import { readRtcData } from '@/features/voice/model/rtc-protocol';
 import { voiceErrorMessage } from '@/features/voice/model/voice-error';
 import {
@@ -102,8 +102,8 @@ describe('camera conversation notifications', () => {
     const row = source('features/home/components/notification-thread-row.tsx');
     expect(row).toContain('<WatchNotificationAction kind={watchKind} data={latest.data} onDone={() => onRead?.(thread)} />');
     for (const key of ['continue-action', 'open-action', 'transcript-action']) {
-      expect(es(`screens.watch.notification.${key}`)).not.toBe(`screens.watch.notification.${key}`);
-      expect(en(`screens.watch.notification.${key}`)).not.toBe(`screens.watch.notification.${key}`);
+      expect(es(`screens.watch.notification.${key}` as TranslationKey)).not.toBe(`screens.watch.notification.${key}`);
+      expect(en(`screens.watch.notification.${key}` as TranslationKey)).not.toBe(`screens.watch.notification.${key}`);
     }
     expect(es('screens.watch.continue-here')).toBe('Continuar aquí');
   });

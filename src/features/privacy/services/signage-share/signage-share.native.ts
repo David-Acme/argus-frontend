@@ -2,7 +2,7 @@ import { Share } from 'react-native';
 import type { SignageShareInput, SignageShareOutcome } from '@/features/privacy/model/signage';
 import { signageText } from '@/features/privacy/model/signage';
 
-export const SIGNAGE_SHARE_ACTION = 'share' as const;
+export const SIGNAGE_SHARE_ACTION: 'share' | 'print' = 'share';
 
 export async function shareSignage({ signage }: SignageShareInput): Promise<SignageShareOutcome> {
   try {

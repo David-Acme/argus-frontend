@@ -20,7 +20,7 @@ import {
   VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_EVENT_TYPE,
-  VOICE_HANDOFF_TYPE,
+  VOICE_HANDOFF_KIND,
   VOICE_INTERRUPTED_TYPE,
   VOICE_MIC_FRAME_MS,
   VOICE_MODE_DUPLEX,
@@ -916,7 +916,7 @@ class VoiceService {
         this.playout.drainThenStop();
         this.notify();
       },
-      [VOICE_HANDOFF_TYPE]: (payload) => {
+      [VOICE_HANDOFF_KIND]: (payload) => {
         const frame = readWatchHandoff(payload);
         if (!frame) return;
         const step = watchHandoffStep(this.handoffConversationId, frame);

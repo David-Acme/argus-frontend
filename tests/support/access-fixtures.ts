@@ -83,6 +83,9 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
     C.guardAdmin,
     C.visitorsManage,
     C.presenceRead,
+    C.guardMaintenance,
+    C.proximityOwn,
+    C.proximityManage,
   ],
   resident: [
     C.cameraView,
@@ -97,6 +100,8 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
     C.guardModeSet,
     C.guardGuestsWrite,
     C.safetyDuress,
+    C.guardMaintenance,
+    C.proximityOwn,
   ],
   guard: [
     C.cameraView,
@@ -108,8 +113,10 @@ const SURVEILLANCE: Readonly<Record<UserRole, readonly string[]>> = {
     C.guardRead,
     C.responseDuty,
     C.visitorsRead,
+    C.guardMaintenance,
+    C.proximityOwn,
   ],
-  guest: [C.cameraView],
+  guest: [C.cameraView, C.proximityOwn],
 };
 
 const PRODUCTIVITY: Readonly<Record<UserRole, readonly string[]>> = {
