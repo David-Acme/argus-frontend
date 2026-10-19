@@ -303,7 +303,11 @@ max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
   session (`session.service`), http (`http.service`), sync
   (`core/services/sync/` + WatermelonDB mappers), view-cache (MMKV snapshots),
   voice (`voice.service`) and settings (`features/settings/` + `/settings`).
-  Still pending: chat and workspace.
+  The planned chat and workspace areas were not built as such: the assistant
+  conversation is the voice call (`features/voice/`, `/call`), and the
+  workspace became agenda, projects and reminders (`features/agenda/`,
+  `features/projects/`, `features/reminders/`), all synced through the
+  autonomous `/sync` layer.
 - **Android builds working**: `bunx expo run:android` compiles and installs on
   a physical device (Redmi Note 11, `spes_global`). See "Android development
   environment" below.
