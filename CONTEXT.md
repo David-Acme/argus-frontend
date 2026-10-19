@@ -4647,8 +4647,8 @@ pieces need `bunx nitrogen` in `modules/argus-net` before a dev-client build.
   or discreet), from the camera leg, outside another call. It starts an Argus
   call with `POST /rtc/token {watchConversationId}`; the device leg joins with
   its microphone muted and opens it only when the server says the device
-  carries the conversation (`argus.handoff` on the room, or a frame with
-  `handoff: "device"`). Nothing within 12 s, or the server keeps the camera,
+  carries the conversation (a `WatchUpdate` frame with `handoff: "device"`;
+  the backend publishes no `argus.handoff` room topic). Nothing within 12 s, or the server keeps the camera,
   and the call ends with "la conversación sigue en la cámara": never two live
   microphones. Pure rule in `features/voice/model/watch-handoff.ts`.
 - **Notices.** `watch_busy` and `watch_resume` continue here or open the
@@ -4668,21 +4668,20 @@ pieces need `bunx nitrogen` in `modules/argus-net` before a dev-client build.
   ESPHome Bluetooth proxies and LD2410 / LD2450 / FP2 radars per room at
   `/settings/proximity`.
 
-### Contracts assumed (to confirm against the backend)
+### Contracts, confirmed against the backend at integration
 
 | What | Where the app reads it |
 |---|---|
-| `/sync` operation `WatchUpdate = 15`, info `{conversationId, cameraId, cameraName, state: waking\|listening\|thinking\|speaking\|resumable\|ended, handoff: camera\|offering\|bridging\|device, audience: member\|discreet\|guest\|visitor, startedAt, updatedAt, resumableUntil, endReason, turns: [{id, role, text, at, final}]}` (seconds), to the speaker's room only | `core/contracts/watch.contract.ts` |
-| `GET /rtc/watch` → `{conversations: [...]}`, `POST /rtc/watch/{id}/end` | same |
-| `POST /rtc/token {watchConversationId}` → the usual grant; refusals `WATCH_NOT_FOUND`, `WATCH_EXPIRED` | `features/voice/services/rtc/rtc-token.ts` |
-| Room data topic `argus.handoff {conversationId, state: camera\|bridging\|device}` | `features/voice/model/watch-handoff.ts` |
+| `/sync` operation `WatchUpdate = 15`, info `{conversationId, cameraId, cameraName, state: waking\|listening\|thinking\|speaking\|resumable\|ended, handoff: camera\|offering\|bridging\|device, audience: member\|discreet\|guest\|visitor, startedAt, updatedAt, resumableUntil, endReason, turns: [{id, role: user\|argus, text, at, final}]}` (seconds), to the speaker's room only; a turn's `argus` role reads as the app's `assistant` | `core/contracts/watch.contract.ts` |
+| `GET /rtc/watch` → `{conversations: [...]}`; `POST /rtc/watch/{id}/end` with the body `{}` (it passes `ValidJsonFilter`) → `{ended: true}` or `WATCH_NOT_FOUND` (404) | same, `features/watch/services/watch.service.ts` |
+| `POST /rtc/token {watchConversationId}` → the usual grant; refusals `WATCH_NOT_FOUND` (404), `WATCH_EXPIRED` (410) | `features/voice/services/rtc/rtc-token.ts` |
+| The hand-off: `WatchUpdate.handoff` goes `bridging` when the token is issued and `device` when the phone took over; `watch-feed` opens the microphone on `device`. The backend does not publish the room data topic `argus.handoff`; the app's listener for it stays and is never fired, so a call the server keeps on the camera ends through the 12 s budget | `features/watch/services/watch-feed.ts`, `features/voice/model/watch-handoff.ts` |
 | Notification kinds `watch_busy`, `watch_resume`, `watch_details` (data `conversationId`), `watch_confirm` (data `url`), `watch_message` | `features/watch/model/watch-notification.ts` |
-| `GET/PUT /guard/proximity/me` → `{ble: {enabled, seed, rotateSeconds, receivers}, located}` | `core/contracts/proximity.contract.ts` |
+| `GET/PUT /guard/proximity/me`, the PUT body `{ble: bool}` → `{ble: {enabled, seed, rotateSeconds, receivers (a count)}, located}` | `core/contracts/proximity.contract.ts` |
 | `GET/POST /guard/proximity/receivers`, `DELETE …/{id}`; `GET/POST /guard/proximity/sensors`, `DELETE …/{id}` | same |
 
-The wire-vocabulary contract test fails until the backend declares
-`WatchUpdate = 15`; the notification-kind test needs the watch kinds mapped to
-surveillance on both sides at the same time if the backend gates them.
+The wire-vocabulary contract test reads `WatchUpdate = 15` from the backend's
+`sync-operation.hxx`.
 
 ## Conversations and the messenger (2026-10-19, T4: F8/F9)
 

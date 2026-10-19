@@ -74,7 +74,7 @@ describe('the camera conversation the server sends', () => {
       endReason: null,
       turns: [
         { id: 1, role: 'user', text: ' ¿qué tengo hoy? ', at: 1_791_000_002, final: true },
-        { id: 2, role: 'assistant', text: 'Mañana tienes dos cosas.', at: 1_791_000_004, final: false },
+        { id: 2, role: 'argus', text: 'Mañana tienes dos cosas.', at: 1_791_000_004, final: false },
         { id: 3, role: 'assistant', text: '   ', at: 1_791_000_005 },
         { role: 'user', text: 'no id', at: 1 },
       ],
@@ -86,6 +86,7 @@ describe('the camera conversation the server sends', () => {
     expect(read?.turns.map((entry) => entry.id)).toEqual(['1', '2']);
     expect(read?.turns[0]?.text).toBe('¿qué tengo hoy?');
     expect(read?.turns[1]?.final).toBe(false);
+    expect(read?.turns[1]?.role).toBe('assistant');
   });
 
   test('an unknown word from a newer server reads as the safe default', () => {

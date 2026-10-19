@@ -33,7 +33,7 @@ const member = <T extends string>(vocabulary: readonly T[], fallback: T) =>
 
 const turnWire = z.object({
   id: z.union([z.string().min(1), z.number().int()]).transform(String),
-  role: z.enum(['user', 'assistant']),
+  role: z.enum(['user', 'argus', 'assistant']).transform((role) => (role === 'user' ? 'user' : 'assistant')),
   text: z.string(),
   at: seconds,
   final: z.boolean().catch(true),

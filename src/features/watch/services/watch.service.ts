@@ -16,7 +16,7 @@ class WatchService {
   }
 
   end(conversationId: string): Promise<IServiceResponse<unknown>> {
-    return httpService.post<unknown>(WATCH_ROUTES.end(conversationId));
+    return httpService.post<unknown>(WATCH_ROUTES.end(conversationId), {});
   }
 }
 
