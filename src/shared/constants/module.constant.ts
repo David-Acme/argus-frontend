@@ -6,7 +6,7 @@ export const MODULE_IDS = {
 } as const;
 
 export const MODULE_APP_ROUTES: Readonly<Record<string, readonly string[]>> = {
-  surveillance: ['/cameras', '/security', '/users/visitors'],
+  surveillance: ['/cameras', '/security', '/users/visitors', '/watch'],
   productivity: ['/agenda', '/projects'],
 };
 

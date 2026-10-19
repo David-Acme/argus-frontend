@@ -21,6 +21,7 @@ import { SessionGate } from '@/features/auth';
 import { useAuthStore } from '@/core/stores';
 import { CallPill, currentCallLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
+import { WatchPill } from '@/features/watch';
 import { usePushListeners } from '@/features/notification';
 import { deepLinkPath } from './+native-intent';
 export { ErrorBoundary } from 'expo-router';
@@ -80,6 +81,7 @@ export default function RootLayout() {
               </View>
               <GlobalBottomNav />
               <CallPill />
+              <WatchPill />
               <IncomingCallSurface />
               <InAppAlertBanner />
               <ConfirmDialog />

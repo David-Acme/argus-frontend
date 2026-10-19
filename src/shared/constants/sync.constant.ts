@@ -14,6 +14,7 @@ export const SYNC_OPERATION = {
   ModuleUpdate: 12,
   ContextUpdate: 13,
   ResourceChanged: 14,
+  WatchUpdate: 15,
 } as const;
 
 export const SYNC_AUDIT_CURSORS_PREFIX = 'app.sync.audit.';

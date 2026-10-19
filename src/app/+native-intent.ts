@@ -2,7 +2,7 @@ import type { NativeIntent } from 'expo-router';
 
 const ALLOWED_PATHS: readonly RegExp[] = [
   /^\/$/,
-  /^\/(agenda|projects|cameras|people|users|profile|security|settings|call|notification)$/,
+  /^\/(agenda|projects|cameras|people|users|profile|security|settings|call|notification|watch)$/,
   /^\/settings\/(modules|activity)$/,
   /^\/cameras\/\d+$/,
 ];
