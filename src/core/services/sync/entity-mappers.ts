@@ -84,6 +84,8 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     recordMode: toStr,
     privacyState: toCameraPrivacyState,
     privacyObeyed: toBool,
+    watchman: toBool,
+    noAudio: toBool,
     retentionDays: toOptNum,
     capabilities: toStringArray,
     config: toObject,

@@ -202,6 +202,8 @@ export const voice = {
     'rtc-unavailable': 'Calls are not available on your server right now. Try again in a little while.',
     connection: 'There is no connection to your Argus server.',
     'connect-failed': 'The call could not connect.',
+    'watch-camera-stays': 'It could not move to this device: the conversation stays on the camera.',
+    'watch-gone': 'That camera conversation has already ended.',
     generic: 'Argus cannot take the call right now.',
     unavailable: 'The microphone is not available.',
     'permission-denied': 'No permission to use the microphone.',

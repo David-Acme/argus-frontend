@@ -18,3 +18,6 @@ export { PrivacyChoiceList } from './components/privacy-choice-list';
 export { usePrivacy } from './hooks/use-privacy';
 export { VisitorAcknowledgementDialog } from './components/visitor-acknowledgement-dialog';
 export { useVisitorRecognitionSwitch } from './hooks/use-visitor-recognition-switch';
+export { useHouseholdWatchman } from './hooks/use-household-watchman';
+export { SignageDialog } from './components/signage-dialog';
+export type { WatchmanReadiness } from './model/privacy';

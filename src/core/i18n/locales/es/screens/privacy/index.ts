@@ -160,6 +160,66 @@ export const privacy = {
     'visitors-off-title': '¿Dejar de reconocer visitantes?',
     'visitors-off-description':
       'Argus borrará los visitantes sin nombre en las próximas horas y dejará de reconocer a los que tienen nombre.',
+    location: 'Ubicar a las personas en casa',
+    'location-hint':
+      'Argus calcula en qué habitación está cada persona que no lo apagó, para hablarle por la cámara más cercana. Solo tú lo consultas.',
+    'off-location-title': '¿Dejar de ubicar a las personas?',
+    'off-location-description':
+      'Argus borrará dónde cree que está cada persona y no lo calculará para nadie. Solo seguirá la conversación que alguien empiece.',
+    watchman: 'Argus escucha por las cámaras',
+    'watchman-hint':
+      'Cuando alguien dice “Argus” cerca de una cámara elegida, suena un tono y Argus contesta por su parlante. Eliges en cada cámara si escucha.',
+    'watchman-ready': 'Escucha en las cámaras que lo tienen activado. Eliges en cada cámara si escucha.',
+    'watchman-audio-off': 'Está encendido, pero el audio de las cámaras está apagado para la casa: no escucha.',
+    'watchman-audio-held':
+      'Está encendido, pero no escucha: {count} persona(s) no permiten el audio de las cámaras o aún no deciden.',
+    'watchman-acknowledged': 'Aceptado el {date}.',
+    'watchman-ack-title': 'Argus escucha por las cámaras',
+    'watchman-ack-intro': 'Antes de encenderlo, confirma que entiendes y aceptas que:',
+    'watchman-ack-installer':
+      'Tú, quien instala y opera Argus, eres responsable de usarlo conforme a la ley. El audio de las cámaras cuenta como dato de videovigilancia.',
+    'watchman-ack-sign': 'Debes poner un aviso visible en cada acceso a una zona con cámaras que escuchan.',
+    'watchman-ack-rest':
+      'No debes activar el audio en zonas de descanso de trabajadores del hogar: marca esas cámaras como “sin audio”.',
+    'watchman-ack-consent':
+      'Reconocer por rostro o voz a personas que no viven en la casa requiere su consentimiento, por escrito para los datos biométricos.',
+    'watchman-ack-retention':
+      'Argus no guarda audio antes de oír su nombre. Cada conversación empieza con un tono y se conserva como las llamadas de voz.',
+    'watchman-ack-confirm': 'Entiendo y acepto',
+    'watchman-off-title': '¿Dejar de escuchar por las cámaras?',
+    'watchman-off-description': 'Ninguna cámara escuchará ni contestará, y las conversaciones abiertas terminan.',
+    signage: 'Aviso para las entradas',
+    'signage-hint': 'Un cartel de zona videovigilada listo para imprimir o compartir.',
+    proximity: 'Receptores y sensores',
+    'proximity-hint': 'Placas Bluetooth y radares por habitación, para saber dónde está cada persona.',
+  },
+  location: {
+    title: 'Ubicarme en casa',
+    hint: 'Argus puede saber en qué habitación estás (por las cámaras, el sonido y, si lo activas, tu celular) para hablarte por la cámara más cercana. Solo el propietario lo consulta. Si lo apagas, solo se usa para seguir la conversación que tú empezaste.',
+    'withdraw-title': '¿Dejar de ubicarte en casa?',
+    'withdraw-description':
+      'Argus dejará de calcular en qué habitación estás. Seguirá oyéndote en la cámara a la que llamaste, solo durante esa conversación.',
+  },
+  signage: {
+    title: 'Aviso para las entradas',
+    description:
+      'Colócalo en cada acceso a una zona con cámaras. Escribe quién responde por la instalación y cómo contactarlo.',
+    'responsible-label': 'Responsable',
+    'responsible-placeholder': 'Nombre y contacto',
+    heading: 'ZONA VIDEOVIGILADA',
+    'heading-audio': 'ZONA VIDEOVIGILADA CON AUDIO',
+    'line-cameras': 'Esta zona tiene cámaras de seguridad.',
+    'line-audio':
+      'Algunas cámaras tienen micrófono y parlante: si dices “Argus”, suena un tono y un asistente automático te contesta.',
+    'line-no-recording': 'No se guarda audio antes de ese tono.',
+    'line-responsible': 'Responsable: {name}',
+    'line-rights':
+      'Puedes ejercer tus derechos de acceso, rectificación, cancelación y oposición ante el responsable. Autoridad: {authority}.',
+    'line-law': 'Conforme a {laws}.',
+    print: 'Imprimir',
+    share: 'Compartir',
+    copied: 'Aviso copiado',
+    'share-failed': 'No se pudo compartir el aviso',
   },
   person: {
     title: 'Privacidad',

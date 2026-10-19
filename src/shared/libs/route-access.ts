@@ -23,6 +23,7 @@ const ROUTE_RULES: Readonly<Record<string, RouteRule>> = {
   '/cameras': { allows: (view) => hasCapability(view, CAPABILITY.cameraView), fallback: '/' },
   '/agenda': { allows: (view) => hasCapability(view, CAPABILITY.agendaRead), fallback: '/' },
   '/projects': { allows: (view) => view.roleActive && hasCapability(view, CAPABILITY.projectsRead), fallback: '/' },
+  '/watch': { allows: (view) => hasCapability(view, CAPABILITY.assistantVoice), fallback: '/' },
 };
 
 const EXACT_RULES: Readonly<Record<string, RouteRule>> = {

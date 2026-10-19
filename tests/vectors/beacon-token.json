@@ -1,0 +1,33 @@
+{
+  "algorithm": "HMAC-SHA256(seed, uint64_be(floor(nowSeconds / rotateSeconds)))[0:16] as a 128-bit service UUID",
+  "cases": [
+    {
+      "seed": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "nowSeconds": 1791000000,
+      "rotateSeconds": 900,
+      "counter": 1990000,
+      "uuid": "630f3da7-3b09-8e68-733f-9e64db387f84"
+    },
+    {
+      "seed": "/+7dzLuqmYh3ZlVEMyIRAP/u3cy7qpmId2ZVRDMiEQA=",
+      "nowSeconds": 1791000899,
+      "rotateSeconds": 900,
+      "counter": 1990000,
+      "uuid": "7a88a4ed-64ac-ad1e-52d7-ec3da75e0fea"
+    },
+    {
+      "seed": "/+7dzLuqmYh3ZlVEMyIRAP/u3cy7qpmId2ZVRDMiEQA=",
+      "nowSeconds": 1791000900,
+      "rotateSeconds": 900,
+      "counter": 1990001,
+      "uuid": "7daa2817-ff65-9c42-7434-0a328b6b99d4"
+    },
+    {
+      "seed": "WlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlo=",
+      "nowSeconds": 0,
+      "rotateSeconds": 60,
+      "counter": 0,
+      "uuid": "815f5dcb-8d00-18c8-7f54-78f78b1cea4e"
+    }
+  ]
+}

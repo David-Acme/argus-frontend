@@ -17,7 +17,9 @@ type UsePrivacyDirectoryOptions = {
   enabled?: boolean;
 };
 
-export type HouseholdSwitch = PrivacySignal | 'visitorRecognition';
+export type HouseholdSwitch = PrivacySignal | 'location' | 'visitorRecognition' | 'watchman';
+
+const ACKNOWLEDGED_SWITCHES: readonly HouseholdSwitch[] = ['visitorRecognition', 'watchman'];
 
 const load = () => privacyService.directory();
 
@@ -26,6 +28,8 @@ const OFF_CONFIRMATION = {
   faceCameras: ['screens.privacy.household.off-face-title', 'screens.privacy.household.off-face-description'],
   voiceLearning: ['screens.privacy.household.off-voice-title', 'screens.privacy.household.off-voice-description'],
   cameraAudio: ['screens.privacy.household.off-audio-title', 'screens.privacy.household.off-audio-description'],
+  location: ['screens.privacy.household.off-location-title', 'screens.privacy.household.off-location-description'],
+  watchman: ['screens.privacy.household.watchman-off-title', 'screens.privacy.household.watchman-off-description'],
   visitorRecognition: [
     'screens.privacy.household.visitors-off-title',
     'screens.privacy.household.visitors-off-description',
@@ -39,7 +43,9 @@ function patched(directory: PrivacyDirectory | null, patch: HouseholdPrivacyPatc
     faceCameras: patch.faceCameras ?? directory.household.faceCameras,
     voiceLearning: patch.voiceLearning ?? directory.household.voiceLearning,
     cameraAudio: patch.cameraAudio ?? directory.household.cameraAudio,
+    location: patch.location ?? directory.household.location,
     visitorRecognition: patch.visitorRecognition ?? directory.household.visitorRecognition,
+    watchman: patch.watchman ?? directory.household.watchman,
   };
   return { ...directory, household };
 }
@@ -88,7 +94,7 @@ export function usePrivacyDirectory({ enabled = true }: UsePrivacyDirectoryOptio
         if (!accepted) return false;
       }
       return save(
-        key === 'visitorRecognition' && value ? { [key]: value, acknowledge: acknowledged } : { [key]: value }
+        ACKNOWLEDGED_SWITCHES.includes(key) && value ? { [key]: value, acknowledge: acknowledged } : { [key]: value }
       );
     },
     [save, t]

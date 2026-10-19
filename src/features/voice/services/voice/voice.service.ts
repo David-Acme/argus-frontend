@@ -20,6 +20,7 @@ import {
   VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_EVENT_TYPE,
+  VOICE_HANDOFF_TYPE,
   VOICE_INTERRUPTED_TYPE,
   VOICE_MIC_FRAME_MS,
   VOICE_MODE_DUPLEX,
@@ -89,6 +90,12 @@ import {
   type CallBoundary,
 } from '@/features/voice/model/voice-action-log';
 import { log } from '@/core/services/log';
+import {
+  readWatchHandoff,
+  WATCH_CAMERA_STAYS_ERROR,
+  WATCH_HANDOFF_BUDGET_MS,
+  watchHandoffStep,
+} from '@/features/voice/model/watch-handoff';
 import { createVoiceMic } from './voice-platform';
 import {
   parseAssistantText,
@@ -191,6 +198,8 @@ class VoiceService {
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
   private closedCallId: string | null = null;
   private closedReason: CallEndReason | null = null;
+  private handoffConversationId: string | null = null;
+  private handoffTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly declineOnce = declineOncePerSession((callId) => requestCallDecline({ callId }));
   private readonly handlers: Readonly<Record<string, FrameHandler>> = this.buildHandlers();
   private snapshotValue: VoiceSnapshot = this.buildSnapshot();
@@ -267,12 +276,17 @@ class VoiceService {
     this.liveCameraId = null;
     this.resetMicPending();
     this.playout.stop();
+    this.clearHandoff();
+    if (options.watchConversationId) this.armHandoff(session, options.watchConversationId);
     this.notify();
 
     const realtime = rtcCallSupported();
     if (!(realtime && IS_TAURI) && !(await this.microphoneGranted(session))) return;
     if (realtime) {
-      const handled = await this.startRealtime(session, { callId: options.callId }).catch(
+      const handled = await this.startRealtime(session, {
+        callId: options.callId,
+        watchConversationId: options.watchConversationId,
+      }).catch(
         (reason: unknown) => {
           log.error('voice', 'the call could not be answered', reason);
           if (this.isCurrent(session))
@@ -281,12 +295,44 @@ class VoiceService {
         },
       );
       if (handled || !this.isCurrent(session)) return;
-      if (options.callId) {
+      if (options.callId || options.watchConversationId) {
         this.fail('RTC_UNAVAILABLE|Argus cannot take this call here');
         return;
       }
     }
+    if (options.watchConversationId) {
+      this.fail('RTC_UNAVAILABLE|This device cannot take the camera conversation');
+      return;
+    }
     await this.startLegacy(session);
+  }
+
+  completeWatchHandoff(conversationId: string): void {
+    if (this.handoffConversationId !== conversationId || !this.active) return;
+    this.clearHandoff();
+    traceEvent('voice', 'joined', 'watch-handoff');
+    this.setMuted(false);
+  }
+
+  get watchHandoffPending(): string | null {
+    return this.handoffConversationId;
+  }
+
+  private armHandoff(session: number, conversationId: string): void {
+    this.handoffConversationId = conversationId;
+    this.muted = true;
+    this.handoffTimer = setTimeout(() => {
+      this.handoffTimer = null;
+      if (!this.isCurrent(session) || this.handoffConversationId !== conversationId) return;
+      this.handoffConversationId = null;
+      this.fail(WATCH_CAMERA_STAYS_ERROR);
+    }, WATCH_HANDOFF_BUDGET_MS);
+  }
+
+  private clearHandoff(): void {
+    if (this.handoffTimer !== null) clearTimeout(this.handoffTimer);
+    this.handoffTimer = null;
+    this.handoffConversationId = null;
   }
 
   private async microphoneGranted(session: number): Promise<boolean> {
@@ -510,6 +556,7 @@ class VoiceService {
   stop(): void {
     traceEvent('voice', 'stop', traceReasonOf(`active-${this.active}-session-${this.serverSession}-transport-${this.transport}`));
     this.clearWaiting();
+    this.clearHandoff();
     if (this.revoked) {
       this.active = false;
       this.notify();
@@ -673,6 +720,7 @@ class VoiceService {
   }
 
   private finishCall(): void {
+    this.clearHandoff();
     this.phase = 'done';
     this.active = false;
     this.liveCameraId = null;
@@ -862,6 +910,16 @@ class VoiceService {
         this.playout.drainThenStop();
         this.notify();
       },
+      [VOICE_HANDOFF_TYPE]: (payload) => {
+        const frame = readWatchHandoff(payload);
+        if (!frame) return;
+        const step = watchHandoffStep(this.handoffConversationId, frame);
+        if (step === 'open-microphone') this.completeWatchHandoff(frame.conversationId);
+        if (step === 'camera-stays') {
+          this.clearHandoff();
+          this.fail(WATCH_CAMERA_STAYS_ERROR, { serverGone: true });
+        }
+      },
       [VOICE_ERROR_TYPE]: (payload) => {
         this.fail(parseVoiceError(payload), { serverGone: true });
       },
@@ -993,6 +1051,7 @@ class VoiceService {
 
   private fail(message: string, { serverGone }: FailOptions = { serverGone: false }): void {
     devLog('fail:', message);
+    this.clearHandoff();
     this.error = message;
     this.phase = 'error';
     this.active = false;

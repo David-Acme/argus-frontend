@@ -40,6 +40,8 @@ export interface ICameraCacheRow {
   recordMode: CameraRecordMode;
   privacyState: CameraPrivacyState;
   privacyObeyed: boolean;
+  watchman: boolean;
+  noAudio: boolean;
   retentionDays: number | null;
   retentionIncident: boolean;
   isOnline: boolean;

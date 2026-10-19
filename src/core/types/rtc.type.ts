@@ -44,6 +44,7 @@ export type RtcTokenGrant = {
 export type RtcTokenRequest = {
   callId?: string;
   resume?: boolean;
+  watchConversationId?: string;
 };
 
 export type RtcCallOutcome = 'not-found' | 'taken' | 'expired';

@@ -128,5 +128,17 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 14,
+      steps: [
+        addColumns({
+          table: 'camera',
+          columns: [
+            { name: 'watchman', type: 'boolean' },
+            { name: 'no_audio', type: 'boolean' },
+          ],
+        }),
+      ],
+    },
   ],
 });

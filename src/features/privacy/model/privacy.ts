@@ -112,3 +112,26 @@ export const consentDraft = {
     return taken;
   },
 };
+
+export function locationChosen(choices: PrivacyChoices): boolean {
+  return choices.location !== false;
+}
+
+export function locationOffered(
+  me: Pick<PrivacyMe, 'applicable'> | null,
+  moduleActive: (moduleId: string) => boolean
+): boolean {
+  return moduleActive(PRIVACY_SIGNAL_MODULE.cameraAudio) && me?.applicable?.location !== false;
+}
+
+export function withLocation(me: PrivacyMe, value: boolean): PrivacyChoices {
+  return { ...me.choices, location: value };
+}
+
+export type WatchmanReadiness = 'off' | 'audio-off' | 'audio-held' | 'ready';
+
+export function watchmanReadiness(household: HouseholdPrivacy, states: readonly PrivacyState[]): WatchmanReadiness {
+  if (!household.watchman) return 'off';
+  if (!household.cameraAudio) return 'audio-off';
+  return cameraAudioHeldBy(states, household) > 0 ? 'audio-held' : 'ready';
+}

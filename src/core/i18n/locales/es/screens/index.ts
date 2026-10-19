@@ -25,6 +25,8 @@ import { access } from './access';
 import { reminders } from './reminders';
 import { activity } from './activity';
 import { notification } from './notification';
+import { watch } from './watch';
+import { proximity } from './proximity';
 
 export const screens = {
   home,
@@ -54,4 +56,6 @@ export const screens = {
   reminders,
   activity,
   notification,
+  watch,
+  proximity,
 } as const;

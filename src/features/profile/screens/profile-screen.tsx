@@ -9,6 +9,7 @@ import { pairedSinceLabel } from '@/features/profile/services/paired-since';
 import { SessionsSection } from '@/features/sessions';
 import { CallPreferencesSection } from '@/features/voice';
 import { PrivacySection } from '@/features/privacy';
+import { ProximitySection } from '@/features/proximity';
 import { SafetySection } from '@/features/safety';
 import { ModuleRequestsSection } from '@/features/modules';
 import { Icon } from '@/shared/components/ui/icon';
@@ -162,6 +163,7 @@ export default function ProfileScreen() {
       <SafetySection />
       {roleActive ? <CallPreferencesSection /> : null}
       <PrivacySection />
+      {roleActive ? <ProximitySection /> : null}
       <ModuleRequestsSection />
     </AppScreen>
   );

@@ -20,5 +20,7 @@ export function voiceErrorMessage(error: string | null, t: TranslateFn): string 
   if (code === 'TOO_MANY_REQUESTS') return t('screens.voice.errors.too-many-calls');
   if (code === 'RTC_UNAVAILABLE') return t('screens.voice.errors.rtc-unavailable');
   if (code === 'CALL_CONNECT_FAILED') return t('screens.voice.errors.connect-failed');
+  if (code === 'WATCH_CAMERA_STAYS') return t('screens.voice.errors.watch-camera-stays');
+  if (code === 'WATCH_NOT_FOUND' || code === 'WATCH_EXPIRED') return t('screens.voice.errors.watch-gone');
   return t('screens.voice.errors.generic');
 }

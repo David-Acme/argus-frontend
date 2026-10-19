@@ -1,6 +1,6 @@
 export type PrivacySignal = 'presence' | 'faceCameras' | 'voiceLearning' | 'cameraAudio';
 
-export type PrivacyChoices = Record<PrivacySignal, boolean>;
+export type PrivacyChoices = Record<PrivacySignal, boolean> & { location?: boolean };
 
 export interface PrivacyState {
   decided: boolean;
@@ -20,6 +20,7 @@ export interface PrivacyMe extends PrivacyState {
 
 export interface HouseholdPrivacy extends PrivacyChoices {
   visitorRecognition: boolean;
+  watchman: boolean;
 }
 
 export interface UserPrivacy extends PrivacyState {
@@ -32,6 +33,7 @@ export interface PrivacyDirectory {
   household: HouseholdPrivacy;
   householdUpdatedAt: number | null;
   visitorAcknowledgedAt: number | null;
+  watchmanAcknowledgedAt: number | null;
   users: UserPrivacy[];
 }
 
