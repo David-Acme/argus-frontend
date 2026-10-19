@@ -182,3 +182,65 @@ describe('the cumulative recompute of a two-year agenda', () => {
     expect(recomputeMedianMs({ series, zone: otherHouseholdZone(), runs: 5 })).toBeLessThanOrEqual(SANITY_MS);
   });
 });
+
+describe('one occurrence changed or skipped', () => {
+  const SECOND = Date.UTC(2026, 9, 12, 13, 0, 0);
+  const THIRD = Date.UTC(2026, 9, 19, 13, 0, 0);
+  const entriesOf = (series: ICalendarEventCacheSource, days = 21): CalendarEntry[] =>
+    toCalendarEntries({ events: [], reminders: [], tasks: [], series: [series], zone: 'America/Lima' }, range(OCT_1, days));
+
+  test('a skipped occurrence leaves the agenda and the others stay', () => {
+    const entries = entriesOf(event({ recurrenceExceptions: [{ occurrence: SECOND, cancelled: true }] }));
+    expect(entries.map((entry) => entry.id)).toEqual([
+      'event:e1@2026-10-05T13:00:00.000Z',
+      'event:e1@2026-10-19T13:00:00.000Z',
+    ]);
+  });
+
+  test('a moved occurrence keeps its id, takes its new time and keeps its length unless an end is given', () => {
+    const later = SECOND + 2 * HOUR;
+    const entries = entriesOf(
+      event({ recurrenceExceptions: [{ occurrence: SECOND, cancelled: false, startsAt: later, title: 'Clase movida' }] })
+    );
+    const moved = entries.find((entry) => entry.id === 'event:e1@2026-10-12T13:00:00.000Z');
+    expect(moved?.startsAt).toBe(later);
+    expect(moved?.endsAt).toBe(later + 90 * 60_000);
+    expect(moved?.title).toBe('Clase movida');
+    expect(moved?.location).toBe('Conservatorio');
+    expect(entries.find((entry) => entry.id.endsWith('2026-10-19T13:00:00.000Z'))?.title).toBe('Clase de piano');
+
+    const ended = entriesOf(
+      event({
+        recurrenceExceptions: [{ occurrence: SECOND, cancelled: false, endsAt: SECOND + 3 * HOUR, location: '' }],
+      })
+    ).find((entry) => entry.id === 'event:e1@2026-10-12T13:00:00.000Z');
+    expect(ended?.startsAt).toBe(SECOND);
+    expect(ended?.endsAt).toBe(SECOND + 3 * HOUR);
+    expect(ended?.location).toBeUndefined();
+  });
+
+  test('an occurrence moved into the window shows, one moved out of it does not', () => {
+    const intoWindow = entriesOf(
+      event({ recurrenceExceptions: [{ occurrence: Date.UTC(2026, 9, 26, 13, 0, 0), cancelled: false, startsAt: THIRD + DAY }] })
+    );
+    expect(intoWindow.map((entry) => entry.id)).toEqual([
+      'event:e1@2026-10-05T13:00:00.000Z',
+      'event:e1@2026-10-12T13:00:00.000Z',
+      'event:e1@2026-10-19T13:00:00.000Z',
+      'event:e1@2026-10-26T13:00:00.000Z',
+    ]);
+    expect(intoWindow.at(-1)?.startsAt).toBe(THIRD + DAY);
+
+    const outOfWindow = entriesOf(
+      event({ recurrenceExceptions: [{ occurrence: THIRD, cancelled: false, startsAt: THIRD + 10 * DAY }] })
+    );
+    expect(outOfWindow.map((entry) => entry.id)).toEqual([
+      'event:e1@2026-10-05T13:00:00.000Z',
+      'event:e1@2026-10-12T13:00:00.000Z',
+    ]);
+  });
+
+  test('a series without changes builds exactly the entries it built before', () => {
+    expect(entriesOf(event({ recurrenceExceptions: [] }))).toEqual(entriesOf(event()));
+  });
+});

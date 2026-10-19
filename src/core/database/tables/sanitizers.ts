@@ -7,6 +7,7 @@ import {
   type ConversationKind,
   type ConversationLeg,
   type ConversationState,
+  type RecurrenceException,
   type ZonePoint,
 } from '@/core/types';
 
@@ -42,3 +43,34 @@ export const sanitizeConversationLeg = (raw: unknown): ConversationLeg | null =>
 
 export const sanitizeConversationState = (raw: unknown): ConversationState =>
   memberOf(CONVERSATION_STATES, raw) ?? 'received';
+
+const finiteOrUndefined = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+const textOrUndefined = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+
+function recurrenceExceptionOf(raw: unknown): RecurrenceException | null {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
+  const item = raw as Record<string, unknown>;
+  const occurrence = finiteOrUndefined(item.occurrence);
+  if (occurrence === undefined || occurrence <= 0) return null;
+  if (item.cancelled === true) return { occurrence, cancelled: true };
+  const exception: RecurrenceException = { occurrence, cancelled: false };
+  const startsAt = finiteOrUndefined(item.startsAt);
+  const endsAt = finiteOrUndefined(item.endsAt);
+  const title = textOrUndefined(item.title);
+  const location = textOrUndefined(item.location);
+  if (startsAt !== undefined) exception.startsAt = startsAt;
+  if (endsAt !== undefined) exception.endsAt = endsAt;
+  if (title !== undefined) exception.title = title;
+  if (location !== undefined) exception.location = location;
+  return Object.keys(exception).length > 2 ? exception : null;
+}
+
+export const sanitizeRecurrenceExceptions = (raw: unknown): RecurrenceException[] =>
+  Array.isArray(raw)
+    ? raw
+        .map(recurrenceExceptionOf)
+        .filter((exception): exception is RecurrenceException => exception !== null)
+        .sort((left, right) => left.occurrence - right.occurrence)
+    : [];

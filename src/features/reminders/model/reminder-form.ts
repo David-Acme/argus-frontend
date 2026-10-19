@@ -1,5 +1,6 @@
-import type { IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
+import type { IOccurrenceChange, IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
 import {
+  currentOccurrence,
   isRecurrenceIntervalDraft,
   repeatDraftOf,
   ruleOfRepeat,
@@ -53,3 +54,10 @@ export function updateBody(saved: IReminderCacheRow, draft: ReminderDraft): IRem
 }
 
 export const isEmptyUpdate = (body: IReminderUpdate): boolean => Object.keys(body).length === 0;
+
+export type OccurrenceMove = Pick<IOccurrenceChange, 'occurrence' | 'startsAt'>;
+
+export function occurrenceMoveBody(saved: IReminderCacheRow, at: number): OccurrenceMove | null {
+  if (seconds(at) === seconds(saved.scheduledAt)) return null;
+  return { occurrence: seconds(currentOccurrence(saved)), startsAt: seconds(at) };
+}

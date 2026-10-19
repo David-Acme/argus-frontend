@@ -35,6 +35,7 @@ import {
   calendarEntryRecordId,
   canShareCalendarEntry,
   entryPermissions,
+  occurrenceOf,
 } from '@/features/agenda/model/calendar-entry-actions';
 
 type AgendaParams = { edit?: string; at?: string };
@@ -61,6 +62,7 @@ export default function ScheduleScreen() {
   const [eventFormOpen, setEventFormOpen] = useState(false);
   const [createAt, setCreateAt] = useState<Date | null>(null);
   const [editingEventId, setEditingEventId] = useState('');
+  const [editingOccurrence, setEditingOccurrence] = useState<CalendarEntry | null>(null);
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
@@ -95,6 +97,18 @@ export default function ScheduleScreen() {
   const sidePanel = isWide && (view === 'agenda' || view === 'day');
 
   const editingEvent = useMemo<ICalendarEventFormRecord | null>(() => {
+    if (editingOccurrence) {
+      return {
+        id: calendarEntryRecordId(editingOccurrence),
+        title: editingOccurrence.title,
+        startsAt: new Date(editingOccurrence.startsAt),
+        endsAt: editingOccurrence.endsAt == null ? null : new Date(editingOccurrence.endsAt),
+        isAllDay: editingOccurrence.isAllDay,
+        location: editingOccurrence.location ?? '',
+        description: editingOccurrence.description ?? '',
+        recurrenceRule: editingOccurrence.series?.rule ?? null,
+      };
+    }
     const entry = entries.find(
       (candidate) =>
         candidate.source === 'event' && calendarEntryRecordId(candidate) === editingEventId
@@ -112,7 +126,7 @@ export default function ScheduleScreen() {
       description: entry.description ?? '',
       recurrenceRule: entry.series?.rule ?? null,
     };
-  }, [editingEventId, entries]);
+  }, [editingEventId, editingOccurrence, entries]);
 
   const pendingEditEntry = pendingEditId
     ? entries.find(
@@ -152,6 +166,7 @@ export default function ScheduleScreen() {
 
   const createEvent = useCallback((at: Date | null) => {
     setEditingEventId('');
+    setEditingOccurrence(null);
     setCreateAt(at);
     setEventFormOpen(true);
   }, []);
@@ -160,6 +175,7 @@ export default function ScheduleScreen() {
     (entry: CalendarEntry) => {
       setActionEntry(null);
       if (entry.source === 'event') {
+        setEditingOccurrence(null);
         setEditingEventId(calendarEntryRecordId(entry));
         setEventFormOpen(true);
         return;
@@ -170,6 +186,13 @@ export default function ScheduleScreen() {
     [router]
   );
 
+  const editOccurrence = useCallback((entry: CalendarEntry) => {
+    setActionEntry(null);
+    setEditingEventId('');
+    setEditingOccurrence(entry);
+    setEventFormOpen(true);
+  }, []);
+
   const renderActions = useCallback(
     (entry: CalendarEntry) => (
       <EntryActionsMenu
@@ -177,10 +200,11 @@ export default function ScheduleScreen() {
         {...entryPermissions(entry, can)}
         canShare={shareableEntry(entry)}
         onEdit={editEntry}
+        onEditOccurrence={editOccurrence}
         onShare={openShare}
       />
     ),
-    [can, editEntry, openShare, shareableEntry]
+    [can, editEntry, editOccurrence, openShare, shareableEntry]
   );
 
   const renderContextMenu = useCallback(
@@ -190,11 +214,12 @@ export default function ScheduleScreen() {
         {...entryPermissions(entry, can)}
         canShare={shareableEntry(entry)}
         onEdit={editEntry}
+        onEditOccurrence={editOccurrence}
         onShare={openShare}
         contextTrigger={trigger}
       />
     ),
-    [can, editEntry, openShare, shareableEntry]
+    [can, editEntry, editOccurrence, openShare, shareableEntry]
   );
 
   const handlers: EntryHandlers = {
@@ -366,11 +391,13 @@ export default function ScheduleScreen() {
           setEventFormOpen(open);
           if (!open) {
             setEditingEventId('');
+            setEditingOccurrence(null);
             setCreateAt(null);
           }
         }}
         startsAt={createAt ?? selectedDay}
         event={editingEvent}
+        occurrence={editingOccurrence ? occurrenceOf(editingOccurrence) : null}
       />
       <CalendarEntryDetail
         entry={detailEntry}
@@ -386,6 +413,7 @@ export default function ScheduleScreen() {
           {...entryPermissions(actionEntry, can)}
           canShare={shareableEntry(actionEntry)}
           onEdit={editEntry}
+          onEditOccurrence={editOccurrence}
           onShare={openShare}
           open
           onOpenChange={(open) => {

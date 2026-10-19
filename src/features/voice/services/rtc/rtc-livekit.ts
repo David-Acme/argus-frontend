@@ -1,6 +1,6 @@
 import type { Participant, RemoteParticipant, RemoteTrack, Room } from 'livekit-client';
 import type { IRealtimeCall } from '@/core/interfaces';
-import type { RtcEvent, RtcJoin } from '@/core/types';
+import type { RtcEvent, RtcIceServer, RtcJoin } from '@/core/types';
 import { decodeUtf8, encodeUtf8, endReasonOf } from '@/features/voice/model/rtc-protocol';
 
 type Listener = (event: RtcEvent) => void;
@@ -12,6 +12,16 @@ export type LivekitCallOptions = {
 };
 
 const AGENT_STATE_ATTRIBUTE = 'lk.agent.state';
+
+export function connectOptionsOf(join: RtcJoin): {
+  autoSubscribe: boolean;
+  rtcConfig?: { iceServers: RtcIceServer[] };
+} {
+  const iceServers = join.iceServers ?? [];
+  return iceServers.length > 0
+    ? { autoSubscribe: true, rtcConfig: { iceServers } }
+    : { autoSubscribe: true };
+}
 const LEVEL_INTERVAL_MS = 66;
 
 export class LivekitRealtimeCall implements IRealtimeCall {
@@ -76,7 +86,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
         this.emit({ kind: 'data', topic, payload: decodeUtf8(payload) });
       });
     try {
-      await room.connect(target.url, target.token, { autoSubscribe: true });
+      await room.connect(target.url, target.token, connectOptionsOf(target));
       await room.localParticipant.setMicrophoneEnabled(true);
     } catch (error) {
       await this.leave();

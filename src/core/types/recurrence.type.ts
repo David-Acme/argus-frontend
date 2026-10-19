@@ -18,3 +18,12 @@ export type ZoneClock = {
   wallOf: (epochMs: number) => WallTime;
   epochOf: (wall: WallTime) => number;
 };
+
+export type RecurrenceException = {
+  occurrence: number;
+  cancelled: boolean;
+  startsAt?: number;
+  endsAt?: number;
+  title?: string;
+  location?: string;
+};

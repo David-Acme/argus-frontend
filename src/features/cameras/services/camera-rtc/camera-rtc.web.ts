@@ -7,7 +7,8 @@ function browserSupportsRtc(): boolean {
 }
 
 const browserPlatform: RtcPlatform = {
-  createPeer: () => Promise.resolve(new RTCPeerConnection({ iceServers: [] }) as unknown as RtcPeer),
+  createPeer: (iceServers) =>
+    Promise.resolve(new RTCPeerConnection({ iceServers }) as unknown as RtcPeer),
   streamWith: (current: CameraRtcStream | null, event: RtcTrackEvent): CameraRtcStream | null => {
     const stream = current instanceof MediaStream ? current : new MediaStream();
     stream.addTrack(event.track as unknown as MediaStreamTrack);

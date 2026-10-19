@@ -28,7 +28,7 @@ export const migrations = schemaMigrations({
     {
       toVersion: 2,
       steps: [
-        fromSchema(CALENDAR_EVENT_SCHEMA),
+        fromSchema(CALENDAR_EVENT_SCHEMA, ['recurrence_exceptions']),
         fromSchema(PROJECT_SCHEMA),
         fromSchema(PROJECT_TASK_SCHEMA),
         createTable({
@@ -149,6 +149,19 @@ export const migrations = schemaMigrations({
           name: CONVERSATION_MESSAGE_SCHEMA.name,
           columns: CONVERSATION_MESSAGE_SCHEMA.columnArray,
           unsafeSql: (sql) => sql + CONVERSATION_THREAD_INDEX_SQL,
+        }),
+      ],
+    },
+    {
+      toVersion: 16,
+      steps: [
+        addColumns({
+          table: 'calendar_event',
+          columns: [{ name: 'recurrence_exceptions', type: 'string' }],
+        }),
+        addColumns({
+          table: 'reminder',
+          columns: [{ name: 'recurrence_exceptions', type: 'string' }],
         }),
       ],
     },

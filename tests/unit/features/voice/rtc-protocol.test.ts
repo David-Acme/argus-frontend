@@ -55,6 +55,24 @@ describe('token answer', () => {
     });
   });
 
+  test('a grant may carry relay servers, and odd relays are dropped without refusing the call', () => {
+    const relayed = {
+      ...grant,
+      iceServers: [
+        { urls: ['turn:turn.example:3478?transport=udp'], username: '1800000000:7', credential: 'c' },
+      ],
+    };
+    expect(readTokenAnswer({ status: 200, ok: true, info: relayed, errors: null })).toEqual({
+      kind: 'granted',
+      grant: relayed,
+    });
+    const odd = { ...grant, iceServers: [{ urls: ['stun:x'], username: 'u', credential: 'c' }] };
+    expect(readTokenAnswer({ status: 200, ok: true, info: odd, errors: null })).toEqual({
+      kind: 'granted',
+      grant: { ...grant, iceServers: [] },
+    });
+  });
+
   test('an old server or an absent LiveKit falls back to the PCM call', () => {
     expect(readTokenAnswer(failure(404, 'NOT_FOUND'))).toEqual({ kind: 'fallback' });
     expect(readTokenAnswer(failure(404, 'UNREACHABLE_ROUTE'))).toEqual({ kind: 'fallback' });

@@ -12,9 +12,9 @@ function isNativeStream(value: unknown): value is CameraRtcStream {
 }
 
 const nativePlatform: RtcPlatform = {
-  createPeer: async () => {
+  createPeer: async (iceServers) => {
     const { RTCPeerConnection } = await import('@livekit/react-native-webrtc');
-    return new RTCPeerConnection({ iceServers: [] }) as unknown as RtcPeer;
+    return new RTCPeerConnection({ iceServers }) as unknown as RtcPeer;
   },
   streamWith: (current: CameraRtcStream | null, event: RtcTrackEvent): CameraRtcStream | null => {
     const [first] = event.streams;

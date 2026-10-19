@@ -1,4 +1,11 @@
-import type { RecurrenceFrequency, RecurrenceRule, TranslateFn, WallTime, ZoneClock } from '@/core/types';
+import type {
+  RecurrenceException,
+  RecurrenceFrequency,
+  RecurrenceRule,
+  TranslateFn,
+  WallTime,
+  ZoneClock,
+} from '@/core/types';
 import {
   RECURRENCE_FINEST_PER_DAY,
   RECURRENCE_FREQUENCIES,
@@ -258,6 +265,59 @@ export function firstOccurrenceAfter({ rule, anchor, moment, clock }: FirstOccur
   const series = seriesOf(rule, anchor, clock);
   const index = firstIndexAfter(series, moment);
   return index === null ? null : occurrenceOf(series, index);
+}
+
+export type NextFiringInput = {
+  rule: RecurrenceRule;
+  anchor: number;
+  after: number;
+  moment: number;
+  exceptions: readonly RecurrenceException[];
+  clock: ZoneClock;
+};
+
+export type NextFiring = { occurrence: number; at: number };
+
+export const exceptionAt = (
+  exceptions: readonly RecurrenceException[] | undefined,
+  occurrence: number
+): RecurrenceException | undefined => exceptions?.find((exception) => exception.occurrence === occurrence);
+
+export function scheduledOccurrence(
+  exceptions: readonly RecurrenceException[] | undefined,
+  scheduledAt: number
+): number {
+  const moved = exceptions?.find((exception) => !exception.cancelled && exception.startsAt === scheduledAt);
+  return moved ? moved.occurrence : scheduledAt;
+}
+
+function movedBehind({ after, moment, exceptions }: NextFiringInput): NextFiring | null {
+  let behind: NextFiring | null = null;
+  for (const exception of exceptions) {
+    if (exception.cancelled || exception.startsAt === undefined) continue;
+    if (exception.occurrence <= after || exception.occurrence > moment) continue;
+    if (exception.startsAt <= moment) continue;
+    if (!behind || exception.startsAt < behind.at) behind = { occurrence: exception.occurrence, at: exception.startsAt };
+  }
+  return behind;
+}
+
+export function nextFiring(input: NextFiringInput): NextFiring | null {
+  const behind = movedBehind(input);
+  if (behind) return behind;
+  const { rule, anchor, moment, exceptions, clock } = input;
+  let cursor = Math.max(input.after, moment);
+  for (let step = 0; step <= exceptions.length; step += 1) {
+    const next = firstOccurrenceAfter({ rule, anchor, moment: cursor, clock });
+    if (next === null) return null;
+    const exception = exceptionAt(exceptions, next);
+    if (!exception || (!exception.cancelled && exception.startsAt === undefined)) return { occurrence: next, at: next };
+    if (!exception.cancelled && exception.startsAt !== undefined && exception.startsAt > moment) {
+      return { occurrence: next, at: exception.startsAt };
+    }
+    cursor = next;
+  }
+  return null;
 }
 
 export function sameTimeTomorrow(moment: number, clock: ZoneClock): number {

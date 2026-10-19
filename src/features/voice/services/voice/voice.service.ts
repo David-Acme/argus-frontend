@@ -389,7 +389,12 @@ class VoiceService {
     this.notify();
     try {
       await call.join(
-        { url: grant.url, token: grant.token, agentIdentity: grant.agentIdentity },
+        {
+          url: grant.url,
+          token: grant.token,
+          agentIdentity: grant.agentIdentity,
+          iceServers: grant.iceServers ?? [],
+        },
         (event) => this.handleRtcEvent(session, event)
       );
       traceEvent('voice', 'joined', 'rtc');

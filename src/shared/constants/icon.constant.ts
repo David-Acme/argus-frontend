@@ -9,7 +9,9 @@ import Headphones from 'lucide-react-native/icons/headphones';
 import Briefcase from 'lucide-react-native/icons/briefcase';
 import Building2 from 'lucide-react-native/icons/building-2';
 import CalendarCheck from 'lucide-react-native/icons/calendar-check';
+import CalendarClock from 'lucide-react-native/icons/calendar-clock';
 import CalendarDays from 'lucide-react-native/icons/calendar-days';
+import CalendarX from 'lucide-react-native/icons/calendar-x';
 import Camera from 'lucide-react-native/icons/camera';
 import Car from 'lucide-react-native/icons/car';
 import Check from 'lucide-react-native/icons/check';
@@ -133,6 +135,8 @@ export const ICONS = {
   headphones: Headphones,
   calendar: CalendarDays,
   'calendar-check': CalendarCheck,
+  'calendar-clock': CalendarClock,
+  'calendar-x': CalendarX,
   camera: Camera,
   'check-circle': CheckCircle2,
   clock: Clock3,

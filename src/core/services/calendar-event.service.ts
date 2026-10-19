@@ -5,6 +5,7 @@ import type { CalendarEventModel } from '@/core/database';
 import type {
   ICalendarEventCreate,
   ICalendarEventUpdate,
+  IOccurrenceChange,
   IServiceResponse,
 } from '@/core/interfaces';
 import { DatabaseService } from './database.service';
@@ -21,6 +22,7 @@ const CALENDAR_SOURCE_COLUMNS = [
   'location',
   'description',
   'recurrence_rule',
+  'recurrence_exceptions',
 ];
 
 class CalendarEventService extends DatabaseService<'calendar_event'> {
@@ -63,6 +65,10 @@ class CalendarEventService extends DatabaseService<'calendar_event'> {
 
   update(id: string, body: ICalendarEventUpdate): Promise<IServiceResponse<unknown>> {
     return httpService.patch(`/calendar-event/${id}`, body);
+  }
+
+  changeOccurrence(id: string, body: IOccurrenceChange): Promise<IServiceResponse<unknown>> {
+    return httpService.patch(`/calendar-event/${id}/occurrence`, body);
   }
 
   remove(id: string): Promise<IServiceResponse<unknown>> {

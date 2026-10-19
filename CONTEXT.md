@@ -303,7 +303,11 @@ max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
   session (`session.service`), http (`http.service`), sync
   (`core/services/sync/` + WatermelonDB mappers), view-cache (MMKV snapshots),
   voice (`voice.service`) and settings (`features/settings/` + `/settings`).
-  Still pending: chat and workspace.
+  The planned chat and workspace areas were not built as such: the assistant
+  conversation is the voice call (`features/voice/`, `/call`), and the
+  workspace became agenda, projects and reminders (`features/agenda/`,
+  `features/projects/`, `features/reminders/`), all synced through the
+  autonomous `/sync` layer.
 - **Android builds working**: `bunx expo run:android` compiles and installs on
   a physical device (Redmi Note 11, `spes_global`). See "Android development
   environment" below.
@@ -1578,19 +1582,18 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     keeps the series' own start, end and rule.
   - The agenda feed has more while a series continues, which is always, because the
     grammar has no end.
-- **An occurrence edits the series; there are no single-occurrence exceptions.**
-  Exceptions are a recorded follow-up.
+- **An occurrence edits the series, unless the person picks this occurrence only** (F6b, below).
   - The form opens on the series' own start, so saving a new title does not move the
-    series to the tapped day. Its title is "Editar la serie", and its hint reads
+    series to the tapped day. Its title is "Editar toda la serie", and its hint reads
     "… Lo que cambies se aplica a toda la serie."
-  - In the menu, "Editar la serie" and "Eliminar todas las repeticiones" both carry
+  - In the menu, "Editar toda la serie" and "Eliminar todas las repeticiones" both carry
     the line "Se aplica a toda la serie".
   - Deleting a series asks first, in a danger confirm whose text reads "Se aplica a
     toda la serie: se eliminan todas sus repeticiones, también las pasadas."
     (`seriesDeleteConfirm`). The Undo toast still follows. A single event keeps going
     straight to Undo.
-  - An optimistic patch of an occurrence changes only its text fields. Its times come
-    back when the event row changes and the series re-expands.
+  - An optimistic patch of the series on an occurrence changes only its text fields. Its
+    times come back when the event row changes and the series re-expands.
   - Reminders are not expanded: the agenda shows a reminder once, at its current time.
 - **Reminder repeat.**
   - The edit dialog has a repeat picker (No se repite, Cada día, Cada semana, Cada mes,
@@ -1614,6 +1617,54 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     `reminders.test.ts` plays both cases, from the prediction to the correction: after
     February the 31st is predicted as the 28th, and in the next leap year 29 February is
     predicted as the 28th.
+
+### One occurrence of a series (F6b, 2026-10-19)
+
+The backend keeps the RFC 5545 exceptions on the series row (backend
+`services/productivity/CONTEXT.md`, "One occurrence of a series"), and the app follows them.
+
+- **Local storage.** Schema version 16 adds `recurrence_exceptions` (a string column, JSON) to `reminder` and
+  `calendar_event` through `addColumns`; v2's `calendar_event` creation leaves it out, so a replay from v1 adds it
+  once. The models read it with `@json` and `sanitizeRecurrenceExceptions` (`tables/sanitizers.ts`), so a row from
+  before the migration (an empty string) reads as no exceptions. The sync mapper (`toRecurrenceExceptions`) turns
+  the wire's JSON text, in seconds, into `RecurrenceException[]` in milliseconds like every local instant
+  (`{occurrence, cancelled, startsAt?, endsAt?, title?, location?}`, `core/types/recurrence.type.ts`). A change
+  arrives as a `Log` diff of the whole field on the existing row, never as a new row.
+- **The expansion applies them** (`calendar.projection.ts`). A skipped occurrence leaves the window. A changed one
+  keeps its id, `event:<id>@<original ISO start>`, and takes its own start, end (or the series' length from its new
+  start), title and place. An occurrence moved into the window from outside it shows, one moved out does not. A
+  series without exceptions builds exactly the entries it built before. The occurrence of an entry is read back
+  from its id (`occurrenceOf`), so `CalendarEntry` gained no field.
+- **Agenda actions.** For an occurrence of a series the editor sees "Editar solo esta vez", "Editar toda la serie"
+  and "Cancelar solo esta vez" (en: "Edit this occurrence only", "Edit the whole series", "Skip this occurrence"),
+  the first and the last with the line "La serie sigue igual".
+  - "Editar solo esta vez" opens the event form on that occurrence's own values, titled as such, with a hint and
+    without the all-day switch and the notes (both belong to the series). Saving sends
+    `PATCH /calendar-event/{id}/occurrence` with the original start and title, place, start and end
+    (`editOccurrenceBody`), the whole change for that occurrence.
+  - "Cancelar solo esta vez" sends `{occurrence, cancelled: true}` behind an Undo toast.
+  - Both are optimistic. The calendar lens patches only the entry whose id names that occurrence, and hides a
+    skipped one through the lens's `hides` (a generic hook of `shared/libs/optimistic.ts`). An update intent now
+    settles only when its patch is a no-op on every synced row of its record, and a hiding intent only once that row
+    is gone, so the overlay of one occurrence of a series is not settled by its siblings.
+- **Reminders.** An open recurring reminder's menu has "Editar solo esta vez", "Editar toda la serie" and
+  "Cancelar solo esta vez".
+  - The reminder shown is the current occurrence; its original start is the exception whose new time is the
+    reminder's `scheduledAt`, else `scheduledAt` (`currentOccurrence`).
+  - "Editar solo esta vez" opens the reminder dialog with only the day and the time and a hint; saving sends
+    `{occurrence, startsAt}` (`occurrenceMoveBody`, nothing when the time is unchanged). The backend keeps a move
+    between the previous and the next occurrence and answers a 422 otherwise, shown as the error toast.
+  - "Cancelar solo esta vez" moves the row at once to the next occurrence that is not skipped
+    (`skippedSchedule`) and says when ("Esta vez no sonará. Próxima vez: …").
+  - Completing predicts the roll with the backend's `nextFiring`, ported to `shared/libs/recurrence.ts`: from the
+    current occurrence, past skipped ones, to a moved one's new time.
+  - A snoozed reminder sits at a time that is not an occurrence; the backend refuses to change "this occurrence"
+    then, and the refusal shows as the error toast.
+- Tests: `calendar-recurrence.test.ts` (the expansion with exceptions), `entity-mappers.test.ts` (the mapper),
+  `calendar-occurrence.test.ts` (actions, bodies, the lens and its settling), `reminders.test.ts` (current
+  occurrence, skip, roll, move body), `database-migrations.test.ts` (v15 to v16) and
+  `occurrence-change-service.test.ts` (the two PATCH calls). The two older migration tests that replayed up to
+  `SCHEMA_VERSION` now stop at version 13, the version they pin.
 
 ### Snooze (F6, 2026-10-13)
 
@@ -2802,9 +2853,17 @@ answer checked by `cameraWebRtcAnswerSchema`).
 - **The chip says which.** The stats chip on the video adds "· WebRTC" or
   "· WS" (`screens.cameras.live.transport-*`, with a spoken hint), from
   `ICameraLiveStats.transport`.
-- **Remote.** Through the tunnel WebRTC has no route (no TURN yet), so the
+- **Remote.** Without a relay, WebRTC through the tunnel has no route, so the
   first view of a session waits up to 5 s before playing over the WebSocket;
-  later views skip WebRTC until the backoff ends.
+  later views skip WebRTC until the backoff ends. Since 2026-10-19 (F1, the
+  TURN relay) the peer is built with the house's own relay when the server
+  offers one: `rtcIceService` (`src/core/services/rtc-ice/`) reads
+  `GET /rtc/ice` (`{iceServers, expiresAt}`, time-limited TURN credentials
+  argus-sync mints for the coturn the owner turned on), caches the answer
+  until a minute before it expires, and answers `[]` on any refusal or
+  failure, so a house without a relay, or an older server without the route,
+  dials directly exactly as before. `RtcPlatform.createPeer(iceServers)` hands
+  the list to `RTCPeerConnection` on the web and on the phone alike.
 - **Phones not verified here.** The native path type-checks and shares the
   session code the browser test exercised, but no phone ran it in this
   change; Android's audio routing for a camera stream (no `AudioSession`
@@ -2843,6 +2902,18 @@ platform, then leaves in its own change.
   the call. `ARGUS_RTC_FAKE_MIC=<pcm16 48 kHz mono file or wav>` replaces the
   microphone with that file and opens no audio device at all (testing
   without a microphone).
+- **The relay (2026-10-19, F1).** The call grant of `POST /rtc/token` may carry
+  `iceServers` (the house's coturn, time-limited TURN credentials). The grant
+  schema accepts them as optional and drops a malformed list to `[]` instead of
+  refusing the call; `voice.service.ts` passes them on in `RtcJoin.iceServers`.
+  `rtc-livekit.ts` (`connectOptionsOf`) hands a non-empty list to LiveKit as
+  `rtcConfig.iceServers` (the web and the phone), and the desktop's
+  `argus_rtc_join` takes it as `iceServers` and sets `RoomOptions.rtc_config`
+  in Rust, keeping only `turn:`/`turns:` servers (`relay_servers`). An empty list
+  changes nothing: LiveKit uses the servers its own join response offers.
+  `tests/unit/features/voice/rtc-livekit-options.test.ts`, the relay case of
+  `rtc-protocol.test.ts`, `tests/unit/core/services/rtc-ice/rtc-ice.test.ts` and
+  the Rust `a_join_without_relays_parses_and_only_turn_urls_are_kept` pin it.
 - **Trust.** The LiveKit front (wss 7046) presents the instance leaf. The app
   dials the token's `url` on the pinned host (`pinnedRtcUrl` /
   `protocol::pinned_url`, keeping the port). Desktop registers
@@ -4402,6 +4473,7 @@ OS version and build noted.
 - **Where it is decided.** `http.service.ts` applies the rule in `change`, the path behind `post`, `patch`, `put` and `delete`. `get` and `postMultipart` deliberately do not pass through it: the face login and registration screens explain a lost connection in their own words (`faceErrorMessage` reads `NETWORK_ERROR` itself, and both screens drive their own phase), and a login is not a change the person expects to see persisted. Every other write path — `runOptimistic` and `runServiceAction`, the forms, and the call sites that toast `serviceErrorKey` directly — gets the new copy from the shared error vocabulary (`serviceError.ts`: `WRITE_NOT_SENT` → `common.errors.write-not-sent`, `WRITE_UNCONFIRMED` → `common.errors.write-unconfirmed`, es and en) without a line of its own.
 - **A retry the person answers, never a background resend.** Both codes are retryable, so `runOptimistic` offers its Retry action, and the retry carries the same idempotency key as the first attempt. That is the only retry: nothing re-sends on its own, and the intent registry holds nothing while the app waits. `tests/unit/core/services/http/write-refusal.test.ts` pins the rule, `http-service.test.ts` pins which verbs pass through it (and that a multipart upload and a read do not), `service-error.test.ts` the copy in both languages plus the retry, and `optimistic-action.test.ts` that a refused write is said aloud and leaves no row behind.
 - **Residual, named rather than fixed.** The invitation enrolment (`inviteService.accept`) posts through `netService.requestPinned`, not through the HTTP wrapper, because it must trust the QR's own CA before the pairing is adopted, so a write it loses keeps the generic connection copy its own screen explains. It is the only change path outside the wrapper.
+- **Relay-down acceptance (2026-10-19, §8.5; to run in the consolidated device phase).** Two devices paired to one house, phone A on mobile data (remote profile through the relay), phone B on the home Wi-Fi. Stop the relay (or block the cloud host on A's network) and check, in order: (1) A keeps painting every screen it had from its cache, with "Mostrando lo último guardado en este dispositivo" in the top notice, and no screen goes blank or shows a spinner forever; (2) a change on A (rename a reminder, toggle a task, mark notifications read) is refused with `common.errors.write-not-sent` ("No puedo llegar a Argus, así que el cambio no se ha enviado…") or, after a timeout, `write-unconfirmed`, and the optimistic row rolls back; (3) Retry on A while the relay is still down refuses again with the same copy and sends nothing twice (B never sees a duplicate); (4) B keeps working normally on the LAN throughout; (5) start the relay: A reconnects on its own within the 2 s → 30 s backoff, catches up (B's changes appear without a pull-to-refresh), and the same Retry now lands once. A pass is all five on Android, and on the desktop for (1)–(3) and (5).
 
 ## Argus calls on iOS: PushKit and CallKit, prepared (2026-10-16, the closing plan's Phase 2.4)
 

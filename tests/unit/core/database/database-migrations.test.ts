@@ -395,7 +395,7 @@ describe('the camera privacy state column', () => {
       'insert into camera (id, _changed, _status, name, manufacturer, model, ip, port, username, cloud_username, driver, icon, record_mode, retention_days, capabilities, config, is_enabled, is_online, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('1', '', 'synced', 'Gate', 'tapo', 'C200', '10.0.0.5', 554, 'admin', '', 'tapo', 'video', 'events', null, '[]', '{}', 1, 1, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 11, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 11, toVersion: 13 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -443,7 +443,7 @@ describe('the camera privacy obeyed column', () => {
       'insert into camera (id, _changed, _status, name, manufacturer, model, ip, port, username, cloud_username, driver, icon, record_mode, privacy_state, retention_days, capabilities, config, is_enabled, is_online, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('1', '', 'synced', 'Gate', 'tapo', 'C200', '10.0.0.5', 554, 'admin', '', 'tapo', 'video', 'events', 'unknown', null, '[]', '{}', 1, 1, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 12, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 12, toVersion: 13 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -489,7 +489,7 @@ describe('the camera watchman and no-audio columns', () => {
       'insert into camera (id, _changed, _status, name, manufacturer, model, ip, port, username, cloud_username, driver, icon, record_mode, privacy_state, privacy_obeyed, retention_days, capabilities, config, is_enabled, is_online, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('1', '', 'synced', 'Sala', 'tapo', 'C225', '10.0.0.6', 554, 'admin', '', 'tapo', 'video', 'events', 'off', 0, null, '[]', '{}', 1, 1, 1, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 13, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 13, toVersion: 14 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -556,7 +556,7 @@ describe('the conversation_message table', () => {
       'insert into notification (id, _changed, _status, user_id, type, title, body, data, is_read, read_at, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run('1', '', 'synced', '1', 'system', 'Hi', 'There', '{}', 0, null, 1);
 
-    const steps = stepsForMigration({ migrations, fromVersion: 14, toVersion: SCHEMA_VERSION });
+    const steps = stepsForMigration({ migrations, fromVersion: 14, toVersion: 15 });
     expect(steps).not.toBeNull();
     db.exec(encodeMigrationSteps(steps ?? []));
 
@@ -565,5 +565,50 @@ describe('the conversation_message table', () => {
     insert(db);
     expect(db.query('select count(*) as n from conversation_message').get()).toEqual({ n: 1 });
     expect(db.query('select count(*) as n from notification').get()).toEqual({ n: 1 });
+  });
+});
+
+describe('the recurrence exceptions column', () => {
+  const columnsOf = (db: Database, table: string): string[] =>
+    (db.query(`select name from pragma_table_info('${table}')`).all() as { name: string }[]).map((row) => row.name);
+
+  const atVersionFifteen = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'reminder' && name !== 'calendar_event') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => column !== 'recurrence_exceptions')
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 15, tables } as AppSchema;
+  };
+
+  test('a fresh database has it on reminders and calendar events', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(columnsOf(db, 'reminder')).toContain('recurrence_exceptions');
+    expect(columnsOf(db, 'calendar_event')).toContain('recurrence_exceptions');
+  });
+
+  test('a version 15 database gains it through the migration and keeps its rows', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionFifteen()));
+    expect(columnsOf(db, 'reminder')).not.toContain('recurrence_exceptions');
+    db.query(
+      'insert into reminder (id, _changed, _status, created_by, target_user_id, title, description, scheduled_at, recurrence_rule, is_completed, completed_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('7', '', 'synced', '1', '1', 'Regar', '', 1, 'FREQ=DAILY', 0, null, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 15, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(columnsOf(db, 'reminder')).toContain('recurrence_exceptions');
+    expect(columnsOf(db, 'calendar_event')).toContain('recurrence_exceptions');
+    expect(db.query('select title, recurrence_exceptions as exceptions from reminder').get()).toEqual({
+      title: 'Regar',
+      exceptions: '',
+    });
   });
 });

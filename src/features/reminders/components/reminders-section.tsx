@@ -25,8 +25,9 @@ export function RemindersSection({ query }: RemindersSectionProps) {
   const { t } = useTranslation();
   const now = useNow(CLOCK_TICK_MS);
   const { has } = useCapabilities();
-  const { groups, complete, snooze, snoozeOptionsOf, stopRepeating, remove } = useReminders();
+  const { groups, complete, snooze, snoozeOptionsOf, skipOccurrence, stopRepeating, remove } = useReminders();
   const [editing, setEditing] = useState<IReminderCacheRow | null>(null);
+  const [editsOccurrence, setEditsOccurrence] = useState(false);
   const [showDone, setShowDone] = useState(false);
 
   if (!has(CAPABILITY.remindersRead)) return null;
@@ -45,7 +46,15 @@ export function RemindersSection({ query }: RemindersSectionProps) {
       editable={editable}
       snoozeOptions={reminder.isCompleted ? [] : snoozeOptionsOf(reminder, now)}
       onToggle={(target, isDone) => void complete(target, isDone)}
-      onEdit={setEditing}
+      onEdit={(target) => {
+        setEditsOccurrence(false);
+        setEditing(target);
+      }}
+      onEditOccurrence={(target) => {
+        setEditsOccurrence(true);
+        setEditing(target);
+      }}
+      onSkipOccurrence={(target) => void skipOccurrence(target)}
       onSnooze={(target, choice) => void snooze(target, choice)}
       onStopRepeating={(target) => void stopRepeating(target)}
       onDelete={(target) => void remove(target)}
@@ -85,12 +94,13 @@ export function RemindersSection({ query }: RemindersSectionProps) {
       )}
       {editing ? (
         <ReminderDialog
-          key={editing.id}
+          key={`${editing.id}:${editsOccurrence ? 'occurrence' : 'series'}`}
           open
           onOpenChange={(open) => {
             if (!open) setEditing(null);
           }}
           reminder={editing}
+          scope={editsOccurrence ? 'occurrence' : 'series'}
         />
       ) : null}
     </View>
