@@ -13,6 +13,7 @@ import { cn } from '@/shared/libs/utils';
 import { ModuleEnableAction } from '@/features/modules';
 import {
   isThreadRead,
+  messageCounterpartOf,
   missedCallId,
   moduleRequestOf,
   phaseOf,
@@ -75,6 +76,7 @@ const KIND_ICONS: Readonly<Record<string, IconName>> = {
   camera_fallback_digest: 'history',
   call: 'phone',
   module_request: 'blocks',
+  household_message: 'messages-square',
 };
 
 const PHASE_KEYS = {
@@ -134,7 +136,8 @@ export function NotificationThreadRow({
   const count = thread.entries.length;
   const canExpand = expandable && count > 1;
   const callId = onRead ? missedCallId(thread) : null;
-  const pressable = canExpand || callId !== null || (onRead != null && !read);
+  const counterpartId = onRead ? messageCounterpartOf(thread) : null;
+  const pressable = canExpand || callId !== null || counterpartId !== null || (onRead != null && !read);
   const critical = thread.urgency === 'critical';
   const request = moduleRequestOf(thread);
 
@@ -171,6 +174,7 @@ export function NotificationThreadRow({
     if (canExpand) setExpanded((open) => !open);
     if (!read) onRead?.(thread);
     if (callId) router.push(`/call?callId=${callId}`);
+    if (counterpartId !== null) router.push(`/conversations/${counterpartId}`);
   };
 
   const content = (

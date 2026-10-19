@@ -38,6 +38,7 @@ import { ResponseStrip } from '@/features/response';
 import { InactiveRoleScreen } from '@/features/access';
 import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
 import { RemindersSection } from '@/features/reminders';
+import { useConversationUnread } from '@/features/conversations';
 import { CAPABILITY, SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { AppScreen } from '@/shared/components/layout';
 import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
@@ -74,6 +75,8 @@ function HomeContent() {
   const overview = useCameraOverview(watchesCameras);
   const readsAgenda = has(CAPABILITY.agendaRead);
   const readsProjects = has(CAPABILITY.projectsRead);
+  const relaysMessages = has(CAPABILITY.messagesRelay);
+  const unreadMessages = useConversationUnread();
   const [query, setQuery] = useState('');
   const now = useNow(60000);
   const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
@@ -188,6 +191,14 @@ function HomeContent() {
               onOpen={() => void readAll()}
               openRequest={panelRequested}
             />
+            {relaysMessages ? (
+              <IconButton
+                icon="messages-square"
+                label={t('screens.conversations.title')}
+                badge={unreadMessages}
+                onPress={() => router.push('/conversations')}
+              />
+            ) : null}
             {readsAgenda ? (
               <IconButton
                 icon="calendar"

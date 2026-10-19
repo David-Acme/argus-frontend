@@ -5,7 +5,9 @@ import { translate } from '@/core/i18n/translate';
 import {
   alertTimesOf,
   groupNotifications,
+  householdMessageCounterpart,
   isThreadRead,
+  messageCounterpartOf,
   missedCallId,
   moduleRequestOf,
   phaseOf,
@@ -310,5 +312,26 @@ describe('a safety alert carries the time it was said and the time it was receiv
     expect(translate(localeDictionaries.en, 'screens.home.thread.delivered-at', { time: '2:35 PM' })).toBe(
       'Received 2:35 PM'
     );
+  });
+});
+
+describe('a household message notification', () => {
+  const message = (data: Record<string, unknown>) =>
+    groupNotifications([row('70', { kind: 'household_message', fromUserId: 3, messageKey: 'msg-1', ...data })])[0]!;
+
+  test('opens the conversation with the counterpart it names', () => {
+    expect(messageCounterpartOf(message({ counterpartId: 3 }))).toBe(3);
+    expect(messageCounterpartOf(message({ counterpartId: 0 }))).toBe(0);
+  });
+
+  test('falls back to the sender when the counterpart is missing or malformed', () => {
+    expect(messageCounterpartOf(message({}))).toBe(3);
+    expect(messageCounterpartOf(message({ counterpartId: -1 }))).toBe(3);
+    expect(householdMessageCounterpart({ kind: 'household_message', counterpartId: 'x', fromUserId: 'y' })).toBeNull();
+  });
+
+  test('another kind opens no conversation', () => {
+    expect(messageCounterpartOf(groupNotifications([row('71', { kind: 'call', counterpartId: 3 })])[0]!)).toBeNull();
+    expect(householdMessageCounterpart({ counterpartId: 3 })).toBeNull();
   });
 });

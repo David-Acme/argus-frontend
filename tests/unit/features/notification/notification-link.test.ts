@@ -44,3 +44,17 @@ describe('the target of a notification link', () => {
     expect(notificationLinkTarget(rows, '42')).toEqual({ kind: 'open', href: '/cameras/12' });
   });
 });
+
+describe('the href of a household message', () => {
+  test('opens the thread with its counterpart, whatever url it carries', () => {
+    expect(notificationHrefOf({ kind: 'household_message', counterpartId: 3, fromUserId: 3, messageKey: 'm' })).toBe(
+      '/conversations/3'
+    );
+    expect(notificationHrefOf({ kind: 'household_message', counterpartId: 0, url: '/agenda' })).toBe('/conversations/0');
+  });
+
+  test('falls back to the sender, and to the url when neither id is usable', () => {
+    expect(notificationHrefOf({ kind: 'household_message', fromUserId: 5 })).toBe('/conversations/5');
+    expect(notificationHrefOf({ kind: 'household_message', counterpartId: 'x', url: '/agenda' })).toBe('/agenda');
+  });
+});

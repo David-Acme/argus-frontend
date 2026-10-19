@@ -1,4 +1,5 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
+import { validCounterpartId } from '@/core/services/conversation';
 import { notificationThreadKey } from '@/core/services/notification';
 
 export const NOTIFICATION_URGENCIES = ['passive', 'active', 'time_sensitive', 'critical'] as const;
@@ -144,6 +145,17 @@ export function missedCallId(thread: Pick<NotificationThread, 'kind' | 'latest'>
   if (thread.kind !== 'call') return null;
   const callId = textField(thread.latest, 'callId');
   return callId && CALL_ID.test(callId) ? callId : null;
+}
+
+export const HOUSEHOLD_MESSAGE_KIND = 'household_message';
+
+export function householdMessageCounterpart(data: Readonly<Record<string, unknown>>): number | null {
+  if (data.kind !== HOUSEHOLD_MESSAGE_KIND) return null;
+  return validCounterpartId(data.counterpartId) ?? validCounterpartId(data.fromUserId);
+}
+
+export function messageCounterpartOf(thread: Pick<NotificationThread, 'kind' | 'latest'>): number | null {
+  return thread.kind === HOUSEHOLD_MESSAGE_KIND ? householdMessageCounterpart(thread.latest.data) : null;
 }
 
 export function isThreadRead(thread: Pick<NotificationThread, 'unreadIds'>): boolean {

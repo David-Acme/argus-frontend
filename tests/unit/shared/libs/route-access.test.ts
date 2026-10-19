@@ -109,3 +109,41 @@ describe('routeFallback for a role whose module is off', () => {
     expect(routeFallback('/call/other', guard)).toBe('/');
   });
 });
+
+describe('the conversations follow messages.relay', () => {
+  test('every role opens the list and a thread', () => {
+    for (const role of ['owner', 'resident', 'guard', 'guest'] as const) {
+      const view = viewFor(role, everything);
+      expect(view.capabilities.has(CAPABILITY.messagesRelay)).toBe(true);
+      expect(routeFallback('/conversations', view)).toBeNull();
+      expect(routeFallback('/conversations/3', view)).toBeNull();
+    }
+  });
+
+  test('a role whose module is off keeps them, since messages.relay is in the baseline', () => {
+    const guard = viewFor('guard', coreOnly);
+    expect(guard.roleActive).toBe(false);
+    expect(routeFallback('/conversations', guard)).toBeNull();
+    expect(routeFallback('/conversations/0', guard)).toBeNull();
+  });
+
+  test('without messages.relay they send the person home', () => {
+    const resident = viewFor('resident', everything);
+    const without = {
+      ...resident,
+      capabilities: new Set([...resident.capabilities].filter((id) => id !== CAPABILITY.messagesRelay)),
+    };
+    expect(routeFallback('/conversations', without)).toBe('/');
+    expect(routeFallback('/conversations/3', without)).toBe('/');
+    const inactive = viewFor('guard', coreOnly);
+    const inactiveWithout = {
+      ...inactive,
+      capabilities: new Set([...inactive.capabilities].filter((id) => id !== CAPABILITY.messagesRelay)),
+    };
+    expect(routeFallback('/conversations/3', inactiveWithout)).toBe('/');
+  });
+
+  test('the core capabilities before the context already include it', () => {
+    expect(noContextView('guest').capabilities.has(CAPABILITY.messagesRelay)).toBe(true);
+  });
+});
