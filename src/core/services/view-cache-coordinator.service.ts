@@ -2,6 +2,7 @@ import { BehaviorSubject, shareReplay, type Observable, type Subscription } from
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { calendarEventShareService } from '@/core/services/calendar-event-share.service';
 import { cameraService } from '@/core/services/camera.service';
+import { conversationService } from '@/core/services/conversation.service';
 import { notificationService } from '@/core/services/notification.service';
 import { projectService } from '@/core/services/project.service';
 import { projectMemberService } from '@/core/services/project-member.service';
@@ -30,6 +31,7 @@ import {
 } from './view-cache/calendar.projection';
 import { projectCalendarShares } from './view-cache/calendar-share.projection';
 import { projectCameras } from './view-cache/camera.projection';
+import { projectConversations } from './view-cache/conversation.projection';
 import { projectGettingStarted } from './view-cache/getting-started.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
 import { ModuleSourceGate } from './view-cache/module-source-gate';
@@ -62,6 +64,7 @@ function sessionSources(userId: string) {
     zone: householdZone.asObservable(),
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
+    conversations: shared(conversationService.observeForUser(userId)),
     users: shared(userService.observeDirectory()),
     invitations: shared(userInvitationService.observeList()),
   };
@@ -102,6 +105,14 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     ),
     startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
     startProjection({ sources: () => ({ reminders: sources.reminders }), project: projectReminders }, ctx),
+    startProjection(
+      {
+        sources: () => ({ conversations: sources.conversations }),
+        project: projectConversations,
+        tracked: ['conversation.thread'],
+      },
+      ctx,
+    ),
     startProjection(
       {
         sources: () => ({

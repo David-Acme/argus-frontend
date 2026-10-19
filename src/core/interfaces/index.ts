@@ -21,3 +21,4 @@ export * from './camera-media.interface';
 export * from './rtc.interface';
 export * from './watchdog.interface';
 export * from './push.interface';
+export * from './conversation.interface';

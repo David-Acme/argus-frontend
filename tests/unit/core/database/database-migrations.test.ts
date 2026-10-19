@@ -368,7 +368,7 @@ describe('the camera privacy state column', () => {
 
   const withoutPrivacyState = (): AppSchema => {
     const tables = Object.fromEntries(
-      Object.entries(schema.tables).map(([name, table]) => {
+      Object.entries(schema.tables).filter(([name]) => name !== 'conversation_message').map(([name, table]) => {
         if (name !== 'camera') return [name, table];
         const columns = Object.fromEntries(
           Object.entries(table.columns).filter(
@@ -416,7 +416,7 @@ describe('the camera privacy obeyed column', () => {
 
   const atVersionTwelve = (): AppSchema => {
     const tables = Object.fromEntries(
-      Object.entries(schema.tables).map(([name, table]) => {
+      Object.entries(schema.tables).filter(([name]) => name !== 'conversation_message').map(([name, table]) => {
         if (name !== 'camera') return [name, table];
         const columns = Object.fromEntries(
           Object.entries(table.columns).filter(([column]) => column !== 'privacy_obeyed')
@@ -450,5 +450,70 @@ describe('the camera privacy obeyed column', () => {
       name: 'Gate',
       obeyed: 0,
     });
+  });
+});
+
+describe('the conversation_message table', () => {
+  const tableOf = (db: Database): string[] =>
+    (
+      db.query("select name from sqlite_master where type = 'table' and name = 'conversation_message'").all() as {
+        name: string;
+      }[]
+    ).map((row) => row.name);
+
+  const indexesOf = (db: Database): string[] =>
+    (db.query("select name from pragma_index_list('conversation_message')").all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const threadPlan = (db: Database): string =>
+    (
+      db
+        .query(
+          "explain query plan select * from conversation_message where user_id = '1' and counterpart_id = '3' order by created_at"
+        )
+        .all() as { detail: string }[]
+    )
+      .map((row) => row.detail)
+      .join(' | ');
+
+  const atVersionThirteen = (): AppSchema => ({
+    ...schema,
+    version: 13,
+    tables: Object.fromEntries(Object.entries(schema.tables).filter(([name]) => name !== 'conversation_message')),
+  } as AppSchema);
+
+  const insert = (db: Database) =>
+    db
+      .query(
+        'insert into conversation_message (id, _changed, _status, user_id, counterpart_id, counterpart_name, direction, kind, body, leg, state, message_key, reply_to_key, is_read, read_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run('41', '', 'synced', '1', '3', 'David', 'out', 'relay', 'Ven a comer', null, 'sent', 'msg-1', null, 1, null, 1, 0);
+
+  test('a fresh database has the table and its thread index', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(tableOf(db)).toEqual(['conversation_message']);
+    expect(indexesOf(db)).toContain('conversation_message_thread');
+    expect(threadPlan(db)).toContain('conversation_message_thread');
+  });
+
+  test('a version 13 database gains it through the migration and keeps its other rows', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionThirteen()));
+    expect(tableOf(db)).toEqual([]);
+    db.query(
+      'insert into notification (id, _changed, _status, user_id, type, title, body, data, is_read, read_at, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', '1', 'system', 'Hi', 'There', '{}', 0, null, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 13, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(tableOf(db)).toEqual(['conversation_message']);
+    expect(indexesOf(db)).toContain('conversation_message_thread');
+    insert(db);
+    expect(db.query('select count(*) as n from conversation_message').get()).toEqual({ n: 1 });
+    expect(db.query('select count(*) as n from notification').get()).toEqual({ n: 1 });
   });
 });

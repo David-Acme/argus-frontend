@@ -5,6 +5,11 @@ import {
 import { CALENDAR_EVENT_SCHEMA, CalendarEventModel } from './calendar-event.table';
 import { CAMERA_SCHEMA, CameraModel } from './camera.table';
 import {
+  CONVERSATION_MESSAGE_SCHEMA,
+  CONVERSATION_THREAD_INDEX_SQL,
+  ConversationMessageModel,
+} from './conversation-message.table';
+import {
   NOTIFICATION_FEED_INDEX_SQL,
   NOTIFICATION_SCHEMA,
   NotificationModel,
@@ -31,6 +36,7 @@ const TABLES = [
   { schema: PROJECT_TASK_SCHEMA, model: ProjectTaskModel },
   { schema: PERSON_SCHEMA, model: PersonModel },
   { schema: NOTIFICATION_SCHEMA, model: NotificationModel },
+  { schema: CONVERSATION_MESSAGE_SCHEMA, model: ConversationMessageModel },
 ] as const;
 
 export const TABLE_SCHEMAS = TABLES.map((table) => table.schema);
@@ -41,6 +47,7 @@ export {
   CalendarEventModel,
   CalendarEventShareModel,
   CameraModel,
+  ConversationMessageModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,
@@ -55,6 +62,8 @@ export {
 export {
   CALENDAR_EVENT_SCHEMA,
   CALENDAR_EVENT_SHARE_SCHEMA,
+  CONVERSATION_MESSAGE_SCHEMA,
+  CONVERSATION_THREAD_INDEX_SQL,
   NOTIFICATION_FEED_INDEX_SQL,
   PERSON_SCHEMA,
   PROJECT_MEMBER_SCHEMA,
