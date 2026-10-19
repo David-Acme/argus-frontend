@@ -32,6 +32,7 @@ const camera: ICameraCacheRow = {
   modelLabel: 'Hikvision DS-2CD',
   recordMode: 'events',
   privacyState: 'unknown',
+  privacyObeyed: false,
   retentionDays: null,
   retentionIncident: false,
   isOnline: true,

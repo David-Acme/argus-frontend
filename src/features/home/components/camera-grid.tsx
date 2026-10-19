@@ -3,7 +3,7 @@ import type { ICameraCacheRow } from '@/core/interfaces';
 import { CameraTile } from '@/features/home/components/camera-tile';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Panel } from '@/shared/components/ui/panel';
-import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
+import { cameraPrivacyMasked, cameraPrivacyUnconfirmed } from '@/shared/libs/camera-privacy';
 
 type CameraGridProps = {
   cameras: readonly ICameraCacheRow[];
@@ -31,7 +31,8 @@ export function CameraGrid({ cameras, emptyLabel, onSelect }: CameraGridProps) {
             isOnline={camera.isOnline}
             isEnabled={camera.isEnabled}
             recordMode={camera.recordMode}
-            masked={cameraPrivacyMasked(camera.privacyState)}
+            masked={cameraPrivacyMasked(camera.privacyState, camera.privacyObeyed)}
+            unconfirmed={cameraPrivacyUnconfirmed(camera.privacyState, camera.privacyObeyed)}
             onPress={onSelect ? () => onSelect(camera.id) : undefined}
           />
         </View>

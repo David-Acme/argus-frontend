@@ -5,8 +5,8 @@ import type { ICameraCacheRow, ICameraOverviewRow } from '@/core/interfaces';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { CameraPrivacyState, TranslateFn } from '@/core/types';
-import { cameraMasked, privacyOf } from '@/features/cameras/model/camera-overview';
-import { privacyStateOf } from '@/shared/libs/camera-privacy';
+import { cameraMasked, privacyOf, privacyUnconfirmed } from '@/features/cameras/model/camera-overview';
+import { cameraPrivacyMasked, cameraPrivacyUnconfirmed, privacyStateOf } from '@/shared/libs/camera-privacy';
 import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 
 const es = ((key: string, params?: Record<string, string>) =>
@@ -109,6 +109,7 @@ const row = (privacyState: CameraPrivacyState): ICameraCacheRow => ({
   modelLabel: 'Tapo C225',
   recordMode: 'events',
   privacyState,
+  privacyObeyed: false,
   retentionDays: null,
   retentionIncident: false,
   isOnline: true,
@@ -144,5 +145,43 @@ describe('the state the surfaces read', () => {
     expect(privacyOf({ camera: row('unknown'), live: liveRow('off') })).toBe('off');
     expect(cameraMasked({ camera: row('on'), live: liveRow('unknown') })).toBe(true);
     expect(cameraMasked({ camera: row('unknown'), live: liveRow('unknown') })).toBe(false);
+  });
+});
+
+describe('a mask Argus obeys without a confirmed state', () => {
+  const view = (
+    privacyState: CameraPrivacyState,
+    privacyObeyed: boolean,
+    live: Partial<ICameraOverviewRow> | null = null
+  ) => ({
+    camera: { privacyState, privacyObeyed } as ICameraCacheRow,
+    live: live as ICameraOverviewRow | null,
+  });
+
+  test('an unknown state the server obeys is masked and unconfirmed', () => {
+    expect(privacyUnconfirmed(view('unknown', true))).toBe(true);
+    expect(cameraMasked(view('unknown', true))).toBe(true);
+    expect(cameraPrivacyMasked('unknown', true)).toBe(true);
+    expect(cameraPrivacyUnconfirmed('unknown', true)).toBe(true);
+  });
+
+  test('the overview row alone is enough to mark the doubt', () => {
+    expect(privacyUnconfirmed(view('unknown', false, { privacyObeyed: true }))).toBe(true);
+  });
+
+  test('a confirmed state is never unconfirmed, and an unknown state nobody obeys is not masked', () => {
+    expect(privacyUnconfirmed(view('on', true))).toBe(false);
+    expect(cameraMasked(view('on', true))).toBe(true);
+    expect(privacyUnconfirmed(view('off', true))).toBe(false);
+    expect(cameraMasked(view('off', true))).toBe(false);
+    expect(cameraMasked(view('unknown', false))).toBe(false);
+    expect(cameraPrivacyMasked('unknown')).toBe(false);
+  });
+
+  test('the doubt has words of its own in both languages', () => {
+    expect(es('screens.cameras.privacy-badge-unconfirmed')).toBe('Privacidad (sin confirmar)');
+    expect(en('screens.cameras.privacy-badge-unconfirmed')).toBe('Privacy (unconfirmed)');
+    expect(es('screens.cameras.privacy-placeholder-unconfirmed')).toBe('Privacidad sin confirmar');
+    expect(en('screens.cameras.privacy-placeholder-unconfirmed')).toBe('Privacy unconfirmed');
   });
 });

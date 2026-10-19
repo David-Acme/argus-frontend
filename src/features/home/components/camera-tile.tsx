@@ -15,6 +15,7 @@ type CameraTileProps = {
   isEnabled: boolean;
   recordMode?: CameraRecordMode;
   masked?: boolean;
+  unconfirmed?: boolean;
   onPress?: () => void;
 };
 
@@ -26,6 +27,7 @@ export function CameraTile({
   isEnabled,
   recordMode,
   masked = false,
+  unconfirmed = false,
   onPress,
 }: CameraTileProps) {
   const { t } = useTranslation();
@@ -66,7 +68,7 @@ export function CameraTile({
         {recordMode ? <StatusBadge label={recordLabel} /> : null}
         {masked ? (
           <StatusBadge
-            label={t('screens.cameras.privacy-badge')}
+            label={t(unconfirmed ? 'screens.cameras.privacy-badge-unconfirmed' : 'screens.cameras.privacy-badge')}
             icon="eye-off"
             iconClassName="text-warning-strong"
             textClassName="text-warning-strong"

@@ -56,6 +56,7 @@ const camera = (id: string, overrides: Partial<CameraSource> = {}): CameraSource
   model: 'C200',
   recordMode: 'events',
   privacyState: 'unknown',
+  privacyObeyed: false,
   retentionDays: null,
   isOnline: true,
   isEnabled: true,

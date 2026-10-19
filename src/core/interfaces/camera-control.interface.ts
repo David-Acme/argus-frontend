@@ -185,6 +185,7 @@ export interface ICameraOverviewRow {
   stream: ICameraStreamStats | null;
   mainActive: boolean;
   privacyState: CameraPrivacyState;
+  privacyObeyed?: boolean;
   lastEvent: ICameraDetection | null;
 }
 

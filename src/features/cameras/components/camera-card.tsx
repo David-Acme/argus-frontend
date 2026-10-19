@@ -7,6 +7,7 @@ import { CAMERA_PREVIEW_TRANSPORT, previewPaints } from '@/features/cameras/mode
 import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
 import {
   cameraMasked,
+  privacyUnconfirmed,
   formatRelative,
   healthOf,
   objectLabelKey,
@@ -110,7 +111,7 @@ function Preview({ view, formFactor, thumbnail, live = false, compact = false }:
       )}
       style={{ aspectRatio: PREVIEW_ASPECT }}>
       {masked ? (
-        <CameraPrivacyPlaceholder fill compact={compact} />
+        <CameraPrivacyPlaceholder fill compact={compact} unconfirmed={privacyUnconfirmed(view)} />
       ) : thumbnail && status === 'online' ? (
         <Image
           source={{ uri: thumbnail }}

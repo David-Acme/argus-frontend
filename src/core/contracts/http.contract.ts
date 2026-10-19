@@ -190,6 +190,7 @@ export const cameraOverviewSchema = z.object({
         .nullable(),
       mainActive: z.boolean(),
       privacyState: cameraPrivacyState,
+      privacyObeyed: z.boolean().optional(),
       lastEvent: cameraDetectionSchema.nullable(),
     })
   ),

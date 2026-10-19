@@ -24,6 +24,7 @@ export const CAMERA_SCHEMA = tableSchema({
     { name: 'icon', type: 'string' },
     { name: 'record_mode', type: 'string' },
     { name: 'privacy_state', type: 'string' },
+    { name: 'privacy_obeyed', type: 'boolean' },
     { name: 'retention_days', type: 'number', isOptional: true },
     { name: 'capabilities', type: 'string' },
     { name: 'config', type: 'string' },
@@ -52,6 +53,7 @@ export class CameraModel extends Model {
   @text('icon') icon!: string;
   @field('record_mode') recordMode!: CameraRecordMode;
   @field('privacy_state') privacyState!: CameraPrivacyState;
+  @field('privacy_obeyed') privacyObeyed!: boolean;
   @field('retention_days') retentionDays!: number | null;
   @json('capabilities', sanitizeStringArray, { memo: true }) capabilities!: CameraCapabilities;
   @json('config', sanitizeObject) config!: CameraConfig;

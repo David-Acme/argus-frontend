@@ -10,6 +10,11 @@ export function privacyStateOf(value: boolean | null | undefined): CameraPrivacy
   return 'unknown';
 }
 
-export function cameraPrivacyMasked(value: unknown): boolean {
-  return parseCameraPrivacyState(value) === 'on';
+export function cameraPrivacyMasked(value: unknown, obeyed = false): boolean {
+  const state = parseCameraPrivacyState(value);
+  return state === 'on' || (state === 'unknown' && obeyed);
+}
+
+export function cameraPrivacyUnconfirmed(value: unknown, obeyed: boolean): boolean {
+  return parseCameraPrivacyState(value) === 'unknown' && obeyed;
 }

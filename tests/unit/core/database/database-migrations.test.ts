@@ -371,7 +371,9 @@ describe('the camera privacy state column', () => {
       Object.entries(schema.tables).map(([name, table]) => {
         if (name !== 'camera') return [name, table];
         const columns = Object.fromEntries(
-          Object.entries(table.columns).filter(([column]) => column !== 'privacy_state')
+          Object.entries(table.columns).filter(
+            ([column]) => column !== 'privacy_state' && column !== 'privacy_obeyed'
+          )
         );
         return [name, { ...table, columns, columnArray: Object.values(columns) }];
       })
@@ -403,5 +405,50 @@ describe('the camera privacy state column', () => {
       privacyState: '',
     });
     expect(parseCameraPrivacyState('')).toBe('unknown');
+  });
+});
+
+describe('the camera privacy obeyed column', () => {
+  const cameraColumnsOf = (db: Database): string[] =>
+    (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const atVersionTwelve = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'camera') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => column !== 'privacy_obeyed')
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 12, tables } as AppSchema;
+  };
+
+  test('a fresh database has the column', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(cameraColumnsOf(db)).toContain('privacy_obeyed');
+  });
+
+  test('a version 12 database gains it through the migration, and its cameras stay', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionTwelve()));
+    expect(cameraColumnsOf(db)).not.toContain('privacy_obeyed');
+    db.query(
+      'insert into camera (id, _changed, _status, name, manufacturer, model, ip, port, username, cloud_username, driver, icon, record_mode, privacy_state, retention_days, capabilities, config, is_enabled, is_online, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', 'Gate', 'tapo', 'C200', '10.0.0.5', 554, 'admin', '', 'tapo', 'video', 'events', 'unknown', null, '[]', '{}', 1, 1, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 12, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(cameraColumnsOf(db)).toContain('privacy_obeyed');
+    expect(db.query('select name, privacy_obeyed as obeyed from camera').get()).toEqual({
+      name: 'Gate',
+      obeyed: 0,
+    });
   });
 });

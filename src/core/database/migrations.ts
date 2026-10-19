@@ -119,5 +119,14 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 13,
+      steps: [
+        addColumns({
+          table: 'camera',
+          columns: [{ name: 'privacy_obeyed', type: 'boolean' }],
+        }),
+      ],
+    },
   ],
 });

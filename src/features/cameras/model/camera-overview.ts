@@ -65,8 +65,12 @@ export function privacyOf(view: Pick<CameraView, 'camera' | 'live'>): CameraPriv
   return 'unknown';
 }
 
+export function privacyUnconfirmed(view: Pick<CameraView, 'camera' | 'live'>): boolean {
+  return privacyOf(view) === 'unknown' && (view.camera.privacyObeyed || view.live?.privacyObeyed === true);
+}
+
 export function cameraMasked(view: Pick<CameraView, 'camera' | 'live'>): boolean {
-  return privacyOf(view) === 'on';
+  return privacyOf(view) === 'on' || privacyUnconfirmed(view);
 }
 
 export function objectLabelKey(label: string): TranslationKey {

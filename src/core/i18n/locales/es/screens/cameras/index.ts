@@ -200,6 +200,9 @@ export const cameras = {
   'privacy-placeholder': 'En modo privacidad',
   'privacy-placeholder-hint': 'Argus no ve, no escucha ni graba esta cámara.',
   'privacy-badge': 'Privacidad',
+  'privacy-badge-unconfirmed': 'Privacidad (sin confirmar)',
+  'privacy-placeholder-unconfirmed': 'Privacidad sin confirmar',
+  'privacy-placeholder-unconfirmed-hint': 'Argus no está seguro de que la lente esté tapada y la trata como tapada: no ve ni graba hasta confirmarlo.',
   'motion-hint': 'La propia cámara avisa cuando algo se mueve.',
   'auto-track-hint': 'La cámara gira sola para seguir a una persona.',
   'ptz-on-video':
