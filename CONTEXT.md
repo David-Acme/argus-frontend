@@ -4576,9 +4576,10 @@ like notification read state. Nothing in the sync engine is specific to the
 table beyond its field map in `entity-mappers.ts`.
 
 The table is core: it belongs to no module, so `ModuleSourceGate` never hides
-it, and `role-access.ts` gives non-owners no table permission on it (the
-backend's `kTableAccess` names none; the routes are gated by the capability
-instead).
+it, and `role-access.ts` mirrors the backend's `kTableAccess`: every
+non-owner role reads, updates (marks read) and deletes (clears) its own rows,
+and nobody creates them from the app. The table is in the backend's baseline
+and own-row sets, so an inactive role keeps it and no module room carries it.
 
 ### The view
 

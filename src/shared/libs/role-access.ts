@@ -20,6 +20,7 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     person: FULL,
     user: READ,
     notification: READ_UPDATE_DELETE,
+    conversation_message: READ_UPDATE_DELETE,
   },
   guard: {
     reminder: FULL,
@@ -28,12 +29,14 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     person: READ,
     user: READ,
     notification: READ_UPDATE_DELETE,
+    conversation_message: READ_UPDATE_DELETE,
   },
   guest: {
     reminder: FULL,
     camera: READ,
     user: READ,
     notification: READ_UPDATE_DELETE,
+    conversation_message: READ_UPDATE_DELETE,
   },
 };
 
