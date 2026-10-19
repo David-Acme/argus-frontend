@@ -24,6 +24,7 @@ const ROUTE_RULES: Readonly<Record<string, RouteRule>> = {
   '/agenda': { allows: (view) => hasCapability(view, CAPABILITY.agendaRead), fallback: '/' },
   '/projects': { allows: (view) => view.roleActive && hasCapability(view, CAPABILITY.projectsRead), fallback: '/' },
   '/watch': { allows: (view) => hasCapability(view, CAPABILITY.assistantVoice), fallback: '/' },
+  '/conversations': { allows: (view) => hasCapability(view, CAPABILITY.messagesRelay), fallback: '/' },
 };
 
 const EXACT_RULES: Readonly<Record<string, RouteRule>> = {
@@ -37,18 +38,24 @@ const INACTIVE_ROLE_CAPABILITY_ROUTES: Readonly<Record<string, Capability>> = {
   '/call': CAPABILITY.callsJoin,
 };
 
+const INACTIVE_ROLE_CAPABILITY_SEGMENTS: Readonly<Record<string, Capability>> = {
+  '/conversations': CAPABILITY.messagesRelay,
+};
+
 const pathOf = (pathname: string): string => pathname.split(/[?#]/)[0] ?? pathname;
+
+const segmentOf = (path: string): string => `/${path.split('/')[1] ?? ''}`;
 
 function inactiveRoleMayOpen(path: string, view: AccessView): boolean {
   if (INACTIVE_ROLE_ROUTES.has(path)) return true;
-  const capability = INACTIVE_ROLE_CAPABILITY_ROUTES[path];
+  const capability = INACTIVE_ROLE_CAPABILITY_ROUTES[path] ?? INACTIVE_ROLE_CAPABILITY_SEGMENTS[segmentOf(path)];
   return capability !== undefined && hasCapability(view, capability);
 }
 
 export function routeFallback(pathname: string, view: AccessView): RouteFallback | null {
   const path = pathOf(pathname);
   if (!view.roleActive) return inactiveRoleMayOpen(path, view) ? null : '/';
-  const segment = ROUTE_RULES[`/${path.split('/')[1] ?? ''}`];
+  const segment = ROUTE_RULES[segmentOf(path)];
   const exact = EXACT_RULES[path];
   if (segment && !segment.allows(view)) return segment.fallback;
   if (exact && !exact.allows(view)) return exact.fallback;

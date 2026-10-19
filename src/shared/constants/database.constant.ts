@@ -1,3 +1,3 @@
 export const DATABASE_NAME = 'argus';
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;

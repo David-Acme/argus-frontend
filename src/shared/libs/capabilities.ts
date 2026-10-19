@@ -37,6 +37,7 @@ const BASELINE: readonly Capability[] = [
   CAPABILITY.safetyRespond,
   CAPABILITY.remindersRead,
   CAPABILITY.remindersWrite,
+  CAPABILITY.messagesRelay,
 ];
 
 const CORE_CAPABILITIES: Readonly<Record<UserRole, readonly Capability[]>> = {

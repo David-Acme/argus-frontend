@@ -8,6 +8,8 @@ import type { TableSchema } from '@nozbe/watermelondb';
 import {
   CALENDAR_EVENT_SCHEMA,
   CALENDAR_EVENT_SHARE_SCHEMA,
+  CONVERSATION_MESSAGE_SCHEMA,
+  CONVERSATION_THREAD_INDEX_SQL,
   NOTIFICATION_FEED_INDEX_SQL,
   PERSON_SCHEMA,
   PROJECT_MEMBER_SCHEMA,
@@ -137,6 +139,16 @@ export const migrations = schemaMigrations({
             { name: 'watchman', type: 'boolean' },
             { name: 'no_audio', type: 'boolean' },
           ],
+        }),
+      ],
+    },
+    {
+      toVersion: 15,
+      steps: [
+        createTable({
+          name: CONVERSATION_MESSAGE_SCHEMA.name,
+          columns: CONVERSATION_MESSAGE_SCHEMA.columnArray,
+          unsafeSql: (sql) => sql + CONVERSATION_THREAD_INDEX_SQL,
         }),
       ],
     },

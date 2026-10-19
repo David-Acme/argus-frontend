@@ -45,6 +45,7 @@ export * from './access.type';
 export * from './activity.type';
 export * from './resource.type';
 export * from './notification.type';
+export * from './conversation.type';
 export * from './recurrence.type';
 export * from './push.type';
 export * from './siren.type';

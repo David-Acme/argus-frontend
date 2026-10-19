@@ -14,6 +14,7 @@ export const SYNC_TABLE_KEYS = [
   'project_task',
   'person',
   'notification',
+  'conversation_message',
 ] as const;
 
 export type SyncTableKey = (typeof SYNC_TABLE_KEYS)[number];

@@ -11,6 +11,7 @@ export {
   CalendarEventModel,
   CalendarEventShareModel,
   CameraModel,
+  ConversationMessageModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,

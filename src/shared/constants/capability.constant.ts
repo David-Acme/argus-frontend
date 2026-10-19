@@ -13,6 +13,7 @@ export const CAPABILITY = {
   safetyRespond: 'safety.respond',
   remindersRead: 'reminders.read',
   remindersWrite: 'reminders.write',
+  messagesRelay: 'messages.relay',
   assistantVoice: 'assistant.voice',
   directoryRead: 'directory.read',
   peopleRead: 'people.read',

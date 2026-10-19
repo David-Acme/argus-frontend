@@ -368,7 +368,7 @@ describe('fallback and outcomes', () => {
     voiceService.sendContext({ kind: 'note', text: 'Cámaras: Patio.' });
     await starting;
     expect(voiceService.snapshot.transport).toBe('sync');
-    expect(sentFrames[0]).toEqual({ type: 'voice:start', payload: { mode: 'duplex' } });
+    expect(sentFrames[0]).toEqual({ type: 'voice:start', payload: { mode: 'duplex', leg: 'laptop' } });
     expect(sentFrames[1]?.type).toBe('voice:context');
     expect(call.joins).toHaveLength(0);
   });

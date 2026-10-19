@@ -2,6 +2,7 @@ import type {
   CalendarEventModel,
   CalendarEventShareModel,
   CameraModel,
+  ConversationMessageModel,
   NotificationModel,
   PersonModel,
   ProjectMemberModel,
@@ -64,6 +65,7 @@ export type ModelMap = {
   project_task: ProjectTaskModel;
   person: PersonModel;
   notification: NotificationModel;
+  conversation_message: ConversationMessageModel;
 };
 
 export type TableName = keyof ModelMap;

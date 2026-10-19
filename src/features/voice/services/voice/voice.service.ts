@@ -37,12 +37,13 @@ import {
   VOICE_TRANSCRIPT_MAX_LINES,
   VOICE_TURN_TYPE,
 } from '@/features/voice/constants/voice';
-import { IS_TAURI, SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/shared/constants';
+import { IS_NATIVE, IS_TAURI, SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/shared/constants';
 import {
   VOICE_ENVELOPE_ATTACK_MS,
   VOICE_ENVELOPE_RELEASE_MS,
 } from '@/features/voice/constants/reaction';
 import { voiceLevel } from '@/features/voice/model/voice-level';
+import { voiceLegOf } from '@/features/voice/model/voice-leg';
 import {
   incomingCallLive,
   isSessionRevocation,
@@ -525,7 +526,7 @@ class VoiceService {
       this.fail('SOCKET_UNAVAILABLE|Unable to connect to Argus');
       return;
     }
-    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX });
+    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, leg: voiceLegOf(IS_NATIVE) });
     this.serverSession = true;
     this.transport = 'sync';
     this.flushPendingSends();
@@ -755,7 +756,7 @@ class VoiceService {
       this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
       return;
     }
-    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, resume: true });
+    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, resume: true, leg: voiceLegOf(IS_NATIVE) });
     this.serverSession = true;
     if (this.muted) synchronizeService.send(VOICE_MUTE_TYPE, { muted: true });
     this.phase = 'listening';

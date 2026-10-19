@@ -26,7 +26,7 @@
 | Media | `expo-camera` (barcode/QR + face capture, mobile), `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar procedural). `@shopify/react-native-skia` eliminado (2026-10: dependencia, `postinstall` y `public/canvaskit.wasm`) |
 | Platform | `common.constant.ts` → `IS_WEB` / `IS_NATIVE` / `IS_ANDROID` / `IS_IOS` / `IS_TAURI` |
 | State | Zustand v5 — 8 stores: `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
-| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 12 tables mirroring the role-scoped backend sync surface |
+| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 13 tables mirroring the role-scoped backend sync surface |
 | Storage | `react-native-mmkv` (native) / localStorage (web) via `storageService`; **secrets** (caPem, JWT) via `secureStorageService` (`expo-secure-store` on mobile / `keyring` crate on Tauri) |
 | Icons | `lucide-react-native` — **centralized** in `icon.constant.ts` only |
 | i18n | Custom engine (`core/i18n`): typed keys, `useTranslation()` + imperative `t()`, `useLocaleStore` |
@@ -384,10 +384,11 @@ projections subscribe to those observables; screens read MMKV snapshots.
 
 ### Schema decisions
 
-- **12 tables** = the synced half of the backend's table surface
+- **13 tables** = the synced half of the backend's table surface
   (`SYNC_TABLE_KEYS` in `core/types/sync.type.ts`): `user`, `user_invitation`,
   `camera`, `zone`, `reminder`, `calendar_event`, `calendar_event_share`,
-  `project`, `project_member`, `project_task`, `person`, `notification`. The
+  `project`, `project_member`, `project_task`, `person`, `notification`,
+  `conversation_message` (schema v15, "Conversations and the messenger"). The
   backend's `event` table has no local table any more and is not pulled
   (schema v10 drops it): nothing ever wrote it, the detections the screens
   show come from `GET /camera/overview`. `camera_stream` and `reminder_detail`
@@ -452,6 +453,13 @@ projections subscribe to those observables; screens read MMKV snapshots.
   `notification_user_created` index, and
   `tests/unit/database-migrations.test.ts` checks that the keyset page plans
   through it.
+- **`conversation_message (user_id, counterpart_id, created_at)` is indexed
+  (schema v15, 2026-10-19).** The same composite shape as the notification
+  feed: `CONVERSATION_MESSAGE_SCHEMA` appends
+  `CONVERSATION_THREAD_INDEX_SQL` through `unsafeSql`, and the v15
+  `createTable` step carries the same `unsafeSql`, so a fresh install and an
+  upgraded one end with the same `conversation_message_thread` index
+  (`tests/unit/core/database/database-migrations.test.ts`).
 - `jsi: true` is safe — it falls back to the async bridge with a warning.
 
 ### Verification
@@ -4603,3 +4611,124 @@ pieces need `bunx nitrogen` in `modules/argus-net` before a dev-client build.
 The wire-vocabulary contract test fails until the backend declares
 `WatchUpdate = 15`; the notification-kind test needs the watch kinds mapped to
 surveillance on both sides at the same time if the backend gates them.
+
+## Conversations and the messenger (2026-10-19, T4: F8/F9)
+
+Every person talks to Argus in their own conversation, and Argus carries
+messages between the people of the house ("dile a David que venga a comer").
+The app shows both as one inbox: `/conversations` lists one entry per
+counterpart and `/conversations/{counterpartId}` is the thread. The backend
+half is argus-llm's messenger and argus-notification's `/conversation`
+routes (backend `docs/design/messenger.md`).
+
+### The table
+
+`conversation_message` is a synced table (`TableName::ConversationMessage` on
+the wire, additive), own rows only: each person receives only the rows whose
+`userId` is theirs. One message has two copies, the sender's (`direction:
+'out'`) and the recipient's (`'in'`), joined by `messageKey`; clearing a
+thread deletes the viewer's copies and the other person keeps theirs.
+
+| Field | Meaning |
+|---|---|
+| `counterpartId` | `0` is Argus (the viewer's conversation with Argus and the notices from visitors); `> 0` is another member |
+| `counterpartName` | the counterpart's name when the row was made (`""` for Argus) |
+| `direction` | `out` said or written by the viewer, `in` received (Argus's replies are `in`) |
+| `kind` | `turn` (a line of the conversation with Argus), `relay` (a message carried by Argus), `reply` (an answer to a relay, `replyToKey` names it), `visitor` (a visitor asked for the viewer at a camera) |
+| `leg` | where a turn was said: `camera`, `phone`, `laptop`, `null` for messages |
+| `state` | the viewer's outgoing relay/reply: `sent`, `delivered` ("Se lo dije"), `notified` ("Le dejé el mensaje"), `answered`, `expired` ("Sin respuesta"); incoming copies are `received`, turns `delivered` |
+
+The state is all a sender learns: nothing in the app says where the recipient
+is. Local columns are snake_case (`counterpart_id` is a string like every FK,
+`'0'` for Argus), times in milliseconds, `updated_at` with the `0` sentinel;
+the vocabulary is sanitized at the mapper (`sanitizeConversation*` in
+`tables/sanitizers.ts`: an unknown direction reads `in`, kind `turn`, state
+`received`, leg `null`, so an unknown state never claims a delivery). It has
+deletions, so it is **not** in `SYNC_TABLES_WITHOUT_DELETIONS`: the pull asks
+for creations and tombstones by `(created_at, id)`, live `Add` frames carry the
+full row and `Delete` frames `{id, deletedAt}` (a cleared thread, the
+retention sweep), and `state`, `isRead`, `readAt` and `updatedAt` arrive as
+recipient-scoped user audit diffs, applied by the generic audit path exactly
+like notification read state. Nothing in the sync engine is specific to the
+table beyond its field map in `entity-mappers.ts`.
+
+The table is core: it belongs to no module, so `ModuleSourceGate` never hides
+it, and `role-access.ts` mirrors the backend's `kTableAccess`: every
+non-owner role reads, updates (marks read) and deletes (clears) its own rows,
+and nobody creates them from the app. The table is in the backend's baseline
+and own-row sets, so an inactive role keeps it and no module room carries it.
+
+### The view
+
+`conversation.projection.ts` reads every row of the user
+(`conversationService.observeForUser`, `observeWithColumns` on the fields a
+diff changes) and writes three things: `conversation.list` (one summary per
+counterpart: name, last line, unread incoming count, and `lastSent`, the last
+outgoing relay or reply whose state the row shows), `conversation.unread`
+(the total, the badge of the Messages button on Inicio) and
+`conversation.thread` scoped by counterpart, oldest first, tracked so a
+cleared thread's scope is dropped. The list puts Argus first when it has rows
+and then the members by their last line. A thread is a bounded list (one
+household, and the server's retention removes old rows), written whole up to
+`VIEW_CACHE_LIST_LIMIT` with the newest rows kept, so it is not paged.
+
+Screens paint from the view cache only. `GET /conversation` exists
+(`conversationService.list`, zod in `core/contracts/conversation.contract.ts`)
+as a fallback and no screen calls it.
+
+### The screens
+
+`features/conversations`: the list (`ConversationsScreen`, `ListRow` per
+counterpart with the time, an unread count and the delivery state of the last
+outgoing message) and the thread (`ConversationThreadScreen`: messages grouped
+by day with Hoy/Ayer/date separators, outgoing bubbles on the right, the leg
+of a turn under it in micro text, the delivery state under each outgoing relay
+or reply, the quoted line a reply answers, a visitor notice marked as such).
+There is no composer: messages are sent by voice, so the thread ends in a hint
+("Para escribirle, díselo a Argus: «dile a David que…»") with the Hablar con
+Argus button when the person has `assistant.voice`.
+
+- Opening a thread marks its unread incoming rows read with
+  `PATCH /conversation/{counterpartId}/read` (body `{}`) through
+  `runOptimistic` (one `conversation_message` update intent per row, the lens
+  in `model/conversation-optimistic.ts`); each id is requested once per open
+  thread, so a refused call does not retry in a loop, and the diffs that come
+  back settle the intents.
+- Clearing asks first (`danger` confirmation that says the other person keeps
+  their copy), hides the rows optimistically, sends
+  `DELETE /conversation/{counterpartId}`, removes the viewer's local rows of
+  that counterpart on 204 (the `Delete` frames that follow are idempotent) and
+  goes back to the list.
+- Pure helpers, unit-tested in `tests/unit/features/conversations/`:
+  `deliveryStateOf` (only outgoing relay/reply, only a delivery state),
+  `legOf` (turns only), `groupByDay`, `dayKindOf`, `replyBodies`/
+  `repliedBodyOf`, `unreadIncomingIds`, `counterpartNameOf` (Argus by id, a
+  blank name reads "Alguien de casa") and `previewOf` ("Tú: …" for the
+  viewer's lines). The projection is tested in
+  `tests/unit/core/services/view-cache/conversation-projection.test.ts`, the
+  sync handling (field map, pull body, live Add/Delete, audit diffs) in
+  `tests/unit/core/services/sync/conversation-message-sync.test.ts`, and the
+  list and thread end to end in `tests/e2e/conversations.e2e.ts`.
+
+### Reaching it
+
+- `/conversation` is served by argus-notification on its listener, so the
+  route table maps the segment to `notification` (`ARGUS_ROUTE_SERVICES`,
+  `ARGUS_DEFAULT_ROUTE_PORTS` 7028), the same on the LAN and through the
+  relay.
+- The capability is `messages.relay` (core, every registered role, in the
+  baseline). The Messages button on Inicio and both routes follow it
+  (`route-access.ts`: a segment rule, and a baseline segment for a role whose
+  module is off, so an inactive role can still open a message it was told
+  about).
+- A relayed message Argus could not say inside the recipient's open
+  conversation also arrives as a `notification` of kind `household_message`
+  (`data: {kind, fromUserId, messageKey, counterpartId}`). It renders like any
+  notification row; tapping it in Novedades or opening it from a push goes to
+  `/conversations/{counterpartId}` (`messageCounterpartOf`,
+  `notificationHrefOf`, falling back to `fromUserId`). The deep-link
+  allow-list accepts `/conversations` and `/conversations/<digits>`.
+- `voice:start` carries the leg the turn is said from: `phone` on the mobile
+  app, `laptop` on the desktop and web builds (`voiceLegOf(IS_NATIVE)`, also on
+  the resume frame); every other field is unchanged and the server ignores any
+  other value. A camera leg is the server's own.

@@ -1,5 +1,13 @@
 import type { CameraPrivacyState, PersonStatus, SyncTableKey, UserLang } from '@/core/types';
-import { sanitizeObject, sanitizeStringArray, sanitizeZonePoints } from '@/core/database/tables/sanitizers';
+import {
+  sanitizeConversationDirection,
+  sanitizeConversationKind,
+  sanitizeConversationLeg,
+  sanitizeConversationState,
+  sanitizeObject,
+  sanitizeStringArray,
+  sanitizeZonePoints,
+} from '@/core/database/tables/sanitizers';
 import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
 
 export type FieldTransform = (value: unknown) => unknown;
@@ -188,6 +196,22 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     isRead: toBool,
     readAt: toOptMs,
     createdAt: toMs,
+  },
+  conversation_message: {
+    userId: toStr,
+    counterpartId: toStr,
+    counterpartName: toStr,
+    direction: sanitizeConversationDirection,
+    kind: sanitizeConversationKind,
+    body: toStr,
+    leg: sanitizeConversationLeg,
+    state: sanitizeConversationState,
+    messageKey: toStr,
+    replyToKey: toOptStr,
+    isRead: toBool,
+    readAt: toOptMs,
+    createdAt: toMs,
+    updatedAt: toMs,
   },
 };
 

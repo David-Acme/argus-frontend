@@ -27,6 +27,7 @@ import { activity } from './activity';
 import { notification } from './notification';
 import { watch } from './watch';
 import { proximity } from './proximity';
+import { conversations } from './conversations';
 
 export const screens = {
   home,
@@ -58,4 +59,5 @@ export const screens = {
   notification,
   watch,
   proximity,
+  conversations,
 };

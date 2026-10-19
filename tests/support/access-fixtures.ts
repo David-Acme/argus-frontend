@@ -41,6 +41,7 @@ const BASELINE: readonly string[] = [
   C.safetyRespond,
   C.remindersRead,
   C.remindersWrite,
+  C.messagesRelay,
 ];
 
 const CORE: Readonly<Record<UserRole, readonly string[]>> = {

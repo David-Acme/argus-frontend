@@ -49,4 +49,12 @@ describe('deep link allow-list', () => {
     expect(deepLinkPath('argus://cameras/abc')).toBe('/');
     expect(deepLinkPath('javascript:alert(1)')).toBe('/');
   });
+
+  test('the conversations and one thread by its numeric counterpart open', () => {
+    expect(deepLinkPath('argus://conversations')).toBe('/conversations');
+    expect(deepLinkPath('argus://conversations/3')).toBe('/conversations/3');
+    expect(deepLinkPath('argus://conversations/0?x=1')).toBe('/conversations/0');
+    expect(deepLinkPath('argus://conversations/abc')).toBe('/');
+    expect(deepLinkPath('argus://conversations/3/read')).toBe('/');
+  });
 });
