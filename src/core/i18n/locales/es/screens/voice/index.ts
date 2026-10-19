@@ -202,6 +202,8 @@ export const voice = {
     'rtc-unavailable': 'Las llamadas no están disponibles en tu servidor en este momento. Inténtalo de nuevo en un rato.',
     connection: 'No hay conexión con tu servidor Argus.',
     'connect-failed': 'No se pudo conectar la llamada.',
+    'watch-camera-stays': 'No se pudo pasar a este dispositivo: la conversación sigue en la cámara.',
+    'watch-gone': 'Esa conversación por cámara ya terminó.',
     generic: 'Argus no puede atender la llamada ahora.',
     unavailable: 'El micrófono no está disponible.',
     'permission-denied': 'Sin permiso para usar el micrófono.',

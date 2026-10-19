@@ -12,3 +12,8 @@ export { useVoiceCallActive } from './hooks/use-voice-call-active';
 export { default as CallScreen } from './screens/call-screen';
 export { argusCallSupported, createVoiceMic, voiceCallSupported } from './services/voice';
 export { isVoiceCallActive } from './services/voice/voice-activity';
+export {
+  completeWatchHandoff,
+  continueWatchConversation,
+  watchContinuationSupported,
+} from './services/voice/watch-continuation';

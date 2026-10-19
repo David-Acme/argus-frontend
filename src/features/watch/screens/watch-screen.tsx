@@ -9,11 +9,14 @@ import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { useVoiceCallActive } from '@/features/voice';
+import { useContinueHere } from '@/features/watch/hooks/use-continue-here';
 import { screenIn } from '@/shared/libs/animations';
 import { WatchTranscript } from '@/features/watch/components/watch-transcript';
 import { useWatch } from '@/features/watch/hooks/use-watch';
 import { useWatchActions } from '@/features/watch/hooks/use-watch-actions';
 import {
+  canContinueHere,
   canEndConversation,
   resumableSecondsLeft,
   WATCH_AUDIENCE_NOTE,
@@ -63,6 +66,9 @@ export default function WatchScreen() {
   const { t } = useTranslation();
   const { live, latest, now } = useWatch();
   const { end, pending } = useWatchActions();
+  const callActive = useVoiceCallActive();
+  const { continueHere, supported } = useContinueHere();
+  const offerContinue = supported && canContinueHere(live, now, callActive);
   const conversation = live ?? latest;
   const title = conversation?.cameraName
     ? t('screens.watch.title-camera', { camera: conversation.cameraName })
@@ -87,6 +93,17 @@ export default function WatchScreen() {
               <Panel title={t('screens.watch.transcript-title')}>
                 <WatchTranscript turns={conversation.turns} />
               </Panel>
+              {offerContinue && live ? (
+                <View className="gap-1.5">
+                  <Button
+                    onPress={() => continueHere({ conversationId: live.conversationId, cameraName: live.cameraName })}>
+                    <Text>{t('screens.watch.continue-here')}</Text>
+                  </Button>
+                  <Text variant="caption" className="text-center">
+                    {t('screens.watch.continue-hint')}
+                  </Text>
+                </View>
+              ) : null}
               {canEndConversation(live, now) && live ? (
                 <Button variant="outline" disabled={pending} onPress={() => void end(live)}>
                   <Text>{t('screens.watch.end-action')}</Text>

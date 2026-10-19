@@ -4,6 +4,7 @@ import { synchronizeService } from '@/core/services/sync';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { WatchConversation } from '@/core/types';
 import { SYNC_OPERATION, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { completeWatchHandoff } from '@/features/voice';
 import {
   mergeConversation,
   newlyWoken,
@@ -31,6 +32,7 @@ export function applyWatchFrame(conversation: WatchConversation, now = Date.now(
   const held = watchConversations();
   const previous = held.find((entry) => entry.conversationId === conversation.conversationId);
   store(mergeConversation(held, conversation, now));
+  if (conversation.handoff === 'device') completeWatchHandoff(conversation.conversationId);
   if (newlyWoken(previous, conversation)) wokenListeners.forEach((listener) => listener(conversation));
 }
 

@@ -17,6 +17,7 @@ import {
   VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_EVENT_TYPE,
+  VOICE_HANDOFF_TYPE,
   VOICE_INTERRUPTED_TYPE,
   VOICE_MUTE_TYPE,
   VOICE_SKIP_TYPE,
@@ -35,6 +36,7 @@ export const RTC_INBOUND_TOPICS: Readonly<Record<string, string>> = {
   'argus.action': VOICE_ACTION_TYPE,
   'argus.event': VOICE_EVENT_TYPE,
   'argus.done': VOICE_DONE_TYPE,
+  'argus.handoff': VOICE_HANDOFF_TYPE,
 };
 
 export const RTC_OUTBOUND_TOPICS: Readonly<Record<string, string>> = {

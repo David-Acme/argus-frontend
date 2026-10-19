@@ -45,7 +45,6 @@ export const watch = {
   'continue-here': 'Continue here',
   'continue-hint': 'The conversation moves to this device with everything that was said.',
   'continue-failed': 'Could not continue here',
-  'continue-camera-stays': 'The conversation stays on the camera.',
   'continue-unsupported': 'This device cannot call Argus.',
   'end-action': 'End conversation',
   'end-confirm-title': 'End the conversation?',
@@ -55,7 +54,5 @@ export const watch = {
     'continue-action': 'Continue here',
     'open-action': 'Open in the app',
     'transcript-action': 'See conversation',
-    'message-from': 'Message from {name}',
-    'message-from-visitor': 'Message from a visitor',
   },
 } as const;

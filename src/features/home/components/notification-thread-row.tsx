@@ -11,6 +11,7 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { ModuleEnableAction } from '@/features/modules';
+import { WATCH_NOTIFICATION_ICONS, WatchNotificationAction, watchNotificationKind } from '@/features/watch';
 import {
   isThreadRead,
   missedCallId,
@@ -75,6 +76,8 @@ const KIND_ICONS: Readonly<Record<string, IconName>> = {
   camera_fallback_digest: 'history',
   call: 'phone',
   module_request: 'blocks',
+  assistant_task: 'messages-square',
+  ...WATCH_NOTIFICATION_ICONS,
 };
 
 const PHASE_KEYS = {
@@ -137,6 +140,7 @@ export function NotificationThreadRow({
   const pressable = canExpand || callId !== null || (onRead != null && !read);
   const critical = thread.urgency === 'critical';
   const request = moduleRequestOf(thread);
+  const watchKind = watchNotificationKind(thread.kind);
 
   const stamp = (at: number): string | null => {
     if (!at) return null;
@@ -226,6 +230,9 @@ export function NotificationThreadRow({
           <View className="pt-1.5">
             <ModuleEnableAction moduleId={request.moduleId} onEnabled={() => onRead?.(thread)} />
           </View>
+        ) : null}
+        {watchKind ? (
+          <WatchNotificationAction kind={watchKind} data={latest.data} onDone={() => onRead?.(thread)} />
         ) : null}
         {expanded ? (
           <View className="pt-2">

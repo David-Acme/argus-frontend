@@ -94,4 +94,5 @@ export type VoiceStartOptions = {
   callId?: string;
   reason?: string | null;
   responseId?: number | null;
+  watchConversationId?: string;
 };
