@@ -101,13 +101,13 @@ export const privacy = {
       'Argus no graba video de forma continua: las imágenes y el historial de eventos de seguridad se guardan 30 días (el propietario elige entre 1 y 60) y 120 días los incidentes marcados. Rostros sin nombre: 30 días sin volver a verlos (entre 1 y 60). Voz aprendida: hasta 180 días, y se borra al retirar tu permiso. Presencia: solo el estado actual, borrado al retirar tu permiso o tras 30 días sin cambios. En {country}, la normativa pide conservar las grabaciones de videovigilancia {videoDays} días (máximo {videoMaxDays}) y hasta {incidentDays} días si muestran un posible incidente.',
     'choices-title': 'Tú decides',
     'choices-body':
-      'Eliges qué permites: presencia, reconocimiento en las cámaras, aprendizaje de voz y audio de las cámaras. Lo cambias cuando quieras en Perfil > Privacidad; sin tu permiso esas funciones quedan apagadas para ti. El propietario puede apagar una función para toda la casa, pero nunca encenderla por ti, y ve qué elegiste.',
+      'Eliges qué permites: presencia, reconocimiento en las cámaras, aprendizaje de voz, audio de las cámaras y tu ubicación. Lo cambias cuando quieras en Perfil > Privacidad; sin tu permiso esas funciones quedan apagadas para ti. El propietario puede apagar una función para toda la casa, pero nunca encenderla por ti, y ve qué elegiste.',
     'rights-title': 'Tus derechos',
     'rights-body':
       'Puedes pedir al propietario de la instalación ver, corregir o borrar tus datos, o desactivar tu cuenta. En {country} la autoridad es la {authority}.',
     'owner-title': 'Responsabilidad del propietario',
     'owner-body':
-      'Quien instala Argus debe cumplir las leyes sobre videovigilancia y datos de terceros ({laws}), colocar avisos visibles de zona videovigilada y no apuntar cámaras a espacios ajenos más de lo necesario.',
+      'Quien instala y opera Argus es el responsable de los datos que procesa y debe usarlo conforme a la ley del lugar donde está instalado ({laws}): colocar avisos visibles de zona videovigilada, no apuntar cámaras a espacios ajenos más de lo necesario y, si una cámara capta audio, tratarlo como dato de videovigilancia y no activarlo en zonas de descanso de trabajadores del hogar. El autor entrega los controles y la documentación; cómo se usan en cada instalación queda fuera de su control.',
     'terms-title': 'Versión en desarrollo, sin garantías',
     'terms-body':
       'Argus está en desarrollo (antes de la beta) y se ofrece “tal cual”, sin garantías de ningún tipo. Su autor no se hace responsable del mal uso ni de fallas del software. Argus no es un sistema de seguridad ni de alarma certificado: no reemplaza un servicio de monitoreo profesional ni los servicios de emergencia. Cada usuario es responsable de cumplir las leyes locales sobre videovigilancia y datos de terceros, incluidos los avisos de zona videovigilada.',

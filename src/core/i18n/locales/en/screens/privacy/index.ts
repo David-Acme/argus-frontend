@@ -100,13 +100,13 @@ export const privacy = {
       'Argus does not record video continuously: images and the history of security events are kept 30 days (the owner chooses 1 to 60), and 120 days for marked incidents. Unnamed faces: 30 days without being seen again (1 to 60). Learned voice: up to 180 days, erased when you withdraw permission. Presence: only the current state, erased when you withdraw permission or after 30 days without change. In {country}, the rules ask that video surveillance recordings be kept {videoDays} days (at most {videoMaxDays}) and up to {incidentDays} days when they show a possible incident.',
     'choices-title': 'You decide',
     'choices-body':
-      'You choose what you allow: presence, recognition on the cameras, voice learning and camera audio. Change it any time in Profile > Privacy; without your permission those features stay off for you. The owner can turn a feature off for the whole household, never on for you, and can see what you chose.',
+      'You choose what you allow: presence, recognition on the cameras, voice learning, camera audio and your location. Change it any time in Profile > Privacy; without your permission those features stay off for you. The owner can turn a feature off for the whole household, never on for you, and can see what you chose.',
     'rights-title': 'Your rights',
     'rights-body':
       'You can ask the installation’s owner to see, correct or erase your data, or to deactivate your account. In {country} the authority is the {authority}.',
     'owner-title': 'The owner’s responsibility',
     'owner-body':
-      'Whoever installs Argus must comply with the laws on video surveillance and third-party data ({laws}), put up visible camera signs and not point cameras at other people’s spaces more than necessary.',
+      'Whoever installs and operates Argus is the controller of the data it processes and must use it lawfully where it is installed ({laws}): put up visible camera signs, not point cameras at other people’s spaces more than necessary and, if a camera captures audio, treat it as video surveillance data and never enable it in domestic workers’ rest areas. The author ships the controls and the documentation; how each installation uses them is outside the author’s control.',
     'terms-title': 'Software in development, no warranty',
     'terms-body':
       'Argus is in development (pre-beta) and is provided “as is”, without warranties of any kind. Its author is not responsible for misuse or malfunction of the software. Argus is not a certified security or alarm system: it does not replace a professional monitoring service or emergency services. Each user is responsible for complying with local laws on video surveillance and third-party data, including camera signage.',

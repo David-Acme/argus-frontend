@@ -1,6 +1,6 @@
 import type { PrivacySignal } from '@/core/types';
 
-export const PRIVACY_NOTICE_VERSION = 1;
+export const PRIVACY_NOTICE_VERSION = 2;
 
 export const PRIVACY_SIGNALS: readonly PrivacySignal[] = [
   'presence',
