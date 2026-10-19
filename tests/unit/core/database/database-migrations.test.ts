@@ -372,7 +372,7 @@ describe('the camera privacy state column', () => {
         if (name !== 'camera') return [name, table];
         const columns = Object.fromEntries(
           Object.entries(table.columns).filter(
-            ([column]) => column !== 'privacy_state' && column !== 'privacy_obeyed'
+            ([column]) => !['privacy_state', 'privacy_obeyed', 'watchman', 'no_audio'].includes(column)
           )
         );
         return [name, { ...table, columns, columnArray: Object.values(columns) }];
@@ -419,7 +419,9 @@ describe('the camera privacy obeyed column', () => {
       Object.entries(schema.tables).map(([name, table]) => {
         if (name !== 'camera') return [name, table];
         const columns = Object.fromEntries(
-          Object.entries(table.columns).filter(([column]) => column !== 'privacy_obeyed')
+          Object.entries(table.columns).filter(
+            ([column]) => !['privacy_obeyed', 'watchman', 'no_audio'].includes(column)
+          )
         );
         return [name, { ...table, columns, columnArray: Object.values(columns) }];
       })
@@ -449,6 +451,54 @@ describe('the camera privacy obeyed column', () => {
     expect(db.query('select name, privacy_obeyed as obeyed from camera').get()).toEqual({
       name: 'Gate',
       obeyed: 0,
+    });
+  });
+});
+
+describe('the camera watchman and no-audio columns', () => {
+  const cameraColumnsOf = (db: Database): string[] =>
+    (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
+      (row) => row.name
+    );
+
+  const atVersionThirteen = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'camera') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => !['watchman', 'no_audio'].includes(column))
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 13, tables } as AppSchema;
+  };
+
+  test('a fresh database has both columns', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(cameraColumnsOf(db)).toContain('watchman');
+    expect(cameraColumnsOf(db)).toContain('no_audio');
+  });
+
+  test('a version 13 database gains them through the migration, off, and its cameras stay', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionThirteen()));
+    expect(cameraColumnsOf(db)).not.toContain('watchman');
+    db.query(
+      'insert into camera (id, _changed, _status, name, manufacturer, model, ip, port, username, cloud_username, driver, icon, record_mode, privacy_state, privacy_obeyed, retention_days, capabilities, config, is_enabled, is_online, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('1', '', 'synced', 'Sala', 'tapo', 'C225', '10.0.0.6', 554, 'admin', '', 'tapo', 'video', 'events', 'off', 0, null, '[]', '{}', 1, 1, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 13, toVersion: SCHEMA_VERSION });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(cameraColumnsOf(db)).toContain('watchman');
+    expect(cameraColumnsOf(db)).toContain('no_audio');
+    expect(db.query('select name, watchman, no_audio as noAudio from camera').get()).toEqual({
+      name: 'Sala',
+      watchman: 0,
+      noAudio: 0,
     });
   });
 });

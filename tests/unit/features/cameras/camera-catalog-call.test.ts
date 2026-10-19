@@ -87,6 +87,8 @@ function camera(id: string, partial: Partial<ICameraCacheRow> = {}): ICameraCach
     recordMode: 'events',
     privacyState: 'unknown',
     privacyObeyed: false,
+    watchman: false,
+    noAudio: false,
     retentionDays: null,
     retentionIncident: false,
     isOnline: true,

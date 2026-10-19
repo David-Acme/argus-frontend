@@ -20,7 +20,7 @@ export interface ICameraCreate {
   catalogId?: string;
 }
 
-export type ICameraUpdate = Partial<ICameraCreate> & { isEnabled?: boolean };
+export type ICameraUpdate = Partial<ICameraCreate> & { isEnabled?: boolean; watchman?: boolean; noAudio?: boolean };
 
 export interface IZoneCreate {
   cameraId: number;

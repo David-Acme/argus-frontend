@@ -51,6 +51,26 @@ export const cameras = {
       'session-ended-hint': 'Vuelve a entrar para seguir viendo la cámara.',
     },
   },
+  watch: {
+    title: 'Argus escucha aquí',
+    description: 'Si alguien dice “Argus” cerca de esta cámara, suena un tono y Argus contesta por su parlante.',
+    listen: 'Escuchar en esta cámara',
+    'listen-hint': 'No guarda audio antes de oír su nombre. Con la lente tapada no escucha ni habla.',
+    'no-audio': 'Sin audio (zona de descanso)',
+    'no-audio-hint':
+      'La cámara no escucha ni transmite sonido. Úsalo en zonas de descanso de trabajadores del hogar.',
+    'save-failed': 'No se pudo cambiar la escucha de la cámara',
+    state: {
+      listening: 'Escuchando su nombre',
+      off: 'No escucha',
+      'no-audio': 'Sin audio',
+      masked: 'No escucha: la lente está tapada',
+      disabled: 'No escucha: la cámara está apagada',
+      'no-speaker': 'No escucha: Argus no puede hablar por esta cámara',
+      'household-off': 'No escucha: la escucha está apagada para la casa',
+      'household-audio': 'No escucha: falta el permiso de audio de la casa',
+    },
+  },
   info: {
     title: 'Dispositivo',
     status: 'Estado',

@@ -21,6 +21,9 @@ import { hasDeviceControls, resolveCapabilities } from '@/features/cameras/model
 import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
 import { nextPresetName, parsePresets, type CameraPreset } from '@/features/cameras/model/camera-presets';
 import { CameraEnvironmentPanel } from '@/features/security';
+import { useHouseholdWatchman } from '@/features/privacy';
+import { CameraWatchPanel } from '@/features/cameras/components/camera-watch-panel';
+import { cameraListening, watchPatchOf } from '@/features/cameras/model/camera-watch';
 import { useAppSirenEnabled } from '@/features/safety';
 import { isVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import { CameraForm } from '@/features/cameras/components/camera-form';
@@ -144,6 +147,7 @@ export default function CameraDetailScreen() {
       ? t('screens.cameras.call.needs-cloud')
       : null;
   const siren = useCameraSiren(id);
+  const householdWatchman = useHouseholdWatchman({ enabled: has(CAPABILITY.privacyHousehold) });
   const micSupported = voiceCallSupported();
   const startCall = call.start;
 
@@ -174,6 +178,18 @@ export default function CameraDetailScreen() {
         intents: [{ table: 'camera', kind: 'update', recordId: cameraId, values: { isEnabled: enabled } }],
         call: () => cameraService.update(cameraId, { isEnabled: enabled }),
       }),
+    [t],
+  );
+
+  const setWatch = useCallback(
+    (cameraId: string, field: 'watchman' | 'noAudio', value: boolean) => {
+      const patch = watchPatchOf(field, value);
+      return runOptimistic({
+        intents: [{ table: 'camera', kind: 'update', recordId: cameraId, values: patch }],
+        call: () => cameraService.update(cameraId, patch),
+        errorTitle: t('screens.cameras.watch.save-failed'),
+      });
+    },
     [t],
   );
 
@@ -386,6 +402,23 @@ export default function CameraDetailScreen() {
       />
     ) : null;
 
+  const watchPanel = (
+    <CameraWatchPanel
+      watchman={camera.watchman}
+      noAudio={camera.noAudio}
+      listening={cameraListening({
+        watchman: camera.watchman,
+        noAudio: camera.noAudio,
+        masked,
+        enabled: camera.isEnabled,
+        talk: features ? features.talk === true : null,
+        household: householdWatchman,
+      })}
+      editable={canUpdate}
+      onChange={(field, value) => void setWatch(camera.id, field, value)}
+    />
+  );
+
   const environment = <CameraEnvironmentPanel cameraId={camera.id} className={controllable ? undefined : stretch} />;
   const zonesPanel = (
     <CameraZonesPanel
@@ -446,6 +479,7 @@ export default function CameraDetailScreen() {
               <View className="w-[360px] shrink-0 gap-5">
                 {callPanel}
                 {sirenPanel}
+                {watchPanel}
                 {info}
                 {environment}
                 {control}
@@ -460,6 +494,7 @@ export default function CameraDetailScreen() {
                 <View className="min-w-0 flex-1 gap-5">
                   {callPanel}
                   {sirenPanel}
+                  {watchPanel}
                   {info}
                   {environment}
                   {control}
@@ -474,6 +509,7 @@ export default function CameraDetailScreen() {
               {clipsPanel}
               {callPanel}
               {sirenPanel}
+              {watchPanel}
               {info}
               {environment}
               {control}

@@ -57,6 +57,8 @@ const camera = (id: string, overrides: Partial<CameraSource> = {}): CameraSource
   recordMode: 'events',
   privacyState: 'unknown',
   privacyObeyed: false,
+  watchman: false,
+  noAudio: false,
   retentionDays: null,
   isOnline: true,
   isEnabled: true,
