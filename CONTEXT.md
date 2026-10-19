@@ -4526,3 +4526,80 @@ locales.
 The camera persists no `sounding` flag yet (backend R8), so the app's
 sounding state is the lease it was answered, per device: a phone that did not
 sound it does not know it is sounding.
+
+## The camera call on the phone (2026-10-19, CC9 of the camera call plan)
+
+Track T5 of the close-all programme: the app side of backend
+`docs/history/plans/camera-call-plan.md` (CC9, the phone side of CC6, and the
+app half of CC0 and CC8). Built while the backend for CC1–CC8 was still being
+written, so every contract not yet in the backend is read in one module and
+listed below; adjust that module at integration, not the screens. Written
+without building or running anything (owner order for the track): the native
+pieces need `bunx nitrogen` in `modules/argus-net` before a dev-client build.
+
+- **Privacy (`features/privacy`).** The household panel gains "Argus escucha
+  por las cámaras" behind its own acknowledgement
+  (`WatchmanAcknowledgementDialog`: installer responsibility, signs, no audio
+  in rest areas, third-party consent, no audio before the wake), a readiness
+  hint (`watchmanReadiness`: off, household audio off, audio held by N people,
+  ready), "Ubicar a las personas en casa" and the entrance sign
+  (`SignageDialog`, `model/signage.ts`; printed through a hidden iframe on the
+  desktop and the web, the share sheet on the phones,
+  `services/signage-share/`). Every person gets "Ubicarme en casa" in Perfil >
+  Privacidad, an opt-out carried as `location` in `PUT /privacy/me`
+  (`PrivacyChoices.location` is optional so an older identity still parses).
+- **Cameras.** Schema 14: `camera.watchman`, `camera.no_audio`, through the
+  mapper, the view cache and the lens. The camera screen's "Argus escucha
+  aquí" panel saves `PATCH /camera/{id} {watchman | noAudio}` optimistically
+  and names the first thing keeping the camera from listening
+  (`model/camera-watch.ts`).
+- **The live conversation (`features/watch`).** `WatchUpdate` (15) frames and
+  `GET /rtc/watch` feed the per-user view cache `voice.watch`; frames merge by
+  turn id, so a snapshot and a delta both work, a stale frame never rolls the
+  state back, and a conversation the server stops listing has ended. A pill on
+  every screen (hidden on `/watch`, during an Argus call and in the welcome)
+  shows waking, listening, thinking, speaking or paused with the camera's name,
+  with a short vibration on the phone when the camera plays its tone. `/watch`
+  shows the transcript, the hand-off, the discreet / guest / visitor notes,
+  how long a pause stays resumable and why it ended, and ends the
+  conversation (`POST /rtc/watch/{id}/end`).
+- **"Continuar aquí".** Offered only to the identified member (audience member
+  or discreet), from the camera leg, outside another call. It starts an Argus
+  call with `POST /rtc/token {watchConversationId}`; the device leg joins with
+  its microphone muted and opens it only when the server says the device
+  carries the conversation (`argus.handoff` on the room, or a frame with
+  `handoff: "device"`). Nothing within 12 s, or the server keeps the camera,
+  and the call ends with "la conversación sigue en la cámara": never two live
+  microphones. Pure rule in `features/voice/model/watch-handoff.ts`.
+- **Notices.** `watch_busy` and `watch_resume` continue here or open the
+  transcript, `watch_details` opens it, `watch_confirm` opens the in-app
+  screen where the refused sensitive request is confirmed (in-app paths
+  only), `watch_message` and `assistant_task` read as they are.
+- **Proximity (`features/proximity`, `core/services/beacon`).** The member's
+  opt-in "Usar mi celular para ubicarme en casa" (`PUT /guard/proximity/me
+  {ble}`) gets a seed and a period; the phone advertises a 128-bit service UUID
+  equal to `HMAC-SHA256(seed, uint64_be(floor(now / period)))[0:16]`
+  (`tests/vectors/beacon-token.json`, shared with the backend and the Kotlin
+  test). Android advertises from a `connectedDevice` foreground service
+  (`PresenceBeaconService`, argus-net's `ArgusBeacon`) only while guard
+  presence says home; iOS advertises through CoreBluetooth while the app is in
+  the foreground; the desktop has no advertiser. `beaconPlan` decides, and the
+  controller is mounted once in the signed-in layout. The owner registers
+  ESPHome Bluetooth proxies and LD2410 / LD2450 / FP2 radars per room at
+  `/settings/proximity`.
+
+### Contracts assumed (to confirm against the backend)
+
+| What | Where the app reads it |
+|---|---|
+| `/sync` operation `WatchUpdate = 15`, info `{conversationId, cameraId, cameraName, state: waking\|listening\|thinking\|speaking\|resumable\|ended, handoff: camera\|offering\|bridging\|device, audience: member\|discreet\|guest\|visitor, startedAt, updatedAt, resumableUntil, endReason, turns: [{id, role, text, at, final}]}` (seconds), to the speaker's room only | `core/contracts/watch.contract.ts` |
+| `GET /rtc/watch` → `{conversations: [...]}`, `POST /rtc/watch/{id}/end` | same |
+| `POST /rtc/token {watchConversationId}` → the usual grant; refusals `WATCH_NOT_FOUND`, `WATCH_EXPIRED` | `features/voice/services/rtc/rtc-token.ts` |
+| Room data topic `argus.handoff {conversationId, state: camera\|bridging\|device}` | `features/voice/model/watch-handoff.ts` |
+| Notification kinds `watch_busy`, `watch_resume`, `watch_details` (data `conversationId`), `watch_confirm` (data `url`), `watch_message` | `features/watch/model/watch-notification.ts` |
+| `GET/PUT /guard/proximity/me` → `{ble: {enabled, seed, rotateSeconds, receivers}, located}` | `core/contracts/proximity.contract.ts` |
+| `GET/POST /guard/proximity/receivers`, `DELETE …/{id}`; `GET/POST /guard/proximity/sensors`, `DELETE …/{id}` | same |
+
+The wire-vocabulary contract test fails until the backend declares
+`WatchUpdate = 15`; the notification-kind test needs the watch kinds mapped to
+surveillance on both sides at the same time if the backend gates them.
