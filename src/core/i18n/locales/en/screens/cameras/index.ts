@@ -531,8 +531,6 @@ export const cameras = {
     'active-look-needs-home': 'Set a watch position first: Argus always returns to it.',
     follow: 'Follow intruders',
     'follow-hint': 'Away from home or with the alarm on, the camera follows a confirmed person while they stay in view.',
-    patrol: 'Patrol',
-    'patrol-hint': 'Goes through the saved positions now and then. It pauses while anyone holds the controls.',
     sectors: 'Places not to look at',
     'sectors-hint': 'Argus never points at these places, such as a neighbour\'s window.',
     'sectors-empty': 'No places yet',

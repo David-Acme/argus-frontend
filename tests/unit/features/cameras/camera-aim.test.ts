@@ -22,7 +22,7 @@ function aim(overrides: Partial<CameraAim> = {}): CameraAim {
     tilt: 0,
     lease: { holder: 'none', userId: 0, mine: false, sinceMs: 0, parkUntilMs: 0 },
     activity: 'idle',
-    settings: { activeLook: true, followIntruders: false, patrol: false, noAimSectors: [] },
+    settings: { activeLook: true, followIntruders: false, noAimSectors: [] },
     wear: { movesToday: 3, dailyCap: 400 },
     ...overrides,
   };
@@ -65,7 +65,6 @@ describe('settings paint from the synced row first', () => {
     homePreset: '5',
     activeLook: false,
     followIntruders: true,
-    patrol: true,
     noAimSectors: [{ name: 'Vecino', panFrom: -20, panTo: 10, tiltFrom: 0, tiltTo: 15 }],
   };
 
@@ -73,7 +72,6 @@ describe('settings paint from the synced row first', () => {
     expect(aimSettingsOf(null, synced)).toEqual({
       activeLook: false,
       followIntruders: true,
-      patrol: true,
       noAimSectors: synced.noAimSectors,
     });
     expect(homePresetOf(null, synced)).toBe('5');
@@ -88,7 +86,6 @@ describe('settings paint from the synced row first', () => {
     expect(aimSettingsOf(null, undefined)).toEqual({
       activeLook: false,
       followIntruders: false,
-      patrol: false,
       noAimSectors: [],
     });
     expect(homePresetOf(null, undefined)).toBeNull();
@@ -96,11 +93,11 @@ describe('settings paint from the synced row first', () => {
 
   test('an optimistic patch touches only the settings', () => {
     const before = aim();
-    const after = withAimPatch(before, { patrol: true });
-    expect(after?.settings.patrol).toBe(true);
+    const after = withAimPatch(before, { followIntruders: true });
+    expect(after?.settings.followIntruders).toBe(true);
     expect(after?.settings.activeLook).toBe(true);
     expect(after?.lease).toBe(before.lease);
-    expect(withAimPatch(null, { patrol: true })).toBeNull();
+    expect(withAimPatch(null, { followIntruders: true })).toBeNull();
   });
 });
 

@@ -37,7 +37,6 @@ export const cameraAimSchema = z.object({
   settings: z.object({
     activeLook: z.boolean(),
     followIntruders: z.boolean(),
-    patrol: z.boolean(),
     noAimSectors: z.array(noAimSectorSchema),
   }),
   wear: z.object({

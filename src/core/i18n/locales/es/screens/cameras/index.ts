@@ -537,8 +537,6 @@ export const cameras = {
     'active-look-needs-home': 'Primero fija una posición de vigilancia: Argus siempre vuelve a ella.',
     follow: 'Seguir intrusos',
     'follow-hint': 'Fuera de casa o con la alarma puesta, la cámara sigue a una persona confirmada mientras esté a la vista.',
-    patrol: 'Patrullar',
-    'patrol-hint': 'Recorre las posiciones guardadas de vez en cuando. Se detiene mientras alguien tenga los controles.',
     sectors: 'Zonas donde no mirar',
     'sectors-hint': 'Argus nunca apunta hacia estas zonas, como la ventana de un vecino.',
     'sectors-empty': 'Sin zonas por ahora',

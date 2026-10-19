@@ -61,7 +61,6 @@ export function cameraAimConfigOf(config: Readonly<Record<string, unknown>>): Ca
     homePreset: typeof home === 'string' && home.length > 0 ? home : typeof home === 'number' ? String(home) : null,
     activeLook: config.activeLook === true,
     followIntruders: config.followIntruders === true,
-    patrol: config.patrol === true,
     noAimSectors: sectors.map(sectorOf).filter((sector): sector is CameraNoAimSector => sector !== null),
   };
 }

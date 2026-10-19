@@ -14,7 +14,6 @@ const AIM = {
   settings: {
     activeLook: true,
     followIntruders: true,
-    patrol: false,
     noAimSectors: [{ name: 'Vecino', panFrom: -40, panTo: -10, tiltFrom: -5, tiltTo: 20 }],
   },
   wear: { movesToday: 12, dailyCap: 400 },

@@ -28,7 +28,6 @@ const WATCHING: ReadonlySet<CameraAimActivity> = new Set(['looking', 'following'
 const EMPTY_SETTINGS: CameraAimSettings = {
   activeLook: false,
   followIntruders: false,
-  patrol: false,
   noAimSectors: [],
 };
 
@@ -57,7 +56,6 @@ export function aimSettingsOf(
   return {
     activeLook: synced.activeLook,
     followIntruders: synced.followIntruders,
-    patrol: synced.patrol,
     noAimSectors: synced.noAimSectors,
   };
 }

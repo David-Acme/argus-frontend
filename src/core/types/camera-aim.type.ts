@@ -19,7 +19,6 @@ export type CameraNoAimSector = {
 export type CameraAimSettings = {
   activeLook: boolean;
   followIntruders: boolean;
-  patrol: boolean;
   noAimSectors: CameraNoAimSector[];
 };
 

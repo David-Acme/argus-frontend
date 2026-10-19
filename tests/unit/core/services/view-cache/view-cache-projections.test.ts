@@ -127,7 +127,6 @@ describe('camera projection', () => {
             homePreset: '3',
             activeLook: true,
             followIntruders: true,
-            patrol: false,
             noAimSectors: [
               { name: 'Vecino', panFrom: -40, panTo: -10, tiltFrom: -5, tiltTo: 20 },
               { name: 'roto', panFrom: 'a' },
@@ -143,14 +142,12 @@ describe('camera projection', () => {
       homePreset: '3',
       activeLook: true,
       followIntruders: true,
-      patrol: false,
       noAimSectors: [{ name: 'Vecino', panFrom: -40, panTo: -10, tiltFrom: -5, tiltTo: 20 }],
     });
     expect(plain?.aim).toEqual({
       homePreset: null,
       activeLook: false,
       followIntruders: false,
-      patrol: false,
       noAimSectors: [],
     });
   });

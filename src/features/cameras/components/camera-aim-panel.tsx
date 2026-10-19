@@ -186,13 +186,6 @@ export function CameraAimPanel({ controls, className }: CameraAimPanelProps) {
         disabled={!hasHome}
         onChange={(followIntruders) => void update({ followIntruders })}
       />
-      <ToggleRow
-        label={t('screens.cameras.sight.patrol')}
-        hint={t('screens.cameras.sight.patrol-hint')}
-        value={settings.patrol}
-        disabled={!hasHome}
-        onChange={(patrol) => void update({ patrol })}
-      />
       <View className="gap-2 pt-2">
         <View className="flex-row items-center gap-2">
           <Text variant="label" className="min-w-0 flex-1">
