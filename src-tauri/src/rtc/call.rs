@@ -8,13 +8,14 @@ use livekit::participant::Participant;
 use livekit::publication::LocalTrackPublication;
 use livekit::track::{LocalAudioTrack, LocalTrack, RemoteAudioTrack, RemoteTrack, TrackSource};
 use livekit::webrtc::audio_stream::native::NativeAudioStream;
+use livekit::webrtc::prelude::IceServer;
 use livekit::{DataPacket, Room, RoomEvent, RoomOptions};
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::task::JoinHandle;
 
 pub use super::audio::AudioChoice;
 use super::audio::AudioIo;
-use super::protocol::{agent_state, end_reason, level, CallState, EndReason, RtcEvent, MICROPHONE_TRACK};
+use super::protocol::{agent_state, end_reason, level, CallState, EndReason, IceServerRequest, RtcEvent, MICROPHONE_TRACK};
 
 pub type EventSink = Arc<dyn Fn(RtcEvent) + Send + Sync>;
 
@@ -25,6 +26,7 @@ pub struct CallOptions {
   pub url: String,
   pub token: String,
   pub agent_identity: String,
+  pub ice_servers: Vec<IceServerRequest>,
   pub audio: AudioChoice,
 }
 
@@ -189,6 +191,15 @@ impl Call {
     let audio = super::audio::open(options.audio)?;
     let mut room_options = RoomOptions::default();
     room_options.auto_subscribe = true;
+    room_options.rtc_config.ice_servers = options
+      .ice_servers
+      .iter()
+      .map(|server| IceServer {
+        urls: server.urls.clone(),
+        username: server.username.clone(),
+        password: server.credential.clone(),
+      })
+      .collect();
     let (room, events) = Room::connect(&options.url, &options.token, room_options)
       .await
       .map_err(connect_error)?;
@@ -363,7 +374,7 @@ mod live_tests {
     let url = super::super::protocol::pinned_url(&url, "argus.local").expect("pinned url");
     let started = Instant::now();
     let call = Call::join(
-      CallOptions { url, token, agent_identity: agent, audio: AudioChoice::File(clip.into()) },
+      CallOptions { url, token, agent_identity: agent, ice_servers: Vec::new(), audio: AudioChoice::File(clip.into()) },
       {
         let speaking = std::sync::atomic::AtomicBool::new(false);
         Arc::new(move |event| match &event {
@@ -405,7 +416,7 @@ mod live_tests {
     let recorded = events.clone();
     let started = Instant::now();
     let call = Call::join(
-      CallOptions { url, token: live.user_token, agent_identity: AGENT.to_string(), audio: AudioChoice::Synthetic },
+      CallOptions { url, token: live.user_token, agent_identity: AGENT.to_string(), ice_servers: Vec::new(), audio: AudioChoice::Synthetic },
       Arc::new(move |event| recorded.lock().unwrap().push(event)),
     )
     .await
@@ -466,6 +477,7 @@ mod live_tests {
         url: live.url.clone(),
         token: live.user_token.clone(),
         agent_identity: AGENT.to_string(),
+        ice_servers: Vec::new(),
         audio: AudioChoice::Synthetic,
       },
       Arc::new(move |event| recorded.lock().unwrap().push(event)),

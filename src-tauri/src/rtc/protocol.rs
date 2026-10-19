@@ -37,12 +37,33 @@ pub enum RtcEvent {
   AgentAudio { active: bool },
 }
 
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct IceServerRequest {
+  pub urls: Vec<String>,
+  pub username: String,
+  pub credential: String,
+}
+
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct JoinRequest {
   pub url: String,
   pub token: String,
   pub agent_identity: String,
+  #[serde(default)]
+  pub ice_servers: Vec<IceServerRequest>,
+}
+
+pub fn relay_servers(requested: &[IceServerRequest]) -> Vec<IceServerRequest> {
+  requested
+    .iter()
+    .filter(|server| {
+      !server.urls.is_empty()
+        && server.urls.iter().all(|url| url.starts_with("turn:") || url.starts_with("turns:"))
+    })
+    .cloned()
+    .collect()
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
@@ -141,6 +162,21 @@ mod tests {
     assert_eq!(pinned_url("wss://argus.local:7046/x", "argus.local").unwrap(), "wss://argus.local:7046/x");
     assert!(pinned_url("ws://argus.local:7880", "argus.local").unwrap_err().starts_with("CERT_NOT_TRUSTED"));
     assert!(pinned_url("wss://argus.local:7046", "").unwrap_err().starts_with("PAIRING_REQUIRED"));
+  }
+
+  #[test]
+  fn a_join_without_relays_parses_and_only_turn_urls_are_kept() {
+    let bare: JoinRequest =
+      serde_json::from_str(r#"{"url":"wss://argus.local:7046","token":"t","agentIdentity":"argus-voice"}"#).unwrap();
+    assert!(bare.ice_servers.is_empty());
+    let relayed: JoinRequest = serde_json::from_str(
+      r#"{"url":"wss://argus.local:7046","token":"t","agentIdentity":"argus-voice","iceServers":[{"urls":["turn:turn.example:3478?transport=udp","turns:turn.example:5349?transport=tcp"],"username":"1800000000:7","credential":"c"},{"urls":["http://x"],"username":"u","credential":"c"},{"urls":[],"username":"u","credential":"c"}]}"#,
+    )
+    .unwrap();
+    let kept = relay_servers(&relayed.ice_servers);
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].username, "1800000000:7");
+    assert_eq!(kept[0].urls.len(), 2);
   }
 
   #[test]

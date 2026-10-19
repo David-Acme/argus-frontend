@@ -11,10 +11,22 @@ export type RtcEvent =
   | { kind: 'level'; local: number; remote: number }
   | { kind: 'agentAudio'; active: boolean };
 
+export type RtcIceServer = {
+  urls: string[];
+  username: string;
+  credential: string;
+};
+
+export type RtcIceGrant = {
+  iceServers: RtcIceServer[];
+  expiresAt: number;
+};
+
 export type RtcJoin = {
   url: string;
   token: string;
   agentIdentity: string;
+  iceServers?: RtcIceServer[];
 };
 
 export type RtcCallKind = 'guard_episode' | 'agenda' | 'assistant';
@@ -39,6 +51,7 @@ export type RtcTokenGrant = {
   callId: string;
   expiresAt: number;
   call?: RtcClaimedCall | null;
+  iceServers?: RtcIceServer[];
 };
 
 export type RtcTokenRequest = {

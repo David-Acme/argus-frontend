@@ -1,6 +1,7 @@
 import type { ICameraRtcOpenInput, ICameraRtcSession, ICameraWebRtcAnswer } from '@/core/interfaces';
-import type { CameraRtcStream } from '@/core/types';
+import type { CameraRtcStream, RtcIceServer } from '@/core/types';
 import { cameraWebRtcAnswerSchema } from '@/core/contracts/http.contract';
+import { rtcIceService } from '@/core/services/rtc-ice';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
 import {
   CAMERA_RTC_PROBE_MS,
@@ -39,7 +40,7 @@ export type RtcPeer = {
 };
 
 export type RtcPlatform = {
-  createPeer(): Promise<RtcPeer>;
+  createPeer(iceServers: RtcIceServer[]): Promise<RtcPeer>;
   streamWith(current: CameraRtcStream | null, event: RtcTrackEvent): CameraRtcStream | null;
 };
 
@@ -152,7 +153,7 @@ class CameraRtcSession implements ICameraRtcSession {
 }
 
 export async function openRtcSession(platform: RtcPlatform, input: ICameraRtcOpenInput): Promise<ICameraRtcSession> {
-  const peer = await platform.createPeer();
+  const peer = await platform.createPeer(await rtcIceService.servers());
   const session = new CameraRtcSession(peer, platform, input);
   try {
     await session.start();

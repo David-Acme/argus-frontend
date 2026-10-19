@@ -2798,9 +2798,17 @@ answer checked by `cameraWebRtcAnswerSchema`).
 - **The chip says which.** The stats chip on the video adds "· WebRTC" or
   "· WS" (`screens.cameras.live.transport-*`, with a spoken hint), from
   `ICameraLiveStats.transport`.
-- **Remote.** Through the tunnel WebRTC has no route (no TURN yet), so the
+- **Remote.** Without a relay, WebRTC through the tunnel has no route, so the
   first view of a session waits up to 5 s before playing over the WebSocket;
-  later views skip WebRTC until the backoff ends.
+  later views skip WebRTC until the backoff ends. Since 2026-10-19 (F1, the
+  TURN relay) the peer is built with the house's own relay when the server
+  offers one: `rtcIceService` (`src/core/services/rtc-ice/`) reads
+  `GET /rtc/ice` (`{iceServers, expiresAt}`, time-limited TURN credentials
+  argus-sync mints for the coturn the owner turned on), caches the answer
+  until a minute before it expires, and answers `[]` on any refusal or
+  failure, so a house without a relay, or an older server without the route,
+  dials directly exactly as before. `RtcPlatform.createPeer(iceServers)` hands
+  the list to `RTCPeerConnection` on the web and on the phone alike.
 - **Phones not verified here.** The native path type-checks and shares the
   session code the browser test exercised, but no phone ran it in this
   change; Android's audio routing for a camera stream (no `AudioSession`
@@ -2839,6 +2847,18 @@ platform, then leaves in its own change.
   the call. `ARGUS_RTC_FAKE_MIC=<pcm16 48 kHz mono file or wav>` replaces the
   microphone with that file and opens no audio device at all (testing
   without a microphone).
+- **The relay (2026-10-19, F1).** The call grant of `POST /rtc/token` may carry
+  `iceServers` (the house's coturn, time-limited TURN credentials). The grant
+  schema accepts them as optional and drops a malformed list to `[]` instead of
+  refusing the call; `voice.service.ts` passes them on in `RtcJoin.iceServers`.
+  `rtc-livekit.ts` (`connectOptionsOf`) hands a non-empty list to LiveKit as
+  `rtcConfig.iceServers` (the web and the phone), and the desktop's
+  `argus_rtc_join` takes it as `iceServers` and sets `RoomOptions.rtc_config`
+  in Rust, keeping only `turn:`/`turns:` servers (`relay_servers`). An empty list
+  changes nothing: LiveKit uses the servers its own join response offers.
+  `tests/unit/features/voice/rtc-livekit-options.test.ts`, the relay case of
+  `rtc-protocol.test.ts`, `tests/unit/core/services/rtc-ice/rtc-ice.test.ts` and
+  the Rust `a_join_without_relays_parses_and_only_turn_urls_are_kept` pin it.
 - **Trust.** The LiveKit front (wss 7046) presents the instance leaf. The app
   dials the token's `url` on the pinned host (`pinnedRtcUrl` /
   `protocol::pinned_url`, keeping the port). Desktop registers

@@ -9,7 +9,7 @@ use tauri::ipc::Channel;
 use tokio::sync::Mutex;
 
 use call::{AudioChoice, Call, CallOptions, EventSink};
-use protocol::{pinned_url, AudioDevice, DataRequest, DeviceRequest, JoinRequest, RtcEvent};
+use protocol::{pinned_url, relay_servers, AudioDevice, DataRequest, DeviceRequest, JoinRequest, RtcEvent};
 
 #[derive(Default)]
 pub struct RtcState {
@@ -36,6 +36,7 @@ pub async fn join(state: &RtcState, request: JoinRequest, on_event: Channel<RtcE
       url,
       token: request.token,
       agent_identity: request.agent_identity,
+      ice_servers: relay_servers(&request.ice_servers),
       audio: AudioChoice::from_environment(),
     },
     channel_sink(on_event),

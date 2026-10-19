@@ -5,6 +5,8 @@ import type {
   IncomingCallCancel,
   RtcClaimedCall,
   RtcDeclineRequest,
+  RtcIceGrant,
+  RtcIceServer,
   RtcTokenGrant,
 } from '@/core/types';
 
@@ -32,6 +34,19 @@ export const rtcClaimedCallSchema = z.object({
   episodeId: optionalId,
 }) satisfies z.ZodType<RtcClaimedCall>;
 
+const ICE_URL_PATTERN = /^turns?:[^\s]+$/;
+
+export const rtcIceServerSchema = z.object({
+  urls: z.array(z.string().regex(ICE_URL_PATTERN)).min(1),
+  username: z.string().min(1),
+  credential: z.string().min(1),
+}) satisfies z.ZodType<RtcIceServer>;
+
+export const rtcIceGrantSchema = z.object({
+  iceServers: z.array(rtcIceServerSchema),
+  expiresAt: z.number().int().nonnegative(),
+}) satisfies z.ZodType<RtcIceGrant>;
+
 export const rtcTokenGrantSchema = z.object({
   url: z.string().regex(/^wss:\/\/[^\s/]+/),
   token: z.string().min(1),
@@ -41,6 +56,7 @@ export const rtcTokenGrantSchema = z.object({
   callId,
   expiresAt: z.number().int().positive(),
   call: rtcClaimedCallSchema.nullish(),
+  iceServers: z.array(rtcIceServerSchema).optional().catch([]),
 }) satisfies z.ZodType<RtcTokenGrant>;
 
 export const incomingCallSchema = z.object({
