@@ -158,6 +158,64 @@ export const privacy = {
     'visitors-off-title': 'Stop recognizing visitors?',
     'visitors-off-description':
       'Argus will erase unnamed visitors within hours and stop recognizing named ones.',
+    location: 'Locate people at home',
+    'location-hint':
+      'Argus works out which room each person who did not turn it off is in, to speak through the nearest camera. Only you can ask for it.',
+    'off-location-title': 'Stop locating people?',
+    'off-location-description':
+      'Argus will erase where it thinks each person is and will not work it out for anyone. It only follows the conversation someone starts.',
+    watchman: 'Argus listens through the cameras',
+    'watchman-hint':
+      'When someone says “Argus” near a chosen camera, a tone plays and Argus answers through its speaker. You choose on each camera whether it listens.',
+    'watchman-ready': 'Listening on the cameras that have it on. You choose on each camera whether it listens.',
+    'watchman-audio-off': 'It is on, but camera audio is off for the household: it does not listen.',
+    'watchman-audio-held':
+      'It is on, but it does not listen: {count} person(s) do not allow camera audio or have not decided.',
+    'watchman-acknowledged': 'Accepted on {date}.',
+    'watchman-ack-title': 'Argus listens through the cameras',
+    'watchman-ack-intro': 'Before turning it on, confirm that you understand and accept that:',
+    'watchman-ack-installer':
+      'You, who install and operate Argus, are responsible for using it lawfully. Camera audio counts as video surveillance data.',
+    'watchman-ack-sign': 'You must put up a visible sign at every entrance to an area with listening cameras.',
+    'watchman-ack-rest':
+      'You must not turn audio on in a domestic worker’s rest area: mark those cameras as “no audio”.',
+    'watchman-ack-consent':
+      'Recognizing people who do not live in the home by face or voice needs their consent, in writing for biometric data.',
+    'watchman-ack-retention':
+      'Argus keeps no audio before it hears its name. Every conversation starts with a tone and is kept like voice calls.',
+    'watchman-ack-confirm': 'I understand and accept',
+    'watchman-off-title': 'Stop listening through the cameras?',
+    'watchman-off-description': 'No camera will listen or answer, and open conversations end.',
+    signage: 'Entrance sign',
+    'signage-hint': 'A video surveillance sign ready to print or share.',
+  },
+  location: {
+    title: 'Locate me at home',
+    hint: 'Argus can know which room you are in (from the cameras, sound and, if you turn it on, your phone) to speak to you through the nearest camera. Only the owner can ask for it. If you turn it off, it is used only to follow the conversation you started.',
+    'withdraw-title': 'Stop locating you at home?',
+    'withdraw-description':
+      'Argus will stop working out which room you are in. It will still hear you on the camera you called, only during that conversation.',
+  },
+  signage: {
+    title: 'Entrance sign',
+    description:
+      'Put it at every entrance to an area with cameras. Write who answers for the installation and how to reach them.',
+    'responsible-label': 'Responsible',
+    'responsible-placeholder': 'Name and contact',
+    heading: 'VIDEO SURVEILLANCE AREA',
+    'heading-audio': 'VIDEO AND AUDIO SURVEILLANCE AREA',
+    'line-cameras': 'This area has security cameras.',
+    'line-audio':
+      'Some cameras have a microphone and a speaker: if you say “Argus”, a tone plays and an automated assistant answers.',
+    'line-no-recording': 'No audio is kept before that tone.',
+    'line-responsible': 'Responsible: {name}',
+    'line-rights':
+      'You may exercise your rights of access, rectification, cancellation and objection before the responsible party. Authority: {authority}.',
+    'line-law': 'Under {laws}.',
+    print: 'Print',
+    share: 'Share',
+    copied: 'Sign copied',
+    'share-failed': 'The sign could not be shared',
   },
   person: {
     title: 'Privacy',

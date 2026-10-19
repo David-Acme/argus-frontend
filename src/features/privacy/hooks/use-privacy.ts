@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { PrivacyChoices, PrivacyMe, PrivacySignal, ResourceMatch } from '@/core/types';
 import { privacyService } from '@/features/privacy/services/privacy.service';
-import { decisionOf, effectiveOf, withChoice } from '@/features/privacy/model/privacy';
+import { decisionOf, effectiveOf, withChoice, withLocation } from '@/features/privacy/model/privacy';
 import { PRIVACY_NOTICE_VERSION } from '@/features/privacy/constants/privacy';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
@@ -82,5 +82,22 @@ export function usePrivacy({ enabled = true }: UsePrivacyOptions = {}) {
     [data, decide, t]
   );
 
-  return { me: data, status, decide, setChoice, reload };
+  const setLocation = useCallback(
+    async (value: boolean) => {
+      if (!data) return;
+      if (!value) {
+        const accepted = await confirm({
+          title: t('screens.privacy.location.withdraw-title'),
+          description: t('screens.privacy.location.withdraw-description'),
+          confirmLabel: t('screens.privacy.withdraw-confirm'),
+          intent: 'warning',
+        });
+        if (!accepted) return;
+      }
+      await decide(withLocation(data, value));
+    },
+    [data, decide, t]
+  );
+
+  return { me: data, status, decide, setChoice, setLocation, reload };
 }

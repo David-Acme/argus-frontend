@@ -88,9 +88,9 @@ describe('privacy consent model', () => {
   test('camera audio is held by every person who has not said yes', () => {
     const yes = { ...withChoice(undecided, 'cameraAudio', true) };
     const no = withChoice(undecided, 'presence', true);
-    expect(cameraAudioHeldBy([yes, yes], { ...ALL, visitorRecognition: false })).toBe(0);
-    expect(cameraAudioHeldBy([yes, no, undecided], { ...ALL, visitorRecognition: false })).toBe(2);
-    expect(cameraAudioHeldBy([yes], { ...ALL, cameraAudio: false, visitorRecognition: false })).toBe(1);
+    expect(cameraAudioHeldBy([yes, yes], { ...ALL, visitorRecognition: false, watchman: false })).toBe(0);
+    expect(cameraAudioHeldBy([yes, no, undecided], { ...ALL, visitorRecognition: false, watchman: false })).toBe(2);
+    expect(cameraAudioHeldBy([yes], { ...ALL, cameraAudio: false, visitorRecognition: false, watchman: false })).toBe(1);
   });
 
   test('the onboarding draft is kept until it is taken', () => {
@@ -107,7 +107,7 @@ describe('privacy consent model', () => {
     expect(
       privacyDirectorySchema.safeParse({
         currentNoticeVersion: 1,
-        household: { ...ALL, visitorRecognition: false },
+        household: { ...ALL, visitorRecognition: false, watchman: false },
         householdUpdatedAt: null,
         visitorAcknowledgedAt: null,
         users: [{ ...withoutHousehold(undecided), userId: 7 }],

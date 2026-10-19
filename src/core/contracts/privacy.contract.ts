@@ -8,6 +8,7 @@ export const privacyChoicesSchema = z.object({
   faceCameras: z.boolean(),
   voiceLearning: z.boolean(),
   cameraAudio: z.boolean(),
+  location: z.boolean().optional(),
 }) satisfies z.ZodType<PrivacyChoices>;
 
 const privacyStateShape = {
@@ -30,8 +31,12 @@ export const privacyMeSchema = z.object({
 export const privacyDirectorySchema = z.object({
   currentNoticeVersion: z.number().int().positive(),
   applicable: privacyChoicesSchema.optional(),
-  household: privacyChoicesSchema.extend({ visitorRecognition: z.boolean() }),
+  household: privacyChoicesSchema.extend({
+    visitorRecognition: z.boolean(),
+    watchman: z.boolean().default(false),
+  }),
   householdUpdatedAt: unixSeconds.nullable(),
   visitorAcknowledgedAt: unixSeconds.nullable(),
+  watchmanAcknowledgedAt: unixSeconds.nullable().default(null),
   users: z.array(z.object({ ...privacyStateShape, userId: z.number().int().positive() })),
 }) satisfies z.ZodType<PrivacyDirectory>;

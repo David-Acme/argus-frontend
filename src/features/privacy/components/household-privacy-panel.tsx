@@ -14,20 +14,29 @@ import { cn } from '@/shared/libs/utils';
 import { PRIVACY_SIGNAL_ICONS } from '@/features/privacy/constants/privacy';
 import { usePrivacyDirectory } from '@/features/privacy/hooks/use-privacy-directory';
 import { usePrivacySignals } from '@/features/privacy/hooks/use-privacy-signals';
-import { cameraAudioHeldBy } from '@/features/privacy/model/privacy';
+import { cameraAudioHeldBy, watchmanReadiness, type WatchmanReadiness } from '@/features/privacy/model/privacy';
+import { SignageDialog } from '@/features/privacy/components/signage-dialog';
 import { VisitorAcknowledgementDialog } from '@/features/privacy/components/visitor-acknowledgement-dialog';
+import { WatchmanAcknowledgementDialog } from '@/features/privacy/components/watchman-acknowledgement-dialog';
 
 type HouseholdPrivacyPanelProps = {
   className?: string;
 };
 
 type SwitchRowProps = {
-  icon: (typeof PRIVACY_SIGNAL_ICONS)[PrivacySignal] | 'users';
+  icon: (typeof PRIVACY_SIGNAL_ICONS)[PrivacySignal] | 'users' | 'map-pin' | 'audio-lines';
   label: string;
   hint: string;
   value: boolean;
   onChange: (value: boolean) => void;
 };
+
+const WATCHMAN_HINTS = {
+  off: 'screens.privacy.household.watchman-hint',
+  'audio-off': 'screens.privacy.household.watchman-audio-off',
+  'audio-held': 'screens.privacy.household.watchman-audio-held',
+  ready: 'screens.privacy.household.watchman-ready',
+} as const satisfies Record<WatchmanReadiness, string>;
 
 function SwitchRow({ icon, label, hint, value, onChange }: SwitchRowProps) {
   return (
@@ -49,13 +58,23 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
   const signals = usePrivacySignals(directory?.applicable);
   const { moduleActive } = useCapabilities();
   const [acknowledging, setAcknowledging] = useState(false);
+  const [watchmanAsking, setWatchmanAsking] = useState(false);
+  const [signageOpen, setSignageOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const surveillance = moduleActive(MODULE_IDS.surveillance);
 
   const enableVisitors = async () => {
     setSaving(true);
     const saved = await setSwitch('visitorRecognition', true, true);
     setSaving(false);
     if (saved) setAcknowledging(false);
+  };
+
+  const enableWatchman = async () => {
+    setSaving(true);
+    const saved = await setSwitch('watchman', true, true);
+    setSaving(false);
+    if (saved) setWatchmanAsking(false);
   };
 
   if (!directory) {
@@ -75,6 +94,12 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
   const pending = directory.users.filter((user) => !user.decided || !user.current).length;
   const audioHeld = cameraAudioHeldBy(directory.users, directory.household);
   const visitorsAcknowledged = directory.visitorAcknowledgedAt;
+  const watchmanAcknowledged = directory.watchmanAcknowledgedAt;
+  const readiness = watchmanReadiness(directory.household, directory.users);
+  const watchmanHint =
+    readiness === 'audio-held'
+      ? t(WATCHMAN_HINTS[readiness], { count: String(audioHeld) })
+      : t(WATCHMAN_HINTS[readiness]);
 
   return (
     <Panel className={cn('gap-2 p-4', className)}>
@@ -107,7 +132,31 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
             onChange={(value) => void setSwitch(signal, value)}
           />
         ))}
-        {moduleActive(MODULE_IDS.surveillance) ? (
+        {surveillance ? (
+          <SwitchRow
+            icon="map-pin"
+            label={t('screens.privacy.household.location')}
+            hint={t('screens.privacy.household.location-hint')}
+            value={directory.household.location !== false}
+            onChange={(value) => void setSwitch('location', value)}
+          />
+        ) : null}
+        {surveillance ? (
+          <SwitchRow
+            icon="audio-lines"
+            label={t('screens.privacy.household.watchman')}
+            hint={
+              directory.household.watchman && watchmanAcknowledged
+                ? `${watchmanHint} ${t('screens.privacy.household.watchman-acknowledged', {
+                    date: dates.formatFullDate(new Date(watchmanAcknowledged * 1000)),
+                  })}`
+                : watchmanHint
+            }
+            value={directory.household.watchman}
+            onChange={(value) => (value ? setWatchmanAsking(true) : void setSwitch('watchman', false))}
+          />
+        ) : null}
+        {surveillance ? (
         <SwitchRow
           icon="users"
           label={t('screens.privacy.household.visitors')}
@@ -126,6 +175,26 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
         />
         ) : null}
       </View>
+      {surveillance ? (
+        <ListRow
+          icon="shield-check"
+          title={t('screens.privacy.household.signage')}
+          subtitle={t('screens.privacy.household.signage-hint')}
+          chevron
+          onPress={() => setSignageOpen(true)}
+        />
+      ) : null}
+      <WatchmanAcknowledgementDialog
+        open={watchmanAsking}
+        saving={saving}
+        onOpenChange={setWatchmanAsking}
+        onConfirm={() => void enableWatchman()}
+      />
+      <SignageDialog
+        open={signageOpen}
+        audio={directory.household.watchman}
+        onOpenChange={setSignageOpen}
+      />
       <VisitorAcknowledgementDialog
         open={acknowledging}
         saving={saving}
