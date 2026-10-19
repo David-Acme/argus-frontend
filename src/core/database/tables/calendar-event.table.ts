@@ -1,5 +1,7 @@
 import { Model, tableSchema } from '@nozbe/watermelondb';
-import { date, field, text } from '@nozbe/watermelondb/decorators';
+import { date, field, json, text } from '@nozbe/watermelondb/decorators';
+import type { RecurrenceException } from '@/core/types';
+import { sanitizeRecurrenceExceptions } from './sanitizers';
 
 export const CALENDAR_EVENT_SCHEMA = tableSchema({
   name: 'calendar_event',
@@ -15,6 +17,7 @@ export const CALENDAR_EVENT_SCHEMA = tableSchema({
     { name: 'ends_at', type: 'number', isOptional: true },
     { name: 'is_all_day', type: 'boolean' },
     { name: 'recurrence_rule', type: 'string', isOptional: true },
+    { name: 'recurrence_exceptions', type: 'string' },
     { name: 'created_at', type: 'number' },
     { name: 'updated_at', type: 'number' },
   ],
@@ -34,6 +37,7 @@ export class CalendarEventModel extends Model {
   @date('ends_at') endsAt!: Date | null;
   @field('is_all_day') isAllDay!: boolean;
   @text('recurrence_rule') recurrenceRule!: string | null;
+  @json('recurrence_exceptions', sanitizeRecurrenceExceptions) recurrenceExceptions!: RecurrenceException[];
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 }

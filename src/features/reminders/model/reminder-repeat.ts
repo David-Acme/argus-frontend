@@ -2,10 +2,11 @@ import type { IReminderCacheRow } from '@/core/interfaces';
 import type { RecurrenceFrequency, ZoneClock } from '@/core/types';
 import { RECURRENCE_INTERVAL_MIN } from '@/shared/constants';
 import {
-  firstOccurrenceAfter,
   formatRecurrenceRule,
   isRecurrenceInterval,
+  nextFiring,
   parseRecurrenceRule,
+  scheduledOccurrence,
 } from '@/shared/libs/recurrence';
 
 export type RepeatChoice = 'none' | RecurrenceFrequency;
@@ -47,14 +48,48 @@ export const ruleOfRepeat = ({ frequency, interval }: RepeatDraft): string | nul
 export const repeatsOf = (row: Pick<IReminderCacheRow, 'recurrenceRule'>): boolean =>
   row.recurrenceRule != null && row.recurrenceRule.length > 0;
 
+type ReminderSeriesRow = Pick<IReminderCacheRow, 'scheduledAt' | 'recurrenceRule' | 'recurrenceExceptions'>;
+
 export type ReminderRollInput = {
-  row: Pick<IReminderCacheRow, 'scheduledAt' | 'recurrenceRule'>;
+  row: ReminderSeriesRow;
   now: number;
   clock: ZoneClock;
 };
 
+export const currentOccurrence = (row: Pick<IReminderCacheRow, 'scheduledAt' | 'recurrenceExceptions'>): number =>
+  scheduledOccurrence(row.recurrenceExceptions, row.scheduledAt);
+
+export const changesOneOccurrence = (row: Pick<IReminderCacheRow, 'recurrenceRule' | 'isCompleted'>): boolean =>
+  !row.isCompleted && parseRecurrenceRule(row.recurrenceRule) !== null;
+
 export function rolledSchedule({ row, now, clock }: ReminderRollInput): number | null {
   const rule = parseRecurrenceRule(row.recurrenceRule);
   if (!rule) return null;
-  return firstOccurrenceAfter({ rule, anchor: row.scheduledAt, moment: Math.max(row.scheduledAt, now), clock });
+  const occurrence = currentOccurrence(row);
+  return (
+    nextFiring({
+      rule,
+      anchor: occurrence,
+      after: occurrence,
+      moment: Math.max(row.scheduledAt, now),
+      exceptions: row.recurrenceExceptions ?? [],
+      clock,
+    })?.at ?? null
+  );
+}
+
+export type ReminderSkipInput = {
+  row: ReminderSeriesRow;
+  clock: ZoneClock;
+};
+
+export function skippedSchedule({ row, clock }: ReminderSkipInput): number | null {
+  const rule = parseRecurrenceRule(row.recurrenceRule);
+  if (!rule) return null;
+  const occurrence = currentOccurrence(row);
+  const exceptions = [
+    ...(row.recurrenceExceptions ?? []).filter((exception) => exception.occurrence !== occurrence),
+    { occurrence, cancelled: true },
+  ];
+  return nextFiring({ rule, anchor: occurrence, after: occurrence, moment: occurrence, exceptions, clock })?.at ?? null;
 }

@@ -1,13 +1,20 @@
 import type {
   ICalendarEventUpdate,
+  IOccurrenceChange,
   IProjectTaskCreate,
   IProjectTaskUpdate,
 } from '@/core/interfaces';
 import type { AgendaStatus, CalendarEntry, CalendarSource, ProjectTaskStatus } from '@/core/types';
 import { defineLens, isPendingRecordId, type OptimisticLens } from '@/shared/libs/optimistic';
-import { calendarEntryRecordId, isOccurrence } from '@/features/agenda/model/calendar-entry-actions';
+import {
+  calendarEntryRecordId,
+  isOccurrence,
+  occurrenceOf,
+} from '@/features/agenda/model/calendar-entry-actions';
 
 type TaskIntentValues = IProjectTaskUpdate & Pick<IProjectTaskCreate, 'projectId'>;
+
+type EventIntentValues = ICalendarEventUpdate & Partial<Pick<IOccurrenceChange, 'occurrence' | 'cancelled'>>;
 
 const recordIdFor = (entry: CalendarEntry, source: CalendarSource): string | null =>
   entry.source === source ? calendarEntryRecordId(entry) : null;
@@ -20,16 +27,34 @@ const optionalText = (
 const msFromSeconds = (value: number | null | undefined): number | null =>
   value == null ? null : value * 1000;
 
+const targetsEntry = (entry: CalendarEntry, values: Partial<EventIntentValues>): boolean =>
+  values.occurrence !== undefined && occurrenceOf(entry) === values.occurrence * 1000;
+
+function patchOccurrence(entry: CalendarEntry, values: Partial<EventIntentValues>): CalendarEntry {
+  if (!targetsEntry(entry, values)) return entry;
+  const startsAt = values.startsAt === undefined ? entry.startsAt : values.startsAt * 1000;
+  const span = entry.endsAt === null ? null : entry.endsAt - entry.startsAt;
+  return {
+    ...entry,
+    title: values.title ?? entry.title,
+    location: optionalText(values.location, entry.location),
+    startsAt,
+    endsAt: values.endsAt == null ? (span === null ? null : startsAt + span) : values.endsAt * 1000,
+  };
+}
+
 export function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus {
   if (status === 'done') return 'complete';
   if (status === 'doing') return 'active';
   return 'upcoming';
 }
 
-const calendarEventLens = defineLens<CalendarEntry, ICalendarEventUpdate>({
+const calendarEventLens = defineLens<CalendarEntry, EventIntentValues>({
   table: 'calendar_event',
   recordIdOf: (entry) => recordIdFor(entry, 'event'),
+  hides: (entry, values) => values.cancelled === true && targetsEntry(entry, values),
   patch: (entry, values) => {
+    if (values.occurrence !== undefined) return patchOccurrence(entry, values);
     const described: CalendarEntry = {
       ...entry,
       title: values.title ?? entry.title,

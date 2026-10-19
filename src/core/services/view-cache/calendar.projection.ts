@@ -9,6 +9,8 @@ import type {
   AgendaWindow,
   CalendarEntry,
   CalendarEntryState,
+  CalendarSeries,
+  RecurrenceException,
   RecurrenceRule,
   ZoneClock,
 } from '@/core/types';
@@ -79,6 +81,29 @@ function eventEntry(event: ICalendarEventCacheSource, startsAt: number, endsAt: 
   };
 }
 
+type OccurrenceInput = {
+  event: ICalendarEventCacheSource;
+  series: CalendarSeries;
+  occurrence: number;
+  exception: RecurrenceException | undefined;
+};
+
+function occurrenceEntry({ event, series, occurrence, exception }: OccurrenceInput): CalendarEntry {
+  const startsAt = exception?.startsAt ?? occurrence;
+  const span = series.endsAt === null ? null : series.endsAt - series.startsAt;
+  const endsAt = exception?.endsAt ?? (span === null ? null : startsAt + span);
+  const entry: CalendarEntry = {
+    ...eventEntry(event, startsAt, endsAt),
+    id: occurrenceId(event.id, occurrence),
+    series,
+  };
+  if (exception?.title !== undefined) entry.title = exception.title;
+  if (exception?.location !== undefined) entry.location = exception.location || undefined;
+  return entry;
+}
+
+const inRange = (at: number, range: Range): boolean => at >= range.from && at <= range.to;
+
 function occurrenceEntries({ event, rule, text }: RecurringEvent, range: Range, clock: ZoneClock): CalendarEntry[] {
   const anchor = event.startsAt.getTime();
   const endsAt = event.endsAt?.getTime() ?? null;
@@ -89,11 +114,25 @@ function occurrenceEntries({ event, rule, text }: RecurringEvent, range: Range, 
     log.debug('calendar', `occurrence limit ${limit} reached for event ${event.id} in ${range.from}..${range.to}`);
     starts.length = limit;
   }
-  return starts.map((startsAt) => ({
-    ...eventEntry(event, startsAt, endsAt === null ? null : startsAt + (endsAt - anchor)),
-    id: occurrenceId(event.id, startsAt),
-    series,
-  }));
+  const exceptions = event.recurrenceExceptions ?? [];
+  if (exceptions.length === 0) {
+    return starts.map((occurrence) => occurrenceEntry({ event, series, occurrence, exception: undefined }));
+  }
+  const byOccurrence = new Map(exceptions.map((exception) => [exception.occurrence, exception]));
+  const entries: CalendarEntry[] = [];
+  for (const occurrence of starts) {
+    const exception = byOccurrence.get(occurrence);
+    byOccurrence.delete(occurrence);
+    if (exception?.cancelled) continue;
+    const entry = occurrenceEntry({ event, series, occurrence, exception });
+    if (inRange(entry.startsAt, range)) entries.push(entry);
+  }
+  for (const exception of byOccurrence.values()) {
+    if (exception.cancelled || exception.startsAt === undefined || exception.occurrence < anchor) continue;
+    if (!inRange(exception.startsAt, range)) continue;
+    entries.push(occurrenceEntry({ event, series, occurrence: exception.occurrence, exception }));
+  }
+  return entries;
 }
 
 function eventEntries(input: CalendarProjectionInput, range: Range): CalendarEntry[] {

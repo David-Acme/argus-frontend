@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { knowsTable, toDirtyRaw, toModelProps } from '@/core/services/sync/entity-mappers';
+import { knowsTable, toDirtyRaw, toModelProps, toPartialModelProps } from '@/core/services/sync/entity-mappers';
 
 describe('toModelProps', () => {
   test('a null optional timestamp stays null instead of becoming epoch zero', () => {
@@ -30,5 +30,44 @@ describe('a table this build does not know', () => {
     expect(knowsTable('toString')).toBe(false);
     expect(knowsTable('constructor')).toBe(false);
     expect(knowsTable('__proto__')).toBe(false);
+  });
+});
+
+describe('recurrence exceptions', () => {
+  const wire = JSON.stringify([
+    { occurrence: 1791205200, cancelled: false, startsAt: 1791212400, endsAt: 1791216000, title: 'Movida' },
+    { occurrence: 1790600400, cancelled: true, title: 'ignored' },
+    { occurrence: 'x' },
+    { occurrence: 1791810000 },
+  ]);
+
+  test('the series row text becomes instants in milliseconds, sorted, without what cannot be read', () => {
+    expect(toModelProps('calendar_event', { id: 4, recurrenceExceptions: wire }).recurrenceExceptions).toEqual([
+      { occurrence: 1790600400000, cancelled: true },
+      {
+        occurrence: 1791205200000,
+        cancelled: false,
+        startsAt: 1791212400000,
+        endsAt: 1791216000000,
+        title: 'Movida',
+      },
+    ]);
+    expect(toModelProps('reminder', { id: 5, recurrenceExceptions: '[]' }).recurrenceExceptions).toEqual([]);
+    expect(toModelProps('reminder', { id: 5 }).recurrenceExceptions).toEqual([]);
+    expect(toModelProps('reminder', { id: 5, recurrenceExceptions: 'not json' }).recurrenceExceptions).toEqual([]);
+  });
+
+  test('the local row stores them as JSON text and an audit diff replaces them whole', () => {
+    const raw = toDirtyRaw('reminder', {
+      id: 5,
+      recurrenceExceptions: JSON.stringify([{ occurrence: 1790600400, cancelled: true }]),
+    });
+    expect(raw.recurrence_exceptions).toBe('[{"occurrence":1790600400000,"cancelled":true}]');
+    const patch = toPartialModelProps('calendar_event', {
+      recurrenceExceptions: JSON.stringify([{ occurrence: 1790600400, cancelled: false, startsAt: 1790604000 }]),
+    });
+    expect(patch).toEqual({
+      recurrenceExceptions: [{ occurrence: 1790600400000, cancelled: false, startsAt: 1790604000000 }],
+    });
   });
 });

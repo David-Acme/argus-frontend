@@ -10,10 +10,13 @@ import {
   draftIssues,
   draftOf,
   isEmptyUpdate,
+  occurrenceMoveBody,
   updateBody,
 } from '@/features/reminders/model/reminder-form';
 import { REMINDER_LENSES, byScheduled } from '@/features/reminders/model/reminder-optimistic';
 import {
+  changesOneOccurrence,
+  currentOccurrence,
   isIntervalText,
   NO_REPEAT,
   repeatChoiceOf,
@@ -21,6 +24,7 @@ import {
   repeatFromChoice,
   repeatsOf,
   rolledSchedule,
+  skippedSchedule,
 } from '@/features/reminders/model/reminder-repeat';
 import {
   isAlreadyDone,
@@ -348,8 +352,8 @@ describe('reminder projection and optimistic rows', () => {
       reminders: [source(), source({ id: '2', isCompleted: true, completedAt: new Date(NOW) })],
     });
     expect(write && 'rows' in write ? write.rows : null).toEqual([
-      row({ description: 'Pedir cita' }),
-      row({ id: '2', description: 'Pedir cita', isCompleted: true, completedAt: NOW }),
+      row({ description: 'Pedir cita', recurrenceExceptions: [] }),
+      row({ id: '2', description: 'Pedir cita', isCompleted: true, completedAt: NOW, recurrenceExceptions: [] }),
     ]);
   });
 
@@ -406,5 +410,86 @@ describe('home search copy', () => {
       'Search reminder, event, project or task…'
     );
     expect(searchPlaceholder({ reminders: false, events: false, projects: false }, es)).toBe('Buscar…');
+  });
+});
+
+describe('one occurrence of a recurring reminder', () => {
+  const lima = () => {
+    const clock = intlZoneClock('America/Lima');
+    if (!clock) throw new Error('this runtime does not know America/Lima');
+    return clock;
+  };
+  const MONDAY = Date.UTC(2026, 9, 5, 13, 0, 0);
+  const NEXT_MONDAY = Date.UTC(2026, 9, 12, 13, 0, 0);
+  const THIRD_MONDAY = Date.UTC(2026, 9, 19, 13, 0, 0);
+  const weekly = (patch: Partial<IReminderCacheRow> = {}) =>
+    row({ id: '40', scheduledAt: MONDAY, recurrenceRule: 'FREQ=WEEKLY', ...patch });
+
+  test('only an open series offers to change one occurrence', () => {
+    expect(changesOneOccurrence(weekly())).toBe(true);
+    expect(changesOneOccurrence(weekly({ isCompleted: true }))).toBe(false);
+    expect(changesOneOccurrence(row())).toBe(false);
+  });
+
+  test('a moved occurrence is still addressed by the start the series gave it', () => {
+    const moved = weekly({
+      scheduledAt: MONDAY + 2 * HOUR,
+      recurrenceExceptions: [{ occurrence: MONDAY, cancelled: false, startsAt: MONDAY + 2 * HOUR }],
+    });
+    expect(currentOccurrence(moved)).toBe(MONDAY);
+    expect(currentOccurrence(weekly())).toBe(MONDAY);
+  });
+
+  test('skipping lands on the next occurrence, past any that is skipped already', () => {
+    const clock = lima();
+    expect(skippedSchedule({ row: weekly(), clock })).toBe(NEXT_MONDAY);
+    expect(
+      skippedSchedule({
+        row: weekly({ recurrenceExceptions: [{ occurrence: NEXT_MONDAY, cancelled: true }] }),
+        clock,
+      })
+    ).toBe(THIRD_MONDAY);
+    expect(
+      skippedSchedule({
+        row: weekly({
+          recurrenceExceptions: [{ occurrence: NEXT_MONDAY, cancelled: false, startsAt: NEXT_MONDAY + HOUR }],
+        }),
+        clock,
+      })
+    ).toBe(NEXT_MONDAY + HOUR);
+    expect(skippedSchedule({ row: row(), clock })).toBeNull();
+  });
+
+  test('completing a moved occurrence rolls from the series, not from the moved time', () => {
+    const moved = weekly({
+      scheduledAt: MONDAY + 2 * HOUR,
+      recurrenceExceptions: [
+        { occurrence: MONDAY, cancelled: false, startsAt: MONDAY + 2 * HOUR },
+        { occurrence: NEXT_MONDAY, cancelled: true },
+      ],
+    });
+    expect(rolledSchedule({ row: moved, now: MONDAY + 2 * HOUR, clock: lima() })).toBe(THIRD_MONDAY);
+  });
+
+  test('moving this occurrence sends its original start and the new one, and nothing when the time stays', () => {
+    const moved = weekly({
+      scheduledAt: MONDAY + 2 * HOUR,
+      recurrenceExceptions: [{ occurrence: MONDAY, cancelled: false, startsAt: MONDAY + 2 * HOUR }],
+    });
+    expect(occurrenceMoveBody(moved, MONDAY + 3 * HOUR)).toEqual({
+      occurrence: MONDAY / 1000,
+      startsAt: (MONDAY + 3 * HOUR) / 1000,
+    });
+    expect(occurrenceMoveBody(moved, MONDAY + 2 * HOUR)).toBeNull();
+    expect(occurrenceMoveBody(weekly(), MONDAY + HOUR)).toEqual({ occurrence: MONDAY / 1000, startsAt: (MONDAY + HOUR) / 1000 });
+  });
+
+  test('the one-occurrence actions say so in Spanish and English', () => {
+    expect(es('screens.reminders.edit-occurrence')).toBe('Editar solo esta vez');
+    expect(es('screens.reminders.skip-occurrence')).toBe('Cancelar solo esta vez');
+    expect(es('screens.reminders.edit-series')).toBe('Editar toda la serie');
+    expect(en('screens.reminders.edit-occurrence')).toBe('Edit this occurrence only');
+    expect(en('screens.reminders.skip-occurrence')).toBe('Skip this occurrence');
+    expect(en('screens.reminders.edit-series')).toBe('Edit the whole series');
   });
 });

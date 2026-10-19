@@ -1,5 +1,7 @@
 import { Model, tableSchema } from '@nozbe/watermelondb';
-import { date, field, text } from '@nozbe/watermelondb/decorators';
+import { date, field, json, text } from '@nozbe/watermelondb/decorators';
+import type { RecurrenceException } from '@/core/types';
+import { sanitizeRecurrenceExceptions } from './sanitizers';
 
 export const REMINDER_SCHEMA = tableSchema({
   name: 'reminder',
@@ -10,6 +12,7 @@ export const REMINDER_SCHEMA = tableSchema({
     { name: 'description', type: 'string' },
     { name: 'scheduled_at', type: 'number' },
     { name: 'recurrence_rule', type: 'string', isOptional: true },
+    { name: 'recurrence_exceptions', type: 'string' },
     { name: 'is_completed', type: 'boolean' },
     { name: 'completed_at', type: 'number', isOptional: true },
     { name: 'created_at', type: 'number' },
@@ -26,6 +29,7 @@ export class ReminderModel extends Model {
   @text('description') description!: string;
   @date('scheduled_at') scheduledAt!: Date;
   @text('recurrence_rule') recurrenceRule!: string | null;
+  @json('recurrence_exceptions', sanitizeRecurrenceExceptions) recurrenceExceptions!: RecurrenceException[];
   @field('is_completed') isCompleted!: boolean;
   @date('completed_at') completedAt!: Date | null;
   @date('created_at') createdAt!: Date;

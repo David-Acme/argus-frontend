@@ -21,8 +21,10 @@ import {
   availableCalendarEntryActions,
   calendarEntryRecordId,
   isOccurrence,
+  occurrenceOf,
   seriesDeleteConfirm,
   shouldShowCalendarEntryOverflow,
+  skipOccurrenceBody,
   type CalendarEntryAction,
 } from '@/features/agenda/model/calendar-entry-actions';
 import { cn } from '@/shared/libs/utils';
@@ -32,6 +34,7 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
   onEdit?: (entry: CalendarEntry) => void;
+  onEditOccurrence?: (entry: CalendarEntry) => void;
   onShare?: (entry: CalendarEntry) => void;
   canEdit: boolean;
   canDelete: boolean;
@@ -44,6 +47,7 @@ type EntryActionsMenuProps = {
 export function EntryActionsMenu({
   entry,
   onEdit,
+  onEditOccurrence,
   onShare,
   canEdit,
   canDelete,
@@ -70,6 +74,22 @@ export function EntryActionsMenu({
     const list: MenuOption<CalendarEntryAction>[] = [];
     if (pending) return list;
     for (const action of availableCalendarEntryActions(entry, { canEdit, canDelete, canShare })) {
+      if (action === 'edit-occurrence' && onEditOccurrence) {
+        list.push({
+          value: action,
+          label: t('screens.agenda.edit-occurrence'),
+          description: t('screens.agenda.applies-to-occurrence'),
+          icon: 'calendar-clock',
+        });
+      }
+      if (action === 'skip-occurrence') {
+        list.push({
+          value: action,
+          label: t('screens.agenda.skip-occurrence'),
+          description: t('screens.agenda.applies-to-occurrence'),
+          icon: 'calendar-x',
+        });
+      }
       if (action === 'edit' && onEdit) {
         list.push({
           value: action,
@@ -107,6 +127,22 @@ export function EntryActionsMenu({
   const run = async (action: CalendarEntryAction) => {
     if (action === 'edit') {
       onEdit?.(entry);
+      return;
+    }
+    if (action === 'edit-occurrence') {
+      onEditOccurrence?.(entry);
+      return;
+    }
+    if (action === 'skip-occurrence') {
+      const occurrence = occurrenceOf(entry);
+      if (occurrence === null) return;
+      const body = skipOccurrenceBody(occurrence);
+      await runOptimistic({
+        intents: [{ table: 'calendar_event', kind: 'update', recordId, values: body }],
+        call: () => calendarEventService.changeOccurrence(recordId, body),
+        undo: { title: t('screens.agenda.occurrence-skipped'), description: entry.title },
+        errorTitle: t('screens.agenda.occurrence-failed'),
+      });
       return;
     }
     if (action === 'share') {

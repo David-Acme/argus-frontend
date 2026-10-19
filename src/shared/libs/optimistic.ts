@@ -28,6 +28,7 @@ export type OptimisticLens<Row> = {
   prepend?: boolean;
   recordIdOf: (row: Row) => string | null;
   patch: (row: Row, values: OptimisticValues) => Row;
+  hides?: (row: Row, values: OptimisticValues) => boolean;
   create?: (recordId: string, values: OptimisticValues) => Row | null;
 };
 
@@ -36,6 +37,7 @@ export type TypedOptimisticLens<Row, V extends object> = {
   prepend?: boolean;
   recordIdOf: (row: Row) => string | null;
   patch: (row: Row, values: Partial<V>) => Row;
+  hides?: (row: Row, values: Partial<V>) => boolean;
   create?: (recordId: string, values: Partial<V>) => Row | null;
 };
 
@@ -119,7 +121,9 @@ function patchThrough<Row>(
   let next = row;
   for (const intent of group) {
     if (intent.kind === 'delete') return null;
-    if (intent.kind === 'update') next = lens.patch(next, intent.values);
+    if (intent.kind !== 'update') continue;
+    if (lens.hides?.(next, intent.values)) return null;
+    next = lens.patch(next, intent.values);
   }
   return shallowEqual(next, row) ? row : next;
 }
@@ -183,6 +187,14 @@ export function applyIntents<Row>(
   return compare ? combined.sort(compare) : combined;
 }
 
+function updateLanded<Row>(
+  rows: readonly Row[],
+  lens: OptimisticLens<Row>,
+  values: OptimisticValues
+): boolean {
+  return rows.every((row) => !lens.hides?.(row, values) && shallowEqual(lens.patch(row, values), row));
+}
+
 export function settledIntents<Row>(
   rows: readonly Row[],
   intents: readonly OptimisticIntent[],
@@ -190,21 +202,20 @@ export function settledIntents<Row>(
 ): string[] {
   const relevant = relevantIntents(intents, lenses);
   if (relevant.length === 0) return [];
-  const base = new Map<string, { row: Row; lens: OptimisticLens<Row> }>();
+  const base = new Map<string, { rows: Row[]; lens: OptimisticLens<Row> }>();
   for (const row of rows) {
     const located = locate(row, lenses);
-    if (located) base.set(located.key, { row, lens: located.lens });
+    if (!located) continue;
+    const known = base.get(located.key);
+    if (known) known.rows.push(row);
+    else base.set(located.key, { rows: [row], lens: located.lens });
   }
   const settled: string[] = [];
   for (const [key, group] of groupByKey(relevant)) {
     const synced = base.get(key);
     for (const intent of group) {
       if (!intent.confirmed || !synced || intent.kind === 'delete') break;
-      if (
-        intent.kind === 'update' &&
-        !shallowEqual(synced.lens.patch(synced.row, intent.values), synced.row)
-      )
-        break;
+      if (intent.kind === 'update' && !updateLanded(synced.rows, synced.lens, intent.values)) break;
       settled.push(intent.id);
     }
   }

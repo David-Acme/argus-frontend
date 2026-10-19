@@ -1574,19 +1574,18 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     keeps the series' own start, end and rule.
   - The agenda feed has more while a series continues, which is always, because the
     grammar has no end.
-- **An occurrence edits the series; there are no single-occurrence exceptions.**
-  Exceptions are a recorded follow-up.
+- **An occurrence edits the series, unless the person picks this occurrence only** (F6b, below).
   - The form opens on the series' own start, so saving a new title does not move the
-    series to the tapped day. Its title is "Editar la serie", and its hint reads
+    series to the tapped day. Its title is "Editar toda la serie", and its hint reads
     "… Lo que cambies se aplica a toda la serie."
-  - In the menu, "Editar la serie" and "Eliminar todas las repeticiones" both carry
+  - In the menu, "Editar toda la serie" and "Eliminar todas las repeticiones" both carry
     the line "Se aplica a toda la serie".
   - Deleting a series asks first, in a danger confirm whose text reads "Se aplica a
     toda la serie: se eliminan todas sus repeticiones, también las pasadas."
     (`seriesDeleteConfirm`). The Undo toast still follows. A single event keeps going
     straight to Undo.
-  - An optimistic patch of an occurrence changes only its text fields. Its times come
-    back when the event row changes and the series re-expands.
+  - An optimistic patch of the series on an occurrence changes only its text fields. Its
+    times come back when the event row changes and the series re-expands.
   - Reminders are not expanded: the agenda shows a reminder once, at its current time.
 - **Reminder repeat.**
   - The edit dialog has a repeat picker (No se repite, Cada día, Cada semana, Cada mes,
@@ -1610,6 +1609,54 @@ backend /sync → WatermelonDB durable projection → ViewCacheCoordinatorServic
     `reminders.test.ts` plays both cases, from the prediction to the correction: after
     February the 31st is predicted as the 28th, and in the next leap year 29 February is
     predicted as the 28th.
+
+### One occurrence of a series (F6b, 2026-10-19)
+
+The backend keeps the RFC 5545 exceptions on the series row (backend
+`services/productivity/CONTEXT.md`, "One occurrence of a series"), and the app follows them.
+
+- **Local storage.** Schema version 14 adds `recurrence_exceptions` (a string column, JSON) to `reminder` and
+  `calendar_event` through `addColumns`; v2's `calendar_event` creation leaves it out, so a replay from v1 adds it
+  once. The models read it with `@json` and `sanitizeRecurrenceExceptions` (`tables/sanitizers.ts`), so a row from
+  before the migration (an empty string) reads as no exceptions. The sync mapper (`toRecurrenceExceptions`) turns
+  the wire's JSON text, in seconds, into `RecurrenceException[]` in milliseconds like every local instant
+  (`{occurrence, cancelled, startsAt?, endsAt?, title?, location?}`, `core/types/recurrence.type.ts`). A change
+  arrives as a `Log` diff of the whole field on the existing row, never as a new row.
+- **The expansion applies them** (`calendar.projection.ts`). A skipped occurrence leaves the window. A changed one
+  keeps its id, `event:<id>@<original ISO start>`, and takes its own start, end (or the series' length from its new
+  start), title and place. An occurrence moved into the window from outside it shows, one moved out does not. A
+  series without exceptions builds exactly the entries it built before. The occurrence of an entry is read back
+  from its id (`occurrenceOf`), so `CalendarEntry` gained no field.
+- **Agenda actions.** For an occurrence of a series the editor sees "Editar solo esta vez", "Editar toda la serie"
+  and "Cancelar solo esta vez" (en: "Edit this occurrence only", "Edit the whole series", "Skip this occurrence"),
+  the first and the last with the line "La serie sigue igual".
+  - "Editar solo esta vez" opens the event form on that occurrence's own values, titled as such, with a hint and
+    without the all-day switch and the notes (both belong to the series). Saving sends
+    `PATCH /calendar-event/{id}/occurrence` with the original start and title, place, start and end
+    (`editOccurrenceBody`), the whole change for that occurrence.
+  - "Cancelar solo esta vez" sends `{occurrence, cancelled: true}` behind an Undo toast.
+  - Both are optimistic. The calendar lens patches only the entry whose id names that occurrence, and hides a
+    skipped one through the lens's `hides` (a generic hook of `shared/libs/optimistic.ts`). An update intent now
+    settles only when its patch is a no-op on every synced row of its record, and a hiding intent only once that row
+    is gone, so the overlay of one occurrence of a series is not settled by its siblings.
+- **Reminders.** An open recurring reminder's menu has "Editar solo esta vez", "Editar toda la serie" and
+  "Cancelar solo esta vez".
+  - The reminder shown is the current occurrence; its original start is the exception whose new time is the
+    reminder's `scheduledAt`, else `scheduledAt` (`currentOccurrence`).
+  - "Editar solo esta vez" opens the reminder dialog with only the day and the time and a hint; saving sends
+    `{occurrence, startsAt}` (`occurrenceMoveBody`, nothing when the time is unchanged). The backend keeps a move
+    between the previous and the next occurrence and answers a 422 otherwise, shown as the error toast.
+  - "Cancelar solo esta vez" moves the row at once to the next occurrence that is not skipped
+    (`skippedSchedule`) and says when ("Esta vez no sonará. Próxima vez: …").
+  - Completing predicts the roll with the backend's `nextFiring`, ported to `shared/libs/recurrence.ts`: from the
+    current occurrence, past skipped ones, to a moved one's new time.
+  - A snoozed reminder sits at a time that is not an occurrence; the backend refuses to change "this occurrence"
+    then, and the refusal shows as the error toast.
+- Tests: `calendar-recurrence.test.ts` (the expansion with exceptions), `entity-mappers.test.ts` (the mapper),
+  `calendar-occurrence.test.ts` (actions, bodies, the lens and its settling), `reminders.test.ts` (current
+  occurrence, skip, roll, move body), `database-migrations.test.ts` (v13 to v14) and
+  `occurrence-change-service.test.ts` (the two PATCH calls). The two older migration tests that replayed up to
+  `SCHEMA_VERSION` now stop at version 13, the version they pin.
 
 ### Snooze (F6, 2026-10-13)
 

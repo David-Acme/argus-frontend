@@ -26,7 +26,7 @@ export const migrations = schemaMigrations({
     {
       toVersion: 2,
       steps: [
-        fromSchema(CALENDAR_EVENT_SCHEMA),
+        fromSchema(CALENDAR_EVENT_SCHEMA, ['recurrence_exceptions']),
         fromSchema(PROJECT_SCHEMA),
         fromSchema(PROJECT_TASK_SCHEMA),
         createTable({
@@ -125,6 +125,19 @@ export const migrations = schemaMigrations({
         addColumns({
           table: 'camera',
           columns: [{ name: 'privacy_obeyed', type: 'boolean' }],
+        }),
+      ],
+    },
+    {
+      toVersion: 14,
+      steps: [
+        addColumns({
+          table: 'calendar_event',
+          columns: [{ name: 'recurrence_exceptions', type: 'string' }],
+        }),
+        addColumns({
+          table: 'reminder',
+          columns: [{ name: 'recurrence_exceptions', type: 'string' }],
         }),
       ],
     },

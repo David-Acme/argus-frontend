@@ -9,6 +9,7 @@ import type {
   EventSeverity,
   IconName,
   NotificationData,
+  RecurrenceException,
   UserRole,
   ZonePoint,
   ZoneType,
@@ -140,6 +141,7 @@ export interface ICalendarEventCacheSource {
   description: string;
   projectId: string | null;
   recurrenceRule?: string | null;
+  recurrenceExceptions?: readonly RecurrenceException[];
 }
 
 export interface ICalendarEventShareCacheRow {
@@ -169,6 +171,7 @@ export interface IReminderCacheSource {
   isCompleted: boolean;
   completedAt: Date | null;
   recurrenceRule: string | null;
+  recurrenceExceptions?: readonly RecurrenceException[];
 }
 
 export interface IReminderCacheRow {
@@ -179,6 +182,7 @@ export interface IReminderCacheRow {
   isCompleted: boolean;
   completedAt: number | null;
   recurrenceRule: string | null;
+  recurrenceExceptions?: readonly RecurrenceException[];
 }
 
 export interface IReminderUpdate {
@@ -187,6 +191,15 @@ export interface IReminderUpdate {
   scheduledAt?: number;
   isCompleted?: boolean;
   recurrenceRule?: string | null;
+}
+
+export interface IOccurrenceChange {
+  occurrence: number;
+  cancelled?: boolean;
+  startsAt?: number;
+  endsAt?: number;
+  title?: string;
+  location?: string;
 }
 
 export type IReminderSnooze = { minutes: number; tomorrow?: never } | { tomorrow: true; minutes?: never };

@@ -11,7 +11,7 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { zoneClock } from '@/shared/libs/recurrence';
 import { reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
 import { byScheduled, REMINDER_LENSES } from '@/features/reminders/model/reminder-optimistic';
-import { rolledSchedule } from '@/features/reminders/model/reminder-repeat';
+import { currentOccurrence, rolledSchedule, skippedSchedule } from '@/features/reminders/model/reminder-repeat';
 import {
   isAlreadyDone,
   snoozeBodyOf,
@@ -76,6 +76,32 @@ export function useReminders() {
     [clock, date, t]
   );
 
+  const skipOccurrence = useCallback(
+    (row: IReminderCacheRow) => {
+      const now = Date.now();
+      const next = skippedSchedule({ row, clock });
+      return runOptimistic({
+        intents:
+          next === null
+            ? []
+            : [{ table: 'reminder', kind: 'update', recordId: row.id, values: { scheduledAt: Math.round(next / 1000) } }],
+        call: () =>
+          reminderService.changeOccurrence(row.id, {
+            occurrence: Math.round(currentOccurrence(row) / 1000),
+            cancelled: true,
+          }),
+        success:
+          next === null
+            ? t('screens.reminders.occurrence-skipped-plain')
+            : t('screens.reminders.occurrence-skipped', {
+                when: reminderWhen({ ...row, scheduledAt: next }, now, date, t),
+              }),
+        errorTitle: t('screens.reminders.occurrence-failed'),
+      });
+    },
+    [clock, date, t]
+  );
+
   const stopRepeating = useCallback(
     (row: IReminderCacheRow) =>
       runOptimistic({
@@ -98,5 +124,5 @@ export function useReminders() {
     [t]
   );
 
-  return { rows, groups, complete, snooze, snoozeOptionsOf, stopRepeating, remove };
+  return { rows, groups, complete, snooze, snoozeOptionsOf, skipOccurrence, stopRepeating, remove };
 }

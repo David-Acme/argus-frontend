@@ -9,7 +9,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { isPendingRecordId } from '@/shared/libs/optimistic';
 import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { cn } from '@/shared/libs/utils';
-import { repeatsOf } from '@/features/reminders/model/reminder-repeat';
+import { changesOneOccurrence, repeatsOf } from '@/features/reminders/model/reminder-repeat';
 import { reminderTiming, reminderWhen } from '@/features/reminders/model/reminder-rows';
 import { isSnoozable, type SnoozeChoice, type SnoozeOption } from '@/features/reminders/model/reminder-snooze';
 
@@ -20,6 +20,8 @@ type ReminderRowProps = {
   snoozeOptions: readonly SnoozeOption[];
   onToggle: (reminder: IReminderCacheRow, done: boolean) => void;
   onEdit: (reminder: IReminderCacheRow) => void;
+  onEditOccurrence: (reminder: IReminderCacheRow) => void;
+  onSkipOccurrence: (reminder: IReminderCacheRow) => void;
   onSnooze: (reminder: IReminderCacheRow, choice: SnoozeChoice) => void;
   onStopRepeating: (reminder: IReminderCacheRow) => void;
   onDelete: (reminder: IReminderCacheRow) => void;
@@ -32,7 +34,7 @@ const SNOOZE_LABEL = {
   tomorrow: 'screens.reminders.snooze-tomorrow',
 } as const satisfies Record<SnoozeChoice, TranslationKey>;
 
-type ReminderAction = 'edit' | 'stop-repeating' | 'delete';
+type ReminderAction = 'edit' | 'edit-occurrence' | 'skip-occurrence' | 'stop-repeating' | 'delete';
 
 export function ReminderRow({
   reminder,
@@ -41,6 +43,8 @@ export function ReminderRow({
   snoozeOptions,
   onToggle,
   onEdit,
+  onEditOccurrence,
+  onSkipOccurrence,
   onSnooze,
   onStopRepeating,
   onDelete,
@@ -54,7 +58,19 @@ export function ReminderRow({
   const repeats = repeatsOf(reminder);
   const repeat = recurrenceLabel(reminder.recurrenceRule, t);
   const caption = [overdue ? t('screens.reminders.overdue') : null, when, repeat].filter(Boolean).join(' · ');
-  const options: MenuOption<ReminderAction>[] = [{ value: 'edit', label: t('common.edit'), icon: 'pencil' }];
+  const single = changesOneOccurrence(reminder);
+  const options: MenuOption<ReminderAction>[] = [];
+  if (single) {
+    options.push({ value: 'edit-occurrence', label: t('screens.reminders.edit-occurrence'), icon: 'calendar-clock' });
+  }
+  options.push({
+    value: 'edit',
+    label: repeats ? t('screens.reminders.edit-series') : t('common.edit'),
+    icon: 'pencil',
+  });
+  if (single) {
+    options.push({ value: 'skip-occurrence', label: t('screens.reminders.skip-occurrence'), icon: 'calendar-x' });
+  }
   if (repeats) options.push({ value: 'stop-repeating', label: t('screens.reminders.stop-repeating'), icon: 'repeat-off' });
   options.push({ value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true });
 
@@ -67,6 +83,8 @@ export function ReminderRow({
 
   const select = (action: ReminderAction) => {
     if (action === 'edit') onEdit(reminder);
+    else if (action === 'edit-occurrence') onEditOccurrence(reminder);
+    else if (action === 'skip-occurrence') onSkipOccurrence(reminder);
     else if (action === 'stop-repeating') onStopRepeating(reminder);
     else onDelete(reminder);
   };

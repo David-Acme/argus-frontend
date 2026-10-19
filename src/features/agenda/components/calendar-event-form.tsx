@@ -7,6 +7,7 @@ import type {
   ICalendarEventCreate,
   ICalendarEventFormRecord,
   ICalendarEventUpdate,
+  IOccurrenceChange,
 } from '@/core/interfaces';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 
@@ -33,13 +34,17 @@ import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { recurrenceLabel } from '@/shared/libs/recurrence';
-import { calendarEventFormActions } from '@/features/agenda/model/calendar-entry-actions';
+import {
+  calendarEventFormActions,
+  editOccurrenceBody,
+} from '@/features/agenda/model/calendar-entry-actions';
 
 type CalendarEventFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   startsAt: Date;
   event?: ICalendarEventFormRecord | null;
+  occurrence?: number | null;
 };
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -69,7 +74,7 @@ const schema = z
 
 type EventValues = z.infer<typeof schema>;
 
-export function CalendarEventForm({ open, onOpenChange, startsAt, event }: CalendarEventFormProps) {
+export function CalendarEventForm({ open, onOpenChange, startsAt, event, occurrence = null }: CalendarEventFormProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const formScroll = useFormScroll();
@@ -111,6 +116,14 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
   const allDay = useWatch({ control: form.control, name: 'isAllDay' });
   const day = useWatch({ control: form.control, name: 'day' });
   const seriesLabel = recurrenceLabel(event?.recurrenceRule, t);
+  const single = event != null && occurrence !== null;
+  const dialogTitle = single
+    ? t('screens.agenda.edit-occurrence')
+    : seriesLabel
+      ? t('screens.agenda.edit-series')
+      : event
+        ? t('common.edit')
+        : t('screens.agenda.new-event');
 
   const eventBody = (values: EventValues): ICalendarEventCreate => ({
     title: values.title,
@@ -136,21 +149,45 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
     };
   };
 
+  const occurrenceBody = (values: EventValues, at: number): IOccurrenceChange => {
+    const body = eventBody(values);
+    return editOccurrenceBody({
+      occurrence: at,
+      title: body.title,
+      location: body.location ?? '',
+      startsAt: body.startsAt * 1000,
+      endsAt: body.endsAt === undefined ? null : body.endsAt * 1000,
+    });
+  };
+
   const { submitting, submit } = useFormSubmit({
     form,
     formScroll,
-    request: (values, idempotencyKey) =>
-      event
+    request: (values, idempotencyKey) => {
+      if (event && occurrence !== null)
+        return calendarEventService.changeOccurrence(event.id, occurrenceBody(values, occurrence));
+      return event
         ? calendarEventService.update(event.id, updateBody(values, event))
-        : calendarEventService.create(eventBody(values), idempotencyKey),
-    optimistic: (values) => ({
-      intents: [
-        event
-          ? { table: 'calendar_event', kind: 'update', recordId: event.id, values: updateBody(values, event) }
-          : { table: 'calendar_event', kind: 'create', values: eventBody(values) },
-      ],
-      success: t('screens.agenda.event-saved'),
-    }),
+        : calendarEventService.create(eventBody(values), idempotencyKey);
+    },
+    optimistic: (values) => {
+      if (event && occurrence !== null) {
+        return {
+          intents: [
+            { table: 'calendar_event', kind: 'update', recordId: event.id, values: occurrenceBody(values, occurrence) },
+          ],
+          success: t('screens.agenda.occurrence-saved'),
+        };
+      }
+      return {
+        intents: [
+          event
+            ? { table: 'calendar_event', kind: 'update', recordId: event.id, values: updateBody(values, event) }
+            : { table: 'calendar_event', kind: 'create', values: eventBody(values) },
+        ],
+        success: t('screens.agenda.event-saved'),
+      };
+    },
     onSuccess: () => onOpenChange(false),
   });
 
@@ -168,7 +205,7 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
       onOpenChange={handleOpenChange}
       dismissible={!submitting}
       onSubmit={submitting ? undefined : () => void submit()}
-      title={seriesLabel ? t('screens.agenda.edit-series') : event ? t('common.edit') : t('screens.agenda.new-event')}
+      title={dialogTitle}
       closeLabel={t('common.close')}
       footer={
         <>
@@ -194,9 +231,11 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
           <View className="gap-3.5 pb-1">
             {seriesLabel ? (
               <View className="bg-surface-secondary flex-row items-center gap-2 rounded-xl px-3 py-2.5">
-                <Icon name="repeat" className="text-muted-foreground size-4" />
+                <Icon name={single ? 'calendar-clock' : 'repeat'} className="text-muted-foreground size-4" />
                 <Text variant="caption" className="flex-1">
-                  {t('screens.agenda.series-hint', { repeat: seriesLabel })}
+                  {single
+                    ? t('screens.agenda.occurrence-hint')
+                    : t('screens.agenda.series-hint', { repeat: seriesLabel })}
                 </Text>
               </View>
             ) : null}
@@ -217,17 +256,19 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
               />
             </FormItem>
 
-            <FormField
-              control={form.control}
-              name="isAllDay"
-              render={({ field }) => (
-                <ToggleRow
-                  label={t('screens.agenda.event-all-day')}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
+            {single ? null : (
+              <FormField
+                control={form.control}
+                name="isAllDay"
+                render={({ field }) => (
+                  <ToggleRow
+                    label={t('screens.agenda.event-all-day')}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            )}
 
             {!allDay ? (
               <View className="flex-row gap-3">
@@ -260,19 +301,21 @@ export function CalendarEventForm({ open, onOpenChange, startsAt, event }: Calen
               onSubmitEditing={submit}
             />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('screens.agenda.event-notes')}</FormLabel>
-                  <FormControl>
-                    <Textarea numberOfLines={3} {...field} onChangeText={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {single ? null : (
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('screens.agenda.event-notes')}</FormLabel>
+                    <FormControl>
+                      <Textarea numberOfLines={3} {...field} onChangeText={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </View>
         </Form>
       </FormScrollView>

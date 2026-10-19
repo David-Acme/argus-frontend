@@ -1,5 +1,10 @@
 import type { CameraPrivacyState, PersonStatus, SyncTableKey, UserLang } from '@/core/types';
-import { sanitizeObject, sanitizeStringArray, sanitizeZonePoints } from '@/core/database/tables/sanitizers';
+import {
+  sanitizeObject,
+  sanitizeRecurrenceExceptions,
+  sanitizeStringArray,
+  sanitizeZonePoints,
+} from '@/core/database/tables/sanitizers';
 import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
 
 export type FieldTransform = (value: unknown) => unknown;
@@ -48,6 +53,23 @@ const parseJson = (v: unknown): unknown => {
 const toStringArray = (v: unknown): string[] => sanitizeStringArray(parseJson(v));
 const toObject = (v: unknown): Record<string, unknown> => sanitizeObject(parseJson(v));
 const toZonePoints = (v: unknown): ReturnType<typeof sanitizeZonePoints> => sanitizeZonePoints(parseJson(v));
+
+const EXCEPTION_INSTANTS = ['occurrence', 'startsAt', 'endsAt'] as const;
+
+const exceptionInMs = (item: unknown): unknown => {
+  if (typeof item !== 'object' || item === null || Array.isArray(item)) return item;
+  const shifted: Record<string, unknown> = { ...(item as Record<string, unknown>) };
+  for (const key of EXCEPTION_INSTANTS) {
+    const value = finiteNumber(shifted[key]);
+    if (value !== null) shifted[key] = Math.round(value * 1000);
+  }
+  return shifted;
+};
+
+export const toRecurrenceExceptions = (v: unknown): ReturnType<typeof sanitizeRecurrenceExceptions> => {
+  const parsed = parseJson(v);
+  return sanitizeRecurrenceExceptions(Array.isArray(parsed) ? parsed.map(exceptionInMs) : []);
+};
 
 export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
   user: {
@@ -109,6 +131,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     description: toStr,
     scheduledAt: toMs,
     recurrenceRule: toOptStr,
+    recurrenceExceptions: toRecurrenceExceptions,
     isCompleted: toBool,
     completedAt: toOptMs,
     createdAt: toMs,
@@ -126,6 +149,7 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     endsAt: toOptMs,
     isAllDay: toBool,
     recurrenceRule: toOptStr,
+    recurrenceExceptions: toRecurrenceExceptions,
     createdAt: toMs,
     updatedAt: toMs,
   },
@@ -189,7 +213,15 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
   },
 };
 
-const JSON_COLUMNS = new Set(['capabilities', 'config', 'points', 'file_paths', 'data', 'details']);
+const JSON_COLUMNS = new Set([
+  'capabilities',
+  'config',
+  'points',
+  'file_paths',
+  'data',
+  'details',
+  'recurrence_exceptions',
+]);
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 

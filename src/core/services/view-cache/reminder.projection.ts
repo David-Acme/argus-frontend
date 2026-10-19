@@ -14,6 +14,7 @@ const toRow = (reminder: IReminderCacheSource): IReminderCacheRow => ({
   isCompleted: reminder.isCompleted,
   completedAt: reminder.completedAt?.getTime() ?? null,
   recurrenceRule: reminder.recurrenceRule,
+  recurrenceExceptions: reminder.recurrenceExceptions ?? [],
 });
 
 export function projectReminders({ reminders }: ReminderProjectionInput): ViewWrite[] {
