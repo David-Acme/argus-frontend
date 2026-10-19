@@ -49,3 +49,4 @@ export * from './recurrence.type';
 export * from './push.type';
 export * from './siren.type';
 export * from './watch.type';
+export * from './proximity.type';

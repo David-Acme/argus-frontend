@@ -190,6 +190,8 @@ export const privacy = {
     'watchman-off-description': 'Ninguna cámara escuchará ni contestará, y las conversaciones abiertas terminan.',
     signage: 'Aviso para las entradas',
     'signage-hint': 'Un cartel de zona videovigilada listo para imprimir o compartir.',
+    proximity: 'Receptores y sensores',
+    'proximity-hint': 'Placas Bluetooth y radares por habitación, para saber dónde está cada persona.',
   },
   location: {
     title: 'Ubicarme en casa',

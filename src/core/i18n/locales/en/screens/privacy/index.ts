@@ -188,6 +188,8 @@ export const privacy = {
     'watchman-off-description': 'No camera will listen or answer, and open conversations end.',
     signage: 'Entrance sign',
     'signage-hint': 'A video surveillance sign ready to print or share.',
+    proximity: 'Receivers and sensors',
+    'proximity-hint': 'Bluetooth boards and radars per room, to know where each person is.',
   },
   location: {
     title: 'Locate me at home',

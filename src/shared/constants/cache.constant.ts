@@ -77,6 +77,9 @@ export const VIEW_CACHE_KEYS = {
   appContext: 'app.context',
   activityFeed: 'activity.feed',
   watchConversations: 'voice.watch',
+  proximityMe: 'guard.proximity.me',
+  proximityReceivers: 'guard.proximity.receivers',
+  proximitySensors: 'guard.proximity.sensors',
 } as const;
 
 export const ACCESS_CACHE_KEYS = [VIEW_CACHE_KEYS.appContext, VIEW_CACHE_KEYS.moduleCatalog] as const;

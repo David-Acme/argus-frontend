@@ -5,6 +5,7 @@ import { EntryGate } from '@/features/auth';
 import { PrivacyGate } from '@/features/privacy';
 import { ModuleNotices } from '@/features/modules';
 import { useCallPush } from '@/features/voice';
+import { useBeaconController } from '@/features/proximity';
 import { usePushRegistration } from '@/features/notification';
 import { NAV_FADE_MS } from '@/shared/constants';
 import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
@@ -13,6 +14,7 @@ export default function AppLayout() {
   const { theme } = useUniwind();
   usePushRegistration();
   useCallPush();
+  useBeaconController();
 
   return (
     <EntryGate>

@@ -28,6 +28,8 @@ export default (_context: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'com.davidacme.argus',
       infoPlist: {
         UIBackgroundModes: ['audio', 'voip'],
+        NSBluetoothAlwaysUsageDescription:
+          'Si lo activas, tu iPhone anuncia una señal anónima que cambia cada pocos minutos para que Argus sepa en qué habitación estás mientras la app está abierta.',
       },
     },
     android: {
@@ -42,6 +44,8 @@ export default (_context: ConfigContext): ExpoConfig => {
         'android.permission.ACCESS_NETWORK_STATE',
         'android.permission.WAKE_LOCK',
         'android.permission.BLUETOOTH_CONNECT',
+        'android.permission.BLUETOOTH_ADVERTISE',
+        'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE',
       ],
       ...(firebaseFile ? { googleServicesFile: firebaseFile } : {}),
     },

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 import type { PrivacySignal } from '@/core/types';
@@ -53,6 +54,7 @@ function SwitchRow({ icon, label, hint, value, onChange }: SwitchRowProps) {
 
 export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const dates = useDateFormatter();
   const { directory, status, setSwitch, reload } = usePrivacyDirectory();
   const signals = usePrivacySignals(directory?.applicable);
@@ -182,6 +184,15 @@ export function HouseholdPrivacyPanel({ className }: HouseholdPrivacyPanelProps)
           subtitle={t('screens.privacy.household.signage-hint')}
           chevron
           onPress={() => setSignageOpen(true)}
+        />
+      ) : null}
+      {surveillance ? (
+        <ListRow
+          icon="bluetooth"
+          title={t('screens.privacy.household.proximity')}
+          subtitle={t('screens.privacy.household.proximity-hint')}
+          chevron
+          onPress={() => router.push('/settings/proximity')}
         />
       ) : null}
       <WatchmanAcknowledgementDialog

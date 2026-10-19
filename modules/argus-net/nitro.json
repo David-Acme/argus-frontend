@@ -18,6 +18,16 @@
         "language": "kotlin",
         "implementationClassName": "HybridArgusNet"
       }
+    },
+    "ArgusBeacon": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridArgusBeacon"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridArgusBeacon"
+      }
     }
   },
   "ignorePaths": ["**/node_modules"]
