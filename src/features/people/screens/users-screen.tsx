@@ -30,7 +30,7 @@ import { ManagedUserDialog } from '@/features/people/components/managed-user-dia
 import { MembersPanel } from '@/features/people/components/members-panel';
 import { RoleAccessCard } from '@/features/people/components/role-access-card';
 import { VoiceRecognitionRow } from '@/features/people/components/voice-recognition-row';
-import { HouseholdPrivacyPanel, UserPrivacyRow } from '@/features/privacy';
+import { HouseholdPrivacyPanel, MinorRow, UserPrivacyRow } from '@/features/privacy';
 import { VisitorsPreviewPanel } from '@/features/visitors';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { roleOptions } from '@/features/people/components/user-options';
@@ -289,6 +289,9 @@ export default function UsersScreen() {
           extra={
             <>
               <UserPrivacyRow userId={Number(inspectedUser.id)} />
+              {inspectedUser.id !== currentUserId && inspectedUser.role !== 'owner' ? (
+                <MinorRow userId={Number(inspectedUser.id)} name={fullName(inspectedUser)} />
+              ) : null}
               <VoiceRecognitionRow
                 userId={Number(inspectedUser.id)}
                 name={fullName(inspectedUser)}

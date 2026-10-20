@@ -10,6 +10,8 @@ export interface PrivacyState {
   updatedAt: number | null;
   choices: PrivacyChoices;
   effective: PrivacyChoices;
+  minor?: boolean;
+  guardianConsent?: boolean;
 }
 
 export interface PrivacyMe extends PrivacyState {
@@ -38,3 +40,8 @@ export interface PrivacyDirectory {
 }
 
 export type HouseholdPrivacyPatch = Partial<HouseholdPrivacy> & { acknowledge?: boolean };
+
+export interface MinorMark {
+  minor: boolean;
+  guardianConsent: boolean;
+}

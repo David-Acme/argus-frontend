@@ -2,7 +2,8 @@ import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privac
 import type { IServiceResponse } from '@/core/interfaces';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
-import type { HouseholdPrivacyPatch, PrivacyDirectory, PrivacyMe } from '@/core/types';
+import type { HouseholdPrivacyPatch, MinorMark, PrivacyDirectory, PrivacyMe } from '@/core/types';
+import { minorPath } from '@/features/privacy/model/minor';
 import type { PrivacyDecision } from '@/features/privacy/model/privacy';
 import type { z } from 'zod';
 
@@ -30,6 +31,10 @@ class PrivacyService {
 
   async directory(): Promise<IServiceResponse<PrivacyDirectory>> {
     return parsed(await httpService.get<unknown>(USERS), privacyDirectorySchema);
+  }
+
+  async markMinor(userId: number, mark: MinorMark): Promise<IServiceResponse<PrivacyDirectory>> {
+    return parsed(await httpService.put<unknown>(minorPath(userId), mark), privacyDirectorySchema);
   }
 
   async updateHousehold(patch: HouseholdPrivacyPatch): Promise<IServiceResponse<PrivacyDirectory>> {

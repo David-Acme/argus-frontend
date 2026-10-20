@@ -127,6 +127,7 @@ import ListChecks from 'lucide-react-native/icons/list-checks';
 import ScanEye from 'lucide-react-native/icons/scan-eye';
 import Wrench from 'lucide-react-native/icons/wrench';
 import Crosshair from 'lucide-react-native/icons/crosshair';
+import Baby from 'lucide-react-native/icons/baby';
 
 export const ICONS = {
   activity: Activity,
@@ -258,4 +259,5 @@ export const ICONS = {
   'scan-eye': ScanEye,
   wrench: Wrench,
   crosshair: Crosshair,
+  baby: Baby,
 } as const;

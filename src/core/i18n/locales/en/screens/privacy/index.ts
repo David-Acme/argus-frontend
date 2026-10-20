@@ -228,4 +228,31 @@ export const privacy = {
     off: 'Does not allow',
     'owner-note': 'Only this person can change their choices.',
   },
+  minor: {
+    title: 'Minor',
+    switch: 'Is a minor',
+    'switch-hint': 'Argus does not recognise their face at the cameras or learn their voice, even if they allowed it.',
+    consent: 'I give my consent as guardian',
+    'consent-hint': 'With your consent their own face and voice choices apply.',
+    protected:
+      'Without your consent: the cameras do not recognise their face, and Argus neither learns their voice nor keeps memories of them.',
+    consented: 'With your consent as guardian: their own face and voice choices apply, and Argus can remember what they ask.',
+    camera:
+      'At a camera Argus always talks to them as a minor: it shows them no cameras, answers no alarm for them and does not change the agenda or the projects.',
+    'mark-title': 'Mark {name} as a minor?',
+    'mark-description':
+      'The cameras will stop recognising {name} by face and Argus will stop learning their voice; the voice it already learned is erased. It will not keep memories of them either. You can give your consent as guardian later.',
+    'mark-confirm': 'Mark as a minor',
+    'unmark-title': 'Is {name} no longer a minor?',
+    'unmark-description': 'The privacy choices of {name} will apply again, without the limits of a minor.',
+    'unmark-confirm': 'Remove the mark',
+    'consent-title': 'Give your consent as guardian of {name}?',
+    'consent-description':
+      'The cameras may recognise {name} by face and Argus may learn their voice, only if {name} allows it in their privacy. You are recorded as their guardian.',
+    'consent-confirm': 'Give my consent',
+    'withdraw-title': 'Withdraw your consent for {name}?',
+    'withdraw-description': 'The cameras will stop recognising {name} by face and Argus will erase the voice it learned.',
+    'withdraw-confirm': 'Withdraw consent',
+    'save-failed': 'The minor mark could not be saved',
+  },
 } as const;

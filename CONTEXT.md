@@ -3059,6 +3059,25 @@ identity's `/privacy` surface (`backend/services/identity/CONTEXT.md`,
   acknowledgement (outside people's faces, camera signs, limited retention)
   before it is enabled. The per-person access dialog shows that person's
   choices read-only: the owner can never change them on someone's behalf.
+- **Minors (gaps closing pass).** The same dialog, for any member who is not
+  an Owner and not the viewer, has "Menor de edad" (`MinorRow`). The Owner
+  marks the member as a minor and, separately, gives or withdraws consent as
+  their guardian, through identity's `PUT /privacy/users/{id}/minor {minor,
+  guardianConsent}` (Owner only; `guardianConsent` only with `minor: true`;
+  `404` for a member who is not active, `422` for a bad body), which answers
+  the whole privacy directory; its users now carry `minor` and
+  `guardianConsent` (read as `false` when an older server leaves them out).
+  What changes is said in plain words: without the guardian's consent the
+  cameras do not recognise the minor by face, Argus does not learn their
+  voice (a learned voice is erased) and keeps no memories of them; with it,
+  their own choices apply. At a camera Argus always treats them as a minor
+  (no camera views, no alarm answers, no agenda or project changes). Every
+  change asks first with its own consequence (`minorChangeOf`: mark, unmark,
+  consent, withdraw), applies optimistically (face and voice shown off at
+  once for a protected minor) and rolls back with a toast if refused. Pure
+  helpers in `features/privacy/model/minor.ts`, tested in
+  `tests/unit/features/privacy/minor-privacy.test.ts`. The member's own
+  choices stay theirs: the Owner never changes them.
 
 ## Safety nets: dead man's switch, panic, duress (2026-10-04, WATCHDOG)
 

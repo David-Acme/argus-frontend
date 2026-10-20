@@ -19,6 +19,8 @@ const privacyStateShape = {
   updatedAt: unixSeconds.nullable(),
   choices: privacyChoicesSchema,
   effective: privacyChoicesSchema,
+  minor: z.boolean().default(false),
+  guardianConsent: z.boolean().default(false),
 };
 
 export const privacyMeSchema = z.object({

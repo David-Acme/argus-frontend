@@ -2,10 +2,12 @@ import { useCallback } from 'react';
 import type {
   HouseholdPrivacy,
   HouseholdPrivacyPatch,
+  MinorMark,
   PrivacyDirectory,
   PrivacySignal,
   ResourceMatch,
 } from '@/core/types';
+import { minorChangeOf, minorMarkOf, normalizedMark, withMinorMark, type MinorChange } from '@/features/privacy/model/minor';
 import { privacyService } from '@/features/privacy/services/privacy.service';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
@@ -15,6 +17,12 @@ import { toastServiceError } from '@/shared/libs/service-error';
 
 type UsePrivacyDirectoryOptions = {
   enabled?: boolean;
+};
+
+export type MinorUpdate = {
+  userId: number;
+  name: string;
+  mark: MinorMark;
 };
 
 export type HouseholdSwitch = PrivacySignal | 'location' | 'visitorRecognition' | 'watchman';
@@ -35,6 +43,21 @@ const OFF_CONFIRMATION = {
     'screens.privacy.household.visitors-off-description',
   ],
 } as const satisfies Record<HouseholdSwitch, readonly [string, string]>;
+
+const MINOR_CONFIRMATION = {
+  mark: ['screens.privacy.minor.mark-title', 'screens.privacy.minor.mark-description', 'screens.privacy.minor.mark-confirm'],
+  unmark: ['screens.privacy.minor.unmark-title', 'screens.privacy.minor.unmark-description', 'screens.privacy.minor.unmark-confirm'],
+  consent: [
+    'screens.privacy.minor.consent-title',
+    'screens.privacy.minor.consent-description',
+    'screens.privacy.minor.consent-confirm',
+  ],
+  withdraw: [
+    'screens.privacy.minor.withdraw-title',
+    'screens.privacy.minor.withdraw-description',
+    'screens.privacy.minor.withdraw-confirm',
+  ],
+} as const satisfies Record<MinorChange, readonly [string, string, string]>;
 
 function patched(directory: PrivacyDirectory | null, patch: HouseholdPrivacyPatch): PrivacyDirectory | null {
   if (!directory) return directory;
@@ -100,5 +123,38 @@ export function usePrivacyDirectory({ enabled = true }: UsePrivacyDirectoryOptio
     [save, t]
   );
 
-  return { directory: data, status, setSwitch, reload };
+  const setMinor = useCallback(
+    async ({ userId, name, mark }: MinorUpdate): Promise<boolean> => {
+      const current = data?.users.find((user) => user.userId === userId);
+      if (!current) return false;
+      const next = normalizedMark(mark);
+      const change = minorChangeOf(minorMarkOf(current), next);
+      if (change === null) return true;
+      const [title, description, confirmLabel] = MINOR_CONFIRMATION[change];
+      const accepted = await confirm({
+        title: t(title, { name }),
+        description: t(description, { name }),
+        confirmLabel: t(confirmLabel),
+        intent: 'warning',
+      });
+      if (!accepted) return false;
+      let before: PrivacyDirectory | null = null;
+      mutate((previous) => {
+        before = previous;
+        return withMinorMark(previous, userId, next);
+      });
+      const result = await privacyService.markMinor(userId, next);
+      if (!result.ok || !result.info) {
+        mutate(() => before);
+        toastServiceError(result.errors, t('screens.privacy.minor.save-failed'));
+        return false;
+      }
+      const saved = result.info;
+      mutate(() => saved);
+      return true;
+    },
+    [data, mutate, t]
+  );
+
+  return { directory: data, status, setSwitch, setMinor, reload };
 }

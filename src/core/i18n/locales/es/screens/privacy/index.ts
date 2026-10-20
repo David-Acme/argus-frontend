@@ -230,4 +230,32 @@ export const privacy = {
     off: 'No permite',
     'owner-note': 'Solo esta persona puede cambiar sus elecciones.',
   },
+  minor: {
+    title: 'Menor de edad',
+    switch: 'Es menor de edad',
+    'switch-hint': 'Argus no reconoce su rostro en las cámaras ni aprende su voz, aunque lo haya permitido.',
+    consent: 'Doy mi permiso como tutor',
+    'consent-hint': 'Con tu permiso valen sus propias elecciones de rostro y voz.',
+    protected:
+      'Sin tu permiso: las cámaras no reconocen su rostro y Argus no aprende su voz ni guarda recuerdos suyos.',
+    consented: 'Con tu permiso como tutor: valen sus propias elecciones de rostro y voz, y Argus puede recordar lo que te pida.',
+    camera:
+      'En una cámara Argus siempre le habla como a menor: no le muestra cámaras, no responde alarmas en su nombre ni cambia la agenda o los proyectos.',
+    'mark-title': '¿Marcar a {name} como menor de edad?',
+    'mark-description':
+      'Las cámaras dejarán de reconocer a {name} por su rostro y Argus dejará de aprender su voz; la voz que ya aprendió se borra. Tampoco guardará recuerdos suyos. Puedes dar tu permiso como tutor después.',
+    'mark-confirm': 'Marcar como menor',
+    'unmark-title': '¿{name} ya no es menor de edad?',
+    'unmark-description': 'Volverán a valer las elecciones de privacidad de {name}, sin los límites de un menor.',
+    'unmark-confirm': 'Quitar la marca',
+    'consent-title': '¿Das tu permiso como tutor de {name}?',
+    'consent-description':
+      'Las cámaras podrán reconocer a {name} por su rostro y Argus podrá aprender su voz, solo si {name} lo permite en su privacidad. Quedas registrado como su tutor.',
+    'consent-confirm': 'Dar mi permiso',
+    'withdraw-title': '¿Retirar tu permiso para {name}?',
+    'withdraw-description':
+      'Las cámaras dejarán de reconocer a {name} por su rostro y Argus borrará la voz que aprendió.',
+    'withdraw-confirm': 'Retirar el permiso',
+    'save-failed': 'No se pudo guardar la marca de menor',
+  },
 } as const;

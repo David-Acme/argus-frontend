@@ -2,6 +2,7 @@ export { PrivacyGate } from './components/privacy-gate';
 export { PrivacySection } from './components/privacy-section';
 export { HouseholdPrivacyPanel } from './components/household-privacy-panel';
 export { UserPrivacyRow } from './components/user-privacy-row';
+export { MinorRow } from './components/minor-row';
 export { ConsentForm } from './components/consent-form';
 export { privacyService } from './services/privacy.service';
 export {
