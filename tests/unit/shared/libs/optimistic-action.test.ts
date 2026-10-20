@@ -41,7 +41,7 @@ mock.module('@/core/services/net', () => ({
 }));
 
 const { optimisticRegistry } = await import('@/shared/libs/optimistic');
-const { runOptimistic, serverRecordId } = await import('@/shared/libs/optimistic-action');
+const { changeTitleKey, runOptimistic, serverRecordId } = await import('@/shared/libs/optimistic-action');
 
 const ok = <T>(info: T): IServiceResponse<T> => ({ ok: true, status: 200, info, errors: null });
 const refused = (code: string): IServiceResponse<null> => ({
@@ -108,7 +108,11 @@ describe('runOptimistic', () => {
       call: async () => refused('WRITE_NOT_SENT'),
     });
     expect(optimisticRegistry.snapshot()).toEqual([]);
-    expect(shown.at(-1)).toMatchObject({ intent: 'error', title: 'common.errors.write-not-sent' });
+    expect(shown.at(-1)).toMatchObject({
+      intent: 'error',
+      title: 'common.change-failed.reminder',
+      description: 'common.errors.write-not-sent',
+    });
     expect(shown.at(-1)?.action?.label).toBe('common.retry');
   });
 
@@ -256,5 +260,13 @@ describe('runOptimistic', () => {
     expect(serverRecordId({ id: 'abc' })).toBe('abc');
     expect(serverRecordId(null)).toBeUndefined();
     expect(serverRecordId({ deleted: true })).toBeUndefined();
+  });
+});
+
+describe('a refused change says which change it was', () => {
+  test('the title names the record kind, and an unknown or empty change has a plain title', () => {
+    expect(changeTitleKey([{ table: 'project_task' }])).toBe('common.change-failed.project-task');
+    expect(changeTitleKey([{ table: 'notification' }])).toBe('common.change-failed.notification');
+    expect(changeTitleKey([])).toBe('common.change-failed.generic');
   });
 });

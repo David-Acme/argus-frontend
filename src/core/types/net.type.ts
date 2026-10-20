@@ -12,6 +12,7 @@ export type NetErrorCode =
   | 'DISCOVERY_NOT_FOUND'
   | 'NETWORK_ERROR'
   | 'TIMEOUT'
+  | 'CONNECTION_LOST'
   | 'STORAGE_ERROR'
   | 'DESKTOP_SHELL_ERROR';
 

@@ -1,6 +1,10 @@
 package com.margelo.nitro.net
 
+import java.io.EOFException
 import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.UnknownHostException
@@ -154,5 +158,19 @@ class StrictTransportTest {
       assertEquals("CERT_NOT_TRUSTED", code)
       assertEquals(0, server.finish().size)
     }
+  }
+
+  @Test
+  fun aConnectionThatNeverOpenedIsANetworkError() {
+    assertEquals("NETWORK_ERROR", StrictTransport.codeOf(ConnectException("Failed to connect to /192.168.18.205:7042")))
+    assertEquals("NETWORK_ERROR", StrictTransport.codeOf(UnknownHostException("argus.local")))
+    assertEquals("NETWORK_ERROR", StrictTransport.codeOf(IOException("wrapped", ConnectException("refused"))))
+  }
+
+  @Test
+  fun aConnectionLostAfterTheRequestLeftIsNotANetworkError() {
+    assertEquals("CONNECTION_LOST", StrictTransport.codeOf(EOFException("unexpected end of stream")))
+    assertEquals("CONNECTION_LOST", StrictTransport.codeOf(SocketException("Connection reset")))
+    assertEquals("TIMEOUT", StrictTransport.codeOf(SocketTimeoutException("timeout")))
   }
 }

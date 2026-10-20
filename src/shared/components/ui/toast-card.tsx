@@ -14,6 +14,7 @@ type ToastCardProps = {
   item: ToastItem;
   dismissLabel: string;
   onDismiss: (id: string) => void;
+  onAct: (id: string) => void;
 };
 
 const ICON: Record<ToastItem['intent'], IconName> = {
@@ -30,7 +31,7 @@ const ACCENT: Record<ToastItem['intent'], string> = {
   info: 'text-foreground-secondary',
 };
 
-export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
+export function ToastCard({ item, dismissLabel, onDismiss, onAct }: ToastCardProps) {
   const { action } = item;
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
@@ -82,10 +83,7 @@ export function ToastCard({ item, dismissLabel, onDismiss }: ToastCardProps) {
             size="sm"
             variant="secondary"
             className="-my-1"
-            onPress={() => {
-              action.onPress();
-              onDismiss(item.id);
-            }}>
+            onPress={() => onAct(item.id)}>
             <Text>{action.label}</Text>
           </Button>
         ) : null}

@@ -3,8 +3,11 @@ package com.margelo.nitro.net
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.NoRouteToHostException
+import java.net.PortUnreachableException
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -16,6 +19,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
@@ -182,8 +186,18 @@ class StrictTransport(
         it is CertificateException || it is SSLPeerUnverifiedException
       } -> "CERT_NOT_TRUSTED"
       error is SocketTimeoutException -> "TIMEOUT"
-      else -> "NETWORK_ERROR"
+      neverConnected(error) -> "NETWORK_ERROR"
+      else -> "CONNECTION_LOST"
     }
+
+    private fun neverConnected(error: IOException): Boolean =
+      generateSequence<Throwable>(error) { it.cause }.any {
+        it is ConnectException ||
+          it is NoRouteToHostException ||
+          it is UnknownHostException ||
+          it is PortUnreachableException ||
+          it is SSLHandshakeException
+      }
 
     fun fingerprintOf(certificate: X509Certificate?): String =
       certificate?.let { sha256Hex(it.encoded) } ?: ""

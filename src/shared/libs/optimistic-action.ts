@@ -2,7 +2,7 @@ import { t } from '@/core/i18n';
 import type { IServiceResponse } from '@/core/interfaces';
 import { newIdempotencyKey } from '@/core/services/http';
 import { useAuthStore } from '@/core/stores';
-import type { ConfirmRequest } from '@/core/types';
+import type { ConfirmRequest, TranslationKey } from '@/core/types';
 import { TOAST_ACTION_MS } from '@/shared/constants';
 import { confirm } from './confirm';
 import {
@@ -41,6 +41,27 @@ export type OptimisticAction<R> = {
   refusals?: (info: R) => OptimisticRefusal | null;
   refusalNotice?: (result: IServiceResponse<R>) => OptimisticNotice | null;
 };
+
+const CHANGE_TITLES: Readonly<Partial<Record<string, TranslationKey>>> = {
+  reminder: 'common.change-failed.reminder',
+  calendar_event: 'common.change-failed.calendar-event',
+  calendar_event_share: 'common.change-failed.calendar-event-share',
+  camera: 'common.change-failed.camera',
+  zone: 'common.change-failed.zone',
+  conversation_message: 'common.change-failed.conversation-message',
+  notification: 'common.change-failed.notification',
+  project: 'common.change-failed.project',
+  project_member: 'common.change-failed.project-member',
+  project_task: 'common.change-failed.project-task',
+  session: 'common.change-failed.session',
+  user: 'common.change-failed.user',
+  user_invitation: 'common.change-failed.user-invitation',
+};
+
+export function changeTitleKey(intents: readonly Pick<OptimisticIntentInput<object>, 'table'>[]): TranslationKey {
+  const table = intents[0]?.table;
+  return (table && CHANGE_TITLES[table]) || 'common.change-failed.generic';
+}
 
 function sessionOf(userId: number | string | undefined): string | null {
   return userId == null ? null : String(userId);
@@ -109,7 +130,7 @@ export async function runOptimistic<R>(
             void runOptimistic({ ...action, idempotencyKey, confirm: undefined, undo: undefined }),
         }
       : undefined;
-    toastServiceError(result.errors, action.errorTitle, retry);
+    toastServiceError(result.errors, action.errorTitle ?? t(changeTitleKey(action.intents)), retry);
     return null;
   }
   const recordId = serverRecordId(result.info);

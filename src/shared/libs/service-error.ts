@@ -7,6 +7,7 @@ import { toast } from './toast';
 const ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   NETWORK_ERROR: 'common.errors.network',
   TIMEOUT: 'common.errors.timeout',
+  CONNECTION_LOST: 'common.errors.network',
   [WRITE_NOT_SENT]: 'common.errors.write-not-sent',
   [WRITE_UNCONFIRMED]: 'common.errors.write-unconfirmed',
   DEADLINE_EXCEEDED: 'common.errors.timeout',
@@ -56,6 +57,7 @@ export function serviceErrorKey(error: IApiError | null | undefined): Translatio
 const RETRYABLE_CODES: ReadonlySet<string> = new Set([
   'NETWORK_ERROR',
   'TIMEOUT',
+  'CONNECTION_LOST',
   'DEADLINE_EXCEEDED',
   'SERVICE_UNAVAILABLE',
   'BAD_GATEWAY',

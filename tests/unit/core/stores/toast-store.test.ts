@@ -49,4 +49,29 @@ describe('toast store', () => {
     expect(useToastStore.getState().items).toHaveLength(3);
     expect(useToastStore.getState().parked.map((item) => item.title)).toEqual(['Primero']);
   });
+
+  test('Retry on a parked change runs once and the alert does not come back', () => {
+    let retried = 0;
+    const id = useToastStore.getState().show('error', 'No se guardó', undefined, {
+      label: 'Reintentar',
+      onPress: () => {
+        retried += 1;
+      },
+    });
+    useToastStore.getState().dismiss(id);
+    const parkedId = useToastStore.getState().parked[0]?.id ?? '';
+    useToastStore.getState().reopenParked(parkedId);
+    const reopened = useToastStore.getState().items[0]?.id ?? '';
+    useToastStore.getState().act(reopened);
+    expect(retried).toBe(1);
+    expect(useToastStore.getState().items).toHaveLength(0);
+    expect(useToastStore.getState().parked).toHaveLength(0);
+  });
+
+  test('signing out forgets the parked changes', () => {
+    const id = useToastStore.getState().show('error', 'No se guardó', undefined, { label: 'Reintentar', onPress: () => {} });
+    useToastStore.getState().dismiss(id);
+    useToastStore.getState().clearParked();
+    expect(useToastStore.getState().parked).toHaveLength(0);
+  });
 });

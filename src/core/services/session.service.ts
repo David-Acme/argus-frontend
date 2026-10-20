@@ -199,6 +199,7 @@ class SessionService {
       log.error('session', 'the local projection was not wiped; the next sync rebuilds it', error);
     } finally {
       setDeviceCredential(null);
+      useToastStore.getState().clearParked();
       useAuthStore.getState().clear();
       viewCacheService.setUserId(null);
       try {

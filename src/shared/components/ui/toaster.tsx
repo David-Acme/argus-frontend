@@ -12,6 +12,7 @@ export function Toaster() {
   const { windowClass, isCompact } = useWindowClass();
   const items = useToastStore((state) => state.items);
   const dismiss = useToastStore((state) => state.dismiss);
+  const act = useToastStore((state) => state.act);
 
   if (items.length === 0) return null;
 
@@ -29,6 +30,7 @@ export function Toaster() {
             item={item}
             dismissLabel={t('common.close')}
             onDismiss={dismiss}
+            onAct={act}
           />
         ))}
       </View>

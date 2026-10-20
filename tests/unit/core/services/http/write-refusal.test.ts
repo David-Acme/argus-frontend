@@ -29,6 +29,11 @@ describe('a write that never reached the server', () => {
     expect(writeRefusal({ method: 'POST', status: 0, code: 'TIMEOUT' })).toBe('unconfirmed');
   });
 
+  test('a connection that dropped after the request left is unconfirmed, never "not sent"', () => {
+    expect(writeRefusal({ method: 'PATCH', status: 0, code: 'CONNECTION_LOST' })).toBe('unconfirmed');
+    expect(writeRefusal({ method: 'GET', status: 0, code: 'CONNECTION_LOST' })).toBeNull();
+  });
+
   test('a write the server answered keeps the server refusal', () => {
     expect(writeRefusal({ method: 'POST', status: 409, code: 'CONFLICT' })).toBeNull();
     expect(writeRefusal({ method: 'DELETE', status: 503, code: 'SERVICE_UNAVAILABLE' })).toBeNull();

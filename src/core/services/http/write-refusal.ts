@@ -7,7 +7,7 @@ export const WRITE_NOT_SENT = 'WRITE_NOT_SENT';
 export const WRITE_UNCONFIRMED = 'WRITE_UNCONFIRMED';
 
 const CHANGE_METHODS: ReadonlySet<HttpMethod> = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
-const LOST_ANSWER = 'TIMEOUT';
+const LOST_ANSWERS: ReadonlySet<string> = new Set(['TIMEOUT', 'CONNECTION_LOST']);
 
 export type WriteRefusalInput = {
   method: HttpMethod;
@@ -22,7 +22,7 @@ export function serverWrite(method: HttpMethod): boolean {
 export function writeRefusal({ method, status, code }: WriteRefusalInput): WriteRefusal | null {
   if (status !== 0 || !serverWrite(method)) return null;
   if (addressUnreachable(code)) return 'unsent';
-  return code === LOST_ANSWER ? 'unconfirmed' : null;
+  return LOST_ANSWERS.has(code) ? 'unconfirmed' : null;
 }
 
 export function writeRefusalCode(refusal: WriteRefusal): string {

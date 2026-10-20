@@ -7,8 +7,10 @@ type ToastStoreState = {
   parked: ToastItem[];
   show: (intent: ToastIntent, title: string, description?: string, action?: ToastAction) => string;
   dismiss: (id: string) => void;
+  act: (id: string) => void;
   reopenParked: (id: string) => void;
   clear: () => void;
+  clearParked: () => void;
 };
 
 let sequence = 0;
@@ -44,6 +46,11 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
     return id;
   },
   dismiss: (id) => set((state) => closed(state, id)),
+  act: (id) => {
+    const item = get().items.find((entry) => entry.id === id);
+    set((state) => ({ items: state.items.filter((entry) => entry.id !== id) }));
+    item?.action?.onPress();
+  },
   reopenParked: (id) => {
     const item = get().parked.find((entry) => entry.id === id);
     if (!item) return;
@@ -51,4 +58,5 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
     get().show(item.intent, item.title, item.description, item.action);
   },
   clear: () => set({ items: [] }),
+  clearParked: () => set({ parked: [] }),
 }));

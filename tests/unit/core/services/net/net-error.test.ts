@@ -20,6 +20,13 @@ mock.module('@/core/services/instance-storage', () => ({
 const { toNetError } = await import('@/core/services/net/net-persistence');
 
 describe('toNetError', () => {
+  test('a connection that dropped after the request left keeps its own code', () => {
+    expect(toNetError(new Error('CONNECTION_LOST|unexpected end of stream'), 'NETWORK_ERROR')).toEqual({
+      code: 'CONNECTION_LOST',
+      message: 'unexpected end of stream',
+    });
+  });
+
   test('a CODE|message native error keeps its code and message', () => {
     expect(toNetError(new Error('FINGERPRINT_MISMATCH|Server proof does not match'), 'NETWORK_ERROR')).toEqual({
       code: 'FINGERPRINT_MISMATCH',
