@@ -105,7 +105,9 @@ describe('the composer in the thread', () => {
   });
 
   test('the composer rides the keyboard over a keyboard-aware virtualized list, never a padding wrapper', () => {
-    expect(THREAD).toContain('<KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>');
+    expect(THREAD).toContain('offset={keyboardOffsets(insets.bottom).sticky}');
+    expect(THREAD).toContain('style={COMPOSER_ABOVE_LIST}>');
+    expect(THREAD).toContain('<View className="bg-background">');
     expect(THREAD).not.toContain('KeyboardAvoidingView');
     expect(THREAD).not.toContain('<ScrollView');
     expect(THREAD).toContain('<ThreadList');

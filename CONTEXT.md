@@ -4995,7 +4995,15 @@ a LegendList that rides the keyboard").
   `KeyboardStickyView` (`offset {closed: 0, opened: insets.bottom}`; the list's
   `keyboardOffset` is the same inset), so it moves by transform with the
   keyboard frame and nothing re-lays out; no `KeyboardAvoidingView` wraps the
-  screen any more. The state is `hooks/use-thread-list.ts`; the rules are pure
+  screen any more. The three offsets come from one rule,
+  `keyboardOffsets(insets.bottom)`, so the list lifts its content by exactly
+  the distance the composer travels, wherever the reader is. Found on the
+  phone (retest r4): opened while reading older lines, the list's frame still
+  reaches under the risen composer, so the composer has an opaque
+  `bg-background` and draws above the list (`zIndex`), and the "Ir a lo más
+  reciente" arrow sits in its own `KeyboardStickyView` with the same offset,
+  floating just above the composer instead of staying behind the keyboard.
+  The state is `hooks/use-thread-list.ts`; the rules are pure
   in `model/thread-list.ts`, tested in
   `tests/unit/features/conversations/thread-list.test.ts`.
 - **Rows.** `threadItems` flattens the thread into day separators ("Hoy",

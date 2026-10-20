@@ -1,5 +1,6 @@
 import type { LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, View, type ViewStyle } from 'react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { Icon } from '@/shared/components/ui/icon';
@@ -13,7 +14,11 @@ import { TypingIndicator } from '@/features/conversations/components/typing-indi
 import { useThreadList } from '@/features/conversations/hooks/use-thread-list';
 import type { ChatMark } from '@/features/conversations/model/assistant-chat-overlay';
 import { repliedBodyOf } from '@/features/conversations/model/conversation-thread';
-import type { ThreadItem } from '@/features/conversations/model/thread-list';
+import {
+  keyboardOffsets,
+  type StickyOffset,
+  type ThreadItem,
+} from '@/features/conversations/model/thread-list';
 import { ThreadScroller } from './thread-scroller';
 
 type ThreadListProps = {
@@ -40,6 +45,15 @@ type OlderLoaderProps = {
 type LatestPillProps = {
   unseen: number;
   onPress: () => void;
+  offset: StickyOffset;
+};
+
+const PILL_FLOAT: ViewStyle = {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 12,
+  alignItems: 'center',
 };
 
 const ESTIMATED_ROW = 72;
@@ -68,6 +82,7 @@ export function ThreadList({
 }: ThreadListProps) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
+  const offsets = keyboardOffsets(insets.bottom);
   const thread = useThreadList({
     rows,
     startOfDay,
@@ -106,7 +121,7 @@ export function ThreadList({
     <View className="min-h-0 flex-1">
       <ThreadScroller
         listRef={thread.listRef}
-        keyboardOffset={insets.bottom}
+        keyboardOffset={offsets.list}
         data={thread.items}
         renderItem={renderItem}
         keyExtractor={keyOf}
@@ -127,7 +142,9 @@ export function ThreadList({
         style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 }}
       />
       <OlderLoader active={thread.loadingOlder} />
-      {!thread.atEnd || !live ? <LatestPill unseen={thread.unseen} onPress={thread.goToLatest} /> : null}
+      {!thread.atEnd || !live ? (
+        <LatestPill unseen={thread.unseen} onPress={thread.goToLatest} offset={offsets.pill} />
+      ) : null}
     </View>
   );
 }
@@ -149,7 +166,7 @@ function OlderLoader({ active }: OlderLoaderProps) {
   );
 }
 
-function LatestPill({ unseen, onPress }: LatestPillProps) {
+function LatestPill({ unseen, onPress, offset }: LatestPillProps) {
   const { t } = useTranslation();
   const count =
     unseen === 1
@@ -160,7 +177,7 @@ function LatestPill({ unseen, onPress }: LatestPillProps) {
   const go = t('screens.conversations.latest.go');
 
   return (
-    <View pointerEvents="box-none" className="absolute inset-x-0 bottom-3 items-center">
+    <KeyboardStickyView offset={offset} pointerEvents="box-none" style={PILL_FLOAT}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={count ? `${count}. ${go}` : go}
@@ -175,6 +192,6 @@ function LatestPill({ unseen, onPress }: LatestPillProps) {
         ) : null}
         <Icon name="chevron-down" className="text-foreground size-5" />
       </Pressable>
-    </View>
+    </KeyboardStickyView>
   );
 }

@@ -35,6 +35,14 @@ export type FollowDecision = {
   lastKey: string | null;
 };
 
+export type StickyOffset = { closed: number; opened: number };
+
+export type KeyboardOffsets = {
+  list: number;
+  sticky: StickyOffset;
+  pill: StickyOffset;
+};
+
 export const THREAD_GROUP_GAP_MS = 5 * 60 * 1000;
 
 export const TYPING_ITEM_KEY = 'typing';
@@ -110,4 +118,10 @@ export function arrivedWhileAway({ live, previous, newest }: ArrivalInput): numb
   if (live || previous === null || newest === null) return 0;
   if (newest.id === previous || newest.direction !== 'in') return 0;
   return 1;
+}
+
+export function keyboardOffsets(bottomInset: number): KeyboardOffsets {
+  const inset = Math.max(bottomInset, 0);
+  const sticky = { closed: 0, opened: inset };
+  return { list: inset, sticky, pill: { ...sticky } };
 }

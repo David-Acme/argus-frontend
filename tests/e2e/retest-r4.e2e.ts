@@ -50,6 +50,16 @@ const selected = (page: Page, name: string): Promise<boolean[]> =>
     name
   );
 
+const composerOf = (page: Page) =>
+  page.evaluate(() => {
+    const field = document.querySelector('textarea[placeholder="Write to Argus"]');
+    let node = field?.parentElement ?? null;
+    while (node && getComputedStyle(node).backgroundColor === 'rgba(0, 0, 0, 0)') node = node.parentElement;
+    const box = node?.getBoundingClientRect();
+    if (!node || !box) return null;
+    return { holdsRows: (node.textContent ?? '').includes('Line 0'), top: box.top };
+  });
+
 test('a draft typed to Argus survives a trip to the call and comes back in chat', async ({ app, second }) => {
   const baseUrl = app.baseUrl ?? '';
   const page = second.page;
@@ -80,6 +90,35 @@ test('a draft typed to Argus survives a trip to the call and comes back in chat'
   await expect
     .poll(() => page.getByPlaceholder('Write to Argus').inputValue({ timeout: 500 }).catch(() => null), { timeout: LIVE_MS })
     .toBe(DRAFT);
+
+  expect(second.escapes).toEqual([]);
+});
+
+test('read away from the bottom, the composer hides the rows behind it and the latest arrow floats above it', async ({
+  app,
+  second,
+}) => {
+  const baseUrl = app.baseUrl ?? '';
+  const page = second.page;
+  await seedThread(baseUrl, 60);
+  await second.open('/conversations/0');
+  await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
+
+  await page.getByText('Line 060', { exact: true }).waitFor({ timeout: 10000 });
+  const arrow = page.getByRole('button', { name: 'Go to the latest' });
+  await page.mouse.move(640, 300);
+  for (let step = 0; step < 20 && !(await arrow.isVisible()); step += 1) {
+    await page.mouse.wheel(0, -400);
+    await page.waitForTimeout(100);
+  }
+  expect(await arrow.isVisible()).toBe(true);
+
+  const composer = await composerOf(page);
+  expect(composer).not.toBeNull();
+  expect(composer?.holdsRows).toBe(false);
+  const box = await arrow.boundingBox();
+  expect(box).not.toBeNull();
+  expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(composer?.top ?? 0);
 
   expect(second.escapes).toEqual([]);
 });

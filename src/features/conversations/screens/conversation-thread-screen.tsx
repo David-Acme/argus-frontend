@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
-import { View } from 'react-native';
+import { View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { validCounterpartId } from '@/core/services/conversation';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
@@ -21,12 +21,15 @@ import { chatOverlay } from '@/features/conversations/model/assistant-chat-overl
 import { MessageComposer } from '@/features/conversations/components/message-composer';
 import { useConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
 import { dayKindOf, replyBodies } from '@/features/conversations/model/conversation-thread';
+import { keyboardOffsets } from '@/features/conversations/model/thread-list';
 
 type ThreadBodyProps = {
   counterpartId: number;
 };
 
 const CHAT_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
+const COMPOSER_ABOVE_LIST: ViewStyle = { zIndex: 1 };
 
 function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const router = useRouter();
@@ -136,24 +139,28 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
           onDismiss={chat.dismiss}
         />
       )}
-      <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
-        {argus ? (
-          <AssistantComposer
-            name={name}
-            mode={assistant.mode}
-            modes={assistant.modes}
-            onChoose={chooseMode}
-            onSend={(text) => {
-              if (!thread.live) thread.toLatest();
-              return chat.send(text) === 'sent';
-            }}
-            busy={chat.busy}
-            readDraft={chat.readDraft}
-            onDraft={chat.setDraft}
-          />
-        ) : (
-          <MessageComposer name={name} argus={false} onSend={send} />
-        )}
+      <KeyboardStickyView
+        offset={keyboardOffsets(insets.bottom).sticky}
+        style={COMPOSER_ABOVE_LIST}>
+        <View className="bg-background">
+          {argus ? (
+            <AssistantComposer
+              name={name}
+              mode={assistant.mode}
+              modes={assistant.modes}
+              onChoose={chooseMode}
+              onSend={(text) => {
+                if (!thread.live) thread.toLatest();
+                return chat.send(text) === 'sent';
+              }}
+              busy={chat.busy}
+              readDraft={chat.readDraft}
+              onDraft={chat.setDraft}
+            />
+          ) : (
+            <MessageComposer name={name} argus={false} onSend={send} />
+          )}
+        </View>
       </KeyboardStickyView>
     </AppScreen>
   );

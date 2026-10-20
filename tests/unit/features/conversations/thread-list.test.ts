@@ -6,6 +6,7 @@ import {
   followNewItems,
   groupsWith,
   isMessageItem,
+  keyboardOffsets,
   THREAD_GROUP_GAP_MS,
   threadItems,
   TYPING_ITEM_KEY,
@@ -240,5 +241,32 @@ describe('arrivedWhileAway', () => {
     expect(arrivedWhileAway({ live: false, previous: '20', newest: incoming })).toBe(0);
     expect(arrivedWhileAway({ live: false, previous: null, newest: incoming })).toBe(0);
     expect(arrivedWhileAway({ live: false, previous: '20', newest: null })).toBe(0);
+  });
+});
+
+describe('keyboardOffsets', () => {
+  test('the list lifts its content by exactly the distance the composer travels', () => {
+    for (const inset of [0, 24, 48]) {
+      const offsets = keyboardOffsets(inset);
+      for (const keyboard of [0, 280, 340]) {
+        const composerTravel = Math.max(keyboard - offsets.sticky.opened, 0);
+        const listLift = Math.max(keyboard - offsets.list, 0);
+        expect(listLift).toBe(composerTravel);
+      }
+      expect(offsets.sticky.closed).toBe(0);
+    }
+  });
+
+  test('the latest arrow rides the keyboard with the composer, so it is never left behind it', () => {
+    const offsets = keyboardOffsets(34);
+    expect(offsets.pill).toEqual(offsets.sticky);
+  });
+
+  test('a negative inset reads as none', () => {
+    expect(keyboardOffsets(-5)).toEqual({
+      list: 0,
+      sticky: { closed: 0, opened: 0 },
+      pill: { closed: 0, opened: 0 },
+    });
   });
 });
