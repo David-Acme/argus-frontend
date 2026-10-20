@@ -1,10 +1,12 @@
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
+import { AppState } from 'react-native';
 import { t } from '@/core/i18n';
 import { readHeartbeat } from '@/core/contracts/heartbeat.contract';
 import type { IDeadmanAlarm, IHeartbeatService } from '@/core/interfaces';
 import { log } from '@/core/services/log';
+import { permissionsService } from '@/core/services/permissions';
 import { sessionService } from '@/core/services/session.service';
 import type { DeadmanPlan } from '@/core/types';
 import {
@@ -15,15 +17,15 @@ import {
   HEARTBEAT_PUSH_TASK,
   IS_ANDROID,
 } from '@/shared/constants';
+import { ensurePermission } from '@/shared/libs/permission-prompt';
 import { HeartbeatEngine } from './heartbeat-engine';
-import { readPushHeartbeat } from './heartbeat-plan';
+import { deadmanPermissionStep, readPushHeartbeat } from './heartbeat-plan';
 
 const clockOf = (at: number): string =>
   new Date(at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
 class NotificationDeadmanAlarm implements IDeadmanAlarm {
   private channelReady = false;
-  private askedPermission = false;
 
   async apply(plan: DeadmanPlan): Promise<void> {
     await Notifications.cancelScheduledNotificationAsync(DEADMAN_NOTIFICATION_ID).catch(() => undefined);
@@ -48,12 +50,11 @@ class NotificationDeadmanAlarm implements IDeadmanAlarm {
   }
 
   private async permitted(): Promise<boolean> {
-    const current = await Notifications.getPermissionsAsync();
-    if (current.granted) return true;
-    if (this.askedPermission || !current.canAskAgain) return false;
-    this.askedPermission = true;
-    const asked = await Notifications.requestPermissionsAsync();
-    return asked.granted;
+    const current = await permissionsService.read('notifications');
+    const step = deadmanPermissionStep(current.granted, AppState.currentState === 'active');
+    if (step === 'granted') return true;
+    if (step === 'skip') return false;
+    return ensurePermission('notifications', { once: true });
   }
 
   private async ensureChannel(): Promise<void> {

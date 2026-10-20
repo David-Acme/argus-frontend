@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readHeartbeat } from '@/core/contracts/heartbeat.contract';
 import {
+  deadmanPermissionStep,
   nextNoticeCheckMs,
   pingIntervalMs,
   planFor,
@@ -96,5 +97,13 @@ describe('push heartbeat', () => {
     expect(readHeartbeat(readPushHeartbeat({ body: JSON.stringify(payload) }))).not.toBeNull();
     expect(readPushHeartbeat({ data: { kind: 'call' } })).toBeNull();
     expect(readPushHeartbeat('x')).toBeNull();
+  });
+});
+
+describe('the dead-man alarm and the notification permission', () => {
+  test('a granted permission schedules, an open app asks through the app dialog, a background arm never prompts', () => {
+    expect(deadmanPermissionStep(true, false)).toBe('granted');
+    expect(deadmanPermissionStep(false, true)).toBe('ask');
+    expect(deadmanPermissionStep(false, false)).toBe('skip');
   });
 });

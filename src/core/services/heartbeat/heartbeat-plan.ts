@@ -75,3 +75,8 @@ const safeParse = (text: string): unknown => {
     return null;
   }
 };
+
+export type DeadmanPermissionStep = 'granted' | 'ask' | 'skip';
+
+export const deadmanPermissionStep = (granted: boolean, appActive: boolean): DeadmanPermissionStep =>
+  granted ? 'granted' : appActive ? 'ask' : 'skip';
