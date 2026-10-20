@@ -121,6 +121,8 @@ internal class OngoingCallService : Service() {
                 .putExtra(EXTRA_OUTSIDE, outside)
                 .putExtra(EXTRA_ASSISTANT, assistant)
 
+        fun showing(): Boolean = current != null
+
         fun demoted(context: Context): OngoingCallState? {
             val state = current ?: return null
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return state

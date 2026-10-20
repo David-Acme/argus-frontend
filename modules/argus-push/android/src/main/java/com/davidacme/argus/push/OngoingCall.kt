@@ -46,6 +46,8 @@ internal fun ongoingDeepLink(state: OngoingCallState): String? =
 
 internal fun shouldRunOngoingService(answered: Boolean, ended: Boolean): Boolean = answered && !ended
 
+internal fun ongoingIsStale(showing: Boolean, inCall: Boolean): Boolean = showing && !inCall
+
 internal object CallFinish {
     fun finish(context: Context, callId: String?) {
         OngoingCall.clear(context)
@@ -72,6 +74,10 @@ internal object OngoingCall {
     }
 
     fun repromote(context: Context) {
+        if (ongoingIsStale(OngoingCallService.showing(), CallSession.inCall())) {
+            clear(context)
+            return
+        }
         val state = OngoingCallService.demoted(context) ?: return
         try {
             context.startForegroundService(OngoingCallService.intent(context, state.callId, state.outside, state.assistant))

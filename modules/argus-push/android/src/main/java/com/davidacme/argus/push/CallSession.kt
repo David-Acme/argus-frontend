@@ -69,6 +69,8 @@ internal object CallSession {
 
     fun telecomActive(): Boolean = TelecomCall.isActive()
 
+    fun inCall(): Boolean = synchronized(lock) { answeredCallId != null || active != null }
+
     fun routeAudio(speaker: Boolean) {
         TelecomCall.route(speaker)
     }

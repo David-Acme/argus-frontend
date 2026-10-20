@@ -696,6 +696,7 @@ class VoiceService {
       this.leaveRealtime(serverGone);
       return;
     }
+    pushService.stopOngoingCall();
     if (!this.serverSession) return;
     this.serverSession = false;
     if (serverGone) return;

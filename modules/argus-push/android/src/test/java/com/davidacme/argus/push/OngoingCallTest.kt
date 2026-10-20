@@ -34,6 +34,13 @@ class OngoingCallTest {
     }
 
     @Test
+    fun anOngoingCallNotificationWithNoCallBehindItIsStale() {
+        assertEquals(true, ongoingIsStale(showing = true, inCall = false))
+        assertEquals(false, ongoingIsStale(showing = true, inCall = true))
+        assertEquals(false, ongoingIsStale(showing = false, inCall = false))
+    }
+
+    @Test
     fun theOngoingCallPostsOnTheChannelThatTheChannelSetupCreates() {
         assertEquals(PushChannels.ONGOING, ongoingCallChannel())
         assertEquals(false, PushChannels.ONGOING == PushChannels.CALLS)
