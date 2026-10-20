@@ -46,7 +46,7 @@ export function UserSessionsDialog({
 }: UserSessionsDialogProps) {
   const { t } = useTranslation();
   const labels = useSessionLabels(now);
-  const { sessions, loading } = useUserSessions({
+  const { sessions, loading, failed, reload } = useUserSessions({
     userId: subject.userId,
     fallback,
     enabled: open,
@@ -98,16 +98,22 @@ export function UserSessionsDialog({
         {sessions.length === 0 ? (
           <View className="bg-surface-secondary flex-row items-center gap-3 rounded-2xl px-4 py-3.5">
             <Icon
-              name={loading ? 'loader-circle' : 'check-circle'}
+              name={loading ? 'loader-circle' : failed ? 'wifi-off' : 'check-circle'}
               className="text-foreground-secondary size-5"
             />
             <View className="min-w-0 flex-1 gap-0.5">
               <Text variant="label">
                 {loading
                   ? t('screens.sessions.admin.loading')
-                  : t('screens.sessions.admin.no-sessions')}
+                  : failed
+                    ? t('screens.sessions.admin.load-error')
+                    : t('screens.sessions.admin.no-sessions')}
               </Text>
-              {loading ? null : (
+              {failed ? (
+                <Button size="sm" variant="outline" className="self-start" onPress={() => void reload()}>
+                  <Text>{t('common.retry')}</Text>
+                </Button>
+              ) : loading ? null : (
                 <Text variant="caption">
                   {subject.isActive
                     ? t('screens.sessions.admin.no-sessions-hint')

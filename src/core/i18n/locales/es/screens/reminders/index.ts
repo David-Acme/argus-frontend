@@ -11,6 +11,8 @@ export const reminders = {
   'save-failed': 'No se pudo guardar el recordatorio',
   'delete-failed': 'No se pudo eliminar el recordatorio',
   empty: 'No tienes nada pendiente',
+  'not-synced': 'Tus recordatorios aún no llegan',
+  'not-synced-hint': 'Argus los traerá en cuanto pueda conectar con tu casa.',
   'empty-hint': 'Pídele a Argus «recuérdame…» y aparecerá aquí.',
   'no-matches': 'Ningún recordatorio coincide',
   'when-today': 'Hoy · {time}',

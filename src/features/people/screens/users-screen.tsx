@@ -219,7 +219,7 @@ export default function UsersScreen() {
               users={users}
               currentUserId={currentUserId}
               roleLabel={roleLabel}
-              devicesOf={(user) => devices.sessionsOf(Number(user.id)).length}
+              devicesOf={(user) => (devices.answered ? devices.sessionsOf(Number(user.id)).length : null)}
               onEdit={setEditing}
               onOpenAccess={(user) => setInspecting(Number(user.id))}
               onInvite={() => setInviteOpen(true)}

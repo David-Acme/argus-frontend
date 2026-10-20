@@ -10,6 +10,7 @@ export const sessions = {
   'only-this-hint': 'Cuando entres desde otro teléfono u ordenador aparecerá aquí.',
   'load-error': 'No se pudieron cargar tus sesiones.',
   loading: 'Buscando tus sesiones…',
+  'none-returned': 'Argus no devolvió ninguna sesión tuya.',
   platform: {
     android: 'Android',
     ios: 'iPhone o iPad',

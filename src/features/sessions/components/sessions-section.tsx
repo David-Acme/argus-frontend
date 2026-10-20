@@ -10,7 +10,7 @@ import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
 import { useSessionLabels } from '@/features/sessions/hooks/use-session-labels';
 import { useSessions } from '@/features/sessions/hooks/use-sessions';
-import { SESSION_GROUP_ICONS, type SessionGroup } from '@/features/sessions/model/sessions';
+import { SESSION_GROUP_ICONS, sessionListState, type SessionGroup } from '@/features/sessions/model/sessions';
 import { SessionInsights } from '@/features/sessions/components/session-insights';
 import { SessionRow } from '@/features/sessions/components/session-row';
 import { ThisDeviceCard } from '@/features/sessions/components/this-device-card';
@@ -70,11 +70,12 @@ function SessionGroupList({ group, renderRow }: SessionGroupListProps) {
 export function SessionsSection({ className, onConnectDevice }: SessionsSectionProps) {
   const { t } = useTranslation();
   const { isWide } = useWindowClass();
-  const { overview, now, failed, busy, reload, closeOne, closeOthers, closeAll, closeHere } =
+  const { overview, now, failed, answered, busy, reload, closeOne, closeOthers, closeAll, closeHere } =
     useSessions();
   const labels = useSessionLabels(now);
   const { current, groups, others } = overview;
-  const hasList = current !== null || others.length > 0;
+  const listState = sessionListState({ failed, answered, count: (current ? 1 : 0) + others.length });
+  const hasList = listState === 'list';
   const everySession = current ? [current, ...others] : others;
 
   const detailOf = (session: AuthSession) =>
@@ -162,10 +163,10 @@ export function SessionsSection({ className, onConnectDevice }: SessionsSectionP
       </View>
 
       {!hasList ? (
-        failed ? (
+        listState !== 'loading' ? (
           <SessionsNotice
             icon="wifi-off"
-            title={t('screens.sessions.load-error')}
+            title={t(listState === 'failed' ? 'screens.sessions.load-error' : 'screens.sessions.none-returned')}
             action={
               <Button size="sm" variant="outline" onPress={() => void reload()}>
                 <Text>{t('common.retry')}</Text>

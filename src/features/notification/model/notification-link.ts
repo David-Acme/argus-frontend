@@ -4,7 +4,10 @@ import { validCounterpartId } from '@/core/services/conversation';
 export type NotificationLinkTarget =
   | { kind: 'open'; href: string }
   | { kind: 'waiting' }
+  | { kind: 'missing' }
   | { kind: 'home' };
+
+export const NOTIFICATION_LINK_WAIT_MS = 10_000;
 
 const IN_APP_PATH = /^\/(?!\/)[A-Za-z0-9/_-]{0,200}$/;
 
@@ -26,9 +29,10 @@ export function notificationHrefOf(data: Readonly<Record<string, unknown>>): str
 export function notificationLinkTarget(
   rows: readonly INotificationPreviewCacheRow[],
   notificationId: string | undefined,
+  waitedOut = false,
 ): NotificationLinkTarget {
   if (!notificationId) return { kind: 'home' };
   const row = rows.find((candidate) => candidate.id === notificationId);
-  if (!row) return { kind: 'waiting' };
+  if (!row) return waitedOut ? { kind: 'missing' } : { kind: 'waiting' };
   return { kind: 'open', href: notificationHrefOf(row.data) };
 }

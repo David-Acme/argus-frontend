@@ -133,6 +133,7 @@ export function useConnectedDevices({ enabled = true }: UseConnectedDevicesOptio
     now,
     loading: status === 'loading',
     failed: status === 'failed' && data == null,
+    answered: data != null,
     reload,
     sessionsOf,
     closeSession,

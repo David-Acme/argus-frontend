@@ -11,6 +11,8 @@ export const reminders = {
   'save-failed': 'The reminder could not be saved',
   'delete-failed': 'The reminder could not be deleted',
   empty: 'Nothing is pending',
+  'not-synced': 'Your reminders have not arrived yet',
+  'not-synced-hint': 'Argus will bring them as soon as it can reach your home.',
   'empty-hint': 'Ask Argus "remind me…" and it will show up here.',
   'no-matches': 'No reminder matches',
   'when-today': 'Today · {time}',

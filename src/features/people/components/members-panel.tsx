@@ -21,7 +21,7 @@ type MembersPanelProps = {
   users: readonly IPeopleDirectoryCacheRow[];
   currentUserId: string;
   roleLabel: (role: UserRole) => string;
-  devicesOf: (user: IPeopleDirectoryCacheRow) => number;
+  devicesOf: (user: IPeopleDirectoryCacheRow) => number | null;
   onEdit: (user: IPeopleDirectoryCacheRow) => void;
   onOpenAccess: (user: IPeopleDirectoryCacheRow) => void;
   onInvite?: () => void;
@@ -46,6 +46,7 @@ export function MembersPanel({
   const statusOf = (user: IPeopleDirectoryCacheRow) => {
     if (!user.isActive) return t('screens.sessions.admin.account-disabled');
     const devices = devicesOf(user);
+    if (devices === null) return null;
     return devices > 0 ? deviceCount(devices) : t('screens.users.no-devices');
   };
 
@@ -63,7 +64,7 @@ export function MembersPanel({
             key={user.id}
             icon={user.isActive ? 'user' : 'user-minus'}
             title={name}
-            subtitle={`${roleLabel(user.role)} · ${statusOf(user)}`}
+            subtitle={[roleLabel(user.role), statusOf(user)].filter(Boolean).join(' · ')}
             onPress={() => onOpenAccess(user)}
             footer={presence ? <PresenceChip state={presence.state} label={presence.label} /> : undefined}
             footerLabel={presence?.label}

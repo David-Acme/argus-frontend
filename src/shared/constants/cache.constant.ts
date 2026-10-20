@@ -82,6 +82,7 @@ export const VIEW_CACHE_KEYS = {
   moduleCatalog: 'modules.catalog',
   gettingStartedSignals: 'modules.getting-started.signals',
   appContext: 'app.context',
+  syncReady: 'sync.ready',
   activityFeed: 'activity.feed',
   watchConversations: 'voice.watch',
   proximityMe: 'guard.proximity.me',

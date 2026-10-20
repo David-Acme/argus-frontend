@@ -38,6 +38,7 @@ export function useUserSessions({ userId, fallback, enabled }: UseUserSessionsOp
   return {
     sessions,
     loading: status === 'loading' && data == null && fallback.length === 0,
+    failed: status === 'failed' && data == null && fallback.length === 0,
     reload,
   };
 }

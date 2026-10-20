@@ -27,7 +27,7 @@ import { LiveFrameApplier } from './live-frame-applier';
 import { ProjectionEpoch } from './projection-epoch';
 import { ownsProjection, ProjectionOwnerStore, type ProjectionOwner } from './projection-owner';
 import { userPatchFromRows, userPatchesFromAudit } from './session-user-patch';
-import { CONTEXT_RESYNC_KEPT_KEYS } from '@/shared/constants';
+import { CONTEXT_RESYNC_KEPT_KEYS, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
@@ -378,6 +378,7 @@ class SynchronizeService {
       if (owner && this.epoch.isCurrent(epoch)) {
         await this.owner.write(owner);
         this.readyEpoch = epoch;
+        viewCacheService.writeValue(VIEW_CACHE_KEYS.syncReady, true);
       }
       this.lastSyncAt = Date.now();
       this.syncRetryAttempt = 0;

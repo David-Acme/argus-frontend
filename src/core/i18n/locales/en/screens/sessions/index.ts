@@ -10,6 +10,7 @@ export const sessions = {
   'only-this-hint': 'When you sign in from another phone or computer, it shows up here.',
   'load-error': 'Your sessions could not be loaded.',
   loading: 'Looking for your sessions…',
+  'none-returned': 'Argus returned no session for you.',
   platform: {
     android: 'Android',
     ios: 'iPhone or iPad',

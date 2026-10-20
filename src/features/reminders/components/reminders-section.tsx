@@ -6,7 +6,10 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Panel } from '@/shared/components/ui/panel';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Text } from '@/shared/components/ui/text';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { synchronizeService } from '@/core/services/sync';
+import { Button } from '@/shared/components/ui/button';
+import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -29,6 +32,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
   const [editing, setEditing] = useState<IReminderCacheRow | null>(null);
   const [editsOccurrence, setEditsOccurrence] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const synced = useViewCacheValue<boolean>(VIEW_CACHE_KEYS.syncReady) === true;
 
   if (!has(CAPABILITY.remindersRead)) return null;
 
@@ -64,7 +68,20 @@ export function RemindersSection({ query }: RemindersSectionProps) {
   return (
     <View className="gap-3">
       <SectionHeader title={t('screens.reminders.title')} count={groups.pending.length} />
-      {empty ? (
+      {empty && !synced && !searching ? (
+        <EmptyState
+          fill={false}
+          className="bg-card rounded-3xl py-8"
+          icon="wifi-off"
+          title={t('screens.reminders.not-synced')}
+          hint={t('screens.reminders.not-synced-hint')}
+          action={
+            <Button size="sm" variant="outline" onPress={() => void synchronizeService.ensureConnected()}>
+              <Text>{t('common.retry')}</Text>
+            </Button>
+          }
+        />
+      ) : empty ? (
         <EmptyState
           fill={false}
           className="bg-card rounded-3xl py-8"

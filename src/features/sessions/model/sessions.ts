@@ -169,3 +169,11 @@ export function withoutSessions(
       .filter((user) => user.sessions.length > 0),
   };
 }
+
+export type SessionListState = 'list' | 'loading' | 'failed' | 'empty';
+
+export function sessionListState(input: { failed: boolean; answered: boolean; count: number }): SessionListState {
+  if (input.count > 0) return 'list';
+  if (input.answered) return 'empty';
+  return input.failed ? 'failed' : 'loading';
+}

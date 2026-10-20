@@ -37,6 +37,7 @@ describe('the target of a notification link', () => {
 
   test('a row that is not local yet waits for the sync, it does not redirect', () => {
     expect(notificationLinkTarget(rows, '99')).toEqual({ kind: 'waiting' });
+    expect(notificationLinkTarget(rows, '99', true)).toEqual({ kind: 'missing' });
     expect(notificationLinkTarget([], '42')).toEqual({ kind: 'waiting' });
   });
 

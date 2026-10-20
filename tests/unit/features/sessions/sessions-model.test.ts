@@ -5,6 +5,7 @@ import {
   connectedUsersOf,
   groupOf,
   overviewOf,
+  sessionListState,
   SESSION_LENSES,
   sessionInsightsOf,
   sessionRowsOf,
@@ -143,5 +144,20 @@ describe('sessionInsightsOf', () => {
   test('no sessions means nothing open and no expiry', () => {
     const insights = sessionInsightsOf([], NOW, 4);
     expect(insights).toEqual({ open: 0, activeToday: 0, nextExpiry: null, recentSignIns: [] });
+  });
+});
+
+describe('a session list says what it knows', () => {
+  test('rows are a list, whatever else happened', () => {
+    expect(sessionListState({ failed: true, answered: false, count: 2 })).toBe('list');
+  });
+
+  test('an empty answer is an answer, never an endless search', () => {
+    expect(sessionListState({ failed: false, answered: true, count: 0 })).toBe('empty');
+  });
+
+  test('a failed load is a failure, never an empty list', () => {
+    expect(sessionListState({ failed: true, answered: false, count: 0 })).toBe('failed');
+    expect(sessionListState({ failed: false, answered: false, count: 0 })).toBe('loading');
   });
 });

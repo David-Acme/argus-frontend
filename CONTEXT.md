@@ -5132,3 +5132,18 @@ minutes without evidence.
   Seguridad, Configuración and Perfil with unknown server values and fails
   on any `screens.`/`common.` key in the page text;
   `tests/unit/core/i18n/translate.test.ts` pins the fallback.
+- **A failed or empty load is said, never shown as a fact.**
+  - Members in `/users` no longer read "Sin sesiones abiertas" when the
+    sessions overview failed or is still loading: `devicesOf` answers
+    `null` (unknown) and the row shows only the role; the per-user access
+    dialog has its own error with Reintentar.
+  - Profile › Sesiones reads `sessionListState({failed, answered, count})`:
+    an empty answer is "Argus no devolvió ninguna sesión tuya" with
+    Reintentar, not "Buscando tus sesiones…" forever.
+  - A notification link whose row never arrives waits
+    `NOTIFICATION_LINK_WAIT_MS` and then says "No encontré este aviso" with
+    Reintentar and Ir al inicio.
+  - The sync engine writes `sync.ready` after its first completed sync for
+    the user (wiped with the projection), and Inicio's reminders say "Tus
+    recordatorios aún no llegan" with Reintentar until then, instead of "No
+    tienes nada pendiente". `tests/e2e/failures.e2e.ts`.

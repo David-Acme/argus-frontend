@@ -133,6 +133,7 @@ export function useSessions({ enabled = true }: UseSessionsOptions = {}) {
     now,
     loading: status === 'loading',
     failed: status === 'failed' && data == null,
+    answered: data != null,
     busy: busy ?? (signingOut ? ('here' as const) : null),
     reload,
     closeOne,
