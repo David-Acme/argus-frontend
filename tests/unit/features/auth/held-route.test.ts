@@ -1,11 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 import { readContext } from '@/core/contracts/context.contract';
+import { accessOf } from '@/core/services/context/context-state';
 import { accessView } from '@/shared/libs/capabilities';
 import { holdRoute, routeToRestore, type HeldRoute } from '@/features/auth/model/held-route';
 import { ownerContext } from '../../../e2e/support/fake-argus';
 
-const known = accessView(readContext(ownerContext()), 'owner');
-const productivityOff = accessView(readContext(ownerContext({ productivity: false })), 'owner');
+const access = (enabled: Record<string, boolean> = {}) => {
+  const context = readContext(ownerContext(enabled));
+  if (!context) throw new Error('the fake context did not parse');
+  return accessOf(context, 0);
+};
+
+const known = accessView(access(), 'owner');
+const productivityOff = accessView(access({ productivity: false }), 'owner');
 const unknown = accessView(null, 'owner');
 
 const held = (path: string): HeldRoute => {
