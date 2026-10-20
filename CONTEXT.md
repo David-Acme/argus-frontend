@@ -1658,8 +1658,16 @@ The backend keeps the RFC 5545 exceptions on the series row (backend
     (`skippedSchedule`) and says when ("Esta vez no sonará. Próxima vez: …").
   - Completing predicts the roll with the backend's `nextFiring`, ported to `shared/libs/recurrence.ts`: from the
     current occurrence, past skipped ones, to a moved one's new time.
-  - A snoozed reminder sits at a time that is not an occurrence; the backend refuses to change "this occurrence"
-    then, and the refusal shows as the error toast.
+  - A snoozed reminder sits at a time that is not an occurrence; the backend still refuses to change "this
+    occurrence" then (`PATCH /reminder/{id}/occurrence` answers 422 "occurrence is not an occurrence of this
+    series", checked against backend master in G1, 2026-10-19), and the synced row carries no anchor from which
+    the app could tell. So the device remembers its own snoozes (`app.reminders.snoozed.<userId>` in storage,
+    the reminder's id and the time the server's snooze answer gave it, `withSnooze` keeping only entries still
+    in force): while a reminder is at that time, "Editar solo esta vez" and "Cancelar solo esta vez" stay in the
+    menu, disabled, with "Pospuesto: podrás hacerlo cuando suene". A snooze made elsewhere (another device,
+    by voice) is not remembered, so the 422 is recognized (`isSnoozedOccurrenceRefusal`) and answered with an
+    information toast that explains it instead of the error. Tested in
+    `reminder-snoozed-occurrence.test.ts`.
 - Tests: `calendar-recurrence.test.ts` (the expansion with exceptions), `entity-mappers.test.ts` (the mapper),
   `calendar-occurrence.test.ts` (actions, bodies, the lens and its settling), `reminders.test.ts` (current
   occurrence, skip, roll, move body), `database-migrations.test.ts` (v15 to v16) and

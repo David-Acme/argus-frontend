@@ -17,6 +17,7 @@ type ReminderRowProps = {
   reminder: IReminderCacheRow;
   now: number;
   editable: boolean;
+  snoozed: boolean;
   snoozeOptions: readonly SnoozeOption[];
   onToggle: (reminder: IReminderCacheRow, done: boolean) => void;
   onEdit: (reminder: IReminderCacheRow) => void;
@@ -40,6 +41,7 @@ export function ReminderRow({
   reminder,
   now,
   editable,
+  snoozed,
   snoozeOptions,
   onToggle,
   onEdit,
@@ -60,8 +62,16 @@ export function ReminderRow({
   const caption = [overdue ? t('screens.reminders.overdue') : null, when, repeat].filter(Boolean).join(' · ');
   const single = changesOneOccurrence(reminder);
   const options: MenuOption<ReminderAction>[] = [];
+  const onlyThisTime = snoozed
+    ? { disabled: true, description: t('screens.reminders.snoozed-occurrence-hint') }
+    : {};
   if (single) {
-    options.push({ value: 'edit-occurrence', label: t('screens.reminders.edit-occurrence'), icon: 'calendar-clock' });
+    options.push({
+      value: 'edit-occurrence',
+      label: t('screens.reminders.edit-occurrence'),
+      icon: 'calendar-clock',
+      ...onlyThisTime,
+    });
   }
   options.push({
     value: 'edit',
@@ -69,7 +79,12 @@ export function ReminderRow({
     icon: 'pencil',
   });
   if (single) {
-    options.push({ value: 'skip-occurrence', label: t('screens.reminders.skip-occurrence'), icon: 'calendar-x' });
+    options.push({
+      value: 'skip-occurrence',
+      label: t('screens.reminders.skip-occurrence'),
+      icon: 'calendar-x',
+      ...onlyThisTime,
+    });
   }
   if (repeats) options.push({ value: 'stop-repeating', label: t('screens.reminders.stop-repeating'), icon: 'repeat-off' });
   options.push({ value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true });
