@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   WATCH_AUDIENCES,
+  WATCH_REPLY_STATES,
   WATCH_END_REASONS,
   WATCH_HANDOFFS,
   WATCH_STATES,
@@ -8,6 +9,7 @@ import {
   type WatchConversation,
   type WatchEndReason,
   type WatchHandoff,
+  type WatchReply,
   type WatchState,
   type WatchTurn,
 } from '@/core/types';
@@ -15,7 +17,10 @@ import {
 export const WATCH_ROUTES = {
   list: '/rtc/watch',
   end: (conversationId: string) => `/rtc/watch/${encodeURIComponent(conversationId)}/end`,
+  reply: (conversationId: string) => `/rtc/watch/${encodeURIComponent(conversationId)}/reply`,
 } as const;
+
+export const WATCH_REPLY_MAX_CHARS = 300;
 
 export const WATCH_TOKEN_FIELD = 'watchConversationId' as const;
 
@@ -97,4 +102,15 @@ export function readWatchList(info: unknown): WatchConversation[] | null {
   return parsed.data.conversations
     .map(readWatchConversation)
     .filter((conversation): conversation is WatchConversation => conversation !== null);
+}
+
+export const watchReplySchema = z.object({
+  state: z.enum(WATCH_REPLY_STATES),
+  replyUntil: seconds,
+});
+
+export function readWatchReply(info: unknown): WatchReply | null {
+  const parsed = watchReplySchema.safeParse(info);
+  if (!parsed.success) return null;
+  return { state: parsed.data.state, replyUntil: parsed.data.replyUntil * 1000 };
 }

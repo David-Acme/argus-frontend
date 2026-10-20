@@ -4703,7 +4703,29 @@ pieces need `bunx nitrogen` in `modules/argus-net` before a dev-client build.
 - **Notices.** `watch_busy` and `watch_resume` continue here or open the
   transcript, `watch_details` opens it, `watch_confirm` opens the in-app
   screen where the refused sensitive request is confirmed (in-app paths
-  only), `watch_message` and `assistant_task` read as they are.
+  only), and `assistant_task` reads as it is. `watch_message` (a visitor
+  talked to Argus at a camera; it reaches the Owners) carries the
+  answer box below.
+- **Replying to a visitor (gaps closing pass).** While the notice's
+  `replyUntil` (seconds) is in the future, the row shows a field (at most
+  300 characters, the voice's `visitor_reply_max_chars`) and a send button
+  (`VisitorReply`, `features/watch/components/visitor-reply.tsx`). It posts
+  `POST /rtc/watch/{conversationId}/reply {text}` to argus-sync, which
+  answers `{state: queued|said, replyUntil}`: `said` reads "Argus ya se lo
+  dijo"; `queued` says Argus will say it if the visitor comes back to that
+  camera before `replyUntil` (the hold, not the answer window). The words are
+  said only at that camera and never with the member's name, and the hint
+  says so. `404 WATCH_NOT_FOUND` (Argus no longer holds the message, a
+  restart of argus-voice included) and `410 WATCH_EXPIRED` close the box with
+  their own line, `422` (too long for a camera) keeps it open, anything else
+  is a toast. After the window the row says the time is over. A reply marks
+  the notice read.
+- **The visitor's consent, as it was said.** `visitorConsent` is
+  `granted`, `declined` or `unanswered` and the row shows one honest line:
+  the visitor said yes to being remembered, said no, or did not answer (and
+  is therefore not remembered). An unknown or absent value shows nothing.
+  `visitorMessageOf`, `canReply`, `visitorConsentOf` and `watchReplyOutcome`
+  are tested in `tests/unit/features/watch/visitor-reply.test.ts`.
 - **Proximity (`features/proximity`, `core/services/beacon`).** The member's
   opt-in "Usar mi celular para ubicarme en casa" (`PUT /guard/proximity/me
   {ble}`) gets a seed and a period; the phone advertises a 128-bit service UUID
@@ -4725,7 +4747,8 @@ pieces need `bunx nitrogen` in `modules/argus-net` before a dev-client build.
 | `GET /rtc/watch` → `{conversations: [...]}`; `POST /rtc/watch/{id}/end` with the body `{}` (it passes `ValidJsonFilter`) → `{ended: true}` or `WATCH_NOT_FOUND` (404) | same, `features/watch/services/watch.service.ts` |
 | `POST /rtc/token {watchConversationId}` → the usual grant; refusals `WATCH_NOT_FOUND` (404), `WATCH_EXPIRED` (410) | `features/voice/services/rtc/rtc-token.ts` |
 | The hand-off: `WatchUpdate.handoff` goes `bridging` when the token is issued and `device` when the phone took over; `watch-feed` opens the microphone on `device`. The backend does not publish the room data topic `argus.handoff`; the app's listener for it stays and is never fired, so a call the server keeps on the camera ends through the 12 s budget | `features/watch/services/watch-feed.ts`, `features/voice/model/watch-handoff.ts` |
-| Notification kinds `watch_busy`, `watch_resume`, `watch_details` (data `conversationId`), `watch_confirm` (data `url`), `watch_message` | `features/watch/model/watch-notification.ts` |
+| Notification kinds `watch_busy`, `watch_resume`, `watch_details` (data `conversationId`), `watch_confirm` (data `url`), `watch_message` (data `conversationId`, `cameraName`, `visitorConsent: granted\|declined\|unanswered`, `replyUntil` in seconds) | `features/watch/model/watch-notification.ts` |
+| `POST /rtc/watch/{id}/reply {text}` → `{state: queued\|said, replyUntil}` (seconds); `WATCH_NOT_FOUND` (404), `WATCH_EXPIRED` (410), `VALIDATION_ERROR` (422) | `core/contracts/watch.contract.ts`, `features/watch/services/watch.service.ts` |
 | `GET/PUT /guard/proximity/me`, the PUT body `{ble: bool}` → `{ble: {enabled, seed, rotateSeconds, receivers (a count)}, located}` | `core/contracts/proximity.contract.ts` |
 | `GET/POST /guard/proximity/receivers`, `DELETE …/{id}`; `GET/POST /guard/proximity/sensors`, `DELETE …/{id}` | same |
 

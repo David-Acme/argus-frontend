@@ -47,3 +47,16 @@ export type WatchConversation = {
   endReason: WatchEndReason | null;
   turns: WatchTurn[];
 };
+
+export const WATCH_REPLY_STATES = ['queued', 'said'] as const;
+
+export type WatchReplyState = (typeof WATCH_REPLY_STATES)[number];
+
+export type WatchReply = {
+  state: WatchReplyState;
+  replyUntil: number;
+};
+
+export const VISITOR_CONSENTS = ['granted', 'declined', 'unanswered'] as const;
+
+export type VisitorConsent = (typeof VISITOR_CONSENTS)[number];
