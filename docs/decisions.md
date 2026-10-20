@@ -81,3 +81,43 @@ Android FPS and memory on a mid-range phone are left to the phone round
   https://shopify.github.io/flash-list/docs/usage/
 - react-native-web and inverted wheel scrolling:
   https://github.com/necolas/react-native-web/pull/2601
+
+### Addendum: the thread reads in batches, never whole (2026-10-20)
+
+David: "true lazy loading in batches, exactly like WhatsApp. Never load the
+whole history at once."
+
+- The thread is a keyset paged view over WatermelonDB (`created_at` + `id`,
+  50 lines a page, at most 4 pages held; CONTEXT.md, "The thread list"). The
+  conversation list no longer reads every row either: its summaries are a
+  handful of small queries per counterpart.
+- 50 lines a page: about 3,300 px, three and a half phone screens, so one
+  batch covers a fast flick; 16 bubbles are mounted whatever the page size; a
+  batch took 33-59 ms (mean 33-42 ms) in the measurement below, so a smaller
+  page would only mean more asks.
+- The server has no cursor-paged history read for a thread
+  (`GET /conversation` answers summaries only). Nothing is lost today because
+  the sync bootstrap pulls every own row the server keeps (30 days by
+  default); what the backend would need if that changes is in CONTEXT.md.
+
+Measured on the same harness (Chromium, 412x915, CPU slowed 4x; three runs,
+ranges), `ARGUS_E2E_PERF_OUT=<prefix>`:
+
+| | 100 lines | 10,000 lines |
+|---|---|---|
+| Tap to newest line painted | 0.46-0.61 s | 0.53-0.66 s |
+| Content height at open | 3,607 px (one page) | 3,580 px (one page) |
+| Bubbles mounted | 16 | 16 (19-20 deep in the thread) |
+| DOM nodes | 713 | 699 |
+| JS heap at open | 24.6 MB | 28.3 MB |
+| JS heap after scrolling ~450 lines back | 25.8 MB | 30.5-30.6 MB |
+| Content height deep in the thread | | 13,350 px (four pages, the cap) |
+| Older batch load | | mean 33-42 ms, max 43-59 ms, 7 batches |
+| Scroll up, 3 s of wheel | 51-55 fps | 37-43 fps, 5-7 frames > 50 ms (batches load during it) |
+| Scroll down, 3 s of wheel | | 51-54 fps |
+
+The 3.7 MB the 10,000-line heap carries over the 100-line one is attributed
+to LokiJS, the web adapter, which keeps its tables in memory (about 370 bytes
+a row; not measured on its own): the app's window, view cache and mounted rows
+are the same size for both threads. On Android and iOS the rows stay in SQLite
+on disk; the phone round confirms the native figure.

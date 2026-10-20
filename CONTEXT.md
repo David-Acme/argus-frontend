@@ -4805,17 +4805,19 @@ and own-row sets, so an inactive role keeps it and no module room carries it.
 
 ### The view
 
-`conversation.projection.ts` reads every row of the user
-(`conversationService.observeForUser`, `observeWithColumns` on the fields a
-diff changes) and writes three things: `conversation.list` (one summary per
-counterpart: name, last line, unread incoming count, and `lastSent`, the last
-outgoing relay or reply whose state the row shows), `conversation.unread`
-(the total, the badge of the Messages button on Inicio) and
-`conversation.thread` scoped by counterpart, oldest first, tracked so a
-cleared thread's scope is dropped. The list puts Argus first when it has rows
-and then the members by their last line. A thread is a bounded list (one
-household, and the server's retention removes old rows), written whole up to
-`VIEW_CACHE_LIST_LIMIT` with the newest rows kept, so it is not paged.
+Nothing reads a whole conversation into memory. The list comes from
+`conversationService.observeSummaryFacts`: on every change to the table
+(`collection.changes`, audited at 120 ms) it asks, per counterpart, for the
+newest line, the newest outgoing relay or reply, the newest line that carries
+a name and the count of unread incoming lines (counterparts are found newest
+first with `counterpart_id NOT IN` the ones already seen), so its cost follows
+the number of counterparts, not the length of the threads.
+`conversation.projection.ts` turns those facts into `conversation.list` (one
+summary per counterpart: name, last line, unread incoming count and
+`lastSent`) and `conversation.unread` (the badge of the Messages button on
+Inicio); the list puts Argus first when it has rows and then the members by
+their last line. Getting started counts the Argus lines with a count query
+(`observeArgusTalks`). A thread is a paged view, below ("The thread list").
 
 Screens paint from the view cache only. `GET /conversation` exists
 (`conversationService.list`, zod in `core/contracts/conversation.contract.ts`)
@@ -4993,22 +4995,59 @@ a LegendList that rides the keyboard").
   into the "N mensajes nuevos" pill, which also shows (as an arrow) whenever
   the reader is away from the bottom; a line the user sends always goes to the
   bottom (`followNewItems`). Reduced motion makes the scrolls instant.
-- **Older lines.** The thread is in memory (the view cache's newest 1,000);
-  the list shows a window held by its oldest line's time (`threadWindow`,
-  60 lines a page, never a row count, so new lines never push rows out of the
-  top) and `onStartReached` widens it by a page (`olderWindowStart`), while
-  `maintainVisibleContentPosition` keeps the line on screen where it was.
-  Lines older than the cache's 1,000 are not reachable from the screen: a
-  keyset paged view (`watchPages`) for the thread is the follow-up if a
-  household ever needs them.
+- **Lazy, in pages, from local storage.** `conversation.thread` is a paged
+  view of the coordinator (`watchPages`/`extendPages`/`resetPages`), scoped by
+  counterpart, over WatermelonDB: it opens on the newest page only (50 lines,
+  `THREAD_PAGE`, about three and a half phone screens, `take(51)` so it knows
+  whether anything is older), and each batch is a keyset query over
+  `(created_at, id)` (`core/services/conversation/thread-window.ts`, the
+  clauses of `paging/keyset.ts`), never an offset and never a slice of a loaded
+  array. The window is `{from, through, pages}`: `through` is the oldest line
+  read, `from` the newest (`null` while the window is live, so new lines join
+  it). Scrolling up reads the next older page; past four pages
+  (`THREAD_MAX_PAGES`, 200 lines) the newest page is let go and `from` is set,
+  so a 10,000-line thread holds the same 200 rows as a 200-line one. Scrolling
+  back down a window cut off from the newest reads the next newer page and
+  lets the oldest go, until it reaches the newest line and becomes live again.
+  "Ir a lo más reciente" resets the window to its first page. A kept scope
+  (`keep`) goes back to its first page when the thread closes, so the view
+  cache always holds the newest page for the next open's first frame.
+  `maintainVisibleContentPosition` keeps the line being read in place as pages
+  come and go. The next page is asked for two screens before the edge
+  (`EDGE_SCREENS`), from the list's own scroll state in `onScroll` once the
+  opening scroll has landed at the end, and the start edge is armed again only
+  after the reader has left it, so one arrival at the top asks for one batch.
+  Found on the web: a page prepended while the scroll offset is already near
+  zero is not anchored by LegendList there and repeated asks then cascaded
+  through the whole thread; prefetching early and the armed edge keep the
+  e2e green three runs in a row, and the native lists anchor through React
+  Native's own `maintainVisibleContentPosition`. A small loader floats at the
+  top (outside the scroll content, so it never shifts the rows) only while an
+  older batch is in flight. While the window is cut off, a new incoming line (the thread's
+  newest line changing, read from the summary) counts into the pill
+  (`arrivedWhileAway`), and sending first goes back to the newest page.
+- **What the server has that this device does not.** Nothing today: the sync
+  bootstrap pulls every own `conversation_message` row (the server keeps them
+  for `conversation.retention_days`, 30 by default), so WatermelonDB already
+  holds the whole history the server has. The backend has no per-thread
+  history read with a cursor (`GET /conversation` answers only the summaries),
+  so the app does not fetch history over HTTP. If the sync bootstrap ever
+  stops pulling old rows, the thread needs
+  `GET /conversation/{counterpartId}/messages?before=<createdAt>&beforeId=<id>&limit=<n>`
+  on argus-notification (own rows, newest first, the sync row shape, a
+  `nextBefore` cursor), and the older-page step would fetch and persist from
+  it when the local keyset query comes back short.
 - **Proven on the web** by `tests/e2e/conversation-thread-list.e2e.ts`: a
-  2,000-line thread opens at its newest line with under 200 bubbles mounted,
-  the composer stays on screen throughout, wheeling up loads the older page
-  with the anchor line still in view (the test fails with
-  `maintainVisibleContentPosition` off), the pill counts a line that arrives
-  while scrolled up and takes the reader down, and a line that arrives at the
-  bottom is followed with no pill. `ARGUS_E2E_PERF_OUT=<file>` writes the
-  timing, DOM and heap figures.
+  10,000-line thread opens at its newest line with one page of content (the
+  list's content height stays under 50 rows' worth) and the composer on
+  screen; wheeling up loads the older page with the anchor line still in view;
+  scrolling deeper lets the newest pages go (the bottom of the list is no
+  longer the newest line and the content stays under five pages); a line that
+  arrives then shows "1 new message" and the pill brings the newest page back;
+  a line that arrives at the bottom is followed with no pill. A 100-line thread
+  is measured beside it. `ARGUS_E2E_PERF_OUT=<prefix>` writes
+  `<prefix>-<size>.json` with the open time, heap, DOM nodes, mounted rows,
+  content height, batch load times and scroll frames.
 - **Phone round** (native only, not run by agents):
   1. A 1,000+ line thread opens at its newest line without a visible scroll.
   2. Tapping the field: the composer and the last lines rise with the keyboard
