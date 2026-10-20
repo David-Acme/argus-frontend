@@ -217,60 +217,22 @@ ve nada.
 - **La excepción es un guardado que no llegó al servidor.** Se avisa al
   momento y con «Reintentar», porque es un error real.
 
-## Sonido (v3.7)
+## Sonido: aplazado
 
-Pocos sonidos, suaves y solo cuando significan algo.
+Decidiste que por ahora **no habrá sonidos**, solo animaciones. Los
+momentos que iban a sonar los llevan la animación de Estela y la vibración:
+- **Llamada conectada:** Estela se arma.
+- **Colgar:** se dispersa.
+- **Cambio de voz a chat:** la cinta se reforma.
+- **Enviar:** la burbuja sube.
+- **Respuesta:** Estela brilla.
+- **Hecho:** un destello.
+- **Error:** se inclina y se apaga.
+- **Ojo:** dibuja el ojo.
 
-**Suenan:**
-- llamada conectada;
-- llamada terminada;
-- cambio de voz a chat y de chat a voz;
-- mensaje enviado;
-- respuesta recibida (una vez, nunca por cada trozo);
-- «hecho» (guardado o completado);
-- error suave;
-- cuando Estela abre el ojo para mirar o buscar;
-- propongo uno más: la primera aparición de Estela en la bienvenida, una sola
-  vez.
-
-**Callados:**
-- cada toque, el desplazamiento y la navegación;
-- la carga;
-- «conectando» y «conectado»;
-- sin conexión;
-- el pánico, por seguridad: nadie debe delatar al usuario.
-
-**Reglas:**
-- Se respeta el modo silencio o vibración del teléfono, «No molestar» y el
-  volumen del sistema.
-- En Ajustes hay un interruptor propio, y «Reducir efectos» también los
-  apaga.
-- Son suaves: −20 LUFS y entre 0,5 y 2 segundos.
-- Nunca se pisan ni se repiten en ráfaga.
-- Van con vibración donde se puede.
-- En una llamada solo suenan conectar y colgar.
-- En escritorio y web se aplican las mismas reglas.
-
-**Paleta v2: un material por momento**, siguiendo las guías de earcons de
-Brewster. Cada sonido tiene su propio material, su dirección y su número de
-notas, para que ninguno se confunda con otro:
-- **Conectar:** marimba, 3 notas que suben.
-- **Colgar:** la misma marimba bajando, como espejo de conectar.
-- **Voz y chat:** un pop con respiración para pasar a voz y dos clics secos
-  para pasar a chat.
-- **Enviar:** aire que se aleja.
-- **Mensaje:** gotas de agua.
-- **Hecho:** campanas de cristal, el único sonido de vidrio.
-- **Error:** dos golpes graves en la misma nota.
-- **Ojo:** el pad de estrellas, la voz de Estela.
-
-Lo medí:
-- Cinco sonidos tienen picos un poco altos y hay que limitarlos.
-- «modo_chat» está algo bajo.
-- «ojo» dura 2,3 segundos: hay que recortarlo o aceptarlo como la excepción.
-
-**Pendiente S1:** apruebas o cambias cada sonido uno por uno. La propuesta
-de dos familias quedó descartada.
+La investigación, las reglas y la paleta v2 (un material por momento) quedan
+guardadas en el Apéndice B de la especificación, fuera del alcance de este
+rediseño, por si más adelante quieres retomarlas.
 
 ## Rendimiento primero
 
