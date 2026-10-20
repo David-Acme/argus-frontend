@@ -1,14 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import {
+  arrivedWhileAway,
   dayItemKey,
   followNewItems,
   groupsWith,
   isMessageItem,
-  olderWindowStart,
   THREAD_GROUP_GAP_MS,
   threadItems,
-  threadWindow,
   TYPING_ITEM_KEY,
   type ThreadItem,
 } from '@/features/conversations/model/thread-list';
@@ -127,71 +126,6 @@ describe('threadItems', () => {
   });
 });
 
-describe('threadWindow', () => {
-  test('a thread opens on its newest page', () => {
-    const rows = thread(150);
-    const window = threadWindow(rows, null, 60);
-    expect(window.rows.map((row) => row.id)).toEqual(rows.slice(90).map((row) => row.id));
-    expect(window.hasOlder).toBe(true);
-    expect(window.oldestAt).toBe(rows[90]?.createdAt ?? null);
-  });
-
-  test('a short thread is shown whole and has nothing older', () => {
-    const rows = thread(20);
-    const window = threadWindow(rows, null, 60);
-    expect(window.rows).toBe(rows);
-    expect(window.hasOlder).toBe(false);
-  });
-
-  test('the window is held by its oldest line, so new lines at the end never push rows out of the top', () => {
-    const rows = thread(150);
-    const opened = threadWindow(rows, null, 60);
-    const grown = [
-      ...rows,
-      message({ id: '151', createdAt: T0 + 150 * MINUTE }),
-      message({ id: '152', createdAt: T0 + 151 * MINUTE }),
-    ];
-    const after = threadWindow(grown, opened.oldestAt, 60);
-    expect(after.rows[0]?.id).toBe(opened.rows[0]?.id);
-    expect(after.rows.length).toBe(opened.rows.length + 2);
-  });
-
-  test('loading older lines only adds rows before the anchor, which stays where it was in the list', () => {
-    const rows = thread(150);
-    const opened = threadWindow(rows, null, 60);
-    const anchor = opened.rows[0]?.id;
-    const older = threadWindow(rows, olderWindowStart(rows, opened.oldestAt, 60), 60);
-    const anchorIndex = older.rows.findIndex((row) => row.id === anchor);
-    expect(anchorIndex).toBe(60);
-    expect(older.rows.slice(anchorIndex).map((row) => row.id)).toEqual(
-      opened.rows.map((row) => row.id)
-    );
-    const oldest = threadWindow(rows, olderWindowStart(rows, older.oldestAt, 60), 60);
-    expect(oldest.rows).toBe(rows);
-    expect(oldest.hasOlder).toBe(false);
-    expect(olderWindowStart(rows, oldest.oldestAt, 60)).toBe(rows[0]?.createdAt ?? null);
-  });
-
-  test('lines that share a second never stall the paging', () => {
-    const rows = Array.from({ length: 130 }, (_, index) =>
-      message({ id: String(index + 1), createdAt: T0 + (index < 100 ? 0 : index) })
-    );
-    const opened = threadWindow(rows, null, 60);
-    const next = olderWindowStart(rows, opened.oldestAt, 60);
-    expect(threadWindow(rows, next, 60).rows.length).toBeGreaterThan(opened.rows.length);
-  });
-
-  test('an anchor that was deleted falls back to the first newer line', () => {
-    const rows = thread(150);
-    const window = threadWindow(
-      rows.filter((row) => row.id !== '91'),
-      rows[90]?.createdAt ?? null,
-      60
-    );
-    expect(window.rows[0]?.id).toBe('92');
-  });
-});
-
 describe('followNewItems', () => {
   const items = (rows: readonly IConversationMessageCacheRow[], typing = false) =>
     threadItems({ rows, startOfDay, typing });
@@ -201,7 +135,7 @@ describe('followNewItems', () => {
   const mine = message({ id: '12', direction: 'out', createdAt: T0 + 21 * MINUTE });
 
   test('the first look records the newest line and moves nothing', () => {
-    expect(followNewItems({ items: items(base), lastKey: null, unseen: 0, atEnd: true })).toEqual({
+    expect(followNewItems({ live: true, items: items(base), lastKey: null, unseen: 0, atEnd: true })).toEqual({
       jump: false,
       unseen: 0,
       lastKey,
@@ -210,7 +144,7 @@ describe('followNewItems', () => {
 
   test('at the bottom a new line is followed by the list itself and nothing is counted', () => {
     expect(
-      followNewItems({ items: items([...base, incoming]), lastKey, unseen: 0, atEnd: true })
+      followNewItems({ live: true, items: items([...base, incoming]), lastKey, unseen: 0, atEnd: true })
     ).toEqual({
       jump: false,
       unseen: 0,
@@ -220,6 +154,7 @@ describe('followNewItems', () => {
 
   test('scrolled up, incoming lines are counted for the pill and the view stays where the reader is', () => {
     const first = followNewItems({
+      live: true,
       items: items([...base, incoming]),
       lastKey,
       unseen: 0,
@@ -228,6 +163,7 @@ describe('followNewItems', () => {
     expect(first).toEqual({ jump: false, unseen: 1, lastKey: '11' });
     const later = message({ id: '13', createdAt: T0 + 22 * MINUTE });
     const second = followNewItems({
+      live: true,
       items: items([...base, incoming, later]),
       lastKey: first.lastKey,
       unseen: first.unseen,
@@ -238,7 +174,7 @@ describe('followNewItems', () => {
 
   test('a line I send always takes me to the bottom, wherever I was', () => {
     expect(
-      followNewItems({ items: items([...base, incoming, mine]), lastKey, unseen: 3, atEnd: false })
+      followNewItems({ live: true, items: items([...base, incoming, mine]), lastKey, unseen: 3, atEnd: false })
     ).toEqual({
       jump: true,
       unseen: 0,
@@ -247,11 +183,11 @@ describe('followNewItems', () => {
   });
 
   test('reaching the bottom clears the count', () => {
-    expect(followNewItems({ items: items(base), lastKey, unseen: 4, atEnd: true }).unseen).toBe(0);
+    expect(followNewItems({ live: true, items: items(base), lastKey, unseen: 4, atEnd: true }).unseen).toBe(0);
   });
 
   test('the typing indicator and a row that changed its id are not new lines', () => {
-    expect(followNewItems({ items: items(base, true), lastKey, unseen: 0, atEnd: false })).toEqual({
+    expect(followNewItems({ live: true, items: items(base, true), lastKey, unseen: 0, atEnd: false })).toEqual({
       jump: false,
       unseen: 0,
       lastKey,
@@ -260,24 +196,49 @@ describe('followNewItems', () => {
       ...base.slice(0, -1),
       { ...base[base.length - 1], id: 'server-10' } as IConversationMessageCacheRow,
     ];
-    expect(followNewItems({ items: items(confirmed), lastKey, unseen: 1, atEnd: false })).toEqual({
+    expect(followNewItems({ live: true, items: items(confirmed), lastKey, unseen: 1, atEnd: false })).toEqual({
       jump: false,
       unseen: 1,
       lastKey: 'server-10',
     });
   });
 
+  test('lines a window cut off from the newest reads back while scrolling down are not new lines', () => {
+    expect(followNewItems({ live: false, items: items([...base, incoming, mine]), lastKey, unseen: 2, atEnd: true })).toEqual({
+      jump: false,
+      unseen: 2,
+      lastKey: '12',
+    });
+  });
+
   test('older lines loaded above are not new lines', () => {
     const window = items(base.slice(5));
     const grown = items(base);
-    const before = followNewItems({ items: window, lastKey: null, unseen: 0, atEnd: false });
+    const before = followNewItems({ live: true, items: window, lastKey: null, unseen: 0, atEnd: false });
     expect(
-      followNewItems({ items: grown, lastKey: before.lastKey, unseen: 0, atEnd: false })
+      followNewItems({ live: true, items: grown, lastKey: before.lastKey, unseen: 0, atEnd: false })
     ).toEqual({
       jump: false,
       unseen: 0,
       lastKey,
     });
     expect(grown.filter(isMessageItem)).toHaveLength(10);
+  });
+});
+
+describe('arrivedWhileAway', () => {
+  const incoming = message({ id: '20' });
+  const mine = message({ id: '21', direction: 'out' });
+
+  test('a window cut off from the newest line counts each incoming line that becomes the newest', () => {
+    expect(arrivedWhileAway({ live: false, previous: '19', newest: incoming })).toBe(1);
+  });
+
+  test('nothing counts while the window is live, for my own line, or when the newest did not change', () => {
+    expect(arrivedWhileAway({ live: true, previous: '19', newest: incoming })).toBe(0);
+    expect(arrivedWhileAway({ live: false, previous: '20', newest: mine })).toBe(0);
+    expect(arrivedWhileAway({ live: false, previous: '20', newest: incoming })).toBe(0);
+    expect(arrivedWhileAway({ live: false, previous: null, newest: incoming })).toBe(0);
+    expect(arrivedWhileAway({ live: false, previous: '20', newest: null })).toBe(0);
   });
 });

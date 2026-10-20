@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { validCounterpartId } from '@/core/services/conversation';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
@@ -33,18 +34,19 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const date = useDateFormatter();
   const now = useNow(60000);
   const insets = useSafeAreaInsets();
-  const { messages, name, argus, clear, send } = useConversationThread(counterpartId);
+  const thread = useConversationThread(counterpartId);
+  const { messages, name, argus, clear, send } = thread;
   const assistant = useAssistantMode();
   const chat = useAssistantChat(argus && assistant.mode === 'chat');
   const overlay = useMemo(
     () =>
       chatOverlay({
         messages,
-        entries: argus ? chat.entries : [],
+        entries: argus && thread.live ? chat.entries : [],
         leg: IS_NATIVE ? 'phone' : 'laptop',
         skewMs: CHAT_CLOCK_SKEW_MS,
       }),
-    [argus, chat.entries, messages]
+    [argus, chat.entries, messages, thread.live]
   );
   const rows = overlay.rows;
   const startOfDay = useCallback((at: number) => date.startOfDay(new Date(at)).getTime(), [date]);
@@ -108,7 +110,9 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
           }
         />
       }>
-      {rows.length === 0 ? (
+      {!thread.loaded ? (
+        <View className="min-h-0 flex-1" />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon="messages-square"
           title={t('screens.conversations.thread-empty')}
@@ -117,6 +121,12 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
       ) : (
         <ThreadList
           rows={rows}
+          live={thread.live}
+          newest={thread.newest}
+          hasOlder={thread.hasOlder}
+          loadOlder={thread.loadOlder}
+          loadNewer={thread.loadNewer}
+          toLatest={thread.toLatest}
           startOfDay={startOfDay}
           dayLabel={dayLabel}
           typing={overlay.typing}
@@ -133,7 +143,10 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
             mode={assistant.mode}
             modes={assistant.modes}
             onChoose={chooseMode}
-            onSend={(text) => chat.send(text) === 'sent'}
+            onSend={(text) => {
+              if (!thread.live) thread.toLatest();
+              return chat.send(text) === 'sent';
+            }}
             busy={chat.busy}
             initialDraft={chat.draft}
             onDraft={chat.setDraft}

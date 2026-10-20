@@ -21,13 +21,8 @@ export type ThreadItemsInput = {
   gapMs?: number;
 };
 
-export type ThreadWindow = {
-  rows: readonly IConversationMessageCacheRow[];
-  hasOlder: boolean;
-  oldestAt: number | null;
-};
-
 export type FollowInput = {
+  live: boolean;
   items: readonly ThreadItem[];
   lastKey: string | null;
   unseen: number;
@@ -41,8 +36,6 @@ export type FollowDecision = {
 };
 
 export const THREAD_GROUP_GAP_MS = 5 * 60 * 1000;
-
-export const THREAD_WINDOW_PAGE = 60;
 
 export const TYPING_ITEM_KEY = 'typing';
 
@@ -92,40 +85,10 @@ export function threadItems({
   return items;
 }
 
-function windowStart(
-  rows: readonly IConversationMessageCacheRow[],
-  oldestAt: number | null,
-  page: number
-): number {
-  const found = oldestAt === null ? -1 : rows.findIndex((row) => row.createdAt >= oldestAt);
-  return found < 0 ? Math.max(0, rows.length - page) : found;
-}
-
-export function threadWindow(
-  rows: readonly IConversationMessageCacheRow[],
-  oldestAt: number | null,
-  page: number = THREAD_WINDOW_PAGE
-): ThreadWindow {
-  const start = windowStart(rows, oldestAt, page);
-  return {
-    rows: start === 0 ? rows : rows.slice(start),
-    hasOlder: start > 0,
-    oldestAt: rows[start]?.createdAt ?? null,
-  };
-}
-
-export function olderWindowStart(
-  rows: readonly IConversationMessageCacheRow[],
-  oldestAt: number | null,
-  page: number = THREAD_WINDOW_PAGE
-): number | null {
-  const start = windowStart(rows, oldestAt, page);
-  return rows[Math.max(0, start - page)]?.createdAt ?? null;
-}
-
-export function followNewItems({ items, lastKey, unseen, atEnd }: FollowInput): FollowDecision {
+export function followNewItems({ live, items, lastKey, unseen, atEnd }: FollowInput): FollowDecision {
   const messages = items.filter(isMessageItem);
   const newest = messages[messages.length - 1]?.key ?? null;
+  if (!live) return { jump: false, unseen, lastKey: newest };
   const kept = atEnd ? 0 : unseen;
   if (lastKey === null || newest === lastKey) return { jump: false, unseen: kept, lastKey: newest };
   const index = messages.findIndex((item) => item.key === lastKey);
@@ -135,4 +98,16 @@ export function followNewItems({ items, lastKey, unseen, atEnd }: FollowInput): 
   if (fresh.some((item) => item.message.direction === 'out'))
     return { jump: true, unseen: 0, lastKey: newest };
   return { jump: false, unseen: kept + fresh.length, lastKey: newest };
+}
+
+export type ArrivalInput = {
+  live: boolean;
+  previous: string | null;
+  newest: Pick<IConversationMessageCacheRow, 'id' | 'direction'> | null;
+};
+
+export function arrivedWhileAway({ live, previous, newest }: ArrivalInput): number {
+  if (live || previous === null || newest === null) return 0;
+  if (newest.id === previous || newest.direction !== 'in') return 0;
+  return 1;
 }

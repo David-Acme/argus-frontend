@@ -38,6 +38,7 @@ export const conversations = {
   latest: {
     one: '1 mensaje nuevo',
     many: '{count} mensajes nuevos',
+    'loading-older': 'Cargando mensajes anteriores',
     go: 'Ir a lo más reciente',
   },
   composer: {

@@ -122,7 +122,7 @@ describe('getting-started steps follow the household data', () => {
       projects: [1],
       people: [1, 2],
       invitations: [1],
-      conversations: [{ counterpartId: '0' }, { counterpartId: '0' }, { counterpartId: '7' }],
+      argusTalks: 2,
     });
     const write = writes.find((item) => item.key === VIEW_CACHE_KEYS.gettingStartedSignals);
     if (!write || !('value' in write)) throw new Error('no getting-started signals written');

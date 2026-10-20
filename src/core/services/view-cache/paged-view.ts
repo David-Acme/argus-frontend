@@ -3,12 +3,15 @@ import type { ViewCacheKey } from '@/core/types';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { ProjectionContext } from './projection';
 
+export type PageDirection = 'older' | 'newer';
+
 export type PagedViewSpec<W> = {
   key: ViewCacheKey;
   warm?: readonly string[];
+  keep?: boolean;
   initial: (scope: string, ctx: ProjectionContext) => W;
   open: (scope: string, window: W, ctx: ProjectionContext) => Subscription;
-  extend: (scope: string, window: W, ctx: ProjectionContext) => Promise<W>;
+  extend: (scope: string, window: W, ctx: ProjectionContext, direction: PageDirection) => Promise<W>;
   same: (left: W, right: W) => boolean;
 };
 
@@ -17,12 +20,14 @@ type PagedEntry<W> = {
   subscription: Subscription;
   holders: number;
   extending: Promise<boolean> | null;
+  generation: number;
 };
 
 export interface IPagedView {
   watch(scope: string): void;
   release(scope: string): void;
-  extend(scope: string): Promise<boolean>;
+  extend(scope: string, direction?: PageDirection): Promise<boolean>;
+  reset(scope: string): void;
   stop(): void;
 }
 
@@ -48,23 +53,24 @@ export class PagedView<W> implements IPagedView {
     if (!entry) return;
     entry.holders = Math.max(0, entry.holders - 1);
     if (entry.holders > 0) return;
-    if (this.spec.warm?.includes(scope)) {
-      this.reopen(scope, entry, this.spec.initial(scope, this.ctx));
+    if (this.spec.keep || this.spec.warm?.includes(scope)) {
+      this.reset(scope);
       return;
     }
     entry.subscription.unsubscribe();
     this.entries.delete(scope);
   }
 
-  extend(scope: string): Promise<boolean> {
+  extend(scope: string, direction: PageDirection = 'older'): Promise<boolean> {
     const entry = this.entries.get(scope);
     if (!entry) return Promise.resolve(false);
     if (entry.extending) return entry.extending;
+    const generation = entry.generation;
     const task = this.spec
-      .extend(scope, entry.window, this.ctx)
+      .extend(scope, entry.window, this.ctx, direction)
       .then((window) => {
         const current = this.entries.get(scope);
-        if (current === entry && !this.spec.same(window, entry.window))
+        if (current === entry && entry.generation === generation && !this.spec.same(window, entry.window))
           this.reopen(scope, entry, window);
         return true;
       })
@@ -74,6 +80,14 @@ export class PagedView<W> implements IPagedView {
       });
     entry.extending = task;
     return task;
+  }
+
+  reset(scope: string): void {
+    const entry = this.entries.get(scope);
+    if (!entry) return;
+    entry.generation += 1;
+    const initial = this.spec.initial(scope, this.ctx);
+    if (!this.spec.same(initial, entry.window)) this.reopen(scope, entry, initial);
   }
 
   stop(): void {
@@ -90,6 +104,7 @@ export class PagedView<W> implements IPagedView {
       subscription: this.spec.open(scope, window, this.ctx),
       holders: 0,
       extending: null,
+      generation: 0,
     };
     this.entries.set(scope, entry);
     return entry;

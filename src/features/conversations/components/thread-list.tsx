@@ -1,5 +1,5 @@
 import type { LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { Icon } from '@/shared/components/ui/icon';
@@ -18,6 +18,12 @@ import { ThreadScroller } from './thread-scroller';
 
 type ThreadListProps = {
   rows: readonly IConversationMessageCacheRow[];
+  live: boolean;
+  newest: IConversationMessageCacheRow | null;
+  hasOlder: boolean;
+  loadOlder: () => Promise<boolean>;
+  loadNewer: () => Promise<boolean>;
+  toLatest: () => void;
   startOfDay: (at: number) => number;
   dayLabel: (day: number) => string;
   typing: boolean;
@@ -27,6 +33,10 @@ type ThreadListProps = {
   onDismiss?: (clientId: string) => void;
 };
 
+type OlderLoaderProps = {
+  active: boolean;
+};
+
 type LatestPillProps = {
   unseen: number;
   onPress: () => void;
@@ -34,12 +44,20 @@ type LatestPillProps = {
 
 const ESTIMATED_ROW = 72;
 
+const EDGE_SCREENS = 2;
+
 const keyOf = (item: ThreadItem): string => item.key;
 
 const typeOf = (item: ThreadItem): ThreadItem['type'] => item.type;
 
 export function ThreadList({
   rows,
+  live,
+  newest,
+  hasOlder,
+  loadOlder,
+  loadNewer,
+  toLatest,
   startOfDay,
   dayLabel,
   typing,
@@ -50,7 +68,18 @@ export function ThreadList({
 }: ThreadListProps) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
-  const thread = useThreadList({ rows, startOfDay, typing, reduceMotion });
+  const thread = useThreadList({
+    rows,
+    startOfDay,
+    typing,
+    reduceMotion,
+    live,
+    newest,
+    hasOlder,
+    loadOlder,
+    loadNewer,
+    toLatest,
+  });
 
   const renderItem = ({ item }: LegendListRenderItemProps<ThreadItem>) => {
     if (item.type === 'day') return <DaySeparator label={dayLabel(item.day)} />;
@@ -87,16 +116,35 @@ export function ThreadList({
         recycleItems
         initialScrollAtEnd
         alignItemsAtEnd
-        maintainScrollAtEnd={{ animated: !reduceMotion }}
+        maintainScrollAtEnd={live ? { animated: !reduceMotion } : false}
         maintainVisibleContentPosition
-        onStartReached={thread.hasOlder ? thread.loadOlder : undefined}
-        onStartReachedThreshold={1}
+        onScroll={thread.onScroll}
+        onStartReachedThreshold={EDGE_SCREENS}
+        onEndReachedThreshold={EDGE_SCREENS}
         contentContainerStyle={{ paddingBottom: 12 }}
         showsVerticalScrollIndicator={IS_WEB}
         keyboardShouldPersistTaps="handled"
         style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 }}
       />
-      {!thread.atEnd ? <LatestPill unseen={thread.unseen} onPress={thread.goToLatest} /> : null}
+      <OlderLoader active={thread.loadingOlder} />
+      {!thread.atEnd || !live ? <LatestPill unseen={thread.unseen} onPress={thread.goToLatest} /> : null}
+    </View>
+  );
+}
+
+function OlderLoader({ active }: OlderLoaderProps) {
+  const { t } = useTranslation();
+
+  if (!active) return null;
+  return (
+    <View pointerEvents="none" className="absolute inset-x-0 top-2 items-center">
+      <View
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={t('screens.conversations.latest.loading-older')}
+        className="bg-card border-border rounded-full border p-1.5 shadow-sm shadow-black/10">
+        <ActivityIndicator size="small" />
+      </View>
     </View>
   );
 }
