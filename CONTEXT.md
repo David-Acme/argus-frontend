@@ -5170,3 +5170,10 @@ minutes without evidence.
   (`showsMicConsent`), so "Llamada terminada" no longer carries it. A
   paused camera conversation counts down as a clock ("59:50",
   `formatCountdown`) instead of "3590 s". `tests/e2e/wording.e2e.ts`.
+- **The web e2e suite is green again.** `conversations.e2e.ts` used text
+  locators that also matched the row labels, `route-status.e2e.ts` still
+  looked for the role=alert banner the toast replaced (c8c5438), and the
+  visual baselines predated the Messages button and the maintenance panel
+  (re-recorded: Home phone/tablet/desktop, Security tablet/desktop). The
+  watch feed now reloads through `createReloadGate`, so a reload asked
+  during a read runs again after it.
