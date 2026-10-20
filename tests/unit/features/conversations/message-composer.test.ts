@@ -98,11 +98,17 @@ describe('the composer in the thread', () => {
   test('the Argus thread offers the Voz | Chat switch and types through the chat session', () => {
     expect(THREAD).toContain('<AssistantComposer');
     expect(THREAD).toContain("useAssistantChat(argus && assistant.mode === 'chat')");
-    expect(THREAD).toContain('<KeyboardAvoidingView');
     expect(ASSISTANT).toContain('<SegmentedControl');
     expect(ASSISTANT).toContain("accessibilityLabel={t('screens.conversations.chat.mode-label')}");
     expect(ASSISTANT).toContain("accessibilityLabel={t('screens.conversations.chat.send')}");
     expect(ASSISTANT).toContain("accessibilityLabel={t('screens.conversations.chat.label')}");
+  });
+
+  test('the composer rides the keyboard over a keyboard-aware virtualized list, never a padding wrapper', () => {
+    expect(THREAD).toContain('<KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>');
+    expect(THREAD).not.toContain('KeyboardAvoidingView');
+    expect(THREAD).not.toContain('<ScrollView');
+    expect(THREAD).toContain('<ThreadList');
   });
 
   test('choosing voice opens the call, and the call offers Chat back to the same thread', () => {
