@@ -432,7 +432,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 
 | # | Component | Variants / props | Replaces today |
 |---|---|---|---|
-| 19 | `Sheet` | `form` / `list` / `detail`; detents `auto`, `large`. Phone: native sheet. Medium and up: centred dialog (form, list) or side sheet (detail) | `sheet.tsx` (250), `adaptive-dialog` (139), `dialog` (176), `overlay-body` (110), 26 feature dialogs reduced to content |
+| 19 | `Sheet` | `form` / `list` / `detail`; slots: `title` (with ✕), body, pinned `footer` (one primary + at most one icon secondary); detents `auto`, `large`. Phone: native sheet. Medium and up: centred dialog (form, list) or side sheet (detail) | `sheet.tsx` (250), `adaptive-dialog` (139), `dialog` (176), `overlay-body` (110), 26 feature dialogs reduced to content |
 | 20 | `Confirm` | `default` / `destructive`; names the object | `confirm-dialog`, ad-hoc confirm sheets (W7) |
 | 21 | `Menu` | dropdown on pointer, sheet list on touch, context menu on long press and right click | `adaptive-menu`, `context-menu` (294), `popover`, single-item menus (W38) |
 | 22 | `Toast` | `info`, `success`, `error` with Retry, `undo` | `toaster`, `toast-card` |
@@ -491,16 +491,44 @@ measure against.
    level down ("Ajustes de la cámara"). On expanded widths, list + detail sit
    side by side (two panes), and the detail opens as a side sheet when the list
    is the main task.
-3. **Compose.** Creation happens in a `Sheet` (`form`): title field focused,
-   then chips for when, repeat and who, plus Guardar. The Return key saves
-   when the form is valid. On the phone the sheet opens at `auto` height and
-   grows to `large` with the keyboard. On desktop it is a 480 px centred
-   dialog with Esc and Ctrl/⌘+Enter. Argus is the general compose: "Recuérdame
+3. **Compose: actions in one place.** Creation happens in a `Sheet`
+   (`form`).
+   - **Top:** the title and a close icon (✕), nothing else.
+   - **Middle:** the title field is focused, then chips for when, repeat and
+     who.
+   - **Bottom:** the actions sit in a **pinned footer**, a full-width primary
+     (Guardar) with at most one secondary as an icon button (⋯ for more
+     options).
+   - **No Cancelar button.** ✕, a swipe down, a tap outside and Back already
+     close the sheet, and a dirty form asks before discarding (§5.7).
+   - **No second Guardar** in the header or on the keyboard. The Return key
+     is *Siguiente* between fields. On the last single-line field it is the
+     platform's *done*, which submits without adding a button of its own.
+   - **Icons** replace words only where the meaning is unambiguous (✕, ⋯,
+     ↵). Destructive actions always keep their words.
+   - **On the phone** the sheet opens at `auto` height and grows to the
+     ceiling with the keyboard.
+   - **On desktop** it is a 480 px centred dialog with the same anatomy:
+     title + ✕ at the top, the footer actions at the bottom right (Guardar
+     with its Ctrl/⌘+Enter hint, an optional ⋯ at the bottom left), and Esc
+     or an outside click to close. Argus is the general compose: "Recuérdame
    pagar la luz el 30" creates the same row, and the reply shows it as a chip
    that opens it.
 4. **States.** Every remote read is a `Resource<T>` rendered through
    `ResourceView`:
-   - `loading`: a skeleton with the final layout's shapes; no spinner in a list.
+   - **Loading, by where the data lives** (local-first, as today's
+     WatermelonDB + MMKV view cache):
+     - **Data stored locally paints instantly**, with no skeleton and no
+       spinner. That covers everything synced: reminders, events, tasks,
+       projects, cameras, notifications, people and conversations.
+     - **A refresh of local data** shows at most a subtle inline
+       «Actualizando» in the screen's top bar or section header. It never
+       puts a skeleton over content that is already shown.
+     - **A skeleton** (`loading`) appears only for data fetched over HTTP
+       that has no local copy yet: sessions, activity, episode detail,
+       module catalogue, settings, the first open of a visitor gallery. It
+       matches the final layout's shapes.
+     - No spinner in any list, ever.
    - `ready` / `empty`: one sentence that says what will appear here, plus one
      action that fills it. The empty view is as tall as a typical populated
      state (the owner's 2026-10-03 rule).
@@ -577,12 +605,15 @@ measure against.
      `screenHeight - topInset` (source-verified on Android with
      edge-to-edge). Set `maxContentHeight = windowHeight - insets.top - 16`
      for the margin.
-   - **Pinned header.** Cancelar · title · Guardar sit in the sheet's `header`
-     slot: fixed, never scrolled away, never under the status bar. Guardar is
-     also the Return key on the last field.
+   - **Pinned title.** The title and ✕ sit in the sheet's `header` slot:
+     fixed, never scrolled away, never under the status bar.
+   - **Pinned footer.** The actions (Guardar full-width, an optional ⋯ icon)
+     sit in the sheet's footer slot and ride **above the keyboard**
+     (true-sheet's `footer` with `footerOptions.keyboardOffset`). There is no
+     action in the header and no "Guardar" key on the keyboard.
    - **Inner scroll.** The fields scroll inside the sheet, between the pinned
-     header and the keyboard: one scroll container (`scrollable`), no
-     page scroll behind it, no double scroll, no jump.
+     title and the pinned footer: one scroll container (`scrollable`), no page
+     scroll behind it, no double scroll, no jump.
    - **Focused field.** It stays visible with 16 dp above the keyboard
      (`scrollableOptions.keyboardScrollOffset: 16`). Switching fields with the
      keyboard's Next key scrolls only as much as needed.
@@ -595,16 +626,17 @@ measure against.
    - **Multiline fields** grow up to 5 lines, then scroll inside themselves.
      The caret stays visible.
    - **Landscape and font scale 1.3–2.0.** In landscape the sheet goes to the
-     ceiling and stays scrollable. At large font scales the header keeps one
-     line: the title truncates first, and the buttons never do.
+     ceiling and stays scrollable. At large font scales the title keeps one
+     line (it truncates before the ✕ moves), and the footer button grows in
+     height instead of truncating.
    - **Focus on open.** Focus the first field in `onDidPresent`, never with
      `autoFocus`.
    - **Platforms.** Android uses edge-to-edge with the window insets
      (true-sheet tracks `WindowInsetsAnimationCompat`), so no `adjustPan`.
      iOS uses UIKit's keyboard avoidance. Desktop and web use a centred
      dialog, with no keyboard rise at all.
-   - **Prototype.** The «Hoja + teclado (formulario largo)» frame shows this
-     layout.
+   - **Prototype.** The «Hoja inferior · acciones abajo» and «Hoja + teclado
+     (formulario largo)» frames show this layout.
 
 ## 6. Responsive rules: one layout system
 
@@ -617,8 +649,8 @@ top so laptops get the sidebar
 |---|---|---|---|
 | `compact` | < 600 | bottom bar (labels always) | one column, 16 gutter |
 | `medium` | 600–1023 | rail (icons + labels) | one column, max 640, centred |
-| `expanded` | 1024–1439 | sidebar with labels | main column max 640 + aside 300, or list + detail panes |
-| `wide` | ≥ 1440 | sidebar | the whole layout capped at 1200 and centred with the sidebar attached (fixes W33's 470 px gap) |
+| `expanded` | 1024–1439 | sidebar with labels | 3 columns (Inicio) or main + aside (Seguridad), or list + detail panes |
+| `wide` | ≥ 1440 | sidebar | 3 columns, and from 1700 px 4 columns (Inicio) or main + 2 asides (Seguridad); content capped at 2,200 px and centred, with the sidebar attached (fixes W33: today at 2560 the content stops at about 1,640 px and floats about 370 px from the rail) |
 
 - Compact height (< 480, phone landscape) keeps the bottom bar. Material uses a
   bar when either dimension is compact, and that also fixes the clipped rail
@@ -632,6 +664,63 @@ top so laptops get the sidebar
 - Reflow: nothing scrolls in two directions at 320 px
   ([WCAG 2.2 reflow](https://www.w3.org/TR/wcag2mobile-22/)). No inner
   scrollbars inside the page (W29), except the calendar's week grid.
+
+### 6b. Density: nothing feels empty
+
+- **Phone above the fold.** The hero is compact: the mascot (58–66) *beside*
+  the hero sentence (30), one meta line, and one row of 2–3 glanceable stats
+  ("5 cámaras", "0 alertas hoy", "1 por revisar"). The first content section
+  starts within the top 40% of the screen (by about y = 300 of 760 on
+  Inicio), and the Aura is at most 300 px tall.
+- **Content-rich rows.** Every row carries a glanceable secondary line (time,
+  place, who, amount) and, where useful, a trailing next step or inline stat:
+  «Posponer», «ahora», «en 1 h», «Revisar», «3 de 8 hechas». A section header
+  carries its count («Ahora · 3 · 1 atrasado»).
+- **Vertical rhythm.** Sections are 24 apart, rows are at least 58 dp (still
+  ≥ 48 dp targets), and cards have 4 px inner padding around their rows.
+  Empty states stay as tall as a typical populated state and always offer the
+  next step (the 2026-10-03 rule).
+- **Desktop uses the width with columns of real content.**
+  - **Inicio:**
+    - expanded: Ahora + Hoy + Mañana | Novedades | Cámaras 2×2 + En casa;
+    - from 1700 px: Ahora/Hoy | Novedades | a camera grid with Lo que pasó
+      | En casa + Proyectos.
+  - **Seguridad:**
+    - a status band (mascot, sentence, stats, mode, SOS);
+    - a camera grid that adds columns as the width grows (`auto-fill`,
+      minimum tile 280 px, 340 px from 2400 px);
+    - a Lo que pasó column;
+    - from 1700 px, an aside with Visitas, Lugares and Mantenimiento.
+- **Line length.** Text columns are capped at 620–680 px (about 72
+  characters). Extra width goes to media (camera grids, the week grid) and to
+  additional columns, never to longer lines.
+
+### 6c. Scrolling: one owner per region
+
+- **One scroll owner per region.** On phones that is the screen, or the
+  sheet's inner area. On desktop, each column scrolls on its own. A list never
+  scrolls inside a card that scrolls inside a page: today's agenda list and
+  episodes panel (W29) are the cases this rule removes.
+- **What stays put.**
+  - The phone's top bar and the floating tab bar.
+  - The desktop sidebar and the status band.
+  - A sheet's title and footer.
+  - Section headers stick inside a desktop column (`position: sticky`, with a
+    fade to `bg`) where a column is long (Novedades, Lo que pasó).
+- **Scrollbars.** On web and Tauri they are thin and consistent: 10 px, a
+  `fill-press` thumb with a radius, a transparent track
+  (`scrollbar-width: thin`, plus `::-webkit-scrollbar` for WebKitGTK). They
+  appear only on the region that scrolls. Phones use the platform's own
+  indicators.
+- **Input and resizing.**
+  - Trackpad and mouse wheel scroll the region under the pointer, with no
+    scroll chaining into the page (`overscroll-behavior: contain` on columns
+    and sheets).
+  - Keyboard Page Up/Down and Space work in the focused column.
+  - On window resize, columns re-flow at the breakpoints without losing each
+    column's scroll position.
+- **No horizontal page scroll** at any width. Horizontal strips (the camera
+  strip on phones) scroll on their own, with snap.
 
 ## 7. Motion
 
@@ -730,7 +819,8 @@ Two open questions are measured in the spike:
 
 Configuration: `detents` (`['auto']` for short forms, `[0.6, 1]` + `scrollable`
 for long ones), `scrollableOptions={{ keyboardScrollOffset: 16 }}`,
-`header={<SheetHeader/>}`, `maxContentHeight={windowHeight - insets.top - 16}`,
+`header={<SheetTitle/>}` (title + ✕), `footer={<SheetActions/>}` with
+`footerOptions.keyboardOffset`, `maxContentHeight={windowHeight - insets.top - 16}`,
 `insetAdjustment="automatic"` and focus in `onDidPresent`. Inside a
 `scrollable` sheet the inset belongs to the sheet: no nested
 `KeyboardAwareScrollView`.
@@ -962,12 +1052,16 @@ creates anything.
 - **Layout:**
   - **Top bar:** the greeting as a meta line ("Buenas tardes, Ana"; with
     several places, the place picker), and search on the right.
-  - **Hero:** the `Aura` field behind the top. In it, `Presence` (104) and the
-    `Status` hero sentence «Todo tranquilo.», then glass chips in today's chip
-    style: "Modo En casa", "5 cámaras", "Luis y tú en casa". The chips wrap
-    and each one opens its screen.
-  - **Ahora:** up to 3 rows, overdue first, then the next by time; the link
-    "Agenda".
+  - **Hero (compact, §6b):**
+    - the `Aura` (at most 300 px) behind the top;
+    - `Presence` (66) *beside* the `Status` hero sentence «Todo tranquilo.»
+      (30), with the meta "En casa · Luis y tú en casa";
+    - one row of glass stats in today's chip style: "5 cámaras", "0 alertas
+      hoy", "4 detecciones". The stats wrap, and each one opens its screen.
+    - Ahora starts above the fold.
+  - **Ahora:** the header carries its count («3 · 1 atrasado»), then up to 3
+    rows, overdue first, then the next by time. Each row has a next step or
+    time-to-go («Posponer», «ahora», «en 1 h»).
   - **Cámaras:** a horizontal strip of live tiles (today's home had camera
     cards; they come back as a strip, not a grid), with the link "Seguridad".
   - **Novedades:** the latest 5 feed items in a card, with inline actions
@@ -976,8 +1070,14 @@ creates anything.
     - night or away: «Buenas noches.» with the hat on;
     - alert: «Alguien en el patio.» with media and actions;
     - offline: «Sin conexión», grey.
-- **Desktop:** a 600 px feed column with a 44 px hero, plus an aside with four
-  live cameras and today's agenda.
+- **Desktop:**
+  - a status band (mascot, sentence, stats, Nuevo) that never scrolls;
+  - at 1024–1699 px, three independently scrolling columns: Ahora + Hoy +
+    Mañana | Novedades | Cámaras 2×2 + En casa;
+  - from 1700 px, four: Ahora/Hoy | Novedades (at most 620 px) | a camera
+    grid with Lo que pasó | En casa + Proyectos;
+  - content capped at 2,200 px. Before and after at 1280, 1920 and 2560 are in
+    the prototype.
 - **States:** calm; alert (a `Status` in tone alert with media and actions,
   `role="alert"`); new household (one empty state with one first step, "Conecta
   tu primera cámara" or "Crea tu primer recordatorio" depending on the modules,
@@ -1012,9 +1112,17 @@ creates anything.
   place picker as its title ("Casa ▾") and "Todos los lugares" in the sheet.
   Changing the mode plays one `snappy` slide, a `success` haptic and the
   Aura's cross-fade to the new tone; `Presence` puts on or takes off its hat.
-- **Desktop:** a status band (Aura `band` + mascot + mode control), a 3-column
-  camera grid whose tiles reveal *Ver* / *Hablar* on hover, and a "Lo que
-  pasó" feed column with inline *Revisar*.
+- **Phone:** a compact hero (mascot 58 beside «En casa») with stats («1 por
+  revisar», «0 en curso», «1 visita hoy») and the mode control, so the cameras
+  start above the fold.
+- **Desktop:**
+  - a status band (Aura `band`, mascot, sentence, stats, mode control, SOS);
+  - an `auto-fill` camera grid (3 columns at 1280, more as width grows) whose
+    tiles reveal *Ver* / *Hablar* on hover;
+  - a "Lo que pasó" column with inline *Revisar*;
+  - from 1700 px, a third column with Visitas, Lugares and Mantenimiento.
+  - Each column scrolls on its own. Before and after at 1280, 1920 and 2560
+    are in the prototype.
 - **States:** calm; attention (an episode to review → the status says it);
   alert (same `Status` as Inicio); camera offline/privacy/off tiles labelled
   in words, not only an icon; guard role (no mode change where not allowed:
@@ -1225,12 +1333,18 @@ visual baselines). The rest are a review list in the PR template.
 
 **Sheet + keyboard (acceptance on the owner's Samsung S21 FE, Samsung Keyboard, Android 14 and 15, plus one iPhone)**
 
-- [ ] Open a form and focus the first field: the whole header is visible, and
-      the sheet's top is at or below the status bar + 16 dp.
-- [ ] Focus the last field of a long form: it is visible above the keyboard,
-      and the header stays pinned.
-- [ ] Move through every field with the keyboard's Next key: no jump and no
-      flicker; Guardar on the last field submits.
+- [ ] Open a form and focus the first field: the title and ✕ are fully
+      visible, and the sheet's top is at or below the status bar + 16 dp.
+- [ ] The footer (Guardar, optional ⋯) sits directly above the keyboard and
+      stays there while the fields scroll between the pinned title and the
+      footer.
+- [ ] Focus the last field of a long form: it is visible above the footer,
+      and the title stays pinned.
+- [ ] Move through every field with the keyboard's Siguiente key: no jump and
+      no flicker. On the last field the platform's *done* submits; no key or
+      header button repeats "Guardar".
+- [ ] There is no Cancelar button: ✕, a swipe down, a tap outside and Back
+      close it, and each asks before discarding when the form is dirty.
 - [ ] Type 10 lines in a multiline field: it grows to 5 lines, then scrolls,
       and the caret stays visible.
 - [ ] Toggle the Samsung keyboard's suggestion or toolbar strip (its height
@@ -1241,21 +1355,24 @@ visual baselines). The rest are a review list in the PR template.
       asks to discard if the form is dirty.
 - [ ] Rotate to landscape with the keyboard open: the header is visible and
       every field is reachable.
-- [ ] Font scale at maximum and display zoom Large: the header keeps one line
-      (the title truncates, the buttons never do) and the content scrolls.
+- [ ] Font scale at maximum and display zoom Large: the title keeps one line
+      (it truncates before the ✕ moves), the footer button grows instead of
+      truncating, and the content scrolls.
 - [ ] Switch dark/light while the app runs, then reopen the sheet: the top
       inset is still respected (the #4863 pattern).
 - [ ] Open and close it 20 times: no lost taps and no stuck sheet.
 - [ ] Profile a drag and an open (GPU profiler / Perfetto): no frame over
       16 ms.
-- [ ] The same forms on the desktop build: a centred dialog, Esc and an
-      outside click behave as in §5.7.
+- [ ] The same forms on the desktop build: a centred dialog with title + ✕
+      at the top and the actions at the bottom right; Esc and an outside
+      click behave as in §5.7.
 
 **Keyboard and input**
 
 - [ ] The focused field stays visible above the keyboard, in sheets too (A6).
-- [ ] The Return key shows the next action ("Siguiente" between fields,
-      "Guardar"/"Enviar" on the last) and performs it.
+- [ ] The Return key is "Siguiente" between fields and the platform's *done*
+      on the last one (it submits). It never carries the label of a button
+      that is already on screen.
 - [ ] Correct keyboard type and autofill per field (code → number pad with
       uppercase letters where needed, email, time).
 - [ ] Errors appear under the field in words after the first submit, never as
@@ -1273,11 +1390,32 @@ visual baselines). The rest are a review list in the PR template.
       hero and title cap at 1.5), at 320 px width, and in phone landscape
       (gate: the UI-map viewports plus font-scale states).
 - [ ] Icons 20 or 24, stroke 1.75, from the registry only.
+- [ ] **Actions in one place:** each sheet or dialog has one primary action,
+      in its footer; no duplicate of it in the header or on the keyboard; no
+      Cancelar where ✕, the scrim, Esc or Back already close it.
+- [ ] **Not empty:** on phones the first content section starts within the
+      top 40% of the screen; every row carries a secondary line; no dead area
+      taller than one row on phone or one card on desktop (empty states
+      included, which always offer the next step).
+- [ ] **Width:** checked at 1280, 1440, 1920 and 2560. Columns are added as
+      width grows, text columns stay at most about 680 px, content is capped
+      at 2,200 px, and nothing floats in empty space.
+- [ ] **Scroll:** one scroll owner per region; no nested scrollbars; the top
+      bar, sidebar, status band and sheet title/footer stay put; long desktop
+      columns have sticky section headers; columns scroll independently with
+      the thin shared scrollbar style; the wheel and trackpad do not chain
+      into the page; resize keeps each column's position; no horizontal page
+      scroll.
 
 **States and data**
 
-- [ ] Loading shows a skeleton with the final layout's shapes; no spinner in a
-      list (gate: no `ActivityIndicator` in features).
+- [ ] **Local data paints instantly:** a screen fed by WatermelonDB or the
+      MMKV view cache shows no skeleton and no spinner, ever. A refresh shows
+      at most an inline «Actualizando» in the top bar or section header,
+      never a skeleton over content.
+- [ ] **Skeletons only for HTTP data with no local copy yet**, in the final
+      layout's shapes; no spinner in a list (gate: no `ActivityIndicator` in
+      features).
 - [ ] Empty shows one sentence and one helpful action, and only through
       `ResourceView` (gate, rule F11).
 - [ ] Stale and offline are labelled with the time of the data; failure shows
@@ -1400,7 +1538,11 @@ second and is written natively, not translated word for word.
 | R-D20 | A "Reducir efectos" setting, plus an automatic `low` tier on older Android (no blur, still Aura, simpler mascot) | yes |
 | R-D21 | Dismissal: overlays close on an outside tap/click, Esc and Back, except destructive confirmations and dirty forms, which ask (§5.7) | yes |
 | R-D22 | **v3 basis:** the redesign evolves today's look (palette, cards, chips, mascot) instead of replacing it; the new-era layer (Aura, glass on what floats, springs, the living mascot) sits on top | yes |
-| R-D23 | Sheet + keyboard: ceiling at the top safe area + 16 dp, pinned header, inner scroll, focused field 16 dp above the keyboard (§5.9); accepted only after the §10 list passes on the S21 FE | yes |
+| R-D23 | Sheet + keyboard: ceiling at the top safe area + 16 dp, pinned title, inner scroll, footer above the keyboard, focused field 16 dp above it (§5.9); accepted only after the §10 list passes on the S21 FE | yes |
+| R-D24 | Actions in one place: title + ✕ at the top, a pinned footer with one primary (and at most one icon secondary), no Cancelar, no duplicate Guardar; desktop dialogs put the footer actions bottom right (§5.3) | yes |
+| R-D25 | Density: compact heroes (content above the fold on phones), content-rich rows, and 3 or 4 columns of real content on desktop (§6b) | yes |
+| R-D26 | Large screens and scrolling: 4 columns from 1700 px, a 2,200 px content cap, text at most about 680 px, and one scroll owner per region with sticky headers and shared thin scrollbars (§6c) | yes |
+| R-D27 | Loading: local data paints instantly, with at most an inline «Actualizando»; skeletons only for HTTP data without a local copy (§5.4) | yes |
 
 ## 14. Order of work
 

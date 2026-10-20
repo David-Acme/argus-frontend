@@ -61,6 +61,49 @@ junto al rediseño, para compararlas.
 Todo esto son piezas reutilizables (`Aura`, `Presence`, `Command`, el material
 y los resortes); ninguna pantalla trae animaciones propias.
 
+## Los cuatro ajustes que pediste (v3.1)
+
+1. **Las acciones van en un solo lugar.**
+   - Arriba van solo el título y una ✕.
+   - Abajo va una barra fija con «Guardar» a todo el ancho y, como mucho, un
+     ícono ⋯. Esa barra queda justo encima del teclado y los campos se
+     desplazan entre el título y la barra.
+   - Ya no hay botón «Cancelar»: la ✕, deslizar hacia abajo, tocar fuera o
+     Atrás cierran la hoja, y si hay algo escrito te pregunta antes.
+   - El teclado ya no repite «Guardar»: muestra «Siguiente» entre campos y,
+     en el último, el *listo* del sistema.
+   - En el escritorio es igual: título y ✕ arriba, acciones abajo a la
+     derecha.
+2. **Nada se siente vacío.**
+   - En el teléfono, la mascota va al lado de la frase y hay una fila de
+     datos rápidos (5 cámaras, 0 alertas, 4 detecciones). Así «Ahora» empieza
+     arriba, sin tener que desplazar.
+   - Cada fila trae una segunda línea útil y el siguiente paso («Posponer»,
+     «en 1 h», «Revisar»).
+   - En el escritorio, Inicio usa tres columnas con contenido real, y cuatro
+     desde 1700 px.
+3. **Pantallas grandes y desplazamiento.** Lo revisé a 1920 y 2560.
+   - Hoy, a 2560, el contenido termina en unos 1.640 px y flota a 370 px de la
+     barra lateral.
+   - En el rediseño se añaden columnas al crecer el ancho. Los textos no pasan
+     de unos 680 px, las cámaras usan el espacio extra y el contenido llega
+     hasta 2.200 px, centrado.
+   - Cada columna se desplaza por su cuenta, con encabezados fijos y barras de
+     desplazamiento finas iguales en web y Tauri.
+   - No hay barras dobles anidadas ni desplazamiento horizontal.
+   - El prototipo muestra antes y después de Inicio y Seguridad a 1280, 1920
+     y 2560.
+4. **Carga.**
+   - Lo que está guardado en el teléfono (WatermelonDB) aparece al instante,
+     sin esqueleto ni ruedita.
+   - Al refrescar se ve como mucho un discreto «Actualizando».
+   - Los esqueletos son solo para datos que llegan por HTTP y aún no están en
+     el teléfono (sesiones, actividad, ajustes), con la forma final.
+
+Decisiones nuevas: R-D24 (acciones en un solo lugar), R-D25 (densidad), R-D26
+(pantallas grandes y desplazamiento) y R-D27 (regla de carga). En todas
+recomiendo sí.
+
 ## Rendimiento primero
 
 - **Dónde corre.** Toda animación corre en el hilo de UI (Reanimated o el
