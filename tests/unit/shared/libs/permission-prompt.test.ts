@@ -56,7 +56,7 @@ describe('what to do about a permission', () => {
   test('granted, never asked, permanently denied, and asked once already', () => {
     expect(permissionStep(GRANTED, false, false)).toBe('granted');
     expect(permissionStep(ASKABLE, false, false)).toBe('explain');
-    expect(permissionStep(BLOCKED, false, false)).toBe('settings');
+    expect(permissionStep(BLOCKED, false, false)).toBe('recheck');
     expect(permissionStep(ASKABLE, true, true)).toBe('skip');
     expect(permissionStep(ASKABLE, false, true)).toBe('explain');
     expect(permissionStep(BLOCKED, true, false)).toBe('skip');
@@ -87,10 +87,27 @@ describe('asking for a permission when it is needed', () => {
     expect(log).not.toContain('system:notifications');
   });
 
-  test('a permanently denied permission offers Settings', async () => {
+  test('a permission Android still refuses after a fresh request offers Settings', async () => {
     const { port, log } = fakePort({ answer: BLOCKED, afterRequest: BLOCKED, accepts: true, asked: true });
     expect(await ensurePermission('microphone', {}, port)).toBe(false);
-    expect(log).toEqual(['read:microphone', 'ask:common.permission-prompt.microphone.blocked-title', 'settings']);
+    expect(log).toEqual([
+      'read:microphone',
+      'system:microphone',
+      'ask:common.permission-prompt.microphone.blocked-title',
+      'settings',
+    ]);
+  });
+
+  test('a permission reported as blocked but set to "ask every time" is asked, not sent to Settings', async () => {
+    const { port, log } = fakePort({ answer: BLOCKED, afterRequest: GRANTED, accepts: true, asked: true });
+    expect(await ensurePermission('microphone', {}, port)).toBe(true);
+    expect(log).toEqual(['read:microphone', 'system:microphone']);
+  });
+
+  test('a fresh refusal that may be asked again offers nothing more', async () => {
+    const { port, log } = fakePort({ answer: BLOCKED, afterRequest: ASKABLE, accepts: true, asked: true });
+    expect(await ensurePermission('microphone', {}, port)).toBe(false);
+    expect(log).toEqual(['read:microphone', 'system:microphone']);
   });
 
   test('an ask-once permission is asked once per install and never sends to Settings', async () => {

@@ -4,7 +4,7 @@ import { permissionsService } from '@/core/services/permissions';
 import type { ConfirmRequest, PermissionAnswer, RuntimePermission } from '@/core/types';
 import { confirm } from './confirm';
 
-export type PermissionStep = 'granted' | 'explain' | 'settings' | 'skip';
+export type PermissionStep = 'granted' | 'explain' | 'recheck' | 'skip';
 
 export type PermissionPromptOptions = {
   once?: boolean;
@@ -23,7 +23,7 @@ export function permissionStep(answer: PermissionAnswer, once: boolean, asked: b
   if (answer.granted) return 'granted';
   if (once && asked) return 'skip';
   if (answer.canAskAgain) return 'explain';
-  return once ? 'skip' : 'settings';
+  return once ? 'skip' : 'recheck';
 }
 
 const explanation = (kind: RuntimePermission): ConfirmRequest => ({
@@ -58,7 +58,10 @@ export async function ensurePermission(
     const step = permissionStep(await port.read(kind), options.once === true, port.asked(kind));
     if (step === 'granted') return true;
     if (step === 'skip') return false;
-    if (step === 'settings') {
+    if (step === 'recheck') {
+      const answer = await port.request(kind);
+      if (answer.granted) return true;
+      if (answer.canAskAgain) return false;
       if (await port.confirm(settingsOffer(kind))) await port.openSettings();
       return false;
     }
