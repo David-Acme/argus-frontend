@@ -11,7 +11,7 @@ import { SYNC_AUDIT_REQUEST_TYPE, SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/sha
 import { SYNC_ERROR_SUFFIX, SYNC_REQUEST_TYPE, SYNC_VOICE_PREFIX } from './sync-constants';
 import { SyncRequestError } from './sync-request-error';
 
-export type SyncErrorFrame = Partial<IWsMessage> & { status?: unknown };
+export type SyncErrorFrame = Partial<IWsMessage> & { status?: unknown; clientId?: unknown };
 
 export type SyncFrameHandlers = {
   initialInfo: (info: IInitialInfo) => void;
@@ -140,7 +140,10 @@ export class SyncMessageRouter {
       this.handlers.auditFailure(scope, new SyncRequestError(message, status));
       return;
     }
-    const payload = { status, error: message };
+    const payload =
+      typeof frame.clientId === 'string'
+        ? { status, error: message, clientId: frame.clientId }
+        : { status, error: message };
     this.typeListeners.get(type)?.forEach((fn) => fn(payload));
     if (requestType.startsWith(SYNC_VOICE_PREFIX)) {
       this.typeListeners.get(VOICE_ERROR_TYPE)?.forEach((fn) => fn(payload));

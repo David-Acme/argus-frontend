@@ -96,3 +96,22 @@ export type VoiceStartOptions = {
   responseId?: number | null;
   watchConversationId?: string;
 };
+
+export type AssistantMode = 'voice' | 'chat';
+
+export type AssistantChatEntryStatus = 'sending' | 'waiting' | 'done' | 'failed';
+
+export type AssistantChatEntry = {
+  clientId: string;
+  text: string;
+  sentAt: number;
+  status: AssistantChatEntryStatus;
+  reply: string;
+  turnId: string | null;
+  error: string | null;
+};
+
+export type AssistantChatSnapshot = {
+  entries: readonly AssistantChatEntry[];
+  open: boolean;
+};

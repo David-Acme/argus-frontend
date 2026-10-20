@@ -17,3 +17,5 @@ export {
   continueWatchConversation,
   watchContinuationSupported,
 } from './services/voice/watch-continuation';
+export { useAssistantChat, type AssistantChatState } from './hooks/use-assistant-chat';
+export { ASSISTANT_CHAT_MAX_CHARS } from './constants/voice';

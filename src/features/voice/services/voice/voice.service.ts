@@ -108,6 +108,7 @@ import {
   parseVoiceError,
 } from '@/features/voice/services/voice/voice-frames';
 import { VoicePlayout } from '@/features/voice/services/voice/voice-playout';
+import { assistantSocket } from '@/features/voice/services/voice/assistant-socket';
 import {
   appendAssistantText,
   appendUserLine,
@@ -535,6 +536,7 @@ class VoiceService {
       this.fail('SOCKET_UNAVAILABLE|Unable to connect to Argus');
       return;
     }
+    assistantSocket.claim('voice');
     synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, leg: voiceLegOf(IS_NATIVE) });
     this.serverSession = true;
     this.transport = 'sync';
@@ -766,6 +768,7 @@ class VoiceService {
       this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
       return;
     }
+    assistantSocket.claim('voice');
     synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, resume: true, leg: voiceLegOf(IS_NATIVE) });
     this.serverSession = true;
     if (this.muted) synchronizeService.send(VOICE_MUTE_TYPE, { muted: true });
@@ -1040,12 +1043,16 @@ class VoiceService {
     );
     for (const [type, handler] of Object.entries(this.handlers)) {
       synchronizeService.onType(type, (payload) => {
-        if (this.transport !== 'rtc') handler(payload);
+        if (this.ownsSyncFrames()) handler(payload);
       });
     }
     synchronizeService.onBinary((data) => {
-      if (this.transport !== 'rtc') this.handleTts(data);
+      if (this.ownsSyncFrames()) this.handleTts(data);
     });
+  }
+
+  private ownsSyncFrames(): boolean {
+    return this.transport !== 'rtc' && assistantSocket.owner !== 'chat';
   }
 
   private stopCapture(): void {

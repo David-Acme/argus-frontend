@@ -6,6 +6,7 @@ export const VOICE_PLAYOUT_STALL_MS = 1500;
 export const VOICE_PLAYOUT_IDLE_GRACE_MS = 250;
 export const VOICE_TRANSCRIPT_MAX_LINES = 200;
 export const VOICE_MODE_DUPLEX = 'duplex';
+export const VOICE_MODE_CHAT = 'chat';
 
 export const VOICE_START_TYPE = 'voice:start';
 export const VOICE_STOP_TYPE = 'voice:stop';
@@ -23,6 +24,13 @@ export const VOICE_CONTEXT_TYPE = 'voice:context';
 export const VOICE_ACTION_NAMES = ['app.show_camera', 'app.open', 'app.set_guard_mode'] as const;
 export const VOICE_DONE_TYPE = 'voice:done';
 export const VOICE_HANDOFF_KIND = 'voice:handoff';
+export const VOICE_TEXT_TYPE = 'voice:text';
+export const VOICE_TEXT_DONE_TYPE = 'voice:text_done';
+export const VOICE_TEXT_ERROR_TYPE = 'voice:text_error';
+
+export const ASSISTANT_CHAT_MAX_CHARS = 500;
+export const ASSISTANT_CHAT_REPLY_TIMEOUT_MS = 90000;
+export const ASSISTANT_CHAT_ENTRIES_KEPT = 40;
 
 export const CALL_TRANSCRIPT_VISIBLE = 4;
 export const CALL_ACTIONS_VISIBLE = 3;

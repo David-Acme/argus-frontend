@@ -89,6 +89,14 @@ describe('SyncMessageRouter', () => {
     ]);
   });
 
+  test('a refused typed message keeps its client id on the way to the voice error listeners', () => {
+    const router = new SyncMessageRouter(recordingHandlers([]));
+    const seen: unknown[] = [];
+    router.onType(VOICE_ERROR_TYPE, (payload) => seen.push(payload));
+    router.route(JSON.stringify({ type: 'voice:text_error', status: 409, error: 'busy', clientId: 'c-1' }));
+    expect(seen).toEqual([{ status: 409, error: 'busy', clientId: 'c-1' }]);
+  });
+
   test('typed frames go to their listeners and operations to listeners before handlers', () => {
     const calls: unknown[][] = [];
     const router = new SyncMessageRouter(recordingHandlers(calls));

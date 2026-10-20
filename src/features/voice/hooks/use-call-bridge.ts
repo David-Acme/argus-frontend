@@ -4,6 +4,7 @@ import type { ICameraCacheRow, INotificationPreviewCacheRow } from '@/core/inter
 import { guardService } from '@/core/services/guard.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { voiceService } from '@/features/voice/services/voice';
+import { assistantChat } from '@/features/voice/services/chat';
 import { useAuthStore } from '@/core/stores';
 import type { CalendarEntry, GuardEnvironment, GuardMode, VoiceAction, VoiceActionOutcome } from '@/core/types';
 import { CAPABILITY, GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -169,7 +170,7 @@ export function useCallBridge(): void {
   useEffect(() => {
     if (!user) return;
     const failed = (detail: string): VoiceActionOutcome => ({ ok: false, detail: spokenDetail(detail) });
-    const run = async (action: VoiceAction): Promise<VoiceActionOutcome> => {
+    const run = async (action: VoiceAction, inCall: boolean): Promise<VoiceActionOutcome> => {
       if (action.name === 'app.show_camera') {
         if (!watchesCameras) return failed(t('screens.voice.actions.detail.no-access'));
         const id = resolveCameraId({
@@ -181,7 +182,7 @@ export function useCallBridge(): void {
           toast.error(t('screens.voice.actions.camera-missing'));
           return failed(t('screens.voice.actions.detail.camera-missing'));
         }
-        if (onCallScreen.current) voiceService.showCamera(id, cameraViewOf(action.arguments.view));
+        if (inCall && onCallScreen.current) voiceService.showCamera(id, cameraViewOf(action.arguments.view));
         else router.push(`/cameras/${id}`);
         return { ok: true, detail: null };
       }
@@ -226,11 +227,22 @@ export function useCallBridge(): void {
       return { ok: true, detail: null };
     };
     let queue = Promise.resolve();
-    return voiceService.onAction((action) => {
-      queue = queue.then(async () => {
-        const outcome = await run(action).catch(() => failed(t('screens.voice.actions.detail.failed')));
-        voiceService.completeAction(action.id, outcome);
-      });
-    });
+    const unsubscribers = [
+      voiceService.onAction((action) => {
+        queue = queue.then(async () => {
+          const outcome = await run(action, true).catch(() => failed(t('screens.voice.actions.detail.failed')));
+          voiceService.completeAction(action.id, outcome);
+        });
+      }),
+      assistantChat.onAction((action) => {
+        queue = queue.then(async () => {
+          const outcome = await run(action, false).catch(() => failed(t('screens.voice.actions.detail.failed')));
+          assistantChat.completeAction(action.id, outcome);
+        });
+      }),
+    ];
+    return () => {
+      for (const unsubscribe of unsubscribers) unsubscribe();
+    };
   }, [router, setsGuardMode, t, user, watchesCameras]);
 }
