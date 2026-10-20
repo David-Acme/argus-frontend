@@ -251,16 +251,26 @@ Pocos sonidos, suaves y solo cuando significan algo.
 - En una llamada solo suenan conectar y colgar.
 - En escritorio y web se aplican las mismas reglas.
 
-**Medí tus muestras:** todas están en −20,4 LUFS. Dos de Estela tienen picos
-altos (−3,5 dB) y «ojo» dura 2,15 segundos, así que hay que ajustarlas.
+**Paleta v2: un material por momento**, siguiendo las guías de earcons de
+Brewster. Cada sonido tiene su propio material, su dirección y su número de
+notas, para que ninguno se confunda con otro:
+- **Conectar:** marimba, 3 notas que suben.
+- **Colgar:** la misma marimba bajando, como espejo de conectar.
+- **Voz y chat:** un pop con respiración para pasar a voz y dos clics secos
+  para pasar a chat.
+- **Enviar:** aire que se aleja.
+- **Mensaje:** gotas de agua.
+- **Hecho:** campanas de cristal, el único sonido de vidrio.
+- **Error:** dos golpes graves en la misma nota.
+- **Ojo:** el pad de estrellas, la voz de Estela.
 
-**Decisión S1, abierta.** Recomiendo **una mezcla**:
-- los granos de Estela para los momentos importantes y poco frecuentes
-  (llamada, ojo, hecho, bienvenida);
-- las campanas de Cristal para los frecuentes (enviar, respuesta, cambio de
-  modo, error).
+Lo medí:
+- Cinco sonidos tienen picos un poco altos y hay que limitarlos.
+- «modo_chat» está algo bajo.
+- «ojo» dura 2,3 segundos: hay que recortarlo o aceptarlo como la excepción.
 
-Las dos irían en la misma tonalidad, para que suenen como una sola familia.
+**Pendiente S1:** apruebas o cambias cada sonido uno por uno. La propuesta
+de dos familias quedó descartada.
 
 ## Rendimiento primero
 
