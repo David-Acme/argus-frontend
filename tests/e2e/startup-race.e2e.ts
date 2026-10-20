@@ -67,3 +67,36 @@ test('home keeps the answers a fast server gives while the session starts', asyn
 
   expect(escapes).toEqual([]);
 });
+
+test('a camera conversation a fast server reports at start-up is still shown', async ({ app, browser, screen }) => {
+  const baseUrl = app.baseUrl ?? '';
+  const now = Math.floor(Date.now() / 1000);
+  await routes(baseUrl, [
+    {
+      method: 'GET',
+      path: '/rtc/watch',
+      info: {
+        conversations: [
+          {
+            conversationId: 'w1',
+            cameraId: 3,
+            cameraName: 'Patio trasero',
+            state: 'listening',
+            handoff: 'camera',
+            audience: 'member',
+            startedAt: now - 60,
+            updatedAt: now - 5,
+            resumableUntil: null,
+            endReason: null,
+            turns: [],
+          },
+        ],
+      },
+    },
+  ]);
+  const escapes = await openFirst(browser, app);
+  await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
+  await app.open('/watch');
+  await expect(screen.getByText('Conversation at Patio trasero', { exact: true })).toBeVisible({ timeout: 10000 });
+  expect(escapes).toEqual([]);
+});

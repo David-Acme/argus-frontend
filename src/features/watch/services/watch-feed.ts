@@ -1,6 +1,7 @@
 import { readWatchConversation } from '@/core/contracts/watch.contract';
 import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
+import { resourceSignal } from '@/core/services/sync/resource-signal';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { WatchConversation } from '@/core/types';
 import { SYNC_OPERATION, VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -67,6 +68,9 @@ export function bindWatchFeed(): void {
     if (conversation) applyWatchFrame(conversation);
   });
   synchronizeService.onConnect(() => {
+    void refreshWatch();
+  });
+  resourceSignal.onReconnected(() => {
     void refreshWatch();
   });
 }
