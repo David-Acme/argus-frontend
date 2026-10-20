@@ -42,6 +42,24 @@ describe('creating an invitation', () => {
     expect(discarded).toEqual([9]);
   });
 
+  test('a close after the server answered but before the QR is ready still revokes it', async () => {
+    const discarded: number[] = [];
+    const flight = createInvitationFlight<Created>((created) => discarded.push(created.id));
+    const server = deferred();
+    const pairing = deferred();
+    const pending = flight.run(async () => {
+      const created = await server.promise;
+      await pairing.promise;
+      return created;
+    });
+    server.resolve({ id: 5 });
+    await Promise.resolve();
+    flight.abandon();
+    pairing.resolve(null);
+    expect(await pending).toBeNull();
+    expect(discarded).toEqual([5]);
+  });
+
   test('closing an idle dialog does not spoil the next creation', async () => {
     const discarded: number[] = [];
     const flight = createInvitationFlight<Created>((created) => discarded.push(created.id));

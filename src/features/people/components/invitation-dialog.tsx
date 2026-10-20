@@ -1,7 +1,7 @@
 import type { IInviteCreated } from '@/core/interfaces';
 import { inviteService } from '@/core/services/invite';
 import { netService } from '@/core/services/net';
-import type { InviteRole } from '@/core/types';
+import type { InviteRole, NetPairedInstance } from '@/core/types';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
 import { Button } from '@/shared/components/ui/button';
@@ -20,6 +20,8 @@ import { View } from 'react-native';
 import { type InvitationDialogProps, inviteRoleOptions } from '@/features/people/components/user-options';
 import { createInvitationFlight } from '@/features/people/model/invitation-flight';
 
+type ReadyInvitation = { created: IInviteCreated; instance: NetPairedInstance | null };
+
 export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: InvitationDialogProps) {
   const { t } = useTranslation();
   const [role, setRole] = useState<InviteRole>('resident');
@@ -34,12 +36,12 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
   );
   const roles = useMemo(() => inviteRoleOptions(t, moduleOff), [moduleOff, t]);
   const [flight] = useState(() =>
-    createInvitationFlight<IInviteCreated>((created) => void inviteService.revoke(created.id))
+    createInvitationFlight<ReadyInvitation>(({ created }) => void inviteService.revoke(created.id))
   );
 
-  const requestInvitation = useCallback(async (): Promise<IInviteCreated | null> => {
+  const requestInvitation = useCallback(async (): Promise<ReadyInvitation | null> => {
     const answer = await inviteService.create({ role });
-    if (answer.ok && answer.info) return answer.info;
+    if (answer.ok && answer.info) return { created: answer.info, instance: await netService.instance() };
     if (answer.errors?.code === 'ROLE_INACTIVE') {
       toast.error(
         t('screens.users.invite-role-off-title'),
@@ -62,10 +64,10 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
   const create = useCallback(async () => {
     if (flight.busy()) return;
     setSaving(true);
-    const created = await flight.run(requestInvitation);
+    const ready = await flight.run(requestInvitation);
     setSaving(false);
-    if (!created) return;
-    const instance = await netService.instance();
+    if (!ready) return;
+    const { created, instance } = ready;
     if (!instance) {
       void inviteService.revoke(created.id);
       toast.error(t('common.errors.pairing-required'));
