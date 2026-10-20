@@ -80,7 +80,7 @@ describe('the uninstall dialog the e2e drives', () => {
     expect(dialog).toContain("t('screens.modules.uninstall.data-title', { name })");
     expect(dialog).toContain("t('screens.modules.uninstall.data-description')");
     expect(dialog).toMatch(
-      /\{impact \? \(\s*<ImpactSummary\s*impact=\{impact\}\s*moduleName=\{name\}\s*uninstall\s*choices=\{choices\}\s*onChoose=/
+      /\{impact \? \(\s*<ImpactSummary\s*impact=\{impact\}\s*moduleName=\{name\}\s*uninstall\s*purging=\{purging\}\s*choices=\{choices\}\s*onChoose=/
     );
     expect(dialog).toContain(
       "{target?.owners ? t('screens.modules.uninstall.holds') : t('screens.modules.uninstall.data-unknown')}"
