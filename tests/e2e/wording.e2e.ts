@@ -2,8 +2,6 @@ import { connected, routes } from './support/harness';
 import { expect, openFirst, test } from './support/devices';
 import { unpairedDevice } from './support/seed';
 
-const now = Math.floor(Date.now() / 1000);
-
 test('pairing on a computer speaks of the computer, never of scanning or a phone', async ({ app, browser, screen }) => {
   const escapes = await openFirst(browser, app, unpairedDevice('A'));
   await app.open('/welcome/pairing');
@@ -16,6 +14,7 @@ test('pairing on a computer speaks of the computer, never of scanning or a phone
 
 test('a paused camera conversation counts down in minutes, not raw seconds', async ({ app, browser, screen }) => {
   const baseUrl = app.baseUrl ?? '';
+  const now = Math.floor(Date.now() / 1000);
   await routes(baseUrl, [
     {
       method: 'GET',
