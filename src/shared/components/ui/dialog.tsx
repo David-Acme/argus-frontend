@@ -1,5 +1,6 @@
 import { Icon } from '@/shared/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import { IS_IOS, IS_NATIVE, IS_WEB } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 import { dialogIn, dialogOut, overlayIn, overlayOut } from '@/shared/libs/animations';
@@ -84,6 +85,7 @@ function DialogContent({
   dismissible?: boolean;
   closeLabel?: string;
 }) {
+  const { open, onOpenChange } = DialogPrimitive.useRootContext();
   const escape: typeof onEscapeKeyDown = (event) => {
     onEscapeKeyDown?.(event);
     if (!dismissible) event.preventDefault();
@@ -91,6 +93,8 @@ function DialogContent({
   const outside: ComponentProps<typeof DialogPrimitive.Content>['onInteractOutside'] = (event) => {
     if (!dismissible) event.preventDefault();
   };
+
+  useOverlayBack(open, dismissible, () => onOpenChange(false));
 
   return (
     <DialogPortal hostName={portalHost}>

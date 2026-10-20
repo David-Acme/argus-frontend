@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/shared/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import { Text } from '@/shared/components/ui/text';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import {
   IS_IOS,
   IS_NATIVE,
@@ -136,6 +137,8 @@ function SheetContent({
   const close = () => {
     onOpenChange(false);
   };
+
+  useOverlayBack(open, dismissible, close);
 
   const endDrag = (velocityY: number) => {
     'worklet';
