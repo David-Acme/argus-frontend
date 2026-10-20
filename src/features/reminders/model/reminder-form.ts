@@ -1,11 +1,14 @@
 import type { IOccurrenceChange, IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
+import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import {
   currentOccurrence,
+  repeatChoiceOf,
   isRecurrenceIntervalDraft,
   keepingMonthDay,
   repeatDraftOf,
   ruleOfRepeat,
   sameRepeat,
+  type RepeatChoice,
   type RepeatDraft,
 } from '@/features/reminders/model/reminder-repeat';
 
@@ -18,6 +21,31 @@ export type ReminderDraft = {
   at: number;
   repeat?: RepeatDraft;
 };
+
+export type ReminderFormValues = {
+  title: string;
+  description: string;
+  time: string;
+  day: number;
+  repeat: RepeatChoice;
+  interval: string;
+};
+
+export function reminderFormValues(
+  row: Pick<IReminderCacheRow, 'title' | 'description' | 'scheduledAt' | 'recurrenceRule'>,
+  date: Pick<DateFormatter, 'formatInputTime' | 'startOfDay'>
+): ReminderFormValues {
+  const at = new Date(row.scheduledAt);
+  const saved = repeatDraftOf(row.recurrenceRule);
+  return {
+    title: row.title,
+    description: row.description,
+    time: date.formatInputTime(at),
+    day: date.startOfDay(at).getTime(),
+    repeat: repeatChoiceOf(saved),
+    interval: String(saved.interval),
+  };
+}
 
 export type DraftIssue = 'title-required' | 'title-long' | 'description-long' | 'time-invalid' | 'interval-invalid';
 

@@ -11,6 +11,7 @@ import {
   draftOf,
   isEmptyUpdate,
   occurrenceMoveBody,
+  reminderFormValues,
   updateBody,
 } from '@/features/reminders/model/reminder-form';
 import { REMINDER_LENSES, byScheduled } from '@/features/reminders/model/reminder-optimistic';
@@ -116,6 +117,21 @@ describe('reminder rows', () => {
 });
 
 describe('reminder form', () => {
+  test('the edit form opens on the reminder own day and time, not on today', () => {
+    const tomorrowNine = new Date(2026, 9, 21, 9, 0).getTime();
+    const values = reminderFormValues(row({ title: 'comprar pan', scheduledAt: tomorrowNine }), date);
+    expect(values.day).toBe(new Date(2026, 9, 21).getTime());
+    expect(values.time).toBe('09:00');
+    expect(values.repeat).toBe('none');
+    expect(date.atInputTime(new Date(values.day), values.time).getTime()).toBe(tomorrowNine);
+  });
+
+  test('the edit form opens a repeating reminder on its rule', () => {
+    const values = reminderFormValues(row({ recurrenceRule: 'FREQ=WEEKLY;INTERVAL=2' }), date);
+    expect(values.repeat).toBe('WEEKLY');
+    expect(values.interval).toBe('2');
+  });
+
   test('a draft needs a title of at most 200 characters, notes of at most 2000 and a time', () => {
     expect(draftIssues({ title: ' ', description: '', at: NOW })).toEqual(['title-required']);
     expect(draftIssues({ title: 'x'.repeat(201), description: '', at: NOW })).toEqual(['title-long']);

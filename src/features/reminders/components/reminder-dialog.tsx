@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
 import { z } from 'zod';
@@ -35,14 +35,13 @@ import {
   occurrenceMoveBody,
   REMINDER_DESCRIPTION_MAX,
   REMINDER_TITLE_MAX,
+  reminderFormValues,
   updateBody,
 } from '@/features/reminders/model/reminder-form';
 import { reminderWhen } from '@/features/reminders/model/reminder-rows';
 import {
   isIntervalText,
   REPEAT_CHOICES,
-  repeatChoiceOf,
-  repeatDraftOf,
   repeatFromChoice,
   repeatsOf,
   type RepeatChoice,
@@ -92,33 +91,11 @@ export function ReminderDialog({ open, onOpenChange, reminder, scope = 'series' 
 
   const form = useForm<ReminderValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      title: '',
-      description: '',
-      time: date.defaultInputTime(new Date()),
-      day: date.startOfDay(new Date()).getTime(),
-      repeat: 'none',
-      interval: '1',
-    },
+    defaultValues: reminderFormValues(reminder, date),
     mode: 'onBlur',
   });
 
-  useEffect(() => {
-    if (!open) return;
-    const at = new Date(reminder.scheduledAt);
-    const saved = repeatDraftOf(reminder.recurrenceRule);
-    form.reset({
-      title: reminder.title,
-      description: reminder.description,
-      time: date.formatInputTime(at),
-      day: date.startOfDay(at).getTime(),
-      repeat: repeatChoiceOf(saved),
-      interval: String(saved.interval),
-    });
-  }, [date, form, open, reminder]);
-
   const single = scope === 'occurrence';
-  const day = useWatch({ control: form.control, name: 'day' });
   const repeat = useWatch({ control: form.control, name: 'repeat' });
   const repeatOptions: MenuOption<RepeatChoice>[] = REPEAT_CHOICES.map((choice) => ({
     value: choice,
@@ -223,13 +200,19 @@ export function ReminderDialog({ open, onOpenChange, reminder, scope = 'series' 
               />
             )}
 
-            <FormItem>
-              <FormLabel>{t('screens.reminders.day')}</FormLabel>
-              <DayPickerField
-                value={new Date(day)}
-                onChange={(next) => form.setValue('day', date.startOfDay(next).getTime())}
-              />
-            </FormItem>
+            <FormField
+              control={form.control}
+              name="day"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('screens.reminders.day')}</FormLabel>
+                  <DayPickerField
+                    value={new Date(field.value)}
+                    onChange={(next) => field.onChange(date.startOfDay(next).getTime())}
+                  />
+                </FormItem>
+              )}
+            />
 
             <FormTextField
               control={form.control}
