@@ -98,15 +98,16 @@ export function useSessions({ enabled = true }: UseSessionsOptions = {}) {
   }, [overview.others, settle, t]);
 
   const closeAll = useCallback(async () => {
+    const accepted = await confirm({
+      title: t('screens.sessions.confirm-all-title'),
+      description: t('screens.sessions.confirm-all-description'),
+      confirmLabel: t('screens.sessions.sign-out-everywhere'),
+      intent: 'danger',
+    });
+    if (!accepted) return;
     setBusy('all');
     try {
       await runServiceAction({
-        confirm: {
-          title: t('screens.sessions.confirm-all-title'),
-          description: t('screens.sessions.confirm-all-description'),
-          confirmLabel: t('screens.sessions.sign-out-everywhere'),
-          intent: 'danger',
-        },
         call: () => sessionsService.revokeAll(),
         errorTitle: t('screens.sessions.close-error'),
       });

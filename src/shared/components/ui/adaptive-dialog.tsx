@@ -95,7 +95,7 @@ export function AdaptiveDialog({
               {children}
             </OverlayBody>
           ) : null}
-          {footer ? <View className="flex-row justify-end gap-2 pt-1">{footer}</View> : null}
+          {footer ? <View className="flex-row flex-wrap justify-end gap-2 pt-1">{footer}</View> : null}
         </SheetContent>
       </Sheet>
     );

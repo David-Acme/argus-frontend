@@ -5147,3 +5147,9 @@ minutes without evidence.
     the user (wiped with the projection), and Inicio's reminders say "Tus
     recordatorios aún no llegan" with Reintentar until then, instead of "No
     tienes nada pendiente". `tests/e2e/failures.e2e.ts`.
+- **"Cerrar sesión en todos los dispositivos" waits for the answer.** It
+  set its spinner before asking; it now asks first (`confirm`) and is busy
+  only once accepted, like "Cerrar las demás sesiones". The sheet's action
+  row wraps (`flex-wrap`), so a long confirm label moves to its own line
+  instead of pushing Cancelar off a phone screen.
+  `tests/e2e/confirm-sheet.e2e.ts`.
