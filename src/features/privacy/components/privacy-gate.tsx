@@ -5,15 +5,19 @@ import { authService } from '@/core/services/auth.service';
 import type { PrivacyChoices } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { confirm } from '@/shared/libs/confirm';
+import { Button } from '@/shared/components/ui/button';
+import { EmptyState } from '@/shared/components/ui/empty-state';
+import { Text } from '@/shared/components/ui/text';
 import { ConsentForm } from '@/features/privacy/components/consent-form';
 import { usePrivacy } from '@/features/privacy/hooks/use-privacy';
 import { usePrivacySignals } from '@/features/privacy/hooks/use-privacy-signals';
-import { consentDraft, needsConsent, NO_CHOICES } from '@/features/privacy/model/privacy';
+import { consentDraft, NO_CHOICES, privacyGateState } from '@/features/privacy/model/privacy';
 
 export function PrivacyGate({ children }: PropsWithChildren) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { me, decide } = usePrivacy();
+  const { me, status, decide, reload } = usePrivacy();
+  const gate = privacyGateState(status, me);
   const signals = usePrivacySignals(me?.applicable);
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,7 +38,26 @@ export function PrivacyGate({ children }: PropsWithChildren) {
     if (leave) await authService.logout();
   };
 
-  if (!me || !needsConsent(me)) return children;
+  if (gate === 'open') return children;
+
+  if (gate !== 'consent' || !me) {
+    return (
+      <View className="bg-background flex-1 px-4" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        <EmptyState
+          icon="shield-check"
+          title={t(gate === 'failed' ? 'screens.privacy.gate.failed' : 'screens.privacy.gate.checking')}
+          hint={gate === 'failed' ? t('screens.privacy.gate.failed-hint') : undefined}
+          action={
+            gate === 'failed' ? (
+              <Button onPress={() => void reload()}>
+                <Text>{t('common.retry')}</Text>
+              </Button>
+            ) : undefined
+          }
+        />
+      </View>
+    );
+  }
 
   return (
     <View className="bg-background flex-1">

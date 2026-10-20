@@ -17,6 +17,7 @@ import { SYNC_TABLE_KEYS } from '@/core/types';
 import type { IAuditLogEntry, IInitialInfo, ISocketEmitDto } from '@/core/interfaces';
 import { AuditLogPager } from './audit-log-pager';
 import { parseAuthContext } from './auth-context';
+import { resourceSignal } from './resource-signal';
 import { contextRoleChange } from './context-role-change';
 import { GRANT_TABLES } from './grant-scope';
 import { GrantScopePager } from './grant-scope-pager';
@@ -493,6 +494,7 @@ class SynchronizeService {
       await destroyAllRows(SYNC_TABLE_KEYS);
       if (!this.epoch.isCurrent(epoch)) return;
       viewCacheService.clear(ACCESS_CACHE_KEYS);
+      resourceSignal.reconnected();
       await this.startSync();
     })()
       .catch((error: unknown) => {

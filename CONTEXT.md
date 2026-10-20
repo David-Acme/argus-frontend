@@ -5090,3 +5090,20 @@ minutes without evidence.
   phone sat at home with Wi-Fi off. It now reads "No encuentro a Argus · No
   responde en esta red y el acceso remoto no está disponible…" (EN "I can’t
   find Argus").
+
+## Web UI map fixes (2026-10-20)
+
+- **No answer is lost while the session starts, and the privacy gate fails
+  closed.** A fresh device always meets an `InitialInfo` its projection was
+  not built for, so the sync engine wipes and bootstraps
+  (`startContextResync`), and that wipe cleared every view-cache value but
+  the access keys, including the remote resources (`privacy.me`, guard
+  environments, the camera overview) a fast server had already answered.
+  Nothing asked again until a focus change or a reconnect, so Home showed
+  0 detections and `PrivacyGate`, which opened whenever `me` was null, let
+  the person in without consent. The wipe now tells every mounted
+  `useRemoteResource` to reload (`resourceSignal.reconnected()`), and the
+  gate reads `privacyGateState(status, me)`: unknown is "Comprobando tu
+  privacidad…", a failed read is an error with Reintentar, and only a known
+  decision opens the app. The fake e2e backend answers `GET /privacy/me`
+  with a current decision by default. `tests/e2e/startup-race.e2e.ts`.

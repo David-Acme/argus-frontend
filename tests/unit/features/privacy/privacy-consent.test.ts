@@ -20,6 +20,7 @@ import {
   decisionOf,
   effectiveOf,
   needsConsent,
+  privacyGateState,
   withChoice,
 } from '@/features/privacy/model/privacy';
 
@@ -210,5 +211,19 @@ describe('what the owner is asked after choosing modules', () => {
   test('a module with no signals asks nothing and a removal in progress is not a choice', () => {
     expect(signalsToAsk(catalog({ id: 'productivity', enabled: true }))).toEqual([]);
     expect(signalsToAsk(catalog({ id: 'surveillance', job: { ...installing, kind: 'uninstall' } }))).toEqual([]);
+  });
+});
+
+describe('the privacy gate fails closed', () => {
+  test('an unknown consent state keeps the app closed until it is known', () => {
+    expect(privacyGateState('loading', null)).toBe('checking');
+    expect(privacyGateState('idle', null)).toBe('checking');
+    expect(privacyGateState('failed', null)).toBe('failed');
+  });
+
+  test('a known state opens the app or asks for consent', () => {
+    expect(privacyGateState('ready', undecided)).toBe('consent');
+    expect(privacyGateState('failed', undecided)).toBe('consent');
+    expect(privacyGateState('ready', { ...undecided, decided: true, current: true, noticeVersion: 99 })).toBe('open');
   });
 });

@@ -60,6 +60,18 @@ export const ownerContext = (enabled: Readonly<Record<string, boolean>> = {}) =>
   version: 1,
 });
 
+const consentGiven = {
+  decided: true,
+  noticeVersion: 2,
+  current: true,
+  decidedAt: 1790000000,
+  updatedAt: 1790000000,
+  choices: { presence: true, faceCameras: true, voiceLearning: true, cameraAudio: false },
+  effective: { presence: true, faceCameras: true, voiceLearning: true, cameraAudio: false },
+  currentNoticeVersion: 2,
+  household: { presence: true, faceCameras: true, voiceLearning: true, cameraAudio: true },
+};
+
 const envelope = (status: number, info: unknown, errors: unknown = null): Response =>
   Response.json({ status, info, errors }, { status });
 
@@ -229,6 +241,7 @@ export class FakeArgus {
       this.routes.get(this.key(method, bare));
     if (spec) return this.answer(spec);
     if (method === 'POST' && path === '/project') return this.createProject(body);
+    if (method === 'GET' && bare === '/privacy/me') return envelope(200, consentGiven);
     if (method === 'GET' && bare === '/modules') return envelope(200, { modules: ownerContext(this.enabled).modules });
     return envelope(404, null, { code: 'ROUTE_NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
   }

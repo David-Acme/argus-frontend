@@ -58,6 +58,13 @@ export function decisionOf(choices: PrivacyChoices): PrivacyDecision {
   return { noticeVersion: PRIVACY_NOTICE_VERSION, ...choices };
 }
 
+export type PrivacyGateState = 'open' | 'consent' | 'checking' | 'failed';
+
+export function privacyGateState(status: 'idle' | 'loading' | 'ready' | 'failed', me: PrivacyMe | null): PrivacyGateState {
+  if (me) return needsConsent(me) ? 'consent' : 'open';
+  return status === 'failed' ? 'failed' : 'checking';
+}
+
 export function needsConsent(me: PrivacyMe | null): boolean {
   if (!me) return false;
   return !me.decided || !me.current || me.noticeVersion < PRIVACY_NOTICE_VERSION;

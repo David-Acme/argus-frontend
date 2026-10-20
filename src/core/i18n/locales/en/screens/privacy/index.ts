@@ -13,6 +13,11 @@ export const privacy = {
     loading: 'One moment…',
     'save-failed': 'Your choices could not be saved. You can do it later from your profile.',
   },
+  gate: {
+    checking: 'Checking your privacy…',
+    failed: 'I couldn’t check your privacy',
+    'failed-hint': 'Argus stays closed until it knows what you allowed. Try again when you are connected.',
+  },
   consent: {
     eyebrow: 'Before you start',
     title: 'Your privacy, your call',
