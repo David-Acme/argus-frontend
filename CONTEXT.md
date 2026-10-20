@@ -4931,6 +4931,11 @@ The Inicio entry "Hablar con Argus" follows the same choice: voice opens
   withheld words. App actions (`voice:action`) run through the call bridge
   with the voice ones and answer `voice:action_result`; a camera opens as a
   screen, since there is no call surface.
+- **Context.** The call bridge sends an open chat session the same
+  `voice:context` frames a call gets (camera names, the household situation,
+  camera events), behind the same capability checks; a live call takes them
+  when both exist (`model/context-target.ts`), and a chat session that opens
+  again after a drop receives them again.
 - **The client** is `features/voice/services/chat` (`AssistantChat`, its
   transport, socket and clock injected; tested in
   `tests/unit/features/voice/assistant-chat.test.ts`). The session opens on

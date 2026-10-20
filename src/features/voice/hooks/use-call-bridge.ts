@@ -1,12 +1,19 @@
 import { usePathname, useRouter } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import type { ICameraCacheRow, INotificationPreviewCacheRow } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import { voiceService } from '@/features/voice/services/voice';
 import { assistantChat } from '@/features/voice/services/chat';
 import { useAuthStore } from '@/core/stores';
-import type { CalendarEntry, GuardEnvironment, GuardMode, VoiceAction, VoiceActionOutcome } from '@/core/types';
+import type {
+  CalendarEntry,
+  GuardEnvironment,
+  GuardMode,
+  VoiceAction,
+  VoiceActionOutcome,
+  VoiceContext,
+} from '@/core/types';
 import { CAPABILITY, GUARD_MODES, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { serviceErrorKey } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
@@ -27,9 +34,14 @@ import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities'
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 import { matchEnvironment } from '@/features/security';
+import { contextTarget } from '@/features/voice/model/context-target';
 
 const RECENT_NOTIFICATIONS = 5;
 const CALL_ROUTE = '/call';
+
+const subscribeChat = (listener: () => void): (() => void) => assistantChat.subscribe(listener);
+
+const chatOpenNow = (): boolean => assistantChat.snapshot.open;
 
 const isGuardMode = (mode: unknown): mode is GuardMode =>
   typeof mode === 'string' && (GUARD_MODES as readonly string[]).includes(mode);
@@ -47,6 +59,8 @@ export function useCallBridge(): void {
   const readsAgenda = has(CAPABILITY.agendaRead);
   const accessRef = useRef(view);
   const { isActive } = useVoiceSession();
+  const chatOpen = useSyncExternalStore(subscribeChat, chatOpenNow, chatOpenNow);
+  const target = contextTarget({ voiceActive: isActive, chatOpen });
   const lastEventCamera = useRef<string | null>(null);
   const onCallScreen = useRef(pathname === CALL_ROUTE);
 
@@ -59,13 +73,15 @@ export function useCallBridge(): void {
   }, [view]);
 
   useEffect(() => {
-    if (!isActive || !user) return;
+    if (target === null || !user) return;
+    const sendContext = (context: VoiceContext) =>
+      target === 'voice' ? voiceService.sendContext(context) : assistantChat.sendContext(context);
     const cameras = () =>
       watchesCameras ? viewCacheService.read<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList) : [];
     const sendCameras = () => {
       if (!watchesCameras) return;
       const names = cameras().map((camera) => camera.name);
-      voiceService.sendContext({
+      sendContext({
         kind: 'note',
         text:
           names.length > 0
@@ -103,7 +119,7 @@ export function useCallBridge(): void {
       });
       if (text === lastSituation) return;
       lastSituation = text;
-      voiceService.sendContext({ kind: 'situation', text });
+      sendContext({ kind: 'situation', text });
     };
 
     const scheduleSituation = () => {
@@ -130,7 +146,7 @@ export function useCallBridge(): void {
         });
         const what =
           event.guardCopy ?? (classes.length > 0 ? classes.join(', ') : t('screens.voice.objects.something-moving'));
-        voiceService.sendContext({ kind: 'cameraEvent', camera: event.camera, text: what });
+        sendContext({ kind: 'cameraEvent', camera: event.camera, text: what });
         events.push({ camera: event.camera, what: event.guardCopy ? row.title : what, at: Date.now() });
         if (events.length > CALL_SITUATION_EVENTS) events.shift();
         changed = true;
@@ -165,7 +181,7 @@ export function useCallBridge(): void {
       if (timer !== null) clearTimeout(timer);
       for (const unsubscribe of unsubscribers) unsubscribe();
     };
-  }, [isActive, user, t, tk, watchesCameras, readsGuard, readsAgenda]);
+  }, [target, user, t, tk, watchesCameras, readsGuard, readsAgenda]);
 
   useEffect(() => {
     if (!user) return;

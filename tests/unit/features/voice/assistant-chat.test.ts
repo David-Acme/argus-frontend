@@ -8,6 +8,7 @@ import {
   chatMessageOf,
 } from '@/features/voice/services/chat/assistant-chat';
 import { uuidFromBytes } from '@/features/voice/services/chat/client-id';
+import { contextTarget } from '@/features/voice/model/context-target';
 import { AssistantSocket } from '@/features/voice/services/voice/assistant-socket';
 import type { VoiceAction } from '@/core/types';
 
@@ -447,5 +448,48 @@ describe('one assistant stream per socket', () => {
     owner.claim('chat');
     expect(owner.owner).toBe('chat');
     expect(claims).toEqual(['voice', 'chat']);
+  });
+});
+
+describe('the context a chat session receives', () => {
+  test('the camera names and the situation go to an open chat session as voice:context', async () => {
+    chat.sendContext({ kind: 'note', text: 'Cámaras: Entrada' });
+    expect(transport.sent).toEqual([]);
+    chat.send('hola');
+    await settle();
+    chat.sendContext({ kind: 'note', text: 'Cámaras: Entrada' });
+    chat.sendContext({ kind: 'situation', text: 'Modo: en casa' });
+    expect(transport.sent.slice(-2)).toEqual([
+      { type: 'voice:context', payload: { kind: 'note', text: 'Cámaras: Entrada' } },
+      { type: 'voice:context', payload: { kind: 'situation', text: 'Modo: en casa' } },
+    ]);
+  });
+
+  test('a session a call took over receives no context', async () => {
+    chat.send('hola');
+    await settle();
+    socket.claim('voice');
+    const before = transport.sent.length;
+    chat.sendContext({ kind: 'note', text: 'x' });
+    expect(transport.sent.length).toBe(before);
+  });
+
+  test('a live call takes the context, an open chat session otherwise, and nothing gets it when neither runs', () => {
+    expect(contextTarget({ voiceActive: true, chatOpen: true })).toBe('voice');
+    expect(contextTarget({ voiceActive: false, chatOpen: true })).toBe('chat');
+    expect(contextTarget({ voiceActive: false, chatOpen: false })).toBeNull();
+  });
+
+  test('the bridge sends the same notes to the chat session behind the same capability checks', () => {
+    const bridge = readFileSync(
+      join(import.meta.dir, '../../../../src/features/voice/hooks/use-call-bridge.ts'),
+      'utf8'
+    );
+    expect(bridge).toContain('const target = contextTarget({ voiceActive: isActive, chatOpen });');
+    expect(bridge).toContain(
+      "target === 'voice' ? voiceService.sendContext(context) : assistantChat.sendContext(context);"
+    );
+    expect(bridge).toContain('if (!watchesCameras) return;');
+    expect(bridge).not.toMatch(/voiceService\.sendContext\(\{/);
   });
 });

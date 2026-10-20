@@ -3,6 +3,7 @@ import type {
   AssistantChatSnapshot,
   VoiceAction,
   VoiceActionOutcome,
+  VoiceContext,
 } from '@/core/types';
 import {
   ASSISTANT_CHAT_ENTRIES_KEPT,
@@ -11,6 +12,7 @@ import {
   VOICE_ACTION_RESULT_TYPE,
   VOICE_ACTION_TYPE,
   VOICE_ASSISTANT_TYPE,
+  VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_MODE_CHAT,
   VOICE_PREVIOUS_CALL_GRACE_MS,
@@ -202,6 +204,11 @@ export class AssistantChat {
     if (next.length === this.entries.length) return;
     this.entries = next;
     this.notify();
+  }
+
+  sendContext(context: VoiceContext): void {
+    if (this.session !== 'open' || this.deps.socket.owner !== 'chat') return;
+    this.deps.transport.send(VOICE_CONTEXT_TYPE, context);
   }
 
   completeAction(id: string, outcome: VoiceActionOutcome): void {
