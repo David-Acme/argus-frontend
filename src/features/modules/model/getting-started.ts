@@ -39,7 +39,13 @@ export type ChecklistOptions = {
   chooseTitle: string;
   chooseHint: string;
   chooseRoute: string;
+  stepTitle?: (stepId: string) => string | null;
 };
+
+export function stepIdOf(itemId: string): string {
+  const separator = itemId.indexOf(':');
+  return separator < 0 ? itemId : itemId.slice(separator + 1);
+}
 
 export function checklistItems(
   catalog: ModuleCatalog | null,
@@ -66,10 +72,10 @@ export function checklistItems(
       module.gettingStarted.map((step) => ({
         id: step.id,
         moduleId: module.id,
-        title: step.title,
+        title: options.stepTitle?.(stepIdOf(step.id)) ?? step.title,
         hint: step.hint,
         route: step.route,
-        done: done.has(step.id),
+        done: done.has(step.id) || done.has(stepIdOf(step.id)),
       }))
     );
   const hidden = new Set(state.hidden);
@@ -89,7 +95,15 @@ export function markDone(state: ChecklistState, id: string): ChecklistState {
 
 export type ChecklistSignals = IChecklistSignalsCache;
 
-export const EMPTY_SIGNALS: ChecklistSignals = { cameras: 0, zones: 0, events: 0, projects: 0, people: 0, invitations: 0 };
+export const EMPTY_SIGNALS: ChecklistSignals = {
+  cameras: 0,
+  zones: 0,
+  events: 0,
+  projects: 0,
+  people: 0,
+  invitations: 0,
+  argusTalks: 0,
+};
 
 export function completedBySignals(signals: ChecklistSignals): ReadonlySet<string> {
   const done = new Set<string>();
@@ -98,6 +112,7 @@ export function completedBySignals(signals: ChecklistSignals): ReadonlySet<strin
   if (signals.events > 0) done.add('first-event');
   if (signals.projects > 0) done.add('first-project');
   if (signals.people > 1 || signals.invitations > 0) done.add('invite-people');
+  if ((signals.argusTalks ?? 0) > 0) done.add('meet-argus');
   return done;
 }
 

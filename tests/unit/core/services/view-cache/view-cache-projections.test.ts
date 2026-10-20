@@ -566,6 +566,7 @@ describe('getting-started signals', () => {
       projects: [1],
       people: [1, 2, 3],
       invitations: [],
+      conversations: [{ counterpartId: '0' }, { counterpartId: '4' }],
     });
     expect(valueOf(writes, VIEW_CACHE_KEYS.gettingStartedSignals)).toEqual({
       cameras: 2,
@@ -574,6 +575,7 @@ describe('getting-started signals', () => {
       projects: 1,
       people: 3,
       invitations: 0,
+      argusTalks: 1,
     });
   });
 
@@ -585,6 +587,7 @@ describe('getting-started signals', () => {
       projects: [],
       people: [],
       invitations: [],
+      conversations: [],
     });
     expect(valueOf(writes, VIEW_CACHE_KEYS.gettingStartedSignals)).toEqual({
       cameras: 0,
@@ -593,6 +596,7 @@ describe('getting-started signals', () => {
       projects: 0,
       people: 0,
       invitations: 0,
+      argusTalks: 0,
     });
   });
 });

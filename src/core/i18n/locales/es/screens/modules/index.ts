@@ -261,5 +261,26 @@ export const modules = {
     'mark-done': 'Marcar como hecho',
     'choose-title': 'Elige qué hará Argus',
     'choose-hint': 'Activa la vigilancia, la agenda y más desde tus módulos.',
+    steps: {
+      'meet-argus': 'Habla con Argus',
+      'invite-people': 'Invita a tu familia',
+      'add-camera': 'Agrega tu primera cámara',
+      'draw-zone': 'Dibuja una zona',
+      'guard-mode': 'Elige el modo del guardia',
+      'first-event': 'Crea tu primer evento',
+      'first-project': 'Empieza un proyecto',
+    },
+  },
+  catalog: {
+    core: {
+      name: 'Asistente y hogar',
+      summary: 'Tu cuenta, las personas de casa, avisos, privacidad y el asistente de voz. Siempre activo.',
+    },
+    surveillance: {
+      name: 'Vigilancia',
+      summary: 'Cámaras en vivo, zonas, detección de personas y el guardia que te avisa de lo importante.',
+    },
+    productivity: { name: 'Productividad', summary: 'Agenda, proyectos y tareas compartidas con tu familia.' },
+    agronomy: { name: 'Agronomía', summary: 'Cultivos, riego y clima de tu terreno. Muy pronto.' },
   },
 } as const;

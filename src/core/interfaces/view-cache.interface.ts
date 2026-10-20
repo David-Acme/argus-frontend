@@ -131,6 +131,7 @@ export interface IChecklistSignalsCache {
   projects: number;
   people: number;
   invitations: number;
+  argusTalks?: number;
 }
 
 export interface ICalendarEventCacheSource {

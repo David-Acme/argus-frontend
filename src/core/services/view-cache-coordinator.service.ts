@@ -134,6 +134,7 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           projects: sources.projects,
           people: sources.users,
           invitations: sources.invitations,
+          conversations: sources.conversations,
         }),
         project: projectGettingStarted,
       },

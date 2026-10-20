@@ -9,3 +9,4 @@ export { ModuleRequestButton } from './components/module-request-button';
 export { ModuleRequestsSection } from './components/module-requests-section';
 export { moduleIcon } from './model/module-text';
 export { useModuleCatalog } from './hooks/use-module-catalog';
+export { markGettingStartedStep } from './hooks/use-getting-started';

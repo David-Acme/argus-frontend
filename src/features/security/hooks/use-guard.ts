@@ -25,6 +25,8 @@ import { runServiceAction } from '@/shared/libs/service-action';
 import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
 import { cameraEnvironmentIndex, maskedInScope, withCameraIn, withMode } from '@/features/security/model/environments';
 import { askDisarmPin, safetyService } from '@/features/safety';
+import { markGettingStartedStep } from '@/features/modules';
+import { useAuthStore } from '@/core/stores';
 import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
 import { confirm } from '@/shared/libs/confirm';
 
@@ -46,6 +48,7 @@ const GUARD_EXPECTED_VISITS: readonly ResourceMatch[] = [{ domain: 'guard', scop
 const GUARD_EPISODES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'episodes' }];
 
 const EPISODE_END_AFTER = 8;
+const GUARD_MODE_STEP = 'guard-mode';
 
 const loadEnvironments = () => guardService.environments();
 const loadGuests = () => guardService.expectedGuests();
@@ -222,6 +225,8 @@ export function useGuard(owner: boolean, environmentId?: number) {
           : t('screens.security.environments.mode-saved-all', { mode: label }),
       });
       setPendingMode(null);
+      const userId = useAuthStore.getState().user?.id;
+      if (saved && userId != null) markGettingStartedStep(userId, GUARD_MODE_STEP);
       return saved;
     },
     [environments.data, mutateEnvironments]

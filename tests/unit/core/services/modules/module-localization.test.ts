@@ -16,13 +16,19 @@ describe('module texts in the app language', () => {
     expect(localizedModule(onlyEnglish, 'es').name).toBe('Surveillance');
   });
 
-  test('a module without per-language texts is left as it is', () => {
-    const module = moduleRecord({ name: 'Agronomía' });
+  test('a module the app does not know, without per-language texts, is left as it is', () => {
+    const module = moduleRecord({ id: 'garden', name: 'Jardín' });
     expect(localizedModule(module, 'en')).toBe(module);
   });
 
+  test('a module the app knows, sent in one language, reads in the app language', () => {
+    const module = moduleRecord({ id: 'agronomy', name: 'Agronomía', summary: 'Cultivos' });
+    expect(localizedModule(module, 'en').name).toBe('Agronomy');
+    expect(localizedModule(module, 'en').summary).toBe('Crops, irrigation and weather for your land. Coming soon.');
+  });
+
   test('a catalog keeps its identity while nothing changes', () => {
-    const catalog = { fetchedAt: 1, modules: [moduleRecord({ name: 'Agronomía' })] };
+    const catalog = { fetchedAt: 1, modules: [moduleRecord({ id: 'garden', name: 'Jardín' })] };
     expect(localizedCatalog(catalog, 'en')).toBe(catalog);
     expect(localizedCatalog(null, 'en')).toBeNull();
     const translated = localizedCatalog({ fetchedAt: 1, modules: [moduleRecord({ name: 'Vigilancia', texts })] }, 'en');
