@@ -167,7 +167,7 @@ describe('backend fixtures honour the app contracts', () => {
       for (const probe of answers) {
         const info = unmask(envelopeSchema.parse(probe.response.json).info);
         const read = schema.parse(info);
-        expect(read.applicable).toEqual({ presence: true, faceCameras: true, voiceLearning: true, cameraAudio: true });
+        expect(read.applicable).toEqual({ presence: true, faceCameras: true, voiceLearning: true, cameraAudio: true, location: true });
       }
     }
   });
