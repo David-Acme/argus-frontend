@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useRef } from 'react';
-import { ScrollView } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { useCallback, useMemo } from 'react';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { validCounterpartId } from '@/core/services/conversation';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
@@ -14,17 +14,12 @@ import type { AssistantMode } from '@/core/types';
 import { ASSISTANT_CALL_HREF, IS_NATIVE } from '@/shared/constants';
 import { useAssistantChat } from '@/features/voice';
 import { AssistantComposer } from '@/features/conversations/components/assistant-composer';
-import { TypingIndicator } from '@/features/conversations/components/typing-indicator';
+import { ThreadList } from '@/features/conversations/components/thread-list';
 import { useAssistantMode } from '@/features/conversations/hooks/use-assistant-mode';
 import { chatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
-import { ConversationDay } from '@/features/conversations/components/conversation-day';
 import { MessageComposer } from '@/features/conversations/components/message-composer';
 import { useConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
-import {
-  dayKindOf,
-  groupByDay,
-  replyBodies,
-} from '@/features/conversations/model/conversation-thread';
+import { dayKindOf, replyBodies } from '@/features/conversations/model/conversation-thread';
 
 type ThreadBodyProps = {
   counterpartId: number;
@@ -37,7 +32,7 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const now = useNow(60000);
-  const scroll = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
   const { messages, name, argus, clear, send } = useConversationThread(counterpartId);
   const assistant = useAssistantMode();
   const chat = useAssistantChat(argus && assistant.mode === 'chat');
@@ -52,10 +47,7 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
     [argus, chat.entries, messages]
   );
   const rows = overlay.rows;
-  const days = useMemo(
-    () => groupByDay(rows, (at) => date.startOfDay(new Date(at)).getTime()),
-    [date, rows]
-  );
+  const startOfDay = useCallback((at: number) => date.startOfDay(new Date(at)).getTime(), [date]);
   const bodies = useMemo(() => replyBodies(rows), [rows]);
   const emptyHint = !argus
     ? t('screens.conversations.empty-hint')
@@ -66,12 +58,15 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const todayStart = today.getTime();
   const yesterdayStart = date.addDays(today, -1).getTime();
 
-  const dayLabel = (day: number): string => {
-    const kind = dayKindOf(day, todayStart, yesterdayStart);
-    if (kind === 'today') return t('screens.conversations.today');
-    if (kind === 'yesterday') return t('screens.conversations.yesterday');
-    return date.formatFullDate(new Date(day));
-  };
+  const dayLabel = useCallback(
+    (day: number): string => {
+      const kind = dayKindOf(day, todayStart, yesterdayStart);
+      if (kind === 'today') return t('screens.conversations.today');
+      if (kind === 'yesterday') return t('screens.conversations.yesterday');
+      return date.formatFullDate(new Date(day));
+    },
+    [date, t, todayStart, yesterdayStart]
+  );
 
   const chooseMode = (mode: AssistantMode) => {
     assistant.choose(mode);
@@ -83,64 +78,55 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
   };
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <AppScreen
-        scrollable={false}
-        bottomNav={false}
-        header={
-          <ScreenHeader
-            title={name}
-            subtitle={t('screens.conversations.back')}
-            onBack={() => (router.canGoBack() ? router.back() : router.replace('/conversations'))}
-            action={
-              messages.length > 0 ? (
-                <AdaptiveMenu
-                  options={[
-                    {
-                      value: 'clear' as const,
-                      label: t('screens.conversations.clear'),
-                      icon: 'trash',
-                      destructive: true,
-                    },
-                  ]}
-                  onSelect={() => void onClear()}
-                  title={name}
-                  closeLabel={t('common.close')}
-                  trigger={
-                    <IconButton icon="more-horizontal" label={t('screens.conversations.actions')} />
-                  }
-                />
-              ) : null
-            }
-          />
-        }>
-        {rows.length === 0 ? (
-          <EmptyState
-            icon="messages-square"
-            title={t('screens.conversations.thread-empty')}
-            hint={emptyHint}
-          />
-        ) : (
-          <ScrollView
-            ref={scroll}
-            className="flex-1"
-            contentContainerClassName="gap-5 pb-2"
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}>
-            {days.map((group) => (
-              <ConversationDay
-                key={group.day}
-                label={dayLabel(group.day)}
-                messages={group.messages}
-                bodies={bodies}
-                marks={overlay.marks}
-                onRetry={chat.retry}
-                onDismiss={chat.dismiss}
+    <AppScreen
+      scrollable={false}
+      bottomNav={false}
+      header={
+        <ScreenHeader
+          title={name}
+          subtitle={t('screens.conversations.back')}
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/conversations'))}
+          action={
+            messages.length > 0 ? (
+              <AdaptiveMenu
+                options={[
+                  {
+                    value: 'clear' as const,
+                    label: t('screens.conversations.clear'),
+                    icon: 'trash',
+                    destructive: true,
+                  },
+                ]}
+                onSelect={() => void onClear()}
+                title={name}
+                closeLabel={t('common.close')}
+                trigger={
+                  <IconButton icon="more-horizontal" label={t('screens.conversations.actions')} />
+                }
               />
-            ))}
-            {overlay.typing ? <TypingIndicator /> : null}
-          </ScrollView>
-        )}
+            ) : null
+          }
+        />
+      }>
+      {rows.length === 0 ? (
+        <EmptyState
+          icon="messages-square"
+          title={t('screens.conversations.thread-empty')}
+          hint={emptyHint}
+        />
+      ) : (
+        <ThreadList
+          rows={rows}
+          startOfDay={startOfDay}
+          dayLabel={dayLabel}
+          typing={overlay.typing}
+          bodies={bodies}
+          marks={overlay.marks}
+          onRetry={chat.retry}
+          onDismiss={chat.dismiss}
+        />
+      )}
+      <KeyboardStickyView offset={{ closed: 0, opened: insets.bottom }}>
         {argus ? (
           <AssistantComposer
             name={name}
@@ -155,8 +141,8 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
         ) : (
           <MessageComposer name={name} argus={false} onSend={send} />
         )}
-      </AppScreen>
-    </KeyboardAvoidingView>
+      </KeyboardStickyView>
+    </AppScreen>
   );
 }
 

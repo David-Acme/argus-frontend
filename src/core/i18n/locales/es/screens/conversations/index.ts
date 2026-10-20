@@ -35,6 +35,11 @@ export const conversations = {
     phone: 'Desde el teléfono',
     laptop: 'Desde el portátil',
   },
+  latest: {
+    one: '1 mensaje nuevo',
+    many: '{count} mensajes nuevos',
+    go: 'Ir a lo más reciente',
+  },
   composer: {
     'relay-prompt': 'Díselo a Argus por voz: «dile a {name} que…»',
     'argus-prompt': 'Habla con Argus por voz',

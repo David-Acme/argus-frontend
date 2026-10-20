@@ -3,11 +3,6 @@ import type { ConversationDeliveryState, ConversationLeg } from '@/core/types';
 
 type MessageFacts = Pick<IConversationMessageCacheRow, 'direction' | 'kind' | 'state'>;
 
-export type ConversationDay = {
-  day: number;
-  messages: readonly IConversationMessageCacheRow[];
-};
-
 export type DayKind = 'today' | 'yesterday' | 'date';
 
 const DELIVERY_STATES: ReadonlySet<string> = new Set<ConversationDeliveryState>([
@@ -28,20 +23,6 @@ export function deliveryStateOf(message: MessageFacts): ConversationDeliveryStat
 
 export function legOf(message: Pick<IConversationMessageCacheRow, 'kind' | 'leg'>): ConversationLeg | null {
   return message.kind === 'turn' ? message.leg : null;
-}
-
-export function groupByDay(
-  messages: readonly IConversationMessageCacheRow[],
-  startOfDay: (at: number) => number
-): ConversationDay[] {
-  const days: { day: number; messages: IConversationMessageCacheRow[] }[] = [];
-  for (const message of messages) {
-    const day = startOfDay(message.createdAt);
-    const current = days[days.length - 1];
-    if (current && current.day === day) current.messages.push(message);
-    else days.push({ day, messages: [message] });
-  }
-  return days;
 }
 
 export function dayKindOf(day: number, today: number, yesterday: number): DayKind {

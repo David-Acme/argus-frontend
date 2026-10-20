@@ -35,6 +35,11 @@ export const conversations = {
     phone: 'From the phone',
     laptop: 'From the laptop',
   },
+  latest: {
+    one: '1 new message',
+    many: '{count} new messages',
+    go: 'Go to the latest',
+  },
   composer: {
     'relay-prompt': 'Tell Argus by voice: “tell {name} that…”',
     'argus-prompt': 'Talk to Argus by voice',

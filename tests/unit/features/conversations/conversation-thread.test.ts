@@ -19,7 +19,6 @@ import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
   dayKindOf,
   deliveryStateOf,
-  groupByDay,
   legOf,
   quoted,
   repliedBodyOf,
@@ -84,31 +83,6 @@ describe('legOf', () => {
     expect(legOf(message({ id: '1', kind: 'turn', leg: null }))).toBeNull();
     expect(legOf(message({ id: '1', kind: 'relay', leg: 'phone' }))).toBeNull();
     expect(LEG_KEYS.laptop).toBe('screens.conversations.leg.laptop');
-  });
-});
-
-describe('groupByDay', () => {
-  const startOfDay = (at: number) => at - (at % DAY);
-
-  test('consecutive messages of one day share a group, in order', () => {
-    const days = groupByDay(
-      [
-        message({ id: '1', createdAt: T0 }),
-        message({ id: '2', createdAt: T0 + 60_000 }),
-        message({ id: '3', createdAt: T0 + DAY }),
-        message({ id: '4', createdAt: T0 + DAY + 60_000 }),
-      ],
-      startOfDay
-    );
-    expect(days.map((day) => day.day)).toEqual([startOfDay(T0), startOfDay(T0 + DAY)]);
-    expect(days.map((day) => day.messages.map((entry) => entry.id))).toEqual([
-      ['1', '2'],
-      ['3', '4'],
-    ]);
-  });
-
-  test('no messages, no days', () => {
-    expect(groupByDay([], startOfDay)).toEqual([]);
   });
 });
 
