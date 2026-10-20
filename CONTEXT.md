@@ -5079,3 +5079,7 @@ minutes without evidence.
   verb of the first intent: a delete is titled from
   `common.change-failed.deleted.*` ("No se eliminó el evento", "No se
   revocó la invitación"), a create or update keeps "No se guardó …".
+- **A reopened parked alert stays open.** Reopening a parked refusal from
+  its header dot shows it `sticky`: no timer, it leaves only when the person
+  closes it (it parks again) or acts on it (Reintentar). The first showing
+  still closes on its own after `TOAST_ACTION_MS` and parks.

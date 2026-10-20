@@ -5,7 +5,7 @@ import { TOAST_ACTION_MS, TOAST_DEFAULT_MS, TOAST_MAX_VISIBLE } from '@/shared/c
 type ToastStoreState = {
   items: ToastItem[];
   parked: ToastItem[];
-  show: (intent: ToastIntent, title: string, description?: string, action?: ToastAction) => string;
+  show: (intent: ToastIntent, title: string, description?: string, action?: ToastAction, sticky?: boolean) => string;
   dismiss: (id: string) => void;
   act: (id: string) => void;
   reopenParked: (id: string) => void;
@@ -29,9 +29,10 @@ const closed = (state: ToastStoreState, id: string): Pick<ToastStoreState, 'item
 export const useToastStore = create<ToastStoreState>((set, get) => ({
   items: [],
   parked: [],
-  show: (intent, title, description, action) => {
+  show: (intent, title, description, action, sticky = false) => {
     const id = `toast-${++sequence}`;
-    const item: ToastItem = action ? { id, intent, title, description, action } : { id, intent, title, description };
+    const base: ToastItem = action ? { id, intent, title, description, action } : { id, intent, title, description };
+    const item: ToastItem = sticky ? { ...base, sticky } : base;
     set((state) => {
       const next = [...state.items, item];
       const overflow = next.slice(0, Math.max(0, next.length - TOAST_MAX_VISIBLE));
@@ -40,9 +41,11 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
         parked: [...state.parked, ...overflow.filter(parkable)],
       };
     });
-    setTimeout(() => {
-      set((state) => closed(state, id));
-    }, action ? TOAST_ACTION_MS : TOAST_DEFAULT_MS);
+    if (!sticky) {
+      setTimeout(() => {
+        set((state) => closed(state, id));
+      }, action ? TOAST_ACTION_MS : TOAST_DEFAULT_MS);
+    }
     return id;
   },
   dismiss: (id) => set((state) => closed(state, id)),
@@ -55,7 +58,7 @@ export const useToastStore = create<ToastStoreState>((set, get) => ({
     const item = get().parked.find((entry) => entry.id === id);
     if (!item) return;
     set((state) => ({ parked: state.parked.filter((entry) => entry.id !== id) }));
-    get().show(item.intent, item.title, item.description, item.action);
+    get().show(item.intent, item.title, item.description, item.action, true);
   },
   clear: () => set({ items: [] }),
   clearParked: () => set({ parked: [] }),

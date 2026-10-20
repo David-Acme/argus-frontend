@@ -11,4 +11,5 @@ export type ToastItem = {
   title: string;
   description?: string;
   action?: ToastAction;
+  sticky?: boolean;
 };

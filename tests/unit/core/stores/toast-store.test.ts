@@ -1,9 +1,41 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
+import { TOAST_ACTION_MS } from '@/shared/constants';
 import { useToastStore } from '@/core/stores/toast.store';
 
 describe('toast store', () => {
   beforeEach(() => {
     useToastStore.setState({ items: [], parked: [] });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('a reopened parked alert stays open until it is dismissed or acted on', () => {
+    jest.useFakeTimers();
+    const id = useToastStore.getState().show('error', 'No se eliminó el evento', undefined, {
+      label: 'Reintentar',
+      onPress: () => {},
+    });
+    jest.advanceTimersByTime(TOAST_ACTION_MS);
+    expect(useToastStore.getState().items).toHaveLength(0);
+    const parkedId = useToastStore.getState().parked[0]?.id ?? '';
+    expect(parkedId).toBe(id);
+    useToastStore.getState().reopenParked(parkedId);
+    jest.advanceTimersByTime(TOAST_ACTION_MS * 10);
+    const open = useToastStore.getState().items;
+    expect(open.map((item) => item.title)).toEqual(['No se eliminó el evento']);
+    useToastStore.getState().dismiss(open[0]?.id ?? '');
+    expect(useToastStore.getState().items).toHaveLength(0);
+    expect(useToastStore.getState().parked.map((item) => item.title)).toEqual(['No se eliminó el evento']);
+  });
+
+  test('a fresh alert still closes on its own and parks', () => {
+    jest.useFakeTimers();
+    useToastStore.getState().show('error', 'No se guardó', undefined, { label: 'Reintentar', onPress: () => {} });
+    jest.advanceTimersByTime(TOAST_ACTION_MS);
+    expect(useToastStore.getState().items).toHaveLength(0);
+    expect(useToastStore.getState().parked).toHaveLength(1);
   });
 
   test('an error toast with an action is parked when it is dismissed, so it can be reopened', () => {
