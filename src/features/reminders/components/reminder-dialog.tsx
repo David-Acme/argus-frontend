@@ -29,7 +29,6 @@ import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { formatRecurrenceRule, recurrenceLabel } from '@/shared/libs/recurrence';
-import type { OptimisticNotice } from '@/shared/libs/optimistic-action';
 import { DayPickerField } from '@/features/agenda';
 import {
   isEmptyUpdate,
@@ -56,7 +55,6 @@ type ReminderDialogProps = {
   onOpenChange: (open: boolean) => void;
   reminder: IReminderCacheRow;
   scope?: ReminderDialogScope;
-  occurrenceRefusal?: (result: IServiceResponse<unknown>) => OptimisticNotice | null;
 };
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -86,7 +84,7 @@ type ReminderValues = z.infer<typeof schema>;
 
 const NOTHING_TO_SAVE: IServiceResponse<unknown> = { status: 200, ok: true, info: null, errors: null };
 
-export function ReminderDialog({ open, onOpenChange, reminder, scope = 'series', occurrenceRefusal }: ReminderDialogProps) {
+export function ReminderDialog({ open, onOpenChange, reminder, scope = 'series' }: ReminderDialogProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const formScroll = useFormScroll();
@@ -161,7 +159,6 @@ export function ReminderDialog({ open, onOpenChange, reminder, scope = 'series',
             when: reminderWhen({ ...reminder, scheduledAt: at }, Date.now(), date, t),
           }),
           errorTitle: t('screens.reminders.occurrence-failed'),
-          refusalNotice: occurrenceRefusal,
         };
       }
       const body = updateBody(reminder, draftOf(values));

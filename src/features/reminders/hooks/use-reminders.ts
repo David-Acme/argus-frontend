@@ -12,12 +12,9 @@ import { zoneClock } from '@/shared/libs/recurrence';
 import { reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
 import { byScheduled, REMINDER_LENSES } from '@/features/reminders/model/reminder-optimistic';
 import { currentOccurrence, rolledSchedule, skippedSchedule } from '@/features/reminders/model/reminder-repeat';
-import { useSnoozedReminders } from '@/features/reminders/hooks/use-snoozed-reminders';
 import {
   isAlreadyDone,
-  isSnoozedOccurrenceRefusal,
   snoozeBodyOf,
-  snoozedAtOf,
   snoozeOptions,
   type SnoozeChoice,
   type SnoozeOption,
@@ -31,14 +28,6 @@ export function useReminders() {
   const cached = useViewCacheRows<IReminderCacheRow>(VIEW_CACHE_KEYS.reminderList);
   const { rows } = useOptimisticRows(cached, REMINDER_LENSES, byScheduled);
   const groups = useMemo(() => splitReminders(rows), [rows]);
-  const { isSnoozed, record } = useSnoozedReminders(rows);
-  const snoozedNotice = useCallback(
-    (result: Parameters<typeof isSnoozedOccurrenceRefusal>[0]) =>
-      isSnoozedOccurrenceRefusal(result)
-        ? { title: t('screens.reminders.snoozed-occurrence-title'), description: t('screens.reminders.snoozed-occurrence') }
-        : null,
-    [t]
-  );
 
   const complete = useCallback(
     (row: IReminderCacheRow, isCompleted: boolean) => {
@@ -64,10 +53,10 @@ export function useReminders() {
   );
 
   const snooze = useCallback(
-    async (row: IReminderCacheRow, choice: SnoozeChoice) => {
+    (row: IReminderCacheRow, choice: SnoozeChoice) => {
       const now = Date.now();
       const target = snoozeOptions({ row, now, clock }).find((option) => option.choice === choice)?.at ?? null;
-      const result = await runOptimistic({
+      return runOptimistic({
         intents:
           target === null
             ? []
@@ -83,11 +72,8 @@ export function useReminders() {
             : null,
         errorTitle: t('screens.reminders.snooze-failed'),
       });
-      const at = result?.ok ? (snoozedAtOf(result.info) ?? target) : null;
-      if (at !== null) record(row.id, at);
-      return result;
     },
-    [clock, date, record, t]
+    [clock, date, t]
   );
 
   const skipOccurrence = useCallback(
@@ -110,11 +96,10 @@ export function useReminders() {
             : t('screens.reminders.occurrence-skipped', {
                 when: reminderWhen({ ...row, scheduledAt: next }, now, date, t),
               }),
-        refusalNotice: snoozedNotice,
         errorTitle: t('screens.reminders.occurrence-failed'),
       });
     },
-    [clock, date, snoozedNotice, t]
+    [clock, date, t]
   );
 
   const stopRepeating = useCallback(
@@ -139,16 +124,5 @@ export function useReminders() {
     [t]
   );
 
-  return {
-    rows,
-    groups,
-    complete,
-    snooze,
-    snoozeOptionsOf,
-    skipOccurrence,
-    stopRepeating,
-    remove,
-    isSnoozed,
-    snoozedNotice,
-  };
+  return { rows, groups, complete, snooze, snoozeOptionsOf, skipOccurrence, stopRepeating, remove };
 }
