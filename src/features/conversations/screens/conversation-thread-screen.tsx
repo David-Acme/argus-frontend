@@ -1,51 +1,22 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { validCounterpartId } from '@/core/services/conversation';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
-import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
-import { Icon } from '@/shared/components/ui/icon';
 import { IconButton } from '@/shared/components/ui/icon-button';
-import { Text } from '@/shared/components/ui/text';
-import { CAPABILITY } from '@/shared/constants';
-import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ConversationDay } from '@/features/conversations/components/conversation-day';
+import { MessageComposer } from '@/features/conversations/components/message-composer';
 import { useConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
 import { dayKindOf, groupByDay, replyBodies } from '@/features/conversations/model/conversation-thread';
 
 type ThreadBodyProps = {
   counterpartId: number;
 };
-
-type ThreadHintProps = {
-  name: string;
-  argus: boolean;
-};
-
-function ThreadHint({ name, argus }: ThreadHintProps) {
-  const router = useRouter();
-  const { t } = useTranslation();
-  const { has } = useCapabilities();
-
-  return (
-    <View className="bg-surface-secondary mt-3 flex-row items-center gap-3 rounded-2xl px-4 py-3">
-      <Icon name="mic" className="text-foreground-secondary size-5" />
-      <Text variant="caption" className="text-foreground-secondary min-w-0 flex-1">
-        {argus ? t('screens.conversations.argus-hint') : t('screens.conversations.thread-hint', { name })}
-      </Text>
-      {has(CAPABILITY.assistantVoice) ? (
-        <Button size="sm" variant="outline" onPress={() => router.push('/call')}>
-          <Text>{t('screens.home.talk')}</Text>
-        </Button>
-      ) : null}
-    </View>
-  );
-}
 
 function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const router = useRouter();
@@ -114,7 +85,7 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
           ))}
         </ScrollView>
       )}
-      <ThreadHint name={name} argus={argus} />
+      <MessageComposer name={name} argus={argus} />
     </AppScreen>
   );
 }

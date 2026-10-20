@@ -10,7 +10,6 @@ export const conversations = {
   empty: 'No messages yet',
   'empty-hint': 'Tell Argus: “tell Ana that…” and it will pass it on.',
   'thread-empty': 'This conversation is empty',
-  'thread-hint': 'To write to them, tell Argus: “tell {name} that…”',
   'argus-hint': 'Talk to Argus by voice; what you say to each other stays here.',
   today: 'Today',
   yesterday: 'Yesterday',
@@ -35,5 +34,13 @@ export const conversations = {
     camera: 'Through the camera',
     phone: 'From the phone',
     laptop: 'From the laptop',
+  },
+  composer: {
+    'relay-prompt': 'Tell Argus by voice: “tell {name} that…”',
+    'argus-prompt': 'Talk to Argus by voice',
+    talk: 'Talk to Argus',
+    'opens-call': 'Opens the call with Argus',
+    'typing-soon': 'Typing from the app is not available yet: Argus carries your message and tells you when it arrives.',
+    'no-voice': 'To write to {name}, ask Argus by voice from a device with a microphone.',
   },
 } as const;

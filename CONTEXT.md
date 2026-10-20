@@ -4755,9 +4755,21 @@ outgoing message) and the thread (`ConversationThreadScreen`: messages grouped
 by day with Hoy/Ayer/date separators, outgoing bubbles on the right, the leg
 of a turn under it in micro text, the delivery state under each outgoing relay
 or reply, the quoted line a reply answers, a visitor notice marked as such).
-There is no composer: messages are sent by voice, so the thread ends in a hint
-("Para escribirle, díselo a Argus: «dile a David que…»") with the Hablar con
-Argus button when the person has `assistant.voice`.
+The thread ends in a composer (`MessageComposer`), but it does not type:
+messages are sent by voice, so its field reads "Díselo a Argus por voz:
+«dile a David que…»" and it and the microphone beside it open `/call`, with a
+line saying that typing from the app is not available yet. Without
+`assistant.voice` or a microphone on the device (`voiceCallSupported`) only
+that line shows (`composerMode`, tested in
+`tests/unit/features/conversations/message-composer.test.ts`). The backend has
+no app-facing route for a typed message (G1 checked argus-notification's
+`/conversation` routes, which read, mark read and clear, and argus-llm, whose
+`/llm/v1/chat` is the internal listener), and the app does not invent one. A
+typed composer needs, on argus-notification behind the usual chain, something
+like `POST /conversation/{counterpartId}/message {body}` → the new outgoing
+row, which hands the words to argus-llm's relay (`ConversationService.
+RelayMessage`) with the same consent, impersonation and delivery-state rules
+as a spoken message, and `messages.relay` as its capability.
 
 - Opening a thread marks its unread incoming rows read with
   `PATCH /conversation/{counterpartId}/read` (body `{}`) through
