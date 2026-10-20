@@ -10,7 +10,6 @@ export const conversations = {
   empty: 'Aún no hay mensajes',
   'empty-hint': 'Dile a Argus: «dile a Ana que…» y él se lo hará llegar.',
   'thread-empty': 'Esta conversación está vacía',
-  'thread-hint': 'Para escribirle, díselo a Argus: «dile a {name} que…»',
   'argus-hint': 'Habla con Argus por voz; lo que digan quedará aquí.',
   today: 'Hoy',
   yesterday: 'Ayer',
@@ -35,5 +34,13 @@ export const conversations = {
     camera: 'Por la cámara',
     phone: 'Desde el teléfono',
     laptop: 'Desde el portátil',
+  },
+  composer: {
+    'relay-prompt': 'Díselo a Argus por voz: «dile a {name} que…»',
+    'argus-prompt': 'Habla con Argus por voz',
+    talk: 'Hablar con Argus',
+    'opens-call': 'Abre la llamada con Argus',
+    'typing-soon': 'Todavía no se puede escribir desde la app: Argus le lleva tu mensaje y te dice si llegó.',
+    'no-voice': 'Para escribirle a {name}, pídeselo a Argus por voz desde un dispositivo que tenga micrófono.',
   },
 } as const;

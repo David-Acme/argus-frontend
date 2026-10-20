@@ -16,6 +16,8 @@ import { useCameraLiveStage } from '@/features/cameras/hooks/use-camera-live-sta
 import { useCameraAim, useViewerLease } from '@/features/cameras/hooks/use-camera-aim';
 import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
 import { CameraAimPanel } from '@/features/cameras/components/camera-aim-panel';
+import { CameraPatrolPanel } from '@/features/cameras/components/camera-patrol-panel';
+import { useCameraPatrol } from '@/features/cameras/hooks/use-camera-patrol';
 import { CameraSightBadge } from '@/features/cameras/components/camera-sight-badge';
 import { CameraSightStatus } from '@/features/cameras/components/camera-sight-status';
 import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
@@ -135,6 +137,8 @@ export default function CameraDetailScreen() {
   const aimable = features?.ptz === true;
   const aimControls = useCameraAim({ cameraId: id, synced: camera?.aim, enabled: aimable && cameraActions.watch });
   const reloadAim = aimControls.reload;
+  const patrolManaged = canUpdate && aimable && cameraActions.aim && features?.presets === true;
+  const patrolControls = useCameraPatrol({ cameraId: id, enabled: patrolManaged });
   const ptzAllowed = cameraActions.aim && aimable && camera?.isEnabled === true;
   useViewerLease(id, ptzAllowed && stage.showPad && stage.live, aimControls.apply);
 
@@ -481,6 +485,7 @@ export default function CameraDetailScreen() {
 
   const environment = <CameraEnvironmentPanel cameraId={camera.id} className={controllable ? undefined : stretch} />;
   const aimPanel = canUpdate && aimable ? <CameraAimPanel controls={aimControls} /> : null;
+  const patrolPanel = patrolManaged ? <CameraPatrolPanel controls={patrolControls} presets={presets} /> : null;
   const maintenancePanel = guardAccess.maintenance ? <MaintenancePanel cameraId={camera.id} /> : null;
   const zonesPanel = (
     <CameraZonesPanel
@@ -546,6 +551,7 @@ export default function CameraDetailScreen() {
                 {environment}
                 {maintenancePanel}
                 {aimPanel}
+                {patrolPanel}
                 {control}
               </View>
             </View>
@@ -566,6 +572,7 @@ export default function CameraDetailScreen() {
                 </View>
                 <View className="min-w-0 flex-1 gap-5">
                   {aimPanel}
+                  {patrolPanel}
                   {zonesPanel}
                 </View>
               </View>
@@ -582,6 +589,7 @@ export default function CameraDetailScreen() {
               {environment}
               {maintenancePanel}
               {aimPanel}
+              {patrolPanel}
               {control}
               {zonesPanel}
             </View>

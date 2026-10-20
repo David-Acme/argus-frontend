@@ -6,13 +6,14 @@ import { newIdempotencyKey } from '@/core/services/http';
 import { IS_WEB } from '@/shared/constants';
 import type { useFormScroll } from '@/shared/components/ui/form';
 import type { OptimisticIntentInput } from '@/shared/libs/optimistic';
-import { runOptimistic } from '@/shared/libs/optimistic-action';
+import { runOptimistic, type OptimisticNotice } from '@/shared/libs/optimistic-action';
 import { toastServiceError } from '@/shared/libs/service-error';
 
 type OptimisticSubmit = {
   intents: readonly OptimisticIntentInput<object>[];
   success?: string;
   errorTitle?: string;
+  refusalNotice?: (result: IServiceResponse<unknown>) => OptimisticNotice | null;
 };
 
 type UseFormSubmitOptions<TValues extends FieldValues, TResult> = {

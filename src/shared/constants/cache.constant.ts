@@ -59,6 +59,7 @@ export const VIEW_CACHE_KEYS = {
   cameraRecording: 'camera.recording',
   cameraPresets: 'camera.presets',
   cameraAim: 'camera.aim',
+  cameraPatrol: 'camera.patrol',
   tamperEvidence: 'camera.tamper-evidence',
   guardMaintenance: 'guard.maintenance',
   guardEnvironments: 'guard.environments',
@@ -86,6 +87,7 @@ export const VIEW_CACHE_KEYS = {
   proximityMe: 'guard.proximity.me',
   proximityReceivers: 'guard.proximity.receivers',
   proximitySensors: 'guard.proximity.sensors',
+  proximityPeople: 'guard.proximity.people',
 } as const;
 
 export const ACCESS_CACHE_KEYS = [VIEW_CACHE_KEYS.appContext, VIEW_CACHE_KEYS.moduleCatalog] as const;

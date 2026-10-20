@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import {
+  PROXIMITY_EVIDENCE_KINDS,
   PROXIMITY_RECEIVER_KINDS,
   PROXIMITY_SENSOR_MODELS,
   PROXIMITY_SENSOR_SOURCES,
   type ProximityMe,
+  type ProximityPerson,
   type ProximityReceiver,
   type ProximitySensor,
 } from '@/core/types';
@@ -14,6 +16,7 @@ export const PROXIMITY_ROUTES = {
   receiver: (id: string) => `/guard/proximity/receivers/${encodeURIComponent(id)}`,
   sensors: '/guard/proximity/sensors',
   sensor: (id: string) => `/guard/proximity/sensors/${encodeURIComponent(id)}`,
+  people: '/guard/proximity/people',
 } as const;
 
 export const BEACON_ROTATE_DEFAULT_SECONDS = 900;
@@ -67,6 +70,15 @@ export const proximitySensorSchema = z.object({
   lastSeenAt: seenAt,
 }) satisfies z.ZodType<ProximitySensor>;
 
+export const proximityPersonSchema = z.object({
+  userId: id,
+  room: z.string(),
+  confidence: z.number().min(0).max(1).catch(0),
+  since: z.number().nonnegative().transform((value) => value * 1000),
+  updatedAt: z.number().nonnegative().transform((value) => value * 1000),
+  evidence: z.enum(PROXIMITY_EVIDENCE_KINDS),
+}) satisfies z.ZodType<ProximityPerson, unknown>;
+
 function readList<T>(raw: unknown, key: string, item: z.ZodType<T>): T[] | null {
   if (!raw || typeof raw !== 'object') return null;
   const entries = (raw as Record<string, unknown>)[key];
@@ -87,3 +99,6 @@ export const readProximityMe = (raw: unknown): ProximityMe | null => {
   const parsed = proximityMeSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
 };
+
+export const readProximityPeople = (raw: unknown): ProximityPerson[] | null =>
+  readList(raw, 'people', proximityPersonSchema);

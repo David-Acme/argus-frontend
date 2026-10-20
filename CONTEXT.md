@@ -1658,8 +1658,16 @@ The backend keeps the RFC 5545 exceptions on the series row (backend
     (`skippedSchedule`) and says when ("Esta vez no sonará. Próxima vez: …").
   - Completing predicts the roll with the backend's `nextFiring`, ported to `shared/libs/recurrence.ts`: from the
     current occurrence, past skipped ones, to a moved one's new time.
-  - A snoozed reminder sits at a time that is not an occurrence; the backend refuses to change "this occurrence"
-    then, and the refusal shows as the error toast.
+  - A snoozed reminder sits at a time that is not an occurrence; the backend still refuses to change "this
+    occurrence" then (`PATCH /reminder/{id}/occurrence` answers 422 "occurrence is not an occurrence of this
+    series", checked against backend master in G1, 2026-10-19), and the synced row carries no anchor from which
+    the app could tell. So the device remembers its own snoozes (`app.reminders.snoozed.<userId>` in storage,
+    the reminder's id and the time the server's snooze answer gave it, `withSnooze` keeping only entries still
+    in force): while a reminder is at that time, "Editar solo esta vez" and "Cancelar solo esta vez" stay in the
+    menu, disabled, with "Pospuesto: podrás hacerlo cuando suene". A snooze made elsewhere (another device,
+    by voice) is not remembered, so the 422 is recognized (`isSnoozedOccurrenceRefusal`) and answered with an
+    information toast that explains it instead of the error. Tested in
+    `reminder-snoozed-occurrence.test.ts`.
 - Tests: `calendar-recurrence.test.ts` (the expansion with exceptions), `entity-mappers.test.ts` (the mapper),
   `calendar-occurrence.test.ts` (actions, bodies, the lens and its settling), `reminders.test.ts` (current
   occurrence, skip, roll, move body), `database-migrations.test.ts` (v15 to v16) and
@@ -4755,9 +4763,21 @@ outgoing message) and the thread (`ConversationThreadScreen`: messages grouped
 by day with Hoy/Ayer/date separators, outgoing bubbles on the right, the leg
 of a turn under it in micro text, the delivery state under each outgoing relay
 or reply, the quoted line a reply answers, a visitor notice marked as such).
-There is no composer: messages are sent by voice, so the thread ends in a hint
-("Para escribirle, díselo a Argus: «dile a David que…»") with the Hablar con
-Argus button when the person has `assistant.voice`.
+The thread ends in a composer (`MessageComposer`), but it does not type:
+messages are sent by voice, so its field reads "Díselo a Argus por voz:
+«dile a David que…»" and it and the microphone beside it open `/call`, with a
+line saying that typing from the app is not available yet. Without
+`assistant.voice` or a microphone on the device (`voiceCallSupported`) only
+that line shows (`composerMode`, tested in
+`tests/unit/features/conversations/message-composer.test.ts`). The backend has
+no app-facing route for a typed message (G1 checked argus-notification's
+`/conversation` routes, which read, mark read and clear, and argus-llm, whose
+`/llm/v1/chat` is the internal listener), and the app does not invent one. A
+typed composer needs, on argus-notification behind the usual chain, something
+like `POST /conversation/{counterpartId}/message {body}` → the new outgoing
+row, which hands the words to argus-llm's relay (`ConversationService.
+RelayMessage`) with the same consent, impersonation and delivery-state rules
+as a spoken message, and `messages.relay` as its capability.
 
 - Opening a thread marks its unread incoming rows read with
   `PATCH /conversation/{counterpartId}/read` (body `{}`) through
@@ -4803,3 +4823,76 @@ Argus button when the person has `assistant.voice`.
   app, `laptop` on the desktop and web builds (`voiceLegOf(IS_NATIVE)`, also on
   the resume frame); every other field is unchanged and the server ignores any
   other value. A camera leg is the server's own.
+
+## The scheduled patrol on the camera screen (2026-10-19, G1)
+
+The backend keeps one patrol per pan-tilt camera (`/camera/{id}/patrol`,
+backend `services/camera/CONTEXT.md` "Patrol"): an ordered list of 2 to 16
+saved presets, a dwell of 5 to 600 seconds (30 by default), an on/off switch
+and an optional daily window of whole hours (start included, end excluded,
+crossing midnight when the start is later; `null` is all day). The app edits
+it from the camera screen (`CameraPatrolPanel` and `CameraPatrolDialog` in
+`features/cameras`).
+
+- **Who sees it.** The panel shows for a role that may change the camera
+  (`can('camera', 'update')`: the Owner and Residents), on a camera that can
+  aim (`features.ptz`), keeps presets (`features.presets`) and the role may
+  aim (`cameraActions.aim`, which also loads the preset list). The backend
+  routes fall through to the `camera` table, so a Guard or a Guest would be
+  refused the PATCH and the DELETE; the app does not offer them.
+- **What it says.** The panel always states the two rules the backend runner
+  applies: a patrol walks only while the household is away or armed, and a
+  person always outranks it (Argus holds the lowest PTZ lease, so a viewer or
+  a person who moves the camera makes the patrol yield until they let go).
+- **The wire.** `GET` answers `{patrol: {...} | null}` (zod in
+  `core/contracts/camera-patrol.contract.ts`); `PATCH` creates the patrol
+  (then every field is sent) or patches only the fields that changed
+  (`patrolPatch`); `DELETE` answers `{patrol: null}` after a `danger`
+  confirmation. The toggle on the panel patches `enabled` alone. A change
+  announces `ResourceChanged (camera, status)` for the camera, so the panel's
+  `useRemoteResource` reloads on it, beside the preset list.
+- **Validation.** `patrolProblems` mirrors the backend DTO before sending: the
+  stop count, two equal neighbours (the last and the first included), a stop
+  that is no longer a saved preset (only when the preset list is known), the
+  dwell range and equal window hours. A refusal the server still answers is a
+  toast. Pure helpers are tested in
+  `tests/unit/features/cameras/camera-patrol.test.ts`.
+
+## Who is in which room (2026-10-19, G1)
+
+`/settings/proximity/people` (`ProximityPeopleScreen` in `features/proximity`)
+shows argus-guard's live room belief, `GET /guard/proximity/people`
+(`{people: [{userId, room, confidence, since, updatedAt, evidence}]}`, times
+in seconds, read into milliseconds by `readProximityPeople`). The route is
+Owner-only on the backend (capability `proximity.manage`, module
+`surveillance`), and the app asks the same thing three times: the `/settings`
+segment rule (the Owner's), an exact rule in `route-access.ts` on
+`proximity.manage`, and `MODULE_APP_ROUTES` (`/settings/proximity` covers the
+sub-route); the hook does not even load unless `proximity.manage` and the
+module are on. The entry is a row on the receivers and sensors screen, shown
+to the same people. Nothing of it is cached in a sync table: it is a
+`useRemoteResource` that reloads on focus and every 15 s while open, because
+the belief is in memory on the server and forgets a person after five
+minutes without evidence.
+
+- **Rooms are names, not keys.** A room is the CC3 camera room key:
+  `<environmentId>:<role>` for an indoor camera of a named role, or
+  `<environmentId>:camera:<cameraId>` for anything else; a BLE receiver or a
+  radar the Owner registered may carry the free text the Owner typed.
+  `roomPlace` maps a role key to the role's name (the camera-context roles of
+  `screens.security.cameras.roles`), the environment's name and the indoor
+  cameras of that role there, from `GET /guard/environments`,
+  `GET /guard/cameras` (the camera contexts) and the cached camera list; a
+  camera key to "Cerca de la cámara X"; free text as written.
+- **Plain words.** Confidence is a level (casi seguro from 0.8, probablemente
+  from 0.5, poco seguro below) with its percent; the strongest evidence is a
+  sentence (a camera recognized the face, a sensor and a camera noticed a
+  person, Argus heard the voice near a camera, a receiver picked up the
+  phone); "since" is the time the person entered the room and the freshness
+  is minutes since the last evidence. Names come from the cached directory
+  (the Owner has it); an id it does not know reads "Alguien de casa".
+- **Privacy.** The screen says only the Owner sees it, nothing is kept as
+  history, and a member who turned location off is not there (the server
+  drops them). Pure helpers are tested in
+  `tests/unit/features/proximity/proximity-people.test.ts` and the route rule
+  in `tests/unit/shared/libs/route-access.test.ts`.

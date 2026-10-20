@@ -46,6 +46,16 @@ describe('routeFallback by role', () => {
   });
 });
 
+describe('who is in which room', () => {
+  test('is the owner\'s alone, and only with surveillance on', () => {
+    expect(routeFallback('/settings/proximity/people', viewFor('owner', everything))).toBeNull();
+    expect(routeFallback('/settings/proximity/people', viewFor('resident', everything))).toBe('/profile');
+    expect(routeFallback('/settings/proximity/people', viewFor('guard', everything))).toBe('/profile');
+    expect(routeFallback('/settings/proximity/people', viewFor('guest', everything))).toBe('/profile');
+    expect(routeFallback('/settings/proximity/people', viewFor('owner', coreOnly))).not.toBeNull();
+  });
+});
+
 describe('routeFallback with modules', () => {
   test('a disabled module sends its screens home', () => {
     const owner = viewFor('owner', coreOnly);
