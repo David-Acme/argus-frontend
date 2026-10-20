@@ -59,6 +59,7 @@ export const VIEW_CACHE_KEYS = {
   cameraRecording: 'camera.recording',
   cameraPresets: 'camera.presets',
   cameraAim: 'camera.aim',
+  cameraPatrol: 'camera.patrol',
   tamperEvidence: 'camera.tamper-evidence',
   guardMaintenance: 'guard.maintenance',
   guardEnvironments: 'guard.environments',

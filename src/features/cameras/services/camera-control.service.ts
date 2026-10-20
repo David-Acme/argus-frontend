@@ -13,8 +13,16 @@ import type {
   ICameraWebRtcOffer,
   IServiceResponse,
 } from '@/core/interfaces';
-import type { CameraAim, CameraAimPatch, CameraLeaseAction, CameraSirenResult } from '@/core/types';
+import type {
+  CameraAim,
+  CameraAimPatch,
+  CameraLeaseAction,
+  CameraPatrolAnswer,
+  CameraPatrolPatch,
+  CameraSirenResult,
+} from '@/core/types';
 import { cameraAimSchema } from '@/core/contracts/camera-sight.contract';
+import { CAMERA_PATROL_ROUTE, readCameraPatrol } from '@/core/contracts/camera-patrol.contract';
 import { httpService } from '@/core/services/http';
 
 function aimOf(result: IServiceResponse<unknown>): IServiceResponse<CameraAim> {
@@ -29,6 +37,20 @@ function aimOf(result: IServiceResponse<unknown>): IServiceResponse<CameraAim> {
     };
   }
   return { status: result.status, ok: true, info: parsed.data, errors: null };
+}
+
+function patrolOf(result: IServiceResponse<unknown>): IServiceResponse<CameraPatrolAnswer> {
+  if (!result.ok) return { status: result.status, ok: false, info: null, errors: result.errors };
+  const answer = readCameraPatrol(result.info);
+  if (!answer) {
+    return {
+      status: result.status,
+      ok: false,
+      info: null,
+      errors: { code: 'INVALID_RESPONSE', message: 'The camera answered an unexpected patrol shape' },
+    };
+  }
+  return { status: result.status, ok: true, info: answer, errors: null };
 }
 
 class CameraControlService {
@@ -58,6 +80,18 @@ class CameraControlService {
 
   async lease(id: string, action: CameraLeaseAction): Promise<IServiceResponse<CameraAim>> {
     return aimOf(await httpService.post<unknown>(`/camera/${id}/ptz/lease`, { action }));
+  }
+
+  async patrol(id: string): Promise<IServiceResponse<CameraPatrolAnswer>> {
+    return patrolOf(await httpService.get<unknown>(CAMERA_PATROL_ROUTE(id)));
+  }
+
+  async setPatrol(id: string, body: CameraPatrolPatch): Promise<IServiceResponse<CameraPatrolAnswer>> {
+    return patrolOf(await httpService.patch<unknown>(CAMERA_PATROL_ROUTE(id), body));
+  }
+
+  async removePatrol(id: string): Promise<IServiceResponse<CameraPatrolAnswer>> {
+    return patrolOf(await httpService.delete<unknown>(CAMERA_PATROL_ROUTE(id)));
   }
 
   capabilities(id: string): Promise<IServiceResponse<ICameraCapabilities>> {

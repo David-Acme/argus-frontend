@@ -4803,3 +4803,37 @@ Argus button when the person has `assistant.voice`.
   app, `laptop` on the desktop and web builds (`voiceLegOf(IS_NATIVE)`, also on
   the resume frame); every other field is unchanged and the server ignores any
   other value. A camera leg is the server's own.
+
+## The scheduled patrol on the camera screen (2026-10-19, G1)
+
+The backend keeps one patrol per pan-tilt camera (`/camera/{id}/patrol`,
+backend `services/camera/CONTEXT.md` "Patrol"): an ordered list of 2 to 16
+saved presets, a dwell of 5 to 600 seconds (30 by default), an on/off switch
+and an optional daily window of whole hours (start included, end excluded,
+crossing midnight when the start is later; `null` is all day). The app edits
+it from the camera screen (`CameraPatrolPanel` and `CameraPatrolDialog` in
+`features/cameras`).
+
+- **Who sees it.** The panel shows for a role that may change the camera
+  (`can('camera', 'update')`: the Owner and Residents), on a camera that can
+  aim (`features.ptz`), keeps presets (`features.presets`) and the role may
+  aim (`cameraActions.aim`, which also loads the preset list). The backend
+  routes fall through to the `camera` table, so a Guard or a Guest would be
+  refused the PATCH and the DELETE; the app does not offer them.
+- **What it says.** The panel always states the two rules the backend runner
+  applies: a patrol walks only while the household is away or armed, and a
+  person always outranks it (Argus holds the lowest PTZ lease, so a viewer or
+  a person who moves the camera makes the patrol yield until they let go).
+- **The wire.** `GET` answers `{patrol: {...} | null}` (zod in
+  `core/contracts/camera-patrol.contract.ts`); `PATCH` creates the patrol
+  (then every field is sent) or patches only the fields that changed
+  (`patrolPatch`); `DELETE` answers `{patrol: null}` after a `danger`
+  confirmation. The toggle on the panel patches `enabled` alone. A change
+  announces `ResourceChanged (camera, status)` for the camera, so the panel's
+  `useRemoteResource` reloads on it, beside the preset list.
+- **Validation.** `patrolProblems` mirrors the backend DTO before sending: the
+  stop count, two equal neighbours (the last and the first included), a stop
+  that is no longer a saved preset (only when the preset list is known), the
+  dwell range and equal window hours. A refusal the server still answers is a
+  toast. Pure helpers are tested in
+  `tests/unit/features/cameras/camera-patrol.test.ts`.
