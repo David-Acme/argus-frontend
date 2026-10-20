@@ -19,6 +19,8 @@ export type AssistantModeInput = AssistantAvailability & {
 
 export type AssistantEntryHref = typeof ASSISTANT_CALL_HREF | typeof ASSISTANT_THREAD_HREF;
 
+const listeners = new Set<() => void>();
+
 const isAssistantMode = (value: unknown): value is AssistantMode =>
   value === 'voice' || value === 'chat';
 
@@ -57,5 +59,14 @@ export function rememberAssistantMode(mode: AssistantMode): void {
     storageService.set(ASSISTANT_MODE_STORAGE_KEY, mode);
   } catch (reason) {
     log.debug('assistant-mode', 'the mode was not remembered', reason);
+    return;
   }
+  for (const listener of listeners) listener();
+}
+
+export function subscribeAssistantMode(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }

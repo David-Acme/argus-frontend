@@ -119,9 +119,9 @@ describe('the composer in the thread', () => {
   });
 
   test('the typed draft lives in the chat session, so a round trip to voice keeps it', () => {
-    expect(THREAD).toContain('initialDraft={chat.draft}');
+    expect(THREAD).toContain('readDraft={chat.readDraft}');
     expect(THREAD).toContain('onDraft={chat.setDraft}');
-    expect(ASSISTANT).toContain('useState(initialDraft)');
+    expect(ASSISTANT).toContain('useState(readDraft)');
   });
 
   test('it follows the voice and the relay capabilities and the device microphone', () => {

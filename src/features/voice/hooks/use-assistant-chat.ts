@@ -6,7 +6,7 @@ import type { AssistantChatSend } from '@/features/voice/services/chat/assistant
 
 export type AssistantChatState = AssistantChatSnapshot & {
   busy: boolean;
-  draft: string;
+  readDraft: () => string;
   setDraft: (draft: string) => void;
   send: (draft: string) => AssistantChatSend;
   retry: (clientId: string) => void;
@@ -22,6 +22,8 @@ const send = (draft: string): AssistantChatSend => assistantChat.send(draft);
 const retry = (clientId: string): void => assistantChat.retry(clientId);
 
 const dismiss = (clientId: string): void => assistantChat.dismiss(clientId);
+
+const readDraft = (): string => assistantChat.draft;
 
 const setDraft = (draft: string): void => assistantChat.setDraft(draft);
 
@@ -43,5 +45,5 @@ export function useAssistantChat(active: boolean): AssistantChatState {
     (entry) => entry.status === 'waiting' || entry.status === 'sending'
   );
 
-  return { ...snapshot, busy, draft: assistantChat.draft, setDraft, send, retry, dismiss };
+  return { ...snapshot, busy, readDraft, setDraft, send, retry, dismiss };
 }

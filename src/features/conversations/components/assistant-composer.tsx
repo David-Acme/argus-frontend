@@ -28,14 +28,14 @@ type AssistantComposerProps = {
   onChoose: (mode: AssistantMode) => void;
   onSend: (text: string) => boolean;
   busy: boolean;
-  initialDraft: string;
+  readDraft: () => string;
   onDraft: (draft: string) => void;
 };
 
 type ChatComposerProps = {
   onSend: (text: string) => boolean;
   busy: boolean;
-  initialDraft: string;
+  readDraft: () => string;
   onDraft: (draft: string) => void;
 };
 
@@ -54,7 +54,7 @@ export function AssistantComposer({
   onChoose,
   onSend,
   busy,
-  initialDraft,
+  readDraft,
   onDraft,
 }: AssistantComposerProps) {
   const { t } = useTranslation();
@@ -79,7 +79,7 @@ export function AssistantComposer({
         </View>
       ) : null}
       {mode === 'chat' ? (
-        <ChatComposer onSend={onSend} busy={busy} initialDraft={initialDraft} onDraft={onDraft} />
+        <ChatComposer onSend={onSend} busy={busy} readDraft={readDraft} onDraft={onDraft} />
       ) : (
         <MessageComposer name={name} argus onSend={() => Promise.resolve(false)} className="mt-0" />
       )}
@@ -87,9 +87,9 @@ export function AssistantComposer({
   );
 }
 
-function ChatComposer({ onSend, busy, initialDraft, onDraft }: ChatComposerProps) {
+function ChatComposer({ onSend, busy, readDraft, onDraft }: ChatComposerProps) {
   const { t } = useTranslation();
-  const [draft, setDraft] = useState(initialDraft);
+  const [draft, setDraft] = useState(readDraft);
   const body = sendableMessage(draft, ASSISTANT_CHAT_MAX_CHARS);
   const characters = charactersOf(draft);
   const blocked = body === null || busy;

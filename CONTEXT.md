@@ -4927,8 +4927,10 @@ The Argus thread has two modes, "Voz | Chat" (`SegmentedControl` above the
 composer, shown when both are available). Voice is `assistant.voice` plus a
 microphone (`voiceCallSupported`); chat follows the thread's own right,
 `messages.relay`. The choice is stored per device (`app.assistant.mode`,
-`shared/libs/assistant-mode.ts`); without a stored choice a phone with voice
-opens by voice and web and the desktop open in chat. Choosing Voz opens
+`shared/libs/assistant-mode.ts`) and observed (`subscribeAssistantMode`), so
+the thread that stays mounted under the call reads the Chat the call
+stored; without a stored choice a phone with voice opens by voice and web
+and the desktop open in chat. Choosing Voz opens
 `/call`; the call shows a "Chat" control (assistant calls only, not an
 incoming call) that stops the call, stores chat and returns to the thread.
 The Inicio entry "Hablar con Argus" follows the same choice: voice opens
@@ -4959,7 +4961,10 @@ The Inicio entry "Hablar con Argus" follows the same choice: voice opens
   silence, a lost socket, a call that takes the socket or a session that
   ended fail the message inline with Reintentar and Descartar; after a drop
   the session reopens with `resume: true` while the thread is open. The draft
-  lives in the client, so it survives a round trip to the call, and
+  lives in the client, so it survives a round trip to the call; the composer
+  reads it when it mounts (`useState(readDraft)`), never a `draft` value the
+  hook returned earlier, because the React Compiler memoizes the hook's result
+  on the snapshot and kept an empty draft (retest r4), and
   everything is dropped when the account changes.
 - **One stream per socket.** argus-sync keeps one voice stream per socket,
   so a call and a chat session cannot run together: `assistantSocket`

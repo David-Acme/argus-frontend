@@ -23,6 +23,7 @@ const {
   readAssistantMode,
   rememberAssistantMode,
   resolveAssistantMode,
+  subscribeAssistantMode,
 } = await import('@/shared/libs/assistant-mode');
 const { ASSISTANT_MODE_STORAGE_KEY } = await import('@/shared/constants');
 
@@ -98,5 +99,32 @@ describe('the choice is remembered on the device', () => {
     expect(readAssistantMode()).toBeNull();
     failWrites = true;
     expect(() => rememberAssistantMode('chat')).not.toThrow();
+  });
+});
+
+describe('a choice made on another screen reaches the open thread', () => {
+  test('the call storing chat tells every listener, and a listener that left hears nothing', () => {
+    let heard = 0;
+    const leave = subscribeAssistantMode(() => {
+      heard += 1;
+    });
+    rememberAssistantMode('voice');
+    rememberAssistantMode('chat');
+    expect(heard).toBe(2);
+    expect(readAssistantMode()).toBe('chat');
+    leave();
+    rememberAssistantMode('voice');
+    expect(heard).toBe(2);
+  });
+
+  test('a write the storage refuses tells no one', () => {
+    let heard = 0;
+    const leave = subscribeAssistantMode(() => {
+      heard += 1;
+    });
+    failWrites = true;
+    rememberAssistantMode('chat');
+    expect(heard).toBe(0);
+    leave();
   });
 });

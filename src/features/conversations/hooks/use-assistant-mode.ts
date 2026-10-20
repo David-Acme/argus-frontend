@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { AssistantMode } from '@/core/types';
 import { CAPABILITY, IS_NATIVE } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
@@ -7,6 +7,7 @@ import {
   readAssistantMode,
   rememberAssistantMode,
   resolveAssistantMode,
+  subscribeAssistantMode,
 } from '@/shared/libs/assistant-mode';
 import { voiceCallSupported } from '@/features/voice';
 import { argusAvailability } from '@/features/conversations/model/composer';
@@ -24,14 +25,9 @@ export function useAssistantMode(): AssistantModeState {
     voiceSupported: voiceCallSupported(),
     chatAllowed: has(CAPABILITY.messagesRelay),
   });
-  const [chosen, setChosen] = useState<AssistantMode | null>(readAssistantMode);
+  const chosen = useSyncExternalStore(subscribeAssistantMode, readAssistantMode, readAssistantMode);
   const mode = resolveAssistantMode({ ...available, stored: chosen, native: IS_NATIVE });
   const modes = assistantModes(available);
 
-  const choose = (next: AssistantMode) => {
-    rememberAssistantMode(next);
-    setChosen(next);
-  };
-
-  return { mode, modes, choose };
+  return { mode, modes, choose: rememberAssistantMode };
 }

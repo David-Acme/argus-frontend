@@ -148,7 +148,7 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
               return chat.send(text) === 'sent';
             }}
             busy={chat.busy}
-            initialDraft={chat.draft}
+            readDraft={chat.readDraft}
             onDraft={chat.setDraft}
           />
         ) : (

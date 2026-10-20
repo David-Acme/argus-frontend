@@ -244,6 +244,30 @@ describe('the frames a typed turn receives', () => {
     expect(chat.draft).toBe('');
   });
 
+  test('the draft survives a call taking the socket and the same account binding again', async () => {
+    chat.send('hola');
+    await settle();
+    transport.emit('voice:text_done', { clientId: 'client-1', turnId: 1 });
+    chat.setDraft('borrador de prueba');
+    chat.close();
+    socket.claim('voice');
+    chat.bindUser('7');
+    chat.open();
+    expect(chat.draft).toBe('borrador de prueba');
+  });
+
+  test('the composer reads the draft when it mounts, never a value the hook kept from an earlier render', () => {
+    const read = (path: string) =>
+      readFileSync(join(import.meta.dir, '../../../../src', path), 'utf8');
+    const hook = read('features/voice/hooks/use-assistant-chat.ts');
+    const composer = read('features/conversations/components/assistant-composer.tsx');
+    const screen = read('features/conversations/screens/conversation-thread-screen.tsx');
+    expect(hook).toContain('const readDraft = (): string => assistantChat.draft;');
+    expect(hook).not.toContain('draft: assistantChat.draft');
+    expect(composer).toContain('useState(readDraft)');
+    expect(screen).toContain('readDraft={chat.readDraft}');
+  });
+
   test('a done frame for an unknown client id changes nothing', async () => {
     chat.send('hola');
     await settle();
