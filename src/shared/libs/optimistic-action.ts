@@ -58,9 +58,28 @@ const CHANGE_TITLES: Readonly<Partial<Record<string, TranslationKey>>> = {
   user_invitation: 'common.change-failed.user-invitation',
 };
 
-export function changeTitleKey(intents: readonly Pick<OptimisticIntentInput<object>, 'table'>[]): TranslationKey {
-  const table = intents[0]?.table;
-  return (table && CHANGE_TITLES[table]) || 'common.change-failed.generic';
+const DELETE_TITLES: Readonly<Partial<Record<string, TranslationKey>>> = {
+  reminder: 'common.change-failed.deleted.reminder',
+  calendar_event: 'common.change-failed.deleted.calendar-event',
+  calendar_event_share: 'common.change-failed.deleted.calendar-event-share',
+  camera: 'common.change-failed.deleted.camera',
+  zone: 'common.change-failed.deleted.zone',
+  conversation_message: 'common.change-failed.deleted.conversation-message',
+  notification: 'common.change-failed.deleted.notification',
+  project: 'common.change-failed.deleted.project',
+  project_member: 'common.change-failed.deleted.project-member',
+  project_task: 'common.change-failed.deleted.project-task',
+  session: 'common.change-failed.deleted.session',
+  user: 'common.change-failed.deleted.user',
+  user_invitation: 'common.change-failed.deleted.user-invitation',
+};
+
+export function changeTitleKey(
+  intents: readonly Pick<OptimisticIntentInput<object>, 'table' | 'kind'>[]
+): TranslationKey {
+  const first = intents[0];
+  if (first?.kind === 'delete') return DELETE_TITLES[first.table] ?? 'common.change-failed.deleted.generic';
+  return (first && CHANGE_TITLES[first.table]) || 'common.change-failed.generic';
 }
 
 function sessionOf(userId: number | string | undefined): string | null {

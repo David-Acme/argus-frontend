@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { localeDictionaries } from '@/core/i18n/locales';
 import type { IServiceResponse } from '@/core/interfaces';
 import type { ToastAction } from '@/core/types';
 
@@ -265,8 +266,35 @@ describe('runOptimistic', () => {
 
 describe('a refused change says which change it was', () => {
   test('the title names the record kind, and an unknown or empty change has a plain title', () => {
-    expect(changeTitleKey([{ table: 'project_task' }])).toBe('common.change-failed.project-task');
-    expect(changeTitleKey([{ table: 'notification' }])).toBe('common.change-failed.notification');
+    expect(changeTitleKey([{ table: 'project_task', kind: 'update' }])).toBe('common.change-failed.project-task');
+    expect(changeTitleKey([{ table: 'calendar_event', kind: 'create' }])).toBe('common.change-failed.calendar-event');
+    expect(changeTitleKey([{ table: 'notification', kind: 'update' }])).toBe('common.change-failed.notification');
     expect(changeTitleKey([])).toBe('common.change-failed.generic');
+  });
+
+  test('a refused delete says it was not deleted, never that it was not saved', () => {
+    expect(changeTitleKey([{ table: 'calendar_event', kind: 'delete' }])).toBe('common.change-failed.deleted.calendar-event');
+    expect(changeTitleKey([{ table: 'project_task', kind: 'delete' }])).toBe('common.change-failed.deleted.project-task');
+    expect(changeTitleKey([{ table: 'unknown_table' as 'reminder', kind: 'delete' }])).toBe(
+      'common.change-failed.deleted.generic',
+    );
+  });
+
+  test('every verb reads right in Spanish and English', () => {
+    const tables = Object.keys(localeDictionaries.es.common['change-failed']).filter(
+      (key) => key !== 'deleted' && key !== 'generic',
+    );
+    for (const language of ['es', 'en'] as const) {
+      const titles = localeDictionaries[language].common['change-failed'];
+      const deleted = titles.deleted as Record<string, string>;
+      for (const table of [...tables, 'generic']) {
+        const text = deleted[table];
+        expect(text).toBeDefined();
+        expect(text).not.toMatch(language === 'es' ? /guard/ : /saved/);
+      }
+    }
+    expect(localeDictionaries.es.common['change-failed'].deleted['calendar-event']).toBe('No se eliminó el evento');
+    expect(localeDictionaries.en.common['change-failed'].deleted['calendar-event']).toBe('The event was not deleted');
+    expect(localeDictionaries.es.common['change-failed']['calendar-event']).toBe('No se guardó el evento');
   });
 });

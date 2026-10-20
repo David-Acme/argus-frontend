@@ -5075,3 +5075,7 @@ minutes without evidence.
   ('camera')` (explain, then the system prompt; blocked offers Ajustes),
   and its own "Permitir cámara" button stays the retry. The face capture
   keeps its intro screen, which is already the explanation.
+- **A refused change says what was refused.** `changeTitleKey` reads the
+  verb of the first intent: a delete is titled from
+  `common.change-failed.deleted.*` ("No se eliminó el evento", "No se
+  revocó la invitación"), a create or update keeps "No se guardó …".
