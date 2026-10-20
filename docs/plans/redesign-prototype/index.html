@@ -765,7 +765,7 @@ ${sec('¿Dónde está el código?',grp([row({lead:lic('devices'),t:'En la pantal
 </div>`;
 
 S.sheet=()=>`${S.agenda()}<div class="scrim" data-close="sheet" title="Toca fuera para cerrar"></div>
-<div class="sheet" role="dialog" aria-label="Nuevo recordatorio"><div class="grab"></div>
+<div class="sheet" data-dirty="Pagar la luz" role="dialog" aria-label="Nuevo recordatorio"><div class="grab"></div>
 ${sheetHd('Recordatorio')}
 <label class="field" style="margin-top:4px"><span class="inp focus">Pagar la luz<i class="caret"></i></span></label>
 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><span class="chip" style="height:34px">${ic('clock','s')}Hoy 17:00</span><span class="chip" style="height:34px">${ic('repeat','s')}Cada mes</span><span class="chip" style="height:34px">${ic('phone','s')}Que me llame</span></div>
@@ -801,7 +801,7 @@ ${sec('Lo último que sé · hace 10 min',grp([row({lead:lic('user','',1),t:'Lui
 S.big=()=>S.inicio();
 S.lowtier=()=>S.inicio();
 S.sheetKbd=()=>`${S.agenda()}<div class="scrim" data-close="sheet"></div>
-<div class="sheet tall" role="dialog" aria-label="Nuevo evento"><div class="grab"></div>
+<div class="sheet tall" data-dirty="Visita del técnico" role="dialog" aria-label="Nuevo evento"><div class="grab"></div>
 ${sheetHd('Nuevo evento')}
 <div class="scrollin"><div class="sbar"></div><div class="inner">
 <div class="seg" style="margin-top:10px"><button class="on">Evento</button><button>Recordatorio</button><button>Tarea</button></div>
@@ -846,7 +846,7 @@ const MAIN=[
  ['pairing','Vincular','The mascot thinks while it searches the network. Step 1 of 3.']
 ];
 const DET=[
- ['sheet','Hoja inferior · acciones abajo','Title and ✕ at the top, Guardar pinned above the keyboard. No Cancelar: ✕, a swipe down, a tap outside or Back close it.'],
+ ['sheet','Hoja inferior · acciones abajo','Title and ✕ at the top, Guardar pinned above the keyboard. No Cancelar: ✕, a swipe down, a tap outside or Back close it. With text typed, it asks first: tap outside to try it.'],
  ['alert','Alerta nativa','A destructive confirmation is the only kind that ignores a tap outside.'],
  ['skeleton','Esqueleto (solo datos por HTTP)','Sesiones has no local copy, so it shows a skeleton in its final layout. Local data never shows one.'],
  ['inicioUpd','Datos locales: al instante','Inicio paints from the local database at once. A refresh only shows «Actualizando» at the top, never a skeleton.'],
@@ -854,7 +854,7 @@ const DET=[
  ['offline','Sin conexión','The mascot is greyed out, the Aura is neutral, and the data is labelled with its time.'],
  ['big','Texto al 130%','Rows grow taller and the text wraps instead of truncating.'],
  ['sheetKbd','Hoja + teclado (formulario largo)','The sheet stops below the status bar. The title and ✕ stay pinned at the top and the actions above the keyboard. The fields scroll in between.'],
- ['errField','Error junto al campo','A validation error sits under its field, and a refusal is an inline notice. The sheet stays open.'],
+ ['errField','Error junto al campo','A validation error sits under its field, and a refusal is an inline notice. The form is empty, so a tap outside closes it without asking.'],
  ['errToast','Error con Reintentar','A failed save rolls back, then a toast names what failed and offers Reintentar. No code, no server text.'],
  ['errFull','Error de pantalla completa','Only for session or trust. The mascot looks concerned, there is one way out, and no code.'],
  ['lowtier','Android de gama baja','The `low` tier: no blur (solid bar), a still Aura and a mascot without drift. Same layout.']
@@ -995,7 +995,7 @@ document.querySelectorAll('[data-dw]').forEach(b=>b.onclick=()=>{dW=+b.dataset.d
 document.getElementById('bigs').innerHTML=[['inicio',1920,'home-desktop-large'],['inicio',2560,'home-wide'],['seg',1920,'security-desktop-large'],['seg',2560,'security-wide']].map(([k,W,t])=>`<figure style="margin:0 0 28px"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div class="pair"><div class="today" style="width:300px"><img src="${TH[t]}" alt="Hoy a ${W}" style="width:300px"><b>HOY · ${W}</b></div></div><div style="flex:1;min-width:280px"><span class="ptag">REDISEÑO · ${W}</span><div class="desk-wrap"><div class="desk-scale" data-static="1" data-w="${W}">${deskHTML(k,W,false,'')}</div></div></div></div><figcaption style="font-size:14px;margin-top:8px"><b>${k==='inicio'?'Inicio':'Seguridad'} a ${W} px</b> <span style="color:var(--pg-text-2)">${k==='inicio'?(W>=2400?'Four columns: today and tasks, the feed capped at 620 px, a 6-camera grid that takes the extra width, and an aside with people and projects. Content is capped at 2,200 px, so nothing floats.':'Four columns at 1920: each one scrolls on its own, and section headers stick.'):(W>=2400?'The camera grid takes the width (340 px minimum per tile). The feed and the context columns keep readable widths.':'The camera grid gains columns as the window grows. Lo que pasó and Lugares scroll on their own.')}</span></figcaption></figure>`).join('');
 window.addEventListener('resize',fit);renderDesk();
 
-document.addEventListener('click',e=>{const c=e.target.closest('[data-close="sheet"]');if(c){const ph=c.closest('.phone');ph.querySelectorAll('.scrim,.sheet').forEach(n=>n.remove());const b=document.createElement('button');b.className='btn compact primary reopen';b.textContent='Abrir de nuevo';b.onclick=()=>{ph.querySelector('.scr').innerHTML=S[ph.dataset.k]();};ph.querySelector('.scr').appendChild(b);}});
+document.addEventListener('click',e=>{const keep=e.target.closest('[data-sheet-keep]');if(keep){keep.closest('.alertbox').remove();return;}const disc=e.target.closest('[data-sheet-discard]');const c=disc||e.target.closest('[data-close="sheet"]');if(c){const ph=c.closest('.phone');const sh=ph.querySelector('.sheet');if(!disc&&sh&&sh.dataset.dirty){if(!ph.querySelector('.alertbox'))ph.querySelector('.scr').insertAdjacentHTML('beforeend',`<div class="alertbox" role="alertdialog" style="z-index:12"><div class="t-title">¿Descartar «${sh.dataset.dirty}»?</div><p class="t-body t-2" style="margin-top:10px">Lo que escribiste se perderá.</p><div class="acts"><button data-sheet-keep>Seguir editando</button><button class="d" data-sheet-discard>Descartar</button></div></div>`);return;}ph.querySelectorAll('.scrim,.sheet,.alertbox').forEach(n=>n.remove());const b=document.createElement('button');b.className='btn compact primary reopen';b.textContent='Abrir de nuevo';b.onclick=()=>{ph.querySelector('.scr').innerHTML=S[ph.dataset.k]();};ph.querySelector('.scr').appendChild(b);}});
 let holdT=null;
 document.addEventListener('pointerdown',e=>{const t=e.target.closest('.phone .tab.argus');if(!t)return;const ph=t.closest('.phone');holdT=setTimeout(()=>{ph.classList.add('listening');const m=t.querySelector('.masc');if(m){m.dataset.prev=m.getAttribute('class');m.setAttribute('class','masc listen');}},220);});
 const endHold=()=>{clearTimeout(holdT);document.querySelectorAll('.phone.listening').forEach(ph=>{ph.classList.remove('listening');const m=ph.querySelector('.tab.argus .masc');if(m&&m.dataset.prev)m.setAttribute('class',m.dataset.prev);});};
