@@ -8,7 +8,13 @@ import { CallSurface } from '@/features/voice/components/call-surface';
 import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
 import { argusCallSupported, voiceService } from '@/features/voice/services/voice';
 import { storageService } from '@/core/services/storage';
-import { CAPABILITY, VIEW_CACHE_KEYS, VOICE_MIC_CONSENT_KEY } from '@/shared/constants';
+import {
+  ASSISTANT_THREAD_HREF,
+  CAPABILITY,
+  VIEW_CACHE_KEYS,
+  VOICE_MIC_CONSENT_KEY,
+} from '@/shared/constants';
+import { rememberAssistantMode } from '@/shared/libs/assistant-mode';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
@@ -61,6 +67,15 @@ function CallScreen() {
     traceEvent('route', 'ended', `outside-${enteredFromOutside ? 1 : 0}-hold-${ENDED_HOLD_MS}`);
     setEndedDurationMs(durationMs);
   }, [endedDurationMs, enteredFromOutside]);
+  const { has } = useCapabilities();
+  const chatAllowed = has(CAPABILITY.messagesRelay) && !params.callId && !enteredFromOutside;
+  const switchToChat = useCallback(() => {
+    voiceService.stop();
+    rememberAssistantMode('chat');
+    traceEvent('route', 'left', 'to-chat');
+    if (router.canDismiss()) router.dismissTo(ASSISTANT_THREAD_HREF);
+    else router.replace(ASSISTANT_THREAD_HREF);
+  }, [router]);
   const closeCamera = useCallback(() => voiceService.showCamera(null), []);
   const answerWaiting = useCallback(() => voiceService.answerWaiting(), []);
   const dismissWaiting = useCallback(() => voiceService.dismissWaiting(), []);
@@ -117,6 +132,7 @@ function CallScreen() {
       onToggleMute={call.toggleMute}
       onHangUp={hangUp}
       onRetry={call.retry}
+      onSwitchToChat={chatAllowed ? switchToChat : undefined}
       endedDurationMs={endedDurationMs}
     />
   );

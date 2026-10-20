@@ -16,11 +16,12 @@ type MessageComposerProps = {
   name: string;
   argus: boolean;
   onSend: (body: string) => Promise<boolean>;
+  className?: string;
 };
 
 const COUNTER_FROM = CONVERSATION_MESSAGE_MAX_CHARS - 100;
 
-export function MessageComposer({ name, argus, onSend }: MessageComposerProps) {
+export function MessageComposer({ name, argus, onSend, className }: MessageComposerProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const { has } = useCapabilities();
@@ -54,7 +55,7 @@ export function MessageComposer({ name, argus, onSend }: MessageComposerProps) {
   };
 
   return (
-    <View className="mt-3 gap-1.5">
+    <View className={cn('mt-3 gap-1.5', className)}>
       {typing ? (
         <View className="flex-row items-end gap-2">
           <Textarea

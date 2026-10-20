@@ -4832,8 +4832,9 @@ or reply, the quoted line a reply answers, a visitor notice marked as such).
 The thread ends in a composer (`MessageComposer`). In a member's thread it is
 a text field with a send button and, beside them, the microphone that opens
 `/call` (the voice shortcut, shown with `assistant.voice` and a microphone on
-the device, `voiceCallSupported`). The Argus thread stays voice only: there is
-no typed turn to Argus, and its field reads "Habla con Argus por voz". Typing
+the device, `voiceCallSupported`). The Argus thread also takes typed turns
+(see "Typed chat with Argus" below); in voice mode its field reads "Habla con
+Argus por voz". Typing
 follows `messages.relay` (`canType`); the line under the field says the
 message arrives under the sender's name, may be said aloud in the
 recipient's live conversation or left as a notice, and that the sender will
@@ -4905,6 +4906,57 @@ not learn whether it was read or where the person is. `composerMode`,
   app, `laptop` on the desktop and web builds (`voiceLegOf(IS_NATIVE)`, also on
   the resume frame); every other field is unchanged and the server ignores any
   other value. A camera leg is the server's own.
+
+### Typed chat with Argus (2026-10-20)
+
+The Argus thread has two modes, "Voz | Chat" (`SegmentedControl` above the
+composer, shown when both are available). Voice is `assistant.voice` plus a
+microphone (`voiceCallSupported`); chat follows the thread's own right,
+`messages.relay`. The choice is stored per device (`app.assistant.mode`,
+`shared/libs/assistant-mode.ts`); without a stored choice a phone with voice
+opens by voice and web and the desktop open in chat. Choosing Voz opens
+`/call`; the call shows a "Chat" control (assistant calls only, not an
+incoming call) that stops the call, stores chat and returns to the thread.
+The Inicio entry "Hablar con Argus" follows the same choice: voice opens
+`/call`, chat opens `/conversations/0`.
+
+- **The wire** (backend `services/voice/CONTEXT.md`, "Typed chat"): a chat
+  session is `voice:start {mode: "chat", leg}` on `/sync`, no microphone and
+  no audio; a message is `voice:text {text, clientId}` (a v4 uuid, 1 to 500
+  code points after trimming); the reply is one or more `voice:assistant
+  {text, turnId}` concatenated verbatim, closed by `voice:text_done
+  {clientId, turnId}`; refusals are `voice:text_error {status, error,
+  clientId}` (the router keeps `clientId` on its way to the `voice:error`
+  listeners); `voice:done` ends the session; `voice:stt_correction` replaces
+  withheld words. App actions (`voice:action`) run through the call bridge
+  with the voice ones and answer `voice:action_result`; a camera opens as a
+  screen, since there is no call surface.
+- **The client** is `features/voice/services/chat` (`AssistantChat`, its
+  transport, socket and clock injected; tested in
+  `tests/unit/features/voice/assistant-chat.test.ts`). The session opens on
+  the first message and stops when the thread closes with nothing pending.
+  One typed turn runs at a time (the server refuses a second with 409), so
+  the send button waits for the done frame. A turn without words, a 90 s
+  silence, a lost socket, a call that takes the socket or a session that
+  ended fail the message inline with Reintentar and Descartar; after a drop
+  the session reopens with `resume: true` while the thread is open. The draft
+  lives in the client, so it survives a round trip to the call, and
+  everything is dropped when the account changes.
+- **One stream per socket.** argus-sync keeps one voice stream per socket,
+  so a call and a chat session cannot run together: `assistantSocket`
+  (`services/voice/assistant-socket.ts`) records who claimed it last, the
+  voice service ignores sync frames while chat owns it, and a call that
+  claims it fails the pending typed messages. A `voice:done` within 3 s of
+  opening the chat session with nothing pending is the previous call's and
+  is ignored.
+- **The thread.** Typed turns show at once over the synced rows
+  (`model/assistant-chat-overlay.ts`) and give way to the rows the backend
+  mirrors into the thread (same words, out, after the send minus five
+  minutes; the reply once an incoming turn follows it), so spoken and typed
+  turns read as one history. A typing indicator shows until the done frame.
+  The thread screen sits in a `KeyboardAvoidingView` so the keyboard never
+  covers the composer; Enter sends on web and the desktop, Shift+Enter
+  breaks the line.
 
 ## The scheduled patrol on the camera screen (2026-10-19, G1)
 

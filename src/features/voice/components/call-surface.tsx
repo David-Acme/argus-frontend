@@ -31,6 +31,7 @@ type CallSurfaceProps = {
   onToggleMute: () => void;
   onHangUp: () => void;
   onRetry: () => void;
+  onSwitchToChat?: () => void;
   endedDurationMs?: number | null;
 };
 
@@ -51,6 +52,7 @@ export function CallSurface({
   onToggleMute,
   onHangUp,
   onRetry,
+  onSwitchToChat,
   endedDurationMs = null,
 }: CallSurfaceProps) {
   const { t } = useTranslation();
@@ -137,6 +139,14 @@ export function CallSurface({
             onPress={onToggleMute}
           />
           <CallControl icon="sliders" label={t('screens.voice.settings')} onPress={() => setSettingsOpen(true)} />
+          {onSwitchToChat ? (
+            <CallControl
+              icon="messages-square"
+              label={t('screens.voice.to-chat')}
+              hint={t('screens.voice.to-chat-hint')}
+              onPress={onSwitchToChat}
+            />
+          ) : null}
           <CallControl
             icon="phone-off"
             label={t('screens.voice.hang-up')}

@@ -17,6 +17,8 @@ export const voice = {
   'mute': 'Silenciar micrófono',
   'unmute': 'Activar micrófono',
   'hang-up': 'Colgar',
+  'to-chat': 'Chat',
+  'to-chat-hint': 'Termina la llamada y sigue escribiéndole a Argus en la misma conversación',
   'retry': 'Volver a llamar',
   'you': 'Tú',
   'argus': 'Argus',

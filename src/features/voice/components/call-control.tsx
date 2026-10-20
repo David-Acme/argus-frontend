@@ -9,6 +9,7 @@ type CallControlProps = {
   label: string;
   tone?: 'neutral' | 'active' | 'danger' | 'success';
   disabled?: boolean;
+  hint?: string;
   onPress: () => void;
 };
 
@@ -19,12 +20,13 @@ const TONES = {
   success: { circle: 'bg-success', icon: 'text-foreground-on-success' },
 } as const;
 
-export function CallControl({ icon, label, tone = 'neutral', disabled = false, onPress }: CallControlProps) {
+export function CallControl({ icon, label, tone = 'neutral', disabled = false, hint, onPress }: CallControlProps) {
   const colors = TONES[tone];
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint={hint}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
