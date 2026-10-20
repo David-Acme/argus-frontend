@@ -539,9 +539,36 @@ measure against.
      Argus. Muestro lo de las 15:32."
    - `failed`: what failed and Reintentar, never the empty copy.
    - `refused`: what the role or module does not allow, and who can change it.
-   - Offline: one `Notice` at the top of the content (not floating over the
-     header, W10/W11) that appears within 3 s and names the right cause: "sin
-     Wi-Fi" versus "fuera de casa" (A7).
+   - **Connection: silent when it works (owner rule, 2026-10-20).** The app
+     never shows «Conectando…», «Conectado», «Reconectado» or any spinner,
+     toast or banner for a connect or reconnect that succeeds. It paints from
+     local data and stays optimistic.
+     - **Grace period: 12 s.** Something appears only after Argus has been
+       unreachable for 12 s in a row.
+     - **Why 12 s.** The ordinary interruptions recover within seconds:
+       - a Wi-Fi/mobile handover;
+       - the app returning from the background (the route probe, CONTEXT.md
+         "Local-first route choice");
+       - the sync socket's reconnect.
+
+       The Android field test measured recovery in 12 s or less after Wi-Fi
+       came back (`uiux-map/android/findings.md`, measured timings). 12 s
+       hides those blips without leaving a real outage unannounced for long.
+       The camera live view, which shows the gap itself, keeps its own
+       unreachable state.
+     - **What appears then** is the calm offline pattern:
+       - a quiet one-line `Notice` at the top of the content (not over the
+         header, W10/W11) naming the right cause, «Sin Wi-Fi» versus «Fuera
+         de casa» (A7);
+       - the last-known data, labelled with its age;
+       - Estela in `off`.
+     - **When the connection returns** the notice simply disappears and
+       Estela regains its colour. No «Conectado» toast, no announcement.
+     - **The exception is a real error the user must act on.** A write that
+       could not be saved is reported at once, because the server never
+       received it and nothing is queued (CONTEXT.md, Phase 4b). The report is
+       the toast with Reintentar of §5.8, naming what was not saved. It is
+       never a connection status.
 5. **Confirm and undo.** Reversible actions (complete, delete a reminder, mark
    as read, archive) act at once and offer Deshacer in a toast for 5 s.
    `Confirm` is only for the irreversible or the loud: siren, panic, deactivate
@@ -1615,6 +1642,11 @@ visual baselines). The rest are a review list in the PR template.
       features).
 - [ ] Empty shows one sentence and one helpful action, and only through
       `ResourceView` (gate, rule F11).
+- [ ] **No connection status:** no «Conectando…», «Conectado» or
+      «Reconectado», and no spinner, toast or banner for a successful connect
+      or reconnect. The offline notice appears only after 12 s unreachable,
+      and leaves silently. An unsaved write is reported at once as an error
+      naming what was not saved.
 - [ ] Stale and offline are labelled with the time of the data; failure shows
       Reintentar; nothing failed reads as empty.
 - [ ] Optimistic updates show the result at once and offer Deshacer (5 s); a

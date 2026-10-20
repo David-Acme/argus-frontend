@@ -807,7 +807,7 @@ ${sec('Más',grp([row({lead:lic('door'),t:'Visitas esperadas',s:'Técnico de int
 </div>${tabs('seg')}`;
 
 S.camara=()=>`${sb()}<div class="body">
-<div class="topbar"><button class="ibtn glass" aria-label="Volver">${ic('back')}</button><div class="grow"><div class="t-title">Cocina</div><div class="t-meta">Casa · en línea</div></div><button class="ibtn" aria-label="Más opciones">${ic('more')}</button></div>
+<div class="topbar"><button class="ibtn glass" aria-label="Volver">${ic('back')}</button><div class="grow"><div class="t-title">Cocina</div><div class="t-meta">Casa · planta baja</div></div><button class="ibtn" aria-label="Más opciones">${ic('more')}</button></div>
 <div class="video">${media('scene-kitchen','',{live:true})}<span class="ui dark eyecorner" role="status">${masc('look',56)}Argus mira</span><div class="ov"><button class="ibtn" aria-label="Activar sonido">${ic('speaker','s')}</button><button class="ibtn" aria-label="Pantalla completa">${ic('max','s')}</button></div></div>
 ${sec('',grp([row({lead:lic('play'),t:'Grabaciones',s:'3 hoy'}),row({lead:lic('grid'),t:'Zonas',s:'Ventana del vecino, Jardín'}),row({lead:lic('sliders'),t:'Ajustes de la cámara',s:'Privacidad, ronda, sensibilidad'})]))}
 <div class="ptt"><button class="big" aria-label="Mantén para hablar por la cámara">${ic('mic')}</button><div class="t-meta">Mantén para hablar por la cámara</div></div>
@@ -980,7 +980,7 @@ const DET=[
  ['skeleton','Esqueleto (solo datos por HTTP)','Sesiones has no local copy, so it shows a skeleton in its final layout. Local data never shows one.'],
  ['inicioUpd','Datos locales: al instante','Inicio paints from the local database at once. A refresh only shows «Actualizando» at the top, never a skeleton.'],
  ['empty','Vacío con Estela','Estela\'s done state, one sentence, one action. The toast offers Deshacer.'],
- ['offline','Sin conexión','A compact hero, a one-line banner, and a stacked notice card (short title, short body, action below). The heading is short and its age is meta.'],
+ ['offline','Sin conexión','Shown only after 12 s without reaching Argus; never «Conectando…» or «Conectado». A compact hero, a one-line notice, and a stacked card (short title, short body, action below). The data carries its age and leaves silently when Argus answers.'],
  ['big','Texto al 130%','Rows grow taller and the text wraps instead of truncating.'],
  ['bigOffline','Sin conexión al 130%','The notice card stacks: title, a short body, then the action. Nothing sits side by side once text wraps.'],
  ['longText','Texto largo','Long titles wrap to two lines. Only the secondary meta (an address) truncates. Names wrap.'],
@@ -1018,9 +1018,9 @@ const SIDE=on=>`<aside class="side" aria-label="Principal"><div class="brand">${
 <button class="cmdk" data-open="palette">${ic('search','s')}Buscar o pedir…<span class="kb">⌘K</span></button>
 ${[['inicio','home','Inicio','1'],['seg','shield','Seguridad','2'],['argus','cmd','Argus','3'],['agenda','cal','Agenda','4'],['tu','user','Tú','5']].map(([k,i,l,n])=>`<button class="nav${on===k?' on':''}" data-ds="${k==='tu'?'inicio':k}">${k==='argus'?masc('idle',22):ic(i,'s')}${l}<span class="kb">${n}</span></button>`).join('')}
 <div style="flex:1"></div>
-<div class="sidestat"><div class="ss-h"><span class="dot" style="color:var(--ok)"></span><b>Argus de Casa</b><span>en línea</span></div>
+<div class="sidestat"><div class="ss-h"><b>Argus de Casa</b></div>
 <div class="ss-r">${ic('home','s')}<span>Modo <b>En casa</b></span></div>
-<div class="ss-r">${ic('cam','s')}<span><b>${dSparse?'1 de 1':'5 de 6'}</b> cámaras en línea</span></div>
+<div class="ss-r">${ic('cam','s')}<span><b>${dSparse?'1 de 1':'5 de 6'}</b> cámaras activas</span></div>
 <div><div class="ss-r" style="justify-content:space-between"><span>Almacenamiento</span><b>${dSparse?'8%':'62%'}</b></div><div class="meter"><i style="width:${dSparse?8:62}%"></i></div></div>
 <div class="ss-ask">${masc('idle',20)}Pregúntale a Argus…</div></div>
 <button class="nav">${ic('sliders','s')}Ajustes</button></aside>`;
@@ -1058,13 +1058,13 @@ const novedades=n=>`<div class="feed">${FEED.slice(0,n).map(f=>feedItem({...f,av
 const CAMS=[['scene-kitchen','Cocina','14:47'],['scene-patio','Patio trasero','ayer'],['scene-door','Puerta principal','14:45'],['scene-living','Sala','13:10'],['scene-garage','Garaje','sin novedad'],['off','Dormitorio',''],['scene-night','Jardín','ayer'],['scene-door','Entrada lateral','09:12']];
 const camTiles=n=>CAMS.slice(0,n).map(([sc,nm,la])=>sc==='off'?media('off',nm,{ctr:ic('lock'),r:'Privada'}):media(sc,nm,{live:true,hov:1,r:la?`<span style="font-weight:500;opacity:.85">${la}</span>`:''})).join('');
 const camfill=(n,cols)=>`<div class="camfill" style="grid-template-columns:repeat(${cols},1fr)">${camTiles(n)}</div>`;
-const sysStatus=()=>grp([R1(lic('devices','ok'),'Servidor','En línea · 41 °C · hace 3 días sin reinicio'),R1(lic('grid'),'Módulos','Seguridad y Productividad activos'),R1(lic('cam'),'Cámaras','5 en línea · Garaje apagada de noche'),R1(lic('hist'),'Almacenamiento','62% · grabaciones de 30 días')]);
+const sysStatus=()=>grp([R1(lic('devices'),'Servidor','41 °C · 3 días sin reiniciar'),R1(lic('grid'),'Módulos','Seguridad y Productividad activos'),R1(lic('cam'),'Cámaras','5 en línea · Garaje apagada de noche'),R1(lic('hist'),'Almacenamiento','62% · grabaciones de 30 días')]);
 const clips=()=>`<div class="grid2">${media('scene-door','Luis llegó',{ctr:'<span class="ibtn glass" style="color:#fff">'+ic('play','s')+'</span>',r:'14:45'})}${media('scene-door','Repartidor',{ctr:'<span class="ibtn glass" style="color:#fff">'+ic('play','s')+'</span>',r:'11:20'})}</div>`;
 const proxRec=()=>grp([R1(lic('bell'),'Pagar el agua','Mañana · todo el día'),R1(lic('bell'),'Revisión del auto','Vie 23 · 09:00'),R1(lic('bell'),'Cumpleaños de Carlos','Dom 25 · todo el día')]);
 const proyectos=()=>grp([row({lead:lic('grid'),t:'Mudanza',s:'3 de 8 hechas · próxima: Comprar cajas'}),row({lead:lic('grid'),t:'Huerto',s:'1 de 4 hechas'})]);
 const setupSteps=()=>grp([R1(ck(1),'Conectar Argus','Hecho hoy'),R1(ck(1),'Primera cámara: Cocina','Hecho hoy'),R1(ck(),'Conecta otra cámara','La puerta principal es la más útil','<button class="btn compact">Conectar</button>'),R1(ck(),'Invita a tu familia','Cada uno con su rol','<button class="btn compact">Invitar</button>'),R1(ck(),'Prueba hablarle a Argus','Mantén el centro y di «¿qué tengo hoy?»')]);
 const ideas=()=>`<div class="stats" style="margin:0"><span class="chip">«Recuérdame pagar la luz cada mes»</span><span class="chip">«Agenda el dentista el jueves»</span><span class="chip">«Pon el modo Noche a las 23:00»</span><span class="chip">«¿Quién llegó hoy?»</span></div>`;
-const hist=()=>grp([R1(lic('devices','ok'),'Argus se conectó','Hoy 13:02'),R1(lic('cam'),'Cocina en línea','Hoy 13:20'),R1(`<span class="lic r" style="padding:2px">${masc('happy',30)}</span>`,'Primera charla con Argus','Hoy 13:25')]);
+const hist=()=>grp([R1(lic('devices'),'Argus vinculado a este equipo','Hoy 13:02'),R1(lic('cam'),'Cocina en línea','Hoy 13:20'),R1(`<span class="lic r" style="padding:2px">${masc('happy',30)}</span>`,'Primera charla con Argus','Hoy 13:25')]);
 const addCam=()=>`<div class="addtile"><span class="lic accent r">${ic('plus','s')}</span><b>Conecta otra cámara</b><span>Tapo, Reolink o ONVIF · 2 min</span></div>`;
 DK.inicio=(W)=>{const xl=W>=1700;const sp=dSparse;return `<div style="display:flex;flex-direction:column;height:100%">
 ${dband(W,`${masc(sp?'happy':'idle',64)}<div style="flex:1;min-width:0"><div class="t-hero" style="font-size:38px;white-space:nowrap">${sp?'Bienvenida, Ana.':'Todo tranquilo.'}</div><div class="t-meta">${sp?'Argus de Casa está listo · 1 cámara · completa los primeros pasos':'Buenas tardes, Ana · Modo En casa · Luis y tú en casa'}</div></div><div class="stats" style="margin:0;flex-wrap:nowrap"><span class="chip">${ic('cam','s')}<b>${sp?1:5}</b> cámara${sp?'':'s'}</span><span class="chip">${ic('shieldok','s')}<b>0</b> alertas hoy</span>${xl?`<span class="chip">${ic('hist','s')}<b>${sp?0:4}</b> detecciones</span><span class="chip"><b>${sp?'2 de 5':'3'}</b> ${sp?'pasos':'pendientes'}</span>`:''}</div><button class="btn compact primary" data-open="dialog">${ic('plus','s')}Nuevo<span class="kb" style="margin-left:6px;color:inherit;border-color:currentColor;opacity:.7">N</span></button>`)}

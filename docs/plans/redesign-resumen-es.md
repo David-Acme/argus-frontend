@@ -203,6 +203,20 @@ reproduce cada caso con un botón.
 - **Rive:** ya no hace falta, así que tampoco su licencia (se cierra R-D17).
 - **Código:** reemplaza unas 1.600 líneas de mascota por unas 400.
 
+## Conexión silenciosa (v3.6)
+
+Nunca se muestra «Conectando…» ni «Conectado». Si la conexión funciona, no se
+ve nada.
+
+- **Solo después de 12 segundos sin llegar a Argus** aparece el aviso
+  tranquilo de sin conexión: una línea arriba, los últimos datos con su hora
+  y Estela gris. Al volver la conexión, el aviso desaparece sin anunciarlo.
+- **Por qué 12 segundos:** los cortes breves (cambio de red, volver a la
+  app, la reconexión del socket) se recuperan antes. En tu Android, la
+  reconexión tardó 12 segundos o menos.
+- **La excepción es un guardado que no llegó al servidor.** Se avisa al
+  momento y con «Reintentar», porque es un error real.
+
 ## Rendimiento primero
 
 - **Dónde corre.** Toda animación corre en el hilo de UI (Reanimated o el
