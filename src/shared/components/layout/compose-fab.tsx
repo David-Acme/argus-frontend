@@ -14,13 +14,16 @@ import {
   BOTTOM_NAV_HEIGHT,
   COMPOSE_ACTIONS,
   COMPOSE_ACTION_LABEL_KEYS,
+  CAPABILITY,
   COMPOSE_ITEM_STAGGER_MS,
+  IS_NATIVE,
   NAV_RAIL_WIDTH,
   colorTokens,
 } from '@/shared/constants';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { itemIn } from '@/shared/libs/animations';
+import { assistantEntryHref, readAssistantMode, resolveAssistantMode } from '@/shared/libs/assistant-mode';
 import { hasCapability, tableAllowed } from '@/shared/libs/capabilities';
 import { routeModuleEnabled } from '@/shared/libs/route-access';
 import { cn } from '@/shared/libs/utils';
@@ -54,17 +57,26 @@ function ComposeFabMenu({ size, anchor }: Required<ComposeFabProps>) {
     [t]
   );
 
-  const actions = useMemo(
-    () =>
-      COMPOSE_ACTIONS.filter(
-        (action) =>
-          view.roleActive &&
-          (!action.table || tableAllowed(view, action.table, 'read')) &&
-          (!action.capability || hasCapability(view, action.capability)) &&
-          routeModuleEnabled(action.route, view)
-      ),
-    [view]
-  );
+  const actions = useMemo(() => {
+    const assistantHref = assistantEntryHref(
+      resolveAssistantMode({
+        voice: hasCapability(view, CAPABILITY.assistantVoice),
+        chat: hasCapability(view, CAPABILITY.messagesRelay),
+        stored: readAssistantMode(),
+        native: IS_NATIVE,
+      })
+    );
+    return COMPOSE_ACTIONS.flatMap((action) => {
+      const route = action.id === 'voice' ? assistantHref : action.route;
+      const allowed =
+        route !== null &&
+        view.roleActive &&
+        (!action.table || tableAllowed(view, action.table, 'read')) &&
+        (!action.capability || hasCapability(view, action.capability)) &&
+        routeModuleEnabled(route, view);
+      return allowed ? [{ ...action, route }] : [];
+    });
+  }, [view]);
 
   const close = () => setOpen(false);
 

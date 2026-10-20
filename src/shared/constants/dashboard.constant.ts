@@ -1,5 +1,5 @@
 import type { ComposeActionId, DashboardTab, IconName, TableName, TranslationKey } from '@/core/types';
-import { CAPABILITY, type Capability } from './capability.constant';
+import type { Capability } from './capability.constant';
 
 export const PANEL_PARAM = 'panel';
 export const NOTIFICATIONS_PANEL = 'notifications';
@@ -72,7 +72,7 @@ export const COMPOSE_ACTIONS: readonly {
   { id: 'event', icon: 'calendar', route: '/agenda', table: 'calendar_event' },
   { id: 'project', icon: 'list-todo', route: '/projects', table: 'project' },
   { id: 'camera', icon: 'video', route: '/cameras', table: 'camera' },
-  { id: 'voice', icon: 'sparkles', route: '/call', capability: CAPABILITY.assistantVoice },
+  { id: 'voice', icon: 'sparkles', route: '/call' },
 ];
 
 export const SCREEN_TITLE_KEYS = {
