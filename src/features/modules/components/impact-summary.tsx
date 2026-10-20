@@ -22,11 +22,12 @@ type ImpactSummaryProps = {
   impact: ModuleImpact;
   moduleName: string;
   uninstall: boolean;
+  purging?: boolean;
   choices: ReassignChoices;
   onChoose: (userId: number, role: string) => void;
 };
 
-export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose }: ImpactSummaryProps) {
+export function ImpactSummary({ impact, moduleName, uninstall, purging = false, choices, onChoose }: ImpactSummaryProps) {
   const { t, language } = useTranslation();
   const roleLabel = (role: string) => roleLabelOf(role, t);
   const invitations = invitationsOf(impact.invitations);
@@ -167,9 +168,9 @@ export function ImpactSummary({ impact, moduleName, uninstall, choices, onChoose
       ) : null}
 
       <View className="flex-row items-start gap-2 px-1">
-        <Icon name="shield-check" className="text-muted-foreground mt-0.5 size-3.5" />
+        <Icon name={purging ? 'trash' : 'shield-check'} className="text-muted-foreground mt-0.5 size-3.5" />
         <View className="min-w-0 flex-1 gap-0.5">
-          <Text variant="caption">{t('screens.modules.impact.data-kept')}</Text>
+          <Text variant="caption">{t(purging ? 'screens.modules.impact.data-erased' : 'screens.modules.impact.data-kept')}</Text>
           {uninstall ? (
             impact.filesBytes > 0 ? (
               <Text variant="caption">

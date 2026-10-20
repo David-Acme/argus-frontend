@@ -141,6 +141,7 @@ export const modules = {
     'invitations-revoked-one': 'Se revoca 1 para {roles}. Quien la recibió verá el motivo y no podrá volver a usarse.',
     'invitations-by': 'Las envió {names}.',
     'data-kept': 'Tus datos se conservan.',
+    'data-erased': 'Tus datos se borran para siempre.',
     'data-kept-restore': 'Al volver a activarlo, todo sigue como estaba.',
     'files-freed': 'Se liberan {size} del servidor.',
     refused: 'Ahora no se puede hacer: {reason}',

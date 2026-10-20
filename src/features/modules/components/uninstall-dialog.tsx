@@ -115,6 +115,7 @@ export function UninstallDialog({ target, onClose, onSubmit }: UninstallDialogPr
             impact={impact}
             moduleName={name}
             uninstall
+            purging={purging}
             choices={choices}
             onChoose={(userId, role) => setChoices((current) => ({ ...current, [String(userId)]: role }))}
           />

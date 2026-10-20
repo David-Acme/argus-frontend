@@ -84,8 +84,11 @@ test('uninstalling a module that holds data keeps it by default and deletes it o
   await expect(screen.getByText('Keep my data', { exact: true })).toBeVisible();
   await expect(screen.getByText('Delete for good', { exact: true })).toBeHidden();
 
+  await expect(screen.getByText('Your data is kept.', { exact: true })).toBeVisible();
   await screen.getByText('Delete my data too', { exact: true }).click();
   await expect(screen.getByText(/This cannot be undone/)).toBeVisible();
+  await expect(screen.getByText('Your data is kept.', { exact: true })).toBeHidden();
+  await expect(screen.getByText('Your data is deleted for good.', { exact: true })).toBeVisible();
   const field = browser.locator('[role="dialog"] input').last();
   const requests = async (): Promise<string[]> =>
     ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] }).requests;

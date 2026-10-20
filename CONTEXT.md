@@ -5120,3 +5120,7 @@ minutes without evidence.
   with the access keys (`CONTEXT_RESYNC_KEPT_KEYS`), so it no longer
   closes the gate and bounces an open screen home.
   `tests/e2e/deep-link.e2e.ts`, `tests/unit/features/auth/held-route.test.ts`.
+- **The uninstall sheet says what will happen to the data.** `ImpactSummary`
+  always closed with "Tus datos se conservan", even with "Borrar también mis
+  datos" chosen. The dialog passes `purging`, and the line reads "Tus datos
+  se borran para siempre." while it is. `tests/e2e/module-dialogs.e2e.ts`.

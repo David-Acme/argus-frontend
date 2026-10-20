@@ -141,6 +141,7 @@ export const modules = {
     'invitations-revoked-one': '1 is revoked for {roles}. Whoever got it will see why, and it can never be used again.',
     'invitations-by': 'Sent by {names}.',
     'data-kept': 'Your data is kept.',
+    'data-erased': 'Your data is deleted for good.',
     'data-kept-restore': 'When you turn it back on, everything is as it was.',
     'files-freed': '{size} are freed on the server.',
     refused: 'It cannot be done now: {reason}',
