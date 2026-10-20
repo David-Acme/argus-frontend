@@ -105,6 +105,6 @@ describe('a camera that listens for its name', () => {
     expect(screen).toContain("intents: [{ table: 'camera', kind: 'update', recordId: cameraId, values: patch }],");
     expect(screen).toContain('call: () => cameraService.update(cameraId, patch),');
     const panel = camerasSource('components/camera-watch-panel.tsx');
-    expect(panel).toContain('disabled={!editable || noAudio}');
+    expect(panel).toContain('disabled={!editable || noAudio || paused}');
   });
 });
