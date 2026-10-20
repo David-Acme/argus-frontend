@@ -1,8 +1,8 @@
 # Frontend rules: proposal
 
-Status: proposal, 2026-10-20. It is not in `AGENTS.md` yet. It replaces the
-"MUST-FOLLOW Rules" section of `frontend/AGENTS.md` once phase R0 of
-`frontend-refactor-plan.md` has landed the gates.
+Status: superseded on 2026-10-20 by `frontend-rules-final.md`, which
+replaces F1–F33. This file is kept as the record of the proposal the owner
+approved "with the recommendations".
 
 Shape: the backend's (`backend/AGENTS.md`). Each rule is numbered and says
 what it requires, why, and **how it is measured**. A rule marked
