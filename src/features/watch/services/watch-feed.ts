@@ -1,7 +1,7 @@
 import { readWatchConversation } from '@/core/contracts/watch.contract';
 import { log } from '@/core/services/log';
 import { synchronizeService } from '@/core/services/sync';
-import { resourceSignal } from '@/core/services/sync/resource-signal';
+import { createReloadGate, resourceSignal } from '@/core/services/sync/resource-signal';
 import { viewCacheService } from '@/core/services/view-cache.service';
 import type { WatchConversation } from '@/core/types';
 import { SYNC_OPERATION, VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -19,7 +19,6 @@ type WokenListener = (conversation: WatchConversation) => void;
 const wokenListeners = new Set<WokenListener>();
 
 let bound = false;
-let refreshing: Promise<void> | null = null;
 
 export function watchConversations(): WatchConversation[] {
   return viewCacheService.readValue<WatchConversation[]>(VIEW_CACHE_KEYS.watchConversations) ?? [];
@@ -41,19 +40,15 @@ export function pruneWatch(now = Date.now()): void {
   store(pruneConversations(watchConversations(), now));
 }
 
-export function refreshWatch(): Promise<void> {
-  if (refreshing) return refreshing;
-  refreshing = watchService
+const fetchWatch = (): Promise<void> =>
+  watchService
     .list()
     .then((result) => {
       if (result.ok && result.info) store(replaceConversations(watchConversations(), result.info, Date.now()));
     })
-    .catch((reason: unknown) => log.error('watch', 'the camera conversations could not be read', reason))
-    .finally(() => {
-      refreshing = null;
-    });
-  return refreshing;
-}
+    .catch((reason: unknown) => log.error('watch', 'the camera conversations could not be read', reason));
+
+export const refreshWatch: () => Promise<void> = createReloadGate(fetchWatch);
 
 export function onWatchWoken(listener: WokenListener): () => void {
   wokenListeners.add(listener);
