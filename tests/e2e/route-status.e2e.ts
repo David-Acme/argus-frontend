@@ -46,7 +46,7 @@ const CASES: RouteCase[] = [
     remote: true,
     cut: { [LAN_HOST]: 'connect', [RELAY_DOMAIN]: 'connect' },
     path: '/',
-    text: 'Acceso remoto no disponible',
+    text: 'No encuentro a Argus',
     banner: true,
   },
 ];

@@ -92,8 +92,9 @@ export const common = {
     'cloud-detail': 'You are away from home. The connection stays encrypted all the way to your home.',
     unreachable: 'I can’t reach Argus at home',
     'unreachable-detail': 'Neither on your network nor through the cloud. Showing what this device saved last.',
-    'remote-unavailable': 'Remote access unavailable',
-    'remote-unavailable-detail': 'Away from home I can’t reach Argus. Showing what this device saved last.',
+    'remote-unavailable': 'I can’t find Argus',
+    'remote-unavailable-detail':
+      'It isn’t answering on this network and remote access isn’t available. Showing what this device saved last.',
   },
   watchdog: {
     'banner-title': 'Argus hasn’t answered since {time}',

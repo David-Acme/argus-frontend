@@ -91,8 +91,9 @@ export const common = {
     'cloud-detail': 'Estás fuera de casa. La conexión sigue cifrada hasta tu casa.',
     unreachable: 'No puedo conectar con Argus en casa',
     'unreachable-detail': 'Ni por tu red ni por la nube. Mostrando lo último guardado en este dispositivo.',
-    'remote-unavailable': 'Acceso remoto no disponible',
-    'remote-unavailable-detail': 'Fuera de casa no puedo llegar a Argus. Mostrando lo último guardado en este dispositivo.',
+    'remote-unavailable': 'No encuentro a Argus',
+    'remote-unavailable-detail':
+      'No responde en esta red y el acceso remoto no está disponible. Mostrando lo último guardado en este dispositivo.',
   },
   watchdog: {
     'banner-title': 'Argus no responde desde las {time}',

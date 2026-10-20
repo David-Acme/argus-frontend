@@ -700,7 +700,9 @@ What this step lands:
     Argus en casa".
   - `remote-unavailable`: the LAN did not answer, and the cloud itself was
     not reached (`dns`, `connect`), or there was no relay to try because
-    the app knows no usable profile. "Acceso remoto no disponible".
+    the app knows no usable profile. "No encuentro a Argus": the app cannot
+    tell home from away here (Wi-Fi off at home looks the same), so the copy
+    never says "Fuera de casa" (retest r3).
   - A relay that fails the pin is no calm state. It can be an attack, so it
     is never shown as unreachable. The choice carries `relayRefused`, the
     log carries an error once per change, and the app raises the existing
@@ -5083,3 +5085,8 @@ minutes without evidence.
   its header dot shows it `sticky`: no timer, it leaves only when the person
   closes it (it parks again) or acts on it (Reintentar). The first showing
   still closes on its own after `TOAST_ACTION_MS` and parks.
+- **The offline copy no longer guesses where the phone is.**
+  `remote-unavailable` read "Fuera de casa no puedo llegar a Argus" while the
+  phone sat at home with Wi-Fi off. It now reads "No encuentro a Argus · No
+  responde en esta red y el acceso remoto no está disponible…" (EN "I can’t
+  find Argus").

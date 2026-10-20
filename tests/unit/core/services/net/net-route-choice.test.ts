@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { localeDictionaries } from '@/core/i18n/locales';
 import {
   chooseRoute,
   deviceName,
@@ -156,5 +157,16 @@ describe('the route choice', () => {
       status: 'remote-unavailable',
       relayRefused: false,
     });
+  });
+});
+
+describe('the remote-unavailable status says only what the app knows', () => {
+  test('it never claims the phone is away from home, in either language', () => {
+    const es = localeDictionaries.es.common.route;
+    const en = localeDictionaries.en.common.route;
+    expect(`${es['remote-unavailable']} ${es['remote-unavailable-detail']}`).not.toMatch(/fuera de casa/i);
+    expect(`${en['remote-unavailable']} ${en['remote-unavailable-detail']}`).not.toMatch(/away from home/i);
+    expect(es['remote-unavailable-detail']).toContain('esta red');
+    expect(en['remote-unavailable-detail']).toContain('this network');
   });
 });
