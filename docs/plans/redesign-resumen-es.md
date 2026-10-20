@@ -1,4 +1,4 @@
-# Rediseño de Argus: resumen (v2)
+# Rediseño de Argus: resumen (v3)
 
 20 de octubre de 2026. Es una propuesta: no toca código de la app. El detalle
 está en `redesign-spec.md` y el prototipo en `redesign-prototype/index.html`,
@@ -6,9 +6,30 @@ que se abre en el navegador y tiene botones para reducir movimiento y
 transparencia. Como decidiste, las reglas, el refactor y el rediseño se
 implementan juntos cuando apruebes el diseño final.
 
-## La idea: Argus es una presencia, no un tablero
+## La base: el Argus de hoy, mejorado
 
-La v1 era calma y limpia. La v2 le da una identidad propia:
+Me dijiste que la v2 se sentía demasiado simple y que te gusta cómo se ve la
+app actual. Por eso la v3 parte del diseño de hoy y lo mejora:
+
+- **Se mantiene:**
+  - el carbón cálido con tarjetas `#24231E`;
+  - el papel cálido `#F4F1ED` en claro;
+  - los botones crema;
+  - los íconos dorados en sus cuadritos;
+  - los títulos en negrita;
+  - los chips;
+  - la mascota con gorro, lupa y bracitos.
+- **Se arregla lo que fallaba:** el saludo cortado a la mitad de la palabra,
+  los chips y contadores truncados, Inicio con nueve tarjetas, la cámara de
+  4.566 px, la barra lateral cortada en horizontal y la hoja que se sube
+  sobre la barra de estado con el teclado.
+- **Encima va la capa nueva:** el Aura, el vidrio en lo que flota, el
+  movimiento con resortes y la mascota viva.
+
+En el prototipo, cada pantalla principal muestra la **captura real de hoy**
+junto al rediseño, para compararlas.
+
+## La capa nueva: Argus es una presencia, no un tablero
 
 - **El Aura.** Una luz suave en la parte de arriba de Inicio y Seguridad que
   respira con el estado de la casa:
@@ -70,6 +91,28 @@ caso:
 El prototipo muestra tres ejemplos. Los textos los define la especificación
 de mensajes de error del otro agente.
 
+## La librería de hojas: tu elección se confirma
+
+Investigué con evidencia (documentación, código fuente e issues) y
+**react-native-true-sheet 3.11.x es la mejor opción**.
+
+- Es nativa en iOS y Android.
+- Se mantiene muy activamente.
+- Tiene un encabezado fijo y desplazamiento interno.
+- Está verificado en su código que, con el teclado abierto, no pasa de la
+  barra de estado.
+
+Las alternativas quedan descartadas:
+
+- **@gorhom/bottom-sheet:** la animan en JavaScript y no recibe cambios desde
+  mayo; sus fallos los cierra un bot.
+- **El formSheet de Expo Router:** deja de subir con el teclado cuando está
+  `KeyboardProvider`, que nosotros usamos.
+- **La hoja de @expo/ui:** ignora el teclado.
+
+No existe un benchmark serio de fotogramas en Android para ninguna, así que
+lo mediremos en tu S21 FE antes de adoptarla.
+
 ## Diálogos, hojas y teclado
 
 - **Cerrar.** Todo diálogo u hoja se cierra al tocar fuera, con Esc en el
@@ -81,9 +124,14 @@ de mensajes de error del otro agente.
   - la hoja nunca pasa de la barra de estado;
   - su encabezado (Cancelar · título · Guardar) queda fijo;
   - el contenido se desplaza dentro de la hoja;
-  - el campo activo siempre se ve.
+  - el campo activo siempre se ve, 16 dp por encima del teclado.
 
-  La especificación trae una lista de pruebas que debe pasar en tu teléfono.
+  Hoy esto falla porque la hoja entera sube la altura del teclado y en el
+  teléfono no tiene tope.
+
+  La especificación trae 13 pruebas que deben pasar en tu S21 FE. Entre
+  ellas: el teclado Samsung con su barra de sugerencias, la vista horizontal,
+  la letra al máximo y pasar de un campo a otro sin saltos.
 
 ## Escritorio y teléfono, cada uno a su manera
 
@@ -138,10 +186,16 @@ dibujadas a mano a un archivo de Rive y un envoltorio de unas 200.
    baja. *Recomiendo sí.*
 8. **Cierre al tocar fuera**, con las dos excepciones de arriba. *Recomiendo
    sí.*
-9. **Tamaño de letra del sistema hasta 200 %.** Contradice el 160 % de la
+9. **Base v3:** evolucionar el aspecto de hoy en lugar de reemplazarlo.
+   *Recomiendo sí.*
+10. **Hoja con teclado:** tope en la barra de estado + 16 dp, encabezado fijo
+    y desplazamiento interno. Se acepta solo si pasa las 13 pruebas en tu
+    S21 FE. *Recomiendo sí.*
+11. **Tamaño de letra del sistema hasta 200 %.** Contradice el 160 % de la
    regla F20 del plan. *Recomiendo sí y actualizar la regla.*
 
-Siguen abiertas las decisiones de la v1 (barra, color tinta + arena, letra
-16, hojas con true-sheet, SOS, nombres «Lugares» y «Seguridad»). La sección
+Siguen abiertas las decisiones de la v1 (barra, letra 16, SOS, nombres
+«Lugares» y «Seguridad»). La propuesta de botones en tinta de la v1 queda
+retirada: se mantiene la paleta de hoy. La sección
 15 de la especificación lista dónde este diseño cambia algo del plan de
 refactor, para que lo confirmes.

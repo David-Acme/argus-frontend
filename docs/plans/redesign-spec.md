@@ -1,13 +1,25 @@
 # Argus app redesign: specification
 
-Status: proposal v2, 2026-10-20. Research, design spec and static prototype
-only; no app code changes. v1 set the calm, Threads-like base. v2 follows the
-owner's review of v1 ("me agrada", but it must feel unique and new-era): it
-adds the identity (§2b), the mascot as a living presence (§8b), the desktop and
-mobile idioms (§8c) and the dismissal rule (§5.7). Companion files:
+Status: proposal v3, 2026-10-20. Research, design spec and static prototype
+only; no app code changes. Each version follows an owner review:
 
-- `redesign-prototype/index.html`: static prototype. It has the identity, the
-  mascot's eleven states, phone screens in light and dark, the details and
+- **v1** set a calm, Threads-like base.
+- **v2** responded to the review of v1 ("me agrada", but it must feel unique
+  and new-era). It added the identity (§2b), the mascot as a living presence
+  (§8b), the desktop and mobile idioms (§8c), the dismissal rule (§5.7), the
+  error surfaces (§5.8) and the performance budget (§7b).
+- **v3** responds to the review of v2: it felt too simplistic. David likes
+  how today's app looks, so v3 takes **the existing design as its reference
+  and improves it** (§1b): today's warm charcoal and sand palette, cards,
+  chips, cream buttons and mascot, with the findings fixed and the new-era
+  layer on top. v3 also specifies sheet + keyboard behaviour (§5.9) and
+  chooses the sheet library on evidence (§8).
+
+Companion files:
+
+- `redesign-prototype/index.html`: static prototype. Each main phone screen
+  shows **today's real capture next to the redesign**. It also has the
+  identity, the mascot's eleven states, phone screens in dark and light, the details and
   states, and four interactive desktop screens with a dialog that closes when
   you click outside it and a ⌘K palette. It has toggles for reduced motion and
   reduced transparency. Open it in a browser.
@@ -70,6 +82,41 @@ components (26,976 lines): 26 bespoke dialogs, 30 panels, 20 cards, 17 rows and
 9 forms, each re-deciding spacing, targets and states. On top of that sit 46 shared
 primitives and 18 layout files.
 
+## 1b. What today does well, and keeps
+
+From the real captures (`uiux-map/android/02-fresh-start.png`,
+`14-home-dark.png`, `30-security-dark.png`, `52-call-connected.png`,
+`84-users-dark.png`, `110-home-light.png`), these are what make Argus look
+good today. v3 keeps all of them:
+
+- **The palette.** Warm charcoal `#181816` with `#24231E` cards in dark, warm
+  paper `#F4F1ED` with white cards in light, cream (dark) or grafito (light)
+  primary buttons, and arena/gold for icons and accents.
+- **The cards.** Large rounded cards (about 24 dp) and rounded-square icon
+  wells with gold line icons. Sections have bold headings ("Recordatorios",
+  "Hoy", "Usuarios") with a quiet "Ver todo" link.
+- **The chips.** The language chips (ES/EN), the status chips ("En casa",
+  "1 en curso"), the count badges.
+- **The mascot.** The white figure with the deerstalker, the lens and small
+  arms. The large one in the call, the hero one on the welcome.
+- **The calm, premium tone of the copy** («Hola, soy Argus», «Todo se queda
+  en tu casa»).
+
+What v3 fixes, and where:
+
+| Problem in the captures | Fix |
+|---|---|
+| The greeting breaks mid-word beside three icon buttons (A2, W8) | the greeting becomes a meta line; the bell and calendar buttons go; the hero sentence wraps on words |
+| Nine cards on Inicio; detection heatmap; empty states as tall as cards | Inicio becomes hero + chips, Ahora, a camera strip and Novedades (§9.1) |
+| Six unlabelled icons + floating "+" | five labelled tabs in a floating pill, with the mascot in the centre (§9.0) |
+| Truncated chips and counters ("Visitas acti…", "En casa des…") | chips wrap (`Cluster`); counters become sentences |
+| Camera page 4,566 px; PTZ pad over "En vivo" | live screen + Ajustes de la cámara (§9.3) |
+| Landscape rail clipped; font scale 1.3 clips | one layout system (§6), font-scale rules (§11) |
+| Sheet rises over the status bar with the keyboard | §5.9 |
+
+On top of that sits the new-era layer of §2b: the Aura, glass on what floats,
+spring motion and the living mascot.
+
 ## 2. Principles
 
 1. **Una presencia, no un tablero.** Argus is someone who lives with you, not
@@ -78,7 +125,8 @@ primitives and 18 layout files.
    at most one primary action. Everything else is a row one tap away
    (progressive disclosure:
    [NN/g](https://www.nngroup.com/articles/progressive-disclosure/)).
-2. **Calma, no alarma.** Ink on paper by default. Colour carries state only:
+2. **Calma, no alarma, con el calor de hoy.** Today's warm charcoal and sand.
+   Colour carries state only:
    green for calm, amber for attention, red only for a real alert that needs
    you. An alert always says what happened, where, and the one thing to do.
 3. **Se aprende usando.** No tutorials or carousels. NN/g measured no benefit
@@ -124,7 +172,7 @@ Talking to it is one signature gesture everywhere: **hold the centre of the
 bar**. The screen's edge lights up, the mascot leans in to your voice, and you
 let go to send.
 
-Everything else stays quiet, Threads-like ink on paper. Glass appears only on
+Everything else keeps today's warm cards and chips, with more care. Glass appears only on
 what floats: the bar, sheets, the desktop sidebar and the palette.
 
 The novelty lives in four primitives:
@@ -225,43 +273,49 @@ and no more than one mascot per screen.
 
 ## 3. Tokens (the values R5 writes into `tokens.ts`)
 
-### 3.1 Colour: near-monochrome, one accent, three status colours
+### 3.1 Colour: today's warm charcoal and sand, consolidated
 
-Threads' approachability comes from a near-monochrome surface where content,
-not chrome, carries the colour: black text on light surfaces, thin dividers and
-line icons, with a single accent reserved for links and verification
-([refero teardown](https://styles.refero.design/style/3b46c64e-b733-4d70-8cd0-531ca1f92937),
-[visual review](https://medium.com/@photog-rahul/threads-visual-review-dc95adc6632a)).
-Argus keeps its warm identity (the owner-approved taupe family) but drops the
-dual accent. Actions become ink (Threads' black button). Arena remains the one
-accent, used for unread marks, the current selection, the focus ring and
-Argus' own presence.
+v3 keeps the palette the owner likes: warm charcoal (`#181816`) with
+`#24231E` cards in dark, warm paper (`#F4F1ED`) with white cards in light,
+cream or grafito actions, the arena accent and gold icons in rounded wells.
+The values are today's `color.constant.ts`. What changes is that the 59
+constants collapse into the roles below, from one source (rule F16), and that
+each role gets a single job. v1's near-monochrome "ink" proposal is
+withdrawn.
 
-| Token | Light | Dark | Use |
+| Token | Light | Dark | Use (today's name) |
 |---|---|---|---|
-| `bg` | `#FAF9F7` | `#121110` | screen background |
-| `surface` | `#FFFFFF` | `#1B1A18` | grouped rows, sheets, dialogs |
-| `fill` | `#F1EFEB` | `#262420` | inputs, chips, icon wells, secondary buttons |
-| `fill-press` | `#E7E4DF` | `#312F2B` | pressed state |
-| `line` | `#E4E1DC` | `#2E2C28` | hairline dividers, borders |
-| `text` | `#161514` | `#F3F1EE` | primary text and icons |
-| `text-2` | `#5C5852` | `#ADA79F` | secondary text (AA on bg and surface) |
-| `text-3` | `#736E67` | `#8F8A82` | meta, placeholders (AA on bg, checked by test) |
-| `ink` / `on-ink` | `#161514` / `#FFFFFF` | `#F3F1EE` / `#121110` | primary button, selected switch, checked box |
-| `accent` | `#8C6B2E` | `#D9BC85` | unread dot, focus ring, selection, Argus |
-| `accent-soft` | `#F4ECDD` | `#2E2618` | accent wells |
-| `ok` / `ok-soft` | `#2E7D4F` / `#E5F1E9` | `#62C189` / `#16261C` | calm, online, done |
-| `attn` / `attn-soft` | `#9A5B00` / `#FAEEDC` | `#E3AA52` / `#2E2314` | attention, review, stale |
-| `alert` / `alert-soft` | `#C0362C` / `#FBE7E4` | `#F07B6F` / `#341A19` | real alerts, destructive |
-| `scrim` | `rgba(20,18,16,.38)` | `rgba(0,0,0,.55)` | behind sheets and dialogs |
+| `bg` | `#F4F1ED` | `#181816` | screen background (`background`) |
+| `surface` | `#FFFFFF` | `#24231E` | cards, grouped rows, sheets, dialogs (`card`) |
+| `fill` | `#E9E4DC` | `#312E27` | icon wells, inputs, chips, secondary buttons (`surface-secondary`) |
+| `fill-press` | `#DDD6CE` | `#3B372F` | pressed state |
+| `line` | `#ECE8E2` | `#2D2A25` | hairlines inside cards (`border-subtle`) |
+| `text` | `#161616` | `#F4EFE7` | primary text (`foreground`) |
+| `text-2` | `#57524E` | `#D4CBBF` | secondary text (`foreground-secondary`) |
+| `text-3` | `#746D68` | `#AEA18F` | meta on cards (`muted-foreground`). On the light `bg` it measures about 4.4:1, so meta placed directly on `bg` uses `text-2` |
+| `ink` / `on-ink` | `#404040` / `#FAF8F5` | `#E4E1DB` / `#1A1713` | primary button, selected switch, checked box: today's grafito and cream (`interactive`) |
+| `accent` | `#836A3C` text, `#B89A63` fill | `#D9BC85` | icons in wells, unread dot, focus ring, selection, Argus (`accent`, `accent-strong`) |
+| `accent-soft` | `#F3E7D2` | `#332A1C` | accent wells (`accent-soft`) |
+| `ok` / `ok-soft` | `#3B7B4F` / `#E3EFE5` | `#63AE73` / `#1C2B20` | calm, online, done (`success`) |
+| `attn` / `attn-soft` | `#9A6114` / `#F8EBD6` | `#E5BC69` / `#33281A` | attention, review, stale (`warning-strong`) |
+| `alert` / `alert-soft` | `#CC3535` / `#FBE4E2` | `#C9706B` / `#3A1F1C` | real alerts, destructive (`error-strong`) |
+| `scrim` | `rgba(28,25,21,.32)` | `rgba(12,11,10,.5)` | behind sheets and dialogs (`overlay`) |
 
 Rules:
 
-- 16 colour roles per theme, down from 59 HEX constants and 62 OKLCH
-  variables. Each status colour is text-safe itself (≥ 4.5:1 on `bg` and
-  `surface`, by the luminance computed for this spec), so the separate
-  `*-strong` twins disappear. A unit test computes every text/background pair
-  from `tokens.ts` (rule F20).
+- About 18 roles per theme instead of 59 constants. The text-safe "strong"
+  values of today become the role values themselves; fills that cannot carry
+  text (`accent` light fill `#B89A63`, `warning` `#E7A44A`) are named as
+  fills. A unit test computes every text/background pair from `tokens.ts`
+  (rule F20).
+- **Cards keep today's look, with more care:**
+  - radius 24 (sheets and the bar 28 or full);
+  - no border in dark, with a 1 px top highlight (`rgba(255,255,255,.035)`)
+    and a soft shadow that gives depth;
+  - in light, a warm two-layer shadow;
+  - rows inside a card are separated by inset hairlines;
+  - icons sit in 42 dp rounded wells (radius 14) in the accent colour, as
+    today.
 - Event colours in the calendar map to five muted tints derived from these
   roles. The raw "blue" of W24 is gone.
 - Dark mode: no pure black. Fills sit above surfaces, so checkboxes, empty
@@ -270,13 +324,13 @@ Rules:
 - Illustration colours (the mascot, procedural avatars) live in
   `tokens.illustration`, as the plan already says.
 - **Aura tones** (fills only, never text; light / dark, three stops each):
-  `calm` `#EBD9B4 #F3E7CF #E3EBDF` / `#4A3A1C #2E2516 #1D2A20`; `duty`
+  `calm` `#EBD9B4 #F3E7CF #E3EBDF` / `#5C4621 #332918 #3B2D1A`; `duty`
   `#C9CEE8 #E3E2F0 #D9E2EC` / `#262C52 #1A1D33 #162430`; `attn` `#F2CF95…` /
   `#5A3D12…`; `alert` `#F1AFA6…` / `#6A231E…`; `off` `#E2E0DC…` / `#2D2B28…`;
   `listen` `#E7C98E…` / `#5C4520…` (full values in the prototype). Text over
   the Aura uses `text` and `text-2`, and the Aura fades to `bg` before the
   content starts, so contrast is measured against `bg`.
-- **Material:** `glass` `rgba(255,255,255,.66)` / `rgba(32,30,28,.62)` with
+- **Material:** `glass` `rgba(255,255,255,.66)` / `rgba(40,38,32,.66)` with
   a blur of 22, saturation 1.7 and a 1 px inner hairline (`glass-line`).
   Used only by `Nav`, `Sheet` (backdrop edge), `Menu` and `Command`.
 
@@ -284,8 +338,8 @@ Rules:
 
 | Step | Size / line | Weight | Use |
 |---|---|---|---|
-| `hero` | 36 / 40 (44 on desktop) | 700, tracking −2.5% | the one expressive sentence per screen (`Status` hero), onboarding headline |
-| `title` | 22 / 28 | 650 | screen and detail titles, sheet titles |
+| `hero` | 36 / 40 (44 on desktop) | 800, tracking −3% | the one expressive sentence per screen (`Status` hero), onboarding headline |
+| `title` | 24 / 30 | 750, tracking −2% | screen titles and section headings (today's bold "Recordatorios", "Usuarios") |
 | `headline` | 17 / 24 | 600 | section headings, status sentence |
 | `body` | 16 / 22 | 400 (500 for row titles) | all reading text, rows |
 | `meta` | 14 / 20 | 400 | secondary lines, timestamps |
@@ -308,14 +362,15 @@ source, so it is not copied.
 - **Sizes:** touch target 48 (minimum 44 where the platform allows), row
   minimum height 56, icon 24 (20 inside rows and buttons), avatar 36/56,
   icon stroke 1.75 everywhere.
-- **Radii** (5 steps, concentric): `8` (small wells) · `14` (buttons,
-  inputs, media) · `22` (groups, dialogs) · `28` (sheets, the floating bar,
-  phone-corner concentric) · `full` (pills, avatars, switches). Nested shapes
+- **Radii** (5 steps, concentric): `8` (small wells) · `14` (icon wells,
+  inputs) · `16–20` (buttons, media) · `24` (cards, dialogs, today's card
+  radius) · `28` (sheets) · `full` (the bar, pills, avatars, switches). Nested shapes
   keep concentric corners (outer radius = inner radius + padding), as Liquid
   Glass does. Down from nine steps.
-- **Elevation** (2 levels): `0` for everything on the page (hairlines separate
-  it, like Threads), `1` (one shadow token) for what floats: sheets, dialogs,
-  menus and toasts. Cards do not cast shadows.
+- **Elevation** (3 levels): `card` for cards on the page (dark: a 1 px top
+  highlight and a soft shadow; light: a warm two-layer shadow), `float` for
+  sheets, dialogs, menus, toasts and the bar, and `none` for content inside
+  cards (hairlines separate it).
 - **Motion:** three springs instead of durations for anything that moves
   physically: `snappy` (damping 18, stiffness 320: presses, toggles, tab
   changes), `gentle` (damping 22, stiffness 180: sheets, layout, tile → live),
@@ -485,7 +540,7 @@ measure against.
      not close on an outside tap, Esc, Back or a drag. It shows an inline
      "¿Descartar «…»?" with *Seguir editando* (the default, also what a
      second Esc or Back does) and *Descartar*. On phones the native sheet's
-     dismiss is blocked the same way (TrueSheet `dismissible=false` while
+     dismiss is blocked the same way (TrueSheet's non-dismissible option, name to be confirmed in the spike, while
      dirty), and the discard question is a native alert.
    - Untouched forms close at once.
    - The prototype's desktop dialog and phone sheet implement this rule.
@@ -511,6 +566,45 @@ measure against.
    The code goes to `log.error` with the request context, never to the screen.
    Error toasts are never stacked: a second one replaces the first. The
    mascot never appears in a toast.
+9. **Sheet + keyboard.** Today's `sheet.tsx` translates the whole sheet up
+   by the keyboard offset (`translateY + keyboardOffset`, line 170), and it
+   caps the height only on web (line 201). On a phone, a tall form therefore
+   rises above the status bar, which is A6 (`uiux-map/android/41-event-form-keyboard.png`).
+   The rule:
+   - **Ceiling.** The sheet's top never goes above the top safe area + 16 dp,
+     so a strip of the screen behind stays visible and the sheet reads as a
+     sheet. True-sheet clamps the keyboard-inflated height to
+     `screenHeight - topInset` (source-verified on Android with
+     edge-to-edge). Set `maxContentHeight = windowHeight - insets.top - 16`
+     for the margin.
+   - **Pinned header.** Cancelar · title · Guardar sit in the sheet's `header`
+     slot: fixed, never scrolled away, never under the status bar. Guardar is
+     also the Return key on the last field.
+   - **Inner scroll.** The fields scroll inside the sheet, between the pinned
+     header and the keyboard: one scroll container (`scrollable`), no
+     page scroll behind it, no double scroll, no jump.
+   - **Focused field.** It stays visible with 16 dp above the keyboard
+     (`scrollableOptions.keyboardScrollOffset: 16`). Switching fields with the
+     keyboard's Next key scrolls only as much as needed.
+   - **Detents.**
+     - Short forms (one to three fields) use `auto`: the sheet grows by the
+       keyboard height up to the ceiling.
+     - Long forms use `[0.6, 1]` with `scrollable`: with the keyboard open the
+       sheet sits at the ceiling. When the keyboard closes it returns to the
+       detent the user left, and never jumps to a different one.
+   - **Multiline fields** grow up to 5 lines, then scroll inside themselves.
+     The caret stays visible.
+   - **Landscape and font scale 1.3–2.0.** In landscape the sheet goes to the
+     ceiling and stays scrollable. At large font scales the header keeps one
+     line: the title truncates first, and the buttons never do.
+   - **Focus on open.** Focus the first field in `onDidPresent`, never with
+     `autoFocus`.
+   - **Platforms.** Android uses edge-to-edge with the window insets
+     (true-sheet tracks `WindowInsetsAnimationCompat`), so no `adjustPan`.
+     iOS uses UIKit's keyboard avoidance. Desktop and web use a centred
+     dialog, with no keyboard rise at all.
+   - **Prototype.** The «Hoja + teclado (formulario largo)» frame shows this
+     layout.
 
 ## 6. Responsive rules: one layout system
 
@@ -601,9 +695,10 @@ react-native-web 0.21 inside Tauri 2 (WebKitGTK). Licences are all MIT.
 
 | Need | Recommendation | Web / Tauri | Reduces our code? |
 |---|---|---|---|
-| Bottom sheets (phone) | **react-native-true-sheet v3** (lodev09): it presents the system sheet controller on iOS (detents, grabber), Material bottom-sheet behaviour on Android, built-in keyboard handling, is Fabric-only from v3, and supports RN 0.81–0.86 ([repo](https://github.com/lodev09/react-native-true-sheet), [docs](https://sheet.lodev09.com/)). Stay on v3. v4 is beta (Expo Router `Sheet` layout, Radix-based web). | Not used on web: `Sheet` renders `@rn-primitives/dialog` at medium and up and on every web build | **Yes.** Replaces the gesture, snap and keyboard code of `sheet.tsx` and `overlay-body.tsx` (about 360 lines) and the per-sheet keyboard workarounds behind A6 |
-| Route-level sheets | Expo Router `presentation: 'formSheet'` with `sheetAllowedDetents` for sheets that need a URL (Android allows at most 3 detents; the grabber is iOS-only) ([Expo modals](https://docs.expo.dev/router/advanced/modals.md)) | a normal route | Neutral |
-| Alternative sheet | `@gorhom/bottom-sheet` 5.2.14: one JS implementation everywhere (Reanimated), but not the system sheet, it needs its own text input, it officially supports only mobile web, and the maintainer has little time ([releases](https://github.com/gorhom/react-native-bottom-sheet/releases), [web](https://gorhom.dev/react-native-bottom-sheet/web-support)) | mobile web only | Yes, but less native |
+| Bottom sheets (phone) | **react-native-true-sheet 3.11.x** (lodev09, MIT): the system sheet controller on iOS, Material `BottomSheetBehavior` on Android, Fabric-only, RN 0.81+. Stable 3.11.18 is from 2026-10-02 and the repo is very active. It has a `header` slot, `scrollable` with `keyboardScrollOffset`, and a keyboard-height clamp at the status bar ([keyboard guide](https://sheet.lodev09.com/guides/keyboard), [repo](https://github.com/lodev09/react-native-true-sheet)). Stay on 3.11.x and move to 3.11.19+ for PR #938 (focus in `onWillPresent`) and #920 (web keyboard). v4 (4.0.0-beta.25) rewrites the layout engine and is still beta. | its own Radix drawer exists, but we use `@rn-primitives/dialog` at medium and up and on every web build | **Yes.** `sheet.tsx` (250), `overlay-body.tsx` (110) and `use-keyboard-progress.ts` (37), about 400 lines, plus most of the per-sheet keyboard workarounds |
+| Route-level sheets | **Not** Expo Router `formSheet` for forms. keyboard-controller [#1683](https://github.com/kirillzyusko/react-native-keyboard-controller/issues/1683) (open, 2026-10-15): with `KeyboardProvider` mounted, as it is in our root layout, a formSheet no longer rises with the keyboard. Also screens [#4863](https://github.com/software-mansion/react-native-screens/issues/4863) (open; ignores the top inset after a config change), [#3640](https://github.com/software-mansion/react-native-screens/issues/3640), [#4994](https://github.com/software-mansion/react-native-screens/issues/4994) and [#4310](https://github.com/software-mansion/react-native-screens/issues/4310) (Samsung One UI relayout loop) | a route | — |
+| Rejected: `@gorhom/bottom-sheet` 5.2.14 | JS-driven (Reanimated), last release 2026-05-09, **no commits since**. Recent bugs are closed by a stale bot: [#2734](https://github.com/gorhom/react-native-bottom-sheet/issues/2734) (5.2.14 regression), [#2747](https://github.com/gorhom/react-native-bottom-sheet/issues/2747) (peeks under edge-to-edge), [#2638](https://github.com/gorhom/react-native-bottom-sheet/issues/2638) (`maxDynamicContentSize` ignored with the keyboard), [#2674](https://github.com/gorhom/react-native-bottom-sheet/issues/2674) (keyboard covers input). Its keyboard-controller wrapper has open issues [#819](https://github.com/kirillzyusko/react-native-keyboard-controller/issues/819), [#1280](https://github.com/kirillzyusko/react-native-keyboard-controller/issues/1280) and [#923](https://github.com/kirillzyusko/react-native-keyboard-controller/issues/923) | weak | — |
+| Watched, not yet | `@expo/ui` BottomSheet (SDK 57): keyboard and footer props are accepted but have **no effect** ([docs](https://docs.expo.dev/versions/v57.0.0/sdk/ui/drop-in-replacements/bottomsheet.md)). `@swmansion/react-native-bottom-sheet` 0.17: native gestures, but 0.x and created 2026-02 (no footer slot, [#62](https://github.com/software-mansion-labs/react-native-bottom-sheet/issues/62)) | — | — |
 | Dialogs, menus, popovers (web, Tauri, medium+) | **Keep `@rn-primitives`** dialog, alert dialog, dropdown menu and context menu (already installed, portal-based, accessible) | yes | Yes: the adaptive components become thin switches |
 | Native confirm | RN `Alert.alert` on iOS and Android (it is a no-op in react-native-web, so web uses the `@rn-primitives` alert dialog) ([RNW source](https://raw.githubusercontent.com/necolas/react-native-web/master/packages/react-native-web/src/exports/Alert/index.js)) | via alert dialog | Yes: removes confirm sheets on phones |
 | Native context menus | Optional later: `@expo/ui` (`ContextMenu` on SwiftUI, `DropdownMenu` on Compose) behind `Menu`. zeego is deferred until its pinned native versions are proven on RN 0.86 ([zeego](https://zeego.dev/start)) | — | No (adds code), so only if the native look is wanted |
@@ -616,13 +711,39 @@ react-native-web 0.21 inside Tauri 2 (WebKitGTK). Licences are all MIT.
 | Mascot | **Rive**: `@rive-app/react-native` (Nitro runtime) on iOS/Android, `@rive-app/canvas-lite` on web if the WebKitGTK CSP test passes (§8b) | wasm, about 420 KB gzip | **Yes**: about 1,600 lines of procedural mascot become a wrapper and one asset |
 | Formatting | `Intl` through the existing `useDateFormatter` + `date-fns` (es/en), with the hour cycle from expo-localization's `getCalendars().uses24hourClock` passed explicitly. Hermes delegates `Intl` to platform ICU, so results vary by OS; `formatToParts` is Android-only ([Hermes Intl](https://github.com/facebook/hermes/blob/main/doc/IntlAPIs.md), [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/)) | yes | Neutral |
 
+**Verdict on the sheet library (the owner asked for evidence).**
+react-native-true-sheet 3.11.x is the right choice, so David's pick holds. It
+is the only candidate that is truly native, actively maintained, and has
+verified keyboard code that stops at the status bar with a pinned header and
+inner scroll. Gorhom is JS-driven and has stalled. formSheet breaks with our
+`KeyboardProvider`. `@expo/ui` ignores the keyboard. No credible Android
+frame-rate benchmark exists for any of them: "best performance" is an
+inference from native animation (system controller vs Reanimated JS-defined
+sheet) and is measured in the spike on the S21 FE.
+
+Two open questions are measured in the spike:
+- whether true-sheet's inset callback still fires with `KeyboardProvider`
+  mounted (#1683 is the analogous failure for screens; for true-sheet this is
+  an inference);
+- whether [#790](https://github.com/lodev09/react-native-true-sheet/issues/790)
+  (a gap left after dragging, closed for lack of a repro) still reproduces.
+
+Configuration: `detents` (`['auto']` for short forms, `[0.6, 1]` + `scrollable`
+for long ones), `scrollableOptions={{ keyboardScrollOffset: 16 }}`,
+`header={<SheetHeader/>}`, `maxContentHeight={windowHeight - insets.top - 16}`,
+`insetAdjustment="automatic"` and focus in `onDidPresent`. Inside a
+`scrollable` sheet the inset belongs to the sheet: no nested
+`KeyboardAwareScrollView`.
+
 Risks: TrueSheet v3 → v4 changes its web renderer, which we don't use, so the
 impact is contained. Every library here needs its `.web` passthrough tested in
 WebKitGTK through `check:bundle`. Re-check the peer ranges at the next SDK.
 **Two spikes come first:**
-1. TrueSheet v3 on the dev-client for both Android and iOS, with a form sheet,
-   the keyboard, Back and the dirty-form dismissal block. If it fails, gorhom
-   is the fallback.
+1. TrueSheet 3.11.x on the dev-client for both Android (the owner's Samsung
+   S21 FE) and iOS, passing the Sheet + keyboard acceptance list of §10 and
+   the dirty-form dismissal block. If it fails, the fallback is the
+   hand-written sheet fixed to §5.9's rules (a height cap at the top inset, a
+   pinned header, one inner `KeyboardAwareScrollView`), not gorhom.
 2. Rive on a low-end Android (frame time, latency from voice level to mouth)
    and `canvas-lite` in the Tauri WebKitGTK build under the strict CSP with
    `'wasm-unsafe-eval'`.
@@ -839,15 +960,18 @@ creates anything.
   feed), the compose menu (`uiux-map/web/home/compose-menu__phone__light__es.png`)
   and the "Primeros pasos 0 de 7" checklist (A10). Its job moves to empty states.
 - **Layout:**
-  - **Top bar:** the place picker as a glass pill on the left ("Casa ▾") and
-    search on the right.
-  - **Hero:** the `Aura` field behind the top. In it, `Presence` (108) and the
-    `Status` hero sentence: «Todo tranquilo.» with the meta "Modo En casa · 5
-    cámaras vigilando · Luis y tú están en casa".
+  - **Top bar:** the greeting as a meta line ("Buenas tardes, Ana"; with
+    several places, the place picker), and search on the right.
+  - **Hero:** the `Aura` field behind the top. In it, `Presence` (104) and the
+    `Status` hero sentence «Todo tranquilo.», then glass chips in today's chip
+    style: "Modo En casa", "5 cámaras", "Luis y tú en casa". The chips wrap
+    and each one opens its screen.
   - **Ahora:** up to 3 rows, overdue first, then the next by time; the link
     "Agenda".
-  - **Novedades:** the latest 5 feed items, inline actions such as "Activar",
-    the link "Ver todo".
+  - **Cámaras:** a horizontal strip of live tiles (today's home had camera
+    cards; they come back as a strip, not a grid), with the link "Seguridad".
+  - **Novedades:** the latest 5 feed items in a card, with inline actions
+    such as "Activar" and the link "Ver todo".
   - **The hero changes with the home:**
     - night or away: «Buenas noches.» with the hat on;
     - alert: «Alguien en el patio.» with media and actions;
@@ -1099,6 +1223,34 @@ visual baselines). The rest are a review list in the PR template.
 - [ ] Irreversible or loud actions use `Confirm` (native alert on phones) with
       a named verb; reversible actions use Deshacer instead.
 
+**Sheet + keyboard (acceptance on the owner's Samsung S21 FE, Samsung Keyboard, Android 14 and 15, plus one iPhone)**
+
+- [ ] Open a form and focus the first field: the whole header is visible, and
+      the sheet's top is at or below the status bar + 16 dp.
+- [ ] Focus the last field of a long form: it is visible above the keyboard,
+      and the header stays pinned.
+- [ ] Move through every field with the keyboard's Next key: no jump and no
+      flicker; Guardar on the last field submits.
+- [ ] Type 10 lines in a multiline field: it grows to 5 lines, then scrolls,
+      and the caret stays visible.
+- [ ] Toggle the Samsung keyboard's suggestion or toolbar strip (its height
+      changes): the layout follows.
+- [ ] Dismiss the keyboard by Back, by dragging and by tapping outside it: no
+      gap is left behind (#790), and the sheet returns to the detent it had.
+- [ ] Swipe the sheet down with the keyboard open: it closes cleanly, or
+      asks to discard if the form is dirty.
+- [ ] Rotate to landscape with the keyboard open: the header is visible and
+      every field is reachable.
+- [ ] Font scale at maximum and display zoom Large: the header keeps one line
+      (the title truncates, the buttons never do) and the content scrolls.
+- [ ] Switch dark/light while the app runs, then reopen the sheet: the top
+      inset is still respected (the #4863 pattern).
+- [ ] Open and close it 20 times: no lost taps and no stuck sheet.
+- [ ] Profile a drag and an open (GPU profiler / Perfetto): no frame over
+      16 ms.
+- [ ] The same forms on the desktop build: a centred dialog, Esc and an
+      outside click behave as in §5.7.
+
 **Keyboard and input**
 
 - [ ] The focused field stays visible above the keyboard, in sheets too (A6).
@@ -1227,13 +1379,13 @@ second and is written natively, not translated word for word.
 | # | Decision | Recommendation |
 |---|---|---|
 | R-D1 | Bottom bar: Inicio · Seguridad · **Argus (centre)** · Agenda · Tú, with Novedades inside Inicio and no bell | yes |
-| R-D2 | Actions in ink (black/white), with arena as the single accent, replacing the grafito + arena pair | yes |
+| R-D2 | ~~Actions in ink~~ **v3:** keep today's palette (warm charcoal and sand, cream or grafito actions, arena accent, gold icon wells), consolidated into about 18 roles from one source | yes |
 | R-D3 | Body text 16 and system fonts, no custom font | yes |
 | R-D4 | Remove the floating "+"; create from Agenda/Proyectos "+" or by asking Argus; long press on Argus for quick create | yes |
 | R-D5 | Merge Cámaras into Seguridad; split the camera page into live + Ajustes de la cámara | yes |
 | R-D6 | Agenda views: Hoy + Calendario (month on phone, week from tablet up) + Proyectos; drop Day and Agenda-list views | yes |
 | R-D7 | Projects on phone as a list grouped by state; board only on wide screens | yes |
-| R-D8 | Native sheets with react-native-true-sheet v3 (spike first; gorhom as fallback); sonner for toasts; expo-haptics | yes, after the spike |
+| R-D8 | Native sheets with **react-native-true-sheet 3.11.x**: David's pick, confirmed on evidence (§8: native, maintained, keyboard clamp verified; gorhom stalled; formSheet breaks with `KeyboardProvider`). Spike on the S21 FE first; sonner for toasts; expo-haptics | yes, after the spike |
 | R-D9 | Font scale cap raised from 1.6 to 2.0 for body text | yes |
 | R-D10 | Panic as hold-to-confirm "SOS" in Seguridad (and in the guest's Inicio) | yes |
 | R-D11 | ~~The mascot only in onboarding and the voice call~~ **Reversed by the owner in v2:** the mascot is a living presence across the app (§8b); the orbit hero and the "+" morph go | yes |
@@ -1247,6 +1399,8 @@ second and is written natively, not translated word for word.
 | R-D19 | ⌘K `Command` as the one door on desktop (commands, search, ask Argus), and the search button on phones | yes |
 | R-D20 | A "Reducir efectos" setting, plus an automatic `low` tier on older Android (no blur, still Aura, simpler mascot) | yes |
 | R-D21 | Dismissal: overlays close on an outside tap/click, Esc and Back, except destructive confirmations and dirty forms, which ask (§5.7) | yes |
+| R-D22 | **v3 basis:** the redesign evolves today's look (palette, cards, chips, mascot) instead of replacing it; the new-era layer (Aura, glass on what floats, springs, the living mascot) sits on top | yes |
+| R-D23 | Sheet + keyboard: ceiling at the top safe area + 16 dp, pinned header, inner scroll, focused field 16 dp above the keyboard (§5.9); accepted only after the §10 list passes on the S21 FE | yes |
 
 ## 14. Order of work
 
@@ -1279,7 +1433,7 @@ deliberate and needs the owner's or the rules agent's confirmation:
 | A1 | D7: the redesign starts after R5 and R6 exit | the owner's 2026-10-20 decision: rules, refactor and redesign are implemented together after design approval | the plan's D7 and §5 ordering are superseded; update the plan |
 | A2 | F20: `Text` caps font scale at 1.6 | 2.0 for body/meta/caption, 1.5 for hero/title (§11) | change F20's number |
 | A3 | F21: today's type scale (8 steps) and radius scale (9 steps) are kept | 6 type steps (`hero` 36 … `caption` 12) and 5 concentric radii (§3) | F21 keeps the *mechanism* (lint-enforced scales) with the new *values* |
-| A4 | §2.4 / F20: status colours are fills with `*-strong` text twins | each status colour is text-safe itself, so the twins go (§3.1); the contrast unit test stays | drop the twins in F20 |
+| A4 | §2.4 / F20: status colours are fills with `*-strong` text twins | v3 keeps today's values. The "strong" values become the role values and the pure fills are named as fills (§3.1), so there is no separate twin token | F20 keeps the contrast test and names roles, not twins |
 | A5 | §3.7 primitive names: `PressableSurface`, `Button`, `IconButton`, `ListRow`, `SegmentedControl` (falls back to a select), `RetryNotice`, `StaleRibbon`, `Field`, `Stack`/`Inline`/`Cluster` | `Pressable`(`PressableSurface`), `Button` (with `iconOnly`, absorbing `IconButton`), `Row`, `Choice`, `Notice` (covers retry and stale), `Field`; `Stack`/`Inline`/`Cluster` are kept as layout helpers and not counted among the 26 | use this spec's names in the rules, or keep the plan's: only one list may exist |
 | A6 | F27 performance budgets cover bundle and startup | adds §7b's animation budget, the `perfTier`, and new dependencies: TrueSheet, sonner(-native), expo-haptics, expo-blur, expo-glass-effect, Rive (+about 420 KB gzip wasm on web, lazy-loaded; +about 2 MB per native app) | add §7b to F27; budget the new dependencies explicitly |
 | A7 | F31 / the Tauri CSP: scripts only from the app itself | Rive on desktop needs `'wasm-unsafe-eval'` with self-hosted wasm (R-D18) | the owner decides; without it, the desktop uses still poses |
