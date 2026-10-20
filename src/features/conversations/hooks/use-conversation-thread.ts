@@ -9,9 +9,10 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { counterpartNameOf, isArgus } from '@/features/conversations/model/conversation-labels';
 import {
-  CONVERSATION_MESSAGE_LENSES,
   conversationClearIntents,
+  conversationLenses,
   conversationReadIntents,
+  typedMessageIntent,
 } from '@/features/conversations/model/conversation-optimistic';
 import { unreadIncomingIds } from '@/features/conversations/model/conversation-thread';
 
@@ -20,6 +21,7 @@ export type ConversationThread = {
   name: string;
   argus: boolean;
   clear: () => Promise<boolean>;
+  send: (body: string) => Promise<boolean>;
 };
 
 export function useConversationThread(counterpartId: number): ConversationThread {
@@ -27,7 +29,8 @@ export function useConversationThread(counterpartId: number): ConversationThread
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const synced = useViewCacheRows<IConversationMessageCacheRow>(VIEW_CACHE_KEYS.conversationThread, String(counterpartId));
   const summaries = useViewCacheRows<IConversationSummaryCacheRow>(VIEW_CACHE_KEYS.conversationList);
-  const { rows: messages } = useOptimisticRows(synced, CONVERSATION_MESSAGE_LENSES);
+  const lenses = useMemo(() => conversationLenses(counterpartId), [counterpartId]);
+  const { rows: messages } = useOptimisticRows(synced, lenses);
   const summary = summaries.find((row) => row.counterpartId === counterpartId);
   const name = counterpartNameOf(counterpartId, summary?.counterpartName ?? '', t);
   const argus = isArgus(counterpartId);
@@ -53,6 +56,18 @@ export function useConversationThread(counterpartId: number): ConversationThread
     return result !== null;
   }, [argus, counterpartId, name, synced, t, userId]);
 
+  const send = useCallback(
+    async (body: string): Promise<boolean> => {
+      const result = await runOptimistic({
+        intents: [typedMessageIntent({ counterpartId, counterpartName: name, body, createdAt: Date.now() })],
+        call: () => conversationService.send(counterpartId, body),
+        errorTitle: t('screens.conversations.composer.send-failed', { name }),
+      });
+      return result !== null;
+    },
+    [counterpartId, name, t]
+  );
+
   useEffect(() => {
     const fresh = unreadKey.split(',').filter((id) => id.length > 0 && !requested.current.has(id));
     if (fresh.length === 0) return;
@@ -64,5 +79,5 @@ export function useConversationThread(counterpartId: number): ConversationThread
     });
   }, [counterpartId, t, unreadKey]);
 
-  return { messages, name, argus, clear };
+  return { messages, name, argus, clear, send };
 }

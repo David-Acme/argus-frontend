@@ -104,7 +104,12 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
 
   await screen.getByRole('button', 'Back').first().click();
   await screen.getByText('Dinner is ready', { exact: true }).click();
-  await expect(screen.getByText('To write to them, tell Argus: “tell David that…”', { exact: true })).toBeVisible({
+  await expect(
+    screen.getByText(
+      'David gets it under your name: if they are talking to Argus it may say it aloud; if not, it leaves them a notice. You will not learn whether they read it or where they are.',
+      { exact: true }
+    )
+  ).toBeVisible({
     timeout: 10000,
   });
   await expect.poll(() => requests(baseUrl), { timeout: LIVE_MS }).toContain('PATCH /conversation/3/read @A');

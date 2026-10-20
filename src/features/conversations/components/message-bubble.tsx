@@ -4,6 +4,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { isPendingRecordId } from '@/shared/libs/optimistic';
 import { cn } from '@/shared/libs/utils';
 import { LEG_ICONS } from '@/features/conversations/constants';
 import { DeliveryState } from '@/features/conversations/components/delivery-state';
@@ -22,6 +23,7 @@ export function MessageBubble({ message, repliedBody }: MessageBubbleProps) {
   const leg = legOf(message);
   const state = deliveryStateOf(message);
   const visitor = message.kind === 'visitor';
+  const pending = isPendingRecordId(message.id);
   const time = date.formatTime(new Date(message.createdAt));
   const label = [
     visitor ? t('screens.conversations.visitor') : null,
@@ -38,7 +40,11 @@ export function MessageBubble({ message, repliedBody }: MessageBubbleProps) {
     <View
       accessible
       accessibilityLabel={label}
-      className={cn('max-w-[85%] gap-1', outgoing ? 'items-end self-end' : 'items-start self-start')}>
+      className={cn(
+        'max-w-[85%] gap-1',
+        outgoing ? 'items-end self-end' : 'items-start self-start',
+        pending && 'opacity-60'
+      )}>
       <View
         className={cn(
           'gap-1 rounded-2xl px-3.5 py-2.5',

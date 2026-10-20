@@ -24,7 +24,7 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const date = useDateFormatter();
   const now = useNow(60000);
   const scroll = useRef<ScrollView>(null);
-  const { messages, name, argus, clear } = useConversationThread(counterpartId);
+  const { messages, name, argus, clear, send } = useConversationThread(counterpartId);
   const days = useMemo(
     () => groupByDay(messages, (at) => date.startOfDay(new Date(at)).getTime()),
     [date, messages]
@@ -85,7 +85,7 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
           ))}
         </ScrollView>
       )}
-      <MessageComposer name={name} argus={argus} />
+      <MessageComposer name={name} argus={argus} onSend={send} />
     </AppScreen>
   );
 }

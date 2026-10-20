@@ -11,8 +11,11 @@ import {
 import {
   CONVERSATION_MESSAGE_LENSES,
   conversationClearIntents,
+  conversationLenses,
   conversationReadIntents,
+  typedMessageIntent,
 } from '@/features/conversations/model/conversation-optimistic';
+import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
   dayKindOf,
   deliveryStateOf,
@@ -190,5 +193,44 @@ describe('optimistic read and clear', () => {
     expect(lens?.recordIdOf(row)).toBe('9');
     expect(lens?.patch(row, { isRead: true }).isRead).toBe(true);
     expect(lens?.patch(row, {}).isRead).toBe(false);
+  });
+});
+
+describe('a typed message shows at once and gives way to the synced row', () => {
+  const draft = { counterpartId: 3, counterpartName: 'David', body: '¿Vienes a comer?', createdAt: T0 };
+  const intentOf = (recordId: string, confirmed: boolean): OptimisticIntent => ({
+    id: 'intent-1',
+    ...typedMessageIntent(draft),
+    recordId,
+    values: draft,
+    confirmed,
+  });
+
+  test('the intent is a create on the conversation table carrying the words', () => {
+    expect(typedMessageIntent(draft)).toEqual({ table: 'conversation_message', kind: 'create', values: draft });
+  });
+
+  test('the pending row is the sender copy, still sent, at the end of its own thread only', () => {
+    const synced = [message({ id: '1', direction: 'in', createdAt: T0 - 1000 })];
+    const shown = applyIntents(synced, [intentOf('pending-1', false)], conversationLenses(3));
+    expect(shown).toHaveLength(2);
+    expect(shown[1]).toMatchObject({
+      id: 'pending-1',
+      counterpartId: 3,
+      direction: 'out',
+      kind: 'relay',
+      state: 'sent',
+      body: '¿Vienes a comer?',
+      isRead: true,
+    });
+    expect(applyIntents(synced, [intentOf('pending-1', false)], conversationLenses(5))).toBe(synced);
+    expect(applyIntents(synced, [intentOf('pending-1', false)], CONVERSATION_MESSAGE_LENSES)).toBe(synced);
+  });
+
+  test('once the server row with that id is synced, it is shown once', () => {
+    const synced = [message({ id: '42', direction: 'out', kind: 'relay', state: 'notified', counterpartId: 3, body: '¿Vienes a comer?' })];
+    const shown = applyIntents(synced, [intentOf('42', true)], conversationLenses(3));
+    expect(shown.filter((row) => row.id === '42')).toHaveLength(1);
+    expect(shown[0]?.state).toBe('notified');
   });
 });

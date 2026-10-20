@@ -4798,7 +4798,9 @@ table beyond its field map in `entity-mappers.ts`.
 The table is core: it belongs to no module, so `ModuleSourceGate` never hides
 it, and `role-access.ts` mirrors the backend's `kTableAccess`: every
 non-owner role reads, updates (marks read) and deletes (clears) its own rows,
-and nobody creates them from the app. The table is in the backend's baseline
+and nobody creates them through the table: a typed message is a route of its
+own (`POST /conversation/{counterpartId}/message`, a `kRouteOverrides` row on
+the backend), and its rows arrive through sync like a spoken one. The table is in the backend's baseline
 and own-row sets, so an inactive role keeps it and no module room carries it.
 
 ### The view
@@ -4827,21 +4829,37 @@ outgoing message) and the thread (`ConversationThreadScreen`: messages grouped
 by day with Hoy/Ayer/date separators, outgoing bubbles on the right, the leg
 of a turn under it in micro text, the delivery state under each outgoing relay
 or reply, the quoted line a reply answers, a visitor notice marked as such).
-The thread ends in a composer (`MessageComposer`), but it does not type:
-messages are sent by voice, so its field reads "Díselo a Argus por voz:
-«dile a David que…»" and it and the microphone beside it open `/call`, with a
-line saying that typing from the app is not available yet. Without
-`assistant.voice` or a microphone on the device (`voiceCallSupported`) only
-that line shows (`composerMode`, tested in
-`tests/unit/features/conversations/message-composer.test.ts`). The backend has
-no app-facing route for a typed message (G1 checked argus-notification's
-`/conversation` routes, which read, mark read and clear, and argus-llm, whose
-`/llm/v1/chat` is the internal listener), and the app does not invent one. A
-typed composer needs, on argus-notification behind the usual chain, something
-like `POST /conversation/{counterpartId}/message {body}` → the new outgoing
-row, which hands the words to argus-llm's relay (`ConversationService.
-RelayMessage`) with the same consent, impersonation and delivery-state rules
-as a spoken message, and `messages.relay` as its capability.
+The thread ends in a composer (`MessageComposer`). In a member's thread it is
+a text field with a send button and, beside them, the microphone that opens
+`/call` (the voice shortcut, shown with `assistant.voice` and a microphone on
+the device, `voiceCallSupported`). The Argus thread stays voice only: there is
+no typed turn to Argus, and its field reads "Habla con Argus por voz". Typing
+follows `messages.relay` (`canType`); the line under the field says the
+message arrives under the sender's name, may be said aloud in the
+recipient's live conversation or left as a notice, and that the sender will
+not learn whether it was read or where the person is. `composerMode`,
+`canType`, `sendableMessage` and `charactersOf` are tested in
+`tests/unit/features/conversations/message-composer.test.ts`.
+
+- **Sending (gaps closing pass).** `POST /conversation/{counterpartId}/message
+  {body}` on argus-notification (`conversationService.send`, the answer read by
+  `conversationMessageSchema`) answers `201` with the sender's new `out` row.
+  The body is the trimmed text, 1 to 500 characters (code points, the
+  backend's `conversation.max_message_chars` default; a counter appears in
+  the last hundred). A typed message is an explicit intent, so it has no
+  spoken read-back: the text is on screen before the press. The send is
+  local-first: `runOptimistic` registers a `conversation_message` create
+  intent (`typedMessageIntent`), the thread's lens (`conversationLenses
+  (counterpartId)`, which creates rows only for its own counterpart) paints
+  the row at once as an outgoing `relay` in `sent`, dimmed while pending
+  (`isPendingRecordId`), and the server id in the answer confirms it, so the
+  sync `Add` of that id never shows twice and the user audit diffs then move
+  its state. The field clears on press and the draft comes back if the
+  server refuses (`422` empty, too long or to oneself, `404` not an active
+  member, `429` past the hourly cap, `503` identity unreadable), with a toast.
+  When the newest row of the thread is an incoming relay or reply, the
+  server files the typed message as a `reply` to it and the other person's
+  copy becomes `answered`.
 
 - Opening a thread marks its unread incoming rows read with
   `PATCH /conversation/{counterpartId}/read` (body `{}`) through

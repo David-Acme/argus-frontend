@@ -9,3 +9,8 @@ export const conversationThreadPath = (counterpartId: number): string =>
   `${CONVERSATION_PATH}/${encodeURIComponent(String(counterpartId))}`;
 
 export const conversationReadPath = (counterpartId: number): string => `${conversationThreadPath(counterpartId)}/read`;
+
+export const conversationMessagePath = (counterpartId: number): string =>
+  `${conversationThreadPath(counterpartId)}/message`;
+
+export const CONVERSATION_MESSAGE_MAX_CHARS = 500;

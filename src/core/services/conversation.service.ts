@@ -1,13 +1,17 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
 import type { z } from 'zod';
-import { conversationListSchema, conversationReadResultSchema } from '@/core/contracts/conversation.contract';
+import {
+  conversationListSchema,
+  conversationMessageSchema,
+  conversationReadResultSchema,
+} from '@/core/contracts/conversation.contract';
 import type { ConversationMessageModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { ConversationReadResult, ConversationSummary } from '@/core/types';
+import type { ConversationMessage, ConversationReadResult, ConversationSummary } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
-import { CONVERSATION_PATH, conversationReadPath, conversationThreadPath } from './conversation';
+import { CONVERSATION_PATH, conversationMessagePath, conversationReadPath, conversationThreadPath } from './conversation';
 import { DatabaseService } from './database.service';
 
 const THREAD_COLUMNS = ['counterpart_name', 'body', 'state', 'is_read', 'read_at', 'updated_at'];
@@ -36,6 +40,10 @@ class ConversationService extends DatabaseService<'conversation_message'> {
 
   async markRead(counterpartId: number): Promise<IServiceResponse<ConversationReadResult>> {
     return parsed(await httpService.patch<unknown>(conversationReadPath(counterpartId), {}), conversationReadResultSchema);
+  }
+
+  async send(counterpartId: number, body: string): Promise<IServiceResponse<ConversationMessage>> {
+    return parsed(await httpService.post<unknown>(conversationMessagePath(counterpartId), { body }), conversationMessageSchema);
   }
 
   async clearThread(userId: string, counterpartId: number): Promise<IServiceResponse<null>> {
