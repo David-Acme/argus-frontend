@@ -127,7 +127,7 @@ figure.shot figcaption span{color:var(--pg-text-2)}
 .sb .r{display:flex;gap:5px;align-items:center}
 .sb .r i{display:block;width:16px;height:9px;border:1.5px solid currentColor;border-radius:3px}
 .sb .r u{display:block;width:12px;height:9px;background:linear-gradient(to top right,currentColor 50%,transparent 50%)}
-.body{position:relative;z-index:1;flex:1;overflow:auto;padding:0 16px 112px;scrollbar-width:none}
+.body{position:relative;z-index:1;flex:1;overflow:auto;padding:0 16px 128px;scrollbar-width:none}
 .body::-webkit-scrollbar{display:none}
 .topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0}
 .topbar .grow{flex:1;min-width:0}
@@ -192,8 +192,8 @@ figure.shot figcaption span{color:var(--pg-text-2)}
 .feed .act{margin-top:10px;display:flex;gap:8px}
 .unread::after{content:"";position:absolute;right:2px;top:20px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
 
-.tabbar{position:absolute;left:12px;right:12px;bottom:12px;height:72px;border-radius:999px;display:flex;justify-content:center;align-items:center;padding:0 6px;z-index:5;background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);box-shadow:inset 0 0 0 1px var(--glass-line),0 8px 30px rgba(0,0,0,.12)}
-.tab{flex:1;max-width:76px;height:62px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text-3);font-size:calc(12px*var(--fs));font-weight:600;background:none;border:0;font-family:inherit;cursor:pointer;transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
+.tabbar{position:absolute;left:12px;right:12px;bottom:26px;height:72px;border-radius:999px;display:flex;justify-content:center;align-items:center;padding:0 6px;z-index:5;background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(1.7);backdrop-filter:blur(22px) saturate(1.7);box-shadow:inset 0 0 0 1px var(--glass-line),0 8px 30px rgba(0,0,0,.12)}
+.tab{flex:1;max-width:76px;height:62px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text-3);font-size:calc(12px*min(var(--fs),1.15));font-weight:600;background:none;border:0;font-family:inherit;cursor:pointer;transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
 .tab:active{transform:scale(.9)}
 .tab.on{color:var(--text);background:color-mix(in srgb,var(--text) 9%,transparent)}
 .tab .masc{margin:-4px 0 -2px}
@@ -248,7 +248,7 @@ figure.shot figcaption span{color:var(--pg-text-2)}
 .alertbox .acts button{font:inherit;font-weight:600;font-size:15px;background:none;border:0;color:var(--text);min-height:44px;padding:0 14px;border-radius:999px;cursor:pointer}
 .alertbox .acts button.d{color:var(--alert)}
 
-.toast{position:absolute;left:16px;right:16px;bottom:94px;z-index:6;background:var(--ink);color:var(--on-ink);border-radius:18px;padding:6px 6px 6px 16px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);font-size:calc(15px*var(--fs))}
+.toast{position:absolute;left:16px;right:16px;bottom:108px;z-index:6;background:var(--ink);color:var(--on-ink);border-radius:18px;padding:6px 6px 6px 16px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow);font-size:calc(15px*var(--fs))}
 .toast .grow{flex:1}
 .toast button{font:inherit;font-weight:700;background:transparent;border:0;color:var(--on-ink);min-height:44px;padding:0 12px;border-radius:10px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
@@ -293,7 +293,7 @@ figure.shot figcaption span{color:var(--pg-text-2)}
 
 .phone.listening::after,.edge{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:20;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 80%,transparent),inset 0 0 36px 8px color-mix(in srgb,var(--accent) 45%,transparent);animation:edge 1.6s ease-in-out infinite}
 @keyframes edge{50%{box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--accent) 90%,transparent),inset 0 0 54px 14px color-mix(in srgb,var(--accent) 55%,transparent)}}
-.listen-cap{position:absolute;left:0;right:0;bottom:96px;text-align:center;z-index:21;display:none}
+.listen-cap{position:absolute;left:0;right:0;bottom:110px;text-align:center;z-index:21;display:none}
 .phone.listening .listen-cap{display:block}
 .listen-cap span{display:inline-flex;gap:8px;align-items:center;padding:10px 16px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px var(--glass-line),var(--shadow);font-weight:600;font-size:15px}
 
@@ -396,7 +396,8 @@ figure.shot figcaption span{color:var(--pg-text-2)}
 
 .ferr{display:flex;gap:6px;align-items:flex-start;color:var(--alert);font-size:calc(14px*var(--fs));margin-top:6px;font-weight:500}
 .field .inp.err{border-color:var(--alert);background:var(--surface)}
-.toast.err{background:var(--surface);color:var(--text);box-shadow:var(--shadow),inset 0 0 0 1px var(--line);align-items:flex-start;padding:12px 8px 12px 14px}
+.toast.err{background:var(--surface);color:var(--text);box-shadow:var(--shadow),inset 0 0 0 1px var(--line);flex-wrap:wrap;align-items:flex-start;padding:12px 10px 10px 14px}
+.toast.err .ta{width:100%;display:flex;justify-content:flex-end}
 .toast.err .ti{color:var(--alert);margin-top:1px}
 .toast.err button{color:var(--text);text-decoration:none;background:var(--fill);min-height:40px;margin-top:-2px}
 .toast.err .grow b{display:block;font-weight:650}
@@ -433,6 +434,15 @@ figure.shot figcaption span{color:var(--pg-text-2)}
 .dband{position:relative;border-radius:24px;overflow:hidden;padding:16px 20px;display:flex;align-items:center;gap:18px;flex-wrap:nowrap;box-shadow:var(--card-shadow);background:var(--surface)}
 .dband>*{position:relative}
 .camgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.homeind{position:absolute;left:50%;bottom:8px;width:118px;height:4px;margin-left:-59px;border-radius:2px;background:var(--text);opacity:.35;z-index:6}
+.ncard{background:var(--surface);border-radius:20px;box-shadow:var(--card-shadow);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ncard .nh{display:flex;gap:12px;align-items:flex-start}
+.ncard .nh .lic{width:36px;height:36px;border-radius:11px}
+.ncard .nt{font-weight:650;font-size:calc(16px*var(--fs));line-height:1.3}
+.ncard .nb{font-size:calc(14px*var(--fs));color:var(--text-2);line-height:1.35;margin-top:2px}
+.ncard .na{display:flex;justify-content:flex-end;gap:8px}
+.sec-h .meta{font-size:calc(13px*var(--fs));color:var(--text-3);font-weight:500}
+.herorow.sm .t-hero{font-size:calc(26px*var(--fs))}
 .phone.lowtier *,.phone.lowtier *::before,.phone.lowtier *::after{animation:none!important;transition:none!important}
 .phone.lowtier .tabbar,.phone.lowtier .btn.glass,.phone.lowtier .ibtn.glass,.phone.lowtier .seg.glass{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--surface)}
 body.rm .ui *,body.rm .ui *::before,body.rm .ui *::after,body.rm .ui.phone::after{animation:none!important;transition:none!important}
@@ -625,7 +635,7 @@ const tabs=(on,set,mst)=>{const all=[['home','Inicio','home'],['shield','Segurid
  return `<nav class="tabbar" aria-label="Principal">${list.map(([i,l,k])=>k==='argus'?`<button class="tab argus${on===k?' on':''}" aria-label="Argus: toca para escribir, mantén para hablar">${masc(mst||'idle',40)}Argus</button>`:`<button class="tab${on===k?' on':''}"${on===k?' aria-current="page"':''}>${ic(i)}${l}</button>`).join('')}</nav><div class="listen-cap"><span>${ic('mic','s')}Te escucho… suelta para enviar</span></div>`;};
 const row=o=>`<button class="row">${o.lead||''}<span class="main"><span class="ttl">${o.t}</span>${o.s?`<span class="sub">${o.s}</span>`:''}</span><span class="trail">${o.tr||''}${o.chev===false?'':ic('chev','s')}</span></button>`;
 const lic=(n,tone,r)=>`<span class="lic${tone?' '+tone:''}${r?' r':''}">${ic(n,'s')}</span>`;
-const sec=(title,body,link)=>`<div class="sec"><div class="sec-h"><span class="t-headline">${title}</span>${link?`<a href="#" onclick="return false">${link}</a>`:''}</div>${body}</div>`;
+const sec=(title,body,link,meta)=>`<div class="sec"><div class="sec-h"><span class="t-headline">${title}</span>${link?`<a href="#" onclick="return false">${link}</a>`:meta?`<span class="meta">${meta}</span>`:''}</div>${body}</div>`;
 const grp=rows=>`<div class="group">${rows.join('')}</div>`;
 const topb=(title,o={})=>`<div class="topbar">${o.back?`<button class="ibtn glass" aria-label="Volver">${ic('back')}</button>`:''}<div class="grow"><div class="t-title">${title}</div>${o.sub?`<div class="t-meta">${o.sub}</div>`:''}</div>${o.right||''}</div>`;
 const chip=(t,tone,dot)=>`<span class="chip${tone?' '+tone:''}">${dot?'<span class="dot"></span>':''}${t}</span>`;
@@ -633,7 +643,7 @@ const media=(scene,name,o={})=>`<div class="media ${scene}">${o.live?'<span clas
 const feedItem=o=>`<div class="item${o.unread?' unread':''}"><div class="av">${o.av}${o.thread?'<span class="thread"></span>':''}</div><div class="c"><div class="top"><b>${o.who}</b><span>${o.when}</span></div><div class="txt">${o.txt}</div>${o.act?`<div class="act">${o.act}</div>`:''}</div></div>`;
 const aura=(tone,cls)=>`<div class="aura ${cls||''} aura-${tone}${tone==='alert'?' alert':''}" aria-hidden="true"><i></i><i></i><i></i></div>`;
 const ahora=()=>grp([
- `<button class="row"><span class="check over"></span><span class="main"><span class="ttl">Llamar al plomero</span><span class="sub" style="color:var(--alert)">Atrasado · hoy 11:00</span></span><span class="trail">${chip('Posponer')}</span></button>`,
+ `<button class="row"><span class="check over"></span><span class="main"><span class="ttl">Llamar al plomero</span><span class="sub" style="color:var(--alert)">Atrasado · 11:00</span></span><span class="trail" style="color:var(--alert);font-weight:650;font-size:13px">hace 4 h</span></button>`,
  `<button class="row"><span class="evm">${ic('cal','s')}</span><span class="main"><span class="ttl">Reunión con el arquitecto</span><span class="sub">14:30 – 16:00 · Mudanza · Luis</span></span><span class="trail" style="color:var(--ok);font-weight:650;font-size:13px">ahora</span></button>`,
  `<button class="row"><span class="check"></span><span class="main"><span class="ttl">Pagar la luz</span><span class="sub">Hoy 17:00 · cada mes · S/ 128</span></span><span class="trail" style="font-size:13px">en 1 h</span></button>`]);
 const ahoraH=()=>`<div class="sec-h"><span class="t-headline">Ahora</span><a href="#" onclick="return false">3 · 1 atrasado</a></div>`;
@@ -643,6 +653,7 @@ const sheetFt=(primary,extra)=>`<div class="sft">${extra||''}<button class="btn 
 const kbd=k=>`<div class="kbd" aria-hidden="true"><div class="kr">${'qwertyuiop'.split('').map(x=>`<span class="k">${x}</span>`).join('')}</div><div class="kr">${'asdfghjklñ'.split('').map(x=>`<span class="k">${x}</span>`).join('')}</div><div class="kr"><span class="k m">123</span><span class="k w">espacio</span><span class="k m">${k||'↵'}</span></div></div>`;
 const prox=()=>grp([row({lead:'<span class="evm" style="background:var(--ev4);color:var(--ev4t)">Mié</span>',t:'Dentista',s:'Mié 21 · 10:00 · y 2 tareas'}),row({lead:'<span class="evm">Jue</span>',t:'Visita del técnico',s:'Jue 22 · 10:00 – 11:00'}),row({lead:'<span class="evm" style="background:var(--ev3);color:var(--ev3t)">Vie</span>',t:'Cena con Luis',s:'Vie 23 · 19:00 · Pagar el agua vence'})]);
 const libre=()=>`<div class="stats" style="margin:10px 0 0"><span class="chip">${ic('clock','s')}Libre 16:00–17:00</span><span class="chip">${ic('clock','s')}Libre desde 19:00</span></div>`;
+const ncard=o=>`<div class="ncard" ${o.alert?'role="alert"':''}><div class="nh">${lic(o.icon,o.tone,1)}<div><div class="nt">${o.t}</div>${o.b?`<div class="nb">${o.b}</div>`:''}</div></div>${o.a?`<div class="na">${o.a}</div>`:''}</div>`;
 const S={};
 S.inicio=()=>`<div class="aura aura-calm" style="height:300px" aria-hidden="true"><i></i><i></i><i></i></div>${sb()}<div class="body">
 <div class="topbar" style="min-height:44px"><div class="grow"><div class="t-meta" style="font-weight:600">Buenas tardes, Ana</div></div><span class="updating" style="display:none"><i></i>Actualizando</span><button class="ibtn glass" aria-label="Buscar o pedir a Argus">${ic('search','s')}</button></div>
@@ -660,7 +671,7 @@ S.inicioUpd=()=>S.inicio().replace("display:none","display:inline-flex");
 
 S.inicioAlert=()=>`${aura('alert')}${sb()}<div class="body">
 <div class="topbar"><button class="btn compact glass">Casa ${ic('chevd','s')}</button><div class="grow"></div><button class="ibtn glass" aria-label="Buscar">${ic('search','s')}</button></div>
-<div class="hero">${masc('alert',92)}<div class="t-hero">Alguien en el patio.</div><div class="t-meta">Persona desconocida · hace 1 min · ya avisé a Luis</div></div>
+<div class="herorow sm">${masc('alert',56)}<div><div class="t-hero">Alguien en el patio.</div><div class="t-meta">Hace 1 min · ya avisé a Luis</div></div></div>
 <div class="status-alert" role="alert">${media('scene-night','Patio trasero',{live:true})}
 <div style="display:flex;gap:8px"><button class="btn primary" style="flex:1">Ver cámara</button><button class="btn" style="flex:1">Es conocido</button></div>
 <button class="btn ghost compact" style="align-self:center">Es una falsa alarma</button></div>
@@ -669,8 +680,8 @@ ${sec('Ahora',grp([`<button class="row"><span class="check"></span><span class="
 
 S.night=()=>`${aura('duty')}${sb('23:18')}<div class="body">
 <div class="topbar"><button class="btn compact glass">Casa ${ic('chevd','s')}</button><div class="grow"></div><button class="ibtn glass" aria-label="Buscar">${ic('search','s')}</button></div>
-<div class="hero">${masc('duty',108)}<div class="t-hero">Buenas noches.</div><div class="t-meta">Modo Noche · vigilo puertas y patio. Te despierto solo si es importante.</div></div>
-${sec('Esta noche',grp([row({lead:lic('door'),t:'Vigilo 3 puertas y el patio',s:'Puerta principal, Garaje, Patio trasero',chev:false}),row({lead:lic('bell'),t:'Te despierto si…',s:'Alguien desconocido entra o tapan una cámara',chev:false})]))}
+<div class="herorow">${masc('duty',62)}<div><div class="t-hero">Buenas noches.</div><div class="t-meta">Modo Noche · vigilo por ti</div></div></div>
+${sec('Esta noche',grp([row({lead:lic('door'),t:'3 puertas y el patio',s:'Puerta, Garaje, Patio trasero',chev:false}),row({lead:lic('bell'),t:'Te despierto si…',s:'Entra alguien desconocido',chev:false})]))}
 ${sec('Mañana',grp([`<button class="row"><span class="check"></span><span class="main"><span class="ttl">Pagar el agua</span><span class="sub">Todo el día</span></span></button>`,`<button class="row"><span class="evm">${ic('cal','s')}</span><span class="main"><span class="ttl">Yoga</span><span class="sub">07:00 – 08:00</span></span></button>`]))}
 </div>${tabs('home',null,'duty')}`;
 
@@ -785,20 +796,31 @@ ${topb('Sesiones',{back:true,sub:'Dispositivos con tu cuenta abierta'})}
 S.empty=()=>`${sb()}<div class="body">
 ${topb('Agenda',{right:`<button class="ibtn filled" aria-label="Nuevo">${ic('plus')}</button>`})}
 <div class="seg"><button class="on">Hoy</button><button>Calendario</button><button>Proyectos</button></div>
-<div class="group" style="margin-top:14px;padding:16px;display:flex;gap:14px;align-items:center">${masc('happy',72)}<div style="flex:1"><div class="t-headline">Nada pendiente hoy</div><div class="t-meta">Tienes el día libre. Puedes pedirle a Argus que te recuerde algo.</div><button class="btn compact primary" style="margin-top:8px">${ic('plus','s')}Nuevo recordatorio</button></div></div>
+<div class="ncard" style="margin-top:14px"><div class="nh" style="align-items:center">${masc('happy',52)}<div><div class="nt">Nada pendiente hoy</div><div class="nb">Tienes el día libre.</div></div></div><button class="btn primary block">${ic('plus','s')}Nuevo recordatorio</button></div>
 <div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>
 ${sec('Próximos días',prox(),'Calendario')}
 </div><div class="toast" role="status"><span class="grow">Tarea hecha: Comprar cajas</span><button>Deshacer</button></div>${tabs('agenda')}`;
 
 S.offline=()=>`${aura('off')}${sb()}<div class="body">
 ${topb('Seguridad')}
-<div class="banner attn" role="status">${ic('wifioff','s')}<span class="grow">Sin conexión con Argus. Muestro lo de las 15:32.</span></div>
-<div class="hero" style="margin-top:12px">${masc('off',64)}<div class="t-hero" style="font-size:30px">En casa</div><div class="t-meta">Así estaba hace 10 min</div></div>
-${sec('Cámaras',`<div class="group" style="padding:14px 16px;display:flex;gap:12px;align-items:center">${lic('wifioff','attn',1)}<div style="flex:1"><div class="t-headline">No puedo mostrar las cámaras ahora</div><div class="t-meta">Revisa el Wi-Fi o espera un momento.</div></div><button class="btn compact">Reintentar</button></div>`)}
-${sec('Lo último que sé · hace 10 min',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras estaban en línea',chev:false})]))}
+<div class="banner attn" role="status">${ic('wifioff','s')}<span class="grow">Sin conexión. Datos de las 15:32.</span></div>
+<div class="herorow sm" style="margin-top:12px">${masc('off',48)}<div><div class="t-hero">En casa</div><div class="t-meta">Hace 10 min</div></div></div>
+${sec('Cámaras',ncard({icon:'wifioff',tone:'attn',t:'Cámaras sin conexión',b:'Revisa el Wi-Fi.',a:'<button class="btn compact">Reintentar</button>'}))}
+${sec('Lo último',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras en línea',chev:false})]),null,'hace 10 min')}
 </div>${tabs('seg',null,'off')}`;
 
 S.big=()=>S.inicio();
+S.bigOffline=()=>S.offline();
+S.longText=()=>`${sb()}<div class="body">
+${topb('Agenda',{right:`<button class="ibtn filled" aria-label="Nuevo">${ic('plus')}</button>`})}
+<div class="seg"><button class="on">Hoy</button><button>Calendario</button><button>Proyectos</button></div>
+<div style="height:12px"></div>
+${grp([
+ `<button class="row"><span class="check over"></span><span class="main"><span class="ttl">Llamar a la Municipalidad de Miraflores por el permiso de obra</span><span class="sub" style="color:var(--alert)">Atrasado · 11:00</span></span></button>`,
+ `<button class="row"><span class="evm">${ic('cal','s')}</span><span class="main"><span class="ttl">Reunión con el arquitecto y la ingeniera estructural</span><span class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">14:30 – 16:00 · Av. José Larco 1232, oficina 504, Miraflores</span></span></button>`,
+ `<button class="row"><span class="check"></span><span class="main"><span class="ttl">Pagar la luz</span><span class="sub">17:00 · S/ 128,40</span></span></button>`])}
+${sec('Novedades',`<div class="feed">${feedItem({av:lic('user','accent',1),who:'María Fernanda Quispe Huamán',when:'14:35',txt:'Quiere usar la agenda, los proyectos y los recordatorios compartidos de la casa.',act:'<button class="btn compact primary">Activar</button><button class="btn compact">Ahora no</button>'})}</div>`)}
+</div>${tabs('agenda')}`;
 S.lowtier=()=>S.inicio();
 S.sheetKbd=()=>`${S.agenda()}<div class="scrim" data-close="sheet"></div>
 <div class="sheet tall" data-dirty="Visita del técnico" role="dialog" aria-label="Nuevo evento"><div class="grab"></div>
@@ -824,9 +846,9 @@ S.errField=()=>`${S.agenda()}<div class="scrim" data-close="sheet"></div>
 ${sheetHd('Recordatorio')}
 <label class="field" style="margin-top:4px"><span class="inp err" aria-invalid="true"><span style="color:var(--text-3)">¿Qué quieres recordar?</span></span><span class="ferr" role="alert">${ic('alert','s')}Escribe qué quieres recordar.</span></label>
 <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><span class="chip" style="height:34px">${ic('clock','s')}Hoy 17:00</span></div>
-<div class="banner" style="margin-top:14px;background:var(--attn-soft)">${ic('lock','s')}<span class="grow">«Que me llame» está apagado en esta casa. Pídele al propietario que lo active.</span></div>
+<div class="banner" style="margin-top:14px;background:var(--attn-soft)">${ic('lock','s')}<span class="grow">Las llamadas están apagadas en esta casa.</span></div>
 ${sheetFt('Guardar')}</div>`;
-S.errToast=()=>`${S.agenda()}<div class="toast err" role="alert"><span class="ti">${ic('wifioff','s')}</span><span class="grow"><b>No pudimos guardar el recordatorio.</b><span>Revisa tu conexión e inténtalo de nuevo.</span></span><button>Reintentar</button></div>`;
+S.errToast=()=>`${S.agenda()}<div class="toast err" role="alert"><span class="ti">${ic('wifioff','s')}</span><span class="grow"><b>No se guardó el recordatorio</b><span>Revisa tu conexión.</span></span><span class="ta"><button>Reintentar</button></span></div>`;
 S.errFull=()=>`${aura('off')}${sb()}<div class="body" style="display:flex;flex-direction:column;padding-bottom:28px;text-align:center">
 <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px">${masc('concern',130)}
 <div class="t-title">Tu cuenta está pausada</div><div class="t-body t-2" style="max-width:290px">Pídele al propietario de la casa que la vuelva a activar. Tus datos siguen guardados.</div>
@@ -851,8 +873,10 @@ const DET=[
  ['skeleton','Esqueleto (solo datos por HTTP)','Sesiones has no local copy, so it shows a skeleton in its final layout. Local data never shows one.'],
  ['inicioUpd','Datos locales: al instante','Inicio paints from the local database at once. A refresh only shows «Actualizando» at the top, never a skeleton.'],
  ['empty','Vacío con mascota','Happy mascot, one sentence, one action. The toast offers Deshacer.'],
- ['offline','Sin conexión','The mascot is greyed out, the Aura is neutral, and the data is labelled with its time.'],
+ ['offline','Sin conexión','A compact hero, a one-line banner, and a stacked notice card (short title, short body, action below). The heading is short and its age is meta.'],
  ['big','Texto al 130%','Rows grow taller and the text wraps instead of truncating.'],
+ ['bigOffline','Sin conexión al 130%','The notice card stacks: title, a short body, then the action. Nothing sits side by side once text wraps.'],
+ ['longText','Texto largo','Long titles wrap to two lines. Only the secondary meta (an address) truncates. Names wrap.'],
  ['sheetKbd','Hoja + teclado (formulario largo)','The sheet stops below the status bar. The title and ✕ stay pinned at the top and the actions above the keyboard. The fields scroll in between.'],
  ['errField','Error junto al campo','A validation error sits under its field, and a refusal is an inline notice. The form is empty, so a tap outside closes it without asking.'],
  ['errToast','Error con Reintentar','A failed save rolls back, then a toast names what failed and offers Reintentar. No code, no server text.'],
@@ -861,13 +885,13 @@ const DET=[
 ];
 const DARK=['night','inicio','seguridad','agenda','argus','sheet'];
 const NAMES={night:['Buenas noches','The hat is on and the Aura is indigo.']};
-const frame=(k,dark,fs)=>`<div class="phone ui${dark?' dark':''}${k==='lowtier'?' lowtier':''}" data-k="${k}"${fs?` style="--fs:${fs}"`:''}><div class="scr">${S[k]()}</div></div>`;
+const frame=(k,dark,fs)=>`<div class="phone ui${dark?' dark':''}${k==='lowtier'?' lowtier':''}" data-k="${k}"${fs?` style="--fs:${fs}"`:''}><div class="scr">${S[k]()}</div><div class="homeind" aria-hidden="true"></div></div>`;
 const fig=(k,t,d,dark,fs)=>`<figure class="shot">${frame(k,dark,fs)}<figcaption><b>${t}</b><span>${d}</span></figcaption></figure>`;
 const TMAP={inicio:'inicio',seguridad:'seguridad',camara:'camara',agenda:'agenda',argus:'argus',voz:'voz',tu:'ajustes',welcome:'welcome'};
 const pairFig=(k,t,d,dark)=>`<figure class="shot pair">${TMAP[k]?`<div class="today"><img src="${TH[TMAP[k]]}" alt="La app hoy: ${t}" loading="lazy"><b>HOY</b></div>`:''}<div class="new"><span class="ptag">REDISEÑO</span>${frame(k,dark)}</div><figcaption><b>${t}</b><span>${d}</span></figcaption></figure>`;
 const all=MAIN.concat(DET);
 document.getElementById('g-main').innerHTML=MAIN.map(([k,t,d])=>pairFig(k,t,d,true)).join('');
-document.getElementById('g-details').innerHTML=DET.map(([k,t,d])=>fig(k,t,d,false,k==='big'?1.3:0)).join('');
+document.getElementById('g-details').innerHTML=DET.map(([k,t,d])=>fig(k,t,d,false,k==='big'||k==='bigOffline'?1.3:0)).join('');
 document.getElementById('g-dark').innerHTML=DARK.map(k=>{const m=NAMES[k]?[k,...NAMES[k]]:all.find(x=>x[0]===k);return fig(k,m[1],NAMES[k]?m[2]:'Claro',k==='night')}).join('');
 
 const MST=[['idle','Atento','En casa, all is calm. It breathes and blinks.'],['duty','De guardia','Noche, Fuera or Armado. Hat on, slow scanning gaze.'],['listen','Escuchando','While you hold to talk. Rings and lean follow the voice level.'],['think','Pensando','Looking something up. Lens out, dots.'],['speak','Hablando','The mouth follows the TTS level.'],['happy','Contento','Done, saved, all clear. One small hop.'],['concern','Preocupado','Something to review (attention).'],['alert','Alerta','A real alert. Still, eyes wide, hat on: serious, not cute.'],['rest','Descansando','Do-not-disturb hours for calls. Security keeps working, and the text says so.'],['off','Sin conexión','The app cannot reach Argus. Grey, still.'],['wave','Saludando','Onboarding and first run only.']];

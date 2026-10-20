@@ -714,6 +714,65 @@ top so laptops get the sidebar
   Weather is not included. Argus is local-first and has no weather source
   today; adding one is a product decision, not a layout fix.
 
+### 6b-2. Phone text and card rules (v3.3, from the owner's phone)
+
+The owner's capture of Seguridad offline on his phone showed:
+- an error card squeezing icon, a four-line title, three lines of body and
+  a button into three columns at 360 px;
+- a hero a third of the screen tall for one fact;
+- a section heading that wrapped;
+- tab labels too close to the bottom edge.
+
+The rules that remove all four:
+
+- **Notice, empty and error cards stack on phones** (`ncard`):
+  - first row: an icon well and a title;
+  - second row: one line of body;
+  - third row: the action, right-aligned (compact) or full width.
+
+  Text and action never sit side by side when the text would wrap. This
+  follows Material 3's card guidance (content first, actions in their own
+  row) and Apple's advice to keep text, not controls, as the primary content
+  ([M3 cards](https://m3.material.io/components/cards/guidelines),
+  [HIG layout](https://developer.apple.com/design/human-interface-guidelines/layout)).
+- **Length budget at 360 dp with font scale 1.0:**
+  - A card title is at most about 28 characters (one line in 16/650);
+    at most 2 lines at 1.3.
+  - A body is at most about 70 characters (2 lines). Longer copy goes behind
+    the row, not into it.
+  - A section heading is at most about 18 characters. Qualifiers such as
+    time, age or counts go in the header's meta slot («Lo último» + «hace
+    10 min»), never in the heading.
+  - Line length for reading text stays within about 45–90 characters
+    ([Butterick, line length](https://practicaltypography.com/line-length.html)).
+
+  Mobile users read less and need shorter, front-loaded text
+  ([NN/g, mobile content](https://www.nngroup.com/articles/mobile-content/)).
+- **Type hierarchy on phones:**
+  - one hero line, 30 at 1.0, 26 for secondary screens;
+  - card titles 16 semibold;
+  - body and meta 14, caption 12.
+
+  This mirrors the M3 roles title-medium, body-medium and label
+  ([M3 type scale](https://m3.material.io/styles/typography/type-scale-tokens)).
+  It keeps Apple's minimum of 11 pt for any text
+  ([HIG typography](https://developer.apple.com/design/human-interface-guidelines/typography)).
+- **Compact heroes everywhere on phones.**
+  - The mascot is 48–62 *beside* the sentence; the hero never takes more
+    than about 20% of the screen.
+  - Only onboarding and the voice call may centre a large mascot.
+- **Rows keep one trailing item, and only a short one** (a time, a count,
+  «ahora»). An action that needs words goes in the row's menu or swipe, not
+  as a trailing chip that squeezes the title.
+- **The tab bar sits above the system's bottom inset** (iOS home indicator,
+  Android gesture bar: `safe-area-inset-bottom` / window insets), so labels
+  always show fully. Labels scale with the user's font setting up to 1.15×;
+  beyond that the bar keeps icons and relies on the accessibility large
+  content viewer (iOS) or long-press tooltip.
+- **Text spacing holds** under WCAG 1.4.12's overrides (line height 1.5,
+  paragraph spacing 2×) without clipping
+  ([WCAG 1.4.12](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html)).
+
 ### 6c. Scrolling: one owner per region
 
 - **One scroll owner per region.** On phones that is the screen, or the
@@ -1443,6 +1502,14 @@ visual baselines). The rest are a review list in the PR template.
 - [ ] **Actions in one place:** each sheet or dialog has one primary action,
       in its footer; no duplicate of it in the header or on the keyboard; no
       Cancelar where ✕, the scrim, Esc or Back already close it.
+- [ ] **Phone text budget (§6b-2):** notice, empty and error cards stack
+      (title, one short body line, action below); card titles fit one line
+      at 1.0; bodies two lines at most; section headings about 18 characters
+      or fewer, with age or counts as meta; at most one short trailing item
+      per row. Checked with data, empty, loading, error, offline, long text
+      and font scale 1.3 at 360 dp.
+- [ ] **Tab labels fully visible** above the bottom inset on iOS and on
+      Android gesture navigation; labels capped at 1.15× scale.
 - [ ] **Not empty:** on phones the first content section starts within the
       top 40% of the screen; every row carries a secondary line; no dead area
       taller than one row on phone or one card on desktop (empty states
@@ -1557,6 +1624,10 @@ second and is written natively, not translated word for word.
 - Avoid regionalisms that read as informal or foreign in Peru ("ahorita",
   "vale", "coger").
 - Numbers keep their units, and dates are relative only when that is clearer.
+- Short beats complete on phones. «Cámaras sin conexión» + «Revisa el
+  Wi-Fi.» + «Reintentar», not «No puedo mostrar las cámaras ahora. Revisa el
+  Wi-Fi o espera un momento.» Titles state the fact, bodies the one thing to
+  do (§6b-2's length budget).
 - One name per thing everywhere, with a glossary kept in i18n: Seguridad (never
   Vigilancia/Surveillance in one place and Security in another, W19), Por
   hacer / En curso / Hecha, Recordatorio, Evento, Tarea, Lugar, Episodio ("lo
