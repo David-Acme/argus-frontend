@@ -98,6 +98,11 @@ export class FakeArgus {
     this.tables.set(table, [...this.rows(table).filter((existing) => existing.id !== row.id), row]);
   }
 
+  storeMany(table: string, rows: readonly Row[]): void {
+    const ids = new Set(rows.map((row) => row.id));
+    this.tables.set(table, [...this.rows(table).filter((existing) => !ids.has(existing.id)), ...rows]);
+  }
+
   accepts(device: string): boolean {
     return (this.refusedUntil.get(device) ?? 0) <= Date.now();
   }

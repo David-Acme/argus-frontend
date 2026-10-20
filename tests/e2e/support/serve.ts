@@ -33,6 +33,9 @@ const control = async (url: URL, request: Request): Promise<Response> => {
     case '/__e2e/store':
       argus.store(url.searchParams.get('table') ?? '', (await request.json()) as Parameters<FakeArgus['store']>[1]);
       return Response.json({ ok: true });
+    case '/__e2e/store-many':
+      argus.storeMany(url.searchParams.get('table') ?? '', (await request.json()) as Parameters<FakeArgus['storeMany']>[1]);
+      return Response.json({ ok: true });
     case '/__e2e/emit':
       argus.emit((await request.json()) as DeviceFrame[]);
       return Response.json({ ok: true });
