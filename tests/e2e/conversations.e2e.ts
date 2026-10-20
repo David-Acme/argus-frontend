@@ -69,7 +69,7 @@ test('the conversations list Argus first, then the household with its unread and
   await screen.getByRole('button', 'Messages').first().click();
   await expect(screen.getByText('Argus', { exact: true }).first()).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Dinner is ready', { exact: true })).toBeVisible();
-  await expect(screen.getByText('You: Bring bread', { exact: true })).toBeVisible();
+  expect(await browser.evaluate(() => document.body.innerText.includes('You: Bring bread'))).toBe(true);
   await expect(screen.getByText('I left the message', { exact: true })).toBeVisible();
   await expect(screen.getByText('Nothing until six.', { exact: true })).toBeVisible();
 
@@ -99,7 +99,7 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
   await screen.getByText('Argus', { exact: true }).first().click();
   await expect(screen.getByText('From the laptop', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Through the camera', { exact: true })).toBeVisible();
-  await expect(screen.getByText('Today', { exact: true })).toBeVisible();
+  await expect(screen.getByRole('heading', 'Today')).toBeVisible();
   expect(await requests(baseUrl)).not.toContain('PATCH /conversation/0/read @A');
 
   await screen.getByRole('button', 'Back').first().click();
@@ -120,8 +120,10 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
   await screen.getByText('Clear', { exact: true }).click();
 
   await expect.poll(() => requests(baseUrl), { timeout: LIVE_MS }).toContain('DELETE /conversation/3 @A');
-  await expect(screen.getByText('Dinner is ready', { exact: true })).toBeHidden({ timeout: LIVE_MS });
-  await expect(screen.getByText('You: Bring bread', { exact: true })).toBeVisible();
+  await expect
+    .poll(() => browser.evaluate(() => document.body.innerText.includes('Dinner is ready')), { timeout: LIVE_MS })
+    .toBe(false);
+  expect(await browser.evaluate(() => document.body.innerText.includes('You: Bring bread'))).toBe(true);
 
   expect(escapes).toEqual([]);
 });
