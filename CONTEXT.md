@@ -5153,3 +5153,13 @@ minutes without evidence.
   row wraps (`flex-wrap`), so a long confirm label moves to its own line
   instead of pushing Cancelar off a phone screen.
   `tests/e2e/confirm-sheet.e2e.ts`.
+- **A camera that cannot act offers nothing it cannot do.**
+  `cameraActionBlock({masked, enabled})` (`model/camera-block.ts`) decides
+  it once: in privacy mode or turned off, the detail screen drops Mover,
+  the positions and the quality switch, the call panel shows the reason
+  instead of Hablar/Llamada/Anuncio, and "Escuchar en esta cámara" is shown
+  off and disabled under the badge that says why (`listenSwitchPaused`). A
+  masked camera's card keeps its talk button visible but disabled, with the
+  reason as its hint. Spanish names the "Mirada activa" places "lugares"
+  ("Añadir lugar"), so "Añadir zona" means one thing on the page.
+  `tests/e2e/camera-blocked.e2e.ts`, `tests/unit/features/cameras/camera-block.test.ts`.

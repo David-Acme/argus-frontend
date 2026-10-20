@@ -437,6 +437,10 @@ export const cameras = {
   'sensitivity-high': 'High',
   'preset-name': 'Position',
   'preset-saved': 'Position saved',
+  blocked: {
+    privacy: 'In privacy mode Argus neither sees nor hears this camera, so you cannot talk through it or move it.',
+    disabled: 'The camera is off: turn it on to talk through it or move it.',
+  },
   call: {
     title: 'Talk through the camera',
     push: 'Talk',

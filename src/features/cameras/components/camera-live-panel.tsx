@@ -259,11 +259,11 @@ export function CameraLivePanel({
           <Chip icon="move" label={t('screens.cameras.live.move')} active={showPad} onPress={() => setShowPad(!showPad)} />
         ) : null}
         <View className="flex-1" />
-        {enabled ? (
+        {enabled && !privacy ? (
           <View className="w-56">
             <QualitySwitch quality={quality} />
           </View>
-        ) : canEnable ? (
+        ) : !enabled && canEnable ? (
           <Button size="sm" onPress={onEnable}>
             <Icon name="play" className="text-foreground-on-interactive size-4" />
             <Text>{t('screens.cameras.enable')}</Text>

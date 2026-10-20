@@ -23,6 +23,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { recordModeLabelKey } from '@/features/cameras/model/camera-record-mode';
 import { cn } from '@/shared/libs/utils';
+import { CAMERA_BLOCK_REASON } from '@/features/cameras/model/camera-block';
 
 export type CameraCardVariant = 'grid' | 'featured' | 'row';
 
@@ -238,14 +239,21 @@ export const CameraCard = memo(function CameraCard({
       ? t('screens.cameras.zones-count-one')
       : t('screens.cameras.zones-count', { count: String(camera.zones.length) });
   const recordLabel = t(recordModeLabelKey(camera.recordMode));
+  const talkBlocked = cameraMasked(view);
   const talk =
     canTalk && status === 'online' ? (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('screens.cameras.call.talk-to', { name: camera.name })}
+        accessibilityHint={talkBlocked ? t(CAMERA_BLOCK_REASON.privacy) : undefined}
+        accessibilityState={{ disabled: talkBlocked }}
+        disabled={talkBlocked}
         onPress={() => onTalk(camera.id)}
         hitSlop={6}
-        className="bg-surface-secondary dark:bg-card-secondary size-9 items-center justify-center rounded-full active:opacity-70">
+        className={cn(
+          'bg-surface-secondary dark:bg-card-secondary size-9 items-center justify-center rounded-full',
+          talkBlocked ? 'opacity-40' : 'active:opacity-70'
+        )}>
         <Icon name="mic" className="text-foreground size-4" />
       </Pressable>
     ) : null;

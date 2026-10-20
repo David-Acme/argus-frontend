@@ -63,6 +63,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { screenIn } from '@/shared/libs/animations';
 import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
+import { CAMERA_BLOCK_REASON, cameraActionBlock } from '@/features/cameras/model/camera-block';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 
 type CameraAction = 'edit' | 'toggle' | 'delete';
@@ -148,7 +149,10 @@ export default function CameraDetailScreen() {
   const controllable = canUpdate && hasDeviceControls(features);
   const maySiren = has(CAPABILITY.cameraSiren);
   const mayTalk = has(CAPABILITY.cameraTalk);
-  const canTalk = mayTalk && features?.talk === true;
+  const block = camera
+    ? cameraActionBlock({ masked: cameraPrivacyMasked(camera.privacyState), enabled: camera.isEnabled })
+    : null;
+  const canTalk = mayTalk && features?.talk === true && block === null;
   const appSirenEnabled = useAppSirenEnabled();
   const canSiren = sirenOffered({
     allowed: maySiren,
@@ -156,9 +160,11 @@ export default function CameraDetailScreen() {
     enabled: appSirenEnabled,
   });
   const talkHint =
-    mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true
-      ? t('screens.cameras.call.needs-cloud')
-      : null;
+    mayTalk && block !== null
+      ? t(CAMERA_BLOCK_REASON[block])
+      : mayTalk && camera?.driver === 'tapo' && features != null && features.talk !== true
+        ? t('screens.cameras.call.needs-cloud')
+        : null;
   const siren = useCameraSiren(id);
   const householdWatchman = useHouseholdWatchman({ enabled: has(CAPABILITY.privacyHousehold) });
   const micSupported = voiceCallSupported();
@@ -337,7 +343,7 @@ export default function CameraDetailScreen() {
   const masked = cameraPrivacyMasked(camera.privacyState);
   const status = cameraStatusOf(camera);
   const stretch = isWide ? 'grow' : undefined;
-  const ptz = ptzAllowed ? ptzControls : null;
+  const ptz = ptzAllowed && block === null ? ptzControls : null;
   const badge = aimable ? <CameraSightBadge activity={aimControls.activity} /> : null;
   const sight = aimable ? <CameraSightStatus controls={aimControls} /> : null;
   const live = (
@@ -352,7 +358,7 @@ export default function CameraDetailScreen() {
       canEnable={canUpdate}
       ptz={ptz}
       presets={
-        cameraActions.aim && features?.presets
+        cameraActions.aim && features?.presets && block === null
           ? {
               presets,
               homePreset: aimControls.homePreset,

@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import type { CameraListening } from '@/features/cameras/model/camera-watch';
 import { CAMERA_LISTENING_LABEL } from '@/features/cameras/model/camera-watch';
+import { listenSwitchPaused } from '@/features/cameras/model/camera-block';
 import { Panel } from '@/shared/components/ui/panel';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
@@ -25,6 +26,7 @@ export function CameraWatchPanel({
 }: CameraWatchPanelProps) {
   const { t } = useTranslation();
   const active = listening === 'listening';
+  const paused = listenSwitchPaused(listening);
 
   return (
     <Panel
@@ -40,8 +42,8 @@ export function CameraWatchPanel({
         <ToggleRow
           label={t('screens.cameras.watch.listen')}
           hint={t('screens.cameras.watch.listen-hint')}
-          value={watchman && !noAudio}
-          disabled={!editable || noAudio}
+          value={watchman && !noAudio && !paused}
+          disabled={!editable || noAudio || paused}
           onChange={(value) => onChange('watchman', value)}
         />
         <ToggleRow
