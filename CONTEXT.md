@@ -4875,7 +4875,7 @@ not learn whether it was read or where the person is. `composerMode`,
   goes back to the list.
 - Pure helpers, unit-tested in `tests/unit/features/conversations/`:
   `deliveryStateOf` (only outgoing relay/reply, only a delivery state),
-  `legOf` (turns only), `groupByDay`, `dayKindOf`, `replyBodies`/
+  `legOf` (turns only), `dayKindOf`, `replyBodies`/
   `repliedBodyOf`, `unreadIncomingIds`, `counterpartNameOf` (Argus by id, a
   blank name reads "Alguien de casa") and `previewOf` ("Tú: …" for the
   viewer's lines). The projection is tested in
@@ -4958,10 +4958,79 @@ The Inicio entry "Hablar con Argus" follows the same choice: voice opens
   (`model/assistant-chat-overlay.ts`) and give way to the rows the backend
   mirrors into the thread (same words, out, after the send minus five
   minutes; the reply once an incoming turn follows it), so spoken and typed
-  turns read as one history. A typing indicator shows until the done frame.
-  The thread screen sits in a `KeyboardAvoidingView` so the keyboard never
-  covers the composer; Enter sends on web and the desktop, Shift+Enter
-  breaks the line.
+  turns read as one history. A typing indicator shows as the thread's last row until the
+  done frame. The composer rides the keyboard (see "The thread list" below);
+  Enter sends on web and the desktop, Shift+Enter breaks the line.
+
+### The thread list (2026-10-20)
+
+The thread is a virtualized list that behaves like a messenger. The choice
+and its measurements are in `docs/decisions.md` ("The conversation thread is
+a LegendList that rides the keyboard").
+
+- **Pieces.** `components/thread-list.tsx` renders `ThreadScroller`, which is
+  `KeyboardAwareLegendList` (`@legendapp/list/keyboard`, over
+  `react-native-keyboard-controller`'s `KeyboardChatScrollView`) on native and
+  the plain `LegendList` on the web and the desktop
+  (`thread-scroller.{native,web}.tsx`). The composer is in a
+  `KeyboardStickyView` (`offset {closed: 0, opened: insets.bottom}`; the list's
+  `keyboardOffset` is the same inset), so it moves by transform with the
+  keyboard frame and nothing re-lays out; no `KeyboardAvoidingView` wraps the
+  screen any more. The state is `hooks/use-thread-list.ts`; the rules are pure
+  in `model/thread-list.ts`, tested in
+  `tests/unit/features/conversations/thread-list.test.ts`.
+- **Rows.** `threadItems` flattens the thread into day separators ("Hoy",
+  "Ayer", the date), messages and, while Argus answers, the typing row last.
+  Consecutive lines from the same side within five minutes on the same day are
+  one group (`groupsWith`): tighter spacing, the tail corner on the last bubble
+  only. The time sits inside each bubble; the leg, the delivery state, or
+  "Enviando…" for a pending line sit under it, and a failed chat line keeps
+  Reintentar and Descartar. Rows are stateless, so they recycle by type.
+- **Following.** It opens at the newest line (`initialScrollAtEnd`; a short
+  thread sits at the bottom with `alignItemsAtEnd`). At the bottom (LegendList's
+  `isWithinMaintainScrollAtEndThreshold`, 10 % of the screen) new lines are
+  followed by `maintainScrollAtEnd`; scrolled up, incoming lines are counted
+  into the "N mensajes nuevos" pill, which also shows (as an arrow) whenever
+  the reader is away from the bottom; a line the user sends always goes to the
+  bottom (`followNewItems`). Reduced motion makes the scrolls instant.
+- **Older lines.** The thread is in memory (the view cache's newest 1,000);
+  the list shows a window held by its oldest line's time (`threadWindow`,
+  60 lines a page, never a row count, so new lines never push rows out of the
+  top) and `onStartReached` widens it by a page (`olderWindowStart`), while
+  `maintainVisibleContentPosition` keeps the line on screen where it was.
+  Lines older than the cache's 1,000 are not reachable from the screen: a
+  keyset paged view (`watchPages`) for the thread is the follow-up if a
+  household ever needs them.
+- **Proven on the web** by `tests/e2e/conversation-thread-list.e2e.ts`: a
+  2,000-line thread opens at its newest line with under 200 bubbles mounted,
+  the composer stays on screen throughout, wheeling up loads the older page
+  with the anchor line still in view (the test fails with
+  `maintainVisibleContentPosition` off), the pill counts a line that arrives
+  while scrolled up and takes the reader down, and a line that arrives at the
+  bottom is followed with no pill. `ARGUS_E2E_PERF_OUT=<file>` writes the
+  timing, DOM and heap figures.
+- **Phone round** (native only, not run by agents):
+  1. A 1,000+ line thread opens at its newest line without a visible scroll.
+  2. Tapping the field: the composer and the last lines rise with the keyboard
+     in one motion, no jump, no gap under the composer, nothing behind the
+     navigation bar; closing it lowers both together.
+  3. A multi-line draft grows the composer; the last line stays visible.
+  4. Scrolled up, opening and closing the keyboard does not move the line
+     being read.
+  5. Scroll fast through the whole thread with the Perf Monitor on (dev
+     menu): UI and JS stay near 60 fps and no blank rows linger; note the RAM
+     figure before and after.
+  6. Reaching the top shows the older page above with no jump.
+  7. Scrolled up, a line from Argus or a member shows the pill with its
+     count; tapping it scrolls down and the pill goes. At the bottom, a new
+     line scrolls into view on its own.
+  8. Sending while scrolled up jumps to the bottom; the line shows "Enviando…"
+     then its state; a failed chat line offers Reintentar.
+  9. Voz | Chat: Voz opens the call, and Chat from the call returns to the
+     thread at its newest line with the draft kept.
+  10. TalkBack reads the lines oldest to newest, the day labels as headers and
+      the pill as a button; with animations removed, scrolls are instant and
+      the typing dots stay still.
 
 ## The scheduled patrol on the camera screen (2026-10-19, G1)
 
