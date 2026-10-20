@@ -7,9 +7,9 @@ import {
   EMPTY_CHECKLIST,
   EMPTY_SIGNALS,
   checklistItems,
+  chosenGuardModes,
   completedBySignals,
   stepIdOf,
-  withSignals,
 } from '@/features/modules/model/getting-started';
 
 const record = (id: string, steps: readonly string[], patch: Partial<ModuleRecord> = {}): ModuleRecord => ({
@@ -44,7 +44,14 @@ const SERVER_CATALOG: ModuleCatalog = {
   ],
 };
 
-const OPTIONS = { owner: true, chooseTitle: '', chooseHint: '', chooseRoute: '/settings/modules' };
+const OPTIONS = {
+  owner: true,
+  chooseTitle: '',
+  chooseHint: '',
+  chooseRoute: '/settings/modules',
+  assistantHref: '/call',
+  evidence: new Set<string>(),
+};
 
 describe('getting-started steps follow the household data', () => {
   test('nothing is done in an empty household', () => {
@@ -62,32 +69,52 @@ describe('getting-started steps follow the household data', () => {
     expect(completedBySignals({ ...EMPTY_SIGNALS, people: 1, invitations: 1 }).has('invite-people')).toBe(true);
   });
 
-  test('signals add to what the person marked by hand and keep the hidden list', () => {
-    const state = { hidden: ['meet-argus'], done: ['guard-mode'] };
-    const merged = withSignals(state, { ...EMPTY_SIGNALS, cameras: 1 });
-    expect(merged.done).toEqual(['guard-mode', 'add-camera']);
-    expect(merged.hidden).toEqual(['meet-argus']);
-    expect(withSignals(EMPTY_CHECKLIST, EMPTY_SIGNALS)).toBe(EMPTY_CHECKLIST);
-  });
-
-  test('the catalog prefixes each step with its module, and the signals still tick it', () => {
-    const state = withSignals(EMPTY_CHECKLIST, {
-      ...EMPTY_SIGNALS,
-      cameras: 1,
-      events: 2,
-      argusTalks: 3,
-    });
-    const done = checklistItems(SERVER_CATALOG, state, OPTIONS)
+  test('the catalog prefixes each step with its module, and the evidence ticks it', () => {
+    const evidence = completedBySignals({ ...EMPTY_SIGNALS, cameras: 1, events: 2, argusTalks: 3 });
+    const done = checklistItems(SERVER_CATALOG, EMPTY_CHECKLIST, { ...OPTIONS, evidence })
       .filter((item) => item.done)
       .map((item) => item.id);
     expect(done).toEqual(['core:meet-argus', 'surveillance:add-camera', 'productivity:first-event']);
-  });
-
-  test('a step marked by its bare id from another screen is ticked', () => {
-    const items = checklistItems(SERVER_CATALOG, { hidden: [], done: ['guard-mode'] }, OPTIONS);
-    expect(items.find((item) => item.id === 'surveillance:guard-mode')?.done).toBe(true);
     expect(stepIdOf('surveillance:guard-mode')).toBe('guard-mode');
     expect(stepIdOf('guard-mode')).toBe('guard-mode');
+  });
+
+  test('a step with evidence is never ticked by a stored tap, only by the evidence', () => {
+    const tapped = { hidden: [], done: ['guard-mode', 'surveillance:guard-mode'] };
+    const items = checklistItems(SERVER_CATALOG, tapped, OPTIONS);
+    expect(items.find((item) => item.id === 'surveillance:guard-mode')?.done).toBe(false);
+    const chosen = completedBySignals({ ...EMPTY_SIGNALS, guardModes: 1 });
+    const ticked = checklistItems(SERVER_CATALOG, EMPTY_CHECKLIST, { ...OPTIONS, evidence: chosen });
+    expect(ticked.find((item) => item.id === 'surveillance:guard-mode')?.done).toBe(true);
+  });
+
+  test('a guard mode counts as chosen once an environment has a mode change on record', () => {
+    expect(chosenGuardModes(null)).toBe(0);
+    expect(chosenGuardModes([{ modeUpdatedAt: 0 }])).toBe(0);
+    expect(chosenGuardModes([{ modeUpdatedAt: 0 }, { modeUpdatedAt: 1792511727 }])).toBe(1);
+    expect(completedBySignals({ ...EMPTY_SIGNALS, guardModes: 0 }).has('guard-mode')).toBe(false);
+  });
+
+  test('a step the app cannot verify nor open is the only one a tap marks', () => {
+    const garden = record('garden', [], {
+      gettingStarted: [{ id: 'garden:water', title: 'Riega', hint: '', route: '/garden' }],
+    });
+    const catalog: ModuleCatalog = { fetchedAt: 0, modules: [...SERVER_CATALOG.modules, garden] };
+    const items = checklistItems(catalog, { hidden: [], done: ['garden:water'] }, OPTIONS);
+    const water = items.find((item) => item.id === 'garden:water');
+    expect(water?.manual).toBe(true);
+    expect(water?.route).toBeNull();
+    expect(water?.done).toBe(true);
+    expect(items.filter((item) => item.manual).map((item) => item.id)).toEqual(['garden:water']);
+  });
+
+  test('the module choice is not ticked by tapping it; it leaves when modules are chosen', () => {
+    const fresh: ModuleCatalog = {
+      fetchedAt: 0,
+      modules: [record('core', []), record('surveillance', [], { enabled: false })],
+    };
+    const items = checklistItems(fresh, { hidden: [], done: ['app:choose-modules'] }, OPTIONS);
+    expect(items.map((item) => [item.id, item.done, item.manual])).toEqual([['app:choose-modules', false, false]]);
   });
 
   test('a talk with Argus completes meeting Argus', () => {

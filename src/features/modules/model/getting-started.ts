@@ -1,6 +1,7 @@
 import { isJobOpen } from '@/core/services/modules/module-state';
 import type { IChecklistSignalsCache } from '@/core/interfaces';
 import type { ModuleCatalog } from '@/core/types';
+import { checklistTarget } from './checklist-routes';
 
 export type ChecklistItem = {
   id: string;
@@ -9,6 +10,7 @@ export type ChecklistItem = {
   hint: string;
   route: string | null;
   done: boolean;
+  manual: boolean;
 };
 
 export type ChecklistState = {
@@ -39,6 +41,8 @@ export type ChecklistOptions = {
   chooseTitle: string;
   chooseHint: string;
   chooseRoute: string;
+  assistantHref: string | null;
+  evidence: ReadonlySet<string>;
   stepTitle?: (stepId: string) => string | null;
 };
 
@@ -62,21 +66,28 @@ export function checklistItems(
             title: options.chooseTitle,
             hint: options.chooseHint,
             route: options.chooseRoute,
-            done: done.has(CHOOSE_MODULES_ID),
+            done: false,
+            manual: false,
           },
         ]
       : [];
   const steps = (catalog?.modules ?? [])
     .filter((module) => module.enabled)
     .flatMap((module) =>
-      module.gettingStarted.map((step) => ({
-        id: step.id,
-        moduleId: module.id,
-        title: options.stepTitle?.(stepIdOf(step.id)) ?? step.title,
-        hint: step.hint,
-        route: step.route,
-        done: done.has(step.id) || done.has(stepIdOf(step.id)),
-      }))
+      module.gettingStarted.map((step) => {
+        const stepId = stepIdOf(step.id);
+        const evidenced = EVIDENCED_STEPS.has(stepId);
+        const route = checklistTarget(step.route, options.assistantHref);
+        return {
+          id: step.id,
+          moduleId: module.id,
+          title: options.stepTitle?.(stepId) ?? step.title,
+          hint: step.hint,
+          route,
+          done: evidenced ? options.evidence.has(stepId) : done.has(step.id) || done.has(stepId),
+          manual: !evidenced && route === null,
+        };
+      })
     );
   const hidden = new Set(state.hidden);
   return [...choose, ...steps].filter((item) => !hidden.has(item.id));
@@ -93,7 +104,21 @@ export function markDone(state: ChecklistState, id: string): ChecklistState {
   return state.done.includes(id) ? state : { ...state, done: [...state.done, id] };
 }
 
-export type ChecklistSignals = IChecklistSignalsCache;
+export type ChecklistSignals = IChecklistSignalsCache & { guardModes?: number };
+
+export const EVIDENCED_STEPS: ReadonlySet<string> = new Set([
+  'add-camera',
+  'draw-zone',
+  'first-event',
+  'first-project',
+  'invite-people',
+  'meet-argus',
+  'guard-mode',
+]);
+
+export function chosenGuardModes(environments: readonly { modeUpdatedAt: number }[] | null): number {
+  return (environments ?? []).filter((environment) => environment.modeUpdatedAt > 0).length;
+}
 
 export const EMPTY_SIGNALS: ChecklistSignals = {
   cameras: 0,
@@ -113,11 +138,7 @@ export function completedBySignals(signals: ChecklistSignals): ReadonlySet<strin
   if (signals.projects > 0) done.add('first-project');
   if (signals.people > 1 || signals.invitations > 0) done.add('invite-people');
   if ((signals.argusTalks ?? 0) > 0) done.add('meet-argus');
+  if ((signals.guardModes ?? 0) > 0) done.add('guard-mode');
   return done;
-}
-
-export function withSignals(state: ChecklistState, signals: ChecklistSignals): ChecklistState {
-  const extra = [...completedBySignals(signals)].filter((id) => !state.done.includes(id));
-  return extra.length === 0 ? state : { ...state, done: [...state.done, ...extra] };
 }
 

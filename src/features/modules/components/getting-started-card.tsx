@@ -17,8 +17,8 @@ export function GettingStartedCard() {
   const done = items.filter((item) => item.done).length;
 
   const open = (item: ChecklistItem) => {
-    complete(item);
     if (item.route) router.push(item.route as Href);
+    else complete(item);
   };
 
   return (
@@ -47,7 +47,7 @@ export function GettingStartedCard() {
             accessibilityRole="button"
             accessibilityState={{ checked: item.done }}
             accessibilityLabel={item.title}
-            accessibilityHint={item.route ? undefined : t('screens.modules.getting-started.mark-done')}
+            accessibilityHint={item.manual ? t('screens.modules.getting-started.mark-done') : undefined}
             onPress={() => open(item)}
             className="flex-row items-center gap-3 rounded-xl px-2 py-2.5 active:bg-surface-secondary">
             <Icon

@@ -104,13 +104,14 @@ const gettingStartedSchema = z.union([
       hint: z.string().optional(),
       description: z.string().optional(),
       route: z.string().nullish(),
+      screen: z.string().nullish(),
     })
     .transform(
       (step): ModuleGettingStartedStep => ({
         id: step.id ?? '',
         title: step.title,
         hint: step.hint ?? step.description ?? '',
-        route: step.route && step.route.startsWith('/') ? step.route : null,
+        route: step.screen?.trim() || step.route?.trim() || null,
       })
     ),
 ]);

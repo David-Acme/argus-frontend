@@ -129,7 +129,14 @@ describe('getting started', () => {
       { id: 'surveillance:1', title: 'Dibuja una zona', hint: '', route: null },
     ],
   });
-  const options = { owner: true, chooseTitle: 'Elige', chooseHint: '', chooseRoute: '/settings/modules' };
+  const options = {
+    owner: true,
+    chooseTitle: 'Elige',
+    chooseHint: '',
+    chooseRoute: '/settings/modules',
+    assistantHref: '/call',
+    evidence: new Set<string>(),
+  };
 
   test('lists the steps of enabled modules only', () => {
     const items = checklistItems(catalog([core, steps, productivity]), EMPTY_CHECKLIST, options);

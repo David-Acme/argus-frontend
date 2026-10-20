@@ -3636,8 +3636,18 @@ The desktop sees only `pair`, so no stepper there. The old
 - **Inicio.** `ModulesProgressChip` (Owner, while a job runs, is paused or
   failed; opens Settings › Modules) and `GettingStartedCard` (the enabled
   modules' first steps plus "Elige qué hará Argus" while only the core is
-  on; a tap marks a step done and opens its route; "Ocultar" hides the
+  on; a tap opens the step's screen and never ticks it; "Ocultar" hides the
   current items, and new items of a module enabled later bring it back).
+  The catalog's route or screen id reaches an app route through one table,
+  `CHECKLIST_TARGETS` (`model/checklist-routes.ts`: `/guard` and `security`
+  open `/security`, `/voice` opens the assistant in the device's last mode);
+  `tests/unit/features/modules/checklist-routes.test.ts` reads the backend's
+  `services/settings/modules.json` and fails when a step resolves to no
+  screen the app has. A known step is ticked only by its evidence
+  (`EVIDENCED_STEPS`, `completedBySignals`): the synced rows, and for
+  "Elige el modo del guardia" a guard environment whose `modeUpdatedAt` is
+  set, so the tick survives a reinstall; a stored mark is ignored for them.
+  Only a step the app can neither open nor verify is marked by a tap.
   State per user in storage (`app.modules.getting-started.<userId>`).
 - **Gating.** Cameras, Seguridad and visitors belong to `surveillance`;
   Agenda and Proyectos to `productivity`. Disabled modules disappear from
