@@ -15,6 +15,8 @@ only; no app code changes. Each version follows an owner review:
   layer on top. v3 also specifies sheet + keyboard behaviour (§5.9) and
   chooses the sheet library on evidence (§8).
 
+**v3.5 (2026-10-20):** the owner chose **Estela** as Argus' presence (R-D28). It replaces the white mascot everywhere, with an animation catalogue in §8b. Where older text in this document says «mascot» or «Presence», read Estela.
+
 Companion files:
 
 - `redesign-prototype/index.html`: static prototype. Each main phone screen
@@ -165,12 +167,12 @@ lives in the home. At the top of the main screens a soft light field, the
 - a faster red pulse for a real alert;
 - grey and still when the app cannot reach Argus.
 
-Inside the Aura, Argus itself (the mascot) says how things are in one large
+Inside the Aura, Argus itself (Estela, §8b) says how things are in one large
 sentence: «Todo tranquilo.», «Buenas noches.», «Alguien en el patio.» Argus
-wears its detective hat whenever it is on watch.
+becomes a calm sweeping arc whenever it is on watch, and draws an eye when it looks through a camera.
 
 Talking to it is one signature gesture everywhere: **hold the centre of the
-bar**. The screen's edge lights up, the mascot leans in to your voice, and you
+bar**. The screen's edge lights up, Estela streams toward you, and you
 let go to send.
 
 Everything else keeps today's warm cards and chips, with more care. Glass appears only on
@@ -257,10 +259,10 @@ reduced motion and reduced transparency.
 | Lever | Primitive | What it does | Reduced motion / transparency / contrast | Cost |
 |---|---|---|---|---|
 | The ambient status | `Aura` (tone: `calm`, `duty`, `attn`, `alert`, `off`, `listen`; `mode`: `field` / `band` / `edge`) | A 2–3 blob gradient field at the top of Inicio and Seguridad (field), a rounded band on desktop (band), or the screen-edge glow while listening (edge). Tempo per tone: 14–18 s drift calm, 3–4 s alert | Static gradient; with Increase Contrast, no field and a 3 px tone border on the edge mode | about 150 lines; `expo-linear-gradient` or a blurred view; no Skia |
-| A living Argus | `Presence` (state, level, size) | The mascot, 11 states (§8b), driven by app state and voice level | Still pose per state | about 200 lines + one `.riv` asset; replaces about 1,600 lines of today's procedural mascot and avatar |
+| A living Argus | `Presence` (state, intensity, target, level, event, size) | Estela, 17 states and 11 events (§8b), driven by app state and voice level | Still frame per state | about 200 lines + one `.riv` asset; replaces about 1,600 lines of today's procedural mascot and avatar |
 | The hero sentence | `Status` variant `hero` | One `hero` line per screen (36/40), spoken by Argus, with a cross-fade on change | Instant change | inside `Status` |
 | Glass on floating chrome | `material` token used by `Nav`, `Sheet`, `Menu`, `Command` | Floating bar, sheet backdrop, desktop sidebar and palette. iOS 26 native glass (expo-glass-effect), Android 12+ blur (expo-blur `BlurTargetView`), web `backdrop-filter`, and a solid surface elsewhere | Solid surface with a hairline | about 60 lines in the four owners |
-| Physical motion | `springs.ts`: `snappy` (presses, toggles), `gentle` (sheets, layout), `playful` (the mascot only); `usePressScale` | One feel everywhere; presses scale to 0.96 | `ReduceMotion.System`: end state at once | about 60 lines |
+| Physical motion | `springs.ts`: `snappy` (presses, toggles), `gentle` (sheets, layout), free flow (Estela only); `usePressScale` | One feel everywhere; presses scale to 0.96 | `ReduceMotion.System`: end state at once | about 60 lines |
 | One door for everything | `Command` (⌘K on desktop, the search button on phones) | Commands, search and "ask Argus" in one bar, with shortcuts shown beside actions | — | about 250 lines; replaces the Inicio search bar and the bell popover |
 | The signature gesture | inside `Nav`: hold the centre tab | Hold to talk from any screen: the `Aura` edge mode, `Presence` in `listen`, haptic `impactLight` on start and stop, a live transcript pill | Tap the centre, then tap to stop | about 80 lines |
 | Grounded answers | `FeedItem` / chat result chips + `Media` `focus` overlay | Argus shows what it means: "this camera" (a dimmed frame with a box around the detected person), "this reminder" (a chip that opens it) | Thicker outline, no dimming | about 80 lines |
@@ -270,7 +272,7 @@ What is deliberately **not** done: no glass behind reading text, no
 animated backgrounds behind lists, no novel navigation, no 3D or Skia
 canvases (CanvasKit is 2.9 MB gzip on web, and about 4 MB on Android and 6 MB
 on iOS: [Skia web](https://www.mintlify.com/shopify/react-native-skia/getting-started/web)),
-and no more than one mascot per screen.
+and no more than one Estela per screen.
 
 ## 3. Tokens (the values R5 writes into `tokens.ts`)
 
@@ -444,7 +446,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 | # | Component | Variants / props | Replaces today |
 |---|---|---|---|
 | 24 | `Aura` | `tone` (`calm`, `duty`, `attn`, `alert`, `off`, `listen`) × `mode` (`field`, `band`, `edge`); derives its tone from the home state, never set by a screen directly | the vigilance hero, the alert card's colour wash, the call screen's background |
-| 25 | `Presence` | `state` (11, §8b), `level` (0–1 voice amplitude), `size` (`tab` 40, `inline` 28, `hero` 84–108, `stage` 190) | `welcome-mascot/*` (1,211 lines) and `voice/components/avatar.tsx` (391) |
+| 25 | `Presence` (Estela) | `state` (17, §8b), `intensity`, `target`, `level` (0–1 voice amplitude), `event`, `size` (icon 28–48, compact, medium, stage) | `welcome-mascot/*` (1,211 lines) and `voice/components/avatar.tsx` (391) |
 | 26 | `Command` | ⌘K palette on pointer, a full-height `Sheet` on touch; groups `Pedir a Argus`, results, actions with shortcuts | the Inicio search bar, the bell popover, the compose menu |
 
 The glass `material`, the `springs` and `usePressScale` are tokens and one
@@ -467,7 +469,7 @@ The method is an estimate from today's line counts, not a measurement:
 |---|---|---|---|
 | Shared primitives + layout | 64 files, 4,907 lines | 26 components, about 3,300 lines (the identity family adds about 700) | fewer variants; sheet, toast and keyboard mechanics move to maintained libraries (§8) |
 | Feature cards, dialogs, forms, panels, rows, sections, lists, pickers, banners, chips, headers | 141 files, about 17,000 lines | about 55 files, about 6,500 lines | composed from `Section`/`Row`/`Status`/`Sheet`/`Field`; no own styling |
-| Mascot and avatar | 8 files, 1,602 lines | inside `Presence` + one `.riv` asset | the animation lives in the Rive state machine (§8b) |
+| Mascot and avatar | 8 files, 1,602 lines | inside `Presence` (about 400 lines) | Estela's target function and renderers (§8b) |
 | Other feature components (player, wizards…) | 94 files, about 8,400 lines | about 70 files, about 7,200 lines | outer chrome only |
 | Screens | 37 files, 6,865 lines | about 32 files, about 4,800 lines | fewer sections per screen; camera page split in two |
 | **Total UI `.tsx`** | **about 39,000 lines** | **about 22,000 lines** | **about 40% less (range 35–45%)**: the identity costs about 700 lines and the mascot move saves about 1,400 |
@@ -554,7 +556,7 @@ measure against.
    cámara), one secondary (Es alguien conocido) and the quiet "Es una falsa
    alarma" ([Android channels](https://developer.android.com/training/notify-user/channels),
    [SimpliSafe's status pattern](https://support.simplisafe.com/articles/using-your-system/how-to-arm-or-disarm-your-system)).
-   The `Aura` switches to `alert` and `Presence` to `alert` (hat on, still,
+   The `Aura` switches to `alert` and `Presence` to `alert` (faster, warmer, readable,
    serious). Once the alert is resolved they return to calm with one `happy`
    beat.
 7. **Dismissal (every overlay, every platform).** A sheet, dialog, menu,
@@ -882,7 +884,7 @@ low-tier form:
 |---|---|---|---|
 | `Aura` field | UI thread, 3 pre-blurred gradient views animating `transform` and `opacity` only (compositor; no per-frame blur) | about 0.3–0.6 ms GPU per frame | Still gradient, no drift; with Reduce Transparency or Increase Contrast, a flat tint |
 | Glass (`material`) | iOS 26 native glass (expo-glass-effect); Android 12+ `RenderEffect` blur (expo-blur `BlurTargetView`); web `backdrop-filter` | proportional to the blurred area: kept to the 70 dp bar or the sheet edge | Below API 31, `low` tier, Reduce Transparency: solid `surface` with a hairline ([expo-blur](https://docs.expo.dev/versions/latest/sdk/blur-view/), [expo-glass-effect](https://docs.expo.dev/versions/latest/sdk/glass-effect.md)) |
-| `Presence` (mascot) | Rive native renderer, one artboard, its own thread; JS sends only the state and the level | +2.4 MB Android / +1.7 MB iOS download for the runtime ([Rive sizes](https://rive.app/docs/runtimes/runtime-sizes.md)); the `.riv` file is tens of KB (inference) | `low` tier: idle breathing at 30 fps and state changes as cuts; reduce motion: still pose |
+| `Presence` (Estela) | Skia Atlas of streak sprites, physics in a Reanimated worklet on the UI thread; JS sends only state, intensity, target, level and event | one draw call per frame; 560 particles at stage size, 200 compact; the icon form is about 24 strokes | `low` tier: half the particles, no trails, 30 fps; reduce motion: the catalogue's still frame |
 | Listening edge | UI thread, one inset shadow animating opacity | negligible | Steady rim |
 | Springs and press scale | UI thread worklets | negligible | Instant |
 | Skeleton shimmer | Reanimated CSS animation (opacity) | negligible | Static fill |
@@ -908,7 +910,7 @@ react-native-web 0.21 inside Tauri 2 (WebKitGTK). Licences are all MIT.
 | Toasts with undo | **sonner-native** on iOS/Android, **sonner** on web, behind `Toast` (both MIT, the same API shape, action buttons) ([sonner-native](https://github.com/gunnartorfis/sonner-native)). Not burnt: it has no action button for undo ([burnt](https://github.com/nandorojo/burnt)). | sonner | Yes: replaces most of `toaster` and `toast-card` |
 | Skeleton | Own 20–30 line `Skeleton` on Reanimated 4 CSS animations (they work on web) ([Reanimated CSS animations](https://docs.swmansion.com/react-native-reanimated/docs/css-animations/animation-name/)). Not moti: no stated Reanimated 4 support. | yes | Neutral |
 | Glass material | iOS 26: **expo-glass-effect** (falls back to a plain View elsewhere). Android 12+: **expo-blur** with `BlurTargetView` (without it, it is only a translucent view). Web/Tauri: CSS `backdrop-filter` | `backdrop-filter` | Small addition, about 60 lines, inside `Nav`/`Sheet`/`Menu`/`Command` |
-| Mascot | **Rive**: `@rive-app/react-native` (Nitro runtime) on iOS/Android, `@rive-app/canvas-lite` on web if the WebKitGTK CSP test passes (§8b) | wasm, about 420 KB gzip | **Yes**: about 1,600 lines of procedural mascot become a wrapper and one asset |
+| Presence (Estela) | **@shopify/react-native-skia** v2 Atlas + Reanimated on iOS/Android; a Canvas 2D renderer of the same particle system on web and Tauri (no wasm, no CSP change) | Canvas 2D | **Yes**: about 1,600 lines of procedural mascot and avatar become about 400 |
 | Formatting | `Intl` through the existing `useDateFormatter` + `date-fns` (es/en), with the hour cycle from expo-localization's `getCalendars().uses24hourClock` passed explicitly. Hermes delegates `Intl` to platform ICU, so results vary by OS; `formatToParts` is Android-only ([Hermes Intl](https://github.com/facebook/hermes/blob/main/doc/IntlAPIs.md), [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/)) | yes | Neutral |
 
 **Verdict on the sheet library (the owner asked for evidence).**
@@ -945,125 +947,166 @@ WebKitGTK through `check:bundle`. Re-check the peer ranges at the next SDK.
    the dirty-form dismissal block. If it fails, the fallback is the
    hand-written sheet fixed to §5.9's rules (a height cap at the top inset, a
    pinned header, one inner `KeyboardAwareScrollView`), not gorhom.
-2. Rive on a low-end Android (frame time, latency from voice level to mouth)
+2. Estela on a low-end Android: frame time with Skia Atlas, and latency from voice level to waves
    and `canvas-lite` in the Tauri WebKitGTK build under the strict CSP with
    `'wasm-unsafe-eval'`.
 
-## 8b. The mascot: Argus as a living presence
+## 8b. Estela: the presence of Argus
 
-David keeps the mascot, the white figure with the detective's deerstalker and
-lens from today's welcome, and it becomes the face of Argus everywhere. Today
-it exists twice: `welcome-mascot/*` (1,211 lines of procedural SVG and
-Reanimated choreography) and the call `avatar.tsx` (391 lines, states `idle`,
-`listening`, `thinking`, `speaking`, `error`). Both become one `Presence`.
+**Decision (R-D28, resolved 2026-10-20).** The owner chose **Estela** from
+the aura proposals (`mascot-proposals/aura.html`, option 1). Estela replaces
+the white mascot everywhere: the prototype, the components, the states and
+every screen.
 
-**States** (shown in the prototype, light and dark):
+Estela is a stream of stars and light that flows like a living brushstroke.
+It has no body, no circle and no container: its edges fade into the
+background. It keeps the identity's palette (warm sand and amber, with deep
+indigo accents) and suits a calm, warm male voice: premium, unhurried and
+never cute or scary.
 
-| State | Looks like | When |
-|---|---|---|
-| `idle` (Atento) | breathing, blinking, eyes open | En casa, all calm; the default |
-| `duty` (De guardia) | **hat on**, a slow scanning gaze | Noche, Fuera, Armado: Argus is on watch |
-| `listen` | leans in, rings follow the voice level | hold-to-talk, the voice call while you speak |
-| `think` | gaze up, lens out, three dots | looking something up, running a tool |
-| `speak` | mouth and body squash follow the TTS level | Argus is speaking |
-| `happy` | ^ ^ eyes, one small hop | saved, done, all clear after an alert, empty "nothing pending" |
-| `concern` | brows, lowered gaze, slower breath | something to review, a failed section |
-| `alert` | hat on, eyes wide, **still** (serious, not cute) | a real alert |
-| `rest` | eyes closed, a "z" | the assistant's quiet hours (it will not call you). The text always says security keeps working |
-| `off` | grey, still | the app cannot reach Argus |
-| `wave` | waving, hat on | onboarding and first run only |
+The earlier rounds that led here are kept as pages, for the record:
+- `mascot-proposals/index.html` (six characters);
+- `slimes.html`;
+- `cosmic.html`;
+- `aura.html`, with Estela marked as chosen.
 
-**The hat means "on watch".** The mascot never suggests that security is off
-while it is on: in Noche, Fuera or Armado it wears the hat and its eyes are
-open. `rest` is used only for the assistant's quiet hours, never for a
-security mode.
+### One primitive: `Presence`
 
-**Where it appears, at most one per screen:**
+Everything Estela does is a parameter of one component:
 
-- the centre tab (40 pt, reflecting its state, so the bar shows Argus
-  listening, thinking or on watch);
-- the Inicio and Seguridad hero (84–108);
-- beside Argus' chat bubbles (28; it thinks while a tool runs);
-- the voice call stage (190, driven by `level`);
-- empty and failed states (110: `happy` for "nothing pending", `concern` for
-  "could not load");
-- onboarding (`wave`, then `think` while pairing searches the network);
+```
+<Presence state intensity target level size event />
+```
+
+- **`state`** is one of the 17 states in the catalogue below.
+- **`intensity`** (0–1) scales speed and brightness. Alert and panic share a
+  shape; panic is alert at full intensity plus its 1.2 Hz pulse.
+- **`target`** is the point the pupil or the lean goes to: the person in the
+  frame, the search hit, the user's touch.
+- **`level`** (0–1) is the voice amplitude, smoothed with about 40 ms attack
+  and 250 ms release.
+- **`event`** is a one-shot overlay that never changes the state: `assemble`,
+  `appear`, `disperse`, `cancel`, `ripple-in`, `ripple-out`, `notify`,
+  `glint`, `modechange`, `reconnect`, `touch`.
+
+**Sizes.** Every size reads the same parameters:
+- 28, 36 and 48 are the **icon form**: a procedural brushstroke, an eye or a
+  line, drawn as about 24 strokes with no particles.
+- 49–89 is the **compact** form: 200 particles. The Inicio and Seguridad
+  heroes, the desktop band.
+- 90–149 is the **medium** form: 320 particles. Empty states and the eye
+  overlay.
+- 150 and up is the **stage** form: 560 particles. The voice call, onboarding
+  and the catalogue.
+
+**Where it appears** (one per screen, always beside words):
+- the centre tab: the 36 px icon form, reflecting the current state;
+- the Inicio and Seguridad heroes, beside the sentence;
+- the Argus chat, beside Argus' bubbles at 28 px: thinking, looking, done;
+- the voice call stage, at 190–300 px;
+- the camera live view: the eye, drawn in a corner chip «Argus mira» while
+  Argus is looking or searching;
+- empty states;
+- onboarding: the first appearance, assembled from scattered stars;
 - the desktop sidebar mark and the Argus conversation row.
 
-It never appears in toasts, confirmations, forms or settings rows.
+### Life (micro-reactions)
 
-**Accessibility.** It is decorative (`accessibilityElementsHidden`): the
-sentence beside it always carries the meaning. It holds a still pose under
-reduce motion and pauses off-screen.
+- **It leans** toward the user's touch or pointer: up to 14% of its width,
+  spring-smoothed, only within about 380 px and for 4 s after the last move.
+- **It brightens** briefly when a message or notification arrives, or when
+  it is tapped (`notify`, `touch`).
+- **It drifts lightly with the scroll** on Inicio: up to 12% upward over the
+  first 160 px.
+- **It breathes with the home's state:**
+  - calm: about 12 breaths a minute, ±2%;
+  - on watch: slower and deeper, about 7 a minute;
+  - alert: faster.
+- **It never distracts while reading.**
+  - Continuous motion stays slow (rotation at most 0.12 rad/s at rest).
+  - Nothing sharper than the brushstroke appears.
+  - No flash goes above 3 per second (WCAG 2.3.1).
+  - The hero copy of Estela pauses once it scrolls out of view.
 
-**Proposals for a male voice (v3.2).** Argus will speak with a calm,
-warm, confident male voice, so the character is open for choice.
-`mascot-proposals/index.html` shows six options. Each one appears in all 11
-states, at 28 · 36 · 96–120 · 200 px, in light and dark, and inside real dark
-screens (Inicio hero, chat, voice call), with a side-by-side comparison at
-the small sizes:
+### The animation catalogue
 
-- **0 · Argus evolucionado.** Today's figure, firmer, with taller eyes and no
-  blush; the hat when on watch, the lens when thinking. Continuity, but it
-  reads younger than the voice.
-- **1 · Panoptes.** A sand face under a crown of five peacock eyes that open
-  on watch. The strongest link to the name; busy at 28 px.
-- **2 · Búho (owl).** A night-watch owl in cocoa and sand: on watch its eyes
-  glow amber, its tufts rise, and a Panoptes ocellus appears on its chest.
-  **Recommended.** It is the best fit for a calm male guardian voice and the
-  most legible at 28 px, and it rigs simply.
-- **3 · Can guardián.** A stylised shepherd (reads shiba- or fox-like) with
-  ears that rise when attentive, and a collar with a shield tag on watch.
-  Protective, but it reads as a pet for assistant tasks.
-- **4 · Orbe.** A warm sand orb with one iris, a lid and a ring that becomes a
-  dial on watch. The cheapest to animate and perfect at 28 px; less warmth,
-  and a single eye can read as surveillance.
-- **5 · Vigía.** A grown-up concierge-watchman face with brows, over
-  charcoal shoulders, with a cap on watch. The most human; it risks uncanny
-  or cultural readings.
+Priority decides what shows when two things happen at once:
+- **P0 truth:** offline. It never claims a state it cannot know. Only panic
+  shows over it, because panic is local.
+- **P1 safety:** panic, then alert.
+- **P2 gaze:** look, search, found or not found, known, unknown.
+- **P3 talk:** listen, then speak, then think.
+- **P4 outcome:** done, cancel, error. These are short overlays of 1.5 s or
+  less, after which the state underneath returns.
+- **P5 ambient:** idle, on watch, night or asleep, mode change.
 
-The main prototype keeps today's mascot until the owner chooses (R-D28). The
-eleven states, the "on watch" rule and the Rive plan apply to whichever is
-chosen. The "on watch" signifier becomes the chosen concept's equivalent of
-the hat.
+Event overlays (arrival, departure, notification, touch, open, close) never
+replace a state, and are suppressed during P1.
 
-**Technology: comparison.** Checked for Expo SDK 57, RN 0.86, Fabric, the web
-build in Tauri/WebKitGTK and its strict CSP:
-
-| Option | Native | Web / Tauri | Live inputs (state + voice level) | Size | Licence and cost | Fit |
+| Case | When it triggers | What the stars do | Duration and easing | Priority | Reduced-motion still | Performance tier |
 |---|---|---|---|---|---|---|
-| **Rive** (`@rive-app/react-native` 0.5.x, Nitro, RN ≥ 0.78, Expo ≥ 53, dev client) | native renderer | no RN-web target: a `.web.tsx` over `@rive-app/canvas-lite`; the wasm must be self-hosted and the CSP needs `'wasm-unsafe-eval'` | state machine + data binding (`useRiveNumber`, triggers); a 1D blend state mixes timelines from one number (mouth by level) | runtime +2.4 MB Android / +1.7 MB iOS download; web about 420 KB gzip (canvas-lite) | runtimes MIT; editor closed, exporting needs a paid seat (about $9/month) | **best**: one file holds all 11 states, smooth, real-time inputs |
-| Lottie / dotLottie (`lottie-react-native` 7.5, `@lottiefiles/dotlottie-react-native` 0.12) | native | dotLottie wasm about 484 KB; lottie-web's full build needs `unsafe-eval` | state machines gate transitions; no blend from a continuous number; still changing | moderate | Apache-2.0 / MIT; After Effects to author | one-off flourishes only |
-| Skia + Reanimated (`@shopify/react-native-skia` 2.14) | UI thread, excellent | CanvasKit 2.9 MB gzip on web | anything, in code | +4 MB Android / +6 MB iOS | MIT, code only | smooth, but heavy on web and hand-drawn |
-| SVG + Reanimated (today) | fine for few nodes; each frame is a Fabric commit | free (DOM SVG), no wasm, no CSP change | anything, in code | 0 | MIT | safe, but it is the 1,600 lines we want to remove |
+| Mirar (look) | live camera view, «muéstrame la cocina», watching a visitor | the stars draw an open almond eye; a lens-shaped pupil of light follows the subject (`target`) or the pointer; the stars shimmer along the outline | enter 600 ms gentle spring; holds while the view is open | P2 | open eye, pupil centred | medium 320; low 160, no trails |
+| Buscar → encontrado | «¿dónde dejé las llaves?», «¿quién está en la puerta?», scanning cameras, recordings or memory | the eye narrows and the pupil sweeps side to side like a searchlight, brightening the stars it passes; on a hit it settles on the target, narrows to focus and glints | sweep 1.7 rad/s until a result; focus 400 ms snappy; glint 1.1 s ease-out | P2 | narrowed eye on the target, static glint | medium; low: no searchlight band |
+| Buscar → sin resultado | the same search with no match | the sweep slows and the eye closes gently into a low line, then rests | close 900 ms ease-in-out, then idle | P2 → P5 | closed low line | any |
+| Reconocer: conocido | a household member or named visitor is recognised | open eye, warmer tone, a soft warm glint over the pupil | glint 1.1 s ease-out; holds 2 s | P2 | warm eye, static glint | any |
+| Reconocer: desconocido | an unknown person is detected (no alarm by itself) | the eye narrows calmly, cooler tone, the pupil steady on the person; no flashing, no red | narrow 700 ms gentle; holds while detected | P2 | narrowed eye | any |
+| Escucha | hold-to-talk; the call while you speak | the stream gathers and flows toward you; its width follows `level` | enter 300 ms snappy; level-driven | P3 | a gathered stream | any; low: level at 15 Hz |
+| Piensa | a tool runs; Argus looks something up | the ribbon braids into three strands | enter 400 ms; loops | P3 | a still braid | any |
+| Habla | Argus speaks (TTS) | waves along the ribbon follow the voice amplitude | level-driven | P3 | a gentle wave | any |
+| Piensa → habla | the first audio of the answer arrives | the braid untwists into the wave without breaking: one continuous stream | 600 ms gentle spring | P3 | — | any |
+| Hecho | a task, reminder or setting is completed | a short upward flourish and a burst of sparkles, then rest | 1.6 s ease-out | P4 | flourish with three sparkles | any; low: no sparkle trails |
+| Cancelado | the user cancels or interrupts | the stars unravel outward and fade, then reassemble softly | unravel 1.3 s ease-in, reassemble 2.2 s ease-out | P4 | a loose, dim ribbon | any |
+| Error / no puedo | a request fails or is not allowed | the ribbon droops into a low curve and dims; no shaking | droop 800 ms ease-in-out; holds 2.4 s | P4 | drooped dim ribbon | any |
+| Alerta | an alert needs attention | faster swirl, brighter, amber shifting to red, still smooth and readable | enter 300 ms; swirl 0.55 rad/s | P1 | warm-red swirl | any |
+| Pánico | panic or a confirmed intruder | the fastest swirl, red-amber, with a steady 1.2 Hz brightness pulse (below 3 flashes/s) | enter 200 ms; pulse 1.2 Hz | P1 (wins over all) | bright red-amber swirl, no pulse | any; never dropped |
+| Cambio de modo | the guard mode changes (En casa → Noche) | the ribbon loosens briefly and re-forms in the new mode's tempo and shape | 1.4 s gentle spring | P5 event | the new mode's still | any |
+| Noche / duerme | night with quiet hours; the assistant resting | a thin, dim, slow ribbon | enter 1.2 s ease-in-out | P5 | thin dim line | low: 30 fps cap |
+| De guardia | Noche, Fuera, Armado | an open arc (an upper lid) with a light that sweeps along it like a calm gaze | sweep 0.4 rad/s; breath about 7/min | P5 | arc with the light centred | any |
+| Llegada / salida | someone arrives / leaves | a ripple of light travels from the edges to the centre (arrival) or from the centre out (departure) | 1.6 s ease-out | event | — | any |
+| Aviso nuevo | a message or notification arrives | a brief brighten of the whole ribbon | 900 ms ease-out | event | — | any |
+| Toque / desplazamiento | touch, hover, scroll | it leans toward the touch and drifts with the scroll; a tap brightens it | continuous spring; tap 800 ms | continuous | no lean | off on the low tier while scrolling |
+| Abrir / cerrar la app | launch or foreground / background | scattered stars assemble into the current state / the ribbon disperses and fades | 2.2 s ease-out / 1.1 s ease-in | P5 event | the current state | low: 1.2 s |
+| Sin conexión / reconexión | the app cannot reach Argus / Argus answers again | dim, grey, still; on reconnect, colour flows back from grey | 600 ms / 1.6 s ease-out | P0 | grey still line | any |
+| Primera aparición | onboarding, the first time | stars drift in from far away and assemble into the ribbon | 3.4 s ease-out | onboarding | the ribbon at rest | any |
 
-Sources: [Rive RN](https://rive.app/docs/runtimes/react-native/react-native),
-[Rive in Expo](https://rive.app/docs/runtimes/react-native/adding-rive-to-expo.md),
-[Rive states](https://rive.app/docs/editor/state-machine/states),
-[Rive sizes](https://rive.app/docs/runtimes/runtime-sizes.md),
-[Rive pricing](https://rive.app/blog/rive-s-new-9-mo-plan),
-[dotLottie state machines](https://docs.lottiefiles.com/en/runtimes/distributions/react-native/v0.x/state-machines),
-[lottie-react-native](https://github.com/lottie-react-native/lottie-react-native),
-[Skia web](https://www.mintlify.com/shopify/react-native-skia/getting-started/web),
-[Reanimated performance](https://docs.swmansion.com/react-native-reanimated/docs/guides/performance),
-[CSP and wasm](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src).
-Web sizes are gzip measurements of the npm packages taken during this
-research. Whether WebKitGTK honours `'wasm-unsafe-eval'` is **not confirmed**
-and must be tested in the exact Tauri build.
+The prototype's «Estela · catálogo» section plays every row on a dark and a
+light stage. Its table is generated from the same data.
 
-**Recommendation: Rive.** It is native on iOS and Android, and one `.riv`
-holds all eleven states with the inputs `state` (enum) and `level` (0–1). It
-sits behind one interface, `<Presence state level size />`.
-- **Web and desktop:** the same file through `canvas-lite` when the CSP test
-  passes. If it fails, the desktop shows the still pose of each state,
-  exported from the same Rive file as SVG, with a cross-fade between states.
-  That is not a second animation system.
-- **Code:** about 1,600 lines of procedural mascot and avatar code become
-  about 200.
-- **Costs:** the paid editor seat, about +2 MB per app download, and a 0.x
-  runtime whose API may still change.
-- **Fallback:** if the Rive spike fails, Skia can take the native side behind
-  the same interface without touching the screens.
+### Build
+
+- **iOS and Android:** `@shopify/react-native-skia` with an **Atlas** of
+  streak sprites (one draw for all particles). A Reanimated worklet
+  integrates the spring physics on the UI thread, and the trails come from an
+  offscreen layer faded each frame. The target shapes (swirl, stream, braid,
+  wave, eye, arc, ribbon) are a pure function `target(particle, state, t,
+  level, target)`, the same one the prototype uses. JS sends only `state`,
+  `intensity`, `target`, `level` and `event`.
+- **Skia version.** Skia v2 (OpenGL ES) runs on every device. v3
+  (Graphite/Vulkan) needs Vulkan 1.1, and the Play Store then stops serving
+  devices without it. Recommendation: **v2**, or v3 with a static fallback
+  when `Skia.gpu.isAvailable` is false.
+- **Web and Tauri:** the same particle system on a plain Canvas 2D (the
+  prototype is that renderer). No CanvasKit (2.9 MB) and no wasm, so the
+  strict Tauri CSP stays as it is. R-D18 is no longer needed.
+- **Icon form:** about 24 strokes per frame, drawn by the same component at
+  28–48 px. It costs next to nothing.
+
+**Code.** It replaces `welcome-mascot/*` and `avatar.tsx` (about 1,600
+lines) with an estimated 350–450 lines: the target function, the Atlas
+renderer, the web canvas renderer and the icon form. The prototype's whole
+engine is under 200 lines.
+
+### Performance tiers and stills
+
+| Tier | Particles (stage / medium / compact) | Trails | Frame rate | Lean and scroll |
+|---|---|---|---|---|
+| `high` | 560 / 320 / 200 | yes | 60 fps active, 30 fps at rest | on |
+| `low` (Android < 12, < 4 GB, «Reducir efectos») | 280 / 160 / 100 | no | 30 fps | off while scrolling |
+| Reduced motion | — | — | still | off |
+
+With reduced motion, each state renders once to its still frame (listed in
+the catalogue) and only changes when the state changes, with a 200 ms
+crossfade at most. Off-screen, backgrounded or scrolled-out copies pause.
 
 ## 8c. Desktop and mobile idioms
 
@@ -1209,7 +1252,7 @@ creates anything.
   - **Novedades:** the latest 5 feed items in a card, with inline actions
     such as "Activar" and the link "Ver todo".
   - **The hero changes with the home:**
-    - night or away: «Buenas noches.» with the hat on;
+    - night or away: «Buenas noches.» with Estela's on-watch arc;
     - alert: «Alguien en el patio.» with media and actions;
     - offline: «Sin conexión», grey.
 - **Desktop:**
@@ -1253,7 +1296,7 @@ creates anything.
   Personas vistas for the owner). With several places, the status shows the
   place picker as its title ("Casa ▾") and "Todos los lugares" in the sheet.
   Changing the mode plays one `snappy` slide, a `success` haptic and the
-  Aura's cross-fade to the new tone; `Presence` puts on or takes off its hat.
+  Aura's cross-fade to the new tone; Estela plays `modechange` and re-forms in the new mode's tempo.
 - **Phone:** a compact hero (mascot 58 beside «En casa») with stats («1 por
   revisar», «0 en curso», «1 visita hoy») and the mode control, so the cameras
   start above the fold.
@@ -1601,8 +1644,9 @@ visual baselines). The rest are a review list in the PR template.
       frame budget on the low-end reference (gate in R9).
 - [ ] No glass behind reading text; Reduce Transparency and the `low` tier
       give solid surfaces.
-- [ ] At most one mascot on screen, always beside words that carry the
-      meaning; its state matches the truth (the hat whenever on watch).
+- [ ] At most one Estela on screen, always beside words that carry the
+      meaning; its state matches the truth (the on-watch arc whenever on
+      watch, the eye only while Argus is actually looking).
 
 **Errors**
 
@@ -1689,9 +1733,9 @@ second and is written natively, not translated word for word.
 | R-D13 | The Argus tab opens the Argus thread directly; conversations with people sit behind its header | yes; alternative: a conversations list with Argus pinned first |
 | R-D14 | Identity: the `Aura` ambient status, the `hero` sentence, glass only on floating chrome, the three springs (§2b) | yes |
 | R-D15 | Signature gesture: **hold the centre tab to talk** from any screen; a tap opens the chat (replaces v1's "long press = quick create") | yes |
-| R-D16 | The hat means "on watch": the mascot wears it in Noche, Fuera and Armado and in alerts, and never suggests that security is off | yes |
-| R-D17 | Mascot technology: **Rive** (native runtime; `canvas-lite` on desktop if the WebKitGTK CSP test passes, otherwise still poses from the same file). Needs a paid Rive editor seat (about $9/month) and someone to rig the `.riv` from today's figure | yes, after the spike |
-| R-D18 | Allow `'wasm-unsafe-eval'` in the Tauri/web CSP (self-hosted wasm only) so desktop gets the animated mascot | yes, if the WebKitGTK test passes; otherwise keep the strict CSP and the still poses |
+| R-D16 | ~~The hat means "on watch"~~ **Superseded by Estela:** on watch is the sweeping arc (§8b) | — |
+| R-D17 | ~~Mascot technology: Rive~~ **Superseded:** Estela is built with Skia Atlas on phones and Canvas 2D on web/desktop (§8b); no Rive seat needed | yes |
+| R-D18 | ~~Allow `'wasm-unsafe-eval'` in the Tauri CSP~~ **No longer needed:** Estela's web renderer is plain Canvas 2D | — |
 | R-D19 | ⌘K `Command` as the one door on desktop (commands, search, ask Argus), and the search button on phones | yes |
 | R-D20 | A "Reducir efectos" setting, plus an automatic `low` tier on older Android (no blur, still Aura, simpler mascot) | yes |
 | R-D21 | Dismissal: overlays close on an outside tap/click, Esc and Back, except destructive confirmations and dirty forms, which ask (§5.7) | yes |
@@ -1701,14 +1745,14 @@ second and is written natively, not translated word for word.
 | R-D25 | Density: compact heroes (content above the fold on phones), content-rich rows, and 3 or 4 columns of real content on desktop (§6b) | yes |
 | R-D26 | Large screens and scrolling: 4 columns from 1700 px, a 2,200 px content cap, text at most about 680 px, and one scroll owner per region with sticky headers and shared thin scrollbars (§6c) | yes |
 | R-D27 | Loading: local data paints instantly, with at most an inline «Actualizando»; skeletons only for HTTP data without a local copy (§5.4) | yes |
-| R-D28 | Mascot: choose one of the six proposals (`mascot-proposals/index.html`); the recommendation is **2 · Búho**, with **0 · Argus evolucionado** as the continuity option | the owner decides |
+| R-D28 | **Resolved 2026-10-20: Estela** (`aura.html`, option 1) is Argus' presence everywhere, with the catalogue of §8b | decided |
 
 ## 14. Order of work
 
 The rules, the refactor and the redesign run as one programme after the owner
 approves this design (owner decision, 2026-10-20). Within it:
 
-1. The two spikes (TrueSheet, Rive and the WebKitGTK CSP) and the low-end
+1. The two spikes (TrueSheet, and Estela on Skia Atlas) and the low-end
    Android performance reference come first, because they can change R-D8,
    R-D17 and R-D18.
 2. `tokens.ts` gets §3's values (R5) and the 26 components of §4 are built
@@ -1736,8 +1780,8 @@ deliberate and needs the owner's or the rules agent's confirmation:
 | A3 | F21: today's type scale (8 steps) and radius scale (9 steps) are kept | 6 type steps (`hero` 36 … `caption` 12) and 5 concentric radii (§3) | F21 keeps the *mechanism* (lint-enforced scales) with the new *values* |
 | A4 | §2.4 / F20: status colours are fills with `*-strong` text twins | v3 keeps today's values. The "strong" values become the role values and the pure fills are named as fills (§3.1), so there is no separate twin token | F20 keeps the contrast test and names roles, not twins |
 | A5 | §3.7 primitive names: `PressableSurface`, `Button`, `IconButton`, `ListRow`, `SegmentedControl` (falls back to a select), `RetryNotice`, `StaleRibbon`, `Field`, `Stack`/`Inline`/`Cluster` | `Pressable`(`PressableSurface`), `Button` (with `iconOnly`, absorbing `IconButton`), `Row`, `Choice`, `Notice` (covers retry and stale), `Field`; `Stack`/`Inline`/`Cluster` are kept as layout helpers and not counted among the 26 | use this spec's names in the rules, or keep the plan's: only one list may exist |
-| A6 | F27 performance budgets cover bundle and startup | adds §7b's animation budget, the `perfTier`, and new dependencies: TrueSheet, sonner(-native), expo-haptics, expo-blur, expo-glass-effect, Rive (+about 420 KB gzip wasm on web, lazy-loaded; +about 2 MB per native app) | add §7b to F27; budget the new dependencies explicitly |
-| A7 | F31 / the Tauri CSP: scripts only from the app itself | Rive on desktop needs `'wasm-unsafe-eval'` with self-hosted wasm (R-D18) | the owner decides; without it, the desktop uses still poses |
+| A6 | F27 performance budgets cover bundle and startup | adds §7b's animation budget, the `perfTier`, and new dependencies: TrueSheet, sonner(-native), expo-haptics, expo-blur, expo-glass-effect, react-native-skia v2 (about +4 MB Android, +6 MB iOS; nothing on web, where Estela uses Canvas 2D) | add §7b to F27; budget the new dependencies explicitly |
+| A7 | F31 / the Tauri CSP: scripts only from the app itself | no change: Estela renders with Canvas 2D on desktop (R-D18 withdrawn) | no conflict |
 | A8 | F11: a failure is never shown as a fact | §5.8 adds *where* each error appears; the copy and the code→message map stay with `error-messages-spec.md` (not yet on the plan branch) | consistent; the rules should name `serviceErrorKey` as the single map |
 | A9 | Breakpoints `compact < 600 ≤ medium < 1024 ≤ expanded < 1440 ≤ wide` | identical (§6) | no conflict |
 

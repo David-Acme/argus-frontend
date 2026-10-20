@@ -20,6 +20,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:20px;margin-top:24px}
 .card h2{font-size:26px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .card h2 small{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.chosen{font-size:12px;font-weight:800;background:var(--accent);color:var(--bg);border-radius:999px;padding:3px 10px;letter-spacing:.03em}
 .card p{color:var(--text-2);margin-top:2px;max-width:900px}
 .stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin-top:16px}
 .stage{border-radius:22px;aspect-ratio:4/3;position:relative;overflow:hidden;display:grid;place-items:center}
@@ -42,7 +43,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <body>
 <div class="page">
   <h1>Argus: aura</h1>
-  <p class="lead">Three proposals for Argus' presence as a free aura, with no circle and nothing to contain it. Each is a flow of light and particles with open edges that fade into the background. It drifts like a galaxy at rest, streams toward you when listening, braids or folds when thinking, flows in waves with the voice when speaking, opens into a calm gaze when on watch, and settles into a dim ribbon when asleep. Each is shown at large size on dark and on light, plus what it becomes at icon size.</p>
+  <p class="lead"><b>Decided 2026-10-20: Estela</b> is Argus' presence (R-D28). It now lives in the main prototype with its full animation catalogue. This page stays as the record of the choice. Three proposals for Argus' presence as a free aura, with no circle and nothing to contain it. Each is a flow of light and particles with open edges that fade into the background. It drifts like a galaxy at rest, streams toward you when listening, braids or folds when thinking, flows in waves with the voice when speaking, opens into a calm gaze when on watch, and settles into a dim ribbon when asleep. Each is shown at large size on dark and on light, plus what it becomes at icon size.</p>
   <div class="ctl" role="group" aria-label="Controles">
     <button type="button" id="pause" aria-pressed="false">Pausar animaciones</button>
     <button type="button" data-pt="system" aria-pressed="true">Sistema</button>
@@ -104,7 +105,7 @@ const K=[
 ];
 
 const list=document.getElementById('list');
-list.innerHTML=K.map(k=>`<article class="card" data-id="${k.id}"><h2>${k.name}<small>${k.tag}</small></h2><p>${k.line}</p>
+list.innerHTML=K.map(k=>`<article class="card" data-id="${k.id}"><h2>${k.name}<small>${k.tag}</small>${k.id==='estela'?'<span class="chosen">Elegida · R-D28</span>':''}</h2><p>${k.line}</p>
 <div class="stages"><div class="stage d"><span>Oscuro</span><canvas data-r="d"></canvas></div><div class="stage l"><span>Claro</span><canvas data-r="l"></canvas></div></div>
 <canvas class="wave"></canvas>
 <div class="row2"><div class="chips" role="group" aria-label="Estado de ${k.name}"><button type="button" data-auto aria-pressed="true">Auto</button>${STATES.map(([s,n])=>`<button type="button" data-st="${s}" aria-pressed="false">${n}</button>`).join('')}</div>

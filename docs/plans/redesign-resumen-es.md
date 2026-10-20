@@ -135,7 +135,7 @@ Las propuestas son:
 - **5 · Vigía:** un rostro humano adulto de conserje o vigilante. Es el más
   humano, pero arriesga una lectura «extraña».
 
-El prototipo principal mantiene la mascota actual hasta que elijas (R-D28).
+Decidido: **Estela** (R-D28).
 
 ## Sin espacios vacíos (v3.2)
 
@@ -155,6 +155,53 @@ Revisé cada pantalla y llené los huecos con información útil:
 
 No añadí el clima: Argus funciona en local y hoy no tiene una fuente del clima.
 Añadirla es una decisión tuya.
+
+## Estela: la presencia de Argus (v3.5)
+
+Elegiste **Estela** y reemplaza a la mascota blanca en todo el rediseño. Es
+una corriente de estrellas y luz que fluye como una pincelada viva: sin
+cuerpo, sin círculo y sin contenedor.
+
+**Es un solo componente** (`Presence`), que se controla con cinco datos:
+- el estado;
+- la intensidad;
+- un punto objetivo (adónde mira o se inclina);
+- el nivel de la voz;
+- un evento puntual.
+
+**Tiene 17 estados y 11 eventos.** Destacan:
+- **Mirar:** dibuja un ojo almendrado con una pupila de luz que sigue a la
+  persona, cuando Argus ve por una cámara.
+- **Buscar:** el ojo barre de lado a lado como un reflector. Cuando
+  encuentra lo que busca, enfoca y brilla; si no, se cierra suavemente.
+- **Reconocer:** con alguien conocido, un brillo cálido. Con un
+  desconocido, el ojo se entrecierra con calma, sin rojo.
+- **Las de la conversación:** escucha, piensa, habla, y el paso continuo de
+  pensar a hablar.
+- **Los resultados:** hecho (destellos), cancelado (se deshace) y error (se
+  inclina y se apaga).
+- **Seguridad y ambiente:** alerta y pánico (rápidos, pero legibles y por
+  debajo de 3 destellos por segundo), cambio de modo, de guardia (un arco
+  que barre como una mirada) y noche.
+- **Eventos:** llegadas y salidas (una onda), aviso nuevo (brilla), toque y
+  desplazamiento (se inclina), abrir y cerrar la app (se arma y se
+  dispersa), sin conexión (gris y quieta), reconexión y la primera
+  aparición en la bienvenida.
+
+**Prioridades.** Si pasan dos cosas a la vez, gana esta escala: sin
+conexión > seguridad > mirada > conversación > resultado > ambiente.
+
+**Cada caso** tiene su duración, su curva, su imagen fija para «Reducir
+movimiento» y su nivel de rendimiento. La tabla completa está en la sección
+8b de la especificación. En el prototipo, la sección «Estela · catálogo»
+reproduce cada caso con un botón.
+
+**Cómo se construye.**
+- **Teléfono:** Skia Atlas + Reanimated.
+- **Escritorio y web:** el mismo sistema en Canvas 2D, así que no hace falta
+  cambiar la política de seguridad de Tauri. Se cierra R-D18.
+- **Rive:** ya no hace falta, así que tampoco su licencia (se cierra R-D17).
+- **Código:** reemplaza unas 1.600 líneas de mascota por unas 400.
 
 ## Rendimiento primero
 
