@@ -9,6 +9,11 @@ import { log } from '@/core/services/log';
 
 const INTERPOLATION_RE = /\{(\w+)\}/g;
 
+export function readableKey(key: string): string {
+  const last = key.slice(key.lastIndexOf('.') + 1).replace(/[-_]+/g, ' ').trim();
+  return last ? last.charAt(0).toUpperCase() + last.slice(1) : '';
+}
+
 function resolvePath(locale: I18nSchema, key: string): string | undefined {
   let current: unknown = locale;
   for (const part of key.split('.')) {
@@ -33,7 +38,7 @@ export function translate<K extends TranslationKey>(
   }
   if (value === undefined) {
     if (__DEV__) log.error('i18n', `missing translation key: ${key}`);
-    return key;
+    return readableKey(key);
   }
 
   return value.replace(INTERPOLATION_RE, (match, name: string) => {

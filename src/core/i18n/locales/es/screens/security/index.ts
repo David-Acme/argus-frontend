@@ -258,6 +258,7 @@ export const security = {
       unobserved: 'Alguien sin identificar',
       several: '{count} personas desconocidas',
       accompanied: 'Persona desconocida acompañada',
+      other: 'Persona detectada',
     },
     tamper: {
       covered: 'Imagen tapada',

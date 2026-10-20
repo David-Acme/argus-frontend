@@ -858,7 +858,8 @@ for Watermelon nor make an HTTP list request just because it mounted.
   (`es-*` → `es`, `en-*` → `en` via `expo-localization`), fallback `es`. Sync
   init at module load (MMKV/localStorage are sync) — no layout effect needed.
 - **Missing keys/params**: dev-only `log.error` + fallback to the default
-  locale → returns the key as last resort. Never crashes.
+  locale → the key's last segment as words (`readableKey`) as last resort,
+  never the dotted key. Never crashes.
 - **Copy held by stores carries keys, never rendered text** (`QR_SCAN_PURPOSES`,
   `QrScanConfig`): translate at render time, so the store stays language-agnostic.
 - `app.config.ts` native plugin strings (`cameraPermission`) are NOT runtime-translatable.

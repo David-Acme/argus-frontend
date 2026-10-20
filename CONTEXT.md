@@ -5124,3 +5124,11 @@ minutes without evidence.
   always closed with "Tus datos se conservan", even with "Borrar también mis
   datos" chosen. The dialog passes `purging`, and the line reads "Tus datos
   se borran para siempre." while it is. `tests/e2e/module-dialogs.e2e.ts`.
+- **No translation key reaches the screen.** An episode subject the client
+  did not know (`household`) rendered `screens.security.episodes.subject.household`.
+  `translate` now answers a missing key with its last segment as words
+  (`readableKey`: "Household"), and the episode card maps a subject it does
+  not know to "Persona detectada". `tests/e2e/raw-keys.e2e.ts` walks
+  Seguridad, Configuración and Perfil with unknown server values and fails
+  on any `screens.`/`common.` key in the page text;
+  `tests/unit/core/i18n/translate.test.ts` pins the fallback.

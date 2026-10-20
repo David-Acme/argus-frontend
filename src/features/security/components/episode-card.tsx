@@ -38,6 +38,8 @@ const REVIEW_OPTIONS: readonly ReviewOption[] = [
   { value: 'not_now', key: 'not-now' },
 ];
 
+const KNOWN_SUBJECTS: ReadonlySet<string> = new Set(['stranger', 'unobserved', 'accompanied']);
+
 const chipHover = Platform.select({ web: 'hover:bg-surface-secondary', default: '' });
 const linkHover = Platform.select({ web: 'hover:opacity-80', default: '' });
 
@@ -70,7 +72,7 @@ export function EpisodeCard({
     ? t(`screens.security.episodes.tamper.${tamperStatus ? TAMPER_STATUS_KEYS[tamperStatus] : 'other'}`)
     : episode.subject === 'several'
       ? t('screens.security.episodes.subject.several', { count: String(Math.max(2, episode.people)) })
-      : t(`screens.security.episodes.subject.${episode.subject === '' ? 'stranger' : episode.subject}`);
+      : t(`screens.security.episodes.subject.${episode.subject === '' ? 'stranger' : KNOWN_SUBJECTS.has(episode.subject) ? episode.subject : 'other'}`);
 
   const stateLabel = active
     ? t('screens.security.episodes.state.active')

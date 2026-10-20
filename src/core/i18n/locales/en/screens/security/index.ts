@@ -258,6 +258,7 @@ export const security = {
       unobserved: 'Someone unidentified',
       several: '{count} unknown people',
       accompanied: 'Unknown person with company',
+      other: 'Person detected',
     },
     tamper: {
       covered: 'View blocked',
