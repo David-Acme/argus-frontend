@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { inviteService } from '@/core/services/invite';
 import type { InvitationPreview } from '@/features/people/components/user-options';
 import { toastServiceError } from '@/shared/libs/service-error';
+import { replacedInvitation } from '@/features/people/model/invitation-flight';
 
 type InvitationPreviewOptions = {
   onRevoked: () => void;
@@ -33,6 +34,13 @@ export function useInvitationPreview({
     });
   }, [onRevoked]);
 
+  const show = useCallback((next: InvitationPreview) => {
+    const replaced = replacedInvitation(previewRef.current, next, spentRef.current);
+    previewRef.current = next;
+    setPreview(next);
+    if (replaced !== null) void inviteService.revoke(replaced);
+  }, []);
+
   useEffect(() => {
     previewRef.current = preview;
   }, [preview]);
@@ -51,5 +59,5 @@ export function useInvitationPreview({
     []
   );
 
-  return { preview, show: setPreview, dismiss };
+  return { preview, show, dismiss };
 }

@@ -1,3 +1,4 @@
+import type { IInviteCreated } from '@/core/interfaces';
 import { inviteService } from '@/core/services/invite';
 import { netService } from '@/core/services/net';
 import type { InviteRole } from '@/core/types';
@@ -14,9 +15,10 @@ import { buildInvitationQr } from '@/shared/libs/invitation-qr';
 import { roleLabelOf } from '@/shared/libs/role-label';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { toast } from '@/shared/libs/toast';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { type InvitationDialogProps, inviteRoleOptions } from '@/features/people/components/user-options';
+import { createInvitationFlight } from '@/features/people/model/invitation-flight';
 
 export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: InvitationDialogProps) {
   const { t } = useTranslation();
@@ -31,23 +33,38 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
     [view]
   );
   const roles = useMemo(() => inviteRoleOptions(t, moduleOff), [moduleOff, t]);
+  const [flight] = useState(() =>
+    createInvitationFlight<IInviteCreated>((created) => void inviteService.revoke(created.id))
+  );
+
+  const requestInvitation = useCallback(async (): Promise<IInviteCreated | null> => {
+    const answer = await inviteService.create({ role });
+    if (answer.ok && answer.info) return answer.info;
+    if (answer.errors?.code === 'ROLE_INACTIVE') {
+      toast.error(
+        t('screens.users.invite-role-off-title'),
+        t('screens.users.invite-role-off', { role: roleLabelOf(role, t), module: moduleOff(role) ?? '' })
+      );
+    } else {
+      toastServiceError(answer.errors);
+    }
+    return null;
+  }, [moduleOff, role, t]);
+
+  const close = useCallback(
+    (next: boolean) => {
+      if (!next) flight.abandon();
+      onOpenChange(next);
+    },
+    [flight, onOpenChange]
+  );
 
   const create = useCallback(async () => {
+    if (flight.busy()) return;
     setSaving(true);
-    const answer = await inviteService.create({ role });
+    const created = await flight.run(requestInvitation);
     setSaving(false);
-    if (!answer.ok || !answer.info) {
-      if (answer.errors?.code === 'ROLE_INACTIVE') {
-        toast.error(
-          t('screens.users.invite-role-off-title'),
-          t('screens.users.invite-role-off', { role: roleLabelOf(role, t), module: moduleOff(role) ?? '' })
-        );
-      } else {
-        toastServiceError(answer.errors);
-      }
-      return;
-    }
-    const created = answer.info;
+    if (!created) return;
     const instance = await netService.instance();
     if (!instance) {
       void inviteService.revoke(created.id);
@@ -70,22 +87,24 @@ export function InvitationDialog({ open, onOpenChange, onCreated, onSaved }: Inv
       }),
     });
     onSaved();
-  }, [moduleOff, onCreated, onOpenChange, onSaved, role, t]);
+  }, [flight, onCreated, onOpenChange, onSaved, requestInvitation, t]);
+
+  useEffect(() => () => flight.abandon(), [flight]);
 
   return (
     <AdaptiveDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={close}
       title={t('screens.users.new-invitation')}
       description={t('screens.users.invitation-description')}
       closeLabel={t('common.close')}
-      onSubmit={() => void create()}
+      onSubmit={saving ? undefined : () => void create()}
       footer={
         <>
-          <Button variant="outline" disabled={saving} onPress={() => onOpenChange(false)}>
+          <Button variant="outline" disabled={saving} onPress={() => close(false)}>
             <Text>{t('common.cancel')}</Text>
           </Button>
-          <Button loading={saving} onPress={create}>
+          <Button loading={saving} disabled={saving} onPress={create}>
             <Text>{t('screens.users.show-qr')}</Text>
           </Button>
         </>
