@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { useUniwind } from 'uniwind';
 import { AppShell } from '@/shared/components/layout';
-import { EntryGate } from '@/features/auth';
+import { EntryGate, useSignedInHistory } from '@/features/auth';
 import { PrivacyGate } from '@/features/privacy';
 import { ModuleNotices } from '@/features/modules';
 import { useCallPush } from '@/features/voice';
@@ -14,6 +14,7 @@ import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
 export default function AppLayout() {
   const { theme } = useUniwind();
   usePushRegistration();
+  useSignedInHistory();
   useCallPush();
   useBeaconController();
   useTamperEvidenceKeeper();
