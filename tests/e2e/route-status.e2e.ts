@@ -51,22 +51,12 @@ const CASES: RouteCase[] = [
   },
 ];
 
-const expectClearOfBanner = async (page: Page, text: string): Promise<void> => {
-  const bannerBox = await page.getByRole('alert').filter({ hasText: text }).boundingBox();
-  const firstControlBox = await page.evaluate(() => {
-    const candidates = [...document.querySelectorAll<HTMLElement>('input, button, [role="button"], [role="textbox"]')];
-    const first = candidates.find((element) => !element.closest('[role="alert"]') && element.getBoundingClientRect().height > 0);
-    if (!first) return null;
-    const { x, y, width, height } = first.getBoundingClientRect();
-    return { x, y, width, height };
-  });
-  if (!bannerBox || !firstControlBox) throw new Error('the banner or the first control has no box');
-  const overlaps =
-    firstControlBox.x < bannerBox.x + bannerBox.width &&
-    firstControlBox.x + firstControlBox.width > bannerBox.x &&
-    firstControlBox.y < bannerBox.y + bannerBox.height &&
-    firstControlBox.y + firstControlBox.height > bannerBox.y;
-  expect(overlaps).toBe(false);
+const expectDismissibleNotice = async (page: Page, text: string): Promise<void> => {
+  await page.getByRole('button', { name: new RegExp(`^${text}\\. `) }).first().click();
+  const dot = page.getByRole('button', { name: text, exact: true });
+  await expect.poll(() => dot.count(), { timeout: 5000 }).toBe(1);
+  await dot.click();
+  await expect.poll(() => page.getByText(text).count(), { timeout: 5000 }).toBeGreaterThan(0);
 };
 
 const seedFor = (routeCase: RouteCase): ShimSeed => {
@@ -97,7 +87,7 @@ for (const routeCase of CASES) {
       const page = await context.newPage();
       await page.goto(new URL(routeCase.path, baseUrl).toString());
       await expect.poll(() => page.getByText(routeCase.text).count(), { timeout: 15000 }).toBe(1);
-      if (routeCase.banner) await expectClearOfBanner(page, routeCase.text);
+      if (routeCase.banner) await expectDismissibleNotice(page, routeCase.text);
       if (SHOTS) {
         await page.getByText(routeCase.text).scrollIntoViewIfNeeded();
         await page.waitForTimeout(SETTLE_MS);
