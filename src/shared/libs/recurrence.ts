@@ -12,6 +12,8 @@ import {
   RECURRENCE_INTERVAL_MAX,
   RECURRENCE_INTERVAL_MIN,
   RECURRENCE_LIMIT_MARGIN,
+  RECURRENCE_MONTH_DAY_MAX,
+  RECURRENCE_MONTH_DAY_MIN,
   RECURRENCE_OFFSET_CACHE_LIMIT,
   RECURRENCE_OFFSET_STEP_MS,
   RECURRENCE_SEARCH_LIMIT,
@@ -56,16 +58,17 @@ export type OccurrenceWindowInput = {
 const isFrequency = (value: string): value is RecurrenceFrequency =>
   (RECURRENCE_FREQUENCIES as readonly string[]).includes(value);
 
-function intervalOf(value: string): number | null {
+function boundedOf(value: string, lowest: number, highest: number): number | null {
   if (!/^\d+$/.test(value)) return null;
   const parsed = Number(value);
-  return parsed >= RECURRENCE_INTERVAL_MIN && parsed <= RECURRENCE_INTERVAL_MAX ? parsed : null;
+  return parsed >= lowest && parsed <= highest ? parsed : null;
 }
 
 export function parseRecurrenceRule(text: string | null | undefined): RecurrenceRule | null {
   if (!text || text.endsWith(';')) return null;
   let frequency: RecurrenceFrequency | null = null;
   let interval: number | null = null;
+  let monthDay: number | null = null;
   for (const part of text.split(';')) {
     const equals = part.indexOf('=');
     if (equals < 0) return null;
@@ -75,17 +78,27 @@ export function parseRecurrenceRule(text: string | null | undefined): Recurrence
       if (!isFrequency(value)) return null;
       frequency = value;
     } else if (key === 'INTERVAL' && interval === null) {
-      interval = intervalOf(value);
+      interval = boundedOf(value, RECURRENCE_INTERVAL_MIN, RECURRENCE_INTERVAL_MAX);
       if (interval === null) return null;
+    } else if (key === 'BYMONTHDAY' && monthDay === null) {
+      monthDay = boundedOf(value, RECURRENCE_MONTH_DAY_MIN, RECURRENCE_MONTH_DAY_MAX);
+      if (monthDay === null) return null;
     } else {
       return null;
     }
   }
-  return frequency === null ? null : { frequency, interval: interval ?? RECURRENCE_INTERVAL_MIN };
+  if (frequency === null) return null;
+  const rule: RecurrenceRule = { frequency, interval: interval ?? RECURRENCE_INTERVAL_MIN };
+  if (monthDay === null) return rule;
+  return frequency === 'MONTHLY' ? { ...rule, monthDay } : null;
 }
 
-export const formatRecurrenceRule = ({ frequency, interval }: RecurrenceRule): string =>
-  interval === RECURRENCE_INTERVAL_MIN ? `FREQ=${frequency}` : `FREQ=${frequency};INTERVAL=${interval}`;
+export function formatRecurrenceRule({ frequency, interval, monthDay }: RecurrenceRule): string {
+  const parts = [`FREQ=${frequency}`];
+  if (interval !== RECURRENCE_INTERVAL_MIN) parts.push(`INTERVAL=${interval}`);
+  if (frequency === 'MONTHLY' && monthDay !== undefined) parts.push(`BYMONTHDAY=${monthDay}`);
+  return parts.join(';');
+}
 
 export const isRecurrenceInterval = (value: number): boolean =>
   Number.isInteger(value) && value >= RECURRENCE_INTERVAL_MIN && value <= RECURRENCE_INTERVAL_MAX;
@@ -220,10 +233,12 @@ function occurrenceOf({ rule, start, fraction, clock }: Series, index: number): 
       date = civilFromDays(dayNumberOf(start) + 7 * steps);
       break;
     case 'MONTHLY': {
-      const monthIndex = start.year * 12 + (start.month - 1) + steps;
+      const day = rule.monthDay ?? start.day;
+      const lateStart = Math.min(day, daysInMonth(start.year, start.month)) < start.day ? 1 : 0;
+      const monthIndex = start.year * 12 + (start.month - 1) + lateStart + steps;
       const year = Math.floor(monthIndex / 12);
       const month = (monthIndex % 12) + 1;
-      date = { year, month, day: Math.min(start.day, daysInMonth(year, month)) };
+      date = { year, month, day: Math.min(day, daysInMonth(year, month)) };
       break;
     }
     case 'YEARLY': {
@@ -355,6 +370,12 @@ export function recurrenceLabel(text: string | null | undefined, t: TranslateFn)
     case 'WEEKLY':
       return count === 1 ? t('common.recurrence.weekly') : t('common.recurrence.every-weeks', { count });
     case 'MONTHLY':
+      if (rule.monthDay !== undefined) {
+        const day = rule.monthDay;
+        return count === 1
+          ? t('common.recurrence.monthly-on-day', { day })
+          : t('common.recurrence.every-months-on-day', { count, day });
+      }
       return count === 1 ? t('common.recurrence.monthly') : t('common.recurrence.every-months', { count });
     case 'YEARLY':
       return count === 1 ? t('common.recurrence.yearly') : t('common.recurrence.every-years', { count });

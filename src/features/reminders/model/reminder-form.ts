@@ -2,6 +2,7 @@ import type { IOccurrenceChange, IReminderCacheRow, IReminderUpdate } from '@/co
 import {
   currentOccurrence,
   isRecurrenceIntervalDraft,
+  keepingMonthDay,
   repeatDraftOf,
   ruleOfRepeat,
   sameRepeat,
@@ -47,8 +48,9 @@ export function updateBody(saved: IReminderCacheRow, draft: ReminderDraft): IRem
   if (title !== saved.title) body.title = title;
   if (description !== saved.description.trim()) body.description = description;
   if (seconds(draft.at) !== seconds(saved.scheduledAt)) body.scheduledAt = seconds(draft.at);
-  if (draft.repeat && !sameRepeat(draft.repeat, repeatDraftOf(saved.recurrenceRule))) {
-    body.recurrenceRule = ruleOfRepeat(draft.repeat);
+  const savedRepeat = repeatDraftOf(saved.recurrenceRule);
+  if (draft.repeat && !sameRepeat(draft.repeat, savedRepeat)) {
+    body.recurrenceRule = ruleOfRepeat(keepingMonthDay(draft.repeat, savedRepeat));
   }
   return body;
 }

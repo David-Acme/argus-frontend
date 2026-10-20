@@ -93,6 +93,8 @@ export const common = {
     'every-days': 'Cada {count} días',
     'every-weeks': 'Cada {count} semanas',
     'every-months': 'Cada {count} meses',
+    'monthly-on-day': 'Cada mes, el día {day}',
+    'every-months-on-day': 'Cada {count} meses, el día {day}',
     'every-years': 'Cada {count} años',
     custom: 'Se repite',
   },

@@ -75,10 +75,12 @@ export function ReminderRow({
   options.push({ value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true });
 
   const snoozable = editable && !pending && isSnoozable(timing) && snoozeOptions.length > 0;
-  const snoozeMenu: MenuOption<SnoozeChoice>[] = snoozeOptions.map(({ choice, at }) => ({
+  const snoozeMenu: MenuOption<SnoozeChoice>[] = snoozeOptions.map(({ choice, at, folds }) => ({
     value: choice,
     label: t(SNOOZE_LABEL[choice]),
-    description: t('screens.reminders.snooze-at', { time: date.formatTime(new Date(at)) }),
+    description: t(folds ? 'screens.reminders.snooze-next' : 'screens.reminders.snooze-at', {
+      time: date.formatTime(new Date(at)),
+    }),
   }));
 
   const select = (action: ReminderAction) => {

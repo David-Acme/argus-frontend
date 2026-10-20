@@ -1658,13 +1658,43 @@ The backend keeps the RFC 5545 exceptions on the series row (backend
     (`skippedSchedule`) and says when ("Esta vez no sonará. Próxima vez: …").
   - Completing predicts the roll with the backend's `nextFiring`, ported to `shared/libs/recurrence.ts`: from the
     current occurrence, past skipped ones, to a moved one's new time.
-  - A snoozed reminder sits at a time that is not an occurrence; the backend refuses to change "this occurrence"
-    then, and the refusal shows as the error toast.
+  - A snoozed reminder is still its occurrence (G4, below): the snooze is that occurrence's exception, so "solo
+    esta vez" works on it like on any other.
 - Tests: `calendar-recurrence.test.ts` (the expansion with exceptions), `entity-mappers.test.ts` (the mapper),
   `calendar-occurrence.test.ts` (actions, bodies, the lens and its settling), `reminders.test.ts` (current
   occurrence, skip, roll, move body), `database-migrations.test.ts` (v15 to v16) and
   `occurrence-change-service.test.ts` (the two PATCH calls). The two older migration tests that replayed up to
   `SCHEMA_VERSION` now stop at version 13, the version they pin.
+
+### Recurring occurrences (G4, 2026-10-19)
+
+The backend closed F6b's gaps (`services/productivity/CONTEXT.md`, "Recurring occurrences"); the app follows.
+
+- **A snooze on a series belongs to the current occurrence.** The backend records it as that occurrence's exception
+  (`startsAt` = the snoozed time), so `currentOccurrence` still finds the occurrence and "Editar solo esta vez" and
+  "Cancelar solo esta vez" send it instead of answering 422. The next occurrence keeps its time. A snooze that reaches
+  the next occurrence or passes it (a daily reminder put off until tomorrow) folds into it: this occurrence is skipped
+  and the reminder fires the next one at its own time.
+  - `snoozeOutcome` (`reminder-snooze.ts`) predicts the same answer from the row: the time it lands on, whether it
+    folds and the exception list. `snoozeOptions` shows each preset's landing time, and a folding preset says "La
+    próxima vez, a las …" / "Next time, at …" (`snooze-next`); the toast of a fold says "Esta vez se omite; te lo
+    recordaré la próxima: …" (`snoozed-to-next`). A one-off reminder snoozes as before.
+  - The optimistic intent carries `scheduledAt` and, for a series, `recurrenceExceptions` (`snoozeIntentValues`), so
+    "solo esta vez" right after a snooze already addresses the right occurrence. The reminder lens keeps the synced
+    list when it holds the same exceptions (`sameExceptions`, field by field), so the intent settles once the audit
+    diff lands; `withOccurrenceException` replaces one occurrence's entry and drops it when nothing changes.
+  - The next occurrence is predicted from the current one as the anchor (the app has no `recurrence_anchor`), like
+    the roll; the backend's answer replaces the prediction.
+- **Monthly on a day.** `parseRecurrenceRule` and `formatRecurrenceRule` read and write `BYMONTHDAY=1..31` for a
+  monthly rule (refused with any other frequency, like the backend), and the expansion puts occurrence 0 on the first
+  such day at or after the anchor, on the last day of a shorter month. The fixture cases run here too.
+  `recurrenceLabel` says "Cada mes, el día 5" / "Every month on day 5" (`monthly-on-day`, `every-months-on-day`).
+  The reminder picker has no day field: `RepeatDraft.monthDay` keeps the saved day when only the interval changes
+  (`keepingMonthDay`), and another frequency drops it.
+- **The agenda the assistant reads** (`calendar.list_events`) and the agenda announcements now expand series with
+  their exceptions on the server, the same expansion as `calendar.projection.ts`; nothing changes in the app for it.
+- Tests: `reminders.test.ts` ("a snooze on a recurring reminder changes only this occurrence", "a monthly reminder on
+  a day of the month") and `recurrence.test.ts` ("monthly on a day of the month" and the fixture).
 
 ### Snooze (F6, 2026-10-13)
 
