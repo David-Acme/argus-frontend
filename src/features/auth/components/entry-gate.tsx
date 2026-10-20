@@ -1,4 +1,4 @@
-import { Redirect, usePathname } from 'expo-router';
+import { Redirect, useGlobalSearchParams, usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { authService } from '@/core/services/auth.service';
 import { restoreEntryOf } from '@/core/services/session-restore';
@@ -60,17 +60,18 @@ export function EntryGate({ children }: PropsWithChildren) {
   const view = useAccessView();
   const pending = status === 'signed-in' && !view.ready && moduleOfAppRoute(pathname) !== null;
   const waitedOut = useExpiry(pending, CONTEXT_WAIT_MS);
-  const [requested] = useState(pathname);
+  const params = useGlobalSearchParams();
+  const [requested] = useState(() => ({ pathname, params }));
   const previousStatus = useRef(status);
   const fallback = status === 'signed-in' && !(pending && !waitedOut) ? routeFallback(pathname, view) : null;
 
   useEffect(() => {
-    holdRequestedRoute(requested);
+    holdRequestedRoute(requested.pathname, requested.params);
   }, [requested]);
 
   useEffect(() => {
-    if (fallback && !view.ready) holdRequestedRoute(pathname);
-  }, [fallback, pathname, view.ready]);
+    if (fallback && !view.ready) holdRequestedRoute(pathname, params);
+  }, [fallback, params, pathname, view.ready]);
 
   useEffect(() => {
     if (previousStatus.current === 'signed-in' && status === 'signed-out') forgetRequestedRoute();

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readContext } from '@/core/contracts/context.contract';
 import { accessOf } from '@/core/services/context/context-state';
 import { accessView } from '@/shared/libs/capabilities';
-import { holdRoute, routeToRestore, type HeldRoute } from '@/features/auth/model/held-route';
+import { holdRoute, hrefOf, routeToRestore, type HeldRoute } from '@/features/auth/model/held-route';
 import { ownerContext } from '../../../e2e/support/fake-argus';
 
 const access = (enabled: Record<string, boolean> = {}) => {
@@ -43,5 +43,19 @@ describe('a requested route sent home before the app could open it is restored',
     const holder = held('/agenda');
     expect(routeToRestore(holder, '/projects', known)).toBeNull();
     expect(holder.path).toBeNull();
+  });
+});
+
+describe('the held route keeps its query', () => {
+  test('a query survives, a path parameter is not repeated', () => {
+    expect(hrefOf('/notification', { notificationId: '999' })).toBe('/notification?notificationId=999');
+    expect(hrefOf('/cameras/3', { id: '3' })).toBe('/cameras/3');
+    expect(hrefOf('/cameras/3', { id: '3', talk: '1' })).toBe('/cameras/3?talk=1');
+  });
+
+  test('a held link with a query is restored with it', () => {
+    const holder: HeldRoute = { path: null };
+    holdRoute(holder, '/notification', { notificationId: '999' });
+    expect(routeToRestore(holder, '/', known)).toBe('/notification?notificationId=999');
   });
 });
