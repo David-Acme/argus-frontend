@@ -3,6 +3,7 @@ export type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 export type RecurrenceRule = {
   frequency: RecurrenceFrequency;
   interval: number;
+  monthDay?: number;
 };
 
 export type WallTime = {

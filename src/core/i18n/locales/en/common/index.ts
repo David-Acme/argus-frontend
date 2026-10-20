@@ -94,6 +94,8 @@ export const common = {
     'every-days': 'Every {count} days',
     'every-weeks': 'Every {count} weeks',
     'every-months': 'Every {count} months',
+    'monthly-on-day': 'Every month on day {day}',
+    'every-months-on-day': 'Every {count} months on day {day}',
     'every-years': 'Every {count} years',
     custom: 'Repeats',
   },

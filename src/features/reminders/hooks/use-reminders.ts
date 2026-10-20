@@ -15,7 +15,9 @@ import { currentOccurrence, rolledSchedule, skippedSchedule } from '@/features/r
 import {
   isAlreadyDone,
   snoozeBodyOf,
+  snoozeIntentValues,
   snoozeOptions,
+  snoozeOutcomeOf,
   type SnoozeChoice,
   type SnoozeOption,
 } from '@/features/reminders/model/reminder-snooze';
@@ -55,17 +57,20 @@ export function useReminders() {
   const snooze = useCallback(
     (row: IReminderCacheRow, choice: SnoozeChoice) => {
       const now = Date.now();
-      const target = snoozeOptions({ row, now, clock }).find((option) => option.choice === choice)?.at ?? null;
+      const outcome = snoozeOutcomeOf({ row, now, clock, choice });
+      const when = outcome === null ? null : reminderWhen({ ...row, scheduledAt: outcome.at }, now, date, t);
       return runOptimistic({
         intents:
-          target === null
+          outcome === null
             ? []
-            : [{ table: 'reminder', kind: 'update', recordId: row.id, values: { scheduledAt: Math.round(target / 1000) } }],
+            : [{ table: 'reminder', kind: 'update', recordId: row.id, values: snoozeIntentValues(outcome) }],
         call: () => reminderService.snooze(row.id, snoozeBodyOf(choice)),
         success:
-          target === null
+          when === null
             ? t('screens.reminders.snoozed-plain')
-            : t('screens.reminders.snoozed', { when: reminderWhen({ ...row, scheduledAt: target }, now, date, t) }),
+            : outcome?.folds
+              ? t('screens.reminders.snoozed-to-next', { when })
+              : t('screens.reminders.snoozed', { when }),
         refusalNotice: (result) =>
           isAlreadyDone(result)
             ? { title: t('screens.reminders.already-done-title'), description: t('screens.reminders.already-done') }

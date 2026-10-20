@@ -24,13 +24,18 @@ import {
   repeatFromChoice,
   repeatsOf,
   rolledSchedule,
+  sameExceptions,
   skippedSchedule,
+  withOccurrenceException,
 } from '@/features/reminders/model/reminder-repeat';
 import {
   isAlreadyDone,
   isSnoozable,
   snoozeBodyOf,
+  snoozeIntentValues,
   snoozeOptions,
+  snoozeOutcome,
+  snoozeOutcomeOf,
 } from '@/features/reminders/model/reminder-snooze';
 import { firstOccurrenceAfter, intlZoneClock, parseRecurrenceRule } from '@/shared/libs/recurrence';
 import { matchesReminder, reminderTiming, reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
@@ -294,7 +299,7 @@ describe('reminder snooze', () => {
     ]);
     const evening = row({ scheduledAt: NOW + 5 * HOUR });
     const [tomorrow] = snoozeOptions({ row: evening, now: NOW, clock: lima() });
-    expect(tomorrow).toEqual({ choice: 'tomorrow', at: NOW + 5 * HOUR + DAY });
+    expect(tomorrow).toEqual({ choice: 'tomorrow', at: NOW + 5 * HOUR + DAY, folds: false });
   });
 
   test('tomorrow keeps the household wall clock across a change of offset', () => {
@@ -302,7 +307,7 @@ describe('reminder snooze', () => {
     if (!newYork) throw new Error('this runtime does not know America/New_York');
     const saturday = Date.UTC(2026, 2, 7, 13, 0, 0);
     const [, , , tomorrow] = snoozeOptions({ row: row({ scheduledAt: saturday }), now: saturday + 1000, clock: newYork });
-    expect(tomorrow).toEqual({ choice: 'tomorrow', at: Date.UTC(2026, 2, 8, 12, 0, 1) });
+    expect(tomorrow).toEqual({ choice: 'tomorrow', at: Date.UTC(2026, 2, 8, 12, 0, 1), folds: false });
   });
 
   test('the body names minutes or tomorrow, never both', () => {
@@ -491,5 +496,125 @@ describe('one occurrence of a recurring reminder', () => {
     expect(en('screens.reminders.edit-occurrence')).toBe('Edit this occurrence only');
     expect(en('screens.reminders.skip-occurrence')).toBe('Skip this occurrence');
     expect(en('screens.reminders.edit-series')).toBe('Edit the whole series');
+  });
+});
+
+describe('a snooze on a recurring reminder changes only this occurrence', () => {
+  const lima = () => {
+    const clock = intlZoneClock('America/Lima');
+    if (!clock) throw new Error('this runtime does not know America/Lima');
+    return clock;
+  };
+  const MINUTE = 60_000;
+  const EIGHT = Date.UTC(2026, 9, 6, 13, 0, 0);
+  const TOMORROW_EIGHT = EIGHT + DAY;
+  const daily = (patch: Partial<IReminderCacheRow> = {}) =>
+    row({ id: '50', scheduledAt: EIGHT, recurrenceRule: 'FREQ=DAILY', recurrenceExceptions: [], ...patch });
+
+  test('a snooze before the next occurrence moves this one and is still this occurrence', () => {
+    const clock = lima();
+    const outcome = snoozeOutcome({ row: daily(), target: EIGHT + 30 * MINUTE, clock });
+    expect(outcome).toEqual({
+      at: EIGHT + 30 * MINUTE,
+      folds: false,
+      exceptions: [{ occurrence: EIGHT, cancelled: false, startsAt: EIGHT + 30 * MINUTE }],
+    });
+    const snoozed = daily({ scheduledAt: outcome.at, recurrenceExceptions: outcome.exceptions ?? [] });
+    expect(currentOccurrence(snoozed)).toBe(EIGHT);
+    expect(skippedSchedule({ row: snoozed, clock })).toBe(TOMORROW_EIGHT);
+    expect(occurrenceMoveBody(snoozed, EIGHT + HOUR)).toEqual({
+      occurrence: EIGHT / 1000,
+      startsAt: (EIGHT + HOUR) / 1000,
+    });
+    expect(rolledSchedule({ row: snoozed, now: EIGHT + 30 * MINUTE, clock })).toBe(TOMORROW_EIGHT);
+  });
+
+  test('snoozing again moves the same occurrence, never a second one', () => {
+    const clock = lima();
+    const once = daily({
+      scheduledAt: EIGHT + 30 * MINUTE,
+      recurrenceExceptions: [{ occurrence: EIGHT, cancelled: false, startsAt: EIGHT + 30 * MINUTE }],
+    });
+    expect(snoozeOutcome({ row: once, target: EIGHT + 2 * HOUR, clock }).exceptions).toEqual([
+      { occurrence: EIGHT, cancelled: false, startsAt: EIGHT + 2 * HOUR },
+    ]);
+  });
+
+  test('a snooze that reaches the next occurrence folds into it and skips this one', () => {
+    const clock = lima();
+    const options = snoozeOptions({ row: daily(), now: EIGHT + 5 * MINUTE, clock });
+    const tomorrow = options.find((option) => option.choice === 'tomorrow');
+    expect(tomorrow).toEqual({ choice: 'tomorrow', at: TOMORROW_EIGHT, folds: true });
+    expect(options.filter((option) => option.choice !== 'tomorrow').every((option) => !option.folds)).toBe(true);
+    const outcome = snoozeOutcomeOf({ row: daily(), now: EIGHT + 5 * MINUTE, clock, choice: 'tomorrow' });
+    expect(outcome?.exceptions).toEqual([{ occurrence: EIGHT, cancelled: true }]);
+    const weekly = daily({ recurrenceRule: 'FREQ=WEEKLY' });
+    expect(snoozeOptions({ row: weekly, now: EIGHT + 5 * MINUTE, clock }).find((option) => option.choice === 'tomorrow'))
+      .toEqual({ choice: 'tomorrow', at: TOMORROW_EIGHT + 5 * MINUTE, folds: false });
+  });
+
+  test('a one-off reminder snoozes to the time asked and keeps no exceptions', () => {
+    const outcome = snoozeOutcome({ row: row({ scheduledAt: NOW - HOUR }), target: NOW + 10 * MINUTE, clock: lima() });
+    expect(outcome).toEqual({ at: NOW + 10 * MINUTE, folds: false, exceptions: null });
+    expect(snoozeIntentValues(outcome)).toEqual({ scheduledAt: (NOW + 10 * MINUTE) / 1000 });
+  });
+
+  test('the row shows the snoozed occurrence at once and settles when the server agrees', () => {
+    const outcome = snoozeOutcome({ row: daily(), target: EIGHT + 30 * MINUTE, clock: lima() });
+    const values = snoozeIntentValues(outcome);
+    expect(values).toEqual({
+      scheduledAt: (EIGHT + 30 * MINUTE) / 1000,
+      recurrenceExceptions: [{ occurrence: EIGHT, cancelled: false, startsAt: EIGHT + 30 * MINUTE }],
+    });
+    const [shown] = applyIntents([daily()], [intentFor({ recordId: '50', values })], REMINDER_LENSES);
+    expect(shown).toMatchObject({ scheduledAt: EIGHT + 30 * MINUTE });
+    expect(shown ? currentOccurrence(shown) : null).toBe(EIGHT);
+
+    const synced = daily({
+      scheduledAt: EIGHT + 30 * MINUTE,
+      recurrenceExceptions: [{ startsAt: EIGHT + 30 * MINUTE, cancelled: false, occurrence: EIGHT }],
+    });
+    const [kept] = applyIntents([synced], [intentFor({ recordId: '50', values })], REMINDER_LENSES);
+    expect(kept?.recurrenceExceptions).toBe(synced.recurrenceExceptions);
+  });
+
+  test('an exception list is replaced by occurrence, and an unchanged occurrence restores it', () => {
+    const list = withOccurrenceException([{ occurrence: TOMORROW_EIGHT, cancelled: true }], {
+      occurrence: EIGHT,
+      cancelled: false,
+      startsAt: EIGHT + HOUR,
+    });
+    expect(list.map((exception) => exception.occurrence)).toEqual([EIGHT, TOMORROW_EIGHT]);
+    expect(withOccurrenceException(list, { occurrence: EIGHT, cancelled: false })).toEqual([
+      { occurrence: TOMORROW_EIGHT, cancelled: true },
+    ]);
+    expect(sameExceptions(list, [...list])).toBe(true);
+    expect(sameExceptions(list, list.slice(1))).toBe(false);
+    expect(sameExceptions(undefined, [])).toBe(true);
+  });
+
+  test('the folded snooze and its menu entry say so in Spanish and English', () => {
+    expect(es('screens.reminders.snooze-next', { time: '08:00' })).toBe('La próxima vez, a las 08:00');
+    expect(en('screens.reminders.snooze-next', { time: '08:00' })).toBe('Next time, at 08:00');
+    expect(es('screens.reminders.snoozed-to-next', { when: 'mañana a las 08:00' })).toBe(
+      'Esta vez se omite; te lo recordaré la próxima: mañana a las 08:00'
+    );
+  });
+});
+
+describe('a monthly reminder on a day of the month', () => {
+  const monthly = row({ recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31' });
+
+  test('the picker keeps the day when only the interval changes, and drops it for another frequency', () => {
+    expect(repeatDraftOf('FREQ=MONTHLY;BYMONTHDAY=31')).toEqual({ frequency: 'MONTHLY', interval: 1, monthDay: 31 });
+    const draft = draftOf(monthly, NOW);
+    expect(updateBody(monthly, draft)).toEqual({});
+    expect(updateBody(monthly, { ...draft, repeat: repeatFromChoice('MONTHLY', '2') })).toEqual({
+      recurrenceRule: 'FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=31',
+    });
+    expect(updateBody(monthly, { ...draft, repeat: repeatFromChoice('WEEKLY', '1') })).toEqual({
+      recurrenceRule: 'FREQ=WEEKLY',
+    });
+    expect(changesOneOccurrence(monthly)).toBe(true);
   });
 });

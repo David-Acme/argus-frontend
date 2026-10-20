@@ -5,6 +5,9 @@ export const RECURRENCE_FREQUENCIES: readonly RecurrenceFrequency[] = ['DAILY', 
 export const RECURRENCE_INTERVAL_MIN = 1;
 export const RECURRENCE_INTERVAL_MAX = 999;
 
+export const RECURRENCE_MONTH_DAY_MIN = 1;
+export const RECURRENCE_MONTH_DAY_MAX = 31;
+
 export const RECURRENCE_SEARCH_LIMIT = 1_000;
 
 export const RECURRENCE_FINEST_PER_DAY = 1;

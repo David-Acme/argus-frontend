@@ -1,5 +1,5 @@
 import type { IReminderCacheRow } from '@/core/interfaces';
-import type { RecurrenceFrequency, ZoneClock } from '@/core/types';
+import type { RecurrenceException, RecurrenceFrequency, ZoneClock } from '@/core/types';
 import { RECURRENCE_INTERVAL_MIN } from '@/shared/constants';
 import {
   formatRecurrenceRule,
@@ -14,6 +14,7 @@ export type RepeatChoice = 'none' | RecurrenceFrequency;
 export type RepeatDraft = {
   frequency: RecurrenceFrequency | null;
   interval: number;
+  monthDay?: number;
 };
 
 export const NO_REPEAT: RepeatDraft = { frequency: null, interval: RECURRENCE_INTERVAL_MIN };
@@ -25,7 +26,9 @@ export const REPEAT_CHOICES = ['none', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] a
 
 export function repeatDraftOf(rule: string | null | undefined): RepeatDraft {
   const parsed = parseRecurrenceRule(rule);
-  return parsed ? { frequency: parsed.frequency, interval: parsed.interval } : NO_REPEAT;
+  if (!parsed) return NO_REPEAT;
+  const draft: RepeatDraft = { frequency: parsed.frequency, interval: parsed.interval };
+  return parsed.monthDay === undefined ? draft : { ...draft, monthDay: parsed.monthDay };
 }
 
 export const repeatChoiceOf = (repeat: RepeatDraft): RepeatChoice => repeat.frequency ?? 'none';
@@ -42,8 +45,17 @@ export const repeatFromChoice = (choice: RepeatChoice, interval: string): Repeat
 export const sameRepeat = (left: RepeatDraft, right: RepeatDraft): boolean =>
   left.frequency === right.frequency && (left.frequency === null || left.interval === right.interval);
 
-export const ruleOfRepeat = ({ frequency, interval }: RepeatDraft): string | null =>
-  frequency === null ? null : formatRecurrenceRule({ frequency, interval });
+export function ruleOfRepeat({ frequency, interval, monthDay }: RepeatDraft): string | null {
+  if (frequency === null) return null;
+  return formatRecurrenceRule(
+    frequency === 'MONTHLY' && monthDay !== undefined ? { frequency, interval, monthDay } : { frequency, interval }
+  );
+}
+
+export const keepingMonthDay = (draft: RepeatDraft, saved: RepeatDraft): RepeatDraft =>
+  draft.frequency === 'MONTHLY' && draft.monthDay === undefined && saved.monthDay !== undefined
+    ? { ...draft, monthDay: saved.monthDay }
+    : draft;
 
 export const repeatsOf = (row: Pick<IReminderCacheRow, 'recurrenceRule'>): boolean =>
   row.recurrenceRule != null && row.recurrenceRule.length > 0;
@@ -92,4 +104,34 @@ export function skippedSchedule({ row, clock }: ReminderSkipInput): number | nul
     { occurrence, cancelled: true },
   ];
   return nextFiring({ rule, anchor: occurrence, after: occurrence, moment: occurrence, exceptions, clock })?.at ?? null;
+}
+
+type ExceptionChange = Pick<RecurrenceException, 'occurrence' | 'cancelled' | 'startsAt'>;
+
+const restores = (change: ExceptionChange): boolean => !change.cancelled && change.startsAt === undefined;
+
+export function withOccurrenceException(
+  exceptions: readonly RecurrenceException[],
+  change: ExceptionChange
+): RecurrenceException[] {
+  const kept = exceptions.filter((exception) => exception.occurrence !== change.occurrence);
+  if (!restores(change)) kept.push(change.cancelled ? { occurrence: change.occurrence, cancelled: true } : { ...change });
+  return kept.sort((left, right) => left.occurrence - right.occurrence);
+}
+
+const EXCEPTION_FIELDS = ['occurrence', 'cancelled', 'startsAt', 'endsAt', 'title', 'location'] as const;
+
+export function sameExceptions(
+  left: readonly RecurrenceException[] | undefined,
+  right: readonly RecurrenceException[] | undefined
+): boolean {
+  const a = left ?? [];
+  const b = right ?? [];
+  return (
+    a.length === b.length &&
+    a.every((exception, index) => {
+      const other = b[index];
+      return other !== undefined && EXCEPTION_FIELDS.every((field) => exception[field] === other[field]);
+    })
+  );
 }

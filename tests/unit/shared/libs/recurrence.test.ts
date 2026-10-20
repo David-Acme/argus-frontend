@@ -253,3 +253,53 @@ describe('the zone clock caches each zone offset change', () => {
     expect(lordHowe.epochOf(lordHowe.wallOf(halfHour + HOUR_MS))).toBe(halfHour + HOUR_MS);
   });
 });
+
+describe('monthly on a day of the month', () => {
+  const en = ((key: string, params?: Record<string, string | number>) =>
+    translate(localeDictionaries.en, key as never, params as never)) as TranslateFn;
+
+  test('reads and writes BYMONTHDAY for a monthly rule only, as the backend does', () => {
+    expect(parseRecurrenceRule('FREQ=MONTHLY;BYMONTHDAY=31')).toEqual({ frequency: 'MONTHLY', interval: 1, monthDay: 31 });
+    expect(parseRecurrenceRule('BYMONTHDAY=5;INTERVAL=2;FREQ=MONTHLY')).toEqual({
+      frequency: 'MONTHLY',
+      interval: 2,
+      monthDay: 5,
+    });
+    expect(parseRecurrenceRule('FREQ=WEEKLY;BYMONTHDAY=5')).toBeNull();
+    expect(parseRecurrenceRule('FREQ=MONTHLY;BYMONTHDAY=32')).toBeNull();
+    expect(formatRecurrenceRule({ frequency: 'MONTHLY', interval: 1, monthDay: 31 })).toBe('FREQ=MONTHLY;BYMONTHDAY=31');
+    expect(formatRecurrenceRule({ frequency: 'MONTHLY', interval: 3, monthDay: 5 })).toBe(
+      'FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=5'
+    );
+    expect(formatRecurrenceRule({ frequency: 'WEEKLY', interval: 1, monthDay: 5 })).toBe('FREQ=WEEKLY');
+  });
+
+  test('the day 31 falls on the last day of a shorter month and comes back', () => {
+    const clock = clockIn('America/Lima');
+    const rule = parseRecurrenceRule('FREQ=MONTHLY;BYMONTHDAY=31');
+    expect(rule).not.toBeNull();
+    if (!rule) return;
+    const anchor = clock.epochOf(wallFrom('2027-01-10T09:00:00'));
+    const found = occurrencesBetween({
+      rule,
+      anchor,
+      from: anchor,
+      to: clock.epochOf(wallFrom('2027-04-30T23:59:59')),
+      clock,
+      limit: 10,
+    });
+    expect(found.map((instant) => wallText(clock.wallOf(instant)))).toEqual([
+      '2027-01-31T09:00:00',
+      '2027-02-28T09:00:00',
+      '2027-03-31T09:00:00',
+      '2027-04-30T09:00:00',
+    ]);
+  });
+
+  test('names the day in the user language', () => {
+    expect(recurrenceLabel('FREQ=MONTHLY;BYMONTHDAY=5', es)).toBe('Cada mes, el día 5');
+    expect(recurrenceLabel('FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=31', es)).toBe('Cada 2 meses, el día 31');
+    expect(recurrenceLabel('FREQ=MONTHLY;BYMONTHDAY=5', en)).toBe('Every month on day 5');
+    expect(recurrenceLabel('FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=31', en)).toBe('Every 2 months on day 31');
+  });
+});
