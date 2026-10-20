@@ -9,7 +9,7 @@ export const watch = {
   you: 'You',
   argus: 'Argus',
   'earcon-note': 'The tone played on the camera: Argus is listening.',
-  'resumable-left': 'You can carry on here for {seconds} s.',
+  'resumable-left': 'You can carry on here for {time}.',
   'no-conversation': 'No camera conversation',
   'no-conversation-hint': 'When you say “Argus” near a listening camera, the conversation shows up here.',
   'last-conversation': 'Last conversation',

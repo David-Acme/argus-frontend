@@ -22,7 +22,7 @@ import { useCall } from '@/features/voice/hooks/use-call';
 import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref, callRouteTraceReason } from '@/features/voice/model/call-route';
 import { outsideCallLockId } from '@/features/voice/model/call-lock-state';
 import { traceEvent } from '@/core/services/native-trace';
-import { dispatchCallEnd, ENDED_HOLD_MS } from '@/features/voice/model/call-end';
+import { dispatchCallEnd, ENDED_HOLD_MS, showsMicConsent } from '@/features/voice/model/call-end';
 import { pushService } from '@/core/services/push';
 import { leaveCall } from '@/features/voice/model/leave-call';
 import { setCallLock } from '@/features/voice/model/call-lock';
@@ -117,7 +117,7 @@ function CallScreen() {
       waitingReason={call.waitingCall?.reason ?? null}
       onAnswerWaiting={answerWaiting}
       onDismissWaiting={dismissWaiting}
-      notice={firstCall ? t('screens.voice.mic-consent') : null}
+      notice={showsMicConsent({ firstCall, phase: call.phase, endedDurationMs }) ? t('screens.voice.mic-consent') : null}
       camera={
         liveCamera ? (
           <CallCameraCard

@@ -41,3 +41,7 @@ export function cancelOutcomeOf(input: {
   if (input.reason !== 'answered_elsewhere') return 'close';
   return input.claimedCallId === input.callId ? 'ignore' : 'taken';
 }
+
+export function showsMicConsent(input: { firstCall: boolean; phase: string; endedDurationMs: number | null }): boolean {
+  return input.firstCall && input.phase !== 'done' && input.phase !== 'error' && input.endedDurationMs === null;
+}

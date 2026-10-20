@@ -18,6 +18,7 @@ import {
   pruneConversations,
   replaceConversations,
   resumableSecondsLeft,
+  formatCountdown,
   WATCH_AUDIENCE_NOTE,
   WATCH_END_LABEL,
   WATCH_HANDOFF_LABEL,
@@ -220,5 +221,14 @@ describe('what the phone shows and offers', () => {
     const feed = watchSource('services/watch-feed.ts');
     expect(feed).toContain('synchronizeService.on(SYNC_OPERATION.WatchUpdate, (message) => {');
     expect(feed).toContain('synchronizeService.onConnect(() => {');
+  });
+});
+
+describe('the resumable countdown reads as a clock', () => {
+  test('minutes and seconds, and hours when it is that long', () => {
+    expect(formatCountdown(3590)).toBe('59:50');
+    expect(formatCountdown(59)).toBe('0:59');
+    expect(formatCountdown(3600)).toBe('1:00:00');
+    expect(formatCountdown(-4)).toBe('0:00');
   });
 });

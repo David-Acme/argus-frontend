@@ -2,6 +2,8 @@ export const pairing = {
   title: 'Link your server',
   subtitle: "Scan your Argus server's QR code or type its pairing code.",
   requirement: 'Your server must be on and this phone on the same Wi-Fi.',
+  'subtitle-desktop': "Type your Argus server's pairing code.",
+  'requirement-desktop': 'Your server must be on and this computer on the same network.',
   scan: 'Scan QR code',
   parsing: 'Validating the code…',
   discovering: 'Searching for the server on the network…',

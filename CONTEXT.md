@@ -5163,3 +5163,10 @@ minutes without evidence.
   reason as its hint. Spanish names the "Mirada activa" places "lugares"
   ("Añadir lugar"), so "Añadir zona" means one thing on the page.
   `tests/e2e/camera-blocked.e2e.ts`, `tests/unit/features/cameras/camera-block.test.ts`.
+- **Wording that fits the device and the moment.** Pairing on a computer
+  reads "Escribe el código de vinculación…" and "este equipo"
+  (`pairingCopy(native)`), never "Escanea" or "este teléfono". The
+  first-call microphone note leaves the caption once the call is over
+  (`showsMicConsent`), so "Llamada terminada" no longer carries it. A
+  paused camera conversation counts down as a clock ("59:50",
+  `formatCountdown`) instead of "3590 s". `tests/e2e/wording.e2e.ts`.

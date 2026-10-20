@@ -2,6 +2,8 @@ export const pairing = {
   title: 'Vincula tu servidor',
   subtitle: 'Escanea el código QR de tu servidor Argus o escribe su código de vinculación.',
   requirement: 'Tu servidor debe estar encendido y este teléfono en la misma red Wi-Fi.',
+  'subtitle-desktop': 'Escribe el código de vinculación de tu servidor Argus.',
+  'requirement-desktop': 'Tu servidor debe estar encendido y este equipo en la misma red.',
   scan: 'Escanear código QR',
   parsing: 'Validando el código…',
   discovering: 'Buscando el servidor en la red…',

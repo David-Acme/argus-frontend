@@ -6,6 +6,7 @@ import {
   ENDED_HOLD_MS,
   endReasonOfCancel,
   formatCallDuration,
+  showsMicConsent,
 } from '@/features/voice/model/call-end';
 
 describe('how a call ends on the screen', () => {
@@ -62,5 +63,14 @@ describe('a cancel arriving while the call is open on this device', () => {
     for (const reason of ['expired', 'declined', 'resolved', 'attended'] as const) {
       expect(cancelOutcomeOf({ reason, callId: 'call-7', claimedCallId: null })).toBe('close');
     }
+  });
+});
+
+describe('the first-call microphone note', () => {
+  test('it shows while the first call runs and leaves once the call ended', () => {
+    expect(showsMicConsent({ firstCall: true, phase: 'listening', endedDurationMs: null })).toBe(true);
+    expect(showsMicConsent({ firstCall: true, phase: 'done', endedDurationMs: null })).toBe(false);
+    expect(showsMicConsent({ firstCall: true, phase: 'listening', endedDurationMs: 4000 })).toBe(false);
+    expect(showsMicConsent({ firstCall: false, phase: 'listening', endedDurationMs: null })).toBe(false);
   });
 });

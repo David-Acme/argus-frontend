@@ -13,6 +13,7 @@ import { itemIn } from '@/shared/libs/animations';
 import { useQrScanStore } from '@/core/stores';
 import { hostLabel } from '@/shared/libs/pairing-qr';
 import { colorTokens, IS_NATIVE } from '@/shared/constants';
+import { pairingCopy } from '@/features/auth/model/pairing-copy';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import type { NetErrorCode, TranslationKey } from '@/core/types';
 import { useRouter } from 'expo-router';
@@ -44,6 +45,7 @@ const SUCCESS_PAUSE_MS = 700;
 export default function PairingScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const copy = pairingCopy(IS_NATIVE);
   const { theme } = useUniwind();
   const flow = usePairingFlow();
   const status = useQrScanStore((s) => s.status);
@@ -95,7 +97,7 @@ export default function PairingScreen() {
         <OnboardingSteps flow="owner" step="pair" className="mb-4" />
         <Text variant="title">{t('screens.pairing.title')}</Text>
         <Text variant="caption" className="text-foreground-secondary">
-          {t('screens.pairing.subtitle')}
+          {t(copy.subtitle)}
         </Text>
       </NativeOnlyAnimatedView>
 
@@ -191,7 +193,7 @@ export default function PairingScreen() {
         <View className="flex-row items-start gap-2 px-1">
           <Icon name="wifi" className="text-muted-foreground mt-0.5 size-4" />
           <Text variant="caption" className="min-w-0 flex-1">
-            {t('screens.pairing.requirement')}
+            {t(copy.requirement)}
           </Text>
         </View>
       </NativeOnlyAnimatedView>

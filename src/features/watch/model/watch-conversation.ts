@@ -94,6 +94,14 @@ export function newlyWoken(previous: WatchConversation | undefined, next: WatchC
   return previous === undefined || previous.state === 'ended';
 }
 
+export function formatCountdown(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const rest = String(seconds % 60).padStart(2, '0');
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${rest}` : `${minutes}:${rest}`;
+}
+
 export function resumableSecondsLeft(conversation: WatchConversation, now: number): number | null {
   if (conversation.state !== 'resumable' || conversation.resumableUntil === null) return null;
   return Math.max(0, Math.ceil((conversation.resumableUntil - now) / 1000));

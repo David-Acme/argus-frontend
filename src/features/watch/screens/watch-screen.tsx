@@ -18,6 +18,7 @@ import { useWatchActions } from '@/features/watch/hooks/use-watch-actions';
 import {
   canContinueHere,
   canEndConversation,
+  formatCountdown,
   resumableSecondsLeft,
   WATCH_AUDIENCE_NOTE,
   WATCH_END_LABEL,
@@ -49,7 +50,7 @@ function WatchStatus({ conversation, live, now }: WatchStatusProps) {
         <Text variant="caption">{t('screens.watch.earcon-note')}</Text>
       ) : null}
       {left !== null ? (
-        <Text variant="caption">{t('screens.watch.resumable-left', { seconds: String(left) })}</Text>
+        <Text variant="caption">{t('screens.watch.resumable-left', { time: formatCountdown(left) })}</Text>
       ) : null}
       {!live && ended ? <Text variant="caption">{t(ended)}</Text> : null}
       {live && audience ? (
