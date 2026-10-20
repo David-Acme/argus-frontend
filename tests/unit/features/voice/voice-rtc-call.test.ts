@@ -53,6 +53,15 @@ mock.module('react-native-reanimated', () => ({
 mock.module('expo-audio', () => ({
   requestRecordingPermissionsAsync: async () => ({ granted: true }),
 }));
+mock.module('@/core/services/permissions', () => ({
+  permissionsService: {
+    read: async () => ({ granted: true, canAskAgain: true }),
+    request: async () => ({ granted: true, canAskAgain: true }),
+    openSettings: async () => undefined,
+    asked: () => true,
+    markAsked: () => undefined,
+  },
+}));
 mock.module('@/features/voice/services/rtc/rtc-token', () => ({
   requestCallDecline: async (body: unknown) => {
     posted.push({ url: '/rtc/decline', body });

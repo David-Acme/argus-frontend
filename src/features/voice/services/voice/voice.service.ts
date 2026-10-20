@@ -38,6 +38,7 @@ import {
   VOICE_TURN_TYPE,
 } from '@/features/voice/constants/voice';
 import { IS_NATIVE, IS_TAURI, SYNC_OPERATION, VOICE_ERROR_TYPE } from '@/shared/constants';
+import { ensurePermission } from '@/shared/libs/permission-prompt';
 import {
   VOICE_ENVELOPE_ATTACK_MS,
   VOICE_ENVELOPE_RELEASE_MS,
@@ -338,7 +339,10 @@ class VoiceService {
 
   private async microphoneGranted(session: number): Promise<boolean> {
     try {
-      const { granted } = await requestRecordingPermissionsAsync();
+      const granted = IS_NATIVE
+        ? await ensurePermission('microphone')
+        : (await requestRecordingPermissionsAsync()).granted;
+      if (granted && IS_NATIVE) await ensurePermission('bluetooth', { once: true });
       if (!this.isCurrent(session)) return false;
       if (!granted) {
         this.fail('MIC_PERMISSION_DENIED|Microphone permission denied');

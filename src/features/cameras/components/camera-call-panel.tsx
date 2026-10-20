@@ -232,6 +232,12 @@ export function CameraCallPanel({
             {notice}
           </Text>
         ) : null}
+        {snapshot.error === 'mic-denied' ? (
+          <Button variant="secondary" size="sm" className="self-start" onPress={controls.allowMicrophone}>
+            <Icon name="mic" className="text-foreground size-4" />
+            <Text>{t('screens.cameras.call.allow-mic')}</Text>
+          </Button>
+        ) : null}
         {pushMode && canTalk && blockedReason == null ? (
           <Pressable
             accessibilityRole="button"

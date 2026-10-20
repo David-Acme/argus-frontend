@@ -23,3 +23,4 @@ export * from './module.constant';
 export * from './capability.constant';
 export * from './resource.constant';
 export * from './recurrence.constant';
+export * from './permission.constant';

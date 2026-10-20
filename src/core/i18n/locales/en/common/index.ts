@@ -4,6 +4,29 @@ export const common = {
   step: 'Step {current} of {total}',
   retry: 'Retry',
   undo: 'Undo',
+  'permission-prompt': {
+    allow: 'Allow',
+    'not-now': 'Not now',
+    'open-settings': 'Open Settings',
+    microphone: {
+      title: 'Argus needs the microphone',
+      reason: 'So people hear you through the camera and you can talk to Argus. It is used only during the call.',
+      'blocked-title': 'The microphone is blocked',
+      blocked: 'Argus cannot use the microphone. Turn it on in Settings, under Permissions, and try again.',
+    },
+    notifications: {
+      title: 'Turn on notifications',
+      reason: 'So alerts, reminders and calls from Argus reach you even when the app is closed.',
+      'blocked-title': 'Notifications are blocked',
+      blocked: 'Without them, alerts and calls do not reach you while the app is closed. Turn them on in Settings, under Notifications.',
+    },
+    bluetooth: {
+      title: 'Calls in your headphones',
+      reason: 'Allow nearby devices so calls play in your headphones or your car.',
+      'blocked-title': 'Nearby devices are blocked',
+      blocked: 'Calls will play on the phone. You can allow it in Settings, under Permissions.',
+    },
+  },
   permissions: {
     microphone: 'Microphone',
     'microphone-detail': 'So that Argus hears you during the call.',

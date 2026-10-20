@@ -4,3 +4,10 @@ export type DevicePermission = {
   id: DevicePermissionId;
   granted: boolean;
 };
+
+export type RuntimePermission = 'microphone' | 'notifications' | 'bluetooth';
+
+export type PermissionAnswer = {
+  granted: boolean;
+  canAskAgain: boolean;
+};

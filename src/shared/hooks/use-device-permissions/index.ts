@@ -35,7 +35,11 @@ async function askRuntime(id: DevicePermissionId): Promise<boolean> {
     const answer = await requestRecordingPermissionsAsync();
     return answer.granted || answer.canAskAgain;
   }
-  if (id === 'notifications') return pushService.requestNotificationsPermission();
+  if (id === 'notifications') {
+    const granted = await pushService.requestNotificationsPermission();
+    if (granted) void pushService.register();
+    return granted;
+  }
   return true;
 }
 

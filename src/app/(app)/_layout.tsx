@@ -7,13 +7,14 @@ import { ModuleNotices } from '@/features/modules';
 import { useCallPush } from '@/features/voice';
 import { useBeaconController } from '@/features/proximity';
 import { useTamperEvidenceKeeper } from '@/features/cameras';
-import { usePushRegistration } from '@/features/notification';
+import { useNotificationPermission, usePushRegistration } from '@/features/notification';
 import { NAV_FADE_MS } from '@/shared/constants';
 import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
 
 export default function AppLayout() {
   const { theme } = useUniwind();
   usePushRegistration();
+  useNotificationPermission();
   useSignedInHistory();
   useCallPush();
   useBeaconController();

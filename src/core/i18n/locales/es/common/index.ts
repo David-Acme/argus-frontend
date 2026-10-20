@@ -3,6 +3,29 @@ export const common = {
   step: 'Paso {current} de {total}',
   retry: 'Reintentar',
   undo: 'Deshacer',
+  'permission-prompt': {
+    allow: 'Permitir',
+    'not-now': 'Ahora no',
+    'open-settings': 'Abrir Ajustes',
+    microphone: {
+      title: 'Argus necesita el micrófono',
+      reason: 'Para que te oigan por la cámara y para hablar con Argus. Solo se usa mientras dura la llamada.',
+      'blocked-title': 'El micrófono está bloqueado',
+      blocked: 'Argus no puede usar el micrófono. Actívalo en Ajustes, en Permisos, y vuelve a intentarlo.',
+    },
+    notifications: {
+      title: 'Activa las notificaciones',
+      reason: 'Así te llegan las alertas, los recordatorios y las llamadas de Argus aunque la app esté cerrada.',
+      'blocked-title': 'Las notificaciones están bloqueadas',
+      blocked: 'Sin ellas no te llegan alertas ni llamadas con la app cerrada. Actívalas en Ajustes, en Notificaciones.',
+    },
+    bluetooth: {
+      title: 'Llamadas en tus audífonos',
+      reason: 'Permite el acceso a dispositivos cercanos para que las llamadas suenen en tus audífonos o en el auto.',
+      'blocked-title': 'Los dispositivos cercanos están bloqueados',
+      blocked: 'Las llamadas sonarán en el teléfono. Puedes permitirlo en Ajustes, en Permisos.',
+    },
+  },
   permissions: {
     microphone: 'Micrófono',
     'microphone-detail': 'Para que Argus te oiga durante la llamada.',

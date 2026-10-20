@@ -475,6 +475,7 @@ export const cameras = {
     'error-network': 'The connection to Argus was lost.',
     'error-session-ended': 'Your session ended. Sign in again to talk through the camera.',
     'error-mic-denied': 'No permission to use the microphone.',
+    'allow-mic': 'Allow the microphone',
     'error-mic-unavailable': 'The microphone is not available.',
     'closed-idle': 'The line closed after a while of silence.',
     'closed-limit': 'The call reached its maximum length.',
