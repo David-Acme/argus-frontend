@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { useMemo } from 'react';
 import Svg, { Rect } from 'react-native-svg';
 import { QR_COLORS } from '@/shared/constants';
+import { QR_QUIET_ZONE_MODULES, qrLayout } from '@/shared/components/ui/qr-code-layout';
 
 type QrCodeProps = {
   value: string;
@@ -9,6 +10,7 @@ type QrCodeProps = {
   color?: string;
   backgroundColor?: string;
   errorCorrection?: 'L' | 'M' | 'Q' | 'H';
+  quietZone?: number;
 };
 
 export function QrCode({
@@ -17,6 +19,7 @@ export function QrCode({
   color = QR_COLORS.foreground,
   backgroundColor = QR_COLORS.background,
   errorCorrection = 'M',
+  quietZone = QR_QUIET_ZONE_MODULES,
 }: QrCodeProps) {
   const qr = useMemo(
     () => QRCode.create(value, { errorCorrectionLevel: errorCorrection }),
@@ -24,7 +27,7 @@ export function QrCode({
   );
 
   const n = qr.modules.size;
-  const cell = size / n;
+  const { cell, offset } = qrLayout(size, n, quietZone);
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -34,8 +37,8 @@ export function QrCode({
           qr.modules.data[y * n + x] ? (
             <Rect
               key={`${x}-${y}`}
-              x={x * cell}
-              y={y * cell}
+              x={offset + x * cell}
+              y={offset + y * cell}
               width={cell + 0.25}
               height={cell + 0.25}
               fill={color}

@@ -133,7 +133,7 @@ export default function LoginScreen() {
       {phase === 'qr' && challengeId ? (
         <>
           <View className="rounded-2xl border border-border bg-white p-4 shadow-lg shadow-black/5">
-            <QrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color={QR_COLORS.foreground} />
+            <QrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color={QR_COLORS.foreground} quietZone={0} />
           </View>
           <Text variant="caption" className="text-center">
             {t('screens.login.qr-hint')}
