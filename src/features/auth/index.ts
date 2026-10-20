@@ -12,3 +12,4 @@ export { default as OnboardingModulesScreen } from './screens/onboarding-modules
 export { default as OnboardingModulePrivacyScreen } from './screens/onboarding-module-privacy-screen';
 export { default as OnboardingPermissionsScreen } from './screens/onboarding-permissions-screen';
 export { useSignedInHistory } from './hooks/use-signed-in-history';
+export { useDeepLinkRestore } from './hooks/use-deep-link-restore';

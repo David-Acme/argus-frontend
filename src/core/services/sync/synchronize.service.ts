@@ -27,7 +27,7 @@ import { LiveFrameApplier } from './live-frame-applier';
 import { ProjectionEpoch } from './projection-epoch';
 import { ownsProjection, ProjectionOwnerStore, type ProjectionOwner } from './projection-owner';
 import { userPatchFromRows, userPatchesFromAudit } from './session-user-patch';
-import { ACCESS_CACHE_KEYS } from '@/shared/constants';
+import { CONTEXT_RESYNC_KEPT_KEYS } from '@/shared/constants';
 import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
@@ -493,7 +493,7 @@ class SynchronizeService {
       this.cursors.clear();
       await destroyAllRows(SYNC_TABLE_KEYS);
       if (!this.epoch.isCurrent(epoch)) return;
-      viewCacheService.clear(ACCESS_CACHE_KEYS);
+      viewCacheService.clear(CONTEXT_RESYNC_KEPT_KEYS);
       resourceSignal.reconnected();
       await this.startSync();
     })()

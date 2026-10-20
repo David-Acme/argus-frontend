@@ -1,5 +1,5 @@
 import { Redirect, usePathname } from 'expo-router';
-import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
+import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { authService } from '@/core/services/auth.service';
 import { restoreEntryOf } from '@/core/services/session-restore';
 import { sessionService } from '@/core/services/session.service';
@@ -12,6 +12,7 @@ import { routeFallback } from '@/shared/libs/route-access';
 import { BrandSplash } from '@/features/auth/components/brand-splash';
 import { ServerUnreachable } from '@/features/auth/components/server-unreachable';
 import { nextHref } from '@/features/auth/model/onboarding-flow';
+import { forgetRequestedRoute, holdRequestedRoute } from '@/features/auth/hooks/use-deep-link-restore';
 
 type EntryDestination = 'welcome' | 'owner-enroll' | 'login' | 'restore' | 'unreachable';
 
@@ -59,9 +60,25 @@ export function EntryGate({ children }: PropsWithChildren) {
   const view = useAccessView();
   const pending = status === 'signed-in' && !view.ready && moduleOfAppRoute(pathname) !== null;
   const waitedOut = useExpiry(pending, CONTEXT_WAIT_MS);
+  const [requested] = useState(pathname);
+  const previousStatus = useRef(status);
+  const fallback = status === 'signed-in' && !(pending && !waitedOut) ? routeFallback(pathname, view) : null;
+
+  useEffect(() => {
+    holdRequestedRoute(requested);
+  }, [requested]);
+
+  useEffect(() => {
+    if (fallback && !view.ready) holdRequestedRoute(pathname);
+  }, [fallback, pathname, view.ready]);
+
+  useEffect(() => {
+    if (previousStatus.current === 'signed-in' && status === 'signed-out') forgetRequestedRoute();
+    previousStatus.current = status;
+  }, [status]);
+
   if (status === 'signed-in') {
     if (pending && !waitedOut) return <BrandSplash />;
-    const fallback = routeFallback(pathname, view);
     return fallback ? <Redirect href={fallback} /> : children;
   }
   if (status === 'loading') return <BrandSplash />;

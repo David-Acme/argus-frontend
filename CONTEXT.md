@@ -5107,3 +5107,16 @@ minutes without evidence.
   privacidad…", a failed read is an error with Reintentar, and only a known
   decision opens the app. The fake e2e backend answers `GET /privacy/me`
   with a current decision by default. `tests/e2e/startup-race.e2e.ts`.
+- **A deep link survives the gates.** Two things sent a cold `/agenda` or
+  `/cameras/3` home for good. `EntryGate` falls back to `/` when the live
+  context has not arrived within `CONTEXT_WAIT_MS`, and nothing went back
+  once it did; and every gate that replaces the navigator (the splash, the
+  privacy gate) makes expo-router resolve the URL again from `/`. The route
+  the person asked for is now held (`holdRequestedRoute`: the first path the
+  gate saw, or a path refused before the context was known) and
+  `useDeepLinkRestore`, mounted inside the navigator, replaces `/` with it
+  once the context is known and allows it (`routeToRestore`), unless the
+  person already moved elsewhere. A context resync now keeps `privacy.me`
+  with the access keys (`CONTEXT_RESYNC_KEPT_KEYS`), so it no longer
+  closes the gate and bounces an open screen home.
+  `tests/e2e/deep-link.e2e.ts`, `tests/unit/features/auth/held-route.test.ts`.

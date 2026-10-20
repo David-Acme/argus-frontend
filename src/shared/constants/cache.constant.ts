@@ -92,6 +92,8 @@ export const VIEW_CACHE_KEYS = {
 
 export const ACCESS_CACHE_KEYS = [VIEW_CACHE_KEYS.appContext, VIEW_CACHE_KEYS.moduleCatalog] as const;
 
+export const CONTEXT_RESYNC_KEPT_KEYS = [...ACCESS_CACHE_KEYS, VIEW_CACHE_KEYS.privacyMe] as const;
+
 export const buildViewCacheStorageKey = (
   userId: string,
   key: string,
