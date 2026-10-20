@@ -714,6 +714,39 @@ top so laptops get the sidebar
   Weather is not included. Argus is local-first and has no weather source
   today; adding one is a product decision, not a layout fix.
 
+### 6b-1. Desktop fills the viewport height, not just the width (v3.4)
+
+David's capture of the 2560 comparison showed the redesign's columns ending
+at different heights with large blanks below, while today's app filled its
+columns better. The rules:
+
+- **Every desktop column is a full-height panel with its own scroll.** The
+  last section of each column grows to the bottom (`flex: 1 0 auto`), so no
+  column ends with a blank while its neighbours continue. A section can be
+  marked to grow instead (the camera grid).
+- **Content scales to the height:**
+  - Lists show as many items as fit: Novedades shows 8, 11 or 14 items at
+    1280, 1920 and 2560.
+  - Hoy is the full day timeline, free slots included.
+  - Camera tiles stretch to fill their column (`grid-auto-rows: 1fr`, at
+    least 120 px).
+  - The week grid's hour rows divide the available height.
+  - The Argus thread is anchored to the bottom, with more history above it
+    on taller screens.
+- **The aside grows into more sections** as height and width allow: who is
+  home, projects, recent clips, upcoming reminders, system status (server,
+  modules, cameras, storage), activity per camera, recordings, and what Argus
+  remembers.
+- **The sidebar ends with useful content:** server status, the current guard
+  mode, cameras online, storage, and a quick «Pregúntale a Argus».
+- **With little data, columns still end at the bottom,** filled with
+  setup steps (Primeros pasos), suggestions («Recuérdame…»), recent history,
+  "what each camera will do", quick templates and system status, never a
+  blank.
+- **Verification:** in the prototype, a measurement of every desktop column at
+  1920 and 2560, with real data and with little data, shows each column's
+  last block within its 20–28 px padding of the bottom, or scrolling.
+
 ### 6b-2. Phone text and card rules (v3.3, from the owner's phone)
 
 The owner's capture of Seguridad offline on his phone showed:
@@ -1514,6 +1547,10 @@ visual baselines). The rest are a review list in the PR template.
       top 40% of the screen; every row carries a secondary line; no dead area
       taller than one row on phone or one card on desktop (empty states
       included, which always offer the next step).
+- [ ] **Height:** at 1280, 1920 and 2560, with real data and with little
+      data, every desktop column ends at the bottom: lists fill, the camera
+      grid stretches, the aside grows sections, and the sidebar ends with
+      status and a quick prompt. No column leaves a blank while others continue.
 - [ ] **Width:** checked at 1280, 1440, 1920 and 2560. Columns are added as
       width grows, text columns stay at most about 680 px, content is capped
       at 2,200 px, and nothing floats in empty space.
