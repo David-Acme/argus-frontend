@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 import type { MenuOption } from '@/core/types';
 import { OptionRow } from '@/shared/components/ui/option-row';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/shared/components/ui/sheet';
 import { IS_NATIVE } from '@/shared/constants';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
@@ -22,6 +23,12 @@ type AdaptiveMenuProps<T extends string = string> = {
 };
 
 const SHEET_MAX_HEIGHT = 420;
+
+function DropdownBack() {
+  const { open, onOpenChange } = DropdownMenuPrimitive.useRootContext();
+  useOverlayBack(open, true, () => onOpenChange(false));
+  return null;
+}
 
 export function AdaptiveMenu<T extends string = string>({
   options,
@@ -82,6 +89,7 @@ export function AdaptiveMenu<T extends string = string>({
   return (
     <DropdownMenuPrimitive.Root onOpenChange={settleDropdown}>
       <DropdownMenuPrimitive.Trigger asChild>{trigger}</DropdownMenuPrimitive.Trigger>
+      <DropdownBack />
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Overlay
           className={cn('z-50', Platform.select({ web: 'fixed inset-0' }))}>

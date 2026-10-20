@@ -1,6 +1,7 @@
 import { Icon } from '@/shared/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import { TextClassContext } from '@/shared/components/ui/text';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import { IS_IOS, IS_NATIVE, IS_WEB } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 import {
@@ -92,6 +93,8 @@ function ContextMenuContent({
   overlayClassName?: string;
   portalHost?: string;
 }) {
+  const { open, onOpenChange } = ContextMenuPrimitive.useRootContext();
+  useOverlayBack(open, true, () => onOpenChange(false));
   return (
     <ContextMenuPrimitive.Portal hostName={portalHost}>
       <FullWindowOverlay>

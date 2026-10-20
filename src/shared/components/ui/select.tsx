@@ -1,6 +1,7 @@
 import { Icon } from '@/shared/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/shared/components/ui/native-only-animated-view';
 import { TextClassContext } from '@/shared/components/ui/text';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import { IS_IOS, IS_NATIVE } from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 import * as SelectPrimitive from '@rn-primitives/select';
@@ -84,6 +85,8 @@ function SelectContent({
     className?: string;
     portalHost?: string;
   }) {
+  const { open, onOpenChange } = SelectPrimitive.useRootContext();
+  useOverlayBack(open, true, () => onOpenChange(false));
   return (
     <SelectPrimitive.Portal hostName={portalHost}>
       <FullWindowOverlay>

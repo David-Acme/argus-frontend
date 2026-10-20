@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUniwind } from 'uniwind';
 import { Icon } from '@/shared/components/ui/icon';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import { MorphIcon } from '@/shared/components/ui/morph-icon';
 import { Text } from '@/shared/components/ui/text';
 import {
@@ -66,6 +67,8 @@ function ComposeFabMenu({ size, anchor }: Required<ComposeFabProps>) {
   );
 
   const close = () => setOpen(false);
+
+  useOverlayBack(open, true, close);
 
   if (actions.length === 0) return null;
 

@@ -23,6 +23,7 @@ import { Text } from '@/shared/components/ui/text';
 import { IS_WEB } from '@/shared/constants';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 
 type AdaptiveSelectProps<T extends string = string> = {
   options: readonly MenuOption<T>[];
@@ -120,7 +121,8 @@ function PopoverBody({
   onPicked,
   ...listProps
 }: Omit<SelectListProps, 'onChoose'> & { onPicked: (value: string) => void }) {
-  const { onOpenChange } = PopoverPrimitive.useRootContext();
+  const { open, onOpenChange } = PopoverPrimitive.useRootContext();
+  useOverlayBack(open, true, () => onOpenChange(false));
 
   return (
     <SelectList

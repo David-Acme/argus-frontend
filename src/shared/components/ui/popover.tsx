@@ -6,6 +6,7 @@ import { menuIn, menuOut } from '@/shared/libs/animations';
 import { cn } from '@/shared/libs/utils';
 import { NativeOnlyAnimatedView } from './native-only-animated-view';
 import { TextClassContext } from './text';
+import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 
 const Popover = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
@@ -24,6 +25,8 @@ function PopoverContent({
   overlayClassName?: string;
   portalHost?: string;
 }) {
+  const { open, onOpenChange } = PopoverPrimitive.useRootContext();
+  useOverlayBack(open, true, () => onOpenChange(false));
   const content = (
     <TextClassContext.Provider value="text-foreground">
       <PopoverPrimitive.Content
