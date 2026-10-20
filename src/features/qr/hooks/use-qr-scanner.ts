@@ -6,6 +6,7 @@ import { useQrScanStore } from '@/core/stores';
 import type { QrScanFeedback, TranslationKey } from '@/core/types';
 import { QR_SCAN_CONFIRM_MS, QR_SCAN_RETRY_MS } from '@/features/qr/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { ensurePermission } from '@/shared/libs/permission-prompt';
 
 const BLOCKED_TITLE: TranslationKey = 'screens.qr.blocked-title';
 const BLOCKED_DESCRIPTION: TranslationKey = 'screens.qr.blocked-description';
@@ -15,7 +16,7 @@ const FALLBACK_INVALID_DESCRIPTION: TranslationKey = 'screens.qr.invalid-fallbac
 export function useQrScanner() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const config = useQrScanStore((state) => state.config);
   const [torch, setTorch] = useState(false);
   const [detectedValue, setDetectedValue] = useState<string | null>(null);
@@ -94,6 +95,12 @@ export function useQrScanner() {
     setAsked(true);
   }, [requestPermission]);
 
+  const explainThenAsk = useCallback(async () => {
+    await ensurePermission('camera');
+    await getPermission();
+    setAsked(true);
+  }, [getPermission]);
+
   const openSettings = useCallback(() => {
     void Linking.openSettings();
   }, []);
@@ -129,8 +136,8 @@ export function useQrScanner() {
   useEffect(() => {
     if (permission === null || permission.granted || requestedRef.current) return;
     requestedRef.current = true;
-    void askPermission();
-  }, [permission, askPermission]);
+    void explainThenAsk();
+  }, [permission, explainThenAsk]);
 
   useEffect(() => {
     if (detectedValue === null) return;

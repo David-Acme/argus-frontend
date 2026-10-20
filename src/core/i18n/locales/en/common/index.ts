@@ -26,6 +26,12 @@ export const common = {
       'blocked-title': 'Nearby devices are blocked',
       blocked: 'Calls will play on the phone. You can allow it in Settings, under Permissions.',
     },
+    camera: {
+      title: 'Argus needs the camera',
+      reason: 'To read the QR code. The camera is used only while you scan, and nothing is saved.',
+      'blocked-title': 'The camera is blocked',
+      blocked: 'Argus cannot use the camera. Turn it on in Settings, under Permissions, or type the code instead.',
+    },
   },
   permissions: {
     microphone: 'Microphone',

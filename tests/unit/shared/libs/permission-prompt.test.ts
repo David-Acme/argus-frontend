@@ -122,6 +122,20 @@ describe('asking for a permission when it is needed', () => {
     expect(blocked.log).toEqual(['read:notifications']);
   });
 
+  test('the camera for the QR scanner is explained by the app before the system prompt, like the others', async () => {
+    const accepted = fakePort({ answer: ASKABLE, afterRequest: GRANTED, accepts: true, asked: false });
+    expect(await ensurePermission('camera', {}, accepted.port)).toBe(true);
+    expect(accepted.log).toEqual([
+      'read:camera',
+      'ask:common.permission-prompt.camera.title',
+      'marked:camera',
+      'system:camera',
+    ]);
+    const declined = fakePort({ answer: ASKABLE, afterRequest: GRANTED, accepts: false, asked: false });
+    expect(await ensurePermission('camera', {}, declined.port)).toBe(false);
+    expect(declined.log).not.toContain('system:camera');
+  });
+
   test('a failing permission API answers no instead of throwing', async () => {
     const { port } = fakePort({ answer: ASKABLE, afterRequest: GRANTED, accepts: true, asked: false });
     expect(await ensurePermission('microphone', {}, { ...port, read: () => Promise.reject(new Error('gone')) })).toBe(false);

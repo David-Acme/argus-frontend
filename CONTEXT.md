@@ -5070,3 +5070,8 @@ minutes without evidence.
   hands the hang-up to the app when its listener is bound
   (`hangupHandledByApp`) and finishes natively only if the app has not
   released the call within `APP_HANGUP_GRACE_MS`.
+- **The camera is asked like every other permission.** The QR scanner
+  called the system prompt on mount. It now goes through `ensurePermission
+  ('camera')` (explain, then the system prompt; blocked offers Ajustes),
+  and its own "Permitir cámara" button stays the retry. The face capture
+  keeps its intro screen, which is already the explanation.

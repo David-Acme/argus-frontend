@@ -1,4 +1,5 @@
 import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from 'expo-audio';
+import { Camera } from 'expo-camera';
 import * as Notifications from 'expo-notifications';
 import { Linking, PermissionsAndroid, Platform } from 'react-native';
 import type { IPermissionsService } from '@/core/interfaces';
@@ -42,11 +43,13 @@ export const permissionsService: IPermissionsService = {
   async read(kind: RuntimePermission) {
     if (kind === 'microphone') return answerOf(await getRecordingPermissionsAsync());
     if (kind === 'notifications') return answerOf(await Notifications.getPermissionsAsync());
+    if (kind === 'camera') return answerOf(await Camera.getCameraPermissionsAsync());
     return readBluetooth();
   },
   async request(kind: RuntimePermission) {
     if (kind === 'microphone') return answerOf(await requestRecordingPermissionsAsync());
     if (kind === 'notifications') return answerOf(await Notifications.requestPermissionsAsync());
+    if (kind === 'camera') return answerOf(await Camera.requestCameraPermissionsAsync());
     return requestBluetooth();
   },
   async openSettings() {

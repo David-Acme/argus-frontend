@@ -5,7 +5,7 @@ export type DevicePermission = {
   granted: boolean;
 };
 
-export type RuntimePermission = 'microphone' | 'notifications' | 'bluetooth';
+export type RuntimePermission = 'microphone' | 'notifications' | 'bluetooth' | 'camera';
 
 export type PermissionAnswer = {
   granted: boolean;

@@ -25,6 +25,12 @@ export const common = {
       'blocked-title': 'Los dispositivos cercanos están bloqueados',
       blocked: 'Las llamadas sonarán en el teléfono. Puedes permitirlo en Ajustes, en Permisos.',
     },
+    camera: {
+      title: 'Argus necesita la cámara',
+      reason: 'Para leer el código QR. La cámara solo se usa mientras escaneas y nada se guarda.',
+      'blocked-title': 'La cámara está bloqueada',
+      blocked: 'Argus no puede usar la cámara. Actívala en Ajustes, en Permisos, o escribe el código a mano.',
+    },
   },
   permissions: {
     microphone: 'Micrófono',
