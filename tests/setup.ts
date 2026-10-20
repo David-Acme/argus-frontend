@@ -10,6 +10,8 @@ mock.module('react-native', () => ({
     select: <T>(options: { web?: T; default?: T }) => options.web ?? options.default,
   },
   AppState: { currentState: 'active' },
+  Linking: { openSettings: async () => undefined },
+  PermissionsAndroid: { check: async () => false, request: async () => 'denied', PERMISSIONS: {}, RESULTS: {} },
 }));
 
 const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');

@@ -51,6 +51,7 @@ mock.module('react-native-reanimated', () => ({
   withTiming: <T>(value: T) => value,
 }));
 mock.module('expo-audio', () => ({
+  getRecordingPermissionsAsync: async () => ({ granted: true, canAskAgain: true }),
   requestRecordingPermissionsAsync: async () => ({ granted: true }),
 }));
 mock.module('@/core/services/permissions', () => ({
