@@ -290,6 +290,15 @@ export const settings = {
     dialogue: 'Dialogue',
     tracking: 'Tracking',
     general: 'General',
+    watchman: 'Camera listening',
+    tamper: 'Tampering',
+    maintenance: 'Maintenance',
+    look: 'Close look',
+    proximity: 'Proximity',
+    calls: 'Calls',
+    privacy: 'Privacy',
+    recording: 'Recording',
+    ptz: 'Camera movement',
   },
   choices: {
     pocket: 'Pocket (fast)',
@@ -329,6 +338,8 @@ export const settings = {
     off: 'Off',
     es: 'Spanish',
     en: 'English',
+    kws: 'Keyword',
+    stt: 'Transcription',
   },
   keys: {
     tts: {
@@ -717,6 +728,33 @@ export const settings = {
           label: 'Dwell in watched zone (ms)',
           hint: 'Time in a watched zone that adds suspicion.',
         },
+      },
+    },
+    calls: {
+      enabled: { label: 'Calls from Argus', hint: 'Argus may call you for reminders and alerts.' },
+    },
+    conversation: {
+      retention_days: {
+        label: 'Days conversations are kept',
+        hint: 'After this time, conversations with Argus are deleted.',
+      },
+    },
+    recording: {
+      enabled: { label: 'Record clips', hint: 'Keeps clips of what the cameras detect.' },
+      retention_days: { label: 'Days clips are kept', hint: 'Older clips are deleted.' },
+    },
+    watch: {
+      echo_tail_ms: {
+        label: 'Pause after speaking through a camera (ms)',
+        hint: 'How long it ignores the echo of its own voice from the camera.',
+      },
+      end_silence_ms: {
+        label: 'Silence at the end of speech (ms)',
+        hint: 'How much silence it waits for to know you have finished.',
+      },
+      idle_close_ms: {
+        label: 'Close when idle (ms)',
+        hint: 'With no voice for this long, the conversation through the camera ends.',
       },
     },
     vad: {

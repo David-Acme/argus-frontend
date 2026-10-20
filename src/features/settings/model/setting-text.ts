@@ -2,12 +2,6 @@ import { t, tk } from '@/core/i18n';
 import type { Setting, SettingsOwner } from '@/core/types';
 import type { SettingText, TechnicalRow } from '@/features/settings/model/settings-catalog';
 
-function humanize(key: string): string {
-  const leaf = key.split('.').pop() ?? key;
-  const words = leaf.replace(/_/g, ' ');
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
 function translated(key: string): string | null {
   const text = tk(key);
   return text === key ? null : text;
@@ -15,7 +9,7 @@ function translated(key: string): string | null {
 
 export function settingText(key: string): SettingText {
   return {
-    label: translated(`screens.settings.keys.${key}.label`) ?? humanize(key),
+    label: translated(`screens.settings.keys.${key}.label`) ?? key,
     hint: translated(`screens.settings.keys.${key}.hint`) ?? '',
   };
 }

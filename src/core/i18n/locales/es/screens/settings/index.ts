@@ -287,6 +287,15 @@ export const settings = {
     dialogue: 'Diálogo',
     tracking: 'Seguimiento',
     general: 'General',
+    watchman: 'Escucha por las cámaras',
+    tamper: 'Manipulación',
+    maintenance: 'Mantenimiento',
+    look: 'Mirada de cerca',
+    proximity: 'Proximidad',
+    calls: 'Llamadas',
+    privacy: 'Privacidad',
+    recording: 'Grabación',
+    ptz: 'Movimiento de la cámara',
   },
   choices: {
     pocket: 'Pocket (rápido)',
@@ -326,6 +335,8 @@ export const settings = {
     off: 'Desactivado',
     es: 'Español',
     en: 'Inglés',
+    kws: 'Palabra clave',
+    stt: 'Transcripción',
   },
   keys: {
     tts: {
@@ -786,6 +797,33 @@ export const settings = {
           label: 'Permanencia en zona vigilada (ms)',
           hint: 'Tiempo en una zona vigilada para sumar sospecha.',
         },
+      },
+    },
+    calls: {
+      enabled: { label: 'Llamadas de Argus', hint: 'Argus puede llamarte para recordatorios y alertas.' },
+    },
+    conversation: {
+      retention_days: {
+        label: 'Días que se guardan las conversaciones',
+        hint: 'Pasado este tiempo, las conversaciones con Argus se borran.',
+      },
+    },
+    recording: {
+      enabled: { label: 'Grabar clips', hint: 'Guarda clips de lo que detectan las cámaras.' },
+      retention_days: { label: 'Días que se guardan los clips', hint: 'Los clips más antiguos se borran.' },
+    },
+    watch: {
+      echo_tail_ms: {
+        label: 'Pausa tras hablar por la cámara (ms)',
+        hint: 'Tiempo en que ignora el eco de su propia voz en la cámara.',
+      },
+      end_silence_ms: {
+        label: 'Silencio al terminar de hablar (ms)',
+        hint: 'Cuánto silencio espera para saber que terminaste.',
+      },
+      idle_close_ms: {
+        label: 'Cierre por inactividad (ms)',
+        hint: 'Sin voz durante este tiempo, la conversación por la cámara termina.',
       },
     },
     vad: {
