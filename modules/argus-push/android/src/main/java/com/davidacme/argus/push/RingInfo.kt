@@ -3,13 +3,13 @@ package com.davidacme.argus.push
 internal data class RingInfo(
     val callId: String,
     val expiresAtSeconds: Long,
-    val reason: String,
+    val subject: String,
     val critical: Boolean,
     val episode: String = "",
 )
 
 internal data class RingDisplay(
-    val reason: String,
+    val subject: String,
     val critical: Boolean,
     val startedAtMillis: Long,
 )

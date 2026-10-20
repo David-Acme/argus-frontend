@@ -29,7 +29,7 @@ internal object CallSession {
 
     fun ringDisplay(callId: String): RingDisplay? =
         synchronized(lock) {
-            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.reason, it.info.critical, it.startedAtMillis) }
+            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.subject, it.info.critical, it.startedAtMillis) }
         }
 
     fun ring(context: Context, info: RingInfo) {

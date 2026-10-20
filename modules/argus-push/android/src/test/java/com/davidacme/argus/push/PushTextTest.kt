@@ -5,6 +5,13 @@ import org.junit.Test
 
 class PushTextTest {
     @Test
+    fun theRingScreenNamesTheSubjectOrArgus() {
+        assertEquals("Prueba R3 contestar", PushText.ringTitle("  Prueba R3 contestar "))
+        assertEquals("Argus", PushText.ringTitle(""))
+        assertEquals("Argus", PushText.ringTitle("   "))
+    }
+
+    @Test
     fun genericLineInSpanish() {
         assertEquals("Tienes un aviso nuevo. Abre Argus para verlo.", PushText.generic(spanish = true, urgent = false))
         assertEquals("Tienes un aviso importante. Abre Argus para verlo.", PushText.generic(spanish = true, urgent = true))

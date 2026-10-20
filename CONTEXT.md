@@ -5045,3 +5045,14 @@ minutes without evidence.
   drops them). Pure helpers are tested in
   `tests/unit/features/proximity/proximity-people.test.ts` and the route rule
   in `tests/unit/shared/libs/route-access.test.ts`.
+
+## Real-device retest r3 fixes (2026-10-20)
+
+- **The ring screen names the call, never its policy code.** The sealed call
+  push carries `reason`, which argus-notification fills with the ring
+  policy's verdict (`ring`, `on_duty`), not words for a person; the locked
+  `CallActivity` showed it as the caller ("ring"). The native side now reads
+  `subject` (the call's title: the reminder, the alert) and shows "Argus"
+  when it is absent (`PushText.ringTitle`). The backend still has to send
+  `subject` (`push-delivery.cc`, `call.title`); until then the screen says
+  "Argus".

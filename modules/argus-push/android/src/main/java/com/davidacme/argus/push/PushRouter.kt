@@ -119,7 +119,7 @@ internal class PushRouter(private val context: Context) {
             RingInfo(
                 callId = callId,
                 expiresAtSeconds = intent.expiresAtSeconds,
-                reason = intent.reason,
+                subject = intent.subject,
                 critical = intent.urgency == "critical",
                 episode = intent.episode,
             ),

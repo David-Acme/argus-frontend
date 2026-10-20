@@ -14,7 +14,7 @@ internal data class PushIntent(
     val expiresAtSeconds: Long,
     val cancel: Boolean,
     val type: String = "",
-    val reason: String = "",
+    val subject: String = "",
     val episode: String = "",
     val ringFollows: Boolean = false,
 ) {
@@ -49,7 +49,7 @@ internal data class PushIntent(
                 expiresAtSeconds = expiresAt,
                 cancel = obj.optBoolean("cancel", false),
                 type = obj.optString("type"),
-                reason = obj.optString("reason"),
+                subject = obj.optString("subject"),
             )
         }
 

@@ -5,6 +5,8 @@ import java.util.Locale
 internal object PushText {
     const val TITLE = "Argus"
 
+    fun ringTitle(subject: String): String = subject.trim().ifEmpty { TITLE }
+
     fun isSpanish(): Boolean = Locale.getDefault().language == "es"
 
     fun generic(spanish: Boolean, urgent: Boolean): String =

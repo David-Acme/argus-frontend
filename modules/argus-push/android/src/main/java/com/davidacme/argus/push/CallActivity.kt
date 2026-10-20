@@ -102,7 +102,7 @@ class CallActivity : Activity() {
         )
         column.addView(emblem(palette), LinearLayout.LayoutParams(dp(EMBLEM_DP), dp(EMBLEM_DP)).apply { topMargin = dp(20) })
         column.addView(
-            label(display.reason.ifEmpty { PushText.TITLE }, palette.text, TITLE_SP).apply {
+            label(PushText.ringTitle(display.subject), palette.text, TITLE_SP).apply {
                 gravity = Gravity.CENTER
                 setPadding(0, dp(20), 0, 0)
             },

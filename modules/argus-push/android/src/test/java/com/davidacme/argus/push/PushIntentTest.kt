@@ -73,10 +73,19 @@ class PushIntentTest {
     }
 
     @Test
-    fun readsTheReasonOfACall() {
+    fun readsTheSubjectOfACall() {
         val intent = PushIntent.parse(
-            """{"intentId":"intent-0004","kind":"call","callId":"call-0002","reason":"Persona en la puerta","exp":1791000060}""",
+            """{"intentId":"intent-0004","kind":"call","callId":"call-0002","subject":"Persona en la puerta","reason":"ring","exp":1791000060}""",
         )
-        assertEquals("Persona en la puerta", intent?.reason)
+        assertEquals("Persona en la puerta", intent?.subject)
+    }
+
+    @Test
+    fun theRingPolicyCodeIsNeverTheSubject() {
+        val intent = PushIntent.parse(
+            """{"intentId":"intent-0007","kind":"call","callId":"call-0007","reason":"ring","exp":1791000060}""",
+        )
+        assertEquals("", intent?.subject)
+        assertEquals("Argus", PushText.ringTitle(intent?.subject.orEmpty()))
     }
 }
