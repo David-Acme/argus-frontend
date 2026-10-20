@@ -104,6 +104,58 @@ Decisiones nuevas: R-D24 (acciones en un solo lugar), R-D25 (densidad), R-D26
 (pantallas grandes y desplazamiento) y R-D27 (regla de carga). En todas
 recomiendo sí.
 
+## Mascota para una voz masculina (v3.2)
+
+Preparé **seis propuestas** en `mascot-proposals/index.html`. Cada una
+aparece:
+
+- en sus 11 estados;
+- a 28, 36, 96 y 200 px;
+- en claro y oscuro;
+- dentro de pantallas reales (Inicio, chat y llamada).
+
+Las propuestas son:
+
+- **0 · Argus evolucionado:** la figura de hoy, más definida y adulta. Es la
+  opción de continuidad, pero se ve más joven que la voz.
+- **1 · Panoptes:** una cara color arena bajo una corona de ojos de pavo real
+  que se abren cuando vigila. Es la que más se conecta con el nombre, pero se
+  recarga a 28 px.
+- **2 · Búho (la recomiendo):**
+  - Es un vigilante nocturno sabio, que encaja mejor con una voz masculina
+    tranquila y segura.
+  - Es el más legible a 28 px.
+  - Cuando vigila, sus ojos brillan en ámbar, se le levantan los penachos y
+    lleva un pequeño ojo de pavo real en el pecho, en guiño a Argus.
+  - Es sencillo de animar en Rive.
+- **3 · Can guardián:** protector y leal, pero parece una mascota de
+  compañía.
+- **4 · Orbe:** el más moderno y barato de animar. Tiene menos calidez, y un
+  solo ojo puede sentirse como vigilancia.
+- **5 · Vigía:** un rostro humano adulto de conserje o vigilante. Es el más
+  humano, pero arriesga una lectura «extraña».
+
+El prototipo principal mantiene la mascota actual hasta que elijas (R-D28).
+
+## Sin espacios vacíos (v3.2)
+
+Revisé cada pantalla y llené los huecos con información útil:
+
+- **Agenda:** las horas libres de hoy, los próximos tres días y las tareas sin
+  fecha.
+- **Seguridad:** la última actividad de cada cámara y una tabla de actividad
+  por cámara en el escritorio.
+- **Inicio:** el último clip.
+- **Modo noche:** «Esta noche» (qué vigilo y cuándo te despierto).
+- **Llamada:** lo que Argus va a hacer.
+- **Estados vacíos:** sugerencias.
+- **Sin conexión:** lo último que se sabe y hace cuánto.
+- **Error de pantalla completa:** quién puede arreglarlo.
+- **Bienvenida y vinculación:** qué hace Argus y dónde está el código.
+
+No añadí el clima: Argus funciona en local y hoy no tiene una fuente del clima.
+Añadirla es una decisión tuya.
+
 ## Rendimiento primero
 
 - **Dónde corre.** Toda animación corre en el hilo de UI (Reanimated o el

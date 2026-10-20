@@ -641,13 +641,15 @@ const ahoraH=()=>`<div class="sec-h"><span class="t-headline">Ahora</span><a hre
 const sheetHd=t=>`<div class="hd2"><span class="t-headline">${t}</span><button class="ibtn" aria-label="Cerrar" data-close="sheet">${ic('x','s')}</button></div>`;
 const sheetFt=(primary,extra)=>`<div class="sft">${extra||''}<button class="btn primary">${primary}</button></div>`;
 const kbd=k=>`<div class="kbd" aria-hidden="true"><div class="kr">${'qwertyuiop'.split('').map(x=>`<span class="k">${x}</span>`).join('')}</div><div class="kr">${'asdfghjklñ'.split('').map(x=>`<span class="k">${x}</span>`).join('')}</div><div class="kr"><span class="k m">123</span><span class="k w">espacio</span><span class="k m">${k||'↵'}</span></div></div>`;
+const prox=()=>grp([row({lead:'<span class="evm" style="background:var(--ev4);color:var(--ev4t)">Mié</span>',t:'Dentista',s:'Mié 21 · 10:00 · y 2 tareas'}),row({lead:'<span class="evm">Jue</span>',t:'Visita del técnico',s:'Jue 22 · 10:00 – 11:00'}),row({lead:'<span class="evm" style="background:var(--ev3);color:var(--ev3t)">Vie</span>',t:'Cena con Luis',s:'Vie 23 · 19:00 · Pagar el agua vence'})]);
+const libre=()=>`<div class="stats" style="margin:10px 0 0"><span class="chip">${ic('clock','s')}Libre 16:00–17:00</span><span class="chip">${ic('clock','s')}Libre desde 19:00</span></div>`;
 const S={};
 S.inicio=()=>`<div class="aura aura-calm" style="height:300px" aria-hidden="true"><i></i><i></i><i></i></div>${sb()}<div class="body">
 <div class="topbar" style="min-height:44px"><div class="grow"><div class="t-meta" style="font-weight:600">Buenas tardes, Ana</div></div><span class="updating" style="display:none"><i></i>Actualizando</span><button class="ibtn glass" aria-label="Buscar o pedir a Argus">${ic('search','s')}</button></div>
 <div class="herorow">${masc('idle',66)}<div><div class="t-hero">Todo tranquilo.</div><div class="t-meta">En casa · Luis y tú en casa</div></div></div>
 <div class="stats"><span class="chip">${ic('cam','s')}<b>5</b> cámaras</span><span class="chip">${ic('shieldok','s')}<b>0</b> alertas hoy</span><span class="chip">${ic('hist','s')}<b>4</b> detecciones</span></div>
 <div class="sec" style="margin-top:18px">${ahoraH()}${ahora()}</div>
-${sec('Cámaras',`<div class="strip">${media('scene-kitchen','Cocina',{live:true,r:'<span style="font-weight:500;opacity:.85">Luis · 14:45</span>'})}${media('scene-patio','Patio trasero',{live:true,r:'<span style="font-weight:500;opacity:.85">sin novedad</span>'})}${media('scene-door','Puerta principal',{live:true})}</div>`,'Seguridad')}
+${sec('Cámaras',`<div class="strip">${media('scene-door','Clip · Luis llegó',{ctr:'<span class="ibtn glass" style="color:#fff">'+ic('play','s')+'</span>',r:'<span style="font-weight:500;opacity:.85">14:45</span>'})}${media('scene-kitchen','Cocina',{live:true,r:'<span style="font-weight:500;opacity:.85">Luis · 14:45</span>'})}${media('scene-patio','Patio trasero',{live:true,r:'<span style="font-weight:500;opacity:.85">sin novedad</span>'})}${media('scene-door','Puerta principal',{live:true})}</div>`,'Seguridad')}
 ${sec('Novedades',`<div class="feed">
 ${feedItem({av:lic('user','accent',1),who:'Carlos',when:'14:35',txt:'Quiere usar la agenda y los proyectos.',act:'<button class="btn compact primary">Activar</button><button class="btn compact">Ahora no</button>',unread:true})}
 ${feedItem({av:lic('cam','',1),who:'Cocina',when:'14:45',txt:'Luis llegó a casa.'})}
@@ -668,6 +670,7 @@ ${sec('Ahora',grp([`<button class="row"><span class="check"></span><span class="
 S.night=()=>`${aura('duty')}${sb('23:18')}<div class="body">
 <div class="topbar"><button class="btn compact glass">Casa ${ic('chevd','s')}</button><div class="grow"></div><button class="ibtn glass" aria-label="Buscar">${ic('search','s')}</button></div>
 <div class="hero">${masc('duty',108)}<div class="t-hero">Buenas noches.</div><div class="t-meta">Modo Noche · vigilo puertas y patio. Te despierto solo si es importante.</div></div>
+${sec('Esta noche',grp([row({lead:lic('door'),t:'Vigilo 3 puertas y el patio',s:'Puerta principal, Garaje, Patio trasero',chev:false}),row({lead:lic('bell'),t:'Te despierto si…',s:'Alguien desconocido entra o tapan una cámara',chev:false})]))}
 ${sec('Mañana',grp([`<button class="row"><span class="check"></span><span class="main"><span class="ttl">Pagar el agua</span><span class="sub">Todo el día</span></span></button>`,`<button class="row"><span class="evm">${ic('cal','s')}</span><span class="main"><span class="ttl">Yoga</span><span class="sub">07:00 – 08:00</span></span></button>`]))}
 </div>${tabs('home',null,'duty')}`;
 
@@ -676,7 +679,7 @@ S.seguridad=()=>`<div class="aura aura-calm" style="height:280px" aria-hidden="t
 <div class="herorow">${masc('idle',58)}<div><div class="t-hero">En casa</div><div class="t-meta">Te aviso solo de desconocidos</div></div></div>
 <div class="stats"><span class="chip"><b>0</b> en curso</span><span class="chip" style="color:var(--attn)"><b>1</b> por revisar</span><span class="chip">${ic('door','s')}<b>1</b> visita hoy</span></div>
 <div class="seg glass" style="margin-top:12px" role="radiogroup" aria-label="Modo"><button class="on" role="radio" aria-checked="true">${ic('home','s')}Casa</button><button role="radio" aria-checked="false">${ic('moon','s')}Noche</button><button role="radio" aria-checked="false">Fuera</button><button role="radio" aria-checked="false">Armado</button></div>
-${sec('Cámaras',`<div class="grid2">${media('scene-kitchen','Cocina',{live:true})}${media('scene-patio','Patio trasero',{live:true})}${media('scene-door','Puerta principal',{live:true})}${media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})}</div>`,'Todas (5)')}
+${sec('Cámaras',`<div class="grid2">${media('scene-kitchen','Cocina',{live:true,r:'<span style="font-weight:500;opacity:.85">14:45</span>'})}${media('scene-patio','Patio trasero',{live:true,r:'<span style="font-weight:500;opacity:.85">ayer</span>'})}${media('scene-door','Puerta principal',{live:true,r:'<span style="font-weight:500;opacity:.85">14:45</span>'})}${media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})}</div>`,'Todas (5)')}
 ${sec('Lo que pasó',grp([
  row({lead:lic('alert','attn',1),t:'Persona desconocida',s:'Patio trasero · 21:53 · avisé a Luis',tr:chip('Revisar','attn')}),
  row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45'}),
@@ -696,7 +699,8 @@ ${sec('',grp([row({lead:lic('play'),t:'Grabaciones',s:'3 hoy'}),row({lead:lic('g
 S.agenda=()=>`${sb()}<div class="body">
 ${topb('Agenda',{right:`<button class="ibtn filled" aria-label="Nuevo">${ic('plus')}</button>`})}
 <div class="seg"><button class="on">Hoy</button><button>Calendario</button><button>Proyectos</button></div>
-<div class="t-meta" style="margin:16px 2px 8px">Martes 20 de octubre</div>
+<div class="t-meta" style="margin:14px 2px 0;font-weight:600">Martes 20 de octubre · 6 cosas, 1 atrasada</div>${libre()}
+<div style="height:10px"></div>
 ${grp([
  `<button class="row"><span class="check over"></span><span class="main"><span class="ttl">Llamar al plomero</span><span class="sub" style="color:var(--alert)">Atrasado · 11:00</span></span></button>`,
  `<button class="row"><span class="check done">${ic('check','s')}</span><span class="main"><span class="ttl" style="text-decoration:line-through;color:var(--text-3)">Yoga</span><span class="sub">07:00 – 08:00</span></span></button>`,
@@ -704,8 +708,7 @@ ${grp([
  `<button class="row"><span class="check"></span><span class="main"><span class="ttl">Pagar la luz</span><span class="sub">17:00 · cada mes</span></span><span class="trail">${ic('repeat','s')}</span></button>`,
  `<button class="row"><span class="check"></span><span class="main"><span class="ttl">Comprar cajas</span><span class="sub">Tarea · Mudanza</span></span></button>`,
  `<button class="row"><span class="evm" style="background:var(--ev3);color:var(--ev3t)">${ic('cal','s')}</span><span class="main"><span class="ttl">Clase de guitarra</span><span class="sub">18:00 – 19:00</span></span></button>`])}
-<div class="t-meta" style="margin:20px 2px 8px">Mañana</div>
-${grp([`<button class="row"><span class="check"></span><span class="main"><span class="ttl">Pagar el agua</span><span class="sub">Todo el día</span></span></button>`])}
+${sec('Próximos días',prox(),'Calendario')}
 </div>${tabs('agenda')}`;
 
 S.argus=()=>`${sb()}<div class="body" style="padding-bottom:160px">
@@ -726,7 +729,8 @@ S.voz=()=>`${aura('listen')}${sb()}<div class="body" style="display:flex;flex-di
 <div class="topbar"><button class="ibtn glass" aria-label="Minimizar">${ic('chevd')}</button><div class="grow"></div><button class="ibtn glass" aria-label="Opciones de llamada">${ic('more')}</button></div>
 <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px;text-align:center">
 ${masc('listen',190)}
-<div><div class="t-title">Te escucho</div><div class="t-meta" style="margin-top:6px;max-width:280px">«Pon la casa en modo noche y recuérdame sacar la basura…»</div></div></div>
+<div><div class="t-title">Te escucho</div><div class="t-meta" style="margin-top:6px;max-width:280px">«Pon la casa en modo noche y recuérdame sacar la basura…»</div></div>
+<div class="group" style="width:100%;text-align:left;padding:4px 0">${row({lead:lic('moon','accent'),t:'Modo Noche a las 23:00',s:'Lo activo cuando cuelgues',chev:false})}${row({lead:lic('bell'),t:'Sacar la basura',s:'Hoy 21:00 · recordatorio',chev:false})}</div></div>
 <div style="display:flex;justify-content:center;gap:28px"><button class="ibtn glass" style="width:64px;height:64px" aria-label="Silenciar">${ic('mic')}</button><button class="ibtn" style="width:64px;height:64px;background:var(--alert);color:#fff" aria-label="Colgar">${ic('x')}</button></div>
 </div><div class="edge"></div>`;
 
@@ -740,10 +744,11 @@ ${sec('Argus',grp([row({lead:lic('sliders'),t:'Ajustes',s:'Equilibrado'}),row({l
 
 S.welcome=()=>`${aura('calm')}${sb()}<div class="body" style="display:flex;flex-direction:column;padding-bottom:28px">
 <div style="display:flex;justify-content:flex-end;padding-top:8px"><div class="seg glass" style="width:112px"><button class="on">ES</button><button>EN</button></div></div>
-<div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px">
-${masc('wave',170)}<div class="t-hero">Hola, soy Argus</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:8px">
+${masc('wave',112)}<div class="t-hero" style="font-size:32px">Hola, soy Argus</div>
 <div class="t-body t-2" style="max-width:280px">Cuido tu casa, te ayudo con tu día y te escucho cuando me hablas.</div>
 <div class="chip" style="margin-top:4px">${ic('lock','s')}Todo se queda en tu casa</div></div>
+<div class="group" style="margin:10px 0 14px">${row({lead:lic('shield'),t:'Vigilo tu casa',s:'Cámaras, visitas y alertas tranquilas',chev:false})}${row({lead:lic('cal'),t:'Te ayudo con tu día',s:'Recordatorios, agenda y proyectos',chev:false})}${row({lead:lic('mic'),t:'Me hablas como a una persona',s:'Por voz o por escrito',chev:false})}</div>
 <button class="btn primary block">Comenzar</button><button class="btn ghost block" style="margin-top:6px">Tengo una invitación</button>
 </div>`;
 
@@ -754,7 +759,8 @@ S.pairing=()=>`${sb()}<div class="body" style="display:flex;flex-direction:colum
 <p class="t-body t-2" style="margin-top:10px">Escribe el código que muestra tu servidor. Lo encuentras en la pantalla de Argus o en la caja.</p>
 <div class="codebox"><span>K</span><span>7</span><span>Q</span><span class="f"><i class="caret"></i></span><span></span><span></span></div>
 <div class="banner" style="margin-top:20px"><span class="dot" style="color:var(--ok)"></span><span class="grow">Encontré a <b>Argus de Casa</b> en tu red.</span></div>
-<div style="flex:1"></div>
+${sec('¿Dónde está el código?',grp([row({lead:lic('devices'),t:'En la pantalla de Argus',s:'Ajustes → Vincular un teléfono',chev:false}),row({lead:lic('key'),t:'En la caja de tu equipo',s:'Etiqueta «Código de vínculo»',chev:false})]))}
+<div style="flex:1;min-height:16px"></div>
 <button class="btn primary block">Conectar</button><button class="btn ghost block" style="margin-top:6px">Escanear código QR</button>
 </div>`;
 
@@ -779,14 +785,17 @@ ${topb('Sesiones',{back:true,sub:'Dispositivos con tu cuenta abierta'})}
 S.empty=()=>`${sb()}<div class="body">
 ${topb('Agenda',{right:`<button class="ibtn filled" aria-label="Nuevo">${ic('plus')}</button>`})}
 <div class="seg"><button class="on">Hoy</button><button>Calendario</button><button>Proyectos</button></div>
-<div class="empty" style="margin-top:28px">${masc('happy',110)}<div class="t-title">Nada pendiente hoy</div><div class="t-meta" style="max-width:260px">Aquí verás tus recordatorios, eventos y tareas del día. También puedes pedírselos a Argus.</div><button class="btn primary" style="margin-top:8px">${ic('plus','s')}Nuevo recordatorio</button></div>
+<div class="group" style="margin-top:14px;padding:16px;display:flex;gap:14px;align-items:center">${masc('happy',72)}<div style="flex:1"><div class="t-headline">Nada pendiente hoy</div><div class="t-meta">Tienes el día libre. Puedes pedirle a Argus que te recuerde algo.</div><button class="btn compact primary" style="margin-top:8px">${ic('plus','s')}Nuevo recordatorio</button></div></div>
+<div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>
+${sec('Próximos días',prox(),'Calendario')}
 </div><div class="toast" role="status"><span class="grow">Tarea hecha: Comprar cajas</span><button>Deshacer</button></div>${tabs('agenda')}`;
 
 S.offline=()=>`${aura('off')}${sb()}<div class="body">
 ${topb('Seguridad')}
 <div class="banner attn" role="status">${ic('wifioff','s')}<span class="grow">Sin conexión con Argus. Muestro lo de las 15:32.</span></div>
 <div class="hero" style="margin-top:12px">${masc('off',64)}<div class="t-hero" style="font-size:30px">En casa</div><div class="t-meta">Así estaba hace 10 min</div></div>
-${sec('Cámaras',`<div class="empty" style="padding:22px 8px">${lic('wifioff','attn',1)}<div class="t-headline">No puedo mostrar las cámaras ahora</div><div class="t-meta">Tu teléfono no llega a Argus. Revisa el Wi-Fi o espera un momento.</div><button class="btn compact" style="margin-top:4px">Reintentar</button></div>`)}
+${sec('Cámaras',`<div class="group" style="padding:14px 16px;display:flex;gap:12px;align-items:center">${lic('wifioff','attn',1)}<div style="flex:1"><div class="t-headline">No puedo mostrar las cámaras ahora</div><div class="t-meta">Revisa el Wi-Fi o espera un momento.</div></div><button class="btn compact">Reintentar</button></div>`)}
+${sec('Lo último que sé · hace 10 min',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras estaban en línea',chev:false})]))}
 </div>${tabs('seg',null,'off')}`;
 
 S.big=()=>S.inicio();
@@ -820,7 +829,8 @@ ${sheetFt('Guardar')}</div>`;
 S.errToast=()=>`${S.agenda()}<div class="toast err" role="alert"><span class="ti">${ic('wifioff','s')}</span><span class="grow"><b>No pudimos guardar el recordatorio.</b><span>Revisa tu conexión e inténtalo de nuevo.</span></span><button>Reintentar</button></div>`;
 S.errFull=()=>`${aura('off')}${sb()}<div class="body" style="display:flex;flex-direction:column;padding-bottom:28px;text-align:center">
 <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px">${masc('concern',130)}
-<div class="t-title">Tu cuenta está pausada</div><div class="t-body t-2" style="max-width:290px">Pídele al propietario de la casa que la vuelva a activar. Tus datos siguen guardados.</div></div>
+<div class="t-title">Tu cuenta está pausada</div><div class="t-body t-2" style="max-width:290px">Pídele al propietario de la casa que la vuelva a activar. Tus datos siguen guardados.</div>
+<div class="group" style="width:100%;text-align:left;margin-top:6px">${row({lead:'<span class="lic r accent">A</span>',t:'Ana Rojas · propietaria',s:'Ella puede reactivarla',tr:'<span class="chip">Llamar</span>',chev:false})}${row({lead:lic('lock'),t:'Lo tuyo sigue a salvo',s:'Recordatorios y conversaciones, guardados',chev:false})}</div></div>
 <button class="btn primary block">Entendido</button><button class="btn ghost block" style="margin-top:6px">Cerrar sesión</button></div>`;
 
 const MAIN=[
@@ -899,28 +909,32 @@ ${dband(W,`${masc('idle',64)}<div style="flex:1;min-width:0"><div class="t-hero"
 <div class="dcol">${sec('Novedades',novedades(6),'Ver todo')}</div>
 ${xl?`<div class="dcol">${sec('Cámaras',`<div class="camgrid" style="grid-template-columns:repeat(auto-fill,minmax(${W>=2400?300:240}px,1fr))">${camTiles(W>=2400?6:4)}</div>`,'Seguridad')}${sec('Lo que pasó',grp([row({lead:lic('alert','attn',1),t:'Persona desconocida',s:'Patio trasero · ayer 21:53',tr:chip('Revisar','attn')}),row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45'})]))}</div>
 <div class="dcol">${sec('En casa',enCasa())}${sec('Proyectos',grp([row({lead:lic('grid'),t:'Mudanza',s:'3 de 8 hechas · próxima: Comprar cajas'}),row({lead:lic('grid'),t:'Huerto',s:'1 de 4 hechas'})]),'Ver')}</div>`
-:`<div class="dcol">${sec('Cámaras',`<div class="grid2">${camTiles(4)}</div>`,'Seguridad')}${sec('En casa',enCasa())}</div>`}
+:`<div class="dcol">${sec('Cámaras',`<div class="grid2">${camTiles(4)}</div>`,'Seguridad')}${sec('En casa',enCasa())}${sec('Último clip',media('scene-door','Luis llegó · Puerta principal',{ctr:'<span class="ibtn glass" style="color:#fff">'+ic('play','s')+'</span>',r:'14:45'}))}</div>`}
 </div></div>`;};
 DK.seg=(W)=>{const xl=W>=1700;return `<div style="display:flex;flex-direction:column;height:100%">
 ${dband(W,`${masc('idle',64)}<div style="min-width:0"><div class="t-hero" style="font-size:38px;white-space:nowrap">En casa</div><div class="t-meta" style="white-space:nowrap">Te aviso solo de desconocidos</div></div><div class="stats" style="margin:0;flex-wrap:nowrap"><span class="chip" style="color:var(--attn)"><b>1</b> por revisar</span>${xl?'<span class="chip"><b>0</b> en curso</span><span class="chip"><b>1</b> visita hoy</span>':''}</div><div style="flex:1"></div><div class="seg glass" style="width:${xl?440:360}px;flex:none"><button class="on">${ic('home','s')}Casa</button><button>${ic('moon','s')}Noche</button><button>Fuera</button><button>Armado</button></div><button class="btn compact danger">SOS · mantén</button>`)}
 <div class="dk" style="grid-template-columns:${xl?'minmax(0,1fr) 380px 320px':'minmax(0,1fr) 330px'};flex:1;min-height:0;width:100%">
-<div class="dcol">${sec('Cámaras',`<div class="camgrid" style="grid-template-columns:repeat(auto-fill,minmax(${W>=2400?340:280}px,1fr))">${camTiles(W>=1700?8:6)}</div>`,'Todas')}</div>
+<div class="dcol">${sec('Cámaras',`<div class="camgrid" style="grid-template-columns:repeat(auto-fill,minmax(${W>=2400?340:280}px,1fr))">${camTiles(W>=1700?8:6)}</div>`,'Todas')}${sec('Actividad por cámara · hoy',grp([row({lead:lic('cam'),t:'Puerta principal',s:'Última: Luis llegó · 14:45',tr:'<span class="chip">3 hoy</span>',chev:false}),row({lead:lic('cam'),t:'Cocina',s:'Última: movimiento · 14:47',tr:'<span class="chip">1 hoy</span>',chev:false}),row({lead:lic('cam'),t:'Patio trasero',s:'Sin novedad desde ayer 21:53',tr:'<span class="chip">0 hoy</span>',chev:false}),row({lead:lic('cam'),t:'Garaje',s:'Apagada por la noche · vuelve 06:00',chev:false})]))}</div>
 <div class="dcol">${sec('Lo que pasó',`<div class="feed">${feedItem({av:lic('alert','attn',1),who:'Patio trasero',when:'21:53',txt:'Persona desconocida. Nadie respondió; avisé a Luis.',act:'<button class="btn compact primary">Revisar</button><button class="btn compact">Fue alguien conocido</button>',unread:true})}${feedItem({av:lic('user','',1),who:'Puerta principal',when:'14:45',txt:'Luis llegó.'})}${feedItem({av:lic('eyeoff','',1),who:'Patio trasero',when:'Ayer 15:02',txt:'La imagen estuvo tapada 2 min.'})}${feedItem({av:lic('user','',1),who:'Cocina',when:'Ayer 08:12',txt:'Rosa entró por la cocina.'})}</div>`,'Ver todo')}${xl?'':sec('Visitas esperadas',grp([row({lead:lic('door'),t:'Técnico de internet',s:'Hoy hasta 18:00',chev:false})]))}</div>
 ${xl?`<div class="dcol">${sec('Visitas esperadas',grp([row({lead:lic('door'),t:'Técnico de internet',s:'Hoy hasta 18:00',chev:false})]))}${sec('Lugares',grp([row({lead:lic('home'),t:'Casa',s:'En casa · 6 cámaras'}),row({lead:lic('door'),t:'Restaurante Centro',s:'Abierto · 2 cámaras'})]))}${sec('Mantenimiento',grp([row({lead:lic('sliders'),t:'Patio trasero',s:'Limpieza hasta 15:15',chev:false})]))}</div>`:''}
 </div></div>`;};
 const evs=[[0,7,8,'e2','Yoga',''],[1,7,8,'e2','Yoga',''],[1,14.5,16,'e1','Reunión con el arquitecto','14:30 – 16:00'],[1,18,19,'e3','Clase de guitarra','18:00'],[2,10,11,'e4','Dentista','10:00'],[3,10,11,'e1','Visita del técnico','10:00'],[3,19,20,'e3','Cena con Luis','19:00'],[5,9,13,'e1','Mudanza: empacar','09:00 – 13:00'],[6,13,15,'e4','Almuerzo familiar','13:00 – 15:00'],[4,7,8,'e2','Yoga','']];
 DK.agenda=()=>{const H=[7,8,9,10,11,12,13,14,15,16,17,18,19];const days=['Lun 19','Mar 20','Mié 21','Jue 22','Vie 23','Sáb 24','Dom 25'];
-return `<div style="padding:22px 28px 20px">
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="t-title" style="font-size:28px">Octubre</div><div style="display:flex;gap:2px"><button class="ibtn" aria-label="Semana anterior">${ic('chevl','s')}</button><button class="ibtn" aria-label="Semana siguiente">${ic('chev','s')}</button></div><button class="btn compact">Hoy</button><div style="flex:1"></div><div class="seg" style="width:300px"><button>Hoy</button><button class="on">Semana</button><button>Mes</button></div><button class="btn compact ghost">Proyectos</button><button class="btn compact primary" data-open="dialog">${ic('plus','s')}Nuevo<span class="kb" style="color:inherit;border-color:currentColor;opacity:.7">N</span></button></div>
+return `<div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;height:100%;padding:0 28px 0 0"><div class="dcol" style="padding:22px 0 20px 28px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="t-title" style="font-size:28px">Octubre</div><div style="display:flex;gap:2px"><button class="ibtn" aria-label="Semana anterior">${ic('chevl','s')}</button><button class="ibtn" aria-label="Semana siguiente">${ic('chev','s')}</button></div><button class="btn compact">Hoy</button><div style="flex:1"></div><div class="seg" style="width:290px;flex:none"><button class="on">Semana</button><button>Mes</button><button>Proyectos</button></div><button class="ibtn" style="background:var(--ink);color:var(--on-ink)" data-open="dialog" aria-label="Nuevo (N)" title="Nuevo · N">${ic('plus','s')}</button></div>
 <div class="group" style="padding:0 0 8px"><div class="week"><div class="dh"></div>${days.map((d,i)=>{const [a,b]=d.split(' ');return `<div class="dh${i===1?' today':''}">${a}<b>${b}</b></div>`}).join('')}
 <div>${H.map(h=>`<div class="hr">${String(h).padStart(2,'0')}:00</div>`).join('')}</div>
-${days.map((d,i)=>`<div class="col${i===1?' today':''}">${evs.filter(e=>e[0]===i).map(e=>`<div class="ev ${e[3]}" style="top:${(e[1]-7)*44+2}px;height:${(e[2]-e[1])*44-4}px">${e[4]}${e[5]?`<span>${e[5]}</span>`:''}</div>`).join('')}${i===1?`<div class="ev" style="top:${(17-7)*44+2}px;height:22px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--text);display:flex;align-items:center;gap:4px;padding:0 6px"><span style="width:10px;height:10px;border-radius:50%;border:1.5px solid var(--text-3);display:inline-block;flex:none"></span>Pagar la luz</div><div class="nowline" style="top:${(15.7-7)*44}px"></div>`:''}</div>`).join('')}
-</div></div></div>`;};
+${days.map((d,i)=>`<div class="col${i===1?' today':''}">${evs.filter(e=>e[0]===i).map(e=>`<div class="ev ${e[3]}" style="top:${(e[1]-7)*44+2}px;height:${(e[2]-e[1])*44-4}px">${e[4]}${e[5]?`<span>${e[5]}</span>`:''}</div>`).join('')}${i===1?`<div class="ev" style="top:${(16-7)*44+2}px;height:${44-4}px;background:repeating-linear-gradient(45deg,transparent 0 6px,color-mix(in srgb,var(--ok) 10%,transparent) 6px 12px);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok)">Libre</div><div class="ev" style="top:${(17-7)*44+2}px;height:22px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--text);display:flex;align-items:center;gap:4px;padding:0 6px"><span style="width:10px;height:10px;border-radius:50%;border:1.5px solid var(--text-3);display:inline-block;flex:none"></span>Pagar la luz</div><div class="nowline" style="top:${(15.7-7)*44}px"></div>`:''}</div>`).join('')}
+</div></div></div>
+<div class="dcol" style="padding-top:22px">${sec('Libre hoy',grp([row({lead:lic('clock','ok'),t:'16:00 – 17:00',s:'Entre la reunión y pagar la luz',chev:false}),row({lead:lic('clock','ok'),t:'Desde 19:00',s:'Después de la guitarra',chev:false})]))}${sec('Próximos días',prox())}${sec('Sin fecha',grp([`<button class="row"><span class="check"></span><span class="main"><span class="ttl">Contratar movilidad</span><span class="sub">Mudanza</span></span></button>`,`<button class="row"><span class="check"></span><span class="main"><span class="ttl">Cambiar dirección del banco</span><span class="sub">Mudanza · Luis</span></span></button>`]))}</div></div>`;};
 DK.argus=()=>`<div style="display:flex;height:100%">
 <div style="width:260px;flex:none;border-right:1px solid var(--line);padding:20px 12px"><div class="t-headline" style="padding:0 10px 10px">Conversaciones</div>
 <div class="convo on">${masc('idle',36)}<div style="min-width:0"><b style="font-size:15px">Argus</b><div class="t-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Luis está en casa desde…</div></div></div>
 <div class="convo"><span class="lic r">L</span><div><b style="font-size:15px">Luis</b><div class="t-meta">¿Compraste las cajas?</div></div></div>
-<div class="convo"><span class="lic r">C</span><div><b style="font-size:15px">Carlos</b><div class="t-meta">Gracias</div></div></div></div>
+<div class="convo"><span class="lic r">C</span><div><b style="font-size:15px">Carlos</b><div class="t-meta">Gracias</div></div></div>
+<div class="convo"><span class="lic r">R</span><div><b style="font-size:15px">Rosa</b><div class="t-meta">Turno de noche confirmado</div></div></div>
+<div class="convo"><span class="lic r accent">F</span><div><b style="font-size:15px">Familia</b><div class="t-meta">Luis: la cena está lista</div></div></div>
+<div class="t-meta" style="font-weight:600;padding:16px 10px 6px">Pídele a Argus</div><div class="stats" style="margin:0;padding:0 6px"><span class="chip">Resumen del día</span><span class="chip">Modo noche</span><span class="chip">¿Qué tengo mañana?</span></div></div>
 <div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative">
 <div style="padding:18px 28px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)">${masc('speak',40)}<div class="grow"><div class="t-headline">Argus</div><div class="t-meta">Hablando…</div></div><button class="btn compact">${ic('phone','s')}Llamar</button></div>
 <div style="flex:1;overflow:auto;padding:16px 28px 120px;max-width:760px;width:100%;margin:0 auto">
@@ -934,7 +948,8 @@ DK.argus=()=>`<div style="display:flex;height:100%">
 <div style="width:320px;flex:none;border-left:1px solid var(--line);padding:20px 18px;overflow:auto"><div class="t-headline" style="margin-bottom:10px">En esta conversación</div>
 ${media('scene-kitchen','Cocina',{live:true,hov:1})}
 <div class="sec" style="margin-top:18px"><div class="sec-h"><span class="t-meta" style="font-weight:600">Lo que hizo Argus</span></div>${grp([row({lead:lic('bell'),t:'Comprar pan',s:'Hoy 18:00 · recordatorio',chev:false})])}</div>
-<div class="sec" style="margin-top:18px"><div class="sec-h"><span class="t-meta" style="font-weight:600">En casa ahora</span></div>${grp([row({lead:'<span class="lic r">L</span>',t:'Luis',s:'desde 14:45',chev:false})])}</div></div></div>`;
+<div class="sec" style="margin-top:18px"><div class="sec-h"><span class="t-meta" style="font-weight:600">En casa ahora</span></div>${grp([row({lead:'<span class="lic r">L</span>',t:'Luis',s:'desde 14:45',chev:false}),row({lead:'<span class="lic r accent">A</span>',t:'Ana (tú)',s:'desde 13:10',chev:false})])}</div>
+<div class="sec" style="margin-top:18px"><div class="sec-h"><span class="t-meta" style="font-weight:600">Tu día</span></div>${grp([row({lead:lic('bell'),t:'Pagar la luz',s:'17:00 · en 1 h',chev:false}),row({lead:'<span class="evm" style="background:var(--ev3);color:var(--ev3t)">'+ic('cal','s')+'</span>',t:'Clase de guitarra',s:'18:00',chev:false})])}</div></div></div>`;
 const OV={};
 OV.dialog=(dirty,confirm)=>`<div class="scrim" data-scrim="dialog"></div><div class="dlg" role="dialog" aria-modal="true" aria-label="Nuevo evento"><div class="hd"><span class="t-title">Nuevo evento</span><button class="ibtn" aria-label="Cerrar" data-scrim="dialog">${ic('x')}</button></div>
 <label class="field"><span class="lab">Título</span><span class="inp focus">Visita del técnico<i class="caret"></i></span></label>

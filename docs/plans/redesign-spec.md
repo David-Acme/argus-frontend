@@ -23,6 +23,7 @@ Companion files:
   states, and four interactive desktop screens with a dialog that closes when
   you click outside it and a ⌘K palette. It has toggles for reduced motion and
   reduced transparency. Open it in a browser.
+- `mascot-proposals/index.html`: six mascot proposals for a male voice, with states, sizes and screens (v3.2).
 - `redesign-resumen-es.md`: one page in Spanish for the owner.
 
 Inputs: the measured refactor plan and rules proposal
@@ -694,6 +695,24 @@ top so laptops get the sidebar
 - **Line length.** Text columns are capped at 620–680 px (about 72
   characters). Extra width goes to media (camera grids, the week grid) and to
   additional columns, never to longer lines.
+- **What fills space (useful, never decorative)**, as shown in the
+  prototype:
+
+  | Screen | Fill |
+  |---|---|
+  | Inicio | the latest clip first in the camera strip; a desktop "Último clip" |
+  | Seguridad | last activity on each camera tile; a desktop "Actividad por cámara · hoy" table (last event, today's count) |
+  | Agenda | the day's count and the free slots («Libre 16:00–17:00»); "Próximos días" (3 days); a desktop aside with Libre hoy, Próximos días and Sin fecha |
+  | Night mode | "Esta noche": what Argus watches and when it will wake you |
+  | Voice call | what Argus will do (the result rows), under the transcript |
+  | Empty states | a compact card with the mascot and one action, then suggestion chips («Recuérdame pagar el agua») and the next days |
+  | Offline | the last-known facts with their age («Lo último que sé · hace 10 min») |
+  | Errors (full screen) | who can fix it, with a call action, and what is still safe |
+  | Onboarding | what Argus does (three rows); where to find the pairing code |
+  | Desktop Argus | more conversations, suggestion chips, and "Tu día" in the context panel |
+
+  Weather is not included. Argus is local-first and has no weather source
+  today; adding one is a product decision, not a layout fix.
 
 ### 6c. Scrolling: one owner per region
 
@@ -884,6 +903,37 @@ It never appears in toasts, confirmations, forms or settings rows.
 **Accessibility.** It is decorative (`accessibilityElementsHidden`): the
 sentence beside it always carries the meaning. It holds a still pose under
 reduce motion and pauses off-screen.
+
+**Proposals for a male voice (v3.2).** Argus will speak with a calm,
+warm, confident male voice, so the character is open for choice.
+`mascot-proposals/index.html` shows six options. Each one appears in all 11
+states, at 28 · 36 · 96–120 · 200 px, in light and dark, and inside real dark
+screens (Inicio hero, chat, voice call), with a side-by-side comparison at
+the small sizes:
+
+- **0 · Argus evolucionado.** Today's figure, firmer, with taller eyes and no
+  blush; the hat when on watch, the lens when thinking. Continuity, but it
+  reads younger than the voice.
+- **1 · Panoptes.** A sand face under a crown of five peacock eyes that open
+  on watch. The strongest link to the name; busy at 28 px.
+- **2 · Búho (owl).** A night-watch owl in cocoa and sand: on watch its eyes
+  glow amber, its tufts rise, and a Panoptes ocellus appears on its chest.
+  **Recommended.** It is the best fit for a calm male guardian voice and the
+  most legible at 28 px, and it rigs simply.
+- **3 · Can guardián.** A stylised shepherd (reads shiba- or fox-like) with
+  ears that rise when attentive, and a collar with a shield tag on watch.
+  Protective, but it reads as a pet for assistant tasks.
+- **4 · Orbe.** A warm sand orb with one iris, a lid and a ring that becomes a
+  dial on watch. The cheapest to animate and perfect at 28 px; less warmth,
+  and a single eye can read as surveillance.
+- **5 · Vigía.** A grown-up concierge-watchman face with brows, over
+  charcoal shoulders, with a cap on watch. The most human; it risks uncanny
+  or cultural readings.
+
+The main prototype keeps today's mascot until the owner chooses (R-D28). The
+eleven states, the "on watch" rule and the Rive plan apply to whichever is
+chosen. The "on watch" signifier becomes the chosen concept's equivalent of
+the hat.
 
 **Technology: comparison.** Checked for Expo SDK 57, RN 0.86, Fabric, the web
 build in Tauri/WebKitGTK and its strict CSP:
@@ -1543,6 +1593,7 @@ second and is written natively, not translated word for word.
 | R-D25 | Density: compact heroes (content above the fold on phones), content-rich rows, and 3 or 4 columns of real content on desktop (§6b) | yes |
 | R-D26 | Large screens and scrolling: 4 columns from 1700 px, a 2,200 px content cap, text at most about 680 px, and one scroll owner per region with sticky headers and shared thin scrollbars (§6c) | yes |
 | R-D27 | Loading: local data paints instantly, with at most an inline «Actualizando»; skeletons only for HTTP data without a local copy (§5.4) | yes |
+| R-D28 | Mascot: choose one of the six proposals (`mascot-proposals/index.html`); the recommendation is **2 · Búho**, with **0 · Argus evolucionado** as the continuity option | the owner decides |
 
 ## 14. Order of work
 
