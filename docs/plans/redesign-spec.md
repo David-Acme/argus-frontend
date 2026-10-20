@@ -1,11 +1,16 @@
 # Argus app redesign: specification
 
-Status: proposal, 2026-10-20. Research, design spec and static prototype only;
-no app code changes. Companion files:
+Status: proposal v2, 2026-10-20. Research, design spec and static prototype
+only; no app code changes. v1 set the calm, Threads-like base. v2 follows the
+owner's review of v1 ("me agrada", but it must feel unique and new-era): it
+adds the identity (§2b), the mascot as a living presence (§8b), the desktop and
+mobile idioms (§8c) and the dismissal rule (§5.7). Companion files:
 
-- `redesign-prototype/index.html`: static prototype (phone screens in light and
-  dark, the details and states, one desktop layout with a dialog). Open it in a
-  browser.
+- `redesign-prototype/index.html`: static prototype. It has the identity, the
+  mascot's eleven states, phone screens in light and dark, the details and
+  states, and four interactive desktop screens with a dialog that closes when
+  you click outside it and a ⌘K palette. It has toggles for reduced motion and
+  reduced transparency. Open it in a browser.
 - `redesign-resumen-es.md`: one page in Spanish for the owner.
 
 Inputs: the measured refactor plan and rules proposal
@@ -22,11 +27,27 @@ everywhere, with every component feeling natural on its platform. Native sheets,
 modals and alerts where the platform expects them; the desktop equivalent on
 web and Tauri. "Cuida los pequeños detalles."
 
-How this spec feeds the refactor plan: **R5** (one token source) takes §3 as
-the values of `shared/theme/tokens.ts`. **R6** (design system completion) takes
-§4 as the primitive list and §5 as the patterns `ResourceView`, `Sheet`,
-`Confirm` and `Toast` implement. The screens of §9 are rebuilt on those
-primitives after R5/R6 exit (decision D7 of the plan).
+Owner direction on v1 (David, 2026-10-20): it is above average, but it does not
+feel like trying something unique, modern, "la nueva era". Keep the Argus
+mascot and make it a native, living presence across the app. Desktop and
+mobile must both feel right in their own idioms. Dialogs close when you click
+or tap outside them. Every "wow" element must be one reusable primitive, not
+per-screen code, and must add no code weight.
+
+How this spec relates to the refactor plan and the rules: the owner decided
+(2026-10-20) that the rules, the refactor and the redesign are implemented
+**together**, after he approves the final design, so nothing is built twice.
+This document is the design source those phases implement:
+
+- §3 is the value set of `shared/theme/tokens.ts` (the plan's R5, rule F16).
+- §4 is the primitive list of `shared/ui` (R6, rules F19/F20).
+- §15 lists where this spec departs from the plan and the rules.
+- §5 holds the patterns that `ResourceView`, `Sheet`, `Confirm`, `Toast` and
+  the error surfaces implement (R1, rules F11/F13).
+- §7b is the animation performance budget (R9, rule F27).
+- The screens of §9 are rebuilt on those primitives in the same pass.
+
+Nothing here is implemented yet.
 
 ---
 
@@ -51,9 +72,11 @@ primitives and 18 layout files.
 
 ## 2. Principles
 
-1. **Lo importante primero (one status, one action).** Every screen opens with
-   one sentence that says how things are, and offers at most one primary
-   action. Everything else is a row one tap away (progressive disclosure:
+1. **Una presencia, no un tablero.** Argus is someone who lives with you, not
+   a control panel. Every screen opens with one sentence that says how things
+   are, spoken by Argus and coloured by the home's state (the Aura), and offers
+   at most one primary action. Everything else is a row one tap away
+   (progressive disclosure:
    [NN/g](https://www.nngroup.com/articles/progressive-disclosure/)).
 2. **Calma, no alarma.** Ink on paper by default. Colour carries state only:
    green for calm, amber for attention, red only for a real alert that needs
@@ -63,17 +86,142 @@ primitives and 18 layout files.
    ([NN/g](https://www.nngroup.com/articles/mobile-tutorials/)). Empty states
    teach and offer the first action
    ([NN/g](https://www.nngroup.com/articles/empty-state-interface-design/)).
-4. **Pocas piezas.** About 23 components with few variants, each with its
-   states, labels and target size built in. A screen is composed of them and
-   adds no styling of its own.
-5. **Natural en cada plataforma.** One visual language, native mechanics:
-   native sheets, alerts, haptics and press feedback on phones, dialogs and
-   hover on desktop. Never a phone sheet stretched across a monitor.
+4. **Pocas piezas, y lo especial también es una pieza.** About 26 components
+   with few variants, each with its states, labels and target size built in.
+   The identity (Aura, Presence, the glass material, springs, ⌘K) consists of
+   primitives like any other. A screen is composed of them and adds no styling
+   or animation of its own.
+5. **Natural en cada plataforma.** One visual language, native mechanics. The
+   phone gets thumb-reach actions, native sheets, gestures, alerts, haptics and
+   press feedback. The desktop gets a sidebar, ⌘K, shortcuts, hover,
+   multi-column layouts and pointer-sized dialogs. Never a phone sheet
+   stretched across a monitor.
 6. **Honesto con el estado.** Loading, stale, offline, refused and failed each
    look different. A failure is never shown as "nothing here". This follows
    rule F11 of the rules proposal.
 7. **Para todos.** 48 dp targets, AA contrast in both themes, text up to 200%,
    status never by colour alone, and dark mode designed, not inverted.
+
+## 2b. Identity: Argus as a presence
+
+### The concept
+
+Argus does not look like a dashboard. It looks like a calm presence that
+lives in the home. At the top of the main screens a soft light field, the
+**Aura**, breathes slowly in a colour taken from the home's state:
+
+- warm sand when all is calm;
+- indigo while Argus is on watch at night or while you are away;
+- amber when something needs a look;
+- a faster red pulse for a real alert;
+- grey and still when the app cannot reach Argus.
+
+Inside the Aura, Argus itself (the mascot) says how things are in one large
+sentence: «Todo tranquilo.», «Buenas noches.», «Alguien en el patio.» Argus
+wears its detective hat whenever it is on watch.
+
+Talking to it is one signature gesture everywhere: **hold the centre of the
+bar**. The screen's edge lights up, the mascot leans in to your voice, and you
+let go to send.
+
+Everything else stays quiet, Threads-like ink on paper. Glass appears only on
+what floats: the bar, sheets, the desktop sidebar and the palette.
+
+The novelty lives in four primitives:
+
+- `Aura`;
+- `Presence`;
+- the `material` token;
+- the springs.
+
+None of it lives in screens, and each one has a still, solid fallback for
+reduced motion and reduced transparency.
+
+### What makes the admired 2025–2026 apps feel new (research)
+
+- **Apple's Liquid Glass (iOS 26).** A translucent material for the
+  *functional layer* only: controls, bars and transient UI. Bars float, shrink
+  on scroll, and are concentric with the device's corners.
+  - Apple's guidance: use a single floating pane, no glass on glass, and keep
+    glass out of scrolling content.
+  - Reduce Transparency frosts it and Increase Contrast makes it solid.
+  - NN/g criticised legibility over noisy backgrounds, and Apple added a
+    "Tinted" option in 26.1.
+  - Lesson: take the floating, concentric depth; never put glass behind
+    reading text. Sources:
+    [Apple press release](https://www.nasdaq.com/press-release/apple-introduces-delightful-and-elegant-new-software-design-2025-06-09),
+    [WWDC25 group lab](https://developer.apple.com/forums/thread/791070),
+    [legibility settings](https://mobilesyrup.com/2025/06/10/how-apple-is-making-sure-liquid-glass-as-legible-as-possible/),
+    [NN/g critique, summarised](https://anderegg.ca/2025/10/12/nielsen-norman-group-on-ios-26-usability),
+    [26.1 Tinted](https://gulfnews.com/technology/companies/apple-yields-tinted-control-in-ios-261-beta-4-tones-down-liquid-glass-after-backlash-1.500315176).
+- **Material 3 Expressive.** Google reports 46 studies with more than 18,000
+  participants, and key elements found up to 4× faster, with older users as
+  fast as younger ones. These are Google's own figures and have not been
+  replicated.
+  - The gain is credited to size, colour, shape and containment on the one
+    thing that matters. Spring motion and shape morphing are the feel layer.
+  - Lesson: make the important thing bigger, and let motion add feel rather
+    than meaning. Sources:
+    [9to5Google](https://9to5google.com/2025/05/05/material-3-expressive-leak/),
+    [Dezeen](https://www.dezeen.com/2025/05/28/google-ushers-in-age-of-expressive-interfaces-with-material-design-update/amp/).
+- **Linear, Raycast, Things 3, Arc to Dia.** They feel new because of speed,
+  one signature interaction and restraint everywhere else.
+  - Linear: "don't compete for attention you haven't earned"; themes from
+    three inputs (base, accent, contrast).
+  - Raycast: a big search bar, and shortcuts shown next to actions so users
+    learn them.
+  - Things 3: physical delight in small touches.
+  - Arc paid a "novelty tax"; Dia hides power behind familiar UI.
+  - Lesson for non-technical users: novelty in feel, never in navigation.
+    Sources: [Linear redesign](https://linear.app/now/how-we-redesigned-the-linear-ui),
+    [Linear refresh](https://linear.app/now/behind-the-latest-design-refresh),
+    [Raycast](https://raycast.com/blog/a-fresh-look-and-feel),
+    [Things 3](https://www.macstories.net/reviews/things-3-beauty-and-delight-in-a-task-manager/),
+    [Arc → Dia](https://every.to/podcast/inside-the-browser-company-why-they-killed-arc-to-build-dia).
+- **AI assistants.**
+  - Siri's edge glow responds to the voice and leaves the UI usable underneath.
+  - ChatGPT moved voice *into* the chat with a live transcript and cards.
+  - Claude's voice mode highlights key points as it speaks.
+  - Gemini Live dims the camera image and outlines what it means.
+  - Humane and Rabbit failed on latency, unreliability and trying to replace
+    the phone.
+  - Lesson: a living state signal that follows the audio, a live transcript,
+    and grounding ("this camera, this reminder"). Reliability beats spectacle.
+    Sources: [Siri glow](https://9to5mac.com/2024/11/03/new-apple-intelligence-siri-looks-different-works-the-same/),
+    [ChatGPT voice in chat](https://www.androidauthority.com/chatgpt-voice-mode-in-chat-3619633),
+    [Claude voice](https://ppc.land/claude-adds-voice-mode-to-mobile-apps/),
+    [Gemini Live overlays](https://www.androidauthority.com/gemini-live-visual-overlays-audio-model-3586419),
+    [Humane post-mortem](https://medium.com/@bossaresearch/anatomy-of-a-failure-the-humane-ai-pin-and-the-misfit-future-of-wearable-ai-04feedd82903).
+- **Premium smart home.**
+  - Apple Home: category summaries on top, up to four live cameras, and a
+    floating glass bar in iOS 26.
+  - Google Home (October 2025): three tabs, an "Ask Home" bar and a daily
+    "Home Brief".
+  - Ring: natural-language video search.
+  - Lesson: calm status as one sentence, and history told as a story, not a
+    log. Sources: [Apple Home iOS 16](https://www.macstories.net/stories/everything-new-coming-to-the-home-app-in-ios-16-and-macos-ventura/),
+    [Google Home redesign](https://blog.google/products/google-nest/google-home-app-gemini-redesign/),
+    [Ring search](https://9to5google.com/2024/10/09/amazon-ring-ai-video-search/).
+
+### The levers, each one primitive
+
+| Lever | Primitive | What it does | Reduced motion / transparency / contrast | Cost |
+|---|---|---|---|---|
+| The ambient status | `Aura` (tone: `calm`, `duty`, `attn`, `alert`, `off`, `listen`; `mode`: `field` / `band` / `edge`) | A 2–3 blob gradient field at the top of Inicio and Seguridad (field), a rounded band on desktop (band), or the screen-edge glow while listening (edge). Tempo per tone: 14–18 s drift calm, 3–4 s alert | Static gradient; with Increase Contrast, no field and a 3 px tone border on the edge mode | about 150 lines; `expo-linear-gradient` or a blurred view; no Skia |
+| A living Argus | `Presence` (state, level, size) | The mascot, 11 states (§8b), driven by app state and voice level | Still pose per state | about 200 lines + one `.riv` asset; replaces about 1,600 lines of today's procedural mascot and avatar |
+| The hero sentence | `Status` variant `hero` | One `hero` line per screen (36/40), spoken by Argus, with a cross-fade on change | Instant change | inside `Status` |
+| Glass on floating chrome | `material` token used by `Nav`, `Sheet`, `Menu`, `Command` | Floating bar, sheet backdrop, desktop sidebar and palette. iOS 26 native glass (expo-glass-effect), Android 12+ blur (expo-blur `BlurTargetView`), web `backdrop-filter`, and a solid surface elsewhere | Solid surface with a hairline | about 60 lines in the four owners |
+| Physical motion | `springs.ts`: `snappy` (presses, toggles), `gentle` (sheets, layout), `playful` (the mascot only); `usePressScale` | One feel everywhere; presses scale to 0.96 | `ReduceMotion.System`: end state at once | about 60 lines |
+| One door for everything | `Command` (⌘K on desktop, the search button on phones) | Commands, search and "ask Argus" in one bar, with shortcuts shown beside actions | — | about 250 lines; replaces the Inicio search bar and the bell popover |
+| The signature gesture | inside `Nav`: hold the centre tab | Hold to talk from any screen: the `Aura` edge mode, `Presence` in `listen`, haptic `impactLight` on start and stop, a live transcript pill | Tap the centre, then tap to stop | about 80 lines |
+| Grounded answers | `FeedItem` / chat result chips + `Media` `focus` overlay | Argus shows what it means: "this camera" (a dimmed frame with a box around the detected person), "this reminder" (a chip that opens it) | Thicker outline, no dimming | about 80 lines |
+| Live tiles | `Media` | A breathing live dot, frames refreshed with a short cross-fade; the tile grows into the live view | Static dot, cut instead of zoom | inside `Media` |
+
+What is deliberately **not** done: no glass behind reading text, no
+animated backgrounds behind lists, no novel navigation, no 3D or Skia
+canvases (CanvasKit is 2.9 MB gzip on web, and about 4 MB on Android and 6 MB
+on iOS: [Skia web](https://www.mintlify.com/shopify/react-native-skia/getting-started/web)),
+and no more than one mascot per screen.
 
 ## 3. Tokens (the values R5 writes into `tokens.ts`)
 
@@ -121,20 +269,32 @@ Rules:
   inverted.
 - Illustration colours (the mascot, procedural avatars) live in
   `tokens.illustration`, as the plan already says.
+- **Aura tones** (fills only, never text; light / dark, three stops each):
+  `calm` `#EBD9B4 #F3E7CF #E3EBDF` / `#4A3A1C #2E2516 #1D2A20`; `duty`
+  `#C9CEE8 #E3E2F0 #D9E2EC` / `#262C52 #1A1D33 #162430`; `attn` `#F2CF95…` /
+  `#5A3D12…`; `alert` `#F1AFA6…` / `#6A231E…`; `off` `#E2E0DC…` / `#2D2B28…`;
+  `listen` `#E7C98E…` / `#5C4520…` (full values in the prototype). Text over
+  the Aura uses `text` and `text-2`, and the Aura fades to `bg` before the
+  content starts, so contrast is measured against `bg`.
+- **Material:** `glass` `rgba(255,255,255,.66)` / `rgba(32,30,28,.62)` with
+  a blur of 22, saturation 1.7 and a 1 px inner hairline (`glass-line`).
+  Used only by `Nav`, `Sheet` (backdrop edge), `Menu` and `Command`.
 
 ### 3.2 Type: six steps, two weights, system fonts
 
 | Step | Size / line | Weight | Use |
 |---|---|---|---|
-| `display` | 28 / 34 | 650 | screen title, onboarding headline |
-| `title` | 20 / 26 | 650 | detail titles, sheet titles, status mode |
+| `hero` | 36 / 40 (44 on desktop) | 700, tracking −2.5% | the one expressive sentence per screen (`Status` hero), onboarding headline |
+| `title` | 22 / 28 | 650 | screen and detail titles, sheet titles |
 | `headline` | 17 / 24 | 600 | section headings, status sentence |
 | `body` | 16 / 22 | 400 (500 for row titles) | all reading text, rows |
 | `meta` | 14 / 20 | 400 | secondary lines, timestamps |
 | `caption` | 12 / 16 | 500 | tab labels, chips, badges only |
 
 This replaces today's eight steps (`display` 32 … `micro` 11). Body moves from
-15 to 16 for older and non-technical readers. Fonts are the platform system
+15 to 16 for older and non-technical readers. `hero` is the expressive moment
+(M3 Expressive's "make the important thing bigger"). It appears once per
+screen, and only in the `Status` hero and onboarding. Fonts are the platform system
 fonts (SF Pro on iOS and macOS, Roboto on Android, Segoe/Cantarell/system-ui on
 desktop). That costs nothing in bundle size, follows the user's OS text
 settings, and needs no licence. The Threads font itself is not confirmed by any
@@ -148,15 +308,20 @@ source, so it is not copied.
 - **Sizes:** touch target 48 (minimum 44 where the platform allows), row
   minimum height 56, icon 24 (20 inside rows and buttons), avatar 36/56,
   icon stroke 1.75 everywhere.
-- **Radii** (4 steps): `8` (chips' inner, small wells) · `12` (buttons,
-  inputs, groups, media) · `20` (sheets, dialogs, cards that float) · `full`
-  (pills, avatars, switches). Down from nine steps.
+- **Radii** (5 steps, concentric): `8` (small wells) · `14` (buttons,
+  inputs, media) · `22` (groups, dialogs) · `28` (sheets, the floating bar,
+  phone-corner concentric) · `full` (pills, avatars, switches). Nested shapes
+  keep concentric corners (outer radius = inner radius + padding), as Liquid
+  Glass does. Down from nine steps.
 - **Elevation** (2 levels): `0` for everything on the page (hairlines separate
   it, like Threads), `1` (one shadow token) for what floats: sheets, dialogs,
   menus and toasts. Cards do not cast shadows.
-- **Motion:** `fast 120 ms` (press, toggles), `base 200 ms` (small
-  enter/leave, cross-fades), `slow 300 ms` (in-app panels; native sheets and
-  screens use the platform's own curves). One easing (`standard`, ease-out).
+- **Motion:** three springs instead of durations for anything that moves
+  physically: `snappy` (damping 18, stiffness 320: presses, toggles, tab
+  changes), `gentle` (damping 22, stiffness 180: sheets, layout, tile → live),
+  `playful` (damping 10, stiffness 220: the mascot only). Cross-fades use
+  `base 200 ms`. Native sheets, screens and alerts keep the platform's own
+  curves.
   Common ranges are 150–250 ms for UI transitions; M3 ships duration tokens
   ([M3 motion tokens](https://github.com/google-labs-code/design.md/issues/47)).
 - **Breakpoints:** see §6.
@@ -169,7 +334,8 @@ are cards, dialogs, forms, sheets, panels, rows, sections, lists, pickers,
 banners, chips, tiles, heroes and headers, about 17,000 lines. That is where
 the redesign removes the most code.
 
-Proposed: **23 components in four families.** Each has at most four variants,
+Proposed: **26 components in five families**: the four of v1 plus the identity
+family (§4.5). Each has at most four variants,
 and booleans only for accessories
 ([variant explosion](https://stevekinney.com/courses/enterprise-ui/maintaining-a-design-system)).
 A new variant needs a design review and a `ui-lab` baseline (rule F19).
@@ -190,7 +356,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 |---|---|---|---|
 | 6 | `Section` | `title`, optional `action` link, `grouped` (rows on a surface) or `plain` | `panel`, `section-header`, `responsive-grid` uses, 30 feature panels, 8 sections |
 | 7 | `Row` | leading (icon, avatar, check, media), title, meta, trailing (chevron, value, switch, chip, button); `danger` | `list-row`, `option-row`, `toggle-row`, `select-field`, `permission-list`, 17 feature rows, most of the 20 feature cards |
-| 8 | `Status` | `tone` calm / attention / alert; icon, sentence, meta, up to one primary + one secondary action, optional media | alert card, response card (248 lines), vigilance hero, settings "applied profile" card, module notices |
+| 8 | `Status` | `tone` calm / attention / alert; variant `hero` (the one expressive sentence over the `Aura`, with `Presence`) or `card`; sentence, meta, up to one primary + one secondary action, optional media | alert card, response card (248 lines), vigilance hero, settings "applied profile" card, module notices |
 | 9 | `Notice` | `info`, `attention` (offline, stale, paused); one action | `top-notice-bar`, offline icon and toast, parked error band, recording-paused banner, the 3 feature banners |
 | 10 | `FeedItem` | icon/avatar, who, when, text, optional actions, unread | notification thread row (301 lines), activity rows, episode cards in their list form |
 | 11 | `Chip` | `tag` (status, with tone and dot) / `filter` (selectable); wraps in a `Cluster` | `status-badge`, `filter-chips`, 4 feature chips and 2 badges |
@@ -215,28 +381,40 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 | 20 | `Confirm` | `default` / `destructive`; names the object | `confirm-dialog`, ad-hoc confirm sheets (W7) |
 | 21 | `Menu` | dropdown on pointer, sheet list on touch, context menu on long press and right click | `adaptive-menu`, `context-menu` (294), `popover`, single-item menus (W38) |
 | 22 | `Toast` | `info`, `success`, `error` with Retry, `undo` | `toaster`, `toast-card` |
-| 23 | `ResourceView` | renders `loading` (its `Skeleton`), `ready`, `empty` (its `Empty`), `stale` (`Notice`), `failed` and `refused` from a `Resource<T>` | `empty-state`, `infinite-list` states, the 42 `EmptyState` uses, spinners in lists |
+| 23 | `ResourceView` | renders `loading` (its `Skeleton`), `ready`, `empty` (its `Empty`), `stale` (`Notice`), `failed` and `refused` from a `Resource<T>`; failures use the error surfaces of §5.8 | `empty-state`, `infinite-list` states, the 42 `EmptyState` uses, spinners in lists |
+
+### 4.5 Identity
+
+| # | Component | Variants / props | Replaces today |
+|---|---|---|---|
+| 24 | `Aura` | `tone` (`calm`, `duty`, `attn`, `alert`, `off`, `listen`) × `mode` (`field`, `band`, `edge`); derives its tone from the home state, never set by a screen directly | the vigilance hero, the alert card's colour wash, the call screen's background |
+| 25 | `Presence` | `state` (11, §8b), `level` (0–1 voice amplitude), `size` (`tab` 40, `inline` 28, `hero` 84–108, `stage` 190) | `welcome-mascot/*` (1,211 lines) and `voice/components/avatar.tsx` (391) |
+| 26 | `Command` | ⌘K palette on pointer, a full-height `Sheet` on touch; groups `Pedir a Argus`, results, actions with shortcuts | the Inicio search bar, the bell popover, the compose menu |
+
+The glass `material`, the `springs` and `usePressScale` are tokens and one
+hook, not components. `Nav`, `Sheet`, `Menu` and `Command` read them.
 
 Dropped without replacement: `orbit-hero`, `blur-reveal`, `brand-mark` variants
-(one `Mark`, which sits inside `Nav` and onboarding), `timeline` (the agenda
-uses `Row`), and `native-only-animated-view`.
+(the mark becomes `Presence`), `timeline` (the agenda uses `Row`), and
+`native-only-animated-view`.
 
 Domain components that stay feature-owned: the camera player, the PTZ pad, the
 zone editor, the calendar month grid, the voice orb, the QR code and scanner,
 and the face capture. They compose the primitives for everything around their
 core.
 
-### 4.5 Expected code reduction
+### 4.6 Expected code reduction
 
 The method is an estimate from today's line counts, not a measurement:
 
 | Area | Today | Target | How |
 |---|---|---|---|
-| Shared primitives + layout | 64 files, 4,907 lines | 23 components, about 2,600 lines | fewer variants; sheet, toast and keyboard mechanics move to maintained libraries (§8) |
+| Shared primitives + layout | 64 files, 4,907 lines | 26 components, about 3,300 lines (the identity family adds about 700) | fewer variants; sheet, toast and keyboard mechanics move to maintained libraries (§8) |
 | Feature cards, dialogs, forms, panels, rows, sections, lists, pickers, banners, chips, headers | 141 files, about 17,000 lines | about 55 files, about 6,500 lines | composed from `Section`/`Row`/`Status`/`Sheet`/`Field`; no own styling |
-| Other feature components (player, avatar, mascot, wizards…) | 102 files, about 10,000 lines | about 75 files, about 8,500 lines | outer chrome only |
+| Mascot and avatar | 8 files, 1,602 lines | inside `Presence` + one `.riv` asset | the animation lives in the Rive state machine (§8b) |
+| Other feature components (player, wizards…) | 94 files, about 8,400 lines | about 70 files, about 7,200 lines | outer chrome only |
 | Screens | 37 files, 6,865 lines | about 32 files, about 4,800 lines | fewer sections per screen; camera page split in two |
-| **Total UI `.tsx`** | **about 39,000 lines** | **about 22,500 lines** | **about 40% less (range 35–45%)** |
+| **Total UI `.tsx`** | **about 39,000 lines** | **about 22,000 lines** | **about 40% less (range 35–45%)**: the identity costs about 700 lines and the mascot move saves about 1,400 |
 
 Two further effects are not counted in that table: about 2,267 `className`
 strings in features fall sharply, because spacing lives in the primitives, and
@@ -292,6 +470,47 @@ measure against.
    cámara), one secondary (Es alguien conocido) and the quiet "Es una falsa
    alarma" ([Android channels](https://developer.android.com/training/notify-user/channels),
    [SimpliSafe's status pattern](https://support.simplisafe.com/articles/using-your-system/how-to-arm-or-disarm-your-system)).
+   The `Aura` switches to `alert` and `Presence` to `alert` (hat on, still,
+   serious). Once the alert is resolved they return to calm with one `happy`
+   beat.
+7. **Dismissal (every overlay, every platform).** A sheet, dialog, menu,
+   popover or palette closes when you tap or click outside it (on the scrim),
+   with Esc on desktop and web, with Back on Android, and by dragging a sheet
+   down on phones. Focus returns to the control that opened it. Two
+   exceptions:
+   - A **destructive confirmation** (`Confirm` `destructive`: siren, panic,
+     purge, deactivate) ignores outside taps. Only its buttons, Esc or Back
+     (which mean Cancelar) close it.
+   - A **form with unsaved input** (any field changed since it opened) does
+     not close on an outside tap, Esc, Back or a drag. It shows an inline
+     "¿Descartar «…»?" with *Seguir editando* (the default, also what a
+     second Esc or Back does) and *Descartar*. On phones the native sheet's
+     dismiss is blocked the same way (TrueSheet `dismissible=false` while
+     dirty), and the discard question is a native alert.
+   - Untouched forms close at once.
+   - The prototype's desktop dialog and phone sheet implement this rule.
+8. **Errors people can act on.** The user never sees a backend code, an
+   HTTP status or a raw server message. Every code goes through one map,
+   today's `serviceErrorKey` (`shared/libs/service-error.ts`: about 45 codes,
+   a retryable set and `common.errors.unknown`). Each entry is a short es/en
+   message saying what happened and what to do, and it names the object when
+   one is known. The copy and the complete code→message map belong to the
+   error-message rules on the plan branch (`docs/plans/error-messages-spec.md`).
+   This section only fixes **where** a message appears. The surface is chosen
+   by context and severity, never by the screen author:
+
+   | Situation | Surface | Example (es) |
+   |---|---|---|
+   | A field is invalid (validation, 422 with field errors) | **Inline** under the field: alert-coloured text with an icon, the field border in `alert`, focus moved to the first error, the sheet or dialog stays open | «Escribe qué quieres recordar.» |
+   | An action failed and can be retried (network, timeout, unavailable, write not sent) | **Toast `error` with Reintentar**. The optimistic change rolls back first, the toast names the object, it stays 8 s or until dismissed, and it is announced | «No pudimos guardar el recordatorio «Pagar la luz». Revisa tu conexión e inténtalo de nuevo.» |
+   | An action was refused and retrying will not help (forbidden, module off, role inactive, conflict) | **Inline `Notice`** beside the action, with the action that resolves it when there is one | «La agenda está apagada en esta casa. Pídele al propietario que la active.» |
+   | A screen or section could not load | **In-place failed state** in that section (`ResourceView` `failed`): `Presence` `concern`, one sentence, Reintentar. Cached data stays, labelled as stale. Never the empty copy | «No pude cargar tus cámaras. Revisa el Wi-Fi o inténtalo en un momento.» |
+   | The session or the trust is gone (account disabled, pairing lost, certificate mismatch) | **Full-screen state** with one way out | «Tu cuenta está pausada. Pídele al propietario de la casa que la vuelva a activar.» |
+   | An unknown code | The same surface its context would use, with the one generic message | «Algo no salió bien. Inténtalo de nuevo en un momento.» |
+
+   The code goes to `log.error` with the request context, never to the screen.
+   Error toasts are never stacked: a second one replaces the first. The
+   mascot never appears in a toast.
 
 ## 6. Responsive rules: one layout system
 
@@ -323,18 +542,57 @@ top so laptops get the sidebar
 ## 7. Motion
 
 - Only what explains a change: a sheet rising, a row leaving after Deshacer
-  expires, a check filling, a status changing tone. No decorative loops. The
-  orbit hero, the compose-glyph morph and the mascot choreography leave the
-  everyday screens. The mascot stays only in onboarding and in Argus' voice
-  call, where it is the content.
-- Native sheets, screen pushes and alerts use the platform's own animation
-  curves, not ours.
-- `fast 120 / base 200 / slow 300 ms`, one easing.
-- Reduce motion (system setting, read through `AccessibilityInfo`,
-  [RN docs](https://reactnative.dev/docs/accessibilityinfo)): every transition
-  becomes an instant change or a 120 ms cross-fade, the skeleton stops
-  shimmering and becomes a static fill, and the voice orb stops pulsing (the
-  avatar reactions included).
+  expires, a check filling, the Aura changing tone, the mascot reacting. No
+  decorative loops except the two ambient ones (`Aura` drift, `Presence`
+  breathing), and both obey §7b. The orbit hero and the compose-glyph morph
+  go. The mascot moves out of its choreography into `Presence`.
+- Physical motion uses the three springs of §3.3: presses scale to 0.96 with
+  `snappy`, sheets and layout use `gentle`, and only the mascot uses
+  `playful`. Native sheets, screen pushes and alerts keep the platform's own
+  curves.
+- **Tile → live view.** The camera tile grows into the live screen. Reanimated
+  shared-element transitions are still experimental (behind a flag, "closer to
+  stable" in 4.7: [React Navigation](https://reactnavigation.org/docs/shared-element-transitions),
+  [Reanimated 4.7](https://newreleases.io/project/npm/react-native-reanimated/release/4.7.0)),
+  so v1 of the redesign uses a scale-from-origin transition and swaps in the
+  shared element once it is stable.
+- Reduce motion (system setting; Reanimated `ReduceMotion.System` and
+  `useReducedMotion`, [Reanimated a11y](https://docs.swmansion.com/react-native-reanimated/docs/guides/accessibility)):
+  every transition jumps to its end state or becomes a 120 ms cross-fade. The
+  Aura is a still gradient, the mascot holds the still pose of its state, the
+  listening edge is a steady rim, and the skeleton is a static fill.
+
+## 7b. Performance budget: beautiful, but performance first
+
+Every animation runs on the UI thread: Reanimated shared values, Reanimated 4
+CSS animations, or the Rive native renderer. No `setState` per frame, no JS
+timers driving visuals, and the voice level reaches `Presence` throttled to
+30 Hz. The budget is checked on a low-end Android reference device in the
+plan's R9 (frame stats from `dumpsys gfxinfo` / Perfetto) and on the desktop
+build in WebKitGTK.
+
+| Budget | Value |
+|---|---|
+| Frame time | ≤ 16.7 ms on the mid-tier reference, ≤ 1% janky frames scrolling Inicio; 120 Hz devices get 8.3 ms where the OS allows |
+| Continuous animations on screen | at most 2 (`Aura` + `Presence`); both pause off-screen, in the background, and once the user scrolls the hero out of view |
+| Blur layers visible at once | at most 1 (the bar *or* a sheet's backdrop), never a full-screen blur over moving video |
+| JS thread during scroll and gestures | untouched by visuals |
+| Startup | the identity adds nothing to first paint: `Presence` loads its `.riv` after the first frame, showing the still pose meanwhile |
+
+**Performance tier.** `perfTier` is `high` or `low`, decided once from the
+hardware profile (Android below API 31, under 4 GB RAM, or the user's
+"Reducir efectos" setting gives `low`). Each effect states its cost and its
+low-tier form:
+
+| Effect | Runs on | Cost (estimate; the spike measures it) | Low-end Android / reduced fallback |
+|---|---|---|---|
+| `Aura` field | UI thread, 3 pre-blurred gradient views animating `transform` and `opacity` only (compositor; no per-frame blur) | about 0.3–0.6 ms GPU per frame | Still gradient, no drift; with Reduce Transparency or Increase Contrast, a flat tint |
+| Glass (`material`) | iOS 26 native glass (expo-glass-effect); Android 12+ `RenderEffect` blur (expo-blur `BlurTargetView`); web `backdrop-filter` | proportional to the blurred area: kept to the 70 dp bar or the sheet edge | Below API 31, `low` tier, Reduce Transparency: solid `surface` with a hairline ([expo-blur](https://docs.expo.dev/versions/latest/sdk/blur-view/), [expo-glass-effect](https://docs.expo.dev/versions/latest/sdk/glass-effect.md)) |
+| `Presence` (mascot) | Rive native renderer, one artboard, its own thread; JS sends only the state and the level | +2.4 MB Android / +1.7 MB iOS download for the runtime ([Rive sizes](https://rive.app/docs/runtimes/runtime-sizes.md)); the `.riv` file is tens of KB (inference) | `low` tier: idle breathing at 30 fps and state changes as cuts; reduce motion: still pose |
+| Listening edge | UI thread, one inset shadow animating opacity | negligible | Steady rim |
+| Springs and press scale | UI thread worklets | negligible | Instant |
+| Skeleton shimmer | Reanimated CSS animation (opacity) | negligible | Static fill |
+| Live tiles | the native player, frames at most every 10 s, cross-faded | network-bound, not frame-bound | Static thumbnail, refreshed on focus |
 
 ## 8. Platform-native mechanics: libraries
 
@@ -354,14 +612,157 @@ react-native-web 0.21 inside Tauri 2 (WebKitGTK). Licences are all MIT.
 | Keyboard | **react-native-keyboard-controller** (already present): `KeyboardAwareScrollView` in `Screen` and forms, `KeyboardToolbar` for multi-field forms; `.web.tsx` passthrough ([Expo docs](https://docs.expo.dev/versions/v57.0.0/sdk/keyboard-controller.md)) | passthrough | Yes: one integration in `Screen` |
 | Toasts with undo | **sonner-native** on iOS/Android, **sonner** on web, behind `Toast` (both MIT, the same API shape, action buttons) ([sonner-native](https://github.com/gunnartorfis/sonner-native)). Not burnt: it has no action button for undo ([burnt](https://github.com/nandorojo/burnt)). | sonner | Yes: replaces most of `toaster` and `toast-card` |
 | Skeleton | Own 20–30 line `Skeleton` on Reanimated 4 CSS animations (they work on web) ([Reanimated CSS animations](https://docs.swmansion.com/react-native-reanimated/docs/css-animations/animation-name/)). Not moti: no stated Reanimated 4 support. | yes | Neutral |
+| Glass material | iOS 26: **expo-glass-effect** (falls back to a plain View elsewhere). Android 12+: **expo-blur** with `BlurTargetView` (without it, it is only a translucent view). Web/Tauri: CSS `backdrop-filter` | `backdrop-filter` | Small addition, about 60 lines, inside `Nav`/`Sheet`/`Menu`/`Command` |
+| Mascot | **Rive**: `@rive-app/react-native` (Nitro runtime) on iOS/Android, `@rive-app/canvas-lite` on web if the WebKitGTK CSP test passes (§8b) | wasm, about 420 KB gzip | **Yes**: about 1,600 lines of procedural mascot become a wrapper and one asset |
 | Formatting | `Intl` through the existing `useDateFormatter` + `date-fns` (es/en), with the hour cycle from expo-localization's `getCalendars().uses24hourClock` passed explicitly. Hermes delegates `Intl` to platform ICU, so results vary by OS; `formatToParts` is Android-only ([Hermes Intl](https://github.com/facebook/hermes/blob/main/doc/IntlAPIs.md), [expo-localization](https://docs.expo.dev/versions/latest/sdk/localization/)) | yes | Neutral |
 
 Risks: TrueSheet v3 → v4 changes its web renderer, which we don't use, so the
 impact is contained. Every library here needs its `.web` passthrough tested in
 WebKitGTK through `check:bundle`. Re-check the peer ranges at the next SDK.
-**A spike comes first:** TrueSheet v3 on the dev-client for both Android and
-iOS, with a form sheet, the keyboard and Back. If it fails, gorhom is the
-fallback.
+**Two spikes come first:**
+1. TrueSheet v3 on the dev-client for both Android and iOS, with a form sheet,
+   the keyboard, Back and the dirty-form dismissal block. If it fails, gorhom
+   is the fallback.
+2. Rive on a low-end Android (frame time, latency from voice level to mouth)
+   and `canvas-lite` in the Tauri WebKitGTK build under the strict CSP with
+   `'wasm-unsafe-eval'`.
+
+## 8b. The mascot: Argus as a living presence
+
+David keeps the mascot, the white figure with the detective's deerstalker and
+lens from today's welcome, and it becomes the face of Argus everywhere. Today
+it exists twice: `welcome-mascot/*` (1,211 lines of procedural SVG and
+Reanimated choreography) and the call `avatar.tsx` (391 lines, states `idle`,
+`listening`, `thinking`, `speaking`, `error`). Both become one `Presence`.
+
+**States** (shown in the prototype, light and dark):
+
+| State | Looks like | When |
+|---|---|---|
+| `idle` (Atento) | breathing, blinking, eyes open | En casa, all calm; the default |
+| `duty` (De guardia) | **hat on**, a slow scanning gaze | Noche, Fuera, Armado: Argus is on watch |
+| `listen` | leans in, rings follow the voice level | hold-to-talk, the voice call while you speak |
+| `think` | gaze up, lens out, three dots | looking something up, running a tool |
+| `speak` | mouth and body squash follow the TTS level | Argus is speaking |
+| `happy` | ^ ^ eyes, one small hop | saved, done, all clear after an alert, empty "nothing pending" |
+| `concern` | brows, lowered gaze, slower breath | something to review, a failed section |
+| `alert` | hat on, eyes wide, **still** (serious, not cute) | a real alert |
+| `rest` | eyes closed, a "z" | the assistant's quiet hours (it will not call you). The text always says security keeps working |
+| `off` | grey, still | the app cannot reach Argus |
+| `wave` | waving, hat on | onboarding and first run only |
+
+**The hat means "on watch".** The mascot never suggests that security is off
+while it is on: in Noche, Fuera or Armado it wears the hat and its eyes are
+open. `rest` is used only for the assistant's quiet hours, never for a
+security mode.
+
+**Where it appears, at most one per screen:**
+
+- the centre tab (40 pt, reflecting its state, so the bar shows Argus
+  listening, thinking or on watch);
+- the Inicio and Seguridad hero (84–108);
+- beside Argus' chat bubbles (28; it thinks while a tool runs);
+- the voice call stage (190, driven by `level`);
+- empty and failed states (110: `happy` for "nothing pending", `concern` for
+  "could not load");
+- onboarding (`wave`, then `think` while pairing searches the network);
+- the desktop sidebar mark and the Argus conversation row.
+
+It never appears in toasts, confirmations, forms or settings rows.
+
+**Accessibility.** It is decorative (`accessibilityElementsHidden`): the
+sentence beside it always carries the meaning. It holds a still pose under
+reduce motion and pauses off-screen.
+
+**Technology: comparison.** Checked for Expo SDK 57, RN 0.86, Fabric, the web
+build in Tauri/WebKitGTK and its strict CSP:
+
+| Option | Native | Web / Tauri | Live inputs (state + voice level) | Size | Licence and cost | Fit |
+|---|---|---|---|---|---|---|
+| **Rive** (`@rive-app/react-native` 0.5.x, Nitro, RN ≥ 0.78, Expo ≥ 53, dev client) | native renderer | no RN-web target: a `.web.tsx` over `@rive-app/canvas-lite`; the wasm must be self-hosted and the CSP needs `'wasm-unsafe-eval'` | state machine + data binding (`useRiveNumber`, triggers); a 1D blend state mixes timelines from one number (mouth by level) | runtime +2.4 MB Android / +1.7 MB iOS download; web about 420 KB gzip (canvas-lite) | runtimes MIT; editor closed, exporting needs a paid seat (about $9/month) | **best**: one file holds all 11 states, smooth, real-time inputs |
+| Lottie / dotLottie (`lottie-react-native` 7.5, `@lottiefiles/dotlottie-react-native` 0.12) | native | dotLottie wasm about 484 KB; lottie-web's full build needs `unsafe-eval` | state machines gate transitions; no blend from a continuous number; still changing | moderate | Apache-2.0 / MIT; After Effects to author | one-off flourishes only |
+| Skia + Reanimated (`@shopify/react-native-skia` 2.14) | UI thread, excellent | CanvasKit 2.9 MB gzip on web | anything, in code | +4 MB Android / +6 MB iOS | MIT, code only | smooth, but heavy on web and hand-drawn |
+| SVG + Reanimated (today) | fine for few nodes; each frame is a Fabric commit | free (DOM SVG), no wasm, no CSP change | anything, in code | 0 | MIT | safe, but it is the 1,600 lines we want to remove |
+
+Sources: [Rive RN](https://rive.app/docs/runtimes/react-native/react-native),
+[Rive in Expo](https://rive.app/docs/runtimes/react-native/adding-rive-to-expo.md),
+[Rive states](https://rive.app/docs/editor/state-machine/states),
+[Rive sizes](https://rive.app/docs/runtimes/runtime-sizes.md),
+[Rive pricing](https://rive.app/blog/rive-s-new-9-mo-plan),
+[dotLottie state machines](https://docs.lottiefiles.com/en/runtimes/distributions/react-native/v0.x/state-machines),
+[lottie-react-native](https://github.com/lottie-react-native/lottie-react-native),
+[Skia web](https://www.mintlify.com/shopify/react-native-skia/getting-started/web),
+[Reanimated performance](https://docs.swmansion.com/react-native-reanimated/docs/guides/performance),
+[CSP and wasm](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src).
+Web sizes are gzip measurements of the npm packages taken during this
+research. Whether WebKitGTK honours `'wasm-unsafe-eval'` is **not confirmed**
+and must be tested in the exact Tauri build.
+
+**Recommendation: Rive.** It is native on iOS and Android, and one `.riv`
+holds all eleven states with the inputs `state` (enum) and `level` (0–1). It
+sits behind one interface, `<Presence state level size />`.
+- **Web and desktop:** the same file through `canvas-lite` when the CSP test
+  passes. If it fails, the desktop shows the still pose of each state,
+  exported from the same Rive file as SVG, with a cross-fade between states.
+  That is not a second animation system.
+- **Code:** about 1,600 lines of procedural mascot and avatar code become
+  about 200.
+- **Costs:** the paid editor seat, about +2 MB per app download, and a 0.x
+  runtime whose API may still change.
+- **Fallback:** if the Rive spike fails, Skia can take the native side behind
+  the same interface without touching the screens.
+
+## 8c. Desktop and mobile idioms
+
+The same components carry two sets of idioms. Each is chosen by input and
+window class, never by a screen.
+
+**Desktop (Tauri and web, expanded and wide):**
+
+- **Glass sidebar.** Labels, the ⌘K field at its top, the Argus mark, and
+  shortcut hints (1–5) that show on hover.
+- **⌘K / Ctrl+K: `Command`.** One bar for commands, search and "pedir a
+  Argus". Results are grouped, actions show their shortcut (as Raycast
+  teaches), and Enter on free text asks Argus.
+- **Shortcuts.** N new, 1–5 sections, / search, Space (held) to talk, Esc
+  closes, Ctrl/⌘+Enter saves, ↑↓ moves in lists, E edits, Delete deletes
+  (with Deshacer). A "?" overlay lists them.
+- **Hover.**
+  - Rows highlight.
+  - Camera tiles reveal *Ver* / *Hablar*.
+  - Calendar events lift.
+  - Every icon-only button has a tooltip with its shortcut.
+  - Right click opens the row's `Menu`.
+- **Multi-column layouts that use the width.**
+  - Inicio: the feed column plus an aside with cameras and today.
+  - Seguridad: a status band, a 3-column camera grid and a "Lo que pasó"
+    column.
+  - Agenda: a 7-day week grid with a now-line.
+  - Argus: conversations, chat and a context panel showing what Argus did and
+    the camera it opened.
+  - Personas and Ajustes: list + detail panes.
+- **Pointer-sized overlays.** Dialogs are 480 px (560 for long forms),
+  popovers are anchored to their control, and menus have 36 px rows. Overlays
+  never cover the sidebar's navigation.
+
+**Mobile (phones):**
+
+- **Thumb reach.**
+  - Primary actions sit in the lower half: the status actions, hold-to-talk,
+    the sheet's Guardar (also the Return key).
+  - The top bar holds only navigation and secondary actions.
+  - The floating glass bar keeps the five destinations at the thumb.
+- **Native sheets and gestures.**
+  - Swipe back (iOS) and predictive Back (Android).
+  - Drag sheets to dismiss.
+  - Swipe a row for its main action, with Deshacer.
+  - Long press for the row menu.
+  - Pull to refresh on server lists.
+  - Pinch and double-tap on the live camera.
+- **Haptics** as in §10, including hold-to-talk start/stop and the hold-to-
+  confirm SOS ticks.
+- **The bar shrinks on scroll down** (labels hide, icons stay) and comes back
+  on scroll up. It stays fixed under reduce motion.
 
 ## 9. Screens
 
@@ -383,7 +784,7 @@ creates anything.
 |---|---|---|
 | 1 | **Inicio** | status sentence, "Ahora" (what is due), Novedades feed. Replaces the dashboard and the bell |
 | 2 | **Seguridad** | mode, cameras, what happened, then visits, places and maintenance as rows. Shown when the surveillance module is active and the role has it |
-| 3 | **Argus** (centre) | the Argus thread (text + voice) and, from its header, the conversations with people |
+| 3 | **Argus** (centre, drawn as the mascot) | tap: the Argus thread (text + voice) and, from its header, the conversations with people. **Hold: talk to Argus from any screen** (the signature gesture) |
 | 4 | **Agenda** | Hoy (reminders + events + tasks in one list), Calendario, Proyectos. Shown when productivity is active |
 | 5 | **Tú** | profile, Personas, Visitantes, Módulos, Sesiones, Privacidad, Llamadas de Argus, Ajustes, Actividad, Apariencia, Idioma, Cerrar sesión |
 
@@ -398,11 +799,24 @@ creates anything.
   A guest gets Inicio, Argus and Tú. An unknown role gets Inicio (the inactive
   notice) and Tú, with no Argus and no compose (fixes W27). Tabs have a fixed
   width and stay centred, so three tabs never spread to the edges (W26).
-- The floating "+" goes. Creation is the "+" inside Agenda and Proyectos, or
-  Argus. A long press on the Argus tab opens the quick-create sheet
-  (Recordatorio, Evento, Tarea) for people who prefer forms.
-- Search: a search icon in the Inicio top bar searches reminders, events,
-  projects, tasks, people and cameras.
+- The floating "+" goes. Creation is the "+" inside Agenda and Proyectos,
+  "Nuevo…" in `Command`, or simply asking Argus.
+- **The signature gesture.** Holding the centre tab (≥ 220 ms) starts
+  listening on any screen:
+  - an `impactLight` haptic;
+  - the `Aura` edge glows;
+  - `Presence` in the tab turns to `listen`;
+  - a glass pill reads «Te escucho… suelta para enviar» with the live
+    transcript.
+
+  Releasing sends; sliding off cancels. The answer arrives as a toast-sized
+  card with the result chip, and the full thread is one tap away. A tap
+  without holding opens the chat. With reduce motion the edge is a steady
+  rim. For people who cannot hold, a tap on the mic in the chat starts and
+  stops.
+- Search: a search button in the Inicio top bar opens `Command`, which
+  searches reminders, events, projects, tasks, people and cameras, runs
+  actions, and sends free text to Argus.
 - Panic: an "SOS" button in Seguridad's top bar (every role that has
   Seguridad) and in the guest's Inicio status. It is hold-to-confirm (1.5 s
   with haptic ticks) and also works from the lock screen notification, as
@@ -424,11 +838,22 @@ creates anything.
   (`uiux-map/web/home/bell-popover__phone__light__es.png`; Novedades is the
   feed), the compose menu (`uiux-map/web/home/compose-menu__phone__light__es.png`)
   and the "Primeros pasos 0 de 7" checklist (A10). Its job moves to empty states.
-- **Layout:** the Argus mark centred in the top bar (search on the right), then
-  the `Status` ("Todo tranquilo en Casa · Modo En casa · 5 cámaras
-  vigilando"), "Ahora" (up to 3 rows: overdue first, then the next by time;
-  the link "Agenda"), and "Novedades" (the latest 5 feed items, inline
-  actions such as "Activar", the link "Ver todo").
+- **Layout:**
+  - **Top bar:** the place picker as a glass pill on the left ("Casa ▾") and
+    search on the right.
+  - **Hero:** the `Aura` field behind the top. In it, `Presence` (108) and the
+    `Status` hero sentence: «Todo tranquilo.» with the meta "Modo En casa · 5
+    cámaras vigilando · Luis y tú están en casa".
+  - **Ahora:** up to 3 rows, overdue first, then the next by time; the link
+    "Agenda".
+  - **Novedades:** the latest 5 feed items, inline actions such as "Activar",
+    the link "Ver todo".
+  - **The hero changes with the home:**
+    - night or away: «Buenas noches.» with the hat on;
+    - alert: «Alguien en el patio.» with media and actions;
+    - offline: «Sin conexión», grey.
+- **Desktop:** a 600 px feed column with a 44 px hero, plus an aside with four
+  live cameras and today's agenda.
 - **States:** calm; alert (a `Status` in tone alert with media and actions,
   `role="alert"`); new household (one empty state with one first step, "Conecta
   tu primera cámara" or "Crea tu primer recordatorio" depending on the modules,
@@ -454,12 +879,18 @@ creates anything.
   "Lugares"), visits and maintenance become rows under "Más". Episode review
   ("¿Acertó?") moves into the episode detail. With one place, the mode control
   is right on the page (A18).
-- **Layout:** title + SOS, the `Status` for the current place with the mode
-  `Choice`, "Cámaras" (2×2 `Media` tiles with live thumbnails, privacy and off
+- **Layout:** title + SOS, the `Aura`-backed hero for the current place
+  (`Presence` + the mode as a 30 px hero line + one sentence) with the mode
+  `Choice` as a glass segmented control under it, within thumb reach, "Cámaras" (2×2 `Media` tiles with live thumbnails, privacy and off
   states), "Lo que pasó" (3 rows, "Revisar" chip on those pending review, "Ver
   todo"), and "Más" (Visitas esperadas, Lugares y modos, Mantenimiento,
   Personas vistas for the owner). With several places, the status shows the
   place picker as its title ("Casa ▾") and "Todos los lugares" in the sheet.
+  Changing the mode plays one `snappy` slide, a `success` haptic and the
+  Aura's cross-fade to the new tone; `Presence` puts on or takes off its hat.
+- **Desktop:** a status band (Aura `band` + mascot + mode control), a 3-column
+  camera grid whose tiles reveal *Ver* / *Hablar* on hover, and a "Lo que
+  pasó" feed column with inline *Revisar*.
 - **States:** calm; attention (an episode to review → the status says it);
   alert (same `Status` as Inicio); camera offline/privacy/off tiles labelled
   in words, not only an icon; guard role (no mode change where not allowed:
@@ -538,7 +969,9 @@ creates anything.
   call screen keeps its orb but loses the overlapping card (the camera opens as
   a result chip). The conversations list with people moves behind the header
   title ("Argus ▾" → Conversaciones), so the tab opens straight into Argus.
-- **Layout:** bubbles (mine in ink, Argus' on surface), the source as meta
+- **Layout:** `Presence` (28) beside Argus' bubbles, showing `think` while a
+  tool runs and `happy` when something was created. Bubbles: mine in ink,
+  Argus' on surface. The source as meta
   ("por voz", "desde el portátil"), results as chips that open the created item
   or the camera, suggestion chips above the composer that change with context
   ("Muéstrame la cocina", "Recuérdame…", "Modo noche").
@@ -547,6 +980,14 @@ creates anything.
   mic denied (button to grant); Argus unreachable (the message stays as
   "No enviado · Reintentar", never silently lost); module-off request
   ("Activar Productividad" as a pending intent chip).
+- **Voice:** the call stage is `Presence` at 190 in `listen` / `speak`, driven
+  by `level`, over the `Aura` `listen` tone with the edge glow. A live
+  transcript sits under it (as Claude and ChatGPT do); result cards (the
+  camera, the reminder) appear inline instead of covering the transcript.
+- **Desktop:** three columns. Conversations on the left (Argus pinned with its
+  mascot), the chat in the centre (max 760 px; holding Space talks), and a
+  context panel on the right: what Argus did in this conversation (created
+  items), the camera it opened, and who is home.
 
 ### 9.7 Personas
 
@@ -647,11 +1088,14 @@ visual baselines). The rest are a review list in the PR template.
 **Sheets, dialogs, alerts**
 
 - [ ] Phone: forms and pickers in a native sheet (`Sheet`), with a grabber,
-      detents `auto` → `large`, drag to dismiss, Back closes it (A15), and
-      dismissal with unsaved text asks to discard.
+      detents `auto` → `large`.
 - [ ] Medium+ and web: the same `Sheet` is a centred dialog or right side
-      sheet, Esc closes it, focus is trapped and returned, Ctrl/⌘+Enter
-      submits.
+      sheet, focus is trapped and returned, Ctrl/⌘+Enter submits.
+- [ ] **Every overlay closes on a tap or click outside it (the scrim), with
+      Esc on desktop, with Back on Android (A15) and by dragging a sheet
+      down**. Exceptions: a destructive confirmation (only its buttons,
+      Esc or Back = Cancelar), and a form with unsaved input, which asks
+      «¿Descartar «…»?» with *Seguir editando* as the default (§5.7).
 - [ ] Irreversible or loud actions use `Confirm` (native alert on phones) with
       a named verb; reversible actions use Deshacer instead.
 
@@ -674,7 +1118,7 @@ visual baselines). The rest are a review list in the PR template.
       instead. Only secondary meta may truncate to one line, and its full text
       is available (gate: truncation count on key fields = 0).
 - [ ] Holds at font scale 1.0, 1.3 and 2.0 (body and meta scale to 2.0;
-      display and title cap at 1.5), at 320 px width, and in phone landscape
+      hero and title cap at 1.5), at 320 px width, and in phone landscape
       (gate: the UI-map viewports plus font-scale states).
 - [ ] Icons 20 or 24, stroke 1.75, from the registry only.
 
@@ -706,7 +1150,25 @@ visual baselines). The rest are a review list in the PR template.
 
 - [ ] Light and dark checked side by side; no control nearly vanishes (W37);
       visual baselines in both (gate).
-- [ ] Transitions within §7's durations; none with reduce motion.
+- [ ] Transitions use the springs of §3.3 and run on the UI thread; none with
+      reduce motion.
+- [ ] At most two continuous animations on screen (`Aura`, `Presence`), both
+      paused off-screen; at most one blur layer; the screen passes §7b's
+      frame budget on the low-end reference (gate in R9).
+- [ ] No glass behind reading text; Reduce Transparency and the `low` tier
+      give solid surfaces.
+- [ ] At most one mascot on screen, always beside words that carry the
+      meaning; its state matches the truth (the hat whenever on watch).
+
+**Errors**
+
+- [ ] No backend code, HTTP status or raw server text on screen; every
+      failure goes through the one code→message map, with a generic message
+      for unknown codes (§5.8).
+- [ ] The surface follows §5.8: inline for fields, a toast with Reintentar
+      for a retryable action (after rollback), an inline `Notice` for a
+      refusal, an in-place failed state for a read, full screen only for
+      session or trust.
 - [ ] Status never by colour alone: always an icon or a word.
 
 ## 11. Accessibility rules
@@ -714,7 +1176,7 @@ visual baselines). The rest are a review list in the PR template.
 - Text contrast ≥ 4.5:1, icons and control borders ≥ 3:1, in both themes,
   checked from `tokens.ts` by a unit test (WCAG 1.4.3, 1.4.11).
 - Text scales with the OS: `allowFontScaling` stays on; `maxFontSizeMultiplier`
-  2.0 for body/meta/caption and 1.5 for display/title. That meets WCAG 1.4.4's
+  2.0 for body/meta/caption and 1.5 for hero/title. That meets WCAG 1.4.4's
   200% target where it matters
   ([RN Text](https://reactnative.dev/docs/text)). Today's global 1.6 cap goes.
 - Every interactive element has a role and a label, required by the
@@ -725,8 +1187,15 @@ visual baselines). The rest are a review list in the PR template.
   heading.
 - Focus is visible on web and desktop (2 px accent ring, 3:1) and never hidden
   by the sticky bar or a toast (WCAG 2.4.11).
-- Reduce motion and reduce transparency are honoured (the tab bar blur becomes
-  solid).
+- Reduce motion, Reduce Transparency and Increase Contrast are honoured. On
+  iOS: `isReduceTransparencyEnabled`, `isDarkerSystemColorsEnabled`. On
+  Android: `isHighTextContrastEnabled`
+  ([RN AccessibilityInfo](https://reactnative.dev/docs/accessibilityinfo)).
+  Glass becomes solid, the Aura becomes a flat tint (and disappears with
+  Increase Contrast), and the edge glow becomes a 3 px border. The app's own
+  "Reducir efectos" setting does the same on every platform.
+- The mascot and the Aura are decorative to screen readers; the hero sentence
+  is the screen's first heading.
 - Hold-to-talk and hold-to-confirm panic have tap alternatives for users who
   cannot hold: tap to start / tap to stop, and a two-step confirm.
 
@@ -767,21 +1236,55 @@ second and is written natively, not translated word for word.
 | R-D8 | Native sheets with react-native-true-sheet v3 (spike first; gorhom as fallback); sonner for toasts; expo-haptics | yes, after the spike |
 | R-D9 | Font scale cap raised from 1.6 to 2.0 for body text | yes |
 | R-D10 | Panic as hold-to-confirm "SOS" in Seguridad (and in the guest's Inicio) | yes |
-| R-D11 | The mascot only in onboarding and the voice call; the orbit hero and the "+" morph go | yes |
+| R-D11 | ~~The mascot only in onboarding and the voice call~~ **Reversed by the owner in v2:** the mascot is a living presence across the app (§8b); the orbit hero and the "+" morph go | yes |
 | R-D12 | Rename "Entornos" → "Lugares", "Vigilancia" → "Seguridad" everywhere | yes |
 | R-D13 | The Argus tab opens the Argus thread directly; conversations with people sit behind its header | yes; alternative: a conversations list with Argus pinned first |
+| R-D14 | Identity: the `Aura` ambient status, the `hero` sentence, glass only on floating chrome, the three springs (§2b) | yes |
+| R-D15 | Signature gesture: **hold the centre tab to talk** from any screen; a tap opens the chat (replaces v1's "long press = quick create") | yes |
+| R-D16 | The hat means "on watch": the mascot wears it in Noche, Fuera and Armado and in alerts, and never suggests that security is off | yes |
+| R-D17 | Mascot technology: **Rive** (native runtime; `canvas-lite` on desktop if the WebKitGTK CSP test passes, otherwise still poses from the same file). Needs a paid Rive editor seat (about $9/month) and someone to rig the `.riv` from today's figure | yes, after the spike |
+| R-D18 | Allow `'wasm-unsafe-eval'` in the Tauri/web CSP (self-hosted wasm only) so desktop gets the animated mascot | yes, if the WebKitGTK test passes; otherwise keep the strict CSP and the still poses |
+| R-D19 | ⌘K `Command` as the one door on desktop (commands, search, ask Argus), and the search button on phones | yes |
+| R-D20 | A "Reducir efectos" setting, plus an automatic `low` tier on older Android (no blur, still Aura, simpler mascot) | yes |
+| R-D21 | Dismissal: overlays close on an outside tap/click, Esc and Back, except destructive confirmations and dirty forms, which ask (§5.7) | yes |
 
 ## 14. Order of work
 
-1. R5 lands `tokens.ts` with §3's values (one edit later if R-D2/R-D3 change).
-2. R6 builds the 23 components of §4 in `ui-lab` with baselines at three
-   widths × two themes, plus the TrueSheet spike (R-D8).
+The rules, the refactor and the redesign run as one programme after the owner
+approves this design (owner decision, 2026-10-20). Within it:
+
+1. The two spikes (TrueSheet, Rive and the WebKitGTK CSP) and the low-end
+   Android performance reference come first, because they can change R-D8,
+   R-D17 and R-D18.
+2. `tokens.ts` gets §3's values (R5) and the 26 components of §4 are built
+   in `ui-lab` with baselines at three widths × two themes × reduced
+   motion/transparency (R6).
 3. Navigation (§9.0) and Inicio first: they change the first impression and
    remove the most code.
 4. Then Seguridad + Cámara, Agenda + Proyectos, Argus, Tú/Ajustes/Personas,
    and onboarding last (it already works and is seen once).
 5. Each screen lands only when it passes §10 and its UI-map states are
    re-captured. Deleted components go in the same change (no dead code).
+
+## 15. Alignment with the refactor plan and the rules
+
+The rules agent's `frontend-rules-final.md` did not exist on the plan branch
+when this was written. It should reference §3 (tokens) and §4 (the 26
+components) of this file. Where this spec departs from
+`frontend-refactor-plan.md` / `frontend-rules-proposal.md`, the difference is
+deliberate and needs the owner's or the rules agent's confirmation:
+
+| # | Plan / rules say | This spec says | Resolution proposed |
+|---|---|---|---|
+| A1 | D7: the redesign starts after R5 and R6 exit | the owner's 2026-10-20 decision: rules, refactor and redesign are implemented together after design approval | the plan's D7 and §5 ordering are superseded; update the plan |
+| A2 | F20: `Text` caps font scale at 1.6 | 2.0 for body/meta/caption, 1.5 for hero/title (§11) | change F20's number |
+| A3 | F21: today's type scale (8 steps) and radius scale (9 steps) are kept | 6 type steps (`hero` 36 … `caption` 12) and 5 concentric radii (§3) | F21 keeps the *mechanism* (lint-enforced scales) with the new *values* |
+| A4 | §2.4 / F20: status colours are fills with `*-strong` text twins | each status colour is text-safe itself, so the twins go (§3.1); the contrast unit test stays | drop the twins in F20 |
+| A5 | §3.7 primitive names: `PressableSurface`, `Button`, `IconButton`, `ListRow`, `SegmentedControl` (falls back to a select), `RetryNotice`, `StaleRibbon`, `Field`, `Stack`/`Inline`/`Cluster` | `Pressable`(`PressableSurface`), `Button` (with `iconOnly`, absorbing `IconButton`), `Row`, `Choice`, `Notice` (covers retry and stale), `Field`; `Stack`/`Inline`/`Cluster` are kept as layout helpers and not counted among the 26 | use this spec's names in the rules, or keep the plan's: only one list may exist |
+| A6 | F27 performance budgets cover bundle and startup | adds §7b's animation budget, the `perfTier`, and new dependencies: TrueSheet, sonner(-native), expo-haptics, expo-blur, expo-glass-effect, Rive (+about 420 KB gzip wasm on web, lazy-loaded; +about 2 MB per native app) | add §7b to F27; budget the new dependencies explicitly |
+| A7 | F31 / the Tauri CSP: scripts only from the app itself | Rive on desktop needs `'wasm-unsafe-eval'` with self-hosted wasm (R-D18) | the owner decides; without it, the desktop uses still poses |
+| A8 | F11: a failure is never shown as a fact | §5.8 adds *where* each error appears; the copy and the code→message map stay with `error-messages-spec.md` (not yet on the plan branch) | consistent; the rules should name `serviceErrorKey` as the single map |
+| A9 | Breakpoints `compact < 600 ≤ medium < 1024 ≤ expanded < 1440 ≤ wide` | identical (§6) | no conflict |
 
 ## Appendix: sources
 
@@ -814,3 +1317,5 @@ second and is written natively, not translated word for word.
 - Design systems: [variant explosion](https://stevekinney.com/courses/enterprise-ui/maintaining-a-design-system),
   [shadcn model](https://vercel.com/academy/shadcn-ui/why-shadcn-ui-is-different).
 - Libraries: see the links in §8.
+- v2 identity research (new-era design, AI assistants, smart home): see the
+  links in §2b. Mascot runtimes: see §8b.

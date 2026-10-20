@@ -1,150 +1,147 @@
-# Rediseño de Argus: resumen
+# Rediseño de Argus: resumen (v2)
 
-20 de octubre de 2026. Esto es una propuesta: no toca código de la app. El
-detalle está en `redesign-spec.md` y el prototipo en
-`redesign-prototype/index.html`, que se abre en el navegador.
+20 de octubre de 2026. Es una propuesta: no toca código de la app. El detalle
+está en `redesign-spec.md` y el prototipo en `redesign-prototype/index.html`,
+que se abre en el navegador y tiene botones para reducir movimiento y
+transparencia. Como decidiste, las reglas, el refactor y el rediseño se
+implementan juntos cuando apruebes el diseño final.
 
-## La dirección
+## La idea: Argus es una presencia, no un tablero
 
-Una app tranquila y sencilla, al estilo de Threads:
+La v1 era calma y limpia. La v2 le da una identidad propia:
 
-- **Fondo y texto casi en blanco y negro.** Un solo color de acento (el
-  arena de siempre) y tres colores de estado: verde (calma), ámbar (atención)
-  y rojo (alerta real).
-- **Tipografía clara.** Fuentes del sistema, texto principal en 16 y solo seis
-  tamaños.
-- **Poco adorno.** Líneas finas en lugar de tarjetas con sombra, y mucho aire.
-- **Lo primero, el estado.** Cada pantalla abre con una frase que dice cómo
-  están las cosas («Todo tranquilo en Casa») y, como mucho, una acción
-  principal.
-- **Natural en cada plataforma.** En el teléfono, hojas inferiores, alertas,
-  vibración y respuesta al toque nativas. En el escritorio, diálogos centrados
-  y estados al pasar el ratón.
+- **El Aura.** Una luz suave en la parte de arriba de Inicio y Seguridad que
+  respira con el estado de la casa:
+  - arena cuando todo está tranquilo;
+  - índigo cuando Argus vigila de noche o estás fuera;
+  - ámbar si hay algo que revisar;
+  - rojo con pulso más rápido en una alerta real;
+  - gris si no hay conexión.
+- **Una frase grande.** Una sola por pantalla: «Todo tranquilo.», «Buenas
+  noches.», «Alguien en el patio.». Todo lo demás queda en silencio, al estilo
+  Threads.
+- **Argus vivo.** La mascota de siempre (con su gorro de detective y su lupa)
+  aparece en toda la app con 11 estados: atento, de guardia, escuchando,
+  pensando, hablando, contento, preocupado, alerta, descansando, sin conexión
+  y saludando.
+  - **El gorro significa «estoy vigilando»:** lo lleva en Noche, Fuera, Armado
+    y en las alertas.
+  - Nunca hay más de una mascota por pantalla, y siempre va junto a una frase
+    que dice lo mismo con palabras.
+- **El gesto propio: mantener el centro para hablar.** Desde cualquier
+  pantalla mantienes presionada la mascota del centro de la barra. El borde de
+  la pantalla se ilumina, Argus se inclina para escucharte y, al soltar, se
+  envía. Un toque abre el chat.
+- **Vidrio solo en lo que flota:** la barra flotante, las hojas, la barra
+  lateral del escritorio y ⌘K. Nunca va detrás del texto que se lee.
+- **Movimiento con física.** Tres resortes para todo: rápido para los toques,
+  suave para las hojas y juguetón solo para la mascota.
 
-## Qué cambia
+Todo esto son piezas reutilizables (`Aura`, `Presence`, `Command`, el material
+y los resortes); ninguna pantalla trae animaciones propias.
 
-**La barra inferior** pasa de 6 iconos sin nombre y un «+» flotante a 5
-destinos con nombre: **Inicio · Seguridad · Argus · Agenda · Tú**.
+## Rendimiento primero
 
-- Argus va en el centro, donde Threads pone «crear»: hablarle a Argus es la
-  forma más fácil de crear cosas («recuérdame pagar la luz»).
-- Si un módulo está apagado, su pestaña desaparece.
-- Un invitado ve solo 3 pestañas, centradas.
+- **Dónde corre.** Toda animación corre en el hilo de UI (Reanimated o el
+  motor nativo de Rive).
+- **Límites por pantalla.** Como máximo dos animaciones continuas (el Aura y
+  la mascota), que se pausan si no se ven, y una sola capa de desenfoque.
+- **Medición.** Se mide en un Android de gama baja.
+- **En Android antiguo o de gama baja**, la app pasa sola a modo ligero: sin
+  desenfoque, con el Aura quieta y una mascota más simple. El mismo modo se
+  puede activar a mano («Reducir efectos»).
+- **Con «Reducir movimiento»**, todo queda quieto.
 
-**Inicio** deja de ser un tablero de 9 tarjetas (3.759 px de alto en el
-teléfono). Ahora tiene tres partes:
+## Errores que la gente entiende
 
-- el estado de la casa;
-- «Ahora», con hasta 3 pendientes;
-- «Novedades», como el feed de Threads.
+Nunca se muestra un código ni un mensaje del servidor. Cada código se
+traduce a una frase corta que dice qué pasó y qué hacer. Si un código es
+desconocido, aparece un mensaje amable genérico. Dónde aparece depende del
+caso:
 
-La campana y el menú «+» desaparecen.
+- **Junto al campo** si falta un dato.
+- **Aviso con «Reintentar»** si falló un guardado. Por ejemplo: «No pudimos
+  guardar el recordatorio. Revisa tu conexión e inténtalo de nuevo.»
+- **Aviso en línea** si algo no está permitido.
+- **Estado de fallo en la sección** si algo no cargó. Nunca se muestra como
+  «vacío».
+- **Pantalla completa** solo si se perdió la sesión.
 
-**Seguridad** junta Vigilancia y Cámaras en una sola pantalla:
+El prototipo muestra tres ejemplos. Los textos los define la especificación
+de mensajes de error del otro agente.
 
-- el modo actual con los cuatro modos a un toque;
-- cuatro cámaras en vivo;
-- «Lo que pasó».
+## Diálogos, hojas y teclado
 
-Visitas, lugares y mantenimiento pasan a filas. «Entornos» se llama
-«Lugares».
+- **Cerrar.** Todo diálogo u hoja se cierra al tocar fuera, con Esc en el
+  escritorio o con Atrás en Android. Hay dos excepciones:
+  - las confirmaciones destructivas;
+  - los formularios con algo escrito, que preguntan «¿Descartar…?» y por
+    defecto siguen editando.
+- **Hoja con teclado** (lo que falló hoy en tu S21 FE):
+  - la hoja nunca pasa de la barra de estado;
+  - su encabezado (Cancelar · título · Guardar) queda fijo;
+  - el contenido se desplaza dentro de la hoja;
+  - el campo activo siempre se ve.
 
-**La cámara** pasaba de 4.566 px a dos pantallas:
+  La especificación trae una lista de pruebas que debe pasar en tu teléfono.
 
-- la de en vivo: video, mantener para hablar, llamar, sirena y tres filas;
-- «Ajustes de la cámara», con todo lo demás.
+## Escritorio y teléfono, cada uno a su manera
 
-Lo que no aplica se oculta. Por ejemplo, en modo privacidad no aparecen
-hablar ni mover.
+- **Escritorio:**
+  - barra lateral;
+  - ⌘K para buscar, actuar o preguntarle a Argus;
+  - atajos (N nuevo, 1–5 secciones, Esc, mantener Espacio para hablar);
+  - efectos al pasar el ratón;
+  - columnas que aprovechan el ancho: Seguridad con cuadrícula de cámaras,
+    Agenda en vista semana, Argus con un panel de contexto.
+- **Teléfono:**
+  - acciones al alcance del pulgar;
+  - hojas nativas;
+  - gestos;
+  - vibración en las acciones clave.
 
-**Agenda** junta recordatorios, eventos y tareas en «Hoy», una sola lista
-ordenada por hora. Además tiene «Calendario» y «Proyectos». En el teléfono, los
-proyectos son listas por estado, no tableros que se desplazan de lado.
+## Lo que se mantiene de la v1
 
-**Tú** reúne perfil, personas, privacidad, módulos y ajustes en filas cortas.
-Antes eran páginas de unos 6.200 px.
+- **Barra:** Inicio · Seguridad · Argus (centro) · Agenda · Tú.
+- **Inicio:** el estado, «Ahora» y Novedades.
+- **Seguridad:** junta Vigilancia y Cámaras.
+- **Cámara:** en vivo y sus ajustes, en dos pantallas.
+- **Agenda:** Hoy, Calendario y Proyectos.
+- **Componentes:** 26 en lugar de unos 300.
 
-**La bienvenida** tiene un solo botón. La vinculación tiene 3 pasos claros, y
-en el escritorio ya no aparece el texto pensado para el teléfono.
+## Cuánto código se elimina
 
-**Los estados son honestos.**
+Se estima un 40 % menos de código de interfaz, de unas 39.000 líneas a unas
+22.000. La identidad suma unas 700 líneas. La mascota pasa de unas 1.600 líneas
+dibujadas a mano a un archivo de Rive y un envoltorio de unas 200.
 
-- Mientras carga se ve un esqueleto con la forma final, no una ruedita.
-- Sin conexión se ve «Muestro lo de las 15:32».
-- Un fallo ofrece «Reintentar» y nunca dice «no hay nada».
-- Las acciones reversibles se hacen al instante con «Deshacer»; ya no se
-  pregunta «¿Seguro?».
+## Decisiones que necesito de ti (nuevas en la v2)
 
-## Por qué es más simple
+1. **Identidad:** el Aura, la frase grande, vidrio solo en lo que flota y
+   movimiento con resortes. *Recomiendo sí.*
+2. **Gesto propio:** mantener el centro para hablar desde cualquier pantalla.
+   Reemplaza «mantener = crear rápido» de la v1. *Recomiendo sí.*
+3. **El gorro significa «vigilando»**, y la mascota nunca da a entender que la
+   seguridad está apagada. *Recomiendo sí.*
+4. **La mascota se hace con Rive**, nativa en iOS y Android.
+   - Requiere una licencia del editor de Rive (unos 9 USD al mes) y que
+     alguien rehaga la figura actual en Rive.
+   - Antes, una prueba de rendimiento en un Android de gama baja.
+   - *Recomiendo sí, tras la prueba.*
+5. **Escritorio con la mascota animada.** Hay que permitir
+   `'wasm-unsafe-eval'` en la política de seguridad de Tauri (solo con el wasm
+   propio). Si WebKitGTK no lo acepta, el escritorio usa poses fijas.
+   *Recomiendo sí, si la prueba pasa.*
+6. **⌘K como puerta única** en el escritorio, y el botón de búsqueda en el
+   teléfono. *Recomiendo sí.*
+7. **Ajuste «Reducir efectos»** y modo ligero automático en Android de gama
+   baja. *Recomiendo sí.*
+8. **Cierre al tocar fuera**, con las dos excepciones de arriba. *Recomiendo
+   sí.*
+9. **Tamaño de letra del sistema hasta 200 %.** Contradice el 160 % de la
+   regla F20 del plan. *Recomiendo sí y actualizar la regla.*
 
-**23 componentes en lugar de unos 300.** Hoy hay 46 primitivas, 18 archivos de
-layout y 243 componentes propios de cada pantalla: 26 diálogos, 30 paneles, 20
-tarjetas y 17 filas distintos. Cada uno decide por su cuenta el espacio, el
-tamaño táctil y los estados.
-
-Con el rediseño, las pantallas se arman con las mismas piezas: `Section`, `Row`,
-`Status`, `Sheet`, `Field`, `ResourceView` y algunas más. Cada pieza ya trae
-incluidos:
-
-- las etiquetas de accesibilidad;
-- los 48 dp de área táctil;
-- el modo oscuro;
-- sus estados.
-
-Revisar una pantalla pasa a ser revisar cómo combina piezas que ya están
-probadas.
-
-**Menos código propio.** Las mecánicas difíciles pasan a librerías mantenidas y
-compatibles con Expo 57:
-
-- hojas nativas: react-native-true-sheet;
-- avisos con deshacer: sonner;
-- vibración: expo-haptics;
-- teclado: react-native-keyboard-controller, que ya usamos.
-
-En el escritorio y la web se siguen usando los diálogos de `@rn-primitives`,
-que ya tenemos.
-
-**Cuánto código se elimina** (estimado a partir de los conteos de hoy): de unas
-39.000 líneas de UI a unas 22.500, **cerca de 40 % menos** (rango 35–45 %). El
-ratchet de la fase R0 lo medirá de verdad.
-
-**Lista de detalles.** La especificación trae una lista que cada pantalla debe
-pasar: vibración solo en acciones clave, área táctil, teclado, zonas seguras,
-formato de fechas para es-PE, texto que no se corta, modo oscuro, movimiento
-reducido. Parte de la lista se volverá una comprobación automática en la fase
-R8.
-
-## Encaje con el plan de refactor
-
-- **R5:** sus tokens toman los valores de esta especificación (colores,
-  6 tamaños de texto, espacios, radios, breakpoints 600 / 1024 / 1440).
-- **R6:** construye los 23 componentes.
-- **Después:** se rehacen las pantallas, empezando por la navegación e Inicio.
-
-## Decisiones que necesito de ti
-
-1. **Barra:** Inicio · Seguridad · Argus (centro) · Agenda · Tú, sin campana y
-   sin «+» flotante. *Recomiendo sí.*
-2. **Color:** botones en tinta (negro en claro, blanco en oscuro) y el arena
-   como único acento, en lugar de grafito + arena. *Recomiendo sí.*
-3. **Texto:** principal en 16 y fuentes del sistema, sin fuente propia.
-   *Recomiendo sí.*
-4. **Cámaras dentro de Seguridad**, y la página de la cámara dividida en dos.
-   *Recomiendo sí.*
-5. **Agenda:** Hoy + Calendario (mes en el teléfono, semana desde tablet) +
-   Proyectos; se quitan las vistas Día y Lista. *Recomiendo sí.*
-6. **Hojas nativas con react-native-true-sheet v3.** Primero una prueba
-   (spike) en Android e iOS; si falla, se usa gorhom. *Recomiendo sí, tras la
-   prueba.*
-7. **Tamaño de letra del sistema hasta 200 %** en el texto principal (hoy el
-   tope es 160 %). *Recomiendo sí.*
-8. **Pánico:** botón «SOS» que se mantiene presionado, en Seguridad (y en el
-   Inicio del invitado). *Recomiendo sí.*
-9. **La mascota solo en la bienvenida y en la llamada con Argus**; se van la
-   órbita y la animación del «+». *Recomiendo sí.*
-10. **Nombres:** «Entornos» pasa a «Lugares», y «Vigilancia» a «Seguridad» en
-    todas partes. *Recomiendo sí.*
-11. **Pestaña Argus:** abre directo la conversación con Argus, y las
-    conversaciones con personas quedan en su encabezado. La alternativa es una
-    lista de conversaciones con Argus fijado arriba. *Recomiendo la primera.*
+Siguen abiertas las decisiones de la v1 (barra, color tinta + arena, letra
+16, hojas con true-sheet, SOS, nombres «Lugares» y «Seguridad»). La sección
+15 de la especificación lista dónde este diseño cambia algo del plan de
+refactor, para que lo confirmes.
