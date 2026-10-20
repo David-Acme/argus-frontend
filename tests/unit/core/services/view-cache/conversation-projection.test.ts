@@ -1,13 +1,14 @@
 import { describe, expect, test } from 'bun:test';
-import type { IConversationMessageCacheRow, IConversationSummaryCacheRow } from '@/core/interfaces';
+import type { IConversationMessageCacheRow, IConversationSummaryCacheRow, IConversationThreadCache } from '@/core/interfaces';
 import {
   projectConversations,
-  summarizeConversations,
-  groupThreads,
+  projectConversationThread,
+  summaryOf,
   toConversationRow,
   type ConversationMessageSource,
+  type ConversationSummaryFacts,
 } from '@/core/services/view-cache/conversation.projection';
-import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
+import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
 
 const T0 = Date.UTC(2026, 9, 19, 12, 0, 0);
 const MINUTE = 60_000;
@@ -50,117 +51,76 @@ describe('toConversationRow', () => {
   });
 });
 
-describe('groupThreads', () => {
-  test('one thread per counterpart, oldest first, ties broken by id', () => {
-    const threads = groupThreads(
-      [
-        source({ id: '12', createdAt: new Date(T0 + MINUTE) }),
-        source({ id: '10', createdAt: new Date(T0 + MINUTE) }),
-        source({ id: '9', createdAt: new Date(T0) }),
-        source({ id: '20', counterpartId: '0', counterpartName: '' }),
-      ].map(toConversationRow)
-    );
-    expect(threads.get(3)?.map((row) => row.id)).toEqual(['9', '10', '12']);
-    expect(threads.get(0)?.map((row) => row.id)).toEqual(['20']);
-  });
+const facts = (patch: Partial<ConversationSummaryFacts> & { counterpartId: string; last: ConversationMessageSource }): ConversationSummaryFacts => ({
+  lastSent: null,
+  lastNamed: null,
+  unread: 0,
+  ...patch,
 });
 
-describe('summarizeConversations', () => {
-  const summaries = (): IConversationSummaryCacheRow[] =>
-    summarizeConversations(
-      groupThreads(
-        [
-          source({ id: '1', counterpartId: '0', counterpartName: '', kind: 'turn', direction: 'out', createdAt: new Date(T0) }),
-          source({ id: '2', counterpartId: '3', createdAt: new Date(T0 + 5 * MINUTE), isRead: false }),
-          source({ id: '3', counterpartId: '3', createdAt: new Date(T0 + 6 * MINUTE), isRead: false }),
-          source({
-            id: '4',
-            counterpartId: '5',
-            counterpartName: 'Ana',
-            direction: 'out',
-            state: 'notified',
-            createdAt: new Date(T0 + 9 * MINUTE),
-          }),
-          source({
-            id: '5',
-            counterpartId: '5',
-            counterpartName: 'Ana',
-            direction: 'in',
-            kind: 'reply',
-            replyToKey: 'key-4',
-            createdAt: new Date(T0 + 10 * MINUTE),
-          }),
-        ].map(toConversationRow)
-      )
+describe('summaryOf', () => {
+  test('a summary is built from the newest line, the unread count and the last sent letter, never from the whole thread', () => {
+    const summary = summaryOf(
+      facts({
+        counterpartId: '5',
+        last: source({ id: '9', counterpartId: '5', counterpartName: ' ', kind: 'reply', createdAt: new Date(T0 + MINUTE) }),
+        lastSent: source({ id: '8', counterpartId: '5', direction: 'out', state: 'notified' }),
+        lastNamed: source({ id: '7', counterpartId: '5', counterpartName: 'Ana ' }),
+        unread: 2,
+      })
     );
-
-  test('Argus comes first when it has rows, then the members by their last line', () => {
-    expect(summaries().map((summary) => summary.counterpartId)).toEqual([0, 5, 3]);
+    expect(summary.counterpartId).toBe(5);
+    expect(summary.counterpartName).toBe('Ana');
+    expect(summary.unread).toBe(2);
+    expect(summary.last.id).toBe('9');
+    expect(summary.lastSent?.id).toBe('8');
   });
 
-  test('counts only incoming rows not yet read', () => {
-    expect(summaries().map((summary) => summary.unread)).toEqual([0, 0, 2]);
-  });
-
-  test('keeps the last outgoing relay or reply for its delivery state, never a turn', () => {
-    const [argus, ana, david] = summaries();
-    expect(argus?.lastSent).toBeNull();
-    expect(ana?.lastSent?.id).toBe('4');
-    expect(ana?.last.id).toBe('5');
-    expect(david?.lastSent).toBeNull();
-  });
-
-  test('the name is the newest non-blank one the thread carried', () => {
-    const [summary] = summarizeConversations(
-      groupThreads(
-        [
-          source({ id: '1', counterpartName: 'Dave', createdAt: new Date(T0) }),
-          source({ id: '2', counterpartName: ' ', createdAt: new Date(T0 + MINUTE) }),
-        ].map(toConversationRow)
-      )
-    );
-    expect(summary?.counterpartName).toBe('Dave');
-  });
-
-  test('Argus is not listed when it has no rows', () => {
-    const list = summarizeConversations(groupThreads([source({ id: '1' })].map(toConversationRow)));
-    expect(list.map((summary) => summary.counterpartId)).toEqual([3]);
+  test('a thread with no named line and nothing sent reads blank and null', () => {
+    const summary = summaryOf(facts({ counterpartId: '0', last: source({ id: '1', counterpartId: '0', counterpartName: '' }) }));
+    expect(summary.counterpartName).toBe('');
+    expect(summary.lastSent).toBeNull();
   });
 });
 
 describe('projectConversations', () => {
-  test('writes the list, the total unread and one thread per counterpart', () => {
+  test('writes the list with Argus first and then the members by their last line, and the total unread', () => {
     const writes = projectConversations({
-      conversations: [
-        source({ id: '1', isRead: false }),
-        source({ id: '2', counterpartId: '0', counterpartName: '', kind: 'turn', direction: 'out' }),
+      summaries: [
+        facts({ counterpartId: '3', last: source({ id: '3', createdAt: new Date(T0 + 6 * MINUTE) }), unread: 2 }),
+        facts({ counterpartId: '5', last: source({ id: '5', counterpartId: '5', createdAt: new Date(T0 + 10 * MINUTE) }) }),
+        facts({ counterpartId: '0', last: source({ id: '1', counterpartId: '0', counterpartName: '', kind: 'turn' }), unread: 1 }),
       ],
     });
     expect(
       (rowsOf(writes, VIEW_CACHE_KEYS.conversationList) as IConversationSummaryCacheRow[]).map((row) => row.counterpartId)
-    ).toEqual([0, 3]);
-    expect(valueOf(writes, VIEW_CACHE_KEYS.conversationUnread)).toBe(1);
-    expect(
-      (rowsOf(writes, VIEW_CACHE_KEYS.conversationThread, '3') as IConversationMessageCacheRow[]).map((row) => row.id)
-    ).toEqual(['1']);
-    expect(
-      (rowsOf(writes, VIEW_CACHE_KEYS.conversationThread, '0') as IConversationMessageCacheRow[]).map((row) => row.id)
-    ).toEqual(['2']);
-  });
-
-  test('a long thread keeps its newest rows, never its oldest', () => {
-    const many = Array.from({ length: VIEW_CACHE_LIST_LIMIT + 3 }, (_, index) =>
-      source({ id: String(index + 1), createdAt: new Date(T0 + index * MINUTE) })
-    );
-    const thread = rowsOf(projectConversations({ conversations: many }), VIEW_CACHE_KEYS.conversationThread, '3') as IConversationMessageCacheRow[];
-    expect(thread).toHaveLength(VIEW_CACHE_LIST_LIMIT);
-    expect(thread[0]?.id).toBe('4');
-    expect(thread.at(-1)?.id).toBe(String(VIEW_CACHE_LIST_LIMIT + 3));
+    ).toEqual([0, 5, 3]);
+    expect(valueOf(writes, VIEW_CACHE_KEYS.conversationUnread)).toBe(3);
+    expect(writes.some((write) => write.key === VIEW_CACHE_KEYS.conversationThread)).toBe(false);
   });
 
   test('no rows writes an empty list and zero unread', () => {
-    const writes = projectConversations({ conversations: [] });
+    const writes = projectConversations({ summaries: [] });
     expect(rowsOf(writes, VIEW_CACHE_KEYS.conversationList)).toEqual([]);
     expect(valueOf(writes, VIEW_CACHE_KEYS.conversationUnread)).toBe(0);
+  });
+});
+
+describe('projectConversationThread', () => {
+  test('writes only the window it was given, oldest first, with what lies beyond it on each side', () => {
+    const [write] = projectConversationThread(
+      {
+        rows: [source({ id: '3', createdAt: new Date(T0 + 2 * MINUTE) }), source({ id: '2', createdAt: new Date(T0 + MINUTE) })],
+        older: true,
+        live: false,
+      },
+      '3'
+    );
+    expect(write?.key).toBe(VIEW_CACHE_KEYS.conversationThread);
+    expect(write?.scope).toBe('3');
+    const value = (write && 'value' in write ? write.value : null) as IConversationThreadCache | null;
+    expect(value?.rows.map((row: IConversationMessageCacheRow) => row.id)).toEqual(['2', '3']);
+    expect(value?.hasOlder).toBe(true);
+    expect(value?.live).toBe(false);
   });
 });

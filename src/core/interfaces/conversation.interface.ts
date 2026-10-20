@@ -27,3 +27,9 @@ export interface IConversationSummaryCacheRow {
   last: IConversationMessageCacheRow;
   lastSent: IConversationMessageCacheRow | null;
 }
+
+export interface IConversationThreadCache {
+  rows: IConversationMessageCacheRow[];
+  hasOlder: boolean;
+  live: boolean;
+}

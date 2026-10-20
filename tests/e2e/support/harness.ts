@@ -27,6 +27,9 @@ export const emit = (baseUrl: string, frames: readonly DeviceFrame[]): Promise<v
 export const store = (baseUrl: string, table: string, row: Record<string, unknown>): Promise<void> =>
   post(baseUrl, `store?table=${table}`, row);
 
+export const storeMany = (baseUrl: string, table: string, rows: readonly Record<string, unknown>[]): Promise<void> =>
+  post(baseUrl, `store-many?table=${table}`, rows);
+
 export const patchContext = (baseUrl: string, patch: Record<string, unknown>): Promise<void> => post(baseUrl, 'context', patch);
 
 export const connected = async (baseUrl: string, device: string): Promise<number> =>

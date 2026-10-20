@@ -1,5 +1,4 @@
 import type { IChecklistSignalsCache } from '@/core/interfaces';
-import { ARGUS_COUNTERPART_ID } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
 import type { ViewWrite } from './projection';
 
@@ -10,10 +9,8 @@ export type GettingStartedSignalsInput = {
   projects: readonly unknown[];
   people: readonly unknown[];
   invitations: readonly unknown[];
-  conversations: readonly { counterpartId: string }[];
+  argusTalks: number;
 };
-
-const ARGUS_THREAD = String(ARGUS_COUNTERPART_ID);
 
 export function projectGettingStarted(values: GettingStartedSignalsInput): ViewWrite[] {
   const signals: IChecklistSignalsCache = {
@@ -23,7 +20,7 @@ export function projectGettingStarted(values: GettingStartedSignalsInput): ViewW
     projects: values.projects.length,
     people: values.people.length,
     invitations: values.invitations.length,
-    argusTalks: values.conversations.filter((message) => message.counterpartId === ARGUS_THREAD).length,
+    argusTalks: values.argusTalks,
   };
   return [{ key: VIEW_CACHE_KEYS.gettingStartedSignals, value: signals }];
 }

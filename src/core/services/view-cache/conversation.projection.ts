@@ -1,5 +1,9 @@
 import type { ConversationMessageModel } from '@/core/database';
-import type { IConversationMessageCacheRow, IConversationSummaryCacheRow } from '@/core/interfaces';
+import type {
+  IConversationMessageCacheRow,
+  IConversationSummaryCacheRow,
+  IConversationThreadCache,
+} from '@/core/interfaces';
 import { ARGUS_COUNTERPART_ID } from '@/core/types';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
 import type { ViewWrite } from './projection';
@@ -20,9 +24,25 @@ export type ConversationMessageSource = Pick<
   | 'createdAt'
 >;
 
-export type ConversationProjectionInput = {
-  conversations: readonly ConversationMessageSource[];
+export type ConversationSummaryFacts = {
+  counterpartId: string;
+  last: ConversationMessageSource;
+  lastSent: ConversationMessageSource | null;
+  lastNamed: ConversationMessageSource | null;
+  unread: number;
 };
+
+export type ConversationProjectionInput = {
+  summaries: readonly ConversationSummaryFacts[];
+};
+
+export type ConversationThreadInput = {
+  rows: readonly ConversationMessageSource[];
+  older: boolean;
+  live: boolean;
+};
+
+
 
 const counterpartOf = (raw: string): number => {
   const id = Number(raw);
@@ -47,39 +67,13 @@ export const toConversationRow = (message: ConversationMessageSource): IConversa
 export const compareMessages = (left: IConversationMessageCacheRow, right: IConversationMessageCacheRow): number =>
   left.createdAt - right.createdAt || Number(left.id) - Number(right.id) || left.id.localeCompare(right.id);
 
-export const isUnreadMessage = (message: Pick<IConversationMessageCacheRow, 'direction' | 'isRead'>): boolean =>
-  message.direction === 'in' && !message.isRead;
-
-export const isSentMessage = (message: Pick<IConversationMessageCacheRow, 'direction' | 'kind'>): boolean =>
-  message.direction === 'out' && (message.kind === 'relay' || message.kind === 'reply');
-
-export function groupThreads(
-  rows: readonly IConversationMessageCacheRow[]
-): Map<number, IConversationMessageCacheRow[]> {
-  const threads = new Map<number, IConversationMessageCacheRow[]>();
-  for (const row of [...rows].sort(compareMessages)) {
-    const thread = threads.get(row.counterpartId);
-    if (thread) thread.push(row);
-    else threads.set(row.counterpartId, [row]);
-  }
-  return threads;
-}
-
-const nameOf = (messages: readonly IConversationMessageCacheRow[]): string =>
-  [...messages].reverse().find((message) => message.counterpartName.trim().length > 0)?.counterpartName.trim() ?? '';
-
-export function summarizeThread(
-  counterpartId: number,
-  messages: readonly IConversationMessageCacheRow[]
-): IConversationSummaryCacheRow | null {
-  const last = messages[messages.length - 1];
-  if (!last) return null;
+export function summaryOf(facts: ConversationSummaryFacts): IConversationSummaryCacheRow {
   return {
-    counterpartId,
-    counterpartName: nameOf(messages),
-    unread: messages.filter(isUnreadMessage).length,
-    last,
-    lastSent: [...messages].reverse().find(isSentMessage) ?? null,
+    counterpartId: counterpartOf(facts.counterpartId),
+    counterpartName: facts.lastNamed?.counterpartName.trim() ?? '',
+    unread: facts.unread,
+    last: toConversationRow(facts.last),
+    lastSent: facts.lastSent ? toConversationRow(facts.lastSent) : null,
   };
 }
 
@@ -90,27 +84,22 @@ export const compareSummaries = (left: IConversationSummaryCacheRow, right: ICon
   return compareMessages(right.last, left.last);
 };
 
-export function summarizeConversations(
-  threads: ReadonlyMap<number, readonly IConversationMessageCacheRow[]>
-): IConversationSummaryCacheRow[] {
-  return [...threads]
-    .flatMap(([counterpartId, messages]) => summarizeThread(counterpartId, messages) ?? [])
-    .sort(compareSummaries);
+export function projectConversations({ summaries }: ConversationProjectionInput): ViewWrite[] {
+  const list = summaries.map(summaryOf).sort(compareSummaries);
+  return [
+    { key: VIEW_CACHE_KEYS.conversationList, rows: list, limit: VIEW_CACHE_LIST_LIMIT },
+    { key: VIEW_CACHE_KEYS.conversationUnread, value: list.reduce((total, summary) => total + summary.unread, 0) },
+  ];
 }
 
-export function projectConversations({ conversations }: ConversationProjectionInput): ViewWrite[] {
-  const threads = groupThreads(conversations.map(toConversationRow));
-  const summaries = summarizeConversations(threads);
-  return [
-    { key: VIEW_CACHE_KEYS.conversationList, rows: summaries, limit: VIEW_CACHE_LIST_LIMIT },
-    { key: VIEW_CACHE_KEYS.conversationUnread, value: summaries.reduce((total, summary) => total + summary.unread, 0) },
-    ...[...threads].map(
-      ([counterpartId, messages]): ViewWrite => ({
-        key: VIEW_CACHE_KEYS.conversationThread,
-        scope: String(counterpartId),
-        rows: messages.slice(-VIEW_CACHE_LIST_LIMIT),
-        limit: VIEW_CACHE_LIST_LIMIT,
-      })
-    ),
-  ];
+export function projectConversationThread(
+  { rows, older, live }: ConversationThreadInput,
+  scope: string
+): ViewWrite[] {
+  const thread: IConversationThreadCache = {
+    rows: rows.map(toConversationRow).sort(compareMessages),
+    hasOlder: older,
+    live,
+  };
+  return [{ key: VIEW_CACHE_KEYS.conversationThread, scope, value: thread }];
 }

@@ -302,6 +302,44 @@ describe('PagedView', () => {
     expect(closed).toEqual(['day:1']);
   });
 
+  test('a scope extends toward older or newer rows, and a reset goes back to its first page', async () => {
+    const opened: { scope: string; size: number }[] = [];
+    const directions: string[] = [];
+    const view = new PagedView(
+      {
+        ...spec(opened, []),
+        warm: [],
+        extend: async (_scope: string, window: { size: number }, _ctx: unknown, direction: 'older' | 'newer') => {
+          directions.push(direction);
+          return { size: window.size + (direction === 'older' ? 1 : -1) };
+        },
+      },
+      { userId: '1', now: new Date() }
+    );
+    view.watch('t');
+    await view.extend('t');
+    await view.extend('t', 'older');
+    await view.extend('t', 'newer');
+    expect(directions).toEqual(['older', 'older', 'newer']);
+    expect(opened.at(-1)).toEqual({ scope: 't', size: 2 });
+    view.reset('t');
+    expect(opened.at(-1)).toEqual({ scope: 't', size: 1 });
+  });
+
+  test('a kept scope goes back to its first page when left, and stays open for the next visit', async () => {
+    const opened: { scope: string; size: number }[] = [];
+    const closed: string[] = [];
+    const view = new PagedView({ ...spec(opened, closed), warm: [], keep: true }, { userId: '1', now: new Date() });
+    view.watch('t');
+    const pending = view.extend('t');
+    view.release('t');
+    await pending;
+    expect(closed).not.toContain('t:1');
+    view.watch('t');
+    expect(opened.filter((entry) => entry.scope === 't').at(-1)).toEqual({ scope: 't', size: 1 });
+    view.stop();
+  });
+
   test('extending a scope nobody opened answers false', async () => {
     const view = new PagedView(spec([], []), { userId: '1', now: new Date() });
     expect(await view.extend('nowhere')).toBe(false);

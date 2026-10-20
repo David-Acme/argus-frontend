@@ -31,11 +31,12 @@ import {
 } from './view-cache/calendar.projection';
 import { projectCalendarShares } from './view-cache/calendar-share.projection';
 import { projectCameras } from './view-cache/camera.projection';
-import { projectConversations } from './view-cache/conversation.projection';
+import { projectConversations, projectConversationThread } from './view-cache/conversation.projection';
 import { projectGettingStarted } from './view-cache/getting-started.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
 import { ModuleSourceGate } from './view-cache/module-source-gate';
-import { PagedView, type IPagedView } from './view-cache/paged-view';
+import { PagedView, type IPagedView, type PageDirection } from './view-cache/paged-view';
+import { sameThreadWindow, type ThreadWindow } from './conversation';
 import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
 import { projectReminders } from './view-cache/reminder.projection';
@@ -64,7 +65,8 @@ function sessionSources(userId: string) {
     zone: householdZone.asObservable(),
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
-    conversations: shared(conversationService.observeForUser(userId)),
+    conversations: shared(conversationService.observeSummaryFacts(userId)),
+    argusTalks: shared(conversationService.observeArgusTalks(userId)),
     users: shared(userService.observeDirectory()),
     invitations: shared(userInvitationService.observeList()),
   };
@@ -107,9 +109,8 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     startProjection({ sources: () => ({ reminders: sources.reminders }), project: projectReminders }, ctx),
     startProjection(
       {
-        sources: () => ({ conversations: sources.conversations }),
+        sources: () => ({ summaries: sources.conversations }),
         project: projectConversations,
-        tracked: ['conversation.thread'],
       },
       ctx,
     ),
@@ -134,7 +135,7 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           projects: sources.projects,
           people: sources.users,
           invitations: sources.invitations,
-          conversations: sources.conversations,
+          argusTalks: sources.argusTalks,
         }),
         project: projectGettingStarted,
       },
@@ -157,7 +158,9 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
 }
 
 export type PagedViewKey =
-  typeof VIEW_CACHE_KEYS.notificationFeed | typeof VIEW_CACHE_KEYS.calendarAgenda;
+  | typeof VIEW_CACHE_KEYS.notificationFeed
+  | typeof VIEW_CACHE_KEYS.calendarAgenda
+  | typeof VIEW_CACHE_KEYS.conversationThread;
 
 const sameKeyset = (left: KeysetWindow, right: KeysetWindow): boolean =>
   left.through?.id === right.through?.id && left.through?.value === right.through?.value;
@@ -218,6 +221,27 @@ function startPagedViews(
       },
       ctx,
     ),
+    [VIEW_CACHE_KEYS.conversationThread]: new PagedView<ThreadWindow>(
+      {
+        key: VIEW_CACHE_KEYS.conversationThread,
+        keep: true,
+        initial: () => conversationService.initialThread(),
+        open: (scope, window, context) =>
+          startProjection(
+            {
+              sources: () => ({ thread: conversationService.observeThreadWindow(context.userId, scope, window) }),
+              project: (values) => projectConversationThread(values.thread, scope),
+            },
+            context,
+          ),
+        extend: (scope, window, context, direction) =>
+          direction === 'newer'
+            ? conversationService.newerThread(context.userId, scope, window)
+            : conversationService.olderThread(context.userId, scope, window),
+        same: sameThreadWindow,
+      },
+      ctx,
+    ),
   };
 }
 
@@ -275,8 +299,12 @@ class ViewCacheCoordinatorService {
     this.paged?.[key].release(scope);
   }
 
-  extendPages(key: PagedViewKey, scope: string): Promise<boolean> {
-    return this.paged ? this.paged[key].extend(scope) : Promise.resolve(false);
+  extendPages(key: PagedViewKey, scope: string, direction: PageDirection = 'older'): Promise<boolean> {
+    return this.paged ? this.paged[key].extend(scope, direction) : Promise.resolve(false);
+  }
+
+  resetPages(key: PagedViewKey, scope: string): void {
+    this.paged?.[key].reset(scope);
   }
 
   stop(): void {
