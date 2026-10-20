@@ -19,6 +19,7 @@ import { ReceiverDialog } from '@/features/proximity/components/receiver-dialog'
 import { SensorDialog } from '@/features/proximity/components/sensor-dialog';
 import { useProximityDevices } from '@/features/proximity/hooks/use-proximity-devices';
 import { useProximityEnabled } from '@/features/proximity/hooks/use-proximity-me';
+import { useProximityPeopleAllowed } from '@/features/proximity/hooks/use-proximity-people';
 import { RECEIVER_ICON, SENSOR_ICON, SENSOR_MODEL_LABEL } from '@/features/proximity/model/proximity';
 
 type DeviceTrailingProps = {
@@ -45,6 +46,7 @@ export default function ProximityDevicesScreen() {
   const { t } = useTranslation();
   const { isWide } = useWindowClass();
   const enabled = useProximityEnabled();
+  const peopleAllowed = useProximityPeopleAllowed();
   const devices = useProximityDevices(enabled);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [receiverOpen, setReceiverOpen] = useState(false);
@@ -148,6 +150,17 @@ export default function ProximityDevicesScreen() {
             <Text variant="caption" className="bg-surface-secondary dark:bg-card-secondary rounded-2xl px-4 py-3">
               {t('screens.proximity.privacy-note')}
             </Text>
+            {peopleAllowed ? (
+              <Panel>
+                <ListRow
+                  icon="map-pin"
+                  title={t('screens.proximity.people.entry')}
+                  subtitle={t('screens.proximity.people.entry-hint')}
+                  chevron
+                  onPress={() => router.push('/settings/proximity/people')}
+                />
+              </Panel>
+            ) : null}
             <View className={isWide ? 'flex-row items-start gap-5' : 'gap-5'}>
               {receiversPanel}
               {sensorsPanel}

@@ -74,3 +74,16 @@ export type ProximitySensorInput = {
   cameraId: number | null;
   panOffsetDeg: number | null;
 };
+
+export const PROXIMITY_EVIDENCE_KINDS = ['face', 'radarBox', 'voice', 'ble'] as const;
+
+export type ProximityEvidence = (typeof PROXIMITY_EVIDENCE_KINDS)[number];
+
+export type ProximityPerson = {
+  userId: string;
+  room: string;
+  confidence: number;
+  since: number;
+  updatedAt: number;
+  evidence: ProximityEvidence;
+};

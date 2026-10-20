@@ -1,6 +1,7 @@
 import {
   PROXIMITY_ROUTES,
   readProximityMe,
+  readProximityPeople,
   readProximityReceivers,
   readProximitySensors,
 } from '@/core/contracts/proximity.contract';
@@ -9,6 +10,7 @@ import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
 import type {
   ProximityMe,
+  ProximityPerson,
   ProximityReceiver,
   ProximityReceiverInput,
   ProximitySensor,
@@ -51,6 +53,10 @@ class ProximityService {
 
   addSensor(input: ProximitySensorInput): Promise<IServiceResponse<unknown>> {
     return httpService.post<unknown>(PROXIMITY_ROUTES.sensors, input);
+  }
+
+  async people(): Promise<IServiceResponse<ProximityPerson[]>> {
+    return parsed(await httpService.get<unknown>(PROXIMITY_ROUTES.people), readProximityPeople);
   }
 
   removeSensor(id: string): Promise<IServiceResponse<unknown>> {

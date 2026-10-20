@@ -4837,3 +4837,42 @@ it from the camera screen (`CameraPatrolPanel` and `CameraPatrolDialog` in
   dwell range and equal window hours. A refusal the server still answers is a
   toast. Pure helpers are tested in
   `tests/unit/features/cameras/camera-patrol.test.ts`.
+
+## Who is in which room (2026-10-19, G1)
+
+`/settings/proximity/people` (`ProximityPeopleScreen` in `features/proximity`)
+shows argus-guard's live room belief, `GET /guard/proximity/people`
+(`{people: [{userId, room, confidence, since, updatedAt, evidence}]}`, times
+in seconds, read into milliseconds by `readProximityPeople`). The route is
+Owner-only on the backend (capability `proximity.manage`, module
+`surveillance`), and the app asks the same thing three times: the `/settings`
+segment rule (the Owner's), an exact rule in `route-access.ts` on
+`proximity.manage`, and `MODULE_APP_ROUTES` (`/settings/proximity` covers the
+sub-route); the hook does not even load unless `proximity.manage` and the
+module are on. The entry is a row on the receivers and sensors screen, shown
+to the same people. Nothing of it is cached in a sync table: it is a
+`useRemoteResource` that reloads on focus and every 15 s while open, because
+the belief is in memory on the server and forgets a person after five
+minutes without evidence.
+
+- **Rooms are names, not keys.** A room is the CC3 camera room key:
+  `<environmentId>:<role>` for an indoor camera of a named role, or
+  `<environmentId>:camera:<cameraId>` for anything else; a BLE receiver or a
+  radar the Owner registered may carry the free text the Owner typed.
+  `roomPlace` maps a role key to the role's name (the camera-context roles of
+  `screens.security.cameras.roles`), the environment's name and the indoor
+  cameras of that role there, from `GET /guard/environments`,
+  `GET /guard/cameras` (the camera contexts) and the cached camera list; a
+  camera key to "Cerca de la cámara X"; free text as written.
+- **Plain words.** Confidence is a level (casi seguro from 0.8, probablemente
+  from 0.5, poco seguro below) with its percent; the strongest evidence is a
+  sentence (a camera recognized the face, a sensor and a camera noticed a
+  person, Argus heard the voice near a camera, a receiver picked up the
+  phone); "since" is the time the person entered the room and the freshness
+  is minutes since the last evidence. Names come from the cached directory
+  (the Owner has it); an id it does not know reads "Alguien de casa".
+- **Privacy.** The screen says only the Owner sees it, nothing is kept as
+  history, and a member who turned location off is not there (the server
+  drops them). Pure helpers are tested in
+  `tests/unit/features/proximity/proximity-people.test.ts` and the route rule
+  in `tests/unit/shared/libs/route-access.test.ts`.
