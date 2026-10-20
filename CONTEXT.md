@@ -5056,3 +5056,17 @@ minutes without evidence.
   when it is absent (`PushText.ringTitle`). The backend still has to send
   `subject` (`push-delivery.cc`, `call.title`); until then the screen says
   "Argus".
+- **A hang-up from the locked phone reaches the server before the call is
+  released.** The server logged `RTC user track left` and then `ends
+  (timeout)` 20 s later after Colgar on the lock screen: `leaveRealtime`
+  stopped the ongoing call (`stopOngoingCall`: the phone-call foreground
+  service, the Telecom call, the keyguard hold) before it sent
+  `argus.hangup` and left the room, so the backgrounded app lost its
+  microphone and could be frozen before either reached LiveKit. The order
+  is now hang-up, flush, leave, and only then release
+  (`sendHangupThenLeave`/`leaveThenRelease` in `model/hangup-leave.ts`),
+  bounded by `VOICE_HANGUP_RELEASE_MAX_MS` so a stuck leave never keeps the
+  service. The notification's Colgar on an answered call (`endActive`) now
+  hands the hang-up to the app when its listener is bound
+  (`hangupHandledByApp`) and finishes natively only if the app has not
+  released the call within `APP_HANGUP_GRACE_MS`.

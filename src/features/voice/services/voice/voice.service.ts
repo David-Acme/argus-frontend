@@ -8,10 +8,10 @@ import { traceEvent } from '@/core/services/native-trace';
 import { micTraceReason } from '@/features/voice/model/mic-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
 import { useAvatarStore } from '@/features/voice/stores/avatar.store';
-import { sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
+import { boundedRelease, leaveThenRelease, sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
 import { pushService } from '@/core/services/push';
 import { cancelOutcomeOf , endReasonOfCancel } from '@/features/voice/model/call-end';
-import { VOICE_HANGUP_FLUSH_MS } from '@/features/voice/constants/hangup';
+import { VOICE_HANGUP_FLUSH_MS, VOICE_HANGUP_RELEASE_MAX_MS } from '@/features/voice/constants/hangup';
 import {
   CALL_ACTIONS_KEPT,
   VOICE_ACTION_RESULT_TYPE,
@@ -707,7 +707,6 @@ class VoiceService {
   }
 
   private leaveRealtime(serverGone: boolean): void {
-    pushService.stopOngoingCall();
     const call = this.rtc;
     const hangUp = this.serverSession && !serverGone;
     this.serverSession = false;
@@ -715,9 +714,21 @@ class VoiceService {
     this.agentState = null;
     this.transport = 'none';
     voiceLevel.value = withTiming(0, { duration: VOICE_ENVELOPE_RELEASE_MS });
-    if (!call) return;
+    if (!call) {
+      pushService.stopOngoingCall();
+      return;
+    }
+    const release = boundedRelease(
+      () => {
+        if (!this.active) pushService.stopOngoingCall();
+      },
+      VOICE_HANGUP_RELEASE_MAX_MS,
+      (run, ms) => {
+        setTimeout(run, ms);
+      },
+    );
     if (!hangUp) {
-      call.leave().catch((reason: unknown) => devLog('rtc leave failed:', reason));
+      leaveThenRelease({ call, release }).catch((reason: unknown) => devLog('rtc leave failed:', reason));
       return;
     }
     sendHangupThenLeave({
@@ -729,6 +740,7 @@ class VoiceService {
         traceEvent('voice', 'stop', 'sync-fallback');
         synchronizeService.send(VOICE_STOP_TYPE);
       },
+      release,
     }).catch((reason: unknown) => devLog('rtc leave failed:', reason));
   }
 

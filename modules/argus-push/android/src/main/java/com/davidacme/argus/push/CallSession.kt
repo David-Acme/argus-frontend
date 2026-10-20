@@ -7,6 +7,7 @@ import android.telecom.DisconnectCause
 
 internal object CallSession {
     private const val MILLIS = 1000L
+    private const val APP_HANGUP_GRACE_MS = 4_000L
 
     private val handler = Handler(Looper.getMainLooper())
     private val ringer = CallRinger()
@@ -123,7 +124,21 @@ internal object CallSession {
 
     fun endActive(context: Context) {
         val app = context.applicationContext
+        val answered = synchronized(lock) {
+            answeredCallId.takeIf { hangupHandledByApp(it, ringing = active != null, CallControls.listener != null) }
+        }
         CallControls.hangUp()
+        if (answered == null) {
+            finishActive(app)
+            return
+        }
+        NativeTrace.record("telecom", "queued", "hangup-by-app")
+        handler.postDelayed({
+            if (synchronized(lock) { answeredCallId == answered }) finishActive(app)
+        }, APP_HANGUP_GRACE_MS)
+    }
+
+    private fun finishActive(app: Context) {
         val callId = synchronized(lock) { (active?.callId ?: answeredCallId).also { answeredCallId = null } }
         CallFinish.finish(app, callId)
         if (callId != null) releaseCall(app, callId)
@@ -189,6 +204,9 @@ internal object CallSession {
         return matched
     }
 }
+
+internal fun hangupHandledByApp(answeredCallId: String?, ringing: Boolean, listenerPresent: Boolean): Boolean =
+    answeredCallId != null && !ringing && listenerPresent
 
 internal fun answeredCallMatches(answeredCallId: String?, callId: String): Boolean =
     answeredCallId != null && answeredCallId == callId

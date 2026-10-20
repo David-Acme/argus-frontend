@@ -1,1 +1,3 @@
 export const VOICE_HANGUP_FLUSH_MS = 400;
+
+export const VOICE_HANGUP_RELEASE_MAX_MS = 3000;
