@@ -917,6 +917,171 @@ low-tier form:
 | Skeleton shimmer | Reanimated CSS animation (opacity) | negligible | Static fill |
 | Live tiles | the native player, frames at most every 10 s, cross-faded | network-bound, not frame-bound | Static thumbnail, refreshed on focus |
 
+## 7c. Sound: few, quiet, and only where they mean something
+
+Sound makes Argus feel alive and recognisable, but only when it confirms
+something the user cares about. A sound on every tap is noise.
+
+### Research
+
+- **Material sound guidance** gives these points
+  ([about sound](https://m2.material.io/design/sound/about-sound.html),
+  [applying sound to UI](https://m2.material.io/design/sound/applying-sound-to-ui.html),
+  [sound choreography](https://m2.material.io/design/sound/sound-choreography.html)):
+  - Sound is often unnecessary.
+  - Leave it out of frequent actions, privacy-sensitive UI, and moments when
+    the user asked not to be interrupted.
+  - **Hero sounds** mark rare, important moments and are used sparingly and
+    consistently.
+  - Sounds form a hierarchy: brand, then hero, then alerts, then primary,
+    then secondary.
+  - Sounds in the same flow share timbre and envelope.
+- **Apple HIG, playing audio**
+  ([HIG](https://developer.apple.com/design/human-interface-guidelines/playing-audio)):
+  - People who set the device to silent also want nonessential sound
+    effects and feedback silenced.
+  - In silent mode only audio the person explicitly starts plays.
+  - Overriding the Ring/Silent switch for UI sounds is not acceptable.
+- **Duolingo.** It is the best-known example of short "right / wrong" earcons.
+  The correct-answer cue is commonly described as a short rising interval,
+  and the wrong-answer cue as a deflated, descending tone that is
+  "discouraging enough … but not so harsh that it induces anxiety"
+  ([commentary](https://out-of-scope-product.beehiiv.com/p/duolingo-has-it-venmo-has-it-even-slack-has-it-your-product-doesn-t)).
+  This is secondhand commentary, not Duolingo's own statement.
+- **Discord.** Its join, leave and message sounds are short, one family, and
+  instantly tied to one meaning each. I found no primary source on how they
+  were designed. Only user requests for packs and customisation turned up
+  ([support forum](https://support.discord.com/hc/vi/community/posts/16545888714647-Adjustable-Customizable-Notification-sounds)).
+  The lesson I take from them is consistency, which is my inference.
+- **expo-audio** ([SDK 57 docs](https://docs.expo.dev/versions/v57.0.0/sdk/audio.md)):
+  - `setAudioModeAsync` sets the session; `playsInSilentMode` must stay
+    `false` for UI sounds.
+  - `createAudioPlayer` gives a reusable, preloadable player. `seekTo(0)`
+    before replaying, because a finished player stays at its end.
+
+### Moments that make a sound
+
+| Moment | Meaning | Haptic pair (§10) | Notes |
+|---|---|---|---|
+| Call connected | Argus is with you | `success` | the only sound that plays when a call starts; never «conectando» |
+| Call ended | the call is over | `impactLight` | plays on hang-up from either side |
+| Voz → Chat | switched to typing | `selection` | short, about 0.5 s |
+| Chat → Voz | switched to talking | `selection` | the mirror of Voz → Chat (rising vs falling) |
+| Message sent | your message left | `impactLight` | only for a message to Argus or a person; about 0.5 s; silent when sent by voice |
+| Reply received | Argus or a person answered | none | once per reply, never per streamed chunk; silent if it arrives within 1.5 s of sending and the thread is on screen (you are already looking) |
+| Done | reminder, event or task saved; a task completed | `success` | the hero sound of daily use; at most once per 1.5 s, so a burst of completions plays once |
+| Soft error | something was not saved or not allowed | `warning` | the descending, gentle cue; paired with the error toast of §5.8 |
+| Estela opens her eye | looking through a camera, or searching | none | plays when the `look` or `search` state begins from the user's request; silent when the eye opens on its own (an automatic detection) or during a call |
+| First appearance (proposed) | onboarding: Estela assembles for the first time | none | a single brand moment, once per install, as Material's hero sounds intend |
+
+### Moments that stay silent
+
+- Every tap, toggle, segmented choice, menu, navigation and tab change.
+- Scrolling, pull-to-refresh, skeletons and loading.
+- «Conectando» and «conectado», reconnects, going offline and coming back,
+  in line with the silent-connection rule of §5.4.
+- Typing, each streamed chunk of a reply, Estela's ambient states (idle,
+  breathing, watch, sleep) and her micro-reactions.
+- Arrivals, departures and feed items while the app is in the foreground.
+  Notifications outside the app use the OS notification sound and channel
+  settings, not these UI sounds.
+- **Panic, SOS and duress: always silent in the app.** Someone in danger
+  must not be given away by their phone. The haptic ticks of the
+  hold-to-confirm stay.
+- Alerts and the siren are not UI sounds. They belong to the
+  alert/notification channels and the camera siren, outside this registry.
+
+### Rules
+
+1. **The OS decides first.**
+   - **iOS:** the Ring/Silent switch silences UI sounds (an ambient audio
+     session: `playsInSilentMode: false`, mixing with other audio, so the
+     user's music never stops).
+   - **Android:** in silent or vibrate ringer mode, and under Do Not
+     Disturb, only the haptic plays. The sound plays on the
+     sonification/notification usage, so its system volume applies.
+   - **Web and Tauri:** the system output mute and volume apply. The
+     browser's autoplay rule means no sound plays before the first user
+     gesture, and none plays while the window is hidden.
+2. **An in-app switch.**
+   - Ajustes → Este dispositivo → «Sonidos de la app», on by default.
+   - «Reducir efectos» (§7b) also turns UI sounds off, so people who choose
+     calm get one switch for both.
+   - When the OS asks for reduced motion, the onboarding sound row offers
+     «Sonidos de la app» off in the same step, so it is never assumed.
+3. **Quiet by default.**
+   - Every asset is mastered to **−20 LUFS integrated** (±1), with true peaks
+     at or below **−6 dBTP**.
+   - Each lasts **0.5–2.0 s** including its tail; frequent ones (send, mode
+     switch) are 0.5–0.7 s.
+4. **Never overlap, never burst.**
+   - One central player plays one sound at a time.
+   - Any sound is dropped (not queued) within 300 ms of another.
+   - The same sound is dropped within 1.5 s of itself.
+   - When two compete, the higher priority wins: error > done > call
+     connect/end > eye > reply > send > mode switch.
+5. **Haptics go with them** where the platform has them (expo-haptics, §8).
+   They follow the same toggle, except that the system haptic settings
+   decide on their own.
+6. **During an active call** only «call connected» and «call ended» play.
+   Everything else stays silent, so Argus' voice is never stepped on.
+7. **Same rules on every platform.** Desktop (Tauri) and web follow rules 1–6;
+   only the platform-specific parts of rule 1 change.
+
+### Implementation notes (later; nothing is built now)
+
+- **One registry file:** `shared/sound/sounds.ts` maps names to assets
+  (`callConnect`, `callEnd`, `modeVoice`, `modeChat`, `send`, `reply`,
+  `done`, `error`, `eye`, `appear`).
+- **One function:** `playSound(name)` owns the toggle, the OS checks, the
+  debounce, the priority and the haptic pair. Features never touch the audio
+  API.
+- **Preloaded players:** `createAudioPlayer` per asset at start-up (about
+  10). `seekTo(0)` then `play()` keeps latency low. A web/Tauri variant uses
+  pre-decoded Web Audio buffers behind the same function.
+- **Assets:** mono, 44.1 kHz, about 10–15 KB each as AAC/MP3 at 64–96 kbps,
+  about 150 KB for the whole set.
+  - The candidates measure 7.5–27 KB as MP3, at −20.4 LUFS integrated with
+    peaks of −3.5 to −8 dBFS (measured with ffmpeg's `ebur128` filter).
+  - Two Estela files peak at −3.5 dBFS and need limiting to −6.
+  - `estela-ojo` lasts 2.15 s and needs trimming to at most 2 s.
+- **Android ringer mode:** expo-audio does not report it. A small check in
+  the existing native module (`AudioManager.getRingerMode` / DND) feeds
+  `playSound`. This is to be built and verified on the S21 FE.
+
+### The two candidate families
+
+The owner generated both: `scratchpad/sounds/synth.py`, listen page
+[Sonidos](https://claude.ai/artifact/RJVddo6Bv21PURR7uPLzz4).
+
+- **Cristal:** clean FM bells in two- and three-note intervals (rising for
+  connect and done, falling for hang-up, a descending semitone for error).
+  - It is precise, calm and reads instantly, like Duolingo's intervals.
+  - Frequent moments wear well.
+  - On its own it is generic: it could be any app.
+- **Estela:** star-dust grains that rise, fall or converge into a chord.
+  - It is unmistakably Argus and matches the presence.
+  - The texture tires in frequent moments (send, mode switch, reply).
+  - Its tails are longer (1.1–2.15 s).
+
+**Recommendation: a mix, one family with two weights** (decision S1 stays
+the owner's):
+- **Estela grains on the rare, emotional moments, as hero sounds:** call
+  connected, call ended, Estela opens her eye, done, first appearance.
+- **Cristal bells on the frequent, functional ones:** send, reply, Voz ↔
+  Chat, error.
+
+To make them one family:
+- Put both on the same pitch set (C-major/E, which both already use for
+  «listo»).
+- Add a light grain tail (a few sparkles) to the Cristal bells.
+- Trim the frequent ones to 0.5–0.7 s.
+- Limit peaks to −6 dBTP.
+
+The result is Material's hierarchy in practice: hero sounds rare and
+distinctive, functional sounds short and plain, with one timbre so they
+belong together.
+
 ## 8. Platform-native mechanics: libraries
 
 All are checked against Expo SDK 57, the new architecture (Fabric), RN 0.86 and
@@ -1656,6 +1821,23 @@ visual baselines). The rest are a review list in the PR template.
       Lo que pasó, Personas, Sesiones). Not on forms or on screens painted only
       from local sync data, where it would do nothing.
 
+**Sound (§7c)**
+
+- [ ] Only the moments in the §7c table make a sound. Taps, scrolling,
+      navigation, loading, connecting, reconnecting, offline, panic and
+      ambient Estela stay silent.
+- [ ] iOS silent switch, Android silent/vibrate and Do Not Disturb, and
+      system mute are respected; the haptic still plays where the OS allows.
+- [ ] «Sonidos de la app» (Ajustes) and «Reducir efectos» both turn the
+      sounds off.
+- [ ] Every asset is −20 LUFS ±1, true peak ≤ −6 dBTP, 0.5–2.0 s, about
+      15 KB or less.
+- [ ] One at a time: nothing within 300 ms of another, the same sound not
+      within 1.5 s, and priority decides.
+- [ ] During a call, only call connected and call ended play.
+- [ ] Web and Tauri follow the same rules; no sound before the first gesture
+      or while the window is hidden.
+
 **Language and formatting**
 
 - [ ] Dates, times and numbers through `useDateFormatter` / `Intl` with the
@@ -1778,6 +1960,7 @@ second and is written natively, not translated word for word.
 | R-D26 | Large screens and scrolling: 4 columns from 1700 px, a 2,200 px content cap, text at most about 680 px, and one scroll owner per region with sticky headers and shared thin scrollbars (§6c) | yes |
 | R-D27 | Loading: local data paints instantly, with at most an inline «Actualizando»; skeletons only for HTTP data without a local copy (§5.4) | yes |
 | R-D28 | **Resolved 2026-10-20: Estela** (`aura.html`, option 1) is Argus' presence everywhere, with the catalogue of §8b | decided |
+| S1 | Sound family: Cristal, Estela, or the recommended mix (Estela grains on hero moments, Cristal bells on frequent ones, one pitch set) (§7c) | open: the owner decides; recommendation is the mix |
 
 ## 14. Order of work
 

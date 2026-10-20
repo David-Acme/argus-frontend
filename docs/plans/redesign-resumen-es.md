@@ -217,6 +217,51 @@ ve nada.
 - **La excepción es un guardado que no llegó al servidor.** Se avisa al
   momento y con «Reintentar», porque es un error real.
 
+## Sonido (v3.7)
+
+Pocos sonidos, suaves y solo cuando significan algo.
+
+**Suenan:**
+- llamada conectada;
+- llamada terminada;
+- cambio de voz a chat y de chat a voz;
+- mensaje enviado;
+- respuesta recibida (una vez, nunca por cada trozo);
+- «hecho» (guardado o completado);
+- error suave;
+- cuando Estela abre el ojo para mirar o buscar;
+- propongo uno más: la primera aparición de Estela en la bienvenida, una sola
+  vez.
+
+**Callados:**
+- cada toque, el desplazamiento y la navegación;
+- la carga;
+- «conectando» y «conectado»;
+- sin conexión;
+- el pánico, por seguridad: nadie debe delatar al usuario.
+
+**Reglas:**
+- Se respeta el modo silencio o vibración del teléfono, «No molestar» y el
+  volumen del sistema.
+- En Ajustes hay un interruptor propio, y «Reducir efectos» también los
+  apaga.
+- Son suaves: −20 LUFS y entre 0,5 y 2 segundos.
+- Nunca se pisan ni se repiten en ráfaga.
+- Van con vibración donde se puede.
+- En una llamada solo suenan conectar y colgar.
+- En escritorio y web se aplican las mismas reglas.
+
+**Medí tus muestras:** todas están en −20,4 LUFS. Dos de Estela tienen picos
+altos (−3,5 dB) y «ojo» dura 2,15 segundos, así que hay que ajustarlas.
+
+**Decisión S1, abierta.** Recomiendo **una mezcla**:
+- los granos de Estela para los momentos importantes y poco frecuentes
+  (llamada, ojo, hecho, bienvenida);
+- las campanas de Cristal para los frecuentes (enviar, respuesta, cambio de
+  modo, error).
+
+Las dos irían en la misma tonalidad, para que suenen como una sola familia.
+
 ## Rendimiento primero
 
 - **Dónde corre.** Toda animación corre en el hilo de UI (Reanimated o el
