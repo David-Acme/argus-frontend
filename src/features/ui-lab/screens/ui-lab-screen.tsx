@@ -45,6 +45,7 @@ function LabIndex({ onOpen }: LabIndexProps) {
                 key={entry.id}
                 title={entry.title}
                 meta={entry.id}
+                testID={`ui-lab-entry-${entry.id}`}
                 chevron
                 onPress={() => onOpen(entry.id)}
               />
