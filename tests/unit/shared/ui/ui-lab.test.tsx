@@ -15,6 +15,9 @@ const { AvatarDemo } = await import('@/features/ui-lab/demos/avatar-demo');
 const { ButtonDemo } = await import('@/features/ui-lab/demos/button-demo');
 const { CheckDemo } = await import('@/features/ui-lab/demos/check-demo');
 const { ChipDemo } = await import('@/features/ui-lab/demos/chip-demo');
+const { ChoiceDemo } = await import('@/features/ui-lab/demos/choice-demo');
+const { FieldCodeDemo } = await import('@/features/ui-lab/demos/field-code-demo');
+const { FieldDemo } = await import('@/features/ui-lab/demos/field-demo');
 const { IconDemo } = await import('@/features/ui-lab/demos/icon-demo');
 const { LayoutDemo } = await import('@/features/ui-lab/demos/layout-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
@@ -31,6 +34,9 @@ const DEMOS: Record<string, ComponentType> = {
   button: ButtonDemo,
   check: CheckDemo,
   chip: ChipDemo,
+  choice: ChoiceDemo,
+  field: FieldDemo,
+  'field-code': FieldCodeDemo,
   icon: IconDemo,
   layout: LayoutDemo,
   pressable: PressableDemo,

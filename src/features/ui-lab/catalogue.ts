@@ -3,6 +3,9 @@ import { AvatarDemo } from './demos/avatar-demo';
 import { ButtonDemo } from './demos/button-demo';
 import { CheckDemo } from './demos/check-demo';
 import { ChipDemo } from './demos/chip-demo';
+import { ChoiceDemo } from './demos/choice-demo';
+import { FieldCodeDemo } from './demos/field-code-demo';
+import { FieldDemo } from './demos/field-demo';
 import { IconDemo } from './demos/icon-demo';
 import { LayoutDemo } from './demos/layout-demo';
 import { PressableDemo } from './demos/pressable-demo';
@@ -32,6 +35,9 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'check', family: 'content', title: 'Check', Demo: CheckDemo },
   { id: 'button', family: 'input', title: 'Button', Demo: ButtonDemo },
   { id: 'switch', family: 'input', title: 'Switch', Demo: SwitchDemo },
+  { id: 'field', family: 'input', title: 'Field', Demo: FieldDemo },
+  { id: 'field-code', family: 'input', title: 'Field, code', Demo: FieldCodeDemo },
+  { id: 'choice', family: 'input', title: 'Choice', Demo: ChoiceDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [
