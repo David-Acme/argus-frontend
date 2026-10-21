@@ -46,6 +46,8 @@ describe('Sheet on a phone', () => {
     expect(sheet.detents).toEqual([0.6, 1]);
     expect(sheet.scrollable).toBe(true);
     expect(sheet.scrollableOptions).toEqual({ keyboardScrollOffset: 16 });
+    expect(sheet.backgroundColor).toBe(tokens.color.dark.surface);
+    expect(sheet.backgroundBlur).toBeUndefined();
     expect(sheet.maxContentHeight).toBe(window.height - 24 - 16);
     expect(sheet.footerOptions).toEqual({ keyboardOffset: -20 });
     expect(sheet.insetAdjustment).toBe('automatic');

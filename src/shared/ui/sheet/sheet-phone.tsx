@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IS_IOS } from '@/shared/constants';
 import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
 import { PhoneFooter, SheetHeader } from './sheet-parts';
@@ -103,9 +104,8 @@ export function SheetPhone(props: SheetProps) {
   const { height } = useWindowDimensions();
   const [footerHeight, setFooterHeight] = useState(0);
   const clearance = actions ? Math.max(0, footerHeight - insets.bottom) : space[4];
-  const surface = reduceTransparency
-    ? theme.surface
-    : withAlpha(theme.surface, material.sheetSurfaceMix);
+  const blurred = IS_IOS && !reduceTransparency;
+  const surface = blurred ? withAlpha(theme.surface, material.sheetSurfaceMix) : theme.surface;
   const grabber = {
     width: size.grabberWidth,
     height: size.grabberHeight,
@@ -157,7 +157,7 @@ export function SheetPhone(props: SheetProps) {
       grabberOptions={grabber}
       cornerRadius={radius.sheet}
       backgroundColor={surface}
-      backgroundBlur={reduceTransparency ? undefined : 'system-material'}>
+      backgroundBlur={blurred ? 'system-material' : undefined}>
       <Body long={long} clearance={clearance} testID={props.testID}>
         {children}
       </Body>
