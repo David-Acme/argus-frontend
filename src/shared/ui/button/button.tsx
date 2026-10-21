@@ -47,7 +47,7 @@ const INK: Record<ButtonVariant, Ink> = {
   danger: { surface: 'bg-alert-soft', text: 'alert', icon: 'alert', edge: 'border-alert' },
 };
 
-const COMPACT_SLOP = (size.target - size.buttonCompact) / 2;
+const COMPACT_SLOP = (size.target - size.targetMin) / 2;
 
 const ICON_SLOP = (size.target - size.targetMin) / 2;
 
@@ -127,6 +127,22 @@ function TextButton({
   const flight = useSingleFlight(onPress, busy);
   const material = useGlass(glass);
   const ink = INK[variant];
+  const face = clsx(
+    'flex-row items-center justify-center gap-2',
+    frameClass(compact, variant),
+    material ? (material.solid ? 'bg-surface' : 'web:glass-control bg-glass') : ink.surface,
+    block && 'w-full'
+  );
+  const glassStyle = material ? { boxShadow: material.elevation.glass } : undefined;
+  const content = (
+    <>
+      {icon ? <Icon name={icon} size="small" tone={ink.icon} /> : null}
+      <Text variant={compact ? 'buttonCompact' : 'button'} tone={ink.text}>
+        {label}
+      </Text>
+      {trailing ? <Trailing trailing={trailing} ink={ink} /> : null}
+    </>
+  );
   return (
     <PressableSurface
       a11y={{ label, role: 'button', busy: flight.busy }}
@@ -134,18 +150,18 @@ function TextButton({
       pressed={{ scale: 'surface' }}
       disabled={disabled || flight.busy}
       hitSlop={compact ? COMPACT_SLOP : undefined}
-      style={material ? { boxShadow: material.elevation.glass } : undefined}
+      style={compact ? undefined : glassStyle}
       className={clsx(
-        'web:hover-dim flex-row items-center justify-center gap-2',
-        frameClass(compact, variant),
-        material ? (material.solid ? 'bg-surface' : 'web:glass-control bg-glass') : ink.surface,
-        block && 'w-full'
+        'web:hover-dim',
+        compact ? clsx('min-h-target-min -my-0.5 justify-center', block && 'w-full') : face
       )}>
-      {icon ? <Icon name={icon} size="small" tone={ink.icon} /> : null}
-      <Text variant={compact ? 'buttonCompact' : 'button'} tone={ink.text}>
-        {label}
-      </Text>
-      {trailing ? <Trailing trailing={trailing} ink={ink} /> : null}
+      {compact ? (
+        <View className={face} style={glassStyle}>
+          {content}
+        </View>
+      ) : (
+        content
+      )}
     </PressableSurface>
   );
 }
