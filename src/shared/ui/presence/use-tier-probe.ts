@@ -6,7 +6,7 @@ import { recordProbe } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
 import { advance, type Look, type Tick } from './engine/driver';
 import { particleCount } from './engine/engine';
-import { draw, prepare, type Runtime } from './skia-runtime';
+import { draw, prepare, release, type Runtime } from './skia-runtime';
 import { probeVerdict, PROBE_LIMITS, type ProbeSamples } from './tier-verdict';
 
 const PROBE_DELAY_MS = 1200;
@@ -90,7 +90,7 @@ export function useTierProbe(wanted: boolean): void {
     const gap = info.timestamp - current.last;
     if (current.frame < 0 || gap < MIN_SPACING_MS) return;
     current.last = info.timestamp;
-    const runtime = prepare(current.runtime, probeLook, spec);
+    const runtime = prepare(current.runtime, { look: probeLook, spec, shown: null });
     if (!runtime) return;
     current.runtime = runtime;
     current.frame += 1;
@@ -104,6 +104,7 @@ export function useTierProbe(wanted: boolean): void {
     current.gaps.push(gap);
     if (current.works.length < SAMPLE_FRAMES && !hopeless(current)) return;
     current.frame = -1;
+    release(current.runtime, null);
     current.runtime = null;
     scheduleOnRN(finish, { works: current.works, gaps: current.gaps });
   }, false);

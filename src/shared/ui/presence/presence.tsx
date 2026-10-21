@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, type GestureResponderEvent } from 'react-native';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useUniwind } from 'uniwind';
@@ -56,23 +56,35 @@ export function Presence({
   const dark = theme === 'dark';
   const [seed] = useState(nextSeed);
   const [touch, setTouch] = useState<PresenceCue | undefined>(undefined);
-  const plan = planFor({
-    size,
-    tier: perfTier,
-    reduceMotion,
-    adaptation: adaptive && !probing ? { ceiling, drops } : undefined,
-  });
-  const look: Look = {
-    size,
-    palette: tokens.illustration.estela[dark ? 'dark' : 'light'],
-    dark,
-    activeFps: plan.activeFps,
-    restFps: plan.restFps,
-    leanWhileScrolling: plan.leanWhileScrolling,
-  };
+  const adapting = adaptive && !probing;
+  const plan = useMemo(
+    () =>
+      planFor({
+        size,
+        tier: perfTier,
+        reduceMotion,
+        adaptation: adapting ? { ceiling, drops } : undefined,
+      }),
+    [size, perfTier, reduceMotion, adapting, ceiling, drops]
+  );
+  const look = useMemo<Look>(
+    () => ({
+      size,
+      palette: tokens.illustration.estela[dark ? 'dark' : 'light'],
+      dark,
+      activeFps: plan.activeFps,
+      restFps: plan.restFps,
+      leanWhileScrolling: plan.leanWhileScrolling,
+    }),
+    [size, dark, plan]
+  );
   const cue = touch && (!event || touch.id > event.id) ? touch : event;
   const { input, active } = usePresenceInput({ state, intensity, target, event: cue, paused });
   const lean = useSharedValue<[number, number]>([0, 0]);
+  const live = useMemo(
+    () => ({ input, level, scroll: scrollOffset, lean }),
+    [input, level, scrollOffset, lean]
+  );
   const decorative = !accessibilityLabel;
   const box = { width: size, height: size };
 
@@ -96,7 +108,7 @@ export function Presence({
       <PresenceCanvas
         plan={plan}
         look={look}
-        live={{ input, level, scroll: scrollOffset, lean }}
+        live={live}
         seed={seed}
         active={active}
         stillKey={`${state}|${dark}`}

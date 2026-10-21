@@ -1,1 +1,5 @@
 src/shared/ui/presence/presence-canvas.tsx spec library-identity: the frame worklet is re-registered whenever its captured spec changes identity, so the spec keeps one identity per particle count and seed
+src/shared/ui/presence/presence-canvas.tsx step library-identity: useFrameCallback registers its worklet again whenever the worklet changes identity, so it changes only when what it draws changes
+src/shared/ui/presence/presence.tsx plan effect-dependency: the canvas keys its still frame and its frame worklet on the plan, so the plan keeps one identity per size, tier and motion setting
+src/shared/ui/presence/presence.tsx look effect-dependency: the canvas keys its still frame and its frame worklet on the look, so the look keeps one identity per size, theme and plan
+src/shared/ui/presence/presence.tsx live effect-dependency: the canvas keys its still frame and its frame worklet on the live values, so they keep one identity per shared value

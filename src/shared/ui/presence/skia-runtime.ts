@@ -7,6 +7,7 @@ import {
   beginFrame,
   buildSprites,
   createScene,
+  disposeScene,
   endFrame,
   flushAtlas,
   setCompositing,
@@ -41,12 +42,15 @@ function sinksFor(scene: SkiaScene, particles: boolean): Sinks {
   };
 }
 
-export function prepare(current: Runtime | null, look: Look, spec: Spec): Runtime | null {
+export type Swap = { look: Look; spec: Spec; shown: SkImage | null };
+
+export function prepare(current: Runtime | null, { look, spec, shown }: Swap): Runtime | null {
   'worklet';
   const key = `${look.size}|${spec.count}|${look.dark}`;
   if (current && current.key === key) return current;
   const scene = createScene({ size: look.size, ratio: spec.ratio, count: spec.count });
   if (!scene) return null;
+  if (current) disposeScene(current.scene, shown);
   if (spec.count > 0) buildSprites(scene, streakWidth(look));
   setCompositing(scene, look.palette.additive);
   const driver = current ? current.driver : createDriver(spec.count, spec.seed);
@@ -68,4 +72,9 @@ export function draw(runtime: Runtime, frame: Frame, fade: number): SkImage {
   paintFrame(driver, frame, runtime.sinks);
   if (particles) flushAtlas(scene, frame.palette.additive);
   return endFrame(scene);
+}
+
+export function release(runtime: Runtime | null, shown: SkImage | null): void {
+  'worklet';
+  if (runtime) disposeScene(runtime.scene, shown);
 }

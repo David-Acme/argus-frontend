@@ -4,6 +4,7 @@ import {
   Skia,
   StrokeCap,
   type SkColor,
+  type SkHostRect,
   type SkImage,
   type SkPaint,
   type SkRect,
@@ -34,6 +35,7 @@ export type SkiaScene = {
   frames: [SkImage | null, SkImage | null];
   flip: number;
   tint: Float32Array;
+  dot: SkHostRect;
 };
 
 export type SceneSpec = { size: number; ratio: number; count: number };
@@ -81,6 +83,7 @@ export function createScene(spec: SceneSpec): SkiaScene | null {
     frames: [null, null],
     flip: 0,
     tint: new Float32Array(4),
+    dot: Skia.XYWHRect(0, 0, 0, 0),
   };
 }
 
@@ -212,10 +215,8 @@ export function strokeToCanvas(scene: SkiaScene, s: Stroke): void {
   if (!s.round) {
     scene.fill.setColor(color);
     const side = s.w * ratio;
-    canvas.drawRect(
-      Skia.XYWHRect(s.x1 * ratio - side / 2, s.y1 * ratio - side / 2, side, side),
-      scene.fill
-    );
+    scene.dot.setXYWH(s.x1 * ratio - side / 2, s.y1 * ratio - side / 2, side, side);
+    canvas.drawRect(scene.dot, scene.fill);
     return;
   }
   scene.stroke.setColor(color);
@@ -239,4 +240,14 @@ export function endFrame(scene: SkiaScene): SkImage {
     : scene.surface.makeImageSnapshot();
   scene.frames[scene.flip] = image;
   return image;
+}
+
+export function disposeScene(scene: SkiaScene, shown: SkImage | null): void {
+  'worklet';
+  scene.surface.dispose();
+  scene.sprites?.dispose();
+  for (const paint of [scene.stroke, scene.fill, scene.fade, scene.atlas]) paint.dispose();
+  for (const frame of scene.frames) if (frame && frame !== shown) frame.dispose();
+  scene.frames = [null, null];
+  scene.sprites = null;
 }
