@@ -106,6 +106,18 @@ const TEMPLATE_KEY_SYNTAX = [
   },
 ];
 
+const VISUAL_TIMER_MESSAGE =
+  'Drive visuals with Reanimated on the UI thread, never a JS timer (rule 26).';
+const VISUAL_TIMERS = '/^(setInterval|requestAnimationFrame)$/';
+
+const VISUAL_TIMER_SYNTAX = [
+  `CallExpression[callee.name=${VISUAL_TIMERS}]`,
+  `MemberExpression[property.name=${VISUAL_TIMERS}]`,
+  `MemberExpression[computed=true][property.value=${VISUAL_TIMERS}]`,
+  `VariableDeclarator[init.name=${VISUAL_TIMERS}]`,
+  `:matches(CallExpression, NewExpression) > Identifier.arguments[name=${VISUAL_TIMERS}]`,
+].map((selector) => ({ selector, message: VISUAL_TIMER_MESSAGE }));
+
 const TYPE_SCALE_MESSAGE =
   'Use a Text step (hero, title, headline, body, meta, caption) or a type role from tokens.';
 
@@ -344,13 +356,7 @@ module.exports = defineConfig([
     plugins: { i18next },
     rules: {
       'argus/type-scale': ['error', ...TYPE_SCALE_SYNTAX],
-      'argus/no-visual-timer': [
-        'error',
-        {
-          selector: 'CallExpression[callee.name=/^(setInterval|requestAnimationFrame)$/]',
-          message: 'Drive visuals with Reanimated on the UI thread, never a JS timer (rule 26).',
-        },
-      ],
+      'argus/no-visual-timer': ['error', ...VISUAL_TIMER_SYNTAX],
       'i18next/no-literal-string': ['error', { mode: 'jsx-only' }],
     },
   },

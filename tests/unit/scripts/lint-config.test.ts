@@ -158,4 +158,29 @@ describe('the lint set', () => {
       [],
     ]);
   });
+
+  test('a visual timer reached through an object, a computed name or an alias is banned', async () => {
+    const lines = [
+      'globalThis.setInterval(() => undefined, 16)',
+      'window.requestAnimationFrame(() => undefined)',
+      "globalThis['setInterval'](() => undefined, 16)",
+      '[0].forEach(requestAnimationFrame)',
+      'setTimeout(() => undefined, 16)',
+    ];
+    const hits = await Promise.all(
+      lines.map((line) =>
+        rulesHit(
+          'src/features/home/card.tsx',
+          `export function Card() {\n  ${line};\n  return null;\n}\n`
+        )
+      )
+    );
+    expect(hits).toEqual([
+      ['argus/no-visual-timer'],
+      ['argus/no-visual-timer'],
+      ['argus/no-visual-timer'],
+      ['argus/no-visual-timer'],
+      [],
+    ]);
+  });
 });

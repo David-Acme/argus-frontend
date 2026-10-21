@@ -176,4 +176,20 @@ describe('check-quality', () => {
     const run = quality({ 'src/shared/lib/labels.ts': file }, baseline({}, 1));
     expect(run.output).toContain('template-key: 4 is above its baseline 0');
   });
+
+  test('a visual timer reached through an alias or a computed name is counted', () => {
+    const screen = [
+      'export function Screen() {',
+      '  const tick = requestAnimationFrame;',
+      '  tick(() => undefined);',
+      '  return null;',
+      '}',
+    ].join('\n');
+    const run = quality(
+      { 'src/features/a/screen.tsx': screen },
+      baseline({}, 1),
+      'src/features/a/screen.tsx\n'
+    );
+    expect(run.output).toContain('timer-in-component: 1 is above its baseline 0');
+  });
 });

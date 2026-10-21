@@ -76,6 +76,31 @@ function callsMatching(file: SourceFile, names: RegExp): boolean {
   return found;
 }
 
+function inTypePosition(node: ts.Node): boolean {
+  for (let current = node.parent; current; current = current.parent) {
+    if (ts.isTypeNode(current)) return true;
+    if (ts.isExpression(current) || ts.isStatement(current)) return false;
+  }
+  return false;
+}
+
+function isTimerReference(node: ts.Node): boolean {
+  if (ts.isIdentifier(node)) return VISUAL_TIMERS.test(node.text) && !inTypePosition(node);
+  return (
+    ts.isElementAccessExpression(node) &&
+    ts.isStringLiteralLike(node.argumentExpression) &&
+    VISUAL_TIMERS.test(node.argumentExpression.text)
+  );
+}
+
+function referencesTimer(file: SourceFile): boolean {
+  let found = false;
+  walk(file.source, (node) => {
+    if (!found) found = isTimerReference(node);
+  });
+  return found;
+}
+
 function readsIdentifier(file: SourceFile, names: RegExp): boolean {
   let found = false;
   walk(file.source, (node) => {
@@ -120,7 +145,7 @@ export const fileCounters: readonly Counter[] = [
   {
     name: 'timer-in-component',
     applies: (path) => component(path) && !path.startsWith('src/shared/ui/'),
-    count: (file) => (callsMatching(file, VISUAL_TIMERS) ? 1 : 0),
+    count: (file) => (referencesTimer(file) ? 1 : 0),
   },
   {
     name: 'source-text-test',
