@@ -77,7 +77,7 @@ export function planFor({ size, tier, reduceMotion, adaptation }: PlanInput): Re
     count: Math.min(rule.ceiling, Math.round(full * rule.share)),
     trails: rule.trails && !icon,
     activeFps: icon ? Math.min(ICON_FPS, rule.activeFps) : rule.activeFps,
-    restFps: rule.restFps,
+    restFps: icon ? Math.min(ICON_FPS, rule.restFps) : rule.restFps,
     still: reduceMotion,
     leanWhileScrolling: rule.leanWhileScrolling,
     watch: adaptation !== undefined && !reduceMotion,

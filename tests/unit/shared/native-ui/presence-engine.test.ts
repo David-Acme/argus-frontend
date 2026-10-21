@@ -91,6 +91,7 @@ describe('presence engine', () => {
     expect(planFor({ size: 36, tier: 'high', reduceMotion: false })).toMatchObject({
       count: 0,
       activeFps: 30,
+      restFps: 30,
     });
     expect(planFor({ size: 120, tier: 'low', reduceMotion: false })).toMatchObject({
       count: 160,
