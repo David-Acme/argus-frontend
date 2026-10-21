@@ -31,19 +31,27 @@ export function hardwareCeiling(profile: HardwareProfile): PerfTier {
 
 export type TierEvidence = { live: PerfTier | null };
 
-export type TierInput = { profile: HardwareProfile; reduceEffects: boolean } & TierEvidence;
+export type TierInput = {
+  profile: HardwareProfile;
+  reduceEffects: boolean;
+  ceiling?: PerfTier | null;
+} & TierEvidence;
 
 export function lowerTier(a: PerfTier, b: PerfTier): PerfTier {
   return perfTiers[Math.min(perfTiers.indexOf(a), perfTiers.indexOf(b))] ?? 'low';
 }
 
-export function needsProbe({ profile, reduceEffects }: TierInput): boolean {
-  return !reduceEffects && profile.android && hardwareCeiling(profile) !== 'low';
+function ceilingOf(input: TierInput): PerfTier {
+  return input.ceiling ?? hardwareCeiling(input.profile);
+}
+
+export function needsProbe(input: TierInput): boolean {
+  return !input.reduceEffects && input.profile.android && ceilingOf(input) !== 'low';
 }
 
 export function resolvePerfTier(input: TierInput): PerfTier {
   if (input.reduceEffects) return 'low';
-  const ceiling = hardwareCeiling(input.profile);
+  const ceiling = ceilingOf(input);
   if (input.live !== null) return lowerTier(ceiling, input.live);
   return input.profile.android ? 'low' : ceiling;
 }
@@ -75,6 +83,7 @@ type EffectsOverrides = {
   reduceMotion: boolean | null;
   reduceTransparency: boolean | null;
   perfTier: PerfTier | null;
+  ceiling: PerfTier | null;
 };
 
 export const useEffectsOverrides = create<EffectsOverrides>(() => ({
@@ -82,6 +91,7 @@ export const useEffectsOverrides = create<EffectsOverrides>(() => ({
   reduceMotion: null,
   reduceTransparency: null,
   perfTier: null,
+  ceiling: null,
 }));
 
 type SystemFlags = Record<SystemFlag, boolean>;
@@ -131,17 +141,17 @@ export function useEffects(): Effects {
   const input: TierInput = {
     profile: hardwareProfile,
     reduceEffects: overrides.reduceEffects,
+    ceiling: overrides.ceiling,
     live: evidence.live,
   };
   const perfTier = overrides.perfTier ?? resolvePerfTier(input);
   const glassTier =
-    overrides.perfTier ??
-    resolvePerfTier({ ...input, live: input.live ?? hardwareCeiling(hardwareProfile) });
+    overrides.perfTier ?? resolvePerfTier({ ...input, live: input.live ?? ceilingOf(input) });
   const auto = overrides.perfTier === null;
   return {
     perfTier,
     adaptive: auto && !overrides.reduceEffects,
-    ceiling: hardwareCeiling(hardwareProfile),
+    ceiling: ceilingOf(input),
     drops: evidence.drops,
     probing: auto && evidence.live === null && needsProbe(input),
     reduceMotion: overrides.reduceMotion ?? systemMotion,

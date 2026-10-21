@@ -21,6 +21,7 @@ export type BenchParams = {
   event?: string;
   still?: string;
   load?: string;
+  ceiling?: string;
 };
 
 const benchTiers = [...perfTiers, 'auto'] as const;
@@ -40,15 +41,18 @@ export function PresenceBench({ params }: { params: BenchParams }) {
   const size = Math.max(28, Math.min(320, Number(params.size) || 300));
   const level = useSimulatedLevel(params.level === '1');
   const cue = useEventPulse(event);
+  const ceiling = perfTiers.find((option) => option === params.ceiling) ?? null;
   useUiLoad(Math.max(0, Math.min(40, Number(params.load) || 0)));
 
   useEffect(() => {
     useEffectsOverrides.setState({
       perfTier: tier === 'auto' ? null : tier,
+      ceiling,
       reduceMotion: params.still === '1' ? true : null,
     });
-    return () => useEffectsOverrides.setState({ perfTier: null, reduceMotion: null });
-  }, [tier, params.still]);
+    return () =>
+      useEffectsOverrides.setState({ perfTier: null, reduceMotion: null, ceiling: null });
+  }, [tier, params.still, ceiling]);
 
   return (
     <View className="flex-1 items-center justify-center gap-6" testID="presence-bench">
