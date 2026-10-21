@@ -53,8 +53,12 @@ function useDialogKeys(props: SheetProps, discard: Discard): void {
   useEffect(() => {
     if (!props.open) return;
     if (IS_WEB) {
-      globalThis.addEventListener('keydown', submit);
-      return () => globalThis.removeEventListener('keydown', submit);
+      const opener = globalThis.document.activeElement;
+      globalThis.addEventListener('keydown', submit, true);
+      return () => {
+        globalThis.removeEventListener('keydown', submit, true);
+        if (opener instanceof HTMLElement) globalThis.setTimeout(() => opener.focus(), 0);
+      };
     }
     if (!IS_ANDROID) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', back);
