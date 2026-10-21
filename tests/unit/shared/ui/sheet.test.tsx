@@ -14,7 +14,7 @@ function sheet(log: Log, overrides: Partial<SheetProps> = {}) {
       open
       title="Nuevo evento"
       onClose={() => log.push('close')}
-      actions={{ primary: { label: 'Guardar', onPress: () => log.push('save') } }}
+      actions={{ primary: { label: 'Guardar', onPress: () => void log.push('save') } }}
       {...overrides}>
       <Text>Notas</Text>
     </SheetDialog>
