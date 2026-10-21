@@ -1,21 +1,34 @@
 # Frontend rules: final set
 
-Status: final proposal, 2026-10-20, approved in principle by the owner ("with
-the recommendations"), including his additional requirements. **Nothing in it
-is implemented yet.** It lands together with the redesign, as one programme in
-which nothing is built twice (see "Implementation order with the redesign" at
-the end). It replaces the F1–F33 proposal (`frontend-rules-proposal.md`). The
-text that goes into `AGENTS.md` is `AGENTS-rules-section.md`.
+Status: final, 2026-10-20, approved by the owner ("with the recommendations"),
+including his additional requirements. The rules, the refactor and the
+redesign are **one programme** in which nothing is built twice (owner
+decision, 2026-10-20; spec §15 A1): "Implementation order with the redesign"
+at the end is its order, and it replaces the plan's §5 and decision D7. Phase
+1 of the redesign lands S0's gates (R0) and `shared/theme/tokens.ts` with the
+spec's values; everything else is still to be built. It replaces the F1–F33
+proposal (`frontend-rules-proposal.md`). The text that goes into `AGENTS.md`
+is `AGENTS-rules-section.md`.
+
+Where this document and the redesign spec disagree, the spec wins (owner
+decision, spec §15 A1–A9), and the values are the ones `tokens.ts` holds.
 
 Companion documents:
 
 - `../references.md`: the sources, cited here as `[key]`;
 - `error-messages-spec.md`: rule 20 in full;
 - `frontend-refactor-plan.md`: the measured state and phases R0–R10;
-- `../../frontend-design/docs/plans/redesign-spec.md` on the design branch:
-  the redesign spec, cited as "spec §n", whose values these rules enforce.
+- `redesign-spec.md`: the redesign spec, cited as "spec §n", whose values
+  these rules enforce;
+- `../../src/shared/theme/tokens.ts` and `../../src/shared/theme/effects.ts`:
+  the values and the performance tier.
 
-Numbers were measured on `09cf103` unless they name another source.
+Numbers were measured on `09cf103` unless they name another source. They are
+the survey that motivated each rule. The counts the gates enforce are the R0
+baselines committed in `scripts/lib/quality-baseline.txt`,
+`eslint-suppressions.json`, `scripts/lib/boundaries-baseline.txt` and
+`scripts/lib/bundle-baseline.txt`; where a count below says `09cf103`, the R0
+baseline replaces it.
 
 ## How to read a rule
 
@@ -45,11 +58,14 @@ This is the backend's model (`backend/AGENTS.md` rules 5, 19 and 20,
 - A baseline is never raised. A manual memoization that rule 31 allows is
   listed in `memo-exceptions.txt`, which the counter skips, so it raises
   nothing.
-- There are six baseline files:
-  - `scripts/lib/quality-baseline.txt`: one `metric count` per line, read by
-    `scripts/check-quality.ts`;
+- The baseline files are:
+  - `scripts/lib/quality-baseline.txt`: one `metric count` per line plus a
+    `scanned-files` line, read by `scripts/check-quality.ts`;
+  - `scripts/lib/boundaries-baseline.txt`: the cycle, deep-import and
+    route-shape counts of `scripts/check-boundaries.ts`;
+  - the Prettier ratchet's list of files not yet formatted (rule 33);
   - `eslint-suppressions.json`: ESLint's bulk suppressions [eslint-suppressions],
-    written once by `eslint --suppress-all` at S0 and only shrunk by
+    written once by `eslint --suppress-all` at R0 and only shrunk by
     `--prune-suppressions`. A fixed violation makes ESLint exit non-zero until
     it is pruned;
   - `scripts/lib/bundle-baseline.txt`: entry chunk bytes, `dist/` bytes, and
@@ -63,7 +79,9 @@ This is the backend's model (`backend/AGENTS.md` rules 5, 19 and 20,
 
 `bun run verify` runs every gate except the layout audit, the Android
 performance run and Maestro. The integration build runs those, the way the
-backend's full build alone runs clang-tidy.
+backend's full build alone runs clang-tidy. The layout and performance
+baselines and `check:tokens` do not exist yet: the rules that rely on them are
+*reviewed* until the phase their rule names.
 
 ---
 
@@ -141,8 +159,9 @@ fewer files than the baseline records (`scanned-files` line).
     `CONTEXT.md`.
   - It fails on an exception without a row, a row without an exception, any
     `warn` severity, or `noInlineConfig` not set.
-  - **Baseline:** 2 exceptions today (`react-hooks/immutability`, and
-    `no-console` for `log.ts` and `scripts/`). The immutability exception
+  - **Baseline:** the rows of `CONTEXT.md` › "Lint exceptions" (at R0:
+    `react-hooks/immutability`, and `no-console` for
+    `src/core/services/log.ts` and `scripts/`). The immutability exception
     leaves at S1 (rule 26).
 
 **Phase.** R0 (S0), together with the suppressions file.
@@ -151,8 +170,8 @@ fewer files than the baseline records (`scanned-files` line).
 
 **Rule.** Today's §10b, without exception:
 - no comment of any kind in any tracked file;
-- no lint or type suppressions (`eslint-disable`, `@ts-expect-error`,
-  `@ts-ignore`);
+- no lint, type or format suppressions (`eslint-disable`,
+  `@ts-expect-error`, `@ts-ignore`, `prettier-ignore`);
 - the "why" goes to `CONTEXT.md`.
 
 The suppressions file, the baselines and `CONTEXT.md` are data and
@@ -231,9 +250,9 @@ type, interface and contract files. A domain change touches 4–5 folders.
 
 **Sources.** [fsd-overview], [fsd-layers].
 
-**Gate.** `bun run check:boundaries` (v2) checks the layer matrix.
-**Baseline:** its current rules 1–5 at 0. The matrix starts when R3 creates
-the layers, and each moved domain is at 0 from the moment it moves.
+**Gate.** `bun run check:boundaries` (v2). **Baseline:** its five rules at 0
+from R0. The layer matrix is *reviewed* until R3 creates the layers; each
+moved domain is at 0 from the moment it moves.
 
 **Phase.** R0 for the mechanism, R3 per domain (S3).
 
@@ -254,11 +273,13 @@ the layers, and each moved domain is at 0 from the moment it moves.
 **Sources.** [fsd-public-api].
 
 **Gate.**
-- `check:boundaries` rule `deep-import`: 71 → 0.
-- The lint selector `ExportAllDeclaration` in `src/**`: 116 → 0, through bulk
-  suppressions.
+- `check:boundaries` rule `deep-import` (71 at `09cf103`), ratcheted against
+  `scripts/lib/boundaries-baseline.txt` → 0.
+- The lint selector `ExportAllDeclaration` in `src/**` (116 at `09cf103`) →
+  0, through bulk suppressions.
 
-**Phase.** R0 gate; reaches 0 with R3.
+**Phase.** `deep-import` is measured from R0. `export *` is *reviewed* until
+R3 adds its selector, when the barrels are rewritten. Both reach 0 with R3.
 
 ### 8. No import cycles
 
@@ -270,8 +291,9 @@ strongly connected component.
 
 **Sources.** [fsd-layers].
 
-**Gate.** `check:boundaries --cycles` (Tarjan SCC over runtime edges).
-**Baseline:** 1 file SCC and 1 slice SCC → 0.
+**Gate.** `check:boundaries` cycle detection (Tarjan SCC over runtime edges,
+file and slice level), ratcheted against `scripts/lib/boundaries-baseline.txt`.
+**Baseline:** 1 file SCC and 1 slice SCC at `09cf103` → 0.
 
 **Phase.** R0 gate, 0 at R4 (S3).
 
@@ -290,10 +312,12 @@ ordering hides in JSX.
 
 **Sources.** [expo-router].
 
-**Gate.** `check:boundaries` rule `route-shape`. **Baseline:** 6 hook calls in
-layouts → 0.
+**Gate.** `check:boundaries` rule `route-shape`: a route file under
+`src/app/**` that is not a one-line re-export, ratcheted against
+`scripts/lib/boundaries-baseline.txt`. The layout half (6 hook calls in
+layouts at `09cf103` → 0) is *reviewed* until R1 builds `<AppRuntime />`.
 
-**Phase.** R0 gate, 0 at R1 (S1).
+**Phase.** R0 gate for routes, 0 at R1 (S1) for layouts.
 
 ### 10. One home for each kind of thing
 
@@ -302,7 +326,8 @@ exists anywhere else.
 
 | Kind | The one home |
 |---|---|
-| Design values (colour, space, size, radius, type, elevation, motion, breakpoints, illustration colours) | `shared/theme/tokens.ts` (rule 21) |
+| Design values (colour roles, Aura tones, elevation, illustration colours, type steps and roles, space, radius, size, motion, material, breakpoints, layout) | `shared/theme/tokens.ts` (rule 21) |
+| The performance tier and the reduce-motion/transparency flags | `shared/theme/effects.ts` (`useEffects`, rule 26) |
 | Icons | the `ICONS` registry, `shared/ui/icon` |
 | User-facing text | the `es`/`en` dictionaries (`platform/i18n/locales`) |
 | Error codes → words | `platform/errors` (rule 20) |
@@ -334,10 +359,12 @@ segment.
   found outside its home fails (for example `lucide-react-native` outside the
   registry, `date-fns`/`Intl.DateTimeFormat` outside the formatter).
 - `check-quality` counters:
-  - `type-written-twice` (`satisfies z.ZodType`): 80 → 0;
-  - `hex-literal`: 74 → 0 (rule 21).
+  - `type-written-twice` (`satisfies z.ZodType`): 80 at `09cf103` → 0;
+  - `hex-literal`: its R0 baseline → 0 (rule 21).
 
-**Phase.** R0 gates. The counters reach 0 at R2/R3 (types) and R5 (values).
+**Phase.** `hex-literal` and the icon and formatter import bans are measured
+from R0. `kind-home` and `type-written-twice` are *reviewed* until R3 and R2,
+which build them. The counters reach 0 at R2/R3 (types) and S3 (values).
 
 ### 11. No duplication; shared code is earned; no dead code
 
@@ -378,8 +405,10 @@ segment.
 - `check:boundaries` rule 5 (2+ consumers in `shared/`), extended to
   `widgets/` at R4. **Baseline:** 0.
 
-**Phase.** R0 (S0). Knip turns from measured-only to a ratchet once its
-false-positive list is configured at S0.
+**Phase.** `sonarjs/no-identical-functions` and rule 5 are measured from R0.
+The jscpd, knip and `duplicate-export-name` counters are *reviewed* until R3,
+when the moves that would churn them are done; knip turns into a ratchet once
+its false-positive list is configured.
 
 ### 12. One interior per slice; file naming
 
@@ -407,10 +436,10 @@ false-positive list is configured at S0.
 **Gate.**
 - `check:boundaries` rule `slice-shape`: 5 → 0.
 - `check:boundaries` rule `file-name`, the regex
-  `^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z]+)*\.(ts|tsx)$`; the baseline is measured
-  at R0.
+  `^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z]+)*\.(ts|tsx)$`.
 
-**Phase.** R0 gate; 0 per domain at R3.
+**Phase.** *Reviewed* until R3, which adds both rules with the layers; 0 per
+domain at R3.
 
 ---
 
@@ -436,15 +465,17 @@ false-positive list is configured at S0.
 **Sources.** [zod], [ts-narrowing].
 
 **Gate.**
-- Lint: a type argument on `httpService.*` is banned.
-- `check-quality` counters `http-unchecked`: 85 → 0, and
-  `type-written-twice`: 80 → 0.
+- `check-quality` counter `http-unchecked` (85 at `09cf103`, the R0 baseline
+  replaces it) → 0.
+- Lint: a type argument on `httpService.*` is banned, and
+  `type-written-twice` (80 at `09cf103`) → 0. Both are *reviewed* until R2
+  gives `httpService` its schema argument.
 - `tests/contracts/http-contract.test.ts` validates every route an entity
   calls against `backend/scripts/fixtures/http`. Its route list is generated
   from the entities' `api/`.
 
-**Phase.** R0 gate. It reaches 0 per domain at R2, before that domain's
-screens are rebuilt (S3).
+**Phase.** R0 for the counter. It reaches 0 per domain at R2, before that
+domain's screens are rebuilt (S3).
 
 ### 14. Gates fail closed and are tri-state
 
@@ -469,7 +500,7 @@ screens are rebuilt (S3).
   loading/failed/allow/deny.
 - The web E2E `startup.e2e.ts` runs the fake server at zero latency.
 
-**Phase.** R1 (S1).
+**Phase.** *Reviewed* until R1 (S1) builds both.
 
 ### 15. One session state machine owns the session lifecycle
 
@@ -487,10 +518,10 @@ Home showed 0 detections, not 5).
 
 **Sources.** [react-state].
 
-**Gate.** `check:boundaries` rule `session-owner`. The baseline is measured at
-R0, and only `platform/session` may hold those calls.
+**Gate.** `check:boundaries` rule `session-owner`: only `platform/session`
+may hold those calls.
 
-**Phase.** R1 (S1).
+**Phase.** *Reviewed* until R1 (S1) creates `platform/session` and the rule.
 
 ### 16. A failure is never shown as a fact
 
@@ -509,11 +540,14 @@ failure (W6).
 
 **Gate.**
 - By type (`ReadyEmpty`).
-- `check-quality` counter `empty-outside-resource-view`: 42 → 0.
-- Lint bans `ActivityIndicator` outside `shared/ui`: 9 → 0.
+- `check-quality` counter `empty-outside-resource-view` (42 at `09cf103`) →
+  0.
+- Lint bans `ActivityIndicator` from `react-native` in features (rule 24),
+  with its R0 bulk suppressions → 0.
 
-**Phase.** R1 builds the type, and R6/S2 the component. The count falls per
-screen at S3.
+**Phase.** The lint ban is measured from R0. The type and the counter are
+*reviewed* until R1 builds `Resource<T>`, and S2 builds `ResourceView`. The
+count falls per screen at S3.
 
 ### 17. One owner per datum
 
@@ -541,10 +575,11 @@ screen at S3.
 **Gate.**
 - `check:boundaries` rule `store-purity`.
 - `check-quality` counters:
-  - `module-cache`: 17 → an audited list in `platform`;
-  - `get-state-outside-store`: 68 → shrink.
+  - `module-cache`: 17 at `09cf103` → an audited list in `platform`;
+  - `get-state-outside-store`: 68 at `09cf103` → shrink.
 
-**Phase.** R0 gate; R1–R3.
+**Phase.** *Reviewed* until R1–R3, which add these with `platform/` and the
+entity stores.
 
 ### 18. Mutations are single-flight, abandon-safe, and confirmed or undoable
 
@@ -566,8 +601,9 @@ screen at S3.
 **Sources.** [nng-confirm], [hig-alerts], [m3-dialogs].
 
 **Gate.**
-- `no-restricted-imports` of `platform/http` outside `entities/*/api` and
-  `platform`: 21 files → 0.
+- `no-restricted-imports` of the HTTP service (today `core/services/http`,
+  then `platform/http`) outside `entities/*/api` and `platform` (21 files at
+  `09cf103`), with its R0 bulk suppressions → 0.
 - The action helpers have unit tests for double press and unmount.
 - `Button`'s `busy` state is single-flight by construction.
 
@@ -598,7 +634,8 @@ first, then live sync.
 - `check:boundaries` rule `database-access`, baseline 0 once restated.
 - The startup trace of rule 30 records `first-frame-from-cache`.
 
-**Phase.** R0 / R3.
+**Phase.** *Reviewed* until R3 restates the rule for the new homes; the trace
+comes with R9's measurements.
 
 ### 20. Errors are words the user can act on
 
@@ -638,8 +675,8 @@ first, then live sync.
 - the UI-map `rawErrorText` check;
 - surface component tests.
 
-**Phase.** S1 (together with `ResourceView`, `Toast`, `Notice` and
-`Field`). The counters reach 0 at S3.
+**Phase.** *Reviewed* until S1 (together with `ResourceView`, `Toast`,
+`Notice` and `Field`). The counters reach 0 at S3.
 
 ---
 
@@ -649,18 +686,44 @@ first, then live sync.
 
 **Rule.**
 - `shared/theme/tokens.ts` is the only place a colour, space step, size,
-  radius, type step, elevation, motion duration or spring, breakpoint or
-  illustration colour is written.
-- Its values are the redesign spec §3:
-  - 16 colour roles per theme, with each status colour text-safe itself (the
-    `*-strong` twins go);
-  - six type steps, `hero` 36 … `caption` 12;
-  - seven space steps, `4 … 48`;
-  - five concentric radii, `8 · 14 · 22 · 28 · full`;
-  - two elevation levels;
-  - three springs (`snappy`, `gentle`, `playful`) and `fast 120 / base 200 /
-    slow 300 ms`;
-  - the `material` (glass) and Aura tones.
+  radius, type step or role, elevation, motion duration or spring, material
+  value, breakpoint, layout width or illustration colour is written. It holds
+  the redesign spec §3 as the prototype renders it, and this list names its
+  groups; the numbers are read from the file, never copied out of it:
+  - `color`: about 18 UI roles per theme (`bg`, `surface`, `fill`,
+    `fill-press`, `line`, `text`, `text-2`, `text-3`, `ink`, `on-ink`,
+    `accent`, `accent-fill`, `accent-soft`, `ok`, `ok-soft`, `attn`,
+    `attn-soft`, `alert`, `alert-soft`, `scrim`), plus the glass hairlines
+    (`glass`, `glass-line`, `glass-edge`), the skeleton fills (`skel`,
+    `skel-2`) and the calendar event tints with their text (`ev1`…`ev4`,
+    `ev1-text`…`ev4-text`). The text-safe value **is** the role: there are no
+    `*-strong` twins, and a fill that cannot carry text is named as a fill
+    (`accent-fill`);
+  - `aura`: the six tones `calm`, `duty`, `attn`, `alert`, `off`, `listen`,
+    three stops each per theme (fills only);
+  - `elevation`: `card` and `float` per theme; `none` is content inside a
+    card, separated by hairlines, and has no shadow token;
+  - `illustration`: media, live dot, switch thumb, eye chip and Estela's
+    palettes per theme;
+  - `type`: six steps, `hero`, `title`, `headline`, `body`, `meta`,
+    `caption` (36 … 12), each with its line height, weight, tracking and
+    `maxScale` (rule 25); and `typeRoles`, the named component roles the
+    prototype renders (`heroCompact`, `heroSecondary`, `section`,
+    `rowTitle`, `rowMeta`, `button`, `buttonCompact`, `label`, `feed`,
+    `chip`, `tab`, `key`);
+  - `space`: seven steps, `4 · 8 · 12 · 16 · 24 · 32 · 48`;
+  - `radius`: the named roles `key`, `sm`, `segInner`, `control`, `well`,
+    `button`, `toast`, `media`, `dialog`, `card`, `status`, `sheet` and
+    `full`, concentric where shapes nest;
+  - `size`: targets, rows, icons and their stroke, wells, avatars, buttons,
+    fields, chips, the switch, segments, the tab bar, the sheet grabber, dots
+    and the hairline;
+  - `motion`: the springs `snappy`, `gentle` and `playful`, the durations
+    `fast` 120, `base` 200 and `slow` 300 ms, and the press scales;
+  - `material`: the glass blur and saturation per surface (bar, control,
+    sheet, palette);
+  - `breakpoints` (rule 23) and `layout` (gutters, content and text widths,
+    dialog, side sheet, palette and sidebar widths).
 - `scripts/gen-tokens.ts` generates the theme block of `global.css` (OKLCH)
   and the JS constants, and Tailwind's default palette is removed
   (`--color-*: initial`).
@@ -675,17 +738,22 @@ first, then live sync.
 [wcag-non-text].
 
 **Gate.**
+- The lint selector bans HEX, `rgb(`, `hsl(` and `oklch(` literals in `src/`
+  outside `shared/theme`, and `check-quality` `hex-literal` counts them (74
+  at `09cf103`; the R0 baseline replaces it) → 0.
+- `check-quality` `legacy-token-class` counts uses of today's colour class
+  names (`background`, `foreground*`, `muted-foreground`, `card*`,
+  `surface-secondary`, `border*`, `error-strong`, …) → 0. The legacy CSS
+  block is deleted at 0.
 - `bun run check:tokens` regenerates the outputs into a temporary folder and
   fails on any difference.
-- The lint selector bans HEX, `rgb(`, `hsl(` and `oklch(` literals in `src/`
-  outside `shared/theme`: 74 → 0.
 - A unit test computes every text and background pair in both themes:
   4.5:1 for text, 3:1 for icons, borders and focus.
-- `check-quality` `legacy-token-class` counts uses of today's token names
-  (`text-foreground-secondary`, `error-strong`, …) → 0. The legacy CSS block
-  is deleted at 0.
 
-**Phase.** R5 (S1). The legacy count reaches 0 at S4.
+**Phase.** The literal ban and both counters are measured from R0.
+`tokens.ts` landed with the spec's values in Phase 1 (`539d76c`).
+`check:tokens` and the contrast test are *reviewed* until the generator lands
+(R5, S1). The legacy count reaches 0 at S4.
 
 ### 22. No arbitrary values, no raw palette, no inline sizes
 
@@ -695,8 +763,8 @@ first, then live sync.
   colour or a size.
 - APIs that need numbers (Reanimated, SVG, insets) read `tokens`.
 
-**Why.** There are 114 arbitrary values and 78 inline style objects. Each one
-is a value the redesign would have to hunt down.
+**Why.** There were 114 arbitrary values and 78 inline style objects at
+`09cf103`. Each one is a value the redesign would have to hunt down.
 
 **Sources.** [better-tailwind], [tailwind-theme].
 
@@ -705,11 +773,14 @@ is a value the redesign would have to hunt down.
   the old scale), `no-unknown-classes`, `no-conflicting-classes` and
   `no-duplicate-classes`, with `entryPoint: 'src/global.css'`.
 - The `style={{` selector.
-- **Baseline:** 114 and 78 → 0 (tokens-derived styles excepted).
+- The `check-quality` counters of arbitrary Tailwind values and `style={{`.
+- **Baseline:** the R0 counts (114 and 78 at `09cf103`) → 0 (tokens-derived
+  styles excepted).
 
-**Phase.** R0 gate. S0 spikes whether `no-unknown-classes` understands
-Uniwind's platform variants. If it does not, that one rule waits and the
-in-repo selectors cover the rest. The counts reach 0 at S3.
+**Phase.** R0 gate. R0 spikes whether `no-unknown-classes` understands
+Uniwind's platform variants and the generated theme; its result is recorded
+in `CONTEXT.md`. If it does not, that one rule waits and the in-repo
+selectors cover the rest. The counts reach 0 at S3.
 
 ### 23. One responsive system
 
@@ -739,27 +810,24 @@ in-repo selectors cover the rest. The counts reach 0 at S3.
 
 **Gate.**
 - `no-restricted-imports` of `useWindowDimensions`/`Dimensions` outside
-  `shared`: 18 → 0.
-- The layout audit (rule 29).
+  `shared`, and the `check-quality` counter of `useWindowDimensions` in
+  features (18 at `09cf103`; the R0 baseline replaces it) → 0.
+- The layout audit (rule 29), *reviewed* until R8.
 
-**Phase.** R5 (S1); per screen at S3.
+**Phase.** The ban and the counter from R0; the breakpoints from tokens at R5
+(S1); per screen at S3.
 
 ### 24. The design system owns every interactive, state and overlay surface
 
 **Rule.**
-- Features compose the **26 components** of spec §4. The list here and the
-  spec are one list, and a new component or variant needs a spec change and a
-  `ui-lab` baseline.
-
-  | Family | Components |
-  |---|---|
-  | Foundations | `Text`, `Icon`, `Pressable` (`PressableSurface`), `Screen`, `Nav` |
-  | Content | `Section`, `Row`, `Status`, `Notice`, `FeedItem`, `Chip`, `Avatar`, `Media`, `Check` |
-  | Input | `Button`, `Field`, `Choice`, `Switch` |
-  | Overlays and states | `Sheet`, `Confirm`, `Menu`, `Toast`, `ResourceView` |
-  | Identity | `Aura`, `Presence`, `Command` |
-
-  `Stack`, `Inline` and `Cluster` are layout helpers.
+- Features compose the **26 components** of spec §4. Spec §4 is the one
+  list, with each component's variants; `AGENTS.md` rule 24 names them for
+  agents, and no other document keeps a copy. The spec's names hold:
+  `Pressable` (the `PressableSurface`), `Button` with `iconOnly` (no
+  `IconButton`), `Row`, `Choice`, `Notice` (it covers retry and stale) and
+  `Field`. `Stack`, `Inline` and `Cluster` are layout helpers, not counted
+  among the 26. A new component or variant needs a spec change and a `ui-lab`
+  baseline.
 - A feature never imports `Pressable`, `TouchableOpacity`,
   `TouchableHighlight`, `ActivityIndicator`, `Switch`, `Modal`, `Image`,
   `FlatList`, `SectionList` or `ScrollView` from `react-native`.
@@ -781,21 +849,18 @@ in-repo selectors cover the rest. The counts reach 0 at S3.
 [nng-confirm].
 
 **Gate.**
-- `no-restricted-imports` (`react-native`: the names above) under
-  `features/**` and `widgets/**`, with bulk suppressions. **Baseline:**
-  - `Pressable` 104;
-  - `ActivityIndicator` 9;
-  - `Switch` 3;
-  - `Image` 6;
-  - list and scroll components: about 30 files by grep, and the exact
-    import count is taken at R0.
-
-  All reach 0.
+- `no-restricted-imports` (`react-native`: the names above, and `Animated`)
+  under `features/**`, with bulk suppressions, and the `check-quality`
+  counter of raw `Pressable` in features. **Baseline:** the R0 suppressions
+  and count (at `09cf103`: `Pressable` 104, `ActivityIndicator` 9, `Switch`
+  3, `Image` 6, list and scroll components in about 30 files). All reach 0.
+  `widgets/**` joins the ban when R4 creates it.
+- `check-quality` `untested-component-or-screen` (rule 34).
 - Each component has a component test and a `ui-lab` visual baseline (3
-  widths × 2 themes × reduced motion/transparency).
+  widths × 2 themes × reduced motion/transparency), *reviewed* until S2.
 
-**Phase.** R6 = S2 (the components, built once with the spec's values); the
-counts reach 0 at S3.
+**Phase.** The bans from R0. R6 = S2 (the components, built once with the
+spec's values); the counts reach 0 at S3.
 
 ### 25. Accessibility is part of the type
 
@@ -808,7 +873,8 @@ counts reach 0 at S3.
   - at least 24 px on pointer-only desktop.
 - **Contrast** is AA in both themes, checked from `tokens.ts` (rule 21).
 - **Font scale:** `maxFontSizeMultiplier` 2.0 for `body`, `meta` and
-  `caption`, and 1.5 for `hero` and `title`. Today's global 1.6 cap goes.
+  `caption`, and 1.5 for `hero` and `title` (spec §11, A2). `Text` reads each
+  step's and role's `maxScale` from `tokens.ts`. Today's global 1.6 cap goes.
 - **Platform settings:** Reduce Motion, Reduce Transparency and Increase
   Contrast are honoured, and so is the app's "Reducir efectos" setting.
 - **Announcements:** the alert `Status` is announced, and toasts are polite
@@ -838,8 +904,8 @@ counts reach 0 at S3.
 - The contrast unit test.
 - Component tests query by role and label [tl-queries].
 
-**Phase.** R6/S2 for the components; R8 for the audits (S2 starts them on
-`ui-lab`).
+**Phase.** *Reviewed* until S2 for the components and R8 for the audits (S2
+starts them on `ui-lab`).
 
 ### 26. Motion runs on the UI thread and respects the user
 
@@ -853,7 +919,11 @@ counts reach 0 at S3.
   - Reanimated shared values and worklets;
   - Reanimated CSS animations [rea-css];
   - the platform's own sheet, push and alert curves;
-  - the Rive native renderer.
+  - Estela (R-D28): `@shopify/react-native-skia` v2's Atlas driven by
+    Reanimated worklets on iOS and Android [skia-atlas] [skia-reanimated],
+    and a plain Canvas 2D renderer of the same particle system on web and
+    Tauri [canvas-2d], inside `shared/ui`, the one place a frame loop may
+    drive visuals.
 
   Never a `setState` per frame, never `setInterval` or `requestAnimationFrame`
   driving visuals, never `Animated` from `react-native`.
@@ -870,12 +940,20 @@ counts reach 0 at S3.
   - every animation keeps `ReduceMotion.System` (the Reanimated default
     [rea-a11y]);
   - every loop (`withRepeat`, `useFrameCallback`, an infinite CSS animation,
-    a Rive loop) has a still form;
+    Estela's frame loop) has a still form;
   - transitions jump to their end state or become a 120 ms cross-fade.
 - **Flashing:** an alert pulse never flashes more than three times a second
   [wcag-flash].
-- **The `low` performance tier** (older Android, under 4 GB RAM, or "Reducir
-  efectos") gets the still and solid forms of spec §7b.
+- **The performance tier** is `perfTier`, `low`, `mid` or `high`, decided by
+  `shared/theme/effects.ts` (`resolvePerfTier`, read through `useEffects`)
+  from the hardware profile [expo-device]: "Reducir efectos", Android below
+  API 31 or under 4 GB RAM give `low`; Android under 6 GB gives `mid`;
+  everything else `high`. `low` gets the still and solid forms of spec §7b
+  and §8b. Spec §7b names two tiers; the owner's Phase 1 brief asked for
+  three, so the spec gets `mid`, and `effects.ts` defines it.
+- **Haptics, not sound.** UI sound is deferred (spec §7c, S1 in spec §13):
+  nothing plays a UI sound. Moments are carried by animation and expo-haptics
+  [expo-haptics].
 
 **Why.**
 - The owner wants an elegant, futuristic feel that is performance-first.
@@ -896,20 +974,22 @@ counts reach 0 at S3.
   - `no-restricted-imports` of `Animated` from `react-native`;
   - a selector banning `setInterval`/`requestAnimationFrame` in `*.tsx`
     outside `shared/ui`.
-- `check-quality` counters, each with its R0 baseline → 0:
-  - `shared-value-dot-value`: 129;
-  - `loop-without-reduce-motion`: 3, an AST scan of files that start a loop
+- `check-quality` counters, each with its R0 baseline → 0 (the `09cf103`
+  survey in brackets):
+  - `shared-value-dot-value` (129);
+  - `loop-without-reduce-motion` (3), an AST scan of files that start a loop
     and never read `useReduceMotion`/`ReduceMotion`;
   - `animated-layout-prop`: the keys returned by `useAnimatedStyle`;
-  - `timer-in-component`: 8 files.
-- The layout audit, on the web build:
+  - `timer-in-component` (8 files).
+- The layout audit, on the web build, *reviewed* until R8:
   - `infiniteAnimations` ≤ 2 per capture (`document.getAnimations()`);
   - 0 under `emulateMedia({ reducedMotion: 'reduce' })`.
-- The Android frame budget of rule 31.
+- The Android frame budget of rule 31, *reviewed* until R9.
 
-**Phase.** R0 for the counters. S1 for `springs.ts` and the motion tokens.
-S2 for the components that own the motion. The integration build measures
-frames at S0 (the baseline) and at every S3 step.
+**Phase.** R0 for the lint bans and the counters. The motion tokens and
+`effects.ts` landed in Phase 1; S1 adds `springs.ts`. S2 for the components
+that own the motion. The integration build measures frames once the
+reference run exists (R9) and at every S3 step.
 
 ### 27. Text the user reads is a typed key, in Argus's voice
 
@@ -947,10 +1027,12 @@ frames at S0 (the baseline) and at every S3 step.
 
 **Gate.**
 - Lint: a selector bans a `TemplateLiteral` with expressions as `t()`'s first
-  argument (132 → 0), and `i18next/no-literal-string` runs in `jsx-only` mode
-  on `src/**/*.tsx` (the baseline is measured at R0).
-- A unit test checks glossary terms and banned words over the dictionaries.
-- The plural keys are typed.
+  argument, counted by `check-quality` too (132 at `09cf103`; the R0
+  baseline replaces it) → 0, and `i18next/no-literal-string` runs in
+  `jsx-only` mode on `src/**/*.tsx`, its debt in the R0 suppressions.
+- A unit test checks glossary terms and banned words over the dictionaries,
+  and the plural keys are typed: both *reviewed* until S1 (plurals) and S3
+  (copy).
 
 **Phase.** R0 gate; R2 for server values; S3 for the copy, per screen.
 
@@ -975,12 +1057,12 @@ frames at S0 (the baseline) and at every S3 step.
 [apg-dialog].
 
 **Gate.**
-- `check-platform` (inside `check:boundaries`) compares a pair's exports.
-  **Baseline:** 0.
-- `check-quality` `is-flag-in-features`: 213 → shrink, and `platform-select`:
-  58 → shrink.
+- `check-quality` `is-flag-in-features` (213 at `09cf103`) → shrink, and
+  `platform-select` (58) → shrink, from their R0 baselines.
+- `check-platform` (inside `check:boundaries`) compares a pair's exports
+  (0 mismatches at `09cf103`), *reviewed* until R3.
 
-**Phase.** R0; S3 per screen.
+**Phase.** R0 for the counters; S3 per screen.
 
 ### 29. Layout is audited, not eyeballed
 
@@ -1031,16 +1113,23 @@ Each count only shrinks. A rebuilt screen must reach 0 on its own states.
     [rn-perf-api].
 - **Nothing runs before the first frame** except reading the persisted
   session and the view cache. Engines start in `AppPhase` order, after the
-  first frame where possible. `Presence` loads its `.riv` after the first
-  frame and shows a still pose until then (spec §7b).
+  first frame where possible. `Presence` adds nothing to first paint: it
+  shows its state's still frame and starts its renderer after the first
+  frame (spec §7b).
 - **The web entry chunk stays ≤ 6.6 MB** (6,600,000 B), and `dist/` has its
   own budget.
 - **Heavy, rarely used code is loaded on use:** `livekit-client`, the
-  WebCodecs player, the Rive web runtime, the QR scanner and face capture.
+  WebCodecs player, the QR scanner and face capture. Skia's CanvasKit never
+  ships on web: Estela draws with Canvas 2D there, and Skia is native-only.
   Async routes are measured before they are adopted [expo-async-routes].
 - **Every new dependency** records its size (native download and web gzip)
-  in `CONTEXT.md` when it is added (spec A6: TrueSheet, sonner, expo-haptics,
-  expo-blur, expo-glass-effect, Rive).
+  in `CONTEXT.md` when it is added. The redesign's set (spec A6) is
+  `@lodev09/react-native-true-sheet` 3.11.18 [true-sheet],
+  `@shopify/react-native-skia` 2.14.0 [skia-atlas] (about +4 MB Android and
+  +6 MB iOS by the spec's estimate, nothing on web), expo-haptics
+  [expo-haptics], expo-blur [expo-blur], expo-glass-effect [expo-glass],
+  expo-device [expo-device], sonner-native [sonner-native] and sonner
+  [sonner].
 
 **Why.**
 - The entry chunk grew from 5.30 to 6.61 MB in 17 days with no gate.
@@ -1056,14 +1145,18 @@ Each count only shrinks. A rebuilt screen must reach 0 on its own states.
   - `dist/` above its baseline;
   - a listed lazy package found in the entry chunk.
 
-  **Baseline:** the entry chunk is 6,612,933 B (dist of 2026-10-16) and is
-  re-measured at S0. See owner decision P1.
+  **Baseline:** `scripts/lib/bundle-baseline.txt`, measured at R0 (the
+  2026-10-16 dist measured 6,612,933 B; R0's measurement replaces it). A
+  merge that legitimately grows it re-baselines with a recorded reason, never
+  silently. See owner decision P1.
 - `scripts/perf/cold-start.ts` runs in the integration build. It fails when
   the median cold start or either mark is more than 10% above
   `perf-baseline.txt`. The baseline is lowered when a change improves it and
   is never raised.
 
-**Phase.** S0 measures. R9 sets the targets; the gates are on from S0.
+**Phase.** `check:bundle`'s budgets are measured from R0. The cold-start run
+is *reviewed* until its baseline is measured on the reference device (S0's
+measurement, then R9's targets).
 
 ### 31. Rendering budgets: frames, lists, images, effects, memoization
 
@@ -1111,16 +1204,18 @@ Each count only shrinks. A rebuilt screen must reach 0 on its own states.
 [android-rendering].
 
 **Gate.**
-- `check-quality` `manual-memo`: 505 → shrink. A new occurrence passes only
-  when it matches a line of `memo-exceptions.txt`.
+- `check-quality` `manual-memo` (`useCallback` + `useMemo` + `memo`: 505 at
+  `09cf103`; the R0 baseline replaces it) → shrink. A new occurrence passes
+  only when it matches a line of `memo-exceptions.txt`.
 - The raw list and image imports (rule 24).
 - The compiler rules of `react-hooks` 7 (rule 2).
 - `scripts/perf/frames.ts` runs in the integration build: a Maestro scroll of
   Inicio, then `dumpsys gfxinfo` against `perf-baseline.txt`, with 10%
   tolerance and the absolute caps above.
 
-**Phase.** R0 for the counters, S0 for the frame baseline, R9 for the
-targets. Each rebuilt screen meets the budget at S3.
+**Phase.** R0 for the counters. The frame run is *reviewed* until its
+baseline is measured (S0's measurement, R9's targets). Each rebuilt screen
+meets the budget at S3.
 
 ---
 
@@ -1130,7 +1225,7 @@ targets. Each rebuilt screen meets the budget at S3.
 
 **Rule.**
 
-| Measure | Budget | Baseline (above the budget) |
+| Measure | Budget | Above the budget at `09cf103` (the R0 suppressions replace it) |
 |---|---|---|
 | `complexity` per function | 15 | 76 functions (max 70) |
 | `max-lines-per-function` | 80 | 133 (max 528) |
@@ -1153,7 +1248,7 @@ and 528 lines.
 
 **Gate.**
 - The ESLint rules at `error`, with their debt in `eslint-suppressions.json`.
-- `check-quality` `props-over-10`: 17 → 0.
+- `check-quality` `props-over-10` (17 at `09cf103`) → 0.
 
 **Phase.** R0. The suppressions shrink as screens are rebuilt (S3, which
 replaces R7).
@@ -1171,17 +1266,21 @@ replaces R7).
   - platform flags come from their one home.
 
 **Why.**
-- 641 of 1,149 files differ from Prettier's output.
+- 641 of 1,149 files differed from Prettier's output at `09cf103`.
 - A timer called as a method crashed WebKit (`e0e2abd`).
 
 **Sources.** [prettier].
 
 **Gate.**
-- `bun run check:format` (`prettier --check`), after one formatting commit
-  listed in `.git-blame-ignore-revs`.
+- `bun run check:format`, a ratchet: the files not yet formatted are a
+  committed list. A file on the list may stay unformatted, a file not on it
+  must be formatted, and the list only shrinks.
+- The one formatting commit (plan D8) waits until the open frontend branches
+  are settled (D4), and lands listed in `.git-blame-ignore-revs`; the list is
+  then empty.
 - The existing lint selectors.
 
-**Phase.** R0 (S0, the formatting commit first).
+**Phase.** R0 for the ratchet; the formatting commit after D4.
 
 ### 34. Tests at the level the behaviour lives
 
@@ -1210,14 +1309,15 @@ replaces R7).
 
 **Gate.**
 - `check-quality`:
-  - `source-text-test`: 14 → 0;
-  - `untested-component-or-screen`, with the current list as the baseline;
+  - `source-text-test` (14 at `09cf103`) → 0;
+  - `untested-component-or-screen`, with the R0 list as the baseline;
   - coverage per top-level slice (`bun test --coverage`), with thresholds
-    that only rise.
-- Maestro and WebKit run in the integration build.
+    that only rise, *reviewed* until R8.
+- Each gate script has a fixture test under `tests/unit/scripts/` (rule 1).
+- Maestro and WebKit run in the integration build, *reviewed* until R8.
 
-**Phase.** The runner spike at S0. The harness is in place before the first
-component (S2), so nothing is built untested.
+**Phase.** R0 for the counters. The runner spike at S0. The harness is in
+place before the first component (S2), so nothing is built untested.
 
 ### 35. Networking and secure storage *(kept)*
 
@@ -1230,8 +1330,10 @@ component (S2), so nothing is built untested.
 - Rust-owned trust keys;
 - a strict CSP.
 
-Any CSP change (for example `'wasm-unsafe-eval'` for Rive on desktop, owner
-decision R-D18) is an explicit owner decision recorded in `CONTEXT.md`.
+The CSP stays as it is. Estela needs no change: its desktop renderer is plain
+Canvas 2D, with no CanvasKit and no wasm, so R-D18 (`'wasm-unsafe-eval'`) is
+withdrawn and R-D17 (Rive) is superseded by R-D28 (spec §13). Any future CSP
+change is an explicit owner decision recorded in `CONTEXT.md`.
 
 **Why.** This is the trust model, and it is outside the redesign's scope.
 
@@ -1272,11 +1374,11 @@ any exception lives in `CONTEXT.md` › "Lint exceptions" (rule 2).
 
 | Package (version) | Rules adopted | Rule |
 |---|---|---|
-| `eslint` 9.39 (core) | `linterOptions`: `noInlineConfig: true`, `reportUnusedDisableDirectives: 'error'`, `reportUnusedInlineConfigs: 'error'`. Rules: `complexity` 15, `max-lines-per-function` {80, skipBlankLines}, `max-lines` {300, skipBlankLines} (locales and generated files ignored), `max-statements` 30, `max-depth` 3, `max-params` 3, `no-console`, `eqeqeq`, `no-restricted-imports` (the bans of rules 10, 18, 23, 24, 26), `no-restricted-syntax` (the selectors of rules 7, 13, 21, 22, 26, 27, 33 and error-messages G5) | 2, 7, 10, 13, 18, 21–24, 26, 27, 32, 33 |
+| `eslint` 9.39 (core) | `linterOptions`: `noInlineConfig: true`, `reportUnusedDisableDirectives: 'error'`, `reportUnusedInlineConfigs: 'error'`. Rules: `complexity` 15, `max-lines-per-function` {80, skipBlankLines}, `max-lines` {300, skipBlankLines} (locales and generated files ignored), `max-statements` 30, `max-depth` 3, `max-params` 3, `no-console`, `eqeqeq`, `no-restricted-imports` and `no-restricted-syntax` (the bans and selectors of rules 10, 18, 21–24, 26, 27 and 33 from R0; rule 7's `ExportAllDeclaration` at R3, rule 13's `httpService` type argument at R2, error-messages G5 at S1) | 2, 7, 10, 13, 18, 21–24, 26, 27, 32, 33 |
 | `eslint-config-expo/flat` 57 [expo-eslint] | the base: `eslint-plugin-react` recommended, `@typescript-eslint` basics, `eslint-plugin-import`, `eslint-plugin-expo`, with every `warn` promoted to `error` | 2 |
 | `eslint-plugin-react-hooks` 7.1 [react-hooks-lint] | all 17 rules of `recommended`: `rules-of-hooks`, `exhaustive-deps` and the compiler's (`immutability` back on at S1, `purity`, `refs`, `set-state-in-effect`, `set-state-in-render`, `static-components`, `use-memo`, `preserve-manual-memoization`, `globals`, `incompatible-library`, `unsupported-syntax`, `error-boundaries`, `component-hook-factories`, `config`, `gating`) | 26, 31 |
 | `@typescript-eslint` 8 (type-aware, `projectService`) [tseslint-typed] [tseslint-rules] | `no-floating-promises`, `no-misused-promises`, `switch-exhaustiveness-check` (`considerDefaultExhaustiveForUnions: false`), `no-unsafe-assignment`, `no-unsafe-member-access`, `no-unsafe-argument`, `no-unsafe-return`, `no-unsafe-call`, `no-explicit-any`, `no-non-null-assertion`, `consistent-type-imports`, `no-unnecessary-type-assertion`, `only-throw-error`, `no-deprecated` | 13, 14, 16, 18 |
-| `eslint-plugin-better-tailwindcss` 4 [better-tailwind] | `no-restricted-classes`, `no-unknown-classes` (after the S0 Uniwind spike), `no-conflicting-classes`, `no-duplicate-classes`, `no-deprecated-classes`, `no-unnecessary-whitespace`. `enforce-consistent-class-order` is off, by name, because Prettier owns class order: that is an exception row | 21, 22 |
+| `eslint-plugin-better-tailwindcss` 4 [better-tailwind] | `no-restricted-classes`, `no-unknown-classes` (after R0's Uniwind spike, `CONTEXT.md` › "Lint exceptions" records the outcome), `no-conflicting-classes`, `no-duplicate-classes`, `no-deprecated-classes`, `no-unnecessary-whitespace`. `enforce-consistent-class-order` is off, by name, because Prettier owns class order: that is an exception row | 21, 22 |
 | `eslint-plugin-i18next` 6 [i18next-lint] | `no-literal-string` in `mode: 'jsx-only'` on `src/**/*.tsx` | 27 |
 | `eslint-plugin-sonarjs` 4 [sonarjs] | `no-identical-functions`, `no-all-duplicated-branches` only. Not the recommended preset | 11 |
 
@@ -1305,14 +1407,14 @@ Considered and not adopted:
 | Gate | Command | Rules | Runs in |
 |---|---|---|---|
 | Comments | `bun run check:comments` | 3 | verify |
-| Boundaries v2 (layers, deep imports, cycles, route shape, kind homes, slice shape, file names, session owner, store purity, database access, platform pairs, lint policy, references) | `bun run check:boundaries` | 1, 2, 4, 6–12, 15, 17, 19, 28 | verify |
-| Quality counters + `quality-baseline.txt` (jscpd, knip, AST counters) | `bun run check:quality` | 10, 11, 13, 14, 16, 17, 20, 21, 26, 28, 31, 32, 34 | verify |
+| Boundaries v2 + `boundaries-baseline.txt` (from R0: the five rules, cycles, deep imports, route shape, lint policy, references; later: the layer matrix, kind homes, slice shape, file names at R3, session owner at R1, store purity, database access, platform pairs) | `bun run check:boundaries` | 1, 2, 4, 6–12, 15, 17, 19, 28 | verify |
+| Quality counters + `quality-baseline.txt` + `memo-exceptions.txt` (the AST counters from R0; jscpd and knip at R3) | `bun run check:quality` | 10, 11, 13, 14, 16, 17, 20, 21, 26, 28, 31, 32, 34 | verify |
 | ESLint + `eslint-suppressions.json` | `bun run lint` | 2, 7, 10, 13, 16, 18, 21–27, 31–33 | verify |
-| Tokens | `bun run check:tokens` | 21 | verify |
-| Formatting | `bun run check:format` | 33 | verify |
+| Tokens (from R5, S1) | `bun run check:tokens` | 21 | verify |
+| Formatting (a ratchet over the list of unformatted files) | `bun run check:format` | 33 | verify |
 | Types (i18n parity, `ReadyEmpty`, required labels, error map exhaustiveness) | `tsc --noEmit` | 16, 20, 25, 27 | verify |
 | Unit, component, navigation and contract tests | `bun run test` | 14, 15, 18, 20, 21, 25, 34, 36 | verify |
-| Bundle render + budgets | `bun run check:bundle` | 30, 35 | verify |
+| Bundle render under the Tauri CSP + byte budgets from `bundle-baseline.txt` | `bun run check:bundle` | 30, 35 | verify |
 | Web E2E on Chromium and WebKit, visual baselines, axe | `bun run test:e2e:run` | 14, 25, 34 | verify (Chromium), integration (WebKit) |
 | Layout audit + `layout-baseline.txt` | integration | 20, 23, 25, 26, 29 | integration |
 | Android cold start and frames + `perf-baseline.txt` | integration | 30, 31 | integration |
@@ -1324,11 +1426,11 @@ Considered and not adopted:
 |---|---|
 | A1: rules, refactor and redesign as one programme | Adopted. "Implementation order with the redesign" below replaces plan §5 and D7. |
 | A2: font scale 2.0 for body/meta/caption, 1.5 for hero/title | Rule 25. |
-| A3: six type steps and five radii, enforced by lint | Rules 21 and 22: the mechanism kept, the spec's values adopted. |
-| A4: `*-strong` twins dropped, contrast test kept | Rule 21. |
-| A5: one component list | Rule 24 uses the spec's 26 names; `Stack`/`Inline`/`Cluster` are helpers. |
-| A6: §7b animation budget, `perfTier`, new dependencies | Rules 26, 30 and 31. Each new dependency records its size. |
-| A7: `'wasm-unsafe-eval'` for Rive on desktop | Rule 35 keeps the strict CSP until the owner decides R-D18. |
+| A3: six type steps and the spec's radii, enforced by lint | Rules 21 and 22: the mechanism kept, the values those `tokens.ts` holds (six steps plus `typeRoles`, the named radius roles, `card`/`float`/`none` elevation). |
+| A4: `*-strong` twins dropped, contrast test kept | Rule 21: the text-safe value is the role, pure fills are named as fills (`accent-fill`). |
+| A5: one component list | Rule 24: spec §4 is the list; `Stack`/`Inline`/`Cluster` are helpers. |
+| A6: §7b animation budget, `perfTier`, new dependencies | Rules 26, 30 and 31. `perfTier` is `low`/`mid`/`high` (`effects.ts`; the spec gets `mid`). Each new dependency records its size. |
+| A7: the Tauri CSP | Rule 35: no change. Estela draws with Canvas 2D on desktop; R-D18 is withdrawn and R-D17 superseded. |
 | A8: `serviceErrorKey` as the single map | Rule 20; it becomes `platform/errors`. |
 | A9: breakpoints | Rule 23; identical. |
 
@@ -1353,8 +1455,8 @@ The five steps:
 
 | Step | What lands | Phases | Rules that turn on or reach 0 |
 |---|---|---|---|
-| **S0. Gates, baselines, measurements, spikes** (no behaviour change) | The formatting commit. ESLint policy plus the suppressions file. `check-quality`, `check-boundaries` v2, `check-lint-policy`, `check-references`, the bundle budget. **Cold start and frame stats measured** on the reference device. The four spikes: (1) the bun + happy-dom + react-native-web component runner; (2) TrueSheet v3; (3) Rive on a low-end Android and `canvas-lite` under the WebKitGTK CSP; (4) better-tailwindcss with Uniwind. The generated error-code list and its contract test. | R0, R9 (measurement only) | 1–5, 7, 8, 11, 12, 30, 32, 33 on as ratchets; every baseline committed |
-| **S1. Foundations every new screen reads** | `platform/` skeleton: `AppPhase` (session), `<AppRuntime />`, tri-state gates, `Resource<T>`, `httpService` with schemas, `platform/errors` (`ApiFailure`, the map, the copy for the 30 codes), the i18n `errors` namespace and plurals. `tokens.ts` with the **spec's values** plus the generator (the legacy CSS block frozen beside it). One breakpoint set, `springs.ts`, the `perfTier`, the `.value` → `.set()` codemod with `react-hooks/immutability` back on. | R1, R2 (mechanism), R5 | 9, 14, 15, 20, 21, 23, 26 |
+| **S0. Gates, baselines, measurements, spikes** (no behaviour change) | The Prettier ratchet (the formatting commit itself waits for D4). ESLint policy plus the suppressions file. `check-quality`, `check-boundaries` v2, `check-lint-policy`, `check-references`, the bundle budget. **Cold start and frame stats measured** on the reference device. The four spikes: (1) the bun + happy-dom + react-native-web component runner; (2) TrueSheet 3.11.18 with the keyboard on the S21 FE and iOS; (3) Estela on Skia v2 Atlas on a low-end Android (frame time, voice level to waves latency) and its Canvas 2D renderer in the Tauri WebKitGTK build under the unchanged CSP; (4) better-tailwindcss with Uniwind. The generated error-code list and its contract test. | R0, R9 (measurement only) | 1–4, 7 (deep imports), 8, 9 (routes), 10 (literals, icon and formatter imports), 21–24, 26, 27, 30–34 on as ratchets; every baseline committed |
+| **S1. Foundations every new screen reads** | `platform/` skeleton: `AppPhase` (session), `<AppRuntime />`, tri-state gates, `Resource<T>`, `httpService` with schemas, `platform/errors` (`ApiFailure`, the map, the copy for the 30 codes), the i18n `errors` namespace and plurals. `tokens.ts` with the **spec's values** (landed in Phase 1) plus the generator (the legacy CSS block frozen beside it). One breakpoint set, `springs.ts`, the three-tier `perfTier` of `effects.ts` (landed in Phase 1), the `.value` → `.set()` codemod with `react-hooks/immutability` back on. | R1, R2 (mechanism), R5 | 9, 14, 15, 20, 21, 23, 26 |
 | **S2. The design system, once** | The 26 components of spec §4 in `ui-lab` on the new tokens. Each one has a component test, an axe pass and visual baselines (3 widths × 2 themes × reduced motion and transparency). `ResourceView`, `Toast`, `Notice`, `Field` and `Confirm` render the error surfaces. The UI-map harness is merged as the layout audit. The old primitives stay until their last consumer goes. | R6 (spec list), R8 (harness) | 16, 24, 25, 29, 34 for components |
 | **S3. Domain by domain, screen by screen** in the spec's order: navigation + Inicio; Seguridad + Cámara; Agenda + Proyectos; Argus; Tú/Ajustes/Personas; onboarding. For each one, in this order: (a) the entity moves to `entities/` with its schemas (R3, R2 for that domain); (b) widgets where 2+ features need them (R4); (c) the screens are rebuilt on the components to spec §9 and §10, within the budgets (this replaces R7); (d) component, navigation and E2E tests, UI-map recapture, frame check; (e) the replaced components and code are deleted and the baselines lowered; (f) the slice's `CONTEXT.md` is written (R10). | R2, R3, R4, R7 (as rebuild), R8, R10 | 6, 10, 13, 16–18, 22, 24, 27–29, 31 reach 0 for that domain |
 | **S4. Closure** | `core/` is gone. The legacy token block, `common.errors.*` and the old primitives are deleted. Every counter is at 0 or at its audited list. WebKit and Maestro are green. Performance is compared with the S0 baseline and the R9 targets are set. The new `AGENTS.md` rules section is applied, and the narrative moves to `CONTEXT.md` files. | R9, R10 | all |
@@ -1372,10 +1474,10 @@ Parallelism:
 
 | # | Decision | Recommendation |
 |---|---|---|
-| P1 | The 6.6 MB ceiling is measured in decimal bytes (6,600,000 B, the plan's unit). Today's entry chunk is 6,612,933 B, so S0 must trim about 13 kB, or the ceiling applies from R9 with the S0 measurement as a ratchet until then | Ratchet from S0, ceiling enforced from the end of S1 |
+| P1 | The 6.6 MB ceiling is measured in decimal bytes (6,600,000 B, the plan's unit). The entry chunk was 6,612,933 B on 2026-10-16 and R0's measurement in `bundle-baseline.txt` is above the ceiling, so either S0 trims it, or the ceiling applies from R9 with R0's measurement as a ratchet until then | Ratchet from R0, ceiling enforced from the end of S1 |
 | P2 | Images through `expo-image` (cache, placeholder, cross-fade, list recycling) inside `Media`, instead of React Native `Image` | Yes, measured in the S0 spike on the camera tiles |
 | P3 | The cold-start and frame targets, set after the S0 measurement | Decide at R9 with the numbers in hand |
 | L1 | ESLint stays on 9.39 (end of life since 2026-08-06) until `eslint-config-expo`'s dependencies support 10, or the move to ESLint 10 is made by replacing `eslint-plugin-import` with `eslint-plugin-import-x` | Stay on 9.39 and re-check at the next Expo SDK |
 | L2 | `react-hooks/immutability` back on, after a codemod from `.value` to `.get()`/`.set()` as Reanimated documents for the compiler | Yes, at S1 |
 | E1–E4 | The error-message decisions | See `error-messages-spec.md` §9 |
-| — | The spec's R-D8, R-D17 and R-D18 (TrueSheet, Rive, the CSP), which depend on the S0 spikes | as in the spec |
+| — | The spec's R-D8 (TrueSheet), which depends on the S0 spike. R-D17 (Rive) is superseded by R-D28 (Estela on Skia Atlas and Canvas 2D) and R-D18 (the CSP) is withdrawn | as in the spec |
