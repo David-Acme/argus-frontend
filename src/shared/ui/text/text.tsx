@@ -43,6 +43,11 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   chipValue: 'text-chip-value',
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
+  heroBand: 'text-hero-band',
+  brand: 'text-brand',
+  count: 'text-count',
+  sideStat: 'text-side-stat',
+  sideStatStrong: 'text-side-stat-strong',
 };
 
 const TONE_CLASS: Record<TextTone, string> = {

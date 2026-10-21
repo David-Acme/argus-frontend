@@ -18,7 +18,7 @@ import {
 const ROOT = join(import.meta.dir, '..');
 const TARGET = join(ROOT, 'src', 'shared', 'theme', 'tokens.generated.css');
 const SKIPPED_RADII = new Set(['full']);
-const SKIPPED_SIZES = new Set(['iconStroke', 'hairline']);
+const SKIPPED_SIZES = new Set(['iconStroke', 'hairline', 'scrollbar', 'scrollbarInset']);
 
 function usage(): never {
   console.log(`usage: bun scripts/gen-tokens.ts [--check]
@@ -84,6 +84,33 @@ const typeLines = (name: string, spec: TypeSpec): string[] => [
   `  --text-${kebab(name)}--font-weight: ${spec.weight};`,
 ];
 
+const blurOnly = (name: string, blur: number): string[] => [
+  `@utility glass-${name} {`,
+  `  -webkit-backdrop-filter: blur(${px(blur)});`,
+  `  backdrop-filter: blur(${px(blur)});`,
+  '}',
+];
+
+const columnScroll = (): string[] => [
+  '@utility scroll-column {',
+  '  overscroll-behavior: contain;',
+  '  scrollbar-width: thin;',
+  '  scrollbar-color: var(--color-fill-press) transparent;',
+  '  &::-webkit-scrollbar {',
+  `    width: ${px(size.scrollbar)};`,
+  '  }',
+  '  &::-webkit-scrollbar-thumb {',
+  '    background: var(--color-fill-press);',
+  `    border-radius: ${px(size.scrollbar)};`,
+  `    border: ${px(size.scrollbarInset)} solid var(--color-bg);`,
+  '  }',
+  '}',
+  '',
+  '@utility fade-to-bg {',
+  `  background: linear-gradient(var(--color-bg) ${material.fadeSolid * 100}%, transparent);`,
+  '}',
+];
+
 const glass = (name: string, blur: number, saturation: number): string[] => [
   `@utility glass-${name} {`,
   `  -webkit-backdrop-filter: blur(${px(blur)}) saturate(${saturation});`,
@@ -139,6 +166,12 @@ export function tokensCss(): string {
     ...glass('sheet', material.blurSheet, material.saturationControl),
     '',
     ...glass('palette', material.blurPalette, material.saturationControl),
+    '',
+    ...blurOnly('side', material.blurSide),
+    '',
+    ...blurOnly('cap', material.blurCap),
+    '',
+    ...columnScroll(),
     '',
     '@utility focus-ring {',
     '  &:focus-visible {',

@@ -1,3 +1,11 @@
+import {
+  auraField,
+  chromeElevation,
+  chromeInset,
+  chromeSize,
+  chromeTypeRoles,
+  type ChromeShadow,
+} from './chrome-tokens';
 import { illustration } from './illustration';
 
 export const themeNames = ['light', 'dark'] as const;
@@ -28,6 +36,8 @@ const light = {
   glass: 'rgba(255,255,255,0.66)',
   'glass-line': 'rgba(255,255,255,0.7)',
   'glass-edge': 'rgba(0,0,0,0.06)',
+  'glass-side': 'rgba(255,255,255,0.55)',
+  'tab-on': 'rgba(22,22,22,0.09)',
   skel: '#ECE9E4',
   'skel-2': '#F5F3F0',
   ev1: '#EFE4D0',
@@ -64,6 +74,8 @@ const dark = {
   glass: 'rgba(40,38,32,0.66)',
   'glass-line': 'rgba(255,255,255,0.08)',
   'glass-edge': 'rgba(255,255,255,0.06)',
+  'glass-side': 'rgba(36,35,30,0.55)',
+  'tab-on': 'rgba(244,239,231,0.09)',
   skel: '#24221F',
   'skel-2': '#2C2A26',
   ev1: '#3A2F1C',
@@ -105,7 +117,10 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
 
 export const elevation: Record<
   TokenTheme,
-  Record<'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset', string>
+  Record<
+    'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset' | ChromeShadow,
+    string
+  >
 > = {
   light: {
     card: '0px 1px 2px 0px rgba(60,45,30,0.05), 0px 6px 20px 0px rgba(60,45,30,0.06)',
@@ -115,6 +130,7 @@ export const elevation: Record<
     glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7)',
     ring: '0px 0px 0px 1px #ECE8E2',
     ringInset: 'inset 0px 0px 0px 1px #ECE8E2',
+    ...chromeElevation.light,
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
@@ -124,10 +140,11 @@ export const elevation: Record<
     glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08)',
     ring: '0px 0px 0px 1px #2D2A25',
     ringInset: 'inset 0px 0px 0px 1px #2D2A25',
+    ...chromeElevation.dark,
   },
 };
 
-export { illustration };
+export { auraField, illustration };
 
 export const typeSteps = ['hero', 'title', 'headline', 'body', 'meta', 'caption'] as const;
 
@@ -167,6 +184,7 @@ export const typeRoles = {
   chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
   initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
+  ...chromeTypeRoles,
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -181,6 +199,7 @@ export const inset = {
   chip: { x: 10, statX: 11, suggestionX: 12, gap: 5 },
   section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
   control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
+  ...chromeInset,
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
@@ -198,6 +217,7 @@ export const radius = {
   card: 24,
   status: 26,
   sheet: 28,
+  meter: 3,
   full: 999,
 } as const;
 
@@ -230,6 +250,7 @@ export const size = {
   grabberHeight: 5,
   dot: 8,
   hairline: 1,
+  ...chromeSize,
 } as const;
 
 export const motion = {
@@ -239,6 +260,8 @@ export const motion = {
     gentle: { damping: 22, stiffness: 180, mass: 1 },
     playful: { damping: 10, stiffness: 220, mass: 1 },
   },
+  pulseSeconds: 1.2,
+  pulseOpacity: 0.35,
   pressScale: 0.96,
   pressScaleIcon: 0.9,
 } as const;
@@ -253,6 +276,9 @@ export const material = {
   sheetSurfaceMix: 0.94,
   blurPalette: 30,
   paletteSurfaceMix: 0.84,
+  blurSide: 30,
+  blurCap: 20,
+  fadeSolid: 0.7,
 } as const;
 
 export const breakpoints = { compact: 0, medium: 600, expanded: 1024, wide: 1440 } as const;
@@ -272,11 +298,13 @@ export const layout = {
   sideSheet: 400,
   palette: 640,
   sidebar: 244,
+  bandMax: 2256,
 } as const;
 
 export const tokens = {
   color,
   aura,
+  auraField,
   elevation,
   illustration,
   type,

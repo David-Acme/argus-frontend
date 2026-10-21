@@ -15,6 +15,7 @@
   --radius-card: 24px;
   --radius-status: 26px;
   --radius-sheet: 28px;
+  --radius-meter: 3px;
   --spacing-row-x: 18px;
   --spacing-row-y: 10px;
   --spacing-row-gap: 14px;
@@ -36,6 +37,48 @@
   --spacing-control-switch-thumb: 3px;
   --spacing-control-focus-ring: 2px;
   --spacing-control-check-border: 2px;
+  --spacing-nav-bar-x: 12px;
+  --spacing-nav-bar-pad: 6px;
+  --spacing-nav-bar-bottom: 26px;
+  --spacing-nav-tab-gap: 2px;
+  --spacing-nav-cap-bottom: 110px;
+  --spacing-nav-cap-x: 16px;
+  --spacing-nav-cap-y: 10px;
+  --spacing-nav-side-x: 12px;
+  --spacing-nav-side-y: 18px;
+  --spacing-nav-side-gap: 2px;
+  --spacing-nav-brand-x: 10px;
+  --spacing-nav-brand-bottom: 14px;
+  --spacing-nav-item-x: 10px;
+  --spacing-nav-count-x: 8px;
+  --spacing-nav-count-y: 1px;
+  --spacing-nav-key-x: 5px;
+  --spacing-nav-stat-pad: 12px;
+  --spacing-nav-stat-gap: 9px;
+  --spacing-nav-ask-x: 10px;
+  --spacing-nav-ask-gap: 6px;
+  --spacing-nav-rail-y: 12px;
+  --spacing-screen-bar-y: 4px;
+  --spacing-screen-body-bottom: 128px;
+  --spacing-screen-pill-x: 10px;
+  --spacing-screen-pill-y: 4px;
+  --spacing-screen-pill-gap: 6px;
+  --spacing-screen-column-gap: 20px;
+  --spacing-screen-column-x: 28px;
+  --spacing-screen-column-pad-x: 4px;
+  --spacing-screen-column-bottom: 28px;
+  --spacing-screen-head-top: 14px;
+  --spacing-status-hero-gap: 14px;
+  --spacing-status-hero-pad: 2px;
+  --spacing-status-stats-top: 12px;
+  --spacing-status-card-pad: 14px;
+  --spacing-status-card-gap: 12px;
+  --spacing-status-card-top: 16px;
+  --spacing-status-band-x: 20px;
+  --spacing-status-band-y: 16px;
+  --spacing-status-band-gap: 18px;
+  --spacing-status-band-top: 18px;
+  --spacing-status-band-bottom: 6px;
   --spacing-target: 48px;
   --spacing-target-min: 44px;
   --spacing-row: 62px;
@@ -62,6 +105,22 @@
   --spacing-grabber-width: 36px;
   --spacing-grabber-height: 5px;
   --spacing-dot: 8px;
+  --spacing-top-bar: 52px;
+  --spacing-top-bar-compact: 44px;
+  --spacing-nav-item: 42px;
+  --spacing-command-field: 40px;
+  --spacing-ask-field: 34px;
+  --spacing-meter: 6px;
+  --spacing-live-dot: 6px;
+  --spacing-key-line: 17px;
+  --spacing-rail: 88px;
+  --spacing-presence-hero: 66px;
+  --spacing-presence-hero-small: 56px;
+  --spacing-presence-band: 64px;
+  --spacing-presence-tab: 36px;
+  --spacing-presence-brand: 30px;
+  --spacing-presence-nav: 22px;
+  --spacing-presence-ask: 20px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
   --text-hero--letter-spacing: -1.08px;
@@ -150,6 +209,26 @@
   --text-initial-large--line-height: 33px;
   --text-initial-large--letter-spacing: 0px;
   --text-initial-large--font-weight: 700;
+  --text-hero-band: 38px;
+  --text-hero-band--line-height: 41.8px;
+  --text-hero-band--letter-spacing: -1.14px;
+  --text-hero-band--font-weight: 800;
+  --text-brand: 18px;
+  --text-brand--line-height: 24px;
+  --text-brand--letter-spacing: 0px;
+  --text-brand--font-weight: 700;
+  --text-count: 12px;
+  --text-count--line-height: 16.2px;
+  --text-count--letter-spacing: 0px;
+  --text-count--font-weight: 600;
+  --text-side-stat: 13px;
+  --text-side-stat--line-height: 17.55px;
+  --text-side-stat--letter-spacing: 0px;
+  --text-side-stat--font-weight: 400;
+  --text-side-stat-strong: 13px;
+  --text-side-stat-strong--line-height: 17.55px;
+  --text-side-stat-strong--letter-spacing: 0px;
+  --text-side-stat-strong--font-weight: 700;
   --blur-control: 18px;
   --blur-chip: 16px;
 }
@@ -180,6 +259,8 @@
       --color-glass: oklch(1.0000 0 0 / 0.66);
       --color-glass-line: oklch(1.0000 0 0 / 0.7);
       --color-glass-edge: oklch(0.0000 0 0 / 0.06);
+      --color-glass-side: oklch(1.0000 0 0 / 0.55);
+      --color-tab-on: oklch(0.2002 0 0 / 0.09);
       --color-skel: oklch(0.9350 0.0074 80.72);
       --color-skel-2: oklch(0.9649 0.0045 78.30);
       --color-ev1: oklch(0.9223 0.0292 82.59);
@@ -216,6 +297,8 @@
       --color-glass: oklch(0.2686 0.0112 91.71 / 0.66);
       --color-glass-line: oklch(1.0000 0 0 / 0.08);
       --color-glass-edge: oklch(1.0000 0 0 / 0.06);
+      --color-glass-side: oklch(0.2554 0.0092 97.71 / 0.55);
+      --color-tab-on: oklch(0.9538 0.0119 79.78 / 0.09);
       --color-skel: oklch(0.2530 0.0063 78.21);
       --color-skel-2: oklch(0.2857 0.0077 84.59);
       --color-ev1: oklch(0.3120 0.0348 80.58);
@@ -248,6 +331,34 @@
 @utility glass-palette {
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   backdrop-filter: blur(30px) saturate(1.6);
+}
+
+@utility glass-side {
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+}
+
+@utility glass-cap {
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+@utility scroll-column {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-fill-press) transparent;
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-fill-press);
+    border-radius: 10px;
+    border: 3px solid var(--color-bg);
+  }
+}
+
+@utility fade-to-bg {
+  background: linear-gradient(var(--color-bg) 70%, transparent);
 }
 
 @utility focus-ring {
