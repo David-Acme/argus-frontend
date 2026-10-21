@@ -9,6 +9,7 @@ import type { PresenceEvent, PresenceState } from './engine/types';
 import { planFor } from './plan';
 import { PresenceCanvas } from './presence-canvas';
 import { usePresenceInput, type PresenceCue } from './use-presence-input';
+import { useTierProbe } from './use-tier-probe';
 
 export type PresenceProps = {
   state: PresenceState;
@@ -49,12 +50,18 @@ export function Presence({
   scrollOffset,
   accessibilityLabel,
 }: PresenceProps) {
-  const { perfTier, reduceMotion } = useEffects();
+  const { perfTier, reduceMotion, adaptive, ceiling, drops, probing } = useEffects();
+  useTierProbe(probing);
   const { theme } = useUniwind();
   const dark = theme === 'dark';
   const [seed] = useState(nextSeed);
   const [touch, setTouch] = useState<PresenceCue | undefined>(undefined);
-  const plan = planFor({ size, tier: perfTier, reduceMotion });
+  const plan = planFor({
+    size,
+    tier: perfTier,
+    reduceMotion,
+    adaptation: adaptive && !probing ? { ceiling, drops } : undefined,
+  });
   const look: Look = {
     size,
     palette: tokens.illustration.estela[dark ? 'dark' : 'light'],

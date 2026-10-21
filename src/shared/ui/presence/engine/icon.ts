@@ -36,7 +36,7 @@ function strokeCurve(paint: IconPaint, line: Line): void {
     s.g = scratch.color[1];
     s.b = scratch.color[2];
     s.a = Math.min(1, (frame.dark ? 1 : 0.9) * paint.alpha * (0.45 + 0.55 * w));
-    paint.sink(s);
+    paint.sinks.stroke(s);
   }
 }
 
@@ -56,7 +56,7 @@ function dot(paint: IconPaint, d: Dot): void {
   s.g = color[1];
   s.b = color[2];
   s.a = Math.min(1, d.a);
-  paint.sink(s);
+  paint.sinks.stroke(s);
 }
 
 function paintEye(paint: IconPaint): void {

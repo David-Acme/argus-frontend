@@ -1,11 +1,26 @@
 import { alphaFor, colorFor, copyInto, eventMods, towards, type Color } from './paint';
 import { isEye, pupilX } from './shapes';
-import type { Engine, EventMods, Frame, Particle, Stroke, StrokeSink } from './types';
+import {
+  STREAK_FIELDS,
+  type Engine,
+  type EventMods,
+  type Frame,
+  type Particle,
+  type Sinks,
+  type Stroke,
+} from './types';
 
 const TAU = Math.PI * 2;
 const STREAK_LIMIT = 0.12;
 
-export type Scratch = { stroke: Stroke; color: Color; mods: EventMods };
+export type Scratch = {
+  stroke: Stroke;
+  color: Color;
+  mods: EventMods;
+  tintKey: string;
+  tints: number[];
+  streaks: Float32Array;
+};
 
 export function createScratch(): Scratch {
   'worklet';
@@ -13,10 +28,13 @@ export function createScratch(): Scratch {
     stroke: { round: true, x1: 0, y1: 0, x2: 0, y2: 0, r: 0, g: 0, b: 0, a: 0, w: 1 },
     color: [0, 0, 0],
     mods: { alpha: 1, saturation: 1, band: null, glint: 0 },
+    tintKey: '',
+    tints: [],
+    streaks: new Float32Array(0),
   };
 }
 
-export type Paint = { frame: Frame; engine: Engine; scratch: Scratch; sink: StrokeSink };
+export type Paint = { frame: Frame; engine: Engine; scratch: Scratch; sinks: Sinks };
 
 export function stageScale(frame: Frame): number {
   'worklet';
@@ -31,7 +49,7 @@ function emit(paint: Paint, color: Color, alpha: number): void {
   stroke.g = color[1];
   stroke.b = color[2];
   stroke.a = Math.min(1, alpha);
-  paint.sink(stroke);
+  paint.sinks.stroke(stroke);
 }
 
 export type Sparkle = { x: number; y: number; r: number; a: number; color: Color };
@@ -93,6 +111,108 @@ function density(paint: Paint): number {
   return Math.min(1, paint.frame.palette.density * (n >= 500 ? 1 : n >= 300 ? 1.1 : 1.5));
 }
 
+const TINT_FIELDS = 4;
+
+function particleTints(paint: Paint): number[] {
+  'worklet';
+  const { frame, engine, scratch } = paint;
+  const { particles } = engine;
+  const key = `${frame.state}|${frame.dark}|${scratch.mods.saturation}|${particles.length}`;
+  if (scratch.tintKey === key) return scratch.tints;
+  const color = scratch.color;
+  const tints = scratch.tints;
+  tints.length = particles.length * TINT_FIELDS;
+  for (let i = 0; i < particles.length; i++) {
+    const u = particles[i]?.u ?? 0;
+    colorFor(frame, u, color);
+    if (scratch.mods.saturation < 1) towards(color, frame.palette.g, 1 - scratch.mods.saturation);
+    const at = i * TINT_FIELDS;
+    tints[at] = color[0];
+    tints[at + 1] = color[1];
+    tints[at + 2] = color[2];
+    tints[at + 3] = 0.4 + 0.6 * Math.sin(Math.PI * u);
+  }
+  scratch.tintKey = key;
+  return tints;
+}
+
+function streakBuffer(scratch: Scratch, count: number): Float32Array {
+  'worklet';
+  if (scratch.streaks.length < count * STREAK_FIELDS)
+    scratch.streaks = new Float32Array(count * STREAK_FIELDS);
+  return scratch.streaks;
+}
+
+function plainAlpha(paint: Paint): boolean {
+  'worklet';
+  const { state } = paint.frame;
+  return (
+    !isEye(state) && state !== 'watch' && state !== 'happy' && paint.scratch.mods.band === null
+  );
+}
+
+type Stage = {
+  half: number;
+  scale: number;
+  look: ParticleLook;
+  tints: number[];
+  out: Float32Array;
+  plain: boolean;
+  i: number;
+  n: number;
+};
+
+function writeStreak(paint: Paint, stage: Stage, p: Particle): void {
+  'worklet';
+  const at = stage.i * TINT_FIELDS;
+  const hx = p.x;
+  const hy = p.y;
+  const tx = p.hx;
+  const ty = p.hy;
+  p.hx = hx;
+  p.hy = hy;
+  if (Math.abs(hx - tx) + Math.abs(hy - ty) > STREAK_LIMIT) return;
+  const { tints, out, half, scale, look } = stage;
+  const color = paint.scratch.color;
+  color[0] = tints[at] ?? 0;
+  color[1] = tints[at + 1] ?? 0;
+  color[2] = tints[at + 2] ?? 0;
+  const a = stage.plain ? look.base * (tints[at + 3] ?? 0) : particleAlpha(paint, p, look);
+  const o = stage.n * STREAK_FIELDS;
+  out[o] = half + tx * scale;
+  out[o + 1] = half + ty * scale;
+  out[o + 2] = half + hx * scale;
+  out[o + 3] = half + hy * scale;
+  out[o + 4] = color[0];
+  out[o + 5] = color[1];
+  out[o + 6] = color[2];
+  out[o + 7] = Math.min(1, a);
+  stage.n += 1;
+}
+
+type StageInput = { half: number; scale: number; look: ParticleLook };
+
+function writeStreaks(paint: Paint, input: StageInput): number {
+  'worklet';
+  const { particles } = paint.engine;
+  const stage: Stage = {
+    ...input,
+    tints: particleTints(paint),
+    out: streakBuffer(paint.scratch, particles.length),
+    plain: plainAlpha(paint),
+    i: 0,
+    n: 0,
+  };
+  const { drawn } = paint.frame;
+  const stride = drawn === 3 ? 1 : 2;
+  for (let i = drawn === 2 ? 1 : 0; i < particles.length && drawn > 0; i += stride) {
+    const p = particles[i];
+    stage.i = i;
+    if (p) writeStreak(paint, stage, p);
+  }
+  return stage.n;
+}
+
 export function paintParticles(paint: Paint): void {
   'worklet';
   const { frame, engine, scratch } = paint;
@@ -105,20 +225,9 @@ export function paintParticles(paint: Paint): void {
     gx: isEye(state) ? pupilX(state, t, engine) : 0,
   };
   const lw = size >= 150 ? 1.15 : 1;
-  const stroke = scratch.stroke;
-  stroke.round = true;
-  stroke.w = (frame.dark ? lw : lw + 0.25) * (size < 90 ? 1.3 : 1);
-  for (const p of engine.particles) {
-    if (Math.abs(p.x - p.px) + Math.abs(p.y - p.py) > STREAK_LIMIT) continue;
-    colorFor(frame, p.u, scratch.color);
-    if (mods.saturation < 1) towards(scratch.color, palette.g, 1 - mods.saturation);
-    const a = particleAlpha(paint, p, look);
-    stroke.x1 = half + p.px * scale;
-    stroke.y1 = half + p.py * scale;
-    stroke.x2 = half + p.x * scale;
-    stroke.y2 = half + p.y * scale;
-    emit(paint, scratch.color, a);
-  }
+  const width = (frame.dark ? lw : lw + 0.25) * (size < 90 ? 1.3 : 1);
+  const count = writeStreaks(paint, { half, scale, look });
+  paint.sinks.streaks(scratch.streaks, count, width);
   if (mods.glint > 0) {
     const color = scratch.color;
     copyInto(color, palette.glint);

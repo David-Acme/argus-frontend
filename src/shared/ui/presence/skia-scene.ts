@@ -10,9 +10,10 @@ import {
   type SkRSXform,
   type SkSurface,
 } from '@shopify/react-native-skia';
-import type { Stroke } from './engine/types';
+import { STREAK_FIELDS, type Stroke } from './engine/types';
 
 const PAD = 2;
+const SPARKLE_STROKES = 4;
 
 export type SkiaScene = {
   surface: SkSurface;
@@ -59,7 +60,7 @@ export function createScene(spec: SceneSpec): SkiaScene | null {
   const transforms: SkRSXform[] = [];
   const colors: SkColor[] = [];
   const sources: SkRect[] = [];
-  for (let i = 0; i < spec.count; i++) {
+  for (let i = 0; i < spec.count + SPARKLE_STROKES; i++) {
     transforms.push(Skia.RSXform(0, 0, 0, 0));
     colors.push(new Float32Array(4));
     sources.push(Skia.XYWHRect(0, 0, 0, 0));
@@ -117,7 +118,7 @@ export function beginFrame(scene: SkiaScene, fade: number): void {
   scene.tint[3] = fade >= 1 ? 0 : fade;
   if (fade >= 1) {
     canvas.clear(scene.tint);
-  } else {
+  } else if (fade > 0) {
     scene.fade.setColor(scene.tint);
     canvas.drawPaint(scene.fade);
   }
@@ -127,26 +128,58 @@ export function beginFrame(scene: SkiaScene, fade: number): void {
 export function strokeToAtlas(scene: SkiaScene, s: Stroke): void {
   'worklet';
   const index = scene.used;
-  const transform = scene.transforms[index];
   const color = scene.colors[index];
   const ratio = scene.ratio;
-  if (!transform || !color) return;
-  const dx = (s.x2 - s.x1) * ratio;
-  const dy = (s.y2 - s.y1) * ratio;
-  const length = Math.min(scene.spriteMax, Math.round(Math.hypot(dx, dy)));
-  const angle = Math.atan2(dy, dx);
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  const o = scene.spriteOrigin;
-  const rect = scene.spriteRects[length];
-  if (!rect) return;
-  scene.sources[index] = rect;
-  transform.set(cos, sin, s.x1 * ratio - (cos * o - sin * o), s.y1 * ratio - (sin * o + cos * o));
+  const slot: Slot = {
+    x1: s.x1 * ratio,
+    y1: s.y1 * ratio,
+    dx: (s.x2 - s.x1) * ratio,
+    dy: (s.y2 - s.y1) * ratio,
+  };
+  if (!color || !placeSprite(scene, index, slot)) return;
   color[0] = s.r / 255;
   color[1] = s.g / 255;
   color[2] = s.b / 255;
   color[3] = s.a;
   scene.used = index + 1;
+}
+
+type Slot = { x1: number; y1: number; dx: number; dy: number };
+
+function placeSprite(scene: SkiaScene, index: number, slot: Slot): boolean {
+  'worklet';
+  const transform = scene.transforms[index];
+  const span = Math.sqrt(slot.dx * slot.dx + slot.dy * slot.dy);
+  const rect = scene.spriteRects[Math.min(scene.spriteMax, Math.round(span))];
+  if (!transform || !rect) return false;
+  const cos = span > 0 ? slot.dx / span : 1;
+  const sin = span > 0 ? slot.dy / span : 0;
+  const o = scene.spriteOrigin;
+  scene.sources[index] = rect;
+  transform.set(cos, sin, slot.x1 - (cos * o - sin * o), slot.y1 - (sin * o + cos * o));
+  return true;
+}
+
+export function streaksToAtlas(scene: SkiaScene, streaks: Float32Array, count: number): void {
+  'worklet';
+  const ratio = scene.ratio;
+  const slot: Slot = { x1: 0, y1: 0, dx: 0, dy: 0 };
+  let used = 0;
+  for (let i = 0; i < count; i++) {
+    const o = i * STREAK_FIELDS;
+    slot.x1 = (streaks[o] ?? 0) * ratio;
+    slot.y1 = (streaks[o + 1] ?? 0) * ratio;
+    slot.dx = (streaks[o + 2] ?? 0) * ratio - slot.x1;
+    slot.dy = (streaks[o + 3] ?? 0) * ratio - slot.y1;
+    const color = scene.colors[used];
+    if (!color || !placeSprite(scene, used, slot)) continue;
+    color[0] = (streaks[o + 4] ?? 0) / 255;
+    color[1] = (streaks[o + 5] ?? 0) / 255;
+    color[2] = (streaks[o + 6] ?? 0) / 255;
+    color[3] = streaks[o + 7] ?? 0;
+    used += 1;
+  }
+  scene.used = used;
 }
 
 export function flushAtlas(scene: SkiaScene, additive: boolean): void {
@@ -199,7 +232,6 @@ export function setCompositing(scene: SkiaScene, additive: boolean): void {
 
 export function endFrame(scene: SkiaScene): SkImage {
   'worklet';
-  scene.surface.flush();
   scene.flip = 1 - scene.flip;
   const reuse = scene.frames[scene.flip];
   const image = reuse

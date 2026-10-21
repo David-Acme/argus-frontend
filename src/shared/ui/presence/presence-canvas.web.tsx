@@ -4,13 +4,13 @@ import {
   createDriver,
   paintFrame,
   paintStill,
-  stepsDue,
+  frameDue,
   takeEndedEvent,
   type Driver,
   type Look,
   type Tick,
 } from './engine/driver';
-import type { Stroke } from './engine/types';
+import { STREAK_FIELDS, type Sinks, type Stroke } from './engine/types';
 import type { PresenceCanvasProps } from './presence-canvas.types';
 
 const MAX_RATIO = 2;
@@ -52,6 +52,28 @@ function strokeTo(context: CanvasRenderingContext2D, s: Stroke): void {
   context.moveTo(s.x1, s.y1);
   context.lineTo(s.x2, s.y2);
   context.stroke();
+}
+
+function streaksTo(context: CanvasRenderingContext2D, streaks: Float32Array, count: number): void {
+  for (let i = 0; i < count; i++) {
+    const o = i * STREAK_FIELDS;
+    context.globalAlpha = streaks[o + 7] ?? 0;
+    context.strokeStyle = `#${hex(streaks[o + 4] ?? 0)}${hex(streaks[o + 5] ?? 0)}${hex(streaks[o + 6] ?? 0)}`;
+    context.beginPath();
+    context.moveTo(streaks[o] ?? 0, streaks[o + 1] ?? 0);
+    context.lineTo(streaks[o + 2] ?? 0, streaks[o + 3] ?? 0);
+    context.stroke();
+  }
+}
+
+function sinksFor(context: CanvasRenderingContext2D): Sinks {
+  return {
+    stroke: (stroke: Stroke) => strokeTo(context, stroke),
+    streaks: (streaks, count, width) => {
+      context.lineWidth = width;
+      streaksTo(context, streaks, count);
+    },
+  };
 }
 
 type Surface = {
@@ -119,19 +141,21 @@ function paintStillCanvas({ surface, driver, live, look, fade }: CanvasJob): und
     leanX: 0,
     leanY: 0,
     steps: 1,
+    lag: 0,
+    split: false,
   };
-  const sink = (stroke: Stroke) => strokeTo(surface.context, stroke);
+  const sinks = sinksFor(surface.context);
   paintStill(driver, {
     tick,
     look,
-    pass: { begin: () => begin(surface, fade), sink, end: () => undefined },
+    pass: { begin: () => begin(surface, fade), sinks, end: () => undefined },
   });
   return undefined;
 }
 
 function startLoop(job: CanvasJob): () => void {
   const { surface, driver, live, look, fade } = job;
-  const sink = (stroke: Stroke) => strokeTo(surface.context, stroke);
+  const sinks = sinksFor(surface.context);
   trackPointer();
   let handle = 0;
   const loop = (ms: number) => {
@@ -147,12 +171,13 @@ function startLoop(job: CanvasJob): () => void {
       leanX,
       leanY,
       steps: 1,
+      lag: 0,
+      split: false,
     };
-    tick.steps = stepsDue(driver, tick, look);
-    if (tick.steps === 0) return;
+    if (!frameDue(driver, tick, look)) return;
     const frame = advance(driver, tick, look);
-    begin(surface, fade);
-    paintFrame(driver, frame, sink);
+    begin(surface, fade < 1 && !frame.stepped ? 0 : fade);
+    paintFrame(driver, frame, sinks);
     const ended = takeEndedEvent(driver);
     if (ended) job.onEventEnd?.(ended);
   };

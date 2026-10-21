@@ -20,8 +20,7 @@ const ANDROID_12_API = 31;
 const LOW_MEMORY_GIB = 4;
 const MID_MEMORY_GIB = 6;
 
-export function resolvePerfTier(profile: HardwareProfile, reduceEffects: boolean): PerfTier {
-  if (reduceEffects) return 'low';
+export function hardwareCeiling(profile: HardwareProfile): PerfTier {
   if (!profile.android) return 'high';
   const memoryGib = profile.totalMemory === null ? null : profile.totalMemory / GIB;
   if (profile.apiLevel !== null && profile.apiLevel < ANDROID_12_API) return 'low';
@@ -30,11 +29,46 @@ export function resolvePerfTier(profile: HardwareProfile, reduceEffects: boolean
   return 'high';
 }
 
+export type TierEvidence = { live: PerfTier | null };
+
+export type TierInput = { profile: HardwareProfile; reduceEffects: boolean } & TierEvidence;
+
+export function lowerTier(a: PerfTier, b: PerfTier): PerfTier {
+  return perfTiers[Math.min(perfTiers.indexOf(a), perfTiers.indexOf(b))] ?? 'low';
+}
+
+export function needsProbe({ profile, reduceEffects }: TierInput): boolean {
+  return !reduceEffects && profile.android && hardwareCeiling(profile) !== 'low';
+}
+
+export function resolvePerfTier(input: TierInput): PerfTier {
+  if (input.reduceEffects) return 'low';
+  const ceiling = hardwareCeiling(input.profile);
+  if (input.live !== null) return lowerTier(ceiling, input.live);
+  return input.profile.android ? 'low' : ceiling;
+}
+
 export const hardwareProfile: HardwareProfile = {
   android: IS_ANDROID,
   apiLevel: typeof Platform.Version === 'number' ? Platform.Version : null,
   totalMemory: Device.totalMemory,
 };
+
+export type ProbeReport = { tier: PerfTier; workMs: number; dropped: number };
+
+type AutoTier = TierEvidence & { report: ProbeReport | null; drops: number };
+
+export const useAutoTier = create<AutoTier>(() => ({ live: null, report: null, drops: 0 }));
+
+export function recordProbe(report: ProbeReport): void {
+  useAutoTier.setState({ live: report.tier, report });
+}
+
+export function shiftTier(from: PerfTier, step: -1 | 1): void {
+  const next = perfTiers[perfTiers.indexOf(from) + step];
+  if (!next) return;
+  useAutoTier.setState((state) => ({ live: next, drops: state.drops + (step < 0 ? 1 : 0) }));
+}
 
 type EffectsOverrides = {
   reduceEffects: boolean;
@@ -68,6 +102,10 @@ function useAccessibilityFlag(flag: SystemFlag): boolean {
 
 export type Effects = {
   perfTier: PerfTier;
+  adaptive: boolean;
+  ceiling: PerfTier;
+  drops: number;
+  probing: boolean;
   reduceMotion: boolean;
   reduceTransparency: boolean;
 };
@@ -76,10 +114,24 @@ export function useEffects(): Effects {
   const overrides = useEffectsOverrides();
   const systemMotion = useAccessibilityFlag('reduceMotion');
   const systemTransparency = useAccessibilityFlag('reduceTransparency');
-  const perfTier = overrides.perfTier ?? resolvePerfTier(hardwareProfile, overrides.reduceEffects);
+  const evidence = useAutoTier();
+  const input: TierInput = {
+    profile: hardwareProfile,
+    reduceEffects: overrides.reduceEffects,
+    live: evidence.live,
+  };
+  const perfTier = overrides.perfTier ?? resolvePerfTier(input);
+  const glassTier =
+    overrides.perfTier ??
+    resolvePerfTier({ ...input, live: input.live ?? hardwareCeiling(hardwareProfile) });
+  const auto = overrides.perfTier === null;
   return {
     perfTier,
+    adaptive: auto && !overrides.reduceEffects,
+    ceiling: hardwareCeiling(hardwareProfile),
+    drops: evidence.drops,
+    probing: auto && evidence.live === null && needsProbe(input),
     reduceMotion: overrides.reduceMotion ?? systemMotion,
-    reduceTransparency: overrides.reduceTransparency ?? (systemTransparency || perfTier === 'low'),
+    reduceTransparency: overrides.reduceTransparency ?? (systemTransparency || glassTier === 'low'),
   };
 }

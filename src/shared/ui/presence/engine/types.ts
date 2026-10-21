@@ -59,6 +59,8 @@ export type Particle = {
   y: number;
   px: number;
   py: number;
+  hx: number;
+  hy: number;
   vx: number;
   vy: number;
   ltx: number;
@@ -103,12 +105,20 @@ export type Stroke = {
 
 export type StrokeSink = (stroke: Stroke) => void;
 
+export const STREAK_FIELDS = 8;
+
+export type StreakSink = (streaks: Float32Array, count: number, width: number) => void;
+
+export type Sinks = { stroke: StrokeSink; streaks: StreakSink };
+
 export type Frame = {
   state: PresenceState;
   t: number;
   size: number;
   palette: Palette;
   dark: boolean;
+  stepped: boolean;
+  drawn: number;
 };
 
 export type EventMods = {

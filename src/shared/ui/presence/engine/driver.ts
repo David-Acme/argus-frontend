@@ -1,7 +1,7 @@
 import { createEngine, playEvent, stepEngine } from './engine';
 import { createScratch, paintParticles, type Scratch } from './frame';
 import { paintIcon } from './icon';
-import type { Engine, Frame, Palette, PresenceEvent, PresenceState, StrokeSink } from './types';
+import type { Engine, Frame, Palette, PresenceEvent, PresenceState, Sinks } from './types';
 
 export type DriverInput = {
   state: PresenceState;
@@ -17,6 +17,9 @@ export type Driver = {
   engine: Engine;
   scratch: Scratch;
   last: number;
+  due: number;
+  sim: number;
+  simOdd: number;
   eventId: number;
   scroll: number;
   scrollAt: number;
@@ -30,6 +33,8 @@ export type Tick = {
   leanX: number;
   leanY: number;
   steps: number;
+  lag: number;
+  split: boolean;
 };
 
 export type Look = {
@@ -43,6 +48,13 @@ export type Look = {
 
 const SCROLL_QUIET = 0.2;
 const DRIFT_PX = 160;
+export const MAX_FPS = 120;
+export const STEP_HZ = 60;
+const STEP = 1 / STEP_HZ;
+const DUE_SLACK = 0.002;
+const MIN_SPACING = 0.7;
+const MAX_STEPS = 3;
+const STEP_SLACK = 0.25;
 
 export function createDriver(count: number, seed: number): Driver {
   'worklet';
@@ -50,21 +62,58 @@ export function createDriver(count: number, seed: number): Driver {
     engine: createEngine(count, seed),
     scratch: createScratch(),
     last: 0,
+    due: 0,
+    sim: 0,
+    simOdd: 0,
     eventId: 0,
     scroll: 0,
     scrollAt: -1,
   };
 }
 
-export function stepsDue(driver: Driver, tick: Tick, look: Look): number {
+export function frameInterval(driver: Driver, tick: Tick, look: Look): number {
   'worklet';
   const resting = tick.input.resting && driver.engine.event === null;
-  const interval = 1 / (resting ? look.restFps : look.activeFps);
-  const elapsed = tick.now - driver.last;
-  if (driver.last > 0 && elapsed < interval - 0.004) return 0;
-  const steps = driver.last > 0 ? Math.round(elapsed * 60) : 1;
-  driver.last = tick.now;
-  return Math.max(1, Math.min(3, steps));
+  return 1 / Math.min(MAX_FPS, resting ? look.restFps : look.activeFps);
+}
+
+function lockstep(driver: Driver, tick: Tick, elapsed: number): void {
+  'worklet';
+  tick.steps = Math.max(1, Math.min(MAX_STEPS, Math.round(elapsed * STEP_HZ)));
+  tick.lag = 0;
+  tick.split = false;
+  driver.sim = driver.simOdd = tick.now;
+}
+
+function stepsSince(sim: number, now: number): number {
+  'worklet';
+  return Math.floor((now - sim) * STEP_HZ + STEP_SLACK);
+}
+
+function interleaved(driver: Driver, tick: Tick): void {
+  'worklet';
+  const { now } = tick;
+  if (driver.simOdd === driver.sim) driver.simOdd = driver.sim - STEP / 2;
+  if (stepsSince(driver.sim, now) > MAX_STEPS) driver.sim = now - STEP;
+  if (stepsSince(driver.simOdd, now) > MAX_STEPS) driver.simOdd = now - STEP / 2;
+  tick.steps = Math.max(0, stepsSince(driver.sim, now));
+  tick.lag = Math.max(0, stepsSince(driver.simOdd, now));
+  tick.split = true;
+  driver.sim += tick.steps * STEP;
+  driver.simOdd += tick.lag * STEP;
+}
+
+export function frameDue(driver: Driver, tick: Tick, look: Look): boolean {
+  'worklet';
+  const interval = frameInterval(driver, tick, look);
+  const { now } = tick;
+  const { last, due } = driver;
+  if (last > 0 && (now < due - DUE_SLACK || now - last < interval * MIN_SPACING)) return false;
+  driver.due = last > 0 && now - due < interval ? due + interval : now + interval;
+  driver.last = now;
+  if (last === 0 || interval >= STEP - DUE_SLACK) lockstep(driver, tick, last > 0 ? now - last : 0);
+  else interleaved(driver, tick);
+  return tick.steps + tick.lag > 0;
 }
 
 function scrolling(driver: Driver, tick: Tick): boolean {
@@ -90,24 +139,40 @@ export function advance(driver: Driver, tick: Tick, look: Look): Frame {
   }
   const quiet = look.leanWhileScrolling || !scrolling(driver, tick);
   const scroll = Math.min(Math.max(tick.scroll, 0), DRIFT_PX) / DRIFT_PX;
-  const { steps } = tick;
-  for (let i = 0; i < steps; i++) {
+  const motion = {
+    state: input.state,
+    level: tick.level,
+    leanX: quiet ? tick.leanX : 0,
+    leanY: quiet ? tick.leanY : 0,
+    scroll: quiet ? scroll : 0,
+  };
+  const { steps, lag, split } = tick;
+  for (let i = 0; i < steps; i++)
     stepEngine(engine, {
-      state: input.state,
-      t: t - (steps - 1 - i) / 60,
-      level: tick.level,
-      leanX: quiet ? tick.leanX : 0,
-      leanY: quiet ? tick.leanY : 0,
-      scroll: quiet ? scroll : 0,
-      carry: i > 0,
+      ...motion,
+      t: driver.sim + engine.t0 - (steps - 1 - i) * STEP,
+      slice: split ? 0 : -1,
     });
-  }
-  return { state: input.state, t, size: look.size, palette: look.palette, dark: look.dark };
+  for (let i = 0; i < lag; i++)
+    stepEngine(engine, {
+      ...motion,
+      t: driver.simOdd + engine.t0 - (lag - 1 - i) * STEP,
+      slice: 1,
+    });
+  return {
+    state: input.state,
+    t,
+    size: look.size,
+    palette: look.palette,
+    dark: look.dark,
+    stepped: steps > 0,
+    drawn: split ? (steps > 0 ? 1 : 0) | (lag > 0 ? 2 : 0) : 3,
+  };
 }
 
-export function paintFrame(driver: Driver, frame: Frame, sink: StrokeSink): void {
+export function paintFrame(driver: Driver, frame: Frame, sinks: Sinks): void {
   'worklet';
-  const paint = { frame, engine: driver.engine, scratch: driver.scratch, sink };
+  const paint = { frame, engine: driver.engine, scratch: driver.scratch, sinks };
   if (driver.engine.particles.length > 0) paintParticles(paint);
   else paintIcon(paint);
 }
@@ -119,7 +184,7 @@ export function takeEndedEvent(driver: Driver): PresenceEvent | null {
   return ended;
 }
 
-export type StillPass = { begin: () => void; sink: StrokeSink; end: () => void };
+export type StillPass = { begin: () => void; sinks: Sinks; end: () => void };
 
 export type StillInput = { tick: Tick; look: Look; pass: StillPass };
 
@@ -129,28 +194,33 @@ export function paintStill(driver: Driver, { tick, look, pass }: StillInput): vo
   engine.lx = engine.ly = 0;
   engine.event = null;
   const base = 8;
-  const frameAt = (i: number): Tick => ({
-    ...tick,
-    now: base + i / 60,
-    leanX: 0,
-    leanY: 0,
-    scroll: 0,
-    steps: 1,
-  });
+  const frameAt = (i: number): Tick => {
+    driver.sim = base + i / STEP_HZ;
+    return {
+      ...tick,
+      now: driver.sim,
+      leanX: 0,
+      leanY: 0,
+      scroll: 0,
+      steps: 1,
+      lag: 0,
+      split: false,
+    };
+  };
   if (engine.particles.length === 0) {
     pass.begin();
-    paintFrame(driver, advance(driver, frameAt(0), look), pass.sink);
+    paintFrame(driver, advance(driver, frameAt(0), look), pass.sinks);
     pass.end();
     return;
   }
   for (let i = 0; i < 240; i++) advance(driver, frameAt(i), look);
   for (const p of engine.particles) {
-    p.px = p.x;
-    p.py = p.y;
+    p.px = p.hx = p.x;
+    p.py = p.hy = p.y;
   }
   for (let i = 0; i < 14; i++) {
     pass.begin();
-    paintFrame(driver, advance(driver, frameAt(240 + i), look), pass.sink);
+    paintFrame(driver, advance(driver, frameAt(240 + i), look), pass.sinks);
     pass.end();
   }
 }

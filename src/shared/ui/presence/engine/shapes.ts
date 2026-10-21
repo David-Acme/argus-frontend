@@ -49,6 +49,9 @@ function swirlRadius(state: PresenceState): number {
   return 1;
 }
 
+const TILT_COS = Math.cos(-0.25);
+const TILT_SIN = Math.sin(-0.25);
+
 function swirl(p: Particle, input: ShapeInput, out: [number, number]): void {
   'worklet';
   const { state, t, engine } = input;
@@ -57,10 +60,8 @@ function swirl(p: Particle, input: ShapeInput, out: [number, number]): void {
   const x = Math.cos(th) * r * 1.15;
   const y = Math.sin(th) * r * 0.55;
   const w = (0.08 * Math.sin(Math.PI * p.u) + 0.01) * p.v;
-  const c = Math.cos(-0.25);
-  const s = Math.sin(-0.25);
-  out[0] = x * c - y * s + w;
-  out[1] = x * s + y * c + w * 0.6;
+  out[0] = x * TILT_COS - y * TILT_SIN + w;
+  out[1] = x * TILT_SIN + y * TILT_COS + w * 0.6;
 }
 
 function listen(p: Particle, { t }: ShapeInput, out: [number, number]): void {
@@ -189,30 +190,36 @@ const SHAPE_FAMILY: Record<PresenceState, ShapeFamily> = {
   unknown: 'eye',
 };
 
-export function shapeTarget(p: Particle, input: ShapeInput, out: [number, number]): void {
+function off(p: Particle, _input: ShapeInput, out: [number, number]): void {
   'worklet';
-  switch (SHAPE_FAMILY[input.state]) {
+  out[0] = (p.u - 0.5) * 1.5;
+  out[1] = 0.18 + p.v * 0.008;
+}
+
+export type Shape = (p: Particle, input: ShapeInput, out: [number, number]) => void;
+
+export function shapeFor(state: PresenceState): Shape {
+  'worklet';
+  switch (SHAPE_FAMILY[state]) {
     case 'swirl':
-      return swirl(p, input, out);
+      return swirl;
     case 'listen':
-      return listen(p, input, out);
+      return listen;
     case 'think':
-      return think(p, input, out);
+      return think;
     case 'speak':
-      return speak(p, input, out);
+      return speak;
     case 'watch':
-      return watch(p, input, out);
+      return watch;
     case 'happy':
-      return happy(p, input, out);
+      return happy;
     case 'droop':
-      return droop(p, input, out);
+      return droop;
     case 'off':
-      out[0] = (p.u - 0.5) * 1.5;
-      out[1] = 0.18 + p.v * 0.008;
-      return;
+      return off;
     case 'rest':
-      return rest(p, input, out);
+      return rest;
     case 'eye':
-      return eye(p, input, out);
+      return eye;
   }
 }

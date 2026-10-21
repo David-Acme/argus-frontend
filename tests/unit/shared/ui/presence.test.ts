@@ -17,6 +17,7 @@ let renderToStaticMarkup: Awaited<ReturnType<typeof markupRenderer>>;
 
 const canvasProps = {
   plan: {
+    tier: 'mid' as const,
     size: 120,
     count: 320,
     trails: true,
@@ -24,6 +25,9 @@ const canvasProps = {
     restFps: 30,
     still: false,
     leanWhileScrolling: true,
+    watch: false,
+    climb: false,
+    patience: 300,
   },
   look: {
     size: 120,
@@ -91,7 +95,7 @@ describe('Presence', () => {
     expect(frame).toBeDefined();
     for (let i = 1; i <= 4; i++) frame?.({ timestamp: 1000 + i * 17 });
     expect(calls.drawAtlas.length).toBe(4);
-    expect((calls.drawAtlas[0]?.[2] as unknown[]).length).toBe(560);
+    expect((calls.drawAtlas[0]?.[2] as unknown[]).length).toBe(560 + 4);
   });
 
   test('the native renderer draws the low tier with half the particles', () => {
@@ -106,7 +110,7 @@ describe('Presence', () => {
       })
     );
     frameCallbacks.at(-1)?.({ timestamp: 2000 });
-    expect((calls.drawAtlas[0]?.[2] as unknown[]).length).toBe(280);
+    expect((calls.drawAtlas[0]?.[2] as unknown[]).length).toBe(280 + 4);
   });
 
   test('the web renderer is a plain canvas sized for the device pixels', () => {
