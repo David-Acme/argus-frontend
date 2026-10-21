@@ -1,5 +1,5 @@
 import { syntheticVoice } from './paint';
-import { isEye, lerp, shapeTarget, type ShapeInput } from './shapes';
+import { isEye, lerp, shapeFor, type ShapeInput } from './shapes';
 import type { Engine, Particle, PresenceEvent, PresenceState } from './types';
 
 const TAU = Math.PI * 2;
@@ -33,6 +33,27 @@ export function particleCount(size: number): number {
   return 0;
 }
 
+function spawn(engine: Engine, from: Particle | undefined): Particle {
+  'worklet';
+  const u = random(engine);
+  const v = random(engine) * 2 - 1;
+  const s = random(engine);
+  const x = from ? from.x : (random(engine) - 0.5) * 1.5;
+  const y = from ? from.y : (random(engine) - 0.5) * 0.6;
+  return { u, v, s, x, y, px: x, py: y, hx: x, hy: y, vx: 0, vy: 0, ltx: 0, lty: 0, fresh: true };
+}
+
+export function resizeEngine(engine: Engine, count: number): void {
+  'worklet';
+  const { particles } = engine;
+  const kept = particles.length;
+  if (count < kept) particles.length = count;
+  for (let i = kept; i < count; i++) {
+    const from = kept > 0 ? particles[Math.floor(random(engine) * kept)] : undefined;
+    particles.push(spawn(engine, from));
+  }
+}
+
 export function createEngine(count: number, seed: number): Engine {
   'worklet';
   const engine: Engine = {
@@ -50,27 +71,7 @@ export function createEngine(count: number, seed: number): Engine {
     endedEvent: null,
     point: [0, 0],
   };
-  for (let i = 0; i < count; i++) {
-    const u = random(engine);
-    const v = random(engine) * 2 - 1;
-    const s = random(engine);
-    const x = (random(engine) - 0.5) * 1.5;
-    const y = (random(engine) - 0.5) * 0.6;
-    engine.particles.push({
-      u,
-      v,
-      s,
-      x,
-      y,
-      px: x,
-      py: y,
-      vx: 0,
-      vy: 0,
-      ltx: 0,
-      lty: 0,
-      fresh: true,
-    });
-  }
+  resizeEngine(engine, count);
   engine.t0 = random(engine) * 20;
   return engine;
 }
@@ -107,7 +108,7 @@ export type StepInput = {
   leanX: number;
   leanY: number;
   scroll: number;
-  carry: boolean;
+  slice: number;
 };
 
 type Physics = {
@@ -116,6 +117,7 @@ type Physics = {
   noise: number;
   scatter: PresenceEvent | null;
   progress: number;
+  t: number;
 };
 
 function physicsOf(engine: Engine, input: StepInput): Physics {
@@ -131,6 +133,7 @@ function physicsOf(engine: Engine, input: StepInput): Physics {
     noise: off ? 0 : 0.0016 * boost,
     scatter: name === 'disperse' || name === 'cancel' ? name : null,
     progress,
+    t: input.t,
   };
 }
 
@@ -165,41 +168,47 @@ function scatterTarget(p: Particle, physics: Physics, target: [number, number]):
     p.y + Math.sin(a) * reach + (physics.scatter === 'cancel' ? 0.02 * physics.progress : 0);
 }
 
+function integrate(p: Particle, physics: Physics, target: [number, number]): void {
+  'worklet';
+  const t = physics.t;
+  p.vx =
+    (p.vx + (target[0] - p.x) * physics.k + Math.sin(p.y * 4 + t * 0.6 + p.s * 7) * physics.noise) *
+    physics.damping;
+  p.vy =
+    (p.vy + (target[1] - p.y) * physics.k + Math.cos(p.x * 4 + t * 0.5 + p.s * 5) * physics.noise) *
+    physics.damping;
+  p.x += p.vx;
+  p.y += p.vy;
+}
+
 export function stepEngine(engine: Engine, input: StepInput): void {
   'worklet';
-  smoothLevel(engine, input);
-  engine.pulse *= 0.95;
-  engine.lx = lerp(engine.lx, input.leanX, 0.06);
-  engine.ly = lerp(engine.ly, input.leanY, 0.06);
-  if (engine.particles.length === 0) return;
+  if (input.slice !== 1) {
+    smoothLevel(engine, input);
+    engine.pulse *= 0.95;
+    engine.lx = lerp(engine.lx, input.leanX, 0.06);
+    engine.ly = lerp(engine.ly, input.leanY, 0.06);
+  }
+  const { particles } = engine;
+  if (particles.length === 0) return;
   const physics = physicsOf(engine, input);
   const shape: ShapeInput = { state: input.state, t: input.t, engine };
+  const targetOf = shapeFor(input.state);
   const leans = !isEye(input.state);
+  const ox = leans ? engine.lx : 0;
+  const oy = leans ? engine.ly - input.scroll * 0.12 : 0;
   const target = engine.point;
-  const { t } = input;
-  for (const p of engine.particles) {
-    if (!input.carry) {
-      p.px = p.x;
-      p.py = p.y;
-    }
-    shapeTarget(p, shape, target);
+  const stride = input.slice < 0 ? 1 : 2;
+  for (let i = Math.max(0, input.slice); i < particles.length; i += stride) {
+    const p = particles[i];
+    if (!p) continue;
+    p.px = p.x;
+    p.py = p.y;
+    targetOf(p, shape, target);
     settle(p, target);
-    if (leans) {
-      target[0] += engine.lx;
-      target[1] += engine.ly - input.scroll * 0.12;
-    }
+    target[0] += ox;
+    target[1] += oy;
     if (physics.scatter) scatterTarget(p, physics, target);
-    p.vx =
-      (p.vx +
-        (target[0] - p.x) * physics.k +
-        Math.sin(p.y * 4 + t * 0.6 + p.s * 7) * physics.noise) *
-      physics.damping;
-    p.vy =
-      (p.vy +
-        (target[1] - p.y) * physics.k +
-        Math.cos(p.x * 4 + t * 0.5 + p.s * 5) * physics.noise) *
-      physics.damping;
-    p.x += p.vx;
-    p.y += p.vy;
+    integrate(p, physics, target);
   }
 }

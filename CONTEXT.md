@@ -5561,6 +5561,8 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | The `fix(ui)` after the `p1/native` merge: Sheet's parts, dialog and phone sheet and the demo field name the 24 token-derived style objects the binding-following `style-object` counter found inline, which the web export keeps as named bindings: entry 7,522,390 → 7,523,403 B and `dist/` 8,841,873 → 8,842,886 B (+1,013 each). | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p1/ds-fixes`, the design-system review's items for this branch: entry 7,523,403 → 7,527,643 B (+4,240) and `dist/` 8,842,886 → 8,847,431 B (+4,545). The entry grows by Confirm's latch and form choice, `useScreenActive` (Aura and the live chip pause out of focus), `useAnnounce`, the shimmer split, MediaFrame's frame key and Aura's flat tint; the other 305 B of `dist/` are the `hit-target` and `focus-inset` CSS utilities. No package was added. | 2026-10-21 |
 
+| `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx step`, `src/shared/ui/presence/presence.tsx plan`, `src/shared/ui/presence/presence.tsx look`, `src/shared/ui/presence/presence.tsx live` | Finding 6 of the design-system review: under reduced motion Presence recomputed its 254-step still frame and registered its frame worklet again on every render, because the look, the plan and the live values were new objects each time; they keep one identity per input now, the effect-dependency and library-identity cases of rule 31. | 2026-10-21 |
+
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
 **Confirm.** On a compact native window it is `Alert.alert` (react-native-web's

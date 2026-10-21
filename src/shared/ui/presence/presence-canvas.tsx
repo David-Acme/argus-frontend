@@ -1,70 +1,42 @@
 import { Canvas, ColorMatrix, Image, type SkImage } from '@shopify/react-native-skia';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PixelRatio } from 'react-native';
-import { useFrameCallback, useSharedValue } from 'react-native-reanimated';
+import { useFrameCallback, useSharedValue, type FrameInfo } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
+import { shiftTier } from '@/shared/theme/effects';
 import {
   advance,
-  createDriver,
-  paintFrame,
+  frameInterval,
   paintStill,
-  stepsDue,
+  frameDue,
   takeEndedEvent,
-  type Driver,
   type Look,
   type Tick,
 } from './engine/driver';
+import { noteBeat, notePace } from './engine/pace';
 import type { PresenceEvent } from './engine/types';
-import type { PresenceCanvasProps } from './presence-canvas.types';
-import {
-  beginFrame,
-  buildSprites,
-  createScene,
-  endFrame,
-  flushAtlas,
-  setCompositing,
-  strokeToAtlas,
-  strokeToCanvas,
-  type SkiaScene,
-} from './skia-scene';
-
-type Runtime = { driver: Driver; scene: SkiaScene; key: string };
+import type { PresenceCanvasProps, PresenceLive } from './presence-canvas.types';
+import { beginFrame, endFrame, flushAtlas } from './skia-scene';
+import { draw, prepare, release, type Runtime, type Spec } from './skia-runtime';
 
 const MAX_RATIO = 2;
 const RESIDUE = 3 / 255;
 const RESIDUE_CUT = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, -RESIDUE];
 
-function streakWidth(look: Look): number {
+function tickOf(live: PresenceLive, now: number): Tick {
   'worklet';
-  const base = look.size >= 150 ? 1.15 : 1;
-  return (look.dark ? base : base + 0.25) * (look.size < 90 ? 1.3 : 1);
-}
-
-type Spec = { count: number; seed: number; ratio: number };
-
-function prepare(current: Runtime | null, look: Look, spec: Spec): Runtime | null {
-  'worklet';
-  const key = `${look.size}|${spec.count}|${look.dark}`;
-  if (current && current.key === key) return current;
-  const scene = createScene({ size: look.size, ratio: spec.ratio, count: spec.count });
-  if (!scene) return null;
-  if (spec.count > 0) buildSprites(scene, streakWidth(look));
-  setCompositing(scene, look.palette.additive);
-  return { driver: createDriver(spec.count, spec.seed), scene, key };
-}
-
-function draw(runtime: Runtime, frame: ReturnType<typeof advance>, fade: number): SkImage {
-  'worklet';
-  const { scene, driver } = runtime;
-  const particles = driver.engine.particles.length > 0;
-  beginFrame(scene, particles ? fade : 1);
-  if (particles) {
-    paintFrame(driver, frame, (stroke) => strokeToAtlas(scene, stroke));
-    flushAtlas(scene, frame.palette.additive);
-  } else {
-    paintFrame(driver, frame, (stroke) => strokeToCanvas(scene, stroke));
-  }
-  return endFrame(scene);
+  const lean = live.lean.get();
+  return {
+    now,
+    input: live.input.get(),
+    level: live.level ? live.level.get() : null,
+    scroll: live.scroll ? live.scroll.get() : 0,
+    leanX: lean[0],
+    leanY: lean[1],
+    steps: 1,
+    lag: 0,
+    split: false,
+  };
 }
 
 type StillFrame = { tick: Tick; look: Look; fade: number };
@@ -80,7 +52,7 @@ function paintStillFrame(runtime: Runtime, { tick, look, fade }: StillFrame): Sk
     look,
     pass: {
       begin: () => beginFrame(scene, particles ? fade : 1),
-      sink: (stroke) => (particles ? strokeToAtlas(scene, stroke) : strokeToCanvas(scene, stroke)),
+      sinks: runtime.sinks,
       end: () => {
         if (particles) flushAtlas(scene, look.palette.additive);
         last = endFrame(scene);
@@ -88,6 +60,15 @@ function paintStillFrame(runtime: Runtime, { tick, look, fade }: StillFrame): Sk
     },
   });
   return last;
+}
+
+function useStableHandler(onEventEnd: PresenceCanvasProps['onEventEnd']) {
+  const latest = useRef(onEventEnd);
+  useEffect(() => {
+    latest.current = onEventEnd;
+  });
+  const [ended] = useState(() => (name: PresenceEvent) => latest.current?.(name));
+  return ended;
 }
 
 export function PresenceCanvas({
@@ -101,34 +82,37 @@ export function PresenceCanvas({
 }: PresenceCanvasProps) {
   const image = useSharedValue<SkImage | null>(null);
   const runtime = useSharedValue<Runtime | null>(null);
-  const [ended] = useState(() => (name: PresenceEvent) => onEventEnd?.(name));
+  const ended = useStableHandler(onEventEnd);
   const spec = useMemo<Spec>(
     () => ({ count: plan.count, seed, ratio: Math.min(MAX_RATIO, PixelRatio.get()) }),
     [plan.count, seed]
   );
   const fade = plan.trails ? look.palette.trail : 1;
-  const { input, level, scroll, lean } = live;
+  const { watch, climb, patience, tier } = plan;
 
-  const frameCallback = useFrameCallback((info) => {
-    'worklet';
-    const current = prepare(runtime.get(), look, spec);
-    if (!current) return;
-    if (current !== runtime.get()) runtime.set(current);
-    const tick: Tick = {
-      now: info.timestamp / 1000,
-      input: input.get(),
-      level: level ? level.get() : null,
-      scroll: scroll ? scroll.get() : 0,
-      leanX: lean.get()[0],
-      leanY: lean.get()[1],
-      steps: 1,
-    };
-    tick.steps = stepsDue(current.driver, tick, look);
-    if (tick.steps === 0) return;
-    image.set(draw(current, advance(current.driver, tick, look), fade));
-    const name = takeEndedEvent(current.driver);
-    if (name) scheduleOnRN(ended, name);
-  }, false);
+  const step = useCallback(
+    (info: FrameInfo) => {
+      'worklet';
+      const current = prepare(runtime.get(), { look, spec, shown: image.get() });
+      if (!current) return;
+      if (current !== runtime.get()) runtime.set(current);
+      const tick = tickOf(live, info.timestamp / 1000);
+      noteBeat(current.pace, (info.timeSincePreviousFrame ?? 0) / 1000);
+      if (!frameDue(current.driver, tick, look)) return;
+      const started = performance.now();
+      image.set(draw(current, advance(current.driver, tick, look), fade));
+      const work = (performance.now() - started) / 1000;
+      const interval = frameInterval(current.driver, tick, look);
+      const shift = watch
+        ? notePace(current.pace, { now: tick.now, work, interval }, { climb, patience })
+        : 0;
+      if (shift !== 0) scheduleOnRN(shiftTier, tier, shift);
+      const name = takeEndedEvent(current.driver);
+      if (name) scheduleOnRN(ended, name);
+    },
+    [runtime, image, look, spec, live, fade, watch, climb, patience, tier, ended]
+  );
+  const frameCallback = useFrameCallback(step, false);
 
   const animate = !plan.still && active;
   const box = { width: plan.size, height: plan.size };
@@ -141,21 +125,23 @@ export function PresenceCanvas({
     if (!plan.still) return;
     scheduleOnUI(() => {
       'worklet';
-      const current = prepare(runtime.get(), look, spec);
+      const current = prepare(runtime.get(), { look, spec, shown: image.get() });
       if (!current) return;
       runtime.set(current);
-      const tick: Tick = {
-        now: 8,
-        input: input.get(),
-        level: null,
-        scroll: 0,
-        leanX: 0,
-        leanY: 0,
-        steps: 1,
-      };
+      const tick = { ...tickOf(live, 8), level: null, scroll: 0, leanX: 0, leanY: 0 };
       image.set(paintStillFrame(current, { tick, look, fade }));
     });
-  }, [plan.still, stillKey, look, spec, fade, image, input, runtime]);
+  }, [plan.still, stillKey, look, spec, fade, image, live, runtime]);
+
+  useEffect(
+    () => () =>
+      scheduleOnUI(() => {
+        'worklet';
+        release(runtime.get(), image.get());
+        runtime.set(null);
+      }),
+    [runtime, image]
+  );
 
   return (
     <Canvas style={box} pointerEvents="none">

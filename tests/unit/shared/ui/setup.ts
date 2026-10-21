@@ -72,6 +72,10 @@ mock.module(
   '@/shared/ui/presence/presence-canvas',
   () => import('@/shared/ui/presence/presence-canvas.web')
 );
+mock.module(
+  '@/shared/ui/presence/use-tier-probe',
+  () => import('@/shared/ui/presence/use-tier-probe.web')
+);
 mock.module('@/shared/ui/sheet/sheet', () => import('@/shared/ui/sheet/sheet.web'));
 mock.module('uniwind', () => ({
   Uniwind: { setTheme: () => undefined },

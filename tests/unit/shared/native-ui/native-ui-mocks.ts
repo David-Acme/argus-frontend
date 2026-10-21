@@ -6,10 +6,18 @@ import { translateLoose } from '@/core/i18n/translate';
 type Props = Record<string, unknown> & { children?: ReactNode };
 
 export const captured: Record<string, Props> = {};
-export const calls: { alerts: unknown[][]; drawAtlas: unknown[][]; frames: number } = {
+export const calls: {
+  alerts: unknown[][];
+  drawAtlas: unknown[][];
+  frames: number;
+  disposed: string[];
+  ran: unknown[][];
+} = {
   alerts: [],
   drawAtlas: [],
   frames: 0,
+  disposed: [],
+  ran: [],
 };
 export const frameCallbacks: ((info: { timestamp: number }) => void)[] = [];
 export const window = { width: 360, height: 800 };
@@ -61,8 +69,10 @@ function fakeSurface() {
     flush: () => undefined,
     makeImageSnapshot: () => {
       calls.frames += 1;
-      return { kind: 'image' };
+      const frame = calls.frames;
+      return { kind: 'image', dispose: () => calls.disposed.push(`image-${frame}`) };
     },
+    dispose: () => calls.disposed.push('surface'),
   };
 }
 
@@ -73,6 +83,7 @@ const paint = () => ({
   setStrokeWidth: () => undefined,
   setColor: () => undefined,
   setBlendMode: () => undefined,
+  dispose: () => calls.disposed.push('paint'),
 });
 
 export function installNativeUiMocks(): void {
@@ -128,7 +139,10 @@ export function installNativeUiMocks(): void {
     },
   }));
   mock.module('react-native-worklets', () => ({
-    scheduleOnRN: () => undefined,
+    scheduleOnRN: (fn: (...args: unknown[]) => void, ...args: unknown[]) => {
+      calls.ran.push(args);
+      fn(...args);
+    },
     scheduleOnUI: () => undefined,
   }));
   mock.module('@shopify/react-native-skia', () => ({
@@ -142,7 +156,13 @@ export function installNativeUiMocks(): void {
       Surface: { MakeOffscreen: () => fakeSurface() },
       Paint: paint,
       RSXform: () => ({ set: () => undefined }),
-      XYWHRect: (x: number, y: number, width: number, height: number) => ({ x, y, width, height }),
+      XYWHRect: (x: number, y: number, width: number, height: number) => ({
+        x,
+        y,
+        width,
+        height,
+        setXYWH: () => undefined,
+      }),
     },
   }));
   mock.module('@lodev09/react-native-true-sheet', () => ({
