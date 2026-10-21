@@ -5783,13 +5783,21 @@ by a Reanimated CSS animation (`transform` only; real CSS keyframes on web, the
 UI thread on native). The field's mask (`linear-gradient(#000 55%,
 transparent)`) is an SVG overlay that fades to `bg` from 55 %, which is the
 same picture over a `bg` page. Still under reduced motion and on the low
-tier; under reduced transparency the prototype's `opacity: .6` (not the flat
-tint the spec text names); under Increase Contrast (`prefers-contrast: more`,
+tier. Under reduced transparency (which includes the low tier) the field and
+the band are a flat tint (the tone's first colour at the prototype's
+`opacity: .6`, no blobs) and the listening edge is the steady 3 px rim with
+no pulse, as spec §7b and §11 ask (review finding 16; the prototype's `rt`
+rule only dims the blobs, and the spec wins for an accessibility mode, so the
+reduced ui-lab baselines of Aura, Status, Screen and Nav were re-recorded).
+Under Increase Contrast (`prefers-contrast: more`,
 Android high-text-contrast, iOS darker colours, `use-increase-contrast`) no
-field and a 3 px accent rim on `edge`. `paused` stops the drift
+field and the same 3 px rim on `edge`. `paused` stops the drift
 (`animationPlayState`); `Screen` pauses its field once the content scrolls
-past it. The edge mode always draws the accent (the prototype's `.edge`), not
-the tone.
+past it, and the drift and the edge pulse also pause while their screen is
+out of focus or the app is in the background (`useScreenActive`,
+`src/shared/hooks/use-screen-active.ts`: expo-router's `useIsFocused` and
+`AppState`, as `Presence` does; finding 17). The edge mode always draws the
+accent (the prototype's `.edge`), not the tone.
 
 **Status.** `hero` is chosen by window class: compact is the `.herorow`
 (Presence slot 66, or 56 with `secondary`, the 30/26 sentence, one meta line,
@@ -5847,7 +5855,12 @@ phones the columns flatten into the one scroll.
 **Tests.** The ui test preload stubs `react-native-safe-area-context`,
 `react-native-keyboard-controller` and `react-native-worklets` (they load
 React Native's Flow sources), and adds `makeMutable`,
-`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. Window
+`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. The
+preload also stubs `expo-router` (its `useIsFocused` answers
+`tests/unit/shared/ui/screen-focus.ts`, so a test can put a screen out of
+focus; a test that mocks `expo-router` again keeps that answer, because bun
+keeps the first mock's export names and the last mock's values), and
+Reanimated's `withTiming` calls its completion with `true` at once. Window
 classes are set through `tests/unit/shared/ui/window-width.ts`, which gives
 happy-dom a `documentElement.clientWidth` and fires `resize` (react-native-web
 reads the window size from there); a `mock.module` of the window hook hung the

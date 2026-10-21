@@ -4,11 +4,20 @@ import { auraField, auraTones, useEffectsOverrides } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura/aura';
 import { AuraBlobView } from '@/shared/ui/aura/aura-blob';
 import { blobStops } from '@/shared/ui/aura/blob-stops';
+import { screenFocus } from './screen-focus';
 
 const reset = () =>
   useEffectsOverrides.setState({ reduceMotion: null, reduceTransparency: null, perfTier: null });
 
-afterEach(() => act(reset));
+afterEach(() => {
+  act(reset);
+  screenFocus.focused = true;
+});
+
+const playStates = (root: Element) =>
+  [...root.querySelectorAll('*')]
+    .map((node) => (node as HTMLElement).style?.animationPlayState)
+    .filter(Boolean);
 
 describe('Aura', () => {
   test('every tone draws three blobs hidden from assistive technology', () => {
@@ -29,11 +38,25 @@ describe('Aura', () => {
     expect(band.container.querySelectorAll('linearGradient').length).toBe(0);
   });
 
-  test('reduced transparency dims the field to the prototype opacity', () => {
+  test('reduced transparency turns the field into a flat tint, dimmed to the prototype opacity', () => {
     useEffectsOverrides.setState({ reduceTransparency: true });
     const { container } = render(<Aura tone="attn" />);
-    const style = (container.firstElementChild as HTMLElement).style.opacity;
-    expect(Number(style)).toBeCloseTo(auraField.reducedOpacity * auraField.opacity);
+    const field = container.firstElementChild as HTMLElement;
+    expect(Number(field.style.opacity)).toBeCloseTo(auraField.reducedOpacity * auraField.opacity);
+    expect(container.querySelectorAll('radialGradient').length).toBe(0);
+    expect((field.firstElementChild as HTMLElement).style.backgroundColor).not.toBe('');
+  });
+
+  test('reduced transparency and the low tier make the edge a steady 3 px rim', () => {
+    for (const flags of [{ reduceTransparency: true }, { perfTier: 'low' as const }]) {
+      act(() => useEffectsOverrides.setState(flags));
+      const { container, unmount } = render(<Aura tone="listen" mode="edge" />);
+      const rim = container.firstElementChild as HTMLElement;
+      expect(rim.childElementCount).toBe(0);
+      expect(rim.style.boxShadow).toContain('3px');
+      unmount();
+      act(reset);
+    }
   });
 
   test('the edge glows with a pulse that reduced motion holds still', () => {
@@ -43,6 +66,20 @@ describe('Aura', () => {
     useEffectsOverrides.setState({ reduceMotion: true });
     const still = render(<Aura tone="listen" mode="edge" />);
     expect(still.container.firstElementChild?.childElementCount).toBe(0);
+  });
+
+  test('the drift and the edge pulse pause while their screen is out of focus', () => {
+    const shown = render(<Aura tone="calm" />);
+    expect(playStates(shown.container)).toEqual(['running', 'running', 'running']);
+    shown.unmount();
+    screenFocus.focused = false;
+    const hidden = render(
+      <>
+        <Aura tone="calm" />
+        <Aura tone="listen" mode="edge" />
+      </>
+    );
+    expect(playStates(hidden.container)).toEqual(['paused', 'paused', 'paused', 'paused']);
   });
 
   test('a blob pads its gradient past its own box by three blur radii', () => {

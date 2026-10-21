@@ -1,6 +1,7 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import { afterEach, mock } from 'bun:test';
 import { createContext, useRef, type ReactNode } from 'react';
+import { screenFocus } from './screen-focus';
 
 GlobalRegistrator.register();
 
@@ -61,6 +62,12 @@ mock.module('react-native-keyboard-controller', async () => {
   return { KeyboardAwareScrollView: web.ScrollView };
 });
 mock.module('expo-device', () => ({ totalMemory: null }));
+mock.module('expo-router', () => ({
+  Redirect: () => null,
+  useLocalSearchParams: () => ({}),
+  useRouter: () => ({ setParams: () => undefined }),
+  useIsFocused: () => screenFocus.focused,
+}));
 mock.module(
   '@/shared/ui/presence/presence-canvas',
   () => import('@/shared/ui/presence/presence-canvas.web')
@@ -85,6 +92,7 @@ mock.module('react-native-reanimated', async () => {
       return target;
     },
     withRepeat: <T>(animation: T) => animation,
+    withSequence: <T>(...steps: T[]) => steps.at(-1),
     cancelAnimation: () => undefined,
     useFrameCallback: () => undefined,
     Keyframe: class {
