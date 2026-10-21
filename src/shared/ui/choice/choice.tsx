@@ -4,7 +4,8 @@ import { ChoiceList, ChoiceOpener } from './choice-list';
 import { Sheet, useOpenedOnce } from '@/shared/ui/sheet';
 import type { ChoiceOption } from './choice-types';
 import { SegmentContent, Segmented } from './segmented';
-import { MAX_SEGMENTS, segmentsFit } from './segments-fit';
+import { MAX_SEGMENTS } from './segments-fit';
+import { useFit } from './use-fit';
 
 export type ChoiceProps<T extends string> = {
   label: string;
@@ -40,22 +41,6 @@ function Measure<T extends string>({ options, onMeasure }: MeasureProps<T>) {
       </ScrollView>
     </View>
   );
-}
-
-function useFit(count: number) {
-  const [width, setWidth] = useState(0);
-  const [contentWidths, setContentWidths] = useState<readonly number[]>(() =>
-    Array.from({ length: count }, () => 0)
-  );
-  const measure = (index: number, measured: number) =>
-    setContentWidths((widths) =>
-      widths[index] === measured ? widths : widths.map((w, i) => (i === index ? measured : w))
-    );
-  return {
-    fits: segmentsFit({ width, contentWidths: contentWidths.slice(0, count) }),
-    onLayout: (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width),
-    measure,
-  };
 }
 
 export function Choice<T extends string>({
