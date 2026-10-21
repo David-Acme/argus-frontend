@@ -105,7 +105,10 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
 
 export const elevation: Record<
   TokenTheme,
-  Record<'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset', string>
+  Record<
+    'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset' | 'segment',
+    string
+  >
 > = {
   light: {
     card: '0px 1px 2px 0px rgba(60,45,30,0.05), 0px 6px 20px 0px rgba(60,45,30,0.06)',
@@ -115,6 +118,7 @@ export const elevation: Record<
     glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7)',
     ring: '0px 0px 0px 1px #ECE8E2',
     ringInset: 'inset 0px 0px 0px 1px #ECE8E2',
+    segment: '0px 1px 3px 0px rgba(0,0,0,0.1)',
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
@@ -124,6 +128,7 @@ export const elevation: Record<
     glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08)',
     ring: '0px 0px 0px 1px #2D2A25',
     ringInset: 'inset 0px 0px 0px 1px #2D2A25',
+    segment: '0px 1px 3px 0px rgba(0,0,0,0.1)',
   },
 };
 
@@ -167,6 +172,10 @@ export const typeRoles = {
   chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
   initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
+  control: { size: 14, line: 21, weight: '600', tracking: 0, maxScale: 2 },
+  fieldError: { size: 14, line: 21, weight: '500', tracking: 0, maxScale: 2 },
+  entry: { size: 16, line: 24, weight: '400', tracking: 0, maxScale: 2 },
+  code: { size: 24, line: 36, weight: '650', tracking: 0, maxScale: 1 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -181,6 +190,19 @@ export const inset = {
   chip: { x: 10, statX: 11, suggestionX: 12, gap: 5 },
   section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
   control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
+  field: {
+    top: 14,
+    x: 14,
+    gap: 8,
+    labelGap: 6,
+    errorGap: 6,
+    multiY: 12,
+    border: 1.5,
+    codeTop: 20,
+    codeGap: 8,
+    codeBorder: 2,
+  },
+  segment: { pad: 3, gap: 2, iconGap: 6, minX: 6 },
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
@@ -215,6 +237,11 @@ export const size = {
   button: 50,
   buttonCompact: 40,
   field: 48,
+  fieldMulti: 76,
+  codeBoxWidth: 44,
+  codeBoxHeight: 56,
+  caretWidth: 2,
+  caretHeight: 20,
   chip: 26,
   chipStat: 32,
   chipSuggestion: 34,
@@ -241,6 +268,7 @@ export const motion = {
   },
   pressScale: 0.96,
   pressScaleIcon: 0.9,
+  caretBlink: 1000,
 } as const;
 
 export const material = {
