@@ -17,7 +17,13 @@ export function SpikesScreen() {
   if (!LAB_ENABLED) return <Redirect href="/" />;
   if (params.view === 'bench') return <PresenceBench params={params} />;
   return (
-    <ScrollView contentContainerStyle={{ paddingTop: insets.top + GUTTER, paddingBottom: insets.bottom + GUTTER, paddingHorizontal: GUTTER }} testID="ui-lab-spikes">
+    <ScrollView
+      contentContainerStyle={{
+        paddingTop: insets.top + GUTTER,
+        paddingBottom: insets.bottom + GUTTER,
+        paddingHorizontal: GUTTER,
+      }}
+      testID="ui-lab-spikes">
       {params.view === 'presence' ? <PresenceDemo /> : <SheetDemo />}
     </ScrollView>
   );

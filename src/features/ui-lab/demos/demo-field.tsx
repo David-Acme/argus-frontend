@@ -10,8 +10,19 @@ const BORDER = 1.5;
 
 const styles = StyleSheet.create({
   field: { marginTop: 14 },
-  label: { marginBottom: 6, fontSize: typeRoles.label.size, lineHeight: typeRoles.label.line, fontWeight: '600' },
-  input: { minHeight: size.field, borderRadius: radius.well, paddingHorizontal: FIELD_PAD, borderWidth: BORDER, fontSize: type.body.size },
+  label: {
+    marginBottom: 6,
+    fontSize: typeRoles.label.size,
+    lineHeight: typeRoles.label.line,
+    fontWeight: '600',
+  },
+  input: {
+    minHeight: size.field,
+    borderRadius: radius.well,
+    paddingHorizontal: FIELD_PAD,
+    borderWidth: BORDER,
+    fontSize: type.body.size,
+  },
   multi: {
     minHeight: 76,
     maxHeight: type.body.line * MULTILINE_LINES + space[3] * 2,
@@ -33,13 +44,24 @@ export type DemoFieldProps = {
   testID?: string;
 };
 
-export function DemoField({ label, value, onChangeText, inputRef, multiline, returnKeyType, onSubmitEditing, testID }: DemoFieldProps) {
+export function DemoField({
+  label,
+  value,
+  onChangeText,
+  inputRef,
+  multiline,
+  returnKeyType,
+  onSubmitEditing,
+  testID,
+}: DemoFieldProps) {
   const { theme } = useUniwind();
   const palette = color[theme === 'dark' ? 'dark' : 'light'];
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>
-      <Text maxFontSizeMultiplier={typeRoles.label.maxScale} style={[styles.label, { color: palette.text }]}>
+      <Text
+        maxFontSizeMultiplier={typeRoles.label.maxScale}
+        style={[styles.label, { color: palette.text }]}>
         {label}
       </Text>
       <TextInput
@@ -49,7 +71,9 @@ export function DemoField({ label, value, onChangeText, inputRef, multiline, ret
         multiline={multiline}
         scrollEnabled={multiline}
         returnKeyType={returnKeyType}
-        submitBehavior={multiline ? 'newline' : returnKeyType === 'next' ? 'submit' : 'blurAndSubmit'}
+        submitBehavior={
+          multiline ? 'newline' : returnKeyType === 'next' ? 'submit' : 'blurAndSubmit'
+        }
         onSubmitEditing={onSubmitEditing}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

@@ -6,7 +6,16 @@ import { Sheet } from '@/shared/ui/sheet';
 import { DemoField } from './demo-field';
 import { sheetCopy } from './demo-copy';
 
-const LONG_FIELDS = ['title', 'day', 'time', 'repeat', 'notes', 'place', 'remind', 'share'] as const;
+const LONG_FIELDS = [
+  'title',
+  'day',
+  'time',
+  'repeat',
+  'notes',
+  'place',
+  'remind',
+  'share',
+] as const;
 const SHORT_FIELDS = ['reminder', 'when', 'who'] as const;
 
 type FieldKey = keyof typeof sheetCopy.fields;
@@ -18,7 +27,13 @@ function dirtyName(values: Values, nameKey: FieldKey): string | boolean {
   return values[nameKey]?.trim() || true;
 }
 
-type FormProps = { fields: readonly FieldKey[]; values: Values; onChange: (key: FieldKey, value: string) => void; refs: RefObject<TextInput | null>[]; onSubmit: () => void };
+type FormProps = {
+  fields: readonly FieldKey[];
+  values: Values;
+  onChange: (key: FieldKey, value: string) => void;
+  refs: RefObject<TextInput | null>[];
+  onSubmit: () => void;
+};
 
 function DemoForm({ fields, values, onChange, refs, onSubmit }: FormProps) {
   return (
@@ -80,10 +95,22 @@ export function SheetDemo() {
         variant="form"
         long={mode === 'long'}
         dirty={dirtyName(values, mode === 'short' ? 'reminder' : 'title')}
-        actions={{ primary: { label: sheetCopy.save, onPress: save, testID: 'spike-save' }, more: mode === 'long' ? { label: sheetCopy.more, onPress: () => undefined, testID: 'spike-more' } : undefined }}
+        actions={{
+          primary: { label: sheetCopy.save, onPress: save, testID: 'spike-save' },
+          more:
+            mode === 'long'
+              ? { label: sheetCopy.more, onPress: () => undefined, testID: 'spike-more' }
+              : undefined,
+        }}
         initialFocus={first}
         testID="spike-sheet">
-        <DemoForm fields={fields} values={values} onChange={(key, value) => setValues((current) => ({ ...current, [key]: value }))} refs={refs} onSubmit={save} />
+        <DemoForm
+          fields={fields}
+          values={values}
+          onChange={(key, value) => setValues((current) => ({ ...current, [key]: value }))}
+          refs={refs}
+          onSubmit={save}
+        />
       </Sheet>
     </View>
   );

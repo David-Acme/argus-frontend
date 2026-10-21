@@ -7,7 +7,10 @@ export function useEventPulse(name: PresenceEvent | null): PresenceCue | undefin
   const [cue, setCue] = useState<PresenceCue | undefined>(undefined);
   useEffect(() => {
     if (!name) return;
-    const handle = globalThis.setInterval(() => setCue((current) => ({ name, id: (current?.id ?? 0) + 1 })), PULSE_MS);
+    const handle = globalThis.setInterval(
+      () => setCue((current) => ({ name, id: (current?.id ?? 0) + 1 })),
+      PULSE_MS
+    );
     return () => globalThis.clearInterval(handle);
   }, [name]);
   return name ? cue : undefined;

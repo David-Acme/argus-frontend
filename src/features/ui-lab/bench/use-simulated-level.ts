@@ -10,7 +10,9 @@ export function useSimulatedLevel(enabled: boolean): SharedValue<number> | undef
     const started = performance.now();
     const handle = globalThis.setInterval(() => {
       const t = (performance.now() - started) / 1000;
-      level.set(Math.abs(Math.sin(t * 6.1) * Math.sin(t * 2.3 + 1)) * (0.6 + 0.4 * Math.sin(t * 1.1)));
+      level.set(
+        Math.abs(Math.sin(t * 6.1) * Math.sin(t * 2.3 + 1)) * (0.6 + 0.4 * Math.sin(t * 1.1))
+      );
     }, 1000 / LEVEL_HZ);
     return () => globalThis.clearInterval(handle);
   }, [enabled, level]);

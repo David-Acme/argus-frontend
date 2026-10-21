@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
-import { Presence, presenceEvents, presenceStates, type PresenceCue, type PresenceState } from '@/shared/ui/presence';
+import {
+  Presence,
+  presenceEvents,
+  presenceStates,
+  type PresenceCue,
+  type PresenceState,
+} from '@/shared/ui/presence';
 import { presenceCopy } from './demo-copy';
 
 const STAGE = 190;
@@ -22,7 +28,12 @@ export function PresenceDemo() {
       <Text variant="subhead">{presenceCopy.states}</Text>
       <View className="flex-row flex-wrap gap-2">
         {presenceStates.map((name) => (
-          <Button key={name} size="sm" variant={name === state ? 'default' : 'secondary'} onPress={() => setState(name)} testID={`presence-state-${name}`}>
+          <Button
+            key={name}
+            size="sm"
+            variant={name === state ? 'default' : 'secondary'}
+            onPress={() => setState(name)}
+            testID={`presence-state-${name}`}>
             <Text>{name}</Text>
           </Button>
         ))}
@@ -30,7 +41,12 @@ export function PresenceDemo() {
       <Text variant="subhead">{presenceCopy.events}</Text>
       <View className="flex-row flex-wrap gap-2">
         {presenceEvents.map((name) => (
-          <Button key={name} size="sm" variant="secondary" onPress={() => setCue({ name, id: (cue?.id ?? 0) + 1 })} testID={`presence-event-${name}`}>
+          <Button
+            key={name}
+            size="sm"
+            variant="secondary"
+            onPress={() => setCue({ name, id: (cue?.id ?? 0) + 1 })}
+            testID={`presence-event-${name}`}>
             <Text>{name}</Text>
           </Button>
         ))}
