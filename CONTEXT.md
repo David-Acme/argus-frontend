@@ -5459,3 +5459,58 @@ shared by every worktree and rewritten by the last bundle; better-tailwindcss
 reads it, so new colour classes read as unknown until it is regenerated for
 this checkout (break the link, then `npx uniwind generate-artifacts --css
 ./src/global.css --dts ./uniwind-types.d.ts`).
+
+## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
+
+**Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
+Alert is a no-op); on the web, Tauri and medium+ native windows it is
+`@rn-primitives/alert-dialog`, added for this because `@rn-primitives/dialog`'s
+web Content always renders Radix's own `role="dialog"` element, so the role
+could not be `alertdialog`. `@radix-ui/react-alert-dialog` is pinned to 1.1.19
+in `overrides`: the 1.2 line pulls `react-dialog` 1.3, whose `focus-scope`
+import does not exist in the 1.1.16 the overrides already pin. Radix's alert
+dialog never closes on an outside press, so the default variant adds its own
+scrim press that cancels; the destructive one disables it. Esc and Back go
+through `onOpenChange(false)` and mean Cancelar. Android's `Alert` ties Back to
+outside taps (`setCancelable`), so the native destructive alert is
+`cancelable: false` and Back does nothing there: only its buttons close it.
+
+**Toast.** One API, `toast.show({ kind, ... })` and `toast.dismiss`, over
+`sonner` (`toaster.tsx`) and `sonner-native` (`toaster.native.tsx`), both
+through their custom-render path (`toast.custom`), so both draw the same
+`ToastCard` and no library style. Errors share one id, so a second error
+replaces the first; undo lasts 5 s, errors 8 s, info and success 4 s. The card
+is `role="status"`, a polite live region (the prototype's error toast says
+`role="alert"`; the spec's polite rule wins). sonner-native's `offset` is from
+the window bottom, not the safe area, so 108 is the prototype frame's number
+and has to follow the real tab bar's top once Phase 2 places it. The host
+`Toaster` is not mounted in the root layout yet: the legacy toaster still is.
+
+**Menu.** Pointer (the web build, Tauri included) gets
+`@rn-primitives/dropdown-menu` from a ⋯ trigger and `@rn-primitives/context-menu`
+on right click (Radix also opens it on a touch long press); touch (native)
+gets a sheet list from the same trigger and from a RNGH long press with
+`impactLight`. The context menu's items are given `role="menuitem"` because
+rn-primitives renders them as buttons. `items` is a tuple of at least two, so
+a single-item menu does not type-check (W38).
+
+**Command.** `useCommand` owns the query and the selection over the groups a
+`source(query)` returns; the component fetches nothing. Free text adds a first
+«pregúntale a Argus» entry, and Enter runs the selected entry. Results are
+`role="option"` inside `role="group"` sections, because React Native's `Role`
+has no `listbox`. On pointer it is a Radix dialog (focus trap, Esc, outside
+press, focus return) with a visually hidden title; `useCommandHotkey` binds
+Ctrl+K / ⌘K on the web and is a no-op natively.
+
+**Slots until p1/native merges.** `Menu` and `Command` take a required
+`sheet` component with `Sheet`'s `open`, `onClose`, `title`, `variant` and
+`long`; the native Command should also pass `initialFocus` once `Sheet` is
+here. `Command` takes an optional `askMark` for Estela's `think` mark.
+
+**Test runner.** The component runner loads the rn-primitives web builds
+(their `.mjs` keep JSX, so a bun plugin loads them as `jsx`), stubs RNGH's
+`Gesture`/`GestureDetector` and Reanimated's `Keyframe`/`Easing`, and
+components that read copy are tested through `translation-stub.ts` (the
+Spanish dictionary), since the locale store's storage has only platform files.
+happy-dom reports a 0 px window, so a test that needs a wide window defines
+`document.documentElement.clientWidth`.
