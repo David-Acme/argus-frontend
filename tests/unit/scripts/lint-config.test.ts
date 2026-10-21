@@ -99,4 +99,19 @@ describe('the lint set', () => {
       'argus/no-http-type-argument',
     ]);
   });
+
+  test('the icon and react-native bans cover deep imports', async () => {
+    const icon = "import Bell from 'lucide-react-native/icons/bell';\nexport const b = Bell;\n";
+    const internal =
+      "import Pressable from 'react-native/Libraries/Components/Pressable/Pressable';\nexport const p = Pressable;\n";
+    expect(await rulesHit('src/features/home/card.tsx', icon)).toEqual([
+      'argus/icon-registry-home',
+    ]);
+    expect((await rulesHit('src/features/home/card.tsx', internal)).sort()).toEqual([
+      'argus/activity-indicator-home',
+      'argus/ds-owns-primitives',
+      'argus/no-rn-animated',
+      'argus/responsive-home',
+    ]);
+  });
 });

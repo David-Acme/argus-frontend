@@ -55,7 +55,15 @@ const promoted = (configs) =>
       : config
   );
 
-const fromReactNative = (names, message) => [{ name: 'react-native', importNames: names, message }];
+const fromReactNative = (names, message) => ({
+  paths: [{ name: 'react-native', importNames: names, message }],
+  patterns: [
+    {
+      group: ['react-native/*'],
+      message: `${message} Import from 'react-native' itself, never its internals.`,
+    },
+  ],
+});
 
 const SOURCE_SYNTAX = [
   {
@@ -157,12 +165,7 @@ module.exports = defineConfig([
       '@typescript-eslint/no-deprecated': 'error',
       'argus/no-rn-animated': [
         'error',
-        {
-          paths: fromReactNative(
-            ['Animated'],
-            'Animate with Reanimated on the UI thread (rule 26).'
-          ),
-        },
+        fromReactNative(['Animated'], 'Animate with Reanimated on the UI thread (rule 26).'),
       ],
       'argus/no-export-all': [
         'error',
@@ -225,9 +228,9 @@ module.exports = defineConfig([
       'argus/icon-registry-home': [
         'error',
         {
-          paths: [
+          patterns: [
             {
-              name: 'lucide-react-native',
+              group: ['lucide-react-native', 'lucide-react-native/*'],
               message: 'Icons come from the ICONS registry (rule 10).',
             },
           ],
@@ -252,12 +255,10 @@ module.exports = defineConfig([
     rules: {
       'argus/responsive-home': [
         'error',
-        {
-          paths: fromReactNative(
-            ['useWindowDimensions', 'Dimensions'],
-            'Read the window class from src/shared (rule 23).'
-          ),
-        },
+        fromReactNative(
+          ['useWindowDimensions', 'Dimensions'],
+          'Read the window class from src/shared (rule 23).'
+        ),
       ],
     },
   },
@@ -267,12 +268,7 @@ module.exports = defineConfig([
     rules: {
       'argus/activity-indicator-home': [
         'error',
-        {
-          paths: fromReactNative(
-            ['ActivityIndicator'],
-            'Loading is drawn by the design system (rule 16).'
-          ),
-        },
+        fromReactNative(['ActivityIndicator'], 'Loading is drawn by the design system (rule 16).'),
       ],
     },
   },
@@ -281,23 +277,21 @@ module.exports = defineConfig([
     rules: {
       'argus/ds-owns-primitives': [
         'error',
-        {
-          paths: fromReactNative(
-            [
-              'Pressable',
-              'TouchableOpacity',
-              'TouchableHighlight',
-              'TouchableWithoutFeedback',
-              'Switch',
-              'Modal',
-              'Image',
-              'FlatList',
-              'SectionList',
-              'ScrollView',
-            ],
-            'Use the design system component from src/shared/ui (rule 24).'
-          ),
-        },
+        fromReactNative(
+          [
+            'Pressable',
+            'TouchableOpacity',
+            'TouchableHighlight',
+            'TouchableWithoutFeedback',
+            'Switch',
+            'Modal',
+            'Image',
+            'FlatList',
+            'SectionList',
+            'ScrollView',
+          ],
+          'Use the design system component from src/shared/ui (rule 24).'
+        ),
       ],
     },
   },
