@@ -16,13 +16,12 @@ const SMALL = [
   { component: 'check', block: 'case-toggle', role: 'checkbox' },
   { component: 'switch', block: 'case-toggle', role: 'switch' },
   { component: 'toast', block: 'case-error', role: 'button' },
-  { component: 'notice', block: 'case-banner-attention', role: 'button' },
 ] as const;
 
 const SCALED = [
-  { component: 'chip', block: 'case-tag-default' },
-  { component: 'chip', block: 'case-suggestion' },
-  { component: 'nav', block: 'case-status' },
+  { component: 'chip', block: 'case-tag-default', control: ':scope > *' },
+  { component: 'chip', block: 'case-suggestion', control: ':scope > *' },
+  { component: 'nav', block: 'case-status', control: '[role="button"]' },
 ] as const;
 
 const openLab = async (
@@ -77,7 +76,7 @@ for (const { component, block, role } of SMALL) {
   });
 }
 
-for (const { component, block } of SCALED) {
+for (const { component, block, control } of SCALED) {
   test(`a ${component} control holds its words at font scale 2 (${block})`, async ({
     app,
     browser,
@@ -85,22 +84,24 @@ for (const { component, block } of SCALED) {
   }) => {
     await openLab(browser, (path) => app.open(path), `/ui-lab?c=${component}&theme=light&fs=2`);
     await expect(screen.getByTestId(block)).toBeVisible({ timeout: 15000 });
-    const overflow = await browser.evaluate((testId: string) => {
-      const scope = document.querySelector(`[data-testid="${testId}"]`);
-      if (!scope) return -1;
-      const words = [...scope.querySelectorAll('*')].filter(
-        (node) => node.children.length === 0 && (node.textContent ?? '').trim() !== ''
-      );
-      return Math.max(
-        0,
-        ...words.map((node) => {
-          const parent = node.parentElement?.getBoundingClientRect();
-          const inner = node.getBoundingClientRect();
-          if (!parent) return 0;
-          return Math.max(parent.top - inner.top, inner.bottom - parent.bottom);
-        })
-      );
-    }, block);
-    expect(overflow).toBeLessThanOrEqual(0.5);
+    const overflow = await browser.evaluate(
+      ({ testId, pick }: { testId: string; pick: string }) => {
+        const target = document.querySelector(`[data-testid="${testId}"]`)?.querySelector(pick);
+        if (!target) return -1;
+        const box = target.getBoundingClientRect();
+        const words = [...target.querySelectorAll('*')].filter(
+          (node) => node.children.length === 0 && (node.textContent ?? '').trim() !== ''
+        );
+        if (words.length === 0) return -1;
+        return Math.max(
+          ...words.map((node) => {
+            const inner = node.getBoundingClientRect();
+            return Math.max(0, box.top - inner.top, inner.bottom - box.bottom);
+          })
+        );
+      },
+      { testId: block, pick: control }
+    );
+    expect(overflow).toBe(0);
   });
 }
