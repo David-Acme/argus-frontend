@@ -125,7 +125,7 @@ export class FakeArgus {
       JSON.stringify({
         operation: OPERATION.InitialInfo,
         option: 'user',
-        info: { id: OWNER.id, role: this.context().role, isActive: true, context: this.context() },
+        info: { id: this.context().userId, role: this.context().role, isActive: true, context: this.context() },
       })
     );
   }
