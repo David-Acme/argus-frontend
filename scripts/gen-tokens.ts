@@ -100,7 +100,7 @@ export function tokensCss(): string {
     .map(([name, value]) => `  --radius-${kebab(name)}: ${px(value)};`);
   const insetLines = Object.entries(inset).flatMap(([group, values]) =>
     Object.entries(values).map(
-      ([name, value]) => `  --spacing-${group}-${kebab(name)}: ${px(value)};`
+      ([name, value]) => `  --spacing-${kebab(group)}-${kebab(name)}: ${px(value)};`
     )
   );
   const sizeLines = Object.entries(size)
@@ -112,6 +112,7 @@ export function tokensCss(): string {
   const blurLines = [
     `  --blur-control: ${px(material.blurControl)};`,
     `  --blur-chip: ${px(material.blurChip)};`,
+    `  --blur-scrim: ${px(material.blurScrim)};`,
   ];
   return [
     '@theme {',
