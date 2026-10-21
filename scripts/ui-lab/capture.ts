@@ -65,10 +65,30 @@ async function catalogueIds(page: Page, base: string): Promise<string[]> {
   return ids.map((id) => id.replace('ui-lab-entry-', ''));
 }
 
+async function settleCases(page: Page, selector: string): Promise<void> {
+  await page.$$eval(selector, (nodes) => {
+    for (const node of nodes) {
+      if (node instanceof HTMLElement)
+        node.style.minHeight = `${Math.ceil(node.getBoundingClientRect().height)}px`;
+    }
+  });
+}
+
+async function fitViewport(page: Page, selector: string): Promise<void> {
+  const bottom = await page.evaluate(
+    (target) => document.querySelector(target)?.getBoundingClientRect().bottom ?? 0,
+    selector
+  );
+  const width = page.viewportSize()?.width ?? WIDTHS[0];
+  await page.setViewportSize({ width, height: Math.max(HEIGHT, Math.ceil(bottom) + HEIGHT) });
+}
+
 async function ourShots(page: Page, url: string): Promise<{ stage: Buffer; cases: OurCase[] }> {
   await page.goto(url);
   const stage = await page.waitForSelector('[data-testid="ui-lab-stage"]', { timeout: READY_MS });
   await page.evaluate(() => document.fonts.ready);
+  await settleCases(page, '[data-testid^="case-"]');
+  await fitViewport(page, '[data-testid="ui-lab-stage"]');
   const handles = await page.$$('[data-testid^="case-"]');
   const cases: OurCase[] = [];
   for (const handle of handles) {
@@ -105,6 +125,8 @@ async function prototypeShots(page: Page, input: ProtoStage): Promise<Map<string
     document.body.classList.toggle('rt', reduced);
     window.scrollTo(0, 0);
   }, input);
+  await settleCases(page, '[data-case]');
+  await fitViewport(page, '#lab-stage');
   const shots = new Map<string, Buffer>();
   for (const item of input.cases) {
     const handle = await page.$(`[data-case="${item.id}"]`);

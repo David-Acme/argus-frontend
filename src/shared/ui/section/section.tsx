@@ -39,7 +39,7 @@ function SectionHead({ title, meta, action }: SectionHeadProps) {
           onPress={action.onPress}
           hitSlop={LINK_SLOP}
           className="py-section-link-y">
-          <Text variant="label" tone="2">
+          <Text variant="sectionLink" tone="2">
             {action.label}
           </Text>
         </PressableSurface>

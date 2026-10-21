@@ -25,7 +25,6 @@
   --spacing-button-ghost-x: 12px;
   --spacing-chip-x: 10px;
   --spacing-chip-stat-x: 11px;
-  --spacing-chip-suggestion-x: 12px;
   --spacing-chip-gap: 5px;
   --spacing-section-top: 26px;
   --spacing-section-head-x: 4px;
@@ -150,6 +149,10 @@
   --text-initial-large--line-height: 33px;
   --text-initial-large--letter-spacing: 0px;
   --text-initial-large--font-weight: 700;
+  --text-section-link: 15px;
+  --text-section-link--line-height: 22.5px;
+  --text-section-link--letter-spacing: 0px;
+  --text-section-link--font-weight: 600;
   --blur-control: 18px;
   --blur-chip: 16px;
 }

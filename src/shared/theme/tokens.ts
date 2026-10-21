@@ -167,6 +167,7 @@ export const typeRoles = {
   chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
   initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
+  sectionLink: { size: 15, line: 22.5, weight: '600', tracking: 0, maxScale: 2 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -178,7 +179,7 @@ export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 8: 32, 12: 48 } as const
 export const inset = {
   row: { x: 18, y: 10, gap: 14, trailGap: 6, metaGap: 1 },
   button: { x: 18, compactX: 14, ghostX: 12 },
-  chip: { x: 10, statX: 11, suggestionX: 12, gap: 5 },
+  chip: { x: 10, statX: 11, gap: 5 },
   section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
   control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
 } as const;

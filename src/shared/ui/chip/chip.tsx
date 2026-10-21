@@ -39,7 +39,7 @@ const TONE: Record<ChipTone, { surface: string; text: TextTone }> = {
 const HEIGHT: Record<ChipSize, string> = {
   tag: 'h-chip px-chip-x',
   stat: 'h-chip-stat px-chip-stat-x',
-  suggestion: 'h-chip-suggestion px-chip-suggestion-x',
+  suggestion: 'h-chip-suggestion px-chip-x',
 };
 
 const DOT_TONE: Record<TextTone, string> = {

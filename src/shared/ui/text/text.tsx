@@ -43,6 +43,7 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   chipValue: 'text-chip-value',
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
+  sectionLink: 'text-section-link',
 };
 
 const TONE_CLASS: Record<TextTone, string> = {
