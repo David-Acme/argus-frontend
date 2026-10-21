@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "uniwind";
 @import "tw-animate-css";
+@import "./shared/theme/tokens.generated.css";
 
 @theme {
   --radius: 12px;
@@ -60,7 +61,6 @@
       --color-interactive-pressed: oklch(0.257 0.000 89.88);
       --color-legacy-accent: oklch(0.701 0.081 81.91);
       --color-accent-hover: oklch(0.645 0.079 78.33);
-      --color-accent-soft: oklch(0.932 0.031 81.75);
       --color-disabled: oklch(0.869 0.011 76.59);
       --color-overlay: oklch(0.215 0.009 75.14 / 0.45);
       --color-error-strong: oklch(0.561 0.188 25.68);
@@ -94,7 +94,6 @@
       --color-interactive-pressed: oklch(0.831 0.012 79.78);
       --color-legacy-accent: oklch(0.807 0.079 83.02);
       --color-accent-hover: oklch(0.864 0.068 83.06);
-      --color-accent-soft: oklch(0.291 0.027 78.38);
       --color-disabled: oklch(0.350 0.013 81.74);
       --color-overlay: oklch(0.150 0.003 67.55 / 0.55);
       --color-error-strong: oklch(0.644 0.113 24.09);

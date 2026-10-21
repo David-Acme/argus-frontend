@@ -101,14 +101,16 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
   },
 };
 
-export const elevation: Record<TokenTheme, Record<'card' | 'float', string>> = {
+export const elevation: Record<TokenTheme, Record<'card' | 'float' | 'thumb', string>> = {
   light: {
     card: '0px 1px 2px 0px rgba(60,45,30,0.05), 0px 6px 20px 0px rgba(60,45,30,0.06)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.06), 0px 10px 32px 0px rgba(0,0,0,0.12)',
+    thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
+    thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
   },
 };
 
@@ -184,6 +186,10 @@ export const typeRoles = {
   chip: { size: 13, line: 17.55, weight: '600', tracking: 0, maxScale: 2 },
   tab: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 1.15 },
   key: { size: 11, line: 17, weight: '650', tracking: 0, maxScale: 1.5 },
+  sectionMeta: { size: 13, line: 19.5, weight: '500', tracking: 0, maxScale: 2 },
+  chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
+  initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
+  initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -191,6 +197,32 @@ export const fontFamily = {
 } as const;
 
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 8: 32, 12: 48 } as const;
+
+export const inset = {
+  rowX: 18,
+  rowY: 10,
+  rowGap: 14,
+  trailGap: 6,
+  metaGap: 1,
+  buttonX: 18,
+  buttonCompactX: 14,
+  buttonGhostX: 12,
+  chipX: 10,
+  chipStatX: 11,
+  chipSuggestionX: 12,
+  chipGap: 5,
+  sectionTop: 26,
+  sectionHeadX: 4,
+  sectionHeadBottom: 10,
+  sectionHeadGap: 12,
+  sectionLinkY: 10,
+  groupY: 4,
+  switchThumb: 3,
+  focusRing: 2,
+  checkBorder: 2,
+} as const;
+
+export const opacity = { disabled: 0.5 } as const;
 
 export const radius = {
   sm: 8,
@@ -254,6 +286,7 @@ export const material = {
   blur: 22,
   saturation: 1.7,
   blurControl: 18,
+  blurChip: 16,
   saturationControl: 1.6,
   blurSheet: 26,
   sheetSurfaceMix: 0.94,
@@ -289,6 +322,8 @@ export const tokens = {
   typeRoles,
   fontFamily,
   space,
+  inset,
+  opacity,
   radius,
   size,
   motion,
