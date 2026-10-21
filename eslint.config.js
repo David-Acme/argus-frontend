@@ -1,5 +1,61 @@
 const { defineConfig } = require('eslint/config');
+const { builtinRules } = require('eslint/use-at-your-own-risk');
 const expoConfig = require('eslint-config-expo/flat');
+const betterTailwind = require('eslint-plugin-better-tailwindcss');
+const i18next = require('eslint-plugin-i18next');
+const sonarjs = require('eslint-plugin-sonarjs');
+
+const SOURCE = 'src/**/*.{ts,tsx}';
+const COMPONENTS = 'src/**/*.tsx';
+const DESIGN_SYSTEM = ['src/shared/ui/**', 'src/shared/components/ui/**'];
+const THEME = 'src/shared/theme/**';
+const LOCALES = 'src/core/i18n/locales/**';
+const GENERATED = ['uniwind-types.d.ts', 'expo-env.d.ts', '.expo/**'];
+
+const restrictedImports = builtinRules.get('no-restricted-imports');
+const restrictedSyntax = builtinRules.get('no-restricted-syntax');
+
+const argus = {
+  meta: { name: 'argus' },
+  rules: {
+    'date-formatter-home': restrictedImports,
+    'icon-registry-home': restrictedImports,
+    'no-rn-animated': restrictedImports,
+    'ds-owns-primitives': restrictedImports,
+    'activity-indicator-home': restrictedImports,
+    'responsive-home': restrictedImports,
+    'http-home': restrictedImports,
+    'source-syntax': restrictedSyntax,
+    'type-scale': restrictedSyntax,
+    'no-color-literal': restrictedSyntax,
+    'no-template-key': restrictedSyntax,
+    'no-visual-timer': restrictedSyntax,
+    'no-export-all': restrictedSyntax,
+    'no-inline-size': restrictedSyntax,
+    'no-http-type-argument': restrictedSyntax,
+  },
+};
+
+const errorSeverity = (entry) => {
+  if (entry === 'warn' || entry === 1) return 'error';
+  if (Array.isArray(entry) && (entry[0] === 'warn' || entry[0] === 1))
+    return ['error', ...entry.slice(1)];
+  return entry;
+};
+
+const promoted = (configs) =>
+  configs.map((config) =>
+    config.rules
+      ? {
+          ...config,
+          rules: Object.fromEntries(
+            Object.entries(config.rules).map(([name, entry]) => [name, errorSeverity(entry)])
+          ),
+        }
+      : config
+  );
+
+const fromReactNative = (names, message) => [{ name: 'react-native', importNames: names, message }];
 
 const SOURCE_SYNTAX = [
   {
@@ -22,30 +78,129 @@ const SOURCE_SYNTAX = [
   },
 ];
 
+const TYPE_SCALE_MESSAGE =
+  'Use a Text step (hero, title, headline, body, meta, caption) or a type role from tokens.';
+
 const TYPE_SCALE_SYNTAX = [
   {
-    selector: "JSXAttribute[name.name='className'] Literal[value=/\\btext-(xs|sm|base|lg|xl|[2-9]xl)\\b/]",
-    message: 'Use a Text variant or the text-micro/caption/body/subhead/display tokens.',
+    selector:
+      "JSXAttribute[name.name='className'] Literal[value=/\\btext-(xs|sm|base|lg|xl|[2-9]xl)\\b/]",
+    message: TYPE_SCALE_MESSAGE,
   },
   {
     selector: "JSXAttribute[name.name='className'] Literal[value=/\\btext-\\[\\d+px\\]/]",
-    message: 'Use a Text variant or the text-micro/caption/body/subhead/display tokens.',
+    message: TYPE_SCALE_MESSAGE,
   },
 ];
 
+const COLOR_PATTERN = '/#[0-9a-fA-F]{3,8}\\b|\\b(rgba?|hsla?|oklch)\\(/';
+const COLOR_MESSAGE =
+  'Colours live in src/shared/theme/tokens.ts: read a colour role, never a literal.';
+
+const SIZE_KEYS =
+  '/^(color|backgroundColor|borderColor|tintColor|shadowColor|width|height|minWidth|minHeight|maxWidth|maxHeight|margin|marginTop|marginBottom|marginLeft|marginRight|marginHorizontal|marginVertical|padding|paddingTop|paddingBottom|paddingLeft|paddingRight|paddingHorizontal|paddingVertical|top|left|right|bottom|gap|rowGap|columnGap|fontSize|lineHeight|letterSpacing|borderRadius|borderWidth)$/';
+
+const TAILWIND_PALETTE =
+  '^(.*:)?-?(bg|text|border|border-[trblxy]|ring|ring-offset|outline|fill|stroke|divide|placeholder|shadow|from|via|to|decoration|caret|accent)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(-\\d+)?(\\/\\d+)?$';
+
 module.exports = defineConfig([
-  expoConfig,
+  promoted(expoConfig),
   {
+    linterOptions: {
+      noInlineConfig: true,
+      reportUnusedDisableDirectives: 'error',
+      reportUnusedInlineConfigs: 'error',
+    },
+    plugins: { argus, sonarjs },
     rules: {
       'no-console': 'error',
+      eqeqeq: 'error',
       'react-hooks/immutability': 'off',
+      'sonarjs/no-identical-functions': 'error',
+      'sonarjs/no-all-duplicated-branches': 'error',
     },
   },
   {
-    files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/shared/hooks/use-date-formatter/date.ts', 'src/shared/constants/common.constant.ts'],
+    files: [SOURCE, 'scripts/**/*.{ts,mjs}'],
+    ignores: [LOCALES, ...GENERATED],
     rules: {
-      'no-restricted-imports': [
+      complexity: ['error', 15],
+      'max-lines-per-function': ['error', { max: 80, skipBlankLines: true }],
+      'max-lines': ['error', { max: 300, skipBlankLines: true }],
+      'max-statements': ['error', 30],
+      'max-depth': ['error', 3],
+      'max-params': ['error', 3],
+    },
+  },
+  {
+    files: [SOURCE],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: __dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': [
+        'error',
+        { considerDefaultExhaustiveForUnions: false },
+      ],
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      '@typescript-eslint/only-throw-error': 'error',
+      '@typescript-eslint/no-deprecated': 'error',
+      'argus/no-rn-animated': [
+        'error',
+        {
+          paths: fromReactNative(
+            ['Animated'],
+            'Animate with Reanimated on the UI thread (rule 26).'
+          ),
+        },
+      ],
+      'argus/no-export-all': [
+        'error',
+        {
+          selector: 'ExportAllDeclaration',
+          message: 'Export each public name explicitly (rule 7).',
+        },
+      ],
+      'argus/no-template-key': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.name='t'][arguments.0.type='TemplateLiteral'][arguments.0.expressions.length>0]",
+          message: 'A translation key is a typed literal, never a template (rule 27).',
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name='t'][arguments.0.type='TemplateLiteral'][arguments.0.expressions.length>0]",
+          message: 'A translation key is a typed literal, never a template (rule 27).',
+        },
+      ],
+      'argus/no-http-type-argument': [
+        'error',
+        {
+          selector: "CallExpression[callee.object.name='httpService'][typeArguments]",
+          message: 'Validate the response with its schema instead of asserting a type (rule 13).',
+        },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: [
+      'src/shared/hooks/use-date-formatter/date.ts',
+      'src/shared/constants/common.constant.ts',
+    ],
+    rules: {
+      'argus/date-formatter-home': [
         'error',
         {
           patterns: [
@@ -56,14 +211,175 @@ module.exports = defineConfig([
           ],
         },
       ],
-      'no-restricted-syntax': ['error', ...SOURCE_SYNTAX],
+      'argus/source-syntax': ['error', ...SOURCE_SYNTAX],
     },
   },
   {
-    files: ['src/**/*.tsx'],
-    ignores: ['src/shared/components/ui/**'],
+    files: [SOURCE],
+    ignores: [
+      'src/shared/constants/icon.constant.ts',
+      'src/shared/components/ui/icon.tsx',
+      'src/shared/ui/**',
+    ],
     rules: {
-      'no-restricted-syntax': ['error', ...SOURCE_SYNTAX, ...TYPE_SCALE_SYNTAX],
+      'argus/icon-registry-home': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'lucide-react-native',
+              message: 'Icons come from the ICONS registry (rule 10).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: [THEME],
+    rules: {
+      'argus/no-color-literal': [
+        'error',
+        { selector: `Literal[value=${COLOR_PATTERN}]`, message: COLOR_MESSAGE },
+        { selector: `TemplateElement[value.raw=${COLOR_PATTERN}]`, message: COLOR_MESSAGE },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: ['src/shared/**'],
+    rules: {
+      'argus/responsive-home': [
+        'error',
+        {
+          paths: fromReactNative(
+            ['useWindowDimensions', 'Dimensions'],
+            'Read the window class from src/shared (rule 23).'
+          ),
+        },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: DESIGN_SYSTEM,
+    rules: {
+      'argus/activity-indicator-home': [
+        'error',
+        {
+          paths: fromReactNative(
+            ['ActivityIndicator'],
+            'Loading is drawn by the design system (rule 16).'
+          ),
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/features/**/*.{ts,tsx}', 'src/widgets/**/*.{ts,tsx}'],
+    rules: {
+      'argus/ds-owns-primitives': [
+        'error',
+        {
+          paths: fromReactNative(
+            [
+              'Pressable',
+              'TouchableOpacity',
+              'TouchableHighlight',
+              'TouchableWithoutFeedback',
+              'Switch',
+              'Modal',
+              'Image',
+              'FlatList',
+              'SectionList',
+              'ScrollView',
+            ],
+            'Use the design system component from src/shared/ui (rule 24).'
+          ),
+        },
+      ],
+    },
+  },
+  {
+    files: [COMPONENTS, 'src/**/use-*.ts', 'src/**/hooks/**/*.ts'],
+    rules: {
+      'argus/http-home': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/core/services/http', '@/core/services/http/*', '**/http.service'],
+              message: 'Components and hooks reach the server through their entity api (rule 18).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: [COMPONENTS],
+    ignores: DESIGN_SYSTEM,
+    plugins: { i18next },
+    rules: {
+      'argus/type-scale': ['error', ...TYPE_SCALE_SYNTAX],
+      'argus/no-visual-timer': [
+        'error',
+        {
+          selector: 'CallExpression[callee.name=/^(setInterval|requestAnimationFrame)$/]',
+          message: 'Drive visuals with Reanimated on the UI thread, never a JS timer (rule 26).',
+        },
+      ],
+      'i18next/no-literal-string': ['error', { mode: 'jsx-only' }],
+    },
+  },
+  {
+    files: [COMPONENTS],
+    rules: {
+      'argus/no-inline-size': [
+        'error',
+        {
+          selector: `JSXAttribute[name.name='style'] Property[key.name=${SIZE_KEYS}][value.type=/^(Literal|UnaryExpression|TemplateLiteral)$/]`,
+          message: 'A colour or a size in a style is read from tokens (rule 22).',
+        },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    plugins: { 'better-tailwindcss': betterTailwind },
+    settings: { 'better-tailwindcss': { entryPoint: 'src/global.css' } },
+    rules: {
+      'better-tailwindcss/no-restricted-classes': [
+        'error',
+        {
+          restrict: [
+            {
+              pattern: '\\[',
+              message: 'Arbitrary values are not allowed: use a token class (rule 22).',
+            },
+            {
+              pattern: TAILWIND_PALETTE,
+              message: 'The default palette is not allowed: use a colour role (rule 22).',
+            },
+            {
+              pattern: '^(.*:)?text-(xs|sm|base|lg|xl|[2-9]xl)$',
+              message: TYPE_SCALE_MESSAGE,
+            },
+          ],
+        },
+      ],
+      'better-tailwindcss/no-unknown-classes': 'error',
+      'better-tailwindcss/no-conflicting-classes': 'error',
+      'better-tailwindcss/no-duplicate-classes': 'error',
+      'better-tailwindcss/no-deprecated-classes': 'error',
+      'better-tailwindcss/no-unnecessary-whitespace': 'error',
+    },
+  },
+  {
+    files: ['src/app/ui-lab.tsx', 'src/features/ui-lab/**/*.tsx'],
+    rules: {
+      'i18next/no-literal-string': 'off',
     },
   },
   {
@@ -73,6 +389,6 @@ module.exports = defineConfig([
     },
   },
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/**', 'android/**', 'ios/**', 'src-tauri/target/**', 'src-tauri/gen/**'],
   },
 ]);

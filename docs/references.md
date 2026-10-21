@@ -91,6 +91,22 @@ page for the installed version.
 | [legend-list] | [Legend List v3 API](https://legendapp.com/open-source/list/v3/api/) | the installed virtualized list (`@legendapp/list`) under `InfiniteList` |
 | [flashlist] | [FlashList](https://shopify.github.io/flash-list/) | the alternative virtualized list; read before changing list libraries |
 
+## Native mechanics and Estela
+
+The redesign's dependencies (spec §8, §8b), at the versions in `package.json`.
+
+| Key | Source | It is the authority for |
+|---|---|---|
+| [true-sheet] | [React Native True Sheet](https://sheet.lodev09.com/), [keyboard guide](https://sheet.lodev09.com/guides/keyboard), [repo](https://github.com/lodev09/react-native-true-sheet) | the native sheet behind `Sheet` on phones (3.11.18): detents, `header`/`footer`, `scrollable`, the keyboard clamp |
+| [skia-atlas] | [React Native Skia: Atlas](https://wcandillon.github.io/react-native-skia/docs/shapes/atlas) | Estela's one-draw sprite atlas on iOS and Android (`@shopify/react-native-skia` 2.14.0) |
+| [skia-reanimated] | [React Native Skia: Animations](https://wcandillon.github.io/react-native-skia/docs/animations/animations) | driving Skia from Reanimated shared values on the UI thread |
+| [canvas-2d] | [MDN: CanvasRenderingContext2D](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D) | Estela's renderer on web and Tauri (no CanvasKit, no wasm) |
+| [expo-blur] | [expo-blur](https://docs.expo.dev/versions/latest/sdk/blur-view/) | the glass material on Android 12+ (`BlurTargetView`) |
+| [expo-glass] | [expo-glass-effect](https://docs.expo.dev/versions/latest/sdk/glass-effect/) | the native glass material on iOS 26 |
+| [expo-device] | [expo-device](https://docs.expo.dev/versions/latest/sdk/device/) | `totalMemory` and the hardware profile that picks the `perfTier` |
+| [sonner-native] | [sonner-native](https://github.com/gunnartorfis/sonner-native) | `Toast` on iOS and Android: action buttons for Deshacer and Reintentar |
+| [sonner] | [Sonner](https://sonner.emilkowal.ski/) | `Toast` on web and Tauri, the same API shape |
+
 ## Language, types, validation
 
 | Key | Source | It is the authority for |

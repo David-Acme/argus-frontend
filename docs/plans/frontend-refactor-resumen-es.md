@@ -2,7 +2,9 @@
 
 20 de octubre de 2026. Todo está medido sobre `master` en el commit `09cf103`.
 Detalle en `frontend-refactor-plan.md`, `frontend-rules-final.md` y
-`error-messages-spec.md`.
+`error-messages-spec.md`. Los valores del diseño y los componentes los manda
+`redesign-spec.md`: donde estos documentos y la especificación no coincidían,
+se tomó lo que dice la especificación, como decidiste.
 
 ## Dónde estamos
 
@@ -64,9 +66,10 @@ bugs que encuentran las pruebas reales.
 | R9 | Rendimiento y arranque |
 | R10 | Documentación por slice |
 
-Desde tu decisión del 20 de octubre, las fases y el rediseño forman un solo
-programa, en los pasos S0–S4 que se explican más abajo. Ya no hay que esperar
-a que terminen R5 y R6 para empezar el rediseño.
+Desde tu decisión del 20 de octubre, las reglas, las fases y el rediseño
+forman un solo programa, en los pasos S0–S4 que se explican más abajo. Ese
+orden sustituye al del plan, y ya no hay que esperar a que terminen R5 y R6
+para empezar el rediseño.
 
 ## Reglas del frontend
 
@@ -75,11 +78,15 @@ las F1–F33. El texto listo para pegar en `AGENTS.md` está en
 `AGENTS-rules-section.md`. Las fuentes que las respaldan están en
 `docs/references.md`.
 
-**Todavía no se ha implementado nada.** Se implementan junto con el rediseño,
-como un solo programa (ver más abajo).
+La fase 1 del rediseño deja puestas las puertas (R0) y `tokens.ts` con los
+valores del rediseño. El resto se implementa junto con el rediseño, como un
+solo programa (ver más abajo).
 
 Cada regla tiene una puerta automática con una línea base que solo puede
-bajar, igual que en el backend.
+bajar, igual que en el backend. Los números de este resumen son la medición
+de `09cf103`; las cifras que vigilan las puertas son las líneas base que R0
+mide y guarda en el repositorio. Las reglas cuya puerta todavía no existe se
+revisan a mano hasta la fase que la construye.
 
 **Cómo funcionan las reglas**
 
@@ -148,12 +155,18 @@ bajar, igual que en el backend.
 **Interfaz**
 
 21. Los tokens tienen una sola fuente, `tokens.ts`, con los valores del
-    rediseño. De ahí se genera el CSS y se comprueba el contraste.
+    rediseño tal como los pinta el prototipo: unos 18 colores por tema (cada
+    color ya es legible como texto, sin gemelos "strong"; los rellenos se
+    llaman relleno, como `accent-fill`), seis tamaños de texto más los
+    estilos con nombre de los componentes, los radios con nombre, las
+    sombras `card` y `float`, tres muelles (`snappy`, `gentle`, `playful`) y
+    las duraciones 120, 200 y 300 ms. De ahí se genera el CSS y se comprueba
+    el contraste.
 22. No hay valores arbitrarios, ni colores sueltos, ni tamaños en estilos en
     línea.
 23. Un solo sistema responsive, con los puntos de corte 600, 1024 y 1440.
-24. **El sistema de diseño son 26 componentes**, y las pantallas solo los
-    combinan:
+24. **El sistema de diseño son los 26 componentes de la especificación**, y
+    las pantallas solo los combinan:
     - Ninguna pantalla usa directamente `Pressable`, `Image` ni las listas de
       React Native.
     - Todo panel se cierra tocando fuera de él, salvo las confirmaciones
@@ -165,12 +178,16 @@ bajar, igual que en el backend.
     - Etiquetas obligatorias.
     - Se respetan "reducir movimiento" y "reducir transparencia".
 26. **Animaciones elegantes y baratas:**
-    - Todo se anima en el hilo de UI con Reanimated, Rive o las curvas
-      nativas.
+    - Todo se anima en el hilo de UI con Reanimated o las curvas nativas.
+      Estela se dibuja con Skia en los teléfonos y con Canvas 2D en la web y
+      en el escritorio.
     - Solo se animan `transform` y `opacity`.
     - Como mucho hay dos animaciones continuas por pantalla.
     - Cada bucle tiene una versión quieta para "reducir movimiento".
-    - Los teléfonos lentos reciben la versión sencilla.
+    - Hay tres niveles de rendimiento (`low`, `mid` y `high`). Los teléfonos
+      lentos y "Reducir efectos" reciben la versión sencilla.
+    - No hay sonidos de interfaz, como decidiste: el movimiento y la
+      vibración llevan cada momento.
 27. Todo texto viene de una clave tipada:
     - Los plurales se hacen bien.
     - Las unidades se escriben en palabras.
@@ -185,8 +202,8 @@ bajar, igual que en el backend.
     - Primero se mide el arranque en frío en el Samsung de referencia.
     - Antes del primer fotograma no se hace nada que no sea imprescindible.
     - El bundle web no pasa de 6,6 MB.
-    - Las llamadas, el reproductor, Rive, el escáner de QR y la cámara facial
-      se cargan solo cuando hacen falta.
+    - Las llamadas, el reproductor, el escáner de QR y la cámara facial se
+      cargan solo cuando hacen falta. Skia no entra en el bundle web.
 31. **Fluidez:**
     - Como mucho un 1 % de fotogramas lentos al desplazarse por Inicio.
     - Las listas largas se virtualizan.
@@ -202,14 +219,18 @@ bajar, igual que en el backend.
     - 300 por archivo;
     - 3 parámetros;
     - 10 props.
-33. Prettier formatea todo. Las convenciones pequeñas de hoy se mantienen.
+33. Prettier formatea todo. Mientras haya ramas abiertas, ningún archivo
+    nuevo o ya formateado puede desformatearse, y el commit que formatea el
+    resto espera a que esas ramas se cierren. Las convenciones pequeñas de
+    hoy se mantienen.
 34. Las pruebas van en el nivel donde vive el comportamiento:
     - Cada componente y cada pantalla tienen una prueba de render.
     - La navegación se prueba con `renderRouter`.
     - Los flujos tienen pruebas E2E en Chromium y WebKit, y en Android un
       pequeño conjunto con Maestro.
-35. La red y el almacenamiento seguro no cambian. La CSP solo cambia si tú lo
-    decides.
+35. La red y el almacenamiento seguro no cambian. La CSP tampoco: Estela usa
+    Canvas 2D en el escritorio, así que ya no hace falta `'wasm-unsafe-eval'`.
+    La CSP solo cambia si tú lo decides.
 36. Los contratos con el backend se comprueban con pruebas. Ahora incluyen
     también los códigos de error.
 
@@ -220,7 +241,8 @@ bajar, igual que en el backend.
   exhaustivos, nada de `any`);
 - `better-tailwindcss` para las clases;
 - `i18next/no-literal-string` para los textos;
-- `sonarjs/no-identical-functions` para las funciones duplicadas;
+- `sonarjs/no-identical-functions` y `no-all-duplicated-branches` para el
+  código duplicado;
 - los presupuestos y prohibiciones de ESLint.
 
 No se adoptan presets completos. Tampoco el plugin de accesibilidad de React
@@ -232,8 +254,8 @@ La idea es construir cada cosa una sola vez, ya en su forma final.
 
 | Paso | Qué se hace |
 |---|---|
-| S0 | Puertas y líneas base, el commit de formato y la **medición del arranque y la fluidez**. Cuatro pruebas técnicas: las pruebas de componente con bun, TrueSheet, Rive en Android y en escritorio, y better-tailwindcss con Uniwind. No cambia nada visible |
-| S1 | Los cimientos que leen las pantallas nuevas: la sesión, las puertas que fallan cerradas, `Resource<T>`, la validación de datos, el mapa de errores, los tokens con los valores del rediseño, los puntos de corte y el movimiento |
+| S0 | Puertas y líneas base (el formato como trinquete) y la **medición del arranque y la fluidez**. Cuatro pruebas técnicas: las pruebas de componente con bun, TrueSheet con el teclado, Estela con Skia en un Android modesto y con Canvas 2D en el escritorio, y better-tailwindcss con Uniwind. No cambia nada visible |
+| S1 | Los cimientos que leen las pantallas nuevas: la sesión, las puertas que fallan cerradas, `Resource<T>`, la validación de datos, el mapa de errores, el generador de tokens (los valores ya están en `tokens.ts`), los puntos de corte, el movimiento y los tres niveles de rendimiento |
 | S2 | Los 26 componentes, una sola vez, en `ui-lab`, con pruebas, auditoría de accesibilidad y capturas de referencia. El mapa de UI entra como puerta |
 | S3 | Dominio por dominio, en el orden del rediseño (navegación e Inicio, Seguridad y Cámara, Agenda y Proyectos, Argus, Tú, Ajustes y Personas, y la bienvenida). En cada uno: mover los datos a `entities/` con sus esquemas, reconstruir las pantallas con los componentes nuevos, probarlas, borrar lo viejo y bajar las líneas base |
 | S4 | Cierre: desaparece `core/`, se borran los tokens y componentes viejos, todos los contadores llegan a 0, se comparan los resultados de rendimiento y se aplica el nuevo `AGENTS.md` |
@@ -252,9 +274,9 @@ componentes nuevos y la reconstrucción de cada pantalla.
 3. **E3.** La voz de Argus en los errores. La propuesta: primera persona
    cuando Argus es quien actúa ("No te reconocí"), y si no, una descripción
    ("No hay conexión con Argus"). Nunca "nosotros".
-4. **P1.** El límite de 6,6 MB. Hoy el bundle mide 6.612.933 bytes, unos
-   13 kB por encima. Propuesta: que no pueda crecer desde S0 y que el límite
-   sea obligatorio al terminar S1.
+4. **P1.** El límite de 6,6 MB. El 16 de octubre el bundle medía 6.612.933
+   bytes, y la medición de R0 también queda por encima. Propuesta: que no
+   pueda crecer desde R0 y que el límite sea obligatorio al terminar S1.
 5. **P2.** Usar `expo-image` para todas las imágenes, después de una prueba
    con las miniaturas de las cámaras.
 6. **P3.** Los objetivos de arranque y de fluidez, una vez medidos en S0.
@@ -264,5 +286,6 @@ componentes nuevos y la reconstrucción de cada pantalla.
 8. **L2.** Volver a activar `react-hooks/immutability`, después de cambiar
    `.value` por `.get()` y `.set()` en Reanimated, como recomienda su
    documentación.
-9. Las del rediseño que dependen de las pruebas técnicas: TrueSheet, Rive y
-   el permiso `'wasm-unsafe-eval'` en la CSP.
+9. La del rediseño que depende de una prueba técnica: TrueSheet (R-D8).
+   Rive (R-D17) quedó sustituido por Estela (R-D28), y el permiso
+   `'wasm-unsafe-eval'` (R-D18) ya no hace falta.

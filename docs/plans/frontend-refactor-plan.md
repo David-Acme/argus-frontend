@@ -1,17 +1,30 @@
 # Frontend refactor plan
 
-Status: proposal, 2026-10-20. Nothing in it is implemented. Every number below
-was measured on `master` at `09cf103` unless it names another source. Its
-companion files are `frontend-rules-proposal.md` (the rules and their gates)
-and `frontend-refactor-resumen-es.md` (the owner's one-page summary).
+Status: approved, 2026-10-20. This plan keeps its job: the measured state
+(§1–§2), the target architecture (§3) and the phases R0–R10 (§4). The rules,
+the refactor and the redesign are one programme (owner decision, 2026-10-20;
+spec §15 A1), so the order of work is the "Implementation order with the
+redesign" of `frontend-rules-final.md`, which replaces this plan's §5 and
+decision D7. Phase 1 of the redesign lands R0 and `shared/theme/tokens.ts`
+with the spec's values; the rest is not implemented yet. Every number below
+was measured on `master` at `09cf103` unless it names another source; the
+counts the gates enforce are R0's committed baselines (§4 R0).
+
+Companion files:
+
+- `frontend-rules-final.md`: the 36 rules, their gates and the implementation
+  order;
+- `redesign-spec.md`: the design values and components (spec §3, §4), which
+  win wherever this plan disagrees (spec §15 A1–A9);
+- `frontend-refactor-resumen-es.md`: the owner's one-page summary.
 
 Goal: the frontend gets the discipline the backend gained in its own refactor
 (`backend/AGENTS.md`, rules 1–27; `backend/docs/history/plans/architecture-plan.md`).
 That means one shape for every unit, dependencies that only point one way, and
-rules that a gate measures instead of a reviewer remembering them. The plan
-also lays the base for the UI/UX redesign that comes afterwards: once tokens,
-primitives and state semantics are settled, the redesign changes token values
-and primitives, not 377 component files.
+rules that a gate measures instead of a reviewer remembering them. The
+redesign is built in the same pass: tokens get the spec's values once, the 26
+components are built once, and each screen is rebuilt on them after its
+domain has moved, so nothing is restyled twice.
 
 This plan follows the one implemented on 2026-10-03
 (`docs/plans/architecture-plan.md`). That plan worked: boundary violations
@@ -33,8 +46,8 @@ Each one is explained where it applies. Section 8 collects them.
 | D4 | What happens to the ~30 open frontend worktrees before the moves in R3/R4 | merge or abandon each one first; freeze one domain at a time |
 | D5 | Token source format: a TypeScript object, or DTCG JSON + Style Dictionary | TypeScript object first, generator in-repo (§3.5) |
 | D6 | Budgets: complexity 15, 80 lines per function, 300 lines per file, 10 props | accept, enforced as a ratchet (§4 R0) |
-| D7 | When the redesign starts | after R5 and R6 exit (§5) |
-| D8 | One formatting commit touching 641 files | yes, isolated in its own commit, listed in `.git-blame-ignore-revs` |
+| D7 | ~~When the redesign starts: after R5 and R6 exit~~ **Superseded** (owner, 2026-10-20): the rules, the refactor and the redesign are one programme, in the order of `frontend-rules-final.md` | — |
+| D8 | One formatting commit touching 641 files | yes, isolated in its own commit, listed in `.git-blame-ignore-revs`, once the open branches are settled (D4); until then `check:format` is a ratchet over the list of unformatted files |
 | D9 | Merge the UI-map harness (`test/ui-map`) into `master` as a gate | yes, as the layout audit of R8 |
 
 ## 1. Why now: growth since the last plan
@@ -372,17 +385,17 @@ rows, 13 bugs). A finding can sit in two rows.
 |---|---|---|---|
 | Layout, responsive, truncation | 25 | W3, W8, W9, W14, W15, A1, A2, A3, A6, A8 | R5 tokens + breakpoints, R6 primitives, R8 layout audit |
 | Failure or loading shown as a fact | 14 | W6, W4, W31, W39, A7, A10 | R1 `Resource<T>` + `ResourceView` |
-| Raw keys, copy, units | 10 | W5, A9, W18, W22 | R2 wire validation, rule F8 |
-| Async actions (double submit, abandon, order) | 8 | A14/E9, R2-6 (`invitation-dialog.tsx` keeps going after `abandon()`), W7, E19 | rule F13 + R6 |
-| Native permissions | 8 | E11, E43, R2 `heartbeat.native.ts` bypass, R3-D6 | rule F22, R8 Maestro |
+| Raw keys, copy, units | 10 | W5, A9, W18, W22 | R2 wire validation, rule 27 |
+| Async actions (double submit, abandon, order) | 8 | A14/E9, R2-6 (`invitation-dialog.tsx` keeps going after `abandon()`), W7, E19 | rule 18 + R6 |
+| Native permissions | 8 | E11, E43, R2 `heartbeat.native.ts` bypass, R3-D6 | rule 28, R8 Maestro |
 | Navigation and back stack | 7 | E12, E23, R2 Back with menu open, R3 `/guard` 404 | R8 navigation tests (`renderRouter`) |
 | Inconsistent components and tokens | 7 | W24, W30, W35/36, W38 | R5, R6 |
 | Errors, toasts, offline | 7 | A8/E18, W10, W11 | R1, R6 |
 | Startup and session races | 6 | W1, W2, E25, R3-12 (mDNS loop) | R1 `AppPhase` |
 | Accessibility | 6 | W16, W37, A3, A19 | R6, R8 a11y + layout gates |
-| Privacy or permission gate failing open | 4 | W1, W27 (Unknown role gets compose '+'), W32 | R1, rule F9 |
+| Privacy or permission gate failing open | 4 | W1, W27 (Unknown role gets compose '+'), W32 | R1, rule 14 |
 | Stale live state | 4 | A11/E20 (privacy mode 8–10 s late) | R1 |
-| Platform divergence | 4 | W20 (phone copy on desktop), A1 | rule F22 |
+| Platform divergence | 4 | W20 (phone copy on desktop), A1 | rule 28 |
 
 ### 2.8 What is right and stays
 
@@ -546,16 +559,10 @@ only `ResourceView` produces, so the compiler is the gate.
 
 ### 3.6 Design tokens, one source
 
-`shared/theme/tokens.ts` is the single source (D5). It holds:
-
-- colors per theme;
-- type scale;
-- radius;
-- **spacing**;
-- **sizes** (touch target, icon, avatar);
-- elevation;
-- motion durations;
-- **breakpoints**.
+`shared/theme/tokens.ts` is the single source (D5). It landed in Phase 1
+with the redesign spec's §3 values as the prototype renders them; its groups
+are listed in rule 21 of `frontend-rules-final.md`. The performance tier and
+the accessibility flags beside it are `shared/theme/effects.ts` (rule 26).
 
 `bun scripts/gen-tokens.ts` writes the `@theme`/`@layer theme` block of
 `global.css` (OKLCH computed from the source), `color.constant`'s successor
@@ -574,25 +581,24 @@ plan starts with the TypeScript source. Illustration colors (mascot, avatar)
 live in `tokens.illustration`, so the hex ban has no exceptions.
 
 **Breakpoints** are one set, used under the same names by CSS variants and by
-`useWindowClass`: `compact < 600 ≤ medium < 1024 ≤ expanded < 1440 ≤ wide`.
-The exact values are a redesign decision. The plan only requires one source.
+`useWindowClass`: `compact < 600 ≤ medium < 1024 ≤ expanded < 1440 ≤ wide`
+(`tokens.breakpoints`, spec §6, A9).
 
 ### 3.7 Design system ownership
 
-`shared/ui` owns every interactive and every state surface:
-
-- `PressableSurface` (the only `Pressable`, with role, label, target size and
-  pressed state);
-- `Button`, `IconButton`, `ListRow`;
-- layout primitives `Stack`, `Inline` and `Cluster`. `Cluster` wraps, so chip
-  rows cannot clip (W14);
-- `SegmentedControl` that switches to a select instead of truncating (W3);
-- `ResourceView`, `Skeleton`, `RetryNotice`, `StaleRibbon`;
-- `Field` (label, hint, error, the keyboard-safe container).
+`shared/ui` owns every interactive and every state surface: the 26 components
+of spec §4, which is the one list (rule 24 of `frontend-rules-final.md`). The
+names this plan first proposed map onto it: `PressableSurface` is `Pressable`,
+`IconButton` is `Button`'s `iconOnly`, `ListRow` is `Row`, `SegmentedControl`
+is `Choice` (it becomes a sheet list instead of truncating, W3), and
+`RetryNotice`/`StaleRibbon` are `Notice` and `ResourceView`'s states. The
+layout helpers `Stack`, `Inline` and `Cluster` (which wraps, so chip rows
+cannot clip, W14) are not counted among the 26.
 
 Features compose these and never import `Pressable`, `ActivityIndicator` or
 `Switch` from `react-native`. `ui-lab` becomes the dev-only catalogue. Every
-primitive has a light/dark visual baseline at three widths.
+component has visual baselines at three widths × two themes × reduced
+motion and transparency.
 
 ## 4. Phases
 
@@ -619,25 +625,27 @@ happen one domain per commit and never mix with behaviour changes.
   - `check-boundaries.ts` v2 checks file- and slice-level cycles, deep
     imports into a service folder's internals, and that every route file is a
     one-line re-export. Its current five rules stay.
-  - One formatting commit (D8), then `prettier --check` in `verify`.
-  - `check:bundle` gets a byte budget for the entry chunk (6,612,933 B, to be
-    re-measured at R0) and for `dist/`.
-  - The counters this plan measured, first as baselines:
-    - hex/rgb literals (74), arbitrary Tailwind values (114),
-      `style={{` (78);
-    - raw `Pressable` in features (104), `useWindowDimensions` in features
-      (18), template-literal `t()` (132);
-    - unchecked HTTP calls (85: 69 in files with no schema plus 16 generic casts elsewhere), source-text tests (14);
-    - `useCallback` (347) and `useMemo` (153);
-    - `IS_*` branches (213) and `Platform.select` (58).
+  - `check:format` as a ratchet over the list of unformatted files; the
+    formatting commit (D8) waits for D4.
+  - `check:bundle` gets a byte budget for the entry chunk and for `dist/`
+    (`scripts/lib/bundle-baseline.txt`), and a list of lazy packages that
+    must stay out of the entry chunk.
+  - The counters of `frontend-rules-final.md`, with the baselines R0
+    measures and commits in `scripts/lib/quality-baseline.txt`. They replace
+    the `09cf103` survey this plan took: hex/rgb literals (74), arbitrary
+    Tailwind values (114), `style={{` (78), raw `Pressable` in features
+    (104), `useWindowDimensions` in features (18), template-literal `t()`
+    (132), unchecked HTTP calls (85), source-text tests (14), manual
+    memoization (`useCallback` 347, `useMemo` 153, `memo` 5), `IS_*` branches
+    (213) and `Platform.select` (58).
 - **Entry.** None.
 - **Exit.**
   - `verify` runs every new gate.
   - Each gate is proved by a unit test under `tests/unit/scripts/` that feeds
     it a violating fixture.
   - The baselines are committed.
-  - The rules proposal is adopted into `AGENTS.md` with each rule marked
-    "measured" or "reviewed".
+  - The rules (`AGENTS-rules-section.md`) replace `AGENTS.md`'s
+    MUST-FOLLOW section, each rule marked "measured" or "reviewed".
 - **Risks.** Noise and churn on open branches. Baselines make the gates
   non-blocking for existing debt, so only new debt fails.
 - **Unblocks for the redesign.** The redesign cannot regress size, layout or
@@ -734,8 +742,9 @@ happen one domain per commit and never mix with behaviour changes.
 ### R5. Tokens and breakpoints (redesign foundation)
 
 - **Scope.**
-  - `shared/theme/tokens.ts` + `gen-tokens.ts` + `check-tokens` (§3.6).
-  - Spacing, size and elevation scales.
+  - `shared/theme/tokens.ts` with the spec's values (landed in Phase 1) +
+    `gen-tokens.ts` + `check-tokens` (§3.6).
+  - Spacing, size, radius, type-role and elevation scales from `tokens.ts`.
   - One breakpoint set for CSS and JS.
   - `useWindowDimensions` leaves the features.
   - Lint bans hex, `rgb(`, arbitrary values and default-palette classes in
@@ -754,8 +763,11 @@ happen one domain per commit and never mix with behaviour changes.
 
 ### R6. Design system completion
 
+R6 is not done on today's UI: it becomes S2 of the implementation order, the
+26 components of spec §4 built once on the new tokens.
+
 - **Scope.** The primitives of §3.7. The 104 feature `Pressable`s move to
-  `PressableSurface`, `ListRow` or `Button`. `ActivityIndicator` and `Switch`
+  `Pressable` (`PressableSurface`), `Row` or `Button`. `ActivityIndicator` and `Switch`
   leave the features. Accessibility props become required in the primitive
   types. `ui-lab` becomes the catalogue, with visual baselines per primitive.
 - **Entry.** R5.
@@ -763,10 +775,11 @@ happen one domain per commit and never mix with behaviour changes.
   - 0 raw interaction primitives in features.
   - Every primitive has a baseline at 3 widths × 2 themes.
   - The UI-map small-target count is 0 on touch viewports.
-- **Unblocks for the redesign.** The redesign restyles about 15 primitives;
-  the screens follow.
 
 ### R7. Hotspot decomposition
+
+R7 is not done on today's UI: in S3 each hotspot is replaced by its rebuilt
+screen, within the same budgets.
 
 - **Scope.** The hotspot list of §2.1, worst first:
   - `camera-detail-screen.tsx`, `camera-form.tsx`, `camera-live-stage.tsx`;
@@ -842,7 +855,7 @@ happen one domain per commit and never mix with behaviour changes.
 ### R10. Documentation shape
 
 - **Scope.**
-  - `AGENTS.md` keeps the rules (the proposal's numbered set) and the
+  - `AGENTS.md` keeps the rules (the 36 of `frontend-rules-final.md`) and the
     commands, and drops the narrative it holds today (993 lines, part of it
     in Spanish).
   - `CONTEXT.md` (4,980 lines) splits into one `CONTEXT.md` per slice
@@ -854,23 +867,11 @@ happen one domain per commit and never mix with behaviour changes.
 
 ## 5. Order and parallelism
 
-```
-R0 ──┬── R1 ──────────────┬── R7 (continuous, per screen)
-     ├── R2 ── R3 ── R4 ──┤
-     ├── R5 ── R6 ────────┴── redesign starts (D7)
-     ├── R8 (harness spike at once; layout gate after R5)
-     └── R9 (any time)
-R10 follows R3 slice by slice.
-```
-
-- R1 and R2 come first after the gates, because they close trust bugs
-  (privacy fail-open, lost answers, raw keys) that a redesign would only
-  repaint.
-- R5 and R6 are the redesign's prerequisites. Starting the redesign before
-  them means restyling 377 component files twice.
-- R3 and R4 are the largest diffs. Run them when the open frontend branches
-  are settled (D4). They do not block the redesign, but doing them first
-  makes the redesign's diff smaller.
+Superseded. The order is "Implementation order with the redesign" in
+`frontend-rules-final.md` (steps S0–S4), which maps every phase above onto
+one programme with the redesign. Two of this plan's reasons still hold
+there: R1 and R2 close trust bugs (privacy fail-open, lost answers, raw keys)
+before a screen is rebuilt, and R3/R4 wait for the open branches (D4).
 
 ## 6. What not to change
 
@@ -890,9 +891,9 @@ R10 follows R3 slice by slice.
   data owners of §3.2 and an explicit union in §3.3 cover the need.
 - **The comment rule, kebab-case names, the icon registry, Nitro module
   boundaries and the Tauri commands.**
-- **No visual redesign inside this plan.** R5 and R6 change structure and
-  tokens with the current values, so screenshots stay equal except where a
-  layout bug is fixed.
+- **No visual change outside the redesign's steps.** Moves (R3, R4) and
+  gates (R0) change no pixel. Visual change comes only from the spec's
+  tokens and components and the screens S3 rebuilds on them.
 
 ## 7. Risks
 
@@ -902,11 +903,11 @@ R10 follows R3 slice by slice.
 | Ratchet gates slow down feature work | Baselines: only new debt fails. Budgets chosen above today's median |
 | A stricter gate or schema breaks working flows | Log-only rollout for schemas. Gates proved on fixtures. UI-map before and after |
 | Component test runner friction on SDK 57 | Spike first (D2); fallback documented |
-| A long freeze before the redesign | R5 and R6 can start in parallel with R1 and R2; the redesign waits only for R5 and R6 |
+| A long freeze before the redesign | None: one programme. S1's tracks and S2's first components run in parallel (`frontend-rules-final.md`) |
 
 ## 8. Open decisions
 
-D1–D9 from §0. Also:
+D1–D9 from §0 (D7 superseded). Also:
 
 - The cold-start target and the bundle target for R9.
 - Whether the Owner wants the redesign to bring a design tool. A DTCG
