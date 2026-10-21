@@ -114,4 +114,24 @@ describe('the lint set', () => {
       'argus/responsive-home',
     ]);
   });
+
+  test('the formatter and the flags are exempt only from the ban their home needs', async () => {
+    const code = [
+      "import * as React from 'react';",
+      "import { Platform } from 'react-native';",
+      "import { format } from 'date-fns';",
+      "export const flag = Platform.OS === 'web';",
+      "export const formatter = new Intl.DateTimeFormat('es');",
+      'export const used = [React, format];',
+    ].join('\n');
+    expect((await rulesHit('src/shared/hooks/use-date-formatter/date.ts', code)).sort()).toEqual([
+      'argus/platform-os-home',
+      'argus/source-syntax',
+    ]);
+    expect((await rulesHit('src/shared/constants/common.constant.ts', code)).sort()).toEqual([
+      'argus/date-formatter-home',
+      'argus/intl-date-home',
+      'argus/source-syntax',
+    ]);
+  });
 });

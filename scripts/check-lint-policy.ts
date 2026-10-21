@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ESLint } from 'eslint';
-import { parseExceptionRows, policyFailures, type ResolvedConfig } from './lib/lint-policy';
+import {
+  parseExceptionRows,
+  policyFailures,
+  type ConfigBlock,
+  type ResolvedConfig,
+} from './lib/lint-policy';
 import { report } from './lib/ratchet';
 import { ROOT } from './lib/source-files';
 import { execFileSync } from 'node:child_process';
@@ -14,7 +19,8 @@ function usage(): never {
 Resolves the ESLint config of every file bun run lint checks (${SCOPE.join(', ')}) and fails on
 a rule at 'warn', inline configuration not disabled, a rule turned off that the
 eslint-config-expo base does not turn off without a row in CONTEXT.md › Lint exceptions,
-or a row that turns nothing off.`);
+or a row that turns nothing off. A rule a config block sets for its files but leaves out
+of a file through the block's ignores is an exemption, counted like an 'off'.`);
   process.exit(0);
 }
 
@@ -51,9 +57,10 @@ async function main(): Promise<void> {
     [...resolved.keys()]
   );
   const rows = parseExceptionRows(readFileSync(join(ROOT, 'CONTEXT.md'), 'utf8'));
+  const blocks = (await import(join(ROOT, 'eslint.config.js'))) as { default: ConfigBlock[] };
   report(
     'check-lint-policy',
-    policyFailures({ resolved, base, rows }),
+    policyFailures({ resolved, base, rows, blocks: blocks.default }),
     `${resolved.size} files, ${rows.length} exception rows`
   );
 }

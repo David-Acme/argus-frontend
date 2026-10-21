@@ -9,10 +9,17 @@ export type ResolvedConfig = {
 
 export type ExceptionRow = { rule: string; paths: string[] };
 
+export type ConfigBlock = {
+  files?: unknown[];
+  ignores?: unknown[];
+  rules?: Record<string, unknown>;
+};
+
 export type PolicyInput = {
   resolved: ReadonlyMap<string, ResolvedConfig>;
   base: ReadonlyMap<string, ResolvedConfig>;
   rows: readonly ExceptionRow[];
+  blocks?: readonly ConfigBlock[];
 };
 
 const SEVERITIES: Record<string, number> = { off: 0, warn: 1, error: 2, '0': 0, '1': 1, '2': 2 };
@@ -30,12 +37,10 @@ export function parseExceptionRows(markdown: string): ExceptionRow[] {
   for (const line of lines.slice(start + 1)) {
     if (/^#+\s/.test(line)) break;
     const cells = line.split('|').map((cell) => cell.trim());
-    const rule = /^`([^`]+)`$/.exec(cells[1] ?? '')?.[1];
-    if (!line.startsWith('|') || !rule) continue;
-    rows.push({
-      rule,
-      paths: [...(cells[2] ?? '').matchAll(/`([^`]+)`/g)].map((match) => match[1] ?? ''),
-    });
+    if (!line.startsWith('|') || !/^`[^`]+`(,\s*`[^`]+`)*$/.test(cells[1] ?? '')) continue;
+    const paths = [...(cells[2] ?? '').matchAll(/`([^`]+)`/g)].map((match) => match[1] ?? '');
+    for (const match of (cells[1] ?? '').matchAll(/`([^`]+)`/g))
+      rows.push({ rule: match[1] ?? '', paths });
   }
   return rows;
 }
@@ -52,17 +57,42 @@ function optionFailures(file: string, config: ResolvedConfig): string[] {
   return failures;
 }
 
+const globMatches = (pattern: unknown, file: string): boolean =>
+  typeof pattern === 'string'
+    ? new Bun.Glob(pattern).match(file)
+    : Array.isArray(pattern) && pattern.every((part) => globMatches(part, file));
+
+const anyMatches = (patterns: readonly unknown[] | undefined, file: string): boolean =>
+  (patterns ?? []).some((pattern) => globMatches(pattern, file));
+
+function scopedExemptions(
+  blocks: readonly ConfigBlock[],
+  file: string,
+  config: ResolvedConfig
+): string[] {
+  return blocks
+    .filter((block) => anyMatches(block.files, file) && anyMatches(block.ignores, file))
+    .flatMap((block) => Object.entries(block.rules ?? {}))
+    .filter(
+      ([rule, entry]) => (severity(entry) ?? 0) > 0 && !((severity(config.rules?.[rule]) ?? 0) > 0)
+    )
+    .map(([rule]) => rule);
+}
+
 function exceptionsOf(input: PolicyInput): { warns: string[]; offs: Map<string, string[]> } {
   const warns: string[] = [];
   const offs = new Map<string, string[]>();
+  const add = (rule: string, file: string) => {
+    if (!(offs.get(rule) ?? []).includes(file)) offs.set(rule, [...(offs.get(rule) ?? []), file]);
+  };
   for (const [file, config] of input.resolved) {
     const baseRules = input.base.get(file)?.rules ?? {};
     for (const [rule, entry] of Object.entries(config.rules ?? {})) {
       const level = severity(entry);
       if (level === 1) warns.push(`${file}: ${rule} is a warning; every adopted rule is an error`);
-      if (level === 0 && severity(baseRules[rule]) !== 0)
-        offs.set(rule, [...(offs.get(rule) ?? []), file]);
+      if (level === 0 && severity(baseRules[rule]) !== 0) add(rule, file);
     }
+    for (const rule of scopedExemptions(input.blocks ?? [], file, config)) add(rule, file);
   }
   return { warns, offs };
 }

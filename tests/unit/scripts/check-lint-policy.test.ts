@@ -80,4 +80,35 @@ describe('check-lint-policy', () => {
     expect(failures).toContain('src/log.ts: linterOptions.noInlineConfig is not true');
     expect(failures).toContain('src/log.ts: eqeqeq is a warning; every adopted rule is an error');
   });
+
+  test('a rule a block leaves out through its ignores is an exemption that needs a row', () => {
+    const blocks = [
+      {
+        files: ['src/**/*.ts'],
+        ignores: ['src/date.ts'],
+        rules: { 'argus/date-home': 'error', 'argus/syntax': 'error' },
+      },
+    ];
+    const resolved = {
+      'src/date.ts': { linterOptions: OPTIONS, rules: {} },
+      'src/log.ts': { linterOptions: OPTIONS, rules: { 'no-console': 0, 'argus/syntax': 2 } },
+    };
+    const failures = policyFailures({ ...input(resolved), blocks });
+    expect(failures).toContain(
+      'argus/date-home is off for src/date.ts without a row in CONTEXT.md › Lint exceptions'
+    );
+    expect(failures).toContain(
+      'argus/syntax is off for src/date.ts without a row in CONTEXT.md › Lint exceptions'
+    );
+    expect(failures.some((failure) => failure.includes('src/log.ts'))).toBe(false);
+  });
+
+  test('a row names several rules that share its paths', () => {
+    const markdown =
+      '## Lint exceptions\n| `max-lines`, `max-depth` | `src/locales/**` | data | rule 32 | 2026-10-20 |\n';
+    expect(parseExceptionRows(markdown)).toEqual([
+      { rule: 'max-lines', paths: ['src/locales/**'] },
+      { rule: 'max-depth', paths: ['src/locales/**'] },
+    ]);
+  });
 });

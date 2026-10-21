@@ -26,6 +26,8 @@ const argus = {
     'responsive-home': restrictedImports,
     'http-home': restrictedImports,
     'source-syntax': restrictedSyntax,
+    'platform-os-home': restrictedSyntax,
+    'intl-date-home': restrictedSyntax,
     'type-scale': restrictedSyntax,
     'no-color-literal': restrictedSyntax,
     'no-template-key': restrictedSyntax,
@@ -65,15 +67,10 @@ const fromReactNative = (names, message) => ({
   ],
 });
 
+const DATE_FORMATTER = 'src/shared/hooks/use-date-formatter/date.ts';
+const PLATFORM_FLAGS = 'src/shared/constants/common.constant.ts';
+
 const SOURCE_SYNTAX = [
-  {
-    selector: "NewExpression[callee.object.name='Intl'][callee.property.name='DateTimeFormat']",
-    message: 'Use the centralized date formatter instead.',
-  },
-  {
-    selector: "MemberExpression[object.name='Platform'][property.name='OS']",
-    message: 'Use IS_WEB, IS_NATIVE, IS_ANDROID, IS_IOS or IS_TAURI from @/shared/constants.',
-  },
   {
     selector: "ImportDeclaration[source.value='react'] > ImportNamespaceSpecifier",
     message: 'Import React APIs by name.',
@@ -198,11 +195,35 @@ module.exports = defineConfig([
   },
   {
     files: [SOURCE],
-    ignores: [
-      'src/shared/hooks/use-date-formatter/date.ts',
-      'src/shared/constants/common.constant.ts',
-    ],
     rules: {
+      'argus/source-syntax': ['error', ...SOURCE_SYNTAX],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: [PLATFORM_FLAGS],
+    rules: {
+      'argus/platform-os-home': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='Platform'][property.name='OS']",
+          message: 'Use IS_WEB, IS_NATIVE, IS_ANDROID, IS_IOS or IS_TAURI from @/shared/constants.',
+        },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: [DATE_FORMATTER],
+    rules: {
+      'argus/intl-date-home': [
+        'error',
+        {
+          selector:
+            "NewExpression[callee.object.name='Intl'][callee.property.name='DateTimeFormat']",
+          message: 'Use the centralized date formatter instead.',
+        },
+      ],
       'argus/date-formatter-home': [
         'error',
         {
@@ -214,16 +235,11 @@ module.exports = defineConfig([
           ],
         },
       ],
-      'argus/source-syntax': ['error', ...SOURCE_SYNTAX],
     },
   },
   {
     files: [SOURCE],
-    ignores: [
-      'src/shared/constants/icon.constant.ts',
-      'src/shared/components/ui/icon.tsx',
-      'src/shared/ui/**',
-    ],
+    ignores: ['src/shared/constants/icon.constant.ts', 'src/shared/components/ui/icon.tsx'],
     rules: {
       'argus/icon-registry-home': [
         'error',

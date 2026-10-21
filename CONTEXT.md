@@ -5304,7 +5304,10 @@ minutes without evidence.
 `eslint.config.js` is the only place lint is configured (rule 2). A rule is
 turned off only here, by name, for the paths listed, and
 `scripts/check-lint-policy.ts` fails on an exception without a row and on a
-row that turns nothing off. The `off` rules of the `eslint-config-expo` base
+row that turns nothing off. An exemption is a rule set to `off`, and also a
+rule a config block sets for its `files` but leaves out of a file through the
+block's `ignores`: both need a row. A row may name several rules that share
+paths and reason. The `off` rules of the `eslint-config-expo` base
 itself (`no-undef`, `no-unused-vars` and the other core rules typescript-eslint
 replaces, `react/prop-types`, `react/react-in-jsx-scope`, `import/named`,
 `import/default`, `react/jsx-no-target-blank`, `react/no-unsafe`) are the
@@ -5315,6 +5318,13 @@ preset's own decisions and are not exceptions.
 | `react-hooks/immutability` | `src/**`, `scripts/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
 | `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
 | `i18next/no-literal-string` | `src/app/ui-lab.tsx`, `src/features/ui-lab/**` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
+| `complexity`, `max-lines-per-function`, `max-lines`, `max-statements`, `max-depth`, `max-params` | `src/core/i18n/locales/**` | The dictionaries are data: one exported object per namespace, whose length is the copy's, not a function's. The budgets of rule 32 measure code. | rule 32; 68 locale files at R0 | 2026-10-20 |
+| `argus/activity-indicator-home`, `argus/type-scale`, `argus/no-visual-timer`, `i18next/no-literal-string` | `src/shared/components/ui/**` | The design system is the one home of loading (rule 16), of the type steps (rule 22) and of the visual drivers (rule 26); its components take their words as props, and the literals they draw are glyphs. The same exemption covers `src/shared/ui/**` in `eslint.config.js`, whose row is added by the merge that brings those files. | rules 16, 22, 24, 26 | 2026-10-20 |
+| `argus/responsive-home` | `src/shared/**` | Rule 23 bans the window size in features: `src/shared` is where the window class is read and turned into `useWindowClass`. | rule 23 | 2026-10-20 |
+| `argus/icon-registry-home` | `src/shared/constants/icon.constant.ts`, `src/shared/components/ui/icon.tsx` | The `ICONS` registry is the only importer of `lucide-react-native` (rule 10), and `Icon` draws from it. | rule 10 | 2026-10-20 |
+| `argus/date-formatter-home`, `argus/intl-date-home` | `src/shared/hooks/use-date-formatter/date.ts` | The one formatter is the only user of `date-fns` and `Intl.DateTimeFormat` (rule 10). | rule 10 | 2026-10-20 |
+| `argus/platform-os-home` | `src/shared/constants/common.constant.ts` | The `IS_*` flags are defined from `Platform.OS` here, and only here (rule 10). | rule 10 | 2026-10-20 |
+| `argus/no-color-literal` | `src/shared/theme/**` | `tokens.ts` and `effects.ts` are the home of the colour values (rule 10). | rule 22 | 2026-10-20 |
 
 ## Rules and gates, R0 (2026-10-20)
 
