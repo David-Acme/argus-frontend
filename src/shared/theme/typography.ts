@@ -1,3 +1,5 @@
+import { chromeTypeRoles } from './chrome-tokens';
+
 export const typeSteps = ['hero', 'title', 'headline', 'body', 'meta', 'caption'] as const;
 
 export type TypeStep = (typeof typeSteps)[number];
@@ -54,6 +56,7 @@ export const typeRoles = {
   mediaDetail: { size: 13, line: 17.55, weight: '500', tracking: 0, maxScale: 2 },
   mediaChip: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 2 },
   eyeChip: { size: 12, line: 16.2, weight: '650', tracking: 0, maxScale: 2 },
+  ...chromeTypeRoles,
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {

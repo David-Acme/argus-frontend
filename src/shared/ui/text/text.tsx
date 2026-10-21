@@ -69,6 +69,12 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   mediaDetail: 'text-media-detail',
   mediaChip: 'text-media-chip',
   eyeChip: 'text-eye-chip',
+  heroBand: 'text-hero-band',
+  greeting: 'text-greeting',
+  brand: 'text-brand',
+  count: 'text-count',
+  sideStat: 'text-side-stat',
+  sideStatStrong: 'text-side-stat-strong',
 };
 
 const TONE_CLASS: Record<TextTone, string> = {

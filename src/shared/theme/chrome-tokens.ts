@@ -1,0 +1,152 @@
+export const auraField = {
+  height: 300,
+  blur: 36,
+  fadeStart: 0.55,
+  opacity: 0.95,
+  reducedOpacity: 0.6,
+  edgeSeconds: 1.6,
+  blobs: [
+    {
+      width: 300,
+      height: 260,
+      left: -60,
+      top: -50,
+      x: 50,
+      y: 30,
+      scale: 1.12,
+      seconds: 14,
+      alertSeconds: 3.2,
+    },
+    {
+      width: 280,
+      height: 240,
+      right: -80,
+      top: 10,
+      x: -40,
+      y: 40,
+      scale: 0.92,
+      seconds: 18,
+      alertSeconds: 4,
+    },
+    {
+      width: 240,
+      height: 200,
+      left: 60,
+      top: 150,
+      x: 30,
+      y: -30,
+      scale: 1.08,
+      seconds: 16,
+      alertSeconds: 16,
+    },
+  ],
+} as const;
+
+export const chromeTypeRoles = {
+  greeting: { size: 14, line: 19.88, weight: '600', tracking: 0, maxScale: 2 },
+  heroBand: { size: 38, line: 41.8, weight: '800', tracking: -0.03, maxScale: 1.5 },
+  brand: { size: 18, line: 24, weight: '700', tracking: 0, maxScale: 1.5 },
+  count: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 2 },
+  sideStat: { size: 13, line: 17.55, weight: '400', tracking: 0, maxScale: 2 },
+  sideStatStrong: { size: 13, line: 17.55, weight: '700', tracking: 0, maxScale: 2 },
+} as const;
+
+export const chromeInset = {
+  nav: {
+    barX: 12,
+    barPad: 6,
+    barBottom: 26,
+    tabGap: 2,
+    capBottom: 110,
+    capX: 16,
+    capY: 10,
+    sideX: 12,
+    sideY: 18,
+    sideGap: 2,
+    brandX: 10,
+    brandBottom: 14,
+    brandGap: 10,
+    itemX: 10,
+    countX: 8,
+    countY: 1,
+    keyX: 5,
+    statPad: 12,
+    statGap: 9,
+    statX: 2,
+    askX: 10,
+    askGap: 6,
+    railY: 12,
+  },
+  screen: {
+    barY: 4,
+    bodyBottom: 128,
+    pillX: 10,
+    pillY: 4,
+    pillGap: 6,
+    columnGap: 20,
+    columnX: 28,
+    columnPadX: 4,
+    columnBottom: 28,
+    headTop: 14,
+  },
+  status: {
+    heroGap: 14,
+    heroPad: 2,
+    statsTop: 12,
+    cardPad: 14,
+    cardGap: 12,
+    cardTop: 16,
+    bandX: 20,
+    bandY: 16,
+    bandGap: 18,
+    bandTop: 18,
+    bandBottom: 6,
+  },
+} as const;
+
+export const chromeSize = {
+  topBar: 52,
+  topBarCompact: 44,
+  navItem: 42,
+  commandField: 40,
+  askField: 34,
+  meter: 6,
+  liveDot: 6,
+  keyLine: 17,
+  rail: 88,
+  presenceHero: 66,
+  presenceHeroSmall: 56,
+  presenceBand: 64,
+  presenceTab: 36,
+  presenceBrand: 30,
+  presenceNav: 22,
+  presenceAsk: 20,
+  columnSide: 320,
+  columnAside: 300,
+  previewPhone: 760,
+  scrollbar: 10,
+  scrollbarInset: 3,
+} as const;
+
+export const chromeElevation = {
+  light: {
+    bar: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 8px 30px 0px rgba(0,0,0,0.12)',
+    cap: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 1px 2px 0px rgba(0,0,0,0.06), 0px 10px 32px 0px rgba(0,0,0,0.12)',
+    listen:
+      'inset 0px 0px 0px 2px rgba(131,106,60,0.8), inset 0px 0px 36px 8px rgba(131,106,60,0.45)',
+    listenPeak:
+      'inset 0px 0px 0px 3px rgba(131,106,60,0.9), inset 0px 0px 54px 14px rgba(131,106,60,0.55)',
+    listenContrast: 'inset 0px 0px 0px 3px #836A3C',
+  },
+  dark: {
+    bar: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 8px 30px 0px rgba(0,0,0,0.12)',
+    cap: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
+    listen:
+      'inset 0px 0px 0px 2px rgba(217,188,133,0.8), inset 0px 0px 36px 8px rgba(217,188,133,0.45)',
+    listenPeak:
+      'inset 0px 0px 0px 3px rgba(217,188,133,0.9), inset 0px 0px 54px 14px rgba(217,188,133,0.55)',
+    listenContrast: 'inset 0px 0px 0px 3px #D9BC85',
+  },
+} as const;
+
+export type ChromeShadow = keyof (typeof chromeElevation)['light'];

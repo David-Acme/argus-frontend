@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { AuraDemo } from './demos/aura-demo';
 import { AvatarDemo } from './demos/avatar-demo';
 import { ButtonDemo } from './demos/button-demo';
 import { CheckDemo } from './demos/check-demo';
@@ -13,11 +14,14 @@ import { IconDemo } from './demos/icon-demo';
 import { LayoutDemo } from './demos/layout-demo';
 import { MediaDemo } from './demos/media-demo';
 import { MenuDemo } from './demos/menu-demo';
+import { NavDemo } from './demos/nav-demo';
 import { NoticeDemo } from './demos/notice-demo';
 import { PressableDemo } from './demos/pressable-demo';
 import { ResourceViewDemo } from './demos/resource-view-demo';
 import { RowDemo } from './demos/row-demo';
+import { ScreenDemo } from './demos/screen-demo';
 import { SectionDemo } from './demos/section-demo';
+import { StatusDemo } from './demos/status-demo';
 import { SwitchDemo } from './demos/switch-demo';
 import { TextDemo } from './demos/text-demo';
 import { ToastDemo } from './demos/toast-demo';
@@ -54,6 +58,10 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'field', family: 'input', title: 'Field', Demo: FieldDemo },
   { id: 'field-code', family: 'input', title: 'Field, code', Demo: FieldCodeDemo },
   { id: 'choice', family: 'input', title: 'Choice', Demo: ChoiceDemo },
+  { id: 'aura', family: 'identity', title: 'Aura', Demo: AuraDemo },
+  { id: 'status', family: 'content', title: 'Status', Demo: StatusDemo },
+  { id: 'nav', family: 'foundations', title: 'Nav', Demo: NavDemo },
+  { id: 'screen', family: 'foundations', title: 'Screen', Demo: ScreenDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [

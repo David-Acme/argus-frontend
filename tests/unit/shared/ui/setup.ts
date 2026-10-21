@@ -1,6 +1,6 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
 import { afterEach, mock } from 'bun:test';
-import { useRef, type ReactNode } from 'react';
+import { createContext, useRef, type ReactNode } from 'react';
 
 GlobalRegistrator.register();
 
@@ -49,6 +49,17 @@ for (const primitive of ['alert-dialog', 'dialog', 'dropdown-menu', 'context-men
     () => import(`../../../../node_modules/@rn-primitives/${primitive}/dist/${primitive}.web.mjs`)
   );
 }
+mock.module('react-native-safe-area-context', () => ({
+  SafeAreaInsetsContext: createContext(null),
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}));
+mock.module('react-native-worklets', () => ({
+  scheduleOnRN: <T extends unknown[]>(run: (...args: T) => void, ...args: T) => run(...args),
+}));
+mock.module('react-native-keyboard-controller', async () => {
+  const web = await import('react-native-web');
+  return { KeyboardAwareScrollView: web.ScrollView };
+});
 mock.module('expo-device', () => ({ totalMemory: null }));
 mock.module('uniwind', () => ({
   Uniwind: { setTheme: () => undefined },
@@ -58,8 +69,10 @@ mock.module('uniwind', () => ({
 mock.module('react-native-reanimated', async () => {
   const web = await import('react-native-web');
   return {
-    default: { View: web.View, Text: web.Text },
+    default: { View: web.View, Text: web.Text, ScrollView: web.ScrollView },
     useSharedValue: <T>(initial: T) => useRef(sharedValue(initial)).current,
+    makeMutable: sharedValue,
+    useAnimatedScrollHandler: () => () => undefined,
     useAnimatedStyle: <T>(build: () => T) => build(),
     withSpring: <T>(target: T) => target,
     withTiming: <T>(target: T) => target,

@@ -1,5 +1,6 @@
 export {
   aura,
+  auraField,
   auraTones,
   breakpoints,
   color,

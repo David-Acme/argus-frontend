@@ -1,4 +1,6 @@
+import { auraField, chromeElevation, chromeSize, type ChromeShadow } from './chrome-tokens';
 import { illustration } from './illustration';
+import { inset } from './inset';
 import { fontFamily, type, typeRoles } from './typography';
 
 export const themeNames = ['light', 'dark'] as const;
@@ -30,6 +32,8 @@ const light = {
   glass: 'rgba(255,255,255,0.66)',
   'glass-line': 'rgba(255,255,255,0.7)',
   'glass-edge': 'rgba(0,0,0,0.06)',
+  'glass-side': 'rgba(255,255,255,0.55)',
+  'tab-on': 'rgba(22,22,22,0.09)',
   skel: '#ECE9E4',
   'skel-2': '#F5F3F0',
   ev1: '#EFE4D0',
@@ -68,6 +72,8 @@ const dark = {
   glass: 'rgba(40,38,32,0.66)',
   'glass-line': 'rgba(255,255,255,0.08)',
   'glass-edge': 'rgba(255,255,255,0.06)',
+  'glass-side': 'rgba(36,35,30,0.55)',
+  'tab-on': 'rgba(244,239,231,0.09)',
   skel: '#24221F',
   'skel-2': '#2C2A26',
   ev1: '#3A2F1C',
@@ -111,7 +117,15 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
 export const elevation: Record<
   TokenTheme,
   Record<
-    'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset' | 'segment',
+    | 'card'
+    | 'float'
+    | 'thumb'
+    | 'glass'
+    | 'glassInset'
+    | 'ring'
+    | 'ringInset'
+    | 'segment'
+    | ChromeShadow,
     string
   >
 > = {
@@ -124,6 +138,7 @@ export const elevation: Record<
     ring: '0px 0px 0px 1px #ECE8E2',
     ringInset: 'inset 0px 0px 0px 1px #ECE8E2',
     segment: '0px 1px 3px 0px rgba(0,0,0,0.1)',
+    ...chromeElevation.light,
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
@@ -134,52 +149,15 @@ export const elevation: Record<
     ring: '0px 0px 0px 1px #2D2A25',
     ringInset: 'inset 0px 0px 0px 1px #2D2A25',
     segment: '0px 1px 3px 0px rgba(0,0,0,0.1)',
+    ...chromeElevation.dark,
   },
 };
 
-export { illustration };
+export { auraField, illustration, inset };
 
 export { fontFamily, type, typeRoles, typeSteps, type TypeSpec, type TypeStep } from './typography';
 
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 8: 32, 12: 48 } as const;
-
-export const inset = {
-  row: { x: 18, y: 10, gap: 14, trailGap: 6, metaGap: 1 },
-  button: { x: 18, compactX: 14, ghostX: 12 },
-  chip: { x: 10, statX: 11, gap: 5 },
-  section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
-  control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
-  dialog: { x: 24, top: 24, bottom: 12, edge: 28, bodyTop: 12 },
-  dialogActions: { top: 20, gap: 4, x: 14 },
-  toast: { start: 16, end: 6, y: 6, actionX: 12, edge: 16, offset: 108 },
-  toastError: { top: 12, start: 14, end: 10, bottom: 10 },
-  palette: { top: 110, group: 8, gap: 12, itemX: 10, queryX: 18, queryY: 16 },
-  paletteText: { titleX: 10, titleTop: 8, titleBottom: 4, footX: 18, footY: 10, footGap: 14 },
-  key: { x: 5 },
-  field: {
-    top: 14,
-    x: 14,
-    gap: 8,
-    labelGap: 6,
-    errorGap: 6,
-    multiY: 12,
-    border: 1.5,
-    codeTop: 20,
-    codeGap: 8,
-    codeBorder: 2,
-  },
-  segment: { pad: 3, gap: 2, iconGap: 6, minX: 2 },
-  notice: { x: 16, y: 14, gap: 10, headGap: 12, bodyTop: 2, actionGap: 8 },
-  banner: { x: 14, y: 10, gap: 10 },
-  feed: { x: 18, y: 2, itemY: 14, gap: 12, whoGap: 6, textTop: 2, actionsTop: 10, actionsGap: 8 },
-  thread: { top: 6 },
-  unread: { end: 2, top: 20 },
-  media: { labelX: 10, labelBottom: 8, chip: 8, chipStart: 7, chipEnd: 9, chipY: 3, chipGap: 6 },
-  overlay: { edge: 10, gap: 6, revealGap: 8 },
-  eye: { edge: 10, start: 2, end: 8, y: 2, gap: 2 },
-  skeleton: { lineGap: 7 },
-  empty: { x: 16, y: 28, gap: 8 },
-} as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
 
@@ -198,6 +176,7 @@ export const radius = {
   card: 24,
   status: 26,
   sheet: 28,
+  meter: 3,
   full: 999,
 } as const;
 
@@ -245,6 +224,7 @@ export const size = {
   skelMeta: 13,
   skelPill: 64,
   skelPillHeight: 28,
+  ...chromeSize,
 } as const;
 
 export const motion = {
@@ -255,6 +235,8 @@ export const motion = {
     gentle: { damping: 22, stiffness: 180, mass: 1 },
     playful: { damping: 10, stiffness: 220, mass: 1 },
   },
+  pulseSeconds: 1.2,
+  pulseOpacity: 0.35,
   pressScale: 0.96,
   pressScaleIcon: 0.9,
   caretBlink: 1000,
@@ -273,6 +255,9 @@ export const material = {
   blurPalette: 30,
   paletteSurfaceMix: 0.84,
   blurMedia: 10,
+  blurSide: 30,
+  blurCap: 20,
+  fadeSolid: 0.7,
 } as const;
 
 export const breakpoints = { compact: 0, medium: 600, expanded: 1024, wide: 1440 } as const;
@@ -293,11 +278,13 @@ export const layout = {
   palette: 640,
   sidebar: 244,
   mediaAspect: 1.6,
+  bandMax: 2256,
 } as const;
 
 export const tokens = {
   color,
   aura,
+  auraField,
   elevation,
   illustration,
   type,
