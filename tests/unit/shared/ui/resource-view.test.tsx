@@ -5,6 +5,10 @@ import { Empty } from '@/shared/ui/resource-view/empty';
 import type { Resource } from '@/shared/ui/resource-view/resource';
 import { ResourceView, type ResourceCopy } from '@/shared/ui/resource-view/resource-view';
 import { Skeleton, SkeletonRow } from '@/shared/ui/resource-view/skeleton';
+import {
+  ShimmerProvider as WebShimmerProvider,
+  useShimmerStyle as useWebShimmerStyle,
+} from '@/shared/ui/resource-view/shimmer';
 import { ShimmerProvider, useShimmerStyle } from '@/shared/ui/resource-view/shimmer.native';
 import { screenFocus } from './screen-focus';
 
@@ -139,5 +143,19 @@ describe('ResourceView', () => {
     );
     expect(seen).toEqual([{ opacity: 0.5 }]);
     screenFocus.focused = true;
+  });
+
+  test('on the web each skeleton keeps its compositor shimmer, inside a view or not', () => {
+    const seen: object[] = [];
+    function Probe() {
+      seen.push(useWebShimmerStyle());
+      return null;
+    }
+    render(
+      <WebShimmerProvider>
+        <Probe />
+      </WebShimmerProvider>
+    );
+    expect(seen.every((style) => 'animationName' in style)).toBe(true);
   });
 });

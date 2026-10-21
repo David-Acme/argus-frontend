@@ -1,8 +1,8 @@
 import { motion } from '@/shared/theme';
 
-export const SHIMMER_STILL = { opacity: motion.loop.shimmerRest };
+const SHIMMER_STILL = { opacity: motion.loop.shimmerRest };
 
-export const SHIMMER = {
+const SHIMMER = {
   ...SHIMMER_STILL,
   animationName: {
     '0%': SHIMMER_STILL,
@@ -14,3 +14,7 @@ export const SHIMMER = {
   animationIterationCount: 'infinite',
   animationTimingFunction: 'linear',
 } as const;
+
+export function cssShimmer(reduceMotion: boolean) {
+  return reduceMotion ? SHIMMER_STILL : SHIMMER;
+}

@@ -11,7 +11,7 @@ import {
 } from 'react-native-reanimated';
 import { useScreenActive } from '@/shared/hooks/use-screen-active';
 import { motion, useEffects } from '@/shared/theme';
-import { SHIMMER, SHIMMER_STILL } from './shimmer-style';
+import { cssShimmer } from './shimmer-style';
 
 export type ShimmerProviderProps = { children: ReactNode };
 
@@ -48,5 +48,5 @@ export function useShimmerStyle() {
   const { reduceMotion } = useEffects();
   const driven = useAnimatedStyle(() => ({ opacity: shared ? shared.get() : REST }));
   if (shared) return driven;
-  return reduceMotion ? SHIMMER_STILL : SHIMMER;
+  return cssShimmer(reduceMotion);
 }
