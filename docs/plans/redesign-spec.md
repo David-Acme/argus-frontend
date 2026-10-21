@@ -1828,6 +1828,14 @@ second and is written natively, not translated word for word.
 | R-D26 | Large screens and scrolling: 4 columns from 1700 px, a 2,200 px content cap, text at most about 680 px, and one scroll owner per region with sticky headers and shared thin scrollbars (§6c) | yes |
 | R-D27 | Loading: local data paints instantly, with at most an inline «Actualizando»; skeletons only for HTTP data without a local copy (§5.4) | yes |
 | R-D28 | **Resolved 2026-10-20: Estela** (`aura.html`, option 1) is Argus' presence everywhere, with the catalogue of §8b | decided |
+| R-D29 | The desktop status band shows the `Aura` (the prototype hid it only through a CSS accident) | decided 2026-10-21 |
+| R-D30 | Reduce Transparency uses §8b's flat tint and a steady rim | decided 2026-10-21 |
+| R-D31 | One live Estela per screen: where a screen draws its hero Estela, the sidebar shows a small static mark instead of a second live one | decided 2026-10-21 |
+| R-D32 | The `concern` state maps to Estela's `error` state | decided 2026-10-21 |
+| R-D33 | The eye chip's Estela always uses the dark palette, for contrast over video | decided 2026-10-21 |
+| R-D34 | Toasts are polite announcements; only errors that need an action use alert semantics | decided 2026-10-21 |
+| R-D35 | The 641-file formatting commit stays deferred, and the format ratchet holds | decided 2026-10-21 |
+| R-D36 | The web entry chunk comes down to the 6.6 MB ceiling through route-level lazy loading, in Phase 2 | decided 2026-10-21 |
 | S1 | Sound: **deferred** by the owner (2026-10-20); no UI sound in this redesign. The v2 palette and rules are kept in Appendix B for a later decision | deferred |
 
 ## 14. Order of work
