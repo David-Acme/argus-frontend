@@ -6263,8 +6263,12 @@ at 5 ms; the flush now merges into it, which may add a little there.
 `useEffects()` resolves the tier from three things (`resolvePerfTier`):
 
 1. **The hardware ceiling** (`hardwareCeiling`, the old rule): web and desktop
-   `high`; Android below 12 (API 31) or under 4 GB `low`; under 6 GB `mid`;
-   else `high`. «Reducir efectos» forces `low`.
+   `high`; Android below 12 (API 31) or under 4 GB `low`; else `high`. The
+   old «under 6 GB `mid`» cap is gone: a 6 GB phone reports about 5.4 GiB
+   (the kernel keeps the rest), so the S21 FE was capped at `mid` while its
+   probe said `high` and the feedback could not climb past the ceiling
+   (caption «tier mid · probe high 4.2 ms 0 late», build `932b976`). The probe
+   and the frame times measure what memory only guessed. «Reducir efectos» forces `low`.
 2. **The startup probe** (`use-tier-probe.ts`, native only). Until it answers,
    an Android device is `low`. It runs once per session, 1.2 s after the
    first `Presence` mounts, off the first frame and never on the JS thread
@@ -6295,8 +6299,9 @@ at 5 ms; the flush now merges into it, which may add a little there.
    (`CLIMB_SECONDS`), doubled after every drop up to 16×: time with headroom
    adds to a credit, time without it takes away four times as much, so the
    climb needs at least 80 % of the frames in budget. Headroom is predicted
-   for the tier above: from `mid`, a frame of at most 8.3 ms (a 120 fps frame
-   does half of it, 4.2 ms, half its budget); from `low`, at most 4.2 ms (`mid`
+   for the tier above: from `mid`, a whole frame (paint-ahead plus present)
+   of at most 10 ms, so the 120 fps frame, which does half of it, stays
+   within 5 ms, 60 % of its 8.3 ms; from `low`, at most 4.2 ms (`mid`
    draws twice the particles, 8.3 ms, half of 16.7). It only climbs below the
    ceiling, and after any change it waits 1 s before it scores again.
 

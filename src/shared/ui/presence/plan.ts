@@ -66,7 +66,7 @@ export type PlanInput = {
 
 const MAX_BACKOFF = 4;
 const RANK: Record<PerfTier, number> = { low: 0, mid: 1, high: 2 };
-const CLIMB_WORK: Record<PerfTier, number> = { low: 1 / 240, mid: 1 / 120, high: 0 };
+const CLIMB_WORK: Record<PerfTier, number> = { low: 1 / 240, mid: 1 / 100, high: 0 };
 
 function climbWork(tier: PerfTier, adaptation: Adaptation | undefined): number {
   if (!adaptation || RANK[tier] >= RANK[adaptation.ceiling]) return 0;

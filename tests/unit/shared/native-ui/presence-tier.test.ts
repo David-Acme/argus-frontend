@@ -29,8 +29,9 @@ describe('the automatic tier', () => {
     expect(needsProbe(input)).toBe(true);
     expect(resolvePerfTier(input)).toBe('low');
     expect(resolvePerfTier({ ...input, live: 'high' })).toBe('high');
-    const small = { ...phone, totalMemory: 5 * GIB };
-    expect(resolvePerfTier({ ...input, profile: small, live: 'high' })).toBe('mid');
+    const sixGigabytes = { ...phone, totalMemory: 5.4 * GIB };
+    expect(resolvePerfTier({ ...input, profile: sixGigabytes, live: 'high' })).toBe('high');
+    expect(resolvePerfTier({ ...input, live: 'high', ceiling: 'mid' })).toBe('mid');
     expect(resolvePerfTier({ ...input, live: 'high', reduceEffects: true })).toBe('low');
   });
 
@@ -56,6 +57,44 @@ describe('the automatic tier', () => {
       tier: 'low',
       dropped: 4,
     });
+  });
+});
+
+describe('a phone like the S21 FE', () => {
+  test('probe high and steady frames, so the tier ends high', () => {
+    const { resolvePerfTier, recordProbe, useAutoTier, hardwareCeiling } = modules.effects;
+    const { probeVerdict } = modules.verdict;
+    const { createPace, notePace, noteBeat } = modules.pace;
+    const s21 = { android: true, apiLevel: 34, totalMemory: 5.4 * GIB };
+    expect(hardwareCeiling(s21)).toBe('high');
+    const works = Array.from({ length: 30 }, () => 4.2);
+    const gaps = Array.from({ length: 30 }, () => 8.3);
+    recordProbe(probeVerdict({ works, gaps }));
+    const tier = () =>
+      resolvePerfTier({ profile: s21, reduceEffects: false, live: useAutoTier.getState().live });
+    expect(tier()).toBe('high');
+    const pace = createPace();
+    let shifts = 0;
+    for (let i = 1; i <= 1200; i++) {
+      noteBeat(pace, 1 / 120);
+      const sample = { now: 1 + i / 120, work: 0.0035, interval: 1 / 120 };
+      shifts += Math.abs(notePace(pace, sample, { climbWork: 0, patience: 3 }));
+    }
+    expect(shifts).toBe(0);
+    expect(tier()).toBe('high');
+  });
+
+  test('a phone the probe put at mid climbs to high after three seconds of headroom', () => {
+    const { createPace, notePace, noteBeat } = modules.pace;
+    const pace = createPace();
+    const shifts: number[] = [];
+    for (let i = 1; i <= 240; i++) {
+      noteBeat(pace, 1 / 120);
+      const sample = { now: 1 + i / 60, work: 0.0075, interval: 1 / 60 };
+      const shift = notePace(pace, sample, { climbWork: 1 / 100, patience: 3 });
+      if (shift !== 0) shifts.push(shift);
+    }
+    expect(shifts).toEqual([1]);
   });
 });
 

@@ -107,7 +107,7 @@ describe('presence engine', () => {
   test('an adaptive plan watches its frames and may climb only below the ceiling', () => {
     const adaptive = (tier: 'low' | 'mid' | 'high', drops: number) =>
       planFor({ size: 300, tier, reduceMotion: false, adaptation: { ceiling: 'high', drops } });
-    expect(adaptive('mid', 0)).toMatchObject({ watch: true, climbWork: 1 / 120, patience: 3 });
+    expect(adaptive('mid', 0)).toMatchObject({ watch: true, climbWork: 1 / 100, patience: 3 });
     expect(adaptive('low', 0)).toMatchObject({ climbWork: 1 / 240 });
     expect(adaptive('high', 0)).toMatchObject({ watch: true, climbWork: 0 });
     expect(adaptive('low', 2).patience).toBe(12);

@@ -18,14 +18,12 @@ export type HardwareProfile = {
 const GIB = 1024 ** 3;
 const ANDROID_12_API = 31;
 const LOW_MEMORY_GIB = 4;
-const MID_MEMORY_GIB = 6;
 
 export function hardwareCeiling(profile: HardwareProfile): PerfTier {
   if (!profile.android) return 'high';
   const memoryGib = profile.totalMemory === null ? null : profile.totalMemory / GIB;
   if (profile.apiLevel !== null && profile.apiLevel < ANDROID_12_API) return 'low';
   if (memoryGib !== null && memoryGib < LOW_MEMORY_GIB) return 'low';
-  if (memoryGib !== null && memoryGib < MID_MEMORY_GIB) return 'mid';
   return 'high';
 }
 
