@@ -20,6 +20,7 @@ export type PolicyInput = {
   base: ReadonlyMap<string, ResolvedConfig>;
   rows: readonly ExceptionRow[];
   blocks?: readonly ConfigBlock[];
+  suppressions?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
 };
 
 const SEVERITIES: Record<string, number> = { off: 0, warn: 1, error: 2, '0': 0, '1': 1, '2': 2 };
@@ -108,10 +109,25 @@ export function policyFailures(input: PolicyInput): string[] {
       .filter((file) => !input.rows.some((row) => row.rule === rule && covers(row, file)))
       .map((file) => `${rule} is off for ${file} without a row in CONTEXT.md › Lint exceptions`)
   );
-  const unused = input.rows
-    .filter((row) => !(offs.get(row.rule) ?? []).some((file) => covers(row, file)))
-    .map(
-      (row) => `the Lint exceptions row for ${row.rule} (${row.paths.join(', ')}) turns nothing off`
-    );
-  return [...new Set(options)].slice(0, 3).concat(warns, unlisted, unused);
+  const unused = input.rows.flatMap((row) =>
+    row.paths
+      .filter((path) => !(offs.get(row.rule) ?? []).some((file) => new Bun.Glob(path).match(file)))
+      .map(
+        (path) =>
+          `the Lint exceptions row for ${row.rule} names ${path}, which it turns nothing off for`
+      )
+  );
+  return [...new Set(options)]
+    .slice(0, 3)
+    .concat(warns, unlisted, unused, suppressionFailures(input));
+}
+
+function suppressionFailures(input: PolicyInput): string[] {
+  return Object.entries(input.suppressions ?? {}).flatMap(([file, rules]) => {
+    const config = input.resolved.get(file);
+    if (!config) return [`eslint-suppressions.json: ${file} is not a file lint checks`];
+    return Object.keys(rules)
+      .filter((rule) => !((severity(config.rules?.[rule]) ?? 0) > 0))
+      .map((rule) => `eslint-suppressions.json: ${rule} is not on for ${file}`);
+  });
 }

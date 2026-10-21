@@ -235,4 +235,28 @@ describe('check-quality', () => {
       expect(run.output).toContain(`${metric}: ${count} is above its baseline 0`);
     }
   });
+
+  test('a memo exception without a reason, naming nothing or naming a whole component fails', () => {
+    const file = [
+      "import { memo, useMemo } from 'react';",
+      'export const Card = memo(function Card() {',
+      '  return useMemo(() => null, []);',
+      '});',
+    ].join('\n');
+    const run = quality(
+      {
+        'src/shared/ui-kit/card.tsx': file,
+        'scripts/lib/memo-exceptions.txt': [
+          'src/shared/ui-kit/card.tsx Card measured',
+          'src/shared/ui-kit/card.tsx gone measured',
+          'src/shared/ui-kit/card.tsx Card',
+        ].join('\n'),
+      },
+      baseline({}, 1),
+      'src/shared/ui-kit/card.tsx\n'
+    );
+    expect(run.output).toContain('src/shared/ui-kit/card.tsx Card names 2 memoizations');
+    expect(run.output).toContain('src/shared/ui-kit/card.tsx gone names no manual memoization');
+    expect(run.output).toContain('src/shared/ui-kit/card.tsx Card has no reason');
+  });
 });

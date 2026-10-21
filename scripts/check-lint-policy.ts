@@ -20,7 +20,9 @@ Resolves the ESLint config of every file bun run lint checks (${SCOPE.join(', ')
 a rule at 'warn', inline configuration not disabled, a rule turned off that the
 eslint-config-expo base does not turn off without a row in CONTEXT.md › Lint exceptions,
 or a row that turns nothing off. A rule a config block sets for its files but leaves out
-of a file through the block's ignores is an exemption, counted like an 'off'.`);
+of a file through the block's ignores is an exemption, counted like an 'off'. Every path
+of a row must turn something off, and every eslint-suppressions.json entry must name a
+file lint checks and a rule that is on for it.`);
   process.exit(0);
 }
 
@@ -60,7 +62,15 @@ async function main(): Promise<void> {
   const blocks = (await import(join(ROOT, 'eslint.config.js'))) as { default: ConfigBlock[] };
   report(
     'check-lint-policy',
-    policyFailures({ resolved, base, rows, blocks: blocks.default }),
+    policyFailures({
+      resolved,
+      base,
+      rows,
+      blocks: blocks.default,
+      suppressions: JSON.parse(
+        readFileSync(join(ROOT, 'eslint-suppressions.json'), 'utf8')
+      ) as Record<string, Record<string, unknown>>,
+    }),
     `${resolved.size} files, ${rows.length} exception rows`
   );
 }
