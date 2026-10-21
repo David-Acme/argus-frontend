@@ -34,6 +34,7 @@ const EMPTY = {
   message: copy.nothingToday,
   detail: copy.freeDay,
   action: { label: copy.newReminder, onPress: noop, icon: 'plus' },
+  presence: 'happy',
   children: (
     <Cluster>
       <Chip label={copy.askPayWater} />

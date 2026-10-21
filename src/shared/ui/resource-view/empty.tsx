@@ -2,13 +2,14 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { Notice, type NoticeAction } from '@/shared/ui/notice';
+import type { PresenceState } from '@/shared/ui/presence';
 
 export type EmptyProps = {
   message: string;
   detail?: string;
   action: Omit<NoticeAction, 'primary'>;
   icon?: IconGlyph;
-  presence?: ReactNode;
+  presence?: PresenceState;
   children?: ReactNode;
 };
 
@@ -19,7 +20,7 @@ export function Empty({ message, detail, action, icon, presence, children }: Emp
         title={message}
         body={detail}
         icon={icon ?? 'check'}
-        leading={presence}
+        presence={presence}
         action={{ ...action, primary: true }}
       />
       {children}

@@ -37,9 +37,9 @@ describe('Notice', () => {
     expect(screen.getByRole('button', { name: 'Nuevo recordatorio' })).toBeDefined();
   });
 
-  test('a card takes a presence slot in place of its icon', () => {
-    render(<Notice title="Todo tranquilo" leading={<span data-testid="presence" />} />);
-    expect(screen.getByTestId('presence')).toBeDefined();
+  test('a card draws Estela at 52 px in place of its icon', () => {
+    render(<Notice title="Todo tranquilo" presence="happy" />);
+    expect(globalThis.document.querySelector('canvas')?.style.width).toBe('52px');
   });
 
   test('an inline banner joins title and body on one line and keeps its action', () => {

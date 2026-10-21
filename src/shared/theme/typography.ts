@@ -36,7 +36,7 @@ export const typeRoles = {
   key: { size: 11, line: 17, weight: '650', tracking: 0, maxScale: 1.5 },
   sectionMeta: { size: 13, line: 19.5, weight: '500', tracking: 0, maxScale: 2 },
   chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
-  initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
+  initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 1.3 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
   sectionLink: { size: 15, line: 22.5, weight: '600', tracking: 0, maxScale: 2 },
   toastTitle: { size: 15, line: 22.5, weight: '650', tracking: 0, maxScale: 2 },

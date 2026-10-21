@@ -44,9 +44,9 @@ describe('ui-lab spikes', () => {
     expect(captured.TrueSheet?.detents).toEqual(['auto']);
   });
 
-  test('the presence demo shows every state at the compact and icon sizes', () => {
+  test('the presence demo has the playground and the ten catalogue cells at 150, 28, 36 and 48', () => {
     const html = renderToStaticMarkup(createElement(modules.presence.PresenceDemo));
-    expect(html.match(/<rn-skia-canvas/g)?.length).toBe(1 + 17 * 2);
+    expect(html.match(/<rn-skia-canvas/g)?.length).toBe(1 + 10 * 4);
     expect(html).toContain('testid="presence-state-panic"');
   });
 

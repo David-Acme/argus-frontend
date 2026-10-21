@@ -1,3 +1,3 @@
-entry-chunk-bytes 7540354
-dist-bytes 8859837
+entry-chunk-bytes 7115996
+dist-bytes 8867041
 lazy livekit-client

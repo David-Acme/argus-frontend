@@ -5386,6 +5386,14 @@ rule 32 run on `src` and `scripts`, without the locales and generated files.
 `lint` now checks `src` and `scripts`; `expo lint` checked `src` alone, and
 `tests` would need `@tests/*` taught to `eslint-plugin-import` first.
 
+**Lint's heap (p1/wire, 2026-10-21).** The script runs ESLint through
+`node --max-old-space-size=4096`, so every caller (`bun run lint`, `verify`,
+an agent under the heavy gate) gets the same heap. Measured on `p1/wire`
+(1,726 files, type-aware rules, 5,120 MiB allowed): peak resident set
+3,766 MiB (`VmHWM`), 96 s. The old-space heap is part of that resident set,
+so 4,096 MiB covers it with room; Node's default limit is derived from the
+memory it sees, and under the gate's 6 GB cgroup it ran out before the end.
+
 **`no-unknown-classes` with Uniwind (spike).** Adopted. With
 `entryPoint: 'src/global.css'` the plugin loads Tailwind's design system from
 the same CSS Uniwind reads, and `uniwind.css` declares its platform variants
@@ -5442,13 +5450,55 @@ glyphs), PressableSurface (RNGH with a foreground ripple on native, React
 Native's Pressable on web for keyboard, hover and the focus ring), Stack,
 Inline, Cluster, Button (single-flight, `iconOnly`, glass that turns solid
 under reduced transparency or the low tier), Chip/FilterChip, Avatar, Check,
-Switch, Section and Row. They take no `className` and join their classes with
+Switch, Section and Row. `useSurfacePress` keeps a pressed state only for a
+surface that draws the pressed fill, so a press on any other surface (the
+rail and sidebar items that hold `Presence`) re-renders nothing of its own
+(review finding 6). A `FilterChip` is a `checkbox` with
+`aria-checked`, not a `button` with `aria-selected`: ARIA ignores
+`aria-selected` on a button, so the web never announced the selection
+(finding 11); native announces checked/not checked. `Text`'s `heading` is a level
+(1–4), carried as `aria-level`: react-native-web renders `role="heading"`
+without a level as `<h1>`, so every heading was an h1 (finding 12). The
+screen's top-bar title is 1, the Status hero and Section heads 2, the Status
+card 3. At font scale 2 a fixed height clipped the words (finding 14):
+the chips and the sidebar's ask field take their prototype height as a
+minimum (`min-h-chip`, `min-h-ask-field`), which draws the same at scale 1,
+and the Avatar initial scales at most 1.3x (29 px line in a 36 px box, which
+must keep its size). They take no `className` and join their classes with
 `clsx`, since tailwind-merge does not know the new type names and drops one of
 two `text-*` classes. Values the prototype draws that the spec's scale lacks
 (row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,
 section spacing 26/4/10/12) live in `tokens.inset`. `useEffects()` holds one
 accessibility subscription for the whole app instead of two per caller, and
 react-native-web has no `isReduceTransparencyEnabled`.
+
+**The focus ring inside clipped containers.** `web:focus-ring` draws its
+2 px outline 2 px outside the control, which a container with
+`overflow-hidden` cut off (review finding 9: the Section group, the Media
+tile and stage, the Status band). The ring's offset is the custom property
+`--focus-ring-offset` (2 px when unset), and such a container carries
+`web:focus-inset`, which sets it to -4 px, so every focusable inside it draws
+its ring inside its own edge. A custom property inherits, so the rows and
+buttons inside need no class of their own; any other clipping container with
+focusable children (Command's palette, Menu's list) takes the same class.
+`tests/e2e/ui-lab-a11y.e2e.ts` reads the computed outline of a focused row
+and tile.
+
+**Hit areas, not drawn sizes.** The prototype draws several controls under
+44/48 (Check 24, Switch 28, chips 26, the compact Button and the toast's
+Retry 40, the banner's text action about 21), and the drawn size stays.
+Native reaches 48 through `hitSlop`; react-native-web ignores `hitSlop`
+(review finding 10), so on the web a `PressableSurface` given a slop also
+carries `web:hit-target`, an absolutely placed `::after` of at least 48 x 48
+centred on the control: a press on it is a press on the control, and it
+changes neither layout, pixels nor the focus ring. The toast's Retry now has
+its slop, and the banner's action computes its slop from the `label` line
+(21) instead of assuming a 44 px control. A clipping parent (a horizontal
+scroller) cuts the pseudo-element like it would cut the control.
+`tests/e2e/ui-lab-a11y.e2e.ts` reads the 48 px area of Check, Switch and the
+toast's Retry (the lab has no banner with an action; the banner's action is
+the same `PressableSurface` path), and that the chips and the sidebar's ask
+field hold their words at the lab's font scale 2.
 
 **Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
 bun process (happy-dom, react-native-web as react-native, react-native-svg's web
@@ -5517,8 +5567,12 @@ many files; the reason names that cause.
 | `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx spec` | Lead merge of `p1/native`: the Skia canvas keeps its worklet spec in one identity per particle count and seed, because the frame worklet is re-registered whenever its captured spec changes identity (the branch's measurement, section "Native spikes" below). | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/native` (Sheet, Presence, the spikes lab) over the four design-system shares: entry 7,430,083 → 7,522,390 B (+92,307) and `dist/` 8,749,566 → 8,841,873 B (+92,307). The branch measured +126,279 B over its own older base (about 91 kB Sheet and the Estela engine, about 12 kB the lab, section "Native spikes"); the merged export has no Skia or TrueSheet module. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | The `fix(ui)` after the `p1/native` merge: Sheet's parts, dialog and phone sheet and the demo field name the 24 token-derived style objects the binding-following `style-object` counter found inline, which the web export keeps as named bindings: entry 7,522,390 → 7,523,403 B and `dist/` 8,841,873 → 8,842,886 B (+1,013 each). | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p1/ds-fixes`, the design-system review's items for this branch: entry 7,523,403 → 7,527,643 B (+4,240) and `dist/` 8,842,886 → 8,847,431 B (+4,545). The entry grows by Confirm's latch and form choice, `useScreenActive` (Aura and the live chip pause out of focus), `useAnnounce`, the shimmer split, MediaFrame's frame key and Aura's flat tint; the other 305 B of `dist/` are the `hit-target` and `focus-inset` CSS utilities. No package was added. | 2026-10-21 |
+
 | `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx step`, `src/shared/ui/presence/presence.tsx plan`, `src/shared/ui/presence/presence.tsx look`, `src/shared/ui/presence/presence.tsx live` | Finding 6 of the design-system review: under reduced motion Presence recomputed its 254-step still frame and registered its frame worklet again on every render, because the look, the plan and the live values were new objects each time; they keep one identity per input now, the effect-dependency and library-identity cases of rule 31. | 2026-10-21 |
-| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Estela's performance work (p1/estela-perf): the streak buffer and tint cache in the engine, the interleaved 120 fps driver, the web canvas's batch sink, the tier rule in `effects.ts` and the bench's new parameters add 16,951 B to the web entry chunk; the probe, the frame-time feedback and Skia stay out of the web export. | 2026-10-21 |
+
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p1/wire` item 4: the ui-lab and the spikes screen load from one lazy chunk (`lab-screens`, 405,626 B) that a production page never fetches. Measured on the same tree before and after: entry 7,522,566 → 7,118,965 B (−403,601; the Phase 1 entry growth over 7,063,615 B falls from +458,951 to +55,350), `dist/` 8,842,120 → 8,844,145 B (+2,025: the chunk's own module wrappers and loader). The entry baseline is lowered with it. | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of `p1/ds-fixes`, `p1/estela-perf` and `p1/wire` (ff881a0), measured on the merged tree: `dist/` 8,844,145 → 8,867,041 B (+22,896): Estela's adaptive renderer (tier probe and frame-time feedback, about 17 kB as measured on its branch), the design-system fixes (about 4.5 kB: the confirm latch, the announce and screen-active hooks, the hit areas) and the lazy lab's chunk carrying the merged demos. The entry chunk went down, 7,118,965 → 7,115,996 B, because the lab now loads lazily. | 2026-10-21 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
@@ -5532,8 +5586,17 @@ import does not exist in the 1.1.16 the overrides already pin. Radix's alert
 dialog never closes on an outside press, so the default variant adds its own
 scrim press that cancels; the destructive one disables it. Esc and Back go
 through `onOpenChange(false)` and mean Cancelar. Android's `Alert` ties Back to
-outside taps (`setCancelable`), so the native destructive alert is
-`cancelable: false` and Back does nothing there: only its buttons close it.
+outside taps (`setCancelable`), so a destructive alert there could not be
+cancelled with Back (review finding 4): on an Android phone a destructive
+confirmation is the dialog instead (`confirm-form.ts`), which cancels on Back
+through `BackHandler` and ignores outside taps; iOS keeps the native alert,
+`cancelable: false`. A confirmation answers once (finding 1, «Purgar» pressed
+twice called the purge twice): `useConfirmLatch` drops every press of either
+button, Esc, Back and the scrim after the first until the dialog opens again,
+and an `onConfirm` that returns a promise marks the button `aria-busy` and
+releases the latch when it settles, so a failed act can be retried. Whether
+Back reaches the dialog's `BackHandler` above `@rn-primitives`' native portal
+needs the phone.
 
 **Toast.** One API, `toast.show({ kind, ... })` and `toast.dismiss`, over
 `sonner` (`toaster.tsx`) and `sonner-native` (`toaster.native.tsx`), both
@@ -5562,10 +5625,13 @@ has no `listbox`. On pointer it is a Radix dialog (focus trap, Esc, outside
 press, focus return) with a visually hidden title; `useCommandHotkey` binds
 Ctrl+K / ⌘K on the web and is a no-op natively.
 
-**Slots until p1/native merges.** `Menu` and `Command` take a required
-`sheet` component with `Sheet`'s `open`, `onClose`, `title`, `variant` and
-`long`; the native Command should also pass `initialFocus` once `Sheet` is
-here. `Command` takes an optional `askMark` for Estela's `think` mark.
+**Sheet and Estela are wired (p1/wire).** The touch `Menu` lists in
+`Sheet`, mounted on first open (`useOpenedOnce`); the touch `Command` is a
+long `Sheet` list that focuses its query through `initialFocus`, and its ask
+row draws `Presence` in `think` at 26. The pointer palette scrolls its
+results inside a listbox (a `div` on the web: React Native's `Role` has no
+`listbox`) and its query is a combobox whose `aria-activedescendant` names
+the selected option. The pointer menu's rows are 44 px.
 
 **Test runner.** The component runner loads the rn-primitives web builds
 (their `.mjs` keep JSX, so a bun plugin loads them as `jsx`), stubs RNGH's
@@ -5636,11 +5702,14 @@ The input share of the design system: `src/shared/ui/field/` and
   and the comparison allows half a pixel of rounding; at 6 the prototype's
   own Modo control (Noche + moon, 70.8 px in a 79 px segment at 360) would
   not have fitted.
-- **The sheet is a slot until `Sheet` lands.** `sheet` is a render prop with
-  `Sheet`'s spec'd props (`variant: 'list'`, `title`, `open`, `onClose`,
-  `children`); `Choice` owns the open state and the option list (radios with
-  a check on the current one, `selection` haptic). When `p1/native` merges,
-  the prop goes and `Choice` renders `Sheet` itself.
+- **The list opens in `Sheet`.** `Choice` owns the open state and the option
+  list (radios with a check on the current one, `selection` haptic) and
+  renders `Sheet` itself, mounted the first time it opens. Its row opener is a
+  pressable `Row`, which speaks a string trailing value. The segmented form
+  follows WAI-ARIA's radio group on the web (one tab stop, the arrows move the
+  selection and the focus) and each segment presses in 44 px around its drawn
+  40. Widths of options that arrive after the first render are measured too
+  (`use-fit.ts`).
 - **Glass.** `glass` puts the track on `glass` with the 18 px control blur
   and the inset glass line, solid `surface` under reduce transparency, as the
   prototype's `.seg.glass` and its `rt` rule. The selected segment is
@@ -5687,7 +5756,10 @@ pointer (`pointerType`), so a tap on a phone opens the camera instead. The
 stage bleeds to the phone gutter (`-mx-4`, the prototype's `.video`) and is a
 rounded tile from `medium` up. `frame` cross-fades a new still over the last
 one on the UI thread after it loads (React Native `Image`: expo-image, the
-owner decision P2, is not installed). The live dot breathes with a Reanimated
+owner decision P2, is not installed). Frames are compared by their `uri`, not
+by object identity, so a parent that rebuilds `{ uri }` on every render does
+not cross-fade; once the fade ends (or at once under reduced motion) the old
+frame is dropped, so only one decoded still stays mounted (review finding 5). The live dot breathes with a Reanimated
 CSS animation and holds still under reduced motion; blur drops under reduced
 transparency. Text on imagery is the `on-media` tone (white in both themes);
 `mediaLabel`/`mediaDetail` on it carry the prototype's text shadow, which
@@ -5702,6 +5774,20 @@ in its final shapes (`Skeleton`, `SkeletonRow`), the `Empty` and an optional
 around 0.5 and holds it at 0.5 under reduced motion, so the still fill has the
 prototype's average tone; in dark mode `skel` alone is all but invisible on
 `surface`.
+
+**At most two continuous animations (review finding 17).** On native one
+shared value per `ResourceView` drives the shimmer of every `Skeleton` in it
+(`shimmer.native.tsx`: one `withRepeat` over the same 0.5 → 1 → 0 → 0.5
+keyframes, read by each shape's `useAnimatedStyle`; it rests at 0.5 under
+reduced motion and while the screen is out of focus or backgrounded), where
+a six-row list ran about 24 animations. The web keeps one Reanimated CSS
+animation per shape (`shimmer.tsx`): those are compositor opacity
+animations, and a shared value would move them to a JavaScript frame loop
+writing every shape's style. A `Skeleton` outside a `ResourceView` keeps its
+own CSS shimmer. The live chip's dot stops breathing while its screen is out
+of focus or the app is in the background (`useScreenActive`), like Aura and
+`Presence`. Whether the native shimmer and the paused breathing measure as
+expected in the frame stats needs the phone (R9).
 
 ## Identity and frame components: Aura, Status, Nav, Screen (Phase 1, ds-c, 2026-10-20)
 
@@ -5733,24 +5819,44 @@ by a Reanimated CSS animation (`transform` only; real CSS keyframes on web, the
 UI thread on native). The field's mask (`linear-gradient(#000 55%,
 transparent)`) is an SVG overlay that fades to `bg` from 55 %, which is the
 same picture over a `bg` page. Still under reduced motion and on the low
-tier; under reduced transparency the prototype's `opacity: .6` (not the flat
-tint the spec text names); under Increase Contrast (`prefers-contrast: more`,
+tier. Under reduced transparency (which includes the low tier) the field and
+the band are a flat tint (the tone's first colour at the prototype's
+`opacity: .6`, no blobs) and the listening edge is the steady 3 px rim with
+no pulse, as spec §7b and §11 ask (review finding 16; the prototype's `rt`
+rule only dims the blobs, and the spec wins for an accessibility mode, so the
+reduced ui-lab baselines of Aura, Status, Screen and Nav were re-recorded).
+Under Increase Contrast (`prefers-contrast: more`,
 Android high-text-contrast, iOS darker colours, `use-increase-contrast`) no
-field and a 3 px accent rim on `edge`. `paused` stops the drift
+field and the same 3 px rim on `edge`. `paused` stops the drift
 (`animationPlayState`); `Screen` pauses its field once the content scrolls
-past it. The edge mode always draws the accent (the prototype's `.edge`), not
-the tone.
+past it, and the drift and the edge pulse also pause while their screen is
+out of focus or the app is in the background (`useScreenActive`,
+`src/shared/hooks/use-screen-active.ts`: expo-router's `useIsFocused` and
+`AppState`, as `Presence` does; finding 17). The edge mode always draws the
+accent (the prototype's `.edge`), not the tone.
 
 **Status.** `hero` is chosen by window class: compact is the `.herorow`
 (Presence slot 66, or 56 with `secondary`, the 30/26 sentence, one meta line,
 a wrapping row of glass stat chips), medium the same row at 36, expanded and
 wide the desktop `.dband` (its own Aura band, Presence 64, the 38 sentence on
 one line, stats that do not wrap, a trailing `action` slot). `card` is the
-`.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
-`alert`. A sentence change fades in over `motion.duration.base` (keyed
+`.status-alert` card. The card and the hero are `role="alert"` in tone
+`alert` only (the card was an alert in every tone, review finding 15).
+`role="alert"` on a native `View` announces nothing on Android, so in tone
+`alert` the sentence is also spoken through
+`AccessibilityInfo.announceForAccessibility` when it appears or changes
+(`src/shared/hooks/use-announce.ts`; react-native-web's is a no-op, so the web
+keeps only its live region); a Field error is spoken the same way. The tests
+check the calls; whether TalkBack and VoiceOver speak them once, and not
+twice over iOS's own handling, needs the phone. A sentence change fades in over `motion.duration.base` (keyed
 remount), instantly under reduced motion. `Presence` comes from `p1/native`:
 until it merges, `presence` is a render prop `(size) => node`, and the
 ui-lab draws a same-size `accent-soft` disc (`LabPresence`).
+
+`.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
+`alert`. A sentence change fades in over `motion.duration.base` (keyed
+remount), instantly under reduced motion. `presence` is a `PresenceState`
+and the hero draws `Presence` itself (66, 56 secondary, 64 in the band).
 
 **Nav.** `navigation` from `useWindowLayout` picks `bar` (compact and
 compact height), `rail` (medium, no prototype frame: tab-styled items in an
@@ -5766,7 +5872,9 @@ and the «Te escucho…» pill; on release the page point is compared with the
 tab's window rectangle, measured at press-in, grown by 24 px (also the press
 retention offset), and inside sends, outside cancels; a tap opens the chat.
 The accessible alternative is the `longpress` accessibility action, then a tap
-to stop and send. The Nav must be the last child of a full-screen container,
+to stop and send. A tab that unmounts while listening (a route change
+mid-hold) ends the listening without sending, `onListenEnd(false)`, so the
+voice session never stays open behind a gone tab (review finding 20c). The Nav must be the last child of a full-screen container,
 because the edge and the pill are absolute over it. `listening` lets a voice
 session started elsewhere light the same edge.
 
@@ -5790,7 +5898,12 @@ phones the columns flatten into the one scroll.
 **Tests.** The ui test preload stubs `react-native-safe-area-context`,
 `react-native-keyboard-controller` and `react-native-worklets` (they load
 React Native's Flow sources), and adds `makeMutable`,
-`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. Window
+`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. The
+preload also stubs `expo-router` (its `useIsFocused` answers
+`tests/unit/shared/ui/screen-focus.ts`, so a test can put a screen out of
+focus; a test that mocks `expo-router` again keeps that answer, because bun
+keeps the first mock's export names and the last mock's values), and
+Reanimated's `withTiming` calls its completion with `true` at once. Window
 classes are set through `tests/unit/shared/ui/window-width.ts`, which gives
 happy-dom a `documentElement.clientWidth` and fires `resize` (react-native-web
 reads the window size from there); a `mock.module` of the window hook hung the
@@ -5835,15 +5948,28 @@ Props verified in 3.11.18's source:
   `maxContentHeight = windowHeight − insets.top − 16`, `insetAdjustment
   'automatic'`, `footerOptions.keyboardOffset = −insets.bottom` (the footer's
   own safe-area padding tucks behind the keyboard), focus in `onDidPresent`.
-- `scrollableOptions.keyboardScrollOffset` is **16 + the footer's height**, not
-  16: TrueSheet scrolls the focused input to the keyboard's top and does not
-  know the footer floats over the content, so with 16 the caret of the notes
-  field hid behind Guardar. The body also pads by the footer's height minus the
-  bottom inset, or an `auto` sheet leaves a band above its footer.
+- `scrollableOptions.keyboardScrollOffset` is **16 + the field's tail + the
+  footer's height + one device pixel** (`focusScrollOffset`). TrueSheet
+  (`TrueSheetContentView.scrollToFocusedInput`) scrolls the caret's line, not
+  the input's box, to the offset above the scroll view's bottom, does not know
+  the footer floats over the content, and truncates the offset to whole
+  pixels. With 16 + the footer the caret line sat 16 dp above the footer, but
+  the 15.5 dp of field below it (`inset.field.top` + `inset.field.border`, the
+  text's vertical inset and the border) left the field's box 13.7 dp (36 px at
+  the S21 FE's 2.625) above Guardar. Adding the tail and a pixel for the
+  truncation keeps the box at least 16 dp above the footer's top edge at any
+  density. The body also pads by the footer's height minus the bottom inset,
+  or an `auto` sheet leaves a band above its footer.
 - The grabber is TrueSheet's native one (36 × 5, `text-3` at 40 %); the header
-  starts 24 dp down to clear it. Glass: `backgroundBlur` exists only on iOS;
-  Android gets `surface` at 94 % (`material.sheetSurfaceMix`) and no blur,
-  solid under `reduceTransparency`.
+  starts 24 dp down to clear it. Glass: `backgroundBlur` exists only on iOS
+  (3.11.18 types it `@platform ios`; Android paints `backgroundColor` into a
+  plain `ShapeDrawable`), so iOS gets `surface` at 94 %
+  (`material.sheetSurfaceMix`) over `system-material`, and Android and
+  reduced transparency get the solid `surface`: the 94 % surface without a
+  blur let the screen show through the header and body on the S21 FE.
+- The header, the body and the footer each sit in a `GestureHandlerRootView`
+  (`flexGrow: 1`): the sheet lives outside the app's root view on Android, and
+  the design system's presses are RNGH (TrueSheet's troubleshooting guide).
 
 Open questions, answered on the emulators:
 
@@ -5873,9 +5999,9 @@ measures the emulator, not the sheet.
 
 In landscape Gboard switches to its full-screen extract editor, so the sheet is
 hidden while typing; the sheet itself stays a sheet with its header and every
-field reachable once the editor closes. A field that should stay visible in
-landscape needs `disableFullscreenUI` on its `TextInput` (the `Field`
-component's decision, not the sheet's).
+field reachable once the editor closes. Every `Field` sets
+`disableFullscreenUI` (Android only; react-native-web drops the prop), so the
+editor never opens over a sheet.
 
 Dialog (web, Chromium, `uiux-map/redesign/phase1/spikes/sheet/web/`): title +
 ✕ on top, ⋯ bottom left, Guardar with its `Ctrl ↵`/`⌘ ↵` key bottom right

@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
+import { screenFocus } from './screen-focus';
 import './translation-stub';
 
 let search: Record<string, string> = {};
@@ -9,7 +10,7 @@ mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => search,
   useRouter: () => ({ setParams: () => undefined }),
-  useIsFocused: () => true,
+  useIsFocused: () => screenFocus.focused,
 }));
 mock.module('@/shared/hooks/use-theme-preference', () => ({ getThemePreference: () => 'system' }));
 
@@ -43,9 +44,9 @@ const { SwitchDemo } = await import('@/features/ui-lab/demos/switch-demo');
 const { TextDemo } = await import('@/features/ui-lab/demos/text-demo');
 const { ToastDemo } = await import('@/features/ui-lab/demos/toast-demo');
 const { UiLabScreen } = await import('@/features/ui-lab/screens/ui-lab-screen');
+const { UiLabRoute, SpikesRoute } = await import('@/features/ui-lab/screens/lab-routes');
 const { catalogue } = await import('@/features/ui-lab/catalogue');
 const { LabCase } = await import('@/features/ui-lab/components/lab-case');
-const { LabPresence } = await import('@/features/ui-lab/components/lab-presence');
 
 const DEMOS: Record<string, ComponentType> = {
   aura: AuraDemo,
@@ -104,11 +105,6 @@ describe('ui-lab', () => {
     expect(screen.getByTestId('case-sample')).toBeDefined();
   });
 
-  test('the lab presence stands in for Presence at the size it is given', () => {
-    const { container } = render(<LabPresence size={66} />);
-    expect((container.firstElementChild as HTMLElement).style.width).toBe('66px');
-  });
-
   test('the index lists the components and a parameter opens one', () => {
     (globalThis as Record<string, unknown>).__ARGUS_UI_LAB__ = true;
     search = {};
@@ -118,5 +114,18 @@ describe('ui-lab', () => {
     search = { c: 'chip', theme: 'dark' };
     render(<UiLabScreen />);
     expect(screen.getByTestId('ui-lab-stage')).toBeDefined();
+  });
+
+  test('the routes load the lab on demand, and only where it is allowed', async () => {
+    (globalThis as Record<string, unknown>).__ARGUS_UI_LAB__ = false;
+    const closed = render(<UiLabRoute />);
+    expect(closed.container.innerHTML).toBe('');
+    closed.unmount();
+    render(<SpikesRoute />);
+    expect(screen.queryByTestId('spikes')).toBeNull();
+    (globalThis as Record<string, unknown>).__ARGUS_UI_LAB__ = true;
+    search = {};
+    render(<UiLabRoute />);
+    expect(await screen.findByRole('button', { name: 'Button, button' })).toBeDefined();
   });
 });

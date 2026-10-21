@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Alert } from 'react-native';
 import './translation-stub';
 
@@ -7,6 +7,7 @@ const { ConfirmBox } = await import('@/shared/ui/confirm/confirm-box');
 const { Confirm } = await import('@/shared/ui/confirm/confirm');
 const { ConfirmDialog } = await import('@/shared/ui/confirm/confirm-dialog');
 const { Confirm: NativeConfirm } = await import('@/shared/ui/confirm/confirm.native');
+const { confirmForm } = await import('@/shared/ui/confirm/confirm-form');
 
 function resize(width: number) {
   Object.defineProperty(document.documentElement, 'clientWidth', {
@@ -128,5 +129,66 @@ describe('Confirm', () => {
     );
     expect(screen.getByRole('alertdialog', { name: siren.title })).toBeDefined();
     resize(0);
+  });
+
+  test('a destructive dialog confirms once however often its button is pressed', () => {
+    let confirmed = 0;
+    let cancelled = 0;
+    render(
+      <ConfirmDialog
+        open
+        {...siren}
+        variant="destructive"
+        onConfirm={() => {
+          confirmed += 1;
+        }}
+        onCancel={() => {
+          cancelled += 1;
+        }}
+      />
+    );
+    const confirm = screen.getByRole('button', { name: 'Hacer sonar' });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect([confirmed, cancelled]).toEqual([1, 0]);
+  });
+
+  test('an asynchronous confirmation is busy until it settles and answers again on reopening', async () => {
+    let confirmed = 0;
+    let finish: () => void = () => undefined;
+    const onConfirm = () => {
+      confirmed += 1;
+      return new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+    };
+    const { rerender } = render(
+      <ConfirmDialog open {...siren} onConfirm={onConfirm} onCancel={() => undefined} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Hacer sonar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hacer sonar' }));
+    expect(confirmed).toBe(1);
+    expect(screen.getByRole('button', { name: 'Hacer sonar' }).getAttribute('aria-busy')).toBe(
+      'true'
+    );
+    await act(async () => {
+      finish();
+      await Promise.resolve();
+    });
+    rerender(
+      <ConfirmDialog open={false} {...siren} onConfirm={onConfirm} onCancel={() => undefined} />
+    );
+    rerender(<ConfirmDialog open {...siren} onConfirm={onConfirm} onCancel={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Hacer sonar' }));
+    expect(confirmed).toBe(2);
+  });
+
+  test('a destructive confirmation on an Android phone is the dialog, so Back can cancel it', () => {
+    const phone = { compact: true, android: true };
+    expect(confirmForm({ ...phone, destructive: true })).toBe('dialog');
+    expect(confirmForm({ ...phone, destructive: false })).toBe('alert');
+    expect(confirmForm({ compact: true, destructive: true, android: false })).toBe('alert');
+    expect(confirmForm({ compact: false, destructive: false, android: false })).toBe('dialog');
   });
 });

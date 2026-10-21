@@ -1,3 +1,5 @@
+import type { FlightAction } from '@/shared/ui/button';
+
 export type ConfirmVariant = 'default' | 'destructive';
 
 export type ConfirmProps = {
@@ -6,6 +8,6 @@ export type ConfirmProps = {
   body: string;
   confirmLabel: string;
   variant?: ConfirmVariant;
-  onConfirm: () => void;
+  onConfirm: FlightAction;
   onCancel: () => void;
 };

@@ -14,10 +14,12 @@ export type TextVariant = TypeStep | keyof typeof typeRoles;
 export type TextTone =
   'default' | '2' | '3' | 'ok' | 'attn' | 'alert' | 'accent' | 'on-ink' | 'on-media';
 
+export type HeadingLevel = 1 | 2 | 3 | 4;
+
 export type TextProps = {
   variant?: TextVariant;
   tone?: TextTone;
-  heading?: boolean;
+  heading?: HeadingLevel;
   struck?: boolean;
   underline?: boolean;
   align?: 'start' | 'center';
@@ -147,6 +149,7 @@ export function Text({
   return (
     <NativeText
       role={heading ? 'heading' : undefined}
+      aria-level={heading}
       maxFontSizeMultiplier={spec.maxScale}
       numberOfLines={numberOfLines}
       testID={testID}

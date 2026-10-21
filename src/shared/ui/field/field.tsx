@@ -93,6 +93,7 @@ function Entry({
         style={FRAME_BORDER}>
         <TextInput
           ref={ref}
+          disableFullscreenUI
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}

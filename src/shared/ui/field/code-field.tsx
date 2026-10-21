@@ -74,6 +74,7 @@ export function CodeField({ label, value, onChangeText, error, submit, ref }: Co
         ))}
         <TextInput
           ref={ref}
+          disableFullscreenUI
           value={value}
           onChangeText={(text) => onChangeText(text.toUpperCase())}
           maxLength={CODE_LENGTH}

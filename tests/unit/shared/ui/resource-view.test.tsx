@@ -5,6 +5,12 @@ import { Empty } from '@/shared/ui/resource-view/empty';
 import type { Resource } from '@/shared/ui/resource-view/resource';
 import { ResourceView, type ResourceCopy } from '@/shared/ui/resource-view/resource-view';
 import { Skeleton, SkeletonRow } from '@/shared/ui/resource-view/skeleton';
+import {
+  ShimmerProvider as WebShimmerProvider,
+  useShimmerStyle as useWebShimmerStyle,
+} from '@/shared/ui/resource-view/shimmer';
+import { ShimmerProvider, useShimmerStyle } from '@/shared/ui/resource-view/shimmer.native';
+import { screenFocus } from './screen-focus';
 
 const COPY: ResourceCopy = {
   loading: 'Cargando',
@@ -20,6 +26,9 @@ const EMPTY = {
   action: { label: 'Nuevo recordatorio', onPress: () => undefined },
 };
 
+const canvases = () =>
+  [...globalThis.document.querySelectorAll('canvas')].map((node) => node.style.width);
+
 function view(resource: Resource<string>) {
   return render(
     <ResourceView
@@ -27,7 +36,7 @@ function view(resource: Resource<string>) {
       copy={COPY}
       skeleton={<span data-testid="skeleton" />}
       empty={EMPTY}
-      concern={<span data-testid="concern" />}>
+      concern>
       {(data) => <span>{data}</span>}
     </ResourceView>
   );
@@ -67,7 +76,7 @@ describe('ResourceView', () => {
     let retries = 0;
     view({ status: 'failed', retry: () => void (retries += 1) });
     expect(screen.getByText('Cámaras sin conexión')).toBeDefined();
-    expect(screen.getByTestId('concern')).toBeDefined();
+    expect(canvases()).toEqual(['52px']);
     expect(screen.queryByText('Nada pendiente hoy')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(retries).toBe(1);
@@ -82,11 +91,11 @@ describe('ResourceView', () => {
 
   test('an empty view keeps its follow-ups below the card', () => {
     render(
-      <Empty {...EMPTY} presence={<span data-testid="presence" />}>
+      <Empty {...EMPTY} presence="happy">
         <span>Recuérdame pagar el agua</span>
       </Empty>
     );
-    expect(screen.getByTestId('presence')).toBeDefined();
+    expect(canvases()).toEqual(['52px']);
     expect(screen.getByText('Recuérdame pagar el agua')).toBeDefined();
   });
 
@@ -108,5 +117,48 @@ describe('ResourceView', () => {
     );
     expect(rows.container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(4);
     act(() => useEffectsOverrides.setState({ reduceMotion: null }));
+  });
+
+  test('on native one shimmer value drives every skeleton of a view, still off-screen', () => {
+    const seen: object[] = [];
+    function Probe() {
+      seen.push(useShimmerStyle());
+      return null;
+    }
+    render(
+      <ShimmerProvider>
+        <Probe />
+        <Probe />
+        <Probe />
+      </ShimmerProvider>
+    );
+    expect(seen.every((style) => !('animationName' in style))).toBe(true);
+    expect(new Set(seen.map((style) => JSON.stringify(style))).size).toBe(1);
+    seen.length = 0;
+    render(<Probe />);
+    expect(seen.every((style) => 'animationName' in style)).toBe(true);
+    seen.length = 0;
+    screenFocus.focused = false;
+    render(
+      <ShimmerProvider>
+        <Probe />
+      </ShimmerProvider>
+    );
+    expect(seen).toEqual([{ opacity: 0.5 }]);
+    screenFocus.focused = true;
+  });
+
+  test('on the web each skeleton keeps its compositor shimmer, inside a view or not', () => {
+    const seen: object[] = [];
+    function Probe() {
+      seen.push(useWebShimmerStyle());
+      return null;
+    }
+    render(
+      <WebShimmerProvider>
+        <Probe />
+      </WebShimmerProvider>
+    );
+    expect(seen.every((style) => 'animationName' in style)).toBe(true);
   });
 });

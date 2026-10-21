@@ -34,7 +34,7 @@ export function ButtonDemo() {
         <Button variant="danger" compact label={copy.sos} onPress={noop} />
       </LabCase>
       <LabCase id="glass-compact">
-        <Button glass compact trailingIcon="chevd" label={copy.home} onPress={noop} />
+        <Button glass compact trailing={{ icon: 'chevd' }} label={copy.home} onPress={noop} />
       </LabCase>
       <LabCase id="icon-glass">
         <Button iconOnly glass icon="search" iconSize="small" label={copy.search} onPress={noop} />

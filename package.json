@@ -31,7 +31,7 @@
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
     "web": "expo start -c --web",
-    "lint": "eslint src scripts --max-warnings 0",
+    "lint": "node --max-old-space-size=4096 node_modules/eslint/bin/eslint.js src scripts --max-warnings 0",
     "test": "tsc -p tests && bun test --path-ignore-patterns='tests/unit/shared/ui/**' tests/unit tests/contracts && bun run test:ui",
     "test:ui": "bun test --config=tests/unit/shared/ui/bunfig.toml tests/unit/shared/ui",
     "test:bench": "bun test tests/bench",

@@ -1,9 +1,12 @@
 import { useEffect, useEffectEvent } from 'react';
 import { Alert } from 'react-native';
+import { IS_ANDROID } from '@/shared/constants';
 import { useWindowLayout } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ConfirmDialog } from './confirm-dialog';
+import { confirmForm } from './confirm-form';
 import type { ConfirmProps } from './confirm-types';
+import { useConfirmLatch } from './use-confirm-latch';
 
 function NativeAlert({
   open,
@@ -15,16 +18,22 @@ function NativeAlert({
   onCancel,
 }: ConfirmProps) {
   const { t } = useTranslation();
+  const latch = useConfirmLatch(open);
   const present = useEffectEvent(() => {
     const destructive = variant === 'destructive';
+    const cancel = latch.once(onCancel);
     Alert.alert(
       title,
       body,
       [
-        { text: t('common.cancel'), style: 'cancel', onPress: onCancel },
-        { text: confirmLabel, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
+        { text: t('common.cancel'), style: 'cancel', onPress: cancel },
+        {
+          text: confirmLabel,
+          style: destructive ? 'destructive' : 'default',
+          onPress: latch.once(onConfirm),
+        },
       ],
-      { cancelable: !destructive, onDismiss: onCancel }
+      { cancelable: !destructive, onDismiss: cancel }
     );
   });
   useEffect(() => {
@@ -35,6 +44,11 @@ function NativeAlert({
 
 export function Confirm(props: ConfirmProps) {
   const { windowClass } = useWindowLayout();
-  if (windowClass === 'compact') return <NativeAlert {...props} />;
+  const form = confirmForm({
+    compact: windowClass === 'compact',
+    destructive: props.variant === 'destructive',
+    android: IS_ANDROID,
+  });
+  if (form === 'alert') return <NativeAlert {...props} />;
   return <ConfirmDialog {...props} />;
 }

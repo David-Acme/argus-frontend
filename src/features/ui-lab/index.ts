@@ -1,2 +1,1 @@
-export { UiLabScreen } from './screens/ui-lab-screen';
-export { SpikesScreen } from './spikes-screen';
+export { SpikesRoute, UiLabRoute } from './screens/lab-routes';

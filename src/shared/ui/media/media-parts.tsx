@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { illustration, motion, size, useEffects } from '@/shared/theme';
+import { useScreenActive } from '@/shared/hooks/use-screen-active';
+import { illustration, motion, size, useEffects, useWindowLayout } from '@/shared/theme';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 
@@ -11,7 +12,7 @@ export type MediaDormant = 'off' | 'privacy';
 
 export type MediaControl = { icon: IconGlyph; label: string; onPress: () => void };
 
-export type MediaEye = { label: string; presence?: ReactNode };
+export type MediaEye = { label: string };
 
 type LabelRowProps = { name?: string; detail?: string; dormant?: MediaDormant };
 
@@ -31,6 +32,8 @@ const BREATHING = {
   animationIterationCount: 'infinite',
   animationTimingFunction: 'ease-in-out',
 } as const;
+
+const ASLEEP = { animationPlayState: 'paused' } as const;
 
 const CHIP = { backgroundColor: illustration.mediaChip };
 
@@ -70,6 +73,7 @@ export function LabelRow({ name, detail, dormant }: LabelRowProps) {
 
 export function LiveChip({ label }: LiveChipProps) {
   const { reduceMotion } = useEffects();
+  const active = useScreenActive();
   const blur = useBlur();
   return (
     <View
@@ -80,7 +84,7 @@ export function LiveChip({ label }: LiveChipProps) {
       style={CHIP}>
       <Animated.View
         className="size-dot rounded-full"
-        style={reduceMotion ? LIVE_DOT : [LIVE_DOT, BREATHING]}
+        style={reduceMotion ? LIVE_DOT : [LIVE_DOT, BREATHING, active ? null : ASLEEP]}
       />
       <Text variant="mediaChip" tone="on-media">
         {label}
@@ -119,6 +123,8 @@ export function Controls({ controls }: ControlsProps) {
 
 export function EyeCorner({ eye }: EyeCornerProps) {
   const blur = useBlur();
+  const { windowClass } = useWindowLayout();
+  const mark = windowClass === 'compact' ? size.presenceEye : size.presenceEyeWide;
   return (
     <View
       role="status"
@@ -127,7 +133,7 @@ export function EyeCorner({ eye }: EyeCornerProps) {
         blur
       )}
       style={EYE}>
-      {eye.presence}
+      <Presence state="look" size={mark} />
       <Text variant="eyeChip" tone="on-media">
         {eye.label}
       </Text>

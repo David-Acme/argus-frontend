@@ -16,7 +16,7 @@ const MODES = [
 
 const HEIGHT = 900;
 
-const NEVER_STILL: ReadonlySet<string> = new Set(['presence']);
+const CHUNKS = 3;
 
 const SHOT = { maxDiffPixels: 40, timeout: 15000 } as const;
 
@@ -26,6 +26,14 @@ const UPDATING = process.env.ARGUS_E2E_UPDATE_SCREENS === '1';
 
 const enableLab = (): void => {
   Reflect.set(globalThis, '__ARGUS_UI_LAB__', true);
+  if (location.search.includes('rm=1')) return;
+  const hide = (): void => {
+    const style = document.createElement('style');
+    style.textContent = 'canvas{visibility:hidden!important}';
+    document.head.append(style);
+  };
+  if (document.head) hide();
+  else document.addEventListener('DOMContentLoaded', hide);
 };
 
 const platformOf = async (browser: Browser): Promise<string> => {
@@ -44,35 +52,41 @@ const catalogueIds = (browser: Browser): Promise<string[]> =>
     )
   );
 
+const chunks = Array.from({ length: CHUNKS }, (_, index) => index);
+
 for (const width of WIDTHS) {
   for (const theme of THEMES) {
-    test(`every ui-lab component looks as recorded at ${width} px in ${theme}`, async ({
-      app,
-      browser,
-      screen,
-    }) => {
-      await browser.setViewport({ width, height: HEIGHT });
-      await browser.addInitScript(installTauriShim, unpairedDevice('A'));
-      await browser.addInitScript(enableLab);
-      await app.open('/ui-lab');
-      await expect(screen.getByTestId('ui-lab-entry-button')).toBeVisible({ timeout: 15000 });
-      const platform = await platformOf(browser);
-      test.skip(
-        !UPDATING && !platformRecorded(platform),
-        `no ui-lab baseline for ${platform}: run \`bun run test:e2e:update-screens\` on this machine`
-      );
-      const components = (await catalogueIds(browser)).filter((id) => !NEVER_STILL.has(id));
-      for (const component of components) {
-        for (const mode of MODES) {
-          await app.open(`/ui-lab?c=${component}&theme=${theme}${mode.query}`);
-          const stage = screen.getByTestId('ui-lab-stage');
-          await expect(stage).toBeVisible({ timeout: 15000 });
-          await expect(stage).toHaveScreenshot(
-            `${component}-${width}-${theme}-${mode.name}-${platform}.png`,
-            SHOT
-          );
+    for (const chunk of chunks) {
+      test(`ui-lab components, part ${chunk + 1} of ${CHUNKS}, look as recorded at ${width} px in ${theme}`, async ({
+        app,
+        browser,
+        screen,
+      }) => {
+        await browser.setViewport({ width, height: HEIGHT });
+        await browser.addInitScript(installTauriShim, unpairedDevice('A'));
+        await browser.addInitScript(enableLab);
+        await app.open('/ui-lab');
+        await expect(screen.getByTestId('ui-lab-entry-button')).toBeVisible({ timeout: 15000 });
+        const platform = await platformOf(browser);
+        test.skip(
+          !UPDATING && !platformRecorded(platform),
+          `no ui-lab baseline for ${platform}: run \`bun run test:e2e:update-screens\` on this machine`
+        );
+        const components = (await catalogueIds(browser)).filter(
+          (_, index) => index % CHUNKS === chunk
+        );
+        for (const component of components) {
+          for (const mode of MODES) {
+            await app.open(`/ui-lab?c=${component}&theme=${theme}${mode.query}`);
+            const stage = screen.getByTestId('ui-lab-stage');
+            await expect(stage).toBeVisible({ timeout: 15000 });
+            await expect(stage).toHaveScreenshot(
+              `${component}-${width}-${theme}-${mode.name}-${platform}.png`,
+              SHOT
+            );
+          }
         }
-      }
-    });
+      });
+    }
   }
 }

@@ -13,13 +13,39 @@ import { LabCase } from '../components/lab-case';
 import { presenceCopy } from './demo-copy';
 
 const STAGE = 190;
-const COMPACT = 66;
-const ICON = 36;
+const CELL = 150;
+const ICONS = [28, 36, 48] as const;
+const CATALOGUE: readonly PresenceState[] = [
+  'idle',
+  'listen',
+  'think',
+  'speak',
+  'happy',
+  'alert',
+  'watch',
+  'look',
+  'sleep',
+  'off',
+];
 
-export function PresenceDemo() {
+function CatalogueCell({ state }: { state: PresenceState }) {
+  return (
+    <LabCase id={`state-${state}`}>
+      <View className="items-center">
+        <Presence state={state} size={CELL} />
+        <View className="mt-1.5 flex-row items-center gap-2">
+          {ICONS.map((size) => (
+            <Presence key={size} state={state} size={size} />
+          ))}
+        </View>
+      </View>
+    </LabCase>
+  );
+}
+
+function Playground() {
   const [state, setState] = useState<PresenceState>('idle');
   const [cue, setCue] = useState<PresenceCue | undefined>(undefined);
-
   return (
     <LabCase id="presence" block>
       <View className="gap-4" testID="presence-demo">
@@ -53,17 +79,18 @@ export function PresenceDemo() {
             </Button>
           ))}
         </View>
-        <Text variant="subhead">{presenceCopy.sizes}</Text>
-        <View className="flex-row flex-wrap gap-3">
-          {presenceStates.map((name) => (
-            <View key={name} className="items-center gap-1">
-              <Presence state={name} size={COMPACT} />
-              <Presence state={name} size={ICON} />
-              <Text variant="caption">{name}</Text>
-            </View>
-          ))}
-        </View>
       </View>
     </LabCase>
+  );
+}
+
+export function PresenceDemo() {
+  return (
+    <>
+      <Playground />
+      {CATALOGUE.map((name) => (
+        <CatalogueCell key={name} state={name} />
+      ))}
+    </>
   );
 }

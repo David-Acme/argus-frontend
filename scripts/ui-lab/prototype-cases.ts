@@ -5,9 +5,6 @@ const glyphs = (small: boolean): string =>
 
 const alertbox = (title: string, body: string, acts: string): string =>
   `'<div class="alertbox" role="alertdialog" style="position:static;transform:none;max-width:480px"><div class="t-title">${title}</div><p class="t-body t-2" style="margin:12px 0 0">${body}</p><div class="acts">${acts}</div></div>'`;
-const still = (expr: string): string =>
-  `(${expr}).replace(/<canvas[^>]*data-sz="(\\d+)"[^>]*><\\/canvas>/g,(m,n)=>'<span style="width:'+n+'px;height:'+n+'px;border-radius:50%;background:var(--accent-soft);flex:none;display:block"></span>')`;
-
 const field = (tone: string): string =>
   `'<div style="position:relative;height:300px;overflow:hidden;background:var(--bg)"><div class="aura aura-${tone}${tone === 'alert' ? ' alert' : ''}" style="height:300px" aria-hidden="true"><i></i><i></i><i></i></div></div>'`;
 
@@ -17,10 +14,10 @@ const band = (tone: string): string =>
 const phone = (inner: string, cls = ''): string =>
   `'<div class="phone ${cls}" style="height:760px;border:0;border-radius:0;box-shadow:none;background:var(--bg)">'+${inner}+'</div>'`;
 
-type Hero = { cls: string; size: number; sentence: string; meta: string };
+type Hero = { cls: string; size: number; sentence: string; meta: string; state?: string };
 
-const herorow = ({ cls, size, sentence, meta }: Hero): string =>
-  `'<div class="herorow ${cls}">'+masc('idle',${size})+'<div><div class="t-hero">${sentence}</div><div class="t-meta">${meta}</div></div></div>'`;
+const herorow = ({ cls, size, sentence, meta, state = 'idle' }: Hero): string =>
+  `'<div class="herorow ${cls}">'+masc('${state}',${size})+'<div><div class="t-hero">${sentence}</div><div class="t-meta">${meta}</div></div></div>'`;
 
 const homeStats =
   "'<div class=\"stats\"><span class=\"chip\">'+ic('cam','s')+'<b>5</b> cámaras</span><span class=\"chip\">'+ic('shieldok','s')+'<b>0</b> alertas hoy</span><span class=\"chip\">'+ic('hist','s')+'<b>4</b> detecciones</span></div>'";
@@ -29,10 +26,8 @@ const homeTop = (updating: boolean): string =>
   `'<div class="topbar" style="min-height:44px"><div class="grow"><div class="t-meta" style="font-weight:600">Buenas tardes, Ana</div></div>${updating ? '<span class="updating"><i></i>Actualizando</span>' : ''}<button class="ibtn glass" aria-label="Buscar">'+ic('search','s')+'</button></div>'`;
 
 const home = (updating: boolean): string =>
-  still(
-    phone(
-      `'<div class="scr"><div class="aura aura-calm" style="height:300px" aria-hidden="true"><i></i><i></i><i></i></div><div class="body">'+${homeTop(updating)}+${herorow({ cls: '', size: 66, sentence: 'Todo tranquilo.', meta: 'En casa · Luis y tú en casa' })}+${homeStats}+'<div class="sec" style="margin-top:18px">'+ahoraH()+ahora()+'</div></div></div>'`
-    )
+  phone(
+    `'<div class="scr"><div class="aura aura-calm" style="height:300px" aria-hidden="true"><i></i><i></i><i></i></div><div class="body">'+${homeTop(updating)}+${herorow({ cls: '', size: 66, sentence: 'Todo tranquilo.', meta: 'En casa · Luis y tú en casa' })}+${homeStats}+'<div class="sec" style="margin-top:18px">'+ahoraH()+ahora()+'</div></div></div>'`
   );
 
 const news =
@@ -42,11 +37,18 @@ const sidestat =
   '\'<div class="sidestat"><div class="ss-h"><b>Argus de Casa</b></div><div class="ss-r">\'+ic(\'home\',\'s\')+\'<span>Modo <b>En casa</b></span></div><div class="ss-r">\'+ic(\'cam\',\'s\')+\'<span><b>5 de 6</b> cámaras activas</span></div><div><div class="ss-r" style="justify-content:space-between"><span>Almacenamiento</span><b>62%</b></div><div class="meter"><i style="width:62%"></i></div></div><div class="ss-ask">\'+masc(\'idle\',20)+\'Pregúntale a Argus…</div></div>\'';
 
 const navFor = (cls: string): string =>
-  still(
-    `(innerWidth>=1024?'<div class="desk" style="height:760px">'+SIDE('inicio')+'</div>':${phone("tabs('home')", cls)})`
-  );
+  `(innerWidth>=1024?'<div class="desk" style="height:760px">'+SIDE('inicio')+'</div>':${phone("tabs('home')", cls)})`;
+
+const CATALOGUE = 'idle listen think speak happy alert watch look sleep off'.split(' ');
+
+const cell = (state: string): string =>
+  `'<div style="display:flex;flex-direction:column;align-items:center">'+masc('${state}',150)+'<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'+masc('${state}',28)+masc('${state}',36)+masc('${state}',48)+'</div></div>'`;
 
 export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
+  presence: Object.fromEntries(CATALOGUE.map((state) => [`state-${state}`, cell(state)])),
+  sheet: {
+    dialog: `OV.dialog(false,false).replace(/^<div class="scrim"[^>]*><\\/div>/,'').replace('class="dlg"','class="dlg" style="position:static;transform:none;animation:none;max-width:100%"')`,
+  },
   text: {
     hero: '\'<div class="t-hero">hero 36/40 · Todo tranquilo.</div>\'',
     title: '\'<div class="t-title">title 22/28 · Seguridad</div>\'',
@@ -167,7 +169,7 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
   },
   menu: {
     panel:
-      '`<div class="palette" style="position:static;transform:none;animation:none;width:auto;min-width:220px;border-radius:20px;background:color-mix(in srgb,var(--surface) 55%,transparent)"><div class="grp"><div class="it" style="min-height:36px">${ic(\'check\',\'s\')}Marcar como hecho</div><div class="it" style="min-height:36px">${ic(\'clock\',\'s\')}Posponer 1 hora</div><div class="it" style="min-height:36px;color:var(--alert)">${ic(\'x\',\'s\')}Borrar</div></div></div>`',
+      '`<div class="palette" style="position:static;transform:none;animation:none;width:auto;min-width:220px;border-radius:20px;background:color-mix(in srgb,var(--surface) 55%,transparent)"><div class="grp"><div class="it">${ic(\'check\',\'s\')}Marcar como hecho</div><div class="it">${ic(\'clock\',\'s\')}Posponer 1 hora</div><div class="it" style="color:var(--alert)">${ic(\'x\',\'s\')}Borrar</div></div></div>`',
   },
   command: {
     palette:
@@ -229,7 +231,7 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
     'tile-privacy': "media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})",
     'tile-off': "media('off','Garaje',{ctr:ic('eyeoff'),r:'Apagada'})",
     stage:
-      "'<div class=\"video\">'+media('scene-kitchen','',{live:true})+'<span class=\"ui dark eyecorner\" role=\"status\">Argus mira</span><div class=\"ov\"><button class=\"ibtn\">'+ic('speaker','s')+'</button><button class=\"ibtn\">'+ic('max','s')+'</button></div></div>'",
+      "'<div class=\"video\">'+media('scene-kitchen','',{live:true})+'<span class=\"ui dark eyecorner\" role=\"status\">'+masc('look',56)+'Argus mira</span><div class=\"ov\"><button class=\"ibtn\">'+ic('speaker','s')+'</button><button class=\"ibtn\">'+ic('max','s')+'</button></div></div>'",
     'stage-privacy':
       "'<div class=\"video\">'+media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})+'</div>'",
     patio:
@@ -239,7 +241,7 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
     failed:
       "ncard({icon:'wifioff',tone:'attn',t:'Cámaras sin conexión',b:'Revisa el Wi-Fi.',a:'<button class=\"btn compact\">Reintentar</button>'})",
     empty:
-      '\'<div class="ncard"><div class="nh">\'+lic(\'check\',\'ok\',1)+\'<div><div class="nt">Nada pendiente hoy</div><div class="nb">Tienes el día libre.</div></div></div><button class="btn primary block">\'+ic(\'plus\',\'s\')+\'Nuevo recordatorio</button></div><div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>\'',
+      '\'<div class="ncard"><div class="nh" style="align-items:center">\'+masc(\'happy\',52)+\'<div><div class="nt">Nada pendiente hoy</div><div class="nb">Tienes el día libre.</div></div></div><button class="btn primary block">\'+ic(\'plus\',\'s\')+\'Nuevo recordatorio</button></div><div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>\'',
     stale:
       "'<div class=\"banner attn\" style=\"margin-top:0\">'+ic('wifioff','s')+'<span class=\"grow\">Sin conexión. Datos de las 15:32.</span></div>'+sec('Lo último',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras en línea',chev:false})]),null,'hace 10 min')",
     ready:
@@ -261,26 +263,22 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
     edge: `'<div style="position:relative;height:300px;border-radius:28px;overflow:hidden;background:var(--bg)"><div class="aura aura-listen" style="height:300px" aria-hidden="true"><i></i><i></i><i></i></div><div class="edge"></div></div>'`,
   },
   status: {
-    'hero-calm': still(
-      `'<div>'+${herorow({ cls: '', size: 66, sentence: 'Todo tranquilo.', meta: 'En casa · Luis y tú en casa' })}+${homeStats}+'</div>'`
-    ),
-    'hero-security': still(
-      `'<div>'+${herorow({ cls: '', size: 66, sentence: 'En casa', meta: 'Te aviso solo de desconocidos' })}+'<div class="stats"><span class="chip"><b>0</b> en curso</span><span class="chip" style="color:var(--attn)"><b>1</b> por revisar</span><span class="chip">'+ic('door','s')+'<b>1</b> visita hoy</span></div></div>'`
-    ),
-    'hero-night': still(
-      herorow({ cls: '', size: 66, sentence: 'Buenas noches.', meta: 'Modo Noche · vigilo por ti' })
-    ),
-    'hero-band': still(
-      `'<div style="padding:18px 28px 6px;max-width:2256px;margin:0 auto;width:100%;box-sizing:border-box"><div class="dband">'+aura('calm','band')+masc('idle',64)+'<div style="flex:1;min-width:0"><div class="t-hero" style="font-size:38px;white-space:nowrap">Todo tranquilo.</div><div class="t-meta">Buenas tardes, Ana · Modo En casa · Luis y tú en casa</div></div><div class="stats" style="margin:0;flex-wrap:nowrap"><span class="chip">'+ic('cam','s')+'<b>5</b> cámaras</span><span class="chip">'+ic('shieldok','s')+'<b>0</b> alertas hoy</span></div><button class="btn compact primary">'+ic('plus','s')+'Nuevo</button></div></div>'`
-    ),
-    alert: still(
-      `'<div>'+${herorow({ cls: 'sm', size: 56, sentence: 'Alguien en el patio.', meta: 'Hace 1 min · ya avisé a Luis' })}+'<div class="status-alert" role="alert">'+media('scene-night','Patio trasero',{live:true})+'<div style="display:flex;gap:8px"><button class="btn primary" style="flex:1">Ver cámara</button><button class="btn" style="flex:1">Es conocido</button></div><button class="btn ghost compact" style="align-self:center">Es una falsa alarma</button></div></div>'`
-    ),
+    'hero-calm': `'<div>'+${herorow({ cls: '', size: 66, sentence: 'Todo tranquilo.', meta: 'En casa · Luis y tú en casa' })}+${homeStats}+'</div>'`,
+    'hero-security': `'<div>'+${herorow({ cls: '', size: 66, sentence: 'En casa', meta: 'Te aviso solo de desconocidos' })}+'<div class="stats"><span class="chip"><b>0</b> en curso</span><span class="chip" style="color:var(--attn)"><b>1</b> por revisar</span><span class="chip">'+ic('door','s')+'<b>1</b> visita hoy</span></div></div>'`,
+    'hero-night': herorow({
+      cls: '',
+      size: 66,
+      sentence: 'Buenas noches.',
+      meta: 'Modo Noche · vigilo por ti',
+      state: 'duty',
+    }),
+    'hero-band': `'<div style="padding:18px 28px 6px;max-width:2256px;margin:0 auto;width:100%;box-sizing:border-box"><div class="dband">'+aura('calm','band')+masc('idle',64)+'<div style="flex:1;min-width:0"><div class="t-hero" style="font-size:38px;white-space:nowrap">Todo tranquilo.</div><div class="t-meta">Buenas tardes, Ana · Modo En casa · Luis y tú en casa</div></div><div class="stats" style="margin:0;flex-wrap:nowrap"><span class="chip">'+ic('cam','s')+'<b>5</b> cámaras</span><span class="chip">'+ic('shieldok','s')+'<b>0</b> alertas hoy</span></div><button class="btn compact primary">'+ic('plus','s')+'Nuevo</button></div></div>'`,
+    alert: `'<div>'+${herorow({ cls: 'sm', size: 56, sentence: 'Alguien en el patio.', meta: 'Hace 1 min · ya avisé a Luis', state: 'alert' })}+'<div class="status-alert" role="alert">'+media('scene-night','Patio trasero',{live:true})+'<div style="display:flex;gap:8px"><button class="btn primary" style="flex:1">Ver cámara</button><button class="btn" style="flex:1">Es conocido</button></div><button class="btn ghost compact" style="align-self:center">Es una falsa alarma</button></div></div>'`,
   },
   nav: {
     nav: navFor(''),
     listening: navFor('listening'),
-    status: still(`'<div style="width:244px">'+${sidestat}+'</div>'`),
+    status: `'<div style="width:244px">'+${sidestat}+'</div>'`,
   },
   screen: {
     inicio: home(false),

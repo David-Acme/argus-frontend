@@ -26,13 +26,19 @@ export function PressableSurface({
         aria-selected={a11y.selected}
         aria-busy={a11y.busy}
         aria-disabled={disabled}
+        tabIndex={a11y.tabStop === false ? -1 : undefined}
         disabled={disabled}
         hitSlop={hitSlop}
         onPress={press.onPress}
         onPressIn={press.onPressIn}
         onPressOut={press.onPressOut}
         testID={testID}
-        className={clsx('web:focus-ring', pressed?.fill && 'web:hover:bg-fill', className)}
+        className={clsx(
+          'web:focus-ring',
+          pressed?.fill && 'web:hover:bg-fill',
+          hitSlop && 'web:hit-target',
+          className
+        )}
         style={press.surfaceStyle}>
         {children}
       </Pressable>

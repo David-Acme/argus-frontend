@@ -3,6 +3,7 @@ import { useId } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient, Rect, Stop, Svg } from 'react-native-svg';
+import { useScreenActive } from '@/shared/hooks/use-screen-active';
 import { auraField, useEffects, useThemeTokens, type AuraTone } from '@/shared/theme';
 import { AuraBlobView } from './aura-blob';
 import { useIncreaseContrast } from './use-increase-contrast';
@@ -16,9 +17,11 @@ export type AuraProps = {
   paused?: boolean;
 };
 
-type Look = { still: boolean; faded: boolean; contrast: boolean };
+type Look = { still: boolean; faded: boolean; contrast: boolean; asleep: boolean };
 
 type EdgeProps = { look: Look };
+
+type BlobsProps = { tone: AuraTone; look: Look; paused: boolean };
 
 const HIDDEN = {
   'aria-hidden': true,
@@ -33,6 +36,8 @@ const PULSE = {
   animationDirection: 'alternate',
   animationTimingFunction: 'ease-in-out',
 } as const;
+
+const ASLEEP = { animationPlayState: 'paused' } as const;
 
 type Drift = { blob: (typeof auraField.blobs)[number]; seconds: number; paused: boolean };
 
@@ -53,7 +58,8 @@ function driftOf({ blob, seconds, paused }: Drift) {
 function useLook(): Look {
   const { reduceMotion, reduceTransparency, perfTier } = useEffects();
   const contrast = useIncreaseContrast();
-  return { still: reduceMotion || perfTier === 'low', faded: reduceTransparency, contrast };
+  const asleep = !useScreenActive();
+  return { still: reduceMotion || perfTier === 'low', faded: reduceTransparency, contrast, asleep };
 }
 
 function Fade() {
@@ -74,15 +80,40 @@ function Fade() {
 
 function Edge({ look }: EdgeProps) {
   const { elevation } = useThemeTokens();
-  const rim = { boxShadow: look.contrast ? elevation.listenContrast : elevation.listen };
-  const peak = { ...PULSE, boxShadow: elevation.listenPeak };
+  const steady = look.contrast || look.faded;
+  const rim = { boxShadow: steady ? elevation.listenContrast : elevation.listen };
+  const peak = { ...PULSE, boxShadow: elevation.listenPeak, ...(look.asleep ? ASLEEP : null) };
   return (
     <View {...HIDDEN} className="pointer-events-none absolute inset-0" style={rim}>
-      {look.still || look.contrast ? null : (
-        <Animated.View className="absolute inset-0" style={peak} />
-      )}
+      {look.still || steady ? null : <Animated.View className="absolute inset-0" style={peak} />}
     </View>
   );
+}
+
+function Blobs({ tone, look, paused }: BlobsProps) {
+  const { aura } = useThemeTokens();
+  const fills = aura[tone];
+  if (look.faded) {
+    const tint = { backgroundColor: fills[0] };
+    return <View className="absolute inset-0" style={tint} />;
+  }
+  return auraField.blobs.map((blob, index) => (
+    <AuraBlobView
+      key={blob.top}
+      blob={blob}
+      index={index}
+      fill={fills[index] ?? fills[0]}
+      drift={
+        look.still
+          ? null
+          : driftOf({
+              blob,
+              seconds: tone === 'alert' ? blob.alertSeconds : blob.seconds,
+              paused: paused || look.asleep,
+            })
+      }
+    />
+  ));
 }
 
 export function Aura({
@@ -92,10 +123,8 @@ export function Aura({
   paused = false,
 }: AuraProps) {
   const look = useLook();
-  const { aura } = useThemeTokens();
   if (mode === 'edge') return <Edge look={look} />;
   if (look.contrast) return null;
-  const fills = aura[tone];
   const opacity = look.faded ? auraField.reducedOpacity * auraField.opacity : auraField.opacity;
   const frame = mode === 'field' ? { height, opacity } : { opacity };
   return (
@@ -106,23 +135,7 @@ export function Aura({
         mode === 'field' ? 'inset-x-0 top-0' : 'inset-0'
       )}
       style={frame}>
-      {auraField.blobs.map((blob, index) => (
-        <AuraBlobView
-          key={blob.top}
-          blob={blob}
-          index={index}
-          fill={fills[index] ?? fills[0]}
-          drift={
-            look.still
-              ? null
-              : driftOf({
-                  blob,
-                  seconds: tone === 'alert' ? blob.alertSeconds : blob.seconds,
-                  paused,
-                })
-          }
-        />
-      ))}
+      <Blobs tone={tone} look={look} paused={paused} />
       {mode === 'field' ? <Fade /> : null}
     </View>
   );

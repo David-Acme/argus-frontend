@@ -264,7 +264,6 @@ export const sheetCopy = {
 
 export const presenceCopy = {
   states: 'Estados',
-  sizes: 'Tamaños',
   events: 'Eventos',
   stage: 'Escenario',
 } as const;

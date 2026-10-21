@@ -12,22 +12,23 @@ export type ConfirmBoxProps = {
   confirmLabel: string;
   cancelLabel: string;
   destructive: boolean;
+  busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   Heading?: ComponentType<FrameProps>;
   Description?: ComponentType<FrameProps>;
 };
 
-type ActProps = { label: string; alert?: boolean; onPress: () => void };
+type ActProps = { label: string; alert?: boolean; busy?: boolean; onPress: () => void };
 
 function Plain({ children }: FrameProps) {
   return <View>{children}</View>;
 }
 
-function Act({ label, alert, onPress }: ActProps) {
+function Act({ label, alert, busy, onPress }: ActProps) {
   return (
     <PressableSurface
-      a11y={{ label, role: 'button' }}
+      a11y={{ label, role: 'button', busy }}
       onPress={onPress}
       pressed={{ scale: 'surface', fill: true }}
       className="min-h-target-min px-dialog-actions-x justify-center rounded-full">
@@ -44,6 +45,7 @@ export function ConfirmBox({
   confirmLabel,
   cancelLabel,
   destructive,
+  busy,
   onConfirm,
   onCancel,
   Heading = Plain,
@@ -65,7 +67,7 @@ export function ConfirmBox({
       </View>
       <View className="mt-dialog-actions-top gap-dialog-actions-gap flex-row justify-end">
         <Act label={cancelLabel} onPress={onCancel} />
-        <Act label={confirmLabel} alert={destructive} onPress={onConfirm} />
+        <Act label={confirmLabel} alert={destructive} busy={busy} onPress={onConfirm} />
       </View>
     </View>
   );

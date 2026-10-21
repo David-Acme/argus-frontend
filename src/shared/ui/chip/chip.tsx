@@ -37,9 +37,9 @@ const TONE: Record<ChipTone, { surface: string; text: TextTone }> = {
 };
 
 const HEIGHT: Record<ChipSize, string> = {
-  tag: 'h-chip px-chip-x',
-  stat: 'h-chip-stat px-chip-stat-x',
-  suggestion: 'h-chip-suggestion px-chip-x',
+  tag: 'min-h-chip px-chip-x',
+  stat: 'min-h-chip-stat px-chip-stat-x',
+  suggestion: 'min-h-chip-suggestion px-chip-x',
 };
 
 const DOT_TONE: Record<TextTone, string> = {
@@ -154,7 +154,7 @@ export function FilterChip({
   const surface = useSizeSurface(size, 'default');
   return (
     <PressableSurface
-      a11y={{ label, role: 'button', selected }}
+      a11y={{ label, role: 'checkbox', checked: selected }}
       onPress={onPress}
       haptic="selection"
       pressed={{ scale: 'surface' }}

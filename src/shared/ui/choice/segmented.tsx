@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
+import { IS_WEB } from '@/shared/constants';
 import { useEffects, useThemeTokens } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -27,6 +28,25 @@ export function SegmentContent<T extends string>({ option, on }: SegmentContentP
   );
 }
 
+const STEP: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+
+type ArrowEvent = { key: string; currentTarget: HTMLElement; preventDefault: () => void };
+
+function useArrowKeys<T extends string>({ options, value, onChange }: SegmentedProps<T>) {
+  const onKeyDown = (event: ArrowEvent) => {
+    const step = STEP[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const at = options.findIndex((option) => option.value === value);
+    const next = (at + step + options.length) % options.length;
+    const target = options[next];
+    if (!target) return;
+    onChange(target.value);
+    event.currentTarget.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus();
+  };
+  return IS_WEB ? { onKeyDown } : null;
+}
+
 function useTrack(glass: boolean | undefined) {
   const { reduceTransparency } = useEffects();
   const { elevation } = useThemeTokens();
@@ -37,14 +57,10 @@ function useTrack(glass: boolean | undefined) {
   };
 }
 
-export function Segmented<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-  glass,
-}: SegmentedProps<T>) {
+export function Segmented<T extends string>(props: SegmentedProps<T>) {
+  const { label, options, value, onChange, glass } = props;
   const { theme, elevation } = useThemeTokens();
+  const keys = useArrowKeys(props);
   const track = useTrack(glass);
   const lifted = { boxShadow: elevation.segment };
   const onFill = theme === 'dark' ? 'bg-fill-press' : 'bg-surface';
@@ -53,23 +69,30 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={clsx('rounded-well p-segment-pad gap-segment-gap flex-row', track.className)}
-      style={track.style}>
+      style={track.style}
+      {...keys}>
       {options.map((option) => {
         const on = option.value === value;
         return (
           <View key={option.value} className="flex-1">
             <PressableSurface
-              a11y={{ label: option.label, role: 'radio', checked: on }}
+              a11y={{ label: option.label, role: 'radio', checked: on, tabStop: on }}
               onPress={() => {
                 if (!on) onChange(option.value);
               }}
               haptic={on ? undefined : 'selection'}
-              style={on ? lifted : undefined}
               className={clsx(
-                'min-h-segment rounded-seg-inner px-segment-min-x items-center justify-center',
-                on ? onFill : 'web:hover-dim'
+                'min-h-target-min rounded-seg-inner -my-0.5 justify-center',
+                !on && 'web:hover-dim'
               )}>
-              <SegmentContent option={option} on={on} />
+              <View
+                style={on ? lifted : undefined}
+                className={clsx(
+                  'min-h-segment rounded-seg-inner px-segment-min-x items-center justify-center',
+                  on && onFill
+                )}>
+                <SegmentContent option={option} on={on} />
+              </View>
             </PressableSurface>
           </View>
         );

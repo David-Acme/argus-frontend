@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { AccessibilityInfo } from 'react-native';
 import { useEffectsOverrides } from '@/shared/theme';
 
 import { Status } from '@/shared/ui/status/status';
@@ -18,44 +19,39 @@ afterEach(() => {
   act(() => useEffectsOverrides.setState({ reduceMotion: null }));
 });
 
+const canvasWidths = (container: HTMLElement) =>
+  [...container.querySelectorAll('canvas')].map((canvas) => canvas.style.width);
+
 describe('Status', () => {
   test('the hero says its sentence as a heading with the meta and the stats', () => {
-    const sizes: number[] = [];
-    render(
+    const { container } = render(
       <Status
         tone="calm"
         sentence="Todo tranquilo."
         meta="En casa · Luis y tú en casa"
         stats={STATS}
-        presence={(size) => {
-          sizes.push(size);
-          return null;
-        }}
+        presence="idle"
       />
     );
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
     expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
     expect(screen.getByText('por revisar')).toBeDefined();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(sizes).toEqual([66]);
+    expect(canvasWidths(container)).toEqual(['66px']);
   });
 
   test('an alert hero is announced and the secondary hero draws a smaller presence', () => {
-    const sizes: number[] = [];
-    render(
+    const { container } = render(
       <HeroStatus
         tone="alert"
         secondary
         sentence="Alguien en el patio."
         meta="Hace 1 min"
-        presence={(size) => {
-          sizes.push(size);
-          return null;
-        }}
+        presence="alert"
       />
     );
     expect(screen.getByRole('alert')).toBeDefined();
-    expect(sizes).toEqual([56]);
+    expect(canvasWidths(container)).toEqual(['56px']);
   });
 
   test('on a wide window the hero becomes the band with its own aura', () => {
@@ -84,6 +80,32 @@ describe('Status', () => {
     for (const name of ['Ver cámara', 'Es conocido', 'Es una falsa alarma'])
       fireEvent.click(screen.getByRole('button', { name }));
     expect(pressed).toEqual(['primary', 'secondary', 'tertiary']);
+  });
+
+  test('only an alert card is an alert, and it is announced on native when its sentence arrives', () => {
+    const announce = mock((_message: string) => undefined);
+    AccessibilityInfo.announceForAccessibility = announce;
+    const card = (tone: 'attention' | 'alert', sentence: string) => (
+      <CardStatus
+        variant="card"
+        tone={tone}
+        sentence={sentence}
+        primary={{ label: 'Ver', onPress: () => undefined }}
+      />
+    );
+    const { rerender } = render(card('attention', 'Luis llega tarde.'));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(announce).not.toHaveBeenCalled();
+    rerender(card('alert', 'Alguien en el patio.'));
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(announce.mock.calls).toEqual([['Alguien en el patio.']]);
+  });
+
+  test('an alert hero is announced on native', () => {
+    const announce = mock((_message: string) => undefined);
+    AccessibilityInfo.announceForAccessibility = announce;
+    render(<HeroStatus tone="alert" sentence="Alguien en el patio." meta="Ahora" />);
+    expect(announce.mock.calls).toEqual([['Alguien en el patio.']]);
   });
 
   test('a card without a sentence keeps only its actions', () => {

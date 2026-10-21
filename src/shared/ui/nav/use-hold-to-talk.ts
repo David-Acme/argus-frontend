@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { GestureResponderEvent, View } from 'react-native';
 import { feedback } from '@/shared/theme';
 import type { NavVoice } from './nav-types';
@@ -29,6 +29,12 @@ export function useHoldToTalk(voice: NavVoice) {
     setModeState(next);
   };
   const target = useRef<View>(null);
+  const abandon = useEffectEvent(() => {
+    if (current.current === 'off') return;
+    current.current = 'off';
+    voice.onListenEnd(false);
+  });
+  useEffect(() => () => abandon(), []);
 
   const rect = useRef<Rect | null>(null);
   const start = (next: ListenMode) => {

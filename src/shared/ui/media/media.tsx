@@ -97,7 +97,7 @@ function Tile({ center, reveal, onPress, ...content }: MediaTileProps) {
   const body = <Layers {...content} />;
   return (
     <View
-      className="rounded-media relative overflow-hidden"
+      className="rounded-media web:focus-inset relative overflow-hidden"
       onPointerEnter={pointer(true)}
       onPointerLeave={pointer(false)}>
       {onPress ? (
@@ -139,7 +139,7 @@ function Stage({ controls, eye, ...content }: MediaStageProps) {
       role="region"
       aria-label={accessibleName(content) || undefined}
       className={clsx(
-        'relative overflow-hidden',
+        'web:focus-inset relative overflow-hidden',
         windowClass === 'compact' ? '-mx-4' : 'rounded-media',
         content.dormant && 'bg-fill'
       )}

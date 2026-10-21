@@ -74,6 +74,11 @@ function RowBody({
 
 const FRAME = 'min-h-row flex-row items-center gap-row-gap px-row-x py-row-y';
 
+function spokenLabel({ title, meta, trailing }: Pick<RowProps, 'title' | 'meta' | 'trailing'>) {
+  const value = typeof trailing === 'string' ? trailing : undefined;
+  return [title, meta, value].filter(Boolean).join(', ');
+}
+
 export function Row({ onPress, testID, ...body }: RowProps) {
   if (!onPress) {
     return (
@@ -84,7 +89,7 @@ export function Row({ onPress, testID, ...body }: RowProps) {
   }
   return (
     <PressableSurface
-      a11y={{ label: body.meta ? `${body.title}, ${body.meta}` : body.title, role: 'button' }}
+      a11y={{ label: spokenLabel(body), role: 'button' }}
       onPress={onPress}
       pressed={{ fill: true }}
       testID={testID}
