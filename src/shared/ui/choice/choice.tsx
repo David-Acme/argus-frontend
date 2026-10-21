@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScrollView, View, type LayoutChangeEvent } from 'react-native';
 import { ChoiceList, ChoiceOpener } from './choice-list';
-import { Sheet } from '@/shared/ui/sheet';
+import { Sheet, useOpenedOnce } from '@/shared/ui/sheet';
 import type { ChoiceOption } from './choice-types';
 import { SegmentContent, Segmented } from './segmented';
 import { MAX_SEGMENTS, segmentsFit } from './segments-fit';
@@ -68,6 +68,7 @@ export function Choice<T extends string>({
   testID,
 }: ChoiceProps<T>) {
   const [open, setOpen] = useState(false);
+  const mounted = useOpenedOnce(open);
   const fit = useFit(options.length);
   const segmentable = options.length <= MAX_SEGMENTS;
   const current = options.find((option) => option.value === value)?.label ?? '';
@@ -89,9 +90,11 @@ export function Choice<T extends string>({
       ) : (
         <ChoiceOpener label={label} current={current} look={look} onOpen={() => setOpen(true)} />
       )}
-      <Sheet variant="list" title={label} open={open} onClose={() => setOpen(false)}>
-        <ChoiceList options={options} value={value} onPick={pick} />
-      </Sheet>
+      {mounted ? (
+        <Sheet variant="list" title={label} open={open} onClose={() => setOpen(false)}>
+          <ChoiceList options={options} value={value} onPick={pick} />
+        </Sheet>
+      ) : null}
     </View>
   );
 }

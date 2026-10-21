@@ -5,7 +5,7 @@ import { feedback } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
 import { Row } from '@/shared/ui/row';
-import { Sheet } from '@/shared/ui/sheet';
+import { Sheet, useOpenedOnce } from '@/shared/ui/sheet';
 import type { ButtonMenuProps, ContextMenuProps, MenuItems, MenuProps } from './menu-types';
 
 type SheetListProps = {
@@ -18,6 +18,8 @@ type SheetListProps = {
 type LongPressProps = { onLongPress: () => void; children: ReactNode };
 
 function SheetList({ open, onClose, label, items }: SheetListProps) {
+  const mounted = useOpenedOnce(open);
+  if (!mounted) return null;
   return (
     <Sheet open={open} onClose={onClose} title={label} variant="list">
       {items.map((item) => (
