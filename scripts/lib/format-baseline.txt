@@ -663,7 +663,6 @@ src/shared/libs/route-access.ts
 src/shared/libs/service-action.ts
 src/shared/libs/service-error.ts
 src/shared/libs/sharing.ts
-src/shared/theme/effects.ts
 tests/bench/agenda-recurrence.test.ts
 tests/contracts/camera-privacy-contract.test.ts
 tests/contracts/capability-contract.test.ts
