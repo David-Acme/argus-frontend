@@ -6,6 +6,7 @@ import { CheckDemo } from './demos/check-demo';
 import { ChipDemo } from './demos/chip-demo';
 import { IconDemo } from './demos/icon-demo';
 import { LayoutDemo } from './demos/layout-demo';
+import { NavDemo } from './demos/nav-demo';
 import { PressableDemo } from './demos/pressable-demo';
 import { RowDemo } from './demos/row-demo';
 import { SectionDemo } from './demos/section-demo';
@@ -36,6 +37,7 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'switch', family: 'input', title: 'Switch', Demo: SwitchDemo },
   { id: 'aura', family: 'identity', title: 'Aura', Demo: AuraDemo },
   { id: 'status', family: 'content', title: 'Status', Demo: StatusDemo },
+  { id: 'nav', family: 'foundations', title: 'Nav', Demo: NavDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [

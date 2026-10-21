@@ -49,12 +49,14 @@
   --spacing-nav-side-gap: 2px;
   --spacing-nav-brand-x: 10px;
   --spacing-nav-brand-bottom: 14px;
+  --spacing-nav-brand-gap: 10px;
   --spacing-nav-item-x: 10px;
   --spacing-nav-count-x: 8px;
   --spacing-nav-count-y: 1px;
   --spacing-nav-key-x: 5px;
   --spacing-nav-stat-pad: 12px;
   --spacing-nav-stat-gap: 9px;
+  --spacing-nav-stat-x: 2px;
   --spacing-nav-ask-x: 10px;
   --spacing-nav-ask-gap: 6px;
   --spacing-nav-rail-y: 12px;
@@ -121,6 +123,7 @@
   --spacing-presence-brand: 30px;
   --spacing-presence-nav: 22px;
   --spacing-presence-ask: 20px;
+  --spacing-preview-phone: 760px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
   --text-hero--letter-spacing: -1.08px;

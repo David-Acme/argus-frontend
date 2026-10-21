@@ -18,6 +18,7 @@ const { CheckDemo } = await import('@/features/ui-lab/demos/check-demo');
 const { ChipDemo } = await import('@/features/ui-lab/demos/chip-demo');
 const { IconDemo } = await import('@/features/ui-lab/demos/icon-demo');
 const { LayoutDemo } = await import('@/features/ui-lab/demos/layout-demo');
+const { NavDemo } = await import('@/features/ui-lab/demos/nav-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
 const { RowDemo } = await import('@/features/ui-lab/demos/row-demo');
 const { SectionDemo } = await import('@/features/ui-lab/demos/section-demo');
@@ -37,6 +38,7 @@ const DEMOS: Record<string, ComponentType> = {
   chip: ChipDemo,
   icon: IconDemo,
   layout: LayoutDemo,
+  nav: NavDemo,
   pressable: PressableDemo,
   row: RowDemo,
   section: SectionDemo,
