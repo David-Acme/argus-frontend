@@ -128,6 +128,22 @@ export function beginFrame(scene: SkiaScene, fade: number): void {
   scene.used = 0;
 }
 
+type Slot = { x1: number; y1: number; dx: number; dy: number };
+
+function placeSprite(scene: SkiaScene, index: number, slot: Slot): boolean {
+  'worklet';
+  const transform = scene.transforms[index];
+  const span = Math.sqrt(slot.dx * slot.dx + slot.dy * slot.dy);
+  const rect = scene.spriteRects[Math.min(scene.spriteMax, Math.round(span))];
+  if (!transform || !rect) return false;
+  const cos = span > 0 ? slot.dx / span : 1;
+  const sin = span > 0 ? slot.dy / span : 0;
+  const o = scene.spriteOrigin;
+  scene.sources[index] = rect;
+  transform.set(cos, sin, slot.x1 - (cos * o - sin * o), slot.y1 - (sin * o + cos * o));
+  return true;
+}
+
 export function strokeToAtlas(scene: SkiaScene, s: Stroke): void {
   'worklet';
   const index = scene.used;
@@ -145,22 +161,6 @@ export function strokeToAtlas(scene: SkiaScene, s: Stroke): void {
   color[2] = s.b / 255;
   color[3] = s.a;
   scene.used = index + 1;
-}
-
-type Slot = { x1: number; y1: number; dx: number; dy: number };
-
-function placeSprite(scene: SkiaScene, index: number, slot: Slot): boolean {
-  'worklet';
-  const transform = scene.transforms[index];
-  const span = Math.sqrt(slot.dx * slot.dx + slot.dy * slot.dy);
-  const rect = scene.spriteRects[Math.min(scene.spriteMax, Math.round(span))];
-  if (!transform || !rect) return false;
-  const cos = span > 0 ? slot.dx / span : 1;
-  const sin = span > 0 ? slot.dy / span : 0;
-  const o = scene.spriteOrigin;
-  scene.sources[index] = rect;
-  transform.set(cos, sin, slot.x1 - (cos * o - sin * o), slot.y1 - (sin * o + cos * o));
-  return true;
 }
 
 export function streaksToAtlas(scene: SkiaScene, streaks: Float32Array, count: number): void {
