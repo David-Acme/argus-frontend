@@ -5386,6 +5386,14 @@ rule 32 run on `src` and `scripts`, without the locales and generated files.
 `lint` now checks `src` and `scripts`; `expo lint` checked `src` alone, and
 `tests` would need `@tests/*` taught to `eslint-plugin-import` first.
 
+**Lint's heap (p1/wire, 2026-10-21).** The script runs ESLint through
+`node --max-old-space-size=4096`, so every caller (`bun run lint`, `verify`,
+an agent under the heavy gate) gets the same heap. Measured on `p1/wire`
+(1,726 files, type-aware rules, 5,120 MiB allowed): peak resident set
+3,766 MiB (`VmHWM`), 96 s. The old-space heap is part of that resident set,
+so 4,096 MiB covers it with room; Node's default limit is derived from the
+memory it sees, and under the gate's 6 GB cgroup it ran out before the end.
+
 **`no-unknown-classes` with Uniwind (spike).** Adopted. With
 `entryPoint: 'src/global.css'` the plugin loads Tailwind's design system from
 the same CSS Uniwind reads, and `uniwind.css` declares its platform variants
@@ -5517,6 +5525,7 @@ many files; the reason names that cause.
 | `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx spec` | Lead merge of `p1/native`: the Skia canvas keeps its worklet spec in one identity per particle count and seed, because the frame worklet is re-registered whenever its captured spec changes identity (the branch's measurement, section "Native spikes" below). | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/native` (Sheet, Presence, the spikes lab) over the four design-system shares: entry 7,430,083 → 7,522,390 B (+92,307) and `dist/` 8,749,566 → 8,841,873 B (+92,307). The branch measured +126,279 B over its own older base (about 91 kB Sheet and the Estela engine, about 12 kB the lab, section "Native spikes"); the merged export has no Skia or TrueSheet module. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | The `fix(ui)` after the `p1/native` merge: Sheet's parts, dialog and phone sheet and the demo field name the 24 token-derived style objects the binding-following `style-object` counter found inline, which the web export keeps as named bindings: entry 7,522,390 → 7,523,403 B and `dist/` 8,841,873 → 8,842,886 B (+1,013 each). | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p1/wire` item 4: the ui-lab and the spikes screen load from one lazy chunk (`lab-screens`, 405,626 B) that a production page never fetches. Measured on the same tree before and after: entry 7,522,566 → 7,118,965 B (−403,601; the Phase 1 entry growth over 7,063,615 B falls from +458,951 to +55,350), `dist/` 8,842,120 → 8,844,145 B (+2,025: the chunk's own module wrappers and loader). The entry baseline is lowered with it. | 2026-10-21 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
@@ -5560,10 +5569,13 @@ has no `listbox`. On pointer it is a Radix dialog (focus trap, Esc, outside
 press, focus return) with a visually hidden title; `useCommandHotkey` binds
 Ctrl+K / ⌘K on the web and is a no-op natively.
 
-**Slots until p1/native merges.** `Menu` and `Command` take a required
-`sheet` component with `Sheet`'s `open`, `onClose`, `title`, `variant` and
-`long`; the native Command should also pass `initialFocus` once `Sheet` is
-here. `Command` takes an optional `askMark` for Estela's `think` mark.
+**Sheet and Estela are wired (p1/wire).** The touch `Menu` lists in
+`Sheet`, mounted on first open (`useOpenedOnce`); the touch `Command` is a
+long `Sheet` list that focuses its query through `initialFocus`, and its ask
+row draws `Presence` in `think` at 26. The pointer palette scrolls its
+results inside a listbox (a `div` on the web: React Native's `Role` has no
+`listbox`) and its query is a combobox whose `aria-activedescendant` names
+the selected option. The pointer menu's rows are 44 px.
 
 **Test runner.** The component runner loads the rn-primitives web builds
 (their `.mjs` keep JSX, so a bun plugin loads them as `jsx`), stubs RNGH's
@@ -5634,11 +5646,14 @@ The input share of the design system: `src/shared/ui/field/` and
   and the comparison allows half a pixel of rounding; at 6 the prototype's
   own Modo control (Noche + moon, 70.8 px in a 79 px segment at 360) would
   not have fitted.
-- **The sheet is a slot until `Sheet` lands.** `sheet` is a render prop with
-  `Sheet`'s spec'd props (`variant: 'list'`, `title`, `open`, `onClose`,
-  `children`); `Choice` owns the open state and the option list (radios with
-  a check on the current one, `selection` haptic). When `p1/native` merges,
-  the prop goes and `Choice` renders `Sheet` itself.
+- **The list opens in `Sheet`.** `Choice` owns the open state and the option
+  list (radios with a check on the current one, `selection` haptic) and
+  renders `Sheet` itself, mounted the first time it opens. Its row opener is a
+  pressable `Row`, which speaks a string trailing value. The segmented form
+  follows WAI-ARIA's radio group on the web (one tab stop, the arrows move the
+  selection and the focus) and each segment presses in 44 px around its drawn
+  40. Widths of options that arrive after the first render are measured too
+  (`use-fit.ts`).
 - **Glass.** `glass` puts the track on `glass` with the 18 px control blur
   and the inset glass line, solid `surface` under reduce transparency, as the
   prototype's `.seg.glass` and its `rt` rule. The selected segment is
@@ -5746,9 +5761,8 @@ wide the desktop `.dband` (its own Aura band, Presence 64, the 38 sentence on
 one line, stats that do not wrap, a trailing `action` slot). `card` is the
 `.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
 `alert`. A sentence change fades in over `motion.duration.base` (keyed
-remount), instantly under reduced motion. `Presence` comes from `p1/native`:
-until it merges, `presence` is a render prop `(size) => node`, and the
-ui-lab draws a same-size `accent-soft` disc (`LabPresence`).
+remount), instantly under reduced motion. `presence` is a `PresenceState`
+and the hero draws `Presence` itself (66, 56 secondary, 64 in the band).
 
 **Nav.** `navigation` from `useWindowLayout` picks `bar` (compact and
 compact height), `rail` (medium, no prototype frame: tab-styled items in an
@@ -5833,15 +5847,28 @@ Props verified in 3.11.18's source:
   `maxContentHeight = windowHeight − insets.top − 16`, `insetAdjustment
   'automatic'`, `footerOptions.keyboardOffset = −insets.bottom` (the footer's
   own safe-area padding tucks behind the keyboard), focus in `onDidPresent`.
-- `scrollableOptions.keyboardScrollOffset` is **16 + the footer's height**, not
-  16: TrueSheet scrolls the focused input to the keyboard's top and does not
-  know the footer floats over the content, so with 16 the caret of the notes
-  field hid behind Guardar. The body also pads by the footer's height minus the
-  bottom inset, or an `auto` sheet leaves a band above its footer.
+- `scrollableOptions.keyboardScrollOffset` is **16 + the field's tail + the
+  footer's height + one device pixel** (`focusScrollOffset`). TrueSheet
+  (`TrueSheetContentView.scrollToFocusedInput`) scrolls the caret's line, not
+  the input's box, to the offset above the scroll view's bottom, does not know
+  the footer floats over the content, and truncates the offset to whole
+  pixels. With 16 + the footer the caret line sat 16 dp above the footer, but
+  the 15.5 dp of field below it (`inset.field.top` + `inset.field.border`, the
+  text's vertical inset and the border) left the field's box 13.7 dp (36 px at
+  the S21 FE's 2.625) above Guardar. Adding the tail and a pixel for the
+  truncation keeps the box at least 16 dp above the footer's top edge at any
+  density. The body also pads by the footer's height minus the bottom inset,
+  or an `auto` sheet leaves a band above its footer.
 - The grabber is TrueSheet's native one (36 × 5, `text-3` at 40 %); the header
-  starts 24 dp down to clear it. Glass: `backgroundBlur` exists only on iOS;
-  Android gets `surface` at 94 % (`material.sheetSurfaceMix`) and no blur,
-  solid under `reduceTransparency`.
+  starts 24 dp down to clear it. Glass: `backgroundBlur` exists only on iOS
+  (3.11.18 types it `@platform ios`; Android paints `backgroundColor` into a
+  plain `ShapeDrawable`), so iOS gets `surface` at 94 %
+  (`material.sheetSurfaceMix`) over `system-material`, and Android and
+  reduced transparency get the solid `surface`: the 94 % surface without a
+  blur let the screen show through the header and body on the S21 FE.
+- The header, the body and the footer each sit in a `GestureHandlerRootView`
+  (`flexGrow: 1`): the sheet lives outside the app's root view on Android, and
+  the design system's presses are RNGH (TrueSheet's troubleshooting guide).
 
 Open questions, answered on the emulators:
 
@@ -5871,9 +5898,9 @@ measures the emulator, not the sheet.
 
 In landscape Gboard switches to its full-screen extract editor, so the sheet is
 hidden while typing; the sheet itself stays a sheet with its header and every
-field reachable once the editor closes. A field that should stay visible in
-landscape needs `disableFullscreenUI` on its `TextInput` (the `Field`
-component's decision, not the sheet's).
+field reachable once the editor closes. Every `Field` sets
+`disableFullscreenUI` (Android only; react-native-web drops the prop), so the
+editor never opens over a sheet.
 
 Dialog (web, Chromium, `uiux-map/redesign/phase1/spikes/sheet/web/`): title +
 ✕ on top, ⋯ bottom left, Guardar with its `Ctrl ↵`/`⌘ ↵` key bottom right

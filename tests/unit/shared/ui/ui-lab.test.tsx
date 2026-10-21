@@ -43,6 +43,7 @@ const { SwitchDemo } = await import('@/features/ui-lab/demos/switch-demo');
 const { TextDemo } = await import('@/features/ui-lab/demos/text-demo');
 const { ToastDemo } = await import('@/features/ui-lab/demos/toast-demo');
 const { UiLabScreen } = await import('@/features/ui-lab/screens/ui-lab-screen');
+const { UiLabRoute, SpikesRoute } = await import('@/features/ui-lab/screens/lab-routes');
 const { catalogue } = await import('@/features/ui-lab/catalogue');
 const { LabCase } = await import('@/features/ui-lab/components/lab-case');
 
@@ -112,5 +113,18 @@ describe('ui-lab', () => {
     search = { c: 'chip', theme: 'dark' };
     render(<UiLabScreen />);
     expect(screen.getByTestId('ui-lab-stage')).toBeDefined();
+  });
+
+  test('the routes load the lab on demand, and only where it is allowed', async () => {
+    (globalThis as Record<string, unknown>).__ARGUS_UI_LAB__ = false;
+    const closed = render(<UiLabRoute />);
+    expect(closed.container.innerHTML).toBe('');
+    closed.unmount();
+    render(<SpikesRoute />);
+    expect(screen.queryByTestId('spikes')).toBeNull();
+    (globalThis as Record<string, unknown>).__ARGUS_UI_LAB__ = true;
+    search = {};
+    render(<UiLabRoute />);
+    expect(await screen.findByRole('button', { name: 'Button, button' })).toBeDefined();
   });
 });

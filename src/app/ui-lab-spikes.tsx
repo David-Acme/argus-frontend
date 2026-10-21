@@ -1,1 +1,1 @@
-export { SpikesScreen as default } from '@/features/ui-lab';
+export { SpikesRoute as default } from '@/features/ui-lab';

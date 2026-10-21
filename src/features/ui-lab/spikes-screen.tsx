@@ -5,16 +5,16 @@ import { tokens } from '@/shared/theme/tokens';
 import { PresenceBench, type BenchParams } from './bench/presence-bench';
 import { PresenceDemo } from './demos/presence-demo';
 import { SheetDemo } from './demos/sheet-demo';
+import { spikesAllowed } from './model/lab-access';
 
 type SpikeParams = BenchParams & { view?: string };
 
 const GUTTER = tokens.space[4];
-const LAB_ENABLED = __DEV__ || process.env.EXPO_PUBLIC_ARGUS_LAB === '1';
 
 export function SpikesScreen() {
   const params = useLocalSearchParams<SpikeParams>();
   const insets = useSafeAreaInsets();
-  if (!LAB_ENABLED) return <Redirect href="/" />;
+  if (!spikesAllowed(__DEV__)) return <Redirect href="/" />;
   if (params.view === 'bench') return <PresenceBench params={params} />;
   return (
     <ScrollView
