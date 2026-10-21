@@ -73,20 +73,30 @@ export function memberName(node: ts.Node): { object: ts.Expression; name: string
   return null;
 }
 
+const IMPORT_NAMES = [
+  ts.isImportSpecifier,
+  ts.isImportClause,
+  ts.isNamespaceImport,
+  ts.isJsxAttribute,
+];
+
+const NAMED_DECLARATIONS = [
+  ts.isVariableDeclaration,
+  ts.isPropertyAccessExpression,
+  ts.isPropertyAssignment,
+  ts.isPropertySignature,
+] as const;
+
+function namesNode(parent: ts.Node, node: ts.Identifier): boolean {
+  if (ts.isBindingElement(parent)) return parent.name === node || parent.propertyName === node;
+  return (
+    NAMED_DECLARATIONS.some((test) => test(parent)) && (parent as ts.NamedDeclaration).name === node
+  );
+}
+
 export function isNotReference(node: ts.Identifier): boolean {
   const parent = node.parent;
-  return (
-    ts.isImportSpecifier(parent) ||
-    ts.isImportClause(parent) ||
-    ts.isNamespaceImport(parent) ||
-    (ts.isBindingElement(parent) && parent.name === node) ||
-    (ts.isBindingElement(parent) && parent.propertyName === node) ||
-    (ts.isVariableDeclaration(parent) && parent.name === node) ||
-    (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
-    (ts.isPropertyAssignment(parent) && parent.name === node) ||
-    (ts.isPropertySignature(parent) && parent.name === node) ||
-    ts.isJsxAttribute(parent)
-  );
+  return IMPORT_NAMES.some((test) => test(parent)) || namesNode(parent, node);
 }
 
 export function isReferenceTo(node: ts.Node, bindings: ModuleBindings, name: string): boolean {
