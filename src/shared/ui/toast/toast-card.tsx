@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { useThemeTokens } from '@/shared/theme';
+import { size, useThemeTokens } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -18,6 +18,8 @@ export type ToastCardProps = {
 type ActionProps = { label: string; onPress: () => void };
 
 const LEADING: Partial<Record<ToastKind, IconGlyph>> = { success: 'check' };
+
+const FILL_SLOP = (size.target - size.buttonCompact) / 2;
 
 function InkAction({ label, onPress }: ActionProps) {
   return (
@@ -39,6 +41,7 @@ function FillAction({ label, onPress }: ActionProps) {
       a11y={{ label, role: 'button' }}
       onPress={onPress}
       pressed={{ scale: 'surface' }}
+      hitSlop={FILL_SLOP}
       className="min-h-button-compact rounded-toast-action px-toast-action-x bg-fill -mt-0.5 justify-center">
       <Text variant="toastAction">{label}</Text>
     </PressableSurface>

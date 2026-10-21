@@ -51,6 +51,12 @@ describe('gen-tokens', () => {
     expect(css).toMatch(/@utility focus-inset \{\s+--focus-ring-offset: -4px;/);
   });
 
+  test('a pressable surface with slop takes a 48 px hit area on the web', () => {
+    expect(tokensCss()).toMatch(
+      /@utility hit-target \{\s+&::after \{[^}]*width: max\(100%, 48px\);\s+height: max\(100%, 48px\);/
+    );
+  });
+
   test('alpha colours keep their alpha', () => {
     expect(toOklch('rgba(255,255,255,0.66)')).toBe('oklch(1.0000 0 0 / 0.66)');
   });

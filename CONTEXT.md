@@ -5462,8 +5462,22 @@ tile and stage, the Status band). The ring's offset is the custom property
 its ring inside its own edge. A custom property inherits, so the rows and
 buttons inside need no class of their own; any other clipping container with
 focusable children (Command's palette, Menu's list) takes the same class.
-`tests/e2e/ui-lab-focus.e2e.ts` reads the computed outline of a focused row
+`tests/e2e/ui-lab-a11y.e2e.ts` reads the computed outline of a focused row
 and tile.
+
+**Hit areas, not drawn sizes.** The prototype draws several controls under
+44/48 (Check 24, Switch 28, chips 26, the compact Button and the toast's
+Retry 40, the banner's text action about 21), and the drawn size stays.
+Native reaches 48 through `hitSlop`; react-native-web ignores `hitSlop`
+(review finding 10), so on the web a `PressableSurface` given a slop also
+carries `web:hit-target`, an absolutely placed `::after` of at least 48 x 48
+centred on the control: a press on it is a press on the control, and it
+changes neither layout, pixels nor the focus ring. The toast's Retry now has
+its slop, and the banner's action computes its slop from the `label` line
+(21) instead of assuming a 44 px control. A clipping parent (a horizontal
+scroller) cuts the pseudo-element like it would cut the control.
+`tests/e2e/ui-lab-a11y.e2e.ts` reads the 48 px area of Check, Switch, the
+toast's Retry and the banner's action.
 
 **Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
 bun process (happy-dom, react-native-web as react-native, react-native-svg's web
