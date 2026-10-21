@@ -13,6 +13,8 @@ const CALL_ID = /[?&]callId=((?:rtc-[0-9a-f]{32})|(?:call-\d+))(?:[&#]|$)/;
 const OUTSIDE = /[?&]outside=1(?:[&#]|$)/;
 const NOTIFICATION_PATH = '/notification';
 const NOTIFICATION_ID = /[?&]notificationId=(\d{1,19})(?:[&#]|$)/;
+const LAB_PATH = '/ui-lab-spikes';
+const LAB_ENABLED = process.env.EXPO_PUBLIC_ARGUS_LAB === '1';
 
 export function deepLinkPath(link: string): string {
   const path = link
@@ -21,6 +23,7 @@ export function deepLinkPath(link: string): string {
     .split(/[?#]/)[0]
     ?.replace(/\/{2,}/g, '/')
     .replace(/(.)\/$/, '$1');
+  if (LAB_ENABLED && path === LAB_PATH) return `${LAB_PATH}${/\?[^#]*/.exec(link)?.[0] ?? ''}`;
   if (!path || !ALLOWED_PATHS.some((pattern) => pattern.test(path))) return '/';
   if (path === CALL_PATH) {
     const callId = CALL_ID.exec(link)?.[1];

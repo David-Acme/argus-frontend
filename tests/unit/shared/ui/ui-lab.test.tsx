@@ -9,6 +9,7 @@ mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => search,
   useRouter: () => ({ setParams: () => undefined }),
+  useIsFocused: () => true,
 }));
 mock.module('@/shared/hooks/use-theme-preference', () => ({ getThemePreference: () => 'system' }));
 
@@ -29,12 +30,14 @@ const { MediaDemo } = await import('@/features/ui-lab/demos/media-demo');
 const { MenuDemo } = await import('@/features/ui-lab/demos/menu-demo');
 const { NavDemo } = await import('@/features/ui-lab/demos/nav-demo');
 const { NoticeDemo } = await import('@/features/ui-lab/demos/notice-demo');
+const { PresenceDemo } = await import('@/features/ui-lab/demos/presence-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
 const { ResourceViewDemo } = await import('@/features/ui-lab/demos/resource-view-demo');
 const { RowDemo } = await import('@/features/ui-lab/demos/row-demo');
 const { Scene } = await import('@/features/ui-lab/demos/scene');
 const { ScreenDemo } = await import('@/features/ui-lab/demos/screen-demo');
 const { SectionDemo } = await import('@/features/ui-lab/demos/section-demo');
+const { SheetDemo } = await import('@/features/ui-lab/demos/sheet-demo');
 const { StatusDemo } = await import('@/features/ui-lab/demos/status-demo');
 const { SwitchDemo } = await import('@/features/ui-lab/demos/switch-demo');
 const { TextDemo } = await import('@/features/ui-lab/demos/text-demo');
@@ -62,11 +65,13 @@ const DEMOS: Record<string, ComponentType> = {
   menu: MenuDemo,
   nav: NavDemo,
   notice: NoticeDemo,
+  presence: PresenceDemo,
   pressable: PressableDemo,
   'resource-view': ResourceViewDemo,
   row: RowDemo,
   screen: ScreenDemo,
   section: SectionDemo,
+  sheet: SheetDemo,
   status: StatusDemo,
   switch: SwitchDemo,
   text: TextDemo,

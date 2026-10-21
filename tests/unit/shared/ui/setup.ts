@@ -61,6 +61,11 @@ mock.module('react-native-keyboard-controller', async () => {
   return { KeyboardAwareScrollView: web.ScrollView };
 });
 mock.module('expo-device', () => ({ totalMemory: null }));
+mock.module(
+  '@/shared/ui/presence/presence-canvas',
+  () => import('@/shared/ui/presence/presence-canvas.web')
+);
+mock.module('@/shared/ui/sheet/sheet', () => import('@/shared/ui/sheet/sheet.web'));
 mock.module('uniwind', () => ({
   Uniwind: { setTheme: () => undefined },
   useUniwind: () => ({ theme: 'light' }),
@@ -76,12 +81,15 @@ mock.module('react-native-reanimated', async () => {
     useAnimatedStyle: <T>(build: () => T) => build(),
     withSpring: <T>(target: T) => target,
     withTiming: <T>(target: T) => target,
+    withRepeat: <T>(animation: T) => animation,
+    cancelAnimation: () => undefined,
+    useFrameCallback: () => undefined,
     Keyframe: class {
       duration() {
         return this;
       }
     },
-    Easing: { bezier: () => () => 0 },
+    Easing: { bezier: () => () => 0, linear: (progress: number) => progress },
   };
 });
 

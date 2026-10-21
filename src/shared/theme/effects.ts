@@ -1,8 +1,9 @@
 import * as Device from 'expo-device';
 import { useEffect } from 'react';
-import { AccessibilityInfo, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { IS_ANDROID } from '@/shared/constants';
+import { readSystemFlag, watchSystemFlag, type SystemFlag } from './system-flags';
 
 export const perfTiers = ['low', 'mid', 'high'] as const;
 
@@ -49,33 +50,32 @@ export const useEffectsOverrides = create<EffectsOverrides>(() => ({
   perfTier: null,
 }));
 
-type SystemFlags = { reduceMotion: boolean; reduceTransparency: boolean };
+type SystemFlags = Record<SystemFlag, boolean>;
 
 const useSystemFlags = create<SystemFlags>(() => ({
   reduceMotion: false,
   reduceTransparency: false,
 }));
 
+const SYSTEM_FLAGS: readonly SystemFlag[] = ['reduceMotion', 'reduceTransparency'];
+
 let listening = false;
+
+function setSystemFlag(flag: SystemFlag, enabled: boolean): void {
+  useSystemFlags.setState(
+    flag === 'reduceMotion' ? { reduceMotion: enabled } : { reduceTransparency: enabled }
+  );
+}
 
 function listenToSystemFlags(): void {
   if (listening) return;
   listening = true;
-  const set = (patch: Partial<SystemFlags>) => useSystemFlags.setState(patch);
-  AccessibilityInfo.isReduceMotionEnabled()
-    .then((reduceMotion) => set({ reduceMotion }))
-    .catch(() => undefined);
-  if (typeof AccessibilityInfo.isReduceTransparencyEnabled === 'function') {
-    AccessibilityInfo.isReduceTransparencyEnabled()
-      .then((reduceTransparency) => set({ reduceTransparency }))
+  for (const flag of SYSTEM_FLAGS) {
+    readSystemFlag(flag)
+      .then((enabled) => setSystemFlag(flag, enabled))
       .catch(() => undefined);
+    watchSystemFlag(flag, (enabled) => setSystemFlag(flag, enabled));
   }
-  AccessibilityInfo.addEventListener('reduceMotionChanged', (reduceMotion) =>
-    set({ reduceMotion })
-  );
-  AccessibilityInfo.addEventListener('reduceTransparencyChanged', (reduceTransparency) =>
-    set({ reduceTransparency })
-  );
 }
 
 export type Effects = {

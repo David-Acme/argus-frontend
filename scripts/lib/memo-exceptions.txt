@@ -1,0 +1,1 @@
+src/shared/ui/presence/presence-canvas.tsx spec library-identity: the frame worklet is re-registered whenever its captured spec changes identity, so the spec keeps one identity per particle count and seed

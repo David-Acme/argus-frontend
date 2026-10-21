@@ -12,6 +12,18 @@ mock.module('react-native', () => ({
   AppState: { currentState: 'active' },
   Linking: { openSettings: async () => undefined },
   PermissionsAndroid: { check: async () => false, request: async () => 'denied', PERMISSIONS: {}, RESULTS: {} },
+  AccessibilityInfo: undefined,
+  Alert: undefined,
+  BackHandler: undefined,
+  Dimensions: undefined,
+  PixelRatio: undefined,
+  StyleSheet: undefined,
+  useWindowDimensions: undefined,
+  View: undefined,
+  Text: undefined,
+  TextInput: undefined,
+  Pressable: undefined,
+  ScrollView: undefined,
 }));
 
 const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');

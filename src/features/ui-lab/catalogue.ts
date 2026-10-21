@@ -16,11 +16,13 @@ import { MediaDemo } from './demos/media-demo';
 import { MenuDemo } from './demos/menu-demo';
 import { NavDemo } from './demos/nav-demo';
 import { NoticeDemo } from './demos/notice-demo';
+import { PresenceDemo } from './demos/presence-demo';
 import { PressableDemo } from './demos/pressable-demo';
 import { ResourceViewDemo } from './demos/resource-view-demo';
 import { RowDemo } from './demos/row-demo';
 import { ScreenDemo } from './demos/screen-demo';
 import { SectionDemo } from './demos/section-demo';
+import { SheetDemo } from './demos/sheet-demo';
 import { StatusDemo } from './demos/status-demo';
 import { SwitchDemo } from './demos/switch-demo';
 import { TextDemo } from './demos/text-demo';
@@ -62,6 +64,8 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'status', family: 'content', title: 'Status', Demo: StatusDemo },
   { id: 'nav', family: 'foundations', title: 'Nav', Demo: NavDemo },
   { id: 'screen', family: 'foundations', title: 'Screen', Demo: ScreenDemo },
+  { id: 'sheet', family: 'overlays', title: 'Sheet', Demo: SheetDemo },
+  { id: 'presence', family: 'identity', title: 'Presence', Demo: PresenceDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [
