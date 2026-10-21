@@ -72,20 +72,24 @@ function weightOf(weight: string): Weight {
 
 export function CloseGlyph({ color, extent }: { color: string; extent: number }) {
   const bar = { width: extent * GLYPH_BAR, backgroundColor: color };
+  const box = { width: extent, height: extent };
+  const down = { transform: [{ rotate: '45deg' }] };
+  const up = { transform: [{ rotate: '-45deg' }] };
   return (
-    <View style={[styles.glyph, { width: extent, height: extent }]}>
-      <View style={[styles.bar, bar, { transform: [{ rotate: '45deg' }] }]} />
-      <View style={[styles.bar, bar, { transform: [{ rotate: '-45deg' }] }]} />
+    <View style={[styles.glyph, box]}>
+      <View style={[styles.bar, bar, down]} />
+      <View style={[styles.bar, bar, up]} />
     </View>
   );
 }
 
 export function MoreGlyph({ color }: { color: string }) {
+  const tint = { backgroundColor: color };
   return (
     <View style={styles.dots}>
-      <View style={[styles.dot, { backgroundColor: color }]} />
-      <View style={[styles.dot, { backgroundColor: color }]} />
-      <View style={[styles.dot, { backgroundColor: color }]} />
+      <View style={[styles.dot, tint]} />
+      <View style={[styles.dot, tint]} />
+      <View style={[styles.dot, tint]} />
     </View>
   );
 }
@@ -110,6 +114,8 @@ export function IconButton({
   testID,
 }: IconButtonProps) {
   const extent = small ? size.iconSmall : size.icon;
+  const rest = { backgroundColor: filled ? theme.fill : 'transparent' };
+  const held = { backgroundColor: theme['fill-press'] };
   return (
     <Pressable
       accessibilityRole="button"
@@ -120,7 +126,7 @@ export function IconButton({
       style={({ pressed }) => [
         styles.iconButton,
         small && styles.smallButton,
-        { backgroundColor: pressed ? theme['fill-press'] : filled ? theme.fill : 'transparent' },
+        pressed ? held : rest,
       ]}>
       {glyph === 'close' ? (
         <CloseGlyph color={theme.text} extent={extent} />
@@ -135,22 +141,20 @@ type TitleProps = { title: string; theme: SheetTheme; dialog: boolean; nativeID?
 
 export function SheetTitle({ title, theme, dialog, nativeID }: TitleProps) {
   const spec = dialog ? type.title : type.headline;
+  const text = {
+    color: theme.text,
+    fontSize: spec.size,
+    lineHeight: spec.line,
+    fontWeight: weightOf(spec.weight),
+    letterSpacing: spec.tracking * spec.size,
+  };
   return (
     <Text
       role="heading"
       nativeID={nativeID}
       numberOfLines={1}
       maxFontSizeMultiplier={spec.maxScale}
-      style={[
-        styles.title,
-        {
-          color: theme.text,
-          fontSize: spec.size,
-          lineHeight: spec.line,
-          fontWeight: weightOf(spec.weight),
-          letterSpacing: spec.tracking * spec.size,
-        },
-      ]}>
+      style={[styles.title, text]}>
       {title}
     </Text>
   );
@@ -185,6 +189,21 @@ type PrimaryProps = { action: SheetAction; theme: SheetTheme; compact?: boolean;
 
 export function PrimaryButton({ action, theme, compact, hint }: PrimaryProps) {
   const role = compact ? typeRoles.buttonCompact : typeRoles.button;
+  const ink = { backgroundColor: theme.ink, opacity: action.disabled ? 0.4 : 1 };
+  const inkPressed = { backgroundColor: theme.ink, opacity: action.disabled ? 0.4 : 0.85 };
+  const text = {
+    color: theme['on-ink'],
+    fontSize: role.size,
+    lineHeight: role.line,
+    fontWeight: weightOf(role.weight),
+  };
+  const keyText = {
+    color: theme['on-ink'],
+    borderColor: theme['on-ink'],
+    fontSize: typeRoles.key.size,
+    lineHeight: typeRoles.key.line,
+    fontWeight: weightOf(typeRoles.key.weight),
+  };
   return (
     <Pressable
       accessibilityRole="button"
@@ -195,32 +214,12 @@ export function PrimaryButton({ action, theme, compact, hint }: PrimaryProps) {
       style={({ pressed }) => [
         styles.primary,
         compact ? styles.compact : styles.block,
-        { backgroundColor: theme.ink, opacity: action.disabled ? 0.4 : pressed ? 0.85 : 1 },
+        pressed ? inkPressed : ink,
       ]}>
-      <Text
-        maxFontSizeMultiplier={role.maxScale}
-        style={[
-          styles.label,
-          { color: theme['on-ink'], fontSize: role.size, lineHeight: role.line },
-          { fontWeight: weightOf(role.weight) },
-        ]}>
+      <Text maxFontSizeMultiplier={role.maxScale} style={[styles.label, text]}>
         {action.label}
       </Text>
-      {hint ? (
-        <Text
-          style={[
-            styles.key,
-            {
-              color: theme['on-ink'],
-              borderColor: theme['on-ink'],
-              fontSize: typeRoles.key.size,
-              lineHeight: typeRoles.key.line,
-              fontWeight: weightOf(typeRoles.key.weight),
-            },
-          ]}>
-          {hint}
-        </Text>
-      ) : null}
+      {hint ? <Text style={[styles.key, keyText]}>{hint}</Text> : null}
     </Pressable>
   );
 }
@@ -277,32 +276,27 @@ type DiscardProps = {
 export function DiscardRow({ question, keep, discard, theme }: DiscardProps) {
   const role = typeRoles.buttonCompact;
   const label = { fontSize: role.size, lineHeight: role.line, fontWeight: weightOf(role.weight) };
+  const band = { backgroundColor: theme['attn-soft'] };
+  const ask = { color: theme.text, fontWeight: weightOf(typeRoles.label.weight) };
+  const keepText = { color: theme.text };
+  const discardFill = { backgroundColor: theme['alert-soft'] };
+  const discardText = { color: theme.alert };
   return (
-    <View
-      role="alertdialog"
-      accessibilityLabel={question}
-      style={[styles.discard, { backgroundColor: theme['attn-soft'] }]}>
-      <Text
-        style={[
-          styles.grow,
-          label,
-          { color: theme.text, fontWeight: weightOf(typeRoles.label.weight) },
-        ]}>
-        {question}
-      </Text>
+    <View role="alertdialog" accessibilityLabel={question} style={[styles.discard, band]}>
+      <Text style={[styles.grow, label, ask]}>{question}</Text>
       <Pressable
         accessibilityRole="button"
         onPress={keep.onPress}
         testID={keep.testID}
         style={[styles.primary, styles.compact]}>
-        <Text style={[label, { color: theme.text }]}>{keep.label}</Text>
+        <Text style={[label, keepText]}>{keep.label}</Text>
       </Pressable>
       <Pressable
         accessibilityRole="button"
         onPress={discard.onPress}
         testID={discard.testID}
-        style={[styles.primary, styles.compact, { backgroundColor: theme['alert-soft'] }]}>
-        <Text style={[label, { color: theme.alert }]}>{discard.label}</Text>
+        style={[styles.primary, styles.compact, discardFill]}>
+        <Text style={[label, discardText]}>{discard.label}</Text>
       </Pressable>
     </View>
   );
