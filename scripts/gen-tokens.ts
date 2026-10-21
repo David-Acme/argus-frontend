@@ -1,7 +1,19 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { breakpoints, color, inset, material, radius, size, type, typeRoles, type TypeSpec } from '../src/shared/theme/tokens';
+import {
+  breakpoints,
+  color,
+  fontFamily,
+  inset,
+  material,
+  radius,
+  size,
+  state,
+  type,
+  typeRoles,
+  type TypeSpec,
+} from '../src/shared/theme/tokens';
 
 const ROOT = join(import.meta.dir, '..');
 const TARGET = join(ROOT, 'src', 'shared', 'theme', 'tokens.generated.css');
@@ -18,7 +30,8 @@ Writes src/shared/theme/tokens.generated.css from src/shared/theme/tokens.ts:
   process.exit(0);
 }
 
-const kebab = (name: string): string => name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+const kebab = (name: string): string =>
+  name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 
 const px = (value: number): string => `${Number(value.toFixed(3))}px`;
 
@@ -36,7 +49,8 @@ export function parseColor(value: string): Rgba {
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, a: 1 };
   }
   const rgba = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(value.replace(/\s/g, ''));
-  if (rgba) return { r: Number(rgba[1]), g: Number(rgba[2]), b: Number(rgba[3]), a: Number(rgba[4]) };
+  if (rgba)
+    return { r: Number(rgba[1]), g: Number(rgba[2]), b: Number(rgba[3]), a: Number(rgba[4]) };
   throw new Error(`gen-tokens cannot read the colour ${value}`);
 }
 
@@ -57,7 +71,9 @@ export function toOklch(value: string): string {
 
 const themeBlock = (theme: 'light' | 'dark'): string[] => [
   `    @variant ${theme} {`,
-  ...Object.entries(color[theme]).map(([role, value]) => `      --color-${role}: ${toOklch(value)};`),
+  ...Object.entries(color[theme]).map(
+    ([role, value]) => `      --color-${role}: ${toOklch(value)};`
+  ),
   '    }',
 ];
 
@@ -82,17 +98,22 @@ export function tokensCss(): string {
   const radiusLines = Object.entries(radius)
     .filter(([name]) => !SKIPPED_RADII.has(name))
     .map(([name, value]) => `  --radius-${kebab(name)}: ${px(value)};`);
-  const insetLines = Object.entries(inset).map(([name, value]) => `  --spacing-${kebab(name)}: ${px(value)};`);
+  const insetLines = Object.entries(inset).map(
+    ([name, value]) => `  --spacing-${kebab(name)}: ${px(value)};`
+  );
   const sizeLines = Object.entries(size)
     .filter(([name]) => !SKIPPED_SIZES.has(name))
     .map(([name, value]) => `  --spacing-${kebab(name)}: ${px(value)};`);
-  const textLines = [...Object.entries(type), ...Object.entries(typeRoles)].flatMap(([name, spec]) => typeLines(name, spec));
+  const textLines = [...Object.entries(type), ...Object.entries(typeRoles)].flatMap(
+    ([name, spec]) => typeLines(name, spec)
+  );
   const blurLines = [
     `  --blur-control: ${px(material.blurControl)};`,
     `  --blur-chip: ${px(material.blurChip)};`,
   ];
   return [
     '@theme {',
+    `  --font-system: ${fontFamily.web};`,
     ...breakpointLines,
     ...radiusLines,
     ...insetLines,
@@ -117,6 +138,19 @@ export function tokensCss(): string {
     '',
     ...glass('palette', material.blurPalette, material.saturationControl),
     '',
+    '@utility focus-ring {',
+    '  &:focus-visible {',
+    `    outline: ${px(inset.focusRing)} solid var(--color-accent);`,
+    `    outline-offset: ${px(inset.focusRing)};`,
+    '  }',
+    '}',
+    '',
+    '@utility hover-dim {',
+    '  &:hover {',
+    `    filter: brightness(${state.hoverBrightness});`,
+    '  }',
+    '}',
+    '',
   ].join('\n');
 }
 
@@ -136,7 +170,9 @@ function check(): void {
   const length = Math.max(want.length, have.length);
   for (let index = 0; index < length; index += 1) {
     if (want[index] !== have[index]) {
-      console.log(`line ${index + 1}: expected ${JSON.stringify(want[index] ?? null)}, found ${JSON.stringify(have[index] ?? null)}`);
+      console.log(
+        `line ${index + 1}: expected ${JSON.stringify(want[index] ?? null)}, found ${JSON.stringify(have[index] ?? null)}`
+      );
     }
   }
   console.log('check-tokens: tokens.generated.css is stale, run `bun scripts/gen-tokens.ts`');

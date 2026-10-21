@@ -1,4 +1,5 @@
 @theme {
+  --font-system: system-ui, -apple-system, "SF Pro Text", Roboto, "Segoe UI", sans-serif;
   --breakpoint-medium: 600px;
   --breakpoint-expanded: 1024px;
   --breakpoint-wide: 1440px;
@@ -247,4 +248,17 @@
 @utility glass-palette {
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   backdrop-filter: blur(30px) saturate(1.6);
+}
+
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@utility hover-dim {
+  &:hover {
+    filter: brightness(0.96);
+  }
 }

@@ -7,7 +7,15 @@ type Pair = { fg: ColorRole; bg: ColorRole; min: number };
 const TEXT = 4.5;
 const GRAPHIC = 3;
 
-const TEXT_ROLES: readonly ColorRole[] = ['text', 'text-2', 'text-3', 'accent', 'ok', 'attn', 'alert'];
+const TEXT_ROLES: readonly ColorRole[] = [
+  'text',
+  'text-2',
+  'text-3',
+  'accent',
+  'ok',
+  'attn',
+  'alert',
+];
 const GROUNDS: readonly ColorRole[] = ['bg', 'surface', 'fill'];
 
 const PAIRS: readonly Pair[] = [
@@ -35,18 +43,51 @@ type Exception = { ratio: number; where: string };
 
 const KNOWN: Record<string, Exception> = {
   'light text-3 on fill': { ratio: 4.02, where: 'the prototype search field (.cmdk) placeholder' },
-  'light accent on fill': { ratio: 4.06, where: 'initials in a plain well (.lic.r, desktop En casa)' },
-  'light ok on fill': { ratio: 4.02, where: 'not drawn by the prototype; ok text sits on ok-soft or surface' },
-  'light attn on fill': { ratio: 4.05, where: 'not drawn by the prototype; attn text sits on attn-soft or glass' },
-  'light alert on fill': { ratio: 4.02, where: 'not drawn by the prototype; alert text sits on alert-soft or surface' },
+  'light accent on fill': {
+    ratio: 4.06,
+    where: 'initials in a plain well (.lic.r, desktop En casa)',
+  },
+  'light ok on fill': {
+    ratio: 4.02,
+    where: 'not drawn by the prototype; ok text sits on ok-soft or surface',
+  },
+  'light attn on fill': {
+    ratio: 4.05,
+    where: 'not drawn by the prototype; attn text sits on attn-soft or glass',
+  },
+  'light alert on fill': {
+    ratio: 4.02,
+    where: 'not drawn by the prototype; alert text sits on alert-soft or surface',
+  },
   'light ok on ok-soft': { ratio: 4.29, where: 'the ok chip (.chip.ok)' },
-  'light attn on attn-soft': { ratio: 4.36, where: 'the attn chip and banner (.chip.attn, .banner.attn)' },
-  'light alert on alert-soft': { ratio: 4.19, where: 'the danger button (.btn.danger: SOS, Sirena)' },
-  'light accent on accent-soft': { ratio: 4.2, where: 'initials in an accent well (.lic.accent) and nav counts (.nav .n)' },
-  'dark alert on fill': { ratio: 3.88, where: 'not drawn by the prototype; alert text sits on alert-soft or surface' },
-  'dark alert on alert-soft': { ratio: 4.32, where: 'the danger button (.btn.danger: SOS, Sirena)' },
-  'light fill-press on surface': { ratio: 1.44, where: 'the off switch track (.switch), drawn with an inset line' },
-  'dark fill-press on surface': { ratio: 1.33, where: 'the off switch track (.switch), drawn with an inset line' },
+  'light attn on attn-soft': {
+    ratio: 4.36,
+    where: 'the attn chip and banner (.chip.attn, .banner.attn)',
+  },
+  'light alert on alert-soft': {
+    ratio: 4.19,
+    where: 'the danger button (.btn.danger: SOS, Sirena)',
+  },
+  'light accent on accent-soft': {
+    ratio: 4.2,
+    where: 'initials in an accent well (.lic.accent) and nav counts (.nav .n)',
+  },
+  'dark alert on fill': {
+    ratio: 3.88,
+    where: 'not drawn by the prototype; alert text sits on alert-soft or surface',
+  },
+  'dark alert on alert-soft': {
+    ratio: 4.32,
+    where: 'the danger button (.btn.danger: SOS, Sirena)',
+  },
+  'light fill-press on surface': {
+    ratio: 1.44,
+    where: 'the off switch track (.switch), drawn with an inset line',
+  },
+  'dark fill-press on surface': {
+    ratio: 1.33,
+    where: 'the off switch track (.switch), drawn with an inset line',
+  },
 };
 
 const luminance = (value: string): number => {
@@ -68,7 +109,9 @@ const keyOf = (theme: TokenTheme, pair: Pair) => `${theme} ${pair.fg} on ${pair.
 
 describe('token contrast', () => {
   test('every known exception is a measured pair', () => {
-    const measuredKeys = new Set(themeNames.flatMap((theme) => PAIRS.map((pair) => keyOf(theme, pair))));
+    const measuredKeys = new Set(
+      themeNames.flatMap((theme) => PAIRS.map((pair) => keyOf(theme, pair)))
+    );
     expect(Object.keys(KNOWN).filter((key) => !measuredKeys.has(key))).toEqual([]);
   });
 

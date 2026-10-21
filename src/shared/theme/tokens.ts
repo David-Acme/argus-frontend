@@ -101,16 +101,27 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
   },
 };
 
-export const elevation: Record<TokenTheme, Record<'card' | 'float' | 'thumb', string>> = {
+export const elevation: Record<
+  TokenTheme,
+  Record<'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset', string>
+> = {
   light: {
     card: '0px 1px 2px 0px rgba(60,45,30,0.05), 0px 6px 20px 0px rgba(60,45,30,0.06)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.06), 0px 10px 32px 0px rgba(0,0,0,0.12)',
     thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
+    glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 1px 2px 0px rgba(0,0,0,0.06)',
+    glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7)',
+    ring: '0px 0px 0px 1px #ECE8E2',
+    ringInset: 'inset 0px 0px 0px 1px #ECE8E2',
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
     thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
+    glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 1px 2px 0px rgba(255,255,255,0.06)',
+    glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08)',
+    ring: '0px 0px 0px 1px #2D2A25',
+    ringInset: 'inset 0px 0px 0px 1px #2D2A25',
   },
 };
 
@@ -222,7 +233,7 @@ export const inset = {
   checkBorder: 2,
 } as const;
 
-export const opacity = { disabled: 0.5 } as const;
+export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
 
 export const radius = {
   sm: 8,
@@ -323,7 +334,7 @@ export const tokens = {
   fontFamily,
   space,
   inset,
-  opacity,
+  state,
   radius,
   size,
   motion,
