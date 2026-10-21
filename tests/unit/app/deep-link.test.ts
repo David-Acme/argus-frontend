@@ -15,6 +15,10 @@ describe('deep link allow-list', () => {
     expect(deepLinkPath('argus://')).toBe('/');
   });
 
+  test('the lab spikes screen is closed to links unless the build turns the lab on', () => {
+    expect(deepLinkPath('argus://ui-lab-spikes?view=bench&tier=low')).toBe('/');
+  });
+
   test('the module and activity screens of the settings can be opened by link, nothing else under it', () => {
     expect(deepLinkPath('argus://settings/modules')).toBe('/settings/modules');
     expect(deepLinkPath('argus://settings/activity?module=surveillance')).toBe('/settings/activity');
