@@ -59,6 +59,7 @@
     "@livekit/react-native-webrtc": "144.2.0",
     "@lodev09/react-native-true-sheet": "3.11.18",
     "@nozbe/watermelondb": "~0.28.0",
+    "@rn-primitives/alert-dialog": "^1.5.2",
     "@rn-primitives/context-menu": "^1.5.2",
     "@rn-primitives/dialog": "^1.5.2",
     "@rn-primitives/dropdown-menu": "^1.5.2",
@@ -158,6 +159,7 @@
   },
   "private": true,
   "overrides": {
+    "@radix-ui/react-alert-dialog": "1.1.19",
     "@radix-ui/react-dismissable-layer": "1.1.19",
     "@radix-ui/react-focus-guards": "1.1.6",
     "@radix-ui/react-focus-scope": "1.1.16",
