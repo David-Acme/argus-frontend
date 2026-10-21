@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useEffectsOverrides } from '@/shared/theme';
 import { Media } from '@/shared/ui/media/media';
 import { MediaFrame } from '@/shared/ui/media/media-frame';
+import { screenFocus } from './screen-focus';
 import {
   Controls,
   DormantMark,
@@ -155,5 +156,18 @@ describe('Media', () => {
     expect(screen.getByText('14:45')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Pantalla completa' })).toBeDefined();
     act(() => useEffectsOverrides.setState({ reduceMotion: null, reduceTransparency: null }));
+  });
+
+  test('the live dot stops breathing while its screen is out of focus', () => {
+    const breath = (root: Element) =>
+      [...root.querySelectorAll('*')]
+        .map((node) => (node as HTMLElement).style?.animationPlayState)
+        .filter(Boolean);
+    act(() => useEffectsOverrides.setState({ reduceMotion: false }));
+    screenFocus.focused = false;
+    const { container } = render(<LiveChip label="En vivo" />);
+    expect(breath(container)).toEqual(['paused']);
+    screenFocus.focused = true;
+    act(() => useEffectsOverrides.setState({ reduceMotion: null }));
   });
 });

@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { useScreenActive } from '@/shared/hooks/use-screen-active';
 import { illustration, motion, size, useEffects } from '@/shared/theme';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -31,6 +32,8 @@ const BREATHING = {
   animationIterationCount: 'infinite',
   animationTimingFunction: 'ease-in-out',
 } as const;
+
+const ASLEEP = { animationPlayState: 'paused' } as const;
 
 const CHIP = { backgroundColor: illustration.mediaChip };
 
@@ -70,6 +73,7 @@ export function LabelRow({ name, detail, dormant }: LabelRowProps) {
 
 export function LiveChip({ label }: LiveChipProps) {
   const { reduceMotion } = useEffects();
+  const active = useScreenActive();
   const blur = useBlur();
   return (
     <View
@@ -80,7 +84,7 @@ export function LiveChip({ label }: LiveChipProps) {
       style={CHIP}>
       <Animated.View
         className="size-dot rounded-full"
-        style={reduceMotion ? LIVE_DOT : [LIVE_DOT, BREATHING]}
+        style={reduceMotion ? LIVE_DOT : [LIVE_DOT, BREATHING, active ? null : ASLEEP]}
       />
       <Text variant="mediaChip" tone="on-media">
         {label}

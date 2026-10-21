@@ -5,6 +5,8 @@ import { Empty } from '@/shared/ui/resource-view/empty';
 import type { Resource } from '@/shared/ui/resource-view/resource';
 import { ResourceView, type ResourceCopy } from '@/shared/ui/resource-view/resource-view';
 import { Skeleton, SkeletonRow } from '@/shared/ui/resource-view/skeleton';
+import { ShimmerProvider, useShimmerStyle } from '@/shared/ui/resource-view/shimmer.native';
+import { screenFocus } from './screen-focus';
 
 const COPY: ResourceCopy = {
   loading: 'Cargando',
@@ -108,5 +110,34 @@ describe('ResourceView', () => {
     );
     expect(rows.container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(4);
     act(() => useEffectsOverrides.setState({ reduceMotion: null }));
+  });
+
+  test('on native one shimmer value drives every skeleton of a view, still off-screen', () => {
+    const seen: object[] = [];
+    function Probe() {
+      seen.push(useShimmerStyle());
+      return null;
+    }
+    render(
+      <ShimmerProvider>
+        <Probe />
+        <Probe />
+        <Probe />
+      </ShimmerProvider>
+    );
+    expect(seen.every((style) => !('animationName' in style))).toBe(true);
+    expect(new Set(seen.map((style) => JSON.stringify(style))).size).toBe(1);
+    seen.length = 0;
+    render(<Probe />);
+    expect(seen.every((style) => 'animationName' in style)).toBe(true);
+    seen.length = 0;
+    screenFocus.focused = false;
+    render(
+      <ShimmerProvider>
+        <Probe />
+      </ShimmerProvider>
+    );
+    expect(seen).toEqual([{ opacity: 0.5 }]);
+    screenFocus.focused = true;
   });
 });

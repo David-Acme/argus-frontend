@@ -5753,6 +5753,20 @@ around 0.5 and holds it at 0.5 under reduced motion, so the still fill has the
 prototype's average tone; in dark mode `skel` alone is all but invisible on
 `surface`.
 
+**At most two continuous animations (review finding 17).** On native one
+shared value per `ResourceView` drives the shimmer of every `Skeleton` in it
+(`shimmer.native.tsx`: one `withRepeat` over the same 0.5 → 1 → 0 → 0.5
+keyframes, read by each shape's `useAnimatedStyle`; it rests at 0.5 under
+reduced motion and while the screen is out of focus or backgrounded), where
+a six-row list ran about 24 animations. The web keeps one Reanimated CSS
+animation per shape (`shimmer.tsx`): those are compositor opacity
+animations, and a shared value would move them to a JavaScript frame loop
+writing every shape's style. A `Skeleton` outside a `ResourceView` keeps its
+own CSS shimmer. The live chip's dot stops breathing while its screen is out
+of focus or the app is in the background (`useScreenActive`), like Aura and
+`Presence`. Whether the native shimmer and the paused breathing measure as
+expected in the frame stats needs the phone (R9).
+
 ## Identity and frame components: Aura, Status, Nav, Screen (Phase 1, ds-c, 2026-10-20)
 
 Four components of the redesign's design system (spec §2b, §4.1, §4.2,

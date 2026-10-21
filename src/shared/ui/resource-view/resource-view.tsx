@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Notice } from '@/shared/ui/notice';
 import { Empty, type EmptyProps } from './empty';
 import type { Resource } from './resource';
+import { ShimmerProvider } from './shimmer';
 
 export type ResourceCopy = {
   loading: string;
@@ -33,7 +34,7 @@ export function ResourceView<T>({
     case 'loading':
       return (
         <View aria-busy aria-label={copy.loading}>
-          {skeleton}
+          <ShimmerProvider>{skeleton}</ShimmerProvider>
         </View>
       );
     case 'ready':
