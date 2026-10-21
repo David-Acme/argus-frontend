@@ -128,7 +128,7 @@ export function CalendarWeekView({
                     style={renderContextMenu ? undefined : position}
                     accessibilityState={{ busy: isPendingEntry(entry) }}
                     className={cn(
-                      'web:hover:opacity-85 justify-center overflow-hidden rounded-legacy-sm px-1.5',
+                      'web:hover:opacity-85 rounded-legacy-sm justify-center overflow-hidden px-1.5',
                       renderContextMenu && 'flex-1',
                       isPendingEntry(entry) && 'opacity-60',
                       entry.status === 'complete'

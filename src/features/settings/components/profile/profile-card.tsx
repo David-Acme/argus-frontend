@@ -146,7 +146,10 @@ export function ProfileCard({
           {targets.map((target) => (
             <View key={`${target.owner}:${target.key}`} className="flex-row items-center gap-2">
               <View
-                className={cn('size-1.5 rounded-full', target.changed ? 'bg-legacy-accent' : 'bg-border')}
+                className={cn(
+                  'size-1.5 rounded-full',
+                  target.changed ? 'bg-legacy-accent' : 'bg-border'
+                )}
               />
               <Text variant="caption" numberOfLines={1} className="min-w-0 flex-1">
                 {settingLabel(target.key)}
