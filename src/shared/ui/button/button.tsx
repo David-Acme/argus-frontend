@@ -112,6 +112,26 @@ function IconButton({
   );
 }
 
+type FaceInput = Pick<TextButtonProps, 'compact' | 'block' | 'glass'> & { variant: ButtonVariant };
+
+function useFace({ variant, compact, block, glass }: FaceInput) {
+  const material = useGlass(glass);
+  const surface = material
+    ? material.solid
+      ? 'bg-surface'
+      : 'web:glass-control bg-glass'
+    : INK[variant].surface;
+  return {
+    className: clsx(
+      'flex-row items-center justify-center gap-2',
+      frameClass(compact, variant),
+      surface,
+      block && 'w-full'
+    ),
+    style: material ? { boxShadow: material.elevation.glass } : undefined,
+  };
+}
+
 function TextButton({
   label,
   onPress,
@@ -125,15 +145,8 @@ function TextButton({
   disabled,
 }: TextButtonProps) {
   const flight = useSingleFlight(onPress, busy);
-  const material = useGlass(glass);
   const ink = INK[variant];
-  const face = clsx(
-    'flex-row items-center justify-center gap-2',
-    frameClass(compact, variant),
-    material ? (material.solid ? 'bg-surface' : 'web:glass-control bg-glass') : ink.surface,
-    block && 'w-full'
-  );
-  const glassStyle = material ? { boxShadow: material.elevation.glass } : undefined;
+  const face = useFace({ variant, compact, block, glass });
   const content = (
     <>
       {icon ? <Icon name={icon} size="small" tone={ink.icon} /> : null}
@@ -150,13 +163,15 @@ function TextButton({
       pressed={{ scale: 'surface' }}
       disabled={disabled || flight.busy}
       hitSlop={compact ? COMPACT_SLOP : undefined}
-      style={compact ? undefined : glassStyle}
+      style={compact ? undefined : face.style}
       className={clsx(
         'web:hover-dim',
-        compact ? clsx('min-h-target-min -my-0.5 justify-center', block && 'w-full') : face
+        compact
+          ? clsx('min-h-target-min -my-0.5 justify-center', block && 'w-full')
+          : face.className
       )}>
       {compact ? (
-        <View className={face} style={glassStyle}>
+        <View className={face.className} style={face.style}>
           {content}
         </View>
       ) : (
