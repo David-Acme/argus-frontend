@@ -114,7 +114,7 @@ export function buildSprites(scene: SkiaScene, width: number): void {
   scene.spriteMax = max;
 }
 
-export function beginFrame(scene: SkiaScene, fade: number): void {
+export function fadeFrame(scene: SkiaScene, fade: number): void {
   'worklet';
   const canvas = scene.surface.getCanvas();
   scene.tint.fill(0);
@@ -125,6 +125,11 @@ export function beginFrame(scene: SkiaScene, fade: number): void {
     scene.fade.setColor(scene.tint);
     canvas.drawPaint(scene.fade);
   }
+}
+
+export function beginFrame(scene: SkiaScene, fade: number): void {
+  'worklet';
+  fadeFrame(scene, fade);
   scene.used = 0;
 }
 
