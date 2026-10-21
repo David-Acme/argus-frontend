@@ -1,7 +1,7 @@
 import ts from 'typescript';
-import { importsOf, readSource, resolveImport } from '../source-files';
+import { importsOf, readSource, resolveImports, walk } from '../source-files';
 
-export type Edge = { from: string; to: string; runtime: boolean };
+export type Edge = { from: string; to: string; runtime: boolean; typeOnly: boolean };
 
 function isTypeOnlyImport(node: ts.ImportDeclaration): boolean {
   const clause = node.importClause;
@@ -37,6 +37,25 @@ function specifierOf(statement: ts.Statement): { specifier: string; runtime: boo
   return null;
 }
 
+function requiredSpecifier(node: ts.Node): string | null {
+  if (
+    ts.isCallExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    node.expression.text === 'require' &&
+    node.arguments[0] &&
+    ts.isStringLiteralLike(node.arguments[0])
+  )
+    return node.arguments[0].text;
+  if (
+    ts.isImportEqualsDeclaration(node) &&
+    !node.isTypeOnly &&
+    ts.isExternalModuleReference(node.moduleReference) &&
+    ts.isStringLiteralLike(node.moduleReference.expression)
+  )
+    return node.moduleReference.expression.text;
+  return null;
+}
+
 function staticRuntime(source: ts.SourceFile): Map<string, boolean> {
   const runtime = new Map<string, boolean>();
   for (const statement of source.statements) {
@@ -44,16 +63,40 @@ function staticRuntime(source: ts.SourceFile): Map<string, boolean> {
     if (found)
       runtime.set(found.specifier, (runtime.get(found.specifier) ?? false) || found.runtime);
   }
+  walk(source, (node) => {
+    const required = requiredSpecifier(node);
+    if (required) runtime.set(required, true);
+  });
   return runtime;
+}
+
+function lazySpecifiers(source: ts.SourceFile): Set<string> {
+  const lazy = new Set<string>();
+  walk(source, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments[0] &&
+      ts.isStringLiteralLike(node.arguments[0])
+    )
+      lazy.add(node.arguments[0].text);
+  });
+  return lazy;
 }
 
 export function edgesOf(file: string): Edge[] {
   const { text, source } = readSource(file);
   const runtime = staticRuntime(source);
+  const lazy = lazySpecifiers(source);
   const edges: Edge[] = [];
   for (const specifier of new Set(importsOf(text))) {
-    const target = resolveImport(file, specifier);
-    if (target) edges.push({ from: file, to: target, runtime: runtime.get(specifier) ?? false });
+    for (const target of resolveImports(file, specifier))
+      edges.push({
+        from: file,
+        to: target,
+        runtime: runtime.get(specifier) ?? false,
+        typeOnly: runtime.get(specifier) === false && !lazy.has(specifier),
+      });
   }
   return edges;
 }

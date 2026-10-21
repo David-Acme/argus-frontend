@@ -5304,7 +5304,10 @@ minutes without evidence.
 `eslint.config.js` is the only place lint is configured (rule 2). A rule is
 turned off only here, by name, for the paths listed, and
 `scripts/check-lint-policy.ts` fails on an exception without a row and on a
-row that turns nothing off. The `off` rules of the `eslint-config-expo` base
+row that turns nothing off. An exemption is a rule set to `off`, and also a
+rule a config block sets for its `files` but leaves out of a file through the
+block's `ignores`: both need a row. A row may name several rules that share
+paths and reason. The `off` rules of the `eslint-config-expo` base
 itself (`no-undef`, `no-unused-vars` and the other core rules typescript-eslint
 replaces, `react/prop-types`, `react/react-in-jsx-scope`, `import/named`,
 `import/default`, `react/jsx-no-target-blank`, `react/no-unsafe`) are the
@@ -5314,7 +5317,14 @@ preset's own decisions and are not exceptions.
 |---|---|---|---|---|
 | `react-hooks/immutability` | `src/**`, `scripts/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
 | `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
-| `i18next/no-literal-string` | `src/app/ui-lab.tsx`, `src/features/ui-lab/**` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
+| `i18next/no-literal-string` | `src/features/ui-lab/**/*.tsx` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. Since p1/ds-base the route `src/app/ui-lab.tsx` is a one-line re-export and the screen and its demos live in `src/features/ui-lab/`. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
+| `complexity`, `max-lines-per-function`, `max-lines`, `max-statements`, `max-depth`, `max-params` | `src/core/i18n/locales/**` | The dictionaries are data: one exported object per namespace, whose length is the copy's, not a function's. The budgets of rule 32 measure code. | rule 32; 68 locale files at R0 | 2026-10-20 |
+| `argus/activity-indicator-home`, `argus/type-scale`, `argus/no-visual-timer`, `i18next/no-literal-string` | `src/shared/components/ui/**`, `src/shared/ui/**` | The design system (the legacy one and the redesign's) is the one home of loading (rule 16), of the type steps (rule 22) and of the visual drivers (rule 26); its components take their words as props, and the literals they draw are glyphs. | rules 16, 22, 24, 26 | 2026-10-20 |
+| `argus/responsive-home` | `src/shared/**` | Rule 23 bans the window size in features: `src/shared` is where the window class is read and turned into `useWindowClass`. | rule 23 | 2026-10-20 |
+| `argus/icon-registry-home` | `src/shared/constants/icon.constant.ts`, `src/shared/components/ui/icon.tsx` | The `ICONS` registry is the only importer of `lucide-react-native` (rule 10), and `Icon` draws from it. | rule 10 | 2026-10-20 |
+| `argus/date-formatter-home`, `argus/intl-date-home` | `src/shared/hooks/use-date-formatter/date.ts` | The one formatter is the only user of `date-fns` and `Intl.DateTimeFormat` (rule 10). | rule 10 | 2026-10-20 |
+| `argus/platform-os-home` | `src/shared/constants/common.constant.ts` | The `IS_*` flags are defined from `Platform.OS` here, and only here (rule 10). | rule 10 | 2026-10-20 |
+| `argus/no-color-literal` | `src/shared/theme/**` | `tokens.ts` and `effects.ts` are the home of the colour values (rule 10). | rule 22 | 2026-10-20 |
 
 ## Rules and gates, R0 (2026-10-20)
 
@@ -5331,36 +5341,39 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 
 | Gate | What it counts | Baseline |
 |---|---|---|
-| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into a slice's internals when the slice has an `index`; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges; `core` files are keyed by `core/<segment>` or `core/services/<name>`); `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`) | `scripts/lib/boundaries-baseline.txt` |
-| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off with the table above; fails on any `warn` and on inline configuration not disabled | the table above |
+| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into another slice's internals, other than its `index`, whether or not the slice has one; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges, `require()` is; `core` files are keyed by `core/<segment>` or `core/services/<name>`), with their members compared one by one; `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`). An import resolves to every platform variant that exists (`.native`, `.web`, `.ios`, `.android`, and the same for `index`), each an edge | `scripts/lib/boundaries-baseline.txt`, `scripts/lib/cycle-baseline.txt` |
+| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off, and each rule a block's `ignores` leaves out of a file, with the table above; fails on any `warn`, on inline configuration not disabled, on a row path that turns nothing off, and on an `eslint-suppressions.json` entry for a file lint does not check or a rule that is not on for it | the table above |
 | `check-references.ts` | every `[key]` in `AGENTS.md`, `CONTEXT.md` files and `docs/plans/*.md` (code spans, fences, links and `[x]` task boxes excluded) is a row of `docs/references.md`, a `[family-*]` matches a key, every row has a URL | 0 |
-| `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0) |
+| `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0; a line without a reason, or whose path and symbol name no memoization or more than one, fails, so a key never exempts a whole component) |
 | `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
 | `lint` | `eslint src scripts --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts --prune-suppressions` in the same change | `eslint-suppressions.json` |
-| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines, and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
+| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
 
 **The quality counters at R0** (they replace the `09cf103` survey numbers of
 the rules document; definitions are in `scripts/lib/quality/`):
 
 | Counter | R0 | Counter | R0 |
 |---|---|---|---|
-| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads) | 73 |
+| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads, aliases included) | 73 |
 | `arbitrary-value` (`-[…]` classes) | 115 | `platform-select` | 58 |
-| `style-object` (`style={{`) | 80 | `shared-value-dot-value` | 315 |
-| `raw-pressable-in-features` (imports) | 74 | `loop-without-reduce-motion` (files) | 2 |
+| `style-object` (each object literal in a `style` attribute, arrays, conditionals and style functions included; 132 since finding 7) | 80 | `shared-value-dot-value` | 315 |
+| `raw-pressable-in-features` (named imports, destructured `require`s and namespace members) | 74 | `loop-without-reduce-motion` (files) | 2 |
 | `window-dimensions-in-features` (imports) | 6 | `animated-layout-prop` (keys other than `transform`/`opacity` returned by `useAnimatedStyle`) | 9 |
-| `template-key` (`t(\`…${}\`)`) | 136 | `timer-in-component` (files) | 8 |
-| `http-unchecked` (an `httpService` call neither passed to a checker nor typed `unknown`) | 83 | `props-over-10` | 18 |
+| `template-key` (a key built by a template, `+`, `join` or `concat` in the first argument of `t`, `tk` or an alias, and every `as TranslationKey`; 137 since finding 3) | 136 | `timer-in-component` (files that reference `setInterval` or `requestAnimationFrame`, by name, member, computed member or alias) | 8 |
+| `http-unchecked` (an `httpService` call, through any alias or destructured method, neither typed `unknown` nor passed to a named checker: `parsed`, `checked`, `parse`, `safeParse`, or a `parse…`, `check…`, `read…`, `validate…` or `…Of` function; 84 since finding 7) | 83 | `props-over-10` | 18 |
 | `source-text-test` (unit tests reading a `src/**/*.ts(x)` file) | 9 | `legacy-token-class` (classes and `var(--color-…)` of today's colour names that `tokens.ts` drops) | 1,548 |
 | `manual-memo` (`useCallback` + `useMemo` + `memo`) | 551 | `untested-component-or-screen` (a `.tsx` under `features`/`shared` no test imports) | 341 |
 | `scanned-files` (floor) | 1,487 | | |
 
-Boundaries at R0: `deep-import` 72, `file-cycle` 1 (the 21-file
+Boundaries at R0: `deep-import` 72 (74 once the slices without an index count, finding 10), `file-cycle` 1 (the 21-file
 `features/{cameras,response,security,voice}` component), `slice-cycle` 1,
 `route-shape` 2 (`+not-found.tsx`, `ui-lab.tsx`).
 
 **Lint.** The lint set of the rules is adopted with each `warn` of
-`eslint-config-expo` promoted to `error`. The bans of rules 10, 13, 16, 18,
+`eslint-config-expo` promoted to `error`. `react-hooks` runs the 17 rules of
+its `recommended-latest` config (the expo base enables 16: it lacks
+`void-use-memo`), spread into `eslint.config.js`; `component-hook-factories`
+is not in that config and not adopted. The bans of rules 10, 13, 16, 18,
 21–24, 26, 27 and the existing selectors are core `no-restricted-imports` /
 `no-restricted-syntax` registered under their own names in a local `argus`
 plugin (`argus/ds-owns-primitives`, `argus/no-color-literal`, …), because a
@@ -5459,3 +5472,36 @@ shared by every worktree and rewritten by the last bundle; better-tailwindcss
 reads it, so new colour classes read as unknown until it is regenerated for
 this checkout (break the link, then `npx uniwind generate-artifacts --css
 ./src/global.css --dts ./uniwind-types.d.ts`).
+
+## Re-baselines
+
+A baseline is never raised silently. `scripts/check-baselines.ts` (the last
+step of `check:boundaries`) compares every ratchet baseline
+(`quality-baseline.txt`, `boundaries-baseline.txt`, `cycle-baseline.txt`,
+`untested-baseline.txt`, `format-baseline.txt`, `memo-exceptions.txt`,
+`bundle-baseline.txt` under `scripts/lib/`, and `eslint-suppressions.json`)
+with its version at the merge base of `HEAD` and `redesign/main`
+(`ARGUS_BASELINE_REF` names another branch). A raise is a count up, a list or
+exception entry added, the `scanned-files` floor down, a `lazy` package
+dropped, or a suppression count up. Each raise fails unless the same change
+adds a row to this table that names the baseline file and the entry; a new
+row that names nothing raised fails too. Rows already on `redesign/main`
+cover nothing, so an old row never opens a baseline again.
+
+The workflow for a lead merge that has to re-baseline: lower what the merge
+fixes (no row: lowering is the ratchet), raise only what it legitimately
+grows, and add one row per baseline here in the merge commit. The entry cell
+lists the keys in backticks: a metric (`style-object`), a list line (a file
+path), a memo key (`path symbol`), `entry-chunk-bytes`, `dist-bytes`,
+`lazy <package>`, or `path rule` for a suppression. A key may be a glob
+(`src/features/** argus/no-template-key`) when the raise is one cause over
+many files; the reason names that cause.
+
+| Baseline | Entries | Reason | Date |
+|---|---|---|---|
+| `scripts/lib/quality-baseline.txt` | `template-key` | Finding 3 of the R0 review: the counter now counts every key built by `+`, a template, `join` or `concat` in the first argument of `t` or `tk` (and their aliases), and every `as TranslationKey`. The one new count is the template key of the `tk` call in `use-settings-profiles.ts` (`screens.settings.profiles.result.reasons.*`), existing debt the `t`-only selector hid. | 2026-10-20 |
+| `eslint-suppressions.json` | `src/features/settings/hooks/use-settings-profiles.ts argus/no-template-key` | The same `tk` template, now seen by the lint ban. | 2026-10-20 |
+| `scripts/lib/boundaries-baseline.txt` | `deep-import` | Finding 10 of the R0 review: an import into another slice's internals counts whether or not the slice has an `index`. The two new counts are the imports into `core/services/desktop`, which has none. | 2026-10-20 |
+| `scripts/lib/cycle-baseline.txt` | `**` | Finding 4 of the R0 review: the cycle members are a list of their own, so a file or slice joining the recorded 21-file and 4-slice cycle fails though the cycle count holds. The file is new: every member is recorded once, as measured. | 2026-10-20 |
+| `scripts/lib/quality-baseline.txt` | `style-object`, `http-unchecked` | Finding 7 of the R0 review: the counters follow bindings. `style-object` counts every object literal in a `style` attribute, inside arrays, conditionals and style functions too (80 → 132, all existing: the welcome mascot, the camera stage and the other array styles); `http-unchecked` follows `httpService` through import aliases, variables and destructured methods, and a call passed to anything but a named checker counts (83 → 84: `responses.push(await httpService.delete(…))` in `notification.service.ts`). `raw-pressable-in-features`, `window-dimensions-in-features`, `is-flag-in-features` and `platform-select` now also see namespace imports, `require`, aliases and computed members, and found nothing new. | 2026-10-20 |
+| `scripts/lib/quality-baseline.txt` | `style-object` | Lead merge of `p1/gates-fix` over `p1/ds-base`: the binding-following counter sees ds-base's two conditional styles in `src/shared/ui/button/button.tsx` and the array style in `src/shared/ui/switch/switch.tsx`, each a named token-derived object chosen by state (132 → 135). | 2026-10-21 |

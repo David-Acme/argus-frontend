@@ -276,6 +276,14 @@ and no more than one Estela per screen.
 
 ## 3. Tokens (the values R5 writes into `tokens.ts`)
 
+The prototype (`docs/plans/redesign-prototype/`) is the visual truth, and
+`src/shared/theme/tokens.ts` holds its values (owner decision, 2026-10-20).
+The numbers in this section are the values of `tokens.ts`, measured from the
+prototype; where an earlier draft of this spec disagreed (the headline, the
+hero line, the row height, the radius steps), the prototype won and the text
+below follows it. A value changes in `tokens.ts` first, from the prototype,
+and this section follows.
+
 ### 3.1 Colour: today's warm charcoal and sand, consolidated
 
 v3 keeps the palette the owner likes: warm charcoal (`#181816`) with
@@ -297,16 +305,21 @@ withdrawn.
 | `text-2` | `#57524E` | `#D4CBBF` | secondary text (`foreground-secondary`) |
 | `text-3` | `#746D68` | `#AEA18F` | meta on cards (`muted-foreground`). On the light `bg` it measures about 4.4:1, so meta placed directly on `bg` uses `text-2` |
 | `ink` / `on-ink` | `#404040` / `#FAF8F5` | `#E4E1DB` / `#1A1713` | primary button, selected switch, checked box: today's grafito and cream (`interactive`) |
-| `accent` | `#836A3C` text, `#B89A63` fill | `#D9BC85` | icons in wells, unread dot, focus ring, selection, Argus (`accent`, `accent-strong`) |
+| `accent` | `#836A3C` | `#D9BC85` | text-safe accent: icons in wells, unread dot, focus ring, selection, Argus (`accent-strong`) |
+| `accent-fill` | `#B89A63` | `#D9BC85` | accent as a fill that carries no text (`accent`) |
 | `accent-soft` | `#F3E7D2` | `#332A1C` | accent wells (`accent-soft`) |
 | `ok` / `ok-soft` | `#3B7B4F` / `#E3EFE5` | `#63AE73` / `#1C2B20` | calm, online, done (`success`) |
 | `attn` / `attn-soft` | `#9A6114` / `#F8EBD6` | `#E5BC69` / `#33281A` | attention, review, stale (`warning-strong`) |
 | `alert` / `alert-soft` | `#CC3535` / `#FBE4E2` | `#C9706B` / `#3A1F1C` | real alerts, destructive (`error-strong`) |
-| `scrim` | `rgba(28,25,21,.32)` | `rgba(12,11,10,.5)` | behind sheets and dialogs (`overlay`) |
+| `scrim` | `rgba(20,18,16,0.32)` | `rgba(0,0,0,0.5)` | behind sheets and dialogs (`overlay`) |
+| `skel` / `skel-2` | `#ECE9E4` / `#F5F3F0` | `#24221F` / `#2C2A26` | skeleton blocks and their shimmer |
+| `ev1`–`ev4` (each with `evN-text`) | `#EFE4D0` `#E2ECE3` `#E1E6EF` `#F2E1DF` | `#3A2F1C` `#1F3326` `#222C3D` `#3A2321` | calendar event tints, each with its text colour (`#5E4A22` `#2C5338` `#2F4366` `#6E2F28` light, `#EBD3A6` `#A9D8B6` `#B4C6E6` `#F0BDB6` dark) |
 
 Rules:
 
-- About 18 roles per theme instead of 59 constants. The text-safe "strong"
+- 33 roles per theme instead of 59 constants: the 20 above the skeleton row,
+  the three of the glass material, the two skeleton tones and the four event
+  tints with their text colours. The text-safe "strong"
   values of today become the role values themselves; fills that cannot carry
   text (`accent` light fill `#B89A63`, `warning` `#E7A44A`) are named as
   fills. A unit test computes every text/background pair from `tokens.ts`
@@ -319,8 +332,7 @@ Rules:
   - rows inside a card are separated by inset hairlines;
   - icons sit in 42 dp rounded wells (radius 14) in the accent colour, as
     today.
-- Event colours in the calendar map to five muted tints derived from these
-  roles. The raw "blue" of W24 is gone.
+- Event colours in the calendar map to the four muted tints `ev1`–`ev4`. The raw "blue" of W24 is gone.
 - Dark mode: no pure black. Fills sit above surfaces, so checkboxes, empty
   cells and off switches stay visible (W37). Status colours are lighter, not
   inverted.
@@ -333,20 +345,31 @@ Rules:
   `listen` `#E7C98E…` / `#5C4520…` (full values in the prototype). Text over
   the Aura uses `text` and `text-2`, and the Aura fades to `bg` before the
   content starts, so contrast is measured against `bg`.
-- **Material:** `glass` `rgba(255,255,255,.66)` / `rgba(40,38,32,.66)` with
-  a blur of 22, saturation 1.7 and a 1 px inner hairline (`glass-line`).
+- **Material:** `glass` `rgba(255,255,255,0.66)` / `rgba(40,38,32,0.66)` with
+  a blur of 22, saturation 1.7, a 1 px inner hairline (`glass-line`,
+  `rgba(255,255,255,0.7)` / `rgba(255,255,255,0.08)`) and an outer edge
+  (`glass-edge`). Controls blur 18 at saturation 1.6, the sheet 26 and the
+  palette 30 (`tokens.material`).
   Used only by `Nav`, `Sheet` (backdrop edge), `Menu` and `Command`.
 
-### 3.2 Type: six steps, two weights, system fonts
+### 3.2 Type: six steps and their roles, system fonts
 
 | Step | Size / line | Weight | Use |
 |---|---|---|---|
-| `hero` | 36 / 40 (44 on desktop) | 800, tracking −3% | the one expressive sentence per screen (`Status` hero), onboarding headline |
+| `hero` | 36 / 39.6 | 800, tracking −3% | the one expressive sentence per screen (`Status` hero), onboarding headline |
 | `title` | 24 / 30 | 750, tracking −2% | screen titles and section headings (today's bold "Recordatorios", "Usuarios") |
-| `headline` | 17 / 24 | 600 | section headings, status sentence |
-| `body` | 16 / 22 | 400 (500 for row titles) | all reading text, rows |
-| `meta` | 14 / 20 | 400 | secondary lines, timestamps |
-| `caption` | 12 / 16 | 500 | tab labels, chips, badges only |
+| `headline` | 17 / 23.8 | 650 | section headings, status sentence |
+| `body` | 16 / 22.4 | 400 | all reading text |
+| `meta` | 14 / 19.88 | 400 | secondary lines, timestamps |
+| `caption` | 12 / 16.2 | 500 | tab labels, chips, badges only |
+
+The prototype also uses named type roles, kept in `tokens.typeRoles` beside the
+steps: `heroCompact` 30 / 33 and `heroSecondary` 26 / 28.6 (800, −3%),
+`section` 21 / 29.4 (750, −1.5%), `rowTitle` 16 / 21.6 (500), `rowMeta`
+14 / 18.9, `button` 16 / 22.4 and `buttonCompact` 15 / 21 (650), `label`
+15 / 21 (600), `feed` 15 / 21, `chip` 13 / 17.55 (600), `tab` 12 / 16.2 (600)
+and `key` 11 / 17 (650). Steps scale with the OS text size up to 2× (`hero`,
+`title` and the hero roles up to 1.5×, `tab` 1.15×).
 
 This replaces today's eight steps (`display` 32 … `micro` 11). Body moves from
 15 to 16 for older and non-technical readers. `hero` is the expressive moment
@@ -363,13 +386,17 @@ source, so it is not copied.
   gutter is 16 on compact and 24 on medium and up. Sections are 24 apart, rows
   have 12 internal gap and 16 horizontal padding.
 - **Sizes:** touch target 48 (minimum 44 where the platform allows), row
-  minimum height 56, icon 24 (20 inside rows and buttons), avatar 36/56,
-  icon stroke 1.75 everywhere.
-- **Radii** (5 steps, concentric): `8` (small wells) · `14` (icon wells,
-  inputs) · `16–20` (buttons, media) · `24` (cards, dialogs, today's card
-  radius) · `28` (sheets) · `full` (the bar, pills, avatars, switches). Nested shapes
-  keep concentric corners (outer radius = inner radius + padding), as Liquid
-  Glass does. Down from nine steps.
+  minimum height 62, icon 24 (20 inside rows and buttons), icon wells 42
+  (36 small), avatar 36/56, button 50 (40 compact), field 48, switch 46 × 28,
+  tab bar 72, icon stroke 1.75 everywhere (`tokens.size`).
+- **Radii** (named roles, concentric, `tokens.radius`): `key` 6 (keyboard
+  keys) · `sm` 8 (small wells) · `segInner` 11 (the selected segment) ·
+  `control` 12 (inputs, segmented controls) · `well` 14 (icon wells) ·
+  `button` 16 · `toast` 18 · `media` 20 · `dialog` 22 · `card` 24 (cards,
+  today's card radius) · `status` 26 (the status hero) · `sheet` 28 · `full`
+  (the bar, pills, avatars, switches). Each role is one job, so a component
+  reads its role, never a number. Nested shapes keep concentric corners
+  (outer radius = inner radius + padding), as Liquid Glass does.
 - **Elevation** (3 levels): `card` for cards on the page (dark: a 1 px top
   highlight and a soft shadow; light: a warm two-layer shadow), `float` for
   sheets, dialogs, menus, toasts and the bar, and `none` for content inside
@@ -377,8 +404,9 @@ source, so it is not copied.
 - **Motion:** three springs instead of durations for anything that moves
   physically: `snappy` (damping 18, stiffness 320: presses, toggles, tab
   changes), `gentle` (damping 22, stiffness 180: sheets, layout, tile → live),
-  `playful` (damping 10, stiffness 220: the mascot only). Cross-fades use
-  `base 200 ms`. Native sheets, screens and alerts keep the platform's own
+  `playful` (damping 10, stiffness 220: the mascot only). Durations are
+  `fast` 120, `base` 200 (cross-fades) and `slow` 300 ms; a press scales to
+  0.96 (0.9 for an icon). Native sheets, screens and alerts keep the platform's own
   curves.
   Common ranges are 150–250 ms for UI transitions; M3 ships duration tokens
   ([M3 motion tokens](https://github.com/google-labs-code/design.md/issues/47)).
@@ -706,8 +734,8 @@ top so laptops get the sidebar
   place, who, amount) and, where useful, a trailing next step or inline stat:
   «Posponer», «ahora», «en 1 h», «Revisar», «3 de 8 hechas». A section header
   carries its count («Ahora · 3 · 1 atrasado»).
-- **Vertical rhythm.** Sections are 24 apart, rows are at least 58 dp (still
-  ≥ 48 dp targets), and cards have 4 px inner padding around their rows.
+- **Vertical rhythm.** Sections are 24 apart, rows are at least 62 dp
+  (`size.row`; still ≥ 48 dp targets), and cards have 4 px inner padding around their rows.
   Empty states stay as tall as a typical populated state and always offer the
   next step (the 2026-10-03 rule).
 - **Desktop uses the width with columns of real content.**

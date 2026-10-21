@@ -3,6 +3,7 @@ const { builtinRules } = require('eslint/use-at-your-own-risk');
 const expoConfig = require('eslint-config-expo/flat');
 const betterTailwind = require('eslint-plugin-better-tailwindcss');
 const i18next = require('eslint-plugin-i18next');
+const reactHooks = require('eslint-plugin-react-hooks');
 const sonarjs = require('eslint-plugin-sonarjs');
 
 const SOURCE = 'src/**/*.{ts,tsx}';
@@ -26,6 +27,8 @@ const argus = {
     'responsive-home': restrictedImports,
     'http-home': restrictedImports,
     'source-syntax': restrictedSyntax,
+    'platform-os-home': restrictedSyntax,
+    'intl-date-home': restrictedSyntax,
     'type-scale': restrictedSyntax,
     'no-color-literal': restrictedSyntax,
     'no-template-key': restrictedSyntax,
@@ -55,17 +58,20 @@ const promoted = (configs) =>
       : config
   );
 
-const fromReactNative = (names, message) => [{ name: 'react-native', importNames: names, message }];
+const fromReactNative = (names, message) => ({
+  paths: [{ name: 'react-native', importNames: names, message }],
+  patterns: [
+    {
+      group: ['react-native/*'],
+      message: `${message} Import from 'react-native' itself, never its internals.`,
+    },
+  ],
+});
+
+const DATE_FORMATTER = 'src/shared/hooks/use-date-formatter/date.ts';
+const PLATFORM_FLAGS = 'src/shared/constants/common.constant.ts';
 
 const SOURCE_SYNTAX = [
-  {
-    selector: "NewExpression[callee.object.name='Intl'][callee.property.name='DateTimeFormat']",
-    message: 'Use the centralized date formatter instead.',
-  },
-  {
-    selector: "MemberExpression[object.name='Platform'][property.name='OS']",
-    message: 'Use IS_WEB, IS_NATIVE, IS_ANDROID, IS_IOS or IS_TAURI from @/shared/constants.',
-  },
   {
     selector: "ImportDeclaration[source.value='react'] > ImportNamespaceSpecifier",
     message: 'Import React APIs by name.',
@@ -77,6 +83,41 @@ const SOURCE_SYNTAX = [
       'A timer called as a method of another object throws "Illegal invocation" in browsers and WebKit (Hermes tolerates it): call it as a plain function or through globalThis.',
   },
 ];
+
+const TEMPLATE_KEY_MESSAGE = 'A translation key is a typed literal, never built or cast (rule 27).';
+const TRANSLATORS = ['[callee.name=/^tk?$/]', '[callee.property.name=/^tk?$/]'];
+const KEY_BUILDERS =
+  ":matches(TemplateLiteral[expressions.length>0], BinaryExpression[operator='+'], CallExpression[callee.property.name=/^(concat|join)$/])";
+
+const TEMPLATE_KEY_SYNTAX = [
+  ...TRANSLATORS.flatMap((callee) => [
+    {
+      selector: `CallExpression${callee} > :first-child${KEY_BUILDERS}`,
+      message: TEMPLATE_KEY_MESSAGE,
+    },
+    {
+      selector: `CallExpression${callee} > :first-child ${KEY_BUILDERS}`,
+      message: TEMPLATE_KEY_MESSAGE,
+    },
+  ]),
+  {
+    selector:
+      ":matches(TSAsExpression, TSTypeAssertion) > TSTypeReference.typeAnnotation[typeName.name='TranslationKey']",
+    message: TEMPLATE_KEY_MESSAGE,
+  },
+];
+
+const VISUAL_TIMER_MESSAGE =
+  'Drive visuals with Reanimated on the UI thread, never a JS timer (rule 26).';
+const VISUAL_TIMERS = '/^(setInterval|requestAnimationFrame)$/';
+
+const VISUAL_TIMER_SYNTAX = [
+  `CallExpression[callee.name=${VISUAL_TIMERS}]`,
+  `MemberExpression[property.name=${VISUAL_TIMERS}]`,
+  `MemberExpression[computed=true][property.value=${VISUAL_TIMERS}]`,
+  `VariableDeclarator[init.name=${VISUAL_TIMERS}]`,
+  `:matches(CallExpression, NewExpression) > Identifier.arguments[name=${VISUAL_TIMERS}]`,
+].map((selector) => ({ selector, message: VISUAL_TIMER_MESSAGE }));
 
 const TYPE_SCALE_MESSAGE =
   'Use a Text step (hero, title, headline, body, meta, caption) or a type role from tokens.';
@@ -113,6 +154,12 @@ module.exports = defineConfig([
     },
     plugins: { argus, sonarjs },
     rules: {
+      ...Object.fromEntries(
+        Object.entries(reactHooks.configs['recommended-latest'].rules).map(([name, entry]) => [
+          name,
+          errorSeverity(entry),
+        ])
+      ),
       'no-console': 'error',
       eqeqeq: 'error',
       'react-hooks/immutability': 'off',
@@ -157,12 +204,7 @@ module.exports = defineConfig([
       '@typescript-eslint/no-deprecated': 'error',
       'argus/no-rn-animated': [
         'error',
-        {
-          paths: fromReactNative(
-            ['Animated'],
-            'Animate with Reanimated on the UI thread (rule 26).'
-          ),
-        },
+        fromReactNative(['Animated'], 'Animate with Reanimated on the UI thread (rule 26).'),
       ],
       'argus/no-export-all': [
         'error',
@@ -171,19 +213,7 @@ module.exports = defineConfig([
           message: 'Export each public name explicitly (rule 7).',
         },
       ],
-      'argus/no-template-key': [
-        'error',
-        {
-          selector:
-            "CallExpression[callee.name='t'][arguments.0.type='TemplateLiteral'][arguments.0.expressions.length>0]",
-          message: 'A translation key is a typed literal, never a template (rule 27).',
-        },
-        {
-          selector:
-            "CallExpression[callee.property.name='t'][arguments.0.type='TemplateLiteral'][arguments.0.expressions.length>0]",
-          message: 'A translation key is a typed literal, never a template (rule 27).',
-        },
-      ],
+      'argus/no-template-key': ['error', ...TEMPLATE_KEY_SYNTAX],
       'argus/no-http-type-argument': [
         'error',
         {
@@ -195,11 +225,35 @@ module.exports = defineConfig([
   },
   {
     files: [SOURCE],
-    ignores: [
-      'src/shared/hooks/use-date-formatter/date.ts',
-      'src/shared/constants/common.constant.ts',
-    ],
     rules: {
+      'argus/source-syntax': ['error', ...SOURCE_SYNTAX],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: [PLATFORM_FLAGS],
+    rules: {
+      'argus/platform-os-home': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='Platform'][property.name='OS']",
+          message: 'Use IS_WEB, IS_NATIVE, IS_ANDROID, IS_IOS or IS_TAURI from @/shared/constants.',
+        },
+      ],
+    },
+  },
+  {
+    files: [SOURCE],
+    ignores: [DATE_FORMATTER],
+    rules: {
+      'argus/intl-date-home': [
+        'error',
+        {
+          selector:
+            "NewExpression[callee.object.name='Intl'][callee.property.name='DateTimeFormat']",
+          message: 'Use the centralized date formatter instead.',
+        },
+      ],
       'argus/date-formatter-home': [
         'error',
         {
@@ -211,23 +265,18 @@ module.exports = defineConfig([
           ],
         },
       ],
-      'argus/source-syntax': ['error', ...SOURCE_SYNTAX],
     },
   },
   {
     files: [SOURCE],
-    ignores: [
-      'src/shared/constants/icon.constant.ts',
-      'src/shared/components/ui/icon.tsx',
-      'src/shared/ui/**',
-    ],
+    ignores: ['src/shared/constants/icon.constant.ts', 'src/shared/components/ui/icon.tsx'],
     rules: {
       'argus/icon-registry-home': [
         'error',
         {
-          paths: [
+          patterns: [
             {
-              name: 'lucide-react-native',
+              group: ['lucide-react-native', 'lucide-react-native/*'],
               message: 'Icons come from the ICONS registry (rule 10).',
             },
           ],
@@ -252,12 +301,10 @@ module.exports = defineConfig([
     rules: {
       'argus/responsive-home': [
         'error',
-        {
-          paths: fromReactNative(
-            ['useWindowDimensions', 'Dimensions'],
-            'Read the window class from src/shared (rule 23).'
-          ),
-        },
+        fromReactNative(
+          ['useWindowDimensions', 'Dimensions'],
+          'Read the window class from src/shared (rule 23).'
+        ),
       ],
     },
   },
@@ -267,12 +314,7 @@ module.exports = defineConfig([
     rules: {
       'argus/activity-indicator-home': [
         'error',
-        {
-          paths: fromReactNative(
-            ['ActivityIndicator'],
-            'Loading is drawn by the design system (rule 16).'
-          ),
-        },
+        fromReactNative(['ActivityIndicator'], 'Loading is drawn by the design system (rule 16).'),
       ],
     },
   },
@@ -281,23 +323,21 @@ module.exports = defineConfig([
     rules: {
       'argus/ds-owns-primitives': [
         'error',
-        {
-          paths: fromReactNative(
-            [
-              'Pressable',
-              'TouchableOpacity',
-              'TouchableHighlight',
-              'TouchableWithoutFeedback',
-              'Switch',
-              'Modal',
-              'Image',
-              'FlatList',
-              'SectionList',
-              'ScrollView',
-            ],
-            'Use the design system component from src/shared/ui (rule 24).'
-          ),
-        },
+        fromReactNative(
+          [
+            'Pressable',
+            'TouchableOpacity',
+            'TouchableHighlight',
+            'TouchableWithoutFeedback',
+            'Switch',
+            'Modal',
+            'Image',
+            'FlatList',
+            'SectionList',
+            'ScrollView',
+          ],
+          'Use the design system component from src/shared/ui (rule 24).'
+        ),
       ],
     },
   },
@@ -323,13 +363,7 @@ module.exports = defineConfig([
     plugins: { i18next },
     rules: {
       'argus/type-scale': ['error', ...TYPE_SCALE_SYNTAX],
-      'argus/no-visual-timer': [
-        'error',
-        {
-          selector: 'CallExpression[callee.name=/^(setInterval|requestAnimationFrame)$/]',
-          message: 'Drive visuals with Reanimated on the UI thread, never a JS timer (rule 26).',
-        },
-      ],
+      'argus/no-visual-timer': ['error', ...VISUAL_TIMER_SYNTAX],
       'i18next/no-literal-string': ['error', { mode: 'jsx-only' }],
     },
   },
@@ -377,7 +411,7 @@ module.exports = defineConfig([
     },
   },
   {
-    files: ['src/app/ui-lab.tsx', 'src/features/ui-lab/**/*.tsx'],
+    files: ['src/features/ui-lab/**/*.tsx'],
     rules: {
       'i18next/no-literal-string': 'off',
     },
