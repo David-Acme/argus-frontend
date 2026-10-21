@@ -259,7 +259,7 @@ reduced motion and reduced transparency.
 | Lever | Primitive | What it does | Reduced motion / transparency / contrast | Cost |
 |---|---|---|---|---|
 | The ambient status | `Aura` (tone: `calm`, `duty`, `attn`, `alert`, `off`, `listen`; `mode`: `field` / `band` / `edge`) | A 2–3 blob gradient field at the top of Inicio and Seguridad (field), a rounded band on desktop (band), or the screen-edge glow while listening (edge). Tempo per tone: 14–18 s drift calm, 3–4 s alert | Static gradient; with Increase Contrast, no field and a 3 px tone border on the edge mode | about 150 lines; `expo-linear-gradient` or a blurred view; no Skia |
-| A living Argus | `Presence` (state, intensity, target, level, event, size) | Estela, 17 states and 11 events (§8b), driven by app state and voice level | Still frame per state | about 200 lines + one `.riv` asset; replaces about 1,600 lines of today's procedural mascot and avatar |
+| A living Argus | `Presence` (state, intensity, target, level, event, size) | Estela, 17 states and 11 events (§8b), driven by app state and voice level | Still frame per state | about 400 lines (engine, Skia Atlas renderer, Canvas 2D renderer, icon form), no asset; replaces about 1,600 lines of today's procedural mascot and avatar |
 | The hero sentence | `Status` variant `hero` | One `hero` line per screen (36/40), spoken by Argus, with a cross-fade on change | Instant change | inside `Status` |
 | Glass on floating chrome | `material` token used by `Nav`, `Sheet`, `Menu`, `Command` | Floating bar, sheet backdrop, desktop sidebar and palette. iOS 26 native glass (expo-glass-effect), Android 12+ blur (expo-blur `BlurTargetView`), web `backdrop-filter`, and a solid surface elsewhere | Solid surface with a hairline | about 60 lines in the four owners |
 | Physical motion | `springs.ts`: `snappy` (presses, toggles), `gentle` (sheets, layout), free flow (Estela only); `usePressScale` | One feel everywhere; presses scale to 0.96 | `ReduceMotion.System`: end state at once | about 60 lines |
@@ -888,7 +888,7 @@ The rules that remove all four:
 ## 7b. Performance budget: beautiful, but performance first
 
 Every animation runs on the UI thread: Reanimated shared values, Reanimated 4
-CSS animations, or the Rive native renderer. No `setState` per frame, no JS
+CSS animations, or Skia driven by a Reanimated worklet. No `setState` per frame, no JS
 timers driving visuals, and the voice level reaches `Presence` throttled to
 30 Hz. The budget is checked on a low-end Android reference device in the
 plan's R9 (frame stats from `dumpsys gfxinfo` / Perfetto) and on the desktop
@@ -900,7 +900,7 @@ build in WebKitGTK.
 | Continuous animations on screen | at most 2 (`Aura` + `Presence`); both pause off-screen, in the background, and once the user scrolls the hero out of view |
 | Blur layers visible at once | at most 1 (the bar *or* a sheet's backdrop), never a full-screen blur over moving video |
 | JS thread during scroll and gestures | untouched by visuals |
-| Startup | the identity adds nothing to first paint: `Presence` loads its `.riv` after the first frame, showing the still pose meanwhile |
+| Startup | the identity adds nothing to first paint: `Presence` starts its particles after the first frame, showing the state's still frame meanwhile |
 
 **Performance tier.** `perfTier` is `high` or `low`, decided once from the
 hardware profile (Android below API 31, under 4 GB RAM, or the user's
@@ -997,8 +997,8 @@ WebKitGTK through `check:bundle`. Re-check the peer ranges at the next SDK.
    hand-written sheet fixed to §5.9's rules (a height cap at the top inset, a
    pinned header, one inner `KeyboardAwareScrollView`), not gorhom.
 2. Estela on a low-end Android: frame time with Skia Atlas, and latency from voice level to waves
-   and `canvas-lite` in the Tauri WebKitGTK build under the strict CSP with
-   `'wasm-unsafe-eval'`.
+   and the Canvas 2D renderer in the Tauri WebKitGTK build under the strict CSP, which
+   stays as it is (no wasm, R-D18 withdrawn).
 
 ## 8b. Estela: the presence of Argus
 
