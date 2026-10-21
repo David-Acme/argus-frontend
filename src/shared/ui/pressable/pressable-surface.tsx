@@ -32,7 +32,12 @@ export function PressableSurface({
         onPressIn={press.onPressIn}
         onPressOut={press.onPressOut}
         testID={testID}
-        className={clsx('web:focus-ring', pressed?.fill && 'web:hover:bg-fill', className)}
+        className={clsx(
+          'web:focus-ring',
+          pressed?.fill && 'web:hover:bg-fill',
+          hitSlop && 'web:hit-target',
+          className
+        )}
         style={press.surfaceStyle}>
         {children}
       </Pressable>

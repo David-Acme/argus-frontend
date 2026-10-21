@@ -551,8 +551,24 @@
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    outline-offset: var(--focus-ring-offset, 2px);
   }
+}
+
+@utility hit-target {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 48px);
+    height: max(100%, 48px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+@utility focus-inset {
+  --focus-ring-offset: -4px;
 }
 
 @utility hover-dim {

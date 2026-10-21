@@ -208,6 +208,19 @@ describe('hold to talk', () => {
     expect(log).toEqual(['start', 'send']);
   });
 
+  test('a tab that unmounts while listening ends the listening without sending', () => {
+    for (const begin of ['onLongPress', 'onAccessibilityAction'] as const) {
+      const log: string[] = [];
+      const { result, unmount } = renderHook(() => useHoldToTalk(voice(log)));
+      act(() => result.current.handlers[begin]());
+      unmount();
+      expect(log).toEqual(['start', 'cancel']);
+    }
+    const idle: string[] = [];
+    renderHook(() => useHoldToTalk(voice(idle))).unmount();
+    expect(idle).toEqual([]);
+  });
+
   test('sliding off the tab cancels', () => {
     const rect = { x: 100, y: 700, width: 62, height: 62 };
     expect(inside(rect, 130, 730)).toBe(true);

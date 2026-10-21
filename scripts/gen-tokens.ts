@@ -118,6 +118,32 @@ const glass = (name: string, blur: number, saturation: number): string[] => [
   '}',
 ];
 
+const interaction = (): string[] => [
+  '@utility focus-ring {',
+  '  &:focus-visible {',
+  `    outline: ${px(inset.control.focusRing)} solid var(--color-accent);`,
+  `    outline-offset: var(--focus-ring-offset, ${px(inset.control.focusRing)});`,
+  '  }',
+  '}',
+  '',
+  '@utility hit-target {',
+  '  &::after {',
+  "    content: '';",
+  '    position: absolute;',
+  '    top: 50%;',
+  '    left: 50%;',
+  `    width: max(100%, ${px(size.target)});`,
+  `    height: max(100%, ${px(size.target)});`,
+  '    transform: translate(-50%, -50%);',
+  '  }',
+  '}',
+  '',
+  '@utility focus-inset {',
+  `  --focus-ring-offset: ${px(-2 * inset.control.focusRing)};`,
+  '}',
+  '',
+];
+
 export function tokensCss(): string {
   const breakpointLines = Object.entries(breakpoints)
     .filter(([, value]) => value > 0)
@@ -175,13 +201,7 @@ export function tokensCss(): string {
     '',
     ...columnScroll(),
     '',
-    '@utility focus-ring {',
-    '  &:focus-visible {',
-    `    outline: ${px(inset.control.focusRing)} solid var(--color-accent);`,
-    `    outline-offset: ${px(inset.control.focusRing)};`,
-    '  }',
-    '}',
-    '',
+    ...interaction(),
     '@utility hover-dim {',
     '  &:hover {',
     `    filter: brightness(${state.hoverBrightness});`,

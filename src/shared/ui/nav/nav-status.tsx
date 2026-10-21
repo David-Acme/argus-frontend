@@ -63,7 +63,7 @@ export function NavStatus({ title, rows, meter, ask, presence }: NavStatusProps)
         a11y={{ label: ask.label, role: 'button' }}
         onPress={ask.onPress}
         hitSlop={ASK_SLOP}
-        className="h-ask-field rounded-control bg-surface px-nav-ask-x gap-nav-ask-gap flex-row items-center">
+        className="min-h-ask-field rounded-control bg-surface px-nav-ask-x gap-nav-ask-gap flex-row items-center">
         {presence ? presence(size.presenceAsk, false) : null}
         <Text variant="sideStat" tone="3" numberOfLines={1}>
           {ask.label}

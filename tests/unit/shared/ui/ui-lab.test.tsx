@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
+import { screenFocus } from './screen-focus';
 import './translation-stub';
 
 let search: Record<string, string> = {};
@@ -9,7 +10,7 @@ mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => search,
   useRouter: () => ({ setParams: () => undefined }),
-  useIsFocused: () => true,
+  useIsFocused: () => screenFocus.focused,
 }));
 mock.module('@/shared/hooks/use-theme-preference', () => ({ getThemePreference: () => 'system' }));
 

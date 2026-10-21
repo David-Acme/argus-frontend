@@ -2,8 +2,8 @@ import { clsx } from 'clsx';
 import { useContext } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { motion, useEffects } from '@/shared/theme';
 import { RowPosition } from '@/shared/ui/row';
+import { useShimmerStyle } from './shimmer';
 
 export type SkeletonShape = 'well' | 'title' | 'meta' | 'short' | 'brief' | 'pill' | 'button';
 
@@ -21,29 +21,11 @@ const SHAPE: Record<SkeletonShape, string> = {
   button: 'h-button w-full rounded-button',
 };
 
-const STILL = { opacity: motion.loop.shimmerRest };
-
-const SHIMMER = {
-  ...STILL,
-  animationName: {
-    '0%': STILL,
-    '25%': { opacity: 1 },
-    '75%': { opacity: 0 },
-    '100%': STILL,
-  },
-  animationDuration: motion.loop.shimmer,
-  animationIterationCount: 'infinite',
-  animationTimingFunction: 'linear',
-} as const;
-
 export function Skeleton({ shape }: SkeletonProps) {
-  const { reduceMotion } = useEffects();
+  const shimmer = useShimmerStyle();
   return (
     <View aria-hidden className={clsx('bg-skel overflow-hidden', SHAPE[shape])}>
-      <Animated.View
-        className="bg-skel-2 absolute inset-0"
-        style={reduceMotion ? STILL : SHIMMER}
-      />
+      <Animated.View className="bg-skel-2 absolute inset-0" style={shimmer} />
     </View>
   );
 }

@@ -21,9 +21,11 @@ describe('Chip', () => {
     const { rerender } = render(
       <FilterChip label="Hoy" selected={selected} onPress={() => (selected = !selected)} />
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Hoy' }));
+    const chip = () => screen.getByRole('checkbox', { name: 'Hoy' });
+    expect(chip().getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(chip());
     expect(selected).toBe(true);
     rerender(<FilterChip label="Hoy" selected={selected} onPress={() => undefined} />);
-    expect(screen.getByRole('button', { name: 'Hoy' }).getAttribute('aria-selected')).toBe('true');
+    expect(chip().getAttribute('aria-checked')).toBe('true');
   });
 });

@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
+import { useAnnounce } from '@/shared/hooks/use-announce';
 import { layout, size, useThemeTokens, useWindowLayout, type AuraTone } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Chip } from '@/shared/ui/chip';
@@ -45,7 +46,7 @@ function HeroRow(props: HeroStatusProps & { wide: boolean }) {
       <View className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
         {presence ? presence(presenceSize) : null}
         <StatusFade change={sentence} grow>
-          <Text variant={sentenceVariant(secondary, wide)} heading>
+          <Text variant={sentenceVariant(secondary, wide)} heading={2}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>
@@ -65,12 +66,12 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
       style={BAND_MAX}>
       <View
         role={tone === 'alert' ? 'alert' : undefined}
-        className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y flex-row flex-nowrap items-center overflow-hidden"
+        className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y web:focus-inset flex-row flex-nowrap items-center overflow-hidden"
         style={card}>
         <Aura tone={AURA[tone]} mode="band" />
         {presence ? presence(size.presenceBand) : null}
         <StatusFade change={sentence} grow>
-          <Text variant="heroBand" heading numberOfLines={1}>
+          <Text variant="heroBand" heading={2} numberOfLines={1}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>
@@ -84,6 +85,7 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
 
 export function HeroStatus(props: HeroStatusProps) {
   const { windowClass } = useWindowLayout();
+  useAnnounce(props.tone === 'alert' ? props.sentence : undefined);
   if (windowClass === 'expanded' || windowClass === 'wide') return <HeroBand {...props} />;
   return <HeroRow {...props} wide={windowClass === 'medium'} />;
 }

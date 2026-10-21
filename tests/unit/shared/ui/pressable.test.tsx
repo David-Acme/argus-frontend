@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { PressableSurface } from '@/shared/ui/pressable/pressable-surface';
+import { useSurfacePress } from '@/shared/ui/pressable/use-surface-press';
 
 describe('PressableSurface', () => {
   test('carries its role and label and presses once per tap', () => {
@@ -42,5 +43,21 @@ describe('PressableSurface', () => {
     expect(screen.getByRole('switch', { name: 'Modo Noche' }).getAttribute('aria-checked')).toBe(
       'true'
     );
+  });
+
+  test('a press-in re-renders the surface only when it draws a pressed fill', () => {
+    const renders = (fill: boolean) => {
+      let count = 0;
+      const { result } = renderHook(() => {
+        count += 1;
+        return useSurfacePress({ pressed: { scale: 'icon', fill } });
+      });
+      const before = count;
+      act(() => result.current.onPressIn());
+      act(() => result.current.onPressOut());
+      return count - before;
+    };
+    expect(renders(false)).toBe(0);
+    expect(renders(true)).toBe(2);
   });
 });

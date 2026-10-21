@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { size, useThemeTokens, useWindowLayout } from '@/shared/theme';
+import { size, typeRoles, useThemeTokens, useWindowLayout } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
@@ -34,7 +34,7 @@ type BannerProps = Omit<NoticeProps, 'inline' | 'leading'>;
 
 type CardActionProps = { action: NoticeAction; block: boolean };
 
-const LINK_SLOP = (size.target - size.targetMin) / 2;
+const BANNER_LINK_SLOP = (size.target - typeRoles.label.line) / 2;
 
 function CardAction({ action, block }: CardActionProps) {
   const button = (
@@ -103,7 +103,7 @@ function NoticeBanner({ title, body, tone = 'info', icon, action, testID }: Bann
         <PressableSurface
           a11y={{ label: action.label, role: 'button' }}
           onPress={() => void action.onPress()}
-          hitSlop={LINK_SLOP}>
+          hitSlop={BANNER_LINK_SLOP}>
           <Text variant="label" tone={attention ? 'attn' : 'default'}>
             {action.label}
           </Text>

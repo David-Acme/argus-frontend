@@ -18,7 +18,7 @@ function LabStage({ entry }: LabStageProps) {
   const { Demo } = entry;
   return (
     <View className="gap-4">
-      <Text variant="title" heading>
+      <Text variant="title" heading={1}>
         {entry.title}
       </Text>
       <View testID="ui-lab-stage" className="gap-4">
@@ -32,7 +32,7 @@ function LabIndex({ onOpen }: LabIndexProps) {
   const { windowClass, navigation } = useWindowLayout();
   return (
     <View testID="ui-lab">
-      <Text variant="title" heading>
+      <Text variant="title" heading={1}>
         {`ui-lab · ${windowClass} · ${navigation}`}
       </Text>
       {catalogueFamilies.map((family) => {

@@ -61,7 +61,7 @@ export function ScreenTopBar({ title, meta, back, actions, updating }: ScreenTop
       ) : null}
       <View className="min-w-0 flex-1">
         {title ? (
-          <Text variant="title" heading numberOfLines={1}>
+          <Text variant="title" heading={1} numberOfLines={1}>
             {title}
           </Text>
         ) : null}

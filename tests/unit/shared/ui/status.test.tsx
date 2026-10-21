@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { AccessibilityInfo } from 'react-native';
 import { useEffectsOverrides } from '@/shared/theme';
 
 import { Status } from '@/shared/ui/status/status';
@@ -84,6 +85,32 @@ describe('Status', () => {
     for (const name of ['Ver cámara', 'Es conocido', 'Es una falsa alarma'])
       fireEvent.click(screen.getByRole('button', { name }));
     expect(pressed).toEqual(['primary', 'secondary', 'tertiary']);
+  });
+
+  test('only an alert card is an alert, and it is announced on native when its sentence arrives', () => {
+    const announce = mock((_message: string) => undefined);
+    AccessibilityInfo.announceForAccessibility = announce;
+    const card = (tone: 'attention' | 'alert', sentence: string) => (
+      <CardStatus
+        variant="card"
+        tone={tone}
+        sentence={sentence}
+        primary={{ label: 'Ver', onPress: () => undefined }}
+      />
+    );
+    const { rerender } = render(card('attention', 'Luis llega tarde.'));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(announce).not.toHaveBeenCalled();
+    rerender(card('alert', 'Alguien en el patio.'));
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(announce.mock.calls).toEqual([['Alguien en el patio.']]);
+  });
+
+  test('an alert hero is announced on native', () => {
+    const announce = mock((_message: string) => undefined);
+    AccessibilityInfo.announceForAccessibility = announce;
+    render(<HeroStatus tone="alert" sentence="Alguien en el patio." meta="Ahora" />);
+    expect(announce.mock.calls).toEqual([['Alguien en el patio.']]);
   });
 
   test('a card without a sentence keeps only its actions', () => {

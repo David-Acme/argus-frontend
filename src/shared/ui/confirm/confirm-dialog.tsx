@@ -4,6 +4,7 @@ import { BackHandler, Pressable, View } from 'react-native';
 import { layout } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ConfirmBox } from './confirm-box';
+import { useConfirmLatch } from './use-confirm-latch';
 import type { ConfirmProps } from './confirm-types';
 
 type FrameProps = { children: ReactNode };
@@ -49,19 +50,21 @@ export function ConfirmDialog({
 }: ConfirmProps) {
   const { t } = useTranslation();
   const destructive = variant === 'destructive';
-  useBackCancels(open, onCancel);
+  const latch = useConfirmLatch(open);
+  const cancel = latch.once(onCancel);
+  useBackCancels(open, cancel);
   return (
     <AlertPrimitive.Root
       open={open}
       onOpenChange={(next) => {
-        if (!next) onCancel();
+        if (!next) cancel();
       }}>
       <AlertPrimitive.Portal>
         <AlertPrimitive.Overlay className="bg-scrim web:backdrop-blur-scrim web:fixed px-dialog-edge absolute inset-0 items-center justify-center">
           <Pressable
             focusable={false}
             disabled={destructive}
-            onPress={onCancel}
+            onPress={cancel}
             className="absolute inset-0"
           />
           <AlertPrimitive.Content style={CONTENT} className="w-full">
@@ -71,8 +74,9 @@ export function ConfirmDialog({
               confirmLabel={confirmLabel}
               cancelLabel={t('common.cancel')}
               destructive={destructive}
-              onConfirm={onConfirm}
-              onCancel={onCancel}
+              busy={latch.busy}
+              onConfirm={latch.once(onConfirm)}
+              onCancel={cancel}
               Heading={Heading}
               Description={Description}
             />

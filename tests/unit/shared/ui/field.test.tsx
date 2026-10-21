@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
+import { AccessibilityInfo } from 'react-native';
 import { CodeField } from '@/shared/ui/field/code-field';
 import { Field, type FieldProps } from '@/shared/ui/field/field';
 import { FieldShell } from '@/shared/ui/field/field-shell';
@@ -42,6 +43,18 @@ describe('Field', () => {
     );
     expect(screen.getByRole('alert').textContent).toBe('Escribe qué quieres recordar.');
     expect(screen.queryByText('Una frase corta')).toBeNull();
+  });
+
+  test('an error is spoken on native when it appears, since Android ignores role alert', () => {
+    const announce = mock((_message: string) => undefined);
+    AccessibilityInfo.announceForAccessibility = announce;
+    const field = (error?: string) => (
+      <Field placeholder="Título" error={error} value="" onChangeText={() => undefined} />
+    );
+    const { rerender } = render(field());
+    expect(announce).not.toHaveBeenCalled();
+    rerender(field('Escribe un título.'));
+    expect(announce.mock.calls).toEqual([['Escribe un título.']]);
   });
 
   test('a hint shows under the field when there is no error', () => {

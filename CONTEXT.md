@@ -5442,13 +5442,55 @@ glyphs), PressableSurface (RNGH with a foreground ripple on native, React
 Native's Pressable on web for keyboard, hover and the focus ring), Stack,
 Inline, Cluster, Button (single-flight, `iconOnly`, glass that turns solid
 under reduced transparency or the low tier), Chip/FilterChip, Avatar, Check,
-Switch, Section and Row. They take no `className` and join their classes with
+Switch, Section and Row. `useSurfacePress` keeps a pressed state only for a
+surface that draws the pressed fill, so a press on any other surface (the
+rail and sidebar items that hold `Presence`) re-renders nothing of its own
+(review finding 6). A `FilterChip` is a `checkbox` with
+`aria-checked`, not a `button` with `aria-selected`: ARIA ignores
+`aria-selected` on a button, so the web never announced the selection
+(finding 11); native announces checked/not checked. `Text`'s `heading` is a level
+(1–4), carried as `aria-level`: react-native-web renders `role="heading"`
+without a level as `<h1>`, so every heading was an h1 (finding 12). The
+screen's top-bar title is 1, the Status hero and Section heads 2, the Status
+card 3. At font scale 2 a fixed height clipped the words (finding 14):
+the chips and the sidebar's ask field take their prototype height as a
+minimum (`min-h-chip`, `min-h-ask-field`), which draws the same at scale 1,
+and the Avatar initial scales at most 1.3x (29 px line in a 36 px box, which
+must keep its size). They take no `className` and join their classes with
 `clsx`, since tailwind-merge does not know the new type names and drops one of
 two `text-*` classes. Values the prototype draws that the spec's scale lacks
 (row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,
 section spacing 26/4/10/12) live in `tokens.inset`. `useEffects()` holds one
 accessibility subscription for the whole app instead of two per caller, and
 react-native-web has no `isReduceTransparencyEnabled`.
+
+**The focus ring inside clipped containers.** `web:focus-ring` draws its
+2 px outline 2 px outside the control, which a container with
+`overflow-hidden` cut off (review finding 9: the Section group, the Media
+tile and stage, the Status band). The ring's offset is the custom property
+`--focus-ring-offset` (2 px when unset), and such a container carries
+`web:focus-inset`, which sets it to -4 px, so every focusable inside it draws
+its ring inside its own edge. A custom property inherits, so the rows and
+buttons inside need no class of their own; any other clipping container with
+focusable children (Command's palette, Menu's list) takes the same class.
+`tests/e2e/ui-lab-a11y.e2e.ts` reads the computed outline of a focused row
+and tile.
+
+**Hit areas, not drawn sizes.** The prototype draws several controls under
+44/48 (Check 24, Switch 28, chips 26, the compact Button and the toast's
+Retry 40, the banner's text action about 21), and the drawn size stays.
+Native reaches 48 through `hitSlop`; react-native-web ignores `hitSlop`
+(review finding 10), so on the web a `PressableSurface` given a slop also
+carries `web:hit-target`, an absolutely placed `::after` of at least 48 x 48
+centred on the control: a press on it is a press on the control, and it
+changes neither layout, pixels nor the focus ring. The toast's Retry now has
+its slop, and the banner's action computes its slop from the `label` line
+(21) instead of assuming a 44 px control. A clipping parent (a horizontal
+scroller) cuts the pseudo-element like it would cut the control.
+`tests/e2e/ui-lab-a11y.e2e.ts` reads the 48 px area of Check, Switch and the
+toast's Retry (the lab has no banner with an action; the banner's action is
+the same `PressableSurface` path), and that the chips and the sidebar's ask
+field hold their words at the lab's font scale 2.
 
 **Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
 bun process (happy-dom, react-native-web as react-native, react-native-svg's web
@@ -5517,6 +5559,7 @@ many files; the reason names that cause.
 | `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx spec` | Lead merge of `p1/native`: the Skia canvas keeps its worklet spec in one identity per particle count and seed, because the frame worklet is re-registered whenever its captured spec changes identity (the branch's measurement, section "Native spikes" below). | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/native` (Sheet, Presence, the spikes lab) over the four design-system shares: entry 7,430,083 → 7,522,390 B (+92,307) and `dist/` 8,749,566 → 8,841,873 B (+92,307). The branch measured +126,279 B over its own older base (about 91 kB Sheet and the Estela engine, about 12 kB the lab, section "Native spikes"); the merged export has no Skia or TrueSheet module. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | The `fix(ui)` after the `p1/native` merge: Sheet's parts, dialog and phone sheet and the demo field name the 24 token-derived style objects the binding-following `style-object` counter found inline, which the web export keeps as named bindings: entry 7,522,390 → 7,523,403 B and `dist/` 8,841,873 → 8,842,886 B (+1,013 each). | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p1/ds-fixes`, the design-system review's items for this branch: entry 7,523,403 → 7,527,643 B (+4,240) and `dist/` 8,842,886 → 8,847,431 B (+4,545). The entry grows by Confirm's latch and form choice, `useScreenActive` (Aura and the live chip pause out of focus), `useAnnounce`, the shimmer split, MediaFrame's frame key and Aura's flat tint; the other 305 B of `dist/` are the `hit-target` and `focus-inset` CSS utilities. No package was added. | 2026-10-21 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
@@ -5530,8 +5573,17 @@ import does not exist in the 1.1.16 the overrides already pin. Radix's alert
 dialog never closes on an outside press, so the default variant adds its own
 scrim press that cancels; the destructive one disables it. Esc and Back go
 through `onOpenChange(false)` and mean Cancelar. Android's `Alert` ties Back to
-outside taps (`setCancelable`), so the native destructive alert is
-`cancelable: false` and Back does nothing there: only its buttons close it.
+outside taps (`setCancelable`), so a destructive alert there could not be
+cancelled with Back (review finding 4): on an Android phone a destructive
+confirmation is the dialog instead (`confirm-form.ts`), which cancels on Back
+through `BackHandler` and ignores outside taps; iOS keeps the native alert,
+`cancelable: false`. A confirmation answers once (finding 1, «Purgar» pressed
+twice called the purge twice): `useConfirmLatch` drops every press of either
+button, Esc, Back and the scrim after the first until the dialog opens again,
+and an `onConfirm` that returns a promise marks the button `aria-busy` and
+releases the latch when it settles, so a failed act can be retried. Whether
+Back reaches the dialog's `BackHandler` above `@rn-primitives`' native portal
+needs the phone.
 
 **Toast.** One API, `toast.show({ kind, ... })` and `toast.dismiss`, over
 `sonner` (`toaster.tsx`) and `sonner-native` (`toaster.native.tsx`), both
@@ -5685,7 +5737,10 @@ pointer (`pointerType`), so a tap on a phone opens the camera instead. The
 stage bleeds to the phone gutter (`-mx-4`, the prototype's `.video`) and is a
 rounded tile from `medium` up. `frame` cross-fades a new still over the last
 one on the UI thread after it loads (React Native `Image`: expo-image, the
-owner decision P2, is not installed). The live dot breathes with a Reanimated
+owner decision P2, is not installed). Frames are compared by their `uri`, not
+by object identity, so a parent that rebuilds `{ uri }` on every render does
+not cross-fade; once the fade ends (or at once under reduced motion) the old
+frame is dropped, so only one decoded still stays mounted (review finding 5). The live dot breathes with a Reanimated
 CSS animation and holds still under reduced motion; blur drops under reduced
 transparency. Text on imagery is the `on-media` tone (white in both themes);
 `mediaLabel`/`mediaDetail` on it carry the prototype's text shadow, which
@@ -5700,6 +5755,20 @@ in its final shapes (`Skeleton`, `SkeletonRow`), the `Empty` and an optional
 around 0.5 and holds it at 0.5 under reduced motion, so the still fill has the
 prototype's average tone; in dark mode `skel` alone is all but invisible on
 `surface`.
+
+**At most two continuous animations (review finding 17).** On native one
+shared value per `ResourceView` drives the shimmer of every `Skeleton` in it
+(`shimmer.native.tsx`: one `withRepeat` over the same 0.5 → 1 → 0 → 0.5
+keyframes, read by each shape's `useAnimatedStyle`; it rests at 0.5 under
+reduced motion and while the screen is out of focus or backgrounded), where
+a six-row list ran about 24 animations. The web keeps one Reanimated CSS
+animation per shape (`shimmer.tsx`): those are compositor opacity
+animations, and a shared value would move them to a JavaScript frame loop
+writing every shape's style. A `Skeleton` outside a `ResourceView` keeps its
+own CSS shimmer. The live chip's dot stops breathing while its screen is out
+of focus or the app is in the background (`useScreenActive`), like Aura and
+`Presence`. Whether the native shimmer and the paused breathing measure as
+expected in the frame stats needs the phone (R9).
 
 ## Identity and frame components: Aura, Status, Nav, Screen (Phase 1, ds-c, 2026-10-20)
 
@@ -5731,21 +5800,36 @@ by a Reanimated CSS animation (`transform` only; real CSS keyframes on web, the
 UI thread on native). The field's mask (`linear-gradient(#000 55%,
 transparent)`) is an SVG overlay that fades to `bg` from 55 %, which is the
 same picture over a `bg` page. Still under reduced motion and on the low
-tier; under reduced transparency the prototype's `opacity: .6` (not the flat
-tint the spec text names); under Increase Contrast (`prefers-contrast: more`,
+tier. Under reduced transparency (which includes the low tier) the field and
+the band are a flat tint (the tone's first colour at the prototype's
+`opacity: .6`, no blobs) and the listening edge is the steady 3 px rim with
+no pulse, as spec §7b and §11 ask (review finding 16; the prototype's `rt`
+rule only dims the blobs, and the spec wins for an accessibility mode, so the
+reduced ui-lab baselines of Aura, Status, Screen and Nav were re-recorded).
+Under Increase Contrast (`prefers-contrast: more`,
 Android high-text-contrast, iOS darker colours, `use-increase-contrast`) no
-field and a 3 px accent rim on `edge`. `paused` stops the drift
+field and the same 3 px rim on `edge`. `paused` stops the drift
 (`animationPlayState`); `Screen` pauses its field once the content scrolls
-past it. The edge mode always draws the accent (the prototype's `.edge`), not
-the tone.
+past it, and the drift and the edge pulse also pause while their screen is
+out of focus or the app is in the background (`useScreenActive`,
+`src/shared/hooks/use-screen-active.ts`: expo-router's `useIsFocused` and
+`AppState`, as `Presence` does; finding 17). The edge mode always draws the
+accent (the prototype's `.edge`), not the tone.
 
 **Status.** `hero` is chosen by window class: compact is the `.herorow`
 (Presence slot 66, or 56 with `secondary`, the 30/26 sentence, one meta line,
 a wrapping row of glass stat chips), medium the same row at 36, expanded and
 wide the desktop `.dband` (its own Aura band, Presence 64, the 38 sentence on
 one line, stats that do not wrap, a trailing `action` slot). `card` is the
-`.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
-`alert`. A sentence change fades in over `motion.duration.base` (keyed
+`.status-alert` card. The card and the hero are `role="alert"` in tone
+`alert` only (the card was an alert in every tone, review finding 15).
+`role="alert"` on a native `View` announces nothing on Android, so in tone
+`alert` the sentence is also spoken through
+`AccessibilityInfo.announceForAccessibility` when it appears or changes
+(`src/shared/hooks/use-announce.ts`; react-native-web's is a no-op, so the web
+keeps only its live region); a Field error is spoken the same way. The tests
+check the calls; whether TalkBack and VoiceOver speak them once, and not
+twice over iOS's own handling, needs the phone. A sentence change fades in over `motion.duration.base` (keyed
 remount), instantly under reduced motion. `Presence` comes from `p1/native`:
 until it merges, `presence` is a render prop `(size) => node`, and the
 ui-lab draws a same-size `accent-soft` disc (`LabPresence`).
@@ -5764,7 +5848,9 @@ and the «Te escucho…» pill; on release the page point is compared with the
 tab's window rectangle, measured at press-in, grown by 24 px (also the press
 retention offset), and inside sends, outside cancels; a tap opens the chat.
 The accessible alternative is the `longpress` accessibility action, then a tap
-to stop and send. The Nav must be the last child of a full-screen container,
+to stop and send. A tab that unmounts while listening (a route change
+mid-hold) ends the listening without sending, `onListenEnd(false)`, so the
+voice session never stays open behind a gone tab (review finding 20c). The Nav must be the last child of a full-screen container,
 because the edge and the pill are absolute over it. `listening` lets a voice
 session started elsewhere light the same edge.
 
@@ -5788,7 +5874,12 @@ phones the columns flatten into the one scroll.
 **Tests.** The ui test preload stubs `react-native-safe-area-context`,
 `react-native-keyboard-controller` and `react-native-worklets` (they load
 React Native's Flow sources), and adds `makeMutable`,
-`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. Window
+`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. The
+preload also stubs `expo-router` (its `useIsFocused` answers
+`tests/unit/shared/ui/screen-focus.ts`, so a test can put a screen out of
+focus; a test that mocks `expo-router` again keeps that answer, because bun
+keeps the first mock's export names and the last mock's values), and
+Reanimated's `withTiming` calls its completion with `true` at once. Window
 classes are set through `tests/unit/shared/ui/window-width.ts`, which gives
 happy-dom a `documentElement.clientWidth` and fires `resize` (react-native-web
 reads the window size from there); a `mock.module` of the window hook hung the

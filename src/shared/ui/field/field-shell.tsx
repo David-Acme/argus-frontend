@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import { useAnnounce } from '@/shared/hooks/use-announce';
 import { inset } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Text } from '@/shared/ui/text';
@@ -35,6 +36,7 @@ export function fieldState(focused: boolean, error: string | undefined): FieldSt
 }
 
 function FieldNote({ hint, error }: FieldNoteProps) {
+  useAnnounce(error);
   if (error) {
     return (
       <View role="alert" className="mt-field-error-gap gap-field-error-gap flex-row items-start">
