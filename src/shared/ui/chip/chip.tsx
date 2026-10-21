@@ -154,7 +154,7 @@ export function FilterChip({
   const surface = useSizeSurface(size, 'default');
   return (
     <PressableSurface
-      a11y={{ label, role: 'button', selected }}
+      a11y={{ label, role: 'checkbox', checked: selected }}
       onPress={onPress}
       haptic="selection"
       pressed={{ scale: 'surface' }}
