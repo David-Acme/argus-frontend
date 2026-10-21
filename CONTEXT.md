@@ -5298,3 +5298,21 @@ minutes without evidence.
   (re-recorded: Home phone/tablet/desktop, Security tablet/desktop). The
   watch feed now reloads through `createReloadGate`, so a reload asked
   during a read runs again after it.
+
+## Lint exceptions
+
+`eslint.config.js` is the only place lint is configured (rule 2). A rule is
+turned off only here, by name, for the paths listed, and
+`scripts/check-lint-policy.ts` fails on an exception without a row and on a
+row that turns nothing off. The `off` rules of the `eslint-config-expo` base
+itself (`no-undef`, `no-unused-vars` and the other core rules typescript-eslint
+replaces, `react/prop-types`, `react/react-in-jsx-scope`, `import/named`,
+`import/default`, `react/jsx-no-target-blank`, `react/no-unsafe`) are the
+preset's own decisions and are not exceptions.
+
+| Rule | Paths | Reason | Source or measurement | Date |
+|---|---|---|---|---|
+| `react-hooks/immutability` | `src/**`, `scripts/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
+| `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
+| `i18next/no-literal-string` | `src/app/ui-lab.tsx`, `src/features/ui-lab/**` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
+
