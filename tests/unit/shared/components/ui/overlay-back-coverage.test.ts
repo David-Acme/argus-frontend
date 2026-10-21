@@ -1,10 +1,13 @@
 import { describe, expect, test } from 'bun:test';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const SRC = join(import.meta.dir, '../../../../../src');
 const OPENS_AN_OVERLAY = /<(?:[A-Za-z]+Primitive\.)?Portal\b|<SheetPortal\b|<DialogPortal\b/;
 const HANDLES_BACK = /useOverlayBack\(|BackHandler\.addEventListener\(/;
+
+const webOnly = (path: string): boolean =>
+  !path.endsWith('.native.tsx') && existsSync(path.replace(/\.tsx$/, '.native.tsx'));
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -15,7 +18,9 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe('every overlay closes on Android Back before the screen behind it', () => {
-  const overlays = sourceFiles(SRC).filter((path) => OPENS_AN_OVERLAY.test(readFileSync(path, 'utf8')));
+  const overlays = sourceFiles(SRC).filter(
+    (path) => !webOnly(path) && OPENS_AN_OVERLAY.test(readFileSync(path, 'utf8'))
+  );
 
   test('the overlays were found', () => {
     expect(overlays.length).toBeGreaterThanOrEqual(8);

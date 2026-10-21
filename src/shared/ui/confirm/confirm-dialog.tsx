@@ -1,6 +1,6 @@
 import * as AlertPrimitive from '@rn-primitives/alert-dialog';
-import type { ReactNode } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useEffectEvent, type ReactNode } from 'react';
+import { BackHandler, Pressable, View } from 'react-native';
 import { layout } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ConfirmBox } from './confirm-box';
@@ -26,6 +26,18 @@ function Description({ children }: FrameProps) {
   );
 }
 
+function useBackCancels(open: boolean, onCancel: () => void): void {
+  const cancel = useEffectEvent(onCancel);
+  useEffect(() => {
+    if (!open) return undefined;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      cancel();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [open]);
+}
+
 export function ConfirmDialog({
   open,
   title,
@@ -37,6 +49,7 @@ export function ConfirmDialog({
 }: ConfirmProps) {
   const { t } = useTranslation();
   const destructive = variant === 'destructive';
+  useBackCancels(open, onCancel);
   return (
     <AlertPrimitive.Root
       open={open}
