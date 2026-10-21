@@ -13,7 +13,7 @@ import {
   type Look,
   type Tick,
 } from './engine/driver';
-import { notePace } from './engine/pace';
+import { noteBeat, notePace } from './engine/pace';
 import type { PresenceEvent } from './engine/types';
 import type { PresenceCanvasProps, PresenceLive } from './presence-canvas.types';
 import { beginFrame, endFrame, flushAtlas } from './skia-scene';
@@ -97,6 +97,7 @@ export function PresenceCanvas({
       if (!current) return;
       if (current !== runtime.get()) runtime.set(current);
       const tick = tickOf(live, info.timestamp / 1000);
+      noteBeat(current.pace, (info.timeSincePreviousFrame ?? 0) / 1000);
       if (!frameDue(current.driver, tick, look)) return;
       const started = performance.now();
       image.set(draw(current, advance(current.driver, tick, look), fade));
