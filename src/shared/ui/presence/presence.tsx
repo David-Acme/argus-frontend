@@ -51,7 +51,7 @@ export function Presence({
   accessibilityLabel,
 }: PresenceProps) {
   const { perfTier, reduceMotion, adaptive, ceiling, drops, probing } = useEffects();
-  useTierProbe(probing);
+  useTierProbe(probing && !reduceMotion);
   const { theme } = useUniwind();
   const dark = theme === 'dark';
   const [seed] = useState(nextSeed);
