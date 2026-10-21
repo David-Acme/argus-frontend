@@ -3,7 +3,6 @@ import { Button } from '@/shared/ui/button';
 import { Status, type StatusStat } from '@/shared/ui/status';
 import { LabCase } from '../components/lab-case';
 import { copy } from './demo-copy';
-import { labPresence } from '../components/lab-presence';
 
 const noop = () => undefined;
 
@@ -33,7 +32,7 @@ export function StatusDemo() {
           sentence={copy.hero}
           meta={copy.heroMeta}
           stats={HOME}
-          presence={labPresence}
+          presence="idle"
         />
       </LabCase>
       <LabCase id="hero-security" block>
@@ -42,16 +41,11 @@ export function StatusDemo() {
           sentence={copy.atHome}
           meta={copy.atHomeMeta}
           stats={SECURITY}
-          presence={labPresence}
+          presence="idle"
         />
       </LabCase>
       <LabCase id="hero-night" block>
-        <Status
-          tone="calm"
-          sentence={copy.goodNight}
-          meta={copy.nightMeta}
-          presence={labPresence}
-        />
+        <Status tone="calm" sentence={copy.goodNight} meta={copy.nightMeta} presence="watch" />
       </LabCase>
       <LabCase id="hero-band" block>
         <Status
@@ -59,7 +53,7 @@ export function StatusDemo() {
           sentence={copy.hero}
           meta={copy.deskMeta}
           stats={DESK}
-          presence={labPresence}
+          presence="idle"
           action={<Button variant="primary" compact icon="plus" label={copy.add} onPress={noop} />}
         />
       </LabCase>
@@ -69,7 +63,7 @@ export function StatusDemo() {
           secondary
           sentence={copy.heroAlert}
           meta={copy.heroAlertMeta}
-          presence={labPresence}
+          presence="alert"
         />
         <Status
           variant="card"

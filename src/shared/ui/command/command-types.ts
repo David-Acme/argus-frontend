@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import type { IconGlyph } from '@/shared/ui/icon';
 
 export type CommandItem = {
@@ -19,5 +18,4 @@ export type CommandProps = {
   onClose: () => void;
   source: CommandSource;
   onAsk: (query: string) => void;
-  askMark?: ReactNode;
 };

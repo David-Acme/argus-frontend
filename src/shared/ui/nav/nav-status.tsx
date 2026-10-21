@@ -1,9 +1,9 @@
 import { View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
+import { Presence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
-import type { NavPresence } from './nav-types';
 
 export type NavStatusRow = { icon: IconGlyph; before?: string; strong: string; after?: string };
 
@@ -14,7 +14,7 @@ export type NavStatusProps = {
   rows: readonly NavStatusRow[];
   meter?: NavStatusMeter;
   ask: { label: string; onPress: () => void };
-  presence?: NavPresence;
+  presence?: PresenceState;
 };
 
 type MeterProps = { meter: NavStatusMeter };
@@ -64,7 +64,7 @@ export function NavStatus({ title, rows, meter, ask, presence }: NavStatusProps)
         onPress={ask.onPress}
         hitSlop={ASK_SLOP}
         className="h-ask-field rounded-control bg-surface px-nav-ask-x gap-nav-ask-gap flex-row items-center">
-        {presence ? presence(size.presenceAsk, false) : null}
+        {presence ? <Presence state={presence} size={size.presenceAsk} /> : null}
         <Text variant="sideStat" tone="3" numberOfLines={1}>
           {ask.label}
         </Text>

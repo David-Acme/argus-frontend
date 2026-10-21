@@ -229,7 +229,7 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
     'tile-privacy': "media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})",
     'tile-off': "media('off','Garaje',{ctr:ic('eyeoff'),r:'Apagada'})",
     stage:
-      "'<div class=\"video\">'+media('scene-kitchen','',{live:true})+'<span class=\"ui dark eyecorner\" role=\"status\">Argus mira</span><div class=\"ov\"><button class=\"ibtn\">'+ic('speaker','s')+'</button><button class=\"ibtn\">'+ic('max','s')+'</button></div></div>'",
+      "'<div class=\"video\">'+media('scene-kitchen','',{live:true})+'<span class=\"ui dark eyecorner\" role=\"status\">'+masc('look',56)+'Argus mira</span><div class=\"ov\"><button class=\"ibtn\">'+ic('speaker','s')+'</button><button class=\"ibtn\">'+ic('max','s')+'</button></div></div>'",
     'stage-privacy':
       "'<div class=\"video\">'+media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})+'</div>'",
     patio:
@@ -239,7 +239,7 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
     failed:
       "ncard({icon:'wifioff',tone:'attn',t:'Cámaras sin conexión',b:'Revisa el Wi-Fi.',a:'<button class=\"btn compact\">Reintentar</button>'})",
     empty:
-      '\'<div class="ncard"><div class="nh">\'+lic(\'check\',\'ok\',1)+\'<div><div class="nt">Nada pendiente hoy</div><div class="nb">Tienes el día libre.</div></div></div><button class="btn primary block">\'+ic(\'plus\',\'s\')+\'Nuevo recordatorio</button></div><div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>\'',
+      '\'<div class="ncard"><div class="nh" style="align-items:center">\'+masc(\'happy\',52)+\'<div><div class="nt">Nada pendiente hoy</div><div class="nb">Tienes el día libre.</div></div></div><button class="btn primary block">\'+ic(\'plus\',\'s\')+\'Nuevo recordatorio</button></div><div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>\'',
     stale:
       "'<div class=\"banner attn\" style=\"margin-top:0\">'+ic('wifioff','s')+'<span class=\"grow\">Sin conexión. Datos de las 15:32.</span></div>'+sec('Lo último',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras en línea',chev:false})]),null,'hace 10 min')",
     ready:

@@ -6,16 +6,16 @@ import { CommandPanel } from './command-panel';
 import type { CommandProps } from './command-types';
 import { useCommand } from './use-command';
 
-type BodyProps = Pick<CommandProps, 'onClose' | 'source' | 'onAsk' | 'askMark'> & {
+type BodyProps = Pick<CommandProps, 'onClose' | 'source' | 'onAsk'> & {
   inputRef: RefObject<TextInput | null>;
 };
 
-function Body({ onClose, source, onAsk, askMark, inputRef }: BodyProps) {
+function Body({ onClose, source, onAsk, inputRef }: BodyProps) {
   const state = useCommand({ source, onAsk, onClose });
-  return <CommandPanel state={state} askMark={askMark} inputRef={inputRef} />;
+  return <CommandPanel state={state} inputRef={inputRef} />;
 }
 
-export function Command({ open, onClose, source, onAsk, askMark }: CommandProps) {
+export function Command({ open, onClose, source, onAsk }: CommandProps) {
   const { t } = useTranslation();
   const input = useRef<TextInput>(null);
   return (
@@ -26,9 +26,7 @@ export function Command({ open, onClose, source, onAsk, askMark }: CommandProps)
       variant="list"
       long
       initialFocus={input}>
-      {open ? (
-        <Body onClose={onClose} source={source} onAsk={onAsk} askMark={askMark} inputRef={input} />
-      ) : null}
+      {open ? <Body onClose={onClose} source={source} onAsk={onAsk} inputRef={input} /> : null}
     </Sheet>
   );
 }

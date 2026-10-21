@@ -17,7 +17,7 @@ export type ResourceViewProps<T> = {
   copy: ResourceCopy;
   skeleton: ReactNode;
   empty: EmptyProps;
-  concern?: ReactNode;
+  concern?: boolean;
   children: (data: T) => ReactNode;
 };
 
@@ -58,7 +58,7 @@ export function ResourceView<T>({
         <Notice
           tone="attention"
           icon="wifioff"
-          leading={concern}
+          presence={concern ? 'error' : undefined}
           title={copy.failed.title}
           body={copy.failed.body}
           action={{ label: copy.retry, onPress: resource.retry }}

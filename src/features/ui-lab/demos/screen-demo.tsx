@@ -9,7 +9,6 @@ import { Section } from '@/shared/ui/section';
 import { Status, type StatusStat } from '@/shared/ui/status';
 import { Text } from '@/shared/ui/text';
 import { LabCase } from '../components/lab-case';
-import { labPresence } from '../components/lab-presence';
 import { copy } from './demo-copy';
 
 const noop = () => undefined;
@@ -80,13 +79,7 @@ function Home({ updating }: { updating?: boolean }) {
       meta={copy.greeting}
       updating={updating ? copy.updating : undefined}
       actions={search}>
-      <Status
-        tone="calm"
-        sentence={copy.hero}
-        meta={copy.heroMeta}
-        stats={STATS}
-        presence={labPresence}
-      />
+      <Status tone="calm" sentence={copy.hero} meta={copy.heroMeta} stats={STATS} presence="idle" />
       <Now />
     </Screen>
   );

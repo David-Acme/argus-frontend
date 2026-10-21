@@ -61,6 +61,12 @@ mock.module('react-native-keyboard-controller', async () => {
   return { KeyboardAwareScrollView: web.ScrollView };
 });
 mock.module('expo-device', () => ({ totalMemory: null }));
+mock.module('expo-router', () => ({
+  Redirect: () => null,
+  useLocalSearchParams: () => ({}),
+  useRouter: () => ({ setParams: () => undefined }),
+  useIsFocused: () => true,
+}));
 mock.module(
   '@/shared/ui/presence/presence-canvas',
   () => import('@/shared/ui/presence/presence-canvas.web')

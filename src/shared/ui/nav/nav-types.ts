@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { IconGlyph } from '@/shared/ui/icon';
+import type { PresenceState } from '@/shared/ui/presence';
 
 export type NavItem = {
   key: string;
@@ -24,15 +25,13 @@ export type NavCopy = {
   commandKey: string;
 };
 
-export type NavPresence = (size: number, listening: boolean) => ReactNode;
-
 export type NavProps = {
   items: readonly NavItem[];
   active: string;
   onSelect: (key: string) => void;
   voice: NavVoice;
   copy: NavCopy;
-  presence?: NavPresence;
+  presence?: PresenceState;
   onCommand?: () => void;
   status?: ReactNode;
   settings?: NavItem;

@@ -2,12 +2,13 @@ import { clsx } from 'clsx';
 import { View } from 'react-native';
 import { layout, size, useEffects } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import { KeyHint } from './key-hint';
 import type { NavItem, NavProps } from './nav-types';
 
-type SideItemProps = Pick<NavProps, 'presence' | 'onSelect' | 'voice'> & {
+type SideItemProps = Pick<NavProps, 'onSelect' | 'voice'> & {
   item: NavItem;
   selected: boolean;
 };
@@ -35,7 +36,7 @@ function Trailing({ item, selected }: Pick<SideItemProps, 'item' | 'selected'>) 
   );
 }
 
-function SideItem({ item, selected, onSelect, voice, presence }: SideItemProps) {
+function SideItem({ item, selected, onSelect, voice }: SideItemProps) {
   return (
     <PressableSurface
       a11y={{ label: item.label, role: 'tab', selected }}
@@ -45,11 +46,7 @@ function SideItem({ item, selected, onSelect, voice, presence }: SideItemProps) 
         'min-h-nav-item px-nav-item-x rounded-control group w-full flex-row items-center gap-3',
         selected ? 'bg-fill' : 'web:hover:bg-fill'
       )}>
-      {item.argus && presence ? (
-        presence(size.presenceNav, false)
-      ) : (
-        <Icon name={item.icon} size="small" tone={selected ? 'text' : 'text-2'} />
-      )}
+      <Icon name={item.icon} size="small" tone={selected ? 'text' : 'text-2'} />
       <Text variant="label" tone={selected ? 'default' : '2'} numberOfLines={1}>
         {item.label}
       </Text>
@@ -90,7 +87,7 @@ export function NavSidebar(props: NavProps) {
       )}
       style={SIDE}>
       <View className="px-nav-brand-x pb-nav-brand-bottom gap-nav-brand-gap flex-row items-center">
-        {presence ? presence(size.presenceBrand, false) : null}
+        {presence ? <Presence state={presence} size={size.presenceBrand} /> : null}
         <Text variant="brand">{brand?.label ?? copy.navigation}</Text>
       </View>
       {onCommand ? (
@@ -103,7 +100,6 @@ export function NavSidebar(props: NavProps) {
           selected={active === item.key}
           onSelect={onSelect}
           voice={voice}
-          presence={presence}
         />
       ))}
       <View className="flex-1" />

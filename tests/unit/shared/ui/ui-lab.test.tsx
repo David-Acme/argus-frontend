@@ -45,7 +45,6 @@ const { ToastDemo } = await import('@/features/ui-lab/demos/toast-demo');
 const { UiLabScreen } = await import('@/features/ui-lab/screens/ui-lab-screen');
 const { catalogue } = await import('@/features/ui-lab/catalogue');
 const { LabCase } = await import('@/features/ui-lab/components/lab-case');
-const { LabPresence } = await import('@/features/ui-lab/components/lab-presence');
 
 const DEMOS: Record<string, ComponentType> = {
   aura: AuraDemo,
@@ -102,11 +101,6 @@ describe('ui-lab', () => {
       </LabCase>
     );
     expect(screen.getByTestId('case-sample')).toBeDefined();
-  });
-
-  test('the lab presence stands in for Presence at the size it is given', () => {
-    const { container } = render(<LabPresence size={66} />);
-    expect((container.firstElementChild as HTMLElement).style.width).toBe('66px');
   });
 
   test('the index lists the components and a parameter opens one', () => {

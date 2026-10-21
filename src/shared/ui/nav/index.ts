@@ -6,4 +6,4 @@ export {
   type NavStatusProps,
   type NavStatusRow,
 } from './nav-status';
-export type { NavCopy, NavItem, NavPresence, NavProps, NavVoice } from './nav-types';
+export type { NavCopy, NavItem, NavProps, NavVoice } from './nav-types';

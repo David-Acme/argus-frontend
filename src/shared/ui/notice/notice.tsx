@@ -1,10 +1,10 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { size, useThemeTokens, useWindowLayout } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
+import { Presence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 
@@ -24,13 +24,13 @@ export type NoticeProps = {
   icon?: IconGlyph;
   action?: NoticeAction;
   inline?: boolean;
-  leading?: ReactNode;
+  presence?: PresenceState;
   testID?: string;
 };
 
 type CardProps = Omit<NoticeProps, 'inline'>;
 
-type BannerProps = Omit<NoticeProps, 'inline' | 'leading'>;
+type BannerProps = Omit<NoticeProps, 'inline' | 'presence'>;
 
 type CardActionProps = { action: NoticeAction; block: boolean };
 
@@ -51,7 +51,7 @@ function CardAction({ action, block }: CardActionProps) {
   return <View className="gap-notice-action-gap flex-row justify-end">{button}</View>;
 }
 
-function NoticeCard({ title, body, tone = 'info', icon, action, leading, testID }: CardProps) {
+function NoticeCard({ title, body, tone = 'info', icon, action, presence, testID }: CardProps) {
   const { elevation } = useThemeTokens();
   const { windowClass } = useWindowLayout();
   const card = { boxShadow: elevation.card };
@@ -65,8 +65,8 @@ function NoticeCard({ title, body, tone = 'info', icon, action, leading, testID 
       className="rounded-notice bg-surface gap-notice-gap px-notice-x py-notice-y"
       style={card}>
       <View
-        className={clsx('gap-notice-head-gap flex-row', leading ? 'items-center' : 'items-start')}>
-        {leading ?? well}
+        className={clsx('gap-notice-head-gap flex-row', presence ? 'items-center' : 'items-start')}>
+        {presence ? <Presence state={presence} size={size.presenceNotice} /> : well}
         <View className="min-w-0 flex-1">
           <Text variant="noticeTitle">{title}</Text>
           {body ? (
@@ -113,7 +113,7 @@ function NoticeBanner({ title, body, tone = 'info', icon, action, testID }: Bann
   );
 }
 
-export function Notice({ inline, leading, ...notice }: NoticeProps) {
+export function Notice({ inline, presence, ...notice }: NoticeProps) {
   if (inline) return <NoticeBanner {...notice} />;
-  return <NoticeCard {...notice} leading={leading} />;
+  return <NoticeCard {...notice} presence={presence} />;
 }

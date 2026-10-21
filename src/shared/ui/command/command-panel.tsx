@@ -1,9 +1,10 @@
 import { clsx } from 'clsx';
 import type { ReactNode, RefObject } from 'react';
 import { Pressable, ScrollView, TextInput, View, type NativeSyntheticEvent } from 'react-native';
-import { useThemeTokens } from '@/shared/theme';
+import { size, useThemeTokens } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Icon } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
 import { Text } from '@/shared/ui/text';
 import type { CommandItem } from './command-types';
 import { Listbox, optionId } from './listbox';
@@ -11,7 +12,6 @@ import type { CommandState } from './use-command';
 
 export type CommandPanelProps = {
   state: CommandState;
-  askMark?: ReactNode;
   hints?: boolean;
   inputRef?: RefObject<TextInput | null>;
 };
@@ -91,7 +91,7 @@ function ItemOption({ item, index, state }: ItemOptionProps) {
   );
 }
 
-function AskGroup({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'>) {
+function AskGroup({ state }: Pick<CommandPanelProps, 'state'>) {
   const { t } = useTranslation();
   if (!state.asks) return null;
   const label = t('common.overlay.command-ask', { query: state.query.trim() });
@@ -104,7 +104,7 @@ function AskGroup({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark
         label={label}
         selected={state.selected === 0}
         onPress={() => state.run(0)}>
-        {askMark ?? <Icon name="search" size="small" tone="accent" />}
+        <Presence state="think" size={size.presenceThink} />
         <View className="min-w-0 flex-1">
           <Text variant="feed" numberOfLines={1}>
             {label}
@@ -123,11 +123,11 @@ function firstIndexes(state: CommandState): number[] {
   );
 }
 
-function Results({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'>) {
+function Results({ state }: Pick<CommandPanelProps, 'state'>) {
   const firsts = firstIndexes(state);
   return (
     <Listbox id={state.listId}>
-      <AskGroup state={state} askMark={askMark} />
+      <AskGroup state={state} />
       {state.groups.map((group, at) => (
         <View key={group.title} role="group" aria-label={group.title}>
           <GroupTitle title={group.title} />
@@ -200,16 +200,16 @@ function Footer() {
   );
 }
 
-export function CommandPanel({ state, askMark, hints, inputRef }: CommandPanelProps) {
+export function CommandPanel({ state, hints, inputRef }: CommandPanelProps) {
   return (
     <>
       <QueryRow state={state} hints={hints} inputRef={inputRef} />
       {hints ? (
         <ScrollView className="shrink" keyboardShouldPersistTaps="handled">
-          <Results state={state} askMark={askMark} />
+          <Results state={state} />
         </ScrollView>
       ) : (
-        <Results state={state} askMark={askMark} />
+        <Results state={state} />
       )}
       {hints ? <Footer /> : null}
     </>

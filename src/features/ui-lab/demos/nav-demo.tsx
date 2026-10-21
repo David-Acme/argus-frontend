@@ -2,7 +2,6 @@ import { View } from 'react-native';
 import { layout, size } from '@/shared/theme';
 import { Nav, NavStatus, type NavItem, type NavProps } from '@/shared/ui/nav';
 import { LabCase } from '../components/lab-case';
-import { labPresence } from '../components/lab-presence';
 import { copy } from './demo-copy';
 
 const noop = () => undefined;
@@ -31,7 +30,7 @@ const NAV: NavProps = {
     command: copy.commandHint,
     commandKey: '⌘K',
   },
-  presence: labPresence,
+  presence: 'idle',
   onCommand: noop,
   settings: { key: 'settings', label: copy.settings, icon: 'sliders' },
 };
@@ -45,7 +44,7 @@ const status = (
     ]}
     meter={{ label: copy.storage, value: copy.storageValue, fraction: 0.62 }}
     ask={{ label: copy.askArgusPrompt, onPress: noop }}
-    presence={labPresence}
+    presence="idle"
   />
 );
 
