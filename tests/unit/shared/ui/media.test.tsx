@@ -107,6 +107,36 @@ describe('Media', () => {
     expect(container.querySelectorAll('img').length).toBeGreaterThanOrEqual(before);
   });
 
+  test('the same frame in a new object does not cross-fade, and a faded-in frame drops the last one', async () => {
+    const loads: FakeImage[] = [];
+    class FakeImage {
+      onload: ((event: unknown) => void) | null = null;
+      onerror: (() => void) | null = null;
+      src = '';
+      constructor() {
+        loads.push(this);
+      }
+      decode() {
+        return Promise.resolve();
+      }
+    }
+    const realImage = globalThis.Image;
+    Object.assign(globalThis, { Image: FakeImage });
+    const { container, rerender } = render(
+      <MediaFrame source={{ uri: 'https://argus.local/a.jpg' }} />
+    );
+    rerender(<MediaFrame source={{ uri: 'https://argus.local/a.jpg' }} />);
+    expect(container.querySelectorAll('img').length).toBe(1);
+    rerender(<MediaFrame source={{ uri: 'https://argus.local/b.jpg' }} />);
+    expect(container.querySelectorAll('img').length).toBe(2);
+    await act(async () => {
+      loads.find((image) => image.src.endsWith('b.jpg'))?.onload?.({});
+      await Promise.resolve();
+    });
+    expect(container.querySelectorAll('img').length).toBe(1);
+    Object.assign(globalThis, { Image: realImage });
+  });
+
   test('the parts render on their own, the live dot still under reduced motion', () => {
     act(() => useEffectsOverrides.setState({ reduceMotion: true, reduceTransparency: true }));
     render(

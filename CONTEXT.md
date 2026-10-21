@@ -5694,7 +5694,10 @@ pointer (`pointerType`), so a tap on a phone opens the camera instead. The
 stage bleeds to the phone gutter (`-mx-4`, the prototype's `.video`) and is a
 rounded tile from `medium` up. `frame` cross-fades a new still over the last
 one on the UI thread after it loads (React Native `Image`: expo-image, the
-owner decision P2, is not installed). The live dot breathes with a Reanimated
+owner decision P2, is not installed). Frames are compared by their `uri`, not
+by object identity, so a parent that rebuilds `{ uri }` on every render does
+not cross-fade; once the fade ends (or at once under reduced motion) the old
+frame is dropped, so only one decoded still stays mounted (review finding 5). The live dot breathes with a Reanimated
 CSS animation and holds still under reduced motion; blur drops under reduced
 transparency. Text on imagery is the `on-media` tone (white in both themes);
 `mediaLabel`/`mediaDetail` on it carry the prototype's text shadow, which

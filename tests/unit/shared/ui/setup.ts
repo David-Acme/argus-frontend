@@ -80,7 +80,10 @@ mock.module('react-native-reanimated', async () => {
     useAnimatedScrollHandler: () => () => undefined,
     useAnimatedStyle: <T>(build: () => T) => build(),
     withSpring: <T>(target: T) => target,
-    withTiming: <T>(target: T) => target,
+    withTiming: <T>(target: T, _config?: unknown, done?: (finished: boolean) => void) => {
+      done?.(true);
+      return target;
+    },
     withRepeat: <T>(animation: T) => animation,
     cancelAnimation: () => undefined,
     useFrameCallback: () => undefined,
