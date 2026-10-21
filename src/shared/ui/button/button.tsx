@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { View } from 'react-native';
 import { size, useEffects, useThemeTokens } from '@/shared/theme';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -7,12 +8,14 @@ import { useSingleFlight, type FlightAction } from './use-single-flight';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
+export type ButtonTrailing = { icon: IconGlyph } | { key: string };
+
 export type TextButtonProps = {
   label: string;
   onPress: FlightAction;
   variant?: ButtonVariant;
   icon?: IconGlyph;
-  trailingIcon?: IconGlyph;
+  trailing?: ButtonTrailing;
   compact?: boolean;
   block?: boolean;
   glass?: boolean;
@@ -27,32 +30,47 @@ export type IconButtonProps = {
   onPress: FlightAction;
   iconSize?: 'small' | 'default';
   filled?: boolean;
+  compact?: boolean;
   glass?: boolean;
   busy?: boolean;
   disabled?: boolean;
-  testID?: string;
 };
 
 export type ButtonProps = TextButtonProps | IconButtonProps;
 
-type Ink = { surface: string; text: TextTone; icon: IconTone };
+type Ink = { surface: string; text: TextTone; icon: IconTone; edge: string };
 
 const INK: Record<ButtonVariant, Ink> = {
-  primary: { surface: 'bg-ink', text: 'on-ink', icon: 'on-ink' },
-  secondary: { surface: 'bg-fill', text: 'default', icon: 'text' },
-  ghost: { surface: 'bg-transparent', text: 'default', icon: 'text' },
-  danger: { surface: 'bg-alert-soft', text: 'alert', icon: 'alert' },
+  primary: { surface: 'bg-ink', text: 'on-ink', icon: 'on-ink', edge: 'border-on-ink' },
+  secondary: { surface: 'bg-fill', text: 'default', icon: 'text', edge: 'border-text' },
+  ghost: { surface: 'bg-transparent', text: 'default', icon: 'text', edge: 'border-text' },
+  danger: { surface: 'bg-alert-soft', text: 'alert', icon: 'alert', edge: 'border-alert' },
 };
 
 const COMPACT_SLOP = (size.target - size.buttonCompact) / 2;
 
 const ICON_SLOP = (size.target - size.targetMin) / 2;
 
+const WELL_SLOP = (size.target - size.wellSmall) / 2;
+
 function frameClass(compact: boolean | undefined, variant: ButtonVariant): string {
   if (compact) return 'min-h-button-compact rounded-control px-button-compact-x';
   return variant === 'ghost'
     ? 'min-h-button rounded-button px-button-ghost-x'
     : 'min-h-button rounded-button px-button-x';
+}
+
+function Trailing({ trailing, ink }: { trailing: ButtonTrailing; ink: Ink }) {
+  if ('icon' in trailing) return <Icon name={trailing.icon} size="small" tone={ink.icon} />;
+  return (
+    <View
+      aria-hidden
+      className={clsx('rounded-key px-nav-key-x ml-1.5 border border-b-2 opacity-70', ink.edge)}>
+      <Text variant="key" tone={ink.text}>
+        {trailing.key}
+      </Text>
+    </View>
+  );
 }
 
 function useGlass(glass: boolean | undefined) {
@@ -67,11 +85,11 @@ function IconButton({
   label,
   onPress,
   iconSize = 'default',
+  compact,
   filled,
   glass,
   busy = false,
   disabled,
-  testID,
 }: IconButtonProps) {
   const flight = useSingleFlight(onPress, busy);
   const material = useGlass(glass);
@@ -81,15 +99,15 @@ function IconButton({
       onPress={flight.run}
       pressed={{ scale: 'icon', fill: true }}
       disabled={disabled || flight.busy}
-      hitSlop={ICON_SLOP}
-      testID={testID}
+      hitSlop={compact ? WELL_SLOP : ICON_SLOP}
       style={material ? { boxShadow: material.elevation.glassInset } : undefined}
       className={clsx(
-        'size-target-min items-center justify-center rounded-full',
+        compact ? 'size-well-small' : 'size-target-min',
+        'items-center justify-center rounded-full',
         filled && 'bg-fill',
         material && (material.solid ? 'bg-surface' : 'web:backdrop-blur-control bg-glass')
       )}>
-      <Icon name={icon} size={iconSize} />
+      <Icon name={icon} size={compact ? 'small' : iconSize} />
     </PressableSurface>
   );
 }
@@ -99,7 +117,7 @@ function TextButton({
   onPress,
   variant = 'secondary',
   icon,
-  trailingIcon,
+  trailing,
   compact,
   block,
   glass,
@@ -127,7 +145,7 @@ function TextButton({
       <Text variant={compact ? 'buttonCompact' : 'button'} tone={ink.text}>
         {label}
       </Text>
-      {trailingIcon ? <Icon name={trailingIcon} size="small" tone={ink.icon} /> : null}
+      {trailing ? <Trailing trailing={trailing} ink={ink} /> : null}
     </PressableSurface>
   );
 }

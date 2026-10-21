@@ -3,7 +3,7 @@ import { useEffect, useEffectEvent } from 'react';
 import { BackHandler, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { IS_ANDROID, IS_WEB } from '@/shared/constants';
 import { tokens } from '@/shared/theme/tokens';
-import { DialogFooter, DiscardRow, IconButton, SheetTitle } from './sheet-parts';
+import { CloseButton, DialogFooter, DiscardRow, SheetTitle } from './sheet-parts';
 import type { SheetProps } from './types';
 import { useDiscard, type Discard } from './use-discard';
 import { useSheetElevation, useSheetTheme, type SheetTheme } from './use-sheet-theme';
@@ -73,21 +73,14 @@ function DialogBottom({ discard, actions, theme }: BottomProps) {
     return (
       <DiscardRow
         question={discard.question}
-        keep={{ label: discard.keepLabel, onPress: discard.keep, testID: 'sheet-keep' }}
-        discard={{ label: discard.discardLabel, onPress: discard.confirm, testID: 'sheet-discard' }}
+        keep={{ label: discard.keepLabel, onPress: discard.keep }}
+        discard={{ label: discard.discardLabel, onPress: discard.confirm }}
         theme={theme}
       />
     );
   }
   if (!actions) return null;
-  return (
-    <DialogFooter
-      primary={actions.primary}
-      more={actions.more}
-      theme={theme}
-      hint={discard.submitHint}
-    />
-  );
+  return <DialogFooter primary={actions.primary} more={actions.more} hint={discard.submitHint} />;
 }
 
 export function SheetDialog(props: SheetProps) {
@@ -137,13 +130,7 @@ export function SheetDialog(props: SheetProps) {
               <DialogPrimitive.Title asChild>
                 <SheetTitle title={title} theme={theme} dialog />
               </DialogPrimitive.Title>
-              <IconButton
-                label={discard.closeLabel}
-                onPress={discard.requestClose}
-                theme={theme}
-                glyph="close"
-                testID="sheet-close"
-              />
+              <CloseButton label={discard.closeLabel} onPress={discard.requestClose} dialog />
             </View>
             <ScrollView keyboardShouldPersistTaps="handled">{children}</ScrollView>
             <DialogBottom discard={discard} actions={actions} theme={theme} />

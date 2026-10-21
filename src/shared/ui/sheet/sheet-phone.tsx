@@ -1,6 +1,7 @@
 import { TrueSheet, type TrueSheetMethods } from '@lodev09/react-native-true-sheet';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
@@ -15,6 +16,7 @@ const GRABBER_ALPHA = 0.4;
 const FOOTER_PAD = 10;
 
 const styles = StyleSheet.create({
+  root: { flexGrow: 1 },
   header: { paddingHorizontal: space[4], paddingTop: space[6], paddingBottom: 6 },
   tallHeader: { borderBottomWidth: size.hairline },
   body: { paddingHorizontal: space[4] },
@@ -26,19 +28,21 @@ type FooterSlotProps = {
   actions: SheetActions;
   long: boolean;
   theme: SheetTheme;
-  inset: number;
+  bottom: number;
   onHeight: (height: number) => void;
 };
 
-function FooterSlot({ actions, long, theme, inset, onHeight }: FooterSlotProps) {
+function FooterSlot({ actions, long, theme, bottom, onHeight }: FooterSlotProps) {
   const edge = { borderColor: theme.line, backgroundColor: theme.surface };
-  const pad = { paddingBottom: FOOTER_PAD + inset };
+  const pad = { paddingBottom: FOOTER_PAD + bottom };
   return (
-    <View
-      onLayout={(event) => onHeight(event.nativeEvent.layout.height)}
-      style={[styles.footer, long && styles.tallFooter, edge, pad]}>
-      <PhoneFooter primary={actions.primary} more={actions.more} theme={theme} />
-    </View>
+    <GestureHandlerRootView style={styles.root}>
+      <View
+        onLayout={(event) => onHeight(event.nativeEvent.layout.height)}
+        style={[styles.footer, long && styles.tallFooter, edge, pad]}>
+        <PhoneFooter primary={actions.primary} more={actions.more} />
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -46,21 +50,22 @@ type BodyProps = { long: boolean; clearance: number; testID?: string; children: 
 
 function Body({ long, clearance, testID, children }: BodyProps) {
   const padding = [styles.body, { paddingBottom: clearance }];
-  if (!long) {
-    return (
-      <View style={padding} testID={testID}>
-        {children}
-      </View>
-    );
-  }
   return (
-    <ScrollView
-      nestedScrollEnabled
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={padding}
-      testID={testID}>
-      {children}
-    </ScrollView>
+    <GestureHandlerRootView style={styles.root}>
+      {long ? (
+        <ScrollView
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={padding}
+          testID={testID}>
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={padding} testID={testID}>
+          {children}
+        </View>
+      )}
+    </GestureHandlerRootView>
   );
 }
 
@@ -115,15 +120,17 @@ export function SheetPhone(props: SheetProps) {
       scrollable={long}
       scrollableOptions={{ keyboardScrollOffset: CEILING_GAP + footerHeight }}
       header={
-        <View style={[styles.header, long && styles.tallHeader, headerLine]}>
-          <SheetHeader
-            title={title}
-            closeLabel={closeLabel}
-            onClose={askOrClose}
-            theme={theme}
-            dialog={false}
-          />
-        </View>
+        <GestureHandlerRootView style={styles.root}>
+          <View style={[styles.header, long && styles.tallHeader, headerLine]}>
+            <SheetHeader
+              title={title}
+              closeLabel={closeLabel}
+              onClose={askOrClose}
+              theme={theme}
+              dialog={false}
+            />
+          </View>
+        </GestureHandlerRootView>
       }
       footer={
         actions ? (
@@ -131,7 +138,7 @@ export function SheetPhone(props: SheetProps) {
             actions={actions}
             long={long}
             theme={theme}
-            inset={insets.bottom}
+            bottom={insets.bottom}
             onHeight={setFooterHeight}
           />
         ) : undefined

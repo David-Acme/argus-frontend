@@ -52,7 +52,8 @@ describe('Sheet on a phone', () => {
     expect(sheet.dismissible).toBe(true);
     expect(html).toContain('Nuevo evento');
     expect(html).toContain('Guardar');
-    expect(html).toContain('accessibilitylabel="Cerrar"');
+    expect(html).toContain('label="Cerrar"');
+    expect(html).toContain('rn-gesture-root');
   });
 
   test('a short form sizes itself, and a dirty one blocks the drag and asks on Back', () => {

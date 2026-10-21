@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import type { IconGlyph } from '@/shared/ui/icon';
-import type { SheetSlot } from '@/shared/ui/menu';
 
 export type CommandItem = {
   id: string;
@@ -21,5 +20,4 @@ export type CommandProps = {
   source: CommandSource;
   onAsk: (query: string) => void;
   askMark?: ReactNode;
-  sheet: SheetSlot;
 };

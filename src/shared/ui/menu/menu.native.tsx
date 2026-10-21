@@ -5,25 +5,19 @@ import { feedback } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
 import { Row } from '@/shared/ui/row';
-import type {
-  ButtonMenuProps,
-  ContextMenuProps,
-  MenuItems,
-  MenuProps,
-  SheetSlot,
-} from './menu-types';
+import { Sheet } from '@/shared/ui/sheet';
+import type { ButtonMenuProps, ContextMenuProps, MenuItems, MenuProps } from './menu-types';
 
 type SheetListProps = {
   open: boolean;
   onClose: () => void;
   label: string;
   items: MenuItems;
-  sheet: SheetSlot;
 };
 
 type LongPressProps = { onLongPress: () => void; children: ReactNode };
 
-function SheetList({ open, onClose, label, items, sheet: Sheet }: SheetListProps) {
+function SheetList({ open, onClose, label, items }: SheetListProps) {
   return (
     <Sheet open={open} onClose={onClose} title={label} variant="list">
       {items.map((item) => (
@@ -60,34 +54,22 @@ function LongPress({ onLongPress, children }: LongPressProps) {
   );
 }
 
-function ButtonMenu({ label, items, icon = 'more', sheet }: ButtonMenuProps) {
+function ButtonMenu({ label, items, icon = 'more' }: ButtonMenuProps) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button iconOnly icon={icon} label={label} onPress={() => setOpen(true)} />
-      <SheetList
-        open={open}
-        onClose={() => setOpen(false)}
-        label={label}
-        items={items}
-        sheet={sheet}
-      />
+      <SheetList open={open} onClose={() => setOpen(false)} label={label} items={items} />
     </>
   );
 }
 
-function ContextMenu({ label, items, sheet, children }: ContextMenuProps) {
+function ContextMenu({ label, items, children }: ContextMenuProps) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <LongPress onLongPress={() => setOpen(true)}>{children}</LongPress>
-      <SheetList
-        open={open}
-        onClose={() => setOpen(false)}
-        label={label}
-        items={items}
-        sheet={sheet}
-      />
+      <SheetList open={open} onClose={() => setOpen(false)} label={label} items={items} />
     </>
   );
 }

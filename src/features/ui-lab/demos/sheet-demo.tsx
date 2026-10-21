@@ -98,10 +98,10 @@ export function SheetDemo() {
           long={mode === 'long'}
           dirty={dirtyName(values, mode === 'short' ? 'reminder' : 'title')}
           actions={{
-            primary: { label: sheetCopy.save, onPress: save, testID: 'spike-save' },
+            primary: { label: sheetCopy.save, onPress: save },
             more:
               mode === 'long'
-                ? { label: sheetCopy.more, onPress: () => undefined, testID: 'spike-more' }
+                ? { label: sheetCopy.more, onPress: () => undefined }
                 : undefined,
           }}
           initialFocus={first}

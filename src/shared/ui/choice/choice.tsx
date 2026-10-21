@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ScrollView, View, type LayoutChangeEvent } from 'react-native';
 import { ChoiceList, ChoiceOpener } from './choice-list';
-import type { ChoiceOption, ChoiceSheet } from './choice-types';
+import { Sheet } from '@/shared/ui/sheet';
+import type { ChoiceOption } from './choice-types';
 import { SegmentContent, Segmented } from './segmented';
 import { MAX_SEGMENTS, segmentsFit } from './segments-fit';
 
@@ -12,7 +13,6 @@ export type ChoiceProps<T extends string> = {
   onChange: (next: T) => void;
   look?: 'row' | 'field';
   glass?: boolean;
-  sheet: ChoiceSheet;
   testID?: string;
 };
 
@@ -65,7 +65,6 @@ export function Choice<T extends string>({
   onChange,
   look = 'row',
   glass,
-  sheet,
   testID,
 }: ChoiceProps<T>) {
   const [open, setOpen] = useState(false);
@@ -90,13 +89,9 @@ export function Choice<T extends string>({
       ) : (
         <ChoiceOpener label={label} current={current} look={look} onOpen={() => setOpen(true)} />
       )}
-      {sheet({
-        variant: 'list',
-        title: label,
-        open,
-        onClose: () => setOpen(false),
-        children: <ChoiceList options={options} value={value} onPick={pick} />,
-      })}
+      <Sheet variant="list" title={label} open={open} onClose={() => setOpen(false)}>
+        <ChoiceList options={options} value={value} onPick={pick} />
+      </Sheet>
     </View>
   );
 }

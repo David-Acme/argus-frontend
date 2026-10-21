@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { CommandGroup } from '@/shared/ui/command/command-types';
-import type { SheetSlotProps } from '@/shared/ui/menu/menu-types';
 import './translation-stub';
 
 const { CommandPanel } = await import('@/shared/ui/command/command-panel');
@@ -57,15 +56,6 @@ function Harness({ log, initialQuery }: HarnessProps) {
   );
 }
 
-function TestSheet({ open, title, children }: SheetSlotProps) {
-  if (!open) return null;
-  return (
-    <div role="dialog" aria-label={title}>
-      {children}
-    </div>
-  );
-}
-
 const input = () => screen.getByLabelText('Buscar o pedir a Argus');
 
 describe('Command', () => {
@@ -108,7 +98,6 @@ describe('Command', () => {
         onClose={() => log.push('close')}
         source={() => groups(log)}
         onAsk={() => undefined}
-        sheet={TestSheet}
       />
     );
     const dialog = screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' });
@@ -139,7 +128,6 @@ describe('Command', () => {
         onClose={() => undefined}
         source={() => groups(log)}
         onAsk={() => undefined}
-        sheet={TestSheet}
       />
     );
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -149,7 +137,6 @@ describe('Command', () => {
         onClose={() => undefined}
         source={() => groups(log)}
         onAsk={() => undefined}
-        sheet={TestSheet}
       />
     );
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();

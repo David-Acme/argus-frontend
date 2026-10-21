@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { Pressable, TextInput, View, type NativeSyntheticEvent } from 'react-native';
 import { useThemeTokens } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -12,6 +12,7 @@ export type CommandPanelProps = {
   state: CommandState;
   askMark?: ReactNode;
   hints?: boolean;
+  inputRef?: RefObject<TextInput | null>;
 };
 
 type KeyProps = { label: string };
@@ -133,7 +134,11 @@ function Results({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'
   );
 }
 
-function QueryRow({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) {
+function QueryRow({
+  state,
+  hints,
+  inputRef,
+}: Pick<CommandPanelProps, 'state' | 'hints' | 'inputRef'>) {
   const { t } = useTranslation();
   const { color } = useThemeTokens();
   const onKeyPress = (event: KeyEvent) => {
@@ -143,6 +148,7 @@ function QueryRow({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) 
     <View className="px-palette-query-x py-palette-query-y gap-palette-gap border-line flex-row items-center border-b">
       <Icon name="search" />
       <TextInput
+        ref={inputRef}
         value={state.query}
         onChangeText={state.setQuery}
         onKeyPress={onKeyPress}
@@ -176,10 +182,10 @@ function Footer() {
   );
 }
 
-export function CommandPanel({ state, askMark, hints }: CommandPanelProps) {
+export function CommandPanel({ state, askMark, hints, inputRef }: CommandPanelProps) {
   return (
     <>
-      <QueryRow state={state} hints={hints} />
+      <QueryRow state={state} hints={hints} inputRef={inputRef} />
       <Results state={state} askMark={askMark} />
       {hints ? <Footer /> : null}
     </>

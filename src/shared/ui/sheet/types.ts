@@ -8,7 +8,6 @@ export type SheetAction = {
   label: string;
   onPress: () => void;
   disabled?: boolean;
-  testID?: string;
 };
 
 export type SheetActions = {

@@ -6,6 +6,4 @@ export type {
   MenuItem,
   MenuItems,
   MenuProps,
-  SheetSlot,
-  SheetSlotProps,
 } from './menu-types';
