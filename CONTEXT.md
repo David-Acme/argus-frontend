@@ -5452,7 +5452,11 @@ rail and sidebar items that hold `Presence`) re-renders nothing of its own
 (1–4), carried as `aria-level`: react-native-web renders `role="heading"`
 without a level as `<h1>`, so every heading was an h1 (finding 12). The
 screen's top-bar title is 1, the Status hero and Section heads 2, the Status
-card 3. They take no `className` and join their classes with
+card 3. At font scale 2 a fixed height clipped the words (finding 14):
+the chips and the sidebar's ask field take their prototype height as a
+minimum (`min-h-chip`, `min-h-ask-field`), which draws the same at scale 1,
+and the Avatar initial scales at most 1.3x (29 px line in a 36 px box, which
+must keep its size). They take no `className` and join their classes with
 `clsx`, since tailwind-merge does not know the new type names and drops one of
 two `text-*` classes. Values the prototype draws that the spec's scale lacks
 (row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,

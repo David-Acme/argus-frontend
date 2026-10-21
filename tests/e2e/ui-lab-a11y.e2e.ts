@@ -19,6 +19,12 @@ const SMALL = [
   { component: 'notice', block: 'case-banner-attention', role: 'button' },
 ] as const;
 
+const SCALED = [
+  { component: 'chip', block: 'case-tag-default' },
+  { component: 'chip', block: 'case-suggestion' },
+  { component: 'nav', block: 'case-status' },
+] as const;
+
 const openLab = async (
   browser: Browser,
   open: (path: string) => Promise<unknown>,
@@ -68,5 +74,33 @@ for (const { component, block, role } of SMALL) {
       { testId: block, kind: role }
     );
     expect(area).toBe('absolute 48px');
+  });
+}
+
+for (const { component, block } of SCALED) {
+  test(`a ${component} control holds its words at font scale 2 (${block})`, async ({
+    app,
+    browser,
+    screen,
+  }) => {
+    await openLab(browser, (path) => app.open(path), `/ui-lab?c=${component}&theme=light&fs=2`);
+    await expect(screen.getByTestId(block)).toBeVisible({ timeout: 15000 });
+    const overflow = await browser.evaluate((testId: string) => {
+      const scope = document.querySelector(`[data-testid="${testId}"]`);
+      if (!scope) return -1;
+      const words = [...scope.querySelectorAll('*')].filter(
+        (node) => node.children.length === 0 && (node.textContent ?? '').trim() !== ''
+      );
+      return Math.max(
+        0,
+        ...words.map((node) => {
+          const parent = node.parentElement?.getBoundingClientRect();
+          const inner = node.getBoundingClientRect();
+          if (!parent) return 0;
+          return Math.max(parent.top - inner.top, inner.bottom - parent.bottom);
+        })
+      );
+    }, block);
+    expect(overflow).toBeLessThanOrEqual(0.5);
   });
 }
