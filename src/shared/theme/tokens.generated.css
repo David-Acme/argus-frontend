@@ -11,6 +11,7 @@
   --radius-button: 16px;
   --radius-toast: 18px;
   --radius-media: 20px;
+  --radius-notice: 20px;
   --radius-dialog: 22px;
   --radius-card: 24px;
   --radius-status: 26px;
@@ -36,6 +37,45 @@
   --spacing-control-switch-thumb: 3px;
   --spacing-control-focus-ring: 2px;
   --spacing-control-check-border: 2px;
+  --spacing-notice-x: 16px;
+  --spacing-notice-y: 14px;
+  --spacing-notice-gap: 10px;
+  --spacing-notice-head-gap: 12px;
+  --spacing-notice-body-top: 2px;
+  --spacing-notice-action-gap: 8px;
+  --spacing-banner-x: 14px;
+  --spacing-banner-y: 10px;
+  --spacing-banner-gap: 10px;
+  --spacing-feed-x: 18px;
+  --spacing-feed-y: 2px;
+  --spacing-feed-item-y: 14px;
+  --spacing-feed-gap: 12px;
+  --spacing-feed-who-gap: 6px;
+  --spacing-feed-text-top: 2px;
+  --spacing-feed-actions-top: 10px;
+  --spacing-feed-actions-gap: 8px;
+  --spacing-thread-top: 6px;
+  --spacing-unread-end: 2px;
+  --spacing-unread-top: 20px;
+  --spacing-media-label-x: 10px;
+  --spacing-media-label-bottom: 8px;
+  --spacing-media-chip: 8px;
+  --spacing-media-chip-start: 7px;
+  --spacing-media-chip-end: 9px;
+  --spacing-media-chip-y: 3px;
+  --spacing-media-chip-gap: 6px;
+  --spacing-overlay-edge: 10px;
+  --spacing-overlay-gap: 6px;
+  --spacing-overlay-reveal-gap: 8px;
+  --spacing-eye-edge: 10px;
+  --spacing-eye-start: 2px;
+  --spacing-eye-end: 8px;
+  --spacing-eye-y: 2px;
+  --spacing-eye-gap: 2px;
+  --spacing-skeleton-line-gap: 7px;
+  --spacing-empty-x: 16px;
+  --spacing-empty-y: 28px;
+  --spacing-empty-gap: 8px;
   --spacing-target: 48px;
   --spacing-target-min: 44px;
   --spacing-row: 62px;
@@ -62,6 +102,14 @@
   --spacing-grabber-width: 36px;
   --spacing-grabber-height: 5px;
   --spacing-dot: 8px;
+  --spacing-feed-leading: 42px;
+  --spacing-thread: 2px;
+  --spacing-thread-min: 12px;
+  --spacing-media-control: 40px;
+  --spacing-skel-line: 16px;
+  --spacing-skel-meta: 13px;
+  --spacing-skel-pill: 64px;
+  --spacing-skel-pill-height: 28px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
   --text-hero--letter-spacing: -1.08px;
@@ -150,8 +198,37 @@
   --text-initial-large--line-height: 33px;
   --text-initial-large--letter-spacing: 0px;
   --text-initial-large--font-weight: 700;
+  --text-notice-title: 16px;
+  --text-notice-title--line-height: 20.8px;
+  --text-notice-title--letter-spacing: 0px;
+  --text-notice-title--font-weight: 650;
+  --text-notice-body: 14px;
+  --text-notice-body--line-height: 18.9px;
+  --text-notice-body--letter-spacing: 0px;
+  --text-notice-body--font-weight: 400;
+  --text-feed-who: 15px;
+  --text-feed-who--line-height: 21px;
+  --text-feed-who--letter-spacing: 0px;
+  --text-feed-who--font-weight: 600;
+  --text-media-label: 13px;
+  --text-media-label--line-height: 17.55px;
+  --text-media-label--letter-spacing: 0px;
+  --text-media-label--font-weight: 600;
+  --text-media-detail: 13px;
+  --text-media-detail--line-height: 17.55px;
+  --text-media-detail--letter-spacing: 0px;
+  --text-media-detail--font-weight: 500;
+  --text-media-chip: 12px;
+  --text-media-chip--line-height: 16.2px;
+  --text-media-chip--letter-spacing: 0px;
+  --text-media-chip--font-weight: 600;
+  --text-eye-chip: 12px;
+  --text-eye-chip--line-height: 16.2px;
+  --text-eye-chip--letter-spacing: 0px;
+  --text-eye-chip--font-weight: 650;
   --blur-control: 18px;
   --blur-chip: 16px;
+  --blur-media: 10px;
 }
 
 @layer theme {
@@ -190,6 +267,7 @@
       --color-ev3-text: oklch(0.3830 0.0653 261.10);
       --color-ev4: oklch(0.9228 0.0189 25.61);
       --color-ev4-text: oklch(0.3908 0.0913 28.38);
+      --color-on-media: oklch(1.0000 0 0);
     }
 
     @variant dark {
@@ -226,6 +304,7 @@
       --color-ev3-text: oklch(0.8234 0.0493 261.98);
       --color-ev4: oklch(0.2848 0.0358 25.00);
       --color-ev4-text: oklch(0.8419 0.0599 27.41);
+      --color-on-media: oklch(1.0000 0 0);
     }
   }
 }

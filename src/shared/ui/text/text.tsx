@@ -1,11 +1,18 @@
 import { clsx } from 'clsx';
 import { createContext, useContext, type ReactNode } from 'react';
 import { Text as NativeText } from 'react-native';
-import { type as typeSteps, typeRoles, type TypeSpec, type TypeStep } from '@/shared/theme';
+import {
+  illustration,
+  type as typeSteps,
+  typeRoles,
+  type TypeSpec,
+  type TypeStep,
+} from '@/shared/theme';
 
 export type TextVariant = TypeStep | keyof typeof typeRoles;
 
-export type TextTone = 'default' | '2' | '3' | 'ok' | 'attn' | 'alert' | 'accent' | 'on-ink';
+export type TextTone =
+  'default' | '2' | '3' | 'ok' | 'attn' | 'alert' | 'accent' | 'on-ink' | 'on-media';
 
 export type TextProps = {
   variant?: TextVariant;
@@ -43,6 +50,13 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   chipValue: 'text-chip-value',
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
+  noticeTitle: 'text-notice-title',
+  noticeBody: 'text-notice-body',
+  feedWho: 'text-feed-who',
+  mediaLabel: 'text-media-label',
+  mediaDetail: 'text-media-detail',
+  mediaChip: 'text-media-chip',
+  eyeChip: 'text-eye-chip',
 };
 
 const TONE_CLASS: Record<TextTone, string> = {
@@ -54,6 +68,7 @@ const TONE_CLASS: Record<TextTone, string> = {
   alert: 'text-alert',
   accent: 'text-accent',
   'on-ink': 'text-on-ink',
+  'on-media': 'text-on-media',
 };
 
 const DEFAULT_TONE: Partial<Record<TextVariant, TextTone>> = {
@@ -61,16 +76,29 @@ const DEFAULT_TONE: Partial<Record<TextVariant, TextTone>> = {
   rowMeta: '2',
   caption: '3',
   sectionMeta: '3',
+  noticeBody: '2',
 };
 
 const TextScale = createContext(1);
 
 export const TextScaleProvider = TextScale.Provider;
 
+const MEDIA_SHADOW = {
+  textShadowColor: illustration.mediaTextShadow.color,
+  textShadowOffset: { width: 0, height: illustration.mediaTextShadow.offsetY },
+  textShadowRadius: illustration.mediaTextShadow.radius,
+};
+
 function scaledStyle(spec: TypeSpec, scale: number) {
   if (scale === 1) return undefined;
   const factor = Math.min(scale, spec.maxScale);
   return { fontSize: spec.size * factor, lineHeight: spec.line * factor };
+}
+
+function textStyle(variant: TextVariant, tone: TextTone | undefined, scale: number) {
+  const scaled = scaledStyle(SPECS[variant], scale);
+  if (tone !== 'on-media' || (variant !== 'mediaLabel' && variant !== 'mediaDetail')) return scaled;
+  return scaled ? [scaled, MEDIA_SHADOW] : MEDIA_SHADOW;
 }
 
 export function Text({
@@ -94,7 +122,7 @@ export function Text({
       maxFontSizeMultiplier={spec.maxScale}
       numberOfLines={numberOfLines}
       testID={testID}
-      style={scaledStyle(spec, scale)}
+      style={textStyle(variant, tone, scale)}
       className={clsx(
         'web:font-system',
         VARIANT_CLASS[variant],

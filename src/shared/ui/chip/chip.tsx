@@ -51,6 +51,7 @@ const DOT_TONE: Record<TextTone, string> = {
   alert: 'bg-alert',
   accent: 'bg-accent',
   'on-ink': 'bg-on-ink',
+  'on-media': 'bg-on-media',
 };
 
 const ICON_TONE: Record<TextTone, IconTone> = {
@@ -62,6 +63,7 @@ const ICON_TONE: Record<TextTone, IconTone> = {
   alert: 'alert',
   accent: 'accent',
   'on-ink': 'on-ink',
+  'on-media': 'on-media',
 };
 
 const FILTER_SLOP: Record<ChipSize, number> = {

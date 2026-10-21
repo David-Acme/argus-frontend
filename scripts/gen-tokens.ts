@@ -112,6 +112,7 @@ export function tokensCss(): string {
   const blurLines = [
     `  --blur-control: ${px(material.blurControl)};`,
     `  --blur-chip: ${px(material.blurChip)};`,
+    `  --blur-media: ${px(material.blurMedia)};`,
   ];
   return [
     '@theme {',

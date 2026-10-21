@@ -1,6 +1,5 @@
 export const illustration = {
   media: '#2A2622',
-  onMedia: '#FFFFFF',
   mediaChip: 'rgba(0,0,0,0.42)',
   mediaHover: 'rgba(0,0,0,0.25)',
   mediaControl: 'rgba(0,0,0,0.4)',
@@ -8,6 +7,41 @@ export const illustration = {
   switchThumb: '#FFFFFF',
   eyeChip: 'rgba(10,9,12,0.48)',
   eyeChipText: '#F4EFE7',
+  sceneShade: '#000000',
+  scenes: {
+    kitchen: {
+      axis: 'x',
+      bands: [
+        ['#6B5A46', 0, 22],
+        ['#8C7A63', 22, 24],
+        ['#B7A688', 24, 70],
+        ['#5B4C3C', 70, 100],
+      ],
+      glow: { color: '#D9C7A6', cx: 70, cy: 30, rx: 60, ry: 40 },
+      shade: { from: 50, top: 0.05, bottom: 0.55 },
+    },
+    patio: {
+      axis: 'y',
+      bands: [
+        ['#9FB6C4', 0, 40],
+        ['#5E7350', 40, 62],
+        ['#8A8577', 62, 100],
+      ],
+      glow: { color: '#4D6B3D', cx: 30, cy: 70, rx: 30, ry: 25 },
+      shade: { from: 45, top: 0, bottom: 0.6 },
+    },
+    door: {
+      axis: 'x',
+      bands: [
+        ['#C9C1B3', 0, 30],
+        ['#6D4C33', 30, 58],
+        ['#C9C1B3', 58, 100],
+      ],
+      glow: null,
+      shade: { from: 45, top: 0, bottom: 0.6 },
+    },
+  },
+  mediaTextShadow: { color: 'rgba(0,0,0,0.6)', offsetY: 1, radius: 2 },
   estela: {
     dark: {
       a: [255, 196, 110],

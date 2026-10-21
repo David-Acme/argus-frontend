@@ -38,6 +38,7 @@ const light = {
   'ev3-text': '#2F4366',
   ev4: '#F2E1DF',
   'ev4-text': '#6E2F28',
+  'on-media': '#FFFFFF',
 } as const;
 
 const dark = {
@@ -74,6 +75,7 @@ const dark = {
   'ev3-text': '#B4C6E6',
   ev4: '#3A2321',
   'ev4-text': '#F0BDB6',
+  'on-media': '#FFFFFF',
 } as const satisfies Record<keyof typeof light, string>;
 
 export type ColorRole = keyof typeof light;
@@ -167,6 +169,13 @@ export const typeRoles = {
   chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
   initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
+  noticeTitle: { size: 16, line: 20.8, weight: '650', tracking: 0, maxScale: 2 },
+  noticeBody: { size: 14, line: 18.9, weight: '400', tracking: 0, maxScale: 2 },
+  feedWho: { size: 15, line: 21, weight: '600', tracking: 0, maxScale: 2 },
+  mediaLabel: { size: 13, line: 17.55, weight: '600', tracking: 0, maxScale: 2 },
+  mediaDetail: { size: 13, line: 17.55, weight: '500', tracking: 0, maxScale: 2 },
+  mediaChip: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 2 },
+  eyeChip: { size: 12, line: 16.2, weight: '650', tracking: 0, maxScale: 2 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -181,6 +190,16 @@ export const inset = {
   chip: { x: 10, statX: 11, suggestionX: 12, gap: 5 },
   section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
   control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
+  notice: { x: 16, y: 14, gap: 10, headGap: 12, bodyTop: 2, actionGap: 8 },
+  banner: { x: 14, y: 10, gap: 10 },
+  feed: { x: 18, y: 2, itemY: 14, gap: 12, whoGap: 6, textTop: 2, actionsTop: 10, actionsGap: 8 },
+  thread: { top: 6 },
+  unread: { end: 2, top: 20 },
+  media: { labelX: 10, labelBottom: 8, chip: 8, chipStart: 7, chipEnd: 9, chipY: 3, chipGap: 6 },
+  overlay: { edge: 10, gap: 6, revealGap: 8 },
+  eye: { edge: 10, start: 2, end: 8, y: 2, gap: 2 },
+  skeleton: { lineGap: 7 },
+  empty: { x: 16, y: 28, gap: 8 },
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
@@ -194,6 +213,7 @@ export const radius = {
   button: 16,
   toast: 18,
   media: 20,
+  notice: 20,
   dialog: 22,
   card: 24,
   status: 26,
@@ -230,6 +250,14 @@ export const size = {
   grabberHeight: 5,
   dot: 8,
   hairline: 1,
+  feedLeading: 42,
+  thread: 2,
+  threadMin: 12,
+  mediaControl: 40,
+  skelLine: 16,
+  skelMeta: 13,
+  skelPill: 64,
+  skelPillHeight: 28,
 } as const;
 
 export const motion = {
@@ -241,6 +269,7 @@ export const motion = {
   },
   pressScale: 0.96,
   pressScaleIcon: 0.9,
+  loop: { live: 2400, liveDim: 0.35, shimmer: 1400 },
 } as const;
 
 export const material = {
@@ -253,6 +282,7 @@ export const material = {
   sheetSurfaceMix: 0.94,
   blurPalette: 30,
   paletteSurfaceMix: 0.84,
+  blurMedia: 10,
 } as const;
 
 export const breakpoints = { compact: 0, medium: 600, expanded: 1024, wide: 1440 } as const;
@@ -272,6 +302,7 @@ export const layout = {
   sideSheet: 400,
   palette: 640,
   sidebar: 244,
+  mediaAspect: 1.6,
 } as const;
 
 export const tokens = {
