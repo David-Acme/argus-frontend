@@ -40,9 +40,11 @@ export function NavTab({ item, selected, onSelect }: TabProps) {
         hitSlop={SLOP}
         className={clsx(FRAME, selected && 'bg-tab-on')}>
         <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
-        <Text variant="tab" tone={selected ? 'default' : '3'} numberOfLines={1}>
-          {item.label}
-        </Text>
+        <View className="-mx-nav-bar-pad items-center">
+          <Text variant="tab" tone={selected ? 'default' : '3'} numberOfLines={1}>
+            {item.label}
+          </Text>
+        </View>
       </PressableSurface>
     </View>
   );
@@ -75,9 +77,11 @@ export function ArgusTab({
         onPress={handlers.onPress}
         className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
         {presence ? presence(size.presenceTab, listening) : <Icon name={item.icon} />}
-        <Text variant="tab" numberOfLines={1}>
-          {item.label}
-        </Text>
+        <View className="-mx-nav-bar-pad items-center">
+          <Text variant="tab" numberOfLines={1}>
+            {item.label}
+          </Text>
+        </View>
       </Pressable>
     </View>
   );
