@@ -150,6 +150,7 @@ test('a refused event delete says it was not deleted, and its reopened alert sta
   const parkedDot = screen.getByRole('button', 'The event was not deleted');
   await expect(parkedDot).toBeVisible({ timeout: UNDO_MS + LIVE_MS });
   await parkedDot.click();
+  await expect(parkedDot).toBeHidden({ timeout: LIVE_MS });
   await expect(screen.getByText('The event was not deleted', { exact: true })).toBeVisible({ timeout: LIVE_MS });
   await browser.evaluate((ms) => new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)), OUTLAST_TIMER_MS);
   await expect(screen.getByText('The event was not deleted', { exact: true })).toBeVisible();
