@@ -34,8 +34,6 @@ type BannerProps = Omit<NoticeProps, 'inline' | 'leading'>;
 
 type CardActionProps = { action: NoticeAction; block: boolean };
 
-const LINK_SLOP = (size.target - size.targetMin) / 2;
-
 const BANNER_LINK_SLOP = (size.target - typeRoles.label.line) / 2;
 
 function CardAction({ action, block }: CardActionProps) {
