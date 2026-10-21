@@ -12,6 +12,7 @@ export type TextProps = {
   tone?: TextTone;
   heading?: boolean;
   struck?: boolean;
+  underline?: boolean;
   align?: 'start' | 'center';
   numberOfLines?: number;
   testID?: string;
@@ -43,6 +44,12 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   chipValue: 'text-chip-value',
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
+  toastTitle: 'text-toast-title',
+  toastBody: 'text-toast-body',
+  toastAction: 'text-toast-action',
+  query: 'text-query',
+  groupTitle: 'text-group-title',
+  hint: 'text-hint',
 };
 
 const TONE_CLASS: Record<TextTone, string> = {
@@ -78,6 +85,7 @@ export function Text({
   tone,
   heading,
   struck,
+  underline,
   align = 'start',
   numberOfLines,
   testID,
@@ -99,6 +107,7 @@ export function Text({
         'web:font-system',
         VARIANT_CLASS[variant],
         toneClass,
+        underline && 'underline underline-offset-3',
         align === 'center' && 'text-center'
       )}>
       {children}
