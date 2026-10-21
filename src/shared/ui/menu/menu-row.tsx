@@ -6,7 +6,7 @@ import { Text } from '@/shared/ui/text';
 import type { MenuItem } from './menu-types';
 
 export const MENU_ROW =
-  'min-h-menu-row px-palette-item-x gap-palette-gap rounded-control web:outline-none web:hover:bg-fill web:data-highlighted:bg-fill flex-row items-center';
+  'min-h-target-min px-palette-item-x gap-palette-gap rounded-control web:outline-none web:hover:bg-fill web:data-highlighted:bg-fill flex-row items-center';
 
 type MenuRowContentProps = { item: MenuItem };
 

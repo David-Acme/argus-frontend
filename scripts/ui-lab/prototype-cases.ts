@@ -167,7 +167,7 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
   },
   menu: {
     panel:
-      '`<div class="palette" style="position:static;transform:none;animation:none;width:auto;min-width:220px;border-radius:20px;background:color-mix(in srgb,var(--surface) 55%,transparent)"><div class="grp"><div class="it" style="min-height:36px">${ic(\'check\',\'s\')}Marcar como hecho</div><div class="it" style="min-height:36px">${ic(\'clock\',\'s\')}Posponer 1 hora</div><div class="it" style="min-height:36px;color:var(--alert)">${ic(\'x\',\'s\')}Borrar</div></div></div>`',
+      '`<div class="palette" style="position:static;transform:none;animation:none;width:auto;min-width:220px;border-radius:20px;background:color-mix(in srgb,var(--surface) 55%,transparent)"><div class="grp"><div class="it">${ic(\'check\',\'s\')}Marcar como hecho</div><div class="it">${ic(\'clock\',\'s\')}Posponer 1 hora</div><div class="it" style="color:var(--alert)">${ic(\'x\',\'s\')}Borrar</div></div></div>`',
   },
   command: {
     palette:

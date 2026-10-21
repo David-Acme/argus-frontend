@@ -213,7 +213,6 @@ export const size = {
   grabberWidth: 36,
   grabberHeight: 5,
   dot: 8,
-  menuRow: 36,
   menuWidth: 220,
   hairline: 1,
   feedLeading: 42,
