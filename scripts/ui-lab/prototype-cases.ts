@@ -105,4 +105,34 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
     danger:
       '`<button class="row danger"><span class="lic alert">${ic(\'logout\',\'s\')}</span><span class="main"><span class="ttl">Cerrar sesión</span></span></button>`',
   },
+  field: {
+    focus:
+      '\'<label class="field"><span class="lab">Título</span><span class="inp focus">Visita del técnico<i class="caret"></i></span></label>\'',
+    label:
+      '\'<label class="field"><span class="lab">Título</span><span class="inp">Visita del técnico</span></label>\'',
+    quick: '\'<label class="field"><span class="inp">Pagar la luz</span></label>\'',
+    multiline:
+      '\'<label class="field"><span class="lab">Notas</span><span class="inp multi">Llevar el router viejo y la factura. Preguntar por la</span></label>\'',
+    error:
+      '`<label class="field"><span class="inp err"><span style="color:var(--text-3)">¿Qué quieres recordar?</span></span><span class="ferr">${ic(\'alert\',\'s\')}Escribe qué quieres recordar.</span></label>`',
+  },
+  'field-code': {
+    typing:
+      '\'<div class="codebox"><span>K</span><span>7</span><span>Q</span><span class="f"><i class="caret"></i></span><span></span><span></span></div>\'',
+    empty:
+      '\'<div class="codebox"><span></span><span></span><span></span><span></span><span></span><span></span></div>\'',
+  },
+  choice: {
+    'mode-glass':
+      "`<div class=\"seg glass\"><button class=\"on\">${ic('home','s')}Casa</button><button>${ic('moon','s')}Noche</button><button>Fuera</button><button>Armado</button></div>`",
+    views:
+      '\'<div class="seg"><button class="on">Hoy</button><button>Calendario</button><button>Proyectos</button></div>\'',
+    kinds:
+      '\'<div class="seg"><button class="on">Evento</button><button>Recordatorio</button><button>Tarea</button></div>\'',
+    'language-glass':
+      '\'<div class="seg glass" style="width:112px"><button class="on">ES</button><button>EN</button></div>\'',
+    'repeat-field':
+      '`<label class="field"><span class="lab">Repetir</span><span class="inp" style="justify-content:space-between">No se repite${ic(\'chevd\',\'s\')}</span></label>`',
+    'notice-row': "row({t:'Avisarme',tr:'30 min antes'})",
+  },
 };
