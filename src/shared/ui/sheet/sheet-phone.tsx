@@ -1,6 +1,6 @@
 import { TrueSheet, type TrueSheetMethods } from '@lodev09/react-native-true-sheet';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Alert, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Alert, PixelRatio, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/shared/constants';
@@ -11,8 +11,10 @@ import type { SheetActions, SheetProps } from './types';
 import { useDiscard } from './use-discard';
 import { useSheetTheme, withAlpha, type SheetTheme } from './use-sheet-theme';
 
-const { space, radius, size, material } = tokens;
+const { space, radius, size, material, inset } = tokens;
 const CEILING_GAP = space[4];
+const FOCUS_GAP = space[4];
+const FIELD_TAIL = inset.field.top + inset.field.border;
 const GRABBER_ALPHA = 0.4;
 const FOOTER_PAD = 10;
 
@@ -45,6 +47,10 @@ function FooterSlot({ actions, long, theme, bottom, onHeight }: FooterSlotProps)
       </View>
     </GestureHandlerRootView>
   );
+}
+
+export function focusScrollOffset(footerHeight: number): number {
+  return FOCUS_GAP + FIELD_TAIL + footerHeight + 1 / PixelRatio.get();
 }
 
 type BodyProps = { long: boolean; clearance: number; testID?: string; children: ReactNode };
@@ -118,7 +124,7 @@ export function SheetPhone(props: SheetProps) {
       ref={sheet}
       detents={long ? [0.6, 1] : ['auto']}
       scrollable={long}
-      scrollableOptions={{ keyboardScrollOffset: CEILING_GAP + footerHeight }}
+      scrollableOptions={{ keyboardScrollOffset: focusScrollOffset(footerHeight) }}
       header={
         <GestureHandlerRootView style={styles.root}>
           <View style={[styles.header, long && styles.tallHeader, headerLine]}>
