@@ -5459,3 +5459,45 @@ shared by every worktree and rewritten by the last bundle; better-tailwindcss
 reads it, so new colour classes read as unknown until it is regenerated for
 this checkout (break the link, then `npx uniwind generate-artifacts --css
 ./src/global.css --dts ./uniwind-types.d.ts`).
+
+## Content and state components, Phase 1 (2026-10-20, p1/ds-b)
+
+**Notice.** One component, two forms. A block notice is the prototype's `ncard`
+at every width: icon well (or a `Presence` slot through `leading`) and title on
+the first row, one body line, the action on its own row. The spec's text says
+"elsewhere the banner", but the prototype's desktop frames draw `ncard` too, so
+the card stays; `inline` gives the `banner` (the stale line above cached data,
+the refusal beside an action). The window class decides only the primary
+action: full width on phones (the empty frame), compact and right-aligned from
+`medium` up (the desktop sparse frames). `info` draws the ok-toned well because
+every info card in the prototype does.
+
+**FeedItem.** `Feed` is the surface and the hairlines (a position context, as
+`Row` has); `FeedItem` is avatar column with the optional thread line, who ·
+when, text, actions. The unread dot takes a label (`unreadLabel`) so a screen
+reader hears it. The spec's "bold who" for unread is not drawn: the prototype
+uses 600 for every item.
+
+**Media.** `tile` and `stage` share one layer stack (frame, player slot, live
+chip, quiet state, label row). Tiles that press are a `PressableSurface`, and
+the centre button and the hover reveal sit beside it rather than inside, so the
+web never nests a button in a button. The reveal shows only for a mouse
+pointer (`pointerType`), so a tap on a phone opens the camera instead. The
+stage bleeds to the phone gutter (`-mx-4`, the prototype's `.video`) and is a
+rounded tile from `medium` up. `frame` cross-fades a new still over the last
+one on the UI thread after it loads (React Native `Image`: expo-image, the
+owner decision P2, is not installed). The live dot breathes with a Reanimated
+CSS animation and holds still under reduced motion; blur drops under reduced
+transparency. Text on imagery is the `on-media` tone (white in both themes);
+`mediaLabel`/`mediaDetail` on it carry the prototype's text shadow, which
+react-native-web warns about in development (`textShadow*` long-hands).
+
+**ResourceView.** `Resource<T>` is the minimal union R1's data layer will
+produce: `loading`, `ready`, `empty`, `stale` (with the cached data, its age
+already formatted and an optional retry), `failed` (a retry) and `refused`
+(who can change it). The screen passes the copy (`ResourceCopy`), the skeleton
+in its final shapes (`Skeleton`, `SkeletonRow`), the `Empty` and an optional
+`concern` slot for `Presence`. The shimmer animates a `skel-2` layer's opacity
+around 0.5 and holds it at 0.5 under reduced motion, so the still fill has the
+prototype's average tone; in dark mode `skel` alone is all but invisible on
+`surface`.
