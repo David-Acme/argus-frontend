@@ -5468,7 +5468,11 @@ prototype | diff with the mismatch to
 `tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines. It is
 one test per width and theme: with the four design-system shares merged the
 catalogue is 26 components, twelve shots each per width, and one test per
-width ran past the suite's 120 s test timeout on a loaded machine.
+width ran past the suite's 120 s test timeout on a loaded machine. `Presence`
+is left out of that loop (`NEVER_STILL`): its demo draws Estela live in 35
+copies, so no two of 50 consecutive screenshots match and no baseline can be
+recorded; `tests/unit/shared/native-ui/presence.test.ts` and the spikes lab
+cover it instead.
 
 **Shared uniwind.css.** `node_modules/uniwind/uniwind.css` is a bun hardlink
 shared by every worktree and rewritten by the last bundle; better-tailwindcss
