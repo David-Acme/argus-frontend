@@ -51,6 +51,10 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   query: 'text-query',
   groupTitle: 'text-group-title',
   hint: 'text-hint',
+  control: 'text-control',
+  fieldError: 'text-field-error',
+  entry: 'text-entry',
+  code: 'text-code',
 };
 
 const TONE_CLASS: Record<TextTone, string> = {
@@ -81,6 +85,12 @@ function scaledStyle(spec: TypeSpec, scale: number) {
   return { fontSize: spec.size * factor, lineHeight: spec.line * factor };
 }
 
+export function useTypeScale(variant: TextVariant) {
+  const spec = SPECS[variant];
+  const factor = Math.min(useContext(TextScale), spec.maxScale);
+  return { factor, style: scaledStyle(spec, factor) };
+}
+
 export function Text({
   variant = 'body',
   tone,
@@ -92,8 +102,8 @@ export function Text({
   testID,
   children,
 }: TextProps) {
-  const scale = useContext(TextScale);
   const spec = SPECS[variant];
+  const { style } = useTypeScale(variant);
   const toneClass = struck
     ? 'text-text-3 line-through'
     : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'];
@@ -103,7 +113,7 @@ export function Text({
       maxFontSizeMultiplier={spec.maxScale}
       numberOfLines={numberOfLines}
       testID={testID}
-      style={scaledStyle(spec, scale)}
+      style={style}
       className={clsx(
         'web:font-system',
         VARIANT_CLASS[variant],

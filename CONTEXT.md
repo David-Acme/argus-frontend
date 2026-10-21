@@ -5506,6 +5506,7 @@ many files; the reason names that cause.
 | `scripts/lib/quality-baseline.txt` | `style-object`, `http-unchecked` | Finding 7 of the R0 review: the counters follow bindings. `style-object` counts every object literal in a `style` attribute, inside arrays, conditionals and style functions too (80 → 132, all existing: the welcome mascot, the camera stage and the other array styles); `http-unchecked` follows `httpService` through import aliases, variables and destructured methods, and a call passed to anything but a named checker counts (83 → 84: `responses.push(await httpService.delete(…))` in `notification.service.ts`). `raw-pressable-in-features`, `window-dimensions-in-features`, `is-flag-in-features` and `platform-select` now also see namespace imports, `require`, aliases and computed members, and found nothing new. | 2026-10-20 |
 | `scripts/lib/quality-baseline.txt` | `style-object` | Lead merge of `p1/gates-fix` over `p1/ds-base`: the binding-following counter sees ds-base's two conditional styles in `src/shared/ui/button/button.tsx` and the array style in `src/shared/ui/switch/switch.tsx`, each a named token-derived object chosen by state (132 → 135). | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/ds-d` (Confirm, Menu, Toast, Command and their ui-lab demos) over `p1/ds-base`: entry 7,220,201 → 7,303,872 B (+83,671) and `dist/` 8,511,606 → 8,603,052 B (+91,446). The share's own source-map breakdown: sonner 36.4 kB (the web Toaster host), the four demos 29.0 kB, Command 11.0, Toast 5.6, Confirm 4.5, Menu 4.0, `@rn-primitives/alert-dialog` 5.2 and `@radix-ui/react-alert-dialog` 4.3 kB; no native-only module reached the web build. | 2026-10-21 |
+
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
 **Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
@@ -5566,3 +5567,83 @@ happy-dom reports a 0 px window, so a test that needs a wide window defines
 | Date | Branch | Entry chunk | `dist/` | Cause |
 |---|---|---|---|---|
 | 2026-10-21 | p1/ds-d | 7,113,459 → 7,303,327 B (+189,868) | 8,379,636 → 8,602,199 B (+222,563) | The overlay share. Measured from the source map of the entry chunk: sonner 36.4 kB (the web Toaster host belongs in the entry), the four ui-lab demos 29.0 kB, Command 11.0 kB, Toast 5.6 kB, Confirm 4.5 kB, Menu 4.0 kB, `@rn-primitives/alert-dialog` 5.2 kB and `@radix-ui/react-alert-dialog` 4.3 kB. The dropdown and context menus were already in the entry through the legacy menus, and no native-only module (sonner-native, the RNGH gestures) reached the web build. |
+
+## Field and Choice (2026-10-20, Phase 1, p1/ds-a)
+
+The input share of the design system: `src/shared/ui/field/` and
+`src/shared/ui/choice/`, drawn from the prototype's `.field`, `.lab`, `.inp`,
+`.inp.focus`, `.inp.err`, `.inp.multi`, `.ferr`, `.codebox` and `.seg` rules.
+
+- **One `Field`, four kinds.** `kind` is `text` (default), `secret`,
+  `multiline` or `code`, a discriminated union so each kind carries only the
+  props it uses (rule 32's ten). The visible label is optional: a quick
+  compose field shows only its placeholder (the prototype's «¿Qué quieres
+  recordar?»), and the type demands a `label` or a `placeholder`, whichever
+  names the field for a screen reader. The code kind always takes a `label`,
+  which is never drawn.
+- **Keyboard and autofill come from the kind, never from the screen.**
+  `input-traits.ts` maps `content` to `inputMode`, `autoComplete`,
+  `textContentType` and capitalisation: `name`, `email`, `url`, `number`
+  for text; `password`, `pin` for secrets; the pairing code is capitals with
+  `one-time-code`. `inputMode` instead of `keyboardType` because
+  react-native-web maps only `inputMode` to the `inputmode` attribute.
+- **The Return key is the form's.** `submit={{ key: 'next' | 'done',
+  onSubmit }}` sets `enterKeyHint` and `submitBehavior` (`submit` keeps the
+  keyboard for Siguiente, `blurAndSubmit` for done). The form moves focus
+  through the `ref` the field forwards to its `TextInput`, and moves focus
+  to the first error the same way; the field never labels a key.
+- **States.** Idle is `fill` with a transparent 1.5 px border, focus is
+  `surface` with a `text` border, error is `surface` with an `alert` border
+  whether focused or not, and the error line (alert icon + words,
+  `role="alert"`) replaces the hint.
+- **Multiline grows to five lines, then scrolls inside itself.** The cap is
+  five `body` lines plus the vertical padding, scaled with the font scale.
+  Native `TextInput` grows on its own up to `maxHeight`; on the web the
+  textarea grows through `field-sizing: content` (with `resize: none`, the
+  prototype has no handle), and where a browser lacks
+  it (Firefox, older WebKit) it stays at its 76 px minimum and scrolls.
+- **The code boxes are drawn; the input is invisible.** Six 44 x 56 boxes
+  render the characters of one transparent `TextInput` laid over them, so
+  paste, autofill and the OS code suggestion work as for any field. The
+  focused box is the next empty one (the last when full) and draws the
+  prototype's accent caret, blinking through a Reanimated CSS animation
+  (UI thread, rule 26) and still under reduce motion.
+- **`Choice` measures before it picks.** A hidden horizontal `ScrollView`
+  lays out every option's content (icon + label) unconstrained, and
+  `segmentsFit` compares each width with its segment's room
+  (`(width - 2 pad - gaps) / n - 2 minX`). Four or fewer options that all fit
+  render the segmented control; anything else renders the opener, a `Row`
+  (`look="row"`, settings) or a field-shaped button with the chevron
+  (`look="field"`, forms: the desktop dialog's «Repetir»), which opens the
+  options in the sheet. Nothing is ever truncated (W3). Before the first
+  layout it assumes the control fits. A `Choice` always fills its container
+  (`self-stretch`): the first capture showed a content-sized one flipping
+  between segments and the row every frame, because each form changed the
+  width the other measured. Segments also carry `minX` (2) of inner padding
+  and the comparison allows half a pixel of rounding; at 6 the prototype's
+  own Modo control (Noche + moon, 70.8 px in a 79 px segment at 360) would
+  not have fitted.
+- **The sheet is a slot until `Sheet` lands.** `sheet` is a render prop with
+  `Sheet`'s spec'd props (`variant: 'list'`, `title`, `open`, `onClose`,
+  `children`); `Choice` owns the open state and the option list (radios with
+  a check on the current one, `selection` haptic). When `p1/native` merges,
+  the prop goes and `Choice` renders `Sheet` itself.
+- **Glass.** `glass` puts the track on `glass` with the 18 px control blur
+  and the inset glass line, solid `surface` under reduce transparency, as the
+  prototype's `.seg.glass` and its `rt` rule. The selected segment is
+  `surface` (light) or `fill-press` (dark) with the `segment` elevation.
+- **Tokens added.** `inset.field` (top 14, x 14, gap 8, labelGap 6,
+  errorGap 6, multiY 12, border 1.5, codeTop 20, codeGap 8, codeBorder 2),
+  `inset.segment` (pad 3, gap 2, iconGap 6, minX 2), `size.fieldMulti` 76,
+  `size.codeBoxWidth` 44, `size.codeBoxHeight` 56, `size.caretWidth` 2,
+  `size.caretHeight` 20, `elevation.segment`, `motion.caretBlink` 1000, and
+  the type roles `control` (14/21/600: `.lab` and `.seg button`),
+  `fieldError` (14/21/500), `entry` (16/24/400: `.inp`; named `entry`
+  because `text-input` is a legacy colour class) and `code` (24/36/650, no
+  scaling: the boxes are fixed, as in the prototype). `Text` exports
+  `useTypeScale(variant)` so a `TextInput` scales with the lab's font scale
+  like `Text`.
+- **The lab.** `field` (text, multiline, error, hint, secret; the title field
+  focused), `field-code` (the pairing code focused at its fourth box) and
+  `choice`. A page can hold one focused field only, so the code field has
+  its own page and the multiline notes are shown unfocused.

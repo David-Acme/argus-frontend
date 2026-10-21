@@ -16,8 +16,11 @@ const { AvatarDemo } = await import('@/features/ui-lab/demos/avatar-demo');
 const { ButtonDemo } = await import('@/features/ui-lab/demos/button-demo');
 const { CheckDemo } = await import('@/features/ui-lab/demos/check-demo');
 const { ChipDemo } = await import('@/features/ui-lab/demos/chip-demo');
+const { ChoiceDemo } = await import('@/features/ui-lab/demos/choice-demo');
 const { CommandDemo } = await import('@/features/ui-lab/demos/command-demo');
 const { ConfirmDemo } = await import('@/features/ui-lab/demos/confirm-demo');
+const { FieldCodeDemo } = await import('@/features/ui-lab/demos/field-code-demo');
+const { FieldDemo } = await import('@/features/ui-lab/demos/field-demo');
 const { IconDemo } = await import('@/features/ui-lab/demos/icon-demo');
 const { LayoutDemo } = await import('@/features/ui-lab/demos/layout-demo');
 const { MenuDemo } = await import('@/features/ui-lab/demos/menu-demo');
@@ -36,8 +39,11 @@ const DEMOS: Record<string, ComponentType> = {
   button: ButtonDemo,
   check: CheckDemo,
   chip: ChipDemo,
+  choice: ChoiceDemo,
   command: CommandDemo,
   confirm: ConfirmDemo,
+  field: FieldDemo,
+  'field-code': FieldCodeDemo,
   icon: IconDemo,
   layout: LayoutDemo,
   menu: MenuDemo,

@@ -3,8 +3,11 @@ import { AvatarDemo } from './demos/avatar-demo';
 import { ButtonDemo } from './demos/button-demo';
 import { CheckDemo } from './demos/check-demo';
 import { ChipDemo } from './demos/chip-demo';
+import { ChoiceDemo } from './demos/choice-demo';
 import { CommandDemo } from './demos/command-demo';
 import { ConfirmDemo } from './demos/confirm-demo';
+import { FieldCodeDemo } from './demos/field-code-demo';
+import { FieldDemo } from './demos/field-demo';
 import { IconDemo } from './demos/icon-demo';
 import { LayoutDemo } from './demos/layout-demo';
 import { MenuDemo } from './demos/menu-demo';
@@ -40,6 +43,9 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'menu', family: 'overlays', title: 'Menu', Demo: MenuDemo },
   { id: 'toast', family: 'overlays', title: 'Toast', Demo: ToastDemo },
   { id: 'command', family: 'overlays', title: 'Command', Demo: CommandDemo },
+  { id: 'field', family: 'input', title: 'Field', Demo: FieldDemo },
+  { id: 'field-code', family: 'input', title: 'Field, code', Demo: FieldCodeDemo },
+  { id: 'choice', family: 'input', title: 'Choice', Demo: ChoiceDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [
