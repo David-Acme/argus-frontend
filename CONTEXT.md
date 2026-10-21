@@ -5442,7 +5442,10 @@ glyphs), PressableSurface (RNGH with a foreground ripple on native, React
 Native's Pressable on web for keyboard, hover and the focus ring), Stack,
 Inline, Cluster, Button (single-flight, `iconOnly`, glass that turns solid
 under reduced transparency or the low tier), Chip/FilterChip, Avatar, Check,
-Switch, Section and Row. They take no `className` and join their classes with
+Switch, Section and Row. `useSurfacePress` keeps a pressed state only for a
+surface that draws the pressed fill, so a press on any other surface (the
+rail and sidebar items that hold `Presence`) re-renders nothing of its own
+(review finding 6). They take no `className` and join their classes with
 `clsx`, since tailwind-merge does not know the new type names and drops one of
 two `text-*` classes. Values the prototype draws that the spec's scale lacks
 (row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,

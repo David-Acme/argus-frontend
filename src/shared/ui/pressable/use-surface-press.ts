@@ -12,19 +12,20 @@ export function useSurfacePress({ onPress, haptic, pressed, disabled, style }: S
   const scale = usePressScale(pressed?.scale ?? 'surface');
   const [down, setDown] = useState(false);
   const scales = pressed?.scale !== undefined && !disabled;
+  const fills = pressed?.fill === true;
   return {
     scaleStyle: scale.style,
     surfaceStyle: [
       style,
-      down && pressed?.fill ? { backgroundColor: color.fill } : null,
+      down && fills ? { backgroundColor: color.fill } : null,
       disabled ? { opacity: states.disabledOpacity } : null,
     ],
     onPressIn: () => {
-      setDown(true);
+      if (fills) setDown(true);
       if (scales) scale.onPressIn();
     },
     onPressOut: () => {
-      setDown(false);
+      if (fills) setDown(false);
       scale.onPressOut();
     },
     onPress: () => {
