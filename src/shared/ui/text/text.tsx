@@ -85,6 +85,9 @@ export function Text({
 }: TextProps) {
   const scale = useContext(TextScale);
   const spec = SPECS[variant];
+  const toneClass = struck
+    ? 'text-text-3 line-through'
+    : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'];
   return (
     <NativeText
       role={heading ? 'heading' : undefined}
@@ -95,9 +98,7 @@ export function Text({
       className={clsx(
         'web:font-system',
         VARIANT_CLASS[variant],
-        struck
-          ? 'text-text-3 line-through'
-          : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'],
+        toneClass,
         align === 'center' && 'text-center'
       )}>
       {children}

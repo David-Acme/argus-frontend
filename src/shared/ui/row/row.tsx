@@ -25,7 +25,7 @@ type TrailingProps = Pick<RowProps, 'trailing' | 'chevron'>;
 function Trailing({ trailing, chevron }: TrailingProps) {
   if (!trailing && !chevron) return null;
   return (
-    <View className="gap-trail-gap flex-row items-center">
+    <View className="gap-row-trail-gap flex-row items-center">
       {typeof trailing === 'string' ? (
         <Text variant="feed" tone="3">
           {trailing}
@@ -60,7 +60,7 @@ function RowBody({
           {title}
         </Text>
         {meta ? (
-          <View className="mt-meta-gap">
+          <View className="mt-row-meta-gap">
             <Text variant="rowMeta" tone={metaTone}>
               {meta}
             </Text>

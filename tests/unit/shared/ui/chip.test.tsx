@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Chip, FilterChip } from '@/shared/ui/chip';
+import { Chip, FilterChip } from '@/shared/ui/chip/chip';
 
 describe('Chip', () => {
   test('a tag reads its value and label, in every size', () => {

@@ -54,4 +54,4 @@ export * from './proximity.type';
 export * from './camera-aim.type';
 export * from './maintenance.type';
 export * from './camera-patrol.type';
-export * from './feedback.type';
+export type { FeedbackKind } from './feedback.type';

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { Icon, ICON_SHAPES } from '@/shared/ui/icon';
+import { Icon } from '@/shared/ui/icon/icon';
+import { ICON_SHAPES } from '@/shared/ui/icon/icon-shapes';
 
 describe('Icon', () => {
   test('the registry holds the prototype set of 43 glyphs', () => {
@@ -18,7 +19,7 @@ describe('Icon', () => {
     expect(svgs[0]?.getAttribute('width')).toBe('24');
     expect(svgs[1]?.getAttribute('width')).toBe('20');
     expect(svgs[0]?.querySelectorAll('path')).toHaveLength(3);
-    expect(svgs[1]?.querySelectorAll('rect')).toHaveLength(1);
+    expect(svgs[1]?.querySelectorAll('path')).toHaveLength(2);
     expect(svgs[0]?.getAttribute('stroke-width')).toBe('1.75');
   });
 

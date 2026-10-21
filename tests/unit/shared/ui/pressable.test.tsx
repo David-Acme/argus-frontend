@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Text } from 'react-native';
-import { PressableSurface } from '@/shared/ui/pressable';
+import { PressableSurface } from '@/shared/ui/pressable/pressable-surface';
 
 describe('PressableSurface', () => {
   test('carries its role and label and presses once per tap', () => {

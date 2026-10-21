@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { Avatar } from '@/shared/ui/avatar';
+import { Avatar } from '@/shared/ui/avatar/avatar';
 
 describe('Avatar', () => {
   test('a person avatar shows the initial and is named', () => {

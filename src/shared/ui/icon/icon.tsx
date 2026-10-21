@@ -1,4 +1,4 @@
-import { Circle, Path, Rect, Svg } from 'react-native-svg';
+import { Circle, Path, Svg } from 'react-native-svg';
 import { size as sizes, useThemeTokens, type ColorRole } from '@/shared/theme';
 import { ICON_SHAPES, type IconGlyph, type IconShape } from './icon-shapes';
 
@@ -20,8 +20,7 @@ const PIXELS = { small: sizes.iconSmall, default: sizes.icon } as const;
 
 function Shape({ shape }: ShapeProps) {
   if ('d' in shape) return <Path d={shape.d} />;
-  if ('r' in shape) return <Circle cx={shape.cx} cy={shape.cy} r={shape.r} />;
-  return <Rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} rx={shape.rx} />;
+  return <Circle cx={shape.cx} cy={shape.cy} r={shape.r} />;
 }
 
 export function Icon({ name, size = 'default', tone = 'text', label }: IconProps) {

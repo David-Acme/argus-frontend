@@ -18,8 +18,8 @@
   --spacing-row-x: 18px;
   --spacing-row-y: 10px;
   --spacing-row-gap: 14px;
-  --spacing-trail-gap: 6px;
-  --spacing-meta-gap: 1px;
+  --spacing-row-trail-gap: 6px;
+  --spacing-row-meta-gap: 1px;
   --spacing-button-x: 18px;
   --spacing-button-compact-x: 14px;
   --spacing-button-ghost-x: 12px;
@@ -32,10 +32,10 @@
   --spacing-section-head-bottom: 10px;
   --spacing-section-head-gap: 12px;
   --spacing-section-link-y: 10px;
-  --spacing-group-y: 4px;
-  --spacing-switch-thumb: 3px;
-  --spacing-focus-ring: 2px;
-  --spacing-check-border: 2px;
+  --spacing-section-group-y: 4px;
+  --spacing-control-switch-thumb: 3px;
+  --spacing-control-focus-ring: 2px;
+  --spacing-control-check-border: 2px;
   --spacing-target: 48px;
   --spacing-target-min: 44px;
   --spacing-row: 62px;

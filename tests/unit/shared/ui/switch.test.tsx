@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Switch } from '@/shared/ui/switch';
+import { Switch } from '@/shared/ui/switch/switch';
 
 describe('Switch', () => {
   test('reports its value and asks for the opposite on press', () => {

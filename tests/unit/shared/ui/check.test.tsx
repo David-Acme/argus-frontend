@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Check } from '@/shared/ui/check';
+import { Check } from '@/shared/ui/check/check';
 
 describe('Check', () => {
   test('each state maps to the checkbox state', () => {

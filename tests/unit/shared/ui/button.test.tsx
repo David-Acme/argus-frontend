@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/shared/ui/button/button';
 
 describe('Button', () => {
   test('every variant renders its label as the accessible name', () => {

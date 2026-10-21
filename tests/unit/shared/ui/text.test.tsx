@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { Text, TextScaleProvider } from '@/shared/ui/text';
+import { Text, TextScaleProvider } from '@/shared/ui/text/text';
 
 describe('Text', () => {
   test('renders its words and a heading role when asked', () => {

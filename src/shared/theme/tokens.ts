@@ -1,3 +1,5 @@
+import { illustration } from './illustration';
+
 export const themeNames = ['light', 'dark'] as const;
 
 export type TokenTheme = (typeof themeNames)[number];
@@ -125,43 +127,7 @@ export const elevation: Record<
   },
 };
 
-export const illustration = {
-  media: '#2A2622',
-  onMedia: '#FFFFFF',
-  mediaChip: 'rgba(0,0,0,0.42)',
-  mediaHover: 'rgba(0,0,0,0.25)',
-  mediaControl: 'rgba(0,0,0,0.4)',
-  liveDot: '#FF5B4F',
-  switchThumb: '#FFFFFF',
-  eyeChip: 'rgba(10,9,12,0.48)',
-  eyeChipText: '#F4EFE7',
-  estela: {
-    dark: {
-      a: [255, 196, 110],
-      b: [242, 220, 178],
-      c: [132, 122, 230],
-      r: [244, 112, 84],
-      g: [150, 145, 138],
-      w: [255, 238, 205],
-      glint: [255, 244, 220],
-      additive: true,
-      trail: 0.17,
-      density: 0.55,
-    },
-    light: {
-      a: [176, 106, 24],
-      b: [122, 78, 36],
-      c: [58, 54, 150],
-      r: [192, 64, 40],
-      g: [140, 136, 130],
-      w: [150, 90, 20],
-      glint: [176, 106, 24],
-      additive: false,
-      trail: 0.2,
-      density: 1,
-    },
-  },
-} as const;
+export { illustration };
 
 export const typeSteps = ['hero', 'title', 'headline', 'body', 'meta', 'caption'] as const;
 
@@ -210,27 +176,11 @@ export const fontFamily = {
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 8: 32, 12: 48 } as const;
 
 export const inset = {
-  rowX: 18,
-  rowY: 10,
-  rowGap: 14,
-  trailGap: 6,
-  metaGap: 1,
-  buttonX: 18,
-  buttonCompactX: 14,
-  buttonGhostX: 12,
-  chipX: 10,
-  chipStatX: 11,
-  chipSuggestionX: 12,
-  chipGap: 5,
-  sectionTop: 26,
-  sectionHeadX: 4,
-  sectionHeadBottom: 10,
-  sectionHeadGap: 12,
-  sectionLinkY: 10,
-  groupY: 4,
-  switchThumb: 3,
-  focusRing: 2,
-  checkBorder: 2,
+  row: { x: 18, y: 10, gap: 14, trailGap: 6, metaGap: 1 },
+  button: { x: 18, compactX: 14, ghostX: 12 },
+  chip: { x: 10, statX: 11, suggestionX: 12, gap: 5 },
+  section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
+  control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;

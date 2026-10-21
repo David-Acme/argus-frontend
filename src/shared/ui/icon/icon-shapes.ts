@@ -2,29 +2,39 @@ export type IconPath = { d: string };
 
 export type IconCircle = { cx: number; cy: number; r: number };
 
-export type IconRect = { x: number; y: number; width: number; height: number; rx: number };
-
-export type IconShape = IconPath | IconCircle | IconRect;
+export type IconShape = IconPath | IconCircle;
 
 export const ICON_SHAPES = {
   home: [{ d: 'M3 10.5 12 3l9 7.5' }, { d: 'M5 9.5V21h14V9.5' }, { d: 'M10 21v-6h4v6' }],
   shield: [{ d: 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z' }],
   shieldok: [{ d: 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z' }, { d: 'm9 12 2 2 4-4' }],
-  cal: [{ x: 3, y: 5, width: 18, height: 16, rx: 2 }, { d: 'M3 10h18M8 3v4M16 3v4' }],
+  cal: [
+    { d: 'M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2z' },
+    { d: 'M3 10h18M8 3v4M16 3v4' },
+  ],
   user: [{ cx: 12, cy: 8, r: 4 }, { d: 'M4 21c0-4 4-6 8-6s8 2 8 6' }],
   bell: [{ d: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z' }, { d: 'M10 21h4' }],
-  cam: [{ x: 2, y: 6, width: 14, height: 12, rx: 2 }, { d: 'm16 10 6-3v10l-6-3' }],
+  cam: [
+    { d: 'M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2z' },
+    { d: 'm16 10 6-3v10l-6-3' },
+  ],
   chev: [{ d: 'm9 6 6 6-6 6' }],
   chevd: [{ d: 'm6 9 6 6 6-6' }],
   chevl: [{ d: 'm15 6-6 6 6 6' }],
   back: [{ d: 'M19 12H5M11 6l-6 6 6 6' }],
   plus: [{ d: 'M12 5v14M5 12h14' }],
-  mic: [{ x: 9, y: 3, width: 6, height: 11, rx: 3 }, { d: 'M5 11a7 7 0 0 0 14 0M12 18v3' }],
+  mic: [
+    { d: 'M12 3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h-0a3 3 0 0 1 -3 -3v-5a3 3 0 0 1 3 -3z' },
+    { d: 'M5 11a7 7 0 0 0 14 0M12 18v3' },
+  ],
   up: [{ d: 'M12 19V5M6 11l6-6 6 6' }],
   check: [{ d: 'm5 12 5 5 9-10' }],
   clock: [{ cx: 12, cy: 12, r: 9 }, { d: 'M12 7v5l3 2' }],
   moon: [{ d: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' }],
-  lock: [{ x: 4, y: 11, width: 16, height: 10, rx: 2 }, { d: 'M8 11V7a4 4 0 0 1 8 0v4' }],
+  lock: [
+    { d: 'M6 11h12a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2z' },
+    { d: 'M8 11V7a4 4 0 0 1 8 0v4' },
+  ],
   users: [
     { cx: 9, cy: 8, r: 3.5 },
     { d: 'M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5' },
@@ -71,17 +81,27 @@ export const ICON_SHAPES = {
   ],
   hist: [{ d: 'M3 12a9 9 0 1 0 3-6.7L3 8' }, { d: 'M3 3v5h5M12 7v5l3 2' }],
   grid: [
-    { x: 3, y: 3, width: 7, height: 7, rx: 1.5 },
-    { x: 14, y: 3, width: 7, height: 7, rx: 1.5 },
-    { x: 3, y: 14, width: 7, height: 7, rx: 1.5 },
-    { x: 14, y: 14, width: 7, height: 7, rx: 1.5 },
+    {
+      d: 'M4.5 3h4a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-4a1.5 1.5 0 0 1 1.5 -1.5z',
+    },
+    {
+      d: 'M15.5 3h4a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-4a1.5 1.5 0 0 1 1.5 -1.5z',
+    },
+    {
+      d: 'M4.5 14h4a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-4a1.5 1.5 0 0 1 1.5 -1.5z',
+    },
+    {
+      d: 'M15.5 14h4a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1 -1.5 1.5h-4a1.5 1.5 0 0 1 -1.5 -1.5v-4a1.5 1.5 0 0 1 1.5 -1.5z',
+    },
   ],
   door: [{ d: 'M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18M15 12v.5' }],
   key: [{ cx: 8, cy: 15, r: 4 }, { d: 'm11 12 9-9M17 6l3 3' }],
   devices: [
-    { x: 2, y: 4, width: 14, height: 10, rx: 1.5 },
+    {
+      d: 'M3.5 4h11a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1 -1.5 1.5h-11a1.5 1.5 0 0 1 -1.5 -1.5v-7a1.5 1.5 0 0 1 1.5 -1.5z',
+    },
     { d: 'M6 18h6M9 14v4' },
-    { x: 17, y: 8, width: 5, height: 12, rx: 1 },
+    { d: 'M18 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1z' },
   ],
   logout: [{ d: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9' }],
   eyeoff: [

@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useEffects } from './effects';
 import { motion } from './tokens';
@@ -14,14 +13,11 @@ export function usePressScale(kind: PressScaleKind = 'surface') {
   const { reduceMotion } = useEffects();
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
-  const settle = useCallback(
-    (target: number) => scale.set(reduceMotion ? target : withSpring(target, motion.spring.snappy)),
-    [reduceMotion, scale]
-  );
-  const onPressIn = useCallback(
-    () => settle(reduceMotion ? 1 : PRESSED[kind]),
-    [kind, reduceMotion, settle]
-  );
-  const onPressOut = useCallback(() => settle(1), [settle]);
-  return { style, onPressIn, onPressOut };
+  const settle = (target: number) =>
+    scale.set(reduceMotion ? target : withSpring(target, motion.spring.snappy));
+  return {
+    style,
+    onPressIn: () => settle(reduceMotion ? 1 : PRESSED[kind]),
+    onPressOut: () => settle(1),
+  };
 }

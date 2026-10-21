@@ -11,13 +11,14 @@ export type SwitchProps = {
   testID?: string;
 };
 
-const TRAVEL = size.switchWidth - size.switchThumb - inset.switchThumb * 2;
+const TRAVEL = size.switchWidth - size.switchThumb - inset.control.switchThumb * 2;
 
 const SLOP = (size.target - size.switchHeight) / 2;
 
 export function Switch({ value, onValueChange, label, disabled, testID }: SwitchProps) {
   const { reduceMotion } = useEffects();
   const { color, elevation } = useThemeTokens();
+  const track = { boxShadow: elevation.ringInset };
   const offset = useSharedValue(value ? TRAVEL : 0);
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: offset.get() }] }));
   useEffect(() => {
@@ -37,9 +38,9 @@ export function Switch({ value, onValueChange, label, disabled, testID }: Switch
           ? 'h-switch-height w-switch-width bg-ink rounded-full'
           : 'h-switch-height w-switch-width bg-fill-press rounded-full'
       }
-      style={{ boxShadow: elevation.ringInset }}>
+      style={track}>
       <Animated.View
-        className="top-switch-thumb left-switch-thumb size-switch-thumb absolute rounded-full"
+        className="top-control-switch-thumb left-control-switch-thumb size-switch-thumb absolute rounded-full"
         style={[
           thumbStyle,
           {

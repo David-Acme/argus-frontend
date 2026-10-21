@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { space } from '@/shared/theme';
-import { Cluster, Inline, Stack } from '@/shared/ui/layout';
+import { Cluster, Inline, Stack } from '@/shared/ui/layout/layout';
 
 describe('layout helpers', () => {
   test('the numeric gap classes are the tokens.space scale', () => {

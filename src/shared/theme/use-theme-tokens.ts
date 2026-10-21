@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useUniwind } from 'uniwind';
 import { aura, color, elevation, type TokenTheme } from './tokens';
 
@@ -9,12 +8,16 @@ export type ThemeTokens = {
   aura: (typeof aura)[TokenTheme];
 };
 
+const THEMES: Record<TokenTheme, ThemeTokens> = {
+  light: { theme: 'light', color: color.light, elevation: elevation.light, aura: aura.light },
+  dark: { theme: 'dark', color: color.dark, elevation: elevation.dark, aura: aura.dark },
+};
+
 export function themeTokensOf(theme: TokenTheme): ThemeTokens {
-  return { theme, color: color[theme], elevation: elevation[theme], aura: aura[theme] };
+  return THEMES[theme];
 }
 
 export function useThemeTokens(): ThemeTokens {
   const { theme } = useUniwind();
-  const name: TokenTheme = theme === 'dark' ? 'dark' : 'light';
-  return useMemo(() => themeTokensOf(name), [name]);
+  return THEMES[theme === 'dark' ? 'dark' : 'light'];
 }

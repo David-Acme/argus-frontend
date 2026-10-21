@@ -98,8 +98,10 @@ export function tokensCss(): string {
   const radiusLines = Object.entries(radius)
     .filter(([name]) => !SKIPPED_RADII.has(name))
     .map(([name, value]) => `  --radius-${kebab(name)}: ${px(value)};`);
-  const insetLines = Object.entries(inset).map(
-    ([name, value]) => `  --spacing-${kebab(name)}: ${px(value)};`
+  const insetLines = Object.entries(inset).flatMap(([group, values]) =>
+    Object.entries(values).map(
+      ([name, value]) => `  --spacing-${group}-${kebab(name)}: ${px(value)};`
+    )
   );
   const sizeLines = Object.entries(size)
     .filter(([name]) => !SKIPPED_SIZES.has(name))
@@ -140,8 +142,8 @@ export function tokensCss(): string {
     '',
     '@utility focus-ring {',
     '  &:focus-visible {',
-    `    outline: ${px(inset.focusRing)} solid var(--color-accent);`,
-    `    outline-offset: ${px(inset.focusRing)};`,
+    `    outline: ${px(inset.control.focusRing)} solid var(--color-accent);`,
+    `    outline-offset: ${px(inset.control.focusRing)};`,
     '  }',
     '}',
     '',

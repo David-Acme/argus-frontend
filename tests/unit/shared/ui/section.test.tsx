@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Avatar } from '@/shared/ui/avatar';
-import { Row } from '@/shared/ui/row';
-import { Section } from '@/shared/ui/section';
+import { Avatar } from '@/shared/ui/avatar/avatar';
+import { Row } from '@/shared/ui/row/row';
+import { Section } from '@/shared/ui/section/section';
 
 describe('Section and Row', () => {
   test('a grouped section names itself and lays out rows with their meta', () => {

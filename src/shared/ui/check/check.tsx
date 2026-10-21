@@ -24,11 +24,13 @@ const RING: Record<CheckState, string> = {
 
 const SLOP = (size.target - size.check) / 2;
 
+const RING_WIDTH = { borderWidth: inset.control.checkBorder };
+
 function CheckMark({ state }: CheckMarkProps) {
   return (
     <View
       className={clsx('size-check items-center justify-center rounded-full', RING[state])}
-      style={{ borderWidth: inset.checkBorder }}>
+      style={RING_WIDTH}>
       {state === 'done' ? <Icon name="check" size="small" tone="on-ink" /> : null}
       {state === 'progress' ? <View className="size-dot bg-ink rounded-full" /> : null}
     </View>

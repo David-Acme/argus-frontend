@@ -19,8 +19,13 @@ const sharedValue = <T>(initial: T): Shared<T> => {
 
 mock.module('react-native', () => import('react-native-web'));
 mock.module('react-native-svg', () => import('react-native-svg/lib/module/elements.web.js'));
+mock.module('react-native-gesture-handler', async () => {
+  const web = await import('react-native-web');
+  return { Pressable: web.Pressable, ScrollView: web.ScrollView };
+});
 mock.module('expo-device', () => ({ totalMemory: null }));
 mock.module('uniwind', () => ({
+  Uniwind: { setTheme: () => undefined },
   useUniwind: () => ({ theme: 'light' }),
   withUniwind: <T>(component: T) => component,
 }));

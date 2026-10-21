@@ -62,11 +62,13 @@ function listenToSystemFlags(): void {
   if (listening) return;
   listening = true;
   const set = (patch: Partial<SystemFlags>) => useSystemFlags.setState(patch);
-  AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => set({ reduceMotion }));
+  AccessibilityInfo.isReduceMotionEnabled()
+    .then((reduceMotion) => set({ reduceMotion }))
+    .catch(() => undefined);
   if (typeof AccessibilityInfo.isReduceTransparencyEnabled === 'function') {
-    AccessibilityInfo.isReduceTransparencyEnabled().then((reduceTransparency) =>
-      set({ reduceTransparency })
-    );
+    AccessibilityInfo.isReduceTransparencyEnabled()
+      .then((reduceTransparency) => set({ reduceTransparency }))
+      .catch(() => undefined);
   }
   AccessibilityInfo.addEventListener('reduceMotionChanged', (reduceMotion) =>
     set({ reduceMotion })
