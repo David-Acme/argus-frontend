@@ -1,6 +1,17 @@
 export const common = {
   continue: 'Continuar',
   step: 'Paso {current} de {total}',
+  overlay: {
+    toasts: 'Avisos',
+    'command-label': 'Buscar o pedir a Argus',
+    'command-ask-group': 'Pedir a Argus',
+    'command-ask': '«{query}…» — pregúntale a Argus',
+    'command-move': '↑↓ moverse',
+    'command-open': '↵ abrir',
+    'command-close': 'Esc cerrar · clic fuera cierra',
+    'key-escape': 'Esc',
+    'key-enter': '↵',
+  },
   retry: 'Reintentar',
   undo: 'Deshacer',
   'permission-prompt': {

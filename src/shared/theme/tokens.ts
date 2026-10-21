@@ -25,6 +25,7 @@ const light = {
   alert: '#CC3535',
   'alert-soft': '#FBE4E2',
   scrim: 'rgba(20,18,16,0.32)',
+  'scrim-soft': 'rgba(0,0,0,0.18)',
   glass: 'rgba(255,255,255,0.66)',
   'glass-line': 'rgba(255,255,255,0.7)',
   'glass-edge': 'rgba(0,0,0,0.06)',
@@ -61,6 +62,7 @@ const dark = {
   alert: '#C9706B',
   'alert-soft': '#3A1F1C',
   scrim: 'rgba(0,0,0,0.5)',
+  'scrim-soft': 'rgba(0,0,0,0.18)',
   glass: 'rgba(40,38,32,0.66)',
   'glass-line': 'rgba(255,255,255,0.08)',
   'glass-edge': 'rgba(255,255,255,0.06)',
@@ -168,6 +170,12 @@ export const typeRoles = {
   initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
   sectionLink: { size: 15, line: 22.5, weight: '600', tracking: 0, maxScale: 2 },
+  toastTitle: { size: 15, line: 22.5, weight: '650', tracking: 0, maxScale: 2 },
+  toastBody: { size: 14, line: 21, weight: '400', tracking: 0, maxScale: 2 },
+  toastAction: { size: 15, line: 22.5, weight: '700', tracking: 0, maxScale: 2 },
+  query: { size: 18, line: 27, weight: '400', tracking: 0, maxScale: 1.5 },
+  groupTitle: { size: 12, line: 18, weight: '650', tracking: 0.04, maxScale: 2 },
+  hint: { size: 12, line: 18, weight: '400', tracking: 0, maxScale: 2 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -182,6 +190,13 @@ export const inset = {
   chip: { x: 10, statX: 11, gap: 5 },
   section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
   control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
+  dialog: { x: 24, top: 24, bottom: 12, edge: 28, bodyTop: 12 },
+  dialogActions: { top: 20, gap: 4, x: 14 },
+  toast: { start: 16, end: 6, y: 6, actionX: 12, edge: 16, offset: 108 },
+  toastError: { top: 12, start: 14, end: 10, bottom: 10 },
+  palette: { top: 110, group: 8, gap: 12, itemX: 10, queryX: 18, queryY: 16 },
+  paletteText: { titleX: 10, titleTop: 8, titleBottom: 4, footX: 18, footY: 10, footGap: 14 },
+  key: { x: 5 },
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
@@ -194,6 +209,7 @@ export const radius = {
   well: 14,
   button: 16,
   toast: 18,
+  toastAction: 10,
   media: 20,
   dialog: 22,
   card: 24,
@@ -230,11 +246,14 @@ export const size = {
   grabberWidth: 36,
   grabberHeight: 5,
   dot: 8,
+  menuRow: 36,
+  menuWidth: 220,
   hairline: 1,
 } as const;
 
 export const motion = {
-  duration: { fast: 120, base: 200, slow: 300 },
+  duration: { fast: 120, base: 200, enter: 220, slow: 300 },
+  easing: { overshoot: [0.2, 1.2, 0.4, 1] },
   spring: {
     snappy: { damping: 18, stiffness: 320, mass: 1 },
     gentle: { damping: 22, stiffness: 180, mass: 1 },
@@ -249,6 +268,7 @@ export const material = {
   saturation: 1.7,
   blurControl: 18,
   blurChip: 16,
+  blurScrim: 2,
   saturationControl: 1.6,
   blurSheet: 26,
   sheetSurfaceMix: 0.94,

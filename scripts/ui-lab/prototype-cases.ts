@@ -3,6 +3,9 @@ const stats = (chips: string): string => `\`<div class="stats" style="margin:0">
 const glyphs = (small: boolean): string =>
   `\`<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center${small ? ';color:var(--ic)' : ''}">\${Object.keys(P).map((n)=>ic(n${small ? ",'s'" : ''})).join('')}</div>\``;
 
+const alertbox = (title: string, body: string, acts: string): string =>
+  `'<div class="alertbox" role="alertdialog" style="position:static;transform:none;max-width:480px"><div class="t-title">${title}</div><p class="t-body t-2" style="margin:12px 0 0">${body}</p><div class="acts">${acts}</div></div>'`;
+
 export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
   text: {
     hero: '\'<div class="t-hero">hero 36/40 · Todo tranquilo.</div>\'',
@@ -104,5 +107,30 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
       "row({lead:lic('face'),t:'Visitantes reconocidos',s:'Apagado',tr:'<span class=\"switch\"></span>',chev:false})",
     danger:
       '`<button class="row danger"><span class="lic alert">${ic(\'logout\',\'s\')}</span><span class="main"><span class="ttl">Cerrar sesión</span></span></button>`',
+  },
+  confirm: {
+    destructive: alertbox(
+      '¿Hacer sonar la sirena?',
+      'Sonará en Cocina durante 30 segundos. Se oye en toda la casa.',
+      '<button>Cancelar</button><button class="d">Hacer sonar</button>'
+    ),
+    default: alertbox(
+      '¿Cerrar sesión en todos tus dispositivos?',
+      'Tendrás que volver a entrar en cada uno con tu cara.',
+      '<button>Cancelar</button><button>Cerrar sesión</button>'
+    ),
+  },
+  toast: {
+    undo: '\'<div class="toast" role="status" style="position:static"><span class="grow">Tarea hecha: Comprar cajas</span><button>Deshacer</button></div>\'',
+    error:
+      '`<div class="toast err" role="status" style="position:static"><span class="ti">${ic(\'wifioff\',\'s\')}</span><span class="grow"><b>No se guardó el recordatorio</b><span>Revisa tu conexión.</span></span><span class="ta"><button>Reintentar</button></span></div>`',
+  },
+  menu: {
+    panel:
+      '`<div class="palette" style="position:static;transform:none;animation:none;width:auto;min-width:220px;border-radius:20px;background:color-mix(in srgb,var(--surface) 55%,transparent)"><div class="grp"><div class="it" style="min-height:36px">${ic(\'check\',\'s\')}Marcar como hecho</div><div class="it" style="min-height:36px">${ic(\'clock\',\'s\')}Posponer 1 hora</div><div class="it" style="min-height:36px;color:var(--alert)">${ic(\'x\',\'s\')}Borrar</div></div></div>`',
+  },
+  command: {
+    palette:
+      'OV.palette().replace(/^<div class="scrim"[^>]*><\\/div>/,\'\').replace(\'class="palette"\',\'class="palette" style="position:static;transform:none;animation:none;max-width:100%"\')',
   },
 };

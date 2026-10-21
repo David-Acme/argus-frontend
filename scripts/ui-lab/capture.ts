@@ -201,6 +201,7 @@ async function captureWidth(run: WidthRun, width: number): Promise<void> {
   const context = await run.browser.newContext({
     viewport: { width, height: HEIGHT },
     reducedMotion: 'reduce',
+    locale: 'es-ES',
   });
   await context.addInitScript(() => Reflect.set(globalThis, '__ARGUS_UI_LAB__', true));
   const ours = await context.newPage();

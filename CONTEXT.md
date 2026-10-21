@@ -5505,3 +5505,64 @@ many files; the reason names that cause.
 | `scripts/lib/cycle-baseline.txt` | `**` | Finding 4 of the R0 review: the cycle members are a list of their own, so a file or slice joining the recorded 21-file and 4-slice cycle fails though the cycle count holds. The file is new: every member is recorded once, as measured. | 2026-10-20 |
 | `scripts/lib/quality-baseline.txt` | `style-object`, `http-unchecked` | Finding 7 of the R0 review: the counters follow bindings. `style-object` counts every object literal in a `style` attribute, inside arrays, conditionals and style functions too (80 → 132, all existing: the welcome mascot, the camera stage and the other array styles); `http-unchecked` follows `httpService` through import aliases, variables and destructured methods, and a call passed to anything but a named checker counts (83 → 84: `responses.push(await httpService.delete(…))` in `notification.service.ts`). `raw-pressable-in-features`, `window-dimensions-in-features`, `is-flag-in-features` and `platform-select` now also see namespace imports, `require`, aliases and computed members, and found nothing new. | 2026-10-20 |
 | `scripts/lib/quality-baseline.txt` | `style-object` | Lead merge of `p1/gates-fix` over `p1/ds-base`: the binding-following counter sees ds-base's two conditional styles in `src/shared/ui/button/button.tsx` and the array style in `src/shared/ui/switch/switch.tsx`, each a named token-derived object chosen by state (132 → 135). | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/ds-d` (Confirm, Menu, Toast, Command and their ui-lab demos) over `p1/ds-base`: entry 7,220,201 → 7,303,872 B (+83,671) and `dist/` 8,511,606 → 8,603,052 B (+91,446). The share's own source-map breakdown: sonner 36.4 kB (the web Toaster host), the four demos 29.0 kB, Command 11.0, Toast 5.6, Confirm 4.5, Menu 4.0, `@rn-primitives/alert-dialog` 5.2 and `@radix-ui/react-alert-dialog` 4.3 kB; no native-only module reached the web build. | 2026-10-21 |
+## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
+
+**Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
+Alert is a no-op); on the web, Tauri and medium+ native windows it is
+`@rn-primitives/alert-dialog`, added for this because `@rn-primitives/dialog`'s
+web Content always renders Radix's own `role="dialog"` element, so the role
+could not be `alertdialog`. `@radix-ui/react-alert-dialog` is pinned to 1.1.19
+in `overrides`: the 1.2 line pulls `react-dialog` 1.3, whose `focus-scope`
+import does not exist in the 1.1.16 the overrides already pin. Radix's alert
+dialog never closes on an outside press, so the default variant adds its own
+scrim press that cancels; the destructive one disables it. Esc and Back go
+through `onOpenChange(false)` and mean Cancelar. Android's `Alert` ties Back to
+outside taps (`setCancelable`), so the native destructive alert is
+`cancelable: false` and Back does nothing there: only its buttons close it.
+
+**Toast.** One API, `toast.show({ kind, ... })` and `toast.dismiss`, over
+`sonner` (`toaster.tsx`) and `sonner-native` (`toaster.native.tsx`), both
+through their custom-render path (`toast.custom`), so both draw the same
+`ToastCard` and no library style. Errors share one id, so a second error
+replaces the first; undo lasts 5 s, errors 8 s, info and success 4 s. The card
+is `role="status"`, a polite live region (the prototype's error toast says
+`role="alert"`; the spec's polite rule wins). sonner-native's `offset` is from
+the window bottom, not the safe area, so 108 is the prototype frame's number
+and has to follow the real tab bar's top once Phase 2 places it. The host
+`Toaster` is not mounted in the root layout yet: the legacy toaster still is.
+
+**Menu.** Pointer (the web build, Tauri included) gets
+`@rn-primitives/dropdown-menu` from a ⋯ trigger and `@rn-primitives/context-menu`
+on right click (Radix also opens it on a touch long press); touch (native)
+gets a sheet list from the same trigger and from a RNGH long press with
+`impactLight`. The context menu's items are given `role="menuitem"` because
+rn-primitives renders them as buttons. `items` is a tuple of at least two, so
+a single-item menu does not type-check (W38).
+
+**Command.** `useCommand` owns the query and the selection over the groups a
+`source(query)` returns; the component fetches nothing. Free text adds a first
+«pregúntale a Argus» entry, and Enter runs the selected entry. Results are
+`role="option"` inside `role="group"` sections, because React Native's `Role`
+has no `listbox`. On pointer it is a Radix dialog (focus trap, Esc, outside
+press, focus return) with a visually hidden title; `useCommandHotkey` binds
+Ctrl+K / ⌘K on the web and is a no-op natively.
+
+**Slots until p1/native merges.** `Menu` and `Command` take a required
+`sheet` component with `Sheet`'s `open`, `onClose`, `title`, `variant` and
+`long`; the native Command should also pass `initialFocus` once `Sheet` is
+here. `Command` takes an optional `askMark` for Estela's `think` mark.
+
+**Test runner.** The component runner loads the rn-primitives web builds
+(their `.mjs` keep JSX, so a bun plugin loads them as `jsx`), stubs RNGH's
+`Gesture`/`GestureDetector` and Reanimated's `Keyframe`/`Easing`, and
+components that read copy are tested through `translation-stub.ts` (the
+Spanish dictionary), since the locale store's storage has only platform files.
+happy-dom reports a 0 px window, so a test that needs a wide window defines
+`document.documentElement.clientWidth`.
+
+**Re-baselines.**
+
+| Date | Branch | Entry chunk | `dist/` | Cause |
+|---|---|---|---|---|
+| 2026-10-21 | p1/ds-d | 7,113,459 → 7,303,327 B (+189,868) | 8,379,636 → 8,602,199 B (+222,563) | The overlay share. Measured from the source map of the entry chunk: sonner 36.4 kB (the web Toaster host belongs in the entry), the four ui-lab demos 29.0 kB, Command 11.0 kB, Toast 5.6 kB, Confirm 4.5 kB, Menu 4.0 kB, `@rn-primitives/alert-dialog` 5.2 kB and `@radix-ui/react-alert-dialog` 4.3 kB. The dropdown and context menus were already in the entry through the legacy menus, and no native-only module (sonner-native, the RNGH gestures) reached the web build. |

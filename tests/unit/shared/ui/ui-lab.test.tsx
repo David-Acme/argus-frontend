@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
+import './translation-stub';
 
 let search: Record<string, string> = {};
 
@@ -15,13 +16,17 @@ const { AvatarDemo } = await import('@/features/ui-lab/demos/avatar-demo');
 const { ButtonDemo } = await import('@/features/ui-lab/demos/button-demo');
 const { CheckDemo } = await import('@/features/ui-lab/demos/check-demo');
 const { ChipDemo } = await import('@/features/ui-lab/demos/chip-demo');
+const { CommandDemo } = await import('@/features/ui-lab/demos/command-demo');
+const { ConfirmDemo } = await import('@/features/ui-lab/demos/confirm-demo');
 const { IconDemo } = await import('@/features/ui-lab/demos/icon-demo');
 const { LayoutDemo } = await import('@/features/ui-lab/demos/layout-demo');
+const { MenuDemo } = await import('@/features/ui-lab/demos/menu-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
 const { RowDemo } = await import('@/features/ui-lab/demos/row-demo');
 const { SectionDemo } = await import('@/features/ui-lab/demos/section-demo');
 const { SwitchDemo } = await import('@/features/ui-lab/demos/switch-demo');
 const { TextDemo } = await import('@/features/ui-lab/demos/text-demo');
+const { ToastDemo } = await import('@/features/ui-lab/demos/toast-demo');
 const { UiLabScreen } = await import('@/features/ui-lab/screens/ui-lab-screen');
 const { catalogue } = await import('@/features/ui-lab/catalogue');
 const { LabCase } = await import('@/features/ui-lab/components/lab-case');
@@ -31,13 +36,17 @@ const DEMOS: Record<string, ComponentType> = {
   button: ButtonDemo,
   check: CheckDemo,
   chip: ChipDemo,
+  command: CommandDemo,
+  confirm: ConfirmDemo,
   icon: IconDemo,
   layout: LayoutDemo,
+  menu: MenuDemo,
   pressable: PressableDemo,
   row: RowDemo,
   section: SectionDemo,
   switch: SwitchDemo,
   text: TextDemo,
+  toast: ToastDemo,
 };
 
 describe('ui-lab', () => {

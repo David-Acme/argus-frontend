@@ -3,13 +3,17 @@ import { AvatarDemo } from './demos/avatar-demo';
 import { ButtonDemo } from './demos/button-demo';
 import { CheckDemo } from './demos/check-demo';
 import { ChipDemo } from './demos/chip-demo';
+import { CommandDemo } from './demos/command-demo';
+import { ConfirmDemo } from './demos/confirm-demo';
 import { IconDemo } from './demos/icon-demo';
 import { LayoutDemo } from './demos/layout-demo';
+import { MenuDemo } from './demos/menu-demo';
 import { PressableDemo } from './demos/pressable-demo';
 import { RowDemo } from './demos/row-demo';
 import { SectionDemo } from './demos/section-demo';
 import { SwitchDemo } from './demos/switch-demo';
 import { TextDemo } from './demos/text-demo';
+import { ToastDemo } from './demos/toast-demo';
 
 export type CatalogueFamily = 'foundations' | 'content' | 'input' | 'overlays' | 'identity';
 
@@ -32,6 +36,10 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'check', family: 'content', title: 'Check', Demo: CheckDemo },
   { id: 'button', family: 'input', title: 'Button', Demo: ButtonDemo },
   { id: 'switch', family: 'input', title: 'Switch', Demo: SwitchDemo },
+  { id: 'confirm', family: 'overlays', title: 'Confirm', Demo: ConfirmDemo },
+  { id: 'menu', family: 'overlays', title: 'Menu', Demo: MenuDemo },
+  { id: 'toast', family: 'overlays', title: 'Toast', Demo: ToastDemo },
+  { id: 'command', family: 'overlays', title: 'Command', Demo: CommandDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [
