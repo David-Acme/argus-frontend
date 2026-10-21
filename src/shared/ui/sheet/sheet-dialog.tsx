@@ -7,6 +7,7 @@ import { CloseButton, DialogFooter, DiscardRow, SheetTitle } from './sheet-parts
 import { useSingleFlight } from '@/shared/ui/button/use-single-flight';
 import type { SheetAction, SheetActions, SheetProps } from './types';
 import { useDiscard, type Discard } from './use-discard';
+import { useKeyboardInset } from './use-keyboard-inset';
 import { useSheetElevation, useSheetTheme, type SheetTheme } from './use-sheet-theme';
 
 const { layout, radius, space } = tokens;
@@ -104,11 +105,12 @@ export function SheetDialog(props: SheetProps) {
   const theme = useSheetTheme();
   const shadow = useSheetElevation();
   const { height } = useWindowDimensions();
+  const keyboard = useKeyboardInset();
   const discard = useDiscard(dirty, onClose);
-  const scrim = { backgroundColor: theme.scrim };
+  const scrim = { backgroundColor: theme.scrim, paddingBottom: EDGE + keyboard };
   const panel = {
     width: long ? layout.dialogLong : layout.dialog,
-    maxHeight: height - EDGE * 2,
+    maxHeight: height - EDGE * 2 - keyboard,
     backgroundColor: theme.surface,
     boxShadow: shadow,
   };
