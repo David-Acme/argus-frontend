@@ -4,7 +4,8 @@ import { BackHandler, ScrollView, StyleSheet, useWindowDimensions, View } from '
 import { IS_ANDROID, IS_WEB } from '@/shared/constants';
 import { tokens } from '@/shared/theme/tokens';
 import { CloseButton, DialogFooter, DiscardRow, SheetTitle } from './sheet-parts';
-import type { SheetProps } from './types';
+import { useSingleFlight } from '@/shared/ui/button/use-single-flight';
+import type { SheetAction, SheetActions, SheetProps } from './types';
 import { useDiscard, type Discard } from './use-discard';
 import { useSheetElevation, useSheetTheme, type SheetTheme } from './use-sheet-theme';
 
@@ -37,13 +38,27 @@ const styles = StyleSheet.create({
   },
 });
 
-function useDialogKeys(props: SheetProps, discard: Discard): void {
+const idle = () => undefined;
+
+function useFlightActions(actions: SheetActions | undefined): SheetActions | undefined {
+  const primary = actions?.primary;
+  const flight = useSingleFlight(primary?.onPress ?? idle, primary?.busy ?? false);
+  if (!actions || !primary) return actions;
+  return { ...actions, primary: { ...primary, onPress: flight.run, busy: flight.busy } };
+}
+
+function submits(event: KeyboardEvent, primary: SheetAction | undefined): primary is SheetAction {
+  if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return false;
+  return !!primary && !primary.disabled && !primary.busy;
+}
+
+type DialogKeys = { open: boolean; primary: SheetAction | undefined; discard: Discard };
+
+function useDialogKeys({ open, primary, discard }: DialogKeys): void {
   const submit = useEffectEvent((event: KeyboardEvent) => {
-    const primary = props.actions?.primary;
-    if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey) || !primary || primary.disabled)
-      return;
+    if (discard.asking || !submits(event, primary)) return;
     event.preventDefault();
-    primary.onPress();
+    void primary.onPress();
   });
   const back = useEffectEvent(() => {
     if (discard.asking) discard.keep();
@@ -51,7 +66,7 @@ function useDialogKeys(props: SheetProps, discard: Discard): void {
     return true;
   });
   useEffect(() => {
-    if (!props.open) return;
+    if (!open) return;
     if (IS_WEB) {
       const opener = globalThis.document.activeElement;
       globalThis.addEventListener('keydown', submit, true);
@@ -63,7 +78,7 @@ function useDialogKeys(props: SheetProps, discard: Discard): void {
     if (!IS_ANDROID) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', back);
     return () => subscription.remove();
-  }, [props.open]);
+  }, [open]);
 }
 
 type BottomProps = { discard: Discard; actions: SheetProps['actions']; theme: SheetTheme };
@@ -84,7 +99,8 @@ function DialogBottom({ discard, actions, theme }: BottomProps) {
 }
 
 export function SheetDialog(props: SheetProps) {
-  const { open, onClose, title, long, dirty, actions, initialFocus, children, testID } = props;
+  const { open, onClose, title, long, dirty, initialFocus, children, testID } = props;
+  const actions = useFlightActions(props.actions);
   const theme = useSheetTheme();
   const shadow = useSheetElevation();
   const { height } = useWindowDimensions();
@@ -105,7 +121,7 @@ export function SheetDialog(props: SheetProps) {
     event.preventDefault();
     discard.requestClose();
   };
-  useDialogKeys(props, discard);
+  useDialogKeys({ open, primary: actions?.primary, discard });
 
   return (
     <DialogPrimitive.Root

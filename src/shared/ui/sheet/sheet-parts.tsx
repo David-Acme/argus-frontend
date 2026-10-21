@@ -113,6 +113,7 @@ export function PhoneFooter({ primary, more }: FooterProps) {
           label={primary.label}
           onPress={primary.onPress}
           disabled={primary.disabled}
+          busy={primary.busy}
         />
       </View>
     </View>
@@ -129,6 +130,7 @@ export function DialogFooter({ primary, more, hint }: FooterProps & { hint: stri
         label={primary.label}
         onPress={primary.onPress}
         disabled={primary.disabled}
+        busy={primary.busy}
         trailing={hint ? { key: hint } : undefined}
       />
     </View>
