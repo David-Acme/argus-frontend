@@ -4,40 +4,17 @@ import { PixelRatio } from 'react-native';
 import { useFrameCallback, useSharedValue, type FrameInfo } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { shiftTier } from '@/shared/theme/effects';
-import {
-  advance,
-  frameInterval,
-  paintStill,
-  frameDue,
-  takeEndedEvent,
-  type Look,
-  type Tick,
-} from './engine/driver';
-import { noteBeat, notePace } from './engine/pace';
+import { paintStill, takeEndedEvent, type Look, type Tick } from './engine/driver';
+import { notePace } from './engine/pace';
+import { stepFrame, tickOf } from './frame-loop';
 import type { PresenceEvent } from './engine/types';
-import type { PresenceCanvasProps, PresenceLive } from './presence-canvas.types';
+import type { PresenceCanvasProps } from './presence-canvas.types';
 import { beginFrame, endFrame, flushAtlas } from './skia-scene';
-import { draw, prepare, release, type Runtime, type Spec } from './skia-runtime';
+import { prepare, release, type Runtime, type Spec } from './skia-runtime';
 
 const MAX_RATIO = 2;
 const RESIDUE = 3 / 255;
 const RESIDUE_CUT = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, -RESIDUE];
-
-function tickOf(live: PresenceLive, now: number): Tick {
-  'worklet';
-  const lean = live.lean.get();
-  return {
-    now,
-    input: live.input.get(),
-    level: live.level ? live.level.get() : null,
-    scroll: live.scroll ? live.scroll.get() : 0,
-    leanX: lean[0],
-    leanY: lean[1],
-    steps: 1,
-    lag: 0,
-    split: false,
-  };
-}
 
 type StillFrame = { tick: Tick; look: Look; fade: number };
 
@@ -88,7 +65,7 @@ export function PresenceCanvas({
     [plan.count, seed]
   );
   const fade = plan.trails ? look.palette.trail : 1;
-  const { watch, climb, patience, tier } = plan;
+  const { watch, climbWork, patience, tier } = plan;
 
   const step = useCallback(
     (info: FrameInfo) => {
@@ -96,21 +73,18 @@ export function PresenceCanvas({
       const current = prepare(runtime.get(), { look, spec, shown: image.get() });
       if (!current) return;
       if (current !== runtime.get()) runtime.set(current);
-      const tick = tickOf(live, info.timestamp / 1000);
-      noteBeat(current.pace, (info.timeSincePreviousFrame ?? 0) / 1000);
-      if (!frameDue(current.driver, tick, look)) return;
-      const started = performance.now();
-      image.set(draw(current, advance(current.driver, tick, look), fade));
-      const work = (performance.now() - started) / 1000;
-      const interval = frameInterval(current.driver, tick, look);
-      const shift = watch
-        ? notePace(current.pace, { now: tick.now, work, interval }, { climb, patience })
-        : 0;
+      const now = info.timestamp / 1000;
+      const since = (info.timeSincePreviousFrame ?? 0) / 1000;
+      const drawn = stepFrame(current, { now, since, live, look, fade });
+      if (!drawn) return;
+      image.set(drawn.image);
+      const sample = { now, work: drawn.work, interval: drawn.interval };
+      const shift = watch ? notePace(current.pace, sample, { climbWork, patience }) : 0;
       if (shift !== 0) scheduleOnRN(shiftTier, tier, shift);
       const name = takeEndedEvent(current.driver);
       if (name) scheduleOnRN(ended, name);
     },
-    [runtime, image, look, spec, live, fade, watch, climb, patience, tier, ended]
+    [runtime, image, look, spec, live, fade, watch, climbWork, patience, tier, ended]
   );
   const frameCallback = useFrameCallback(step, false);
 

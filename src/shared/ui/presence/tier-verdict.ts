@@ -3,10 +3,10 @@ import type { PerfTier, ProbeReport } from '@/shared/theme/effects';
 export type ProbeSamples = { works: readonly number[]; gaps: readonly number[] };
 
 export const PROBE_LIMITS = {
-  highMs: 4.2,
-  midMs: 10,
+  highMs: 5,
+  midMs: 6.25,
   lateGapMs: 25,
-  maxLate: 2,
+  maxLate: 3,
 } as const;
 
 function percentile(values: readonly number[], share: number): number {
@@ -15,7 +15,7 @@ function percentile(values: readonly number[], share: number): number {
 }
 
 export function probeVerdict({ works, gaps }: ProbeSamples): ProbeReport {
-  const workMs = percentile(works, 0.9);
+  const workMs = percentile(works, 0.5);
   const dropped = gaps.filter((gap) => gap > PROBE_LIMITS.lateGapMs).length;
   const steady = dropped <= PROBE_LIMITS.maxLate;
   let tier: PerfTier = 'low';

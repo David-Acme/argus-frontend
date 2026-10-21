@@ -4,32 +4,31 @@ import { useFrameCallback, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { recordProbe } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
-import { advance, type Look, type Tick } from './engine/driver';
+import { advance, frameDue, type Look, type Tick } from './engine/driver';
 import { particleCount } from './engine/engine';
 import { draw, prepare, release, type Runtime } from './skia-runtime';
 import { probeVerdict, PROBE_LIMITS, type ProbeSamples } from './tier-verdict';
 
 const PROBE_DELAY_MS = 1200;
 const PROBE_SIZE = 300;
-const WARMUP_FRAMES = 4;
-const SAMPLE_FRAMES = 20;
-const EARLY_FRAMES = 6;
+const WARMUP_FRAMES = 30;
+const SAMPLE_FRAMES = 30;
+const EARLY_FRAMES = 8;
 const MAX_RATIO = 2;
-const MIN_SPACING_MS = 12;
+const PROBE_HZ = 120;
 
 const probeLook: Look = {
   size: PROBE_SIZE,
   palette: tokens.illustration.estela.dark,
   dark: true,
-  activeFps: 60,
-  restFps: 60,
+  activeFps: PROBE_HZ,
+  restFps: PROBE_HZ,
   leanWhileScrolling: true,
 };
 
 type ProbeRun = {
   runtime: Runtime | null;
   frame: number;
-  last: number;
   works: number[];
   gaps: number[];
 };
@@ -63,14 +62,13 @@ function probeTick(now: number): Tick {
 
 function hopeless(run: ProbeRun): boolean {
   'worklet';
-  return run.works.length >= EARLY_FRAMES && run.works.every((ms) => ms > PROBE_LIMITS.midMs);
+  return run.works.length >= EARLY_FRAMES && run.works.every((ms) => ms > 2 * PROBE_LIMITS.midMs);
 }
 
 export function useTierProbe(wanted: boolean): void {
   const run = useSharedValue<ProbeRun>({
     runtime: null,
     frame: 0,
-    last: 0,
     works: [],
     gaps: [],
   });
@@ -87,21 +85,19 @@ export function useTierProbe(wanted: boolean): void {
   const probe = useFrameCallback((info) => {
     'worklet';
     const current = run.get();
-    const gap = info.timestamp - current.last;
-    if (current.frame < 0 || gap < MIN_SPACING_MS) return;
-    current.last = info.timestamp;
+    if (current.frame < 0) return;
     const runtime = prepare(current.runtime, { look: probeLook, spec, shown: null });
     if (!runtime) return;
     current.runtime = runtime;
     current.frame += 1;
-    const tick = probeTick(info.timestamp / 1000);
-    runtime.driver.sim = tick.now;
+    const tick = probeTick(1 + current.frame / PROBE_HZ);
+    if (!frameDue(runtime.driver, tick, probeLook)) return;
     const started = performance.now();
     draw(runtime, advance(runtime.driver, tick, probeLook), probeLook.palette.trail);
     const work = performance.now() - started;
     if (current.frame <= WARMUP_FRAMES) return;
     current.works.push(work);
-    current.gaps.push(gap);
+    current.gaps.push(info.timeSincePreviousFrame ?? 0);
     if (current.works.length < SAMPLE_FRAMES && !hopeless(current)) return;
     current.frame = -1;
     release(current.runtime, null);

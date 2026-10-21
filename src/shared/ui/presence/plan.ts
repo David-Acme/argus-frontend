@@ -1,6 +1,6 @@
 import type { PerfTier } from '@/shared/theme/effects';
 import { particleCount } from './engine/engine';
-import { CLIMB_FRAMES } from './engine/pace';
+import { CLIMB_SECONDS } from './engine/pace';
 import type { PresenceState } from './engine/types';
 
 export type RenderPlan = {
@@ -13,7 +13,7 @@ export type RenderPlan = {
   still: boolean;
   leanWhileScrolling: boolean;
   watch: boolean;
-  climb: boolean;
+  climbWork: number;
   patience: number;
 };
 
@@ -32,7 +32,7 @@ export const tierRules: Record<PerfTier, TierRule> = {
     ceiling: 560,
     trails: true,
     activeFps: 120,
-    restFps: 60,
+    restFps: 30,
     leanWhileScrolling: true,
   },
   mid: {
@@ -66,6 +66,12 @@ export type PlanInput = {
 
 const MAX_BACKOFF = 4;
 const RANK: Record<PerfTier, number> = { low: 0, mid: 1, high: 2 };
+const CLIMB_WORK: Record<PerfTier, number> = { low: 1 / 240, mid: 1 / 120, high: 0 };
+
+function climbWork(tier: PerfTier, adaptation: Adaptation | undefined): number {
+  if (!adaptation || RANK[tier] >= RANK[adaptation.ceiling]) return 0;
+  return CLIMB_WORK[tier];
+}
 
 export function planFor({ size, tier, reduceMotion, adaptation }: PlanInput): RenderPlan {
   const rule = tierRules[tier];
@@ -81,8 +87,8 @@ export function planFor({ size, tier, reduceMotion, adaptation }: PlanInput): Re
     still: reduceMotion,
     leanWhileScrolling: rule.leanWhileScrolling,
     watch: adaptation !== undefined && !reduceMotion,
-    climb: adaptation !== undefined && RANK[tier] < RANK[adaptation.ceiling],
-    patience: CLIMB_FRAMES * 2 ** Math.min(MAX_BACKOFF, adaptation?.drops ?? 0),
+    climbWork: climbWork(tier, adaptation),
+    patience: CLIMB_SECONDS * 2 ** Math.min(MAX_BACKOFF, adaptation?.drops ?? 0),
   };
 }
 

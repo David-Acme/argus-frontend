@@ -44,23 +44,24 @@ describe('the automatic tier', () => {
     expect(resolvePerfTier({ ...web, reduceEffects: false, live: 'mid' })).toBe('mid');
   });
 
-  test('the probe asks for 4.2 ms for high, 10 ms for mid and few late frames', () => {
+  test('the probe judges the median half-frame after its warm-up: 5 ms high, 6.25 ms mid', () => {
     const { probeVerdict } = modules.verdict;
-    const works = (ms: number) => Array.from({ length: 20 }, () => ms);
-    const gaps = Array.from({ length: 20 }, () => 16.7);
-    expect(probeVerdict({ works: works(3), gaps }).tier).toBe('high');
-    expect(probeVerdict({ works: works(7), gaps }).tier).toBe('mid');
-    expect(probeVerdict({ works: works(12), gaps }).tier).toBe('low');
-    const late = gaps.map((gap, i) => (i < 3 ? 40 : gap));
+    const works = (ms: number) => Array.from({ length: 30 }, (_, i) => (i < 3 ? 40 : ms));
+    const gaps = Array.from({ length: 30 }, () => 8.3);
+    expect(probeVerdict({ works: works(3.5), gaps })).toMatchObject({ tier: 'high', workMs: 3.5 });
+    expect(probeVerdict({ works: works(5.8), gaps }).tier).toBe('mid');
+    expect(probeVerdict({ works: works(8), gaps }).tier).toBe('low');
+    const late = gaps.map((gap, i) => (i < 4 ? 40 : gap));
     expect(probeVerdict({ works: works(3), gaps: late })).toMatchObject({
       tier: 'low',
-      dropped: 3,
+      dropped: 4,
     });
   });
 });
 
 describe('the frame-time feedback', () => {
-  const run = (frames: number, sample: (i: number) => { gap: number; work: number }) => {
+  type Frame = { gap: number; work: number };
+  const run = (frames: number, sample: (i: number) => Frame, climbWork = 1 / 120) => {
     const { createPace, notePace, noteBeat } = modules.pace;
     const pace = createPace();
     const shifts: number[] = [];
@@ -69,28 +70,47 @@ describe('the frame-time feedback', () => {
       const { gap, work } = sample(i);
       now += gap;
       noteBeat(pace, gap);
-      const shift = notePace(
-        pace,
-        { now, work, interval: 1 / 120 },
-        { climb: true, patience: 300 }
-      );
+      const shift = notePace(pace, { now, work, interval: 1 / 60 }, { climbWork, patience: 3 });
       if (shift !== 0) shifts.push(shift);
     }
     return shifts;
   };
+  const at60 = (work: number) => () => ({ gap: 1 / 60, work });
 
   test('a sustained run of long frames steps down once, a passing hitch never', () => {
-    expect(run(60, () => ({ gap: 1 / 120, work: 0.007 }))).toEqual([-1]);
-    expect(run(600, (i) => ({ gap: 1 / 120, work: i % 10 === 0 ? 0.02 : 0.002 }))).toEqual([]);
+    expect(run(60, at60(0.014))).toEqual([-1]);
+    const hitch = (i: number) => ({ gap: 1 / 60, work: i % 30 === 0 ? 0.03 : 0.009 });
+    expect(run(600, hitch)).toEqual([]);
   });
 
-  test('it climbs only after a long stretch of short frames', () => {
-    expect(run(299, () => ({ gap: 1 / 120, work: 0.002 }))).toEqual([]);
-    expect(run(301, () => ({ gap: 1 / 120, work: 0.002 }))).toEqual([1]);
-    expect(run(400, () => ({ gap: 1 / 120, work: 0.004 }))).toEqual([]);
+  test('three seconds of headroom step up once; frames over the climb budget never do', () => {
+    expect(run(170, at60(0.004))).toEqual([]);
+    expect(run(185, at60(0.004))).toEqual([1]);
+    expect(run(600, at60(0.009))).toEqual([]);
+    expect(run(600, at60(0.004), 0)).toEqual([]);
+  });
+
+  test('headroom that keeps breaking does not add up to a climb', () => {
+    const shaky = (i: number) => ({ gap: 1 / 60, work: i % 4 === 0 ? 0.0095 : 0.004 });
+    expect(run(900, shaky)).toEqual([]);
+  });
+
+  test('the beat is the display period, not a late frame caught up in a burst', () => {
+    const { createPace, noteBeat } = modules.pace;
+    const pace = createPace();
+    for (const since of [1 / 120, 0.0006, 1 / 120, 0.001, 1 / 60]) noteBeat(pace, since);
+    expect(pace.beat).toBeCloseTo(1 / 120, 4);
   });
 
   test('a 60 Hz screen is not late for a 120 fps tier', () => {
-    expect(run(400, () => ({ gap: 1 / 60, work: 0.004 }))).toEqual([]);
+    const { createPace, notePace, noteBeat } = modules.pace;
+    const pace = createPace();
+    let shifts = 0;
+    for (let i = 1; i <= 400; i++) {
+      noteBeat(pace, 1 / 60);
+      const sample = { now: 1 + i / 60, work: 0.004, interval: 1 / 120 };
+      shifts += Math.abs(notePace(pace, sample, { climbWork: 0, patience: 3 }));
+    }
+    expect(shifts).toBe(0);
   });
 });

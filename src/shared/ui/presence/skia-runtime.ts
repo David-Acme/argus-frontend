@@ -9,6 +9,7 @@ import {
   createScene,
   disposeScene,
   endFrame,
+  fadeFrame,
   flushAtlas,
   setCompositing,
   strokeToAtlas,
@@ -17,12 +18,15 @@ import {
   type SkiaScene,
 } from './skia-scene';
 
+export type Ahead = { frame: Frame; work: number; interval: number };
+
 export type Runtime = {
   driver: Driver;
   scene: SkiaScene;
   sinks: Sinks;
   key: string;
   pace: Pace;
+  ahead: Ahead | null;
 };
 
 export type Spec = { count: number; seed: number; ratio: number };
@@ -61,16 +65,38 @@ export function prepare(current: Runtime | null, { look, spec, shown }: Swap): R
     sinks: sinksFor(scene, spec.count > 0),
     key,
     pace: current ? current.pace : createPace(),
+    ahead: null,
   };
+}
+
+export function canPaintAhead(runtime: Runtime): boolean {
+  'worklet';
+  return runtime.driver.engine.particles.length > 0;
+}
+
+export function paintAhead(runtime: Runtime, frame: Frame): void {
+  'worklet';
+  runtime.scene.used = 0;
+  paintFrame(runtime.driver, frame, runtime.sinks);
+}
+
+export function present(runtime: Runtime, frame: Frame, fade: number): SkImage {
+  'worklet';
+  const { scene } = runtime;
+  fadeFrame(scene, fade < 1 ? (frame.stepped ? fade : 0) : 1);
+  flushAtlas(scene, frame.palette.additive);
+  return endFrame(scene);
 }
 
 export function draw(runtime: Runtime, frame: Frame, fade: number): SkImage {
   'worklet';
   const { scene, driver } = runtime;
-  const particles = driver.engine.particles.length > 0;
-  beginFrame(scene, particles && fade < 1 ? (frame.stepped ? fade : 0) : 1);
+  if (canPaintAhead(runtime)) {
+    paintAhead(runtime, frame);
+    return present(runtime, frame, fade);
+  }
+  beginFrame(scene, 1);
   paintFrame(driver, frame, runtime.sinks);
-  if (particles) flushAtlas(scene, frame.palette.additive);
   return endFrame(scene);
 }
 

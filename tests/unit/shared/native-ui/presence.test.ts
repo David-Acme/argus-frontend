@@ -11,6 +11,7 @@ type Modules = {
   canvas: typeof import('@/shared/ui/presence/presence-canvas');
   plan: typeof import('@/shared/ui/presence/plan');
   runtime: typeof import('@/shared/ui/presence/skia-runtime');
+  loop: typeof import('@/shared/ui/presence/frame-loop');
 };
 
 let modules: Modules;
@@ -27,8 +28,8 @@ const canvasProps = {
     still: false,
     leanWhileScrolling: true,
     watch: false,
-    climb: false,
-    patience: 300,
+    climbWork: 0,
+    patience: 3,
   },
   look: {
     size: 120,
@@ -68,8 +69,22 @@ beforeAll(async () => {
     canvas: await import('@/shared/ui/presence/presence-canvas'),
     plan: await import('@/shared/ui/presence/plan'),
     runtime: await import('@/shared/ui/presence/skia-runtime'),
+    loop: await import('@/shared/ui/presence/frame-loop'),
   };
 });
+
+const activeInput = {
+  get: () => ({
+    state: 'listen',
+    resting: false,
+    intensity: 0.5,
+    targetX: 0.3,
+    targetY: 0,
+    eventName: null,
+    eventId: 0,
+    active: true,
+  }),
+} as never;
 
 describe('Presence', () => {
   test('it is decorative unless it is given a label', () => {
@@ -162,6 +177,29 @@ describe('Presence', () => {
     expect(calls.disposed).not.toContain('shown');
     modules.runtime.release(second, null);
     expect(calls.disposed.filter((name) => name === 'surface').length).toBe(2);
+  });
+
+  test('at 60 fps on a 120 Hz screen the skipped vsync paints ahead and the drawn one only presents', () => {
+    calls.drawAtlas.length = 0;
+    const look = { ...canvasProps.look, size: 300, activeFps: 60, restFps: 30 };
+    const live = { ...canvasProps.live, input: activeInput };
+    const runtime = modules.runtime.prepare(null, {
+      look,
+      spec: { count: 560, seed: 9, ratio: 2 },
+      shown: null,
+    });
+    if (!runtime) throw new Error('no runtime');
+    const drawn: (number | null)[] = [];
+    for (let i = 0; i <= 24; i++) {
+      const job = { now: 1 + i / 120, since: 1 / 120, live, look, fade: 0.17 };
+      const out = modules.loop.stepFrame(runtime, job);
+      drawn.push(out ? i : null);
+      if (i > 2 && !out) expect(runtime.ahead).not.toBeNull();
+    }
+    const frames = drawn.filter((i) => i !== null);
+    expect(frames.length).toBeGreaterThanOrEqual(12);
+    expect(frames.length).toBeLessThanOrEqual(13);
+    expect(calls.drawAtlas.length).toBe(frames.length);
   });
 
   test('the web renderer is a plain canvas sized for the device pixels', () => {
