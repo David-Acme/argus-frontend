@@ -24,7 +24,7 @@ const buttonVariants = cva(
   cn(
     'group shrink-0 flex-row items-center justify-center gap-2 rounded-lg shadow-none',
     Platform.select({
-      web: "focus-visible:border-accent focus-visible:ring-accent/50 aria-invalid:ring-error/20 dark:aria-invalid:ring-error/40 aria-invalid:border-error whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+      web: "focus-visible:border-legacy-accent focus-visible:ring-legacy-accent/50 aria-invalid:ring-error/20 dark:aria-invalid:ring-error/40 aria-invalid:border-error whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     })
   ),
   {

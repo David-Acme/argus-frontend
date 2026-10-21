@@ -37,7 +37,7 @@ export function BottomNav({
               hitSlop={{ top: (BOTTOM_NAV_TAB_SIZE - tabSize) / 2 + 2, bottom: (BOTTOM_NAV_TAB_SIZE - tabSize) / 2 + 2 }}
               className={cn(
                 'items-center justify-center rounded-full active:opacity-70',
-                selected ? 'bg-surface shadow-sm shadow-black/10' : 'bg-transparent'
+                selected ? 'bg-legacy-surface shadow-sm shadow-black/10' : 'bg-transparent'
               )}
               onPress={() => onNavigate(item.tab)}>
               <Icon

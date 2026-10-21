@@ -46,7 +46,7 @@ export function NavRail({ active }: NavRailProps) {
               className={cn(
                 target,
                 'items-center justify-center rounded-xl active:opacity-70',
-                selected ? 'bg-surface shadow-sm shadow-black/10' : 'web:hover:bg-surface-secondary/60 bg-transparent'
+                selected ? 'bg-legacy-surface shadow-sm shadow-black/10' : 'web:hover:bg-surface-secondary/60 bg-transparent'
               )}
               onHoverIn={() => showHint(item.tab)}
               onHoverOut={() => hideHint(item.tab)}

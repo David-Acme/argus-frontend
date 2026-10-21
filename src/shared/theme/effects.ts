@@ -1,5 +1,5 @@
 import * as Device from 'expo-device';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { IS_ANDROID } from '@/shared/constants';
@@ -84,20 +84,32 @@ export const useEffectsOverrides = create<EffectsOverrides>(() => ({
   perfTier: null,
 }));
 
-function useAccessibilityFlag(flag: SystemFlag): boolean {
-  const [enabled, setEnabled] = useState(false);
-  useEffect(() => {
-    let active = true;
-    void readSystemFlag(flag).then((value) => {
-      if (active) setEnabled(value);
-    });
-    const stop = watchSystemFlag(flag, setEnabled);
-    return () => {
-      active = false;
-      stop();
-    };
-  }, [flag]);
-  return enabled;
+type SystemFlags = Record<SystemFlag, boolean>;
+
+const useSystemFlags = create<SystemFlags>(() => ({
+  reduceMotion: false,
+  reduceTransparency: false,
+}));
+
+const SYSTEM_FLAGS: readonly SystemFlag[] = ['reduceMotion', 'reduceTransparency'];
+
+let listening = false;
+
+function setSystemFlag(flag: SystemFlag, enabled: boolean): void {
+  useSystemFlags.setState(
+    flag === 'reduceMotion' ? { reduceMotion: enabled } : { reduceTransparency: enabled }
+  );
+}
+
+function listenToSystemFlags(): void {
+  if (listening) return;
+  listening = true;
+  for (const flag of SYSTEM_FLAGS) {
+    readSystemFlag(flag)
+      .then((enabled) => setSystemFlag(flag, enabled))
+      .catch(() => undefined);
+    watchSystemFlag(flag, (enabled) => setSystemFlag(flag, enabled));
+  }
 }
 
 export type Effects = {
@@ -111,9 +123,10 @@ export type Effects = {
 };
 
 export function useEffects(): Effects {
+  useEffect(listenToSystemFlags, []);
   const overrides = useEffectsOverrides();
-  const systemMotion = useAccessibilityFlag('reduceMotion');
-  const systemTransparency = useAccessibilityFlag('reduceTransparency');
+  const systemMotion = useSystemFlags((flags) => flags.reduceMotion);
+  const systemTransparency = useSystemFlags((flags) => flags.reduceTransparency);
   const evidence = useAutoTier();
   const input: TierInput = {
     profile: hardwareProfile,

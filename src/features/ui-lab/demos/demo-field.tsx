@@ -57,11 +57,15 @@ export function DemoField({
   const { theme } = useUniwind();
   const palette = color[theme === 'dark' ? 'dark' : 'light'];
   const [focused, setFocused] = useState(false);
+  const labelTone = { color: palette.text };
+  const box = {
+    color: palette.text,
+    backgroundColor: focused ? palette.surface : palette.fill,
+    borderColor: focused ? palette.text : 'transparent',
+  };
   return (
     <View style={styles.field}>
-      <Text
-        maxFontSizeMultiplier={typeRoles.label.maxScale}
-        style={[styles.label, { color: palette.text }]}>
+      <Text maxFontSizeMultiplier={typeRoles.label.maxScale} style={[styles.label, labelTone]}>
         {label}
       </Text>
       <TextInput
@@ -80,15 +84,7 @@ export function DemoField({
         accessibilityLabel={label}
         testID={testID}
         maxFontSizeMultiplier={type.body.maxScale}
-        style={[
-          styles.input,
-          multiline && styles.multi,
-          {
-            color: palette.text,
-            backgroundColor: focused ? palette.surface : palette.fill,
-            borderColor: focused ? palette.text : 'transparent',
-          },
-        ]}
+        style={[styles.input, multiline && styles.multi, box]}
       />
     </View>
   );

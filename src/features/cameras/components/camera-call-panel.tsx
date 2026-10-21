@@ -73,7 +73,7 @@ function LevelMeter({ icon, label, level }: LevelMeterProps) {
         {Array.from({ length: BARS }, (_, index) => (
           <View
             key={index}
-            className={cn('flex-1 rounded-sm', index < lit ? 'bg-accent' : 'bg-surface-secondary')}
+            className={cn('flex-1 rounded-legacy-sm', index < lit ? 'bg-legacy-accent' : 'bg-surface-secondary')}
             style={{ height: `${40 + (index / BARS) * 60}%` }}
           />
         ))}
@@ -246,7 +246,7 @@ export function CameraCallPanel({
             onPressOut={controls.release}
             className={cn(
               'h-16 flex-row items-center justify-center gap-2 rounded-2xl',
-              snapshot.talking ? 'bg-accent' : 'bg-interactive',
+              snapshot.talking ? 'bg-legacy-accent' : 'bg-interactive',
             )}>
             <Icon name="mic" className="text-foreground-on-interactive size-5" />
             <Text className="text-foreground-on-interactive font-semibold">

@@ -2,6 +2,17 @@ export const common = {
 
   continue: 'Continue',
   step: 'Step {current} of {total}',
+  overlay: {
+    toasts: 'Notices',
+    'command-label': 'Search or ask Argus',
+    'command-ask-group': 'Ask Argus',
+    'command-ask': '“{query}…” — ask Argus',
+    'command-move': '↑↓ move',
+    'command-open': '↵ open',
+    'command-close': 'Esc close · click outside closes',
+    'key-escape': 'Esc',
+    'key-enter': '↵',
+  },
   retry: 'Retry',
   undo: 'Undo',
   'permission-prompt': {

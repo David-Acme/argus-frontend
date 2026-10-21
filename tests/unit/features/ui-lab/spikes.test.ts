@@ -1,6 +1,10 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
-import { captured, installNativeUiMocks, markupRenderer } from '../../shared/ui/native-ui-mocks';
+import {
+  captured,
+  installNativeUiMocks,
+  markupRenderer,
+} from '../../shared/native-ui/native-ui-mocks';
 
 installNativeUiMocks();
 Object.assign(globalThis, { __DEV__: true });

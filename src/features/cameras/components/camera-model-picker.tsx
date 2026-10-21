@@ -89,7 +89,7 @@ const ModelCard = memo(function ModelCard({ model, selected, onSelect }: ModelCa
       onPress={() => onSelect(model)}
       className={cn(
         'bg-surface-secondary dark:bg-card-secondary web:hover:opacity-90 flex-1 items-center gap-1.5 rounded-2xl border-2 px-2 pt-2 pb-3 active:opacity-80',
-        selected ? 'border-accent' : 'border-transparent'
+        selected ? 'border-legacy-accent' : 'border-transparent'
       )}>
       <CameraIllustration formFactor={model.formFactor} size={88} />
       <Text variant="label" numberOfLines={1} className="text-center">

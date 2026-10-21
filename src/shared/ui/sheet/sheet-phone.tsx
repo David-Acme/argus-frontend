@@ -31,15 +31,12 @@ type FooterSlotProps = {
 };
 
 function FooterSlot({ actions, long, theme, inset, onHeight }: FooterSlotProps) {
+  const edge = { borderColor: theme.line, backgroundColor: theme.surface };
+  const pad = { paddingBottom: FOOTER_PAD + inset };
   return (
     <View
       onLayout={(event) => onHeight(event.nativeEvent.layout.height)}
-      style={[
-        styles.footer,
-        long && styles.tallFooter,
-        { borderColor: theme.line, backgroundColor: theme.surface },
-        { paddingBottom: FOOTER_PAD + inset },
-      ]}>
+      style={[styles.footer, long && styles.tallFooter, edge, pad]}>
       <PhoneFooter primary={actions.primary} more={actions.more} theme={theme} />
     </View>
   );
@@ -109,6 +106,7 @@ export function SheetPhone(props: SheetProps) {
     height: size.grabberHeight,
     color: withAlpha(theme['text-3'], GRABBER_ALPHA),
   };
+  const headerLine = { borderColor: theme.line };
 
   return (
     <TrueSheet
@@ -117,7 +115,7 @@ export function SheetPhone(props: SheetProps) {
       scrollable={long}
       scrollableOptions={{ keyboardScrollOffset: CEILING_GAP + footerHeight }}
       header={
-        <View style={[styles.header, long && styles.tallHeader, { borderColor: theme.line }]}>
+        <View style={[styles.header, long && styles.tallHeader, headerLine]}>
           <SheetHeader
             title={title}
             closeLabel={closeLabel}

@@ -110,7 +110,7 @@ export default function PairingScreen() {
                 <Text>{t('screens.pairing.scan')}</Text>
               </Button>
             ) : (
-              <View className="border-border bg-surface flex-row items-center gap-3 rounded-xl border px-4 py-3">
+              <View className="border-border bg-legacy-surface flex-row items-center gap-3 rounded-xl border px-4 py-3">
                 <Icon name="monitor" className="text-accent-strong size-5" />
                 <Text variant="body" className="flex-1">
                   {t('screens.pairing.desktop-hint')}

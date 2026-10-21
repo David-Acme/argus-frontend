@@ -146,7 +146,7 @@ export function CalendarDayView({
                         : undefined
                     }
                     className={cn('group h-8 flex-row items-center gap-2 rounded-lg px-2', slotHover)}>
-                    <View className={cn('h-hairline flex-1', current ? 'bg-accent' : 'bg-divider/70')} />
+                    <View className={cn('h-hairline flex-1', current ? 'bg-legacy-accent' : 'bg-divider/70')} />
                     {onCreateAt ? (
                       <Icon name="plus" className="text-muted-foreground web:opacity-0 web:group-hover:opacity-100 size-3.5" />
                     ) : null}

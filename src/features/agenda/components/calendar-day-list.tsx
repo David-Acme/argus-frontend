@@ -96,14 +96,14 @@ export function CalendarDayList({
               item.status === 'complete'
                 ? 'bg-success'
                 : item.source === 'task'
-                  ? 'bg-accent'
+                  ? 'bg-legacy-accent'
                   : 'bg-interactive'
             )}
           />
           <View className="min-w-0 flex-1">
             <Text
               className={cn(
-                'text-body font-medium',
+                'text-legacy-body font-medium',
                 item.status === 'complete'
                   ? 'text-muted-foreground line-through'
                   : 'text-foreground'

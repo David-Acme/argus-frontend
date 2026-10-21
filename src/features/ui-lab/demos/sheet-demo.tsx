@@ -3,6 +3,7 @@ import { View, type TextInput } from 'react-native';
 import { Button } from '@/shared/components/ui/button';
 import { Text } from '@/shared/components/ui/text';
 import { Sheet } from '@/shared/ui/sheet';
+import { LabCase } from '../components/lab-case';
 import { DemoField } from './demo-field';
 import { sheetCopy } from './demo-copy';
 
@@ -78,40 +79,42 @@ export function SheetDemo() {
   const first = refs[0] ?? createRef<TextInput>();
 
   return (
-    <View className="gap-3" testID="sheet-demo">
-      <Button onPress={() => setMode('long')} testID="spike-open-long">
-        <Text>{sheetCopy.openLong}</Text>
-      </Button>
-      <Button variant="secondary" onPress={() => setMode('short')} testID="spike-open-short">
-        <Text>{sheetCopy.openShort}</Text>
-      </Button>
-      <Text variant="caption" testID="spike-saved">
-        {`${sheetCopy.saved} ${saved}`}
-      </Text>
-      <Sheet
-        open={mode !== null}
-        onClose={close}
-        title={mode === 'short' ? sheetCopy.shortTitle : sheetCopy.longTitle}
-        variant="form"
-        long={mode === 'long'}
-        dirty={dirtyName(values, mode === 'short' ? 'reminder' : 'title')}
-        actions={{
-          primary: { label: sheetCopy.save, onPress: save, testID: 'spike-save' },
-          more:
-            mode === 'long'
-              ? { label: sheetCopy.more, onPress: () => undefined, testID: 'spike-more' }
-              : undefined,
-        }}
-        initialFocus={first}
-        testID="spike-sheet">
-        <DemoForm
-          fields={fields}
-          values={values}
-          onChange={(key, value) => setValues((current) => ({ ...current, [key]: value }))}
-          refs={refs}
-          onSubmit={save}
-        />
-      </Sheet>
-    </View>
+    <LabCase id="sheet" block>
+      <View className="gap-3" testID="sheet-demo">
+        <Button onPress={() => setMode('long')} testID="spike-open-long">
+          <Text>{sheetCopy.openLong}</Text>
+        </Button>
+        <Button variant="secondary" onPress={() => setMode('short')} testID="spike-open-short">
+          <Text>{sheetCopy.openShort}</Text>
+        </Button>
+        <Text variant="caption" testID="spike-saved">
+          {`${sheetCopy.saved} ${saved}`}
+        </Text>
+        <Sheet
+          open={mode !== null}
+          onClose={close}
+          title={mode === 'short' ? sheetCopy.shortTitle : sheetCopy.longTitle}
+          variant="form"
+          long={mode === 'long'}
+          dirty={dirtyName(values, mode === 'short' ? 'reminder' : 'title')}
+          actions={{
+            primary: { label: sheetCopy.save, onPress: save, testID: 'spike-save' },
+            more:
+              mode === 'long'
+                ? { label: sheetCopy.more, onPress: () => undefined, testID: 'spike-more' }
+                : undefined,
+          }}
+          initialFocus={first}
+          testID="spike-sheet">
+          <DemoForm
+            fields={fields}
+            values={values}
+            onChange={(key, value) => setValues((current) => ({ ...current, [key]: value }))}
+            refs={refs}
+            onSubmit={save}
+          />
+        </Sheet>
+      </View>
+    </LabCase>
   );
 }

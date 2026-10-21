@@ -1,5 +1,13 @@
 import ts from 'typescript';
 import { countNodes, type SourceFile } from '../source-files';
+import {
+  flagReads,
+  inlineStyleObjects,
+  platformSelects,
+  reactNativeImports,
+  uncheckedHttp,
+} from './binding-counters';
+import { builtKeys } from './translation-keys';
 
 export type Counter = {
   name: string;
@@ -13,7 +21,6 @@ const outsideTheme = (path: string) => inSource(path) && !path.startsWith('src/s
 
 const COLOR = /#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?|oklch)\(/g;
 const ARBITRARY = /(?:^|[\s:'"`])!?-?[a-z][a-z0-9-]*-\[[^\]\s]+\]/g;
-const HTTP_METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'postMultipart']);
 const MEMO_CALLS = new Set(['useCallback', 'useMemo', 'memo']);
 
 function stringText(node: ts.Node): string | null {
@@ -38,66 +45,6 @@ function calleeName(node: ts.CallExpression): string | null {
   if (ts.isIdentifier(node.expression)) return node.expression.text;
   if (ts.isPropertyAccessExpression(node.expression)) return node.expression.name.text;
   return null;
-}
-
-function importsNamed(file: SourceFile, module: string, names: ReadonlySet<string>): number {
-  return countNodes(
-    file,
-    (node) =>
-      ts.isImportSpecifier(node) &&
-      names.has((node.propertyName ?? node.name).text) &&
-      ts.isStringLiteral(node.parent.parent.parent.moduleSpecifier) &&
-      node.parent.parent.parent.moduleSpecifier.text === module
-  );
-}
-
-function isStyleObject(node: ts.Node): boolean {
-  return (
-    ts.isJsxAttribute(node) &&
-    node.name.getText() === 'style' &&
-    node.initializer !== undefined &&
-    ts.isJsxExpression(node.initializer) &&
-    node.initializer.expression !== undefined &&
-    ts.isObjectLiteralExpression(node.initializer.expression)
-  );
-}
-
-function isTemplateKey(node: ts.Node): boolean {
-  if (!ts.isCallExpression(node) || calleeName(node) !== 't') return false;
-  const first = node.arguments[0];
-  return first !== undefined && ts.isTemplateExpression(first);
-}
-
-function unwrapAwait(node: ts.Node): ts.Node {
-  let current = node;
-  while (ts.isAwaitExpression(current.parent) || ts.isParenthesizedExpression(current.parent))
-    current = current.parent;
-  return current;
-}
-
-function isUncheckedHttp(node: ts.Node): boolean {
-  if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) return false;
-  const target = node.expression.expression;
-  if (!ts.isIdentifier(target) || target.text !== 'httpService') return false;
-  if (!HTTP_METHODS.has(node.expression.name.text)) return false;
-  const outer = unwrapAwait(node).parent;
-  const passedOn = ts.isCallExpression(outer) && outer.expression !== unwrapAwait(node);
-  const opaque = node.typeArguments?.[0]?.kind === ts.SyntaxKind.UnknownKeyword;
-  return !passedOn && !opaque;
-}
-
-function isIsFlag(node: ts.Node): boolean {
-  return (
-    ts.isIdentifier(node) && /^IS_[A-Z_]+$/.test(node.text) && !ts.isImportSpecifier(node.parent)
-  );
-}
-
-function isPlatformSelect(node: ts.Node): boolean {
-  return (
-    ts.isCallExpression(node) &&
-    ts.isPropertyAccessExpression(node.expression) &&
-    node.expression.getText() === 'Platform.select'
-  );
 }
 
 export function memoSymbol(node: ts.Node): string {
@@ -168,25 +115,24 @@ function membersOver(node: ts.Node, limit: number): boolean {
 export const syntaxCounters: readonly Counter[] = [
   { name: 'hex-literal', applies: outsideTheme, count: (file) => countInStrings(file, COLOR) },
   { name: 'arbitrary-value', applies: inSource, count: (file) => countInStrings(file, ARBITRARY) },
-  { name: 'style-object', applies: inSource, count: (file) => countNodes(file, isStyleObject) },
+  { name: 'style-object', applies: inSource, count: inlineStyleObjects },
   {
     name: 'raw-pressable-in-features',
     applies: inFeatures,
-    count: (file) => importsNamed(file, 'react-native', new Set(['Pressable'])),
+    count: (file) => reactNativeImports(file, new Set(['Pressable'])),
   },
   {
     name: 'window-dimensions-in-features',
     applies: inFeatures,
-    count: (file) =>
-      importsNamed(file, 'react-native', new Set(['useWindowDimensions', 'Dimensions'])),
+    count: (file) => reactNativeImports(file, new Set(['useWindowDimensions', 'Dimensions'])),
   },
-  { name: 'template-key', applies: inSource, count: (file) => countNodes(file, isTemplateKey) },
-  { name: 'http-unchecked', applies: inSource, count: (file) => countNodes(file, isUncheckedHttp) },
-  { name: 'is-flag-in-features', applies: inFeatures, count: (file) => countNodes(file, isIsFlag) },
+  { name: 'template-key', applies: inSource, count: builtKeys },
+  { name: 'http-unchecked', applies: inSource, count: uncheckedHttp },
+  { name: 'is-flag-in-features', applies: inFeatures, count: flagReads },
   {
     name: 'platform-select',
     applies: inSource,
-    count: (file) => countNodes(file, isPlatformSelect),
+    count: platformSelects,
   },
   { name: 'animated-layout-prop', applies: inSource, count: animatedLayoutProps },
   {

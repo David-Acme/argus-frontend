@@ -96,6 +96,13 @@ export function SheetDialog(props: SheetProps) {
   const shadow = useSheetElevation();
   const { height } = useWindowDimensions();
   const discard = useDiscard(dirty, onClose);
+  const scrim = { backgroundColor: theme.scrim };
+  const panel = {
+    width: long ? layout.dialogLong : layout.dialog,
+    maxHeight: height - EDGE * 2,
+    backgroundColor: theme.surface,
+    boxShadow: shadow,
+  };
   const escape = (event: Event) => {
     event.preventDefault();
     if (discard.asking) discard.keep();
@@ -114,7 +121,7 @@ export function SheetDialog(props: SheetProps) {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           closeOnPress={false}
-          style={StyleSheet.flatten([styles.overlay, { backgroundColor: theme.scrim }])}
+          style={StyleSheet.flatten([styles.overlay, scrim])}
           onPress={IS_WEB ? undefined : discard.requestClose}>
           <DialogPrimitive.Content
             testID={testID}
@@ -125,15 +132,7 @@ export function SheetDialog(props: SheetProps) {
               event.preventDefault();
               initialFocus.current.focus();
             }}
-            style={StyleSheet.flatten([
-              styles.content,
-              {
-                width: long ? layout.dialogLong : layout.dialog,
-                maxHeight: height - EDGE * 2,
-                backgroundColor: theme.surface,
-                boxShadow: shadow,
-              },
-            ])}>
+            style={StyleSheet.flatten([styles.content, panel])}>
             <View style={styles.header}>
               <DialogPrimitive.Title asChild>
                 <SheetTitle title={title} theme={theme} dialog />

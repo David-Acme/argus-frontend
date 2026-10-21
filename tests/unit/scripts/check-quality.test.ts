@@ -160,4 +160,113 @@ describe('check-quality', () => {
     expect(fresh.output).toContain('untested-component-or-screen: src/features/a/card.tsx is new');
     expect(fixed.output).toContain('src/features/a/card.tsx is fixed');
   });
+
+  test('a built or cast translation key is counted, a key map read is not', () => {
+    const file = [
+      "import type { TranslationKey } from '@/core/i18n';",
+      'declare const t: (key: TranslationKey) => string;',
+      'const translate = t;',
+      'export const labels = (id: string, LABELS: Record<string, TranslationKey>) => [',
+      "  t('home.' + id),",
+      '  translate(`home.${id}`),',
+      "  t(['home', id].join('.') as TranslationKey),",
+      '  t(LABELS[id] ?? LABELS.unknown),',
+      '];',
+    ].join('\n');
+    const run = quality({ 'src/shared/lib/labels.ts': file }, baseline({}, 1));
+    expect(run.output).toContain('template-key: 4 is above its baseline 0');
+  });
+
+  test('a visual timer reached through an alias or a computed name is counted', () => {
+    const screen = [
+      'export function Screen() {',
+      '  const tick = requestAnimationFrame;',
+      '  tick(() => undefined);',
+      '  return null;',
+      '}',
+    ].join('\n');
+    const run = quality(
+      { 'src/features/a/screen.tsx': screen },
+      baseline({}, 1),
+      'src/features/a/screen.tsx\n'
+    );
+    expect(run.output).toContain('timer-in-component: 1 is above its baseline 0');
+  });
+
+  test('a test that imports a component only as a type does not test it', () => {
+    const component =
+      'export type CardProps = { id: string };\nexport function Card() {\n  return null;\n}\n';
+    const typed =
+      "import type { CardProps } from '@/features/a/card';\nexport const props: CardProps = { id: 'x' };\n";
+    const run = quality(
+      { 'src/features/a/card.tsx': component, 'tests/unit/card.test.ts': typed },
+      baseline({}, 2)
+    );
+    expect(run.output).toContain('untested-component-or-screen: src/features/a/card.tsx is new');
+  });
+
+  test('a test that loads a component with a lazy import() tests it', () => {
+    const component = 'export function Card() {\n  return null;\n}\n';
+    const lazy = "const { Card } = await import('@/features/a/card');\nexport const used = Card;\n";
+    const run = quality(
+      { 'src/features/a/card.tsx': component, 'tests/unit/card.test.ts': lazy },
+      baseline({}, 2)
+    );
+    expect(run.status).toBe(0);
+  });
+
+  test('a namespace import, an alias and a computed member reach the counters', () => {
+    const screen = [
+      "import * as RN from 'react-native';",
+      "import { IS_WEB as web } from '@/shared/constants';",
+      "import { httpService } from '@/core/services/http';",
+      'const http = httpService;',
+      'const { get } = httpService;',
+      'export async function Screen() {',
+      "  await withTimeout(http.get('/a'), 10);",
+      "  await get('/b');",
+      "  await parsed(httpService.get('/c'));",
+      "  const pad = RN.Platform['select']({ web: 1, default: 2 });",
+      '  return web ? <RN.Pressable style={[{ padding: pad }]} /> : null;',
+      '}',
+    ].join('\n');
+    const run = quality(
+      { 'src/features/a/screen.tsx': screen },
+      baseline({}, 1),
+      'src/features/a/screen.tsx\n'
+    );
+    for (const [metric, count] of [
+      ['raw-pressable-in-features', 1],
+      ['is-flag-in-features', 1],
+      ['http-unchecked', 2],
+      ['platform-select', 1],
+      ['style-object', 1],
+    ] as const) {
+      expect(run.output).toContain(`${metric}: ${count} is above its baseline 0`);
+    }
+  });
+
+  test('a memo exception without a reason, naming nothing or naming a whole component fails', () => {
+    const file = [
+      "import { memo, useMemo } from 'react';",
+      'export const Card = memo(function Card() {',
+      '  return useMemo(() => null, []);',
+      '});',
+    ].join('\n');
+    const run = quality(
+      {
+        'src/shared/ui-kit/card.tsx': file,
+        'scripts/lib/memo-exceptions.txt': [
+          'src/shared/ui-kit/card.tsx Card measured',
+          'src/shared/ui-kit/card.tsx gone measured',
+          'src/shared/ui-kit/card.tsx Card',
+        ].join('\n'),
+      },
+      baseline({}, 1),
+      'src/shared/ui-kit/card.tsx\n'
+    );
+    expect(run.output).toContain('src/shared/ui-kit/card.tsx Card names 2 memoizations');
+    expect(run.output).toContain('src/shared/ui-kit/card.tsx gone names no manual memoization');
+    expect(run.output).toContain('src/shared/ui-kit/card.tsx Card has no reason');
+  });
 });

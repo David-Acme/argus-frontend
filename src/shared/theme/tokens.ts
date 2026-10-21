@@ -1,3 +1,8 @@
+import { auraField, chromeElevation, chromeSize, type ChromeShadow } from './chrome-tokens';
+import { illustration } from './illustration';
+import { inset } from './inset';
+import { fontFamily, type, typeRoles } from './typography';
+
 export const themeNames = ['light', 'dark'] as const;
 
 export type TokenTheme = (typeof themeNames)[number];
@@ -23,9 +28,12 @@ const light = {
   alert: '#CC3535',
   'alert-soft': '#FBE4E2',
   scrim: 'rgba(20,18,16,0.32)',
+  'scrim-soft': 'rgba(0,0,0,0.18)',
   glass: 'rgba(255,255,255,0.66)',
   'glass-line': 'rgba(255,255,255,0.7)',
   'glass-edge': 'rgba(0,0,0,0.06)',
+  'glass-side': 'rgba(255,255,255,0.55)',
+  'tab-on': 'rgba(22,22,22,0.09)',
   skel: '#ECE9E4',
   'skel-2': '#F5F3F0',
   ev1: '#EFE4D0',
@@ -36,6 +44,7 @@ const light = {
   'ev3-text': '#2F4366',
   ev4: '#F2E1DF',
   'ev4-text': '#6E2F28',
+  'on-media': '#FFFFFF',
 } as const;
 
 const dark = {
@@ -59,9 +68,12 @@ const dark = {
   alert: '#C9706B',
   'alert-soft': '#3A1F1C',
   scrim: 'rgba(0,0,0,0.5)',
+  'scrim-soft': 'rgba(0,0,0,0.18)',
   glass: 'rgba(40,38,32,0.66)',
   'glass-line': 'rgba(255,255,255,0.08)',
   'glass-edge': 'rgba(255,255,255,0.06)',
+  'glass-side': 'rgba(36,35,30,0.55)',
+  'tab-on': 'rgba(244,239,231,0.09)',
   skel: '#24221F',
   'skel-2': '#2C2A26',
   ev1: '#3A2F1C',
@@ -72,6 +84,7 @@ const dark = {
   'ev3-text': '#B4C6E6',
   ev4: '#3A2321',
   'ev4-text': '#F0BDB6',
+  'on-media': '#FFFFFF',
 } as const satisfies Record<keyof typeof light, string>;
 
 export type ColorRole = keyof typeof light;
@@ -101,96 +114,52 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
   },
 };
 
-export const elevation: Record<TokenTheme, Record<'card' | 'float', string>> = {
+export const elevation: Record<
+  TokenTheme,
+  Record<
+    | 'card'
+    | 'float'
+    | 'thumb'
+    | 'glass'
+    | 'glassInset'
+    | 'ring'
+    | 'ringInset'
+    | 'segment'
+    | ChromeShadow,
+    string
+  >
+> = {
   light: {
     card: '0px 1px 2px 0px rgba(60,45,30,0.05), 0px 6px 20px 0px rgba(60,45,30,0.06)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.06), 0px 10px 32px 0px rgba(0,0,0,0.12)',
+    thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
+    glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 1px 2px 0px rgba(0,0,0,0.06)',
+    glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7)',
+    ring: '0px 0px 0px 1px #ECE8E2',
+    ringInset: 'inset 0px 0px 0px 1px #ECE8E2',
+    segment: '0px 1px 3px 0px rgba(0,0,0,0.1)',
+    ...chromeElevation.light,
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
+    thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
+    glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 1px 2px 0px rgba(255,255,255,0.06)',
+    glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08)',
+    ring: '0px 0px 0px 1px #2D2A25',
+    ringInset: 'inset 0px 0px 0px 1px #2D2A25',
+    segment: '0px 1px 3px 0px rgba(0,0,0,0.1)',
+    ...chromeElevation.dark,
   },
 };
 
-export const illustration = {
-  media: '#2A2622',
-  onMedia: '#FFFFFF',
-  mediaChip: 'rgba(0,0,0,0.42)',
-  mediaHover: 'rgba(0,0,0,0.25)',
-  mediaControl: 'rgba(0,0,0,0.4)',
-  liveDot: '#FF5B4F',
-  switchThumb: '#FFFFFF',
-  eyeChip: 'rgba(10,9,12,0.48)',
-  eyeChipText: '#F4EFE7',
-  estela: {
-    dark: {
-      a: [255, 196, 110],
-      b: [242, 220, 178],
-      c: [132, 122, 230],
-      r: [244, 112, 84],
-      g: [150, 145, 138],
-      w: [255, 238, 205],
-      glint: [255, 244, 220],
-      additive: true,
-      trail: 0.17,
-      density: 0.55,
-    },
-    light: {
-      a: [176, 106, 24],
-      b: [122, 78, 36],
-      c: [58, 54, 150],
-      r: [192, 64, 40],
-      g: [140, 136, 130],
-      w: [150, 90, 20],
-      glint: [176, 106, 24],
-      additive: false,
-      trail: 0.2,
-      density: 1,
-    },
-  },
-} as const;
+export { auraField, illustration, inset };
 
-export const typeSteps = ['hero', 'title', 'headline', 'body', 'meta', 'caption'] as const;
-
-export type TypeStep = (typeof typeSteps)[number];
-
-export type TypeSpec = {
-  size: number;
-  line: number;
-  weight: '400' | '500' | '600' | '650' | '700' | '750' | '800';
-  tracking: number;
-  maxScale: number;
-};
-
-export const type: Record<TypeStep, TypeSpec> = {
-  hero: { size: 36, line: 39.6, weight: '800', tracking: -0.03, maxScale: 1.5 },
-  title: { size: 24, line: 30, weight: '750', tracking: -0.02, maxScale: 1.5 },
-  headline: { size: 17, line: 23.8, weight: '650', tracking: 0, maxScale: 2 },
-  body: { size: 16, line: 22.4, weight: '400', tracking: 0, maxScale: 2 },
-  meta: { size: 14, line: 19.88, weight: '400', tracking: 0, maxScale: 2 },
-  caption: { size: 12, line: 16.2, weight: '500', tracking: 0, maxScale: 2 },
-};
-
-export const typeRoles = {
-  heroCompact: { size: 30, line: 33, weight: '800', tracking: -0.03, maxScale: 1.5 },
-  heroSecondary: { size: 26, line: 28.6, weight: '800', tracking: -0.03, maxScale: 1.5 },
-  section: { size: 21, line: 29.4, weight: '750', tracking: -0.015, maxScale: 1.5 },
-  rowTitle: { size: 16, line: 21.6, weight: '500', tracking: 0, maxScale: 2 },
-  rowMeta: { size: 14, line: 18.9, weight: '400', tracking: 0, maxScale: 2 },
-  button: { size: 16, line: 22.4, weight: '650', tracking: 0, maxScale: 2 },
-  buttonCompact: { size: 15, line: 21, weight: '650', tracking: 0, maxScale: 2 },
-  label: { size: 15, line: 21, weight: '600', tracking: 0, maxScale: 2 },
-  feed: { size: 15, line: 21, weight: '400', tracking: 0, maxScale: 2 },
-  chip: { size: 13, line: 17.55, weight: '600', tracking: 0, maxScale: 2 },
-  tab: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 1.15 },
-  key: { size: 11, line: 17, weight: '650', tracking: 0, maxScale: 1.5 },
-} as const satisfies Record<string, TypeSpec>;
-
-export const fontFamily = {
-  web: 'system-ui, -apple-system, "SF Pro Text", Roboto, "Segoe UI", sans-serif',
-} as const;
+export { fontFamily, type, typeRoles, typeSteps, type TypeSpec, type TypeStep } from './typography';
 
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 8: 32, 12: 48 } as const;
+
+export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
 
 export const radius = {
   sm: 8,
@@ -200,11 +169,14 @@ export const radius = {
   well: 14,
   button: 16,
   toast: 18,
+  toastAction: 10,
   media: 20,
+  notice: 20,
   dialog: 22,
   card: 24,
   status: 26,
   sheet: 28,
+  meter: 3,
   full: 999,
 } as const;
 
@@ -222,6 +194,11 @@ export const size = {
   button: 50,
   buttonCompact: 40,
   field: 48,
+  fieldMulti: 76,
+  codeBoxWidth: 44,
+  codeBoxHeight: 56,
+  caretWidth: 2,
+  caretHeight: 20,
   chip: 26,
   chipStat: 32,
   chipSuggestion: 34,
@@ -236,29 +213,51 @@ export const size = {
   grabberWidth: 36,
   grabberHeight: 5,
   dot: 8,
+  menuRow: 36,
+  menuWidth: 220,
   hairline: 1,
+  feedLeading: 42,
+  thread: 2,
+  threadMin: 12,
+  mediaControl: 40,
+  skelLine: 16,
+  skelMeta: 13,
+  skelPill: 64,
+  skelPillHeight: 28,
+  ...chromeSize,
 } as const;
 
 export const motion = {
-  duration: { fast: 120, base: 200, slow: 300 },
+  duration: { fast: 120, base: 200, enter: 220, slow: 300 },
+  easing: { overshoot: [0.2, 1.2, 0.4, 1] },
   spring: {
     snappy: { damping: 18, stiffness: 320, mass: 1 },
     gentle: { damping: 22, stiffness: 180, mass: 1 },
     playful: { damping: 10, stiffness: 220, mass: 1 },
   },
+  pulseSeconds: 1.2,
+  pulseOpacity: 0.35,
   pressScale: 0.96,
   pressScaleIcon: 0.9,
+  caretBlink: 1000,
+  loop: { live: 2400, liveDim: 0.35, shimmer: 1400, shimmerRest: 0.5 },
 } as const;
 
 export const material = {
   blur: 22,
   saturation: 1.7,
   blurControl: 18,
+  blurChip: 16,
+  blurScrim: 2,
   saturationControl: 1.6,
   blurSheet: 26,
   sheetSurfaceMix: 0.94,
   blurPalette: 30,
   paletteSurfaceMix: 0.84,
+  blurMedia: 10,
+  blurSide: 30,
+  blurCap: 20,
+  fadeSolid: 0.7,
 } as const;
 
 export const breakpoints = { compact: 0, medium: 600, expanded: 1024, wide: 1440 } as const;
@@ -278,17 +277,22 @@ export const layout = {
   sideSheet: 400,
   palette: 640,
   sidebar: 244,
+  mediaAspect: 1.6,
+  bandMax: 2256,
 } as const;
 
 export const tokens = {
   color,
   aura,
+  auraField,
   elevation,
   illustration,
   type,
   typeRoles,
   fontFamily,
   space,
+  inset,
+  state,
   radius,
   size,
   motion,

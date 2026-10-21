@@ -5304,7 +5304,10 @@ minutes without evidence.
 `eslint.config.js` is the only place lint is configured (rule 2). A rule is
 turned off only here, by name, for the paths listed, and
 `scripts/check-lint-policy.ts` fails on an exception without a row and on a
-row that turns nothing off. The `off` rules of the `eslint-config-expo` base
+row that turns nothing off. An exemption is a rule set to `off`, and also a
+rule a config block sets for its `files` but leaves out of a file through the
+block's `ignores`: both need a row. A row may name several rules that share
+paths and reason. The `off` rules of the `eslint-config-expo` base
 itself (`no-undef`, `no-unused-vars` and the other core rules typescript-eslint
 replaces, `react/prop-types`, `react/react-in-jsx-scope`, `import/named`,
 `import/default`, `react/jsx-no-target-blank`, `react/no-unsafe`) are the
@@ -5314,7 +5317,14 @@ preset's own decisions and are not exceptions.
 |---|---|---|---|---|
 | `react-hooks/immutability` | `src/**`, `scripts/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
 | `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
-| `i18next/no-literal-string` | `src/app/ui-lab.tsx`, `src/features/ui-lab/**` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
+| `i18next/no-literal-string` | `src/features/ui-lab/**/*.tsx` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. Since p1/ds-base the route `src/app/ui-lab.tsx` is a one-line re-export and the screen and its demos live in `src/features/ui-lab/`. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
+| `complexity`, `max-lines-per-function`, `max-lines`, `max-statements`, `max-depth`, `max-params` | `src/core/i18n/locales/**` | The dictionaries are data: one exported object per namespace, whose length is the copy's, not a function's. The budgets of rule 32 measure code. | rule 32; 68 locale files at R0 | 2026-10-20 |
+| `argus/activity-indicator-home`, `argus/type-scale`, `argus/no-visual-timer`, `i18next/no-literal-string` | `src/shared/components/ui/**`, `src/shared/ui/**` | The design system (the legacy one and the redesign's) is the one home of loading (rule 16), of the type steps (rule 22) and of the visual drivers (rule 26); its components take their words as props, and the literals they draw are glyphs. | rules 16, 22, 24, 26 | 2026-10-20 |
+| `argus/responsive-home` | `src/shared/**` | Rule 23 bans the window size in features: `src/shared` is where the window class is read and turned into `useWindowClass`. | rule 23 | 2026-10-20 |
+| `argus/icon-registry-home` | `src/shared/constants/icon.constant.ts`, `src/shared/components/ui/icon.tsx` | The `ICONS` registry is the only importer of `lucide-react-native` (rule 10), and `Icon` draws from it. | rule 10 | 2026-10-20 |
+| `argus/date-formatter-home`, `argus/intl-date-home` | `src/shared/hooks/use-date-formatter/date.ts` | The one formatter is the only user of `date-fns` and `Intl.DateTimeFormat` (rule 10). | rule 10 | 2026-10-20 |
+| `argus/platform-os-home` | `src/shared/constants/common.constant.ts` | The `IS_*` flags are defined from `Platform.OS` here, and only here (rule 10). | rule 10 | 2026-10-20 |
+| `argus/no-color-literal` | `src/shared/theme/**` | `tokens.ts` and `effects.ts` are the home of the colour values (rule 10). | rule 22 | 2026-10-20 |
 
 ## Rules and gates, R0 (2026-10-20)
 
@@ -5331,36 +5341,39 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 
 | Gate | What it counts | Baseline |
 |---|---|---|
-| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into a slice's internals when the slice has an `index`; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges; `core` files are keyed by `core/<segment>` or `core/services/<name>`); `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`) | `scripts/lib/boundaries-baseline.txt` |
-| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off with the table above; fails on any `warn` and on inline configuration not disabled | the table above |
+| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into another slice's internals, other than its `index`, whether or not the slice has one; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges, `require()` is; `core` files are keyed by `core/<segment>` or `core/services/<name>`), with their members compared one by one; `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`). An import resolves to every platform variant that exists (`.native`, `.web`, `.ios`, `.android`, and the same for `index`), each an edge | `scripts/lib/boundaries-baseline.txt`, `scripts/lib/cycle-baseline.txt` |
+| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off, and each rule a block's `ignores` leaves out of a file, with the table above; fails on any `warn`, on inline configuration not disabled, on a row path that turns nothing off, and on an `eslint-suppressions.json` entry for a file lint does not check or a rule that is not on for it | the table above |
 | `check-references.ts` | every `[key]` in `AGENTS.md`, `CONTEXT.md` files and `docs/plans/*.md` (code spans, fences, links and `[x]` task boxes excluded) is a row of `docs/references.md`, a `[family-*]` matches a key, every row has a URL | 0 |
-| `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0) |
+| `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0; a line without a reason, or whose path and symbol name no memoization or more than one, fails, so a key never exempts a whole component) |
 | `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
 | `lint` | `eslint src scripts --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts --prune-suppressions` in the same change | `eslint-suppressions.json` |
-| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines, and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
+| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
 
 **The quality counters at R0** (they replace the `09cf103` survey numbers of
 the rules document; definitions are in `scripts/lib/quality/`):
 
 | Counter | R0 | Counter | R0 |
 |---|---|---|---|
-| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads) | 73 |
+| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads, aliases included) | 73 |
 | `arbitrary-value` (`-[…]` classes) | 115 | `platform-select` | 58 |
-| `style-object` (`style={{`) | 80 | `shared-value-dot-value` | 315 |
-| `raw-pressable-in-features` (imports) | 74 | `loop-without-reduce-motion` (files) | 2 |
+| `style-object` (each object literal in a `style` attribute, arrays, conditionals and style functions included; 132 since finding 7) | 80 | `shared-value-dot-value` | 315 |
+| `raw-pressable-in-features` (named imports, destructured `require`s and namespace members) | 74 | `loop-without-reduce-motion` (files) | 2 |
 | `window-dimensions-in-features` (imports) | 6 | `animated-layout-prop` (keys other than `transform`/`opacity` returned by `useAnimatedStyle`) | 9 |
-| `template-key` (`t(\`…${}\`)`) | 136 | `timer-in-component` (files) | 8 |
-| `http-unchecked` (an `httpService` call neither passed to a checker nor typed `unknown`) | 83 | `props-over-10` | 18 |
+| `template-key` (a key built by a template, `+`, `join` or `concat` in the first argument of `t`, `tk` or an alias, and every `as TranslationKey`; 137 since finding 3) | 136 | `timer-in-component` (files that reference `setInterval` or `requestAnimationFrame`, by name, member, computed member or alias) | 8 |
+| `http-unchecked` (an `httpService` call, through any alias or destructured method, neither typed `unknown` nor passed to a named checker: `parsed`, `checked`, `parse`, `safeParse`, or a `parse…`, `check…`, `read…`, `validate…` or `…Of` function; 84 since finding 7) | 83 | `props-over-10` | 18 |
 | `source-text-test` (unit tests reading a `src/**/*.ts(x)` file) | 9 | `legacy-token-class` (classes and `var(--color-…)` of today's colour names that `tokens.ts` drops) | 1,548 |
 | `manual-memo` (`useCallback` + `useMemo` + `memo`) | 551 | `untested-component-or-screen` (a `.tsx` under `features`/`shared` no test imports) | 341 |
 | `scanned-files` (floor) | 1,487 | | |
 
-Boundaries at R0: `deep-import` 72, `file-cycle` 1 (the 21-file
+Boundaries at R0: `deep-import` 72 (74 once the slices without an index count, finding 10), `file-cycle` 1 (the 21-file
 `features/{cameras,response,security,voice}` component), `slice-cycle` 1,
 `route-shape` 2 (`+not-found.tsx`, `ui-lab.tsx`).
 
 **Lint.** The lint set of the rules is adopted with each `warn` of
-`eslint-config-expo` promoted to `error`. The bans of rules 10, 13, 16, 18,
+`eslint-config-expo` promoted to `error`. `react-hooks` runs the 17 rules of
+its `recommended-latest` config (the expo base enables 16: it lacks
+`void-use-memo`), spread into `eslint.config.js`; `component-hook-factories`
+is not in that config and not adopted. The bans of rules 10, 13, 16, 18,
 21–24, 26, 27 and the existing selectors are core `no-restricted-imports` /
 `no-restricted-syntax` registered under their own names in a local `argus`
 plugin (`argus/ds-owns-primitives`, `argus/no-color-literal`, …), because a
@@ -5396,6 +5409,386 @@ not reach the web entry. `lint` takes about 2 minutes with the type-aware
 rules (75 s with `expo lint` before). `check-quality` 16 s,
 `check-boundaries` with policy and references 5 s.
 
+## The design-system base, Phase 1 (2026-10-20, p1/ds-base)
+
+**One token source, generated CSS.** `scripts/gen-tokens.ts` writes
+`src/shared/theme/tokens.generated.css` from `tokens.ts` alone (colour roles in
+OKLCH for both themes, radius/inset/size roles as `--radius-*`/`--spacing-*`,
+type steps and roles as `--text-*` with line height, tracking and weight, the
+`medium`/`expanded`/`wide` breakpoints, the glass, focus-ring and hover-dim
+utilities); `global.css` imports it and `check:tokens` fails on drift. Text
+metrics travel as CSS because React Native's `fontWeight` type has no 650/750
+while CSS does; whether Uniwind carries `--text-*--font-weight` and
+`--letter-spacing` to native is still to be confirmed on a device. Tailwind's
+numeric spacing (4 px a step) is the `tokens.space` scale, pinned by a test.
+
+**The legacy names moved aside.** The redesign's `surface`, `accent`, `sm`
+radius and `body`/`caption` type take the plain names, so the old values are
+`legacy-surface`, `legacy-accent`, `rounded-legacy-sm`, `text-legacy-body` and
+`text-legacy-caption` (a codemod over class strings; the web visual snapshots
+passed unchanged). `legacy-token-class` counts them.
+
+**Contrast.** `tests/unit/shared/theme/contrast.test.ts` measures every text
+role on bg/surface/fill (4.5:1) and the icons, borders and focus ring (3:1).
+The pairs the prototype draws below the bar are listed with their ratio and
+stay listed until a colour changes: light text-3/accent on fill (4.02/4.06),
+ok/attn/alert/accent on their soft fills (4.29/4.36/4.19/4.2), dark alert on
+alert-soft (4.32), and the off switch track (fill-press on surface,
+1.44/1.33). Light ok/attn/alert on fill and dark alert on fill fail too but the
+prototype never draws them.
+
+**Components.** `src/shared/ui/<name>/` holds Text, Icon (the prototype's 43
+glyphs), PressableSurface (RNGH with a foreground ripple on native, React
+Native's Pressable on web for keyboard, hover and the focus ring), Stack,
+Inline, Cluster, Button (single-flight, `iconOnly`, glass that turns solid
+under reduced transparency or the low tier), Chip/FilterChip, Avatar, Check,
+Switch, Section and Row. They take no `className` and join their classes with
+`clsx`, since tailwind-merge does not know the new type names and drops one of
+two `text-*` classes. Values the prototype draws that the spec's scale lacks
+(row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,
+section spacing 26/4/10/12) live in `tokens.inset`. `useEffects()` holds one
+accessibility subscription for the whole app instead of two per caller, and
+react-native-web has no `isReduceTransparencyEnabled`.
+
+**Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
+bun process (happy-dom, react-native-web as react-native, react-native-svg's web
+elements, stubs for Reanimated, expo-device, uniwind, RNGH), because the main
+suite's preload stubs react-native for pure logic. Tests import each component
+file directly: check:quality counts only direct imports.
+
+**ui-lab.** `src/features/ui-lab/` with a catalogue, one demo per component
+(the prototype's own words), `case-<id>` wrappers and URL parameters
+(`c`, `theme`, `rm`, `rt`, `fs`). In an export it opens only when the page sets
+`__ARGUS_UI_LAB__` before load. `scripts/ui-lab/capture.ts` captures every
+component at 360/768/1280 × light/dark × default/reduced and rebuilds each case
+in the prototype from its own helpers (`scripts/ui-lab/prototype-cases.ts`,
+one block per component) in a stage of the same width, then writes ours |
+prototype | diff with the mismatch to
+`/home/acme/Desktop/argus/uiux-map/redesign/phase1/gallery/`.
+`tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines. It is
+one test per width and theme: with the four design-system shares merged the
+catalogue is 26 components, twelve shots each per width, and one test per
+width ran past the suite's 120 s test timeout on a loaded machine.
+
+**Shared uniwind.css.** `node_modules/uniwind/uniwind.css` is a bun hardlink
+shared by every worktree and rewritten by the last bundle; better-tailwindcss
+reads it, so new colour classes read as unknown until it is regenerated for
+this checkout (break the link, then `npx uniwind generate-artifacts --css
+./src/global.css --dts ./uniwind-types.d.ts`).
+
+## Re-baselines
+
+A baseline is never raised silently. `scripts/check-baselines.ts` (the last
+step of `check:boundaries`) compares every ratchet baseline
+(`quality-baseline.txt`, `boundaries-baseline.txt`, `cycle-baseline.txt`,
+`untested-baseline.txt`, `format-baseline.txt`, `memo-exceptions.txt`,
+`bundle-baseline.txt` under `scripts/lib/`, and `eslint-suppressions.json`)
+with its version at the merge base of `HEAD` and `redesign/main`
+(`ARGUS_BASELINE_REF` names another branch). A raise is a count up, a list or
+exception entry added, the `scanned-files` floor down, a `lazy` package
+dropped, or a suppression count up. Each raise fails unless the same change
+adds a row to this table that names the baseline file and the entry; a new
+row that names nothing raised fails too. Rows already on `redesign/main`
+cover nothing, so an old row never opens a baseline again.
+
+The workflow for a lead merge that has to re-baseline: lower what the merge
+fixes (no row: lowering is the ratchet), raise only what it legitimately
+grows, and add one row per baseline here in the merge commit. The entry cell
+lists the keys in backticks: a metric (`style-object`), a list line (a file
+path), a memo key (`path symbol`), `entry-chunk-bytes`, `dist-bytes`,
+`lazy <package>`, or `path rule` for a suppression. A key may be a glob
+(`src/features/** argus/no-template-key`) when the raise is one cause over
+many files; the reason names that cause.
+
+| Baseline | Entries | Reason | Date |
+|---|---|---|---|
+| `scripts/lib/quality-baseline.txt` | `template-key` | Finding 3 of the R0 review: the counter now counts every key built by `+`, a template, `join` or `concat` in the first argument of `t` or `tk` (and their aliases), and every `as TranslationKey`. The one new count is the template key of the `tk` call in `use-settings-profiles.ts` (`screens.settings.profiles.result.reasons.*`), existing debt the `t`-only selector hid. | 2026-10-20 |
+| `eslint-suppressions.json` | `src/features/settings/hooks/use-settings-profiles.ts argus/no-template-key` | The same `tk` template, now seen by the lint ban. | 2026-10-20 |
+| `scripts/lib/boundaries-baseline.txt` | `deep-import` | Finding 10 of the R0 review: an import into another slice's internals counts whether or not the slice has an `index`. The two new counts are the imports into `core/services/desktop`, which has none. | 2026-10-20 |
+| `scripts/lib/cycle-baseline.txt` | `**` | Finding 4 of the R0 review: the cycle members are a list of their own, so a file or slice joining the recorded 21-file and 4-slice cycle fails though the cycle count holds. The file is new: every member is recorded once, as measured. | 2026-10-20 |
+| `scripts/lib/quality-baseline.txt` | `style-object`, `http-unchecked` | Finding 7 of the R0 review: the counters follow bindings. `style-object` counts every object literal in a `style` attribute, inside arrays, conditionals and style functions too (80 → 132, all existing: the welcome mascot, the camera stage and the other array styles); `http-unchecked` follows `httpService` through import aliases, variables and destructured methods, and a call passed to anything but a named checker counts (83 → 84: `responses.push(await httpService.delete(…))` in `notification.service.ts`). `raw-pressable-in-features`, `window-dimensions-in-features`, `is-flag-in-features` and `platform-select` now also see namespace imports, `require`, aliases and computed members, and found nothing new. | 2026-10-20 |
+| `scripts/lib/quality-baseline.txt` | `style-object` | Lead merge of `p1/gates-fix` over `p1/ds-base`: the binding-following counter sees ds-base's two conditional styles in `src/shared/ui/button/button.tsx` and the array style in `src/shared/ui/switch/switch.tsx`, each a named token-derived object chosen by state (132 → 135). | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/ds-d` (Confirm, Menu, Toast, Command and their ui-lab demos) over `p1/ds-base`: entry 7,220,201 → 7,303,872 B (+83,671) and `dist/` 8,511,606 → 8,603,052 B (+91,446). The share's own source-map breakdown: sonner 36.4 kB (the web Toaster host), the four demos 29.0 kB, Command 11.0, Toast 5.6, Confirm 4.5, Menu 4.0, `@rn-primitives/alert-dialog` 5.2 and `@radix-ui/react-alert-dialog` 4.3 kB; no native-only module reached the web build. | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merges of `p1/ds-a` (Field, Choice), `p1/ds-b` (Notice, FeedItem, Media, ResourceView) and `p1/ds-c` (Aura, Status, Nav, Screen), measured once after the third: entry 7,303,872 → 7,430,083 B (+126,211) and `dist/` 8,603,052 → 8,749,566 B (+146,514). The entry chunk's source map gives the shares' own modules, components and ui-lab demos together: ds-a 22.0 kB, ds-b 30.1 kB, ds-c 55.1 kB (the Nav family 19.6 kB, `chrome-tokens.ts` 2.9 kB); the rest is the grown demo copy, type and inset tokens and Metro's module wrappers. No package was added and no native-only module reached the web build. | 2026-10-21 |
+| `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx spec` | Lead merge of `p1/native`: the Skia canvas keeps its worklet spec in one identity per particle count and seed, because the frame worklet is re-registered whenever its captured spec changes identity (the branch's measurement, section "Native spikes" below). | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/native` (Sheet, Presence, the spikes lab) over the four design-system shares: entry 7,430,083 → 7,522,390 B (+92,307) and `dist/` 8,749,566 → 8,841,873 B (+92,307). The branch measured +126,279 B over its own older base (about 91 kB Sheet and the Estela engine, about 12 kB the lab, section "Native spikes"); the merged export has no Skia or TrueSheet module. | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | The `fix(ui)` after the `p1/native` merge: Sheet's parts, dialog and phone sheet and the demo field name the 24 token-derived style objects the binding-following `style-object` counter found inline, which the web export keeps as named bindings: entry 7,522,390 → 7,523,403 B and `dist/` 8,841,873 → 8,842,886 B (+1,013 each). | 2026-10-21 |
+
+## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
+
+**Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
+Alert is a no-op); on the web, Tauri and medium+ native windows it is
+`@rn-primitives/alert-dialog`, added for this because `@rn-primitives/dialog`'s
+web Content always renders Radix's own `role="dialog"` element, so the role
+could not be `alertdialog`. `@radix-ui/react-alert-dialog` is pinned to 1.1.19
+in `overrides`: the 1.2 line pulls `react-dialog` 1.3, whose `focus-scope`
+import does not exist in the 1.1.16 the overrides already pin. Radix's alert
+dialog never closes on an outside press, so the default variant adds its own
+scrim press that cancels; the destructive one disables it. Esc and Back go
+through `onOpenChange(false)` and mean Cancelar. Android's `Alert` ties Back to
+outside taps (`setCancelable`), so the native destructive alert is
+`cancelable: false` and Back does nothing there: only its buttons close it.
+
+**Toast.** One API, `toast.show({ kind, ... })` and `toast.dismiss`, over
+`sonner` (`toaster.tsx`) and `sonner-native` (`toaster.native.tsx`), both
+through their custom-render path (`toast.custom`), so both draw the same
+`ToastCard` and no library style. Errors share one id, so a second error
+replaces the first; undo lasts 5 s, errors 8 s, info and success 4 s. The card
+is `role="status"`, a polite live region (the prototype's error toast says
+`role="alert"`; the spec's polite rule wins). sonner-native's `offset` is from
+the window bottom, not the safe area, so 108 is the prototype frame's number
+and has to follow the real tab bar's top once Phase 2 places it. The host
+`Toaster` is not mounted in the root layout yet: the legacy toaster still is.
+
+**Menu.** Pointer (the web build, Tauri included) gets
+`@rn-primitives/dropdown-menu` from a ⋯ trigger and `@rn-primitives/context-menu`
+on right click (Radix also opens it on a touch long press); touch (native)
+gets a sheet list from the same trigger and from a RNGH long press with
+`impactLight`. The context menu's items are given `role="menuitem"` because
+rn-primitives renders them as buttons. `items` is a tuple of at least two, so
+a single-item menu does not type-check (W38).
+
+**Command.** `useCommand` owns the query and the selection over the groups a
+`source(query)` returns; the component fetches nothing. Free text adds a first
+«pregúntale a Argus» entry, and Enter runs the selected entry. Results are
+`role="option"` inside `role="group"` sections, because React Native's `Role`
+has no `listbox`. On pointer it is a Radix dialog (focus trap, Esc, outside
+press, focus return) with a visually hidden title; `useCommandHotkey` binds
+Ctrl+K / ⌘K on the web and is a no-op natively.
+
+**Slots until p1/native merges.** `Menu` and `Command` take a required
+`sheet` component with `Sheet`'s `open`, `onClose`, `title`, `variant` and
+`long`; the native Command should also pass `initialFocus` once `Sheet` is
+here. `Command` takes an optional `askMark` for Estela's `think` mark.
+
+**Test runner.** The component runner loads the rn-primitives web builds
+(their `.mjs` keep JSX, so a bun plugin loads them as `jsx`), stubs RNGH's
+`Gesture`/`GestureDetector` and Reanimated's `Keyframe`/`Easing`, and
+components that read copy are tested through `translation-stub.ts` (the
+Spanish dictionary), since the locale store's storage has only platform files.
+happy-dom reports a 0 px window, so a test that needs a wide window defines
+`document.documentElement.clientWidth`.
+
+**Re-baselines.**
+
+| Date | Branch | Entry chunk | `dist/` | Cause |
+|---|---|---|---|---|
+| 2026-10-21 | p1/ds-d | 7,113,459 → 7,303,327 B (+189,868) | 8,379,636 → 8,602,199 B (+222,563) | The overlay share. Measured from the source map of the entry chunk: sonner 36.4 kB (the web Toaster host belongs in the entry), the four ui-lab demos 29.0 kB, Command 11.0 kB, Toast 5.6 kB, Confirm 4.5 kB, Menu 4.0 kB, `@rn-primitives/alert-dialog` 5.2 kB and `@radix-ui/react-alert-dialog` 4.3 kB. The dropdown and context menus were already in the entry through the legacy menus, and no native-only module (sonner-native, the RNGH gestures) reached the web build. |
+
+## Field and Choice (2026-10-20, Phase 1, p1/ds-a)
+
+The input share of the design system: `src/shared/ui/field/` and
+`src/shared/ui/choice/`, drawn from the prototype's `.field`, `.lab`, `.inp`,
+`.inp.focus`, `.inp.err`, `.inp.multi`, `.ferr`, `.codebox` and `.seg` rules.
+
+- **One `Field`, four kinds.** `kind` is `text` (default), `secret`,
+  `multiline` or `code`, a discriminated union so each kind carries only the
+  props it uses (rule 32's ten). The visible label is optional: a quick
+  compose field shows only its placeholder (the prototype's «¿Qué quieres
+  recordar?»), and the type demands a `label` or a `placeholder`, whichever
+  names the field for a screen reader. The code kind always takes a `label`,
+  which is never drawn.
+- **Keyboard and autofill come from the kind, never from the screen.**
+  `input-traits.ts` maps `content` to `inputMode`, `autoComplete`,
+  `textContentType` and capitalisation: `name`, `email`, `url`, `number`
+  for text; `password`, `pin` for secrets; the pairing code is capitals with
+  `one-time-code`. `inputMode` instead of `keyboardType` because
+  react-native-web maps only `inputMode` to the `inputmode` attribute.
+- **The Return key is the form's.** `submit={{ key: 'next' | 'done',
+  onSubmit }}` sets `enterKeyHint` and `submitBehavior` (`submit` keeps the
+  keyboard for Siguiente, `blurAndSubmit` for done). The form moves focus
+  through the `ref` the field forwards to its `TextInput`, and moves focus
+  to the first error the same way; the field never labels a key.
+- **States.** Idle is `fill` with a transparent 1.5 px border, focus is
+  `surface` with a `text` border, error is `surface` with an `alert` border
+  whether focused or not, and the error line (alert icon + words,
+  `role="alert"`) replaces the hint.
+- **Multiline grows to five lines, then scrolls inside itself.** The cap is
+  five `body` lines plus the vertical padding, scaled with the font scale.
+  Native `TextInput` grows on its own up to `maxHeight`; on the web the
+  textarea grows through `field-sizing: content` (with `resize: none`, the
+  prototype has no handle), and where a browser lacks
+  it (Firefox, older WebKit) it stays at its 76 px minimum and scrolls.
+- **The code boxes are drawn; the input is invisible.** Six 44 x 56 boxes
+  render the characters of one transparent `TextInput` laid over them, so
+  paste, autofill and the OS code suggestion work as for any field. The
+  focused box is the next empty one (the last when full) and draws the
+  prototype's accent caret, blinking through a Reanimated CSS animation
+  (UI thread, rule 26) and still under reduce motion.
+- **`Choice` measures before it picks.** A hidden horizontal `ScrollView`
+  lays out every option's content (icon + label) unconstrained, and
+  `segmentsFit` compares each width with its segment's room
+  (`(width - 2 pad - gaps) / n - 2 minX`). Four or fewer options that all fit
+  render the segmented control; anything else renders the opener, a `Row`
+  (`look="row"`, settings) or a field-shaped button with the chevron
+  (`look="field"`, forms: the desktop dialog's «Repetir»), which opens the
+  options in the sheet. Nothing is ever truncated (W3). Before the first
+  layout it assumes the control fits. A `Choice` always fills its container
+  (`self-stretch`): the first capture showed a content-sized one flipping
+  between segments and the row every frame, because each form changed the
+  width the other measured. Segments also carry `minX` (2) of inner padding
+  and the comparison allows half a pixel of rounding; at 6 the prototype's
+  own Modo control (Noche + moon, 70.8 px in a 79 px segment at 360) would
+  not have fitted.
+- **The sheet is a slot until `Sheet` lands.** `sheet` is a render prop with
+  `Sheet`'s spec'd props (`variant: 'list'`, `title`, `open`, `onClose`,
+  `children`); `Choice` owns the open state and the option list (radios with
+  a check on the current one, `selection` haptic). When `p1/native` merges,
+  the prop goes and `Choice` renders `Sheet` itself.
+- **Glass.** `glass` puts the track on `glass` with the 18 px control blur
+  and the inset glass line, solid `surface` under reduce transparency, as the
+  prototype's `.seg.glass` and its `rt` rule. The selected segment is
+  `surface` (light) or `fill-press` (dark) with the `segment` elevation.
+- **Tokens added.** `inset.field` (top 14, x 14, gap 8, labelGap 6,
+  errorGap 6, multiY 12, border 1.5, codeTop 20, codeGap 8, codeBorder 2),
+  `inset.segment` (pad 3, gap 2, iconGap 6, minX 2), `size.fieldMulti` 76,
+  `size.codeBoxWidth` 44, `size.codeBoxHeight` 56, `size.caretWidth` 2,
+  `size.caretHeight` 20, `elevation.segment`, `motion.caretBlink` 1000, and
+  the type roles `control` (14/21/600: `.lab` and `.seg button`),
+  `fieldError` (14/21/500), `entry` (16/24/400: `.inp`; named `entry`
+  because `text-input` is a legacy colour class) and `code` (24/36/650, no
+  scaling: the boxes are fixed, as in the prototype). `Text` exports
+  `useTypeScale(variant)` so a `TextInput` scales with the lab's font scale
+  like `Text`.
+- **The lab.** `field` (text, multiline, error, hint, secret; the title field
+  focused), `field-code` (the pairing code focused at its fourth box) and
+  `choice`. A page can hold one focused field only, so the code field has
+  its own page and the multiline notes are shown unfocused.
+
+## Content and state components, Phase 1 (2026-10-20, p1/ds-b)
+
+**Notice.** One component, two forms. A block notice is the prototype's `ncard`
+at every width: icon well (or a `Presence` slot through `leading`) and title on
+the first row, one body line, the action on its own row. The spec's text says
+"elsewhere the banner", but the prototype's desktop frames draw `ncard` too, so
+the card stays; `inline` gives the `banner` (the stale line above cached data,
+the refusal beside an action). The window class decides only the primary
+action: full width on phones (the empty frame), compact and right-aligned from
+`medium` up (the desktop sparse frames). `info` draws the ok-toned well because
+every info card in the prototype does.
+
+**FeedItem.** `Feed` is the surface and the hairlines (a position context, as
+`Row` has); `FeedItem` is avatar column with the optional thread line, who ·
+when, text, actions. The unread dot takes a label (`unreadLabel`) so a screen
+reader hears it. The spec's "bold who" for unread is not drawn: the prototype
+uses 600 for every item.
+
+**Media.** `tile` and `stage` share one layer stack (frame, player slot, live
+chip, quiet state, label row). Tiles that press are a `PressableSurface`, and
+the centre button and the hover reveal sit beside it rather than inside, so the
+web never nests a button in a button. The reveal shows only for a mouse
+pointer (`pointerType`), so a tap on a phone opens the camera instead. The
+stage bleeds to the phone gutter (`-mx-4`, the prototype's `.video`) and is a
+rounded tile from `medium` up. `frame` cross-fades a new still over the last
+one on the UI thread after it loads (React Native `Image`: expo-image, the
+owner decision P2, is not installed). The live dot breathes with a Reanimated
+CSS animation and holds still under reduced motion; blur drops under reduced
+transparency. Text on imagery is the `on-media` tone (white in both themes);
+`mediaLabel`/`mediaDetail` on it carry the prototype's text shadow, which
+react-native-web warns about in development (`textShadow*` long-hands).
+
+**ResourceView.** `Resource<T>` is the minimal union R1's data layer will
+produce: `loading`, `ready`, `empty`, `stale` (with the cached data, its age
+already formatted and an optional retry), `failed` (a retry) and `refused`
+(who can change it). The screen passes the copy (`ResourceCopy`), the skeleton
+in its final shapes (`Skeleton`, `SkeletonRow`), the `Empty` and an optional
+`concern` slot for `Presence`. The shimmer animates a `skel-2` layer's opacity
+around 0.5 and holds it at 0.5 under reduced motion, so the still fill has the
+prototype's average tone; in dark mode `skel` alone is all but invisible on
+`surface`.
+
+## Identity and frame components: Aura, Status, Nav, Screen (Phase 1, ds-c, 2026-10-20)
+
+Four components of the redesign's design system (spec §2b, §4.1, §4.2,
+§4.5, §6, §6c, §7b, §8c), built on the ds-base conventions. Their values
+live in `src/shared/theme/chrome-tokens.ts`, spread into `tokens.ts` so that
+file stays under the 300-line budget: `auraField` (the three blobs of the
+prototype's `.aura i` with their drift targets and tempos), `chromeInset`
+(`nav`, `screen`, `status`), `chromeSize`, `chromeTypeRoles` (`heroBand`
+38, `brand` 18, `count`, `sideStat`, `greeting`) and `chromeElevation`
+(`bar`, `cap`, `listen`, `listenPeak`, `listenContrast`). New colour roles:
+`glass-side` (the sidebar's `surface` at 55 %) and `tab-on` (the selected
+tab's `text` at 9 %). New web utilities from `gen-tokens.ts`: `glass-side`,
+`glass-cap`, `scroll-column` (the thin 10 px scrollbar, `overscroll-behavior:
+contain`) and `fade-to-bg` (a sticky header's fade).
+
+**Aura: how the soft blobs are drawn.** The prototype draws each blob as a
+solid ellipse under `filter: blur(36px)`. Measured in headless Chromium
+(software GPU, 412 × 900 at DPR 2, three blobs drifting, five seconds per
+run, two runs each): per-frame blur gave 193–201 frames, p95 frame interval
+33–50 ms and about 9.2–9.6 s of GPU work; a CSS `radial-gradient` gave 301
+frames, p95 16.7 ms, 2.4 s; a react-native-svg `RadialGradient` gave 301
+frames, p95 16.8 ms, 2.4–2.7 s. The SVG gradient is the one form that renders
+the same on Android, iOS and web (React Native's `filter: blur` is
+Android-only and react-native-web drops `experimental_backgroundImage`), so
+each blob is an SVG radial gradient whose stops follow the Gaussian edge of a
+36 px blur (`blob-stops.ts`, Φ((R − r)/σ), padded by 3σ), drawn once and moved
+by a Reanimated CSS animation (`transform` only; real CSS keyframes on web, the
+UI thread on native). The field's mask (`linear-gradient(#000 55%,
+transparent)`) is an SVG overlay that fades to `bg` from 55 %, which is the
+same picture over a `bg` page. Still under reduced motion and on the low
+tier; under reduced transparency the prototype's `opacity: .6` (not the flat
+tint the spec text names); under Increase Contrast (`prefers-contrast: more`,
+Android high-text-contrast, iOS darker colours, `use-increase-contrast`) no
+field and a 3 px accent rim on `edge`. `paused` stops the drift
+(`animationPlayState`); `Screen` pauses its field once the content scrolls
+past it. The edge mode always draws the accent (the prototype's `.edge`), not
+the tone.
+
+**Status.** `hero` is chosen by window class: compact is the `.herorow`
+(Presence slot 66, or 56 with `secondary`, the 30/26 sentence, one meta line,
+a wrapping row of glass stat chips), medium the same row at 36, expanded and
+wide the desktop `.dband` (its own Aura band, Presence 64, the 38 sentence on
+one line, stats that do not wrap, a trailing `action` slot). `card` is the
+`.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
+`alert`. A sentence change fades in over `motion.duration.base` (keyed
+remount), instantly under reduced motion. `Presence` comes from `p1/native`:
+until it merges, `presence` is a render prop `(size) => node`, and the
+ui-lab draws a same-size `accent-soft` disc (`LabPresence`).
+
+**Nav.** `navigation` from `useWindowLayout` picks `bar` (compact and
+compact height), `rail` (medium, no prototype frame: tab-styled items in an
+88 px column) or `sidebar` (expanded, wide). Items are passed in (derive them
+from capabilities; no role names), with `argus: true` marking the centre.
+Every visible word comes in through `copy`, `items` and `NavStatus`'s props.
+The bar sits at `max(safe-area bottom, 26)`; it collapses to 0.9 and drops 13
+px while the screen scrolls down (`navCollapse`, a module `makeMutable` that
+`Screen`'s scroll worklet writes through `trackCollapse`) and stays fixed under
+reduced motion. The signature gesture (`use-hold-to-talk.ts`): a long press of
+220 ms (`delayLongPress`) starts listening with `impactLight`, the Aura edge
+and the «Te escucho…» pill; on release the page point is compared with the
+tab's window rectangle, measured at press-in, grown by 24 px (also the press
+retention offset), and inside sends, outside cancels; a tap opens the chat.
+The accessible alternative is the `longpress` accessibility action, then a tap
+to stop and send. The Nav must be the last child of a full-screen container,
+because the edge and the pill are absolute over it. `listening` lets a voice
+session started elsewhere light the same edge.
+
+**Screen.** One scroll owner: `KeyboardAwareScrollView` on native
+(`screen-scroll.native.tsx`, `bottomOffset` 24) and a Reanimated
+`ScrollView` on web (`screen-scroll.tsx`, the passthrough), both with the
+same animated scroll handler and an optional `RefreshControl`. The content
+gets the top safe-area inset, the 16/24 gutter by window class, room for the
+bar (128) when the bar shows, a 640 cap on medium and 680 on desktop. The top
+bar follows `.topbar` (52, or 44 with only the greeting), with a glass back
+button, the title or greeting, the inline «Actualizando» pill (a pulsing dot,
+still under reduced motion) and an `actions` slot. The top bar scrolls with
+the body as in the prototype's frames (spec §6c says it stays put; the
+prototype wins). `columns` with an expanded or wide window drops the outer
+scroll: `ScreenColumns` lays the `.dk` row (gap 20, 28 sides, 2,200 cap) and
+each `ScreenColumn` scrolls on its own with the thin scrollbar and
+`overscroll-behavior: contain`; its last child grows to the bottom; inside a
+column `Section` heads stick on web with the fade (`useInScreenColumn`). On
+phones the columns flatten into the one scroll.
+
+**Tests.** The ui test preload stubs `react-native-safe-area-context`,
+`react-native-keyboard-controller` and `react-native-worklets` (they load
+React Native's Flow sources), and adds `makeMutable`,
+`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. Window
+classes are set through `tests/unit/shared/ui/window-width.ts`, which gives
+happy-dom a `documentElement.clientWidth` and fires `resize` (react-native-web
+reads the window size from there); a `mock.module` of the window hook hung the
+runner.
 ## Native spikes: Sheet on TrueSheet and Estela on Skia (2026-10-21, Phase 1)
 
 Branch `p1/native`. Two components land in `src/shared/ui/`, each with a

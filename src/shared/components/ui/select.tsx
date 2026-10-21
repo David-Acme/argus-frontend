@@ -164,9 +164,9 @@ function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        'active:bg-accent group relative flex w-full flex-row items-center gap-2 rounded-md py-2 pl-2 pr-8 sm:py-1.5',
+        'active:bg-legacy-accent group relative flex w-full flex-row items-center gap-2 rounded-md py-2 pl-2 pr-8 sm:py-1.5',
         Platform.select({
-          web: 'focus:bg-accent focus:text-accent-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 cursor-default outline-none data-[disabled]:pointer-events-none [&_svg]:pointer-events-none',
+          web: 'focus:bg-legacy-accent focus:text-accent-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 cursor-default outline-none data-[disabled]:pointer-events-none [&_svg]:pointer-events-none',
         }),
         props.disabled && 'opacity-50',
         className

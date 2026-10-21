@@ -3,9 +3,10 @@ import { AccessibilityInfo } from 'react-native';
 export type SystemFlag = 'reduceMotion' | 'reduceTransparency';
 
 export function readSystemFlag(flag: SystemFlag): Promise<boolean> {
-  return flag === 'reduceMotion'
-    ? AccessibilityInfo.isReduceMotionEnabled()
-    : AccessibilityInfo.isReduceTransparencyEnabled();
+  if (flag === 'reduceMotion') return AccessibilityInfo.isReduceMotionEnabled();
+  return typeof AccessibilityInfo.isReduceTransparencyEnabled === 'function'
+    ? AccessibilityInfo.isReduceTransparencyEnabled()
+    : Promise.resolve(false);
 }
 
 export function watchSystemFlag(

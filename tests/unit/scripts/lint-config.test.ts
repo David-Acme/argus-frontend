@@ -99,4 +99,104 @@ describe('the lint set', () => {
       'argus/no-http-type-argument',
     ]);
   });
+
+  test('the icon and react-native bans cover deep imports', async () => {
+    const icon = "import Bell from 'lucide-react-native/icons/bell';\nexport const b = Bell;\n";
+    const internal =
+      "import Pressable from 'react-native/Libraries/Components/Pressable/Pressable';\nexport const p = Pressable;\n";
+    expect(await rulesHit('src/features/home/card.tsx', icon)).toEqual([
+      'argus/icon-registry-home',
+    ]);
+    expect((await rulesHit('src/features/home/card.tsx', internal)).sort()).toEqual([
+      'argus/activity-indicator-home',
+      'argus/ds-owns-primitives',
+      'argus/no-rn-animated',
+      'argus/responsive-home',
+    ]);
+  });
+
+  test('the formatter and the flags are exempt only from the ban their home needs', async () => {
+    const code = [
+      "import * as React from 'react';",
+      "import { Platform } from 'react-native';",
+      "import { format } from 'date-fns';",
+      "export const flag = Platform.OS === 'web';",
+      "export const formatter = new Intl.DateTimeFormat('es');",
+      'export const used = [React, format];',
+    ].join('\n');
+    expect((await rulesHit('src/shared/hooks/use-date-formatter/date.ts', code)).sort()).toEqual([
+      'argus/platform-os-home',
+      'argus/source-syntax',
+    ]);
+    expect((await rulesHit('src/shared/constants/common.constant.ts', code)).sort()).toEqual([
+      'argus/date-formatter-home',
+      'argus/intl-date-home',
+      'argus/source-syntax',
+    ]);
+  });
+
+  test('a translation key built by concatenation, a template or a join, or cast, is banned', async () => {
+    const lines = [
+      "t('home.' + id)",
+      't(`home.${id}`)',
+      "tk(ready ? `home.${id}` : 'home.title')",
+      "i18n.t(['home', id].join('.'))",
+      't(id as TranslationKey)',
+      't(LABELS[id])',
+      "t(ready ? 'home.a' : 'home.b')",
+    ];
+    const hits = await Promise.all(
+      lines.map((line) => rulesHit('src/features/home/keys.ts', `export const k = ${line};\n`))
+    );
+    expect(hits).toEqual([
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      [],
+      [],
+    ]);
+  });
+
+  test('a visual timer reached through an object, a computed name or an alias is banned', async () => {
+    const lines = [
+      'globalThis.setInterval(() => undefined, 16)',
+      'window.requestAnimationFrame(() => undefined)',
+      "globalThis['setInterval'](() => undefined, 16)",
+      '[0].forEach(requestAnimationFrame)',
+      'setTimeout(() => undefined, 16)',
+    ];
+    const hits = await Promise.all(
+      lines.map((line) =>
+        rulesHit(
+          'src/features/home/card.tsx',
+          `export function Card() {\n  ${line};\n  return null;\n}\n`
+        )
+      )
+    );
+    expect(hits).toEqual([
+      ['argus/no-visual-timer'],
+      ['argus/no-visual-timer'],
+      ['argus/no-visual-timer'],
+      ['argus/no-visual-timer'],
+      [],
+    ]);
+  });
+
+  test('every rule of react-hooks recommended-latest is on as an error', async () => {
+    const reactHooks = (await import('eslint-plugin-react-hooks')) as unknown as {
+      configs: Record<string, { rules: Record<string, unknown> }>;
+    };
+    const latest = Object.keys(reactHooks.configs['recommended-latest']?.rules ?? {});
+    const resolved = (await eslint.calculateConfigForFile(
+      'src/features/home/index.ts'
+    )) as Resolved;
+    const off = latest.filter((rule) => {
+      const entry = resolved.rules[rule];
+      return (Array.isArray(entry) ? entry[0] : entry) !== 2 && rule !== 'react-hooks/immutability';
+    });
+    expect(latest).toContain('react-hooks/void-use-memo');
+    expect(off).toEqual([]);
+  });
 });

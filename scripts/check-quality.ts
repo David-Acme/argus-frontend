@@ -1,8 +1,8 @@
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileCounters } from './lib/quality/file-counters';
 import { sharedValueReads } from './lib/quality/shared-values';
 import { memoCalls, memoSymbol, syntaxCounters, type Counter } from './lib/quality/syntax-counters';
+import { MEMO_EXCEPTIONS, memoExceptions, memoFailures } from './lib/quality/memo-exceptions';
 import { untestedComponents } from './lib/quality/untested';
 import {
   compareCounts,
@@ -17,7 +17,6 @@ import { listFiles, readSource, ROOT, type SourceFile } from './lib/source-files
 
 const BASELINE = 'scripts/lib/quality-baseline.txt';
 const UNTESTED = 'scripts/lib/untested-baseline.txt';
-const MEMO_EXCEPTIONS = 'scripts/lib/memo-exceptions.txt';
 const SCANNED = 'scanned-files';
 
 function usage(): never {
@@ -26,18 +25,12 @@ function usage(): never {
 Counts the quality metrics of src/ and tests/ and compares them with ${BASELINE}:
 a count above its baseline fails, a count below fails until the baseline is lowered
 in the same change, and fewer scanned files than recorded fails. Manual memoizations
-listed in ${MEMO_EXCEPTIONS} (path symbol reason) are not counted. The untested
+listed in ${MEMO_EXCEPTIONS} (path symbol reason) are not counted; a line without a reason,
+or whose path and symbol name no memoization or more than one, fails. The untested
 components and screens are compared one by one with ${UNTESTED}.
   --print           print the current counts in the baseline's format
   --print-untested  print the current untested list`);
   process.exit(0);
-}
-
-function memoExceptions(): Set<string> {
-  if (!existsSync(join(ROOT, MEMO_EXCEPTIONS))) return new Set();
-  return new Set(
-    readLines(join(ROOT, MEMO_EXCEPTIONS)).map((line) => line.split(/\s+/).slice(0, 2).join(' '))
-  );
 }
 
 const manualMemo = (exceptions: ReadonlySet<string>): Counter => ({
@@ -87,6 +80,7 @@ function main(): void {
   const recorded = new Map([...baseline].filter(([metric]) => metric !== SCANNED));
   const failures = [
     ...scannedFailure(baseline, files.length),
+    ...memoFailures(files),
     ...compareCounts(recorded, counts),
     ...compareLists('untested-component-or-screen', readLines(join(ROOT, UNTESTED)), untested),
   ];

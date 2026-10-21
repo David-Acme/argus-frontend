@@ -129,7 +129,7 @@ export default function FaceScreen() {
           active
         />
       ) : (
-        <View className="bg-surface absolute inset-0 items-center justify-center">
+        <View className="bg-legacy-surface absolute inset-0 items-center justify-center">
           {denied ? (
             <View className="items-center gap-4 px-8">
               <Icon name="scan-face" className="text-placeholder size-10" />

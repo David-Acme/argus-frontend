@@ -39,7 +39,7 @@ export function OnboardingSteps({ flow, step, className }: OnboardingStepsProps)
             key={item.id}
             className={cn(
               'h-1.5 rounded-full',
-              index + 1 === current ? 'bg-accent w-9' : 'w-5',
+              index + 1 === current ? 'bg-legacy-accent w-9' : 'w-5',
               index + 1 < current ? 'bg-interactive' : index + 1 > current ? 'bg-border' : null
             )}
           />

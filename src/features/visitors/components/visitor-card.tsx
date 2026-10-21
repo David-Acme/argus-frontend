@@ -33,7 +33,7 @@ export function VisitorCard({ visitor, selected = false, selectable = false, onP
       onPress={() => onPress(visitor)}
       className={cn(
         'bg-card border-border-subtle active:bg-surface-secondary gap-2.5 rounded-xl border p-2.5',
-        selected && 'border-accent bg-accent-soft'
+        selected && 'border-legacy-accent bg-accent-soft'
       )}>
       <View>
         <VisitorFace

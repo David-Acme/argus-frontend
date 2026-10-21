@@ -44,14 +44,22 @@ export function measureBundle(dist: string): BundleSizes {
   };
 }
 
+export const BELOW_TOLERANCE = 0.001;
+
+function sizeFailures(label: string, size: number, recorded: number): string[] {
+  if (size > recorded) return [`${label} is ${size} B, above its baseline ${recorded} B`];
+  if (size < recorded * (1 - BELOW_TOLERANCE))
+    return [
+      `${label} is ${size} B, more than ${BELOW_TOLERANCE * 100}% below its baseline ${recorded} B; lower the baseline in this change`,
+    ];
+  return [];
+}
+
 export function budgetFailures(baseline: BundleBaseline, sizes: BundleSizes): string[] {
-  const failures: string[] = [];
-  if (sizes.entryBytes > baseline.entryBytes)
-    failures.push(
-      `the entry chunk is ${sizes.entryBytes} B, above its baseline ${baseline.entryBytes} B`
-    );
-  if (sizes.distBytes > baseline.distBytes)
-    failures.push(`dist/ is ${sizes.distBytes} B, above its baseline ${baseline.distBytes} B`);
+  const failures = [
+    ...sizeFailures('the entry chunk', sizes.entryBytes, baseline.entryBytes),
+    ...sizeFailures('dist/', sizes.distBytes, baseline.distBytes),
+  ];
   for (const name of baseline.lazy) {
     const chunk = new RegExp(
       `^${name.replace(/[^a-z0-9]/gi, (char) => `\\${char}`)}-[0-9a-f]+\\.js$`

@@ -231,7 +231,7 @@ function SheetHeader({
         </DialogPrimitive.Title>
         {description ? (
           <DialogPrimitive.Description asChild>
-            <Text className="text-muted-foreground text-caption leading-[18px]">{description}</Text>
+            <Text className="text-muted-foreground text-legacy-caption leading-[18px]">{description}</Text>
           </DialogPrimitive.Description>
         ) : null}
       </View>

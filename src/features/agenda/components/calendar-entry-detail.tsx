@@ -76,7 +76,7 @@ export function CalendarEntryDetail({ entry, now, open, onOpenChange }: Calendar
         {rows.map((row) => (
           <View key={row.id} className="gap-1">
             <Text variant="micro" className="text-muted-foreground font-medium">{row.label}</Text>
-            <Text className="text-body font-medium">{row.value}</Text>
+            <Text className="text-legacy-body font-medium">{row.value}</Text>
           </View>
         ))}
       </View>

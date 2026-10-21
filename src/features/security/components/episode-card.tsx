@@ -131,9 +131,9 @@ export function EpisodeCard({
         <View
           className={cn(
             'flex-row items-center gap-1.5 rounded-full px-2.5 py-1',
-            active ? 'bg-accent/15' : 'bg-surface-secondary'
+            active ? 'bg-legacy-accent/15' : 'bg-surface-secondary'
           )}>
-          <View className={cn('size-1.5 rounded-full', active ? 'bg-accent' : 'bg-muted-foreground')} />
+          <View className={cn('size-1.5 rounded-full', active ? 'bg-legacy-accent' : 'bg-muted-foreground')} />
           <Text variant="micro" className={cn('font-semibold', active ? 'text-accent-strong' : 'text-foreground-secondary')}>
             {stateLabel}
           </Text>

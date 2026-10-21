@@ -44,7 +44,7 @@ export function AgendaItem({
       <View className={cn('w-[3px]', ENTRY_STATE_RAIL[state])} />
       <View className="min-w-0 flex-1 gap-1 p-3">
         <View className="flex-row items-start justify-between gap-3">
-          <Text className="flex-1 text-body font-semibold leading-5" numberOfLines={1}>
+          <Text className="flex-1 text-legacy-body font-semibold leading-5" numberOfLines={1}>
             {title}
           </Text>
         </View>
@@ -56,8 +56,8 @@ export function AgendaItem({
           </View>
         </View>
         {note ? (
-          <View className="bg-surface mt-2.5 rounded-xl p-3">
-            <Text className="text-foreground-secondary text-caption leading-[19px]">{note}</Text>
+          <View className="bg-legacy-surface mt-2.5 rounded-xl p-3">
+            <Text className="text-foreground-secondary text-legacy-caption leading-[19px]">{note}</Text>
           </View>
         ) : null}
       </View>

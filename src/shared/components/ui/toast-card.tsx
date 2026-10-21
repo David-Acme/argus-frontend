@@ -68,7 +68,7 @@ export function ToastCard({ item, dismissLabel, onDismiss, onAct }: ToastCardPro
           className="min-w-0 flex-1 flex-row items-start gap-3 active:opacity-80">
           <Icon name={ICON[item.intent]} className={cn('mt-0.5 size-4 shrink-0', ACCENT[item.intent])} />
           <View className="min-w-0 flex-1">
-            <Text className="text-caption font-semibold" numberOfLines={2}>
+            <Text className="text-legacy-caption font-semibold" numberOfLines={2}>
               {item.title}
             </Text>
             {item.description ? (

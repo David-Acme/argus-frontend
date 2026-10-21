@@ -5,17 +5,9 @@ import ts from 'typescript';
 
 export const ROOT = process.cwd();
 
-const EXTENSIONS = [
-  '',
-  '.ts',
-  '.tsx',
-  '.native.ts',
-  '.native.tsx',
-  '.web.ts',
-  '.web.tsx',
-  '/index.ts',
-  '/index.tsx',
-];
+export const PLATFORM_SUFFIX = '(\\.(native|web|ios|android))?';
+const PLATFORMS = ['', '.native', '.web', '.ios', '.android'];
+const VARIANTS = PLATFORMS.flatMap((platform) => [`${platform}.ts`, `${platform}.tsx`]);
 
 export type SourceFile = { path: string; text: string; source: ts.SourceFile };
 
@@ -46,17 +38,20 @@ export function readSource(path: string): SourceFile {
   };
 }
 
-export function resolveImport(from: string, specifier: string): string | null {
+const existing = (base: string): string[] =>
+  VARIANTS.map((variant) => base + variant).filter((candidate) =>
+    existsSync(join(ROOT, candidate))
+  );
+
+export function resolveImports(from: string, specifier: string): string[] {
   let base: string;
   if (specifier.startsWith('@/')) base = join('src', specifier.slice(2));
   else if (specifier.startsWith('@tests/')) base = join('tests', specifier.slice(7));
   else if (specifier.startsWith('.')) base = normalize(join(dirname(from), specifier));
-  else return null;
-  for (const extension of EXTENSIONS) {
-    const candidate = base + extension;
-    if (/\.(ts|tsx)$/.test(candidate) && existsSync(join(ROOT, candidate))) return candidate;
-  }
-  return null;
+  else return [];
+  if (/\.(ts|tsx)$/.test(base) && existsSync(join(ROOT, base))) return [base];
+  const files = existing(base);
+  return files.length > 0 ? files : existing(join(base, 'index'));
 }
 
 export function importsOf(text: string): string[] {
