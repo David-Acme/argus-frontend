@@ -113,6 +113,7 @@ export function tokensCss(): string {
     `  --blur-control: ${px(material.blurControl)};`,
     `  --blur-chip: ${px(material.blurChip)};`,
     `  --blur-scrim: ${px(material.blurScrim)};`,
+    `  --blur-media: ${px(material.blurMedia)};`,
   ];
   return [
     '@theme {',

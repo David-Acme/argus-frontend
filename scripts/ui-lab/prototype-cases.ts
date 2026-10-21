@@ -163,4 +163,50 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
       '`<label class="field"><span class="lab">Repetir</span><span class="inp" style="justify-content:space-between">No se repite${ic(\'chevd\',\'s\')}</span></label>`',
     'notice-row': "row({t:'Avisarme',tr:'30 min antes'})",
   },
+  notice: {
+    'card-attention':
+      "ncard({icon:'wifioff',tone:'attn',t:'Cámaras sin conexión',b:'Revisa el Wi-Fi.',a:'<button class=\"btn compact\">Reintentar</button>'})",
+    'card-info':
+      "ncard({icon:'shieldok',tone:'ok',t:'Todo tranquilo',b:'Aún no ha pasado nada que contar.'})",
+    'card-primary':
+      "ncard({icon:'check',tone:'ok',t:'Nada pendiente hoy',b:'Pídele a Argus que te recuerde algo.',a:'<button class=\"btn compact primary\">Nuevo recordatorio</button>'})",
+    'banner-attention':
+      "'<div class=\"banner attn\" style=\"margin-top:0\">'+ic('wifioff','s')+'<span class=\"grow\">Sin conexión. Datos de las 15:32.</span></div>'",
+    'banner-info':
+      "'<div class=\"banner\" style=\"margin-top:0\">'+ic('lock','s')+'<span class=\"grow\">Las llamadas están apagadas en esta casa.</span></div>'",
+  },
+  'feed-item': {
+    feed: "'<div class=\"feed\">'+feedItem({av:lic('user','accent',1),who:'Carlos',when:'14:35',txt:'Quiere usar la agenda y los proyectos.',act:'<button class=\"btn compact primary\">Activar</button><button class=\"btn compact\">Ahora no</button>',unread:true})+feedItem({av:lic('cam','',1),who:'Cocina',when:'14:45',txt:'Luis llegó a casa.'})+feedItem({av:lic('bell','',1),who:'Recordatorio',when:'12:00',txt:'Llamar al plomero venció hace 1 h.'})+'</div>'",
+    long: "'<div class=\"feed\">'+feedItem({av:lic('user','accent',1),who:'María Fernanda Quispe Huamán',when:'14:35',txt:'Quiere usar la agenda, los proyectos y los recordatorios compartidos de la casa.',act:'<button class=\"btn compact primary\">Activar</button><button class=\"btn compact\">Ahora no</button>'})+'</div>'",
+    thread:
+      "'<div class=\"feed\">'+feedItem({av:lic('alert','attn',1),who:'Patio trasero',when:'Ayer 21:53',txt:'Persona desconocida. Nadie respondió; avisé a Luis.',act:'<button class=\"btn compact\">Revisar</button>',thread:true})+feedItem({av:'<span class=\"lic r\">L</span>',who:'Luis',when:'Ayer 21:55',txt:'Era el jardinero. Ya lo dejé entrar.'})+'</div>'",
+  },
+  media: {
+    'tile-live':
+      "media('scene-kitchen','Cocina',{live:true,hov:1,r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})",
+    'tile-clip':
+      "media('scene-door','Luis llegó',{ctr:'<span class=\"ibtn glass\" style=\"color:#fff\">'+ic('play','s')+'</span>',r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})",
+    'tile-privacy': "media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})",
+    'tile-off': "media('off','Garaje',{ctr:ic('eyeoff'),r:'Apagada'})",
+    stage:
+      "'<div class=\"video\">'+media('scene-kitchen','',{live:true})+'<span class=\"ui dark eyecorner\" role=\"status\">Argus mira</span><div class=\"ov\"><button class=\"ibtn\">'+ic('speaker','s')+'</button><button class=\"ibtn\">'+ic('max','s')+'</button></div></div>'",
+    'stage-privacy':
+      "'<div class=\"video\">'+media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})+'</div>'",
+    patio:
+      "media('scene-patio','Patio trasero',{live:true,r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})",
+  },
+  'resource-view': {
+    failed:
+      "ncard({icon:'wifioff',tone:'attn',t:'Cámaras sin conexión',b:'Revisa el Wi-Fi.',a:'<button class=\"btn compact\">Reintentar</button>'})",
+    empty:
+      '\'<div class="ncard"><div class="nh">\'+lic(\'check\',\'ok\',1)+\'<div><div class="nt">Nada pendiente hoy</div><div class="nb">Tienes el día libre.</div></div></div><button class="btn primary block">\'+ic(\'plus\',\'s\')+\'Nuevo recordatorio</button></div><div class="stats" style="margin-top:12px"><span class="chip">«Recuérdame pagar el agua»</span><span class="chip">«Agenda al técnico el jueves»</span></div>\'',
+    stale:
+      "'<div class=\"banner attn\" style=\"margin-top:0\">'+ic('wifioff','s')+'<span class=\"grow\">Sin conexión. Datos de las 15:32.</span></div>'+sec('Lo último',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras en línea',chev:false})]),null,'hace 10 min')",
+    ready:
+      "sec('Lo último',grp([row({lead:lic('user','',1),t:'Luis llegó',s:'Puerta principal · 14:45',chev:false}),row({lead:lic('shieldok','ok',1),t:'Sin alertas hoy',s:'5 cámaras en línea',chev:false})]),null,'hace 10 min')",
+    refused:
+      "'<div class=\"banner\" style=\"margin-top:0\">'+ic('lock','s')+'<span class=\"grow\">La agenda está apagada en esta casa. Pídele al propietario que la active.</span></div>'",
+    loading:
+      '\'<div class="sec"><div class="group">\'+[0,1,2,3].map(()=>\'<div class="row"><span class="skel" style="width:42px;height:42px;border-radius:14px"></span><span class="main"><span class="skel" style="display:block;height:16px;width:58%"></span><span class="skel" style="display:block;height:13px;width:40%;margin-top:7px"></span></span><span class="skel" style="width:64px;height:28px;border-radius:999px"></span></div>\').join(\'\')+\'</div></div><div class="sec"><div class="group">\'+[0,1].map(()=>\'<div class="row"><span class="skel" style="width:42px;height:42px;border-radius:14px"></span><span class="main"><span class="skel" style="display:block;height:16px;width:50%"></span><span class="skel" style="display:block;height:13px;width:34%;margin-top:7px"></span></span></div>\').join(\'\')+\'</div></div><div class="skel" style="height:50px;border-radius:16px"></div>\'',
+  },
 };

@@ -1,0 +1,50 @@
+import { describe, expect, test } from 'bun:test';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { Feed, FeedItem } from '@/shared/ui/feed-item/feed-item';
+
+describe('FeedItem', () => {
+  test('a feed lists its items with who, when and text', () => {
+    render(
+      <Feed>
+        <FeedItem leading={null} who="Cocina" when="14:45" text="Luis llegó a casa." />
+        <FeedItem
+          leading={null}
+          who="Recordatorio"
+          when="12:00"
+          text="Llamar al plomero venció hace 1 h."
+        />
+      </Feed>
+    );
+    expect(screen.getByRole('list')).toBeDefined();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByText('Cocina')).toBeDefined();
+    expect(screen.getByText('14:45')).toBeDefined();
+    expect(screen.getByText('Luis llegó a casa.')).toBeDefined();
+  });
+
+  test('an unread item names its dot and runs the actions under its text', () => {
+    let activated = 0;
+    render(
+      <Feed>
+        <FeedItem
+          leading={<span data-testid="avatar" />}
+          who="Carlos"
+          when="14:35"
+          text="Quiere usar la agenda y los proyectos."
+          unreadLabel="Sin leer"
+          thread
+          actions={<button onClick={() => (activated += 1)}>Activar</button>}
+        />
+      </Feed>
+    );
+    expect(screen.getByRole('img', { name: 'Sin leer' })).toBeDefined();
+    expect(screen.getByTestId('avatar')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Activar' }));
+    expect(activated).toBe(1);
+  });
+
+  test('a read item shows no unread dot', () => {
+    render(<FeedItem leading={null} who="Argus" when="14:40" text="Resumen del día." />);
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+});

@@ -6,12 +6,16 @@ import { ChipDemo } from './demos/chip-demo';
 import { ChoiceDemo } from './demos/choice-demo';
 import { CommandDemo } from './demos/command-demo';
 import { ConfirmDemo } from './demos/confirm-demo';
+import { FeedItemDemo } from './demos/feed-item-demo';
 import { FieldCodeDemo } from './demos/field-code-demo';
 import { FieldDemo } from './demos/field-demo';
 import { IconDemo } from './demos/icon-demo';
 import { LayoutDemo } from './demos/layout-demo';
+import { MediaDemo } from './demos/media-demo';
 import { MenuDemo } from './demos/menu-demo';
+import { NoticeDemo } from './demos/notice-demo';
 import { PressableDemo } from './demos/pressable-demo';
+import { ResourceViewDemo } from './demos/resource-view-demo';
 import { RowDemo } from './demos/row-demo';
 import { SectionDemo } from './demos/section-demo';
 import { SwitchDemo } from './demos/switch-demo';
@@ -37,6 +41,10 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'chip', family: 'content', title: 'Chip', Demo: ChipDemo },
   { id: 'avatar', family: 'content', title: 'Avatar', Demo: AvatarDemo },
   { id: 'check', family: 'content', title: 'Check', Demo: CheckDemo },
+  { id: 'notice', family: 'content', title: 'Notice', Demo: NoticeDemo },
+  { id: 'feed-item', family: 'content', title: 'FeedItem', Demo: FeedItemDemo },
+  { id: 'media', family: 'content', title: 'Media', Demo: MediaDemo },
+  { id: 'resource-view', family: 'overlays', title: 'ResourceView', Demo: ResourceViewDemo },
   { id: 'button', family: 'input', title: 'Button', Demo: ButtonDemo },
   { id: 'switch', family: 'input', title: 'Switch', Demo: SwitchDemo },
   { id: 'confirm', family: 'overlays', title: 'Confirm', Demo: ConfirmDemo },

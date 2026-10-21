@@ -19,13 +19,18 @@ const { ChipDemo } = await import('@/features/ui-lab/demos/chip-demo');
 const { ChoiceDemo } = await import('@/features/ui-lab/demos/choice-demo');
 const { CommandDemo } = await import('@/features/ui-lab/demos/command-demo');
 const { ConfirmDemo } = await import('@/features/ui-lab/demos/confirm-demo');
+const { FeedItemDemo } = await import('@/features/ui-lab/demos/feed-item-demo');
 const { FieldCodeDemo } = await import('@/features/ui-lab/demos/field-code-demo');
 const { FieldDemo } = await import('@/features/ui-lab/demos/field-demo');
 const { IconDemo } = await import('@/features/ui-lab/demos/icon-demo');
 const { LayoutDemo } = await import('@/features/ui-lab/demos/layout-demo');
+const { MediaDemo } = await import('@/features/ui-lab/demos/media-demo');
 const { MenuDemo } = await import('@/features/ui-lab/demos/menu-demo');
+const { NoticeDemo } = await import('@/features/ui-lab/demos/notice-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
+const { ResourceViewDemo } = await import('@/features/ui-lab/demos/resource-view-demo');
 const { RowDemo } = await import('@/features/ui-lab/demos/row-demo');
+const { Scene } = await import('@/features/ui-lab/demos/scene');
 const { SectionDemo } = await import('@/features/ui-lab/demos/section-demo');
 const { SwitchDemo } = await import('@/features/ui-lab/demos/switch-demo');
 const { TextDemo } = await import('@/features/ui-lab/demos/text-demo');
@@ -42,12 +47,16 @@ const DEMOS: Record<string, ComponentType> = {
   choice: ChoiceDemo,
   command: CommandDemo,
   confirm: ConfirmDemo,
+  'feed-item': FeedItemDemo,
   field: FieldDemo,
   'field-code': FieldCodeDemo,
   icon: IconDemo,
   layout: LayoutDemo,
+  media: MediaDemo,
   menu: MenuDemo,
+  notice: NoticeDemo,
   pressable: PressableDemo,
+  'resource-view': ResourceViewDemo,
   row: RowDemo,
   section: SectionDemo,
   switch: SwitchDemo,
@@ -66,6 +75,11 @@ describe('ui-lab', () => {
       expect(container.querySelectorAll('[data-testid^="case-"]').length).toBeGreaterThan(0);
     });
   }
+
+  test('a scene placeholder draws its bands', () => {
+    const { container } = render(<Scene name="patio" />);
+    expect(container.querySelectorAll('path').length).toBeGreaterThan(1);
+  });
 
   test('a case wraps its component in a case- test id', () => {
     render(

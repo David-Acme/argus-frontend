@@ -40,6 +40,7 @@ const light = {
   'ev3-text': '#2F4366',
   ev4: '#F2E1DF',
   'ev4-text': '#6E2F28',
+  'on-media': '#FFFFFF',
 } as const;
 
 const dark = {
@@ -77,6 +78,7 @@ const dark = {
   'ev3-text': '#B4C6E6',
   ev4: '#3A2321',
   'ev4-text': '#F0BDB6',
+  'on-media': '#FFFFFF',
 } as const satisfies Record<keyof typeof light, string>;
 
 export type ColorRole = keyof typeof light;
@@ -167,6 +169,16 @@ export const inset = {
     codeBorder: 2,
   },
   segment: { pad: 3, gap: 2, iconGap: 6, minX: 2 },
+  notice: { x: 16, y: 14, gap: 10, headGap: 12, bodyTop: 2, actionGap: 8 },
+  banner: { x: 14, y: 10, gap: 10 },
+  feed: { x: 18, y: 2, itemY: 14, gap: 12, whoGap: 6, textTop: 2, actionsTop: 10, actionsGap: 8 },
+  thread: { top: 6 },
+  unread: { end: 2, top: 20 },
+  media: { labelX: 10, labelBottom: 8, chip: 8, chipStart: 7, chipEnd: 9, chipY: 3, chipGap: 6 },
+  overlay: { edge: 10, gap: 6, revealGap: 8 },
+  eye: { edge: 10, start: 2, end: 8, y: 2, gap: 2 },
+  skeleton: { lineGap: 7 },
+  empty: { x: 16, y: 28, gap: 8 },
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
@@ -181,6 +193,7 @@ export const radius = {
   toast: 18,
   toastAction: 10,
   media: 20,
+  notice: 20,
   dialog: 22,
   card: 24,
   status: 26,
@@ -224,6 +237,14 @@ export const size = {
   menuRow: 36,
   menuWidth: 220,
   hairline: 1,
+  feedLeading: 42,
+  thread: 2,
+  threadMin: 12,
+  mediaControl: 40,
+  skelLine: 16,
+  skelMeta: 13,
+  skelPill: 64,
+  skelPillHeight: 28,
 } as const;
 
 export const motion = {
@@ -237,6 +258,7 @@ export const motion = {
   pressScale: 0.96,
   pressScaleIcon: 0.9,
   caretBlink: 1000,
+  loop: { live: 2400, liveDim: 0.35, shimmer: 1400, shimmerRest: 0.5 },
 } as const;
 
 export const material = {
@@ -250,6 +272,7 @@ export const material = {
   sheetSurfaceMix: 0.94,
   blurPalette: 30,
   paletteSurfaceMix: 0.84,
+  blurMedia: 10,
 } as const;
 
 export const breakpoints = { compact: 0, medium: 600, expanded: 1024, wide: 1440 } as const;
@@ -269,6 +292,7 @@ export const layout = {
   sideSheet: 400,
   palette: 640,
   sidebar: 244,
+  mediaAspect: 1.6,
 } as const;
 
 export const tokens = {

@@ -47,6 +47,13 @@ export const typeRoles = {
   fieldError: { size: 14, line: 21, weight: '500', tracking: 0, maxScale: 2 },
   entry: { size: 16, line: 24, weight: '400', tracking: 0, maxScale: 2 },
   code: { size: 24, line: 36, weight: '650', tracking: 0, maxScale: 1 },
+  noticeTitle: { size: 16, line: 20.8, weight: '650', tracking: 0, maxScale: 2 },
+  noticeBody: { size: 14, line: 18.9, weight: '400', tracking: 0, maxScale: 2 },
+  feedWho: { size: 15, line: 21, weight: '600', tracking: 0, maxScale: 2 },
+  mediaLabel: { size: 13, line: 17.55, weight: '600', tracking: 0, maxScale: 2 },
+  mediaDetail: { size: 13, line: 17.55, weight: '500', tracking: 0, maxScale: 2 },
+  mediaChip: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 2 },
+  eyeChip: { size: 12, line: 16.2, weight: '650', tracking: 0, maxScale: 2 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
