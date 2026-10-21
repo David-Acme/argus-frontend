@@ -134,6 +134,7 @@ export function installNativeUiMocks(): void {
   mock.module('@shopify/react-native-skia', () => ({
     Canvas: host('skia-canvas'),
     Image: host('skia-image'),
+    ColorMatrix: host('skia-color-matrix'),
     BlendMode: { DstOut: 8, Plus: 12, Modulate: 13, SrcOver: 3 },
     PaintStyle: { Stroke: 1 },
     StrokeCap: { Round: 1 },

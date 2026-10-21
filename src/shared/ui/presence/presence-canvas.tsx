@@ -1,4 +1,4 @@
-import { Canvas, Image, type SkImage } from '@shopify/react-native-skia';
+import { Canvas, ColorMatrix, Image, type SkImage } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
 import { PixelRatio } from 'react-native';
 import { useFrameCallback, useSharedValue } from 'react-native-reanimated';
@@ -31,6 +31,8 @@ import {
 type Runtime = { driver: Driver; scene: SkiaScene; key: string };
 
 const MAX_RATIO = 2;
+const RESIDUE = 3 / 255;
+const RESIDUE_CUT = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, -RESIDUE];
 
 function streakWidth(look: Look): number {
   'worklet';
@@ -157,7 +159,9 @@ export function PresenceCanvas({
 
   return (
     <Canvas style={box} pointerEvents="none">
-      <Image image={image} x={0} y={0} width={plan.size} height={plan.size} fit="fill" />
+      <Image image={image} x={0} y={0} width={plan.size} height={plan.size} fit="fill">
+        {plan.trails ? <ColorMatrix matrix={RESIDUE_CUT} /> : null}
+      </Image>
     </Canvas>
   );
 }
