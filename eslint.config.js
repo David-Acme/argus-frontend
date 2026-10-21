@@ -83,6 +83,29 @@ const SOURCE_SYNTAX = [
   },
 ];
 
+const TEMPLATE_KEY_MESSAGE = 'A translation key is a typed literal, never built or cast (rule 27).';
+const TRANSLATORS = ['[callee.name=/^tk?$/]', '[callee.property.name=/^tk?$/]'];
+const KEY_BUILDERS =
+  ":matches(TemplateLiteral[expressions.length>0], BinaryExpression[operator='+'], CallExpression[callee.property.name=/^(concat|join)$/])";
+
+const TEMPLATE_KEY_SYNTAX = [
+  ...TRANSLATORS.flatMap((callee) => [
+    {
+      selector: `CallExpression${callee} > :first-child${KEY_BUILDERS}`,
+      message: TEMPLATE_KEY_MESSAGE,
+    },
+    {
+      selector: `CallExpression${callee} > :first-child ${KEY_BUILDERS}`,
+      message: TEMPLATE_KEY_MESSAGE,
+    },
+  ]),
+  {
+    selector:
+      ":matches(TSAsExpression, TSTypeAssertion) > TSTypeReference.typeAnnotation[typeName.name='TranslationKey']",
+    message: TEMPLATE_KEY_MESSAGE,
+  },
+];
+
 const TYPE_SCALE_MESSAGE =
   'Use a Text step (hero, title, headline, body, meta, caption) or a type role from tokens.';
 
@@ -171,19 +194,7 @@ module.exports = defineConfig([
           message: 'Export each public name explicitly (rule 7).',
         },
       ],
-      'argus/no-template-key': [
-        'error',
-        {
-          selector:
-            "CallExpression[callee.name='t'][arguments.0.type='TemplateLiteral'][arguments.0.expressions.length>0]",
-          message: 'A translation key is a typed literal, never a template (rule 27).',
-        },
-        {
-          selector:
-            "CallExpression[callee.property.name='t'][arguments.0.type='TemplateLiteral'][arguments.0.expressions.length>0]",
-          message: 'A translation key is a typed literal, never a template (rule 27).',
-        },
-      ],
+      'argus/no-template-key': ['error', ...TEMPLATE_KEY_SYNTAX],
       'argus/no-http-type-argument': [
         'error',
         {

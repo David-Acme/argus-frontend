@@ -5432,3 +5432,5 @@ many files; the reason names that cause.
 
 | Baseline | Entries | Reason | Date |
 |---|---|---|---|
+| `scripts/lib/quality-baseline.txt` | `template-key` | Finding 3 of the R0 review: the counter now counts every key built by `+`, a template, `join` or `concat` in the first argument of `t` or `tk` (and their aliases), and every `as TranslationKey`. The one new count is the template key of the `tk` call in `use-settings-profiles.ts` (`screens.settings.profiles.result.reasons.*`), existing debt the `t`-only selector hid. | 2026-10-20 |
+| `eslint-suppressions.json` | `src/features/settings/hooks/use-settings-profiles.ts argus/no-template-key` | The same `tk` template, now seen by the lint ban. | 2026-10-20 |

@@ -160,4 +160,20 @@ describe('check-quality', () => {
     expect(fresh.output).toContain('untested-component-or-screen: src/features/a/card.tsx is new');
     expect(fixed.output).toContain('src/features/a/card.tsx is fixed');
   });
+
+  test('a built or cast translation key is counted, a key map read is not', () => {
+    const file = [
+      "import type { TranslationKey } from '@/core/i18n';",
+      'declare const t: (key: TranslationKey) => string;',
+      'const translate = t;',
+      'export const labels = (id: string, LABELS: Record<string, TranslationKey>) => [',
+      "  t('home.' + id),",
+      '  translate(`home.${id}`),',
+      "  t(['home', id].join('.') as TranslationKey),",
+      '  t(LABELS[id] ?? LABELS.unknown),',
+      '];',
+    ].join('\n');
+    const run = quality({ 'src/shared/lib/labels.ts': file }, baseline({}, 1));
+    expect(run.output).toContain('template-key: 4 is above its baseline 0');
+  });
 });

@@ -134,4 +134,28 @@ describe('the lint set', () => {
       'argus/source-syntax',
     ]);
   });
+
+  test('a translation key built by concatenation, a template or a join, or cast, is banned', async () => {
+    const lines = [
+      "t('home.' + id)",
+      't(`home.${id}`)',
+      "tk(ready ? `home.${id}` : 'home.title')",
+      "i18n.t(['home', id].join('.'))",
+      't(id as TranslationKey)',
+      't(LABELS[id])',
+      "t(ready ? 'home.a' : 'home.b')",
+    ];
+    const hits = await Promise.all(
+      lines.map((line) => rulesHit('src/features/home/keys.ts', `export const k = ${line};\n`))
+    );
+    expect(hits).toEqual([
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      ['argus/no-template-key'],
+      [],
+      [],
+    ]);
+  });
 });

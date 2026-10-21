@@ -2365,6 +2365,11 @@
       "count": 1
     }
   },
+  "src/features/settings/hooks/use-settings-profiles.ts": {
+    "argus/no-template-key": {
+      "count": 1
+    }
+  },
   "src/features/settings/model/profile-text.ts": {
     "argus/no-template-key": {
       "count": 2

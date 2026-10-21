@@ -1,5 +1,6 @@
 import ts from 'typescript';
 import { countNodes, type SourceFile } from '../source-files';
+import { builtKeys } from './translation-keys';
 
 export type Counter = {
   name: string;
@@ -60,12 +61,6 @@ function isStyleObject(node: ts.Node): boolean {
     node.initializer.expression !== undefined &&
     ts.isObjectLiteralExpression(node.initializer.expression)
   );
-}
-
-function isTemplateKey(node: ts.Node): boolean {
-  if (!ts.isCallExpression(node) || calleeName(node) !== 't') return false;
-  const first = node.arguments[0];
-  return first !== undefined && ts.isTemplateExpression(first);
 }
 
 function unwrapAwait(node: ts.Node): ts.Node {
@@ -180,7 +175,7 @@ export const syntaxCounters: readonly Counter[] = [
     count: (file) =>
       importsNamed(file, 'react-native', new Set(['useWindowDimensions', 'Dimensions'])),
   },
-  { name: 'template-key', applies: inSource, count: (file) => countNodes(file, isTemplateKey) },
+  { name: 'template-key', applies: inSource, count: builtKeys },
   { name: 'http-unchecked', applies: inSource, count: (file) => countNodes(file, isUncheckedHttp) },
   { name: 'is-flag-in-features', applies: inFeatures, count: (file) => countNodes(file, isIsFlag) },
   {
