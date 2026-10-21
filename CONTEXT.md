@@ -5465,7 +5465,10 @@ in the prototype from its own helpers (`scripts/ui-lab/prototype-cases.ts`,
 one block per component) in a stage of the same width, then writes ours |
 prototype | diff with the mismatch to
 `/home/acme/Desktop/argus/uiux-map/redesign/phase1/gallery/`.
-`tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines.
+`tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines. It is
+one test per width and theme: with the four design-system shares merged the
+catalogue is 26 components, twelve shots each per width, and one test per
+width ran past the suite's 120 s test timeout on a loaded machine.
 
 **Shared uniwind.css.** `node_modules/uniwind/uniwind.css` is a bun hardlink
 shared by every worktree and rewritten by the last bundle; better-tailwindcss

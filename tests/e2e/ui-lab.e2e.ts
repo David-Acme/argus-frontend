@@ -43,23 +43,23 @@ const catalogueIds = (browser: Browser): Promise<string[]> =>
   );
 
 for (const width of WIDTHS) {
-  test(`every ui-lab component looks as recorded at ${width} px`, async ({
-    app,
-    browser,
-    screen,
-  }) => {
-    await browser.setViewport({ width, height: HEIGHT });
-    await browser.addInitScript(installTauriShim, unpairedDevice('A'));
-    await browser.addInitScript(enableLab);
-    await app.open('/ui-lab');
-    await expect(screen.getByTestId('ui-lab-entry-button')).toBeVisible({ timeout: 15000 });
-    const platform = await platformOf(browser);
-    test.skip(
-      !UPDATING && !platformRecorded(platform),
-      `no ui-lab baseline for ${platform}: run \`bun run test:e2e:update-screens\` on this machine`
-    );
-    for (const component of await catalogueIds(browser)) {
-      for (const theme of THEMES) {
+  for (const theme of THEMES) {
+    test(`every ui-lab component looks as recorded at ${width} px in ${theme}`, async ({
+      app,
+      browser,
+      screen,
+    }) => {
+      await browser.setViewport({ width, height: HEIGHT });
+      await browser.addInitScript(installTauriShim, unpairedDevice('A'));
+      await browser.addInitScript(enableLab);
+      await app.open('/ui-lab');
+      await expect(screen.getByTestId('ui-lab-entry-button')).toBeVisible({ timeout: 15000 });
+      const platform = await platformOf(browser);
+      test.skip(
+        !UPDATING && !platformRecorded(platform),
+        `no ui-lab baseline for ${platform}: run \`bun run test:e2e:update-screens\` on this machine`
+      );
+      for (const component of await catalogueIds(browser)) {
         for (const mode of MODES) {
           await app.open(`/ui-lab?c=${component}&theme=${theme}${mode.query}`);
           const stage = screen.getByTestId('ui-lab-stage');
@@ -70,6 +70,6 @@ for (const width of WIDTHS) {
           );
         }
       }
-    }
-  });
+    });
+  }
 }
