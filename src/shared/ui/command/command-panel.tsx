@@ -71,12 +71,13 @@ function ItemOption({ item, index, state }: ItemOptionProps) {
   return (
     <Option label={item.label} selected={state.selected === index} onPress={() => state.run(index)}>
       <Icon name={item.icon} size="small" />
-      <View className="min-w-0 flex-1">
+      <View className="shrink">
         <Text variant="feed" numberOfLines={1}>
           {item.label}
-          {item.meta ? <Text variant="meta">{` · ${item.meta}`}</Text> : null}
         </Text>
       </View>
+      {item.meta ? <Text variant="meta">{`· ${item.meta}`}</Text> : null}
+      <View className="flex-1" />
       {item.shortcut ? <Key label={item.shortcut} /> : null}
     </Option>
   );
