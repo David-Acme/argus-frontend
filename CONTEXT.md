@@ -5453,6 +5453,18 @@ section spacing 26/4/10/12) live in `tokens.inset`. `useEffects()` holds one
 accessibility subscription for the whole app instead of two per caller, and
 react-native-web has no `isReduceTransparencyEnabled`.
 
+**The focus ring inside clipped containers.** `web:focus-ring` draws its
+2 px outline 2 px outside the control, which a container with
+`overflow-hidden` cut off (review finding 9: the Section group, the Media
+tile and stage, the Status band). The ring's offset is the custom property
+`--focus-ring-offset` (2 px when unset), and such a container carries
+`web:focus-inset`, which sets it to -4 px, so every focusable inside it draws
+its ring inside its own edge. A custom property inherits, so the rows and
+buttons inside need no class of their own; any other clipping container with
+focusable children (Command's palette, Menu's list) takes the same class.
+`tests/e2e/ui-lab-focus.e2e.ts` reads the computed outline of a focused row
+and tile.
+
 **Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
 bun process (happy-dom, react-native-web as react-native, react-native-svg's web
 elements, stubs for Reanimated, expo-device, uniwind, RNGH), because the main

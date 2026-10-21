@@ -60,7 +60,9 @@ function Group({ children }: GroupProps) {
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.card };
   return (
-    <View className="rounded-card bg-surface py-section-group-y overflow-hidden" style={card}>
+    <View
+      className="rounded-card bg-surface py-section-group-y web:focus-inset overflow-hidden"
+      style={card}>
       {Children.toArray(children).map((child, index) => (
         <RowPosition.Provider key={index} value={{ index }}>
           {child}

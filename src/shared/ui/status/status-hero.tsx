@@ -65,7 +65,7 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
       style={BAND_MAX}>
       <View
         role={tone === 'alert' ? 'alert' : undefined}
-        className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y flex-row flex-nowrap items-center overflow-hidden"
+        className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y web:focus-inset flex-row flex-nowrap items-center overflow-hidden"
         style={card}>
         <Aura tone={AURA[tone]} mode="band" />
         {presence ? presence(size.presenceBand) : null}
