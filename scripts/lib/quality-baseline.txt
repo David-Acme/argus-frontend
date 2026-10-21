@@ -1,10 +1,10 @@
 hex-literal 137
 arbitrary-value 115
-style-object 80
+style-object 132
 raw-pressable-in-features 74
 window-dimensions-in-features 6
 template-key 137
-http-unchecked 83
+http-unchecked 84
 is-flag-in-features 73
 platform-select 58
 animated-layout-prop 9

@@ -5342,7 +5342,7 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 | Gate | What it counts | Baseline |
 |---|---|---|
 | `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into another slice's internals, other than its `index`, whether or not the slice has one; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges, `require()` is; `core` files are keyed by `core/<segment>` or `core/services/<name>`), with their members compared one by one; `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`). An import resolves to every platform variant that exists (`.native`, `.web`, `.ios`, `.android`, and the same for `index`), each an edge | `scripts/lib/boundaries-baseline.txt`, `scripts/lib/cycle-baseline.txt` |
-| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off with the table above; fails on any `warn` and on inline configuration not disabled | the table above |
+| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off, and each rule a block's `ignores` leaves out of a file, with the table above; fails on any `warn` and on inline configuration not disabled | the table above |
 | `check-references.ts` | every `[key]` in `AGENTS.md`, `CONTEXT.md` files and `docs/plans/*.md` (code spans, fences, links and `[x]` task boxes excluded) is a row of `docs/references.md`, a `[family-*]` matches a key, every row has a URL | 0 |
 | `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0) |
 | `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
@@ -5354,13 +5354,13 @@ the rules document; definitions are in `scripts/lib/quality/`):
 
 | Counter | R0 | Counter | R0 |
 |---|---|---|---|
-| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads) | 73 |
+| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads, aliases included) | 73 |
 | `arbitrary-value` (`-[…]` classes) | 115 | `platform-select` | 58 |
-| `style-object` (`style={{`) | 80 | `shared-value-dot-value` | 315 |
-| `raw-pressable-in-features` (imports) | 74 | `loop-without-reduce-motion` (files) | 2 |
+| `style-object` (each object literal in a `style` attribute, arrays, conditionals and style functions included; 132 since finding 7) | 80 | `shared-value-dot-value` | 315 |
+| `raw-pressable-in-features` (named imports, destructured `require`s and namespace members) | 74 | `loop-without-reduce-motion` (files) | 2 |
 | `window-dimensions-in-features` (imports) | 6 | `animated-layout-prop` (keys other than `transform`/`opacity` returned by `useAnimatedStyle`) | 9 |
-| `template-key` (`t(\`…${}\`)`) | 136 | `timer-in-component` (files) | 8 |
-| `http-unchecked` (an `httpService` call neither passed to a checker nor typed `unknown`) | 83 | `props-over-10` | 18 |
+| `template-key` (a key built by a template, `+`, `join` or `concat` in the first argument of `t`, `tk` or an alias, and every `as TranslationKey`; 137 since finding 3) | 136 | `timer-in-component` (files that reference `setInterval` or `requestAnimationFrame`, by name, member, computed member or alias) | 8 |
+| `http-unchecked` (an `httpService` call, through any alias or destructured method, neither typed `unknown` nor passed to a named checker: `parsed`, `checked`, `parse`, `safeParse`, or a `parse…`, `check…`, `read…`, `validate…` or `…Of` function; 84 since finding 7) | 83 | `props-over-10` | 18 |
 | `source-text-test` (unit tests reading a `src/**/*.ts(x)` file) | 9 | `legacy-token-class` (classes and `var(--color-…)` of today's colour names that `tokens.ts` drops) | 1,548 |
 | `manual-memo` (`useCallback` + `useMemo` + `memo`) | 551 | `untested-component-or-screen` (a `.tsx` under `features`/`shared` no test imports) | 341 |
 | `scanned-files` (floor) | 1,487 | | |
@@ -5439,3 +5439,4 @@ many files; the reason names that cause.
 | `eslint-suppressions.json` | `src/features/settings/hooks/use-settings-profiles.ts argus/no-template-key` | The same `tk` template, now seen by the lint ban. | 2026-10-20 |
 | `scripts/lib/boundaries-baseline.txt` | `deep-import` | Finding 10 of the R0 review: an import into another slice's internals counts whether or not the slice has an `index`. The two new counts are the imports into `core/services/desktop`, which has none. | 2026-10-20 |
 | `scripts/lib/cycle-baseline.txt` | `**` | Finding 4 of the R0 review: the cycle members are a list of their own, so a file or slice joining the recorded 21-file and 4-slice cycle fails though the cycle count holds. The file is new: every member is recorded once, as measured. | 2026-10-20 |
+| `scripts/lib/quality-baseline.txt` | `style-object`, `http-unchecked` | Finding 7 of the R0 review: the counters follow bindings. `style-object` counts every object literal in a `style` attribute, inside arrays, conditionals and style functions too (80 → 132, all existing: the welcome mascot, the camera stage and the other array styles); `http-unchecked` follows `httpService` through import aliases, variables and destructured methods, and a call passed to anything but a named checker counts (83 → 84: `responses.push(await httpService.delete(…))` in `notification.service.ts`). `raw-pressable-in-features`, `window-dimensions-in-features`, `is-flag-in-features` and `platform-select` now also see namespace imports, `require`, aliases and computed members, and found nothing new. | 2026-10-20 |

@@ -204,4 +204,35 @@ describe('check-quality', () => {
     );
     expect(run.output).toContain('untested-component-or-screen: src/features/a/card.tsx is new');
   });
+
+  test('a namespace import, an alias and a computed member reach the counters', () => {
+    const screen = [
+      "import * as RN from 'react-native';",
+      "import { IS_WEB as web } from '@/shared/constants';",
+      "import { httpService } from '@/core/services/http';",
+      'const http = httpService;',
+      'const { get } = httpService;',
+      'export async function Screen() {',
+      "  await withTimeout(http.get('/a'), 10);",
+      "  await get('/b');",
+      "  await parsed(httpService.get('/c'));",
+      "  const pad = RN.Platform['select']({ web: 1, default: 2 });",
+      '  return web ? <RN.Pressable style={[{ padding: pad }]} /> : null;',
+      '}',
+    ].join('\n');
+    const run = quality(
+      { 'src/features/a/screen.tsx': screen },
+      baseline({}, 1),
+      'src/features/a/screen.tsx\n'
+    );
+    for (const [metric, count] of [
+      ['raw-pressable-in-features', 1],
+      ['is-flag-in-features', 1],
+      ['http-unchecked', 2],
+      ['platform-select', 1],
+      ['style-object', 1],
+    ] as const) {
+      expect(run.output).toContain(`${metric}: ${count} is above its baseline 0`);
+    }
+  });
 });
