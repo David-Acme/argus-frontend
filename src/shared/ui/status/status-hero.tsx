@@ -45,7 +45,7 @@ function HeroRow(props: HeroStatusProps & { wide: boolean }) {
       <View className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
         {presence ? presence(presenceSize) : null}
         <StatusFade change={sentence} grow>
-          <Text variant={sentenceVariant(secondary, wide)} heading>
+          <Text variant={sentenceVariant(secondary, wide)} heading={2}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>
@@ -70,7 +70,7 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
         <Aura tone={AURA[tone]} mode="band" />
         {presence ? presence(size.presenceBand) : null}
         <StatusFade change={sentence} grow>
-          <Text variant="heroBand" heading numberOfLines={1}>
+          <Text variant="heroBand" heading={2} numberOfLines={1}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>

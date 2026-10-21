@@ -12,7 +12,7 @@ function CardHead({ sentence, meta, tone }: CardHeadProps) {
   if (!sentence) return null;
   return (
     <StatusFade change={sentence}>
-      <Text variant="headline" tone={tone === 'alert' ? 'alert' : 'default'} heading>
+      <Text variant="headline" tone={tone === 'alert' ? 'alert' : 'default'} heading={3}>
         {sentence}
       </Text>
       {meta ? <Text variant="meta">{meta}</Text> : null}

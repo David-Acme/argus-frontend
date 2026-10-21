@@ -5448,7 +5448,11 @@ rail and sidebar items that hold `Presence`) re-renders nothing of its own
 (review finding 6). A `FilterChip` is a `checkbox` with
 `aria-checked`, not a `button` with `aria-selected`: ARIA ignores
 `aria-selected` on a button, so the web never announced the selection
-(finding 11); native announces checked/not checked. They take no `className` and join their classes with
+(finding 11); native announces checked/not checked. `Text`'s `heading` is a level
+(1–4), carried as `aria-level`: react-native-web renders `role="heading"`
+without a level as `<h1>`, so every heading was an h1 (finding 12). The
+screen's top-bar title is 1, the Status hero and Section heads 2, the Status
+card 3. They take no `className` and join their classes with
 `clsx`, since tailwind-merge does not know the new type names and drops one of
 two `text-*` classes. Values the prototype draws that the spec's scale lacks
 (row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,

@@ -34,7 +34,7 @@ function SectionHead({ title, meta, action }: SectionHeadProps) {
         sticky && 'web:sticky web:top-0 web:z-10 web:fade-to-bg web:pt-screen-head-top'
       )}>
       {title ? (
-        <Text variant="section" heading>
+        <Text variant="section" heading={2}>
           {title}
         </Text>
       ) : (

@@ -6,7 +6,7 @@ export function TextDemo() {
   return (
     <>
       <LabCase id="hero" block>
-        <Text variant="hero" heading>
+        <Text variant="hero" heading={1}>
           {copy.heroToken}
         </Text>
       </LabCase>

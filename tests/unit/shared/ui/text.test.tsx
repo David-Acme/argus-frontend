@@ -6,7 +6,7 @@ describe('Text', () => {
   test('renders its words and a heading role when asked', () => {
     render(
       <>
-        <Text variant="hero" heading>
+        <Text variant="hero" heading={1}>
           Todo tranquilo.
         </Text>
         <Text variant="meta">En casa · Luis y tú en casa</Text>
@@ -15,6 +15,25 @@ describe('Text', () => {
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
     expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
     expect(screen.queryAllByRole('heading')).toHaveLength(1);
+  });
+
+  test('a heading carries its level, so the web does not make every heading an h1', () => {
+    render(
+      <>
+        <Text variant="title" heading={1}>
+          Seguridad
+        </Text>
+        <Text variant="section" heading={2}>
+          Lo que pasó
+        </Text>
+        <Text variant="headline" heading={3}>
+          Hay alguien en la puerta
+        </Text>
+      </>
+    );
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Seguridad');
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Lo que pasó');
+    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Hay alguien en la puerta');
   });
 
   test('a font scale grows the size up to the variant cap', () => {
