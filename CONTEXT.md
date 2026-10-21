@@ -5491,7 +5491,8 @@ The input share of the design system: `src/shared/ui/field/` and
 - **Multiline grows to five lines, then scrolls inside itself.** The cap is
   five `body` lines plus the vertical padding, scaled with the font scale.
   Native `TextInput` grows on its own up to `maxHeight`; on the web the
-  textarea grows through `field-sizing: content`, and where a browser lacks
+  textarea grows through `field-sizing: content` (with `resize: none`, the
+  prototype has no handle), and where a browser lacks
   it (Firefox, older WebKit) it stays at its 76 px minimum and scrolls.
 - **The code boxes are drawn; the input is invisible.** Six 44 x 56 boxes
   render the characters of one transparent `TextInput` laid over them, so
@@ -5507,9 +5508,13 @@ The input share of the design system: `src/shared/ui/field/` and
   (`look="row"`, settings) or a field-shaped button with the chevron
   (`look="field"`, forms: the desktop dialog's «Repetir»), which opens the
   options in the sheet. Nothing is ever truncated (W3). Before the first
-  layout it assumes the control fits. Segments carry `minX` (6) of inner
-  padding, which the prototype does not have: without it a segmented control
-  in a content-sized container would measure as never fitting and flip.
+  layout it assumes the control fits. A `Choice` always fills its container
+  (`self-stretch`): the first capture showed a content-sized one flipping
+  between segments and the row every frame, because each form changed the
+  width the other measured. Segments also carry `minX` (2) of inner padding
+  and the comparison allows half a pixel of rounding; at 6 the prototype's
+  own Modo control (Noche + moon, 70.8 px in a 79 px segment at 360) would
+  not have fitted.
 - **The sheet is a slot until `Sheet` lands.** `sheet` is a render prop with
   `Sheet`'s spec'd props (`variant: 'list'`, `title`, `open`, `onClose`,
   `children`); `Choice` owns the open state and the option list (radios with
@@ -5521,7 +5526,7 @@ The input share of the design system: `src/shared/ui/field/` and
   `surface` (light) or `fill-press` (dark) with the `segment` elevation.
 - **Tokens added.** `inset.field` (top 14, x 14, gap 8, labelGap 6,
   errorGap 6, multiY 12, border 1.5, codeTop 20, codeGap 8, codeBorder 2),
-  `inset.segment` (pad 3, gap 2, iconGap 6, minX 6), `size.fieldMulti` 76,
+  `inset.segment` (pad 3, gap 2, iconGap 6, minX 2), `size.fieldMulti` 76,
   `size.codeBoxWidth` 44, `size.codeBoxHeight` 56, `size.caretWidth` 2,
   `size.caretHeight` 20, `elevation.segment`, `motion.caretBlink` 1000, and
   the type roles `control` (14/21/600: `.lab` and `.seg button`),
