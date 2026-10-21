@@ -63,7 +63,7 @@ function LivePalette() {
 export function CommandDemo() {
   return (
     <>
-      <LabCase id="palette">
+      <LabCase id="palette" block>
         <StaticPalette />
       </LabCase>
       <LabCase id="live">
