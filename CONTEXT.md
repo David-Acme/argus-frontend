@@ -5395,3 +5395,217 @@ re-baselines with its reason here, never silently, and Skia's CanvasKit must
 not reach the web entry. `lint` takes about 2 minutes with the type-aware
 rules (75 s with `expo lint` before). `check-quality` 16 s,
 `check-boundaries` with policy and references 5 s.
+
+## Native spikes: Sheet on TrueSheet and Estela on Skia (2026-10-21, Phase 1)
+
+Branch `p1/native`. Two components land in `src/shared/ui/`, each with a
+platform split that keeps the native library out of the web bundle: `Sheet`
+(`sheet.tsx` is the native entry, `sheet.web.tsx` the web one) and `Presence`
+(`presence-canvas.tsx` is the Skia renderer, `presence-canvas.web.tsx` the
+Canvas 2D one). The plain module is the native one so Bun's test runner, which
+ignores `moduleSuffixes`, resolves it; Metro and `tsc` still pick `.web` first
+on the web. The lab is `src/app/ui-lab-spikes.tsx` →
+`src/features/ui-lab/spikes-screen.tsx` (views `sheet`, `presence`, `bench`).
+
+### Release-only lab access
+
+`/ui-lab-spikes` renders in `__DEV__`, or in a release built with
+`EXPO_PUBLIC_ARGUS_LAB=1` (inlined at build time, off by default). The same
+flag is the only way `+native-intent.ts` lets `argus://ui-lab-spikes?…` through
+its allow-list; a normal release sends that link to `/` (unit test in
+`tests/unit/app/deep-link.test.ts`). Every measurement below used a release
+build with the flag on.
+
+### Sheet (spike A)
+
+TrueSheet 3.11.18 on phones (compact width, or a short window: a phone in
+landscape keeps the sheet, which the first run on the emulator got wrong by
+switching to the dialog), and an `@rn-primitives/dialog` centred dialog at
+medium and up and on every web/Tauri build (480 px, 560 px for long forms).
+Props verified in 3.11.18's source:
+
+- The non-dismissible option is **`dismissible`** (`dismissible={!dirty}`). On
+  Android it sets `BottomSheetBehavior.isHideable`, so a dirty sheet cannot be
+  dragged away (it settles on its lowest detent) and the dim tap does nothing;
+  neither raises an event, so those two gestures are blocked silently. Back
+  arrives through **`onBackPress`** (which `TrueSheet.tsx` calls only while the
+  sheet is presented, and lets propagate when `dismissible` is false unless the
+  handler returns true): it opens the native discard alert, `cancelable` so a
+  second Back means *Seguir editando*. ✕ asks the same way.
+- `detents` `['auto']` / `[0.6, 1]` + `scrollable`,
+  `maxContentHeight = windowHeight − insets.top − 16`, `insetAdjustment
+  'automatic'`, `footerOptions.keyboardOffset = −insets.bottom` (the footer's
+  own safe-area padding tucks behind the keyboard), focus in `onDidPresent`.
+- `scrollableOptions.keyboardScrollOffset` is **16 + the footer's height**, not
+  16: TrueSheet scrolls the focused input to the keyboard's top and does not
+  know the footer floats over the content, so with 16 the caret of the notes
+  field hid behind Guardar. The body also pads by the footer's height minus the
+  bottom inset, or an `auto` sheet leaves a band above its footer.
+- The grabber is TrueSheet's native one (36 × 5, `text-3` at 40 %); the header
+  starts 24 dp down to clear it. Glass: `backgroundBlur` exists only on iOS;
+  Android gets `surface` at 94 % (`material.sheetSurfaceMix`) and no blur,
+  solid under `reduceTransparency`.
+
+Open questions, answered on the emulators:
+
+- **Inset/keyboard handling with `KeyboardProvider` mounted** (it is, in the
+  root layout): works. The sheet rises with Gboard to the ceiling (top at
+  40 dp = status bar 24 + 16), the footer rides on the keyboard, and the
+  focused field scrolls into view. keyboard-controller #1683 does not affect
+  TrueSheet, which observes `WindowInsetsAnimationCompat` itself.
+- **#790 (gap after a drag or keyboard dismissal)**: not reproduced. Back,
+  dismissing the keyboard, and dragging between detents with the keyboard open
+  leave no gap; after the keyboard closes the sheet returns to the detent it
+  had (0.6 when the user had not dragged it).
+
+Acceptance (spec §10 «Sheet + keyboard»), emulator `Argus_LowEnd_API35`,
+Gboard, screenshots in `uiux-map/redesign/phase1/spikes/sheet/`: ceiling and
+pinned title/✕ pass; footer on the keyboard passes; last field above the
+footer passes after the offset fix; Siguiente through the fields and *done*
+submitting the short form pass; ✕ and Back ask on a dirty form and close a
+clean one, drag and outside tap are blocked silently when dirty (no question,
+see above); multiline grows to five lines then scrolls with the caret visible;
+no #790 gap; landscape keeps the sheet (after the fix); font scale 2.0 keeps
+the title on one line and grows the button; dark/light switch then reopen keeps
+the top inset; 20 open/close cycles end with no stuck sheet. The Samsung
+keyboard's strip toggle and frame times on a real GPU need the S21 FE: on the
+software-GPU emulator an open/close cycle runs at p50 77 ms per frame, which
+measures the emulator, not the sheet.
+
+In landscape Gboard switches to its full-screen extract editor, so the sheet is
+hidden while typing; the sheet itself stays a sheet with its header and every
+field reachable once the editor closes. A field that should stay visible in
+landscape needs `disableFullscreenUI` on its `TextInput` (the `Field`
+component's decision, not the sheet's).
+
+Dialog (web, Chromium, `uiux-map/redesign/phase1/spikes/sheet/web/`): title +
+✕ on top, ⋯ bottom left, Guardar with its `Ctrl ↵`/`⌘ ↵` key bottom right
+(web only); an untouched form closes on Esc or an outside click; a dirty one
+shows the inline `.discard` row, a second Esc keeps editing; Ctrl+Enter saves.
+`@rn-primitives/dialog`'s web `Content` and `Overlay` crash on a style array
+(«Failed to set an indexed property on CSSStyleDeclaration»), so they get
+`StyleSheet.flatten`ed objects, and take their 480/560 width explicitly
+(`width`, `maxWidth: '100%'`) because Radix's wrapper shrinks to its content.
+Ctrl/⌘+Enter listens in the capture phase (a single-line input otherwise ate
+it), and focus returns to the control that opened the dialog.
+
+### Estela (spike B)
+
+One engine in `src/shared/ui/presence/engine/` (shapes, paint, frame, icon,
+engine, driver), a typed port of the prototype's `EST` with every function a
+worklet and three parameters at most; palettes from
+`tokens.illustration.estela`. The Skia renderer runs the spring integration in
+a `useFrameCallback` worklet, draws every particle with one `drawAtlas` call
+from a sprite sheet of round streaks (one sprite per streak length in device
+pixels, so a streak never scales its width), into an offscreen GPU surface
+that is faded with `DstOut` each frame (the trails) and snapshotted into two
+alternating `SkImage`s shown by a `<Canvas><Image/></Canvas>`. JS sends only
+state, intensity, target, level (a `SharedValue`) and the event cue. The icon
+form (≤ 48) strokes ~60 segments with `drawLine`. The web renderer is the same
+driver on a plain `<canvas>` 2D context; no CanvasKit, no wasm, and neither
+Skia nor TrueSheet appears in the web export (checked by grep of
+`dist/_expo/static/js/web/*.js`).
+
+Tier rule (`plan.ts`, measured):
+
+| Tier | Particles stage / medium / compact | Trails | Frame rate active / rest | Icon form | Lean while scrolling |
+|---|---|---|---|---|---|
+| `high` | 560 / 320 / 200 | yes | 60 / 30 | 30 fps | yes |
+| `mid` | 320 / 320 / 200 | yes | 60 / 30 | 30 fps | yes |
+| `low` | 280 / 160 / 100 | no | 30 / 30 | 30 fps | no |
+| reduced motion | the catalogue still per state, redrawn only when the state or theme changes | — | — | — | — |
+
+Why: on native the trail layer is free, because every tier already draws into
+the offscreen surface and only the fade alpha differs, so `mid` keeps trails
+and gives up particles instead; the 560-particle stage was the one size that
+dropped frames under host load. The icon form was the costliest per pixel (each
+segment is its own `drawLine`; a 36 px eye took 95 % of the UI thread on the
+low-end emulator at 60 fps), so it runs at 30 fps on every tier. "Rest" is
+`idle`, `watch`, `sleep`, `off` with no event playing. `resolvePerfTier`'s
+memory thresholds (< 4 GB low, < 6 GB mid) stay: the low-end emulator holds
+`low` at a steady 30 fps and nothing measured argues for moving them.
+
+The trail layer is an 8-bit surface faded with `DstOut`, which stops at an
+alpha of 2/255 (the product rounds back to itself), so earlier shapes stayed as
+a faint ghost on the dark stage; the displayed image drops alpha under 3/255
+through a colour matrix. The prototype's canvas has the same floor and the web
+renderer keeps it, to stay identical. The lab's catalogue view mounts 35
+animated copies at once and wedges the software-GPU emulator; the spec allows
+two continuous animations per screen, so that page is for looking, not for
+measuring.
+
+Pausing: the frame callback stops when the screen loses focus, the app leaves
+the foreground or `paused` is set (for a hero scrolled out of view); the web
+canvas also stops when an `IntersectionObserver` reports it off-screen.
+
+### Measurements (release x86_64 builds, emulators)
+
+Emulators: `Argus_LowEnd_API35` (new: 2 cores, 2 GB, 720 × 1600 at 320 dpi,
+`swiftshader_indirect`, 60 Hz) and `Argus_API35` (4 cores, 2 GB, host GPU).
+The host was shared with other agents' builds; each bench row records the
+host's load average, and rows above a load of about 4 are noisy. A 4 GB cap
+OOM-killed the low-end emulator, so it ran under a 5 GB cap. Performance on a
+real GPU is judged on the S21 FE with the arm64 APK
+(`uiux-map/redesign/phase1/apk/`).
+
+**Cold start**, `am start -S -W`, median of 10 after one warm-up (TotalTime /
+WaitTime, ms): low-end before `fd9af56` 2,731 / 2,745, after 2,615 / 2,620;
+mid before 950 / 954, after 961 / 970. No regression beyond the noise.
+
+**APK** (x86_64 release, lab flag on): 101,455,548 B before, 117,468,588 B
+after (+16.0 MB); the arm64-v8a review APK is 110,469,964 B. `librnskia.so` is 14,687,712 B and is stored uncompressed;
+`libreact_codegen_TrueSheetSpec.so` 459,256 B; dex +0.25 MB; the JS bundle
+10,244,680 → 10,850,460 B (+606 KB, Skia's JS API, TrueSheet, the two
+components and the lab).
+
+**Estela, low-end emulator**, 10 s per row, `dumpsys gfxinfo framestats`, 7
+states per size (idle, listen with a 30 Hz level from the JS thread, speak
+with level, look, alert, panic, happy with a glint every 2 s). Frame time is
+IntendedVsync → FrameCompleted (the software GPU's render thread alone takes
+~16–28 ms per frame, so a 60 fps frame shows as 20–30 ms end to end); fps is
+frames / 10 s; CPU is the thread's share of one core over the same 10 s, read
+from `/proc/<pid>/task/*/stat` (the JS thread is `mqt_v_js`):
+
+| Tier · size | fps (active rows) | janky % (max) | p50 / p95 / p99 ms | UI thread CPU | JS thread CPU |
+|---|---|---|---|---|---|
+| low 300 | 30 | 0–8 (31 on idle at load 5) | 32 / 32 / 57 (117 on that idle row) | 18–27 % | 0–1 % |
+| low 120 | 30 | 0–10 | 32 / 32 / 32 | 14–16 % | 0 % |
+| low 66 | 30 | 0–7 | 31 / 32 / 32 | 13–17 % | 0 % |
+| low 36 | 30 | 0–12 | 32 / 61 / 65 | 32–71 % | 0 % |
+| high 300 | 60 | 0–0.3 | 26 / 32 / 32 | 52–56 % | 0 % |
+| high 120 | 60 | 0–0.2 | 24 / 27 / 29 | 36–37 % | 0 % |
+| high 66 | 60 | 0–3.8 | 25 / 34 / 46 | 33–48 % | 0 % |
+| high 36 (icon at 60 fps, before the 30 fps cap) | 44–60 | 0.5–34 | 29 / 48 / 65 | 70–95 % | 0 % |
+
+The gate holds: the low tier runs at a steady 30 fps on the low-end emulator
+with the JS thread at 0–1 % while Estela animates, i.e. the JS thread only
+writes the level and the cue; every frame is the UI thread's worklet and the
+render thread. The `mid` rows of the first run measured the earlier rule (560
+particles, no trails) and are superseded by the rule above; a rerun of the
+final `mid` rule was taken while other agents held the host at a load of
+35–70 and is discarded. The closest clean evidence for it is `high` at 120 px:
+320 particles with trails at 60 fps, 0–0.2 % janky, UI thread 36–37 %.
+
+**Estela, mid emulator** (host GPU): this AVD had the system animation scales
+at 0, which Reanimated reads as Reduce Motion, so the first run measured the
+still frame (0 frames, as it should); the scales were set to 1 for the run and
+put back to 0. With the host quiet (load ≤ 2): high 66 at 60 fps, 0 % janky,
+p50 20 ms end to end with the UI thread at 3.3–3.6 ms per frame (19–20 % CPU);
+high 36 at its 30 fps cap, ≤ 0.3 % janky. Rows taken while other agents
+loaded the host (load 10–60) show 11–37 % janky frames at 300 and 120 px on
+every tier, the render thread waiting on the host GPU; they are kept in
+`~/.cache/argus-p1/measure/` and are not a property of the code. The JS thread
+stayed at 0–1 % CPU in every row on both emulators.
+
+**Web bundle**: the entry chunk grows by 126,279 B (7,113,459 → 7,239,738 B,
+baseline moved in `scripts/lib/bundle-baseline.txt`); about 91 KB of it is
+this work module by module, half of the engine's share being the source
+strings the worklets Babel plugin keeps beside each worklet, and about 12 KB is
+the lab, which a production web build still bundles and redirects.
+
+**Web**: the lab export under the Tauri CSP renders Estela with no console
+error; neither Skia nor TrueSheet is in the export. Against the prototype's
+catalogue stage at 300 px (`uiux-map/redesign/phase1/spikes/estela/web/`,
+`<state>-<theme>-{prototype,ours}.png`) every state draws the same shape and
+the alpha-weighted mean stroke colour is within 2 % per channel; our strokes
+cover about 60–75 % of the pixels the prototype's do after the same settle time.
