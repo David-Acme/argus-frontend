@@ -5395,3 +5395,67 @@ re-baselines with its reason here, never silently, and Skia's CanvasKit must
 not reach the web entry. `lint` takes about 2 minutes with the type-aware
 rules (75 s with `expo lint` before). `check-quality` 16 s,
 `check-boundaries` with policy and references 5 s.
+
+## The design-system base, Phase 1 (2026-10-20, p1/ds-base)
+
+**One token source, generated CSS.** `scripts/gen-tokens.ts` writes
+`src/shared/theme/tokens.generated.css` from `tokens.ts` alone (colour roles in
+OKLCH for both themes, radius/inset/size roles as `--radius-*`/`--spacing-*`,
+type steps and roles as `--text-*` with line height, tracking and weight, the
+`medium`/`expanded`/`wide` breakpoints, the glass, focus-ring and hover-dim
+utilities); `global.css` imports it and `check:tokens` fails on drift. Text
+metrics travel as CSS because React Native's `fontWeight` type has no 650/750
+while CSS does; whether Uniwind carries `--text-*--font-weight` and
+`--letter-spacing` to native is still to be confirmed on a device. Tailwind's
+numeric spacing (4 px a step) is the `tokens.space` scale, pinned by a test.
+
+**The legacy names moved aside.** The redesign's `surface`, `accent`, `sm`
+radius and `body`/`caption` type take the plain names, so the old values are
+`legacy-surface`, `legacy-accent`, `rounded-legacy-sm`, `text-legacy-body` and
+`text-legacy-caption` (a codemod over class strings; the web visual snapshots
+passed unchanged). `legacy-token-class` counts them.
+
+**Contrast.** `tests/unit/shared/theme/contrast.test.ts` measures every text
+role on bg/surface/fill (4.5:1) and the icons, borders and focus ring (3:1).
+The pairs the prototype draws below the bar are listed with their ratio and
+stay listed until a colour changes: light text-3/accent on fill (4.02/4.06),
+ok/attn/alert/accent on their soft fills (4.29/4.36/4.19/4.2), dark alert on
+alert-soft (4.32), and the off switch track (fill-press on surface,
+1.44/1.33). Light ok/attn/alert on fill and dark alert on fill fail too but the
+prototype never draws them.
+
+**Components.** `src/shared/ui/<name>/` holds Text, Icon (the prototype's 43
+glyphs), PressableSurface (RNGH with a foreground ripple on native, React
+Native's Pressable on web for keyboard, hover and the focus ring), Stack,
+Inline, Cluster, Button (single-flight, `iconOnly`, glass that turns solid
+under reduced transparency or the low tier), Chip/FilterChip, Avatar, Check,
+Switch, Section and Row. They take no `className` and join their classes with
+`clsx`, since tailwind-merge does not know the new type names and drops one of
+two `text-*` classes. Values the prototype draws that the spec's scale lacks
+(row padding 10/18 and gap 14, button padding 18/14/12, chip padding 10/11/12,
+section spacing 26/4/10/12) live in `tokens.inset`. `useEffects()` holds one
+accessibility subscription for the whole app instead of two per caller, and
+react-native-web has no `isReduceTransparencyEnabled`.
+
+**Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
+bun process (happy-dom, react-native-web as react-native, react-native-svg's web
+elements, stubs for Reanimated, expo-device, uniwind, RNGH), because the main
+suite's preload stubs react-native for pure logic. Tests import each component
+file directly: check:quality counts only direct imports.
+
+**ui-lab.** `src/features/ui-lab/` with a catalogue, one demo per component
+(the prototype's own words), `case-<id>` wrappers and URL parameters
+(`c`, `theme`, `rm`, `rt`, `fs`). In an export it opens only when the page sets
+`__ARGUS_UI_LAB__` before load. `scripts/ui-lab/capture.ts` captures every
+component at 360/768/1280 × light/dark × default/reduced and rebuilds each case
+in the prototype from its own helpers (`scripts/ui-lab/prototype-cases.ts`,
+one block per component) in a stage of the same width, then writes ours |
+prototype | diff with the mismatch to
+`/home/acme/Desktop/argus/uiux-map/redesign/phase1/gallery/`.
+`tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines.
+
+**Shared uniwind.css.** `node_modules/uniwind/uniwind.css` is a bun hardlink
+shared by every worktree and rewritten by the last bundle; better-tailwindcss
+reads it, so new colour classes read as unknown until it is regenerated for
+this checkout (break the link, then `npx uniwind generate-artifacts --css
+./src/global.css --dts ./uniwind-types.d.ts`).
