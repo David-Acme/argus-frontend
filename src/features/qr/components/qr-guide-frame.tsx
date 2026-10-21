@@ -19,11 +19,11 @@ type QrGuideFrameProps = {
 };
 
 const CORNER_TONE: Record<QrScanFeedback, string> = {
-  requesting: 'border-accent/40',
-  searching: 'border-accent/70',
-  detected: 'border-accent',
+  requesting: 'border-legacy-accent/40',
+  searching: 'border-legacy-accent/70',
+  detected: 'border-legacy-accent',
   invalid: 'border-error',
-  blocked: 'border-accent/40',
+  blocked: 'border-legacy-accent/40',
 };
 
 const CONVERGE_EASING = Easing.out(Easing.cubic);

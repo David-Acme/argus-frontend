@@ -58,7 +58,7 @@ export function SettingsOwnerList({ owners, selected, layout, countOf, onSelect 
               'flex-row items-center gap-3 rounded-2xl px-3 py-3 active:opacity-80',
               active ? 'bg-surface-secondary' : 'web:hover:bg-surface-secondary/60'
             )}>
-            <View className="bg-surface size-9 items-center justify-center rounded-full">
+            <View className="bg-legacy-surface size-9 items-center justify-center rounded-full">
               <Icon name={SETTINGS_OWNER_ICONS[owner.service]} className="text-foreground-secondary size-4" />
             </View>
             <View className="min-w-0 flex-1">

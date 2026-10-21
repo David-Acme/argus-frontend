@@ -5,7 +5,7 @@
 @theme {
   --radius: 12px;
   --radius-xs: 2px;
-  --radius-sm: 6px;
+  --radius-legacy-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 12px;
   --radius-xl: 14px;
@@ -23,10 +23,10 @@
 
   --text-micro: 11px;
   --text-micro--line-height: 14px;
-  --text-caption: 13px;
-  --text-caption--line-height: 18px;
-  --text-body: 15px;
-  --text-body--line-height: 22px;
+  --text-legacy-caption: 13px;
+  --text-legacy-caption--line-height: 18px;
+  --text-legacy-body: 15px;
+  --text-legacy-body--line-height: 22px;
   --text-subhead: 17px;
   --text-subhead--line-height: 24px;
   --text-display: 32px;
@@ -40,7 +40,7 @@
   :root {
     @variant light {
             --color-background: oklch(0.959 0.006 75.41);
-      --color-surface: oklch(0.980 0.005 78.30);
+      --color-legacy-surface: oklch(0.980 0.005 78.30);
       --color-surface-secondary: oklch(0.921 0.012 79.78);
       --color-card: oklch(1 0 0);
       --color-card-secondary: oklch(0.936 0.010 72.66);
@@ -58,7 +58,7 @@
       --color-interactive: oklch(0.371 0.000 89.88);
       --color-interactive-hover: oklch(0.321 0.000 89.88);
       --color-interactive-pressed: oklch(0.257 0.000 89.88);
-      --color-accent: oklch(0.701 0.081 81.91);
+      --color-legacy-accent: oklch(0.701 0.081 81.91);
       --color-accent-hover: oklch(0.645 0.079 78.33);
       --color-accent-soft: oklch(0.932 0.031 81.75);
       --color-disabled: oklch(0.869 0.011 76.59);
@@ -74,7 +74,7 @@
 
     @variant dark {
             --color-background: oklch(0.208 0.004 106.73);
-      --color-surface: oklch(0.235 0.008 95.39);
+      --color-legacy-surface: oklch(0.235 0.008 95.39);
       --color-surface-secondary: oklch(0.302 0.013 87.57);
       --color-card: oklch(0.255 0.009 97.71);
       --color-card-secondary: oklch(0.281 0.009 88.77);
@@ -92,7 +92,7 @@
       --color-interactive: oklch(0.910 0.009 84.57);
       --color-interactive-hover: oklch(0.947 0.007 80.72);
       --color-interactive-pressed: oklch(0.831 0.012 79.78);
-      --color-accent: oklch(0.807 0.079 83.02);
+      --color-legacy-accent: oklch(0.807 0.079 83.02);
       --color-accent-hover: oklch(0.864 0.068 83.06);
       --color-accent-soft: oklch(0.291 0.027 78.38);
       --color-disabled: oklch(0.350 0.013 81.74);

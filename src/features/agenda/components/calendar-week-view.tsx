@@ -85,7 +85,7 @@ export function CalendarWeekView({
                 )}>
                 <Text
                   className={cn(
-                    'text-caption font-semibold',
+                    'text-legacy-caption font-semibold',
                     isSelected ? 'text-foreground-on-interactive' : 'text-foreground'
                   )}>
                   {date.formatDayNumber(day)}
@@ -128,7 +128,7 @@ export function CalendarWeekView({
                     style={renderContextMenu ? undefined : position}
                     accessibilityState={{ busy: isPendingEntry(entry) }}
                     className={cn(
-                      'web:hover:opacity-85 justify-center overflow-hidden rounded-sm px-1.5',
+                      'web:hover:opacity-85 justify-center overflow-hidden rounded-legacy-sm px-1.5',
                       renderContextMenu && 'flex-1',
                       isPendingEntry(entry) && 'opacity-60',
                       entry.status === 'complete'

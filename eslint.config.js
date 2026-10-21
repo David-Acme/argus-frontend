@@ -25,11 +25,11 @@ const SOURCE_SYNTAX = [
 const TYPE_SCALE_SYNTAX = [
   {
     selector: "JSXAttribute[name.name='className'] Literal[value=/\\btext-(xs|sm|base|lg|xl|[2-9]xl)\\b/]",
-    message: 'Use a Text variant or the text-micro/caption/body/subhead/display tokens.',
+    message: 'Use a Text variant or the text-micro/legacy-caption/legacy-body/subhead/display tokens.',
   },
   {
     selector: "JSXAttribute[name.name='className'] Literal[value=/\\btext-\\[\\d+px\\]/]",
-    message: 'Use a Text variant or the text-micro/caption/body/subhead/display tokens.',
+    message: 'Use a Text variant or the text-micro/legacy-caption/legacy-body/subhead/display tokens.',
   },
 ];
 

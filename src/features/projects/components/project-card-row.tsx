@@ -39,12 +39,12 @@ export function ProjectCardRow({
       accessibilityLabel={`${name}, ${statusLabel}`}
       className={cn(
         'bg-card gap-2 rounded-2xl p-3 shadow-md shadow-black/[0.05] active:opacity-80',
-        selected && 'border-accent border'
+        selected && 'border-legacy-accent border'
       )}
       onPress={onPress}>
       <View className="flex-row items-center gap-2">
         <View className={cn('size-2 rounded-full', PROJECT_STATUS_TONE[status])} />
-        <Text className="flex-1 text-body font-semibold" numberOfLines={1}>
+        <Text className="flex-1 text-legacy-body font-semibold" numberOfLines={1}>
           {name}
         </Text>
         <Text variant="micro">{taskCount}</Text>

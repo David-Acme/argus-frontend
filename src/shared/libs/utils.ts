@@ -4,7 +4,7 @@ import { extendTailwindMerge } from 'tailwind-merge';
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ['micro', 'caption', 'body', 'subhead', 'display'],
+      text: ['micro', 'legacy-caption', 'legacy-body', 'subhead', 'display'],
     },
   },
 });

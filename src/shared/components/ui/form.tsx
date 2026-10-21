@@ -154,7 +154,7 @@ function FormLabel({ className, children, ...props }: ComponentProps<typeof Text
   return (
     <Text
       nativeID={formItemId}
-      className={cn('text-caption font-medium', error && 'text-error-strong', className)}
+      className={cn('text-legacy-caption font-medium', error && 'text-error-strong', className)}
       {...props}>
       {children}
     </Text>

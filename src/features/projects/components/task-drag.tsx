@@ -108,7 +108,7 @@ export function TaskDropZone({ index, children }: TaskDropZoneProps) {
       <Animated.View
         pointerEvents="none"
         style={ringStyle}
-        className="border-accent bg-accent/5 absolute inset-0 rounded-3xl border-2"
+        className="border-legacy-accent bg-legacy-accent/5 absolute inset-0 rounded-3xl border-2"
       />
     </Animated.View>
   );

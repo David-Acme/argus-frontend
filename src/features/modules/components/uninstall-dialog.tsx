@@ -35,14 +35,14 @@ function Choice({ selected, title, hint, danger = false, onPress }: ChoiceProps)
       onPress={onPress}
       className={cn(
         'bg-surface-secondary dark:bg-card-secondary flex-row items-start gap-3 rounded-2xl border-2 p-3',
-        selected ? (danger ? 'border-error' : 'border-accent') : 'border-transparent'
+        selected ? (danger ? 'border-error' : 'border-legacy-accent') : 'border-transparent'
       )}>
       <View
         className={cn(
           'mt-0.5 size-5 items-center justify-center rounded-full border-2',
-          selected ? (danger ? 'border-error' : 'border-accent') : 'border-border'
+          selected ? (danger ? 'border-error' : 'border-legacy-accent') : 'border-border'
         )}>
-        {selected ? <View className={cn('size-2.5 rounded-full', danger ? 'bg-error' : 'bg-accent')} /> : null}
+        {selected ? <View className={cn('size-2.5 rounded-full', danger ? 'bg-error' : 'bg-legacy-accent')} /> : null}
       </View>
       <View className="min-w-0 flex-1 gap-0.5">
         <Text variant="label" className={danger && selected ? 'text-error-strong' : undefined}>

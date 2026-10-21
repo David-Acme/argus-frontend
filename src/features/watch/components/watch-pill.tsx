@@ -53,7 +53,7 @@ export function WatchPill() {
         className="bg-interactive max-w-md flex-row items-center gap-2.5 rounded-full py-2.5 pr-4 pl-4 shadow-lg shadow-black/20 active:opacity-80">
         <View className={cn('size-2 rounded-full', indicator.dot)} />
         <Icon name={indicator.icon} className="text-foreground-on-interactive size-4" />
-        <Text className="text-foreground-on-interactive text-caption shrink font-semibold" numberOfLines={1}>
+        <Text className="text-foreground-on-interactive text-legacy-caption shrink font-semibold" numberOfLines={1}>
           {label}
         </Text>
       </Pressable>

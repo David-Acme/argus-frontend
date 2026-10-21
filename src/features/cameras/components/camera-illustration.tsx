@@ -148,8 +148,8 @@ export function CameraIllustration({ formFactor, size = 96, label }: CameraIllus
     body: tokens.card,
     shade: tokens['surface-secondary'],
     glass: tokens.overlay,
-    ring: tokens.accent,
-    shine: tokens.surface,
+    ring: tokens['legacy-accent'],
+    shine: tokens['legacy-surface'],
   };
   const Shape = SHAPES[formFactor];
 

@@ -74,7 +74,7 @@ export function CalendarHeader({
           )}
           onPress={onToday}>
           <View
-            className={cn('size-1.5 rounded-full', showsToday ? 'bg-muted-foreground/50' : 'bg-accent')}
+            className={cn('size-1.5 rounded-full', showsToday ? 'bg-muted-foreground/50' : 'bg-legacy-accent')}
           />
           <Text
             variant="caption"

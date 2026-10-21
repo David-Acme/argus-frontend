@@ -56,7 +56,7 @@ function CameraRow({ camera, context, onPress }: CameraRowProps) {
       <View
         className={cn(
           'size-10 items-center justify-center rounded-2xl',
-          context ? 'bg-accent/15' : 'bg-surface-secondary'
+          context ? 'bg-legacy-accent/15' : 'bg-surface-secondary'
         )}>
         <Icon
           name={context ? CAMERA_ROLE_ICONS[context.role] : 'camera'}
