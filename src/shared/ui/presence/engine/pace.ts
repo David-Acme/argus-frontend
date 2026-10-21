@@ -18,6 +18,7 @@ const PAUSE_GAP = 0.25;
 const GOOD_CREDIT = 0.5;
 const SETTLE = 1;
 const BEAT_DRIFT = 1.002;
+const SHORTEST_BEAT = 0.004;
 const DEBIT = 4;
 export const TRIP_SCORE = 45;
 export const CLIMB_SECONDS = 3;
@@ -36,7 +37,7 @@ function restart(pace: Pace, now: number): void {
 
 export function noteBeat(pace: Pace, since: number): void {
   'worklet';
-  if (since <= 0 || since > PAUSE_GAP) return;
+  if (since < SHORTEST_BEAT || since > PAUSE_GAP) return;
   pace.beat = pace.beat > 0 ? Math.min(pace.beat * BEAT_DRIFT, since) : since;
 }
 

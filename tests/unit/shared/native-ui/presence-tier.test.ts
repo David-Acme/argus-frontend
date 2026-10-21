@@ -95,6 +95,13 @@ describe('the frame-time feedback', () => {
     expect(run(900, shaky)).toEqual([]);
   });
 
+  test('the beat is the display period, not a late frame caught up in a burst', () => {
+    const { createPace, noteBeat } = modules.pace;
+    const pace = createPace();
+    for (const since of [1 / 120, 0.0006, 1 / 120, 0.001, 1 / 60]) noteBeat(pace, since);
+    expect(pace.beat).toBeCloseTo(1 / 120, 4);
+  });
+
   test('a 60 Hz screen is not late for a 120 fps tier', () => {
     const { createPace, notePace, noteBeat } = modules.pace;
     const pace = createPace();
