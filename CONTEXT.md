@@ -6134,3 +6134,297 @@ catalogue stage at 300 px (`uiux-map/redesign/phase1/spikes/estela/web/`,
 `<state>-<theme>-{prototype,ours}.png`) every state draws the same shape and
 the alpha-weighted mean stroke colour is within 2 % per channel; our strokes
 cover about 60–75 % of the pixels the prototype's do after the same settle time.
+
+## Estela: the display's rate on capable phones, an adaptive tier (2026-10-21, Phase 1)
+
+Branch `p1/estela-perf`. The owner's direction replaced the first brief (cap
+at 60, cut particles): on a capable phone Estela looks exactly like the
+prototype and runs at the display's rate, 120 fps on a 120 Hz screen; old
+Android still never lags. The table in "Estela (spike B)" above is superseded
+by this one.
+
+| Tier | Particles stage / medium / compact | Trails | Frame rate active / rest | Icon form |
+|---|---|---|---|---|
+| `high` | 560 / 320 / 200 | yes | the display's, up to 120 / 30 | 30 fps |
+| `mid` | 560 / 320 / 200 | yes | 60 / 30 | 30 fps |
+| `low` | 280 / 160 / 100 | no | 30 / 30 | 30 fps |
+
+`high` and `mid` draw the same picture; only the rate differs. `MAX_FPS` (120)
+in `engine/driver.ts` caps every tier, and the pacing (`frameDue`) keeps a due
+time per frame, so a 144 Hz screen gets about 120, a 90 Hz screen about 60 at
+`mid`, and no tier ever runs faster than its rate.
+
+### Where the frame went (profiled, not guessed)
+
+Release build, `Argus_API35` host GPU, the worklet's own work timed with
+`performance.now()` inside the UI runtime, 120 back-to-back frames at 300 px
+(warm, so it is the CPU cost of the code, not of the emulator's load):
+
+| Phase (high, 560 particles) | before | after |
+|---|---|---|
+| integration (`advance`) | 0.9–1.1 ms | 0.6–0.9 ms |
+| paint + sprite transforms | 1.8–2.2 ms | 0.9–1.5 ms |
+| `drawAtlas` call | 0.5–0.7 ms | 0.5 ms |
+| trail fade (`DstOut`) | 0.02 ms | 0.01 ms |
+| `surface.flush()` + snapshot | 0.8–1.4 ms | 0.00 ms |
+| **one 60 Hz frame** | **4.3–5.4 ms** | **2.0–2.3 ms** |
+| **one 120 Hz frame** | — | **1.3–1.5 ms (p99 2.9–3.3)** |
+
+What changed, keeping the look:
+
+- **No `surface.flush()`.** The offscreen surface and the `<Canvas>` window
+  share the UI thread's `GrDirectContext` (RN Skia 2.14:
+  `OpenGLContext::getInstance()` is `thread_local` and
+  `makeWindowContext` hands its `_directContext` to the window), so the flush
+  only split one GPU submission in two; the present submits it. Verified by
+  screenshots on both emulators.
+- **Colours computed once per state.** A particle's colour depends only on its
+  `u`, the state, the theme and the event's saturation; it is cached per
+  particle (`particleTints`) and recomputed when one of those changes. The
+  base alpha weight `0.4 + 0.6·sin(πu)` is cached beside it, and the special
+  alpha rules (eye, watch, happy, ripple band) run only in the states that
+  have them.
+- **One preallocated streak buffer.** The engine writes every streak into a
+  `Float32Array` (8 numbers per streak) and hands it to the renderer once per
+  frame (`Sinks.streaks`), instead of one closure call per particle; the Skia
+  renderer turns it into the atlas's transforms and colours in one loop, with
+  the direction from `dx/len, dy/len` instead of `atan2` + `cos` + `sin`.
+- **The shape function is chosen once per step** (`shapeFor`), the swirl's
+  tilt is a constant, the loops are indexed.
+- **120 fps at half the work per frame.** Above 60 fps the physics keeps its
+  60 Hz step (the look is defined by that step), and the even and the odd
+  particles step on alternate frames, each with its own clock
+  (`driver.sim`, `driver.simOdd`). A 120 Hz frame integrates and draws half
+  the particles; each one is drawn once per 1/60 s with exactly the streak
+  and trail it has at 60 fps, and the fade runs once per 1/60 s, so the
+  8-bit trail floor and its 3/255 cut are unchanged. At 60 fps and below the
+  two clocks run together (lockstep) and the drawing is the one before this
+  change. Interpolating every particle every frame was tried first; it costs
+  a full frame's paint and atlas at 120 Hz and changes the trail density.
+
+- **A vsync that is not drawn paints the next frame ahead.** At 60 fps on a
+  120 Hz screen (and at the 30 fps rest) most vsyncs draw nothing. On such a
+  vsync, when the next frame is due by the next beat, the frame callback runs
+  the physics and the paint for that next frame (its time is the next vsync's)
+  and leaves the atlas ready (`frame-loop.ts`, `paintAhead`); the drawn vsync
+  then only fades, draws the atlas and snapshots (`present`). The work is the
+  same, split over two vsyncs, so a 60 fps frame on a 120 Hz screen costs the
+  drawn vsync about what a 120 fps frame does. The beat is the shortest recent
+  gap between frame callbacks (`noteBeat`); on a 60 Hz screen at 60 fps there
+  is no free vsync and the frame is drawn whole, as before. The S21 FE review
+  of `ff881a0` measured exactly this: `high` at 120 fps p50/p90/p99 8/9/11 ms,
+  but `mid` at 60 fps and `high` resting at 60 fps 11–12 / 15 / 18–19 ms,
+  because each of their frames did twice the work of a 120 fps frame.
+
+Not changed, measured and left: the `DstOut` fade (0.01 ms), the atlas draw
+(one call, its cost is RN Skia reading each transform and colour through JSI),
+the sprite sheet. A runtime shader cannot hold the springs' state.
+
+On the emulators the end-to-end frame (`gfxinfo`) is dominated by the
+emulator's GL transport, not by Estela: with the worklet running but nothing
+shown, the UI thread uses 26 % of a core; showing the image takes it to 72 %
+at about 43 fps on `Argus_API35`, the same before and after this change. So
+the per-frame work above is the measure of this change, and gfxinfo on the
+emulators is reported for regressions, not as a phone prediction.
+
+### The S21 FE: prediction, then the measurement
+
+The phone run of `ff881a0` answered the prediction below: `high` active at
+119 fps with p50/p90/p99 8/9/11 ms and 1–3 % janky; the eye correct; `low` at
+30 fps, 5 ms. It also found the three defects fixed in the next commit:
+`mid` and a resting `high` slower per frame than `high` active (now
+paint-ahead), `high` resting at 60 instead of 30, and the probe choosing
+`low`.
+
+The reviewer measured the spike build on the S21 FE: `high` 300 px active
+p50 12–14 ms, p99 20–21 ms; every 30 fps row 5 ms. At 30 fps on a 120 Hz
+screen the frames that gfxinfo records are the ones where the UI thread only
+presents (the worklet ran on an earlier vsync), so about 5 ms is the phone's
+present path and the active rows' extra 7–9 ms is Estela's work in the frame.
+The same build's warm work on the emulator is 4.3–4.4 ms, a phone/emulator
+factor of 1.6–2.0. Predicted for this build on the S21 FE (300 px):
+
+| Tier | Estela work per frame | Predicted p50 | Predicted p99 |
+|---|---|---|---|
+| `high`, 120 fps | 1.3–1.5 ms emu → 2.1–3.0 ms | 7–8 ms | 9.5–11.5 ms |
+| `mid`, 60 fps | 2.0–2.3 ms emu → 3.2–4.6 ms | 8–10 ms | 10–11 ms |
+| `low`, 30 fps | 0.7–1.0 ms emu → 1.1–2.0 ms | 5 ms | 5–6 ms |
+
+So `mid` meets its 12 ms p99 and `low` is unchanged, and `high` at 120 fps
+is at the edge of the 8.3 ms budget: the p50 should fit, the p99 probably
+not. That is why the tier is adaptive: if the 120 Hz frames run long on the
+phone, the frame-time feedback moves it to `mid` (60 fps, the whole look)
+within about a second, and the reviewer's gfxinfo run of `tier=high` answers
+the question directly. The prediction assumes the phone's present path stays
+at 5 ms; the flush now merges into it, which may add a little there.
+
+### The automatic tier
+
+`useEffects()` resolves the tier from three things (`resolvePerfTier`):
+
+1. **The hardware ceiling** (`hardwareCeiling`, the old rule): web and desktop
+   `high`; Android below 12 (API 31) or under 4 GB `low`; under 6 GB `mid`;
+   else `high`. «Reducir efectos» forces `low`.
+2. **The startup probe** (`use-tier-probe.ts`, native only). Until it answers,
+   an Android device is `low`. It runs once per session, 1.2 s after the
+   first `Presence` mounts, off the first frame and never on the JS thread
+   (and not at all under Reduce Motion): a `useFrameCallback` worklet drives
+   the real stage (560 particles, trails, `alert`, 300 px) into a hidden
+   offscreen surface the way `high` draws it at 120 fps, half the particles
+   per frame on a synthetic 120 Hz clock, one frame per vsync. The first 30
+   frames are a warm-up and are discarded (surface creation, sprite sheet,
+   shader compilation, the first garbage collections); the next 30 are timed
+   with `performance.now()`, and the gaps between their vsyncs are read from
+   the frame timestamps. Verdict (`tier-verdict.ts`, the p50 of the measured
+   half): ≤ 5 ms (60 % of a 120 Hz frame) and at most 3 vsyncs later than
+   25 ms → `high`; ≤ 6.25 ms (a whole 60 fps frame within 75 % of 16.7 ms)
+   → `mid`; else `low`. It gives up early with `low` when the first 8
+   measured frames all exceed 12.5 ms. The result is capped by the ceiling.
+   The first probe judged the p90 of 20 whole 60 Hz frames right after 4
+   warm-up frames; on the S21 FE it read 11.9 ms and chose `low` on a phone
+   that holds 120 fps.
+3. **Live frame-time feedback** (`engine/pace.ts`), in every animated
+   `Presence` whose tier came from the automatic rule. A drawn frame's work is
+   the time of its paint-ahead plus its present. It is long when the work
+   took more than 75 % of the frame interval or the gap since the previous
+   drawn frame was more than 1.5 intervals, the interval being the tier's or
+   the display's beat, whichever is longer (gaps over 250 ms are pauses). A
+   leaky score (+1 long, −0.5 short) steps the tier **down** one level at 45:
+   about 0.75 s of all-long frames, or a sustained third of them; a passing
+   hitch never does. It steps **up** one level after 3 s of headroom
+   (`CLIMB_SECONDS`), doubled after every drop up to 16×: time with headroom
+   adds to a credit, time without it takes away four times as much, so the
+   climb needs at least 80 % of the frames in budget. Headroom is predicted
+   for the tier above: from `mid`, a frame of at most 8.3 ms (a 120 fps frame
+   does half of it, 4.2 ms, half its budget); from `low`, at most 4.2 ms (`mid`
+   draws twice the particles, 8.3 ms, half of 16.7). It only climbs below the
+   ceiling, and after any change it waits 1 s before it scores again.
+
+The glass and blur decision (`reduceTransparency`) does not wait for the
+probe: it uses the ceiling, «Reducir efectos» and the live tier once there is
+one, so a phone that starts at `low` for Estela does not flash a solid sheet.
+Reduce Motion still draws the catalogue still and runs neither the probe's
+verdict on Estela nor the feedback.
+
+The lab bench reads `tier=auto` (no override), `ceiling=low|mid|high` (pretend
+the hardware ceiling, because both emulators have 2 GB and would never
+probe), and `load=N` (N ms of UI-thread load per frame, from 6 s on, after
+the probe); the caption shows `tier … · probe … ms … late · n drops`.
+
+### Skia lifetimes (review findings 6–8)
+
+`look`, `plan` and the live values keep one identity per input
+(`memo-exceptions.txt`), so the still frame is recomputed only when the state,
+theme, size or tier changes, and the frame worklet is registered again only
+when what it draws changes. `onEventEnd` is read from a ref, so a new handler
+is honoured. Replacing a scene (size, particle count or theme) disposes its
+surface, sprite sheet, paints and the snapshot that is not on screen; the
+engine itself is kept and resized (`resizeEngine`, new particles start where
+existing ones are), so a tier change does not restart Estela. Unmounting
+disposes the scene on the UI thread. The square dots of the icon form reuse
+one rect.
+
+### Measurements on the emulators (release x86_64, this build)
+
+Release x86_64 builds, `bench.sh` (10 s per row, `dumpsys gfxinfo
+framestats`, 7 states per size: idle, listen and speak with a 30 Hz level,
+look, alert, panic, happy with a glint every 2 s). Frame time is
+IntendedVsync → FrameCompleted; CPU is the thread's share of one core over the
+10 s. Ranges are over the seven states (the fps range includes the rest rate of
+idle). Both AVDs are 60 Hz; the host was shared with other agents' builds and
+evals (load column), and the emulators run at nice 10. Rows of the build at
+`dc50356` (the frame pacing and probe of the next section had not landed), the
+happy rows and `high 36` re-run on `ff881a0` after the glint and icon fixes.
+
+`Argus_LowEnd_API35` (2 cores, 2 GB, software GPU):
+
+| Tier · size | fps | janky % | p50 / p90 / p95 / p99 ms | UI thread CPU % | JS thread CPU % | host load |
+|---|---|---|---|---|---|---|
+| high 300 | 55.1–59.9 | 0.7–9.4 | 27–34 / 30–48 / 32–48 / 32–53 | 60–72 | 0–1 | 7.2–12.3 |
+| high 120 | 55.8–60.3 | 0–8.2 | 23–29 / 26–32 / 27–38 / 30–48 | 36–54 | 0–1 | 8.6–15.6 |
+| high 66 | 54.3–60.3 | 0–9.9 | 22–28 / 24–40 / 25–46 / 26–65 | 30–44 | 0–1 | 11.3–18.7 |
+| high 36 | 29.9–55.9 | 0–8.2 | 31–53 / 32–61 / 32–61 / 32–65 | 40–78 | 0–1 | 11.2–19.9 |
+| mid 300 | 30.1–55.1 | 0–18.2 | 32–44 / 48 / 48–53 / 48–65 | 38–78 | 0–1 | 19.5–24.1 |
+| mid 120 | 30.1–60.3 | 0–1.0 | 23–32 / 26–32 / 27–32 / 29–48 | 19–43 | 0–1 | 10.8–14.2 |
+| mid 66 | 30.1–60.4 | 0 | 23–32 / 25–32 / 26–32 / 27–32 | 17–37 | 0 | 9.4–10.2 |
+| mid 36 | 30–30.1 | 0 | 32 / 32 / 32 / 32 | 31–57 | 0 | 7.5–9.5 |
+| low 300 | 30–30.1 | 0 | 32 / 32 / 32 / 32 | 19–22 | 0–1 | 5.5–8.5 |
+| low 120 | 30.1 | 0 | 32 / 32 / 32 / 32 | 15–17 | 0 | 3.2–4.8 |
+| low 66 | 30–30.1 | 0 | 32 / 32 / 32 / 32 | 12–15 | 0 | 4.2–6.1 |
+| low 36 | 30.1 | 0 | 32 / 32 / 32 / 32 | 32–49 | 0 | 3.1–5.0 |
+
+`Argus_API35` (4 cores, 2 GB, host GPU through gfxstream; slower than the
+low-end AVD under this host load, because the GL transport runs on the UI
+thread):
+
+| Tier · size | fps | janky % | p50 / p90 / p95 / p99 ms | UI thread CPU % | JS thread CPU % | host load |
+|---|---|---|---|---|---|---|
+| high 300 | 30.2–39.1 | 0.3–52.8 | 53–57 / 57–69 / 57–77 / 61–81 | 46–75 | 0–1 | 11.5–19.5 |
+| high 120 | 51.5–52.9 | 14.4–17.1 | 32 / 34–40 / 40–44 / 48 | 60–66 | 0–1 | 16.9–20.7 |
+| high 66 | 50.1–56.5 | 6.7–20.6 | 31–32 / 32–44 / 36–48 / 44–57 | 52–58 | 0–1 | 19.3–21.6 |
+| high 36 | 28.5–30.2 | 0–6.3 | 32–65 / 32–65 / 32–77 / 32–89 | 42–82 | 0–1 | 11.3–20.4 |
+| mid 300 | 30.2–38.1 | 0–55.6 | 53–57 / 57–69 / 57–73 / 57–81 | 48–75 | 0–1 | 12.9–19.9 |
+| mid 120 | 30.2–50.2 | 0–42.5 | 32–48 / 40–57 / 48–65 / 48–69 | 37–68 | 0–1 | 17.3–24.7 |
+| mid 66 | 30.2–53.2 | 0–22.7 | 32–46 / 36–48 / 42–53 / 48–61 | 28–59 | 0–1 | 18.9–22.0 |
+| mid 36 | 29.9–30.1 | 0–0.7 | 32–61 / 32–65 / 32–65 / 32–65 | 43–76 | 0–1 | 11.4–16.4 |
+| low 300 | 29.6–30.2 | 0–7.8 | 32–57 / 48–65 / 53–65 / 57–113 | 37–52 | 0–1 | 13.4–17.1 |
+| low 120 | 30.1 | 0 | 31–32 / 32 / 32 / 32 | 26–28 | 0–1 | 9.7–15.4 |
+| low 66 | 30–30.1 | 0–0.3 | 27–32 / 32–48 / 32–48 / 32–61 | 23–26 | 0–1 | 11.0–17.1 |
+| low 36 | 30–30.1 | 0–0.3 | 32–57 / 32–61 / 32–61 / 32–65 | 40–69 | 0–1 | 11.2–17.6 |
+
+The JS thread stays at 0–1 % in every row. On both AVDs the frame is bound by
+the emulator's GL path, not by Estela (see the profile above): the same rows
+with the spike build ran at the same rates.
+
+**Paint-ahead, per vsync** (`Argus_API35_120Hz`, a copy of `Argus_API35` with
+`hw.lcd.vsync = 120` and the peak refresh rate set to 120, release build of
+`5ea6838` with a temporary counter in the frame callback, mean UI-thread ms per
+callback over 3 s):
+
+| Row | drawn vsync, presenting a frame painted ahead | vsync that paints ahead | drawn vsync, whole frame | vsync that draws nothing |
+|---|---|---|---|---|
+| `high` 300 idle (30 fps rest) | 1.37 ms × 89 | 4.03 ms × 88 | 7.05 ms × 2 | 0.03 ms × 136 |
+| `high` 66 idle | 0.57 ms × 90 | 1.82 ms × 91 | — | 0.03 ms × 180 |
+| `mid` 66 listen (60 fps) | 0.70 ms × 81 | 1.58 ms × 80 | 2.05 ms × 79 | — |
+| `mid` 300 listen | 1.42 ms × 4 | 5.72 ms × 4 | 6.63 ms × 104 | — |
+
+Before the change every drawn vsync did the whole frame (`high` 300 idle 5.8
+to 7 ms). The emulator drops vsyncs at 300 px (35 fps), so `mid` 300 has few
+free vsyncs to paint ahead in; on the phone every other vsync is free.
+
+**Startup probe and feedback**, the bench at `tier=auto` (both AVDs have 2 GB,
+so the real ceiling is `low` and they never probe: `tier low · probe pending`;
+`ceiling=high` pretends a capable phone): build `dc50356` (the earlier probe):
+low-end AVD `probe high 3.0–3.5 ms 0 late`, then one step down to `mid`
+(the 60 Hz screen made 120 fps frames look late; fixed by the beat in
+`45e30be`); `load=30` → `low`, 2 drops. `Argus_API35`: `probe low 9.1–11.2 ms
+9–14 late` (the host GPU path is the slow one here). S21 FE (reviewer,
+`ff881a0`): `probe low 11.9 ms 0 late` on a phone that runs `high` at 120 fps,
+which is what the warm-up and half-frame probe now fixes.
+
+**Cold start**, `am start -S -W`, median of 10 after a warm-up, TotalTime:
+`Argus_API35` ff881a0 2,404 ms against the spike build 2,231 ms run right after
+it under the same host load (load 15–25, both spread 1.2–2.7 s), so no
+difference beyond the noise; the spikes section's 950 ms was measured on a
+quiet host. The S21 FE measured about 990 ms for `ff881a0` (6 runs).
+
+**APK**: x86_64 release with the lab flag 117,926,648 B (ff881a0; the spike
+build was 117,468,588 B); arm64-v8a review APKs 110,928,024 B (ff881a0) and
+110,469,964 B (spikes).
+
+### Traps found on the way
+
+- **A worklet captures the worklets it calls when it is defined.** The
+  worklets Babel plugin turns each `'worklet'` function into a value with its
+  closure, so a module worklet that calls another one defined further down the
+  same file captures `undefined` and throws «undefined is not a function» on
+  the UI thread (the glint's sparkle did, through `strokeToAtlas` →
+  `placeSprite`). Define a worklet after everything it calls.
+- **No nested arrow function inside an inline frame worklet.** A helper arrow
+  declared inside the `useCallback` worklet reached the UI runtime as a remote
+  function and crashed («Tried to synchronously call a Remote Function»);
+  helpers are module-level worklets.
+- **The display's beat comes from the frame callbacks, filtered.** A late
+  frame is followed by a callback well under a millisecond later; taken as the
+  beat, it made every frame look on time and the paint-ahead never ran.
+  `noteBeat` ignores gaps under 4 ms.
