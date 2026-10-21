@@ -3,7 +3,7 @@ import type { PerfTier, ProbeReport } from '@/shared/theme/effects';
 export type ProbeSamples = { works: readonly number[]; gaps: readonly number[] };
 
 export const PROBE_LIMITS = {
-  highMs: 6,
+  highMs: 4.2,
   midMs: 10,
   lateGapMs: 25,
   maxLate: 2,
