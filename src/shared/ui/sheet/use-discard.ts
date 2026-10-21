@@ -23,7 +23,10 @@ export type Discard = {
 export function useDiscard(dirty: string | boolean | undefined, close: () => void): Discard {
   const { t } = useTranslation();
   const [asking, setAsking] = useState(false);
-  const question = typeof dirty === 'string' && dirty.trim() ? t('common.sheet.discard-title', { name: dirty.trim() }) : t('common.sheet.discard-changes');
+  const question =
+    typeof dirty === 'string' && dirty.trim()
+      ? t('common.sheet.discard-title', { name: dirty.trim() })
+      : t('common.sheet.discard-changes');
   return {
     asking: asking && !!dirty,
     question,
@@ -32,7 +35,11 @@ export function useDiscard(dirty: string | boolean | undefined, close: () => voi
     discardLabel: t('common.sheet.discard'),
     closeLabel: t('common.close'),
     moreLabel: t('common.sheet.more'),
-    submitHint: isMac() ? t('common.sheet.submit-key-mac') : t('common.sheet.submit-key'),
+    submitHint: !IS_WEB
+      ? ''
+      : isMac()
+        ? t('common.sheet.submit-key-mac')
+        : t('common.sheet.submit-key'),
     requestClose: () => {
       if (dirty) setAsking(true);
       else close();

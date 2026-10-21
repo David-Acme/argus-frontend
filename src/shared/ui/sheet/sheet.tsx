@@ -4,6 +4,6 @@ import { SheetPhone } from './sheet-phone';
 import type { SheetProps } from './types';
 
 export function Sheet(props: SheetProps) {
-  const { isCompact } = useWindowClass();
-  return isCompact ? <SheetPhone {...props} /> : <SheetDialog {...props} />;
+  const { isCompact, isShort } = useWindowClass();
+  return isCompact || isShort ? <SheetPhone {...props} /> : <SheetDialog {...props} />;
 }
