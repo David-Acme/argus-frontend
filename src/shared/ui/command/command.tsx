@@ -6,18 +6,18 @@ import { CommandPanel } from './command-panel';
 import type { CommandProps } from './command-types';
 import { useCommand } from './use-command';
 
-type BodyProps = Pick<CommandProps, 'onClose' | 'source' | 'onAsk' | 'askMark'>;
+type BodyProps = Pick<CommandProps, 'onClose' | 'source' | 'onAsk'>;
 
-function Body({ onClose, source, onAsk, askMark }: BodyProps) {
+function Body({ onClose, source, onAsk }: BodyProps) {
   const state = useCommand({ source, onAsk, onClose });
   return (
     <CommandPalette>
-      <CommandPanel state={state} askMark={askMark} hints />
+      <CommandPanel state={state} hints />
     </CommandPalette>
   );
 }
 
-export function Command({ open, onClose, source, onAsk, askMark }: CommandProps) {
+export function Command({ open, onClose, source, onAsk }: CommandProps) {
   const { t } = useTranslation();
   return (
     <DialogPrimitive.Root
@@ -31,7 +31,7 @@ export function Command({ open, onClose, source, onAsk, askMark }: CommandProps)
             <DialogPrimitive.Title className="sr-only">
               {t('common.overlay.command-label')}
             </DialogPrimitive.Title>
-            <Body onClose={onClose} source={source} onAsk={onAsk} askMark={askMark} />
+            <Body onClose={onClose} source={source} onAsk={onAsk} />
           </DialogPrimitive.Content>
         </DialogPrimitive.Overlay>
       </DialogPrimitive.Portal>

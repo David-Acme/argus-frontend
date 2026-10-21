@@ -71,7 +71,7 @@ describe('Media', () => {
         name="Cocina"
         live="En vivo"
         frame={{ uri: 'https://argus.local/frame.jpg' }}
-        eye={{ label: 'Argus mira', presence: <span data-testid="presence" /> }}
+        eye={{ label: 'Argus mira' }}
         controls={[
           { icon: 'speaker', label: 'Activar sonido', onPress: () => (muted += 1) },
           { icon: 'max', label: 'Pantalla completa', onPress: () => undefined },
@@ -81,7 +81,7 @@ describe('Media', () => {
     expect(screen.getByRole('region', { name: 'Cocina, En vivo' })).toBeDefined();
     expect(screen.getByRole('status')).toBeDefined();
     expect(screen.getByText('Argus mira')).toBeDefined();
-    expect(screen.getByTestId('presence')).toBeDefined();
+    expect(globalThis.document.querySelector('canvas')?.style.width).toBe('56px');
     fireEvent.click(screen.getByRole('button', { name: 'Activar sonido' }));
     expect(muted).toBe(1);
     expect(screen.getByRole('button', { name: 'Pantalla completa' })).toBeDefined();

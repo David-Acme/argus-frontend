@@ -6,8 +6,6 @@ import { copy } from './demo-copy';
 
 const noop = () => undefined;
 
-const NoSheet = () => null;
-
 const ITEMS: MenuItems = [
   { label: copy.markDone, icon: 'check', onPress: noop },
   { label: copy.snooze, icon: 'clock', onPress: noop },
@@ -21,10 +19,10 @@ export function MenuDemo() {
         <MenuPreview items={ITEMS} />
       </LabCase>
       <LabCase id="dropdown">
-        <Menu label={copy.reminderOptions} items={ITEMS} sheet={NoSheet} />
+        <Menu label={copy.reminderOptions} items={ITEMS} />
       </LabCase>
       <LabCase id="context" block>
-        <Menu context label={copy.reminderOptions} items={ITEMS} sheet={NoSheet}>
+        <Menu context label={copy.reminderOptions} items={ITEMS}>
           <Row
             leading={<Avatar icon="bell" />}
             title={copy.light}

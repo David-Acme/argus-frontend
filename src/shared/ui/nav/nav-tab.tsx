@@ -2,9 +2,10 @@ import { clsx } from 'clsx';
 import { Pressable, View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
+import { Presence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
-import type { NavItem, NavPresence } from './nav-types';
+import type { NavItem } from './nav-types';
 import { HOLD_DELAY, SLIDE_SLOP, type useHoldToTalk } from './use-hold-to-talk';
 
 type HoldTalk = ReturnType<typeof useHoldToTalk>;
@@ -18,7 +19,7 @@ type ArgusTabProps = {
   listening: boolean;
   target: HoldTalk['target'];
   handlers: HoldTalk['handlers'];
-  presence?: NavPresence;
+  presence?: PresenceState;
 };
 
 const SLOT = 'max-w-tab-max-width flex-1';
@@ -76,7 +77,11 @@ export function ArgusTab({
         onPressOut={handlers.onPressOut}
         onPress={handlers.onPress}
         className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
-        {presence ? presence(size.presenceTab, listening) : <Icon name={item.icon} />}
+        {presence ? (
+          <Presence state={listening ? 'listen' : presence} size={size.presenceTab} />
+        ) : (
+          <Icon name={item.icon} />
+        )}
         <View className="-mx-nav-bar-pad items-center">
           <Text variant="tab" numberOfLines={1}>
             {item.label}

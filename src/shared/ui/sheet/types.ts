@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
+import type { FlightAction } from '@/shared/ui/button/use-single-flight';
 
 export const sheetVariants = ['form', 'list', 'detail'] as const;
 
@@ -6,9 +7,9 @@ export type SheetVariant = (typeof sheetVariants)[number];
 
 export type SheetAction = {
   label: string;
-  onPress: () => void;
+  onPress: FlightAction;
   disabled?: boolean;
-  testID?: string;
+  busy?: boolean;
 };
 
 export type SheetActions = {

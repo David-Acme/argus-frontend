@@ -26,6 +26,7 @@ export function PressableSurface({
         aria-selected={a11y.selected}
         aria-busy={a11y.busy}
         aria-disabled={disabled}
+        tabIndex={a11y.tabStop === false ? -1 : undefined}
         disabled={disabled}
         hitSlop={hitSlop}
         onPress={press.onPress}

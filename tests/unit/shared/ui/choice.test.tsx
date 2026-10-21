@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
-import { Choice } from '@/shared/ui/choice/choice';
 import { ChoiceList, ChoiceOpener } from '@/shared/ui/choice/choice-list';
-import type { ChoiceSheetProps } from '@/shared/ui/choice/choice-types';
 import { Segmented } from '@/shared/ui/choice/segmented';
 import { segmentWidth, segmentsFit } from '@/shared/ui/choice/segments-fit';
+import './translation-stub';
+
+const { Choice } = await import('@/shared/ui/choice/choice');
 
 const MODES = [
   { value: 'home', label: 'Casa', icon: 'home' },
@@ -22,31 +23,11 @@ const REPEAT = [
   { value: 'yearly', label: 'Cada año' },
 ] as const;
 
-function Sheet({ open, title, onClose, children }: ChoiceSheetProps) {
-  if (!open) return null;
-  return (
-    <div role="dialog" aria-label={title}>
-      <button type="button" onClick={onClose}>
-        Cerrar
-      </button>
-      {children}
-    </div>
-  );
-}
-
-const sheet = (props: ChoiceSheetProps) => <Sheet {...props} />;
-
 describe('Choice', () => {
   test('four short options render as a radio group with the selected one checked', () => {
     const picked: string[] = [];
     render(
-      <Choice
-        label="Modo"
-        options={MODES}
-        value="home"
-        onChange={(next) => picked.push(next)}
-        sheet={sheet}
-      />
+      <Choice label="Modo" options={MODES} value="home" onChange={(next) => picked.push(next)} />
     );
     expect(screen.getByRole('radiogroup', { name: 'Modo' })).toBeDefined();
     expect(screen.getByRole('radio', { name: 'Casa' }).getAttribute('aria-checked')).toBe('true');
@@ -59,9 +40,7 @@ describe('Choice', () => {
   test('more than four options become a row that opens the list in the sheet', () => {
     function Repeat() {
       const [value, setValue] = useState<(typeof REPEAT)[number]['value']>('never');
-      return (
-        <Choice label="Repetir" options={REPEAT} value={value} onChange={setValue} sheet={sheet} />
-      );
+      return <Choice label="Repetir" options={REPEAT} value={value} onChange={setValue} />;
     }
     render(<Repeat />);
     expect(screen.queryByRole('radiogroup', { name: 'Repetir' })).toBeNull();
@@ -81,7 +60,6 @@ describe('Choice', () => {
         options={REPEAT}
         value="never"
         onChange={(next) => picked.push(next)}
-        sheet={sheet}
       />
     );
     expect(screen.getByText('Repetir')).toBeDefined();
@@ -89,6 +67,24 @@ describe('Choice', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(picked).toEqual([]);
+  });
+
+  test('the segmented control is one tab stop and the arrows move the selection', () => {
+    function Modes() {
+      const [value, setValue] = useState<(typeof MODES)[number]['value']>('home');
+      return <Segmented label="Modo" options={MODES} value={value} onChange={setValue} />;
+    }
+    render(<Modes />);
+    const radio = (name: string) => screen.getByRole('radio', { name });
+    expect(radio('Casa').getAttribute('tabindex')).toBe('0');
+    expect(radio('Noche').getAttribute('tabindex')).toBe('-1');
+    fireEvent.keyDown(radio('Casa'), { key: 'ArrowRight' });
+    expect(radio('Noche').getAttribute('aria-checked')).toBe('true');
+    expect(radio('Noche').getAttribute('tabindex')).toBe('0');
+    expect(globalThis.document.activeElement).toBe(radio('Noche'));
+    fireEvent.keyDown(radio('Noche'), { key: 'ArrowLeft' });
+    fireEvent.keyDown(radio('Casa'), { key: 'ArrowLeft' });
+    expect(radio('Armado').getAttribute('aria-checked')).toBe('true');
   });
 
   test('a glass segmented control keeps its radios', () => {

@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import type { NavItem, NavProps } from './nav-types';
@@ -28,7 +29,7 @@ function RailItem({ item, selected, onSelect, voice, presence }: RailItemProps) 
         selected && 'bg-tab-on'
       )}>
       {item.argus && presence ? (
-        presence(size.presenceTab, false)
+        <Presence state={presence} size={size.presenceTab} />
       ) : (
         <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
       )}

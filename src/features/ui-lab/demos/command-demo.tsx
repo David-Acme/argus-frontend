@@ -13,8 +13,6 @@ import { copy } from './demo-copy';
 
 const noop = () => undefined;
 
-const NoSheet = () => null;
-
 const GROUPS: readonly CommandGroup[] = [
   {
     title: copy.agendaGroup,
@@ -49,13 +47,7 @@ function LivePalette() {
   return (
     <>
       <Button compact label={copy.openCommand} onPress={() => setOpen(true)} />
-      <Command
-        open={open}
-        onClose={() => setOpen(false)}
-        source={source}
-        onAsk={noop}
-        sheet={NoSheet}
-      />
+      <Command open={open} onClose={() => setOpen(false)} source={source} onAsk={noop} />
     </>
   );
 }

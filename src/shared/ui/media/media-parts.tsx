@@ -1,10 +1,10 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useScreenActive } from '@/shared/hooks/use-screen-active';
-import { illustration, motion, size, useEffects } from '@/shared/theme';
+import { illustration, motion, size, useEffects, useWindowLayout } from '@/shared/theme';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 
@@ -12,7 +12,7 @@ export type MediaDormant = 'off' | 'privacy';
 
 export type MediaControl = { icon: IconGlyph; label: string; onPress: () => void };
 
-export type MediaEye = { label: string; presence?: ReactNode };
+export type MediaEye = { label: string };
 
 type LabelRowProps = { name?: string; detail?: string; dormant?: MediaDormant };
 
@@ -123,6 +123,8 @@ export function Controls({ controls }: ControlsProps) {
 
 export function EyeCorner({ eye }: EyeCornerProps) {
   const blur = useBlur();
+  const { windowClass } = useWindowLayout();
+  const mark = windowClass === 'compact' ? size.presenceEye : size.presenceEyeWide;
   return (
     <View
       role="status"
@@ -131,7 +133,7 @@ export function EyeCorner({ eye }: EyeCornerProps) {
         blur
       )}
       style={EYE}>
-      {eye.presence}
+      <Presence state="look" size={mark} />
       <Text variant="eyeChip" tone="on-media">
         {eye.label}
       </Text>

@@ -1,22 +1,25 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
-import { Pressable, TextInput, View, type NativeSyntheticEvent } from 'react-native';
-import { useThemeTokens } from '@/shared/theme';
+import type { ReactNode, RefObject } from 'react';
+import { Pressable, ScrollView, TextInput, View, type NativeSyntheticEvent } from 'react-native';
+import { size, useThemeTokens } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Icon } from '@/shared/ui/icon';
+import { Presence } from '@/shared/ui/presence';
 import { Text } from '@/shared/ui/text';
 import type { CommandItem } from './command-types';
+import { Listbox, optionId } from './listbox';
 import type { CommandState } from './use-command';
 
 export type CommandPanelProps = {
   state: CommandState;
-  askMark?: ReactNode;
   hints?: boolean;
+  inputRef?: RefObject<TextInput | null>;
 };
 
 type KeyProps = { label: string };
 
 type OptionProps = {
+  id: string;
   label: string;
   selected: boolean;
   onPress: () => void;
@@ -41,9 +44,10 @@ export function Key({ label }: KeyProps) {
   );
 }
 
-function Option({ label, selected, onPress, children }: OptionProps) {
+function Option({ id, label, selected, onPress, children }: OptionProps) {
   return (
     <Pressable
+      nativeID={id}
       role="option"
       aria-label={label}
       aria-selected={selected}
@@ -69,7 +73,11 @@ function GroupTitle({ title }: { title: string }) {
 
 function ItemOption({ item, index, state }: ItemOptionProps) {
   return (
-    <Option label={item.label} selected={state.selected === index} onPress={() => state.run(index)}>
+    <Option
+      id={optionId(state.listId, index)}
+      label={item.label}
+      selected={state.selected === index}
+      onPress={() => state.run(index)}>
       <Icon name={item.icon} size="small" />
       <View className="shrink">
         <Text variant="feed" numberOfLines={1}>
@@ -83,7 +91,7 @@ function ItemOption({ item, index, state }: ItemOptionProps) {
   );
 }
 
-function AskGroup({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'>) {
+function AskGroup({ state }: Pick<CommandPanelProps, 'state'>) {
   const { t } = useTranslation();
   if (!state.asks) return null;
   const label = t('common.overlay.command-ask', { query: state.query.trim() });
@@ -91,8 +99,12 @@ function AskGroup({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark
   return (
     <View role="group" aria-label={title}>
       <GroupTitle title={title} />
-      <Option label={label} selected={state.selected === 0} onPress={() => state.run(0)}>
-        {askMark ?? <Icon name="search" size="small" tone="accent" />}
+      <Option
+        id={optionId(state.listId, 0)}
+        label={label}
+        selected={state.selected === 0}
+        onPress={() => state.run(0)}>
+        <Presence state="think" size={size.presenceThink} />
         <View className="min-w-0 flex-1">
           <Text variant="feed" numberOfLines={1}>
             {label}
@@ -111,11 +123,11 @@ function firstIndexes(state: CommandState): number[] {
   );
 }
 
-function Results({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'>) {
+function Results({ state }: Pick<CommandPanelProps, 'state'>) {
   const firsts = firstIndexes(state);
   return (
-    <View className="p-palette-group">
-      <AskGroup state={state} askMark={askMark} />
+    <Listbox id={state.listId}>
+      <AskGroup state={state} />
       {state.groups.map((group, at) => (
         <View key={group.title} role="group" aria-label={group.title}>
           <GroupTitle title={group.title} />
@@ -129,20 +141,32 @@ function Results({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'
           ))}
         </View>
       ))}
-    </View>
+    </Listbox>
   );
 }
 
-function QueryRow({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) {
+function QueryRow({
+  state,
+  hints,
+  inputRef,
+}: Pick<CommandPanelProps, 'state' | 'hints' | 'inputRef'>) {
   const { t } = useTranslation();
   const { color } = useThemeTokens();
   const onKeyPress = (event: KeyEvent) => {
     if (state.onKey(event.nativeEvent.key)) event.preventDefault?.();
   };
+  const combobox = {
+    'aria-controls': state.listId,
+    'aria-activedescendant': optionId(state.listId, state.selected),
+  };
   return (
     <View className="px-palette-query-x py-palette-query-y gap-palette-gap border-line flex-row items-center border-b">
       <Icon name="search" />
       <TextInput
+        ref={inputRef}
+        role="combobox"
+        aria-expanded
+        {...combobox}
         value={state.query}
         onChangeText={state.setQuery}
         onKeyPress={onKeyPress}
@@ -176,11 +200,17 @@ function Footer() {
   );
 }
 
-export function CommandPanel({ state, askMark, hints }: CommandPanelProps) {
+export function CommandPanel({ state, hints, inputRef }: CommandPanelProps) {
   return (
     <>
-      <QueryRow state={state} hints={hints} />
-      <Results state={state} askMark={askMark} />
+      <QueryRow state={state} hints={hints} inputRef={inputRef} />
+      {hints ? (
+        <ScrollView className="shrink" keyboardShouldPersistTaps="handled">
+          <Results state={state} />
+        </ScrollView>
+      ) : (
+        <Results state={state} />
+      )}
       {hints ? <Footer /> : null}
     </>
   );

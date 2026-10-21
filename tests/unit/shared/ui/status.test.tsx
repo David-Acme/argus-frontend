@@ -19,44 +19,39 @@ afterEach(() => {
   act(() => useEffectsOverrides.setState({ reduceMotion: null }));
 });
 
+const canvasWidths = (container: HTMLElement) =>
+  [...container.querySelectorAll('canvas')].map((canvas) => canvas.style.width);
+
 describe('Status', () => {
   test('the hero says its sentence as a heading with the meta and the stats', () => {
-    const sizes: number[] = [];
-    render(
+    const { container } = render(
       <Status
         tone="calm"
         sentence="Todo tranquilo."
         meta="En casa · Luis y tú en casa"
         stats={STATS}
-        presence={(size) => {
-          sizes.push(size);
-          return null;
-        }}
+        presence="idle"
       />
     );
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
     expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
     expect(screen.getByText('por revisar')).toBeDefined();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(sizes).toEqual([66]);
+    expect(canvasWidths(container)).toEqual(['66px']);
   });
 
   test('an alert hero is announced and the secondary hero draws a smaller presence', () => {
-    const sizes: number[] = [];
-    render(
+    const { container } = render(
       <HeroStatus
         tone="alert"
         secondary
         sentence="Alguien en el patio."
         meta="Hace 1 min"
-        presence={(size) => {
-          sizes.push(size);
-          return null;
-        }}
+        presence="alert"
       />
     );
     expect(screen.getByRole('alert')).toBeDefined();
-    expect(sizes).toEqual([56]);
+    expect(canvasWidths(container)).toEqual(['56px']);
   });
 
   test('on a wide window the hero becomes the band with its own aura', () => {

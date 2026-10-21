@@ -71,6 +71,16 @@ describe('Nav', () => {
     expect(log).toEqual(['chat', 'select:settings']);
   });
 
+  test('each form of the Nav mounts one Estela, the centre tab or the sidebar mark', () => {
+    for (const width of [360, 768, 1280]) {
+      setWindowWidth(width);
+      const { props } = setup({ presence: 'idle' });
+      const { container, unmount } = render(<Nav {...props} />);
+      expect(container.ownerDocument.querySelectorAll('canvas').length).toBe(1);
+      unmount();
+    }
+  });
+
   test('a laptop gets the sidebar with the brand, the command field, counts and shortcuts', () => {
     setWindowWidth(1280);
     const commands: string[] = [];
@@ -135,7 +145,7 @@ describe('Nav', () => {
       onPress: () => void calls.push('press'),
       onAccessibilityAction: () => undefined,
     };
-    render(
+    const { container } = render(
       <ArgusTab
         item={ITEMS[2]}
         selected={false}
@@ -143,12 +153,12 @@ describe('Nav', () => {
         listening={false}
         target={{ current: null }}
         handlers={handlers}
-        presence={(size, listening) => <>{`${size}-${listening}`}</>}
+        presence="idle"
       />
     );
     fireEvent.click(screen.getByRole('tab', { name: COPY.argusHint }));
     expect(calls).toContain('press');
-    expect(screen.getByText('36-false')).toBeDefined();
+    expect(container.querySelector('canvas')?.style.width).toBe('36px');
   });
 
   test('the scroll handler and the collapse value exist for Screen to drive', () => {

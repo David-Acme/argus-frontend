@@ -123,7 +123,10 @@ export function installNativeUiMocks(): void {
   mock.module('react-native-safe-area-context', () => ({
     useSafeAreaInsets: () => ({ top: 24, bottom: 20, left: 0, right: 0 }),
   }));
-  mock.module('react-native-gesture-handler', () => ({ ScrollView: host('scroll') }));
+  mock.module('react-native-gesture-handler', () => ({
+    ScrollView: host('scroll'),
+    GestureHandlerRootView: host('gesture-root'),
+  }));
   mock.module('uniwind', () => ({ useUniwind: () => ({ theme: 'dark' }) }));
   mock.module('expo-router', () => ({
     useIsFocused: () => true,
@@ -183,6 +186,14 @@ export function installNativeUiMocks(): void {
     }),
   }));
   mock.module('@/shared/components/ui/button', () => ({ Button: recorder('Button') }));
+  mock.module('@/shared/ui/button', () => ({
+    Button: (props: Props) =>
+      createElement(
+        'rn-ui-button',
+        attributes(props),
+        (props.trailing as { key?: string } | undefined)?.key
+      ),
+  }));
   mock.module('@/shared/components/ui/text', () => ({ Text: host('text') }));
 }
 

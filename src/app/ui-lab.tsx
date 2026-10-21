@@ -1,1 +1,1 @@
-export { UiLabScreen as default } from '@/features/ui-lab';
+export { UiLabRoute as default } from '@/features/ui-lab';

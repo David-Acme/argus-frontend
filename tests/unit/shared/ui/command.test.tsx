@@ -1,8 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { CommandGroup } from '@/shared/ui/command/command-types';
-import type { SheetSlotProps } from '@/shared/ui/menu/menu-types';
 import './translation-stub';
+import {
+  Listbox as NativeListbox,
+  optionId as nativeOptionId,
+} from '@/shared/ui/command/listbox.native';
+import { Listbox, optionId } from '@/shared/ui/command/listbox';
 
 const { CommandPanel } = await import('@/shared/ui/command/command-panel');
 const { CommandPalette } = await import('@/shared/ui/command/command-palette');
@@ -57,15 +61,6 @@ function Harness({ log, initialQuery }: HarnessProps) {
   );
 }
 
-function TestSheet({ open, title, children }: SheetSlotProps) {
-  if (!open) return null;
-  return (
-    <div role="dialog" aria-label={title}>
-      {children}
-    </div>
-  );
-}
-
 const input = () => screen.getByLabelText('Buscar o pedir a Argus');
 
 describe('Command', () => {
@@ -77,6 +72,20 @@ describe('Command', () => {
     expect(screen.getByRole('group', { name: 'Agenda' })).toBeDefined();
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(log).toEqual(['ask:Pagar', 'close']);
+  });
+
+  test('the query is a combobox whose active descendant is the selected option of its listbox', () => {
+    render(<Harness log={[]} initialQuery="Pagar" />);
+    const list = screen.getByRole('listbox');
+    expect(input().getAttribute('role')).toBe('combobox');
+    expect(input().getAttribute('aria-controls')).toBe(list.id);
+    const ask = screen.getByRole('option', { name: '«Pagar…» — pregúntale a Argus' });
+    expect(input().getAttribute('aria-activedescendant')).toBe(ask.id);
+    fireEvent.keyDown(input(), { key: 'ArrowDown' });
+    const light = screen.getByRole('option', { name: 'Pagar la luz' });
+    expect(input().getAttribute('aria-activedescendant')).toBe(light.id);
+    expect(light.id).toContain('-option-');
+    expect(list.id).not.toBe('');
   });
 
   test('↑↓ move the selection, wrapping, and Enter runs the selected result', () => {
@@ -108,7 +117,6 @@ describe('Command', () => {
         onClose={() => log.push('close')}
         source={() => groups(log)}
         onAsk={() => undefined}
-        sheet={TestSheet}
       />
     );
     const dialog = screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' });
@@ -139,7 +147,6 @@ describe('Command', () => {
         onClose={() => undefined}
         source={() => groups(log)}
         onAsk={() => undefined}
-        sheet={TestSheet}
       />
     );
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -149,11 +156,28 @@ describe('Command', () => {
         onClose={() => undefined}
         source={() => groups(log)}
         onAsk={() => undefined}
-        sheet={TestSheet}
       />
     );
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Pagar la luz' })).toBeDefined();
     native.useCommandHotkey(() => undefined);
+  });
+});
+
+describe('Listbox', () => {
+  test('the web listbox and the native list carry the id the combobox points to', () => {
+    expect(optionId('list', 2)).toBe(nativeOptionId('list', 2));
+    render(
+      <>
+        <Listbox id="web-list">
+          <span>uno</span>
+        </Listbox>
+        <NativeListbox id="native-list">
+          <span>dos</span>
+        </NativeListbox>
+      </>
+    );
+    expect(screen.getByRole('listbox').id).toBe('web-list');
+    expect(globalThis.document.getElementById('native-list')?.textContent).toBe('dos');
   });
 });

@@ -39,20 +39,24 @@ const base = {
 
 describe('Sheet on a phone', () => {
   test('a long form takes the ceiling, the scroll and the pinned footer of spec §5.9', () => {
+    const tail = tokens.inset.field.top + tokens.inset.field.border;
     const html = renderToStaticMarkup(
       createElement(modules.phone.SheetPhone, { ...base, onClose: () => undefined, long: true })
     );
     const sheet = captured.TrueSheet ?? {};
     expect(sheet.detents).toEqual([0.6, 1]);
     expect(sheet.scrollable).toBe(true);
-    expect(sheet.scrollableOptions).toEqual({ keyboardScrollOffset: 16 });
+    expect(sheet.scrollableOptions).toEqual({ keyboardScrollOffset: 16 + tail + 1 / 2 });
+    expect(sheet.backgroundColor).toBe(tokens.color.dark.surface);
+    expect(sheet.backgroundBlur).toBeUndefined();
     expect(sheet.maxContentHeight).toBe(window.height - 24 - 16);
     expect(sheet.footerOptions).toEqual({ keyboardOffset: -20 });
     expect(sheet.insetAdjustment).toBe('automatic');
     expect(sheet.dismissible).toBe(true);
     expect(html).toContain('Nuevo evento');
     expect(html).toContain('Guardar');
-    expect(html).toContain('accessibilitylabel="Cerrar"');
+    expect(html).toContain('label="Cerrar"');
+    expect(html).toContain('rn-gesture-root');
   });
 
   test('a short form sizes itself, and a dirty one blocks the drag and asks on Back', () => {

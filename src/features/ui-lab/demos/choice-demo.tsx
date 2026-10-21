@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Choice, type ChoiceSheetProps } from '@/shared/ui/choice';
+import { Choice } from '@/shared/ui/choice';
+import { ChoiceList } from '@/shared/ui/choice/choice-list';
 import { LabCase } from '../components/lab-case';
 import { copy } from './demo-copy';
 
@@ -46,55 +47,22 @@ const NOTICES = [
 
 const noop = () => undefined;
 
-const inlineSheet = ({ open, children }: ChoiceSheetProps) =>
-  open ? <View className="rounded-card bg-surface mt-2">{children}</View> : null;
-
-const shownSheet = ({ children }: ChoiceSheetProps) => (
-  <View className="rounded-card bg-surface mt-2">{children}</View>
-);
-
 export function ChoiceDemo() {
   const [mode, setMode] = useState<(typeof MODES)[number]['value']>('home');
   const [repeat, setRepeat] = useState<(typeof REPEATS)[number]['value']>('never');
   return (
     <>
       <LabCase id="mode-glass" block>
-        <Choice
-          label={copy.mode}
-          options={MODES}
-          value={mode}
-          onChange={setMode}
-          glass
-          sheet={inlineSheet}
-        />
+        <Choice label={copy.mode} options={MODES} value={mode} onChange={setMode} glass />
       </LabCase>
       <LabCase id="views" block>
-        <Choice
-          label={copy.agendaView}
-          options={VIEWS}
-          value="today"
-          onChange={noop}
-          sheet={inlineSheet}
-        />
+        <Choice label={copy.agendaView} options={VIEWS} value="today" onChange={noop} />
       </LabCase>
       <LabCase id="kinds" block>
-        <Choice
-          label={copy.entryKind}
-          options={KINDS}
-          value="event"
-          onChange={noop}
-          sheet={inlineSheet}
-        />
+        <Choice label={copy.entryKind} options={KINDS} value="event" onChange={noop} />
       </LabCase>
       <LabCase id="language-glass" block>
-        <Choice
-          label={copy.language}
-          options={LANGUAGES}
-          value="es"
-          onChange={noop}
-          glass
-          sheet={inlineSheet}
-        />
+        <Choice label={copy.language} options={LANGUAGES} value="es" onChange={noop} glass />
       </LabCase>
       <LabCase id="repeat-field" block>
         <Choice
@@ -103,26 +71,15 @@ export function ChoiceDemo() {
           options={REPEATS}
           value={repeat}
           onChange={setRepeat}
-          sheet={inlineSheet}
         />
       </LabCase>
       <LabCase id="notice-row" block>
-        <Choice
-          label={copy.notify}
-          options={NOTICES}
-          value="thirty"
-          onChange={noop}
-          sheet={inlineSheet}
-        />
+        <Choice label={copy.notify} options={NOTICES} value="thirty" onChange={noop} />
       </LabCase>
       <LabCase id="list" block>
-        <Choice
-          label={copy.repeat}
-          options={REPEATS}
-          value="monthly"
-          onChange={noop}
-          sheet={shownSheet}
-        />
+        <View className="rounded-card bg-surface mt-2">
+          <ChoiceList options={REPEATS} value="monthly" onPick={noop} />
+        </View>
       </LabCase>
     </>
   );

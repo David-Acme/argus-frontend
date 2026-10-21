@@ -197,7 +197,6 @@
   --spacing-grabber-width: 36px;
   --spacing-grabber-height: 5px;
   --spacing-dot: 8px;
-  --spacing-menu-row: 36px;
   --spacing-menu-width: 220px;
   --spacing-feed-leading: 42px;
   --spacing-thread: 2px;
@@ -221,8 +220,11 @@
   --spacing-presence-band: 64px;
   --spacing-presence-tab: 36px;
   --spacing-presence-brand: 30px;
-  --spacing-presence-nav: 22px;
   --spacing-presence-ask: 20px;
+  --spacing-presence-notice: 52px;
+  --spacing-presence-eye: 56px;
+  --spacing-presence-eye-wide: 48px;
+  --spacing-presence-think: 26px;
   --spacing-column-side: 320px;
   --spacing-column-aside: 300px;
   --spacing-preview-phone: 760px;

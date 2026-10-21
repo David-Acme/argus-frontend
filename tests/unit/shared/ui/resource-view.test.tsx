@@ -26,6 +26,9 @@ const EMPTY = {
   action: { label: 'Nuevo recordatorio', onPress: () => undefined },
 };
 
+const canvases = () =>
+  [...globalThis.document.querySelectorAll('canvas')].map((node) => node.style.width);
+
 function view(resource: Resource<string>) {
   return render(
     <ResourceView
@@ -33,7 +36,7 @@ function view(resource: Resource<string>) {
       copy={COPY}
       skeleton={<span data-testid="skeleton" />}
       empty={EMPTY}
-      concern={<span data-testid="concern" />}>
+      concern>
       {(data) => <span>{data}</span>}
     </ResourceView>
   );
@@ -73,7 +76,7 @@ describe('ResourceView', () => {
     let retries = 0;
     view({ status: 'failed', retry: () => void (retries += 1) });
     expect(screen.getByText('Cámaras sin conexión')).toBeDefined();
-    expect(screen.getByTestId('concern')).toBeDefined();
+    expect(canvases()).toEqual(['52px']);
     expect(screen.queryByText('Nada pendiente hoy')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(retries).toBe(1);
@@ -88,11 +91,11 @@ describe('ResourceView', () => {
 
   test('an empty view keeps its follow-ups below the card', () => {
     render(
-      <Empty {...EMPTY} presence={<span data-testid="presence" />}>
+      <Empty {...EMPTY} presence="happy">
         <span>Recuérdame pagar el agua</span>
       </Empty>
     );
-    expect(screen.getByTestId('presence')).toBeDefined();
+    expect(canvases()).toEqual(['52px']);
     expect(screen.getByText('Recuérdame pagar el agua')).toBeDefined();
   });
 

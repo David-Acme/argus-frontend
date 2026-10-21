@@ -30,6 +30,21 @@ describe('Section and Row', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(1);
   });
 
+  test('a pressable row speaks its string trailing value after its title and meta', () => {
+    render(
+      <Row
+        title="Avisarme"
+        meta="Recordatorio"
+        trailing="30 min antes"
+        chevron
+        onPress={() => undefined}
+      />
+    );
+    expect(
+      screen.getByRole('button', { name: 'Avisarme, Recordatorio, 30 min antes' })
+    ).toBeDefined();
+  });
+
   test('a plain section shows its meta when it has no action', () => {
     render(
       <Section title="Lo último" meta="hace 10 min" variant="plain">
