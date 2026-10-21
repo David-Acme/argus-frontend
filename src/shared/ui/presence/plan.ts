@@ -1,4 +1,4 @@
-import { perfTiers, type PerfTier } from '@/shared/theme/effects';
+import type { PerfTier } from '@/shared/theme/effects';
 import { particleCount } from './engine/engine';
 import { CLIMB_FRAMES } from './engine/pace';
 import type { PresenceState } from './engine/types';
@@ -65,6 +65,7 @@ export type PlanInput = {
 };
 
 const MAX_BACKOFF = 4;
+const RANK: Record<PerfTier, number> = { low: 0, mid: 1, high: 2 };
 
 export function planFor({ size, tier, reduceMotion, adaptation }: PlanInput): RenderPlan {
   const rule = tierRules[tier];
@@ -80,8 +81,7 @@ export function planFor({ size, tier, reduceMotion, adaptation }: PlanInput): Re
     still: reduceMotion,
     leanWhileScrolling: rule.leanWhileScrolling,
     watch: adaptation !== undefined && !reduceMotion,
-    climb:
-      adaptation !== undefined && perfTiers.indexOf(tier) < perfTiers.indexOf(adaptation.ceiling),
+    climb: adaptation !== undefined && RANK[tier] < RANK[adaptation.ceiling],
     patience: CLIMB_FRAMES * 2 ** Math.min(MAX_BACKOFF, adaptation?.drops ?? 0),
   };
 }
