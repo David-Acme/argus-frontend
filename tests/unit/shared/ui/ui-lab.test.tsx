@@ -11,6 +11,7 @@ mock.module('expo-router', () => ({
 }));
 mock.module('@/shared/hooks/use-theme-preference', () => ({ getThemePreference: () => 'system' }));
 
+const { AuraDemo } = await import('@/features/ui-lab/demos/aura-demo');
 const { AvatarDemo } = await import('@/features/ui-lab/demos/avatar-demo');
 const { ButtonDemo } = await import('@/features/ui-lab/demos/button-demo');
 const { CheckDemo } = await import('@/features/ui-lab/demos/check-demo');
@@ -27,6 +28,7 @@ const { catalogue } = await import('@/features/ui-lab/catalogue');
 const { LabCase } = await import('@/features/ui-lab/components/lab-case');
 
 const DEMOS: Record<string, ComponentType> = {
+  aura: AuraDemo,
   avatar: AvatarDemo,
   button: ButtonDemo,
   check: CheckDemo,

@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { AuraDemo } from './demos/aura-demo';
 import { AvatarDemo } from './demos/avatar-demo';
 import { ButtonDemo } from './demos/button-demo';
 import { CheckDemo } from './demos/check-demo';
@@ -32,6 +33,7 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'check', family: 'content', title: 'Check', Demo: CheckDemo },
   { id: 'button', family: 'input', title: 'Button', Demo: ButtonDemo },
   { id: 'switch', family: 'input', title: 'Switch', Demo: SwitchDemo },
+  { id: 'aura', family: 'identity', title: 'Aura', Demo: AuraDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [
