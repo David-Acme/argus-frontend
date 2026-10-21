@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
-import { chromium, type Browser, type Page } from 'playwright-core';
+import { chromium, type Browser, type ElementHandle, type Page } from 'playwright-core';
 import { compare } from './compare';
-import { galleryPage, type CaseResult, type StageShot } from './gallery-page';
+import { galleryPage, mergeRun, type CaseResult, type StageShot } from './gallery-page';
 import { PROTOTYPE_CASES } from './prototype-cases';
 
 const ROOT = join(import.meta.dir, '..', '..');
@@ -87,6 +87,7 @@ async function ourShots(page: Page, url: string): Promise<{ stage: Buffer; cases
   await page.goto(url);
   const stage = await page.waitForSelector('[data-testid="ui-lab-stage"]', { timeout: READY_MS });
   await page.evaluate(() => document.fonts.ready);
+  await twoFrames(page);
   await settleCases(page, '[data-testid^="case-"]');
   await fitViewport(page, '[data-testid="ui-lab-stage"]');
   const handles = await page.$$('[data-testid^="case-"]');
@@ -96,8 +97,26 @@ async function ourShots(page: Page, url: string): Promise<{ stage: Buffer; cases
     const block = await handle.evaluate((node) => getComputedStyle(node).alignSelf === 'stretch');
     cases.push({ id, block, png: await handle.screenshot({ animations: 'disabled' }) });
   }
-  return { stage: await stage.screenshot({ animations: 'disabled' }), cases };
+  const shot = await stage.screenshot({ animations: 'disabled' });
+  const opener = await page.$('[data-testid="spike-open-long"]');
+  if (opener) cases.push(await openedSheet(page, opener));
+  return { stage: shot, cases };
 }
+
+async function openedSheet(page: Page, opener: ElementHandle): Promise<OurCase> {
+  await opener.click();
+  const dialog = await page.waitForSelector('[role="dialog"]', { timeout: READY_MS });
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  const png = await dialog.screenshot({ animations: 'disabled' });
+  await page.keyboard.press('Escape');
+  return { id: 'dialog', block: false, png };
+}
+
+const twoFrames = (page: Page): Promise<void> =>
+  page.evaluate(
+    () =>
+      new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
+  );
 
 type ProtoStage = {
   cases: { id: string; expr: string; block: boolean }[];
@@ -125,6 +144,7 @@ async function prototypeShots(page: Page, input: ProtoStage): Promise<Map<string
     document.body.classList.toggle('rt', reduced);
     window.scrollTo(0, 0);
   }, input);
+  await twoFrames(page);
   await settleCases(page, '[data-case]');
   await fitViewport(page, '#lab-stage');
   const shots = new Map<string, Buffer>();
@@ -243,9 +263,11 @@ async function main(): Promise<void> {
     server.stop(true);
   }
   mkdirSync(out, { recursive: true });
-  writeFileSync(join(out, 'results.json'), JSON.stringify(results, null, 2));
-  writeFileSync(join(out, 'index.html'), galleryPage(stages, results));
-  console.log(`capture: ${stages.length} stages, ${results.length} cases in ${out}`);
+  const merged = mergeRun({ out, only, stages, results });
+  writeFileSync(join(out, 'results.json'), JSON.stringify(merged.results, null, 2));
+  writeFileSync(join(out, 'stages.json'), JSON.stringify(merged.stages, null, 2));
+  writeFileSync(join(out, 'index.html'), galleryPage(merged.stages, merged.results));
+  console.log(`capture: ${merged.stages.length} stages, ${merged.results.length} cases in ${out}`);
 }
 
 await main();
