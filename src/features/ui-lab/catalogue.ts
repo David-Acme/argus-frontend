@@ -9,6 +9,7 @@ import { LayoutDemo } from './demos/layout-demo';
 import { NavDemo } from './demos/nav-demo';
 import { PressableDemo } from './demos/pressable-demo';
 import { RowDemo } from './demos/row-demo';
+import { ScreenDemo } from './demos/screen-demo';
 import { SectionDemo } from './demos/section-demo';
 import { StatusDemo } from './demos/status-demo';
 import { SwitchDemo } from './demos/switch-demo';
@@ -38,6 +39,7 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'aura', family: 'identity', title: 'Aura', Demo: AuraDemo },
   { id: 'status', family: 'content', title: 'Status', Demo: StatusDemo },
   { id: 'nav', family: 'foundations', title: 'Nav', Demo: NavDemo },
+  { id: 'screen', family: 'foundations', title: 'Screen', Demo: ScreenDemo },
 ];
 
 export const catalogueFamilies: readonly CatalogueFamily[] = [

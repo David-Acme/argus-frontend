@@ -1,5 +1,5 @@
 export { Nav } from './nav';
-export { navCollapse, useNavScrollHandler } from './nav-chrome';
+export { navCollapse, trackCollapse, useNavScrollHandler, type ScrollTrack } from './nav-chrome';
 export {
   NavStatus,
   type NavStatusMeter,

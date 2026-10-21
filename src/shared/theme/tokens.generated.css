@@ -123,6 +123,8 @@
   --spacing-presence-brand: 30px;
   --spacing-presence-nav: 22px;
   --spacing-presence-ask: 20px;
+  --spacing-column-side: 320px;
+  --spacing-column-aside: 300px;
   --spacing-preview-phone: 760px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
@@ -212,6 +214,10 @@
   --text-initial-large--line-height: 33px;
   --text-initial-large--letter-spacing: 0px;
   --text-initial-large--font-weight: 700;
+  --text-greeting: 14px;
+  --text-greeting--line-height: 19.88px;
+  --text-greeting--letter-spacing: 0px;
+  --text-greeting--font-weight: 600;
   --text-hero-band: 38px;
   --text-hero-band--line-height: 41.8px;
   --text-hero-band--letter-spacing: -1.14px;

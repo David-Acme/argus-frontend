@@ -3,7 +3,7 @@ import { act, fireEvent, render, renderHook, screen } from '@testing-library/rea
 import { KeyHint } from '@/shared/ui/nav/key-hint';
 import { Nav } from '@/shared/ui/nav/nav';
 import { NavBar } from '@/shared/ui/nav/nav-bar';
-import { navCollapse, useNavScrollHandler } from '@/shared/ui/nav/nav-chrome';
+import { navCollapse, trackCollapse, useNavScrollHandler } from '@/shared/ui/nav/nav-chrome';
 import { NavRail } from '@/shared/ui/nav/nav-rail';
 import { NavSidebar } from '@/shared/ui/nav/nav-sidebar';
 import { NavStatus } from '@/shared/ui/nav/nav-status';
@@ -154,6 +154,18 @@ describe('Nav', () => {
   test('the scroll handler and the collapse value exist for Screen to drive', () => {
     expect(navCollapse.get()).toBe(0);
     expect(typeof renderHook(() => useNavScrollHandler()).result.current).toBe('function');
+  });
+
+  test('scrolling down collapses the bar and scrolling up brings it back', () => {
+    const track = {};
+    trackCollapse(0, track);
+    trackCollapse(40, track);
+    expect(navCollapse.get()).toBe(1);
+    trackCollapse(20, track);
+    expect(navCollapse.get()).toBe(0);
+    trackCollapse(60, track);
+    trackCollapse(0, track);
+    expect(navCollapse.get()).toBe(0);
   });
 });
 

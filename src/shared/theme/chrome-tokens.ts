@@ -43,6 +43,7 @@ export const auraField = {
 } as const;
 
 export const chromeTypeRoles = {
+  greeting: { size: 14, line: 19.88, weight: '600', tracking: 0, maxScale: 2 },
   heroBand: { size: 38, line: 41.8, weight: '800', tracking: -0.03, maxScale: 1.5 },
   brand: { size: 18, line: 24, weight: '700', tracking: 0, maxScale: 1.5 },
   count: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 2 },
@@ -120,6 +121,8 @@ export const chromeSize = {
   presenceBrand: 30,
   presenceNav: 22,
   presenceAsk: 20,
+  columnSide: 320,
+  columnAside: 300,
   previewPhone: 760,
   scrollbar: 10,
   scrollbarInset: 3,

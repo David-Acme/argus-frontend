@@ -1,8 +1,10 @@
+import { clsx } from 'clsx';
 import { Children, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { size, useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { RowPosition } from '@/shared/ui/row';
+import { useInScreenColumn } from '@/shared/ui/screen';
 import { Text } from '@/shared/ui/text';
 
 export type SectionAction = { label: string; onPress: () => void };
@@ -23,9 +25,14 @@ type GroupProps = { children: ReactNode };
 const LINK_SLOP = (size.target - size.targetMin) / 2;
 
 function SectionHead({ title, meta, action }: SectionHeadProps) {
+  const sticky = useInScreenColumn();
   if (!title && !meta && !action) return null;
   return (
-    <View className="gap-section-head-gap px-section-head-x pb-section-head-bottom flex-row items-baseline justify-between">
+    <View
+      className={clsx(
+        'gap-section-head-gap px-section-head-x pb-section-head-bottom flex-row items-baseline justify-between',
+        sticky && 'web:sticky web:top-0 web:z-10 web:fade-to-bg web:pt-screen-head-top'
+      )}>
       {title ? (
         <Text variant="section" heading>
           {title}

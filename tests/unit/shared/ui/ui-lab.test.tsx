@@ -21,6 +21,7 @@ const { LayoutDemo } = await import('@/features/ui-lab/demos/layout-demo');
 const { NavDemo } = await import('@/features/ui-lab/demos/nav-demo');
 const { PressableDemo } = await import('@/features/ui-lab/demos/pressable-demo');
 const { RowDemo } = await import('@/features/ui-lab/demos/row-demo');
+const { ScreenDemo } = await import('@/features/ui-lab/demos/screen-demo');
 const { SectionDemo } = await import('@/features/ui-lab/demos/section-demo');
 const { StatusDemo } = await import('@/features/ui-lab/demos/status-demo');
 const { SwitchDemo } = await import('@/features/ui-lab/demos/switch-demo');
@@ -41,6 +42,7 @@ const DEMOS: Record<string, ComponentType> = {
   nav: NavDemo,
   pressable: PressableDemo,
   row: RowDemo,
+  screen: ScreenDemo,
   section: SectionDemo,
   status: StatusDemo,
   switch: SwitchDemo,

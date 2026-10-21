@@ -44,6 +44,7 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
   heroBand: 'text-hero-band',
+  greeting: 'text-greeting',
   brand: 'text-brand',
   count: 'text-count',
   sideStat: 'text-side-stat',
