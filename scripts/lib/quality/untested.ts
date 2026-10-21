@@ -1,4 +1,4 @@
-import { importsOf, readSource, resolveImport } from '../source-files';
+import { importsOf, readSource, resolveImports } from '../source-files';
 
 export function isComponentOrScreen(path: string): boolean {
   return /^src\/(features|shared)\/.+\.tsx$/.test(path);
@@ -9,8 +9,7 @@ export function untestedComponents(sources: readonly string[], tests: readonly s
   for (const test of tests) {
     const { text } = readSource(test);
     for (const specifier of importsOf(text)) {
-      const target = resolveImport(test, specifier);
-      if (target) imported.add(target);
+      for (const target of resolveImports(test, specifier)) imported.add(target);
     }
   }
   return sources.filter((path) => isComponentOrScreen(path) && !imported.has(path));

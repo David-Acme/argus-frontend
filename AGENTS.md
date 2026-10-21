@@ -39,13 +39,15 @@ counter is a **ratchet**:
 - a committed baseline;
 - a count that rises fails;
 - a count that falls fails until the baseline is lowered in the same change;
-- a baseline is never raised.
+- a baseline is never raised, unless the change adds a row to `CONTEXT.md`
+  › "Re-baselines" naming it (`scripts/check-baselines.ts`).
 
 The baselines are:
 
 - `scripts/lib/quality-baseline.txt` (with its `scanned-files` line) and
   `scripts/lib/memo-exceptions.txt`, read by `bun run check:quality`;
-- `scripts/lib/boundaries-baseline.txt`, read by `bun run check:boundaries`;
+- `scripts/lib/boundaries-baseline.txt` and `scripts/lib/cycle-baseline.txt`
+  (the members of each cycle), read by `bun run check:boundaries`;
 - `eslint-suppressions.json` (ESLint bulk suppressions), read by
   `bun run lint`;
 - the list of files not yet formatted, read by `bun run check:format`;
@@ -1531,7 +1533,7 @@ cd src-tauri && cargo check
 | `docs/references.md` | The sources the rules cite as `[key]` (rule 4) |
 | `docs/plans/frontend-rules-final.md` | Each rule's rationale, survey, gate, phase and the implementation order |
 | `docs/plans/redesign-spec.md` | The redesign: tokens (§3), the 26 components (§4), patterns, motion, Estela (§8b), screens |
-| `scripts/lib/quality-baseline.txt` · `boundaries-baseline.txt` · `bundle-baseline.txt` · `memo-exceptions.txt` · `eslint-suppressions.json` | The ratchet baselines |
+| `scripts/lib/quality-baseline.txt` · `boundaries-baseline.txt` · `cycle-baseline.txt` · `bundle-baseline.txt` · `memo-exceptions.txt` · `eslint-suppressions.json` | The ratchet baselines |
 | `src/shared/constants/color.constant.ts` | Today's color palette (HEX), legacy until S3 |
 | `src/shared/constants/common.constant.ts` | Platform/Tauri flags (`IS_WEB`, `IS_TAURI`, ...) |
 | `src/shared/constants/icon.constant.ts` | Centralized icon registry (lucide only here) |

@@ -5341,7 +5341,7 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 
 | Gate | What it counts | Baseline |
 |---|---|---|
-| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into a slice's internals when the slice has an `index`; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges; `core` files are keyed by `core/<segment>` or `core/services/<name>`); `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`) | `scripts/lib/boundaries-baseline.txt` |
+| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into another slice's internals, other than its `index`, whether or not the slice has one; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges, `require()` is; `core` files are keyed by `core/<segment>` or `core/services/<name>`), with their members compared one by one; `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`). An import resolves to every platform variant that exists (`.native`, `.web`, `.ios`, `.android`, and the same for `index`), each an edge | `scripts/lib/boundaries-baseline.txt`, `scripts/lib/cycle-baseline.txt` |
 | `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off with the table above; fails on any `warn` and on inline configuration not disabled | the table above |
 | `check-references.ts` | every `[key]` in `AGENTS.md`, `CONTEXT.md` files and `docs/plans/*.md` (code spans, fences, links and `[x]` task boxes excluded) is a row of `docs/references.md`, a `[family-*]` matches a key, every row has a URL | 0 |
 | `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0) |
@@ -5365,7 +5365,7 @@ the rules document; definitions are in `scripts/lib/quality/`):
 | `manual-memo` (`useCallback` + `useMemo` + `memo`) | 551 | `untested-component-or-screen` (a `.tsx` under `features`/`shared` no test imports) | 341 |
 | `scanned-files` (floor) | 1,487 | | |
 
-Boundaries at R0: `deep-import` 72, `file-cycle` 1 (the 21-file
+Boundaries at R0: `deep-import` 72 (74 once the slices without an index count, finding 10), `file-cycle` 1 (the 21-file
 `features/{cameras,response,security,voice}` component), `slice-cycle` 1,
 `route-shape` 2 (`+not-found.tsx`, `ui-lab.tsx`).
 
@@ -5437,3 +5437,5 @@ many files; the reason names that cause.
 |---|---|---|---|
 | `scripts/lib/quality-baseline.txt` | `template-key` | Finding 3 of the R0 review: the counter now counts every key built by `+`, a template, `join` or `concat` in the first argument of `t` or `tk` (and their aliases), and every `as TranslationKey`. The one new count is the template key of the `tk` call in `use-settings-profiles.ts` (`screens.settings.profiles.result.reasons.*`), existing debt the `t`-only selector hid. | 2026-10-20 |
 | `eslint-suppressions.json` | `src/features/settings/hooks/use-settings-profiles.ts argus/no-template-key` | The same `tk` template, now seen by the lint ban. | 2026-10-20 |
+| `scripts/lib/boundaries-baseline.txt` | `deep-import` | Finding 10 of the R0 review: an import into another slice's internals counts whether or not the slice has an `index`. The two new counts are the imports into `core/services/desktop`, which has none. | 2026-10-20 |
+| `scripts/lib/cycle-baseline.txt` | `**` | Finding 4 of the R0 review: the cycle members are a list of their own, so a file or slice joining the recorded 21-file and 4-slice cycle fails though the cycle count holds. The file is new: every member is recorded once, as measured. | 2026-10-20 |

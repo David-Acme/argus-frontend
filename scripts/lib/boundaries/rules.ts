@@ -1,13 +1,13 @@
-import { existsSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { relative } from 'node:path';
 import ts from 'typescript';
-import { readSource, ROOT } from '../source-files';
+import { PLATFORM_SUFFIX, readSource } from '../source-files';
 import type { Edge } from './graph';
 
 const DESIGN_SYSTEM = new Set(['shared/components/ui', 'shared/components/layout']);
 const DESIGN_SYSTEM_ROOTS = ['shared/ui/', 'shared/theme/'];
 const SLICE_ROOT = /^src\/(features|widgets|entities|platform|core\/services)\/[^/]+(?=\/)/;
-const NOT_ROUTES = /(^|\/)(_layout|\+html|\+native-intent)(\.native|\.web)?\.tsx?$/;
+const NOT_ROUTES = new RegExp(`(^|/)(_layout|\\+html|\\+native-intent)${PLATFORM_SUFFIX}\\.tsx?$`);
+const SOURCE_EXTENSION = new RegExp(`${PLATFORM_SUFFIX}\\.tsx?$`);
 
 export function moduleOf(file: string): string {
   const parts = relative('src', file).split('/');
@@ -15,8 +15,7 @@ export function moduleOf(file: string): string {
   if (first === 'features' || first === 'widgets' || first === 'entities' || first === 'platform')
     return `${first}/${second}`;
   if (first === 'shared' && second === 'components') return `shared/components/${third}`;
-  if (first === 'shared')
-    return `shared/${second}/${third.replace(/(\.native|\.web)?\.tsx?$/, '')}`;
+  if (first === 'shared') return `shared/${second}/${third.replace(SOURCE_EXTENSION, '')}`;
   return first ?? '';
 }
 
@@ -24,29 +23,23 @@ export function sliceOf(file: string): string {
   const parts = relative('src', file).split('/');
   const [first, second = '', third = ''] = parts;
   if (first === 'core' && second === 'services')
-    return `core/services/${third.replace(/(\.native|\.web)?\.tsx?$/, '')}`;
-  if (first === 'core') return `core/${second.replace(/(\.native|\.web)?\.tsx?$/, '')}`;
+    return `core/services/${third.replace(SOURCE_EXTENSION, '')}`;
+  if (first === 'core') return `core/${second.replace(SOURCE_EXTENSION, '')}`;
   return moduleOf(file);
 }
 
-function hasIndex(directory: string): boolean {
-  return (
-    existsSync(join(ROOT, directory, 'index.ts')) || existsSync(join(ROOT, directory, 'index.tsx'))
-  );
-}
-
 function isIndexOf(directory: string, file: string): boolean {
-  return /^index(\.native|\.web)?\.tsx?$/.test(file.slice(directory.length + 1));
+  return new RegExp(`^index${PLATFORM_SUFFIX}\\.tsx?$`).test(file.slice(directory.length + 1));
 }
 
 export function isDeepImport(edge: Edge): boolean {
   const root = SLICE_ROOT.exec(edge.to)?.[0];
-  if (!root || edge.from.startsWith(`${root}/`) || !hasIndex(root)) return false;
+  if (!root || edge.from.startsWith(`${root}/`)) return false;
   return !isIndexOf(root, edge.to);
 }
 
 function isFeatureIndex(file: string): boolean {
-  return /^src\/features\/[^/]+\/index\.tsx?$/.test(file);
+  return new RegExp(`^src/features/[^/]+/index${PLATFORM_SUFFIX}\\.tsx?$`).test(file);
 }
 
 type LayerRule = { name: string; breaks: (edge: Edge, from: string, to: string) => boolean };
