@@ -113,7 +113,8 @@ export function buildSprites(scene: SkiaScene, width: number): void {
 export function beginFrame(scene: SkiaScene, fade: number): void {
   'worklet';
   const canvas = scene.surface.getCanvas();
-  scene.tint.set([0, 0, 0, fade >= 1 ? 0 : fade]);
+  scene.tint.fill(0);
+  scene.tint[3] = fade >= 1 ? 0 : fade;
   if (fade >= 1) {
     canvas.clear(scene.tint);
   } else {
@@ -171,7 +172,10 @@ export function strokeToCanvas(scene: SkiaScene, s: Stroke): void {
   const canvas = scene.surface.getCanvas();
   const ratio = scene.ratio;
   const color = scene.tint;
-  color.set([(s.r | 0) / 255, (s.g | 0) / 255, (s.b | 0) / 255, s.a]);
+  color[0] = (s.r | 0) / 255;
+  color[1] = (s.g | 0) / 255;
+  color[2] = (s.b | 0) / 255;
+  color[3] = s.a;
   if (!s.round) {
     scene.fill.setColor(color);
     const side = s.w * ratio;

@@ -6,7 +6,7 @@ import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
 import type { Look } from './engine/driver';
 import type { PresenceEvent, PresenceState } from './engine/types';
-import { planFor, tierRules } from './plan';
+import { planFor } from './plan';
 import { PresenceCanvas } from './presence-canvas';
 import { usePresenceInput, type PresenceCue } from './use-presence-input';
 
@@ -55,14 +55,13 @@ export function Presence({
   const [seed] = useState(nextSeed);
   const [touch, setTouch] = useState<PresenceCue | undefined>(undefined);
   const plan = planFor({ size, tier: perfTier, reduceMotion });
-  const rule = tierRules[perfTier];
   const look: Look = {
     size,
     palette: tokens.illustration.estela[dark ? 'dark' : 'light'],
     dark,
-    activeFps: rule.activeFps,
-    restFps: rule.restFps,
-    leanWhileScrolling: rule.leanWhileScrolling,
+    activeFps: plan.activeFps,
+    restFps: plan.restFps,
+    leanWhileScrolling: plan.leanWhileScrolling,
   };
   const cue = touch && (!event || touch.id > event.id) ? touch : event;
   const { input, active } = usePresenceInput({ state, intensity, target, event: cue, paused });

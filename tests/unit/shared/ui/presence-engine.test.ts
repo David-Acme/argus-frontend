@@ -51,15 +51,19 @@ describe('presence engine', () => {
     ]);
   });
 
-  test('tiers halve particles on low and drop trails below high', () => {
+  test('the low tier halves the particles and drops trails, mid caps them at 320, icons run at 30 fps', () => {
     expect(planFor({ size: 300, tier: 'high', reduceMotion: false })).toMatchObject({
       count: 560,
       trails: true,
       activeFps: 60,
     });
     expect(planFor({ size: 300, tier: 'mid', reduceMotion: false })).toMatchObject({
-      count: 560,
-      trails: false,
+      count: 320,
+      trails: true,
+    });
+    expect(planFor({ size: 36, tier: 'high', reduceMotion: false })).toMatchObject({
+      count: 0,
+      activeFps: 30,
     });
     expect(planFor({ size: 120, tier: 'low', reduceMotion: false })).toMatchObject({
       count: 160,
