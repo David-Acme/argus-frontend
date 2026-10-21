@@ -49,6 +49,8 @@ let call = new FakeCall();
 mock.module('react-native-reanimated', () => ({
   makeMutable: <T>(value: T) => ({ value }),
   withTiming: <T>(value: T) => value,
+  useSharedValue: undefined,
+  useFrameCallback: undefined,
 }));
 mock.module('expo-audio', () => ({
   getRecordingPermissionsAsync: async () => ({ granted: true, canAskAgain: true }),
