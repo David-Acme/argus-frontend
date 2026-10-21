@@ -205,7 +205,7 @@ export function EntryActionsMenu({
                 ) : null}
                 <Text
                   className={cn(
-                    'text-body font-medium',
+                    'text-legacy-body font-medium',
                     option.destructive ? 'text-error-strong' : 'text-foreground'
                   )}>
                   {option.label}

@@ -67,7 +67,7 @@ const DayCell = memo(function DayCell({
           )}>
           <Text
             className={cn(
-              mini ? 'text-caption' : 'text-body',
+              mini ? 'text-legacy-caption' : 'text-legacy-body',
               isToday && !isSelected && 'font-semibold',
               isSelected
                 ? 'text-foreground-on-interactive font-semibold'
@@ -120,7 +120,7 @@ const DayCell = memo(function DayCell({
           <Text
             variant="micro"
             className={cn(
-              'lg:text-caption',
+              'lg:text-legacy-caption',
               isSelected
                 ? 'text-foreground-on-interactive'
                 : outside

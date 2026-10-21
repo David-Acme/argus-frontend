@@ -72,7 +72,7 @@ export function VisitorSamplesPanel({
                 accessibilityLabel={label}
                 disabled={!selecting}
                 onPress={() => toggle(sample.id)}
-                className={cn('rounded-lg', isSelected && 'border-accent border-2')}>
+                className={cn('rounded-lg', isSelected && 'border-legacy-accent border-2')}>
                 <VisitorFace
                   visitorId={visitor.id}
                   sampleId={sample.id}

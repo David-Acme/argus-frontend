@@ -42,7 +42,7 @@ export function ModuleProgress({ job, compact = false, className }: ModuleProgre
       aria-live="polite">
       <View className="flex-row items-center gap-3">
         <View className="bg-surface-secondary dark:bg-border h-2 flex-1 overflow-hidden rounded-full">
-          <Animated.View className={cn('h-full rounded-full', FILL[job.state] ?? 'bg-accent')} style={fillStyle} />
+          <Animated.View className={cn('h-full rounded-full', FILL[job.state] ?? 'bg-legacy-accent')} style={fillStyle} />
         </View>
         <Text variant="label" className="min-w-10 text-right tabular-nums">
           {`${percent} %`}

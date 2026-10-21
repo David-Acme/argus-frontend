@@ -3,9 +3,9 @@ import type { CalendarEntryState, TranslationKey } from '@/core/types';
 export const ENTRY_STATE_RAIL: Record<CalendarEntryState, string> = {
   upcoming: 'bg-interactive',
   todo: 'bg-interactive',
-  ongoing: 'bg-accent',
-  today: 'bg-accent',
-  doing: 'bg-accent',
+  ongoing: 'bg-legacy-accent',
+  today: 'bg-legacy-accent',
+  doing: 'bg-legacy-accent',
   overdue: 'bg-warning',
   ended: 'bg-border',
   done: 'bg-success',

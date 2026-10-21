@@ -1,3 +1,5 @@
+import { illustration } from './illustration';
+
 export const themeNames = ['light', 'dark'] as const;
 
 export type TokenTheme = (typeof themeNames)[number];
@@ -101,54 +103,31 @@ export const aura: Record<TokenTheme, Record<AuraTone, readonly [string, string,
   },
 };
 
-export const elevation: Record<TokenTheme, Record<'card' | 'float', string>> = {
+export const elevation: Record<
+  TokenTheme,
+  Record<'card' | 'float' | 'thumb' | 'glass' | 'glassInset' | 'ring' | 'ringInset', string>
+> = {
   light: {
     card: '0px 1px 2px 0px rgba(60,45,30,0.05), 0px 6px 20px 0px rgba(60,45,30,0.06)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.06), 0px 10px 32px 0px rgba(0,0,0,0.12)',
+    thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
+    glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7), 0px 1px 2px 0px rgba(0,0,0,0.06)',
+    glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.7)',
+    ring: '0px 0px 0px 1px #ECE8E2',
+    ringInset: 'inset 0px 0px 0px 1px #ECE8E2',
   },
   dark: {
     card: 'inset 0px 1px 0px 0px rgba(255,255,255,0.035), 0px 10px 30px 0px rgba(0,0,0,0.25)',
     float: '0px 1px 2px 0px rgba(0,0,0,0.4), 0px 12px 34px 0px rgba(0,0,0,0.55)',
+    thumb: '0px 1px 3px 0px rgba(0,0,0,0.3)',
+    glass: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 1px 2px 0px rgba(255,255,255,0.06)',
+    glassInset: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08)',
+    ring: '0px 0px 0px 1px #2D2A25',
+    ringInset: 'inset 0px 0px 0px 1px #2D2A25',
   },
 };
 
-export const illustration = {
-  media: '#2A2622',
-  onMedia: '#FFFFFF',
-  mediaChip: 'rgba(0,0,0,0.42)',
-  mediaHover: 'rgba(0,0,0,0.25)',
-  mediaControl: 'rgba(0,0,0,0.4)',
-  liveDot: '#FF5B4F',
-  switchThumb: '#FFFFFF',
-  eyeChip: 'rgba(10,9,12,0.48)',
-  eyeChipText: '#F4EFE7',
-  estela: {
-    dark: {
-      a: [255, 196, 110],
-      b: [242, 220, 178],
-      c: [132, 122, 230],
-      r: [244, 112, 84],
-      g: [150, 145, 138],
-      w: [255, 238, 205],
-      glint: [255, 244, 220],
-      additive: true,
-      trail: 0.17,
-      density: 0.55,
-    },
-    light: {
-      a: [176, 106, 24],
-      b: [122, 78, 36],
-      c: [58, 54, 150],
-      r: [192, 64, 40],
-      g: [140, 136, 130],
-      w: [150, 90, 20],
-      glint: [176, 106, 24],
-      additive: false,
-      trail: 0.2,
-      density: 1,
-    },
-  },
-} as const;
+export { illustration };
 
 export const typeSteps = ['hero', 'title', 'headline', 'body', 'meta', 'caption'] as const;
 
@@ -184,6 +163,11 @@ export const typeRoles = {
   chip: { size: 13, line: 17.55, weight: '600', tracking: 0, maxScale: 2 },
   tab: { size: 12, line: 16.2, weight: '600', tracking: 0, maxScale: 1.15 },
   key: { size: 11, line: 17, weight: '650', tracking: 0, maxScale: 1.5 },
+  sectionMeta: { size: 13, line: 19.5, weight: '500', tracking: 0, maxScale: 2 },
+  chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
+  initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 2 },
+  initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
+  sectionLink: { size: 15, line: 22.5, weight: '600', tracking: 0, maxScale: 2 },
 } as const satisfies Record<string, TypeSpec>;
 
 export const fontFamily = {
@@ -191,6 +175,16 @@ export const fontFamily = {
 } as const;
 
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 8: 32, 12: 48 } as const;
+
+export const inset = {
+  row: { x: 18, y: 10, gap: 14, trailGap: 6, metaGap: 1 },
+  button: { x: 18, compactX: 14, ghostX: 12 },
+  chip: { x: 10, statX: 11, gap: 5 },
+  section: { top: 26, headX: 4, headBottom: 10, headGap: 12, linkY: 10, groupY: 4 },
+  control: { switchThumb: 3, focusRing: 2, checkBorder: 2 },
+} as const;
+
+export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;
 
 export const radius = {
   sm: 8,
@@ -254,6 +248,7 @@ export const material = {
   blur: 22,
   saturation: 1.7,
   blurControl: 18,
+  blurChip: 16,
   saturationControl: 1.6,
   blurSheet: 26,
   sheetSurfaceMix: 0.94,
@@ -289,6 +284,8 @@ export const tokens = {
   typeRoles,
   fontFamily,
   space,
+  inset,
+  state,
   radius,
   size,
   motion,

@@ -53,7 +53,7 @@ export function TechnicalSettingRow({ setting, siblings, preview, onChange }: Te
           <View className="flex-row flex-wrap items-center gap-x-2 gap-y-1">
             <Text variant="label">{label}</Text>
             {changed ? (
-              <StatusBadge label={t('screens.settings.technical.changed')} dotClassName="bg-accent" />
+              <StatusBadge label={t('screens.settings.technical.changed')} dotClassName="bg-legacy-accent" />
             ) : null}
             {setting.pendingRestart ? (
               <StatusBadge

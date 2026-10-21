@@ -106,7 +106,7 @@ export function FaceGuideOverlay({ state, offset, available, area }: FaceGuideOv
 
   const meta = state ? GUIDE_META[state] : null;
   const tone = meta ? TONE_CLASS[meta.tone] : TONE_CLASS.neutral;
-  const stroke = isReady ? tokens.success : tokens.accent;
+  const stroke = isReady ? tokens.success : tokens['legacy-accent'];
 
   if (!available) return null;
 

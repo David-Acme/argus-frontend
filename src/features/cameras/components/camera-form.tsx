@@ -103,7 +103,7 @@ function Stepper({ steps, current }: StepperProps) {
         const active = position === index;
         return (
           <View key={step} className="min-w-0 flex-1 gap-1.5">
-            <View className={cn('h-1 rounded-full', done || active ? 'bg-accent' : 'bg-surface-secondary')} />
+            <View className={cn('h-1 rounded-full', done || active ? 'bg-legacy-accent' : 'bg-surface-secondary')} />
             <Text
               variant="micro"
               numberOfLines={1}

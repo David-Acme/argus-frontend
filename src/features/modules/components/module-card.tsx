@@ -95,7 +95,7 @@ export function ModuleCard({
     <View
       className={cn(
         'bg-card gap-3 rounded-3xl border-2 p-4 shadow-md shadow-black/[0.05]',
-        selected ? 'border-accent' : 'border-transparent',
+        selected ? 'border-legacy-accent' : 'border-transparent',
         muted ? 'opacity-70' : null,
         className
       )}>
@@ -132,7 +132,7 @@ export function ModuleCard({
           <View
             className={cn(
               'size-7 items-center justify-center rounded-full border-2',
-              selected ? 'bg-accent border-accent' : 'border-border'
+              selected ? 'bg-legacy-accent border-legacy-accent' : 'border-border'
             )}>
             {selected ? <Icon name="check" className="text-foreground-on-interactive size-4" /> : null}
           </View>

@@ -1,5 +1,5 @@
 import * as Device from 'expo-device';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { AccessibilityInfo, Platform } from 'react-native';
 import { create } from 'zustand';
 import { IS_ANDROID } from '@/shared/constants';
@@ -49,27 +49,34 @@ export const useEffectsOverrides = create<EffectsOverrides>(() => ({
   perfTier: null,
 }));
 
-function useAccessibilityFlag(
-  read: () => Promise<boolean>,
-  event: 'reduceMotionChanged' | 'reduceTransparencyChanged',
-): boolean {
-  const [enabled, setEnabled] = useState(false);
-  useEffect(() => {
-    let active = true;
-    read().then((value) => {
-      if (active) setEnabled(value);
-    });
-    const subscription = AccessibilityInfo.addEventListener(event, setEnabled);
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, [read, event]);
-  return enabled;
-}
+type SystemFlags = { reduceMotion: boolean; reduceTransparency: boolean };
 
-const readReduceMotion = () => AccessibilityInfo.isReduceMotionEnabled();
-const readReduceTransparency = () => AccessibilityInfo.isReduceTransparencyEnabled();
+const useSystemFlags = create<SystemFlags>(() => ({
+  reduceMotion: false,
+  reduceTransparency: false,
+}));
+
+let listening = false;
+
+function listenToSystemFlags(): void {
+  if (listening) return;
+  listening = true;
+  const set = (patch: Partial<SystemFlags>) => useSystemFlags.setState(patch);
+  AccessibilityInfo.isReduceMotionEnabled()
+    .then((reduceMotion) => set({ reduceMotion }))
+    .catch(() => undefined);
+  if (typeof AccessibilityInfo.isReduceTransparencyEnabled === 'function') {
+    AccessibilityInfo.isReduceTransparencyEnabled()
+      .then((reduceTransparency) => set({ reduceTransparency }))
+      .catch(() => undefined);
+  }
+  AccessibilityInfo.addEventListener('reduceMotionChanged', (reduceMotion) =>
+    set({ reduceMotion })
+  );
+  AccessibilityInfo.addEventListener('reduceTransparencyChanged', (reduceTransparency) =>
+    set({ reduceTransparency })
+  );
+}
 
 export type Effects = {
   perfTier: PerfTier;
@@ -78,9 +85,10 @@ export type Effects = {
 };
 
 export function useEffects(): Effects {
+  useEffect(listenToSystemFlags, []);
   const overrides = useEffectsOverrides();
-  const systemMotion = useAccessibilityFlag(readReduceMotion, 'reduceMotionChanged');
-  const systemTransparency = useAccessibilityFlag(readReduceTransparency, 'reduceTransparencyChanged');
+  const systemMotion = useSystemFlags((flags) => flags.reduceMotion);
+  const systemTransparency = useSystemFlags((flags) => flags.reduceTransparency);
   const perfTier = overrides.perfTier ?? resolvePerfTier(hardwareProfile, overrides.reduceEffects);
   return {
     perfTier,

@@ -44,12 +44,12 @@ function ContextMenuSubTrigger({
       )}>
       <ContextMenuPrimitive.SubTrigger
         className={cn(
-          'active:bg-accent group flex flex-row items-center justify-between rounded-md px-2 py-2 sm:py-1.5',
+          'active:bg-legacy-accent group flex flex-row items-center justify-between rounded-md px-2 py-2 sm:py-1.5',
           Platform.select({
-            web: 'focus:bg-accent focus:text-accent-foreground cursor-default outline-none [&_svg]:pointer-events-none',
+            web: 'focus:bg-legacy-accent focus:text-accent-foreground cursor-default outline-none [&_svg]:pointer-events-none',
           }),
           className,
-          open && cn('bg-accent', Platform.select({ native: 'mb-1' })),
+          open && cn('bg-legacy-accent', Platform.select({ native: 'mb-1' })),
           inset && 'pl-8'
         )}
         {...props}>
@@ -154,10 +154,10 @@ function ContextMenuItem({
       )}>
       <ContextMenuPrimitive.Item
         className={cn(
-          'active:bg-accent group relative flex flex-row items-center gap-2 rounded-md px-2 py-2 sm:py-1.5',
+          'active:bg-legacy-accent group relative flex flex-row items-center gap-2 rounded-md px-2 py-2 sm:py-1.5',
           Platform.select({
             web: cn(
-              'focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-disabled:pointer-events-none',
+              'focus:bg-legacy-accent focus:text-accent-foreground cursor-default outline-none data-disabled:pointer-events-none',
               variant === 'destructive' && 'focus:bg-destructive/10 dark:focus:bg-destructive/20'
             ),
           }),
@@ -183,9 +183,9 @@ function ContextMenuCheckboxItem({
     <TextClassContext.Provider value="text-sm text-popover-foreground select-none group-active:text-accent-foreground">
       <ContextMenuPrimitive.CheckboxItem
         className={cn(
-          'active:bg-accent group relative flex flex-row items-center gap-2 rounded-md py-2 pr-2 pl-8 sm:py-1.5',
+          'active:bg-legacy-accent group relative flex flex-row items-center gap-2 rounded-md py-2 pr-2 pl-8 sm:py-1.5',
           Platform.select({
-            web: 'focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-disabled:pointer-events-none',
+            web: 'focus:bg-legacy-accent focus:text-accent-foreground cursor-default outline-none data-disabled:pointer-events-none',
           }),
           props.disabled && 'opacity-50',
           className
@@ -219,9 +219,9 @@ function ContextMenuRadioItem({
     <TextClassContext.Provider value="text-sm text-popover-foreground select-none group-active:text-accent-foreground">
       <ContextMenuPrimitive.RadioItem
         className={cn(
-          'active:bg-accent group relative flex flex-row items-center gap-2 rounded-md py-2 pr-2 pl-8 sm:py-1.5',
+          'active:bg-legacy-accent group relative flex flex-row items-center gap-2 rounded-md py-2 pr-2 pl-8 sm:py-1.5',
           Platform.select({
-            web: 'focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-disabled:pointer-events-none',
+            web: 'focus:bg-legacy-accent focus:text-accent-foreground cursor-default outline-none data-disabled:pointer-events-none',
           }),
           props.disabled && 'opacity-50',
           className

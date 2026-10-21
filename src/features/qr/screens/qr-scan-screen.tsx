@@ -135,7 +135,7 @@ function QrScannerScreen() {
             onCameraReady={scanner.onCameraReady}
           />
         ) : (
-          <View className="bg-surface absolute inset-0 items-center justify-center">
+          <View className="bg-legacy-surface absolute inset-0 items-center justify-center">
             <Icon name="scan-barcode" className="text-placeholder size-10" />
           </View>
         )}

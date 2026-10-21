@@ -19,7 +19,7 @@ export const TASK_LANES: readonly TaskLaneSpec[] = [
     createStatus: 'todo',
     toneClassName: 'bg-muted-foreground',
   },
-  { key: 'doing', statuses: ['doing'], createStatus: 'doing', toneClassName: 'bg-accent' },
+  { key: 'doing', statuses: ['doing'], createStatus: 'doing', toneClassName: 'bg-legacy-accent' },
   {
     key: 'finished',
     statuses: ['done', 'canceled'],

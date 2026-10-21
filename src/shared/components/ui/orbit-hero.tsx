@@ -71,7 +71,7 @@ export function OrbitHero({ size, label, items, orbitMs, breathMs, chipSize }: O
             index === 0
               ? 'border-border absolute rounded-full border border-dashed'
               : index === 1
-                ? 'border-accent/40 bg-accent-soft/40 absolute rounded-full border'
+                ? 'border-legacy-accent/40 bg-accent-soft/40 absolute rounded-full border'
                 : 'bg-accent-soft absolute rounded-full'
           }
         />

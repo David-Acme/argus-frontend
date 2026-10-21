@@ -40,7 +40,7 @@ export function CallPill() {
           />
           <Icon name="phone" className="text-foreground-on-interactive size-4" />
           <Text
-            className="text-foreground-on-interactive text-caption shrink font-semibold"
+            className="text-foreground-on-interactive text-legacy-caption shrink font-semibold"
             numberOfLines={1}>
             {label}
           </Text>

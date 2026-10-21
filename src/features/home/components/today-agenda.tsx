@@ -46,8 +46,8 @@ function HourRow({ label, current, children }: HourRowProps) {
 function NowMarker({ label }: { label: string }) {
   return (
     <View className="flex-row items-center gap-2" accessibilityRole="text" accessibilityLabel={label}>
-      <View className="bg-accent -ml-1 size-2 rounded-full" />
-      <View className="bg-accent h-0.5 flex-1 rounded-full" />
+      <View className="bg-legacy-accent -ml-1 size-2 rounded-full" />
+      <View className="bg-legacy-accent h-0.5 flex-1 rounded-full" />
     </View>
   );
 }

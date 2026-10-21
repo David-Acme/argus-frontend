@@ -45,7 +45,7 @@ export function OptionRow({
       <View className="flex-1">
         <Text
           className={cn(
-            'text-body font-medium',
+            'text-legacy-body font-medium',
             option.destructive ? 'text-error-strong' : 'text-foreground'
           )}>
           {option.label}

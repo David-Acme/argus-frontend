@@ -43,7 +43,7 @@ const PILL_ICON_TONE: Record<QrScanTone, string> = {
 
 const DOT_TONE: Record<QrScanTone, string> = {
   muted: 'bg-foreground-secondary',
-  accent: 'bg-accent',
+  accent: 'bg-legacy-accent',
   error: 'bg-destructive-foreground',
 };
 

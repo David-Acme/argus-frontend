@@ -12,7 +12,7 @@ props-over-10 18
 loop-without-reduce-motion 2
 timer-in-component 8
 source-text-test 9
-legacy-token-class 1548
+legacy-token-class 1638
 manual-memo 551
 shared-value-dot-value 315
 untested-component-or-screen 341

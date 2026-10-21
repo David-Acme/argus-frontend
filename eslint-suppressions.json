@@ -2952,10 +2952,5 @@
     "max-lines": {
       "count": 1
     }
-  },
-  "src/shared/theme/effects.ts": {
-    "@typescript-eslint/no-floating-promises": {
-      "count": 1
-    }
   }
 }

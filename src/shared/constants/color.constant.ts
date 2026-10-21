@@ -3,7 +3,7 @@ import type { ThemeName } from '@/core/types/theme.type';
 export const colorTokens = {
   light: {
     background: '#F4F1ED',
-    surface: '#FAF8F5',
+    'legacy-surface': '#FAF8F5',
     'surface-secondary': '#E9E4DC',
     card: '#FFFFFF',
     'card-secondary': '#EEE9E3',
@@ -21,7 +21,7 @@ export const colorTokens = {
     interactive: '#404040',
     'interactive-hover': '#333333',
     'interactive-pressed': '#292929',
-    accent: '#B89A63',
+    'legacy-accent': '#B89A63',
     'accent-hover': '#A88855',
     'accent-soft': '#F3E7D2',
     disabled: '#D8D3CC',
@@ -34,7 +34,7 @@ export const colorTokens = {
   },
   dark: {
     background: '#181816',
-    surface: '#1F1E1A',
+    'legacy-surface': '#1F1E1A',
     'surface-secondary': '#312E27',
     card: '#24231E',
     'card-secondary': '#2B2924',
@@ -52,7 +52,7 @@ export const colorTokens = {
     interactive: '#E4E1DB',
     'interactive-hover': '#F0EDE8',
     'interactive-pressed': '#CCC7BF',
-    accent: '#D9BC85',
+    'legacy-accent': '#D9BC85',
     'accent-hover': '#E8CFA0',
     'accent-soft': '#332A1C',
     disabled: '#3E3A33',

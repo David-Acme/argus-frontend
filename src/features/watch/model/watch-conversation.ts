@@ -117,7 +117,7 @@ export const WATCH_INDICATORS = {
   waking: {
     label: 'screens.watch.state.waking',
     icon: 'ear',
-    dot: 'bg-accent',
+    dot: 'bg-legacy-accent',
   },
   listening: {
     label: 'screens.watch.state.listening',

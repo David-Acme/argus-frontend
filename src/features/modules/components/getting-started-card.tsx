@@ -38,7 +38,7 @@ export function GettingStartedCard() {
         </Button>
       </View>
       <View className="bg-surface-secondary dark:bg-border h-1.5 overflow-hidden rounded-full">
-        <View className="bg-accent h-full rounded-full" style={{ width: `${(done / Math.max(1, items.length)) * 100}%` }} />
+        <View className="bg-legacy-accent h-full rounded-full" style={{ width: `${(done / Math.max(1, items.length)) * 100}%` }} />
       </View>
       <View className="gap-1">
         {items.map((item) => (

@@ -108,7 +108,7 @@ export function OrbitChip({
         placeStyle,
       ]}>
       <Animated.View
-        className="border-accent absolute rounded-3xl border-2"
+        className="border-legacy-accent absolute rounded-3xl border-2"
         style={[
           {
             left: -6 * scale,
