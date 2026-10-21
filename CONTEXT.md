@@ -5514,3 +5514,9 @@ components that read copy are tested through `translation-stub.ts` (the
 Spanish dictionary), since the locale store's storage has only platform files.
 happy-dom reports a 0 px window, so a test that needs a wide window defines
 `document.documentElement.clientWidth`.
+
+**Re-baselines.**
+
+| Date | Branch | Entry chunk | `dist/` | Cause |
+|---|---|---|---|---|
+| 2026-10-21 | p1/ds-d | 7,113,459 → 7,303,327 B (+189,868) | 8,379,636 → 8,602,199 B (+222,563) | The overlay share. Measured from the source map of the entry chunk: sonner 36.4 kB (the web Toaster host belongs in the entry), the four ui-lab demos 29.0 kB, Command 11.0 kB, Toast 5.6 kB, Confirm 4.5 kB, Menu 4.0 kB, `@rn-primitives/alert-dialog` 5.2 kB and `@radix-ui/react-alert-dialog` 4.3 kB. The dropdown and context menus were already in the entry through the legacy menus, and no native-only module (sonner-native, the RNGH gestures) reached the web build. |
