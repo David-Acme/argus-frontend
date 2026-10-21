@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -21,8 +21,9 @@ type ArgusTabProps = {
   presence?: NavPresence;
 };
 
-const FRAME =
-  'h-tab max-w-tab-max-width flex-1 items-center justify-center gap-nav-tab-gap rounded-full';
+const SLOT = 'max-w-tab-max-width flex-1';
+
+const FRAME = 'h-tab w-full items-center justify-center gap-nav-tab-gap rounded-full';
 
 const SLOP = (size.tabBar - size.tab) / 2;
 
@@ -30,18 +31,20 @@ const ACTIONS = [{ name: 'longpress' as const }];
 
 export function NavTab({ item, selected, onSelect }: TabProps) {
   return (
-    <PressableSurface
-      a11y={{ label: item.label, role: 'tab', selected }}
-      onPress={() => onSelect(item.key)}
-      haptic="selection"
-      pressed={{ scale: 'icon' }}
-      hitSlop={SLOP}
-      className={clsx(FRAME, selected && 'bg-tab-on')}>
-      <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
-      <Text variant="tab" tone={selected ? 'default' : '3'} numberOfLines={1}>
-        {item.label}
-      </Text>
-    </PressableSurface>
+    <View className={SLOT}>
+      <PressableSurface
+        a11y={{ label: item.label, role: 'tab', selected }}
+        onPress={() => onSelect(item.key)}
+        haptic="selection"
+        pressed={{ scale: 'icon' }}
+        hitSlop={SLOP}
+        className={clsx(FRAME, selected && 'bg-tab-on')}>
+        <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
+        <Text variant="tab" tone={selected ? 'default' : '3'} numberOfLines={1}>
+          {item.label}
+        </Text>
+      </PressableSurface>
+    </View>
   );
 }
 
@@ -55,25 +58,27 @@ export function ArgusTab({
   presence,
 }: ArgusTabProps) {
   return (
-    <Pressable
-      ref={target}
-      role="tab"
-      aria-label={hint}
-      aria-selected={selected}
-      accessibilityActions={ACTIONS}
-      onAccessibilityAction={handlers.onAccessibilityAction}
-      delayLongPress={HOLD_DELAY}
-      pressRetentionOffset={SLIDE_SLOP}
-      hitSlop={SLOP}
-      onPressIn={handlers.onPressIn}
-      onLongPress={handlers.onLongPress}
-      onPressOut={handlers.onPressOut}
-      onPress={handlers.onPress}
-      className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
-      {presence ? presence(size.presenceTab, listening) : <Icon name={item.icon} />}
-      <Text variant="tab" numberOfLines={1}>
-        {item.label}
-      </Text>
-    </Pressable>
+    <View className={SLOT}>
+      <Pressable
+        ref={target}
+        role="tab"
+        aria-label={hint}
+        aria-selected={selected}
+        accessibilityActions={ACTIONS}
+        onAccessibilityAction={handlers.onAccessibilityAction}
+        delayLongPress={HOLD_DELAY}
+        pressRetentionOffset={SLIDE_SLOP}
+        hitSlop={SLOP}
+        onPressIn={handlers.onPressIn}
+        onLongPress={handlers.onLongPress}
+        onPressOut={handlers.onPressOut}
+        onPress={handlers.onPress}
+        className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
+        {presence ? presence(size.presenceTab, listening) : <Icon name={item.icon} />}
+        <Text variant="tab" numberOfLines={1}>
+          {item.label}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
