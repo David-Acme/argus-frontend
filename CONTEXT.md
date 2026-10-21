@@ -5316,3 +5316,82 @@ preset's own decisions and are not exceptions.
 | `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
 | `i18next/no-literal-string` | `src/app/ui-lab.tsx`, `src/features/ui-lab/**` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
 
+## Rules and gates, R0 (2026-10-20)
+
+R0 of the redesign's Phase 1 (step S0 of the rules' implementation order)
+lands the rules of `AGENTS.md` and the gates that measure them, as ratchets
+that never block on existing debt: each gate counts the debt in today's code
+and fails only when a count moves. Base `redesign/main` at `539d76c`.
+
+**The gates.** `bun run verify` runs, in order: `check:comments`,
+`check:boundaries` (boundaries v2, then `check-lint-policy.ts`, then
+`check-references.ts`), `check:quality`, `check:format`, `tsc --noEmit`,
+`lint`, `test`, `check:bundle`, `test:e2e:run`. Every gate has a fixture test
+in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
+
+| Gate | What it counts | Baseline |
+|---|---|---|
+| `check-boundaries.ts` | the five layer rules at 0; `deep-import` (an import into a slice's internals when the slice has an `index`; slices are `features/x`, `widgets/x`, `entities/x`, `platform/x` and the `core/services/x` folders); `file-cycle` and `slice-cycle` (Tarjan SCCs over runtime edges: type-only imports and lazy `import()` are not edges; `core` files are keyed by `core/<segment>` or `core/services/<name>`); `route-shape` (a file under `src/app` other than `_layout`, `+html`, `+native-intent` that is not one `export { default } from …`) | `scripts/lib/boundaries-baseline.txt` |
+| `check-lint-policy.ts` | resolves the config of every file `lint` checks (`calculateConfigForFile`), compares each `off` rule the expo base does not turn off with the table above; fails on any `warn` and on inline configuration not disabled | the table above |
+| `check-references.ts` | every `[key]` in `AGENTS.md`, `CONTEXT.md` files and `docs/plans/*.md` (code spans, fences, links and `[x]` task boxes excluded) is a row of `docs/references.md`, a `[family-*]` matches a key, every row has a URL | 0 |
+| `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0) |
+| `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
+| `lint` | `eslint src scripts --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts --prune-suppressions` in the same change | `eslint-suppressions.json` |
+| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines, and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
+
+**The quality counters at R0** (they replace the `09cf103` survey numbers of
+the rules document; definitions are in `scripts/lib/quality/`):
+
+| Counter | R0 | Counter | R0 |
+|---|---|---|---|
+| `hex-literal` (hex, `rgb(a)`, `hsl(a)`, `oklch` in strings outside `shared/theme`) | 137 | `is-flag-in-features` (`IS_*` reads) | 73 |
+| `arbitrary-value` (`-[…]` classes) | 115 | `platform-select` | 58 |
+| `style-object` (`style={{`) | 80 | `shared-value-dot-value` | 315 |
+| `raw-pressable-in-features` (imports) | 74 | `loop-without-reduce-motion` (files) | 2 |
+| `window-dimensions-in-features` (imports) | 6 | `animated-layout-prop` (keys other than `transform`/`opacity` returned by `useAnimatedStyle`) | 9 |
+| `template-key` (`t(\`…${}\`)`) | 136 | `timer-in-component` (files) | 8 |
+| `http-unchecked` (an `httpService` call neither passed to a checker nor typed `unknown`) | 83 | `props-over-10` | 18 |
+| `source-text-test` (unit tests reading a `src/**/*.ts(x)` file) | 9 | `legacy-token-class` (classes and `var(--color-…)` of today's colour names that `tokens.ts` drops) | 1,548 |
+| `manual-memo` (`useCallback` + `useMemo` + `memo`) | 551 | `untested-component-or-screen` (a `.tsx` under `features`/`shared` no test imports) | 341 |
+| `scanned-files` (floor) | 1,487 | | |
+
+Boundaries at R0: `deep-import` 72, `file-cycle` 1 (the 21-file
+`features/{cameras,response,security,voice}` component), `slice-cycle` 1,
+`route-shape` 2 (`+not-found.tsx`, `ui-lab.tsx`).
+
+**Lint.** The lint set of the rules is adopted with each `warn` of
+`eslint-config-expo` promoted to `error`. The bans of rules 10, 13, 16, 18,
+21–24, 26, 27 and the existing selectors are core `no-restricted-imports` /
+`no-restricted-syntax` registered under their own names in a local `argus`
+plugin (`argus/ds-owns-primitives`, `argus/no-color-literal`, …), because a
+later flat-config block replaces an earlier block's options for the same rule:
+one name per ban lets each carry its own `files`/`ignores` and its own count
+in the suppressions. The type-aware rules run on `src/**` through
+`projectService`. `enforce-consistent-class-order` is simply not adopted
+(Prettier owns class order), so it is not an exception. The metric rules of
+rule 32 run on `src` and `scripts`, without the locales and generated files.
+`lint` now checks `src` and `scripts`; `expo lint` checked `src` alone, and
+`tests` would need `@tests/*` taught to `eslint-plugin-import` first.
+
+**`no-unknown-classes` with Uniwind (spike).** Adopted. With
+`entryPoint: 'src/global.css'` the plugin loads Tailwind's design system from
+the same CSS Uniwind reads, and `uniwind.css` declares its platform variants
+with `@custom-variant`: a fixture with `ios:`, `android:`, `web:`, `native:`,
+`dark:`, `light:`, the theme colours and Uniwind's `p-safe`/`h-screen-safe`
+utilities raised only the planted `bogus-class`, and the whole of `src` raised
+0. New colour roles reach the rule when the token generator writes them into
+the CSS.
+
+**Formatting.** The formatting commit (plan D8) is not made in this phase:
+660 of 1,187 files in `src` (897 of 1,511 with `scripts` and `tests`) differ from
+Prettier, and about 30 frontend branches are open (D4). The list is the
+ratchet until then. When the commit lands it is one commit of its own, its
+SHA goes to `.git-blame-ignore-revs`, and the list empties in the same change.
+
+**S0 measurements.** Web export (cached Metro) 12 s. Entry chunk 7,113,459 B
+and `dist/` 8,379,636 B on `539d76c`, above the 6.6 MB ceiling (owner decision
+P1), so the baseline is the ratchet; a merge that legitimately grows it
+re-baselines with its reason here, never silently, and Skia's CanvasKit must
+not reach the web entry. `lint` takes about 2 minutes with the type-aware
+rules (75 s with `expo lint` before). `check-quality` 16 s,
+`check-boundaries` with policy and references 5 s.
