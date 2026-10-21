@@ -2,6 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { CommandGroup } from '@/shared/ui/command/command-types';
 import './translation-stub';
+import {
+  Listbox as NativeListbox,
+  optionId as nativeOptionId,
+} from '@/shared/ui/command/listbox.native';
+import { Listbox, optionId } from '@/shared/ui/command/listbox';
 
 const { CommandPanel } = await import('@/shared/ui/command/command-panel');
 const { CommandPalette } = await import('@/shared/ui/command/command-palette');
@@ -156,5 +161,23 @@ describe('Command', () => {
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Pagar la luz' })).toBeDefined();
     native.useCommandHotkey(() => undefined);
+  });
+});
+
+describe('Listbox', () => {
+  test('the web listbox and the native list carry the id the combobox points to', () => {
+    expect(optionId('list', 2)).toBe(nativeOptionId('list', 2));
+    render(
+      <>
+        <Listbox id="web-list">
+          <span>uno</span>
+        </Listbox>
+        <NativeListbox id="native-list">
+          <span>dos</span>
+        </NativeListbox>
+      </>
+    );
+    expect(screen.getByRole('listbox').id).toBe('web-list');
+    expect(globalThis.document.getElementById('native-list')?.textContent).toBe('dos');
   });
 });
