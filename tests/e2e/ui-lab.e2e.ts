@@ -16,6 +16,8 @@ const MODES = [
 
 const HEIGHT = 900;
 
+const NEVER_STILL: ReadonlySet<string> = new Set(['presence']);
+
 const SHOT = { maxDiffPixels: 40, timeout: 15000 } as const;
 
 const SNAPSHOTS = fileURLToPath(new URL('./ui-lab.e2e.ts-snapshots/', import.meta.url));
@@ -59,7 +61,8 @@ for (const width of WIDTHS) {
         !UPDATING && !platformRecorded(platform),
         `no ui-lab baseline for ${platform}: run \`bun run test:e2e:update-screens\` on this machine`
       );
-      for (const component of await catalogueIds(browser)) {
+      const components = (await catalogueIds(browser)).filter((id) => !NEVER_STILL.has(id));
+      for (const component of components) {
         for (const mode of MODES) {
           await app.open(`/ui-lab?c=${component}&theme=${theme}${mode.query}`);
           const stage = screen.getByTestId('ui-lab-stage');
