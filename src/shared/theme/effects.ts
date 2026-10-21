@@ -1,8 +1,9 @@
 import * as Device from 'expo-device';
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { IS_ANDROID } from '@/shared/constants';
+import { readSystemFlag, watchSystemFlag, type SystemFlag } from './system-flags';
 
 export const perfTiers = ['low', 'mid', 'high'] as const;
 
@@ -49,27 +50,21 @@ export const useEffectsOverrides = create<EffectsOverrides>(() => ({
   perfTier: null,
 }));
 
-function useAccessibilityFlag(
-  read: () => Promise<boolean>,
-  event: 'reduceMotionChanged' | 'reduceTransparencyChanged',
-): boolean {
+function useAccessibilityFlag(flag: SystemFlag): boolean {
   const [enabled, setEnabled] = useState(false);
   useEffect(() => {
     let active = true;
-    read().then((value) => {
+    void readSystemFlag(flag).then((value) => {
       if (active) setEnabled(value);
     });
-    const subscription = AccessibilityInfo.addEventListener(event, setEnabled);
+    const stop = watchSystemFlag(flag, setEnabled);
     return () => {
       active = false;
-      subscription.remove();
+      stop();
     };
-  }, [read, event]);
+  }, [flag]);
   return enabled;
 }
-
-const readReduceMotion = () => AccessibilityInfo.isReduceMotionEnabled();
-const readReduceTransparency = () => AccessibilityInfo.isReduceTransparencyEnabled();
 
 export type Effects = {
   perfTier: PerfTier;
@@ -79,8 +74,8 @@ export type Effects = {
 
 export function useEffects(): Effects {
   const overrides = useEffectsOverrides();
-  const systemMotion = useAccessibilityFlag(readReduceMotion, 'reduceMotionChanged');
-  const systemTransparency = useAccessibilityFlag(readReduceTransparency, 'reduceTransparencyChanged');
+  const systemMotion = useAccessibilityFlag('reduceMotion');
+  const systemTransparency = useAccessibilityFlag('reduceTransparency');
   const perfTier = overrides.perfTier ?? resolvePerfTier(hardwareProfile, overrides.reduceEffects);
   return {
     perfTier,
