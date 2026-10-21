@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { useAnnounce } from '@/shared/hooks/use-announce';
 import { useThemeTokens } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Inline } from '@/shared/ui/layout';
@@ -31,9 +32,11 @@ export function CardStatus({
 }: CardStatusProps) {
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.float };
+  const alert = tone === 'alert';
+  useAnnounce(alert ? sentence : undefined);
   return (
     <View
-      role="alert"
+      role={alert ? 'alert' : undefined}
       className="rounded-status bg-surface gap-status-card-gap p-status-card-pad mt-status-card-top"
       style={card}>
       <CardHead sentence={sentence} meta={meta} tone={tone} />

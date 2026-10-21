@@ -5796,8 +5796,15 @@ the tone.
 a wrapping row of glass stat chips), medium the same row at 36, expanded and
 wide the desktop `.dband` (its own Aura band, Presence 64, the 38 sentence on
 one line, stats that do not wrap, a trailing `action` slot). `card` is the
-`.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
-`alert`. A sentence change fades in over `motion.duration.base` (keyed
+`.status-alert` card. The card and the hero are `role="alert"` in tone
+`alert` only (the card was an alert in every tone, review finding 15).
+`role="alert"` on a native `View` announces nothing on Android, so in tone
+`alert` the sentence is also spoken through
+`AccessibilityInfo.announceForAccessibility` when it appears or changes
+(`src/shared/hooks/use-announce.ts`; react-native-web's is a no-op, so the web
+keeps only its live region); a Field error is spoken the same way. The tests
+check the calls; whether TalkBack and VoiceOver speak them once, and not
+twice over iOS's own handling, needs the phone. A sentence change fades in over `motion.duration.base` (keyed
 remount), instantly under reduced motion. `Presence` comes from `p1/native`:
 until it merges, `presence` is a render prop `(size) => node`, and the
 ui-lab draws a same-size `accent-soft` disc (`LabPresence`).

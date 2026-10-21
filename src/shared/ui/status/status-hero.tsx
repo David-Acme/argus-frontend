@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
+import { useAnnounce } from '@/shared/hooks/use-announce';
 import { layout, size, useThemeTokens, useWindowLayout, type AuraTone } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Chip } from '@/shared/ui/chip';
@@ -84,6 +85,7 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
 
 export function HeroStatus(props: HeroStatusProps) {
   const { windowClass } = useWindowLayout();
+  useAnnounce(props.tone === 'alert' ? props.sentence : undefined);
   if (windowClass === 'expanded' || windowClass === 'wide') return <HeroBand {...props} />;
   return <HeroRow {...props} wide={windowClass === 'medium'} />;
 }
