@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     padding: EDGE,
   },
   content: {
-    width: '100%',
+    maxWidth: '100%',
     borderRadius: radius.dialog,
     paddingTop: 20,
     paddingHorizontal: EDGE,
@@ -128,7 +128,7 @@ export function SheetDialog(props: SheetProps) {
             style={StyleSheet.flatten([
               styles.content,
               {
-                maxWidth: long ? layout.dialogLong : layout.dialog,
+                width: long ? layout.dialogLong : layout.dialog,
                 maxHeight: height - EDGE * 2,
                 backgroundColor: theme.surface,
                 boxShadow: shadow,
