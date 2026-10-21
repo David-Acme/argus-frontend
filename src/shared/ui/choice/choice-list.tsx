@@ -45,14 +45,8 @@ export function ChoiceList<T extends string>({ options, value, onPick }: ChoiceL
 }
 
 export function ChoiceOpener({ label, current, look, onOpen }: ChoiceOpenerProps) {
+  if (look === 'row') return <Row title={label} trailing={current} chevron onPress={onOpen} />;
   const a11y = { label: `${label}, ${current}`, role: 'button' } as const;
-  if (look === 'row') {
-    return (
-      <PressableSurface a11y={a11y} onPress={onOpen} pressed={{ fill: true }}>
-        <Row title={label} trailing={current} chevron />
-      </PressableSurface>
-    );
-  }
   return (
     <FieldShell label={label}>
       <PressableSurface
