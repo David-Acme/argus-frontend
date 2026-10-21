@@ -69,6 +69,24 @@ describe('Choice', () => {
     expect(picked).toEqual([]);
   });
 
+  test('the segmented control is one tab stop and the arrows move the selection', () => {
+    function Modes() {
+      const [value, setValue] = useState<(typeof MODES)[number]['value']>('home');
+      return <Segmented label="Modo" options={MODES} value={value} onChange={setValue} />;
+    }
+    render(<Modes />);
+    const radio = (name: string) => screen.getByRole('radio', { name });
+    expect(radio('Casa').getAttribute('tabindex')).toBe('0');
+    expect(radio('Noche').getAttribute('tabindex')).toBe('-1');
+    fireEvent.keyDown(radio('Casa'), { key: 'ArrowRight' });
+    expect(radio('Noche').getAttribute('aria-checked')).toBe('true');
+    expect(radio('Noche').getAttribute('tabindex')).toBe('0');
+    expect(globalThis.document.activeElement).toBe(radio('Noche'));
+    fireEvent.keyDown(radio('Noche'), { key: 'ArrowLeft' });
+    fireEvent.keyDown(radio('Casa'), { key: 'ArrowLeft' });
+    expect(radio('Armado').getAttribute('aria-checked')).toBe('true');
+  });
+
   test('a glass segmented control keeps its radios', () => {
     render(
       <Segmented

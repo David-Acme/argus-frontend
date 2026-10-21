@@ -11,6 +11,7 @@ export type SurfaceAccessibility = {
   checked?: boolean | 'mixed';
   selected?: boolean;
   busy?: boolean;
+  tabStop?: boolean;
 };
 
 export type SurfacePressed = { scale?: PressScaleKind; fill?: boolean };
