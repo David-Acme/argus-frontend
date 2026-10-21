@@ -5845,7 +5845,9 @@ and the «Te escucho…» pill; on release the page point is compared with the
 tab's window rectangle, measured at press-in, grown by 24 px (also the press
 retention offset), and inside sends, outside cancels; a tap opens the chat.
 The accessible alternative is the `longpress` accessibility action, then a tap
-to stop and send. The Nav must be the last child of a full-screen container,
+to stop and send. A tab that unmounts while listening (a route change
+mid-hold) ends the listening without sending, `onListenEnd(false)`, so the
+voice session never stays open behind a gone tab (review finding 20c). The Nav must be the last child of a full-screen container,
 because the edge and the pill are absolute over it. `listening` lets a voice
 session started elsewhere light the same edge.
 
