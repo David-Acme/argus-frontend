@@ -3,6 +3,7 @@ const { builtinRules } = require('eslint/use-at-your-own-risk');
 const expoConfig = require('eslint-config-expo/flat');
 const betterTailwind = require('eslint-plugin-better-tailwindcss');
 const i18next = require('eslint-plugin-i18next');
+const reactHooks = require('eslint-plugin-react-hooks');
 const sonarjs = require('eslint-plugin-sonarjs');
 
 const SOURCE = 'src/**/*.{ts,tsx}';
@@ -153,6 +154,12 @@ module.exports = defineConfig([
     },
     plugins: { argus, sonarjs },
     rules: {
+      ...Object.fromEntries(
+        Object.entries(reactHooks.configs['recommended-latest'].rules).map(([name, entry]) => [
+          name,
+          errorSeverity(entry),
+        ])
+      ),
       'no-console': 'error',
       eqeqeq: 'error',
       'react-hooks/immutability': 'off',

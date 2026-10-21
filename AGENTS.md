@@ -92,7 +92,7 @@ settle a question" section says which source wins. The rules cite its keys in
    - The adopted plugins and rules are "The lint set" in
      `docs/plans/frontend-rules-final.md`:
      - `eslint-config-expo/flat`;
-     - `react-hooks` 7, all 17 rules;
+     - `react-hooks` 7, the 17 rules of `recommended-latest`;
      - type-aware `@typescript-eslint` rules (named, not a preset);
      - `better-tailwindcss` (correctness rules);
      - `i18next/no-literal-string` in `jsx-only` mode;

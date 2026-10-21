@@ -183,4 +183,20 @@ describe('the lint set', () => {
       [],
     ]);
   });
+
+  test('every rule of react-hooks recommended-latest is on as an error', async () => {
+    const reactHooks = (await import('eslint-plugin-react-hooks')) as unknown as {
+      configs: Record<string, { rules: Record<string, unknown> }>;
+    };
+    const latest = Object.keys(reactHooks.configs['recommended-latest']?.rules ?? {});
+    const resolved = (await eslint.calculateConfigForFile(
+      'src/features/home/index.ts'
+    )) as Resolved;
+    const off = latest.filter((rule) => {
+      const entry = resolved.rules[rule];
+      return (Array.isArray(entry) ? entry[0] : entry) !== 2 && rule !== 'react-hooks/immutability';
+    });
+    expect(latest).toContain('react-hooks/void-use-memo');
+    expect(off).toEqual([]);
+  });
 });

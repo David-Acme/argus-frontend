@@ -5370,7 +5370,10 @@ Boundaries at R0: `deep-import` 72, `file-cycle` 1 (the 21-file
 `route-shape` 2 (`+not-found.tsx`, `ui-lab.tsx`).
 
 **Lint.** The lint set of the rules is adopted with each `warn` of
-`eslint-config-expo` promoted to `error`. The bans of rules 10, 13, 16, 18,
+`eslint-config-expo` promoted to `error`. `react-hooks` runs the 17 rules of
+its `recommended-latest` config (the expo base enables 16: it lacks
+`void-use-memo`), spread into `eslint.config.js`; `component-hook-factories`
+is not in that config and not adopted. The bans of rules 10, 13, 16, 18,
 21–24, 26, 27 and the existing selectors are core `no-restricted-imports` /
 `no-restricted-syntax` registered under their own names in a local `argus`
 plugin (`argus/ds-owns-primitives`, `argus/no-color-literal`, …), because a
