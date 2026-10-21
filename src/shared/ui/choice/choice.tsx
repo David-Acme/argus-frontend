@@ -77,7 +77,7 @@ export function Choice<T extends string>({
     if (next !== value) onChange(next);
   };
   return (
-    <View onLayout={fit.onLayout} testID={testID}>
+    <View onLayout={fit.onLayout} testID={testID} className="self-stretch">
       {segmentable ? <Measure options={options} onMeasure={fit.measure} /> : null}
       {segmentable && fit.fits ? (
         <Segmented

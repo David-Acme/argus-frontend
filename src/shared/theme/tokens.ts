@@ -202,7 +202,7 @@ export const inset = {
     codeGap: 8,
     codeBorder: 2,
   },
-  segment: { pad: 3, gap: 2, iconGap: 6, minX: 6 },
+  segment: { pad: 3, gap: 2, iconGap: 6, minX: 2 },
 } as const;
 
 export const state = { disabledOpacity: 0.5, hoverBrightness: 0.96 } as const;

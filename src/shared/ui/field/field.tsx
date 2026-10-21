@@ -111,7 +111,7 @@ function Entry({
           className={clsx(
             ENTRY_TEXT,
             'min-w-0 flex-1',
-            multiline && 'py-field-multi-y web:field-sizing-content'
+            multiline && 'py-field-multi-y web:field-sizing-content web:resize-none'
           )}
           style={[style, cap]}
         />

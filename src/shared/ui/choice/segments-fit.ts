@@ -2,6 +2,8 @@ import { inset } from '@/shared/theme';
 
 export const MAX_SEGMENTS = 4;
 
+const ROUNDING = 0.5;
+
 export type SegmentsFitInput = { width: number; contentWidths: readonly number[] };
 
 export function segmentWidth(width: number, count: number): number {
@@ -14,5 +16,5 @@ export function segmentsFit({ width, contentWidths }: SegmentsFitInput): boolean
   if (count === 0 || count > MAX_SEGMENTS) return false;
   if (width <= 0) return true;
   const room = segmentWidth(width, count) - inset.segment.minX * 2;
-  return contentWidths.every((content) => content <= room);
+  return contentWidths.every((content) => content <= room + ROUNDING);
 }

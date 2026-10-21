@@ -86,7 +86,7 @@ export function ChoiceDemo() {
           sheet={inlineSheet}
         />
       </LabCase>
-      <LabCase id="language-glass">
+      <LabCase id="language-glass" block>
         <Choice
           label={copy.language}
           options={LANGUAGES}

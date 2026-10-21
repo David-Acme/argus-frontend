@@ -66,7 +66,7 @@ export function Segmented<T extends string>({
               haptic={on ? undefined : 'selection'}
               style={on ? lifted : undefined}
               className={clsx(
-                'min-h-segment rounded-seg-inner items-center justify-center',
+                'min-h-segment rounded-seg-inner px-segment-min-x items-center justify-center',
                 on ? onFill : 'web:hover-dim'
               )}>
               <SegmentContent option={option} on={on} />
