@@ -110,7 +110,7 @@ export function SheetDialog(props: SheetProps) {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           closeOnPress={false}
-          style={[styles.overlay, { backgroundColor: theme.scrim }]}
+          style={StyleSheet.flatten([styles.overlay, { backgroundColor: theme.scrim }])}
           onPress={IS_WEB ? undefined : discard.requestClose}>
           <DialogPrimitive.Content
             testID={testID}
@@ -121,7 +121,7 @@ export function SheetDialog(props: SheetProps) {
               event.preventDefault();
               initialFocus.current.focus();
             }}
-            style={[
+            style={StyleSheet.flatten([
               styles.content,
               {
                 maxWidth: long ? layout.dialogLong : layout.dialog,
@@ -129,7 +129,7 @@ export function SheetDialog(props: SheetProps) {
                 backgroundColor: theme.surface,
                 boxShadow: shadow,
               },
-            ]}>
+            ])}>
             <View style={styles.header}>
               <DialogPrimitive.Title asChild>
                 <SheetTitle title={title} theme={theme} dialog />

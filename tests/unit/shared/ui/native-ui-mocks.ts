@@ -98,7 +98,10 @@ export function installNativeUiMocks(): void {
     Alert: { alert: (...args: unknown[]) => calls.alerts.push(args) },
     Dimensions: { get: () => window, addEventListener: () => ({ remove: () => undefined }) },
     PixelRatio: { get: () => 2 },
-    StyleSheet: { create: <T>(styles: T) => styles },
+    StyleSheet: {
+      create: <T>(styles: T) => styles,
+      flatten: (style: unknown) => Object.assign({}, ...[style].flat(Infinity)),
+    },
     useWindowDimensions: () => window,
     View: host('view'),
     Text: host('text'),
