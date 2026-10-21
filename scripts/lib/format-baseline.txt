@@ -880,7 +880,6 @@ tests/unit/scripts/check-comments.test.ts
 tests/unit/shared/components/ui/blur-reveal-style.test.ts
 tests/unit/shared/components/ui/dialog-submit-key.test.ts
 tests/unit/shared/components/ui/morph-icon/morph-icon-driver.test.ts
-tests/unit/shared/components/ui/overlay-back-coverage.test.ts
 tests/unit/shared/constants/compose-actions.test.ts
 tests/unit/shared/hooks/date-formatter.test.ts
 tests/unit/shared/hooks/use-device-permissions/device-permissions.test.ts
