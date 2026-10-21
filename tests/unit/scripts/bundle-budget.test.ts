@@ -32,7 +32,9 @@ describe('the bundle budget', () => {
       expect(sizes.entryBytes).toBe(100);
       expect(
         budgetFailures(
-          parseBundleBaseline('entry-chunk-bytes 100\ndist-bytes 500\nlazy livekit-client\n'),
+          parseBundleBaseline(
+            `entry-chunk-bytes 100\ndist-bytes ${sizes.distBytes}\nlazy livekit-client\n`
+          ),
           sizes
         )
       ).toEqual([]);
@@ -53,11 +55,26 @@ describe('the bundle budget', () => {
   test('a lazy package without a chunk of its own fails', () => {
     withDist(false, (dist) => {
       const failures = budgetFailures(
-        parseBundleBaseline('entry-chunk-bytes 100\ndist-bytes 500\nlazy livekit-client\n'),
+        parseBundleBaseline(
+          `entry-chunk-bytes 100\ndist-bytes ${measureBundle(dist).distBytes}\nlazy livekit-client\n`
+        ),
         measureBundle(dist)
       );
       expect(failures).toEqual([
         'livekit-client has no chunk of its own: it was pulled into the entry chunk',
+      ]);
+    });
+  });
+
+  test('a bundle below its baseline beyond the tolerance fails until the baseline is lowered', () => {
+    withDist(true, (dist) => {
+      const sizes = measureBundle(dist);
+      const failures = budgetFailures(
+        parseBundleBaseline(`entry-chunk-bytes 200\ndist-bytes ${sizes.distBytes}\n`),
+        sizes
+      );
+      expect(failures).toEqual([
+        'the entry chunk is 100 B, more than 0.1% below its baseline 200 B; lower the baseline in this change',
       ]);
     });
   });

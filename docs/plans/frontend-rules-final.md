@@ -1143,6 +1143,8 @@ Each count only shrinks. A rebuilt screen must reach 0 on its own states.
 - `bun run check:bundle` fails on any of these:
   - the entry chunk above min(6,600,000 B, its baseline);
   - `dist/` above its baseline;
+  - the entry chunk or `dist/` more than 0.1% below its baseline, until the
+    baseline is lowered in the same change (the ratchet);
   - a listed lazy package found in the entry chunk.
 
   **Baseline:** `scripts/lib/bundle-baseline.txt`, measured at R0 (the
