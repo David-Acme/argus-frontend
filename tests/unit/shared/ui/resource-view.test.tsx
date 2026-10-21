@@ -92,11 +92,13 @@ describe('ResourceView', () => {
 
   test('a skeleton shimmers and holds a static fill under reduced motion', () => {
     const { container, unmount } = render(<Skeleton shape="title" />);
-    expect(container.querySelectorAll('div').length).toBe(2);
+    const overlayOf = (root: Element) => root.querySelectorAll('div')[1] as HTMLElement;
+    expect(overlayOf(container).style.opacity).toBe('0.5');
     unmount();
     act(() => useEffectsOverrides.setState({ reduceMotion: true }));
     const still = render(<Skeleton shape="title" />);
-    expect(still.container.querySelectorAll('div').length).toBe(1);
+    expect(overlayOf(still.container).style.opacity).toBe('0.5');
+    expect(overlayOf(still.container).style.animationDuration).toBe('');
     still.unmount();
     const rows = render(
       <>

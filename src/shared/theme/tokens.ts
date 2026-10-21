@@ -269,7 +269,7 @@ export const motion = {
   },
   pressScale: 0.96,
   pressScaleIcon: 0.9,
-  loop: { live: 2400, liveDim: 0.35, shimmer: 1400 },
+  loop: { live: 2400, liveDim: 0.35, shimmer: 1400, shimmerRest: 0.5 },
 } as const;
 
 export const material = {
