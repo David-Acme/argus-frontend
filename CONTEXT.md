@@ -5530,8 +5530,17 @@ import does not exist in the 1.1.16 the overrides already pin. Radix's alert
 dialog never closes on an outside press, so the default variant adds its own
 scrim press that cancels; the destructive one disables it. Esc and Back go
 through `onOpenChange(false)` and mean Cancelar. Android's `Alert` ties Back to
-outside taps (`setCancelable`), so the native destructive alert is
-`cancelable: false` and Back does nothing there: only its buttons close it.
+outside taps (`setCancelable`), so a destructive alert there could not be
+cancelled with Back (review finding 4): on an Android phone a destructive
+confirmation is the dialog instead (`confirm-form.ts`), which cancels on Back
+through `BackHandler` and ignores outside taps; iOS keeps the native alert,
+`cancelable: false`. A confirmation answers once (finding 1, «Purgar» pressed
+twice called the purge twice): `useConfirmLatch` drops every press of either
+button, Esc, Back and the scrim after the first until the dialog opens again,
+and an `onConfirm` that returns a promise marks the button `aria-busy` and
+releases the latch when it settles, so a failed act can be retried. Whether
+Back reaches the dialog's `BackHandler` above `@rn-primitives`' native portal
+needs the phone.
 
 **Toast.** One API, `toast.show({ kind, ... })` and `toast.dismiss`, over
 `sonner` (`toaster.tsx`) and `sonner-native` (`toaster.native.tsx`), both
