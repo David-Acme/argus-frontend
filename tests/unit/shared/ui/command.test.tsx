@@ -69,6 +69,20 @@ describe('Command', () => {
     expect(log).toEqual(['ask:Pagar', 'close']);
   });
 
+  test('the query is a combobox whose active descendant is the selected option of its listbox', () => {
+    render(<Harness log={[]} initialQuery="Pagar" />);
+    const list = screen.getByRole('listbox');
+    expect(input().getAttribute('role')).toBe('combobox');
+    expect(input().getAttribute('aria-controls')).toBe(list.id);
+    const ask = screen.getByRole('option', { name: '«Pagar…» — pregúntale a Argus' });
+    expect(input().getAttribute('aria-activedescendant')).toBe(ask.id);
+    fireEvent.keyDown(input(), { key: 'ArrowDown' });
+    const light = screen.getByRole('option', { name: 'Pagar la luz' });
+    expect(input().getAttribute('aria-activedescendant')).toBe(light.id);
+    expect(light.id).toContain('-option-');
+    expect(list.id).not.toBe('');
+  });
+
   test('↑↓ move the selection, wrapping, and Enter runs the selected result', () => {
     const log: Log = [];
     render(<Harness log={log} initialQuery="Pagar" />);

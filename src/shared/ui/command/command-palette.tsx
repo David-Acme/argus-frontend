@@ -1,7 +1,8 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+import { useWindowDimensions } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { layout, motion, useEffects, useThemeTokens } from '@/shared/theme';
+import { inset, layout, motion, useEffects, useThemeTokens } from '@/shared/theme';
 
 type CommandPaletteProps = { children: ReactNode };
 
@@ -15,8 +16,10 @@ const ENTER = new Keyframe({
 export function CommandPalette({ children }: CommandPaletteProps) {
   const { reduceMotion, reduceTransparency } = useEffects();
   const { elevation } = useThemeTokens();
+  const { height } = useWindowDimensions();
   const frame = {
     width: layout.palette,
+    maxHeight: height - inset.palette.top * 2,
     boxShadow: `${elevation.float}, ${elevation.glassInset}`,
   };
   return (

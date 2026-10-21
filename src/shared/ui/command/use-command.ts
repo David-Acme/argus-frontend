@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { CommandGroup, CommandItem, CommandSource } from './command-types';
 
 export type CommandInput = {
@@ -14,6 +14,7 @@ export type CommandState = {
   groups: readonly CommandGroup[];
   asks: boolean;
   selected: number;
+  listId: string;
   run: (index: number) => void;
   submit: () => void;
   onKey: (key: string) => boolean;
@@ -29,6 +30,7 @@ export function useCommand({
 }: CommandInput): CommandState {
   const [query, setQueryState] = useState(initialQuery);
   const [selected, setSelected] = useState(0);
+  const listId = useId();
   const trimmed = query.trim();
   const groups = source(trimmed);
   const items: CommandItem[] = groups.flatMap((group) => group.items);
@@ -58,6 +60,7 @@ export function useCommand({
     groups,
     asks,
     selected: current,
+    listId,
     run,
     submit: () => run(current),
     onKey,

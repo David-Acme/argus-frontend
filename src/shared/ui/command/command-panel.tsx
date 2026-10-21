@@ -1,11 +1,12 @@
 import { clsx } from 'clsx';
 import type { ReactNode, RefObject } from 'react';
-import { Pressable, TextInput, View, type NativeSyntheticEvent } from 'react-native';
+import { Pressable, ScrollView, TextInput, View, type NativeSyntheticEvent } from 'react-native';
 import { useThemeTokens } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Icon } from '@/shared/ui/icon';
 import { Text } from '@/shared/ui/text';
 import type { CommandItem } from './command-types';
+import { Listbox, optionId } from './listbox';
 import type { CommandState } from './use-command';
 
 export type CommandPanelProps = {
@@ -18,6 +19,7 @@ export type CommandPanelProps = {
 type KeyProps = { label: string };
 
 type OptionProps = {
+  id: string;
   label: string;
   selected: boolean;
   onPress: () => void;
@@ -42,9 +44,10 @@ export function Key({ label }: KeyProps) {
   );
 }
 
-function Option({ label, selected, onPress, children }: OptionProps) {
+function Option({ id, label, selected, onPress, children }: OptionProps) {
   return (
     <Pressable
+      nativeID={id}
       role="option"
       aria-label={label}
       aria-selected={selected}
@@ -70,7 +73,11 @@ function GroupTitle({ title }: { title: string }) {
 
 function ItemOption({ item, index, state }: ItemOptionProps) {
   return (
-    <Option label={item.label} selected={state.selected === index} onPress={() => state.run(index)}>
+    <Option
+      id={optionId(state.listId, index)}
+      label={item.label}
+      selected={state.selected === index}
+      onPress={() => state.run(index)}>
       <Icon name={item.icon} size="small" />
       <View className="shrink">
         <Text variant="feed" numberOfLines={1}>
@@ -92,7 +99,11 @@ function AskGroup({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark
   return (
     <View role="group" aria-label={title}>
       <GroupTitle title={title} />
-      <Option label={label} selected={state.selected === 0} onPress={() => state.run(0)}>
+      <Option
+        id={optionId(state.listId, 0)}
+        label={label}
+        selected={state.selected === 0}
+        onPress={() => state.run(0)}>
         {askMark ?? <Icon name="search" size="small" tone="accent" />}
         <View className="min-w-0 flex-1">
           <Text variant="feed" numberOfLines={1}>
@@ -115,7 +126,7 @@ function firstIndexes(state: CommandState): number[] {
 function Results({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'>) {
   const firsts = firstIndexes(state);
   return (
-    <View className="p-palette-group">
+    <Listbox id={state.listId}>
       <AskGroup state={state} askMark={askMark} />
       {state.groups.map((group, at) => (
         <View key={group.title} role="group" aria-label={group.title}>
@@ -130,7 +141,7 @@ function Results({ state, askMark }: Pick<CommandPanelProps, 'state' | 'askMark'
           ))}
         </View>
       ))}
-    </View>
+    </Listbox>
   );
 }
 
@@ -144,11 +155,18 @@ function QueryRow({
   const onKeyPress = (event: KeyEvent) => {
     if (state.onKey(event.nativeEvent.key)) event.preventDefault?.();
   };
+  const combobox = {
+    'aria-controls': state.listId,
+    'aria-activedescendant': optionId(state.listId, state.selected),
+  };
   return (
     <View className="px-palette-query-x py-palette-query-y gap-palette-gap border-line flex-row items-center border-b">
       <Icon name="search" />
       <TextInput
         ref={inputRef}
+        role="combobox"
+        aria-expanded
+        {...combobox}
         value={state.query}
         onChangeText={state.setQuery}
         onKeyPress={onKeyPress}
@@ -186,7 +204,13 @@ export function CommandPanel({ state, askMark, hints, inputRef }: CommandPanelPr
   return (
     <>
       <QueryRow state={state} hints={hints} inputRef={inputRef} />
-      <Results state={state} askMark={askMark} />
+      {hints ? (
+        <ScrollView className="shrink" keyboardShouldPersistTaps="handled">
+          <Results state={state} askMark={askMark} />
+        </ScrollView>
+      ) : (
+        <Results state={state} askMark={askMark} />
+      )}
       {hints ? <Footer /> : null}
     </>
   );
