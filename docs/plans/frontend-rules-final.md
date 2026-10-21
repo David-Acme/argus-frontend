@@ -1273,8 +1273,9 @@ replaces R7).
 
 **Gate.**
 - `bun run check:format`, a ratchet: the files not yet formatted are a
-  committed list. A file on the list may stay unformatted, a file not on it
-  must be formatted, and the list only shrinks.
+  committed list (`scripts/lib/format-baseline.txt`). A file on the list may
+  stay unformatted, a file not on it must be formatted, and the list only
+  shrinks.
 - The one formatting commit (plan D8) waits until the open frontend branches
   are settled (D4), and lands listed in `.git-blame-ignore-revs`; the list is
   then empty.
