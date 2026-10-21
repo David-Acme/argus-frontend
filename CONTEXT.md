@@ -5459,3 +5459,96 @@ shared by every worktree and rewritten by the last bundle; better-tailwindcss
 reads it, so new colour classes read as unknown until it is regenerated for
 this checkout (break the link, then `npx uniwind generate-artifacts --css
 ./src/global.css --dts ./uniwind-types.d.ts`).
+
+## Identity and frame components: Aura, Status, Nav, Screen (Phase 1, ds-c, 2026-10-20)
+
+Four components of the redesign's design system (spec §2b, §4.1, §4.2,
+§4.5, §6, §6c, §7b, §8c), built on the ds-base conventions. Their values
+live in `src/shared/theme/chrome-tokens.ts`, spread into `tokens.ts` so that
+file stays under the 300-line budget: `auraField` (the three blobs of the
+prototype's `.aura i` with their drift targets and tempos), `chromeInset`
+(`nav`, `screen`, `status`), `chromeSize`, `chromeTypeRoles` (`heroBand`
+38, `brand` 18, `count`, `sideStat`, `greeting`) and `chromeElevation`
+(`bar`, `cap`, `listen`, `listenPeak`, `listenContrast`). New colour roles:
+`glass-side` (the sidebar's `surface` at 55 %) and `tab-on` (the selected
+tab's `text` at 9 %). New web utilities from `gen-tokens.ts`: `glass-side`,
+`glass-cap`, `scroll-column` (the thin 10 px scrollbar, `overscroll-behavior:
+contain`) and `fade-to-bg` (a sticky header's fade).
+
+**Aura: how the soft blobs are drawn.** The prototype draws each blob as a
+solid ellipse under `filter: blur(36px)`. Measured in headless Chromium
+(software GPU, 412 × 900 at DPR 2, three blobs drifting, five seconds per
+run, two runs each): per-frame blur gave 193–201 frames, p95 frame interval
+33–50 ms and about 9.2–9.6 s of GPU work; a CSS `radial-gradient` gave 301
+frames, p95 16.7 ms, 2.4 s; a react-native-svg `RadialGradient` gave 301
+frames, p95 16.8 ms, 2.4–2.7 s. The SVG gradient is the one form that renders
+the same on Android, iOS and web (React Native's `filter: blur` is
+Android-only and react-native-web drops `experimental_backgroundImage`), so
+each blob is an SVG radial gradient whose stops follow the Gaussian edge of a
+36 px blur (`blob-stops.ts`, Φ((R − r)/σ), padded by 3σ), drawn once and moved
+by a Reanimated CSS animation (`transform` only; real CSS keyframes on web, the
+UI thread on native). The field's mask (`linear-gradient(#000 55%,
+transparent)`) is an SVG overlay that fades to `bg` from 55 %, which is the
+same picture over a `bg` page. Still under reduced motion and on the low
+tier; under reduced transparency the prototype's `opacity: .6` (not the flat
+tint the spec text names); under Increase Contrast (`prefers-contrast: more`,
+Android high-text-contrast, iOS darker colours, `use-increase-contrast`) no
+field and a 3 px accent rim on `edge`. `paused` stops the drift
+(`animationPlayState`); `Screen` pauses its field once the content scrolls
+past it. The edge mode always draws the accent (the prototype's `.edge`), not
+the tone.
+
+**Status.** `hero` is chosen by window class: compact is the `.herorow`
+(Presence slot 66, or 56 with `secondary`, the 30/26 sentence, one meta line,
+a wrapping row of glass stat chips), medium the same row at 36, expanded and
+wide the desktop `.dband` (its own Aura band, Presence 64, the 38 sentence on
+one line, stats that do not wrap, a trailing `action` slot). `card` is the
+`.status-alert` card, `role="alert"`. The hero is `role="alert"` in tone
+`alert`. A sentence change fades in over `motion.duration.base` (keyed
+remount), instantly under reduced motion. `Presence` comes from `p1/native`:
+until it merges, `presence` is a render prop `(size) => node`, and the
+ui-lab draws a same-size `accent-soft` disc (`LabPresence`).
+
+**Nav.** `navigation` from `useWindowLayout` picks `bar` (compact and
+compact height), `rail` (medium, no prototype frame: tab-styled items in an
+88 px column) or `sidebar` (expanded, wide). Items are passed in (derive them
+from capabilities; no role names), with `argus: true` marking the centre.
+Every visible word comes in through `copy`, `items` and `NavStatus`'s props.
+The bar sits at `max(safe-area bottom, 26)`; it collapses to 0.9 and drops 13
+px while the screen scrolls down (`navCollapse`, a module `makeMutable` that
+`Screen`'s scroll worklet writes through `trackCollapse`) and stays fixed under
+reduced motion. The signature gesture (`use-hold-to-talk.ts`): a long press of
+220 ms (`delayLongPress`) starts listening with `impactLight`, the Aura edge
+and the «Te escucho…» pill; on release the page point is compared with the
+tab's window rectangle, measured at press-in, grown by 24 px (also the press
+retention offset), and inside sends, outside cancels; a tap opens the chat.
+The accessible alternative is the `longpress` accessibility action, then a tap
+to stop and send. The Nav must be the last child of a full-screen container,
+because the edge and the pill are absolute over it. `listening` lets a voice
+session started elsewhere light the same edge.
+
+**Screen.** One scroll owner: `KeyboardAwareScrollView` on native
+(`screen-scroll.native.tsx`, `bottomOffset` 24) and a Reanimated
+`ScrollView` on web (`screen-scroll.tsx`, the passthrough), both with the
+same animated scroll handler and an optional `RefreshControl`. The content
+gets the top safe-area inset, the 16/24 gutter by window class, room for the
+bar (128) when the bar shows, a 640 cap on medium and 680 on desktop. The top
+bar follows `.topbar` (52, or 44 with only the greeting), with a glass back
+button, the title or greeting, the inline «Actualizando» pill (a pulsing dot,
+still under reduced motion) and an `actions` slot. The top bar scrolls with
+the body as in the prototype's frames (spec §6c says it stays put; the
+prototype wins). `columns` with an expanded or wide window drops the outer
+scroll: `ScreenColumns` lays the `.dk` row (gap 20, 28 sides, 2,200 cap) and
+each `ScreenColumn` scrolls on its own with the thin scrollbar and
+`overscroll-behavior: contain`; its last child grows to the bottom; inside a
+column `Section` heads stick on web with the fade (`useInScreenColumn`). On
+phones the columns flatten into the one scroll.
+
+**Tests.** The ui test preload stubs `react-native-safe-area-context`,
+`react-native-keyboard-controller` and `react-native-worklets` (they load
+React Native's Flow sources), and adds `makeMutable`,
+`useAnimatedScrollHandler` and `ScrollView` to the Reanimated stub. Window
+classes are set through `tests/unit/shared/ui/window-width.ts`, which gives
+happy-dom a `documentElement.clientWidth` and fires `resize` (react-native-web
+reads the window size from there); a `mock.module` of the window hook hung the
+runner.
