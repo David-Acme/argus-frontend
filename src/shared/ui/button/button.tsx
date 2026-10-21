@@ -12,12 +12,12 @@ export type TextButtonProps = {
   onPress: FlightAction;
   variant?: ButtonVariant;
   icon?: IconGlyph;
+  trailingIcon?: IconGlyph;
   compact?: boolean;
   block?: boolean;
   glass?: boolean;
   busy?: boolean;
   disabled?: boolean;
-  testID?: string;
 };
 
 export type IconButtonProps = {
@@ -99,12 +99,12 @@ function TextButton({
   onPress,
   variant = 'secondary',
   icon,
+  trailingIcon,
   compact,
   block,
   glass,
   busy = false,
   disabled,
-  testID,
 }: TextButtonProps) {
   const flight = useSingleFlight(onPress, busy);
   const material = useGlass(glass);
@@ -116,7 +116,6 @@ function TextButton({
       pressed={{ scale: 'surface' }}
       disabled={disabled || flight.busy}
       hitSlop={compact ? COMPACT_SLOP : undefined}
-      testID={testID}
       style={material ? { boxShadow: material.elevation.glass } : undefined}
       className={clsx(
         'web:hover-dim flex-row items-center justify-center gap-2',
@@ -128,6 +127,7 @@ function TextButton({
       <Text variant={compact ? 'buttonCompact' : 'button'} tone={ink.text}>
         {label}
       </Text>
+      {trailingIcon ? <Icon name={trailingIcon} size="small" tone={ink.icon} /> : null}
     </PressableSurface>
   );
 }
