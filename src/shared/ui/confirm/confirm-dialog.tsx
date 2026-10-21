@@ -1,0 +1,71 @@
+import * as AlertPrimitive from '@rn-primitives/alert-dialog';
+import type { ReactNode } from 'react';
+import { Pressable, View } from 'react-native';
+import { layout } from '@/shared/theme';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { ConfirmBox } from './confirm-box';
+import type { ConfirmProps } from './confirm-types';
+
+type FrameProps = { children: ReactNode };
+
+const CONTENT = { maxWidth: layout.dialog };
+
+function Heading({ children }: FrameProps) {
+  return (
+    <AlertPrimitive.Title asChild>
+      <View>{children}</View>
+    </AlertPrimitive.Title>
+  );
+}
+
+function Description({ children }: FrameProps) {
+  return (
+    <AlertPrimitive.Description asChild>
+      <View>{children}</View>
+    </AlertPrimitive.Description>
+  );
+}
+
+export function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel,
+  variant = 'default',
+  onConfirm,
+  onCancel,
+}: ConfirmProps) {
+  const { t } = useTranslation();
+  const destructive = variant === 'destructive';
+  return (
+    <AlertPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onCancel();
+      }}>
+      <AlertPrimitive.Portal>
+        <AlertPrimitive.Overlay className="bg-scrim web:backdrop-blur-scrim web:fixed px-dialog-edge absolute inset-0 items-center justify-center">
+          <Pressable
+            focusable={false}
+            disabled={destructive}
+            onPress={onCancel}
+            className="absolute inset-0"
+          />
+          <AlertPrimitive.Content style={CONTENT} className="w-full">
+            <ConfirmBox
+              title={title}
+              body={body}
+              confirmLabel={confirmLabel}
+              cancelLabel={t('common.cancel')}
+              destructive={destructive}
+              onConfirm={onConfirm}
+              onCancel={onCancel}
+              Heading={Heading}
+              Description={Description}
+            />
+          </AlertPrimitive.Content>
+        </AlertPrimitive.Overlay>
+      </AlertPrimitive.Portal>
+    </AlertPrimitive.Root>
+  );
+}
