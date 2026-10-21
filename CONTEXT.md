@@ -5395,3 +5395,30 @@ re-baselines with its reason here, never silently, and Skia's CanvasKit must
 not reach the web entry. `lint` takes about 2 minutes with the type-aware
 rules (75 s with `expo lint` before). `check-quality` 16 s,
 `check-boundaries` with policy and references 5 s.
+
+## Re-baselines
+
+A baseline is never raised silently. `scripts/check-baselines.ts` (the last
+step of `check:boundaries`) compares every ratchet baseline
+(`quality-baseline.txt`, `boundaries-baseline.txt`, `cycle-baseline.txt`,
+`untested-baseline.txt`, `format-baseline.txt`, `memo-exceptions.txt`,
+`bundle-baseline.txt` under `scripts/lib/`, and `eslint-suppressions.json`)
+with its version at the merge base of `HEAD` and `redesign/main`
+(`ARGUS_BASELINE_REF` names another branch). A raise is a count up, a list or
+exception entry added, the `scanned-files` floor down, a `lazy` package
+dropped, or a suppression count up. Each raise fails unless the same change
+adds a row to this table that names the baseline file and the entry; a new
+row that names nothing raised fails too. Rows already on `redesign/main`
+cover nothing, so an old row never opens a baseline again.
+
+The workflow for a lead merge that has to re-baseline: lower what the merge
+fixes (no row: lowering is the ratchet), raise only what it legitimately
+grows, and add one row per baseline here in the merge commit. The entry cell
+lists the keys in backticks: a metric (`style-object`), a list line (a file
+path), a memo key (`path symbol`), `entry-chunk-bytes`, `dist-bytes`,
+`lazy <package>`, or `path rule` for a suppression. A key may be a glob
+(`src/features/** argus/no-template-key`) when the raise is one cause over
+many files; the reason names that cause.
+
+| Baseline | Entries | Reason | Date |
+|---|---|---|---|
