@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { chromium, type Page } from 'playwright-core';
+import { budgetFailures, measureBundle, parseBundleBaseline } from './lib/bundle-budget';
 import { welcome as welcomeEn } from '../src/core/i18n/locales/en/screens/welcome';
 import { welcome as welcomeEs } from '../src/core/i18n/locales/es/screens/welcome';
 
@@ -16,6 +17,16 @@ const SETTLE_MS = 2500;
 type AllowedConsoleError = { match: RegExp; why: string };
 
 const ALLOWED: readonly AllowedConsoleError[] = [];
+
+const BUNDLE_BASELINE = join(ROOT, 'scripts', 'lib', 'bundle-baseline.txt');
+
+const checkBudget = (): boolean => {
+  const sizes = measureBundle(DIST);
+  const failures = budgetFailures(parseBundleBaseline(readFileSync(BUNDLE_BASELINE, 'utf8')), sizes);
+  for (const failure of failures) console.error(`probe-web-bundle: ${failure}`);
+  console.log(`probe-web-bundle: entry chunk ${sizes.entryBytes} B, dist/ ${sizes.distBytes} B`);
+  return failures.length === 0;
+};
 
 const runExport = async (): Promise<void> => {
   const exported = Bun.spawn(['bun', 'run', 'web:build'], {
@@ -94,6 +105,10 @@ const main = async (): Promise<void> => {
   const startedAt = Date.now();
   await runExport();
   const exportedAt = Date.now();
+  if (!checkBudget()) {
+    process.exitCode = 1;
+    return;
+  }
   const server = bundleServer(contentPolicy());
   const browser = await chromium.launch({ executablePath: CHROMIUM });
   try {
