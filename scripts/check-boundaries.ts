@@ -6,6 +6,7 @@ import ts from 'typescript';
 const ROOT = join(import.meta.dir, '..');
 const EXTENSIONS = ['', '.ts', '.tsx', '.native.ts', '.native.tsx', '.web.ts', '.web.tsx', '/index.ts', '/index.tsx'];
 const DESIGN_SYSTEM = new Set(['shared/components/ui', 'shared/components/layout']);
+const DESIGN_SYSTEM_ROOTS = ['shared/ui/', 'shared/theme/'];
 
 function usage(): never {
   console.log(`usage: bun scripts/check-boundaries.ts
@@ -15,7 +16,7 @@ Checks the import boundaries of src/:
   feature imports another feature only through its index
   core    never imports features or shared/components
   shared  never imports features
-  shared  modules outside ui/ and layout/ need two or more consumers`);
+  shared  modules outside the design system (components/ui, components/layout, ui/, theme/) need two or more consumers`);
   process.exit(0);
 }
 
@@ -87,7 +88,7 @@ for (const file of files) {
 
 for (const file of files) {
   const module = moduleOf(file);
-  if (!module.startsWith('shared/') || module.startsWith('shared/constants/') || DESIGN_SYSTEM.has(module)) continue;
+  if (!module.startsWith('shared/') || module.startsWith('shared/constants/') || DESIGN_SYSTEM.has(module) || DESIGN_SYSTEM_ROOTS.some((root) => module.startsWith(root))) continue;
   const count = consumers.get(module)?.size ?? 0;
   if (count < 2) violations.add(`shared-single-consumer | ${module} (${count})`);
 }
