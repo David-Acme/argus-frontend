@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { importsOf, readSource, resolveImports, walk } from '../source-files';
 
-export type Edge = { from: string; to: string; runtime: boolean };
+export type Edge = { from: string; to: string; runtime: boolean; typeOnly: boolean };
 
 function isTypeOnlyImport(node: ts.ImportDeclaration): boolean {
   const clause = node.importClause;
@@ -70,13 +70,33 @@ function staticRuntime(source: ts.SourceFile): Map<string, boolean> {
   return runtime;
 }
 
+function lazySpecifiers(source: ts.SourceFile): Set<string> {
+  const lazy = new Set<string>();
+  walk(source, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+      node.arguments[0] &&
+      ts.isStringLiteralLike(node.arguments[0])
+    )
+      lazy.add(node.arguments[0].text);
+  });
+  return lazy;
+}
+
 export function edgesOf(file: string): Edge[] {
   const { text, source } = readSource(file);
   const runtime = staticRuntime(source);
+  const lazy = lazySpecifiers(source);
   const edges: Edge[] = [];
   for (const specifier of new Set(importsOf(text))) {
     for (const target of resolveImports(file, specifier))
-      edges.push({ from: file, to: target, runtime: runtime.get(specifier) ?? false });
+      edges.push({
+        from: file,
+        to: target,
+        runtime: runtime.get(specifier) ?? false,
+        typeOnly: runtime.get(specifier) === false && !lazy.has(specifier),
+      });
   }
   return edges;
 }

@@ -8,7 +8,7 @@ export function untestedComponents(sources: readonly string[], tests: readonly s
   const imported = new Set(
     tests
       .flatMap(edgesOf)
-      .filter((edge) => edge.runtime)
+      .filter((edge) => !edge.typeOnly)
       .map((edge) => edge.to)
   );
   return sources.filter((path) => isComponentOrScreen(path) && !imported.has(path));

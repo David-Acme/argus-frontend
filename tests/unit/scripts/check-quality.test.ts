@@ -205,6 +205,16 @@ describe('check-quality', () => {
     expect(run.output).toContain('untested-component-or-screen: src/features/a/card.tsx is new');
   });
 
+  test('a test that loads a component with a lazy import() tests it', () => {
+    const component = 'export function Card() {\n  return null;\n}\n';
+    const lazy = "const { Card } = await import('@/features/a/card');\nexport const used = Card;\n";
+    const run = quality(
+      { 'src/features/a/card.tsx': component, 'tests/unit/card.test.ts': lazy },
+      baseline({}, 2)
+    );
+    expect(run.status).toBe(0);
+  });
+
   test('a namespace import, an alias and a computed member reach the counters', () => {
     const screen = [
       "import * as RN from 'react-native';",
