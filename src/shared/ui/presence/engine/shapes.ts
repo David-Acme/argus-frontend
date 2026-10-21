@@ -75,7 +75,11 @@ function think(p: Particle, { t }: ShapeInput, out: [number, number]): void {
   const k = Math.floor(p.s * 3);
   const uu = (p.u + t * 0.08) % 1;
   out[0] = (uu - 0.5) * 1.7;
-  out[1] = Math.sin(uu * TAU * 1.5 + t * 1.8 + (k * TAU) / 3) * 0.22 * (1 - Math.pow(2 * uu - 1, 2) * 0.5) + p.v * 0.01;
+  out[1] =
+    Math.sin(uu * TAU * 1.5 + t * 1.8 + (k * TAU) / 3) *
+      0.22 *
+      (1 - Math.pow(2 * uu - 1, 2) * 0.5) +
+    p.v * 0.01;
 }
 
 function speak(p: Particle, { t, engine }: ShapeInput, out: [number, number]): void {
@@ -84,7 +88,9 @@ function speak(p: Particle, { t, engine }: ShapeInput, out: [number, number]): v
   const uu = (p.u + t * 0.06) % 1;
   const hump = Math.sin(Math.PI * uu);
   out[0] = (uu - 0.5) * 1.8;
-  out[1] = Math.sin(uu * TAU * 1.2 + t * 3) * (0.06 + 0.26 * level) * hump + p.v * (0.015 + 0.08 * level) * hump;
+  out[1] =
+    Math.sin(uu * TAU * 1.2 + t * 3) * (0.06 + 0.26 * level) * hump +
+    p.v * (0.015 + 0.08 * level) * hump;
 }
 
 function watch(p: Particle, { t }: ShapeInput, out: [number, number]): void {
@@ -160,12 +166,33 @@ function rest(p: Particle, { t }: ShapeInput, out: [number, number]): void {
   out[1] = 0.28 + Math.sin(p.u * 3 + t * 0.3) * 0.02 + p.v * 0.006;
 }
 
+type ShapeFamily =
+  'swirl' | 'listen' | 'think' | 'speak' | 'watch' | 'happy' | 'droop' | 'off' | 'rest' | 'eye';
+
+const SHAPE_FAMILY: Record<PresenceState, ShapeFamily> = {
+  idle: 'swirl',
+  alert: 'swirl',
+  panic: 'swirl',
+  listen: 'listen',
+  think: 'think',
+  speak: 'speak',
+  watch: 'watch',
+  happy: 'happy',
+  error: 'droop',
+  off: 'off',
+  sleep: 'rest',
+  look: 'eye',
+  search: 'eye',
+  found: 'eye',
+  notfound: 'eye',
+  known: 'eye',
+  unknown: 'eye',
+};
+
 export function shapeTarget(p: Particle, input: ShapeInput, out: [number, number]): void {
   'worklet';
-  switch (input.state) {
-    case 'idle':
-    case 'alert':
-    case 'panic':
+  switch (SHAPE_FAMILY[input.state]) {
+    case 'swirl':
       return swirl(p, input, out);
     case 'listen':
       return listen(p, input, out);
@@ -177,15 +204,15 @@ export function shapeTarget(p: Particle, input: ShapeInput, out: [number, number
       return watch(p, input, out);
     case 'happy':
       return happy(p, input, out);
-    case 'error':
+    case 'droop':
       return droop(p, input, out);
     case 'off':
       out[0] = (p.u - 0.5) * 1.5;
       out[1] = 0.18 + p.v * 0.008;
       return;
-    case 'sleep':
+    case 'rest':
       return rest(p, input, out);
-    default:
+    case 'eye':
       return eye(p, input, out);
   }
 }

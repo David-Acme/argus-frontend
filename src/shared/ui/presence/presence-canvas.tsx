@@ -3,7 +3,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { PixelRatio } from 'react-native';
 import { useFrameCallback, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
-import { advance, createDriver, paintFrame, paintStill, stepsDue, takeEndedEvent, type Driver, type Look, type Tick } from './engine/driver';
+import {
+  advance,
+  createDriver,
+  paintFrame,
+  paintStill,
+  stepsDue,
+  takeEndedEvent,
+  type Driver,
+  type Look,
+  type Tick,
+} from './engine/driver';
 import type { PresenceEvent } from './engine/types';
 import type { PresenceCanvasProps } from './presence-canvas.types';
 import {
@@ -55,28 +65,45 @@ function draw(runtime: Runtime, frame: ReturnType<typeof advance>, fade: number)
   return endFrame(scene);
 }
 
-function paintStillFrame(runtime: Runtime, tick: Tick, look: Look, fade: number): SkImage | null {
+type StillFrame = { tick: Tick; look: Look; fade: number };
+
+function paintStillFrame(runtime: Runtime, { tick, look, fade }: StillFrame): SkImage | null {
   'worklet';
   const { scene, driver } = runtime;
   const particles = driver.engine.particles.length > 0;
   let last: SkImage | null = null;
   beginFrame(scene, 1);
-  paintStill(driver, tick, look, {
-    begin: () => beginFrame(scene, particles ? fade : 1),
-    sink: (stroke) => (particles ? strokeToAtlas(scene, stroke) : strokeToCanvas(scene, stroke)),
-    end: () => {
-      if (particles) flushAtlas(scene, look.palette.additive);
-      last = endFrame(scene);
+  paintStill(driver, {
+    tick,
+    look,
+    pass: {
+      begin: () => beginFrame(scene, particles ? fade : 1),
+      sink: (stroke) => (particles ? strokeToAtlas(scene, stroke) : strokeToCanvas(scene, stroke)),
+      end: () => {
+        if (particles) flushAtlas(scene, look.palette.additive);
+        last = endFrame(scene);
+      },
     },
   });
   return last;
 }
 
-export function PresenceCanvas({ plan, look, live, seed, active, stillKey, onEventEnd }: PresenceCanvasProps) {
+export function PresenceCanvas({
+  plan,
+  look,
+  live,
+  seed,
+  active,
+  stillKey,
+  onEventEnd,
+}: PresenceCanvasProps) {
   const image = useSharedValue<SkImage | null>(null);
   const runtime = useSharedValue<Runtime | null>(null);
   const [ended] = useState(() => (name: PresenceEvent) => onEventEnd?.(name));
-  const spec = useMemo<Spec>(() => ({ count: plan.count, seed, ratio: Math.min(MAX_RATIO, PixelRatio.get()) }), [plan.count, seed]);
+  const spec = useMemo<Spec>(
+    () => ({ count: plan.count, seed, ratio: Math.min(MAX_RATIO, PixelRatio.get()) }),
+    [plan.count, seed]
+  );
   const fade = plan.trails ? look.palette.trail : 1;
   const { input, level, scroll, lean } = live;
 
@@ -92,15 +119,17 @@ export function PresenceCanvas({ plan, look, live, seed, active, stillKey, onEve
       scroll: scroll ? scroll.get() : 0,
       leanX: lean.get()[0],
       leanY: lean.get()[1],
+      steps: 1,
     };
-    const steps = stepsDue(current.driver, tick, look);
-    if (steps === 0) return;
-    image.set(draw(current, advance(current.driver, tick, look, steps), fade));
+    tick.steps = stepsDue(current.driver, tick, look);
+    if (tick.steps === 0) return;
+    image.set(draw(current, advance(current.driver, tick, look), fade));
     const name = takeEndedEvent(current.driver);
     if (name) scheduleOnRN(ended, name);
   }, false);
 
   const animate = !plan.still && active;
+  const box = { width: plan.size, height: plan.size };
 
   useEffect(() => {
     frameCallback.setActive(animate);
@@ -113,13 +142,21 @@ export function PresenceCanvas({ plan, look, live, seed, active, stillKey, onEve
       const current = prepare(runtime.get(), look, spec);
       if (!current) return;
       runtime.set(current);
-      const tick: Tick = { now: 8, input: input.get(), level: null, scroll: 0, leanX: 0, leanY: 0 };
-      image.set(paintStillFrame(current, tick, look, fade));
+      const tick: Tick = {
+        now: 8,
+        input: input.get(),
+        level: null,
+        scroll: 0,
+        leanX: 0,
+        leanY: 0,
+        steps: 1,
+      };
+      image.set(paintStillFrame(current, { tick, look, fade }));
     });
   }, [plan.still, stillKey, look, spec, fade, image, input, runtime]);
 
   return (
-    <Canvas style={{ width: plan.size, height: plan.size }} pointerEvents="none">
+    <Canvas style={box} pointerEvents="none">
       <Image image={image} x={0} y={0} width={plan.size} height={plan.size} fit="fill" />
     </Canvas>
   );

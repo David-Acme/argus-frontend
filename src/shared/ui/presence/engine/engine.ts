@@ -56,7 +56,20 @@ export function createEngine(count: number, seed: number): Engine {
     const s = random(engine);
     const x = (random(engine) - 0.5) * 1.5;
     const y = (random(engine) - 0.5) * 0.6;
-    engine.particles.push({ u, v, s, x, y, px: x, py: y, vx: 0, vy: 0, ltx: 0, lty: 0, fresh: true });
+    engine.particles.push({
+      u,
+      v,
+      s,
+      x,
+      y,
+      px: x,
+      py: y,
+      vx: 0,
+      vy: 0,
+      ltx: 0,
+      lty: 0,
+      fresh: true,
+    });
   }
   engine.t0 = random(engine) * 20;
   return engine;
@@ -97,7 +110,13 @@ export type StepInput = {
   carry: boolean;
 };
 
-type Physics = { k: number; damping: number; noise: number; scatter: PresenceEvent | null; progress: number };
+type Physics = {
+  k: number;
+  damping: number;
+  noise: number;
+  scatter: PresenceEvent | null;
+  progress: number;
+};
 
 function physicsOf(engine: Engine, input: StepInput): Physics {
   'worklet';
@@ -142,7 +161,8 @@ function scatterTarget(p: Particle, physics: Physics, target: [number, number]):
   const a = Math.atan2(p.y, p.x) + p.v;
   const reach = 0.05 * (1 + physics.progress * 3);
   target[0] = p.x + Math.cos(a) * reach;
-  target[1] = p.y + Math.sin(a) * reach + (physics.scatter === 'cancel' ? 0.02 * physics.progress : 0);
+  target[1] =
+    p.y + Math.sin(a) * reach + (physics.scatter === 'cancel' ? 0.02 * physics.progress : 0);
 }
 
 export function stepEngine(engine: Engine, input: StepInput): void {
@@ -169,8 +189,16 @@ export function stepEngine(engine: Engine, input: StepInput): void {
       target[1] += engine.ly - input.scroll * 0.12;
     }
     if (physics.scatter) scatterTarget(p, physics, target);
-    p.vx = (p.vx + (target[0] - p.x) * physics.k + Math.sin(p.y * 4 + t * 0.6 + p.s * 7) * physics.noise) * physics.damping;
-    p.vy = (p.vy + (target[1] - p.y) * physics.k + Math.cos(p.x * 4 + t * 0.5 + p.s * 5) * physics.noise) * physics.damping;
+    p.vx =
+      (p.vx +
+        (target[0] - p.x) * physics.k +
+        Math.sin(p.y * 4 + t * 0.6 + p.s * 7) * physics.noise) *
+      physics.damping;
+    p.vy =
+      (p.vy +
+        (target[1] - p.y) * physics.k +
+        Math.cos(p.x * 4 + t * 0.5 + p.s * 5) * physics.noise) *
+      physics.damping;
     p.x += p.vx;
     p.y += p.vy;
   }

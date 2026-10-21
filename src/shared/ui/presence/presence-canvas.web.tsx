@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { advance, createDriver, paintFrame, paintStill, stepsDue, takeEndedEvent, type Driver, type Tick } from './engine/driver';
+import {
+  advance,
+  createDriver,
+  paintFrame,
+  paintStill,
+  stepsDue,
+  takeEndedEvent,
+  type Driver,
+  type Look,
+  type Tick,
+} from './engine/driver';
 import type { Stroke } from './engine/types';
 import type { PresenceCanvasProps } from './presence-canvas.types';
 
@@ -18,7 +28,7 @@ function trackPointer(): void {
       pointer.y = event.clientY;
       pointer.at = performance.now();
     },
-    { passive: true },
+    { passive: true }
   );
 }
 
@@ -44,7 +54,12 @@ function strokeTo(context: CanvasRenderingContext2D, s: Stroke): void {
   context.stroke();
 }
 
-type Surface = { context: CanvasRenderingContext2D; size: number; ratio: number; additive: boolean };
+type Surface = {
+  context: CanvasRenderingContext2D;
+  size: number;
+  ratio: number;
+  additive: boolean;
+};
 
 function begin(surface: Surface, fade: number): void {
   const { context, size, ratio } = surface;
@@ -72,16 +87,88 @@ function useVisible(ref: React.RefObject<HTMLCanvasElement | null>): boolean {
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas || typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver((entries) => setVisible(entries.some((entry) => entry.isIntersecting)), {
-      rootMargin: '120px',
-    });
+    const observer = new IntersectionObserver(
+      (entries) => setVisible(entries.some((entry) => entry.isIntersecting)),
+      {
+        rootMargin: '120px',
+      }
+    );
     observer.observe(canvas);
     return () => observer.disconnect();
   }, [ref]);
   return visible;
 }
 
-export function PresenceCanvas({ plan, look, live, seed, active, stillKey, onEventEnd }: PresenceCanvasProps) {
+type CanvasJob = {
+  element: () => HTMLCanvasElement | null;
+  surface: Surface;
+  driver: Driver;
+  live: PresenceCanvasProps['live'];
+  look: Look;
+  fade: number;
+  onEventEnd: PresenceCanvasProps['onEventEnd'];
+};
+
+function paintStillCanvas({ surface, driver, live, look, fade }: CanvasJob): undefined {
+  begin(surface, 1);
+  const tick: Tick = {
+    now: 8,
+    input: live.input.get(),
+    level: null,
+    scroll: 0,
+    leanX: 0,
+    leanY: 0,
+    steps: 1,
+  };
+  const sink = (stroke: Stroke) => strokeTo(surface.context, stroke);
+  paintStill(driver, {
+    tick,
+    look,
+    pass: { begin: () => begin(surface, fade), sink, end: () => undefined },
+  });
+  return undefined;
+}
+
+function startLoop(job: CanvasJob): () => void {
+  const { surface, driver, live, look, fade } = job;
+  const sink = (stroke: Stroke) => strokeTo(surface.context, stroke);
+  trackPointer();
+  let handle = 0;
+  const loop = (ms: number) => {
+    handle = globalThis.requestAnimationFrame(loop);
+    const canvas = job.element();
+    if (!canvas) return;
+    const [leanX, leanY] = leanOf(canvas);
+    const tick: Tick = {
+      now: ms / 1000,
+      input: live.input.get(),
+      level: live.level ? live.level.get() : null,
+      scroll: live.scroll ? live.scroll.get() : 0,
+      leanX,
+      leanY,
+      steps: 1,
+    };
+    tick.steps = stepsDue(driver, tick, look);
+    if (tick.steps === 0) return;
+    const frame = advance(driver, tick, look);
+    begin(surface, fade);
+    paintFrame(driver, frame, sink);
+    const ended = takeEndedEvent(driver);
+    if (ended) job.onEventEnd?.(ended);
+  };
+  handle = globalThis.requestAnimationFrame(loop);
+  return () => globalThis.cancelAnimationFrame(handle);
+}
+
+export function PresenceCanvas({
+  plan,
+  look,
+  live,
+  seed,
+  active,
+  stillKey,
+  onEventEnd,
+}: PresenceCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const driver = useRef<Driver | null>(null);
   const visible = useVisible(ref);
@@ -89,7 +176,7 @@ export function PresenceCanvas({ plan, look, live, seed, active, stillKey, onEve
   const pixels = Math.round(plan.size * ratio);
   const fade = plan.trails ? look.palette.trail : 1;
   const running = active && visible && !plan.still;
-  const { input, level, scroll } = live;
+  const box = { width: plan.size, height: plan.size, display: 'block' };
 
   useEffect(() => {
     driver.current = createDriver(plan.count, seed);
@@ -99,35 +186,18 @@ export function PresenceCanvas({ plan, look, live, seed, active, stillKey, onEve
     const context = ref.current?.getContext('2d');
     const current = driver.current;
     if (!context || !current) return;
-    const surface: Surface = { context, size: plan.size, ratio, additive: look.palette.additive };
-    const particles = current.engine.particles.length > 0;
-    const sink = (stroke: Stroke) => strokeTo(context, stroke);
-    if (plan.still) {
-      begin(surface, 1);
-      const tick: Tick = { now: 8, input: input.get(), level: null, scroll: 0, leanX: 0, leanY: 0 };
-      paintStill(current, tick, look, { begin: () => begin(surface, particles ? fade : 1), sink, end: () => undefined });
-      return;
-    }
-    if (!running) return;
-    trackPointer();
-    let handle = 0;
-    const loop = (ms: number) => {
-      handle = globalThis.requestAnimationFrame(loop);
-      const canvas = ref.current;
-      if (!canvas) return;
-      const [leanX, leanY] = leanOf(canvas);
-      const tick: Tick = { now: ms / 1000, input: input.get(), level: level ? level.get() : null, scroll: scroll ? scroll.get() : 0, leanX, leanY };
-      const steps = stepsDue(current, tick, look);
-      if (steps === 0) return;
-      const frame = advance(current, tick, look, steps);
-      begin(surface, particles ? fade : 1);
-      paintFrame(current, frame, sink);
-      const ended = takeEndedEvent(current);
-      if (ended) onEventEnd?.(ended);
+    const job: CanvasJob = {
+      element: () => ref.current,
+      surface: { context, size: plan.size, ratio, additive: look.palette.additive },
+      driver: current,
+      live,
+      look,
+      fade: current.engine.particles.length > 0 ? fade : 1,
+      onEventEnd,
     };
-    handle = globalThis.requestAnimationFrame(loop);
-    return () => globalThis.cancelAnimationFrame(handle);
-  }, [running, plan.still, plan.size, plan.count, stillKey, ratio, look, fade, input, level, scroll, onEventEnd]);
+    if (plan.still) return paintStillCanvas(job);
+    if (running) return startLoop(job);
+  }, [running, plan.still, plan.size, plan.count, stillKey, ratio, look, fade, live, onEventEnd]);
 
-  return <canvas ref={ref} width={pixels} height={pixels} style={{ width: plan.size, height: plan.size, display: 'block' }} aria-hidden />;
+  return <canvas ref={ref} width={pixels} height={pixels} style={box} aria-hidden />;
 }

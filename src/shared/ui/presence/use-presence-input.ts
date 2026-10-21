@@ -29,13 +29,18 @@ export type InputSource = {
 function useAppActive(): boolean {
   const [active, setActive] = useState(AppState.currentState !== 'background');
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (next) => setActive(next === 'active'));
+    const subscription = AppState.addEventListener('change', (next) =>
+      setActive(next === 'active')
+    );
     return () => subscription.remove();
   }, []);
   return active;
 }
 
-export function usePresenceInput(source: InputSource): { input: SharedValue<PresenceInput>; active: boolean } {
+export function usePresenceInput(source: InputSource): {
+  input: SharedValue<PresenceInput>;
+  active: boolean;
+} {
   const focused = useIsFocused();
   const appActive = useAppActive();
   const active = focused && appActive && !source.paused;

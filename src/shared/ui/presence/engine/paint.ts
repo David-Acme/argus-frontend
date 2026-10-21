@@ -5,11 +5,19 @@ const TAU = Math.PI * 2;
 
 export type Color = [number, number, number];
 
-export function mixInto(out: Color, a: Rgb, b: Rgb, k: number): Color {
+export function copyInto(out: Color, from: Rgb): Color {
   'worklet';
-  out[0] = lerp(a[0], b[0], k);
-  out[1] = lerp(a[1], b[1], k);
-  out[2] = lerp(a[2], b[2], k);
+  out[0] = from[0];
+  out[1] = from[1];
+  out[2] = from[2];
+  return out;
+}
+
+export function towards(out: Color, to: Rgb, k: number): Color {
+  'worklet';
+  out[0] = lerp(out[0], to[0], k);
+  out[1] = lerp(out[1], to[1], k);
+  out[2] = lerp(out[2], to[2], k);
   return out;
 }
 
@@ -22,18 +30,18 @@ const STATE_TINT: Partial<Record<PresenceState, readonly ['a' | 'c' | 'r' | 'g',
   notfound: ['g', 0.45],
 };
 
-export function colorFor(palette: Palette, state: PresenceState, u: number, out: Color): Color {
+export function colorFor(
+  look: { palette: Palette; state: PresenceState },
+  u: number,
+  out: Color
+): Color {
   'worklet';
-  if (state === 'off') {
-    out[0] = palette.g[0];
-    out[1] = palette.g[1];
-    out[2] = palette.g[2];
-    return out;
-  }
-  mixInto(out, palette.b, palette.c, u);
-  mixInto(out, palette.a, out, Math.min(1, u * 1.4));
+  const { palette, state } = look;
+  if (state === 'off') return copyInto(out, palette.g);
+  towards(copyInto(out, palette.b), palette.c, u);
+  towards(out, palette.a, 1 - Math.min(1, u * 1.4));
   const tint = STATE_TINT[state];
-  if (tint) mixInto(out, out, palette[tint[0]], tint[1]);
+  if (tint) towards(out, palette[tint[0]], tint[1]);
   return out;
 }
 
@@ -65,7 +73,11 @@ export function alphaFor(state: PresenceState, engine: Engine, t: number): numbe
 export function syntheticVoice(state: PresenceState, t: number): number {
   'worklet';
   if (state === 'speak') {
-    return clamp(Math.abs(Math.sin(t * 6.1) * Math.sin(t * 2.3 + 1)) * (0.6 + 0.4 * Math.sin(t * 1.1)), 0, 1);
+    return clamp(
+      Math.abs(Math.sin(t * 6.1) * Math.sin(t * 2.3 + 1)) * (0.6 + 0.4 * Math.sin(t * 1.1)),
+      0,
+      1
+    );
   }
   if (state === 'listen') return 0.35 * Math.abs(Math.sin(t * 4.2) * Math.sin(t * 1.6));
   return 0;

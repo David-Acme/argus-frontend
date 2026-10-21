@@ -1,4 +1,15 @@
-import { BlendMode, PaintStyle, Skia, StrokeCap, type SkColor, type SkImage, type SkPaint, type SkRect, type SkRSXform, type SkSurface } from '@shopify/react-native-skia';
+import {
+  BlendMode,
+  PaintStyle,
+  Skia,
+  StrokeCap,
+  type SkColor,
+  type SkImage,
+  type SkPaint,
+  type SkRect,
+  type SkRSXform,
+  type SkSurface,
+} from '@shopify/react-native-skia';
 import type { Stroke } from './engine/types';
 
 const PAD = 2;
@@ -143,7 +154,16 @@ export function flushAtlas(scene: SkiaScene, additive: boolean): void {
   if (!sprites) return;
   for (let i = used; i < scene.transforms.length; i++) scene.transforms[i]?.set(0, 0, -100, -100);
   scene.atlas.setBlendMode(additive ? BlendMode.Plus : BlendMode.SrcOver);
-  scene.surface.getCanvas().drawAtlas(sprites, scene.sources, scene.transforms, scene.atlas, BlendMode.Modulate, scene.colors);
+  scene.surface
+    .getCanvas()
+    .drawAtlas(
+      sprites,
+      scene.sources,
+      scene.transforms,
+      scene.atlas,
+      BlendMode.Modulate,
+      scene.colors
+    );
 }
 
 export function strokeToCanvas(scene: SkiaScene, s: Stroke): void {
@@ -155,7 +175,10 @@ export function strokeToCanvas(scene: SkiaScene, s: Stroke): void {
   if (!s.round) {
     scene.fill.setColor(color);
     const side = s.w * ratio;
-    canvas.drawRect(Skia.XYWHRect(s.x1 * ratio - side / 2, s.y1 * ratio - side / 2, side, side), scene.fill);
+    canvas.drawRect(
+      Skia.XYWHRect(s.x1 * ratio - side / 2, s.y1 * ratio - side / 2, side, side),
+      scene.fill
+    );
     return;
   }
   scene.stroke.setColor(color);
@@ -175,7 +198,9 @@ export function endFrame(scene: SkiaScene): SkImage {
   scene.surface.flush();
   scene.flip = 1 - scene.flip;
   const reuse = scene.frames[scene.flip];
-  const image = reuse ? scene.surface.makeImageSnapshot(undefined, reuse) : scene.surface.makeImageSnapshot();
+  const image = reuse
+    ? scene.surface.makeImageSnapshot(undefined, reuse)
+    : scene.surface.makeImageSnapshot();
   scene.frames[scene.flip] = image;
   return image;
 }

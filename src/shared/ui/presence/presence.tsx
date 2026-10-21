@@ -37,7 +37,18 @@ function leanFrom(event: GestureResponderEvent, size: number): [number, number] 
   return [clamp(locationX - size / 2) * 0.14, clamp(locationY - size / 2) * 0.1];
 }
 
-export function Presence({ state, size, intensity = 0.5, target, level, event, onEventEnd, paused = false, scrollOffset, accessibilityLabel }: PresenceProps) {
+export function Presence({
+  state,
+  size,
+  intensity = 0.5,
+  target,
+  level,
+  event,
+  onEventEnd,
+  paused = false,
+  scrollOffset,
+  accessibilityLabel,
+}: PresenceProps) {
   const { perfTier, reduceMotion } = useEffects();
   const { theme } = useUniwind();
   const dark = theme === 'dark';
@@ -57,6 +68,7 @@ export function Presence({ state, size, intensity = 0.5, target, level, event, o
   const { input, active } = usePresenceInput({ state, intensity, target, event: cue, paused });
   const lean = useSharedValue<[number, number]>([0, 0]);
   const decorative = !accessibilityLabel;
+  const box = { width: size, height: size };
 
   function onTouchStart(touchEvent: GestureResponderEvent) {
     lean.set(leanFrom(touchEvent, size));
@@ -70,7 +82,7 @@ export function Presence({ state, size, intensity = 0.5, target, level, event, o
       accessibilityLabel={accessibilityLabel}
       importantForAccessibility={decorative ? 'no-hide-descendants' : 'yes'}
       aria-hidden={decorative}
-      style={{ width: size, height: size }}
+      style={box}
       onTouchStart={onTouchStart}
       onTouchMove={(touchEvent) => lean.set(leanFrom(touchEvent, size))}
       onTouchEnd={() => lean.set([0, 0])}

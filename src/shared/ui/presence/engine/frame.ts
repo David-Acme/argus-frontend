@@ -1,4 +1,4 @@
-import { alphaFor, colorFor, eventMods, mixInto, type Color } from './paint';
+import { alphaFor, colorFor, copyInto, eventMods, towards, type Color } from './paint';
 import { isEye, pupilX } from './shapes';
 import type { Engine, EventMods, Frame, Particle, Stroke, StrokeSink } from './types';
 
@@ -66,21 +66,23 @@ function particleAlpha(paint: Paint, p: Particle, look: ParticleLook): number {
   let a = look.base * (0.4 + 0.6 * Math.sin(Math.PI * p.u));
   const color = scratch.color;
   if (isEye(state) && state !== 'notfound' && p.s >= 0.76) {
-    mixInto(color, palette.a, palette.w, 0.6);
+    towards(copyInto(color, palette.a), palette.w, 0.6);
     a = Math.min(1, look.base * (frame.dark ? 0.9 : 1.4));
   }
-  if (state === 'search' && p.s < 0.76) a *= 1 + 0.8 * Math.max(0, 1 - Math.abs(p.x - look.gx) / 0.25);
+  if (state === 'search' && p.s < 0.76)
+    a *= 1 + 0.8 * Math.max(0, 1 - Math.abs(p.x - look.gx) / 0.25);
   if (state === 'watch' && p.s >= 0.78) {
-    mixInto(color, palette.w, palette.w, 0);
+    copyInto(color, palette.w);
     a = Math.min(1, look.base * 1.5);
   }
   if (state === 'happy' && p.s > 0.86) {
     const k = (t * 0.7 + p.v * 0.5 + 1) % 1;
     a = look.base * (1 - k) * 1.4;
-    mixInto(color, palette.w, palette.w, 0);
+    copyInto(color, palette.w);
   }
   const band = scratch.mods.band;
-  if (band !== null) a *= 1 + 2 * Math.max(0, 1 - Math.abs(Math.min(1, Math.abs(p.x) / 0.85) - band) / 0.18);
+  if (band !== null)
+    a *= 1 + 2 * Math.max(0, 1 - Math.abs(Math.min(1, Math.abs(p.x) / 0.85) - band) / 0.18);
   return a;
 }
 
@@ -108,8 +110,8 @@ export function paintParticles(paint: Paint): void {
   stroke.w = (frame.dark ? lw : lw + 0.25) * (size < 90 ? 1.3 : 1);
   for (const p of engine.particles) {
     if (Math.abs(p.x - p.px) + Math.abs(p.y - p.py) > STREAK_LIMIT) continue;
-    colorFor(palette, state, p.u, scratch.color);
-    if (mods.saturation < 1) mixInto(scratch.color, palette.g, scratch.color, mods.saturation);
+    colorFor(frame, p.u, scratch.color);
+    if (mods.saturation < 1) towards(scratch.color, palette.g, 1 - mods.saturation);
     const a = particleAlpha(paint, p, look);
     stroke.x1 = half + p.px * scale;
     stroke.y1 = half + p.py * scale;
@@ -119,7 +121,7 @@ export function paintParticles(paint: Paint): void {
   }
   if (mods.glint > 0) {
     const color = scratch.color;
-    mixInto(color, palette.glint, palette.glint, 0);
+    copyInto(color, palette.glint);
     sparkle(paint, {
       x: half + look.gx * scale + scale * 0.12,
       y: half - scale * 0.12,

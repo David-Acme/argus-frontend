@@ -12,7 +12,13 @@ export type RenderPlan = {
   leanWhileScrolling: boolean;
 };
 
-type TierRule = { share: number; trails: boolean; activeFps: number; restFps: number; leanWhileScrolling: boolean };
+type TierRule = {
+  share: number;
+  trails: boolean;
+  activeFps: number;
+  restFps: number;
+  leanWhileScrolling: boolean;
+};
 
 export const tierRules: Record<PerfTier, TierRule> = {
   high: { share: 1, trails: true, activeFps: 60, restFps: 30, leanWhileScrolling: true },
