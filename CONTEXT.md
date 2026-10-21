@@ -5573,6 +5573,7 @@ many files; the reason names that cause.
 
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p1/wire` item 4: the ui-lab and the spikes screen load from one lazy chunk (`lab-screens`, 405,626 B) that a production page never fetches. Measured on the same tree before and after: entry 7,522,566 → 7,118,965 B (−403,601; the Phase 1 entry growth over 7,063,615 B falls from +458,951 to +55,350), `dist/` 8,842,120 → 8,844,145 B (+2,025: the chunk's own module wrappers and loader). The entry baseline is lowered with it. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of `p1/ds-fixes`, `p1/estela-perf` and `p1/wire` (ff881a0), measured on the merged tree: `dist/` 8,844,145 → 8,867,041 B (+22,896): Estela's adaptive renderer (tier probe and frame-time feedback, about 17 kB as measured on its branch), the design-system fixes (about 4.5 kB: the confirm latch, the announce and screen-active hooks, the hit areas) and the lazy lab's chunk carrying the merged demos. The entry chunk went down, 7,118,965 → 7,115,996 B, because the lab now loads lazily. | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of the Estela tier fixes (`932b976`, `1033e5f`: paint-ahead pacing, the warm-up probe, the step-up path), measured on the integrated tree: `dist/` 8,867,041 → 8,867,586 B (+545). The entry chunk is unchanged at 7,115,996 B; the growth is in the lazy lab chunk and the Presence modules. | 2026-10-21 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
