@@ -1,0 +1,96 @@
+export type IconPath = { d: string };
+
+export type IconCircle = { cx: number; cy: number; r: number };
+
+export type IconRect = { x: number; y: number; width: number; height: number; rx: number };
+
+export type IconShape = IconPath | IconCircle | IconRect;
+
+export const ICON_SHAPES = {
+  home: [{ d: 'M3 10.5 12 3l9 7.5' }, { d: 'M5 9.5V21h14V9.5' }, { d: 'M10 21v-6h4v6' }],
+  shield: [{ d: 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z' }],
+  shieldok: [{ d: 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z' }, { d: 'm9 12 2 2 4-4' }],
+  cal: [{ x: 3, y: 5, width: 18, height: 16, rx: 2 }, { d: 'M3 10h18M8 3v4M16 3v4' }],
+  user: [{ cx: 12, cy: 8, r: 4 }, { d: 'M4 21c0-4 4-6 8-6s8 2 8 6' }],
+  bell: [{ d: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z' }, { d: 'M10 21h4' }],
+  cam: [{ x: 2, y: 6, width: 14, height: 12, rx: 2 }, { d: 'm16 10 6-3v10l-6-3' }],
+  chev: [{ d: 'm9 6 6 6-6 6' }],
+  chevd: [{ d: 'm6 9 6 6 6-6' }],
+  chevl: [{ d: 'm15 6-6 6 6 6' }],
+  back: [{ d: 'M19 12H5M11 6l-6 6 6 6' }],
+  plus: [{ d: 'M12 5v14M5 12h14' }],
+  mic: [{ x: 9, y: 3, width: 6, height: 11, rx: 3 }, { d: 'M5 11a7 7 0 0 0 14 0M12 18v3' }],
+  up: [{ d: 'M12 19V5M6 11l6-6 6 6' }],
+  check: [{ d: 'm5 12 5 5 9-10' }],
+  clock: [{ cx: 12, cy: 12, r: 9 }, { d: 'M12 7v5l3 2' }],
+  moon: [{ d: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' }],
+  lock: [{ x: 4, y: 11, width: 16, height: 10, rx: 2 }, { d: 'M8 11V7a4 4 0 0 1 8 0v4' }],
+  users: [
+    { cx: 9, cy: 8, r: 3.5 },
+    { d: 'M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5' },
+    { d: 'M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.5.5 4 2.5 4 5.5' },
+  ],
+  sliders: [
+    { d: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12' },
+    { cx: 16, cy: 6, r: 2 },
+    { cx: 10, cy: 12, r: 2 },
+    { cx: 18, cy: 18, r: 2 },
+  ],
+  speaker: [{ d: 'M4 9h4l5-4v14l-5-4H4z' }, { d: 'M17 9a4 4 0 0 1 0 6' }],
+  max: [{ d: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5' }],
+  alert: [{ d: 'M12 3 2 20h20z' }, { d: 'M12 10v4M12 17v.5' }],
+  wifioff: [
+    {
+      d: 'M2 8.5a15 15 0 0 1 4-2.5M10 5.2A15 15 0 0 1 22 8.5M5 12a10 10 0 0 1 4-2M15 10a10 10 0 0 1 4 2M8.5 15.5a5 5 0 0 1 7 0M12 19.5v.01M3 3l18 18',
+    },
+  ],
+  x: [{ d: 'M6 6l12 12M18 6 6 18' }],
+  more: [
+    { cx: 5, cy: 12, r: 1.2 },
+    { cx: 12, cy: 12, r: 1.2 },
+    { cx: 19, cy: 12, r: 1.2 },
+  ],
+  play: [{ d: 'M7 4v16l13-8z' }],
+  phone: [
+    { d: 'M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2' },
+  ],
+  siren: [{ d: 'M7 18v-6a5 5 0 0 1 10 0v6M5 18h14v3H5zM12 3v2M4 7l1.5 1M20 7l-1.5 1' }],
+  search: [{ cx: 11, cy: 11, r: 7 }, { d: 'm20 20-4-4' }],
+  repeat: [{ d: 'M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h16M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4' }],
+  globe: [{ cx: 12, cy: 12, r: 9 }, { d: 'M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18' }],
+  sun: [
+    { cx: 12, cy: 12, r: 4 },
+    { d: 'M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M5 19l1.4-1.4M17.6 6.4 19 5' },
+  ],
+  face: [
+    {
+      d: 'M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3',
+    },
+    { cx: 12, cy: 10, r: 3 },
+    { d: 'M8 17c1-1.5 2.4-2 4-2s3 .5 4 2' },
+  ],
+  hist: [{ d: 'M3 12a9 9 0 1 0 3-6.7L3 8' }, { d: 'M3 3v5h5M12 7v5l3 2' }],
+  grid: [
+    { x: 3, y: 3, width: 7, height: 7, rx: 1.5 },
+    { x: 14, y: 3, width: 7, height: 7, rx: 1.5 },
+    { x: 3, y: 14, width: 7, height: 7, rx: 1.5 },
+    { x: 14, y: 14, width: 7, height: 7, rx: 1.5 },
+  ],
+  door: [{ d: 'M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18M15 12v.5' }],
+  key: [{ cx: 8, cy: 15, r: 4 }, { d: 'm11 12 9-9M17 6l3 3' }],
+  devices: [
+    { x: 2, y: 4, width: 14, height: 10, rx: 1.5 },
+    { d: 'M6 18h6M9 14v4' },
+    { x: 17, y: 8, width: 5, height: 12, rx: 1 },
+  ],
+  logout: [{ d: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9' }],
+  eyeoff: [
+    {
+      d: 'M3 3l18 18M10.6 6.1A10 10 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-3 3.5M6.5 7.5A17 17 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4-1',
+    },
+  ],
+  send: [{ d: 'M4 12 20 4l-6 16-3-7z' }],
+  cmd: [{ d: 'M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z' }],
+} as const satisfies Record<string, readonly IconShape[]>;
+
+export type IconGlyph = keyof typeof ICON_SHAPES;
