@@ -119,4 +119,10 @@ export const copy = {
   nowMeta: '3 · 1 atrasado',
   newsTitle: 'Novedades',
   todayTitle: 'Hoy',
+  plumberWhen: 'hace 4 h',
+  architect: 'Reunión con el arquitecto',
+  architectMeta: '14:30 – 16:00 · Mudanza · Luis',
+  architectWhen: 'ahora',
+  lightToday: 'Hoy 17:00 · cada mes · S/ 128',
+  lightWhen: 'en 1 h',
 } as const;

@@ -2,10 +2,12 @@ import { View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
+import { Check } from '@/shared/ui/check';
 import { Row } from '@/shared/ui/row';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
 import { Status, type StatusStat } from '@/shared/ui/status';
+import { Text } from '@/shared/ui/text';
 import { LabCase } from '../components/lab-case';
 import { labPresence } from '../components/lab-presence';
 import { copy } from './demo-copy';
@@ -20,14 +22,44 @@ const STATS: readonly StatusStat[] = [
   { icon: 'hist', value: '4', label: copy.detections },
 ];
 
-const search = <Button iconOnly glass icon="search" label={copy.search} onPress={noop} />;
+const search = (
+  <Button iconOnly glass icon="search" iconSize="small" label={copy.search} onPress={noop} />
+);
 
 function Now() {
   return (
     <Section title={copy.now} action={{ label: copy.nowMeta, onPress: noop }}>
-      <Row title={copy.plumber} meta={copy.plumberMeta} metaTone="alert" />
-      <Row title={copy.light} meta={copy.lightMeta} />
-      <Row title={copy.yoga} meta={copy.yogaMeta} />
+      <Row
+        leading={<Check state="overdue" label={copy.plumber} />}
+        title={copy.plumber}
+        meta={copy.plumberMeta}
+        metaTone="alert"
+        trailing={
+          <Text variant="chip" tone="alert">
+            {copy.plumberWhen}
+          </Text>
+        }
+      />
+      <Row
+        leading={<Avatar icon="cal" size="small" />}
+        title={copy.architect}
+        meta={copy.architectMeta}
+        trailing={
+          <Text variant="chip" tone="ok">
+            {copy.architectWhen}
+          </Text>
+        }
+      />
+      <Row
+        leading={<Check state="open" label={copy.light} />}
+        title={copy.light}
+        meta={copy.lightToday}
+        trailing={
+          <Text variant="chip" tone="2">
+            {copy.lightWhen}
+          </Text>
+        }
+      />
     </Section>
   );
 }
@@ -56,7 +88,6 @@ function Home({ updating }: { updating?: boolean }) {
         presence={labPresence}
       />
       <Now />
-      <News />
     </Screen>
   );
 }
