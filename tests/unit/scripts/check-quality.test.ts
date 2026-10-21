@@ -192,4 +192,16 @@ describe('check-quality', () => {
     );
     expect(run.output).toContain('timer-in-component: 1 is above its baseline 0');
   });
+
+  test('a test that imports a component only as a type does not test it', () => {
+    const component =
+      'export type CardProps = { id: string };\nexport function Card() {\n  return null;\n}\n';
+    const typed =
+      "import type { CardProps } from '@/features/a/card';\nexport const props: CardProps = { id: 'x' };\n";
+    const run = quality(
+      { 'src/features/a/card.tsx': component, 'tests/unit/card.test.ts': typed },
+      baseline({}, 2)
+    );
+    expect(run.output).toContain('untested-component-or-screen: src/features/a/card.tsx is new');
+  });
 });
