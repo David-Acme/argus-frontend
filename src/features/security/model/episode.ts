@@ -1,4 +1,11 @@
-import type { GuardEpisode, GuardReason } from '@/core/types';
+import type {
+  GuardEpisode,
+  GuardReason,
+  TamperStatus,
+  TranslateFn,
+  TranslationKey,
+} from '@/core/types';
+import { tamperStatusOf } from '@/features/security/model/tamper-notice';
 
 const RAISING: readonly GuardReason[] = [
   'watchlist',
@@ -24,6 +31,24 @@ const CALMING: readonly GuardReason[] = [
   'with_resident',
   'with_guest',
 ];
+
+const SUBJECT_TITLES: Partial<Record<string, TranslationKey>> = {
+  '': 'screens.security.episodes.subject.stranger',
+  stranger: 'screens.security.episodes.subject.stranger',
+  unobserved: 'screens.security.episodes.subject.unobserved',
+  accompanied: 'screens.security.episodes.subject.accompanied',
+};
+
+const TAMPER_TITLES: Record<TamperStatus, TranslationKey> = {
+  covered: 'screens.security.episodes.tamper.covered',
+  whiteout: 'screens.security.episodes.tamper.whiteout',
+  blinded: 'screens.security.episodes.tamper.blinded',
+  partial_cover: 'screens.security.episodes.tamper.partial-cover',
+  blurred: 'screens.security.episodes.tamper.blurred',
+  moved: 'screens.security.episodes.tamper.moved',
+  dark_sudden: 'screens.security.episodes.tamper.dark-sudden',
+  unreachable: 'screens.security.episodes.tamper.unreachable',
+};
 
 export type EpisodeOutcome = 'alerted' | 'grouped' | 'routine' | 'brief' | 'quiet' | 'camera';
 
@@ -54,7 +79,9 @@ export function episodeKey(episode: Pick<GuardEpisode, 'kind' | 'id'>): string {
   return `${episode.kind}-${episode.id}`;
 }
 
-export function needsReview(episode: Pick<GuardEpisode, 'kind' | 'notified' | 'reviewLabel'>): boolean {
+export function needsReview(
+  episode: Pick<GuardEpisode, 'kind' | 'notified' | 'reviewLabel'>
+): boolean {
   return episode.kind === 'person' && episode.notified && episode.reviewLabel === '';
 }
 
@@ -69,4 +96,19 @@ export function formatDuration(seconds: number): string {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
+export function episodeTitle(
+  t: TranslateFn,
+  episode: Pick<GuardEpisode, 'kind' | 'status' | 'subject' | 'people'>
+): string {
+  if (episode.kind === 'camera') {
+    const status = tamperStatusOf(episode.status);
+    return t(status ? TAMPER_TITLES[status] : 'screens.security.episodes.tamper.other');
+  }
+  if (episode.subject === 'several')
+    return t('screens.security.episodes.subject.several', {
+      count: String(Math.max(2, episode.people)),
+    });
+  return t(SUBJECT_TITLES[episode.subject] ?? 'screens.security.episodes.subject.other');
 }

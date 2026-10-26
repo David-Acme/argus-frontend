@@ -8,11 +8,11 @@ import { Text } from '@/shared/components/ui/text';
 import { DangerBadge } from '@/features/security/components/danger-badge';
 import { EpisodeTimeline } from '@/features/security/components/episode-timeline';
 import { CAMERA_ROLE_ICONS, REASON_KEYS } from '@/features/security/constants';
-import { TAMPER_STATUS_KEYS, tamperStatusOf } from '@/features/security/model/tamper-notice';
 import {
   calmingReasons,
   durationSeconds,
   episodeOutcome,
+  episodeTitle,
   formatDuration,
   raisingReasons,
 } from '@/features/security/model/episode';
@@ -37,8 +37,6 @@ const REVIEW_OPTIONS: readonly ReviewOption[] = [
   { value: 'false_alarm', key: 'false-alarm' },
   { value: 'not_now', key: 'not-now' },
 ];
-
-const KNOWN_SUBJECTS: ReadonlySet<string> = new Set(['stranger', 'unobserved', 'accompanied']);
 
 const chipHover = Platform.select({ web: 'hover:bg-surface-secondary', default: '' });
 const linkHover = Platform.select({ web: 'hover:opacity-80', default: '' });
@@ -67,12 +65,7 @@ export function EpisodeCard({
   const shown = reasons.length > 0 ? reasons : raisingReasons(episode);
   const retained = (episode.retainUntil ?? 0) > 0;
 
-  const tamperStatus = tamperStatusOf(episode.status);
-  const title = camera
-    ? t(`screens.security.episodes.tamper.${tamperStatus ? TAMPER_STATUS_KEYS[tamperStatus] : 'other'}`)
-    : episode.subject === 'several'
-      ? t('screens.security.episodes.subject.several', { count: String(Math.max(2, episode.people)) })
-      : t(`screens.security.episodes.subject.${episode.subject === '' ? 'stranger' : KNOWN_SUBJECTS.has(episode.subject) ? episode.subject : 'other'}`);
+  const title = episodeTitle(t, episode);
 
   const stateLabel = active
     ? t('screens.security.episodes.state.active')

@@ -110,6 +110,8 @@
   --spacing-media-chip-end: 9px;
   --spacing-media-chip-y: 3px;
   --spacing-media-chip-gap: 6px;
+  --spacing-media-gap: 10px;
+  --spacing-media-grid-gap: 12px;
   --spacing-overlay-edge: 10px;
   --spacing-overlay-gap: 6px;
   --spacing-overlay-reveal-gap: 8px;
@@ -203,6 +205,8 @@
   --spacing-thread: 2px;
   --spacing-thread-min: 12px;
   --spacing-media-control: 40px;
+  --spacing-media-strip: 210px;
+  --spacing-media-fill: 120px;
   --spacing-skel-line: 16px;
   --spacing-skel-meta: 13px;
   --spacing-skel-pill: 64px;

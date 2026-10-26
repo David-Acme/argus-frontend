@@ -29,7 +29,7 @@ export function PressableSurface({
     style,
   });
   return (
-    <Animated.View style={press.scaleStyle}>
+    <Animated.View className={pressed?.grow ? 'grow' : undefined} style={press.scaleStyle}>
       <StyledPressable
         accessible
         accessibilityRole={a11y.role}

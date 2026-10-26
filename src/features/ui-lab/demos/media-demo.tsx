@@ -1,15 +1,71 @@
 import { Button } from '@/shared/ui/button';
-import { Media } from '@/shared/ui/media';
+import { View } from 'react-native';
+import { size } from '@/shared/theme';
+import { Media, MediaStrip } from '@/shared/ui/media';
 import { LabCase } from '../components/lab-case';
 import { copy } from './demo-copy';
 import { Scene } from './scene';
 
 const noop = () => undefined;
 
+const FILL_FRAME = { height: size.mediaStrip };
+
 const STAGE_CONTROLS = [
   { icon: 'speaker', label: copy.sound, onPress: noop },
   { icon: 'max', label: copy.fullscreen, onPress: noop },
 ] as const;
+
+function MediaLayoutDemo() {
+  return (
+    <>
+      <LabCase id="tile-fill" block>
+        <View className="gap-media-grid-gap flex-row" style={FILL_FRAME}>
+          <View className="flex-1">
+            <Media
+              fill
+              name={copy.kitchen}
+              detail={copy.kitchenTime}
+              live={copy.live}
+              onPress={noop}>
+              <Scene name="kitchen" />
+            </Media>
+          </View>
+          <View className="flex-1">
+            <Media fill name={copy.patio} live={copy.live} onPress={noop}>
+              <Scene name="patio" />
+            </Media>
+          </View>
+        </View>
+      </LabCase>
+      <LabCase id="strip" block>
+        <MediaStrip label={copy.cameraStrip}>
+          <Media
+            name={copy.clipLuisArrived}
+            detail={copy.kitchenTime}
+            onPress={noop}
+            center={
+              <Button
+                iconOnly
+                glass
+                icon="play"
+                iconSize="small"
+                label={copy.play}
+                onPress={noop}
+              />
+            }>
+            <Scene name="door" />
+          </Media>
+          <Media name={copy.kitchen} detail={copy.kitchenTime} live={copy.live} onPress={noop}>
+            <Scene name="kitchen" />
+          </Media>
+          <Media name={copy.patio} live={copy.live} onPress={noop}>
+            <Scene name="patio" />
+          </Media>
+        </MediaStrip>
+      </LabCase>
+    </>
+  );
+}
 
 export function MediaDemo() {
   return (
@@ -63,6 +119,7 @@ export function MediaDemo() {
           <Scene name="patio" />
         </Media>
       </LabCase>
+      <MediaLayoutDemo />
     </>
   );
 }

@@ -11,6 +11,7 @@ export class CameraThumbnailPoller {
   constructor(
     private readonly ids: readonly string[],
     private readonly listener: ThumbnailListener,
+    private readonly repeat = true,
   ) {}
 
   start(): void {
@@ -33,6 +34,6 @@ export class CameraThumbnailPoller {
         this.listener(new Map(this.thumbnails));
       }
     }
-    if (!this.stopped) this.timer = setTimeout(() => void this.refresh(), CAMERA_THUMBNAIL_REFRESH_MS);
+    if (!this.stopped && this.repeat) this.timer = setTimeout(() => void this.refresh(), CAMERA_THUMBNAIL_REFRESH_MS);
   }
 }

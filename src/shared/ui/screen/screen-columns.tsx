@@ -19,7 +19,7 @@ const CONTENT = { maxWidth: layout.contentMax };
 const FILL = { flexGrow: 1 };
 
 function columnStyle(width: number | undefined, max: number | undefined) {
-  if (width !== undefined) return { width };
+  if (width !== undefined) return { width, flexGrow: 0, flexShrink: 0 };
   return max === undefined ? undefined : { maxWidth: max };
 }
 

@@ -5591,9 +5591,11 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p1/wire` item 4: the ui-lab and the spikes screen load from one lazy chunk (`lab-screens`, 405,626 B) that a production page never fetches. Measured on the same tree before and after: entry 7,522,566 → 7,118,965 B (−403,601; the Phase 1 entry growth over 7,063,615 B falls from +458,951 to +55,350), `dist/` 8,842,120 → 8,844,145 B (+2,025: the chunk's own module wrappers and loader). The entry baseline is lowered with it. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of `p1/ds-fixes`, `p1/estela-perf` and `p1/wire` (ff881a0), measured on the merged tree: `dist/` 8,844,145 → 8,867,041 B (+22,896): Estela's adaptive renderer (tier probe and frame-time feedback, about 17 kB as measured on its branch), the design-system fixes (about 4.5 kB: the confirm latch, the announce and screen-active hooks, the hit areas) and the lazy lab's chunk carrying the merged demos. The entry chunk went down, 7,118,965 → 7,115,996 B, because the lab now loads lazily. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of the Estela tier fixes (`932b976`, `1033e5f`: paint-ahead pacing, the warm-up probe, the step-up path), measured on the integrated tree: `dist/` 8,867,041 → 8,867,586 B (+545). The entry chunk is unchanged at 7,115,996 B; the growth is in the lazy lab chunk and the Presence modules. | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-cameras` (T7): entry 7,115,996 → 7,119,946 B (+3,950), `dist/` 8,867,586 → 8,876,285 B (+8,699). Metro keeps every module a barrel names, so the entry carries the new camera and security exports (`useRecentClips`, `useEpisodeFeed`, `episodeTitle`'s typed key maps), `MediaStrip`, the grow context of `ScreenColumn`/`Section`, and the `camera-sections` copy in es and en; the three Inicio sections themselves are not imported by any screen until T4 composes them. The rest of the `dist/` growth is the lazy lab chunk (the `tile-fill` and `strip` cases). | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-agenda` (T5), measured on its own tree: entry 7,115,996 → 7,120,467 B (+4,471) and `dist/` 8,867,586 → 8,872,510 B (+4,924). The sections themselves are not in the entry yet (nothing imports them until T4); the growth is the es and en `agenda-sections` dictionaries (3.1 kB of source, the locales load with the entry), the shared `calendar-entry-commands` module and its wrapper, the reminder Deshacer, `setAssistantDraft` and Avatar's event mark; the other 453 B of `dist/` are the `size-event-mark` utility and the avatar demo in the lazy lab chunk. No package was added. R-D36's lazy routes (T9) are where the entry comes down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
@@ -6454,6 +6456,57 @@ build was 117,468,588 B); arm64-v8a review APKs 110,928,024 B (ff881a0) and
   frame is followed by a callback well under a millisecond later; taken as the
   beat, it made every frame look on time and the paint-ahead never ran.
   `noteBeat` ignores gaps under 4 ms.
+
+## Inicio cameras: Cámaras, Lo que pasó, Clips recientes (Phase 2, T7, 2026-10-26)
+
+Three sections in `src/features/home/components/cameras/`, each with its own hook
+(`use-camera-section`, `use-happened`, `use-recent-clip-tiles`) and its decisions in
+`model/camera-tiles.ts`, `model/camera-moments.ts` and `model/happened.ts`.
+
+**Cámaras.** On a phone or a tablet (outside a `ScreenColumn`) it is the prototype's
+horizontal strip: 210 px tiles 10 apart with snap, bleeding to the screen edge on
+compact, the latest clip first («Clip · Puerta principal», play button), then up to six
+cameras, the live ones first and the rest (off, private, offline) after them in the
+cache's order. A live tile carries «En vivo», its name and its last detection's time
+(«14:47», «ayer», the weekday), or «sin novedad»; a dormant tile says why
+in words. In a desktop column it is a two-column grid whose rows divide the height the
+column gives it (`Media` `fill`, at least 120 px a tile): four cameras, six once the
+grid itself is at least `layout.mediaGridWide` (640) wide, which is where the prototype
+switches at a 2400 px window. The section measures its own width with `onLayout`
+because a feature never reads the window. The grid shows no clip, as in the prototype.
+
+**Old Android.** The section never mounts a player. It paints the snapshot path the
+cameras screen already uses (`CameraThumbnailPoller`: one `GET /camera/{id}/snapshot`
+per live camera, in sequence, cross-faded by `MediaFrame`): at `perfTier` low it reads
+each picture once per focus and stops (`repeat` false), otherwise every 30 s. The old
+home tile cost no decoder either (an icon card); the cameras screen keeps its live
+previews (2 compact, 4 wide) and is not on Inicio.
+
+**Lo que pasó.** The guard episode feed (`useEpisodeFeed`, the same pinned
+`RemoteFeed` the Security screen pages, so its local copy paints at once), three rows:
+what waits for a review first when the role may review (owner), then the newest. A
+row is the episode's title (`episodeTitle`, moved out of `EpisodeCard`), the camera
+and the moment («Patio trasero · ayer 21:53»), «Revisar» when pending, and opens
+Seguridad: there is no episode route yet. Before the first answer with no local copy
+it shows three skeleton rows in its card; an empty feed offers Seguridad; a failed
+first load offers Reintentar. A role without `guard.view` gets nothing.
+
+**Clips recientes.** Owner and guard only (`clips.view`). `useRecentClips` reads the
+two newest clips of each enabled camera outside privacy (`GET /camera/{id}/clips?limit=2`,
+there is no clip list across cameras) into one view-cache value (`camera.clips`,
+scope `recent`) and keeps the two newest. A clip has no poster on the wire, so its
+tile is the dark media frame with the play button; it opens its camera. The strip's
+latest-clip tile reads the same value.
+
+**Columns that grow.** The column mechanism is the one `p2/inicio-feed` landed
+(`ScreenColumn` `grows`, `useGrowsInColumn`). Cámaras is the section that grows in its
+column, so T4 composes it as `<ScreenColumn grows={0}>` with `CamerasSection` first
+(then En casa at 1024–1699 px, `HappenedSection` from 1700 px); its grid then divides
+the column's height. Two fixes this needed: a fixed-width column no longer widens
+(react-native-web gives every `ScrollView` `flex-grow: 1`, so `width` alone let a
+340 px column render about 440 px wide), and `PressableSurface` takes `pressed.grow`,
+because its press-scale wrapper is an unstyled `Animated.View` and a filling `Media`
+stopped at 120 px until that wrapper grew too.
 
 ## Command: one door for search, actions and Argus (2026-10-26, Phase 2, p2/command)
 
