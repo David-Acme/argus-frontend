@@ -23,6 +23,8 @@ const notification = (id: number, title: string) => ({
   createdAt: at + id - 500,
 });
 
+const FEED = '/notification';
+
 const deleteLabel = (title: string): string => `Delete notification: ${title}`;
 
 const auditFrame = (id: number) => ({
@@ -62,7 +64,8 @@ test('a notification deleted on one device leaves it at once and leaves the othe
     { method: 'DELETE', path: '/notification/501', status: 204, emits: [auditFrame(501), deleteFrame(501)] },
   ]);
   const escapes = await openFirst(browser, app);
-  await second.open();
+  await app.open(FEED);
+  await second.open(FEED);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
@@ -90,7 +93,8 @@ test('a delete whose Delete frame never arrives still leaves the other device, b
   await store(baseUrl, 'notification', notification(601, 'Garage left open'));
   await routes(baseUrl, [{ method: 'DELETE', path: '/notification/601', status: 204, emits: [auditFrame(601)] }]);
   const escapes = await openFirst(browser, app);
-  await second.open();
+  await app.open(FEED);
+  await second.open(FEED);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
@@ -137,7 +141,8 @@ test('a thread longer than the loaded page is deleted by its key, and every entr
     },
   ]);
   const escapes = await openFirst(browser, app);
-  await second.open();
+  await app.open(FEED);
+  await second.open(FEED);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
@@ -170,6 +175,7 @@ test('a thread the server no longer has counts as deleted, with no error', async
     },
   ]);
   const escapes = await openFirst(browser, app);
+  await app.open(FEED);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   const latest = deleteLabel('Motion in the yard 902');
@@ -185,3 +191,28 @@ test('a thread the server no longer has counts as deleted, with no error', async
   expect(escapes).toEqual([]);
 });
 
+test('a delete on the full feed shows Undo, and Undo keeps the item and sends nothing', async ({
+  app,
+  browser,
+  screen,
+}) => {
+  const baseUrl = app.baseUrl ?? '';
+  await store(baseUrl, 'notification', notification(951, 'Gate left open'));
+  await routes(baseUrl, [{ method: 'DELETE', path: '/notification/951', status: 204, emits: [deleteFrame(951)] }]);
+  const escapes = await openFirst(browser, app);
+  await app.open(FEED);
+  await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
+
+  const removeGate = deleteLabel('Gate left open');
+  await expect(screen.getByRole('button', removeGate)).toBeVisible({ timeout: 10000 });
+  await screen.getByRole('button', removeGate).click();
+  await expect(screen.getByRole('button', removeGate)).toBeHidden({ timeout: LIVE_MS });
+  await expect(screen.getByText('Notification deleted', { exact: true })).toBeVisible({ timeout: LIVE_MS });
+  await screen.getByRole('button', 'Undo').click();
+
+  await expect(screen.getByRole('button', removeGate)).toBeVisible({ timeout: LIVE_MS });
+  await new Promise((resolve) => setTimeout(resolve, UNDO_MS));
+  expect(await requests(baseUrl)).not.toContain('DELETE /notification/951 @A');
+
+  expect(escapes).toEqual([]);
+});
