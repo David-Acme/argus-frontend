@@ -1,5 +1,6 @@
 export const activity = {
   title: 'Activity',
+  recent: { title: 'What you did last', all: 'See activity' },
   subtitle: 'What was done in your home, who did it and when.',
   entry: 'Activity history',
   'entry-hint': 'Changes in your home and its modules, with filters.',

@@ -91,6 +91,14 @@ mock.module('@/features/sessions', () => ({
   DevicesSection: () => <div>dispositivos</div>,
   useSignOut: () => ({ signOut: async () => void (state.signedOut += 1), signingOut: false }),
 }));
+mock.module('@/features/activity', () => ({
+  RecentActivitySection: ({ fallback }: { fallback: unknown }) => (
+    <div>
+      <span>lo último</span>
+      {fallback as never}
+    </div>
+  ),
+}));
 mock.module('@/features/home', () => ({
   useAskArgus: () => (draft: string) => state.asked.push(draft),
 }));
@@ -124,6 +132,7 @@ mock.module('@/shared/hooks/use-device-preferences', () => ({
   }),
 }));
 mock.module('@/core/stores', () => ({
+  useAuthStore: (select: (store: Record<string, unknown>) => unknown) => select({ user: { id: 1 } }),
   useLocaleStore: (select: (store: Record<string, unknown>) => unknown) =>
     select({
       preference: state.language,
@@ -240,6 +249,8 @@ describe('Tú with panes', () => {
     expect(screen.getByText('cosas hechas a tiempo')).toBeDefined();
     expect(screen.getByText('pendiente esta semana')).toBeDefined();
     expect(screen.getByText('dispositivos')).toBeDefined();
+    expect(screen.getByText('lo último')).toBeDefined();
+    expect(screen.getByText('Así te ayuda Argus')).toBeDefined();
   });
 
   test('an empty week explains how Argus helps and asks Argus from a suggestion', () => {

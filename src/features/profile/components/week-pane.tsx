@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import type { TranslationKey } from '@/core/types';
+import { useAuthStore } from '@/core/stores';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useThemeTokens } from '@/shared/theme';
@@ -11,6 +12,7 @@ import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Text } from '@/shared/ui/text';
+import { RecentActivitySection } from '@/features/activity';
 import { useAskArgus } from '@/features/home';
 import { DevicesSection } from '@/features/sessions';
 import { useWeek } from '@/features/profile/hooks/use-week';
@@ -88,6 +90,22 @@ function Tiles({ stats }: TilesProps) {
   );
 }
 
+function HelpSection() {
+  const { t } = useTranslation();
+  return (
+    <Section title={t('screens.profile.empty.help-title')}>
+      {HELP.map((item) => (
+        <Row
+          key={item.title}
+          leading={<Avatar icon={item.icon} />}
+          title={t(item.title)}
+          meta={t(item.meta)}
+        />
+      ))}
+    </Section>
+  );
+}
+
 function EmptyWeek() {
   const { t } = useTranslation();
   const ask = useAskArgus();
@@ -100,16 +118,7 @@ function EmptyWeek() {
           body={t('screens.profile.empty.body')}
         />
       </View>
-      <Section title={t('screens.profile.empty.help-title')}>
-        {HELP.map((item) => (
-          <Row
-            key={item.title}
-            leading={<Avatar icon={item.icon} />}
-            title={t(item.title)}
-            meta={t(item.meta)}
-          />
-        ))}
-      </Section>
+      <HelpSection />
       {ask ? (
         <Section title={t('screens.profile.empty.try-title')} variant="plain">
           <View className="flex-row flex-wrap gap-2">
@@ -134,6 +143,7 @@ export function WeekPane() {
   const { t } = useTranslation();
   const { formatDayRange } = useDateFormatter();
   const { range, stats } = useWeek();
+  const userId = useAuthStore((state) => state.user?.id ?? 0);
   const lively = stats !== null && stats.onTime + stats.pending > 0;
   return (
     <>
@@ -148,6 +158,7 @@ export function WeekPane() {
         <EmptyWeek />
       )}
       <DevicesSection />
+      <RecentActivitySection userId={userId} fallback={lively ? <HelpSection /> : null} />
     </>
   );
 }
