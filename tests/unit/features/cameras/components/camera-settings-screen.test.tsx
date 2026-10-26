@@ -117,7 +117,6 @@ mock.module('@/features/cameras/hooks/use-camera-live', () => ({
 }));
 
 mock.module('@/features/security', () => ({
-  MaintenancePanel: () => <span>Ventanas de mantenimiento</span>,
   useCameraEnvironmentIndex: () =>
     new Map([['3', { environmentId: 1, name: 'Casa', kind: 'home' }]]),
 }));
@@ -166,6 +165,8 @@ const { DetectionSection } =
   await import('@/features/cameras/components/settings/detection-section');
 const { DeviceSection } = await import('@/features/cameras/components/settings/device-section');
 const { AdvancedSection } = await import('@/features/cameras/components/settings/advanced-section');
+const { MaintenanceSection } =
+  await import('@/features/cameras/components/settings/maintenance-section');
 const { ChoiceRow } = await import('@/features/cameras/components/settings/choice-row');
 
 afterEach(() => {
@@ -186,10 +187,12 @@ describe('Ajustes de la cámara', () => {
       'Mirada activa',
       'Ronda programada',
       'Lugares donde no mirar',
+      'Mantenimiento',
       'Dispositivo',
       'Opciones avanzadas',
     ]);
-    expect(screen.getByText('Ventanas de mantenimiento')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /^Avisar un mantenimiento/ }));
+    expect(pushed).toEqual(['/security/maintenance']);
   });
 
   test('a camera that is gone redirects to the list', () => {
@@ -360,6 +363,12 @@ describe('detection, device and advanced', () => {
     });
     expect(applied).toEqual([{ isEnabled: false }]);
     expect(screen.getByRole('button', { name: 'Eliminar cámara' })).toBeDefined();
+  });
+
+  test('maintenance leads to the Seguridad screen that declares it', () => {
+    render(<MaintenanceSection />);
+    fireEvent.click(screen.getByRole('button', { name: /^Avisar un mantenimiento/ }));
+    expect(pushed).toEqual(['/security/maintenance']);
   });
 
   test('a choice row carries its label over the control', () => {

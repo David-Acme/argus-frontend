@@ -97,8 +97,25 @@ mock.module('@/features/cameras/components/clip-player', () => ({
   ClipPlayer: () => <span data-testid="clip-player" />,
 }));
 
-mock.module('@/features/cameras/components/zone-form', () => ({
-  ZoneForm: ({ open }: { open: boolean }) => (open ? <span data-testid="zone-form" /> : null),
+mock.module('@/features/cameras/components/zone-editor', () => ({
+  ZoneEditor: ({ onChange }: { onChange: (points: { x: number; y: number }[]) => void }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onChange([
+          { x: 0.1, y: 0.1 },
+          { x: 0.5, y: 0.1 },
+          { x: 0.3, y: 0.6 },
+        ])
+      }>
+      Marcar
+    </button>
+  ),
+}));
+
+mock.module('@/features/cameras/components/camera-live-view', () => ({
+  CameraLiveView: () => null,
+  CameraLiveStream: () => null,
 }));
 
 mock.module('@/features/cameras/services/camera-clips.service', () => ({ cameraClipsService: {} }));
@@ -118,7 +135,13 @@ mock.module('@/shared/hooks/use-date-formatter', () => ({
   useDateFormatter: () => ({ formatTime: () => '21:53', formatDayMonth: () => '26 oct' }),
 }));
 
-mock.module('@/core/services/zone.service', () => ({ zoneService: {} }));
+mock.module('@/core/services/zone.service', () => ({
+  zoneService: {
+    create: async () => ({ ok: true }),
+    update: async () => ({ ok: true }),
+    remove: async () => ({ ok: true }),
+  },
+}));
 
 mock.module('@/shared/libs/service-action', () => ({
   runServiceAction: async (action: { call: () => Promise<unknown> }) => {
@@ -128,9 +151,9 @@ mock.module('@/shared/libs/service-action', () => ({
 }));
 
 mock.module('@/shared/libs/optimistic-action', () => ({
-  runOptimistic: async () => {
+  runOptimistic: async (action: { call: () => Promise<unknown> }) => {
     calls.push('optimistic');
-    return null;
+    return action.call();
   },
 }));
 
@@ -139,6 +162,7 @@ const { default: CameraRecordingsScreen } =
 const { default: CameraZonesScreen } =
   await import('@/features/cameras/screens/camera-zones-screen');
 const { ClipStage } = await import('@/features/cameras/components/recordings/clip-stage');
+const { ZoneSheet } = await import('@/features/cameras/components/zones/zone-sheet');
 const { AnnounceSheet } = await import('@/features/cameras/components/live/announce-sheet');
 
 afterEach(() => {
@@ -210,7 +234,9 @@ describe('Zonas', () => {
     render(<CameraZonesScreen />);
     expect(screen.getByRole('button', { name: /^Jardín, Alertar/ })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /^Añadir zona/ }));
-    expect(screen.getByTestId('zone-form')).toBeDefined();
+    expect(
+      screen.getByText('Añadir zona', { selector: '[role=heading] *, [role=heading]' })
+    ).toBeDefined();
   });
 
   test('without zones it explains them and offers to add the first', () => {
@@ -218,7 +244,9 @@ describe('Zonas', () => {
     render(<CameraZonesScreen />);
     expect(screen.getByText('Sin zonas definidas')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Añadir zona' }));
-    expect(screen.getByTestId('zone-form')).toBeDefined();
+    expect(
+      screen.getByText('Añadir zona', { selector: '[role=heading] *, [role=heading]' })
+    ).toBeDefined();
   });
 
   test('a zone is deleted after its confirmation', () => {
@@ -231,6 +259,28 @@ describe('Zonas', () => {
     camera = null;
     render(<CameraZonesScreen />);
     expect(screen.getByTestId('redirect').textContent).toBe('/cameras');
+  });
+});
+
+describe('the zone sheet', () => {
+  test('asks for a name and three points in words, then saves', async () => {
+    let closed = 0;
+    render(<ZoneSheet cameraId="3" zone={null} zones={[]} onClose={() => (closed += 1)} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    });
+    expect(screen.getByText('Ponle un nombre a la zona, de hasta 120 caracteres.')).toBeDefined();
+    fireEvent.change(screen.getByLabelText('Nombre de la zona'), { target: { value: 'Reja' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    });
+    expect(screen.getByText('Marca al menos 3 puntos sobre la imagen.')).toBeDefined();
+    fireEvent.click(screen.getByText('Marcar'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Color 3' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    });
+    expect(closed).toBe(1);
   });
 });
 

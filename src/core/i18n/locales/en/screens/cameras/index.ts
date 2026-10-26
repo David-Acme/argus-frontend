@@ -58,6 +58,9 @@ export const cameras = {
     failed: 'I could not say the announcement through the camera',
   },
   sections: {
+    maintenance: 'Maintenance',
+    'maintenance-row': 'Announce maintenance',
+    'maintenance-meta': 'So Argus does not take work on the camera for tampering.',
     privacy: 'Privacy',
     detection: 'Detection and sensitivity',
     'edit-meta': 'Name, address and recording',
@@ -158,8 +161,6 @@ export const cameras = {
   disable: 'Disable camera',
   'zone-pending': 'Saving…',
   edit: 'Edit camera',
-  'connect-description': 'Access details of the camera on your local network.',
-  'edit-description': 'Update the details of {name}.',
   form: {
     name: 'Name',
     'name-placeholder': 'Front door',
@@ -228,6 +229,11 @@ export const cameras = {
   'zone-privacy-hint':
     "Argus neither analyses nor keeps what is inside: the street, the pavement or a neighbour's window.",
   'zone-color': 'Color',
+  'zone-sheet': {
+    'name-missing': 'Give the zone a name of up to 120 characters.',
+    'points-missing': 'Mark at least 3 points on the picture.',
+    color: 'Colour {index}',
+  },
   'zone-points': 'Tap the frame to mark the area',
   'zone-points-count': '{count} points',
   'zone-reset': 'Reset',
@@ -298,7 +304,6 @@ export const cameras = {
   'suggest-yard': 'Yard',
   'suggest-bedroom': 'Bedroom',
   'suggest-hallway': 'Hallway',
-  icon: 'Icon',
   'icon-hint': 'So you recognise it at a glance.',
   'name-suggestions': 'Or pick a spot',
   'ip-label': 'Camera address on your network',
@@ -306,7 +311,6 @@ export const cameras = {
   'user-label': 'Camera username',
   'password-label': 'Camera password',
   advanced: 'Advanced options',
-  'record-hint': 'Events records only when something happens; continuous always records.',
   'record-continuous-cost':
     '≈678 MB per hour per camera at the default quality (≈16.3 GB per day).',
   'record-cost-note': 'Events or motion uses much less: it only records when something happens.',
@@ -335,6 +339,7 @@ export const cameras = {
     show: 'Tap to show the controls',
   },
   steps: {
+    position: 'Step {index} of {total}: {step}',
     model: 'Model',
     connection: 'Connection',
     test: 'Test',
@@ -343,11 +348,14 @@ export const cameras = {
     back: 'Back',
   },
   catalog: {
+    'all-features': 'Any feature',
+    brand: 'Brand',
+    form: 'Shape',
+    feature: 'Feature',
     hint: 'Pick your camera and Argus fills in the ports and paths for you.',
     search: 'Search brand or model',
     'all-brands': 'All brands',
     'all-forms': 'All shapes',
-    loading: 'Loading models…',
     failed: 'The model list could not be loaded',
     'no-match': 'No model matches',
     'no-match-hint': 'Try another search, or pick RTSP for any camera.',
@@ -381,6 +389,9 @@ export const cameras = {
     'note-verification-code': 'The password is the verification code printed on the camera label.',
     'note-reolink': '4K models use h265Preview instead of h264Preview in the path.',
     'note-custom-paths': 'Type the RTSP paths your camera manual gives.',
+  },
+  connection: {
+    'keep-password': 'Leave it empty to keep the stored one.',
   },
   probe: {
     'stored-elsewhere': 'To test the new address, type the camera password again.',

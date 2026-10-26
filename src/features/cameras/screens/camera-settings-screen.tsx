@@ -1,13 +1,12 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Screen } from '@/shared/ui/screen';
-import { MaintenancePanel } from '@/features/security';
 import { AdvancedSection } from '@/features/cameras/components/settings/advanced-section';
 import { DetectionSection } from '@/features/cameras/components/settings/detection-section';
 import { DeviceSection } from '@/features/cameras/components/settings/device-section';
 import { GazeSection } from '@/features/cameras/components/settings/gaze-section';
+import { MaintenanceSection } from '@/features/cameras/components/settings/maintenance-section';
 import { ListenSection } from '@/features/cameras/components/settings/listen-section';
 import { PatrolSection } from '@/features/cameras/components/settings/patrol-section';
 import { PlacesSection } from '@/features/cameras/components/settings/places-section';
@@ -25,11 +24,7 @@ const SECTIONS: Record<SettingsSection, (settings: CameraSettings) => ReactNode>
   gaze: (settings) => <GazeSection key="gaze" settings={settings} />,
   patrol: (settings) => <PatrolSection key="patrol" settings={settings} />,
   places: (settings) => <PlacesSection key="places" settings={settings} />,
-  maintenance: (settings) => (
-    <View key="maintenance" className="mt-section-top">
-      <MaintenancePanel cameraId={settings.camera.id} />
-    </View>
-  ),
+  maintenance: () => <MaintenanceSection key="maintenance" />,
   device: (settings) => <DeviceSection key="device" settings={settings} />,
   advanced: (settings) => <AdvancedSection key="advanced" settings={settings} />,
 };

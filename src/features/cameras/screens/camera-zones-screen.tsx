@@ -12,7 +12,7 @@ import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Screen } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
-import { ZoneForm } from '@/features/cameras/components/zone-form';
+import { ZoneSheet } from '@/features/cameras/components/zones/zone-sheet';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
 
@@ -124,15 +124,15 @@ function ZonesBody({ camera, isPending }: ZonesBodyProps) {
           ) : null}
         </Section>
       )}
-      <ZoneForm
-        open={editing !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditing(null);
-        }}
-        cameraId={camera.id}
-        zone={editing === 'new' ? null : editing}
-        zones={camera.zones}
-      />
+      {editing ? (
+        <ZoneSheet
+          key={editing === 'new' ? 'new' : editing.id}
+          cameraId={camera.id}
+          zone={editing === 'new' ? null : editing}
+          zones={camera.zones}
+          onClose={() => setEditing(null)}
+        />
+      ) : null}
     </>
   );
 }

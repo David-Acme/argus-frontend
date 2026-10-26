@@ -234,18 +234,14 @@ src/features/auth/screens/onboarding-modules-screen.tsx
 src/features/auth/screens/pairing-screen.tsx
 src/features/auth/screens/privacy-screen.tsx
 src/features/cameras/components/camera-form-schema.ts
-src/features/cameras/components/camera-form.tsx
 src/features/cameras/components/camera-illustration.tsx
 src/features/cameras/components/camera-live-status.tsx
 src/features/cameras/components/camera-privacy-placeholder.tsx
-src/features/cameras/components/camera-probe-panel.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
 src/features/cameras/components/clip-player.native.tsx
 src/features/cameras/components/recording-paused-banner.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/web-camera-player.ts
-src/features/cameras/components/zone-editor.tsx
-src/features/cameras/components/zone-form.tsx
 src/features/cameras/hooks/use-camera-aim.ts
 src/features/cameras/hooks/use-camera-clips.ts
 src/features/cameras/hooks/use-camera-device-settings.ts
@@ -414,8 +410,6 @@ src/features/security/components/guard-mode-picker.tsx
 src/features/security/components/hours-editor.tsx
 src/features/security/components/hours-fields.tsx
 src/features/security/components/maintenance-dialog.tsx
-src/features/security/components/maintenance-panel.tsx
-src/features/security/components/maintenance-window-row.tsx
 src/features/security/components/response-recipients-panel.tsx
 src/features/security/components/sight-notice-actions.tsx
 src/features/security/hooks/use-environment-response.ts

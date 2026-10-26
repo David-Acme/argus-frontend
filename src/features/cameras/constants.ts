@@ -1,4 +1,3 @@
-import type { IconName } from '@/core/types';
 import { IS_IOS } from '@/shared/constants';
 
 export const CAMERA_STREAM_WS_PATH = '/media';
@@ -63,17 +62,6 @@ export const ZONE_MIN_POINTS = 3;
 export const ZONE_MAX_POINTS = 64;
 
 export const ZONE_COLORS = ['#FF3B30', '#FF9500', '#34C759', '#0A84FF', '#AF52DE'] as const;
-
-export const CAMERA_ICONS: readonly IconName[] = [
-  'video',
-  'home',
-  'shield-check',
-  'eye',
-  'monitor',
-  'camera',
-  'key-round',
-  'wifi',
-];
 
 export const CAMERA_RETENTION_DEFAULT_DAYS = 30;
 export const CAMERA_RETENTION_MAX_DAYS = 60;

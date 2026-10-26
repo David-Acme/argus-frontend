@@ -47,14 +47,19 @@ function flagsOf(features: ICameraCapabilities | null) {
   };
 }
 
-export function useCameraLive(id: string, camera: ICameraCacheRow | null): CameraLive | null {
-  const { can, clips, cameraActions, guard } = useCapabilities();
-  const rights = {
+function rightsOf({ can, clips, cameraActions }: ReturnType<typeof useCapabilities>) {
+  return {
     update: can('camera', 'update'),
     remove: can('camera', 'delete'),
     clips: clips.view,
     managePresets: cameraActions.managePresets,
   };
+}
+
+export function useCameraLive(id: string, camera: ICameraCacheRow | null): CameraLive | null {
+  const capabilities = useCapabilities();
+  const { cameraActions, guard } = capabilities;
+  const rights = rightsOf(capabilities);
   const { features } = useCameraFeatures(id, camera);
   const flags = flagsOf(features);
   const dock = useTalkDock(id);
@@ -99,7 +104,7 @@ export function useCameraLive(id: string, camera: ICameraCacheRow | null): Camer
     onHomeSet: () => void aim.reload(),
   });
   useViewerLease(id, controls.ptz && live.ptzShown, aim.apply);
-  const thumbnails = useCameraThumbnails(camera ? [camera] : [], false);
+  const poster = useCameraPoster(camera);
   if (!camera) return null;
   return {
     camera,
@@ -125,8 +130,13 @@ export function useCameraLive(id: string, camera: ICameraCacheRow | null): Camer
       maintenance: guard.maintenance,
     }),
     access: rights,
-    poster: thumbnails.get(camera.id) ?? null,
+    poster,
   };
+}
+
+function useCameraPoster(camera: ICameraCacheRow | null): string | null {
+  const thumbnails = useCameraThumbnails(camera ? [camera] : [], false);
+  return camera ? (thumbnails.get(camera.id) ?? null) : null;
 }
 
 export function useCameraRow(id: string): ICameraCacheRow | null {
