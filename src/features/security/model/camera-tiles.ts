@@ -51,9 +51,30 @@ export function onlineCount(tiles: readonly SecurityTile[]): number {
   return tiles.filter((tile) => tile.state === 'live' || tile.state === 'private').length;
 }
 
-export function gridColumnsFor(width: number): number {
+export function maxColumnsFor(width: number): number {
   if (width >= layout.mediaGridFour) return 4;
   return width >= layout.mediaGridThree ? 3 : 2;
+}
+
+type Shape = { columns: number; empty: number; tall: boolean };
+
+function shapeOf(count: number, columns: number): Shape {
+  const rows = Math.ceil(count / columns);
+  return { columns, empty: rows * columns - count, tall: rows > columns };
+}
+
+function better(left: Shape, right: Shape): Shape {
+  if (left.tall !== right.tall) return left.tall ? right : left;
+  if (left.empty !== right.empty) return left.empty < right.empty ? left : right;
+  return left.columns <= right.columns ? left : right;
+}
+
+export function gridColumnsFor(count: number, width: number): number {
+  const most = Math.min(maxColumnsFor(width), Math.max(1, count));
+  const shapes = Array.from({ length: Math.max(1, most - 1) }, (_, index) =>
+    shapeOf(count, Math.min(most, index + 2))
+  );
+  return shapes.reduce(better).columns;
 }
 
 export function rowsOf<T>(items: readonly T[], columns: number): (T | null)[][] {

@@ -91,12 +91,23 @@ export function securityStatus(input: SecurityStatusInput): SecurityStatus {
   };
 }
 
+function alertWords(alert: GuardEpisode, t: TranslateFn): StatusWords {
+  const camera = alert.cameraName;
+  const what = episodeTitle(t, alert);
+  if (alert.kind === 'camera')
+    return { sentence: what, meta: t('screens.security.hero.alert-meta', { camera }) };
+  const sentence =
+    alert.subject === 'several'
+      ? t('screens.security.hero.alert-several', {
+          count: String(Math.max(2, alert.people)),
+          camera,
+        })
+      : t('screens.security.hero.alert-someone', { camera });
+  return { sentence, meta: t('screens.security.hero.alert-what', { what }) };
+}
+
 export function statusWords(status: SecurityStatus, t: TranslateFn): StatusWords {
-  if (status.alert)
-    return {
-      sentence: episodeTitle(t, status.alert),
-      meta: t('screens.security.hero.alert-meta', { camera: status.alert.cameraName }),
-    };
+  if (status.alert) return alertWords(status.alert, t);
   if (status.mode) return { sentence: t(MODE_LABEL[status.mode]), meta: t(MODE_META[status.mode]) };
   return {
     sentence: t('screens.security.hero.mixed'),

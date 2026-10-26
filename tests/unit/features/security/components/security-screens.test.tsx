@@ -183,7 +183,7 @@ describe('Seguridad', () => {
     render(<SecurityScreen />);
     expect(screen.getByRole('button', { name: 'Casa' })).toBeDefined();
     expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
-    expect(screen.getByRole('heading', { name: 'Persona desconocida' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Alguien en Patio trasero' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Ver cámara' }));
     expect(routes).toEqual(['/cameras/3']);
     await act(async () => {

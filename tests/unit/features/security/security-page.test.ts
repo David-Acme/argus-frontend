@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { activityToday } from '@/features/security/model/camera-activity';
 import {
   gridColumnsFor,
+  maxColumnsFor,
   onlineCount,
   rowsOf,
   securityTiles,
@@ -80,7 +81,32 @@ describe('the Seguridad status', () => {
     expect(alert.presence).toBe('alert');
     expect(alert.alert?.id).toBe(3);
     expect(statusWords(alert, t)).toEqual({
-      sentence: 'Persona desconocida',
+      sentence: 'Alguien en Patio trasero',
+      meta: 'Persona desconocida · ahora',
+    });
+  });
+
+  test('the alert sentence is short and says who and where, the meta says what', () => {
+    const several = episode({
+      state: 'active',
+      danger: 'high',
+      notified: true,
+      subject: 'several',
+      people: 3,
+    });
+    expect(statusWords(status({ episodes: [several] }), t)).toEqual({
+      sentence: '3 personas en Patio trasero',
+      meta: '3 personas desconocidas · ahora',
+    });
+    const covered = episode({
+      kind: 'camera',
+      state: 'active',
+      danger: 'high',
+      notified: true,
+      status: 'covered',
+    });
+    expect(statusWords(status({ episodes: [covered] }), t)).toEqual({
+      sentence: 'Imagen tapada',
       meta: 'Patio trasero · ahora',
     });
   });
@@ -169,11 +195,19 @@ describe('camera tiles', () => {
     expect(tileLabel(yesterday, NOW, format)).toBe('ayer');
   });
 
+  test('the grid picks the columns that fill its last row, never taller than wide', () => {
+    const shapes = (width: number) =>
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((count) => gridColumnsFor(count, width));
+    expect(shapes(1500)).toEqual([1, 2, 3, 2, 3, 3, 4, 4, 3, 4]);
+    expect(shapes(870)).toEqual([1, 2, 3, 2, 3, 3, 3, 3, 3, 2]);
+    expect(shapes(328)).toEqual([1, 2, 2, 2, 2, 2, 2, 2, 2, 2]);
+  });
+
   test('the grid adds columns as its width grows, and rows pad with empty slots', () => {
-    expect(gridColumnsFor(328)).toBe(2);
-    expect(gridColumnsFor(620)).toBe(3);
-    expect(gridColumnsFor(870)).toBe(3);
-    expect(gridColumnsFor(1500)).toBe(4);
+    expect(maxColumnsFor(328)).toBe(2);
+    expect(maxColumnsFor(620)).toBe(3);
+    expect(maxColumnsFor(870)).toBe(3);
+    expect(maxColumnsFor(1500)).toBe(4);
     expect(rowsOf([1, 2, 3], 2)).toEqual([
       [1, 2],
       [3, null],

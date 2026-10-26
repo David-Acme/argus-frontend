@@ -9,7 +9,7 @@ export type ScreenColumnsProps = { children: ReactNode };
 export type ScreenColumnProps = {
   width?: number;
   label?: string;
-  grows?: number;
+  grows?: number | false;
   children: ReactNode;
 };
 
@@ -38,7 +38,7 @@ export function ScreenColumn({ width, label, grows, children }: ScreenColumnProp
   if (!desktop) return <>{children}</>;
   const items = Children.toArray(children);
   const fixed = width === undefined ? undefined : { width, flexGrow: 0, flexShrink: 0 };
-  const growing = grows ?? items.length - 1;
+  const growing = grows === false ? -1 : (grows ?? items.length - 1);
   return (
     <ScrollView
       aria-label={label}

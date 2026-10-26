@@ -155,13 +155,16 @@ function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
         action={band}
       />
       <ScreenColumns>
-        <ScreenColumn label={t('screens.security.camera-grid.title')} grows={start.promise ? 1 : 0}>
+        <ScreenColumn
+          label={t('screens.security.camera-grid.title')}
+          grows={start.promise ? false : 0}>
           <CamerasSection cameras={cameras} desktop onConnect={onConnect} />
           {start.promise ? <PromiseSection /> : null}
         </ScreenColumn>
         <ScreenColumn
           label={t('screens.security.happened.title')}
-          width={four ? size.columnFeedWide : size.columnFeed}>
+          width={four ? size.columnFeedWide : size.columnFeed}
+          grows={false}>
           <AlertCard security={security} onOpen={onOpen} />
           <HappenedSection
             feed={security.episodes}
@@ -180,7 +183,10 @@ function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
           )}
         </ScreenColumn>
         {four ? (
-          <ScreenColumn label={t('screens.security.more.title')} width={size.columnAsideWide}>
+          <ScreenColumn
+            label={t('screens.security.more.title')}
+            width={size.columnAsideWide}
+            grows={false}>
             <VisitsSection guests={security.guests.list} now={security.now} />
             <PlacesSection environments={security.environments} />
             <MaintenanceSection now={security.now} />

@@ -6892,13 +6892,21 @@ slice's.
 - **Episode review lives in the episode sheet** (`EpisodeSheet`): ¿Acertó? is a
   `Choice`, keeping the incident is a `Switch`, the footer's one action is «Ver
   cámara», or «Fui yo» for an active tamper.
-- **Desktop.** The status band holds the picker, the mode and SOS; the camera
-  column grows and picks 2, 3 or 4 columns from its own width
-  (`gridColumnsFor`, `layout.mediaGridThree`/`mediaGridFour`), because the
-  prototype draws three columns at 1280 and four at 2560 where a minimum tile
-  of 280 px would draw two. From 1700 px (`useFourColumns`) a third column adds
-  visits, places, maintenance and activity per camera; below it the second
-  column carries visits and the other «Más» rows so nothing is out of reach.
+- **Desktop.** The status band holds the picker, the mode and SOS. The camera
+  column's width allows 2, 3 or 4 columns (`maxColumnsFor`,
+  `layout.mediaGridThree`/`mediaGridFour`: the prototype draws three at 1280
+  and four at 2560), and `gridColumnsFor` picks, within that, the shape that is
+  never taller than wide, then the one whose last row is fullest, then the
+  fewer columns: 4 → 2×2, 5 → 3+2, 6 → 3×2, 7 → 4+3, so no lone tile sits
+  beside a blank. The tiles stretch evenly over their minimum height. The
+  feed and aside columns grow nothing (`ScreenColumn grows={false}`) and end on
+  their content; a short card is never stretched into empty space. From
+  1700 px (`useFourColumns`) a third column adds visits, places, maintenance
+  and activity per camera; below it the second column carries visits and the
+  other «Más» rows so nothing is out of reach.
+- **The alert sentence stays short** so the band never truncates it: who and
+  where («Alguien en Patio trasero», «3 personas en Patio trasero»), with what
+  in the meta; a tamper says what happened and the camera goes to the meta.
 - **No data is a designed state** (`starters`): two cameras or fewer add «Qué
   hará Argus con tus cámaras», an answered empty feed adds «Prueba esto», and
   no camera at all is the empty state with the wizard («Conecta tu primera

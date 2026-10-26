@@ -77,7 +77,7 @@ function CameraTile({ tile, frames, now, format, fill, onOpen, onTalk }: TilePro
 
 export function CameraGrid({ tiles, fill, ...tile }: CameraGridProps) {
   const [width, setWidth] = useState(0);
-  const columns = fill ? gridColumnsFor(width) : 2;
+  const columns = fill ? gridColumnsFor(tiles.length, width) : 2;
   const measure = (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width);
   return (
     <View className="gap-media-grid-gap grow" onLayout={measure}>
