@@ -1,13 +1,13 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
-import { size as sizes, useEffects, useThemeTokens } from '@/shared/theme';
+import { inset, size as sizes, useEffects, useThemeTokens } from '@/shared/theme';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text, type TextTone } from '@/shared/ui/text';
 
 export type ChipTone = 'default' | 'ok' | 'attn' | 'alert';
 
-export type ChipSize = 'tag' | 'stat' | 'suggestion';
+export type ChipSize = 'tag' | 'stat' | 'suggestion' | 'view';
 
 export type TagChipProps = {
   label: string;
@@ -27,7 +27,11 @@ export type FilterChipProps = {
   testID?: string;
 };
 
-type ChipBodyProps = Omit<TagChipProps, 'size'> & { textTone: TextTone; iconTone: IconTone };
+type ChipBodyProps = Omit<TagChipProps, 'size'> & {
+  textTone: TextTone;
+  iconTone: IconTone;
+  large?: boolean;
+};
 
 const TONE: Record<ChipTone, { surface: string; text: TextTone }> = {
   default: { surface: 'bg-fill', text: '2' },
@@ -40,7 +44,10 @@ const HEIGHT: Record<ChipSize, string> = {
   tag: 'min-h-chip px-chip-x',
   stat: 'min-h-chip-stat px-chip-stat-x',
   suggestion: 'min-h-chip-suggestion px-chip-x',
+  view: 'min-h-segment px-4',
 };
+
+const VIEW_RING = { borderWidth: inset.field.border };
 
 const DOT_TONE: Record<TextTone, string> = {
   default: 'bg-text',
@@ -70,6 +77,7 @@ const FILTER_SLOP: Record<ChipSize, number> = {
   tag: (sizes.target - sizes.chip) / 2,
   stat: (sizes.target - sizes.chipStat) / 2,
   suggestion: (sizes.target - sizes.chipSuggestion) / 2,
+  view: (sizes.target - sizes.segment) / 2,
 };
 
 type SizeSurface = {
@@ -104,7 +112,7 @@ function useSizeSurface(chipSize: ChipSize, tone: ChipTone): SizeSurface {
   };
 }
 
-function ChipBody({ label, dot, icon, value, textTone, iconTone }: ChipBodyProps) {
+function ChipBody({ label, dot, icon, value, textTone, iconTone, large }: ChipBodyProps) {
   return (
     <>
       {dot ? <View className={clsx('size-dot rounded-full', DOT_TONE[textTone])} /> : null}
@@ -114,7 +122,7 @@ function ChipBody({ label, dot, icon, value, textTone, iconTone }: ChipBodyProps
           {value}
         </Text>
       ) : null}
-      <Text variant="chip" tone={textTone} numberOfLines={1}>
+      <Text variant={large ? 'buttonCompact' : 'chip'} tone={textTone} numberOfLines={1}>
         {label}
       </Text>
     </>
@@ -143,6 +151,26 @@ export function Chip({ label, tone = 'default', dot, icon, value, size = 'tag' }
   );
 }
 
+function ViewChip({ label, selected, onPress, testID }: Omit<FilterChipProps, 'size' | 'icon'>) {
+  return (
+    <PressableSurface
+      a11y={{ label, role: 'tab', selected }}
+      onPress={onPress}
+      haptic="selection"
+      pressed={{ scale: 'surface' }}
+      hitSlop={FILTER_SLOP.view}
+      testID={testID}
+      style={VIEW_RING}
+      className={clsx(
+        'flex-row items-center rounded-full',
+        HEIGHT.view,
+        selected ? 'bg-accent-soft border-transparent' : 'border-fill-press'
+      )}>
+      <ChipBody label={label} textTone={selected ? 'accent' : '2'} iconTone="text-2" large />
+    </PressableSurface>
+  );
+}
+
 export function FilterChip({
   label,
   selected,
@@ -152,6 +180,8 @@ export function FilterChip({
   testID,
 }: FilterChipProps) {
   const surface = useSizeSurface(size, 'default');
+  if (size === 'view')
+    return <ViewChip label={label} selected={selected} onPress={onPress} testID={testID} />;
   return (
     <PressableSurface
       a11y={{ label, role: 'checkbox', checked: selected }}

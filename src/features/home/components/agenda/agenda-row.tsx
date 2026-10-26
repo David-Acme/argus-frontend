@@ -5,8 +5,8 @@ import { Menu, type MenuItem } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { Text, type TextTone } from '@/shared/ui/text';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
-import { agendaCheck, type AgendaMenuAction } from '@/features/home/model/agenda-actions';
-import { isOngoing, type AgendaItem } from '@/features/home/model/agenda-items';
+import { agendaCheck, isOngoing } from '@/features/agenda';
+import type { AgendaItem, AgendaMenuAction } from '@/features/agenda';
 import {
   itemMeta,
   timeToGo,

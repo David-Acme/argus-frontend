@@ -3,7 +3,8 @@ import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { CalendarEntry, TranslateFn } from '@/core/types';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
-import { agendaItems, type AgendaItem } from '@/features/home/model/agenda-items';
+import { agendaItems } from '@/features/agenda';
+import type { AgendaItem } from '@/features/agenda';
 import type { WordingContext } from '@/features/home/model/agenda-wording';
 
 export const date = createDateFormatter('es', {

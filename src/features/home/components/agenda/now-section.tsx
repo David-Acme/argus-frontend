@@ -1,7 +1,7 @@
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Section } from '@/shared/ui/section';
 import { useAgenda } from '@/features/home/hooks/use-agenda';
-import { nowList } from '@/features/home/model/agenda-items';
+import { nowList } from '@/features/agenda';
 import { nowCount } from '@/features/home/model/agenda-wording';
 import { AgendaEmpty } from './agenda-empty';
 import { AgendaRow } from './agenda-row';

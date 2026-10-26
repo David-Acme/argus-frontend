@@ -5,11 +5,8 @@ import type { ProjectionContext, ViewWrite } from '@/core/services/view-cache/pr
 import { activityLevels } from '@/core/services/view-cache/activity.projection';
 import {
   calendarEntryState,
-  agendaScope,
-  agendaSpan,
   calendarMonthScope,
   projectAgenda,
-  projectAgendaFeed,
   projectCalendar,
 } from '@/core/services/view-cache/calendar.projection';
 import {
@@ -287,89 +284,6 @@ describe('people projection', () => {
     expect(filterPeople(rows, { query: '', role: 'owner' }).map((row) => row.id)).toEqual(['1']);
     expect(filterPeople(rows, { query: 'guard', role: 'all' }).map((row) => row.id)).toEqual(['2']);
     expect(filterPeople(rows, { query: 'ana', role: 'guard' })).toEqual([]);
-  });
-});
-
-describe('agenda feed projection', () => {
-  test('the scope is the first day and each window adds whole weeks', () => {
-    const scope = agendaScope(new Date(2026, 9, 15, 18, 0));
-    expect(scope).toBe(String(new Date(2026, 9, 15).getTime()));
-    const span = agendaSpan(scope, { weeks: 2 });
-    expect(span.from).toBe(new Date(2026, 9, 15).getTime());
-    expect(span.to).toBe(new Date(2026, 9, 29).getTime() - 1);
-  });
-
-  const event = (id: string, title: string, startsAt: Date) => ({
-    id,
-    ownerId: '1',
-    title,
-    startsAt,
-    endsAt: null,
-    isAllDay: false,
-    color: '',
-    location: '',
-    description: '',
-    projectId: null,
-  });
-
-  test('writes the entries inside the span under its scope', () => {
-    const scope = agendaScope(now);
-    const range = agendaSpan(scope, { weeks: 1 });
-    const writes = projectAgendaFeed(
-      {
-        events: [
-          event('1', 'Inside', new Date(2026, 9, 16, 9)),
-          event('2', 'Outside', new Date(2026, 9, 23, 9)),
-        ],
-        reminders: [],
-        tasks: [],
-        eventsLater: true,
-        tasksLater: false,
-      },
-      scope,
-      range
-    );
-    const feed = valueOf(writes, 'calendar.agenda', scope) as {
-      rows: CalendarEntry[];
-      hasMore: boolean;
-      to: number;
-    };
-    expect(feed.rows.map((entry) => entry.title)).toEqual(['Inside']);
-    expect(feed.hasMore).toBe(true);
-    expect(feed.to).toBe(range.to);
-  });
-
-  test('ends only when nothing is scheduled after the span', () => {
-    const scope = agendaScope(now);
-    const range = agendaSpan(scope, { weeks: 1 });
-    const hasMore = (input: { eventsLater: boolean; tasksLater: boolean; reminderAt?: Date }) =>
-      (
-        valueOf(
-          projectAgendaFeed(
-            {
-              events: [],
-              reminders: input.reminderAt
-                ? [{ id: 'r', title: 'Later', scheduledAt: input.reminderAt, isCompleted: false }]
-                : [],
-              tasks: [],
-              eventsLater: input.eventsLater,
-              tasksLater: input.tasksLater,
-            },
-            scope,
-            range
-          ),
-          'calendar.agenda',
-          scope
-        ) as { hasMore: boolean }
-      ).hasMore;
-    expect(hasMore({ eventsLater: false, tasksLater: false })).toBe(false);
-    expect(hasMore({ eventsLater: false, tasksLater: true })).toBe(true);
-    expect(
-      hasMore({ eventsLater: false, tasksLater: false, reminderAt: new Date(2027, 0, 1) })
-    ).toBe(true);
-    expect(
-      hasMore({ eventsLater: false, tasksLater: false, reminderAt: new Date(2026, 9, 16) })
-    ).toBe(false);
   });
 });
 

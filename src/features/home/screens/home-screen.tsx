@@ -19,6 +19,7 @@ import {
   calendarEntryEditHref,
   EntryActionsMenu,
   entryPermissions,
+  RemindersSection,
 } from '@/features/agenda';
 import { useNotificationFeed } from '@/features/home/hooks/use-notification-feed';
 import { useNotificationPanel } from '@/features/home/hooks/use-notification-panel';
@@ -37,7 +38,6 @@ import { EmptyState } from '@/shared/components/ui/empty-state';
 import { ResponseStrip } from '@/features/response';
 import { InactiveRoleScreen } from '@/features/access';
 import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
-import { RemindersSection } from '@/features/reminders';
 import { useConversationUnread } from '@/features/conversations';
 import { CAPABILITY, SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { AppScreen } from '@/shared/components/layout';

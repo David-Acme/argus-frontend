@@ -11,6 +11,8 @@ export const ENTRY_STATE_RAIL: Record<CalendarEntryState, string> = {
   done: 'bg-success',
 };
 
-export const entryStateLabelKey = (state: CalendarEntryState): TranslationKey => `screens.agenda.state-${state}`;
+export const entryStateLabelKey = (state: CalendarEntryState): TranslationKey =>
+  `screens.agenda.state-${state}`;
 
-export const isQuietEntryState = (state: CalendarEntryState): boolean => state === 'upcoming' || state === 'todo';
+export const isQuietEntryState = (state: CalendarEntryState): boolean =>
+  state === 'upcoming' || state === 'todo';

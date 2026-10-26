@@ -8,7 +8,7 @@ import { SCREEN_TITLE_KEYS } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { calendarEntryState } from '@/core/services/view-cache';
-import { AgendaItem, isPendingEntry } from '@/features/agenda';
+import { AgendaEntryCard, isPendingEntry } from '@/features/agenda';
 import { Panel } from '@/shared/components/ui/panel';
 
 type TodayAgendaProps = {
@@ -81,7 +81,7 @@ export function TodayAgenda({
   ].sort((left, right) => left - right);
 
   const item = (entry: CalendarEntry) => (
-    <AgendaItem
+    <AgendaEntryCard
       key={entry.id}
       title={entry.title}
       time={formatTime(entry)}

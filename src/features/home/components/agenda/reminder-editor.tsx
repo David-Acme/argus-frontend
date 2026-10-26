@@ -1,4 +1,4 @@
-import { ReminderDialog } from '@/features/reminders';
+import { ReminderDialog } from '@/features/agenda';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
 
 export type ReminderEditorProps = { actions: AgendaActions };

@@ -4,7 +4,7 @@ import { Row } from '@/shared/ui/row';
 import { useInScreenColumn } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
 import { useAgenda } from '@/features/home/hooks/use-agenda';
-import { listLimit, upcomingReminders } from '@/features/home/model/agenda-items';
+import { listLimit, upcomingReminders } from '@/features/agenda';
 import { itemMeta } from '@/features/home/model/agenda-wording';
 import { ReminderEditor } from './reminder-editor';
 

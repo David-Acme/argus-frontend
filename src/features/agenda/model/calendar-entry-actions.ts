@@ -1,14 +1,9 @@
+import type { Href } from 'expo-router';
 import type { IOccurrenceChange } from '@/core/interfaces';
 import type { CalendarEntry, CalendarEntryState, ConfirmRequest } from '@/core/types';
-import type { Href } from 'expo-router';
 
 export type CalendarEntryAction =
-  | 'edit'
-  | 'edit-occurrence'
-  | 'skip-occurrence'
-  | 'delete'
-  | 'toggle'
-  | 'share';
+  'edit' | 'edit-occurrence' | 'skip-occurrence' | 'delete' | 'toggle' | 'share';
 export type CalendarEventFormAction = 'cancel' | 'save';
 export type CalendarEntryDetailRow = {
   id: 'type' | 'date' | 'time' | 'status' | 'repeat' | 'location';
@@ -47,7 +42,10 @@ export function canShareCalendarEntry(entry: CalendarEntry, viewer: CalendarShar
 
 type CanFn = (table: 'project_task' | 'calendar_event', permission: 'update' | 'delete') => boolean;
 
-export function entryPermissions(entry: Pick<CalendarEntry, 'source'>, can: CanFn): CalendarEntryPermissions {
+export function entryPermissions(
+  entry: Pick<CalendarEntry, 'source'>,
+  can: CanFn
+): CalendarEntryPermissions {
   const table = entry.source === 'task' ? 'project_task' : 'calendar_event';
   return { canEdit: can(table, 'update'), canDelete: can(table, 'delete') };
 }
@@ -101,14 +99,15 @@ export function calendarEntryDetailRows({
     { id: 'status', label: labels.status, value: labels.state[state] },
   ];
 
-  if (labels.repeat?.value) rows.push({ id: 'repeat', label: labels.repeat.label, value: labels.repeat.value });
+  if (labels.repeat?.value)
+    rows.push({ id: 'repeat', label: labels.repeat.label, value: labels.repeat.value });
   if (entry.location) rows.push({ id: 'location', label: labels.location, value: entry.location });
   return rows;
 }
 
 export function compareDayEntries(
   left: Pick<CalendarEntry, 'isAllDay' | 'startsAt'>,
-  right: Pick<CalendarEntry, 'isAllDay' | 'startsAt'>,
+  right: Pick<CalendarEntry, 'isAllDay' | 'startsAt'>
 ): number {
   return Number(right.isAllDay) - Number(left.isAllDay) || left.startsAt - right.startsAt;
 }
@@ -119,7 +118,8 @@ export function calendarEntryRecordId(entry: Pick<CalendarEntry, 'id'>): string 
   return occurrence < 0 ? recordId : recordId.slice(0, occurrence);
 }
 
-export const isOccurrence = (entry: Pick<CalendarEntry, 'series'>): boolean => entry.series !== undefined;
+export const isOccurrence = (entry: Pick<CalendarEntry, 'series'>): boolean =>
+  entry.series !== undefined;
 
 export function occurrenceOf(entry: Pick<CalendarEntry, 'id' | 'series'>): number | null {
   if (!isOccurrence(entry)) return null;
@@ -144,7 +144,13 @@ export type OccurrenceEdit = {
   endsAt: number | null;
 };
 
-export function editOccurrenceBody({ occurrence, title, location, startsAt, endsAt }: OccurrenceEdit): IOccurrenceChange {
+export function editOccurrenceBody({
+  occurrence,
+  title,
+  location,
+  startsAt,
+  endsAt,
+}: OccurrenceEdit): IOccurrenceChange {
   const body: IOccurrenceChange = {
     occurrence: toSeconds(occurrence),
     title,
@@ -160,7 +166,8 @@ export type SeriesDeleteLabels = Pick<ConfirmRequest, 'title' | 'description' | 
 export const seriesDeleteConfirm = (
   entry: Pick<CalendarEntry, 'series'>,
   labels: SeriesDeleteLabels
-): ConfirmRequest | undefined => (isOccurrence(entry) ? { ...labels, intent: 'danger' } : undefined);
+): ConfirmRequest | undefined =>
+  isOccurrence(entry) ? { ...labels, intent: 'danger' } : undefined;
 
 export function availableCalendarEntryActions(
   entry: CalendarEntry,

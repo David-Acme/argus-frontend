@@ -16,8 +16,6 @@ export const MOSAIC_TINTS = [
   'bg-foreground',
 ] as const;
 
-export const TIMELINE_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
-
 export const TASK_STATUS_ORDER = ['doing', 'todo', 'backlog', 'done', 'canceled'] as const;
 
 export const TASK_PRIORITY_WEIGHT: Record<string, number> = {

@@ -7,15 +7,15 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { byStart, CALENDAR_LENSES } from '@/features/agenda';
-import { useReminders } from '@/features/reminders';
 import { useAgendaActions, type AgendaActions } from '@/features/home/hooks/use-agenda-actions';
 import {
   agendaItems,
+  byStart,
+  CALENDAR_LENSES,
   projectNamesOf,
-  type AgendaItem,
-  type DayRange,
-} from '@/features/home/model/agenda-items';
+  useReminders,
+} from '@/features/agenda';
+import type { AgendaItem, DayRange } from '@/features/agenda';
 import type { WordingContext } from '@/features/home/model/agenda-wording';
 
 export type Agenda = {

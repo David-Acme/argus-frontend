@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { nowList } from '@/features/home/model/agenda-items';
+import { nowList } from '@/features/agenda';
 import {
   dayAndTime,
   itemMeta,

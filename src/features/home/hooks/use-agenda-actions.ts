@@ -5,15 +5,14 @@ import { CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { feedback } from '@/shared/theme';
-import { calendarEntryEditHref, removeEntry, toggleTask } from '@/features/agenda';
-import type { useReminders } from '@/features/reminders';
 import {
   agendaMenu,
   agendaRights,
-  type AgendaMenuAction,
-  type AgendaRights,
-} from '@/features/home/model/agenda-actions';
-import type { AgendaItem } from '@/features/home/model/agenda-items';
+  calendarEntryEditHref,
+  removeEntry,
+  toggleTask,
+} from '@/features/agenda';
+import type { AgendaItem, AgendaMenuAction, AgendaRights, useReminders } from '@/features/agenda';
 
 export type AgendaActions = {
   rightsOf: (item: AgendaItem) => AgendaRights;

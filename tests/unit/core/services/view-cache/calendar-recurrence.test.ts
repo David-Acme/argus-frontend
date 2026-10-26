@@ -1,17 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import type { ICalendarEventCacheSource } from '@/core/interfaces';
 import type { CalendarEntry } from '@/core/types';
-import type { ViewWrite } from '@/core/services/view-cache/projection';
-import {
-  agendaScope,
-  agendaSpan,
-  projectAgendaFeed,
-  toCalendarEntries,
-} from '@/core/services/view-cache/calendar.projection';
-import { AGENDA_FEED_INITIAL_WEEKS, AGENDA_FEED_STEP_WEEKS } from '@/shared/constants/cache.constant';
+import { toCalendarEntries } from '@/core/services/view-cache/calendar.projection';
 import { occurrenceLimitFor } from '@/shared/libs/recurrence';
 import {
   RECOMPUTE_WEEKS,
+  recomputeSpan,
   otherHouseholdZone,
   recomputeMedianMs,
   twentySeries,
@@ -117,28 +111,7 @@ describe('recurring events in the agenda', () => {
     expect(entries.map((entry) => new Date(entry.startsAt).getHours())).toEqual([8, 8, 8]);
   });
 
-  test('the agenda feed has more while a series continues after the window', () => {
-    const scope = agendaScope(new Date(2026, 9, 1));
-    const span = agendaSpan(scope, { weeks: 1 });
-    const feed = (series: readonly ICalendarEventCacheSource[]): boolean => {
-      const [write]: ViewWrite[] = projectAgendaFeed(
-        { events: [], reminders: [], tasks: [], series, zone: 'America/Lima', eventsLater: false, tasksLater: false },
-        scope,
-        span
-      );
-      return (write && 'value' in write ? (write.value as { hasMore: boolean }) : { hasMore: false }).hasMore;
-    };
-    expect(feed([])).toBe(false);
-    expect(feed([event()])).toBe(true);
-  });
 });
-
-const feedRows = (writes: ViewWrite[]): CalendarEntry[] => {
-  const [write] = writes;
-  return write && 'value' in write ? (write.value as { rows: CalendarEntry[] }).rows : [];
-};
-
-const loadMores = (weeks: number): number => Math.ceil((weeks - AGENDA_FEED_INITIAL_WEEKS) / AGENDA_FEED_STEP_WEEKS);
 
 describe('the occurrence guard is sized per request', () => {
   test('the guard is the window in days at one occurrence a day, plus a margin', () => {
@@ -148,24 +121,19 @@ describe('the occurrence guard is sized per request', () => {
     expect(occurrenceLimitFor({ from, to: from - 1 })).toBe(0);
   });
 
-  test('a long cumulative agenda window with a daily rule returns every occurrence, none cut', () => {
-    const scope = agendaScope(new Date(2026, 9, 1));
-    const weeks = AGENDA_FEED_INITIAL_WEEKS + loadMores(3 * 52) * AGENDA_FEED_STEP_WEEKS;
-    const span = agendaSpan(scope, { weeks });
+  test('a long window with a daily rule returns every occurrence, none cut', () => {
+    const weeks = 3 * 52;
+    const span = recomputeSpan(weeks);
     const daily = event({
       id: 'd1',
       startsAt: new Date(2026, 8, 1, 7, 30),
       endsAt: null,
       recurrenceRule: 'FREQ=DAILY',
     });
-    const rows = feedRows(
-      projectAgendaFeed(
-        { events: [], reminders: [], tasks: [], series: [daily], zone: null, eventsLater: false, tasksLater: false },
-        scope,
-        span
-      )
+    const rows = toCalendarEntries(
+      { events: [], reminders: [], tasks: [], series: [daily], zone: null },
+      span
     );
-    expect(weeks).toBeGreaterThanOrEqual(3 * 52);
     expect(rows).toHaveLength(weeks * 7);
     expect(new Date(rows[0]?.startsAt ?? 0).getDate()).toBe(1);
     expect(new Date(rows.at(-1)?.startsAt ?? 0).getTime()).toBeLessThanOrEqual(span.to);

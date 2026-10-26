@@ -9,7 +9,7 @@ import { Avatar } from '@/shared/ui/avatar';
 import { Row } from '@/shared/ui/row';
 import { useInScreenColumn } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
-import { listLimit } from '@/features/home/model/agenda-items';
+import { listLimit } from '@/features/agenda';
 import { nextTask, openProjects, projectMeta } from '@/features/home/model/agenda-projects';
 
 type ProjectRowProps = { project: DashboardProjectCard; onOpen: (id: string) => void };

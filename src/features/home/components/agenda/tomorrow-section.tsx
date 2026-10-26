@@ -1,7 +1,7 @@
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Section } from '@/shared/ui/section';
 import { useAgenda } from '@/features/home/hooks/use-agenda';
-import { dayList } from '@/features/home/model/agenda-items';
+import { dayList } from '@/features/agenda';
 import { AgendaRow } from './agenda-row';
 import { FreeRow } from './free-row';
 import { ReminderEditor } from './reminder-editor';

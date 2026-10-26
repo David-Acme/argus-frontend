@@ -1,6 +1,7 @@
 import type { ICalendarEventShareCacheRow, IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { ShareAccess } from '@/core/types';
-import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
+import { defineLens } from '@/shared/libs/optimistic';
+import type { OptimisticLens } from '@/shared/libs/optimistic';
 import { personFullName } from '@/shared/libs/sharing';
 
 export type CalendarShareIntentValues = {

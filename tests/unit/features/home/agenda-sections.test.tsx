@@ -6,8 +6,8 @@ import type { DashboardProjectCard } from '@/core/types';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import type { Agenda } from '@/features/home/hooks/use-agenda';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
-import { agendaMenu, type AgendaMenuAction } from '@/features/home/model/agenda-actions';
-import type { AgendaItem } from '@/features/home/model/agenda-items';
+import { agendaMenu } from '@/features/agenda';
+import type { AgendaItem, AgendaMenuAction } from '@/features/agenda';
 import { screenFocus } from '../../shared/ui/screen-focus';
 import '../../shared/ui/translation-stub';
 import { at, items, prototypeDay, reminder, TODAY, TOMORROW, wording } from './agenda-fixtures';
@@ -59,7 +59,7 @@ mock.module('@/features/home/hooks/use-agenda', () => ({ useAgenda: () => state.
 mock.module('@/features/home/hooks/use-ask-argus', () => ({
   useAskArgus: () => (state.askable ? (draft: string) => calls.asked.push(draft) : null),
 }));
-mock.module('@/features/reminders', () => ({
+mock.module('@/features/agenda/components/reminder-dialog', () => ({
   ReminderDialog: ({ reminder: row }: { reminder: IReminderCacheRow }) => (
     <div role="dialog" aria-label={row.title} />
   ),

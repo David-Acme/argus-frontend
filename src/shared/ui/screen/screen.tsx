@@ -11,6 +11,7 @@ import {
   type WindowLayout,
 } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
+import { PanesProvider } from './screen-column-context';
 import { ScreenScroll } from './screen-scroll';
 import type { ScreenRefresh } from './screen-scroll-types';
 import { ScreenTopBar, type ScreenTopBarProps } from './screen-top-bar';
@@ -19,7 +20,7 @@ import { useScreenScroll } from './use-screen-scroll';
 export type ScreenProps = ScreenTopBarProps & {
   aura?: AuraTone;
   refresh?: ScreenRefresh;
-  columns?: boolean;
+  columns?: boolean | 'medium';
   children: ReactNode;
 };
 
@@ -54,12 +55,15 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
   const desktop = window.windowClass === 'expanded' || window.windowClass === 'wide';
   const header = hasTopBar(bar) ? <ScreenTopBar {...bar} /> : null;
   const field = aura ? <Aura tone={aura} paused={auraHidden} /> : null;
-  if (columns && desktop)
+  const paned = desktop || (columns === 'medium' && window.windowClass === 'medium');
+  if (columns && paned)
     return (
       <View className="bg-bg relative min-h-0 flex-1">
         {field}
         {header ? <View className="px-screen-column-x">{header}</View> : null}
-        <View className="min-h-0 flex-1">{children}</View>
+        <View className="min-h-0 flex-1">
+          <PanesProvider value>{children}</PanesProvider>
+        </View>
       </View>
     );
   return (

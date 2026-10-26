@@ -198,6 +198,13 @@ export interface IReminderCacheRow {
   recurrenceExceptions?: readonly RecurrenceException[];
 }
 
+export interface IReminderCreate {
+  title: string;
+  description: string;
+  scheduledAt: number;
+  recurrenceRule?: string;
+}
+
 export interface IReminderUpdate {
   title?: string;
   description?: string | null;
