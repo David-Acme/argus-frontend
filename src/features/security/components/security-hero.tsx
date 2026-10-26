@@ -5,7 +5,7 @@ import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { GUARD_MODE_ICONS } from '@/features/security/constants';
-import { sharedMode } from '@/features/security/model/environments';
+import { headlineMode, sharedMode } from '@/features/security/model/environments';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
@@ -50,8 +50,7 @@ export function SecurityHero({
   const { t } = useTranslation();
   const shared = sharedMode(environments);
   const effective = environments.map((environment) => environment.effectiveMode);
-  const headline: GuardMode | null =
-    effective.length > 0 && effective.every((mode) => mode === effective[0]) ? (effective[0] ?? null) : null;
+  const headline = headlineMode(environments);
   const armed = effective.filter((mode) => mode === 'armed').length;
   const several = environments.length > 1;
   const [only] = environments;

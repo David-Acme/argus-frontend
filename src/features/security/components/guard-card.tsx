@@ -3,7 +3,7 @@ import type { GuardEnvironment } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { GUARD_MODE_ICONS } from '@/features/security/constants';
-import { sharedMode } from '@/features/security/model/environments';
+import { headlineMode, sharedMode } from '@/features/security/model/environments';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
@@ -17,8 +17,7 @@ const hover = Platform.select({ web: 'hover:bg-surface-secondary/60', default: '
 export function GuardCard({ environments, onPress }: GuardCardProps) {
   const { t } = useTranslation();
   const list = environments ?? [];
-  const effective = list.map((environment) => environment.effectiveMode);
-  const mode = effective.length > 0 && effective.every((item) => item === effective[0]) ? (effective[0] ?? null) : null;
+  const mode = headlineMode(list);
   const shared = sharedMode(list);
   const label =
     list.length > 1
