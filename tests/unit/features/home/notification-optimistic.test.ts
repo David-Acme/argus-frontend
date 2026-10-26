@@ -32,7 +32,11 @@ describe('notification delete intents', () => {
   test('a thread is hidden by one intent per entry it shows and deleted by its thread key', () => {
     const [thread] = groupNotifications(feed);
     if (!thread) throw new Error('expected the episode thread');
-    expect(threadTargetOf(thread, '1')).toEqual({ userId: '1', threadKey: 'guard:episode:7', ids: ['30', '10'] });
+    expect(threadTargetOf(thread, '1')).toEqual({
+      userId: '1',
+      threadKey: 'guard:episode:7',
+      ids: ['30', '10'],
+    });
     expect(threadDeleteIntents(thread)).toEqual([
       { table: 'notification', kind: 'delete', recordId: '30' },
       { table: 'notification', kind: 'delete', recordId: '10' },
@@ -52,7 +56,12 @@ describe('notification delete intents', () => {
 
   test('a delete beside a read keeps the read on the row that stays', () => {
     const intents = registry();
-    intents.begin({ table: 'notification', kind: 'update', recordId: '20', values: { isRead: true } });
+    intents.begin({
+      table: 'notification',
+      kind: 'update',
+      recordId: '20',
+      values: { isRead: true },
+    });
     intents.begin({ table: 'notification', kind: 'delete', recordId: '30' });
 
     const rows = applyIntents(feed, intents.snapshot(), NOTIFICATION_LENSES);
@@ -99,7 +108,9 @@ describe('notification read intents', () => {
       ['20', false],
       ['10', true],
     ]);
-    expect(groupNotifications(rows).find((item) => item.key === 'thread:guard:episode:7')?.unreadIds).toEqual([]);
+    expect(
+      groupNotifications(rows).find((item) => item.key === 'thread:guard:episode:7')?.unreadIds
+    ).toEqual([]);
   });
 });
 

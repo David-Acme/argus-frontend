@@ -8,6 +8,7 @@ export type ScreenColumnsProps = { children: ReactNode };
 
 export type ScreenColumnProps = {
   width?: number;
+  max?: number;
   label?: string;
   grows?: number;
   children: ReactNode;
@@ -16,6 +17,11 @@ export type ScreenColumnProps = {
 const CONTENT = { maxWidth: layout.contentMax };
 
 const FILL = { flexGrow: 1 };
+
+function columnStyle(width: number | undefined, max: number | undefined) {
+  if (width !== undefined) return { width, flexGrow: 0, flexShrink: 0 };
+  return max === undefined ? undefined : { maxWidth: max };
+}
 
 export function ScreenColumns({ children }: ScreenColumnsProps) {
   if (!usePanes()) return <>{children}</>;
@@ -28,11 +34,11 @@ export function ScreenColumns({ children }: ScreenColumnsProps) {
   );
 }
 
-export function ScreenColumn({ width, label, grows, children }: ScreenColumnProps) {
+export function ScreenColumn({ width, max, label, grows, children }: ScreenColumnProps) {
   const panes = usePanes();
   if (!panes) return <>{children}</>;
   const items = Children.toArray(children);
-  const fixed = width === undefined ? undefined : { width, flexGrow: 0, flexShrink: 0 };
+  const fixed = columnStyle(width, max);
   const growing = grows ?? items.length - 1;
   return (
     <ScrollView

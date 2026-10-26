@@ -14,7 +14,7 @@ import { faceAlternatives } from '@/features/auth/model/face-alternatives';
 import { LOGIN_QR_ROUTE } from '@/features/auth/model/login-entry';
 import { useQrScanStore } from '@/core/stores';
 import { faceErrorMessage } from '@/features/auth/model/face-error';
-import { CameraView } from 'expo-camera';
+import { DeviceCamera } from '@/shared/components/device-camera/device-camera';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { consentDraft } from '@/features/privacy';
 import { useCallback, useEffect, useState } from 'react';
@@ -117,7 +117,7 @@ export default function FaceScreen() {
   return (
     <View className="bg-background flex-1 justify-end" style={{ paddingTop: insets.top }}>
       {granted && cameraActive ? (
-        <CameraView
+        <DeviceCamera
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
           facing="front"

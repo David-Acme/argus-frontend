@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import type { CalendarEntry } from '@/core/types';
 import type { ProjectionContext, ViewWrite } from '@/core/services/view-cache/projection';
-import { activityLevels } from '@/core/services/view-cache/activity.projection';
 import {
   calendarEntryState,
   calendarMonthScope,
@@ -16,13 +15,11 @@ import {
   type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
 import { projectEventList } from '@/core/services/view-cache/event.projection';
-import { projectGettingStarted } from '@/core/services/view-cache/getting-started.projection';
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
 import { projectSummary } from '@/core/services/view-cache/summary.projection';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
-import { MOSAIC_COLUMNS, MOSAIC_ROWS } from '@/shared/constants/dashboard.constant';
 
 const now = new Date(2026, 9, 15, 10, 30);
 const ctx: ProjectionContext = { userId: '1', now };
@@ -342,23 +339,6 @@ describe('notification projection', () => {
   });
 });
 
-describe('activity projection', () => {
-  const at = (day: number, hour: number) => new Date(2026, 9, day, hour);
-
-  test('the mosaic places today in the last column and scales to the peak', () => {
-    const levels = activityLevels([{ occurredAt: at(15, 1) }, { occurredAt: at(15, 1) }, { occurredAt: at(14, 23) }], now);
-    expect(levels).toHaveLength(MOSAIC_ROWS);
-    expect(levels[0]).toHaveLength(MOSAIC_COLUMNS);
-    expect(levels[0]?.[MOSAIC_COLUMNS - 1]).toBe(3);
-    expect(levels[MOSAIC_ROWS - 1]?.[MOSAIC_COLUMNS - 2]).toBe(2);
-  });
-
-  test('an empty week is all zeros and future events are ignored', () => {
-    const levels = activityLevels([{ occurredAt: at(16, 9) }], now);
-    expect(levels.flat().every((value) => value === 0)).toBe(true);
-  });
-});
-
 describe('summary projection', () => {
   test('counts what the home cards show', () => {
     const writes = projectSummary(
@@ -489,49 +469,5 @@ describe('calendar entry state', () => {
     if (!reminder) throw new Error('no reminder');
     expect(calendarEntryState(reminder, at(17))).toBe('upcoming');
     expect(calendarEntryState(reminder, at(18, 1))).toBe('overdue');
-  });
-});
-
-describe('getting-started signals', () => {
-  test('each source is counted into the cache payload', () => {
-    const writes = projectGettingStarted({
-      cameras: [1, 2],
-      zones: [],
-      events: 7,
-      projects: [1],
-      people: [1, 2, 3],
-      invitations: [],
-      argusTalks: 1,
-    });
-    expect(valueOf(writes, VIEW_CACHE_KEYS.gettingStartedSignals)).toEqual({
-      cameras: 2,
-      zones: 0,
-      events: 7,
-      projects: 1,
-      people: 3,
-      invitations: 0,
-      argusTalks: 1,
-    });
-  });
-
-  test('an empty session writes zeroes', () => {
-    const writes = projectGettingStarted({
-      cameras: [],
-      zones: [],
-      events: 0,
-      projects: [],
-      people: [],
-      invitations: [],
-      argusTalks: 0,
-    });
-    expect(valueOf(writes, VIEW_CACHE_KEYS.gettingStartedSignals)).toEqual({
-      cameras: 0,
-      zones: 0,
-      events: 0,
-      projects: 0,
-      people: 0,
-      invitations: 0,
-      argusTalks: 0,
-    });
   });
 });

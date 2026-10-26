@@ -1,5 +1,5 @@
-entry-chunk-bytes 6493364
-dist-bytes 8920271
+entry-chunk-bytes 6444328
+dist-bytes 8922342
 lazy livekit-client
 lazy activity-screen
 lazy agenda-screen
@@ -30,3 +30,5 @@ lazy users-screen
 lazy visitor-detail-screen
 lazy visitors-screen
 lazy watch-screen
+lazy expo-camera
+lazy qr-code

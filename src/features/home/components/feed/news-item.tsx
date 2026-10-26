@@ -30,6 +30,7 @@ export type NewsItemProps = {
   thread: NotificationThread;
   now: number;
   onRead: (thread: NotificationThread) => void;
+  onRemove?: (thread: NotificationThread) => void;
 };
 
 type NewsActionsProps = {
@@ -38,6 +39,7 @@ type NewsActionsProps = {
   sight: ReturnType<typeof useSightNotice>;
   onRead: () => void;
   onOpen: () => void;
+  onRemove?: () => void;
 };
 
 const ACTION_KEYS = {
@@ -69,7 +71,7 @@ function useNewsWhen(thread: NotificationThread, now: number): string {
   ].join(' · ');
 }
 
-function NewsActions({ thread, action, sight, onRead, onOpen }: NewsActionsProps) {
+function NewsActions({ thread, action, sight, onRead, onOpen, onRemove }: NewsActionsProps) {
   const { t } = useTranslation();
   const request = action === 'module' ? moduleRequestOf(thread) : null;
   const watchKind = watchNotificationKind(thread.kind);
@@ -83,11 +85,21 @@ function NewsActions({ thread, action, sight, onRead, onOpen }: NewsActionsProps
       {action === 'review' || action === 'reply' ? (
         <Button compact label={t(ACTION_KEYS[action])} onPress={onOpen} />
       ) : null}
+      {onRemove ? (
+        <Button
+          iconOnly
+          compact
+          icon="x"
+          iconSize="small"
+          label={t('screens.home.thread.delete', { title: thread.latest.title })}
+          onPress={onRemove}
+        />
+      ) : null}
     </>
   );
 }
 
-export function NewsItem({ thread, now, onRead }: NewsItemProps) {
+export function NewsItem({ thread, now, onRead, onRemove }: NewsItemProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const sight = useSightNotice(thread.kind, thread.latest.data);
@@ -98,7 +110,11 @@ export function NewsItem({ thread, now, onRead }: NewsItemProps) {
   const avatar = newsAvatarOf(thread);
   const words = newsWordsOf(thread.latest, t('screens.home.news.sender'), sight?.title ?? null);
   const when = useNewsWhen(thread, now);
-  const acts = sight !== null || watchNotificationKind(thread.kind) !== null || action !== null;
+  const acts =
+    sight !== null ||
+    watchNotificationKind(thread.kind) !== null ||
+    action !== null ||
+    onRemove !== undefined;
   const read = () => onRead(thread);
   const open = () => {
     read();
@@ -121,7 +137,14 @@ export function NewsItem({ thread, now, onRead }: NewsItemProps) {
       unreadLabel={isThreadRead(thread) ? undefined : t('screens.home.thread.unread')}
       actions={
         acts ? (
-          <NewsActions thread={thread} action={action} sight={sight} onRead={read} onOpen={open} />
+          <NewsActions
+            thread={thread}
+            action={action}
+            sight={sight}
+            onRead={read}
+            onOpen={open}
+            onRemove={onRemove ? () => onRemove(thread) : undefined}
+          />
         ) : undefined
       }
       onPress={newsPressable(thread, target) ? open : undefined}

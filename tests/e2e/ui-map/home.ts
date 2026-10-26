@@ -181,14 +181,11 @@ const hover =
     await sleep(500);
   };
 
-const openBell = async (scene: Scene): Promise<void> => {
-  await button(scene, 'screens.home.notifications').first().click();
-  await sleep(900);
-};
-
 const search =
   (value: string) =>
   async (scene: Scene): Promise<void> => {
+    await button(scene, 'screens.home.inicio.search').first().click();
+    await sleep(500);
     await scene.page.getByRole('textbox').first().fill(value);
     await sleep(700);
   };
@@ -295,13 +292,6 @@ export const HOME: ScreenSpec[] = [
           await sleep(14000);
         },
       },
-      {
-        state: 'bell-popover',
-        rows: POPULATED,
-        act: openBell,
-        notes: 'opening the bell marks every unread notification read',
-      },
-      { state: 'bell-popover-empty', act: openBell },
       { state: 'search-no-match', rows: POPULATED, act: search('zzzz') },
       { state: 'search-match', rows: POPULATED, act: search('Mudanza') },
       {
@@ -408,7 +398,7 @@ export const HOME: ScreenSpec[] = [
       {
         state: 'nav-tooltip',
         rows: POPULATED,
-        act: hover('screens.home.projects'),
+        act: hover('screens.projects.title'),
         notes: 'pointer over a rail tab (rail only from 640 px)',
       },
       {

@@ -1,7 +1,11 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { notificationThreadKey } from '@/core/services/notification';
 import type { NotificationThreadTarget } from '@/core/types';
-import { defineLens, type OptimisticIntentInput, type OptimisticLens } from '@/shared/libs/optimistic';
+import {
+  defineLens,
+  type OptimisticIntentInput,
+  type OptimisticLens,
+} from '@/shared/libs/optimistic';
 import type { NotificationThread } from '@/features/home/model/notification-threads';
 
 export const NOTIFICATION_LENSES: readonly OptimisticLens<INotificationPreviewCacheRow>[] = [
@@ -15,7 +19,11 @@ export const NOTIFICATION_LENSES: readonly OptimisticLens<INotificationPreviewCa
 export function threadDeleteIntents(
   thread: Pick<NotificationThread, 'entries'>
 ): OptimisticIntentInput[] {
-  return thread.entries.map((entry) => ({ table: 'notification', kind: 'delete', recordId: entry.id }));
+  return thread.entries.map((entry) => ({
+    table: 'notification',
+    kind: 'delete',
+    recordId: entry.id,
+  }));
 }
 
 export function notificationReadIntents(ids: readonly string[]): OptimisticIntentInput[] {

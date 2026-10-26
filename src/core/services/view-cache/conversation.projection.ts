@@ -88,7 +88,6 @@ export function projectConversations({ summaries }: ConversationProjectionInput)
   const list = summaries.map(summaryOf).sort(compareSummaries);
   return [
     { key: VIEW_CACHE_KEYS.conversationList, rows: list, limit: VIEW_CACHE_LIST_LIMIT },
-    { key: VIEW_CACHE_KEYS.conversationUnread, value: list.reduce((total, summary) => total + summary.unread, 0) },
   ];
 }
 

@@ -48,8 +48,23 @@ describe('HomePeopleSection', () => {
     expect(screen.getByText('en casa desde 00:10')).toBeDefined();
     expect(screen.getByText('en casa desde 00:45')).toBeDefined();
     expect(screen.getByText('fuera desde el 5 ene')).toBeDefined();
-    expect(screen.getByText('sin datos')).toBeDefined();
+    expect(screen.getByText('Aún no sé si está en casa')).toBeDefined();
     expect(screen.getByText('A')).toBeDefined();
+  });
+
+  test('alone and unknown it says nothing; me unknown among others asks for a camera or the phone', () => {
+    people.people = [person('1', 'Ana', 'unknown', null, true)];
+    const { container, unmount } = render(<HomePeopleSection />);
+    expect(container.textContent).toBe('');
+    unmount();
+    people.people = [
+      person('1', 'Ana', 'unknown', null, true),
+      person('2', 'Luis', 'home', at(0, 45)),
+    ];
+    render(<HomePeopleSection />);
+    expect(
+      screen.getByText('Aún no sé si estás en casa · conecta una cámara o tu teléfono')
+    ).toBeDefined();
   });
 
   test('in a desktop column it is the same list inside the column', () => {

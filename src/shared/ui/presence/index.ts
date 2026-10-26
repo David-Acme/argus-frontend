@@ -1,4 +1,5 @@
 export { Presence, type PresenceProps } from './presence';
+export { useCentrePresence, useHeroPresence } from './presence-focus';
 export {
   presenceEvents,
   presenceStates,

@@ -98,10 +98,14 @@ export type ModuleRequestThread = {
   requestedByName: string | null;
 };
 
-export function moduleRequestOf(thread: Pick<NotificationThread, 'kind' | 'latest'>): ModuleRequestThread | null {
+export function moduleRequestOf(
+  thread: Pick<NotificationThread, 'kind' | 'latest'>
+): ModuleRequestThread | null {
   if (thread.kind !== 'module_request') return null;
   const moduleId = textField(thread.latest, 'moduleId');
-  return moduleId ? { moduleId, requestedByName: textField(thread.latest, 'requestedByName') } : null;
+  return moduleId
+    ? { moduleId, requestedByName: textField(thread.latest, 'requestedByName') }
+    : null;
 }
 
 export type AlertTimes = {
@@ -111,7 +115,9 @@ export type AlertTimes = {
 
 function epochMsField(row: NotificationRow, field: string): number | null {
   const value = row.data[field];
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value * 1000 : null;
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+    ? value * 1000
+    : null;
 }
 
 export function alertTimesOf(row: NotificationRow): AlertTimes | null {
@@ -149,13 +155,19 @@ export function missedCallId(thread: Pick<NotificationThread, 'kind' | 'latest'>
 
 export const HOUSEHOLD_MESSAGE_KIND = 'household_message';
 
-export function householdMessageCounterpart(data: Readonly<Record<string, unknown>>): number | null {
+export function householdMessageCounterpart(
+  data: Readonly<Record<string, unknown>>
+): number | null {
   if (data.kind !== HOUSEHOLD_MESSAGE_KIND) return null;
   return validCounterpartId(data.counterpartId) ?? validCounterpartId(data.fromUserId);
 }
 
-export function messageCounterpartOf(thread: Pick<NotificationThread, 'kind' | 'latest'>): number | null {
-  return thread.kind === HOUSEHOLD_MESSAGE_KIND ? householdMessageCounterpart(thread.latest.data) : null;
+export function messageCounterpartOf(
+  thread: Pick<NotificationThread, 'kind' | 'latest'>
+): number | null {
+  return thread.kind === HOUSEHOLD_MESSAGE_KIND
+    ? householdMessageCounterpart(thread.latest.data)
+    : null;
 }
 
 export function isThreadRead(thread: Pick<NotificationThread, 'unreadIds'>): boolean {

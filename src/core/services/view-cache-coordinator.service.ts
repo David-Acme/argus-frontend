@@ -29,7 +29,6 @@ import { projectCalendarShares } from './view-cache/calendar-share.projection';
 import { projectCameras } from './view-cache/camera.projection';
 import { projectConversations, projectConversationThread } from './view-cache/conversation.projection';
 import { projectEventList } from './view-cache';
-import { projectGettingStarted } from './view-cache/getting-started.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
 import { ModuleSourceGate } from './view-cache/module-source-gate';
 import { PagedView, type IPagedView, type PageDirection } from './view-cache/paged-view';
@@ -63,7 +62,6 @@ function sessionSources(userId: string) {
     reminders: shared(reminderService.observeForUser(userId)),
     unread: shared(notificationService.observeUnreadCountForUser(userId)),
     conversations: shared(conversationService.observeSummaryFacts(userId)),
-    argusTalks: shared(conversationService.observeArgusTalks(userId)),
     users: shared(userService.observeDirectory()),
     invitations: shared(userInvitationService.observeList()),
   };
@@ -129,21 +127,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
           tasks: sources.tasks,
         }),
         project: projectSummary,
-      },
-      ctx,
-    ),
-    startProjection(
-      {
-        sources: () => ({
-          cameras: sources.cameras,
-          zones: sources.zones,
-          events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeCount(), 0),
-          projects: sources.projects,
-          people: sources.users,
-          invitations: sources.invitations,
-          argusTalks: sources.argusTalks,
-        }),
-        project: projectGettingStarted,
       },
       ctx,
     ),

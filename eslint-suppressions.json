@@ -195,9 +195,6 @@
     "max-lines": {
       "count": 1
     },
-    "max-lines-per-function": {
-      "count": 1
-    },
     "max-params": {
       "count": 1
     }
@@ -623,9 +620,6 @@
     }
   },
   "src/features/auth/hooks/use-face-capture.ts": {
-    "@typescript-eslint/consistent-type-imports": {
-      "count": 1
-    },
     "complexity": {
       "count": 3
     },
@@ -1255,114 +1249,7 @@
       "count": 1
     }
   },
-  "src/features/home/components/activity/activity-card.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 2
-    }
-  },
-  "src/features/home/components/activity/mosaic-chart.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/features/home/components/camera-grid.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/features/home/components/camera-tile.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 2
-    }
-  },
-  "src/features/home/components/dashboard-search-field.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/home/components/home-aside.tsx": {
-    "i18next/no-literal-string": {
-      "count": 6
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/home/components/notification-popover.tsx": {
-    "argus/no-visual-timer": {
-      "count": 1
-    }
-  },
-  "src/features/home/components/notification-thread-row.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/home/components/project-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    }
-  },
-  "src/features/home/components/today-agenda.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/home/model/home-search.ts": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/home/screens/home-screen.tsx": {
-    "i18next/no-literal-string": {
-      "count": 7
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 1
-    }
-  },
   "src/features/in-app-alert/components/in-app-alert-banner.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/modules/components/getting-started-card.tsx": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 1
-    },
     "better-tailwindcss/no-restricted-classes": {
       "count": 1
     }
@@ -1393,14 +1280,6 @@
   },
   "src/features/modules/components/module-intro.tsx": {
     "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/modules/components/modules-progress-chip.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
       "count": 1
     }
   },

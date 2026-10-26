@@ -50,14 +50,14 @@ test('a session closed on one device ends the other at once, and the list that c
   await second.open();
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => second.page.getByRole('heading', { name: 'Welcome, Ana' }).count(), { timeout: 10000 }).toBe(1);
+  await expect.poll(() => second.page.getByText(/Good (morning|afternoon|evening), Ana/).first().count(), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'You').first().click();
   await expect(screen.getByRole('button', 'Sign out of Teléfono de Ana')).toBeVisible();
   await screen.getByRole('button', 'Sign out of Teléfono de Ana').click();
 
   await expect(screen.getByRole('button', 'Sign out of Teléfono de Ana')).toBeHidden({ timeout: LIVE_MS });
-  await expect.poll(() => second.page.getByRole('heading', { name: 'Welcome, Ana' }).count(), { timeout: LIVE_MS }).toBe(0);
+  await expect.poll(() => second.page.getByText(/Good (morning|afternoon|evening), Ana/).first().count(), { timeout: LIVE_MS }).toBe(0);
   await expect.poll(() => second.page.evaluate(() => window.localStorage.getItem('argus-storage:app.session.user'))).toBeNull();
   await expect.poll(() => connected(baseUrl, 'B')).toBe(0);
 
