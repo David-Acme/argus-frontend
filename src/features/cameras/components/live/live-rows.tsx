@@ -1,13 +1,20 @@
 import { useRouter } from 'expo-router';
 import type { ICameraCacheRow } from '@/core/interfaces';
+import type { TranslationKey } from '@/core/types';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 import { Avatar } from '@/shared/ui/avatar';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
-import { clipsToday, settingsSummaryOf, zoneNames } from '@/features/cameras/model/camera-settings';
-import type { SettingsSection } from '@/features/cameras/model/camera-settings';
+import {
+  clipsToday,
+  recordingsLineOf,
+  settingsSummaryOf,
+  zoneNames,
+} from '@/features/cameras/model/camera-settings';
+import type { RecordingsLine, SettingsSection } from '@/features/cameras/model/camera-settings';
 
 export type LiveRowsProps = {
   camera: ICameraCacheRow;
@@ -17,13 +24,26 @@ export type LiveRowsProps = {
 
 const MINUTE_MS = 60_000;
 
-function useRecordingsMeta(camera: ICameraCacheRow, clips: boolean): string | undefined {
+const RECORDINGS_LINE = {
+  off: 'screens.cameras.rows.recordings-off',
+  private: 'screens.cameras.rows.recordings-private',
+  paused: 'screens.cameras.rows.recordings-paused',
+  unread: 'screens.cameras.rows.recordings-unread',
+  reading: 'screens.cameras.rows.recordings-reading',
+} as const satisfies Record<Exclude<RecordingsLine, 'count'>, TranslationKey>;
+
+function useRecordingsMeta(camera: ICameraCacheRow, clips: boolean): string {
   const { t } = useTranslation();
   const now = useNow(MINUTE_MS);
-  const records = camera.recordMode !== 'off';
-  const state = useCameraClips(camera.id, clips && records);
-  if (!records) return t('screens.cameras.rows.recordings-off');
-  if (state.status !== 'ready' && state.clips.length === 0) return undefined;
+  const state = useCameraClips(camera.id, clips && camera.recordMode !== 'off');
+  const line = recordingsLineOf({
+    recordMode: camera.recordMode,
+    masked: cameraPrivacyMasked(camera.privacyState),
+    enabled: camera.isEnabled,
+    status: state.status,
+    hasClips: state.clips.length > 0,
+  });
+  if (line !== 'count') return t(RECORDINGS_LINE[line]);
   const count = clipsToday(state.clips, now);
   if (count === 0) return t('screens.cameras.rows.recordings-none');
   if (count === 1) return t('screens.cameras.rows.recordings-one');

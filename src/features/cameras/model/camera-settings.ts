@@ -68,3 +68,22 @@ export function zoneNames(zones: readonly Pick<IZoneCacheRow, 'name' | 'isEnable
     .map((zone) => zone.name)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 }
+
+export type RecordingsLine = 'off' | 'private' | 'paused' | 'unread' | 'reading' | 'count';
+
+export type RecordingsLineInput = {
+  recordMode: string;
+  masked: boolean;
+  enabled: boolean;
+  status: 'idle' | 'loading' | 'ready' | 'failed';
+  hasClips: boolean;
+};
+
+export function recordingsLineOf(input: RecordingsLineInput): RecordingsLine {
+  if (input.recordMode === 'off') return 'off';
+  if (input.hasClips) return 'count';
+  if (input.masked) return 'private';
+  if (!input.enabled) return 'paused';
+  if (input.status === 'failed') return 'unread';
+  return input.status === 'ready' ? 'count' : 'reading';
+}

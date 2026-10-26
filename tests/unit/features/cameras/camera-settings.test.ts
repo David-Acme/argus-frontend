@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   clipsToday,
+  recordingsLineOf,
   settingsSectionsOf,
   settingsSummaryOf,
   startOfDay,
@@ -84,5 +85,28 @@ describe('the live rows', () => {
         { name: 'Zona 2', isEnabled: true },
       ])
     ).toEqual(['Jardín', 'Ventana del vecino', 'Zona 2', 'Zona 10']);
+  });
+});
+
+describe('the recordings row says why when it has no count', () => {
+  const base = {
+    recordMode: 'events',
+    masked: false,
+    enabled: true,
+    status: 'ready',
+    hasClips: false,
+  } as const;
+
+  test('known clips are counted whatever else holds', () => {
+    expect(recordingsLineOf({ ...base, masked: true, hasClips: true })).toBe('count');
+    expect(recordingsLineOf(base)).toBe('count');
+  });
+
+  test('without clips it names the reason in order', () => {
+    expect(recordingsLineOf({ ...base, recordMode: 'off' })).toBe('off');
+    expect(recordingsLineOf({ ...base, masked: true, status: 'failed' })).toBe('private');
+    expect(recordingsLineOf({ ...base, enabled: false, status: 'failed' })).toBe('paused');
+    expect(recordingsLineOf({ ...base, status: 'failed' })).toBe('unread');
+    expect(recordingsLineOf({ ...base, status: 'loading' })).toBe('reading');
   });
 });
