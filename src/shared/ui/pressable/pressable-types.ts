@@ -14,7 +14,7 @@ export type SurfaceAccessibility = {
   tabStop?: boolean;
 };
 
-export type SurfacePressed = { scale?: PressScaleKind; fill?: boolean };
+export type SurfacePressed = { scale?: PressScaleKind; fill?: boolean; grow?: boolean };
 
 export type PressableSurfaceProps = {
   a11y: SurfaceAccessibility;

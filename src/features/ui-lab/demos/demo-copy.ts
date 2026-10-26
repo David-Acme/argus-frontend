@@ -186,6 +186,8 @@ export const copy = {
   garage: 'Garaje',
   cameraOff: 'Apagada',
   luisArrived: 'Luis llegó',
+  clipLuisArrived: 'Clip · Luis llegó',
+  cameraStrip: 'Cámaras y último clip',
   see: 'Ver',
   talk: 'Hablar',
   play: 'Reproducir',

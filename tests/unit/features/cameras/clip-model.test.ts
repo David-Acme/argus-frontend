@@ -11,11 +11,13 @@ import {
   clipOfRow,
   clipRowSubtitle,
   clipRowsOf,
+  clipSourceIds,
   clipTriggerLabelKey,
   formatClipDuration,
   formatClipSize,
   isImageClip,
   mergeClipPages,
+  newestClips,
   olderClipCursor,
 } from '@/features/cameras/model/camera-clips';
 import {
@@ -210,5 +212,28 @@ describe('record modes', () => {
     expect(recordsSomething('off')).toBe(false);
     expect(recordsSomething('motion')).toBe(true);
     expect(recordModeSummary()).toEqual({ off: 0, motion: 0, events: 0, continuous: 0 });
+  });
+
+  test('the newest clips across cameras come first, a tie broken by the higher id', () => {
+    const rows = clipRowsOf({
+      cameraId: 0,
+      clips: [
+        { id: 3, cameraId: 1, startedAt: 100 },
+        { id: 9, cameraId: 2, startedAt: 300 },
+        { id: 4, cameraId: 1, startedAt: 300 },
+      ] as unknown as ICameraClips['clips'],
+    });
+    expect(newestClips(rows, 2).map((clip) => clip.id)).toEqual(['9', '4']);
+  });
+
+  test('clips are read only from enabled, saved cameras outside privacy', () => {
+    const camera = { isEnabled: true, privacyState: 'off' as const, privacyObeyed: false };
+    expect(
+      clipSourceIds([
+        { ...camera, id: '1' },
+        { ...camera, id: '2', isEnabled: false },
+        { ...camera, id: '3', privacyState: 'on' },
+      ])
+    ).toEqual(['1']);
   });
 });

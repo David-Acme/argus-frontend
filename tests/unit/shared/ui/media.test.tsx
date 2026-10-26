@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useEffectsOverrides } from '@/shared/theme';
 import { Media } from '@/shared/ui/media/media';
 import { MediaFrame } from '@/shared/ui/media/media-frame';
+import { MediaStrip } from '@/shared/ui/media/media-strip';
 import { screenFocus } from './screen-focus';
 import {
   Controls,
@@ -25,6 +26,36 @@ describe('Media', () => {
     expect(screen.getByText('En vivo')).toBeDefined();
     fireEvent.click(tile);
     expect(opened).toBe(1);
+  });
+
+  test('a filling tile keeps its words and its press while it stretches to its row', () => {
+    let opened = 0;
+    render(
+      <>
+        <Media
+          fill
+          name="Patio trasero"
+          detail="ayer"
+          live="En vivo"
+          onPress={() => (opened += 1)}
+        />
+        <Media fill name="Garaje" detail="Apagada" dormant="off" />
+      </>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Patio trasero, En vivo, ayer' }));
+    expect(opened).toBe(1);
+    expect(screen.getByText('Apagada')).toBeDefined();
+  });
+
+  test('a strip names itself and holds its tiles in order', () => {
+    render(
+      <MediaStrip label="Cámaras y último clip">
+        <Media name="Clip · Puerta principal" detail="14:45" />
+        <Media name="Cocina" live="En vivo" />
+      </MediaStrip>
+    );
+    const strip = screen.getByLabelText('Cámaras y último clip');
+    expect(strip.textContent).toBe('Clip · Puerta principal14:45En vivoCocina');
   });
 
   test('the privacy and off states say so in words and hide the player and the live chip', () => {

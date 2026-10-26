@@ -37,7 +37,7 @@ export function ScreenColumn({ width, label, grows, children }: ScreenColumnProp
   const desktop = useDesktop();
   if (!desktop) return <>{children}</>;
   const items = Children.toArray(children);
-  const fixed = width === undefined ? undefined : { width };
+  const fixed = width === undefined ? undefined : { width, flexGrow: 0, flexShrink: 0 };
   const growing = grows ?? items.length - 1;
   return (
     <ScrollView
