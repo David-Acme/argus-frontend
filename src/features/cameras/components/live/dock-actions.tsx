@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { feedback } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
@@ -6,7 +8,12 @@ import { Inline } from '@/shared/ui/layout';
 import type { TalkDock } from '@/features/cameras/hooks/use-talk-dock';
 import type { LiveControls } from '@/features/cameras/model/camera-stage';
 
-export type DockActionsProps = { dock: TalkDock; controls: LiveControls; cameraName: string };
+export type DockActionsProps = {
+  dock: TalkDock;
+  controls: LiveControls;
+  cameraName: string;
+  center?: ReactNode;
+};
 
 type SirenButtonProps = { dock: TalkDock };
 
@@ -73,7 +80,7 @@ function CallButton({ dock }: SirenButtonProps) {
   );
 }
 
-export function DockActions({ dock, controls, cameraName }: DockActionsProps) {
+export function DockActions({ dock, controls, cameraName, center }: DockActionsProps) {
   const { t } = useTranslation();
   const { siren } = dock;
   if (!controls.talk && !controls.siren) return null;
@@ -81,6 +88,7 @@ export function DockActions({ dock, controls, cameraName }: DockActionsProps) {
     <>
       <Inline gap={2} fill>
         {controls.talk ? <CallButton dock={dock} /> : null}
+        {center ? <View className="items-center">{center}</View> : null}
         {controls.siren ? <SirenButton dock={dock} /> : null}
       </Inline>
       <Confirm

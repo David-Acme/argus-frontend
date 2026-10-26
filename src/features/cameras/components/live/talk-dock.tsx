@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useThemeTokens } from '@/shared/theme';
+import { size, talkSizeOf, useHeightLayout, useThemeTokens } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Notice } from '@/shared/ui/notice';
 import { PressableSurface } from '@/shared/ui/pressable';
@@ -19,11 +19,13 @@ export type TalkDockProps = {
   cameraName: string;
 };
 
-type TalkButtonProps = { dock: TalkDockState };
+type TalkButtonProps = { dock: TalkDockState; compact: boolean };
 
-type DockCaptionProps = { dock: TalkDockState; cameraName: string };
+type DockCaptionProps = { dock: TalkDockState; cameraName: string; compact: boolean };
 
-function TalkButton({ dock }: TalkButtonProps) {
+function TalkButton({ dock, compact }: TalkButtonProps) {
+  const frame = compact ? 'size-talk-short' : 'size-talk';
+  const glyph = compact ? 'default' : 'large';
   const { t } = useTranslation();
   const { elevation } = useThemeTokens();
   const ring = { boxShadow: elevation.talk };
@@ -35,9 +37,9 @@ function TalkButton({ dock }: TalkButtonProps) {
         onPress={dock.call.end}
         haptic="impactLight"
         pressed={{ scale: 'surface' }}
-        className="size-talk bg-alert items-center justify-center rounded-full"
+        className={clsx(frame, 'bg-alert items-center justify-center rounded-full')}
         style={ring}>
-        <Icon name="phone" size="large" tone="on-ink" />
+        <Icon name="phone" size={glyph} tone="on-ink" />
       </PressableSurface>
     );
   return (
@@ -50,17 +52,19 @@ function TalkButton({ dock }: TalkButtonProps) {
       hold={dock.hold}
       pressed={{ scale: 'surface' }}
       className={clsx(
-        'size-talk items-center justify-center rounded-full',
+        frame,
+        'items-center justify-center rounded-full',
         dock.phase === 'talking' ? 'bg-accent-fill' : 'bg-ink'
       )}
       style={ring}>
-      <Icon name="mic" size="large" tone="on-ink" />
+      <Icon name="mic" size={glyph} tone="on-ink" />
     </PressableSurface>
   );
 }
 
-function DockCaption({ dock, cameraName }: DockCaptionProps) {
+function DockCaption({ dock, cameraName, compact }: DockCaptionProps) {
   const { t } = useTranslation();
+  if (dock.phase === 'idle' && compact) return null;
   if (dock.phase === 'idle')
     return (
       <Text variant="meta" align="center">
@@ -82,12 +86,14 @@ function DockCaption({ dock, cameraName }: DockCaptionProps) {
 export function TalkDock({ dock, controls, note, cameraName }: TalkDockProps) {
   const { t } = useTranslation();
   const { trouble } = dock;
+  const compact = talkSizeOf(useHeightLayout()) === size.talkShort;
+  const button = controls.talk ? <TalkButton dock={dock} compact={compact} /> : null;
   return (
     <View className="mt-talk-top mb-talk-bottom gap-talk-gap">
-      {controls.talk ? (
+      {button && !compact ? (
         <View className="gap-talk-gap items-center">
-          <TalkButton dock={dock} />
-          <DockCaption dock={dock} cameraName={cameraName} />
+          {button}
+          <DockCaption dock={dock} cameraName={cameraName} compact={false} />
         </View>
       ) : null}
       {note ? (
@@ -108,7 +114,15 @@ export function TalkDock({ dock, controls, note, cameraName }: TalkDockProps) {
           }
         />
       ) : null}
-      <DockActions dock={dock} controls={controls} cameraName={cameraName} />
+      <DockActions
+        dock={dock}
+        controls={controls}
+        cameraName={cameraName}
+        center={compact ? button : null}
+      />
+      {compact && controls.talk ? (
+        <DockCaption dock={dock} cameraName={cameraName} compact />
+      ) : null}
     </View>
   );
 }

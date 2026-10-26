@@ -2,9 +2,17 @@ import { clsx } from 'clsx';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import type { ImageSourcePropType, PointerEvent } from 'react-native';
+import type { ImageSourcePropType, PointerEvent, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { illustration, layout, motion, useWindowLayout } from '@/shared/theme';
+import {
+  illustration,
+  layout,
+  motion,
+  stageStepOf,
+  useHeightLayout,
+  useWindowLayout,
+} from '@/shared/theme';
+import type { HeightClass } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { MediaFrame } from '@/shared/ui/media/media-frame';
 import {
@@ -52,6 +60,18 @@ type RevealProps = { shown: boolean; children: ReactNode };
 const LIVE_FRAME = { aspectRatio: layout.mediaAspect, backgroundColor: illustration.media };
 
 const DORMANT_FRAME = { aspectRatio: layout.mediaAspect };
+
+const STAGE_LIVE: Record<HeightClass, ViewStyle> = {
+  regular: LIVE_FRAME,
+  short: { aspectRatio: layout.mediaAspectShort, backgroundColor: illustration.media },
+  tiny: { aspectRatio: layout.mediaAspectTiny, backgroundColor: illustration.media },
+};
+
+const STAGE_DORMANT: Record<HeightClass, ViewStyle> = {
+  regular: DORMANT_FRAME,
+  short: { aspectRatio: layout.mediaAspectShort },
+  tiny: { aspectRatio: layout.mediaAspectTiny },
+};
 
 const FILL_FRAME = { backgroundColor: illustration.media };
 
@@ -156,6 +176,7 @@ function Tile({ center, reveal, onPress, fill, ...content }: MediaTileProps) {
 
 function Stage({ controls, eye, center, poster, ...content }: MediaStageProps) {
   const { windowClass } = useWindowLayout();
+  const step = stageStepOf(useHeightLayout());
   const overlay = (
     <>
       {poster && !content.dormant ? <Poster frame={poster.frame} /> : null}
@@ -179,7 +200,7 @@ function Stage({ controls, eye, center, poster, ...content }: MediaStageProps) {
         windowClass === 'compact' ? '-mx-4' : 'rounded-media',
         content.dormant && 'bg-fill'
       )}
-      style={content.dormant ? DORMANT_FRAME : LIVE_FRAME}>
+      style={content.dormant ? STAGE_DORMANT[step] : STAGE_LIVE[step]}>
       <Layers {...content} overlay={overlay} marked={!center} />
     </View>
   );

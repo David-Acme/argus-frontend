@@ -1,10 +1,10 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size } from '@/shared/theme';
-import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
+import { Screen } from '@/shared/ui/screen';
 import { isVoiceCallActive } from '@/features/voice';
 import { AnnounceSheet } from '@/features/cameras/components/live/announce-sheet';
+import { LiveLayout } from '@/features/cameras/components/live/live-layout';
 import { LiveFullscreen } from '@/features/cameras/components/live/live-fullscreen';
 import { LiveMenu, setCameraEnabled } from '@/features/cameras/components/live/live-menu';
 import { LiveNotices } from '@/features/cameras/components/live/live-notices';
@@ -55,28 +55,34 @@ function LiveBody({ view, talk }: LiveBodyProps) {
             onAnnounce={controls.talk ? () => setAnnouncing(true) : null}
           />
         }>
-        <ScreenColumns>
-          <ScreenColumn label={camera.name} grows={-1}>
-            <LiveStageView
-              cameraId={camera.id}
-              live={live}
-              controls={controls}
-              ptz={view.ptz}
-              onTurnOn={access.update ? () => void setCameraEnabled(camera, true, null) : null}
-              poster={view.poster}
-            />
-            <LiveNotices view={view} />
-          </ScreenColumn>
-          <ScreenColumn width={size.columnSide} label={t('screens.cameras.settings')}>
-            <LiveRows camera={camera} clips={access.clips} sections={view.sections} />
-            <TalkDock
-              dock={view.dock}
-              controls={controls}
-              note={view.note}
-              cameraName={camera.name}
-            />
-          </ScreenColumn>
-        </ScreenColumns>
+        <LiveLayout
+          mainLabel={camera.name}
+          sideLabel={t('screens.cameras.settings')}
+          main={
+            <>
+              <LiveStageView
+                cameraId={camera.id}
+                live={live}
+                controls={controls}
+                ptz={view.ptz}
+                onTurnOn={access.update ? () => void setCameraEnabled(camera, true, null) : null}
+                poster={view.poster}
+              />
+              <LiveNotices view={view} />
+            </>
+          }
+          side={
+            <>
+              <LiveRows camera={camera} clips={access.clips} sections={view.sections} />
+              <TalkDock
+                dock={view.dock}
+                controls={controls}
+                note={view.note}
+                cameraName={camera.name}
+              />
+            </>
+          }
+        />
       </Screen>
       <LiveFullscreen cameraId={camera.id} live={live} controls={controls} ptz={view.ptz} />
       <CameraForm open={editing} onOpenChange={setEditing} camera={camera} />

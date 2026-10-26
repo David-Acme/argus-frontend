@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import type { CameraClipsState } from '@/features/cameras/hooks/use-camera-clips';
 import type { CameraLive } from '@/features/cameras/hooks/use-camera-live';
 import { screenFocus } from '../../../shared/ui/screen-focus';
-import { setWindowWidth } from '../../../shared/ui/window-width';
+import { setWindowSize, setWindowWidth } from '../../../shared/ui/window-width';
 import '../../../shared/ui/translation-stub';
 import {
   ALL_CONTROLS,
@@ -93,6 +93,7 @@ const { LiveMenu } = await import('@/features/cameras/components/live/live-menu'
 const { TalkDock } = await import('@/features/cameras/components/live/talk-dock');
 const { DockActions } = await import('@/features/cameras/components/live/dock-actions');
 const { LevelMeter } = await import('@/features/cameras/components/live/level-meter');
+const { LiveLayout } = await import('@/features/cameras/components/live/live-layout');
 const { PtzPad } = await import('@/features/cameras/components/live/ptz-pad');
 
 const NOW = Date.now();
@@ -153,6 +154,24 @@ describe('the live camera screen', () => {
     expect(screen.getByLabelText('Ajustes de la cámara')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Mantén para hablar por la cámara' })).toBeDefined();
     setWindowWidth(360);
+  });
+
+  test('on a short phone the talk button sits between Llamar and Sirena, without its caption', () => {
+    clips = clipsState(3);
+    setWindowSize(360, 640);
+    render(<CameraLiveScreen />);
+    expect(screen.getByRole('button', { name: 'Mantén para hablar por la cámara' })).toBeDefined();
+    expect(screen.queryByText('Mantén para hablar por la cámara')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Llamar' })).toBeDefined();
+    setWindowSize(360, 800);
+  });
+
+  test('a phone on its side puts the picture and the controls side by side', () => {
+    clips = clipsState(3);
+    setWindowSize(800, 360);
+    const { container } = render(<CameraLiveScreen />);
+    expect(container.querySelector('[data-testid="live-side"]')).not.toBeNull();
+    setWindowSize(360, 800);
   });
 
   test('the rows open their screens', () => {
@@ -329,6 +348,21 @@ describe('the dock', () => {
   test('the meter is bounded', () => {
     render(<LevelMeter level={3} label="Nivel" />);
     expect(screen.getByRole('meter', { name: 'Nivel' }).getAttribute('aria-valuenow')).toBe('12');
+  });
+});
+
+describe('the live layout', () => {
+  test('stacks on a tall phone', () => {
+    render(
+      <LiveLayout
+        main={<span>Imagen</span>}
+        side={<span>Filas</span>}
+        mainLabel="Cocina"
+        sideLabel="Ajustes"
+      />
+    );
+    expect(screen.getByText('Imagen')).toBeDefined();
+    expect(screen.getByText('Filas')).toBeDefined();
   });
 });
 
