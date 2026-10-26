@@ -15,6 +15,7 @@ export type NavVoice = {
   onOpenChat: () => void;
   onListenStart: () => void;
   onListenEnd: (send: boolean) => void;
+  canListen?: boolean;
 };
 
 export type NavCopy = {

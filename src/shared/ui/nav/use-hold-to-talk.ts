@@ -38,6 +38,10 @@ export function useHoldToTalk(voice: NavVoice) {
 
   const rect = useRef<Rect | null>(null);
   const start = (next: ListenMode) => {
+    if (voice.canListen === false) {
+      voice.onOpenChat();
+      return;
+    }
     feedback('impactLight');
     setMode(next);
     voice.onListenStart();
