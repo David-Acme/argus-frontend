@@ -1,193 +1,243 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import type { ICameraCacheRow } from '@/core/interfaces';
-import type { GuardEnvironment, GuardEnvironmentCreate, GuardEpisode } from '@/core/types';
-import { AppScreen, ScreenHeader } from '@/shared/components/layout';
-import { Button } from '@/shared/components/ui/button';
-import { EmptyState } from '@/shared/components/ui/empty-state';
-import { Icon } from '@/shared/components/ui/icon';
-import { Panel } from '@/shared/components/ui/panel';
-import { Text } from '@/shared/components/ui/text';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
-import { useCapabilities } from '@/shared/hooks/use-capabilities';
+import { useState, type ReactNode } from 'react';
+import { View } from 'react-native';
+import type { GuardEpisode } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { cn } from '@/shared/libs/utils';
-import { EnvironmentFormDialog } from '@/features/security/components/environment-form-dialog';
-import { EnvironmentsPanel } from '@/features/security/components/environments-panel';
-import { MaintenancePanel } from '@/features/security/components/maintenance-panel';
-import { EpisodeList } from '@/features/security/components/episode-list';
-import { ExpectedGuestForm } from '@/features/security/components/expected-guest-form';
-import { ExpectedGuestList } from '@/features/security/components/expected-guest-list';
-import { SecurityHero } from '@/features/security/components/security-hero';
-import { EPISODE_LIST_MAX_HEIGHT } from '@/features/security/constants';
-import { useGuard } from '@/features/security/hooks/use-guard';
-import { claimTamper } from '@/features/security/hooks/use-maintenance';
-import { needsReview } from '@/features/security/model/episode';
+import { size, useFourColumns, useWindowLayout } from '@/shared/theme';
+import { Notice } from '@/shared/ui/notice';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
+import { Status } from '@/shared/ui/status';
+import { CameraForm } from '@/features/cameras';
+import { SosButton } from '@/features/safety';
+import {
+  ActivitySection,
+  MaintenanceSection,
+  PlacesSection,
+  VisitsSection,
+} from '@/features/security/components/page/aside-sections';
+import { CamerasSection } from '@/features/security/components/page/cameras-section';
+import { EpisodeSheet } from '@/features/security/components/page/episode-sheet';
+import { HappenedSection } from '@/features/security/components/page/happened-section';
+import { ModeControl } from '@/features/security/components/page/mode-control';
+import { MoreSection } from '@/features/security/components/page/more-section';
+import { PlacePicker } from '@/features/security/components/page/place-picker';
+import { PromiseSection, TrySection } from '@/features/security/components/page/starter-sections';
+import { useSecurity } from '@/features/security/hooks/use-security';
+import { useCameraTiles } from '@/features/security/hooks/use-security-cameras';
+import { episodeKey } from '@/features/security/model/episode';
+import {
+  HAPPENED_COLUMN,
+  HAPPENED_COLUMN_WIDE,
+  HAPPENED_PHONE,
+} from '@/features/security/model/happened';
+import { placeTitle } from '@/features/security/model/places';
+import { statusStats, statusWords } from '@/features/security/model/security-status';
+import { starters } from '@/features/security/model/starters';
 
-export default function SecurityScreen() {
-  const router = useRouter();
+type Security = ReturnType<typeof useSecurity>;
+
+type LayoutProps = {
+  security: Security;
+  cameras: ReturnType<typeof useCameraTiles>;
+  onOpen: (episode: GuardEpisode) => void;
+  onConnect: () => void;
+};
+
+type PickerProps = { security: Security };
+
+function Picker({ security }: PickerProps) {
   const { t } = useTranslation();
-  const { isExpanded, isMedium } = useWindowClass();
-  const { guard: access, isOwner, clips: clipAccess } = useCapabilities();
-  const guard = useGuard(access.review);
-  const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
-  const [guestFormOpen, setGuestFormOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-
-  const activeGuests = guard.guests.filter((guest) => guest.validUntil * 1000 > guard.loadedAt).length;
-  const ongoing = guard.episodes.filter((episode) => episode.state === 'active').length;
-  const pendingReviews = guard.episodes.filter(needsReview).length;
-  const pendingAll = guard.pendingMode?.environmentId === null ? guard.pendingMode.mode : null;
-
-  const open = (environment: GuardEnvironment) => router.push(`/security/${environment.id}`);
-
-  const claimEpisode = (episode: GuardEpisode) => claimTamper(episode.id);
-
-  const create = async (body: GuardEnvironmentCreate): Promise<boolean> => {
-    const created = await guard.createEnvironment(body);
-    if (created) router.push(`/security/${created.id}`);
-    return created !== null;
-  };
-
-  const heroSection = (
-    <SecurityHero
-      environments={guard.environments}
-      ongoing={ongoing}
-      activeGuests={activeGuests}
-      pendingReviews={access.review ? pendingReviews : undefined}
-      pendingAll={pendingAll}
-      onSetAll={access.setMode ? (mode) => void guard.setMode(mode) : undefined}
+  if (!security.scope.several) return null;
+  return (
+    <PlacePicker
+      title={placeTitle(security.scope, t)}
+      environments={security.environments}
+      current={security.scope.place}
+      onPick={security.pick}
     />
   );
+}
 
-  const environmentsSection = (className?: string) => (
-    <EnvironmentsPanel
-      environments={guard.environments}
-      cameras={cameras}
-      episodes={guard.episodes}
-      onOpen={open}
-      onCreate={access.review ? () => setCreating(true) : undefined}
-      className={className}
+function AlertCard({ security, onOpen }: Pick<LayoutProps, 'security' | 'onOpen'>) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const alert = security.status.alert;
+  if (!alert) return null;
+  return (
+    <Status
+      variant="card"
+      tone="alert"
+      primary={{
+        label: t('screens.security.hero.see-camera'),
+        onPress: () => router.push(`/cameras/${alert.cameraId}`),
+      }}
+      secondaryAction={{
+        label: t('screens.security.happened.review'),
+        onPress: () => onOpen(alert),
+      }}
     />
   );
+}
 
-  const guestSection = (className?: string) => (
-    <Panel
-      title={t('screens.security.guests.title')}
-      description={t('screens.security.guests.description')}
-      count={guard.guests.length}
-      className={className}
-      action={
-        access.manageGuests ? (
-          <Button variant="ghost" size="sm" onPress={() => setGuestFormOpen(true)}>
-            <Icon name="user-plus" />
-            <Text>{t('screens.security.guests.add')}</Text>
-          </Button>
-        ) : undefined
-      }>
-      <ExpectedGuestList
-        guests={guard.guests}
-        now={guard.loadedAt}
-        onRemove={access.manageGuests ? guard.removeGuest : undefined}
-      />
-    </Panel>
-  );
+function startersOf(security: Security, cameras: LayoutProps['cameras']) {
+  return starters({
+    cameras: cameras.visible ? cameras.tiles.length : Number.POSITIVE_INFINITY,
+    feed: security.episodes.status,
+    episodes: security.episodes.rows.length,
+  });
+}
 
-  const episodeSection = (fill: boolean, className?: string) => (
-    <Panel
-      title={t('screens.security.episodes.title')}
-      description={t('screens.security.episodes.description')}
-      className={cn(fill && 'min-h-[420px] flex-1 basis-0', className)}>
-      <EpisodeList
-        episodes={guard.episodes}
-        cameras={cameras}
-        contexts={guard.cameras}
-        environments={guard.environments}
-        paging={guard.episodePaging}
-        maxHeight={fill ? undefined : EPISODE_LIST_MAX_HEIGHT}
-        onReview={access.review ? guard.reviewEpisode : undefined}
-        onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
-        onClaim={access.maintenance ? claimEpisode : undefined}
-        evidence={clipAccess.view}
-      />
-    </Panel>
-  );
+function nightOf(security: Security) {
+  const change = security.changeMode;
+  if (!change || security.selectedMode === 'night') return undefined;
+  return () => void change('night');
+}
 
-  const layout = isExpanded ? (
-    <View className="flex-1 flex-row items-stretch gap-5">
-      <View className="min-w-0 flex-1 gap-5">
-        {heroSection}
-        {environmentsSection('flex-1')}
-      </View>
-      <View className="min-w-0 flex-1 gap-5">
-        {episodeSection(true)}
-        <MaintenancePanel />
-        {guestSection()}
-      </View>
-    </View>
-  ) : isMedium ? (
-    <View className="flex-1 gap-5">
-      {heroSection}
-      {environmentsSection()}
-      <View className="flex-1 flex-row items-stretch gap-5">
-        {episodeSection(true, 'min-w-0')}
-        <View className="min-w-0 flex-1 gap-5">
-          <MaintenancePanel />
-          {guestSection('flex-1')}
-        </View>
-      </View>
-    </View>
-  ) : (
-    <View className="flex-1 gap-5">
-      {heroSection}
-      {environmentsSection()}
-      {episodeSection(false)}
-      <MaintenancePanel />
-      {guestSection('flex-1')}
-    </View>
-  );
-
-  const body = guard.failed ? (
-    <EmptyState
-      icon="triangle-alert"
-      title={t('screens.security.load-error')}
-      action={
-        <Button variant="outline" onPress={guard.reload}>
-          <Text>{t('common.retry')}</Text>
-        </Button>
-      }
-    />
-  ) : (
-    <ScrollView className="flex-1" contentContainerClassName="grow pb-6" showsVerticalScrollIndicator={false}>
-      {layout}
-    </ScrollView>
-  );
-
+function PhoneLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
+  const { t } = useTranslation();
+  const start = startersOf(security, cameras);
+  const words = statusWords(security.status, t);
   return (
     <>
-      <AppScreen
-        scrollable={false}
-        header={
-          <ScreenHeader
-            title={t('screens.security.title')}
-            subtitle={t('screens.security.subtitle')}
-            onBack={() => router.back()}
-          />
-        }>
-        {body}
-      </AppScreen>
-      <ExpectedGuestForm
-        open={guestFormOpen}
-        onOpenChange={setGuestFormOpen}
-        onSubmit={guard.addGuest}
-        environments={guard.environments}
-        cameras={cameras}
-        arrivalRequired={!isOwner}
+      <View className="items-start">
+        <Picker security={security} />
+      </View>
+      <Status
+        tone={security.status.tone}
+        sentence={words.sentence}
+        meta={words.meta}
+        stats={statusStats(security.status.counts, t, 'phone')}
+        presence={security.status.presence}
+        presenceEvent={security.cue}
+        dense
       />
-      {creating ? <EnvironmentFormDialog open onOpenChange={setCreating} onSubmit={create} /> : null}
+      <View className="mt-3">
+        <ModeControl value={security.selectedMode} onChange={security.changeMode} />
+      </View>
+      <AlertCard security={security} onOpen={onOpen} />
+      <CamerasSection cameras={cameras} desktop={false} onConnect={onConnect} />
+      {start.promise ? <PromiseSection /> : null}
+      <HappenedSection
+        feed={security.episodes}
+        limit={HAPPENED_PHONE}
+        feedForm={false}
+        onOpen={onOpen}
+      />
+      {start.suggest ? <TrySection onNight={nightOf(security)} /> : null}
+      <MoreSection guests={security.guests.list} environments={security.environments} />
+    </>
+  );
+}
+
+function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
+  const { t } = useTranslation();
+  const four = useFourColumns();
+  const words = statusWords(security.status, t);
+  const start = startersOf(security, cameras);
+  const band: ReactNode = (
+    <>
+      <Picker security={security} />
+      <View className={four ? 'w-mode-band-wide' : 'w-mode-band'}>
+        <ModeControl value={security.selectedMode} onChange={security.changeMode} />
+      </View>
+      <SosButton band environmentId={security.scope.place?.id} />
+    </>
+  );
+  return (
+    <>
+      <Status
+        tone={security.status.tone}
+        sentence={words.sentence}
+        meta={words.meta}
+        stats={statusStats(security.status.counts, t, four ? 'band-wide' : 'band')}
+        presence={security.status.presence}
+        presenceEvent={security.cue}
+        action={band}
+      />
+      <ScreenColumns>
+        <ScreenColumn label={t('screens.security.camera-grid.title')} grows={start.promise ? 1 : 0}>
+          <CamerasSection cameras={cameras} desktop onConnect={onConnect} />
+          {start.promise ? <PromiseSection /> : null}
+        </ScreenColumn>
+        <ScreenColumn
+          label={t('screens.security.happened.title')}
+          width={four ? size.columnFeedWide : size.columnFeed}>
+          <AlertCard security={security} onOpen={onOpen} />
+          <HappenedSection
+            feed={security.episodes}
+            limit={four ? HAPPENED_COLUMN_WIDE : HAPPENED_COLUMN}
+            feedForm
+            onOpen={onOpen}
+          />
+          {start.suggest ? <TrySection onNight={nightOf(security)} /> : null}
+          {four ? null : <VisitsSection guests={security.guests.list} now={security.now} />}
+          {four ? null : (
+            <MoreSection
+              guests={security.guests.list}
+              environments={security.environments}
+              without="visits"
+            />
+          )}
+        </ScreenColumn>
+        {four ? (
+          <ScreenColumn label={t('screens.security.more.title')} width={size.columnAsideWide}>
+            <VisitsSection guests={security.guests.list} now={security.now} />
+            <PlacesSection environments={security.environments} />
+            <MaintenanceSection now={security.now} />
+            <ActivitySection cameras={cameras} />
+          </ScreenColumn>
+        ) : null}
+      </ScreenColumns>
+    </>
+  );
+}
+
+export default function SecurityScreen() {
+  const { t } = useTranslation();
+  const { windowClass } = useWindowLayout();
+  const security = useSecurity();
+  const cameras = useCameraTiles({
+    place: security.scope.place,
+    environments: security.environments,
+  });
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const desktop = windowClass === 'expanded' || windowClass === 'wide';
+  const episode = security.episodes.rows.find((row) => episodeKey(row) === openKey) ?? null;
+  const layout = {
+    security,
+    cameras,
+    onOpen: (next: GuardEpisode) => setOpenKey(episodeKey(next)),
+    onConnect: () => setConnecting(true),
+  };
+  const body = security.failed ? (
+    <Notice
+      tone="attention"
+      icon="wifioff"
+      title={t('screens.security.load-error')}
+      action={{ label: t('common.retry'), onPress: security.reload }}
+    />
+  ) : desktop ? (
+    <DesktopLayout {...layout} />
+  ) : (
+    <PhoneLayout {...layout} />
+  );
+  return (
+    <>
+      <Screen
+        title={desktop ? undefined : t('screens.security.title')}
+        actions={desktop ? undefined : <SosButton environmentId={security.scope.place?.id} />}
+        aura={desktop ? undefined : security.status.aura}
+        columns>
+        {body}
+      </Screen>
+      <EpisodeSheet
+        episode={episode}
+        where={episode?.cameraName ?? ''}
+        actions={security.episodes}
+        onClose={() => setOpenKey(null)}
+      />
+      {connecting ? <CameraForm open onOpenChange={setConnecting} /> : null}
     </>
   );
 }

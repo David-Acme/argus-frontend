@@ -1,5 +1,4 @@
 export { default as CameraDetailScreen } from './screens/camera-detail-screen';
-export { default as CamerasScreen } from './screens/cameras-screen';
 export { CameraLiveView } from './components/camera-live-view';
 export { CameraSnapshotView } from './components/camera-snapshot-view';
 export { useCameraCounts, type CameraCounts } from './hooks/use-camera-counts';
@@ -11,4 +10,10 @@ export { TamperEvidenceView } from './components/tamper-evidence-view';
 export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';
 export { useCameraThumbnails } from './hooks/use-camera-thumbnails';
 export { useRecentClips, type RecentClips } from './hooks/use-recent-clips';
-export { cameraMasked, cameraViews, type CameraView } from './model/camera-overview';
+export {
+  cameraMasked,
+  cameraViews,
+  objectLabelKey,
+  type CameraView,
+} from './model/camera-overview';
+export { CameraForm } from './components/camera-form';

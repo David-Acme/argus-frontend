@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import type { GuardEnvironment, GuardEnvironmentCreate, GuardEpisode, MenuOption } from '@/core/types';
+import type { GuardEnvironment, GuardEnvironmentCreate, MenuOption } from '@/core/types';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
@@ -22,15 +22,18 @@ import { EmergencyContactDialog } from '@/features/security/components/emergency
 import { EmergencyContactsPanel } from '@/features/security/components/emergency-contacts-panel';
 import { EnvironmentFormDialog } from '@/features/security/components/environment-form-dialog';
 import { EnvironmentSettingsPanel } from '@/features/security/components/environment-settings-panel';
-import { EpisodeList } from '@/features/security/components/episode-list';
+import { EpisodeSheet } from '@/features/security/components/page/episode-sheet';
+import { HappenedSection } from '@/features/security/components/page/happened-section';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { ResponseRecipientsPanel } from '@/features/security/components/response-recipients-panel';
 import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-notice';
-import { ENVIRONMENT_KIND_ICONS, EPISODE_LIST_MAX_HEIGHT } from '@/features/security/constants';
+import { ENVIRONMENT_KIND_ICONS } from '@/features/security/constants';
 import { useEnvironmentResponse } from '@/features/security/hooks/use-environment-response';
 import { useGuard, useGuardEnvironments } from '@/features/security/hooks/use-guard';
-import { claimTamper } from '@/features/security/hooks/use-maintenance';
+import { useEpisodes } from '@/features/security/hooks/use-episodes';
 import { camerasIn, postureKey } from '@/features/security/model/environments';
+import { episodeKey } from '@/features/security/model/episode';
+import { HAPPENED_COLUMN } from '@/features/security/model/happened';
 
 type EnvironmentAction = 'edit' | 'remove';
 
@@ -43,8 +46,11 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const { t } = useTranslation();
   const { isExpanded, isMedium } = useWindowClass();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
-  const { guard: access, isOwner: owner, can, clips: clipAccess } = useCapabilities();
-  const guard = useGuard(access.review, environment.id);
+  const { guard: access, isOwner: owner, can } = useCapabilities();
+  const guard = useGuard(access.review);
+  const episodes = useEpisodes(environment.id, true);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const opened = episodes.rows.find((row) => episodeKey(row) === openKey) ?? null;
   const allCameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const [editing, setEditing] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
@@ -52,8 +58,6 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const current = guard.environments.find((item) => item.id === environment.id) ?? environment;
   const cameras = camerasIn(current, guard.environments, allCameras);
   const pending = guard.pendingMode?.environmentId === current.id ? guard.pendingMode.mode : null;
-
-  const claimEpisode = (episode: GuardEpisode) => claimTamper(episode.id);
 
   const actions: MenuOption<EnvironmentAction>[] = [
     { value: 'edit', label: t('screens.security.environments.edit'), icon: 'pencil' },
@@ -143,22 +147,13 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
     />
   );
 
-  const episodeSection = (fill: boolean) => (
-    <Panel
-      title={t('screens.security.environments.episodes-title')}
-      className={fill ? 'min-h-[420px] flex-1 basis-0' : undefined}>
-      <EpisodeList
-        episodes={guard.episodes}
-        cameras={allCameras}
-        contexts={guard.cameras}
-        paging={guard.episodePaging}
-        maxHeight={fill ? undefined : EPISODE_LIST_MAX_HEIGHT}
-        onReview={access.review ? guard.reviewEpisode : undefined}
-        onRetain={access.review ? (episode, retain) => void guard.retainEpisode(episode, retain) : undefined}
-        onClaim={access.maintenance ? claimEpisode : undefined}
-        evidence={clipAccess.view}
-      />
-    </Panel>
+  const episodeSection = (
+    <HappenedSection
+      feed={episodes}
+      limit={HAPPENED_COLUMN}
+      feedForm={false}
+      onOpen={(episode) => setOpenKey(episodeKey(episode))}
+    />
   );
 
   const layout = isExpanded ? (
@@ -171,7 +166,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       <View className="min-w-0 flex-1 gap-5">
         {contactsSection()}
         {cameraSection()}
-        {episodeSection(true)}
+        {episodeSection}
       </View>
     </View>
   ) : isMedium ? (
@@ -185,7 +180,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
         {settingsSection('min-w-0 flex-1')}
         {cameraSection('min-w-0 flex-1')}
       </View>
-      {episodeSection(true)}
+      {episodeSection}
     </View>
   ) : (
     <View className="flex-1 gap-5">
@@ -193,7 +188,7 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       {recipientsSection()}
       {contactsSection()}
       {cameraSection()}
-      {episodeSection(false)}
+      {episodeSection}
       {settingsSection('flex-1')}
     </View>
   );
@@ -237,6 +232,12 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
       {editing ? (
         <EnvironmentFormDialog open onOpenChange={setEditing} environment={current} onSubmit={rename} />
       ) : null}
+      <EpisodeSheet
+        episode={opened}
+        where={opened?.cameraName ?? ''}
+        actions={episodes}
+        onClose={() => setOpenKey(null)}
+      />
       {owner ? (
         <EmergencyContactDialog
           open={addingContact}

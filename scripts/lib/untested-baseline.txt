@@ -50,8 +50,6 @@ src/features/auth/screens/privacy-screen.tsx
 src/features/auth/screens/welcome-screen.tsx
 src/features/cameras/components/camera-aim-panel.tsx
 src/features/cameras/components/camera-call-panel.tsx
-src/features/cameras/components/camera-card-grid.tsx
-src/features/cameras/components/camera-card.tsx
 src/features/cameras/components/camera-control-panel.tsx
 src/features/cameras/components/camera-device-settings.tsx
 src/features/cameras/components/camera-form.tsx
@@ -76,9 +74,7 @@ src/features/cameras/components/camera-sight-status.tsx
 src/features/cameras/components/camera-siren-panel.tsx
 src/features/cameras/components/camera-siren-sheet.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
-src/features/cameras/components/camera-summary.tsx
 src/features/cameras/components/camera-talk-sheet.tsx
-src/features/cameras/components/camera-toolbar.tsx
 src/features/cameras/components/camera-watch-panel.tsx
 src/features/cameras/components/camera-zones-overlay.tsx
 src/features/cameras/components/camera-zones-panel.tsx
@@ -88,7 +84,6 @@ src/features/cameras/components/clip-player.web.tsx
 src/features/cameras/components/icon-picker-button.tsx
 src/features/cameras/components/privacy-toggle.tsx
 src/features/cameras/components/ptz-pad.tsx
-src/features/cameras/components/recent-detections.tsx
 src/features/cameras/components/recording-paused-banner.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/zone-editor.tsx
@@ -96,7 +91,6 @@ src/features/cameras/components/zone-form.tsx
 src/features/cameras/components/zone-row.tsx
 src/features/cameras/screens/camera-detail-screen.tsx
 src/features/cameras/screens/camera-lab-screen.tsx
-src/features/cameras/screens/cameras-screen.tsx
 src/features/conversations/components/assistant-composer.tsx
 src/features/conversations/components/conversation-row.tsx
 src/features/conversations/components/day-separator.tsx
@@ -206,18 +200,11 @@ src/features/safety/components/safety-section.tsx
 src/features/security/components/camera-context-editor.tsx
 src/features/security/components/camera-context-panel.tsx
 src/features/security/components/camera-environment-panel.tsx
-src/features/security/components/danger-badge.tsx
 src/features/security/components/emergency-contact-dialog.tsx
 src/features/security/components/emergency-contacts-panel.tsx
-src/features/security/components/environment-card.tsx
 src/features/security/components/environment-form-dialog.tsx
 src/features/security/components/environment-settings-panel.tsx
-src/features/security/components/environments-panel.tsx
-src/features/security/components/episode-card.tsx
-src/features/security/components/episode-list.tsx
-src/features/security/components/episode-timeline.tsx
 src/features/security/components/expected-guest-form.tsx
-src/features/security/components/expected-guest-list.tsx
 src/features/security/components/guard-card.tsx
 src/features/security/components/guard-mode-picker.tsx
 src/features/security/components/hours-editor.tsx
@@ -226,10 +213,8 @@ src/features/security/components/maintenance-dialog.tsx
 src/features/security/components/maintenance-panel.tsx
 src/features/security/components/maintenance-window-row.tsx
 src/features/security/components/response-recipients-panel.tsx
-src/features/security/components/security-hero.tsx
 src/features/security/components/sight-notice-actions.tsx
 src/features/security/screens/environment-screen.tsx
-src/features/security/screens/security-screen.tsx
 src/features/sessions/components/connected-devices-panel.tsx
 src/features/sessions/components/session-insights.tsx
 src/features/sessions/components/session-row.tsx

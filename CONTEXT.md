@@ -5578,6 +5578,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-cameras` (T7): entry 7,115,996 → 7,119,946 B (+3,950), `dist/` 8,867,586 → 8,876,285 B (+8,699). Metro keeps every module a barrel names, so the entry carries the new camera and security exports (`useRecentClips`, `useEpisodeFeed`, `episodeTitle`'s typed key maps), `MediaStrip`, the grow context of `ScreenColumn`/`Section`, and the `camera-sections` copy in es and en; the three Inicio sections themselves are not imported by any screen until T4 composes them. The rest of the `dist/` growth is the lazy lab chunk (the `tile-fill` and `strip` cases). | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-agenda` (T5), measured on its own tree: entry 7,115,996 → 7,120,467 B (+4,471) and `dist/` 8,867,586 → 8,872,510 B (+4,924). The sections themselves are not in the entry yet (nothing imports them until T4); the growth is the es and en `agenda-sections` dictionaries (3.1 kB of source, the locales load with the entry), the shared `calendar-entry-commands` module and its wrapper, the reminder Deshacer, `setAssistantDraft` and Avatar's event mark; the other 453 B of `dist/` are the `size-event-mark` utility and the avatar demo in the lazy lab chunk. No package was added. R-D36's lazy routes (T9) are where the entry comes down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
+| `scripts/lib/cycle-baseline.txt` | `file-cycle src/features/security/components/page/aside-sections.tsx`, `file-cycle src/features/security/components/page/cameras-section.tsx`, `file-cycle src/features/security/components/page/episode-sheet.tsx`, `file-cycle src/features/security/hooks/use-security-cameras.ts`, `file-cycle src/features/security/screens/camera-list-screen.tsx`, `file-cycle src/features/security/screens/episodes-screen.tsx` | `p3/seguridad`: the new Seguridad files that read the cameras slice (tiles, thumbnails, the add-camera wizard, tamper evidence) join the recorded cameras ↔ security slice cycle, which `camera-detail-screen.tsx` closes by importing the security panels; the cycle count stays 1 and three members leave with the screens they replace (`cameras-screen.tsx`, `episode-card.tsx`, `episode-list.tsx`). The cycle ends when the camera detail stops importing `@/features/security` (P3b's rebuild). | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
 
@@ -6766,3 +6767,53 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando con la cámara»/«Reconectando…», the voice call's
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
+
+## Seguridad (2026-10-26, Phase 3, p3/seguridad)
+
+The Seguridad tab of the redesign spec §9.2, built from the 26 components in
+`src/features/security/screens/security-screen.tsx` and its sections under
+`src/features/security/components/page/`. The camera list at `/cameras` folds
+into this slice (`camera-list-screen.tsx`); the live view stays the cameras
+slice's.
+
+- **One hook per region, decisions in `model/`.** `useSecurity` holds the place
+  scope, the episodes of that scope, the visits and the mode change;
+  `useCameraTiles` reads the cached camera rows and the overview once per
+  screen, and only the tiles on screen ask for thumbnails (`useCameraFrames`).
+  The hero's sentence, tone, aura, presence and stats are
+  `securityStatus`/`statusWords`/`statusStats`; the alert is the newest active
+  episode Argus told someone about at `high` or `critical`, and an active
+  episode alone is attention. A pending review alone stays calm, as the
+  prototype draws it: the stat in `attn` says it.
+- **The mode applies at once.** `useGuardMode` keeps the masked-camera warning
+  and the disarm PIN of the old picker, writes optimistically, plays the
+  `success` haptic and offers Deshacer in the toast; Deshacer runs the same
+  path with the modes the server answered, so lowering back asks for the PIN
+  when the place needs it. The segmented control slides its pill on the
+  `snappy` spring (`Segmented`), and the hero passes Estela's `modechange` cue.
+- **SOS is hold-to-confirm** (`Button` with `hold`, R-D10): 1.5 s
+  (`motion.holdConfirm`), a `selection` tick at each third and `warning` at the
+  end, driven by the animation on the UI thread; a tap is the two-step
+  alternative and opens the destructive `Confirm`.
+- **Places.** With one place the mode control is on the page; with several the
+  hero carries the picker («Casa ▾» with «Todos los lugares»), the default place
+  first. Places, visits, maintenance and the full feed are short pushed screens
+  (`/security/places`, `/visits`, `/maintenance`, `/episodes`); a place keeps
+  `/security/{id}`, whose episode list became the same rows and sheet.
+- **Episode review lives in the episode sheet** (`EpisodeSheet`): ¿Acertó? is a
+  `Choice`, keeping the incident is a `Switch`, the footer's one action is «Ver
+  cámara», or «Fui yo» for an active tamper.
+- **Desktop.** The status band holds the picker, the mode and SOS; the camera
+  column grows and picks 2, 3 or 4 columns from its own width
+  (`gridColumnsFor`, `layout.mediaGridThree`/`mediaGridFour`), because the
+  prototype draws three columns at 1280 and four at 2560 where a minimum tile
+  of 280 px would draw two. From 1700 px (`useFourColumns`) a third column adds
+  visits, places, maintenance and activity per camera; below it the second
+  column carries visits and the other «Más» rows so nothing is out of reach.
+- **No data is a designed state** (`starters`): two cameras or fewer add «Qué
+  hará Argus con tus cámaras», an answered empty feed adds «Prueba esto», and
+  no camera at all is the empty state with the wizard («Conecta tu primera
+  cámara»), at every width.
+- **Spoken names.** A tile's Ver and Hablar and each feed's Revisar show one
+  word and say which camera or episode they act on (`ButtonLabel`), so no two
+  controls share a name.

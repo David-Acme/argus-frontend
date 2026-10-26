@@ -8,7 +8,6 @@ const DETAIL = read('features/cameras/screens/camera-detail-screen.tsx');
 const LIVE_PANEL = read('features/cameras/components/camera-live-panel.tsx');
 const STAGE = read('features/cameras/components/camera-live-stage.tsx');
 const THREAD_ROW = read('features/home/components/notification-thread-row.tsx');
-const EPISODE_CARD = read('features/security/components/episode-card.tsx');
 const APP_LAYOUT = read('app/(app)/_layout.tsx');
 
 describe('the camera detail carries the camera sight surfaces', () => {
@@ -50,11 +49,6 @@ describe('notices and incidents', () => {
   test('a sight notice renders its own title and answers in the thread row', () => {
     expect(THREAD_ROW).toContain('const sight = useSightNotice(thread.kind, latest.data);');
     expect(THREAD_ROW).toContain('<SightNoticeActions notice={sight.notice}');
-  });
-
-  test('a tamper incident shows its evidence and the claim', () => {
-    expect(EPISODE_CARD).toContain('<TamperEvidenceView target={{ cameraId: episode.cameraId, onsetAt: episode.firstSeen }} enabled={evidence} />');
-    expect(EPISODE_CARD).toContain("t('screens.security.tamper.claim')");
   });
 
   test('evidence is kept as soon as a tamper notice lands, for every signed-in screen', () => {

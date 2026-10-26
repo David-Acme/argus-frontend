@@ -796,26 +796,6 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 2
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    },
-    "complexity": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 6
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 2
-    }
-  },
   "src/features/cameras/components/camera-device-settings.tsx": {
     "complexity": {
       "count": 1
@@ -961,33 +941,8 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-summary.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/camera-talk-sheet.tsx": {
     "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-toolbar.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
@@ -1037,11 +992,6 @@
       "count": 1
     },
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/recent-detections.tsx": {
-    "argus/ds-owns-primitives": {
       "count": 1
     }
   },
@@ -1140,23 +1090,6 @@
     },
     "i18next/no-literal-string": {
       "count": 4
-    }
-  },
-  "src/features/cameras/screens/cameras-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-visual-timer": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 1
     }
   },
   "src/features/cameras/services/camera-call-session.ts": {
@@ -1953,27 +1886,8 @@
       "count": 1
     }
   },
-  "src/features/security/components/danger-badge.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
   "src/features/security/components/emergency-contacts-panel.tsx": {
     "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/environment-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 7
-    },
-    "better-tailwindcss/no-restricted-classes": {
       "count": 1
     },
     "max-lines-per-function": {
@@ -2008,55 +1922,11 @@
       "count": 1
     }
   },
-  "src/features/security/components/environments-panel.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/episode-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 4
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 5
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/episode-timeline.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 2
-    }
-  },
   "src/features/security/components/expected-guest-form.tsx": {
     "@typescript-eslint/no-misused-promises": {
       "count": 3
     },
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/expected-guest-list.tsx": {
-    "argus/ds-owns-primitives": {
       "count": 1
     }
   },
@@ -2127,26 +1997,7 @@
       "count": 2
     }
   },
-  "src/features/security/components/security-hero.tsx": {
-    "argus/no-template-key": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/security/hooks/use-environment-response.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/security/hooks/use-guard.ts": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
@@ -2166,16 +2017,13 @@
   },
   "src/features/security/screens/environment-screen.tsx": {
     "@typescript-eslint/no-misused-promises": {
-      "count": 2
+      "count": 1
     },
     "argus/ds-owns-primitives": {
       "count": 1
     },
     "argus/no-template-key": {
       "count": 3
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
     },
     "i18next/no-literal-string": {
       "count": 8
@@ -2186,19 +2034,7 @@
   },
   "src/features/security/screens/security-screen.tsx": {
     "@typescript-eslint/no-misused-promises": {
-      "count": 3
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 5
-    },
-    "max-lines-per-function": {
-      "count": 1
+      "count": 2
     }
   },
   "src/features/sessions/components/connected-devices-panel.tsx": {

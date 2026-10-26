@@ -1,1 +1,1 @@
-export { CamerasScreen as default } from '@/features/cameras';
+export { CameraListScreen as default } from '@/features/security';
