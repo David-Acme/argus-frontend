@@ -71,6 +71,7 @@ export type Audit = {
 
 export const VIEWPORTS: readonly Viewport[] = [
   { name: 'phone-small', w: 320, h: 568 },
+  { name: 'phone-short', w: 360, h: 640 },
   { name: 'phone', w: 360, h: 800 },
   { name: 'phone-large', w: 430, h: 932 },
   { name: 'tablet-portrait', w: 768, h: 1024 },

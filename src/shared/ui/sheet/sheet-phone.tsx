@@ -7,6 +7,7 @@ import { IS_IOS } from '@/shared/constants';
 import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
 import { PhoneFooter, SheetHeader } from './sheet-parts';
+import { sheetFit } from './sheet-fit';
 import type { SheetActions, SheetProps } from './types';
 import { useDiscard } from './use-discard';
 import { useSheetTheme, withAlpha, type SheetTheme } from './use-sheet-theme';
@@ -109,6 +110,7 @@ export function SheetPhone(props: SheetProps) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [footerHeight, setFooterHeight] = useState(0);
+  const fit = sheetFit(long, height);
   const clearance = actions ? Math.max(0, footerHeight - insets.bottom) : space[4];
   const blurred = IS_IOS && !reduceTransparency;
   const surface = blurred ? withAlpha(theme.surface, material.sheetSurfaceMix) : theme.surface;
@@ -122,12 +124,12 @@ export function SheetPhone(props: SheetProps) {
   return (
     <TrueSheet
       ref={sheet}
-      detents={long ? [0.6, 1] : ['auto']}
-      scrollable={long}
+      detents={fit.detents}
+      scrollable={fit.scrolls}
       scrollableOptions={{ keyboardScrollOffset: focusScrollOffset(footerHeight) }}
       header={
         <GestureHandlerRootView style={styles.root}>
-          <View style={[styles.header, long && styles.tallHeader, headerLine]}>
+          <View style={[styles.header, fit.scrolls && styles.tallHeader, headerLine]}>
             <SheetHeader
               title={title}
               closeLabel={closeLabel}
@@ -142,7 +144,7 @@ export function SheetPhone(props: SheetProps) {
         actions ? (
           <FooterSlot
             actions={actions}
-            long={long}
+            long={fit.scrolls}
             theme={theme}
             bottom={insets.bottom}
             onHeight={setFooterHeight}
@@ -164,7 +166,7 @@ export function SheetPhone(props: SheetProps) {
       cornerRadius={radius.sheet}
       backgroundColor={surface}
       backgroundBlur={blurred ? 'system-material' : undefined}>
-      <Body long={long} clearance={clearance} testID={props.testID}>
+      <Body long={fit.scrolls} clearance={clearance} testID={props.testID}>
         {children}
       </Body>
     </TrueSheet>

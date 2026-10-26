@@ -287,6 +287,7 @@ export const layout = {
   fourColumns: 1700,
   mediaGridWide: 640,
   compactHeight: 480,
+  shortHeight: 700,
   dialog: 480,
   dialogLong: 560,
   sideSheet: 400,

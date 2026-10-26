@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { breakpoints, layout } from '@/shared/theme/tokens';
-import { classifyWindowSize, windowClassOf } from '@/shared/theme/window-layout';
+import { classifyWindowSize, isShortWindow, windowClassOf } from '@/shared/theme/window-layout';
 
 describe('window layout', () => {
   test('the class follows tokens.breakpoints at each edge', () => {
@@ -38,5 +38,10 @@ describe('window layout', () => {
     expect(classifyWindowSize({ width: 800, height: layout.compactHeight }).navigation).toBe(
       'rail'
     );
+  });
+
+  test('the short phones are short, a 360×740 phone is not', () => {
+    for (const height of [568, 640, 667]) expect(isShortWindow(height)).toBe(true);
+    expect(isShortWindow(740)).toBe(false);
   });
 });

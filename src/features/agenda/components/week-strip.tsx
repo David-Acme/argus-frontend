@@ -1,5 +1,6 @@
+import { clsx } from 'clsx';
 import { View } from 'react-native';
-import { useThemeTokens } from '@/shared/theme';
+import { useShortWindow, useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import type { DayCell, MonthCell } from '@/features/agenda/model/agenda-days';
 import { DayButton, DayLetters, MonthGrid } from '@/features/agenda/components/month-grid';
@@ -27,11 +28,12 @@ export function WeekStrip({
   onPick,
 }: WeekStripProps) {
   const { elevation } = useThemeTokens();
+  const short = useShortWindow();
   const card = { boxShadow: elevation.card };
   return (
-    <View className="rounded-card bg-surface px-2 pt-2" style={card}>
+    <View className={clsx('rounded-card bg-surface px-2 pt-2', short && 'pb-2')} style={card}>
       {expanded ? (
-        <MonthGrid cells={month} names={names} onPick={onPick} shift={shift} />
+        <MonthGrid cells={month} names={names} onPick={onPick} shift={shift} small={short} />
       ) : (
         <>
           <DayLetters cells={week} names={names} />
@@ -42,12 +44,14 @@ export function WeekStrip({
           </View>
         </>
       )}
-      <PressableSurface
-        a11y={{ label: toggleLabel, role: 'button' }}
-        onPress={onToggle}
-        className="min-h-target-min items-center justify-center">
-        <View className="w-grabber-width h-grabber-height bg-fill-press rounded-full" />
-      </PressableSurface>
+      {short ? null : (
+        <PressableSurface
+          a11y={{ label: toggleLabel, role: 'button' }}
+          onPress={onToggle}
+          className="min-h-target-min items-center justify-center">
+          <View className="w-grabber-width h-grabber-height bg-fill-press rounded-full" />
+        </PressableSurface>
+      )}
     </View>
   );
 }

@@ -15,6 +15,8 @@ export function windowClassOf(width: number): WindowClass {
   );
 }
 
+export const isShortWindow = (height: number): boolean => height < layout.shortHeight;
+
 export function classifyWindowSize({ width, height }: WindowSize): WindowLayout {
   const windowClass = windowClassOf(width);
   if (windowClass === 'compact' || height < layout.compactHeight)
