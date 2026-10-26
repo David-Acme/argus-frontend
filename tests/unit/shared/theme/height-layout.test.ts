@@ -32,7 +32,7 @@ describe('responsive by height', () => {
     expect(stageStepOf(tall)).toBe('regular');
     expect(stageStepOf(short)).toBe('short');
     expect(stageStepOf(tiny)).toBe('tiny');
-    expect(stageStepOf(side)).toBe('regular');
+    expect(stageStepOf(side)).toBe('short');
     expect(talkSizeOf(tall)).toBe(size.talk);
     expect(talkSizeOf(short)).toBe(size.talkShort);
     expect(talkSizeOf(side)).toBe(size.talkShort);

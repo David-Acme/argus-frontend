@@ -2,13 +2,13 @@ import { Controller, useWatch } from 'react-hook-form';
 import type { ICameraCatalogModel } from '@/core/interfaces';
 import type { CameraDriverKind, TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Inline, Stack } from '@/shared/ui/layout';
 import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Switch } from '@/shared/ui/switch';
 import { Text } from '@/shared/ui/text';
-import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
 import { SetupField } from '@/features/cameras/components/camera-setup/setup-field';
 import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
 import {
@@ -51,12 +51,7 @@ function ModelRow({ model, driver, onChange }: ModelRowProps) {
   return (
     <Stack gap={2}>
       <Row
-        leading={
-          <CameraIllustration
-            formFactor={model?.formFactor ?? (driver === 'tapo' ? 'pan-tilt' : 'bullet')}
-            size={56}
-          />
-        }
+        leading={<Avatar icon="cam" />}
         title={model ? catalogLabel(model) : t(DRIVER_LABEL[driver])}
         meta={
           model

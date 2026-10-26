@@ -22,7 +22,7 @@ export function heightLayoutOf(window: WindowSize): HeightLayout {
 }
 
 export function stageStepOf({ heightClass, landscape }: HeightLayout): HeightClass {
-  return landscape ? 'regular' : heightClass;
+  return landscape ? 'short' : heightClass;
 }
 
 export function talkSizeOf({ heightClass, landscape }: HeightLayout): number {
