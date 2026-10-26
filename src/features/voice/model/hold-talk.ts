@@ -1,4 +1,4 @@
-import type { VoiceActionRecord, VoicePhase, VoiceSnapshot } from '@/core/types';
+import type { VoiceActionRecord, VoicePhase, VoiceSnapshot, VoiceStartOptions } from '@/core/types';
 
 export type HoldTalkStage = 'idle' | 'listening' | 'sending' | 'answered' | 'failed' | 'cancelled';
 
@@ -26,6 +26,13 @@ export type HoldTalkEvent =
   | { type: 'release'; send: boolean; at: number }
   | { type: 'observe'; voice: HoldTalkVoice; at: number }
   | { type: 'dismiss' };
+
+export type HoldTalkAbility = {
+  allowed: boolean;
+  supported: boolean;
+  callActive: boolean;
+  live: boolean;
+};
 
 export type HoldTalkFailure =
   'not-heard' | 'no-reply' | 'permission' | 'connection' | 'session' | 'account' | 'generic';
@@ -147,4 +154,17 @@ export function holdTalkSessionEnds(previous: HoldTalkState, next: HoldTalkState
 
 export function holdTalkMutes(stage: HoldTalkStage, voice: HoldTalkVoice): boolean {
   return stage === 'sending' && voice.said !== '' && voice.phase !== 'listening';
+}
+
+export function holdTalkCanListen({
+  allowed,
+  supported,
+  callActive,
+  live,
+}: HoldTalkAbility): boolean {
+  return allowed && supported && (live || !callActive);
+}
+
+export function holdTalkStartOptions(socketMicrophone: boolean): VoiceStartOptions {
+  return socketMicrophone ? { socket: true } : {};
 }

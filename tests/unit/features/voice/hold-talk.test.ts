@@ -7,10 +7,12 @@ import {
   HOLD_NOT_HEARD,
   HOLD_REPLY_WAIT_MS,
   HOLD_SETTLE_MS,
+  holdTalkCanListen,
   holdTalkFailureOf,
   holdTalkLive,
   holdTalkMutes,
   holdTalkSessionEnds,
+  holdTalkStartOptions,
   holdTalkStep,
   holdTalkVoiceOf,
   type HoldTalkState,
@@ -250,5 +252,27 @@ describe('holdTalkFailureOf', () => {
     expect(holdTalkFailureOf('ACCOUNT_DISABLED|')).toBe('account');
     expect(holdTalkFailureOf('RTC_UNAVAILABLE|livekit down')).toBe('generic');
     expect(holdTalkFailureOf(null)).toBe('generic');
+  });
+});
+
+describe('holdTalkCanListen', () => {
+  const able = { allowed: true, supported: true, callActive: false, live: false };
+
+  test('a hold listens only with the capability and a microphone path', () => {
+    expect(holdTalkCanListen(able)).toBe(true);
+    expect(holdTalkCanListen({ ...able, allowed: false })).toBe(false);
+    expect(holdTalkCanListen({ ...able, supported: false })).toBe(false);
+  });
+
+  test("another call keeps the hold a tap, the hold's own session does not", () => {
+    expect(holdTalkCanListen({ ...able, callActive: true })).toBe(false);
+    expect(holdTalkCanListen({ ...able, callActive: true, live: true })).toBe(true);
+  });
+});
+
+describe('holdTalkStartOptions', () => {
+  test('a device that captures its own microphone holds over the socket leg, others over WebRTC', () => {
+    expect(holdTalkStartOptions(true)).toEqual({ socket: true });
+    expect(holdTalkStartOptions(false)).toEqual({});
   });
 });

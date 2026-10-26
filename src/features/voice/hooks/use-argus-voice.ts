@@ -1,12 +1,19 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { argusCallSupported, voiceService } from '@/features/voice/services/voice';
+import { useVoiceCallActive } from '@/features/voice/hooks/use-voice-call-active';
+import {
+  argusCallSupported,
+  voiceCallSupported,
+  voiceService,
+} from '@/features/voice/services/voice';
 import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
 import {
   HOLD_TICK_MS,
+  holdTalkCanListen,
   holdTalkLive,
   holdTalkMutes,
   holdTalkSessionEnds,
+  holdTalkStartOptions,
   holdTalkVoiceOf,
   type HoldTalkStage,
 } from '@/features/voice/model/hold-talk';
@@ -54,20 +61,21 @@ export function useArgusVoice(): ArgusVoice {
   const hold = useHoldTalkStore((state) => state.hold);
   const dispatch = useHoldTalkStore((state) => state.dispatch);
   const live = holdTalkLive(hold);
-  const talks = has(CAPABILITY.assistantVoice) && argusCallSupported();
+  const callActive = useVoiceCallActive();
   useHoldTalkSession(hold.stage);
 
-  const openChat = () => router.navigate(ASSISTANT_THREAD_HREF);
   const voice: NavVoice = {
-    onOpenChat: openChat,
+    onOpenChat: () => router.navigate(ASSISTANT_THREAD_HREF),
+    canListen: holdTalkCanListen({
+      allowed: has(CAPABILITY.assistantVoice),
+      supported: argusCallSupported(),
+      callActive,
+      live,
+    }),
     onListenStart: () => {
-      if (!talks || (voiceService.isActive && !live)) {
-        openChat();
-        return;
-      }
       dispatch({ type: 'start' });
       if (live) voiceService.stop();
-      void voiceService.start({});
+      void voiceService.start(holdTalkStartOptions(voiceCallSupported()));
     },
     onListenEnd: (send) => dispatch({ type: 'release', send, at: Date.now() }),
   };
