@@ -20,6 +20,7 @@ export type InicioReads = {
   agenda: boolean;
   news: boolean;
   cameras: boolean;
+  tiles: boolean;
   people: boolean;
   watch: boolean;
   night: boolean;
@@ -56,11 +57,11 @@ function bandPlans(reads: InicioReads): ColumnPlan[] {
     {
       id: 'side',
       sections: [
-        ...when(reads.cameras, 'cameras'),
+        ...when(reads.cameras && reads.tiles, 'cameras'),
         ...when(reads.people, 'people'),
         ...when(reads.system && reads.sparse, 'system'),
       ],
-      grow: 'cameras',
+      grow: reads.tiles ? 'cameras' : 'system',
       width: size.columnAside,
     },
   ];
@@ -75,7 +76,14 @@ function widePlans(reads: InicioReads): ColumnPlan[] {
       width: size.columnWide,
     },
     { id: 'news', sections: when(reads.news, 'news'), grow: 'news', max: size.columnFeed },
-    { id: 'cameras', sections: when(reads.cameras, 'cameras', 'happened'), grow: 'cameras' },
+    {
+      id: 'cameras',
+      sections: [
+        ...when(reads.cameras && reads.tiles, 'cameras'),
+        ...when(reads.cameras, 'happened'),
+      ],
+      grow: reads.tiles ? 'cameras' : 'happened',
+    },
     {
       id: 'side',
       sections: [
@@ -85,7 +93,7 @@ function widePlans(reads: InicioReads): ColumnPlan[] {
         ...when(reads.agenda, 'reminders'),
         ...when(reads.system, 'system'),
       ],
-      grow: reads.people ? 'people' : 'projects',
+      grow: 'system',
       width: size.columnWide,
     },
   ];
@@ -118,12 +126,12 @@ export function inicioColumns(place: StatPlace, reads: InicioReads): InicioColum
 }
 
 export function inicioStack(reads: InicioReads, firstStep: boolean): InicioSection[] {
-  if (firstStep) return ['lead'];
+  if (firstStep) return ['lead', ...when(reads.news, 'news'), ...when(reads.system, 'system')];
   return [
     'lead',
     ...when(reads.watch, 'watch'),
     ...when(reads.agenda, reads.night ? 'tomorrow' : 'now'),
-    ...when(reads.cameras, 'cameras'),
+    ...when(reads.cameras && reads.tiles, 'cameras'),
     ...when(reads.news, 'news'),
   ];
 }

@@ -19,6 +19,7 @@ export function useInicioBody(): InicioBody {
     agenda: has(CAPABILITY.remindersRead) || has(CAPABILITY.agendaRead),
     news: news.readable && news.threads.length > 0,
     cameras: has(CAPABILITY.cameraView),
+    tiles: summary.camerasTotal > 0,
     people: has(CAPABILITY.presenceRead),
     watch: guard.view && watchTitleOf(mode) !== null,
     night: guard.view && mode === 'night',

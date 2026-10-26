@@ -242,7 +242,7 @@ describe('Inicio on a phone', () => {
     expect(screen.getByText('Sin conexión.')).toBeDefined();
   });
 
-  test('a new household shows one first step and no empty sections', () => {
+  test('a new household shows one first step, then only sections with content', () => {
     state.summary = {
       camerasTotal: 0,
       camerasOnline: 0,
@@ -252,7 +252,7 @@ describe('Inicio on a phone', () => {
     };
     render(<HomeScreen />);
     expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
-    expect(order(ALL)).toEqual([]);
+    expect(order(ALL)).toEqual(['news', 'system']);
     fireEvent.click(screen.getByRole('button', { name: 'Conectar cámara' }));
     expect(routes).toEqual(['/cameras']);
   });

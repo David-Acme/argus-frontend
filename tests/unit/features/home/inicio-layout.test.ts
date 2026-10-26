@@ -5,6 +5,7 @@ const ALL = {
   agenda: true,
   news: true,
   cameras: true,
+  tiles: true,
   people: true,
   watch: false,
   night: false,
@@ -16,6 +17,7 @@ const NONE = {
   agenda: false,
   news: false,
   cameras: false,
+  tiles: false,
   people: false,
   watch: false,
   night: false,
@@ -37,7 +39,7 @@ describe('the Inicio columns', () => {
       { id: 'agenda', sections: ['lead', 'now', 'today', 'tomorrow'], grows: 2, width: 340 },
       { id: 'news', sections: ['news'], grows: 0, max: 620 },
       { id: 'cameras', sections: ['cameras', 'happened'], grows: 0 },
-      { id: 'side', sections: ['people', 'projects', 'clips', 'reminders'], grows: 0, width: 340 },
+      { id: 'side', sections: ['people', 'projects', 'clips', 'reminders'], grows: 3, width: 340 },
     ]);
   });
 
@@ -56,13 +58,25 @@ describe('the Inicio columns', () => {
     ]);
   });
 
-  test('a side column without En casa grows its first section', () => {
-    const side = inicioColumns('wide', { ...ALL, people: false }).at(-1);
-    expect(side).toEqual({
+  test('the side column grows its last section, Estado when there is one', () => {
+    expect(inicioColumns('wide', { ...ALL, people: false }).at(-1)).toEqual({
       id: 'side',
       sections: ['projects', 'clips', 'reminders'],
-      grows: 0,
+      grows: 2,
       width: 340,
+    });
+    expect(inicioColumns('wide', { ...ALL, system: true }).at(-1)?.grows).toBe(4);
+  });
+
+  test('without camera tiles Lo que pasó grows, and at 1024 px the side ends on Estado', () => {
+    const wide = inicioColumns('wide', { ...ALL, tiles: false });
+    expect(wide[2]).toEqual({ id: 'cameras', sections: ['happened'], grows: 0 });
+    const band = inicioColumns('band', { ...ALL, tiles: false, system: true, sparse: true });
+    expect(band.at(-1)).toEqual({
+      id: 'side',
+      sections: ['people', 'system'],
+      grows: 1,
+      width: 300,
     });
   });
 
@@ -76,8 +90,9 @@ describe('the phone stack', () => {
     expect(inicioStack(ALL, false)).toEqual(['lead', 'now', 'cameras', 'news']);
   });
 
-  test('a new household shows only its one first step', () => {
-    expect(inicioStack(ALL, true)).toEqual(['lead']);
+  test('a new household shows its one first step, then Novedades and Estado when there are any', () => {
+    expect(inicioStack(ALL, true)).toEqual(['lead', 'news']);
+    expect(inicioStack({ ...ALL, news: false, system: true }, true)).toEqual(['lead', 'system']);
   });
 
   test('what the role cannot read is absent', () => {
