@@ -1,6 +1,6 @@
-import type { Page } from 'playwright-core';
 import { connected, patchContext, routes, store } from './support/harness';
 import { expect, openFirst, test } from './support/devices';
+import { rowIn, UPCOMING, WIDE } from './support/inicio';
 
 const at = Math.floor(Date.now() / 1000);
 
@@ -48,11 +48,6 @@ const auditFrame = (id: number, recordId: number, changes: Record<string, Change
   },
 });
 
-const rowLabel = async (page: Page, title: string): Promise<string> => {
-  const row = page.getByRole('button', { name: new RegExp(`^${title}\\. `) });
-  return (await row.count()) === 0 ? '' : ((await row.first().getAttribute('aria-label')) ?? '');
-};
-
 const recorded = async (baseUrl: string): Promise<{ requests: string[]; bodies: Record<string, string> }> =>
   (await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[]; bodies: Record<string, string> };
 
@@ -77,10 +72,12 @@ test('a reminder set to repeat every week on one device shows the repeat on the 
     },
   ]);
   const escapes = await openFirst(browser, app);
+  await second.page.setViewportSize(WIDE);
   await second.open();
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => rowLabel(second.page, 'Water the plants'), { timeout: 10000 }).toContain('Tomorrow');
+  await expect.poll(() => rowIn(second.page, UPCOMING, 'Water the plants'), { timeout: 10000 }).toContain('Tomorrow');
+  expect(await rowIn(second.page, 'Tomorrow', 'Water the plants')).not.toBe('');
 
   await screen.getByText('Water the plants', { exact: true }).click();
   await screen.getByRole('button', 'Repeat: Does not repeat').click();
@@ -89,8 +86,9 @@ test('a reminder set to repeat every week on one device shows the repeat on the 
 
   await expect.poll(async () => (await recorded(baseUrl)).requests, { timeout: LIVE_MS }).toContain('PATCH /reminder/701 @A');
   expect(await bodyOf(baseUrl, 'PATCH /reminder/701 @A')).toEqual({ recurrenceRule: 'FREQ=WEEKLY' });
-  await expect.poll(() => rowLabel(second.page, 'Water the plants'), { timeout: LIVE_MS }).toContain('Every week');
-  expect(await rowLabel(second.page, 'Water the plants')).toContain('Tomorrow');
+  await expect.poll(() => rowIn(second.page, UPCOMING, 'Water the plants'), { timeout: LIVE_MS }).toContain('every week');
+  expect(await rowIn(second.page, UPCOMING, 'Water the plants')).toContain('Tomorrow');
+  expect(await rowIn(second.page, 'Tomorrow', 'Water the plants')).toContain('every week');
 
   expect(escapes).toEqual([]);
   expect(second.escapes).toEqual([]);
@@ -114,29 +112,29 @@ test('completing a weekly reminder moves it a week ahead on both devices and it 
     },
   ]);
   const escapes = await openFirst(browser, app);
+  await second.page.setViewportSize(WIDE);
   await second.open();
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => rowLabel(second.page, 'Take out the trash'), { timeout: 10000 }).toContain('Every week');
-  const before = await rowLabel(second.page, 'Take out the trash');
+  await expect.poll(() => rowIn(second.page, UPCOMING, 'Take out the trash'), { timeout: 10000 }).toContain('every week');
+  const before = await rowIn(second.page, UPCOMING, 'Take out the trash');
   expect(before).toContain('Tomorrow');
 
-  await screen.getByRole('checkbox', 'Mark as done').click();
+  await screen.getByRole('checkbox', 'Mark “Take out the trash” as done').click();
 
   await expect.poll(async () => (await recorded(baseUrl)).requests, { timeout: LIVE_MS }).toContain('PATCH /reminder/702 @A');
   expect(await bodyOf(baseUrl, 'PATCH /reminder/702 @A')).toEqual({ isCompleted: true });
-  await expect(screen.getByRole('checkbox', 'Mark as done')).toBeVisible();
-  await expect.poll(() => rowLabel(second.page, 'Take out the trash'), { timeout: LIVE_MS }).not.toBe(before);
-  const after = await rowLabel(second.page, 'Take out the trash');
-  expect(after).toContain('Every week');
+  await expect.poll(() => rowIn(second.page, UPCOMING, 'Take out the trash'), { timeout: LIVE_MS }).not.toBe(before);
+  const after = await rowIn(second.page, UPCOMING, 'Take out the trash');
+  expect(after).toContain('every week');
   expect(after).not.toContain('Tomorrow');
-  expect(await second.page.getByRole('checkbox', { name: 'Mark as done' }).count()).toBe(1);
+  expect(await rowIn(second.page, 'Tomorrow', 'Take out the trash')).toBe('');
 
   expect(escapes).toEqual([]);
   expect(second.escapes).toEqual([]);
 });
 
-test('stopping the repeat from the row keeps the time on both devices', async ({ app, browser, screen, second }) => {
+test('stopping the repeat from the reminder keeps the time on both devices', async ({ app, browser, screen, second }) => {
   const baseUrl = app.baseUrl ?? '';
   await store(baseUrl, 'reminder', reminder(703, 'Call grandma', 'FREQ=DAILY'));
   await routes(baseUrl, [
@@ -148,18 +146,20 @@ test('stopping the repeat from the row keeps the time on both devices', async ({
     },
   ]);
   const escapes = await openFirst(browser, app);
+  await second.page.setViewportSize(WIDE);
   await second.open();
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => rowLabel(second.page, 'Call grandma'), { timeout: 10000 }).toContain('Every day');
+  await expect.poll(() => rowIn(second.page, UPCOMING, 'Call grandma'), { timeout: 10000 }).toContain('every day');
 
-  await screen.getByRole('button', 'Options').first().click();
+  await screen.getByText('Call grandma', { exact: true }).click();
   await screen.getByText('Stop repeating', { exact: true }).last().click();
+  await screen.getByRole('button', 'Save').click();
 
   await expect.poll(async () => (await recorded(baseUrl)).requests, { timeout: LIVE_MS }).toContain('PATCH /reminder/703 @A');
   expect(await bodyOf(baseUrl, 'PATCH /reminder/703 @A')).toEqual({ recurrenceRule: null });
-  await expect.poll(() => rowLabel(second.page, 'Call grandma'), { timeout: LIVE_MS }).not.toContain('Every day');
-  expect(await rowLabel(second.page, 'Call grandma')).toContain('Tomorrow');
+  await expect.poll(() => rowIn(second.page, UPCOMING, 'Call grandma'), { timeout: LIVE_MS }).not.toContain('every day');
+  expect(await rowIn(second.page, UPCOMING, 'Call grandma')).toContain('Tomorrow');
 
   expect(escapes).toEqual([]);
   expect(second.escapes).toEqual([]);
