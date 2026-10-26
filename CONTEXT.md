@@ -5575,6 +5575,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of `p1/ds-fixes`, `p1/estela-perf` and `p1/wire` (ff881a0), measured on the merged tree: `dist/` 8,844,145 → 8,867,041 B (+22,896): Estela's adaptive renderer (tier probe and frame-time feedback, about 17 kB as measured on its branch), the design-system fixes (about 4.5 kB: the confirm latch, the announce and screen-active hooks, the hit areas) and the lazy lab's chunk carrying the merged demos. The entry chunk went down, 7,118,965 → 7,115,996 B, because the lab now loads lazily. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of the Estela tier fixes (`932b976`, `1033e5f`: paint-ahead pacing, the warm-up probe, the step-up path), measured on the integrated tree: `dist/` 8,867,041 → 8,867,586 B (+545). The entry chunk is unchanged at 7,115,996 B; the growth is in the lazy lab chunk and the Presence modules. | 2026-10-21 |
 
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
 **Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
@@ -6434,3 +6435,57 @@ build was 117,468,588 B); arm64-v8a review APKs 110,928,024 B (ff881a0) and
   frame is followed by a callback well under a millisecond later; taken as the
   beat, it made every frame look on time and the paint-ahead never ran.
   `noteBeat` ignores gaps under 4 ms.
+
+## Command: one door for search, actions and Argus (2026-10-26, Phase 2, p2/command)
+
+`features/command` is the signed-in app's palette (spec §8c, §9.0 "Search",
+R-D19, R-D21). `GlobalCommand` is mounted once in `(app)/_layout.tsx`; its open
+state, intent (`search` or `create`) and starting query live in a small slice
+store, and `useCommandLauncher()` (`open(query?)`, `openNew()`) is what the
+sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
+
+- **Keys.** `useCommandHotkey` (shared `Command`) answers Ctrl/⌘+K and `/` with
+  the search and a bare `N` with the new-item actions. A bare key never fires
+  while focus is in a field, while an IME composes, on auto-repeat or with
+  Alt; `⇧N` is left free (the prototype gives it to «Poner modo Noche»). While
+  the palette is open the keys do nothing more: Esc, an outside click and
+  Back close it (the Dialog on pointer, the Sheet on touch).
+- **Nothing before the first open.** The host mounts on first open
+  (`useOpenedOnce`), so the layout pays no subscription until then. Results are
+  computed against the moment the palette opened (`openedAt` in the store), not
+  a ticking clock, so a mounted palette does not recompute every minute.
+- **Local first.** Results come from the view cache only, with no query per
+  keystroke: reminders (`reminder.list`), events (`event.list`, new: the 1000
+  latest by start through `calendarEventService.observeLatest`, gated by the
+  productivity module like every other productivity source), tasks
+  (`task.list`, new: the flat list the project projection already builds per
+  project, written once more so one hook can read every task), projects, the
+  people directory and cameras. Each title is folded once (NFD, marks removed,
+  lower case) when the entries are built; a keystroke only compares strings.
+  A recurring event is found at its next occurrence.
+- **Ranking** (`model/command-search.ts`): a title that starts with the query,
+  then one with a word that starts with it, then one that contains it; ties go
+  to the nearest upcoming, then the most recent past, then the undated; five
+  per group, groups in the order Agenda, Proyectos, Personas, Cámaras, then
+  Acciones and Ir a. «Pedir a Argus» leads whenever there is text.
+- **Access** (`model/command-access.ts`): every result kind, action and section
+  answers the same tables the screens answer (`routeFallback`, `tableAllowed`,
+  `peopleAccessOf`). A module that is off removes its results, actions and
+  section, and the section numbers close up like the nav's. A role the build
+  does not know gets Inicio and Tú and no Argus entry (`Command`'s `onAsk` is
+  optional for this).
+- **Actions.** «Nuevo evento/tarea/proyecto» push `/agenda?new=event` and
+  `/projects?new=project|task` (`NEW_ITEM_PARAM`), which open those screens'
+  existing forms once the screen's own permission allows it. «Nuevo
+  recordatorio» follows the owner's direction that reminders are made by
+  talking to Argus: it opens the Argus thread with «Recuérdame …» as the draft.
+  With free text it quotes the text and sits after the actions the text names.
+- **Asking Argus.** Enter on free text sends it through the assistant chat and
+  opens the thread in chat mode; if Argus is busy the text becomes the
+  thread's draft instead of being lost. The host calls `useAssistantChat`,
+  which binds the chat to the user before anything is sent: binding later (on
+  the thread's mount) would wipe the queued message.
+- **Touch.** The shortcut chips and the ↵ chip show only on the pointer
+  palette (`hints`); the phone's sheet lists the same rows without them.
+- **Component tests of a feature** live in `tests/unit/features/<slice>/components/`
+  and run with the DOM runner (`test:ui`); the plain runner skips them.
