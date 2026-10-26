@@ -5,9 +5,12 @@ import { ownerDevice } from '../seed';
 import type { ShimSeed } from '../tauri-shim';
 import {
   CORE,
+  DARK_ES,
   ENGINE,
   LIGHT_ES,
   MAIN_LOOKS,
+  PROTO,
+  PROTO_VIEWPORTS,
   VIEWPORTS,
   openScene,
   quiet,
@@ -39,6 +42,7 @@ export type StateSpec = {
   before?: (context: BrowserContext) => Promise<void>;
   motion?: boolean;
   latency?: number;
+  clock?: number;
   main?: boolean;
   deep?: boolean;
   notes?: string;
@@ -110,6 +114,7 @@ const once = async (
     before: state.before,
     motion: state.motion,
     latency: state.latency,
+    clock: state.clock,
     viewport: viewports[0],
   });
   try {
@@ -132,19 +137,27 @@ const once = async (
   }
 };
 
+const looksOf = (state: StateSpec): readonly Look[] => {
+  if (PROTO) return [LIGHT_ES, DARK_ES];
+  return state.main ? [LIGHT_ES, ...MAIN_LOOKS] : [LIGHT_ES];
+};
+
+const viewportsOf = (state: StateSpec, look: Look): readonly Viewport[] => {
+  if (PROTO) return PROTO_VIEWPORTS;
+  return state.main && look === LIGHT_ES && ENGINE === 'chromium' ? VIEWPORTS : CORE;
+};
+
 export const runScreen = async (
   baseUrl: string,
   screen: ScreenSpec,
-  only?: string
+  only: readonly string[]
 ): Promise<string[]> => {
   const failures: string[] = [];
   for (const state of screen.states) {
-    if (only && !state.state.includes(only)) continue;
-    const looks = state.main ? [LIGHT_ES, ...MAIN_LOOKS] : [LIGHT_ES];
-    for (const look of looks) {
+    if (only.length > 0 && !only.some((part) => state.state.includes(part))) continue;
+    for (const look of looksOf(state)) {
       try {
-        const viewports =
-          state.main && look === LIGHT_ES && ENGINE === 'chromium' ? VIEWPORTS : CORE;
+        const viewports = viewportsOf(state, look);
         const runs = screen.perViewport ? viewports.map((viewport) => [viewport]) : [viewports];
         for (const run of runs) await once(baseUrl, screen, state, look, run);
       } catch (error) {

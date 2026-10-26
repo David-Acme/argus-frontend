@@ -12,7 +12,15 @@ from the code (`src/app`, `src/features`, `src/shared/components`). Each conditi
 
 Run it with `bun run ui-map` (Chromium) and `ARGUS_UI_MAP_ENGINE=webkit bun run ui-map` (WebKit,
 the engine family of the Tauri desktop). `ARGUS_UI_MAP_SCREEN` and `ARGUS_UI_MAP_STATE` narrow a
-run. The spec is skipped unless `ARGUS_UI_MAP_DIR` is set, so `verify` never runs it.
+run; both take a comma list, and a state is selected when its id contains one of the parts. The
+spec is skipped unless `ARGUS_UI_MAP_DIR` is set, so `verify` never runs it.
+
+`ARGUS_UI_MAP_VIEWPORTS=proto` swaps the viewport set for the redesign prototype's frames:
+proto-phone 360×760, proto-1280 1280×820, proto-1920 1920×1080 and proto-2560 2560×1440, every
+selected state in light/es and dark/es. The default set and its names are unchanged without it.
+Every manifest row carries `masks`: the viewport rectangles of the canvas and video elements
+(`canvas`) and of the images and background-image frames (`media`), so a comparison can leave
+animation and photo content out.
 
 ## How the web harness sees the app
 
@@ -160,6 +168,9 @@ run. The spec is skipped unless `ARGUS_UI_MAP_DIR` is set, so `verify` never run
   `/guard/environments`, `/guard/proximity/me`, `/rtc/watch`, `PATCH /notification/read`.
 - Conditions and captures:
   - populated [captured: `populated`, main]; same data with no latency [captured: `populated-fast-server`]
+  - the populated data with no open incident [captured: `calm`]; Noche mode at 23:18 [captured:
+    `night`]; one camera, nothing scheduled and the getting-started list [captured: `sparse`]
+  - Ctrl+K on Inicio [captured: `command-open`]
   - new household (nothing synced, no environments) [captured: `empty-new-household`]
   - many items and long text: 14 projects, 46 notifications, 12 reminders, long name [captured: `many-long`]
   - before the context arrives [captured: `before-context`]
