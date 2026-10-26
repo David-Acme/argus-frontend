@@ -329,47 +329,17 @@ export const SURVEILLANCE_SCREENS: ScreenSpec[] = [
       },
       { state: 'many-long', rows: [...CAMERA_ROWS, ...manyCameras] },
       { state: 'single-featured', rows: [...HOUSEHOLD, camera(3, 'Patio trasero')] },
-      {
-        state: 'list-density',
-        rows: CAMERA_ROWS,
-        act: async (scene) => {
-          await scene.page
-            .getByRole('radio', { name: say(scene, 'screens.cameras.density-list'), exact: true })
-            .first()
-            .click();
-          await sleep(800);
-        },
-      },
-      { state: 'sort-menu', rows: CAMERA_ROWS, act: click('screens.cameras.sort.title') },
-      {
-        state: 'search-no-match',
-        rows: CAMERA_ROWS,
-        act: async (scene) => {
-          await scene.page
-            .getByRole('textbox', { name: say(scene, 'screens.cameras.search') })
-            .first()
-            .fill('zzz');
-          await sleep(700);
-        },
-      },
-      {
-        state: 'recording-paused-banner',
-        rows: CAMERA_ROWS,
-        routes: [
-          {
-            method: 'GET',
-            path: '/camera/recording',
-            info: { paused: true, freeGb: 3, minFreeGb: 10, freeBytes: 3221225472 },
-          },
-        ],
-      },
       { state: 'guest', role: 'guest', rows: CAMERA_ROWS },
-      { state: 'connect-wizard-model', rows: CAMERA_ROWS, act: click('screens.cameras.connect') },
+      {
+        state: 'connect-wizard-model',
+        rows: CAMERA_ROWS,
+        act: click('screens.security.camera-grid.connect'),
+      },
       {
         state: 'connect-wizard-connection-errors',
         rows: CAMERA_ROWS,
         act: async (scene) => {
-          await click('screens.cameras.connect')(scene);
+          await click('screens.security.camera-grid.connect')(scene);
           await scene.page
             .getByRole('radio', { name: /TP-Link Tapo C210/ })
             .first()
@@ -586,11 +556,108 @@ export const SURVEILLANCE_SCREENS: ScreenSpec[] = [
       },
       { state: 'resident', role: 'resident' },
       { state: 'guard', role: 'guard' },
-      { state: 'new-environment-form', act: click('screens.security.environments.add') },
-      { state: 'add-visitor-form', act: click('screens.security.guests.add') },
       {
-        state: 'maintenance-dialog',
-        act: click('screens.security.maintenance.declare-short', 'last'),
+        state: 'place-picker',
+        routes: [{ method: 'GET', path: '/guard/environments', info: ENVIRONMENTS }],
+        act: async (scene) => {
+          await scene.page
+            .getByRole('button', { name: ENVIRONMENTS[0]?.name, exact: true })
+            .first()
+            .click();
+          await sleep(900);
+        },
+      },
+      {
+        state: 'episode-sheet',
+        act: async (scene) => {
+          await scene.page
+            .getByRole('button', {
+              name: new RegExp(say(scene, 'screens.security.episodes.subject.stranger')),
+            })
+            .first()
+            .click({ timeout: 8000 });
+          await sleep(1200);
+        },
+      },
+      { state: 'sos-confirm', act: click('screens.security.sos.label') },
+    ],
+  },
+  {
+    screen: 'security-new-home',
+    inApp: true,
+    route: '/security',
+    path: '/security',
+    routes: [
+      ...SURVEILLANCE_BASE,
+      { method: 'GET', path: '/guard/environments', info: [environment('home')] },
+      { method: 'GET', path: '/guard/episodes', info: { rows: [], nextBefore: null } },
+      { method: 'GET', path: '/guard/expected-guests', info: [] },
+      { method: 'GET', path: '/guard/maintenance', info: { windows: [] } },
+      { method: 'GET', path: '/camera/overview', info: EMPTY_OVERVIEW },
+    ],
+    states: [
+      { state: 'no-data', main: true },
+      { state: 'no-data-guard', role: 'guard' },
+    ],
+  },
+  {
+    screen: 'security-places',
+    inApp: true,
+    route: '/security/places',
+    path: '/security/places',
+    routes: SURVEILLANCE_BASE,
+    rows: CAMERA_ROWS,
+    states: [
+      { state: 'populated', main: true },
+      { state: 'resident', role: 'resident' },
+      { state: 'new-place-form', act: click('screens.security.places-screen.add') },
+    ],
+  },
+  {
+    screen: 'security-visits',
+    inApp: true,
+    route: '/security/visits',
+    path: '/security/visits',
+    routes: SURVEILLANCE_BASE,
+    rows: CAMERA_ROWS,
+    states: [
+      { state: 'populated', main: true },
+      {
+        state: 'empty',
+        routes: [{ method: 'GET', path: '/guard/expected-guests', info: [] }],
+      },
+      { state: 'guard', role: 'guard' },
+      { state: 'add-visitor-form', act: click('screens.security.guests.add') },
+    ],
+  },
+  {
+    screen: 'security-maintenance',
+    inApp: true,
+    route: '/security/maintenance',
+    path: '/security/maintenance',
+    routes: SURVEILLANCE_BASE,
+    rows: CAMERA_ROWS,
+    states: [
+      { state: 'populated', main: true },
+      {
+        state: 'empty',
+        routes: [{ method: 'GET', path: '/guard/maintenance', info: { windows: [] } }],
+      },
+      { state: 'maintenance-dialog', act: click('screens.security.maintenance.declare') },
+    ],
+  },
+  {
+    screen: 'security-episodes',
+    inApp: true,
+    route: '/security/episodes',
+    path: '/security/episodes',
+    routes: SURVEILLANCE_BASE,
+    rows: CAMERA_ROWS,
+    states: [
+      { state: 'populated', main: true },
+      {
+        state: 'empty',
+        routes: [{ method: 'GET', path: '/guard/episodes', info: { rows: [], nextBefore: null } }],
       },
     ],
   },

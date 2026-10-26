@@ -34,11 +34,6 @@ export const CAMERA_THUMBNAIL_REFRESH_MS = 30000;
 
 export const CAMERA_FULLSCREEN_FADE_MS = 180;
 
-export const CAMERA_LIVE_PREVIEWS_COMPACT = 2;
-export const CAMERA_LIVE_PREVIEWS_WIDE = 4;
-
-export const CAMERA_DENSITY_STORAGE_KEY = 'cameras.density';
-
 export const CAMERA_DRIVER_SPECS = {
   tapo: {
     port: 554,

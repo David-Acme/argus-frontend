@@ -89,6 +89,7 @@ mock.module('react-native-reanimated', async () => {
     useSharedValue: <T>(initial: T) => useRef(sharedValue(initial)).current,
     makeMutable: sharedValue,
     useAnimatedScrollHandler: () => () => undefined,
+    useAnimatedReaction: () => undefined,
     useAnimatedStyle: <T>(build: () => T) => build(),
     withSpring: <T>(target: T) => target,
     withTiming: <T>(target: T, _config?: unknown, done?: (finished: boolean) => void) => {

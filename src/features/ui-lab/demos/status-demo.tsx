@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { Button } from '@/shared/ui/button';
 import { Status, type StatusStat } from '@/shared/ui/status';
-import { LabCase } from '../components/lab-case';
-import { copy } from './demo-copy';
+import { LabCase } from '@/features/ui-lab/components/lab-case';
+import { copy } from '@/features/ui-lab/demos/demo-copy';
 
 const noop = () => undefined;
 
@@ -42,6 +42,7 @@ export function StatusDemo() {
           meta={copy.atHomeMeta}
           stats={SECURITY}
           presence="idle"
+          scale="dense"
         />
       </LabCase>
       <LabCase id="hero-night" block>
@@ -60,7 +61,7 @@ export function StatusDemo() {
       <LabCase id="alert" block>
         <Status
           tone="alert"
-          secondary
+          scale="secondary"
           sentence={copy.heroAlert}
           meta={copy.heroAlertMeta}
           presence="alert"

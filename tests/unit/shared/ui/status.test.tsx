@@ -40,11 +40,33 @@ describe('Status', () => {
     expect(canvasWidths(container)).toEqual(['66px']);
   });
 
+  test('the dense hero draws the Seguridad presence beside its mode', () => {
+    const { container } = render(
+      <Status
+        tone="calm"
+        scale="dense"
+        sentence="En casa"
+        meta="Te aviso solo de desconocidos"
+        presence="idle"
+        presenceEvent={{ name: 'modechange', id: 1 }}
+      />
+    );
+    expect(screen.getByRole('heading', { name: 'En casa' })).toBeDefined();
+    expect(canvasWidths(container)).toEqual(['58px']);
+  });
+
+  test('the band keeps a long alert sentence whole', () => {
+    setWindowWidth(1280);
+    render(<Status tone="alert" sentence="3 personas en Patio trasero" meta="Ahora" />);
+    const sentence = screen.getByRole('heading', { name: '3 personas en Patio trasero' });
+    expect(sentence.textContent).toBe('3 personas en Patio trasero');
+  });
+
   test('an alert hero is announced and the secondary hero draws a smaller presence', () => {
     const { container } = render(
       <HeroStatus
         tone="alert"
-        secondary
+        scale="secondary"
         sentence="Alguien en el patio."
         meta="Hace 1 min"
         presence="alert"

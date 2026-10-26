@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { AuraTone } from '@/shared/theme';
 import type { ChipTone } from '@/shared/ui/chip';
 import type { IconGlyph } from '@/shared/ui/icon';
-import type { PresenceState } from '@/shared/ui/presence';
+import type { PresenceCue, PresenceState } from '@/shared/ui/presence';
 
 export type StatusTone = 'calm' | 'attention' | 'alert';
 
@@ -16,6 +16,8 @@ export type StatusStat = {
 
 export type StatusAction = { label: string; onPress: () => void | Promise<unknown> };
 
+export type HeroScale = 'dense' | 'secondary';
+
 export type HeroStatusProps = {
   variant?: 'hero';
   tone: StatusTone;
@@ -23,8 +25,9 @@ export type HeroStatusProps = {
   meta: string;
   stats?: readonly StatusStat[];
   presence?: PresenceState;
+  presenceEvent?: PresenceCue;
   aura?: AuraTone;
-  secondary?: boolean;
+  scale?: HeroScale;
   action?: ReactNode;
 };
 

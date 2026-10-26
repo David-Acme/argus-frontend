@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { t } from '@/core/i18n';
 import type { ICameraCacheRow, IServiceResponse } from '@/core/interfaces';
 import { guardService } from '@/core/services/guard.service';
@@ -9,31 +9,21 @@ import type {
   GuardEnvironment,
   GuardEnvironmentCreate,
   GuardEnvironmentPatch,
-  GuardEpisode,
-  GuardExpectedGuest,
-  GuardExpectedGuestCreate,
-  GuardFeedbackLabel,
   GuardMode,
   ResourceMatch,
 } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { useInfiniteList } from '@/shared/hooks/use-infinite-list';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runServiceAction } from '@/shared/libs/service-action';
-import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
-import { useEpisodeFeed } from '@/features/security/hooks/use-episode-feed';
 import {
   cameraEnvironmentIndex,
   headlineMode,
-  maskedInScope,
   withCameraIn,
-  withMode,
 } from '@/features/security/model/environments';
-import { askDisarmPin, safetyService } from '@/features/safety';
-import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
-import { confirm } from '@/shared/libs/confirm';
+import { useExpectedGuests } from '@/features/security/hooks/use-expected-guests';
+import { useGuardMode } from '@/features/security/hooks/use-guard-mode';
 
 type OptimisticRemote<T, R> = {
   mutate: (update: (previous: T | null) => T | null) => void;
@@ -43,18 +33,12 @@ type OptimisticRemote<T, R> = {
   success?: string;
 };
 
-export type PendingMode = { mode: GuardMode; environmentId: number | null };
-
 const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [
   { domain: 'guard', scope: 'environments' },
   { domain: 'camera', scope: 'overview' },
 ];
-const GUARD_EXPECTED_VISITS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'expected_visits' }];
-
-const EPISODE_END_AFTER = 8;
 
 const loadEnvironments = () => guardService.environments();
-const loadGuests = () => guardService.expectedGuests();
 const loadCameras = () => guardService.cameras();
 
 async function optimisticRemote<T, R>(action: OptimisticRemote<T, R>): Promise<boolean> {
@@ -76,10 +60,6 @@ async function optimisticRemote<T, R>(action: OptimisticRemote<T, R>): Promise<b
 function replaceCamera(rows: GuardCameraContext[] | null, next: GuardCameraContext): GuardCameraContext[] {
   const others = (rows ?? []).filter((row) => row.cameraId !== next.cameraId);
   return [...others, next].sort((left, right) => left.cameraId - right.cameraId);
-}
-
-function replaceEpisode(rows: GuardEpisode[] | null, next: GuardEpisode): GuardEpisode[] {
-  return (rows ?? []).map((row) => (row.kind === next.kind && row.id === next.id ? next : row));
 }
 
 function replaceEnvironment(rows: GuardEnvironment[] | null, next: GuardEnvironment): GuardEnvironment[] {
@@ -169,70 +149,15 @@ export function useCameraPlacement(owner: boolean, enabled = true) {
   };
 }
 
-export function useGuard(owner: boolean, environmentId?: number) {
+export function useGuard(owner: boolean) {
   const placement = useCameraPlacement(owner);
   const environments = placement.environments;
-  const guests = useRemoteResource({
-    cacheKey: VIEW_CACHE_KEYS.guardGuests,
-    load: loadGuests,
-    resources: GUARD_EXPECTED_VISITS,
-  });
-  const episodes = useEpisodeFeed(environmentId, true);
-  const episodePaging = useInfiniteList({
-    count: episodes.rows.length,
-    hasMore: episodes.hasMore,
-    loadMore: episodes.loadMore,
-    endAfter: EPISODE_END_AFTER,
-  });
-  const [pendingMode, setPendingMode] = useState<PendingMode | null>(null);
+  const guests = useExpectedGuests();
+  const mode = useGuardMode(environments);
   const reloadEnvironments = environments.reload;
   const reloadGuests = guests.reload;
   const reloadCameras = placement.reloadContexts;
   const mutateEnvironments = environments.mutate;
-  const mutateGuests = guests.mutate;
-  const mutateFeed = episodes.mutate;
-  const mutateEpisodes = useCallback(
-    (update: (previous: GuardEpisode[] | null) => GuardEpisode[] | null) =>
-      mutateFeed((rows) => update([...rows]) ?? []),
-    [mutateFeed]
-  );
-
-  const setMode = useCallback(
-    async (mode: GuardMode, target?: GuardEnvironment): Promise<boolean> => {
-      const masked = maskedInScope(environments.data, target?.id);
-      if (modeExpectsProtection(mode) && masked.length > 0) {
-        const proceed = await confirm({
-          title: t('screens.security.mask.arm-title'),
-          description: t('screens.security.mask.arm-body', {
-            names: masked.map((camera) => camera.name).join(', '),
-          }),
-          confirmLabel: t('screens.security.mask.arm-anyway'),
-          intent: 'warning',
-        });
-        if (!proceed) return false;
-      }
-      let pin: string | undefined;
-      if (modeLowers(mode, environments.data, target?.id) && (await safetyService.disarmNeedsPin())) {
-        const entered = await askDisarmPin();
-        if (entered === null) return false;
-        pin = entered;
-      }
-      setPendingMode({ mode, environmentId: target?.id ?? null });
-      const label = t(`screens.security.mode.${mode}`);
-      const saved = await optimisticRemote<GuardEnvironment[], GuardEnvironment[]>({
-        mutate: mutateEnvironments,
-        apply: (previous) => (previous ? withMode(previous, mode, target?.id) : previous),
-        call: () => guardService.setMode(mode, target?.id, pin),
-        settle: (_current, info) => info,
-        success: target
-          ? t('screens.security.environments.mode-saved', { name: target.name, mode: label })
-          : t('screens.security.environments.mode-saved-all', { mode: label }),
-      });
-      setPendingMode(null);
-      return saved;
-    },
-    [environments.data, mutateEnvironments]
-  );
 
   const createEnvironment = useCallback(
     async (body: GuardEnvironmentCreate): Promise<GuardEnvironment | null> => {
@@ -280,83 +205,21 @@ export function useGuard(owner: boolean, environmentId?: number) {
     [mutateEnvironments, reloadCameras, reloadGuests]
   );
 
-  const addGuest = useCallback(
-    async (body: GuardExpectedGuestCreate): Promise<boolean> => {
-      const result = await runServiceAction({
-        call: () => guardService.addExpectedGuest(body),
-        success: t('screens.security.guests.saved'),
-      });
-      if (result) await reloadGuests();
-      return result !== null;
-    },
-    [reloadGuests]
-  );
-
-  const removeGuest = useCallback(
-    async (guest: GuardExpectedGuest) => {
-      const result = await runServiceAction({
-        confirm: {
-          title: t('screens.security.guests.remove-title'),
-          description: t('screens.security.guests.remove-description', { name: guest.description }),
-          confirmLabel: t('screens.security.guests.remove'),
-          intent: 'danger',
-        },
-        call: () => guardService.removeExpectedGuest(guest.id),
-        success: t('screens.security.guests.removed'),
-      });
-      if (result) mutateGuests((previous) => (previous ?? []).filter((item) => item.id !== guest.id));
-    },
-    [mutateGuests]
-  );
-
-  const reviewEpisode = useCallback(
-    (episode: GuardEpisode, label: GuardFeedbackLabel): Promise<boolean> =>
-      optimisticRemote<GuardEpisode[], GuardEpisode>({
-        mutate: mutateEpisodes,
-        apply: (previous) =>
-          replaceEpisode(previous, { ...episode, reviewLabel: label, reviewedAt: Date.now() / 1000 }),
-        call: () => guardService.reviewEpisode(episode.id, label),
-        settle: (current, info) => replaceEpisode(current, info),
-        success: t('screens.security.episodes.review-saved'),
-      }),
-    [mutateEpisodes]
-  );
-
-  const retainEpisode = useCallback(
-    (episode: GuardEpisode, retain: boolean): Promise<boolean> =>
-      optimisticRemote<GuardEpisode[], GuardEpisode>({
-        mutate: mutateEpisodes,
-        apply: (previous) =>
-          replaceEpisode(previous, {
-            ...episode,
-            retainUntil: retain ? episode.firstSeen + EPISODE_MARKED_RETENTION_DAYS * 86400 : 0,
-          }),
-        call: () => guardService.retainEpisode(episode.id, retain),
-        settle: (current, info) => replaceEpisode(current, info),
-        success: t(retain ? 'screens.security.episodes.retain-saved' : 'screens.security.episodes.retain-released'),
-      }),
-    [mutateEpisodes]
-  );
-
   return {
     environments: environments.data ?? [],
     environmentsReady: environments.data != null,
-    guests: guests.data ?? [],
+    guests: guests.list,
     cameras: placement.contexts,
-    episodes: episodes.rows,
-    episodePaging,
     loadedAt: guests.loadedAt,
     failed: environments.status === 'failed',
-    pendingMode,
+    pendingMode: mode.pendingMode,
     reload: reloadEnvironments,
-    setMode,
+    setMode: mode.setMode,
     createEnvironment,
     updateEnvironment,
     removeEnvironment,
-    addGuest,
-    removeGuest,
+    addGuest: guests.add,
+    removeGuest: guests.remove,
     updateCamera: placement.updateCamera,
-    reviewEpisode,
-    retainEpisode,
   };
 }

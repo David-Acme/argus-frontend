@@ -1,7 +1,9 @@
 import { clsx } from 'clsx';
-import { View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, type LayoutChangeEvent } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { IS_WEB } from '@/shared/constants';
-import { useEffects, useThemeTokens } from '@/shared/theme';
+import { inset, motion, useEffects, useThemeTokens } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -57,46 +59,75 @@ function useTrack(glass: boolean | undefined) {
   };
 }
 
+type SlideInput = { index: number; total: number };
+
+function segmentSpan(inner: number, total: number): number {
+  return (inner - inset.segment.gap * (total - 1)) / Math.max(1, total);
+}
+
+function useSlide({ index, total }: SlideInput) {
+  const { reduceMotion } = useEffects();
+  const [width, setWidth] = useState(0);
+  const offset = useSharedValue(0);
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: offset.get() }] }));
+  useEffect(() => {
+    if (width <= 0 || index < 0) return;
+    const target = index * (segmentSpan(width, total) + inset.segment.gap);
+    offset.set(reduceMotion ? target : withSpring(target, motion.spring.snappy));
+  }, [index, offset, reduceMotion, total, width]);
+  return {
+    slide,
+    measure: (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width),
+    pill: width > 0 && index >= 0 ? { width: segmentSpan(width, total) } : null,
+  };
+}
+
 export function Segmented<T extends string>(props: SegmentedProps<T>) {
   const { label, options, value, onChange, glass } = props;
   const { theme, elevation } = useThemeTokens();
   const keys = useArrowKeys(props);
   const track = useTrack(glass);
+  const index = options.findIndex((option) => option.value === value);
+  const motionState = useSlide({ index, total: options.length });
   const lifted = { boxShadow: elevation.segment };
   const onFill = theme === 'dark' ? 'bg-fill-press' : 'bg-surface';
   return (
     <View
       role="radiogroup"
       aria-label={label}
-      className={clsx('rounded-well p-segment-pad gap-segment-gap flex-row', track.className)}
+      className={clsx('rounded-well p-segment-pad', track.className)}
       style={track.style}
       {...keys}>
-      {options.map((option) => {
-        const on = option.value === value;
-        return (
-          <View key={option.value} className="flex-1">
-            <PressableSurface
-              a11y={{ label: option.label, role: 'radio', checked: on, tabStop: on }}
-              onPress={() => {
-                if (!on) onChange(option.value);
-              }}
-              haptic={on ? undefined : 'selection'}
-              className={clsx(
-                'min-h-target-min rounded-seg-inner -my-0.5 justify-center',
-                !on && 'web:hover-dim'
-              )}>
-              <View
-                style={on ? lifted : undefined}
+      <View className="gap-segment-gap relative flex-row" onLayout={motionState.measure}>
+        {motionState.pill ? (
+          <Animated.View
+            aria-hidden
+            className={clsx('rounded-seg-inner absolute inset-y-0 left-0', onFill)}
+            style={[motionState.pill, lifted, motionState.slide]}
+          />
+        ) : null}
+        {options.map((option) => {
+          const on = option.value === value;
+          return (
+            <View key={option.value} className="flex-1">
+              <PressableSurface
+                a11y={{ label: option.label, role: 'radio', checked: on, tabStop: on }}
+                onPress={() => {
+                  if (!on) onChange(option.value);
+                }}
+                haptic={on ? undefined : 'selection'}
                 className={clsx(
-                  'min-h-segment rounded-seg-inner px-segment-min-x items-center justify-center',
-                  on && onFill
+                  'min-h-target-min rounded-seg-inner -my-0.5 justify-center',
+                  !on && 'web:hover-dim'
                 )}>
-                <SegmentContent option={option} on={on} />
-              </View>
-            </PressableSurface>
-          </View>
-        );
-      })}
+                <View className="min-h-segment rounded-seg-inner px-segment-min-x items-center justify-center">
+                  <SegmentContent option={option} on={on} />
+                </View>
+              </PressableSurface>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }

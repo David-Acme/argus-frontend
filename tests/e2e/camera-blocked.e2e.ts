@@ -49,23 +49,18 @@ test('a camera in privacy mode offers neither talk nor movement, and says why', 
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await app.open('/cameras');
-  await expect(screen.getByRole('button', 'Talk through Dormitorio')).toBeDisabled({
-    timeout: 10000,
-  });
-  await screen.getByRole('button', 'Dormitorio, Online').click();
+  await expect(screen.getByRole('button', 'Dormitorio, Private')).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('button', 'Talk through Dormitorio')).toBeHidden();
+  await screen.getByRole('button', 'Dormitorio, Private').click();
   await expect(
     screen.getByText('Private: Argus neither looks nor listens', { exact: true })
-  ).toBeVisible({
-    timeout: 10000,
-  });
+  ).toBeVisible({ timeout: 10000 });
   await expect(screen.getByRole('button', 'Hold to talk through the camera')).toBeHidden();
   await expect(screen.getByRole('button', 'Move the camera')).toBeHidden();
   await expect(screen.getByRole('button', 'Full screen')).toBeHidden();
   await screen.getByRole('button', /^Camera settings/).click();
   await expect(screen.getByText('Not listening: the lens is covered', { exact: true })).toBeVisible(
-    {
-      timeout: 10000,
-    }
+    { timeout: 10000 }
   );
   await expect(screen.getByRole('switch', 'Listen on this camera')).toBeHidden();
 

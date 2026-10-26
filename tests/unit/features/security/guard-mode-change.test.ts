@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { localeDictionaries } from '@/core/i18n/locales';
-import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
+import {
+  modeExpectsProtection,
+  modeLowers,
+  scopeMode,
+  undoTarget,
+} from '@/features/security/model/mode-change';
 
 const environments = [
   { id: 1, mode: 'armed' as const },
@@ -49,7 +54,9 @@ describe('the arming warning', () => {
 
   test('it is named, it carries the cameras and it never unmasks on its own', () => {
     expect(security.mask['arm-title']).toBe('Cámaras en modo privacidad');
-    expect(security.mask['arm-body']).toBe('{names} no cubrirán nada mientras la lente esté cubierta.');
+    expect(security.mask['arm-body']).toBe(
+      '{names} no cubrirán nada mientras la lente esté cubierta.'
+    );
     expect(security.mask['arm-anyway']).toBe('Armar igual');
     expect(security.mask.unmask).toBe('Quitar privacidad');
     expect(security.mask['unmask-title']).toBe('Modo privacidad');
@@ -57,7 +64,22 @@ describe('the arming warning', () => {
       '¿Quitar la privacidad de {name}? Argus vuelve a ver, escuchar y grabar.'
     );
     expect(security.mask.unmasked).toBe('Privacidad desactivada en {name}');
-    expect(security.mask.card).toBe('En modo privacidad: {names}');
     expect(security.mask.title).toBe('Estas cámaras están en modo privacidad: no cubren su zona.');
+  });
+});
+
+describe('undo', () => {
+  test('the scope mode is the one mode its places share', () => {
+    expect(scopeMode(environments, 2)).toBe('night');
+    expect(scopeMode(environments)).toBeNull();
+    expect(scopeMode([{ id: 1, mode: 'away' }])).toBe('away');
+    expect(scopeMode([], 1)).toBeNull();
+  });
+
+  test('Deshacer goes back to the previous shared mode, never to the same one', () => {
+    expect(undoTarget(environments, 'away', 2)).toBe('night');
+    expect(undoTarget(environments, 'night', 2)).toBeNull();
+    expect(undoTarget(environments, 'away')).toBeNull();
+    expect(undoTarget(null, 'away', 1)).toBeNull();
   });
 });
