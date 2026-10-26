@@ -5509,6 +5509,11 @@ suite's preload stubs react-native for pure logic; the main suite skips
 beside its model tests (`tests/unit/features/home/agenda-sections.test.tsx`)
 instead of under `shared/ui`. Tests import each component file directly:
 check:quality counts only direct imports.
+The runner uses `--parallel=4`, which implies `--isolate`: each file gets a
+fresh module registry, so one file's `mock.module` never leaks into the next.
+Without it, two files that mocked `@/shared/hooks/use-capabilities` with
+different exports broke each other once both ran in one process (the Phase 2
+lead merge of `p2/command` and `p2/inicio-agenda`).
 
 **ui-lab.** `src/features/ui-lab/` with a catalogue, one demo per component
 (the prototype's own words), `case-<id>` wrappers and URL parameters
