@@ -6878,14 +6878,22 @@ and T7 under one hero; every decision is a pure function in
   details). No watched camera, no section. On phones it leads the stack and,
   at night, Mañana takes Ahora's place, as the prototype draws; on the desktop
   it tops the agenda column.
-- **A home with little data.** Ideas are T5's `AgendaEmpty` (the chips ask
-  Argus once Ahora is empty). `SystemSection` (Estado) lists the active
-  modules and the cameras online, from the access view and the dashboard
-  summary; it closes the side column from 1700 px, and from 1024 px when
-  nothing is pending (`isSparse`). An empty Novedades drops its column, so
-  no column is left blank. Rutinas has no source in the app (no routine
-  model, no backend contract) and is not drawn; storage and the server's
-  temperature are not known to the app either.
+- **A home with little data.** No card is ever stretched into empty space:
+  only Cámaras' tile grid grows in its column, every other column ends
+  where its content ends, on a list or chips. Ideas are T5's `AgendaEmpty`
+  chips (`IdeaChips`, shared with «Prueba a decirle»). When nothing is
+  pending (`isSparse`) the side column ends with Estado (`SystemSection`:
+  the active modules and the cameras online), «Así te ayuda Argus» (one row
+  per right the reader has: cameras, reminders, voice) and «Prueba a
+  decirle» (phrases that ask Argus, each behind the right its answer needs).
+  An empty Novedades drops its column. A new household hides the zero stats
+  and stacks its first step, Novedades if any, Estado and «Prueba a
+  decirle». Presence that is unknown is never «sin datos»: a person reads
+  «Aún no sé si está en casa», me with the hint to connect a camera or the
+  phone; one person whose presence is unknown is no section, and the hero
+  names who is home only once someone's presence is known. Rutinas has no
+  source in the app and is not drawn; storage and the server's temperature
+  are not known to the app either.
 - **Guest SOS.** A role that can panic and has no Seguridad holds the
   existing `PanicButton` on Inicio (R-D10).
 - **One live Estela (R-D31).** `useHeroPresence` (claimed by the Status hero)

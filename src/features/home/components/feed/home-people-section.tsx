@@ -8,7 +8,11 @@ import { SkeletonRow } from '@/shared/ui/resource-view';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { useHomePeople } from '@/features/home/hooks/use-home-people';
-import { homeSinceOf, type HomePerson } from '@/features/home/model/home-people';
+import {
+  homeSinceOf,
+  peopleWorthShowing,
+  type HomePerson,
+} from '@/features/home/model/home-people';
 
 const MINUTE_MS = 60_000;
 
@@ -17,14 +21,27 @@ const SKELETON_ROWS = [0, 1, 2] as const;
 const STATE_KEYS = {
   home: 'screens.home.people.home',
   away: 'screens.home.people.away',
-  unknown: 'screens.home.people.unknown',
-} as const satisfies Record<HomePerson['state'], string>;
+} as const;
 
 type PersonRowProps = { person: HomePerson; now: number };
 
 function PersonRow({ person, now }: PersonRowProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
+  if (person.state === 'unknown')
+    return (
+      <Row
+        title={person.self ? t('screens.home.people.you', { name: person.name }) : person.name}
+        meta={
+          person.self
+            ? t('screens.home.people.unknown-self')
+            : t('screens.home.people.unknown-other')
+        }
+        leading={
+          <Avatar initial={person.initial} tone={person.self ? 'accent' : 'default'} round />
+        }
+      />
+    );
   const state = t(STATE_KEYS[person.state]);
   const since = homeSinceOf(person, new Date(now));
   const meta =
@@ -69,7 +86,7 @@ export function HomePeopleSection() {
         </Section>
       </View>
     );
-  if (people.length === 0) return null;
+  if (!peopleWorthShowing(people)) return null;
 
   return (
     <Section title={t('screens.home.people.title')}>

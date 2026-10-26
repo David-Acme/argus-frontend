@@ -60,3 +60,12 @@ export function homeSinceOf(person: Pick<HomePerson, 'since'>, now: Date): HomeS
     ? 'today'
     : 'day';
 }
+
+export function peopleWorthShowing(people: readonly Pick<HomePerson, 'state'>[]): boolean {
+  if (people.length === 0) return false;
+  return people.length > 1 || people.some((person) => person.state !== 'unknown');
+}
+
+export function presenceKnown(people: readonly Pick<HomePerson, 'state'>[]): boolean {
+  return people.some((person) => person.state !== 'unknown');
+}

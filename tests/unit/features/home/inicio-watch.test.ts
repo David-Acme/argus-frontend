@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { helpRows, tryPhrases } from '@/features/home/model/inicio-guide';
 import { isSparse, systemRows } from '@/features/home/model/inicio-system';
 import { wakeRuleOf, watchedCameras, watchTitleOf } from '@/features/home/model/inicio-watch';
 
@@ -96,5 +97,28 @@ describe('the system status', () => {
     expect(isSparse(SUMMARY)).toBe(true);
     expect(isSparse({ ...SUMMARY, camerasTotal: 3 })).toBe(true);
     expect(isSparse({ ...SUMMARY, remindersPending: 1 })).toBe(false);
+  });
+});
+
+describe('the guide for a home with little data', () => {
+  test('Argus says how it helps only with what the reader has', () => {
+    expect(helpRows({ cameras: true, reminders: true, voice: true })).toEqual([
+      'guards',
+      'reminds',
+      'answers',
+    ]);
+    expect(helpRows({ cameras: false, reminders: true, voice: false })).toEqual(['reminds']);
+  });
+
+  test('what to say follows the rights behind each answer', () => {
+    expect(tryPhrases({ events: true, presence: true, setsMode: true, agenda: true })).toEqual([
+      'who-home',
+      'night',
+      'happened',
+      'today',
+    ]);
+    expect(tryPhrases({ events: false, presence: false, setsMode: false, agenda: true })).toEqual([
+      'today',
+    ]);
   });
 });

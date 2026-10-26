@@ -96,6 +96,12 @@ mock.module('@/features/home/components/status/watch-section', () => ({
 mock.module('@/features/home/components/status/system-section', () => ({
   SystemSection: marker('system'),
 }));
+mock.module('@/features/home/components/status/help-section', () => ({
+  HelpSection: marker('help'),
+}));
+mock.module('@/features/home/components/status/try-section', () => ({
+  TrySection: marker('try'),
+}));
 
 mock.module('@/features/safety', () => ({ PanicButton: marker('sos') }));
 
@@ -160,6 +166,8 @@ const ALL = [
   'clips',
   'reminders',
   'system',
+  'help',
+  'try',
 ];
 
 afterEach(() => {
@@ -252,7 +260,8 @@ describe('Inicio on a phone', () => {
     };
     render(<HomeScreen />);
     expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
-    expect(order(ALL)).toEqual(['news', 'system']);
+    expect(order(ALL)).toEqual(['news', 'system', 'try']);
+    expect(screen.queryByText('5')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Conectar cámara' }));
     expect(routes).toEqual(['/cameras']);
   });
@@ -304,7 +313,7 @@ describe('Inicio on a desktop', () => {
     setWindowWidth(1920);
     render(<HomeScreen />);
     expect(screen.getByLabelText('Cámaras')).toBeDefined();
-    expect(order(ALL)).toEqual(ALL.filter((name) => name !== 'watch'));
+    expect(order(ALL)).toEqual(ALL.filter((name) => !['watch', 'help', 'try'].includes(name)));
   });
 });
 
@@ -325,7 +334,7 @@ describe('Inicio at night, away and with little data', () => {
     setWindowWidth(1280);
     state.summary = { ...state.summary, remindersPending: 0, projectsActive: 0, tasksOpen: 0 };
     render(<HomeScreen />);
-    expect(order(['people', 'system'])).toEqual(['people', 'system']);
+    expect(order(['people', 'system', 'help', 'try'])).toEqual(['people', 'system', 'help', 'try']);
   });
 
   test('an empty feed is no blank column', () => {

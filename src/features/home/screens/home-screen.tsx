@@ -18,10 +18,15 @@ import { HomePeopleSection } from '@/features/home/components/feed/home-people-s
 import { NewsSection } from '@/features/home/components/feed/news-section';
 import { InicioHero } from '@/features/home/components/hero/inicio-hero';
 import { InicioLead } from '@/features/home/components/hero/inicio-lead';
+import { HelpSection } from '@/features/home/components/status/help-section';
 import { SystemSection } from '@/features/home/components/status/system-section';
+import { TrySection } from '@/features/home/components/status/try-section';
 import { WatchSection } from '@/features/home/components/status/watch-section';
 import { useInicioHero, type InicioHero as Hero } from '@/features/home/hooks/use-inicio-hero';
-import { useInicioBody } from '@/features/home/hooks/use-inicio-body';
+import {
+  useInicioBody,
+  type InicioBody as InicioBodyData,
+} from '@/features/home/hooks/use-inicio-body';
 import {
   inicioColumns,
   inicioStack,
@@ -29,7 +34,7 @@ import {
 } from '@/features/home/model/inicio-layout';
 import { statPlace, type StatPlace } from '@/features/home/model/inicio-stats';
 
-type BodyProps = { hero: Hero; place: StatPlace };
+type BodyProps = { hero: Hero; place: StatPlace; body: InicioBodyData };
 
 const COLUMN_KEYS = {
   agenda: 'screens.home.inicio.columns.agenda',
@@ -52,11 +57,13 @@ const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
   reminders: UpcomingRemindersSection,
   watch: WatchSection,
   system: SystemSection,
+  help: HelpSection,
+  try: TrySection,
 };
 
-function InicioBody({ hero, place }: BodyProps) {
+function InicioBody({ hero, place, body }: BodyProps) {
   const { t } = useTranslation();
-  const { reads, step, sos } = useInicioBody();
+  const { reads, step, sos } = body;
   const band = place !== 'hero';
   const render = (section: InicioSection) => {
     if (section === 'lead')
@@ -89,6 +96,7 @@ function HomeContent() {
   const place = statPlace(windowClass, width);
   const band = place !== 'hero';
   const hero = useInicioHero(band);
+  const body = useInicioBody();
   const search = (
     <Button
       iconOnly
@@ -105,8 +113,8 @@ function HomeContent() {
       aura={band ? undefined : hero.aura}
       meta={band ? undefined : hero.greeting}
       actions={band ? undefined : search}>
-      <InicioHero hero={hero} place={place} />
-      <InicioBody hero={hero} place={place} />
+      <InicioHero hero={hero} place={place} bare={body.step !== null} />
+      <InicioBody hero={hero} place={place} body={body} />
     </Screen>
   );
 }

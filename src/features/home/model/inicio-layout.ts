@@ -14,7 +14,9 @@ export type InicioSection =
   | 'clips'
   | 'reminders'
   | 'watch'
-  | 'system';
+  | 'system'
+  | 'help'
+  | 'try';
 
 export type InicioReads = {
   agenda: boolean;
@@ -38,7 +40,7 @@ export type InicioColumn = {
   max?: number;
 };
 
-type ColumnPlan = Omit<InicioColumn, 'grows'> & { grow: InicioSection };
+type ColumnPlan = Omit<InicioColumn, 'grows'> & { grow?: InicioSection };
 
 const AGENDA: readonly InicioSection[] = ['now', 'today', 'tomorrow'];
 
@@ -50,18 +52,18 @@ function bandPlans(reads: InicioReads): ColumnPlan[] {
     {
       id: 'agenda',
       sections: [...when(reads.watch, 'watch'), ...when(reads.agenda, ...AGENDA)],
-      grow: 'today',
       width: size.columnSide,
     },
-    { id: 'news', sections: when(reads.news, 'news'), grow: 'news' },
+    { id: 'news', sections: when(reads.news, 'news') },
     {
       id: 'side',
       sections: [
         ...when(reads.cameras && reads.tiles, 'cameras'),
         ...when(reads.people, 'people'),
         ...when(reads.system && reads.sparse, 'system'),
+        ...when(reads.sparse, 'help', 'try'),
       ],
-      grow: reads.tiles ? 'cameras' : 'system',
+      grow: 'cameras',
       width: size.columnAside,
     },
   ];
@@ -72,17 +74,16 @@ function widePlans(reads: InicioReads): ColumnPlan[] {
     {
       id: 'agenda',
       sections: [...when(reads.watch, 'watch'), ...when(reads.agenda, ...AGENDA)],
-      grow: 'today',
       width: size.columnWide,
     },
-    { id: 'news', sections: when(reads.news, 'news'), grow: 'news', max: size.columnFeed },
+    { id: 'news', sections: when(reads.news, 'news'), max: size.columnFeed },
     {
       id: 'cameras',
       sections: [
         ...when(reads.cameras && reads.tiles, 'cameras'),
         ...when(reads.cameras, 'happened'),
       ],
-      grow: reads.tiles ? 'cameras' : 'happened',
+      grow: 'cameras',
     },
     {
       id: 'side',
@@ -92,16 +93,15 @@ function widePlans(reads: InicioReads): ColumnPlan[] {
         ...when(reads.cameras, 'clips'),
         ...when(reads.agenda, 'reminders'),
         ...when(reads.system, 'system'),
+        ...when(reads.sparse, 'help', 'try'),
       ],
-      grow: 'system',
       width: size.columnWide,
     },
   ];
 }
 
-function growIndex(sections: readonly InicioSection[], grow: InicioSection): number {
-  const index = sections.indexOf(grow);
-  return index >= 0 ? index : sections.length - 1;
+function growIndex(sections: readonly InicioSection[], grow: InicioSection | undefined): number {
+  return grow === undefined ? -1 : sections.indexOf(grow);
 }
 
 function flexible(columns: ColumnPlan[]): ColumnPlan[] {
@@ -114,9 +114,7 @@ function flexible(columns: ColumnPlan[]): ColumnPlan[] {
 export function inicioColumns(place: StatPlace, reads: InicioReads): InicioColumn[] {
   const plans = place === 'band' ? bandPlans(reads) : widePlans(reads);
   const filled = plans.filter((column) => column.sections.length > 0);
-  const [first, ...rest] = flexible(
-    filled.length > 0 ? filled : [{ id: 'lead', sections: [], grow: 'lead' }]
-  );
+  const [first, ...rest] = flexible(filled.length > 0 ? filled : [{ id: 'lead', sections: [] }]);
   if (!first) return [];
   const lead: ColumnPlan = { ...first, sections: ['lead', ...first.sections] };
   return [lead, ...rest].map(({ grow, ...column }) => ({
@@ -126,7 +124,8 @@ export function inicioColumns(place: StatPlace, reads: InicioReads): InicioColum
 }
 
 export function inicioStack(reads: InicioReads, firstStep: boolean): InicioSection[] {
-  if (firstStep) return ['lead', ...when(reads.news, 'news'), ...when(reads.system, 'system')];
+  if (firstStep)
+    return ['lead', ...when(reads.news, 'news'), ...when(reads.system, 'system'), 'try'];
   return [
     'lead',
     ...when(reads.watch, 'watch'),

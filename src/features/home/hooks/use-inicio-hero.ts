@@ -11,6 +11,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { alertSentence, headlineOf, headlineWords, useOpenResponse } from '@/features/response';
 import { useGuardHeadline } from '@/features/security';
 import { useHomePeople } from '@/features/home/hooks/use-home-people';
+import { presenceKnown } from '@/features/home/model/home-people';
 import {
   ageOf,
   dayPart,
@@ -155,7 +156,7 @@ function useInicioGreeting(now: number): string {
 
 function useHomeLine(): HomeLine | null {
   const { readable, people } = useHomePeople();
-  if (!readable || people.length === 0) return null;
+  if (!readable || !presenceKnown(people)) return null;
   const home = people.filter((person) => person.state === 'home');
   return homeLine({
     me: home.some((person) => person.self),

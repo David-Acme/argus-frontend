@@ -11,7 +11,7 @@ import { useInicioStats } from '@/features/home/hooks/use-inicio-stats';
 import type { StatPlace } from '@/features/home/model/inicio-stats';
 import { OfflineNotice } from './inicio-lead';
 
-export type InicioHeroProps = { hero: Hero; place: StatPlace };
+export type InicioHeroProps = { hero: Hero; place: StatPlace; bare?: boolean };
 
 type NewButtonProps = { onPress: () => void };
 
@@ -51,7 +51,7 @@ function HeroSkeleton() {
   );
 }
 
-export function InicioHero({ hero, place }: InicioHeroProps) {
+export function InicioHero({ hero, place, bare = false }: InicioHeroProps) {
   const stats = useInicioStats(place);
   const { openNew } = useCommandLauncher();
   const band = place !== 'hero';
@@ -62,7 +62,7 @@ export function InicioHero({ hero, place }: InicioHeroProps) {
       tone={hero.tone}
       sentence={loading ? hero.greeting : hero.sentence}
       meta={loading ? '' : hero.meta}
-      stats={loading ? [] : stats}
+      stats={loading || bare ? [] : stats}
       presence={hero.presence}
       aura={hero.aura}
       action={band ? <NewButton onPress={openNew} /> : undefined}
