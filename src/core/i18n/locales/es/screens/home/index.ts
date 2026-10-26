@@ -1,3 +1,5 @@
+import { agendaSections } from './agenda-sections';
+
 export const home = {
   recent: 'Novedades',
   now: 'Ahora',
@@ -72,6 +74,7 @@ export const home = {
     },
   },
   calendar: 'Calendario',
+  'agenda-sections': agendaSections,
   subtitle:
     'Los parámetros viajan por el store, así que la misma ruta sirve para cualquier escaneo.',
   'scan-server': 'Vincular servidor',
@@ -167,5 +170,24 @@ export const home = {
       'reminder-action': 'Nuevo recordatorio',
     },
     loading: 'Cargando Inicio',
+  },
+  news: {
+    sender: 'Argus',
+    review: 'Revisar',
+    reply: 'Responder',
+    yesterday: 'Ayer {time}',
+    empty: 'Aquí verás lo que pase en tu casa',
+    more: 'Ver más',
+  },
+  people: {
+    title: 'En casa',
+    you: '{name} (tú)',
+    home: 'en casa',
+    away: 'fuera',
+    unknown: 'sin datos',
+    'since-time': '{state} desde {time}',
+    'since-day': '{state} desde el {date}',
+    loading: 'Cargando quién está en casa',
+    failed: 'No se pudo saber quién está en casa',
   },
 } as const;

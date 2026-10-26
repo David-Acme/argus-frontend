@@ -1,38 +1,18 @@
-import { useCallback, useMemo } from 'react';
-import type { INotificationPreviewCacheRow } from '@/core/interfaces';
+import { useCallback } from 'react';
 import { notificationService } from '@/core/services/notification.service';
 import { useAuthStore } from '@/core/stores';
-import {
-  NOTIFICATION_FEED_PAGE_SIZE,
-  NOTIFICATION_FEED_SCOPE,
-  VIEW_CACHE_KEYS,
-} from '@/shared/constants';
-import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { useInfiniteList, usePagedView } from '@/shared/hooks/use-infinite-list';
-import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
+import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
+import { useInfiniteList } from '@/shared/hooks/use-infinite-list';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
-import {
-  NOTIFICATION_LENSES,
-  threadDeleteIntents,
-  threadTargetOf,
-} from '@/features/home/model/notification-optimistic';
-import { notificationVisible } from '@/features/home/model/notification-modules';
-import { groupNotifications, type NotificationThread } from '@/features/home/model/notification-threads';
+import { threadDeleteIntents, threadTargetOf } from '@/features/home/model/notification-optimistic';
+import type { NotificationThread } from '@/features/home/model/notification-threads';
+import { useNews } from '@/features/home/hooks/use-news';
 
 export function useNotificationFeed() {
   const { t } = useTranslation();
   const userId = String(useAuthStore((state) => state.user?.id ?? ''));
-  const feed = usePagedView<INotificationPreviewCacheRow>(
-    VIEW_CACHE_KEYS.notificationFeed,
-    NOTIFICATION_FEED_SCOPE
-  );
-  const { moduleActive } = useCapabilities();
-  const { rows } = useOptimisticRows(feed.rows, NOTIFICATION_LENSES);
-  const threads = useMemo(
-    () => groupNotifications(rows.filter((row) => notificationVisible(row, moduleActive))),
-    [moduleActive, rows]
-  );
+  const { feed, threads } = useNews();
   const paging = useInfiniteList({
     count: feed.rows.length,
     hasMore: feed.hasMore,

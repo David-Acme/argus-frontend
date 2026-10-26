@@ -149,6 +149,14 @@ export interface ICalendarEventCacheSource {
   recurrenceExceptions?: readonly RecurrenceException[];
 }
 
+export interface IEventListCacheRow {
+  id: string;
+  title: string;
+  startsAt: number;
+  isAllDay: boolean;
+  recurrenceRule: string | null;
+}
+
 export interface ICalendarEventShareCacheRow {
   id: string;
   calendarEventId: string;

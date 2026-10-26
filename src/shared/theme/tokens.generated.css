@@ -187,6 +187,7 @@
   --spacing-chip-stat: 32px;
   --spacing-chip-suggestion: 34px;
   --spacing-check: 24px;
+  --spacing-event-mark: 26px;
   --spacing-switch-width: 46px;
   --spacing-switch-height: 28px;
   --spacing-switch-thumb: 22px;
@@ -222,6 +223,7 @@
   --spacing-presence-brand: 30px;
   --spacing-presence-ask: 20px;
   --spacing-presence-notice: 52px;
+  --spacing-presence-avatar: 30px;
   --spacing-presence-eye: 56px;
   --spacing-presence-eye-wide: 48px;
   --spacing-presence-think: 26px;

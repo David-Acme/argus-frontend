@@ -8,7 +8,12 @@ import type { CalendarEntry, CalendarView } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { CALENDAR_DEFAULT_VIEW, IS_NATIVE, SCREEN_TITLE_KEYS } from '@/shared/constants';
+import {
+  CALENDAR_DEFAULT_VIEW,
+  IS_NATIVE,
+  NEW_ITEM_PARAM,
+  SCREEN_TITLE_KEYS,
+} from '@/shared/constants';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
@@ -38,7 +43,7 @@ import {
   occurrenceOf,
 } from '@/features/agenda/model/calendar-entry-actions';
 
-type AgendaParams = { edit?: string; at?: string };
+type AgendaParams = { edit?: string; at?: string; new?: string };
 
 function timestampParam(value: string | undefined): number | null {
   const at = Number(value);
@@ -50,7 +55,7 @@ export default function ScheduleScreen() {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const { windowClass, isCompact, isWide, isExpanded, isShort } = useWindowClass();
-  const { edit: editParam, at: atParam } = useLocalSearchParams<AgendaParams>();
+  const { edit: editParam, at: atParam, new: newParam } = useLocalSearchParams<AgendaParams>();
   const atMs = timestampParam(atParam);
   const initialDay = useMemo(
     () => date.startOfDay(atMs == null ? new Date() : new Date(atMs)),
@@ -64,6 +69,7 @@ export default function ScheduleScreen() {
   const [editingEventId, setEditingEventId] = useState('');
   const [editingOccurrence, setEditingOccurrence] = useState<CalendarEntry | null>(null);
   const [pendingEditId, setPendingEditId] = useState(editParam ?? '');
+  const [pendingNew, setPendingNew] = useState(newParam === NEW_ITEM_PARAM.event);
   const [actionEntry, setActionEntry] = useState<CalendarEntry | null>(null);
   const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
   const [shareEntry, setShareEntry] = useState<CalendarEntry | null>(null);
@@ -127,6 +133,11 @@ export default function ScheduleScreen() {
       recurrenceRule: entry.series?.rule ?? null,
     };
   }, [editingEventId, editingOccurrence, entries]);
+
+  if (pendingNew && canCreate) {
+    setPendingNew(false);
+    setEventFormOpen(true);
+  }
 
   const pendingEditEntry = pendingEditId
     ? entries.find(

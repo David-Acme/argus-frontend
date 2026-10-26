@@ -230,7 +230,7 @@ export const modules = {
     installing: '{name} is being installed right now.',
     failed: 'The request could not be sent',
     inactive: 'Ask to turn it on',
-    enable: 'Turn on {name}',
+    enable: 'Turn on',
     'enable-running': 'Turning on…',
     'enable-failed': '{name} could not be turned on',
   },

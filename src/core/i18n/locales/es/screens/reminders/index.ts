@@ -40,6 +40,7 @@ export const reminders = {
   'occurrence-skipped-plain': 'Esta vez no sonará',
   'occurrence-failed': 'No se pudo cambiar esta vez',
   'stopped-repeating': 'Ya no se repite. Se queda a la misma hora.',
+  completed: 'Recordatorio hecho',
   rolled: 'Hecho. Próxima vez: {when}',
   snooze: 'Posponer',
   'snooze-label': 'Posponer {title}',

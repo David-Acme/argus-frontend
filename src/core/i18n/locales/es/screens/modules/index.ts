@@ -230,7 +230,7 @@ export const modules = {
     installing: '{name} se está instalando ahora mismo.',
     failed: 'No se pudo enviar el pedido',
     inactive: 'Pedir que lo activen',
-    enable: 'Activar {name}',
+    enable: 'Activar',
     'enable-running': 'Activando…',
     'enable-failed': 'No se pudo activar {name}',
   },

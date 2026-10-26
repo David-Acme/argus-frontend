@@ -18,6 +18,7 @@ import {
   projectCameras,
   type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
+import { projectEventList } from '@/core/services/view-cache/event.projection';
 import { projectGettingStarted } from '@/core/services/view-cache/getting-started.projection';
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
@@ -198,6 +199,10 @@ describe('project projection', () => {
       { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: 1000 },
     ]);
     expect(rowsOf(writes, 'project.tasks', 'p2')).toEqual([]);
+    expect(rowsOf(writes, 'task.list')).toEqual([
+      { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
+      { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: 1000 },
+    ]);
     expect(rowsOf(writes, 'project.members', 'p1')).toEqual([
       { id: 'm1', projectId: 'p1', userId: '2', name: 'Luis', access: 'edit' },
       { id: 'm2', projectId: 'p1', userId: '9', name: '', access: 'view' },
@@ -206,6 +211,22 @@ describe('project projection', () => {
     expect(rowsOf(writes, 'dashboard.projects')).toEqual([
       { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active', done: 1, total: 2, progress: 0.5 },
       { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active', done: 0, total: 0, progress: 0 },
+    ]);
+  });
+});
+
+describe('event list projection', () => {
+  test('every event is one searchable row in milliseconds, an empty rule read as none', () => {
+    const writes = projectEventList({
+      events: [
+        { id: 'e1', title: 'Cena', startsAt: new Date(5000), isAllDay: false, recurrenceRule: 'FREQ=WEEKLY' },
+        { id: 'e2', title: 'Viaje', startsAt: new Date(9000), isAllDay: true, recurrenceRule: '' },
+      ],
+    });
+    expect(writes).toHaveLength(1);
+    expect(rowsOf(writes, 'event.list')).toEqual([
+      { id: 'e1', title: 'Cena', startsAt: 5000, isAllDay: false, recurrenceRule: 'FREQ=WEEKLY' },
+      { id: 'e2', title: 'Viaje', startsAt: 9000, isAllDay: true, recurrenceRule: null },
     ]);
   });
 });

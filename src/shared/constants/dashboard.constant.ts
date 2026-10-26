@@ -5,6 +5,8 @@ export const PANEL_PARAM = 'panel';
 export const NOTIFICATIONS_PANEL = 'notifications';
 export const NOTIFICATIONS_PANEL_HREF = `/?${PANEL_PARAM}=${NOTIFICATIONS_PANEL}`;
 
+export const NEW_ITEM_PARAM = { event: 'event', project: 'project', task: 'task' } as const;
+
 export const MOSAIC_COLUMNS = 13;
 export const MOSAIC_ROWS = 6;
 

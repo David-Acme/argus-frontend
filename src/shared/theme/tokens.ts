@@ -203,6 +203,7 @@ export const size = {
   chipStat: 32,
   chipSuggestion: 34,
   check: 24,
+  eventMark: 26,
   switchWidth: 46,
   switchHeight: 28,
   switchThumb: 22,
