@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { readIncidentResponse } from '@/core/contracts/response.contract';
-import type { IncidentResponse } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
-import type { TranslateFn } from '@/core/types';
+import type { IncidentResponse, TranslateFn } from '@/core/types';
 import {
   alertPlaceOf,
   alertSentence,

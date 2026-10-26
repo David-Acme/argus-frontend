@@ -10,19 +10,19 @@ type PermissionMethods = {
 
 const hooks: PermissionMethods[] = [];
 
-mock.module('expo', () => ({
-  createPermissionHook: (methods: PermissionMethods) => {
-    hooks.push(methods);
-    return () => [null, methods.requestMethod, methods.getMethod];
-  },
-}));
-
 const granted = { granted: true, canAskAgain: true, status: 'granted', expires: 'never' };
 const asked: string[] = [];
 
 type FakeCameraProps = { facing?: string; ref?: unknown };
 
 const refs: unknown[] = [];
+
+mock.module('expo', () => ({
+  createPermissionHook: (methods: PermissionMethods) => {
+    hooks.push(methods);
+    return () => [null, methods.requestMethod, methods.getMethod];
+  },
+}));
 
 mock.module('@/shared/components/device-camera/expo-camera', () => ({
   Camera: {
