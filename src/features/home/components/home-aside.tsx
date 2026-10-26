@@ -45,21 +45,21 @@ export function HomeAside({
   return (
     <View className="flex-1 gap-5">
       {watchesCameras ? (
-      <View className="gap-3">
-        <SectionHeader
-          title={t('screens.home.cameras_section')}
-          action={t('screens.home.cameras-online', {
-            online: String(summary.camerasOnline),
-            total: String(summary.camerasTotal),
-          })}
-          onAction={() => router.push('/cameras')}
-        />
-        <CameraGrid
-          cameras={cameras}
-          emptyLabel={t('screens.home.cameras-empty')}
-          onSelect={(id) => router.push(`/cameras/${id}`)}
-        />
-      </View>
+        <View className="gap-3">
+          <SectionHeader
+            title={t('screens.home.cameras_section')}
+            action={t('screens.home.cameras-online', {
+              online: String(summary.camerasOnline),
+              total: String(summary.camerasTotal),
+            })}
+            onAction={() => router.push('/cameras')}
+          />
+          <CameraGrid
+            cameras={cameras}
+            emptyLabel={t('screens.home.cameras-empty')}
+            onSelect={(id) => router.push(`/cameras/${id}`)}
+          />
+        </View>
       ) : null}
 
       {guard.view ? (
@@ -68,28 +68,30 @@ export function HomeAside({
 
       <SummaryCard
         title={t('screens.home.overview')}
-        items={([
-          {
-            icon: 'video',
-            label: t('screens.home.cameras'),
-            value: `${summary.camerasOnline}/${summary.camerasTotal}`,
-          },
-          {
-            icon: 'bell',
-            label: t('screens.home.reminders'),
-            value: String(summary.remindersPending),
-          },
-          {
-            icon: 'list-todo',
-            label: t('screens.home.tasks-open'),
-            value: String(summary.tasksOpen),
-          },
-          {
-            icon: 'activity',
-            label: t('screens.home.detections-recent'),
-            value: String(detections),
-          },
-        ] as const).filter(
+        items={(
+          [
+            {
+              icon: 'video',
+              label: t('screens.home.cameras'),
+              value: `${summary.camerasOnline}/${summary.camerasTotal}`,
+            },
+            {
+              icon: 'bell',
+              label: t('screens.home.reminders'),
+              value: String(summary.remindersPending),
+            },
+            {
+              icon: 'list-todo',
+              label: t('screens.home.tasks-open'),
+              value: String(summary.tasksOpen),
+            },
+            {
+              icon: 'activity',
+              label: t('screens.home.detections-recent'),
+              value: String(detections),
+            },
+          ] as const
+        ).filter(
           (item) =>
             ((item.icon !== 'video' && item.icon !== 'activity') || watchesCameras) &&
             (item.icon !== 'list-todo' || has(CAPABILITY.projectsRead)) &&

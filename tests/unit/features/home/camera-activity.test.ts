@@ -8,7 +8,8 @@ const at = (daysAgo: number, hour: number, minute = 0) => ({
   at: new Date(2026, 9, 7 - daysAgo, hour, minute).getTime(),
 });
 
-const zeros = () => Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
+const zeros = () =>
+  Array.from({ length: MOSAIC_ROWS }, () => Array.from({ length: MOSAIC_COLUMNS }, () => 0));
 
 describe('the camera activity the home shows', () => {
   test('an empty list counts nothing and leaves the mosaic dark', () => {

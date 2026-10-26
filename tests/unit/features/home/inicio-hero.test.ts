@@ -3,9 +3,9 @@ import {
   ageOf,
   dayPart,
   heroLook,
+  heroMeta,
   homeLine,
   inicioPhase,
-  sharedMode,
 } from '@/features/home/model/inicio-hero';
 
 const BASE = { ready: true, offline: false, alert: false, mode: 'home' } as const;
@@ -51,14 +51,6 @@ describe('the hero look of each phase', () => {
   });
 });
 
-describe('the shared guard mode', () => {
-  test('one mode across every place is the mode; mixed or none is null', () => {
-    expect(sharedMode(['night', 'night'])).toBe('night');
-    expect(sharedMode(['night', 'home'])).toBeNull();
-    expect(sharedMode([])).toBeNull();
-  });
-});
-
 describe('the part of the day the greeting names', () => {
   test('morning from 5 to 11, afternoon from 12 to 19, evening otherwise', () => {
     expect(dayPart(4)).toBe('evening');
@@ -98,5 +90,42 @@ describe('the age of the last known data', () => {
 
   test('a time in the future reads as now', () => {
     expect(ageOf(now + 5_000, now)).toEqual({ unit: 'now' });
+  });
+});
+
+describe('the hero meta line', () => {
+  const people = { kind: 'me-and-others', names: ['Luis'] } as const;
+
+  test('the phone says the mode and who is home', () => {
+    expect(heroMeta({ phase: 'calm', band: false, mode: 'home', people })).toEqual([
+      { kind: 'mode', mode: 'home', named: false },
+      { kind: 'people', line: people },
+    ]);
+  });
+
+  test('the band leads with the greeting and names the mode', () => {
+    expect(heroMeta({ phase: 'calm', band: true, mode: 'home', people })).toEqual([
+      { kind: 'greeting' },
+      { kind: 'mode', mode: 'home', named: true },
+      { kind: 'people', line: people },
+    ]);
+  });
+
+  test('at night Argus says it keeps watch', () => {
+    expect(heroMeta({ phase: 'night', band: false, mode: 'night', people })).toEqual([
+      { kind: 'mode', mode: 'night', named: true },
+      { kind: 'watching' },
+    ]);
+  });
+
+  test('an alert says how long ago and who is answering', () => {
+    expect(heroMeta({ phase: 'alert', band: true, mode: 'home', people })).toEqual([
+      { kind: 'age' },
+      { kind: 'headline' },
+    ]);
+  });
+
+  test('what the role cannot read is absent', () => {
+    expect(heroMeta({ phase: 'calm', band: false, mode: null, people: null })).toEqual([]);
   });
 });

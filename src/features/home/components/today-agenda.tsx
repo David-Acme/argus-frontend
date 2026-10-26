@@ -35,7 +35,10 @@ function HourRow({ label, current, children }: HourRowProps) {
       <Text
         variant="label"
         numberOfLines={1}
-        className={cn('w-18 pt-3 tabular-nums', current ? 'text-accent-strong' : 'text-foreground-secondary')}>
+        className={cn(
+          'w-18 pt-3 tabular-nums',
+          current ? 'text-accent-strong' : 'text-foreground-secondary'
+        )}>
         {label}
       </Text>
       <View className="min-w-0 flex-1 gap-2">{children}</View>
@@ -45,7 +48,10 @@ function HourRow({ label, current, children }: HourRowProps) {
 
 function NowMarker({ label }: { label: string }) {
   return (
-    <View className="flex-row items-center gap-2" accessibilityRole="text" accessibilityLabel={label}>
+    <View
+      className="flex-row items-center gap-2"
+      accessibilityRole="text"
+      accessibilityLabel={label}>
       <View className="bg-legacy-accent -ml-1 size-2 rounded-full" />
       <View className="bg-legacy-accent h-0.5 flex-1 rounded-full" />
     </View>
@@ -77,7 +83,10 @@ export function TodayAgenda({
   const first = Math.max(0, currentHour - HOURS_BEFORE);
   const last = Math.min(23, currentHour + HOURS_AFTER);
   const hours = [
-    ...new Set([...Array.from({ length: last - first + 1 }, (_, index) => first + index), ...byHour.keys()]),
+    ...new Set([
+      ...Array.from({ length: last - first + 1 }, (_, index) => first + index),
+      ...byHour.keys(),
+    ]),
   ].sort((left, right) => left - right);
 
   const item = (entry: CalendarEntry) => (
@@ -114,7 +123,9 @@ export function TodayAgenda({
           <HourRow key={hour} label={date.formatHour(hour)} current={current}>
             {before.map(item)}
             {current ? (
-              <View className="h-11 px-3" style={{ paddingTop: Math.round((today.getMinutes() / 60) * 40) }}>
+              <View
+                className="h-11 px-3"
+                style={{ paddingTop: Math.round((today.getMinutes() / 60) * 40) }}>
                 <NowMarker label={t('screens.home.now')} />
               </View>
             ) : null}
@@ -125,7 +136,7 @@ export function TodayAgenda({
                 accessibilityLabel={`${t(SCREEN_TITLE_KEYS.agenda)} ${date.formatHour(hour)}`}
                 disabled={!onOpenAgenda}
                 onPress={() => onOpenAgenda?.()}
-                className="group h-11 justify-center rounded-2xl px-3 web:hover:bg-surface-secondary">
+                className="group web:hover:bg-surface-secondary h-11 justify-center rounded-2xl px-3">
                 <View className="border-border-subtle border-t border-dashed" />
               </Pressable>
             ) : null}

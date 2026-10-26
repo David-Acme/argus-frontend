@@ -17,12 +17,11 @@ export function DashboardSearchField({
   onChangeText,
   onFilter,
 }: DashboardSearchFieldProps) {
-
   return (
     <View className="bg-card flex-row items-center gap-3 rounded-full px-5 shadow-sm shadow-black/[0.07]">
       <Icon name="search" className="text-muted-foreground size-5" />
       <Input
-        className="h-12 flex-1 border-0 bg-transparent px-0 text-legacy-body shadow-none"
+        className="text-legacy-body h-12 flex-1 border-0 bg-transparent px-0 shadow-none"
         placeholder={placeholder}
         accessibilityLabel={placeholder}
         returnKeyType="search"

@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { Popover, PopoverContent, PopoverTrigger, type PopoverTriggerRef } from '@/shared/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  type PopoverTriggerRef,
+} from '@/shared/components/ui/popover';
 import { Text } from '@/shared/components/ui/text';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -25,7 +30,13 @@ const PREVIEW_LIMIT = 4;
 
 const NO_SNAPSHOT: OpenedSnapshot = { ids: new Set(), count: 0 };
 
-export function NotificationPopover({ unreadCount, threads, now, onOpen, openRequest = false }: NotificationPopoverProps) {
+export function NotificationPopover({
+  unreadCount,
+  threads,
+  now,
+  onOpen,
+  openRequest = false,
+}: NotificationPopoverProps) {
   const { t } = useTranslation();
   const [opened, setOpened] = useState<OpenedSnapshot>(NO_SNAPSHOT);
   const triggerRef = useRef<PopoverTriggerRef>(null);
@@ -65,7 +76,9 @@ export function NotificationPopover({ unreadCount, threads, now, onOpen, openReq
         <IconButton
           icon="bell"
           label={t('screens.home.notifications')}
-          accessibilityHint={unreadCount > 0 ? t('screens.home.notifications-open-hint') : undefined}
+          accessibilityHint={
+            unreadCount > 0 ? t('screens.home.notifications-open-hint') : undefined
+          }
           badge={unreadCount}
         />
       </PopoverTrigger>

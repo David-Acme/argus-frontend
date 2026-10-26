@@ -9,7 +9,8 @@ export function useDashboardData(): IDashboardCacheData {
   const today = useViewCacheRows<CalendarEntry>(VIEW_CACHE_KEYS.dashboardAgenda, 'today');
   const unreadNotifications = useViewCacheValue<number>(VIEW_CACHE_KEYS.dashboardUnread) ?? 0;
   const summary =
-    useViewCacheValue<DashboardSummary>(VIEW_CACHE_KEYS.dashboardSummary) ?? EMPTY_DASHBOARD_SUMMARY;
+    useViewCacheValue<DashboardSummary>(VIEW_CACHE_KEYS.dashboardSummary) ??
+    EMPTY_DASHBOARD_SUMMARY;
 
   return {
     cameraTiles,

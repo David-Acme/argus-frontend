@@ -122,7 +122,6 @@ src/features/home/components/project-grid.tsx
 src/features/home/components/recent-activity-card.tsx
 src/features/home/components/summary-card.tsx
 src/features/home/components/today-agenda.tsx
-src/features/home/screens/home-screen.tsx
 src/features/in-app-alert/components/in-app-alert-banner.tsx
 src/features/modules/components/disable-dialog.tsx
 src/features/modules/components/getting-started-card.tsx

@@ -19,7 +19,11 @@ export function isNewHousehold(summary: DashboardSummary): boolean {
   );
 }
 
-export function firstStep({ summary, addsCameras, addsReminders }: FirstStepInput): FirstStep | null {
+export function firstStep({
+  summary,
+  addsCameras,
+  addsReminders,
+}: FirstStepInput): FirstStep | null {
   if (!isNewHousehold(summary)) return null;
   if (addsCameras) return 'camera';
   return addsReminders ? 'reminder' : null;

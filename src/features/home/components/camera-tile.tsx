@@ -54,7 +54,9 @@ export function CameraTile({
             className={cn('size-4', offline ? 'text-muted-foreground' : 'text-foreground')}
           />
         </View>
-        <View className={cn('size-2 rounded-full', offline ? 'bg-muted-foreground' : 'bg-success')} />
+        <View
+          className={cn('size-2 rounded-full', offline ? 'bg-muted-foreground' : 'bg-success')}
+        />
       </View>
       <View className="gap-0.5">
         <Text variant="label" className="font-semibold" numberOfLines={1}>
@@ -68,7 +70,11 @@ export function CameraTile({
         {recordMode ? <StatusBadge label={recordLabel} /> : null}
         {masked ? (
           <StatusBadge
-            label={t(unconfirmed ? 'screens.cameras.privacy-badge-unconfirmed' : 'screens.cameras.privacy-badge')}
+            label={t(
+              unconfirmed
+                ? 'screens.cameras.privacy-badge-unconfirmed'
+                : 'screens.cameras.privacy-badge'
+            )}
             icon="eye-off"
             iconClassName="text-warning-strong"
             textClassName="text-warning-strong"

@@ -1,299 +1,129 @@
-import { useAuthStore } from '@/core/stores';
-import { notificationService } from '@/core/services/notification.service';
-import { notificationThreadKey } from '@/core/services/notification';
-import { runOptimistic } from '@/shared/libs/optimistic-action';
-import type { IAuthUser } from '@/core/interfaces';
-import { ActivityCard } from '@/features/home/components/activity/activity-card';
-import { IconButton } from '@/shared/components/ui/icon-button';
-import { DashboardSearchField } from '@/features/home/components/dashboard-search-field';
-import { NotificationPopover } from '@/features/home/components/notification-popover';
-import { ProjectGrid } from '@/features/home/components/project-grid';
-import { TodayAgenda } from '@/features/home/components/today-agenda';
-import { SectionHeader } from '@/shared/components/ui/section-header';
-import type { CalendarEntry, NotificationThreadTarget } from '@/core/types';
-import { Button } from '@/shared/components/ui/button';
-import { Text } from '@/shared/components/ui/text';
-import {
-  byStart,
-  CALENDAR_LENSES,
-  calendarEntryEditHref,
-  EntryActionsMenu,
-  entryPermissions,
-} from '@/features/agenda';
-import { useNotificationFeed } from '@/features/home/hooks/use-notification-feed';
-import { useNotificationPanel } from '@/features/home/hooks/use-notification-panel';
-import {
-  unreadIdsOf,
-  unreadThreadCount,
-  type NotificationThread,
-} from '@/features/home/model/notification-threads';
-import { notificationReadIntents } from '@/features/home/model/notification-optimistic';
-import { cameraActivity } from '@/features/home/model/camera-activity';
-import { cameraActivityAction } from '@/features/home/model/camera-activity-action';
-import { searchPlaceholder } from '@/features/home/model/home-search';
-import { HomeAside } from '@/features/home/components/home-aside';
-import { useCameraOverview } from '@/features/cameras';
-import { EmptyState } from '@/shared/components/ui/empty-state';
-import { ResponseStrip } from '@/features/response';
-import { InactiveRoleScreen } from '@/features/access';
-import { GettingStartedCard, ModulesProgressChip } from '@/features/modules';
-import { RemindersSection } from '@/features/reminders';
-import { useConversationUnread } from '@/features/conversations';
-import { CAPABILITY, SCREEN_TITLE_KEYS } from '@/shared/constants';
-import { AppScreen } from '@/shared/components/layout';
-import { useDashboardData } from '@/features/home/hooks/use-dashboard-data';
-import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
-import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { useNow } from '@/shared/hooks/use-now';
+import type { ComponentType } from 'react';
+import { CAPABILITY } from '@/shared/constants';
 import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { useWindowLayout, useWindowWidth } from '@/shared/theme';
+import { Button } from '@/shared/ui/button';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
+import { InactiveRoleScreen } from '@/features/access';
+import { useCommandLauncher } from '@/features/command';
+import { NowSection } from '@/features/home/components/agenda/now-section';
+import { ProjectsSection } from '@/features/home/components/agenda/projects-section';
+import { TodaySection } from '@/features/home/components/agenda/today-section';
+import { TomorrowSection } from '@/features/home/components/agenda/tomorrow-section';
+import { UpcomingRemindersSection } from '@/features/home/components/agenda/upcoming-reminders-section';
+import { HomePeopleSection } from '@/features/home/components/feed/home-people-section';
+import { NewsSection } from '@/features/home/components/feed/news-section';
+import { InicioHero } from '@/features/home/components/hero/inicio-hero';
+import { InicioLead } from '@/features/home/components/hero/inicio-lead';
+import { useInicioHero, type InicioHero as Hero } from '@/features/home/hooks/use-inicio-hero';
+import { useInicioSummary } from '@/features/home/hooks/use-inicio-stats';
+import {
+  inicioColumns,
+  inicioStack,
+  type InicioReads,
+  type InicioSection,
+} from '@/features/home/model/inicio-layout';
+import { firstStep, sosOnInicio } from '@/features/home/model/inicio-states';
+import { statPlace, type StatPlace } from '@/features/home/model/inicio-stats';
 
-function firstNameOf(user: IAuthUser | null): string {
-  return user?.name?.trim().split(/\s+/)[0] ?? '';
+type BodyProps = { hero: Hero; place: StatPlace };
+
+const Nothing = () => null;
+
+const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
+  now: NowSection,
+  today: TodaySection,
+  tomorrow: TomorrowSection,
+  news: NewsSection,
+  cameras: Nothing,
+  happened: Nothing,
+  people: HomePeopleSection,
+  projects: ProjectsSection,
+  clips: Nothing,
+  reminders: UpcomingRemindersSection,
+};
+
+function useInicioBody() {
+  const { has, can, guard } = useCapabilities();
+  const summary = useInicioSummary();
+  const reads: InicioReads = {
+    agenda: has(CAPABILITY.remindersRead) || has(CAPABILITY.agendaRead),
+    news: has(CAPABILITY.notificationsRead),
+    cameras: has(CAPABILITY.cameraView),
+    people: has(CAPABILITY.presenceRead),
+  };
+  const step = firstStep({
+    summary,
+    addsCameras: can('camera', 'create'),
+    addsReminders: has(CAPABILITY.remindersWrite),
+  });
+  const sos = sosOnInicio({ panics: has(CAPABILITY.safetyPanic), hasSecurityTab: guard.view });
+  return { reads, step, sos };
+}
+
+const COLUMN_KEYS = {
+  agenda: 'screens.home.inicio.columns.agenda',
+  news: 'screens.home.inicio.columns.news',
+  cameras: 'screens.home.inicio.columns.cameras',
+  side: 'screens.home.inicio.columns.side',
+  lead: 'screens.home.inicio.columns.lead',
+} as const;
+
+function InicioBody({ hero, place }: BodyProps) {
+  const { t } = useTranslation();
+  const { reads, step, sos } = useInicioBody();
+  const band = place !== 'hero';
+  const render = (section: InicioSection) => {
+    if (section === 'lead')
+      return <InicioLead key={section} hero={hero} firstStep={step} sos={sos} band={band} />;
+    const Section = SECTIONS[section];
+    return <Section key={section} />;
+  };
+  if (!band) return <>{inicioStack(reads, step !== null).map(render)}</>;
+  return (
+    <ScreenColumns>
+      {inicioColumns(place, reads).map((column) => (
+        <ScreenColumn
+          key={column.id}
+          label={t(COLUMN_KEYS[column.id])}
+          width={column.width}
+          max={column.max}
+          grows={column.grows}>
+          {column.sections.map(render)}
+        </ScreenColumn>
+      ))}
+    </ScreenColumns>
+  );
 }
 
 function HomeContent() {
-  const user = useAuthStore((state) => state.user);
-  const router = useRouter();
   const { t } = useTranslation();
-  const date = useDateFormatter();
-  const { isShort } = useWindowClass();
-  const { can, has } = useCapabilities();
-  const panelRequested = useNotificationPanel(has(CAPABILITY.notificationsRead));
-  const {
-    cameraTiles,
-    projects,
-    today,
-    unreadNotifications: syncedUnread,
-    summary,
-  } = useDashboardData();
-  const watchesCameras = has(CAPABILITY.cameraView);
-  const overview = useCameraOverview(watchesCameras);
-  const readsAgenda = has(CAPABILITY.agendaRead);
-  const readsProjects = has(CAPABILITY.projectsRead);
-  const relaysMessages = has(CAPABILITY.messagesRelay);
-  const unreadMessages = useConversationUnread();
-  const [query, setQuery] = useState('');
-  const now = useNow(60000);
-  const { rows: todayEntries } = useOptimisticRows(today, CALENDAR_LENSES, byStart);
-  const {
-    synced: syncedNotifications,
-    threads,
-    paging: notificationPaging,
-    remove: removeThread,
-  } = useNotificationFeed();
-  const deletesNotifications = can('notification', 'delete');
-  const unreadNotifications = unreadThreadCount(threads, syncedUnread, syncedNotifications);
-  const firstName = firstNameOf(user);
-
-  const matches = useCallback(
-    (text: string) =>
-      query.trim().length === 0 || text.toLowerCase().includes(query.trim().toLowerCase()),
-    [query]
+  const { windowClass } = useWindowLayout();
+  const width = useWindowWidth();
+  const { open } = useCommandLauncher();
+  const place = statPlace(windowClass, width);
+  const band = place !== 'hero';
+  const hero = useInicioHero(band);
+  const search = (
+    <Button
+      iconOnly
+      glass
+      icon="search"
+      iconSize="small"
+      label={t('screens.home.inicio.search')}
+      onPress={() => open()}
+    />
   );
-
-  const todayRows = useMemo(
-    () =>
-      todayEntries.filter(
-        (entry) =>
-          entry.source !== 'reminder' && date.sameDay(new Date(entry.startsAt), new Date(now)) && matches(entry.title)
-      ),
-    [date, matches, now, todayEntries]
-  );
-  const visibleProjects = useMemo(
-    () => projects.filter((project) => matches(project.name)),
-    [projects, matches]
-  );
-
-  const formatTime = useCallback(
-    (entry: CalendarEntry) =>
-      entry.isAllDay
-        ? t('screens.agenda.event-all-day')
-        : date.formatTimeRange(
-            new Date(entry.startsAt),
-            entry.endsAt ? new Date(entry.endsAt) : null
-          ),
-    [date, t]
-  );
-
-  const activity = useMemo(() => cameraActivity(overview?.events ?? [], now), [now, overview]);
-
-  const noCameras = summary.camerasTotal === 0;
-  const cameraAction = cameraActivityAction(noCameras);
-
-  const markNotificationsRead = useCallback(
-    (target: Pick<NotificationThreadTarget, 'threadKey' | 'ids'>) => {
-      void runOptimistic({
-        intents: notificationReadIntents(target.ids),
-        call: () => notificationService.markRead(target),
-      });
-    },
-    []
-  );
-
-  const readAll = useCallback(async () => {
-    const synced = user ? await notificationService.unreadIdsForUser(String(user.id)) : [];
-    const ids = [...new Set([...synced, ...unreadIdsOf(threads)])];
-    if (ids.length > 0) markNotificationsRead({ threadKey: null, ids });
-  }, [markNotificationsRead, threads, user]);
-
-  const readThread = useCallback(
-    (thread: NotificationThread) =>
-      markNotificationsRead({
-        threadKey: notificationThreadKey(thread.latest.data),
-        ids: thread.unreadIds,
-      }),
-    [markNotificationsRead]
-  );
-
-  const renderActions = useCallback(
-    (entry: CalendarEntry) => (
-      <EntryActionsMenu
-        entry={entry}
-        {...entryPermissions(entry, can)}
-        onEdit={(selected) => {
-          const href = calendarEntryEditHref(selected);
-          if (href) router.push(href);
-        }}
-      />
-    ),
-    [can, router]
-  );
-
   return (
-    <AppScreen
-      aside={
-        <HomeAside
-          cameras={cameraTiles}
-          summary={summary}
-          detections={activity.recent}
-          threads={threads}
-          paging={notificationPaging}
-          now={now}
-          onReadThread={readThread}
-          onDeleteThread={deletesNotifications ? removeThread : undefined}
-        />
-      }>
-      <View className="gap-5">
-        <View className="flex-row items-center justify-between gap-4">
-          <Text variant={isShort ? 'headline' : 'display'} className="flex-1" numberOfLines={2}>
-            {firstName ? t('screens.home.welcome', { name: firstName }) : t('screens.home.welcome-anonymous')}
-          </Text>
-          <View className="flex-row gap-2">
-            <NotificationPopover
-              unreadCount={unreadNotifications}
-              threads={threads}
-              now={now}
-              onOpen={() => void readAll()}
-              openRequest={panelRequested}
-            />
-            {relaysMessages ? (
-              <IconButton
-                icon="messages-square"
-                label={t('screens.conversations.title')}
-                badge={unreadMessages}
-                onPress={() => router.push('/conversations')}
-              />
-            ) : null}
-            {readsAgenda ? (
-              <IconButton
-                icon="calendar"
-                label={t('screens.home.calendar')}
-                onPress={() => router.push('/agenda')}
-              />
-            ) : null}
-          </View>
-        </View>
-
-        <ResponseStrip />
-
-        <ModulesProgressChip />
-
-        <GettingStartedCard />
-
-        <DashboardSearchField
-          placeholder={searchPlaceholder(
-            { reminders: has(CAPABILITY.remindersRead), events: readsAgenda, projects: readsProjects },
-            t
-          )}
-          value={query}
-          onChangeText={setQuery}
-        />
-
-        <RemindersSection query={query} />
-
-        {watchesCameras ? (
-        <ActivityCard
-          title={
-            noCameras
-              ? t('screens.home.activity-no-cameras')
-              : t('screens.home.activity-detections', { count: String(activity.recent) })
-          }
-          delta={t('screens.home.activity-detections-today', { count: String(activity.today) })}
-          direction="flat"
-          levels={activity.levels}
-          action={t(cameraAction.labelKey)}
-          onAction={() => router.push(cameraAction.href)}
-        />
-        ) : null}
-
-        {readsAgenda ? (
-        <View className="gap-3">
-          <SectionHeader
-            title={t('screens.home.today')}
-            action={t('screens.home.see-all')}
-            actionLabel={t('screens.home.see-all-of', { section: t('screens.home.today') })}
-            onAction={() => router.push('/agenda')}
-          />
-          <TodayAgenda
-            entries={todayRows}
-            now={now}
-            formatTime={formatTime}
-            renderActions={renderActions}
-            onSelect={(entry) => {
-              const href = calendarEntryEditHref(entry);
-              router.push(href ?? '/agenda');
-            }}
-            onOpenAgenda={() => router.push('/agenda')}
-          />
-        </View>
-        ) : null}
-
-        {readsProjects ? (
-        <View className="gap-3">
-          <SectionHeader
-            title={t('screens.home.projects')}
-            action={projects.length > 0 ? t('screens.home.see-all') : undefined}
-            actionLabel={t('screens.home.see-all-of', { section: t('screens.home.projects') })}
-            onAction={() => router.push('/projects')}
-          />
-          {visibleProjects.length === 0 ? (
-            <EmptyState
-              fill={false}
-              className="bg-card rounded-3xl py-8"
-              icon="list-todo"
-              title={t('screens.projects.empty')}
-              hint={t('screens.projects.empty-hint')}
-              action={
-                <Button size="sm" onPress={() => router.push('/projects')}>
-                  <Text>{t(SCREEN_TITLE_KEYS.projects)}</Text>
-                </Button>
-              }
-            />
-          ) : (
-            <ProjectGrid
-              projects={visibleProjects}
-              onSelect={(id) => router.push(`/projects?id=${id}`)}
-            />
-          )}
-        </View>
-        ) : null}
-      </View>
-    </AppScreen>
+    <Screen
+      columns
+      aura={band ? undefined : hero.aura}
+      meta={band ? undefined : hero.greeting}
+      actions={band ? undefined : search}>
+      <InicioHero hero={hero} place={place} />
+      <InicioBody hero={hero} place={place} />
+    </Screen>
   );
 }
 

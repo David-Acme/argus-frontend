@@ -24,7 +24,9 @@ export function SummaryCard({ title, items }: SummaryCardProps) {
             <View className="bg-surface-secondary size-8 items-center justify-center rounded-xl">
               <Icon name={item.icon} className="text-foreground-secondary size-4" />
             </View>
-            <Text className="text-foreground-secondary flex-1 text-legacy-caption" numberOfLines={1}>
+            <Text
+              className="text-foreground-secondary text-legacy-caption flex-1"
+              numberOfLines={1}>
               {item.label}
             </Text>
             <Text className="text-legacy-body font-semibold">{item.value}</Text>

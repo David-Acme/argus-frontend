@@ -21,6 +21,7 @@ export function searchPlaceholder(scope: SearchScope, t: TranslateFn): string {
   const last = names.at(-1);
   if (last === undefined) return t('common.search');
   const head = names.slice(0, -1);
-  const things = head.length === 0 ? last : `${head.join(', ')} ${t('screens.home.search-or')} ${last}`;
+  const things =
+    head.length === 0 ? last : `${head.join(', ')} ${t('screens.home.search-or')} ${last}`;
   return t('screens.home.search-placeholder', { things });
 }

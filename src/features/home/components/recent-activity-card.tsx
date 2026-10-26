@@ -36,7 +36,13 @@ export function RecentActivityCard({
 }: RecentActivityCardProps) {
   const renderThread = useCallback(
     (thread: NotificationThread) => (
-      <NotificationThreadRow thread={thread} now={now} expandable onRead={onRead} onDelete={onDelete} />
+      <NotificationThreadRow
+        thread={thread}
+        now={now}
+        expandable
+        onRead={onRead}
+        onDelete={onDelete}
+      />
     ),
     [now, onDelete, onRead]
   );

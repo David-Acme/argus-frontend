@@ -26,6 +26,21 @@ export type HomeLine =
 
 export type Age = { unit: 'now' } | { unit: 'minutes' | 'hours' | 'days'; count: number };
 
+export type MetaPart =
+  | { kind: 'greeting' }
+  | { kind: 'mode'; mode: GuardMode; named: boolean }
+  | { kind: 'watching' }
+  | { kind: 'people'; line: HomeLine }
+  | { kind: 'age' }
+  | { kind: 'headline' };
+
+export type HeroMetaInput = {
+  phase: InicioPhase;
+  band: boolean;
+  mode: GuardMode | null;
+  people: HomeLine | null;
+};
+
 const CALM: HeroLook = { tone: 'calm', presence: 'idle', aura: 'calm' };
 
 const WATCH: HeroLook = { tone: 'calm', presence: 'watch', aura: 'duty' };
@@ -58,12 +73,6 @@ export function heroLook(phase: InicioPhase): HeroLook {
   return LOOK[phase];
 }
 
-export function sharedMode(modes: readonly GuardMode[]): GuardMode | null {
-  const [first] = modes;
-  if (first === undefined) return null;
-  return modes.every((mode) => mode === first) ? first : null;
-}
-
 export function dayPart(hour: number): DayPart {
   if (hour >= 5 && hour < 12) return 'morning';
   if (hour >= 12 && hour < 20) return 'afternoon';
@@ -82,4 +91,16 @@ export function ageOf(since: number, now: number): Age {
   if (elapsed < HOUR) return { unit: 'minutes', count: Math.floor(elapsed / MINUTE) };
   if (elapsed < DAY) return { unit: 'hours', count: Math.floor(elapsed / HOUR) };
   return { unit: 'days', count: Math.floor(elapsed / DAY) };
+}
+
+export function heroMeta({ phase, band, mode, people }: HeroMetaInput): MetaPart[] {
+  if (phase === 'alert') return [{ kind: 'age' }, { kind: 'headline' }];
+  const greeting: MetaPart[] = band ? [{ kind: 'greeting' }] : [];
+  if (phase === 'night' && mode !== null)
+    return [...greeting, { kind: 'mode', mode, named: true }, { kind: 'watching' }];
+  return [
+    ...greeting,
+    ...(mode === null ? [] : [{ kind: 'mode', mode, named: band } as const]),
+    ...(people === null ? [] : [{ kind: 'people', line: people } as const]),
+  ];
 }

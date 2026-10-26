@@ -1,4 +1,5 @@
 import type { ICameraDetection } from '@/core/interfaces';
+import { layout, type WindowClass } from '@/shared/theme/tokens';
 import type { IconGlyph } from '@/shared/ui/icon';
 
 export type HeroStatKind = 'cameras' | 'alerts' | 'detections' | 'pending';
@@ -8,14 +9,17 @@ export type HeroStatInput = {
   alerts: number | null;
   detections: number | null;
   pending: number | null;
-  wide: boolean;
+  place: StatPlace;
 };
+
+export type StatPlace = 'hero' | 'band' | 'wide';
 
 export type HeroStat = {
   kind: HeroStatKind;
   count: number;
   icon?: IconGlyph;
   href: '/security' | '/agenda';
+  raised?: boolean;
 };
 
 export type DayDetections = { detections: number; alerts: number };
@@ -34,14 +38,21 @@ const HREF: Record<HeroStatKind, HeroStat['href']> = {
   pending: '/agenda',
 };
 
-const ORDER: readonly HeroStatKind[] = ['cameras', 'alerts', 'detections', 'pending'];
+const KINDS: Record<StatPlace, readonly HeroStatKind[]> = {
+  hero: ['cameras', 'alerts', 'detections'],
+  band: ['cameras', 'alerts'],
+  wide: ['cameras', 'alerts', 'detections', 'pending'],
+};
 
 export function heroStats(input: HeroStatInput): HeroStat[] {
-  return ORDER.flatMap((kind) => {
+  return KINDS[input.place].flatMap((kind) => {
     const count = input[kind];
-    if (count === null || (kind === 'pending' && !input.wide)) return [];
-    const icon = ICON[kind];
-    return [{ kind, count, href: HREF[kind], ...(icon ? { icon } : {}) }];
+    if (count === null) return [];
+    const raised = kind === 'alerts' && count > 0;
+    const icon = raised ? 'alert' : ICON[kind];
+    return [
+      { kind, count, href: HREF[kind], ...(icon ? { icon } : {}), ...(raised ? { raised } : {}) },
+    ];
   });
 }
 
@@ -54,4 +65,9 @@ export function dayDetections(
     detections: today.length,
     alerts: today.filter((event) => event.severity !== 'info').length,
   };
+}
+
+export function statPlace(windowClass: WindowClass, width: number): StatPlace {
+  if (windowClass === 'compact' || windowClass === 'medium') return 'hero';
+  return width >= layout.fourColumns ? 'wide' : 'band';
 }

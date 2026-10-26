@@ -27,7 +27,10 @@ export function ProjectGrid({ projects, onSelect }: ProjectGridProps) {
           title={project.name}
           description={
             project.description ||
-            t('screens.home.project-tasks', { done: String(project.done), total: String(project.total) })
+            t('screens.home.project-tasks', {
+              done: String(project.done),
+              total: String(project.total),
+            })
           }
           done={project.done}
           total={project.total}

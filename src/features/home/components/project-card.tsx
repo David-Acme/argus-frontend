@@ -67,7 +67,10 @@ export function ProjectCard({
             </Text>
             <View className="mt-auto flex-row items-center gap-2.5 pt-3">
               <View className="bg-border-subtle h-[5px] flex-1 overflow-hidden rounded-full">
-                <Animated.View className="bg-interactive h-full rounded-full" style={progressStyle} />
+                <Animated.View
+                  className="bg-interactive h-full rounded-full"
+                  style={progressStyle}
+                />
               </View>
               <Text variant="micro" className="min-w-8 text-right tabular-nums">
                 {progressLabel}

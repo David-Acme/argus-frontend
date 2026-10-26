@@ -11,7 +11,11 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 import { ModuleEnableAction } from '@/features/modules';
-import { WATCH_NOTIFICATION_ICONS, WatchNotificationAction, watchNotificationKind } from '@/features/watch';
+import {
+  WATCH_NOTIFICATION_ICONS,
+  WatchNotificationAction,
+  watchNotificationKind,
+} from '@/features/watch';
 import { SightNoticeActions, useSightNotice } from '@/features/security';
 import {
   isThreadRead,
@@ -144,7 +148,8 @@ export function NotificationThreadRow({
   const canExpand = expandable && count > 1;
   const callId = onRead ? missedCallId(thread) : null;
   const counterpartId = onRead ? messageCounterpartOf(thread) : null;
-  const pressable = canExpand || callId !== null || counterpartId !== null || (onRead != null && !read);
+  const pressable =
+    canExpand || callId !== null || counterpartId !== null || (onRead != null && !read);
   const critical = thread.urgency === 'critical';
   const request = moduleRequestOf(thread);
   const watchKind = watchNotificationKind(thread.kind);
@@ -236,14 +241,20 @@ export function NotificationThreadRow({
             {meta.join(' · ')}
           </Text>
         ) : null}
-        {sight ? <SightNoticeActions notice={sight.notice} onAnswered={() => onRead?.(thread)} /> : null}
+        {sight ? (
+          <SightNoticeActions notice={sight.notice} onAnswered={() => onRead?.(thread)} />
+        ) : null}
         {request ? (
           <View className="pt-1.5">
             <ModuleEnableAction moduleId={request.moduleId} onDone={() => onRead?.(thread)} />
           </View>
         ) : null}
         {watchKind ? (
-          <WatchNotificationAction kind={watchKind} data={latest.data} onDone={() => onRead?.(thread)} />
+          <WatchNotificationAction
+            kind={watchKind}
+            data={latest.data}
+            onDone={() => onRead?.(thread)}
+          />
         ) : null}
         {expanded ? (
           <View className="pt-2">

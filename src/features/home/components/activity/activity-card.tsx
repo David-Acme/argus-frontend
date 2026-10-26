@@ -41,7 +41,7 @@ export function ActivityCard({
     <Panel className={cn('justify-center overflow-hidden', className)}>
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-3">
-          <Text className="text-subhead font-semibold leading-[22px]">{title}</Text>
+          <Text className="text-subhead leading-[22px] font-semibold">{title}</Text>
           {action ? (
             <Button size="sm" className="self-start px-4" onPress={onAction}>
               <Text className="text-legacy-caption font-semibold">{action}</Text>

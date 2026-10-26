@@ -17,7 +17,10 @@ describe('the notifications panel asked for by a route param', () => {
 
   test('opens when the home route carries the panel and the person may read notifications, and clears the param', () => {
     expect(panelRequestOf({ panel: 'notifications' }, true)).toEqual({ open: true, clear: true });
-    expect(panelRequestOf(paramsOf(NOTIFICATIONS_PANEL_HREF), true)).toEqual({ open: true, clear: true });
+    expect(panelRequestOf(paramsOf(NOTIFICATIONS_PANEL_HREF), true)).toEqual({
+      open: true,
+      clear: true,
+    });
   });
 
   test('opens once: after the param is cleared the same screen asks for nothing', () => {
@@ -40,8 +43,14 @@ describe('the notifications panel asked for by a route param', () => {
   });
 
   test('repeated params follow the first value', () => {
-    expect(panelRequestOf({ panel: ['notifications', 'settings'] }, true)).toEqual({ open: true, clear: true });
-    expect(panelRequestOf({ panel: ['settings', 'notifications'] }, true)).toEqual({ open: false, clear: true });
+    expect(panelRequestOf({ panel: ['notifications', 'settings'] }, true)).toEqual({
+      open: true,
+      clear: true,
+    });
+    expect(panelRequestOf({ panel: ['settings', 'notifications'] }, true)).toEqual({
+      open: false,
+      clear: true,
+    });
   });
 
   test('without notifications.read nothing opens, and the param is still cleared', () => {
