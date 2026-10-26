@@ -40,6 +40,7 @@ export const reminders = {
   'occurrence-skipped-plain': 'Skipped this time',
   'occurrence-failed': 'This occurrence could not be changed',
   'stopped-repeating': 'It no longer repeats. It keeps its time.',
+  completed: 'Reminder done',
   rolled: 'Done. Next time: {when}',
   snooze: 'Snooze',
   'snooze-label': 'Snooze {title}',

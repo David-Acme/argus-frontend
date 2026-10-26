@@ -1,9 +1,9 @@
 hex-literal 137
 arbitrary-value 115
-style-object 134
+style-object 129
 raw-pressable-in-features 74
 window-dimensions-in-features 6
-template-key 137
+template-key 135
 http-unchecked 84
 is-flag-in-features 73
 platform-select 58
@@ -12,8 +12,8 @@ props-over-10 18
 loop-without-reduce-motion 2
 timer-in-component 8
 source-text-test 9
-legacy-token-class 1638
-manual-memo 551
-shared-value-dot-value 315
-untested-component-or-screen 341
-scanned-files 1487
+legacy-token-class 1620
+manual-memo 543
+shared-value-dot-value 312
+untested-component-or-screen 335
+scanned-files 1840

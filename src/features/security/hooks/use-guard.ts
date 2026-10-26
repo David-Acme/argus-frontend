@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { t } from '@/core/i18n';
 import type { ICameraCacheRow, IServiceResponse } from '@/core/interfaces';
-import { guardEpisodeFeed, guardService } from '@/core/services/guard.service';
+import { guardService } from '@/core/services/guard.service';
 import type {
   CameraEnvironmentBadge,
   GuardCameraContext,
@@ -16,14 +16,21 @@ import type {
   GuardMode,
   ResourceMatch,
 } from '@/core/types';
-import { GUARD_EPISODES_ALL_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list';
+import { useInfiniteList } from '@/shared/hooks/use-infinite-list';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
-import { cameraEnvironmentIndex, maskedInScope, withCameraIn, withMode } from '@/features/security/model/environments';
+import { useEpisodeFeed } from '@/features/security/hooks/use-episode-feed';
+import {
+  cameraEnvironmentIndex,
+  headlineMode,
+  maskedInScope,
+  withCameraIn,
+  withMode,
+} from '@/features/security/model/environments';
 import { askDisarmPin, safetyService } from '@/features/safety';
 import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
 import { confirm } from '@/shared/libs/confirm';
@@ -43,7 +50,6 @@ const GUARD_ENVIRONMENTS: readonly ResourceMatch[] = [
   { domain: 'camera', scope: 'overview' },
 ];
 const GUARD_EXPECTED_VISITS: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'expected_visits' }];
-const GUARD_EPISODES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'episodes' }];
 
 const EPISODE_END_AFTER = 8;
 
@@ -90,6 +96,12 @@ export function useGuardEnvironments(enabled: boolean) {
     enabled,
     resources: GUARD_ENVIRONMENTS,
   });
+}
+
+export function useGuardHeadline(): GuardMode | null {
+  const { guard } = useCapabilities();
+  const environments = useGuardEnvironments(guard.view).data;
+  return guard.view ? headlineMode(environments ?? []) : null;
 }
 
 export function useCameraEnvironmentIndex(): ReadonlyMap<string, CameraEnvironmentBadge> {
@@ -165,12 +177,7 @@ export function useGuard(owner: boolean, environmentId?: number) {
     load: loadGuests,
     resources: GUARD_EXPECTED_VISITS,
   });
-  const episodes = useRemoteFeed(
-    guardEpisodeFeed,
-    environmentId === undefined ? GUARD_EPISODES_ALL_SCOPE : String(environmentId),
-    true,
-    GUARD_EPISODES
-  );
+  const episodes = useEpisodeFeed(environmentId, true);
   const episodePaging = useInfiniteList({
     count: episodes.rows.length,
     hasMore: episodes.hasMore,

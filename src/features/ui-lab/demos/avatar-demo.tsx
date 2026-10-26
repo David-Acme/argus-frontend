@@ -23,6 +23,9 @@ export function AvatarDemo() {
       <LabCase id="small-attn">
         <Avatar icon="wifioff" tone="attn" size="small" />
       </LabCase>
+      <LabCase id="event-mark">
+        <Avatar icon="cal" tone="event" size="mark" />
+      </LabCase>
       <LabCase id="initial">
         <Avatar initial={copy.anaInitial} label={copy.ana} tone="accent" round />
       </LabCase>

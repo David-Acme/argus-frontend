@@ -29,8 +29,13 @@ test('a value the client does not know reads as text, never as a translation key
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
-  for (const tab of ['Open security', 'Settings', 'Profile']) {
-    await screen.getByRole('button', tab).first().click();
+  const steps = [
+    ['button', 'Open security'],
+    ['tab', 'Settings'],
+    ['tab', 'You'],
+  ] as const;
+  for (const [role, name] of steps) {
+    await screen.getByRole(role, name).first().click();
     await new Promise((resolve) => setTimeout(resolve, 1500));
     const text = await browser.evaluate(() => document.body.innerText);
     expect(text.match(RAW_KEY)?.[0] ?? null).toBeNull();

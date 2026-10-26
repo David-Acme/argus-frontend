@@ -39,6 +39,7 @@ export function useReminders() {
       return runOptimistic({
         intents: [{ table: 'reminder', kind: 'update', recordId: row.id, values: shown }],
         call: () => reminderService.update(row.id, { isCompleted }),
+        undo: next === null && isCompleted ? { title: t('screens.reminders.completed'), description: row.title } : undefined,
         success:
           next === null
             ? undefined

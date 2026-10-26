@@ -18,7 +18,7 @@ export function PressableSurface({
 }: PressableSurfaceProps) {
   const press = useSurfacePress({ onPress, haptic, pressed, disabled, style });
   return (
-    <Animated.View style={press.scaleStyle}>
+    <Animated.View className={pressed?.grow ? 'grow' : undefined} style={press.scaleStyle}>
       <Pressable
         role={a11y.role}
         aria-label={a11y.label}

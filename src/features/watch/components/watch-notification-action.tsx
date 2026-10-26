@@ -1,7 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { View } from 'react-native';
-import { Button } from '@/shared/components/ui/button';
-import { Text } from '@/shared/components/ui/text';
+import { Button } from '@/shared/ui/button';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceCallActive } from '@/features/voice';
 import { useContinueHere } from '@/features/watch/hooks/use-continue-here';
@@ -31,17 +29,14 @@ export function WatchNotificationAction({ kind, data, onDone }: WatchNotificatio
 
   if (action.kind === 'open') {
     return (
-      <View className="flex-row pt-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          onPress={() => {
-            onDone?.();
-            router.push(action.href as Href);
-          }}>
-          <Text>{t('screens.watch.notification.open-action')}</Text>
-        </Button>
-      </View>
+      <Button
+        compact
+        label={t('screens.watch.notification.open-action')}
+        onPress={() => {
+          onDone?.();
+          router.push(action.href as Href);
+        }}
+      />
     );
   }
 
@@ -49,26 +44,26 @@ export function WatchNotificationAction({ kind, data, onDone }: WatchNotificatio
   const offerContinue = supported && target !== null && canContinueHere(target, now, callActive);
 
   return (
-    <View className="flex-row gap-2 pt-1.5">
+    <>
       {offerContinue && target ? (
         <Button
-          size="sm"
+          compact
+          variant="primary"
+          label={t('screens.watch.notification.continue-action')}
           onPress={() => {
             onDone?.();
             continueHere({ conversationId: target.conversationId, cameraName: target.cameraName });
-          }}>
-          <Text>{t('screens.watch.notification.continue-action')}</Text>
-        </Button>
+          }}
+        />
       ) : null}
       <Button
-        size="sm"
-        variant="outline"
+        compact
+        label={t('screens.watch.notification.transcript-action')}
         onPress={() => {
           onDone?.();
           router.push(WATCH_ROUTE);
-        }}>
-        <Text>{t('screens.watch.notification.transcript-action')}</Text>
-      </Button>
-    </View>
+        }}
+      />
+    </>
   );
 }

@@ -54,13 +54,14 @@ for (const size of WIDTHS) {
     await expect(screen.getByText(/Mudanza/).first()).toBeVisible();
     await expect(screen).toHaveScreenshot(`home-${size.name}-${platform}.png`, SHOT);
 
+    await screen.getByRole('tab', 'Agenda').first().click();
     await screen.getByRole('button', 'Projects').first().click();
     await expect(screen.getByRole('button', 'New project').first()).toBeVisible({ timeout: 10000 });
     await browser.mouse.move(size.width - 2, size.height - 2);
     await settle(TOOLTIP_MS);
     await expect(screen).toHaveScreenshot(`projects-${size.name}-${platform}.png`, SHOT);
 
-    await screen.getByRole('button', 'Home').first().click();
+    await screen.getByRole('tab', 'Home').first().click();
     await screen.getByRole('button', 'Open security').click();
     await expect(screen.getByText('Unknown person', { exact: true })).toBeVisible({ timeout: 10000 });
     await browser.mouse.move(size.width - 2, size.height - 2);

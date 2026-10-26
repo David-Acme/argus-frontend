@@ -205,7 +205,6 @@ export default function CamerasScreen() {
   return (
     <AppScreen
       scrollable={false}
-      bottomNav={false}
       header={
         <ScreenHeader
           title={t(SCREEN_TITLE_KEYS.cameras)}

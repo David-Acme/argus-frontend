@@ -1,7 +1,3 @@
-export type DashboardTab = 'home' | 'schedule' | 'projects' | 'people' | 'settings' | 'profile';
-
-export type ComposeActionId = 'event' | 'project' | 'camera' | 'voice';
-
 export type AgendaStatus = 'upcoming' | 'active' | 'complete';
 
 export type DashboardProjectCard = {

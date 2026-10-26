@@ -25,3 +25,5 @@ export const assistantChat = new AssistantChat({
     return () => clearTimeout(timer);
   },
 });
+
+export const setAssistantDraft = (draft: string): void => assistantChat.setDraft(draft);

@@ -89,11 +89,6 @@ const gone = (target: Locator, timeout = 5000): Promise<void> =>
 
 const argusTab = (page: Page): Locator => page.getByRole('tab', { name: HINT, exact: true });
 
-const centreTabShown = async (page: Page): Promise<boolean> => {
-  await page.waitForTimeout(1500);
-  return (await argusTab(page).count()) > 0;
-};
-
 test('holding the centre tab listens, the release sends, the answer card opens the thread', async ({
   app,
 }) => {
@@ -101,7 +96,7 @@ test('holding the centre tab listens, the release sends, the answer card opens t
   const phone = await openPhone(baseUrl);
   try {
     const { page } = phone;
-    test.skip(!(await centreTabShown(page)), 'the centre tab arrives with the navigation track');
+    await shown(argusTab(page), 10000);
 
     await holdDown(page, argusTab(page));
     await shown(page.getByText(LISTENING, { exact: true }));
@@ -145,7 +140,7 @@ test('sliding off the centre tab cancels: no answer card and the cap goes away',
   const phone = await openPhone(baseUrl);
   try {
     const { page } = phone;
-    test.skip(!(await centreTabShown(page)), 'the centre tab arrives with the navigation track');
+    await shown(argusTab(page), 10000);
 
     const centre = await holdDown(page, argusTab(page));
     await shown(page.getByText(LISTENING, { exact: true }));
@@ -175,7 +170,7 @@ test('a release Argus never hears ends in the not-heard card, and an outside tap
   const phone = await openPhone(baseUrl);
   try {
     const { page } = phone;
-    test.skip(!(await centreTabShown(page)), 'the centre tab arrives with the navigation track');
+    await shown(argusTab(page), 10000);
 
     await holdDown(page, argusTab(page));
     await page.mouse.up();

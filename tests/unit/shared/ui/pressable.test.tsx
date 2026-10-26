@@ -18,6 +18,20 @@ describe('PressableSurface', () => {
     expect(presses).toBe(1);
   });
 
+  test('a surface that grows into its slot keeps its role, label and tap', () => {
+    let presses = 0;
+    render(
+      <PressableSurface
+        a11y={{ label: 'Abrir Patio', role: 'button' }}
+        pressed={{ grow: true }}
+        onPress={() => (presses += 1)}>
+        <Text>Patio</Text>
+      </PressableSurface>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir Patio' }));
+    expect(presses).toBe(1);
+  });
+
   test('a disabled surface says so and ignores the tap', () => {
     let presses = 0;
     render(

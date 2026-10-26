@@ -94,7 +94,6 @@ export const common = {
   offline: {
     title: 'No connection to Argus',
     description: 'Showing what this device saved last.',
-    reconnected: 'Connected again',
   },
   route: {
     home: 'Connected at home',

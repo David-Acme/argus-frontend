@@ -52,6 +52,13 @@ class CalendarEventService extends DatabaseService<'calendar_event'> {
     ]);
   }
 
+  observeLatest(limit: number): Observable<CalendarEventModel[]> {
+    return this.observeManyWithColumns(
+      ['title', 'starts_at', 'is_all_day', 'recurrence_rule'],
+      [Q.sortBy('starts_at', Q.desc), Q.take(limit)],
+    );
+  }
+
   observeForOwner(ownerId: string): Observable<CalendarEventModel[]> {
     return this.observeManyWithColumns(
       ['title', 'starts_at', 'ends_at', 'is_all_day', 'color'],

@@ -34,7 +34,7 @@ test('the owner sets the duress phrase, sees that one is set, and no copy of the
   await second.open();
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
-  await second.page.getByRole('button', { name: 'Profile' }).first().click();
+  await second.page.getByRole('tab', { name: 'You' }).first().click();
   await second.page.getByText('Choose the duress phrase', { exact: true }).click();
   await second.page.locator('[role="dialog"] input').first().fill(PHRASE);
   await second.page.getByText('Save', { exact: true }).last().click();
@@ -75,7 +75,7 @@ test('turning duress on when the alert would reach nobody warns first, and goes 
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Profile').first().click();
+  await screen.getByRole('tab', 'You').first().click();
   await expect(
     screen.getByText(
       'If you ask for help, the alert would reach nobody: there is no one else in the household and no emergency contact.',

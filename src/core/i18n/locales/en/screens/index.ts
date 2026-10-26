@@ -28,6 +28,8 @@ import { notification } from './notification';
 import { watch } from './watch';
 import { proximity } from './proximity';
 import { conversations } from './conversations';
+import { command } from './command';
+import { navigation } from './navigation';
 
 export const screens = {
   home,
@@ -60,4 +62,6 @@ export const screens = {
   watch,
   proximity,
   conversations,
+  command,
+  navigation,
 };

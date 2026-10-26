@@ -236,6 +236,10 @@ export const PROTOTYPE_CASES: Record<string, Record<string, string>> = {
       "'<div class=\"video\">'+media('off','Dormitorio',{ctr:ic('lock'),r:'Privada'})+'</div>'",
     patio:
       "media('scene-patio','Patio trasero',{live:true,r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})",
+    'tile-fill':
+      "'<div class=\"camfill\" style=\"grid-template-columns:repeat(2,1fr);height:210px\">'+media('scene-kitchen','Cocina',{live:true,r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})+media('scene-patio','Patio trasero',{live:true})+'</div>'",
+    strip:
+      "'<div class=\"strip\">'+media('scene-door','Clip · Luis llegó',{ctr:'<span class=\"ibtn glass\" style=\"color:#fff\">'+ic('play','s')+'</span>',r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})+media('scene-kitchen','Cocina',{live:true,r:'<span style=\"font-weight:500;opacity:.85\">14:45</span>'})+media('scene-patio','Patio trasero',{live:true})+'</div>'",
   },
   'resource-view': {
     failed:

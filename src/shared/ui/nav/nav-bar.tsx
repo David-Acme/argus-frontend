@@ -1,9 +1,9 @@
 import { clsx } from 'clsx';
 import { useContext } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { inset, motion, useEffects, useThemeTokens } from '@/shared/theme';
+import { inset, motion, typeRoles, useEffects, useThemeTokens } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Icon } from '@/shared/ui/icon';
 import { Text } from '@/shared/ui/text';
@@ -59,6 +59,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
   const insets = useContext(SafeAreaInsetsContext);
   const { mode, target, handlers } = useHoldToTalk(voice);
   const collapse = useCollapse();
+  const labelled = useWindowDimensions().fontScale <= typeRoles.tab.maxScale;
   const frame = {
     bottom: Math.max(insets?.bottom ?? 0, inset.nav.barBottom),
     boxShadow: elevation.bar,
@@ -86,13 +87,20 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
               item={item}
               selected={active === item.key}
               hint={copy.argusHint}
+              labelled={labelled}
               listening={mode !== 'off' || Boolean(listening)}
               target={target}
               handlers={handlers}
               presence={presence}
             />
           ) : (
-            <NavTab key={item.key} item={item} selected={active === item.key} onSelect={onSelect} />
+            <NavTab
+              key={item.key}
+              item={item}
+              selected={active === item.key}
+              labelled={labelled}
+              onSelect={onSelect}
+            />
           )
         )}
       </Animated.View>

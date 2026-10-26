@@ -27,7 +27,7 @@ test('a consent answer that arrives while the session starts still shows the pri
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await expect(screen.getByText('Accept and continue', { exact: true })).toBeVisible({ timeout: 10000 });
-  await expect(screen.getByRole('button', 'Settings')).toBeHidden();
+  await expect(screen.getByRole('tab', 'Settings')).toBeHidden();
 
   expect(escapes).toEqual([]);
 });
@@ -45,7 +45,7 @@ test('while the consent state is unknown the app stays closed, and a failed read
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await expect(screen.getByText('Retry', { exact: true })).toBeVisible({ timeout: 10000 });
-  await expect(screen.getByRole('button', 'Settings')).toBeHidden();
+  await expect(screen.getByRole('tab', 'Settings')).toBeHidden();
 
   await routes(baseUrl, [{ method: 'GET', path: '/privacy/me', info: undecided }]);
   await screen.getByText('Retry', { exact: true }).click();

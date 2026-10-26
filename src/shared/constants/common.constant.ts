@@ -10,6 +10,11 @@ export const IS_IOS = Platform.OS === 'ios';
 
 export const IS_TAURI = IS_WEB && '__TAURI_INTERNALS__' in window;
 
+const APPLE_PLATFORM = /Mac|iPhone|iPad/;
+
+export const COMMAND_KEY =
+  IS_IOS || (IS_WEB && APPLE_PLATFORM.test(globalThis.navigator?.platform ?? '')) ? '⌘K' : 'Ctrl K';
+
 export const TOAST_DEFAULT_MS = 4000;
 export const TOAST_ACTION_MS = 6000;
 export const TOAST_MAX_VISIBLE = 3;

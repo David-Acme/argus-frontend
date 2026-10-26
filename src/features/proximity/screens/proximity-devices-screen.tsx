@@ -137,7 +137,6 @@ export default function ProximityDevicesScreen() {
     <>
       <AppScreen
         scrollable={false}
-        bottomNav={false}
         header={
           <ScreenHeader
             title={t('screens.proximity.title')}

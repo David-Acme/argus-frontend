@@ -10,7 +10,7 @@ import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { IconButton } from '@/shared/components/ui/icon-button';
 import { Text } from '@/shared/components/ui/text';
-import { SCREEN_TITLE_KEYS, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { NEW_ITEM_PARAM, SCREEN_TITLE_KEYS, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -44,15 +44,17 @@ import {
   upcomingTasks,
 } from '@/features/projects/model/task-lanes';
 
-type ProjectsParams = { id?: string; task?: string };
+type ProjectsParams = { id?: string; task?: string; new?: string };
 
 const UPCOMING_LIMIT = 6;
+
+const AGENDA_HREF = '/agenda';
 
 export default function ProjectsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const { id: idParam, task: taskParam } = useLocalSearchParams<ProjectsParams>();
+  const { id: idParam, task: taskParam, new: newParam } = useLocalSearchParams<ProjectsParams>();
   const [selectedId, setSelectedId] = useState(idParam ?? '');
   const [projectFormOpen, setProjectFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(false);
@@ -60,6 +62,7 @@ export default function ProjectsScreen() {
   const [editingTaskId, setEditingTaskId] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState<ProjectTaskStatus>('todo');
   const [pendingTaskId, setPendingTaskId] = useState(taskParam ?? '');
+  const [pendingNew, setPendingNew] = useState(newParam ?? '');
   const [membersOpen, setMembersOpen] = useState(false);
   const userId = String(useAuthStore((state) => state.user?.id ?? ''));
   const { isExpanded } = useWindowClass();
@@ -103,6 +106,19 @@ export default function ProjectsScreen() {
   if (pendingTaskId && tasks.some((item) => item.id === pendingTaskId)) {
     setPendingTaskId('');
     setEditingTaskId(pendingTaskId);
+    setTaskFormOpen(true);
+  }
+
+  if (pendingNew === NEW_ITEM_PARAM.project && canCreateProject) {
+    setPendingNew('');
+    setEditingProject(false);
+    setProjectFormOpen(true);
+  }
+
+  if (pendingNew === NEW_ITEM_PARAM.task && canCreateTask) {
+    setPendingNew('');
+    setEditingTaskId('');
+    setNewTaskStatus('todo');
     setTaskFormOpen(true);
   }
 
@@ -204,7 +220,7 @@ export default function ProjectsScreen() {
             <IconButton
               icon="arrow-left"
               label={t('common.back')}
-              onPress={() => router.replace('/')}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace(AGENDA_HREF))}
             />
             <Text variant="title">{t(SCREEN_TITLE_KEYS.projects)}</Text>
             {canCreateProject ? (

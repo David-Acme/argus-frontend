@@ -1,0 +1,17 @@
+export const navigation = {
+  label: 'Principal',
+  home: 'Inicio',
+  security: 'Seguridad',
+  argus: 'Argus',
+  agenda: 'Agenda',
+  you: 'Tú',
+  settings: 'Ajustes',
+  'argus-hint': 'Argus: toca para escribir, mantén para hablar',
+  listening: 'Te escucho… suelta para enviar',
+  command: 'Buscar o pedir…',
+  'status-title': 'Argus de Casa',
+  mode: 'Modo',
+  cameras: '{online} de {total}',
+  'cameras-active': 'cámaras activas',
+  ask: 'Pregúntale a Argus…',
+} as const;
