@@ -17,7 +17,7 @@ test('a role whose module is off keeps the account and shows what still works', 
   ).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Always available')).toBeVisible();
   await expect(screen.getByRole('button', 'Panic button')).toBeVisible();
-  await expect(screen.getByRole('button', 'Welcome, Ana')).toBeHidden();
+  await expect(screen.getByText(/Good (morning|afternoon|evening), Ana/)).toBeHidden();
 
   await screen.getByRole('button', 'Go to my profile').click();
   await expect(screen.getByRole('heading', 'Sessions and devices')).toBeVisible();

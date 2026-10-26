@@ -19,6 +19,10 @@ import {
 
 const ASSISTANT_CALL_TIMEOUT_MS = 3000;
 
+const importNotifications = () => import('expo-notifications');
+let notificationsModule: ReturnType<typeof importNotifications> | undefined;
+const notifications = () => (notificationsModule ??= importNotifications());
+
 export type PushRegistrationPort = {
   post(body: NotificationTokenBody): Promise<{ ok: boolean; code: string | null }>;
   remove(removal: NotificationTokenRemoval): Promise<void>;
@@ -207,12 +211,12 @@ export class IosPushService implements IPushService {
   requestBackground(): void {}
 
   async notificationsPermitted(): Promise<boolean> {
-    const Notifications = await import('expo-notifications');
+    const Notifications = await notifications();
     return (await Notifications.getPermissionsAsync()).granted;
   }
 
   async requestNotificationsPermission(): Promise<boolean> {
-    const Notifications = await import('expo-notifications');
+    const Notifications = await notifications();
     return (await Notifications.requestPermissionsAsync()).granted;
   }
 

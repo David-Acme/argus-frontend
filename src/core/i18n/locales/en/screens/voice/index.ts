@@ -192,6 +192,19 @@ export const voice = {
     dnd: { off: 'Off', hour: '1 hour', morning: 'Until morning' },
     environment: 'Calls about {name}',
   },
+  hold: {
+    'open-thread': 'See the conversation',
+    'retry-hint': 'Try again in a moment.',
+    errors: {
+      'not-heard': "I didn't hear you.",
+      'not-heard-hint': 'Hold Argus while you speak.',
+      'no-reply': "Argus didn't answer.",
+      connection: 'No connection to Argus.',
+      permission: 'No microphone permission.',
+      'permission-hint': 'Turn it on in the device settings.',
+      generic: "Argus couldn't hear you.",
+    },
+  },
   errors: {
     'call-taken': 'You answered this call on another device.',
     'call-missed': 'This call has already ended.',

@@ -28,6 +28,4 @@ export const MODULE_ROUTE = '/modules';
 
 export const MODULE_SETTINGS_PATH = '/settings/modules';
 
-export const MODULE_GETTING_STARTED_KEY = 'app.modules.getting-started.';
-
 export const MODULE_DISK_HEADROOM = 1.1;

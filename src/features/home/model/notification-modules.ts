@@ -22,5 +22,7 @@ export function moduleOfNotification(row: NotificationRow): string {
   return NOTIFICATION_KIND_MODULES.get(kind) ?? MODULE_IDS.core;
 }
 
-export const notificationVisible = (row: NotificationRow, moduleActive: (moduleId: string) => boolean): boolean =>
-  moduleActive(moduleOfNotification(row));
+export const notificationVisible = (
+  row: NotificationRow,
+  moduleActive: (moduleId: string) => boolean
+): boolean => moduleActive(moduleOfNotification(row));

@@ -1,14 +1,30 @@
-export { default as CameraLiveScreen } from './screens/camera-live-screen';
-export { default as CameraRecordingsScreen } from './screens/camera-recordings-screen';
-export { default as CameraSettingsScreen } from './screens/camera-settings-screen';
-export { default as CameraZonesScreen } from './screens/camera-zones-screen';
-export { default as CamerasScreen } from './screens/cameras-screen';
+import { lazyScreen } from '@/shared/libs/lazy-screen';
+export const CameraLiveScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraLiveScreen'
+);
+export const CameraRecordingsScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraRecordingsScreen'
+);
+export const CameraSettingsScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraSettingsScreen'
+);
+export const CameraZonesScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraZonesScreen'
+);
+export const CamerasScreen = lazyScreen(() => import('./screens/camera-screens'), 'CamerasScreen');
 export { CameraLiveView } from './components/camera-live-view';
 export { CameraSnapshotView } from './components/camera-snapshot-view';
 export { useCameraCounts, type CameraCounts } from './hooks/use-camera-counts';
 export { useCameraOverview } from './hooks/use-camera-overview';
 export { useCameraPrivacy } from './hooks/use-camera-privacy';
-export { CameraLabScreen } from './screens/camera-lab-screen';
+export const CameraLabScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraLabScreen'
+);
 export { recordModeLabelKey } from './model/camera-record-mode';
 export { TamperEvidenceView } from './components/tamper-evidence-view';
 export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';

@@ -4162,6 +4162,57 @@ button inside it while the speech bubble still leaked through on the web. Now th
 decoration whose content the label already says. The probe fails unless exactly one button carries
 that label and neither the chips' "coming soon" nor the bubble's greeting reaches the tree.
 
+### Route screens load on navigation (2026-10-26, R-D36, Phase 2 T9)
+
+The web entry (the three scripts `dist/index.html` loads: Metro's runtime, `__common` and
+`index`) was 7,373,421 B on redesign/main 9b3757c, above the 6.6 MB ceiling of rule 30. Every
+route screen sat in it, because a feature's `index.ts` re-exported each screen statically and the
+layouts import those same barrels for their hooks and gates, so no route-level setting could
+split them: Metro does not tree-shake a barrel, and Expo Router's `asyncRoutes` would only have
+moved the one-line route files, whose barrels stay in the entry through the layouts.
+
+The split therefore lives in the barrels. `lazyScreen(load, name)`
+(`src/shared/libs/lazy-screen.tsx`) wraps `React.lazy` over a dynamic `import()` and paints
+nothing (`Suspense` with a `null` fallback) until the module arrives, so a route shows no spinner
+and nothing heavier than the stack's own empty frame; Metro turns each `import()` into a chunk
+named after its module, fetched by a `<script>` from the same origin, which the Tauri CSP
+(`script-src 'self'`) already allows, as it did for `livekit-client`. Route files stay one-line
+re-exports and the route tree is unchanged, so a deep link resolves exactly as before; only the
+screen's code arrives after the route matched. Native resolves the same `import()` inside its one
+bundle, with no fetch, but `React.lazy` still settles a promise, so the first visit to a screen in
+a launch paints the empty frame for one tick, under the stack's fade; later visits render at once,
+because `lazy` keeps the resolved screen.
+
+What stays eager is what the first frame needs: the layouts and their gates, Inicio (`HomeScreen`,
+`NewsScreen`) and the welcome screen (the unpaired first frame and the probe's hero). Every other
+route screen is lazy, the onboarding steps after welcome and the call screen included.
+
+A module shared by two async chunks is hoisted by Metro into `__common`, which `index.html`
+loads at startup (`extractCommonChunk` in `@expo/metro-config`'s `serializeChunks`). Two screens
+of one feature share most of their code (the camera form, the episode cards, the proximity
+model), so a feature with several screens loads them from one module —
+`screens/camera-screens.ts`, `security-screens.ts`, `proximity-screens.ts`,
+`conversation-screens.ts`, like `ui-lab`'s `lab-screens.ts` — and their shared code stays in that
+chunk: `__common` fell from 169,166 B (one chunk per screen) to 67,019 B. What is left there is
+code two features share. `expo-camera` (QR scan and face capture) and `qrcode` (the login and
+the invitation QR) were the largest part of it, and they now load on use, as rule 30 asks: QR
+scan and face capture take `DeviceCamera` and `useCameraPermissions` from
+`shared/components/device-camera/device-camera.tsx`, whose one `import()` of
+`device-camera/expo-camera.ts` is the `expo-camera` chunk (the permission hook is expo's own
+`createPermissionHook` over that module's `Camera` methods, so it behaves as the package's); the
+login and the invitation dialog render `LazyQrCode` (`shared/components/ui/lazy-qr-code.tsx`),
+which holds the square with its background until the `qr-code` chunk (`QrCode` and `qrcode`)
+arrives. Both are `lazy` rows. Entry 6,493,364 → 6,444,328 B, `__common` 67,019 → 17,843 B.
+
+Measured on the same tree: entry 7,373,421 B (an export with source maps) → 6,432,190 B,
+`dist/` 8,905,970 B (the recorded baseline was 8,906,690 B), 29 route chunks (1 KB to 272 KB, `lab-screens` among them), and the unpaired first
+render in headless chromium against `dist/` under the CSP (time until `#root` has text, two
+series of 5 each, medians) 781 and 653 ms before against 624 and 612 ms after. Each route
+chunk is a `lazy` row of `bundle-baseline.txt`, so a static import of a screen, which would pull
+it back into the entry, fails `check:bundle`. After merging redesign/main cde97d12
+(hold-to-talk), the entry is 6,493,364 B and `dist/` 8,920,271 B. The `import()` also removed the file cycles that
+ran through the camera, security and voice screens (the cycle check does not count a lazy edge).
+
 ### Resource changes: the client side (2026-10-12, the real-time plan's 2.2)
 
 `ResourceChanged` (operation 14) is the one frame for state a screen re-reads
@@ -5299,7 +5350,7 @@ preset's own decisions and are not exceptions.
 
 | Rule | Paths | Reason | Source or measurement | Date |
 |---|---|---|---|---|
-| `react-hooks/immutability` | `src/**`, `scripts/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
+| `react-hooks/immutability` | `src/**`, `scripts/**`, `tests/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value; the tests drive the same values through their mocks. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
 | `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
 | `i18next/no-literal-string` | `src/features/ui-lab/**/*.tsx` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. Since p1/ds-base the route `src/app/ui-lab.tsx` is a one-line re-export and the screen and its demos live in `src/features/ui-lab/`. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
 | `complexity`, `max-lines-per-function`, `max-lines`, `max-statements`, `max-depth`, `max-params` | `src/core/i18n/locales/**` | The dictionaries are data: one exported object per namespace, whose length is the copy's, not a function's. The budgets of rule 32 measure code. | rule 32; 68 locale files at R0 | 2026-10-20 |
@@ -5309,6 +5360,35 @@ preset's own decisions and are not exceptions.
 | `argus/date-formatter-home`, `argus/intl-date-home` | `src/shared/hooks/use-date-formatter/date.ts` | The one formatter is the only user of `date-fns` and `Intl.DateTimeFormat` (rule 10). | rule 10 | 2026-10-20 |
 | `argus/platform-os-home` | `src/shared/constants/common.constant.ts` | The `IS_*` flags are defined from `Platform.OS` here, and only here (rule 10). | rule 10 | 2026-10-20 |
 | `argus/no-color-literal` | `src/shared/theme/**` | `tokens.ts` and `effects.ts` are the home of the colour values (rule 10). | rule 22 | 2026-10-20 |
+
+### Imports and the test module layout (2026-10-26)
+
+`import/first` and `import/no-duplicates` are errors everywhere lint looks,
+and `lint` covers `tests/` since 2026-10-26 (48 problems in 389 files before,
+0 after). The tests resolve `@tests/*` through `tests/tsconfig.json`, set as
+the TypeScript import resolver's project for `tests/**`.
+
+A static import is evaluated before any statement of its file, so a module a
+test replaces with `mock.module` must be loaded after the mock with
+`await import`. Every file under `tests/` follows one layout, which
+`argus/test-module-layout` enforces:
+
+1. the static imports;
+2. the state the mock factories read (plain declarations);
+3. every top-level `mock.module(...)`, as one block (a loop that only
+   installs mocks counts as one);
+4. one block of `const { ... } = await import('...')`;
+5. the fixtures and the tests.
+
+A dynamic `import()` inside a function is refused, except as the factory of a
+`mock.module` call (`() => import('react-native-web')`). A module that needs
+a `beforeAll` to load is loaded at the top level instead: Bun evaluates a
+test file, then runs its tests, so the order is the same.
+
+In `src/`, a dynamic `import()` is only for lazy, platform-only or heavy code
+(rule 30), and a file that loads the same module more than once does it
+through one memoised loader (`const livekit = () => (livekitModule ??=
+importLivekit())`).
 
 ## Rules and gates, R0 (2026-10-20)
 
@@ -5331,6 +5411,9 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 | `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0; a line without a reason, or whose path and symbol name no memoization or more than one, fails, so a key never exempts a whole component) |
 | `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
 | `lint` | `eslint src scripts --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts --prune-suppressions` in the same change | `eslint-suppressions.json` |
+| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` row (a package, or a route screen module) keeps a chunk of its own (Metro names an async chunk after its package or module; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
+
+| `lint` | `eslint src scripts tests --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts tests --prune-suppressions` in the same change | `eslint-suppressions.json` |
 | `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
 
 **The quality counters at R0** (they replace the `09cf103` survey numbers of
@@ -5593,7 +5676,8 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
-| `scripts/lib/cycle-baseline.txt` | `file-cycle src/features/cameras/screens/camera-live-screen.tsx`, `file-cycle src/features/cameras/screens/camera-recordings-screen.tsx`, `file-cycle src/features/cameras/screens/camera-settings-screen.tsx`, `file-cycle src/features/cameras/hooks/use-camera-live.ts`, `file-cycle src/features/cameras/hooks/use-camera-meta.ts`, `file-cycle src/features/cameras/hooks/use-live-stage.ts`, `file-cycle src/features/cameras/hooks/use-talk-dock.ts`, `file-cycle src/features/cameras/components/settings/device-section.tsx` | `p3/camara`: the 629-line camera page that was a member of the recorded cameras ↔ security ↔ voice ↔ response cycle (its imports of `@/features/security` and `@/features/voice`) is split into the live screen, Ajustes de la cámara and Grabaciones, each composed of its own hooks; the same two imports now sit in those smaller files, so the one old member leaves and eight join. No slice joins: the slice cycle is the four slices it was. Breaking it means voice reaching `CameraLiveView` without the cameras index, which is outside this track. | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` (T9) merged with redesign/main cde97d12, whose own export, measured the same day, is entry 7,434,450 B and `dist/` 8,914,334 B above the recorded 7,379,320 and 8,906,690 B (the hold-to-talk merge has no row of its own). With the route screens lazy the entry is 6,493,364 B (−941,086 against that tree) and `dist/` 8,920,271 B (+5,937): each of the 29 route chunks carries its own Metro module wrappers, and the entry gains the async-import paths that name them and `lazyScreen`; on 9b3757c, before the merge, the same change measured `dist/` 8,905,970 B. The entry baseline is lowered with it. | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` follow-up: `expo-camera` and `qrcode` load on use (rule 30) from their own `expo-camera` and `qr-code` chunks instead of `__common`. Measured on the same tree, redesign/main 090f5f6: entry 6,493,364 → 6,444,328 B (−49,036) and `dist/` 8,920,271 → 8,922,342 B (+2,071): the two chunks' own Metro wrappers, the `DeviceCamera` and `LazyQrCode` wrappers and the async-import paths. The entry baseline is lowered with it. | 2026-10-26 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
@@ -6780,6 +6864,226 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando con la cámara»/«Reconectando…», the voice call's
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
+
+## Inicio: composition, hero, band and states (Phase 2, T4, 2026-10-26)
+
+`src/features/home/screens/home-screen.tsx` lays out the sections of T5, T6
+and T7 under one hero; every decision is a pure function in
+`model/inicio-hero.ts`, `inicio-stats.ts`, `inicio-states.ts` and
+`inicio-layout.ts`.
+
+- **Top bar and hero.** On phones and tablets the top bar is the greeting
+  (`dayPart`: morning 5–11, afternoon 12–19, evening otherwise) and one
+  search button that opens Command; the hero is `Status` with Estela, the
+  sentence, the meta and the stats. From 1024 px the hero is the band: the
+  greeting leads the meta, the stats are cameras and alerts (from 1700 px
+  also detections and pending), and «Nuevo» opens Command's new-item actions.
+  The band draws its Aura (R-D29); the Screen's Aura field is drawn only on
+  phones and tablets.
+- **Phase.** `inicioPhase` orders loading (no context or no first sync) >
+  alert (an open response) > offline > night > away/armed > calm. Each phase
+  has one look (`heroLook`): tone, Estela's state and the aura; offline is
+  calm in tone with Estela off and the grey aura, so the band takes an aura
+  apart from its tone (`Status` `aura`).
+- **Alert.** The hero says what happened and where (`alertSentence` in
+  `features/response`, kept beside the response model) with the age and the
+  response headline as meta. `components/hero/inicio-alert.tsx` is the card:
+  the camera live (only with `camera.view`), «Ver cámara» (or «Ver
+  Seguridad»), «Es real» or, once confirmed, the emergency call, «Es una falsa
+  alarma», then the contacts. It lives in `home`, not `response`, because a
+  response component importing `features/cameras` joins the recorded
+  cameras ↔ voice ↔ response cycle.
+- **Offline.** `useOfflineNotice` decides when (12 s); the age of the last
+  known facts is counted from the notice minus its delay, on the minute
+  clock. Phones show it above the hero, the band in the first column. The
+  stats and the meta stay: they are the last known facts.
+- **New household.** No camera, reminder, project or open task: one first
+  step instead of the sections, the camera when the role can add one, else
+  the first reminder (Command's new-item actions).
+- **Before the context.** The phone hero is a skeleton and Ahora's place
+  holds three skeleton rows; the band shows the greeting with no stats.
+- **Columns** come from what the role reads (`inicioColumns`): an empty
+  column is dropped, the lead block (alert, offline, SOS, first step) tops
+  the first column left, and when every remaining column is fixed the last
+  one takes the rest of the width. The grown section is chosen by name, not
+  position, so a section that may render nothing (Mañana, En casa) is not the
+  one that grows; Cámaras grows in its column.
+- **Night and away.** `WatchSection` («Esta noche» at night, «Mientras no
+  estás» away or armed) reads the effective mode through `useGuardHeadline`,
+  the same answer the sidebar gives, and names the cameras of every place not
+  at home (`watchedCameras`, three names and a count) and what wakes or tells
+  you (`wakeRuleOf`: night an unknown person, away someone who insists or
+  enters an alert zone, armed a critical danger, from the modes' own
+  details). No watched camera, no section. On phones it leads the stack and,
+  at night, Mañana takes Ahora's place, as the prototype draws; on the desktop
+  it tops the agenda column.
+- **A home with little data.** No card is ever stretched into empty space:
+  only Cámaras' tile grid grows in its column, every other column ends
+  where its content ends, on a list or chips. Ideas are T5's `AgendaEmpty`
+  chips (`IdeaChips`, shared with «Prueba a decirle»). When nothing is
+  pending (`isSparse`) the side column ends with Estado (`SystemSection`:
+  the active modules and the cameras online), «Así te ayuda Argus» (one row
+  per right the reader has: cameras, reminders, voice) and «Prueba a
+  decirle» (phrases that ask Argus, each behind the right its answer needs).
+  An empty Novedades drops its column. A new household hides the zero stats
+  and stacks its first step, Novedades if any, Estado and «Prueba a
+  decirle»; on a tablet also «Así te ayuda Argus» before the phrases and
+  the day (Hoy) after them. With no mode and nobody known its hero meta is
+  «Conecta una cámara para que Argus vigile», never a blank. Presence that is unknown is never «sin datos»: a person reads
+  «Aún no sé si está en casa», me with the hint to connect a camera or the
+  phone; one person whose presence is unknown is no section, and the hero
+  names who is home only once someone's presence is known. Rutinas has no
+  source in the app and is not drawn; storage and the server's temperature
+  are not known to the app either.
+- **Guest SOS.** A role that can panic and has no Seguridad holds the
+  existing `PanicButton` on Inicio (R-D10).
+- **One live Estela (R-D31).** `useHeroPresence` (claimed by the Status hero)
+  and `useCentrePresence` (the bar's and the rail's centre) share one small
+  store in `shared/ui/presence/presence-focus.ts`: while a hero is mounted the
+  centre paints the still frame, and while hold-to-talk listens the centre is
+  live and the hero holds still.
+- **Removed.** The nine-card dashboard, the bell popover and its
+  `/?panel=notifications` link (the assistant's notifications link opens
+  `/notification`, which an inactive role with `notifications.read` may
+  open), the search field, the activity heatmap and its projection, the
+  getting-started checklist with its signals projection, and the camera grid.
+  Deleting a notification lives on the full feed, one button per item with
+  Deshacer. The earlier sections of this file that describe the bell and the
+  checklist are history.
+
+## Hold the centre tab to talk (Phase 2, T2, 2026-10-26)
+
+`useArgusVoice()` (`features/voice/hooks/use-argus-voice.ts`) gives the Nav
+its `voice` handlers and the `listening` flag, and `ArgusListening`
+(`features/voice/components/argus-listening.tsx`) is mounted once in the
+`(app)` layout. The state machine is `model/hold-talk.ts` (idle → listening →
+sending → answered | failed | cancelled), held in `stores/hold-talk.store.ts`.
+
+**The voice path, measured before building.** The backend has no
+one-utterance endpoint: a turn is closed by argus-voice's VAD
+(`services/voice/CONTEXT.md`, "Session behavior decisions"), and the typed
+chat mode (`voice:start {mode:"chat"}`) takes text, not audio. So the hold
+drives the existing call stack (`voiceService` on its `/sync` duplex PCM
+leg, see "The first words" below; WebRTC only where the app has no PCM
+microphone): the session
+starts on hold, the microphone stays open after the release until the VAD
+closes the turn, and the session stops once Argus has spoken. Nothing on the
+server changed. Three backend facts make it fit:
+
+- `[voice] opening` is `none` by default, so a session starts listening at
+  once and says no greeting (an install with `opening = "spoken"` would greet
+  on every hold).
+- `voice:mute` drops the PCM queue and resets the VAD, so muting on the
+  release would throw away the utterance the VAD has not closed yet. The
+  microphone is muted only once the turn was heard (a final STT line) and
+  Argus left `listening` (`holdTalkMutes`), so nothing said afterwards opens a
+  second turn.
+- Every identified voice turn is mirrored to the user's Argus thread
+  (`services/llm/CONTEXT.md`, "The messenger and the app's conversation
+  thread"), so the reply stays in the thread the card opens.
+
+**When it settles.** After the release: nothing heard in 4 s is «No te
+escuché»; heard and no reply in 30 s is «Argus no respondió»; a reply is
+answered once Argus has been back in `listening` for 800 ms (its speech
+ended) or the session ended. The card reads the reply and the latest
+`voice:action` as a chip (`voiceActionLabel`, shared with the call's chips);
+a tap opens `ASSISTANT_THREAD_HREF`, an outside tap closes it, a failure
+closes itself after 8 s. Failures are worded from the code
+(`holdTalkFailureOf`), never the server's text, and are polite status
+regions with no action (R-D34).
+
+**What the Nav already draws.** `NavBar` draws the Aura edge (the steady rim
+under reduced motion or transparency) and the «Te escucho…» cap whenever its
+gesture is held or `listening` is true, and the gesture hook already fires
+`impactLight` on start and stop. `ArgusListening` therefore draws only what
+the Nav does not: the live transcript above the cap, the thinking card, the
+answer card and the failure card; drawing the edge and the pill again would
+double them. The rail and the sidebar have no hold (a press opens the chat).
+
+**A hold that cannot listen is a tap.** Without `assistant.voice` or a
+microphone path (`argusCallSupported()`), and while another call is active,
+`useArgusVoice` sets `NavVoice.canListen` to false (`holdTalkCanListen`) and
+the Nav's gesture turns the long press into `onOpenChat`: no pill, no edge,
+no haptic. The call pill hides while a hold is live. The live transcript is
+the STT partial the server streams.
+
+**The first words: the socket leg, measured (2026-10-26).** Where the app
+captures its own microphone (`voiceCallSupported()`: the web, Android
+and the desktop), a hold starts `voiceService` with `{ socket: true }`
+(`holdTalkStartOptions`): the PCM leg over the `/sync` socket that is
+already open, instead of a WebRTC room. Measured:
+
+- WebRTC, a throwaway `livekit-server` 1.13.7 on loopback with
+  `livekit-client` 2.22.3 in headless Chromium, 10 runs after 2 warm-ups:
+  `connect` 118 ms, microphone published 163 ms, subscribed at the far peer
+  205 ms, first audio packet at the far peer 257 ms (median, p90 within
+  5 ms). `/rtc/token` adds 83 ms (`services/voice/CONTEXT.md`, measured with
+  the agent already in the room). So the agent hears nothing for about
+  340 ms after the hold starts on a LAN, more on a phone over Wi-Fi.
+- The socket leg, the web build against the e2e backend, 8 holds:
+  press to `voice:start` 276 ms (the 220 ms hold plus about 56 ms of
+  gesture and render), `voice:start` to the first PCM frame 108 ms median
+  (104–164); a frame carries 100 ms of audio (`VOICE_MIC_FRAME_MS`), so
+  capture starts about 8 ms after `voice:start`.
+
+What was not taken, and why:
+
+- **Connecting on press-in.** Every tap of the Argus tab would claim
+  `/rtc/token`, which makes argus-voice join a room (and prime the LLM); a
+  tap leaves that agent in a room until LiveKit closes it (about a minute),
+  and a user has at most two calls at once (`services/sync/CONTEXT.md`,
+  "At most two calls per user"), so two taps would refuse the next hold.
+- **Capturing before the room and replaying.** A local track can capture
+  before the room connects (`createLocalAudioTrack`, 3 ms with a fake
+  device), but LiveKit's own pre-connect buffer records with
+  `MediaRecorder` (absent in React Native) and sends it on the byte-stream
+  topic `lk.agent.pre-connect-audio-buffer`, which the C++ agent does not
+  read. A replayed custom track would work on the web only.
+- **A warm room.** Unmuting a connected room reached the far peer in 106 ms
+  (median), but a warm room keeps an agent, one of the two call slots and,
+  on Android, the ongoing-call service and the microphone, and while it is
+  up the voice session counts as active (the camera live view mutes its own
+  audio for it).
+
+**The residual gap, on the server.** argus-sync's relay does not queue PCM
+while a start is in flight (`services/sync/CONTEXT.md`, "Frames that race
+the start"): on the first call of a socket the frames before the gRPC stream
+exists are dropped, and on a later call the binary path can reach
+argus-voice before the `VoiceStart` frame. Neither is measurable without the
+backend; the client cannot see when the session is ready on this leg. A full
+guarantee needs a backend change: the relay queueing PCM during the start
+(or a ready frame), or the agent reading LiveKit's pre-connect buffer.
+The desktop takes the socket leg too: its shell grants the app origin the
+WebKitGTK microphone (`src-tauri/src/media.rs`), which is what `voiceCallSupported()`
+reads; only a platform without a PCM microphone would hold over WebRTC and
+keep the 340 ms above.
+
+
+## Pending normalisation (owner decision 2026-10-26)
+
+New code follows AGENTS.md › "Rule 12 today: one pattern for where code goes
+and how it is imported". The code written before it is normalised in ONE pass
+after every redesign screen has landed and no branch is open, so the pass
+conflicts with nothing. The pass covers:
+
+- `import/order` with the five groups, and `consistent-type-imports` (`import type`), both as lint errors with autofix;
+- relative imports inside a feature turned into `@/features/<feature>/...`;
+- loose `constants.ts` files moved into `constants/`;
+- `-types.ts` renamed to `.type.ts`;
+- single-feature types moved from `core/types` into that feature's `model/`;
+- the remaining `export *` replaced by named exports;
+- the deferred Prettier formatting commit (R-D35), which brings `format-baseline.txt` to zero.
+
+Measured on 2026-10-26:
+
+| What | Count |
+|---|---|
+| own-feature imports | 1,132 alias, 164 relative |
+| type imports | 1,216 `import type`, 325 inline `type` |
+| `export *` | 117 |
+| loose `constants.ts` | 5 |
+| `-types.ts` files | 10 |
+| unformatted files | 879 |
 
 ## The live camera and Ajustes de la cámara (Phase 3, P3b, 2026-10-26)
 

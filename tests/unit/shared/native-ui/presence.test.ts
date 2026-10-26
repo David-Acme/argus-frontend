@@ -1,21 +1,22 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { tokens } from '@/shared/theme/tokens';
-import { calls, frameCallbacks, installNativeUiMocks, markupRenderer } from './native-ui-mocks';
+import {
+  calls,
+  frameCallbacks,
+  installNativeUiMocks,
+  renderToStaticMarkup,
+} from './native-ui-mocks';
 
 installNativeUiMocks();
 
-type Modules = {
-  presence: typeof import('@/shared/ui/presence/presence');
-  web: typeof import('@/shared/ui/presence/presence-canvas.web');
-  canvas: typeof import('@/shared/ui/presence/presence-canvas');
-  plan: typeof import('@/shared/ui/presence/plan');
-  runtime: typeof import('@/shared/ui/presence/skia-runtime');
-  loop: typeof import('@/shared/ui/presence/frame-loop');
-};
-
-let modules: Modules;
-let renderToStaticMarkup: Awaited<ReturnType<typeof markupRenderer>>;
+const { Presence } = await import('@/shared/ui/presence/presence');
+const { PresenceCanvas: WebPresenceCanvas } =
+  await import('@/shared/ui/presence/presence-canvas.web');
+const { PresenceCanvas } = await import('@/shared/ui/presence/presence-canvas');
+const { planFor } = await import('@/shared/ui/presence/plan');
+const { draw, prepare, release } = await import('@/shared/ui/presence/skia-runtime');
+const { stepFrame } = await import('@/shared/ui/presence/frame-loop');
 
 const canvasProps = {
   plan: {
@@ -61,18 +62,6 @@ const canvasProps = {
   stillKey: 'idle',
 };
 
-beforeAll(async () => {
-  renderToStaticMarkup = await markupRenderer();
-  modules = {
-    presence: await import('@/shared/ui/presence/presence'),
-    web: await import('@/shared/ui/presence/presence-canvas.web'),
-    canvas: await import('@/shared/ui/presence/presence-canvas'),
-    plan: await import('@/shared/ui/presence/plan'),
-    runtime: await import('@/shared/ui/presence/skia-runtime'),
-    loop: await import('@/shared/ui/presence/frame-loop'),
-  };
-});
-
 const activeInput = {
   get: () => ({
     state: 'listen',
@@ -88,13 +77,11 @@ const activeInput = {
 
 describe('Presence', () => {
   test('it is decorative unless it is given a label', () => {
-    const quiet = renderToStaticMarkup(
-      createElement(modules.presence.Presence, { state: 'idle', size: 66 })
-    );
+    const quiet = renderToStaticMarkup(createElement(Presence, { state: 'idle', size: 66 }));
     expect(quiet).toContain('importantforaccessibility="no-hide-descendants"');
     expect(quiet).toContain('aria-hidden="true"');
     const named = renderToStaticMarkup(
-      createElement(modules.presence.Presence, {
+      createElement(Presence, {
         state: 'look',
         size: 66,
         accessibilityLabel: 'Argus mira',
@@ -107,7 +94,7 @@ describe('Presence', () => {
   test('the native renderer draws every particle of a frame in one atlas call', () => {
     frameCallbacks.length = 0;
     calls.drawAtlas.length = 0;
-    renderToStaticMarkup(createElement(modules.presence.Presence, { state: 'speak', size: 300 }));
+    renderToStaticMarkup(createElement(Presence, { state: 'speak', size: 300 }));
     const frame = frameCallbacks.at(-1);
     expect(frame).toBeDefined();
     for (let i = 1; i <= 4; i++) frame?.({ timestamp: 1000 + i * 17 });
@@ -118,9 +105,9 @@ describe('Presence', () => {
   test('the native renderer draws the low tier with half the particles', () => {
     frameCallbacks.length = 0;
     calls.drawAtlas.length = 0;
-    const plan = modules.plan.planFor({ size: 300, tier: 'low', reduceMotion: false });
+    const plan = planFor({ size: 300, tier: 'low', reduceMotion: false });
     renderToStaticMarkup(
-      createElement(modules.canvas.PresenceCanvas, {
+      createElement(PresenceCanvas, {
         ...canvasProps,
         plan,
         look: { ...canvasProps.look, size: 300 },
@@ -141,7 +128,7 @@ describe('Presence', () => {
       }),
     } as never;
     renderToStaticMarkup(
-      createElement(modules.canvas.PresenceCanvas, {
+      createElement(PresenceCanvas, {
         ...canvasProps,
         live: { ...canvasProps.live, input },
         onEventEnd: (name) => ended.push(name),
@@ -156,16 +143,16 @@ describe('Presence', () => {
     calls.disposed.length = 0;
     const look = { ...canvasProps.look, size: 120 };
     const spec = { count: 320, seed: 9, ratio: 2 };
-    const first = modules.runtime.prepare(null, { look, spec, shown: null });
+    const first = prepare(null, { look, spec, shown: null });
     expect(first).not.toBeNull();
     if (!first) return;
     const frame = { state: 'idle', t: 1, size: 120, palette: look.palette, dark: true } as const;
-    const shown = modules.runtime.draw(first, { ...frame, stepped: true, drawn: 3 }, 0.2);
+    const shown = draw(first, { ...frame, stepped: true, drawn: 3 }, 0.2);
     Object.assign(shown, { dispose: () => calls.disposed.push('shown') });
-    modules.runtime.draw(first, { ...frame, stepped: true, drawn: 3 }, 0.2);
-    expect(modules.runtime.prepare(first, { look, spec, shown })).toBe(first);
+    draw(first, { ...frame, stepped: true, drawn: 3 }, 0.2);
+    expect(prepare(first, { look, spec, shown })).toBe(first);
     expect(calls.disposed).toEqual([]);
-    const second = modules.runtime.prepare(first, {
+    const second = prepare(first, {
       look: { ...look, size: 300 },
       spec: { ...spec, count: 560 },
       shown,
@@ -175,7 +162,7 @@ describe('Presence', () => {
     expect(calls.disposed.filter((name) => name === 'surface').length).toBe(1);
     expect(calls.disposed.filter((name) => name.startsWith('image')).length).toBe(2);
     expect(calls.disposed).not.toContain('shown');
-    modules.runtime.release(second, null);
+    release(second, null);
     expect(calls.disposed.filter((name) => name === 'surface').length).toBe(2);
   });
 
@@ -183,7 +170,7 @@ describe('Presence', () => {
     calls.drawAtlas.length = 0;
     const look = { ...canvasProps.look, size: 300, activeFps: 60, restFps: 30 };
     const live = { ...canvasProps.live, input: activeInput };
-    const runtime = modules.runtime.prepare(null, {
+    const runtime = prepare(null, {
       look,
       spec: { count: 560, seed: 9, ratio: 2 },
       shown: null,
@@ -192,7 +179,7 @@ describe('Presence', () => {
     const drawn: (number | null)[] = [];
     for (let i = 0; i <= 24; i++) {
       const job = { now: 1 + i / 120, since: 1 / 120, live, look, fade: 0.17 };
-      const out = modules.loop.stepFrame(runtime, job);
+      const out = stepFrame(runtime, job);
       drawn.push(out ? i : null);
       if (i > 2 && !out) expect(runtime.ahead).not.toBeNull();
     }
@@ -203,7 +190,7 @@ describe('Presence', () => {
   });
 
   test('the web renderer is a plain canvas sized for the device pixels', () => {
-    const html = renderToStaticMarkup(createElement(modules.web.PresenceCanvas, canvasProps));
+    const html = renderToStaticMarkup(createElement(WebPresenceCanvas, canvasProps));
     expect(html).toMatch(/<canvas width="\d+" height="\d+"/);
     expect(html).toContain('aria-hidden="true"');
   });

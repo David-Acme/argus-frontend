@@ -6,6 +6,8 @@ import { Text } from '@/shared/components/ui/text';
 import { useCallBridge } from '@/features/voice/hooks/use-call-bridge';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
+import { holdTalkLive } from '@/features/voice/model/hold-talk';
+import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
 
 export function CallPill() {
   useCallBridge();
@@ -14,11 +16,12 @@ export function CallPill() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { isActive, phase, callReason, stop } = useVoiceSession();
+  const holding = useHoldTalkStore((state) => holdTalkLive(state.hold));
   const label =
     callReason ??
     t(phase === 'reconnecting' ? 'screens.voice.status-reconnecting' : 'screens.voice.in-call');
 
-  if (!isActive || pathname === '/call' || pathname.startsWith('/welcome')) return null;
+  if (!isActive || holding || pathname === '/call' || pathname.startsWith('/welcome')) return null;
 
   return (
     <View

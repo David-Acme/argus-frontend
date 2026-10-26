@@ -345,6 +345,47 @@ src/core/stores/qr-scan.store.ts
   `nitro.json` (`autolinking.ArgusNet`, `androidCxxLibName`, `iosModuleName`) —
   renaming it breaks codegen.
 
+#### Rule 12 today: one pattern for where code goes and how it is imported
+
+Owner decision (2026-10-26). Every new or touched file follows this. Code written
+before it is normalised in one pass when the redesign closes (the pending
+list in CONTEXT.md › "Pending normalisation").
+
+**Where a constant or a type lives: decided by who uses it (the 2+ rule).**
+
+| Used by | Constants | Types |
+|---|---|---|
+| one feature | `src/features/<feature>/constants/<name>.constant.ts` | that feature's `model/` (next to the logic that needs it) |
+| two or more features, or no domain at all (platform, layout, i18n, cache keys, sheets, sync) | `src/shared/constants/<domain>.constant.ts` | `src/core/types/<domain>.type.ts` |
+| the server's vocabulary (enums, wire values) | its contract-tested module | `z.infer` of its schema, never written twice |
+
+- Everything starts in its feature.
+- It moves to `shared/` (or `core/types`) in the same change that gives it a second consumer feature.
+- It moves back when only one consumer is left.
+- A feature never keeps a loose `constants.ts`, only the `constants/` folder.
+- Shared type files are named `<name>.type.ts`, never `-types.ts`.
+
+**How to import.**
+
+1. Inside your own feature, use the alias `@/features/<feature>/...`, never `./` or `../`. The only exception is the feature's own `index.ts` barrel.
+2. Another feature is reached only through its `index.ts`: `@/features/<other>`.
+3. Type-only imports are `import type { X } from '...'`, never `import { type X }`.
+4. Imports sit at the top of the file (`import/first`, `import/no-duplicates`). They come in this order:
+   1. external packages;
+   2. `@/core/...`;
+   3. `@/shared/...`;
+   4. other features;
+   5. your own feature.
+5. Barrels list named exports; no new `export *`.
+6. In a Bun test that mocks modules, the layout is: static imports, then every `mock.module`, then one `await import` block, then the tests (`argus/test-module-layout`).
+
+**Interior of a feature.**
+- A feature holds `screens/`, `components/`, `hooks/`, `model/`, `services/`, `constants/` and `stores/`, plus `index.ts`.
+- A folder exists only when it holds a file.
+- Pure decisions live in `model/`, with unit tests.
+- A component reads data through its hook.
+- A screen composes sections.
+
 ### C. Data, state and trust
 
 13. **Wire data is validated, never cast.**
@@ -1078,6 +1119,10 @@ Inside every component (mandatory):
     - Dates only through the formatter.
     - Timers are never called as methods.
     - React APIs are imported by name.
+    - Imports sit at the top of the file, one declaration per module
+      (`import/first`, `import/no-duplicates`). A dynamic `import()` in
+      `src/` is only for lazy, platform-only or heavy code (rule 30), through
+      one memoised loader per module and file.
     - Platform flags come from their home, never `Platform.OS` or
       `__TAURI_INTERNALS__`.
     - Official Expo APIs are used directly (for example `SystemBars`).
@@ -1141,6 +1186,11 @@ Inside every component (mandatory):
   them). `tests/setup.ts` stubs what the constants barrel pulls in
   (`react-native`'s `Platform`, the lucide icons read from
   `icon.constant.ts`, `window`). A fix to pure logic lands with its test.
+- A test file is laid out as static imports, the state its mocks read, every
+  `mock.module(...)`, one block of `const { ... } = await import('...')`, then
+  the tests; a dynamic import inside a function is only a `mock.module`
+  factory (`argus/test-module-layout`, CONTEXT.md › "Imports and the test
+  module layout"). `bun run lint` covers `tests/`.
 - A test that asserts a time budget is a bench. It lives under `tests/bench/`, is
   run by `bun run test:bench` in the integration build, and stays out of
   `bun run verify`, which must stay deterministic on a busy machine. `verify` keeps

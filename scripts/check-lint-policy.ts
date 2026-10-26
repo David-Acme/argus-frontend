@@ -11,7 +11,7 @@ import { report } from './lib/ratchet';
 import { ROOT } from './lib/source-files';
 import { execFileSync } from 'node:child_process';
 
-const SCOPE = ['src', 'scripts'];
+const SCOPE = ['src', 'scripts', 'tests'];
 
 function usage(): never {
   console.log(`usage: bun scripts/check-lint-policy.ts

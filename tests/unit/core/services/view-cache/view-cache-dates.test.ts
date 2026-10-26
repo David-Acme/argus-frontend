@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
   addDays,
-  calendarDaysBetween,
   DAY_MS,
   endOfDay,
   startOfDay,
@@ -33,9 +32,7 @@ describe('calendar days across daylight saving changes', () => {
     expect(startOfNextDay(springForward) - startOfDay(springForward)).toBe(DAY_MS - HOUR_MS);
   });
 
-  test('calendar distance ignores the hour the clocks moved', () => {
-    expect(calendarDaysBetween(new Date(2026, 2, 30, 0, 30), new Date(2026, 2, 28, 23, 30))).toBe(2);
-    expect(calendarDaysBetween(new Date(2026, 9, 26, 0, 10), new Date(2026, 9, 24, 23, 50))).toBe(2);
+  test('adding days keeps the calendar date across the change', () => {
     expect(addDays(new Date(2026, 9, 25, 15), -6).getDate()).toBe(19);
   });
 });

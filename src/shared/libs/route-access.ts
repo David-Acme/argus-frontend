@@ -44,6 +44,7 @@ const INACTIVE_ROLE_CAPABILITY_ROUTES: Readonly<Record<string, Capability>> = {
 
 const INACTIVE_ROLE_CAPABILITY_SEGMENTS: Readonly<Record<string, Capability>> = {
   '/conversations': CAPABILITY.messagesRelay,
+  '/notification': CAPABILITY.notificationsRead,
 };
 
 const pathOf = (pathname: string): string => pathname.split(/[?#]/)[0] ?? pathname;

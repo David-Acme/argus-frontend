@@ -4,6 +4,10 @@ import { log } from '@/core/services/log';
 import { IS_ANDROID, IS_IOS } from '@/shared/constants';
 import { livekitOutputKind } from '@/features/voice/model/call-audio';
 
+const importLivekit = () => import('@livekit/react-native');
+let livekitModule: ReturnType<typeof importLivekit> | undefined;
+const livekit = () => (livekitModule ??= importLivekit());
+
 class TelecomCallAudio implements ICallAudio {
   readonly support = { devices: true, routePicker: false };
 
@@ -31,7 +35,7 @@ class SessionCallAudio implements ICallAudio {
 
   async devices(): Promise<CallAudioDevice[]> {
     try {
-      const { AudioSession } = await import('@livekit/react-native');
+      const { AudioSession } = await livekit();
       const outputs = await AudioSession.getAudioOutputs();
       return outputs.map((id, index) => {
         const kind: CallAudioKind = livekitOutputKind(id);
@@ -45,7 +49,7 @@ class SessionCallAudio implements ICallAudio {
 
   async select(device: CallAudioDevice): Promise<void> {
     try {
-      const { AudioSession } = await import('@livekit/react-native');
+      const { AudioSession } = await livekit();
       await AudioSession.selectAudioOutput(device.id);
       this.selected = device.id;
       for (const listener of this.listeners) listener();
@@ -57,7 +61,7 @@ class SessionCallAudio implements ICallAudio {
   async showRoutePicker(): Promise<void> {
     if (!IS_IOS) return;
     try {
-      const { AudioSession } = await import('@livekit/react-native');
+      const { AudioSession } = await livekit();
       await AudioSession.showAudioRoutePicker();
     } catch (error) {
       log.error('voice', 'the audio route picker could not be shown', error);

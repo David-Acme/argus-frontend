@@ -26,6 +26,10 @@ export const routes: string[] = [];
 
 export const reads: string[] = [];
 
+export const removed: string[] = [];
+
+export const removal = { allowed: true };
+
 export const params: { notificationId?: string } = {};
 
 export const news = {
@@ -67,6 +71,8 @@ export function setRows(rows: INotificationPreviewCacheRow[]): void {
 export function reset(): void {
   routes.length = 0;
   reads.length = 0;
+  removed.length = 0;
+  removal.allowed = true;
   delete params.notificationId;
   news.readable = true;
   news.threads = [];
@@ -74,6 +80,14 @@ export function reset(): void {
   Object.assign(capabilities, { manages: true, active: false });
   Object.assign(people, { readable: true, status: 'ready', people: [] });
 }
+
+const dates = createDateFormatter('es', {
+  languageTag: 'es-PE',
+  regionCode: 'PE',
+  uses24hourClock: true,
+  firstWeekday: 2,
+  timeZone: null,
+});
 
 mock.module('expo-router', () => ({
   Redirect: () => null,
@@ -88,14 +102,6 @@ mock.module('expo-router', () => ({
   useIsFocused: () => true,
 }));
 
-const dates = createDateFormatter('es', {
-  languageTag: 'es-PE',
-  regionCode: 'PE',
-  uses24hourClock: true,
-  firstWeekday: 2,
-  timeZone: null,
-});
-
 mock.module('@/shared/hooks/use-date-formatter', () => ({ useDateFormatter: () => dates }));
 
 mock.module('@/features/home/hooks/use-news', () => ({
@@ -105,6 +111,11 @@ mock.module('@/features/home/hooks/use-news', () => ({
     feed: news.feed,
     read: (thread: NotificationThread) => reads.push(thread.key),
   }),
+}));
+
+mock.module('@/features/home/hooks/use-news-remove', () => ({
+  useNewsRemove: () =>
+    removal.allowed ? (thread: NotificationThread) => removed.push(thread.key) : null,
 }));
 
 mock.module('@/shared/hooks/use-capabilities', () => ({

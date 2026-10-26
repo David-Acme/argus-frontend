@@ -1,20 +1,8 @@
 import type { TranslationKey } from '@/core/types';
 
-export const PANEL_PARAM = 'panel';
-export const NOTIFICATIONS_PANEL = 'notifications';
-export const NOTIFICATIONS_PANEL_HREF = `/?${PANEL_PARAM}=${NOTIFICATIONS_PANEL}`;
+export const NOTIFICATIONS_PANEL_HREF = '/notification';
 
 export const NEW_ITEM_PARAM = { event: 'event', project: 'project', task: 'task' } as const;
-
-export const MOSAIC_COLUMNS = 13;
-export const MOSAIC_ROWS = 6;
-
-export const MOSAIC_TINTS = [
-  'bg-border-subtle',
-  'bg-border',
-  'bg-foreground-secondary',
-  'bg-foreground',
-] as const;
 
 export const TIMELINE_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
 

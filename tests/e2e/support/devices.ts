@@ -13,7 +13,7 @@ export type SecondDevice = {
 };
 
 export const test = base.extend<{ second: SecondDevice }>({
-  second: async ({ app }, use) => {
+  second: async ({ app }, provide) => {
     await control(app.baseUrl ?? '', 'reset');
     const connection: Browser = await chromium.connectOverCDP(await cdpEndpoint());
     const context = await connection.newContext({ viewport: { width: 1280, height: 800 } });
@@ -27,7 +27,7 @@ export const test = base.extend<{ second: SecondDevice }>({
     const open = async (path = '/'): Promise<void> => {
       await page.goto(new URL(path, app.baseUrl ?? 'http://127.0.0.1').toString());
     };
-    await use({ page, context, escapes, open });
+    await provide({ page, context, escapes, open });
     await context.close();
     await connection.close();
   },

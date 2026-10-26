@@ -4,7 +4,7 @@ import Svg, { Rect } from 'react-native-svg';
 import { QR_COLORS } from '@/shared/constants';
 import { QR_QUIET_ZONE_MODULES, qrLayout } from '@/shared/components/ui/qr-code-layout';
 
-type QrCodeProps = {
+export type QrCodeProps = {
   value: string;
   size: number;
   color?: string;
@@ -23,7 +23,7 @@ export function QrCode({
 }: QrCodeProps) {
   const qr = useMemo(
     () => QRCode.create(value, { errorCorrectionLevel: errorCorrection }),
-    [value, errorCorrection],
+    [value, errorCorrection]
   );
 
   const n = qr.modules.size;
@@ -43,8 +43,8 @@ export function QrCode({
               height={cell + 0.25}
               fill={color}
             />
-          ) : null,
-        ),
+          ) : null
+        )
       )}
     </Svg>
   );

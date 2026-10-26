@@ -129,6 +129,8 @@ export const chromeSize = {
   presenceThink: 26,
   columnSide: 320,
   columnAside: 300,
+  columnWide: 340,
+  columnFeed: 620,
   previewPhone: 760,
   scrollbar: 10,
   scrollbarInset: 3,
