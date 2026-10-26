@@ -1,6 +1,6 @@
 import type { TranslationKey } from '@/core/types';
 import { layout } from '@/shared/theme/tokens';
-import { tileWhen, type MomentFormat } from './moment';
+import { tileWhen, type MomentFormat } from '@/features/security/model/moment';
 
 export type TileState = 'live' | 'private' | 'off' | 'offline';
 

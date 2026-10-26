@@ -120,6 +120,9 @@ export const CAMERA_ROLE_OUTDOOR: readonly GuardCameraRole[] = ['entrance', 'per
 
 export const WEEK_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
-export const DIGEST_HOUR_OPTIONS: readonly number[] = [-1, ...Array.from({ length: 24 }, (_, hour) => hour)];
+export const DIGEST_HOUR_OPTIONS: readonly number[] = [
+  -1,
+  ...Array.from({ length: 24 }, (_, hour) => hour),
+];
 
 export const EPISODE_MARKED_RETENTION_DAYS = 120;

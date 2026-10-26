@@ -1,6 +1,6 @@
 import { Button } from '@/shared/ui/button';
-import { LabCase } from '../components/lab-case';
-import { copy } from './demo-copy';
+import { LabCase } from '@/features/ui-lab/components/lab-case';
+import { copy } from '@/features/ui-lab/demos/demo-copy';
 
 const noop = () => undefined;
 

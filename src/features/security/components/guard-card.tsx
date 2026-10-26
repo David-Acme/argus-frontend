@@ -2,7 +2,7 @@ import { Platform, Pressable, View } from 'react-native';
 import type { GuardEnvironment } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
-import { GUARD_MODE_ICONS } from '@/features/security/constants';
+import { GUARD_MODE_ICONS } from '@/features/security/constants/security.constant';
 import { headlineMode, sharedMode } from '@/features/security/model/environments';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';

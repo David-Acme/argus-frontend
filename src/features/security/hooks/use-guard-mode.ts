@@ -7,7 +7,7 @@ import { runServiceAction } from '@/shared/libs/service-action';
 import { toast } from '@/shared/libs/toast';
 import { feedback } from '@/shared/theme';
 import { askDisarmPin, safetyService } from '@/features/safety';
-import { MODE_LABEL } from '@/features/security/constants';
+import { MODE_LABEL } from '@/features/security/constants/security.constant';
 import { maskedInScope, withMode } from '@/features/security/model/environments';
 import {
   modeExpectsProtection,

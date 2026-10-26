@@ -6,7 +6,7 @@ import { Empty } from '@/shared/ui/resource-view';
 import { Section } from '@/shared/ui/section';
 import { useCameraFrames, type CameraTiles } from '@/features/security/hooks/use-security-cameras';
 import { onlineCount, PHONE_TILES, sparseGrid } from '@/features/security/model/camera-tiles';
-import { CameraGrid } from './camera-grid';
+import { CameraGrid } from '@/features/security/components/page/camera-grid';
 
 type CamerasSectionProps = {
   cameras: CameraTiles;

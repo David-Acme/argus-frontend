@@ -1,8 +1,8 @@
 import type { GuardEpisode } from '@/core/types';
 import type { AvatarTone } from '@/shared/ui/avatar';
 import type { IconGlyph } from '@/shared/ui/icon';
-import { episodeKey, episodeTitle, needsReview } from './episode';
-import { feedWhen, type MomentFormat } from './moment';
+import { episodeKey, episodeTitle, needsReview } from '@/features/security/model/episode';
+import { feedWhen, type MomentFormat } from '@/features/security/model/moment';
 
 export type HappenedItem = {
   key: string;

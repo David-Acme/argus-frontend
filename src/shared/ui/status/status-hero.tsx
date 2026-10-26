@@ -4,7 +4,12 @@ import { useAnnounce } from '@/shared/hooks/use-announce';
 import { layout, size, useThemeTokens, useWindowLayout, type AuraTone } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Chip } from '@/shared/ui/chip';
-import { Presence, useHeroPresence, type PresenceCue, type PresenceState } from '@/shared/ui/presence';
+import {
+  Presence,
+  useHeroPresence,
+  type PresenceCue,
+  type PresenceState,
+} from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text, type TextVariant } from '@/shared/ui/text';
 import { StatusFade } from './status-fade';

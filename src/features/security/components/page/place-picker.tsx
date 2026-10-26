@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
 import { Row } from '@/shared/ui/row';
 import { Sheet, useOpenedOnce } from '@/shared/ui/sheet';
-import { PLACE_GLYPH } from '@/features/security/constants';
+import { PLACE_GLYPH } from '@/features/security/constants/security.constant';
 import type { PlacePick } from '@/features/security/model/places';
 
 type PlacePickerProps = {

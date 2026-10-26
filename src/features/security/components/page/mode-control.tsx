@@ -1,7 +1,11 @@
 import type { GuardMode } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Choice, type ChoiceOption } from '@/shared/ui/choice';
-import { MODE_GLYPH, MODE_ORDER, MODE_SHORT } from '@/features/security/constants';
+import {
+  MODE_GLYPH,
+  MODE_ORDER,
+  MODE_SHORT,
+} from '@/features/security/constants/security.constant';
 
 type ModeControlProps = {
   value: GuardMode | null;

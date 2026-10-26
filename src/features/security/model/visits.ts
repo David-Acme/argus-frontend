@@ -1,5 +1,5 @@
 import type { GuardExpectedGuest, TranslateFn } from '@/core/types';
-import { calendarDaysBetween } from './moment';
+import { calendarDaysBetween } from '@/features/security/model/moment';
 
 export type VisitFormat = {
   t: TranslateFn;

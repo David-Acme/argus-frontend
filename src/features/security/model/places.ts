@@ -1,6 +1,6 @@
 import type { GuardEnvironment, TranslateFn } from '@/core/types';
-import { MODE_LABEL } from '@/features/security/constants';
-import { defaultEnvironment } from './environments';
+import { MODE_LABEL } from '@/features/security/constants/security.constant';
+import { defaultEnvironment } from '@/features/security/model/environments';
 
 export type PlacePick = number | 'all';
 

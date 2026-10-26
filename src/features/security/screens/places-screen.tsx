@@ -12,7 +12,7 @@ import { Row } from '@/shared/ui/row';
 import { Screen } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
 import { EnvironmentFormDialog } from '@/features/security/components/environment-form-dialog';
-import { PLACE_GLYPH } from '@/features/security/constants';
+import { PLACE_GLYPH } from '@/features/security/constants/security.constant';
 import { useBack } from '@/features/security/hooks/use-back';
 import { useGuard } from '@/features/security/hooks/use-guard';
 import { camerasIn } from '@/features/security/model/environments';

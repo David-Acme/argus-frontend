@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { Button } from '@/shared/ui/button';
 import { Status, type StatusStat } from '@/shared/ui/status';
-import { LabCase } from '../components/lab-case';
-import { copy } from './demo-copy';
+import { LabCase } from '@/features/ui-lab/components/lab-case';
+import { copy } from '@/features/ui-lab/demos/demo-copy';
 
 const noop = () => undefined;
 

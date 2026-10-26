@@ -8,9 +8,9 @@ import type {
 import type { AuraTone } from '@/shared/theme';
 import type { PresenceState } from '@/shared/ui/presence';
 import type { StatusStat, StatusTone } from '@/shared/ui/status';
-import { MODE_LABEL, MODE_META } from '@/features/security/constants';
-import { headlineMode } from './environments';
-import { episodeTitle, needsReview } from './episode';
+import { MODE_LABEL, MODE_META } from '@/features/security/constants/security.constant';
+import { headlineMode } from '@/features/security/model/environments';
+import { episodeTitle, needsReview } from '@/features/security/model/episode';
 
 export type SecurityStatusInput = {
   environments: readonly GuardEnvironment[];

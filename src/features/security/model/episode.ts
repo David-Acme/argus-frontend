@@ -6,7 +6,7 @@ import type {
   TranslateFn,
   TranslationKey,
 } from '@/core/types';
-import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
+import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants/security.constant';
 import { tamperStatusOf } from '@/features/security/model/tamper-notice';
 
 const RAISING: readonly GuardReason[] = [

@@ -1,4 +1,4 @@
-import { SPARSE_CAMERAS } from './camera-tiles';
+import { SPARSE_CAMERAS } from '@/features/security/model/camera-tiles';
 
 export type StarterInput = {
   cameras: number;

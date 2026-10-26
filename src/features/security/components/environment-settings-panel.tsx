@@ -16,7 +16,7 @@ import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { ToggleRow } from '@/shared/components/ui/toggle-row';
 import { HoursEditor } from '@/features/security/components/hours-editor';
-import { DIGEST_HOUR_OPTIONS, QUIET_HOUR_OPTIONS, WEEK_DAY_KEYS } from '@/features/security/constants';
+import { DIGEST_HOUR_OPTIONS, QUIET_HOUR_OPTIONS, WEEK_DAY_KEYS } from '@/features/security/constants/security.constant';
 import { ENVIRONMENT_PRESETS, HOURS_BY_KIND } from '@/features/security/model/environment-presets';
 import { parseHours, summarizeHours } from '@/features/security/model/hours';
 import { useTranslation } from '@/shared/hooks/use-translation';

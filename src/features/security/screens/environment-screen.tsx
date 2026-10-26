@@ -17,6 +17,7 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-notice';
 import { CameraContextPanel } from '@/features/security/components/camera-context-panel';
 import { EmergencyContactDialog } from '@/features/security/components/emergency-contact-dialog';
 import { EmergencyContactsPanel } from '@/features/security/components/emergency-contacts-panel';
@@ -26,8 +27,7 @@ import { EpisodeSheet } from '@/features/security/components/page/episode-sheet'
 import { HappenedSection } from '@/features/security/components/page/happened-section';
 import { GuardModePicker } from '@/features/security/components/guard-mode-picker';
 import { ResponseRecipientsPanel } from '@/features/security/components/response-recipients-panel';
-import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-notice';
-import { ENVIRONMENT_KIND_ICONS } from '@/features/security/constants';
+import { ENVIRONMENT_KIND_ICONS } from '@/features/security/constants/security.constant';
 import { useEnvironmentResponse } from '@/features/security/hooks/use-environment-response';
 import { useGuard, useGuardEnvironments } from '@/features/security/hooks/use-guard';
 import { useEpisodes } from '@/features/security/hooks/use-episodes';

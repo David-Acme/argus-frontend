@@ -1,6 +1,6 @@
 import type { ICameraDetection } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
-import type { SecurityTile } from './camera-tiles';
+import type { SecurityTile } from '@/features/security/model/camera-tiles';
 
 export type ActivityRow = { id: string; name: string; meta: string; count: number };
 

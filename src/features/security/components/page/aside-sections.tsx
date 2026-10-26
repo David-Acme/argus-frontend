@@ -10,7 +10,7 @@ import { Chip } from '@/shared/ui/chip';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { objectLabelKey } from '@/features/cameras';
-import { PLACE_GLYPH } from '@/features/security/constants';
+import { PLACE_GLYPH } from '@/features/security/constants/security.constant';
 import { useMaintenance } from '@/features/security/hooks/use-maintenance';
 import { useMomentFormat } from '@/features/security/hooks/use-moment-format';
 import type { CameraTiles } from '@/features/security/hooks/use-security-cameras';
