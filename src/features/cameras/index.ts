@@ -1,7 +1,19 @@
 import { lazyScreen } from '@/shared/libs/lazy-screen';
-export const CameraDetailScreen = lazyScreen(
+export const CameraLiveScreen = lazyScreen(
   () => import('./screens/camera-screens'),
-  'CameraDetailScreen'
+  'CameraLiveScreen'
+);
+export const CameraRecordingsScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraRecordingsScreen'
+);
+export const CameraSettingsScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraSettingsScreen'
+);
+export const CameraZonesScreen = lazyScreen(
+  () => import('./screens/camera-screens'),
+  'CameraZonesScreen'
 );
 export { CameraLiveView } from './components/camera-live-view';
 export { CameraSnapshotView } from './components/camera-snapshot-view';

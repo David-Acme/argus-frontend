@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/shared/constants';
 import { useEffects } from '@/shared/theme/effects';
+import { heightLayoutOf, sheetDetentsOf } from '@/shared/theme/height-layout';
 import { tokens } from '@/shared/theme/tokens';
 import { PhoneFooter, SheetHeader } from './sheet-parts';
 import type { SheetActions, SheetProps } from './types';
@@ -107,7 +108,7 @@ export function SheetPhone(props: SheetProps) {
   const theme = useSheetTheme();
   const { reduceTransparency } = useEffects();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [footerHeight, setFooterHeight] = useState(0);
   const clearance = actions ? Math.max(0, footerHeight - insets.bottom) : space[4];
   const blurred = IS_IOS && !reduceTransparency;
@@ -122,7 +123,7 @@ export function SheetPhone(props: SheetProps) {
   return (
     <TrueSheet
       ref={sheet}
-      detents={long ? [0.6, 1] : ['auto']}
+      detents={[...sheetDetentsOf(long, heightLayoutOf({ width, height }))]}
       scrollable={long}
       scrollableOptions={{ keyboardScrollOffset: focusScrollOffset(footerHeight) }}
       header={

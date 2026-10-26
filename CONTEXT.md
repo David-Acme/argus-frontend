@@ -7202,3 +7202,62 @@ The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26
   handle is the call's subject, so the system screen reads «Argus · Pagar la luz». Answering opens
   this same stage through `argus://call`.
 
+## The live camera and Ajustes de la cámara (Phase 3, P3b, 2026-10-26)
+
+The 4,566 px camera page (`camera-detail-screen.tsx` and the 21 panels it
+stacked) is four screens under `/cameras/[id]`: the live view (`index`),
+`settings` (Ajustes de la cámara), `recordings` (Grabaciones) and `zones`
+(Zonas). Every old deep link to `/cameras/<id>` (and `?talk=1`, which still
+opens a call once the camera allows talk) lands on the live view.
+
+**Decisions are pure.** `model/camera-stage.ts` turns the camera row and the
+player's reported status into one stage (`off`, `privacy`, `connecting`,
+`live`, `blocked` with its message and whether Reintentar applies) and decides
+which controls exist: talk and the call need the role, the speaker, a
+microphone and no call with Argus; movement needs a live picture on a
+pan-tilt camera and the aim permission; quality and fullscreen need a camera
+that sees; the siren stays in privacy (it is a deterrent, not a view) and goes
+only when the camera is off, unless one is already counting or sounding.
+Controls that cannot apply are hidden, never disabled (W17), and
+`talkNoteOf` says in words why talk is missing. A camera the sync row reports
+offline shows «La cámara no responde» with Reintentar before the stream even
+answers; a painted picture wins over that row. `model/talk-dock.ts` holds the
+hold-to-talk reducer: a press shorter than 300 ms latches talking until the
+next tap, which is the tap alternative of rule 25.
+
+**The stage says its state; no words for connecting.** `CameraLiveView`
+takes `onStatus`, and when it is given the view stops drawing its old status
+pills («Conectando con la cámara», «Reconectando…») and reports state,
+painted, notice and retry upward; the stage (`Media` `stage`) shows the dark
+calm frame while connecting, «En vivo» once painted, the lock and «Privada:
+Argus no mira ni escucha» in privacy, and its centre slot for the refusals.
+Other consumers (the call card, the response card, the list) keep the old
+behaviour because they pass no `onStatus`.
+
+**One decoder.** The inline stage unmounts its player while fullscreen plays
+its own, and the children screens never mount one beside the live view: the
+live view's player follows focus, so pushing Ajustes stops it. The one player
+outside the live view is the «Añadir lugar» sheet, which needs the picture and
+the pad to mark the two edges.
+
+**Shared changes.** `PressableSurface` takes `hold` (press down, press up; a
+started hold always ends, even if the surface turns disabled), used by the
+88 pt talk button and the PTZ pad; `Media` `stage` takes `center`; `Presence`
+takes `dark` and the eye chip always passes it (R-D33); `Icon` gains `large`
+(34, the talk glyph) and three glyphs (`move`, `mute`, `chevu`); tokens gain
+`size.talk` 88, `size.iconLarge` 34, `inset.talk` and the flat 10 px
+`elevation.talk` ring of the prototype. The tab bar now shows on
+`/cameras/<id>` and its children, as the prototype's camera frame draws it;
+only the list at `/cameras` keeps it hidden.
+
+**What moved.** The siren is the dock's danger button: `Confirm` asks
+(destructive, so a native alert on Android phones), then the button counts
+down as «Cancelar · 5» and, once sounding, is «Detener · 18 s» (F5 kept, its
+sheet removed). The written announcement is a `Sheet` from the ⋯ menu, which
+also holds the stream quality and, for the owner, edit, turn off and delete.
+Presets, the lease and the PTZ limit show under the stage while moving; the
+watch position is chosen in Mirada activa from the saved positions (a reversible
+choice, so no confirm). The frame-rate and resolution pills, the volume and
+listen toggles of the old call panel, and the zones overlay on the live picture
+are gone; the zone editor keeps its overlay. Maintenance is still the security
+slice's `MaintenancePanel`, whose restyle belongs to the Seguridad track.

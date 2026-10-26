@@ -21,6 +21,7 @@ export const ICON_SHAPES = {
   chev: [{ d: 'm9 6 6 6-6 6' }],
   chevd: [{ d: 'm6 9 6 6 6-6' }],
   chevl: [{ d: 'm15 6-6 6 6 6' }],
+  chevu: [{ d: 'm6 15 6-6 6 6' }],
   back: [{ d: 'M19 12H5M11 6l-6 6 6 6' }],
   plus: [{ d: 'M12 5v14M5 12h14' }],
   mic: [
@@ -48,6 +49,8 @@ export const ICON_SHAPES = {
   ],
   speaker: [{ d: 'M4 9h4l5-4v14l-5-4H4z' }, { d: 'M17 9a4 4 0 0 1 0 6' }],
   max: [{ d: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5' }],
+  mute: [{ d: 'M4 9h4l5-4v14l-5-4H4z' }, { d: 'm17 10 4 4M21 10l-4 4' }],
+  move: [{ d: 'M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3' }],
   alert: [{ d: 'M12 3 2 20h20z' }, { d: 'M12 10v4M12 17v.5' }],
   wifioff: [
     {

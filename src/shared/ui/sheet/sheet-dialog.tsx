@@ -104,12 +104,12 @@ export function SheetDialog(props: SheetProps) {
   const actions = useFlightActions(props.actions);
   const theme = useSheetTheme();
   const shadow = useSheetElevation();
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const keyboard = useKeyboardInset();
   const discard = useDiscard(dirty, onClose);
   const scrim = { backgroundColor: theme.scrim, paddingBottom: EDGE + keyboard };
   const panel = {
-    width: long ? layout.dialogLong : layout.dialog,
+    width: Math.min(long ? layout.dialogLong : layout.dialog, width - EDGE * 2),
     maxHeight: height - EDGE * 2 - keyboard,
     backgroundColor: theme.surface,
     boxShadow: shadow,

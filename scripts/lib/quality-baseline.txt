@@ -8,7 +8,7 @@ http-unchecked 84
 is-flag-in-features 72
 platform-select 54
 animated-layout-prop 8
-props-over-10 16
+props-over-10 15
 loop-without-reduce-motion 2
 timer-in-component 4
 source-text-test 9

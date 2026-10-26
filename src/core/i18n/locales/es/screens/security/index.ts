@@ -444,9 +444,7 @@ export const security = {
   },
   maintenance: {
     title: 'Mantenimiento',
-    description: 'Avisa a Argus cuando vayas a limpiar, mover o reparar una cámara, para que no lo tome como un ataque.',
     declare: 'Voy a darle mantenimiento',
-    'declare-short': 'Mantenimiento',
     'declare-description': 'Mientras dure, si la cámara se tapa o se mueve, Argus solo lo anota.',
     'declare-hint': 'Termina sola al acabar el tiempo o si Argus ve a un desconocido en el lugar. Si la vista cambia, Argus te preguntará.',
     start: 'Empezar',

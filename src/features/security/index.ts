@@ -29,7 +29,6 @@ export const SecurityScreen = lazyScreen(
   'SecurityScreen'
 );
 export const VisitsScreen = lazyScreen(() => import('./screens/security-screens'), 'VisitsScreen');
-export { MaintenancePanel } from './components/maintenance-panel';
 export { SightNoticeActions } from './components/sight-notice-actions';
 export { useSightNotice } from './hooks/use-sight-notice';
 export { SIGHT_NOTICE_KINDS, evidenceTargetOf, sightNoticeOf } from './model/tamper-notice';

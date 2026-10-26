@@ -765,65 +765,6 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-aim-panel.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-call-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-device-settings.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-form.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 3
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/camera-fullscreen.tsx": {
     "i18next/no-literal-string": {
       "count": 1
@@ -835,37 +776,6 @@
     },
     "i18next/no-literal-string": {
       "count": 12
-    }
-  },
-  "src/features/cameras/components/camera-live-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-live-stage.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 4
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/features/cameras/components/camera-live-status.tsx": {
@@ -901,32 +811,8 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-model-picker.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-patrol-dialog.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/camera-privacy-placeholder.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-probe-panel.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 2
-    },
-    "complexity": {
       "count": 1
     }
   },
@@ -935,32 +821,9 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-talk-sheet.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-watch-panel.tsx": {
-    "i18next/no-literal-string": {
-      "count": 2
-    }
-  },
   "src/features/cameras/components/camera-zones-overlay.tsx": {
     "i18next/no-literal-string": {
       "count": 2
-    }
-  },
-  "src/features/cameras/components/camera-zones-panel.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/clip-list.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/features/cameras/components/clip-player.native.tsx": {
@@ -968,51 +831,11 @@
       "count": 2
     }
   },
-  "src/features/cameras/components/icon-picker-button.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/privacy-toggle.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/ptz-pad.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/tamper-evidence-view.tsx": {
     "argus/ds-owns-primitives": {
       "count": 1
     },
     "complexity": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/zone-form.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/zone-row.tsx": {
-    "argus/ds-owns-primitives": {
       "count": 1
     }
   },
@@ -1042,34 +865,6 @@
     },
     "max-depth": {
       "count": 5
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/model/siren.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/screens/camera-detail-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 3
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 4
-    },
-    "max-lines": {
-      "count": 1
     },
     "max-lines-per-function": {
       "count": 1
@@ -1852,19 +1647,6 @@
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/maintenance-panel.tsx": {
-    "argus/no-visual-timer": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/maintenance-window-row.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
       "count": 1
     }
   },

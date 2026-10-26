@@ -120,6 +120,11 @@
   --spacing-eye-end: 8px;
   --spacing-eye-y: 2px;
   --spacing-eye-gap: 2px;
+  --spacing-talk-top: 24px;
+  --spacing-talk-gap: 12px;
+  --spacing-talk-bottom: 4px;
+  --spacing-talk-pad-edge: 12px;
+  --spacing-talk-pad-gap: 8px;
   --spacing-skeleton-line-gap: 7px;
   --spacing-empty-x: 16px;
   --spacing-empty-y: 28px;
@@ -231,6 +236,10 @@
   --spacing-presence-avatar: 30px;
   --spacing-presence-eye: 56px;
   --spacing-presence-eye-wide: 48px;
+  --spacing-talk: 88px;
+  --spacing-talk-short: 64px;
+  --spacing-dock-side: 200px;
+  --spacing-icon-large: 34px;
   --spacing-presence-think: 26px;
   --spacing-column-side: 320px;
   --spacing-column-aside: 300px;

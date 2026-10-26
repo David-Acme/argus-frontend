@@ -48,6 +48,28 @@ describe('PressableSurface', () => {
     expect(button.getAttribute('aria-disabled')).toBe('true');
   });
 
+  test('a held surface reports the press going down and coming up, and a disabled one does not', () => {
+    const steps: string[] = [];
+    const hold = { onStart: () => steps.push('start'), onEnd: () => steps.push('end') };
+    const { rerender } = render(
+      <PressableSurface a11y={{ label: 'Hablar', role: 'button' }} hold={hold}>
+        <Text>Hablar</Text>
+      </PressableSurface>
+    );
+    const button = screen.getByRole('button', { name: 'Hablar' });
+    fireEvent.keyDown(button, { key: 'Enter' });
+    fireEvent.keyUp(button, { key: 'Enter' });
+    expect(steps).toEqual(['start', 'end']);
+    rerender(
+      <PressableSurface a11y={{ label: 'Hablar', role: 'button' }} hold={hold} disabled>
+        <Text>Hablar</Text>
+      </PressableSurface>
+    );
+    fireEvent.keyDown(button, { key: 'Enter' });
+    fireEvent.keyUp(button, { key: 'Enter' });
+    expect(steps).toEqual(['start', 'end']);
+  });
+
   test('a switch surface exposes its checked state', () => {
     render(
       <PressableSurface a11y={{ label: 'Modo Noche', role: 'switch', checked: true }}>

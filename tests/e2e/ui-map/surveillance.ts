@@ -41,6 +41,41 @@ const openCamera =
     await sleep(2500);
   };
 
+const openRow =
+  (key: TranslationKey) =>
+  async (scene: Scene): Promise<void> => {
+    await scene.page
+      .getByRole('button', { name: new RegExp(`^${say(scene, key)}`) })
+      .first()
+      .click({ timeout: 10000 });
+    await sleep(1500);
+  };
+
+const openMenu = async (scene: Scene): Promise<void> => {
+  await scene.page
+    .getByLabel(say(scene, 'screens.cameras.menu.more'))
+    .first()
+    .click({ timeout: 8000 });
+  await sleep(900);
+};
+
+const menuItem =
+  (key: TranslationKey) =>
+  async (scene: Scene): Promise<void> => {
+    await scene.page.getByText(say(scene, key), { exact: true }).last().click({ timeout: 8000 });
+    await sleep(900);
+  };
+
+const openPatrol = async (scene: Scene): Promise<void> => {
+  await scene.page
+    .getByRole('button', {
+      name: new RegExp(`→|^${say(scene, 'screens.cameras.patrol.create')}`),
+    })
+    .first()
+    .click({ timeout: 10000 });
+  await sleep(900);
+};
+
 const mediaFrame =
   (frame: Record<string, unknown>) =>
   async (_scene: Scene, baseUrl: string): Promise<void> => {
@@ -130,6 +165,10 @@ const CAMERA_DETAIL: RouteSpec[] = [
 ];
 
 const CAMERA_ROWS: Row[] = [...HOUSEHOLD, ...CAMERAS];
+
+const NO_CLIPS: RouteSpec[] = [
+  { method: 'GET', path: '/camera/4/clips', info: { cameraId: 4, clips: [] } },
+];
 
 const manyCameras: Row[] = Array.from({ length: 14 }, (_, index) =>
   camera(
@@ -365,42 +404,79 @@ export const SURVEILLANCE_SCREENS: ScreenSpec[] = [
       { state: 'resident', role: 'resident', act: openCamera('Patio trasero') },
       { state: 'guard', role: 'guard', act: openCamera('Patio trasero') },
       { state: 'guest', role: 'guest', act: openCamera('Patio trasero') },
-      {
-        state: 'header-menu',
-        act: steps(openCamera('Patio trasero'), click('screens.cameras.edit')),
-      },
+      { state: 'header-menu', act: steps(openCamera('Patio trasero'), openMenu) },
       {
         state: 'edit-form',
-        act: async (scene) => {
-          await openCamera('Patio trasero')(scene);
-          await click('screens.cameras.edit')(scene);
-          await scene.page
-            .getByText(say(scene, 'screens.cameras.edit'), { exact: true })
-            .last()
-            .click();
-          await sleep(900);
-        },
+        act: steps(openCamera('Patio trasero'), openMenu, menuItem('screens.cameras.edit')),
+      },
+      {
+        state: 'recordings',
+        act: steps(openCamera('Patio trasero'), openRow('screens.cameras.rows.recordings')),
+      },
+      {
+        state: 'empty',
+        routes: [...SURVEILLANCE_BASE, ...NO_CLIPS],
+        act: openCamera('Puerta principal'),
+        notes:
+          'Puerta principal has no zones and, here, no clips: the rows say so and still lead to their screens',
+      },
+      {
+        state: 'recordings-empty',
+        routes: [...SURVEILLANCE_BASE, ...NO_CLIPS],
+        act: steps(openCamera('Puerta principal'), openRow('screens.cameras.rows.recordings')),
+      },
+      {
+        state: 'zones-empty',
+        routes: [...SURVEILLANCE_BASE, ...NO_CLIPS],
+        act: steps(openCamera('Puerta principal'), openRow('screens.cameras.zones')),
+      },
+      {
+        state: 'zones',
+        act: steps(openCamera('Patio trasero'), openRow('screens.cameras.zones')),
       },
       {
         state: 'add-zone-form',
-        act: steps(openCamera('Patio trasero'), click('screens.cameras.add-zone', 'last')),
+        act: steps(
+          openCamera('Patio trasero'),
+          openRow('screens.cameras.zones'),
+          openRow('screens.cameras.add-zone')
+        ),
+      },
+      {
+        state: 'settings',
+        act: steps(openCamera('Patio trasero'), openRow('screens.cameras.settings')),
+      },
+      {
+        state: 'settings-guard',
+        role: 'guard',
+        act: steps(openCamera('Patio trasero'), openRow('screens.cameras.settings')),
       },
       {
         state: 'siren-confirm',
-        act: steps(openCamera('Patio trasero'), click('screens.cameras.siren-activate')),
+        role: 'resident',
+        act: steps(openCamera('Patio trasero'), click('screens.cameras.siren-title')),
+        notes:
+          'the siren is the resident and guard camera action, behind the camera alarm and the owner switch',
       },
       {
         state: 'typed-announcement',
-        act: steps(openCamera('Patio trasero'), click('screens.cameras.call.announce')),
+        act: steps(
+          openCamera('Patio trasero'),
+          openMenu,
+          menuItem('screens.cameras.menu.announce')
+        ),
       },
       {
         state: 'patrol-dialog',
-        act: steps(openCamera('Patio trasero'), click('common.edit', 'last')),
-        notes: 'the last Edit on the page belongs to the patrol panel',
+        act: steps(openCamera('Patio trasero'), openRow('screens.cameras.settings'), openPatrol),
       },
       {
         state: 'add-place-draft',
-        act: steps(openCamera('Patio trasero'), click('screens.cameras.sight.sector-add')),
+        act: steps(
+          openCamera('Patio trasero'),
+          openRow('screens.cameras.settings'),
+          openRow('screens.cameras.sight.sector-add')
+        ),
       },
       {
         state: 'fullscreen',
