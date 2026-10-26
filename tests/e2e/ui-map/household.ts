@@ -251,6 +251,27 @@ const HOUSEHOLD_ROUTES: RouteSpec[] = [
 
 const ROWS: Row[] = [...PEOPLE, ...CAMERAS];
 
+const activity = (id: number, table: string, action: string, title: string, ago: number) => ({
+  id,
+  userId: 1,
+  recordId: id,
+  table,
+  module: table === 'camera' ? 'surveillance' : 'productivity',
+  action,
+  oldData: null,
+  newData: { title },
+  ipAddress: '',
+  createdAt: NOW - ago,
+});
+
+const MY_ACTIVITY = [
+  activity(901, 'project_task', 'update', 'Sacar la basura', HOUR),
+  activity(902, 'reminder', 'create', 'Pagar el agua', HOUR * 2),
+  activity(903, 'calendar_event', 'create', 'Cena con Luis', DAY),
+  activity(904, 'user_invitation', 'create', '', DAY + HOUR),
+  activity(905, 'camera', 'read', 'Patio trasero', DAY * 2),
+];
+
 const WEEK: Row[] = [
   reminder(201, 'Sacar la basura', NOW - HOUR * 5, {
     isCompleted: true,
@@ -665,7 +686,14 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
     routes: HOUSEHOLD_ROUTES,
     rows: [],
     states: [
-      { state: 'owner', main: true, rows: [...ROWS, ...WEEK] },
+      {
+        state: 'owner',
+        main: true,
+        rows: [...ROWS, ...WEEK],
+        routes: [
+          { method: 'GET', path: '/sync/activity', info: { items: MY_ACTIVITY, nextCursor: null } },
+        ],
+      },
       {
         state: 'empty',
         routes: [
