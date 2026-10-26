@@ -8,7 +8,7 @@ import { useOfflineNotice } from '@/shared/components/layout/use-offline-notice'
 import { useWatchdogNotice } from '@/shared/components/layout/use-watchdog-notice';
 import { offlineTransition, type OfflineView } from '@/shared/components/layout/offline-transition';
 import { NET_ROUTE_STATUS_VIEWS } from '@/shared/constants';
-import { useRelayRefusalAlert, useRouteStatus } from '@/shared/hooks/use-route-status';
+import { useRelayRefusalAlert, useRouteStatus } from '@/shared/components/layout/use-route-status';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toast } from '@/shared/libs/toast';
 

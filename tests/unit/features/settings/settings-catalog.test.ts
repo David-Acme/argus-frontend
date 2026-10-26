@@ -2,19 +2,37 @@ import { describe, expect, test } from 'bun:test';
 import { settingsOverviewSchema, settingsProfilesSchema } from '@/core/contracts/http.contract';
 import type { Setting, SettingsOverview, SettingsOwner } from '@/core/types';
 import {
-  disconnectedOwners,
   exportOwner,
   exportText,
   isChanged,
-  overviewCounts,
   ownerStatus,
+  pendingRestartKeys,
   planImport,
   SETTINGS_EXPORT_FORMAT,
-  technicalGroups,
-  type TechnicalRow,
 } from '@/features/settings/model/settings-catalog';
+import {
+  advancedOf,
+  basicOf,
+  changedOf,
+  matchingOwners,
+  reachableCount,
+  searchSettings,
+  serviceOwners,
+  summaryOf,
+} from '@/features/settings/model/services';
+import {
+  currentProfileId,
+  isProfileLevel,
+  levelFraction,
+  profileLineOf,
+} from '@/features/settings/model/profile-meters';
 
-function numeric(key: string, value: string, fallback: string, extra: Partial<Setting> = {}): Setting {
+function numeric(
+  key: string,
+  value: string,
+  fallback: string,
+  extra: Partial<Setting> = {}
+): Setting {
   return {
     key,
     group: 'engine',
@@ -40,7 +58,12 @@ const tts: SettingsOwner = {
   profile: null,
   settings: [
     numeric('tts.speed', '1.250', '1.25', { level: 'basic', unit: 'x' }),
-    numeric('tts.threads', '4', '0', { type: 'integer', apply: 'restart', pendingRestart: true, unit: 'threads' }),
+    numeric('tts.threads', '4', '0', {
+      type: 'integer',
+      apply: 'restart',
+      pendingRestart: true,
+      unit: 'threads',
+    }),
     {
       key: 'tts.engine_es',
       group: 'engine',
@@ -60,7 +83,9 @@ const tts: SettingsOwner = {
 const vlm: SettingsOwner = {
   service: 'vlm',
   reachable: true,
-  settings: [numeric('vision.gpu_layers', '-1', '-1', { type: 'integer', apply: 'restart', unit: 'layers' })],
+  settings: [
+    numeric('vision.gpu_layers', '-1', '-1', { type: 'integer', apply: 'restart', unit: 'layers' }),
+  ],
 };
 
 const overview: SettingsOverview = {
@@ -72,8 +97,13 @@ const overview: SettingsOverview = {
   ],
 };
 
-const describeRow = (row: TechnicalRow) => ({ label: row.setting.key === 'tts.speed' ? 'Velocidad al hablar' : '', hint: '' });
-const nameOf = (owner: SettingsOwner) => (owner.service === 'tts' ? 'Voz de Argus' : owner.service);
+const SEARCH = {
+  describe: (key: string) => ({
+    label: key === 'tts.speed' ? 'Velocidad al hablar' : '',
+    hint: '',
+  }),
+  ownerName: (owner: SettingsOwner) => (owner.service === 'tts' ? 'Voz de Argus' : owner.service),
+};
 
 describe('settings catalog model', () => {
   test('a value differs from its default by its type, not its spelling', () => {
@@ -84,31 +114,13 @@ describe('settings catalog model', () => {
   });
 
   test('owners are connected, not answering or not connected at all', () => {
-    expect(overview.owners.map(ownerStatus)).toEqual(['connected', 'connected', 'unreachable', 'unconfigured']);
-    expect(disconnectedOwners(overview).map((owner) => owner.service)).toEqual(['stt', 'guard']);
-    expect(overviewCounts(overview)).toEqual({ total: 4, changed: 1, pending: 1 });
-  });
-
-  test('search reads the key, the label, the hint and the service name, without accents', () => {
-    const search = (query: string) =>
-      technicalGroups(overview, { query, service: 'all', changed: false, restart: false }, describeRow, nameOf)
-        .flatMap((group) => group.rows.map((row) => row.setting.key));
-    expect(search('velocidad')).toEqual(['tts.speed']);
-    expect(search('VOZ argus speed')).toEqual(['tts.speed']);
-    expect(search('gpu_layers')).toEqual(['vision.gpu_layers']);
-    expect(search('nothing-like-this')).toEqual([]);
-  });
-
-  test('filters keep the changed keys, the restart keys or one service, and empty owners stay only unfiltered', () => {
-    const groups = (changed: boolean, restart: boolean, service: 'all' | 'vlm' = 'all') =>
-      technicalGroups(overview, { query: '', service, changed, restart }, describeRow, nameOf);
-    expect(groups(false, false).map((group) => group.owner.service)).toEqual(['tts', 'vlm', 'stt', 'guard']);
-    expect(groups(true, false).flatMap((group) => group.rows.map((row) => row.setting.key))).toEqual(['tts.threads']);
-    expect(groups(false, true).flatMap((group) => group.rows.map((row) => row.setting.key))).toEqual([
-      'tts.threads',
-      'vision.gpu_layers',
+    expect(overview.owners.map(ownerStatus)).toEqual([
+      'connected',
+      'connected',
+      'unreachable',
+      'unconfigured',
     ]);
-    expect(groups(false, false, 'vlm').map((group) => group.owner.service)).toEqual(['vlm']);
+    expect(pendingRestartKeys(tts)).toEqual(['tts.threads']);
   });
 
   test('an export carries every value of one service and nothing else', () => {
@@ -125,7 +137,13 @@ describe('settings catalog model', () => {
     const text = JSON.stringify({
       format: SETTINGS_EXPORT_FORMAT,
       service: 'tts',
-      settings: { 'tts.speed': '1.25', 'tts.threads': '8', 'tts.engine_es': 'supertonic', 'tts.gone': '1', 'tts.bad': 3 },
+      settings: {
+        'tts.speed': '1.25',
+        'tts.threads': '8',
+        'tts.engine_es': 'supertonic',
+        'tts.gone': '1',
+        'tts.bad': 3,
+      },
     });
     expect(planImport(text, tts)).toEqual({
       ok: true,
@@ -138,14 +156,28 @@ describe('settings catalog model', () => {
     });
     expect(planImport('{', tts)).toEqual({ ok: false, reason: 'notJson' });
     expect(planImport('{"service":"tts"}', tts)).toEqual({ ok: false, reason: 'wrongFormat' });
-    expect(planImport(exportText(vlm, new Date()), tts)).toEqual({ ok: false, reason: 'wrongService', service: 'vlm' });
-    expect(planImport(exportText(tts, new Date()), tts)).toEqual({ ok: false, reason: 'nothingToChange' });
-    const many = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [`tts.k${index}`, '1']));
+    expect(planImport(exportText(vlm, new Date()), tts)).toEqual({
+      ok: false,
+      reason: 'wrongService',
+      service: 'vlm',
+    });
+    expect(planImport(exportText(tts, new Date()), tts)).toEqual({
+      ok: false,
+      reason: 'nothingToChange',
+    });
+    const many = Object.fromEntries(
+      Array.from({ length: 70 }, (_, index) => [`tts.k${index}`, '1'])
+    );
     const wide: SettingsOwner = {
       ...tts,
       settings: Object.keys(many).map((key) => numeric(key, '0', '0')),
     };
-    expect(planImport(JSON.stringify({ format: SETTINGS_EXPORT_FORMAT, service: 'tts', settings: many }), wide)).toEqual({
+    expect(
+      planImport(
+        JSON.stringify({ format: SETTINGS_EXPORT_FORMAT, service: 'tts', settings: many }),
+        wide
+      )
+    ).toEqual({
       ok: false,
       reason: 'tooMany',
     });
@@ -155,12 +187,23 @@ describe('settings catalog model', () => {
     expect(settingsOverviewSchema.safeParse(overview).success).toBe(true);
     expect(
       settingsOverviewSchema.safeParse({
-        owners: [{ ...tts, profile: { id: 'quality', origin: 'recommended', appliedAt: 1759500000, keys: ['tts.speed'] } }],
+        owners: [
+          {
+            ...tts,
+            profile: {
+              id: 'quality',
+              origin: 'recommended',
+              appliedAt: 1759500000,
+              keys: ['tts.speed'],
+            },
+          },
+        ],
       }).success
     ).toBe(true);
     expect(
-      settingsOverviewSchema.safeParse({ owners: [{ ...tts, profile: { id: 'x', origin: 'auto', appliedAt: 1, keys: [] } }] })
-        .success
+      settingsOverviewSchema.safeParse({
+        owners: [{ ...tts, profile: { id: 'x', origin: 'auto', appliedAt: 1, keys: [] } }],
+      }).success
     ).toBe(false);
     const profiles = {
       profiles: [],
@@ -178,8 +221,79 @@ describe('settings catalog model', () => {
     expect(
       settingsProfilesSchema.safeParse({
         ...profiles,
-        firstRun: { profile: 'quality', state: 'applied', appliedAt: 1, owners: [{ service: 'vlm', keys: ['vision.gpu_layers'] }] },
+        firstRun: {
+          profile: 'quality',
+          state: 'applied',
+          appliedAt: 1,
+          owners: [{ service: 'vlm', keys: ['vision.gpu_layers'] }],
+        },
       }).success
     ).toBe(true);
+  });
+});
+
+describe('the services of Ajustes', () => {
+  test('services follow the human order, and one that is not connected at all is hidden', () => {
+    expect(serviceOwners(overview).map((owner) => owner.service)).toEqual(['tts', 'stt', 'vlm']);
+    expect(reachableCount(serviceOwners(overview))).toBe(2);
+  });
+
+  test('main and advanced options split by level, and the changed ones are known', () => {
+    expect(basicOf(tts).map((setting) => setting.key)).toEqual(['tts.speed', 'tts.engine_es']);
+    expect(advancedOf(tts).map((setting) => setting.key)).toEqual(['tts.threads']);
+    expect(changedOf(tts).map((setting) => setting.key)).toEqual(['tts.threads']);
+  });
+
+  test('a summary reads the voice first, else the main choices, never a bare number', () => {
+    expect(summaryOf(tts).map((setting) => setting.key)).toEqual(['tts.engine_es']);
+    expect(summaryOf({ ...tts, service: 'llm' }).map((setting) => setting.key)).toEqual([
+      'tts.engine_es',
+    ]);
+    expect(summaryOf(vlm)).toEqual([]);
+  });
+
+  test('search reads the key, the label and the service name, without accents', () => {
+    const keys = (query: string) =>
+      searchSettings(overview.owners, query, SEARCH).map((match) => match.setting.key);
+    expect(keys('velocidad')).toEqual(['tts.speed']);
+    expect(keys('VOZ argus speed')).toEqual(['tts.speed']);
+    expect(keys('gpu_layers')).toEqual(['vision.gpu_layers']);
+    expect(keys('nothing-like-this')).toEqual([]);
+    expect(keys('  ')).toEqual([]);
+  });
+
+  test('a service stays in the list when its name or one of its options matches', () => {
+    const services = (query: string) =>
+      matchingOwners([tts, vlm], query, SEARCH).map((owner) => owner.service);
+    expect(services('')).toEqual(['tts', 'vlm']);
+    expect(services('voz')).toEqual(['tts']);
+    expect(services('gpu')).toEqual(['vlm']);
+  });
+});
+
+describe('how Argus works', () => {
+  const profiles = (current: string | null, recommended = 'balanced') =>
+    ({
+      profiles: ['performance', 'balanced', 'quality'].map((id) => ({
+        id,
+        labelKey: id,
+        current: id === current,
+        owners: [],
+      })),
+      recommendation: { profile: recommended },
+    }) as never;
+
+  test('the line says whether the chosen profile is the recommended one', () => {
+    expect(profileLineOf(profiles('balanced'))).toBe('recommended');
+    expect(profileLineOf(profiles('quality'))).toBe('other');
+    expect(profileLineOf(profiles(null))).toBe('custom');
+    expect(currentProfileId(profiles('quality'))).toBe('quality');
+  });
+
+  test('the meters rank the three known profiles and nothing else', () => {
+    expect(isProfileLevel('balanced')).toBe(true);
+    expect(isProfileLevel('custom')).toBe(false);
+    expect(levelFraction('performance')).toBeCloseTo(1 / 3);
+    expect(levelFraction('quality')).toBe(1);
   });
 });

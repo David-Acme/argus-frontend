@@ -23,16 +23,6 @@ export type ProfileChangeItem = ProfileChange & { owner: SettingsOwnerName };
 
 export type ProfileRefusedItem = ProfileKeyResult & { owner: SettingsOwnerName };
 
-export type ProfileCost = {
-  changes: number;
-  unchanged: number;
-  downloadMb: number;
-  hostOnly: readonly ProfileChangeItem[];
-  restart: boolean;
-  nextSession: boolean;
-  unreachable: readonly SettingsOwnerName[];
-};
-
 type SettingIntentValues = { value: string };
 
 export function settingRecordId(owner: SettingsOwnerName, key: string): string {
@@ -97,27 +87,6 @@ export function changedItems(profile: SettingsProfile): ProfileChangeItem[] {
   );
 }
 
-function isPaidDownload(change: ProfileChange): boolean {
-  const availability = change.install?.availability;
-  return availability === 'installable' || availability === 'failed';
-}
-
-export function profileCost(profile: SettingsProfile): ProfileCost {
-  const changed = changedItems(profile);
-  const total = profile.owners.reduce((sum, owner) => sum + owner.changes.length, 0);
-  return {
-    changes: changed.length,
-    unchanged: total - changed.length,
-    downloadMb: changed
-      .filter(isPaidDownload)
-      .reduce((sum, change) => sum + (change.install?.sizeMb ?? 0), 0),
-    hostOnly: changed.filter((change) => change.install?.availability === 'hostOnly'),
-    restart: changed.some((change) => change.apply === 'restart'),
-    nextSession: changed.some((change) => change.apply === 'nextSession'),
-    unreachable: profile.owners.filter((owner) => !owner.reachable).map((owner) => owner.service),
-  };
-}
-
 export function canApply(profile: SettingsProfile): boolean {
   return changedItems(profile).some((change) => change.install?.availability !== 'hostOnly');
 }
@@ -153,10 +122,4 @@ export function refusedRecordIds(result: ProfileApplyResult): string[] {
 
 export function returnedCatalogs(result: ProfileApplyResult): SettingsOwner[] {
   return result.owners.flatMap((owner) => (owner.catalog ? [owner.catalog] : []));
-}
-
-export function profileTargets(profile: SettingsProfile): ProfileChangeItem[] {
-  return profile.owners.flatMap((owner) =>
-    owner.changes.map((change) => ({ ...change, owner: owner.service }))
-  );
 }

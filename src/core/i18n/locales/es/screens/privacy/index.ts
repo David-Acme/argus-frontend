@@ -1,5 +1,4 @@
 export const privacy = {
-  title: 'Privacidad',
   subtitle: 'Tú decides qué hace Argus con tus datos. Puedes cambiarlo cuando quieras.',
   step: 'Privacidad',
   modules: {
@@ -16,7 +15,8 @@ export const privacy = {
   gate: {
     checking: 'Comprobando tu privacidad…',
     failed: 'No pude comprobar tu privacidad',
-    'failed-hint': 'Argus no deja entrar hasta saber qué permitiste. Vuelve a intentarlo cuando haya conexión.',
+    'failed-hint':
+      'Argus no deja entrar hasta saber qué permitiste. Vuelve a intentarlo cuando haya conexión.',
   },
   consent: {
     eyebrow: 'Antes de empezar',
@@ -35,12 +35,12 @@ export const privacy = {
       'Para entrar usas tu rostro: Argus guarda un patrón numérico de tu cara y la foto del registro en almacenamiento privado.',
     'essential-retention':
       'Lo que Argus aprende se borra solo con el tiempo, y al instante si retiras tu permiso.',
-    'essential-beta':
-      'Argus está en desarrollo y no es un sistema de alarma certificado.',
+    'essential-beta': 'Argus está en desarrollo y no es un sistema de alarma certificado.',
     'choices-title': 'Qué permites',
     'choices-hint': 'Todo empieza apagado. Actívalo solo si quieres.',
     accept: 'Aceptar y continuar',
-    'accept-hint': 'Al continuar aceptas el aviso de privacidad y los términos (versión {version}).',
+    'accept-hint':
+      'Al continuar aceptas el aviso de privacidad y los términos (versión {version}).',
     decline: 'No acepto',
     'decline-onboarding-title': 'No se creó ninguna cuenta',
     'decline-onboarding-description':
@@ -127,15 +127,20 @@ export const privacy = {
       cameraAudio: 'Audio de las cámaras',
     },
     'signal-hint': {
-      presence: 'Usa “en casa” o “fuera” de quienes lo permiten para decidir a quién avisar primero.',
-      faceCameras: 'Las cámaras nombran a quienes lo permiten; al resto lo ven como alguien de casa, sin nombre.',
-      voiceLearning: 'Argus aprende la voz de quienes lo permiten en sus llamadas. Al apagarlo se borran todas.',
-      cameraAudio: 'Los micrófonos de las cámaras se encienden solo si todas las personas lo permiten.',
+      presence:
+        'Usa “en casa” o “fuera” de quienes lo permiten para decidir a quién avisar primero.',
+      faceCameras:
+        'Las cámaras nombran a quienes lo permiten; al resto lo ven como alguien de casa, sin nombre.',
+      voiceLearning:
+        'Argus aprende la voz de quienes lo permiten en sus llamadas. Al apagarlo se borran todas.',
+      cameraAudio:
+        'Los micrófonos de las cámaras se encienden solo si todas las personas lo permiten.',
     },
     hint: 'Apaga una función para todos. No puedes encenderla por otra persona: cada quien decide la suya.',
     pending: '{count} sin decidir',
     'all-decided': 'Todos decidieron',
-    'audio-held': 'El audio de las cámaras está apagado: {count} persona(s) no lo permiten o aún no deciden.',
+    'audio-held':
+      'El audio de las cámaras está apagado: {count} persona(s) no lo permiten o aún no deciden.',
     'audio-on': 'El audio de las cámaras está encendido: todos lo permiten.',
     'off-voice-title': '¿Apagar el aprendizaje de voz para todos?',
     'off-voice-description':
@@ -174,8 +179,10 @@ export const privacy = {
     watchman: 'Argus escucha por las cámaras',
     'watchman-hint':
       'Cuando alguien dice “Argus” cerca de una cámara elegida, suena un tono y Argus contesta por su parlante. Eliges en cada cámara si escucha.',
-    'watchman-ready': 'Escucha en las cámaras que lo tienen activado. Eliges en cada cámara si escucha.',
-    'watchman-audio-off': 'Está encendido, pero el audio de las cámaras está apagado para la casa: no escucha.',
+    'watchman-ready':
+      'Escucha en las cámaras que lo tienen activado. Eliges en cada cámara si escucha.',
+    'watchman-audio-off':
+      'Está encendido, pero el audio de las cámaras está apagado para la casa: no escucha.',
     'watchman-audio-held':
       'Está encendido, pero no escucha: {count} persona(s) no permiten el audio de las cámaras o aún no deciden.',
     'watchman-acknowledged': 'Aceptado el {date}.',
@@ -183,7 +190,8 @@ export const privacy = {
     'watchman-ack-intro': 'Antes de encenderlo, confirma que entiendes y aceptas que:',
     'watchman-ack-installer':
       'Tú, quien instala y opera Argus, eres responsable de usarlo conforme a la ley. El audio de las cámaras cuenta como dato de videovigilancia.',
-    'watchman-ack-sign': 'Debes poner un aviso visible en cada acceso a una zona con cámaras que escuchan.',
+    'watchman-ack-sign':
+      'Debes poner un aviso visible en cada acceso a una zona con cámaras que escuchan.',
     'watchman-ack-rest':
       'No debes activar el audio en zonas de descanso de trabajadores del hogar: marca esas cámaras como “sin audio”.',
     'watchman-ack-consent':
@@ -192,11 +200,13 @@ export const privacy = {
       'Argus no guarda audio antes de oír su nombre. Cada conversación empieza con un tono y se conserva como las llamadas de voz.',
     'watchman-ack-confirm': 'Entiendo y acepto',
     'watchman-off-title': '¿Dejar de escuchar por las cámaras?',
-    'watchman-off-description': 'Ninguna cámara escuchará ni contestará, y las conversaciones abiertas terminan.',
+    'watchman-off-description':
+      'Ninguna cámara escuchará ni contestará, y las conversaciones abiertas terminan.',
     signage: 'Aviso para las entradas',
     'signage-hint': 'Un cartel de zona videovigilada listo para imprimir o compartir.',
     proximity: 'Receptores y sensores',
-    'proximity-hint': 'Placas Bluetooth y radares por habitación, para saber dónde está cada persona.',
+    'proximity-hint':
+      'Placas Bluetooth y radares por habitación, para saber dónde está cada persona.',
   },
   location: {
     title: 'Ubicarme en casa',
@@ -238,12 +248,14 @@ export const privacy = {
   minor: {
     title: 'Menor de edad',
     switch: 'Es menor de edad',
-    'switch-hint': 'Argus no reconoce su rostro en las cámaras ni aprende su voz, aunque lo haya permitido.',
+    'switch-hint':
+      'Argus no reconoce su rostro en las cámaras ni aprende su voz, aunque lo haya permitido.',
     consent: 'Doy mi permiso como tutor',
     'consent-hint': 'Con tu permiso valen sus propias elecciones de rostro y voz.',
     protected:
       'Sin tu permiso: las cámaras no reconocen su rostro y Argus no aprende su voz ni guarda recuerdos suyos.',
-    consented: 'Con tu permiso como tutor: valen sus propias elecciones de rostro y voz, y Argus puede recordar lo que te pida.',
+    consented:
+      'Con tu permiso como tutor: valen sus propias elecciones de rostro y voz, y Argus puede recordar lo que te pida.',
     camera:
       'En una cámara Argus siempre le habla como a menor: no le muestra cámaras, no responde alarmas en su nombre ni cambia la agenda o los proyectos.',
     'mark-title': '¿Marcar a {name} como menor de edad?',
@@ -251,7 +263,8 @@ export const privacy = {
       'Las cámaras dejarán de reconocer a {name} por su rostro y Argus dejará de aprender su voz; la voz que ya aprendió se borra. Tampoco guardará recuerdos suyos. Puedes dar tu permiso como tutor después.',
     'mark-confirm': 'Marcar como menor',
     'unmark-title': '¿{name} ya no es menor de edad?',
-    'unmark-description': 'Volverán a valer las elecciones de privacidad de {name}, sin los límites de un menor.',
+    'unmark-description':
+      'Volverán a valer las elecciones de privacidad de {name}, sin los límites de un menor.',
     'unmark-confirm': 'Quitar la marca',
     'consent-title': '¿Das tu permiso como tutor de {name}?',
     'consent-description':

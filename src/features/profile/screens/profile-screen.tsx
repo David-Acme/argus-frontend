@@ -1,187 +1,77 @@
-import { authService } from '@/core/services/auth.service';
-import { pushService } from '@/core/services/push';
-import { netService } from '@/core/services/net';
-import { useAuthStore, useLocaleStore } from '@/core/stores';
-import type { LanguagePreference, NetPairedInstance, ThemePreference } from '@/core/types';
-import { AppScreen } from '@/shared/components/layout';
-import { SettingsGroup } from '@/features/profile/components/settings-group';
-import { profileLinks } from '@/features/profile/model/profile-links';
-import { pairedSinceLabel } from '@/features/profile/services/paired-since';
-import { SessionsSection } from '@/features/sessions';
-import { CallPreferencesSection } from '@/features/voice';
-import { PrivacySection } from '@/features/privacy';
-import { ProximitySection } from '@/features/proximity';
-import { SafetySection } from '@/features/safety';
-import { ModuleRequestsSection } from '@/features/modules';
-import { Icon } from '@/shared/components/ui/icon';
-import { ListRow } from '@/shared/components/ui/list-row';
-import { SegmentedControl } from '@/shared/components/ui/segmented-control';
-import { Text } from '@/shared/components/ui/text';
-import { IS_NATIVE, LANGUAGE_OPTIONS, NET_ROUTE_STATUS_VIEWS, THEME_ICONS, THEME_OPTIONS } from '@/shared/constants';
-import { getThemePreference, setThemePreference } from '@/shared/hooks/use-theme-preference';
-import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { useRouteStatus } from '@/shared/hooks/use-route-status';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { confirm } from '@/shared/libs/confirm';
-import { roleLabelOf } from '@/shared/libs/role-label';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { size, useWindowLayout } from '@/shared/theme';
+import { Button } from '@/shared/ui/button';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
+import { ProfileHero } from '@/features/profile/components/profile-hero';
+import { ProfileTabs } from '@/features/profile/components/profile-tabs';
+import { WeekPane } from '@/features/profile/components/week-pane';
+import { profileLinks } from '@/features/profile/model/profile-links';
+import type { ProfileLinks } from '@/features/profile/model/profile-links';
+
+type TopActionsProps = { links: ProfileLinks };
+
+const NO_GROWTH = -1;
+
+function TopActions({ links }: TopActionsProps) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const activity = links.argus.find((link) => link.key === 'activity');
+  const settings = links.argus.find((link) => link.key === 'settings');
+  if (!activity && !settings) return null;
+  return (
+    <View className="flex-row gap-2">
+      {activity ? (
+        <Button
+          iconOnly
+          glass
+          icon="activity"
+          label={t('screens.profile.activity')}
+          onPress={() => router.push(activity.href)}
+        />
+      ) : null}
+      {settings ? (
+        <Button
+          iconOnly
+          glass
+          icon="gear"
+          label={t('screens.profile.settings')}
+          onPress={() => router.push(settings.href)}
+        />
+      ) : null}
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
-  const router = useRouter();
-  const { t, language } = useTranslation();
-  const user = useAuthStore((state) => state.user);
-  const capabilities = useCapabilities();
-  const { roleActive } = capabilities;
-  const links = profileLinks(capabilities);
-  const languagePreference = useLocaleStore((state) => state.preference);
-  const setLanguage = useLocaleStore((state) => state.setLanguage);
-  const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
-  const [instance, setInstance] = useState<NetPairedInstance | null>(null);
-  const [leaving, setLeaving] = useState(false);
-  const routeStatus = useRouteStatus();
-  const route = routeStatus ? NET_ROUTE_STATUS_VIEWS[routeStatus] : null;
-
-  const themeOptions = useMemo(
-    () =>
-      THEME_OPTIONS.map((value) => ({
-        value,
-        label: t(`screens.profile.theme.${value}`),
-        icon: THEME_ICONS[value],
-      })),
-    [t],
-  );
-  const languageOptions = useMemo(
-    () =>
-      LANGUAGE_OPTIONS.map((value) => ({
-        value,
-        label: t(`common.language-name.${value}`),
-      })),
-    [t],
-  );
-  const pairedSince = pairedSinceLabel(instance?.pairedAt ?? 0, language);
-
-  const changeTheme = useCallback((value: ThemePreference) => {
-    setThemePreference(value);
-    setTheme(value);
-  }, []);
-
-  const changeLanguage = useCallback(
-    (value: LanguagePreference) => setLanguage(value),
-    [setLanguage],
-  );
-
-  const connectDevice = useCallback(() => router.push('/approve'), [router]);
-
-  const unpair = useCallback(async () => {
-    const accepted = await confirm({
-      title: t('screens.profile.unpair-confirm-title'),
-      description: t('screens.profile.unpair-confirm-description'),
-      confirmLabel: t('screens.profile.unpair'),
-      intent: 'danger',
-    });
-    if (!accepted) return;
-    setLeaving(true);
-    await pushService.unpair();
-    await authService.logout();
-    await netService.unpair();
-    router.replace('/');
-  }, [router, t]);
-
-  useEffect(() => {
-    let active = true;
-    void netService.instance().then((current) => {
-      if (active) setInstance(current);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const preferences = (
-    <>
-      <SettingsGroup title={t('screens.profile.appearance')}>
-        <View className="p-1.5">
-          <SegmentedControl
-            options={themeOptions}
-            value={theme}
-            onChange={changeTheme}
-            accessibilityLabel={t('screens.profile.theme-label')}
-          />
-        </View>
-      </SettingsGroup>
-
-      <SettingsGroup title={t('screens.profile.language')}>
-        <View className="p-1.5">
-          <SegmentedControl
-            options={languageOptions}
-            value={languagePreference}
-            onChange={changeLanguage}
-            accessibilityLabel={t('screens.profile.language-label')}
-          />
-        </View>
-      </SettingsGroup>
-
-      <SettingsGroup title={t('screens.profile.server')}>
-        {instance ? (
-          <ListRow
-            icon="shield-check"
-            title={t('screens.profile.server-address', { address: instance.ip })}
-            subtitle={
-              pairedSince ? t('screens.profile.server-paired', { date: pairedSince }) : undefined
-            }
-          />
-        ) : null}
-        {instance && route ? <ListRow icon={route.icon} title={t(route.title)} subtitle={t(route.detail)} /> : null}
-        <ListRow
-          icon="unlink"
-          title={t('screens.profile.unpair')}
-          subtitle={t('screens.profile.unpair-hint')}
-          destructive
-          disabled={leaving}
-          onPress={unpair}
-        />
-      </SettingsGroup>
-    </>
-  );
-
+  const { t } = useTranslation();
+  const { windowClass } = useWindowLayout();
+  const links = profileLinks(useAccessView());
+  const split = windowClass !== 'compact';
+  const actions = <TopActions links={links} />;
   return (
-    <AppScreen aside={preferences}>
-      <View className="flex-row items-center gap-4 pt-1">
-        <View className="bg-surface-secondary size-16 items-center justify-center rounded-full">
-          <Icon name="user" className="text-foreground-secondary size-7" />
-        </View>
-        <View className="min-w-0 flex-1 gap-0.5">
-          <Text variant="title" numberOfLines={1}>
-            {user?.name ?? '—'}
-          </Text>
-          <Text variant="label" className="text-foreground-secondary">
-            {user ? roleLabelOf(user.role, t) : '—'}
-          </Text>
-        </View>
-      </View>
-
-      {links.length > 0 ? (
-        <SettingsGroup title={t('screens.profile.home-group')}>
-          {links.map((link) => (
-            <ListRow
-              key={link.key}
-              icon={link.icon}
-              title={t(link.title)}
-              chevron
-              onPress={() => router.push(link.href)}
-            />
-          ))}
-        </SettingsGroup>
-      ) : null}
-
-      <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
-      <SafetySection />
-      {roleActive ? <CallPreferencesSection /> : null}
-      <PrivacySection />
-      {roleActive ? <ProximitySection /> : null}
-      <ModuleRequestsSection />
-    </AppScreen>
+    <Screen columns="panes" aura="calm" actions={split ? undefined : actions}>
+      <ScreenColumns>
+        <ScreenColumn
+          label={t('screens.profile.title')}
+          width={windowClass === 'medium' ? size.columnWide : size.columnProfile}
+          grows={0}>
+          <View>
+            {split ? (
+              <View className="min-h-top-bar flex-row items-center justify-end">{actions}</View>
+            ) : null}
+            <ProfileHero />
+            <ProfileTabs links={links} />
+          </View>
+        </ScreenColumn>
+        {split ? (
+          <ScreenColumn label={t('screens.profile.week.title')} grows={NO_GROWTH}>
+            <WeekPane />
+          </ScreenColumn>
+        ) : null}
+      </ScreenColumns>
+    </Screen>
   );
 }

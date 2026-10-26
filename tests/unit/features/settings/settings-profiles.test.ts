@@ -10,7 +10,6 @@ import type {
 import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
   canApply,
-  profileCost,
   profileIntents,
   refusedRecordIds,
   returnedCatalogs,
@@ -199,16 +198,6 @@ describe('settings profiles', () => {
     expect(next.owners[0]).toBe(applied.owners[0]?.catalog);
     expect(next.owners[1]).toBe(overview.owners[1]);
     expect(withCatalogs(overview, [])).toBe(overview);
-  });
-
-  test('the cost counts downloads, host installs, unchanged keys and silent owners', () => {
-    const cost = profileCost(quality);
-    expect(cost.changes).toBe(3);
-    expect(cost.unchanged).toBe(1);
-    expect(cost.downloadMb).toBe(672);
-    expect(cost.hostOnly.map((change) => change.key)).toEqual(['tts.pocket_voice_es']);
-    expect(cost.restart).toBe(false);
-    expect(cost.unreachable).toEqual(['vlm']);
   });
 
   test('only what can change becomes an intent, and a profile with nothing to send cannot apply', () => {

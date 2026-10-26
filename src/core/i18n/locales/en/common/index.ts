@@ -1,5 +1,4 @@
 export const common = {
-
   continue: 'Continue',
   step: 'Step {current} of {total}',
   overlay: {
@@ -21,15 +20,18 @@ export const common = {
     'open-settings': 'Open Settings',
     microphone: {
       title: 'Argus needs the microphone',
-      reason: 'So people hear you through the camera and you can talk to Argus. It is used only during the call.',
+      reason:
+        'So people hear you through the camera and you can talk to Argus. It is used only during the call.',
       'blocked-title': 'The microphone is blocked',
-      blocked: 'Argus cannot use the microphone. Turn it on in Settings, under Permissions, and try again.',
+      blocked:
+        'Argus cannot use the microphone. Turn it on in Settings, under Permissions, and try again.',
     },
     notifications: {
       title: 'Turn on notifications',
       reason: 'So alerts, reminders and calls from Argus reach you even when the app is closed.',
       'blocked-title': 'Notifications are blocked',
-      blocked: 'Without them, alerts and calls do not reach you while the app is closed. Turn them on in Settings, under Notifications.',
+      blocked:
+        'Without them, alerts and calls do not reach you while the app is closed. Turn them on in Settings, under Notifications.',
     },
     bluetooth: {
       title: 'Calls in your headphones',
@@ -41,7 +43,8 @@ export const common = {
       title: 'Argus needs the camera',
       reason: 'To read the QR code. The camera is used only while you scan, and nothing is saved.',
       'blocked-title': 'The camera is blocked',
-      blocked: 'Argus cannot use the camera. Turn it on in Settings, under Permissions, or type the code instead.',
+      blocked:
+        'Argus cannot use the camera. Turn it on in Settings, under Permissions, or type the code instead.',
     },
   },
   permissions: {
@@ -99,16 +102,19 @@ export const common = {
     home: 'Connected at home',
     'home-detail': 'Over your home network.',
     cloud: 'Connected through the cloud',
-    'cloud-detail': 'You are away from home. The connection stays encrypted all the way to your home.',
+    'cloud-detail':
+      'You are away from home. The connection stays encrypted all the way to your home.',
     unreachable: 'I can’t reach Argus at home',
-    'unreachable-detail': 'Neither on your network nor through the cloud. Showing what this device saved last.',
+    'unreachable-detail':
+      'Neither on your network nor through the cloud. Showing what this device saved last.',
     'remote-unavailable': 'I can’t find Argus',
     'remote-unavailable-detail':
       'It isn’t answering on this network and remote access isn’t available. Showing what this device saved last.',
   },
   watchdog: {
     'banner-title': 'Argus hasn’t answered since {time}',
-    'banner-description': 'The server may be off or offline. If nobody is home, ask someone to check on it.',
+    'banner-description':
+      'The server may be off or offline. If nobody is home, ask someone to check on it.',
     'alarm-title': 'Argus isn’t answering',
     'alarm-body': 'No word from Argus since {time}. Open the app to check.',
     channel: 'Argus offline alerts',
@@ -149,6 +155,10 @@ export const common = {
   share: 'Share',
   saving: 'Saving…',
   loading: 'Loading',
+  resource: {
+    stale: 'Argus is unreachable. Showing what it had at {age}.',
+    refused: 'Only {owner} can change this.',
+  },
   list: {
     'loading-more': 'Loading more',
     end: 'Nothing more',
@@ -186,8 +196,10 @@ export const common = {
   errors: {
     network: 'Could not connect to Argus',
     timeout: 'Argus took too long to answer. Try again.',
-    'write-not-sent': 'I can’t reach Argus, so the change was not sent. Try again when you have a connection.',
-    'write-unconfirmed': 'The connection to Argus dropped and I don’t know whether the change was sent. Check how it ended up before trying again.',
+    'write-not-sent':
+      'I can’t reach Argus, so the change was not sent. Try again when you have a connection.',
+    'write-unconfirmed':
+      'The connection to Argus dropped and I don’t know whether the change was sent. Check how it ended up before trying again.',
     unauthorized: 'Session expired, sign in again',
     forbidden: 'You do not have permission to do this',
     'not-found': 'Resource not found',
@@ -195,31 +207,37 @@ export const common = {
     validation: 'Check the submitted data',
     'server-error': 'The server failed, try again',
     'too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
-    'unavailable': 'Argus is not available right now. Try again in a moment.',
+    unavailable: 'Argus is not available right now. Try again in a moment.',
     'camera-unreachable': 'The camera is not answering. Check that it is on and on the network.',
-    'app-siren-disabled': 'The siren from the app is off. The owner can enable it in Settings › Surveillance.',
-    'camera-secret': 'The server could not protect the camera password, so nothing was saved. Try again in a moment.',
+    'app-siren-disabled':
+      'The siren from the app is off. The owner can enable it in Settings › Surveillance.',
+    'camera-secret':
+      'The server could not protect the camera password, so nothing was saved. Try again in a moment.',
     'remote-not-allowed': 'This can only be done from your home network.',
     'bad-request': 'Argus could not process that request.',
     'pairing-required': 'Pair your device with the server first',
-    'invalid-response': 'Argus answered in a way the app does not understand. Try again or update the app.',
+    'invalid-response':
+      'Argus answered in a way the app does not understand. Try again or update the app.',
     'unreachable-route': 'The server did not answer as Argus. It may need an update.',
     'cert-not-trusted': 'This server could not be confirmed as your Argus. Pair the device again.',
     'fingerprint-mismatch': 'This is not the server you paired with, so the app did not connect.',
     storage: 'The data saved on this device could not be read. Try again.',
     'account-disabled': 'Your account is turned off. Ask the Argus owner to turn it back on.',
-    'module-disabled': 'That part of Argus is switched off. The owner can turn it on in Settings › Modules.',
+    'module-disabled':
+      'That part of Argus is switched off. The owner can turn it on in Settings › Modules.',
     'module-hardware': 'Your server does not have enough resources for this module.',
     'module-coming-soon': 'This module is not available yet.',
     'module-busy': 'This module is already being installed.',
     'module-required': 'Another active module needs it. Switch that module off first.',
     'module-core': 'The Argus core is always on.',
-    'module-roles-held': 'Someone holds a role of this module. Choose a new role for them and try again.',
+    'module-roles-held':
+      'Someone holds a role of this module. Choose a new role for them and try again.',
     'role-inactive': 'Your role is on hold while that module is off.',
     'desktop-shell': 'The desktop could not change this setting.',
     'guard-off-duty': 'You can move the camera only while you are on duty.',
     'maintenance-off-duty': 'You can declare maintenance only while you are on duty.',
-    'maintenance-out-of-scope': 'You can declare maintenance only for the cameras of your environment.',
+    'maintenance-out-of-scope':
+      'You can declare maintenance only for the cameras of your environment.',
     'presets-not-yours': 'Only the owner or a resident saves, deletes or sets positions.',
     'camera-control-locked': 'Someone else is moving the camera.',
     'not-a-tamper': 'This alert is not about a tampered camera.',

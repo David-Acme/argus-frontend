@@ -2,6 +2,7 @@ import '../global.css';
 import { IS_NATIVE, NAV_FADE_MS } from '@/shared/constants';
 import { NAV_THEME, BG_COLORS } from '@/shared/components/layout/navigation-theme';
 import { getThemePreference } from '@/shared/hooks/use-theme-preference';
+import { applyDevicePreferences } from '@/shared/hooks/use-device-preferences';
 import { AppState, View } from 'react-native';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { ThemeProvider } from 'expo-router/react-navigation';
@@ -18,7 +19,12 @@ import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
 import { useAuthStore } from '@/core/stores';
-import { CallPill, currentCallLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
+import {
+  CallPill,
+  currentCallLockRedirect,
+  IncomingCallSurface,
+  useDesktopBridge,
+} from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
 import { WatchPill } from '@/features/watch';
 import { usePushListeners } from '@/features/notification';
@@ -32,6 +38,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     Uniwind.setTheme(getThemePreference());
+    applyDevicePreferences();
   }, []);
 
   useDesktopBridge(deepLinkPath);

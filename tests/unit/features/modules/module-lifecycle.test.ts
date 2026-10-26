@@ -15,6 +15,7 @@ import {
   uninstallBlock,
   uninstallMode,
 } from '@/features/modules/model/module-lifecycle';
+import { moduleDangerOf, moduleSwitchOf } from '@/features/modules/model/module-switch';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;
@@ -60,14 +61,17 @@ const job = (state: ModuleJob['state']): ModuleJob => ({
 });
 
 const catalog = (modules: ModuleRecord[]): ModuleCatalog => ({ fetchedAt: 0, modules });
-const choices = (record: ModuleRecord) => lifecycleButtons(record).map((button) => `${button.choice}:${button.action}`);
+const choices = (record: ModuleRecord) =>
+  lifecycleButtons(record).map((button) => `${button.choice}:${button.action}`);
 
 describe('lifecycle wording', () => {
   test('each of the four states reads clearly, and kept data is said out loud', () => {
     expect(es(lifecycleCopy('not_installed').label)).toBe('No instalado');
     expect(es(lifecycleCopy('active').label)).toBe('Activo');
     expect(es(lifecycleCopy('disabled').label)).toBe('Desactivado · tus datos se conservan');
-    expect(es(lifecycleCopy('uninstalled_data_kept').label)).toBe('Desinstalado · tus datos se conservan');
+    expect(es(lifecycleCopy('uninstalled_data_kept').label)).toBe(
+      'Desinstalado · tus datos se conservan'
+    );
     expect(en(lifecycleCopy('uninstalled_data_kept').hint ?? 'screens.modules.title')).toBe(
       'Reinstall it and your data comes back.'
     );
@@ -78,7 +82,10 @@ describe('lifecycle wording', () => {
 describe('lifecycle actions', () => {
   test('active offers Desactivar and Desinstalar; disabled offers Activar at once', () => {
     expect(choices(module())).toEqual(['uninstall:uninstall', 'disable:disable']);
-    expect(choices(module({ lifecycle: 'disabled', enabled: false }))).toEqual(['uninstall:uninstall', 'enable:install']);
+    expect(choices(module({ lifecycle: 'disabled', enabled: false }))).toEqual([
+      'uninstall:uninstall',
+      'enable:install',
+    ]);
   });
 
   test('uninstalled with data offers reinstall and erasing; not installed offers install', () => {
@@ -86,13 +93,21 @@ describe('lifecycle actions', () => {
       'erase:uninstall',
       'reinstall:install',
     ]);
-    expect(choices(module({ lifecycle: 'not_installed', enabled: false }))).toEqual(['install:install']);
+    expect(choices(module({ lifecycle: 'not_installed', enabled: false }))).toEqual([
+      'install:install',
+    ]);
     expect(
       choices(
         module({
           lifecycle: 'not_installed',
           enabled: false,
-          hardware: { verdict: 'insufficient', reasons: [], minRamMb: 0, recommendedRamMb: 0, freeDiskMb: 0 },
+          hardware: {
+            verdict: 'insufficient',
+            reasons: [],
+            minRamMb: 0,
+            recommendedRamMb: 0,
+            freeDiskMb: 0,
+          },
         })
       )
     ).toEqual([]);
@@ -102,9 +117,18 @@ describe('lifecycle actions', () => {
     expect(choices(module({ job: job('downloading') }))).toEqual(['cancel:cancel', 'pause:pause']);
     expect(choices(module({ job: job('paused') }))).toEqual(['cancel:cancel', 'resume:resume']);
     expect(choices(module({ job: job('failed') }))).toEqual(['cancel:cancel', 'retry:install']);
-    expect(choices(module({ job: { ...job('failed'), kind: 'uninstall' } }))).toEqual(['cancel:cancel', 'retry:uninstall']);
-    expect(choices(module({ job: { ...job('failed'), kind: 'purge' } }))).toEqual(['cancel:cancel', 'retry:uninstall']);
-    expect(choices(module({ job: job('done') }))).toEqual(['uninstall:uninstall', 'disable:disable']);
+    expect(choices(module({ job: { ...job('failed'), kind: 'uninstall' } }))).toEqual([
+      'cancel:cancel',
+      'retry:uninstall',
+    ]);
+    expect(choices(module({ job: { ...job('failed'), kind: 'purge' } }))).toEqual([
+      'cancel:cancel',
+      'retry:uninstall',
+    ]);
+    expect(choices(module({ job: job('done') }))).toEqual([
+      'uninstall:uninstall',
+      'disable:disable',
+    ]);
     expect(choices(module({ kind: 'core' }))).toEqual([]);
     expect(choices(module({ kind: 'coming_soon' }))).toEqual([]);
   });
@@ -126,11 +150,17 @@ describe('uninstall rules', () => {
   test('without data it is one confirmation, with data a choice, after a kept uninstall an erase', () => {
     const owner = { owner: 'camera', reachable: true, reported: true };
     expect(uninstallMode(module(), [])).toBe('simple');
-    expect(uninstallMode(module(), [{ ...owner, items: [{ kind: 'camera', count: 0 }], bytes: 0 }])).toBe('simple');
+    expect(
+      uninstallMode(module(), [{ ...owner, items: [{ kind: 'camera', count: 0 }], bytes: 0 }])
+    ).toBe('simple');
     expect(uninstallMode(module({ hasData: true }), [])).toBe('choose');
     expect(uninstallMode(module(), [{ ...owner, items: [], bytes: 2048 }])).toBe('choose');
-    expect(uninstallMode(module(), [{ ...owner, reachable: false, items: [], bytes: 0 }])).toBe('choose');
-    expect(uninstallMode(module(), [{ ...owner, reported: false, items: [], bytes: 0 }])).toBe('choose');
+    expect(uninstallMode(module(), [{ ...owner, reachable: false, items: [], bytes: 0 }])).toBe(
+      'choose'
+    );
+    expect(uninstallMode(module(), [{ ...owner, reported: false, items: [], bytes: 0 }])).toBe(
+      'choose'
+    );
     expect(uninstallMode(module(), null)).toBe('choose');
     expect(uninstallMode(module({ lifecycle: 'uninstalled_data_kept' }), null)).toBe('erase');
     expect(holdsData(module(), null)).toBe(false);
@@ -154,17 +184,25 @@ describe('uninstall rules', () => {
       bytes,
     });
     const owners = [
-      owner('camera', [
-        { kind: 'cameras', count: 3 },
-        { kind: 'zones', count: 1 },
-        { kind: 'evidence_photos', count: 40 },
-        { kind: 'camera_actions', count: 0 },
-      ], 2 * 1024 ** 3),
-      owner('guard', [
-        { kind: 'evidence_photos', count: 88 },
-        { kind: 'episodes', count: 12 },
-        { kind: 'mystery', count: 2 },
-      ], 104_857_600),
+      owner(
+        'camera',
+        [
+          { kind: 'cameras', count: 3 },
+          { kind: 'zones', count: 1 },
+          { kind: 'evidence_photos', count: 40 },
+          { kind: 'camera_actions', count: 0 },
+        ],
+        2 * 1024 ** 3
+      ),
+      owner(
+        'guard',
+        [
+          { kind: 'evidence_photos', count: 88 },
+          { kind: 'episodes', count: 12 },
+          { kind: 'mystery', count: 2 },
+        ],
+        104_857_600
+      ),
       owner('sync', [{ kind: 'change_history', count: 1 }]),
     ];
     expect(dataSummary(owners, 'es', es)).toEqual([
@@ -179,23 +217,53 @@ describe('uninstall rules', () => {
     expect(
       dataSummary(
         [
-          owner('identity', [{ kind: 'visitors', count: 1 }, { kind: 'visitor_face_samples', count: 4 }, { kind: 'visits', count: 1200 }]),
-          owner('productivity', [{ kind: 'projects', count: 2 }, { kind: 'calendar_shares', count: 1 }]),
+          owner('identity', [
+            { kind: 'visitors', count: 1 },
+            { kind: 'visitor_face_samples', count: 4 },
+            { kind: 'visits', count: 1200 },
+          ]),
+          owner('productivity', [
+            { kind: 'projects', count: 2 },
+            { kind: 'calendar_shares', count: 1 },
+          ]),
         ],
         'en',
         en
       )
-    ).toEqual(['1 person seen', '4 saved visitor faces', '1,200 visitor passes', '2 projects', '1 shared event']);
+    ).toEqual([
+      '1 person seen',
+      '4 saved visitor faces',
+      '1,200 visitor passes',
+      '2 projects',
+      '1 shared event',
+    ]);
   });
 
   test('every documented kind has a label in both languages', () => {
     const kinds = [
-      'cameras', 'zones', 'evidence_photos', 'camera_actions', 'environments', 'episodes', 'incidents', 'decisions',
-      'expected_guests', 'visitors', 'visitor_face_samples', 'visits', 'projects', 'tasks', 'project_members',
-      'calendar_events', 'calendar_shares', 'change_history',
+      'cameras',
+      'zones',
+      'evidence_photos',
+      'camera_actions',
+      'environments',
+      'episodes',
+      'incidents',
+      'decisions',
+      'expected_guests',
+      'visitors',
+      'visitor_face_samples',
+      'visits',
+      'projects',
+      'tasks',
+      'project_members',
+      'calendar_events',
+      'calendar_shares',
+      'change_history',
     ];
     for (const kind of kinds) {
-      const items = [{ owner: 'x', reachable: true, reported: true, items: [{ kind, count: 2 }], bytes: 0 }];
+      const items = [
+        { owner: 'x', reachable: true, reported: true, items: [{ kind, count: 2 }], bytes: 0 },
+      ];
       expect(dataSummary(items, 'es', es)[0]).not.toContain('elementos');
       expect(dataSummary(items, 'en', en)[0]).not.toContain('items');
     }
@@ -224,8 +292,51 @@ describe('retry and PIN', () => {
   });
 
   test('pin copy explains a wrong code, a lock and that the name is enough without a PIN', () => {
-    expect(es('screens.modules.uninstall.pin-invalid')).toBe('Ese código no es correcto. Inténtalo otra vez.');
-    expect(en('screens.modules.uninstall.pin-locked')).toBe('Too many attempts with the code. Wait a few minutes and try again.');
+    expect(es('screens.modules.uninstall.pin-invalid')).toBe(
+      'Ese código no es correcto. Inténtalo otra vez.'
+    );
+    expect(en('screens.modules.uninstall.pin-locked')).toBe(
+      'Too many attempts with the code. Wait a few minutes and try again.'
+    );
     expect(es('screens.modules.uninstall.pin-needed')).toContain('escribir el nombre basta');
+  });
+});
+
+describe('the module switch', () => {
+  test('an active module switches off through its disable flow', () => {
+    expect(moduleSwitchOf(module())).toEqual({ kind: 'switch', on: true, move: 'disable' });
+    expect(moduleDangerOf(module())).toBe('uninstall');
+  });
+
+  test('an off, never installed or uninstalled module switches on by installing', () => {
+    for (const lifecycle of ['disabled', 'not_installed', 'uninstalled_data_kept'] as const)
+      expect(moduleSwitchOf(module({ lifecycle, enabled: false }))).toEqual({
+        kind: 'switch',
+        on: false,
+        move: 'install',
+      });
+    expect(moduleDangerOf(module({ lifecycle: 'uninstalled_data_kept', enabled: false }))).toBe(
+      'erase'
+    );
+    expect(moduleDangerOf(module({ lifecycle: 'not_installed', enabled: false }))).toBeNull();
+  });
+
+  test('a machine too small, a job under way and the core never move the switch', () => {
+    const small = module({
+      lifecycle: 'not_installed',
+      enabled: false,
+      hardware: { verdict: 'insufficient' } as ModuleRecord['hardware'],
+    });
+    expect(moduleSwitchOf(small)).toEqual({ kind: 'switch', on: false, move: null });
+    expect(moduleSwitchOf(module({ lifecycle: 'not_installed', job: job('downloading') }))).toEqual(
+      {
+        kind: 'switch',
+        on: true,
+        move: null,
+      }
+    );
+    expect(moduleDangerOf(module({ job: job('paused') }))).toBeNull();
+    expect(moduleSwitchOf(module({ kind: 'core' }))).toEqual({ kind: 'none' });
+    expect(moduleSwitchOf(module({ kind: 'coming_soon' }))).toEqual({ kind: 'none' });
   });
 });

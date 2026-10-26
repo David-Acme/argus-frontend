@@ -1,9 +1,9 @@
 export const modules = {
-  'action-of': '{action}: {module}',
   title: 'Módulos',
   subtitle: 'Elige qué hace Argus en tu casa. Todo se instala y se procesa en tu servidor.',
   'step-title': '¿Qué quieres que haga Argus?',
-  'step-subtitle': 'Elige los módulos que quieras. Tu servidor los instala mientras sigues, y puedes cambiarlos cuando quieras.',
+  'step-subtitle':
+    'Elige los módulos que quieras. Tu servidor los instala mientras sigues, y puedes cambiarlos cuando quieras.',
   included: 'Incluido',
   recommended: 'Recomendado',
   'coming-soon': 'Próximamente',
@@ -14,6 +14,9 @@ export const modules = {
   'on-server': '{size} en tu servidor',
   requires: 'Necesita {names}',
   'needed-by': 'Lo necesita {names}, así que también se instala',
+  'danger-meta': 'Se borran sus archivos. Tú decides qué pasa con tus datos.',
+  'manage-title': 'Gestionar módulos',
+  'manage-meta': 'Instalar, desinstalar y ver cómo va cada uno',
   'core-name': 'Núcleo',
   verdict: {
     ok: 'Tu servidor lo mueve bien',
@@ -43,7 +46,11 @@ export const modules = {
   },
   'job-kind': {
     uninstall: { running: 'Desinstalando', done: 'Desinstalado', failed: 'No se pudo desinstalar' },
-    purge: { running: 'Borrando tus datos', done: 'Datos borrados', failed: 'No se pudieron borrar los datos' },
+    purge: {
+      running: 'Borrando tus datos',
+      done: 'Datos borrados',
+      failed: 'No se pudieron borrar los datos',
+    },
   },
   amount: '{done} de {total}',
   speed: '{speed}/s',
@@ -58,16 +65,22 @@ export const modules = {
     network: 'Se cortó la descarga. Al reintentar, Argus sigue donde lo dejó.',
     source_unavailable: 'El sitio de descarga no responde ahora. Inténtalo más tarde.',
     checksum_mismatch: 'Un archivo llegó dañado y se descartó. Reintenta para bajarlo de nuevo.',
-    health_check_failed: 'Se instaló, pero no arrancó bien. Reintenta; si se repite, revisa el servidor.',
+    health_check_failed:
+      'Se instaló, pero no arrancó bien. Reintenta; si se repite, revisa el servidor.',
     host_only: 'Una parte se prepara en el propio servidor. Ejecuta el comando y reintenta.',
     interrupted: 'El servidor se reinició a mitad. Reintenta para continuar.',
     hardware_insufficient: 'Tu servidor ya no tiene recursos suficientes para este módulo.',
-    dependency_failed: 'No se pudo instalar un módulo que este necesita. Revisa ese primero y reintenta.',
-    owner_unreachable: 'Una parte de Argus no respondió durante la instalación. Comprueba que el servidor esté en marcha y reintenta.',
-    remove_failed: 'No se pudieron borrar los archivos de {part}. Reintenta; si se repite, revisa el servidor.',
-    remove_unsupported: '{part} todavía no sabe desinstalar sus archivos. Actualiza Argus en el servidor y reintenta.',
+    dependency_failed:
+      'No se pudo instalar un módulo que este necesita. Revisa ese primero y reintenta.',
+    owner_unreachable:
+      'Una parte de Argus no respondió durante la instalación. Comprueba que el servidor esté en marcha y reintenta.',
+    remove_failed:
+      'No se pudieron borrar los archivos de {part}. Reintenta; si se repite, revisa el servidor.',
+    remove_unsupported:
+      '{part} todavía no sabe desinstalar sus archivos. Actualiza Argus en el servidor y reintenta.',
     purge_failed: '{part} no pudo borrar sus datos. Reintenta: seguirá con lo que falte.',
-    purge_unsupported: '{part} todavía no sabe borrar sus datos. Actualiza Argus en el servidor y reintenta.',
+    purge_unsupported:
+      '{part} todavía no sabe borrar sus datos. Actualiza Argus en el servidor y reintenta.',
     unknown: 'Algo falló durante la instalación. Reintenta en un momento.',
   },
   owners: {
@@ -84,7 +97,8 @@ export const modules = {
     other: 'Una parte de Argus',
   },
   'provisioned-title': 'Una parte se instala en el servidor',
-  'provisioned-hint': 'Quien administra el servidor debe instalarla una vez. Cuando esté, Argus la usará solo.',
+  'provisioned-hint':
+    'Quien administra el servidor debe instalarla una vez. Cuando esté, Argus la usará solo.',
   copy: 'Copiar',
   copied: 'Copiado',
   'host-command': 'Ejecuta esto en el servidor:',
@@ -110,9 +124,11 @@ export const modules = {
   },
   impact: {
     'disable-title': '¿Desactivar {name}?',
-    'disable-description': 'Esto es lo que cambia. Tus datos se conservan y volver a activarlo es inmediato, sin descargas.',
+    'disable-description':
+      'Esto es lo que cambia. Tus datos se conservan y volver a activarlo es inmediato, sin descargas.',
     'uninstall-title': '¿Desinstalar {name}?',
-    'uninstall-description': 'Esto es lo que cambia. Se borran sus archivos del servidor y se libera espacio.',
+    'uninstall-description':
+      'Esto es lo que cambia. Se borran sus archivos del servidor y se libera espacio.',
     stops: {
       live_views: 'Se cierran las vistas en vivo de las cámaras',
       camera_talk: 'Se cierran las charlas por cámara',
@@ -125,20 +141,25 @@ export const modules = {
       agenda_calls: 'Se cancelan las llamadas y avisos de tu agenda',
       other: 'Dejan de funcionar otras tareas de {module}',
     },
-    partial: 'No se pudo consultar a todos los servicios, así que esta vista previa puede estar incompleta.',
+    partial:
+      'No se pudo consultar a todos los servicios, así que esta vista previa puede estar incompleta.',
     'moved-title': 'Ya cambiaron de rol',
     'moved-hint': 'Estos cambios se quedan aunque la desinstalación no termine.',
     'keeps-running-title': 'Sigue funcionando',
     'stops-title': 'Qué se detiene',
     'nothing-stops': 'No se detiene nada que esté en marcha.',
     'holders-title': 'Quién se ve afectado',
-    'holders-inactive': 'Conservan su cuenta. Su rol se queda en pausa y se activa de nuevo cuando vuelvas a usar {module}.',
+    'holders-inactive':
+      'Conservan su cuenta. Su rol se queda en pausa y se activa de nuevo cuando vuelvas a usar {module}.',
     'reassign-title': 'Elige un rol nuevo para quienes tienen un rol de este módulo',
-    'reassign-hint': 'Sin esto no se puede desinstalar. Los cambios son inmediatos y quedan en el historial.',
+    'reassign-hint':
+      'Sin esto no se puede desinstalar. Los cambios son inmediatos y quedan en el historial.',
     'reassign-pick': 'Elegir rol',
     'invitations-title': 'Invitaciones pendientes',
-    'invitations-revoked': 'Se revocan {count} para {roles}. Quien las recibió verá el motivo y no podrán volver a usarse.',
-    'invitations-revoked-one': 'Se revoca 1 para {roles}. Quien la recibió verá el motivo y no podrá volver a usarse.',
+    'invitations-revoked':
+      'Se revocan {count} para {roles}. Quien las recibió verá el motivo y no podrán volver a usarse.',
+    'invitations-revoked-one':
+      'Se revoca 1 para {roles}. Quien la recibió verá el motivo y no podrá volver a usarse.',
     'invitations-by': 'Las envió {names}.',
     'data-kept': 'Tus datos se conservan.',
     'data-erased': 'Tus datos se borran para siempre.',
@@ -147,11 +168,13 @@ export const modules = {
     refused: 'Ahora no se puede hacer: {reason}',
     'confirm-disable': 'Desactivar',
     loading: 'Mirando qué cambiaría…',
-    'roles-held': 'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
+    'roles-held':
+      'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
   },
   uninstall: {
     title: '¿Desinstalar {name}?',
-    'simple-description': 'Se borran sus archivos del servidor y se libera el espacio. No guarda datos tuyos, así que no se pierde nada.',
+    'simple-description':
+      'Se borran sus archivos del servidor y se libera el espacio. No guarda datos tuyos, así que no se pierde nada.',
     'data-title': 'Desinstalar {name}',
     'data-description': 'Se borran sus archivos del servidor. ¿Qué hacemos con lo que guarda?',
     holds: 'Ahora guarda:',
@@ -161,7 +184,8 @@ export const modules = {
     'keep-hint': 'Solo se libera espacio. Si lo reinstalas, tus datos volverán.',
     purge: 'Borrar también mis datos',
     'purge-hint': 'Se borra todo lo que guarda, también fotos y evidencias.',
-    'purge-warning': 'Esto no se puede deshacer. Nadie podrá recuperar estos datos, ni siquiera desde el servidor.',
+    'purge-warning':
+      'Esto no se puede deshacer. Nadie podrá recuperar estos datos, ni siquiera desde el servidor.',
     'type-name': 'Escribe «{name}» para confirmar',
     'erase-title': '¿Borrar los datos de {name}?',
     'erase-description': 'El módulo ya está desinstalado; ahora se borra lo que guardaba.',
@@ -170,29 +194,36 @@ export const modules = {
     'required-by': 'Primero desactiva {names}: lo necesita para funcionar.',
     'pin-invalid': 'Ese código no es correcto. Inténtalo otra vez.',
     'pin-locked': 'Demasiados intentos con el código. Espera unos minutos y vuelve a probar.',
-    'pin-needed': 'Si tienes un código de seguridad, te lo pediremos antes de borrar; si no, escribir el nombre basta.',
+    'pin-needed':
+      'Si tienes un código de seguridad, te lo pediremos antes de borrar; si no, escribir el nombre basta.',
     done: '{name} se está desinstalando',
     'purge-started': 'Borrando los datos de {name}',
   },
   data: {
     cameras: { one: '{count} cámara', other: '{count} cámaras' },
     zones: { one: '{count} zona', other: '{count} zonas' },
-    'evidence_photos': { one: '{count} foto de evidencia', other: '{count} fotos de evidencia' },
-    'camera_actions': { one: '{count} acción de cámara', other: '{count} acciones de cámara' },
+    evidence_photos: { one: '{count} foto de evidencia', other: '{count} fotos de evidencia' },
+    camera_actions: { one: '{count} acción de cámara', other: '{count} acciones de cámara' },
     environments: { one: '{count} entorno', other: '{count} entornos' },
     episodes: { one: '{count} visita registrada', other: '{count} visitas registradas' },
     incidents: { one: '{count} incidente guardado', other: '{count} incidentes guardados' },
     decisions: { one: '{count} decisión de vigilancia', other: '{count} decisiones de vigilancia' },
-    'expected_guests': { one: '{count} visita esperada', other: '{count} visitas esperadas' },
+    expected_guests: { one: '{count} visita esperada', other: '{count} visitas esperadas' },
     visitors: { one: '{count} persona vista', other: '{count} personas vistas' },
-    'visitor_face_samples': { one: '{count} rostro guardado de visitantes', other: '{count} rostros guardados de visitantes' },
+    visitor_face_samples: {
+      one: '{count} rostro guardado de visitantes',
+      other: '{count} rostros guardados de visitantes',
+    },
     visits: { one: '{count} paso de visitantes', other: '{count} pasos de visitantes' },
     projects: { one: '{count} proyecto', other: '{count} proyectos' },
     tasks: { one: '{count} tarea', other: '{count} tareas' },
-    'project_members': { one: '{count} miembro de proyecto', other: '{count} miembros de proyecto' },
-    'calendar_events': { one: '{count} evento de agenda', other: '{count} eventos de agenda' },
-    'calendar_shares': { one: '{count} evento compartido', other: '{count} eventos compartidos' },
-    'change_history': { one: '{count} cambio en el historial', other: '{count} cambios en el historial' },
+    project_members: { one: '{count} miembro de proyecto', other: '{count} miembros de proyecto' },
+    calendar_events: { one: '{count} evento de agenda', other: '{count} eventos de agenda' },
+    calendar_shares: { one: '{count} evento compartido', other: '{count} eventos compartidos' },
+    change_history: {
+      one: '{count} cambio en el historial',
+      other: '{count} cambios en el historial',
+    },
     items: { one: '{count} elemento', other: '{count} elementos' },
     bytes: 'aprox. {size} en la base de datos',
     kept: 'Se conservan siempre tu historial de seguridad personal (pánico, coacción), tus códigos y tus recordatorios.',
@@ -219,6 +250,7 @@ export const modules = {
   'background-note': 'La instalación sigue en tu servidor aunque cierres la app.',
   queued: 'Instalación en marcha',
   request: {
+    none: 'Tu casa ya tiene todo lo que Argus ofrece hoy',
     title: 'Más para tu casa',
     hint: 'Argus puede hacer más. Si algo te sirve, pídeselo a quien administra la casa.',
     ask: 'Pedirlo',
@@ -238,23 +270,6 @@ export const modules = {
   'waiting-title': 'Esperando a tu servidor',
   'waiting-hint': 'La lista de módulos llegará en cuanto Argus se conecte con tu casa.',
   'start-failed': 'No se pudo empezar a instalar {names}.',
-  server: {
-    title: 'Tu servidor',
-    disk: 'Disco libre',
-    ram: 'Memoria que piden',
-    'ram-value': '{min} mínimo · {recommended} recomendado',
-  },
-  how: {
-    title: 'Cómo funciona',
-    install: 'Cada módulo se descarga y se comprueba en tu servidor. Puedes cerrar la app: al volver verás el progreso real.',
-    off: 'Desactivar un módulo oculta sus pantallas y detiene su trabajo; vuelve al instante y con tus datos.',
-    space: 'Desinstalar libera el espacio de sus archivos. Tus datos se conservan salvo que elijas borrarlos.',
-  },
-  summary: {
-    title: 'Módulos',
-    manage: 'Gestionar',
-    hint: 'Elige qué hace Argus y mira cómo va cada instalación.',
-  },
   'getting-started': {
     title: 'Primeros pasos',
     progress: '{done} de {total}',
@@ -275,13 +290,18 @@ export const modules = {
   catalog: {
     core: {
       name: 'Asistente y hogar',
-      summary: 'Tu cuenta, las personas de casa, avisos, privacidad y el asistente de voz. Siempre activo.',
+      summary:
+        'Tu cuenta, las personas de casa, avisos, privacidad y el asistente de voz. Siempre activo.',
     },
     surveillance: {
       name: 'Vigilancia',
-      summary: 'Cámaras en vivo, zonas, detección de personas y el guardia que te avisa de lo importante.',
+      summary:
+        'Cámaras en vivo, zonas, detección de personas y el guardia que te avisa de lo importante.',
     },
-    productivity: { name: 'Productividad', summary: 'Agenda, proyectos y tareas compartidas con tu familia.' },
+    productivity: {
+      name: 'Productividad',
+      summary: 'Agenda, proyectos y tareas compartidas con tu familia.',
+    },
     agronomy: { name: 'Agronomía', summary: 'Cultivos, riego y clima de tu terreno. Muy pronto.' },
   },
 } as const;
