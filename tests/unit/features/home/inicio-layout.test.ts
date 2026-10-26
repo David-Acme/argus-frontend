@@ -90,6 +90,16 @@ describe('the phone stack', () => {
     ]);
   });
 
+  test('a new household on a tablet adds how Argus helps and the day under what to say', () => {
+    expect(inicioStack({ ...ALL, news: false, system: true }, true, true)).toEqual([
+      'lead',
+      'system',
+      'help',
+      'try',
+      'today',
+    ]);
+  });
+
   test('what the role cannot read is absent', () => {
     expect(inicioStack({ ...NONE, news: true }, false)).toEqual(['lead', 'news']);
   });

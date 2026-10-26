@@ -131,6 +131,7 @@ export const home = {
       happened: '¿Qué pasó hoy?',
       today: '¿Qué tengo hoy?',
     },
+    connect: 'Conecta una cámara para que Argus vigile',
     columns: {
       agenda: 'Tu día',
       news: 'Novedades',

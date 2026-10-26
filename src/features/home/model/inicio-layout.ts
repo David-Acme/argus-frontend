@@ -123,9 +123,20 @@ export function inicioColumns(place: StatPlace, reads: InicioReads): InicioColum
   }));
 }
 
-export function inicioStack(reads: InicioReads, firstStep: boolean): InicioSection[] {
+export function inicioStack(
+  reads: InicioReads,
+  firstStep: boolean,
+  tablet = false
+): InicioSection[] {
   if (firstStep)
-    return ['lead', ...when(reads.news, 'news'), ...when(reads.system, 'system'), 'try'];
+    return [
+      'lead',
+      ...when(reads.news, 'news'),
+      ...when(reads.system, 'system'),
+      ...when(tablet, 'help'),
+      'try',
+      ...when(tablet && reads.agenda, 'today'),
+    ];
   return [
     'lead',
     ...when(reads.watch, 'watch'),

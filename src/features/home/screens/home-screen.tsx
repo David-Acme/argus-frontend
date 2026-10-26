@@ -63,6 +63,7 @@ const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
 
 function InicioBody({ hero, place, body }: BodyProps) {
   const { t } = useTranslation();
+  const tablet = useWindowLayout().windowClass === 'medium';
   const { reads, step, sos } = body;
   const band = place !== 'hero';
   const render = (section: InicioSection) => {
@@ -71,7 +72,7 @@ function InicioBody({ hero, place, body }: BodyProps) {
     const Section = SECTIONS[section];
     return <Section key={section} />;
   };
-  if (!band) return <>{inicioStack(reads, step !== null).map(render)}</>;
+  if (!band) return <>{inicioStack(reads, step !== null, tablet).map(render)}</>;
   return (
     <ScreenColumns>
       {inicioColumns(place, reads).map((column) => (

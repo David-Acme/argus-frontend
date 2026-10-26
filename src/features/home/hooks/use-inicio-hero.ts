@@ -11,7 +11,9 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { alertSentence, headlineOf, headlineWords, useOpenResponse } from '@/features/response';
 import { useGuardHeadline } from '@/features/security';
 import { useHomePeople } from '@/features/home/hooks/use-home-people';
+import { useInicioSummary } from '@/features/home/hooks/use-inicio-stats';
 import { presenceKnown } from '@/features/home/model/home-people';
+import { isNewHousehold } from '@/features/home/model/inicio-states';
 import {
   ageOf,
   dayPart,
@@ -133,6 +135,8 @@ function partText(part: MetaPart, words: MetaWords): string {
       return words.age;
     case 'headline':
       return words.headline;
+    case 'connect':
+      return words.t('screens.home.inicio.connect');
   }
 }
 
@@ -174,6 +178,7 @@ export function useInicioHero(band: boolean): InicioHero {
   const alert = useOpenResponse();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
   const mode = useGuardHeadline();
+  const summary = useInicioSummary();
   const people = useHomeLine();
   const greeting = useInicioGreeting(now);
   const phase = inicioPhase({ ready: ready && synced, offline, alert: alert !== null, mode });
@@ -188,7 +193,7 @@ export function useInicioHero(band: boolean): InicioHero {
     phase,
     greeting,
     sentence: sentenceOf(phase, alert, t),
-    meta: heroMeta({ phase, band, mode, people })
+    meta: heroMeta({ phase, band, mode, people, newHousehold: isNewHousehold(summary) })
       .map((part) => partText(part, words))
       .join(' · '),
     alert,

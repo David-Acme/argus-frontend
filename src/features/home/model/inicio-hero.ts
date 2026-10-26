@@ -32,13 +32,15 @@ export type MetaPart =
   | { kind: 'watching' }
   | { kind: 'people'; line: HomeLine }
   | { kind: 'age' }
-  | { kind: 'headline' };
+  | { kind: 'headline' }
+  | { kind: 'connect' };
 
 export type HeroMetaInput = {
   phase: InicioPhase;
   band: boolean;
   mode: GuardMode | null;
   people: HomeLine | null;
+  newHousehold: boolean;
 };
 
 const CALM: HeroLook = { tone: 'calm', presence: 'idle', aura: 'calm' };
@@ -93,16 +95,17 @@ export function ageOf(since: number, now: number): Age {
   return { unit: 'days', count: Math.floor(elapsed / DAY) };
 }
 
-export function heroMeta({ phase, band, mode, people }: HeroMetaInput): MetaPart[] {
+export function heroMeta({ phase, band, mode, people, newHousehold }: HeroMetaInput): MetaPart[] {
   if (phase === 'alert') return [{ kind: 'age' }, { kind: 'headline' }];
   const greeting: MetaPart[] = band ? [{ kind: 'greeting' }] : [];
   if (phase === 'night' && mode !== null)
     return [...greeting, { kind: 'mode', mode, named: true }, { kind: 'watching' }];
-  return [
-    ...greeting,
+  const known: MetaPart[] = [
     ...(mode === null ? [] : [{ kind: 'mode', mode, named: band } as const]),
     ...(people === null ? [] : [{ kind: 'people', line: people } as const]),
   ];
+  const connect: MetaPart[] = known.length === 0 && newHousehold ? [{ kind: 'connect' }] : [];
+  return [...greeting, ...known, ...connect];
 }
 
 export function namesText(names: readonly string[], t: TranslateFn): string {

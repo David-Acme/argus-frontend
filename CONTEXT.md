@@ -6888,7 +6888,9 @@ and T7 under one hero; every decision is a pure function in
   decirle» (phrases that ask Argus, each behind the right its answer needs).
   An empty Novedades drops its column. A new household hides the zero stats
   and stacks its first step, Novedades if any, Estado and «Prueba a
-  decirle». Presence that is unknown is never «sin datos»: a person reads
+  decirle»; on a tablet also «Así te ayuda Argus» before the phrases and
+  the day (Hoy) after them. With no mode and nobody known its hero meta is
+  «Conecta una cámara para que Argus vigile», never a blank. Presence that is unknown is never «sin datos»: a person reads
   «Aún no sé si está en casa», me with the hint to connect a camera or the
   phone; one person whose presence is unknown is no section, and the hero
   names who is home only once someone's presence is known. Rutinas has no

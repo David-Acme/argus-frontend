@@ -345,3 +345,20 @@ describe('Inicio at night, away and with little data', () => {
     expect(screen.getByLabelText('En casa')).toBeDefined();
   });
 });
+
+describe('a new household on a tablet', () => {
+  test('fills with how Argus helps, what to say and the day', () => {
+    setWindowWidth(820);
+    state.threads = 0;
+    state.summary = {
+      camerasTotal: 0,
+      camerasOnline: 0,
+      remindersPending: 0,
+      projectsActive: 0,
+      tasksOpen: 0,
+    };
+    render(<HomeScreen />);
+    expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
+    expect(order(ALL)).toEqual(['system', 'help', 'try', 'today']);
+  });
+});

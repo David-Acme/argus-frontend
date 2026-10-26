@@ -97,14 +97,18 @@ describe('the hero meta line', () => {
   const people = { kind: 'me-and-others', names: ['Luis'] } as const;
 
   test('the phone says the mode and who is home', () => {
-    expect(heroMeta({ phase: 'calm', band: false, mode: 'home', people })).toEqual([
+    expect(
+      heroMeta({ phase: 'calm', band: false, mode: 'home', people, newHousehold: false })
+    ).toEqual([
       { kind: 'mode', mode: 'home', named: false },
       { kind: 'people', line: people },
     ]);
   });
 
   test('the band leads with the greeting and names the mode', () => {
-    expect(heroMeta({ phase: 'calm', band: true, mode: 'home', people })).toEqual([
+    expect(
+      heroMeta({ phase: 'calm', band: true, mode: 'home', people, newHousehold: false })
+    ).toEqual([
       { kind: 'greeting' },
       { kind: 'mode', mode: 'home', named: true },
       { kind: 'people', line: people },
@@ -112,20 +116,29 @@ describe('the hero meta line', () => {
   });
 
   test('at night Argus says it keeps watch', () => {
-    expect(heroMeta({ phase: 'night', band: false, mode: 'night', people })).toEqual([
-      { kind: 'mode', mode: 'night', named: true },
-      { kind: 'watching' },
-    ]);
+    expect(
+      heroMeta({ phase: 'night', band: false, mode: 'night', people, newHousehold: false })
+    ).toEqual([{ kind: 'mode', mode: 'night', named: true }, { kind: 'watching' }]);
   });
 
   test('an alert says how long ago and who is answering', () => {
-    expect(heroMeta({ phase: 'alert', band: true, mode: 'home', people })).toEqual([
-      { kind: 'age' },
-      { kind: 'headline' },
-    ]);
+    expect(
+      heroMeta({ phase: 'alert', band: true, mode: 'home', people, newHousehold: false })
+    ).toEqual([{ kind: 'age' }, { kind: 'headline' }]);
   });
 
   test('what the role cannot read is absent', () => {
-    expect(heroMeta({ phase: 'calm', band: false, mode: null, people: null })).toEqual([]);
+    expect(
+      heroMeta({ phase: 'calm', band: false, mode: null, people: null, newHousehold: false })
+    ).toEqual([]);
+  });
+
+  test('a new household with no mode and nobody known asks for a camera, never a blank', () => {
+    expect(
+      heroMeta({ phase: 'calm', band: false, mode: null, people: null, newHousehold: true })
+    ).toEqual([{ kind: 'connect' }]);
+    expect(
+      heroMeta({ phase: 'calm', band: true, mode: null, people: null, newHousehold: true })
+    ).toEqual([{ kind: 'greeting' }, { kind: 'connect' }]);
   });
 });
