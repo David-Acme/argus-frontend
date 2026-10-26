@@ -10,8 +10,10 @@ import { Button } from '@/shared/ui/button';
 import { Notice } from '@/shared/ui/notice';
 import { SkeletonRow } from '@/shared/ui/resource-view';
 import { Row } from '@/shared/ui/row';
-import { Screen } from '@/shared/ui/screen';
+import { size } from '@/shared/theme';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
+import { RecordingGuide } from '@/features/cameras/components/recordings/recording-guide';
 import { ClipStage } from '@/features/cameras/components/recordings/clip-stage';
 import { useCameraRow } from '@/features/cameras/hooks/use-camera-live';
 import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
@@ -186,10 +188,18 @@ export default function CameraRecordingsScreen() {
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/cameras/${id}`));
   return (
     <Screen
+      columns
       title={t('screens.cameras.rows.recordings')}
       meta={camera.name}
       back={{ label: t('common.back'), onPress: back }}>
-      <ClipsBody camera={camera} />
+      <ScreenColumns>
+        <ScreenColumn label={t('screens.cameras.clips.title')} grows={-1}>
+          <ClipsBody camera={camera} />
+        </ScreenColumn>
+        <ScreenColumn width={size.columnSide} label={t('screens.cameras.guide.recordings')}>
+          <RecordingGuide camera={camera} />
+        </ScreenColumn>
+      </ScreenColumns>
     </Screen>
   );
 }

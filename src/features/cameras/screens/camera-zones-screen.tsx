@@ -10,8 +10,10 @@ import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
-import { Screen } from '@/shared/ui/screen';
+import { size } from '@/shared/theme';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
+import { ZoneGuide } from '@/features/cameras/components/zones/zone-guide';
 import { ZoneSheet } from '@/features/cameras/components/zones/zone-sheet';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
@@ -147,10 +149,18 @@ export default function CameraZonesScreen() {
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/cameras/${id}`));
   return (
     <Screen
+      columns
       title={t('screens.cameras.zones')}
       meta={camera.name}
       back={{ label: t('common.back'), onPress: back }}>
-      <ZonesBody camera={camera} isPending={isPendingZone} />
+      <ScreenColumns>
+        <ScreenColumn label={t('screens.cameras.zones')} grows={-1}>
+          <ZonesBody camera={camera} isPending={isPendingZone} />
+        </ScreenColumn>
+        <ScreenColumn width={size.columnSide} label={t('screens.cameras.guide.zones')}>
+          <ZoneGuide />
+        </ScreenColumn>
+      </ScreenColumns>
     </Screen>
   );
 }

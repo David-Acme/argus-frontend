@@ -161,6 +161,8 @@ const { default: CameraRecordingsScreen } =
   await import('@/features/cameras/screens/camera-recordings-screen');
 const { default: CameraZonesScreen } =
   await import('@/features/cameras/screens/camera-zones-screen');
+const { RecordingGuide } = await import('@/features/cameras/components/recordings/recording-guide');
+const { ZoneGuide } = await import('@/features/cameras/components/zones/zone-guide');
 const { ClipStage } = await import('@/features/cameras/components/recordings/clip-stage');
 const { ZoneSheet } = await import('@/features/cameras/components/zones/zone-sheet');
 const { AnnounceSheet } = await import('@/features/cameras/components/live/announce-sheet');
@@ -259,6 +261,36 @@ describe('Zonas', () => {
     camera = null;
     render(<CameraZonesScreen />);
     expect(screen.getByTestId('redirect').textContent).toBe('/cameras');
+  });
+});
+
+describe('the guides beside an empty list', () => {
+  test('recordings explain how this camera records and lead to its settings', () => {
+    render(<RecordingGuide camera={cameraRow({ retentionDays: 45 })} />);
+    expect(screen.getByText('Guarda 45 días')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /^Solo eventos/ }));
+    expect(pushed).toEqual(['/cameras/3/settings']);
+  });
+
+  test('zones explain their four kinds', () => {
+    render(<ZoneGuide />);
+    for (const kind of ['Vigilar', 'Alertar', 'Ignorar', 'Máscara de privacidad'])
+      expect(screen.getByText(kind)).toBeDefined();
+  });
+
+  test('an empty recordings screen keeps its guide, so it is never blank', () => {
+    clips = clipsOf([]);
+    playback = playbackOf();
+    render(<CameraRecordingsScreen />);
+    expect(screen.getByText('Aún no hay clips')).toBeDefined();
+    expect(screen.getByText('Cómo graba')).toBeDefined();
+  });
+
+  test('an empty zones screen keeps the kinds of zone beside the first step', () => {
+    camera = cameraRow({ zones: [] });
+    render(<CameraZonesScreen />);
+    expect(screen.getByText('Sin zonas definidas')).toBeDefined();
+    expect(screen.getByText('Tipos de zona')).toBeDefined();
   });
 });
 

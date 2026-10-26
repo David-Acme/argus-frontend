@@ -1,7 +1,8 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Screen } from '@/shared/ui/screen';
+import { size } from '@/shared/theme';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { AdvancedSection } from '@/features/cameras/components/settings/advanced-section';
 import { DetectionSection } from '@/features/cameras/components/settings/detection-section';
 import { DeviceSection } from '@/features/cameras/components/settings/device-section';
@@ -16,6 +17,8 @@ import { useCameraSettings } from '@/features/cameras/hooks/use-camera-settings'
 import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 import type { SettingsSection } from '@/features/cameras/model/camera-settings';
 import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
+
+const ASIDE: ReadonlySet<SettingsSection> = new Set(['maintenance', 'device', 'advanced']);
 
 const SECTIONS: Record<SettingsSection, (settings: CameraSettings) => ReactNode> = {
   privacy: (settings) => <PrivacySection key="privacy" settings={settings} />,
@@ -38,10 +41,22 @@ export default function CameraSettingsScreen() {
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/cameras/${id}`));
   return (
     <Screen
+      columns
       title={t('screens.cameras.settings')}
       meta={settings.camera.name}
       back={{ label: t('common.back'), onPress: back }}>
-      {settings.sections.map((section) => SECTIONS[section](settings))}
+      <ScreenColumns>
+        <ScreenColumn label={t('screens.cameras.settings')} grows={-1}>
+          {settings.sections
+            .filter((section) => !ASIDE.has(section))
+            .map((section) => SECTIONS[section](settings))}
+        </ScreenColumn>
+        <ScreenColumn width={size.columnSide} label={t('screens.cameras.info.title')} grows={-1}>
+          {settings.sections
+            .filter((section) => ASIDE.has(section))
+            .map((section) => SECTIONS[section](settings))}
+        </ScreenColumn>
+      </ScreenColumns>
     </Screen>
   );
 }
