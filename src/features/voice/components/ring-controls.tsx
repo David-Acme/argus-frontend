@@ -3,7 +3,7 @@ import type { TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { RoundControl, type RoundTone } from '@/features/voice/components/round-control';
-import { CALL_RING_CONTROL } from '@/features/voice/constants/call.constant';
+import { useCallScale } from '@/features/voice/hooks/use-call-scale';
 import type { RingChoice } from '@/features/voice/model/incoming-surface';
 
 type RingControlsProps = {
@@ -21,6 +21,7 @@ const LOOKS: Readonly<Record<RingChoice, ChoiceLook>> = {
 
 export function RingControls({ choices, onChoose }: RingControlsProps) {
   const { t } = useTranslation();
+  const { ringControl } = useCallScale();
   return (
     <View className="w-full flex-row justify-around px-2">
       {choices.map((choice) => (
@@ -29,7 +30,7 @@ export function RingControls({ choices, onChoose }: RingControlsProps) {
           icon={LOOKS[choice].icon}
           tone={LOOKS[choice].tone}
           label={t(LOOKS[choice].label)}
-          size={CALL_RING_CONTROL}
+          size={ringControl}
           caption
           onPress={() => onChoose(choice)}
         />

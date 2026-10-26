@@ -62,7 +62,7 @@ describe('the call parts', () => {
 
   test('the stage carries the private line, Argus and the call line around Estela', () => {
     render(
-      <CallStage kind="reminder" line="0:42" presence="speak" avatar={168}>
+      <CallStage kind="reminder" line="0:42" presence="speak">
         <></>
       </CallStage>
     );

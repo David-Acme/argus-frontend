@@ -1,10 +1,11 @@
 import { View } from 'react-native';
 import type { VoiceTranscriptLine } from '@/core/types';
 import { Text } from '@/shared/ui/text';
-import { CALL_CAPTION_LINES } from '@/features/voice/constants/call.constant';
+import { useCallScale } from '@/features/voice/hooks/use-call-scale';
 
 export function CallCaptions({ lines }: { lines: readonly VoiceTranscriptLine[] }) {
-  const visible = lines.slice(-CALL_CAPTION_LINES);
+  const { captionLines } = useCallScale();
+  const visible = lines.slice(-captionLines);
   if (visible.length === 0) return null;
   return (
     <View accessibilityLiveRegion="polite" className="w-full gap-2">

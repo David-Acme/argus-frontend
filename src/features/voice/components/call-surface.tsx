@@ -9,7 +9,6 @@ import { EndedSummary, StageTop, WaitingCard } from '@/features/voice/components
 import { CallPanel } from '@/features/voice/components/call-panel';
 import { CallResultCard } from '@/features/voice/components/call-result-card';
 import { CallStage } from '@/features/voice/components/call-stage';
-import { CALL_ENDED_AVATAR, CALL_STAGE_AVATAR } from '@/features/voice/constants/call.constant';
 import { useCallClock } from '@/features/voice/hooks/use-call-clock';
 import {
   callResultOf,
@@ -91,7 +90,7 @@ export function CallSurface({
       kind={moment === 'ended' ? 'reminder' : kind}
       line={line}
       presence={stagePresenceOf({ moment, phase, kind })}
-      avatar={moment === 'ended' ? CALL_ENDED_AVATAR : CALL_STAGE_AVATAR}
+      ended={moment === 'ended'}
       level={voiceLevel}
       top={
         moment === 'live' ? (

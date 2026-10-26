@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import type { CallAudioDevice, VoiceActionRecord } from '@/core/types';
+import { callScaleOf } from '@/shared/theme/call-scale';
 import '../../shared/ui/translation-stub';
 
 const devices: { list: CallAudioDevice[] } = { list: [] };
@@ -15,6 +16,9 @@ mock.module('@/features/voice/services/call-audio', () => ({
     showRoutePicker: () => Promise.resolve(),
     subscribe: () => () => undefined,
   }),
+}));
+mock.module('@/features/voice/hooks/use-call-scale', () => ({
+  useCallScale: () => callScaleOf(760),
 }));
 mock.module('@/features/voice/components/call-settings-dialog', () => ({
   CallSettingsDialog: () => null,

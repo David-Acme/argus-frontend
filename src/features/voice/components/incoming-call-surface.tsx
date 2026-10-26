@@ -16,7 +16,6 @@ import {
   CALL_BANNER_AVATAR,
   CALL_BANNER_CONTROL,
   CALL_RING_VIBRATION,
-  CALL_STAGE_AVATAR,
   CALL_STAGE_MAX_WIDTH,
 } from '@/features/voice/constants/call.constant';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
@@ -91,8 +90,7 @@ function RingStage({ call, onChoose }: RingProps) {
       <CallStage
         kind="alert"
         line={t('screens.voice.ring.alert-line', { subject: callSubjectOf(call) })}
-        presence="alert"
-        avatar={CALL_STAGE_AVATAR}>
+        presence="alert">
         {call.summary.trim() ? (
           <View className="mt-4 px-4">
             <Text variant="meta" tone="2" align="center" numberOfLines={3}>

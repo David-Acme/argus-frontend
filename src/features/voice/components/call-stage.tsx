@@ -11,13 +11,14 @@ import type { PresenceState } from '@/shared/ui/presence';
 import { Text } from '@/shared/ui/text';
 import { CallAvatar } from '@/features/voice/components/call-avatar';
 import { CALL_STAGE_MAX_WIDTH } from '@/features/voice/constants/call.constant';
+import { useCallScale } from '@/features/voice/hooks/use-call-scale';
 import type { CallKind } from '@/features/voice/model/incoming-surface';
 
 type CallStageProps = {
   kind: CallKind;
   line: string;
   presence: PresenceState;
-  avatar: number;
+  ended?: boolean;
   level?: SharedValue<number>;
   top?: ReactNode;
   children: ReactNode;
@@ -25,8 +26,18 @@ type CallStageProps = {
 
 const COLUMN = { maxWidth: CALL_STAGE_MAX_WIDTH };
 
-export function CallStage({ kind, line, presence, avatar, level, top, children }: CallStageProps) {
+export function CallStage({
+  kind,
+  line,
+  presence,
+  ended = false,
+  level,
+  top,
+  children,
+}: CallStageProps) {
   const { t } = useTranslation();
+  const scale = useCallScale();
+  const gap = { marginTop: scale.avatarGap };
   const insets = useSafeAreaInsets();
   const frame = { paddingTop: insets.top + space[4], paddingBottom: insets.bottom + space[6] };
   return (
@@ -49,10 +60,10 @@ export function CallStage({ kind, line, presence, avatar, level, top, children }
               {line}
             </Text>
           </View>
-          <View className="mt-8">
+          <View style={gap}>
             <CallAvatar
               state={presence}
-              size={avatar}
+              size={ended ? scale.endedAvatar : scale.avatar}
               level={level}
               label={t('screens.voice.stage.estela')}
             />

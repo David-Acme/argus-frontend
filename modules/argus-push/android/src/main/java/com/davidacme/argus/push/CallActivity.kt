@@ -26,6 +26,7 @@ class CallActivity : Activity() {
     private var detachEnd: (() -> Unit)? = null
     private var pulse: ObjectAnimator? = null
     private val palette = CallPalette.STAGE
+    private val scale by lazy { callStageScaleOf(resources.configuration.screenHeightDp) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,10 +84,10 @@ class CallActivity : Activity() {
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(16), dp(48), dp(16), dp(24))
+            setPadding(dp(16), dp(scale.topDp), dp(16), dp(24))
         }
         column.addView(privateLine(spanish))
-        column.addView(label(PushText.TITLE, palette.text, TITLE_SP, bold = true), spaced(8))
+        column.addView(label(PushText.TITLE, palette.text, scale.titleSp, bold = true), spaced(8))
         column.addView(
             label(PushText.stageLine(spanish, display.critical, display.subject), palette.secondary, LINE_SP).apply {
                 maxLines = 2
@@ -94,7 +95,7 @@ class CallActivity : Activity() {
             },
             spaced(4),
         )
-        column.addView(estela(display.critical), LinearLayout.LayoutParams(dp(AVATAR_DP), dp(AVATAR_DP)).apply { topMargin = dp(32) })
+        column.addView(estela(display.critical), LinearLayout.LayoutParams(dp(scale.avatarDp), dp(scale.avatarDp)).apply { topMargin = dp(scale.avatarGapDp) })
         column.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
         column.addView(controls(callId, display, spanish))
         root.addView(
@@ -126,14 +127,15 @@ class CallActivity : Activity() {
         }
 
     private fun estela(critical: Boolean): View {
+        val estelaDp = (scale.avatarDp * ESTELA_FILL).toInt()
         val circle = FrameLayout(this).apply {
             background = oval(palette.surface)
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             addView(
                 ImageView(this@CallActivity).apply {
-                    setImageBitmap(EstelaStill.bitmap(dp(ESTELA_DP), if (critical) EstelaMood.Alert else EstelaMood.Idle))
+                    setImageBitmap(EstelaStill.bitmap(dp(estelaDp), if (critical) EstelaMood.Alert else EstelaMood.Idle))
                 },
-                FrameLayout.LayoutParams(dp(ESTELA_DP), dp(ESTELA_DP), Gravity.CENTER),
+                FrameLayout.LayoutParams(dp(estelaDp), dp(estelaDp), Gravity.CENTER),
             )
         }
         if (Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f) {
@@ -195,7 +197,7 @@ class CallActivity : Activity() {
                     background = oval(fill)
                     addView(icon(glyph, palette.text), FrameLayout.LayoutParams(dp(CONTROL_ICON_DP), dp(CONTROL_ICON_DP), Gravity.CENTER))
                 },
-                LinearLayout.LayoutParams(dp(CONTROL_DP), dp(CONTROL_DP)),
+                LinearLayout.LayoutParams(dp(scale.controlDp), dp(scale.controlDp)),
             )
             addView(label(text, palette.secondary, CAPTION_SP, bold = true), spaced(8))
             setOnClickListener { onTap() }
@@ -231,14 +233,11 @@ class CallActivity : Activity() {
     private companion object {
         const val MAX_WIDTH_DP = 480
         const val MIN_TOUCH_DP = 48
-        const val AVATAR_DP = 168
-        const val ESTELA_DP = 134
+        const val ESTELA_FILL = 0.8f
         const val GLOW_DP = 420
-        const val CONTROL_DP = 64
         const val CONTROL_ICON_DP = 28
         const val PULSE_MS = 900L
         const val PULSE_SCALE = 1.04f
-        const val TITLE_SP = 30f
         const val LINE_SP = 15f
         const val CAPTION_SP = 13f
     }

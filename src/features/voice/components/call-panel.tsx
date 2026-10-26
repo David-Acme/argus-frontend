@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { CallSettingsDialog } from '@/features/voice/components/call-settings-dialog';
 import { RoundControl } from '@/features/voice/components/round-control';
-import { CALL_PANEL_CONTROL } from '@/features/voice/constants/call.constant';
+
+import { useCallScale } from '@/features/voice/hooks/use-call-scale';
 import { useCallSpeaker } from '@/features/voice/hooks/use-call-speaker';
 
 type CallPanelProps = {
@@ -15,6 +16,7 @@ type CallPanelProps = {
 
 export function CallPanel({ muted, onToggleMute, onHangUp, onViewCamera }: CallPanelProps) {
   const { t } = useTranslation();
+  const { panelControl } = useCallScale();
   const [audioOpen, setAudioOpen] = useState(false);
   const speaker = useCallSpeaker(() => setAudioOpen(true));
   return (
@@ -22,7 +24,7 @@ export function CallPanel({ muted, onToggleMute, onHangUp, onViewCamera }: CallP
       <RoundControl
         icon="speaker"
         label={t('screens.voice.stage.speaker')}
-        size={CALL_PANEL_CONTROL}
+        size={panelControl}
         tone={speaker.on ? 'on' : 'neutral'}
         toggled={speaker.on}
         disabled={!speaker.available}
@@ -31,14 +33,14 @@ export function CallPanel({ muted, onToggleMute, onHangUp, onViewCamera }: CallP
       <RoundControl
         icon="cam"
         label={t('screens.voice.stage.camera')}
-        size={CALL_PANEL_CONTROL}
+        size={panelControl}
         disabled={!onViewCamera}
         onPress={() => onViewCamera?.()}
       />
       <RoundControl
         icon={muted ? 'micoff' : 'mic'}
         label={t('screens.voice.mute')}
-        size={CALL_PANEL_CONTROL}
+        size={panelControl}
         tone={muted ? 'on' : 'neutral'}
         toggled={muted}
         onPress={onToggleMute}
@@ -46,7 +48,7 @@ export function CallPanel({ muted, onToggleMute, onHangUp, onViewCamera }: CallP
       <RoundControl
         icon="hang"
         label={t('screens.voice.hang-up')}
-        size={CALL_PANEL_CONTROL}
+        size={panelControl}
         tone="decline"
         onPress={onHangUp}
       />

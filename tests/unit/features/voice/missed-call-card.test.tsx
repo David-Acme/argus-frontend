@@ -17,7 +17,9 @@ mock.module('expo-router', () => ({
   useRouter: () => ({ navigate, push }),
   useIsFocused: () => true,
 }));
-mock.module('@/shared/hooks/use-cached-rows', () => ({ useViewCacheRows: () => feed.rows }));
+mock.module('@/shared/hooks/use-infinite-list', () => ({
+  usePagedView: () => ({ rows: feed.rows }),
+}));
 mock.module('@/shared/hooks/use-capabilities', () => ({
   useCapabilities: () => ({ has: () => true }),
 }));

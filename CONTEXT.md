@@ -7190,6 +7190,12 @@ The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26
   (`res/drawable/argus_ic_*`), the colour is gone so the system CallStyle defaults apply, and the
   action list is a pure function (`ongoingCallActions`) with a NativeTrace line
   (`actions-<n>-own-icons-<style>-style-default-color`).
+- **Short screens.** The stage holds at 320×568, 360×640 and in phone landscape: `callScaleOf(height)`
+  (`shared/theme/call-scale.ts`, tested) steps the avatar (168, 136, 104, 64), the gap above it, the ring
+  and panel buttons (never below 48) and the caption lines (two, then one). `CallActivity` reads the same
+  steps from the display height in dp (`callStageScaleOf`), title size included.
+- **The missed card reads the paged notification feed** (`usePagedView`), the same subscription Inicio
+  uses: the feed is a paged value, not a row list, and reading it as rows crashed the first capture build.
 - **The missed-call notification** offers «Devolver» (opens `argus://call`) and joins the
   `argus-missed-calls` group, which is cleared when a call starts.
 - **iOS.** CallKit stays the system UI: the provider's icon is a template still of Estela and the

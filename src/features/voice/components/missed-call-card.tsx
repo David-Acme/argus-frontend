@@ -5,8 +5,8 @@ import { ScopedTheme } from 'uniwind';
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { notificationService } from '@/core/services/notification.service';
 import { CAPABILITY, NOTIFICATION_FEED_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
-import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
+import { usePagedView } from '@/shared/hooks/use-infinite-list';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
 import { Text } from '@/shared/ui/text';
@@ -91,9 +91,10 @@ export function MissedCallCard() {
   const pathname = usePathname();
   const { has } = useCapabilities();
   const { isActive, waitingCall } = useVoiceSession();
-  const rows = useViewCacheRows<INotificationPreviewCacheRow>(
+  const { rows } = usePagedView<INotificationPreviewCacheRow>(
     VIEW_CACHE_KEYS.notificationFeed,
-    NOTIFICATION_FEED_SCOPE
+    NOTIFICATION_FEED_SCOPE,
+    has(CAPABILITY.notificationsRead)
   );
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const now = useNow(CALL_MISSED_TICK_MS);
