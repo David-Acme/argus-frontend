@@ -53,6 +53,7 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   chipValue: 'text-chip-value',
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
+  initialPortrait: 'text-initial-portrait',
   sectionLink: 'text-section-link',
   toastTitle: 'text-toast-title',
   toastBody: 'text-toast-body',

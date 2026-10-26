@@ -177,6 +177,7 @@
   --spacing-well-small: 36px;
   --spacing-avatar: 36px;
   --spacing-avatar-large: 56px;
+  --spacing-avatar-portrait: 80px;
   --spacing-button: 50px;
   --spacing-button-compact: 40px;
   --spacing-field: 48px;
@@ -235,6 +236,7 @@
   --spacing-column-aside: 300px;
   --spacing-column-wide: 340px;
   --spacing-column-feed: 620px;
+  --spacing-column-profile: 460px;
   --spacing-preview-phone: 760px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
@@ -324,6 +326,10 @@
   --text-initial-large--line-height: 33px;
   --text-initial-large--letter-spacing: 0px;
   --text-initial-large--font-weight: 700;
+  --text-initial-portrait: 28px;
+  --text-initial-portrait--line-height: 34px;
+  --text-initial-portrait--letter-spacing: -0.28px;
+  --text-initial-portrait--font-weight: 700;
   --text-section-link: 15px;
   --text-section-link--line-height: 22.5px;
   --text-section-link--letter-spacing: 0px;

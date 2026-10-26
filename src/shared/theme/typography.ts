@@ -38,6 +38,7 @@ export const typeRoles = {
   chipValue: { size: 13, line: 17.55, weight: '800', tracking: 0, maxScale: 2 },
   initial: { size: 15, line: 22.5, weight: '400', tracking: 0, maxScale: 1.3 },
   initialLarge: { size: 22, line: 33, weight: '700', tracking: 0, maxScale: 1.5 },
+  initialPortrait: { size: 28, line: 34, weight: '700', tracking: -0.01, maxScale: 1.3 },
   sectionLink: { size: 15, line: 22.5, weight: '600', tracking: 0, maxScale: 2 },
   toastTitle: { size: 15, line: 22.5, weight: '650', tracking: 0, maxScale: 2 },
   toastBody: { size: 14, line: 21, weight: '400', tracking: 0, maxScale: 2 },

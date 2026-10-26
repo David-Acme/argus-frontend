@@ -29,6 +29,7 @@ export {
 } from './tokens';
 export { useEffects, useEffectsOverrides, type Effects, type PerfTier } from './effects';
 export { feedback } from './feedback';
+export { feedbackEnabled, setFeedbackEnabled } from './feedback-switch';
 export { usePressScale, type PressScaleKind } from './press-scale';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
 export { useWindowHeight, useWindowLayout, useWindowWidth } from './use-window-layout';

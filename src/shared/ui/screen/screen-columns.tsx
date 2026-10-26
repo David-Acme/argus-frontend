@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { Children, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import { layout, useWindowLayout } from '@/shared/theme';
-import { ColumnGrowProvider, ScreenColumnProvider } from './screen-column-context';
+import { ColumnGrowProvider, ScreenColumnProvider, usePanes } from './screen-column-context';
 
 export type ScreenColumnsProps = { children: ReactNode };
 
@@ -25,7 +25,10 @@ function columnStyle(width: number | undefined, max: number | undefined) {
 
 function useDesktop(): boolean {
   const { windowClass } = useWindowLayout();
-  return windowClass === 'expanded' || windowClass === 'wide';
+  const panes = usePanes();
+  return (
+    windowClass === 'expanded' || windowClass === 'wide' || (panes && windowClass === 'medium')
+  );
 }
 
 export function ScreenColumns({ children }: ScreenColumnsProps) {
