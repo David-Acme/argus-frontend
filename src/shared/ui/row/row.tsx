@@ -5,9 +5,11 @@ import { PressableSurface } from '@/shared/ui/pressable';
 import { Text, type TextTone } from '@/shared/ui/text';
 import { RowPosition } from './row-position';
 
+export type RowMeta = { text: string; mono: true };
+
 export type RowProps = {
   title: string;
-  meta?: string;
+  meta?: string | RowMeta;
   metaTone?: TextTone;
   leading?: ReactNode;
   trailing?: ReactNode;
@@ -61,8 +63,8 @@ function RowBody({
         </Text>
         {meta ? (
           <View className="mt-row-meta-gap">
-            <Text variant="rowMeta" tone={metaTone}>
-              {meta}
+            <Text variant="rowMeta" tone={metaTone} mono={typeof meta !== 'string'}>
+              {typeof meta === 'string' ? meta : meta.text}
             </Text>
           </View>
         ) : null}
@@ -76,7 +78,8 @@ const FRAME = 'min-h-row flex-row items-center gap-row-gap px-row-x py-row-y';
 
 function spokenLabel({ title, meta, trailing }: Pick<RowProps, 'title' | 'meta' | 'trailing'>) {
   const value = typeof trailing === 'string' ? trailing : undefined;
-  return [title, meta, value].filter(Boolean).join(', ');
+  const line = typeof meta === 'string' ? meta : meta?.text;
+  return [title, line, value].filter(Boolean).join(', ');
 }
 
 export function Row({ onPress, testID, ...body }: RowProps) {

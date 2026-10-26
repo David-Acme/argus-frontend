@@ -132,7 +132,7 @@ const SETTINGS = {
           fallback: '1',
           unit: 'x',
         }),
-        setting('tts.cache_mb', 'synthesis', 'integer', 'advanced', '256', {
+        setting('tts.threads', 'synthesis', 'integer', 'advanced', '256', {
           min: 16,
           max: 4096,
           step: 16,
@@ -154,7 +154,7 @@ const SETTINGS = {
           step: 0.05,
           fallback: '0.3',
         }),
-        setting('llm.context', 'generation', 'choice', 'advanced', '4096', {
+        setting('llm.context_size', 'generation', 'choice', 'advanced', '4096', {
           choices: ['2048', '4096', '8192', '16384', '32768'],
           apply: 'restart',
         }),
@@ -173,7 +173,7 @@ const SETTINGS = {
       configured: true,
       settings: [
         setting('guard.app_siren_enabled', 'siren', 'toggle', 'basic', 'true'),
-        setting('guard.digest_hour', 'summary', 'integer', 'basic', '8', {
+        setting('guard.siren_seconds', 'summary', 'integer', 'basic', '8', {
           min: 0,
           max: 23,
           step: 1,

@@ -45,7 +45,7 @@ function Advanced({ owner, onOpen }: AdvancedProps) {
     <Row
       key={setting.key}
       title={settingText(setting.key).label}
-      meta={setting.key}
+      meta={{ text: setting.key, mono: true }}
       trailing={valueText(setting, setting.value)}
       chevron
       onPress={() => onOpen(setting)}

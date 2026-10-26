@@ -1,3 +1,5 @@
+import { advancedKeys } from './advanced-keys';
+
 export const settings = {
   title: 'Settings',
   'load-error': 'Settings could not be loaded.',
@@ -269,6 +271,10 @@ export const settings = {
     stt: 'Transcription',
   },
   keys: {
+    kws: advancedKeys.kws,
+    tamper: advancedKeys.tamper,
+    ptz: advancedKeys.ptz,
+    look: advancedKeys.look,
     tts: {
       engine_es: {
         label: 'Spanish voice engine',
@@ -372,6 +378,7 @@ export const settings = {
       n_ubatch: { label: 'Micro-batch', hint: 'Size of each step of the reading batch.' },
     },
     memory: {
+      ...advancedKeys.memory,
       recall_top_k: {
         label: 'Memories per answer',
         hint: 'How many memories it may use when answering.',
@@ -438,6 +445,7 @@ export const settings = {
       },
     },
     operator: {
+      ...advancedKeys.operator,
       night_start: {
         label: 'Night starts',
         hint: 'Hour from which the house is watched as night.',
@@ -527,6 +535,7 @@ export const settings = {
       },
     },
     guard: {
+      ...advancedKeys.guard,
       notify_level: {
         label: 'Level to notify you',
         hint: 'Severity from which you get an alert (1 = everything).',
@@ -658,6 +667,7 @@ export const settings = {
       },
     },
     calls: {
+      ...advancedKeys.calls,
       enabled: { label: 'Calls from Argus', hint: 'Argus may call you for reminders and alerts.' },
     },
     conversation: {
@@ -667,10 +677,12 @@ export const settings = {
       },
     },
     recording: {
+      ...advancedKeys.recording,
       enabled: { label: 'Record clips', hint: 'Keeps clips of what the cameras detect.' },
       retention_days: { label: 'Days clips are kept', hint: 'Older clips are deleted.' },
     },
     watch: {
+      ...advancedKeys.watch,
       echo_tail_ms: {
         label: 'Pause after speaking through a camera (ms)',
         hint: 'How long it ignores the echo of its own voice from the camera.',

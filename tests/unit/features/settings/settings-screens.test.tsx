@@ -258,7 +258,7 @@ describe('Ajustes on a phone', () => {
     expect(screen.getByRole('heading', { name: 'Voz de Argus' })).toBeDefined();
     expect(screen.getByRole('radio', { name: /Supertonic/ })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Opciones avanzadas · 2' }));
-    expect(screen.getByText('tts.threads')).toBeDefined();
+    expect(screen.getByRole('button', { name: /^Hilos de cómputo, tts.threads/ })).toBeDefined();
   });
 
   test('a service that does not answer names itself and offers to retry', () => {

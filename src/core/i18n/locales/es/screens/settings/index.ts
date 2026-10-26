@@ -1,3 +1,5 @@
+import { advancedKeys } from './advanced-keys';
+
 export const settings = {
   title: 'Ajustes',
   'load-error': 'No se pudo cargar la configuración.',
@@ -268,6 +270,10 @@ export const settings = {
     stt: 'Transcripción',
   },
   keys: {
+    kws: advancedKeys.kws,
+    tamper: advancedKeys.tamper,
+    ptz: advancedKeys.ptz,
+    look: advancedKeys.look,
     tts: {
       engine_es: {
         label: 'Motor de voz en español',
@@ -398,6 +404,7 @@ export const settings = {
       n_ubatch: { label: 'Micro-lote', hint: 'Tamaño de cada paso del lote de lectura.' },
     },
     memory: {
+      ...advancedKeys.memory,
       recall_top_k: {
         label: 'Recuerdos por respuesta',
         hint: 'Cuántos recuerdos puede usar al contestar.',
@@ -473,6 +480,7 @@ export const settings = {
       },
     },
     operator: {
+      ...advancedKeys.operator,
       night_start: {
         label: 'Inicio de la noche',
         hint: 'Hora desde la que se vigila como de noche.',
@@ -580,6 +588,7 @@ export const settings = {
       },
     },
     guard: {
+      ...advancedKeys.guard,
       notify_level: {
         label: 'Nivel para avisarte',
         hint: 'Desde qué gravedad recibes un aviso (1 = todo).',
@@ -729,6 +738,7 @@ export const settings = {
       },
     },
     calls: {
+      ...advancedKeys.calls,
       enabled: {
         label: 'Llamadas de Argus',
         hint: 'Argus puede llamarte para recordatorios y alertas.',
@@ -741,6 +751,7 @@ export const settings = {
       },
     },
     recording: {
+      ...advancedKeys.recording,
       enabled: { label: 'Grabar clips', hint: 'Guarda clips de lo que detectan las cámaras.' },
       retention_days: {
         label: 'Días que se guardan los clips',
@@ -748,6 +759,7 @@ export const settings = {
       },
     },
     watch: {
+      ...advancedKeys.watch,
       echo_tail_ms: {
         label: 'Pausa tras hablar por la cámara (ms)',
         hint: 'Tiempo en que ignora el eco de su propia voz en la cámara.',
