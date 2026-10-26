@@ -63,6 +63,35 @@ describe('Status', () => {
     expect(container.querySelectorAll('radialGradient').length).toBe(3);
   });
 
+  test('a stat with an action is a link named by its value and label', () => {
+    const opened: string[] = [];
+    render(
+      <Status
+        tone="calm"
+        sentence="Todo tranquilo."
+        meta="En casa"
+        stats={[{ icon: 'cam', value: '5', label: 'cámaras', onPress: () => opened.push('cam') }]}
+      />
+    );
+    fireEvent.click(screen.getByRole('link', { name: '5 cámaras' }));
+    expect(opened).toEqual(['cam']);
+  });
+
+  test('the band can take an aura other than its tone', () => {
+    setWindowWidth(1280);
+    const stopColors = (aura?: 'off') => {
+      const { container, unmount } = render(
+        <Status tone="calm" sentence="Sin conexión." meta="Modo En casa" aura={aura} />
+      );
+      const colors = [...container.querySelectorAll('stop')].map((stop) =>
+        stop.getAttribute('stop-color')
+      );
+      unmount();
+      return colors;
+    };
+    expect(stopColors('off')).not.toEqual(stopColors());
+  });
+
   test('the card is an alert with one primary, one secondary and a quiet tertiary', () => {
     const pressed: string[] = [];
     render(

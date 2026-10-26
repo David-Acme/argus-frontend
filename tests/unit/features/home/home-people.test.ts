@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { PresenceOverview } from '@/core/types';
-import { homePeopleOf, homeSinceOf } from '@/features/home/model/home-people';
+import {
+  homePeopleOf,
+  homeSinceOf,
+  peopleWorthShowing,
+  presenceKnown,
+} from '@/features/home/model/home-people';
 
 const person = (
   id: string,
@@ -89,5 +94,19 @@ describe('how the since reads', () => {
     expect(homeSinceOf({ since: new Date(2026, 9, 26, 9, 10) }, now)).toBe('today');
     expect(homeSinceOf({ since: new Date(2026, 9, 25, 22, 0) }, now)).toBe('day');
     expect(homeSinceOf({ since: null }, now)).toBe('none');
+  });
+});
+
+describe('when presence is worth saying', () => {
+  test('one person whose presence is unknown is not a section', () => {
+    expect(peopleWorthShowing([{ state: 'unknown' }])).toBe(false);
+    expect(peopleWorthShowing([{ state: 'home' }])).toBe(true);
+    expect(peopleWorthShowing([{ state: 'unknown' }, { state: 'unknown' }])).toBe(true);
+    expect(peopleWorthShowing([])).toBe(false);
+  });
+
+  test('the hero names who is home only once someone is known', () => {
+    expect(presenceKnown([{ state: 'unknown' }])).toBe(false);
+    expect(presenceKnown([{ state: 'unknown' }, { state: 'away' }])).toBe(true);
   });
 });

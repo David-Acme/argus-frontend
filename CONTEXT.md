@@ -6865,6 +6865,92 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
 
+## Inicio: composition, hero, band and states (Phase 2, T4, 2026-10-26)
+
+`src/features/home/screens/home-screen.tsx` lays out the sections of T5, T6
+and T7 under one hero; every decision is a pure function in
+`model/inicio-hero.ts`, `inicio-stats.ts`, `inicio-states.ts` and
+`inicio-layout.ts`.
+
+- **Top bar and hero.** On phones and tablets the top bar is the greeting
+  (`dayPart`: morning 5–11, afternoon 12–19, evening otherwise) and one
+  search button that opens Command; the hero is `Status` with Estela, the
+  sentence, the meta and the stats. From 1024 px the hero is the band: the
+  greeting leads the meta, the stats are cameras and alerts (from 1700 px
+  also detections and pending), and «Nuevo» opens Command's new-item actions.
+  The band draws its Aura (R-D29); the Screen's Aura field is drawn only on
+  phones and tablets.
+- **Phase.** `inicioPhase` orders loading (no context or no first sync) >
+  alert (an open response) > offline > night > away/armed > calm. Each phase
+  has one look (`heroLook`): tone, Estela's state and the aura; offline is
+  calm in tone with Estela off and the grey aura, so the band takes an aura
+  apart from its tone (`Status` `aura`).
+- **Alert.** The hero says what happened and where (`alertSentence` in
+  `features/response`, kept beside the response model) with the age and the
+  response headline as meta. `components/hero/inicio-alert.tsx` is the card:
+  the camera live (only with `camera.view`), «Ver cámara» (or «Ver
+  Seguridad»), «Es real» or, once confirmed, the emergency call, «Es una falsa
+  alarma», then the contacts. It lives in `home`, not `response`, because a
+  response component importing `features/cameras` joins the recorded
+  cameras ↔ voice ↔ response cycle.
+- **Offline.** `useOfflineNotice` decides when (12 s); the age of the last
+  known facts is counted from the notice minus its delay, on the minute
+  clock. Phones show it above the hero, the band in the first column. The
+  stats and the meta stay: they are the last known facts.
+- **New household.** No camera, reminder, project or open task: one first
+  step instead of the sections, the camera when the role can add one, else
+  the first reminder (Command's new-item actions).
+- **Before the context.** The phone hero is a skeleton and Ahora's place
+  holds three skeleton rows; the band shows the greeting with no stats.
+- **Columns** come from what the role reads (`inicioColumns`): an empty
+  column is dropped, the lead block (alert, offline, SOS, first step) tops
+  the first column left, and when every remaining column is fixed the last
+  one takes the rest of the width. The grown section is chosen by name, not
+  position, so a section that may render nothing (Mañana, En casa) is not the
+  one that grows; Cámaras grows in its column.
+- **Night and away.** `WatchSection` («Esta noche» at night, «Mientras no
+  estás» away or armed) reads the effective mode through `useGuardHeadline`,
+  the same answer the sidebar gives, and names the cameras of every place not
+  at home (`watchedCameras`, three names and a count) and what wakes or tells
+  you (`wakeRuleOf`: night an unknown person, away someone who insists or
+  enters an alert zone, armed a critical danger, from the modes' own
+  details). No watched camera, no section. On phones it leads the stack and,
+  at night, Mañana takes Ahora's place, as the prototype draws; on the desktop
+  it tops the agenda column.
+- **A home with little data.** No card is ever stretched into empty space:
+  only Cámaras' tile grid grows in its column, every other column ends
+  where its content ends, on a list or chips. Ideas are T5's `AgendaEmpty`
+  chips (`IdeaChips`, shared with «Prueba a decirle»). When nothing is
+  pending (`isSparse`) the side column ends with Estado (`SystemSection`:
+  the active modules and the cameras online), «Así te ayuda Argus» (one row
+  per right the reader has: cameras, reminders, voice) and «Prueba a
+  decirle» (phrases that ask Argus, each behind the right its answer needs).
+  An empty Novedades drops its column. A new household hides the zero stats
+  and stacks its first step, Novedades if any, Estado and «Prueba a
+  decirle»; on a tablet also «Así te ayuda Argus» before the phrases and
+  the day (Hoy) after them. With no mode and nobody known its hero meta is
+  «Conecta una cámara para que Argus vigile», never a blank. Presence that is unknown is never «sin datos»: a person reads
+  «Aún no sé si está en casa», me with the hint to connect a camera or the
+  phone; one person whose presence is unknown is no section, and the hero
+  names who is home only once someone's presence is known. Rutinas has no
+  source in the app and is not drawn; storage and the server's temperature
+  are not known to the app either.
+- **Guest SOS.** A role that can panic and has no Seguridad holds the
+  existing `PanicButton` on Inicio (R-D10).
+- **One live Estela (R-D31).** `useHeroPresence` (claimed by the Status hero)
+  and `useCentrePresence` (the bar's and the rail's centre) share one small
+  store in `shared/ui/presence/presence-focus.ts`: while a hero is mounted the
+  centre paints the still frame, and while hold-to-talk listens the centre is
+  live and the hero holds still.
+- **Removed.** The nine-card dashboard, the bell popover and its
+  `/?panel=notifications` link (the assistant's notifications link opens
+  `/notification`, which an inactive role with `notifications.read` may
+  open), the search field, the activity heatmap and its projection, the
+  getting-started checklist with its signals projection, and the camera grid.
+  Deleting a notification lives on the full feed, one button per item with
+  Deshacer. The earlier sections of this file that describe the bell and the
+  checklist are history.
+
 ## Hold the centre tab to talk (Phase 2, T2, 2026-10-26)
 
 `useArgusVoice()` (`features/voice/hooks/use-argus-voice.ts`) gives the Nav

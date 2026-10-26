@@ -118,8 +118,8 @@ describe('the alert card the response e2e answers', () => {
     expect(hook).toMatch(/confirm:[\s\S]*?: undefined,[\s\S]*?call: \(\) => \{\s*store\.apply\(/);
     expect(hook).toContain('return responseService.decide(response.id, verdict);');
     expect(hook).toContain("errorTitle: t('screens.response.verdict-failed')");
-    expect(hook).toContain(
-      'useResponseStore.setState((state) => ({ responses: { ...state.responses, [before.id]: before } }));'
+    expect(hook).toMatch(
+      /useResponseStore\.setState\(\(state\) => \(\{\s*responses: \{ \.\.\.state\.responses, \[before\.id\]: before \},?\s*\}\)\);/
     );
     expect(en('screens.response.verdict-failed')).toBe('Your answer could not be saved');
   });

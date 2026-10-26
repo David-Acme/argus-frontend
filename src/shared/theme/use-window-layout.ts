@@ -9,3 +9,7 @@ export function useWindowLayout(): WindowLayout {
 export function useWindowHeight(): number {
   return useWindowDimensions().height;
 }
+
+export function useWindowWidth(): number {
+  return useWindowDimensions().width;
+}

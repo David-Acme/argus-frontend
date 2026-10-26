@@ -23,9 +23,7 @@ const moduleRoutes: RouteSpec[] = [
 
 const homeProductivity = async (page: Page): Promise<number> =>
   (await page.getByRole('heading', { name: 'Today', exact: true }).count()) +
-  (await page.getByRole('heading', { name: 'Projects', exact: true }).count()) +
-  (await page.getByRole('button', { name: 'See all: Today', exact: true }).count()) +
-  (await page.getByRole('button', { name: 'See all: Projects', exact: true }).count());
+  (await page.getByRole('heading', { name: 'Tomorrow', exact: true }).count());
 
 const onProjects = (page: Page): Promise<number> => page.getByRole('button', { name: 'New project', exact: true }).count();
 
@@ -78,7 +76,7 @@ test('a module turned off on one device leaves the other at once, and comes back
   await expect
     .poll(() => second.page.getByRole('tab', { name: 'Agenda', exact: true }).count(), { timeout: LIVE_MS })
     .toBeGreaterThan(0);
-  await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(4);
+  await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(2);
   await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await expect.poll(() => second.page.getByRole('button', { name: /^Huerto comunitario, / }).count(), { timeout: LIVE_MS }).toBe(1);

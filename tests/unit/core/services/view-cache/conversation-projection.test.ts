@@ -33,11 +33,6 @@ const rowsOf = (writes: ReturnType<typeof projectConversations>, key: string, sc
   return write && 'rows' in write ? [...write.rows] : [];
 };
 
-const valueOf = (writes: ReturnType<typeof projectConversations>, key: string): unknown => {
-  const write = writes.find((candidate) => candidate.key === key);
-  return write && 'value' in write ? write.value : undefined;
-};
-
 describe('toConversationRow', () => {
   test('reads the counterpart as a number and the time in milliseconds', () => {
     const row = toConversationRow(source({ id: '1', counterpartId: '0', counterpartName: '', kind: 'turn', leg: 'phone' }));
@@ -84,7 +79,7 @@ describe('summaryOf', () => {
 });
 
 describe('projectConversations', () => {
-  test('writes the list with Argus first and then the members by their last line, and the total unread', () => {
+  test('writes the list with Argus first and then the members by their last line', () => {
     const writes = projectConversations({
       summaries: [
         facts({ counterpartId: '3', last: source({ id: '3', createdAt: new Date(T0 + 6 * MINUTE) }), unread: 2 }),
@@ -95,14 +90,12 @@ describe('projectConversations', () => {
     expect(
       (rowsOf(writes, VIEW_CACHE_KEYS.conversationList) as IConversationSummaryCacheRow[]).map((row) => row.counterpartId)
     ).toEqual([0, 5, 3]);
-    expect(valueOf(writes, VIEW_CACHE_KEYS.conversationUnread)).toBe(3);
     expect(writes.some((write) => write.key === VIEW_CACHE_KEYS.conversationThread)).toBe(false);
   });
 
-  test('no rows writes an empty list and zero unread', () => {
+  test('no rows writes an empty list', () => {
     const writes = projectConversations({ summaries: [] });
     expect(rowsOf(writes, VIEW_CACHE_KEYS.conversationList)).toEqual([]);
-    expect(valueOf(writes, VIEW_CACHE_KEYS.conversationUnread)).toBe(0);
   });
 });
 

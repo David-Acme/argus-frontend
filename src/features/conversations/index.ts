@@ -7,4 +7,3 @@ export const ConversationThreadScreen = lazyScreen(
   () => import('./screens/conversation-screens'),
   'ConversationThreadScreen'
 );
-export { useConversationUnread } from './hooks/use-conversations';

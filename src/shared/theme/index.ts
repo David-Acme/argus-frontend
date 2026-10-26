@@ -31,7 +31,7 @@ export { useEffects, useEffectsOverrides, type Effects, type PerfTier } from './
 export { feedback } from './feedback';
 export { usePressScale, type PressScaleKind } from './press-scale';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
-export { useWindowHeight, useWindowLayout } from './use-window-layout';
+export { useWindowHeight, useWindowLayout, useWindowWidth } from './use-window-layout';
 export {
   classifyWindowSize,
   windowClassOf,

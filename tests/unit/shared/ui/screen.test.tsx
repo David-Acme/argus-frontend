@@ -91,6 +91,27 @@ describe('Screen', () => {
     expect(seen).toContain(true);
   });
 
+  test('a column with a ceiling grows only up to it, and a fixed width wins', () => {
+    setWindowWidth(1920);
+    render(
+      <Screen columns>
+        <ScreenColumns>
+          <ScreenColumn label="Novedades" max={620}>
+            <Text>b</Text>
+          </ScreenColumn>
+          <ScreenColumn label="En casa" width={340} max={620}>
+            <Text>c</Text>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    const feed = screen.getByLabelText('Novedades') as HTMLElement;
+    const side = screen.getByLabelText('En casa') as HTMLElement;
+    expect(feed.style.maxWidth).toBe('620px');
+    expect(side.style.width).toBe('340px');
+    expect(side.style.maxWidth).toBe('');
+  });
+
   test('outside a column a section is not sticky', () => {
     expect(renderHook(() => useInScreenColumn()).result.current).toBe(false);
   });

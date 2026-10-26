@@ -18,7 +18,10 @@ import {
   urgencyOf,
   withUnreadSnapshot,
 } from '@/features/home/model/notification-threads';
-import { moduleOfNotification, notificationVisible } from '@/features/home/model/notification-modules';
+import {
+  moduleOfNotification,
+  notificationVisible,
+} from '@/features/home/model/notification-modules';
 
 function row(
   id: string,
@@ -179,12 +182,20 @@ describe('a request the assistant kept for a module that was off', () => {
   const done = row(
     '51',
     { kind: 'assistant_task', commandId: 'intent:42:done' },
-    { type: 'assistant_task', title: 'Tu petición está lista', body: 'Agendé tu reunión del jueves.' }
+    {
+      type: 'assistant_task',
+      title: 'Tu petición está lista',
+      body: 'Agendé tu reunión del jueves.',
+    }
   );
   const failed = row(
     '52',
     { kind: 'assistant_task', commandId: 'intent:43:failed' },
-    { type: 'assistant_task', title: 'No pude completar tu petición', body: 'La guardé como recordatorio.' }
+    {
+      type: 'assistant_task',
+      title: 'No pude completar tu petición',
+      body: 'La guardé como recordatorio.',
+    }
   );
   const coreOnly = (moduleId: string) => moduleId === 'core';
 
@@ -202,7 +213,10 @@ describe('a request the assistant kept for a module that was off', () => {
   });
 
   test('every request is its own thread, so a failure never hides the earlier success', () => {
-    expect(groupNotifications([failed, done]).map((thread) => thread.latest.id)).toEqual(['52', '51']);
+    expect(groupNotifications([failed, done]).map((thread) => thread.latest.id)).toEqual([
+      '52',
+      '51',
+    ]);
   });
 
   test('is core: it is shown with every optional module off', () => {
@@ -226,7 +240,11 @@ describe('a notification of a type this build does not know', () => {
   );
   const odd = [
     row('61', {}, { type: 'x', title: 'Sin datos', body: '' }),
-    row('62', { kind: 5, threadKey: 7, urgency: {}, phase: null }, { type: 'y', title: 'Datos raros' }),
+    row(
+      '62',
+      { kind: 5, threadKey: 7, urgency: {}, phase: null },
+      { type: 'y', title: 'Datos raros' }
+    ),
     row('63', { kind: '   ', threadKey: '   ' }, { type: '', title: 'Vacíos' }),
   ];
   const coreOnly = (moduleId: string) => moduleId === 'core';
@@ -267,7 +285,13 @@ describe('a safety alert carries the time it was said and the time it was receiv
   const said = 1_790_000_000;
   const received = 1_790_000_030;
   const safety = (id: string, data: Record<string, unknown>) =>
-    row(id, { threadKey: `guard:safety:${id}`, kind: 'guard_duress', phase: 'opened', urgency: 'critical', ...data });
+    row(id, {
+      threadKey: `guard:safety:${id}`,
+      kind: 'guard_duress',
+      phase: 'opened',
+      urgency: 'critical',
+      ...data,
+    });
   const labels = {
     stamp: (at: number) => `t${at / 1000}`,
     said: (time: string) => `said ${time}`,
@@ -298,26 +322,34 @@ describe('a safety alert carries the time it was said and the time it was receiv
       `said t${said}`,
       `received t${received}`,
     ]);
-    expect(rowTimes(safety('9', { saidAt: null, deliveredAt: received }), labels)).toEqual([`t${received}`]);
+    expect(rowTimes(safety('9', { saidAt: null, deliveredAt: received }), labels)).toEqual([
+      `t${received}`,
+    ]);
     expect(rowTimes(row('10'), labels)).toEqual(['t10']);
     expect(rowTimes(row('11'), { ...labels, stamp: () => null })).toEqual([]);
   });
 
   test('the labels read in es and en', () => {
-    expect(translate(localeDictionaries.es, 'screens.home.thread.said-at', { time: '14:32' })).toBe('Dicha 14:32');
-    expect(translate(localeDictionaries.es, 'screens.home.thread.delivered-at', { time: '14:35' })).toBe(
-      'Recibida 14:35'
+    expect(translate(localeDictionaries.es, 'screens.home.thread.said-at', { time: '14:32' })).toBe(
+      'Dicha 14:32'
     );
-    expect(translate(localeDictionaries.en, 'screens.home.thread.said-at', { time: '2:32 PM' })).toBe('Said 2:32 PM');
-    expect(translate(localeDictionaries.en, 'screens.home.thread.delivered-at', { time: '2:35 PM' })).toBe(
-      'Received 2:35 PM'
-    );
+    expect(
+      translate(localeDictionaries.es, 'screens.home.thread.delivered-at', { time: '14:35' })
+    ).toBe('Recibida 14:35');
+    expect(
+      translate(localeDictionaries.en, 'screens.home.thread.said-at', { time: '2:32 PM' })
+    ).toBe('Said 2:32 PM');
+    expect(
+      translate(localeDictionaries.en, 'screens.home.thread.delivered-at', { time: '2:35 PM' })
+    ).toBe('Received 2:35 PM');
   });
 });
 
 describe('a household message notification', () => {
   const message = (data: Record<string, unknown>) =>
-    groupNotifications([row('70', { kind: 'household_message', fromUserId: 3, messageKey: 'msg-1', ...data })])[0]!;
+    groupNotifications([
+      row('70', { kind: 'household_message', fromUserId: 3, messageKey: 'msg-1', ...data }),
+    ])[0]!;
 
   test('opens the conversation with the counterpart it names', () => {
     expect(messageCounterpartOf(message({ counterpartId: 3 }))).toBe(3);
@@ -327,11 +359,19 @@ describe('a household message notification', () => {
   test('falls back to the sender when the counterpart is missing or malformed', () => {
     expect(messageCounterpartOf(message({}))).toBe(3);
     expect(messageCounterpartOf(message({ counterpartId: -1 }))).toBe(3);
-    expect(householdMessageCounterpart({ kind: 'household_message', counterpartId: 'x', fromUserId: 'y' })).toBeNull();
+    expect(
+      householdMessageCounterpart({
+        kind: 'household_message',
+        counterpartId: 'x',
+        fromUserId: 'y',
+      })
+    ).toBeNull();
   });
 
   test('another kind opens no conversation', () => {
-    expect(messageCounterpartOf(groupNotifications([row('71', { kind: 'call', counterpartId: 3 })])[0]!)).toBeNull();
+    expect(
+      messageCounterpartOf(groupNotifications([row('71', { kind: 'call', counterpartId: 3 })])[0]!)
+    ).toBeNull();
     expect(householdMessageCounterpart({ counterpartId: 3 })).toBeNull();
   });
 });
