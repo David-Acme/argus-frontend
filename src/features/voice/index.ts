@@ -1,3 +1,4 @@
+export { ArgusListening } from './components/argus-listening';
 export { CallPill } from './components/call-pill';
 export { CallPreferencesSection } from './components/call-preferences-section';
 export { CallSurface } from './components/call-surface';
@@ -5,6 +6,7 @@ export { IncomingCallSurface } from './components/incoming-call-surface';
 export { VoiceWebNotice } from './components/voice-web-notice';
 export { callLockedId } from './model/call-lock';
 export { currentCallLockRedirect, outsideCallLockId } from './model/call-lock-state';
+export { useArgusVoice, type ArgusVoice } from './hooks/use-argus-voice';
 export { useCall } from './hooks/use-call';
 export { useCallPush } from './hooks/use-call-push';
 export { useDesktopBridge } from './hooks/use-desktop-bridge';

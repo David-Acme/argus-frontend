@@ -4,7 +4,7 @@ import { AppShell } from '@/shared/components/layout';
 import { EntryGate, useDeepLinkRestore, useSignedInHistory } from '@/features/auth';
 import { PrivacyGate } from '@/features/privacy';
 import { ModuleNotices } from '@/features/modules';
-import { useCallPush } from '@/features/voice';
+import { ArgusListening, useCallPush } from '@/features/voice';
 import { useBeaconController } from '@/features/proximity';
 import { useTamperEvidenceKeeper } from '@/features/cameras';
 import { useNotificationPermission, usePushRegistration } from '@/features/notification';
@@ -39,6 +39,7 @@ export default function AppLayout() {
             contentStyle: { backgroundColor: BG_COLORS[theme === 'dark' ? 'dark' : 'light'] },
           }}
         />
+        <ArgusListening />
       </AppShell>
       </PrivacyGate>
     </EntryGate>

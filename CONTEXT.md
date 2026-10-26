@@ -6434,3 +6434,58 @@ build was 117,468,588 B); arm64-v8a review APKs 110,928,024 B (ff881a0) and
   frame is followed by a callback well under a millisecond later; taken as the
   beat, it made every frame look on time and the paint-ahead never ran.
   `noteBeat` ignores gaps under 4 ms.
+
+## Hold the centre tab to talk (Phase 2, T2, 2026-10-26)
+
+`useArgusVoice()` (`features/voice/hooks/use-argus-voice.ts`) gives the Nav
+its `voice` handlers and the `listening` flag, and `ArgusListening`
+(`features/voice/components/argus-listening.tsx`) is mounted once in the
+`(app)` layout. The state machine is `model/hold-talk.ts` (idle → listening →
+sending → answered | failed | cancelled), held in `stores/hold-talk.store.ts`.
+
+**The voice path, measured before building.** The backend has no
+one-utterance endpoint: a turn is closed by argus-voice's VAD
+(`services/voice/CONTEXT.md`, "Session behavior decisions"), and the typed
+chat mode (`voice:start {mode:"chat"}`) takes text, not audio. So the hold
+drives the existing call stack (`voiceService`, WebRTC through LiveKit, or
+the `/sync` duplex leg when `/rtc/token` answers the fallback): the session
+starts on hold, the microphone stays open after the release until the VAD
+closes the turn, and the session stops once Argus has spoken. Nothing on the
+server changed. Three backend facts make it fit:
+
+- `[voice] opening` is `none` by default, so a session starts listening at
+  once and says no greeting (an install with `opening = "spoken"` would greet
+  on every hold).
+- `voice:mute` drops the PCM queue and resets the VAD, so muting on the
+  release would throw away the utterance the VAD has not closed yet. The
+  microphone is muted only once the turn was heard (a final STT line) and
+  Argus left `listening` (`holdTalkMutes`), so nothing said afterwards opens a
+  second turn.
+- Every identified voice turn is mirrored to the user's Argus thread
+  (`services/llm/CONTEXT.md`, "The messenger and the app's conversation
+  thread"), so the reply stays in the thread the card opens.
+
+**When it settles.** After the release: nothing heard in 4 s is «No te
+escuché»; heard and no reply in 30 s is «Argus no respondió»; a reply is
+answered once Argus has been back in `listening` for 800 ms (its speech
+ended) or the session ended. The card reads the reply and the latest
+`voice:action` as a chip (`voiceActionLabel`, shared with the call's chips);
+a tap opens `ASSISTANT_THREAD_HREF`, an outside tap closes it, a failure
+closes itself after 8 s. Failures are worded from the code
+(`holdTalkFailureOf`), never the server's text, and are polite status
+regions with no action (R-D34).
+
+**What the Nav already draws.** `NavBar` draws the Aura edge (the steady rim
+under reduced motion or transparency) and the «Te escucho…» cap whenever its
+gesture is held or `listening` is true, and the gesture hook already fires
+`impactLight` on start and stop. `ArgusListening` therefore draws only what
+the Nav does not: the live transcript above the cap, the thinking card, the
+answer card and the failure card; drawing the edge and the pill again would
+double them. The rail and the sidebar have no hold (a press opens the chat).
+
+**What stays the same.** Without `assistant.voice` or a microphone path
+(`argusCallSupported()`), and while another call is active, a hold opens the
+chat like a tap. The call pill hides while a hold is live. The live
+transcript is the STT partial the server streams; the first words can be lost
+while the session connects (WebRTC joins on the hold), which is the latency
+the phone check measures.
