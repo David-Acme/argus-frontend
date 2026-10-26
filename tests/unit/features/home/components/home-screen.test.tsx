@@ -98,6 +98,15 @@ mock.module('@/features/home/components/agenda/projects-section', () => ({
 mock.module('@/features/home/components/agenda/upcoming-reminders-section', () => ({
   UpcomingRemindersSection: marker('reminders'),
 }));
+mock.module('@/features/home/components/cameras/cameras-section', () => ({
+  CamerasSection: marker('cameras'),
+}));
+mock.module('@/features/home/components/cameras/happened-section', () => ({
+  HappenedSection: marker('happened'),
+}));
+mock.module('@/features/home/components/cameras/recent-clips-section', () => ({
+  RecentClipsSection: marker('clips'),
+}));
 mock.module('@/features/home/components/feed/news-section', () => ({
   NewsSection: marker('news'),
 }));
@@ -108,7 +117,26 @@ mock.module('@/features/home/components/feed/home-people-section', () => ({
 const { default: HomeScreen } = await import('@/features/home/screens/home-screen');
 
 const order = (names: readonly string[]) =>
-  names.filter((name) => screen.queryByText(name) !== null);
+  names
+    .map((name) => ({ name, node: screen.queryByText(name) }))
+    .filter((entry): entry is { name: string; node: HTMLElement } => entry.node !== null)
+    .sort((left, right) =>
+      left.node.compareDocumentPosition(right.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+    )
+    .map((entry) => entry.name);
+
+const ALL = [
+  'now',
+  'today',
+  'tomorrow',
+  'news',
+  'cameras',
+  'happened',
+  'people',
+  'projects',
+  'clips',
+  'reminders',
+];
 
 afterEach(() => {
   setWindowWidth(360);
@@ -142,7 +170,7 @@ describe('Inicio on a phone', () => {
     expect(screen.getByText('Buenas tardes, Ana')).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
     expect(screen.getByText('En casa · Luis y tú en casa')).toBeDefined();
-    expect(order(['now', 'news', 'today', 'people'])).toEqual(['now', 'news']);
+    expect(order(ALL)).toEqual(['now', 'cameras', 'news']);
     expect(screen.queryByRole('button', { name: /Notificaciones/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Buscar o pedir a Argus' }));
     expect(launched).toEqual(['search']);
@@ -198,7 +226,7 @@ describe('Inicio on a phone', () => {
     };
     render(<HomeScreen />);
     expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
-    expect(order(['now', 'news'])).toEqual([]);
+    expect(order(ALL)).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Conectar cámara' }));
     expect(routes).toEqual(['/cameras']);
   });
@@ -223,7 +251,7 @@ describe('Inicio on a phone', () => {
     state.granted = new Set(['safety.panic', 'notifications.read']);
     render(<HomeScreen />);
     expect(screen.getByText('sos')).toBeDefined();
-    expect(order(['now', 'news'])).toEqual(['news']);
+    expect(order(ALL)).toEqual(['news']);
   });
 
   test('an inactive role sees the inactive notice', () => {
@@ -241,13 +269,7 @@ describe('Inicio on a desktop', () => {
     expect(screen.getByLabelText('Tu día')).toBeDefined();
     expect(screen.getByLabelText('Novedades')).toBeDefined();
     expect(screen.getByLabelText('En casa')).toBeDefined();
-    expect(order(['now', 'today', 'tomorrow', 'news', 'people', 'projects'])).toEqual([
-      'now',
-      'today',
-      'tomorrow',
-      'news',
-      'people',
-    ]);
+    expect(order(ALL)).toEqual(['now', 'today', 'tomorrow', 'news', 'cameras', 'people']);
     fireEvent.click(screen.getByRole('button', { name: /Nuevo/ }));
     expect(launched).toEqual(['new']);
   });
@@ -256,6 +278,6 @@ describe('Inicio on a desktop', () => {
     setWindowWidth(1920);
     render(<HomeScreen />);
     expect(screen.getByLabelText('Cámaras')).toBeDefined();
-    expect(order(['projects', 'reminders'])).toEqual(['projects', 'reminders']);
+    expect(order(ALL)).toEqual(ALL);
   });
 });

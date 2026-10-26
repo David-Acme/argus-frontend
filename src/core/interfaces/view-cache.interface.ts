@@ -116,24 +116,6 @@ export interface INotificationPreviewCacheRow {
   createdAt: number;
 }
 
-export interface IDashboardCacheData {
-  cameraTiles: readonly ICameraCacheRow[];
-  projects: readonly DashboardProjectCard[];
-  today: readonly CalendarEntry[];
-  unreadNotifications: number;
-  summary: DashboardSummary;
-}
-
-export interface IChecklistSignalsCache {
-  cameras: number;
-  zones: number;
-  events: number;
-  projects: number;
-  people: number;
-  invitations: number;
-  argusTalks?: number;
-}
-
 export interface ICalendarEventCacheSource {
   id: string;
   ownerId: string;

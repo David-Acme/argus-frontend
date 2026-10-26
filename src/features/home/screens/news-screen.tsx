@@ -9,6 +9,7 @@ import { Section } from '@/shared/ui/section';
 import { NotificationLinkScreen } from '@/features/notification';
 import { NewsItem } from '@/features/home/components/feed/news-item';
 import { useNews } from '@/features/home/hooks/use-news';
+import { useNewsRemove } from '@/features/home/hooks/use-news-remove';
 
 const MINUTE_MS = 60_000;
 
@@ -17,6 +18,7 @@ function NewsList() {
   const router = useRouter();
   const now = useNow(MINUTE_MS);
   const { threads, read, feed } = useNews();
+  const remove = useNewsRemove();
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   return (
@@ -27,7 +29,13 @@ function NewsList() {
         ) : (
           <Feed>
             {threads.map((thread) => (
-              <NewsItem key={thread.key} thread={thread} now={now} onRead={read} />
+              <NewsItem
+                key={thread.key}
+                thread={thread}
+                now={now}
+                onRead={read}
+                onRemove={remove ?? undefined}
+              />
             ))}
           </Feed>
         )}

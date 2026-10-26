@@ -12,6 +12,9 @@ import { ProjectsSection } from '@/features/home/components/agenda/projects-sect
 import { TodaySection } from '@/features/home/components/agenda/today-section';
 import { TomorrowSection } from '@/features/home/components/agenda/tomorrow-section';
 import { UpcomingRemindersSection } from '@/features/home/components/agenda/upcoming-reminders-section';
+import { CamerasSection } from '@/features/home/components/cameras/cameras-section';
+import { HappenedSection } from '@/features/home/components/cameras/happened-section';
+import { RecentClipsSection } from '@/features/home/components/cameras/recent-clips-section';
 import { HomePeopleSection } from '@/features/home/components/feed/home-people-section';
 import { NewsSection } from '@/features/home/components/feed/news-section';
 import { InicioHero } from '@/features/home/components/hero/inicio-hero';
@@ -29,18 +32,16 @@ import { statPlace, type StatPlace } from '@/features/home/model/inicio-stats';
 
 type BodyProps = { hero: Hero; place: StatPlace };
 
-const Nothing = () => null;
-
 const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
   now: NowSection,
   today: TodaySection,
   tomorrow: TomorrowSection,
   news: NewsSection,
-  cameras: Nothing,
-  happened: Nothing,
+  cameras: CamerasSection,
+  happened: HappenedSection,
   people: HomePeopleSection,
   projects: ProjectsSection,
-  clips: Nothing,
+  clips: RecentClipsSection,
   reminders: UpcomingRemindersSection,
 };
 

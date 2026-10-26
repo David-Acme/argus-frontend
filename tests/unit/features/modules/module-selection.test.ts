@@ -10,16 +10,6 @@ import {
   toggleModule,
   unmetRequirements,
 } from '@/features/modules/model/module-selection';
-import {
-  CHOOSE_MODULES_ID,
-  checklistItems,
-  checklistVisible,
-  dismissChecklist,
-  EMPTY_CHECKLIST,
-  markDone,
-  needsModuleChoice,
-  readChecklistState,
-} from '@/features/modules/model/getting-started';
 
 const hardware = (verdict: 'ok' | 'slow' | 'insufficient', freeDiskMb = 10_000) => ({
   verdict,
@@ -118,57 +108,6 @@ describe('choosing modules', () => {
   test('a card names only the requirements that are still off', () => {
     expect(unmetRequirements(all, reports)).toEqual(['surveillance']);
     expect(unmetRequirements(all, module())).toEqual([]);
-  });
-});
-
-describe('getting started', () => {
-  const steps = module({
-    enabled: true,
-    gettingStarted: [
-      { id: 'surveillance:0', title: 'Conecta una cámara', hint: '', route: '/cameras' },
-      { id: 'surveillance:1', title: 'Dibuja una zona', hint: '', route: null },
-    ],
-  });
-  const options = {
-    owner: true,
-    chooseTitle: 'Elige',
-    chooseHint: '',
-    chooseRoute: '/settings/modules',
-    assistantHref: '/call',
-    evidence: new Set<string>(),
-  };
-
-  test('lists the steps of enabled modules only', () => {
-    const items = checklistItems(catalog([core, steps, productivity]), EMPTY_CHECKLIST, options);
-    expect(items.map((item) => item.id)).toEqual(['surveillance:0', 'surveillance:1']);
-  });
-
-  test('asks the owner to choose modules while only the core is on', () => {
-    const fresh = catalog([core, module(), productivity]);
-    expect(needsModuleChoice(fresh)).toBe(true);
-    expect(checklistItems(fresh, EMPTY_CHECKLIST, options)[0]?.id).toBe(CHOOSE_MODULES_ID);
-    expect(checklistItems(fresh, EMPTY_CHECKLIST, { ...options, owner: false })).toEqual([]);
-    expect(needsModuleChoice(catalog([core, module({ job: running })]))).toBe(false);
-    expect(needsModuleChoice(null)).toBe(false);
-  });
-
-  test('done steps stay ticked and a dismissed list returns only with new steps', () => {
-    const list = catalog([core, steps]);
-    let state = markDone(EMPTY_CHECKLIST, 'surveillance:0');
-    expect(checklistItems(list, state, options).map((item) => item.done)).toEqual([true, false]);
-    state = dismissChecklist(state, checklistItems(list, state, options));
-    expect(checklistVisible(checklistItems(list, state, options))).toBe(false);
-    const more = catalog([
-      core,
-      steps,
-      module({ id: 'productivity', enabled: true, gettingStarted: [{ id: 'productivity:0', title: 'Crea un evento', hint: '', route: null }] }),
-    ]);
-    expect(checklistItems(more, state, options).map((item) => item.id)).toEqual(['productivity:0']);
-  });
-
-  test('a stored state is read defensively', () => {
-    expect(readChecklistState(null)).toEqual(EMPTY_CHECKLIST);
-    expect(readChecklistState({ hidden: ['a', 3], done: 'x' })).toEqual({ hidden: ['a'], done: [] });
   });
 });
 

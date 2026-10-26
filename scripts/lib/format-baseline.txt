@@ -54,7 +54,6 @@ src/core/i18n/locales/es/screens/approve/index.ts
 src/core/i18n/locales/es/screens/cameras/index.ts
 src/core/i18n/locales/es/screens/conversations/index.ts
 src/core/i18n/locales/es/screens/face/index.ts
-src/core/i18n/locales/es/screens/home/index.ts
 src/core/i18n/locales/es/screens/invitation/index.ts
 src/core/i18n/locales/es/screens/login/index.ts
 src/core/i18n/locales/es/screens/modules/index.ts
@@ -152,7 +151,6 @@ src/core/services/user-invitation.service.ts
 src/core/services/user.service.ts
 src/core/services/view-cache-coordinator.service.ts
 src/core/services/view-cache.service.ts
-src/core/services/view-cache/activity.projection.ts
 src/core/services/view-cache/calendar-share.projection.ts
 src/core/services/view-cache/calendar.projection.ts
 src/core/services/view-cache/camera.projection.ts
@@ -334,7 +332,6 @@ src/features/conversations/model/thread-list.ts
 src/features/conversations/screens/conversations-screen.tsx
 src/features/in-app-alert/components/in-app-alert-banner.tsx
 src/features/modules/components/disable-dialog.tsx
-src/features/modules/components/getting-started-card.tsx
 src/features/modules/components/host-command-note.tsx
 src/features/modules/components/impact-summary.tsx
 src/features/modules/components/module-card-skeleton.tsx
@@ -345,16 +342,12 @@ src/features/modules/components/module-notices.tsx
 src/features/modules/components/module-progress.tsx
 src/features/modules/components/module-request-button.tsx
 src/features/modules/components/module-requests-section.tsx
-src/features/modules/components/modules-progress-chip.tsx
 src/features/modules/components/modules-summary-card.tsx
 src/features/modules/components/uninstall-dialog.tsx
-src/features/modules/hooks/use-getting-started.ts
 src/features/modules/hooks/use-module-catalog.ts
 src/features/modules/hooks/use-module-disable.ts
 src/features/modules/hooks/use-module-request.ts
 src/features/modules/hooks/use-module-uninstall.ts
-src/features/modules/model/checklist-routes.ts
-src/features/modules/model/getting-started.ts
 src/features/modules/model/module-impact.ts
 src/features/modules/model/module-lifecycle.ts
 src/features/modules/model/module-request.ts
@@ -750,7 +743,6 @@ tests/unit/core/services/view-cache.test.ts
 tests/unit/core/services/view-cache/calendar-recurrence.test.ts
 tests/unit/core/services/view-cache/conversation-projection.test.ts
 tests/unit/core/services/view-cache/module-source-gate.test.ts
-tests/unit/core/services/view-cache/view-cache-dates.test.ts
 tests/unit/core/services/view-cache/view-cache-projections.test.ts
 tests/unit/core/stores/pending-call-store.test.ts
 tests/unit/core/stores/toast-store.test.ts
@@ -792,8 +784,6 @@ tests/unit/features/cameras/tamper-evidence.test.ts
 tests/unit/features/conversations/conversation-thread.test.ts
 tests/unit/features/conversations/message-composer.test.ts
 tests/unit/features/conversations/thread-list.test.ts
-tests/unit/features/modules/checklist-routes.test.ts
-tests/unit/features/modules/getting-started.test.ts
 tests/unit/features/modules/module-impact.test.ts
 tests/unit/features/modules/module-lifecycle.test.ts
 tests/unit/features/modules/module-request.test.ts

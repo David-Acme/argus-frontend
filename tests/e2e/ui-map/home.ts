@@ -28,7 +28,7 @@ import {
   user,
 } from '../support/ui-map/data';
 import type { Row, ScreenSpec } from '../support/ui-map/scenario';
-import { button, say, tap, text } from '../support/ui-map/text';
+import { button, say, text } from '../support/ui-map/text';
 
 const POPULATED: Row[] = [
   ...PRODUCTIVITY,
@@ -151,14 +151,11 @@ const hover =
     await sleep(500);
   };
 
-const openBell = async (scene: Scene): Promise<void> => {
-  await button(scene, 'screens.home.notifications').first().click();
-  await sleep(900);
-};
-
 const search =
   (value: string) =>
   async (scene: Scene): Promise<void> => {
+    await button(scene, 'screens.home.inicio.search').first().click();
+    await sleep(500);
     await scene.page.getByRole('textbox').first().fill(value);
     await sleep(700);
   };
@@ -231,20 +228,6 @@ export const HOME: ScreenSpec[] = [
         seed: remote({ 'argus.e2e': 'connect', 'argus-tunnel.lynk.page': 'connect' }),
         act: async () => {
           await sleep(6000);
-        },
-      },
-      {
-        state: 'bell-popover',
-        rows: POPULATED,
-        act: openBell,
-        notes: 'opening the bell marks every unread notification read',
-      },
-      { state: 'bell-popover-empty', act: openBell },
-      {
-        state: 'compose-menu',
-        rows: POPULATED,
-        act: async (scene) => {
-          await tap(scene, 'screens.home.compose');
         },
       },
       { state: 'search-no-match', rows: POPULATED, act: search('zzzz') },
@@ -374,7 +357,7 @@ export const HOME: ScreenSpec[] = [
       {
         state: 'nav-tooltip',
         rows: POPULATED,
-        act: hover('screens.home.projects'),
+        act: hover('screens.projects.title'),
         notes: 'pointer over a rail tab (rail only from 640 px)',
       },
       {

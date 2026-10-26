@@ -48,10 +48,10 @@ for (const size of WIDTHS) {
     await browser.addInitScript(installFixedClock, FIXED_NOW);
     await openFirst(browser, app);
     await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
-    await expect(screen.getByRole('heading', 'Welcome, Ana')).toBeVisible({ timeout: 10000 });
+    await expect(screen.getByText(/Good (morning|afternoon|evening), Ana/).first()).toBeVisible({ timeout: 10000 });
     const platform = await platformOf(browser);
     test.skip(!UPDATING && !platformRecorded(platform), missingBaseline(platform));
-    await expect(screen.getByText(/Mudanza/).first()).toBeVisible();
+    await expect(screen.getByText('Now', { exact: true }).first()).toBeVisible();
     await expect(screen).toHaveScreenshot(`home-${size.name}-${platform}.png`, SHOT);
 
     await screen.getByRole('button', 'Projects').first().click();
