@@ -345,7 +345,6 @@ src/features/home/components/recent-activity-card.tsx
 src/features/home/components/summary-card.tsx
 src/features/home/components/today-agenda.tsx
 src/features/home/hooks/use-dashboard-data.ts
-src/features/home/hooks/use-notification-feed.ts
 src/features/home/model/camera-activity.ts
 src/features/home/model/home-search.ts
 src/features/home/model/notification-modules.ts

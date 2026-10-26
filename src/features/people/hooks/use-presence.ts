@@ -13,15 +13,19 @@ const loadPresence = () => presenceService.overview();
 
 const PRESENCE_RESOURCES: readonly ResourceMatch[] = [{ domain: 'guard', scope: 'presence' }];
 
-export function usePresence(enabled: boolean) {
-  const { t } = useTranslation();
-  const dates = useDateFormatter();
-  const { data } = useRemoteResource({
+export function usePresenceOverview(enabled: boolean) {
+  return useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.presence,
     load: loadPresence,
     enabled,
     resources: PRESENCE_RESOURCES,
   });
+}
+
+export function usePresence(enabled: boolean) {
+  const { t } = useTranslation();
+  const dates = useDateFormatter();
+  const { data } = usePresenceOverview(enabled);
 
   return useMemo(() => {
     const now = new Date();

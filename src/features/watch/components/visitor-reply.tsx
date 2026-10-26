@@ -75,7 +75,7 @@ export function VisitorReply({ message, onReplied }: VisitorReplyProps) {
   };
 
   return (
-    <View className="gap-2 pt-1.5">
+    <View className="w-full gap-2">
       {message.consent ? (
         <View className="flex-row items-start gap-1.5">
           <Icon name="user-check" className="text-muted-foreground mt-0.5 size-3.5" />

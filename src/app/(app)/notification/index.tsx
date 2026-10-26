@@ -1,1 +1,1 @@
-export { NotificationLinkScreen as default } from '@/features/notification';
+export { NewsScreen as default } from '@/features/home';
