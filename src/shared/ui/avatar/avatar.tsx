@@ -3,9 +3,9 @@ import { Image, View, type ImageSourcePropType } from 'react-native';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
 import { Text, type TextTone } from '@/shared/ui/text';
 
-export type AvatarTone = 'default' | 'accent' | 'ok' | 'attn' | 'alert';
+export type AvatarTone = 'default' | 'accent' | 'ok' | 'attn' | 'alert' | 'event';
 
-export type AvatarSize = 'small' | 'default' | 'large';
+export type AvatarSize = 'mark' | 'small' | 'default' | 'large';
 
 export type AvatarProps = {
   label?: string;
@@ -25,15 +25,18 @@ const INK: Record<AvatarTone, Ink> = {
   ok: { surface: 'bg-ok-soft', text: 'ok', icon: 'ok' },
   attn: { surface: 'bg-attn-soft', text: 'attn', icon: 'attn' },
   alert: { surface: 'bg-alert-soft', text: 'alert', icon: 'alert' },
+  event: { surface: 'bg-ev1', text: 'default', icon: 'ev1-text' },
 };
 
 const FRAME: Record<AvatarSize, string> = {
+  mark: 'size-event-mark',
   small: 'size-well-small',
   default: 'size-well',
   large: 'size-avatar-large',
 };
 
 const CORNER: Record<AvatarSize, string> = {
+  mark: 'rounded-sm',
   small: 'rounded-seg-inner',
   default: 'rounded-well',
   large: 'rounded-well',

@@ -446,7 +446,7 @@ A new variant needs a design review and a `ui-lab` baseline (rule F19).
 | 9 | `Notice` | `info`, `attention` (offline, stale, paused); one action | `top-notice-bar`, offline icon and toast, parked error band, recording-paused banner, the 3 feature banners |
 | 10 | `FeedItem` | icon/avatar, who, when, text, optional actions, unread | notification thread row (301 lines), activity rows, episode cards in their list form |
 | 11 | `Chip` | `tag` (status, with tone and dot) / `filter` (selectable); wraps in a `Cluster` | `status-badge`, `filter-chips`, 4 feature chips and 2 badges |
-| 12 | `Avatar` | person (initial or portrait), icon well; 36/56 | per-feature icon circles, presence dots |
+| 12 | `Avatar` | person (initial or portrait), icon well; 36/56; the 26 event mark (calendar icon on `ev1`, radius 8) that leads an event row | per-feature icon circles, presence dots |
 | 13 | `Media` | camera `tile` / `stage` (live player slot, overlays, privacy and off states) | camera card (334), live panel/stage chrome, home camera tiles |
 | 14 | `Check` | completion circle: open, overdue, in progress, done; haptic on toggle | reminder circles, task status pickers in rows |
 
