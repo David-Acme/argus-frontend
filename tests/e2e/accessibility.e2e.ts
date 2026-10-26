@@ -40,8 +40,7 @@ const VISITS: Visit[] = [
     await click('Projects')(page);
   } },
   { name: 'security', go: async (page) => {
-    await tab('Home')(page);
-    await click('Open security')(page);
+    await tab('Security')(page);
   } },
   { name: 'places', go: click('Places and modes', false) },
   { name: 'environment', go: async (page) => {

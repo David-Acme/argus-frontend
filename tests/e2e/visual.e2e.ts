@@ -62,7 +62,7 @@ for (const size of WIDTHS) {
     await expect(screen).toHaveScreenshot(`projects-${size.name}-${platform}.png`, SHOT);
 
     await screen.getByRole('tab', 'Home').first().click();
-    await screen.getByRole('button', 'Open security').click();
+    await screen.getByRole('tab', 'Security').first().click();
     await expect(screen.getByText('Unknown person', { exact: true })).toBeVisible({ timeout: 10000 });
     await browser.mouse.move(size.width - 2, size.height - 2);
     await settle(TOOLTIP_MS);

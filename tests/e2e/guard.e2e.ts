@@ -83,10 +83,10 @@ test('the guard mode chosen on one device is the mode the other shows, live', as
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
-  await second.page.getByRole('button', { name: 'Open security' }).click();
+  await second.page.getByRole('tab', { name: 'Security', exact: true }).first().click();
   await expect.poll(() => second.page.getByRole('heading', { name: 'Home', exact: true }).count(), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Open security').click();
+  await screen.getByRole('tab', 'Security').first().click();
   await screen.getByRole('radio', 'Night').click();
 
   await expect.poll(() => second.page.getByRole('heading', { name: 'Night', exact: true }).count(), { timeout: LIVE_MS }).toBe(1);
@@ -103,8 +103,8 @@ test('an episode a camera opens reaches the security screen of both devices, liv
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Open security').click();
-  await second.page.getByRole('button', { name: 'Open security' }).click();
+  await screen.getByRole('tab', 'Security').first().click();
+  await second.page.getByRole('tab', { name: 'Security', exact: true }).first().click();
   await expect(screen.getByText('All quiet', { exact: true }).first()).toBeVisible();
   await expect.poll(() => second.page.getByText('All quiet', { exact: true }).count(), { timeout: 10000 }).toBeGreaterThan(0);
 
