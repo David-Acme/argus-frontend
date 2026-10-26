@@ -5,7 +5,12 @@ import type {
   PushPlatform,
   PushProvider,
 } from '@/core/types';
-import type { CallControlAction, CallEndpoint, IArgusPushNative, IPushService } from '@/core/interfaces';
+import type {
+  CallControlAction,
+  CallEndpoint,
+  IArgusPushNative,
+  IPushService,
+} from '@/core/interfaces';
 import { log } from '@/core/services/log';
 import { callControlActionOf, callEndpointsOf } from './call-control';
 import {
@@ -186,6 +191,18 @@ export class IosPushService implements IPushService {
 
   overKeyguard(): boolean {
     return false;
+  }
+
+  async requestUnlock(): Promise<boolean> {
+    return true;
+  }
+
+  postCallSummary(title: string, body: string): void {
+    try {
+      this.module().postCallSummary(title, body);
+    } catch (error) {
+      log.error('push', 'the call summary could not be posted', error);
+    }
   }
 
   outsideCallId(): string {

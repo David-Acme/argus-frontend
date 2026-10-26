@@ -1,18 +1,24 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoiceActionRecord, VoicePhase, VoiceTranscriptLine } from '@/core/types';
-import Avatar from '@/features/voice/components/avatar';
-import { Button } from '@/shared/components/ui/button';
-import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { voiceErrorMessage } from '@/features/voice/model/voice-error';
-import { CallActionChips } from '@/features/voice/components/call-action-chips';
-import { CallControl } from '@/features/voice/components/call-control';
-import { CallSettingsDialog } from '@/features/voice/components/call-settings-dialog';
-import { CallTranscript } from '@/features/voice/components/call-transcript';
-import { formatCallDuration } from '@/features/voice/model/call-end';
+import { Button } from '@/shared/ui/button';
+import { Text } from '@/shared/ui/text';
+import { CallCaptions } from '@/features/voice/components/call-captions';
+import { EndedSummary, StageTop, WaitingCard } from '@/features/voice/components/call-notes';
+import { CallPanel } from '@/features/voice/components/call-panel';
+import { CallResultCard } from '@/features/voice/components/call-result-card';
+import { CallStage } from '@/features/voice/components/call-stage';
+import { useCallClock } from '@/features/voice/hooks/use-call-clock';
+import {
+  callResultOf,
+  stageHintOf,
+  stageLineOf,
+  stageMomentOf,
+  stagePresenceOf,
+} from '@/features/voice/model/call-stage';
+import type { CallKind } from '@/features/voice/model/incoming-surface';
+import { voiceLevel } from '@/features/voice/model/voice-level';
 
 type CallSurfaceProps = {
   phase: VoicePhase;
@@ -20,19 +26,24 @@ type CallSurfaceProps = {
   error: string | null;
   transcript: readonly VoiceTranscriptLine[];
   actions?: readonly VoiceActionRecord[];
+  kind?: CallKind;
+  connectedAt?: number | null;
   reason?: string | null;
   notice?: string | null;
   waitingReason?: string | null;
+  liveCameraId?: string | null;
+  header?: ReactNode;
+  situation?: ReactNode;
+  endedDurationMs?: number | null;
   onAnswerWaiting?: () => void;
   onDismissWaiting?: () => void;
-  header?: ReactNode;
-  camera?: ReactNode;
-  situation?: ReactNode;
+  onViewCamera?: () => void;
+  onMinimise?: () => void;
+  onSwitchToChat?: () => void;
+  onClose?: () => void;
   onToggleMute: () => void;
   onHangUp: () => void;
   onRetry: () => void;
-  onSwitchToChat?: () => void;
-  endedDurationMs?: number | null;
 };
 
 export function CallSurface({
@@ -41,121 +52,96 @@ export function CallSurface({
   error,
   transcript,
   actions = [],
+  kind = 'reminder',
+  connectedAt = null,
   reason = null,
   notice = null,
   waitingReason = null,
+  liveCameraId = null,
+  header,
+  situation,
+  endedDurationMs = null,
   onAnswerWaiting,
   onDismissWaiting,
-  header,
-  camera,
-  situation,
+  onViewCamera,
+  onMinimise,
+  onSwitchToChat,
+  onClose,
   onToggleMute,
   onHangUp,
   onRetry,
-  onSwitchToChat,
-  endedDurationMs = null,
 }: CallSurfaceProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
-  const { isShort } = useWindowClass();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const speaking = phase === 'speaking';
-  const hint =
-    phase === 'error'
-      ? voiceErrorMessage(error, t)
-      : muted
-        ? t('screens.voice.muted-hint')
-        : speaking
-          ? t('screens.voice.speaking-hint')
-          : notice;
-
+  const elapsedMs = useCallClock(endedDurationMs === null ? connectedAt : null);
+  const moment = stageMomentOf({ phase, endedDurationMs });
+  const line = stageLineOf({
+    t,
+    moment,
+    phase,
+    elapsedMs,
+    connected: connectedAt !== null,
+    reason,
+    endedDurationMs,
+  });
+  const hint = moment === 'ended' ? null : stageHintOf({ t, phase, error, muted, notice });
+  const result = callResultOf(actions, liveCameraId);
   return (
-    <View
-      className="bg-background w-full max-w-lg flex-1 self-center px-6"
-      style={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 }}>
-      {header}
-      {waitingReason ? (
-        <View
-          accessibilityLiveRegion="polite"
-          className="bg-card dark:bg-card-secondary mt-2 flex-row items-center gap-3 rounded-2xl p-3 shadow-sm shadow-black/10">
-          <View className="min-w-0 flex-1 gap-0.5">
-            <Text variant="label">{t('screens.voice.waiting-title')}</Text>
-            <Text variant="caption" numberOfLines={2}>
-              {waitingReason}
-            </Text>
-          </View>
-          <Button variant="outline" size="sm" onPress={onDismissWaiting}>
-            <Text>{t('screens.voice.waiting-dismiss')}</Text>
-          </Button>
-          <Button size="sm" onPress={onAnswerWaiting}>
-            <Text>{t('screens.voice.waiting-answer')}</Text>
-          </Button>
-        </View>
+    <CallStage
+      kind={moment === 'ended' ? 'reminder' : kind}
+      line={line}
+      presence={stagePresenceOf({ moment, phase, kind })}
+      ended={moment === 'ended'}
+      level={voiceLevel}
+      top={
+        moment === 'live' ? (
+          <StageTop header={header} onMinimise={onMinimise} onSwitchToChat={onSwitchToChat} />
+        ) : (
+          header
+        )
+      }>
+      {waitingReason && moment === 'live' ? (
+        <WaitingCard
+          reason={waitingReason}
+          onAnswer={onAnswerWaiting}
+          onDismiss={onDismissWaiting}
+        />
       ) : null}
-      <View className="items-center gap-1 pt-4">
-        {reason ? (
-          <Text variant="label" className="text-foreground-secondary text-center" numberOfLines={2}>
-            {`${t('screens.voice.incoming-title')} · ${reason}`}
-          </Text>
-        ) : null}
-        <Text variant="title" accessibilityRole="header">
-          {endedDurationMs === null ? t(`screens.voice.status-${phase}`) : t('screens.voice.ended-title')}
-        </Text>
-        <Text
-          variant="caption"
-          className="min-h-[18px] text-center"
-          accessibilityLiveRegion="polite">
-          {endedDurationMs === null ? (hint ?? '') : formatCallDuration(endedDurationMs)}
-        </Text>
-      </View>
-
-      <View className="flex-1 items-center justify-center">
-        {camera ?? (
-          <Avatar size={isShort ? 180 : 260} accessibilityLabel={t('screens.voice.call-title')} />
-        )}
-      </View>
-
-      <View className="min-h-32 justify-end gap-4 pb-6">
-        {situation}
-        <CallTranscript lines={transcript} />
-        <CallActionChips actions={actions} />
-      </View>
-
-      {endedDurationMs !== null ? null : phase === 'error' || phase === 'done' ? (
-        <View className="flex-row justify-center gap-3">
-          <Button variant="outline" size="lg" onPress={onHangUp}>
-            <Text>{t('common.close')}</Text>
-          </Button>
-          <Button size="lg" onPress={onRetry}>
-            <Text>{t('screens.voice.retry')}</Text>
-          </Button>
-        </View>
+      {moment === 'ended' ? (
+        <EndedSummary actions={actions} />
       ) : (
-        <View className="flex-row items-start justify-center gap-4">
-          <CallControl
-            icon={muted ? 'mic-off' : 'mic'}
-            label={muted ? t('screens.voice.unmute') : t('screens.voice.mute')}
-            tone={muted ? 'active' : 'neutral'}
-            onPress={onToggleMute}
-          />
-          <CallControl icon="sliders" label={t('screens.voice.settings')} onPress={() => setSettingsOpen(true)} />
-          {onSwitchToChat ? (
-            <CallControl
-              icon="messages-square"
-              label={t('screens.voice.to-chat')}
-              hint={t('screens.voice.to-chat-hint')}
-              onPress={onSwitchToChat}
-            />
+        <View className="mt-6 w-full gap-3">
+          <CallCaptions lines={transcript} />
+          {hint ? (
+            <Text variant="meta" tone={phase === 'error' ? 'alert' : '2'} align="center">
+              {hint}
+            </Text>
           ) : null}
-          <CallControl
-            icon="phone-off"
-            label={t('screens.voice.hang-up')}
-            tone="danger"
-            onPress={onHangUp}
-          />
+          {situation}
+          {result ? <CallResultCard result={result} onView={onViewCamera} /> : null}
         </View>
       )}
-      <CallSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} muted={muted} onToggleMute={onToggleMute} />
-    </View>
+      <View className="flex-1" />
+      {moment === 'live' ? (
+        <CallPanel
+          muted={muted}
+          onToggleMute={onToggleMute}
+          onHangUp={onHangUp}
+          onViewCamera={onViewCamera}
+        />
+      ) : null}
+      {moment === 'failed' ? (
+        <View className="w-full flex-row gap-3">
+          <View className="flex-1">
+            <Button label={t('common.close')} onPress={onHangUp} block />
+          </View>
+          <View className="flex-1">
+            <Button label={t('screens.voice.retry')} onPress={onRetry} variant="primary" block />
+          </View>
+        </View>
+      ) : null}
+      {moment === 'ended' && onClose ? (
+        <Button label={t('screens.voice.stage.back')} onPress={onClose} block />
+      ) : null}
+    </CallStage>
   );
 }

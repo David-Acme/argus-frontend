@@ -21,23 +21,30 @@ internal object PushText {
 
     fun missedCallBody(spanish: Boolean): String = if (spanish) "Toca para ver quién llamó" else "Tap to see who called"
 
-    fun callTitle(spanish: Boolean): String = if (spanish) "Llamada de Argus" else "Argus is calling"
-
     fun incomingTitle(spanish: Boolean): String = if (spanish) "Argus te llama" else "Argus is calling"
 
-    fun criticalTitle(spanish: Boolean): String = if (spanish) "Alerta crítica" else "Critical alert"
+    fun criticalTitle(spanish: Boolean): String = if (spanish) "Alerta en casa" else "Alert at home"
 
-    fun ringStatus(spanish: Boolean, time: String): String =
-        if (spanish) "Llamada de Argus · sonando · $time" else "Argus call · ringing · $time"
-
-    fun clock(elapsedMillis: Long): String {
-        val totalSeconds = maxOf(0L, elapsedMillis / 1000L)
-        return "%02d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
+    fun stageLine(spanish: Boolean, critical: Boolean, subject: String): String {
+        val kicker = when {
+            critical && spanish -> "Alerta en casa"
+            critical -> "Alert at home"
+            spanish -> "Llamada de Argus"
+            else -> "Argus call"
+        }
+        val trimmed = subject.trim()
+        return if (trimmed.isEmpty()) kicker else "$kicker · $trimmed"
     }
+
+    fun privateLine(spanish: Boolean): String = if (spanish) "Privada · se queda en tu casa" else "Private · stays in your home"
 
     fun answer(spanish: Boolean): String = if (spanish) "Contestar" else "Answer"
 
     fun decline(spanish: Boolean): String = if (spanish) "Rechazar" else "Decline"
+
+    fun snooze(spanish: Boolean): String = if (spanish) "En 10 min" else "In 10 min"
+
+    fun callBack(spanish: Boolean): String = if (spanish) "Devolver" else "Call back"
 
     fun channelName(channelId: String, spanish: Boolean): String =
         when (channelId) {
@@ -46,6 +53,7 @@ internal object PushText {
             PushChannels.NORMAL -> if (spanish) "Avisos" else "Alerts"
             PushChannels.SILENT_ALERTS -> if (spanish) "Avisos con el timbre" else "Alerts with the ring"
             PushChannels.ONGOING -> if (spanish) "Llamada en curso" else "Call in progress"
+            PushChannels.SUMMARY -> if (spanish) "Resumen de llamadas" else "Call summaries"
             else -> if (spanish) "Llamadas" else "Calls"
         }
 }

@@ -3,15 +3,21 @@ import { AppState } from 'react-native';
 import { incomingCallCancelSchema, incomingCallSchema } from '@/core/contracts/rtc.contract';
 import { withTiming } from 'react-native-reanimated';
 import { synchronizeService } from '@/core/services/sync';
-import type { CallControlAction, IRealtimeCall, IVoiceMic, IVoiceReactionPayload } from '@/core/interfaces';
+import type { CallControlAction, IRealtimeCall, IVoiceMic } from '@/core/interfaces';
 import { traceEvent } from '@/core/services/native-trace';
 import { micTraceReason } from '@/features/voice/model/mic-trace';
 import { traceReasonOf } from '@/core/services/native-trace-reason';
-import { useAvatarStore } from '@/features/voice/stores/avatar.store';
-import { boundedRelease, leaveThenRelease, sendHangupThenLeave } from '@/features/voice/model/hangup-leave';
+import {
+  boundedRelease,
+  leaveThenRelease,
+  sendHangupThenLeave,
+} from '@/features/voice/model/hangup-leave';
 import { pushService } from '@/core/services/push';
-import { cancelOutcomeOf , endReasonOfCancel } from '@/features/voice/model/call-end';
-import { VOICE_HANGUP_FLUSH_MS, VOICE_HANGUP_RELEASE_MAX_MS } from '@/features/voice/constants/hangup';
+import { cancelOutcomeOf, endReasonOfCancel } from '@/features/voice/model/call-end';
+import {
+  VOICE_HANGUP_FLUSH_MS,
+  VOICE_HANGUP_RELEASE_MAX_MS,
+} from '@/features/voice/constants/hangup';
 import {
   CALL_ACTIONS_KEPT,
   VOICE_ACTION_RESULT_TYPE,
@@ -44,6 +50,7 @@ import {
   VOICE_ENVELOPE_RELEASE_MS,
 } from '@/features/voice/constants/reaction';
 import { voiceLevel } from '@/features/voice/model/voice-level';
+import { isLivePhase } from '@/features/voice/model/call-stage';
 import { voiceLegOf } from '@/features/voice/model/voice-leg';
 import {
   incomingCallLive,
@@ -57,12 +64,14 @@ import {
 import { createRealtimeCall, rtcCallSupported } from '@/features/voice/services/rtc';
 import { requestCallDecline, requestCallToken } from '@/features/voice/services/rtc/rtc-token';
 import { declineOncePerSession } from '@/features/voice/model/call-decline';
-import type { CallEndReason ,
+import type {
+  CallEndReason,
   IncomingCall,
   IncomingCallCancel,
   SessionRevokeCause,
   RtcAgentState,
   RtcCallOutcome,
+  RtcCallUrgency,
   RtcCallState,
   RtcEndReason,
   RtcEvent,
@@ -201,6 +210,8 @@ class VoiceService {
   private waitingTimer: ReturnType<typeof setTimeout> | null = null;
   private closedCallId: string | null = null;
   private closedReason: CallEndReason | null = null;
+  private connectedAt: number | null = null;
+  private callUrgency: RtcCallUrgency | null = null;
   private handoffConversationId: string | null = null;
   private handoffTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly declineOnce = declineOncePerSession((callId) => requestCallDecline({ callId }));
@@ -214,7 +225,11 @@ class VoiceService {
 
   private applyCallControl(action: CallControlAction): void {
     if (action === 'endpoints') return;
-    traceEvent('voice', action === 'hangup' ? 'stop' : 'mute', traceReasonOf(`call-control-${action}`));
+    traceEvent(
+      'voice',
+      action === 'hangup' ? 'stop' : 'mute',
+      traceReasonOf(`call-control-${action}`)
+    );
     if (action === 'hangup') {
       this.stop();
       return;
@@ -262,10 +277,12 @@ class VoiceService {
     this.pendingSends = [];
     this.callId = options.callId ?? null;
     this.callReason = options.reason ?? null;
+    this.callUrgency = options.urgency ?? null;
     this.responseId = options.responseId ?? null;
     this.agentState = null;
     this.closedCallId = null;
     this.closedReason = null;
+    this.connectedAt = null;
     this.rtcState = 'connecting';
     this.sttText = '';
     this.transcript = [];
@@ -289,14 +306,14 @@ class VoiceService {
       const handled = await this.startRealtime(session, {
         callId: options.callId,
         watchConversationId: options.watchConversationId,
-      }).catch(
-        (reason: unknown) => {
-          log.error('voice', 'the call could not be answered', reason);
-          if (this.isCurrent(session))
-            this.fail(`CALL_CONNECT_FAILED|${reason instanceof Error ? reason.message : String(reason)}`);
-          return true;
-        },
-      );
+      }).catch((reason: unknown) => {
+        log.error('voice', 'the call could not be answered', reason);
+        if (this.isCurrent(session))
+          this.fail(
+            `CALL_CONNECT_FAILED|${reason instanceof Error ? reason.message : String(reason)}`
+          );
+        return true;
+      });
       if (handled || !this.isCurrent(session)) return;
       if (options.callId || options.watchConversationId) {
         this.fail('RTC_UNAVAILABLE|Argus cannot take this call here');
@@ -537,7 +554,10 @@ class VoiceService {
       return;
     }
     assistantSocket.claim('voice');
-    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, leg: voiceLegOf(IS_NATIVE) });
+    synchronizeService.send(VOICE_START_TYPE, {
+      mode: VOICE_MODE_DUPLEX,
+      leg: voiceLegOf(IS_NATIVE),
+    });
     this.serverSession = true;
     this.transport = 'sync';
     this.flushPendingSends();
@@ -566,7 +586,13 @@ class VoiceService {
   }
 
   stop(): void {
-    traceEvent('voice', 'stop', traceReasonOf(`active-${this.active}-session-${this.serverSession}-transport-${this.transport}`));
+    traceEvent(
+      'voice',
+      'stop',
+      traceReasonOf(
+        `active-${this.active}-session-${this.serverSession}-transport-${this.transport}`
+      )
+    );
     this.clearWaiting();
     this.clearHandoff();
     if (this.revoked) {
@@ -725,17 +751,20 @@ class VoiceService {
       VOICE_HANGUP_RELEASE_MAX_MS,
       (run, ms) => {
         setTimeout(run, ms);
-      },
+      }
     );
     if (!hangUp) {
-      leaveThenRelease({ call, release }).catch((reason: unknown) => devLog('rtc leave failed:', reason));
+      leaveThenRelease({ call, release }).catch((reason: unknown) =>
+        devLog('rtc leave failed:', reason)
+      );
       return;
     }
     sendHangupThenLeave({
       call,
       flushMs: VOICE_HANGUP_FLUSH_MS,
       wait: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
-      onSent: (sent) => traceEvent('voice', sent ? 'sent' : 'error', sent ? 'hangup' : 'hangup-send-failed'),
+      onSent: (sent) =>
+        traceEvent('voice', sent ? 'sent' : 'error', sent ? 'hangup' : 'hangup-send-failed'),
       fallback: () => {
         traceEvent('voice', 'stop', 'sync-fallback');
         synchronizeService.send(VOICE_STOP_TYPE);
@@ -781,7 +810,11 @@ class VoiceService {
       return;
     }
     assistantSocket.claim('voice');
-    synchronizeService.send(VOICE_START_TYPE, { mode: VOICE_MODE_DUPLEX, resume: true, leg: voiceLegOf(IS_NATIVE) });
+    synchronizeService.send(VOICE_START_TYPE, {
+      mode: VOICE_MODE_DUPLEX,
+      resume: true,
+      leg: voiceLegOf(IS_NATIVE),
+    });
     this.serverSession = true;
     if (this.muted) synchronizeService.send(VOICE_MUTE_TYPE, { muted: true });
     this.phase = 'listening';
@@ -863,10 +896,8 @@ class VoiceService {
         this.withheldTurn = this.localTurn;
         this.notify();
       },
-      [VOICE_EVENT_TYPE]: (payload) => {
+      [VOICE_EVENT_TYPE]: () => {
         if (this.fromPreviousCall()) return;
-        const p = payload as IVoiceReactionPayload;
-        useAvatarStore.getState().react(p.reaction, p.intensity ?? 0);
         if (
           this.transport !== 'rtc' &&
           this.active &&
@@ -992,6 +1023,7 @@ class VoiceService {
     void this.start({
       callId: call.callId,
       reason: call.reason,
+      urgency: call.urgency,
       responseId: call.responseId ?? null,
     });
   }
@@ -1005,7 +1037,11 @@ class VoiceService {
   traceAppState(state: string): void {
     const call = this.rtc;
     if (!call || this.transport !== 'rtc') return;
-    traceEvent('voice', state === 'background' ? 'background' : 'foreground', micTraceReason(call.microphoneOn()));
+    traceEvent(
+      'voice',
+      state === 'background' ? 'background' : 'foreground',
+      micTraceReason(call.microphoneOn())
+    );
   }
 
   async declineCall(callId: string): Promise<void> {
@@ -1110,10 +1146,14 @@ class VoiceService {
       waitingCall: this.waitingCall,
       closedCallId: this.closedCallId,
       closedReason: this.closedReason,
+      connectedAt: this.connectedAt,
+      callUrgency: this.callUrgency,
     };
   }
 
   private notify(): void {
+    if (this.connectedAt === null && this.active && isLivePhase(this.phase))
+      this.connectedAt = Date.now();
     this.snapshotValue = this.buildSnapshot();
     this.listeners.forEach((listener) => listener());
   }

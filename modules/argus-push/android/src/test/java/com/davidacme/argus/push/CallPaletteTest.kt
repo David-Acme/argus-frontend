@@ -6,18 +6,16 @@ import org.junit.Test
 
 class CallPaletteTest {
     @Test
-    fun aNightThemeUsesTheDarkTokensAndALightThemeUsesTheLightOnes() {
-        assertEquals(0xFF181816.toInt(), CallPalette.of(night = true).background)
-        assertEquals(0xFFF4F1ED.toInt(), CallPalette.of(night = false).background)
-        assertNotEquals(CallPalette.of(night = true).text, CallPalette.of(night = false).text)
+    fun theCallStageIsAlwaysTheDarkStageOfTheApp() {
+        assertEquals(0xFF181816.toInt(), CallPalette.STAGE.background)
+        assertEquals(0xFF24231E.toInt(), CallPalette.STAGE.surface)
+        assertEquals(0xFFF4EFE7.toInt(), CallPalette.STAGE.text)
     }
 
     @Test
-    fun acceptAndDeclineKeepTheirMeaningInBothThemes() {
-        for (night in listOf(true, false)) {
-            val palette = CallPalette.of(night)
-            assertEquals(0xFF, (palette.accept ushr 24) and 0xFF)
-            assertNotEquals(palette.accept, palette.decline)
-        }
+    fun answerAndDeclineAreTheFlatCallColoursOfTheApp() {
+        assertEquals(0xFF25A85A.toInt(), CallPalette.STAGE.accept)
+        assertEquals(0xFFD83A34.toInt(), CallPalette.STAGE.decline)
+        assertNotEquals(CallPalette.STAGE.accept, CallPalette.STAGE.decline)
     }
 }

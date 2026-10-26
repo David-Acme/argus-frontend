@@ -1,6 +1,7 @@
-import type { IncomingCall } from './rtc.type';
+import type { IncomingCall, RtcCallUrgency } from './rtc.type';
 
-export type VoicePhase = 'idle' | 'connecting' | 'reconnecting' | 'listening' | 'thinking' | 'speaking' | 'done' | 'error';
+export type VoicePhase =
+  'idle' | 'connecting' | 'reconnecting' | 'listening' | 'thinking' | 'speaking' | 'done' | 'error';
 
 export type VoiceTurnRole = 'user' | 'assistant';
 
@@ -84,6 +85,8 @@ export type VoiceSnapshot = {
   waitingCall: IncomingCall | null;
   closedCallId: string | null;
   closedReason: CallEndReason | null;
+  connectedAt: number | null;
+  callUrgency: RtcCallUrgency | null;
 };
 
 export type CallEndReason = 'answered-ended' | 'missed' | 'declined' | 'claimed-elsewhere';
@@ -93,6 +96,7 @@ export type VoiceTransport = 'none' | 'sync' | 'rtc';
 export type VoiceStartOptions = {
   callId?: string;
   reason?: string | null;
+  urgency?: RtcCallUrgency | null;
   responseId?: number | null;
   watchConversationId?: string;
   socket?: boolean;
