@@ -139,7 +139,7 @@ test('a refused event delete says it was not deleted, and its reopened alert sta
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Schedule').first().click();
+  await screen.getByRole('tab', 'Agenda').first().click();
   await screen.getByRole('button', 'Options').first().click();
   await screen.getByText('Delete', { exact: true }).last().click();
 

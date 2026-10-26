@@ -60,7 +60,7 @@ test('the owner shares an agenda event, the other device shows the share live, a
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Schedule').first().click();
+  await screen.getByRole('tab', 'Agenda').first().click();
   await screen.getByRole('button', 'Options').first().click();
   await screen.getByText('Share', { exact: true }).last().click();
   await expect(screen.getByText('Only you can see this event for now.')).toBeVisible();
@@ -80,7 +80,7 @@ test('the owner shares an agenda event, the other device shows the share live, a
   });
   await expect(screen.getByRole('button', 'Remove Luis Paz')).toBeVisible({ timeout: LIVE_MS });
 
-  await second.page.getByRole('button', { name: 'Schedule' }).first().click();
+  await second.page.getByRole('tab', { name: 'Agenda' }).first().click();
   await second.page.getByRole('button', { name: 'Options', exact: true }).first().click();
   await second.page.getByText('Share', { exact: true }).last().click();
   await expect.poll(() => countButtons(second.page, 'Remove Luis Paz'), { timeout: LIVE_MS }).toBe(1);
