@@ -17,6 +17,7 @@ import {
   contactsOf,
   emergencyOf,
   headlineOf,
+  headlineWords,
   isOpen,
   phoneHref,
   placeOf,
@@ -116,33 +117,7 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
   const contacts = contactsOf(response);
   const open = isOpen(response);
   const showCamera = !compact && open && response.cameraId > 0 && cameraActions.watch;
-  const headlineText = (() => {
-    switch (headline.key) {
-      case 'calling':
-        return headline.stepCount > 1
-          ? t('screens.response.headline.calling-step', {
-              step: String(headline.step),
-              count: String(headline.stepCount),
-            })
-          : t('screens.response.headline.calling');
-      case 'attended':
-        return t('screens.response.headline.attended', { name: headline.name });
-      case 'confirmed':
-        return t('screens.response.headline.confirmed', { name: headline.name });
-      case 'false-alarm':
-        return t('screens.response.headline.false-alarm', { name: headline.name });
-      case 'confirmed-self':
-        return t('screens.response.headline.confirmed-self');
-      case 'false-alarm-self':
-        return t('screens.response.headline.false-alarm-self');
-      case 'attended-self':
-        return t('screens.response.headline.attended-self');
-      case 'unanswered':
-        return t('screens.response.headline.unanswered');
-      case 'expired':
-        return t('screens.response.headline.expired');
-    }
-  })();
+  const headlineText = headlineWords(headline, t);
 
   const choose = async (verdict: 'real' | 'false_alarm') => {
     setPending(verdict);
@@ -163,7 +138,10 @@ function ResponseCardBody({ response, compact, className }: ResponseCardBodyProp
             {t(`screens.response.kind.${KIND_KEYS[response.kind]}`)}
             {place ? ` · ${place}` : ''}
           </Text>
-          <Text variant="caption" numberOfLines={2} className={tone === 'urgent' ? 'text-error-strong' : undefined}>
+          <Text
+            variant="caption"
+            numberOfLines={2}
+            className={tone === 'urgent' ? 'text-error-strong' : undefined}>
             {headlineText}
           </Text>
         </View>
