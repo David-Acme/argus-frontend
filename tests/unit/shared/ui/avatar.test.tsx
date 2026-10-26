@@ -16,6 +16,12 @@ describe('Avatar', () => {
     expect(screen.queryByRole('img')).toBeNull();
   });
 
+  test('an Estela well draws the mascot still instead of a glyph', () => {
+    const { container } = render(<Avatar presence="idle" icon="bell" round />);
+    expect(container.querySelector('canvas')).not.toBeNull();
+    expect(container.querySelector('svg')).toBeNull();
+  });
+
   test('an initial grows with the font scale only as far as its 36 px box holds it', () => {
     render(
       <TextScaleProvider value={2}>

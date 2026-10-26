@@ -121,6 +121,7 @@ export const chromeSize = {
   presenceBrand: 30,
   presenceAsk: 20,
   presenceNotice: 52,
+  presenceAvatar: 30,
   presenceEye: 56,
   presenceEyeWide: 48,
   presenceThink: 26,

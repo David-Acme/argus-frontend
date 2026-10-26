@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import { Image, View, type ImageSourcePropType } from 'react-native';
+import { size as sizes } from '@/shared/theme';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
+import { Presence, type PresenceState } from '@/shared/ui/presence';
 import { Text, type TextTone } from '@/shared/ui/text';
 
 export type AvatarTone = 'default' | 'accent' | 'ok' | 'attn' | 'alert';
@@ -11,6 +13,7 @@ export type AvatarProps = {
   label?: string;
   initial?: string;
   icon?: IconGlyph;
+  presence?: PresenceState;
   portrait?: ImageSourcePropType;
   tone?: AvatarTone;
   round?: boolean;
@@ -39,10 +42,28 @@ const CORNER: Record<AvatarSize, string> = {
   large: 'rounded-well',
 };
 
+type FaceProps = Pick<AvatarProps, 'initial' | 'icon' | 'presence' | 'portrait'> & {
+  ink: Ink;
+  large: boolean;
+};
+
+function Face({ initial, icon, presence, portrait, ink, large }: FaceProps) {
+  if (portrait) return <Image source={portrait} className="size-full" />;
+  if (presence) return <Presence state={presence} size={sizes.presenceAvatar} paused />;
+  if (icon) return <Icon name={icon} size="small" tone={ink.icon} />;
+  if (!initial) return null;
+  return (
+    <Text variant={large ? 'initialLarge' : 'initial'} tone={ink.text}>
+      {initial}
+    </Text>
+  );
+}
+
 export function Avatar({
   label,
   initial,
   icon,
+  presence,
   portrait,
   tone = 'default',
   round,
@@ -60,13 +81,14 @@ export function Avatar({
         round ? 'rounded-full' : CORNER[size],
         ink.surface
       )}>
-      {portrait ? <Image source={portrait} className="size-full" /> : null}
-      {!portrait && icon ? <Icon name={icon} size="small" tone={ink.icon} /> : null}
-      {!portrait && !icon && initial ? (
-        <Text variant={size === 'large' ? 'initialLarge' : 'initial'} tone={ink.text}>
-          {initial}
-        </Text>
-      ) : null}
+      <Face
+        initial={initial}
+        icon={icon}
+        presence={presence}
+        portrait={portrait}
+        ink={ink}
+        large={size === 'large'}
+      />
     </View>
   );
 }

@@ -58,10 +58,14 @@ function SectionHead({ title, meta, action }: SectionHeadProps) {
 
 function Group({ children }: GroupProps) {
   const { elevation } = useThemeTokens();
+  const column = useInScreenColumn();
   const card = { boxShadow: elevation.card };
   return (
     <View
-      className="rounded-card bg-surface py-section-group-y web:focus-inset overflow-hidden"
+      className={clsx(
+        'rounded-card bg-surface py-section-group-y web:focus-inset overflow-hidden',
+        column && 'grow'
+      )}
       style={card}>
       {Children.toArray(children).map((child, index) => (
         <RowPosition.Provider key={index} value={{ index }}>
@@ -80,8 +84,9 @@ export function Section({
   testID,
   children,
 }: SectionProps) {
+  const column = useInScreenColumn();
   return (
-    <View className="mt-section-top" testID={testID}>
+    <View className={clsx('mt-section-top', column && 'grow')} testID={testID}>
       <SectionHead title={title} meta={meta} action={action} />
       {variant === 'grouped' ? <Group>{children}</Group> : children}
     </View>
