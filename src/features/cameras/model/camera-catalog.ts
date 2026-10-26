@@ -106,10 +106,6 @@ export function findCatalogModel(
   );
 }
 
-export function formFactorOf(models: readonly ICameraCatalogModel[], lookup: CatalogLookup): CameraFormFactor {
-  return findCatalogModel(models, lookup)?.formFactor ?? (lookup.driver === 'tapo' ? 'pan-tilt' : 'bullet');
-}
-
 export function megapixelsOf(resolution: string): string {
   const [width, height] = resolution.split('x').map(Number);
   if (!width || !height) return '';

@@ -3,7 +3,7 @@ import type { GuardMode } from '@/core/types';
 import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { GUARD_MODES } from '@/shared/constants';
-import { GUARD_MODE_ICONS } from '@/features/security/constants';
+import { GUARD_MODE_ICONS } from '@/features/security/constants/security.constant';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';

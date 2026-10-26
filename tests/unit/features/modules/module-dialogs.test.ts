@@ -190,4 +190,3 @@ describe('the turn-off dialog the e2e confirms', () => {
     );
   });
 });
-

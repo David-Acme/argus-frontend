@@ -5678,6 +5678,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` (T9) merged with redesign/main cde97d12, whose own export, measured the same day, is entry 7,434,450 B and `dist/` 8,914,334 B above the recorded 7,379,320 and 8,906,690 B (the hold-to-talk merge has no row of its own). With the route screens lazy the entry is 6,493,364 B (−941,086 against that tree) and `dist/` 8,920,271 B (+5,937): each of the 29 route chunks carries its own Metro module wrappers, and the entry gains the async-import paths that name them and `lazyScreen`; on 9b3757c, before the merge, the same change measured `dist/` 8,905,970 B. The entry baseline is lowered with it. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` follow-up: `expo-camera` and `qrcode` load on use (rule 30) from their own `expo-camera` and `qr-code` chunks instead of `__common`. Measured on the same tree, redesign/main 090f5f6: entry 6,493,364 → 6,444,328 B (−49,036) and `dist/` 8,920,271 → 8,922,342 B (+2,071): the two chunks' own Metro wrappers, the `DeviceCamera` and `LazyQrCode` wrappers and the async-import paths. The entry baseline is lowered with it. | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/inicio` (a22c419e), measured on the integrated tree: entry 6,444,328 → 6,502,624 B (+58,296) and `dist/` 8,922,342 → 8,945,214 B (+22,872). Inicio is the eager first screen, so its new composition, hero, states, «Esta noche», Estado and the help/try sections load with the entry; the entry stays 97,376 B under R-D36's 6,600,000 B ceiling. | 2026-10-26 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
@@ -6864,6 +6865,64 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando con la cámara»/«Reconectando…», the voice call's
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
+
+## Seguridad (2026-10-26, Phase 3, p3/seguridad)
+
+The Seguridad tab of the redesign spec §9.2, built from the 26 components in
+`src/features/security/screens/security-screen.tsx` and its sections under
+`src/features/security/components/page/`. The camera list at `/cameras` folds
+into this slice (`camera-list-screen.tsx`); the live view stays the cameras
+slice's.
+
+- **One hook per region, decisions in `model/`.** `useSecurity` holds the place
+  scope, the episodes of that scope, the visits and the mode change;
+  `useCameraTiles` reads the cached camera rows and the overview once per
+  screen, and only the tiles on screen ask for thumbnails (`useCameraFrames`).
+  The hero's sentence, tone, aura, presence and stats are
+  `securityStatus`/`statusWords`/`statusStats`; the alert is the newest active
+  episode Argus told someone about at `high` or `critical`, and an active
+  episode alone is attention. A pending review alone stays calm, as the
+  prototype draws it: the stat in `attn` says it.
+- **The mode applies at once.** `useGuardMode` keeps the masked-camera warning
+  and the disarm PIN of the old picker, writes optimistically, plays the
+  `success` haptic and offers Deshacer in the toast; Deshacer runs the same
+  path with the modes the server answered, so lowering back asks for the PIN
+  when the place needs it. The segmented control slides its pill on the
+  `snappy` spring (`Segmented`), and the hero passes Estela's `modechange` cue.
+- **SOS is hold-to-confirm** (`Button` with `hold`, R-D10): 1.5 s
+  (`motion.holdConfirm`), a `selection` tick at each third and `warning` at the
+  end, driven by the animation on the UI thread; a tap is the two-step
+  alternative and opens the destructive `Confirm`.
+- **Places.** With one place the mode control is on the page; with several the
+  hero carries the picker («Casa ▾» with «Todos los lugares»), the default place
+  first. Places, visits, maintenance and the full feed are short pushed screens
+  (`/security/places`, `/visits`, `/maintenance`, `/episodes`); a place keeps
+  `/security/{id}`, whose episode list became the same rows and sheet.
+- **Episode review lives in the episode sheet** (`EpisodeSheet`): ¿Acertó? is a
+  `Choice`, keeping the incident is a `Switch`, the footer's one action is «Ver
+  cámara», or «Fui yo» for an active tamper.
+- **Desktop.** The status band holds the picker, the mode and SOS. The camera
+  column's width allows 2, 3 or 4 columns (`maxColumnsFor`,
+  `layout.mediaGridThree`/`mediaGridFour`: the prototype draws three at 1280
+  and four at 2560), and `gridColumnsFor` picks, within that, the shape that is
+  never taller than wide, then the one whose last row is fullest, then the
+  fewer columns: 4 → 2×2, 5 → 3+2, 6 → 3×2, 7 → 4+3, so no lone tile sits
+  beside a blank. The tiles stretch evenly over their minimum height. The
+  feed and aside columns grow nothing (`ScreenColumn grows={false}`) and end on
+  their content; a short card is never stretched into empty space. From
+  1700 px (`layout.fourColumns`) a third column adds visits, places, maintenance
+  and activity per camera; below it the second column carries visits and the
+  other «Más» rows so nothing is out of reach.
+- **The alert sentence stays short** so the band never truncates it: who and
+  where («Alguien en Patio trasero», «3 personas en Patio trasero»), with what
+  in the meta; a tamper says what happened and the camera goes to the meta.
+- **No data is a designed state** (`starters`): two cameras or fewer add «Qué
+  hará Argus con tus cámaras», an answered empty feed adds «Prueba esto», and
+  no camera at all is the empty state with the wizard («Conecta tu primera
+  cámara»), at every width.
+- **Spoken names.** A tile's Ver and Hablar and each feed's Revisar show one
+  word and say which camera or episode they act on (`ButtonLabel`), so no two
+  controls share a name.
 
 ## Inicio: composition, hero, band and states (Phase 2, T4, 2026-10-26)
 

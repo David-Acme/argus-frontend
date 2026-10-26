@@ -44,7 +44,10 @@ const state = {
   threads: 1,
 };
 
-const marker = (name: string) => () => <span>{name}</span>;
+const marker = (name: string) =>
+  function Marker() {
+    return <span>{name}</span>;
+  };
 
 mock.module('expo-router', () => ({
   useRouter: () => ({ push: (href: string) => routes.push(href) }),

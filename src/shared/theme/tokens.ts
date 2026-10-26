@@ -243,6 +243,8 @@ export const motion = {
   pressScale: 0.96,
   pressScaleIcon: 0.9,
   caretBlink: 1000,
+  holdConfirm: 1500,
+  holdTicks: 3,
   loop: { live: 2400, liveDim: 0.35, shimmer: 1400, shimmerRest: 0.5 },
 } as const;
 
@@ -282,6 +284,8 @@ export const layout = {
   palette: 640,
   sidebar: 244,
   mediaAspect: 1.6,
+  mediaGridThree: 560,
+  mediaGridFour: 1400,
   bandMax: 2256,
 } as const;
 

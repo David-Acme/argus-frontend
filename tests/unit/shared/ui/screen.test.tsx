@@ -136,7 +136,7 @@ describe('Screen', () => {
     expect(renderHook(() => useInScreenColumn()).result.current).toBe(false);
   });
 
-  function growthOf(grows?: number): Record<string, boolean> {
+  function growthOf(grows?: number | false): Record<string, boolean> {
     setWindowWidth(1280);
     const seen: Record<string, boolean> = {};
     function Probe({ name }: { name: string }) {
@@ -167,6 +167,10 @@ describe('Screen', () => {
 
   test('a column that names the section to grow grows that one and not its last', () => {
     expect(growthOf(0)).toEqual({ Ahora: true, Hoy: false, Mañana: false });
+  });
+
+  test('a column that grows nothing ends on its content', () => {
+    expect(growthOf(false)).toEqual({ Ahora: false, Hoy: false, Mañana: false });
   });
 
   test('outside a column nothing grows', () => {

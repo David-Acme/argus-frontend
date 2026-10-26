@@ -224,8 +224,6 @@ src/features/auth/screens/pairing-screen.tsx
 src/features/auth/screens/privacy-screen.tsx
 src/features/cameras/components/camera-aim-panel.tsx
 src/features/cameras/components/camera-call-panel.tsx
-src/features/cameras/components/camera-card-grid.tsx
-src/features/cameras/components/camera-card.tsx
 src/features/cameras/components/camera-control-panel.tsx
 src/features/cameras/components/camera-device-settings.tsx
 src/features/cameras/components/camera-form-schema.ts
@@ -244,14 +242,11 @@ src/features/cameras/components/camera-sight-status.tsx
 src/features/cameras/components/camera-siren-panel.tsx
 src/features/cameras/components/camera-siren-sheet.tsx
 src/features/cameras/components/camera-snapshot-view.tsx
-src/features/cameras/components/camera-summary.tsx
 src/features/cameras/components/camera-talk-sheet.tsx
-src/features/cameras/components/camera-toolbar.tsx
 src/features/cameras/components/clip-list.tsx
 src/features/cameras/components/clip-player.native.tsx
 src/features/cameras/components/privacy-toggle.tsx
 src/features/cameras/components/ptz-pad.tsx
-src/features/cameras/components/recent-detections.tsx
 src/features/cameras/components/recording-paused-banner.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/web-camera-player.ts
@@ -295,7 +290,6 @@ src/features/cameras/model/stream-recovery.ts
 src/features/cameras/model/tamper-evidence.ts
 src/features/cameras/screens/camera-detail-screen.tsx
 src/features/cameras/screens/camera-lab-screen.tsx
-src/features/cameras/screens/cameras-screen.tsx
 src/features/cameras/services/camera-call-session.ts
 src/features/cameras/services/camera-call.service.ts
 src/features/cameras/services/camera-control.service.ts
@@ -419,11 +413,8 @@ src/features/security/components/camera-context-panel.tsx
 src/features/security/components/camera-environment-panel.tsx
 src/features/security/components/emergency-contact-dialog.tsx
 src/features/security/components/emergency-contacts-panel.tsx
-src/features/security/components/environment-card.tsx
 src/features/security/components/environment-form-dialog.tsx
 src/features/security/components/environment-settings-panel.tsx
-src/features/security/components/environments-panel.tsx
-src/features/security/components/episode-card.tsx
 src/features/security/components/expected-guest-form.tsx
 src/features/security/components/guard-card.tsx
 src/features/security/components/guard-mode-picker.tsx
@@ -433,9 +424,7 @@ src/features/security/components/maintenance-dialog.tsx
 src/features/security/components/maintenance-panel.tsx
 src/features/security/components/maintenance-window-row.tsx
 src/features/security/components/response-recipients-panel.tsx
-src/features/security/components/security-hero.tsx
 src/features/security/components/sight-notice-actions.tsx
-src/features/security/constants.ts
 src/features/security/hooks/use-environment-response.ts
 src/features/security/hooks/use-guard.ts
 src/features/security/hooks/use-maintenance.ts
@@ -447,7 +436,6 @@ src/features/security/model/mode-change.ts
 src/features/security/model/response-recipients.ts
 src/features/security/model/tamper-notice.ts
 src/features/security/screens/environment-screen.tsx
-src/features/security/screens/security-screen.tsx
 src/features/sessions/components/user-sessions-dialog.tsx
 src/features/sessions/services/sessions.service.ts
 src/features/settings/hooks/use-settings.ts
@@ -707,7 +695,6 @@ tests/unit/features/cameras/camera-live-controls.test.ts
 tests/unit/features/cameras/camera-media-access.test.ts
 tests/unit/features/cameras/camera-model.test.ts
 tests/unit/features/cameras/camera-patrol.test.ts
-tests/unit/features/cameras/camera-preview.test.ts
 tests/unit/features/cameras/camera-privacy.test.ts
 tests/unit/features/cameras/camera-recording.test.ts
 tests/unit/features/cameras/camera-sight-layout.test.ts
@@ -740,11 +727,9 @@ tests/unit/features/reminders/reminders.test.ts
 tests/unit/features/safety/safety-model.test.ts
 tests/unit/features/safety/services/safety-phrase.test.ts
 tests/unit/features/safety/services/safety-service.test.ts
-tests/unit/features/security/guard-mode-change.test.ts
 tests/unit/features/security/maintenance.test.ts
 tests/unit/features/security/response-recipients.test.ts
 tests/unit/features/security/security-environments.test.ts
-tests/unit/features/security/security-episode.test.ts
 tests/unit/features/security/security-hours.test.ts
 tests/unit/features/security/tamper-notice.test.ts
 tests/unit/features/settings/desktop-autostart.test.ts
