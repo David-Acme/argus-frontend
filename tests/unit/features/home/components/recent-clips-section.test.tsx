@@ -3,8 +3,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { RecentClipsData } from '@/features/home/hooks/use-recent-clip-tiles';
-import { screenFocus } from '../../../unit/shared/ui/screen-focus';
-import '../../../unit/shared/ui/translation-stub';
+import { screenFocus } from '../../../shared/ui/screen-focus';
+import { setWindowWidth } from '../../../shared/ui/window-width';
+import '../../../shared/ui/translation-stub';
 
 const pushed: string[] = [];
 
@@ -52,9 +53,10 @@ mock.module('@/features/home/hooks/use-recent-clip-tiles', () => ({
 
 const { RecentClipsSection } =
   await import('@/features/home/components/cameras/recent-clips-section');
-const { ScreenColumnProvider } = await import('@/shared/ui/screen/screen-column-context');
+const { ScreenColumn, ScreenColumns } = await import('@/shared/ui/screen/screen-columns');
 
 afterEach(() => {
+  setWindowWidth(360);
   pushed.length = 0;
 });
 
@@ -70,11 +72,14 @@ describe('RecentClipsSection', () => {
   });
 
   test('in a desktop column one clip keeps half the width', () => {
+    setWindowWidth(1920);
     data = recent({ clips: recent({}).clips.slice(0, 1) });
     render(
-      <ScreenColumnProvider value>
-        <RecentClipsSection />
-      </ScreenColumnProvider>
+      <ScreenColumns>
+        <ScreenColumn label="En casa">
+          <RecentClipsSection />
+        </ScreenColumn>
+      </ScreenColumns>
     );
     expect(screen.getByRole('button', { name: 'Puerta principal, 14:45' })).toBeDefined();
   });

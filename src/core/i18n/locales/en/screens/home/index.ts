@@ -1,3 +1,5 @@
+import { agendaSections } from './agenda-sections';
+
 export const home = {
   recent: 'Recent',
   now: 'Now',
@@ -94,6 +96,7 @@ export const home = {
     },
   },
   calendar: 'Calendar',
+  'agenda-sections': agendaSections,
   subtitle: 'Parameters travel through the store, so the same route works for any scan.',
   'scan-server': 'Link server',
   'scan-camera': 'Link IP camera',
@@ -118,4 +121,23 @@ export const home = {
   'project-tasks': '{done} of {total} tasks done',
   'tasks-open': 'Open tasks',
   'detections-recent': 'Recent detections',
+  news: {
+    sender: 'Argus',
+    review: 'Review',
+    reply: 'Reply',
+    yesterday: 'Yesterday {time}',
+    empty: 'What happens at home will show up here',
+    more: 'Show more',
+  },
+  people: {
+    title: 'At home',
+    you: '{name} (you)',
+    home: 'at home',
+    away: 'away',
+    unknown: 'no data',
+    'since-time': '{state} since {time}',
+    'since-day': '{state} since {date}',
+    loading: 'Loading who is at home',
+    failed: 'Could not tell who is at home',
+  },
 };

@@ -239,7 +239,7 @@ export function NotificationThreadRow({
         {sight ? <SightNoticeActions notice={sight.notice} onAnswered={() => onRead?.(thread)} /> : null}
         {request ? (
           <View className="pt-1.5">
-            <ModuleEnableAction moduleId={request.moduleId} onEnabled={() => onRead?.(thread)} />
+            <ModuleEnableAction moduleId={request.moduleId} onDone={() => onRead?.(thread)} />
           </View>
         ) : null}
         {watchKind ? (

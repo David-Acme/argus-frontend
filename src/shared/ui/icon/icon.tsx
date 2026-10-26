@@ -4,7 +4,16 @@ import { ICON_SHAPES, type IconGlyph, type IconShape } from './icon-shapes';
 
 export type IconTone = Extract<
   ColorRole,
-  'text' | 'text-2' | 'text-3' | 'accent' | 'ok' | 'attn' | 'alert' | 'on-ink' | 'on-media'
+  | 'text'
+  | 'text-2'
+  | 'text-3'
+  | 'accent'
+  | 'ok'
+  | 'attn'
+  | 'alert'
+  | 'on-ink'
+  | 'on-media'
+  | 'ev1-text'
 >;
 
 export type IconProps = {

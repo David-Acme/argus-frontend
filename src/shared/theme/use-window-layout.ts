@@ -5,3 +5,7 @@ export function useWindowLayout(): WindowLayout {
   const { width, height } = useWindowDimensions();
   return classifyWindowSize({ width, height });
 }
+
+export function useWindowHeight(): number {
+  return useWindowDimensions().height;
+}

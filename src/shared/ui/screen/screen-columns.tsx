@@ -2,14 +2,14 @@ import { clsx } from 'clsx';
 import { Children, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import { layout, useWindowLayout } from '@/shared/theme';
-import { ScreenColumnGrowProvider, ScreenColumnProvider } from './screen-column-context';
+import { ColumnGrowProvider, ScreenColumnProvider } from './screen-column-context';
 
 export type ScreenColumnsProps = { children: ReactNode };
 
 export type ScreenColumnProps = {
   width?: number;
   label?: string;
-  grow?: number;
+  grows?: number;
   children: ReactNode;
 };
 
@@ -33,12 +33,12 @@ export function ScreenColumns({ children }: ScreenColumnsProps) {
   );
 }
 
-export function ScreenColumn({ width, label, grow, children }: ScreenColumnProps) {
+export function ScreenColumn({ width, label, grows, children }: ScreenColumnProps) {
   const desktop = useDesktop();
   if (!desktop) return <>{children}</>;
   const items = Children.toArray(children);
   const fixed = width === undefined ? undefined : { width, flexGrow: 0, flexShrink: 0 };
-  const grown = grow ?? items.length - 1;
+  const growing = grows ?? items.length - 1;
   return (
     <ScrollView
       aria-label={label}
@@ -48,8 +48,8 @@ export function ScreenColumn({ width, label, grow, children }: ScreenColumnProps
       <View className="px-screen-column-pad-x pb-screen-column-bottom grow">
         <ScreenColumnProvider value>
           {items.map((child, index) => (
-            <View key={index} className={index === grown ? 'grow' : undefined}>
-              <ScreenColumnGrowProvider value={index === grown}>{child}</ScreenColumnGrowProvider>
+            <View key={index} className={index === growing ? 'grow' : undefined}>
+              <ColumnGrowProvider value={index === growing}>{child}</ColumnGrowProvider>
             </View>
           ))}
         </ScreenColumnProvider>

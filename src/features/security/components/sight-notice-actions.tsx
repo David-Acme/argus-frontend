@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { View } from 'react-native';
-import { Button } from '@/shared/components/ui/button';
-import { Text } from '@/shared/components/ui/text';
+import { Button } from '@/shared/ui/button';
+import { Text } from '@/shared/ui/text';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { answerTamperAsk, answerViewCheck, claimTamper } from '@/features/security/hooks/use-maintenance';
@@ -67,25 +66,24 @@ export function SightNoticeActions({ notice, onAnswered }: SightNoticeActionsPro
   if (choices.length === 0) return null;
   if (answered) {
     return (
-      <Text variant="caption" className="pt-1.5">
+      <Text variant="meta" tone="2">
         {t('screens.security.tamper.answered')}
       </Text>
     );
   }
 
   return (
-    <View className="flex-row flex-wrap gap-2 pt-1.5">
+    <>
       {choices.map((choice) => (
         <Button
           key={choice.key}
-          size="sm"
-          variant={choice.primary ? 'default' : 'outline'}
-          loading={busy === choice.key}
+          compact
+          variant={choice.primary ? 'primary' : 'secondary'}
+          label={choice.label}
           disabled={busy !== null && busy !== choice.key}
-          onPress={() => void choose(choice)}>
-          <Text>{choice.label}</Text>
-        </Button>
+          onPress={() => choose(choice)}
+        />
       ))}
-    </View>
+    </>
   );
 }

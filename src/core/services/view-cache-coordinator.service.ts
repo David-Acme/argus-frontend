@@ -18,6 +18,7 @@ import {
   NOTIFICATION_FEED_SCOPE,
   MODULE_IDS,
   VIEW_CACHE_KEYS,
+  VIEW_CACHE_LIST_LIMIT,
 } from '@/shared/constants';
 import {
   agendaScope,
@@ -32,6 +33,7 @@ import {
 import { projectCalendarShares } from './view-cache/calendar-share.projection';
 import { projectCameras } from './view-cache/camera.projection';
 import { projectConversations, projectConversationThread } from './view-cache/conversation.projection';
+import { projectEventList } from './view-cache';
 import { projectGettingStarted } from './view-cache/getting-started.projection';
 import { projectNotificationFeed } from './view-cache/notification.projection';
 import { ModuleSourceGate } from './view-cache/module-source-gate';
@@ -107,6 +109,15 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
     ),
     startProjection({ sources: () => ({ users: sources.users, invitations: sources.invitations }), project: projectPeople }, ctx),
     startProjection({ sources: () => ({ reminders: sources.reminders }), project: projectReminders }, ctx),
+    startProjection(
+      {
+        sources: () => ({
+          events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeLatest(VIEW_CACHE_LIST_LIMIT), []),
+        }),
+        project: projectEventList,
+      },
+      ctx,
+    ),
     startProjection(
       {
         sources: () => ({ summaries: sources.conversations }),

@@ -1,7 +1,6 @@
 import type { ReactElement } from 'react';
 import { Pressable, View } from 'react-native';
 import { calendarEventService } from '@/core/services/calendar-event.service';
-import { projectTaskService } from '@/core/services/project-task.service';
 import type { CalendarEntry, MenuOption } from '@/core/types';
 import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import {
@@ -22,7 +21,6 @@ import {
   calendarEntryRecordId,
   isOccurrence,
   occurrenceOf,
-  seriesDeleteConfirm,
   shouldShowCalendarEntryOverflow,
   skipOccurrenceBody,
   type CalendarEntryAction,
@@ -30,6 +28,7 @@ import {
 import { cn } from '@/shared/libs/utils';
 import { isPendingRecordId } from '@/shared/libs/optimistic';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
+import { removeEntry, toggleTask } from '@/features/agenda/services/calendar-entry-commands';
 
 type EntryActionsMenuProps = {
   entry: CalendarEntry;
@@ -65,7 +64,6 @@ export function EntryActionsMenu({
     isShort,
   });
   const usesContextMenu = IS_NATIVE && !usesSheet;
-  const isEvent = entry.source === 'event';
   const series = isOccurrence(entry);
   const recordId = calendarEntryRecordId(entry);
   const pending = isPendingRecordId(recordId);
@@ -151,24 +149,11 @@ export function EntryActionsMenu({
     }
 
     if (action === 'toggle') {
-      const status = entry.status === 'complete' ? 'todo' : 'done';
-      await runOptimistic({
-        intents: [{ table: 'project_task', kind: 'update', recordId, values: { status } }],
-        call: () => projectTaskService.update(recordId, { status }),
-      });
+      await toggleTask({ entry, t });
       return;
     }
 
-    await runOptimistic({
-      confirm: seriesDeleteConfirm(entry, {
-        title: t('screens.agenda.delete-event-title', { name: entry.title }),
-        description: t('screens.agenda.delete-series-body'),
-        confirmLabel: t('screens.agenda.delete-series'),
-      }),
-      intents: [{ table: isEvent ? 'calendar_event' : 'project_task', kind: 'delete', recordId }],
-      call: () => (isEvent ? calendarEventService.remove(recordId) : projectTaskService.remove(recordId)),
-      undo: { title: series ? t('screens.agenda.deleted-series') : t('screens.agenda.deleted'), description: entry.title },
-    });
+    await removeEntry({ entry, t });
   };
 
   if (options.length === 0) return contextTrigger ?? null;

@@ -3,7 +3,7 @@ import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { Section } from '@/shared/ui/section/section';
 import { Screen } from '@/shared/ui/screen/screen';
-import { useInScreenColumn, useScreenColumnGrow } from '@/shared/ui/screen/screen-column-context';
+import { useGrowsInColumn, useInScreenColumn } from '@/shared/ui/screen/screen-column-context';
 import { ScreenColumn, ScreenColumns } from '@/shared/ui/screen/screen-columns';
 import { ScreenScroll } from '@/shared/ui/screen/screen-scroll';
 import { ScreenScroll as NativeScreenScroll } from '@/shared/ui/screen/screen-scroll.native';
@@ -91,36 +91,45 @@ describe('Screen', () => {
     expect(seen).toContain(true);
   });
 
-  test('a column grows its last child, or the child it names, to the bottom', () => {
-    setWindowWidth(1920);
-    const grown: Record<string, boolean> = {};
+  test('outside a column a section is not sticky', () => {
+    expect(renderHook(() => useInScreenColumn()).result.current).toBe(false);
+  });
+
+  function growthOf(grows?: number): Record<string, boolean> {
+    setWindowWidth(1280);
+    const seen: Record<string, boolean> = {};
     function Probe({ name }: { name: string }) {
-      grown[name] = useScreenColumnGrow();
-      return null;
+      seen[name] = useGrowsInColumn();
+      return (
+        <Section title={name}>
+          <Text>{name}</Text>
+        </Section>
+      );
     }
     render(
       <Screen columns>
         <ScreenColumns>
-          <ScreenColumn label="Ahora">
-            <Probe name="ahora" />
-            <Probe name="hoy" />
-          </ScreenColumn>
-          <ScreenColumn label="Cámaras" grow={0}>
-            <Probe name="camaras" />
-            <Section title="Lo que pasó">
-              <Probe name="paso" />
-            </Section>
+          <ScreenColumn label="Agenda" width={320} grows={grows}>
+            <Probe name="Ahora" />
+            <Probe name="Hoy" />
+            <Probe name="Mañana" />
           </ScreenColumn>
         </ScreenColumns>
       </Screen>
     );
-    expect(grown).toEqual({ ahora: false, hoy: true, camaras: true, paso: false });
-    expect(screen.getByRole('heading', { name: 'Lo que pasó' })).toBeDefined();
+    return seen;
+  }
+
+  test('in a column of three sections only the last grows to the bottom', () => {
+    expect(growthOf()).toEqual({ Ahora: false, Hoy: false, Mañana: true });
   });
 
-  test('outside a column a section is not sticky and does not grow', () => {
-    expect(renderHook(() => useScreenColumnGrow()).result.current).toBe(false);
-    expect(renderHook(() => useInScreenColumn()).result.current).toBe(false);
+  test('a column that names the section to grow grows that one and not its last', () => {
+    expect(growthOf(0)).toEqual({ Ahora: true, Hoy: false, Mañana: false });
+  });
+
+  test('outside a column nothing grows', () => {
+    expect(renderHook(() => useGrowsInColumn()).result.current).toBe(false);
   });
 
   test('the top bar and both scroll owners render alone', () => {

@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { HappenedData } from '@/features/home/hooks/use-happened';
-import { screenFocus } from '../../../unit/shared/ui/screen-focus';
-import '../../../unit/shared/ui/translation-stub';
+import { screenFocus } from '../../../shared/ui/screen-focus';
+import { setWindowWidth } from '../../../shared/ui/window-width';
+import '../../../shared/ui/translation-stub';
 
 const pushed: string[] = [];
 
@@ -49,9 +50,10 @@ mock.module('expo-router', () => ({
 mock.module('@/features/home/hooks/use-happened', () => ({ useHappened: () => data }));
 
 const { HappenedSection } = await import('@/features/home/components/cameras/happened-section');
-const { ScreenColumnProvider } = await import('@/shared/ui/screen/screen-column-context');
+const { ScreenColumn, ScreenColumns } = await import('@/shared/ui/screen/screen-columns');
 
 afterEach(() => {
+  setWindowWidth(360);
   pushed.length = 0;
   retried = 0;
 });
@@ -67,11 +69,14 @@ describe('HappenedSection', () => {
   });
 
   test('in a desktop column it keeps the same rows', () => {
+    setWindowWidth(1920);
     data = happened({});
     render(
-      <ScreenColumnProvider value>
-        <HappenedSection />
-      </ScreenColumnProvider>
+      <ScreenColumns>
+        <ScreenColumn label="Cámaras">
+          <HappenedSection />
+        </ScreenColumn>
+      </ScreenColumns>
     );
     expect(screen.getByText('Patio trasero · ayer 21:53')).toBeDefined();
   });

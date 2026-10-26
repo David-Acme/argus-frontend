@@ -43,6 +43,28 @@ describe('FeedItem', () => {
     expect(activated).toBe(1);
   });
 
+  test('a pressable item names itself by its words and keeps its actions apart', () => {
+    const pressed: string[] = [];
+    render(
+      <Feed>
+        <FeedItem
+          leading={null}
+          who="Patio trasero"
+          when="21:53"
+          text="Persona desconocida."
+          unreadLabel="Sin leer"
+          onPress={() => pressed.push('row')}
+          actions={<button onClick={() => pressed.push('action')}>Revisar</button>}
+        />
+      </Feed>
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Sin leer, Patio trasero, 21:53, Persona desconocida.' })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }));
+    expect(pressed).toEqual(['row', 'action']);
+  });
+
   test('a read item shows no unread dot', () => {
     render(<FeedItem leading={null} who="Argus" when="14:40" text="Resumen del día." />);
     expect(screen.queryByRole('img')).toBeNull();

@@ -8,8 +8,9 @@ import type {
   CameraSectionForm,
 } from '@/features/home/hooks/use-camera-section';
 import type { MomentFormat } from '@/features/home/model/camera-moments';
-import { screenFocus } from '../../../unit/shared/ui/screen-focus';
-import '../../../unit/shared/ui/translation-stub';
+import { screenFocus } from '../../../shared/ui/screen-focus';
+import { setWindowWidth } from '../../../shared/ui/window-width';
+import '../../../shared/ui/translation-stub';
 
 const pushed: string[] = [];
 
@@ -57,13 +58,20 @@ mock.module('@/features/home/hooks/use-camera-section', () => ({
 
 const { CamerasSection } = await import('@/features/home/components/cameras/cameras-section');
 const { CameraMedia, ClipMedia } = await import('@/features/home/components/cameras/camera-media');
-const { ScreenColumnProvider } = await import('@/shared/ui/screen/screen-column-context');
+const { ScreenColumn, ScreenColumns } = await import('@/shared/ui/screen/screen-columns');
 
 function InColumn({ children }: { children: ReactNode }) {
-  return <ScreenColumnProvider value>{children}</ScreenColumnProvider>;
+  return (
+    <ScreenColumns>
+      <ScreenColumn label="Cámaras" grows={0}>
+        {children}
+      </ScreenColumn>
+    </ScreenColumns>
+  );
 }
 
 afterEach(() => {
+  setWindowWidth(360);
   pushed.length = 0;
   forms.length = 0;
 });
@@ -102,6 +110,7 @@ describe('CamerasSection', () => {
   });
 
   test('in a desktop column the cameras fill a grid with no clip and no strip', () => {
+    setWindowWidth(1920);
     data = sectionData({ latestClip: null });
     render(
       <InColumn>
