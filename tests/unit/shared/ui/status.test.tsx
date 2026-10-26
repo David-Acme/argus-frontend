@@ -78,6 +78,13 @@ describe('Status', () => {
     expect(container.querySelectorAll('radialGradient').length).toBe(3);
   });
 
+  test('the band keeps a long alert sentence whole', () => {
+    setWindowWidth(1280);
+    render(<Status tone="alert" sentence="3 personas en Patio trasero" meta="Ahora" />);
+    const sentence = screen.getByRole('heading', { name: '3 personas en Patio trasero' });
+    expect(sentence.textContent).toBe('3 personas en Patio trasero');
+  });
+
   test('the card is an alert with one primary, one secondary and a quiet tertiary', () => {
     const pressed: string[] = [];
     render(

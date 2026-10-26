@@ -80,7 +80,7 @@ function HeroBand(props: HeroStatusProps) {
           <Presence state={presence} size={size.presenceBand} event={presenceEvent} />
         ) : null}
         <StatusFade change={sentence} grow>
-          <Text variant="heroBand" heading={2} numberOfLines={1}>
+          <Text variant="heroBand" heading={2} numberOfLines={2}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>
