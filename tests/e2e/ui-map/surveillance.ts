@@ -446,7 +446,7 @@ export const SURVEILLANCE_SCREENS: ScreenSpec[] = [
       {
         state: 'empty',
         routes: [...SURVEILLANCE_BASE, ...NO_CLIPS],
-        act: openCamera('Patio trasero'),
+        act: openCamera('Puerta principal'),
         notes:
           'Puerta principal has no zones and, here, no clips: the rows say so and still lead to their screens',
       },
