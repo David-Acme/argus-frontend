@@ -40,6 +40,21 @@ describe('Status', () => {
     expect(canvasWidths(container)).toEqual(['66px']);
   });
 
+  test('the dense hero draws the Seguridad presence beside its mode', () => {
+    const { container } = render(
+      <Status
+        tone="calm"
+        dense
+        sentence="En casa"
+        meta="Te aviso solo de desconocidos"
+        presence="idle"
+        presenceEvent={{ name: 'modechange', id: 1 }}
+      />
+    );
+    expect(screen.getByRole('heading', { name: 'En casa' })).toBeDefined();
+    expect(canvasWidths(container)).toEqual(['58px']);
+  });
+
   test('an alert hero is announced and the secondary hero draws a smaller presence', () => {
     const { container } = render(
       <HeroStatus

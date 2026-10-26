@@ -42,6 +42,7 @@ export function StatusDemo() {
           meta={copy.atHomeMeta}
           stats={SECURITY}
           presence="idle"
+          dense
         />
       </LabCase>
       <LabCase id="hero-night" block>

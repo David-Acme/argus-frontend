@@ -39,13 +39,18 @@ function sentenceVariant(secondary: boolean | undefined, wide: boolean): TextVar
   return secondary ? 'heroSecondary' : 'heroCompact';
 }
 
+function presenceSizeOf({ secondary, dense }: Pick<HeroStatusProps, 'secondary' | 'dense'>) {
+  if (secondary) return size.presenceHeroSmall;
+  return dense ? size.presenceHeroDense : size.presenceHero;
+}
+
 function HeroRow(props: HeroStatusProps & { wide: boolean }) {
-  const { tone, sentence, meta, stats = [], presence, secondary, wide } = props;
-  const presenceSize = secondary ? size.presenceHeroSmall : size.presenceHero;
+  const { tone, sentence, meta, stats = [], presence, presenceEvent, secondary, wide } = props;
+  const presenceSize = presenceSizeOf(props);
   return (
     <View role={tone === 'alert' ? 'alert' : undefined}>
       <View className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
-        {presence ? <Presence state={presence} size={presenceSize} /> : null}
+        {presence ? <Presence state={presence} size={presenceSize} event={presenceEvent} /> : null}
         <StatusFade change={sentence} grow>
           <Text variant={sentenceVariant(secondary, wide)} heading={2}>
             {sentence}
@@ -58,7 +63,8 @@ function HeroRow(props: HeroStatusProps & { wide: boolean }) {
   );
 }
 
-function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroStatusProps) {
+function HeroBand(props: HeroStatusProps) {
+  const { tone, sentence, meta, stats = [], presence, presenceEvent, action } = props;
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.card };
   return (
@@ -70,7 +76,9 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
         className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y web:focus-inset flex-row flex-nowrap items-center overflow-hidden"
         style={card}>
         <Aura tone={AURA[tone]} mode="band" />
-        {presence ? <Presence state={presence} size={size.presenceBand} /> : null}
+        {presence ? (
+          <Presence state={presence} size={size.presenceBand} event={presenceEvent} />
+        ) : null}
         <StatusFade change={sentence} grow>
           <Text variant="heroBand" heading={2} numberOfLines={1}>
             {sentence}

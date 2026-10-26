@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ChipTone } from '@/shared/ui/chip';
 import type { IconGlyph } from '@/shared/ui/icon';
-import type { PresenceState } from '@/shared/ui/presence';
+import type { PresenceCue, PresenceState } from '@/shared/ui/presence';
 
 export type StatusTone = 'calm' | 'attention' | 'alert';
 
@@ -16,7 +16,9 @@ export type HeroStatusProps = {
   meta: string;
   stats?: readonly StatusStat[];
   presence?: PresenceState;
+  presenceEvent?: PresenceCue;
   secondary?: boolean;
+  dense?: boolean;
   action?: ReactNode;
 };
 

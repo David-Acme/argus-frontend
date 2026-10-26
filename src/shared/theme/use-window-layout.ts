@@ -1,4 +1,5 @@
 import { useWindowDimensions } from 'react-native';
+import { layout } from './tokens';
 import { classifyWindowSize, type WindowLayout } from './window-layout';
 
 export function useWindowLayout(): WindowLayout {
@@ -8,4 +9,8 @@ export function useWindowLayout(): WindowLayout {
 
 export function useWindowHeight(): number {
   return useWindowDimensions().height;
+}
+
+export function useFourColumns(): boolean {
+  return useWindowDimensions().width >= layout.fourColumns;
 }

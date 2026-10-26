@@ -33,6 +33,9 @@ export function ButtonDemo() {
       <LabCase id="danger-compact">
         <Button variant="danger" compact label={copy.sos} onPress={noop} />
       </LabCase>
+      <LabCase id="danger-hold">
+        <Button compact label={copy.sos} hold={{ onHold: noop, hint: copy.sos }} onPress={noop} />
+      </LabCase>
       <LabCase id="glass-compact">
         <Button glass compact trailing={{ icon: 'chevd' }} label={copy.home} onPress={noop} />
       </LabCase>
