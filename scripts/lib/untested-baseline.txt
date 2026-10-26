@@ -130,7 +130,6 @@ src/features/modules/components/host-command-note.tsx
 src/features/modules/components/impact-summary.tsx
 src/features/modules/components/module-card-skeleton.tsx
 src/features/modules/components/module-card.tsx
-src/features/modules/components/module-enable-action.tsx
 src/features/modules/components/module-intro.tsx
 src/features/modules/components/module-notices.tsx
 src/features/modules/components/module-progress.tsx
