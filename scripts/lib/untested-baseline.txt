@@ -318,7 +318,6 @@ src/shared/components/ui/overlay-body.tsx
 src/shared/components/ui/panel.tsx
 src/shared/components/ui/permission-list.tsx
 src/shared/components/ui/popover.tsx
-src/shared/components/ui/qr-code.tsx
 src/shared/components/ui/responsive-grid.tsx
 src/shared/components/ui/section-header.tsx
 src/shared/components/ui/segmented-control.tsx

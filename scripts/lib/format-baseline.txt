@@ -442,7 +442,6 @@ src/features/proximity/services/proximity.service.ts
 src/features/qr/components/qr-guide-frame.tsx
 src/features/qr/components/qr-manual-entry.tsx
 src/features/qr/components/qr-scan-sheet.tsx
-src/features/qr/hooks/use-qr-scanner.ts
 src/features/qr/model/qr-layout.ts
 src/features/qr/screens/qr-scan-screen.tsx
 src/features/reminders/components/reminder-dialog.tsx
@@ -609,7 +608,6 @@ src/shared/components/ui/orbit-hero.tsx
 src/shared/components/ui/overlay-body.tsx
 src/shared/components/ui/permission-list.tsx
 src/shared/components/ui/qr-code-layout.ts
-src/shared/components/ui/qr-code.tsx
 src/shared/components/ui/responsive-grid.tsx
 src/shared/components/ui/section-header.tsx
 src/shared/components/ui/segmented-control.tsx

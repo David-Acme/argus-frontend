@@ -1,10 +1,11 @@
-import { useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
+import type { BarcodeScanningResult } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Linking } from 'react-native';
 import { useQrScanStore } from '@/core/stores';
 import type { QrScanFeedback, TranslationKey } from '@/core/types';
 import { QR_SCAN_CONFIRM_MS, QR_SCAN_RETRY_MS } from '@/features/qr/constants';
+import { useCameraPermissions } from '@/shared/components/device-camera/device-camera';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ensurePermission } from '@/shared/libs/permission-prompt';
 
@@ -28,7 +29,8 @@ export function useQrScanner() {
   const rejectedRef = useRef<string | null>(null);
 
   const granted = permission?.granted === true;
-  const canRetryPermission = asked && permission !== null && !permission.granted && permission.canAskAgain;
+  const canRetryPermission =
+    asked && permission !== null && !permission.granted && permission.canAskAgain;
   const isBlocked = asked && permission !== null && !permission.granted && !permission.canAskAgain;
   const detected = detectedValue !== null;
 

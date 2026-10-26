@@ -4194,8 +4194,15 @@ model), so a feature with several screens loads them from one module —
 `screens/camera-screens.ts`, `security-screens.ts`, `proximity-screens.ts`,
 `conversation-screens.ts`, like `ui-lab`'s `lab-screens.ts` — and their shared code stays in that
 chunk: `__common` fell from 169,166 B (one chunk per screen) to 67,019 B. What is left there is
-code two features share, mostly `expo-camera` (QR scan and face capture) and `qrcode` (the login
-and the invitation QR).
+code two features share. `expo-camera` (QR scan and face capture) and `qrcode` (the login and
+the invitation QR) were the largest part of it, and they now load on use, as rule 30 asks: QR
+scan and face capture take `DeviceCamera` and `useCameraPermissions` from
+`shared/components/device-camera/device-camera.tsx`, whose one `import()` of
+`device-camera/expo-camera.ts` is the `expo-camera` chunk (the permission hook is expo's own
+`createPermissionHook` over that module's `Camera` methods, so it behaves as the package's); the
+login and the invitation dialog render `LazyQrCode` (`shared/components/ui/lazy-qr-code.tsx`),
+which holds the square with its background until the `qr-code` chunk (`QrCode` and `qrcode`)
+arrives. Both are `lazy` rows. Entry 6,493,364 → 6,444,328 B, `__common` 67,019 → 17,843 B.
 
 Measured on the same tree: entry 7,373,421 B (an export with source maps) → 6,432,190 B,
 `dist/` 8,905,970 B (the recorded baseline was 8,906,690 B), 29 route chunks (1 KB to 272 KB, `lab-screens` among them), and the unpaired first
@@ -5670,6 +5677,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` (T9) merged with redesign/main cde97d12, whose own export, measured the same day, is entry 7,434,450 B and `dist/` 8,914,334 B above the recorded 7,379,320 and 8,906,690 B (the hold-to-talk merge has no row of its own). With the route screens lazy the entry is 6,493,364 B (−941,086 against that tree) and `dist/` 8,920,271 B (+5,937): each of the 29 route chunks carries its own Metro module wrappers, and the entry gains the async-import paths that name them and `lazyScreen`; on 9b3757c, before the merge, the same change measured `dist/` 8,905,970 B. The entry baseline is lowered with it. | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` follow-up: `expo-camera` and `qrcode` load on use (rule 30) from their own `expo-camera` and `qr-code` chunks instead of `__common`. Measured on the same tree, redesign/main 090f5f6: entry 6,493,364 → 6,444,328 B (−49,036) and `dist/` 8,920,271 → 8,922,342 B (+2,071): the two chunks' own Metro wrappers, the `DeviceCamera` and `LazyQrCode` wrappers and the async-import paths. The entry baseline is lowered with it. | 2026-10-26 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
