@@ -32,7 +32,6 @@ export const CAMERA_FRAGMENT_AUDIO = !IS_IOS;
 
 export const CAMERA_THUMBNAIL_REFRESH_MS = 30000;
 
-export const CAMERA_FULLSCREEN_CONTROLS_HIDE_MS = 4000;
 export const CAMERA_FULLSCREEN_FADE_MS = 180;
 
 export const CAMERA_LIVE_PREVIEWS_COMPACT = 2;
@@ -84,3 +83,5 @@ export const CAMERA_ICONS: readonly IconName[] = [
 export const CAMERA_RETENTION_DEFAULT_DAYS = 30;
 export const CAMERA_RETENTION_MAX_DAYS = 60;
 export const CAMERA_RETENTION_INCIDENT_MAX_DAYS = 120;
+
+export const CAMERA_LIST_HREF = '/cameras';

@@ -108,17 +108,6 @@ export class CameraCallSession {
     this.update({ muted });
   }
 
-  setVolume(volume: number): void {
-    this.update({ volume: Math.max(0, Math.min(2, volume)) });
-  }
-
-  setListening(listening: boolean): void {
-    if (listening === this.snapshot.listening) return;
-    if (listening) this.startListening();
-    else this.stopListening();
-    this.update({ listening });
-  }
-
   async pressToTalk(): Promise<void> {
     this.pushHeld = true;
     this.update({ talking: true });

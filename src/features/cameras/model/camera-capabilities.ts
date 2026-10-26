@@ -32,14 +32,3 @@ export function resolveCapabilities(
   return { ...synced, catalogId: remote?.catalogId, holdRenewMs: remote?.holdRenewMs };
 }
 
-export function hasDeviceControls(capabilities: ICameraCapabilities | null): boolean {
-  if (!capabilities) return false;
-  return [
-    capabilities.ptz,
-    capabilities.privacy,
-    capabilities.led,
-    capabilities.dayNight,
-    capabilities.motion,
-    capabilities.autoTrack,
-  ].some((value) => value === true);
-}

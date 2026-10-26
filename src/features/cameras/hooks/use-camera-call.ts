@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CameraTalkMode } from '@/core/types';
 import { ensurePermission } from '@/shared/libs/permission-prompt';
-import { CameraCall, type CameraCallSnapshot } from '@/features/cameras/services/camera-call.service';
+import {
+  CameraCall,
+  type CameraCallSnapshot,
+} from '@/features/cameras/services/camera-call.service';
 
 export type CameraCallControls = {
   snapshot: CameraCallSnapshot | null;
@@ -9,14 +12,13 @@ export type CameraCallControls = {
   allowMicrophone: () => void;
   end: () => void;
   setMuted: (muted: boolean) => void;
-  setVolume: (volume: number) => void;
-  setListening: (listening: boolean) => void;
-  press: () => void;
-  release: () => void;
+  talkStart: () => void;
+  talkEnd: () => void;
 };
 
 export function useCameraCall(cameraId: string): CameraCallControls {
   const call = useRef<CameraCall | null>(null);
+  const holding = useRef(false);
   const [snapshot, setSnapshot] = useState<CameraCallSnapshot | null>(null);
 
   const end = useCallback(() => {
@@ -35,14 +37,14 @@ export function useCameraCall(cameraId: string): CameraCallControls {
       });
       void next.start();
     },
-    [cameraId],
+    [cameraId]
   );
 
   const start = useCallback(
     (mode: CameraTalkMode, listen: boolean) => {
       void ensurePermission('microphone').then(() => open(mode, listen));
     },
-    [open],
+    [open]
   );
 
   const allowMicrophone = useCallback(() => {
@@ -54,12 +56,28 @@ export function useCameraCall(cameraId: string): CameraCallControls {
   }, [open]);
 
   const setMuted = useCallback((muted: boolean) => call.current?.setMuted(muted), []);
-  const setVolume = useCallback((volume: number) => call.current?.setVolume(volume), []);
-  const setListening = useCallback((listening: boolean) => call.current?.setListening(listening), []);
-  const press = useCallback(() => void call.current?.pressToTalk(), []);
-  const release = useCallback(() => call.current?.releaseToTalk(), []);
+  const talkStart = useCallback(() => {
+    holding.current = true;
+    void ensurePermission('microphone').then((granted) => {
+      if (!granted || !holding.current) return;
+      if (call.current?.current.mode !== 'push') open('push', false);
+      void call.current?.pressToTalk();
+    });
+  }, [open]);
+  const talkEnd = useCallback(() => {
+    holding.current = false;
+    call.current?.releaseToTalk();
+  }, []);
 
   useEffect(() => end, [cameraId, end]);
 
-  return { snapshot, start, allowMicrophone, end, setMuted, setVolume, setListening, press, release };
+  return {
+    snapshot,
+    start,
+    allowMicrophone,
+    end,
+    setMuted,
+    talkStart,
+    talkEnd,
+  };
 }

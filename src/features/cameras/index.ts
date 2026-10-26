@@ -1,4 +1,7 @@
-export { default as CameraDetailScreen } from './screens/camera-detail-screen';
+export { default as CameraLiveScreen } from './screens/camera-live-screen';
+export { default as CameraRecordingsScreen } from './screens/camera-recordings-screen';
+export { default as CameraSettingsScreen } from './screens/camera-settings-screen';
+export { default as CameraZonesScreen } from './screens/camera-zones-screen';
 export { default as CamerasScreen } from './screens/cameras-screen';
 export { CameraLiveView } from './components/camera-live-view';
 export { CameraSnapshotView } from './components/camera-snapshot-view';

@@ -5593,6 +5593,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
+| `scripts/lib/cycle-baseline.txt` | `file-cycle src/features/cameras/screens/camera-live-screen.tsx`, `file-cycle src/features/cameras/screens/camera-recordings-screen.tsx`, `file-cycle src/features/cameras/screens/camera-settings-screen.tsx`, `file-cycle src/features/cameras/hooks/use-camera-live.ts`, `file-cycle src/features/cameras/hooks/use-camera-meta.ts`, `file-cycle src/features/cameras/hooks/use-live-stage.ts`, `file-cycle src/features/cameras/hooks/use-talk-dock.ts`, `file-cycle src/features/cameras/components/settings/device-section.tsx` | `p3/camara`: the 629-line camera page that was a member of the recorded cameras ↔ security ↔ voice ↔ response cycle (its imports of `@/features/security` and `@/features/voice`) is split into the live screen, Ajustes de la cámara and Grabaciones, each composed of its own hooks; the same two imports now sit in those smaller files, so the one old member leaves and eight join. No slice joins: the slice cycle is the four slices it was. Breaking it means voice reaching `CameraLiveView` without the cameras index, which is outside this track. | 2026-10-26 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
@@ -6779,3 +6780,63 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando con la cámara»/«Reconectando…», the voice call's
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
+
+## The live camera and Ajustes de la cámara (Phase 3, P3b, 2026-10-26)
+
+The 4,566 px camera page (`camera-detail-screen.tsx` and the 21 panels it
+stacked) is four screens under `/cameras/[id]`: the live view (`index`),
+`settings` (Ajustes de la cámara), `recordings` (Grabaciones) and `zones`
+(Zonas). Every old deep link to `/cameras/<id>` (and `?talk=1`, which still
+opens a call once the camera allows talk) lands on the live view.
+
+**Decisions are pure.** `model/camera-stage.ts` turns the camera row and the
+player's reported status into one stage (`off`, `privacy`, `connecting`,
+`live`, `blocked` with its message and whether Reintentar applies) and decides
+which controls exist: talk and the call need the role, the speaker, a
+microphone and no call with Argus; movement needs a live picture on a
+pan-tilt camera and the aim permission; quality and fullscreen need a camera
+that sees; the siren stays in privacy (it is a deterrent, not a view) and goes
+only when the camera is off, unless one is already counting or sounding.
+Controls that cannot apply are hidden, never disabled (W17), and
+`talkNoteOf` says in words why talk is missing. A camera the sync row reports
+offline shows «La cámara no responde» with Reintentar before the stream even
+answers; a painted picture wins over that row. `model/talk-dock.ts` holds the
+hold-to-talk reducer: a press shorter than 300 ms latches talking until the
+next tap, which is the tap alternative of rule 25.
+
+**The stage says its state; no words for connecting.** `CameraLiveView`
+takes `onStatus`, and when it is given the view stops drawing its old status
+pills («Conectando con la cámara», «Reconectando…») and reports state,
+painted, notice and retry upward; the stage (`Media` `stage`) shows the dark
+calm frame while connecting, «En vivo» once painted, the lock and «Privada:
+Argus no mira ni escucha» in privacy, and its centre slot for the refusals.
+Other consumers (the call card, the response card, the list) keep the old
+behaviour because they pass no `onStatus`.
+
+**One decoder.** The inline stage unmounts its player while fullscreen plays
+its own, and the children screens never mount one beside the live view: the
+live view's player follows focus, so pushing Ajustes stops it. The one player
+outside the live view is the «Añadir lugar» sheet, which needs the picture and
+the pad to mark the two edges.
+
+**Shared changes.** `PressableSurface` takes `hold` (press down, press up; a
+started hold always ends, even if the surface turns disabled), used by the
+88 pt talk button and the PTZ pad; `Media` `stage` takes `center`; `Presence`
+takes `dark` and the eye chip always passes it (R-D33); `Icon` gains `large`
+(34, the talk glyph) and three glyphs (`move`, `mute`, `chevu`); tokens gain
+`size.talk` 88, `size.iconLarge` 34, `inset.talk` and the flat 10 px
+`elevation.talk` ring of the prototype. The tab bar now shows on
+`/cameras/<id>` and its children, as the prototype's camera frame draws it;
+only the list at `/cameras` keeps it hidden.
+
+**What moved.** The siren is the dock's danger button: `Confirm` asks
+(destructive, so a native alert on Android phones), then the button counts
+down as «Cancelar · 5» and, once sounding, is «Detener · 18 s» (F5 kept, its
+sheet removed). The written announcement is a `Sheet` from the ⋯ menu, which
+also holds the stream quality and, for the owner, edit, turn off and delete.
+Presets, the lease and the PTZ limit show under the stage while moving; the
+watch position is chosen in Mirada activa from the saved positions (a reversible
+choice, so no confirm). The frame-rate and resolution pills, the volume and
+listen toggles of the old call panel, and the zones overlay on the live picture
+are gone; the zone editor keeps its overlay. Maintenance is still the security
+slice's `MaintenancePanel`, whose restyle belongs to the Seguridad track.

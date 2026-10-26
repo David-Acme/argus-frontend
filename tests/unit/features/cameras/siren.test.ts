@@ -98,10 +98,7 @@ describe('while the siren sounds', () => {
     expect(sirenRemaining(sounding.until, 1_025_000)).toBe(0);
   });
 
-  test('closing the sheet never silences it, stopping does', () => {
-    expect(sirenReducer(sounding, { kind: 'close' })).toBe(sounding);
-    expect(sirenReducer(counting, { kind: 'close' })).toBe(IDLE_SIREN);
-    expect(sirenReducer(asked, { kind: 'close' })).toBe(IDLE_SIREN);
+  test('stopping silences it in one tap', () => {
     expect(sirenReducer(sounding, { kind: 'stop' })).toBe(IDLE_SIREN);
   });
 

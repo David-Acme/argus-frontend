@@ -57,7 +57,7 @@ const SECTION_OF_SEGMENT: Readonly<Record<string, NavSectionKey>> = {
 };
 
 const BAR_HIDDEN: readonly RegExp[] = [
-  /^\/cameras(\/|$)/,
+  /^\/cameras\/?$/,
   /^\/conversations\/[^/]+/,
   /^\/security\/[^/]+/,
   /^\/users\/visitors(\/|$)/,

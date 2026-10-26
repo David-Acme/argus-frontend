@@ -7,7 +7,7 @@ import {
   nativePlayerMuted,
   storedMuted,
 } from '@/features/cameras/model/camera-live-audio';
-import { capabilitiesFromRow, hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
+import { capabilitiesFromRow, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import {
   defaultQuality,
   isStall,
@@ -95,8 +95,6 @@ describe('capabilities synced on the camera row', () => {
     expect(features?.talk).toBe(true);
     expect(features?.streamOnly).toBe(false);
     expect(features?.catalogId).toBe('tapo-c225');
-    expect(hasDeviceControls(features)).toBe(true);
-    expect(hasDeviceControls(capabilitiesFromRow(['streamOnly']))).toBe(false);
   });
 });
 

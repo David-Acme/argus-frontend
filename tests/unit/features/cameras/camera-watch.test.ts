@@ -1,6 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { TranslateFn } from '@/core/types';
@@ -23,9 +21,6 @@ const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;
 const en = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.en, key as never, params as never)) as TranslateFn;
-
-const camerasSource = (relative: string) =>
-  readFileSync(join(import.meta.dir, '../../../../src/features/cameras', relative), 'utf8');
 
 const listening: CameraListeningInput = {
   watchman: true,
@@ -97,14 +92,5 @@ describe('a camera that listens for its name', () => {
     const write = writes.find((item) => item.key === VIEW_CACHE_KEYS.cameraList);
     const rows = write && 'rows' in write ? write.rows : [];
     expect(rows[0]).toMatchObject({ watchman: true, noAudio: false });
-  });
-
-  test('the detail screen shows the panel in each layout and saves optimistically', () => {
-    const screen = camerasSource('screens/camera-detail-screen.tsx');
-    expect(screen.match(/\{watchPanel\}/g)?.length).toBe(3);
-    expect(screen).toContain("intents: [{ table: 'camera', kind: 'update', recordId: cameraId, values: patch }],");
-    expect(screen).toContain('call: () => cameraService.update(cameraId, patch),');
-    const panel = camerasSource('components/camera-watch-panel.tsx');
-    expect(panel).toContain('disabled={!editable || noAudio || paused}');
   });
 });

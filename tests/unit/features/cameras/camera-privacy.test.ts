@@ -1,23 +1,24 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { ICameraCacheRow, ICameraOverviewRow } from '@/core/interfaces';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { CameraPrivacyState, TranslateFn } from '@/core/types';
-import { cameraMasked, privacyOf, privacyUnconfirmed } from '@/features/cameras/model/camera-overview';
-import { cameraPrivacyMasked, cameraPrivacyUnconfirmed, privacyStateOf } from '@/shared/libs/camera-privacy';
+import {
+  cameraMasked,
+  privacyOf,
+  privacyUnconfirmed,
+} from '@/features/cameras/model/camera-overview';
+import {
+  cameraPrivacyMasked,
+  cameraPrivacyUnconfirmed,
+  privacyStateOf,
+} from '@/shared/libs/camera-privacy';
 import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;
 const en = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.en, key as never, params as never)) as TranslateFn;
-
-const toggleSource = readFileSync(
-  join(import.meta.dir, '../../../../src/features/cameras/components/privacy-toggle.tsx'),
-  'utf8'
-);
 
 describe('the privacy state the settings row shows', () => {
   test('a state that is not known is unknown, never off', () => {
@@ -41,14 +42,6 @@ describe('the privacy state the settings row shows', () => {
     expect(en('screens.cameras.privacy-unknown-hint')).toBe(
       'The camera does not report its state; check the Tapo app.'
     );
-
-    const unknownAt = toggleSource.indexOf("t('screens.cameras.privacy-unknown')");
-    const switchAt = toggleSource.indexOf('<Switch');
-    expect(unknownAt).toBeGreaterThan(-1);
-    expect(switchAt).toBeGreaterThan(unknownAt);
-    expect(toggleSource.match(/<Switch/g)).toHaveLength(1);
-    expect(toggleSource).toContain("t('screens.cameras.privacy-recheck')");
-    expect(toggleSource).toContain("t('screens.cameras.privacy-unknown-hint')");
   });
 });
 
@@ -81,8 +74,12 @@ describe('the placeholder the masked surfaces show', () => {
   test('it is one name in both languages', () => {
     expect(es('screens.cameras.privacy-placeholder')).toBe('En modo privacidad');
     expect(en('screens.cameras.privacy-placeholder')).toBe('In privacy mode');
-    expect(es('screens.cameras.privacy-placeholder-hint')).toBe('Argus no ve, no escucha ni graba esta cámara.');
-    expect(en('screens.cameras.privacy-placeholder-hint')).toBe('Argus does not see, hear or record this camera.');
+    expect(es('screens.cameras.privacy-placeholder-hint')).toBe(
+      'Argus no ve, no escucha ni graba esta cámara.'
+    );
+    expect(en('screens.cameras.privacy-placeholder-hint')).toBe(
+      'Argus does not see, hear or record this camera.'
+    );
     expect(es('screens.cameras.privacy-badge')).toBe('Privacidad');
     expect(en('screens.cameras.privacy-badge')).toBe('Privacy');
     expect(es('screens.cameras.clips.privacy')).toBe('Esta cámara está en modo privacidad');

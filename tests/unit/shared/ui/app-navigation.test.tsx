@@ -115,7 +115,7 @@ describe('AppNavigation', () => {
   });
 
   test('a full-screen pushed route hides the bar and gives back its inset', () => {
-    route.pathname = '/cameras/3';
+    route.pathname = '/watch';
     mount();
     expect(screen.queryByRole('tablist')).toBeNull();
     expect(screen.getByText('no-inset')).toBeDefined();

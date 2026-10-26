@@ -1,9 +1,16 @@
+file-cycle src/features/cameras/components/settings/device-section.tsx
 file-cycle src/features/cameras/components/tamper-evidence-view.tsx
 file-cycle src/features/cameras/hooks/use-camera-call.ts
 file-cycle src/features/cameras/hooks/use-camera-live-audio.ts
+file-cycle src/features/cameras/hooks/use-camera-live.ts
+file-cycle src/features/cameras/hooks/use-camera-meta.ts
+file-cycle src/features/cameras/hooks/use-live-stage.ts
+file-cycle src/features/cameras/hooks/use-talk-dock.ts
 file-cycle src/features/cameras/hooks/use-tamper-evidence.ts
 file-cycle src/features/cameras/index.ts
-file-cycle src/features/cameras/screens/camera-detail-screen.tsx
+file-cycle src/features/cameras/screens/camera-live-screen.tsx
+file-cycle src/features/cameras/screens/camera-recordings-screen.tsx
+file-cycle src/features/cameras/screens/camera-settings-screen.tsx
 file-cycle src/features/cameras/screens/cameras-screen.tsx
 file-cycle src/features/cameras/services/camera-call.service.ts
 file-cycle src/features/response/components/response-card.tsx

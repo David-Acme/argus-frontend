@@ -10,8 +10,7 @@ export type SirenAction =
   | { kind: 'cancel' }
   | { kind: 'tick'; at: number }
   | { kind: 'activated'; until: number }
-  | { kind: 'stop' }
-  | { kind: 'close' };
+  | { kind: 'stop' };
 
 export type SirenOffer = {
   allowed: boolean;
@@ -53,7 +52,5 @@ export const sirenReducer = (state: SirenState, action: SirenAction): SirenState
       return { phase: 'sounding', secondsLeft: 0, startedAt: 0, until: action.until };
     case 'stop':
       return state.phase === 'idle' ? state : IDLE_SIREN;
-    case 'close':
-      return state.phase === 'sounding' ? state : IDLE_SIREN;
   }
 };
