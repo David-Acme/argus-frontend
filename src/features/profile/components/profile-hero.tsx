@@ -130,7 +130,6 @@ function Actions({ actions, look }: ActionsProps) {
         <View className="flex-1">
           <Button
             block
-            compact={look.compact}
             variant="primary"
             label={t('screens.profile.invite')}
             onPress={() => router.push(PROFILE_HREF.invite)}

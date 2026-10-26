@@ -75,17 +75,14 @@ describe('the hero on short windows', () => {
     expect(heroLookOf('tiny', true).facts).toBe(true);
   });
 
-  test('a short phone shrinks the portrait and folds where you are into the role line', () => {
-    expect(heroLookOf('short', false)).toEqual({
-      portrait: 'large',
-      name: 'heroSecondary',
-      inlineWhere: true,
-      facts: true,
-      compact: true,
-    });
-  });
-
-  test('a tiny phone also leaves the counts to their screens', () => {
-    expect(heroLookOf('tiny', false).facts).toBe(false);
+  test('a short or tiny phone shrinks the portrait, folds where you are under the role and leaves the counts to their screens', () => {
+    for (const height of ['short', 'tiny'] as const)
+      expect(heroLookOf(height, false)).toEqual({
+        portrait: 'large',
+        name: 'heroSecondary',
+        inlineWhere: true,
+        facts: false,
+        compact: true,
+      });
   });
 });

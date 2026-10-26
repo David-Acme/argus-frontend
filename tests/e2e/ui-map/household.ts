@@ -59,6 +59,16 @@ const fill =
     await sleep(900);
   };
 
+const tabChip =
+  (key: TranslationKey) =>
+  async (scene: Scene): Promise<void> => {
+    await scene.page
+      .getByRole('checkbox', { name: say(scene, key), exact: true })
+      .first()
+      .click({ timeout: 8000 });
+    await sleep(900);
+  };
+
 const toggle =
   (name: string) =>
   async (scene: Scene): Promise<void> => {
@@ -667,8 +677,8 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
           },
         ],
       },
-      { state: 'tab-account', rows: ROWS, act: clickText('screens.profile.tabs.account') },
-      { state: 'tab-argus', rows: ROWS, act: clickText('screens.profile.tabs.argus') },
+      { state: 'tab-account', rows: ROWS, act: tabChip('screens.profile.tabs.account') },
+      { state: 'tab-argus', rows: ROWS, act: tabChip('screens.profile.tabs.argus') },
       { state: 'resident', role: 'resident', rows: ROWS },
       { state: 'guard', role: 'guard', rows: ROWS },
       { state: 'guest', role: 'guest', rows: ROWS },

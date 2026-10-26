@@ -22,7 +22,7 @@ export function heroLookOf(height: HeightClass, panes: boolean): HeroLook {
     portrait: 'large',
     name: 'heroSecondary',
     inlineWhere: true,
-    facts: height === 'short',
+    facts: false,
     compact: true,
   };
 }
