@@ -5500,11 +5500,15 @@ toast's Retry (the lab has no banner with an action; the banner's action is
 the same `PressableSurface` path), and that the chips and the sidebar's ask
 field hold their words at the lab's font scale 2.
 
-**Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
-bun process (happy-dom, react-native-web as react-native, react-native-svg's web
-elements, stubs for Reanimated, expo-device, uniwind, RNGH), because the main
-suite's preload stubs react-native for pure logic. Tests import each component
-file directly: check:quality counts only direct imports.
+**Component tests.** `bun run test:ui` runs every `*.test.tsx` under `tests/`
+in its own bun process (happy-dom, react-native-web as react-native,
+react-native-svg's web elements, stubs for Reanimated, expo-device, uniwind,
+RNGH; the preload is `tests/unit/shared/ui/setup.ts`), because the main
+suite's preload stubs react-native for pure logic; the main suite skips
+`*.test.tsx`. The extension is the switch, so a feature's component test sits
+beside its model tests (`tests/unit/features/home/agenda-sections.test.tsx`)
+instead of under `shared/ui`. Tests import each component file directly:
+check:quality counts only direct imports.
 
 **ui-lab.** `src/features/ui-lab/` with a catalogue, one demo per component
 (the prototype's own words), `case-<id>` wrappers and URL parameters
