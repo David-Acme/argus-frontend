@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { size, useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { RowPosition } from '@/shared/ui/row';
-import { useInScreenColumn } from '@/shared/ui/screen';
+import { useGrowsInColumn, useInScreenColumn } from '@/shared/ui/screen';
 import { Text } from '@/shared/ui/text';
 
 export type SectionAction = { label: string; onPress: () => void };
@@ -58,13 +58,13 @@ function SectionHead({ title, meta, action }: SectionHeadProps) {
 
 function Group({ children }: GroupProps) {
   const { elevation } = useThemeTokens();
-  const column = useInScreenColumn();
+  const grows = useGrowsInColumn();
   const card = { boxShadow: elevation.card };
   return (
     <View
       className={clsx(
         'rounded-card bg-surface py-section-group-y web:focus-inset overflow-hidden',
-        column && 'grow'
+        grows && 'grow'
       )}
       style={card}>
       {Children.toArray(children).map((child, index) => (
@@ -84,9 +84,9 @@ export function Section({
   testID,
   children,
 }: SectionProps) {
-  const column = useInScreenColumn();
+  const grows = useGrowsInColumn();
   return (
-    <View className={clsx('mt-section-top', column && 'grow')} testID={testID}>
+    <View className={clsx('mt-section-top', grows && 'grow')} testID={testID}>
       <SectionHead title={title} meta={meta} action={action} />
       {variant === 'grouped' ? <Group>{children}</Group> : children}
     </View>

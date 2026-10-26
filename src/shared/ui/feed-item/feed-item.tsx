@@ -3,7 +3,7 @@ import { Children, createContext, useContext, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
-import { useInScreenColumn } from '@/shared/ui/screen';
+import { useGrowsInColumn } from '@/shared/ui/screen';
 import { Text } from '@/shared/ui/text';
 
 export type FeedProps = { children: ReactNode; testID?: string };
@@ -28,13 +28,13 @@ const FeedPosition = createContext({ index: 0 });
 
 export function Feed({ children, testID }: FeedProps) {
   const { elevation } = useThemeTokens();
-  const column = useInScreenColumn();
+  const grows = useGrowsInColumn();
   const card = { boxShadow: elevation.card };
   return (
     <View
       role="list"
       testID={testID}
-      className={clsx('rounded-card bg-surface px-feed-x py-feed-y', column && 'grow')}
+      className={clsx('rounded-card bg-surface px-feed-x py-feed-y', grows && 'grow')}
       style={card}>
       {Children.toArray(children).map((child, index) => (
         <FeedPosition.Provider key={index} value={{ index }}>

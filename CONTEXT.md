@@ -6502,8 +6502,12 @@ skeleton rows (HTTP data with no local copy); a failure shows an attention
 `Notice` with Reintentar; a role without the capability, or surveillance off,
 gets no section.
 
-**Columns.** In a `ScreenColumn` the last section grows to the bottom
-(§6b-1): `Section` grows there, and so do its grouped card and a `Feed`, so a
-short Novedades or En casa card reaches the column's bottom instead of leaving a
-blank; outside a column nothing changes.
+**Columns.** `ScreenColumn` decides which of its children grows to the
+bottom (§6b-1): its last child by default, or the index it is given in
+`grows` (the camera fill, the prototype's `.sec.grow`, after which the last
+section stays its own height). It tells that child alone through
+`useGrowsInColumn()`; `Section`, its grouped card and `Feed` grow only when it
+says so, so a short last card reaches the column's bottom while Ahora, Hoy and
+the other sections above it keep their height. The choice is by child
+position: a last child that renders nothing takes the growth with it.
 

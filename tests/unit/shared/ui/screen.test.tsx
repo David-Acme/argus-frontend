@@ -3,7 +3,7 @@ import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { Section } from '@/shared/ui/section/section';
 import { Screen } from '@/shared/ui/screen/screen';
-import { useInScreenColumn } from '@/shared/ui/screen/screen-column-context';
+import { useGrowsInColumn, useInScreenColumn } from '@/shared/ui/screen/screen-column-context';
 import { ScreenColumn, ScreenColumns } from '@/shared/ui/screen/screen-columns';
 import { ScreenScroll } from '@/shared/ui/screen/screen-scroll';
 import { ScreenScroll as NativeScreenScroll } from '@/shared/ui/screen/screen-scroll.native';
@@ -93,6 +93,43 @@ describe('Screen', () => {
 
   test('outside a column a section is not sticky', () => {
     expect(renderHook(() => useInScreenColumn()).result.current).toBe(false);
+  });
+
+  function growthOf(grows?: number): Record<string, boolean> {
+    setWindowWidth(1280);
+    const seen: Record<string, boolean> = {};
+    function Probe({ name }: { name: string }) {
+      seen[name] = useGrowsInColumn();
+      return (
+        <Section title={name}>
+          <Text>{name}</Text>
+        </Section>
+      );
+    }
+    render(
+      <Screen columns>
+        <ScreenColumns>
+          <ScreenColumn label="Agenda" width={320} grows={grows}>
+            <Probe name="Ahora" />
+            <Probe name="Hoy" />
+            <Probe name="Mañana" />
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    return seen;
+  }
+
+  test('in a column of three sections only the last grows to the bottom', () => {
+    expect(growthOf()).toEqual({ Ahora: false, Hoy: false, Mañana: true });
+  });
+
+  test('a column that names the section to grow grows that one and not its last', () => {
+    expect(growthOf(0)).toEqual({ Ahora: true, Hoy: false, Mañana: false });
+  });
+
+  test('outside a column nothing grows', () => {
+    expect(renderHook(() => useGrowsInColumn()).result.current).toBe(false);
   });
 
   test('the top bar and both scroll owners render alone', () => {
