@@ -65,7 +65,6 @@ export function TopNoticeBar() {
     if (store.toastId) toast.dismiss(store.toastId);
     if (transition === 'recovered') {
       store.setToastId(null);
-      toast.success(t('common.offline.reconnected'));
       return;
     }
     if (view) store.setToastId(toast.warning(view.title, view.description, { label: t('common.retry'), onPress: retry }));

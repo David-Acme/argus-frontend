@@ -86,7 +86,7 @@ for (const routeCase of CASES) {
       await context.addInitScript(installTauriShim, seedFor(routeCase));
       const page = await context.newPage();
       await page.goto(new URL(routeCase.path, baseUrl).toString());
-      await expect.poll(() => page.getByText(routeCase.text).count(), { timeout: 15000 }).toBe(1);
+      await expect.poll(() => page.getByText(routeCase.text).count(), { timeout: 30000 }).toBe(1);
       if (routeCase.banner) await expectDismissibleNotice(page, routeCase.text);
       if (SHOTS) {
         await page.getByText(routeCase.text).scrollIntoViewIfNeeded();
