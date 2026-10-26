@@ -194,6 +194,7 @@ export function liveView(overrides: Partial<CameraLive> = {}): CameraLive {
     note: null,
     sections: ['privacy', 'listen', 'patrol', 'device', 'advanced'],
     access: { update: true, remove: true, clips: true, managePresets: true },
+    poster: null,
     ...overrides,
   };
 }

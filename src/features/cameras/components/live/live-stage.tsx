@@ -17,6 +17,7 @@ export type LiveStageViewProps = {
   controls: LiveControls;
   ptz: CameraPtzControls | null;
   onTurnOn: (() => void) | null;
+  poster: string | null;
 };
 
 type StageCenterProps = { stage: CameraStage; onRetry: () => void; onTurnOn: (() => void) | null };
@@ -91,7 +92,14 @@ function dormantLabel(kind: CameraStage['kind']) {
   return null;
 }
 
-export function LiveStageView({ cameraId, live, controls, ptz, onTurnOn }: LiveStageViewProps) {
+export function LiveStageView({
+  cameraId,
+  live,
+  controls,
+  ptz,
+  onTurnOn,
+  poster,
+}: LiveStageViewProps) {
   const { t } = useTranslation();
   const mediaControls = useStageControls(live, controls);
   const { stage, audio } = live;
@@ -106,6 +114,11 @@ export function LiveStageView({ cameraId, live, controls, ptz, onTurnOn }: LiveS
       dormant={DORMANT[stage.kind]}
       eye={controls.eye ? { label: t('screens.cameras.stage.eye') } : undefined}
       controls={mediaControls}
+      poster={
+        stage.kind === 'connecting' || stage.kind === 'blocked'
+          ? { frame: poster ? { uri: poster } : undefined }
+          : undefined
+      }
       center={
         centered ? <StageCenter stage={stage} onRetry={retry} onTurnOn={onTurnOn} /> : undefined
       }>

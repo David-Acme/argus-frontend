@@ -38,7 +38,10 @@ export type MediaStageProps = MediaContent & {
   controls?: readonly MediaControl[];
   eye?: MediaEye;
   center?: ReactNode;
+  poster?: { frame?: ImageSourcePropType };
 };
+
+type PosterProps = { frame?: ImageSourcePropType };
 
 export type MediaProps = MediaTileProps | MediaStageProps;
 
@@ -83,6 +86,14 @@ function Layers({
       {overlay}
       <LabelRow name={name} detail={detail} dormant={dormant} />
     </>
+  );
+}
+
+function Poster({ frame }: PosterProps) {
+  return (
+    <View className="absolute inset-0" style={FILL_FRAME}>
+      {frame ? <MediaFrame source={frame} /> : null}
+    </View>
   );
 }
 
@@ -143,10 +154,11 @@ function Tile({ center, reveal, onPress, fill, ...content }: MediaTileProps) {
   );
 }
 
-function Stage({ controls, eye, center, ...content }: MediaStageProps) {
+function Stage({ controls, eye, center, poster, ...content }: MediaStageProps) {
   const { windowClass } = useWindowLayout();
   const overlay = (
     <>
+      {poster && !content.dormant ? <Poster frame={poster.frame} /> : null}
       {center ? (
         <View className="absolute inset-0 items-center justify-center" style={PASS_THROUGH}>
           {center}

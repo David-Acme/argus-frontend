@@ -199,7 +199,11 @@ describe('the live camera screen', () => {
 });
 
 describe('the stage states', () => {
-  const stageOnly = (stage: CameraLive['live']['stage'], onTurnOn: (() => void) | null = null) =>
+  const stageOnly = (
+    stage: CameraLive['live']['stage'],
+    onTurnOn: (() => void) | null = null,
+    poster: string | null = null
+  ) =>
     render(
       <LiveStageView
         cameraId="3"
@@ -207,6 +211,7 @@ describe('the stage states', () => {
         controls={{ ...liveView().controls, eye: false }}
         ptz={null}
         onTurnOn={onTurnOn}
+        poster={poster}
       />
     );
 
@@ -232,9 +237,10 @@ describe('the stage states', () => {
     expect(turned).toBe(1);
   });
 
-  test('connecting is a calm stage with no words', () => {
-    const { container } = stageOnly({ kind: 'connecting' });
+  test('connecting is a calm stage with no words, the last picture as its poster', () => {
+    const { container } = stageOnly({ kind: 'connecting' }, null, 'data:image/jpeg;base64,AAAA');
     expect(container.textContent).toBe('');
+    expect(container.querySelectorAll('img').length).toBeGreaterThan(0);
   });
 });
 

@@ -143,6 +143,25 @@ describe('Media', () => {
     expect(globalThis.document.querySelectorAll('svg')).toHaveLength(0);
   });
 
+  test('a stage poster covers the player with the warm frame and the last picture', () => {
+    const { container, rerender } = render(
+      <Media
+        variant="stage"
+        name="Cocina"
+        poster={{ frame: { uri: 'https://argus.local/last.jpg' } }}>
+        <span data-testid="player" />
+      </Media>
+    );
+    expect(screen.getByTestId('player')).toBeDefined();
+    expect(container.querySelectorAll('img').length).toBeGreaterThan(0);
+    rerender(
+      <Media variant="stage" name="Cocina" dormant="privacy" poster={{}}>
+        <span data-testid="player" />
+      </Media>
+    );
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+  });
+
   test('a new frame keeps the previous one underneath until it has faded in', () => {
     const { container, rerender } = render(
       <MediaFrame source={{ uri: 'https://argus.local/a.jpg' }} />

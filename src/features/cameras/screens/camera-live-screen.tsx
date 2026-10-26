@@ -63,6 +63,7 @@ function LiveBody({ view, talk }: LiveBodyProps) {
               controls={controls}
               ptz={view.ptz}
               onTurnOn={access.update ? () => void setCameraEnabled(camera, true, null) : null}
+              poster={view.poster}
             />
             <LiveNotices view={view} />
           </ScreenColumn>

@@ -11,6 +11,7 @@ import type { CameraPresets } from '@/features/cameras/hooks/use-camera-presets'
 import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
+import { useCameraThumbnails } from '@/features/cameras/hooks/use-camera-thumbnails';
 import { useLiveStage } from '@/features/cameras/hooks/use-live-stage';
 import type { LiveStage } from '@/features/cameras/hooks/use-live-stage';
 import { useTalkDock } from '@/features/cameras/hooks/use-talk-dock';
@@ -33,6 +34,7 @@ export type CameraLive = {
   note: TalkNote | null;
   sections: readonly SettingsSection[];
   access: { update: boolean; remove: boolean; clips: boolean; managePresets: boolean };
+  poster: string | null;
 };
 
 function flagsOf(features: ICameraCapabilities | null) {
@@ -97,6 +99,7 @@ export function useCameraLive(id: string, camera: ICameraCacheRow | null): Camer
     onHomeSet: () => void aim.reload(),
   });
   useViewerLease(id, controls.ptz && live.ptzShown, aim.apply);
+  const thumbnails = useCameraThumbnails(camera ? [camera] : [], false);
   if (!camera) return null;
   return {
     camera,
@@ -122,6 +125,7 @@ export function useCameraLive(id: string, camera: ICameraCacheRow | null): Camer
       maintenance: guard.maintenance,
     }),
     access: rights,
+    poster: thumbnails.get(camera.id) ?? null,
   };
 }
 
