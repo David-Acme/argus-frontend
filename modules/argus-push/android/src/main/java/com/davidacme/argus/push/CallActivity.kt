@@ -1,15 +1,14 @@
 package com.davidacme.argus.push
 
 import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.app.Activity
-import android.content.res.Configuration
-import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -21,13 +20,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.margelo.nitro.push.R
 
 class CallActivity : Activity() {
     private var detachEnd: (() -> Unit)? = null
-    private val handler = Handler(Looper.getMainLooper())
-    private var statusView: TextView? = null
-    private var ticker: Runnable? = null
     private var pulse: ObjectAnimator? = null
+    private val palette = CallPalette.STAGE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +45,7 @@ class CallActivity : Activity() {
             finishAndRemoveTask()
             return
         }
-        setContentView(callLayout(callId, display))
+        setContentView(stage(callId, display))
         detachEnd = CallSession.watchEnd(callId) { runOnUiThread { finishAndRemoveTask() } }
     }
 
@@ -63,7 +61,6 @@ class CallActivity : Activity() {
     }
 
     override fun onDestroy() {
-        ticker?.let { handler.removeCallbacks(it) }
         pulse?.cancel()
         detachEnd?.invoke()
         detachEnd = null
@@ -72,9 +69,8 @@ class CallActivity : Activity() {
         super.onDestroy()
     }
 
-    private fun callLayout(callId: String, display: RingDisplay): View {
+    private fun stage(callId: String, display: RingDisplay): View {
         val spanish = PushText.isSpanish()
-        val palette = CallPalette.of(isNight())
         val root = FrameLayout(this).apply {
             setBackgroundColor(palette.background)
             ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
@@ -83,60 +79,68 @@ class CallActivity : Activity() {
                 insets
             }
         }
+        if (display.critical) root.addView(alertGlow(), FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(GLOW_DP)))
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(24), dp(16), dp(24), dp(32))
-            layoutParams = FrameLayout.LayoutParams(
+            setPadding(dp(16), dp(48), dp(16), dp(24))
+        }
+        column.addView(privateLine(spanish))
+        column.addView(label(PushText.TITLE, palette.text, TITLE_SP, bold = true), spaced(8))
+        column.addView(
+            label(PushText.stageLine(spanish, display.critical, display.subject), palette.secondary, LINE_SP).apply {
+                maxLines = 2
+                ellipsize = TextUtils.TruncateAt.END
+            },
+            spaced(4),
+        )
+        column.addView(estela(display.critical), LinearLayout.LayoutParams(dp(AVATAR_DP), dp(AVATAR_DP)).apply { topMargin = dp(32) })
+        column.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
+        column.addView(controls(callId, display, spanish))
+        root.addView(
+            column,
+            FrameLayout.LayoutParams(
                 minOf(resources.displayMetrics.widthPixels, dp(MAX_WIDTH_DP)),
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 Gravity.CENTER_HORIZONTAL,
-            )
-        }
-        column.addView(
-            label(
-                if (display.critical) PushText.criticalTitle(spanish) else PushText.incomingTitle(spanish),
-                if (display.critical) palette.decline else palette.secondary,
-                LABEL_SP,
             ),
         )
-        column.addView(emblem(palette), LinearLayout.LayoutParams(dp(EMBLEM_DP), dp(EMBLEM_DP)).apply { topMargin = dp(20) })
-        column.addView(
-            label(PushText.ringTitle(display.subject), palette.text, TITLE_SP).apply {
-                gravity = Gravity.CENTER
-                setPadding(0, dp(20), 0, 0)
-            },
-        )
-        val status = label(
-            PushText.ringStatus(spanish, PushText.clock(0L)),
-            palette.secondary,
-            STATUS_SP,
-        ).apply { setPadding(0, dp(8), 0, 0) }
-        statusView = status
-        column.addView(status)
-        startTicker(display.startedAtMillis, spanish)
-        column.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
-        column.addView(controls(callId, palette, spanish))
-        root.addView(column)
+        NativeTrace.record("screen", "shown", if (display.critical) "ring-alert-stage" else "ring-stage")
         return root
     }
 
-    private fun emblem(palette: CallPalette): View {
+    private fun alertGlow(): View =
+        View(this).apply {
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(palette.alertGlow, palette.background),
+            )
+        }
+
+    private fun privateLine(spanish: Boolean): View =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(icon(R.drawable.argus_ic_lock, palette.secondary), LinearLayout.LayoutParams(dp(14), dp(14)).apply { marginEnd = dp(4) })
+            addView(label(PushText.privateLine(spanish), palette.secondary, CAPTION_SP))
+        }
+
+    private fun estela(critical: Boolean): View {
         val circle = FrameLayout(this).apply {
-            background = oval(palette.emblem)
+            background = oval(palette.surface)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             addView(
                 ImageView(this@CallActivity).apply {
-                    setImageResource(applicationInfo.icon)
-                    scaleType = ImageView.ScaleType.FIT_CENTER
+                    setImageBitmap(EstelaStill.bitmap(dp(ESTELA_DP), if (critical) EstelaMood.Alert else EstelaMood.Idle))
                 },
-                FrameLayout.LayoutParams(dp(EMBLEM_ICON_DP), dp(EMBLEM_ICON_DP), Gravity.CENTER),
+                FrameLayout.LayoutParams(dp(ESTELA_DP), dp(ESTELA_DP), Gravity.CENTER),
             )
         }
         if (Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f) {
             pulse = ObjectAnimator.ofPropertyValuesHolder(
                 circle,
-                android.animation.PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, PULSE_SCALE),
-                android.animation.PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, PULSE_SCALE),
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, PULSE_SCALE),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, PULSE_SCALE),
             ).apply {
                 duration = PULSE_MS
                 repeatCount = ObjectAnimator.INFINITE
@@ -147,35 +151,35 @@ class CallActivity : Activity() {
         return circle
     }
 
-    private fun controls(callId: String, palette: CallPalette, spanish: Boolean): View =
+    private fun controls(callId: String, display: RingDisplay, spanish: Boolean): View =
         LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            addView(
-                roundControl(
-                    android.R.drawable.ic_menu_close_clear_cancel,
-                    palette.decline,
-                    PushText.decline(spanish),
-                ) {
-                    CallSession.decline(this@CallActivity, callId)
-                    finishAndRemoveTask()
-                },
-                LinearLayout.LayoutParams(dp(CONTROL_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(12), 0, dp(12), 0) },
-            )
-            addView(
-                roundControl(
-                    android.R.drawable.ic_menu_call,
-                    palette.accept,
-                    PushText.answer(spanish),
-                ) {
-                    CallSession.answer(this@CallActivity, callId)
-                    finish()
-                },
-                LinearLayout.LayoutParams(dp(CONTROL_WIDTH_DP), ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(12), 0, dp(12), 0) },
-            )
+            ringChoices(display.critical, snoozable = false).forEach { choice ->
+                addView(roundControl(choice, spanish) { choose(callId, choice) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            }
         }
 
-    private fun roundControl(icon: Int, color: Int, text: String, onTap: () -> Unit): LinearLayout {
+    private fun choose(callId: String, choice: RingChoice) {
+        when (choice) {
+            RingChoice.Decline -> {
+                CallSession.decline(this, callId)
+                finishAndRemoveTask()
+            }
+            RingChoice.Answer -> {
+                CallSession.answer(this, callId)
+                finish()
+            }
+            RingChoice.Snooze -> Unit
+        }
+    }
+
+    private fun roundControl(choice: RingChoice, spanish: Boolean, onTap: () -> Unit): View {
+        val (glyph, fill, text) = when (choice) {
+            RingChoice.Decline -> Triple(R.drawable.argus_ic_hang, palette.decline, PushText.decline(spanish))
+            RingChoice.Snooze -> Triple(R.drawable.argus_ic_clock, palette.fill, PushText.snooze(spanish))
+            RingChoice.Answer -> Triple(R.drawable.argus_ic_phone, palette.accept, PushText.answer(spanish))
+        }
         val selectable = TypedValue()
         theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, selectable, true)
         return LinearLayout(this).apply {
@@ -184,71 +188,58 @@ class CallActivity : Activity() {
             minimumHeight = dp(MIN_TOUCH_DP)
             isClickable = true
             isFocusable = true
+            contentDescription = text
             setBackgroundResource(selectable.resourceId)
             addView(
                 FrameLayout(this@CallActivity).apply {
-                    background = oval(color)
-                    addView(
-                        ImageView(this@CallActivity).apply {
-                            setImageResource(icon)
-                            setColorFilter(Color.WHITE)
-                        },
-                        FrameLayout.LayoutParams(dp(CONTROL_ICON_DP), dp(CONTROL_ICON_DP), Gravity.CENTER),
-                    )
+                    background = oval(fill)
+                    addView(icon(glyph, palette.text), FrameLayout.LayoutParams(dp(CONTROL_ICON_DP), dp(CONTROL_ICON_DP), Gravity.CENTER))
                 },
                 LinearLayout.LayoutParams(dp(CONTROL_DP), dp(CONTROL_DP)),
             )
-            addView(
-                label(text, currentPalette().text, LABEL_SP).apply { setPadding(0, dp(8), 0, 0) },
-            )
+            addView(label(text, palette.secondary, CAPTION_SP, bold = true), spaced(8))
             setOnClickListener { onTap() }
         }
     }
 
-    private fun currentPalette(): CallPalette = CallPalette.of(isNight())
-
-    private fun startTicker(startedAtMillis: Long, spanish: Boolean) {
-        val runnable = object : Runnable {
-            override fun run() {
-                statusView?.text = PushText.ringStatus(spanish, PushText.clock(System.currentTimeMillis() - startedAtMillis))
-                handler.postDelayed(this, TICK_MS)
-            }
+    private fun icon(resource: Int, tint: Int): ImageView =
+        ImageView(this).apply {
+            setImageResource(resource)
+            setColorFilter(tint)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
-        ticker = runnable
-        runnable.run()
-    }
 
-    private fun label(text: String, color: Int, sp: Float): TextView =
+    private fun label(text: String, color: Int, sp: Float, bold: Boolean = false): TextView =
         TextView(this).apply {
             this.text = text
             setTextColor(color)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, sp)
             gravity = Gravity.CENTER_HORIZONTAL
+            if (bold) setTypeface(typeface, Typeface.BOLD)
         }
+
+    private fun spaced(top: Int): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(top) }
 
     private fun oval(color: Int): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.OVAL
         setColor(color)
     }
 
-    private fun isNight(): Boolean =
-        (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-
     private fun dp(value: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), resources.displayMetrics).toInt()
 
     private companion object {
         const val MAX_WIDTH_DP = 480
         const val MIN_TOUCH_DP = 48
-        const val EMBLEM_DP = 160
-        const val EMBLEM_ICON_DP = 96
-        const val CONTROL_DP = 72
-        const val CONTROL_ICON_DP = 32
-        const val CONTROL_WIDTH_DP = 104
+        const val AVATAR_DP = 168
+        const val ESTELA_DP = 134
+        const val GLOW_DP = 420
+        const val CONTROL_DP = 64
+        const val CONTROL_ICON_DP = 28
         const val PULSE_MS = 900L
-        const val PULSE_SCALE = 1.06f
-        const val TICK_MS = 1000L
-        const val LABEL_SP = 14f
-        const val STATUS_SP = 14f
-        const val TITLE_SP = 26f
+        const val PULSE_SCALE = 1.04f
+        const val TITLE_SP = 30f
+        const val LINE_SP = 15f
+        const val CAPTION_SP = 13f
     }
 }

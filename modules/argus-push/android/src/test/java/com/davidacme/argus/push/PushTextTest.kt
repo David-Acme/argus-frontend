@@ -38,10 +38,20 @@ class PushTextTest {
     }
 
     @Test
-    fun ringStatusAndClockForBothLanguages() {
-        assertEquals("Llamada de Argus · sonando · 00:04", PushText.ringStatus(spanish = true, time = PushText.clock(4_200L)))
-        assertEquals("Argus call · ringing · 01:05", PushText.ringStatus(spanish = false, time = PushText.clock(65_000L)))
-        assertEquals("00:00", PushText.clock(-10L))
-        assertEquals("Alerta crítica", PushText.criticalTitle(spanish = true))
+    fun theStageLineNamesTheKindAndTheSubject() {
+        assertEquals("Llamada de Argus · Pagar la luz", PushText.stageLine(spanish = true, critical = false, subject = " Pagar la luz "))
+        assertEquals("Alerta en casa · Alguien en el patio", PushText.stageLine(spanish = true, critical = true, subject = "Alguien en el patio"))
+        assertEquals("Argus call", PushText.stageLine(spanish = false, critical = false, subject = ""))
+        assertEquals("Alerta en casa", PushText.criticalTitle(spanish = true))
+        assertEquals("Privada · se queda en tu casa", PushText.privateLine(spanish = true))
+    }
+
+    @Test
+    fun theCallButtonsReadLikeAPhoneCall() {
+        assertEquals("Rechazar", PushText.decline(spanish = true))
+        assertEquals("En 10 min", PushText.snooze(spanish = true))
+        assertEquals("Contestar", PushText.answer(spanish = true))
+        assertEquals("Devolver", PushText.callBack(spanish = true))
+        assertEquals("Call back", PushText.callBack(spanish = false))
     }
 }

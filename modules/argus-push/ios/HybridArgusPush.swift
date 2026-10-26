@@ -111,6 +111,14 @@ public class HybridArgusPush: HybridArgusPushSpec {
     false
   }
 
+  func requestUnlock() throws -> Promise<Bool> {
+    Promise.resolved(withResult: true)
+  }
+
+  func postCallSummary(title: String, body: String) throws -> Void {
+    CallSummaryNotice.post(CallSummaryText(title: title, body: body))
+  }
+
   func outsideCallId() throws -> String {
     ""
   }
