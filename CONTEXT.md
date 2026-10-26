@@ -5562,11 +5562,24 @@ prototype | diff with the mismatch to
 `tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines. It is
 one test per width and theme: with the four design-system shares merged the
 catalogue is 26 components, twelve shots each per width, and one test per
-width ran past the suite's 120 s test timeout on a loaded machine. `Presence`
-is left out of that loop (`NEVER_STILL`): its demo draws Estela live in 35
-copies, so no two of 50 consecutive screenshots match and no baseline can be
-recorded; `tests/unit/shared/native-ui/presence.test.ts` and the spikes lab
-cover it instead.
+width ran past the suite's 120 s test timeout on a loaded machine. In the
+default mode the spec hides every canvas, because Estela draws live; in the
+reduced mode Estela paints its still, and those shots compare her pixels.
+
+**Estela's seed is her size.** Each `Presence` takes its seed from
+`seedFor(size)` (`src/shared/ui/presence/plan.ts`). It used to take the next
+value of a module counter in a `useState` initialiser, and React runs that
+initialiser again for every render it discards before a commit, which happens
+more often the slower the machine is: under a 6× CPU throttle the ui-lab page
+painted a different still in 38 of its 41 canvases, and `ui-lab.e2e.ts` failed
+in its reduced shots (presence, media, screen, status, resource-view) when
+several tracks loaded the laptop at once. `useId` is no way out: outside
+hydration React numbers ids with the same kind of counter, and a seed derived
+from it still moved under the throttle. The size alone is stable on every
+run. Two copies of the same size and state are the same picture and move in
+step: the camera tiles' "look" marks (48 or 56 px, drawn icons with no
+particles) and two notices of the same state are the only places the app can
+show that.
 
 **Shared uniwind.css.** `node_modules/uniwind/uniwind.css` is a bun hardlink
 shared by every worktree and rewritten by the last bundle; better-tailwindcss
@@ -6809,3 +6822,110 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando con la cámara»/«Reconectando…», the voice call's
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
+
+## Hold the centre tab to talk (Phase 2, T2, 2026-10-26)
+
+`useArgusVoice()` (`features/voice/hooks/use-argus-voice.ts`) gives the Nav
+its `voice` handlers and the `listening` flag, and `ArgusListening`
+(`features/voice/components/argus-listening.tsx`) is mounted once in the
+`(app)` layout. The state machine is `model/hold-talk.ts` (idle → listening →
+sending → answered | failed | cancelled), held in `stores/hold-talk.store.ts`.
+
+**The voice path, measured before building.** The backend has no
+one-utterance endpoint: a turn is closed by argus-voice's VAD
+(`services/voice/CONTEXT.md`, "Session behavior decisions"), and the typed
+chat mode (`voice:start {mode:"chat"}`) takes text, not audio. So the hold
+drives the existing call stack (`voiceService` on its `/sync` duplex PCM
+leg, see "The first words" below; WebRTC only where the app has no PCM
+microphone): the session
+starts on hold, the microphone stays open after the release until the VAD
+closes the turn, and the session stops once Argus has spoken. Nothing on the
+server changed. Three backend facts make it fit:
+
+- `[voice] opening` is `none` by default, so a session starts listening at
+  once and says no greeting (an install with `opening = "spoken"` would greet
+  on every hold).
+- `voice:mute` drops the PCM queue and resets the VAD, so muting on the
+  release would throw away the utterance the VAD has not closed yet. The
+  microphone is muted only once the turn was heard (a final STT line) and
+  Argus left `listening` (`holdTalkMutes`), so nothing said afterwards opens a
+  second turn.
+- Every identified voice turn is mirrored to the user's Argus thread
+  (`services/llm/CONTEXT.md`, "The messenger and the app's conversation
+  thread"), so the reply stays in the thread the card opens.
+
+**When it settles.** After the release: nothing heard in 4 s is «No te
+escuché»; heard and no reply in 30 s is «Argus no respondió»; a reply is
+answered once Argus has been back in `listening` for 800 ms (its speech
+ended) or the session ended. The card reads the reply and the latest
+`voice:action` as a chip (`voiceActionLabel`, shared with the call's chips);
+a tap opens `ASSISTANT_THREAD_HREF`, an outside tap closes it, a failure
+closes itself after 8 s. Failures are worded from the code
+(`holdTalkFailureOf`), never the server's text, and are polite status
+regions with no action (R-D34).
+
+**What the Nav already draws.** `NavBar` draws the Aura edge (the steady rim
+under reduced motion or transparency) and the «Te escucho…» cap whenever its
+gesture is held or `listening` is true, and the gesture hook already fires
+`impactLight` on start and stop. `ArgusListening` therefore draws only what
+the Nav does not: the live transcript above the cap, the thinking card, the
+answer card and the failure card; drawing the edge and the pill again would
+double them. The rail and the sidebar have no hold (a press opens the chat).
+
+**A hold that cannot listen is a tap.** Without `assistant.voice` or a
+microphone path (`argusCallSupported()`), and while another call is active,
+`useArgusVoice` sets `NavVoice.canListen` to false (`holdTalkCanListen`) and
+the Nav's gesture turns the long press into `onOpenChat`: no pill, no edge,
+no haptic. The call pill hides while a hold is live. The live transcript is
+the STT partial the server streams.
+
+**The first words: the socket leg, measured (2026-10-26).** Where the app
+captures its own microphone (`voiceCallSupported()`: the web, Android
+and the desktop), a hold starts `voiceService` with `{ socket: true }`
+(`holdTalkStartOptions`): the PCM leg over the `/sync` socket that is
+already open, instead of a WebRTC room. Measured:
+
+- WebRTC, a throwaway `livekit-server` 1.13.7 on loopback with
+  `livekit-client` 2.22.3 in headless Chromium, 10 runs after 2 warm-ups:
+  `connect` 118 ms, microphone published 163 ms, subscribed at the far peer
+  205 ms, first audio packet at the far peer 257 ms (median, p90 within
+  5 ms). `/rtc/token` adds 83 ms (`services/voice/CONTEXT.md`, measured with
+  the agent already in the room). So the agent hears nothing for about
+  340 ms after the hold starts on a LAN, more on a phone over Wi-Fi.
+- The socket leg, the web build against the e2e backend, 8 holds:
+  press to `voice:start` 276 ms (the 220 ms hold plus about 56 ms of
+  gesture and render), `voice:start` to the first PCM frame 108 ms median
+  (104–164); a frame carries 100 ms of audio (`VOICE_MIC_FRAME_MS`), so
+  capture starts about 8 ms after `voice:start`.
+
+What was not taken, and why:
+
+- **Connecting on press-in.** Every tap of the Argus tab would claim
+  `/rtc/token`, which makes argus-voice join a room (and prime the LLM); a
+  tap leaves that agent in a room until LiveKit closes it (about a minute),
+  and a user has at most two calls at once (`services/sync/CONTEXT.md`,
+  "At most two calls per user"), so two taps would refuse the next hold.
+- **Capturing before the room and replaying.** A local track can capture
+  before the room connects (`createLocalAudioTrack`, 3 ms with a fake
+  device), but LiveKit's own pre-connect buffer records with
+  `MediaRecorder` (absent in React Native) and sends it on the byte-stream
+  topic `lk.agent.pre-connect-audio-buffer`, which the C++ agent does not
+  read. A replayed custom track would work on the web only.
+- **A warm room.** Unmuting a connected room reached the far peer in 106 ms
+  (median), but a warm room keeps an agent, one of the two call slots and,
+  on Android, the ongoing-call service and the microphone, and while it is
+  up the voice session counts as active (the camera live view mutes its own
+  audio for it).
+
+**The residual gap, on the server.** argus-sync's relay does not queue PCM
+while a start is in flight (`services/sync/CONTEXT.md`, "Frames that race
+the start"): on the first call of a socket the frames before the gRPC stream
+exists are dropped, and on a later call the binary path can reach
+argus-voice before the `VoiceStart` frame. Neither is measurable without the
+backend; the client cannot see when the session is ready on this leg. A full
+guarantee needs a backend change: the relay queueing PCM during the start
+(or a ready frame), or the agent reading LiveKit's pre-connect buffer.
+The desktop takes the socket leg too: its shell grants the app origin the
+WebKitGTK microphone (`src-tauri/src/media.rs`), which is what `voiceCallSupported()`
+reads; only a platform without a PCM microphone would hold over WebRTC and
+keep the 340 ms above.

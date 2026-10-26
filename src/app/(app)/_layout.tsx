@@ -4,12 +4,12 @@ import { EntryGate, useDeepLinkRestore, useSignedInHistory } from '@/features/au
 import { PrivacyGate } from '@/features/privacy';
 import { ModuleNotices } from '@/features/modules';
 import { GlobalCommand, useCommandLauncher } from '@/features/command';
-import { useCallPush } from '@/features/voice';
+import { ArgusListening, useArgusVoice, useCallPush } from '@/features/voice';
 import { useBeaconController } from '@/features/proximity';
 import { useTamperEvidenceKeeper } from '@/features/cameras';
 import { useNotificationPermission, usePushRegistration } from '@/features/notification';
-import { AppNavigation, useSectionRoute } from '@/features/navigation';
-import { ASSISTANT_THREAD_HREF, NAV_FADE_MS } from '@/shared/constants';
+import { AppNavigation } from '@/features/navigation';
+import { NAV_FADE_MS } from '@/shared/constants';
 import { BG_COLORS } from '@/shared/components/layout/navigation-theme';
 
 function DeepLinkRestore() {
@@ -17,11 +17,8 @@ function DeepLinkRestore() {
   return null;
 }
 
-const noListen = () => undefined;
-
 export default function AppLayout() {
   const { theme } = useUniwind();
-  const go = useSectionRoute();
   const command = useCommandLauncher();
   usePushRegistration();
   useNotificationPermission();
@@ -29,13 +26,12 @@ export default function AppLayout() {
   useCallPush();
   useBeaconController();
   useTamperEvidenceKeeper();
-  const openThread = () => go(ASSISTANT_THREAD_HREF);
-  const voice = { onOpenChat: openThread, onListenStart: openThread, onListenEnd: noListen };
+  const { voice, listening } = useArgusVoice();
 
   return (
     <EntryGate>
       <PrivacyGate>
-        <AppNavigation voice={voice} onCommand={() => command.open()}>
+        <AppNavigation voice={voice} listening={listening} onCommand={() => command.open()}>
           <ModuleNotices />
           <GlobalCommand />
           <DeepLinkRestore />
@@ -48,6 +44,7 @@ export default function AppLayout() {
             }}
           />
         </AppNavigation>
+        <ArgusListening />
       </PrivacyGate>
     </EntryGate>
   );

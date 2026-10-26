@@ -219,6 +219,17 @@ describe('hold to talk', () => {
     expect(log).toEqual(['chat']);
   });
 
+  test('a voice that cannot listen turns a hold into a tap: the chat opens and nothing listens', () => {
+    for (const begin of ['onLongPress', 'onAccessibilityAction'] as const) {
+      const log: string[] = [];
+      const { result } = renderHook(() => useHoldToTalk({ ...voice(log), canListen: false }));
+      act(() => result.current.handlers[begin]());
+      expect(result.current.mode).toBe('off');
+      act(() => result.current.handlers.onPressOut(release(0)));
+      expect(log).toEqual(['chat']);
+    }
+  });
+
   test('the accessible alternative is tap to start and tap to stop', () => {
     const log: string[] = [];
     const { result } = renderHook(() => useHoldToTalk(voice(log)));

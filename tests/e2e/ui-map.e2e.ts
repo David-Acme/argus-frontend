@@ -19,7 +19,7 @@ const SCREENS: readonly ScreenSpec[] = [
 
 const ONLY_SCREEN = process.env.ARGUS_UI_MAP_SCREEN ?? '';
 
-const ONLY_STATE = process.env.ARGUS_UI_MAP_STATE ?? '';
+const ONLY_STATES = (process.env.ARGUS_UI_MAP_STATE ?? '').split(',').filter(Boolean);
 
 const report = (screen: string, failures: readonly string[]): void => {
   const folder = join(
@@ -38,7 +38,7 @@ for (const screen of SCREENS) {
       ? 'not selected'
       : false;
   test(`ui map: ${screen.screen}`, { timeout: 3600000, skip }, async ({ app }) => {
-    const failures = await runScreen(app.baseUrl ?? '', screen, ONLY_STATE || undefined);
+    const failures = await runScreen(app.baseUrl ?? '', screen, ONLY_STATES);
     report(screen.screen, failures);
     await closeBrowser();
   });
