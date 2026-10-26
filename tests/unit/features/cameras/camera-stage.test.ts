@@ -112,6 +112,13 @@ describe('the controls that cannot apply are hidden', () => {
     });
   });
 
+  test('a camera that does not answer offers no talk and no fullscreen', () => {
+    const blocked = liveControlsOf({ ...controlsInput, stage: 'blocked' });
+    expect(blocked.talk).toBe(false);
+    expect(blocked.fullscreen).toBe(false);
+    expect(blocked.quality).toBe(true);
+  });
+
   test('a camera that is off offers no siren unless one is already counting or sounding', () => {
     expect(liveControlsOf({ ...controlsInput, stage: 'off' }).siren).toBe(false);
     expect(liveControlsOf({ ...controlsInput, stage: 'off', sirenActive: true }).siren).toBe(true);

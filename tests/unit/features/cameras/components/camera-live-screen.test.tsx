@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import type { CameraClipsState } from '@/features/cameras/hooks/use-camera-clips';
 import type { CameraLive } from '@/features/cameras/hooks/use-camera-live';
 import { screenFocus } from '../../../shared/ui/screen-focus';
+import { setWindowWidth } from '../../../shared/ui/window-width';
 import '../../../shared/ui/translation-stub';
 import {
   ALL_CONTROLS,
@@ -139,6 +140,16 @@ describe('the live camera screen', () => {
     expect(screen.getAllByText('Mantén para hablar por la cámara').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Llamar' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Sirena' })).toBeDefined();
+  });
+
+  test('on a desktop the picture and the actions sit in two columns', () => {
+    clips = clipsState(3);
+    setWindowWidth(1440);
+    render(<CameraLiveScreen />);
+    expect(screen.getByLabelText('Cocina')).toBeDefined();
+    expect(screen.getByLabelText('Ajustes de la cámara')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Mantén para hablar por la cámara' })).toBeDefined();
+    setWindowWidth(360);
   });
 
   test('the rows open their screens', () => {

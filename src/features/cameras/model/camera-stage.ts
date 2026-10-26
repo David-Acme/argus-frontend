@@ -88,13 +88,14 @@ export type LiveControls = {
 export function liveControlsOf(input: LiveControlsInput): LiveControls {
   const sees = stageSees(input.stage);
   const live = input.stage === 'live';
+  const reachable = live || input.stage === 'connecting';
   return {
-    talk: sees && input.access.talk && input.talk && input.mic && !input.argusCall,
+    talk: reachable && input.access.talk && input.talk && input.mic && !input.argusCall,
     siren: input.sirenActive || (input.stage !== 'off' && input.siren),
     ptz: live && input.access.aim && input.ptz,
     quality: sees,
     sound: live && input.audio,
-    fullscreen: sees,
+    fullscreen: reachable,
     eye: live && input.looking,
   };
 }
