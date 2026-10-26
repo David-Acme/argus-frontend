@@ -5,7 +5,7 @@ export {
   useGuardEnvironments,
   useGuardHeadline,
 } from './hooks/use-guard';
-export { matchEnvironment, sharedMode } from './model/environments';
+export { matchEnvironment } from './model/environments';
 export { default as EnvironmentScreen } from './screens/environment-screen';
 export { default as SecurityScreen } from './screens/security-screen';
 export { MaintenancePanel } from './components/maintenance-panel';

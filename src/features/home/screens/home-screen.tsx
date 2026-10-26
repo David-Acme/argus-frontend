@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react';
-import { CAPABILITY } from '@/shared/constants';
-import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
+import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowLayout, useWindowWidth } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
@@ -19,18 +18,26 @@ import { HomePeopleSection } from '@/features/home/components/feed/home-people-s
 import { NewsSection } from '@/features/home/components/feed/news-section';
 import { InicioHero } from '@/features/home/components/hero/inicio-hero';
 import { InicioLead } from '@/features/home/components/hero/inicio-lead';
+import { SystemSection } from '@/features/home/components/status/system-section';
+import { WatchSection } from '@/features/home/components/status/watch-section';
 import { useInicioHero, type InicioHero as Hero } from '@/features/home/hooks/use-inicio-hero';
-import { useInicioSummary } from '@/features/home/hooks/use-inicio-stats';
+import { useInicioBody } from '@/features/home/hooks/use-inicio-body';
 import {
   inicioColumns,
   inicioStack,
-  type InicioReads,
   type InicioSection,
 } from '@/features/home/model/inicio-layout';
-import { firstStep, sosOnInicio } from '@/features/home/model/inicio-states';
 import { statPlace, type StatPlace } from '@/features/home/model/inicio-stats';
 
 type BodyProps = { hero: Hero; place: StatPlace };
+
+const COLUMN_KEYS = {
+  agenda: 'screens.home.inicio.columns.agenda',
+  news: 'screens.home.inicio.columns.news',
+  cameras: 'screens.home.inicio.columns.cameras',
+  side: 'screens.home.inicio.columns.side',
+  lead: 'screens.home.inicio.columns.lead',
+} as const;
 
 const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
   now: NowSection,
@@ -43,33 +50,9 @@ const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
   projects: ProjectsSection,
   clips: RecentClipsSection,
   reminders: UpcomingRemindersSection,
+  watch: WatchSection,
+  system: SystemSection,
 };
-
-function useInicioBody() {
-  const { has, can, guard } = useCapabilities();
-  const summary = useInicioSummary();
-  const reads: InicioReads = {
-    agenda: has(CAPABILITY.remindersRead) || has(CAPABILITY.agendaRead),
-    news: has(CAPABILITY.notificationsRead),
-    cameras: has(CAPABILITY.cameraView),
-    people: has(CAPABILITY.presenceRead),
-  };
-  const step = firstStep({
-    summary,
-    addsCameras: can('camera', 'create'),
-    addsReminders: has(CAPABILITY.remindersWrite),
-  });
-  const sos = sosOnInicio({ panics: has(CAPABILITY.safetyPanic), hasSecurityTab: guard.view });
-  return { reads, step, sos };
-}
-
-const COLUMN_KEYS = {
-  agenda: 'screens.home.inicio.columns.agenda',
-  news: 'screens.home.inicio.columns.news',
-  cameras: 'screens.home.inicio.columns.cameras',
-  side: 'screens.home.inicio.columns.side',
-  lead: 'screens.home.inicio.columns.lead',
-} as const;
 
 function InicioBody({ hero, place }: BodyProps) {
   const { t } = useTranslation();

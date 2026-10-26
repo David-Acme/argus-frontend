@@ -1,4 +1,4 @@
-import type { GuardMode } from '@/core/types';
+import type { GuardMode, TranslateFn } from '@/core/types';
 import type { AuraTone } from '@/shared/theme';
 import type { PresenceState } from '@/shared/ui/presence';
 import type { StatusTone } from '@/shared/ui/status';
@@ -103,4 +103,12 @@ export function heroMeta({ phase, band, mode, people }: HeroMetaInput): MetaPart
     ...(mode === null ? [] : [{ kind: 'mode', mode, named: band } as const]),
     ...(people === null ? [] : [{ kind: 'people', line: people } as const]),
   ];
+}
+
+export function namesText(names: readonly string[], t: TranslateFn): string {
+  if (names.length < 2) return names.join('');
+  return t('screens.home.inicio.and', {
+    first: names.slice(0, -1).join(', '),
+    last: names.at(-1) ?? '',
+  });
 }

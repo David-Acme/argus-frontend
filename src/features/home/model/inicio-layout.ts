@@ -12,13 +12,19 @@ export type InicioSection =
   | 'people'
   | 'projects'
   | 'clips'
-  | 'reminders';
+  | 'reminders'
+  | 'watch'
+  | 'system';
 
 export type InicioReads = {
   agenda: boolean;
   news: boolean;
   cameras: boolean;
   people: boolean;
+  watch: boolean;
+  night: boolean;
+  system: boolean;
+  sparse: boolean;
 };
 
 export type InicioColumnId = 'agenda' | 'news' | 'cameras' | 'side' | 'lead';
@@ -35,34 +41,49 @@ type ColumnPlan = Omit<InicioColumn, 'grows'> & { grow: InicioSection };
 
 const AGENDA: readonly InicioSection[] = ['now', 'today', 'tomorrow'];
 
-function plans(place: StatPlace, reads: InicioReads): ColumnPlan[] {
-  const agenda = reads.agenda ? AGENDA : [];
-  const news: InicioSection[] = reads.news ? ['news'] : [];
-  if (place === 'band')
-    return [
-      { id: 'agenda', sections: agenda, grow: 'today', width: size.columnSide },
-      { id: 'news', sections: news, grow: 'news' },
-      {
-        id: 'side',
-        sections: [
-          ...(reads.cameras ? ['cameras' as const] : []),
-          ...(reads.people ? ['people' as const] : []),
-        ],
-        grow: 'cameras',
-        width: size.columnAside,
-      },
-    ];
+const when = (shown: boolean, ...sections: InicioSection[]): InicioSection[] =>
+  shown ? sections : [];
+
+function bandPlans(reads: InicioReads): ColumnPlan[] {
   return [
-    { id: 'agenda', sections: agenda, grow: 'today', width: size.columnWide },
-    { id: 'news', sections: news, grow: 'news', max: size.columnFeed },
-    { id: 'cameras', sections: reads.cameras ? ['cameras', 'happened'] : [], grow: 'cameras' },
+    {
+      id: 'agenda',
+      sections: [...when(reads.watch, 'watch'), ...when(reads.agenda, ...AGENDA)],
+      grow: 'today',
+      width: size.columnSide,
+    },
+    { id: 'news', sections: when(reads.news, 'news'), grow: 'news' },
     {
       id: 'side',
       sections: [
-        ...(reads.people ? ['people' as const] : []),
-        ...(reads.agenda ? ['projects' as const] : []),
-        ...(reads.cameras ? ['clips' as const] : []),
-        ...(reads.agenda ? ['reminders' as const] : []),
+        ...when(reads.cameras, 'cameras'),
+        ...when(reads.people, 'people'),
+        ...when(reads.system && reads.sparse, 'system'),
+      ],
+      grow: 'cameras',
+      width: size.columnAside,
+    },
+  ];
+}
+
+function widePlans(reads: InicioReads): ColumnPlan[] {
+  return [
+    {
+      id: 'agenda',
+      sections: [...when(reads.watch, 'watch'), ...when(reads.agenda, ...AGENDA)],
+      grow: 'today',
+      width: size.columnWide,
+    },
+    { id: 'news', sections: when(reads.news, 'news'), grow: 'news', max: size.columnFeed },
+    { id: 'cameras', sections: when(reads.cameras, 'cameras', 'happened'), grow: 'cameras' },
+    {
+      id: 'side',
+      sections: [
+        ...when(reads.people, 'people'),
+        ...when(reads.agenda, 'projects'),
+        ...when(reads.cameras, 'clips'),
+        ...when(reads.agenda, 'reminders'),
+        ...when(reads.system, 'system'),
       ],
       grow: reads.people ? 'people' : 'projects',
       width: size.columnWide,
@@ -83,7 +104,8 @@ function flexible(columns: ColumnPlan[]): ColumnPlan[] {
 }
 
 export function inicioColumns(place: StatPlace, reads: InicioReads): InicioColumn[] {
-  const filled = plans(place, reads).filter((column) => column.sections.length > 0);
+  const plans = place === 'band' ? bandPlans(reads) : widePlans(reads);
+  const filled = plans.filter((column) => column.sections.length > 0);
   const [first, ...rest] = flexible(
     filled.length > 0 ? filled : [{ id: 'lead', sections: [], grow: 'lead' }]
   );
@@ -99,8 +121,9 @@ export function inicioStack(reads: InicioReads, firstStep: boolean): InicioSecti
   if (firstStep) return ['lead'];
   return [
     'lead',
-    ...(reads.agenda ? ['now' as const] : []),
-    ...(reads.cameras ? ['cameras' as const] : []),
-    ...(reads.news ? ['news' as const] : []),
+    ...when(reads.watch, 'watch'),
+    ...when(reads.agenda, reads.night ? 'tomorrow' : 'now'),
+    ...when(reads.cameras, 'cameras'),
+    ...when(reads.news, 'news'),
   ];
 }

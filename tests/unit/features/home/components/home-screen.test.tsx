@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { IncidentResponse } from '@/core/types';
+import type { GuardMode, IncidentResponse } from '@/core/types';
 import type { InicioHero } from '@/features/home/hooks/use-inicio-hero';
 import '../../../shared/ui/translation-stub';
 import { setWindowWidth } from '../../../shared/ui/window-width';
@@ -40,6 +40,8 @@ const state = {
     projectsActive: 1,
     tasksOpen: 2,
   },
+  mode: null as GuardMode | null,
+  threads: 1,
 };
 
 const marker = (name: string) => () => <span>{name}</span>;
@@ -77,6 +79,22 @@ mock.module('@/features/home/components/hero/inicio-alert', () => ({
   InicioAlert: ({ response }: { response: IncidentResponse }) => (
     <span>{`alert ${response.id}`}</span>
   ),
+}));
+
+mock.module('@/features/security', () => ({ useGuardHeadline: () => state.mode }));
+
+mock.module('@/features/home/hooks/use-news', () => ({
+  useNews: () => ({
+    readable: state.granted.has('notifications.read'),
+    threads: Array.from({ length: state.threads }, (_, index) => ({ key: String(index) })),
+  }),
+}));
+
+mock.module('@/features/home/components/status/watch-section', () => ({
+  WatchSection: marker('watch'),
+}));
+mock.module('@/features/home/components/status/system-section', () => ({
+  SystemSection: marker('system'),
 }));
 
 mock.module('@/features/safety', () => ({ PanicButton: marker('sos') }));
@@ -130,6 +148,7 @@ const order = (names: readonly string[]) =>
     .map((entry) => entry.name);
 
 const ALL = [
+  'watch',
   'now',
   'today',
   'tomorrow',
@@ -140,6 +159,7 @@ const ALL = [
   'projects',
   'clips',
   'reminders',
+  'system',
 ];
 
 afterEach(() => {
@@ -165,6 +185,8 @@ afterEach(() => {
       projectsActive: 1,
       tasksOpen: 2,
     },
+    mode: null,
+    threads: 1,
   });
 });
 
@@ -282,6 +304,35 @@ describe('Inicio on a desktop', () => {
     setWindowWidth(1920);
     render(<HomeScreen />);
     expect(screen.getByLabelText('Cámaras')).toBeDefined();
-    expect(order(ALL)).toEqual(ALL);
+    expect(order(ALL)).toEqual(ALL.filter((name) => name !== 'watch'));
+  });
+});
+
+describe('Inicio at night, away and with little data', () => {
+  test('at night the phone shows «Esta noche» and then Mañana instead of Ahora', () => {
+    state.mode = 'night';
+    render(<HomeScreen />);
+    expect(order(ALL)).toEqual(['watch', 'tomorrow', 'cameras', 'news']);
+  });
+
+  test('away, the watch leads and Ahora stays', () => {
+    state.mode = 'away';
+    render(<HomeScreen />);
+    expect(order(ALL)).toEqual(['watch', 'now', 'cameras', 'news']);
+  });
+
+  test('a sparse home at 1280 px closes the side column with Estado', () => {
+    setWindowWidth(1280);
+    state.summary = { ...state.summary, remindersPending: 0, projectsActive: 0, tasksOpen: 0 };
+    render(<HomeScreen />);
+    expect(order(['people', 'system'])).toEqual(['people', 'system']);
+  });
+
+  test('an empty feed is no blank column', () => {
+    setWindowWidth(1280);
+    state.threads = 0;
+    render(<HomeScreen />);
+    expect(screen.queryByLabelText('Novedades')).toBeNull();
+    expect(screen.getByLabelText('En casa')).toBeDefined();
   });
 });

@@ -6823,6 +6823,23 @@ and T7 under one hero; every decision is a pure function in
   one takes the rest of the width. The grown section is chosen by name, not
   position, so a section that may render nothing (Mañana, En casa) is not the
   one that grows; Cámaras grows in its column.
+- **Night and away.** `WatchSection` («Esta noche» at night, «Mientras no
+  estás» away or armed) reads the effective mode through `useGuardHeadline`,
+  the same answer the sidebar gives, and names the cameras of every place not
+  at home (`watchedCameras`, three names and a count) and what wakes or tells
+  you (`wakeRuleOf`: night an unknown person, away someone who insists or
+  enters an alert zone, armed a critical danger, from the modes' own
+  details). No watched camera, no section. On phones it leads the stack and,
+  at night, Mañana takes Ahora's place, as the prototype draws; on the desktop
+  it tops the agenda column.
+- **A home with little data.** Ideas are T5's `AgendaEmpty` (the chips ask
+  Argus once Ahora is empty). `SystemSection` (Estado) lists the active
+  modules and the cameras online, from the access view and the dashboard
+  summary; it closes the side column from 1700 px, and from 1024 px when
+  nothing is pending (`isSparse`). An empty Novedades drops its column, so
+  no column is left blank. Rutinas has no source in the app (no routine
+  model, no backend contract) and is not drawn; storage and the server's
+  temperature are not known to the app either.
 - **Guest SOS.** A role that can panic and has no Seguridad holds the
   existing `PanicButton` on Inicio (R-D10).
 - **One live Estela (R-D31).** `useHeroPresence` (claimed by the Status hero)

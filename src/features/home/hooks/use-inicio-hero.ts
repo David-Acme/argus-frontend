@@ -9,7 +9,7 @@ import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { alertSentence, headlineOf, headlineWords, useOpenResponse } from '@/features/response';
-import { sharedMode, useGuardEnvironments } from '@/features/security';
+import { useGuardHeadline } from '@/features/security';
 import { useHomePeople } from '@/features/home/hooks/use-home-people';
 import {
   ageOf,
@@ -18,6 +18,7 @@ import {
   heroMeta,
   homeLine,
   inicioPhase,
+  namesText,
   type Age,
   type HeroLook,
   type HomeLine,
@@ -56,14 +57,6 @@ const SENTENCE_KEYS = {
 
 function firstNameOf(user: IAuthUser | null): string {
   return user?.name?.trim().split(/\s+/)[0] ?? '';
-}
-
-function namesText(names: readonly string[], t: TranslateFn): string {
-  if (names.length < 2) return names.join('');
-  return t('screens.home.inicio.and', {
-    first: names.slice(0, -1).join(', '),
-    last: names.at(-1) ?? '',
-  });
 }
 
 const PEOPLE_KEYS = {
@@ -173,14 +166,13 @@ function useHomeLine(): HomeLine | null {
 export function useInicioHero(band: boolean): InicioHero {
   const { t } = useTranslation();
   const now = useNow(MINUTE_MS);
-  const { ready, guard } = useCapabilities();
+  const { ready } = useCapabilities();
   const synced = useViewCacheValue<boolean>(VIEW_CACHE_KEYS.syncReady) === true;
   const offline = useOfflineNotice();
   const since = useOfflineSince(offline, now);
   const alert = useOpenResponse();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
-  const environments = useGuardEnvironments(guard.view).data;
-  const mode = guard.view ? sharedMode(environments ?? []) : null;
+  const mode = useGuardHeadline();
   const people = useHomeLine();
   const greeting = useInicioGreeting(now);
   const phase = inicioPhase({ ready: ready && synced, offline, alert: alert !== null, mode });

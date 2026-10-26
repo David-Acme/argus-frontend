@@ -1,7 +1,27 @@
 import { describe, expect, test } from 'bun:test';
 import { inicioColumns, inicioStack } from '@/features/home/model/inicio-layout';
 
-const ALL = { agenda: true, news: true, cameras: true, people: true };
+const ALL = {
+  agenda: true,
+  news: true,
+  cameras: true,
+  people: true,
+  watch: false,
+  night: false,
+  system: false,
+  sparse: false,
+};
+
+const NONE = {
+  agenda: false,
+  news: false,
+  cameras: false,
+  people: false,
+  watch: false,
+  night: false,
+  system: false,
+  sparse: false,
+};
 
 describe('the Inicio columns', () => {
   test('from 1024 px: Ahora, Hoy and Mañana | Novedades | Cámaras and En casa', () => {
@@ -29,12 +49,7 @@ describe('the Inicio columns', () => {
   });
 
   test('when every column is fixed, the last one takes the rest of the width', () => {
-    const columns = inicioColumns('band', {
-      agenda: true,
-      news: false,
-      cameras: false,
-      people: true,
-    });
+    const columns = inicioColumns('band', { ...NONE, agenda: true, people: true });
     expect(columns).toEqual([
       { id: 'agenda', sections: ['lead', 'now', 'today', 'tomorrow'], grows: 2, width: 320 },
       { id: 'side', sections: ['people'], grows: 0 },
@@ -52,9 +67,7 @@ describe('the Inicio columns', () => {
   });
 
   test('a role that reads none of them still has the lead', () => {
-    expect(
-      inicioColumns('band', { agenda: false, news: false, cameras: false, people: false })
-    ).toEqual([{ id: 'lead', sections: ['lead'], grows: 0 }]);
+    expect(inicioColumns('band', NONE)).toEqual([{ id: 'lead', sections: ['lead'], grows: 0 }]);
   });
 });
 
@@ -68,8 +81,57 @@ describe('the phone stack', () => {
   });
 
   test('what the role cannot read is absent', () => {
+    expect(inicioStack({ ...NONE, news: true }, false)).toEqual(['lead', 'news']);
+  });
+});
+
+describe('night, away and a sparse home', () => {
+  test("on watch, «Esta noche» leads the phone, and at night Mañana takes Ahora's place", () => {
+    expect(inicioStack({ ...ALL, watch: true, night: true }, false)).toEqual([
+      'lead',
+      'watch',
+      'tomorrow',
+      'cameras',
+      'news',
+    ]);
+    expect(inicioStack({ ...ALL, watch: true }, false)).toEqual([
+      'lead',
+      'watch',
+      'now',
+      'cameras',
+      'news',
+    ]);
+  });
+
+  test('on the desktop the watch tops the agenda column, and Hoy still grows', () => {
+    expect(inicioColumns('band', { ...ALL, watch: true })[0]).toEqual({
+      id: 'agenda',
+      sections: ['lead', 'watch', 'now', 'today', 'tomorrow'],
+      grows: 3,
+      width: 320,
+    });
+  });
+
+  test('Estado closes the side column from 1700 px, and from 1024 px only in a sparse home', () => {
     expect(
-      inicioStack({ agenda: false, news: true, cameras: false, people: false }, false)
-    ).toEqual(['lead', 'news']);
+      inicioColumns('wide', { ...ALL, system: true })
+        .at(-1)
+        ?.sections.at(-1)
+    ).toBe('system');
+    expect(inicioColumns('band', { ...ALL, system: true }).at(-1)?.sections).toEqual([
+      'cameras',
+      'people',
+    ]);
+    expect(inicioColumns('band', { ...ALL, system: true, sparse: true }).at(-1)?.sections).toEqual([
+      'cameras',
+      'people',
+      'system',
+    ]);
+  });
+
+  test('an empty feed leaves no blank column: the side takes the width', () => {
+    const columns = inicioColumns('band', { ...ALL, news: false, system: true, sparse: true });
+    expect(columns.map((column) => column.id)).toEqual(['agenda', 'side']);
+    expect(columns.at(-1)?.width).toBeUndefined();
   });
 });
