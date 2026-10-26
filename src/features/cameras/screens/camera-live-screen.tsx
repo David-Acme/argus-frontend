@@ -58,7 +58,7 @@ function LiveBody({ view, talk }: LiveBodyProps) {
         <LiveLayout
           mainLabel={camera.name}
           sideLabel={t('screens.cameras.settings')}
-          main={
+          stage={
             <>
               <LiveStageView
                 cameraId={camera.id}
@@ -71,16 +71,14 @@ function LiveBody({ view, talk }: LiveBodyProps) {
               <LiveNotices view={view} />
             </>
           }
-          side={
-            <>
-              <LiveRows camera={camera} clips={access.clips} sections={view.sections} />
-              <TalkDock
-                dock={view.dock}
-                controls={controls}
-                note={view.note}
-                cameraName={camera.name}
-              />
-            </>
+          rows={<LiveRows camera={camera} clips={access.clips} sections={view.sections} />}
+          dock={
+            <TalkDock
+              dock={view.dock}
+              controls={controls}
+              note={view.note}
+              cameraName={camera.name}
+            />
           }
         />
       </Screen>

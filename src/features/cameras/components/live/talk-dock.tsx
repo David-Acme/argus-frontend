@@ -86,7 +86,8 @@ function DockCaption({ dock, cameraName, compact }: DockCaptionProps) {
 export function TalkDock({ dock, controls, note, cameraName }: TalkDockProps) {
   const { t } = useTranslation();
   const { trouble } = dock;
-  const compact = talkSizeOf(useHeightLayout()) === size.talkShort;
+  const height = useHeightLayout();
+  const compact = talkSizeOf(height) === size.talkShort;
   const button = controls.talk ? <TalkButton dock={dock} compact={compact} /> : null;
   return (
     <View className="mt-talk-top mb-talk-bottom gap-talk-gap">
@@ -119,6 +120,7 @@ export function TalkDock({ dock, controls, note, cameraName }: TalkDockProps) {
         controls={controls}
         cameraName={cameraName}
         center={compact ? button : null}
+        vertical={height.landscape}
       />
       {compact && controls.talk ? (
         <DockCaption dock={dock} cameraName={cameraName} compact />

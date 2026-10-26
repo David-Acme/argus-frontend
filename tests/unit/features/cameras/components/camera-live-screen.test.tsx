@@ -355,14 +355,16 @@ describe('the live layout', () => {
   test('stacks on a tall phone', () => {
     render(
       <LiveLayout
-        main={<span>Imagen</span>}
-        side={<span>Filas</span>}
+        stage={<span>Imagen</span>}
+        rows={<span>Filas</span>}
+        dock={<span>Hablar</span>}
         mainLabel="Cocina"
         sideLabel="Ajustes"
       />
     );
     expect(screen.getByText('Imagen')).toBeDefined();
     expect(screen.getByText('Filas')).toBeDefined();
+    expect(screen.getByText('Hablar')).toBeDefined();
   });
 });
 

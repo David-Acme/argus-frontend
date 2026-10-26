@@ -4,7 +4,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { feedback } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Confirm } from '@/shared/ui/confirm';
-import { Inline } from '@/shared/ui/layout';
+import { Inline, Stack } from '@/shared/ui/layout';
 import type { TalkDock } from '@/features/cameras/hooks/use-talk-dock';
 import type { LiveControls } from '@/features/cameras/model/camera-stage';
 
@@ -13,6 +13,7 @@ export type DockActionsProps = {
   controls: LiveControls;
   cameraName: string;
   center?: ReactNode;
+  vertical?: boolean;
 };
 
 type SirenButtonProps = { dock: TalkDock };
@@ -80,17 +81,31 @@ function CallButton({ dock }: SirenButtonProps) {
   );
 }
 
-export function DockActions({ dock, controls, cameraName, center }: DockActionsProps) {
+export function DockActions({
+  dock,
+  controls,
+  cameraName,
+  center,
+  vertical = false,
+}: DockActionsProps) {
   const { t } = useTranslation();
   const { siren } = dock;
   if (!controls.talk && !controls.siren) return null;
   return (
     <>
-      <Inline gap={2} fill>
-        {controls.talk ? <CallButton dock={dock} /> : null}
-        {center ? <View className="items-center">{center}</View> : null}
-        {controls.siren ? <SirenButton dock={dock} /> : null}
-      </Inline>
+      {vertical ? (
+        <Stack gap={2}>
+          {center ? <View className="items-center">{center}</View> : null}
+          {controls.talk ? <CallButton dock={dock} /> : null}
+          {controls.siren ? <SirenButton dock={dock} /> : null}
+        </Stack>
+      ) : (
+        <Inline gap={2} fill>
+          {controls.talk ? <CallButton dock={dock} /> : null}
+          {center ? <View className="items-center">{center}</View> : null}
+          {controls.siren ? <SirenButton dock={dock} /> : null}
+        </Inline>
+      )}
       <Confirm
         open={siren.phase === 'confirm'}
         variant="destructive"

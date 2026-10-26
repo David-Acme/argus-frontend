@@ -127,6 +127,7 @@ export const chromeSize = {
   presenceEyeWide: 48,
   talk: 88,
   talkShort: 64,
+  dockSide: 200,
   iconLarge: 34,
   presenceThink: 26,
   columnSide: 320,
