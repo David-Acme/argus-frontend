@@ -2,12 +2,11 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { IReminderCacheRow } from '@/core/interfaces';
-import type { DashboardProjectCard } from '@/core/types';
+import type { AgendaItem, AgendaMenuAction, DashboardProjectCard } from '@/core/types';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import type { Agenda } from '@/features/home/hooks/use-agenda';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
-import { agendaMenu } from '@/features/agenda';
-import type { AgendaItem, AgendaMenuAction } from '@/features/agenda';
+import { agendaMenu } from '@/features/agenda/model/agenda-actions';
 import { screenFocus } from '../../shared/ui/screen-focus';
 import '../../shared/ui/translation-stub';
 import { at, items, prototypeDay, reminder, TODAY, TOMORROW, wording } from './agenda-fixtures';
@@ -59,7 +58,10 @@ mock.module('@/features/home/hooks/use-agenda', () => ({ useAgenda: () => state.
 mock.module('@/features/home/hooks/use-ask-argus', () => ({
   useAskArgus: () => (state.askable ? (draft: string) => calls.asked.push(draft) : null),
 }));
-mock.module('@/features/agenda/components/reminder-dialog', () => ({
+mock.module('@/features/agenda', async () => ({
+  ...(await import('@/features/agenda/model/agenda-items')),
+  ...(await import('@/features/agenda/model/agenda-actions')),
+  ...(await import('@/features/agenda/model/agenda-timeline')),
   ReminderDialog: ({ reminder: row }: { reminder: IReminderCacheRow }) => (
     <div role="dialog" aria-label={row.title} />
   ),

@@ -1,4 +1,4 @@
-import type { CalendarEntry, DashboardProjectCard } from '@/core/types';
+import type { AgendaItem, CalendarEntry, DashboardProjectCard, DayRange } from '@/core/types';
 import { calendarMonthScope } from '@/core/services/view-cache';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows, useViewCacheValue } from '@/shared/hooks/use-cached-rows';
@@ -15,7 +15,6 @@ import {
   projectNamesOf,
   useReminders,
 } from '@/features/agenda';
-import type { AgendaItem, DayRange } from '@/features/agenda';
 import type { WordingContext } from '@/features/home/model/agenda-wording';
 
 export type Agenda = {

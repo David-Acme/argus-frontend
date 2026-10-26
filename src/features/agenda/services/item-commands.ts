@@ -1,9 +1,8 @@
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { projectTaskService } from '@/core/services/project-task.service';
 import { reminderService } from '@/core/services/reminder.service';
-import type { TranslateFn } from '@/core/types';
+import type { AgendaItem, TranslateFn } from '@/core/types';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 import {
   calendarEntryRecordId,
   editOccurrenceBody,

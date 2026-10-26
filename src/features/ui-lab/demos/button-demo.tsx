@@ -42,6 +42,9 @@ export function ButtonDemo() {
       <LabCase id="icon-filled">
         <Button iconOnly filled icon="plus" label={copy.add} onPress={noop} />
       </LabCase>
+      <LabCase id="icon-fab">
+        <Button iconOnly fab icon="plus" label={copy.add} onPress={noop} />
+      </LabCase>
       <LabCase id="icon-plain">
         <Button iconOnly icon="more" label={copy.more} onPress={noop} />
       </LabCase>

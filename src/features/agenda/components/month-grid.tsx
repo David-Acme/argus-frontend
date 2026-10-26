@@ -5,19 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import type { DayCell, MonthCell } from '@/features/agenda/model/agenda-days';
-
-export type DayNames = {
-  letter: (at: number) => string;
-  number: (at: number) => string;
-  full: (at: number) => string;
-};
-
-export type MonthShift = {
-  title: string;
-  previous: string;
-  next: string;
-  onShift: (step: number) => void;
-};
+import type { DayNames, MonthShift } from '@/features/agenda/model/agenda-view';
 
 export type MonthGridProps = {
   cells: readonly MonthCell[];

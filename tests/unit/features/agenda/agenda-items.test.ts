@@ -8,7 +8,16 @@ import {
   nowList,
   upcomingReminders,
 } from '@/features/agenda/model/agenda-items';
-import { at, entry, items, NOW, prototypeDay, reminder, TODAY, TOMORROW } from '../home/agenda-fixtures';
+import {
+  at,
+  entry,
+  items,
+  NOW,
+  prototypeDay,
+  reminder,
+  TODAY,
+  TOMORROW,
+} from '../home/agenda-fixtures';
 
 const titles = (list: readonly { title: string }[]) => list.map((item) => item.title);
 

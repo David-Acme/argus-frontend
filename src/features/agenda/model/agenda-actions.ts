@@ -1,12 +1,7 @@
-import type { TableName } from '@/core/types';
+import type { AgendaItem, AgendaMenuAction, AgendaRights, TableName } from '@/core/types';
 import { isOverdue } from '@/features/agenda/model/agenda-items';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
-
-export type AgendaMenuAction = 'snooze-hour' | 'snooze-tomorrow' | 'edit' | 'delete';
 
 export type AgendaCheck = 'open' | 'overdue' | 'progress' | 'done';
-
-export type AgendaRights = { toggle: boolean; edit: boolean; remove: boolean };
 
 export type RightsInput = {
   writesReminders: boolean;

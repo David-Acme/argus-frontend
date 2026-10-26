@@ -1,4 +1,4 @@
-import type { TranslationKey } from '@/core/types';
+import type { AgendaItem, AgendaMenuAction, TranslationKey } from '@/core/types';
 import { Avatar } from '@/shared/ui/avatar';
 import { Check } from '@/shared/ui/check';
 import { Menu, type MenuItem } from '@/shared/ui/menu';
@@ -6,7 +6,6 @@ import { Row } from '@/shared/ui/row';
 import { Text, type TextTone } from '@/shared/ui/text';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
 import { agendaCheck, isOngoing } from '@/features/agenda';
-import type { AgendaItem, AgendaMenuAction } from '@/features/agenda';
 import {
   itemMeta,
   timeToGo,

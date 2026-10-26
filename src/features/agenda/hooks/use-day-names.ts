@@ -1,5 +1,5 @@
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import type { DayNames } from '@/features/agenda/components/month-grid';
+import type { DayNames } from '@/features/agenda/model/agenda-view';
 
 export function useDayNames(): DayNames {
   const date = useDateFormatter();

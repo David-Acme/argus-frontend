@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import type { ICalendarEventShareCacheRow, IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { calendarEventShareService } from '@/core/services/calendar-event-share.service';
 import type { ShareAccess } from '@/core/types';
-import { ShareMembersDialog } from '@/shared/components/sharing/share-members-dialog';
-import type { ShareDialogLabels } from '@/shared/components/sharing/share-members-dialog';
+import { ShareMembersDialog, type ShareDialogLabels } from '@/shared/components/sharing/share-members-dialog';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
@@ -28,19 +27,13 @@ export function CalendarEventShareDialog({
   ownerId,
 }: CalendarEventShareDialogProps) {
   const { t } = useTranslation();
-  const shares = useViewCacheRows<ICalendarEventShareCacheRow>(
-    VIEW_CACHE_KEYS.calendarEventShares,
-    eventId
-  );
+  const shares = useViewCacheRows<ICalendarEventShareCacheRow>(VIEW_CACHE_KEYS.calendarEventShares, eventId);
   const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
   const lenses = useMemo(() => [calendarShareLens(eventId, people)], [eventId, people]);
   const merged = useOptimisticRows(shares, lenses);
-  const candidates = shareCandidates({
-    table: 'calendar_event',
-    ownerId,
-    shared: merged.rows,
-    people,
-  }).map((person) => ({ id: person.id, name: personFullName(person) }));
+  const candidates = shareCandidates({ table: 'calendar_event', ownerId, shared: merged.rows, people }).map(
+    (person) => ({ id: person.id, name: personFullName(person) })
+  );
   const labels: ShareDialogLabels = {
     title: t('screens.agenda.share-title', { title: eventTitle }),
     empty: t('screens.agenda.share-empty'),
@@ -74,14 +67,7 @@ export function CalendarEventShareDialog({
 
   const changeAccess = (row: ICalendarEventShareCacheRow, next: ShareAccess) => {
     void runOptimistic({
-      intents: [
-        {
-          table: 'calendar_event_share',
-          kind: 'update',
-          recordId: row.id,
-          values: { access: next },
-        },
-      ],
+      intents: [{ table: 'calendar_event_share', kind: 'update', recordId: row.id, values: { access: next } }],
       call: () => calendarEventShareService.setAccess(row.id, next),
       success: t('screens.agenda.share-saved'),
     });

@@ -1,19 +1,15 @@
 import type { IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
 import type { RecurrenceException } from '@/core/types';
-import { defineLens } from '@/shared/libs/optimistic';
-import type { OptimisticLens } from '@/shared/libs/optimistic';
+import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 import { sameExceptions } from '@/features/agenda/model/reminder-repeat';
 
-type ReminderOptimisticValues = IReminderUpdate & {
-  recurrenceExceptions?: readonly RecurrenceException[];
-};
+type ReminderOptimisticValues = IReminderUpdate & { recurrenceExceptions?: readonly RecurrenceException[] };
 
 const exceptionsOf = (
   row: IReminderCacheRow,
   values: Partial<ReminderOptimisticValues>
 ): IReminderCacheRow['recurrenceExceptions'] =>
-  values.recurrenceExceptions === undefined ||
-  sameExceptions(values.recurrenceExceptions, row.recurrenceExceptions)
+  values.recurrenceExceptions === undefined || sameExceptions(values.recurrenceExceptions, row.recurrenceExceptions)
     ? row.recurrenceExceptions
     : values.recurrenceExceptions;
 
@@ -28,8 +24,7 @@ const reminderLens = defineLens<IReminderCacheRow, ReminderOptimisticValues>({
     isCompleted: values.isCompleted ?? row.isCompleted,
     completedAt:
       values.isCompleted === undefined ? row.completedAt : values.isCompleted ? Date.now() : null,
-    recurrenceRule:
-      values.recurrenceRule === undefined ? row.recurrenceRule : values.recurrenceRule || null,
+    recurrenceRule: values.recurrenceRule === undefined ? row.recurrenceRule : values.recurrenceRule || null,
     recurrenceExceptions: exceptionsOf(row, values),
   }),
   create: (recordId, values) =>

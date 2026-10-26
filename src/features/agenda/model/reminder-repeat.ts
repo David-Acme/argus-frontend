@@ -19,13 +19,10 @@ export type RepeatDraft = {
 
 export const NO_REPEAT: RepeatDraft = { frequency: null, interval: RECURRENCE_INTERVAL_MIN };
 
-export const REPEAT_CHOICES = [
+export const REPEAT_CHOICES = ['none', 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const satisfies readonly [
   'none',
-  'DAILY',
-  'WEEKLY',
-  'MONTHLY',
-  'YEARLY',
-] as const satisfies readonly ['none', ...RecurrenceFrequency[]];
+  ...RecurrenceFrequency[],
+];
 
 export function repeatDraftOf(rule: string | null | undefined): RepeatDraft {
   const parsed = parseRecurrenceRule(rule);
@@ -46,15 +43,12 @@ export const repeatFromChoice = (choice: RepeatChoice, interval: string): Repeat
   choice === 'none' ? NO_REPEAT : { frequency: choice, interval: Number(interval.trim()) };
 
 export const sameRepeat = (left: RepeatDraft, right: RepeatDraft): boolean =>
-  left.frequency === right.frequency &&
-  (left.frequency === null || left.interval === right.interval);
+  left.frequency === right.frequency && (left.frequency === null || left.interval === right.interval);
 
 export function ruleOfRepeat({ frequency, interval, monthDay }: RepeatDraft): string | null {
   if (frequency === null) return null;
   return formatRecurrenceRule(
-    frequency === 'MONTHLY' && monthDay !== undefined
-      ? { frequency, interval, monthDay }
-      : { frequency, interval }
+    frequency === 'MONTHLY' && monthDay !== undefined ? { frequency, interval, monthDay } : { frequency, interval }
   );
 }
 
@@ -66,10 +60,7 @@ export const keepingMonthDay = (draft: RepeatDraft, saved: RepeatDraft): RepeatD
 export const repeatsOf = (row: Pick<IReminderCacheRow, 'recurrenceRule'>): boolean =>
   row.recurrenceRule != null && row.recurrenceRule.length > 0;
 
-type ReminderSeriesRow = Pick<
-  IReminderCacheRow,
-  'scheduledAt' | 'recurrenceRule' | 'recurrenceExceptions'
->;
+type ReminderSeriesRow = Pick<IReminderCacheRow, 'scheduledAt' | 'recurrenceRule' | 'recurrenceExceptions'>;
 
 export type ReminderRollInput = {
   row: ReminderSeriesRow;
@@ -77,13 +68,11 @@ export type ReminderRollInput = {
   clock: ZoneClock;
 };
 
-export const currentOccurrence = (
-  row: Pick<IReminderCacheRow, 'scheduledAt' | 'recurrenceExceptions'>
-): number => scheduledOccurrence(row.recurrenceExceptions, row.scheduledAt);
+export const currentOccurrence = (row: Pick<IReminderCacheRow, 'scheduledAt' | 'recurrenceExceptions'>): number =>
+  scheduledOccurrence(row.recurrenceExceptions, row.scheduledAt);
 
-export const changesOneOccurrence = (
-  row: Pick<IReminderCacheRow, 'recurrenceRule' | 'isCompleted'>
-): boolean => !row.isCompleted && parseRecurrenceRule(row.recurrenceRule) !== null;
+export const changesOneOccurrence = (row: Pick<IReminderCacheRow, 'recurrenceRule' | 'isCompleted'>): boolean =>
+  !row.isCompleted && parseRecurrenceRule(row.recurrenceRule) !== null;
 
 export function rolledSchedule({ row, now, clock }: ReminderRollInput): number | null {
   const rule = parseRecurrenceRule(row.recurrenceRule);
@@ -114,43 +103,23 @@ export function skippedSchedule({ row, clock }: ReminderSkipInput): number | nul
     ...(row.recurrenceExceptions ?? []).filter((exception) => exception.occurrence !== occurrence),
     { occurrence, cancelled: true },
   ];
-  return (
-    nextFiring({
-      rule,
-      anchor: occurrence,
-      after: occurrence,
-      moment: occurrence,
-      exceptions,
-      clock,
-    })?.at ?? null
-  );
+  return nextFiring({ rule, anchor: occurrence, after: occurrence, moment: occurrence, exceptions, clock })?.at ?? null;
 }
 
 type ExceptionChange = Pick<RecurrenceException, 'occurrence' | 'cancelled' | 'startsAt'>;
 
-const restores = (change: ExceptionChange): boolean =>
-  !change.cancelled && change.startsAt === undefined;
+const restores = (change: ExceptionChange): boolean => !change.cancelled && change.startsAt === undefined;
 
 export function withOccurrenceException(
   exceptions: readonly RecurrenceException[],
   change: ExceptionChange
 ): RecurrenceException[] {
   const kept = exceptions.filter((exception) => exception.occurrence !== change.occurrence);
-  if (!restores(change))
-    kept.push(
-      change.cancelled ? { occurrence: change.occurrence, cancelled: true } : { ...change }
-    );
+  if (!restores(change)) kept.push(change.cancelled ? { occurrence: change.occurrence, cancelled: true } : { ...change });
   return kept.sort((left, right) => left.occurrence - right.occurrence);
 }
 
-const EXCEPTION_FIELDS = [
-  'occurrence',
-  'cancelled',
-  'startsAt',
-  'endsAt',
-  'title',
-  'location',
-] as const;
+const EXCEPTION_FIELDS = ['occurrence', 'cancelled', 'startsAt', 'endsAt', 'title', 'location'] as const;
 
 export function sameExceptions(
   left: readonly RecurrenceException[] | undefined,
@@ -162,9 +131,7 @@ export function sameExceptions(
     a.length === b.length &&
     a.every((exception, index) => {
       const other = b[index];
-      return (
-        other !== undefined && EXCEPTION_FIELDS.every((field) => exception[field] === other[field])
-      );
+      return other !== undefined && EXCEPTION_FIELDS.every((field) => exception[field] === other[field]);
     })
   );
 }

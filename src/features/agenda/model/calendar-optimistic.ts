@@ -5,8 +5,7 @@ import type {
   IProjectTaskUpdate,
 } from '@/core/interfaces';
 import type { AgendaStatus, CalendarEntry, CalendarSource, ProjectTaskStatus } from '@/core/types';
-import { defineLens, isPendingRecordId } from '@/shared/libs/optimistic';
-import type { OptimisticLens } from '@/shared/libs/optimistic';
+import { defineLens, isPendingRecordId, type OptimisticLens } from '@/shared/libs/optimistic';
 import {
   calendarEntryRecordId,
   isOccurrence,
@@ -15,8 +14,7 @@ import {
 
 type TaskIntentValues = IProjectTaskUpdate & Pick<IProjectTaskCreate, 'projectId'>;
 
-type EventIntentValues = ICalendarEventUpdate &
-  Partial<Pick<IOccurrenceChange, 'occurrence' | 'cancelled'>>;
+type EventIntentValues = ICalendarEventUpdate & Partial<Pick<IOccurrenceChange, 'occurrence' | 'cancelled'>>;
 
 const recordIdFor = (entry: CalendarEntry, source: CalendarSource): string | null =>
   entry.source === source ? calendarEntryRecordId(entry) : null;

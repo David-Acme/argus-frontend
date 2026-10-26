@@ -1,23 +1,14 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
+import type { AgendaItem } from '@/core/types';
 import { Check } from '@/shared/ui/check';
 import { Icon } from '@/shared/ui/icon';
-import type { ItemActions } from '@/features/agenda/hooks/use-item-actions';
 import { agendaCheck } from '@/features/agenda/model/agenda-actions';
 import type { DayGroup } from '@/features/agenda/model/agenda-days';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 import { barOf, freeWords, lineWords } from '@/features/agenda/model/agenda-lines';
-import type { LineContext } from '@/features/agenda/model/agenda-lines';
 import { AgendaLine } from '@/features/agenda/components/agenda-line';
 import { DayHead } from '@/features/agenda/components/day-head';
-
-export type ListContext = LineContext & {
-  date: DateFormatter;
-  actions: ItemActions;
-  selected: string | null;
-  onOpen: (item: AgendaItem) => void;
-};
+import type { ListContext } from '@/features/agenda/model/agenda-view';
 
 export type AgendaListProps = {
   groups: readonly DayGroup[];

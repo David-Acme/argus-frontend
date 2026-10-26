@@ -1,17 +1,16 @@
 import { useRef } from 'react';
 import { View } from 'react-native';
 import type { TextInput } from 'react-native';
-import type { TranslationKey } from '@/core/types';
+import type { AgendaKind, TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Choice } from '@/shared/ui/choice';
 import { FilterChip } from '@/shared/ui/chip';
 import { Sheet } from '@/shared/ui/sheet';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
-import type { AgendaKind } from '@/features/agenda/model/agenda-items';
-import { KIND_LABEL } from '@/features/agenda/model/agenda-lines';
 import type { EditScope } from '@/features/agenda/model/item-draft';
 import { ItemFields } from '@/features/agenda/components/item-fields';
-import type { ProjectOption } from '@/features/agenda/components/item-fields';
+import { KIND_LABEL } from '@/features/agenda/constants/agenda.constant';
+import type { ProjectOption } from '@/features/agenda/model/agenda-view';
 
 export type ItemSheetProps = {
   form: ItemForm;
@@ -71,8 +70,7 @@ export function ItemSheet({ form, kinds, projects, now }: ItemSheetProps) {
       long={draft.kind === 'event'}
       dirty={form.dirty}
       actions={{ primary: { label: t('screens.agenda.sheet.save'), onPress: form.submit } }}
-      initialFocus={titleRef}
-      testID="agenda-item-sheet">
+      initialFocus={titleRef}>
       <View className="gap-4">
         {editing ? null : <Kinds form={form} kinds={kinds} projects={projects} />}
         {form.scopes.length > 0 ? (

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { calendarEventService } from '@/core/services/calendar-event.service';
+import type { AgendaItem, AgendaMenuAction, AgendaRights } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -7,8 +8,6 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { feedback } from '@/shared/theme';
 import type { useReminders } from '@/features/agenda/hooks/use-reminders';
 import { agendaMenu, agendaRights } from '@/features/agenda/model/agenda-actions';
-import type { AgendaMenuAction, AgendaRights } from '@/features/agenda/model/agenda-actions';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 import {
   calendarEntryRecordId,
   occurrenceOf,

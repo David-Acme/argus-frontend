@@ -131,7 +131,6 @@ src/core/services/push/in-app-alert.ts
 src/core/services/push/ios-push.ts
 src/core/services/push/push-registration.ts
 src/core/services/push/push.native.ts
-src/core/services/reminder.service.ts
 src/core/services/rtc-ice/index.ts
 src/core/services/rtc-ice/rtc-ice.ts
 src/core/services/secure-storage/secure-storage.web.ts
@@ -193,18 +192,8 @@ src/features/activity/model/activity-filter.ts
 src/features/activity/model/activity-text.ts
 src/features/activity/screens/activity-screen.tsx
 src/features/activity/services/activity.service.ts
-src/features/agenda/components/agenda-entry-row.tsx
-src/features/agenda/components/agenda-item.tsx
-src/features/agenda/components/agenda-side-panel.tsx
-src/features/agenda/components/calendar-agenda-view.tsx
-src/features/agenda/components/calendar-day-list.tsx
-src/features/agenda/components/calendar-day-view.tsx
-src/features/agenda/components/calendar-entry-detail.tsx
-src/features/agenda/components/calendar-event-form.tsx
+src/features/agenda/components/agenda-entry-card.tsx
 src/features/agenda/components/calendar-event-share-dialog.tsx
-src/features/agenda/components/calendar-header.tsx
-src/features/agenda/components/day-picker-field.tsx
-src/features/agenda/model/agenda-rows.ts
 src/features/agenda/model/calendar-entry-actions.ts
 src/features/agenda/model/calendar-optimistic.ts
 src/features/agenda/model/entry-state.ts
@@ -737,7 +726,6 @@ tests/unit/core/stores/toast-store.test.ts
 tests/unit/e2e/chromium-profile.test.ts
 tests/unit/features/access/inactive-role.test.ts
 tests/unit/features/activity/activity.test.ts
-tests/unit/features/agenda/agenda-rows.test.ts
 tests/unit/features/agenda/calendar-occurrence.test.ts
 tests/unit/features/agenda/calendar-share.test.ts
 tests/unit/features/agenda/entry-permissions.test.ts

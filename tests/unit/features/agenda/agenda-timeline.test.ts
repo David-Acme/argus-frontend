@@ -1,12 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { dayList } from '@/features/agenda/model/agenda-items';
-import {
-  busySpan,
-  dayTimeline,
-  FREE_SLOT_RULES,
-  freeSlots,
-} from '@/features/agenda/model/agenda-timeline';
+import { busySpan, dayTimeline, freeSlots } from '@/features/agenda/model/agenda-timeline';
 import { at, entry, items, NOW, prototypeDay, reminder, TODAY } from '../home/agenda-fixtures';
+import { FREE_SLOT_RULES } from '@/shared/constants';
 
 const HOUR = 3_600_000;
 

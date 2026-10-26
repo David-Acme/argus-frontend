@@ -12,12 +12,11 @@ import { Field } from '@/shared/ui/field';
 import { Row } from '@/shared/ui/row';
 import { Switch } from '@/shared/ui/switch';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
-import { REPEATS } from '@/features/agenda/model/item-draft';
-import type { DraftProblem } from '@/features/agenda/model/item-draft';
+import { REPEAT_CHOICES } from '@/features/agenda/model/reminder-repeat';
 import type { RepeatChoice } from '@/features/agenda/model/reminder-repeat';
+import type { DraftProblem } from '@/features/agenda/model/item-draft';
 import { DayField } from '@/features/agenda/components/day-field';
-
-export type ProjectOption = { id: string; name: string };
+import type { ProjectOption } from '@/features/agenda/model/agenda-view';
 
 export type ItemFieldsProps = {
   form: ItemForm;
@@ -58,7 +57,7 @@ function useProblem(form: ItemForm) {
 }
 
 function repeatOptions(t: TranslateFn): ChoiceOption<RepeatChoice>[] {
-  return REPEATS.map((choice) => ({
+  return REPEAT_CHOICES.map((choice) => ({
     value: choice,
     label:
       choice === 'none'

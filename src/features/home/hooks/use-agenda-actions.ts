@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import type { IReminderCacheRow } from '@/core/interfaces';
+import type { AgendaItem, AgendaMenuAction, AgendaRights } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -12,7 +13,7 @@ import {
   removeEntry,
   toggleTask,
 } from '@/features/agenda';
-import type { AgendaItem, AgendaMenuAction, AgendaRights, useReminders } from '@/features/agenda';
+import type { useReminders } from '@/features/agenda';
 
 export type AgendaActions = {
   rightsOf: (item: AgendaItem) => AgendaRights;

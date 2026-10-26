@@ -3,7 +3,7 @@ import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { calendarMonthScope } from '@/core/services/view-cache';
 import { viewCacheCoordinatorService } from '@/core/services/view-cache-coordinator.service';
 import { useAuthStore } from '@/core/stores';
-import type { CalendarEntry, DashboardProjectCard } from '@/core/types';
+import type { AgendaItem, CalendarEntry, DashboardProjectCard } from '@/core/types';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
@@ -13,7 +13,6 @@ import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { personFullName } from '@/shared/libs/sharing';
 import { useReminders } from '@/features/agenda/hooks/use-reminders';
 import { agendaItems, projectNamesOf } from '@/features/agenda/model/agenda-items';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 import { monthOf } from '@/features/agenda/model/agenda-days';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
 

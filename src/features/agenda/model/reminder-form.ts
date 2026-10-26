@@ -8,8 +8,9 @@ import {
   repeatDraftOf,
   ruleOfRepeat,
   sameRepeat,
+  type RepeatChoice,
+  type RepeatDraft,
 } from '@/features/agenda/model/reminder-repeat';
-import type { RepeatChoice, RepeatDraft } from '@/features/agenda/model/reminder-repeat';
 
 export const REMINDER_TITLE_MAX = 200;
 export const REMINDER_DESCRIPTION_MAX = 2000;
@@ -46,8 +47,7 @@ export function reminderFormValues(
   };
 }
 
-export type DraftIssue =
-  'title-required' | 'title-long' | 'description-long' | 'time-invalid' | 'interval-invalid';
+export type DraftIssue = 'title-required' | 'title-long' | 'description-long' | 'time-invalid' | 'interval-invalid';
 
 const seconds = (ms: number): number => Math.round(ms / 1000);
 

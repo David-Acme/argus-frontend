@@ -44,7 +44,7 @@ export function AgendaEntryCard({
       <View className={cn('w-[3px]', ENTRY_STATE_RAIL[state])} />
       <View className="min-w-0 flex-1 gap-1 p-3">
         <View className="flex-row items-start justify-between gap-3">
-          <Text className="text-legacy-body flex-1 leading-5 font-semibold" numberOfLines={1}>
+          <Text className="flex-1 text-legacy-body font-semibold leading-5" numberOfLines={1}>
             {title}
           </Text>
         </View>
@@ -52,16 +52,12 @@ export function AgendaEntryCard({
           <Text variant="caption">{statusLabel}</Text>
           <View className="flex-row items-center gap-1.5">
             <Icon name="clock" className="text-muted-foreground size-3.5" />
-            <Text variant="micro" className="text-foreground-secondary font-medium">
-              {time}
-            </Text>
+            <Text variant="micro" className="text-foreground-secondary font-medium">{time}</Text>
           </View>
         </View>
         {note ? (
           <View className="bg-legacy-surface mt-2.5 rounded-xl p-3">
-            <Text className="text-foreground-secondary text-legacy-caption leading-[19px]">
-              {note}
-            </Text>
+            <Text className="text-foreground-secondary text-legacy-caption leading-[19px]">{note}</Text>
           </View>
         ) : null}
       </View>
@@ -73,7 +69,7 @@ export function AgendaEntryCard({
       accessibilityState={{ busy: pending }}
       className={cn(
         'bg-card dark:bg-card-secondary flex-row overflow-hidden rounded-2xl shadow-md shadow-black/[0.06]',
-        pending && 'opacity-60'
+        pending && 'opacity-60',
       )}>
       {contextMenu ? contextMenu(pressable) : pressable}
       {actions === undefined ? null : <View className="w-7 items-start pt-3">{actions}</View>}

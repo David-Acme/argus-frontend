@@ -1,5 +1,5 @@
+import type { AgendaItem } from '@/core/types';
 import { itemEnd } from '@/features/agenda/model/agenda-items';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 
 export type Span = { from: number; to: number };
 
@@ -7,10 +7,6 @@ export type FreeSlotRules = { after: number; minMs: number; pointMs: number };
 
 export type TimelineEntry =
   { type: 'item'; item: AgendaItem } | { type: 'free'; id: string; from: number; to: number };
-
-const MINUTE_MS = 60_000;
-
-export const FREE_SLOT_RULES = { minMs: 60 * MINUTE_MS, pointMs: 30 * MINUTE_MS } as const;
 
 export function busySpan(item: AgendaItem, pointMs: number): Span {
   if (item.kind === 'event') return { from: item.startsAt, to: itemEnd(item) };

@@ -8,20 +8,13 @@ import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Text } from '@/shared/ui/text';
 import { freeGaps } from '@/features/agenda/model/agenda-days';
-import type { DayGroup, FreeGap, MonthCell } from '@/features/agenda/model/agenda-days';
-import { CATEGORIES, durationText } from '@/features/agenda/model/agenda-lines';
+import type { DayGroup, FreeGap } from '@/features/agenda/model/agenda-days';
+import { durationText } from '@/features/agenda/model/agenda-lines';
 import type { Category } from '@/features/agenda/model/agenda-lines';
-import type { ListContext } from '@/features/agenda/components/agenda-list';
-import { ASIDE_IDEAS, Ideas } from '@/features/agenda/components/day-empty';
+import { Ideas } from '@/features/agenda/components/day-empty';
 import { MonthGrid } from '@/features/agenda/components/month-grid';
-import type { DayNames, MonthShift } from '@/features/agenda/components/month-grid';
-
-export type AsideMonth = {
-  cells: readonly MonthCell[];
-  names: DayNames;
-  shift: MonthShift;
-  onPick: (at: number) => void;
-};
+import { ASIDE_IDEAS, CATEGORIES } from '@/features/agenda/constants/agenda.constant';
+import type { AsideMonth, ListContext } from '@/features/agenda/model/agenda-view';
 
 export type AgendaAsideProps = {
   month: AsideMonth;

@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { CAPABILITY } from '@/shared/constants';
+import { CAPABILITY, FREE_SLOT_RULES } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Section } from '@/shared/ui/section';
 import { useAgenda } from '@/features/home/hooks/use-agenda';
-import { dayList, dayTimeline, FREE_SLOT_RULES } from '@/features/agenda';
+import { dayList, dayTimeline } from '@/features/agenda';
 import { AgendaRow } from './agenda-row';
 import { FreeRow } from './free-row';
 import { ReminderEditor } from './reminder-editor';

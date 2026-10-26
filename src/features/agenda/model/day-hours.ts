@@ -1,6 +1,6 @@
+import type { AgendaItem, DayRange } from '@/core/types';
 import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { itemEnd } from '@/features/agenda/model/agenda-items';
-import type { AgendaItem, DayRange } from '@/features/agenda/model/agenda-items';
 
 export type HourBlock = {
   item: AgendaItem;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import type { AgendaItem, AgendaKind } from '@/core/types';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import type { AgendaItem, AgendaKind } from '@/features/agenda/model/agenda-items';
 import {
   draftDirty,
   draftFrom,

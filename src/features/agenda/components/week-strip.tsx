@@ -3,7 +3,7 @@ import { useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import type { DayCell, MonthCell } from '@/features/agenda/model/agenda-days';
 import { DayButton, DayLetters, MonthGrid } from '@/features/agenda/components/month-grid';
-import type { DayNames, MonthShift } from '@/features/agenda/components/month-grid';
+import type { DayNames, MonthShift } from '@/features/agenda/model/agenda-view';
 
 export type WeekStripProps = {
   week: readonly DayCell[];
@@ -29,7 +29,7 @@ export function WeekStrip({
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.card };
   return (
-    <View className="rounded-card bg-surface px-2 pt-2" style={card} testID="agenda-week-strip">
+    <View className="rounded-card bg-surface px-2 pt-2" style={card}>
       {expanded ? (
         <MonthGrid cells={month} names={names} onPick={onPick} shift={shift} />
       ) : (

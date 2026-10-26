@@ -1,36 +1,12 @@
 import type { IReminderCacheRow } from '@/core/interfaces';
-import type { CalendarEntry } from '@/core/types';
+import type { AgendaItem, CalendarEntry, DayRange, NowList } from '@/core/types';
 import { CALENDAR_OPEN_EVENT_MS } from '@/shared/constants';
-
-export type AgendaKind = 'reminder' | 'event' | 'task';
-
-export type AgendaOrigin =
-  { kind: 'reminder'; row: IReminderCacheRow } | { kind: 'entry'; entry: CalendarEntry };
-
-export type AgendaItem = {
-  id: string;
-  kind: AgendaKind;
-  title: string;
-  startsAt: number;
-  endsAt: number | null;
-  allDay: boolean;
-  done: boolean;
-  started: boolean;
-  repeat: string | null;
-  place: string | null;
-  project: string | null;
-  origin: AgendaOrigin;
-};
 
 export type AgendaSources = {
   reminders: readonly IReminderCacheRow[];
   entries: readonly CalendarEntry[];
   projectNames: ReadonlyMap<string, string>;
 };
-
-export type DayRange = { from: number; to: number };
-
-export type NowList = { items: readonly AgendaItem[]; total: number; overdue: number };
 
 export const NOW_ROWS = 3;
 

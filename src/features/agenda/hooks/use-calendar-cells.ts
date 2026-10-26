@@ -1,9 +1,9 @@
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import type { MonthShift } from '@/features/agenda/components/month-grid';
 import type { AgendaScreenState } from '@/features/agenda/hooks/use-agenda-screen';
 import { markedDays, monthCells, shiftMonth, weekCells } from '@/features/agenda/model/agenda-days';
 import type { DayCell, MonthCell } from '@/features/agenda/model/agenda-days';
+import type { MonthShift } from '@/features/agenda/model/agenda-view';
 
 export type CalendarCells = { week: DayCell[]; month: MonthCell[] };
 

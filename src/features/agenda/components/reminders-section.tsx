@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import type { IReminderCacheRow } from '@/core/interfaces';
-import { synchronizeService } from '@/core/services/sync';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Icon } from '@/shared/components/ui/icon';
 import { Panel } from '@/shared/components/ui/panel';
 import { SectionHeader } from '@/shared/components/ui/section-header';
 import { Text } from '@/shared/components/ui/text';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { synchronizeService } from '@/core/services/sync';
 import { Button } from '@/shared/components/ui/button';
 import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
@@ -28,8 +28,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
   const { t } = useTranslation();
   const now = useNow(CLOCK_TICK_MS);
   const { has } = useCapabilities();
-  const { groups, complete, snooze, snoozeOptionsOf, skipOccurrence, stopRepeating, remove } =
-    useReminders();
+  const { groups, complete, snooze, snoozeOptionsOf, skipOccurrence, stopRepeating, remove } = useReminders();
   const [editing, setEditing] = useState<IReminderCacheRow | null>(null);
   const [editsOccurrence, setEditsOccurrence] = useState(false);
   const [showDone, setShowDone] = useState(false);
@@ -77,10 +76,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
           title={t('screens.reminders.not-synced')}
           hint={t('screens.reminders.not-synced-hint')}
           action={
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => void synchronizeService.ensureConnected()}>
+            <Button size="sm" variant="outline" onPress={() => void synchronizeService.ensureConnected()}>
               <Text>{t('common.retry')}</Text>
             </Button>
           }
@@ -103,10 +99,7 @@ export function RemindersSection({ query }: RemindersSectionProps) {
                 accessibilityState={{ expanded: showDone }}
                 onPress={() => setShowDone((value) => !value)}
                 className="min-h-11 flex-row items-center gap-2 rounded-2xl px-3 active:opacity-70">
-                <Icon
-                  name={showDone ? 'chevron-up' : 'chevron-down'}
-                  className="text-muted-foreground size-4"
-                />
+                <Icon name={showDone ? 'chevron-up' : 'chevron-down'} className="text-muted-foreground size-4" />
                 <Text variant="label" className="text-foreground-secondary">
                   {showDone ? t('screens.reminders.hide-done') : t('screens.reminders.show-done')}
                 </Text>

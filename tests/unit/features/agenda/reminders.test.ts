@@ -373,7 +373,7 @@ describe('reminder projection and optimistic rows', () => {
     ]);
   });
 
-  test('completing shows at once, deleting removes the row and a create never shows: Argus alone creates reminders', () => {
+  test('completing shows at once, deleting removes the row and a new reminder shows while the server answers', () => {
     const rows = [row(), row({ id: '2', scheduledAt: NOW + 2 * HOUR })];
     const done = applyIntents(rows, [intentFor({ values: { isCompleted: true } })], REMINDER_LENSES, byScheduled);
     expect(done[0]?.isCompleted).toBe(true);
@@ -386,7 +386,8 @@ describe('reminder projection and optimistic rows', () => {
       REMINDER_LENSES,
       byScheduled
     );
-    expect(created.map((item) => item.id)).toEqual(['1', '2']);
+    expect(created.map((item) => item.id).sort()).toEqual(['1', '2', 'pending-9']);
+    expect(created.find((item) => item.id === 'pending-9')).toMatchObject({ title: 'Nuevo', isCompleted: false, recurrenceRule: null });
   });
 
   test('an edit changes the title and the time on the row while the server answers', () => {

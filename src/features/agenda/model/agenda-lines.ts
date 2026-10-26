@@ -1,9 +1,9 @@
-import type { TranslateFn, TranslationKey } from '@/core/types';
+import type { AgendaItem, AgendaKind, TranslateFn } from '@/core/types';
 import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { dayRelation } from '@/features/agenda/model/agenda-days';
 import { isOverdue } from '@/features/agenda/model/agenda-items';
-import type { AgendaItem, AgendaKind } from '@/features/agenda/model/agenda-items';
+import { KIND_LABEL } from '@/features/agenda/constants/agenda.constant';
 
 export type Category = AgendaKind | 'shared';
 
@@ -23,15 +23,6 @@ export type LineContext = {
   owners: ReadonlyMap<string, string>;
   date: Pick<DateFormatter, 'formatTime'>;
   t: TranslateFn;
-};
-
-export const CATEGORIES: readonly Category[] = ['reminder', 'event', 'task', 'shared'];
-
-export const KIND_LABEL: Record<Category, TranslationKey> = {
-  reminder: 'screens.agenda.kind.reminder',
-  event: 'screens.agenda.kind.event',
-  task: 'screens.agenda.kind.task',
-  shared: 'screens.agenda.kind.shared',
 };
 
 const MINUTE_MS = 60_000;
@@ -113,8 +104,6 @@ export function freeWords(
 export function kindWords(item: AgendaItem, context: Pick<LineContext, 'viewer' | 't'>): string {
   return context.t(KIND_LABEL[categoryOf(item, context.viewer)]);
 }
-
-export const ALL_SHOWN: ReadonlySet<Category> = new Set(CATEGORIES);
 
 export function toggleShown(shown: ReadonlySet<Category>, category: Category): Set<Category> {
   const next = new Set(shown);

@@ -35,6 +35,13 @@ describe('Button', () => {
     expect(presses).toBe(1);
   });
 
+  test('the floating new button is an icon-only button named by its label', () => {
+    let presses = 0;
+    render(<Button iconOnly fab icon="plus" label="Nuevo" onPress={() => void (presses += 1)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo' }));
+    expect(presses).toBe(1);
+  });
+
   test('a press that is still running ignores the next press and shows busy', async () => {
     let presses = 0;
     let finish = () => undefined as void;

@@ -5,9 +5,9 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { MonthGrid } from '@/features/agenda/components/month-grid';
 import { useDayNames } from '@/features/agenda/hooks/use-day-names';
 import { monthCells } from '@/features/agenda/model/agenda-days';
-import { MonthGrid } from '@/features/agenda/components/month-grid';
 
 type DayPickerFieldProps = {
   value: Date | null;
@@ -26,7 +26,7 @@ export function DayPickerField({ value, onChange, placeholder, onClear }: DayPic
   const names = useDayNames();
   const cells = monthCells(
     month.getTime(),
-    { selected: (value ?? today).getTime(), now: Date.now(), marks: new Set() },
+    { selected: (value ?? today).getTime(), now: today.getTime(), marks: new Set() },
     date
   );
 

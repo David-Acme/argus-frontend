@@ -1,28 +1,27 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import type { AgendaItem, AgendaKind } from '@/core/types';
 import { CAPABILITY, NEW_ITEM_PARAM } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { peopleAccessOf } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
-import type { AgendaView } from '@/features/agenda/components/agenda-top';
-import type { ListContext } from '@/features/agenda/components/agenda-list';
-import type { DetailHandlers } from '@/features/agenda/components/item-detail';
 import { useAgendaPlan } from '@/features/agenda/hooks/use-agenda-plan';
 import type { AgendaPlan } from '@/features/agenda/hooks/use-agenda-plan';
 import { useItemActions } from '@/features/agenda/hooks/use-item-actions';
 import { useItemForm } from '@/features/agenda/hooks/use-item-form';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
-import { dayGroups, itemsOf, LIST_DAYS, monthOf } from '@/features/agenda/model/agenda-days';
-import type { AgendaItem, AgendaKind } from '@/features/agenda/model/agenda-items';
-import { ALL_SHOWN, shownItems, toggleShown } from '@/features/agenda/model/agenda-lines';
+import { dayGroups, itemsOf, monthOf } from '@/features/agenda/model/agenda-days';
+import { shownItems, toggleShown } from '@/features/agenda/model/agenda-lines';
 import type { Category } from '@/features/agenda/model/agenda-lines';
 import {
   calendarEntryEditHref,
   calendarEntryRecordId,
   canShareCalendarEntry,
 } from '@/features/agenda/model/calendar-entry-actions';
+import { ALL_SHOWN, LIST_DAYS } from '@/features/agenda/constants/agenda.constant';
+import type { AgendaView, DetailHandlers, ListContext } from '@/features/agenda/model/agenda-view';
 
 type AgendaParams = { edit?: string; at?: string; new?: string };
 

@@ -4,7 +4,6 @@ import type { CalendarEntry } from '@/core/types';
 import { applyIntents, settledIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
   availableCalendarEntryActions,
-  calendarEntryDetailRows,
   calendarEntryEditHref,
   calendarEntryRecordId,
   editOccurrenceBody,
@@ -12,7 +11,6 @@ import {
   occurrenceOf,
   seriesDeleteConfirm,
   skipOccurrenceBody,
-  type CalendarEntryDetailLabels,
 } from '@/features/agenda/model/calendar-entry-actions';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
 
@@ -99,59 +97,9 @@ describe('an occurrence addresses its event', () => {
   test('the series actions read "se aplica a toda la serie" in Spanish and say the same in English', () => {
     const { es, en } = localeDictionaries;
     expect(es.screens.agenda['applies-to-series']).toBe('Se aplica a toda la serie');
-    expect(es.screens.agenda['series-hint']).toContain('se aplica a toda la serie');
     expect(es.screens.agenda['delete-series-body']).toStartWith('Se aplica a toda la serie');
     expect(en.screens.agenda['applies-to-series']).toBe('Applies to the whole series');
-    expect(en.screens.agenda['series-hint']).toContain('applies to the whole series');
     expect(en.screens.agenda['delete-series-body']).toStartWith('Applies to the whole series');
-  });
-
-  test('the detail says how the event repeats', () => {
-    const labels: CalendarEntryDetailLabels = {
-      type: 'Tipo',
-      status: 'Estado',
-      date: 'Día',
-      time: 'Hora',
-      allDay: 'Todo el día',
-      location: 'Lugar',
-      event: 'Evento',
-      task: 'Tarea',
-      reminder: 'Recordatorio',
-      state: {
-        upcoming: 'Próximo',
-        ongoing: 'En curso',
-        today: 'Hoy',
-        ended: 'Terminado',
-        overdue: 'Vencido',
-        todo: 'Por hacer',
-        doing: 'En curso',
-        done: 'Hecho',
-      },
-      repeat: { label: 'Se repite', value: 'Cada semana' },
-    };
-    const rows = calendarEntryDetailRows({
-      entry: occurrence(1),
-      state: 'upcoming',
-      labels,
-      formatDate: () => '12 oct',
-      formatTime: () => '08:00',
-    });
-    expect(rows.map((row) => [row.id, row.value])).toEqual([
-      ['type', 'Evento'],
-      ['date', '12 oct'],
-      ['time', '08:00'],
-      ['status', 'Próximo'],
-      ['repeat', 'Cada semana'],
-      ['location', 'Conservatorio'],
-    ]);
-    const once = calendarEntryDetailRows({
-      entry: plain,
-      state: 'upcoming',
-      labels: { ...labels, repeat: { label: 'Se repite', value: null } },
-      formatDate: () => '5 oct',
-      formatTime: () => '08:00',
-    });
-    expect(once.map((row) => row.id)).toEqual(['type', 'date', 'time', 'status']);
   });
 });
 

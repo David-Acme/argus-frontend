@@ -1,8 +1,7 @@
-import type { TranslateFn } from '@/core/types';
+import type { AgendaItem, NowList, TranslateFn } from '@/core/types';
 import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
 import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { isOngoing, isOverdue } from '@/features/agenda';
-import type { AgendaItem, NowList } from '@/features/agenda';
 
 export type TimeToGo =
   { kind: 'now' } | { kind: 'ago' | 'in'; amount: number; unit: 'min' | 'h' | 'd' };

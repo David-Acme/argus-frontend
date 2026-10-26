@@ -29,7 +29,7 @@ import { useFormSubmit } from '@/shared/hooks/use-form-submit';
 import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { formatRecurrenceRule, recurrenceLabel } from '@/shared/libs/recurrence';
-import { DayPickerField } from '@/features/agenda';
+import { DayPickerField } from '@/features/agenda/components/day-picker-field';
 import {
   isEmptyUpdate,
   occurrenceMoveBody,
@@ -44,8 +44,8 @@ import {
   REPEAT_CHOICES,
   repeatFromChoice,
   repeatsOf,
+  type RepeatChoice,
 } from '@/features/agenda/model/reminder-repeat';
-import type { RepeatChoice } from '@/features/agenda/model/reminder-repeat';
 
 type ReminderDialogScope = 'series' | 'occurrence';
 
@@ -67,11 +67,7 @@ const INTERVAL_LABEL = {
 
 const schema = z
   .object({
-    title: z
-      .string()
-      .trim()
-      .min(1, 'common.validation.required')
-      .max(REMINDER_TITLE_MAX, 'common.validation.too-long'),
+    title: z.string().trim().min(1, 'common.validation.required').max(REMINDER_TITLE_MAX, 'common.validation.too-long'),
     description: z.string().trim().max(REMINDER_DESCRIPTION_MAX, 'common.validation.too-long'),
     time: z.string().trim().regex(TIME_RE, 'common.validation.invalid-time'),
     day: z.number(),
@@ -85,19 +81,9 @@ const schema = z
 
 type ReminderValues = z.infer<typeof schema>;
 
-const NOTHING_TO_SAVE: IServiceResponse<unknown> = {
-  status: 200,
-  ok: true,
-  info: null,
-  errors: null,
-};
+const NOTHING_TO_SAVE: IServiceResponse<unknown> = { status: 200, ok: true, info: null, errors: null };
 
-export function ReminderDialog({
-  open,
-  onOpenChange,
-  reminder,
-  scope = 'series',
-}: ReminderDialogProps) {
+export function ReminderDialog({ open, onOpenChange, reminder, scope = 'series' }: ReminderDialogProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const formScroll = useFormScroll();
@@ -132,14 +118,10 @@ export function ReminderDialog({
     request: (values) => {
       if (single) {
         const move = occurrenceMoveBody(reminder, draftOf(values).at);
-        return move === null
-          ? Promise.resolve(NOTHING_TO_SAVE)
-          : reminderService.changeOccurrence(reminder.id, move);
+        return move === null ? Promise.resolve(NOTHING_TO_SAVE) : reminderService.changeOccurrence(reminder.id, move);
       }
       const body = updateBody(reminder, draftOf(values));
-      return isEmptyUpdate(body)
-        ? Promise.resolve(NOTHING_TO_SAVE)
-        : reminderService.update(reminder.id, body);
+      return isEmptyUpdate(body) ? Promise.resolve(NOTHING_TO_SAVE) : reminderService.update(reminder.id, body);
     },
     optimistic: (values) => {
       if (single) {
@@ -149,14 +131,7 @@ export function ReminderDialog({
           intents:
             move === null
               ? []
-              : [
-                  {
-                    table: 'reminder',
-                    kind: 'update',
-                    recordId: reminder.id,
-                    values: { scheduledAt: move.startsAt },
-                  },
-                ],
+              : [{ table: 'reminder', kind: 'update', recordId: reminder.id, values: { scheduledAt: move.startsAt } }],
           success: t('screens.reminders.occurrence-saved', {
             when: reminderWhen({ ...reminder, scheduledAt: at }, Date.now(), date, t),
           }),
@@ -165,9 +140,7 @@ export function ReminderDialog({
       }
       const body = updateBody(reminder, draftOf(values));
       return {
-        intents: isEmptyUpdate(body)
-          ? []
-          : [{ table: 'reminder', kind: 'update', recordId: reminder.id, values: body }],
+        intents: isEmptyUpdate(body) ? [] : [{ table: 'reminder', kind: 'update', recordId: reminder.id, values: body }],
         success: t('screens.reminders.saved'),
       };
     },
@@ -266,11 +239,7 @@ export function ReminderDialog({
                         searchPlaceholder={t('common.search')}
                         emptyLabel={t('common.recurrence.none')}
                         trigger={
-                          <SelectField
-                            label={
-                              repeatOptions.find((option) => option.value === field.value)?.label
-                            }
-                          />
+                          <SelectField label={repeatOptions.find((option) => option.value === field.value)?.label} />
                         }
                       />
                       <FormMessage />

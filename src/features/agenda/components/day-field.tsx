@@ -29,7 +29,6 @@ export function DayField({ day, now, onChange }: DayFieldProps) {
         trailing={date.formatPickerDay(new Date(day))}
         chevron
         onPress={() => setOpen(!open)}
-        testID="agenda-sheet-day"
       />
       {open ? (
         <View className="px-2 pb-2">

@@ -1,16 +1,16 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import type { AgendaItem, DayRange } from '@/core/types';
 import { space } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
-import type { AgendaItem, DayRange } from '@/features/agenda/model/agenda-items';
 import { barOf, lineWords } from '@/features/agenda/model/agenda-lines';
 import { dayHours } from '@/features/agenda/model/day-hours';
 import type { HourBlock } from '@/features/agenda/model/day-hours';
-import type { ListContext } from '@/features/agenda/components/agenda-list';
 import { AgendaLine } from '@/features/agenda/components/agenda-line';
 import { EventBar } from '@/features/agenda/components/event-bar';
+import type { ListContext } from '@/features/agenda/model/agenda-view';
 
 export type DayViewProps = {
   items: readonly AgendaItem[];
@@ -75,7 +75,7 @@ export function DayView({ items, range, context, empty }: DayViewProps) {
   const { date, now } = context;
   const plan = dayHours({ items, range, now }, date);
   return (
-    <View testID="agenda-day-view">
+    <View>
       {items.length === 0 ? empty : null}
       {plan.allDay.map((item) => (
         <AgendaLine

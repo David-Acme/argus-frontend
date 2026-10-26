@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import type { AgendaItem } from '@/core/types';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -10,7 +11,6 @@ import type { AgendaScreenState } from '@/features/agenda/hooks/use-agenda-scree
 import { useCalendarCells, useMonthShift } from '@/features/agenda/hooks/use-calendar-cells';
 import { useDayNames } from '@/features/agenda/hooks/use-day-names';
 import { dayGroup, dayRange, nextDays, restOfDay } from '@/features/agenda/model/agenda-days';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 import { kindWords } from '@/features/agenda/model/agenda-lines';
 import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-actions';
 import { AgendaAside } from '@/features/agenda/components/agenda-aside';
@@ -52,7 +52,7 @@ function Detail({ state, item, titled }: DetailProps) {
     <ItemDetail
       item={item}
       rest={restOfDay(visible, item, date)}
-      upcoming={nextDays(visible, item.startsAt, context.now, date)}
+      upcoming={nextDays({ items: visible, from: item.startsAt, now: context.now }, date)}
       context={context}
       handlers={state.handlersFor(item)}
       titled={titled}
@@ -98,8 +98,7 @@ export function PhoneAgenda({ state }: AgendaLayoutProps) {
         open={chosen !== null}
         onClose={state.close}
         title={chosen ? kindWords(chosen, context) : ''}
-        variant="detail"
-        testID="agenda-detail-sheet">
+        variant="detail">
         {chosen ? <Detail state={state} item={chosen} titled={false} /> : null}
       </Sheet>
       <Overlays state={state} />
@@ -136,7 +135,10 @@ function DetailColumn({ state }: AgendaLayoutProps) {
       {item ? <Detail state={state} item={item} /> : <AgendaGuide />}
       {item ? null : (
         <NextDays
-          groups={nextDays(state.visible, state.selected, state.plan.now, date)}
+          groups={nextDays(
+            { items: state.visible, from: state.selected, now: state.plan.now },
+            date
+          )}
           context={state.context}
         />
       )}

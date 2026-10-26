@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/shared/ui/text';
 import type { DayGroup } from '@/features/agenda/model/agenda-days';
 import { dayWord } from '@/features/agenda/model/agenda-lines';
-import type { ListContext } from '@/features/agenda/components/agenda-list';
+import type { ListContext } from '@/features/agenda/model/agenda-view';
 
 export type DayHeadProps = { group: DayGroup; context: ListContext };
 

@@ -16,9 +16,6 @@ import { IS_NATIVE } from '@/shared/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
-import { cn } from '@/shared/libs/utils';
-import { isPendingRecordId } from '@/shared/libs/optimistic';
-import { runOptimistic } from '@/shared/libs/optimistic-action';
 import {
   availableCalendarEntryActions,
   calendarEntryRecordId,
@@ -26,8 +23,11 @@ import {
   occurrenceOf,
   shouldShowCalendarEntryOverflow,
   skipOccurrenceBody,
+  type CalendarEntryAction,
 } from '@/features/agenda/model/calendar-entry-actions';
-import type { CalendarEntryAction } from '@/features/agenda/model/calendar-entry-actions';
+import { cn } from '@/shared/libs/utils';
+import { isPendingRecordId } from '@/shared/libs/optimistic';
+import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { removeEntry, toggleTask } from '@/features/agenda/services/calendar-entry-commands';
 
 type EntryActionsMenuProps = {

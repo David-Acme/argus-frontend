@@ -8,22 +8,13 @@ import { PressableSurface } from '@/shared/ui/pressable';
 import { Empty } from '@/shared/ui/resource-view';
 import { useArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
 import type { ArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
+import { LIST_IDEAS } from '@/features/agenda/constants/agenda.constant';
 
 export type DayEmptyProps = { today: boolean; onCreate?: () => void };
 
 export type IdeasProps = { ideas: readonly TranslationKey[] };
 
 type IdeaProps = { text: string; ask: ArgusDraft };
-
-export const LIST_IDEAS: readonly TranslationKey[] = [
-  'screens.agenda.empty.idea-light',
-  'screens.agenda.empty.idea-dentist',
-];
-
-export const ASIDE_IDEAS: readonly TranslationKey[] = [
-  ...LIST_IDEAS,
-  'screens.agenda.empty.idea-project',
-];
 
 const IDEA_SLOP = (size.target - size.chipSuggestion) / 2;
 

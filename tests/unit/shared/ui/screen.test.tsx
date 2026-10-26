@@ -170,4 +170,29 @@ describe('Screen', () => {
       unmount();
     }
   });
+
+  test('a screen that opts into medium panes shows its columns on a tablet', () => {
+    setWindowWidth(820);
+    const { unmount } = render(
+      <Screen columns="medium">
+        <ScreenColumns>
+          <ScreenColumn label="Lista">
+            <Text>a</Text>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    expect(screen.getByLabelText('Lista')).toBeDefined();
+    unmount();
+    render(
+      <Screen columns>
+        <ScreenColumns>
+          <ScreenColumn label="Lista">
+            <Text>a</Text>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    expect(screen.queryByLabelText('Lista')).toBeNull();
+  });
 });

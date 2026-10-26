@@ -11,19 +11,16 @@ import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { zoneClock } from '@/shared/libs/recurrence';
 import { reminderWhen, splitReminders } from '@/features/agenda/model/reminder-rows';
 import { byScheduled, REMINDER_LENSES } from '@/features/agenda/model/reminder-optimistic';
-import {
-  currentOccurrence,
-  rolledSchedule,
-  skippedSchedule,
-} from '@/features/agenda/model/reminder-repeat';
+import { currentOccurrence, rolledSchedule, skippedSchedule } from '@/features/agenda/model/reminder-repeat';
 import {
   isAlreadyDone,
   snoozeBodyOf,
   snoozeIntentValues,
   snoozeOptions,
   snoozeOutcomeOf,
+  type SnoozeChoice,
+  type SnoozeOption,
 } from '@/features/agenda/model/reminder-snooze';
-import type { SnoozeChoice, SnoozeOption } from '@/features/agenda/model/reminder-snooze';
 
 export function useReminders() {
   const { t } = useTranslation();
@@ -38,21 +35,15 @@ export function useReminders() {
     (row: IReminderCacheRow, isCompleted: boolean) => {
       const now = Date.now();
       const next = isCompleted ? rolledSchedule({ row, now, clock }) : null;
-      const shown: IReminderUpdate =
-        next === null ? { isCompleted } : { scheduledAt: Math.round(next / 1000) };
+      const shown: IReminderUpdate = next === null ? { isCompleted } : { scheduledAt: Math.round(next / 1000) };
       return runOptimistic({
         intents: [{ table: 'reminder', kind: 'update', recordId: row.id, values: shown }],
         call: () => reminderService.update(row.id, { isCompleted }),
-        undo:
-          next === null && isCompleted
-            ? { title: t('screens.reminders.completed'), description: row.title }
-            : undefined,
+        undo: next === null && isCompleted ? { title: t('screens.reminders.completed'), description: row.title } : undefined,
         success:
           next === null
             ? undefined
-            : t('screens.reminders.rolled', {
-                when: reminderWhen({ ...row, scheduledAt: next }, now, date, t),
-              }),
+            : t('screens.reminders.rolled', { when: reminderWhen({ ...row, scheduledAt: next }, now, date, t) }),
         errorTitle: t('screens.reminders.save-failed'),
       });
     },
@@ -68,20 +59,12 @@ export function useReminders() {
     (row: IReminderCacheRow, choice: SnoozeChoice) => {
       const now = Date.now();
       const outcome = snoozeOutcomeOf({ row, now, clock, choice });
-      const when =
-        outcome === null ? null : reminderWhen({ ...row, scheduledAt: outcome.at }, now, date, t);
+      const when = outcome === null ? null : reminderWhen({ ...row, scheduledAt: outcome.at }, now, date, t);
       return runOptimistic({
         intents:
           outcome === null
             ? []
-            : [
-                {
-                  table: 'reminder',
-                  kind: 'update',
-                  recordId: row.id,
-                  values: snoozeIntentValues(outcome),
-                },
-              ],
+            : [{ table: 'reminder', kind: 'update', recordId: row.id, values: snoozeIntentValues(outcome) }],
         call: () => reminderService.snooze(row.id, snoozeBodyOf(choice)),
         success:
           when === null
@@ -91,10 +74,7 @@ export function useReminders() {
               : t('screens.reminders.snoozed', { when }),
         refusalNotice: (result) =>
           isAlreadyDone(result)
-            ? {
-                title: t('screens.reminders.already-done-title'),
-                description: t('screens.reminders.already-done'),
-              }
+            ? { title: t('screens.reminders.already-done-title'), description: t('screens.reminders.already-done') }
             : null,
         errorTitle: t('screens.reminders.snooze-failed'),
       });
@@ -110,14 +90,7 @@ export function useReminders() {
         intents:
           next === null
             ? []
-            : [
-                {
-                  table: 'reminder',
-                  kind: 'update',
-                  recordId: row.id,
-                  values: { scheduledAt: Math.round(next / 1000) },
-                },
-              ],
+            : [{ table: 'reminder', kind: 'update', recordId: row.id, values: { scheduledAt: Math.round(next / 1000) } }],
         call: () =>
           reminderService.changeOccurrence(row.id, {
             occurrence: Math.round(currentOccurrence(row) / 1000),
@@ -138,9 +111,7 @@ export function useReminders() {
   const stopRepeating = useCallback(
     (row: IReminderCacheRow) =>
       runOptimistic({
-        intents: [
-          { table: 'reminder', kind: 'update', recordId: row.id, values: { recurrenceRule: null } },
-        ],
+        intents: [{ table: 'reminder', kind: 'update', recordId: row.id, values: { recurrenceRule: null } }],
         call: () => reminderService.update(row.id, { recurrenceRule: null }),
         success: t('screens.reminders.stopped-repeating'),
         errorTitle: t('screens.reminders.save-failed'),

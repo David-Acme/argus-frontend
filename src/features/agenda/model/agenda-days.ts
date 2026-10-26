@@ -1,8 +1,10 @@
+import type { AgendaItem, DayRange } from '@/core/types';
 import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
+import { FREE_SLOT_RULES } from '@/shared/constants';
 import { isOverdue } from '@/features/agenda/model/agenda-items';
-import type { AgendaItem, DayRange } from '@/features/agenda/model/agenda-items';
-import { dayTimeline, FREE_SLOT_RULES } from '@/features/agenda/model/agenda-timeline';
+import { dayTimeline } from '@/features/agenda/model/agenda-timeline';
 import type { TimelineEntry } from '@/features/agenda/model/agenda-timeline';
+import { UPCOMING_DAYS } from '@/features/agenda/constants/agenda.constant';
 
 export type DayMath = Pick<
   DateFormatter,
@@ -37,10 +39,6 @@ export type GroupInput = {
   days: number;
   now: number;
 };
-
-export const LIST_DAYS = 7;
-
-export const UPCOMING_DAYS = 3;
 
 export function dayRange(at: number, date: Pick<DayMath, 'startOfDay' | 'endOfDay'>): DayRange {
   const day = new Date(at);
@@ -145,7 +143,10 @@ export function freeGaps(group: DayGroup): FreeGap[] {
   });
 }
 
-export function nextDays(items: readonly AgendaItem[], from: number, now: number, date: DayMath) {
+export function nextDays(
+  { items, from, now }: Omit<GroupInput, 'days'>,
+  date: DayMath
+): DayGroup[] {
   const start = date.addDays(new Date(from), 1).getTime();
   return dayGroups({ items, from: start, days: UPCOMING_DAYS, now }, date);
 }

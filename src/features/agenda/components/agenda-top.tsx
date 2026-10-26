@@ -5,8 +5,7 @@ import { FilterChip } from '@/shared/ui/chip';
 import { Icon } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
-
-export type AgendaView = 'agenda' | 'day';
+import type { AgendaView } from '@/features/agenda/model/agenda-view';
 
 export type AgendaTopProps = {
   month: string;

@@ -1,13 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-import { nowList } from '@/features/agenda';
-import {
-  dayAndTime,
-  itemMeta,
-  nowCount,
-  timeToGo,
-  timeToGoText,
-  urgencyOf,
-} from '@/features/home/model/agenda-wording';
+import { describe, expect, mock, test } from 'bun:test';
+import { nowList } from '@/features/agenda/model/agenda-items';
 import {
   at,
   entry,
@@ -19,6 +11,11 @@ import {
   TODAY,
   wording,
 } from './agenda-fixtures';
+
+mock.module('@/features/agenda', () => import('@/features/agenda/model/agenda-items'));
+
+const { dayAndTime, itemMeta, nowCount, timeToGo, timeToGoText, urgencyOf } =
+  await import('@/features/home/model/agenda-wording');
 
 const byTitle = (title: string) => {
   const found = prototypeDay().find((item) => item.title === title);

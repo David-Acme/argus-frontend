@@ -11,8 +11,7 @@ import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { cn } from '@/shared/libs/utils';
 import { changesOneOccurrence, repeatsOf } from '@/features/agenda/model/reminder-repeat';
 import { reminderTiming, reminderWhen } from '@/features/agenda/model/reminder-rows';
-import { isSnoozable } from '@/features/agenda/model/reminder-snooze';
-import type { SnoozeChoice, SnoozeOption } from '@/features/agenda/model/reminder-snooze';
+import { isSnoozable, type SnoozeChoice, type SnoozeOption } from '@/features/agenda/model/reminder-snooze';
 
 type ReminderRowProps = {
   reminder: IReminderCacheRow;
@@ -58,17 +57,11 @@ export function ReminderRow({
   const when = reminderWhen(reminder, now, date, t);
   const repeats = repeatsOf(reminder);
   const repeat = recurrenceLabel(reminder.recurrenceRule, t);
-  const caption = [overdue ? t('screens.reminders.overdue') : null, when, repeat]
-    .filter(Boolean)
-    .join(' · ');
+  const caption = [overdue ? t('screens.reminders.overdue') : null, when, repeat].filter(Boolean).join(' · ');
   const single = changesOneOccurrence(reminder);
   const options: MenuOption<ReminderAction>[] = [];
   if (single) {
-    options.push({
-      value: 'edit-occurrence',
-      label: t('screens.reminders.edit-occurrence'),
-      icon: 'calendar-clock',
-    });
+    options.push({ value: 'edit-occurrence', label: t('screens.reminders.edit-occurrence'), icon: 'calendar-clock' });
   }
   options.push({
     value: 'edit',
@@ -76,18 +69,9 @@ export function ReminderRow({
     icon: 'pencil',
   });
   if (single) {
-    options.push({
-      value: 'skip-occurrence',
-      label: t('screens.reminders.skip-occurrence'),
-      icon: 'calendar-x',
-    });
+    options.push({ value: 'skip-occurrence', label: t('screens.reminders.skip-occurrence'), icon: 'calendar-x' });
   }
-  if (repeats)
-    options.push({
-      value: 'stop-repeating',
-      label: t('screens.reminders.stop-repeating'),
-      icon: 'repeat-off',
-    });
+  if (repeats) options.push({ value: 'stop-repeating', label: t('screens.reminders.stop-repeating'), icon: 'repeat-off' });
   options.push({ value: 'delete', label: t('common.delete'), icon: 'trash', destructive: true });
 
   const snoozable = editable && !pending && isSnoozable(timing) && snoozeOptions.length > 0;
@@ -108,19 +92,11 @@ export function ReminderRow({
   };
 
   return (
-    <View
-      className={cn(
-        'min-h-14 flex-row items-center gap-1 rounded-2xl px-1',
-        pending && 'opacity-60'
-      )}>
+    <View className={cn('min-h-14 flex-row items-center gap-1 rounded-2xl px-1', pending && 'opacity-60')}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: reminder.isCompleted, disabled: !editable || pending }}
-        accessibilityLabel={
-          reminder.isCompleted
-            ? t('screens.reminders.mark-pending')
-            : t('screens.reminders.mark-done')
-        }
+        accessibilityLabel={reminder.isCompleted ? t('screens.reminders.mark-pending') : t('screens.reminders.mark-done')}
         disabled={!editable || pending}
         hitSlop={4}
         onPress={() => onToggle(reminder, !reminder.isCompleted)}
@@ -128,15 +104,9 @@ export function ReminderRow({
         <View
           className={cn(
             'size-6 items-center justify-center rounded-full border-2',
-            reminder.isCompleted
-              ? 'bg-success border-success'
-              : overdue
-                ? 'border-error'
-                : 'border-border'
+            reminder.isCompleted ? 'bg-success border-success' : overdue ? 'border-error' : 'border-border'
           )}>
-          {reminder.isCompleted ? (
-            <Icon name="check" className="text-foreground-on-interactive size-3.5" />
-          ) : null}
+          {reminder.isCompleted ? <Icon name="check" className="text-foreground-on-interactive size-3.5" /> : null}
         </View>
       </Pressable>
       <Pressable
@@ -148,10 +118,7 @@ export function ReminderRow({
         <Text
           variant="body"
           numberOfLines={2}
-          className={cn(
-            'font-medium',
-            reminder.isCompleted && 'text-muted-foreground line-through'
-          )}>
+          className={cn('font-medium', reminder.isCompleted && 'text-muted-foreground line-through')}>
           {reminder.title}
         </Text>
         <View className="flex-row items-center gap-1">
@@ -161,10 +128,7 @@ export function ReminderRow({
               className={cn('size-3.5', overdue ? 'text-error-strong' : 'text-muted-foreground')}
             />
           ) : null}
-          <Text
-            variant="caption"
-            className={cn('min-w-0 flex-1', overdue && 'text-error-strong')}
-            numberOfLines={1}>
+          <Text variant="caption" className={cn('min-w-0 flex-1', overdue && 'text-error-strong')} numberOfLines={1}>
             {caption}
           </Text>
         </View>

@@ -7,7 +7,7 @@ import { Section } from '@/shared/ui/section';
 import { itemsOf } from '@/features/agenda/model/agenda-days';
 import type { DayGroup } from '@/features/agenda/model/agenda-days';
 import { dayWord } from '@/features/agenda/model/agenda-lines';
-import type { ListContext } from '@/features/agenda/components/agenda-list';
+import type { ListContext } from '@/features/agenda/model/agenda-view';
 
 export type NextDaysProps = { groups: readonly DayGroup[]; context: ListContext };
 

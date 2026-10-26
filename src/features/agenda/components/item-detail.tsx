@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import type { TranslateFn } from '@/core/types';
+import type { AgendaItem, TranslateFn } from '@/core/types';
 import { recurrenceLabel } from '@/shared/libs/recurrence';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
@@ -11,15 +11,9 @@ import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Text } from '@/shared/ui/text';
 import type { DayGroup } from '@/features/agenda/model/agenda-days';
-import type { AgendaItem } from '@/features/agenda/model/agenda-items';
 import { categoryOf, kindWords, lineWords } from '@/features/agenda/model/agenda-lines';
-import type { ListContext } from '@/features/agenda/components/agenda-list';
 import { NextDays } from '@/features/agenda/components/agenda-guide';
-
-export type DetailHandlers = {
-  onEdit?: (item: AgendaItem) => void;
-  onShare?: (item: AgendaItem) => void;
-};
+import type { DetailHandlers, ListContext } from '@/features/agenda/model/agenda-view';
 
 export type ItemDetailProps = {
   item: AgendaItem;
@@ -172,7 +166,7 @@ export function ItemDetail({
   const words = lineWords(item, context);
   const facts = factRows(item, context, t);
   return (
-    <View testID="agenda-detail">
+    <View>
       <View className="gap-3 pt-6">
         {titled ? <Chip label={kindWords(item, context)} /> : null}
         {titled ? (

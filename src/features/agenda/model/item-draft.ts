@@ -3,17 +3,14 @@ import type {
   ICalendarEventUpdate,
   IProjectTaskCreate,
 } from '@/core/interfaces';
+import type { AgendaItem, AgendaKind } from '@/core/types';
 import { formatRecurrenceRule } from '@/shared/libs/recurrence';
-import type { AgendaItem, AgendaKind } from '@/features/agenda/model/agenda-items';
 import { clockAt, clockText, parseClock } from '@/features/agenda/model/clock-text';
 import type { ClockText } from '@/features/agenda/model/clock-text';
 import { REMINDER_TITLE_MAX } from '@/features/agenda/model/reminder-form';
-import {
-  REPEAT_CHOICES,
-  repeatChoiceOf,
-  repeatDraftOf,
-} from '@/features/agenda/model/reminder-repeat';
+import { repeatChoiceOf, repeatDraftOf } from '@/features/agenda/model/reminder-repeat';
 import type { RepeatChoice } from '@/features/agenda/model/reminder-repeat';
+import { EVENT_TITLE_MAX } from '@/features/agenda/constants/agenda.constant';
 
 export type EditScope = 'one' | 'series';
 
@@ -37,12 +34,6 @@ export type DraftDate = ClockText & { startOfDay: (value: Date) => Date };
 export type Moment = { start: number; end: number | null };
 
 export type NewDraftInput = { kind: AgendaKind; day: number; at: number; project: string };
-
-export const EVENT_TITLE_MAX = 160;
-
-export const KIND_ORDER: readonly AgendaKind[] = ['reminder', 'event', 'task'];
-
-export const REPEATS: readonly RepeatChoice[] = REPEAT_CHOICES;
 
 const SECOND_MS = 1000;
 
