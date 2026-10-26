@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import type { IconName, VoiceActionRecord, VoiceActionStatus } from '@/core/types';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { CALL_ACTIONS_VISIBLE } from '@/features/voice/constants/voice';
+import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
 
@@ -27,27 +28,9 @@ const STATUS_TONES: Readonly<Record<VoiceActionStatus, string>> = {
 };
 
 export function CallActionChips({ actions }: CallActionChipsProps) {
-  const { t, tk } = useTranslation();
+  const copy = useTranslation();
+  const { t } = copy;
   const visible = actions.slice(-CALL_ACTIONS_VISIBLE);
-
-  const labelOf = (action: VoiceActionRecord): string => {
-    if (action.name === 'app.show_camera') {
-      const camera = typeof action.arguments.camera === 'string' ? action.arguments.camera.trim() : '';
-      return camera
-        ? t('screens.voice.actions.show-camera', { name: camera })
-        : t('screens.voice.actions.show-camera-any');
-    }
-    if (action.name === 'app.open') {
-      const screen = String(action.arguments.screen ?? '');
-      const key = `screens.voice.actions.screens.${screen}`;
-      return t('screens.voice.actions.open', { screen: tk(key) === key ? screen : tk(key) });
-    }
-    const mode = String(action.arguments.mode ?? '');
-    const key = `screens.security.mode.${mode}`;
-    const label = t('screens.voice.actions.set-guard-mode', { mode: tk(key) === key ? mode : tk(key) });
-    const place = typeof action.arguments.environment === 'string' ? action.arguments.environment.trim() : '';
-    return place ? `${place} · ${label}` : label;
-  };
 
   if (visible.length === 0) return null;
 
@@ -58,7 +41,7 @@ export function CallActionChips({ actions }: CallActionChipsProps) {
       accessibilityLiveRegion="polite"
       className="flex-row flex-wrap justify-center gap-2">
       {visible.map((action) => {
-        const label = labelOf(action);
+        const label = voiceActionLabel(action, copy);
         const status = t(`screens.voice.actions.${action.status}`);
         return (
           <View

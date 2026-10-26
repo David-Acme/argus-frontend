@@ -857,7 +857,6 @@ tests/unit/features/voice/rtc-livekit-options.test.ts
 tests/unit/features/voice/rtc-protocol.test.ts
 tests/unit/features/voice/voice-action-log.test.ts
 tests/unit/features/voice/voice-actions.test.ts
-tests/unit/features/voice/voice-rtc-call.test.ts
 tests/unit/features/voice/voice-transcript.test.ts
 tests/unit/features/watch/visitor-reply.test.ts
 tests/unit/features/watch/watch-continue.test.ts

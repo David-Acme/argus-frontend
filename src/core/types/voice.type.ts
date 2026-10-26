@@ -95,6 +95,7 @@ export type VoiceStartOptions = {
   reason?: string | null;
   responseId?: number | null;
   watchConversationId?: string;
+  socket?: boolean;
 };
 
 export type AssistantMode = 'voice' | 'chat';
