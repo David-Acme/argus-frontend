@@ -5500,11 +5500,15 @@ toast's Retry (the lab has no banner with an action; the banner's action is
 the same `PressableSurface` path), and that the chips and the sidebar's ask
 field hold their words at the lab's font scale 2.
 
-**Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
-bun process (happy-dom, react-native-web as react-native, react-native-svg's web
-elements, stubs for Reanimated, expo-device, uniwind, RNGH), because the main
-suite's preload stubs react-native for pure logic. Tests import each component
-file directly: check:quality counts only direct imports.
+**Component tests.** `bun run test:ui` runs every `*.test.tsx` under `tests/`
+in its own bun process (happy-dom, react-native-web as react-native,
+react-native-svg's web elements, stubs for Reanimated, expo-device, uniwind,
+RNGH; the preload is `tests/unit/shared/ui/setup.ts`), because the main
+suite's preload stubs react-native for pure logic; the main suite skips
+`*.test.tsx`. The extension is the switch, so a feature's component test sits
+beside its model tests (`tests/unit/features/home/agenda-sections.test.tsx`)
+instead of under `shared/ui`. Tests import each component file directly:
+check:quality counts only direct imports.
 
 **ui-lab.** `src/features/ui-lab/` with a catalogue, one demo per component
 (the prototype's own words), `case-<id>` wrappers and URL parameters
@@ -5574,8 +5578,9 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p1/wire` item 4: the ui-lab and the spikes screen load from one lazy chunk (`lab-screens`, 405,626 B) that a production page never fetches. Measured on the same tree before and after: entry 7,522,566 → 7,118,965 B (−403,601; the Phase 1 entry growth over 7,063,615 B falls from +458,951 to +55,350), `dist/` 8,842,120 → 8,844,145 B (+2,025: the chunk's own module wrappers and loader). The entry baseline is lowered with it. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of `p1/ds-fixes`, `p1/estela-perf` and `p1/wire` (ff881a0), measured on the merged tree: `dist/` 8,844,145 → 8,867,041 B (+22,896): Estela's adaptive renderer (tier probe and frame-time feedback, about 17 kB as measured on its branch), the design-system fixes (about 4.5 kB: the confirm latch, the announce and screen-active hooks, the hit areas) and the lazy lab's chunk carrying the merged demos. The entry chunk went down, 7,118,965 → 7,115,996 B, because the lab now loads lazily. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of the Estela tier fixes (`932b976`, `1033e5f`: paint-ahead pacing, the warm-up probe, the step-up path), measured on the integrated tree: `dist/` 8,867,041 → 8,867,586 B (+545). The entry chunk is unchanged at 7,115,996 B; the growth is in the lazy lab chunk and the Presence modules. | 2026-10-21 |
-
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-agenda` (T5), measured on its own tree: entry 7,115,996 → 7,120,467 B (+4,471) and `dist/` 8,867,586 → 8,872,510 B (+4,924). The sections themselves are not in the entry yet (nothing imports them until T4); the growth is the es and en `agenda-sections` dictionaries (3.1 kB of source, the locales load with the entry), the shared `calendar-entry-commands` module and its wrapper, the reminder Deshacer, `setAssistantDraft` and Avatar's event mark; the other 453 B of `dist/` are the `size-event-mark` utility and the avatar demo in the lazy lab chunk. No package was added. R-D36's lazy routes (T9) are where the entry comes down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
+
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
 **Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
@@ -6489,3 +6494,79 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
   palette (`hints`); the phone's sheet lists the same rows without them.
 - **Component tests of a feature** live in `tests/unit/features/<slice>/components/`
   and run with the DOM runner (`test:ui`); the plain runner skips them.
+
+## Inicio's agenda sections (2026-10-26, Phase 2 T5, p2/inicio-agenda)
+
+`src/features/home/components/agenda/` holds `NowSection` (Ahora),
+`TodaySection` (Hoy), `TomorrowSection` (Mañana), `ProjectsSection` (Proyectos)
+and `UpcomingRemindersSection` (Próximos recordatorios). Each takes no props,
+owns its hook and switches on `useInScreenColumn()`; T4 composes them.
+
+**Where the data comes from, all local.** `useAgenda` reads `reminder.list`
+through `useReminders` (core, never gated), `dashboard.agenda` scope `today`
+and `calendar.entries` for tomorrow's month (the coordinator keeps the current
+month ±1 projected unless the Agenda moved its anchor, in which case Mañana
+paints the last projection it has), each through `CALENDAR_LENSES`, so
+optimistic writes show at once. Reminder entries of the calendar are dropped
+in favour of the reminder rows, because the reminder actions (roll forward,
+snooze, occurrences) work on the row. `ProjectsSection` reads
+`dashboard.projects` and each row reads its own `project.tasks` scope.
+
+**Who sees what.** Ahora, Hoy and Mañana show when reminders or the agenda are
+readable (reminders are core, so with productivity off they still show the
+user's reminders, and Hoy drops its Agenda link); Próximos recordatorios needs
+reminders and Proyectos `projects.read`; a section with nothing to show for a
+role or module renders nothing. Before the first sync (`sync.ready`) an empty
+Ahora, Hoy or Mañana renders nothing instead of claiming the day is free
+(W6); T4's skeleton covers that moment.
+
+**The decisions, in `model/agenda-*.ts`, each unit-tested.**
+- Ahora: open items due today or overdue from any day, events until they end;
+  overdue first, then timed before all-day, then by time; three rows; the
+  header meta counts them all («5 · 1 atrasado»).
+- Time-to-go: under a minute or an ongoing event is «ahora», then minutes,
+  hours, days («hace 4 h», «en 1 h», «en 2 d»), floored; alert tone when
+  overdue, ok tone when now, `text-3` otherwise. The prototype sets the urgent
+  ones at 13/650 and the rest at 13/500: `chip` and `sectionMeta`.
+- Meta: Ahora names the day for reminders and tasks («Hoy 17:00», «Atrasado ·
+  11:00», an older one «Atrasado · Lun 19 · 10:00»), the repeat in lower case,
+  then the project and the place; Hoy and Mañana keep the time, «en curso» and
+  the repeat only, as the prototype's Hoy rows do (a project made the 320 px
+  column wrap); upcoming reminders say «Mañana · 09:00» or «Vie 23 · 09:00».
+- Free slots: a gap of 60 min or more between busy spans (an event its own
+  span, a timed reminder or task 30 min), never before now, never before the
+  first item or after the last: the prototype day yields «Libre 16:00 – 17:00»
+  and «19:00 – 21:00». A day with nothing reads «Día libre · Sin eventos ni
+  tareas».
+- Row actions: the check completes (reminders through `useReminders.complete`,
+  which now offers Deshacer when it does not roll a repeat forward; tasks
+  through the agenda's `toggleTask`, extracted from `EntryActionsMenu` with
+  `removeEntry` so both menus share them), single-flight per item id, with the
+  `success` haptic of §7c on top of the check's `selection`. A tap opens the
+  reminder dialog or the event/task route (`calendarEntryEditHref`, else
+  `/agenda`). A long press (right click on pointer) opens the row `Menu`:
+  Posponer 1 h and Posponer a mañana when the reminder's snooze options allow
+  them, Editar, Borrar (Deshacer through `runOptimistic`); a role without
+  rights gets no menu and a check that does not act.
+- Lists that the spec says show "as many as fit" use fixed counts: three in
+  the phone card, five in a desktop column (`listLimit`). Measuring the column
+  height would re-render on every resize for one or two rows; Hoy and Mañana
+  show the whole day.
+
+**The empty Ahora** is the prototype's sparse card (`ncard`: an ok check well,
+«Nada pendiente hoy», «Pídele a Argus que te recuerde algo.», Nuevo
+recordatorio) followed by three suggestion chips. It uses the check well and
+not Estela: the prototype draws it that way and R-D31 keeps one live Estela
+per screen (the hero). The action and the chips put a draft in the Argus
+thread (`setAssistantDraft`, exported by `features/voice`) and open
+`/conversations/0`; reminders are created by Argus. Without `messages.relay`
+the card keeps its words and drops the action and the chips.
+
+**Event mark.** Event rows lead with `Avatar size="mark" tone="event"`: the
+prototype's `.evm`, 26 px, radius 8, the calendar icon in `ev1-text` on `ev1`
+(spec §4, row 12; `IconTone` gained `ev1-text`, `size.eventMark` is 26).
+
+**Known gaps.** A row speaks its title and meta; the coloured time-to-go is a
+node, which `Row` does not speak (only a string trailing is spoken). The
+column's last section growing to the bottom (§6b-1) needs `Section`'s `grow`,
+which T7 adds; T4 sets it once both land.

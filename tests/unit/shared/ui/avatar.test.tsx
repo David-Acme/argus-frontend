@@ -16,6 +16,12 @@ describe('Avatar', () => {
     expect(screen.queryByRole('img')).toBeNull();
   });
 
+  test('an event mark is a decorative calendar well', () => {
+    const { container } = render(<Avatar icon="cal" tone="event" size="mark" />);
+    expect(container.querySelector('svg')).not.toBeNull();
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+
   test('an initial grows with the font scale only as far as its 36 px box holds it', () => {
     render(
       <TextScaleProvider value={2}>
