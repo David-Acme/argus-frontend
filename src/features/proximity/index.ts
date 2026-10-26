@@ -1,4 +1,11 @@
+import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { ProximitySection } from './components/proximity-section';
 export { useBeaconController } from './hooks/use-beacon-controller';
-export { default as ProximityDevicesScreen } from './screens/proximity-devices-screen';
-export { default as ProximityPeopleScreen } from './screens/proximity-people-screen';
+export const ProximityDevicesScreen = lazyScreen(
+  () => import('./screens/proximity-screens'),
+  'ProximityDevicesScreen'
+);
+export const ProximityPeopleScreen = lazyScreen(
+  () => import('./screens/proximity-screens'),
+  'ProximityPeopleScreen'
+);

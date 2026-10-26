@@ -1,3 +1,7 @@
-export { default as PeopleDirectoryScreen } from './screens/people-directory-screen';
-export { default as UsersScreen } from './screens/users-screen';
+import { lazyScreen } from '@/shared/libs/lazy-screen';
+export const PeopleDirectoryScreen = lazyScreen(
+  () => import('./screens/people-directory-screen'),
+  'default'
+);
+export const UsersScreen = lazyScreen(() => import('./screens/users-screen'), 'default');
 export { usePresenceOverview } from './hooks/use-presence';

@@ -4162,6 +4162,50 @@ button inside it while the speech bubble still leaked through on the web. Now th
 decoration whose content the label already says. The probe fails unless exactly one button carries
 that label and neither the chips' "coming soon" nor the bubble's greeting reaches the tree.
 
+### Route screens load on navigation (2026-10-26, R-D36, Phase 2 T9)
+
+The web entry (the three scripts `dist/index.html` loads: Metro's runtime, `__common` and
+`index`) was 7,373,421 B on redesign/main 9b3757c, above the 6.6 MB ceiling of rule 30. Every
+route screen sat in it, because a feature's `index.ts` re-exported each screen statically and the
+layouts import those same barrels for their hooks and gates, so no route-level setting could
+split them: Metro does not tree-shake a barrel, and Expo Router's `asyncRoutes` would only have
+moved the one-line route files, whose barrels stay in the entry through the layouts.
+
+The split therefore lives in the barrels. `lazyScreen(load, name)`
+(`src/shared/libs/lazy-screen.tsx`) wraps `React.lazy` over a dynamic `import()` and paints
+nothing (`Suspense` with a `null` fallback) until the module arrives, so a route shows no spinner
+and nothing heavier than the stack's own empty frame; Metro turns each `import()` into a chunk
+named after its module, fetched by a `<script>` from the same origin, which the Tauri CSP
+(`script-src 'self'`) already allows, as it did for `livekit-client`. Route files stay one-line
+re-exports and the route tree is unchanged, so a deep link resolves exactly as before; only the
+screen's code arrives after the route matched. Native resolves the same `import()` inside its one
+bundle, with no fetch, but `React.lazy` still settles a promise, so the first visit to a screen in
+a launch paints the empty frame for one tick, under the stack's fade; later visits render at once,
+because `lazy` keeps the resolved screen.
+
+What stays eager is what the first frame needs: the layouts and their gates, Inicio (`HomeScreen`,
+`NewsScreen`) and the welcome screen (the unpaired first frame and the probe's hero). Every other
+route screen is lazy, the onboarding steps after welcome and the call screen included.
+
+A module shared by two async chunks is hoisted by Metro into `__common`, which `index.html`
+loads at startup (`extractCommonChunk` in `@expo/metro-config`'s `serializeChunks`). Two screens
+of one feature share most of their code (the camera form, the episode cards, the proximity
+model), so a feature with several screens loads them from one module —
+`screens/camera-screens.ts`, `security-screens.ts`, `proximity-screens.ts`,
+`conversation-screens.ts`, like `ui-lab`'s `lab-screens.ts` — and their shared code stays in that
+chunk: `__common` fell from 169,166 B (one chunk per screen) to 67,019 B. What is left there is
+code two features share, mostly `expo-camera` (QR scan and face capture) and `qrcode` (the login
+and the invitation QR).
+
+Measured on the same tree: entry 7,373,421 B (an export with source maps) → 6,432,190 B,
+`dist/` 8,905,970 B (the recorded baseline was 8,906,690 B), 29 route chunks (1 KB to 272 KB, `lab-screens` among them), and the unpaired first
+render in headless chromium against `dist/` under the CSP (time until `#root` has text, two
+series of 5 each, medians) 781 and 653 ms before against 624 and 612 ms after. Each route
+chunk is a `lazy` row of `bundle-baseline.txt`, so a static import of a screen, which would pull
+it back into the entry, fails `check:bundle`. After merging redesign/main cde97d12
+(hold-to-talk), the entry is 6,493,364 B and `dist/` 8,920,271 B. The `import()` also removed the file cycles that
+ran through the camera, security and voice screens (the cycle check does not count a lazy edge).
+
 ### Resource changes: the client side (2026-10-12, the real-time plan's 2.2)
 
 `ResourceChanged` (operation 14) is the one frame for state a screen re-reads
@@ -5331,7 +5375,7 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 | `check-quality.ts` | the counters below over `src/` (and `tests/unit/` for `source-text-test`), with the TypeScript compiler API; `shared-value-dot-value` uses the type checker (a `.value` on a type with `value`, `modify` and `addListener`) | `scripts/lib/quality-baseline.txt`, `untested-baseline.txt`, `memo-exceptions.txt` (path, symbol, reason; empty at R0; a line without a reason, or whose path and symbol name no memoization or more than one, fails, so a key never exempts a whole component) |
 | `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
 | `lint` | `eslint src scripts --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts --prune-suppressions` in the same change | `eslint-suppressions.json` |
-| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
+| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` row (a package, or a route screen module) keeps a chunk of its own (Metro names an async chunk after its package or module; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
 
 **The quality counters at R0** (they replace the `09cf103` survey numbers of
 the rules document; definitions are in `scripts/lib/quality/`):
@@ -5594,6 +5638,8 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
 | `scripts/lib/quality-baseline.txt` | `scanned-files` | `p2/inicio` (T4): the floor goes down, 1840 → 1826, because the old Inicio's files are deleted with their tests (the nine-card dashboard, the bell popover and thread row, the search field, the activity heatmap and its projection, the getting-started checklist, card, chip and signals projection, the camera grid and tile). Every count measured with them fell too and was lowered in the same change. | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` (T9) merged with redesign/main cde97d12, whose own export, measured the same day, is entry 7,434,450 B and `dist/` 8,914,334 B above the recorded 7,379,320 and 8,906,690 B (the hold-to-talk merge has no row of its own). With the route screens lazy the entry is 6,493,364 B (−941,086 against that tree) and `dist/` 8,920,271 B (+5,937): each of the 29 route chunks carries its own Metro module wrappers, and the entry gains the async-import paths that name them and `lazyScreen`; on 9b3757c, before the merge, the same change measured `dist/` 8,905,970 B. The entry baseline is lowered with it. | 2026-10-26 |
+
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
