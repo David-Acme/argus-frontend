@@ -10,6 +10,8 @@ export type LiveLayoutProps = {
   sideLabel: string;
 };
 
+const SIDE_ID = 'live-side';
+
 export function LiveLayout({ main, side, mainLabel, sideLabel }: LiveLayoutProps) {
   const { landscape } = useHeightLayout();
   const { navigation } = useWindowLayout();
@@ -17,7 +19,7 @@ export function LiveLayout({ main, side, mainLabel, sideLabel }: LiveLayoutProps
     return (
       <View className="flex-row items-start gap-6">
         <View className="min-w-0 flex-1">{main}</View>
-        <View className="w-column-side" testID="live-side">
+        <View className="w-column-side" testID={SIDE_ID}>
           {side}
         </View>
       </View>
