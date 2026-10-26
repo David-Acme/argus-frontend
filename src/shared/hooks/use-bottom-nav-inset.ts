@@ -1,14 +1,12 @@
+import { createContext, useContext } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BOTTOM_NAV_GAP, BOTTOM_NAV_HEIGHT } from '@/shared/constants';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { inset, layout, size } from '@/shared/theme';
 
-const RAIL_INSET = 24;
-const BAR_GAP = 12;
+export const BottomNavShown = createContext(false);
 
 export function useBottomNavInset(): number {
+  const shown = useContext(BottomNavShown);
   const insets = useSafeAreaInsets();
-  const { usesNavRail } = useWindowClass();
-  return usesNavRail
-    ? RAIL_INSET
-    : insets.bottom + BOTTOM_NAV_GAP + BOTTOM_NAV_HEIGHT + BAR_GAP;
+  if (!shown) return layout.gutterMedium;
+  return Math.max(insets.bottom, inset.nav.barBottom) + size.tabBar + layout.gutterCompact;
 }

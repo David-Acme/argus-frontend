@@ -78,7 +78,6 @@ export default function WatchScreen() {
   return (
     <AppScreen
       scrollable={false}
-      bottomNav={false}
       header={
         <ScreenHeader
           title={title}

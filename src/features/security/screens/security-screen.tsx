@@ -170,7 +170,6 @@ export default function SecurityScreen() {
     <>
       <AppScreen
         scrollable={false}
-        bottomNav={false}
         header={
           <ScreenHeader
             title={t('screens.security.title')}

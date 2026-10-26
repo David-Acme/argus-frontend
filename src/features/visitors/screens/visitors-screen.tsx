@@ -198,7 +198,6 @@ export default function VisitorsScreen() {
 
   return (
     <AppScreen
-      bottomNav={false}
       scrollable={false}
       header={
         <ScreenHeader

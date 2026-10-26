@@ -202,7 +202,6 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
     <>
       <AppScreen
         scrollable={false}
-        bottomNav={false}
         header={
           <ScreenHeader
             title={current.name}
@@ -260,7 +259,6 @@ export default function EnvironmentScreen() {
 
   return (
     <AppScreen
-      bottomNav={false}
       header={<ScreenHeader title={t('screens.security.title')} onBack={() => router.back()} />}>
       {environments ? (
         <EmptyState

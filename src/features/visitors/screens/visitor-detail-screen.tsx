@@ -145,7 +145,6 @@ export default function VisitorDetailScreen() {
   return (
     <AppScreen
       scrollable={false}
-      bottomNav={false}
       header={
         <ScreenHeader
           title={label}

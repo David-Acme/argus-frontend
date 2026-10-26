@@ -31,6 +31,10 @@ const CHAT_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 const COMPOSER_ABOVE_LIST: ViewStyle = { zIndex: 1 };
 
+const LIST_HREF = '/conversations';
+
+const HOME_HREF = '/';
+
 function ThreadBody({ counterpartId }: ThreadBodyProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -79,37 +83,47 @@ function ThreadBody({ counterpartId }: ThreadBodyProps) {
   };
 
   const onClear = async () => {
-    if (await clear()) router.replace('/conversations');
+    if (await clear()) router.replace(LIST_HREF);
   };
 
   return (
     <AppScreen
       scrollable={false}
-      bottomNav={false}
       header={
         <ScreenHeader
           title={name}
           subtitle={t('screens.conversations.back')}
-          onBack={() => (router.canGoBack() ? router.back() : router.replace('/conversations'))}
+          onBack={() =>
+            router.canGoBack() ? router.back() : router.replace(argus ? HOME_HREF : LIST_HREF)
+          }
           action={
-            messages.length > 0 ? (
-              <AdaptiveMenu
-                options={[
-                  {
-                    value: 'clear' as const,
-                    label: t('screens.conversations.clear'),
-                    icon: 'trash',
-                    destructive: true,
-                  },
-                ]}
-                onSelect={() => void onClear()}
-                title={name}
-                closeLabel={t('common.close')}
-                trigger={
-                  <IconButton icon="more-horizontal" label={t('screens.conversations.actions')} />
-                }
-              />
-            ) : null
+            <View className="flex-row items-center gap-2">
+              {argus ? (
+                <IconButton
+                  icon="messages-square"
+                  label={t('screens.conversations.title')}
+                  onPress={() => router.push(LIST_HREF)}
+                />
+              ) : null}
+              {messages.length > 0 ? (
+                <AdaptiveMenu
+                  options={[
+                    {
+                      value: 'clear' as const,
+                      label: t('screens.conversations.clear'),
+                      icon: 'trash',
+                      destructive: true,
+                    },
+                  ]}
+                  onSelect={() => void onClear()}
+                  title={name}
+                  closeLabel={t('common.close')}
+                  trigger={
+                    <IconButton icon="more-horizontal" label={t('screens.conversations.actions')} />
+                  }
+                />
+              ) : null}
+            </View>
           }
         />
       }>
@@ -175,11 +189,10 @@ export default function ConversationThreadScreen() {
   if (counterpartId === null) {
     return (
       <AppScreen
-        bottomNav={false}
         header={
           <ScreenHeader
             title={t('screens.conversations.title')}
-            onBack={() => router.replace('/conversations')}
+            onBack={() => router.replace(LIST_HREF)}
           />
         }>
         <EmptyState icon="messages-square" title={t('screens.conversations.thread-empty')} />

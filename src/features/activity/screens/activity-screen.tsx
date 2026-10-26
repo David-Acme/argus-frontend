@@ -61,7 +61,6 @@ export default function ActivityScreen() {
 
   return (
     <AppScreen
-      bottomNav={false}
       scrollable={false}
       header={<ScreenHeader title={t('screens.activity.title')} subtitle={t('screens.activity.subtitle')} onBack={back} />}>
       {feed.rows.length === 0 ? (

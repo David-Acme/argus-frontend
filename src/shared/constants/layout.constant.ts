@@ -9,36 +9,13 @@ export const CONTENT_MAX_WIDTH = {
   expanded: 1600,
 } as const;
 
-export const NAV_RAIL_WIDTH = 76;
-
-export const BOTTOM_NAV_GAP = 14;
-
-export const BOTTOM_NAV_TRAVEL = 24;
-
 export const NAV_FADE_MS = 220;
 
 export const EMPTY_STATE_TEXT_MAX_WIDTH = 460;
 
-export const BOTTOM_NAV_MAX_WIDTH = 560;
-
-export const BOTTOM_NAV_SIDE_MARGIN = 20;
-
-export const BOTTOM_NAV_ROW_GAP = 12;
-
-export const BOTTOM_NAV_PADDING = 8;
-
-export const BOTTOM_NAV_TAB_SIZE = 44;
-
-export const BOTTOM_NAV_TAB_MIN = 32;
-
-export const BOTTOM_NAV_FAB_SIZE = 60;
-
-export const BOTTOM_NAV_FAB_COMPACT = 52;
-
 export const CENTERED_SCREEN_MAX_WIDTH = 512;
 export const CENTERED_SCREEN_TOP_GAP = 48;
 export const CENTERED_SCREEN_KEYBOARD_GAP = 24;
-export const EDGE_FADE_HEIGHT = 20;
 export const EDGE_FADE_BANDS = 6;
 
 export const OVERLAY_BODY_HEIGHT_RATIO = 0.62;
