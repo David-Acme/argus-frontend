@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import type { GuardEpisode } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size, useFourColumns, useWindowLayout } from '@/shared/theme';
+import { layout, size, useWindowLayout, useWindowWidth } from '@/shared/theme';
 import { Notice } from '@/shared/ui/notice';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { Status } from '@/shared/ui/status';
@@ -109,7 +109,7 @@ function PhoneLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
         stats={statusStats(security.status.counts, t, 'phone')}
         presence={security.status.presence}
         presenceEvent={security.cue}
-        dense
+        scale="dense"
       />
       <View className="mt-3">
         <ModeControl value={security.selectedMode} onChange={security.changeMode} />
@@ -131,7 +131,7 @@ function PhoneLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
 
 function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
   const { t } = useTranslation();
-  const four = useFourColumns();
+  const four = useWindowWidth() >= layout.fourColumns;
   const words = statusWords(security.status, t);
   const start = startersOf(security, cameras);
   const band: ReactNode = (
@@ -163,7 +163,7 @@ function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
         </ScreenColumn>
         <ScreenColumn
           label={t('screens.security.happened.title')}
-          width={four ? size.columnFeedWide : size.columnFeed}
+          width={four ? size.columnHappenedWide : size.columnHappened}
           grows={false}>
           <AlertCard security={security} onOpen={onOpen} />
           <HappenedSection
@@ -185,7 +185,7 @@ function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
         {four ? (
           <ScreenColumn
             label={t('screens.security.more.title')}
-            width={size.columnAsideWide}
+            width={size.columnWide}
             grows={false}>
             <VisitsSection guests={security.guests.list} now={security.now} />
             <PlacesSection environments={security.environments} />

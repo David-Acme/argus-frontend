@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
-import { Presence } from '@/shared/ui/presence';
+import { Presence, useCentrePresence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import type { NavItem, NavProps } from './nav-types';
@@ -12,9 +12,16 @@ type RailItemProps = Pick<NavProps, 'presence' | 'onSelect' | 'voice'> & {
   selected: boolean;
 };
 
+type RailPresenceProps = { state: PresenceState };
+
 const RAIL = { width: size.rail };
 
 const SLOP = (size.target - size.tab) / 2;
+
+function RailPresence({ state }: RailPresenceProps) {
+  const still = useCentrePresence(false);
+  return <Presence state={state} size={size.presenceTab} paused={still} />;
+}
 
 function RailItem({ item, selected, onSelect, voice, presence }: RailItemProps) {
   return (
@@ -29,7 +36,7 @@ function RailItem({ item, selected, onSelect, voice, presence }: RailItemProps) 
         selected && 'bg-tab-on'
       )}>
       {item.argus && presence ? (
-        <Presence state={presence} size={size.presenceTab} />
+        <RailPresence state={presence} />
       ) : (
         <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
       )}

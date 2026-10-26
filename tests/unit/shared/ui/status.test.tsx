@@ -44,7 +44,7 @@ describe('Status', () => {
     const { container } = render(
       <Status
         tone="calm"
-        dense
+        scale="dense"
         sentence="En casa"
         meta="Te aviso solo de desconocidos"
         presence="idle"
@@ -55,11 +55,18 @@ describe('Status', () => {
     expect(canvasWidths(container)).toEqual(['58px']);
   });
 
+  test('the band keeps a long alert sentence whole', () => {
+    setWindowWidth(1280);
+    render(<Status tone="alert" sentence="3 personas en Patio trasero" meta="Ahora" />);
+    const sentence = screen.getByRole('heading', { name: '3 personas en Patio trasero' });
+    expect(sentence.textContent).toBe('3 personas en Patio trasero');
+  });
+
   test('an alert hero is announced and the secondary hero draws a smaller presence', () => {
     const { container } = render(
       <HeroStatus
         tone="alert"
-        secondary
+        scale="secondary"
         sentence="Alguien en el patio."
         meta="Hace 1 min"
         presence="alert"
@@ -78,11 +85,33 @@ describe('Status', () => {
     expect(container.querySelectorAll('radialGradient').length).toBe(3);
   });
 
-  test('the band keeps a long alert sentence whole', () => {
+  test('a stat with an action is a link named by its value and label', () => {
+    const opened: string[] = [];
+    render(
+      <Status
+        tone="calm"
+        sentence="Todo tranquilo."
+        meta="En casa"
+        stats={[{ icon: 'cam', value: '5', label: 'cámaras', onPress: () => opened.push('cam') }]}
+      />
+    );
+    fireEvent.click(screen.getByRole('link', { name: '5 cámaras' }));
+    expect(opened).toEqual(['cam']);
+  });
+
+  test('the band can take an aura other than its tone', () => {
     setWindowWidth(1280);
-    render(<Status tone="alert" sentence="3 personas en Patio trasero" meta="Ahora" />);
-    const sentence = screen.getByRole('heading', { name: '3 personas en Patio trasero' });
-    expect(sentence.textContent).toBe('3 personas en Patio trasero');
+    const stopColors = (aura?: 'off') => {
+      const { container, unmount } = render(
+        <Status tone="calm" sentence="Sin conexión." meta="Modo En casa" aura={aura} />
+      );
+      const colors = [...container.querySelectorAll('stop')].map((stop) =>
+        stop.getAttribute('stop-color')
+      );
+      unmount();
+      return colors;
+    };
+    expect(stopColors('off')).not.toEqual(stopColors());
   });
 
   test('the card is an alert with one primary, one secondary and a quiet tertiary', () => {

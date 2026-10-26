@@ -1,38 +1,19 @@
 import type { TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size } from '@/shared/theme';
-import { Chip } from '@/shared/ui/chip';
-import { Cluster, Stack } from '@/shared/ui/layout';
+import { Stack } from '@/shared/ui/layout';
 import { Notice } from '@/shared/ui/notice';
-import { PressableSurface } from '@/shared/ui/pressable';
 import { useInScreenColumn } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
-import { useAskArgus, type AskArgus } from '@/features/home/hooks/use-ask-argus';
+import { useAskArgus } from '@/features/home/hooks/use-ask-argus';
+import { IdeaChips } from './idea-chips';
 
 export type AgendaEmptyProps = { title: string };
-
-type IdeaProps = { text: string; ask: AskArgus };
 
 const IDEAS: readonly TranslationKey[] = [
   'screens.home.agenda-sections.ideas.water',
   'screens.home.agenda-sections.ideas.call',
   'screens.home.agenda-sections.ideas.tomorrow',
 ];
-
-const IDEA_SLOP = (size.target - size.chipSuggestion) / 2;
-
-function Idea({ text, ask }: IdeaProps) {
-  const { t } = useTranslation();
-  return (
-    <PressableSurface
-      a11y={{ label: t('screens.home.agenda-sections.ask', { text }), role: 'button' }}
-      onPress={() => ask(text)}
-      pressed={{ scale: 'surface' }}
-      hitSlop={IDEA_SLOP}>
-      <Chip label={t('screens.home.agenda-sections.quoted', { text })} size="suggestion" />
-    </PressableSurface>
-  );
-}
 
 export function AgendaEmpty({ title }: AgendaEmptyProps) {
   const { t } = useTranslation();
@@ -54,13 +35,7 @@ export function AgendaEmpty({ title }: AgendaEmptyProps) {
       }
     />
   );
-  const ideas = ask ? (
-    <Cluster>
-      {IDEAS.map((key) => (
-        <Idea key={key} text={t(key)} ask={ask} />
-      ))}
-    </Cluster>
-  ) : null;
+  const ideas = ask ? <IdeaChips ideas={IDEAS.map((key) => t(key))} ask={ask} /> : null;
   if (column && ideas) {
     return (
       <>

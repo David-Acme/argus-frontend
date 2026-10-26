@@ -40,7 +40,6 @@ import {
 } from '@/features/reminders/model/reminder-snooze';
 import { firstOccurrenceAfter, intlZoneClock, parseRecurrenceRule } from '@/shared/libs/recurrence';
 import { matchesReminder, reminderTiming, reminderWhen, splitReminders } from '@/features/reminders/model/reminder-rows';
-import { searchKinds, searchPlaceholder } from '@/features/home/model/home-search';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;
@@ -397,26 +396,6 @@ describe('reminder projection and optimistic rows', () => {
       REMINDER_LENSES
     );
     expect(edited[0]).toMatchObject({ title: 'Nuevo título', scheduledAt: NOW + 5 * HOUR, description: '' });
-  });
-});
-
-describe('home search copy', () => {
-  test('names only what can be searched', () => {
-    expect(searchKinds({ reminders: true, events: false, projects: false })).toEqual(['reminder']);
-    expect(searchKinds({ reminders: true, events: true, projects: true })).toEqual(['reminder', 'event', 'project', 'task']);
-    expect(searchKinds({ reminders: false, events: false, projects: false })).toEqual([]);
-  });
-
-  test('joins the names in the app language', () => {
-    expect(searchPlaceholder({ reminders: true, events: false, projects: false }, es)).toBe('Buscar recordatorio…');
-    expect(searchPlaceholder({ reminders: true, events: true, projects: false }, es)).toBe('Buscar recordatorio o evento…');
-    expect(searchPlaceholder({ reminders: true, events: true, projects: true }, es)).toBe(
-      'Buscar recordatorio, evento, proyecto o tarea…'
-    );
-    expect(searchPlaceholder({ reminders: true, events: true, projects: true }, en)).toBe(
-      'Search reminder, event, project or task…'
-    );
-    expect(searchPlaceholder({ reminders: false, events: false, projects: false }, es)).toBe('Buscar…');
   });
 });
 

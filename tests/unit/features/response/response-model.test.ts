@@ -2,13 +2,20 @@ import { describe, expect, test } from 'bun:test';
 import { readIncidentResponse } from '@/core/contracts/response.contract';
 import type { IncidentResponse } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
+import { localeDictionaries } from '@/core/i18n/locales';
+import { translate } from '@/core/i18n/translate';
+import type { TranslateFn } from '@/core/types';
 import {
+  alertPlaceOf,
+  alertSentence,
   alertsFor,
   canDecide,
   contactsOf,
   emergencyOf,
   headlineOf,
+  headlineWords,
   mergeResponse,
+  openResponseOf,
   phoneHref,
   placeOf,
   toneOf,
@@ -50,21 +57,31 @@ describe('response headline', () => {
   });
 
   test('the person attending is named, and the attendant reads it as themselves', () => {
-    const attended = { ...base, state: 'attended' as const, attendedBy: { userId: 2, name: 'Pedro' } };
+    const attended = {
+      ...base,
+      state: 'attended' as const,
+      attendedBy: { userId: 2, name: 'Pedro' },
+    };
     expect(headlineOf(attended, 1)).toEqual({ key: 'attended', name: 'Pedro' });
     expect(headlineOf(attended, 2)).toEqual({ key: 'attended-self' });
     expect(toneOf(attended)).toBe('attended');
   });
 
   test('verdicts and endings read as what they are', () => {
-    expect(headlineOf({ ...base, state: 'false_alarm', verdictBy: { userId: 3, name: 'Ana' } }, 1)).toEqual({
+    expect(
+      headlineOf({ ...base, state: 'false_alarm', verdictBy: { userId: 3, name: 'Ana' } }, 1)
+    ).toEqual({
       key: 'false-alarm',
       name: 'Ana',
     });
-    expect(headlineOf({ ...base, state: 'false_alarm', verdictBy: { userId: 3, name: 'Ana' } }, 3)).toEqual({
+    expect(
+      headlineOf({ ...base, state: 'false_alarm', verdictBy: { userId: 3, name: 'Ana' } }, 3)
+    ).toEqual({
       key: 'false-alarm-self',
     });
-    expect(headlineOf({ ...base, state: 'confirmed', verdictBy: { userId: 1, name: 'Laura' } }, 1)).toEqual({
+    expect(
+      headlineOf({ ...base, state: 'confirmed', verdictBy: { userId: 1, name: 'Laura' } }, 1)
+    ).toEqual({
       key: 'confirmed-self',
     });
     expect(headlineOf({ ...base, state: 'unanswered' }, 1)).toEqual({ key: 'unanswered' });
@@ -124,7 +141,13 @@ describe('contacts and the emergency number', () => {
 describe('visible responses', () => {
   test('open ones first, closed ones linger fifteen minutes', () => {
     const open = { ...base, id: 1, createdAt: 100 };
-    const closed = { ...base, id: 2, state: 'false_alarm' as const, createdAt: 200, updatedAt: 1000 };
+    const closed = {
+      ...base,
+      id: 2,
+      state: 'false_alarm' as const,
+      createdAt: 200,
+      updatedAt: 1000,
+    };
     const old = { ...base, id: 3, state: 'expired' as const, updatedAt: 0 };
     const visible = visibleResponses({ 1: open, 2: closed, 3: old }, 1000 + 60);
     expect(visible.map((item) => item.id)).toEqual([1, 2]);
@@ -141,7 +164,13 @@ describe('response contract', () => {
 });
 
 describe('the alert strip follows safety.respond and the alerts addressed to the user', () => {
-  const panic: IncidentResponse = { ...base, id: 9, kind: 'guard_panic', cameraId: 0, state: 'active' };
+  const panic: IncidentResponse = {
+    ...base,
+    id: 9,
+    kind: 'guard_panic',
+    cameraId: 0,
+    state: 'active',
+  };
   const NOW = 1000;
   const alerts = { [panic.id]: panic };
 
@@ -171,9 +200,17 @@ describe('the alert strip follows safety.respond and the alerts addressed to the
 
   test('without safety.respond nothing is shown, and a role this build does not know holds nothing', () => {
     const stripped = viewFor('guard');
-    const without = { ...stripped, capabilities: new Set([...stripped.capabilities].filter((id) => id !== CAPABILITY.safetyRespond)) };
+    const without = {
+      ...stripped,
+      capabilities: new Set(
+        [...stripped.capabilities].filter((id) => id !== CAPABILITY.safetyRespond)
+      ),
+    };
     expect(alertsFor(without, alerts, NOW)).toEqual([]);
-    const unknown = accessView({ ...accessFor('guest'), role: null, roleActive: false, capabilities: [] }, 'guest');
+    const unknown = accessView(
+      { ...accessFor('guest'), role: null, roleActive: false, capabilities: [] },
+      'guest'
+    );
     expect(alertsFor(unknown, alerts, NOW)).toEqual([]);
   });
 
@@ -182,7 +219,40 @@ describe('the alert strip follows safety.respond and the alerts addressed to the
     const open = { ...panic, id: 11, state: 'attended' as const, updatedAt: NOW };
     const view = viewFor('guard', { modules: [] });
     const later = NOW + 16 * 60;
-    expect(alertsFor(view, { 10: closed, 11: open }, NOW + 60).map((alert) => alert.id)).toEqual([11, 10]);
+    expect(alertsFor(view, { 10: closed, 11: open }, NOW + 60).map((alert) => alert.id)).toEqual([
+      11, 10,
+    ]);
     expect(alertsFor(view, { 10: closed, 11: open }, later).map((alert) => alert.id)).toEqual([11]);
+  });
+});
+
+const es = ((key: string, params?: Record<string, string>) =>
+  translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;
+
+describe('the alert Inicio shows', () => {
+  test('the sentence names what happened and where', () => {
+    expect(alertSentence(base, es)).toBe('Alguien en Patio.');
+    expect(alertSentence({ ...base, kind: 'guard_panic' }, es)).toBe('Piden ayuda en Patio.');
+    expect(alertSentence({ ...base, kind: 'guard_tamper', cameraName: '' }, es)).toBe(
+      'Sin imagen en Casa.'
+    );
+  });
+
+  test('with no camera and no place the alert is at home', () => {
+    expect(alertPlaceOf({ cameraName: '', environmentName: '' })).toBeNull();
+    expect(alertSentence({ ...base, cameraName: '', environmentName: '' }, es)).toBe(
+      'Alguien en casa.'
+    );
+  });
+
+  test('the first open response is the alert; closed ones are not', () => {
+    const closed = { ...base, id: 1, state: 'false_alarm' as const };
+    expect(openResponseOf([closed, base])).toBe(base);
+    expect(openResponseOf([closed])).toBeNull();
+  });
+
+  test('the headline reads in the user language', () => {
+    expect(headlineWords(headlineOf(base, 1), es)).toBe('Llamando · paso 1 de 3');
+    expect(headlineWords({ key: 'attended', name: 'Luis' }, es)).toBe('Luis está atendiendo');
   });
 });

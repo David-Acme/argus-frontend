@@ -7,7 +7,12 @@ import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runServiceAction } from '@/shared/libs/service-action';
-import { alertsFor, canRespond, withVerdict } from '@/features/response/model/response';
+import {
+  alertsFor,
+  canRespond,
+  openResponseOf,
+  withVerdict,
+} from '@/features/response/model/response';
 import { bindResponseFeed } from '@/features/response/services/response-feed';
 import { responseService } from '@/features/response/services/response.service';
 import { useResponseStore } from '@/features/response/stores/response.store';
@@ -51,9 +56,15 @@ export function useResponses(): IncidentResponse[] {
   return useMemo(() => alertsFor(view, responses, nowSeconds), [view, responses, nowSeconds]);
 }
 
+export function useOpenResponse(): IncidentResponse | null {
+  return openResponseOf(useResponses());
+}
+
 export function useResponse(responseId: number | null | undefined): IncidentResponse | null {
   useResponseSession();
-  return useResponseStore((state) => (responseId == null ? null : (state.responses[responseId] ?? null)));
+  return useResponseStore((state) =>
+    responseId == null ? null : (state.responses[responseId] ?? null)
+  );
 }
 
 export function useResponseVerdict() {
@@ -77,14 +88,21 @@ export function useResponseVerdict() {
             : undefined,
         call: () => {
           store.apply(
-            withVerdict(response, verdict, { userId: user.id, name: user.name }, Math.floor(Date.now() / 1000))
+            withVerdict(
+              response,
+              verdict,
+              { userId: user.id, name: user.name },
+              Math.floor(Date.now() / 1000)
+            )
           );
           return responseService.decide(response.id, verdict);
         },
         errorTitle: t('screens.response.verdict-failed'),
       });
       if (!result?.info) {
-        useResponseStore.setState((state) => ({ responses: { ...state.responses, [before.id]: before } }));
+        useResponseStore.setState((state) => ({
+          responses: { ...state.responses, [before.id]: before },
+        }));
         return false;
       }
       store.apply(result.info);

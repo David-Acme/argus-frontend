@@ -14,7 +14,7 @@ import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { shouldUseQrSupportingPane } from '@/features/qr/model/qr-layout';
 import { cn } from '@/shared/libs/utils';
-import { CameraView } from 'expo-camera';
+import { DeviceCamera } from '@/shared/components/device-camera/device-camera';
 import { Redirect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
@@ -125,7 +125,7 @@ function QrScannerScreen() {
           isSupportingPane && 'border-border-subtle m-5 overflow-hidden rounded-4xl border'
         )}>
         {granted ? (
-          <CameraView
+          <DeviceCamera
             style={StyleSheet.absoluteFill}
             mute
             active={!keyboard.fullyOpen}

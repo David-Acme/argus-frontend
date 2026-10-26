@@ -7,7 +7,7 @@ const read = (path: string) => readFileSync(join(import.meta.dir, '../../../../s
 const DETAIL = read('features/cameras/screens/camera-detail-screen.tsx');
 const LIVE_PANEL = read('features/cameras/components/camera-live-panel.tsx');
 const STAGE = read('features/cameras/components/camera-live-stage.tsx');
-const THREAD_ROW = read('features/home/components/notification-thread-row.tsx');
+const NEWS_ITEM = read('features/home/components/feed/news-item.tsx');
 const APP_LAYOUT = read('app/(app)/_layout.tsx');
 
 describe('the camera detail carries the camera sight surfaces', () => {
@@ -46,9 +46,9 @@ describe('the camera detail carries the camera sight surfaces', () => {
 });
 
 describe('notices and incidents', () => {
-  test('a sight notice renders its own title and answers in the thread row', () => {
-    expect(THREAD_ROW).toContain('const sight = useSightNotice(thread.kind, latest.data);');
-    expect(THREAD_ROW).toContain('<SightNoticeActions notice={sight.notice}');
+  test('a sight notice renders its own title and answers in the feed item', () => {
+    expect(NEWS_ITEM).toContain('const sight = useSightNotice(thread.kind, thread.latest.data);');
+    expect(NEWS_ITEM).toContain('<SightNoticeActions notice={sight.notice}');
   });
 
   test('evidence is kept as soon as a tamper notice lands, for every signed-in screen', () => {

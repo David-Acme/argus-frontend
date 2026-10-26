@@ -42,7 +42,7 @@ export function StatusDemo() {
           meta={copy.atHomeMeta}
           stats={SECURITY}
           presence="idle"
-          dense
+          scale="dense"
         />
       </LabCase>
       <LabCase id="hero-night" block>
@@ -61,7 +61,7 @@ export function StatusDemo() {
       <LabCase id="alert" block>
         <Status
           tone="alert"
-          secondary
+          scale="secondary"
           sentence={copy.heroAlert}
           meta={copy.heroAlertMeta}
           presence="alert"

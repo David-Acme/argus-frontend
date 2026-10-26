@@ -67,7 +67,7 @@ test('every control on the section-2 screens has a name, and no two different co
   await store(baseUrl, 'project', seededProject);
   await second.open();
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => second.page.getByRole('heading', { name: 'Welcome, Ana' }).count(), { timeout: 10000 }).toBe(1);
+  await expect.poll(() => second.page.getByText(/Good (morning|afternoon|evening), Ana/).first().count(), { timeout: 10000 }).toBe(1);
 
   const missing: string[] = [];
   const repeated: string[] = [];

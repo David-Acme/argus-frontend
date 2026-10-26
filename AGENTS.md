@@ -345,6 +345,47 @@ src/core/stores/qr-scan.store.ts
   `nitro.json` (`autolinking.ArgusNet`, `androidCxxLibName`, `iosModuleName`) —
   renaming it breaks codegen.
 
+#### Rule 12 today: one pattern for where code goes and how it is imported
+
+Owner decision (2026-10-26). Every new or touched file follows this. Code written
+before it is normalised in one pass when the redesign closes (the pending
+list in CONTEXT.md › "Pending normalisation").
+
+**Where a constant or a type lives: decided by who uses it (the 2+ rule).**
+
+| Used by | Constants | Types |
+|---|---|---|
+| one feature | `src/features/<feature>/constants/<name>.constant.ts` | that feature's `model/` (next to the logic that needs it) |
+| two or more features, or no domain at all (platform, layout, i18n, cache keys, sheets, sync) | `src/shared/constants/<domain>.constant.ts` | `src/core/types/<domain>.type.ts` |
+| the server's vocabulary (enums, wire values) | its contract-tested module | `z.infer` of its schema, never written twice |
+
+- Everything starts in its feature.
+- It moves to `shared/` (or `core/types`) in the same change that gives it a second consumer feature.
+- It moves back when only one consumer is left.
+- A feature never keeps a loose `constants.ts`, only the `constants/` folder.
+- Shared type files are named `<name>.type.ts`, never `-types.ts`.
+
+**How to import.**
+
+1. Inside your own feature, use the alias `@/features/<feature>/...`, never `./` or `../`. The only exception is the feature's own `index.ts` barrel.
+2. Another feature is reached only through its `index.ts`: `@/features/<other>`.
+3. Type-only imports are `import type { X } from '...'`, never `import { type X }`.
+4. Imports sit at the top of the file (`import/first`, `import/no-duplicates`). They come in this order:
+   1. external packages;
+   2. `@/core/...`;
+   3. `@/shared/...`;
+   4. other features;
+   5. your own feature.
+5. Barrels list named exports; no new `export *`.
+6. In a Bun test that mocks modules, the layout is: static imports, then every `mock.module`, then one `await import` block, then the tests (`argus/test-module-layout`).
+
+**Interior of a feature.**
+- A feature holds `screens/`, `components/`, `hooks/`, `model/`, `services/`, `constants/` and `stores/`, plus `index.ts`.
+- A folder exists only when it holds a file.
+- Pure decisions live in `model/`, with unit tests.
+- A component reads data through its hook.
+- A screen composes sections.
+
 ### C. Data, state and trust
 
 13. **Wire data is validated, never cast.**

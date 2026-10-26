@@ -234,11 +234,12 @@
   --spacing-presence-think: 26px;
   --spacing-column-side: 320px;
   --spacing-column-aside: 300px;
-  --spacing-column-feed: 330px;
-  --spacing-column-feed-wide: 380px;
-  --spacing-column-aside-wide: 340px;
+  --spacing-column-wide: 340px;
+  --spacing-column-happened: 330px;
+  --spacing-column-happened-wide: 380px;
   --spacing-mode-band: 360px;
   --spacing-mode-band-wide: 440px;
+  --spacing-column-feed: 620px;
   --spacing-preview-phone: 760px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;

@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import type { CameraView } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Vibration } from 'react-native';
@@ -16,6 +16,7 @@ import { faceErrorFromUnknown, type FaceError } from '@/features/auth/model/face
 import { clearInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
 import { invitationRevokedBy } from '@/features/auth/model/invitation-refusal';
 import { consentDraft } from '@/features/privacy';
+import { useCameraPermissions } from '@/shared/components/device-camera/device-camera';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { submitConsentDraft } from '@/features/auth/model/consent-submit';
 import { flowOf, nextHref } from '@/features/auth/model/onboarding-flow';

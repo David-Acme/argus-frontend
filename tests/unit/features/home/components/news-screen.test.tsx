@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { news, params, reset, routes, row, setRows } from './feed-stubs';
+import { news, params, removal, removed, reset, routes, row, setRows } from './feed-stubs';
 
 const { default: NewsScreen } = await import('@/features/home/screens/news-screen');
 
@@ -38,6 +38,17 @@ describe('NewsScreen', () => {
     render(<NewsScreen />);
     expect(screen.getByText('Aquí verás lo que pase en tu casa')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Ver más' })).toBeNull();
+  });
+
+  test('each item can be deleted from the full feed, when the role may delete', () => {
+    setRows([row('1'), row('2')]);
+    const { unmount } = render(<NewsScreen />);
+    fireEvent.click(screen.getByRole('button', { name: 'Borrar notificación: Aviso 2' }));
+    expect(removed).toHaveLength(1);
+    unmount();
+    removal.allowed = false;
+    render(<NewsScreen />);
+    expect(screen.queryByRole('button', { name: /Borrar notificación/ })).toBeNull();
   });
 
   test('a link to one notification still opens that notification', () => {

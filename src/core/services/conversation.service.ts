@@ -37,7 +37,6 @@ const SUMMARY_REFRESH_MS = 120;
 
 const MAX_COUNTERPARTS = 200;
 
-const ARGUS_THREAD = '0';
 
 const NEWEST_FIRST: Clause[] = [Q.sortBy('created_at', Q.desc), Q.sortBy('id', Q.desc)];
 
@@ -63,10 +62,6 @@ class ConversationService extends DatabaseService<'conversation_message'> {
       auditTime(SUMMARY_REFRESH_MS),
       switchMap(() => from(this.summaryFacts(userId)))
     );
-  }
-
-  observeArgusTalks(userId: string): Observable<number> {
-    return this.observeTotal([Q.where('user_id', userId), Q.where('counterpart_id', ARGUS_THREAD)]);
   }
 
   observeThreadWindow(userId: string, counterpartId: string, window: ThreadWindow): Observable<ConversationThreadInput> {
