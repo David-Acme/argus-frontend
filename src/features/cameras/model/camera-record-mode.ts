@@ -17,10 +17,6 @@ export function recordModeOptions(): readonly CameraRecordMode[] {
   return RECORD_MODE_ORDER;
 }
 
-export function recordModeSummary(): Record<CameraRecordMode, number> {
-  return { off: 0, motion: 0, events: 0, continuous: 0 };
-}
-
 export function recordsSomething(mode: CameraRecordMode): boolean {
   return mode !== 'off';
 }

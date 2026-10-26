@@ -6866,6 +6866,64 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
 
+## Seguridad (2026-10-26, Phase 3, p3/seguridad)
+
+The Seguridad tab of the redesign spec §9.2, built from the 26 components in
+`src/features/security/screens/security-screen.tsx` and its sections under
+`src/features/security/components/page/`. The camera list at `/cameras` folds
+into this slice (`camera-list-screen.tsx`); the live view stays the cameras
+slice's.
+
+- **One hook per region, decisions in `model/`.** `useSecurity` holds the place
+  scope, the episodes of that scope, the visits and the mode change;
+  `useCameraTiles` reads the cached camera rows and the overview once per
+  screen, and only the tiles on screen ask for thumbnails (`useCameraFrames`).
+  The hero's sentence, tone, aura, presence and stats are
+  `securityStatus`/`statusWords`/`statusStats`; the alert is the newest active
+  episode Argus told someone about at `high` or `critical`, and an active
+  episode alone is attention. A pending review alone stays calm, as the
+  prototype draws it: the stat in `attn` says it.
+- **The mode applies at once.** `useGuardMode` keeps the masked-camera warning
+  and the disarm PIN of the old picker, writes optimistically, plays the
+  `success` haptic and offers Deshacer in the toast; Deshacer runs the same
+  path with the modes the server answered, so lowering back asks for the PIN
+  when the place needs it. The segmented control slides its pill on the
+  `snappy` spring (`Segmented`), and the hero passes Estela's `modechange` cue.
+- **SOS is hold-to-confirm** (`Button` with `hold`, R-D10): 1.5 s
+  (`motion.holdConfirm`), a `selection` tick at each third and `warning` at the
+  end, driven by the animation on the UI thread; a tap is the two-step
+  alternative and opens the destructive `Confirm`.
+- **Places.** With one place the mode control is on the page; with several the
+  hero carries the picker («Casa ▾» with «Todos los lugares»), the default place
+  first. Places, visits, maintenance and the full feed are short pushed screens
+  (`/security/places`, `/visits`, `/maintenance`, `/episodes`); a place keeps
+  `/security/{id}`, whose episode list became the same rows and sheet.
+- **Episode review lives in the episode sheet** (`EpisodeSheet`): ¿Acertó? is a
+  `Choice`, keeping the incident is a `Switch`, the footer's one action is «Ver
+  cámara», or «Fui yo» for an active tamper.
+- **Desktop.** The status band holds the picker, the mode and SOS. The camera
+  column's width allows 2, 3 or 4 columns (`maxColumnsFor`,
+  `layout.mediaGridThree`/`mediaGridFour`: the prototype draws three at 1280
+  and four at 2560), and `gridColumnsFor` picks, within that, the shape that is
+  never taller than wide, then the one whose last row is fullest, then the
+  fewer columns: 4 → 2×2, 5 → 3+2, 6 → 3×2, 7 → 4+3, so no lone tile sits
+  beside a blank. The tiles stretch evenly over their minimum height. The
+  feed and aside columns grow nothing (`ScreenColumn grows={false}`) and end on
+  their content; a short card is never stretched into empty space. From
+  1700 px (`layout.fourColumns`) a third column adds visits, places, maintenance
+  and activity per camera; below it the second column carries visits and the
+  other «Más» rows so nothing is out of reach.
+- **The alert sentence stays short** so the band never truncates it: who and
+  where («Alguien en Patio trasero», «3 personas en Patio trasero»), with what
+  in the meta; a tamper says what happened and the camera goes to the meta.
+- **No data is a designed state** (`starters`): two cameras or fewer add «Qué
+  hará Argus con tus cámaras», an answered empty feed adds «Prueba esto», and
+  no camera at all is the empty state with the wizard («Conecta tu primera
+  cámara»), at every width.
+- **Spoken names.** A tile's Ver and Hablar and each feed's Revisar show one
+  word and say which camera or episode they act on (`ButtonLabel`), so no two
+  controls share a name.
+
 ## Inicio: composition, hero, band and states (Phase 2, T4, 2026-10-26)
 
 `src/features/home/screens/home-screen.tsx` lays out the sections of T5, T6

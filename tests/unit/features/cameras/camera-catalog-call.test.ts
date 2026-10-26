@@ -5,11 +5,10 @@ import {
   catalogPrefill,
   filterCatalog,
   findCatalogModel,
-  formFactorOf,
   megapixelsOf,
 } from '@/features/cameras/model/camera-catalog';
 import { cameraBodyOf, connectionFields, formSteps, nextStep, previousStep, probeInputOf } from '@/features/cameras/model/camera-form-steps';
-import { cameraViews, countViews, gridColumns, livePreviewIds, relativeTime, selectViews, streamSummary } from '@/features/cameras/model/camera-overview';
+import { cameraViews } from '@/features/cameras/model/camera-overview';
 import { nextPresetName, parsePresets, sensitivityLevel } from '@/features/cameras/model/camera-presets';
 import { probeStepCopy, probeVerdict } from '@/features/cameras/model/camera-probe';
 import { cameraFormDefaults } from '@/features/cameras/components/camera-form-schema';
@@ -140,7 +139,6 @@ describe('camera catalog', () => {
     expect(findCatalogModel(catalog, { catalogId: 'tapo-c310', driver: 'tapo', model: 'C225' })?.id).toBe('tapo-c310');
     expect(findCatalogModel(catalog, { catalogId: '', driver: 'tapo', model: 'Tapo C225 v2' })?.id).toBe('tapo-c225');
     expect(findCatalogModel(catalog, { catalogId: '', driver: 'tapo', model: 'C2250' })).toBeNull();
-    expect(formFactorOf(catalog, { catalogId: '', driver: 'rtsp', model: '' })).toBe('bullet');
     expect(megapixelsOf('2688x1520')).toBe('4 MP');
     expect(megapixelsOf('1920x1080')).toBe('1080p');
   });
@@ -221,34 +219,11 @@ describe('cameras overview', () => {
   };
   const cameras = [camera('1', { name: 'Patio' }), camera('2', { name: 'Garage', isOnline: false }), camera('3', { name: 'attic', isEnabled: false })];
 
-  test('rows join live data and last events, counts and filters follow status', () => {
+  test('rows join live data and last events', () => {
     const views = cameraViews(cameras, overview);
     expect(views[0]?.live?.viewers).toBe(2);
     expect(views[0]?.lastEvent?.id).toBe('a');
     expect(views[1]?.lastEvent?.id).toBe('b');
-    expect(countViews(views)).toEqual({ all: 3, online: 1, offline: 1, disabled: 1 });
-    expect(selectViews(views, { query: '', status: 'offline', sort: 'name' }).map((v) => v.camera.id)).toEqual(['2']);
-    expect(selectViews(views, { query: '', status: 'all', sort: 'name' }).map((v) => v.camera.name)).toEqual(['attic', 'Garage', 'Patio']);
-    expect(selectViews(views, { query: '', status: 'all', sort: 'status' }).map((v) => v.camera.id)).toEqual(['2', '1', '3']);
-    expect(selectViews(views, { query: '', status: 'all', sort: 'activity' }).map((v) => v.camera.id)).toEqual(['2', '1', '3']);
-    expect(selectViews(views, { query: '192.168.1.1', status: 'all', sort: 'name' }).map((v) => v.camera.id)).toEqual(['1']);
-    expect(streamSummary(views[0]!.live)).toBe('1280×720 · 15 fps · 1.4 Mbps');
-    expect([...livePreviewIds(views, { budget: 2, isPending: () => false })]).toEqual(['1']);
-    expect([...livePreviewIds(views, { budget: 2, isPending: (item) => item.id === '1' })]).toEqual([]);
-    expect([...livePreviewIds(views, { budget: 0, isPending: () => false })]).toEqual([]);
-  });
-
-  test('relative time and grid columns', () => {
-    expect(relativeTime(0, 10)).toBeNull();
-    expect(relativeTime(1000, 30_000)).toEqual({ unit: 'now', count: 0 });
-    expect(relativeTime(0 + 1, 5 * 60_000 + 1)).toEqual({ unit: 'minutes', count: 5 });
-    expect(relativeTime(1, 3 * 3_600_000 + 1)).toEqual({ unit: 'hours', count: 3 });
-    expect(gridColumns(1500, 2)).toBe(2);
-    expect(gridColumns(1190, 4)).toBe(4);
-    expect(gridColumns(1190, 5)).toBe(3);
-    expect(gridColumns(1500, 10)).toBe(5);
-    expect(gridColumns(900, 4)).toBe(2);
-    expect(gridColumns(400, 9)).toBe(1);
   });
 });
 

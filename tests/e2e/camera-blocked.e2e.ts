@@ -38,8 +38,9 @@ test('a camera in privacy mode offers neither talk nor movement, and says why', 
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await app.open('/cameras');
-  await expect(screen.getByRole('button', 'Talk through Dormitorio')).toBeDisabled({ timeout: 10000 });
-  await screen.getByRole('button', 'Dormitorio, Online').click();
+  await expect(screen.getByRole('button', 'Dormitorio, Private')).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('button', 'Talk through Dormitorio')).toBeHidden();
+  await screen.getByRole('button', 'Dormitorio, Private').click();
   await expect(screen.getByText(PRIVACY_REASON, { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Move', { exact: true })).toBeHidden();
   await expect(screen.getByRole('switch', 'Listen on this camera')).toBeDisabled();

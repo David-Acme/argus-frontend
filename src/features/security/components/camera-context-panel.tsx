@@ -7,7 +7,7 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { CameraContextEditor } from '@/features/security/components/camera-context-editor';
-import { CAMERA_ROLE_ICONS, CAMERA_ROLE_KEYS, WEEK_DAY_KEYS } from '@/features/security/constants';
+import { CAMERA_ROLE_ICONS, CAMERA_ROLE_KEYS, WEEK_DAY_KEYS } from '@/features/security/constants/security.constant';
 import { parseHours, summarizeHours } from '@/features/security/model/hours';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';

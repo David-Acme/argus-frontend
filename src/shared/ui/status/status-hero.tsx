@@ -4,17 +4,22 @@ import { useAnnounce } from '@/shared/hooks/use-announce';
 import { layout, size, useThemeTokens, useWindowLayout, type AuraTone } from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Chip } from '@/shared/ui/chip';
-import { Presence, useHeroPresence, type PresenceState } from '@/shared/ui/presence';
+import {
+  Presence,
+  useHeroPresence,
+  type PresenceCue,
+  type PresenceState,
+} from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text, type TextVariant } from '@/shared/ui/text';
 import { StatusFade } from './status-fade';
-import type { HeroStatusProps, StatusStat, StatusTone } from './status-types';
+import type { HeroScale, HeroStatusProps, StatusStat, StatusTone } from './status-types';
 
 type StatsProps = { stats: readonly StatusStat[]; wrap: boolean };
 
 type StatChipProps = { stat: StatusStat };
 
-type HeroPresenceProps = { state: PresenceState; size: number };
+type HeroPresenceProps = { state: PresenceState; size: number; event?: PresenceCue };
 
 const AURA: Record<StatusTone, AuraTone> = { calm: 'calm', attention: 'attn', alert: 'alert' };
 
@@ -38,9 +43,9 @@ function StatChip({ stat }: StatChipProps) {
   );
 }
 
-function HeroPresence({ state, size: side }: HeroPresenceProps) {
+function HeroPresence({ state, size: side, event }: HeroPresenceProps) {
   const paused = useHeroPresence();
-  return <Presence state={state} size={side} paused={paused} />;
+  return <Presence state={state} size={side} paused={paused} event={event} />;
 }
 
 function Stats({ stats, wrap }: StatsProps) {
@@ -55,20 +60,28 @@ function Stats({ stats, wrap }: StatsProps) {
   );
 }
 
-function sentenceVariant(secondary: boolean | undefined, wide: boolean): TextVariant {
+const PRESENCE_SIZE: Record<HeroScale | 'page', number> = {
+  page: size.presenceHero,
+  dense: size.presenceHeroDense,
+  secondary: size.presenceHeroSmall,
+};
+
+function sentenceVariant(scale: HeroScale | undefined, wide: boolean): TextVariant {
   if (wide) return 'hero';
-  return secondary ? 'heroSecondary' : 'heroCompact';
+  return scale === 'secondary' ? 'heroSecondary' : 'heroCompact';
 }
 
 function HeroRow(props: HeroStatusProps & { wide: boolean }) {
-  const { tone, sentence, meta, stats = [], presence, secondary, wide } = props;
-  const presenceSize = secondary ? size.presenceHeroSmall : size.presenceHero;
+  const { tone, sentence, meta, stats = [], presence, presenceEvent, scale, wide } = props;
+  const presenceSize = PRESENCE_SIZE[scale ?? 'page'];
   return (
     <View role={tone === 'alert' ? 'alert' : undefined}>
       <View className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
-        {presence ? <HeroPresence state={presence} size={presenceSize} /> : null}
+        {presence ? (
+          <HeroPresence state={presence} size={presenceSize} event={presenceEvent} />
+        ) : null}
         <StatusFade change={sentence} grow>
-          <Text variant={sentenceVariant(secondary, wide)} heading={2}>
+          <Text variant={sentenceVariant(scale, wide)} heading={2}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>
@@ -79,7 +92,8 @@ function HeroRow(props: HeroStatusProps & { wide: boolean }) {
   );
 }
 
-function HeroBand({ tone, sentence, meta, stats = [], presence, aura, action }: HeroStatusProps) {
+function HeroBand(props: HeroStatusProps) {
+  const { tone, sentence, meta, stats = [], presence, presenceEvent, aura, action } = props;
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.card };
   return (
@@ -91,9 +105,11 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, aura, action }: 
         className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y web:focus-inset flex-row flex-nowrap items-center overflow-hidden"
         style={card}>
         <Aura tone={aura ?? AURA[tone]} mode="band" />
-        {presence ? <HeroPresence state={presence} size={size.presenceBand} /> : null}
+        {presence ? (
+          <HeroPresence state={presence} size={size.presenceBand} event={presenceEvent} />
+        ) : null}
         <StatusFade change={sentence} grow>
-          <Text variant="heroBand" heading={2} numberOfLines={1}>
+          <Text variant="heroBand" heading={2} numberOfLines={2}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>

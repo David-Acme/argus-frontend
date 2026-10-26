@@ -1,4 +1,48 @@
-import type { GuardCameraRole, GuardEnvironmentKind, GuardMode, GuardReason, IconName } from '@/core/types';
+import type {
+  GuardCameraRole,
+  GuardEnvironmentKind,
+  GuardMode,
+  IconName,
+  TranslationKey,
+} from '@/core/types';
+import type { IconGlyph } from '@/shared/ui/icon';
+
+export const MODE_ORDER: readonly GuardMode[] = ['home', 'night', 'away', 'armed'];
+
+export const MODE_LABEL: Readonly<Record<GuardMode, TranslationKey>> = {
+  home: 'screens.security.mode.home',
+  night: 'screens.security.mode.night',
+  away: 'screens.security.mode.away',
+  armed: 'screens.security.mode.armed',
+};
+
+export const MODE_SHORT: Readonly<Record<GuardMode, TranslationKey>> = {
+  home: 'screens.security.mode-short.home',
+  night: 'screens.security.mode-short.night',
+  away: 'screens.security.mode-short.away',
+  armed: 'screens.security.mode-short.armed',
+};
+
+export const MODE_META: Readonly<Record<GuardMode, TranslationKey>> = {
+  home: 'screens.security.hero.meta-home',
+  night: 'screens.security.hero.meta-night',
+  away: 'screens.security.hero.meta-away',
+  armed: 'screens.security.hero.meta-armed',
+};
+
+export const MODE_GLYPH: Readonly<Partial<Record<GuardMode, IconGlyph>>> = {
+  home: 'home',
+  night: 'moon',
+};
+
+export const PLACE_GLYPH: Readonly<Record<GuardEnvironmentKind, IconGlyph>> = {
+  home: 'home',
+  office: 'door',
+  commercial: 'door',
+  restaurant: 'door',
+  warehouse: 'door',
+  outdoor: 'globe',
+};
 
 export const GUARD_MODE_ICONS: Readonly<Record<GuardMode, IconName>> = {
   home: 'home',
@@ -10,10 +54,6 @@ export const GUARD_MODE_ICONS: Readonly<Record<GuardMode, IconName>> = {
 export const GUARD_GUEST_HOURS: readonly number[] = [1, 2, 4, 8, 12, 24];
 
 export const GUARD_GUEST_DEFAULT_HOURS = 4;
-
-export const EPISODE_ROW_ESTIMATE = 180;
-
-export const EPISODE_LIST_MAX_HEIGHT = 560;
 
 export const ENVIRONMENT_KINDS: readonly GuardEnvironmentKind[] = [
   'home',
@@ -78,31 +118,11 @@ export const CAMERA_ROLE_KEYS = {
 
 export const CAMERA_ROLE_OUTDOOR: readonly GuardCameraRole[] = ['entrance', 'perimeter'];
 
-export const REASON_KEYS = {
-  weapon: 'weapon',
-  after_hours: 'after-hours',
-  nobody_home: 'nobody-home',
-  armed: 'armed',
-  night: 'night',
-  alert_zone: 'alert-zone',
-  several_strangers: 'several-strangers',
-  repeat_visits: 'repeat-visits',
-  escalating: 'escalating',
-  lingering: 'lingering',
-  face_hidden: 'face-hidden',
-  expected_guest: 'expected-guest',
-  with_resident: 'with-resident',
-  with_guest: 'with-guest',
-  public_hours: 'public-hours',
-  staff_hours: 'staff-hours',
-  area_in_use: 'area-in-use',
-  passerby: 'passerby',
-  brief: 'brief',
-  watchlist: 'watchlist',
-} as const satisfies Record<GuardReason, string>;
-
 export const WEEK_DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
-export const DIGEST_HOUR_OPTIONS: readonly number[] = [-1, ...Array.from({ length: 24 }, (_, hour) => hour)];
+export const DIGEST_HOUR_OPTIONS: readonly number[] = [
+  -1,
+  ...Array.from({ length: 24 }, (_, hour) => hour),
+];
 
 export const EPISODE_MARKED_RETENTION_DAYS = 120;

@@ -222,6 +222,7 @@
   --spacing-rail: 88px;
   --spacing-presence-hero: 66px;
   --spacing-presence-hero-small: 56px;
+  --spacing-presence-hero-dense: 58px;
   --spacing-presence-band: 64px;
   --spacing-presence-tab: 36px;
   --spacing-presence-brand: 30px;
@@ -234,6 +235,10 @@
   --spacing-column-side: 320px;
   --spacing-column-aside: 300px;
   --spacing-column-wide: 340px;
+  --spacing-column-happened: 330px;
+  --spacing-column-happened-wide: 380px;
+  --spacing-mode-band: 360px;
+  --spacing-mode-band-wide: 440px;
   --spacing-column-feed: 620px;
   --spacing-preview-phone: 760px;
   --text-hero: 36px;
