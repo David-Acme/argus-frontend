@@ -7,9 +7,7 @@ export const sessions = {
   desktop: 'Escritorio',
   other: 'Otros dispositivos',
   'only-this': 'Solo tienes abierta esta sesión.',
-  'only-this-hint': 'Cuando entres desde otro teléfono u ordenador aparecerá aquí.',
   'load-error': 'No se pudieron cargar tus sesiones.',
-  loading: 'Buscando tus sesiones…',
   'none-returned': 'Argus no devolvió ninguna sesión tuya.',
   platform: {
     android: 'Android',
@@ -53,6 +51,22 @@ export const sessions = {
   'sign-out-everywhere': 'Cerrar sesión en todos los dispositivos',
   'manage-sessions': 'Sesiones y dispositivos',
   'manage-sessions-hint': 'Mira dónde tienes Argus abierto y cierra lo que sobre.',
+  'connect-device': 'Conectar otro dispositivo',
+  'connect-device-meta': 'Con un código QR, sin escribir nada',
+  'close-others-meta': 'Este dispositivo seguirá abierto',
+  'close-all-meta': 'También en este dispositivo',
+  'only-this-meta': 'Cuando entres desde otro dispositivo aparecerá aquí',
+  'sign-out-meta': 'Volverás a la pantalla de entrada',
+  home: {
+    title: 'Argus en casa',
+    address: 'Argus en {address}',
+    paired: 'Vinculado desde el {date}',
+    unpair: 'Desvincular este dispositivo',
+    'unpair-meta': 'Cierra la sesión y olvida a Argus en este dispositivo',
+    'unpair-confirm-title': '¿Desvincular este dispositivo?',
+    'unpair-confirm-description':
+      'Tendrás que volver a vincularlo con el código de tu casa para usar Argus aquí.',
+  },
   admin: {
     title: 'Dispositivos conectados',
     hint: 'Quién tiene Argus abierto ahora y desde dónde.',

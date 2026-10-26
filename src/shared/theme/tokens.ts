@@ -191,6 +191,7 @@ export const size = {
   wellSmall: 36,
   avatar: 36,
   avatarLarge: 56,
+  avatarPortrait: 80,
   button: 50,
   buttonCompact: 40,
   field: 48,

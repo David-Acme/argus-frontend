@@ -21,17 +21,27 @@ interface RouteCase {
   path: string;
   text: string;
   banner: boolean;
+  shown: boolean;
 }
 
 const CASES: RouteCase[] = [
-  { name: 'home', remote: true, cut: {}, path: '/profile', text: 'Conectado en casa', banner: false },
+  {
+    name: 'home',
+    remote: true,
+    cut: {},
+    path: '/profile/sessions',
+    text: 'Conectado en casa',
+    banner: false,
+    shown: false,
+  },
   {
     name: 'cloud',
     remote: true,
     cut: { [LAN_HOST]: 'connect' },
-    path: '/profile',
+    path: '/profile/sessions',
     text: 'Conectado por la nube',
     banner: false,
+    shown: false,
   },
   {
     name: 'unreachable',
@@ -40,6 +50,7 @@ const CASES: RouteCase[] = [
     path: '/',
     text: 'No puedo conectar con Argus en casa',
     banner: true,
+    shown: true,
   },
   {
     name: 'remote-unavailable',
@@ -48,11 +59,15 @@ const CASES: RouteCase[] = [
     path: '/',
     text: 'No encuentro a Argus',
     banner: true,
+    shown: true,
   },
 ];
 
 const expectDismissibleNotice = async (page: Page, text: string): Promise<void> => {
-  await page.getByRole('button', { name: new RegExp(`^${text}\\. `) }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(`^${text}\\. `) })
+    .first()
+    .click();
   const dot = page.getByRole('button', { name: text, exact: true });
   await expect.poll(() => dot.count(), { timeout: 5000 }).toBe(1);
   await dot.click();
@@ -76,7 +91,9 @@ const seedFor = (routeCase: RouteCase): ShimSeed => {
 };
 
 for (const routeCase of CASES) {
-  test(`the route status reads "${routeCase.text}" at phone width`, async ({ app }) => {
+  test(`the route status ${routeCase.shown ? 'reads' : 'never reads'} "${routeCase.text}" at phone width`, async ({
+    app,
+  }) => {
     const baseUrl = app.baseUrl ?? '';
     await control(baseUrl, 'reset');
     const connection = await chromium.connectOverCDP(await cdpEndpoint());
@@ -86,6 +103,13 @@ for (const routeCase of CASES) {
       await context.addInitScript(installTauriShim, seedFor(routeCase));
       const page = await context.newPage();
       await page.goto(new URL(routeCase.path, baseUrl).toString());
+      if (!routeCase.shown) {
+        await expect
+          .poll(() => page.getByText(/^Argus en /).count(), { timeout: 30000 })
+          .toBeGreaterThan(0);
+        expect(await page.getByText(routeCase.text).count()).toBe(0);
+        return;
+      }
       await expect.poll(() => page.getByText(routeCase.text).count(), { timeout: 30000 }).toBe(1);
       if (routeCase.banner) await expectDismissibleNotice(page, routeCase.text);
       if (SHOTS) {

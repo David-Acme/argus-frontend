@@ -64,7 +64,11 @@ function candidateClip(key: string, choice: string, settings: readonly Setting[]
   }
 }
 
-export function previewClipId(key: string, choice: string, settings: readonly Setting[]): string | null {
+export function previewClipId(
+  key: string,
+  choice: string,
+  settings: readonly Setting[]
+): string | null {
   const clip = candidateClip(key, choice, settings);
   return clip !== null && KNOWN_CLIPS.has(clip) ? clip : null;
 }

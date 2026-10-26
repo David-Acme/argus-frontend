@@ -1,9 +1,9 @@
 export const modules = {
-  'action-of': '{action}: {module}',
   title: 'Modules',
   subtitle: 'Choose what Argus does at home. Everything is installed and processed on your server.',
   'step-title': 'What should Argus do for you?',
-  'step-subtitle': 'Pick the modules you want. Your server installs them while you carry on, and you can change them any time.',
+  'step-subtitle':
+    'Pick the modules you want. Your server installs them while you carry on, and you can change them any time.',
   included: 'Included',
   recommended: 'Recommended',
   'coming-soon': 'Coming soon',
@@ -14,6 +14,9 @@ export const modules = {
   'on-server': '{size} on your server',
   requires: 'Needs {names}',
   'needed-by': 'Needed by {names}, so it is installed too',
+  'danger-meta': 'Its files are removed. You decide what happens to your data.',
+  'manage-title': 'Manage modules',
+  'manage-meta': 'Install, uninstall and follow each one',
   'core-name': 'Core',
   verdict: {
     ok: 'Your server handles it well',
@@ -43,7 +46,11 @@ export const modules = {
   },
   'job-kind': {
     uninstall: { running: 'Uninstalling', done: 'Uninstalled', failed: 'Could not uninstall' },
-    purge: { running: 'Deleting your data', done: 'Data deleted', failed: 'Could not delete the data' },
+    purge: {
+      running: 'Deleting your data',
+      done: 'Data deleted',
+      failed: 'Could not delete the data',
+    },
   },
   amount: '{done} of {total}',
   speed: '{speed}/s',
@@ -58,14 +65,19 @@ export const modules = {
     network: 'The download was cut off. When you retry, Argus picks up where it left off.',
     source_unavailable: 'The download site is not answering right now. Try again later.',
     checksum_mismatch: 'A file arrived damaged and was discarded. Retry to fetch it again.',
-    health_check_failed: 'It installed but did not start properly. Retry; if it happens again, check the server.',
+    health_check_failed:
+      'It installed but did not start properly. Retry; if it happens again, check the server.',
     host_only: 'One part is prepared on the server itself. Run the command, then retry.',
     interrupted: 'The server restarted halfway. Retry to continue.',
     hardware_insufficient: 'Your server no longer has enough resources for this module.',
-    dependency_failed: 'A module this one needs could not be installed. Check that one first, then retry.',
-    owner_unreachable: 'Part of Argus did not answer during the installation. Check that the server is running and retry.',
-    remove_failed: '{part} could not delete its files. Retry; if it happens again, check the server.',
-    remove_unsupported: '{part} cannot uninstall its files yet. Update Argus on the server and retry.',
+    dependency_failed:
+      'A module this one needs could not be installed. Check that one first, then retry.',
+    owner_unreachable:
+      'Part of Argus did not answer during the installation. Check that the server is running and retry.',
+    remove_failed:
+      '{part} could not delete its files. Retry; if it happens again, check the server.',
+    remove_unsupported:
+      '{part} cannot uninstall its files yet. Update Argus on the server and retry.',
     purge_failed: '{part} could not delete its data. Retry: it continues with what is left.',
     purge_unsupported: '{part} cannot delete its data yet. Update Argus on the server and retry.',
     unknown: 'Something went wrong during the installation. Try again in a moment.',
@@ -84,7 +96,8 @@ export const modules = {
     other: 'A part of Argus',
   },
   'provisioned-title': 'One part is installed on the server',
-  'provisioned-hint': 'Whoever runs the server needs to install it once. After that, Argus uses it on its own.',
+  'provisioned-hint':
+    'Whoever runs the server needs to install it once. After that, Argus uses it on its own.',
   copy: 'Copy',
   copied: 'Copied',
   'host-command': 'Run this on the server:',
@@ -110,9 +123,11 @@ export const modules = {
   },
   impact: {
     'disable-title': 'Turn off {name}?',
-    'disable-description': 'This is what changes. Your data is kept and turning it back on is instant, with no downloads.',
+    'disable-description':
+      'This is what changes. Your data is kept and turning it back on is instant, with no downloads.',
     'uninstall-title': 'Uninstall {name}?',
-    'uninstall-description': 'This is what changes. Its files are removed from the server and space is freed.',
+    'uninstall-description':
+      'This is what changes. Its files are removed from the server and space is freed.',
     stops: {
       live_views: 'Live camera views close',
       camera_talk: 'Camera conversations close',
@@ -132,13 +147,17 @@ export const modules = {
     'stops-title': 'What stops',
     'nothing-stops': 'Nothing that is running stops.',
     'holders-title': 'Who is affected',
-    'holders-inactive': 'They keep their account. Their role is on hold and switches on again when you use {module} again.',
+    'holders-inactive':
+      'They keep their account. Their role is on hold and switches on again when you use {module} again.',
     'reassign-title': 'Choose a new role for whoever holds a role of this module',
-    'reassign-hint': 'It cannot be uninstalled without this. Changes are immediate and are kept in the history.',
+    'reassign-hint':
+      'It cannot be uninstalled without this. Changes are immediate and are kept in the history.',
     'reassign-pick': 'Choose role',
     'invitations-title': 'Pending invitations',
-    'invitations-revoked': '{count} are revoked for {roles}. Whoever got them will see why, and they can never be used again.',
-    'invitations-revoked-one': '1 is revoked for {roles}. Whoever got it will see why, and it can never be used again.',
+    'invitations-revoked':
+      '{count} are revoked for {roles}. Whoever got them will see why, and they can never be used again.',
+    'invitations-revoked-one':
+      '1 is revoked for {roles}. Whoever got it will see why, and it can never be used again.',
     'invitations-by': 'Sent by {names}.',
     'data-kept': 'Your data is kept.',
     'data-erased': 'Your data is deleted for good.',
@@ -151,9 +170,11 @@ export const modules = {
   },
   uninstall: {
     title: 'Uninstall {name}?',
-    'simple-description': 'Its files are deleted from the server and the space is freed. It keeps none of your data, so nothing is lost.',
+    'simple-description':
+      'Its files are deleted from the server and the space is freed. It keeps none of your data, so nothing is lost.',
     'data-title': 'Uninstall {name}',
-    'data-description': 'Its files are deleted from the server. What should happen to what it keeps?',
+    'data-description':
+      'Its files are deleted from the server. What should happen to what it keeps?',
     holds: 'It keeps:',
     'checking-data': 'Checking what data it keeps…',
     'data-unknown': 'Could not tell what data it keeps. To be safe, it is kept.',
@@ -161,7 +182,8 @@ export const modules = {
     'keep-hint': 'Only frees space. Reinstall it and your data comes back.',
     purge: 'Delete my data too',
     'purge-hint': 'Everything it keeps is deleted, photos and evidence included.',
-    'purge-warning': 'This cannot be undone. Nobody can recover this data, not even from the server.',
+    'purge-warning':
+      'This cannot be undone. Nobody can recover this data, not even from the server.',
     'type-name': 'Type “{name}” to confirm',
     'erase-title': 'Delete the data of {name}?',
     'erase-description': 'The module is already uninstalled; now what it kept is deleted.',
@@ -170,29 +192,36 @@ export const modules = {
     'required-by': 'Turn off {names} first: it needs this module to work.',
     'pin-invalid': 'That code is not right. Try again.',
     'pin-locked': 'Too many attempts with the code. Wait a few minutes and try again.',
-    'pin-needed': 'If you have a security code, we will ask for it before deleting; otherwise typing the name is enough.',
+    'pin-needed':
+      'If you have a security code, we will ask for it before deleting; otherwise typing the name is enough.',
     done: '{name} is being uninstalled',
     'purge-started': 'Deleting the data of {name}',
   },
   data: {
     cameras: { one: '{count} camera', other: '{count} cameras' },
     zones: { one: '{count} zone', other: '{count} zones' },
-    'evidence_photos': { one: '{count} evidence photo', other: '{count} evidence photos' },
-    'camera_actions': { one: '{count} camera action', other: '{count} camera actions' },
+    evidence_photos: { one: '{count} evidence photo', other: '{count} evidence photos' },
+    camera_actions: { one: '{count} camera action', other: '{count} camera actions' },
     environments: { one: '{count} place', other: '{count} places' },
     episodes: { one: '{count} recorded visit', other: '{count} recorded visits' },
     incidents: { one: '{count} saved incident', other: '{count} saved incidents' },
     decisions: { one: '{count} surveillance decision', other: '{count} surveillance decisions' },
-    'expected_guests': { one: '{count} expected guest', other: '{count} expected guests' },
+    expected_guests: { one: '{count} expected guest', other: '{count} expected guests' },
     visitors: { one: '{count} person seen', other: '{count} people seen' },
-    'visitor_face_samples': { one: '{count} saved visitor face', other: '{count} saved visitor faces' },
+    visitor_face_samples: {
+      one: '{count} saved visitor face',
+      other: '{count} saved visitor faces',
+    },
     visits: { one: '{count} visitor pass', other: '{count} visitor passes' },
     projects: { one: '{count} project', other: '{count} projects' },
     tasks: { one: '{count} task', other: '{count} tasks' },
-    'project_members': { one: '{count} project member', other: '{count} project members' },
-    'calendar_events': { one: '{count} calendar event', other: '{count} calendar events' },
-    'calendar_shares': { one: '{count} shared event', other: '{count} shared events' },
-    'change_history': { one: '{count} change in the history', other: '{count} changes in the history' },
+    project_members: { one: '{count} project member', other: '{count} project members' },
+    calendar_events: { one: '{count} calendar event', other: '{count} calendar events' },
+    calendar_shares: { one: '{count} shared event', other: '{count} shared events' },
+    change_history: {
+      one: '{count} change in the history',
+      other: '{count} changes in the history',
+    },
     items: { one: '{count} item', other: '{count} items' },
     bytes: 'about {size} in the database',
     kept: 'Your personal safety history (panic, duress), your codes and your reminders are always kept.',
@@ -219,6 +248,7 @@ export const modules = {
   'background-note': 'The installation keeps going on your server even if you close the app.',
   queued: 'Installation under way',
   request: {
+    none: 'Your home already has everything Argus offers today',
     title: 'More for your home',
     hint: 'Argus can do more. If something helps you, ask whoever manages the house.',
     ask: 'Ask for it',
@@ -238,23 +268,6 @@ export const modules = {
   'waiting-title': 'Waiting for your server',
   'waiting-hint': 'The module list arrives as soon as Argus connects to your home.',
   'start-failed': 'Could not start installing {names}.',
-  server: {
-    title: 'Your server',
-    disk: 'Free disk',
-    ram: 'Memory needed',
-    'ram-value': '{min} minimum · {recommended} recommended',
-  },
-  how: {
-    title: 'How it works',
-    install: 'Each module is downloaded and checked on your server. You can close the app: when you come back you see the real progress.',
-    off: 'Turning a module off hides its screens and stops its work; it comes back instantly, with your data.',
-    space: 'Uninstalling frees the space its files use. Your data is kept unless you choose to delete it.',
-  },
-  summary: {
-    title: 'Modules',
-    manage: 'Manage',
-    hint: 'Choose what Argus does and follow each installation.',
-  },
   'getting-started': {
     title: 'Getting started',
     progress: '{done} of {total}',
@@ -275,13 +288,20 @@ export const modules = {
   catalog: {
     core: {
       name: 'Assistant and home',
-      summary: 'Your account, the people at home, alerts, privacy and the voice assistant. Always on.',
+      summary:
+        'Your account, the people at home, alerts, privacy and the voice assistant. Always on.',
     },
     surveillance: {
       name: 'Surveillance',
       summary: 'Live cameras, zones, person detection and the guard that tells you what matters.',
     },
-    productivity: { name: 'Productivity', summary: 'Calendar, projects and tasks shared with your family.' },
-    agronomy: { name: 'Agronomy', summary: 'Crops, irrigation and weather for your land. Coming soon.' },
+    productivity: {
+      name: 'Productivity',
+      summary: 'Calendar, projects and tasks shared with your family.',
+    },
+    agronomy: {
+      name: 'Agronomy',
+      summary: 'Crops, irrigation and weather for your land. Coming soon.',
+    },
   },
 };

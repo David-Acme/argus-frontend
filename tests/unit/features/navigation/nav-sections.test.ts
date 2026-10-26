@@ -114,6 +114,8 @@ describe('barShownOn', () => {
       '/security/2',
       '/watch',
       '/settings/activity',
+      '/settings/tts',
+      '/profile/sessions',
     ])
       expect(barShownOn(path)).toBe(false);
   });

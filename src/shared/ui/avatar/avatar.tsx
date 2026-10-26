@@ -3,11 +3,11 @@ import { Image, View, type ImageSourcePropType } from 'react-native';
 import { size as sizes } from '@/shared/theme';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
 import { Presence, type PresenceState } from '@/shared/ui/presence';
-import { Text, type TextTone } from '@/shared/ui/text';
+import { Text, type TextTone, type TextVariant } from '@/shared/ui/text';
 
 export type AvatarTone = 'default' | 'accent' | 'ok' | 'attn' | 'alert' | 'event';
 
-export type AvatarSize = 'mark' | 'small' | 'default' | 'large';
+export type AvatarSize = 'mark' | 'small' | 'default' | 'large' | 'portrait';
 
 export type AvatarProps = {
   label?: string;
@@ -36,6 +36,7 @@ const FRAME: Record<AvatarSize, string> = {
   small: 'size-well-small',
   default: 'size-well',
   large: 'size-avatar-large',
+  portrait: 'size-avatar-portrait',
 };
 
 const CORNER: Record<AvatarSize, string> = {
@@ -43,20 +44,29 @@ const CORNER: Record<AvatarSize, string> = {
   small: 'rounded-seg-inner',
   default: 'rounded-well',
   large: 'rounded-well',
+  portrait: 'rounded-full',
 };
 
 type FaceProps = Pick<AvatarProps, 'initial' | 'icon' | 'presence' | 'portrait'> & {
   ink: Ink;
-  large: boolean;
+  size: AvatarSize;
 };
 
-function Face({ initial, icon, presence, portrait, ink, large }: FaceProps) {
+const INITIAL: Record<AvatarSize, TextVariant> = {
+  mark: 'initial',
+  small: 'initial',
+  default: 'initial',
+  large: 'initialLarge',
+  portrait: 'initialPortrait',
+};
+
+function Face({ initial, icon, presence, portrait, ink, size }: FaceProps) {
   if (portrait) return <Image source={portrait} className="size-full" />;
   if (presence) return <Presence state={presence} size={sizes.presenceAvatar} paused />;
   if (icon) return <Icon name={icon} size="small" tone={ink.icon} />;
   if (!initial) return null;
   return (
-    <Text variant={large ? 'initialLarge' : 'initial'} tone={ink.text}>
+    <Text variant={INITIAL[size]} tone={ink.text}>
       {initial}
     </Text>
   );
@@ -90,7 +100,7 @@ export function Avatar({
         presence={presence}
         portrait={portrait}
         ink={ink}
-        large={size === 'large'}
+        size={size}
       />
     </View>
   );

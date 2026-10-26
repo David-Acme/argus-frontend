@@ -2,6 +2,7 @@ import '../global.css';
 import { IS_NATIVE, NAV_FADE_MS } from '@/shared/constants';
 import { NAV_THEME, BG_COLORS } from '@/shared/components/layout/navigation-theme';
 import { getThemePreference } from '@/shared/hooks/use-theme-preference';
+import { applyDevicePreferences } from '@/shared/hooks/use-device-preferences';
 import { AppState, View } from 'react-native';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { ThemeProvider } from 'expo-router/react-navigation';
@@ -38,6 +39,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     Uniwind.setTheme(getThemePreference());
+    applyDevicePreferences();
   }, []);
 
   useDesktopBridge(deepLinkPath);

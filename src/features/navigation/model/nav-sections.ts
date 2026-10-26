@@ -62,7 +62,8 @@ const BAR_HIDDEN: readonly RegExp[] = [
   /^\/conversations\/[^/]+/,
   /^\/security\/[^/]+/,
   /^\/users\/visitors(\/|$)/,
-  /^\/settings\/(proximity|activity)(\/|$)/,
+  /^\/settings\/[^/]+/,
+  /^\/profile\/[^/]+/,
   /^\/watch(\/|$)/,
 ];
 

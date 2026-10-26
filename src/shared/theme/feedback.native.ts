@@ -9,6 +9,7 @@ import {
 } from 'expo-haptics';
 import type { FeedbackKind } from '@/core/types';
 import { IS_ANDROID } from '@/shared/constants';
+import { feedbackEnabled } from './feedback-switch';
 
 const ANDROID: Record<FeedbackKind, AndroidHaptics> = {
   selection: AndroidHaptics.Segment_Tick,
@@ -25,6 +26,7 @@ const IOS: Record<FeedbackKind, () => Promise<void>> = {
 };
 
 export function feedback(kind: FeedbackKind): void {
+  if (!feedbackEnabled()) return;
   const played = IS_ANDROID ? performAndroidHapticsAsync(ANDROID[kind]) : IOS[kind]();
   played.catch(() => undefined);
 }

@@ -138,6 +138,7 @@ export const chromeSize = {
   modeBand: 360,
   modeBandWide: 440,
   columnFeed: 620,
+  columnProfile: 460,
   previewPhone: 760,
   scrollbar: 10,
   scrollbarInset: 3,

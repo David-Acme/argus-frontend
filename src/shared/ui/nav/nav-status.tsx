@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
+import { Meter as Bar } from '@/shared/ui/meter';
 import { Presence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -35,7 +36,6 @@ function Row({ icon, before, strong, after }: NavStatusRow) {
 }
 
 function Meter({ meter }: MeterProps) {
-  const fill = { width: `${Math.round(Math.min(1, Math.max(0, meter.fraction)) * 100)}%` } as const;
   return (
     <View>
       <View className="flex-row items-center justify-between gap-2">
@@ -44,8 +44,8 @@ function Meter({ meter }: MeterProps) {
         </Text>
         <Text variant="sideStatStrong">{meter.value}</Text>
       </View>
-      <View className="h-meter rounded-meter bg-fill-press mt-1 overflow-hidden">
-        <View className="rounded-meter bg-accent-fill h-full" style={fill} />
+      <View className="mt-1">
+        <Bar fraction={meter.fraction} label={meter.label} />
       </View>
     </View>
   );

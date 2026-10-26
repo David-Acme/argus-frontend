@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { isJobOpen } from '@/core/services/modules/module-state';
 import { roleMovesNoteOf } from '@/core/services/modules/module-text';
@@ -31,11 +30,8 @@ type ModuleCardProps = {
   selectable?: boolean;
   recommended?: boolean;
   addedBy?: string | null;
-  lifecycle?: boolean;
   intro?: boolean;
   onToggle?: () => void;
-  actions?: ReactNode;
-  className?: string;
 };
 
 const VERDICT_DOT: Readonly<Record<string, string>> = {
@@ -51,11 +47,8 @@ export function ModuleCard({
   selectable = false,
   recommended = false,
   addedBy = null,
-  lifecycle = false,
   intro = false,
   onToggle,
-  actions,
-  className,
 }: ModuleCardProps) {
   const { t, language } = useTranslation();
   const roleMovesNote = roleMovesNoteOf(module.job, language);
@@ -63,7 +56,9 @@ export function ModuleCard({
   const muted = status === 'coming-soon' || status === 'blocked';
   const hardware = module.hardware;
   const reasons = hardware
-    ? hardware.reasons.map((reason) => hardwareReasonText(reason, hardware, language, t)).filter(Boolean)
+    ? hardware.reasons
+        .map((reason) => hardwareReasonText(reason, hardware, language, t))
+        .filter(Boolean)
     : [];
   const requires = unmetRequirements(catalog, module);
   const commands = hostCommands(module);
@@ -85,7 +80,7 @@ export function ModuleCard({
       ? { label: t('screens.modules.included'), icon: 'check' as const }
       : status === 'coming-soon'
         ? { label: t('screens.modules.coming-soon'), icon: 'clock' as const }
-        : status === 'enabled' && !lifecycle
+        : status === 'enabled'
           ? { label: t('screens.modules.active'), icon: 'check-circle' as const }
           : selectable && recommended
             ? { label: t('screens.modules.recommended'), icon: 'sparkles' as const }
@@ -96,20 +91,23 @@ export function ModuleCard({
       className={cn(
         'bg-card gap-3 rounded-3xl border-2 p-4 shadow-md shadow-black/[0.05]',
         selected ? 'border-legacy-accent' : 'border-transparent',
-        muted ? 'opacity-70' : null,
-        className
+        muted ? 'opacity-70' : null
       )}>
       <View className="flex-row items-start gap-3">
         <View
           className={cn(
             'size-12 items-center justify-center rounded-2xl',
-            status === 'enabled' || status === 'core' || selected ? 'bg-accent-soft' : 'bg-surface-secondary'
+            status === 'enabled' || status === 'core' || selected
+              ? 'bg-accent-soft'
+              : 'bg-surface-secondary'
           )}>
           <Icon
             name={moduleIcon(module.id)}
             className={cn(
               'size-6',
-              status === 'enabled' || status === 'core' || selected ? 'text-accent-strong' : 'text-foreground-secondary'
+              status === 'enabled' || status === 'core' || selected
+                ? 'text-accent-strong'
+                : 'text-foreground-secondary'
             )}
           />
         </View>
@@ -134,26 +132,15 @@ export function ModuleCard({
               'size-7 items-center justify-center rounded-full border-2',
               selected ? 'bg-legacy-accent border-legacy-accent' : 'border-border'
             )}>
-            {selected ? <Icon name="check" className="text-foreground-on-interactive size-4" /> : null}
+            {selected ? (
+              <Icon name="check" className="text-foreground-on-interactive size-4" />
+            ) : null}
           </View>
         ) : null}
       </View>
 
-      {stage && (lifecycle || stage.hint) && !isJobOpen(module.job) ? (
-        <View className="gap-0.5">
-          {lifecycle ? (
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className={cn(
-                  'size-2 rounded-full',
-                  module.lifecycle === 'active' ? 'bg-success' : module.lifecycle === 'not_installed' ? 'bg-border' : 'bg-warning'
-                )}
-              />
-              <Text variant="label">{t(stage.label)}</Text>
-            </View>
-          ) : null}
-          {stage.hint ? <Text variant="caption">{t(stage.hint)}</Text> : null}
-        </View>
+      {stage?.hint && !isJobOpen(module.job) ? (
+        <Text variant="caption">{t(stage.hint)}</Text>
       ) : null}
 
       {status !== 'coming-soon' && (size || hardware) ? (
@@ -171,7 +158,11 @@ export function ModuleCard({
               <View className={cn('size-2 rounded-full', VERDICT_DOT[hardware.verdict])} />
               <Text
                 variant="caption"
-                className={hardware.verdict === 'insufficient' ? 'text-error-strong' : 'text-foreground-secondary'}>
+                className={
+                  hardware.verdict === 'insufficient'
+                    ? 'text-error-strong'
+                    : 'text-foreground-secondary'
+                }>
                 {t(verdictKey(hardware.verdict))}
               </Text>
             </View>
@@ -200,7 +191,9 @@ export function ModuleCard({
         <View className="flex-row items-center gap-1.5">
           <Icon name="link" className="text-muted-foreground size-3.5" />
           <Text variant="caption">
-            {t('screens.modules.requires', { names: moduleNames(requires, catalog?.modules ?? [], t) })}
+            {t('screens.modules.requires', {
+              names: moduleNames(requires, catalog?.modules ?? [], t),
+            })}
           </Text>
         </View>
       ) : null}
@@ -226,8 +219,6 @@ export function ModuleCard({
       ) : null}
 
       {commands.length > 0 ? <HostCommandNote commands={commands} /> : null}
-
-      {actions ? <View className="flex-row flex-wrap items-center justify-end gap-2">{actions}</View> : null}
     </View>
   );
 

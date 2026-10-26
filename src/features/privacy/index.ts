@@ -1,5 +1,5 @@
+import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { PrivacyGate } from './components/privacy-gate';
-export { PrivacySection } from './components/privacy-section';
 export { HouseholdPrivacyPanel } from './components/household-privacy-panel';
 export { UserPrivacyRow } from './components/user-privacy-row';
 export { MinorRow } from './components/minor-row';
@@ -22,3 +22,4 @@ export { useVisitorRecognitionSwitch } from './hooks/use-visitor-recognition-swi
 export { useHouseholdWatchman } from './hooks/use-household-watchman';
 export { SignageDialog } from './components/signage-dialog';
 export type { WatchmanReadiness } from './model/privacy';
+export const PrivacyScreen = lazyScreen(() => import('./screens/privacy-screen'), 'default');

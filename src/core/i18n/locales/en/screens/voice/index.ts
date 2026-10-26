@@ -144,12 +144,9 @@ export const voice = {
     'something-moving': 'something moving',
   },
   preferences: {
-    subtitle: 'When and how Argus calls you. Everyone at home chooses their own.',
-    title: 'Calls from Argus',
     enabled: 'Argus may call me',
     'enabled-hint': 'When something important happens, Argus calls and tells you.',
-    loading: 'Loading your preferences…',
-    unavailable: 'They could not be loaded. Tap to try again.',
+    'load-error': 'I could not load your call preferences',
     'save-failed': 'The change was not saved',
     mode: { call: 'Call', notify: 'Notify', off: 'Off' },
     trigger: {
@@ -163,7 +160,7 @@ export const voice = {
     'group-when': 'When it calls',
     'group-how': 'How it calls',
     'group-quiet': 'Quiet',
-    'group-places': 'Environments',
+    'group-places': 'Places',
     'trigger-hint': {
       guardCritical:
         'The most serious: someone getting in, or a weapon. It can break through quiet hours if you allow it.',
@@ -203,7 +200,6 @@ export const voice = {
       fri: 'Friday',
       sat: 'Saturday',
     },
-    'days-short': { sun: 'S', mon: 'M', tue: 'T', wed: 'W', thu: 'T', fri: 'F', sat: 'S' },
     'dnd-hint': 'While it lasts, Argus notifies instead of calling.',
     'quiet-title': 'Quiet hours',
     'quiet-hint': 'During those hours Argus notifies instead of calling.',

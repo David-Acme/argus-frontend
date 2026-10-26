@@ -15,6 +15,7 @@ export type ChoiceListProps<T extends string> = {
 
 export type ChoiceOpenerProps = {
   label: string;
+  caption?: string;
   current: string;
   look: 'row' | 'field';
   onOpen: () => void;
@@ -44,8 +45,9 @@ export function ChoiceList<T extends string>({ options, value, onPick }: ChoiceL
   );
 }
 
-export function ChoiceOpener({ label, current, look, onOpen }: ChoiceOpenerProps) {
-  if (look === 'row') return <Row title={label} trailing={current} chevron onPress={onOpen} />;
+export function ChoiceOpener({ label, caption, current, look, onOpen }: ChoiceOpenerProps) {
+  if (look === 'row')
+    return <Row title={label} meta={caption} trailing={current} chevron onPress={onOpen} />;
   const a11y = { label: `${label}, ${current}`, role: 'button' } as const;
   return (
     <FieldShell label={label}>
