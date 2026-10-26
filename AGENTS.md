@@ -396,6 +396,15 @@ A screen is responsive only when it also holds on short phones: 320×568, 360×6
 - **Where the decisions live:** the height classes and every size decision come from `shared/theme` (tokens plus pure functions with tests). They are never ad-hoc numbers in features.
 - **Gate:** the UI-map harness captures the short-phone viewports, and its layout audit fails when fixed chrome covers more than its share of the window, or when the first content starts below 40 %.
 
+#### Local first, real time (owner decision 2026-10-26)
+
+The app is local-first and live. This is why the sync tables exist, and every screen keeps both properties:
+
+- **A synced table** is read from WatermelonDB or the MMKV view cache. The screen paints instantly, offline too, with no spinner and no skeleton.
+- **The live stream:** the screen subscribes to the local observables, so a `/sync` Add, Delete or Log diff (a change made by Argus, by another member or on another device) shows at once without a reload. A row Argus changed carries «por Argus» where the data says so.
+- **HTTP-only data** (episodes, presence, settings…) re-reads on the `ResourceChanged` frame for its `(domain, scope)`. It shows a skeleton only before its first answer.
+- **Tests:** two-device e2e specs prove it per domain. A change made on device A, or by Argus through the fake backend, reaches device B live.
+
 ### C. Data, state and trust
 
 13. **Wire data is validated, never cast.**
