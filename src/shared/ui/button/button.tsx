@@ -4,14 +4,17 @@ import { size, useEffects, useThemeTokens } from '@/shared/theme';
 import { Icon, type IconGlyph, type IconTone } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text, type TextTone } from '@/shared/ui/text';
+import { HoldButton, type HoldButtonProps } from './hold-button';
 import { useSingleFlight, type FlightAction } from './use-single-flight';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 export type ButtonTrailing = { icon: IconGlyph } | { key: string };
 
+export type ButtonLabel = string | { shown: string; spoken: string };
+
 export type TextButtonProps = {
-  label: string;
+  label: ButtonLabel;
   onPress: FlightAction;
   variant?: ButtonVariant;
   icon?: IconGlyph;
@@ -37,7 +40,7 @@ export type IconButtonProps = {
   disabled?: boolean;
 };
 
-export type ButtonProps = TextButtonProps | IconButtonProps;
+export type ButtonProps = TextButtonProps | IconButtonProps | HoldButtonProps;
 
 type Ink = { surface: string; text: TextTone; icon: IconTone; edge: string };
 
@@ -156,18 +159,20 @@ function TextButton({
   const flight = useSingleFlight(onPress, busy);
   const ink = INK[variant];
   const face = useFace({ variant, compact, block, glass });
+  const shown = typeof label === 'string' ? label : label.shown;
+  const spoken = typeof label === 'string' ? label : label.spoken;
   const content = (
     <>
       {icon ? <Icon name={icon} size="small" tone={ink.icon} /> : null}
       <Text variant={compact ? 'buttonCompact' : 'button'} tone={ink.text}>
-        {label}
+        {shown}
       </Text>
       {trailing ? <Trailing trailing={trailing} ink={ink} /> : null}
     </>
   );
   return (
     <PressableSurface
-      a11y={{ label, role: 'button', busy: flight.busy }}
+      a11y={{ label: spoken, role: 'button', busy: flight.busy }}
       onPress={flight.run}
       pressed={{ scale: 'surface' }}
       disabled={disabled || flight.busy}
@@ -192,5 +197,6 @@ function TextButton({
 
 export function Button(props: ButtonProps) {
   if ('iconOnly' in props) return <IconButton {...props} />;
+  if ('hold' in props) return <HoldButton {...props} />;
   return <TextButton {...props} />;
 }

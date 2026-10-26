@@ -4,7 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
-import { WEEK_DAY_KEYS } from '@/features/security/constants';
+import { WEEK_DAY_KEYS } from '@/features/security/constants/security.constant';
 import {
   crossesMidnight,
   HALF_HOURS,

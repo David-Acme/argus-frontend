@@ -27,3 +27,24 @@ export function modeLowers(
 export function modeExpectsProtection(mode: GuardMode): boolean {
   return MODE_RANK[mode] > MODE_RANK.home;
 }
+
+export function scopeMode(
+  environments: readonly ModedEnvironment[] | null | undefined,
+  targetId?: number
+): GuardMode | null {
+  const scoped = (environments ?? []).filter(
+    (environment) => targetId === undefined || environment.id === targetId
+  );
+  const first = scoped[0];
+  if (!first) return null;
+  return scoped.every((environment) => environment.mode === first.mode) ? first.mode : null;
+}
+
+export function undoTarget(
+  environments: readonly ModedEnvironment[] | null | undefined,
+  next: GuardMode,
+  targetId?: number
+): GuardMode | null {
+  const previous = scopeMode(environments, targetId);
+  return previous === null || previous === next ? null : previous;
+}

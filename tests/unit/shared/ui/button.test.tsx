@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Button } from '@/shared/ui/button/button';
+import { HoldButton } from '@/shared/ui/button/hold-button';
 
 describe('Button', () => {
   test('every variant renders its label as the accessible name', () => {
@@ -86,5 +87,36 @@ describe('Button', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ocupado' }));
     fireEvent.click(screen.getByRole('button', { name: 'Apagado' }));
     expect(presses).toBe(0);
+  });
+
+  test('a button can say more to a screen reader than it shows', () => {
+    render(
+      <Button
+        compact
+        glass
+        label={{ shown: 'Ver', spoken: 'Ver Cocina' }}
+        onPress={() => undefined}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Ver Cocina' }).textContent).toBe('Ver');
+  });
+
+  test('a hold button asks on a tap and acts once the hold completes', async () => {
+    const pressed: string[] = [];
+    const hold = { onHold: () => void pressed.push('hold'), hint: 'Mantén pulsado' };
+    const { unmount } = render(
+      <Button compact label="SOS" hold={hold} onPress={() => void pressed.push('tap')} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'SOS' }));
+    expect(pressed).toEqual(['tap']);
+    unmount();
+    render(<HoldButton compact label="SOS" hold={hold} onPress={() => void pressed.push('tap')} />);
+    const button = screen.getByRole('button', { name: 'SOS' });
+    await act(async () => {
+      fireEvent.mouseDown(button, { buttons: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 120));
+    });
+    fireEvent.click(button);
+    expect(pressed).toEqual(['tap', 'hold']);
   });
 });

@@ -6,7 +6,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { Input } from '@/shared/components/ui/input';
 import { Text } from '@/shared/components/ui/text';
-import { ENVIRONMENT_KIND_ICONS, ENVIRONMENT_KINDS, ENVIRONMENT_NAME_MAX } from '@/features/security/constants';
+import { ENVIRONMENT_KIND_ICONS, ENVIRONMENT_KINDS, ENVIRONMENT_NAME_MAX } from '@/features/security/constants/security.constant';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';

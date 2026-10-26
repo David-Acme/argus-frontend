@@ -19,7 +19,7 @@ import {
   CAMERA_ROLE_KEYS,
   CAMERA_ROLE_OUTDOOR,
   CAMERA_ROLES,
-} from '@/features/security/constants';
+} from '@/features/security/constants/security.constant';
 import { formatHours, parseHours, type HoursWindow } from '@/features/security/model/hours';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';

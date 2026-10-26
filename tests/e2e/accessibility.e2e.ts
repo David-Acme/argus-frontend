@@ -43,7 +43,11 @@ const VISITS: Visit[] = [
     await tab('Home')(page);
     await click('Open security')(page);
   } },
-  { name: 'environment', go: click('Open Casa') },
+  { name: 'places', go: click('Places and modes', false) },
+  { name: 'environment', go: async (page) => {
+    await page.getByRole('button', { name: /^Casa,/ }).first().click();
+    await page.waitForTimeout(800);
+  } },
   { name: 'people', go: async (page) => {
     await tab('You')(page);
     await click('People')(page);

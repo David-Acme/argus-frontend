@@ -23,7 +23,6 @@ import {
 import {
   recordModeLabelKey,
   recordModeOptions,
-  recordModeSummary,
   recordsSomething,
 } from '@/features/cameras/model/camera-record-mode';
 import type { TranslateFn } from '@/core/types';
@@ -211,7 +210,6 @@ describe('record modes', () => {
     expect(recordModeLabelKey('events')).toBe('screens.cameras.form.record-events');
     expect(recordsSomething('off')).toBe(false);
     expect(recordsSomething('motion')).toBe(true);
-    expect(recordModeSummary()).toEqual({ off: 0, motion: 0, events: 0, continuous: 0 });
   });
 
   test('the newest clips across cameras come first, a tie broken by the higher id', () => {

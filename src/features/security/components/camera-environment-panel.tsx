@@ -17,7 +17,7 @@ import {
   CAMERA_ROLE_KEYS,
   ENVIRONMENT_KIND_ICONS,
   GUARD_MODE_ICONS,
-} from '@/features/security/constants';
+} from '@/features/security/constants/security.constant';
 import { useCameraPlacement } from '@/features/security/hooks/use-guard';
 import { environmentForCamera, postureKey } from '@/features/security/model/environments';
 
