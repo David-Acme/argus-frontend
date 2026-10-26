@@ -34,16 +34,21 @@ export { feedbackEnabled, setFeedbackEnabled } from './feedback-switch';
 export { usePressScale, type PressScaleKind } from './press-scale';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
 export {
-  useHeightClass,
-  useWindowHeight,
-  useWindowLayout,
-  useWindowWidth,
-} from './use-window-layout';
+  heightClassOf,
+  heightLayoutOf,
+  phoneLandscape,
+  sheetDetentsOf,
+  stageStepOf,
+  talkSizeOf,
+  useHeightLayout,
+  type HeightClass,
+  type HeightLayout,
+  type SheetDetent,
+} from './height-layout';
+export { useWindowHeight, useWindowLayout, useWindowWidth } from './use-window-layout';
 export {
   classifyWindowSize,
-  heightClassOf,
   windowClassOf,
-  type HeightClass,
   type Navigation,
   type WindowLayout,
 } from './window-layout';

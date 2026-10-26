@@ -1,6 +1,7 @@
 import type { TranslationKey } from '@/core/types';
 import { ASSISTANT_THREAD_HREF, CAPABILITY } from '@/shared/constants';
-import { hasCapability, type AccessView } from '@/shared/libs/capabilities';
+import { hasCapability } from '@/shared/libs/capabilities';
+import type { AccessView } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 import type { IconGlyph } from '@/shared/ui/icon';
 
@@ -57,7 +58,7 @@ const SECTION_OF_SEGMENT: Readonly<Record<string, NavSectionKey>> = {
 };
 
 const BAR_HIDDEN: readonly RegExp[] = [
-  /^\/cameras(\/|$)/,
+  /^\/cameras\/?$/,
   /^\/conversations\/[^/]+/,
   /^\/security\/[^/]+/,
   /^\/users\/visitors(\/|$)/,

@@ -9,7 +9,6 @@ import {
   pendingChecks,
   replaceWindow,
   sortWindows,
-  windowsForCamera,
 } from '@/features/security/model/maintenance';
 
 function window(overrides: Partial<MaintenanceWindow> & Pick<MaintenanceWindow, 'id'>): MaintenanceWindow {
@@ -59,7 +58,6 @@ describe('the windows list', () => {
 
   test('a camera sees only the windows that cover it', () => {
     const windows = [window({ id: 1, cameraIds: [4, 5] }), window({ id: 2, cameraIds: [6] })];
-    expect(windowsForCamera(windows, 5).map((item) => item.id)).toEqual([1]);
     expect(activeWindowFor(windows, 6)?.id).toBe(2);
     expect(activeWindowFor(windows, 9)).toBeNull();
   });

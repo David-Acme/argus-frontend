@@ -1,6 +1,8 @@
-import { ArgusCameraView, type ArgusCameraViewMethods } from 'argus-camera';
+import { ArgusCameraView } from 'argus-camera';
+import type { ArgusCameraViewMethods } from 'argus-camera';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { callback } from 'react-native-nitro-modules';
@@ -17,13 +19,14 @@ import type {
   CameraStreamState,
   CameraTransport,
 } from '@/core/types';
+import { cn } from '@/shared/libs/utils';
 import { cameraLiveService } from '@/features/cameras/services/camera-live.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { nativePlayerMuted } from '@/features/cameras/model/camera-live-audio';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
-import { CameraRtcVideo } from './camera-rtc-video';
-import { cn } from '@/shared/libs/utils';
+import { CameraRtcVideo } from '@/features/cameras/components/camera-rtc-video';
+import type { LiveViewStatus } from '@/features/cameras/model/camera-stage';
 
 type CameraLiveStreamProps = {
   cameraId: string;
@@ -43,6 +46,7 @@ type CameraLiveStreamProps = {
   audioLevel?: number;
   audioUnlock?: number;
   onAudioBlocked?: (blocked: boolean) => void;
+  onStatus?: (status: LiveViewStatus) => void;
 };
 
 type CameraLiveViewProps = Omit<CameraLiveStreamProps, 'active'>;
@@ -77,6 +81,7 @@ export function CameraLiveStream({
   statusHidden,
   statusInsets,
   audioLevel = 0,
+  onStatus,
 }: CameraLiveStreamProps) {
   const [player, setPlayer] = useState<ArgusCameraViewMethods | null>(null);
   const session = useRef<ICameraLiveSession | null>(null);
@@ -92,6 +97,7 @@ export function CameraLiveStream({
   const retry = useCallback(() => session.current?.retry(), []);
   const reportStats = useEffectEvent((stats: ICameraLiveStats) => onStats?.(stats));
   const reportState = useEffectEvent((state: CameraStreamState) => onState?.(state));
+  const reportStatus = useEffectEvent((next: LiveViewStatus) => onStatus?.(next));
   const currentLevel = useEffectEvent(() => audioLevel);
 
   useEffect(() => {
@@ -153,6 +159,14 @@ export function CameraLiveStream({
     };
   }, [active, cameraId, player, privacy, quality, streamKey, transport, isolatedBackoff]);
 
+  const shownState = current?.state ?? 'connecting';
+  const shownPainted = current?.painted ?? false;
+  const shownNotice = current?.notice ?? null;
+
+  useEffect(() => {
+    reportStatus({ state: shownState, painted: shownPainted, notice: shownNotice, retry });
+  }, [retry, shownNotice, shownPainted, shownState]);
+
   useEffect(() => {
     session.current?.setAudioEnabled(audioLevel > 0);
   }, [audioLevel]);
@@ -173,15 +187,17 @@ export function CameraLiveStream({
           />
           <CameraRtcVideo stream={current?.rtcStream ?? null} visible={showRtc} />
           {overlay}
-          <CameraLiveStatus
-            state={current?.state ?? 'connecting'}
-            painted={current?.painted ?? false}
-            notice={current?.notice ?? null}
-            compact={compactStatus ?? fill}
-            hidden={statusHidden}
-            insets={statusInsets}
-            onRetry={retry}
-          />
+          {onStatus ? null : (
+            <CameraLiveStatus
+              state={shownState}
+              painted={shownPainted}
+              notice={shownNotice}
+              compact={compactStatus ?? fill}
+              hidden={statusHidden}
+              insets={statusInsets}
+              onRetry={retry}
+            />
+          )}
         </>
       )}
     </View>

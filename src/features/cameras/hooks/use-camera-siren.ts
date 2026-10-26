@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SirenPhase } from '@/core/types';
-import { cameraControlService } from '@/features/cameras/services/camera-control.service';
-import { IDLE_SIREN, sirenReducer, sirenRemaining, sirenSounding } from '@/features/cameras/model/siren';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toastServiceError } from '@/shared/libs/service-error';
+import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import {
+  IDLE_SIREN,
+  sirenReducer,
+  sirenRemaining,
+  sirenSounding,
+} from '@/features/cameras/model/siren';
 
 export type CameraSirenControls = {
   phase: SirenPhase;
@@ -15,7 +20,6 @@ export type CameraSirenControls = {
   confirm: () => void;
   cancel: () => void;
   stop: () => void;
-  close: () => void;
 };
 
 const TICK_MS = 200;
@@ -81,7 +85,6 @@ export function useCameraSiren(cameraId: string): CameraSirenControls {
     activating.current = false;
     dispatch({ kind: 'cancel' });
   }, []);
-  const close = useCallback(() => dispatch({ kind: 'close' }), []);
   const stop = useCallback(() => {
     activating.current = false;
     dispatch({ kind: 'stop' });
@@ -104,6 +107,5 @@ export function useCameraSiren(cameraId: string): CameraSirenControls {
     confirm,
     cancel,
     stop,
-    close,
   };
 }

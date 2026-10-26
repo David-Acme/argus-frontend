@@ -125,6 +125,10 @@ export const chromeSize = {
   presenceAvatar: 30,
   presenceEye: 56,
   presenceEyeWide: 48,
+  talk: 88,
+  talkShort: 64,
+  dockSide: 200,
+  iconLarge: 34,
   presenceThink: 26,
   columnSide: 320,
   columnAside: 300,
@@ -149,6 +153,7 @@ export const chromeElevation = {
     listenPeak:
       'inset 0px 0px 0px 3px rgba(131,106,60,0.9), inset 0px 0px 54px 14px rgba(131,106,60,0.55)',
     listenContrast: 'inset 0px 0px 0px 3px #836A3C',
+    talk: '0px 0px 0px 10px rgba(64,64,64,0.08)',
   },
   dark: {
     bar: 'inset 0px 0px 0px 1px rgba(255,255,255,0.08), 0px 8px 30px 0px rgba(0,0,0,0.12)',
@@ -158,6 +163,7 @@ export const chromeElevation = {
     listenPeak:
       'inset 0px 0px 0px 3px rgba(217,188,133,0.9), inset 0px 0px 54px 14px rgba(217,188,133,0.55)',
     listenContrast: 'inset 0px 0px 0px 3px #D9BC85',
+    talk: '0px 0px 0px 10px rgba(228,225,219,0.08)',
   },
 } as const;
 

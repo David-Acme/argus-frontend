@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size, useHeightClass, useWindowLayout } from '@/shared/theme';
+import { size, stageStepOf, useHeightLayout, useWindowLayout } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { ProfileHero } from '@/features/profile/components/profile-hero';
@@ -51,7 +51,7 @@ export default function ProfileScreen() {
   const { windowClass } = useWindowLayout();
   const links = profileLinks(useAccessView());
   const split = windowClass !== 'compact';
-  const look = heroLookOf(useHeightClass(), split);
+  const look = heroLookOf(stageStepOf(useHeightLayout()), split);
   const actions = <TopActions links={links} />;
   return (
     <Screen columns="panes" aura="calm" actions={split ? undefined : actions}>

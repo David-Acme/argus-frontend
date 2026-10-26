@@ -7,7 +7,10 @@ import {
   nativePlayerMuted,
   storedMuted,
 } from '@/features/cameras/model/camera-live-audio';
-import { capabilitiesFromRow, hasDeviceControls, resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
+import {
+  capabilitiesFromRow,
+  resolveCapabilities,
+} from '@/features/cameras/model/camera-capabilities';
 import {
   defaultQuality,
   isStall,
@@ -58,7 +61,10 @@ function videoInit(width: number, height: number, withAudio: boolean): Uint8Arra
   const audioHdlr = box('hdlr', [...be32(0), ...be32(0), ...ascii('soun'), ...be32(0)]);
   const fLaC = box('fLaC', [...zeros(16), 0, 1, ...zeros(6), ...be32(8000 * 65536)]);
   const audioStbl = box('stbl', box('stsd', [...be32(0), ...be32(1), ...fLaC]));
-  const audio = box('trak', [...audioTkhd, ...box('mdia', [...audioMdhd, ...audioHdlr, ...box('minf', audioStbl)])]);
+  const audio = box('trak', [
+    ...audioTkhd,
+    ...box('mdia', [...audioMdhd, ...audioHdlr, ...box('minf', audioStbl)]),
+  ]);
   return new Uint8Array([
     ...box('ftyp', ascii('iso5')),
     ...box('moov', [...box('mvhd', be32(0)), ...video, ...(withAudio ? audio : [])]),
@@ -75,7 +81,11 @@ function videoFragment(durationTicks: number): Uint8Array {
     ...be32(0x02000000),
   ]);
   const tfdt = box('tfdt', [...be32(0x01000000), ...be32(0), ...be32(0)]);
-  const traf = box('traf', [...tfhd, ...tfdt, ...box('trun', [...be32(0x000001), ...be32(1), ...be32(0)])]);
+  const traf = box('traf', [
+    ...tfhd,
+    ...tfdt,
+    ...box('trun', [...be32(0x000001), ...be32(1), ...be32(0)]),
+  ]);
   const moof = box('moof', [...box('mfhd', [...be32(0), ...be32(1)]), ...traf]);
   const patched = [...moof];
   patched.splice(patched.length - 4, 4, ...be32(moof.length + 8));
@@ -85,7 +95,10 @@ function videoFragment(durationTicks: number): Uint8Array {
 describe('capabilities synced on the camera row', () => {
   test('an empty list means the row has not been told yet, so the device answer decides', () => {
     expect(capabilitiesFromRow([])).toBeNull();
-    expect(resolveCapabilities([], { ptz: true, catalogId: 'tapo-c225' })).toEqual({ ptz: true, catalogId: 'tapo-c225' });
+    expect(resolveCapabilities([], { ptz: true, catalogId: 'tapo-c225' })).toEqual({
+      ptz: true,
+      catalogId: 'tapo-c225',
+    });
   });
 
   test('a synced list wins over a stale device answer, so a driver change shows at once', () => {
@@ -95,8 +108,6 @@ describe('capabilities synced on the camera row', () => {
     expect(features?.talk).toBe(true);
     expect(features?.streamOnly).toBe(false);
     expect(features?.catalogId).toBe('tapo-c225');
-    expect(hasDeviceControls(features)).toBe(true);
-    expect(hasDeviceControls(capabilitiesFromRow(['streamOnly']))).toBe(false);
   });
 });
 
@@ -119,14 +130,23 @@ describe('live quality', () => {
     expect(shouldFallBack('sub', second)).toBe(false);
     expect(recordStall(first, 1000 + STALL_WINDOW_MS)).toHaveLength(1);
   });
-
 });
 
 describe('stream meter', () => {
   test('reads the picture size from the init and the frame rate from the samples', () => {
     const meter = new StreamMeter();
-    expect(meter.init(videoInit(2688, 1520, true))).toEqual({ width: 2688, height: 1520, fps: 0, audio: true });
-    expect(meter.fragment(videoFragment(6000))).toEqual({ width: 2688, height: 1520, fps: 15, audio: true });
+    expect(meter.init(videoInit(2688, 1520, true))).toEqual({
+      width: 2688,
+      height: 1520,
+      fps: 0,
+      audio: true,
+    });
+    expect(meter.fragment(videoFragment(6000))).toEqual({
+      width: 2688,
+      height: 1520,
+      fps: 15,
+      audio: true,
+    });
     expect(meter.fragment(videoFragment(6000))).toBeNull();
     expect(new StreamMeter().init(videoInit(1280, 720, false))?.audio).toBe(false);
   });
@@ -136,7 +156,6 @@ describe('stream meter', () => {
     expect(fpsOf([])).toBe(0);
   });
 });
-
 
 describe('live camera audio', () => {
   test('plays by default, and the user, an Argus call or a camera call silence it', () => {

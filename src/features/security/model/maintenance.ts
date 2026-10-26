@@ -23,10 +23,6 @@ export function sortWindows(windows: readonly MaintenanceWindow[]): MaintenanceW
   );
 }
 
-export function windowsForCamera(windows: readonly MaintenanceWindow[], cameraId: number): MaintenanceWindow[] {
-  return sortWindows(windows.filter((window) => window.cameraIds.includes(cameraId)));
-}
-
 export function activeWindowFor(windows: readonly MaintenanceWindow[], cameraId: number): MaintenanceWindow | null {
   return windows.find((window) => window.active && window.cameraIds.includes(cameraId)) ?? null;
 }

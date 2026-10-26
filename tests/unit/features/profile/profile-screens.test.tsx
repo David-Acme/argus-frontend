@@ -132,7 +132,8 @@ mock.module('@/shared/hooks/use-device-preferences', () => ({
   }),
 }));
 mock.module('@/core/stores', () => ({
-  useAuthStore: (select: (store: Record<string, unknown>) => unknown) => select({ user: { id: 1 } }),
+  useAuthStore: (select: (store: Record<string, unknown>) => unknown) =>
+    select({ user: { id: 1 } }),
   useLocaleStore: (select: (store: Record<string, unknown>) => unknown) =>
     select({
       preference: state.language,
