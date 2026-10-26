@@ -130,6 +130,19 @@ describe('Media', () => {
     expect(screen.queryByRole('button', { name: 'Activar sonido' })).toBeNull();
   });
 
+  test('a stage centres what it says over the picture, and in place of the dormant mark', () => {
+    const { rerender } = render(
+      <Media variant="stage" name="Cocina" center={<span>La cámara no responde</span>}>
+        <span data-testid="player" />
+      </Media>
+    );
+    expect(screen.getByText('La cámara no responde')).toBeDefined();
+    expect(screen.getByTestId('player')).toBeDefined();
+    rerender(<Media variant="stage" name="Garaje" dormant="off" center={<span>Encender</span>} />);
+    expect(screen.getByText('Encender')).toBeDefined();
+    expect(globalThis.document.querySelectorAll('svg')).toHaveLength(0);
+  });
+
   test('a new frame keeps the previous one underneath until it has faded in', () => {
     const { container, rerender } = render(
       <MediaFrame source={{ uri: 'https://argus.local/a.jpg' }} />

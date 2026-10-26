@@ -18,14 +18,14 @@ export type IconTone = Extract<
 
 export type IconProps = {
   name: IconGlyph;
-  size?: 'small' | 'default';
+  size?: 'small' | 'default' | 'large';
   tone?: IconTone;
   label?: string;
 };
 
 type ShapeProps = { shape: IconShape };
 
-const PIXELS = { small: sizes.iconSmall, default: sizes.icon } as const;
+const PIXELS = { small: sizes.iconSmall, default: sizes.icon, large: sizes.iconLarge } as const;
 
 function Shape({ shape }: ShapeProps) {
   if ('d' in shape) return <Path d={shape.d} />;

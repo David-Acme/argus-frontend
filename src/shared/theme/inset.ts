@@ -44,6 +44,7 @@ export const inset = {
   },
   overlay: { edge: 10, gap: 6, revealGap: 8 },
   eye: { edge: 10, start: 2, end: 8, y: 2, gap: 2 },
+  talk: { top: 24, gap: 12, bottom: 4, padEdge: 12, padGap: 8 },
   skeleton: { lineGap: 7 },
   empty: { x: 16, y: 28, gap: 8 },
   ...chromeInset,

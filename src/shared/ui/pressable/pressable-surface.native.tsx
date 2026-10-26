@@ -13,6 +13,7 @@ export function PressableSurface({
   onPress,
   haptic,
   pressed,
+  hold,
   disabled,
   hitSlop,
   className,
@@ -25,6 +26,7 @@ export function PressableSurface({
     onPress,
     haptic,
     pressed: IS_ANDROID ? { scale: pressed?.scale } : pressed,
+    hold,
     disabled,
     style,
   });

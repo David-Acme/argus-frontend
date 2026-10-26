@@ -22,6 +22,7 @@ export type PresenceProps = {
   paused?: boolean;
   scrollOffset?: SharedValue<number>;
   accessibilityLabel?: string;
+  dark?: boolean;
 };
 
 const LEAN_REACH = 380;
@@ -43,11 +44,12 @@ export function Presence({
   paused = false,
   scrollOffset,
   accessibilityLabel,
+  dark: onDark = false,
 }: PresenceProps) {
   const { perfTier, reduceMotion, adaptive, ceiling, drops, probing } = useEffects();
   useTierProbe(probing && !reduceMotion);
   const { theme } = useUniwind();
-  const dark = theme === 'dark';
+  const dark = onDark || theme === 'dark';
   const seed = seedFor(size);
   const [touch, setTouch] = useState<PresenceCue | undefined>(undefined);
   const adapting = adaptive && !probing;

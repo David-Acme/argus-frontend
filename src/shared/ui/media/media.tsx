@@ -37,11 +37,12 @@ export type MediaStageProps = MediaContent & {
   variant: 'stage';
   controls?: readonly MediaControl[];
   eye?: MediaEye;
+  center?: ReactNode;
 };
 
 export type MediaProps = MediaTileProps | MediaStageProps;
 
-type LayersProps = MediaContent & { overlay?: ReactNode };
+type LayersProps = MediaContent & { overlay?: ReactNode; marked?: boolean };
 
 type RevealProps = { shown: boolean; children: ReactNode };
 
@@ -63,13 +64,22 @@ const REVEAL_HIDDEN = { ...REVEAL_SHOWN, opacity: 0, pointerEvents: 'none' } as 
 
 const PASS_THROUGH = { pointerEvents: 'box-none' } as const;
 
-function Layers({ name, detail, live, dormant, frame, children, overlay }: LayersProps) {
+function Layers({
+  name,
+  detail,
+  live,
+  dormant,
+  frame,
+  children,
+  overlay,
+  marked = true,
+}: LayersProps) {
   return (
     <>
       {frame && !dormant ? <MediaFrame source={frame} /> : null}
       {children && !dormant ? <View className="absolute inset-0">{children}</View> : null}
       {live && !dormant ? <LiveChip label={live} /> : null}
-      {dormant ? <DormantMark dormant={dormant} /> : null}
+      {dormant && marked ? <DormantMark dormant={dormant} /> : null}
       {overlay}
       <LabelRow name={name} detail={detail} dormant={dormant} />
     </>
@@ -133,10 +143,15 @@ function Tile({ center, reveal, onPress, fill, ...content }: MediaTileProps) {
   );
 }
 
-function Stage({ controls, eye, ...content }: MediaStageProps) {
+function Stage({ controls, eye, center, ...content }: MediaStageProps) {
   const { windowClass } = useWindowLayout();
   const overlay = (
     <>
+      {center ? (
+        <View className="absolute inset-0 items-center justify-center" style={PASS_THROUGH}>
+          {center}
+        </View>
+      ) : null}
       {eye ? <EyeCorner eye={eye} /> : null}
       {controls && controls.length > 0 && !content.dormant ? (
         <Controls controls={controls} />
@@ -153,7 +168,7 @@ function Stage({ controls, eye, ...content }: MediaStageProps) {
         content.dormant && 'bg-fill'
       )}
       style={content.dormant ? DORMANT_FRAME : LIVE_FRAME}>
-      <Layers {...content} overlay={overlay} />
+      <Layers {...content} overlay={overlay} marked={!center} />
     </View>
   );
 }

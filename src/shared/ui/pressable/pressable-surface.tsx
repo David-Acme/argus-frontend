@@ -9,6 +9,7 @@ export function PressableSurface({
   onPress,
   haptic,
   pressed,
+  hold,
   disabled,
   hitSlop,
   className,
@@ -16,7 +17,7 @@ export function PressableSurface({
   testID,
   children,
 }: PressableSurfaceProps) {
-  const press = useSurfacePress({ onPress, haptic, pressed, disabled, style });
+  const press = useSurfacePress({ onPress, haptic, pressed, hold, disabled, style });
   return (
     <Animated.View className={pressed?.grow ? 'grow' : undefined} style={press.scaleStyle}>
       <Pressable

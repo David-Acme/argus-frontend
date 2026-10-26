@@ -133,7 +133,7 @@ export function EyeCorner({ eye }: EyeCornerProps) {
         blur
       )}
       style={EYE}>
-      <Presence state="look" size={mark} />
+      <Presence state="look" size={mark} dark />
       <Text variant="eyeChip" tone="on-media">
         {eye.label}
       </Text>
