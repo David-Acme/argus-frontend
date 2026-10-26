@@ -28,6 +28,7 @@ export type SceneOptions = {
   viewport?: Viewport;
   motion?: boolean;
   latency?: number;
+  clock?: number;
   before?: (context: BrowserContext) => Promise<void>;
 };
 
@@ -53,8 +54,11 @@ type ManifestEntry = {
   fullPage: boolean;
   notes: string;
   auto: Audit;
+  masks: Mask[];
   errors: string[];
 };
+
+export type Mask = { kind: 'canvas' | 'media'; x: number; y: number; w: number; h: number };
 
 export type Audit = {
   horizontalOverflow: number;
@@ -76,6 +80,15 @@ export const VIEWPORTS: readonly Viewport[] = [
   { name: 'desktop-large', w: 1920, h: 1080 },
   { name: 'wide', w: 2560, h: 1440 },
 ];
+
+export const PROTO_VIEWPORTS: readonly Viewport[] = [
+  { name: 'proto-phone', w: 360, h: 760 },
+  { name: 'proto-1280', w: 1280, h: 820 },
+  { name: 'proto-1920', w: 1920, h: 1080 },
+  { name: 'proto-2560', w: 2560, h: 1440 },
+];
+
+export const PROTO = process.env.ARGUS_UI_MAP_VIEWPORTS === 'proto';
 
 const CORE_NAMES = new Set(['phone', 'tablet-portrait', 'desktop']);
 
@@ -105,6 +118,8 @@ const QUIET_MS = LATENCY_MS + 350;
 const SETTLE_MS = 700;
 
 export const LIGHT_ES: Look = { theme: 'light', lang: 'es' };
+
+export const DARK_ES: Look = { theme: 'dark', lang: 'es' };
 
 export const MAIN_LOOKS: readonly Look[] = [
   { theme: 'dark', lang: 'es' },
@@ -185,7 +200,7 @@ export const openScene = async (
       await route.continue().catch(() => undefined);
     });
   }
-  await context.addInitScript(installFixedClock, FIXED_NOW);
+  await context.addInitScript(installFixedClock, options.clock ?? FIXED_NOW);
   await context.addInitScript(installTauriShim, withLook(seed, look));
   if (options.before) await options.before(context);
   const page = await context.newPage();
@@ -303,6 +318,35 @@ const audit = (page: Page): Promise<Audit> =>
     };
   });
 
+const masks = (page: Page): Promise<Mask[]> =>
+  page.evaluate(() => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const found: Mask[] = [];
+    const seen = new Set<string>();
+    const add = (kind: Mask['kind'], element: Element): void => {
+      const style = getComputedStyle(element);
+      if (style.visibility === 'hidden' || style.display === 'none') return;
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(0, Math.floor(rect.left));
+      const y = Math.max(0, Math.floor(rect.top));
+      const w = Math.min(width, Math.ceil(rect.right)) - x;
+      const h = Math.min(height, Math.ceil(rect.bottom)) - y;
+      if (w < 16 || h < 16) return;
+      const key = `${x},${y},${w},${h}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      found.push({ kind, x, y, w, h });
+    };
+    for (const element of Array.from(document.querySelectorAll('canvas, video')))
+      add('canvas', element);
+    for (const element of Array.from(document.querySelectorAll('img'))) add('media', element);
+    for (const element of Array.from(document.querySelectorAll('div'))) {
+      if (getComputedStyle(element).backgroundImage.startsWith('url(')) add('media', element);
+    }
+    return found;
+  });
+
 const readManifest = (): ManifestEntry[] =>
   existsSync(MANIFEST) ? (JSON.parse(readFileSync(MANIFEST, 'utf8')) as ManifestEntry[]) : [];
 
@@ -338,6 +382,7 @@ const capture = async (
   );
   mkdirSync(dirname(target), { recursive: true });
   const found = await audit(scene.page);
+  const regions = await masks(scene.page);
   await scene.page.screenshot({ path: target, animations: 'disabled', caret: 'hide' });
   record({
     screen: shot.screen,
@@ -352,6 +397,7 @@ const capture = async (
     fullPage,
     notes: shot.notes ?? '',
     auto: found,
+    masks: regions,
     errors: [...new Set(scene.errors)].slice(0, 8),
   });
 };
@@ -363,7 +409,9 @@ export const shoot = async (
   viewports: readonly Viewport[]
 ): Promise<void> => {
   const list =
-    ENGINE === 'webkit' ? viewports.filter((viewport) => CORE_NAMES.has(viewport.name)) : viewports;
+    ENGINE === 'webkit' && !PROTO
+      ? viewports.filter((viewport) => CORE_NAMES.has(viewport.name))
+      : viewports;
   for (const viewport of list) {
     await scene.page.setViewportSize({ width: viewport.w, height: viewport.h });
     await parkPointer(scene.page, viewport);

@@ -92,6 +92,12 @@ export function planFor({ size, tier, reduceMotion, adaptation }: PlanInput): Re
   };
 }
 
+const SEED_MODULUS = 2147483647;
+
+export function seedFor(size: number): number {
+  return 1 + ((9 + Math.round(size) * 7919) % (SEED_MODULUS - 1));
+}
+
 const RESTING: ReadonlySet<PresenceState> = new Set(['idle', 'watch', 'sleep', 'off']);
 
 export function isResting(state: PresenceState): boolean {

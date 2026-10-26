@@ -1,5 +1,6 @@
 import { ownerContext } from '../support/fake-argus';
 import { control, emit } from '../support/harness';
+import { environment } from '../support/screens';
 import { ownerDevice } from '../support/seed';
 import type { ShimSeed } from '../support/tauri-shim';
 import { sleep, type Scene } from '../support/ui-map/capture';
@@ -13,6 +14,7 @@ import {
   NOTIFICATIONS,
   PRODUCTIVITY_MODULE,
   SURVEILLANCE_MODULE,
+  camera,
   catalogContext,
   job,
   notification,
@@ -53,6 +55,13 @@ const remote = (cut: Record<string, string>): ShimSeed => {
     local: { ...base.local, __e2e_unreachable__: JSON.stringify(cut) },
   };
 };
+
+const NIGHT_CLOCK = Date.UTC(2026, 9, 13, 4, 18, 0);
+
+const quietHome = (mode: 'home' | 'night', cameraIds: readonly number[]) => [
+  { method: 'GET', path: '/notification/responses', info: [] },
+  { method: 'GET', path: '/guard/environments', info: [{ ...environment(mode), cameraIds }] },
+];
 
 const offline =
   (wait: number) =>
@@ -141,6 +150,27 @@ const catalog = (
     AGRONOMY_MODULE,
   ]);
 
+const GETTING_STARTED = [
+  {
+    id: 'add-camera',
+    title: 'Conecta tu primera cámara',
+    hint: 'Desde Cámaras',
+    route: '/cameras',
+  },
+  {
+    id: 'zones',
+    title: 'Dibuja una zona de alerta',
+    hint: 'En el detalle de la cámara',
+    route: '/cameras',
+  },
+  {
+    id: 'mode',
+    title: 'Elige el modo de seguridad',
+    hint: 'En Seguridad',
+    route: '/security',
+  },
+];
+
 const hover =
   (key: Parameters<typeof say>[1]) =>
   async (scene: Scene): Promise<void> => {
@@ -175,6 +205,38 @@ export const HOME: ScreenSpec[] = [
         latency: 0,
         notes:
           'the same data answered with no latency: remote resources answered during session start are dropped (0 detections, no alert card)',
+      },
+      {
+        state: 'calm',
+        rows: POPULATED,
+        routes: quietHome('home', [3, 4]),
+        notes: 'the populated data with no open incident: the calm Inicio of the prototype',
+      },
+      {
+        state: 'sparse',
+        rows: [camera(5, 'Cocina')],
+        routes: [
+          ...quietHome('home', [5]),
+          { method: 'GET', path: '/camera/overview', info: EMPTY_OVERVIEW },
+        ],
+        context: catalog({ gettingStarted: GETTING_STARTED }),
+        notes: 'one camera, nothing scheduled, the getting-started list: little data',
+      },
+      {
+        state: 'night',
+        rows: POPULATED,
+        routes: quietHome('night', [3, 4]),
+        clock: NIGHT_CLOCK,
+        notes: 'Casa in Noche mode at 23:18 with no open incident',
+      },
+      {
+        state: 'command-open',
+        rows: POPULATED,
+        act: async (scene) => {
+          await scene.page.keyboard.press('Control+k');
+          await sleep(900);
+        },
+        notes: 'Ctrl+K pressed on Inicio: the command palette when the shell binds it',
       },
       {
         state: 'empty-new-household',
@@ -307,28 +369,7 @@ export const HOME: ScreenSpec[] = [
       {
         state: 'getting-started',
         rows: POPULATED,
-        context: catalog({
-          gettingStarted: [
-            {
-              id: 'add-camera',
-              title: 'Conecta tu primera cámara',
-              hint: 'Desde Cámaras',
-              route: '/cameras',
-            },
-            {
-              id: 'zones',
-              title: 'Dibuja una zona de alerta',
-              hint: 'En el detalle de la cámara',
-              route: '/cameras',
-            },
-            {
-              id: 'mode',
-              title: 'Elige el modo de seguridad',
-              hint: 'En Seguridad',
-              route: '/security',
-            },
-          ],
-        }),
+        context: catalog({ gettingStarted: GETTING_STARTED }),
       },
       {
         state: 'all-modules-off',

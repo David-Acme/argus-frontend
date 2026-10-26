@@ -6,7 +6,7 @@ import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
 import type { Look } from './engine/driver';
 import type { PresenceEvent, PresenceState } from './engine/types';
-import { planFor } from './plan';
+import { planFor, seedFor } from './plan';
 import { PresenceCanvas } from './presence-canvas';
 import { usePresenceInput, type PresenceCue } from './use-presence-input';
 import { useTierProbe } from './use-tier-probe';
@@ -25,12 +25,6 @@ export type PresenceProps = {
 };
 
 const LEAN_REACH = 380;
-let seeds = 0;
-
-function nextSeed(): number {
-  seeds += 1;
-  return 9 + seeds * 7919;
-}
 
 function leanFrom(event: GestureResponderEvent, size: number): [number, number] {
   const clamp = (v: number) => Math.max(-1, Math.min(1, v / LEAN_REACH));
@@ -54,7 +48,7 @@ export function Presence({
   useTierProbe(probing && !reduceMotion);
   const { theme } = useUniwind();
   const dark = theme === 'dark';
-  const [seed] = useState(nextSeed);
+  const seed = seedFor(size);
   const [touch, setTouch] = useState<PresenceCue | undefined>(undefined);
   const adapting = adaptive && !probing;
   const plan = useMemo(

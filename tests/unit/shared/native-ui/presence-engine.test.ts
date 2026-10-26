@@ -15,7 +15,7 @@ import {
   type Sinks,
   type Stroke,
 } from '@/shared/ui/presence/engine/types';
-import { planFor } from '@/shared/ui/presence/plan';
+import { planFor, seedFor } from '@/shared/ui/presence/plan';
 import { tokens } from '@/shared/theme/tokens';
 
 const look = (size: number): Look => ({
@@ -192,5 +192,17 @@ describe('presence engine', () => {
     expect(sum(odd)).toBeGreaterThanOrEqual(59);
     expect(sum(odd)).toBeLessThanOrEqual(61);
     expect(even.every((n, i) => n + (odd[i] ?? 0) === 1)).toBe(true);
+  });
+
+  test('a seed is a function of the size alone, distinct per size and valid for the generator', () => {
+    const sizes = [28, 36, 48, 66, 120, 150, 190, 300];
+    const seeds = sizes.map(seedFor);
+    expect(sizes.map(seedFor)).toEqual(seeds);
+    expect(new Set(seeds).size).toBe(sizes.length);
+    for (const seed of seeds) {
+      expect(Number.isInteger(seed)).toBe(true);
+      expect(seed).toBeGreaterThan(0);
+      expect(seed).toBeLessThan(2147483647);
+    }
   });
 });
