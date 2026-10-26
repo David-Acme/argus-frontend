@@ -5,15 +5,36 @@ import { layout, size, useThemeTokens, useWindowLayout, type AuraTone } from '@/
 import { Aura } from '@/shared/ui/aura';
 import { Chip } from '@/shared/ui/chip';
 import { Presence } from '@/shared/ui/presence';
+import { PressableSurface } from '@/shared/ui/pressable';
 import { Text, type TextVariant } from '@/shared/ui/text';
 import { StatusFade } from './status-fade';
 import type { HeroStatusProps, StatusStat, StatusTone } from './status-types';
 
 type StatsProps = { stats: readonly StatusStat[]; wrap: boolean };
 
+type StatChipProps = { stat: StatusStat };
+
 const AURA: Record<StatusTone, AuraTone> = { calm: 'calm', attention: 'attn', alert: 'alert' };
 
 const BAND_MAX = { maxWidth: layout.bandMax };
+
+const STAT_SLOP = (size.target - size.chipStat) / 2;
+
+function StatChip({ stat }: StatChipProps) {
+  const chip = (
+    <Chip size="stat" icon={stat.icon} value={stat.value} label={stat.label} tone={stat.tone} />
+  );
+  if (!stat.onPress) return chip;
+  return (
+    <PressableSurface
+      a11y={{ label: `${stat.value} ${stat.label}`, role: 'link' }}
+      onPress={stat.onPress}
+      hitSlop={STAT_SLOP}
+      className="rounded-full">
+      {chip}
+    </PressableSurface>
+  );
+}
 
 function Stats({ stats, wrap }: StatsProps) {
   if (stats.length === 0) return null;
@@ -21,14 +42,7 @@ function Stats({ stats, wrap }: StatsProps) {
     <View
       className={clsx('flex-row gap-2', wrap ? 'mt-status-stats-top flex-wrap' : 'flex-nowrap')}>
       {stats.map((stat) => (
-        <Chip
-          key={`${stat.value} ${stat.label}`}
-          size="stat"
-          icon={stat.icon}
-          value={stat.value}
-          label={stat.label}
-          tone={stat.tone}
-        />
+        <StatChip key={`${stat.value} ${stat.label}`} stat={stat} />
       ))}
     </View>
   );
@@ -58,7 +72,7 @@ function HeroRow(props: HeroStatusProps & { wide: boolean }) {
   );
 }
 
-function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroStatusProps) {
+function HeroBand({ tone, sentence, meta, stats = [], presence, aura, action }: HeroStatusProps) {
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.card };
   return (
@@ -69,7 +83,7 @@ function HeroBand({ tone, sentence, meta, stats = [], presence, action }: HeroSt
         role={tone === 'alert' ? 'alert' : undefined}
         className="rounded-card bg-surface gap-status-band-gap px-status-band-x py-status-band-y web:focus-inset flex-row flex-nowrap items-center overflow-hidden"
         style={card}>
-        <Aura tone={AURA[tone]} mode="band" />
+        <Aura tone={aura ?? AURA[tone]} mode="band" />
         {presence ? <Presence state={presence} size={size.presenceBand} /> : null}
         <StatusFade change={sentence} grow>
           <Text variant="heroBand" heading={2} numberOfLines={1}>
