@@ -2,12 +2,13 @@ import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size, useWindowLayout } from '@/shared/theme';
+import { size, useHeightClass, useWindowLayout } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { ProfileHero } from '@/features/profile/components/profile-hero';
 import { ProfileTabs } from '@/features/profile/components/profile-tabs';
 import { WeekPane } from '@/features/profile/components/week-pane';
+import { heroLookOf } from '@/features/profile/model/hero-look';
 import { profileLinks } from '@/features/profile/model/profile-links';
 import type { ProfileLinks } from '@/features/profile/model/profile-links';
 
@@ -50,6 +51,7 @@ export default function ProfileScreen() {
   const { windowClass } = useWindowLayout();
   const links = profileLinks(useAccessView());
   const split = windowClass !== 'compact';
+  const look = heroLookOf(useHeightClass(), split);
   const actions = <TopActions links={links} />;
   return (
     <Screen columns="panes" aura="calm" actions={split ? undefined : actions}>
@@ -62,8 +64,8 @@ export default function ProfileScreen() {
             {split ? (
               <View className="min-h-top-bar flex-row items-center justify-end">{actions}</View>
             ) : null}
-            <ProfileHero />
-            <ProfileTabs links={links} />
+            <ProfileHero look={look} />
+            <ProfileTabs links={links} compact={look.compact} />
           </View>
         </ScreenColumn>
         {split ? (

@@ -18,7 +18,7 @@ import type { LinkMeta } from '@/features/profile/hooks/use-link-meta';
 import { profileTabs } from '@/features/profile/model/profile-links';
 import type { ProfileLink, ProfileLinks, ProfileTab } from '@/features/profile/model/profile-links';
 
-type ProfileTabsProps = { links: ProfileLinks };
+type ProfileTabsProps = { links: ProfileLinks; compact?: boolean };
 
 type LinkRowsProps = { links: readonly ProfileLink[]; meta: LinkMeta };
 
@@ -62,7 +62,7 @@ function SignOut() {
   );
 }
 
-export function ProfileTabs({ links }: ProfileTabsProps) {
+export function ProfileTabs({ links, compact }: ProfileTabsProps) {
   const { t } = useTranslation();
   const household = useHousehold();
   const meta = useLinkMeta(household);
@@ -74,7 +74,7 @@ export function ProfileTabs({ links }: ProfileTabsProps) {
   const people = links.home.find((link) => link.key === 'people');
   const peopleHref = people?.href === '/users' || people?.href === '/people' ? people.href : null;
   return (
-    <View className="mt-6">
+    <View className={compact ? 'mt-4' : 'mt-6'}>
       <View
         role="tablist"
         aria-label={t('screens.profile.tabs.label')}

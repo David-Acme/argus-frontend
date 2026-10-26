@@ -32,10 +32,17 @@ export { feedback } from './feedback';
 export { feedbackEnabled, setFeedbackEnabled } from './feedback-switch';
 export { usePressScale, type PressScaleKind } from './press-scale';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
-export { useWindowHeight, useWindowLayout, useWindowWidth } from './use-window-layout';
+export {
+  useHeightClass,
+  useWindowHeight,
+  useWindowLayout,
+  useWindowWidth,
+} from './use-window-layout';
 export {
   classifyWindowSize,
+  heightClassOf,
   windowClassOf,
+  type HeightClass,
   type Navigation,
   type WindowLayout,
 } from './window-layout';

@@ -150,6 +150,7 @@ const { CallsScreen, ModuleRequestsScreen, ProximityScreen, SafetyScreen } =
   await import('@/features/profile/screens/account-screens');
 const { HomePanel } = await import('@/features/profile/components/home-panel');
 const { ProfileHero: Hero } = await import('@/features/profile/components/profile-hero');
+const { heroLookOf } = await import('@/features/profile/model/hero-look');
 const { ProfileTabs } = await import('@/features/profile/components/profile-tabs');
 const { SubScreen } = await import('@/features/profile/components/sub-screen');
 const { WeekPane } = await import('@/features/profile/components/week-pane');
@@ -272,7 +273,7 @@ describe('the Casa panel alone', () => {
       facts: [],
       actions: { edit: false, invite: false, qr: false },
     };
-    render(<Hero />);
+    render(<Hero look={heroLookOf('regular', false)} />);
     expect(screen.queryByRole('group')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
   });

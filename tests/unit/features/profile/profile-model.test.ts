@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { heroLookOf } from '@/features/profile/model/hero-look';
 import { homeSteps } from '@/features/profile/model/home-steps';
 import { deviceKindOf, factsOf, initialsOf } from '@/features/profile/model/profile-hero';
 import { weekOf, weekStats } from '@/features/profile/model/week-stats';
@@ -65,5 +66,26 @@ describe('the week', () => {
       week
     );
     expect(stats).toEqual({ onTime: 1, pending: 1 });
+  });
+});
+
+describe('the hero on short windows', () => {
+  test('a tall phone and any split window keep the full hero', () => {
+    expect(heroLookOf('regular', false).portrait).toBe('portrait');
+    expect(heroLookOf('tiny', true).facts).toBe(true);
+  });
+
+  test('a short phone shrinks the portrait and folds where you are into the role line', () => {
+    expect(heroLookOf('short', false)).toEqual({
+      portrait: 'large',
+      name: 'heroSecondary',
+      inlineWhere: true,
+      facts: true,
+      compact: true,
+    });
+  });
+
+  test('a tiny phone also leaves the counts to their screens', () => {
+    expect(heroLookOf('tiny', false).facts).toBe(false);
   });
 });

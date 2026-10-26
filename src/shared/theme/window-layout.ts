@@ -6,6 +6,8 @@ export type WindowLayout = { windowClass: WindowClass; navigation: Navigation };
 
 export type WindowSize = { width: number; height: number };
 
+export type HeightClass = 'regular' | 'short' | 'tiny';
+
 const CLASSES = Object.entries(breakpoints) as [WindowClass, number][];
 
 export function windowClassOf(width: number): WindowClass {
@@ -20,4 +22,9 @@ export function classifyWindowSize({ width, height }: WindowSize): WindowLayout 
   if (windowClass === 'compact' || height < layout.compactHeight)
     return { windowClass, navigation: 'bar' };
   return { windowClass, navigation: windowClass === 'medium' ? 'rail' : 'sidebar' };
+}
+
+export function heightClassOf(height: number): HeightClass {
+  if (height < layout.tinyHeight) return 'tiny';
+  return height < layout.shortHeight ? 'short' : 'regular';
 }

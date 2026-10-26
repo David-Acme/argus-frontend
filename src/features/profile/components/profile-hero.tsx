@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import type { TranslationKey } from '@/core/types';
@@ -15,13 +16,16 @@ import type {
   ProfileActions,
   ProfileHero as Hero,
 } from '@/features/profile/hooks/use-profile-hero';
+import type { HeroLook } from '@/features/profile/model/hero-look';
 import type { FactKey, ProfileFact } from '@/features/profile/model/profile-hero';
 
-type WhereProps = { hero: Hero };
+type ProfileHeroProps = { look: HeroLook };
 
-type FactsProps = { facts: readonly ProfileFact[] };
+type WhereProps = { hero: Hero; look: HeroLook };
 
-type ActionsProps = { actions: ProfileActions };
+type FactsProps = { facts: readonly ProfileFact[]; look: HeroLook };
+
+type ActionsProps = { actions: ProfileActions; look: HeroLook };
 
 const FACT_LABEL: Readonly<Record<FactKey, readonly [TranslationKey, TranslationKey]>> = {
   people: ['screens.profile.facts.people.one', 'screens.profile.facts.people.other'],
@@ -35,21 +39,28 @@ const DEVICE_LABEL = {
   browser: 'screens.profile.presence.device.browser',
 } as const;
 
-function Where({ hero }: WhereProps) {
+function useWhere(hero: Hero): { state: string | null; rest: string } {
   const { t } = useTranslation();
   const { formatTime } = useDateFormatter();
   const { self, device } = hero;
-  if (!self && !device) return null;
   const state = self
     ? t(self.state === 'home' ? 'screens.profile.presence.home' : 'screens.profile.presence.away')
     : null;
   const since = self?.since
     ? t('screens.profile.presence.since', { time: formatTime(self.since) })
     : null;
-  const rest = [since, device ? t(DEVICE_LABEL[device]) : null].filter(Boolean).join(' · ');
+  return {
+    state,
+    rest: [since, device ? t(DEVICE_LABEL[device]) : null].filter(Boolean).join(' · '),
+  };
+}
+
+function Where({ hero, look }: WhereProps) {
+  const { state, rest } = useWhere(hero);
+  if (!state && !rest) return null;
   return (
-    <View className="mt-4 flex-row items-center gap-2">
-      <Icon name="home" size="small" tone="accent" />
+    <View className={clsx('flex-row items-center gap-2', look.compact ? 'mt-1' : 'mt-4')}>
+      {look.inlineWhere ? null : <Icon name="home" size="small" tone="accent" />}
       <View className="min-w-0 flex-1">
         <Text variant="meta" tone="2">
           {state ? <Text variant="label">{state}</Text> : null}
@@ -61,17 +72,17 @@ function Where({ hero }: WhereProps) {
   );
 }
 
-function Facts({ facts }: FactsProps) {
+function Facts({ facts, look }: FactsProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { elevation } = useThemeTokens();
-  if (facts.length === 0) return null;
+  if (facts.length === 0 || !look.facts) return null;
   const card = { boxShadow: elevation.card };
   return (
     <View
       role="group"
       aria-label={t('screens.profile.facts.label')}
-      className="bg-surface rounded-card mt-4 flex-row"
+      className={clsx('bg-surface rounded-card flex-row', look.compact ? 'mt-3' : 'mt-4')}
       style={card}>
       {facts.map((fact, index) => {
         const label = t(FACT_LABEL[fact.key][fact.value === 1 ? 0 : 1]);
@@ -81,7 +92,10 @@ function Facts({ facts }: FactsProps) {
               a11y={{ label: `${fact.value} ${label}`, role: 'link' }}
               onPress={() => router.push(fact.href)}
               pressed={{ fill: true }}
-              className="min-h-target items-center justify-center px-2 py-3">
+              className={clsx(
+                'min-h-target items-center justify-center px-2',
+                look.compact ? 'py-2' : 'py-3'
+              )}>
               {index > 0 ? (
                 <View className="border-line absolute inset-y-4 left-0 border-l" />
               ) : null}
@@ -97,12 +111,12 @@ function Facts({ facts }: FactsProps) {
   );
 }
 
-function Actions({ actions }: ActionsProps) {
+function Actions({ actions, look }: ActionsProps) {
   const { t } = useTranslation();
   const router = useRouter();
   if (!actions.edit && !actions.invite && !actions.qr) return null;
   return (
-    <View className="mt-4 flex-row gap-2">
+    <View className={clsx('flex-row gap-2', look.compact ? 'mt-3' : 'mt-4')}>
       {actions.edit ? (
         <View className="flex-1">
           <Button
@@ -116,6 +130,7 @@ function Actions({ actions }: ActionsProps) {
         <View className="flex-1">
           <Button
             block
+            compact={look.compact}
             variant="primary"
             label={t('screens.profile.invite')}
             onPress={() => router.push(PROFILE_HREF.invite)}
@@ -135,24 +150,25 @@ function Actions({ actions }: ActionsProps) {
   );
 }
 
-export function ProfileHero() {
+export function ProfileHero({ look }: ProfileHeroProps) {
   const hero = useProfileHero();
   return (
     <View>
-      <View className="flex-row items-center gap-4 pt-2">
-        <Avatar size="portrait" round initial={hero.initials} label={hero.name} />
+      <View className={clsx('flex-row items-center', look.compact ? 'gap-3' : 'gap-4 pt-2')}>
+        <Avatar size={look.portrait} round initial={hero.initials} label={hero.name} />
         <View className="min-w-0 flex-1">
-          <Text variant="heroCompact" heading={1}>
+          <Text variant={look.name} heading={1}>
             {hero.name}
           </Text>
           <Text variant="label" tone="2">
             {hero.role}
           </Text>
+          {look.inlineWhere ? <Where hero={hero} look={look} /> : null}
         </View>
       </View>
-      <Where hero={hero} />
-      <Facts facts={hero.facts} />
-      <Actions actions={hero.actions} />
+      {look.inlineWhere ? null : <Where hero={hero} look={look} />}
+      <Facts facts={hero.facts} look={look} />
+      <Actions actions={hero.actions} look={look} />
     </View>
   );
 }
