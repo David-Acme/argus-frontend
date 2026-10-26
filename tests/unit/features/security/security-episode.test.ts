@@ -1,12 +1,17 @@
 import { describe, expect, test } from 'bun:test';
-import type { GuardEpisode } from '@/core/types';
+import { localeDictionaries } from '@/core/i18n/locales';
+import { translate } from '@/core/i18n/translate';
+import type { GuardEpisode, TranslateFn } from '@/core/types';
 import {
   calmingReasons,
   episodeOutcome,
+  episodeTitle,
   formatDuration,
   needsReview,
   raisingReasons,
 } from '@/features/security/model/episode';
+
+const t: TranslateFn = (key, ...rest) => translate(localeDictionaries.es, key, ...rest);
 
 function episode(overrides: Partial<GuardEpisode>): GuardEpisode {
   return {
@@ -66,5 +71,19 @@ describe('guard episodes', () => {
     expect(formatDuration(200)).toBe('3 min');
     expect(formatDuration(3600)).toBe('1 h');
     expect(formatDuration(4900)).toBe('1 h 22 min');
+  });
+
+  test('the title names the subject or the camera trouble in words', () => {
+    expect(episodeTitle(t, episode({ subject: '' }))).toBe('Persona desconocida');
+    expect(episodeTitle(t, episode({ subject: 'unobserved' }))).toBe('Alguien sin identificar');
+    expect(episodeTitle(t, episode({ subject: 'several', people: 1 }))).toBe(
+      '2 personas desconocidas'
+    );
+    expect(episodeTitle(t, episode({ kind: 'camera', status: 'covered' }))).toBe(
+      t('screens.security.episodes.tamper.covered')
+    );
+    expect(episodeTitle(t, episode({ kind: 'camera', status: 'bogus' }))).toBe(
+      t('screens.security.episodes.tamper.other')
+    );
   });
 });

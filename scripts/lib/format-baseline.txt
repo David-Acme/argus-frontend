@@ -494,7 +494,6 @@ src/features/security/hooks/use-environment-response.ts
 src/features/security/hooks/use-guard.ts
 src/features/security/hooks/use-maintenance.ts
 src/features/security/model/environments.ts
-src/features/security/model/episode.ts
 src/features/security/model/guest-arrival.ts
 src/features/security/model/hours.ts
 src/features/security/model/maintenance.ts
