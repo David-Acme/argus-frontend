@@ -7146,3 +7146,48 @@ Measured on 2026-10-26:
 | loose `constants.ts` | 5 |
 | `-types.ts` files | 10 |
 | unformatted files | 879 |
+
+## Agenda (2026-10-26, Phase 4, p4/agenda)
+
+The owner's 2026-10-26 prototype (`uiux-map/redesign/later-phases/owner-2026-10-26/tu-agenda-ajustes.html`)
+replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
+
+- **Layout by window class.** Phone: the month title (its chevron opens the
+  month), view chips Agenda · Día · Proyectos (`FilterChip size="view"`, a tab
+  with the accent-soft selection), the week strip with a grab handle, the day
+  list, and the ink «+» (`Button iconOnly fab`) above the bar; a line opens a
+  detail sheet. Tablet (medium): list | detail, through `Screen columns="medium"`
+  (the panes start at medium only for a screen that asks; `ScreenColumns`
+  keeps its desktop default outside a `Screen`). Desktop: mini month, «Mostrar»
+  filters and «Libre hoy» | list | detail. The aside and the detail are lists
+  of sections (`asideBlocks`, `detailBlocks`), so only their last section grows
+  to the bottom.
+- **The list** covers the selected day and the six after it, from the month
+  caches of the selected month and the next (the paged agenda feed went with
+  the old Agenda view). Overdue first, then all-day, then by time, with the free
+  slots of `dayTimeline` between them. A line is time | 4 px bar | title and
+  meta | repeat and check: the bar is `ev1-bar` reminders, `ev3-bar` events,
+  `ev2-bar` tasks, `ev4-bar` events shared with you, red overdue, dashed for an
+  event series and dotted for a free slot (segments, never a gradient). The
+  bar colours are the prototype's `--ev*b`, added to `tokens.ts`.
+- **Día** is the hour timeline of the selected day from 07:00, or the first
+  earlier start, to 21:00 or the last end, hour labels in the device clock
+  (`formatHour`) in a fixed gutter that never wraps; overlapping events share
+  the width in lanes, and a red line marks now.
+- **One Nuevo sheet** (`ItemSheet`) creates a reminder (the default), an event
+  or a task (the type is a chip) and edits reminders and events; a series asks
+  «Solo esta» / «Toda la serie». A task is edited in Proyectos. Times are typed
+  and shown in the device clock (`parseClock` reads 24 h, 12 h, «930», «9.30»),
+  which removes the 12 h / 24 h mismatch between grid and forms (A12). Reminders
+  are now created from the app too (`reminderService.create`, the reminder lens
+  shows them at once); Argus still creates them by voice.
+- **Short phones** (`isShortWindow`, under 700 dp): every phone sheet opens near
+  full height and scrolls (`sheetFit`), the week strip drops its grab handle and
+  the month uses small discs, so the list starts within the top 40 %.
+- **Slices.** The reminders slice merged into agenda: agenda reads
+  `useReminders` and reminders read agenda's day picker, which would close a
+  slice cycle. Inicio's agenda models moved here; the types they share live in
+  `core/types/agenda.type.ts` and `FREE_SLOT_RULES` in the calendar constants.
+  `ReminderDialog`, `RemindersSection` and `EntryActionsMenu` stay exported while
+  Inicio and the inactive-role screen still use them; the event share dialog is
+  still the legacy one, opened from the detail's «Más acciones».
