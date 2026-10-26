@@ -167,6 +167,12 @@ describe('InicioLead', () => {
       />
     );
     expect(screen.queryByText('Conecta tu primera cámara')).toBeNull();
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  test('on the band, before the context, the agenda skeleton says Inicio is loading', () => {
+    render(<InicioLead hero={{ ...HERO, phase: 'loading' }} firstStep={null} sos={false} band />);
+    expect(screen.getByRole('progressbar', { name: 'Cargando Inicio' })).toBeDefined();
   });
 });
 

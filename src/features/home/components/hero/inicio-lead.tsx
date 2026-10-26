@@ -24,6 +24,8 @@ type SpacedProps = { children: ReactNode };
 
 type FirstStepCardProps = { step: FirstStep };
 
+type AgendaSkeletonProps = { announced: boolean };
+
 const ROWS = [0, 1, 2] as const;
 
 const CAMERAS_ROUTE = '/cameras';
@@ -76,13 +78,20 @@ export function OfflineNotice({ age }: OfflineNoticeProps) {
   );
 }
 
-function AgendaSkeleton() {
-  return (
+function AgendaSkeleton({ announced }: AgendaSkeletonProps) {
+  const { t } = useTranslation();
+  const rows = (
     <Section>
       {ROWS.map((row) => (
         <SkeletonRow key={row} trailing />
       ))}
     </Section>
+  );
+  if (!announced) return rows;
+  return (
+    <View role="progressbar" aria-label={t('screens.home.inicio.loading')}>
+      {rows}
+    </View>
   );
 }
 
@@ -100,7 +109,7 @@ export function InicioLead({ hero, firstStep, sos, band }: InicioLeadProps) {
           <PanicButton />
         </Spaced>
       ) : null}
-      {hero.phase === 'loading' ? <AgendaSkeleton /> : null}
+      {hero.phase === 'loading' ? <AgendaSkeleton announced={band} /> : null}
       {firstStep && hero.phase !== 'loading' ? (
         <Spaced>
           <FirstStepCard step={firstStep} />
