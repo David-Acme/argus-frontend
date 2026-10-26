@@ -5500,7 +5500,9 @@ toast's Retry (the lab has no banner with an action; the banner's action is
 the same `PressableSurface` path), and that the chips and the sidebar's ask
 field hold their words at the lab's font scale 2.
 
-**Component tests.** `bun run test:ui` runs `tests/unit/shared/ui/` in its own
+**Component tests.** `bun run test:ui` runs every `*.test.tsx` (the design
+system's in `tests/unit/shared/ui/`, a feature's beside its unit tests, e.g.
+`tests/unit/features/home/components/`; the main suite skips `*.test.tsx`) in its own
 bun process (happy-dom, react-native-web as react-native, react-native-svg's web
 elements, stubs for Reanimated, expo-device, uniwind, RNGH), because the main
 suite's preload stubs react-native for pure logic. Tests import each component
@@ -5574,6 +5576,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p1/wire` item 4: the ui-lab and the spikes screen load from one lazy chunk (`lab-screens`, 405,626 B) that a production page never fetches. Measured on the same tree before and after: entry 7,522,566 → 7,118,965 B (−403,601; the Phase 1 entry growth over 7,063,615 B falls from +458,951 to +55,350), `dist/` 8,842,120 → 8,844,145 B (+2,025: the chunk's own module wrappers and loader). The entry baseline is lowered with it. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of `p1/ds-fixes`, `p1/estela-perf` and `p1/wire` (ff881a0), measured on the merged tree: `dist/` 8,844,145 → 8,867,041 B (+22,896): Estela's adaptive renderer (tier probe and frame-time feedback, about 17 kB as measured on its branch), the design-system fixes (about 4.5 kB: the confirm latch, the announce and screen-active hooks, the hit areas) and the lazy lab's chunk carrying the merged demos. The entry chunk went down, 7,118,965 → 7,115,996 B, because the lab now loads lazily. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `dist-bytes` | Lead merge of the Estela tier fixes (`932b976`, `1033e5f`: paint-ahead pacing, the warm-up probe, the step-up path), measured on the integrated tree: `dist/` 8,867,041 → 8,867,586 B (+545). The entry chunk is unchanged at 7,115,996 B; the growth is in the lazy lab chunk and the Presence modules. | 2026-10-21 |
+| `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
@@ -6434,3 +6437,73 @@ build was 117,468,588 B); arm64-v8a review APKs 110,928,024 B (ff881a0) and
   frame is followed by a callback well under a millisecond later; taken as the
   beat, it made every frame look on time and the paint-ahead never ran.
   `noteBeat` ignores gaps under 4 ms.
+
+## Inicio feed: Novedades and En casa (2026-10-26, Phase 2, p2/inicio-feed)
+
+Two sections of Inicio (`INICIO-SECTIONS` contract): `NewsSection` and
+`HomePeopleSection` in `src/features/home/components/feed/`, each with no
+props, its own hook and its `model/` decisions; both switch form on
+`useInScreenColumn()`.
+
+**Novedades** reads the local notification feed (`usePagedView` over
+`notificationFeed`, the same rows, module filter, threads and optimistic read
+lens the bell used: `useNews` is now the one place, and the old
+`useNotificationFeed` builds on it until the old home goes). The phone and
+tablet card shows the latest 5 threads; a desktop column shows one per 100 px
+of window height (`newsLimit`: 8, 11 and 14 at 820, 1080 and 1440, the
+prototype's numbers for 1280, 1920 and 2560), never fewer than 5, and the
+column scrolls past that. With no thread, or without `notifications.read`, the
+section renders nothing: the composition decides what fills the column then
+(the prototype's sparse Inicio shows Primeros pasos there). Each thread is a
+`FeedItem`: the title is who, the body is what (no body: «Argus» says the
+title); the well's glyph follows the kind (`newsAvatarOf`), urgency colours
+it, and what Argus itself says (`assistant_task`, `guard_digest`) carries a
+paused Estela (`Avatar presence`, `size.presenceAvatar` 30 in the 42 well, the
+prototype's `masc(30)` in a `lic r`; paused, so never a second live Estela).
+The time line reads today «14:35», yesterday «Ayer 21:53», this week «Lun»,
+older «12 oct» (`newsStampOf`), the spoken-duress said/delivered pair kept,
+and a thread adds «· 3 avisos». Inline actions come from the features that own
+them: a module request's «Activar» / «Ahora no» (`ModuleEnableAction`, now the
+redesign's compact buttons; «Ahora no» dismisses), a sight notice's answers,
+a camera conversation's continue/transcript, plus «Revisar» for an episode or
+tamper that links somewhere and «Responder» for a household message. Those
+three features' notification actions moved to the redesign's `Button` and
+return bare buttons, so they sit in the `FeedItem` action row (which wraps).
+
+**Reading.** The bell's moment, "opening it reads everything", is gone with
+the bell. An item is marked read when it is used: its row pressed (the row is
+pressable while it leads somewhere or is still unread) or one of its actions
+completed. Seeing it on Inicio does not read it; the unread dot stays until
+then. A read goes through `runOptimistic` with the thread's unread ids and
+`notificationService.markRead`, i.e. `PATCH /notification/thread/{key}/read`
+for a thread and `PATCH /notification/read` by id otherwise: the backend
+selects the unread rows before it marks them and publishes their user-audit
+diffs, so other devices drop the dot through the audit stream.
+
+**«Ver todo»** opens `/notification`. That route used to be only the push
+link (`?notificationId=` waits for the row and opens its target; without an id
+it sent you back to Inicio). It is now `NewsScreen` (home feature): with an id
+it renders the link screen exactly as before; without one it is the full feed,
+every thread as the same `NewsItem` under «Novedades», «Ver más» paging the
+local view while the server holds more, the same reading rule, and an empty
+state («Aquí verás lo que pase en tu casa»). §9.8's filter (Todo / Seguridad /
+Pendientes), thread lines and swipe-to-delete are not built yet; deletion still
+lives on the old home's activity card.
+
+**En casa** is who is home and since when: Owner only (`presence.read`, which
+the server grants the Owner alone and gates on surveillance), from
+`GET /guard/presence` through people's `usePresenceOverview` (view-cached, so
+after the first answer it paints from the local copy) joined with the local
+people directory. Order: home, away, unknown; me first within a state, then by
+name; inactive accounts out. A row reads «Ana (tú)» / «en casa desde 13:10»,
+«fuera desde el 5 ene» for another day, «sin datos» when the server knows
+nothing. Before the first answer the section keeps its final layout with three
+skeleton rows (HTTP data with no local copy); a failure shows an attention
+`Notice` with Reintentar; a role without the capability, or surveillance off,
+gets no section.
+
+**Columns.** In a `ScreenColumn` the last section grows to the bottom
+(§6b-1): `Section` grows there, and so do its grouped card and a `Feed`, so a
+short Novedades or En casa card reaches the column's bottom instead of leaving a
+blank; outside a column nothing changes.
+
