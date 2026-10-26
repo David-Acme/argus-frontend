@@ -99,8 +99,10 @@ describe('camera conversation notifications', () => {
   });
 
   test('the row shows the actions, in words both languages have', () => {
-    const row = source('features/home/components/notification-thread-row.tsx');
-    expect(row).toContain('<WatchNotificationAction kind={watchKind} data={latest.data} onDone={() => onRead?.(thread)} />');
+    const row = source('features/home/components/feed/news-item.tsx');
+    expect(row).toMatch(
+      /<WatchNotificationAction\s+kind=\{watchKind\}\s+data=\{thread\.latest\.data\}\s+onDone=\{onRead\}\s*\/>/
+    );
     for (const key of ['continue-action', 'open-action', 'transcript-action']) {
       expect(es(`screens.watch.notification.${key}` as TranslationKey)).not.toBe(`screens.watch.notification.${key}`);
       expect(en(`screens.watch.notification.${key}` as TranslationKey)).not.toBe(`screens.watch.notification.${key}`);

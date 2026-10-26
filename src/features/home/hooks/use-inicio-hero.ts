@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { IAuthUser } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
 import type { GuardMode, IncidentResponse, TranslateFn } from '@/core/types';
@@ -33,6 +33,8 @@ export type InicioHero = HeroLook & {
   alert: IncidentResponse | null;
   offlineAge: string | null;
 };
+
+type OfflineSeen = { offline: boolean; since: number | null };
 
 type MetaWords = {
   t: TranslateFn;
@@ -144,12 +146,11 @@ function sentenceOf(phase: InicioPhase, alert: IncidentResponse | null, t: Trans
   return phase === 'alert' && alert ? alertSentence(alert, t) : t(SENTENCE_KEYS[phase]);
 }
 
-function useOfflineSince(offline: boolean): number | null {
-  const [since, setSince] = useState<number | null>(null);
-  useEffect(() => {
-    setSince(offline ? Date.now() - OFFLINE_NOTICE_DELAY_MS : null);
-  }, [offline]);
-  return since;
+function useOfflineSince(offline: boolean, now: number): number | null {
+  const [seen, setSeen] = useState<OfflineSeen>({ offline: false, since: null });
+  if (seen.offline !== offline)
+    setSeen({ offline, since: offline ? now - OFFLINE_NOTICE_DELAY_MS : null });
+  return seen.since;
 }
 
 function useInicioGreeting(now: number): string {
@@ -175,7 +176,7 @@ export function useInicioHero(band: boolean): InicioHero {
   const { ready, guard } = useCapabilities();
   const synced = useViewCacheValue<boolean>(VIEW_CACHE_KEYS.syncReady) === true;
   const offline = useOfflineNotice();
-  const since = useOfflineSince(offline);
+  const since = useOfflineSince(offline, now);
   const alert = useOpenResponse();
   const selfId = useAuthStore((state) => state.user?.id ?? 0);
   const environments = useGuardEnvironments(guard.view).data;

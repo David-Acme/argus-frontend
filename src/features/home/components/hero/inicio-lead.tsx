@@ -26,6 +26,8 @@ type FirstStepCardProps = { step: FirstStep };
 
 const ROWS = [0, 1, 2] as const;
 
+const CAMERAS_ROUTE = '/cameras';
+
 function FirstStepCard({ step }: FirstStepCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -39,7 +41,7 @@ function FirstStepCard({ step }: FirstStepCardProps) {
         action={{
           label: t('screens.home.inicio.first.camera-action'),
           primary: true,
-          onPress: () => router.push('/cameras'),
+          onPress: () => router.push(CAMERAS_ROUTE),
         }}
       />
     );

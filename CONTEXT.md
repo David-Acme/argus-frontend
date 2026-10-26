@@ -5580,7 +5580,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
-
+| `scripts/lib/quality-baseline.txt` | `scanned-files` | `p2/inicio` (T4): the floor goes down, 1840 → 1826, because the old Inicio's files are deleted with their tests (the nine-card dashboard, the bell popover and thread row, the search field, the activity heatmap and its projection, the getting-started checklist, card, chip and signals projection, the camera grid and tile). Every count measured with them fell too and was lowered in the same change. | 2026-10-26 |
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
@@ -6766,3 +6766,62 @@ Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R
   «Conectando con la cámara»/«Reconectando…», the voice call's
   «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
   nube», which is a status line, not a notice.
+
+## Inicio: composition, hero, band and states (Phase 2, T4, 2026-10-26)
+
+`src/features/home/screens/home-screen.tsx` lays out the sections of T5, T6
+and T7 under one hero; every decision is a pure function in
+`model/inicio-hero.ts`, `inicio-stats.ts`, `inicio-states.ts` and
+`inicio-layout.ts`.
+
+- **Top bar and hero.** On phones and tablets the top bar is the greeting
+  (`dayPart`: morning 5–11, afternoon 12–19, evening otherwise) and one
+  search button that opens Command; the hero is `Status` with Estela, the
+  sentence, the meta and the stats. From 1024 px the hero is the band: the
+  greeting leads the meta, the stats are cameras and alerts (from 1700 px
+  also detections and pending), and «Nuevo» opens Command's new-item actions.
+  The band draws its Aura (R-D29); the Screen's Aura field is drawn only on
+  phones and tablets.
+- **Phase.** `inicioPhase` orders loading (no context or no first sync) >
+  alert (an open response) > offline > night > away/armed > calm. Each phase
+  has one look (`heroLook`): tone, Estela's state and the aura; offline is
+  calm in tone with Estela off and the grey aura, so the band takes an aura
+  apart from its tone (`Status` `aura`).
+- **Alert.** The hero says what happened and where (`alertSentence` in
+  `features/response`, kept beside the response model) with the age and the
+  response headline as meta. `components/hero/inicio-alert.tsx` is the card:
+  the camera live (only with `camera.view`), «Ver cámara» (or «Ver
+  Seguridad»), «Es real» or, once confirmed, the emergency call, «Es una falsa
+  alarma», then the contacts. It lives in `home`, not `response`, because a
+  response component importing `features/cameras` joins the recorded
+  cameras ↔ voice ↔ response cycle.
+- **Offline.** `useOfflineNotice` decides when (12 s); the age of the last
+  known facts is counted from the notice minus its delay, on the minute
+  clock. Phones show it above the hero, the band in the first column. The
+  stats and the meta stay: they are the last known facts.
+- **New household.** No camera, reminder, project or open task: one first
+  step instead of the sections, the camera when the role can add one, else
+  the first reminder (Command's new-item actions).
+- **Before the context.** The phone hero is a skeleton and Ahora's place
+  holds three skeleton rows; the band shows the greeting with no stats.
+- **Columns** come from what the role reads (`inicioColumns`): an empty
+  column is dropped, the lead block (alert, offline, SOS, first step) tops
+  the first column left, and when every remaining column is fixed the last
+  one takes the rest of the width. The grown section is chosen by name, not
+  position, so a section that may render nothing (Mañana, En casa) is not the
+  one that grows; Cámaras grows in its column.
+- **Guest SOS.** A role that can panic and has no Seguridad holds the
+  existing `PanicButton` on Inicio (R-D10).
+- **One live Estela (R-D31).** `useHeroPresence` (claimed by the Status hero)
+  and `useCentrePresence` (the bar's and the rail's centre) share one small
+  store in `shared/ui/presence/presence-focus.ts`: while a hero is mounted the
+  centre paints the still frame, and while hold-to-talk listens the centre is
+  live and the hero holds still.
+- **Removed.** The nine-card dashboard, the bell popover and its
+  `/?panel=notifications` link (the assistant's notifications link opens
+  `/notification`, which an inactive role with `notifications.read` may
+  open), the search field, the activity heatmap and its projection, the
+  getting-started checklist with its signals projection, and the camera grid.
+  Deleting a notification lives on the full feed, one button per item with
+  Deshacer. The earlier sections of this file that describe the bell and the
+  checklist are history.
