@@ -8,6 +8,10 @@ import { pinnedRtcUrl } from '@/features/voice/model/rtc-protocol';
 import { pinSocketOrigin, routedWebSocket } from './pinned-websocket';
 import { LivekitRealtimeCall } from './rtc-livekit';
 
+const importLivekit = () => import('@livekit/react-native');
+let livekitModule: ReturnType<typeof importLivekit> | undefined;
+const livekit = () => (livekitModule ??= importLivekit());
+
 let globalsReady = false;
 let unpinOrigin: (() => void) | null = null;
 let audioSessionOwned = false;
@@ -18,8 +22,7 @@ function nativeWebRtcLinked(): boolean {
 
 async function ensureGlobals(): Promise<void> {
   if (globalsReady) return;
-  const livekit = await import('@livekit/react-native');
-  livekit.registerGlobals();
+  (await livekit()).registerGlobals();
   globalThis.WebSocket = routedWebSocket(globalThis.WebSocket, (url) =>
     netService.openSocket({ url })
   ) as unknown as typeof WebSocket;
@@ -37,7 +40,7 @@ async function prepare(join: RtcJoin): Promise<RtcJoin> {
   audioSessionOwned = !pushService.telecomCallActive();
   traceEvent('voice', 'start', audioSessionOwned ? 'audio-session-app' : 'audio-session-telecom');
   if (audioSessionOwned) {
-    const { AudioSession, AndroidAudioTypePresets } = await import('@livekit/react-native');
+    const { AudioSession, AndroidAudioTypePresets } = await livekit();
     await AudioSession.configureAudio({
       android: { audioTypeOptions: AndroidAudioTypePresets.communication },
     });
@@ -51,7 +54,7 @@ async function release(): Promise<void> {
   unpinOrigin = null;
   if (!audioSessionOwned) return;
   audioSessionOwned = false;
-  const { AudioSession } = await import('@livekit/react-native');
+  const { AudioSession } = await livekit();
   await AudioSession.stopAudioSession();
 }
 
