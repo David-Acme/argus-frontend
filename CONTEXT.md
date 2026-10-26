@@ -7057,3 +7057,30 @@ The desktop takes the socket leg too: its shell grants the app origin the
 WebKitGTK microphone (`src-tauri/src/media.rs`), which is what `voiceCallSupported()`
 reads; only a platform without a PCM microphone would hold over WebRTC and
 keep the 340 ms above.
+
+
+## Pending normalisation (owner decision 2026-10-26)
+
+New code follows AGENTS.md › "Rule 12 today: one pattern for where code goes
+and how it is imported". The code written before it is normalised in ONE pass
+after every redesign screen has landed and no branch is open, so the pass
+conflicts with nothing. The pass covers:
+
+- `import/order` with the five groups, and `consistent-type-imports` (`import type`), both as lint errors with autofix;
+- relative imports inside a feature turned into `@/features/<feature>/...`;
+- loose `constants.ts` files moved into `constants/`;
+- `-types.ts` renamed to `.type.ts`;
+- single-feature types moved from `core/types` into that feature's `model/`;
+- the remaining `export *` replaced by named exports;
+- the deferred Prettier formatting commit (R-D35), which brings `format-baseline.txt` to zero.
+
+Measured on 2026-10-26:
+
+| What | Count |
+|---|---|
+| own-feature imports | 1,132 alias, 164 relative |
+| type imports | 1,216 `import type`, 325 inline `type` |
+| `export *` | 117 |
+| loose `constants.ts` | 5 |
+| `-types.ts` files | 10 |
+| unformatted files | 879 |
