@@ -83,5 +83,3 @@ export const CAMERA_ICONS: readonly IconName[] = [
 export const CAMERA_RETENTION_DEFAULT_DAYS = 30;
 export const CAMERA_RETENTION_MAX_DAYS = 60;
 export const CAMERA_RETENTION_INCIDENT_MAX_DAYS = 120;
-
-export const CAMERA_LIST_HREF = '/cameras';

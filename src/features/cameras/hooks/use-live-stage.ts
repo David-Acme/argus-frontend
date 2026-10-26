@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import type { ICameraLiveStats } from '@/core/interfaces';
 import type { CameraStreamState } from '@/core/types';
-import {
-  useCameraLiveAudio,
-  type CameraLiveAudio,
-} from '@/features/cameras/hooks/use-camera-live-audio';
-import {
-  useCameraQuality,
-  type CameraQualityControls,
-} from '@/features/cameras/hooks/use-camera-quality';
+import { useCameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
+import type { CameraLiveAudio } from '@/features/cameras/hooks/use-camera-live-audio';
+import { useCameraQuality } from '@/features/cameras/hooks/use-camera-quality';
+import type { CameraQualityControls } from '@/features/cameras/hooks/use-camera-quality';
 import { CAMERA_FRAGMENT_AUDIO } from '@/features/cameras/constants';
 import { liveAudioPlayable } from '@/features/cameras/model/camera-live-audio';
-import {
-  stageOf,
-  type CameraStage,
-  type LiveViewStatus,
-} from '@/features/cameras/model/camera-stage';
+import { stageOf } from '@/features/cameras/model/camera-stage';
+import type { CameraStage, LiveViewStatus } from '@/features/cameras/model/camera-stage';
 
 export type LiveStageInput = {
   cameraId: string;

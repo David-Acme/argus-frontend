@@ -1,9 +1,9 @@
 import { View } from 'react-native';
-import type { CameraLive } from '@/features/cameras/hooks/use-camera-live';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
 import { Cluster, Stack } from '@/shared/ui/layout';
 import { Notice } from '@/shared/ui/notice';
+import type { CameraLive } from '@/features/cameras/hooks/use-camera-live';
 
 export type LiveNoticesProps = { view: CameraLive };
 

@@ -1,8 +1,8 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { useCameraEnvironmentIndex } from '@/features/security';
 import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
 import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
-import { useCameraEnvironmentIndex } from '@/features/security';
-import { useTranslation } from '@/shared/hooks/use-translation';
 
 export function useCameraMeta(camera: ICameraCacheRow): string {
   const { t } = useTranslation();

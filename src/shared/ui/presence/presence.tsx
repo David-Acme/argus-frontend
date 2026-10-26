@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react';
-import { View, type GestureResponderEvent } from 'react-native';
-import { useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { View } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import { useUniwind } from 'uniwind';
 import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
-import type { Look } from './engine/driver';
-import type { PresenceEvent, PresenceState } from './engine/types';
-import { planFor, seedFor } from './plan';
-import { PresenceCanvas } from './presence-canvas';
-import { usePresenceInput, type PresenceCue } from './use-presence-input';
-import { useTierProbe } from './use-tier-probe';
+import type { Look } from '@/shared/ui/presence/engine/driver';
+import type { PresenceEvent, PresenceState } from '@/shared/ui/presence/engine/types';
+import { planFor, seedFor } from '@/shared/ui/presence/plan';
+import { PresenceCanvas } from '@/shared/ui/presence/presence-canvas';
+import { usePresenceInput } from '@/shared/ui/presence/use-presence-input';
+import type { PresenceCue } from '@/shared/ui/presence/use-presence-input';
+import { useTierProbe } from '@/shared/ui/presence/use-tier-probe';
 
 export type PresenceProps = {
   state: PresenceState;

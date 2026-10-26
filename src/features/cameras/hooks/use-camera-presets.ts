@@ -1,13 +1,10 @@
-import { cameraControlService } from '@/features/cameras/services/camera-control.service';
-import {
-  nextPresetName,
-  parsePresets,
-  type CameraPreset,
-} from '@/features/cameras/model/camera-presets';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import { nextPresetName, parsePresets } from '@/features/cameras/model/camera-presets';
+import type { CameraPreset } from '@/features/cameras/model/camera-presets';
 
 export type CameraPresetsInput = { cameraId: string; enabled: boolean; onHomeSet: () => void };
 

@@ -1,12 +1,13 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { illustration, size, useEffects } from '@/shared/theme';
+import { Icon } from '@/shared/ui/icon';
+import type { IconGlyph } from '@/shared/ui/icon';
+import { PressableSurface } from '@/shared/ui/pressable';
 import { usePadPress } from '@/features/cameras/hooks/use-pad-press';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import type { PtzDirection } from '@/features/cameras/model/camera-ptz';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { illustration, size, useEffects } from '@/shared/theme';
-import { Icon, type IconGlyph } from '@/shared/ui/icon';
-import { PressableSurface } from '@/shared/ui/pressable';
 
 export type PtzPadProps = { ptz: CameraPtzControls };
 

@@ -1,6 +1,8 @@
 import { Circle, Path, Svg } from 'react-native-svg';
-import { size as sizes, useThemeTokens, type ColorRole } from '@/shared/theme';
-import { ICON_SHAPES, type IconGlyph, type IconShape } from './icon-shapes';
+import { size as sizes, useThemeTokens } from '@/shared/theme';
+import type { ColorRole } from '@/shared/theme';
+import { ICON_SHAPES } from '@/shared/ui/icon/icon-shapes';
+import type { IconGlyph, IconShape } from '@/shared/ui/icon/icon-shapes';
 
 export type IconTone = Extract<
   ColorRole,

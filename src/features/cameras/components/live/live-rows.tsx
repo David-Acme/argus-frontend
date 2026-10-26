@@ -1,17 +1,13 @@
 import { useRouter } from 'expo-router';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
-import {
-  clipsToday,
-  settingsSummaryOf,
-  zoneNames,
-  type SettingsSection,
-} from '@/features/cameras/model/camera-settings';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Avatar } from '@/shared/ui/avatar';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
+import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
+import { clipsToday, settingsSummaryOf, zoneNames } from '@/features/cameras/model/camera-settings';
+import type { SettingsSection } from '@/features/cameras/model/camera-settings';
 
 export type LiveRowsProps = {
   camera: ICameraCacheRow;

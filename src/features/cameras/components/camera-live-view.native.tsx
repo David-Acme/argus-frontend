@@ -1,6 +1,8 @@
-import { ArgusCameraView, type ArgusCameraViewMethods } from 'argus-camera';
+import { ArgusCameraView } from 'argus-camera';
+import type { ArgusCameraViewMethods } from 'argus-camera';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { callback } from 'react-native-nitro-modules';
@@ -17,13 +19,13 @@ import type {
   CameraStreamState,
   CameraTransport,
 } from '@/core/types';
+import { cn } from '@/shared/libs/utils';
 import { cameraLiveService } from '@/features/cameras/services/camera-live.service';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { nativePlayerMuted } from '@/features/cameras/model/camera-live-audio';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
 import { CameraRtcVideo } from './camera-rtc-video';
-import { cn } from '@/shared/libs/utils';
 import type { LiveViewStatus } from '@/features/cameras/model/camera-stage';
 
 type CameraLiveStreamProps = {

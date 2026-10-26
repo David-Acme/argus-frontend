@@ -1,20 +1,17 @@
 import { useRef, useState } from 'react';
-import { useCameraCall, type CameraCallControls } from '@/features/cameras/hooks/use-camera-call';
-import {
-  useCameraSiren,
-  type CameraSirenControls,
-} from '@/features/cameras/hooks/use-camera-siren';
+import { feedback } from '@/shared/theme';
+import { useCameraCall } from '@/features/cameras/hooks/use-camera-call';
+import type { CameraCallControls } from '@/features/cameras/hooks/use-camera-call';
+import { useCameraSiren } from '@/features/cameras/hooks/use-camera-siren';
+import type { CameraSirenControls } from '@/features/cameras/hooks/use-camera-siren';
 import {
   IDLE_HOLD,
   callTroubleOf,
   dockPhase,
   holdReducer,
   holdTalking,
-  type CallTrouble,
-  type DockPhase,
-  type HoldEvent,
 } from '@/features/cameras/model/talk-dock';
-import { feedback } from '@/shared/theme';
+import type { CallTrouble, DockPhase, HoldEvent } from '@/features/cameras/model/talk-dock';
 
 export type TalkDock = {
   call: CameraCallControls;

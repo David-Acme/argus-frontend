@@ -1,6 +1,9 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { Screen } from '@/shared/ui/screen';
+import { MaintenancePanel } from '@/features/security';
 import { AdvancedSection } from '@/features/cameras/components/settings/advanced-section';
 import { DetectionSection } from '@/features/cameras/components/settings/detection-section';
 import { DeviceSection } from '@/features/cameras/components/settings/device-section';
@@ -10,15 +13,10 @@ import { PatrolSection } from '@/features/cameras/components/settings/patrol-sec
 import { PlacesSection } from '@/features/cameras/components/settings/places-section';
 import { PrivacySection } from '@/features/cameras/components/settings/privacy-section';
 import { useCameraRow } from '@/features/cameras/hooks/use-camera-live';
-import {
-  useCameraSettings,
-  type CameraSettings,
-} from '@/features/cameras/hooks/use-camera-settings';
+import { useCameraSettings } from '@/features/cameras/hooks/use-camera-settings';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 import type { SettingsSection } from '@/features/cameras/model/camera-settings';
-import { MaintenancePanel } from '@/features/security';
-import { CAMERA_LIST_HREF } from '@/features/cameras/constants';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { Screen } from '@/shared/ui/screen';
+import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
 
 const SECTIONS: Record<SettingsSection, (settings: CameraSettings) => ReactNode> = {
   privacy: (settings) => <PrivacySection key="privacy" settings={settings} />,

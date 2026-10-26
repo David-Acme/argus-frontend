@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import type { CameraNoAimSector } from '@/core/types';
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
-import { NO_AIM_SECTOR_MAX, sectorRange } from '@/features/cameras/model/camera-aim';
-import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Avatar } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
-import { SectorSheet } from './sector-sheet';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
+import { NO_AIM_SECTOR_MAX, sectorRange } from '@/features/cameras/model/camera-aim';
+import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
+import { SectorSheet } from '@/features/cameras/components/settings/sector-sheet';
 
 export type PlacesSectionProps = { settings: CameraSettings };
 

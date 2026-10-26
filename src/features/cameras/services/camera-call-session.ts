@@ -1,8 +1,20 @@
-import type { IArgusSocket, ICameraMediaOpenInput, ICameraMediaSession, IVoiceMic } from '@/core/interfaces';
+import type {
+  IArgusSocket,
+  ICameraMediaOpenInput,
+  ICameraMediaSession,
+  IVoiceMic,
+} from '@/core/interfaces';
 import type { CameraCallState, CameraTalkMode, SessionCredential } from '@/core/types';
-import { applyGain, decodeFlacFrame, levelOf, talkFrame } from '@/features/cameras/model/camera-audio';
-import { parseAudioInit, parseFragment, type Fmp4AudioTrack } from '@/features/cameras/model/fmp4';
-import { mediaCloseAction, type MediaCloseAction } from '@/features/cameras/model/media-access';
+import {
+  applyGain,
+  decodeFlacFrame,
+  levelOf,
+  talkFrame,
+} from '@/features/cameras/model/camera-audio';
+import { parseAudioInit, parseFragment } from '@/features/cameras/model/fmp4';
+import type { Fmp4AudioTrack } from '@/features/cameras/model/fmp4';
+import { mediaCloseAction } from '@/features/cameras/model/media-access';
+import type { MediaCloseAction } from '@/features/cameras/model/media-access';
 import type { CameraMediaDeps } from '@/features/cameras/services/camera-media-session';
 import { MediaAccessRenewal } from '@/features/cameras/services/media-access-renewal';
 
@@ -78,7 +90,7 @@ export class CameraCallSession {
 
   constructor(
     private readonly options: CameraCallOptions,
-    private readonly deps: CameraCallDeps,
+    private readonly deps: CameraCallDeps
   ) {
     this.snapshot = { ...IDLE, mode: options.mode, listening: options.listen };
     this.access = new MediaAccessRenewal(deps);
@@ -96,7 +108,8 @@ export class CameraCallSession {
 
   async start(): Promise<void> {
     this.mic = this.deps.createMic();
-    this.mic.onError = (code, message) => this.fail(code === 'MIC_PERMISSION_DENIED' ? 'mic-denied' : 'mic-unavailable', message);
+    this.mic.onError = (code, message) =>
+      this.fail(code === 'MIC_PERMISSION_DENIED' ? 'mic-denied' : 'mic-unavailable', message);
     this.mic.onData = (pcm) => this.onMicData(pcm);
     this.update({ state: 'connecting', error: null, closedReason: null });
     if (this.options.listen) this.startListening();
@@ -142,7 +155,12 @@ export class CameraCallSession {
   private fail(error: string, detail?: string): void {
     this.stopMic();
     this.closeSocket();
-    this.update({ state: this.options.listen && this.media ? 'live' : 'idle', error, talking: false, closedReason: detail ?? null });
+    this.update({
+      state: this.options.listen && this.media ? 'live' : 'idle',
+      error,
+      talking: false,
+      closedReason: detail ?? null,
+    });
   }
 
   private async openLine(): Promise<void> {
@@ -156,7 +174,9 @@ export class CameraCallSession {
     try {
       socket = await this.deps.openSocket(credential.accessToken);
     } catch (reason) {
-      this.fail(reason instanceof Error && reason.message === NO_SESSION ? 'no-session' : 'network');
+      this.fail(
+        reason instanceof Error && reason.message === NO_SESSION ? 'no-session' : 'network'
+      );
       return;
     }
     if (this.ended || this.socket) {
@@ -172,7 +192,7 @@ export class CameraCallSession {
         JSON.stringify({
           type: 'camera:talk:start',
           payload: { cameraId: Number(this.options.cameraId), sampleRate: CAPTURE_RATE },
-        }),
+        })
       );
     };
     socket.onMessage = (message) => {
@@ -193,7 +213,11 @@ export class CameraCallSession {
         void this.reopenLine(action, failed);
         return;
       }
-      this.update({ state: this.options.mode === 'push' ? 'live' : 'idle', talking: false, closedReason: reason || String(code) });
+      this.update({
+        state: this.options.mode === 'push' ? 'live' : 'idle',
+        talking: false,
+        closedReason: reason || String(code),
+      });
     };
   }
 
@@ -248,7 +272,14 @@ export class CameraCallSession {
     }
     if (frame.type === 'camera:talk:start_error') {
       const status = frame.status ?? 0;
-      const reason = status === 409 ? 'busy' : status === 403 ? 'forbidden' : status === 422 ? 'no-speaker' : 'refused';
+      const reason =
+        status === 409
+          ? 'busy'
+          : status === 403
+            ? 'forbidden'
+            : status === 422
+              ? 'no-speaker'
+              : 'refused';
       this.fail(reason, frame.error);
       return;
     }
@@ -256,7 +287,8 @@ export class CameraCallSession {
       const reason = frame.payload?.reason ?? 'stopped';
       this.stopMic();
       this.closeSocket();
-      if (this.options.mode === 'call' && reason !== 'stopped') this.update({ state: 'idle', closedReason: reason, talking: false });
+      if (this.options.mode === 'call' && reason !== 'stopped')
+        this.update({ state: 'idle', closedReason: reason, talking: false });
       else this.update({ talking: false });
     }
   }

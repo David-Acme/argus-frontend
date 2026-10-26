@@ -1,5 +1,6 @@
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import type {
@@ -15,6 +16,7 @@ import type {
   CameraStreamState,
   CameraTransport,
 } from '@/core/types';
+import { cn } from '@/shared/libs/utils';
 import { cameraLiveService } from '@/features/cameras/services/camera-live.service';
 import { cameraRtcService } from '@/features/cameras/services/camera-rtc';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
@@ -23,7 +25,6 @@ import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-p
 import { CameraRtcVideo } from './camera-rtc-video';
 import { WebCameraAudio } from '@/features/cameras/components/web-camera-audio';
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
-import { cn } from '@/shared/libs/utils';
 import type { LiveViewStatus } from '@/features/cameras/model/camera-stage';
 
 type CameraLiveStreamProps = {

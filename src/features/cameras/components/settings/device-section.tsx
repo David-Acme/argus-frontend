@@ -1,17 +1,17 @@
 import { useRouter } from 'expo-router';
 import type { CameraDriverKind, DayNightMode, TranslationKey } from '@/core/types';
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
-import { cameraAddressLabel } from '@/features/cameras/model/camera-address';
-import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
-import { recordModeLabelKey } from '@/features/cameras/model/camera-record-mode';
-import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
-import { useCameraEnvironmentIndex } from '@/features/security';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { ChoiceOption } from '@/shared/ui/choice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Switch } from '@/shared/ui/switch';
-import { ChoiceRow } from './choice-row';
+import { useCameraEnvironmentIndex } from '@/features/security';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
+import { cameraAddressLabel } from '@/features/cameras/model/camera-address';
+import { cameraStatusOf } from '@/features/cameras/model/camera-overview';
+import { recordModeLabelKey } from '@/features/cameras/model/camera-record-mode';
+import { STATUS_LABEL } from '@/features/cameras/model/camera-status';
+import { ChoiceRow } from '@/features/cameras/components/settings/choice-row';
 
 export type DeviceSectionProps = { settings: CameraSettings };
 

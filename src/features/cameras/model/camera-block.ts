@@ -8,7 +8,6 @@ export const CAMERA_BLOCK_REASON = {
   disabled: 'screens.cameras.blocked.disabled',
 } as const satisfies Record<CameraActionBlock, TranslationKey>;
 
-
 export function listenSwitchPaused(listening: CameraListening): boolean {
   return listening === 'masked' || listening === 'disabled';
 }

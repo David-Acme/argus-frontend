@@ -1,16 +1,16 @@
 import { useState } from 'react';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { Avatar } from '@/shared/ui/avatar';
+import { Row } from '@/shared/ui/row';
+import { Section } from '@/shared/ui/section';
+import { Switch } from '@/shared/ui/switch';
 import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 import {
   PATROL_MIN_STOPS,
   formatPatrolHour,
   stopName,
 } from '@/features/cameras/model/camera-patrol';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { Avatar } from '@/shared/ui/avatar';
-import { Row } from '@/shared/ui/row';
-import { Section } from '@/shared/ui/section';
-import { Switch } from '@/shared/ui/switch';
-import { PatrolSheet } from './patrol-sheet';
+import { PatrolSheet } from '@/features/cameras/components/settings/patrol-sheet';
 
 export type PatrolSectionProps = { settings: CameraSettings };
 

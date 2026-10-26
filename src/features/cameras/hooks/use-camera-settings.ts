@@ -1,21 +1,21 @@
 import type { ICameraCacheRow, ICameraCapabilities, ICameraDeviceStatus } from '@/core/interfaces';
-import { useCameraAim, type CameraAimControls } from '@/features/cameras/hooks/use-camera-aim';
-import {
-  useCameraDeviceSettings,
-  type CameraDeviceSettingsControls,
-} from '@/features/cameras/hooks/use-camera-device-settings';
-import { useCameraFeatures } from '@/features/cameras/hooks/use-camera-features';
-import {
-  useCameraPatrol,
-  type CameraPatrolControls,
-} from '@/features/cameras/hooks/use-camera-patrol';
-import { useCameraPresets, type CameraPresets } from '@/features/cameras/hooks/use-camera-presets';
-import { settingsSectionsOf, type SettingsSection } from '@/features/cameras/model/camera-settings';
-import { cameraListening, type CameraListening } from '@/features/cameras/model/camera-watch';
-import { useHouseholdWatchman } from '@/features/privacy';
 import { CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
+import { useHouseholdWatchman } from '@/features/privacy';
+import { useCameraAim } from '@/features/cameras/hooks/use-camera-aim';
+import type { CameraAimControls } from '@/features/cameras/hooks/use-camera-aim';
+import { useCameraDeviceSettings } from '@/features/cameras/hooks/use-camera-device-settings';
+import type { CameraDeviceSettingsControls } from '@/features/cameras/hooks/use-camera-device-settings';
+import { useCameraFeatures } from '@/features/cameras/hooks/use-camera-features';
+import { useCameraPatrol } from '@/features/cameras/hooks/use-camera-patrol';
+import type { CameraPatrolControls } from '@/features/cameras/hooks/use-camera-patrol';
+import { useCameraPresets } from '@/features/cameras/hooks/use-camera-presets';
+import type { CameraPresets } from '@/features/cameras/hooks/use-camera-presets';
+import { settingsSectionsOf } from '@/features/cameras/model/camera-settings';
+import type { SettingsSection } from '@/features/cameras/model/camera-settings';
+import { cameraListening } from '@/features/cameras/model/camera-watch';
+import type { CameraListening } from '@/features/cameras/model/camera-watch';
 
 export type CameraSettings = {
   camera: ICameraCacheRow;

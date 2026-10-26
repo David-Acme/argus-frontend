@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { PTZ_HOLD_DELAY_MS, type PtzDirection } from '@/features/cameras/model/camera-ptz';
+import { PTZ_HOLD_DELAY_MS } from '@/features/cameras/model/camera-ptz';
+import type { PtzDirection } from '@/features/cameras/model/camera-ptz';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 
 export type PadPress = { onStart: () => void; onEnd: () => void };

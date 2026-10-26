@@ -1,14 +1,14 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { cameraService } from '@/core/services/camera.service';
-import { CameraForm } from '@/features/cameras/components/camera-form';
-import { setCameraEnabled } from '@/features/cameras/components/live/live-menu';
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { Avatar } from '@/shared/ui/avatar';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
+import { CameraForm } from '@/features/cameras/components/camera-form';
+import { setCameraEnabled } from '@/features/cameras/components/live/live-menu';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 
 export type AdvancedSectionProps = { settings: CameraSettings };
 

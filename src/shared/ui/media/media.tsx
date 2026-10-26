@@ -1,20 +1,20 @@
 import { clsx } from 'clsx';
-import { useState, type ReactNode } from 'react';
-import { View, type ImageSourcePropType, type PointerEvent } from 'react-native';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { View } from 'react-native';
+import type { ImageSourcePropType, PointerEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { illustration, layout, motion, useWindowLayout } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
-import { MediaFrame } from './media-frame';
+import { MediaFrame } from '@/shared/ui/media/media-frame';
 import {
   Controls,
   DormantMark,
   EyeCorner,
   LabelRow,
   LiveChip,
-  type MediaControl,
-  type MediaDormant,
-  type MediaEye,
-} from './media-parts';
+} from '@/shared/ui/media/media-parts';
+import type { MediaControl, MediaDormant, MediaEye } from '@/shared/ui/media/media-parts';
 
 type MediaContent = {
   name?: string;

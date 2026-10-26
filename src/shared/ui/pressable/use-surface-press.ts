@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { feedback, state as states, usePressScale, useThemeTokens } from '@/shared/theme';
-import type { PressableSurfaceProps } from './pressable-types';
+import type { PressableSurfaceProps } from '@/shared/ui/pressable/pressable-types';
 
 type SurfacePressInput = Pick<
   PressableSurfaceProps,

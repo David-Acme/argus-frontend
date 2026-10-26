@@ -1,9 +1,10 @@
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { cameraService } from '@/core/services/camera.service';
-import type { CameraQualityControls } from '@/features/cameras/hooks/use-camera-quality';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
-import { Menu, type MenuItem, type MenuItems } from '@/shared/ui/menu';
+import { Menu } from '@/shared/ui/menu';
+import type { MenuItem, MenuItems } from '@/shared/ui/menu';
+import type { CameraQualityControls } from '@/features/cameras/hooks/use-camera-quality';
 
 export type LiveMenuProps = {
   camera: ICameraCacheRow;

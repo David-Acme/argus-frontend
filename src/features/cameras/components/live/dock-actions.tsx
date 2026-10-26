@@ -1,10 +1,10 @@
-import type { TalkDock } from '@/features/cameras/hooks/use-talk-dock';
-import type { LiveControls } from '@/features/cameras/model/camera-stage';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { feedback } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Confirm } from '@/shared/ui/confirm';
 import { Inline } from '@/shared/ui/layout';
+import type { TalkDock } from '@/features/cameras/hooks/use-talk-dock';
+import type { LiveControls } from '@/features/cameras/model/camera-stage';
 
 export type DockActionsProps = { dock: TalkDock; controls: LiveControls; cameraName: string };
 

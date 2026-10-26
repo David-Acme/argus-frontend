@@ -1,14 +1,15 @@
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { Button } from '@/shared/ui/button';
+import { Icon } from '@/shared/ui/icon';
+import { Stack } from '@/shared/ui/layout';
+import { Media } from '@/shared/ui/media';
+import type { MediaControl, MediaDormant } from '@/shared/ui/media';
+import { Text } from '@/shared/ui/text';
 import { CameraLiveView } from '@/features/cameras/components/players';
 import { PtzPad } from '@/features/cameras/components/live/ptz-pad';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import type { LiveStage } from '@/features/cameras/hooks/use-live-stage';
 import type { CameraStage, LiveControls } from '@/features/cameras/model/camera-stage';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { Button } from '@/shared/ui/button';
-import { Icon } from '@/shared/ui/icon';
-import { Stack } from '@/shared/ui/layout';
-import { Media, type MediaControl, type MediaDormant } from '@/shared/ui/media';
-import { Text } from '@/shared/ui/text';
 
 export type LiveStageViewProps = {
   cameraId: string;

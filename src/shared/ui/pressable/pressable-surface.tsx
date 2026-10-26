@@ -1,8 +1,8 @@
 import { clsx } from 'clsx';
 import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { PressableSurfaceProps } from './pressable-types';
-import { useSurfacePress } from './use-surface-press';
+import type { PressableSurfaceProps } from '@/shared/ui/pressable/pressable-types';
+import { useSurfacePress } from '@/shared/ui/pressable/use-surface-press';
 
 export function PressableSurface({
   a11y,

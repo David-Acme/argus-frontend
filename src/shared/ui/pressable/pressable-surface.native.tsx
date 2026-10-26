@@ -3,8 +3,8 @@ import Animated from 'react-native-reanimated';
 import { withUniwind } from 'uniwind';
 import { IS_ANDROID } from '@/shared/constants';
 import { useThemeTokens } from '@/shared/theme';
-import type { PressableSurfaceProps } from './pressable-types';
-import { useSurfacePress } from './use-surface-press';
+import type { PressableSurfaceProps } from '@/shared/ui/pressable/pressable-types';
+import { useSurfacePress } from '@/shared/ui/pressable/use-surface-press';
 
 const StyledPressable = withUniwind(Pressable);
 

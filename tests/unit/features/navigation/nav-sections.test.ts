@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import { accessFor, viewFor } from '@tests/support/access-fixtures';
+import { accessView } from '@/shared/libs/capabilities';
 import {
   barShownOn,
   sectionOf,
@@ -6,8 +8,6 @@ import {
   tabMove,
   visibleTabs,
 } from '@/features/navigation/model/nav-sections';
-import { accessView } from '@/shared/libs/capabilities';
-import { accessFor, viewFor } from '@tests/support/access-fixtures';
 
 const keysOf = (tabs: ReturnType<typeof visibleTabs>) => tabs.map((tab) => tab.key);
 

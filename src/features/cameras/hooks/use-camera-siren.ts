@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { SirenPhase } from '@/core/types';
-import { cameraControlService } from '@/features/cameras/services/camera-control.service';
-import { IDLE_SIREN, sirenReducer, sirenRemaining, sirenSounding } from '@/features/cameras/model/siren';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { toastServiceError } from '@/shared/libs/service-error';
+import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import {
+  IDLE_SIREN,
+  sirenReducer,
+  sirenRemaining,
+  sirenSounding,
+} from '@/features/cameras/model/siren';
 
 export type CameraSirenControls = {
   phase: SirenPhase;

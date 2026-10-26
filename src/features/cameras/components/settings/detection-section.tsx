@@ -1,15 +1,12 @@
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
-import {
-  MOTION_SENSITIVITY,
-  sensitivityLevel,
-  type MotionSensitivityLevel,
-} from '@/features/cameras/model/camera-presets';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { ChoiceOption } from '@/shared/ui/choice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Switch } from '@/shared/ui/switch';
-import { ChoiceRow } from './choice-row';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
+import { MOTION_SENSITIVITY, sensitivityLevel } from '@/features/cameras/model/camera-presets';
+import type { MotionSensitivityLevel } from '@/features/cameras/model/camera-presets';
+import { ChoiceRow } from '@/features/cameras/components/settings/choice-row';
 
 export type DetectionSectionProps = { settings: CameraSettings };
 

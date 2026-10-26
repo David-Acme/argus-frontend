@@ -1,16 +1,5 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { CameraLiveView } from '@/features/cameras/components/players';
-import { PtzPad } from '@/features/cameras/components/live/ptz-pad';
-import { useViewerLease, type CameraAimControls } from '@/features/cameras/hooks/use-camera-aim';
-import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
-import {
-  NO_AIM_SECTOR_NAME_MAX,
-  closeSector,
-  formatDegrees,
-  sectorProblem,
-  type SectorMark,
-} from '@/features/cameras/model/camera-aim';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { illustration, layout } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
@@ -18,6 +7,18 @@ import { Field } from '@/shared/ui/field';
 import { Inline, Stack } from '@/shared/ui/layout';
 import { Sheet } from '@/shared/ui/sheet';
 import { Text } from '@/shared/ui/text';
+import { CameraLiveView } from '@/features/cameras/components/players';
+import { PtzPad } from '@/features/cameras/components/live/ptz-pad';
+import { useViewerLease } from '@/features/cameras/hooks/use-camera-aim';
+import type { CameraAimControls } from '@/features/cameras/hooks/use-camera-aim';
+import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
+import {
+  NO_AIM_SECTOR_NAME_MAX,
+  closeSector,
+  formatDegrees,
+  sectorProblem,
+} from '@/features/cameras/model/camera-aim';
+import type { SectorMark } from '@/features/cameras/model/camera-aim';
 
 export type SectorSheetProps = {
   cameraId: string;

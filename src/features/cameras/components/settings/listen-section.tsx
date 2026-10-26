@@ -1,13 +1,13 @@
 import { cameraService } from '@/core/services/camera.service';
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
-import { listenSwitchPaused } from '@/features/cameras/model/camera-block';
-import { CAMERA_LISTENING_LABEL, watchPatchOf } from '@/features/cameras/model/camera-watch';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { Avatar } from '@/shared/ui/avatar';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Switch } from '@/shared/ui/switch';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
+import { listenSwitchPaused } from '@/features/cameras/model/camera-block';
+import { CAMERA_LISTENING_LABEL, watchPatchOf } from '@/features/cameras/model/camera-watch';
 
 export type ListenSectionProps = { settings: CameraSettings };
 

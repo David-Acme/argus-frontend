@@ -1,15 +1,16 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
-import { LevelMeter } from '@/features/cameras/components/live/level-meter';
-import type { TalkDock as TalkDockState } from '@/features/cameras/hooks/use-talk-dock';
-import { TALK_NOTE, type LiveControls, type TalkNote } from '@/features/cameras/model/camera-stage';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useThemeTokens } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import { Notice } from '@/shared/ui/notice';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
-import { DockActions } from './dock-actions';
+import { LevelMeter } from '@/features/cameras/components/live/level-meter';
+import type { TalkDock as TalkDockState } from '@/features/cameras/hooks/use-talk-dock';
+import { TALK_NOTE } from '@/features/cameras/model/camera-stage';
+import type { LiveControls, TalkNote } from '@/features/cameras/model/camera-stage';
+import { DockActions } from '@/features/cameras/components/live/dock-actions';
 
 export type TalkDockProps = {
   dock: TalkDockState;

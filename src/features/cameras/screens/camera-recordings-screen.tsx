@@ -1,16 +1,7 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { ICameraCacheRow, ICameraClip } from '@/core/interfaces';
-import { ClipStage } from '@/features/cameras/components/recordings/clip-stage';
-import { useCameraRow } from '@/features/cameras/hooks/use-camera-live';
-import { useCameraClips, type CameraClipsState } from '@/features/cameras/hooks/use-camera-clips';
-import { useCameraRecording } from '@/features/cameras/hooks/use-camera-recording';
-import { useClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
-import { clipRowSubtitle } from '@/features/cameras/model/camera-clips';
-import { recordingPaused } from '@/features/cameras/model/camera-recording';
-import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
-import { CAMERA_LIST_HREF } from '@/features/cameras/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 import { runServiceAction } from '@/shared/libs/service-action';
@@ -21,6 +12,16 @@ import { SkeletonRow } from '@/shared/ui/resource-view';
 import { Row } from '@/shared/ui/row';
 import { Screen } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
+import { ClipStage } from '@/features/cameras/components/recordings/clip-stage';
+import { useCameraRow } from '@/features/cameras/hooks/use-camera-live';
+import { useCameraClips } from '@/features/cameras/hooks/use-camera-clips';
+import type { CameraClipsState } from '@/features/cameras/hooks/use-camera-clips';
+import { useCameraRecording } from '@/features/cameras/hooks/use-camera-recording';
+import { useClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
+import { clipRowSubtitle } from '@/features/cameras/model/camera-clips';
+import { recordingPaused } from '@/features/cameras/model/camera-recording';
+import { cameraClipsService } from '@/features/cameras/services/camera-clips.service';
+import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
 
 type ClipsBodyProps = { camera: ICameraCacheRow };
 

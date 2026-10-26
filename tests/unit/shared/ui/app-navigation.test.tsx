@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useContext } from 'react';
+import { viewFor } from '@tests/support/access-fixtures';
 import type { UserRole } from '@/core/types';
 import { BottomNavShown } from '@/shared/hooks/use-bottom-nav-inset';
-import { viewFor } from '@tests/support/access-fixtures';
 import { screenFocus } from './screen-focus';
 import './translation-stub';
 

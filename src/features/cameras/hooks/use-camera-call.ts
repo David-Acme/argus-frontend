@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CameraTalkMode } from '@/core/types';
 import { ensurePermission } from '@/shared/libs/permission-prompt';
-import {
-  CameraCall,
-  type CameraCallSnapshot,
-} from '@/features/cameras/services/camera-call.service';
+import { CameraCall } from '@/features/cameras/services/camera-call.service';
+import type { CameraCallSnapshot } from '@/features/cameras/services/camera-call.service';
 
 export type CameraCallControls = {
   snapshot: CameraCallSnapshot | null;

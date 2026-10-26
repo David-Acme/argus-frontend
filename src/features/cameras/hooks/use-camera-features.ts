@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import type { ICameraCacheRow, ICameraCapabilities, ICameraDeviceStatus } from '@/core/interfaces';
-import { cameraControlService } from '@/features/cameras/services/camera-control.service';
-import { resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
+import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import { resolveCapabilities } from '@/features/cameras/model/camera-capabilities';
 
 export type CameraFeatures = {
   features: ICameraCapabilities | null;

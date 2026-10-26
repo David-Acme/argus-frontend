@@ -3,10 +3,7 @@ import { useState } from 'react';
 import type { ICameraCacheRow, IZoneCacheRow } from '@/core/interfaces';
 import type { TranslationKey, ZoneType } from '@/core/types';
 import { zoneService } from '@/core/services/zone.service';
-import { ZoneForm } from '@/features/cameras/components/zone-form';
-import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { CAMERA_LIST_HREF } from '@/features/cameras/constants';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { Avatar } from '@/shared/ui/avatar';
@@ -15,6 +12,9 @@ import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Screen } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
+import { ZoneForm } from '@/features/cameras/components/zone-form';
+import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
+import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
 
 type ZonesBodyProps = { camera: ICameraCacheRow; isPending: (zone: IZoneCacheRow) => boolean };
 

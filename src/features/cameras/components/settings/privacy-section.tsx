@@ -1,5 +1,3 @@
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
-import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { privacyStateOf } from '@/shared/libs/camera-privacy';
 import { Avatar } from '@/shared/ui/avatar';
@@ -7,6 +5,8 @@ import { Button } from '@/shared/ui/button';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Switch } from '@/shared/ui/switch';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
+import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 
 export type PrivacySectionProps = { settings: CameraSettings };
 

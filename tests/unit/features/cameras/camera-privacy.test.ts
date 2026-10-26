@@ -4,15 +4,15 @@ import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
 import type { CameraPrivacyState, TranslateFn } from '@/core/types';
 import {
-  cameraMasked,
-  privacyOf,
-  privacyUnconfirmed,
-} from '@/features/cameras/model/camera-overview';
-import {
   cameraPrivacyMasked,
   cameraPrivacyUnconfirmed,
   privacyStateOf,
 } from '@/shared/libs/camera-privacy';
+import {
+  cameraMasked,
+  privacyOf,
+  privacyUnconfirmed,
+} from '@/features/cameras/model/camera-overview';
 import { privacyApplyConfirm } from '@/features/cameras/model/camera-device';
 
 const es = ((key: string, params?: Record<string, string>) =>

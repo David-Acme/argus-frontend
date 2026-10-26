@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import type { CameraPatrol, CameraPatrolPatch } from '@/core/types';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { Button } from '@/shared/ui/button';
+import { Choice } from '@/shared/ui/choice';
+import { Field } from '@/shared/ui/field';
+import { Cluster, Inline, Stack } from '@/shared/ui/layout';
+import { Row } from '@/shared/ui/row';
+import { Sheet } from '@/shared/ui/sheet';
+import { Switch } from '@/shared/ui/switch';
+import { Text } from '@/shared/ui/text';
 import type { CameraPreset } from '@/features/cameras/model/camera-presets';
 import {
   PATROL_DEFAULT_WINDOW,
@@ -17,18 +26,8 @@ import {
   patrolProblems,
   removeStop,
   stopName,
-  type PatrolDraft,
-  type PatrolProblem,
 } from '@/features/cameras/model/camera-patrol';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { Button } from '@/shared/ui/button';
-import { Choice } from '@/shared/ui/choice';
-import { Field } from '@/shared/ui/field';
-import { Cluster, Inline, Stack } from '@/shared/ui/layout';
-import { Row } from '@/shared/ui/row';
-import { Sheet } from '@/shared/ui/sheet';
-import { Switch } from '@/shared/ui/switch';
-import { Text } from '@/shared/ui/text';
+import type { PatrolDraft, PatrolProblem } from '@/features/cameras/model/camera-patrol';
 
 export type PatrolSheetProps = {
   patrol: CameraPatrol | null;

@@ -7,8 +7,8 @@ import {
   holdReducer,
   holdTalking,
   litBars,
-  type HoldState,
 } from '@/features/cameras/model/talk-dock';
+import type { HoldState } from '@/features/cameras/model/talk-dock';
 
 const steps = (events: readonly ['down' | 'up', number][]): HoldState =>
   events.reduce((state, [kind, at]) => holdReducer(state, { kind, at }), IDLE_HOLD);

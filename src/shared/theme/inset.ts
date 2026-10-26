@@ -1,4 +1,4 @@
-import { chromeInset } from './chrome-tokens';
+import { chromeInset } from '@/shared/theme/chrome-tokens';
 
 export const inset = {
   row: { x: 18, y: 10, gap: 14, trailGap: 6, metaGap: 1 },

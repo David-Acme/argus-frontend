@@ -1,28 +1,26 @@
-import {
-  useCameraAim,
-  useViewerLease,
-  type CameraAimControls,
-} from '@/features/cameras/hooks/use-camera-aim';
-import { useCameraFeatures } from '@/features/cameras/hooks/use-camera-features';
-import { useCameraPresets, type CameraPresets } from '@/features/cameras/hooks/use-camera-presets';
-import { useCameraPtz, type CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
-import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
-import { useLiveStage, type LiveStage } from '@/features/cameras/hooks/use-live-stage';
-import { useTalkDock, type TalkDock } from '@/features/cameras/hooks/use-talk-dock';
-import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
-import { settingsSectionsOf, type SettingsSection } from '@/features/cameras/model/camera-settings';
-import {
-  liveControlsOf,
-  talkNoteOf,
-  type LiveControls,
-  type TalkNote,
-} from '@/features/cameras/model/camera-stage';
-import { sirenOffered } from '@/features/cameras/model/siren';
-import { useAppSirenEnabled } from '@/features/safety';
-import { useVoiceCallActive, voiceCallSupported } from '@/features/voice';
 import type { ICameraCacheRow, ICameraCapabilities } from '@/core/interfaces';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
+import { useAppSirenEnabled } from '@/features/safety';
+import { useVoiceCallActive, voiceCallSupported } from '@/features/voice';
+import { useCameraAim, useViewerLease } from '@/features/cameras/hooks/use-camera-aim';
+import type { CameraAimControls } from '@/features/cameras/hooks/use-camera-aim';
+import { useCameraFeatures } from '@/features/cameras/hooks/use-camera-features';
+import { useCameraPresets } from '@/features/cameras/hooks/use-camera-presets';
+import type { CameraPresets } from '@/features/cameras/hooks/use-camera-presets';
+import { useCameraPtz } from '@/features/cameras/hooks/use-camera-ptz';
+import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
+import { useCameraRows } from '@/features/cameras/hooks/use-camera-rows';
+import { useLiveStage } from '@/features/cameras/hooks/use-live-stage';
+import type { LiveStage } from '@/features/cameras/hooks/use-live-stage';
+import { useTalkDock } from '@/features/cameras/hooks/use-talk-dock';
+import type { TalkDock } from '@/features/cameras/hooks/use-talk-dock';
+import { ptzHoldRenewMs } from '@/features/cameras/model/camera-ptz';
+import { settingsSectionsOf } from '@/features/cameras/model/camera-settings';
+import type { SettingsSection } from '@/features/cameras/model/camera-settings';
+import { liveControlsOf, talkNoteOf } from '@/features/cameras/model/camera-stage';
+import type { LiveControls, TalkNote } from '@/features/cameras/model/camera-stage';
+import { sirenOffered } from '@/features/cameras/model/siren';
 
 export type CameraLive = {
   camera: ICameraCacheRow;

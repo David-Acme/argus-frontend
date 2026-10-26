@@ -7,15 +7,15 @@ import {
   CAMERA_SOURCE_COLUMNS,
   CAMERA_SOURCE_FIELDS,
   projectCameras,
-  type CameraSource,
 } from '@/core/services/view-cache/camera.projection';
+import type { CameraSource } from '@/core/services/view-cache/camera.projection';
+import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
 import {
   CAMERA_LISTENING_LABEL,
   cameraListening,
   watchPatchOf,
-  type CameraListeningInput,
 } from '@/features/cameras/model/camera-watch';
-import { VIEW_CACHE_KEYS } from '@/shared/constants/cache.constant';
+import type { CameraListeningInput } from '@/features/cameras/model/camera-watch';
 
 const es = ((key: string, params?: Record<string, string>) =>
   translate(localeDictionaries.es, key as never, params as never)) as TranslateFn;

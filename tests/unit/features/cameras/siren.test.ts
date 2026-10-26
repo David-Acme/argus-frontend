@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import type { SirenState } from '@/core/types';
 import {
   IDLE_SIREN,
   sirenOffered,
@@ -9,12 +10,12 @@ import {
   sirenSecondsLeft,
   sirenSounding,
 } from '@/features/cameras/model/siren';
-import type { SirenState } from '@/core/types';
 
 const asked = sirenReducer(IDLE_SIREN, { kind: 'ask' });
 const counting = sirenReducer(asked, { kind: 'confirm', at: 1_000 });
 
-const tickAt = (state: SirenState, at: number): SirenState => sirenReducer(state, { kind: 'tick', at });
+const tickAt = (state: SirenState, at: number): SirenState =>
+  sirenReducer(state, { kind: 'tick', at });
 
 describe('who is offered the siren', () => {
   const offered = (allowed: boolean, supported: boolean, enabled: boolean | undefined) =>
@@ -79,7 +80,10 @@ describe('cancelling', () => {
     expect(sirenCountdownFinished(tickAt(cancelled, 7_000))).toBe(false);
     expect(tickAt(cancelled, 7_000)).toBe(IDLE_SIREN);
 
-    const again = sirenReducer(sirenReducer(cancelled, { kind: 'ask' }), { kind: 'confirm', at: 9_000 });
+    const again = sirenReducer(sirenReducer(cancelled, { kind: 'ask' }), {
+      kind: 'confirm',
+      at: 9_000,
+    });
     expect(again.secondsLeft).toBe(SIREN_COUNTDOWN_SECONDS);
     expect(tickAt(again, 9_400).secondsLeft).toBe(SIREN_COUNTDOWN_SECONDS);
     expect(sirenCountdownFinished(tickAt(again, 13_999))).toBe(false);

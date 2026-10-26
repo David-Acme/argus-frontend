@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Avatar } from '@/shared/ui/avatar';
 import { Icon } from '@/shared/ui/icon';
@@ -7,6 +6,7 @@ import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Sheet } from '@/shared/ui/sheet';
 import { Switch } from '@/shared/ui/switch';
+import type { CameraSettings } from '@/features/cameras/hooks/use-camera-settings';
 
 export type GazeSectionProps = { settings: CameraSettings };
 

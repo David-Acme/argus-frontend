@@ -1,12 +1,12 @@
 import { View } from 'react-native';
-import { ClipPlayer } from '@/features/cameras/components/players';
-import type { ClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { illustration, layout } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Stack } from '@/shared/ui/layout';
 import { Media } from '@/shared/ui/media';
 import { Notice } from '@/shared/ui/notice';
+import { ClipPlayer } from '@/features/cameras/components/players';
+import type { ClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 
 export type ClipStageProps = { playback: ClipPlayback };
 

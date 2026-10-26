@@ -23,7 +23,8 @@ export const sirenOffered = (offer: SirenOffer): boolean =>
 
 export const sirenSounding = (until: number, at: number): boolean => until > Math.floor(at / 1000);
 
-export const sirenRemaining = (until: number, at: number): number => Math.max(0, Math.ceil(until - at / 1000));
+export const sirenRemaining = (until: number, at: number): number =>
+  Math.max(0, Math.ceil(until - at / 1000));
 
 export const sirenSecondsLeft = (elapsedMs: number): number =>
   Math.max(0, SIREN_COUNTDOWN_SECONDS - Math.floor(Math.max(0, elapsedMs) / 1000));
@@ -39,7 +40,12 @@ export const sirenReducer = (state: SirenState, action: SirenAction): SirenState
         : state;
     case 'confirm':
       return state.phase === 'confirm'
-        ? { phase: 'countdown', secondsLeft: SIREN_COUNTDOWN_SECONDS, startedAt: action.at, until: 0 }
+        ? {
+            phase: 'countdown',
+            secondsLeft: SIREN_COUNTDOWN_SECONDS,
+            startedAt: action.at,
+            until: 0,
+          }
         : state;
     case 'cancel':
       return state.phase === 'confirm' || state.phase === 'countdown' ? IDLE_SIREN : state;

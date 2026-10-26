@@ -259,13 +259,10 @@ src/features/cameras/hooks/use-camera-patrol.ts
 src/features/cameras/hooks/use-camera-ptz.ts
 src/features/cameras/hooks/use-camera-quality.ts
 src/features/cameras/hooks/use-camera-rows.ts
-src/features/cameras/hooks/use-camera-siren.ts
 src/features/cameras/hooks/use-camera-thumbnails.ts
 src/features/cameras/hooks/use-clip-playback.ts
 src/features/cameras/hooks/use-tamper-evidence.ts
 src/features/cameras/model/camera-aim.ts
-src/features/cameras/model/camera-block.ts
-src/features/cameras/model/camera-capabilities.ts
 src/features/cameras/model/camera-catalog.ts
 src/features/cameras/model/camera-clips.ts
 src/features/cameras/model/camera-device.ts
@@ -282,12 +279,10 @@ src/features/cameras/model/fmp4.ts
 src/features/cameras/model/fragment-assembler.ts
 src/features/cameras/model/media-access.ts
 src/features/cameras/model/ptz-hold.ts
-src/features/cameras/model/siren.ts
 src/features/cameras/model/stream-recovery.ts
 src/features/cameras/model/tamper-evidence.ts
 src/features/cameras/screens/camera-lab-screen.tsx
 src/features/cameras/screens/cameras-screen.tsx
-src/features/cameras/services/camera-call-session.ts
 src/features/cameras/services/camera-call.service.ts
 src/features/cameras/services/camera-control.service.ts
 src/features/cameras/services/camera-media-session.ts
@@ -731,7 +726,6 @@ tests/unit/features/cameras/camera-aim.test.ts
 tests/unit/features/cameras/camera-catalog-call.test.ts
 tests/unit/features/cameras/camera-device-status.test.ts
 tests/unit/features/cameras/camera-form-rules.test.ts
-tests/unit/features/cameras/camera-live-controls.test.ts
 tests/unit/features/cameras/camera-media-access.test.ts
 tests/unit/features/cameras/camera-model.test.ts
 tests/unit/features/cameras/camera-preview.test.ts
@@ -740,7 +734,6 @@ tests/unit/features/cameras/camera-stream.test.ts
 tests/unit/features/cameras/camera-talk-access.test.ts
 tests/unit/features/cameras/clip-model.test.ts
 tests/unit/features/cameras/ptz-hold.test.ts
-tests/unit/features/cameras/siren.test.ts
 tests/unit/features/cameras/tamper-evidence.test.ts
 tests/unit/features/conversations/conversation-thread.test.ts
 tests/unit/features/conversations/message-composer.test.ts

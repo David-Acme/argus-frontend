@@ -1,5 +1,9 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { size } from '@/shared/theme';
+import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
+import { isVoiceCallActive } from '@/features/voice';
 import { AnnounceSheet } from '@/features/cameras/components/live/announce-sheet';
 import { LiveFullscreen } from '@/features/cameras/components/live/live-fullscreen';
 import { LiveMenu, setCameraEnabled } from '@/features/cameras/components/live/live-menu';
@@ -8,17 +12,10 @@ import { LiveRows } from '@/features/cameras/components/live/live-rows';
 import { LiveStageView } from '@/features/cameras/components/live/live-stage';
 import { TalkDock } from '@/features/cameras/components/live/talk-dock';
 import { CameraForm } from '@/features/cameras/components/camera-form';
-import {
-  useCameraLive,
-  useCameraRow,
-  type CameraLive,
-} from '@/features/cameras/hooks/use-camera-live';
+import { useCameraLive, useCameraRow } from '@/features/cameras/hooks/use-camera-live';
+import type { CameraLive } from '@/features/cameras/hooks/use-camera-live';
 import { useCameraMeta } from '@/features/cameras/hooks/use-camera-meta';
-import { isVoiceCallActive } from '@/features/voice';
-import { CAMERA_LIST_HREF } from '@/features/cameras/constants';
-import { useTranslation } from '@/shared/hooks/use-translation';
-import { size } from '@/shared/theme';
-import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
+import { CAMERA_LIST_HREF } from '@/features/cameras/constants/routes.constant';
 
 type LiveBodyProps = { view: CameraLive; talk: boolean };
 

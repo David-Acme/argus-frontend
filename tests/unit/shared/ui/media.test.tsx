@@ -4,7 +4,6 @@ import { useEffectsOverrides } from '@/shared/theme';
 import { Media } from '@/shared/ui/media/media';
 import { MediaFrame } from '@/shared/ui/media/media-frame';
 import { MediaStrip } from '@/shared/ui/media/media-strip';
-import { screenFocus } from './screen-focus';
 import {
   Controls,
   DormantMark,
@@ -12,6 +11,7 @@ import {
   LabelRow,
   LiveChip,
 } from '@/shared/ui/media/media-parts';
+import { screenFocus } from './screen-focus';
 
 describe('Media', () => {
   test('a live tile names its camera, its live chip and its time, and opens on press', () => {

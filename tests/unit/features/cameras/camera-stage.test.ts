@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  liveControlsOf,
-  stageOf,
-  talkNoteOf,
-  type LiveControlsInput,
-} from '@/features/cameras/model/camera-stage';
+import { liveControlsOf, stageOf, talkNoteOf } from '@/features/cameras/model/camera-stage';
+import type { LiveControlsInput } from '@/features/cameras/model/camera-stage';
 
 const live = { state: 'live', painted: true, notice: null } as const;
 

@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { View } from 'react-native';
-import { Choice, type ChoiceOption } from '@/shared/ui/choice';
+import { Choice } from '@/shared/ui/choice';
+import type { ChoiceOption } from '@/shared/ui/choice';
 import { RowPosition } from '@/shared/ui/row';
 import { Text } from '@/shared/ui/text';
 
