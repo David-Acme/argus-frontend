@@ -22,7 +22,7 @@ import { projectNotificationFeed } from '@/core/services/view-cache/notification
 import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
 import { projectSummary } from '@/core/services/view-cache/summary.projection';
-import { VIEW_CACHE_KEYS, VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
+import { VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
 
 const now = new Date(2026, 9, 15, 10, 30);
 const ctx: ProjectionContext = { userId: '1', now };
