@@ -30,6 +30,7 @@ type ItemOptionProps = {
   item: CommandItem;
   index: number;
   state: CommandState;
+  hints?: boolean;
 };
 
 type KeyEvent = NativeSyntheticEvent<{ key: string }> & { preventDefault?: () => void };
@@ -71,7 +72,7 @@ function GroupTitle({ title }: { title: string }) {
   );
 }
 
-function ItemOption({ item, index, state }: ItemOptionProps) {
+function ItemOption({ item, index, state, hints }: ItemOptionProps) {
   return (
     <Option
       id={optionId(state.listId, index)}
@@ -86,12 +87,12 @@ function ItemOption({ item, index, state }: ItemOptionProps) {
       </View>
       {item.meta ? <Text variant="meta">{`· ${item.meta}`}</Text> : null}
       <View className="flex-1" />
-      {item.shortcut ? <Key label={item.shortcut} /> : null}
+      {hints && item.shortcut ? <Key label={item.shortcut} /> : null}
     </Option>
   );
 }
 
-function AskGroup({ state }: Pick<CommandPanelProps, 'state'>) {
+function AskGroup({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) {
   const { t } = useTranslation();
   if (!state.asks) return null;
   const label = t('common.overlay.command-ask', { query: state.query.trim() });
@@ -110,7 +111,7 @@ function AskGroup({ state }: Pick<CommandPanelProps, 'state'>) {
             {label}
           </Text>
         </View>
-        <Key label={t('common.overlay.key-enter')} />
+        {hints ? <Key label={t('common.overlay.key-enter')} /> : null}
       </Option>
     </View>
   );
@@ -123,11 +124,11 @@ function firstIndexes(state: CommandState): number[] {
   );
 }
 
-function Results({ state }: Pick<CommandPanelProps, 'state'>) {
+function Results({ state, hints }: Pick<CommandPanelProps, 'state' | 'hints'>) {
   const firsts = firstIndexes(state);
   return (
     <Listbox id={state.listId}>
-      <AskGroup state={state} />
+      <AskGroup state={state} hints={hints} />
       {state.groups.map((group, at) => (
         <View key={group.title} role="group" aria-label={group.title}>
           <GroupTitle title={group.title} />
@@ -137,6 +138,7 @@ function Results({ state }: Pick<CommandPanelProps, 'state'>) {
               item={item}
               index={(firsts[at] ?? 0) + position}
               state={state}
+              hints={hints}
             />
           ))}
         </View>
@@ -206,7 +208,7 @@ export function CommandPanel({ state, hints, inputRef }: CommandPanelProps) {
       <QueryRow state={state} hints={hints} inputRef={inputRef} />
       {hints ? (
         <ScrollView className="shrink" keyboardShouldPersistTaps="handled">
-          <Results state={state} />
+          <Results state={state} hints />
         </ScrollView>
       ) : (
         <Results state={state} />

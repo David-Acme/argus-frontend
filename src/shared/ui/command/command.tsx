@@ -1,15 +1,16 @@
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import { useEffect, useEffectEvent } from 'react';
+import { Pressable } from 'react-native';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { CommandPalette } from './command-palette';
 import { CommandPanel } from './command-panel';
-import type { CommandProps } from './command-types';
+import type { CommandIntent, CommandProps } from './command-types';
 import { useCommand } from './use-command';
 
-type BodyProps = Pick<CommandProps, 'onClose' | 'source' | 'onAsk'>;
+type BodyProps = Omit<CommandProps, 'open'>;
 
-function Body({ onClose, source, onAsk }: BodyProps) {
-  const state = useCommand({ source, onAsk, onClose });
+function Body({ onClose, source, onAsk, initialQuery }: BodyProps) {
+  const state = useCommand({ source, onAsk, onClose, initialQuery });
   return (
     <CommandPalette>
       <CommandPanel state={state} hints />
@@ -17,7 +18,7 @@ function Body({ onClose, source, onAsk }: BodyProps) {
   );
 }
 
-export function Command({ open, onClose, source, onAsk }: CommandProps) {
+export function Command({ open, onClose, ...body }: CommandProps) {
   const { t } = useTranslation();
   return (
     <DialogPrimitive.Root
@@ -27,11 +28,12 @@ export function Command({ open, onClose, source, onAsk }: CommandProps) {
       }}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="bg-scrim-soft pt-palette-top px-palette-group fixed inset-0 items-center">
+          <Pressable focusable={false} onPress={onClose} className="absolute inset-0" />
           <DialogPrimitive.Content className="max-w-full">
             <DialogPrimitive.Title className="sr-only">
               {t('common.overlay.command-label')}
             </DialogPrimitive.Title>
-            <Body onClose={onClose} source={source} onAsk={onAsk} />
+            <Body onClose={onClose} {...body} />
           </DialogPrimitive.Content>
         </DialogPrimitive.Overlay>
       </DialogPrimitive.Portal>
@@ -39,13 +41,30 @@ export function Command({ open, onClose, source, onAsk }: CommandProps) {
   );
 }
 
-export function useCommandHotkey(onOpen: () => void): void {
+const PLAIN_KEYS: Readonly<Record<string, CommandIntent>> = { '/': 'search', n: 'create' };
+
+function typingIn(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+}
+
+function intentOf(event: KeyboardEvent): CommandIntent | null {
+  if (event.isComposing) return null;
+  if (event.metaKey || event.ctrlKey) {
+    return event.key.toLowerCase() === 'k' && !event.altKey ? 'search' : null;
+  }
+  if (event.altKey || event.repeat || typingIn(event.target)) return null;
+  return PLAIN_KEYS[event.key] ?? null;
+}
+
+export function useCommandHotkey(onOpen: (intent: CommandIntent) => void): void {
   const fire = useEffectEvent(onOpen);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== 'k' || !(event.metaKey || event.ctrlKey)) return;
+      const intent = intentOf(event);
+      if (intent === null) return;
       event.preventDefault();
-      fire();
+      fire(intent);
     };
     globalThis.addEventListener('keydown', onKeyDown);
     return () => globalThis.removeEventListener('keydown', onKeyDown);
