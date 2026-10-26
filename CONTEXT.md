@@ -5518,11 +5518,24 @@ prototype | diff with the mismatch to
 `tests/e2e/ui-lab.e2e.ts` holds the same stages as visual baselines. It is
 one test per width and theme: with the four design-system shares merged the
 catalogue is 26 components, twelve shots each per width, and one test per
-width ran past the suite's 120 s test timeout on a loaded machine. `Presence`
-is left out of that loop (`NEVER_STILL`): its demo draws Estela live in 35
-copies, so no two of 50 consecutive screenshots match and no baseline can be
-recorded; `tests/unit/shared/native-ui/presence.test.ts` and the spikes lab
-cover it instead.
+width ran past the suite's 120 s test timeout on a loaded machine. In the
+default mode the spec hides every canvas, because Estela draws live; in the
+reduced mode Estela paints its still, and those shots compare her pixels.
+
+**Estela's seed is her size.** Each `Presence` takes its seed from
+`seedFor(size)` (`src/shared/ui/presence/plan.ts`). It used to take the next
+value of a module counter in a `useState` initialiser, and React runs that
+initialiser again for every render it discards before a commit, which happens
+more often the slower the machine is: under a 6× CPU throttle the ui-lab page
+painted a different still in 38 of its 41 canvases, and `ui-lab.e2e.ts` failed
+in its reduced shots (presence, media, screen, status, resource-view) when
+several tracks loaded the laptop at once. `useId` is no way out: outside
+hydration React numbers ids with the same kind of counter, and a seed derived
+from it still moved under the throttle. The size alone is stable on every
+run. Two copies of the same size and state are the same picture and move in
+step: the camera tiles' "look" marks (48 or 56 px, drawn icons with no
+particles) and two notices of the same state are the only places the app can
+show that.
 
 **Shared uniwind.css.** `node_modules/uniwind/uniwind.css` is a bun hardlink
 shared by every worktree and rewritten by the last bundle; better-tailwindcss
