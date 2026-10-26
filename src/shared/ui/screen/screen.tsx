@@ -53,19 +53,18 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
   const top = insets?.top ?? 0;
   const { onScroll, auraHidden } = useScreenScroll(auraField.height);
   const desktop = window.windowClass === 'expanded' || window.windowClass === 'wide';
-  const panes = columns === 'panes';
-  const split = desktop || (panes && window.windowClass === 'medium');
   const header = hasTopBar(bar) ? <ScreenTopBar {...bar} /> : null;
   const field = aura ? <Aura tone={aura} paused={auraHidden} /> : null;
-  if (columns && split)
+  const paned = desktop || (columns === 'panes' && window.windowClass === 'medium');
+  if (columns && paned)
     return (
-      <PanesProvider value={panes}>
-        <View className="bg-bg relative min-h-0 flex-1">
-          {field}
-          {header ? <View className="px-screen-column-x">{header}</View> : null}
-          <View className="min-h-0 flex-1">{children}</View>
+      <View className="bg-bg relative min-h-0 flex-1">
+        {field}
+        {header ? <View className="px-screen-column-x">{header}</View> : null}
+        <View className="min-h-0 flex-1">
+          <PanesProvider value>{children}</PanesProvider>
         </View>
-      </PanesProvider>
+      </View>
     );
   return (
     <View className="bg-bg relative flex-1">

@@ -36,14 +36,19 @@ export function inactiveRoleCopy(inactive: InactiveRole, t: TranslateFn): Inacti
     };
   }
   if (inactive.kind === 'paused') {
-    return { title: t('screens.access.inactive.paused-title'), body: t('screens.access.inactive.body') };
+    return {
+      title: t('screens.access.inactive.paused-title'),
+      body: t('screens.access.inactive.body'),
+    };
   }
-  return { title: t('screens.access.inactive.unknown-title'), body: t('screens.access.inactive.unknown-body') };
+  return {
+    title: t('screens.access.inactive.unknown-title'),
+    body: t('screens.access.inactive.unknown-body'),
+  };
 }
 
 export type InactiveRoleOffers = {
   alerts: boolean;
-  reminders: { editable: boolean } | null;
   panic: boolean;
   moduleRequest: { moduleId: string; moduleName: string } | null;
   profile: true;
@@ -53,9 +58,6 @@ export type InactiveRoleOffers = {
 export function inactiveRoleOffers(view: AccessView, inactive: InactiveRole): InactiveRoleOffers {
   return {
     alerts: hasCapability(view, CAPABILITY.safetyRespond),
-    reminders: hasCapability(view, CAPABILITY.remindersRead)
-      ? { editable: hasCapability(view, CAPABILITY.remindersWrite) }
-      : null,
     panic: hasCapability(view, CAPABILITY.safetyPanic),
     moduleRequest:
       inactive.kind === 'module' && hasCapability(view, CAPABILITY.modulesRequest)

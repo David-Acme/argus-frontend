@@ -4,6 +4,7 @@ import {
   heightLayoutOf,
   phoneLandscape,
   sheetDetentsOf,
+  sheetScrolls,
   stageStepOf,
   talkSizeOf,
 } from '@/shared/theme/height-layout';
@@ -39,9 +40,26 @@ describe('responsive by height', () => {
   });
 
   test('a long sheet opens near full height on a short window and sizes to content otherwise', () => {
-    expect(sheetDetentsOf(false, heightLayoutOf({ width: 360, height: 640 }))).toEqual(['auto']);
-    expect(sheetDetentsOf(true, heightLayoutOf({ width: 360, height: 800 }))).toEqual([0.6, 1]);
-    expect(sheetDetentsOf(true, heightLayoutOf({ width: 360, height: 640 }))).toEqual([1]);
-    expect(sheetDetentsOf(true, heightLayoutOf({ width: 800, height: 360 }))).toEqual([1]);
+    const tall = heightLayoutOf({ width: 360, height: 800 });
+    const short = heightLayoutOf({ width: 360, height: 640 });
+    const landscape = heightLayoutOf({ width: 800, height: 360 });
+    expect(sheetDetentsOf({ long: false, form: false }, short)).toEqual(['auto']);
+    expect(sheetDetentsOf({ long: true, form: true }, tall)).toEqual([0.6, 1]);
+    expect(sheetDetentsOf({ long: true, form: false }, short)).toEqual([1]);
+    expect(sheetDetentsOf({ long: true, form: false }, landscape)).toEqual([1]);
+  });
+
+  test('a form sizes to its content on a tall phone and opens near full height, scrolling, on a short one', () => {
+    const tall = heightLayoutOf({ width: 360, height: 800 });
+    expect(sheetDetentsOf({ long: false, form: true }, tall)).toEqual(['auto']);
+    expect(sheetScrolls(sheetDetentsOf({ long: false, form: true }, tall))).toBe(false);
+    for (const height of [568, 640, 667]) {
+      const detents = sheetDetentsOf(
+        { long: false, form: true },
+        heightLayoutOf({ width: 360, height })
+      );
+      expect(detents).toEqual([1]);
+      expect(sheetScrolls(detents)).toBe(true);
+    }
   });
 });

@@ -5,7 +5,9 @@ import { Icon } from '@/shared/components/ui/icon';
 import { Text } from '@/shared/components/ui/text';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { CalendarMonthView } from '@/features/agenda/components/calendar-month-view';
+import { MonthGrid } from '@/features/agenda/components/month-grid';
+import { useDayNames } from '@/features/agenda/hooks/use-day-names';
+import { monthCells } from '@/features/agenda/model/agenda-days';
 
 type DayPickerFieldProps = {
   value: Date | null;
@@ -21,6 +23,12 @@ export function DayPickerField({ value, onChange, placeholder, onClear }: DayPic
   const today = date.startOfDay(new Date());
   const [month, setMonth] = useState(value ?? today);
   const label = value ? date.formatPickerDay(value) : (placeholder ?? t('screens.agenda.pick-day'));
+  const names = useDayNames();
+  const cells = monthCells(
+    month.getTime(),
+    { selected: (value ?? today).getTime(), now: today.getTime(), marks: new Set() },
+    date
+  );
 
   const shortcut = (day: Date, text: string) => (
     <Pressable
@@ -28,7 +36,9 @@ export function DayPickerField({ value, onChange, placeholder, onClear }: DayPic
       accessibilityLabel={text}
       onPress={() => onChange(day)}
       className="bg-surface-secondary rounded-full px-3 py-1.5 active:opacity-70">
-      <Text variant="micro" className="font-medium">{text}</Text>
+      <Text variant="micro" className="font-medium">
+        {text}
+      </Text>
     </Pressable>
   );
 
@@ -67,7 +77,9 @@ export function DayPickerField({ value, onChange, placeholder, onClear }: DayPic
         closeLabel={t('common.close')}>
         <View className="gap-2 pb-1">
           <View className="flex-row items-center justify-between">
-            <Text variant="label" className="font-semibold">{date.formatMonthYear(month)}</Text>
+            <Text variant="label" className="font-semibold">
+              {date.formatMonthYear(month)}
+            </Text>
             <View className="flex-row gap-1">
               <Pressable
                 accessibilityRole="button"
@@ -85,12 +97,11 @@ export function DayPickerField({ value, onChange, placeholder, onClear }: DayPic
               </Pressable>
             </View>
           </View>
-          <CalendarMonthView
-            anchor={month}
-            selected={value ?? today}
-            entries={[]}
-            onSelectDay={(day) => {
-              onChange(day);
+          <MonthGrid
+            cells={cells}
+            names={names}
+            onPick={(day) => {
+              onChange(new Date(day));
               setOpen(false);
             }}
           />

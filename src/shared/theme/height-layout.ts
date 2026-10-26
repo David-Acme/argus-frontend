@@ -29,13 +29,18 @@ export function talkSizeOf({ heightClass, landscape }: HeightLayout): number {
   return heightClass === 'regular' && !landscape ? size.talk : size.talkShort;
 }
 
+export type SheetShape = { long: boolean; form: boolean };
+
 export function sheetDetentsOf(
-  long: boolean,
+  { long, form }: SheetShape,
   layoutOfHeight: HeightLayout
 ): readonly SheetDetent[] {
-  if (!long) return ['auto'];
-  return layoutOfHeight.heightClass === 'regular' && !layoutOfHeight.landscape ? [0.6, 1] : [1];
+  const roomy = layoutOfHeight.heightClass === 'regular' && !layoutOfHeight.landscape;
+  if (!long && (roomy || !form)) return ['auto'];
+  return roomy ? [0.6, 1] : [1];
 }
+
+export const sheetScrolls = (detents: readonly SheetDetent[]): boolean => detents[0] !== 'auto';
 
 export function useHeightLayout(): HeightLayout {
   const { width, height } = useWindowDimensions();

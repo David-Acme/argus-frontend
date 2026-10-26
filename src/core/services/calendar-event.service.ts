@@ -1,6 +1,5 @@
 import { Q } from '@nozbe/watermelondb';
 import type { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import type { CalendarEventModel } from '@/core/database';
 import type {
   ICalendarEventCreate,
@@ -28,12 +27,6 @@ const CALENDAR_SOURCE_COLUMNS = [
 class CalendarEventService extends DatabaseService<'calendar_event'> {
   constructor() {
     super('calendar_event');
-  }
-
-  observeAnyStartingAfter(afterMs: number): Observable<boolean> {
-    return this.observeMany([Q.where('starts_at', Q.gt(afterMs)), Q.take(1)]).pipe(
-      map((rows) => rows.length > 0),
-    );
   }
 
   observeRange(fromMs: number, toMs: number): Observable<CalendarEventModel[]> {

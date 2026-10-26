@@ -24,11 +24,14 @@ export type NoticeProps = {
   icon?: IconGlyph;
   action?: NoticeAction;
   inline?: boolean;
+  centred?: boolean;
   presence?: PresenceState;
   testID?: string;
 };
 
-type CardProps = Omit<NoticeProps, 'inline'>;
+type CardProps = Omit<NoticeProps, 'inline' | 'centred'>;
+
+type CentredProps = Omit<NoticeProps, 'inline' | 'centred' | 'presence' | 'tone'>;
 
 type BannerProps = Omit<NoticeProps, 'inline' | 'presence'>;
 
@@ -83,6 +86,40 @@ function NoticeCard({ title, body, tone = 'info', icon, action, presence, testID
   );
 }
 
+function NoticeCentred({ title, body, icon, action, testID }: CentredProps) {
+  const { elevation } = useThemeTokens();
+  const card = { boxShadow: elevation.card };
+  return (
+    <View
+      role="status"
+      testID={testID}
+      className="rounded-notice bg-surface gap-notice-gap px-notice-x items-center py-6"
+      style={card}>
+      {icon ? <Avatar icon={icon} tone="accent" size="large" /> : null}
+      <View className="items-center">
+        <Text variant="noticeTitle" align="center">
+          {title}
+        </Text>
+        {body ? (
+          <View className="mt-notice-body-top">
+            <Text variant="noticeBody" tone="2" align="center">
+              {body}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      {action ? (
+        <Button
+          label={action.label}
+          onPress={action.onPress}
+          variant={action.primary ? 'primary' : 'secondary'}
+          icon={action.icon}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 function NoticeBanner({ title, body, tone = 'info', icon, action, testID }: BannerProps) {
   const attention = tone === 'attention';
   return (
@@ -113,7 +150,8 @@ function NoticeBanner({ title, body, tone = 'info', icon, action, testID }: Bann
   );
 }
 
-export function Notice({ inline, presence, ...notice }: NoticeProps) {
+export function Notice({ inline, centred, presence, ...notice }: NoticeProps) {
   if (inline) return <NoticeBanner {...notice} />;
+  if (centred) return <NoticeCentred {...notice} />;
   return <NoticeCard {...notice} presence={presence} />;
 }

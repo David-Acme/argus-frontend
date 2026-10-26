@@ -53,3 +53,12 @@ export * from './camera-aim.type';
 export * from './maintenance.type';
 export * from './camera-patrol.type';
 export type { FeedbackKind } from './feedback.type';
+export type {
+  AgendaItem,
+  AgendaKind,
+  AgendaMenuAction,
+  AgendaOrigin,
+  AgendaRights,
+  DayRange,
+  NowList,
+} from './agenda.type';

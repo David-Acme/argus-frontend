@@ -28,4 +28,9 @@ describe('Chip', () => {
     rerender(<FilterChip label="Hoy" selected={selected} onPress={() => undefined} />);
     expect(chip().getAttribute('aria-checked')).toBe('true');
   });
+
+  test('a view chip is a tab that reports its selection', () => {
+    render(<FilterChip size="view" label="Día" selected onPress={() => undefined} />);
+    expect(screen.getByRole('tab', { name: 'Día' }).getAttribute('aria-selected')).toBe('true');
+  });
 });

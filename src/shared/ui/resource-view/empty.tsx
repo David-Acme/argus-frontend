@@ -10,10 +10,11 @@ export type EmptyProps = {
   action: Omit<NoticeAction, 'primary'>;
   icon?: IconGlyph;
   presence?: PresenceState;
+  centred?: boolean;
   children?: ReactNode;
 };
 
-export function Empty({ message, detail, action, icon, presence, children }: EmptyProps) {
+export function Empty({ message, detail, action, icon, presence, centred, children }: EmptyProps) {
   return (
     <View className="gap-3">
       <Notice
@@ -21,6 +22,7 @@ export function Empty({ message, detail, action, icon, presence, children }: Emp
         body={detail}
         icon={icon ?? 'check'}
         presence={presence}
+        centred={centred}
         action={{ ...action, primary: true }}
       />
       {children}

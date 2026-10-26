@@ -97,7 +97,7 @@ test('Ctrl+K opens the palette, typing filters local data, and Esc and an outsid
 
   await searchFor(page, 'pay', 'Pay the light bill');
   expect(await groupNames(page)).toEqual(['Ask Argus', 'Agenda', 'Actions']);
-  expect(await optionCount(page, 'New reminder “pay…”')).toBe(1);
+  expect(await optionCount(page, 'Ask Argus to remind me “pay…”')).toBe(1);
 
   await searchFor(page, 'guitar', 'Guitar lesson');
   expect(await optionCount(page, 'Pay the light bill')).toBe(0);

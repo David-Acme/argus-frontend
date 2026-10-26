@@ -27,8 +27,6 @@ export const agendaSections = {
   'project-progress': '{done} of {total} done',
   'project-next': '{progress} · next: {task}',
   'project-empty': 'No tasks yet',
-  'snooze-hour': 'Snooze 1 h',
-  'snooze-tomorrow': 'Snooze to tomorrow',
   edit: 'Edit',
   delete: 'Delete',
   actions: 'Actions for “{title}”',

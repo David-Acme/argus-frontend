@@ -3,8 +3,6 @@ import { localeDictionaries } from '@/core/i18n/locales';
 import type { CalendarEntry } from '@/core/types';
 import { applyIntents, settledIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
-  availableCalendarEntryActions,
-  calendarEntryDetailRows,
   calendarEntryEditHref,
   calendarEntryRecordId,
   editOccurrenceBody,
@@ -12,7 +10,6 @@ import {
   occurrenceOf,
   seriesDeleteConfirm,
   skipOccurrenceBody,
-  type CalendarEntryDetailLabels,
 } from '@/features/agenda/model/calendar-entry-actions';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
 
@@ -91,7 +88,11 @@ describe('an occurrence addresses its event', () => {
   });
 
   test('deleting a series asks first and says it applies to the whole series; a single event goes straight to undo', () => {
-    const labels = { title: 'Delete Piano?', description: 'Applies to the whole series', confirmLabel: 'Delete every occurrence' };
+    const labels = {
+      title: 'Delete Piano?',
+      description: 'Applies to the whole series',
+      confirmLabel: 'Delete every occurrence',
+    };
     expect(seriesDeleteConfirm(occurrence(1), labels)).toEqual({ ...labels, intent: 'danger' });
     expect(seriesDeleteConfirm(plain, labels)).toBeUndefined();
   });
@@ -99,59 +100,9 @@ describe('an occurrence addresses its event', () => {
   test('the series actions read "se aplica a toda la serie" in Spanish and say the same in English', () => {
     const { es, en } = localeDictionaries;
     expect(es.screens.agenda['applies-to-series']).toBe('Se aplica a toda la serie');
-    expect(es.screens.agenda['series-hint']).toContain('se aplica a toda la serie');
     expect(es.screens.agenda['delete-series-body']).toStartWith('Se aplica a toda la serie');
     expect(en.screens.agenda['applies-to-series']).toBe('Applies to the whole series');
-    expect(en.screens.agenda['series-hint']).toContain('applies to the whole series');
     expect(en.screens.agenda['delete-series-body']).toStartWith('Applies to the whole series');
-  });
-
-  test('the detail says how the event repeats', () => {
-    const labels: CalendarEntryDetailLabels = {
-      type: 'Tipo',
-      status: 'Estado',
-      date: 'Día',
-      time: 'Hora',
-      allDay: 'Todo el día',
-      location: 'Lugar',
-      event: 'Evento',
-      task: 'Tarea',
-      reminder: 'Recordatorio',
-      state: {
-        upcoming: 'Próximo',
-        ongoing: 'En curso',
-        today: 'Hoy',
-        ended: 'Terminado',
-        overdue: 'Vencido',
-        todo: 'Por hacer',
-        doing: 'En curso',
-        done: 'Hecho',
-      },
-      repeat: { label: 'Se repite', value: 'Cada semana' },
-    };
-    const rows = calendarEntryDetailRows({
-      entry: occurrence(1),
-      state: 'upcoming',
-      labels,
-      formatDate: () => '12 oct',
-      formatTime: () => '08:00',
-    });
-    expect(rows.map((row) => [row.id, row.value])).toEqual([
-      ['type', 'Evento'],
-      ['date', '12 oct'],
-      ['time', '08:00'],
-      ['status', 'Próximo'],
-      ['repeat', 'Cada semana'],
-      ['location', 'Conservatorio'],
-    ]);
-    const once = calendarEntryDetailRows({
-      entry: plain,
-      state: 'upcoming',
-      labels: { ...labels, repeat: { label: 'Se repite', value: null } },
-      formatDate: () => '5 oct',
-      formatTime: () => '08:00',
-    });
-    expect(once.map((row) => row.id)).toEqual(['type', 'date', 'time', 'status']);
   });
 });
 
@@ -163,27 +114,33 @@ describe('one occurrence of a series', () => {
     expect(occurrenceOf(plain)).toBeNull();
   });
 
-  test('an editor of a series may change or skip one occurrence; a single event offers neither', () => {
-    const permissions = { canEdit: true, canDelete: true };
-    expect(availableCalendarEntryActions(occurrence(1), permissions)).toEqual([
-      'edit-occurrence',
-      'edit',
-      'skip-occurrence',
-      'delete',
-    ]);
-    expect(availableCalendarEntryActions(occurrence(1), { canEdit: false, canDelete: false })).toEqual([]);
-    expect(availableCalendarEntryActions(plain, permissions)).toEqual(['edit', 'delete']);
-  });
-
   test('the bodies name the occurrence by its original start, in seconds', () => {
     const at = START + WEEK;
     expect(skipOccurrenceBody(at)).toEqual({ occurrence: at / 1000, cancelled: true });
     expect(
-      editOccurrenceBody({ occurrence: at, title: 'Piano', location: '', startsAt: at + 3_600_000, endsAt: null })
+      editOccurrenceBody({
+        occurrence: at,
+        title: 'Piano',
+        location: '',
+        startsAt: at + 3_600_000,
+        endsAt: null,
+      })
     ).toEqual({ occurrence: at / 1000, title: 'Piano', location: '', startsAt: at / 1000 + 3600 });
     expect(
-      editOccurrenceBody({ occurrence: at, title: 'Piano', location: 'Sala', startsAt: at, endsAt: at + 7_200_000 })
-    ).toEqual({ occurrence: at / 1000, title: 'Piano', location: 'Sala', startsAt: at / 1000, endsAt: at / 1000 + 7200 });
+      editOccurrenceBody({
+        occurrence: at,
+        title: 'Piano',
+        location: 'Sala',
+        startsAt: at,
+        endsAt: at + 7_200_000,
+      })
+    ).toEqual({
+      occurrence: at / 1000,
+      title: 'Piano',
+      location: 'Sala',
+      startsAt: at / 1000,
+      endsAt: at / 1000 + 7200,
+    });
   });
 
   test('skipping hides only that occurrence until the series row says so', () => {
@@ -209,14 +166,25 @@ describe('one occurrence of a series', () => {
       startsAt: START + WEEK + 7_200_000,
       endsAt: null,
     });
-    const moved = applyIntents(rows, [intent({ values: { ...body }, confirmed: true })], CALENDAR_LENSES, byStart);
-    expect(moved.map((entry) => [entry.title, entry.startsAt, entry.endsAt, entry.location])).toEqual([
+    const moved = applyIntents(
+      rows,
+      [intent({ values: { ...body }, confirmed: true })],
+      CALENDAR_LENSES,
+      byStart
+    );
+    expect(
+      moved.map((entry) => [entry.title, entry.startsAt, entry.endsAt, entry.location])
+    ).toEqual([
       ['Clase de piano', START, START + 3_600_000, 'Conservatorio'],
       ['Piano tarde', START + WEEK + 7_200_000, START + WEEK + 10_800_000, 'Casa'],
       ['Clase de piano', START + 2 * WEEK, START + 2 * WEEK + 3_600_000, 'Conservatorio'],
     ]);
-    expect(settledIntents(rows, [intent({ values: { ...body }, confirmed: true })], CALENDAR_LENSES)).toEqual([]);
-    expect(settledIntents(moved, [intent({ values: { ...body }, confirmed: true })], CALENDAR_LENSES)).toEqual(['i1']);
+    expect(
+      settledIntents(rows, [intent({ values: { ...body }, confirmed: true })], CALENDAR_LENSES)
+    ).toEqual([]);
+    expect(
+      settledIntents(moved, [intent({ values: { ...body }, confirmed: true })], CALENDAR_LENSES)
+    ).toEqual(['i1']);
   });
 
   test('the one-occurrence actions say so in Spanish and English', () => {

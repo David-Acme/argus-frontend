@@ -4,9 +4,7 @@ import type {
   IReminderCacheSource,
 } from '@/core/interfaces';
 import type {
-  AgendaFeed,
   AgendaStatus,
-  AgendaWindow,
   CalendarEntry,
   CalendarEntryState,
   CalendarSeries,
@@ -23,13 +21,12 @@ import {
 } from '@/shared/constants/cache.constant';
 import { log } from '@/core/services/log';
 import {
-  firstOccurrenceAfter,
   occurrenceLimitFor,
   occurrencesBetween,
   parseRecurrenceRule,
   zoneClock,
 } from '@/shared/libs/recurrence';
-import { addDays, endOfDay, startOfDay } from './dates';
+import { endOfDay, startOfDay } from './dates';
 import type { ProjectionContext, ViewWrite } from './projection';
 
 export type CalendarReminder = Pick<IReminderCacheSource, 'id' | 'title' | 'scheduledAt' | 'isCompleted'>;
@@ -150,15 +147,6 @@ function eventEntries(input: CalendarProjectionInput, range: Range): CalendarEnt
   return entries;
 }
 
-function seriesContinueAfter(input: CalendarProjectionInput, moment: number): boolean {
-  const recurring = recurringEvents(input);
-  if (recurring.size === 0) return false;
-  const clock = zoneClock(input.zone);
-  return [...recurring.values()].some(
-    ({ event, rule }) => firstOccurrenceAfter({ rule, anchor: event.startsAt.getTime(), moment, clock }) !== null
-  );
-}
-
 export const calendarMonthScope = (value: Date): string =>
   `month.${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`;
 
@@ -265,25 +253,3 @@ export function projectAgenda(input: CalendarProjectionInput, { now }: Projectio
   ];
 }
 
-export const agendaScope = (anchor: Date): string => String(startOfDay(anchor));
-
-export const agendaSpan = (scope: string, { weeks }: AgendaWindow): Range => {
-  const first = new Date(Number(scope));
-  return { from: startOfDay(first), to: endOfDay(addDays(first, weeks * 7 - 1)) };
-};
-
-export type AgendaFeedInput = CalendarProjectionInput & {
-  eventsLater: boolean;
-  tasksLater: boolean;
-};
-
-export function projectAgendaFeed(input: AgendaFeedInput, scope: string, range: Range): ViewWrite[] {
-  const remindersLater = input.reminders.some((reminder) => reminder.scheduledAt.getTime() > range.to);
-  const value: AgendaFeed = {
-    rows: toCalendarEntries(input, range),
-    hasMore: input.eventsLater || input.tasksLater || remindersLater || seriesContinueAfter(input, range.to),
-    from: range.from,
-    to: range.to,
-  };
-  return [{ key: VIEW_CACHE_KEYS.calendarAgenda, scope, value }];
-}

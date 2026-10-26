@@ -19,9 +19,8 @@ import { enIN } from 'date-fns/locale/en-IN';
 import { enNZ } from 'date-fns/locale/en-NZ';
 import { enUS } from 'date-fns/locale/en-US';
 import { es } from 'date-fns/locale/es';
-import type { CalendarView, LanguageCode, WallTime } from '@/core/types';
+import type { LanguageCode, WallTime } from '@/core/types';
 import { DAYS_PER_WEEK, MONTH_GRID_ROWS } from '@/shared/constants/calendar.constant';
-import { TIMELINE_HOURS } from '@/shared/constants/dashboard.constant';
 
 type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -42,10 +41,9 @@ export type DateFormatter = {
   formatYear: (value: Date) => string;
   formatMonthYear: (value: Date) => string;
   formatDayMonth: (value: Date) => string;
-  formatAgendaDay: (value: Date) => string;
+  formatDayRange: (from: Date, to: Date) => string;
   formatFullDate: (value: Date) => string;
   formatPickerDay: (value: Date) => string;
-  formatDayRange: (from: Date, to: Date) => string;
   formatDayNumber: (value: Date) => string;
   formatHour: (hour: number) => string;
   formatTime: (value: Date) => string;
@@ -60,8 +58,6 @@ export type DateFormatter = {
   sameDay: (left: Date, right: Date) => boolean;
   weekDays: (value: Date) => Date[];
   monthGridDays: (value: Date) => Date[];
-  rangeFor: (view: CalendarView, anchor: Date) => { from: number; to: number };
-  timelineHours: (entryHours: readonly number[]) => number[];
   hourOf: (value: Date) => number;
   minuteOf: (value: Date) => number;
   isSameMonth: (left: Date, right: Date) => boolean;
@@ -88,10 +84,6 @@ function weekStartsOn(value: number | null, fallback: number | undefined): WeekS
   return resolved >= 0 && resolved <= 6 ? (resolved as WeekStartsOn) : 0;
 }
 
-function dayPattern(language: LanguageCode): string {
-  return language === 'es' ? "EEEE, d 'de' MMMM" : 'EEEE, MMMM d';
-}
-
 export function createDateFormatter(
   language: LanguageCode,
   preferences: DeviceDatePreferences
@@ -114,20 +106,6 @@ export function createDateFormatter(
       addDays(first, index)
     );
   };
-  const rangeFor = (view: CalendarView, anchor: Date) => {
-    if (view === 'day') return { from: startDay(anchor).getTime(), to: endDay(anchor).getTime() };
-    if (view === 'week') {
-      const first = startOfWeek(startDay(anchor), options);
-      return { from: first.getTime(), to: endDay(addDays(first, DAYS_PER_WEEK - 1)).getTime() };
-    }
-    if (view === 'month') {
-      const first = startOfWeek(startOfMonthBase(anchor), options);
-      return { from: first.getTime(), to: endDay(addDays(first, MONTH_GRID_ROWS * DAYS_PER_WEEK - 1)).getTime() };
-    }
-    const start = startDay(anchor);
-    return { from: start.getTime(), to: endDay(addDays(start, 30)).getTime() };
-  };
-
   return {
     formatWeekdayShort: (value) => format(value, 'EEE', options).replace('.', ''),
     formatWeekday: (value) => sentence(format(value, 'EEEE', options)),
@@ -135,9 +113,6 @@ export function createDateFormatter(
     formatYear: (value) => format(value, 'yyyy', options),
     formatMonthYear: (value) => sentence(format(value, 'LLLL yyyy', options)),
     formatDayMonth: (value) => format(value, language === 'es' ? 'd MMM' : 'MMM d', options),
-    formatAgendaDay: (value) => sentence(format(value, dayPattern(language), options)),
-    formatFullDate: (value) => format(value, 'PPPP', options),
-    formatPickerDay: (value) => format(value, 'EEE, d MMM', options).replace('.', ''),
     formatDayRange: (from, to) => {
       const pattern = language === 'es' ? 'd MMM' : 'MMM d';
       if (isSameDay(from, to)) return format(from, pattern, options);
@@ -149,6 +124,8 @@ export function createDateFormatter(
       }
       return `${format(from, pattern, options)} – ${format(to, pattern, options)}`;
     },
+    formatFullDate: (value) => format(value, 'PPPP', options),
+    formatPickerDay: (value) => format(value, 'EEE, d MMM', options).replace('.', ''),
     formatDayNumber: (value) => format(value, 'd', options),
     formatHour: (hour) => format(new Date(2000, 0, 1, hour), timePattern, options),
     formatTime: (value) => format(value, timePattern, options),
@@ -169,16 +146,6 @@ export function createDateFormatter(
     sameDay: isSameDay,
     weekDays,
     monthGridDays,
-    rangeFor,
-    timelineHours: (entryHours) => {
-      const first =
-        entryHours.length > 0 ? Math.min(TIMELINE_HOURS[0], ...entryHours) : TIMELINE_HOURS[0];
-      const last =
-        entryHours.length > 0
-          ? Math.max(TIMELINE_HOURS.at(-1)!, ...entryHours)
-          : TIMELINE_HOURS.at(-1)!;
-      return Array.from({ length: last - first + 1 }, (_, index) => first + index);
-    },
     hourOf: getHours,
     minuteOf: (value) => value.getMinutes(),
     isSameMonth,

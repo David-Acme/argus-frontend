@@ -114,6 +114,8 @@ export const chromeSize = {
   liveDot: 6,
   keyLine: 17,
   rail: 88,
+  eventBar: 4,
+  fab: 56,
   presenceHero: 66,
   presenceHeroSmall: 56,
   presenceHeroDense: 58,

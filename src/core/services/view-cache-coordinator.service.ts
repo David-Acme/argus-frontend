@@ -11,22 +11,17 @@ import { reminderService } from '@/core/services/reminder.service';
 import { userInvitationService } from '@/core/services/user-invitation.service';
 import { userService } from '@/core/services/user.service';
 import { zoneService } from '@/core/services/zone.service';
-import type { AgendaWindow, KeysetWindow } from '@/core/types';
+import type { KeysetWindow } from '@/core/types';
 import {
-  AGENDA_FEED_INITIAL_WEEKS,
-  AGENDA_FEED_STEP_WEEKS,
   NOTIFICATION_FEED_SCOPE,
   MODULE_IDS,
   VIEW_CACHE_KEYS,
   VIEW_CACHE_LIST_LIMIT,
 } from '@/shared/constants';
 import {
-  agendaScope,
-  agendaSpan,
   calendarMonthScope,
   calendarWindow,
   projectAgenda,
-  projectAgendaFeed,
   projectCalendar,
   todayRange,
 } from './view-cache/calendar.projection';
@@ -153,7 +148,6 @@ function startSessionProjections(sources: SessionSources, ctx: ProjectionContext
 
 export type PagedViewKey =
   | typeof VIEW_CACHE_KEYS.notificationFeed
-  | typeof VIEW_CACHE_KEYS.calendarAgenda
   | typeof VIEW_CACHE_KEYS.conversationThread;
 
 const sameKeyset = (left: KeysetWindow, right: KeysetWindow): boolean =>
@@ -183,35 +177,6 @@ function startPagedViews(
         extend: (_scope, window, context) =>
           notificationService.nextFeedWindow(context.userId, window),
         same: sameKeyset,
-      },
-      ctx,
-    ),
-    [VIEW_CACHE_KEYS.calendarAgenda]: new PagedView<AgendaWindow>(
-      {
-        key: VIEW_CACHE_KEYS.calendarAgenda,
-        warm: [agendaScope(ctx.now)],
-        initial: () => ({ weeks: AGENDA_FEED_INITIAL_WEEKS }),
-        open: (scope, window, context) => {
-          const range = agendaSpan(scope, window);
-          return startProjection(
-            {
-              sources: () => ({
-                events: moduleGate.of(PRODUCTIVITY, calendarEventService.observeRange(range.from, range.to), []),
-                reminders: sources.reminders,
-                tasks: moduleGate.of(PRODUCTIVITY, projectTaskService.observeDueRange(range.from, range.to), []),
-                eventsLater: moduleGate.of(PRODUCTIVITY, calendarEventService.observeAnyStartingAfter(range.to), false),
-                tasksLater: moduleGate.of(PRODUCTIVITY, projectTaskService.observeAnyDueAfter(range.to), false),
-                series: sources.series,
-                zone: sources.zone,
-              }),
-              project: (values) => projectAgendaFeed(values, scope, range),
-            },
-            context,
-          );
-        },
-        extend: (_scope, window) =>
-          Promise.resolve({ weeks: window.weeks + AGENDA_FEED_STEP_WEEKS }),
-        same: (left, right) => left.weeks === right.weeks,
       },
       ctx,
     ),

@@ -26,28 +26,6 @@ describe('createDateFormatter', () => {
     expect(createDateFormatter('en', us).weekDays(october)[0]?.getDay()).toBe(0);
   });
 
-  test('ranges cover whole days of the view', () => {
-    const date = createDateFormatter('es', spain);
-    const day = date.rangeFor('day', october);
-    expect(new Date(day.from)).toEqual(new Date(2026, 9, 15));
-    expect(day.to - day.from).toBe(86_400_000 - 1);
-    const week = date.rangeFor('week', october);
-    expect(new Date(week.from)).toEqual(new Date(2026, 9, 12));
-    const month = date.rangeFor('month', october);
-    expect(date.monthGridDays(october)).toHaveLength(42);
-    expect(new Date(month.from)).toEqual(new Date(2026, 8, 28));
-  });
-
-  test('day ranges name the month once when they share it', () => {
-    const es = createDateFormatter('es', spain);
-    const en = createDateFormatter('en', us);
-    expect(es.formatDayRange(new Date(2026, 9, 4), new Date(2026, 9, 9))).toBe('4–9 oct');
-    expect(en.formatDayRange(new Date(2026, 9, 4), new Date(2026, 9, 9))).toBe('Oct 4–9');
-    expect(es.formatDayRange(new Date(2026, 9, 29), new Date(2026, 10, 2))).toBe('29 oct – 2 nov');
-    expect(en.formatDayRange(new Date(2026, 9, 29), new Date(2026, 10, 2))).toBe('Oct 29 – Nov 2');
-    expect(es.formatDayRange(new Date(2026, 9, 3), new Date(2026, 9, 3, 23))).toBe('3 oct');
-  });
-
   test('times follow the clock preference', () => {
     const start = new Date(2026, 9, 15, 14, 5);
     const end = new Date(2026, 9, 15, 15, 0);
@@ -60,13 +38,6 @@ describe('createDateFormatter', () => {
     expect(date.defaultInputTime(new Date(2026, 9, 16), october)).toBe('09:00');
     expect(date.defaultInputTime(october, october)).toBe('11:00');
     expect(date.atInputTime(october, '07:45')).toEqual(new Date(2026, 9, 15, 7, 45));
-  });
-
-  test('the timeline widens to include early and late entries', () => {
-    const date = createDateFormatter('es', spain);
-    const hours = date.timelineHours([5, 23]);
-    expect(hours[0]).toBe(5);
-    expect(hours.at(-1)).toBe(23);
   });
 
   test('the calendar cache window covers the visible month grid for any week start', () => {

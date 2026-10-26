@@ -38,12 +38,14 @@ export {
   heightLayoutOf,
   phoneLandscape,
   sheetDetentsOf,
+  sheetScrolls,
   stageStepOf,
   talkSizeOf,
   useHeightLayout,
   type HeightClass,
   type HeightLayout,
   type SheetDetent,
+  type SheetShape,
 } from './height-layout';
 export { useWindowHeight, useWindowLayout, useWindowWidth } from './use-window-layout';
 export {

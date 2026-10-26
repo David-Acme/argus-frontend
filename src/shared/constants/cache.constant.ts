@@ -15,10 +15,6 @@ export const NOTIFICATION_READ_BATCH_SIZE = 500;
 
 export const NOTIFICATION_FEED_SCOPE = 'all';
 
-export const AGENDA_FEED_INITIAL_WEEKS = 5;
-
-export const AGENDA_FEED_STEP_WEEKS = 4;
-
 export const EMPTY_DASHBOARD_SUMMARY = {
   camerasTotal: 0,
   camerasOnline: 0,
@@ -40,7 +36,6 @@ export const VIEW_CACHE_KEYS = {
   cameraList: 'camera.list',
   cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
-  calendarAgenda: 'calendar.agenda',
   eventList: 'event.list',
   reminderList: 'reminder.list',
   projectList: 'project.list',
