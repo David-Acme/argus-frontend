@@ -1,5 +1,7 @@
-import type { ICameraClip, ICameraClips } from '@/core/interfaces';
+import type { ICameraCacheRow, ICameraClip, ICameraClips } from '@/core/interfaces';
 import type { CameraClipTrigger, TranslateFn, TranslationKey } from '@/core/types';
+import { isPendingRecordId } from '@/shared/libs/optimistic';
+import { cameraPrivacyMasked } from '@/shared/libs/camera-privacy';
 
 export const CLIP_PAGE_SIZE = 20;
 
@@ -59,6 +61,25 @@ export function clipRowsOf(payload: ICameraClips | null | undefined): ICameraCli
   return payload.clips
     .map((row) => clipOfRow(row))
     .filter((clip): clip is ICameraClip => clip !== null);
+}
+
+export function newestClips(clips: readonly ICameraClip[], limit: number): ICameraClip[] {
+  return [...clips]
+    .sort((left, right) => right.startedAt - left.startedAt || Number(right.id) - Number(left.id))
+    .slice(0, limit);
+}
+
+export function clipSourceIds(
+  cameras: readonly Pick<ICameraCacheRow, 'id' | 'isEnabled' | 'privacyState' | 'privacyObeyed'>[],
+): string[] {
+  return cameras
+    .filter(
+      (camera) =>
+        camera.isEnabled &&
+        !isPendingRecordId(camera.id) &&
+        !cameraPrivacyMasked(camera.privacyState, camera.privacyObeyed),
+    )
+    .map((camera) => camera.id);
 }
 
 export function mergeClipPages(

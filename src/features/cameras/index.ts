@@ -8,3 +8,6 @@ export { CameraLabScreen } from './screens/camera-lab-screen';
 export { recordModeLabelKey } from './model/camera-record-mode';
 export { TamperEvidenceView } from './components/tamper-evidence-view';
 export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';
+export { useCameraThumbnails } from './hooks/use-camera-thumbnails';
+export { useRecentClips, type RecentClips } from './hooks/use-recent-clips';
+export { cameraMasked, cameraViews, type CameraView } from './model/camera-overview';

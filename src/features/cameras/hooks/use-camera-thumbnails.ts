@@ -6,7 +6,10 @@ import { CameraThumbnailPoller } from '@/features/cameras/services/camera-thumbn
 
 const NO_THUMBNAILS: ReadonlyMap<string, string> = new Map();
 
-export function useCameraThumbnails(cameras: readonly ICameraCacheRow[]): ReadonlyMap<string, string> {
+export function useCameraThumbnails(
+  cameras: readonly ICameraCacheRow[],
+  repeat = true,
+): ReadonlyMap<string, string> {
   const focused = useIsFocused();
   const [thumbnails, setThumbnails] = useState<ReadonlyMap<string, string>>(NO_THUMBNAILS);
   const watched = cameras
@@ -16,10 +19,10 @@ export function useCameraThumbnails(cameras: readonly ICameraCacheRow[]): Readon
 
   useEffect(() => {
     if (!focused || watched === '') return;
-    const poller = new CameraThumbnailPoller(watched.split(','), setThumbnails);
+    const poller = new CameraThumbnailPoller(watched.split(','), setThumbnails, repeat);
     poller.start();
     return () => poller.stop();
-  }, [focused, watched]);
+  }, [focused, repeat, watched]);
 
   return thumbnails;
 }
