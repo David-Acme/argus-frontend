@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { size, useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { RowPosition } from '@/shared/ui/row';
-import { useInScreenColumn } from '@/shared/ui/screen';
+import { useInScreenColumn, useScreenColumnGrow } from '@/shared/ui/screen';
 import { Text } from '@/shared/ui/text';
 
 export type SectionAction = { label: string; onPress: () => void };
@@ -20,7 +20,7 @@ export type SectionProps = {
 
 type SectionHeadProps = Pick<SectionProps, 'title' | 'meta' | 'action'>;
 
-type GroupProps = { children: ReactNode };
+type GroupProps = { grow?: boolean; children: ReactNode };
 
 const LINK_SLOP = (size.target - size.targetMin) / 2;
 
@@ -56,12 +56,15 @@ function SectionHead({ title, meta, action }: SectionHeadProps) {
   );
 }
 
-function Group({ children }: GroupProps) {
+function Group({ grow, children }: GroupProps) {
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.card };
   return (
     <View
-      className="rounded-card bg-surface py-section-group-y web:focus-inset overflow-hidden"
+      className={clsx(
+        'rounded-card bg-surface py-section-group-y web:focus-inset overflow-hidden',
+        grow && 'grow'
+      )}
       style={card}>
       {Children.toArray(children).map((child, index) => (
         <RowPosition.Provider key={index} value={{ index }}>
@@ -80,10 +83,11 @@ export function Section({
   testID,
   children,
 }: SectionProps) {
+  const grow = useScreenColumnGrow();
   return (
-    <View className="mt-section-top" testID={testID}>
+    <View className={clsx('mt-section-top', grow && 'grow')} testID={testID}>
       <SectionHead title={title} meta={meta} action={action} />
-      {variant === 'grouped' ? <Group>{children}</Group> : children}
+      {variant === 'grouped' ? <Group grow={grow}>{children}</Group> : children}
     </View>
   );
 }

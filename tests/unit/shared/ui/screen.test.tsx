@@ -3,7 +3,7 @@ import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import { Section } from '@/shared/ui/section/section';
 import { Screen } from '@/shared/ui/screen/screen';
-import { useInScreenColumn } from '@/shared/ui/screen/screen-column-context';
+import { useInScreenColumn, useScreenColumnGrow } from '@/shared/ui/screen/screen-column-context';
 import { ScreenColumn, ScreenColumns } from '@/shared/ui/screen/screen-columns';
 import { ScreenScroll } from '@/shared/ui/screen/screen-scroll';
 import { ScreenScroll as NativeScreenScroll } from '@/shared/ui/screen/screen-scroll.native';
@@ -91,7 +91,35 @@ describe('Screen', () => {
     expect(seen).toContain(true);
   });
 
-  test('outside a column a section is not sticky', () => {
+  test('a column grows its last child, or the child it names, to the bottom', () => {
+    setWindowWidth(1920);
+    const grown: Record<string, boolean> = {};
+    function Probe({ name }: { name: string }) {
+      grown[name] = useScreenColumnGrow();
+      return null;
+    }
+    render(
+      <Screen columns>
+        <ScreenColumns>
+          <ScreenColumn label="Ahora">
+            <Probe name="ahora" />
+            <Probe name="hoy" />
+          </ScreenColumn>
+          <ScreenColumn label="Cámaras" grow={0}>
+            <Probe name="camaras" />
+            <Section title="Lo que pasó">
+              <Probe name="paso" />
+            </Section>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    expect(grown).toEqual({ ahora: false, hoy: true, camaras: true, paso: false });
+    expect(screen.getByRole('heading', { name: 'Lo que pasó' })).toBeDefined();
+  });
+
+  test('outside a column a section is not sticky and does not grow', () => {
+    expect(renderHook(() => useScreenColumnGrow()).result.current).toBe(false);
     expect(renderHook(() => useInScreenColumn()).result.current).toBe(false);
   });
 

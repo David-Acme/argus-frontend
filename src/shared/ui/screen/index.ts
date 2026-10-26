@@ -1,5 +1,5 @@
 export { Screen, type ScreenProps } from './screen';
-export { useInScreenColumn } from './screen-column-context';
+export { useInScreenColumn, useScreenColumnGrow } from './screen-column-context';
 export {
   ScreenColumn,
   ScreenColumns,

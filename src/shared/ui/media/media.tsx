@@ -27,6 +27,7 @@ type MediaContent = {
 
 export type MediaTileProps = MediaContent & {
   variant?: 'tile';
+  fill?: boolean;
   center?: ReactNode;
   reveal?: ReactNode;
   onPress?: () => void;
@@ -47,6 +48,8 @@ type RevealProps = { shown: boolean; children: ReactNode };
 const LIVE_FRAME = { aspectRatio: layout.mediaAspect, backgroundColor: illustration.media };
 
 const DORMANT_FRAME = { aspectRatio: layout.mediaAspect };
+
+const FILL_FRAME = { backgroundColor: illustration.media };
 
 const REVEAL_SHOWN = {
   backgroundColor: illustration.mediaHover,
@@ -87,24 +90,30 @@ function accessibleName({ name, live, detail }: MediaContent): string {
   return [name, live, detail].filter(Boolean).join(', ');
 }
 
-function Tile({ center, reveal, onPress, ...content }: MediaTileProps) {
+function tileFrame({ dormant, fill }: Pick<MediaTileProps, 'dormant' | 'fill'>) {
+  if (fill) return dormant ? undefined : FILL_FRAME;
+  return dormant ? DORMANT_FRAME : LIVE_FRAME;
+}
+
+function Tile({ center, reveal, onPress, fill, ...content }: MediaTileProps) {
   const [hovered, setHovered] = useState(false);
   const pointer = (shown: boolean) => (event: PointerEvent) => {
     if (event.nativeEvent.pointerType === 'mouse') setHovered(shown);
   };
-  const frame = content.dormant ? DORMANT_FRAME : LIVE_FRAME;
-  const surface = clsx(content.dormant && 'bg-fill');
+  const frame = tileFrame({ dormant: content.dormant, fill });
+  const stretch = fill && 'min-h-media-fill flex-1';
+  const surface = clsx(content.dormant && 'bg-fill', stretch);
   const body = <Layers {...content} />;
   return (
     <View
-      className="rounded-media web:focus-inset relative overflow-hidden"
+      className={clsx('rounded-media web:focus-inset relative overflow-hidden', stretch)}
       onPointerEnter={pointer(true)}
       onPointerLeave={pointer(false)}>
       {onPress ? (
         <PressableSurface
           a11y={{ label: accessibleName(content), role: 'button' }}
           onPress={onPress}
-          pressed={{ scale: 'surface' }}
+          pressed={{ scale: 'surface', grow: fill }}
           className={surface}
           style={frame}>
           {body}
