@@ -59,8 +59,10 @@ test('home does not say nothing is pending before anything was synced', async ({
   await control(baseUrl, 'refuse?device=A&ms=600000');
   const escapes = await openFirst(browser, app);
 
-  await expect(screen.getByText('Your reminders have not arrived yet', { exact: true })).toBeVisible({ timeout: 15000 });
-  await expect(screen.getByText('Nothing is pending', { exact: true })).toBeHidden();
+  await expect(screen.getByRole('progressbar', 'Loading Home')).toBeVisible({ timeout: 15000 });
+  await expect(screen.getByText('Nothing due today', { exact: true })).toBeHidden();
+  await expect(screen.getByText('Free day', { exact: true })).toBeHidden();
+  await expect(screen.getByRole('heading', 'All quiet.')).toBeHidden();
 
   expect(escapes).toEqual([]);
 });
