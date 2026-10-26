@@ -96,7 +96,7 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('button', 'Messages').first().click();
-  await screen.getByText('Argus', { exact: true }).first().click();
+  await screen.getByText('Argus', { exact: true }).last().click();
   await expect(screen.getByText('From the laptop', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Through the camera', { exact: true })).toBeVisible();
   await expect(screen.getByRole('heading', 'Today')).toBeVisible();

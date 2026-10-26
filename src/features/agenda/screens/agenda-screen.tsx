@@ -22,6 +22,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { peopleAccessOf } from '@/shared/libs/capabilities';
+import { routeFallback } from '@/shared/libs/route-access';
 import { screenIn } from '@/shared/libs/animations';
 import { AgendaSidePanel } from '@/features/agenda/components/agenda-side-panel';
 import { CalendarAgendaView } from '@/features/agenda/components/calendar-agenda-view';
@@ -44,6 +45,8 @@ import {
 } from '@/features/agenda/model/calendar-entry-actions';
 
 type AgendaParams = { edit?: string; at?: string; new?: string };
+
+const PROJECTS_HREF = '/projects';
 
 function timestampParam(value: string | undefined): number | null {
   const at = Number(value);
@@ -77,6 +80,7 @@ export default function ScheduleScreen() {
   const canManageShares = peopleAccessOf(capabilities).receivesDirectory;
   const { can } = capabilities;
   const canCreate = can('calendar_event', 'create');
+  const canOpenProjects = routeFallback(PROJECTS_HREF, capabilities) === null;
   const userId = String(useAuthStore((state) => state.user?.id ?? ''));
   const shareViewer = useMemo(() => ({ userId, canManageShares }), [canManageShares, userId]);
   const shareableEntry = useCallback(
@@ -275,11 +279,15 @@ export default function ScheduleScreen() {
     <AppScreen scrollable={false}>
       <Animated.View entering={screenIn} className="flex-1 gap-5">
         <View className="flex-row items-center justify-between">
-          <IconButton
-            icon="arrow-left"
-            label={t('common.back')}
-            onPress={() => router.replace('/')}
-          />
+          {canOpenProjects ? (
+            <IconButton
+              icon="list-todo"
+              label={t(SCREEN_TITLE_KEYS.projects)}
+              onPress={() => router.push(PROJECTS_HREF)}
+            />
+          ) : (
+            <View className="size-11" />
+          )}
           <Text variant="title">{t(SCREEN_TITLE_KEYS.agenda)}</Text>
           {canCreate ? (
             <IconButton

@@ -24,7 +24,13 @@ import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runServiceAction } from '@/shared/libs/service-action';
 import { EPISODE_MARKED_RETENTION_DAYS } from '@/features/security/constants';
 import { useEpisodeFeed } from '@/features/security/hooks/use-episode-feed';
-import { cameraEnvironmentIndex, maskedInScope, withCameraIn, withMode } from '@/features/security/model/environments';
+import {
+  cameraEnvironmentIndex,
+  headlineMode,
+  maskedInScope,
+  withCameraIn,
+  withMode,
+} from '@/features/security/model/environments';
 import { askDisarmPin, safetyService } from '@/features/safety';
 import { modeExpectsProtection, modeLowers } from '@/features/security/model/mode-change';
 import { confirm } from '@/shared/libs/confirm';
@@ -90,6 +96,12 @@ export function useGuardEnvironments(enabled: boolean) {
     enabled,
     resources: GUARD_ENVIRONMENTS,
   });
+}
+
+export function useGuardHeadline(): GuardMode | null {
+  const { guard } = useCapabilities();
+  const environments = useGuardEnvironments(guard.view).data;
+  return guard.view ? headlineMode(environments ?? []) : null;
 }
 
 export function useCameraEnvironmentIndex(): ReadonlyMap<string, CameraEnvironmentBadge> {

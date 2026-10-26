@@ -132,8 +132,8 @@
 ## Current state (docs resync 2026-08-23)
 
 The app is built out end-to-end. Every signed-in screen lives in the
-`src/app/(app)/` route group; its layout mounts the nav rail once
-(`AppShell`) and is the session guard (`EntryGate`): signed in, it renders
+`src/app/(app)/` route group; its layout mounts the navigation once
+(`AppNavigation`, `features/navigation`) and is the session guard (`EntryGate`): signed in, it renders
 the screen; loading, the branded splash; signed out, it resolves the entry:
 unpaired → `/welcome`; no admin + native → `/welcome/face?mode=owner-enroll`;
 paired → `/login` (desktop QR or mobile face login). Screens never redirect
@@ -291,8 +291,9 @@ max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
     metering, native + web).
 - **Navigation**: root `Stack` crossfades every route (`animation: 'fade'`,
   `animationTypeForReplace: 'push'`) with `headerShown: false`, themed
-  `contentStyle` (no white flash); `GlobalBottomNav`, `ConfirmDialog`,
-  `Toaster` and `PortalHost` render above the Stack in `_layout.tsx`. The
+  `contentStyle` (no white flash); `ConfirmDialog`, `Toaster` and
+  `PortalHost` render above the Stack in `_layout.tsx`, so every overlay sits
+  above the tab bar, which `(app)/_layout.tsx` mounts inside the root Stack. The
   welcome stack nests its own fade Stack (240 ms).
 - **Storage**: platform-split, typed `IStorageService`.
 - **i18n rebuilt** (2026-08) — custom engine in `src/core/i18n/` (see `AGENTS.md`
@@ -3998,20 +3999,12 @@ Agenda, Proyectos and Cámaras, a board create tile, a form title) keeps
 opening its form, and the edit entries (`?edit=`, `?task=` from the entry
 menus) keep opening the form of the row the user tapped.
 
-- `COMPOSE_ACTIONS` (`shared/constants/dashboard.constant.ts`) carries plain
-  destinations (`/agenda`, `/projects`, `/cameras`, `/call`).
-  `SCREEN_TITLE_KEYS` is the one source of the three destination titles — the
-  Agenda, Proyectos and Cámaras screens render it as their own header, the nav
-  labels Agenda and Proyectos with it, and the Inicio shortcuts that name a
+- `SCREEN_TITLE_KEYS` (`shared/constants/dashboard.constant.ts`) is the one
+  source of the three destination titles: the Agenda, Proyectos and Cámaras
+  screens render it as their own header, and the Inicio shortcuts that name a
   destination read it too (the projects empty-state action, the free-hour cell
-  of Hoy, the camera-activity card) — and `COMPOSE_ACTION_LABEL_KEYS` names each
-  compose entry with the key of the screen its route opens
-  (`screens.agenda.schedule`, `screens.projects.title`, `screens.cameras.title`;
-  `voice` keeps `screens.home.talk`).
-  `tests/unit/shared/constants/compose-actions.test.ts` pins that: no route
-  carries a query, and each entry's label key is the `SCREEN_TITLE_KEYS` key of
-  the screen at its route slug, so a header rename cannot leave the "+" naming
-  another screen.
+  of Hoy, the camera-activity card). The compose "+" menu that also read it is
+  gone with R-D4 (see "The navigation shell").
 - The Inicio projects grid has no trailing create tile: a "+" always means
   create, and the section header's "Ver todos" already opens `/projects`.
 - Inicio follows the same rule: the free-hour cell of Hoy opens the agenda
@@ -4024,19 +4017,9 @@ menus) keep opening the form of the row the user tapped.
 
 ### The compose menu belongs to the route (2026-10-07, U10 fix)
 
-The compose FAB is one instance owned above the navigator
-(`GlobalBottomNav` in the root layout, `NavRail` in `AppShell`), so its local
-`open` state used to survive every navigation: leaving a screen with the menu
-open carried the menu — and its "x" — into the next screen, where nothing was
-open. `ComposeFab` now reads `usePathname()` and renders the menu component
-keyed by the pathname, so a route change unmounts the menu and its state and
-the arrived screen always mounts the closed glyph ('plus'). The spring still
-plays for an in-screen open/close; a navigation always cuts it, which is the
-point ("never leave a frozen mid-spring"). On the web build the morph cannot
-paint at all — `react-native-svg`'s `WebShape.setNativeProps` drops the incoming
-`d` (it merges only `props.style`) — so there the glyph only ever changes on a
-mount, which is exactly what the route key guarantees; the web morph paints
-again since the U12 fix (next section).
+Superseded on 2026-10-26: the compose FAB and its menu were removed with the
+old bar (R-D4, "The navigation shell"). Creation is the "+" inside Agenda and
+Proyectos, `Command`, or asking Argus.
 
 ### The morph paints on the web again (2026-10-07, U12 fix)
 
@@ -4461,8 +4444,9 @@ pieces:
     `aria-describedby` and `aria-invalid` while the field has an error), and
     `SelectField` inside a form item speaks "Status: Active";
   - the hidden phone tab bar stayed in the tree and the tab order on desktop
-    (every navigation button twice): `GlobalBottomNav` renders nothing where the
-    navigation rail is used, and is `aria-hidden` whenever it is hidden;
+    (every navigation button twice): the navigation now mounts exactly one form
+    of `Nav` (bar, rail or sidebar), and the bar is not rendered at all where it
+    is hidden;
   - repeated, ambiguous names: the module cards' actions say which module
     ("Turn off: Productivity"), a lane's add button says which lane ("Add task to
     To do"), Home's section links say which section ("See all: Today"), and the
@@ -5597,6 +5581,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
 
+
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
 
 **Confirm.** On a compact native window it is `Alert.alert` (react-native-web's
@@ -6711,3 +6696,73 @@ says so, so a short last card reaches the column's bottom while Ahora, Hoy and
 the other sections above it keep their height. The choice is by child
 position: a last child that renders nothing takes the growth with it.
 
+## The navigation shell (Phase 2, T1, 2026-10-26)
+
+Spec §9.0, §6, §6b-1, §6b-2, §8c; R-D1, R-D4, R-D13, R-D15, R-D19, R-D26, R-D31.
+
+- **One mount.** `src/app/(app)/_layout.tsx` wraps the Stack in `AppNavigation`
+  (`src/features/navigation`), which renders exactly one form of Phase 1's `Nav`:
+  the floating bar at `compact` or below 480 px of height, the rail at `medium`,
+  the glass sidebar at `expanded`/`wide`. The old pieces are gone: `AppShell`,
+  `GlobalBottomNav`, `BottomNav`, the old `NavRail`, `bottom-nav-metrics`,
+  `useBottomNav`, `useDashboardNavigation`, the navigation store, the
+  `DASHBOARD_*`/`COMPOSE_*`/`BOTTOM_NAV_*` constants and the floating "+"
+  (`ComposeFab`, R-D4). The bar used to live in the root layout for two reasons:
+  overlays above it and the fade on sign-in. Both still hold without it there:
+  the root layout renders the call and watch pills, the dialogs, the toasts and
+  the portal host after its Stack, so they paint above the `(app)` group and its
+  bar, and the root Stack's fade carries the whole group, bar included.
+- **Tabs from capabilities.** `visibleTabs(view)` (`model/nav-sections.ts`) keeps
+  a tab when `routeFallback` lets the role open its route and, for Argus, when
+  the role has `assistant.voice`: owner and resident 5, one module off 4, guard
+  Inicio · Seguridad · Argus · Tú, guest Inicio · Argus · Tú, an unknown or
+  inactive role Inicio · Tú. Ajustes is a sidebar row only; on the bar and the
+  rail it is a row of Tú.
+- **The active tab follows the route.** `sectionOf` maps the first segment:
+  cameras and watch to Seguridad, projects to Agenda, conversations to Argus,
+  notification to Inicio, people, users, settings and profile to Tú (settings to
+  Ajustes where the sidebar shows it). `tabMove` keeps today's stack rules: the
+  active tab stays, Inicio dismisses to the root, a tab pushed from Inicio
+  pushes, anything else replaces. Re-tapping the active tab gives the selection
+  haptic; scroll-to-top is not wired (no cheap handle on the screen's scroller).
+- **Where the bar shows.** The bar is hidden on the full-screen pushed routes
+  (`barShownOn`: cameras, a conversation thread, an environment, visitors,
+  activity, proximity, watch). This replaces the old per-screen claim
+  (`AppScreen bottomNav={false}` and the navigation store): the decision is one
+  tested function instead of a prop on eleven screens. `useBottomNavInset` reads
+  `BottomNavShown`, which `AppNavigation` provides, and answers the bar's real
+  height above the safe-area inset (`max(inset, nav.barBottom) + tabBar + 16`)
+  or the 24 px gutter where no bar shows.
+- **Shrink on scroll.** `navCollapse` is driven by `Screen` (Phase 1) and by
+  `AppScreen` (the same `useNavScrollHandler`), and reset to open on every route
+  change; under reduce motion the bar stays fixed (`NavBar`).
+- **Labels and font scale.** Tab labels scale to 1.15× (`typeRoles.tab`);
+  beyond that `NavBar` drops the labels and keeps the icons, the accessible
+  name staying on the tab (§6b-2).
+- **R-D31.** The sidebar's brand mark and its "Pregúntale a Argus…" mark are
+  `Presence` with `paused`: a still frame, never a second live Estela beside a
+  screen's hero. The centre tab of the bar stays live (Phase 1's choice).
+- **Sidebar.** The ⌘K field and «Pregúntale a Argus…» call `onCommand`
+  (`COMMAND_KEY` reads ⌘K on Apple platforms, Ctrl K elsewhere); keys 1–5
+  switch sections on web while the sidebar shows, never while typing in a field
+  or with a modifier (`sectionShortcut`); Inicio carries the unread count. The
+  status block shows «Argus de Casa» (no home name source exists), «Modo …»
+  when the guard environments share one effective mode (`useGuardHeadline`,
+  security) and «N de M cámaras activas» from the view-cache summary
+  (`useCameraCounts`, cameras) when the role sees cameras. No storage meter:
+  no source reports used and total storage.
+- **Content cap.** The content beside the sidebar is capped at
+  `layout.contentMax` (2,200 px) and centred in the remaining width.
+- **Temporary wiring.** Until the lead wires T2's `useArgusVoice()` and T3's
+  `useCommandLauncher()`, the layout passes a voice whose open and listen
+  callbacks open the Argus thread, and a no-op `onCommand`.
+- **Reachability.** Agenda's header leads to Proyectos (where the role may open
+  it), Proyectos' back returns to Agenda, Tú gains a «Casa» group with Personas
+  (`/users` or `/people`) and Ajustes, and the Argus thread's header leads to
+  the conversations with people (R-D13).
+- **Connection notices.** `OFFLINE_NOTICE_DELAY_MS` is 12,000 ms and the
+  recovered transition only closes the warning: the «Conectado de nuevo» toast
+  and its i18n key are gone. Still shown, by design: the camera stream's
+  «Conectando con la cámara»/«Reconectando…», the voice call's
+  «Conectando…»/«Reconectando…», and Tú's route row «Conectado en casa»/«por la
+  nube», which is a status line, not a notice.

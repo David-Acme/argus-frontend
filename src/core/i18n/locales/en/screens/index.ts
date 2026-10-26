@@ -29,6 +29,7 @@ import { watch } from './watch';
 import { proximity } from './proximity';
 import { conversations } from './conversations';
 import { command } from './command';
+import { navigation } from './navigation';
 
 export const screens = {
   home,
@@ -62,4 +63,5 @@ export const screens = {
   proximity,
   conversations,
   command,
+  navigation,
 };

@@ -19,6 +19,7 @@ test('members do not read "No open sessions" when the sessions overview failed t
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
+  await screen.getByRole('tab', 'You').first().click();
   await screen.getByRole('button', 'People').first().click();
   await expect(screen.getByText(/Luis Paz/).first()).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('The connected devices could not be loaded.', { exact: true })).toBeVisible({ timeout: 10000 });
@@ -33,7 +34,7 @@ test('an empty sessions answer ends the search instead of searching forever', as
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Profile').first().click();
+  await screen.getByRole('tab', 'You').first().click();
   await expect(screen.getByText('Argus returned no session for you.', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Looking for your sessions…', { exact: true })).toBeHidden();
 

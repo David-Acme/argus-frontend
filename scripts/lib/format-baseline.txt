@@ -4,7 +4,6 @@ scripts/patch-argus-modules.mjs
 scripts/patch-expo-camera.mjs
 scripts/patch-livekit-audio.mjs
 scripts/probe-web-bundle.ts
-src/app/(app)/_layout.tsx
 src/app/+html.tsx
 src/app/+native-intent.ts
 src/app/_layout.tsx
@@ -584,16 +583,9 @@ src/features/watch/screens/watch-screen.tsx
 src/features/watch/services/watch-feed.ts
 src/features/watch/services/watch.service.ts
 src/shared/components/cameras/masked-cameras-notice.tsx
-src/shared/components/layout/bottom-nav-metrics.ts
-src/shared/components/layout/bottom-nav.tsx
-src/shared/components/layout/compose-fab.tsx
 src/shared/components/layout/edge-fade.tsx
-src/shared/components/layout/global-bottom-nav.tsx
-src/shared/components/layout/nav-rail.tsx
 src/shared/components/layout/offline-transition.ts
 src/shared/components/layout/top-notice-bar.tsx
-src/shared/components/layout/use-bottom-nav.ts
-src/shared/components/layout/use-dashboard-navigation.ts
 src/shared/components/sharing/share-members-dialog.tsx
 src/shared/components/ui/adaptive-dialog.tsx
 src/shared/components/ui/adaptive-menu.tsx
@@ -635,7 +627,6 @@ src/shared/constants/module.constant.ts
 src/shared/constants/pairing.constant.ts
 src/shared/constants/recurrence.constant.ts
 src/shared/constants/resource.constant.ts
-src/shared/hooks/use-bottom-nav-inset.ts
 src/shared/hooks/use-cached-rows.ts
 src/shared/hooks/use-capabilities.ts
 src/shared/hooks/use-date-formatter/date.ts
@@ -647,7 +638,6 @@ src/shared/hooks/use-overlay-body-height.ts
 src/shared/hooks/use-remote-resource.ts
 src/shared/hooks/use-service-action.ts
 src/shared/hooks/use-translation.ts
-src/shared/hooks/use-window-class.ts
 src/shared/libs/capabilities.ts
 src/shared/libs/invitation-qr.ts
 src/shared/libs/optimistic-action.ts
@@ -877,7 +867,6 @@ tests/unit/scripts/check-comments.test.ts
 tests/unit/shared/components/ui/blur-reveal-style.test.ts
 tests/unit/shared/components/ui/dialog-submit-key.test.ts
 tests/unit/shared/components/ui/morph-icon/morph-icon-driver.test.ts
-tests/unit/shared/constants/compose-actions.test.ts
 tests/unit/shared/hooks/date-formatter.test.ts
 tests/unit/shared/hooks/use-device-permissions/device-permissions.test.ts
 tests/unit/shared/libs/capabilities.test.ts

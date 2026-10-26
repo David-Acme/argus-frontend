@@ -129,11 +129,20 @@ describe('Nav', () => {
 
   test('a tab and a key hint render alone', () => {
     const picked: string[] = [];
-    render(<NavTab item={ITEMS[0]} selected={false} onSelect={(key) => void picked.push(key)} />);
+    render(
+      <NavTab item={ITEMS[0]} selected={false} labelled onSelect={(key) => void picked.push(key)} />
+    );
     fireEvent.click(screen.getByRole('tab', { name: 'Inicio' }));
     expect(picked).toEqual(['home']);
+    expect(screen.getByText('Inicio')).toBeDefined();
     render(<KeyHint label="N" reveal />);
     expect(screen.getByText('N')).toBeDefined();
+  });
+
+  test('past the label scale cap a tab keeps its icon and its accessible name, without the label', () => {
+    render(<NavTab item={ITEMS[3]} selected labelled={false} onSelect={() => undefined} />);
+    expect(screen.getByRole('tab', { name: 'Agenda' })).toBeDefined();
+    expect(screen.queryByText('Agenda')).toBeNull();
   });
 
   test('the Argus tab hands its presses to the hold handlers', () => {
@@ -150,6 +159,7 @@ describe('Nav', () => {
         item={ITEMS[2]}
         selected={false}
         hint={COPY.argusHint}
+        labelled
         listening={false}
         target={{ current: null }}
         handlers={handlers}

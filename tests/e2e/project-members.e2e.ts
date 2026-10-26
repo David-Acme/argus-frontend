@@ -56,8 +56,10 @@ test('the owner adds a member on one device, the other device shows it live, and
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
+  await screen.getByRole('tab', 'Agenda').first().click();
   await screen.getByRole('button', 'Projects').first().click();
-  await second.page.getByRole('button', { name: 'Projects' }).first().click();
+  await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
+  await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await screen.getByRole('button', 'Members').click();
   await expect(screen.getByText('Only you work on this project for now.')).toBeVisible();
 
@@ -92,6 +94,7 @@ test('a member who can only view sees the project without the controls that woul
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
+  await screen.getByRole('tab', 'Agenda').first().click();
   await screen.getByRole('button', 'Projects').first().click();
   await expect(screen.getByText('You can view this project. Whoever created it decides who can edit it.')).toBeVisible({
     timeout: 10000,

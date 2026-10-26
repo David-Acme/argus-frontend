@@ -50,11 +50,12 @@ test('what one device does reaches the activity history open on the other, live'
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
-  await second.page.getByRole('button', { name: 'Settings' }).first().click();
+  await second.page.getByRole('tab', { name: 'Settings' }).first().click();
   await second.page.getByText('Activity history', { exact: true }).click();
   await expect.poll(() => second.page.getByRole('heading', { name: 'Activity' }).count(), { timeout: 10000 }).toBe(1);
   await expect.poll(() => second.page.getByText('created a project').count()).toBe(0);
 
+  await screen.getByRole('tab', 'Agenda').first().click();
   await screen.getByRole('button', 'Projects').first().click();
   await screen.getByRole('button', 'New project').first().click();
   await screen.getByPlaceholder('Move, renovation, trip…').fill(project.name);

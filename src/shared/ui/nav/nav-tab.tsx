@@ -10,12 +10,20 @@ import { HOLD_DELAY, SLIDE_SLOP, type useHoldToTalk } from './use-hold-to-talk';
 
 type HoldTalk = ReturnType<typeof useHoldToTalk>;
 
-type TabProps = { item: NavItem; selected: boolean; onSelect: (key: string) => void };
+type TabProps = {
+  item: NavItem;
+  selected: boolean;
+  labelled: boolean;
+  onSelect: (key: string) => void;
+};
+
+type TabLabelProps = { label: string; labelled: boolean; dim?: boolean };
 
 type ArgusTabProps = {
   item: NavItem;
   selected: boolean;
   hint: string;
+  labelled: boolean;
   listening: boolean;
   target: HoldTalk['target'];
   handlers: HoldTalk['handlers'];
@@ -30,7 +38,18 @@ const SLOP = (size.tabBar - size.tab) / 2;
 
 const ACTIONS = [{ name: 'longpress' as const }];
 
-export function NavTab({ item, selected, onSelect }: TabProps) {
+function TabLabel({ label, labelled, dim }: TabLabelProps) {
+  if (!labelled) return null;
+  return (
+    <View className="-mx-nav-bar-pad items-center">
+      <Text variant="tab" tone={dim ? '3' : 'default'} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+export function NavTab({ item, selected, labelled, onSelect }: TabProps) {
   return (
     <View className={SLOT}>
       <PressableSurface
@@ -41,11 +60,7 @@ export function NavTab({ item, selected, onSelect }: TabProps) {
         hitSlop={SLOP}
         className={clsx(FRAME, selected && 'bg-tab-on')}>
         <Icon name={item.icon} tone={selected ? 'text' : 'text-3'} />
-        <View className="-mx-nav-bar-pad items-center">
-          <Text variant="tab" tone={selected ? 'default' : '3'} numberOfLines={1}>
-            {item.label}
-          </Text>
-        </View>
+        <TabLabel label={item.label} labelled={labelled} dim={!selected} />
       </PressableSurface>
     </View>
   );
@@ -55,6 +70,7 @@ export function ArgusTab({
   item,
   selected,
   hint,
+  labelled,
   listening,
   target,
   handlers,
@@ -82,11 +98,7 @@ export function ArgusTab({
         ) : (
           <Icon name={item.icon} />
         )}
-        <View className="-mx-nav-bar-pad items-center">
-          <Text variant="tab" numberOfLines={1}>
-            {item.label}
-          </Text>
-        </View>
+        <TabLabel label={item.label} labelled={labelled} />
       </Pressable>
     </View>
   );

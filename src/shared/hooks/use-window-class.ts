@@ -1,7 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { Dimensions } from 'react-native';
 import type { Orientation, WindowClass, WindowHeightClass } from '@/core/types';
-import { IS_NATIVE, WINDOW_EXPANDED_MIN, WINDOW_MEDIUM_MIN, WINDOW_TALL_MIN } from '@/shared/constants';
+import { WINDOW_EXPANDED_MIN, WINDOW_MEDIUM_MIN, WINDOW_TALL_MIN } from '@/shared/constants';
 
 type WindowClassification = {
   windowClass: WindowClass;
@@ -16,7 +16,6 @@ type WindowClassResult = WindowClassification & {
   isWide: boolean;
   isShort: boolean;
   isLandscape: boolean;
-  usesNavRail: boolean;
 };
 
 export function classifyWindow(width: number, height: number): WindowClassification {
@@ -67,8 +66,6 @@ export function useWindowClass(): WindowClassResult {
       isWide: windowClass !== 'compact',
       isShort: heightClass === 'short',
       isLandscape: orientation === 'landscape',
-      usesNavRail:
-        windowClass === 'expanded' || (windowClass !== 'compact' && (heightClass === 'short' || !IS_NATIVE)),
     };
   }, [classification]);
 }

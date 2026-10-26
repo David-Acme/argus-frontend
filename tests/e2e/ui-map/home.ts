@@ -28,7 +28,7 @@ import {
   user,
 } from '../support/ui-map/data';
 import type { Row, ScreenSpec } from '../support/ui-map/scenario';
-import { button, say, tap, text } from '../support/ui-map/text';
+import { button, say, text } from '../support/ui-map/text';
 
 const POPULATED: Row[] = [
   ...PRODUCTIVITY,
@@ -208,13 +208,13 @@ export const HOME: ScreenSpec[] = [
       {
         state: 'offline-toast',
         rows: POPULATED,
-        act: offline(5200),
+        act: offline(13200),
         notes: 'socket dropped and refused for 15 min; the warning toast',
       },
       {
         state: 'offline-icon',
         rows: POPULATED,
-        act: offline(13000),
+        act: offline(21000),
         notes: 'after the toast closes, the wifi-off icon stays in the top bar',
       },
       {
@@ -222,7 +222,7 @@ export const HOME: ScreenSpec[] = [
         rows: POPULATED,
         seed: remote({ 'argus.e2e': 'connect', 'argus-tunnel.lynk.page': 'tls-peer-closed' }),
         act: async () => {
-          await sleep(6000);
+          await sleep(14000);
         },
       },
       {
@@ -230,7 +230,7 @@ export const HOME: ScreenSpec[] = [
         rows: POPULATED,
         seed: remote({ 'argus.e2e': 'connect', 'argus-tunnel.lynk.page': 'connect' }),
         act: async () => {
-          await sleep(6000);
+          await sleep(14000);
         },
       },
       {
@@ -240,13 +240,6 @@ export const HOME: ScreenSpec[] = [
         notes: 'opening the bell marks every unread notification read',
       },
       { state: 'bell-popover-empty', act: openBell },
-      {
-        state: 'compose-menu',
-        rows: POPULATED,
-        act: async (scene) => {
-          await tap(scene, 'screens.home.compose');
-        },
-      },
       { state: 'search-no-match', rows: POPULATED, act: search('zzzz') },
       { state: 'search-match', rows: POPULATED, act: search('Mudanza') },
       {

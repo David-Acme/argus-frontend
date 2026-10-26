@@ -5,6 +5,7 @@ import {
   camerasIn,
   environmentForCamera,
   maskedInScope,
+  headlineMode,
   matchEnvironment,
   sharedMode,
   withCameraIn,
@@ -75,6 +76,13 @@ describe('environments', () => {
     expect(every[1]?.effectiveMode).toBe('home');
     expect(withMode(all, 'armed')[1]?.effectiveMode).toBe('armed');
     expect(sharedMode(one)).toBeNull();
+  });
+
+  test('the headline mode is the effective mode every environment shares, or none', () => {
+    expect(headlineMode([])).toBeNull();
+    expect(headlineMode([environment({ effectiveMode: 'night' })])).toBe('night');
+    expect(headlineMode([environment({ mode: 'away', effectiveMode: 'home' }), environment({ id: 2 })])).toBe('home');
+    expect(headlineMode([environment({}), environment({ id: 2, effectiveMode: 'armed' })])).toBeNull();
   });
 
   test('moving a camera takes it out of every other environment', () => {

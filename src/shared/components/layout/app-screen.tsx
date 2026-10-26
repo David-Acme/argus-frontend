@@ -1,19 +1,19 @@
 import type { ReactNode } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CONTENT_MAX_WIDTH } from '@/shared/constants';
 import { EdgeFade } from '@/shared/components/layout/edge-fade';
-import { useBottomNav } from '@/shared/components/layout/use-bottom-nav';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
 import { cn } from '@/shared/libs/utils';
+import { useNavScrollHandler } from '@/shared/ui/nav';
 
 type AppScreenProps = {
   children: ReactNode;
   header?: ReactNode;
   aside?: ReactNode;
   scrollable?: boolean;
-  bottomNav?: boolean;
   fillHeight?: boolean;
 };
 
@@ -22,15 +22,13 @@ export function AppScreen({
   header,
   aside,
   scrollable = true,
-  bottomNav = true,
   fillHeight = true,
 }: AppScreenProps) {
   const insets = useSafeAreaInsets();
   const { windowClass, isExpanded, isShort, isWide } = useWindowClass();
   const bottomInset = useBottomNavInset();
+  const onScroll = useNavScrollHandler();
   const topPad = isShort ? 8 : isExpanded ? 20 : 18;
-
-  useBottomNav(bottomNav);
 
   const body =
     aside && isWide ? (
@@ -62,13 +60,14 @@ export function AppScreen({
 
   return (
     <View className="bg-background flex-1">
-      <ScrollView
+      <Animated.ScrollView
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         className="flex-1"
-        contentContainerClassName="grow"
-        contentContainerStyle={{ paddingBottom: bottomNav ? bottomInset : 24 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: bottomInset }}
         showsVerticalScrollIndicator={false}>
         {content}
-      </ScrollView>
+      </Animated.ScrollView>
       {insets.top > 0 ? <EdgeFade edge="top" solid={insets.top} fade={topPad} /> : null}
     </View>
   );

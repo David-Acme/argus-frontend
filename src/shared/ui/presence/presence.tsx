@@ -62,10 +62,10 @@ export function Presence({
       planFor({
         size,
         tier: perfTier,
-        reduceMotion,
+        reduceMotion: reduceMotion || paused,
         adaptation: adapting ? { ceiling, drops } : undefined,
       }),
-    [size, perfTier, reduceMotion, adapting, ceiling, drops]
+    [size, perfTier, reduceMotion, paused, adapting, ceiling, drops]
   );
   const look = useMemo<Look>(
     () => ({

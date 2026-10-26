@@ -131,7 +131,6 @@ export default function ProximityPeopleScreen() {
   return (
     <AppScreen
       scrollable={false}
-      bottomNav={false}
       header={
         <ScreenHeader
           title={t('screens.proximity.people.title')}
