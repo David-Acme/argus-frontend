@@ -25,6 +25,6 @@ export type DayRange = { from: number; to: number };
 
 export type NowList = { items: readonly AgendaItem[]; total: number; overdue: number };
 
-export type AgendaMenuAction = 'snooze-hour' | 'snooze-tomorrow' | 'edit' | 'delete';
+export type AgendaMenuAction = 'edit' | 'delete';
 
 export type AgendaRights = { toggle: boolean; edit: boolean; remove: boolean };

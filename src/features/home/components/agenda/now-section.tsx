@@ -5,7 +5,6 @@ import { nowList } from '@/features/agenda';
 import { nowCount } from '@/features/home/model/agenda-wording';
 import { AgendaEmpty } from './agenda-empty';
 import { AgendaRow } from './agenda-row';
-import { ReminderEditor } from './reminder-editor';
 
 export function NowSection() {
   const { t } = useTranslation();
@@ -17,13 +16,10 @@ export function NowSection() {
     return synced ? <AgendaEmpty title={title} /> : null;
   }
   return (
-    <>
-      <Section title={title} meta={nowCount(list, t)}>
-        {list.items.map((item) => (
-          <AgendaRow key={item.id} item={item} place="now" wording={wording} actions={actions} />
-        ))}
-      </Section>
-      <ReminderEditor actions={actions} />
-    </>
+    <Section title={title} meta={nowCount(list, t)}>
+      {list.items.map((item) => (
+        <AgendaRow key={item.id} item={item} place="now" wording={wording} actions={actions} />
+      ))}
+    </Section>
   );
 }

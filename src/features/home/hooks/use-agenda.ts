@@ -39,7 +39,7 @@ export function useAgenda(): Agenda {
   const readsReminders = has(CAPABILITY.remindersRead);
   const readsAgenda = has(CAPABILITY.agendaRead);
   const reminders = useReminders();
-  const actions = useAgendaActions(reminders);
+  const actions = useAgendaActions();
   const start = date.startOfDay(new Date(now));
   const next = date.addDays(start, 1);
   const today = { from: start.getTime(), to: date.endOfDay(start).getTime() };

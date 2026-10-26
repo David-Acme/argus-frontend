@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import type { IReminderCacheRow } from '@/core/interfaces';
 import type { AgendaItem, AgendaMenuAction, DashboardProjectCard } from '@/core/types';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import type { Agenda } from '@/features/home/hooks/use-agenda';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
-import { agendaMenu } from '@/features/agenda/model/agenda-actions';
+import { agendaMenu, agendaRights } from '@/features/agenda/model/agenda-actions';
 import { screenFocus } from '../../shared/ui/screen-focus';
 import '../../shared/ui/translation-stub';
 import { at, items, prototypeDay, reminder, TODAY, TOMORROW, wording } from './agenda-fixtures';
@@ -28,16 +27,14 @@ const state: {
   rows: Map<string, readonly unknown[]>;
 } = { agenda: null, caps: new Set(), askable: true, rows: new Map() };
 
-function actions(editing: IReminderCacheRow | null = null): AgendaActions {
-  const rights = { toggle: true, edit: true, remove: true };
+function actions(): AgendaActions {
+  const rightsOf = (item: AgendaItem) => agendaRights(item, () => true);
   return {
-    rightsOf: () => rights,
-    menuOf: (item: AgendaItem) => agendaMenu({ item, rights, snoozes: ['60', 'tomorrow'] }),
+    rightsOf,
+    menuOf: (item: AgendaItem) => agendaMenu(rightsOf(item)),
     toggle: (item) => calls.toggled.push(item.title),
     open: (item) => calls.opened.push(item.title),
     run: (item: AgendaItem, action: AgendaMenuAction) => calls.ran.push(`${action}:${item.title}`),
-    editing,
-    closeEditing: () => undefined,
   };
 }
 
@@ -62,9 +59,6 @@ mock.module('@/features/agenda', async () => ({
   ...(await import('@/features/agenda/model/agenda-items')),
   ...(await import('@/features/agenda/model/agenda-actions')),
   ...(await import('@/features/agenda/model/agenda-timeline')),
-  ReminderDialog: ({ reminder: row }: { reminder: IReminderCacheRow }) => (
-    <div role="dialog" aria-label={row.title} />
-  ),
 }));
 mock.module('@/shared/hooks/use-capabilities', () => ({
   useCapabilities: () => ({ has: (capability: string) => state.caps.has(capability) }),
@@ -92,7 +86,6 @@ const { UpcomingRemindersSection } =
 const { AgendaRow } = await import('@/features/home/components/agenda/agenda-row');
 const { AgendaEmpty } = await import('@/features/home/components/agenda/agenda-empty');
 const { FreeRow } = await import('@/features/home/components/agenda/free-row');
-const { ReminderEditor } = await import('@/features/home/components/agenda/reminder-editor');
 const { ScreenColumnProvider } = await import('@/shared/ui/screen/screen-column-context');
 
 function inColumn(children: ReactNode) {
@@ -127,23 +120,21 @@ describe('Ahora', () => {
     expect(screen.queryByText('Clase de guitarra')).toBeNull();
   });
 
-  test('the check completes the row and the row itself opens it', () => {
+  test('Argus manages reminders: they have no check, and a tap opens them through Argus', () => {
     render(<NowSection />);
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar «Pagar la luz» como hecho' }));
-    expect(calls.toggled).toEqual(['Pagar la luz']);
-    expect(calls.opened).toEqual([]);
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    fireEvent.click(rowNamed('Pagar la luz'));
     fireEvent.click(rowNamed('Reunión con el arquitecto'));
-    expect(calls.opened).toEqual(['Reunión con el arquitecto']);
+    expect(calls.opened).toEqual(['Pagar la luz', 'Reunión con el arquitecto']);
   });
 
-  test('a right click opens the row menu with Posponer, Editar and Borrar', async () => {
+  test('a right click on an event opens its menu with Editar and Borrar', async () => {
     render(<NowSection />);
-    fireEvent.contextMenu(screen.getByText('Llamar al plomero'));
+    fireEvent.contextMenu(screen.getByText('Reunión con el arquitecto'));
     const named = (name: string) => screen.findByRole('menuitem', { name, hidden: true });
-    for (const name of ['Posponer 1 h', 'Posponer a mañana', 'Editar'])
-      expect(await named(name)).toBeDefined();
+    expect(await named('Editar')).toBeDefined();
     fireEvent.click(await named('Borrar'));
-    expect(calls.ran).toEqual(['delete:Llamar al plomero']);
+    expect(calls.ran).toEqual(['delete:Reunión con el arquitecto']);
   });
 
   test('the same card renders inside a desktop column', () => {
@@ -189,13 +180,6 @@ describe('Ahora', () => {
     state.agenda = agenda(prototypeDay(), { visible: false });
     expect(render(<NowSection />).container.textContent).toBe('');
   });
-
-  test('a reminder being edited opens its dialog beside the card', () => {
-    const row = reminder('Pagar la luz', at(17));
-    state.agenda = agenda(prototypeDay(), { actions: actions(row) });
-    render(<NowSection />);
-    expect(screen.getByRole('dialog', { name: 'Pagar la luz' })).toBeDefined();
-  });
 });
 
 describe('Hoy and Mañana', () => {
@@ -206,11 +190,7 @@ describe('Hoy and Mañana', () => {
     expect(within(section).getByText('16:00 – 17:00')).toBeDefined();
     expect(within(section).getByText('19:00 – 21:00')).toBeDefined();
     expect(within(section).getByText('14:30 – 16:00 · en curso')).toBeDefined();
-    expect(
-      screen
-        .getByRole('checkbox', { name: 'Marcar «Yoga» como pendiente' })
-        .getAttribute('aria-checked')
-    ).toBe('true');
+    expect(screen.queryByRole('checkbox', { name: 'Marcar «Yoga» como pendiente' })).toBeNull();
     fireEvent.click(screen.getByRole('link', { name: 'Agenda' }));
     expect(calls.pushed).toEqual(['/agenda']);
   });
@@ -330,14 +310,13 @@ describe('the agenda row pieces', () => {
     menuOf: () => [],
   };
 
-  test('a row the role cannot change shows its check without acting and has no menu', () => {
+  test('a reminder row is read-only: no check, no menu, and a tap asks Argus about it', () => {
     const plumber = prototypeDay().find((item) => item.title === 'Llamar al plomero')!;
     render(<AgendaRow item={plumber} place="now" wording={wording} actions={readOnly} />);
-    fireEvent.click(
-      screen.getByRole('checkbox', { name: 'Marcar «Llamar al plomero» como hecho' })
-    );
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    fireEvent.click(rowNamed('Llamar al plomero'));
+    expect(calls.opened).toEqual(['Llamar al plomero']);
     expect(calls.toggled).toEqual([]);
-    expect(screen.queryByRole('button')).toBeNull();
   });
 
   test('an event leads with its mark and opens even when read-only', () => {
@@ -357,9 +336,5 @@ describe('the agenda row pieces', () => {
     );
     expect(screen.getByText('16:00 – 17:00')).toBeDefined();
     expect(screen.getByText('Nada pendiente hoy')).toBeDefined();
-  });
-
-  test('the reminder editor is closed until a reminder is being edited', () => {
-    expect(render(<ReminderEditor actions={actions()} />).container.textContent).toBe('');
   });
 });

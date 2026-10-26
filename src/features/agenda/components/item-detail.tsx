@@ -35,13 +35,8 @@ const ownerName = (item: AgendaItem, { owners }: ListContext): string | null =>
   item.origin.kind === 'entry' ? (owners.get(item.origin.entry.ownerId ?? '') ?? null) : null;
 
 function moreItems({ item, context, handlers }: PartProps): MenuItem[] {
-  const { actions, now, t } = context;
-  const [, ...later] = actions.snoozesOf(item, now);
-  const items: MenuItem[] = later.map((action) => ({
-    label: t('screens.agenda.detail.snooze-tomorrow'),
-    icon: 'clock',
-    onPress: () => actions.snooze(item, action),
-  }));
+  const { actions, t } = context;
+  const items: MenuItem[] = [];
   if (actions.canSkip(item))
     items.push({ label: t('screens.agenda.detail.skip'), onPress: () => actions.skip(item) });
   if (handlers.onShare)
@@ -77,8 +72,7 @@ function More(part: PartProps) {
 
 function Actions(part: PartProps) {
   const { item, context, handlers } = part;
-  const { actions, now, t } = context;
-  const [snooze] = actions.snoozesOf(item, now);
+  const { actions, t } = context;
   const edit = handlers.onEdit;
   return (
     <View className="flex-row flex-wrap items-center gap-2">
@@ -90,10 +84,11 @@ function Actions(part: PartProps) {
           compact
         />
       ) : null}
-      {snooze ? (
+      {item.kind === 'reminder' ? (
         <Button
-          label={t('screens.agenda.detail.snooze')}
-          onPress={() => actions.snooze(item, snooze)}
+          label={t('screens.agenda.detail.ask')}
+          icon="mic"
+          onPress={() => context.onOpen(item)}
           compact
         />
       ) : null}

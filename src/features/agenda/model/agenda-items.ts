@@ -1,6 +1,7 @@
 import type { IReminderCacheRow } from '@/core/interfaces';
 import type { AgendaItem, CalendarEntry, DayRange, NowList } from '@/core/types';
 import { CALENDAR_OPEN_EVENT_MS } from '@/shared/constants';
+import { ARGUS_REMINDERS_SHOWN } from '@/features/agenda/constants/agenda.constant';
 
 export type AgendaSources = {
   reminders: readonly IReminderCacheRow[];
@@ -53,7 +54,7 @@ const byTime = (left: AgendaItem, right: AgendaItem): number =>
 
 export function agendaItems({ reminders, entries, projectNames }: AgendaSources): AgendaItem[] {
   return [
-    ...reminders.map(fromReminder),
+    ...(ARGUS_REMINDERS_SHOWN ? reminders.map(fromReminder) : []),
     ...entries.filter((entry) => entry.source !== 'reminder').map(fromEntry(projectNames)),
   ].sort(byTime);
 }

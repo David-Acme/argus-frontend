@@ -12,9 +12,8 @@ import { Field } from '@/shared/ui/field';
 import { Row } from '@/shared/ui/row';
 import { Switch } from '@/shared/ui/switch';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
-import { REPEAT_CHOICES } from '@/features/agenda/model/reminder-repeat';
-import type { RepeatChoice } from '@/features/agenda/model/reminder-repeat';
-import type { DraftProblem } from '@/features/agenda/model/item-draft';
+import { REPEAT_CHOICES } from '@/features/agenda/constants/agenda.constant';
+import type { DraftProblem, RepeatChoice } from '@/features/agenda/model/item-draft';
 import { DayField } from '@/features/agenda/components/day-field';
 import type { ProjectOption } from '@/features/agenda/model/agenda-view';
 
@@ -31,7 +30,6 @@ type TimeProps = Pick<ItemFieldsProps, 'form'> & {
 };
 
 const TITLE_LABEL = {
-  reminder: 'screens.agenda.sheet.title-reminder',
   event: 'screens.agenda.sheet.title-event',
   task: 'screens.agenda.sheet.title-task',
 } as const satisfies Record<string, TranslationKey>;
@@ -66,8 +64,7 @@ function repeatOptions(t: TranslateFn): ChoiceOption<RepeatChoice>[] {
   }));
 }
 
-const hasTime = ({ kind, allDay }: ItemForm['draft']): boolean =>
-  kind === 'reminder' || (kind === 'event' && !allDay);
+const hasTime = ({ kind, allDay }: ItemForm['draft']): boolean => kind === 'event' && !allDay;
 
 function TimeFields({ form, timeRef, placeRef }: TimeProps) {
   const { t } = useTranslation();

@@ -27,7 +27,7 @@ export function parseClock(text: string): number | null {
   return hour * HOUR_MINUTES + minute;
 }
 
-export const inputTime = (minutes: number): string =>
+const inputTime = (minutes: number): string =>
   `${pad(Math.floor(minutes / HOUR_MINUTES))}:${pad(minutes % HOUR_MINUTES)}`;
 
 export const clockAt = (day: number, minutes: number, date: ClockText): number =>

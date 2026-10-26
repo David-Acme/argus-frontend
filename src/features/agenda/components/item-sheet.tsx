@@ -1,34 +1,32 @@
 import { useRef } from 'react';
 import { View } from 'react-native';
 import type { TextInput } from 'react-native';
-import type { AgendaKind, TranslationKey } from '@/core/types';
+import type { TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Choice } from '@/shared/ui/choice';
 import { FilterChip } from '@/shared/ui/chip';
 import { Sheet } from '@/shared/ui/sheet';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
-import type { EditScope } from '@/features/agenda/model/item-draft';
+import type { EditScope, ItemKind } from '@/features/agenda/model/item-draft';
 import { ItemFields } from '@/features/agenda/components/item-fields';
 import { KIND_LABEL } from '@/features/agenda/constants/agenda.constant';
 import type { ProjectOption } from '@/features/agenda/model/agenda-view';
 
 export type ItemSheetProps = {
   form: ItemForm;
-  kinds: readonly AgendaKind[];
+  kinds: readonly ItemKind[];
   projects: readonly ProjectOption[];
   now: number;
 };
 
 type KindsProps = Pick<ItemSheetProps, 'form' | 'kinds' | 'projects'>;
 
-const NEW_TITLE: Record<AgendaKind, TranslationKey> = {
-  reminder: 'screens.agenda.sheet.new-reminder',
+const NEW_TITLE: Record<ItemKind, TranslationKey> = {
   event: 'screens.agenda.sheet.new-event',
   task: 'screens.agenda.sheet.new-task',
 };
 
-const EDIT_TITLE: Record<AgendaKind, TranslationKey> = {
-  reminder: 'screens.agenda.sheet.edit-reminder',
+const EDIT_TITLE: Record<ItemKind, TranslationKey> = {
   event: 'screens.agenda.sheet.edit-event',
   task: 'screens.agenda.sheet.edit-event',
 };

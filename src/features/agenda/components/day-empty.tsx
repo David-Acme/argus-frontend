@@ -8,9 +8,10 @@ import { PressableSurface } from '@/shared/ui/pressable';
 import { Empty } from '@/shared/ui/resource-view';
 import { useArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
 import type { ArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
+import type { ItemKind } from '@/features/agenda/model/item-draft';
 import { LIST_IDEAS } from '@/features/agenda/constants/agenda.constant';
 
-export type DayEmptyProps = { today: boolean; onCreate?: () => void };
+export type DayEmptyProps = { today: boolean; create?: { kind: ItemKind; onPress: () => void } };
 
 export type IdeasProps = { ideas: readonly TranslationKey[] };
 
@@ -44,23 +45,30 @@ export function Ideas({ ideas }: IdeasProps) {
   );
 }
 
-export function DayEmpty({ today, onCreate }: DayEmptyProps) {
+export function DayEmpty({ today, create }: DayEmptyProps) {
   const { t } = useTranslation();
   const title = t(today ? 'screens.agenda.empty.today-title' : 'screens.agenda.empty.day-title');
   return (
     <Stack gap={4}>
-      {onCreate ? (
+      {create ? (
         <Empty
           centred
           icon="cal"
           message={title}
           detail={t('screens.agenda.empty.body')}
-          action={{ label: t('screens.agenda.empty.action'), onPress: onCreate }}
+          action={{
+            label: t(
+              create.kind === 'event'
+                ? 'screens.agenda.sheet.new-event'
+                : 'screens.agenda.sheet.new-task'
+            ),
+            onPress: create.onPress,
+          }}
         />
       ) : (
         <Notice icon="cal" title={title} body={t('screens.agenda.empty.read-only')} />
       )}
-      {onCreate ? <Ideas ideas={LIST_IDEAS} /> : null}
+      <Ideas ideas={LIST_IDEAS} />
     </Stack>
   );
 }

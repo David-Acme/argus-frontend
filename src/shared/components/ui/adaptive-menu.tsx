@@ -7,7 +7,6 @@ import { useOverlayBack } from '@/shared/components/ui/overlay-back';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/shared/components/ui/sheet';
 import { IS_NATIVE } from '@/shared/constants';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
-import { shouldUseAdaptiveMenuSheet } from '@/shared/libs/adaptive-menu-layout';
 import { cn } from '@/shared/libs/utils';
 
 type AdaptiveMenuProps<T extends string = string> = {
@@ -41,7 +40,7 @@ export function AdaptiveMenu<T extends string = string>({
   open: controlledOpen,
   onOpenChange,
 }: AdaptiveMenuProps<T>) {
-  const { isCompact, isExpanded, isShort } = useWindowClass();
+  const { isCompact, isShort } = useWindowClass();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const chosen = useRef<{ value: T } | null>(null);
@@ -56,7 +55,7 @@ export function AdaptiveMenu<T extends string = string>({
     onSelect(value as T);
   }
 
-  if (shouldUseAdaptiveMenuSheet({ isCompact, isExpanded, isNative: IS_NATIVE, isShort })) {
+  if (isCompact || (IS_NATIVE && isShort)) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>

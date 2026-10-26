@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import type { IReminderCacheRow } from '@/core/interfaces';
 import type { AgendaItem, DashboardProjectCard } from '@/core/types';
 import { at, date, entry, items, NOW, reminder } from '../../home/agenda-fixtures';
 import '../../../shared/ui/translation-stub';
@@ -10,11 +9,10 @@ type Calls = {
   pushed: unknown[];
   created: string[];
   saved: string[];
-  toggled: string[];
   asked: string[];
 };
 
-const calls: Calls = { pushed: [], created: [], saved: [], toggled: [], asked: [] };
+const calls: Calls = { pushed: [], created: [], saved: [], asked: [] };
 
 const state: {
   items: AgendaItem[];
@@ -48,6 +46,19 @@ const busyDay = (): AgendaItem[] =>
         ownerId: '1',
       }),
       entry('event:cena', at(21), { title: 'Cena con Luis', endsAt: at(22), ownerId: '2' }),
+      entry('event:daily', at(8), {
+        title: 'Daily',
+        endsAt: at(8, 30),
+        ownerId: '1',
+        series: { rule: 'FREQ=DAILY', startsAt: at(8), endsAt: null },
+        id: 'event:daily@2026-10-21T13:00:00.000Z',
+      }),
+      entry('task:cajas', at(0), {
+        title: 'Comprar cajas',
+        source: 'task',
+        isAllDay: true,
+        projectId: '7',
+      }),
       entry('event:gasfitero', at(9, 0, 1), {
         title: 'Gasfitero',
         endsAt: at(10, 0, 1),
@@ -55,21 +66,6 @@ const busyDay = (): AgendaItem[] =>
       }),
     ]
   );
-
-const reminders = {
-  rows: [] as IReminderCacheRow[],
-  complete: (row: IReminderCacheRow) => {
-    calls.toggled.push(row.title);
-    return Promise.resolve();
-  },
-  snooze: () => Promise.resolve(),
-  snoozeOptionsOf: () => [
-    { choice: '60', at: NOW, folds: false },
-    { choice: 'tomorrow', at: NOW, folds: false },
-  ],
-  skipOccurrence: () => Promise.resolve(),
-  remove: () => Promise.resolve(),
-};
 
 mock.module('@/core/services/database.service', () => ({
   DatabaseService: class {
@@ -126,7 +122,6 @@ mock.module('@/features/agenda/hooks/use-agenda-plan', () => ({
     viewer: '1',
     owners: new Map([['2', 'Luis Paz']]),
     projects: state.projects,
-    reminders,
   }),
 }));
 
@@ -187,7 +182,6 @@ beforeEach(() => {
   calls.pushed = [];
   calls.created = [];
   calls.saved = [];
-  calls.toggled = [];
   calls.asked = [];
   state.items = busyDay();
   state.caps = new Set(['reminders.read', 'reminders.write', 'agenda.read', 'messages.relay']);
@@ -210,10 +204,16 @@ describe('Agenda on a phone', () => {
     expect(exported.every((component) => typeof component === 'function')).toBe(true);
   });
 
-  test('the check completes a reminder and a line opens its detail sheet', async () => {
+  test('a task has its check, a reminder is read-only and asks Argus, an event opens its detail', async () => {
     render(<AgendaScreen />);
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar «Pagar la luz» como hecho' }));
-    expect(calls.toggled).toEqual(['Pagar la luz']);
+    expect(
+      screen.getByRole('checkbox', { name: 'Marcar «Comprar cajas» como hecho' })
+    ).toBeDefined();
+    expect(screen.queryByRole('checkbox', { name: 'Marcar «Pagar la luz» como hecho' })).toBeNull();
+    const asked = line('Pagar la luz');
+    if (!asked) throw new Error('no reminder');
+    fireEvent.click(asked);
+    expect(calls.asked).toEqual(['Cuéntame del recordatorio «Pagar la luz»']);
     const row = line('Llamar al técnico');
     if (!row) throw new Error('no line');
     fireEvent.click(row);
@@ -223,28 +223,27 @@ describe('Agenda on a phone', () => {
     expect(within(sheet).getByRole('button', { name: 'Editar' })).toBeDefined();
   });
 
-  test('the + opens one Nuevo sheet that refuses an empty title and saves a reminder', async () => {
+  test('the + opens one Nuevo sheet, an event by default, that refuses an empty name and saves', async () => {
     render(<AgendaScreen />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nuevo recordatorio, evento o tarea' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento o tarea' }));
     await flush();
-    const sheet = screen.getByRole('dialog', { name: 'Nuevo recordatorio' });
+    const sheet = screen.getByRole('dialog', { name: 'Nuevo evento' });
     fireEvent.click(within(sheet).getByRole('button', { name: 'Guardar' }));
     await flush();
-    expect(within(sheet).getByText('Escribe qué quieres recordar.')).toBeDefined();
-    fireEvent.change(within(sheet).getByRole('textbox', { name: 'Qué quieres recordar' }), {
-      target: { value: 'Pagar el agua' },
+    expect(within(sheet).getByText('Escribe un nombre.')).toBeDefined();
+    fireEvent.change(within(sheet).getByRole('textbox', { name: 'Nombre del evento' }), {
+      target: { value: 'Cita' },
     });
     fireEvent.click(within(sheet).getByRole('button', { name: 'Guardar' }));
     await flush();
-    expect(calls.created).toEqual(['reminder:Pagar el agua']);
+    expect(calls.created).toEqual(['event:Cita']);
   });
 
-  test('the type chip turns the sheet into an event or a task', async () => {
+  test('the type chip is Evento or Tarea, never Recordatorio: Argus creates reminders', async () => {
     render(<AgendaScreen />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nuevo recordatorio, evento o tarea' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento o tarea' }));
     await flush();
-    fireEvent.click(screen.getByRole('tab', { name: 'Evento' }));
-    expect(screen.getByRole('dialog', { name: 'Nuevo evento' })).toBeDefined();
+    expect(screen.queryByRole('tab', { name: 'Recordatorio' })).toBeNull();
     expect(screen.getByRole('switch', { name: 'Todo el día' })).toBeDefined();
     fireEvent.click(screen.getByRole('tab', { name: 'Tarea' }));
     expect(screen.getByRole('dialog', { name: 'Nueva tarea' })).toBeDefined();
@@ -259,22 +258,22 @@ describe('Agenda on a phone', () => {
 
   test('editing a series asks «Solo esta» or «Toda la serie»', async () => {
     render(<AgendaScreen />);
-    const row = line('Sacar la basura');
+    const row = line('Daily');
     if (!row) throw new Error('no line');
     fireEvent.click(row);
     await flush();
     fireEvent.click(
-      within(screen.getByRole('dialog', { name: 'Recordatorio' })).getByRole('button', {
+      within(screen.getByRole('dialog', { name: 'Evento' })).getByRole('button', {
         name: 'Editar',
       })
     );
     await flush();
-    const sheet = screen.getByRole('dialog', { name: 'Editar recordatorio' });
+    const sheet = screen.getByRole('dialog', { name: 'Editar evento' });
     expect(within(sheet).getAllByText('Solo esta').length).toBeGreaterThan(0);
     expect(within(sheet).getAllByText('Toda la serie').length).toBeGreaterThan(0);
     fireEvent.click(within(sheet).getByRole('button', { name: 'Guardar' }));
     await flush();
-    expect(calls.saved).toEqual(['one:Sacar la basura']);
+    expect(calls.saved).toEqual(['one:Daily']);
   });
 
   test('the month opens from the title and Día shows the hours', () => {
@@ -285,11 +284,11 @@ describe('Agenda on a phone', () => {
     expect(screen.getByText('07:00')).toBeDefined();
   });
 
-  test('with no data the day says so, offers a reminder and suggestions, and the next days are free', () => {
+  test('with no data the day says so, offers an event and asks Argus for reminders, and the next days are free', () => {
     state.items = [];
     render(<AgendaScreen />);
     expect(screen.getByText('Nada para hoy')).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Nuevo recordatorio' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Nuevo evento' })).toBeDefined();
     fireEvent.click(
       screen.getByRole('button', { name: 'Pedirle a Argus: Recuérdame pagar la luz el lunes' })
     );
@@ -301,7 +300,7 @@ describe('Agenda on a phone', () => {
     state.caps = new Set(['agenda.read', 'reminders.read']);
     state.writes = false;
     render(<AgendaScreen />);
-    expect(screen.queryByRole('button', { name: 'Nuevo recordatorio, evento o tarea' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Nuevo evento o tarea' })).toBeNull();
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });

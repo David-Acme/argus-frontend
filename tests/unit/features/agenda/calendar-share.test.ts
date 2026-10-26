@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { ICalendarEventShareCacheRow, IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import type { CalendarEntry } from '@/core/types';
-import { availableCalendarEntryActions, canShareCalendarEntry } from '@/features/agenda/model/calendar-entry-actions';
+import { canShareCalendarEntry } from '@/features/agenda/model/calendar-entry-actions';
 import { calendarShareLens } from '@/features/agenda/model/calendar-share-optimistic';
 
 const event = (ownerId: string): CalendarEntry => ({
@@ -25,7 +25,13 @@ const person: IPeopleDirectoryCacheRow = {
   updatedAt: 0,
 };
 
-const share: ICalendarEventShareCacheRow = { id: 'x1', calendarEventId: '9', userId: '2', name: 'Luis Paz', access: 'view' };
+const share: ICalendarEventShareCacheRow = {
+  id: 'x1',
+  calendarEventId: '9',
+  userId: '2',
+  name: 'Luis Paz',
+  access: 'view',
+};
 
 describe('sharing an agenda event', () => {
   test('only the owner of an event, with the household directory, can share it', () => {
@@ -39,15 +45,6 @@ describe('sharing an agenda event', () => {
     const viewer = { userId: '1', canManageShares: true };
     expect(canShareCalendarEntry({ ...event('1'), source: 'task' }, viewer)).toBe(false);
     expect(canShareCalendarEntry({ ...event('1'), source: 'reminder' }, viewer)).toBe(false);
-  });
-
-  test('share is offered between edit and delete, and only when allowed', () => {
-    expect(availableCalendarEntryActions(event('1'), { canEdit: true, canDelete: true, canShare: true })).toEqual([
-      'edit',
-      'share',
-      'delete',
-    ]);
-    expect(availableCalendarEntryActions(event('1'), { canEdit: true, canDelete: true })).toEqual(['edit', 'delete']);
   });
 });
 
@@ -67,7 +64,9 @@ describe('calendar event share lens', () => {
       name: 'Luis Paz',
       access: 'edit',
     });
-    expect(lens.create?.('pending-2', { calendarEventId: 10, userId: 2, access: 'view' })).toBeNull();
+    expect(
+      lens.create?.('pending-2', { calendarEventId: 10, userId: 2, access: 'view' })
+    ).toBeNull();
     expect(lens.create?.('pending-3', { calendarEventId: 9 })).toBeNull();
   });
 });

@@ -57,7 +57,7 @@ export function AgendaBody({ state }: AgendaBodyProps) {
   const empty = (
     <DayEmpty
       today={date.sameDay(new Date(state.selected), new Date(state.plan.now))}
-      onCreate={first ? () => state.create(first) : undefined}
+      create={first ? { kind: first, onPress: () => state.create(first) } : undefined}
     />
   );
   if (state.view === 'day') {

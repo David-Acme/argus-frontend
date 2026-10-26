@@ -288,73 +288,11 @@
       "count": 1
     }
   },
-  "src/features/agenda/components/agenda-entry-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    }
-  },
   "src/features/agenda/components/day-picker-field.tsx": {
     "argus/ds-owns-primitives": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/entry-actions-menu.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/reminder-dialog.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/reminder-row.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/reminders-section.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/hooks/use-reminders.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/model/reminder-rows.ts": {
-    "max-params": {
       "count": 1
     }
   },

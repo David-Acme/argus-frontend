@@ -24,7 +24,6 @@ src/core/database/tables/project-task.table.ts
 src/core/database/tables/reminder.table.ts
 src/core/database/tables/sanitizers.ts
 src/core/i18n/locales/en/common/index.ts
-src/core/i18n/locales/en/screens/agenda/index.ts
 src/core/i18n/locales/en/screens/approve/index.ts
 src/core/i18n/locales/en/screens/conversations/index.ts
 src/core/i18n/locales/en/screens/face/index.ts
@@ -45,7 +44,6 @@ src/core/i18n/locales/en/screens/users/index.ts
 src/core/i18n/locales/en/screens/watch/index.ts
 src/core/i18n/locales/en/screens/welcome/index.ts
 src/core/i18n/locales/es/common/index.ts
-src/core/i18n/locales/es/screens/agenda/index.ts
 src/core/i18n/locales/es/screens/approve/index.ts
 src/core/i18n/locales/es/screens/conversations/index.ts
 src/core/i18n/locales/es/screens/face/index.ts
@@ -175,18 +173,13 @@ src/core/types/settings.type.ts
 src/core/types/visitor.type.ts
 src/core/types/watch.type.ts
 src/core/types/watchdog.type.ts
-src/features/access/model/inactive-role.ts
 src/features/access/screens/inactive-role-screen.tsx
 src/features/activity/components/activity-filters.tsx
 src/features/activity/model/activity-filter.ts
 src/features/activity/model/activity-text.ts
 src/features/activity/screens/activity-screen.tsx
 src/features/activity/services/activity.service.ts
-src/features/agenda/components/agenda-entry-card.tsx
 src/features/agenda/components/calendar-event-share-dialog.tsx
-src/features/agenda/model/calendar-entry-actions.ts
-src/features/agenda/model/calendar-optimistic.ts
-src/features/agenda/model/entry-state.ts
 src/features/auth/components/entry-gate.tsx
 src/features/auth/components/face-alternatives.tsx
 src/features/auth/components/face-capture-sheet.tsx
@@ -362,15 +355,6 @@ src/features/qr/components/qr-manual-entry.tsx
 src/features/qr/components/qr-scan-sheet.tsx
 src/features/qr/model/qr-layout.ts
 src/features/qr/screens/qr-scan-screen.tsx
-src/features/agenda/components/reminder-dialog.tsx
-src/features/agenda/components/reminder-row.tsx
-src/features/agenda/components/reminders-section.tsx
-src/features/agenda/hooks/use-reminders.ts
-src/features/agenda/model/reminder-form.ts
-src/features/agenda/model/reminder-optimistic.ts
-src/features/agenda/model/reminder-repeat.ts
-src/features/agenda/model/reminder-rows.ts
-src/features/agenda/model/reminder-snooze.ts
 src/features/safety/components/disarm-pin-dialog.tsx
 src/features/safety/components/panic-button.tsx
 src/features/safety/components/pin-setup-dialog.tsx
@@ -575,8 +559,6 @@ tests/e2e/people.e2e.ts
 tests/e2e/presence.e2e.ts
 tests/e2e/project-members.e2e.ts
 tests/e2e/raw-keys.e2e.ts
-tests/e2e/recurring-reminder.e2e.ts
-tests/e2e/reminder-snooze.e2e.ts
 tests/e2e/response.e2e.ts
 tests/e2e/retest-r3.e2e.ts
 tests/e2e/retest-r4.e2e.ts
@@ -660,9 +642,6 @@ tests/unit/core/stores/toast-store.test.ts
 tests/unit/e2e/chromium-profile.test.ts
 tests/unit/features/access/inactive-role.test.ts
 tests/unit/features/activity/activity.test.ts
-tests/unit/features/agenda/calendar-occurrence.test.ts
-tests/unit/features/agenda/calendar-share.test.ts
-tests/unit/features/agenda/entry-permissions.test.ts
 tests/unit/features/auth/face-alternatives.test.ts
 tests/unit/features/auth/face-error.test.ts
 tests/unit/features/auth/held-route.test.ts
@@ -703,7 +682,6 @@ tests/unit/features/projects/project-access.test.ts
 tests/unit/features/projects/project-member-optimistic.test.ts
 tests/unit/features/proximity/proximity-people.test.ts
 tests/unit/features/proximity/proximity.test.ts
-tests/unit/features/agenda/reminders.test.ts
 tests/unit/features/safety/safety-model.test.ts
 tests/unit/features/safety/services/safety-phrase.test.ts
 tests/unit/features/safety/services/safety-service.test.ts

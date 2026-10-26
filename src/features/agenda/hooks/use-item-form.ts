@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AgendaItem, AgendaKind } from '@/core/types';
+import type { AgendaItem } from '@/core/types';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import {
@@ -10,10 +10,15 @@ import {
   newDraft,
   scopesOf,
 } from '@/features/agenda/model/item-draft';
-import type { DraftProblem, EditScope, ItemDraft } from '@/features/agenda/model/item-draft';
+import type {
+  DraftProblem,
+  EditScope,
+  ItemDraft,
+  ItemKind,
+} from '@/features/agenda/model/item-draft';
 import { createItem, saveItem } from '@/features/agenda/services/item-commands';
 
-export type NewInput = { kind: AgendaKind; day: number; project: string };
+export type NewInput = { kind: ItemKind; day: number; project: string };
 
 export type ItemForm = {
   open: boolean;
@@ -37,7 +42,7 @@ export function useItemForm(): ItemForm {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AgendaItem | null>(null);
   const [start, setStart] = useState<ItemDraft>(() =>
-    newDraft({ kind: 'reminder', day: Date.now(), at: Date.now(), project: '' }, date)
+    newDraft({ kind: 'event', day: Date.now(), at: Date.now(), project: '' }, date)
   );
   const [draft, setDraft] = useState(start);
   const [scope, setScope] = useState<EditScope>('one');

@@ -22,7 +22,6 @@ import { safety } from './safety';
 import { visitors } from './visitors';
 import { modules } from './modules';
 import { access } from './access';
-import { reminders } from './reminders';
 import { activity } from './activity';
 import { notification } from './notification';
 import { watch } from './watch';
@@ -56,7 +55,6 @@ export const screens = {
   visitors,
   modules,
   access,
-  reminders,
   activity,
   notification,
   watch,

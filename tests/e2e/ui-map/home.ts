@@ -30,7 +30,7 @@ import {
   user,
 } from '../support/ui-map/data';
 import type { Row, ScreenSpec } from '../support/ui-map/scenario';
-import { button, say, text } from '../support/ui-map/text';
+import { button, say } from '../support/ui-map/text';
 
 const POPULATED: Row[] = [
   ...PRODUCTIVITY,
@@ -402,73 +402,25 @@ export const HOME: ScreenSpec[] = [
         notes: 'pointer over a rail tab (rail only from 640 px)',
       },
       {
-        state: 'reminders-done-open',
+        state: 'reminders-read-only',
         rows: [
           ...POPULATED,
           reminder(960, 'Sacar la basura', NOW - HOUR * 2),
           reminder(961, 'Tomar la pastilla', NOW + HOUR, { recurrenceRule: 'FREQ=DAILY' }),
         ],
-        act: async (scene) => {
-          await text(scene, 'screens.reminders.show-done').first().click();
-          await sleep(500);
-        },
+        notes: 'Argus manages reminders: shown read-only, with no check and no menu',
       },
       {
-        state: 'reminder-snooze-menu',
-        rows: [...POPULATED, reminder(960, 'Sacar la basura', NOW - HOUR * 2)],
-        act: async (scene) => {
-          await button(scene, 'screens.reminders.snooze-label', { title: 'Sacar la basura' })
-            .first()
-            .click();
-          await sleep(700);
-        },
-      },
-      {
-        state: 'reminder-options-menu',
-        rows: [
-          ...POPULATED,
-          reminder(961, 'Tomar la pastilla', NOW + HOUR, { recurrenceRule: 'FREQ=DAILY' }),
-        ],
-        act: async (scene) => {
-          await button(scene, 'screens.reminders.options').first().click();
-          await sleep(700);
-        },
-      },
-      {
-        state: 'reminder-dialog',
-        rows: [
-          ...POPULATED,
-          reminder(961, 'Tomar la pastilla', NOW + HOUR, {
-            recurrenceRule: 'FREQ=DAILY',
-            description: 'Con el desayuno',
-          }),
-        ],
-        act: async (scene) => {
-          await scene.page
-            .getByRole('button', { name: /^Tomar la pastilla\./ })
-            .first()
-            .click();
-          await sleep(900);
-        },
-      },
-      {
-        state: 'reminder-dialog-errors',
+        state: 'reminder-asks-argus',
         rows: [...POPULATED, reminder(961, 'Tomar la pastilla', NOW + HOUR)],
         act: async (scene) => {
           await scene.page
-            .getByRole('button', { name: /^Tomar la pastilla\./ })
+            .getByRole('button', { name: /^Tomar la pastilla,/ })
             .first()
             .click();
           await sleep(900);
-          await scene.page
-            .getByRole('textbox', { name: say(scene, 'screens.reminders.title-field') })
-            .fill('');
-          await scene.page
-            .getByRole('textbox', { name: say(scene, 'screens.reminders.time') })
-            .fill('9:3');
-          await button(scene, 'common.save').last().click();
-          await sleep(700);
         },
+        notes: 'a tap on a reminder opens the Argus thread asking about it',
       },
     ],
   },

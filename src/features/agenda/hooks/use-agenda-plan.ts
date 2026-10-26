@@ -23,7 +23,6 @@ export type AgendaPlan = {
   viewer: string;
   owners: ReadonlyMap<string, string>;
   projects: readonly DashboardProjectCard[];
-  reminders: ReturnType<typeof useReminders>;
 };
 
 const MINUTE_MS = 60_000;
@@ -83,6 +82,5 @@ export function useAgendaPlan(selected: number): AgendaPlan {
     viewer,
     owners: ownersOf(people),
     projects: readsAgenda ? projects : NONE,
-    reminders,
   };
 }

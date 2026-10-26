@@ -1,19 +1,7 @@
 import type { IReminderCacheRow, IReminderUpdate } from '@/core/interfaces';
-import type { RecurrenceException } from '@/core/types';
 import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
-import { sameExceptions } from '@/features/agenda/model/reminder-repeat';
 
-type ReminderOptimisticValues = IReminderUpdate & { recurrenceExceptions?: readonly RecurrenceException[] };
-
-const exceptionsOf = (
-  row: IReminderCacheRow,
-  values: Partial<ReminderOptimisticValues>
-): IReminderCacheRow['recurrenceExceptions'] =>
-  values.recurrenceExceptions === undefined || sameExceptions(values.recurrenceExceptions, row.recurrenceExceptions)
-    ? row.recurrenceExceptions
-    : values.recurrenceExceptions;
-
-const reminderLens = defineLens<IReminderCacheRow, ReminderOptimisticValues>({
+const reminderLens = defineLens<IReminderCacheRow, IReminderUpdate>({
   table: 'reminder',
   recordIdOf: (row) => row.id,
   patch: (row, values) => ({
@@ -24,21 +12,10 @@ const reminderLens = defineLens<IReminderCacheRow, ReminderOptimisticValues>({
     isCompleted: values.isCompleted ?? row.isCompleted,
     completedAt:
       values.isCompleted === undefined ? row.completedAt : values.isCompleted ? Date.now() : null,
-    recurrenceRule: values.recurrenceRule === undefined ? row.recurrenceRule : values.recurrenceRule || null,
-    recurrenceExceptions: exceptionsOf(row, values),
+    recurrenceRule:
+      values.recurrenceRule === undefined ? row.recurrenceRule : values.recurrenceRule || null,
   }),
-  create: (recordId, values) =>
-    values.scheduledAt === undefined
-      ? null
-      : {
-          id: recordId,
-          title: values.title ?? '',
-          description: values.description ?? '',
-          scheduledAt: values.scheduledAt * 1000,
-          isCompleted: false,
-          completedAt: null,
-          recurrenceRule: values.recurrenceRule || null,
-        },
+  create: () => null,
 });
 
 export const REMINDER_LENSES: readonly OptimisticLens<IReminderCacheRow>[] = [reminderLens];

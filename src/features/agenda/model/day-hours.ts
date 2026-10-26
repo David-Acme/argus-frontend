@@ -23,15 +23,15 @@ type Clock = Pick<DateFormatter, 'hourOf' | 'minuteOf'>;
 
 type Placed = { item: AgendaItem; start: number; end: number };
 
-export const DAY_START_HOUR = 7;
+const DAY_START_HOUR = 7;
 
-export const DAY_END_HOUR = 21;
+const DAY_END_HOUR = 21;
 
 const HOUR_MINUTES = 60;
 
 const DAY_MINUTES = 24 * HOUR_MINUTES;
 
-export const MIN_SPAN_MINUTES = 30;
+const MIN_SPAN_MINUTES = 30;
 
 const minuteOfDay = (at: number, clock: Clock): number =>
   clock.hourOf(new Date(at)) * HOUR_MINUTES + clock.minuteOf(new Date(at));

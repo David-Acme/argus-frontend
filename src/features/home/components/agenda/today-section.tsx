@@ -7,7 +7,6 @@ import { useAgenda } from '@/features/home/hooks/use-agenda';
 import { dayList, dayTimeline } from '@/features/agenda';
 import { AgendaRow } from './agenda-row';
 import { FreeRow } from './free-row';
-import { ReminderEditor } from './reminder-editor';
 
 export function TodaySection() {
   const { t } = useTranslation();
@@ -27,34 +26,31 @@ export function TodaySection() {
       }
     : undefined;
   return (
-    <>
-      <Section title={t('screens.home.agenda-sections.today')} action={action}>
-        {timeline.length === 0 ? (
-          <FreeRow
-            title={t('screens.home.agenda-sections.free-day')}
-            meta={t('screens.home.agenda-sections.free-day-meta')}
-          />
-        ) : (
-          timeline.map((entry) =>
-            entry.type === 'item' ? (
-              <AgendaRow
-                key={entry.item.id}
-                item={entry.item}
-                place="day"
-                wording={wording}
-                actions={actions}
-              />
-            ) : (
-              <FreeRow
-                key={entry.id}
-                title={t('screens.home.agenda-sections.free')}
-                meta={date.formatTimeRange(new Date(entry.from), new Date(entry.to))}
-              />
-            )
+    <Section title={t('screens.home.agenda-sections.today')} action={action}>
+      {timeline.length === 0 ? (
+        <FreeRow
+          title={t('screens.home.agenda-sections.free-day')}
+          meta={t('screens.home.agenda-sections.free-day-meta')}
+        />
+      ) : (
+        timeline.map((entry) =>
+          entry.type === 'item' ? (
+            <AgendaRow
+              key={entry.item.id}
+              item={entry.item}
+              place="day"
+              wording={wording}
+              actions={actions}
+            />
+          ) : (
+            <FreeRow
+              key={entry.id}
+              title={t('screens.home.agenda-sections.free')}
+              meta={date.formatTimeRange(new Date(entry.from), new Date(entry.to))}
+            />
           )
-        )}
-      </Section>
-      <ReminderEditor actions={actions} />
-    </>
+        )
+      )}
+    </Section>
   );
 }

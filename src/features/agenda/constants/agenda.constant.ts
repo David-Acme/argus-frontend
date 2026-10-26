@@ -1,5 +1,8 @@
 import type { TranslationKey } from '@/core/types';
 import type { Category } from '@/features/agenda/model/agenda-lines';
+import type { RepeatChoice } from '@/features/agenda/model/item-draft';
+
+export const ARGUS_REMINDERS_SHOWN = true;
 
 export const LIST_DAYS = 7;
 
@@ -26,4 +29,12 @@ export const LIST_IDEAS: readonly TranslationKey[] = [
 export const ASIDE_IDEAS: readonly TranslationKey[] = [
   ...LIST_IDEAS,
   'screens.agenda.empty.idea-project',
+];
+
+export const REPEAT_CHOICES: readonly RepeatChoice[] = [
+  'none',
+  'DAILY',
+  'WEEKLY',
+  'MONTHLY',
+  'YEARLY',
 ];

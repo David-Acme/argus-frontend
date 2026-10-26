@@ -1,19 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import type { AgendaItem, AgendaKind } from '@/core/types';
-import { CAPABILITY, NEW_ITEM_PARAM } from '@/shared/constants';
+import type { AgendaItem } from '@/core/types';
+import { NEW_ITEM_PARAM } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { peopleAccessOf } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 import { useAgendaPlan } from '@/features/agenda/hooks/use-agenda-plan';
+import { useArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
 import type { AgendaPlan } from '@/features/agenda/hooks/use-agenda-plan';
 import { useItemActions } from '@/features/agenda/hooks/use-item-actions';
 import { useItemForm } from '@/features/agenda/hooks/use-item-form';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
 import { dayGroups, itemsOf, monthOf } from '@/features/agenda/model/agenda-days';
-import { shownItems, toggleShown } from '@/features/agenda/model/agenda-lines';
+import { reminderQuestion, shownItems, toggleShown } from '@/features/agenda/model/agenda-lines';
 import type { Category } from '@/features/agenda/model/agenda-lines';
 import {
   calendarEntryEditHref,
@@ -22,6 +23,7 @@ import {
 } from '@/features/agenda/model/calendar-entry-actions';
 import { ALL_SHOWN, LIST_DAYS } from '@/features/agenda/constants/agenda.constant';
 import type { AgendaView, DetailHandlers, ListContext } from '@/features/agenda/model/agenda-view';
+import type { ItemKind } from '@/features/agenda/model/item-draft';
 
 type AgendaParams = { edit?: string; at?: string; new?: string };
 
@@ -43,16 +45,15 @@ const editTarget = (items: readonly AgendaItem[], recordId: string): AgendaItem 
 type DeepLinkInput = {
   params: AgendaParams;
   items: readonly AgendaItem[];
-  kinds: readonly AgendaKind[];
+  kinds: readonly ItemKind[];
   form: ItemForm;
-  create: (kind: AgendaKind) => void;
+  create: (kind: ItemKind) => void;
 };
 
 function useCreateKinds(plan: AgendaPlan) {
-  const { has, can } = useCapabilities();
+  const { can } = useCapabilities();
   const project = plan.projects[0]?.id ?? '';
-  const kinds: AgendaKind[] = [
-    ...(has(CAPABILITY.remindersWrite) ? (['reminder'] as const) : []),
+  const kinds: ItemKind[] = [
     ...(can('calendar_event', 'create') ? (['event'] as const) : []),
     ...(can('project_task', 'create') && project ? (['task'] as const) : []),
   ];
@@ -119,10 +120,11 @@ export function useAgendaScreen() {
   const [shown, setShown] = useState<ReadonlySet<Category>>(ALL_SHOWN);
   const [picked, setPicked] = useState<string | null>(null);
   const plan = useAgendaPlan(selected);
-  const actions = useItemActions(plan.reminders);
+  const actions = useItemActions();
+  const ask = useArgusDraft();
   const form = useItemForm();
   const { kinds, project } = useCreateKinds(plan);
-  const create = (kind: AgendaKind) => form.startNew({ kind, day: selected, project });
+  const create = (kind: ItemKind) => form.startNew({ kind, day: selected, project });
   useDeepLinks({ params, items: plan.items, kinds, form, create });
   const items = useItemHandlers(plan, form, setPicked);
   const visible = shownItems(plan.items, shown, plan.viewer);
@@ -139,7 +141,8 @@ export function useAgendaScreen() {
     t,
     actions,
     selected: chosen?.id ?? null,
-    onOpen: (item) => setPicked(item.id),
+    onOpen: (item) =>
+      item.kind === 'reminder' ? ask?.(reminderQuestion(item, t)) : setPicked(item.id),
   };
   return {
     ...items,

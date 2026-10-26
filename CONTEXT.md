@@ -5665,9 +5665,6 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p1/native` (Sheet, Presence, the spikes lab) over the four design-system shares: entry 7,430,083 → 7,522,390 B (+92,307) and `dist/` 8,749,566 → 8,841,873 B (+92,307). The branch measured +126,279 B over its own older base (about 91 kB Sheet and the Estela engine, about 12 kB the lab, section "Native spikes"); the merged export has no Skia or TrueSheet module. | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | The `fix(ui)` after the `p1/native` merge: Sheet's parts, dialog and phone sheet and the demo field name the 24 token-derived style objects the binding-following `style-object` counter found inline, which the web export keeps as named bindings: entry 7,522,390 → 7,523,403 B and `dist/` 8,841,873 → 8,842,886 B (+1,013 each). | 2026-10-21 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p1/ds-fixes`, the design-system review's items for this branch: entry 7,523,403 → 7,527,643 B (+4,240) and `dist/` 8,842,886 → 8,847,431 B (+4,545). The entry grows by Confirm's latch and form choice, `useScreenActive` (Aura and the live chip pause out of focus), `useAnnounce`, the shimmer split, MediaFrame's frame key and Aura's flat tint; the other 305 B of `dist/` are the `hit-target` and `focus-inset` CSS utilities. No package was added. | 2026-10-21 |
-| `scripts/lib/untested-baseline.txt` | `src/features/agenda/components/agenda-entry-card.tsx`, `src/features/agenda/components/reminder-*.tsx`, `src/features/agenda/components/reminders-section.tsx` | P4a moves files, it adds no debt: the reminders slice merges into agenda (agenda now reads it, which would close a slice cycle) and Inicio's legacy `AgendaItem` card is renamed `AgendaEntryCard` (its name now belongs to the agenda item type). The same files, untested before, under their new paths. | 2026-10-26 |
-| `scripts/lib/format-baseline.txt` | `src/features/agenda/components/agenda-entry-card.tsx`, `src/features/agenda/components/reminder-*.tsx`, `src/features/agenda/components/reminders-section.tsx`, `src/features/agenda/hooks/use-reminders.ts`, `src/features/agenda/model/reminder-*.ts`, `tests/unit/features/agenda/reminders.test.ts` | The same P4a move: the unformatted files of the reminders slice and the renamed card under their new paths, left as they were for the one formatting pass. | 2026-10-26 |
-| `eslint-suppressions.json` | `src/features/agenda/components/agenda-entry-card.tsx **`, `src/features/agenda/components/reminder-*.tsx **`, `src/features/agenda/components/reminders-section.tsx **`, `src/features/agenda/hooks/use-reminders.ts **`, `src/features/agenda/model/reminder-rows.ts **`, `src/features/agenda/components/agenda-entry-card.tsx argus/ds-owns-primitives`, `src/features/agenda/components/agenda-entry-card.tsx better-tailwindcss/no-restricted-classes`, `src/features/agenda/components/reminder-dialog.tsx @typescript-eslint/no-misused-promises`, `src/features/agenda/components/reminder-row.tsx argus/ds-owns-primitives`, `src/features/agenda/components/reminders-section.tsx argus/ds-owns-primitives` | The same P4a move: the suppressions follow their files to the new paths, with the same counts. | 2026-10-26 |
 
 | `scripts/lib/memo-exceptions.txt` | `src/shared/ui/presence/presence-canvas.tsx step`, `src/shared/ui/presence/presence.tsx plan`, `src/shared/ui/presence/presence.tsx look`, `src/shared/ui/presence/presence.tsx live` | Finding 6 of the design-system review: under reduced motion Presence recomputed its 254-step still frame and registered its frame worklet again on every render, because the look, the plan and the live values were new objects each time; they keep one identity per input now, the effect-dependency and library-identity cases of rule 31. | 2026-10-21 |
 
@@ -7292,20 +7289,27 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
   earlier start, to 21:00 or the last end, hour labels in the device clock
   (`formatHour`) in a fixed gutter that never wraps; overlapping events share
   the width in lanes, and a red line marks now.
-- **One Nuevo sheet** (`ItemSheet`) creates a reminder (the default), an event
-  or a task (the type is a chip) and edits reminders and events; a series asks
-  «Solo esta» / «Toda la serie». A task is edited in Proyectos. Times are typed
-  and shown in the device clock (`parseClock` reads 24 h, 12 h, «930», «9.30»),
-  which removes the 12 h / 24 h mismatch between grid and forms (A12). Reminders
-  are now created from the app too (`reminderService.create`, the reminder lens
-  shows them at once); Argus still creates them by voice.
-- **Short phones** (`isShortWindow`, under 700 dp): every phone sheet opens near
-  full height and scrolls (`sheetFit`), the week strip drops its grab handle and
-  the month uses small discs, so the list starts within the top 40 %.
+- **One Nuevo sheet** (`ItemSheet`) creates an event (the default) or a task
+  (the type is a chip) and edits events; a series asks «Solo esta» / «Toda la
+  serie». A task is edited in Proyectos. Times are typed and shown in the device
+  clock (`parseClock` reads 24 h, 12 h, «930», «9.30»), which removes the
+  12 h / 24 h mismatch between grid and forms (A12).
+- **Reminders are Argus's memory** (owner decision, 2026-10-26). The app never
+  creates, edits, completes, snoozes or deletes a reminder: there is no reminders
+  section and no reminder dialog, and the suggestion chips and Command's
+  «Pedirle a Argus que me recuerde…» open the Argus thread with a draft. Argus's
+  pending reminders show read-only in the Agenda list and in Inicio's Ahora (a
+  bell, no check, no menu), and a tap opens the thread asking about one. Whether
+  they show at all is one flag, `ARGUS_REMINDERS_SHOWN` in
+  `features/agenda/constants/agenda.constant.ts`, read by `agendaItems`; the
+  owner's answer is a one-line change.
+- **Short phones** (`height-layout.ts`): a form sheet opens near full height and
+  scrolls on a short or landscape window (`sheetDetentsOf`, `sheetScrolls`), the
+  week strip drops its grab handle and the month uses small discs, so the list
+  starts within the top 40 %.
 - **Slices.** The reminders slice merged into agenda: agenda reads
   `useReminders` and reminders read agenda's day picker, which would close a
   slice cycle. Inicio's agenda models moved here; the types they share live in
   `core/types/agenda.type.ts` and `FREE_SLOT_RULES` in the calendar constants.
-  `ReminderDialog`, `RemindersSection` and `EntryActionsMenu` stay exported while
-  Inicio and the inactive-role screen still use them; the event share dialog is
-  still the legacy one, opened from the detail's «Más acciones».
+  The event share dialog is still the legacy one, opened from the detail's
+  «Más acciones».

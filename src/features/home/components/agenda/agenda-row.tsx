@@ -28,8 +28,6 @@ type LeadProps = { item: AgendaItem; wording: WordingContext; actions: AgendaAct
 type TrailProps = { label: string; urgency: Urgency };
 
 const MENU_LABEL: Record<AgendaMenuAction, TranslationKey> = {
-  'snooze-hour': 'screens.home.agenda-sections.snooze-hour',
-  'snooze-tomorrow': 'screens.home.agenda-sections.snooze-tomorrow',
   edit: 'screens.home.agenda-sections.edit',
   delete: 'screens.home.agenda-sections.delete',
 };
@@ -38,6 +36,7 @@ const TRAIL_TONE: Record<Urgency, TextTone> = { overdue: 'alert', now: 'ok', lat
 
 function Lead({ item, wording, actions }: LeadProps) {
   if (item.kind === 'event') return <Avatar icon="cal" tone="event" size="mark" />;
+  if (item.kind === 'reminder') return <Avatar icon="bell" tone="accent" size="mark" />;
   const { t, now } = wording;
   const label = t(
     item.done ? 'screens.home.agenda-sections.reopen' : 'screens.home.agenda-sections.complete',
@@ -61,21 +60,12 @@ function trailOf(item: AgendaItem, place: MetaPlace, now: number) {
   return place === 'day' && isOngoing(item, now) ? timeToGo(item, now) : null;
 }
 
-function menuItems(
-  item: AgendaItem,
-  actions: AgendaActions,
-  { now, t }: WordingContext
-): MenuItem[] {
-  return actions.menuOf(item, now).map((action) => ({
+function menuItems(item: AgendaItem, actions: AgendaActions, { t }: WordingContext): MenuItem[] {
+  return actions.menuOf(item).map((action) => ({
     label: t(MENU_LABEL[action]),
-    icon: action.startsWith('snooze') ? 'clock' : undefined,
     destructive: action === 'delete',
     onPress: () => actions.run(item, action),
   }));
-}
-
-function opensOnPress(item: AgendaItem, actions: AgendaActions): boolean {
-  return item.origin.kind === 'entry' || actions.rightsOf(item).edit;
 }
 
 export function AgendaRow({ item, place, wording, actions }: AgendaRowProps) {
@@ -91,7 +81,7 @@ export function AgendaRow({ item, place, wording, actions }: AgendaRowProps) {
       struck={item.done}
       leading={<Lead item={item} wording={wording} actions={actions} />}
       trailing={trail ? <Trail label={timeToGoText(trail, t)} urgency={urgency} /> : undefined}
-      onPress={opensOnPress(item, actions) ? () => actions.open(item) : undefined}
+      onPress={() => actions.open(item)}
       testID={`agenda-row-${item.id}`}
     />
   );

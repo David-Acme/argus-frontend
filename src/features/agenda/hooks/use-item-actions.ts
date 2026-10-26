@@ -1,13 +1,11 @@
 import { useRef } from 'react';
 import { calendarEventService } from '@/core/services/calendar-event.service';
-import type { AgendaItem, AgendaMenuAction, AgendaRights } from '@/core/types';
-import { CAPABILITY } from '@/shared/constants';
+import type { AgendaItem, AgendaRights, CalendarEntry } from '@/core/types';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import { feedback } from '@/shared/theme';
-import type { useReminders } from '@/features/agenda/hooks/use-reminders';
-import { agendaMenu, agendaRights } from '@/features/agenda/model/agenda-actions';
+import { agendaRights } from '@/features/agenda/model/agenda-actions';
 import {
   calendarEntryRecordId,
   occurrenceOf,
@@ -15,31 +13,23 @@ import {
 } from '@/features/agenda/model/calendar-entry-actions';
 import { removeEntry, toggleTask } from '@/features/agenda/services/calendar-entry-commands';
 
-export type SnoozeAction = Extract<AgendaMenuAction, 'snooze-hour' | 'snooze-tomorrow'>;
-
 export type ItemActions = {
   rightsOf: (item: AgendaItem) => AgendaRights;
-  snoozesOf: (item: AgendaItem, now: number) => SnoozeAction[];
   canSkip: (item: AgendaItem) => boolean;
   toggle: (item: AgendaItem) => void;
-  snooze: (item: AgendaItem, action: SnoozeAction) => void;
   skip: (item: AgendaItem) => void;
   remove: (item: AgendaItem) => void;
 };
 
-type Reminders = ReturnType<typeof useReminders>;
+const entryOf = (item: AgendaItem): CalendarEntry | null =>
+  item.origin.kind === 'entry' ? item.origin.entry : null;
 
-const SNOOZE_CHOICE = { 'snooze-hour': '60', 'snooze-tomorrow': 'tomorrow' } as const;
-
-const isSnooze = (action: AgendaMenuAction): action is SnoozeAction => action.startsWith('snooze');
-
-export function useItemActions(reminders: Reminders): ItemActions {
+export function useItemActions(): ItemActions {
   const { t } = useTranslation();
-  const { has, can } = useCapabilities();
+  const { can } = useCapabilities();
   const flying = useRef(new Set<string>());
-  const writesReminders = has(CAPABILITY.remindersWrite);
 
-  const rightsOf = (item: AgendaItem) => agendaRights(item, { writesReminders, can });
+  const rightsOf = (item: AgendaItem) => agendaRights(item, can);
 
   const single = (item: AgendaItem, action: () => Promise<unknown>): boolean => {
     if (flying.current.has(item.id)) return false;
@@ -50,64 +40,39 @@ export function useItemActions(reminders: Reminders): ItemActions {
     return true;
   };
 
-  const snoozesOf = (item: AgendaItem, now: number): SnoozeAction[] => {
-    const { origin } = item;
-    if (origin.kind !== 'reminder') return [];
-    const snoozes = reminders.snoozeOptionsOf(origin.row, now).map((option) => option.choice);
-    return agendaMenu({ item, rights: rightsOf(item), snoozes }).filter(isSnooze);
-  };
-
   const canSkip = (item: AgendaItem): boolean => {
-    const { origin } = item;
-    if (!item.repeat || item.done || !rightsOf(item).edit) return false;
-    return origin.kind === 'reminder' || occurrenceOf(origin.entry) !== null;
+    const entry = entryOf(item);
+    if (!entry || !item.repeat || item.done || !rightsOf(item).edit) return false;
+    return occurrenceOf(entry) !== null;
   };
 
   const toggle = (item: AgendaItem) => {
-    const { origin } = item;
-    const started = single(item, () =>
-      origin.kind === 'reminder'
-        ? reminders.complete(origin.row, !origin.row.isCompleted)
-        : toggleTask({ entry: origin.entry, t })
-    );
+    const entry = entryOf(item);
+    if (!entry || !rightsOf(item).toggle) return;
+    const started = single(item, () => toggleTask({ entry, t }));
     if (started && !item.done) feedback('success');
   };
 
-  const snooze = (item: AgendaItem, action: SnoozeAction) => {
-    const { origin } = item;
-    if (origin.kind === 'reminder')
-      single(item, () => reminders.snooze(origin.row, SNOOZE_CHOICE[action]));
-  };
-
-  const skipEvent = (item: AgendaItem, occurrence: number) => {
-    const recordId = calendarEntryRecordId({ id: item.id });
-    const body = skipOccurrenceBody(occurrence);
-    return runOptimistic({
-      intents: [{ table: 'calendar_event', kind: 'update', recordId, values: body }],
-      call: () => calendarEventService.changeOccurrence(recordId, body),
-      undo: { title: t('screens.agenda.occurrence-skipped'), description: item.title },
-      errorTitle: t('screens.agenda.occurrence-failed'),
-    });
-  };
-
   const skip = (item: AgendaItem) => {
-    const { origin } = item;
-    if (origin.kind === 'reminder') {
-      single(item, () => reminders.skipOccurrence(origin.row));
-      return;
-    }
-    const occurrence = occurrenceOf(origin.entry);
-    if (occurrence !== null) single(item, () => skipEvent(item, occurrence));
-  };
-
-  const remove = (item: AgendaItem) => {
-    const { origin } = item;
+    const entry = entryOf(item);
+    const occurrence = entry ? occurrenceOf(entry) : null;
+    if (!entry || occurrence === null) return;
+    const recordId = calendarEntryRecordId(entry);
+    const body = skipOccurrenceBody(occurrence);
     single(item, () =>
-      origin.kind === 'reminder'
-        ? reminders.remove(origin.row)
-        : removeEntry({ entry: origin.entry, t })
+      runOptimistic({
+        intents: [{ table: 'calendar_event', kind: 'update', recordId, values: body }],
+        call: () => calendarEventService.changeOccurrence(recordId, body),
+        undo: { title: t('screens.agenda.occurrence-skipped'), description: item.title },
+        errorTitle: t('screens.agenda.occurrence-failed'),
+      })
     );
   };
 
-  return { rightsOf, snoozesOf, canSkip, toggle, snooze, skip, remove };
+  const remove = (item: AgendaItem) => {
+    const entry = entryOf(item);
+    if (entry) single(item, () => removeEntry({ entry, t }));
+  };
+
+  return { rightsOf, canSkip, toggle, skip, remove };
 }

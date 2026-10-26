@@ -131,3 +131,6 @@ export function dayWord(at: number, { now, date, t }: DayWordContext): string {
   if (relation === 'tomorrow') return t('screens.agenda.page.tomorrow');
   return date.formatWeekday(new Date(at)).toLocaleLowerCase();
 }
+
+export const reminderQuestion = (item: Pick<AgendaItem, 'title'>, t: TranslateFn): string =>
+  t('screens.agenda.line.ask-reminder', { title: item.title });

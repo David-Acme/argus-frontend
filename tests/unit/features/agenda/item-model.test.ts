@@ -10,7 +10,6 @@ import {
   eventUpdate,
   momentOf,
   newDraft,
-  reminderCreate,
   scopesOf,
   taskCreate,
 } from '@/features/agenda/model/item-draft';
@@ -91,8 +90,8 @@ describe('a typed time', () => {
 });
 
 describe('the Nuevo draft', () => {
-  test('a new reminder needs a title and a readable time', () => {
-    const draft = newDraft({ kind: 'reminder', day: NOW, at: at(16), project: '' }, date);
+  test('a new event needs a title and a readable time, and the default kind is an event', () => {
+    const draft = newDraft({ kind: 'event', day: NOW, at: at(16), project: '' }, date);
     expect(draft.time).toBe('16:00');
     expect(draftProblems(draft)).toEqual(['title']);
     expect(draftProblems({ ...draft, title: 'Pagar', time: 'luego' })).toEqual(['time']);
@@ -100,17 +99,16 @@ describe('the Nuevo draft', () => {
     expect(draftDirty({ ...draft, title: 'Pagar' }, draft)).toBe('Pagar');
   });
 
-  test('a reminder body carries seconds and its repeat rule', () => {
+  test('an event body carries seconds and its repeat rule', () => {
     const draft = {
-      ...newDraft({ kind: 'reminder' as const, day: NOW, at: at(16), project: '' }, date),
-      title: ' Pagar la luz ',
-      repeat: 'MONTHLY' as const,
+      ...newDraft({ kind: 'event' as const, day: NOW, at: at(16), project: '' }, date),
+      title: ' Clase de piano ',
+      repeat: 'WEEKLY' as const,
     };
-    expect(reminderCreate(draft, momentOf(draft, date))).toEqual({
-      title: 'Pagar la luz',
-      description: '',
-      scheduledAt: at(16) / 1000,
-      recurrenceRule: 'FREQ=MONTHLY',
+    expect(eventCreate(draft, momentOf(draft, date))).toMatchObject({
+      title: 'Clase de piano',
+      startsAt: at(16) / 1000,
+      recurrenceRule: 'FREQ=WEEKLY',
     });
   });
 
@@ -143,13 +141,20 @@ describe('the Nuevo draft', () => {
     });
   });
 
-  test('a recurring item asks «solo esta» or «toda la serie», a single one does not', () => {
-    const [weekly, once] = items([
-      reminder('Sacar la basura', at(20), { recurrenceRule: 'FREQ=WEEKLY' }),
-      reminder('Pagar el agua', at(21)),
-    ]);
-    expect(scopesOf(weekly ?? null)).toEqual(['one', 'series']);
-    expect(scopesOf(once ?? null)).toEqual([]);
+  test('a recurring event asks «solo esta» or «toda la serie»; a single one and a reminder do not', () => {
+    const [single, argus, series] = items(
+      [reminder('Sacar la basura', at(20), { recurrenceRule: 'FREQ=WEEKLY' })],
+      [
+        entry('event:yoga', at(7), {
+          title: 'Yoga',
+          series: { rule: 'FREQ=WEEKLY', startsAt: at(7), endsAt: null },
+        }),
+        entry('event:cita', at(9), { title: 'Cita' }),
+      ]
+    ).sort((left, right) => left.title.localeCompare(right.title));
+    expect(scopesOf(series ?? null)).toEqual(['one', 'series']);
+    expect(scopesOf(single ?? null)).toEqual([]);
+    expect(scopesOf(argus ?? null)).toEqual([]);
     expect(scopesOf(null)).toEqual([]);
   });
 
