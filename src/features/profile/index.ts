@@ -1,1 +1,2 @@
-export { default as ProfileScreen } from './screens/profile-screen';
+import { lazyScreen } from '@/shared/libs/lazy-screen';
+export const ProfileScreen = lazyScreen(() => import('./screens/profile-screen'), 'default');
