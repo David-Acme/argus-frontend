@@ -4198,11 +4198,12 @@ code two features share, mostly `expo-camera` (QR scan and face capture) and `qr
 and the invitation QR).
 
 Measured on the same tree: entry 7,373,421 B (an export with source maps) → 6,432,190 B,
-`dist/` 8,906,690 → 8,905,970 B, 29 route chunks (1 KB to 272 KB, `lab-screens` among them), and the unpaired first
+`dist/` 8,905,970 B (the recorded baseline was 8,906,690 B), 29 route chunks (1 KB to 272 KB, `lab-screens` among them), and the unpaired first
 render in headless chromium against `dist/` under the CSP (time until `#root` has text, two
 series of 5 each, medians) 781 and 653 ms before against 624 and 612 ms after. Each route
 chunk is a `lazy` row of `bundle-baseline.txt`, so a static import of a screen, which would pull
-it back into the entry, fails `check:bundle`. The `import()` also removed the file cycles that
+it back into the entry, fails `check:bundle`. After merging redesign/main cde97d12
+(hold-to-talk), the entry is 6,493,364 B and `dist/` 8,920,271 B. The `import()` also removed the file cycles that
 ran through the camera, security and voice screens (the cycle check does not count a lazy edge).
 
 ### Resource changes: the client side (2026-10-12, the real-time plan's 2.2)
@@ -5636,6 +5637,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/command`: `GlobalCommand` is mounted in the signed-in layout, so `Command` and what it renders (the pointer palette, `@rn-primitives/dialog`, Presence in the «Pedir a Argus» row) move from the lazy `lab-screens` chunk, where only the ui-lab used them, into the entry. Measured on this branch's export: entry 7,115,996 → 7,303,301 B (+187,305) while `lab-screens` fell to 259,334 B, and `dist/` 8,867,586 → 8,882,494 B (+14,908): the new code itself (the slice, the two view-cache projections, the i18n). No package was added. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | `p2/inicio-feed`: `NewsScreen` (the full Novedades at `/notification`) is the first production route on the redesign's `Screen`, and `Screen` imports `trackCollapse` from Nav and renders Aura, so the design system that lived only in the lazy lab chunk enters the entry: entry 7,115,996 → 7,328,096 B (+212,100), `dist/` 8,867,586 → 8,878,414 B (+10,828; the lab chunk gives the moved modules back). The entry's source map: `src/shared/ui/` 143.6 kB (Estela's engine and canvas 75.1, Nav 21.4, Aura 7.0), the feed's own modules (sections, item, screen, models, hooks) 8.8 kB, `@radix-ui/react-presence` 3.2 kB; the rest is tokens and module wrappers. The same design-system bytes arrive with Phase 2's navigation and Inicio, and route-level lazy loading (T9) is what brings the entry down. | 2026-10-26 |
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/command`, `p2/inicio-agenda`, `p2/inicio-feed` and `p2/inicio-cameras` (f35d20ee), measured on the merged tree: entry 7,379,320 B and `dist/` 8,906,690 B. The design system leaves the lazy lab chunk once a production route renders `Screen` and `Command`; each branch's own rows above account for its part. This is the high-water mark before T9's route-level lazy loading, which must bring the entry to the 6.6 MB ceiling (R-D36). | 2026-10-26 |
+| `scripts/lib/bundle-baseline.txt` | `dist-bytes` | `p2/bundle` (T9) merged with redesign/main cde97d12, whose own export, measured the same day, is entry 7,434,450 B and `dist/` 8,914,334 B above the recorded 7,379,320 and 8,906,690 B (the hold-to-talk merge has no row of its own). With the route screens lazy the entry is 6,493,364 B (−941,086 against that tree) and `dist/` 8,920,271 B (+5,937): each of the 29 route chunks carries its own Metro module wrappers, and the entry gains the async-import paths that name them and `lazyScreen`; on 9b3757c, before the merge, the same change measured `dist/` 8,905,970 B. The entry baseline is lowered with it. | 2026-10-26 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
