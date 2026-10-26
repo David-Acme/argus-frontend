@@ -207,7 +207,6 @@ src/features/agenda/components/calendar-event-form.tsx
 src/features/agenda/components/calendar-event-share-dialog.tsx
 src/features/agenda/components/calendar-header.tsx
 src/features/agenda/components/day-picker-field.tsx
-src/features/agenda/components/entry-actions-menu.tsx
 src/features/agenda/model/agenda-rows.ts
 src/features/agenda/model/calendar-entry-actions.ts
 src/features/agenda/model/calendar-optimistic.ts
