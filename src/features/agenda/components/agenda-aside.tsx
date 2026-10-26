@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -72,7 +73,7 @@ function Show({ shown, onToggle }: ShowProps) {
           className="min-h-10 flex-row items-center gap-3 px-1">
           <View
             className={clsx(
-              'size-3.5 rounded-sm',
+              'rounded-meter size-3.5',
               shown.has(category) ? SWATCH[category] : 'bg-fill-press'
             )}
           />
@@ -101,20 +102,24 @@ function FreeToday({ gaps, context }: FreeProps) {
   );
 }
 
-export function AgendaAside({ month, shown, onToggle, today, context }: AgendaAsideProps) {
+export function asideBlocks({
+  month,
+  shown,
+  onToggle,
+  today,
+  context,
+}: AgendaAsideProps): ReactNode[] {
   const { t } = context;
   const gaps = freeGaps(today);
-  return (
-    <>
-      <MonthCard month={month} />
-      <Show shown={shown} onToggle={onToggle} />
-      {gaps.length > 0 ? (
-        <FreeToday gaps={gaps} context={context} />
-      ) : (
-        <Section title={t('screens.agenda.empty.ideas-title')} variant="plain">
-          <Ideas ideas={ASIDE_IDEAS} />
-        </Section>
-      )}
-    </>
-  );
+  return [
+    <MonthCard key="month" month={month} />,
+    <Show key="show" shown={shown} onToggle={onToggle} />,
+    gaps.length > 0 ? (
+      <FreeToday key="free" gaps={gaps} context={context} />
+    ) : (
+      <Section key="ideas" title={t('screens.agenda.empty.ideas-title')} variant="plain">
+        <Ideas ideas={ASIDE_IDEAS} />
+      </Section>
+    ),
+  ];
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { AgendaItem } from '@/core/types';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -13,16 +14,16 @@ import { useDayNames } from '@/features/agenda/hooks/use-day-names';
 import { dayGroup, dayRange, nextDays, restOfDay } from '@/features/agenda/model/agenda-days';
 import { kindWords } from '@/features/agenda/model/agenda-lines';
 import { calendarEntryRecordId } from '@/features/agenda/model/calendar-entry-actions';
-import { AgendaAside } from '@/features/agenda/components/agenda-aside';
+import { asideBlocks } from '@/features/agenda/components/agenda-aside';
 import { AgendaBody, AgendaHead } from '@/features/agenda/components/agenda-body';
 import { AgendaGuide, NextDays } from '@/features/agenda/components/agenda-guide';
 import { CalendarEventShareDialog } from '@/features/agenda/components/calendar-event-share-dialog';
-import { ItemDetail } from '@/features/agenda/components/item-detail';
+import { detailBlocks } from '@/features/agenda/components/item-detail';
 import { ItemSheet } from '@/features/agenda/components/item-sheet';
 
 export type AgendaLayoutProps = { state: AgendaScreenState };
 
-type DetailProps = AgendaLayoutProps & { item: AgendaItem; titled?: boolean };
+type DetailProps = AgendaLayoutProps & { item: AgendaItem | null; titled: boolean };
 
 type NewButtonProps = AgendaLayoutProps & { phone: boolean };
 
@@ -45,19 +46,18 @@ function NewButton({ state, phone }: NewButtonProps) {
   );
 }
 
-function Detail({ state, item, titled }: DetailProps) {
+function useDetail({ state, item, titled }: DetailProps): ReactNode[] {
   const date = useDateFormatter();
   const { context, visible } = state;
-  return (
-    <ItemDetail
-      item={item}
-      rest={restOfDay(visible, item, date)}
-      upcoming={nextDays({ items: visible, from: item.startsAt, now: context.now }, date)}
-      context={context}
-      handlers={state.handlersFor(item)}
-      titled={titled}
-    />
-  );
+  if (!item) return [];
+  return detailBlocks({
+    item,
+    rest: restOfDay(visible, item, date),
+    upcoming: nextDays({ items: visible, from: item.startsAt, now: context.now }, date),
+    context,
+    handlers: state.handlersFor(item),
+    titled,
+  });
 }
 
 function Overlays({ state }: AgendaLayoutProps) {
@@ -87,6 +87,7 @@ function Overlays({ state }: AgendaLayoutProps) {
 
 export function PhoneAgenda({ state }: AgendaLayoutProps) {
   const { context, chosen } = state;
+  const detail = useDetail({ state, item: chosen, titled: false });
   return (
     <View className="flex-1">
       <Screen>
@@ -99,7 +100,7 @@ export function PhoneAgenda({ state }: AgendaLayoutProps) {
         onClose={state.close}
         title={chosen ? kindWords(chosen, context) : ''}
         variant="detail">
-        {chosen ? <Detail state={state} item={chosen} titled={false} /> : null}
+        <View>{detail}</View>
       </Sheet>
       <Overlays state={state} />
     </View>
@@ -115,13 +116,13 @@ function AsideColumn({ state }: AgendaLayoutProps) {
   const today = dayGroup(state.visible, dayRange(state.plan.now, date), state.plan.now);
   return (
     <ScreenColumn width={size.columnAside} label={t('screens.agenda.page.calendar')}>
-      <AgendaAside
-        month={{ cells: cells.month, names, shift, onPick: state.pick }}
-        shown={state.shown}
-        onToggle={state.toggleShown}
-        today={today}
-        context={state.context}
-      />
+      {asideBlocks({
+        month: { cells: cells.month, names, shift, onPick: state.pick },
+        shown: state.shown,
+        onToggle: state.toggleShown,
+        today,
+        context: state.context,
+      })}
     </ScreenColumn>
   );
 }
@@ -130,19 +131,17 @@ function DetailColumn({ state }: AgendaLayoutProps) {
   const { t } = useTranslation();
   const date = useDateFormatter();
   const item = state.chosen ?? state.first;
+  const detail = useDetail({ state, item, titled: true });
+  const guide = [
+    <AgendaGuide key="guide" />,
+    <NextDays
+      key="next"
+      groups={nextDays({ items: state.visible, from: state.selected, now: state.plan.now }, date)}
+      context={state.context}
+    />,
+  ];
   return (
-    <ScreenColumn label={t('screens.agenda.page.detail')}>
-      {item ? <Detail state={state} item={item} /> : <AgendaGuide />}
-      {item ? null : (
-        <NextDays
-          groups={nextDays(
-            { items: state.visible, from: state.selected, now: state.plan.now },
-            date
-          )}
-          context={state.context}
-        />
-      )}
-    </ScreenColumn>
+    <ScreenColumn label={t('screens.agenda.page.detail')}>{item ? detail : guide}</ScreenColumn>
   );
 }
 

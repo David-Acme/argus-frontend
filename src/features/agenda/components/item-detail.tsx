@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { AgendaItem, TranslateFn } from '@/core/types';
 import { recurrenceLabel } from '@/shared/libs/recurrence';
@@ -154,45 +155,43 @@ function RestOfDay({ items, context }: RestProps) {
   );
 }
 
-export function ItemDetail({
+export function detailBlocks({
   item,
   rest,
   upcoming,
   context,
   handlers,
   titled = true,
-}: ItemDetailProps) {
+}: ItemDetailProps): ReactNode[] {
   const { t } = context;
   const words = lineWords(item, context);
   const facts = factRows(item, context, t);
-  return (
-    <View>
-      <View className="gap-3 pt-6">
-        {titled ? <Chip label={kindWords(item, context)} /> : null}
-        {titled ? (
-          <Text variant="title" heading={2} struck={item.done}>
-            {item.title}
-          </Text>
-        ) : null}
-        <Text variant="body" tone="2">
-          {[words.time, words.state, words.meta].filter(Boolean).join(' · ')}
+  return [
+    <View key="head" className="gap-3 pt-6">
+      {titled ? <Chip label={kindWords(item, context)} /> : null}
+      {titled ? (
+        <Text variant="title" heading={2} struck={item.done}>
+          {item.title}
         </Text>
-        <Actions item={item} context={context} handlers={handlers} />
-      </View>
-      {facts.length > 0 ? (
-        <Section>
-          {facts.map((fact) => (
-            <Row
-              key={fact.key}
-              leading={fact.icon ? <Avatar icon={fact.icon} /> : undefined}
-              title={fact.title}
-              meta={fact.meta}
-            />
-          ))}
-        </Section>
       ) : null}
-      <NextDays groups={upcoming} context={context} />
-      <RestOfDay items={rest} context={context} />
-    </View>
-  );
+      <Text variant="body" tone="2">
+        {[words.time, words.state, words.meta].filter(Boolean).join(' · ')}
+      </Text>
+      <Actions item={item} context={context} handlers={handlers} />
+    </View>,
+    facts.length > 0 ? (
+      <Section key="facts">
+        {facts.map((fact) => (
+          <Row
+            key={fact.key}
+            leading={fact.icon ? <Avatar icon={fact.icon} /> : undefined}
+            title={fact.title}
+            meta={fact.meta}
+          />
+        ))}
+      </Section>
+    ) : null,
+    <NextDays key="next" groups={upcoming} context={context} />,
+    <RestOfDay key="rest" items={rest} context={context} />,
+  ].filter((block) => block !== null);
 }

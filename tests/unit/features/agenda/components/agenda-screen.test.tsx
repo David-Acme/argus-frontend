@@ -143,7 +143,7 @@ mock.module('@/features/agenda/services/item-commands', () => ({
 
 const { default: AgendaScreen } = await import('@/features/agenda/screens/agenda-screen');
 const { PhoneAgenda, PanesAgenda } = await import('@/features/agenda/components/agenda-layouts');
-const { AgendaAside } = await import('@/features/agenda/components/agenda-aside');
+const { asideBlocks } = await import('@/features/agenda/components/agenda-aside');
 const { AgendaBody, AgendaHead } = await import('@/features/agenda/components/agenda-body');
 const { AgendaGuide, NextDays } = await import('@/features/agenda/components/agenda-guide');
 const { AgendaLine } = await import('@/features/agenda/components/agenda-line');
@@ -154,7 +154,7 @@ const { DayField } = await import('@/features/agenda/components/day-field');
 const { DayHead } = await import('@/features/agenda/components/day-head');
 const { DayView } = await import('@/features/agenda/components/day-view');
 const { EventBar } = await import('@/features/agenda/components/event-bar');
-const { ItemDetail } = await import('@/features/agenda/components/item-detail');
+const { detailBlocks } = await import('@/features/agenda/components/item-detail');
 const { ItemFields } = await import('@/features/agenda/components/item-fields');
 const { ItemSheet } = await import('@/features/agenda/components/item-sheet');
 const { MonthGrid } = await import('@/features/agenda/components/month-grid');
@@ -163,7 +163,7 @@ const { WeekStrip } = await import('@/features/agenda/components/week-strip');
 const exported = [
   PhoneAgenda,
   PanesAgenda,
-  AgendaAside,
+  asideBlocks,
   AgendaBody,
   AgendaHead,
   AgendaGuide,
@@ -172,7 +172,7 @@ const exported = [
   AgendaTop,
   DayHead,
   DayView,
-  ItemDetail,
+  detailBlocks,
   ItemFields,
   ItemSheet,
   WeekStrip,
