@@ -1078,6 +1078,10 @@ Inside every component (mandatory):
     - Dates only through the formatter.
     - Timers are never called as methods.
     - React APIs are imported by name.
+    - Imports sit at the top of the file, one declaration per module
+      (`import/first`, `import/no-duplicates`). A dynamic `import()` in
+      `src/` is only for lazy, platform-only or heavy code (rule 30), through
+      one memoised loader per module and file.
     - Platform flags come from their home, never `Platform.OS` or
       `__TAURI_INTERNALS__`.
     - Official Expo APIs are used directly (for example `SystemBars`).
@@ -1141,6 +1145,11 @@ Inside every component (mandatory):
   them). `tests/setup.ts` stubs what the constants barrel pulls in
   (`react-native`'s `Platform`, the lucide icons read from
   `icon.constant.ts`, `window`). A fix to pure logic lands with its test.
+- A test file is laid out as static imports, the state its mocks read, every
+  `mock.module(...)`, one block of `const { ... } = await import('...')`, then
+  the tests; a dynamic import inside a function is only a `mock.module`
+  factory (`argus/test-module-layout`, CONTEXT.md › "Imports and the test
+  module layout"). `bun run lint` covers `tests/`.
 - A test that asserts a time budget is a bench. It lives under `tests/bench/`, is
   run by `bun run test:bench` in the integration build, and stays out of
   `bun run verify`, which must stay deterministic on a busy machine. `verify` keeps

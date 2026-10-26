@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 import { ESLint, Linter } from 'eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 const ROOT = resolve(import.meta.dir, '../../..');
 const eslint = new ESLint({ cwd: ROOT });
@@ -185,10 +186,7 @@ describe('the lint set', () => {
   });
 
   test('every rule of react-hooks recommended-latest is on as an error', async () => {
-    const reactHooks = (await import('eslint-plugin-react-hooks')) as unknown as {
-      configs: Record<string, { rules: Record<string, unknown> }>;
-    };
-    const latest = Object.keys(reactHooks.configs['recommended-latest']?.rules ?? {});
+    const latest = Object.keys(reactHooks.configs['recommended-latest'].rules);
     const resolved = (await eslint.calculateConfigForFile(
       'src/features/home/index.ts'
     )) as Resolved;

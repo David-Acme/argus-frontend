@@ -283,7 +283,7 @@ class VoiceService {
     if (options.watchConversationId) this.armHandoff(session, options.watchConversationId);
     this.notify();
 
-    const realtime = rtcCallSupported();
+    const realtime = !options.socket && rtcCallSupported();
     if (!(realtime && IS_TAURI) && !(await this.microphoneGranted(session))) return;
     if (realtime) {
       const handled = await this.startRealtime(session, {

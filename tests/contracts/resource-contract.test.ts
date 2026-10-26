@@ -2,8 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { backendPath } from '@tests/support/backend-dir';
-import { SYNC_OPERATION } from '@/shared/constants';
-import { RESOURCE_DOMAINS, RESOURCE_SCOPES } from '@/shared/constants';
+import { RESOURCE_DOMAINS, RESOURCE_SCOPES, SYNC_OPERATION } from '@/shared/constants';
 
 const backend = backendPath('packages');
 const header = readFileSync(join(backend, 'contracts/sync/src/sync/resource-change.hxx'), 'utf8');

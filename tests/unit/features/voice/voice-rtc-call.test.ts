@@ -45,6 +45,26 @@ class FakeCall implements IRealtimeCall {
 }
 
 let call = new FakeCall();
+const stoppedOngoing: number[] = [];
+const sharedMute: boolean[] = [];
+let callControl: (action: 'hangup' | 'mute-on' | 'mute-off') => void = () => undefined;
+const endedSessions: (string | null)[] = [];
+const micModule = join(
+  import.meta.dir,
+  '../../../../src/features/voice/services/voice/voice-platform.ts'
+);
+const fakeMic = {
+  start: () => undefined,
+  stop: () => undefined,
+  playerStart: () => undefined,
+  playerWrite: () => undefined,
+  playerFlush: () => undefined,
+  playerStop: () => undefined,
+  playedSamples: () => 0,
+  onData: null,
+  onError: null,
+  onPlayerIdle: null,
+};
 
 mock.module('react-native-reanimated', () => ({
   makeMutable: <T>(value: T) => ({ value }),
@@ -108,9 +128,6 @@ mock.module('@/core/services/sync', () => ({
     },
   },
 }));
-const stoppedOngoing: number[] = [];
-const sharedMute: boolean[] = [];
-let callControl: (action: 'hangup' | 'mute-on' | 'mute-off') => void = () => undefined;
 mock.module('@/core/services/push', () => ({
   pushService: {
     stopOngoingCall: () => stoppedOngoing.push(1),
@@ -123,7 +140,6 @@ mock.module('@/core/services/push', () => ({
     startAssistantCall: async () => false,
   },
 }));
-const endedSessions: (string | null)[] = [];
 mock.module('@/features/voice/services/voice/voice-session-end', () => ({
   endRevokedSession: (cause: string | null) => endedSessions.push(cause),
 }));
@@ -131,22 +147,6 @@ mock.module('@/features/voice/services/rtc', () => ({
   rtcCallSupported: () => realtimeSupported,
   createRealtimeCall: () => call,
 }));
-const micModule = join(
-  import.meta.dir,
-  '../../../../src/features/voice/services/voice/voice-platform.ts'
-);
-const fakeMic = {
-  start: () => undefined,
-  stop: () => undefined,
-  playerStart: () => undefined,
-  playerWrite: () => undefined,
-  playerFlush: () => undefined,
-  playerStop: () => undefined,
-  playedSamples: () => 0,
-  onData: null,
-  onError: null,
-  onPlayerIdle: null,
-};
 mock.module(micModule, () => ({
   createVoiceMic: () => fakeMic,
   voiceCallSupported: () => true,
@@ -380,9 +380,19 @@ describe('fallback and outcomes', () => {
     voiceService.sendContext({ kind: 'note', text: 'Cámaras: Patio.' });
     await starting;
     expect(voiceService.snapshot.transport).toBe('sync');
-    expect(sentFrames[0]).toEqual({ type: 'voice:start', payload: { mode: 'duplex', leg: 'laptop' } });
+    expect(sentFrames[0]).toEqual({
+      type: 'voice:start',
+      payload: { mode: 'duplex', leg: 'laptop' },
+    });
     expect(sentFrames[1]?.type).toBe('voice:context');
     expect(call.joins).toHaveLength(0);
+  });
+
+  test('a start that asks for the socket leg never asks for a token', async () => {
+    await voiceService.start({ socket: true });
+    expect(posted).toEqual([]);
+    expect(sentFrames[0]?.type).toBe('voice:start');
+    expect(voiceService.snapshot.transport).toBe('sync');
   });
 
   test('a platform without WebRTC never asks for a token', async () => {
@@ -542,7 +552,9 @@ describe('a withheld turn leaves no trace of the words', () => {
 
   const words = 'rojo verde azul';
   const userTexts = () =>
-    voiceService.snapshot.transcript.filter((line) => line.role === 'user').map((line) => line.text);
+    voiceService.snapshot.transcript
+      .filter((line) => line.role === 'user')
+      .map((line) => line.text);
   const traceOfWords = () => JSON.stringify(voiceService.snapshot).includes(words);
   const data = (topic: string, payload: unknown) =>
     call.listener({ kind: 'data', topic, payload: JSON.stringify(payload) });
@@ -572,7 +584,10 @@ describe('a withheld turn leaves no trace of the words', () => {
     data('argus.assistant', { text: '¿Perdona? No te he entendido.', turnId: 4 });
     expect(userTexts()).toEqual(['…']);
     expect(voiceService.snapshot.sttText).toBe('…');
-    expect(voiceService.snapshot.transcript.map((line) => line.role)).toEqual(['user', 'assistant']);
+    expect(voiceService.snapshot.transcript.map((line) => line.role)).toEqual([
+      'user',
+      'assistant',
+    ]);
     expect(traceOfWords()).toBe(false);
   });
 
@@ -596,7 +611,9 @@ describe('a withheld turn leaves no trace of the words', () => {
     data('argus.stt_correction', { text: '…' });
     data('argus.event', { reaction: 'confused', intensity: 0.6 });
     expect(userTexts()).toEqual(['…', '…']);
-    expect(voiceService.snapshot.transcript.filter((line) => line.role === 'assistant')).toHaveLength(1);
+    expect(
+      voiceService.snapshot.transcript.filter((line) => line.role === 'assistant')
+    ).toHaveLength(1);
     expect(traceOfWords()).toBe(false);
   });
 
@@ -614,4 +631,3 @@ describe('a withheld turn leaves no trace of the words', () => {
     expect(traceOfWords()).toBe(false);
   });
 });
-

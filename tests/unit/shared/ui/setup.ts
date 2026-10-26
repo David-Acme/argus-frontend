@@ -28,13 +28,13 @@ const sharedValue = <T>(initial: T): Shared<T> => {
   };
 };
 
-mock.module('react-native', () => import('react-native-web'));
-mock.module('react-native-svg', () => import('react-native-svg/lib/module/elements.web.js'));
 type Chain = { [method: string]: (...args: unknown[]) => Chain };
 
 const chain = (): Chain =>
   new Proxy({} as Chain, { get: (_target, _key, self: Chain) => () => self });
 
+mock.module('react-native', () => import('react-native-web'));
+mock.module('react-native-svg', () => import('react-native-svg/lib/module/elements.web.js'));
 mock.module('react-native-gesture-handler', async () => {
   const web = await import('react-native-web');
   return {

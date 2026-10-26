@@ -1,13 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 import { callPreferencesSchema } from '@/core/contracts/rtc.contract';
 import {
+  ALL_DAYS,
   dndActive,
   dndChoiceOf,
   dndUntilFor,
   quietHoursFor,
+  quietDayOn,
   quietPresetOf,
+  RING_SECONDS,
   toggledEnvironments,
+  toggledQuietDay,
   triggersOf,
+  withCurrent,
 } from '@/features/voice/model/call-preferences';
 
 const defaults = {
@@ -75,15 +80,12 @@ describe('call preferences', () => {
 });
 
 describe('call preferences, per-person timings', () => {
-  test('a server value outside the presets is still offered', async () => {
-    const { withCurrent, RING_SECONDS } = await import('@/features/voice/model/call-preferences');
+  test('a server value outside the presets is still offered', () => {
     expect(withCurrent(RING_SECONDS, 45)).toEqual([20, 30, 45, 60, 90]);
     expect(withCurrent(RING_SECONDS, 50)).toEqual([20, 30, 45, 50, 60, 90]);
   });
 
-  test('quiet days toggle one bit per weekday, Sunday is bit 0', async () => {
-    const { quietDayOn, toggledQuietDay, ALL_DAYS } =
-      await import('@/features/voice/model/call-preferences');
+  test('quiet days toggle one bit per weekday, Sunday is bit 0', () => {
     expect(quietDayOn(ALL_DAYS, 0)).toBe(true);
     const weekdays = toggledQuietDay(toggledQuietDay(ALL_DAYS, 0), 6);
     expect(weekdays).toBe(0b0111110);

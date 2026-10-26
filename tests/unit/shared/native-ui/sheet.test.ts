@@ -1,31 +1,21 @@
-import { beforeAll, describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { createElement } from 'react';
 import { tokens } from '@/shared/theme/tokens';
-import { calls, captured, installNativeUiMocks, window, markupRenderer } from './native-ui-mocks';
+import {
+  calls,
+  captured,
+  installNativeUiMocks,
+  renderToStaticMarkup,
+  window,
+} from './native-ui-mocks';
 
 installNativeUiMocks();
 
-type Modules = {
-  phone: typeof import('@/shared/ui/sheet/sheet-phone');
-  dialog: typeof import('@/shared/ui/sheet/sheet-dialog');
-  native: typeof import('@/shared/ui/sheet/sheet');
-  parts: typeof import('@/shared/ui/sheet/sheet-parts');
-  web: typeof import('@/shared/ui/sheet/sheet.web');
-};
-
-let modules: Modules;
-let renderToStaticMarkup: Awaited<ReturnType<typeof markupRenderer>>;
-
-beforeAll(async () => {
-  renderToStaticMarkup = await markupRenderer();
-  modules = {
-    phone: await import('@/shared/ui/sheet/sheet-phone'),
-    dialog: await import('@/shared/ui/sheet/sheet-dialog'),
-    native: await import('@/shared/ui/sheet/sheet'),
-    parts: await import('@/shared/ui/sheet/sheet-parts'),
-    web: await import('@/shared/ui/sheet/sheet.web'),
-  };
-});
+const { SheetPhone } = await import('@/shared/ui/sheet/sheet-phone');
+const { SheetDialog } = await import('@/shared/ui/sheet/sheet-dialog');
+const { Sheet } = await import('@/shared/ui/sheet/sheet');
+const { DiscardRow } = await import('@/shared/ui/sheet/sheet-parts');
+const { Sheet: WebSheet } = await import('@/shared/ui/sheet/sheet.web');
 
 const base = {
   open: true,
@@ -41,7 +31,7 @@ describe('Sheet on a phone', () => {
   test('a long form takes the ceiling, the scroll and the pinned footer of spec §5.9', () => {
     const tail = tokens.inset.field.top + tokens.inset.field.border;
     const html = renderToStaticMarkup(
-      createElement(modules.phone.SheetPhone, { ...base, onClose: () => undefined, long: true })
+      createElement(SheetPhone, { ...base, onClose: () => undefined, long: true })
     );
     const sheet = captured.TrueSheet ?? {};
     expect(sheet.detents).toEqual([0.6, 1]);
@@ -62,7 +52,7 @@ describe('Sheet on a phone', () => {
   test('a short form sizes itself, and a dirty one blocks the drag and asks on Back', () => {
     calls.alerts.length = 0;
     renderToStaticMarkup(
-      createElement(modules.phone.SheetPhone, {
+      createElement(SheetPhone, {
         ...base,
         onClose: () => undefined,
         dirty: 'Pagar la luz',
@@ -88,9 +78,7 @@ describe('Sheet on a phone', () => {
   test('the phone entry picks the native sheet at compact width', () => {
     window.width = 360;
     delete captured.TrueSheet;
-    renderToStaticMarkup(
-      createElement(modules.native.Sheet, { ...base, onClose: () => undefined })
-    );
+    renderToStaticMarkup(createElement(Sheet, { ...base, onClose: () => undefined }));
     expect(captured.TrueSheet).toBeDefined();
   });
 });
@@ -98,7 +86,7 @@ describe('Sheet on a phone', () => {
 describe('Sheet as a dialog', () => {
   test('Esc closes an untouched form at once and the footer carries the submit key', () => {
     const onClose = mock(() => undefined);
-    const html = renderToStaticMarkup(createElement(modules.web.Sheet, { ...base, onClose }));
+    const html = renderToStaticMarkup(createElement(WebSheet, { ...base, onClose }));
     expect(html).toContain('Ctrl ↵');
     expect(html).toContain('Más opciones');
     const event = { preventDefault: mock(() => undefined) };
@@ -110,7 +98,7 @@ describe('Sheet as a dialog', () => {
   test('a dirty form does not close on Esc or an outside click', () => {
     const onClose = mock(() => undefined);
     renderToStaticMarkup(
-      createElement(modules.dialog.SheetDialog, {
+      createElement(SheetDialog, {
         ...base,
         onClose,
         dirty: 'Visita del técnico',
@@ -130,7 +118,7 @@ describe('Sheet as a dialog', () => {
 describe('Sheet parts', () => {
   test('the discard row names the form and offers both answers', () => {
     const html = renderToStaticMarkup(
-      createElement(modules.parts.DiscardRow, {
+      createElement(DiscardRow, {
         question: '¿Descartar «Visita del técnico»?',
         keep: { label: 'Seguir editando', onPress: () => undefined },
         discard: { label: 'Descartar', onPress: () => undefined },

@@ -198,10 +198,8 @@ export function installNativeUiMocks(): void {
 }
 
 const SERVER = 'react-dom/server';
+const server = (await import(SERVER)) as {
+  renderToStaticMarkup: (element: ReactElement) => string;
+};
 
-export async function markupRenderer(): Promise<(element: ReactElement) => string> {
-  const server = (await import(SERVER)) as {
-    renderToStaticMarkup: (element: ReactElement) => string;
-  };
-  return server.renderToStaticMarkup;
-}
+export const { renderToStaticMarkup } = server;

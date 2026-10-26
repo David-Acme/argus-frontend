@@ -1,15 +1,28 @@
+import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { EntryGate } from './components/entry-gate';
 export { SessionGate } from './components/session-gate';
-export { default as ApproveScreen } from './screens/approve-screen';
-export { default as FaceScreen } from './screens/face-screen';
-export { default as InvitationScreen } from './screens/invitation-screen';
-export { default as LoginScreen } from './screens/login-screen';
-export { default as OnboardingCallScreen } from './screens/onboarding-call-screen';
-export { default as PairingScreen } from './screens/pairing-screen';
-export { default as PrivacyScreen } from './screens/privacy-screen';
+export const ApproveScreen = lazyScreen(() => import('./screens/approve-screen'), 'default');
+export const FaceScreen = lazyScreen(() => import('./screens/face-screen'), 'default');
+export const InvitationScreen = lazyScreen(() => import('./screens/invitation-screen'), 'default');
+export const LoginScreen = lazyScreen(() => import('./screens/login-screen'), 'default');
+export const OnboardingCallScreen = lazyScreen(
+  () => import('./screens/onboarding-call-screen'),
+  'default'
+);
+export const PairingScreen = lazyScreen(() => import('./screens/pairing-screen'), 'default');
+export const PrivacyScreen = lazyScreen(() => import('./screens/privacy-screen'), 'default');
 export { default as WelcomeScreen } from './screens/welcome-screen';
-export { default as OnboardingModulesScreen } from './screens/onboarding-modules-screen';
-export { default as OnboardingModulePrivacyScreen } from './screens/onboarding-module-privacy-screen';
-export { default as OnboardingPermissionsScreen } from './screens/onboarding-permissions-screen';
+export const OnboardingModulesScreen = lazyScreen(
+  () => import('./screens/onboarding-modules-screen'),
+  'default'
+);
+export const OnboardingModulePrivacyScreen = lazyScreen(
+  () => import('./screens/onboarding-module-privacy-screen'),
+  'default'
+);
+export const OnboardingPermissionsScreen = lazyScreen(
+  () => import('./screens/onboarding-permissions-screen'),
+  'default'
+);
 export { useSignedInHistory } from './hooks/use-signed-in-history';
 export { useDeepLinkRestore } from './hooks/use-deep-link-restore';
