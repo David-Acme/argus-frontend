@@ -7,7 +7,7 @@ import { Field } from '@/shared/ui/field';
 import { Inline, Stack } from '@/shared/ui/layout';
 import { Sheet } from '@/shared/ui/sheet';
 import { Text } from '@/shared/ui/text';
-import { CameraLiveView } from '@/features/cameras/components/players';
+import { CameraLiveView } from '@/features/cameras/components/camera-live-view';
 import { PtzPad } from '@/features/cameras/components/live/ptz-pad';
 import { useViewerLease } from '@/features/cameras/hooks/use-camera-aim';
 import type { CameraAimControls } from '@/features/cameras/hooks/use-camera-aim';

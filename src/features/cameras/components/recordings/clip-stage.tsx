@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { Stack } from '@/shared/ui/layout';
 import { Media } from '@/shared/ui/media';
 import { Notice } from '@/shared/ui/notice';
-import { ClipPlayer } from '@/features/cameras/components/players';
+import { ClipPlayer } from '@/features/cameras/components/clip-player';
 import type { ClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 
 export type ClipStageProps = { playback: ClipPlayback };

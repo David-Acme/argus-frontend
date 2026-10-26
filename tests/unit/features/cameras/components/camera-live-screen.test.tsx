@@ -46,8 +46,11 @@ mock.module('@/features/cameras/hooks/use-camera-meta', () => ({ useCameraMeta: 
 
 mock.module('@/features/cameras/hooks/use-camera-clips', () => ({ useCameraClips: () => clips }));
 
-mock.module('@/features/cameras/components/players', () => ({
+mock.module('@/features/cameras/components/camera-live-view', () => ({
   CameraLiveView: () => <span data-testid="player" />,
+}));
+
+mock.module('@/features/cameras/components/clip-player', () => ({
   ClipPlayer: () => null,
 }));
 

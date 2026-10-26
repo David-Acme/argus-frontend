@@ -25,7 +25,7 @@ import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { nativePlayerMuted } from '@/features/cameras/model/camera-live-audio';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
-import { CameraRtcVideo } from './camera-rtc-video';
+import { CameraRtcVideo } from '@/features/cameras/components/camera-rtc-video';
 import type { LiveViewStatus } from '@/features/cameras/model/camera-stage';
 
 type CameraLiveStreamProps = {

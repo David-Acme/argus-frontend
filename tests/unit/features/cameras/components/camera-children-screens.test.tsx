@@ -89,8 +89,11 @@ mock.module('@/features/cameras/hooks/use-clip-playback', () => ({
   useClipPlayback: () => playback,
 }));
 
-mock.module('@/features/cameras/components/players', () => ({
+mock.module('@/features/cameras/components/camera-live-view', () => ({
   CameraLiveView: () => null,
+}));
+
+mock.module('@/features/cameras/components/clip-player', () => ({
   ClipPlayer: () => <span data-testid="clip-player" />,
 }));
 

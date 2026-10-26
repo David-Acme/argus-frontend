@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
 import { CameraFullscreen } from '@/features/cameras/components/camera-fullscreen';
-import { CameraLiveView } from '@/features/cameras/components/players';
+import { CameraLiveView } from '@/features/cameras/components/camera-live-view';
 import { PtzPad } from '@/features/cameras/components/live/ptz-pad';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import type { LiveStage } from '@/features/cameras/hooks/use-live-stage';

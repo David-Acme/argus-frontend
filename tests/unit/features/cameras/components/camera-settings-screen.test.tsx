@@ -124,8 +124,11 @@ mock.module('@/features/security', () => ({
 
 mock.module('@/features/cameras/components/camera-form', () => ({ CameraForm: () => null }));
 
-mock.module('@/features/cameras/components/players', () => ({
+mock.module('@/features/cameras/components/camera-live-view', () => ({
   CameraLiveView: () => <span data-testid="player" />,
+}));
+
+mock.module('@/features/cameras/components/clip-player', () => ({
   ClipPlayer: () => null,
 }));
 

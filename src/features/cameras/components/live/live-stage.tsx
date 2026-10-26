@@ -5,7 +5,7 @@ import { Stack } from '@/shared/ui/layout';
 import { Media } from '@/shared/ui/media';
 import type { MediaControl, MediaDormant } from '@/shared/ui/media';
 import { Text } from '@/shared/ui/text';
-import { CameraLiveView } from '@/features/cameras/components/players';
+import { CameraLiveView } from '@/features/cameras/components/camera-live-view';
 import { PtzPad } from '@/features/cameras/components/live/ptz-pad';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import type { LiveStage } from '@/features/cameras/hooks/use-live-stage';

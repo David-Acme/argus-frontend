@@ -22,7 +22,7 @@ import { cameraRtcService } from '@/features/cameras/services/camera-rtc';
 import { CAMERA_LIVE_BACKGROUND } from '@/features/cameras/constants';
 import { CameraLiveStatus } from '@/features/cameras/components/camera-live-status';
 import { CameraPrivacyPlaceholder } from '@/features/cameras/components/camera-privacy-placeholder';
-import { CameraRtcVideo } from './camera-rtc-video';
+import { CameraRtcVideo } from '@/features/cameras/components/camera-rtc-video';
 import { WebCameraAudio } from '@/features/cameras/components/web-camera-audio';
 import { WebCameraPlayer } from '@/features/cameras/components/web-camera-player';
 import type { LiveViewStatus } from '@/features/cameras/model/camera-stage';
