@@ -62,6 +62,7 @@ export const rtcTokenGrantSchema = z.object({
 export const incomingCallSchema = z.object({
   callId,
   reason: z.string(),
+  subject: optionalText,
   summary: z.string().default(''),
   urgency: z.enum(['active', 'time_sensitive', 'critical']),
   kind: callKind,

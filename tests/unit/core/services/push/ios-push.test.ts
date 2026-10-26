@@ -15,6 +15,7 @@ class FakeNative implements IArgusPushNative {
   readonly muted: boolean[] = [];
   readonly selected: string[] = [];
   readonly stopped: number[] = [];
+  readonly summaries: string[] = [];
   declineListener: ((callId: string) => void) | null = null;
   tokenListener: ((token: string) => void) | null = null;
   callControlListener: ((action: string) => void) | null = null;
@@ -115,6 +116,14 @@ class FakeNative implements IArgusPushNative {
 
   overKeyguard(): boolean {
     return false;
+  }
+
+  async requestUnlock(): Promise<boolean> {
+    return true;
+  }
+
+  postCallSummary(title: string, body: string): void {
+    this.summaries.push(`${title}|${body}`);
   }
 
   outsideCallId(): string {
@@ -349,5 +358,12 @@ describe('the iOS push service call surface', () => {
     expect(service.exactAlarmsAllowed()).toBe(true);
     expect(service.fullScreenAllowed()).toBe(true);
     expect(service.backgroundAllowed()).toBe(true);
+  });
+
+  test('the camera never waits for an unlock and the call summary reaches the module', async () => {
+    const { native, service } = build();
+    expect(await service.requestUnlock()).toBe(true);
+    service.postCallSummary('Llamada terminada · 1:12', 'Modo noche');
+    expect(native.summaries).toEqual(['Llamada terminada · 1:12|Modo noche']);
   });
 });

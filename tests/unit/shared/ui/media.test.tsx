@@ -4,7 +4,6 @@ import { useEffectsOverrides } from '@/shared/theme';
 import { Media } from '@/shared/ui/media/media';
 import { MediaFrame } from '@/shared/ui/media/media-frame';
 import { MediaStrip } from '@/shared/ui/media/media-strip';
-import { screenFocus } from './screen-focus';
 import {
   Controls,
   DormantMark,
@@ -12,6 +11,7 @@ import {
   LabelRow,
   LiveChip,
 } from '@/shared/ui/media/media-parts';
+import { screenFocus } from './screen-focus';
 
 describe('Media', () => {
   test('a live tile names its camera, its live chip and its time, and opens on press', () => {
@@ -128,6 +128,38 @@ describe('Media', () => {
       />
     );
     expect(screen.queryByRole('button', { name: 'Activar sonido' })).toBeNull();
+  });
+
+  test('a stage centres what it says over the picture, and in place of the dormant mark', () => {
+    const { rerender } = render(
+      <Media variant="stage" name="Cocina" center={<span>La cámara no responde</span>}>
+        <span data-testid="player" />
+      </Media>
+    );
+    expect(screen.getByText('La cámara no responde')).toBeDefined();
+    expect(screen.getByTestId('player')).toBeDefined();
+    rerender(<Media variant="stage" name="Garaje" dormant="off" center={<span>Encender</span>} />);
+    expect(screen.getByText('Encender')).toBeDefined();
+    expect(globalThis.document.querySelectorAll('svg')).toHaveLength(0);
+  });
+
+  test('a stage poster covers the player with the warm frame and the last picture', () => {
+    const { container, rerender } = render(
+      <Media
+        variant="stage"
+        name="Cocina"
+        poster={{ frame: { uri: 'https://argus.local/last.jpg' } }}>
+        <span data-testid="player" />
+      </Media>
+    );
+    expect(screen.getByTestId('player')).toBeDefined();
+    expect(container.querySelectorAll('img').length).toBeGreaterThan(0);
+    rerender(
+      <Media variant="stage" name="Cocina" dormant="privacy" poster={{}}>
+        <span data-testid="player" />
+      </Media>
+    );
+    expect(container.querySelectorAll('img')).toHaveLength(0);
   });
 
   test('a new frame keeps the previous one underneath until it has faded in', () => {

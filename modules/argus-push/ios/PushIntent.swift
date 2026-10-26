@@ -15,6 +15,7 @@ struct PushIntent {
   let cancel: Bool
   let type: String
   let reason: String
+  let subject: String
   let episode: String
   let ringFollows: Bool
 
@@ -44,6 +45,7 @@ struct PushIntent {
       cancel: object["cancel"] as? Bool ?? false,
       type: object["type"] as? String ?? "",
       reason: object["reason"] as? String ?? "",
+      subject: object["subject"] as? String ?? "",
       episode: object["episode"] as? String ?? "",
       ringFollows: object["ringFollows"] as? Bool ?? false)
   }

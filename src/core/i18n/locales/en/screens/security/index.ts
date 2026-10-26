@@ -444,9 +444,7 @@ export const security = {
   },
   maintenance: {
     title: 'Maintenance',
-    description: 'Tell Argus when you are going to clean, move or repair a camera, so it does not take it for an attack.',
     declare: 'I am going to service it',
-    'declare-short': 'Maintenance',
     'declare-description': 'While it lasts, if the camera is covered or moved, Argus only logs it.',
     'declare-hint': 'It ends by itself when the time is up or if Argus sees a stranger in the place. If the view changes, Argus will ask you.',
     start: 'Start',

@@ -73,6 +73,6 @@ final class PushRouter {
       return
     }
     session.ring(
-      RingRequest(callId: callId, expiresAtSeconds: intent.expiresAtSeconds))
+      RingRequest(callId: callId, expiresAtSeconds: intent.expiresAtSeconds, subject: intent.subject))
   }
 }

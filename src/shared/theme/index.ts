@@ -28,18 +28,27 @@ export {
   type WindowClass,
 } from './tokens';
 export { useEffects, useEffectsOverrides, type Effects, type PerfTier } from './effects';
+export { CALL_SCALE_STEPS, callScaleOf, type CallScale } from './call-scale';
 export { feedback } from './feedback';
 export { usePressScale, type PressScaleKind } from './press-scale';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
 export {
-  useShortWindow,
-  useWindowHeight,
-  useWindowLayout,
-  useWindowWidth,
-} from './use-window-layout';
+  heightClassOf,
+  heightLayoutOf,
+  phoneLandscape,
+  sheetDetentsOf,
+  sheetScrolls,
+  stageStepOf,
+  talkSizeOf,
+  useHeightLayout,
+  type HeightClass,
+  type HeightLayout,
+  type SheetDetent,
+  type SheetShape,
+} from './height-layout';
+export { useWindowHeight, useWindowLayout, useWindowWidth } from './use-window-layout';
 export {
   classifyWindowSize,
-  isShortWindow,
   windowClassOf,
   type Navigation,
   type WindowLayout,

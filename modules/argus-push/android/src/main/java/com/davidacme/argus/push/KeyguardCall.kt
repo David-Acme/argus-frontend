@@ -41,6 +41,41 @@ object KeyguardCall {
     fun isKeyguardLocked(context: Context): Boolean =
         context.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked ?: false
 
+    fun requestUnlock(context: Context, done: (Boolean) -> Unit) {
+        val manager = context.getSystemService(KeyguardManager::class.java)
+        if (manager == null || !manager.isKeyguardLocked) {
+            done(true)
+            return
+        }
+        val activity = shown?.get() ?: PushActivityTracker.appActivity()
+        if (activity == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            NativeTrace.record("lock", "failed", "unlock-unavailable")
+            done(false)
+            return
+        }
+        activity.runOnUiThread {
+            manager.requestDismissKeyguard(activity, unlockCallback(done))
+        }
+    }
+
+    private fun unlockCallback(done: (Boolean) -> Unit) =
+        object : KeyguardManager.KeyguardDismissCallback() {
+            override fun onDismissSucceeded() {
+                NativeTrace.record("lock", "ok", "unlocked-for-camera")
+                done(true)
+            }
+
+            override fun onDismissCancelled() {
+                NativeTrace.record("lock", "stay", "unlock-cancelled")
+                done(false)
+            }
+
+            override fun onDismissError() {
+                NativeTrace.record("lock", "error", "unlock-refused")
+                done(false)
+            }
+        }
+
     fun onCreated(activity: Activity) {
         val extra = activity.intent?.getBooleanExtra(EXTRA_SHOW_OVER_LOCK, false) == true
         if (shouldAttach(armedCallId != null, extra, activity is CallActivity)) attach(activity)

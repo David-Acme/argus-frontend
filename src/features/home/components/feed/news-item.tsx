@@ -45,6 +45,7 @@ type NewsActionsProps = {
 const ACTION_KEYS = {
   review: 'screens.home.news.review',
   reply: 'screens.home.news.reply',
+  'call-back': 'screens.home.news.call-back',
 } as const;
 
 function useNewsWhen(thread: NotificationThread, now: number): string {
@@ -82,7 +83,7 @@ function NewsActions({ thread, action, sight, onRead, onOpen, onRemove }: NewsAc
       {watchKind ? (
         <WatchNotificationAction kind={watchKind} data={thread.latest.data} onDone={onRead} />
       ) : null}
-      {action === 'review' || action === 'reply' ? (
+      {action === 'review' || action === 'reply' || action === 'call-back' ? (
         <Button compact label={t(ACTION_KEYS[action])} onPress={onOpen} />
       ) : null}
       {onRemove ? (

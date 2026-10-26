@@ -11,11 +11,13 @@ import {
 
 export const NEWS_ROUTE = '/notification';
 
+export const NEWS_CALL_BACK_HREF = '/call';
+
 export const NEWS_STACK_LIMIT = 5;
 
 export const NEWS_COLUMN_ROW_PX = 100;
 
-export type NewsAction = 'module' | 'review' | 'reply' | null;
+export type NewsAction = 'module' | 'review' | 'reply' | 'call-back' | null;
 
 export type NewsWords = { who: string; text: string };
 
@@ -90,8 +92,7 @@ export function newsTargetOf(
   thread: Thread,
   hrefOf: (data: Readonly<Record<string, unknown>>) => string
 ): string | null {
-  const callId = missedCallId(thread);
-  if (callId) return `/call?callId=${callId}`;
+  if (missedCallId(thread)) return NEWS_CALL_BACK_HREF;
   const href = hrefOf(thread.latest.data);
   return href === '/' ? null : href;
 }
@@ -104,6 +105,7 @@ export function newsActionOf(
   const request = moduleRequestOf(thread);
   if (request && offersModule(request.moduleId)) return 'module';
   if (target === null) return null;
+  if (missedCallId(thread)) return 'call-back';
   if (messageCounterpartOf(thread) !== null) return 'reply';
   return thread.kind !== null && REVIEW_KINDS.has(thread.kind) ? 'review' : null;
 }

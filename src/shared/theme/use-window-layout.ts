@@ -1,5 +1,5 @@
 import { useWindowDimensions } from 'react-native';
-import { classifyWindowSize, isShortWindow, type WindowLayout } from './window-layout';
+import { classifyWindowSize, type WindowLayout } from './window-layout';
 
 export function useWindowLayout(): WindowLayout {
   const { width, height } = useWindowDimensions();
@@ -12,8 +12,4 @@ export function useWindowHeight(): number {
 
 export function useWindowWidth(): number {
   return useWindowDimensions().width;
-}
-
-export function useShortWindow(): boolean {
-  return isShortWindow(useWindowDimensions().height);
 }

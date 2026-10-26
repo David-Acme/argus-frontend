@@ -28,6 +28,8 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin'; ios: 'swift
   sendToBackground(): void;
   isKeyguardLocked(): boolean;
   overKeyguard(): boolean;
+  requestUnlock(): Promise<boolean>;
+  postCallSummary(title: string, body: string): void;
   outsideCallId(): string;
   exactAlarmsAllowed(): boolean;
   openExactAlarmSettings(): void;

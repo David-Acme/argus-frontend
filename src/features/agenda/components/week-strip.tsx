@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
-import { useShortWindow, useThemeTokens } from '@/shared/theme';
+import { useHeightLayout, useThemeTokens } from '@/shared/theme';
 import { PressableSurface } from '@/shared/ui/pressable';
 import type { DayCell, MonthCell } from '@/features/agenda/model/agenda-days';
 import { DayButton, DayLetters, MonthGrid } from '@/features/agenda/components/month-grid';
@@ -28,7 +28,8 @@ export function WeekStrip({
   onPick,
 }: WeekStripProps) {
   const { elevation } = useThemeTokens();
-  const short = useShortWindow();
+  const { heightClass, landscape } = useHeightLayout();
+  const short = heightClass !== 'regular' || landscape;
   const card = { boxShadow: elevation.card };
   return (
     <View className={clsx('rounded-card bg-surface px-2 pt-2', short && 'pb-2')} style={card}>

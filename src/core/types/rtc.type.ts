@@ -80,6 +80,7 @@ export type RtcDeclineAnswer =
 export type IncomingCall = {
   callId: string;
   reason: string;
+  subject?: string | null;
   summary: string;
   urgency: RtcCallUrgency;
   kind: RtcCallKind;
@@ -94,7 +95,8 @@ export type IncomingCall = {
   offers: string[];
 };
 
-export type IncomingCallCancelReason = 'answered_elsewhere' | 'expired' | 'resolved' | 'declined' | 'attended';
+export type IncomingCallCancelReason =
+  'answered_elsewhere' | 'expired' | 'resolved' | 'declined' | 'attended';
 
 export type IncomingCallCancel = {
   callId: string;
@@ -106,7 +108,8 @@ export type IncomingCallCancel = {
 
 export type CallMode = 'call' | 'notify' | 'off';
 
-export type CallTrigger = 'guardCritical' | 'guardIntruder' | 'guardEscalation' | 'guardArrival' | 'agenda' | 'assistant';
+export type CallTrigger =
+  'guardCritical' | 'guardIntruder' | 'guardEscalation' | 'guardArrival' | 'agenda' | 'assistant';
 
 export type CallPreferences = Record<CallTrigger, CallMode> & {
   userId: number;

@@ -1,14 +1,15 @@
 import { clsx } from 'clsx';
 import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { PressableSurfaceProps } from './pressable-types';
-import { useSurfacePress } from './use-surface-press';
+import type { PressableSurfaceProps } from '@/shared/ui/pressable/pressable-types';
+import { useSurfacePress } from '@/shared/ui/pressable/use-surface-press';
 
 export function PressableSurface({
   a11y,
   onPress,
   haptic,
   pressed,
+  hold,
   disabled,
   hitSlop,
   className,
@@ -16,7 +17,7 @@ export function PressableSurface({
   testID,
   children,
 }: PressableSurfaceProps) {
-  const press = useSurfacePress({ onPress, haptic, pressed, disabled, style });
+  const press = useSurfacePress({ onPress, haptic, pressed, hold, disabled, style });
   return (
     <Animated.View className={pressed?.grow ? 'grow' : undefined} style={press.scaleStyle}>
       <Pressable

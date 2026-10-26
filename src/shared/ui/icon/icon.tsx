@@ -1,6 +1,8 @@
 import { Circle, Path, Svg } from 'react-native-svg';
-import { size as sizes, useThemeTokens, type ColorRole } from '@/shared/theme';
-import { ICON_SHAPES, type IconGlyph, type IconShape } from './icon-shapes';
+import { size as sizes, useThemeTokens } from '@/shared/theme';
+import type { ColorRole } from '@/shared/theme';
+import { ICON_SHAPES } from '@/shared/ui/icon/icon-shapes';
+import type { IconGlyph, IconShape } from '@/shared/ui/icon/icon-shapes';
 
 export type IconTone = Extract<
   ColorRole,
@@ -18,14 +20,14 @@ export type IconTone = Extract<
 
 export type IconProps = {
   name: IconGlyph;
-  size?: 'small' | 'default';
+  size?: 'small' | 'default' | 'large';
   tone?: IconTone;
   label?: string;
 };
 
 type ShapeProps = { shape: IconShape };
 
-const PIXELS = { small: sizes.iconSmall, default: sizes.icon } as const;
+const PIXELS = { small: sizes.iconSmall, default: sizes.icon, large: sizes.iconLarge } as const;
 
 function Shape({ shape }: ShapeProps) {
   if ('d' in shape) return <Path d={shape.d} />;

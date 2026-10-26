@@ -60,6 +60,8 @@ const snapshot = (patch: Partial<VoiceSnapshot>): VoiceSnapshot => ({
   waitingCall: null,
   closedCallId: null,
   closedReason: null,
+  connectedAt: null,
+  callUrgency: null,
   ...patch,
 });
 

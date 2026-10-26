@@ -6,6 +6,7 @@ import UIKit
 struct RingRequest {
   let callId: String
   let expiresAtSeconds: Int64
+  let subject: String
 }
 
 struct CallDeepLink {
@@ -50,6 +51,7 @@ final class CallSession: NSObject, CXProviderDelegate {
     configuration.maximumCallsPerCallGroup = 1
     configuration.maximumCallGroups = 1
     configuration.supportedHandleTypes = [.generic]
+    configuration.iconTemplateImageData = EstelaStill.templateImage(side: 40).pngData()
     provider = CXProvider(configuration: configuration)
     super.init()
     provider.setDelegate(self, queue: .main)
@@ -277,7 +279,7 @@ final class CallSession: NSObject, CXProviderDelegate {
       end(ringing.key, suppressed: true)
     }
     let update = CXCallUpdate()
-    update.remoteHandle = CXHandle(type: .generic, value: request.callId)
+    update.remoteHandle = CXHandle(type: .generic, value: CallSession.handleText(request))
     update.localizedCallerName = "Argus"
     update.hasVideo = false
     update.supportsHolding = false
@@ -401,6 +403,11 @@ final class CallSession: NSObject, CXProviderDelegate {
       return
     }
     DispatchQueue.main.async(execute: work)
+  }
+
+  static func handleText(_ request: RingRequest) -> String {
+    let subject = request.subject.trimmingCharacters(in: .whitespacesAndNewlines)
+    return subject.isEmpty ? "Argus" : subject
   }
 
   private static func kind(of port: AVAudioSession.Port) -> String {
