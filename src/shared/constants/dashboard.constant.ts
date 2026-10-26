@@ -1,5 +1,4 @@
-import type { ComposeActionId, DashboardTab, IconName, TableName, TranslationKey } from '@/core/types';
-import type { Capability } from './capability.constant';
+import type { TranslationKey } from '@/core/types';
 
 export const NOTIFICATIONS_PANEL_HREF = '/notification';
 
@@ -17,70 +16,11 @@ export const TASK_PRIORITY_WEIGHT: Record<string, number> = {
   none: 4,
 };
 
-export const DASHBOARD_TAB_ROUTE: Record<
-  DashboardTab,
-  '/' | '/agenda' | '/projects' | '/people' | '/settings' | '/profile'
-> = {
-  home: '/',
-  schedule: '/agenda',
-  projects: '/projects',
-  people: '/people',
-  settings: '/settings',
-  profile: '/profile',
-};
-
-export const DASHBOARD_ROUTE_TAB: Record<string, DashboardTab> = {
-  '/': 'home',
-  '/agenda': 'schedule',
-  '/projects': 'projects',
-  '/people': 'people',
-  '/users': 'people',
-  '/settings': 'settings',
-  '/profile': 'profile',
-};
-
-export const DASHBOARD_TABS: readonly {
-  tab: DashboardTab;
-  icon: IconName;
-  table?: TableName;
-}[] = [
-  { tab: 'home', icon: 'home' },
-  { tab: 'schedule', icon: 'calendar', table: 'calendar_event' },
-  { tab: 'projects', icon: 'list-todo', table: 'project' },
-  { tab: 'people', icon: 'users' },
-  { tab: 'settings', icon: 'settings' },
-  { tab: 'profile', icon: 'user' },
-];
-
-export const COMPOSE_ACTIONS: readonly {
-  id: ComposeActionId;
-  icon: IconName;
-  route: '/agenda' | '/projects' | '/cameras' | '/call';
-  table?: TableName;
-  capability?: Capability;
-}[] = [
-  { id: 'event', icon: 'calendar', route: '/agenda', table: 'calendar_event' },
-  { id: 'project', icon: 'list-todo', route: '/projects', table: 'project' },
-  { id: 'camera', icon: 'video', route: '/cameras', table: 'camera' },
-  { id: 'voice', icon: 'sparkles', route: '/call' },
-];
-
 export const SCREEN_TITLE_KEYS = {
   agenda: 'screens.agenda.schedule',
   projects: 'screens.projects.title',
   cameras: 'screens.cameras.title',
 } as const satisfies Record<'agenda' | 'projects' | 'cameras', TranslationKey>;
-
-export const COMPOSE_ACTION_LABEL_KEYS: Record<ComposeActionId, TranslationKey> = {
-  event: SCREEN_TITLE_KEYS.agenda,
-  project: SCREEN_TITLE_KEYS.projects,
-  camera: SCREEN_TITLE_KEYS.cameras,
-  voice: 'screens.home.talk',
-};
-
-export const BOTTOM_NAV_HEIGHT = 60;
-
-export const COMPOSE_ITEM_STAGGER_MS = 45;
 
 export const ACTIVITY_WINDOW_DAYS = 7;
 

@@ -7,6 +7,7 @@ test('the project dialog names every field by its visible label', async ({ app, 
   const baseUrl = app.baseUrl ?? '';
   await second.open();
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
+  await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'New project' }).first().click();
   await expect.poll(async () => (await controls(second.page)).some((control) => control.role === 'textbox'), { timeout: 10000 }).toBe(true);
@@ -25,22 +26,33 @@ const click = (name: string, exact = true) => async (page: import('playwright-co
   await page.waitForTimeout(800);
 };
 
+const tab = (name: string) => async (page: import('playwright-core').Page) => {
+  await page.getByRole('tab', { name, exact: true }).first().click();
+  await page.waitForTimeout(800);
+};
+
 const SAME_PURPOSE = new Set(['projects: button: New project']);
 
 const VISITS: Visit[] = [
   { name: 'home', go: async (page) => page.waitForTimeout(800) },
-  { name: 'projects', go: click('Projects') },
+  { name: 'projects', go: async (page) => {
+    await tab('Agenda')(page);
+    await click('Projects')(page);
+  } },
   { name: 'security', go: async (page) => {
-    await click('Home')(page);
+    await tab('Home')(page);
     await click('Open security')(page);
   } },
   { name: 'environment', go: click('Open Casa') },
-  { name: 'people', go: click('People') },
-  { name: 'profile', go: click('Profile') },
-  { name: 'settings', go: click('Settings') },
+  { name: 'people', go: async (page) => {
+    await tab('You')(page);
+    await click('People')(page);
+  } },
+  { name: 'profile', go: tab('You') },
+  { name: 'settings', go: tab('Settings') },
   { name: 'activity', go: click('Activity history. Changes in your home and its modules, with filters.') },
   { name: 'modules', go: async (page) => {
-    await click('Settings')(page);
+    await tab('Settings')(page);
     await click('Modules. Choose what Argus does and follow each installation.')(page);
   } },
 ];

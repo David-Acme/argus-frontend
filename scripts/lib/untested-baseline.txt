@@ -268,13 +268,8 @@ src/features/watch/components/watch-transcript.tsx
 src/features/watch/screens/watch-screen.tsx
 src/shared/components/cameras/masked-cameras-notice.tsx
 src/shared/components/layout/app-screen.tsx
-src/shared/components/layout/app-shell.tsx
-src/shared/components/layout/bottom-nav.tsx
 src/shared/components/layout/centered-screen.tsx
-src/shared/components/layout/compose-fab.tsx
 src/shared/components/layout/edge-fade.tsx
-src/shared/components/layout/global-bottom-nav.tsx
-src/shared/components/layout/nav-rail.tsx
 src/shared/components/layout/screen-header.tsx
 src/shared/components/layout/top-notice-bar.tsx
 src/shared/components/sharing/share-members-dialog.tsx

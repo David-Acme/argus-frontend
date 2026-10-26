@@ -56,26 +56,28 @@ test('a module turned off on one device leaves the other at once, and comes back
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
   await emit(baseUrl, [{ frame: { operation: 4, option: 'project', info: renamed } }]);
+  await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await expect.poll(() => onProjects(second.page), { timeout: 10000 }).toBeGreaterThan(0);
   await expect.poll(() => second.page.getByRole('button', { name: /^Huerto, / }).count(), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Settings').first().click();
+  await screen.getByRole('tab', 'Settings').first().click();
   await screen.getByRole('button', 'Modules. Choose what Argus does and follow each installation.').click();
   await screen.getByRole('button', 'Turn off: Productivity').click();
   await screen.getByText('Turn off', { exact: true }).last().click();
 
   await expect.poll(() => onProjects(second.page), { timeout: LIVE_MS }).toBe(0);
-  await expect.poll(() => second.page.getByRole('button', { name: 'Schedule', exact: true }).count()).toBe(0);
+  await expect.poll(() => second.page.getByRole('tab', { name: 'Agenda', exact: true }).count()).toBe(0);
   await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(0);
 
   await store(baseUrl, 'project', { ...renamed, name: 'Huerto comunitario' });
 
   await screen.getByText('Turn on', { exact: true }).first().click();
   await expect
-    .poll(() => second.page.getByRole('button', { name: 'Schedule', exact: true }).count(), { timeout: LIVE_MS })
+    .poll(() => second.page.getByRole('tab', { name: 'Agenda', exact: true }).count(), { timeout: LIVE_MS })
     .toBeGreaterThan(0);
   await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(2);
+  await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await expect.poll(() => second.page.getByRole('button', { name: /^Huerto comunitario, / }).count(), { timeout: LIVE_MS }).toBe(1);
   await expect.poll(() => second.page.getByRole('button', { name: /^Huerto, / }).count()).toBe(0);

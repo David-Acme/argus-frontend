@@ -3,8 +3,6 @@ import { agendaSections } from './agenda-sections';
 export const home = {
   recent: 'Recent',
   'see-all': 'See all',
-  profile: 'Profile',
-  compose: 'Create',
   'camera-sections': {
     cameras: 'Cameras',
     security: 'Security',
@@ -27,7 +25,6 @@ export const home = {
     'open-security': 'Open Security',
     clips: 'Recent clips',
   },
-  home: 'Home',
   'notification-deleted': 'Notification deleted',
   'notification-delete-failed': 'The notification could not be deleted',
   thread: {
@@ -38,7 +35,6 @@ export const home = {
     'delivered-at': 'Received {time}',
   },
   'agenda-sections': agendaSections,
-  talk: 'Talk to Argus',
   inicio: {
     greeting: {
       morning: 'Good morning, {name}',

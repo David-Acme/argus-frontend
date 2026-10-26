@@ -510,7 +510,6 @@ export default function CameraDetailScreen() {
   return (
     <AppScreen
       scrollable={false}
-      bottomNav={false}
       header={
         <ScreenHeader
           title={camera.name}

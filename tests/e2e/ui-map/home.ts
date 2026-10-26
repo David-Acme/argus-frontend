@@ -205,13 +205,13 @@ export const HOME: ScreenSpec[] = [
       {
         state: 'offline-toast',
         rows: POPULATED,
-        act: offline(5200),
+        act: offline(13200),
         notes: 'socket dropped and refused for 15 min; the warning toast',
       },
       {
         state: 'offline-icon',
         rows: POPULATED,
-        act: offline(13000),
+        act: offline(21000),
         notes: 'after the toast closes, the wifi-off icon stays in the top bar',
       },
       {
@@ -219,7 +219,7 @@ export const HOME: ScreenSpec[] = [
         rows: POPULATED,
         seed: remote({ 'argus.e2e': 'connect', 'argus-tunnel.lynk.page': 'tls-peer-closed' }),
         act: async () => {
-          await sleep(6000);
+          await sleep(14000);
         },
       },
       {
@@ -227,7 +227,7 @@ export const HOME: ScreenSpec[] = [
         rows: POPULATED,
         seed: remote({ 'argus.e2e': 'connect', 'argus-tunnel.lynk.page': 'connect' }),
         act: async () => {
-          await sleep(6000);
+          await sleep(14000);
         },
       },
       { state: 'search-no-match', rows: POPULATED, act: search('zzzz') },

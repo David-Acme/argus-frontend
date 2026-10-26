@@ -18,11 +18,13 @@ test('a project created on one device appears on the other, live, after a backgr
   await second.open();
 
   const open = async (): Promise<void> => {
+    await screen.getByRole('tab', 'Agenda').first().click();
     await screen.getByRole('button', 'Projects').first().click();
     await expect(screen.getByRole('heading', 'Projects')).toBeVisible();
   };
   await open();
-  await second.page.getByRole('button', { name: 'Projects' }).first().click();
+  await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
+  await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 

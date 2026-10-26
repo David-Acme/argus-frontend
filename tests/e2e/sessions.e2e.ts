@@ -52,7 +52,7 @@ test('a session closed on one device ends the other at once, and the list that c
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => second.page.getByText(/Good (morning|afternoon|evening), Ana/).first().count(), { timeout: 10000 }).toBe(1);
 
-  await screen.getByRole('button', 'Profile').first().click();
+  await screen.getByRole('tab', 'You').first().click();
   await expect(screen.getByRole('button', 'Sign out of Teléfono de Ana')).toBeVisible();
   await screen.getByRole('button', 'Sign out of Teléfono de Ana').click();
 

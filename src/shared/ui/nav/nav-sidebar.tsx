@@ -87,7 +87,7 @@ export function NavSidebar(props: NavProps) {
       )}
       style={SIDE}>
       <View className="px-nav-brand-x pb-nav-brand-bottom gap-nav-brand-gap flex-row items-center">
-        {presence ? <Presence state={presence} size={size.presenceBrand} /> : null}
+        {presence ? <Presence state={presence} size={size.presenceBrand} paused /> : null}
         <Text variant="brand">{brand?.label ?? copy.navigation}</Text>
       </View>
       {onCommand ? (

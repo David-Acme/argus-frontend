@@ -64,7 +64,7 @@ export function NavStatus({ title, rows, meter, ask, presence }: NavStatusProps)
         onPress={ask.onPress}
         hitSlop={ASK_SLOP}
         className="min-h-ask-field rounded-control bg-surface px-nav-ask-x gap-nav-ask-gap flex-row items-center">
-        {presence ? <Presence state={presence} size={size.presenceAsk} /> : null}
+        {presence ? <Presence state={presence} size={size.presenceAsk} paused /> : null}
         <Text variant="sideStat" tone="3" numberOfLines={1}>
           {ask.label}
         </Text>

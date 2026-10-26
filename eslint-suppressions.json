@@ -214,7 +214,7 @@
   },
   "src/core/stores/index.ts": {
     "argus/no-export-all": {
-      "count": 10
+      "count": 9
     }
   },
   "src/core/stores/toast.store.ts": {
@@ -1246,9 +1246,6 @@
     }
   },
   "src/features/conversations/screens/conversation-thread-screen.tsx": {
-    "i18next/no-literal-string": {
-      "count": 2
-    },
     "max-lines-per-function": {
       "count": 1
     }
@@ -2134,9 +2131,6 @@
     "argus/no-template-key": {
       "count": 2
     },
-    "complexity": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
@@ -2672,40 +2666,11 @@
   "src/shared/components/layout/app-screen.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
-  "src/shared/components/layout/bottom-nav.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/shared/components/layout/compose-fab.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/shared/components/layout/edge-fade.tsx": {
     "argus/no-inline-size": {
       "count": 2
-    }
-  },
-  "src/shared/components/layout/global-bottom-nav.tsx": {
-    "argus/no-inline-size": {
-      "count": 1
-    }
-  },
-  "src/shared/components/layout/nav-rail.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
     }
   },
   "src/shared/components/layout/top-notice-bar.tsx": {

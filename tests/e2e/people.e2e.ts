@@ -10,8 +10,10 @@ test('a member enrolled on a third device appears in People on both devices, liv
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
+  await screen.getByRole('tab', 'You').first().click();
   await screen.getByRole('button', 'People').first().click();
-  await second.page.getByRole('button', { name: 'People' }).first().click();
+  await second.page.getByRole('tab', { name: 'You', exact: true }).first().click();
+  await second.page.getByRole('button', { name: 'People', exact: true }).first().click();
   await expect(screen.getByRole('heading', 'People and access')).toBeVisible();
   await expect(screen.getByText('Ana Ruiz').first()).toBeVisible();
 

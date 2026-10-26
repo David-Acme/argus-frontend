@@ -31,7 +31,7 @@ export const SYNC_GRANT_SCOPES_PREFIX = 'app.sync.grants.';
 export const SYNC_WS_PATH = '/sync';
 
 export const WS_RECONNECT_BASE_MS = 2000;
-export const OFFLINE_NOTICE_DELAY_MS = 4000;
+export const OFFLINE_NOTICE_DELAY_MS = 12000;
 export const WS_RECONNECT_MAX_MS = 30000;
 
 export const SYNC_WS_CONNECT_TIMEOUT_MS = 8000;

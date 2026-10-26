@@ -120,6 +120,14 @@ export function withCameraIn(
   });
 }
 
+export function headlineMode(environments: readonly GuardEnvironment[]): GuardMode | null {
+  const first = environments[0];
+  if (!first) return null;
+  return environments.every((environment) => environment.effectiveMode === first.effectiveMode)
+    ? first.effectiveMode
+    : null;
+}
+
 export function sharedMode(environments: readonly GuardEnvironment[]): GuardMode | null {
   const first = environments[0];
   if (!first) return null;

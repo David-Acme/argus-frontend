@@ -48,6 +48,8 @@ type ProjectsParams = { id?: string; task?: string; new?: string };
 
 const UPCOMING_LIMIT = 6;
 
+const AGENDA_HREF = '/agenda';
+
 export default function ProjectsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -218,7 +220,7 @@ export default function ProjectsScreen() {
             <IconButton
               icon="arrow-left"
               label={t('common.back')}
-              onPress={() => router.replace('/')}
+              onPress={() => (router.canGoBack() ? router.back() : router.replace(AGENDA_HREF))}
             />
             <Text variant="title">{t(SCREEN_TITLE_KEYS.projects)}</Text>
             {canCreateProject ? (

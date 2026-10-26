@@ -1,6 +1,7 @@
 export const profile = {
   title: 'Tu perfil',
   people: 'Personas',
+  'home-group': 'Casa',
   'connect-device': 'Conectar otro dispositivo',
   appearance: 'Apariencia',
   'theme-label': 'Tema de la aplicación',

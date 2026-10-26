@@ -3,8 +3,6 @@ import { agendaSections } from './agenda-sections';
 export const home = {
   recent: 'Novedades',
   'see-all': 'Ver todo',
-  profile: 'Perfil',
-  compose: 'Crear',
   'camera-sections': {
     cameras: 'Cámaras',
     security: 'Seguridad',
@@ -27,7 +25,6 @@ export const home = {
     'open-security': 'Ver Seguridad',
     clips: 'Clips recientes',
   },
-  home: 'Inicio',
   'notification-deleted': 'Notificación borrada',
   'notification-delete-failed': 'No se pudo borrar la notificación',
   thread: {
@@ -38,7 +35,6 @@ export const home = {
     'delivered-at': 'Recibida {time}',
   },
   'agenda-sections': agendaSections,
-  talk: 'Hablar con Argus',
   inicio: {
     greeting: {
       morning: 'Buenos días, {name}',
