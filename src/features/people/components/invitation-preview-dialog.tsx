@@ -3,7 +3,7 @@ import type { IInvitationRecord } from '@/core/interfaces';
 import { AdaptiveDialog } from '@/shared/components/ui/adaptive-dialog';
 import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
-import { QrCode } from '@/shared/components/ui/qr-code';
+import { LazyQrCode } from '@/shared/components/ui/lazy-qr-code';
 import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -63,7 +63,7 @@ export function InvitationPreviewDialog({
       {preview ? (
         <View className="items-center gap-4 pb-1">
           {state === 'waiting' ? (
-            <QrCode value={preview.value} size={220} errorCorrection="M" />
+            <LazyQrCode value={preview.value} size={220} errorCorrection="M" />
           ) : (
             <View className="bg-surface-secondary size-[220px] items-center justify-center gap-3 rounded-3xl px-6">
               <Icon

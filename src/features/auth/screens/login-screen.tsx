@@ -4,7 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Icon } from '@/shared/components/ui/icon';
 import { CenteredScreen } from '@/shared/components/layout';
 import { Text } from '@/shared/components/ui/text';
-import { QrCode } from '@/shared/components/ui/qr-code';
+import { LazyQrCode } from '@/shared/components/ui/lazy-qr-code';
 import { buildLoginQr } from '@/features/auth/model/login-qr';
 import { loginEntry, loginPollOutcome } from '@/features/auth/model/login-entry';
 import { useTranslation } from '@/shared/hooks/use-translation';
@@ -133,7 +133,7 @@ export default function LoginScreen() {
       {phase === 'qr' && challengeId ? (
         <>
           <View className="rounded-2xl border border-border bg-white p-4 shadow-lg shadow-black/5">
-            <QrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color={QR_COLORS.foreground} quietZone={0} />
+            <LazyQrCode value={buildLoginQr(challengeId)} size={QR_SIZE} color={QR_COLORS.foreground} quietZone={0} />
           </View>
           <Text variant="caption" className="text-center">
             {t('screens.login.qr-hint')}

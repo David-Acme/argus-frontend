@@ -623,9 +623,6 @@
     }
   },
   "src/features/auth/hooks/use-face-capture.ts": {
-    "@typescript-eslint/consistent-type-imports": {
-      "count": 1
-    },
     "complexity": {
       "count": 3
     },
