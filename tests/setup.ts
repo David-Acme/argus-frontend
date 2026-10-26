@@ -4,6 +4,8 @@ import { join } from 'node:path';
 
 Object.assign(globalThis, { window: globalThis });
 
+const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');
+
 mock.module('react-native', () => ({
   Platform: {
     OS: 'web',
@@ -26,7 +28,6 @@ mock.module('react-native', () => ({
   ScrollView: undefined,
 }));
 
-const iconSource = readFileSync(join(import.meta.dir, '../src/shared/constants/icon.constant.ts'), 'utf8');
 for (const [, path = ''] of iconSource.matchAll(/from '(lucide-react-native\/icons\/[a-z0-9-]+)'/g)) {
   mock.module(path, () => ({ default: () => null }));
 }

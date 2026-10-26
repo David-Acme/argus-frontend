@@ -75,6 +75,14 @@ export function reset(): void {
   Object.assign(people, { readable: true, status: 'ready', people: [] });
 }
 
+const dates = createDateFormatter('es', {
+  languageTag: 'es-PE',
+  regionCode: 'PE',
+  uses24hourClock: true,
+  firstWeekday: 2,
+  timeZone: null,
+});
+
 mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => params,
@@ -87,14 +95,6 @@ mock.module('expo-router', () => ({
   }),
   useIsFocused: () => true,
 }));
-
-const dates = createDateFormatter('es', {
-  languageTag: 'es-PE',
-  regionCode: 'PE',
-  uses24hourClock: true,
-  firstWeekday: 2,
-  timeZone: null,
-});
 
 mock.module('@/shared/hooks/use-date-formatter', () => ({ useDateFormatter: () => dates }));
 

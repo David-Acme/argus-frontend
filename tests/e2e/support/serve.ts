@@ -84,4 +84,4 @@ const server = Bun.serve<{ device: string }>({
   },
 });
 
-console.log(`fake argus on http://127.0.0.1:${server.port}`);
+process.stdout.write(`fake argus on http://127.0.0.1:${server.port}\n`);

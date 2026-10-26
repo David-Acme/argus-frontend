@@ -5343,7 +5343,7 @@ preset's own decisions and are not exceptions.
 
 | Rule | Paths | Reason | Source or measurement | Date |
 |---|---|---|---|---|
-| `react-hooks/immutability` | `src/**`, `scripts/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
+| `react-hooks/immutability` | `src/**`, `scripts/**`, `tests/**` | Reanimated shared values are written as `sv.value = x`, which the compiler rule reads as mutating a hook value; the tests drive the same values through their mocks. It comes back at S1 with the `.value` → `.get()`/`.set()` codemod (owner decision L2). | [react-hooks-lint], [rea-sv]; `shared-value-dot-value` 315 at R0 | 2026-08-20 |
 | `no-console` | `src/core/services/log.ts`, `scripts/**` | `log.ts` is the one logging home (rules 10, 33); the scripts are command-line gates whose output is the console. | [eslint-core-rules] | 2026-10-03 |
 | `i18next/no-literal-string` | `src/features/ui-lab/**/*.tsx` | The UI lab is a development catalogue: it redirects to `/` outside `__DEV__`, so no user reads its labels. Since p1/ds-base the route `src/app/ui-lab.tsx` is a one-line re-export and the screen and its demos live in `src/features/ui-lab/`. | [i18next-lint]; 20 literals in `ui-lab.tsx` at R0 | 2026-10-20 |
 | `complexity`, `max-lines-per-function`, `max-lines`, `max-statements`, `max-depth`, `max-params` | `src/core/i18n/locales/**` | The dictionaries are data: one exported object per namespace, whose length is the copy's, not a function's. The budgets of rule 32 measure code. | rule 32; 68 locale files at R0 | 2026-10-20 |
@@ -5353,6 +5353,35 @@ preset's own decisions and are not exceptions.
 | `argus/date-formatter-home`, `argus/intl-date-home` | `src/shared/hooks/use-date-formatter/date.ts` | The one formatter is the only user of `date-fns` and `Intl.DateTimeFormat` (rule 10). | rule 10 | 2026-10-20 |
 | `argus/platform-os-home` | `src/shared/constants/common.constant.ts` | The `IS_*` flags are defined from `Platform.OS` here, and only here (rule 10). | rule 10 | 2026-10-20 |
 | `argus/no-color-literal` | `src/shared/theme/**` | `tokens.ts` and `effects.ts` are the home of the colour values (rule 10). | rule 22 | 2026-10-20 |
+
+### Imports and the test module layout (2026-10-26)
+
+`import/first` and `import/no-duplicates` are errors everywhere lint looks,
+and `lint` covers `tests/` since 2026-10-26 (48 problems in 389 files before,
+0 after). The tests resolve `@tests/*` through `tests/tsconfig.json`, set as
+the TypeScript import resolver's project for `tests/**`.
+
+A static import is evaluated before any statement of its file, so a module a
+test replaces with `mock.module` must be loaded after the mock with
+`await import`. Every file under `tests/` follows one layout, which
+`argus/test-module-layout` enforces:
+
+1. the static imports;
+2. the state the mock factories read (plain declarations);
+3. every top-level `mock.module(...)`, as one block (a loop that only
+   installs mocks counts as one);
+4. one block of `const { ... } = await import('...')`;
+5. the fixtures and the tests.
+
+A dynamic `import()` inside a function is refused, except as the factory of a
+`mock.module` call (`() => import('react-native-web')`). A module that needs
+a `beforeAll` to load is loaded at the top level instead: Bun evaluates a
+test file, then runs its tests, so the order is the same.
+
+In `src/`, a dynamic `import()` is only for lazy, platform-only or heavy code
+(rule 30), and a file that loads the same module more than once does it
+through one memoised loader (`const livekit = () => (livekitModule ??=
+importLivekit())`).
 
 ## Rules and gates, R0 (2026-10-20)
 
@@ -5376,6 +5405,9 @@ in `tests/unit/scripts/` that feeds it a violating tree (rule 1).
 | `check-format.ts` | `prettier --list-different` over the code of `src`, `scripts`, `tests`: a file not on the list must be formatted, and the list only shrinks | `scripts/lib/format-baseline.txt` |
 | `lint` | `eslint src scripts --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts --prune-suppressions` in the same change | `eslint-suppressions.json` |
 | `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` row (a package, or a route screen module) keeps a chunk of its own (Metro names an async chunk after its package or module; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
+
+| `lint` | `eslint src scripts tests --max-warnings 0` with the lint set and `eslint-suppressions.json`; unpruned suppressions fail (ESLint 9.39 exits 2 unless `--pass-on-unpruned-suppressions`): after a fix, run `npx eslint src scripts tests --prune-suppressions` in the same change | `eslint-suppressions.json` |
+| `check:bundle` | the render under the Tauri CSP, then the entry chunk (the scripts `dist/index.html` loads) and `dist/` against their byte baselines (above fails, and more than 0.1% below fails until the baseline is lowered in the same change: the bytes of one tree are reproducible, so the tolerance only absorbs build noise), and each `lazy` package keeps a chunk of its own (Metro names an async chunk after its package; a static import pulls it into the entry and the chunk disappears) | `scripts/lib/bundle-baseline.txt` |
 
 **The quality counters at R0** (they replace the `09cf103` survey numbers of
 the rules document; definitions are in `scripts/lib/quality/`):

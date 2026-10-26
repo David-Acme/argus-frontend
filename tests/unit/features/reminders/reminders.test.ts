@@ -80,6 +80,12 @@ const intentFor = (patch: Partial<OptimisticIntent>): OptimisticIntent => ({
   ...patch,
 });
 
+const lima = () => {
+  const clock = intlZoneClock('America/Lima');
+  if (!clock) throw new Error('this runtime does not know America/Lima');
+  return clock;
+};
+
 describe('reminder rows', () => {
   test('pending ones come first by time and the done ones are the latest few', () => {
     const rows = [
@@ -219,11 +225,6 @@ describe('reminder repeat', () => {
 });
 
 describe('the instant roll and the audit diff that corrects it', () => {
-  const lima = () => {
-    const clock = intlZoneClock('America/Lima');
-    if (!clock) throw new Error('this runtime does not know America/Lima');
-    return clock;
-  };
   const at = (year: number, month: number, day: number, hour: number): number =>
     lima().epochOf({ year, month, day, hour, minute: 0, second: 0 });
 
@@ -292,11 +293,6 @@ describe('the instant roll and the audit diff that corrects it', () => {
 });
 
 describe('reminder snooze', () => {
-  const lima = () => {
-    const clock = intlZoneClock('America/Lima');
-    if (!clock) throw new Error('this runtime does not know America/Lima');
-    return clock;
-  };
   const MINUTE = 60_000;
 
   test('an overdue reminder offers every preset, each later than now', () => {
@@ -378,26 +374,16 @@ describe('reminder projection and optimistic rows', () => {
     ]);
   });
 
-  const intent = (patch: Partial<OptimisticIntent>): OptimisticIntent => ({
-    id: 'i1',
-    table: 'reminder',
-    kind: 'update',
-    recordId: '1',
-    values: {},
-    confirmed: false,
-    ...patch,
-  });
-
   test('completing shows at once, deleting removes the row and a create never shows: Argus alone creates reminders', () => {
     const rows = [row(), row({ id: '2', scheduledAt: NOW + 2 * HOUR })];
-    const done = applyIntents(rows, [intent({ values: { isCompleted: true } })], REMINDER_LENSES, byScheduled);
+    const done = applyIntents(rows, [intentFor({ values: { isCompleted: true } })], REMINDER_LENSES, byScheduled);
     expect(done[0]?.isCompleted).toBe(true);
     expect(done[0]?.completedAt).not.toBeNull();
-    const gone = applyIntents(rows, [intent({ kind: 'delete' })], REMINDER_LENSES, byScheduled);
+    const gone = applyIntents(rows, [intentFor({ kind: 'delete' })], REMINDER_LENSES, byScheduled);
     expect(gone.map((item) => item.id)).toEqual(['2']);
     const created = applyIntents(
       rows,
-      [intent({ kind: 'create', recordId: 'pending-9', values: { title: 'Nuevo', scheduledAt: Math.round((NOW + 90 * 60_000) / 1000) } })],
+      [intentFor({ kind: 'create', recordId: 'pending-9', values: { title: 'Nuevo', scheduledAt: Math.round((NOW + 90 * 60_000) / 1000) } })],
       REMINDER_LENSES,
       byScheduled
     );
@@ -407,7 +393,7 @@ describe('reminder projection and optimistic rows', () => {
   test('an edit changes the title and the time on the row while the server answers', () => {
     const edited = applyIntents(
       [row()],
-      [intent({ values: { title: 'Nuevo título', scheduledAt: Math.round((NOW + 5 * HOUR) / 1000), description: null } })],
+      [intentFor({ values: { title: 'Nuevo título', scheduledAt: Math.round((NOW + 5 * HOUR) / 1000), description: null } })],
       REMINDER_LENSES
     );
     expect(edited[0]).toMatchObject({ title: 'Nuevo título', scheduledAt: NOW + 5 * HOUR, description: '' });
@@ -435,11 +421,6 @@ describe('home search copy', () => {
 });
 
 describe('one occurrence of a recurring reminder', () => {
-  const lima = () => {
-    const clock = intlZoneClock('America/Lima');
-    if (!clock) throw new Error('this runtime does not know America/Lima');
-    return clock;
-  };
   const MONDAY = Date.UTC(2026, 9, 5, 13, 0, 0);
   const NEXT_MONDAY = Date.UTC(2026, 9, 12, 13, 0, 0);
   const THIRD_MONDAY = Date.UTC(2026, 9, 19, 13, 0, 0);
@@ -516,11 +497,6 @@ describe('one occurrence of a recurring reminder', () => {
 });
 
 describe('a snooze on a recurring reminder changes only this occurrence', () => {
-  const lima = () => {
-    const clock = intlZoneClock('America/Lima');
-    if (!clock) throw new Error('this runtime does not know America/Lima');
-    return clock;
-  };
   const MINUTE = 60_000;
   const EIGHT = Date.UTC(2026, 9, 6, 13, 0, 0);
   const TOMORROW_EIGHT = EIGHT + DAY;

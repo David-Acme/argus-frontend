@@ -13,6 +13,7 @@ mock.module('@/core/services/storage', () => ({
 }));
 
 const { viewCacheService } = await import('@/core/services/view-cache.service');
+const { applyWrites } = await import('@/core/services/view-cache/projection');
 
 describe('viewCacheService', () => {
   beforeEach(() => {
@@ -75,8 +76,7 @@ describe('clearing the view cache', () => {
 });
 
 describe('applyWrites', () => {
-  test('a tracked key drops the scopes the projection no longer writes', async () => {
-    const { applyWrites } = await import('@/core/services/view-cache/projection');
+  test('a tracked key drops the scopes the projection no longer writes', () => {
     viewCacheService.setUserId('u1');
     applyWrites(
       [

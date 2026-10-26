@@ -2,9 +2,11 @@ import { Redirect } from 'expo-router';
 import { lazyScreen } from '@/shared/libs/lazy-screen';
 import { labAllowed, spikesAllowed } from '../model/lab-access';
 
-const Lab = lazyScreen(() => import('./lab-screens'), 'UiLabScreen');
+const labScreens = () => import('./lab-screens');
 
-const Spikes = lazyScreen(() => import('./lab-screens'), 'SpikesScreen');
+const Lab = lazyScreen(labScreens, 'UiLabScreen');
+
+const Spikes = lazyScreen(labScreens, 'SpikesScreen');
 
 export function UiLabRoute() {
   if (!labAllowed(__DEV__)) return <Redirect href="/" />;

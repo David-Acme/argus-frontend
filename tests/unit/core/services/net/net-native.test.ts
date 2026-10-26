@@ -280,7 +280,7 @@ describe('the phone net service against a moved server', () => {
     probeOutcome = (url) => (throughRelay(url) ? 'connect' : 'pin');
 
     expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'remote-unavailable', relayRefused: false });
-    probeOutcome = (url) => (throughRelay(url) ? 'connect' : 'connect');
+    probeOutcome = () => 'connect';
     expect(await netService.probeRoute()).toEqual({ mode: 'relay', status: 'remote-unavailable', relayRefused: false });
     probeOutcome = (url) => (throughRelay(url) ? 'connect' : 'pin');
     await netService.probeRoute();

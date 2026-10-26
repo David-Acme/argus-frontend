@@ -45,6 +45,26 @@ class FakeCall implements IRealtimeCall {
 }
 
 let call = new FakeCall();
+const stoppedOngoing: number[] = [];
+const sharedMute: boolean[] = [];
+let callControl: (action: 'hangup' | 'mute-on' | 'mute-off') => void = () => undefined;
+const endedSessions: (string | null)[] = [];
+const micModule = join(
+  import.meta.dir,
+  '../../../../src/features/voice/services/voice/voice-platform.ts'
+);
+const fakeMic = {
+  start: () => undefined,
+  stop: () => undefined,
+  playerStart: () => undefined,
+  playerWrite: () => undefined,
+  playerFlush: () => undefined,
+  playerStop: () => undefined,
+  playedSamples: () => 0,
+  onData: null,
+  onError: null,
+  onPlayerIdle: null,
+};
 
 mock.module('react-native-reanimated', () => ({
   makeMutable: <T>(value: T) => ({ value }),
@@ -108,9 +128,6 @@ mock.module('@/core/services/sync', () => ({
     },
   },
 }));
-const stoppedOngoing: number[] = [];
-const sharedMute: boolean[] = [];
-let callControl: (action: 'hangup' | 'mute-on' | 'mute-off') => void = () => undefined;
 mock.module('@/core/services/push', () => ({
   pushService: {
     stopOngoingCall: () => stoppedOngoing.push(1),
@@ -123,7 +140,6 @@ mock.module('@/core/services/push', () => ({
     startAssistantCall: async () => false,
   },
 }));
-const endedSessions: (string | null)[] = [];
 mock.module('@/features/voice/services/voice/voice-session-end', () => ({
   endRevokedSession: (cause: string | null) => endedSessions.push(cause),
 }));
@@ -131,22 +147,6 @@ mock.module('@/features/voice/services/rtc', () => ({
   rtcCallSupported: () => realtimeSupported,
   createRealtimeCall: () => call,
 }));
-const micModule = join(
-  import.meta.dir,
-  '../../../../src/features/voice/services/voice/voice-platform.ts'
-);
-const fakeMic = {
-  start: () => undefined,
-  stop: () => undefined,
-  playerStart: () => undefined,
-  playerWrite: () => undefined,
-  playerFlush: () => undefined,
-  playerStop: () => undefined,
-  playedSamples: () => 0,
-  onData: null,
-  onError: null,
-  onPlayerIdle: null,
-};
 mock.module(micModule, () => ({
   createVoiceMic: () => fakeMic,
   voiceCallSupported: () => true,
