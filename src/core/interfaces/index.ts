@@ -10,7 +10,6 @@ export * from './sync.interface';
 export * from './socket-emit.interface';
 export * from './socket.interface';
 export * from './voice.interface';
-export * from './reaction.interface';
 export * from './calendar.interface';
 export * from './project.interface';
 export * from './camera.interface';

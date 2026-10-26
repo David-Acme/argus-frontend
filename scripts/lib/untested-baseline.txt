@@ -234,16 +234,8 @@ src/features/visitors/components/visitor-visits-panel.tsx
 src/features/visitors/components/visitors-preview-panel.tsx
 src/features/visitors/screens/visitor-detail-screen.tsx
 src/features/visitors/screens/visitors-screen.tsx
-src/features/voice/components/avatar.tsx
-src/features/voice/components/call-action-chips.tsx
-src/features/voice/components/call-camera-card.tsx
-src/features/voice/components/call-control.tsx
-src/features/voice/components/call-pill.tsx
 src/features/voice/components/call-preferences-section.tsx
 src/features/voice/components/call-settings-dialog.tsx
-src/features/voice/components/call-surface.tsx
-src/features/voice/components/call-transcript.tsx
-src/features/voice/components/incoming-call-surface.tsx
 src/features/voice/components/voice-web-notice.tsx
 src/features/voice/screens/call-screen.tsx
 src/features/watch/components/visitor-reply.tsx

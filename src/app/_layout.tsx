@@ -18,7 +18,13 @@ import { Toaster } from '@/shared/components/ui/toaster';
 import { TopNoticeBar } from '@/shared/components/layout';
 import { SessionGate } from '@/features/auth';
 import { useAuthStore } from '@/core/stores';
-import { CallPill, currentCallLockRedirect, IncomingCallSurface, useDesktopBridge } from '@/features/voice';
+import {
+  CallPill,
+  currentCallLockRedirect,
+  IncomingCallSurface,
+  MissedCallCard,
+  useDesktopBridge,
+} from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
 import { WatchPill } from '@/features/watch';
 import { usePushListeners } from '@/features/notification';
@@ -79,6 +85,7 @@ export default function RootLayout() {
                 </Stack>
               </View>
               <CallPill />
+              <MissedCallCard />
               <WatchPill />
               <IncomingCallSurface />
               <InAppAlertBanner />

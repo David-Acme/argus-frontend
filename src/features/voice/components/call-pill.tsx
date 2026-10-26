@@ -1,62 +1,68 @@
 import { usePathname, useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
-import { useCallBridge } from '@/features/voice/hooks/use-call-bridge';
+import { View } from 'react-native';
+import { ScopedTheme } from 'uniwind';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { PressableSurface } from '@/shared/ui/pressable';
+import { Text } from '@/shared/ui/text';
+import { CallAvatar } from '@/features/voice/components/call-avatar';
+import { RoundControl } from '@/features/voice/components/round-control';
+import { CALL_BANNER_CONTROL, CALL_MINI_AVATAR } from '@/features/voice/constants/call.constant';
+import { useCallBridge } from '@/features/voice/hooks/use-call-bridge';
+import { useCallClock } from '@/features/voice/hooks/use-call-clock';
+import { useCallFloat } from '@/features/voice/hooks/use-call-float';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
+import { formatCallClock, stagePresenceOf } from '@/features/voice/model/call-stage';
 import { holdTalkLive } from '@/features/voice/model/hold-talk';
+import { CALL_SCREEN_PATH } from '@/features/voice/model/incoming-surface';
 import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
 
 export function CallPill() {
   useCallBridge();
   const router = useRouter();
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
+  const float = useCallFloat();
   const { t } = useTranslation();
-  const { isActive, phase, callReason, stop } = useVoiceSession();
+  const { isActive, phase, connectedAt, stop } = useVoiceSession();
+  const elapsedMs = useCallClock(isActive ? connectedAt : null);
   const holding = useHoldTalkStore((state) => holdTalkLive(state.hold));
-  const label =
-    callReason ??
-    t(phase === 'reconnecting' ? 'screens.voice.status-reconnecting' : 'screens.voice.in-call');
 
-  if (!isActive || holding || pathname === '/call' || pathname.startsWith('/welcome')) return null;
+  if (!isActive || holding || pathname === CALL_SCREEN_PATH || pathname.startsWith('/welcome'))
+    return null;
+
+  const status =
+    phase === 'reconnecting'
+      ? t('screens.voice.status-reconnecting')
+      : t('screens.voice.stage.mini-line', { time: formatCallClock(elapsedMs) });
 
   return (
-    <View
-      pointerEvents="box-none"
-      className="absolute right-0 left-0 items-center px-4"
-      style={{ top: insets.top + 8 }}>
-      <View className="bg-interactive max-w-md flex-row items-center rounded-full shadow-lg shadow-black/20">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('screens.voice.back-to-call')}
-          onPress={() => router.navigate('/call')}
-          className="shrink flex-row items-center gap-2.5 py-2.5 pr-2 pl-4 active:opacity-80">
-          <View
-            className={
-              phase === 'reconnecting'
-                ? 'bg-warning size-2 rounded-full'
-                : 'bg-success size-2 rounded-full'
-            }
+    <ScopedTheme theme="dark">
+      <View
+        className="bg-surface rounded-media absolute inset-x-3 flex-row items-center gap-3 self-center py-2 pr-2 pl-3"
+        style={float}>
+        <PressableSurface
+          a11y={{ label: t('screens.voice.back-to-call'), role: 'button' }}
+          onPress={() => router.navigate(CALL_SCREEN_PATH)}
+          pressed={{ grow: true }}
+          className="min-w-0 flex-1 flex-row items-center gap-3">
+          <CallAvatar
+            state={stagePresenceOf({ moment: 'live', phase, kind: 'reminder' })}
+            size={CALL_MINI_AVATAR}
           />
-          <Icon name="phone" className="text-foreground-on-interactive size-4" />
-          <Text
-            className="text-foreground-on-interactive text-legacy-caption shrink font-semibold"
-            numberOfLines={1}>
-            {label}
-          </Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('screens.voice.end-call')}
+          <View className="min-w-0 flex-1">
+            <Text variant="label">{t('screens.voice.argus')}</Text>
+            <Text variant="rowMeta" tone="2" numberOfLines={1}>
+              {status}
+            </Text>
+          </View>
+        </PressableSurface>
+        <RoundControl
+          icon="hang"
+          tone="decline"
+          label={t('screens.voice.end-call')}
+          size={CALL_BANNER_CONTROL}
           onPress={stop}
-          hitSlop={6}
-          className="bg-error mr-1.5 size-8 items-center justify-center rounded-full active:opacity-75">
-          <Icon name="phone-off" className="text-foreground-on-error size-4" />
-        </Pressable>
+        />
       </View>
-    </View>
+    </ScopedTheme>
   );
 }

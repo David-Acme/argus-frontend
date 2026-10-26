@@ -136,10 +136,10 @@ describe('the words of a news item', () => {
 });
 
 describe('where a news item leads and what it offers', () => {
-  test('a missed call reopens the call', () => {
+  test('a missed call offers to call Argus back, never to rejoin the call that ended', () => {
     const thread = threadOf({ kind: 'call', callId: 'call-42' });
-    expect(newsTargetOf(thread, notificationHrefOf)).toBe('/call?callId=call-42');
-    expect(newsActionOf(thread, '/call?callId=call-42', ALWAYS)).toBeNull();
+    expect(newsTargetOf(thread, notificationHrefOf)).toBe('/call');
+    expect(newsActionOf(thread, '/call', ALWAYS)).toBe('call-back');
   });
 
   test('a household message opens the conversation and offers a reply', () => {

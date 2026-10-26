@@ -80,6 +80,7 @@ mock.module('@/shared/ui/sheet/sheet', () => import('@/shared/ui/sheet/sheet.web
 mock.module('uniwind', () => ({
   Uniwind: { setTheme: () => undefined },
   useUniwind: () => ({ theme: 'light' }),
+  ScopedTheme: ({ children }: { children: ReactNode }) => children,
   withUniwind: <T>(component: T) => component,
 }));
 mock.module('react-native-reanimated', async () => {
@@ -106,6 +107,10 @@ mock.module('react-native-reanimated', async () => {
       }
     },
     Easing: { bezier: () => () => 0, linear: (progress: number) => progress },
+    FadeIn: chain(),
+    FadeOut: chain(),
+    SlideInUp: chain(),
+    SlideOutUp: chain(),
   };
 });
 

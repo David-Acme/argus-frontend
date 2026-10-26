@@ -1,35 +1,48 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
-import { useAuthStore, usePendingCallStore } from '@/core/stores';
-import { ResponseCard } from '@/features/response';
-import { CallCameraCard } from '@/features/voice/components/call-camera-card';
-import { CallSurface } from '@/features/voice/components/call-surface';
-import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
-import { argusCallSupported, voiceService } from '@/features/voice/services/voice';
+import { traceEvent } from '@/core/services/native-trace';
+import { pushService } from '@/core/services/push';
 import { storageService } from '@/core/services/storage';
+import { useAuthStore, usePendingCallStore } from '@/core/stores';
 import {
   ASSISTANT_THREAD_HREF,
   CAPABILITY,
   VIEW_CACHE_KEYS,
   VOICE_MIC_CONSENT_KEY,
 } from '@/shared/constants';
-import { rememberAssistantMode } from '@/shared/libs/assistant-mode';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
+import { rememberAssistantMode } from '@/shared/libs/assistant-mode';
+import { ResponseCard } from '@/features/response';
+import { CallSurface } from '@/features/voice/components/call-surface';
+import { VoiceWebNotice } from '@/features/voice/components/voice-web-notice';
 import { useCall } from '@/features/voice/hooks/use-call';
-import { CALL_ROUTE_WAIT_MS, callRouteDecision, callRouteHref, callRouteTraceReason } from '@/features/voice/model/call-route';
-import { outsideCallLockId } from '@/features/voice/model/call-lock-state';
-import { traceEvent } from '@/core/services/native-trace';
 import { dispatchCallEnd, ENDED_HOLD_MS, showsMicConsent } from '@/features/voice/model/call-end';
-import { pushService } from '@/core/services/push';
-import { leaveCall } from '@/features/voice/model/leave-call';
 import { setCallLock } from '@/features/voice/model/call-lock';
+import { outsideCallLockId } from '@/features/voice/model/call-lock-state';
+import {
+  CALL_ROUTE_WAIT_MS,
+  callRouteDecision,
+  callRouteHref,
+  callRouteTraceReason,
+} from '@/features/voice/model/call-route';
+import {
+  endedSummaryOf,
+  formatCallClock,
+  postsSummaryNotice,
+  summaryBodyOf,
+} from '@/features/voice/model/call-stage';
+import { callKindOf } from '@/features/voice/model/incoming-surface';
+import { leaveCall } from '@/features/voice/model/leave-call';
+import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
+import { argusCallSupported, voiceService } from '@/features/voice/services/voice';
 
 function CallScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, tk } = useTranslation();
   const params = useLocalSearchParams<{ callId?: string; outside?: string }>();
   const enteredFromOutside = params.outside === '1';
   useEffect(() => {
@@ -41,7 +54,6 @@ function CallScreen() {
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);
   const liveCamera = cameras.find((camera) => camera.id === call.liveCameraId) ?? null;
-  const startedAt = useRef<number | null>(null);
   const [endedDurationMs, setEndedDurationMs] = useState<number | null>(null);
   const leave = useCallback(
     () =>
@@ -58,15 +70,29 @@ function CallScreen() {
         },
         enteredFromOutside,
       }),
-    [router, enteredFromOutside],
+    [router, enteredFromOutside]
   );
   const hangUp = useCallback(() => {
     if (endedDurationMs !== null) return;
     voiceService.stop();
-    const durationMs = startedAt.current === null ? 0 : Date.now() - startedAt.current;
+    const durationMs = call.connectedAt === null ? 0 : Date.now() - call.connectedAt;
     traceEvent('route', 'ended', `outside-${enteredFromOutside ? 1 : 0}-hold-${ENDED_HOLD_MS}`);
     setEndedDurationMs(durationMs);
-  }, [endedDurationMs, enteredFromOutside]);
+    if (
+      !postsSummaryNotice({
+        appActive: AppState.currentState === 'active',
+        locked: pushService.isKeyguardLocked(),
+      })
+    )
+      return;
+    const labels = endedSummaryOf(call.actions).map((action) =>
+      voiceActionLabel(action, { t, tk })
+    );
+    pushService.postCallSummary(
+      t('screens.voice.stage.ended-line', { time: formatCallClock(durationMs) }),
+      summaryBodyOf(labels, t('screens.voice.stage.summary-empty'))
+    );
+  }, [endedDurationMs, enteredFromOutside, call.connectedAt, call.actions, t, tk]);
   const { has } = useCapabilities();
   const chatAllowed = has(CAPABILITY.messagesRelay) && !params.callId && !enteredFromOutside;
   const switchToChat = useCallback(() => {
@@ -76,26 +102,36 @@ function CallScreen() {
     if (router.canDismiss()) router.dismissTo(ASSISTANT_THREAD_HREF);
     else router.replace(ASSISTANT_THREAD_HREF);
   }, [router]);
-  const closeCamera = useCallback(() => voiceService.showCamera(null), []);
   const answerWaiting = useCallback(() => voiceService.answerWaiting(), []);
   const dismissWaiting = useCallback(() => voiceService.dismissWaiting(), []);
-  const openCamera = useCallback(() => {
-    if (!liveCamera) return;
-    voiceService.showCamera(null);
-    router.push(`/cameras/${liveCamera.id}`);
+  const viewCamera = useCallback(() => {
+    void pushService.requestUnlock().then((unlocked) => {
+      traceEvent(
+        'lock',
+        unlocked ? 'ok' : 'stay',
+        unlocked ? 'camera-unlocked' : 'camera-still-locked'
+      );
+      if (!unlocked) return;
+      voiceService.showCamera(null);
+      router.push(liveCamera ? `/cameras/${liveCamera.id}` : '/cameras');
+    });
   }, [liveCamera, router]);
+  const minimise = useCallback(() => {
+    traceEvent('route', 'left', 'minimised');
+    router.push('/');
+  }, [router]);
 
   useEffect(() => {
     if (firstCall) storageService.set(VOICE_MIC_CONSENT_KEY, true);
   }, [firstCall]);
 
   useEffect(() => {
-    if (startedAt.current !== null) return;
-    if (call.phase === 'listening' || call.phase === 'thinking' || call.phase === 'speaking') startedAt.current = Date.now();
-  }, [call.phase]);
-
-  useEffect(() => {
-    if (call.closedCallId === null || call.closedCallId !== params.callId || call.closedReason === null) return;
+    if (
+      call.closedCallId === null ||
+      call.closedCallId !== params.callId ||
+      call.closedReason === null
+    )
+      return;
     dispatchCallEnd(call.closedReason, { showEnded: hangUp, closeNow: leave });
   }, [call.closedCallId, call.closedReason, hangUp, leave, params.callId]);
 
@@ -112,23 +148,22 @@ function CallScreen() {
       error={call.error}
       transcript={call.transcript}
       actions={call.actions}
+      kind={callKindOf(call.callUrgency ?? undefined)}
+      connectedAt={call.connectedAt}
       reason={call.callReason}
+      liveCameraId={call.liveCameraId}
       situation={call.responseId ? <ResponseCard responseId={call.responseId} compact /> : null}
       waitingReason={call.waitingCall?.reason ?? null}
       onAnswerWaiting={answerWaiting}
       onDismissWaiting={dismissWaiting}
-      notice={showsMicConsent({ firstCall, phase: call.phase, endedDurationMs }) ? t('screens.voice.mic-consent') : null}
-      camera={
-        liveCamera ? (
-          <CallCameraCard
-            cameraId={liveCamera.id}
-            name={liveCamera.name}
-            view={call.liveCameraView}
-            onClose={closeCamera}
-            onOpen={openCamera}
-          />
-        ) : null
+      notice={
+        showsMicConsent({ firstCall, phase: call.phase, endedDurationMs })
+          ? t('screens.voice.mic-consent')
+          : null
       }
+      onViewCamera={has(CAPABILITY.cameraView) ? viewCamera : undefined}
+      onMinimise={enteredFromOutside ? undefined : minimise}
+      onClose={leave}
       onToggleMute={call.toggleMute}
       onHangUp={hangUp}
       onRetry={call.retry}
@@ -163,7 +198,9 @@ export default function CallRoute() {
 
   useEffect(() => {
     if (authStatus === 'signed-in' || !callId) return;
-    usePendingCallStore.getState().hold(callRouteHref({ callId, outside: outside === '1' }), Date.now());
+    usePendingCallStore
+      .getState()
+      .hold(callRouteHref({ callId, outside: outside === '1' }), Date.now());
   }, [authStatus, callId, outside]);
 
   useEffect(() => {

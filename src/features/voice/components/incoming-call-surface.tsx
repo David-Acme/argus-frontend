@@ -1,114 +1,139 @@
-import { useRouter, usePathname } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Vibration, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  FadeIn,
-  FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Avatar from '@/features/voice/components/avatar';
-import { CallControl } from '@/features/voice/components/call-control';
-import { Text } from '@/shared/components/ui/text';
-import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
+import { ScopedTheme } from 'uniwind';
+import type { IncomingCall } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { elevation, space } from '@/shared/theme';
+import { Text } from '@/shared/ui/text';
+import { CallAvatar } from '@/features/voice/components/call-avatar';
+import { CallStage } from '@/features/voice/components/call-stage';
+import { RingControls } from '@/features/voice/components/ring-controls';
+import { RoundControl } from '@/features/voice/components/round-control';
+import {
+  CALL_BANNER_AVATAR,
+  CALL_BANNER_CONTROL,
+  CALL_RING_VIBRATION,
+  CALL_STAGE_AVATAR,
+  CALL_STAGE_MAX_WIDTH,
+} from '@/features/voice/constants/call.constant';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
-import { formatCallDuration } from '@/features/voice/model/call-end';
-import { incomingSurfaceVisible, isCriticalRing } from '@/features/voice/model/incoming-surface';
+import {
+  callKindOf,
+  callSubjectOf,
+  ringChoices,
+  ringSurfaceOf,
+  type RingChoice,
+} from '@/features/voice/model/incoming-surface';
 import { voiceService } from '@/features/voice/services/voice';
 
-const ALERT_PATTERN = [0, 400, 200, 400];
-const PULSE_MS = 900;
-const ELAPSED_TICK_MS = 1000;
+type RingProps = {
+  call: IncomingCall;
+  onChoose: (choice: RingChoice) => void;
+};
 
-function PulsingEmblem({ label }: { label: string }) {
-  const reduceMotion = useReduceMotion();
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    scale.value = withRepeat(withTiming(1.06, { duration: PULSE_MS }), -1, true);
-    return () => cancelAnimation(scale);
-  }, [reduceMotion, scale]);
-
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
+function RingBanner({ call, onChoose }: RingProps) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const place = {
+    top: insets.top + space[2],
+    maxWidth: CALL_STAGE_MAX_WIDTH,
+    boxShadow: elevation.dark.float,
+  };
   return (
-    <Animated.View style={style}>
-      <Avatar size={160} accessibilityLabel={label} />
+    <ScopedTheme theme="dark">
+      <Animated.View
+        entering={SlideInUp.springify()}
+        exiting={SlideOutUp}
+        role="alertdialog"
+        aria-label={t('screens.voice.incoming-title')}
+        accessibilityLiveRegion="assertive"
+        className="bg-surface rounded-dialog absolute inset-x-2 flex-row items-center gap-3 self-center p-3"
+        style={place}>
+        <CallAvatar state="listen" size={CALL_BANNER_AVATAR} />
+        <View className="min-w-0 flex-1">
+          <Text variant="headline">{t('screens.voice.argus')}</Text>
+          <Text variant="meta" tone="2" numberOfLines={1}>
+            {t('screens.voice.ring.banner-line', { subject: callSubjectOf(call) })}
+          </Text>
+        </View>
+        <RoundControl
+          icon="hang"
+          tone="decline"
+          label={t('screens.voice.ring-decline')}
+          size={CALL_BANNER_CONTROL}
+          onPress={() => onChoose('decline')}
+        />
+        <RoundControl
+          icon="phone"
+          tone="answer"
+          label={t('screens.voice.ring-answer')}
+          size={CALL_BANNER_CONTROL}
+          onPress={() => onChoose('answer')}
+        />
+      </Animated.View>
+    </ScopedTheme>
+  );
+}
+
+function RingStage({ call, onChoose }: RingProps) {
+  const { t } = useTranslation();
+  return (
+    <Animated.View
+      entering={FadeIn.duration(180)}
+      exiting={FadeOut.duration(150)}
+      role="alertdialog"
+      aria-label={t('screens.voice.ring.alert-kicker')}
+      accessibilityLiveRegion="assertive"
+      className="absolute inset-0">
+      <CallStage
+        kind="alert"
+        line={t('screens.voice.ring.alert-line', { subject: callSubjectOf(call) })}
+        presence="alert"
+        avatar={CALL_STAGE_AVATAR}>
+        {call.summary.trim() ? (
+          <View className="mt-4 px-4">
+            <Text variant="meta" tone="2" align="center" numberOfLines={3}>
+              {call.summary.trim()}
+            </Text>
+          </View>
+        ) : null}
+        <View className="flex-1" />
+        <RingControls
+          choices={ringChoices({ kind: callKindOf(call.urgency), snoozable: false })}
+          onChoose={onChoose}
+        />
+      </CallStage>
     </Animated.View>
   );
 }
 
 export function IncomingCallSurface() {
-  const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
   const { waitingCall } = useVoiceSession();
-  const visible = incomingSurfaceVisible(waitingCall, pathname);
-  const critical = isCriticalRing(waitingCall?.urgency);
-  const callId = waitingCall?.callId ?? null;
-  const [clock, setClock] = useState<{ callId: string | null; started: number; now: number }>({
-    callId: null,
-    started: 0,
-    now: 0,
-  });
-  const elapsedMs = clock.callId === callId ? clock.now - clock.started : 0;
+  const surface = ringSurfaceOf({ waiting: waitingCall, pathname });
 
   useEffect(() => {
-    if (!visible || !critical) return;
-    Vibration.vibrate(ALERT_PATTERN, true);
+    if (surface !== 'full') return;
+    Vibration.vibrate(CALL_RING_VIBRATION, true);
     return () => Vibration.cancel();
-  }, [visible, critical]);
+  }, [surface]);
 
-  useEffect(() => {
-    if (callId === null) return;
-    const started = Date.now();
-    const timer = setInterval(() => setClock({ callId, started, now: Date.now() }), ELAPSED_TICK_MS);
-    return () => clearInterval(timer);
-  }, [callId]);
+  if (surface === 'none' || !waitingCall) return null;
 
-  if (!visible || !waitingCall) return null;
-
-  const answer = () => {
+  const choose = (choice: RingChoice) => {
+    if (choice === 'decline') void voiceService.declineCall(waitingCall.callId);
+    if (choice !== 'answer') return;
     voiceService.answerWaiting();
     router.navigate('/call');
   };
-  const decline = () => {
-    void voiceService.declineCall(waitingCall.callId);
-  };
 
-  return (
-    <Animated.View
-      entering={FadeIn.duration(180)}
-      exiting={FadeOut.duration(150)}
-      accessibilityRole="alert"
-      accessibilityLiveRegion="assertive"
-      className="bg-background absolute inset-0 items-center justify-center px-6"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
-      <View className="w-full max-w-md items-center gap-6">
-        <Text variant="label" className={critical ? 'text-error-strong' : 'text-foreground-secondary'}>
-          {critical ? t('screens.voice.ring-critical') : t('screens.voice.incoming-title')}
-        </Text>
-        <PulsingEmblem label={t('screens.voice.call-title')} />
-        <View className="items-center gap-2">
-          <Text variant="title" numberOfLines={3} className="text-center">
-            {waitingCall.reason}
-          </Text>
-          <Text variant="caption" className="text-foreground-secondary text-center">
-            {t('screens.voice.ring-status', { time: formatCallDuration(elapsedMs) })}
-          </Text>
-        </View>
-        <View className="flex-row justify-center gap-10 pt-2">
-          <CallControl icon="phone-off" label={t('screens.voice.ring-decline')} tone="danger" onPress={decline} />
-          <CallControl icon="phone" label={t('screens.voice.ring-answer')} tone="success" onPress={answer} />
-        </View>
-      </View>
-    </Animated.View>
+  return surface === 'banner' ? (
+    <RingBanner call={waitingCall} onChoose={choose} />
+  ) : (
+    <RingStage call={waitingCall} onChoose={choose} />
   );
 }

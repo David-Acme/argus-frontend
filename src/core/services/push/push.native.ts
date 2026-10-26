@@ -1,7 +1,12 @@
 import * as Notifications from 'expo-notifications';
 import { NitroModules } from 'react-native-nitro-modules';
 import { getLanguage } from '@/core/i18n';
-import type { CallControlAction, CallEndpoint, IArgusPushNative, IPushService } from '@/core/interfaces';
+import type {
+  CallControlAction,
+  CallEndpoint,
+  IArgusPushNative,
+  IPushService,
+} from '@/core/interfaces';
 import { callControlActionOf, callEndpointsOf } from './call-control';
 import { httpService } from '@/core/services/http';
 import { parseInAppAlert } from './in-app-alert';
@@ -119,7 +124,9 @@ class NativePushService implements IPushService {
   async startAssistantCall(): Promise<boolean> {
     if (!IS_ANDROID) return false;
     try {
-      const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ASSISTANT_CALL_TIMEOUT_MS));
+      const timeout = new Promise<boolean>((resolve) =>
+        setTimeout(() => resolve(false), ASSISTANT_CALL_TIMEOUT_MS)
+      );
       return await Promise.race([this.module().startAssistantCall(), timeout]);
     } catch (error) {
       log.error('push', 'the assistant call could not be registered', error);
@@ -253,6 +260,25 @@ class NativePushService implements IPushService {
     } catch (error) {
       log.error('push', 'the keyguard state could not be read', error);
       return true;
+    }
+  }
+
+  async requestUnlock(): Promise<boolean> {
+    if (!IS_ANDROID) return true;
+    try {
+      return await this.module().requestUnlock();
+    } catch (error) {
+      log.error('push', 'the unlock request failed', error);
+      return false;
+    }
+  }
+
+  postCallSummary(title: string, body: string): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().postCallSummary(title, body);
+    } catch (error) {
+      log.error('push', 'the call summary could not be posted', error);
     }
   }
 

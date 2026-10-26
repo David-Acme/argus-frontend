@@ -2,7 +2,8 @@ import type { CallEndReason } from '@/core/types';
 
 export type CallEndAction = 'show-ended' | 'close-now';
 
-export type IncomingCancelReason = 'answered_elsewhere' | 'expired' | 'resolved' | 'declined' | 'attended';
+export type IncomingCancelReason =
+  'answered_elsewhere' | 'expired' | 'resolved' | 'declined' | 'attended';
 
 export const ENDED_HOLD_MS = 2000;
 
@@ -18,17 +19,10 @@ export function endReasonOfCancel(reason: IncomingCancelReason): CallEndReason {
 
 export function dispatchCallEnd(
   reason: CallEndReason,
-  handlers: { showEnded: () => void; closeNow: () => void },
+  handlers: { showEnded: () => void; closeNow: () => void }
 ): void {
   if (callEndAction(reason) === 'show-ended') handlers.showEnded();
   else handlers.closeNow();
-}
-
-export function formatCallDuration(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 export type CancelOutcome = 'ignore' | 'taken' | 'close';
@@ -42,6 +36,15 @@ export function cancelOutcomeOf(input: {
   return input.claimedCallId === input.callId ? 'ignore' : 'taken';
 }
 
-export function showsMicConsent(input: { firstCall: boolean; phase: string; endedDurationMs: number | null }): boolean {
-  return input.firstCall && input.phase !== 'done' && input.phase !== 'error' && input.endedDurationMs === null;
+export function showsMicConsent(input: {
+  firstCall: boolean;
+  phase: string;
+  endedDurationMs: number | null;
+}): boolean {
+  return (
+    input.firstCall &&
+    input.phase !== 'done' &&
+    input.phase !== 'error' &&
+    input.endedDurationMs === null
+  );
 }
