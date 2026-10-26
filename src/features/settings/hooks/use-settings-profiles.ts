@@ -12,6 +12,7 @@ import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
 import { runOptimistic, type OptimisticRefusal } from '@/shared/libs/optimistic-action';
 import { runServiceAction } from '@/shared/libs/service-action';
+import { toast } from '@/shared/libs/toast';
 import { settingsService } from '@/features/settings/services/settings.service';
 import {
   profileIntents,
@@ -72,19 +73,23 @@ export function useSettingsProfiles({ enabled = true, onCatalogs }: UseSettingsP
   const profiles = useMemo(() => readableProfiles(data), [data]);
 
   const apply = useCallback(
-    async (profile: SettingsProfile) => {
+    async (profile: SettingsProfile, previous: SettingsProfile | null = null) => {
       setApplying(profile.id);
+      const name = profileName(profile.labelKey);
       try {
         const result = await runOptimistic({
           intents: profileIntents(profile),
           call: () => settingsService.applyProfile(profile.id),
-          success: t('screens.settings.profiles.result.applied', {
-            name: profileName(profile.labelKey),
-          }),
+          success: previous ? undefined : t('screens.settings.profiles.result.applied', { name }),
           errorTitle: t('screens.settings.profiles.result.failed'),
           refusals: refusalOf,
         });
         if (result?.info) onCatalogs(returnedCatalogs(result.info));
+        if (result && previous)
+          toast.success(t('screens.settings.profiles.result.applied', { name }), undefined, {
+            label: t('common.undo'),
+            onPress: () => void apply(previous),
+          });
       } finally {
         setApplying(null);
         void reload();

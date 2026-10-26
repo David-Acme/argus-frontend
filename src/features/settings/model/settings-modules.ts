@@ -7,7 +7,8 @@ const OWNER_MODULES: Readonly<Partial<Record<SettingsOwnerName, string>>> = {
   camera: MODULE_IDS.surveillance,
 };
 
-export const moduleOfOwner = (owner: SettingsOwnerName): string => OWNER_MODULES[owner] ?? MODULE_IDS.core;
+export const moduleOfOwner = (owner: SettingsOwnerName): string =>
+  OWNER_MODULES[owner] ?? MODULE_IDS.core;
 
 export function withActiveOwners(
   overview: SettingsOverview,

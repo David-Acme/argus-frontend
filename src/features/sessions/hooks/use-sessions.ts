@@ -34,6 +34,8 @@ function withoutRevoked(
   return { sessions: list.sessions.filter((session) => !revoked.has(session.id)) };
 }
 
+export type Sessions = ReturnType<typeof useSessions>;
+
 export function useSessions({ enabled = true }: UseSessionsOptions = {}) {
   const { t } = useTranslation();
   const { data, status, reload, mutate } = useRemoteResource({

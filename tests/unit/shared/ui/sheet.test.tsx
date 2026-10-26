@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Text } from 'react-native';
 import type { SheetProps } from '@/shared/ui/sheet/types';
 import './translation-stub';
+import { setWindowWidth } from './window-width';
 
 const { SheetDialog } = await import('@/shared/ui/sheet/sheet-dialog');
 
@@ -24,6 +25,16 @@ function sheet(log: Log, overrides: Partial<SheetProps> = {}) {
 const ctrlEnter = () => fireEvent.keyDown(globalThis.document, { key: 'Enter', ctrlKey: true });
 
 describe('Sheet dialog dismissal (§5.7)', () => {
+  test('a dialog never grows wider than the window it opens in', () => {
+    setWindowWidth(360);
+    render(sheet([], { long: true }));
+    const widths = [...globalThis.document.querySelectorAll<HTMLElement>('*')]
+      .map((node) => Number.parseFloat(node.style.width))
+      .filter((value) => value > 0);
+    expect(Math.max(...widths)).toBeLessThanOrEqual(360 - 48);
+    setWindowWidth(1440);
+  });
+
   test('the dialog is named by its title', () => {
     render(sheet([]));
     expect(screen.getByRole('dialog', { name: 'Nuevo evento' })).toBeDefined();

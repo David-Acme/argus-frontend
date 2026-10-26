@@ -78,7 +78,7 @@ const GROUP_TITLES = {
 } as const satisfies Record<SearchGroup, TranslationKey>;
 
 const CREATE_LABELS = {
-  reminder: 'screens.agenda.new-reminder',
+  reminder: 'screens.command.ask-reminder',
   event: 'screens.agenda.new-event',
   task: 'screens.projects.new-task',
   project: 'screens.projects.new-project',

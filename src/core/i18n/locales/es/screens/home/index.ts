@@ -145,6 +145,7 @@ export const home = {
     sender: 'Argus',
     review: 'Revisar',
     reply: 'Responder',
+    'call-back': 'Devolver',
     yesterday: 'Ayer {time}',
     empty: 'Aquí verás lo que pase en tu casa',
     more: 'Ver más',

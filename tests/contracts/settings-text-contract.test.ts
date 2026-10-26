@@ -51,6 +51,25 @@ function textAt(language: LanguageCode, path: string): string | undefined {
 }
 
 const LANGUAGES: readonly LanguageCode[] = ['es', 'en'];
+
+function fixtureKeys(value: unknown, found: Set<string>): Set<string> {
+  if (Array.isArray(value)) value.forEach((item) => fixtureKeys(item, found));
+  else if (typeof value === 'object' && value !== null) {
+    const record = value as Record<string, unknown>;
+    if (typeof record.service === 'string' && Array.isArray(record.settings))
+      for (const setting of record.settings as { key?: unknown }[])
+        if (typeof setting.key === 'string') found.add(setting.key);
+    Object.values(record).forEach((item) => fixtureKeys(item, found));
+  }
+  return found;
+}
+
+const recorded = [
+  ...fixtureKeys(
+    JSON.parse(readFileSync(backendPath('scripts/fixtures/http/settings.json'), 'utf8')) as unknown,
+    new Set()
+  ),
+];
 const sources = catalogSources();
 const entries = catalogEntries(sources);
 
@@ -63,19 +82,31 @@ describe('the settings catalog is worded in every language', () => {
   for (const language of LANGUAGES) {
     test(`every group has a ${language} name`, () => {
       const groups = [...new Set(entries.map((entry) => entry.group))];
-      expect(groups.filter((group) => !textAt(language, `screens.settings.groups.${group}`))).toEqual([]);
+      expect(
+        groups.filter((group) => !textAt(language, `screens.settings.groups.${group}`))
+      ).toEqual([]);
     });
 
-    test(`every basic setting has a ${language} label`, () => {
+    test(`every setting, basic or advanced, has a ${language} label`, () => {
       const missing = entries
-        .filter((entry) => entry.basic)
         .filter((entry) => !textAt(language, `screens.settings.keys.${entry.key}.label`))
         .map((entry) => entry.key);
       expect(missing).toEqual([]);
     });
 
+    test(`every key an owner catalog answers with in the recorded fixtures has a ${language} label`, () => {
+      expect(recorded.length).toBeGreaterThan(50);
+      expect(
+        recorded.filter((key) => !textAt(language, `screens.settings.keys.${key}.label`))
+      ).toEqual([]);
+    });
+
     test(`every choice has a ${language} label`, () => {
-      expect(catalogChoices(sources).filter((choice) => !textAt(language, `screens.settings.choices.${choice}`))).toEqual([]);
+      expect(
+        catalogChoices(sources).filter(
+          (choice) => !textAt(language, `screens.settings.choices.${choice}`)
+        )
+      ).toEqual([]);
     });
   }
 });

@@ -16,11 +16,14 @@ export type SurfaceAccessibility = {
 
 export type SurfacePressed = { scale?: PressScaleKind; fill?: boolean; grow?: boolean };
 
+export type SurfaceHold = { onStart: () => void; onEnd: () => void };
+
 export type PressableSurfaceProps = {
   a11y: SurfaceAccessibility;
   onPress?: () => void;
   haptic?: FeedbackKind;
   pressed?: SurfacePressed;
+  hold?: SurfaceHold;
   disabled?: boolean;
   hitSlop?: number;
   className?: string;

@@ -51,6 +51,35 @@ describe('Choice', () => {
     expect(screen.getByRole('button', { name: 'Repetir, Cada mes' })).toBeDefined();
   });
 
+  test('a captioned choice names itself once, above its segments or in its row', () => {
+    const fitting = render(
+      <Choice
+        label="Modo"
+        caption="Cómo te avisa"
+        options={MODES}
+        value="home"
+        onChange={() => undefined}
+      />
+    );
+    expect(screen.getAllByText('Modo')).toHaveLength(1);
+    expect(screen.getByText('Cómo te avisa')).toBeDefined();
+    expect(screen.getByRole('radiogroup', { name: 'Modo' })).toBeDefined();
+    fitting.unmount();
+    render(
+      <Choice
+        label="Repetir"
+        caption="Cuándo vuelve"
+        options={REPEAT}
+        value="never"
+        onChange={() => undefined}
+      />
+    );
+    expect(
+      screen.getByRole('button', { name: 'Repetir, Cuándo vuelve, No se repite' })
+    ).toBeDefined();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+
   test('the sheet closes from its own dismissal without a change', () => {
     const picked: string[] = [];
     render(

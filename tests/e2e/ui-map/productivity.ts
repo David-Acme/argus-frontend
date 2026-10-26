@@ -81,11 +81,9 @@ const crowdedDay: Row[] = Array.from({ length: 32 }, (_, index) =>
 
 const AGENDA_ROWS: Row[] = [...PRODUCTIVITY, ...busyDay, share(1400, 900, 2, 'edit')];
 
-const openOptions = async (scene: Scene): Promise<void> => {
-  await tab('screens.agenda.view-day')(scene);
-  await button(scene, 'screens.agenda.options').first().click({ timeout: 8000 });
-  await sleep(800);
-};
+const openNew = click('screens.agenda.page.new', 'last');
+
+const openDetail = clickText('Reunión con el arquitecto');
 
 export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
   {
@@ -100,77 +98,72 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
         state: 'default-view',
         rows: AGENDA_ROWS,
         main: true,
-        notes: 'default view depends on width: Day (compact), Week (medium), Month (expanded)',
+        notes:
+          'the week strip and the day list; list | detail from tablet, the mini month and filters on desktop',
       },
-      { state: 'empty-default-view' },
+      { state: 'empty-default-view', notes: 'Nada para hoy, suggestions and the free next days' },
       {
         state: 'deep-link-cold',
         rows: AGENDA_ROWS,
         deep: true,
         notes: 'a cold deep link to a module route bounces to Home',
       },
-      { state: 'day', rows: AGENDA_ROWS, act: tab('screens.agenda.view-day') },
-      { state: 'week', rows: AGENDA_ROWS, act: tab('screens.agenda.view-week') },
-      { state: 'month', rows: AGENDA_ROWS, act: tab('screens.agenda.view-month') },
-      { state: 'agenda-list', rows: AGENDA_ROWS, act: tab('screens.agenda.view-agenda') },
-      { state: 'month-empty', act: tab('screens.agenda.view-month') },
-      { state: 'agenda-list-empty', act: tab('screens.agenda.view-agenda') },
-      {
-        state: 'day-next-not-today',
-        rows: AGENDA_ROWS,
-        act: steps(tab('screens.agenda.view-day'), click('screens.agenda.next')),
-        notes: 'the Today pill turns into "Back to today"',
-      },
+      { state: 'day', rows: AGENDA_ROWS, act: tab('screens.agenda.page.view-day') },
+      { state: 'day-empty', act: tab('screens.agenda.page.view-day') },
+      { state: 'month-open', rows: AGENDA_ROWS, act: click('screens.agenda.page.month-open') },
       {
         state: 'day-crowded',
         rows: [...AGENDA_ROWS, ...crowdedDay],
         path: `/agenda?at=${(MIDNIGHT + DAY * 2) * 1000}`,
-        act: tab('screens.agenda.view-day'),
+        act: tab('screens.agenda.page.view-day'),
         notes: '32 short events on one day',
       },
       {
-        state: 'month-crowded',
+        state: 'list-crowded',
         rows: [...AGENDA_ROWS, ...crowdedDay],
-        act: tab('screens.agenda.view-month'),
+        path: `/agenda?at=${(MIDNIGHT + DAY * 2) * 1000}`,
       },
+      { state: 'entry-detail', rows: AGENDA_ROWS, act: openDetail },
       {
-        state: 'entry-detail',
+        state: 'detail-more-menu',
         rows: AGENDA_ROWS,
-        act: steps(tab('screens.agenda.view-day'), clickText('Reunión con el arquitecto')),
+        act: steps(openDetail, click('screens.agenda.detail.more', 'last')),
       },
-      { state: 'options-menu', rows: AGENDA_ROWS, act: openOptions },
       {
-        state: 'occurrence-options-menu',
+        state: 'occurrence-edit-scope',
         rows: AGENDA_ROWS,
         path: `/agenda?at=${(MIDNIGHT + DAY * 7) * 1000}`,
-        act: async (scene) => {
-          await tab('screens.agenda.view-day')(scene);
-          await button(scene, 'screens.agenda.options').first().click({ timeout: 8000 });
-          await sleep(800);
-        },
-        notes: 'next Monday holds only the weekly Yoga series',
+        act: steps(clickText('Yoga'), click('screens.agenda.detail.edit', 'last')),
+        notes:
+          'next Monday holds only the weekly Yoga series: the sheet asks Solo esta / Toda la serie',
       },
-      { state: 'create-form', rows: AGENDA_ROWS, act: click('screens.agenda.new-event') },
+      { state: 'create-form', rows: AGENDA_ROWS, act: openNew },
       {
         state: 'create-form-errors',
         rows: AGENDA_ROWS,
         act: async (scene) => {
-          await click('screens.agenda.new-event')(scene);
+          await openNew(scene);
           await scene.page
-            .getByRole('textbox', { name: say(scene, 'screens.agenda.event-time') })
+            .getByRole('textbox', { name: say(scene, 'screens.agenda.sheet.time') })
             .first()
             .fill('9:3');
-          await button(scene, 'common.save').last().click();
+          await button(scene, 'screens.agenda.sheet.save').last().click();
           await sleep(700);
         },
+      },
+      {
+        state: 'create-form-event',
+        rows: AGENDA_ROWS,
+        act: steps(openNew, tab('screens.agenda.kind.event')),
       },
       {
         state: 'create-form-all-day',
         rows: AGENDA_ROWS,
         act: async (scene) => {
-          await click('screens.agenda.new-event')(scene);
+          await openNew(scene);
+          await tab('screens.agenda.kind.event')(scene);
           await scene.page
-            .getByRole('switch', { name: say(scene, 'screens.agenda.event-all-day') })
+            .getByRole('switch', { name: say(scene, 'screens.agenda.sheet.all-day') })
             .first()
             .click();
           await sleep(500);
@@ -179,7 +172,15 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
       {
         state: 'day-picker',
         rows: AGENDA_ROWS,
-        act: steps(click('screens.agenda.new-event'), click('screens.agenda.pick-day', 'last')),
+        act: async (scene) => {
+          await openNew(scene);
+          const day = say(scene, 'screens.agenda.sheet.day');
+          await scene.page
+            .getByRole('button', { name: new RegExp(`^${day}, `) })
+            .last()
+            .click();
+          await sleep(700);
+        },
       },
       {
         state: 'edit-form',
@@ -190,8 +191,12 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
         state: 'share-dialog-empty',
         rows: AGENDA_ROWS,
         act: async (scene) => {
-          await openOptions(scene);
-          await scene.page.getByText(say(scene, 'common.share'), { exact: true }).last().click();
+          await openDetail(scene);
+          await click('screens.agenda.detail.more', 'last')(scene);
+          await scene.page
+            .getByText(say(scene, 'screens.agenda.share'), { exact: true })
+            .last()
+            .click();
           await sleep(900);
         },
       },
@@ -207,12 +212,13 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
           },
         ],
         act: async (scene) => {
-          await click('screens.agenda.new-event')(scene);
+          await openNew(scene);
+          await tab('screens.agenda.kind.event')(scene);
           await scene.page
-            .getByRole('textbox', { name: say(scene, 'screens.agenda.event-title') })
+            .getByRole('textbox', { name: say(scene, 'screens.agenda.sheet.title-event') })
             .first()
             .fill('Cena con amigos');
-          await button(scene, 'common.save').last().click();
+          await button(scene, 'screens.agenda.sheet.save').last().click();
           await sleep(1500);
         },
       },

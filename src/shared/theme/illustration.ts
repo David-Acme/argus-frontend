@@ -41,6 +41,10 @@ export const illustration = {
       shade: { from: 45, top: 0, bottom: 0.6 },
     },
   },
+  call: {
+    answer: '#25A85A',
+    decline: '#D83A34',
+  },
   mediaTextShadow: { color: 'rgba(0,0,0,0.6)', offsetY: 1, radius: 2 },
   estela: {
     dark: {

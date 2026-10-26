@@ -17,6 +17,7 @@ class PushVisibilityTest {
         assertEquals("Toca para ver quién llamó", copy.body)
         assertEquals("Llamada perdida", copy.publicTitle)
         assertEquals("Toca para ver quién llamó", copy.publicBody)
+        assertEquals(true, copy.callBack)
     }
 
     @Test
@@ -46,6 +47,7 @@ class PushVisibilityTest {
         assertEquals("Patio: persona desconocida", copy.title)
         assertEquals(PushText.TITLE, copy.publicTitle)
         assertEquals(PushText.generic(spanish = true, urgent = true), copy.publicBody)
+        assertEquals(false, copy.callBack)
     }
 
     @Test

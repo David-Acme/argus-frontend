@@ -10,6 +10,16 @@ describe('Avatar', () => {
     expect(screen.getByText('A')).toBeDefined();
   });
 
+  test('a portrait names the person and grows its initials only as far as 1.3×', () => {
+    render(
+      <TextScaleProvider value={2}>
+        <Avatar initial="DA" label="David Acme" size="portrait" />
+      </TextScaleProvider>
+    );
+    expect(screen.getByRole('img', { name: 'David Acme' })).toBeDefined();
+    expect(getComputedStyle(screen.getByText('DA')).fontSize).toBe('36.4px');
+  });
+
   test('an icon well is decorative', () => {
     const { container } = render(<Avatar icon="door" />);
     expect(container.querySelector('svg')).not.toBeNull();

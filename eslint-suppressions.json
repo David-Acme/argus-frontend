@@ -57,7 +57,7 @@
   },
   "src/core/interfaces/index.ts": {
     "argus/no-export-all": {
-      "count": 26
+      "count": 25
     }
   },
   "src/core/services/auth.service.ts": {
@@ -221,7 +221,7 @@
   },
   "src/core/types/index.ts": {
     "argus/no-export-all": {
-      "count": 56
+      "count": 54
     }
   },
   "src/core/types/socket-emit.type.ts": {
@@ -288,185 +288,11 @@
       "count": 1
     }
   },
-  "src/features/agenda/components/agenda-entry-row.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    }
-  },
-  "src/features/agenda/components/agenda-item.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    }
-  },
-  "src/features/agenda/components/agenda-side-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 2
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/calendar-agenda-view.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 2
-    }
-  },
-  "src/features/agenda/components/calendar-day-list.tsx": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/calendar-day-view.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 2
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/calendar-event-form.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 3
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/calendar-header.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/features/agenda/components/calendar-month-view.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 3
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/calendar-view-switcher.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/calendar-week-view.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/agenda/components/day-picker-field.tsx": {
     "argus/ds-owns-primitives": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/entry-actions-menu.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/components/month-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
-  "src/features/agenda/model/agenda-rows.ts": {
-    "max-params": {
-      "count": 2
-    }
-  },
-  "src/features/agenda/screens/agenda-screen.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 2
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
       "count": 1
     }
   },
@@ -765,65 +591,6 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-aim-panel.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-call-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-device-settings.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-form.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 4
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 3
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/camera-fullscreen.tsx": {
     "i18next/no-literal-string": {
       "count": 1
@@ -835,37 +602,6 @@
     },
     "i18next/no-literal-string": {
       "count": 12
-    }
-  },
-  "src/features/cameras/components/camera-live-panel.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-live-stage.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 4
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/features/cameras/components/camera-live-status.tsx": {
@@ -901,32 +637,8 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-model-picker.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-patrol-dialog.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/camera-privacy-placeholder.tsx": {
     "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-probe-panel.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 2
-    },
-    "complexity": {
       "count": 1
     }
   },
@@ -935,32 +647,9 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-talk-sheet.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/camera-watch-panel.tsx": {
-    "i18next/no-literal-string": {
-      "count": 2
-    }
-  },
   "src/features/cameras/components/camera-zones-overlay.tsx": {
     "i18next/no-literal-string": {
       "count": 2
-    }
-  },
-  "src/features/cameras/components/camera-zones-panel.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/clip-list.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/features/cameras/components/clip-player.native.tsx": {
@@ -968,51 +657,11 @@
       "count": 2
     }
   },
-  "src/features/cameras/components/icon-picker-button.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/privacy-toggle.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/ptz-pad.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
   "src/features/cameras/components/tamper-evidence-view.tsx": {
     "argus/ds-owns-primitives": {
       "count": 1
     },
     "complexity": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/zone-form.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/components/zone-row.tsx": {
-    "argus/ds-owns-primitives": {
       "count": 1
     }
   },
@@ -1042,34 +691,6 @@
     },
     "max-depth": {
       "count": 5
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/model/siren.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
-  "src/features/cameras/screens/camera-detail-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 3
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 4
-    },
-    "max-lines": {
-      "count": 1
     },
     "max-lines-per-function": {
       "count": 1
@@ -1216,14 +837,6 @@
       "count": 1
     }
   },
-  "src/features/modules/components/modules-summary-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
   "src/features/modules/components/uninstall-dialog.tsx": {
     "argus/ds-owns-primitives": {
       "count": 1
@@ -1245,17 +858,6 @@
   },
   "src/features/modules/model/module-text.ts": {
     "max-params": {
-      "count": 1
-    }
-  },
-  "src/features/modules/screens/modules-screen.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 3
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
@@ -1419,17 +1021,6 @@
   "src/features/privacy/services/privacy.service.ts": {
     "argus/no-http-type-argument": {
       "count": 5
-    }
-  },
-  "src/features/profile/screens/profile-screen.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/features/projects/components/project-board-header.tsx": {
@@ -1636,46 +1227,6 @@
       "count": 1
     }
   },
-  "src/features/reminders/components/reminder-dialog.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/reminders/components/reminder-row.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/reminders/components/reminders-section.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/reminders/hooks/use-reminders.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/reminders/model/reminder-rows.ts": {
-    "max-params": {
-      "count": 1
-    }
-  },
   "src/features/response/components/response-card.tsx": {
     "argus/no-template-key": {
       "count": 1
@@ -1855,19 +1406,6 @@
       "count": 1
     }
   },
-  "src/features/security/components/maintenance-panel.tsx": {
-    "argus/no-visual-timer": {
-      "count": 1
-    }
-  },
-  "src/features/security/components/maintenance-window-row.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
   "src/features/security/components/response-recipients-panel.tsx": {
     "argus/no-template-key": {
       "count": 2
@@ -1921,22 +1459,6 @@
       "count": 1
     }
   },
-  "src/features/sessions/components/sessions-section.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/sessions/components/this-device-card.tsx": {
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
   "src/features/sessions/components/user-sessions-dialog.tsx": {
     "i18next/no-literal-string": {
       "count": 2
@@ -1965,123 +1487,9 @@
       "count": 7
     }
   },
-  "src/features/settings/components/connection-notice.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/profile/profile-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/profile/profile-preview-dialog.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/profile/settings-profile-section.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    }
-  },
-  "src/features/settings/components/setting-choice-list.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/setting-control.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/setting-row.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/setting-stepper.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/settings-owner-list.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 2
-    }
-  },
-  "src/features/settings/components/settings-owner-panel.tsx": {
-    "argus/no-template-key": {
-      "count": 2
-    }
-  },
-  "src/features/settings/components/technical/settings-transfer-dialog.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/technical/technical-owner-header.tsx": {
-    "argus/no-template-key": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/settings/components/technical/technical-setting-row.tsx": {
-    "argus/no-template-key": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 3
-    }
-  },
-  "src/features/settings/components/technical/technical-settings.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/settings/hooks/use-settings-profiles.ts": {
     "argus/no-template-key": {
       "count": 1
-    }
-  },
-  "src/features/settings/model/profile-text.ts": {
-    "argus/no-template-key": {
-      "count": 2
     }
   },
   "src/features/settings/model/setting-text.ts": {
@@ -2091,20 +1499,6 @@
   },
   "src/features/settings/model/settings-catalog.ts": {
     "max-params": {
-      "count": 2
-    }
-  },
-  "src/features/settings/screens/settings-screen.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
@@ -2167,66 +1561,8 @@
       "count": 11
     }
   },
-  "src/features/voice/components/avatar.tsx": {
-    "@typescript-eslint/no-deprecated": {
-      "count": 4
-    },
-    "argus/no-visual-timer": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 2
-    }
-  },
-  "src/features/voice/components/call-action-chips.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/call-camera-card.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/call-control.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/call-pill.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
   "src/features/voice/components/call-preferences-section.tsx": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 8
-    },
     "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
@@ -2236,32 +1572,10 @@
     }
   },
   "src/features/voice/components/call-surface.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
     "complexity": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/incoming-call-surface.tsx": {
-    "argus/no-visual-timer": {
-      "count": 1
-    }
-  },
-  "src/features/voice/constants/avatar.ts": {
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 1
-    },
-    "argus/no-color-literal": {
-      "count": 37
-    },
-    "max-lines": {
       "count": 1
     }
   },
@@ -2562,14 +1876,6 @@
   "src/shared/constants/index.ts": {
     "argus/no-export-all": {
       "count": 26
-    }
-  },
-  "src/shared/hooks/use-date-formatter/date.ts": {
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/shared/hooks/use-form-submit.ts": {

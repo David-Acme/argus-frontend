@@ -4,7 +4,12 @@ import { expect, openFirst, test } from './support/devices';
 
 const text = (es: string, en: string) => ({ es, en });
 
-const detailed = (id: string, name: { es: string; en: string }, kind: string, hasData: boolean) => ({
+const detailed = (
+  id: string,
+  name: { es: string; en: string },
+  kind: string,
+  hasData: boolean
+) => ({
   id,
   name,
   summary: text('', ''),
@@ -61,7 +66,20 @@ const dialogRoutes: RouteSpec[] = [
     method: 'POST',
     path: '/modules/productivity/uninstall',
     status: 202,
-    info: { id: '9', kind: 'purge', state: 'queued', progress: 0, bytesDone: 0, bytesTotal: 0, bytesPerSecond: 0, etaSeconds: null, reason: null, owner: null, roleMoves: [], roleMovesNote: null },
+    info: {
+      id: '9',
+      kind: 'purge',
+      state: 'queued',
+      progress: 0,
+      bytesDone: 0,
+      bytesTotal: 0,
+      bytesPerSecond: 0,
+      etaSeconds: null,
+      reason: null,
+      owner: null,
+      roleMoves: [],
+      roleMovesNote: null,
+    },
   },
 ];
 
@@ -77,8 +95,14 @@ test('uninstalling a module that holds data keeps it by default and deletes it o
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'Settings').first().click();
-  await screen.getByRole('button', 'Modules. Choose what Argus does and follow each installation.').click();
-  await screen.getByRole('button', 'Uninstall: Productivity').click();
+  await screen
+    .getByRole('button', /^Manage modules/)
+    .first()
+    .click();
+  await screen
+    .getByTestId('module-productivity')
+    .getByRole('button', /^Uninstall/)
+    .click();
 
   await expect(screen.getByText('15 items', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(screen.getByText('Keep my data', { exact: true })).toBeVisible();
@@ -91,14 +115,18 @@ test('uninstalling a module that holds data keeps it by default and deletes it o
   await expect(screen.getByText('Your data is deleted for good.', { exact: true })).toBeVisible();
   const field = browser.locator('[role="dialog"] input').last();
   const requests = async (): Promise<string[]> =>
-    ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] }).requests;
+    ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] })
+      .requests;
 
   const deleteDisabled = (): Promise<boolean> =>
     browser.evaluate(() => {
-      const button = [...document.querySelectorAll('[role="dialog"] [role="button"], [role="dialog"] button')].find(
-        (candidate) => candidate.textContent?.trim() === 'Delete for good'
+      const button = [
+        ...document.querySelectorAll('[role="dialog"] [role="button"], [role="dialog"] button'),
+      ].find((candidate) => candidate.textContent?.trim() === 'Delete for good');
+      return (
+        button?.getAttribute('aria-disabled') === 'true' ||
+        (button as HTMLButtonElement | undefined)?.disabled === true
       );
-      return button?.getAttribute('aria-disabled') === 'true' || (button as HTMLButtonElement | undefined)?.disabled === true;
     });
 
   await expect.poll(deleteDisabled).toBe(true);
@@ -108,8 +136,14 @@ test('uninstalling a module that holds data keeps it by default and deletes it o
   await expect.poll(deleteDisabled).toBe(false);
   await screen.getByText('Delete for good', { exact: true }).click();
   await expect.poll(requests).toContain('POST /modules/productivity/uninstall @A');
-  const sent = ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { bodies: Record<string, string> }).bodies;
-  expect(JSON.parse(sent['POST /modules/productivity/uninstall @A'] ?? '{}')).toEqual({ keepData: false });
+  const sent = (
+    (await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as {
+      bodies: Record<string, string>;
+    }
+  ).bodies;
+  expect(JSON.parse(sent['POST /modules/productivity/uninstall @A'] ?? '{}')).toEqual({
+    keepData: false,
+  });
 
   expect(escapes).toEqual([]);
 });

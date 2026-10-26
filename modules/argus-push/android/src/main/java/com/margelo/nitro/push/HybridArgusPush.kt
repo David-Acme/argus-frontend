@@ -10,6 +10,7 @@ import com.davidacme.argus.push.BackgroundStep
 import com.davidacme.argus.push.TelecomCall
 import com.davidacme.argus.push.endpointsJson
 import com.davidacme.argus.push.CallControls
+import com.davidacme.argus.push.CallSummary
 import com.davidacme.argus.push.CallSession
 import com.davidacme.argus.push.KeyguardCall
 import com.davidacme.argus.push.ExactAlarms
@@ -99,6 +100,16 @@ class HybridArgusPush : HybridArgusPushSpec() {
   override fun isKeyguardLocked(): Boolean = KeyguardCall.isKeyguardLocked(requireContext())
 
   override fun overKeyguard(): Boolean = KeyguardCall.isShown()
+
+  override fun requestUnlock(): Promise<Boolean> {
+    val promise = Promise<Boolean>()
+    KeyguardCall.requestUnlock(requireContext()) { unlocked -> promise.resolve(unlocked) }
+    return promise
+  }
+
+  override fun postCallSummary(title: String, body: String) {
+    PushNotifier.postCallSummary(requireContext(), CallSummary(title, body))
+  }
 
   override fun outsideCallId(): String = KeyguardCall.outsideCallId().orEmpty()
 

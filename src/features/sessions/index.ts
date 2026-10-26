@@ -1,6 +1,10 @@
+import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { ConnectedDevicesPanel, type ConnectedPerson } from './components/connected-devices-panel';
-export { SessionsSection } from './components/sessions-section';
+export { DevicesSection } from './components/devices-section';
+export { CONNECTS_DEVICE } from './constants/sessions.constant';
 export { UserSessionsDialog, type UserSessionsSubject } from './components/user-sessions-dialog';
 export { useConnectedDevices } from './hooks/use-connected-devices';
 export { useSessionLabels } from './hooks/use-session-labels';
+export { useSessions } from './hooks/use-sessions';
 export { useSignOut } from './hooks/use-sign-out';
+export const SessionsScreen = lazyScreen(() => import('./screens/sessions-screen'), 'default');

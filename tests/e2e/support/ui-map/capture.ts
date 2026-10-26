@@ -71,6 +71,7 @@ export type Audit = {
 
 export const VIEWPORTS: readonly Viewport[] = [
   { name: 'phone-small', w: 320, h: 568 },
+  { name: 'phone-short', w: 360, h: 640 },
   { name: 'phone', w: 360, h: 800 },
   { name: 'phone-large', w: 430, h: 932 },
   { name: 'tablet-portrait', w: 768, h: 1024 },
@@ -90,7 +91,7 @@ export const PROTO_VIEWPORTS: readonly Viewport[] = [
 
 export const PROTO = process.env.ARGUS_UI_MAP_VIEWPORTS === 'proto';
 
-const CORE_NAMES = new Set(['phone', 'tablet-portrait', 'desktop']);
+const CORE_NAMES = new Set(['phone', 'phone-short', 'tablet-portrait', 'desktop']);
 
 export const CORE: readonly Viewport[] = VIEWPORTS.filter((viewport) =>
   CORE_NAMES.has(viewport.name)

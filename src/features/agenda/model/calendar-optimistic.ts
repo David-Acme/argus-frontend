@@ -5,7 +5,7 @@ import type {
   IProjectTaskUpdate,
 } from '@/core/interfaces';
 import type { AgendaStatus, CalendarEntry, CalendarSource, ProjectTaskStatus } from '@/core/types';
-import { defineLens, isPendingRecordId, type OptimisticLens } from '@/shared/libs/optimistic';
+import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 import {
   calendarEntryRecordId,
   isOccurrence,
@@ -14,7 +14,8 @@ import {
 
 type TaskIntentValues = IProjectTaskUpdate & Pick<IProjectTaskCreate, 'projectId'>;
 
-type EventIntentValues = ICalendarEventUpdate & Partial<Pick<IOccurrenceChange, 'occurrence' | 'cancelled'>>;
+type EventIntentValues = ICalendarEventUpdate &
+  Partial<Pick<IOccurrenceChange, 'occurrence' | 'cancelled'>>;
 
 const recordIdFor = (entry: CalendarEntry, source: CalendarSource): string | null =>
   entry.source === source ? calendarEntryRecordId(entry) : null;
@@ -43,7 +44,7 @@ function patchOccurrence(entry: CalendarEntry, values: Partial<EventIntentValues
   };
 }
 
-export function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus {
+function agendaStatusOf(status: ProjectTaskStatus | string): AgendaStatus {
   if (status === 'done') return 'complete';
   if (status === 'doing') return 'active';
   return 'upcoming';
@@ -118,6 +119,3 @@ export const CALENDAR_LENSES: readonly OptimisticLens<CalendarEntry>[] = [
 
 export const byStart = (left: CalendarEntry, right: CalendarEntry): number =>
   left.startsAt - right.startsAt;
-
-export const isPendingEntry = (entry: CalendarEntry): boolean =>
-  isPendingRecordId(calendarEntryRecordId(entry));

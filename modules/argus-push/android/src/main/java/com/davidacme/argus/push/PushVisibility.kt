@@ -5,6 +5,7 @@ internal data class AlertCopy(
     val body: String,
     val publicTitle: String,
     val publicBody: String,
+    val callBack: Boolean = false,
 )
 
 internal object PushVisibility {
@@ -14,7 +15,7 @@ internal object PushVisibility {
         if (type == MISSED_CALL_TYPE) {
             val missed = PushText.missedCallTitle(spanish)
             val prompt = PushText.missedCallBody(spanish)
-            return AlertCopy(title = missed, body = prompt, publicTitle = missed, publicBody = prompt)
+            return AlertCopy(title = missed, body = prompt, publicTitle = missed, publicBody = prompt, callBack = true)
         }
         return AlertCopy(
             title = title.ifEmpty { PushText.TITLE },

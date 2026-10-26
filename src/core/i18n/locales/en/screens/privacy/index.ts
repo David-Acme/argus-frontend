@@ -1,5 +1,4 @@
 export const privacy = {
-  title: 'Privacy',
   subtitle: 'You decide what Argus does with your data. Change it whenever you like.',
   step: 'Privacy',
   modules: {
@@ -16,7 +15,8 @@ export const privacy = {
   gate: {
     checking: 'Checking your privacy…',
     failed: 'I couldn’t check your privacy',
-    'failed-hint': 'Argus stays closed until it knows what you allowed. Try again when you are connected.',
+    'failed-hint':
+      'Argus stays closed until it knows what you allowed. Try again when you are connected.',
   },
   consent: {
     eyebrow: 'Before you start',
@@ -30,7 +30,8 @@ export const privacy = {
     'updated-intro':
       'We updated the privacy notice and the terms. Read them and confirm your choices to continue.',
     'essentials-title': 'The essentials',
-    'essential-local': 'Everything is processed and stored on the computer in your home, never in the cloud.',
+    'essential-local':
+      'Everything is processed and stored on the computer in your home, never in the cloud.',
     'essential-face':
       'You sign in with your face: Argus keeps a numeric pattern of it and your registration photo in private storage.',
     'essential-retention':
@@ -127,8 +128,10 @@ export const privacy = {
     },
     'signal-hint': {
       presence: 'Uses “home” or “away” for those who allow it, to decide whom to warn first.',
-      faceCameras: 'Cameras name those who allow it; everyone else is seen as someone from home, without a name.',
-      voiceLearning: 'Argus learns the voices of those who allow it in their calls. Turning it off erases them all.',
+      faceCameras:
+        'Cameras name those who allow it; everyone else is seen as someone from home, without a name.',
+      voiceLearning:
+        'Argus learns the voices of those who allow it in their calls. Turning it off erases them all.',
       cameraAudio: 'Camera microphones turn on only if everyone allows it.',
     },
     hint: 'Turn a feature off for everyone. You cannot turn it on for someone else: each person decides their own.',
@@ -172,8 +175,10 @@ export const privacy = {
     watchman: 'Argus listens through the cameras',
     'watchman-hint':
       'When someone says “Argus” near a chosen camera, a tone plays and Argus answers through its speaker. You choose on each camera whether it listens.',
-    'watchman-ready': 'Listening on the cameras that have it on. You choose on each camera whether it listens.',
-    'watchman-audio-off': 'It is on, but camera audio is off for the household: it does not listen.',
+    'watchman-ready':
+      'Listening on the cameras that have it on. You choose on each camera whether it listens.',
+    'watchman-audio-off':
+      'It is on, but camera audio is off for the household: it does not listen.',
     'watchman-audio-held':
       'It is on, but it does not listen: {count} person(s) do not allow camera audio or have not decided.',
     'watchman-acknowledged': 'Accepted on {date}.',
@@ -181,7 +186,8 @@ export const privacy = {
     'watchman-ack-intro': 'Before turning it on, confirm that you understand and accept that:',
     'watchman-ack-installer':
       'You, who install and operate Argus, are responsible for using it lawfully. Camera audio counts as video surveillance data.',
-    'watchman-ack-sign': 'You must put up a visible sign at every entrance to an area with listening cameras.',
+    'watchman-ack-sign':
+      'You must put up a visible sign at every entrance to an area with listening cameras.',
     'watchman-ack-rest':
       'You must not turn audio on in a domestic worker’s rest area: mark those cameras as “no audio”.',
     'watchman-ack-consent':
@@ -236,12 +242,14 @@ export const privacy = {
   minor: {
     title: 'Minor',
     switch: 'Is a minor',
-    'switch-hint': 'Argus does not recognise their face at the cameras or learn their voice, even if they allowed it.',
+    'switch-hint':
+      'Argus does not recognise their face at the cameras or learn their voice, even if they allowed it.',
     consent: 'I give my consent as guardian',
     'consent-hint': 'With your consent their own face and voice choices apply.',
     protected:
       'Without your consent: the cameras do not recognise their face, and Argus neither learns their voice nor keeps memories of them.',
-    consented: 'With your consent as guardian: their own face and voice choices apply, and Argus can remember what they ask.',
+    consented:
+      'With your consent as guardian: their own face and voice choices apply, and Argus can remember what they ask.',
     camera:
       'At a camera Argus always talks to them as a minor: it shows them no cameras, answers no alarm for them and does not change the agenda or the projects.',
     'mark-title': 'Mark {name} as a minor?',
@@ -249,14 +257,16 @@ export const privacy = {
       'The cameras will stop recognising {name} by face and Argus will stop learning their voice; the voice it already learned is erased. It will not keep memories of them either. You can give your consent as guardian later.',
     'mark-confirm': 'Mark as a minor',
     'unmark-title': 'Is {name} no longer a minor?',
-    'unmark-description': 'The privacy choices of {name} will apply again, without the limits of a minor.',
+    'unmark-description':
+      'The privacy choices of {name} will apply again, without the limits of a minor.',
     'unmark-confirm': 'Remove the mark',
     'consent-title': 'Give your consent as guardian of {name}?',
     'consent-description':
       'The cameras may recognise {name} by face and Argus may learn their voice, only if {name} allows it in their privacy. You are recorded as their guardian.',
     'consent-confirm': 'Give my consent',
     'withdraw-title': 'Withdraw your consent for {name}?',
-    'withdraw-description': 'The cameras will stop recognising {name} by face and Argus will erase the voice it learned.',
+    'withdraw-description':
+      'The cameras will stop recognising {name} by face and Argus will erase the voice it learned.',
     'withdraw-confirm': 'Withdraw consent',
     'save-failed': 'The minor mark could not be saved',
   },

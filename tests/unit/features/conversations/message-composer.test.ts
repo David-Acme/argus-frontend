@@ -79,7 +79,7 @@ describe('the composer in the thread', () => {
   const HOOK = read('features/conversations/hooks/use-conversation-thread.ts');
 
   const ASSISTANT = read('features/conversations/components/assistant-composer.tsx');
-  const CALL = read('features/voice/components/call-surface.tsx');
+  const CALL = read('features/voice/components/call-notes.tsx');
   const CALL_SCREEN = read('features/voice/screens/call-screen.tsx');
 
   test('the thread ends in the composer, which sends through the thread hook', () => {

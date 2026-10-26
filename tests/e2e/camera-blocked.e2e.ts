@@ -21,7 +21,16 @@ const camera = (id: number, name: string, patch: Record<string, unknown>) => ({
   noAudio: false,
   retentionDays: 30,
   capabilities: ['ptz', 'presets', 'talk', 'privacy'],
-  config: { catalogId: 'tapo-c210', streamPath: '', subStreamPath: '', homePreset: '1', activeLook: false, followIntruders: false, noAimSectors: [], retentionIncident: false },
+  config: {
+    catalogId: 'tapo-c210',
+    streamPath: '',
+    subStreamPath: '',
+    homePreset: '1',
+    activeLook: false,
+    followIntruders: false,
+    noAimSectors: [],
+    retentionIncident: false,
+  },
   isEnabled: true,
   isOnline: true,
   createdAt: at + id,
@@ -29,9 +38,11 @@ const camera = (id: number, name: string, patch: Record<string, unknown>) => ({
   ...patch,
 });
 
-const PRIVACY_REASON = 'In privacy mode Argus neither sees nor hears this camera, so you cannot talk through it or move it.';
-
-test('a camera in privacy mode offers neither talk nor movement, and says why', async ({ app, browser, screen }) => {
+test('a camera in privacy mode offers neither talk nor movement, and says why', async ({
+  app,
+  browser,
+  screen,
+}) => {
   const baseUrl = app.baseUrl ?? '';
   await store(baseUrl, 'camera', camera(7, 'Dormitorio', { privacyState: 'on' }));
   const escapes = await openFirst(browser, app);
@@ -41,9 +52,17 @@ test('a camera in privacy mode offers neither talk nor movement, and says why', 
   await expect(screen.getByRole('button', 'Dormitorio, Private')).toBeVisible({ timeout: 10000 });
   await expect(screen.getByRole('button', 'Talk through Dormitorio')).toBeHidden();
   await screen.getByRole('button', 'Dormitorio, Private').click();
-  await expect(screen.getByText(PRIVACY_REASON, { exact: true })).toBeVisible({ timeout: 10000 });
-  await expect(screen.getByText('Move', { exact: true })).toBeHidden();
-  await expect(screen.getByRole('switch', 'Listen on this camera')).toBeDisabled();
+  await expect(
+    screen.getByText('Private: Argus neither looks nor listens', { exact: true })
+  ).toBeVisible({ timeout: 10000 });
+  await expect(screen.getByRole('button', 'Hold to talk through the camera')).toBeHidden();
+  await expect(screen.getByRole('button', 'Move the camera')).toBeHidden();
+  await expect(screen.getByRole('button', 'Full screen')).toBeHidden();
+  await screen.getByRole('button', /^Camera settings/).click();
+  await expect(screen.getByText('Not listening: the lens is covered', { exact: true })).toBeVisible(
+    { timeout: 10000 }
+  );
+  await expect(screen.getByRole('switch', 'Listen on this camera')).toBeHidden();
 
   expect(escapes).toEqual([]);
 });

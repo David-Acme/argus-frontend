@@ -7,9 +7,7 @@ export const sessions = {
   desktop: 'Desktop',
   other: 'Other devices',
   'only-this': 'This is your only open session.',
-  'only-this-hint': 'When you sign in from another phone or computer, it shows up here.',
   'load-error': 'Your sessions could not be loaded.',
-  loading: 'Looking for your sessions…',
   'none-returned': 'Argus returned no session for you.',
   platform: {
     android: 'Android',
@@ -53,6 +51,22 @@ export const sessions = {
   'sign-out-everywhere': 'Sign out on all devices',
   'manage-sessions': 'Sessions and devices',
   'manage-sessions-hint': 'See where Argus is open and close what you do not need.',
+  'connect-device': 'Connect another device',
+  'connect-device-meta': 'With a QR code, nothing to type',
+  'close-others-meta': 'This device stays signed in',
+  'close-all-meta': 'This device too',
+  'only-this-meta': 'When you sign in on another device it shows up here',
+  'sign-out-meta': 'You go back to the sign-in screen',
+  home: {
+    title: 'Argus at home',
+    address: 'Argus at {address}',
+    paired: 'Paired since {date}',
+    unpair: 'Unpair this device',
+    'unpair-meta': 'Signs out and forgets Argus on this device',
+    'unpair-confirm-title': 'Unpair this device?',
+    'unpair-confirm-description':
+      'You will need your home code to pair it again before using Argus here.',
+  },
   admin: {
     title: 'Connected devices',
     hint: 'Who has Argus open right now, and where.',
@@ -75,14 +89,14 @@ export const sessions = {
       'Argus closes at once on every device they use. They can sign back in whenever they like.',
     disable: 'Turn off account',
     enable: 'Turn account back on',
-    'confirm-disable-title': 'Turn off {name}\'s account?',
+    'confirm-disable-title': "Turn off {name}'s account?",
     'confirm-disable-description':
       'Every session they have closes at once and they cannot sign in until you turn it back on. Their data is kept.',
-    disabled: '{name}\'s account is off and their sessions are closed',
-    'confirm-enable-title': 'Turn {name}\'s account back on?',
+    disabled: "{name}'s account is off and their sessions are closed",
+    'confirm-enable-title': "Turn {name}'s account back on?",
     'confirm-enable-description':
       'They can sign in again with their face. Their old sessions stay closed.',
-    enabled: '{name}\'s account is back on',
+    enabled: "{name}'s account is back on",
   },
   insights: {
     open: 'Open sessions',

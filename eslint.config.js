@@ -142,6 +142,19 @@ const LOADER =
 const LAYOUT_MESSAGE =
   'A test file is static imports, then every mock.module call, then one block of await import, then the tests.';
 
+const PLATFORM_EXTENSIONS = [
+  '.ts',
+  '.tsx',
+  '.web.ts',
+  '.web.tsx',
+  '.native.ts',
+  '.native.tsx',
+  '.d.ts',
+  '.js',
+  '.jsx',
+  '.json',
+];
+
 const TEST_MODULE_LAYOUT_SYNTAX = [
   `Program > ${LOADER} ~ ${MOCK}`,
   `Program > ${MOCK} ~ :not(${MOCK}) ~ ${MOCK}`,
@@ -428,9 +441,19 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    settings: {
+      'import/resolver': {
+        typescript: { project: 'tsconfig.json', extensions: PLATFORM_EXTENSIONS },
+      },
+    },
+  },
+  {
     files: ['tests/**/*.{ts,tsx}'],
     settings: {
-      'import/resolver': { typescript: { project: 'tests/tsconfig.json' } },
+      'import/resolver': {
+        typescript: { project: 'tests/tsconfig.json', extensions: PLATFORM_EXTENSIONS },
+      },
     },
     rules: {
       'argus/test-module-layout': ['error', ...TEST_MODULE_LAYOUT_SYNTAX],

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { View } from 'react-native';
 import { Chip, FilterChip } from '@/shared/ui/chip';
 import { Cluster } from '@/shared/ui/layout';
 import { LabCase } from '../components/lab-case';
@@ -7,6 +8,7 @@ import { copy } from './demo-copy';
 export function ChipDemo() {
   const [monthly, setMonthly] = useState(true);
   const [callMe, setCallMe] = useState(false);
+  const [day, setDay] = useState(false);
   return (
     <>
       <LabCase id="tag-ok-dot">
@@ -29,6 +31,17 @@ export function ChipDemo() {
       </LabCase>
       <LabCase id="suggestion">
         <Chip size="suggestion" label={copy.showKitchen} />
+      </LabCase>
+      <LabCase id="views" block>
+        <View role="tablist" aria-label={copy.agendaView} className="flex-row gap-2">
+          <FilterChip
+            size="view"
+            label={copy.agenda}
+            selected={!day}
+            onPress={() => setDay(false)}
+          />
+          <FilterChip size="view" label={copy.event} selected={day} onPress={() => setDay(true)} />
+        </View>
       </LabCase>
       <LabCase id="filters" block>
         <Cluster>

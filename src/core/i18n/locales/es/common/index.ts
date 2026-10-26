@@ -20,19 +20,24 @@ export const common = {
     'open-settings': 'Abrir Ajustes',
     microphone: {
       title: 'Argus necesita el micrófono',
-      reason: 'Para que te oigan por la cámara y para hablar con Argus. Solo se usa mientras dura la llamada.',
+      reason:
+        'Para que te oigan por la cámara y para hablar con Argus. Solo se usa mientras dura la llamada.',
       'blocked-title': 'El micrófono está bloqueado',
-      blocked: 'Argus no puede usar el micrófono. Actívalo en Ajustes, en Permisos, y vuelve a intentarlo.',
+      blocked:
+        'Argus no puede usar el micrófono. Actívalo en Ajustes, en Permisos, y vuelve a intentarlo.',
     },
     notifications: {
       title: 'Activa las notificaciones',
-      reason: 'Así te llegan las alertas, los recordatorios y las llamadas de Argus aunque la app esté cerrada.',
+      reason:
+        'Así te llegan las alertas, los recordatorios y las llamadas de Argus aunque la app esté cerrada.',
       'blocked-title': 'Las notificaciones están bloqueadas',
-      blocked: 'Sin ellas no te llegan alertas ni llamadas con la app cerrada. Actívalas en Ajustes, en Notificaciones.',
+      blocked:
+        'Sin ellas no te llegan alertas ni llamadas con la app cerrada. Actívalas en Ajustes, en Notificaciones.',
     },
     bluetooth: {
       title: 'Llamadas en tus audífonos',
-      reason: 'Permite el acceso a dispositivos cercanos para que las llamadas suenen en tus audífonos o en el auto.',
+      reason:
+        'Permite el acceso a dispositivos cercanos para que las llamadas suenen en tus audífonos o en el auto.',
       'blocked-title': 'Los dispositivos cercanos están bloqueados',
       blocked: 'Las llamadas sonarán en el teléfono. Puedes permitirlo en Ajustes, en Permisos.',
     },
@@ -40,7 +45,8 @@ export const common = {
       title: 'Argus necesita la cámara',
       reason: 'Para leer el código QR. La cámara solo se usa mientras escaneas y nada se guarda.',
       'blocked-title': 'La cámara está bloqueada',
-      blocked: 'Argus no puede usar la cámara. Actívala en Ajustes, en Permisos, o escribe el código a mano.',
+      blocked:
+        'Argus no puede usar la cámara. Actívala en Ajustes, en Permisos, o escribe el código a mano.',
     },
   },
   permissions: {
@@ -100,21 +106,24 @@ export const common = {
     cloud: 'Conectado por la nube',
     'cloud-detail': 'Estás fuera de casa. La conexión sigue cifrada hasta tu casa.',
     unreachable: 'No puedo conectar con Argus en casa',
-    'unreachable-detail': 'Ni por tu red ni por la nube. Mostrando lo último guardado en este dispositivo.',
+    'unreachable-detail':
+      'Ni por tu red ni por la nube. Mostrando lo último guardado en este dispositivo.',
     'remote-unavailable': 'No encuentro a Argus',
     'remote-unavailable-detail':
       'No responde en esta red y el acceso remoto no está disponible. Mostrando lo último guardado en este dispositivo.',
   },
   watchdog: {
     'banner-title': 'Argus no responde desde las {time}',
-    'banner-description': 'Puede que el servidor esté apagado o sin red. Si no hay nadie en casa, pide a alguien que lo compruebe.',
+    'banner-description':
+      'Puede que el servidor esté apagado o sin red. Si no hay nadie en casa, pide a alguien que lo compruebe.',
     'alarm-title': 'Argus no responde',
     'alarm-body': 'No sé nada de Argus desde las {time}. Abre la app para comprobarlo.',
     channel: 'Avisos de Argus sin conexión',
   },
   'server-unreachable': {
     title: 'No encontramos tu servidor Argus',
-    description: 'Comprueba que el servidor esté encendido y que este dispositivo esté en la misma red.',
+    description:
+      'Comprueba que el servidor esté encendido y que este dispositivo esté en la misma red.',
   },
   back: 'Volver',
   'open-settings': 'Abrir ajustes',
@@ -148,6 +157,10 @@ export const common = {
   share: 'Compartir',
   saving: 'Guardando…',
   loading: 'Cargando',
+  resource: {
+    stale: 'Sin conexión con Argus. Muestro lo de las {age}.',
+    refused: 'Solo {owner} puede cambiar esto.',
+  },
   list: {
     'loading-more': 'Cargando más',
     end: 'No hay más',
@@ -185,8 +198,10 @@ export const common = {
   errors: {
     network: 'No se pudo conectar con Argus',
     timeout: 'Argus tardó demasiado en responder. Inténtalo de nuevo.',
-    'write-not-sent': 'No puedo llegar a Argus, así que el cambio no se ha enviado. Vuelve a intentarlo cuando tengas conexión.',
-    'write-unconfirmed': 'Se cortó la conexión con Argus y no sé si el cambio llegó a enviarse. Comprueba cómo quedó antes de repetirlo.',
+    'write-not-sent':
+      'No puedo llegar a Argus, así que el cambio no se ha enviado. Vuelve a intentarlo cuando tengas conexión.',
+    'write-unconfirmed':
+      'Se cortó la conexión con Argus y no sé si el cambio llegó a enviarse. Comprueba cómo quedó antes de repetirlo.',
     unauthorized: 'Sesión expirada, vuelve a iniciar sesión',
     forbidden: 'No tienes permiso para esta acción',
     'not-found': 'Recurso no encontrado',
@@ -194,31 +209,40 @@ export const common = {
     validation: 'Revisa los datos enviados',
     'server-error': 'El servidor falló, inténtalo de nuevo',
     'too-many-requests': 'Demasiados intentos. Espera unos minutos y vuelve a probar.',
-    'unavailable': 'Argus no está disponible ahora mismo. Inténtalo en un momento.',
+    unavailable: 'Argus no está disponible ahora mismo. Inténtalo en un momento.',
     'camera-unreachable': 'La cámara no responde. Revisa que esté encendida y en la red.',
-    'app-siren-disabled': 'La sirena desde la app está apagada. El propietario puede activarla en Configuración › Vigilancia.',
-    'camera-secret': 'No pudimos proteger la contraseña de la cámara en el servidor, así que no se guardó. Inténtalo de nuevo en un momento.',
+    'app-siren-disabled':
+      'La sirena desde la app está apagada. El propietario puede activarla en Configuración › Vigilancia.',
+    'camera-secret':
+      'No pudimos proteger la contraseña de la cámara en el servidor, así que no se guardó. Inténtalo de nuevo en un momento.',
     'remote-not-allowed': 'Esto solo se puede hacer desde la red de tu casa.',
     'bad-request': 'Argus no pudo procesar esa petición.',
     'pairing-required': 'Empareja tu dispositivo con el servidor primero',
-    'invalid-response': 'Argus respondió algo que la app no entiende. Inténtalo de nuevo o actualiza la app.',
+    'invalid-response':
+      'Argus respondió algo que la app no entiende. Inténtalo de nuevo o actualiza la app.',
     'unreachable-route': 'El servidor no respondió como Argus. Puede que necesite actualizarse.',
-    'cert-not-trusted': 'No se pudo comprobar que este servidor sea tu Argus. Vuelve a vincular el dispositivo.',
-    'fingerprint-mismatch': 'Este servidor no es el que vinculaste, así que la app no se ha conectado.',
+    'cert-not-trusted':
+      'No se pudo comprobar que este servidor sea tu Argus. Vuelve a vincular el dispositivo.',
+    'fingerprint-mismatch':
+      'Este servidor no es el que vinculaste, así que la app no se ha conectado.',
     storage: 'No se pudieron leer los datos guardados en este dispositivo. Inténtalo de nuevo.',
-    'account-disabled': 'Tu cuenta está desactivada. Pide al propietario de Argus que la vuelva a activar.',
-    'module-disabled': 'Esa parte de Argus está apagada. El propietario puede activarla en Configuración › Módulos.',
+    'account-disabled':
+      'Tu cuenta está desactivada. Pide al propietario de Argus que la vuelva a activar.',
+    'module-disabled':
+      'Esa parte de Argus está apagada. El propietario puede activarla en Configuración › Módulos.',
     'module-hardware': 'Tu servidor no tiene recursos suficientes para este módulo.',
     'module-coming-soon': 'Este módulo todavía no está disponible.',
     'module-busy': 'Ya hay una instalación en marcha para este módulo.',
     'module-required': 'Otro módulo activo lo necesita. Apaga primero ese módulo.',
     'module-core': 'El núcleo de Argus siempre está activo.',
-    'module-roles-held': 'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
+    'module-roles-held':
+      'Alguien tiene un rol de este módulo. Elige un rol nuevo para esa persona y vuelve a intentarlo.',
     'role-inactive': 'Tu rol está en pausa mientras ese módulo esté apagado.',
     'desktop-shell': 'El escritorio no pudo cambiar este ajuste.',
     'guard-off-duty': 'Solo puedes mover la cámara mientras estás de turno.',
     'maintenance-off-duty': 'Solo puedes declarar un mantenimiento mientras estás de turno.',
-    'maintenance-out-of-scope': 'Solo puedes declarar mantenimiento para las cámaras de tu entorno.',
+    'maintenance-out-of-scope':
+      'Solo puedes declarar mantenimiento para las cámaras de tu entorno.',
     'presets-not-yours': 'Solo el propietario o un residente guarda, borra o fija posiciones.',
     'camera-control-locked': 'Otra persona está moviendo la cámara.',
     'not-a-tamper': 'Esta alerta no es de una cámara manipulada.',

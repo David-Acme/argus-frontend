@@ -91,6 +91,26 @@ describe('Screen', () => {
     expect(seen).toContain(true);
   });
 
+  test('on a tablet only a screen of panes splits into columns', () => {
+    setWindowWidth(820);
+    const columns = (
+      <ScreenColumns>
+        <ScreenColumn label="Lista" width={340}>
+          <Text>lista</Text>
+        </ScreenColumn>
+        <ScreenColumn label="Detalle">
+          <Text>detalle</Text>
+        </ScreenColumn>
+      </ScreenColumns>
+    );
+    const stacked = render(<Screen columns>{columns}</Screen>);
+    expect(screen.queryByLabelText('Lista')).toBeNull();
+    stacked.unmount();
+    render(<Screen columns="panes">{columns}</Screen>);
+    expect(screen.getByLabelText('Lista')).toBeDefined();
+    expect(screen.getByLabelText('Detalle')).toBeDefined();
+  });
+
   test('a column with a ceiling grows only up to it, and a fixed width wins', () => {
     setWindowWidth(1920);
     render(
@@ -173,5 +193,30 @@ describe('Screen', () => {
       expect(screen.getByText('dentro')).toBeDefined();
       unmount();
     }
+  });
+
+  test('a screen that opts into medium panes shows its columns on a tablet', () => {
+    setWindowWidth(820);
+    const { unmount } = render(
+      <Screen columns="panes">
+        <ScreenColumns>
+          <ScreenColumn label="Lista">
+            <Text>a</Text>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    expect(screen.getByLabelText('Lista')).toBeDefined();
+    unmount();
+    render(
+      <Screen columns>
+        <ScreenColumns>
+          <ScreenColumn label="Lista">
+            <Text>a</Text>
+          </ScreenColumn>
+        </ScreenColumns>
+      </Screen>
+    );
+    expect(screen.queryByLabelText('Lista')).toBeNull();
   });
 });

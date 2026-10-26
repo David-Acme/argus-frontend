@@ -23,6 +23,7 @@ internal fun ongoingCallActionOf(action: String?): OngoingCallAction? =
 
 internal data class OngoingCallCopy(
     val title: String,
+    val back: String,
     val hangUp: String,
     val mute: String,
     val unmute: String,
@@ -32,10 +33,34 @@ internal data class OngoingCallCopy(
 
 internal fun ongoingCallCopy(spanish: Boolean): OngoingCallCopy =
     if (spanish) {
-        OngoingCallCopy("Llamada con Argus", "Colgar", "Silenciar", "Activar micrófono", "Altavoz", "Auricular")
+        OngoingCallCopy("Llamada con Argus", "Toca para volver", "Colgar", "Silenciar", "Activar micrófono", "Altavoz", "Auricular")
     } else {
-        OngoingCallCopy("Call with Argus", "Hang up", "Mute", "Unmute", "Speaker", "Earpiece")
+        OngoingCallCopy("Call with Argus", "Tap to return", "Hang up", "Mute", "Unmute", "Speaker", "Earpiece")
     }
+
+internal enum class OngoingCallIcon { Mic, MicOff, Speaker, Earpiece, HangUp }
+
+internal data class OngoingActionSpec(val action: OngoingCallAction, val label: String, val icon: OngoingCallIcon)
+
+internal fun ongoingCallActions(copy: OngoingCallCopy, controls: CallControlState, style: OngoingCallStyle): List<OngoingActionSpec> {
+    val mute = if (controls.muted) {
+        OngoingActionSpec(OngoingCallAction.Mute, copy.unmute, OngoingCallIcon.Mic)
+    } else {
+        OngoingActionSpec(OngoingCallAction.Mute, copy.mute, OngoingCallIcon.MicOff)
+    }
+    val speaker = if (controls.speakerOn) {
+        OngoingActionSpec(OngoingCallAction.Speaker, copy.earpiece, OngoingCallIcon.Earpiece)
+    } else {
+        OngoingActionSpec(OngoingCallAction.Speaker, copy.speaker, OngoingCallIcon.Speaker)
+    }
+    return when (style) {
+        OngoingCallStyle.Call -> listOf(mute, speaker)
+        OngoingCallStyle.Plain -> listOf(mute, speaker, OngoingActionSpec(OngoingCallAction.HangUp, copy.hangUp, OngoingCallIcon.HangUp))
+    }
+}
+
+internal fun ongoingActionsTrace(actions: List<OngoingActionSpec>, style: OngoingCallStyle): String =
+    "actions-${actions.size}-own-icons-${style.name.lowercase()}-style-default-color"
 
 internal fun ongoingCallRoute(): OngoingCallRoute = OngoingCallRoute.ForegroundService
 
@@ -62,6 +87,7 @@ internal object OngoingCall {
     fun show(context: Context, callId: String, enteredFromOutside: Boolean, assistant: Boolean = false) {
         if (enteredFromOutside) KeyguardCall.arm(callId)
         PushChannels.ensure(context)
+        PushNotifier.cancelMissedCalls(context)
         when (ongoingCallRoute()) {
             OngoingCallRoute.ForegroundService -> {
                 try {

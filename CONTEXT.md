@@ -2209,10 +2209,10 @@ path, knows the house it is talking about, and reports what it did.
   digest never.
 - **Actions.** `voice:action` runs one at a time, a repeated id is ignored,
   and each outcome goes back as `voice:action_result {id, ok, detail}` so
-  argus-voice corrects a failure aloud. The call surface shows them as
-  chips (pending, done, failed). `app.show_camera` opens the camera as a
-  live card inside the call when the call screen is on top
-  (`CameraLiveView` from `features/cameras`), and navigates otherwise.
+  argus-voice corrects a failure aloud. The call stage shows the latest one
+  as an inline result card; `app.show_camera` offers «Ver» on it, which opens
+  the camera screen (after an unlock when the phone is locked) instead of a
+  live card that covered the transcript (see "Argus calls you: the call mode").
 - **Lifecycle.** Mute is sent to the server (`voice:mute`), which drops the
   half-said utterance. The service counts the stops it sent and ignores the
   previous call's frames until its `voice:done` (3 s grace), so a quick
@@ -7147,3 +7147,173 @@ Measured on 2026-10-26:
 | loose `constants.ts` | 5 |
 | `-types.ts` files | 10 |
 | unformatted files | 879 |
+
+## Argus calls you: the call mode (P5c, 2026-10-26, p5/llamadas)
+
+The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26/llamada/llamada.html`
+(WhatsApp-like, v2 and v3 revisions). One dark stage serves every moment.
+
+- **Which surface.** `model/incoming-surface.ts` decides: a reminder rings as the dark top banner
+  (Estela listening, «Argus», «Llamada · subject», round decline/answer); an alert at home
+  (`urgency: critical`) takes the full screen with the alert Aura; nothing rings over `/call`.
+  The banner is not modal, so an outside tap cannot dismiss it. `subject` is the field
+  argus-notification already sends in `call_incoming` and in the call push; it falls back to
+  `reason`.
+- **The stage.** `CallStage` wraps everything in `ScopedTheme theme="dark"`, so the stage uses the
+  dark tokens in both themes and Estela draws with her dark palette. The call line is the subject
+  until the call connects and then the clock (`connectedAt` in the voice snapshot, set the first
+  time the phase is listening, thinking or speaking): there is no «Conectando» anywhere. Estela
+  listens from the first instant and follows the real engine states (listen, think, speak; the red
+  curl for an alert while nobody talks). The bottom panel is Altavoz, Cámara, Silenciar, Colgar.
+  Altavoz toggles earpiece and speaker; with bluetooth or headphones it opens the audio dialog
+  instead of guessing (`model/call-speaker.ts`). The settings button and the in-call live camera
+  card are gone; the chat switch moved to the top right, the minimise chevron to the top left
+  (minimise pushes Inicio over the call so the call stays mounted, and the dark mini bar sits above
+  the tab bar).
+- **Ended and missed.** The ended stage sums up what was done (the last two done actions) and closes
+  by itself after `ENDED_HOLD_MS`. When the call ends with the app in the background or the phone
+  locked, the app posts a silent summary notification (`postCallSummary`, the `argus-call-summary`
+  channel, importance low; a local notification on iOS). A missed call is a card above the tab bar
+  for 30 minutes (unread `kind: call` notification), with «Ver lo que pasó» and «Devolver»; in
+  Novedades the same row offers «Devolver». Devolver starts a new call with Argus: the missed call
+  itself is closed on the server and cannot be rejoined.
+- **Snooze and Marcar hecho are hidden on purpose.** The reminder snooze path exists
+  (`POST /reminder/{id}/snooze`), but a call never names its reminder: `call_incoming`, the call
+  push and the missed-call notification carry no reminder id, and there is no route that rings a
+  call again later. The model already knows the buttons (`ringChoices({kind, snoozable})`,
+  `missedCallActions({kind, reminderLinked})`, `ringChoices(critical, snoozable)` on Android) and
+  the call sites pass `false` until argus-notification sends the reminder id.
+- **Android, locked.** `CallActivity` is the same dark stage drawn natively: the private line,
+  «Argus», the kind and subject, a still of Estela's idle hook (`EstelaStill`, the engine's swirl
+  shape drawn once on a Canvas, never a figure-eight) and the round buttons in one row. The same still
+  is the CallStyle caller icon. Silenciar, altavoz and colgar work over the lock screen; seeing the
+  camera asks for an unlock first (`requestUnlock`, `KeyguardManager.requestDismissKeyguard`).
+- **The ongoing-call notification fix.** Its mute and speaker actions used the launcher icon and the
+  notification was coloured with a dark accent inside `CallStyle.forOngoingCall`; One UI then painted
+  light pills with light labels. Each action now carries its own monochrome vector
+  (`res/drawable/argus_ic_*`), the colour is gone so the system CallStyle defaults apply, and the
+  action list is a pure function (`ongoingCallActions`) with a NativeTrace line
+  (`actions-<n>-own-icons-<style>-style-default-color`).
+- **Short screens.** The stage holds at 320×568, 360×640 and in phone landscape: `callScaleOf(height)`
+  (`shared/theme/call-scale.ts`, tested) steps the avatar (168, 136, 104, 64), the gap above it, the ring
+  and panel buttons (never below 48) and the caption lines (two, then one). `CallActivity` reads the same
+  steps from the display height in dp (`callStageScaleOf`), title size included.
+- **The missed card reads the paged notification feed** (`usePagedView`), the same subscription Inicio
+  uses: the feed is a paged value, not a row list, and reading it as rows crashed the first capture build.
+- **The missed-call notification** offers «Devolver» (opens `argus://call`) and joins the
+  `argus-missed-calls` group, which is cleared when a call starts.
+- **iOS.** CallKit stays the system UI: the provider's icon is a template still of Estela and the
+  handle is the call's subject, so the system screen reads «Argus · Pagar la luz». Answering opens
+  this same stage through `argus://call`.
+
+## The live camera and Ajustes de la cámara (Phase 3, P3b, 2026-10-26)
+
+The 4,566 px camera page (`camera-detail-screen.tsx` and the 21 panels it
+stacked) is four screens under `/cameras/[id]`: the live view (`index`),
+`settings` (Ajustes de la cámara), `recordings` (Grabaciones) and `zones`
+(Zonas). Every old deep link to `/cameras/<id>` (and `?talk=1`, which still
+opens a call once the camera allows talk) lands on the live view.
+
+**Decisions are pure.** `model/camera-stage.ts` turns the camera row and the
+player's reported status into one stage (`off`, `privacy`, `connecting`,
+`live`, `blocked` with its message and whether Reintentar applies) and decides
+which controls exist: talk and the call need the role, the speaker, a
+microphone and no call with Argus; movement needs a live picture on a
+pan-tilt camera and the aim permission; quality and fullscreen need a camera
+that sees; the siren stays in privacy (it is a deterrent, not a view) and goes
+only when the camera is off, unless one is already counting or sounding.
+Controls that cannot apply are hidden, never disabled (W17), and
+`talkNoteOf` says in words why talk is missing. A camera the sync row reports
+offline shows «La cámara no responde» with Reintentar before the stream even
+answers; a painted picture wins over that row. `model/talk-dock.ts` holds the
+hold-to-talk reducer: a press shorter than 300 ms latches talking until the
+next tap, which is the tap alternative of rule 25.
+
+**The stage says its state; no words for connecting.** `CameraLiveView`
+takes `onStatus`, and when it is given the view stops drawing its old status
+pills («Conectando con la cámara», «Reconectando…») and reports state,
+painted, notice and retry upward; the stage (`Media` `stage`) shows the dark
+calm frame while connecting, «En vivo» once painted, the lock and «Privada:
+Argus no mira ni escucha» in privacy, and its centre slot for the refusals.
+Other consumers (the call card, the response card, the list) keep the old
+behaviour because they pass no `onStatus`.
+
+**One decoder.** The inline stage unmounts its player while fullscreen plays
+its own, and the children screens never mount one beside the live view: the
+live view's player follows focus, so pushing Ajustes stops it. The one player
+outside the live view is the «Añadir lugar» sheet, which needs the picture and
+the pad to mark the two edges.
+
+**Shared changes.** `PressableSurface` takes `hold` (press down, press up; a
+started hold always ends, even if the surface turns disabled), used by the
+88 pt talk button and the PTZ pad; `Media` `stage` takes `center`; `Presence`
+takes `dark` and the eye chip always passes it (R-D33); `Icon` gains `large`
+(34, the talk glyph) and three glyphs (`move`, `mute`, `chevu`); tokens gain
+`size.talk` 88, `size.iconLarge` 34, `inset.talk` and the flat 10 px
+`elevation.talk` ring of the prototype. The tab bar now shows on
+`/cameras/<id>` and its children, as the prototype's camera frame draws it;
+only the list at `/cameras` keeps it hidden.
+
+**What moved.** The siren is the dock's danger button: `Confirm` asks
+(destructive, so a native alert on Android phones), then the button counts
+down as «Cancelar · 5» and, once sounding, is «Detener · 18 s» (F5 kept, its
+sheet removed). The written announcement is a `Sheet` from the ⋯ menu, which
+also holds the stream quality and, for the owner, edit, turn off and delete.
+Presets, the lease and the PTZ limit show under the stage while moving; the
+watch position is chosen in Mirada activa from the saved positions (a reversible
+choice, so no confirm). The frame-rate and resolution pills, the volume and
+listen toggles of the old call panel, and the zones overlay on the live picture
+are gone; the zone editor keeps its overlay. Maintenance is still the security
+slice's `MaintenancePanel`, whose restyle belongs to the Seguridad track.
+
+## Agenda (2026-10-26, Phase 4, p4/agenda)
+
+The owner's 2026-10-26 prototype (`uiux-map/redesign/later-phases/owner-2026-10-26/tu-agenda-ajustes.html`)
+replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
+
+- **Layout by window class.** Phone: the month title (its chevron opens the
+  month), view chips Agenda · Día · Proyectos (`FilterChip size="view"`, a tab
+  with the accent-soft selection), the week strip with a grab handle, the day
+  list, and the ink «+» (`Button iconOnly fab`) above the bar; a line opens a
+  detail sheet. Tablet (medium): list | detail, through `Screen columns="medium"`
+  (the panes start at medium only for a screen that asks; `ScreenColumns`
+  keeps its desktop default outside a `Screen`). Desktop: mini month, «Mostrar»
+  filters and «Libre hoy» | list | detail. The aside and the detail are lists
+  of sections (`asideBlocks`, `detailBlocks`), so only their last section grows
+  to the bottom.
+- **The list** covers the selected day and the six after it, from the month
+  caches of the selected month and the next (the paged agenda feed went with
+  the old Agenda view). Overdue first, then all-day, then by time, with the free
+  slots of `dayTimeline` between them. A line is time | 4 px bar | title and
+  meta | repeat and check: the bar is `ev1-bar` reminders, `ev3-bar` events,
+  `ev2-bar` tasks, `ev4-bar` events shared with you, red overdue, dashed for an
+  event series and dotted for a free slot (segments, never a gradient). The
+  bar colours are the prototype's `--ev*b`, added to `tokens.ts`.
+- **Día** is the hour timeline of the selected day from 07:00, or the first
+  earlier start, to 21:00 or the last end, hour labels in the device clock
+  (`formatHour`) in a fixed gutter that never wraps; overlapping events share
+  the width in lanes, and a red line marks now.
+- **One Nuevo sheet** (`ItemSheet`) creates an event (the default) or a task
+  (the type is a chip) and edits events; a series asks «Solo esta» / «Toda la
+  serie». A task is edited in Proyectos. Times are typed and shown in the device
+  clock (`parseClock` reads 24 h, 12 h, «930», «9.30»), which removes the
+  12 h / 24 h mismatch between grid and forms (A12).
+- **Reminders are Argus's memory** (owner decision, 2026-10-26). The app never
+  creates, edits, completes, snoozes or deletes a reminder: there is no reminders
+  section and no reminder dialog, and the suggestion chips and Command's
+  «Pedirle a Argus que me recuerde…» open the Argus thread with a draft. Argus's
+  pending reminders show read-only in the Agenda list and in Inicio's Ahora (a
+  bell, no check, no menu), and a tap opens the thread asking about one. Whether
+  they show at all is one flag, `ARGUS_REMINDERS_SHOWN` in
+  `features/agenda/constants/agenda.constant.ts`, read by `agendaItems`; the
+  owner's answer is a one-line change.
+- **Short phones** (`height-layout.ts`): a form sheet opens near full height and
+  scrolls on a short or landscape window (`sheetDetentsOf`, `sheetScrolls`), the
+  week strip drops its grab handle and the month uses small discs, so the list
+  starts within the top 40 %.
+- **Slices.** The reminders slice merged into agenda: agenda reads
+  `useReminders` and reminders read agenda's day picker, which would close a
+  slice cycle. Inicio's agenda models moved here; the types they share live in
+  `core/types/agenda.type.ts` and `FREE_SLOT_RULES` in the calendar constants.
+  The event share dialog is still the legacy one, opened from the detail's
+  «Más acciones».

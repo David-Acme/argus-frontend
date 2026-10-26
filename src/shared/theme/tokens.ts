@@ -44,6 +44,10 @@ const light = {
   'ev3-text': '#2F4366',
   ev4: '#F2E1DF',
   'ev4-text': '#6E2F28',
+  'ev1-bar': '#B89A63',
+  'ev2-bar': '#5E9C70',
+  'ev3-bar': '#6C86B8',
+  'ev4-bar': '#C9706B',
   'on-media': '#FFFFFF',
 } as const;
 
@@ -84,6 +88,10 @@ const dark = {
   'ev3-text': '#B4C6E6',
   ev4: '#3A2321',
   'ev4-text': '#F0BDB6',
+  'ev1-bar': '#D9BC85',
+  'ev2-bar': '#63AE73',
+  'ev3-bar': '#8EA6D6',
+  'ev4-bar': '#C9706B',
   'on-media': '#FFFFFF',
 } as const satisfies Record<keyof typeof light, string>;
 
@@ -191,6 +199,7 @@ export const size = {
   wellSmall: 36,
   avatar: 36,
   avatarLarge: 56,
+  avatarPortrait: 80,
   button: 50,
   buttonCompact: 40,
   field: 48,
@@ -283,6 +292,10 @@ export const layout = {
   palette: 640,
   sidebar: 244,
   mediaAspect: 1.6,
+  mediaAspectShort: 2,
+  mediaAspectTiny: 2.4,
+  shortHeight: 760,
+  tinyHeight: 600,
   mediaGridThree: 560,
   mediaGridFour: 1400,
   bandMax: 2256,

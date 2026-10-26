@@ -4,8 +4,6 @@ export const NOTIFICATIONS_PANEL_HREF = '/notification';
 
 export const NEW_ITEM_PARAM = { event: 'event', project: 'project', task: 'task' } as const;
 
-export const TIMELINE_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
-
 export const TASK_STATUS_ORDER = ['doing', 'todo', 'backlog', 'done', 'canceled'] as const;
 
 export const TASK_PRIORITY_WEIGHT: Record<string, number> = {

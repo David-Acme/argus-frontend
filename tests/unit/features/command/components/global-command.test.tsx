@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, describe, expect, mock, setSystemTime, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { AccessView } from '@/shared/libs/capabilities';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
@@ -11,7 +11,9 @@ import { accessView } from '@/shared/libs/capabilities';
 type Calls = string[];
 
 const calls: Calls = [];
-const today = new Date();
+const today = new Date(2026, 9, 26, 12);
+
+setSystemTime(today);
 const at = (days: number, hours: number) =>
   new Date(today.getFullYear(), today.getMonth(), today.getDate() + days, hours).getTime();
 
@@ -113,7 +115,7 @@ describe('GlobalCommand', () => {
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();
     expect(groups()).toEqual(['Acciones', 'Ir a']);
     expect(options()).toEqual([
-      'Nuevo recordatorio',
+      'Pedirle a Argus que me recuerde…',
       'Nuevo evento',
       'Nuevo proyecto',
       'Inicio',
@@ -135,7 +137,7 @@ describe('GlobalCommand', () => {
       '«pagar…» — pregúntale a Argus',
       'Pagar la luz',
       'Pagar el agua',
-      'Nuevo recordatorio «pagar…»',
+      'Pedirle a Argus que me recuerde «pagar…»',
     ]);
     expect(screen.getByText('· hoy 23:00')).toBeDefined();
     expect(screen.getByText('· mañana 09:00')).toBeDefined();
@@ -162,7 +164,9 @@ describe('GlobalCommand', () => {
     calls.length = 0;
     press('/');
     type('pagar');
-    fireEvent.click(screen.getByRole('option', { name: 'Nuevo recordatorio «pagar…»' }));
+    fireEvent.click(
+      screen.getByRole('option', { name: 'Pedirle a Argus que me recuerde «pagar…»' })
+    );
     expect(calls).toEqual(['draft Recuérdame pagar', 'mode chat', 'push "/conversations/0"']);
   });
 
@@ -171,7 +175,7 @@ describe('GlobalCommand', () => {
     press('n');
     expect(groups()).toEqual(['Acciones']);
     type('evento');
-    expect(options()).toEqual(['Nuevo evento', 'Nuevo recordatorio «evento…»']);
+    expect(options()).toEqual(['Nuevo evento', 'Pedirle a Argus que me recuerde «evento…»']);
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(calls).toEqual(['push {"pathname":"/agenda","params":{"new":"event"}}']);
   });

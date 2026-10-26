@@ -24,13 +24,13 @@ internal object CallSession {
 
     fun activeEpisode(): String? = synchronized(lock) { active?.info?.episode?.takeIf { it.isNotEmpty() } }
 
-    private class ActiveCall(val info: RingInfo, val expiry: Runnable, val startedAtMillis: Long) {
+    private class ActiveCall(val info: RingInfo, val expiry: Runnable) {
         val callId: String get() = info.callId
     }
 
     fun ringDisplay(callId: String): RingDisplay? =
         synchronized(lock) {
-            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.subject, it.info.critical, it.startedAtMillis) }
+            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.subject, it.info.critical) }
         }
 
     fun ring(context: Context, info: RingInfo) {
@@ -43,7 +43,7 @@ internal object CallSession {
             val previous = active
             previous?.let { handler.removeCallbacks(it.expiry) }
             val expiry = Runnable { expire(app, callId) }
-            active = ActiveCall(info, expiry, System.currentTimeMillis())
+            active = ActiveCall(info, expiry)
             handler.postDelayed(expiry, timeoutMillis)
             previous?.callId
         }
@@ -54,7 +54,7 @@ internal object CallSession {
         }
         ringer.start(app)
         TelecomCall.addIncoming(app, callId)
-        PushNotifier.postCall(app, callId, PushNotifier.canUseFullScreen(app), timeoutMillis)
+        PushNotifier.postCall(app, info, PushNotifier.canUseFullScreen(app), timeoutMillis)
     }
 
     fun isRinging(callId: String): Boolean = synchronized(lock) { active?.callId == callId }

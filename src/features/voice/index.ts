@@ -4,6 +4,7 @@ export { CallPill } from './components/call-pill';
 export { CallPreferencesSection } from './components/call-preferences-section';
 export { CallSurface } from './components/call-surface';
 export { IncomingCallSurface } from './components/incoming-call-surface';
+export { MissedCallCard } from './components/missed-call-card';
 export { VoiceWebNotice } from './components/voice-web-notice';
 export { callLockedId } from './model/call-lock';
 export { currentCallLockRedirect, outsideCallLockId } from './model/call-lock-state';

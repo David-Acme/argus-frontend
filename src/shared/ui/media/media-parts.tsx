@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useScreenActive } from '@/shared/hooks/use-screen-active';
 import { illustration, motion, size, useEffects, useWindowLayout } from '@/shared/theme';
-import { Icon, type IconGlyph } from '@/shared/ui/icon';
+import { Icon } from '@/shared/ui/icon';
+import type { IconGlyph } from '@/shared/ui/icon';
 import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -133,7 +134,7 @@ export function EyeCorner({ eye }: EyeCornerProps) {
         blur
       )}
       style={EYE}>
-      <Presence state="look" size={mark} />
+      <Presence state="look" size={mark} dark />
       <Text variant="eyeChip" tone="on-media">
         {eye.label}
       </Text>

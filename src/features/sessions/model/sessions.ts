@@ -1,9 +1,4 @@
-import type {
-  AuthSession,
-  IconName,
-  SessionPlatform,
-  UserSessionsOverview,
-} from '@/core/types';
+import type { AuthSession, IconName, SessionPlatform, UserSessionsOverview } from '@/core/types';
 import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 
 export type SessionGroupKey = 'mobile' | 'desktop' | 'other';
@@ -124,7 +119,9 @@ export function connectedUsersOf(rows: readonly UserSessionRow[]): ConnectedUser
         userId,
         sessions: ordered,
         lastSeenAt: ordered[0]?.lastSeenAt ?? 0,
-        groups: GROUP_ORDER.filter((key) => ordered.some((session) => groupOf(session.platform) === key)),
+        groups: GROUP_ORDER.filter((key) =>
+          ordered.some((session) => groupOf(session.platform) === key)
+        ),
       };
     })
     .sort((left, right) => right.lastSeenAt - left.lastSeenAt || left.userId - right.userId);
@@ -145,7 +142,9 @@ export function sessionInsightsOf<T extends AuthSession>(
   const activeToday = sessions.filter(
     (session) => session.current || nowSeconds - session.lastSeenAt < DAY_S
   ).length;
-  const expiries = sessions.map((session) => session.expiresAt).filter((value) => value > nowSeconds);
+  const expiries = sessions
+    .map((session) => session.expiresAt)
+    .filter((value) => value > nowSeconds);
   const recentSignIns = [...sessions]
     .sort((left, right) => right.createdAt - left.createdAt || left.id.localeCompare(right.id))
     .slice(0, limit);
@@ -165,15 +164,18 @@ export function withoutSessions(
   const gone = new Set(revoked);
   return {
     users: overview.users
-      .map((user) => ({ ...user, sessions: user.sessions.filter((session) => !gone.has(session.id)) }))
+      .map((user) => ({
+        ...user,
+        sessions: user.sessions.filter((session) => !gone.has(session.id)),
+      }))
       .filter((user) => user.sessions.length > 0),
   };
 }
 
-export type SessionListState = 'list' | 'loading' | 'failed' | 'empty';
+const EARLIEST_PAIRING_MS = Date.UTC(2000, 0, 1);
 
-export function sessionListState(input: { failed: boolean; answered: boolean; count: number }): SessionListState {
-  if (input.count > 0) return 'list';
-  if (input.answered) return 'empty';
-  return input.failed ? 'failed' : 'loading';
+export function pairedDateOf(pairedAt: number): Date | null {
+  if (!Number.isFinite(pairedAt) || pairedAt < EARLIEST_PAIRING_MS) return null;
+  const paired = new Date(pairedAt);
+  return Number.isNaN(paired.getTime()) ? null : paired;
 }

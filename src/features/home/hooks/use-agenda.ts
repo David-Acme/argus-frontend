@@ -1,4 +1,4 @@
-import type { CalendarEntry, DashboardProjectCard } from '@/core/types';
+import type { AgendaItem, CalendarEntry, DashboardProjectCard, DayRange } from '@/core/types';
 import { calendarMonthScope } from '@/core/services/view-cache';
 import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows, useViewCacheValue } from '@/shared/hooks/use-cached-rows';
@@ -7,15 +7,14 @@ import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useNow } from '@/shared/hooks/use-now';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { byStart, CALENDAR_LENSES } from '@/features/agenda';
-import { useReminders } from '@/features/reminders';
 import { useAgendaActions, type AgendaActions } from '@/features/home/hooks/use-agenda-actions';
 import {
   agendaItems,
+  byStart,
+  CALENDAR_LENSES,
   projectNamesOf,
-  type AgendaItem,
-  type DayRange,
-} from '@/features/home/model/agenda-items';
+  useReminders,
+} from '@/features/agenda';
 import type { WordingContext } from '@/features/home/model/agenda-wording';
 
 export type Agenda = {
@@ -40,7 +39,7 @@ export function useAgenda(): Agenda {
   const readsReminders = has(CAPABILITY.remindersRead);
   const readsAgenda = has(CAPABILITY.agendaRead);
   const reminders = useReminders();
-  const actions = useAgendaActions(reminders);
+  const actions = useAgendaActions();
   const start = date.startOfDay(new Date(now));
   const next = date.addDays(start, 1);
   const today = { from: start.getTime(), to: date.endOfDay(start).getTime() };

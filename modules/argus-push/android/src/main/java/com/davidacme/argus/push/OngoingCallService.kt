@@ -16,6 +16,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import com.margelo.nitro.push.R
 
 internal data class OngoingCallState(
     val callId: String,
@@ -104,7 +105,24 @@ internal class OngoingCallService : Service() {
         const val EXTRA_OUTSIDE = "com.davidacme.argus.push.ONGOING_OUTSIDE"
         const val EXTRA_ASSISTANT = "com.davidacme.argus.push.ONGOING_ASSISTANT"
         const val ID = 7046
-        const val ACCENT = 0xFF023C69.toInt()
+        private const val PERSON_ICON_PX = 192
+        private val ACTION_ICONS = mapOf(
+            OngoingCallIcon.Mic to R.drawable.argus_ic_mic,
+            OngoingCallIcon.MicOff to R.drawable.argus_ic_mic_off,
+            OngoingCallIcon.Speaker to R.drawable.argus_ic_speaker,
+            OngoingCallIcon.Earpiece to R.drawable.argus_ic_earpiece,
+            OngoingCallIcon.HangUp to R.drawable.argus_ic_hang,
+        )
+        private val ACTION_INTENTS = mapOf(
+            OngoingCallAction.HangUp to PushActions.ACTION_HANG_UP,
+            OngoingCallAction.Mute to PushActions.ACTION_MUTE,
+            OngoingCallAction.Speaker to PushActions.ACTION_SPEAKER,
+        )
+        private val ACTION_REQUESTS = mapOf(
+            OngoingCallAction.HangUp to 1,
+            OngoingCallAction.Mute to 2,
+            OngoingCallAction.Speaker to 3,
+        )
         private const val EXTRA_REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
         private const val FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
@@ -140,7 +158,8 @@ internal class OngoingCallService : Service() {
 
         private fun build(context: Context, state: OngoingCallState): Notification {
             val copy = ongoingCallCopy(PushText.isSpanish())
-            val controls = CallControls.snapshot()
+            val style = ongoingCallStyleOf(Build.VERSION.SDK_INT, CallSession.telecomActive())
+            val actions = ongoingCallActions(copy, CallControls.snapshot(), style)
             val open = PendingIntent.getActivity(
                 context,
                 0,
@@ -149,22 +168,11 @@ internal class OngoingCallService : Service() {
                 },
                 FLAGS,
             )
-            val icon = Icon.createWithResource(context, context.applicationInfo.icon)
-            val hangUp = broadcast(context, 1, PushActions.ACTION_HANG_UP, state.callId)
-            val mute = Notification.Action.Builder(
-                icon,
-                if (controls.muted) copy.unmute else copy.mute,
-                broadcast(context, 2, PushActions.ACTION_MUTE, state.callId),
-            ).build()
-            val speaker = Notification.Action.Builder(
-                icon,
-                if (controls.speakerOn) copy.earpiece else copy.speaker,
-                broadcast(context, 3, PushActions.ACTION_SPEAKER, state.callId),
-            ).build()
+            val hangUp = broadcast(context, ACTION_REQUESTS.getValue(OngoingCallAction.HangUp), PushActions.ACTION_HANG_UP, state.callId)
             val builder = Notification.Builder(context, ongoingCallChannel())
-                .setSmallIcon(context.applicationInfo.icon)
-                .setColor(ACCENT)
+                .setSmallIcon(R.drawable.argus_ic_phone)
                 .setContentTitle(copy.title)
+                .setContentText(copy.back)
                 .setContentIntent(open)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
@@ -173,21 +181,26 @@ internal class OngoingCallService : Service() {
                 .setShowWhen(true)
                 .setUsesChronometer(true)
             builder.extras.putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true)
-            if (ongoingCallStyleOf(Build.VERSION.SDK_INT, CallSession.telecomActive()) == OngoingCallStyle.Call) {
-                val person = Person.Builder().setName("Argus").setIcon(icon).setImportant(true).build()
+            if (style == OngoingCallStyle.Call) {
+                val person = Person.Builder()
+                    .setName(PushText.TITLE)
+                    .setIcon(Icon.createWithBitmap(EstelaStill.bitmap(PERSON_ICON_PX, EstelaMood.Idle)))
+                    .setImportant(true)
+                    .build()
                 builder.setFullScreenIntent(open, false)
                     .setStyle(Notification.CallStyle.forOngoingCall(person, hangUp))
-                    .addAction(mute)
-                    .addAction(speaker)
-                NativeTrace.record("ongoing", "shown", "call-style")
-            } else {
-                builder.addAction(Notification.Action.Builder(icon, copy.hangUp, hangUp).build())
-                    .addAction(mute)
-                    .addAction(speaker)
-                NativeTrace.record("ongoing", "shown", "plain-style")
             }
+            actions.forEach { spec -> builder.addAction(action(context, spec, state.callId)) }
+            NativeTrace.record("ongoing", "shown", ongoingActionsTrace(actions, style))
             return builder.build()
         }
+
+        private fun action(context: Context, spec: OngoingActionSpec, callId: String): Notification.Action =
+            Notification.Action.Builder(
+                Icon.createWithResource(context, ACTION_ICONS.getValue(spec.icon)),
+                spec.label,
+                broadcast(context, ACTION_REQUESTS.getValue(spec.action), ACTION_INTENTS.getValue(spec.action), callId),
+            ).build()
 
         private fun broadcast(context: Context, requestCode: Int, action: String, callId: String): PendingIntent =
             PendingIntent.getBroadcast(

@@ -45,6 +45,19 @@ describe('Section and Row', () => {
     ).toBeDefined();
   });
 
+  test('a technical meta line is still spoken after the title', () => {
+    render(
+      <Section>
+        <Row
+          title="Hilos de cómputo"
+          meta={{ text: 'tts.threads', mono: true }}
+          onPress={() => undefined}
+        />
+      </Section>
+    );
+    expect(screen.getByRole('button', { name: 'Hilos de cómputo, tts.threads' })).toBeDefined();
+  });
+
   test('a plain section shows its meta when it has no action', () => {
     render(
       <Section title="Lo último" meta="hace 10 min" variant="plain">

@@ -1,18 +1,71 @@
+import { advancedKeys } from './advanced-keys';
+
 export const settings = {
   title: 'Settings',
-  subtitle: 'Tune how each part of Argus works. Changes are saved right away.',
-  search: 'Search option',
   'load-error': 'Settings could not be loaded.',
-  'owner-unreachable': 'Not available right now',
-  'owner-unreachable-hint':
-    'This service is not answering. Its settings will appear when it is back online.',
-  'owner-empty': 'Nothing to tune at this level',
-  'owner-empty-hint': 'Switch to Advanced to see every option of this service.',
-  'subtitle-advanced':
-    'Every option of every service, with its .toml file, its range, its factory value and when it applies.',
-  'more-advanced': 'This service has {count} more technical options.',
-  'show-advanced': 'Show in advanced mode',
-  'count-all': '{count} options',
+  hub: {
+    search: 'Search settings',
+    results: 'Matching settings',
+    'no-results': 'No setting matches “{query}”',
+    'no-results-meta': 'Try another word',
+  },
+  how: {
+    title: 'How Argus works',
+    label: 'Argus profile',
+    'line-recommended': '{name} · recommended for this machine',
+    'line-other': '{name} · your choice',
+    'line-custom': 'Your own · tuned by hand',
+    'needs-host': 'This profile needs something installed on the Argus machine',
+    response: 'Responds',
+    memory: 'Memory',
+    voice: 'Naturalness',
+    levels: {
+      response: { performance: 'Instantly', balanced: 'Quickly', quality: 'Calmly' },
+      memory: { performance: 'Little', balanced: 'Some', quality: 'More' },
+      voice: { performance: 'Good', balanced: 'High', quality: 'Very high' },
+    },
+  },
+  services: {
+    title: 'Services',
+    'active-one': '1 active',
+    'active-many': '{count} active',
+    unreachable: 'Not responding · Retry',
+    'unreachable-title': '{name} is not responding',
+    'unreachable-body': 'Your settings are saved. Check that the Argus machine is on.',
+    pick: 'Choose a service',
+    'pick-meta': 'Its options show up here.',
+    empty: 'All set',
+    'empty-meta': 'This service has no main options. Look at the advanced ones if you need them.',
+    back: 'Back to Settings',
+  },
+  advanced: {
+    title: 'Advanced options',
+    count: 'Advanced options · {count}',
+    factory: 'Factory value: {value}',
+    reset: 'Back to {value}',
+    'pending-restart': 'Applies when {name} restarts',
+  },
+  more: {
+    label: 'Export, import or reset',
+    reset: 'Reset everything',
+    'reset-title': 'Reset {name}?',
+    'reset-body': 'Its {count} changed options go back to the factory values.',
+    'reset-confirm': 'Reset {name}',
+    'reset-none': '{name} is already as it came',
+  },
+  device: {
+    title: 'This device',
+    haptics: 'Vibrate to confirm',
+    'haptics-meta': 'A soft tap when you save or complete something',
+  },
+  voices: {
+    hint: 'Tap to listen',
+    chosen: 'Argus will speak with {name}’s voice',
+  },
+  stepper: {
+    less: 'Lower {name}',
+    more: 'Raise {name}',
+  },
   desktop: {
     autostart: {
       label: 'Open Argus when I sign in',
@@ -20,78 +73,17 @@ export const settings = {
       failed: 'The setting could not be changed.',
     },
   },
-  mode: {
-    label: 'Settings mode',
-    simple: 'Simple',
-    advanced: 'Advanced',
-  },
   'first-run': {
     title: 'Argus applied “{name}”, the recommendation for this machine, on {date}',
-    changed: 'It changed {keys}. Anything you tune later is kept.',
-    'changed-more': 'It changed {keys} and {count} more. Anything you tune later is kept.',
-    nothing: 'Your settings already matched; nothing had to change.',
     revert: 'Undo',
     reverted: 'The factory values are back',
     'revert-failed': 'The recommended profile could not be undone',
   },
-  connection: {
-    unreachable: 'Not answering right now: {names}.',
-    unconfigured: 'You can’t adjust {names} from here yet.',
-    'unconfigured-hint':
-      'They keep running with their current settings; they just aren’t linked to Settings yet. Run the server setup again and they will show up here.',
-    details: 'See details',
-  },
   technical: {
-    search: 'Search by name, key or service',
-    'all-services': 'All',
-    view: {
-      all: 'All ({count})',
-      changed: 'Changed ({count})',
-      restart: 'On restart',
-    },
-    summary: '{shown} of {total} options · {changed} differ from factory · {pending} wait for a restart',
-    'no-results': 'No option matches',
-    'no-results-hint': 'Try another word or clear the filters.',
-    shown: '{count} of {total} options',
-    status: {
-      connected: 'Connected',
-      unreachable: 'Not answering',
-      unconfigured: 'Not connected',
-    },
-    'status-hint': {
-      unreachable: 'Its options will appear when it answers again.',
-      unconfigured:
-        'Settings doesn’t have the address or the credential of argus-{service} yet, so its settings live only in its .toml file. Run scripts/provision-host.sh again (or scripts/setup.sh in development) and restart argus-settings and argus-{service}.',
-    },
-    gpu: 'GPU available',
-    marker: {
-      recommended: 'Profile “{name}” applied automatically on {date}',
-      owner: 'Profile “{name}” applied on {date}',
-      reverted: 'Recommended profile undone on {date}',
-    },
-    changed: 'Changed',
-    pending: 'Waits for a restart',
-    'pending-one': 'One change waits for the service to restart',
-    'pending-other': '{count} changes wait for the service to restart',
-    'pending-hint':
-      'What you saved is already in its file and applies when {service} starts again; Argus does not restart it on its own.',
-    type: 'Type',
-    unit: 'Unit',
-    range: 'Range',
-    default: 'Factory',
     'range-step': '{range} · step {step}',
-    reset: 'Back to {value}',
-    'reset-label': 'Reset {name} to its factory value',
     on: 'On',
     off: 'Off',
     empty: '(empty)',
-    types: {
-      toggle: 'Yes or no',
-      integer: 'Integer',
-      decimal: 'Decimal',
-      choice: 'Choice',
-      text: 'Text',
-    },
   },
   units: {
     ms: 'ms',
@@ -116,16 +108,17 @@ export const settings = {
     import: 'Import',
     'export-title': 'Export {name}',
     'import-title': 'Import into {name}',
-    'export-hint': 'All its options as JSON. Keep it to restore them or move them to another machine; it holds no secrets.',
-    'import-hint': 'Paste a JSON exported from this service. Review the changes before applying them.',
+    'export-hint':
+      'All its options as JSON. Keep it to restore them or move them to another machine; it holds no secrets.',
+    'import-hint':
+      'Paste a JSON exported from this service. Review the changes before applying them.',
     placeholder: 'Paste the exported JSON here',
     copy: 'Copy',
-    copied: 'Copied',
+    share: 'Share',
     apply: 'Apply changes',
     'changes-one': '1 option will change',
     'changes-other': '{count} options will change',
     unchanged: '{count} already hold that value.',
-    unknown: 'Ignored because this service does not have them: {keys}.',
     refusal: {
       notJson: 'This is not valid JSON.',
       wrongFormat: 'This does not look like an Argus Settings export.',
@@ -144,33 +137,19 @@ export const settings = {
     stop: 'Stop',
   },
   install: {
-    missing: 'Not installed · ~{size} MB',
-    'missing-unknown': 'Not installed',
     installing: 'Installing…',
     failed: 'Could not install; choose it to try again',
     host: 'Not installed · installs on the server',
     'host-hint': 'To install {name}, run this on the Argus server:',
     action: 'Install',
     'action-size': 'Install · ~{size} MB',
-    'action-hint': 'While it downloads, Argus keeps speaking with what is available.',
     'non-commercial': 'Non-commercial use only',
   },
   profiles: {
-    title: 'Profile',
-    subtitle: 'Tune several services at once. You can still fine-tune each option below.',
-    recommended: 'Recommended for this machine',
-    current: 'Active',
-    open: 'See what {name} changes',
     'load-error': 'Profiles could not be loaded.',
-    'changes-one': 'Changes 1 setting',
-    'changes-other': 'Changes {count} settings',
-    'no-changes': 'Your settings already match',
-    download: 'Downloads ~{size} MB',
-    'host-only': 'Something installs on the server',
-    'owner-unreachable': '{name} is not answering',
     items: {
       performance: {
-        name: 'Best performance',
+        name: 'Fast',
         summary: 'Instant voice and quick descriptions, with the lightest load on the machine.',
       },
       balanced: {
@@ -181,56 +160,6 @@ export const settings = {
         name: 'Best quality',
         summary: 'The best Spanish voice and more detail in what the cameras see.',
       },
-    },
-    reason: {
-      meets: '{cores} cores and {ram} GB of RAM: plenty of headroom for this profile.',
-      cores: 'With {cores} cores, {profile} would be tight: it asks for {min}.',
-      ram: 'With {ram} GB of RAM, {profile} would be tight: it asks for {min} GB.',
-      isa: 'The processor has neither AVX2 nor NEON, which the models use to run fast.',
-    },
-    fit: {
-      needs: 'Asks for {cores} cores and {ram} GB of RAM',
-      any: 'Runs on any machine',
-      above: 'It would be tight on this machine.',
-      below: 'This machine can do more.',
-    },
-    hardware: {
-      label: 'This machine',
-      cores: '{count} cores',
-      threads: '{count} threads',
-      ram: '{count} GB of RAM',
-      isa: {
-        baseline: 'No AVX2',
-        avx2: 'AVX2',
-        avx512: 'AVX-512',
-        neon: 'NEON',
-      },
-      gpu: {
-        none: 'No GPU',
-        vaapi: 'GPU with VA-API',
-        qsv: 'Intel GPU',
-        nvdec: 'NVIDIA GPU',
-        videotoolbox: 'Apple GPU',
-      },
-    },
-    preview: {
-      description: 'This is what changes in each service. Everything else stays as it is.',
-      apply: 'Apply profile',
-      applied: 'Already applied',
-      cancel: 'Cancel',
-      already: 'Your settings already match this profile.',
-      'unchanged-one': '1 setting already matches this profile.',
-      'unchanged-other': '{count} settings already match this profile.',
-      'owner-unreachable': 'Not answering right now. It will be tried when you apply.',
-      download: 'Argus will download ~{size} MB and keep using the current option meanwhile.',
-      'host-title': 'Installs on the server',
-      'host-hint': 'It will not apply until you install it. Run on the Argus server:',
-      restart: 'Some changes apply when the service restarts.',
-      'next-session': 'Some changes take effect on the next call.',
-      from: 'Now',
-      to: 'With the profile',
-      unknown: 'No data',
-      px: '{value} px',
     },
     result: {
       applied: 'Profile “{name}” applied',
@@ -250,13 +179,13 @@ export const settings = {
     },
   },
   owners: {
-    llm: { name: 'Assistant', hint: 'How Argus thinks and answers.' },
-    voice: { name: 'Conversation', hint: 'How it listens and when it lets you talk.' },
+    llm: { name: 'Conversation', hint: 'How Argus thinks and answers.' },
+    voice: { name: 'Listening', hint: 'When it listens and when it lets you talk.' },
     tts: { name: 'Argus voice', hint: 'How it sounds when it talks to you.' },
-    stt: { name: 'Transcription', hint: 'How it understands what you say.' },
+    stt: { name: 'Hearing', hint: 'How it understands what you say.' },
     vlm: { name: 'Vision', hint: 'How it describes what the cameras see.' },
     guard: { name: 'Security', hint: 'When it notifies, speaks or sounds the siren.' },
-    camera: { name: 'Cameras', hint: 'Detection, streaming and camera health.' },
+    camera: { name: 'Cameras and recording', hint: 'Detection, streaming and camera health.' },
     notification: {
       name: 'Notifications',
       hint: 'How many notifications you get and when they stay quiet.',
@@ -342,6 +271,10 @@ export const settings = {
     stt: 'Transcription',
   },
   keys: {
+    kws: advancedKeys.kws,
+    tamper: advancedKeys.tamper,
+    ptz: advancedKeys.ptz,
+    look: advancedKeys.look,
     tts: {
       engine_es: {
         label: 'Spanish voice engine',
@@ -445,6 +378,7 @@ export const settings = {
       n_ubatch: { label: 'Micro-batch', hint: 'Size of each step of the reading batch.' },
     },
     memory: {
+      ...advancedKeys.memory,
       recall_top_k: {
         label: 'Memories per answer',
         hint: 'How many memories it may use when answering.',
@@ -511,6 +445,7 @@ export const settings = {
       },
     },
     operator: {
+      ...advancedKeys.operator,
       night_start: {
         label: 'Night starts',
         hint: 'Hour from which the house is watched as night.',
@@ -600,6 +535,7 @@ export const settings = {
       },
     },
     guard: {
+      ...advancedKeys.guard,
       notify_level: {
         label: 'Level to notify you',
         hint: 'Severity from which you get an alert (1 = everything).',
@@ -731,6 +667,7 @@ export const settings = {
       },
     },
     calls: {
+      ...advancedKeys.calls,
       enabled: { label: 'Calls from Argus', hint: 'Argus may call you for reminders and alerts.' },
     },
     conversation: {
@@ -740,10 +677,12 @@ export const settings = {
       },
     },
     recording: {
+      ...advancedKeys.recording,
       enabled: { label: 'Record clips', hint: 'Keeps clips of what the cameras detect.' },
       retention_days: { label: 'Days clips are kept', hint: 'Older clips are deleted.' },
     },
     watch: {
+      ...advancedKeys.watch,
       echo_tail_ms: {
         label: 'Pause after speaking through a camera (ms)',
         hint: 'How long it ignores the echo of its own voice from the camera.',

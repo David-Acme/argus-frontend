@@ -34,10 +34,28 @@ describe('routeFallback by role', () => {
     expect(routeFallback('/security/3', viewFor('guard', everything))).toBeNull();
   });
 
-  test('configuration is the owner\'s alone; sessions live in every profile', () => {
+  test("configuration is the owner's alone; sessions live in every profile", () => {
     expect(routeFallback('/settings', viewFor('resident', everything))).toBe('/profile');
     expect(routeFallback('/settings/modules', viewFor('guest', everything))).toBe('/profile');
     expect(routeFallback('/profile', viewFor('guest', everything))).toBeNull();
+  });
+
+  test('the short screens of Tú open for the roles that hold what they show', () => {
+    const guest = viewFor('guest', everything);
+    expect(routeFallback('/profile/sessions', guest)).toBeNull();
+    expect(routeFallback('/profile/calls', guest)).toBeNull();
+    expect(routeFallback('/profile/modules', guest)).toBeNull();
+    expect(routeFallback('/profile/modules', viewFor('owner', everything))).toBe('/profile');
+    expect(routeFallback('/profile/safety', viewFor('resident', everything))).toBeNull();
+    expect(routeFallback('/profile/safety', viewFor('resident', coreOnly))).toBe('/profile');
+  });
+
+  test('an inactive role keeps its account screens and loses the rest of Tú', () => {
+    const inactive = viewFor('guard', coreOnly);
+    expect(routeFallback('/profile/sessions', inactive)).toBeNull();
+    expect(routeFallback('/profile/privacy', inactive)).toBeNull();
+    expect(routeFallback('/profile/appearance', inactive)).toBeNull();
+    expect(routeFallback('/profile/calls', inactive)).toBe('/');
   });
 
   test('the visitors screen follows the visitors capability, not the role', () => {
@@ -47,11 +65,17 @@ describe('routeFallback by role', () => {
 });
 
 describe('who is in which room', () => {
-  test('is the owner\'s alone, and only with surveillance on', () => {
+  test("is the owner's alone, and only with surveillance on", () => {
     expect(routeFallback('/settings/proximity/people', viewFor('owner', everything))).toBeNull();
-    expect(routeFallback('/settings/proximity/people', viewFor('resident', everything))).toBe('/profile');
-    expect(routeFallback('/settings/proximity/people', viewFor('guard', everything))).toBe('/profile');
-    expect(routeFallback('/settings/proximity/people', viewFor('guest', everything))).toBe('/profile');
+    expect(routeFallback('/settings/proximity/people', viewFor('resident', everything))).toBe(
+      '/profile'
+    );
+    expect(routeFallback('/settings/proximity/people', viewFor('guard', everything))).toBe(
+      '/profile'
+    );
+    expect(routeFallback('/settings/proximity/people', viewFor('guest', everything))).toBe(
+      '/profile'
+    );
     expect(routeFallback('/settings/proximity/people', viewFor('owner', coreOnly))).not.toBeNull();
   });
 });
@@ -110,7 +134,10 @@ describe('routeFallback for a role whose module is off', () => {
   });
 
   test('without calls.join the call route stays closed for a role whose module is off', () => {
-    const without = { ...guard, capabilities: new Set([...guard.capabilities].filter((id) => id !== CAPABILITY.callsJoin)) };
+    const without = {
+      ...guard,
+      capabilities: new Set([...guard.capabilities].filter((id) => id !== CAPABILITY.callsJoin)),
+    };
     expect(routeFallback('/call', without)).toBe('/');
   });
 
@@ -141,14 +168,18 @@ describe('the conversations follow messages.relay', () => {
     const resident = viewFor('resident', everything);
     const without = {
       ...resident,
-      capabilities: new Set([...resident.capabilities].filter((id) => id !== CAPABILITY.messagesRelay)),
+      capabilities: new Set(
+        [...resident.capabilities].filter((id) => id !== CAPABILITY.messagesRelay)
+      ),
     };
     expect(routeFallback('/conversations', without)).toBe('/');
     expect(routeFallback('/conversations/3', without)).toBe('/');
     const inactive = viewFor('guard', coreOnly);
     const inactiveWithout = {
       ...inactive,
-      capabilities: new Set([...inactive.capabilities].filter((id) => id !== CAPABILITY.messagesRelay)),
+      capabilities: new Set(
+        [...inactive.capabilities].filter((id) => id !== CAPABILITY.messagesRelay)
+      ),
     };
     expect(routeFallback('/conversations/3', inactiveWithout)).toBe('/');
   });

@@ -1,8 +1,8 @@
 import { clsx } from 'clsx';
 import { Children, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { layout, useWindowLayout } from '@/shared/theme';
-import { ColumnGrowProvider, ScreenColumnProvider } from './screen-column-context';
+import { layout } from '@/shared/theme';
+import { ColumnGrowProvider, ScreenColumnProvider, usePanes } from './screen-column-context';
 
 export type ScreenColumnsProps = { children: ReactNode };
 
@@ -23,13 +23,8 @@ function columnStyle(width: number | undefined, max: number | undefined) {
   return max === undefined ? undefined : { maxWidth: max };
 }
 
-function useDesktop(): boolean {
-  const { windowClass } = useWindowLayout();
-  return windowClass === 'expanded' || windowClass === 'wide';
-}
-
 export function ScreenColumns({ children }: ScreenColumnsProps) {
-  if (!useDesktop()) return <>{children}</>;
+  if (!usePanes()) return <>{children}</>;
   return (
     <View
       className="gap-screen-column-gap px-screen-column-x min-h-0 w-full flex-1 flex-row self-center"
@@ -40,8 +35,8 @@ export function ScreenColumns({ children }: ScreenColumnsProps) {
 }
 
 export function ScreenColumn({ width, max, label, grows, children }: ScreenColumnProps) {
-  const desktop = useDesktop();
-  if (!desktop) return <>{children}</>;
+  const panes = usePanes();
+  if (!panes) return <>{children}</>;
   const items = Children.toArray(children);
   const fixed = columnStyle(width, max);
   const growing = grows === false ? -1 : (grows ?? items.length - 1);

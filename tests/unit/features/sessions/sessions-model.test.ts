@@ -5,8 +5,8 @@ import {
   connectedUsersOf,
   groupOf,
   overviewOf,
-  sessionListState,
   SESSION_LENSES,
+  pairedDateOf,
   sessionInsightsOf,
   sessionRowsOf,
   withoutSessions,
@@ -130,7 +130,12 @@ describe('connected devices for the owner', () => {
 describe('sessionInsightsOf', () => {
   test('counts open and active-today sessions, the nearest expiry and the latest sign-ins', () => {
     const sessions = [
-      session('a', { current: true, lastSeenAt: NOW - 3 * 86_400, createdAt: NOW - 10, expiresAt: NOW + 900 }),
+      session('a', {
+        current: true,
+        lastSeenAt: NOW - 3 * 86_400,
+        createdAt: NOW - 10,
+        expiresAt: NOW + 900,
+      }),
       session('b', { lastSeenAt: NOW - 3_600, createdAt: NOW - 5_000, expiresAt: NOW + 100 }),
       session('c', { lastSeenAt: NOW - 2 * 86_400, createdAt: NOW - 90_000, expiresAt: NOW - 1 }),
     ];
@@ -138,7 +143,9 @@ describe('sessionInsightsOf', () => {
     expect(insights.open).toBe(3);
     expect(insights.activeToday).toBe(2);
     expect(insights.nextExpiry).toBe(NOW + 100);
-    expect(insights.recentSignIns.map((item) => item.id)).toEqual(sessions.slice(0, 2).map((item) => item.id));
+    expect(insights.recentSignIns.map((item) => item.id)).toEqual(
+      sessions.slice(0, 2).map((item) => item.id)
+    );
   });
 
   test('no sessions means nothing open and no expiry', () => {
@@ -147,17 +154,13 @@ describe('sessionInsightsOf', () => {
   });
 });
 
-describe('a session list says what it knows', () => {
-  test('rows are a list, whatever else happened', () => {
-    expect(sessionListState({ failed: true, answered: false, count: 2 })).toBe('list');
+describe('pairedDateOf', () => {
+  test('a stamp from before pairing was recorded shows no date', () => {
+    for (const stamp of [0, 1, -5, Number.NaN, Number.POSITIVE_INFINITY, 8.7e15])
+      expect(pairedDateOf(stamp)).toBeNull();
   });
 
-  test('an empty answer is an answer, never an endless search', () => {
-    expect(sessionListState({ failed: false, answered: true, count: 0 })).toBe('empty');
-  });
-
-  test('a failed load is a failure, never an empty list', () => {
-    expect(sessionListState({ failed: true, answered: false, count: 0 })).toBe('failed');
-    expect(sessionListState({ failed: false, answered: false, count: 0 })).toBe('loading');
+  test('a real pairing stamp is its date', () => {
+    expect(pairedDateOf(Date.UTC(2026, 9, 14, 12))?.getUTCFullYear()).toBe(2026);
   });
 });

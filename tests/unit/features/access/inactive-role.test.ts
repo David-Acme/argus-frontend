@@ -107,12 +107,11 @@ describe('what the inactive-role screen offers', () => {
   const guard = viewFor('guard', { modules: ['productivity'] });
   const inactive = inactiveRoleOf(guard);
 
-  test('reminders, panic, the module request, the profile and sign-out, each by its baseline capability', () => {
+  test('panic, the module request, the profile and sign-out, each by its baseline capability', () => {
     expect(inactive).not.toBeNull();
     if (!inactive) return;
     expect(inactiveRoleOffers(guard, inactive)).toEqual({
       alerts: true,
-      reminders: { editable: true },
       panic: true,
       moduleRequest: { moduleId: 'surveillance', moduleName: 'Vigilancia' },
       profile: true,
@@ -127,7 +126,6 @@ describe('what the inactive-role screen offers', () => {
       'moduleRequest',
       'panic',
       'profile',
-      'reminders',
       'signOut',
     ]);
   });
@@ -143,17 +141,6 @@ describe('what the inactive-role screen offers', () => {
     }
   });
 
-  test('reminders follow reminders.read and are editable only with reminders.write', () => {
-    if (!inactive) throw new Error('the guard is inactive');
-    expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.remindersWrite), inactive).reminders).toEqual({
-      editable: false,
-    });
-    expect(
-      inactiveRoleOffers(withoutCapability(guard, CAPABILITY.remindersRead, CAPABILITY.remindersWrite), inactive)
-        .reminders
-    ).toBeNull();
-  });
-
   test('the alert strip follows safety.respond', () => {
     if (!inactive) throw new Error('the guard is inactive');
     expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.safetyRespond), inactive).alerts).toBe(false);
@@ -165,7 +152,7 @@ describe('what the inactive-role screen offers', () => {
     expect(inactiveRoleOffers(withoutCapability(guard, CAPABILITY.modulesRequest), inactive).moduleRequest).toBeNull();
   });
 
-  test('a role on hold without a module has no request to make but keeps its reminders and panic', () => {
+  test('a role on hold without a module has no request to make but keeps its panic', () => {
     const access = { ...accessFor('guest', { roleActive: false }), roles: [], modules: [] };
     const view = accessView(access, 'guest');
     const paused = inactiveRoleOf(view);
@@ -173,7 +160,6 @@ describe('what the inactive-role screen offers', () => {
     if (!paused) return;
     expect(inactiveRoleOffers(view, paused)).toEqual({
       alerts: true,
-      reminders: { editable: true },
       panic: true,
       moduleRequest: null,
       profile: true,
@@ -188,7 +174,6 @@ describe('what the inactive-role screen offers', () => {
     if (!unknown) return;
     expect(inactiveRoleOffers(view, unknown)).toEqual({
       alerts: false,
-      reminders: null,
       panic: false,
       moduleRequest: null,
       profile: true,

@@ -39,3 +39,4 @@ yarn-error.*
 *.tsbuildinfo
 
 expo-env.d.ts
+.cache/

@@ -12,6 +12,7 @@ internal object PushChannels {
     const val CALLS = "argus-calls"
     const val SILENT_ALERTS = "argus-alerts-silent"
     const val ONGOING = "argus-ongoing-call"
+    const val SUMMARY = "argus-call-summary"
 
     fun forUrgency(urgency: String): String =
         when (urgency) {
@@ -31,6 +32,7 @@ internal object PushChannels {
             silentCalls(spanish),
             silentAlerts(spanish),
             ongoing(spanish),
+            summary(spanish),
         )
         manager.createNotificationChannels(channels)
     }
@@ -40,6 +42,12 @@ internal object PushChannels {
 
     private fun ongoing(spanish: Boolean): NotificationChannel =
         NotificationChannel(ONGOING, PushText.channelName(ONGOING, spanish), NotificationManager.IMPORTANCE_DEFAULT).apply {
+            setSound(null, null)
+            enableVibration(false)
+        }
+
+    private fun summary(spanish: Boolean): NotificationChannel =
+        NotificationChannel(SUMMARY, PushText.channelName(SUMMARY, spanish), NotificationManager.IMPORTANCE_LOW).apply {
             setSound(null, null)
             enableVibration(false)
         }

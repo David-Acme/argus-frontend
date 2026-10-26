@@ -24,6 +24,7 @@ export type TextProps = {
   underline?: boolean;
   align?: 'start' | 'center';
   numberOfLines?: number;
+  mono?: boolean;
   testID?: string;
   children: ReactNode;
 };
@@ -53,6 +54,7 @@ const VARIANT_CLASS: Record<TextVariant, string> = {
   chipValue: 'text-chip-value',
   initial: 'text-initial',
   initialLarge: 'text-initial-large',
+  initialPortrait: 'text-initial-portrait',
   sectionLink: 'text-section-link',
   toastTitle: 'text-toast-title',
   toastBody: 'text-toast-body',
@@ -138,6 +140,7 @@ export function Text({
   underline,
   align = 'start',
   numberOfLines,
+  mono,
   testID,
   children,
 }: TextProps) {
@@ -155,7 +158,7 @@ export function Text({
       testID={testID}
       style={withMediaShadow(variant, tone, style)}
       className={clsx(
-        'web:font-system',
+        mono ? 'font-mono' : 'web:font-system',
         VARIANT_CLASS[variant],
         toneClass,
         underline && 'underline underline-offset-3',

@@ -3,7 +3,6 @@ export * from './storage.type';
 export * from './theme.type';
 export * from './icon.type';
 export * from './net.type';
-export * from './avatar.type';
 export * from './qr.type';
 export * from './i18n.type';
 export * from './http.type';
@@ -18,7 +17,6 @@ export * from './device-permission.type';
 export * from './onboarding.type';
 export * from './face.type';
 export * from './morph-icon.type';
-export * from './reaction.type';
 export * from './dashboard.type';
 export * from './layout.type';
 export * from './menu.type';
@@ -55,3 +53,12 @@ export * from './camera-aim.type';
 export * from './maintenance.type';
 export * from './camera-patrol.type';
 export type { FeedbackKind } from './feedback.type';
+export type {
+  AgendaItem,
+  AgendaKind,
+  AgendaMenuAction,
+  AgendaOrigin,
+  AgendaRights,
+  DayRange,
+  NowList,
+} from './agenda.type';

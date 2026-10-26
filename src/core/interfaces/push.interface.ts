@@ -5,7 +5,8 @@ export type ArgusPushKeys = {
 
 export type CallControlAction = 'hangup' | 'mute-on' | 'mute-off' | 'endpoints';
 
-export type CallEndpointKind = 'earpiece' | 'speaker' | 'bluetooth' | 'wired' | 'streaming' | 'unknown';
+export type CallEndpointKind =
+  'earpiece' | 'speaker' | 'bluetooth' | 'wired' | 'streaming' | 'unknown';
 
 export type CallEndpoint = {
   id: string;
@@ -36,6 +37,8 @@ export interface IArgusPushNative {
   stopOngoingCall(): void;
   isKeyguardLocked(): boolean;
   overKeyguard(): boolean;
+  requestUnlock(): Promise<boolean>;
+  postCallSummary(title: string, body: string): void;
   outsideCallId(): string;
   exactAlarmsAllowed(): boolean;
   openExactAlarmSettings(): void;
@@ -63,6 +66,8 @@ export interface IPushService {
   stopOngoingCall(): void;
   isKeyguardLocked(): boolean;
   overKeyguard(): boolean;
+  requestUnlock(): Promise<boolean>;
+  postCallSummary(title: string, body: string): void;
   outsideCallId(): string;
   notificationsPermitted(): Promise<boolean>;
   requestNotificationsPermission(): Promise<boolean>;
