@@ -386,6 +386,16 @@ list in CONTEXT.md › "Pending normalisation").
 - A component reads data through its hook.
 - A screen composes sections.
 
+#### Responsive by height as well as width (owner decision 2026-10-26)
+
+A screen is responsive only when it also holds on short phones: 320×568, 360×640, 375×667 and 360×740, as well as on tall ones and in phone landscape.
+
+- **Bottom sheets** size to their content up to a cap. On a short window they open near full height with scrolling content and the footer action visible. A half-screen sheet that is mostly empty is a bug.
+- **The tab bar** is at most 56 dp of chrome on short phones, and icons only below 600 dp of window height or in landscape.
+- **Heroes, the Aura, Estela, the face finder, the call avatar and dialogs** scale with the window height, so the first content starts in the top 40 %.
+- **Where the decisions live:** the height classes and every size decision come from `shared/theme` (tokens plus pure functions with tests). They are never ad-hoc numbers in features.
+- **Gate:** the UI-map harness captures the short-phone viewports, and its layout audit fails when fixed chrome covers more than its share of the window, or when the first content starts below 40 %.
+
 ### C. Data, state and trust
 
 13. **Wire data is validated, never cast.**
