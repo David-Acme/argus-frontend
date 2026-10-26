@@ -6663,10 +6663,14 @@ in favour of the reminder rows, because the reminder actions (roll forward,
 snooze, occurrences) work on the row. `ProjectsSection` reads
 `dashboard.projects` and each row reads its own `project.tasks` scope.
 
-**Who sees what.** Ahora, Hoy and Mañana show when reminders or the agenda are
-readable (reminders are core, so with productivity off they still show the
-user's reminders, and Hoy drops its Agenda link); Próximos recordatorios needs
-reminders and Proyectos `projects.read`; a section with nothing to show for a
+**Who sees what.** Ahora, Hoy, Mañana, Proyectos and Próximos recordatorios are
+Productividad's Inicio line (spec §9.0: a module that is off removes its tab and
+its Inicio line), so they show only while that module is active and the role
+reads reminders or the agenda (`agendaOnInicio`, `model/inicio-states.ts`);
+reminders stay core on the server, but with Productividad off the app has no
+surface for them, as the Agenda tab goes too (fix/e2e-redesign, 2026-10-26,
+`modules.e2e.ts`). Within that, Próximos recordatorios needs reminders and
+Proyectos `projects.read`; a section with nothing to show for a
 role or module renders nothing. Before the first sync (`sync.ready`) an empty
 Ahora, Hoy or Mañana renders nothing instead of claiming the day is free
 (W6); T4's skeleton covers that moment.
