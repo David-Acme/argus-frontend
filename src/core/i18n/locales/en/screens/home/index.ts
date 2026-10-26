@@ -1,3 +1,5 @@
+import { agendaSections } from './agenda-sections';
+
 export const home = {
   recent: 'Recent',
   now: 'Now',
@@ -72,6 +74,7 @@ export const home = {
     },
   },
   calendar: 'Calendar',
+  'agenda-sections': agendaSections,
   subtitle: 'Parameters travel through the store, so the same route works for any scan.',
   'scan-server': 'Link server',
   'scan-camera': 'Link IP camera',

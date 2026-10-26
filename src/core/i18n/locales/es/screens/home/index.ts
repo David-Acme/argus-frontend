@@ -1,3 +1,5 @@
+import { agendaSections } from './agenda-sections';
+
 export const home = {
   recent: 'Novedades',
   now: 'Ahora',
@@ -72,6 +74,7 @@ export const home = {
     },
   },
   calendar: 'Calendario',
+  'agenda-sections': agendaSections,
   subtitle:
     'Los parámetros viajan por el store, así que la misma ruta sirve para cualquier escaneo.',
   'scan-server': 'Vincular servidor',

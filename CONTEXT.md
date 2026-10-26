@@ -6438,3 +6438,79 @@ build was 117,468,588 B); arm64-v8a review APKs 110,928,024 B (ff881a0) and
   frame is followed by a callback well under a millisecond later; taken as the
   beat, it made every frame look on time and the paint-ahead never ran.
   `noteBeat` ignores gaps under 4 ms.
+
+## Inicio's agenda sections (2026-10-26, Phase 2 T5, p2/inicio-agenda)
+
+`src/features/home/components/agenda/` holds `NowSection` (Ahora),
+`TodaySection` (Hoy), `TomorrowSection` (Mañana), `ProjectsSection` (Proyectos)
+and `UpcomingRemindersSection` (Próximos recordatorios). Each takes no props,
+owns its hook and switches on `useInScreenColumn()`; T4 composes them.
+
+**Where the data comes from, all local.** `useAgenda` reads `reminder.list`
+through `useReminders` (core, never gated), `dashboard.agenda` scope `today`
+and `calendar.entries` for tomorrow's month (the coordinator keeps the current
+month ±1 projected unless the Agenda moved its anchor, in which case Mañana
+paints the last projection it has), each through `CALENDAR_LENSES`, so
+optimistic writes show at once. Reminder entries of the calendar are dropped
+in favour of the reminder rows, because the reminder actions (roll forward,
+snooze, occurrences) work on the row. `ProjectsSection` reads
+`dashboard.projects` and each row reads its own `project.tasks` scope.
+
+**Who sees what.** Ahora, Hoy and Mañana show when reminders or the agenda are
+readable (reminders are core, so with productivity off they still show the
+user's reminders, and Hoy drops its Agenda link); Próximos recordatorios needs
+reminders and Proyectos `projects.read`; a section with nothing to show for a
+role or module renders nothing. Before the first sync (`sync.ready`) an empty
+Ahora, Hoy or Mañana renders nothing instead of claiming the day is free
+(W6); T4's skeleton covers that moment.
+
+**The decisions, in `model/agenda-*.ts`, each unit-tested.**
+- Ahora: open items due today or overdue from any day, events until they end;
+  overdue first, then timed before all-day, then by time; three rows; the
+  header meta counts them all («5 · 1 atrasado»).
+- Time-to-go: under a minute or an ongoing event is «ahora», then minutes,
+  hours, days («hace 4 h», «en 1 h», «en 2 d»), floored; alert tone when
+  overdue, ok tone when now, `text-3` otherwise. The prototype sets the urgent
+  ones at 13/650 and the rest at 13/500: `chip` and `sectionMeta`.
+- Meta: Ahora names the day for reminders and tasks («Hoy 17:00», «Atrasado ·
+  11:00», an older one «Atrasado · Lun 19 · 10:00»), the repeat in lower case,
+  then the project and the place; Hoy and Mañana keep the time, «en curso» and
+  the repeat only, as the prototype's Hoy rows do (a project made the 320 px
+  column wrap); upcoming reminders say «Mañana · 09:00» or «Vie 23 · 09:00».
+- Free slots: a gap of 60 min or more between busy spans (an event its own
+  span, a timed reminder or task 30 min), never before now, never before the
+  first item or after the last: the prototype day yields «Libre 16:00 – 17:00»
+  and «19:00 – 21:00». A day with nothing reads «Día libre · Sin eventos ni
+  tareas».
+- Row actions: the check completes (reminders through `useReminders.complete`,
+  which now offers Deshacer when it does not roll a repeat forward; tasks
+  through the agenda's `toggleTask`, extracted from `EntryActionsMenu` with
+  `removeEntry` so both menus share them), single-flight per item id, with the
+  `success` haptic of §7c on top of the check's `selection`. A tap opens the
+  reminder dialog or the event/task route (`calendarEntryEditHref`, else
+  `/agenda`). A long press (right click on pointer) opens the row `Menu`:
+  Posponer 1 h and Posponer a mañana when the reminder's snooze options allow
+  them, Editar, Borrar (Deshacer through `runOptimistic`); a role without
+  rights gets no menu and a check that does not act.
+- Lists that the spec says show "as many as fit" use fixed counts: three in
+  the phone card, five in a desktop column (`listLimit`). Measuring the column
+  height would re-render on every resize for one or two rows; Hoy and Mañana
+  show the whole day.
+
+**The empty Ahora** is the prototype's sparse card (`ncard`: an ok check well,
+«Nada pendiente hoy», «Pídele a Argus que te recuerde algo.», Nuevo
+recordatorio) followed by three suggestion chips. It uses the check well and
+not Estela: the prototype draws it that way and R-D31 keeps one live Estela
+per screen (the hero). The action and the chips put a draft in the Argus
+thread (`setAssistantDraft`, exported by `features/voice`) and open
+`/conversations/0`; reminders are created by Argus. Without `messages.relay`
+the card keeps its words and drops the action and the chips.
+
+**Event mark.** Event rows lead with `Avatar size="mark" tone="event"`: the
+prototype's `.evm`, 26 px, radius 8, the calendar icon in `ev1-text` on `ev1`
+(spec §4, row 12; `IconTone` gained `ev1-text`, `size.eventMark` is 26).
+
+**Known gaps.** A row speaks its title and meta; the coloured time-to-go is a
+node, which `Row` does not speak (only a string trailing is spoken). The
+column's last section growing to the bottom (§6b-1) needs `Section`'s `grow`,
+which T7 adds; T4 sets it once both land.
