@@ -5,6 +5,7 @@ import { useAuthStore, useLocaleStore } from '@/core/stores';
 import type { LanguagePreference, NetPairedInstance, ThemePreference } from '@/core/types';
 import { AppScreen } from '@/shared/components/layout';
 import { SettingsGroup } from '@/features/profile/components/settings-group';
+import { profileLinks } from '@/features/profile/model/profile-links';
 import { pairedSinceLabel } from '@/features/profile/services/paired-since';
 import { SessionsSection } from '@/features/sessions';
 import { CallPreferencesSection } from '@/features/voice';
@@ -31,7 +32,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t, language } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const { roleActive } = useCapabilities();
+  const capabilities = useCapabilities();
+  const { roleActive } = capabilities;
+  const links = profileLinks(capabilities);
   const languagePreference = useLocaleStore((state) => state.preference);
   const setLanguage = useLocaleStore((state) => state.setLanguage);
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference);
@@ -158,6 +161,20 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
+
+      {links.length > 0 ? (
+        <SettingsGroup title={t('screens.profile.home-group')}>
+          {links.map((link) => (
+            <ListRow
+              key={link.key}
+              icon={link.icon}
+              title={t(link.title)}
+              chevron
+              onPress={() => router.push(link.href)}
+            />
+          ))}
+        </SettingsGroup>
+      ) : null}
 
       <SessionsSection onConnectDevice={IS_NATIVE ? connectDevice : undefined} />
       <SafetySection />
