@@ -9,7 +9,7 @@ import {
 import { Listbox, optionId } from '@/shared/ui/command/listbox';
 
 const { CommandPanel } = await import('@/shared/ui/command/command-panel');
-const { CommandPalette } = await import('@/shared/ui/command/command-palette');
+const { CommandPalette, paletteWidth } = await import('@/shared/ui/command/command-palette');
 const { useCommand } = await import('@/shared/ui/command/use-command');
 const { Command, useCommandHotkey } = await import('@/shared/ui/command/command');
 const native = await import('@/shared/ui/command/command.native');
@@ -109,7 +109,7 @@ describe('Command', () => {
     expect(log).toEqual(['light', 'close']);
   });
 
-  test('on pointer the palette is a named dialog that Esc closes', () => {
+  test('on pointer the palette is a named dialog that Esc and a click outside close', () => {
     const log: Log = [];
     render(
       <Command
@@ -122,21 +122,53 @@ describe('Command', () => {
     const dialog = screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' });
     fireEvent.keyDown(dialog, { key: 'Escape' });
     expect(log).toEqual(['close']);
+    const backdrop = dialog.previousElementSibling as HTMLElement;
+    fireEvent.click(backdrop);
+    expect(log).toEqual(['close', 'close']);
+    fireEvent.click(screen.getByRole('option', { name: 'Pagar la luz' }));
+    expect(log).toEqual(['close', 'close', 'light', 'close']);
   });
 
-  test('Ctrl+K and ⌘K open the palette', () => {
-    let opened = 0;
+  test('Ctrl+K, ⌘K and / open the search, N opens the new-item actions, and a field keeps its keys', () => {
+    const opened: string[] = [];
     function Hotkey() {
-      useCommandHotkey(() => {
-        opened += 1;
+      useCommandHotkey((intent) => {
+        opened.push(intent);
       });
-      return null;
+      return <input aria-label="nota" />;
     }
     render(<Hotkey />);
+    const field = screen.getByLabelText('nota');
     fireEvent.keyDown(globalThis.document, { key: 'k', ctrlKey: true });
     fireEvent.keyDown(globalThis.document, { key: 'K', metaKey: true });
     fireEvent.keyDown(globalThis.document, { key: 'k' });
-    expect(opened).toBe(2);
+    fireEvent.keyDown(globalThis.document, { key: '/' });
+    fireEvent.keyDown(globalThis.document, { key: 'n' });
+    fireEvent.keyDown(globalThis.document, { key: 'N', shiftKey: true });
+    fireEvent.keyDown(globalThis.document, { key: 'n', altKey: true });
+    fireEvent.keyDown(globalThis.document, { key: 'n', repeat: true });
+    fireEvent.keyDown(field, { key: '/' });
+    fireEvent.keyDown(field, { key: 'n' });
+    fireEvent.keyDown(field, { key: 'k', ctrlKey: true });
+    expect(opened).toEqual(['search', 'search', 'search', 'create', 'search']);
+  });
+
+  test('without an ask handler free text offers no Argus entry and Enter runs the first result', () => {
+    const log: Log = [];
+    render(
+      <Command
+        open
+        onClose={() => log.push('close')}
+        source={() => groups(log)}
+        initialQuery="Pagar"
+      />
+    );
+    const query = screen.getByRole('combobox', { name: 'Buscar o pedir a Argus' });
+    expect((query as HTMLInputElement).value).toBe('Pagar');
+    expect(screen.queryByRole('group', { name: 'Pedir a Argus' })).toBeNull();
+    expect(screen.getByText('⇧ N')).toBeDefined();
+    fireEvent.keyDown(query, { key: 'Enter' });
+    expect(log).toEqual(['light', 'close']);
   });
 
   test('on touch the palette is the sheet with the same results', () => {
@@ -160,7 +192,16 @@ describe('Command', () => {
     );
     expect(screen.getByRole('dialog', { name: 'Buscar o pedir a Argus' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Pagar la luz' })).toBeDefined();
+    expect(screen.queryByText('⇧ N')).toBeNull();
     native.useCommandHotkey(() => undefined);
+  });
+});
+
+describe('CommandPalette', () => {
+  test('the palette is 640 wide and keeps a 16 px gutter on a narrow window', () => {
+    expect(paletteWidth(1280)).toBe(640);
+    expect(paletteWidth(672)).toBe(640);
+    expect(paletteWidth(360)).toBe(328);
   });
 });
 

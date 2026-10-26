@@ -3,7 +3,7 @@ import type { CommandGroup, CommandItem, CommandSource } from './command-types';
 
 export type CommandInput = {
   source: CommandSource;
-  onAsk: (query: string) => void;
+  onAsk?: (query: string) => void;
   onClose: () => void;
   initialQuery?: string;
 };
@@ -34,13 +34,13 @@ export function useCommand({
   const trimmed = query.trim();
   const groups = source(trimmed);
   const items: CommandItem[] = groups.flatMap((group) => group.items);
-  const asks = trimmed.length > 0;
+  const asks = trimmed.length > 0 && onAsk !== undefined;
   const offset = asks ? 1 : 0;
   const count = items.length + offset;
   const current = count === 0 ? 0 : Math.min(selected, count - 1);
   const run = (index: number) => {
     const item = items[index - offset];
-    if (asks && index === 0) onAsk(trimmed);
+    if (asks && index === 0) onAsk?.(trimmed);
     else if (item) item.onRun();
     else return;
     onClose();

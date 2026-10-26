@@ -4,6 +4,7 @@ import { AppShell } from '@/shared/components/layout';
 import { EntryGate, useDeepLinkRestore, useSignedInHistory } from '@/features/auth';
 import { PrivacyGate } from '@/features/privacy';
 import { ModuleNotices } from '@/features/modules';
+import { GlobalCommand } from '@/features/command';
 import { useCallPush } from '@/features/voice';
 import { useBeaconController } from '@/features/proximity';
 import { useTamperEvidenceKeeper } from '@/features/cameras';
@@ -30,6 +31,7 @@ export default function AppLayout() {
       <PrivacyGate>
       <AppShell>
         <ModuleNotices />
+        <GlobalCommand />
         <DeepLinkRestore />
         <Stack
           screenOptions={{

@@ -34,17 +34,18 @@ export function projectProjects({ projects, tasks, members, users }: ProjectProj
     description: project.description,
     status: project.status,
   }));
+  const taskRows: IProjectTaskCacheRow[] = tasks.map((task) => ({
+    id: task.id,
+    projectId: task.projectId,
+    title: task.title,
+    status: task.status,
+    priority: task.priority,
+    dueAt: task.dueAt?.getTime() ?? null,
+  }));
   const tasksByProject = new Map<string, IProjectTaskCacheRow[]>();
-  for (const task of tasks) {
+  for (const task of taskRows) {
     const bucket = tasksByProject.get(task.projectId) ?? [];
-    bucket.push({
-      id: task.id,
-      projectId: task.projectId,
-      title: task.title,
-      status: task.status,
-      priority: task.priority,
-      dueAt: task.dueAt?.getTime() ?? null,
-    });
+    bucket.push(task);
     tasksByProject.set(task.projectId, bucket);
   }
   const people = new Map(users.map((user) => [user.id, user]));
@@ -71,6 +72,7 @@ export function projectProjects({ projects, tasks, members, users }: ProjectProj
   });
   return [
     { key: VIEW_CACHE_KEYS.projectList, rows: projectRows, limit: VIEW_CACHE_LIST_LIMIT },
+    { key: VIEW_CACHE_KEYS.taskList, rows: taskRows, limit: VIEW_CACHE_LIST_LIMIT },
     ...projectRows.map(
       (project): ViewWrite => ({
         key: VIEW_CACHE_KEYS.projectTasks,
