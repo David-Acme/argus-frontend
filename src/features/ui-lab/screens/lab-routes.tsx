@@ -1,25 +1,17 @@
 import { Redirect } from 'expo-router';
-import { lazy, Suspense } from 'react';
+import { lazyScreen } from '@/shared/libs/lazy-screen';
 import { labAllowed, spikesAllowed } from '../model/lab-access';
 
-const Lab = lazy(async () => ({ default: (await import('./lab-screens')).UiLabScreen }));
+const Lab = lazyScreen(() => import('./lab-screens'), 'UiLabScreen');
 
-const Spikes = lazy(async () => ({ default: (await import('./lab-screens')).SpikesScreen }));
+const Spikes = lazyScreen(() => import('./lab-screens'), 'SpikesScreen');
 
 export function UiLabRoute() {
   if (!labAllowed(__DEV__)) return <Redirect href="/" />;
-  return (
-    <Suspense fallback={null}>
-      <Lab />
-    </Suspense>
-  );
+  return <Lab />;
 }
 
 export function SpikesRoute() {
   if (!spikesAllowed(__DEV__)) return <Redirect href="/" />;
-  return (
-    <Suspense fallback={null}>
-      <Spikes />
-    </Suspense>
-  );
+  return <Spikes />;
 }

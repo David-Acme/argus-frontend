@@ -1,3 +1,4 @@
+import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { ArgusListening } from './components/argus-listening';
 export { CallPill } from './components/call-pill';
 export { CallPreferencesSection } from './components/call-preferences-section';
@@ -11,7 +12,7 @@ export { useCall } from './hooks/use-call';
 export { useCallPush } from './hooks/use-call-push';
 export { useDesktopBridge } from './hooks/use-desktop-bridge';
 export { useVoiceCallActive } from './hooks/use-voice-call-active';
-export { default as CallScreen } from './screens/call-screen';
+export const CallScreen = lazyScreen(() => import('./screens/call-screen'), 'default');
 export { argusCallSupported, createVoiceMic, voiceCallSupported } from './services/voice';
 export { isVoiceCallActive } from './services/voice/voice-activity';
 export {
