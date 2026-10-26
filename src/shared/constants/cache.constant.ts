@@ -37,7 +37,6 @@ export const VIEW_CACHE_KEYS = {
   notificationFeed: 'notification.feed',
   conversationList: 'conversation.list',
   conversationThread: 'conversation.thread',
-  conversationUnread: 'conversation.unread',
   cameraList: 'camera.list',
   cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
