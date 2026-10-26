@@ -49,11 +49,11 @@ class OngoingCallTest {
     @Test
     fun theOngoingCallCopyFollowsTheDeviceLanguage() {
         assertEquals(
-            OngoingCallCopy("Llamada con Argus", "Colgar", "Silenciar", "Activar micrófono", "Altavoz", "Auricular"),
+            OngoingCallCopy("Llamada con Argus", "Toca para volver", "Colgar", "Silenciar", "Activar micrófono", "Altavoz", "Auricular"),
             ongoingCallCopy(spanish = true),
         )
         assertEquals(
-            OngoingCallCopy("Call with Argus", "Hang up", "Mute", "Unmute", "Speaker", "Earpiece"),
+            OngoingCallCopy("Call with Argus", "Tap to return", "Hang up", "Mute", "Unmute", "Speaker", "Earpiece"),
             ongoingCallCopy(spanish = false),
         )
     }
@@ -81,5 +81,45 @@ class OngoingCallTest {
         assertEquals(true, needsPromotion(currentTypes = phoneCall, microphoneGranted = true))
         assertEquals(false, needsPromotion(currentTypes = phoneCall, microphoneGranted = false))
         assertEquals(false, needsPromotion(currentTypes = phoneCall or MICROPHONE_TYPE, microphoneGranted = true))
+    }
+
+    @Test
+    fun theCallStyleNotificationCarriesSilenciarAndAltavozWithTheirOwnIconsAndLeavesColgarToTheSystem() {
+        val actions = ongoingCallActions(ongoingCallCopy(spanish = true), CallControlState(speakerOn = false, muted = false), OngoingCallStyle.Call)
+        assertEquals(
+            listOf(
+                OngoingActionSpec(OngoingCallAction.Mute, "Silenciar", OngoingCallIcon.MicOff),
+                OngoingActionSpec(OngoingCallAction.Speaker, "Altavoz", OngoingCallIcon.Speaker),
+            ),
+            actions,
+        )
+    }
+
+    @Test
+    fun thePlainNotificationEndsWithColgarSoThePrototypeOrderHolds() {
+        val actions = ongoingCallActions(ongoingCallCopy(spanish = true), CallControlState(speakerOn = false, muted = false), OngoingCallStyle.Plain)
+        assertEquals(listOf("Silenciar", "Altavoz", "Colgar"), actions.map { it.label })
+        assertEquals(OngoingCallIcon.HangUp, actions.last().icon)
+    }
+
+    @Test
+    fun theLabelsAndIconsFollowTheCurrentMuteAndRoute() {
+        val actions = ongoingCallActions(ongoingCallCopy(spanish = false), CallControlState(speakerOn = true, muted = true), OngoingCallStyle.Call)
+        assertEquals(
+            listOf(
+                OngoingActionSpec(OngoingCallAction.Mute, "Unmute", OngoingCallIcon.Mic),
+                OngoingActionSpec(OngoingCallAction.Speaker, "Earpiece", OngoingCallIcon.Earpiece),
+            ),
+            actions,
+        )
+    }
+
+    @Test
+    fun noActionUsesTheLauncherIconSoNoPillIsPaintedBlankAndTheTraceSaysSo() {
+        val actions = ongoingCallActions(ongoingCallCopy(spanish = true), CallControlState(speakerOn = false, muted = false), OngoingCallStyle.Plain)
+        assertEquals(actions.size, actions.map { it.icon }.toSet().size)
+        val reason = ongoingActionsTrace(actions, OngoingCallStyle.Call)
+        assertEquals("actions-3-own-icons-call-style-default-color", reason)
+        assertEquals("trace ongoing outcome=shown reason=$reason", NativeTrace.line("ongoing", "shown", reason))
     }
 }

@@ -11,5 +11,13 @@ internal data class RingInfo(
 internal data class RingDisplay(
     val subject: String,
     val critical: Boolean,
-    val startedAtMillis: Long,
 )
+
+internal enum class RingChoice { Decline, Snooze, Answer }
+
+internal fun ringChoices(critical: Boolean, snoozable: Boolean): List<RingChoice> =
+    if (!critical && snoozable) {
+        listOf(RingChoice.Decline, RingChoice.Snooze, RingChoice.Answer)
+    } else {
+        listOf(RingChoice.Decline, RingChoice.Answer)
+    }

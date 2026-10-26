@@ -57,7 +57,7 @@
   },
   "src/core/interfaces/index.ts": {
     "argus/no-export-all": {
-      "count": 26
+      "count": 25
     }
   },
   "src/core/services/auth.service.ts": {
@@ -221,7 +221,7 @@
   },
   "src/core/types/index.ts": {
     "argus/no-export-all": {
-      "count": 56
+      "count": 54
     }
   },
   "src/core/types/socket-emit.type.ts": {
@@ -1993,52 +1993,6 @@
       "count": 11
     }
   },
-  "src/features/voice/components/avatar.tsx": {
-    "@typescript-eslint/no-deprecated": {
-      "count": 4
-    },
-    "argus/no-visual-timer": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "max-statements": {
-      "count": 2
-    }
-  },
-  "src/features/voice/components/call-action-chips.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/call-camera-card.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/call-control.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/call-pill.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
   "src/features/voice/components/call-preferences-section.tsx": {
     "max-lines": {
       "count": 1
@@ -2050,32 +2004,10 @@
     }
   },
   "src/features/voice/components/call-surface.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
     "complexity": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/voice/components/incoming-call-surface.tsx": {
-    "argus/no-visual-timer": {
-      "count": 1
-    }
-  },
-  "src/features/voice/constants/avatar.ts": {
-    "@typescript-eslint/no-non-null-assertion": {
-      "count": 1
-    },
-    "argus/no-color-literal": {
-      "count": 37
-    },
-    "max-lines": {
       "count": 1
     }
   },

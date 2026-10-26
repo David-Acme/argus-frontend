@@ -5,7 +5,6 @@ import {
   dispatchCallEnd,
   ENDED_HOLD_MS,
   endReasonOfCancel,
-  formatCallDuration,
   showsMicConsent,
 } from '@/features/voice/model/call-end';
 
@@ -40,23 +39,22 @@ describe('how a call ends on the screen', () => {
     dispatchCallEnd('missed', handlers);
     expect(order).toEqual(['ended', 'close', 'close']);
   });
-
-  test('the duration reads minutes and seconds', () => {
-    expect(formatCallDuration(0)).toBe('00:00');
-    expect(formatCallDuration(9_999)).toBe('00:09');
-    expect(formatCallDuration(65_000)).toBe('01:05');
-    expect(formatCallDuration(-5)).toBe('00:00');
-  });
 });
 
 describe('a cancel arriving while the call is open on this device', () => {
   test('the answer this device made is not reported as taken by another device', () => {
-    expect(cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: 'call-7' })).toBe('ignore');
+    expect(
+      cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: 'call-7' })
+    ).toBe('ignore');
   });
 
   test('an answer by another device is reported as taken', () => {
-    expect(cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: null })).toBe('taken');
-    expect(cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: 'call-8' })).toBe('taken');
+    expect(
+      cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: null })
+    ).toBe('taken');
+    expect(
+      cancelOutcomeOf({ reason: 'answered_elsewhere', callId: 'call-7', claimedCallId: 'call-8' })
+    ).toBe('taken');
   });
 
   test('a call the server already settled closes without an error', () => {
@@ -68,9 +66,15 @@ describe('a cancel arriving while the call is open on this device', () => {
 
 describe('the first-call microphone note', () => {
   test('it shows while the first call runs and leaves once the call ended', () => {
-    expect(showsMicConsent({ firstCall: true, phase: 'listening', endedDurationMs: null })).toBe(true);
+    expect(showsMicConsent({ firstCall: true, phase: 'listening', endedDurationMs: null })).toBe(
+      true
+    );
     expect(showsMicConsent({ firstCall: true, phase: 'done', endedDurationMs: null })).toBe(false);
-    expect(showsMicConsent({ firstCall: true, phase: 'listening', endedDurationMs: 4000 })).toBe(false);
-    expect(showsMicConsent({ firstCall: false, phase: 'listening', endedDurationMs: null })).toBe(false);
+    expect(showsMicConsent({ firstCall: true, phase: 'listening', endedDurationMs: 4000 })).toBe(
+      false
+    );
+    expect(showsMicConsent({ firstCall: false, phase: 'listening', endedDurationMs: null })).toBe(
+      false
+    );
   });
 });

@@ -4,8 +4,8 @@ import { Icon } from '@/shared/ui/icon/icon';
 import { ICON_SHAPES } from '@/shared/ui/icon/icon-shapes';
 
 describe('Icon', () => {
-  test('the registry holds the prototype set of 53 glyphs', () => {
-    expect(Object.keys(ICON_SHAPES)).toHaveLength(53);
+  test('the registry holds the prototype set of 55 glyphs', () => {
+    expect(Object.keys(ICON_SHAPES)).toHaveLength(55);
   });
 
   test('draws every shape of the glyph at 20 or 24 with the 1.75 stroke', () => {

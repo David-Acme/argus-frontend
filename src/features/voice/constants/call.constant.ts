@@ -1,0 +1,10 @@
+export const CALL_ENDED_SUMMARY_ITEMS = 2;
+export const CALL_RING_VIBRATION = [0, 400, 200, 400];
+export const CALL_CLOCK_TICK_MS = 1000;
+export const CALL_MISSED_WINDOW_MS = 30 * 60_000;
+export const CALL_BANNER_AVATAR = 48;
+export const CALL_MINI_AVATAR = 40;
+export const CALL_AVATAR_FILL = 0.8;
+export const CALL_BANNER_CONTROL = 44;
+export const CALL_STAGE_MAX_WIDTH = 480;
+export const CALL_MISSED_TICK_MS = 60_000;

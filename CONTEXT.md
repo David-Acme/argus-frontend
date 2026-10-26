@@ -2209,10 +2209,10 @@ path, knows the house it is talking about, and reports what it did.
   digest never.
 - **Actions.** `voice:action` runs one at a time, a repeated id is ignored,
   and each outcome goes back as `voice:action_result {id, ok, detail}` so
-  argus-voice corrects a failure aloud. The call surface shows them as
-  chips (pending, done, failed). `app.show_camera` opens the camera as a
-  live card inside the call when the call screen is on top
-  (`CameraLiveView` from `features/cameras`), and navigates otherwise.
+  argus-voice corrects a failure aloud. The call stage shows the latest one
+  as an inline result card; `app.show_camera` offers «Ver» on it, which opens
+  the camera screen (after an unlock when the phone is locked) instead of a
+  live card that covered the transcript (see "Argus calls you: the call mode").
 - **Lifecycle.** Mute is sent to the server (`voice:mute`), which drops the
   half-said utterance. The service counts the stops it sent and ignores the
   previous call's frames until its `voice:done` (3 s grace), so a quick
@@ -7143,3 +7143,62 @@ Measured on 2026-10-26:
 | loose `constants.ts` | 5 |
 | `-types.ts` files | 10 |
 | unformatted files | 879 |
+
+## Argus calls you: the call mode (P5c, 2026-10-26, p5/llamadas)
+
+The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26/llamada/llamada.html`
+(WhatsApp-like, v2 and v3 revisions). One dark stage serves every moment.
+
+- **Which surface.** `model/incoming-surface.ts` decides: a reminder rings as the dark top banner
+  (Estela listening, «Argus», «Llamada · subject», round decline/answer); an alert at home
+  (`urgency: critical`) takes the full screen with the alert Aura; nothing rings over `/call`.
+  The banner is not modal, so an outside tap cannot dismiss it. `subject` is the field
+  argus-notification already sends in `call_incoming` and in the call push; it falls back to
+  `reason`.
+- **The stage.** `CallStage` wraps everything in `ScopedTheme theme="dark"`, so the stage uses the
+  dark tokens in both themes and Estela draws with her dark palette. The call line is the subject
+  until the call connects and then the clock (`connectedAt` in the voice snapshot, set the first
+  time the phase is listening, thinking or speaking): there is no «Conectando» anywhere. Estela
+  listens from the first instant and follows the real engine states (listen, think, speak; the red
+  curl for an alert while nobody talks). The bottom panel is Altavoz, Cámara, Silenciar, Colgar.
+  Altavoz toggles earpiece and speaker; with bluetooth or headphones it opens the audio dialog
+  instead of guessing (`model/call-speaker.ts`). The settings button and the in-call live camera
+  card are gone; the chat switch moved to the top right, the minimise chevron to the top left
+  (minimise pushes Inicio over the call so the call stays mounted, and the dark mini bar sits above
+  the tab bar).
+- **Ended and missed.** The ended stage sums up what was done (the last two done actions) and closes
+  by itself after `ENDED_HOLD_MS`. When the call ends with the app in the background or the phone
+  locked, the app posts a silent summary notification (`postCallSummary`, the `argus-call-summary`
+  channel, importance low; a local notification on iOS). A missed call is a card above the tab bar
+  for 30 minutes (unread `kind: call` notification), with «Ver lo que pasó» and «Devolver»; in
+  Novedades the same row offers «Devolver». Devolver starts a new call with Argus: the missed call
+  itself is closed on the server and cannot be rejoined.
+- **Snooze and Marcar hecho are hidden on purpose.** The reminder snooze path exists
+  (`POST /reminder/{id}/snooze`), but a call never names its reminder: `call_incoming`, the call
+  push and the missed-call notification carry no reminder id, and there is no route that rings a
+  call again later. The model already knows the buttons (`ringChoices({kind, snoozable})`,
+  `missedCallActions({kind, reminderLinked})`, `ringChoices(critical, snoozable)` on Android) and
+  the call sites pass `false` until argus-notification sends the reminder id.
+- **Android, locked.** `CallActivity` is the same dark stage drawn natively: the private line,
+  «Argus», the kind and subject, a still of Estela's idle hook (`EstelaStill`, the engine's swirl
+  shape drawn once on a Canvas, never a figure-eight) and the round buttons in one row. The same still
+  is the CallStyle caller icon. Silenciar, altavoz and colgar work over the lock screen; seeing the
+  camera asks for an unlock first (`requestUnlock`, `KeyguardManager.requestDismissKeyguard`).
+- **The ongoing-call notification fix.** Its mute and speaker actions used the launcher icon and the
+  notification was coloured with a dark accent inside `CallStyle.forOngoingCall`; One UI then painted
+  light pills with light labels. Each action now carries its own monochrome vector
+  (`res/drawable/argus_ic_*`), the colour is gone so the system CallStyle defaults apply, and the
+  action list is a pure function (`ongoingCallActions`) with a NativeTrace line
+  (`actions-<n>-own-icons-<style>-style-default-color`).
+- **Short screens.** The stage holds at 320×568, 360×640 and in phone landscape: `callScaleOf(height)`
+  (`shared/theme/call-scale.ts`, tested) steps the avatar (168, 136, 104, 64), the gap above it, the ring
+  and panel buttons (never below 48) and the caption lines (two, then one). `CallActivity` reads the same
+  steps from the display height in dp (`callStageScaleOf`), title size included.
+- **The missed card reads the paged notification feed** (`usePagedView`), the same subscription Inicio
+  uses: the feed is a paged value, not a row list, and reading it as rows crashed the first capture build.
+- **The missed-call notification** offers «Devolver» (opens `argus://call`) and joins the
+  `argus-missed-calls` group, which is cleared when a call starts.
+- **iOS.** CallKit stays the system UI: the provider's icon is a template still of Estela and the
+  handle is the call's subject, so the system screen reads «Argus · Pagar la luz». Answering opens
+  this same stage through `argus://call`.
+

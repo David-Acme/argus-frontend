@@ -918,13 +918,13 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
         ],
       },
       {
-        state: 'settings-dialog',
+        state: 'minimised',
         before: async (context) => {
           await context.addInitScript(fakeMicrophone);
         },
         act: steps(async () => {
           await sleep(1500);
-        }, click('screens.voice.settings')),
+        }, click('screens.voice.stage.minimise')),
       },
     ],
   },

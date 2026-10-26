@@ -23,6 +23,7 @@ import {
   CallPill,
   currentCallLockRedirect,
   IncomingCallSurface,
+  MissedCallCard,
   useDesktopBridge,
 } from '@/features/voice';
 import { InAppAlertBanner } from '@/features/in-app-alert';
@@ -86,6 +87,7 @@ export default function RootLayout() {
                 </Stack>
               </View>
               <CallPill />
+              <MissedCallCard />
               <WatchPill />
               <IncomingCallSurface />
               <InAppAlertBanner />
