@@ -83,7 +83,11 @@ mock.module('@/features/safety', () => ({ PanicButton: marker('sos') }));
 
 mock.module('@/features/access', () => ({ InactiveRoleScreen: marker('inactive') }));
 
-mock.module('@/shared/ui/presence', () => ({ Presence: marker('estela') }));
+mock.module('@/shared/ui/presence', () => ({
+  Presence: marker('estela'),
+  useHeroPresence: () => false,
+  useCentrePresence: () => false,
+}));
 
 mock.module('@/features/home/components/agenda/now-section', () => ({ NowSection: marker('now') }));
 mock.module('@/features/home/components/agenda/today-section', () => ({

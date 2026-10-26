@@ -45,7 +45,11 @@ mock.module('@/features/cameras', () => ({
 
 mock.module('@/features/safety', () => ({ PanicButton: marker('sos') }));
 
-mock.module('@/shared/ui/presence', () => ({ Presence: marker('estela') }));
+mock.module('@/shared/ui/presence', () => ({
+  Presence: marker('estela'),
+  useHeroPresence: () => false,
+  useCentrePresence: () => false,
+}));
 
 mock.module('@/features/response', () => ({
   alertPlaceOf: (response: IncidentResponse) => response.cameraName || null,

@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { Pressable, View } from 'react-native';
 import { size } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
-import { Presence, type PresenceState } from '@/shared/ui/presence';
+import { Presence, useCentrePresence, type PresenceState } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
 import type { NavItem } from './nav-types';
@@ -76,6 +76,7 @@ export function ArgusTab({
   handlers,
   presence,
 }: ArgusTabProps) {
+  const still = useCentrePresence(listening);
   return (
     <View className={SLOT}>
       <Pressable
@@ -94,7 +95,11 @@ export function ArgusTab({
         onPress={handlers.onPress}
         className={clsx('web:focus-ring', FRAME, selected && 'bg-tab-on')}>
         {presence ? (
-          <Presence state={listening ? 'listen' : presence} size={size.presenceTab} />
+          <Presence
+            state={listening ? 'listen' : presence}
+            size={size.presenceTab}
+            paused={still}
+          />
         ) : (
           <Icon name={item.icon} />
         )}
