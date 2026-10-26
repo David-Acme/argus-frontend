@@ -64,6 +64,7 @@ describe('the words of an agenda line', () => {
   test('an overdue reminder says since when, in alert', () => {
     expect(lineWords(named('Pagar la luz'), context)).toEqual({
       time: '11:00',
+      allDay: false,
       state: 'Atrasado',
       meta: 'Atrasado desde las 11:00',
       alert: true,
@@ -89,6 +90,7 @@ describe('the words of an agenda line', () => {
   test('a free slot gives its start, its length and its end', () => {
     expect(freeWords({ from: at(15), to: at(17) }, context)).toEqual({
       time: '15:00',
+      allDay: false,
       state: '2 h',
       meta: 'Hasta las 17:00',
       alert: false,

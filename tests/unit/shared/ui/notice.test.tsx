@@ -37,6 +37,23 @@ describe('Notice', () => {
     expect(screen.getByRole('button', { name: 'Nuevo recordatorio' })).toBeDefined();
   });
 
+  test('a centred empty card keeps its title, its line and its one action', () => {
+    let created = 0;
+    render(
+      <Notice
+        centred
+        icon="cal"
+        title="Nada para hoy"
+        body="Pídeselo a Argus o crea tu primer recordatorio."
+        action={{ label: 'Nuevo recordatorio', onPress: () => void (created += 1), primary: true }}
+      />
+    );
+    expect(screen.getByRole('status')).toBeDefined();
+    expect(screen.getByText('Pídeselo a Argus o crea tu primer recordatorio.')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo recordatorio' }));
+    expect(created).toBe(1);
+  });
+
   test('a card draws Estela at 52 px in place of its icon', () => {
     render(<Notice title="Todo tranquilo" presence="happy" />);
     expect(globalThis.document.querySelector('canvas')?.style.width).toBe('52px');

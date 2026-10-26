@@ -212,8 +212,6 @@ export const size = {
   chipSuggestion: 34,
   check: 24,
   eventMark: 26,
-  eventBar: 4,
-  fab: 56,
   switchWidth: 46,
   switchHeight: 28,
   switchThumb: 22,

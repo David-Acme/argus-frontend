@@ -9,7 +9,13 @@ export type Category = AgendaKind | 'shared';
 
 export type BarLook = Category | 'overdue' | 'series' | 'free';
 
-export type LineWords = { time: string; state: string | null; meta: string; alert: boolean };
+export type LineWords = {
+  time: string;
+  allDay: boolean;
+  state: string | null;
+  meta: string;
+  alert: boolean;
+};
 
 export type DayWordContext = {
   now: number;
@@ -86,7 +92,7 @@ export function lineWords(item: AgendaItem, context: LineContext): LineWords {
         .filter(Boolean)
         .join(' · ')
     : detailsOf(item, context).join(' · ');
-  return { time, state: stateOf(item, context), meta, alert };
+  return { time, allDay: item.allDay, state: stateOf(item, context), meta, alert };
 }
 
 export function freeWords(
@@ -95,6 +101,7 @@ export function freeWords(
 ): LineWords {
   return {
     time: date.formatTime(new Date(from)),
+    allDay: false,
     state: durationText(to - from, t),
     meta: t('screens.agenda.line.free-until', { time: date.formatTime(new Date(to)) }),
     alert: false,

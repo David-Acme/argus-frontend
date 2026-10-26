@@ -26,7 +26,9 @@ function LineBody({ title, words, look, struck, trailing }: LineBodyProps) {
   return (
     <>
       <View className="w-19">
-        <Text variant="feed">{words.time}</Text>
+        <Text variant={words.allDay ? 'caption' : 'feed'} numberOfLines={1}>
+          {words.time}
+        </Text>
         {words.state ? (
           <Text variant="rowMeta" tone="3">
             {words.state}

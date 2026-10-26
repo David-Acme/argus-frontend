@@ -27,6 +27,15 @@ export function NoticeDemo() {
           action={{ label: copy.newReminder, onPress: noop, primary: true }}
         />
       </LabCase>
+      <LabCase id="card-centred" block>
+        <Notice
+          centred
+          icon="cal"
+          title={copy.nothingToday}
+          body={copy.askArgus}
+          action={{ label: copy.newReminder, onPress: noop, primary: true }}
+        />
+      </LabCase>
       <LabCase id="banner-attention" block>
         <Notice inline tone="attention" icon="wifioff" title={copy.offlineBanner} />
       </LabCase>

@@ -59,7 +59,13 @@ function FreeDay({ context }: FreeDayProps) {
   return (
     <AgendaLine
       title={t('screens.agenda.line.free')}
-      words={{ time: t('screens.agenda.line.all-day'), state: null, meta: '', alert: false }}
+      words={{
+        time: t('screens.agenda.line.all-day'),
+        allDay: true,
+        state: null,
+        meta: '',
+        alert: false,
+      }}
       look="free"
     />
   );

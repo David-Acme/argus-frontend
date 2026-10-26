@@ -343,7 +343,13 @@ describe('the agenda parts', () => {
       <>
         <AgendaLine
           title="Libre"
-          words={{ time: '15:00', state: '2 h', meta: 'Hasta las 17:00', alert: false }}
+          words={{
+            time: '15:00',
+            allDay: false,
+            state: '2 h',
+            meta: 'Hasta las 17:00',
+            alert: false,
+          }}
           look="free"
         />
         <EventBar look="series" />

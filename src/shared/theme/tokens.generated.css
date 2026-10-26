@@ -195,8 +195,6 @@
   --spacing-chip-suggestion: 34px;
   --spacing-check: 24px;
   --spacing-event-mark: 26px;
-  --spacing-event-bar: 4px;
-  --spacing-fab: 56px;
   --spacing-switch-width: 46px;
   --spacing-switch-height: 28px;
   --spacing-switch-thumb: 22px;
@@ -227,6 +225,8 @@
   --spacing-live-dot: 6px;
   --spacing-key-line: 17px;
   --spacing-rail: 88px;
+  --spacing-event-bar: 4px;
+  --spacing-fab: 56px;
   --spacing-presence-hero: 66px;
   --spacing-presence-hero-small: 56px;
   --spacing-presence-hero-dense: 58px;

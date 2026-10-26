@@ -51,6 +51,7 @@ export function DayEmpty({ today, onCreate }: DayEmptyProps) {
     <Stack gap={4}>
       {onCreate ? (
         <Empty
+          centred
           icon="cal"
           message={title}
           detail={t('screens.agenda.empty.body')}
