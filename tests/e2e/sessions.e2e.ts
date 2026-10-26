@@ -20,17 +20,33 @@ const desktop = (current: boolean) => session(SESSION_A, 'Escritorio', 'desktop'
 const phone = (current: boolean) => session(SESSION_B, 'Teléfono de Ana', 'android', current);
 
 const sessionRoutes: RouteSpec[] = [
-  { method: 'GET', path: '/auth/sessions', device: 'A', info: { sessions: [desktop(true), phone(false)] } },
-  { method: 'GET', path: '/auth/sessions', device: 'B', info: { sessions: [desktop(false), phone(true)] } },
+  {
+    method: 'GET',
+    path: '/auth/sessions',
+    device: 'A',
+    info: { sessions: [desktop(true), phone(false)] },
+  },
+  {
+    method: 'GET',
+    path: '/auth/sessions',
+    device: 'B',
+    info: { sessions: [desktop(false), phone(true)] },
+  },
   {
     method: 'DELETE',
     path: `/auth/sessions/${SESSION_B}`,
     info: { revoked: [SESSION_B], current: false },
-    sets: [{ method: 'GET', path: '/auth/sessions', device: 'A', info: { sessions: [desktop(true)] } }],
+    sets: [
+      { method: 'GET', path: '/auth/sessions', device: 'A', info: { sessions: [desktop(true)] } },
+    ],
     emits: [
       {
         device: 'B',
-        frame: { operation: 7, option: 'user', info: { reason: 'sessionRevoked', sessionId: SESSION_B, cause: 'revokedByOwner' } },
+        frame: {
+          operation: 7,
+          option: 'user',
+          info: { reason: 'sessionRevoked', sessionId: SESSION_B, cause: 'revokedByOwner' },
+        },
         close: true,
       },
       { device: 'A', frame: { operation: 7, option: 'user', info: { reason: 'sessionsChanged' } } },
@@ -50,15 +66,44 @@ test('a session closed on one device ends the other at once, and the list that c
   await second.open();
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => second.page.getByText(/Good (morning|afternoon|evening), Ana/).first().count(), { timeout: 10000 }).toBe(1);
+  await expect
+    .poll(
+      () =>
+        second.page
+          .getByText(/Good (morning|afternoon|evening), Ana/)
+          .first()
+          .count(),
+      { timeout: 10000 }
+    )
+    .toBe(1);
 
   await screen.getByRole('tab', 'You').first().click();
+  await screen.getByRole('checkbox', 'Your account').first().click();
+  await screen
+    .getByRole('button', /^Sessions and devices/)
+    .first()
+    .click();
   await expect(screen.getByRole('button', 'Sign out of Teléfono de Ana')).toBeVisible();
   await screen.getByRole('button', 'Sign out of Teléfono de Ana').click();
 
-  await expect(screen.getByRole('button', 'Sign out of Teléfono de Ana')).toBeHidden({ timeout: LIVE_MS });
-  await expect.poll(() => second.page.getByText(/Good (morning|afternoon|evening), Ana/).first().count(), { timeout: LIVE_MS }).toBe(0);
-  await expect.poll(() => second.page.evaluate(() => window.localStorage.getItem('argus-storage:app.session.user'))).toBeNull();
+  await expect(screen.getByRole('button', 'Sign out of Teléfono de Ana')).toBeHidden({
+    timeout: LIVE_MS,
+  });
+  await expect
+    .poll(
+      () =>
+        second.page
+          .getByText(/Good (morning|afternoon|evening), Ana/)
+          .first()
+          .count(),
+      { timeout: LIVE_MS }
+    )
+    .toBe(0);
+  await expect
+    .poll(() =>
+      second.page.evaluate(() => window.localStorage.getItem('argus-storage:app.session.user'))
+    )
+    .toBeNull();
   await expect.poll(() => connected(baseUrl, 'B')).toBe(0);
 
   expect(escapes).toEqual([]);

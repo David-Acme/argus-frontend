@@ -6,6 +6,7 @@ import { sleep, type Scene } from '../support/ui-map/capture';
 import {
   AGRONOMY_MODULE,
   BASELINE,
+  CALL_PREFERENCES,
   CAMERAS,
   CORE_MODULE,
   GUARD_CAMERAS,
@@ -14,6 +15,7 @@ import {
   PRODUCTIVITY_MODULE,
   PROXIMITY_PEOPLE,
   RECEIVERS,
+  SAFETY,
   SENSORS,
   SESSIONS,
   SURVEILLANCE_MODULE,
@@ -22,7 +24,7 @@ import {
   job,
   sessionRow,
 } from '../support/ui-map/backend';
-import { DAY, HOUSEHOLD, NOW, user } from '../support/ui-map/data';
+import { DAY, HOUR, HOUSEHOLD, NOW, reminder, user } from '../support/ui-map/data';
 import type { Row, ScreenSpec } from '../support/ui-map/scenario';
 import { button, say } from '../support/ui-map/text';
 import type { TranslationKey } from '../../../src/core/types';
@@ -43,11 +45,25 @@ const clickName =
   };
 
 const clickText =
-  (key: TranslationKey, which: 'first' | 'last' = 'first') =>
+  (key: TranslationKey, which: 'first' | 'last' = 'first', params?: Record<string, string>) =>
   async (scene: Scene): Promise<void> => {
-    const locator = scene.page.getByText(say(scene, key), { exact: true });
+    const locator = scene.page.getByText(say(scene, key, params), { exact: true });
     await (which === 'first' ? locator.first() : locator.last()).click({ timeout: 8000 });
     await sleep(900);
+  };
+
+const fill =
+  (key: TranslationKey, value: string) =>
+  async (scene: Scene): Promise<void> => {
+    await scene.page.getByPlaceholder(say(scene, key)).first().fill(value);
+    await sleep(900);
+  };
+
+const toggle =
+  (name: string) =>
+  async (scene: Scene): Promise<void> => {
+    await scene.page.getByRole('switch', { name, exact: true }).first().click({ timeout: 8000 });
+    await sleep(1200);
   };
 
 const steps =
@@ -225,6 +241,15 @@ const HOUSEHOLD_ROUTES: RouteSpec[] = [
 
 const ROWS: Row[] = [...PEOPLE, ...CAMERAS];
 
+const WEEK: Row[] = [
+  reminder(201, 'Sacar la basura', NOW - HOUR * 5, {
+    isCompleted: true,
+    completedAt: NOW - HOUR * 6,
+  }),
+  reminder(202, 'Pagar la luz', NOW - DAY, { isCompleted: true, completedAt: NOW - DAY - HOUR }),
+  reminder(203, 'Llamar al gasfitero', NOW + HOUR * 4),
+];
+
 const catalog = (
   surveillance: Record<string, unknown>,
   productivity: Record<string, unknown> = {}
@@ -270,14 +295,6 @@ const MODULE_DATA = {
     },
   ],
 };
-
-const moduleAction =
-  (action: TranslationKey, module: string) =>
-  async (scene: Scene): Promise<void> => {
-    const name = say(scene, 'screens.modules.action-of', { action: say(scene, action), module });
-    await scene.page.getByRole('button', { name, exact: true }).first().click({ timeout: 8000 });
-    await sleep(1200);
-  };
 
 const callFrame =
   (type: string, payload: Record<string, unknown>) =>
@@ -525,9 +542,34 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
     routes: HOUSEHOLD_ROUTES,
     rows: ROWS,
     states: [
-      { state: 'simple', main: true },
-      { state: 'advanced', act: clickText('screens.settings.mode.advanced') },
-      { state: 'advanced-mode-stored', local: { 'argus-storage:settings.mode': 'advanced' } },
+      { state: 'hub', main: true },
+      { state: 'service-tts', path: '/settings/tts' },
+      { state: 'service-unreachable', path: '/settings/stt' },
+      { state: 'search', act: fill('screens.settings.hub.search', 'velocidad') },
+      {
+        state: 'advanced-open',
+        path: '/settings/llm',
+        act: clickText('screens.settings.advanced.count', 'first', { count: '2' }),
+      },
+      {
+        state: 'setting-sheet',
+        path: '/settings/llm',
+        act: steps(
+          clickText('screens.settings.advanced.count', 'first', { count: '2' }),
+          async (scene) => {
+            await scene.page.getByText('llm.gpu_layers').first().click({ timeout: 8000 });
+            await sleep(900);
+          }
+        ),
+      },
+      {
+        state: 'more-menu',
+        path: '/settings/tts',
+        act: async (scene) => {
+          await scene.page.getByLabel(say(scene, 'screens.settings.more.label')).first().click();
+          await sleep(900);
+        },
+      },
       {
         state: 'failed',
         routes: [
@@ -547,22 +589,8 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
       },
       {
         state: 'empty-owners',
+        rows: [],
         routes: [{ method: 'GET', path: '/settings', info: { owners: [] } }],
-      },
-      { state: 'profile-preview', act: clickName(/Equilibrado|Balanced/) },
-      {
-        state: 'export-dialog',
-        local: { 'argus-storage:settings.mode': 'advanced' },
-        act: click('screens.settings.transfer.export'),
-      },
-      {
-        state: 'import-dialog-invalid',
-        local: { 'argus-storage:settings.mode': 'advanced' },
-        act: async (scene) => {
-          await click('screens.settings.transfer.import')(scene);
-          await scene.page.locator('textarea').first().fill('{ not json');
-          await sleep(600);
-        },
       },
     ],
   },
@@ -605,50 +633,17 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
         }),
       },
       {
-        state: 'paused-insufficient',
-        context: catalog({
-          enabled: false,
-          lifecycle: 'not_installed',
-          installedBytes: 0,
-          job: job('install', 'paused', 0.3),
-          hardware: {
-            verdict: 'insufficient',
-            reasons: ['ram_below_minimum', 'disk_insufficient'],
-            minRamMb: 16384,
-            recommendedRamMb: 32768,
-            freeDiskMb: 512,
-          },
-        }),
-      },
-      {
         state: 'disabled-and-kept',
         context: catalog(
           { enabled: false, lifecycle: 'disabled' },
           { enabled: false, lifecycle: 'uninstalled_data_kept', installedBytes: 0 }
         ),
       },
-      {
-        state: 'disable-dialog',
-        context: catalog({}),
-        act: moduleAction('screens.modules.actions.disable', 'Vigilancia'),
-      },
+      { state: 'disable-dialog', context: catalog({}), act: toggle('Vigilancia') },
       {
         state: 'uninstall-dialog',
         context: catalog({}),
-        act: moduleAction('screens.modules.actions.uninstall', 'Vigilancia'),
-      },
-      {
-        state: 'uninstall-purge-typed',
-        context: catalog({}),
-        act: async (scene) => {
-          await moduleAction('screens.modules.actions.uninstall', 'Vigilancia')(scene);
-          await scene.page
-            .getByRole('radio')
-            .last()
-            .click()
-            .catch(() => undefined);
-          await sleep(700);
-        },
+        act: clickText('screens.modules.actions.uninstall'),
       },
     ],
   },
@@ -658,16 +653,30 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
     route: '/profile',
     path: '/profile',
     routes: HOUSEHOLD_ROUTES,
-    rows: ROWS,
+    rows: [],
     states: [
-      { state: 'owner', main: true },
-      { state: 'resident', role: 'resident' },
-      { state: 'guard', role: 'guard' },
-      { state: 'guest', role: 'guest' },
-      { state: 'inactive', role: 'inactive' },
-      { state: 'unknown-role', role: 'unknown' },
+      { state: 'owner', main: true, rows: [...ROWS, ...WEEK] },
       {
-        state: 'panels-failed',
+        state: 'empty',
+        routes: [
+          { method: 'GET', path: '/auth/sessions', info: { sessions: SESSIONS.slice(0, 1) } },
+          {
+            method: 'GET',
+            path: '/guard/presence',
+            info: { people: [{ userId: 1, state: 'home', since: NOW - 3600, environments: [] }] },
+          },
+        ],
+      },
+      { state: 'tab-account', rows: ROWS, act: clickText('screens.profile.tabs.account') },
+      { state: 'tab-argus', rows: ROWS, act: clickText('screens.profile.tabs.argus') },
+      { state: 'resident', role: 'resident', rows: ROWS },
+      { state: 'guard', role: 'guard', rows: ROWS },
+      { state: 'guest', role: 'guest', rows: ROWS },
+      { state: 'inactive', role: 'inactive', rows: ROWS },
+      { state: 'unknown-role', role: 'unknown', rows: ROWS },
+      {
+        state: 'sessions-failed',
+        rows: ROWS,
         routes: [
           {
             method: 'GET',
@@ -675,40 +684,19 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
             status: 500,
             errors: { code: 'INTERNAL_ERROR', message: 'x' },
           },
-          {
-            method: 'GET',
-            path: '/notification/call-preferences',
-            status: 500,
-            errors: { code: 'INTERNAL_ERROR', message: 'x' },
-          },
-          {
-            method: 'GET',
-            path: '/privacy/me',
-            status: 500,
-            errors: { code: 'INTERNAL_ERROR', message: 'x' },
-          },
-          {
-            method: 'GET',
-            path: '/guard/safety',
-            status: 500,
-            errors: { code: 'INTERNAL_ERROR', message: 'x' },
-          },
         ],
       },
-      {
-        state: 'loading',
-        before: async (context) => {
-          for (const path of [
-            'auth/sessions',
-            'notification/call-preferences',
-            'privacy/me',
-            'guard/safety',
-            'guard/proximity/me',
-          ]) {
-            await hold(`**/__api/${path}`)(context);
-          }
-        },
-      },
+    ],
+  },
+  {
+    screen: 'profile-sessions',
+    inApp: true,
+    route: '/profile/sessions',
+    path: '/profile/sessions',
+    routes: HOUSEHOLD_ROUTES,
+    rows: ROWS,
+    states: [
+      { state: 'populated', main: true },
       {
         state: 'only-session',
         routes: [
@@ -716,59 +704,31 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
         ],
       },
       {
-        state: 'sessions-empty-list',
-        routes: [{ method: 'GET', path: '/auth/sessions', info: { sessions: [] } }],
-        notes: 'ok with an empty list shows the loading text forever',
-      },
-      {
-        state: 'safety-reach-nobody',
+        state: 'failed',
         routes: [
           {
             method: 'GET',
-            path: '/guard/safety',
-            info: {
-              duressEnabled: false,
-              hasPin: false,
-              alertsReach: 'nobody',
-              appSirenEnabled: true,
-              maskedCameras: [{ cameraId: 7, name: 'Dormitorio' }],
-            },
+            path: '/auth/sessions',
+            status: 500,
+            errors: { code: 'INTERNAL_ERROR', message: 'x' },
           },
         ],
       },
+      { state: 'sign-out-all-confirm', act: clickText('screens.sessions.sign-out-everywhere') },
+      { state: 'unpair-confirm', act: clickText('screens.sessions.home.unpair') },
+    ],
+  },
+  {
+    screen: 'profile-privacy',
+    inApp: true,
+    route: '/profile/privacy',
+    path: '/profile/privacy',
+    routes: HOUSEHOLD_ROUTES,
+    rows: ROWS,
+    states: [
+      { state: 'decided', main: true },
       {
-        state: 'calls-off',
-        routes: [
-          {
-            method: 'GET',
-            path: '/notification/call-preferences',
-            info: {
-              userId: 1,
-              enabled: false,
-              guardCritical: 'call',
-              guardIntruder: 'call',
-              guardEscalation: 'notify',
-              guardArrival: 'notify',
-              agenda: 'notify',
-              assistant: 'call',
-              quietStartHour: -1,
-              quietEndHour: -1,
-              dndUntil: 0,
-              criticalBypass: true,
-              mutedEnvironmentIds: [],
-              updatedAt: NOW,
-              agendaLeadMinutes: 0,
-              quietDays: 0,
-              ringSeconds: 30,
-              pushDelaySeconds: 0,
-              liveAnnounce: false,
-              lang: '',
-            },
-          },
-        ],
-      },
-      {
-        state: 'privacy-undecided',
+        state: 'household-off',
         routes: [
           {
             method: 'GET',
@@ -780,45 +740,61 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
           },
         ],
       },
-      { state: 'sign-out-all-confirm', act: click('screens.sessions.sign-out-everywhere') },
       {
-        state: 'pin-setup-dialog',
+        state: 'failed',
         routes: [
           {
             method: 'GET',
-            path: '/guard/safety',
-            info: {
-              duressEnabled: true,
-              hasPin: false,
-              hasPhrase: true,
-              alertsReach: 'others',
-              appSirenEnabled: true,
-              maskedCameras: [],
-            },
+            path: '/privacy/me',
+            status: 500,
+            errors: { code: 'INTERNAL_ERROR', message: 'x' },
           },
         ],
-        act: clickText('screens.safety.pins.create'),
       },
+      { state: 'notice-dialog', act: clickText('screens.privacy.section.terms-title') },
+    ],
+  },
+  {
+    screen: 'profile-calls',
+    inApp: true,
+    route: '/profile/calls',
+    path: '/profile/calls',
+    routes: HOUSEHOLD_ROUTES,
+    rows: ROWS,
+    states: [
+      { state: 'on', main: true },
       {
-        state: 'phrase-dialog',
+        state: 'off',
         routes: [
           {
             method: 'GET',
-            path: '/guard/safety',
-            info: {
-              duressEnabled: true,
-              hasPin: false,
-              hasPhrase: false,
-              alertsReach: 'others',
-              appSirenEnabled: true,
-              maskedCameras: [],
-            },
+            path: '/notification/call-preferences',
+            info: { ...CALL_PREFERENCES, enabled: false },
           },
         ],
-        act: clickText('screens.safety.phrase.create'),
       },
-      { state: 'notice-dialog', act: clickText('screens.privacy.consent.read-notice', 'last') },
-      { state: 'unpair-confirm', act: clickText('screens.profile.unpair') },
+      {
+        state: 'failed',
+        routes: [
+          {
+            method: 'GET',
+            path: '/notification/call-preferences',
+            status: 500,
+            errors: { code: 'INTERNAL_ERROR', message: 'x' },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    screen: 'profile-appearance',
+    inApp: true,
+    route: '/profile/appearance',
+    path: '/profile/appearance',
+    routes: HOUSEHOLD_ROUTES,
+    rows: ROWS,
+    states: [
+      { state: 'system', main: true },
       {
         state: 'theme-dark-selected',
         act: async (scene) => {
@@ -829,8 +805,41 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
           await sleep(800);
         },
       },
+    ],
+  },
+  {
+    screen: 'profile-safety',
+    inApp: true,
+    route: '/profile/safety',
+    path: '/profile/safety',
+    routes: HOUSEHOLD_ROUTES,
+    rows: ROWS,
+    states: [
+      { state: 'populated', main: true },
+      {
+        state: 'pin-setup-dialog',
+        routes: [
+          {
+            method: 'GET',
+            path: '/guard/safety',
+            info: { ...SAFETY, hasPin: false },
+          },
+        ],
+        act: clickText('screens.safety.pins.create'),
+      },
+    ],
+  },
+  {
+    screen: 'profile-modules',
+    inApp: true,
+    route: '/profile/modules',
+    path: '/profile/modules',
+    routes: HOUSEHOLD_ROUTES,
+    rows: ROWS,
+    states: [
       {
         state: 'module-request-resident',
+        main: true,
         role: 'resident',
         context: { modules: ownerContext({ surveillance: false }).modules },
       },
