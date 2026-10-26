@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { backendPath } from '@tests/support/backend-dir';
 import { toModelProps } from '@/core/services/sync/entity-mappers';
 import { CAMERA_PRIVACY_STATES } from '@/core/types';

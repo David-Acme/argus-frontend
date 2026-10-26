@@ -360,12 +360,12 @@ describe('the retired camera_stream and reminder_detail tables', () => {
   });
 });
 
-describe('the camera privacy state column', () => {
-  const cameraColumnsOf = (db: Database): string[] =>
-    (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
-      (row) => row.name
-    );
+const cameraColumnsOf = (db: Database): string[] =>
+  (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
+    (row) => row.name
+  );
 
+describe('the camera privacy state column', () => {
   const withoutPrivacyState = (): AppSchema => {
     const tables = Object.fromEntries(
       Object.entries(schema.tables).filter(([name]) => name !== 'conversation_message').map(([name, table]) => {
@@ -409,11 +409,6 @@ describe('the camera privacy state column', () => {
 });
 
 describe('the camera privacy obeyed column', () => {
-  const cameraColumnsOf = (db: Database): string[] =>
-    (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
-      (row) => row.name
-    );
-
   const atVersionTwelve = (): AppSchema => {
     const tables = Object.fromEntries(
       Object.entries(schema.tables).filter(([name]) => name !== 'conversation_message').map(([name, table]) => {
@@ -456,11 +451,6 @@ describe('the camera privacy obeyed column', () => {
 });
 
 describe('the camera watchman and no-audio columns', () => {
-  const cameraColumnsOf = (db: Database): string[] =>
-    (db.query("select name from pragma_table_info('camera')").all() as { name: string }[]).map(
-      (row) => row.name
-    );
-
   const atVersionThirteen = (): AppSchema => {
     const tables = Object.fromEntries(
       Object.entries(schema.tables).filter(([name]) => name !== 'conversation_message').map(([name, table]) => {

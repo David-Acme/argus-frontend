@@ -7,6 +7,7 @@ const invoked: Call[] = [];
 const posted: { path: string; body: unknown }[] = [];
 let postOutcome: 'accepted' | 'refused' | 'unreachable' | 'expired' | 'taken' | 'not-found' = 'accepted';
 const REFUSED_CODES: Record<string, string> = { expired: 'CALL_EXPIRED', taken: 'CALL_TAKEN', 'not-found': 'CALL_NOT_FOUND' };
+const order: string[] = [];
 
 mock.module('@tauri-apps/api/core', () => ({
   invoke: async (command: string, args?: unknown) => {
@@ -14,8 +15,6 @@ mock.module('@tauri-apps/api/core', () => ({
     return null;
   },
 }));
-
-const order: string[] = [];
 
 mock.module('@tauri-apps/api/event', () => ({
   listen: async (event: string) => {

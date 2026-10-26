@@ -1,30 +1,18 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { installNativeUiMocks } from './native-ui-mocks';
 
 installNativeUiMocks();
 
-type Modules = {
-  effects: typeof import('@/shared/theme/effects');
-  pace: typeof import('@/shared/ui/presence/engine/pace');
-  verdict: typeof import('@/shared/ui/presence/tier-verdict');
-};
-
-let modules: Modules;
-
-beforeAll(async () => {
-  modules = {
-    effects: await import('@/shared/theme/effects'),
-    pace: await import('@/shared/ui/presence/engine/pace'),
-    verdict: await import('@/shared/ui/presence/tier-verdict'),
-  };
-});
+const { hardwareCeiling, needsProbe, recordProbe, resolvePerfTier, useAutoTier } =
+  await import('@/shared/theme/effects');
+const { createPace, noteBeat, notePace } = await import('@/shared/ui/presence/engine/pace');
+const { probeVerdict } = await import('@/shared/ui/presence/tier-verdict');
 
 const GIB = 1024 ** 3;
 const phone = { android: true, apiLevel: 34, totalMemory: 8 * GIB };
 
 describe('the automatic tier', () => {
   test('an Android phone stays low until the probe answers, then the ceiling caps it', () => {
-    const { resolvePerfTier, needsProbe } = modules.effects;
     const input = { profile: phone, reduceEffects: false, live: null };
     expect(needsProbe(input)).toBe(true);
     expect(resolvePerfTier(input)).toBe('low');
@@ -36,7 +24,6 @@ describe('the automatic tier', () => {
   });
 
   test('old or small phones never probe, and the web starts at high', () => {
-    const { resolvePerfTier, needsProbe } = modules.effects;
     const old = { profile: { ...phone, apiLevel: 30 }, reduceEffects: false, live: null };
     expect(needsProbe(old)).toBe(false);
     expect(resolvePerfTier(old)).toBe('low');
@@ -46,7 +33,6 @@ describe('the automatic tier', () => {
   });
 
   test('the probe judges the median half-frame after its warm-up: 5 ms high, 6.25 ms mid', () => {
-    const { probeVerdict } = modules.verdict;
     const works = (ms: number) => Array.from({ length: 30 }, (_, i) => (i < 3 ? 40 : ms));
     const gaps = Array.from({ length: 30 }, () => 8.3);
     expect(probeVerdict({ works: works(3.5), gaps })).toMatchObject({ tier: 'high', workMs: 3.5 });
@@ -62,9 +48,6 @@ describe('the automatic tier', () => {
 
 describe('a phone like the S21 FE', () => {
   test('probe high and steady frames, so the tier ends high', () => {
-    const { resolvePerfTier, recordProbe, useAutoTier, hardwareCeiling } = modules.effects;
-    const { probeVerdict } = modules.verdict;
-    const { createPace, notePace, noteBeat } = modules.pace;
     const s21 = { android: true, apiLevel: 34, totalMemory: 5.4 * GIB };
     expect(hardwareCeiling(s21)).toBe('high');
     const works = Array.from({ length: 30 }, () => 4.2);
@@ -85,7 +68,6 @@ describe('a phone like the S21 FE', () => {
   });
 
   test('a phone the probe put at mid climbs to high after three seconds of headroom', () => {
-    const { createPace, notePace, noteBeat } = modules.pace;
     const pace = createPace();
     const shifts: number[] = [];
     for (let i = 1; i <= 240; i++) {
@@ -101,7 +83,6 @@ describe('a phone like the S21 FE', () => {
 describe('the frame-time feedback', () => {
   type Frame = { gap: number; work: number };
   const run = (frames: number, sample: (i: number) => Frame, climbWork = 1 / 120) => {
-    const { createPace, notePace, noteBeat } = modules.pace;
     const pace = createPace();
     const shifts: number[] = [];
     let now = 1;
@@ -135,14 +116,12 @@ describe('the frame-time feedback', () => {
   });
 
   test('the beat is the display period, not a late frame caught up in a burst', () => {
-    const { createPace, noteBeat } = modules.pace;
     const pace = createPace();
     for (const since of [1 / 120, 0.0006, 1 / 120, 0.001, 1 / 60]) noteBeat(pace, since);
     expect(pace.beat).toBeCloseTo(1 / 120, 4);
   });
 
   test('a 60 Hz screen is not late for a 120 fps tier', () => {
-    const { createPace, notePace, noteBeat } = modules.pace;
     const pace = createPace();
     let shifts = 0;
     for (let i = 1; i <= 400; i++) {

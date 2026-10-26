@@ -36,6 +36,7 @@ const argus = {
     'no-export-all': restrictedSyntax,
     'no-inline-size': restrictedSyntax,
     'no-http-type-argument': restrictedSyntax,
+    'test-module-layout': restrictedSyntax,
   },
 };
 
@@ -134,6 +135,20 @@ const TYPE_SCALE_SYNTAX = [
   },
 ];
 
+const MOCK_CALL = "CallExpression[callee.object.name='mock'][callee.property.name='module']";
+const MOCK = `:matches(ExpressionStatement[expression.callee.object.name='mock'][expression.callee.property.name='module'], ForOfStatement:has(${MOCK_CALL}))`;
+const LOADER =
+  ":matches(VariableDeclaration[declarations.0.init.argument.type='ImportExpression'], VariableDeclaration[declarations.0.init.expression.argument.type='ImportExpression'])";
+const LAYOUT_MESSAGE =
+  'A test file is static imports, then every mock.module call, then one block of await import, then the tests.';
+
+const TEST_MODULE_LAYOUT_SYNTAX = [
+  `Program > ${LOADER} ~ ${MOCK}`,
+  `Program > ${MOCK} ~ :not(${MOCK}) ~ ${MOCK}`,
+  `Program > ${LOADER} ~ :not(${LOADER}) ~ ${LOADER}`,
+  `:function:not(${MOCK_CALL} > :function) ImportExpression`,
+].map((selector) => ({ selector, message: LAYOUT_MESSAGE }));
+
 const COLOR_PATTERN = '/#[0-9a-fA-F]{3,8}\\b|\\b(rgba?|hsla?|oklch)\\(/';
 const COLOR_MESSAGE =
   'Colours live in src/shared/theme/tokens.ts: read a colour role, never a literal.';
@@ -162,6 +177,8 @@ module.exports = defineConfig([
       ),
       'no-console': 'error',
       eqeqeq: 'error',
+      'import/first': 'error',
+      'import/no-duplicates': 'error',
       'react-hooks/immutability': 'off',
       'sonarjs/no-identical-functions': 'error',
       'sonarjs/no-all-duplicated-branches': 'error',
@@ -408,6 +425,15 @@ module.exports = defineConfig([
       'better-tailwindcss/no-duplicate-classes': 'error',
       'better-tailwindcss/no-deprecated-classes': 'error',
       'better-tailwindcss/no-unnecessary-whitespace': 'error',
+    },
+  },
+  {
+    files: ['tests/**/*.{ts,tsx}'],
+    settings: {
+      'import/resolver': { typescript: { project: 'tests/tsconfig.json' } },
+    },
+    rules: {
+      'argus/test-module-layout': ['error', ...TEST_MODULE_LAYOUT_SYNTAX],
     },
   },
   {

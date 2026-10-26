@@ -79,10 +79,10 @@ mock.module('@tauri-apps/api/core', () => ({
 }));
 
 const { netService } = await import('@/core/services/net/net.web');
+const { clearInstance, savePairingMetadata } = await import('@/core/services/net/net-persistence');
 
 const REMOTE = { homeId: '0123456789abcdef0123456789abcdef', domain: 'argus-tunnel.lynk.page' };
 const throughRelay = (url: string): boolean => url.includes(`--${REMOTE.homeId}.${REMOTE.domain}/`);
-const { clearInstance, savePairingMetadata } = await import('@/core/services/net/net-persistence');
 
 const pairing = {
   caPem: 'pem',
