@@ -6,6 +6,7 @@ import {
   HOLD_FAILURE_SHOWN_MS,
   holdTalkFailureOf,
   shownResults,
+  threadResultsOf,
   useArgusResults,
   useArgusTalk,
   useAssistantChat,
@@ -22,6 +23,7 @@ import {
   anchorResults,
   lastReplyOf,
   newestIncomingId,
+  resultRowsOf,
   shownCameraOf,
 } from '@/features/conversations/model/thread-results';
 import type { AnchoredResults } from '@/features/conversations/model/thread-results';
@@ -97,7 +99,7 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     overlay,
     typing: overlay.typing || talk.stage === 'sending',
     results,
-    anchored: anchorResults(overlay.rows, results),
+    anchored: anchorResults(overlay.rows, threadResultsOf(resultRowsOf(overlay.rows), results)),
     newestIn: newestIncomingId(overlay.rows),
     chat,
     talk,

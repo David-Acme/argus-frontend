@@ -26,6 +26,7 @@ export {
   shownResults,
   type ArgusResult,
 } from './model/argus-result';
+export { threadResultsOf, type ResultRow, type ThreadResults } from './model/result-merge';
 export {
   HOLD_FAILURE_SHOWN_MS,
   holdTalkFailureOf,
