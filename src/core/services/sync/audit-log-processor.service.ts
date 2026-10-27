@@ -3,7 +3,7 @@ import type { AuditLogApplyResult, AuditLogRecordUpdate, SyncTableKey } from '@/
 import { database } from '@/core/database';
 import { optimisticRegistry } from '@/shared/libs/optimistic';
 import { batchPrepared, existingByServerId, type PreparedOperation } from './sync-db-utils';
-import { planAuditEntries } from './audit-log-patch';
+import { patchedProps, planAuditEntries } from './audit-log-patch';
 
 export type PreparedAuditLogs = AuditLogApplyResult & {
   operations: PreparedOperation[];
@@ -28,7 +28,8 @@ class AuditLogProcessorService {
         }
         affected.add(key);
         updated.push({ table: key, recordId: patch.recordId });
-        operations.push(() => record.prepareUpdate((row) => Object.assign(row, patch.props)));
+        const props = patchedProps(patch, (prop) => Reflect.get(record, prop));
+        operations.push(() => record.prepareUpdate((row) => Object.assign(row, props)));
       }
     }
     for (const [key, recordIds] of removals) {

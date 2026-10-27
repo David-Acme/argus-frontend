@@ -242,6 +242,9 @@ const JSON_COLUMNS = new Set([
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
+export const isJsonProp = (key: SyncTableKey, prop: string): boolean =>
+  Object.hasOwn(TABLE_MAPS[key], prop) && JSON_COLUMNS.has(toSnake(prop));
+
 export const knowsTable = (key: string): key is SyncTableKey => Object.hasOwn(TABLE_MAPS, key);
 
 export const toDirtyRaw = (key: SyncTableKey, row: Record<string, unknown>): Record<string, unknown> => {

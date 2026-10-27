@@ -19,11 +19,18 @@ export type AuditLogRow = {
   id: number;
 };
 
+export type AuditPath = {
+  prop: string;
+  path: readonly string[];
+  value: unknown;
+};
+
 export type AuditPatch = {
   id: number;
   key: SyncTableKey;
   recordId: string;
   props: Record<string, unknown>;
+  paths: readonly AuditPath[];
 };
 
 export type AuditLogApplyResult = {

@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import type { IAuditLogEntry, IAuditLogChange } from '@/core/interfaces';
-import { planAuditEntries, toAuditPatch, toAuditRemoval } from '@/core/services/sync/audit-log-patch';
+import {
+  patchedProps,
+  planAuditEntries,
+  toAuditPatch,
+  toAuditRemoval,
+} from '@/core/services/sync/audit-log-patch';
 
 const entry = (
   id: number,
@@ -79,5 +84,62 @@ describe('planAuditEntries', () => {
     const plan = planAuditEntries([entry(1, 'notification', 7, { unknownField: { previous: 1, current: 2 } })]);
     expect(plan.patches.size).toBe(0);
     expect(plan.removals.size).toBe(0);
+  });
+});
+
+describe('a missed reminder call that rewrites its feed row in place', () => {
+  const rowData = { kind: 'agenda', threadKey: 'agenda:reminder:7:1790000000', reminderId: 7, scheduledAt: 1_790_000_000 };
+
+  const missed = (id: number) =>
+    entry(id, 'notification', 41, {
+      type: { previous: 'agenda', current: 'call_missed' },
+      title: { previous: 'Argus · Regar las plantas', current: 'Llamada perdida · Recordatorio' },
+      body: { previous: 'Regar las plantas', current: 'Te llamé para recordarte: Regar las plantas.' },
+      isRead: { previous: true, current: false },
+      readAt: { previous: 1_790_000_050, current: null },
+      'data.kind': { previous: 'agenda', current: 'call' },
+      'data.callId': { previous: null, current: 'c-9' },
+      'data.summary': { previous: null, current: 'Regar las plantas' },
+    });
+
+  test('patches the type, title, body and read state, and keeps the data paths apart', () => {
+    const patch = toAuditPatch(missed(20));
+    expect(patch?.props).toEqual({
+      type: 'call_missed',
+      title: 'Llamada perdida · Recordatorio',
+      body: 'Te llamé para recordarte: Regar las plantas.',
+      isRead: false,
+      readAt: null,
+    });
+    expect(patch?.paths).toEqual([
+      { prop: 'data', path: ['kind'], value: 'call' },
+      { prop: 'data', path: ['callId'], value: 'c-9' },
+      { prop: 'data', path: ['summary'], value: 'Regar las plantas' },
+    ]);
+  });
+
+  test('merges the data paths over the row it updates, so the reminder it names stays', () => {
+    const patch = planAuditEntries([missed(20)]).patches.get('notification')?.get('41');
+    if (!patch) throw new Error('no patch');
+    const props = patchedProps(patch, (prop) => (prop === 'data' ? rowData : undefined));
+    expect(props.data).toEqual({ ...rowData, kind: 'call', callId: 'c-9', summary: 'Regar las plantas' });
+    expect(props.title).toBe('Llamada perdida · Recordatorio');
+    expect(rowData.kind).toBe('agenda');
+  });
+
+  test('a key the diff clears leaves the data, and a later diff of the whole data wins', () => {
+    const cleared = entry(21, 'notification', 41, { 'data.scheduledAt': { previous: 1_790_000_000, current: null } });
+    const whole = entry(22, 'notification', 41, { data: { previous: rowData, current: { kind: 'call' } } });
+    const onlyCleared = planAuditEntries([cleared]).patches.get('notification')?.get('41');
+    if (!onlyCleared) throw new Error('no patch');
+    expect(patchedProps(onlyCleared, () => rowData).data).not.toHaveProperty('scheduledAt');
+    const merged = planAuditEntries([cleared, whole]).patches.get('notification')?.get('41');
+    if (!merged) throw new Error('no patch');
+    expect(merged.paths).toEqual([]);
+    expect(patchedProps(merged, () => rowData).data).toEqual({ kind: 'call' });
+  });
+
+  test('a dotted path into a column that is not JSON is ignored', () => {
+    expect(toAuditPatch(entry(23, 'notification', 41, { 'title.x': { previous: 'a', current: 'b' } }))?.paths).toEqual([]);
   });
 });
