@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { Text } from 'react-native';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { Section } from '@/shared/ui/section/section';
 import { FillScroll } from '@/shared/ui/screen/fill-scroll';
 import { Screen } from '@/shared/ui/screen/screen';
@@ -41,6 +42,19 @@ describe('Screen', () => {
     expect(screen.getByText('Buenas tardes, Ana')).toBeDefined();
     expect(screen.getByText('Actualizando')).toBeDefined();
     expect(container.querySelectorAll('radialGradient').length).toBe(3);
+  });
+
+  test('a flat band in the page colour covers the status bar, clear until content scrolls under it', () => {
+    render(
+      <SafeAreaInsetsContext.Provider value={{ top: 24, right: 0, bottom: 0, left: 0 }}>
+        <Screen title="Inicio">
+          <Text>cuerpo</Text>
+        </Screen>
+      </SafeAreaInsetsContext.Provider>
+    );
+    const band = screen.getByTestId('screen-top-band');
+    expect(band.style.height).toBe('24px');
+    expect(band.style.opacity).toBe('0');
   });
 
   test('a screen without bar content draws no top bar', () => {
@@ -196,7 +210,7 @@ describe('Screen', () => {
   test('the top bar and both scroll owners render alone', () => {
     render(<ScreenTopBar meta="Hola" />);
     expect(screen.getByText('Hola')).toBeDefined();
-    const onScroll = renderHook(() => useScreenScroll(300)).result.current.onScroll;
+    const onScroll = renderHook(() => useScreenScroll(300, 0)).result.current.onScroll;
     for (const Scroll of [ScreenScroll, NativeScreenScroll]) {
       const { unmount } = render(
         <Scroll
