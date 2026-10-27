@@ -59,6 +59,7 @@ export const voice = {
     back: 'Back',
     'ended-line': 'Call ended · {time}',
     'summary-empty': 'Open Argus to see the conversation.',
+    'captions-empty': 'What we say shows here.',
     'mini-line': 'In call · {time}',
   },
   missed: {

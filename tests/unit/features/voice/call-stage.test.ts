@@ -7,6 +7,7 @@ import {
   formatCallClock,
   isLivePhase,
   postsSummaryNotice,
+  stageAuraOf,
   stageMomentOf,
   stageHintOf,
   stageLineOf,
@@ -140,5 +141,14 @@ describe('the words under Argus', () => {
     expect(stageHintOf({ ...hint, phase: 'error', error: 'RTC_UNAVAILABLE|down' })).not.toContain(
       'RTC_UNAVAILABLE'
     );
+  });
+});
+
+describe('the light behind the call', () => {
+  test('a live call sits on the listen tone, an alert keeps its own, an ended call has none', () => {
+    expect(stageAuraOf({ moment: 'live', kind: 'reminder' })).toBe('listen');
+    expect(stageAuraOf({ moment: 'live', kind: 'alert' })).toBe('alert');
+    expect(stageAuraOf({ moment: 'failed', kind: 'reminder' })).toBeNull();
+    expect(stageAuraOf({ moment: 'ended', kind: 'alert' })).toBeNull();
   });
 });
