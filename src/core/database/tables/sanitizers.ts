@@ -3,12 +3,16 @@ import {
   CONVERSATION_KINDS,
   CONVERSATION_LEGS,
   CONVERSATION_STATES,
-  type ConversationDirection,
-  type ConversationKind,
-  type ConversationLeg,
-  type ConversationState,
-  type RecurrenceException,
-  type ZonePoint,
+  CREATED_VIA,
+} from '@/core/types';
+import type {
+  ConversationDirection,
+  ConversationKind,
+  ConversationLeg,
+  ConversationState,
+  CreatedVia,
+  RecurrenceException,
+  ZonePoint,
 } from '@/core/types';
 
 export const sanitizeStringArray = (raw: unknown): string[] =>
@@ -26,12 +30,14 @@ export const sanitizeZonePoints = (raw: unknown): ZonePoint[] =>
           typeof point === 'object' &&
           point !== null &&
           typeof (point as ZonePoint).x === 'number' &&
-          typeof (point as ZonePoint).y === 'number',
+          typeof (point as ZonePoint).y === 'number'
       )
     : [];
 
 const memberOf = <T extends string>(vocabulary: readonly T[], raw: unknown): T | null =>
   vocabulary.find((entry) => entry === raw) ?? null;
+
+export const sanitizeCreatedVia = (raw: unknown): CreatedVia => memberOf(CREATED_VIA, raw) ?? 'app';
 
 export const sanitizeConversationDirection = (raw: unknown): ConversationDirection =>
   memberOf(CONVERSATION_DIRECTIONS, raw) ?? 'in';
@@ -39,7 +45,8 @@ export const sanitizeConversationDirection = (raw: unknown): ConversationDirecti
 export const sanitizeConversationKind = (raw: unknown): ConversationKind =>
   memberOf(CONVERSATION_KINDS, raw) ?? 'turn';
 
-export const sanitizeConversationLeg = (raw: unknown): ConversationLeg | null => memberOf(CONVERSATION_LEGS, raw);
+export const sanitizeConversationLeg = (raw: unknown): ConversationLeg | null =>
+  memberOf(CONVERSATION_LEGS, raw);
 
 export const sanitizeConversationState = (raw: unknown): ConversationState =>
   memberOf(CONVERSATION_STATES, raw) ?? 'received';
@@ -47,7 +54,8 @@ export const sanitizeConversationState = (raw: unknown): ConversationState =>
 const finiteOrUndefined = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 
-const textOrUndefined = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+const textOrUndefined = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
 
 function recurrenceExceptionOf(raw: unknown): RecurrenceException | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;

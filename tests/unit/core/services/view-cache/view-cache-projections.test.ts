@@ -194,6 +194,27 @@ describe('camera projection', () => {
   });
 });
 
+const TASK_ROWS = [
+  {
+    id: 't1',
+    projectId: 'p1',
+    title: 'a',
+    status: 'done',
+    priority: 'none',
+    dueAt: null,
+    createdVia: 'assistant',
+  },
+  {
+    id: 't2',
+    projectId: 'p1',
+    title: 'b',
+    status: 'todo',
+    priority: 'high',
+    dueAt: 1000,
+    createdVia: 'app',
+  },
+];
+
 describe('project projection', () => {
   test('tasks and members are scoped per project and cards carry progress', () => {
     const writes = projectProjects({
@@ -202,7 +223,15 @@ describe('project projection', () => {
         { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active' },
       ],
       tasks: [
-        { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
+        {
+          id: 't1',
+          projectId: 'p1',
+          title: 'a',
+          status: 'done',
+          priority: 'none',
+          dueAt: null,
+          createdVia: 'assistant',
+        },
         {
           id: 't2',
           projectId: 'p1',
@@ -210,6 +239,7 @@ describe('project projection', () => {
           status: 'todo',
           priority: 'high',
           dueAt: new Date(1000),
+          createdVia: '',
         },
       ],
       members: [
@@ -225,15 +255,9 @@ describe('project projection', () => {
       { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active' },
       { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active' },
     ]);
-    expect(rowsOf(writes, 'project.tasks', 'p1')).toEqual([
-      { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
-      { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: 1000 },
-    ]);
+    expect(rowsOf(writes, 'project.tasks', 'p1')).toEqual([...TASK_ROWS]);
     expect(rowsOf(writes, 'project.tasks', 'p2')).toEqual([]);
-    expect(rowsOf(writes, 'task.list')).toEqual([
-      { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
-      { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: 1000 },
-    ]);
+    expect(rowsOf(writes, 'task.list')).toEqual([...TASK_ROWS]);
     expect(rowsOf(writes, 'project.members', 'p1')).toEqual([
       { id: 'm1', projectId: 'p1', userId: '2', name: 'Luis', access: 'edit' },
       { id: 'm2', projectId: 'p1', userId: '9', name: '', access: 'view' },

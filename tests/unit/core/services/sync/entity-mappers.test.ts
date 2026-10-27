@@ -71,3 +71,14 @@ describe('recurrence exceptions', () => {
     });
   });
 });
+
+describe('how a task or an event was made', () => {
+  test('assistant is kept, and anything else, absent included, reads as the app', () => {
+    expect(toModelProps('project_task', { id: 1, createdVia: 'assistant' }).createdVia).toBe('assistant');
+    expect(toModelProps('calendar_event', { id: 2, createdVia: 'assistant' }).createdVia).toBe('assistant');
+    expect(toModelProps('calendar_event', { id: 2, createdVia: 'app' }).createdVia).toBe('app');
+    expect(toModelProps('project_task', { id: 1 }).createdVia).toBe('app');
+    expect(toModelProps('project_task', { id: 1, createdVia: 'robot' }).createdVia).toBe('app');
+    expect(toDirtyRaw('project_task', { id: 1, createdVia: 'assistant' }).created_via).toBe('assistant');
+  });
+});

@@ -239,6 +239,21 @@ describe('backend fixtures honour the app contracts', () => {
     expect(decidedPhase('deny', { ok: false, status: gone?.response.status ?? 0 })).toBe('expired');
   });
 
+  test('the task and event rows the backend recorded say how they were made, and the sync mapper reads it', () => {
+    const rows = [
+      ['project_task', successesOf('PATCH /project-task/{1}')],
+      ['calendar_event', successesOf('PATCH /calendar-event/{1}')],
+    ] as const;
+    for (const [table, probes] of rows) {
+      expect(probes.length).toBeGreaterThan(0);
+      for (const probe of probes) {
+        const info = unmask(envelopeSchema.parse(probe.response.json).info) as Record<string, unknown>;
+        expect(['app', 'assistant'].includes(String(info.createdVia))).toBe(true);
+        expect(toModelProps(table, info).createdVia).toBe(info.createdVia);
+      }
+    }
+  });
+
   test('deleting an own reminder is recorded as a 204 without a body, which the envelope reader accepts', () => {
     const deleted = probes.filter(
       (probe) => probe.method === 'DELETE' && probe.route === '/reminder/{1}' && probe.response.status === 204

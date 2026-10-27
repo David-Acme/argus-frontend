@@ -1,6 +1,7 @@
 import type { ProjectMemberModel, ProjectModel, ProjectTaskModel, UserModel } from '@/core/database';
 import type { IProjectCacheRow, IProjectMemberCacheRow, IProjectTaskCacheRow } from '@/core/interfaces';
 import type { DashboardProjectCard } from '@/core/types';
+import { sanitizeCreatedVia } from '@/core/database/tables/sanitizers';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
 import { taskProgress } from '@/shared/libs/task-progress';
 import type { ViewWrite } from './projection';
@@ -13,7 +14,7 @@ export type ProjectUserSource = Pick<UserModel, 'id' | 'name' | 'lastName'>;
 
 export type ProjectTaskSource = Pick<
   ProjectTaskModel,
-  'id' | 'projectId' | 'title' | 'status' | 'priority' | 'dueAt'
+  'id' | 'projectId' | 'title' | 'status' | 'priority' | 'dueAt' | 'createdVia'
 >;
 
 export type ProjectProjectionInput = {
@@ -41,6 +42,7 @@ export function projectProjects({ projects, tasks, members, users }: ProjectProj
     status: task.status,
     priority: task.priority,
     dueAt: task.dueAt?.getTime() ?? null,
+    createdVia: sanitizeCreatedVia(task.createdVia),
   }));
   const tasksByProject = new Map<string, IProjectTaskCacheRow[]>();
   for (const task of taskRows) {

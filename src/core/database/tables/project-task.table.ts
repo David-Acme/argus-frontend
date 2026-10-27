@@ -14,6 +14,7 @@ export const PROJECT_TASK_SCHEMA = tableSchema({
     { name: 'priority', type: 'string' },
     { name: 'due_at', type: 'number', isOptional: true, isIndexed: true },
     { name: 'sort_order', type: 'number' },
+    { name: 'created_via', type: 'string' },
     { name: 'created_at', type: 'number' },
     { name: 'updated_at', type: 'number' },
   ],
@@ -35,6 +36,7 @@ export class ProjectTaskModel extends Model {
   @field('priority') priority!: string;
   @date('due_at') dueAt!: Date | null;
   @field('sort_order') sortOrder!: number;
+  @field('created_via') createdVia!: string;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 
