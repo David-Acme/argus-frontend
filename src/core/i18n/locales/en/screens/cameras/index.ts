@@ -195,6 +195,14 @@ export const cameras = {
     retention: 'Retention days',
   },
   'record-mode': 'Recording',
+  attention: {
+    offline: '{camera} is not answering',
+    'offline-meta': 'Check that it is on and on your Wi-Fi.',
+  },
+  card: {
+    online: '{online} of {total} cameras online',
+    none: 'No cameras yet',
+  },
   clips: {
     'all-title': 'Clips',
     recent: 'Recent clips',

@@ -13,3 +13,5 @@ export { NewsSection } from './components/feed/news-section';
 export { HelpSection } from './components/status/help-section';
 export { SystemSection } from './components/status/system-section';
 export { WatchSection } from './components/status/watch-section';
+export { AttentionSection } from './components/status/attention-section';
+export { ModuleCards } from './components/status/module-cards';

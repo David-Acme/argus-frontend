@@ -1,7 +1,7 @@
 import { CAPABILITY, MODULE_IDS } from '@/shared/constants';
 import { clipAccessOf, guardAccessOf, tableAllowed } from '@/shared/libs/capabilities';
 import type { ModuleSurfaces } from '@/shared/libs/surfaces';
-import { RecentClipsCard } from '@/features/cameras';
+import { CameraAttention, RecentClipsCard, SecurityCard } from '@/features/cameras';
 import { CamerasSection, HappenedSection, HomePeopleSection, WatchSection } from '@/features/home';
 
 export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
@@ -13,6 +13,14 @@ export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
     href: '/security',
     needs: { route: '/security' },
   },
+  card: SecurityCard,
+  attention: [
+    {
+      id: 'camera-offline',
+      probe: CameraAttention,
+      needs: { capabilities: [CAPABILITY.cameraView] },
+    },
+  ],
   destinations: [
     {
       id: 'security',
@@ -64,6 +72,7 @@ export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
   inicio: [
     {
       id: 'watch',
+      label: 'screens.home.inicio.sections.watch',
       render: WatchSection,
       needs: { allows: (view) => guardAccessOf(view).view },
       places: {
@@ -74,6 +83,7 @@ export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'cameras',
+      label: 'screens.home.inicio.sections.cameras',
       render: CamerasSection,
       needs: { capabilities: [CAPABILITY.cameraView] },
       places: {
@@ -84,6 +94,7 @@ export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'clips',
+      label: 'screens.home.inicio.sections.clips',
       render: RecentClipsCard,
       needs: {
         route: '/clips',
@@ -97,12 +108,14 @@ export const SURVEILLANCE_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'happened',
+      label: 'screens.home.inicio.sections.happened',
       render: HappenedSection,
       needs: { capabilities: [CAPABILITY.cameraView] },
       places: { wide: { order: 20, column: 'cameras' } },
     },
     {
       id: 'people',
+      label: 'screens.home.inicio.sections.people',
       render: HomePeopleSection,
       needs: { capabilities: [CAPABILITY.presenceRead] },
       places: {

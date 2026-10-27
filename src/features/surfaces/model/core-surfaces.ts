@@ -2,7 +2,13 @@ import { ASSISTANT_THREAD_HREF, CAPABILITY, MODULE_IDS } from '@/shared/constant
 import { peopleAccessOf } from '@/shared/libs/capabilities';
 import { routeFallback } from '@/shared/libs/route-access';
 import type { ModuleSurfaces } from '@/shared/libs/surfaces';
-import { HelpSection, NewsSection, SystemSection } from '@/features/home';
+import {
+  AttentionSection,
+  HelpSection,
+  ModuleCards,
+  NewsSection,
+  SystemSection,
+} from '@/features/home';
 
 export const CORE_SURFACES: ModuleSurfaces = {
   module: MODULE_IDS.core,
@@ -59,7 +65,29 @@ export const CORE_SURFACES: ModuleSurfaces = {
   ],
   inicio: [
     {
+      id: 'attention',
+      label: 'screens.home.inicio.sections.attention',
+      render: AttentionSection,
+      places: {
+        stack: { order: 5 },
+        first: { order: 5 },
+        band: { order: 5, column: 'agenda' },
+        wide: { order: 5, column: 'agenda' },
+      },
+    },
+    {
+      id: 'modules',
+      label: 'screens.home.inicio.sections.modules',
+      render: ModuleCards,
+      places: {
+        stack: { order: 60 },
+        band: { order: 60, column: 'side' },
+        wide: { order: 60, column: 'side' },
+      },
+    },
+    {
       id: 'news',
+      label: 'screens.home.inicio.sections.news',
       render: NewsSection,
       places: {
         stack: { order: 50, when: 'news' },
@@ -70,6 +98,7 @@ export const CORE_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'system',
+      label: 'screens.home.inicio.sections.system',
       render: SystemSection,
       needs: { anyOf: [CAPABILITY.modulesRead, CAPABILITY.cameraView] },
       places: {
@@ -80,6 +109,7 @@ export const CORE_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'help',
+      label: 'screens.home.inicio.sections.help',
       render: HelpSection,
       places: {
         first: { order: 30, when: 'tablet' },

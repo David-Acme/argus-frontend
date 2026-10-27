@@ -5,3 +5,5 @@ export const SECURITY_MAINTENANCE_HREF = '/security/maintenance';
 export const CLIPS_HREF = '/clips';
 
 export const CLIP_HREF = '/clips/[id]';
+
+export const SECURITY_HREF = '/security';

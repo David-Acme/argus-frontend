@@ -58,6 +58,7 @@ export const VIEW_CACHE_KEYS = {
   cameraOverview: 'camera.overview',
   clipFeed: 'camera.clip-feed',
   navPins: 'navigation.pins',
+  inicioPrefs: 'inicio.prefs',
   cameraRecording: 'camera.recording',
   cameraPresets: 'camera.presets',
   cameraAim: 'camera.aim',
@@ -92,16 +93,17 @@ export const VIEW_CACHE_KEYS = {
   proximityPeople: 'guard.proximity.people',
 } as const;
 
-export const ACCESS_CACHE_KEYS = [VIEW_CACHE_KEYS.appContext, VIEW_CACHE_KEYS.moduleCatalog] as const;
+export const ACCESS_CACHE_KEYS = [
+  VIEW_CACHE_KEYS.appContext,
+  VIEW_CACHE_KEYS.moduleCatalog,
+] as const;
 
 export const CONTEXT_RESYNC_KEPT_KEYS = [
   ...ACCESS_CACHE_KEYS,
   VIEW_CACHE_KEYS.privacyMe,
   VIEW_CACHE_KEYS.navPins,
+  VIEW_CACHE_KEYS.inicioPrefs,
 ] as const;
 
-export const buildViewCacheStorageKey = (
-  userId: string,
-  key: string,
-  scope?: string,
-): string => `${VIEW_CACHE_PREFIX}${userId}.${key}${scope ? `.${scope}` : ''}`;
+export const buildViewCacheStorageKey = (userId: string, key: string, scope?: string): string =>
+  `${VIEW_CACHE_PREFIX}${userId}.${key}${scope ? `.${scope}` : ''}`;

@@ -1,16 +1,21 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { SurfaceGroup, SurfaceSlot, useSurfaces } from '@/shared/libs/surfaces';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowLayout, useWindowWidth } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
+import { Section } from '@/shared/ui/section';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { InactiveRoleScreen } from '@/features/access';
 import { PROFILE_HREF } from '@/features/home/constants/routes.constant';
 import { useCommandLauncher } from '@/features/command';
 import { InicioHero } from '@/features/home/components/hero/inicio-hero';
 import { InicioLead } from '@/features/home/components/hero/inicio-lead';
+import { CustomizeSheet } from '@/features/home/components/status/customize-sheet';
 import { useInicioHero, type InicioHero as Hero } from '@/features/home/hooks/use-inicio-hero';
+import { useInicioPrefs } from '@/features/home/hooks/use-inicio-prefs';
+import { applyInicioPrefs } from '@/features/home/model/inicio-prefs';
 import {
   useInicioBody,
   type InicioBody as InicioBodyData,
@@ -36,7 +41,8 @@ const COLUMN_KEYS = {
 function InicioBody({ hero, place, body }: BodyProps) {
   const { t } = useTranslation();
   const tablet = useWindowLayout().windowClass === 'medium';
-  const surfaces = useSurfaces().inicio;
+  const { prefs } = useInicioPrefs();
+  const surfaces = applyInicioPrefs(useSurfaces().inicio, prefs);
   const { step, sos } = body;
   const band = place !== 'hero';
   const signals = new Set<InicioSignal>(tablet ? [...body.signals, 'tablet'] : body.signals);
@@ -75,6 +81,7 @@ function HomeContent() {
   const { t } = useTranslation();
   const { windowClass, navigation } = useWindowLayout();
   const router = useRouter();
+  const [customizing, setCustomizing] = useState(false);
   const width = useWindowWidth();
   const { open } = useCommandLauncher();
   const place = statPlace(windowClass, width);
@@ -111,6 +118,18 @@ function HomeContent() {
       actions={band ? undefined : search}>
       <InicioHero hero={hero} place={place} bare={body.step !== null} />
       <InicioBody hero={hero} place={place} body={body} />
+      {body.step === null ? (
+        <Section variant="plain">
+          <Button
+            block
+            variant="ghost"
+            icon="sliders"
+            label={t('screens.home.inicio.customize')}
+            onPress={() => setCustomizing(true)}
+          />
+        </Section>
+      ) : null}
+      <CustomizeSheet open={customizing} onClose={() => setCustomizing(false)} />
     </Screen>
   );
 }

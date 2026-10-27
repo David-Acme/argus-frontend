@@ -41,4 +41,12 @@ export const navigation = {
   'module-actions': 'Options for {module}',
   'open-module': 'Open {module}',
   'expand-module': 'See the sections of {module}',
+  'agenda-card': {
+    tasks: '{count} open tasks',
+    'no-tasks': 'No open tasks',
+    projects: '{count} active projects',
+  },
+  'search-dest': 'Sections',
+  'search-more': 'Load more results',
+  'search-none': 'No results for “{query}”',
 } as const;

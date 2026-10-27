@@ -1,6 +1,7 @@
 import { CAPABILITY, MODULE_IDS } from '@/shared/constants';
 import { tableAllowed } from '@/shared/libs/capabilities';
 import type { ModuleSurfaces } from '@/shared/libs/surfaces';
+import { AgendaCard } from '@/features/agenda';
 import { NowSection, ProjectsSection, TodaySection, TomorrowSection } from '@/features/home';
 
 const AGENDA = { capabilities: [CAPABILITY.agendaRead] } as const;
@@ -14,6 +15,7 @@ export const PRODUCTIVITY_SURFACES: ModuleSurfaces = {
     href: '/agenda',
     needs: { route: '/agenda' },
   },
+  card: AgendaCard,
   destinations: [
     {
       id: 'agenda',
@@ -38,6 +40,7 @@ export const PRODUCTIVITY_SURFACES: ModuleSurfaces = {
   inicio: [
     {
       id: 'now',
+      label: 'screens.home.inicio.sections.now',
       render: NowSection,
       needs: AGENDA,
       places: {
@@ -48,6 +51,7 @@ export const PRODUCTIVITY_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'today',
+      label: 'screens.home.inicio.sections.today',
       render: TodaySection,
       needs: AGENDA,
       places: {
@@ -58,6 +62,7 @@ export const PRODUCTIVITY_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'tomorrow',
+      label: 'screens.home.inicio.sections.tomorrow',
       render: TomorrowSection,
       needs: AGENDA,
       places: {
@@ -68,6 +73,7 @@ export const PRODUCTIVITY_SURFACES: ModuleSurfaces = {
     },
     {
       id: 'projects',
+      label: 'screens.home.inicio.sections.projects',
       render: ProjectsSection,
       needs: AGENDA,
       places: { wide: { order: 20, column: 'side' } },

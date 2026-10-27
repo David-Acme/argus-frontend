@@ -33,6 +33,8 @@ export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';
 export { useCameraThumbnails } from './hooks/use-camera-thumbnails';
 export { useCameraStill } from './hooks/use-camera-still';
 export { RecentClipsCard } from './components/clips/recent-clips-card';
+export { CameraAttention } from './components/attention/camera-attention';
+export { SecurityCard } from './components/attention/security-card';
 export {
   cameraMasked,
   cameraViews,

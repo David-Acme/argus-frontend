@@ -41,4 +41,12 @@ export const navigation = {
   'module-actions': 'Opciones de {module}',
   'open-module': 'Abrir {module}',
   'expand-module': 'Ver los apartados de {module}',
+  'agenda-card': {
+    tasks: '{count} tareas abiertas',
+    'no-tasks': 'Sin tareas abiertas',
+    projects: '{count} proyectos activos',
+  },
+  'search-dest': 'Apartados',
+  'search-more': 'Cargar más resultados',
+  'search-none': 'Sin resultados para «{query}»',
 } as const;

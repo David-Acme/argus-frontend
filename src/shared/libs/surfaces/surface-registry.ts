@@ -26,6 +26,7 @@ export type InicioPlace = {
 };
 
 export type InicioSurface = SurfaceContribution & {
+  label: TranslationKey;
   render: ComponentType;
   places: Partial<Record<InicioForm, InicioPlace>>;
 };
@@ -47,10 +48,24 @@ export type ModuleHub = {
   needs?: SurfaceNeeds;
 };
 
+export type AttentionItem = {
+  id: string;
+  title: string;
+  meta?: string;
+  icon: IconGlyph;
+  href: string;
+};
+
+export type AttentionProbeProps = { report: (items: readonly AttentionItem[]) => void };
+
+export type AttentionSurface = SurfaceContribution & { probe: ComponentType<AttentionProbeProps> };
+
 export type ModuleSurfaces = {
   module: string;
   order: number;
   hub?: ModuleHub;
+  card?: ComponentType;
+  attention?: readonly AttentionSurface[];
   inicio?: readonly InicioSurface[];
   destinations?: readonly DestinationSurface[];
   search?: readonly SurfaceContribution[];
@@ -62,20 +77,22 @@ export type Placed<T> = T & { module: string };
 export type ActiveModule = ModuleHub & {
   module: string;
   order: number;
+  card?: ComponentType;
   destinations: readonly Placed<DestinationSurface>[];
 };
 
 export type ResolvedSurfaces = {
   modules: readonly ActiveModule[];
   inicio: readonly Placed<InicioSurface>[];
+  attention: readonly Placed<AttentionSurface>[];
   destinations: readonly Placed<DestinationSurface>[];
   search: ReadonlySet<string>;
   actions: ReadonlySet<string>;
 };
 
-type Kind = 'inicio' | 'destinations' | 'search' | 'actions';
+type Kind = 'inicio' | 'destinations' | 'search' | 'actions' | 'attention';
 
-const KINDS: readonly Kind[] = ['inicio', 'destinations', 'search', 'actions'];
+const KINDS: readonly Kind[] = ['inicio', 'destinations', 'search', 'actions', 'attention'];
 
 const FORMS: readonly InicioForm[] = ['stack', 'first', 'band', 'wide'];
 
@@ -141,6 +158,7 @@ export function resolveSurfaces(
         ...hub,
         module: module.module,
         order: module.order,
+        card: module.card,
         destinations: destinations.filter((destination) => destination.module === module.module),
       },
     ];
@@ -148,6 +166,7 @@ export function resolveSurfaces(
   return {
     modules,
     inicio: collect(registry, (module) => module.inicio, view),
+    attention: collect(registry, (module) => module.attention, view),
     destinations,
     search: new Set(
       collect(registry, (module) => module.search, view).map((surface) => surface.id)
