@@ -111,7 +111,7 @@ mock.module('@/shared/hooks/use-date-formatter', () => ({
     }),
 }));
 
-const { useCommandLauncher } = await import('@/features/command');
+const { useCommandLauncher, useCommandSearch } = await import('@/features/command');
 const { GlobalCommand } = await import('@/features/command/components/global-command');
 const { useCommandStore } = await import('@/features/command/stores/command.store');
 
@@ -313,5 +313,40 @@ describe('GlobalCommand', () => {
     expect(watched).toEqual([]);
     expect(screen.queryByText('Pedir a Argus')).toBeNull();
     expect(screen.getByRole('status').textContent).toContain('Nada coincide con «pagar»');
+  });
+});
+
+type ProviderProbeProps = { query: string; scope: 'all' | 'cameras' | 'people' };
+
+function ProviderProbe({ query, scope }: ProviderProbeProps) {
+  const search = useCommandSearch({ query, scope, openedAt: today.getTime() });
+  return (
+    <ul aria-label={search.groups.join(',')} data-scope={search.scope}>
+      {search.results.flatMap((group) =>
+        group.items.map((item) => (
+          <li key={item.id}>{`${group.title}|${item.label}|${item.meta ?? ''}`}</li>
+        ))
+      )}
+    </ul>
+  );
+}
+
+describe('useCommandSearch', () => {
+  test('the search provider pages the same rows for any host, narrowed by its scope', async () => {
+    const { rerender } = render(<ProviderProbe query="pa" scope="all" />);
+    await settle();
+    expect(screen.getByRole('list').getAttribute('aria-label')).toBe(
+      'agenda,projects,people,cameras'
+    );
+    expect(screen.getAllByRole('listitem').map((node) => node.textContent)).toEqual([
+      'Agenda|Pagar la luz|Evento · hoy 23:00',
+      'Agenda|Pagar el agua|Evento · mañana 09:00',
+      'Cámaras|Cámara del patio|Cámara',
+    ]);
+    rerender(<ProviderProbe query="pa" scope="cameras" />);
+    await settle();
+    expect(screen.getAllByRole('listitem').map((node) => node.textContent)).toEqual([
+      'Cámaras|Cámara del patio|Cámara',
+    ]);
   });
 });
