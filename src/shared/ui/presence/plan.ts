@@ -1,4 +1,5 @@
 import type { PerfTier } from '@/shared/theme/effects';
+import type { DriverInput } from './engine/driver';
 import { particleCount } from './engine/engine';
 import { CLIMB_SECONDS } from './engine/pace';
 import type { PresenceState } from './engine/types';
@@ -102,4 +103,28 @@ const RESTING: ReadonlySet<PresenceState> = new Set(['idle', 'watch', 'sleep', '
 
 export function isResting(state: PresenceState): boolean {
   return RESTING.has(state);
+}
+
+export type StillSource = {
+  state: PresenceState;
+  intensity: number;
+  targetX?: number;
+  targetY?: number;
+};
+
+export function stillInputOf({
+  state,
+  intensity,
+  targetX = 0.3,
+  targetY = 0,
+}: StillSource): DriverInput {
+  return {
+    state,
+    resting: isResting(state),
+    intensity,
+    targetX,
+    targetY,
+    eventName: null,
+    eventId: 0,
+  };
 }

@@ -4,6 +4,7 @@ import {
   createDriver,
   frameDue,
   paintFrame,
+  paintStill,
   takeEndedEvent,
   type Look,
   type Tick,
@@ -15,7 +16,7 @@ import {
   type Sinks,
   type Stroke,
 } from '@/shared/ui/presence/engine/types';
-import { planFor, seedFor } from '@/shared/ui/presence/plan';
+import { planFor, seedFor, stillInputOf } from '@/shared/ui/presence/plan';
 import { tokens } from '@/shared/theme/tokens';
 
 const look = (size: number): Look => ({
@@ -67,6 +68,20 @@ function collect(strokes: Stroke[]): Sinks {
 }
 
 const quiet: Sinks = { stroke: () => undefined, streaks: () => undefined };
+
+function stillOf(size: number, state: Tick['input']['state']): Stroke[] {
+  const strokes: Stroke[] = [];
+  const sinks = collect(strokes);
+  paintStill(
+    { count: particleCount(size), seed: seedFor(size) },
+    {
+      input: stillInputOf({ state, intensity: 0.5 }),
+      look: look(size),
+      pass: { begin: () => (strokes.length = 0), sinks, end: () => undefined },
+    }
+  );
+  return strokes;
+}
 
 describe('presence engine', () => {
   test('sizes map to the spec forms', () => {
@@ -204,5 +219,37 @@ describe('presence engine', () => {
       expect(seed).toBeGreaterThan(0);
       expect(seed).toBeLessThan(2147483647);
     }
+  });
+
+  test('the still frame is a pure function of state and size, whatever painted before it', () => {
+    for (const size of [36, 66, 300]) {
+      const first = stillOf(size, 'alert');
+      const driver = createDriver(particleCount(size), seedFor(size));
+      for (let i = 1; i <= 30; i++) {
+        const frame = advance(driver, tick(i / 60, 'speak', 'notify'), look(size));
+        paintFrame(driver, frame, quiet);
+      }
+      stillOf(size, 'idle');
+      expect(stillOf(size, 'alert')).toEqual(first);
+      expect(first.length).toBeGreaterThan(0);
+    }
+    expect(stillOf(300, 'idle')).not.toEqual(stillOf(300, 'alert'));
+  });
+
+  test('the still input rests in a resting state and plays no event', () => {
+    expect(stillInputOf({ state: 'idle', intensity: 0.5 })).toEqual({
+      state: 'idle',
+      resting: true,
+      intensity: 0.5,
+      targetX: 0.3,
+      targetY: 0,
+      eventName: null,
+      eventId: 0,
+    });
+    expect(stillInputOf({ state: 'alert', intensity: 1, targetX: 0, targetY: 0.2 })).toMatchObject({
+      resting: false,
+      targetX: 0,
+      targetY: 0.2,
+    });
   });
 });

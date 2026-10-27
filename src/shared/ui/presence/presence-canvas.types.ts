@@ -1,5 +1,5 @@
 import type { SharedValue } from 'react-native-reanimated';
-import type { Look } from './engine/driver';
+import type { DriverInput, Look } from './engine/driver';
 import type { PresenceEvent } from './engine/types';
 import type { RenderPlan } from './plan';
 import type { PresenceInput } from './use-presence-input';
@@ -17,6 +17,6 @@ export type PresenceCanvasProps = {
   live: PresenceLive;
   seed: number;
   active: boolean;
-  stillKey: string;
+  still: DriverInput;
   onEventEnd?: (name: PresenceEvent) => void;
 };

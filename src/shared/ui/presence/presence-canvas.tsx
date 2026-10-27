@@ -4,9 +4,15 @@ import { PixelRatio } from 'react-native';
 import { useFrameCallback, useSharedValue, type FrameInfo } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { shiftTier } from '@/shared/theme/effects';
-import { paintStill, takeEndedEvent, type Look, type Tick } from './engine/driver';
+import {
+  paintStill,
+  takeEndedEvent,
+  type DriverInput,
+  type Look,
+  type StillSpec,
+} from './engine/driver';
 import { notePace } from './engine/pace';
-import { stepFrame, tickOf } from './frame-loop';
+import { stepFrame } from './frame-loop';
 import type { PresenceEvent } from './engine/types';
 import type { PresenceCanvasProps } from './presence-canvas.types';
 import { beginFrame, endFrame, flushAtlas } from './skia-scene';
@@ -16,16 +22,19 @@ const MAX_RATIO = 2;
 const RESIDUE = 3 / 255;
 const RESIDUE_CUT = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, -RESIDUE];
 
-type StillFrame = { tick: Tick; look: Look; fade: number };
+type StillFrame = { spec: StillSpec; input: DriverInput; look: Look; fade: number };
 
-function paintStillFrame(runtime: Runtime, { tick, look, fade }: StillFrame): SkImage | null {
+function paintStillFrame(
+  runtime: Runtime,
+  { spec, input, look, fade }: StillFrame
+): SkImage | null {
   'worklet';
-  const { scene, driver } = runtime;
-  const particles = driver.engine.particles.length > 0;
+  const { scene } = runtime;
+  const particles = spec.count > 0;
   let last: SkImage | null = null;
   beginFrame(scene, 1);
-  paintStill(driver, {
-    tick,
+  paintStill(spec, {
+    input,
     look,
     pass: {
       begin: () => beginFrame(scene, particles ? fade : 1),
@@ -54,7 +63,7 @@ export function PresenceCanvas({
   live,
   seed,
   active,
-  stillKey,
+  still,
   onEventEnd,
 }: PresenceCanvasProps) {
   const image = useSharedValue<SkImage | null>(null);
@@ -102,10 +111,9 @@ export function PresenceCanvas({
       const current = prepare(runtime.get(), { look, spec, shown: image.get() });
       if (!current) return;
       runtime.set(current);
-      const tick = { ...tickOf(live, 8), level: null, scroll: 0, leanX: 0, leanY: 0 };
-      image.set(paintStillFrame(current, { tick, look, fade }));
+      image.set(paintStillFrame(current, { spec, input: still, look, fade }));
     });
-  }, [plan.still, stillKey, look, spec, fade, image, live, runtime]);
+  }, [plan.still, still, look, spec, fade, image, runtime]);
 
   useEffect(
     () => () =>
