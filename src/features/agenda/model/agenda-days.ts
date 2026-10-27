@@ -161,3 +161,15 @@ export function restOfDay(
     .filter((other) => other.id !== item.id && other.startsAt >= from && other.startsAt <= to)
     .sort((left, right) => left.startsAt - right.startsAt);
 }
+
+export type AgendaEmptyInput = {
+  day: boolean;
+  groups: readonly Pick<DayGroup, 'entries'>[];
+  items: readonly Pick<AgendaItem, 'startsAt'>[];
+  range: DayRange;
+};
+
+export function agendaEmpty({ day, groups, items, range }: AgendaEmptyInput): boolean {
+  if (day) return !items.some((item) => item.startsAt >= range.from && item.startsAt <= range.to);
+  return (groups[0]?.entries.length ?? 0) === 0;
+}

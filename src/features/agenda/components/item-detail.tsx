@@ -11,15 +11,12 @@ import type { MenuItem } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Text } from '@/shared/ui/text';
-import type { DayGroup } from '@/features/agenda/model/agenda-days';
 import { categoryOf, kindWords, lineWords } from '@/features/agenda/model/agenda-lines';
-import { NextDays } from '@/features/agenda/components/agenda-guide';
 import type { DetailHandlers, ListContext } from '@/features/agenda/model/agenda-view';
 
 export type ItemDetailProps = {
   item: AgendaItem;
   rest: readonly AgendaItem[];
-  upcoming: readonly DayGroup[];
   context: ListContext;
   handlers: DetailHandlers;
   titled?: boolean;
@@ -144,7 +141,6 @@ function RestOfDay({ items, context }: RestProps) {
 export function detailBlocks({
   item,
   rest,
-  upcoming,
   context,
   handlers,
   titled = true,
@@ -177,7 +173,6 @@ export function detailBlocks({
         ))}
       </Section>
     ) : null,
-    <NextDays key="next" groups={upcoming} context={context} />,
     <RestOfDay key="rest" items={rest} context={context} />,
   ].filter((block) => block !== null);
 }

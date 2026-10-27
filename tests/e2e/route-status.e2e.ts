@@ -64,14 +64,14 @@ const CASES: RouteCase[] = [
 ];
 
 const expectDismissibleNotice = async (page: Page, text: string): Promise<void> => {
-  await page
-    .getByRole('button', { name: new RegExp(`^${text}\\. `) })
-    .first()
-    .click();
-  const dot = page.getByRole('button', { name: text, exact: true });
-  await expect.poll(() => dot.count(), { timeout: 5000 }).toBe(1);
-  await dot.click();
-  await expect.poll(() => page.getByText(text).count(), { timeout: 5000 }).toBeGreaterThan(0);
+  const pill = page.getByRole('button', { name: text, exact: true });
+  await expect.poll(() => pill.count(), { timeout: 5000 }).toBe(1);
+  await pill.click();
+  await expect
+    .poll(() => page.getByRole('button', { name: new RegExp(`^${text}\\. `) }).count(), {
+      timeout: 5000,
+    })
+    .toBe(1);
 };
 
 const seedFor = (routeCase: RouteCase): ShimSeed => {

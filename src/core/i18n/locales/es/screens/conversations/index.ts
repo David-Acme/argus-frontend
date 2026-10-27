@@ -6,6 +6,8 @@ export const conversations = {
   'argus-meta-desktop': 'Mantén Espacio para hablar',
   'open-list': 'Argus. Ver las conversaciones',
   call: 'Llamar a Argus',
+  more: 'Más opciones de la conversación',
+  'see-list': 'Ver las conversaciones',
   'someone-home': 'Alguien de casa',
   you: 'Tú: {body}',
   unread: '{count} sin leer',
@@ -57,6 +59,8 @@ export const conversations = {
     tomorrow: '¿Qué tengo mañana?',
     remind: 'Recuérdame…',
     'remind-draft': 'Recuérdame ',
+    yes: 'Sí',
+    no: 'No',
   },
   context: {
     label: 'Lo que pasa en esta conversación',
@@ -68,7 +72,8 @@ export const conversations = {
   composer: {
     talk: 'Hablar con Argus',
     stop: 'Enviar lo que dije',
-    listening: 'Te escucho…',
+    cancel: 'Dejar de escuchar sin enviar',
+    listening: 'Te escucho… toca para enviar',
     placeholder: 'Escríbele a {name}',
     send: 'Enviar el mensaje a {name}',
     'typed-note': 'Le llega a {name} con tu nombre: si está hablando con Argus puede decírselo en voz alta; si no, le queda un aviso. No sabrás si lo leyó ni dónde está.',

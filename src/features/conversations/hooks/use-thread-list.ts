@@ -24,6 +24,7 @@ export type ThreadListState = {
   items: readonly ThreadItem[];
   loadingOlder: boolean;
   onScroll: () => void;
+  onLoad: () => void;
   atEnd: boolean;
   unseen: number;
   goToLatest: () => void;
@@ -97,6 +98,10 @@ export function useThreadList({
     });
   }, [live, loadNewer]);
 
+  const onLoad = () => {
+    requestAnimationFrame(() => void listRef.current?.scrollToEnd({ animated: false }));
+  };
+
   const onScroll = useCallback(() => {
     const state = listRef.current?.getState();
     if (!state) return;
@@ -147,5 +152,5 @@ export function useThreadList({
     if (decision.jump) requestAnimationFrame(scrollToEnd);
   }, [items, live, remember, scrollToEnd]);
 
-  return { listRef, items, loadingOlder, onScroll, atEnd, unseen, goToLatest };
+  return { listRef, items, loadingOlder, onScroll, onLoad, atEnd, unseen, goToLatest };
 }

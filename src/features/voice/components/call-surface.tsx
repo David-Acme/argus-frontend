@@ -10,6 +10,7 @@ import { CallPanel } from '@/features/voice/components/call-panel';
 import { CallStage } from '@/features/voice/components/call-stage';
 import { useCallClock } from '@/features/voice/hooks/use-call-clock';
 import {
+  stageAuraOf,
   stageHintOf,
   stageLineOf,
   stageMomentOf,
@@ -86,7 +87,7 @@ export function CallSurface({
   const hint = moment === 'ended' ? null : stageHintOf({ t, phase, error, muted, notice });
   return (
     <CallStage
-      kind={moment === 'ended' ? 'reminder' : kind}
+      aura={stageAuraOf({ moment, kind })}
       line={line}
       presence={stagePresenceOf({ moment, phase, kind })}
       ended={moment === 'ended'}
@@ -109,7 +110,7 @@ export function CallSurface({
         <EndedSummary actions={actions} />
       ) : (
         <View className="mt-6 min-h-0 w-full shrink gap-3 overflow-hidden">
-          <CallCaptions lines={transcript} />
+          <CallCaptions lines={transcript} empty={t('screens.voice.stage.captions-empty')} />
           {hint ? (
             <Text variant="meta" tone={phase === 'error' ? 'alert' : '2'} align="center">
               {hint}
@@ -140,7 +141,9 @@ export function CallSurface({
         </View>
       ) : null}
       {moment === 'ended' && onClose ? (
-        <Button label={t('screens.voice.stage.back')} onPress={onClose} block />
+        <View className="w-full">
+          <Button label={t('screens.voice.stage.back')} onPress={onClose} block />
+        </View>
       ) : null}
     </CallStage>
   );

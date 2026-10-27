@@ -4,7 +4,6 @@ import { View } from 'react-native';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Avatar } from '@/shared/ui/avatar';
-import { Button } from '@/shared/ui/button';
 import { Meter } from '@/shared/ui/meter';
 import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
@@ -26,7 +25,7 @@ const STEP = {
     icon: 'users',
     title: 'screens.profile.steps.invite.title',
     body: 'screens.profile.steps.invite.body',
-    action: 'screens.profile.steps.invite.action',
+    action: null,
     href: { pathname: '/users', params: { invite: '1' } },
   },
   camera: {
@@ -116,7 +115,6 @@ function PresenceCard({ household, peopleHref }: HomePanelProps) {
 
 function AloneCard({ household }: StepsProps) {
   const { t } = useTranslation();
-  const router = useRouter();
   if (!household.invites || household.names.length > 1) return null;
   return (
     <Section>
@@ -126,14 +124,6 @@ function AloneCard({ household }: StepsProps) {
         }
         title={t('screens.profile.household.alone')}
         meta={t('screens.profile.household.alone-meta')}
-        trailing={
-          <Button
-            compact
-            variant="primary"
-            label={t('screens.profile.invite')}
-            onPress={() => router.push(STEP.invite.href)}
-          />
-        }
       />
     </Section>
   );
@@ -155,20 +145,23 @@ function Steps({ household }: StepsProps) {
         <Meter fraction={steps.done / steps.total} label={`${heading}, ${count}`} />
       </View>
       <View className="gap-3">
-        {steps.pending.map((key, index) => (
-          <View key={key}>
-            <Notice
-              icon={STEP[key].icon}
-              title={t(STEP[key].title)}
-              body={t(STEP[key].body)}
-              action={{
-                label: t(STEP[key].action),
-                primary: index === 0,
-                onPress: () => router.push(STEP[key].href),
-              }}
-            />
-          </View>
-        ))}
+        {steps.pending.map((key) => {
+          const { icon, title, body, action, href } = STEP[key];
+          return (
+            <View key={key}>
+              <Notice
+                icon={icon}
+                title={t(title)}
+                body={t(body)}
+                action={
+                  action
+                    ? { label: t(action), primary: true, onPress: () => router.push(href) }
+                    : undefined
+                }
+              />
+            </View>
+          );
+        })}
       </View>
     </Section>
   );

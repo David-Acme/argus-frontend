@@ -5,7 +5,6 @@ import { illustration, size, useEffects } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
-import { usePadPress } from '@/features/cameras/hooks/use-pad-press';
 import type { CameraPtzControls } from '@/features/cameras/hooks/use-camera-ptz';
 import type { PtzDirection } from '@/features/cameras/model/camera-ptz';
 
@@ -34,11 +33,11 @@ const SLOP = (size.target - size.mediaControl) / 2;
 function PadButton({ direction, ptz }: PadButtonProps) {
   const { t } = useTranslation();
   const { reduceTransparency } = useEffects();
-  const press = usePadPress(direction, ptz);
   return (
     <PressableSurface
       a11y={{ label: t(LABEL[direction]), role: 'button' }}
-      hold={press}
+      hold={{ onStart: () => ptz.onHoldStart(direction), onEnd: ptz.onHoldEnd }}
+      onPress={() => ptz.onStep(direction)}
       pressed={{ scale: 'icon' }}
       hitSlop={SLOP}
       className={clsx(

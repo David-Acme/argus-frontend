@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { motion } from '@/shared/theme';
 import type { PressableSurfaceProps } from '@/shared/ui/pressable/pressable-types';
 import { useSurfacePress } from '@/shared/ui/pressable/use-surface-press';
 
@@ -33,6 +34,8 @@ export function PressableSurface({
         onPress={press.onPress}
         onPressIn={press.onPressIn}
         onPressOut={press.onPressOut}
+        onLongPress={press.onLongPress}
+        delayLongPress={hold ? motion.hold.talk : undefined}
         testID={testID}
         className={clsx(
           'web:focus-ring',

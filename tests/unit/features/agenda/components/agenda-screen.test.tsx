@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { Text } from 'react-native';
 import type { AgendaItem, DashboardProjectCard } from '@/core/types';
 import { at, date, entry, items, NOW, task } from '../../home/agenda-fixtures';
 import '../../../shared/ui/translation-stub';
@@ -148,6 +149,7 @@ const { DayField } = await import('@/features/agenda/components/day-field');
 const { DayHead } = await import('@/features/agenda/components/day-head');
 const { DayView } = await import('@/features/agenda/components/day-view');
 const { EventBar } = await import('@/features/agenda/components/event-bar');
+const { FormLine } = await import('@/features/agenda/components/form-line');
 const { detailBlocks } = await import('@/features/agenda/components/item-detail');
 const { ItemFields } = await import('@/features/agenda/components/item-fields');
 const { ItemSheet } = await import('@/features/agenda/components/item-sheet');
@@ -219,9 +221,10 @@ describe('Agenda on a phone', () => {
     if (!row) throw new Error('no line');
     fireEvent.click(row);
     await flush();
-    const sheet = screen.getByRole('dialog', { name: 'Evento' });
+    const sheet = screen.getByRole('dialog', { name: 'Llamar al técnico' });
     expect(within(sheet).getByText('Lugar')).toBeDefined();
     expect(within(sheet).getByRole('button', { name: 'Editar' })).toBeDefined();
+    expect(within(sheet).queryByText('Próximos días')).toBeNull();
   });
 
   test('the + opens one Nuevo sheet, an event by default, that refuses an empty name and saves', async () => {
@@ -264,7 +267,7 @@ describe('Agenda on a phone', () => {
     fireEvent.click(row);
     await flush();
     fireEvent.click(
-      within(screen.getByRole('dialog', { name: 'Evento' })).getByRole('button', {
+      within(screen.getByRole('dialog', { name: 'Daily' })).getByRole('button', {
         name: 'Editar',
       })
     );
@@ -285,11 +288,12 @@ describe('Agenda on a phone', () => {
     expect(screen.getByText('07:00')).toBeDefined();
   });
 
-  test('with no data the day says so, offers an event and asks Argus for reminders, and the next days are free', () => {
+  test('with no data the day says so, offers an event without the floating +, and asks Argus for reminders', () => {
     state.items = [];
     render(<AgendaScreen />);
     expect(screen.getByText('Nada para hoy')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Nuevo evento' })).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Nuevo evento o tarea' })).toBeNull();
     fireEvent.click(
       screen.getByRole('button', { name: 'Pedirle a Argus: Recuérdame pagar la luz el lunes' })
     );
@@ -377,5 +381,19 @@ describe('the agenda parts', () => {
         document.body
     );
     expect(days).toEqual([next]);
+  });
+
+  test('a form line carries the field label at the field edge, with its value or control', () => {
+    let opened = 0;
+    render(
+      <>
+        <FormLine label="Día" value="mar, 27 oct" onPress={() => (opened += 1)} />
+        <FormLine label="Todo el día" trailing={<Text>control</Text>} />
+      </>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Día, mar, 27 oct' }));
+    expect(opened).toBe(1);
+    expect(screen.getByText('Todo el día')).toBeDefined();
+    expect(screen.getByText('control')).toBeDefined();
   });
 });

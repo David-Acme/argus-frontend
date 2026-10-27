@@ -25,6 +25,7 @@ const COPY = {
   navigation: 'Principal',
   argusHint: 'Argus: toca para escribir, mantén para hablar',
   listening: 'Te escucho… suelta para enviar',
+  listeningTap: 'Te escucho… toca para enviar',
   command: 'Buscar o pedir…',
   commandKey: '⌘K',
 };
@@ -99,9 +100,16 @@ describe('Nav', () => {
   });
 
   test('a listening voice lights the edge and shows the listening pill', () => {
-    const { props } = setup({ listening: true });
+    const { props } = setup({ listening: 'hold' });
     render(<NavBar {...props} />);
     expect(screen.getByText(COPY.listening)).toBeDefined();
+  });
+
+  test('a tap-started listening says to tap to send, not to release', () => {
+    const { props } = setup({ listening: 'toggle' });
+    render(<NavBar {...props} />);
+    expect(screen.getByText(COPY.listeningTap)).toBeDefined();
+    expect(screen.queryByText(COPY.listening)).toBeNull();
   });
 
   test('every form renders on its own', () => {

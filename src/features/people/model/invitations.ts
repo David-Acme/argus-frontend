@@ -69,3 +69,17 @@ export function invitationLinesOf(
 export function pendingCount(lines: readonly Pick<InvitationLine, 'state'>[]): number {
   return lines.filter((line) => line.state === 'waiting').length;
 }
+
+export type InvitationGroups = {
+  current: InvitationLine[];
+  earlier: InvitationLine[];
+};
+
+const EARLIER: ReadonlySet<InvitationState> = new Set(['closed', 'lapsed']);
+
+export function invitationGroupsOf(lines: readonly InvitationLine[]): InvitationGroups {
+  return {
+    current: lines.filter((line) => !EARLIER.has(line.state)),
+    earlier: lines.filter((line) => EARLIER.has(line.state)),
+  };
+}

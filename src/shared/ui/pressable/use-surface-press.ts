@@ -31,19 +31,22 @@ export function useSurfacePress({
     onPressIn: () => {
       if (fills) setDown(true);
       if (scales) scale.onPressIn();
-      if (!hold || disabled) return;
-      held.current = true;
-      hold.onStart();
+      held.current = false;
     },
+    onLongPress:
+      hold && !disabled
+        ? () => {
+            held.current = true;
+            hold.onStart();
+          }
+        : undefined,
     onPressOut: () => {
       if (fills) setDown(false);
       scale.onPressOut();
-      if (!hold || !held.current) return;
-      held.current = false;
-      hold.onEnd();
+      if (hold && held.current) hold.onEnd();
     },
     onPress: () => {
-      if (disabled || !onPress) return;
+      if (disabled || !onPress || held.current) return;
       if (haptic) feedback(haptic);
       onPress();
     },

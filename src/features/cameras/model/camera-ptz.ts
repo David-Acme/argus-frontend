@@ -3,7 +3,6 @@ import type { ICameraCapabilities, ICameraPtz } from '@/core/interfaces';
 export type PtzDirection = 'up' | 'down' | 'left' | 'right';
 
 export const PTZ_STEP_DEGREES = 10;
-export const PTZ_HOLD_DELAY_MS = 350;
 export const PTZ_LIMIT_NOTICE_MS = 2500;
 export const PTZ_HOLD_RENEW_MIN_MS = 250;
 export const PTZ_HOLD_RENEW_MAX_MS = 60_000;

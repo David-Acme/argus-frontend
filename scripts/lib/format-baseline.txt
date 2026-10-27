@@ -172,7 +172,6 @@ src/features/cameras/hooks/use-camera-patrol.ts
 src/features/cameras/hooks/use-camera-ptz.ts
 src/features/cameras/hooks/use-camera-quality.ts
 src/features/cameras/hooks/use-camera-rows.ts
-src/features/cameras/hooks/use-camera-thumbnails.ts
 src/features/cameras/hooks/use-clip-playback.ts
 src/features/cameras/hooks/use-tamper-evidence.ts
 src/features/cameras/model/camera-aim.ts
@@ -202,7 +201,6 @@ src/features/cameras/services/camera-media.service.ts
 src/features/cameras/services/camera-rtc/camera-rtc-session.ts
 src/features/cameras/services/camera-rtc/camera-rtc.native.ts
 src/features/cameras/services/camera-rtc/camera-rtc.web.ts
-src/features/cameras/services/camera-thumbnail.service.ts
 src/features/cameras/services/media-access-renewal.ts
 src/features/cameras/services/tamper-evidence.service.ts
 src/features/cameras/services/window-fullscreen.native.ts
@@ -351,7 +349,6 @@ src/features/watch/services/watch.service.ts
 src/shared/components/cameras/masked-cameras-notice.tsx
 src/shared/components/layout/edge-fade.tsx
 src/shared/components/layout/offline-transition.ts
-src/shared/components/layout/top-notice-bar.tsx
 src/shared/components/sharing/share-members-dialog.tsx
 src/shared/components/ui/adaptive-dialog.tsx
 src/shared/components/ui/adaptive-menu.tsx

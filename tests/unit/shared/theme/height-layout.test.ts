@@ -9,6 +9,7 @@ import {
   phoneLandscape,
   sheetBodyCapOf,
   sheetCeilingOf,
+  sheetChromeOf,
   sheetDetentsOf,
   sheetScrolls,
   stageStepOf,
@@ -111,6 +112,23 @@ describe('responsive by height', () => {
       568 - 20 - space[4] - 70 - 280
     );
     expect(sheetBodyCapOf({ height: 360, top: 0, header: 70, keyboard: 320 })).toBe(0);
+  });
+
+  test('on a tiny phone with the keyboard up the footer scrolls with the form, and the header goes when even that is too little', () => {
+    const tiny = { height: 543, top: 24, header: 70, footer: 70 };
+    expect(sheetChromeOf({ ...tiny, keyboard: 0 })).toEqual({ footerPinned: true, header: true });
+    expect(sheetChromeOf({ ...tiny, keyboard: 320 })).toEqual({
+      footerPinned: false,
+      header: true,
+    });
+    expect(sheetChromeOf({ ...tiny, keyboard: 400 })).toEqual({
+      footerPinned: false,
+      header: false,
+    });
+    expect(sheetChromeOf({ height: 915, top: 24, header: 70, footer: 70, keyboard: 320 })).toEqual({
+      footerPinned: true,
+      header: true,
+    });
   });
 
   test('the command palette drops from its desktop height only where the window is tall enough', () => {

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { TranslateFn } from '@/core/types';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
@@ -9,7 +10,7 @@ import { Button } from '@/shared/ui/button';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import type { Invitations } from '@/features/people/hooks/use-invitations';
-import { pendingCount } from '@/features/people/model/invitations';
+import { invitationGroupsOf, pendingCount } from '@/features/people/model/invitations';
 import type { InvitationLine } from '@/features/people/model/invitations';
 import type { InvitationState } from '@/features/people/model/people-optimistic';
 
@@ -84,12 +85,23 @@ function InvitationRow({ line, onRevoke }: InvitationRowProps) {
 export function InvitationsSection({ invitations, onInvite }: InvitationsSectionProps) {
   const { t } = useTranslation();
   const { lines, revoke } = invitations;
+  const [earlierShown, setEarlierShown] = useState(false);
   const pending = pendingCount(lines);
+  const { current, earlier } = invitationGroupsOf(lines);
+  const shown = earlierShown ? [...current, ...earlier] : current;
   return (
     <Section title={t('screens.users.invitations')} meta={pendingMeta(pending, t)}>
-      {lines.map((line) => (
+      {shown.map((line) => (
         <InvitationRow key={line.id} line={line} onRevoke={revoke} />
       ))}
+      {earlier.length > 0 && !earlierShown ? (
+        <Row
+          leading={<Avatar icon="hist" />}
+          title={t('screens.users.earlier-invitations', { count: String(earlier.length) })}
+          chevron
+          onPress={() => setEarlierShown(true)}
+        />
+      ) : null}
       <Row
         leading={<Avatar icon="plus" tone="accent" />}
         title={t('screens.users.invite-someone')}

@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space, useWindowLayout } from '@/shared/theme';
+import { useStickyKeyboard } from '@/features/conversations/hooks/use-sticky-keyboard';
 import { keyboardOffsets } from '@/features/conversations/model/thread-list';
 
 export type ThreadFrameProps = {
@@ -18,6 +19,7 @@ const COMPOSER_ABOVE_LIST = { zIndex: 1 } as const;
 export function ThreadFrame({ phone, header, children, composer }: ThreadFrameProps) {
   const insets = useSafeAreaInsets();
   const capped = useWindowLayout().windowClass !== 'compact';
+  const sticky = useStickyKeyboard();
   const top = { paddingTop: phone ? insets.top : 0 };
   const bottom = { paddingBottom: phone ? Math.max(insets.bottom, space[3]) : space[4] };
   return (
@@ -28,6 +30,7 @@ export function ThreadFrame({ phone, header, children, composer }: ThreadFramePr
         {children}
       </View>
       <KeyboardStickyView
+        enabled={sticky}
         offset={keyboardOffsets(insets.bottom).sticky}
         style={COMPOSER_ABOVE_LIST}>
         <View className="bg-bg w-full">

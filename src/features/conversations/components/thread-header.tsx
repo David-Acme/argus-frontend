@@ -3,6 +3,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { size } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Icon } from '@/shared/ui/icon';
+import { Menu } from '@/shared/ui/menu';
 import { Presence } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { Text } from '@/shared/ui/text';
@@ -23,6 +24,8 @@ export type MemberHeaderProps = {
 
 type ClearProps = { onClear: () => void };
 
+type ArgusActionsProps = Pick<ArgusHeaderProps, 'onConversations' | 'onClear'>;
+
 function Clear({ onClear }: ClearProps) {
   const { t } = useTranslation();
   return (
@@ -34,6 +37,21 @@ function Clear({ onClear }: ClearProps) {
         spoken: t('screens.conversations.clear'),
       }}
       onPress={onClear}
+    />
+  );
+}
+
+function ArgusActions({ onConversations, onClear }: ArgusActionsProps) {
+  const { t } = useTranslation();
+  if (!onClear) return null;
+  if (!onConversations) return <Clear onClear={onClear} />;
+  return (
+    <Menu
+      label={t('screens.conversations.more')}
+      items={[
+        { label: t('screens.conversations.see-list'), icon: 'chat', onPress: onConversations },
+        { label: t('screens.conversations.clear'), destructive: true, onPress: onClear },
+      ]}
     />
   );
 }
@@ -94,7 +112,7 @@ export function ArgusHeader({
       ) : null}
       <Presence state="idle" size={size.presenceThreadHead} paused />
       <ArgusTitle desktop={desktop} onConversations={onConversations} />
-      {onClear ? <Clear onClear={onClear} /> : null}
+      <ArgusActions onConversations={onConversations} onClear={onClear} />
       {onCall ? (
         <Button
           iconOnly

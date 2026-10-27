@@ -1,4 +1,7 @@
 import type { VoiceActionRecord, VoicePhase, VoiceSnapshot, VoiceStartOptions } from '@/core/types';
+import type { ListenMode } from '@/shared/ui/nav';
+
+export type HoldTalkMode = 'hold' | 'tap';
 
 export type HoldTalkStage = 'idle' | 'listening' | 'sending' | 'answered' | 'failed' | 'cancelled';
 
@@ -10,6 +13,7 @@ export type HoldTalkAnswer = {
 
 export type HoldTalkState = {
   stage: HoldTalkStage;
+  mode: HoldTalkMode;
   releasedAt: number | null;
   settledAt: number | null;
   error: string | null;
@@ -22,7 +26,7 @@ export type HoldTalkVoice = HoldTalkAnswer & {
 };
 
 export type HoldTalkEvent =
-  | { type: 'start' }
+  | { type: 'start'; mode?: HoldTalkMode }
   | { type: 'release'; send: boolean; at: number }
   | { type: 'observe'; voice: HoldTalkVoice; at: number }
   | { type: 'dismiss' };
@@ -53,6 +57,7 @@ export const HOLD_FAILURE_SHOWN_MS = 8000;
 
 export const HOLD_IDLE: HoldTalkState = {
   stage: 'idle',
+  mode: 'hold',
   releasedAt: null,
   settledAt: null,
   error: null,
@@ -138,10 +143,19 @@ function observe(state: HoldTalkState, voice: HoldTalkVoice, at: number): HoldTa
 }
 
 export function holdTalkStep(state: HoldTalkState, event: HoldTalkEvent): HoldTalkState {
-  if (event.type === 'start') return { ...HOLD_IDLE, stage: 'listening' };
+  if (event.type === 'start')
+    return { ...HOLD_IDLE, stage: 'listening', mode: event.mode ?? 'hold' };
   if (event.type === 'release') return release(state, event.send, event.at);
   if (event.type === 'observe') return observe(state, event.voice, event.at);
   return HOLD_IDLE;
+}
+
+export function holdTalkListenMode({
+  stage,
+  mode,
+}: Pick<HoldTalkState, 'stage' | 'mode'>): ListenMode {
+  if (stage !== 'listening') return 'off';
+  return mode === 'tap' ? 'toggle' : 'hold';
 }
 
 export function holdTalkLive(state: HoldTalkState): boolean {

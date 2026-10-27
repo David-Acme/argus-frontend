@@ -58,9 +58,11 @@ export function useCameraFrames(
   shown: readonly SecurityTile[]
 ): ReadonlyMap<string, string> {
   const { perfTier } = useEffects();
-  const live = new Set(shown.filter((tile) => tile.state === 'live').map((tile) => tile.id));
+  const framed = new Set(
+    shown.filter((tile) => tile.state === 'live' || tile.state === 'offline').map((tile) => tile.id)
+  );
   return useCameraThumbnails(
-    cameras.filter((camera) => live.has(camera.id)),
+    cameras.filter((camera) => framed.has(camera.id)),
     perfTier !== 'low'
   );
 }

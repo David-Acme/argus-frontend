@@ -53,3 +53,26 @@ export function bubblePresenceOf(results: readonly ArgusResult[] | undefined): P
 export function newestIncomingId(rows: readonly ThreadRow[]): string | null {
   return rows.findLast((row) => row.direction === 'in')?.id ?? null;
 }
+
+export function streamingResultId(
+  anchored: AnchoredResults,
+  newestIn: string | null,
+  latestCamera: string | null
+): string | null {
+  if (latestCamera === null) return null;
+  const current = newestIn === null ? [] : (anchored.byRow.get(newestIn) ?? []);
+  const live = [...anchored.trailing, ...current].some((result) => result.id === latestCamera);
+  return live ? latestCamera : null;
+}
+
+export function shownCameraOf(results: readonly ArgusResult[]): string | null {
+  const shown = results.findLast((result) => result.kind === 'camera' && result.status === 'done');
+  return shown?.kind === 'camera' ? shown.name : null;
+}
+
+export function lastReplyOf(
+  rows: readonly Pick<IConversationMessageCacheRow, 'direction' | 'body'>[]
+): string | null {
+  const last = rows.at(-1);
+  return last?.direction === 'in' ? last.body : null;
+}

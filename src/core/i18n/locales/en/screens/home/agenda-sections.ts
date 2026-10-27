@@ -33,7 +33,7 @@ export const agendaSections = {
   reopen: 'Mark “{title}” as to do',
   'empty-title': 'Nothing due today',
   'empty-body': 'Ask Argus to remind you of something.',
-  'empty-action': 'New reminder',
+  'empty-action': 'Ask Argus',
   'empty-draft': 'Remind me to ',
   ask: 'Ask Argus: {text}',
   'ideas-title': 'Ideas to start',

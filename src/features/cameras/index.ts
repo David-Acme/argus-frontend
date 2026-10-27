@@ -28,6 +28,7 @@ export { recordModeLabelKey } from './model/camera-record-mode';
 export { TamperEvidenceView } from './components/tamper-evidence-view';
 export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';
 export { useCameraThumbnails } from './hooks/use-camera-thumbnails';
+export { useCameraStill } from './hooks/use-camera-still';
 export { useRecentClips, type RecentClips } from './hooks/use-recent-clips';
 export {
   cameraMasked,

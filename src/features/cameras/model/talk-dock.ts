@@ -1,31 +1,20 @@
 import type { CameraCallState, CameraTalkMode, TranslationKey } from '@/core/types';
 
-export const TAP_MS = 300;
-
 export const METER_BARS = 12;
 
-export type HoldPhase = 'idle' | 'held' | 'latched' | 'ending';
+export type HoldPhase = 'idle' | 'held' | 'latched';
 
-export type HoldState = { phase: HoldPhase; since: number };
+export type HoldEvent = 'hold' | 'release' | 'tap' | 'leave';
 
-export type HoldEvent = { kind: 'down' | 'up'; at: number };
-
-export const IDLE_HOLD: HoldState = { phase: 'idle', since: 0 };
-
-export function holdReducer(state: HoldState, event: HoldEvent): HoldState {
-  if (event.kind === 'down') {
-    if (state.phase === 'idle') return { phase: 'held', since: event.at };
-    if (state.phase === 'latched') return { phase: 'ending', since: event.at };
-    return state;
-  }
-  if (state.phase === 'held')
-    return event.at - state.since < TAP_MS ? { phase: 'latched', since: state.since } : IDLE_HOLD;
-  if (state.phase === 'ending') return IDLE_HOLD;
-  return state;
+export function holdReducer(phase: HoldPhase, event: HoldEvent): HoldPhase {
+  if (event === 'hold') return 'held';
+  if (event === 'tap') return phase === 'idle' ? 'latched' : 'idle';
+  if (event === 'release') return phase === 'held' ? 'idle' : phase;
+  return 'idle';
 }
 
-export function holdTalking(state: HoldState): boolean {
-  return state.phase === 'held' || state.phase === 'latched';
+export function holdTalking(phase: HoldPhase): boolean {
+  return phase !== 'idle';
 }
 
 export type DockPhase = 'idle' | 'talking' | 'opening' | 'call';

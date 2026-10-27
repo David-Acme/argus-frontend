@@ -6,6 +6,8 @@ import { voiceErrorMessage } from '@/features/voice/model/voice-error';
 
 export type StageMoment = 'live' | 'ended' | 'failed';
 
+export type StageAura = 'alert' | 'listen' | null;
+
 export type StageMomentInput = {
   phase: VoicePhase;
   endedDurationMs: number | null;
@@ -40,6 +42,15 @@ export function stagePresenceOf({ moment, phase, kind }: StagePresenceInput): Pr
   if (moment === 'failed') return PHASE_PRESENCE[phase];
   if (kind === 'alert' && phase !== 'speaking' && phase !== 'listening') return 'alert';
   return PHASE_PRESENCE[phase];
+}
+
+export function stageAuraOf({
+  moment,
+  kind,
+}: Pick<StagePresenceInput, 'moment' | 'kind'>): StageAura {
+  if (moment === 'ended') return null;
+  if (kind === 'alert') return 'alert';
+  return moment === 'live' ? 'listen' : null;
 }
 
 export function isLivePhase(phase: VoicePhase): boolean {

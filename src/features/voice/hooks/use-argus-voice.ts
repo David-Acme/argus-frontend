@@ -10,25 +10,28 @@ import { useHoldTalkStore } from '@/features/voice/stores/hold-talk.store';
 import {
   HOLD_TICK_MS,
   holdTalkCanListen,
+  holdTalkListenMode,
   holdTalkLive,
   holdTalkMutes,
   holdTalkSessionEnds,
   holdTalkStartOptions,
   holdTalkVoiceOf,
+  type HoldTalkMode,
   type HoldTalkStage,
 } from '@/features/voice/model/hold-talk';
 import { ASSISTANT_THREAD_HREF, CAPABILITY } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { feedback } from '@/shared/theme';
-import type { NavVoice } from '@/shared/ui/nav';
+import type { ListenMode, NavVoice } from '@/shared/ui/nav';
 
-export type ArgusVoice = { voice: NavVoice; listening: boolean };
+export type ArgusVoice = { voice: NavVoice; listening: ListenMode };
 
 export type ArgusTalk = {
   stage: HoldTalkStage;
+  mode: HoldTalkMode;
   error: string | null;
   canListen: boolean;
-  start: () => void;
+  start: (mode?: HoldTalkMode) => void;
   finish: (send: boolean) => void;
   dismiss: () => void;
 };
@@ -72,6 +75,7 @@ export function useArgusTalk(): ArgusTalk {
   const callActive = useVoiceCallActive();
   return {
     stage: hold.stage,
+    mode: hold.mode,
     error: hold.error,
     canListen: holdTalkCanListen({
       allowed: has(CAPABILITY.assistantVoice),
@@ -79,8 +83,8 @@ export function useArgusTalk(): ArgusTalk {
       callActive,
       live,
     }),
-    start: () => {
-      dispatch({ type: 'start' });
+    start: (mode) => {
+      dispatch({ type: 'start', mode });
       if (live) voiceService.stop();
       void voiceService.start(holdTalkStartOptions(voiceCallSupported()));
     },
@@ -97,8 +101,8 @@ export function useArgusVoice(): ArgusVoice {
   const voice: NavVoice = {
     onOpenChat: () => router.navigate(ASSISTANT_THREAD_HREF),
     canListen: talk.canListen,
-    onListenStart: talk.start,
+    onListenStart: () => talk.start('hold'),
     onListenEnd: talk.finish,
   };
-  return { voice, listening: talk.stage === 'listening' };
+  return { voice, listening: holdTalkListenMode(talk) };
 }

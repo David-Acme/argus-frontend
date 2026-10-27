@@ -76,6 +76,7 @@ describe('CallSurface', () => {
     expect(screen.getByRole('button', { name: 'Ver la cámara' })).toBeDefined();
     expect(screen.getByRole('switch', { name: 'Silenciar micrófono' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Colgar' })).toBeDefined();
+    expect(screen.getByText('Lo que digamos aparece aquí.')).toBeDefined();
   });
 
   test('mute is a pressed switch with its hint, and hanging up asks once', async () => {

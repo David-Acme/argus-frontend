@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { useContext, type ReactNode } from 'react';
 import { View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
 import {
@@ -53,7 +54,8 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
   const insets = useContext(SafeAreaInsetsContext);
   const top = insets?.top ?? 0;
   const { clearance } = useNavOffsets();
-  const { onScroll, auraHidden } = useScreenScroll(auraField.height);
+  const { onScroll, auraHidden, band } = useScreenScroll(auraField.height, top);
+  const bandFrame = { height: top };
   const desktop = window.windowClass === 'expanded' || window.windowClass === 'wide';
   const header = hasTopBar(bar) ? <ScreenTopBar {...bar} /> : null;
   const field = aura ? <Aura tone={aura} paused={auraHidden} /> : null;
@@ -83,6 +85,13 @@ export function Screen({ aura, refresh, columns, children, ...bar }: ScreenProps
           {children}
         </View>
       </ScreenScroll>
+      <Animated.View
+        aria-hidden
+        pointerEvents="none"
+        testID="screen-top-band"
+        className="bg-bg absolute inset-x-0 top-0"
+        style={[bandFrame, band]}
+      />
     </View>
   );
 }

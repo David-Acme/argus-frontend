@@ -251,8 +251,7 @@ export const motion = {
   pressScale: 0.96,
   pressScaleIcon: 0.9,
   caretBlink: 1000,
-  holdConfirm: 1500,
-  holdTicks: 3,
+  hold: { confirm: 1500, ticks: 3, talk: 220, slop: 10 },
   loop: { live: 2400, liveDim: 0.35, shimmer: 1400, shimmerRest: 0.5 },
 } as const;
 

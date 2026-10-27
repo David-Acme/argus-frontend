@@ -8,6 +8,7 @@ export const navigation = {
   settings: 'Settings',
   'argus-hint': 'Argus: tap to write, hold to talk',
   listening: 'Listening… release to send',
+  'listening-tap': 'Listening… tap to send',
   command: 'Search or ask…',
   'status-title': 'Argus at home',
   mode: 'Mode',

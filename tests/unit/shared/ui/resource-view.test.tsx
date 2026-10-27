@@ -23,7 +23,7 @@ const COPY: ResourceCopy = {
 const EMPTY = {
   message: 'Nada pendiente hoy',
   detail: 'Tienes el día libre.',
-  action: { label: 'Nuevo recordatorio', onPress: () => undefined },
+  action: { label: 'Nuevo evento', onPress: () => undefined },
 };
 
 const canvases = () =>
@@ -60,7 +60,7 @@ describe('ResourceView', () => {
   test('empty says what will appear and offers one action', () => {
     view({ status: 'empty' });
     expect(screen.getByText('Nada pendiente hoy')).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Nuevo recordatorio' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Nuevo evento' })).toBeDefined();
   });
 
   test('stale keeps the cached data under a notice with its age', () => {

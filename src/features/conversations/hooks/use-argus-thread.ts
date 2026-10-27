@@ -18,7 +18,12 @@ import type { ConversationThread } from '@/features/conversations/hooks/use-conv
 import { chatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
 import type { ChatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
 import type { Suggestion } from '@/features/conversations/model/suggestions';
-import { anchorResults, newestIncomingId } from '@/features/conversations/model/thread-results';
+import {
+  anchorResults,
+  lastReplyOf,
+  newestIncomingId,
+  shownCameraOf,
+} from '@/features/conversations/model/thread-results';
 import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
 export type ArgusThreadState = {
@@ -47,13 +52,17 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
   const talk = useArgusTalk();
   const heard = useVoiceHeard();
   const now = useNow(MINUTE_MS);
-  const suggestions = useArgusSuggestions(now);
   const [draftVersion, setDraftVersion] = useState(0);
   const overlay = chatOverlay({
     messages: thread.messages,
     entries: thread.live ? chat.entries : [],
     leg: IS_NATIVE ? 'phone' : 'laptop',
     skewMs: CHAT_CLOCK_SKEW_MS,
+  });
+  const suggestions = useArgusSuggestions({
+    now,
+    shownCamera: shownCameraOf(results),
+    lastReply: lastReplyOf(overlay.rows),
   });
   const failure = talk.stage === 'failed' ? holdTalkFailureOf(talk.error) : null;
   const { dismiss } = talk;

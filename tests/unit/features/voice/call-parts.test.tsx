@@ -61,7 +61,7 @@ describe('the call parts', () => {
 
   test('the stage carries the private line, Argus and the call line around Estela', () => {
     render(
-      <CallStage kind="reminder" line="0:42" presence="speak">
+      <CallStage aura="listen" line="0:42" presence="speak">
         <></>
       </CallStage>
     );
@@ -85,6 +85,7 @@ describe('the call parts', () => {
           { id: 'b', role: 'assistant', text: 'Te llamo por la luz.' },
           { id: 'c', role: 'user', text: 'Ya la pago.' },
         ]}
+        empty="Lo que digamos aparece aquí."
       />
     );
     expect(screen.queryByText('Uno.')).toBeNull();

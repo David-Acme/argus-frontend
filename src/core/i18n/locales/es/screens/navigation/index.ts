@@ -8,6 +8,7 @@ export const navigation = {
   settings: 'Ajustes',
   'argus-hint': 'Argus: toca para escribir, mantén para hablar',
   listening: 'Te escucho… suelta para enviar',
+  'listening-tap': 'Te escucho… toca para enviar',
   command: 'Buscar o pedir…',
   'status-title': 'Argus de Casa',
   mode: 'Modo',

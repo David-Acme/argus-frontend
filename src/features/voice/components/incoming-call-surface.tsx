@@ -89,7 +89,7 @@ function RingStage({ call, choices, onChoose }: RingProps) {
       accessibilityLiveRegion="assertive"
       className="absolute inset-0">
       <CallStage
-        kind="alert"
+        aura="alert"
         line={t('screens.voice.ring.alert-line', { subject: callSubjectOf(call) })}
         presence="alert">
         {call.summary.trim() ? (

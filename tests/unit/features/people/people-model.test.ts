@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { IInvitationRecord, IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import {
+  invitationGroupsOf,
   invitationLinesOf,
   offerableRoles,
   pendingCount,
@@ -160,6 +161,22 @@ describe('invitations', () => {
     ]);
     expect(lines.filter((line) => line.revocable).map((line) => line.id)).toEqual([5, 3]);
     expect(pendingCount(lines)).toBe(2);
+  });
+
+  test('closed and lapsed invitations go to the earlier group, the rest stay in view', () => {
+    const groups = invitationGroupsOf(
+      invitationLinesOf(
+        [
+          invitation(1, { redemptionCount: 1 }),
+          invitation(2, { revokedAt: 5 }),
+          invitation(3),
+          invitation(4, { expiresAt: 1 }),
+        ],
+        nowMs
+      )
+    );
+    expect(groups.current.map((line) => line.id)).toEqual([3, 1]);
+    expect(groups.earlier.map((line) => line.id)).toEqual([4, 2]);
   });
 
   test('an invitation closed by a module names the module', () => {

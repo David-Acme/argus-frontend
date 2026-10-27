@@ -13,10 +13,10 @@ import { Text } from '@/shared/ui/text';
 import { CallAvatar } from '@/features/voice/components/call-avatar';
 import { CALL_STAGE_MAX_WIDTH } from '@/features/voice/constants/call.constant';
 import { useCallScale } from '@/features/voice/hooks/use-call-scale';
-import type { CallKind } from '@/features/voice/model/incoming-surface';
+import type { StageAura } from '@/features/voice/model/call-stage';
 
 type CallStageProps = {
-  kind: CallKind;
+  aura: StageAura;
   line: string;
   presence: PresenceState;
   ended?: boolean;
@@ -28,7 +28,7 @@ type CallStageProps = {
 const COLUMN = { maxWidth: CALL_STAGE_MAX_WIDTH };
 
 export function CallStage({
-  kind,
+  aura,
   line,
   presence,
   ended = false,
@@ -44,7 +44,13 @@ export function CallStage({
   return (
     <ScopedTheme theme="dark">
       <View className="bg-bg flex-1 overflow-hidden" style={frame}>
-        {kind === 'alert' ? <Aura tone="alert" /> : null}
+        {aura === 'alert' ? <Aura tone="alert" /> : null}
+        {aura === 'listen' ? (
+          <>
+            <Aura tone="listen" />
+            <Aura tone="listen" mode="edge" />
+          </>
+        ) : null}
         <FillScroll>
           <View className="w-full flex-1 items-center self-center px-4" style={COLUMN}>
             <View className="min-h-12 w-full justify-center">{top}</View>

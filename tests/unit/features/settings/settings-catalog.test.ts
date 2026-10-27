@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { settingsOverviewSchema, settingsProfilesSchema } from '@/core/contracts/http.contract';
-import type { Setting, SettingsOverview, SettingsOwner } from '@/core/types';
+import type {
+  FirstRunState,
+  Setting,
+  SettingsOverview,
+  SettingsOwner,
+  SettingsProfiles,
+} from '@/core/types';
 import {
   exportOwner,
   exportText,
@@ -21,7 +27,9 @@ import {
   summaryOf,
 } from '@/features/settings/model/services';
 import {
+  FIRST_RUN_UNDO_MS,
   currentProfileId,
+  firstRunUndoable,
   isProfileLevel,
   levelFraction,
   profileLineOf,
@@ -288,6 +296,30 @@ describe('how Argus works', () => {
     expect(profileLineOf(profiles('quality'))).toBe('other');
     expect(profileLineOf(profiles(null))).toBe('custom');
     expect(currentProfileId(profiles('quality'))).toBe('quality');
+  });
+
+  const applied: FirstRunState = {
+    profile: 'quality',
+    state: 'applied',
+    appliedAt: 1000,
+    owners: [],
+  };
+
+  const withRun = (firstRun: FirstRunState): SettingsProfiles => ({
+    ...(profiles(null) as SettingsProfiles),
+    firstRun,
+  });
+
+  test('a profile Argus applied and then changed is never called tuned by hand', () => {
+    expect(profileLineOf(withRun(applied))).toBe('adjusted');
+    expect(profileLineOf(withRun({ ...applied, state: 'reverted' }))).toBe('custom');
+  });
+
+  test('the recommended profile can be undone for a day after Argus applied it', () => {
+    expect(firstRunUndoable(applied, 1000 * 1000 + FIRST_RUN_UNDO_MS - 1)).toBe(true);
+    expect(firstRunUndoable(applied, 1000 * 1000 + FIRST_RUN_UNDO_MS)).toBe(false);
+    expect(firstRunUndoable({ ...applied, state: 'reverted' }, 1000 * 1000)).toBe(false);
+    expect(firstRunUndoable(null, 0)).toBe(false);
   });
 
   test('the meters rank the three known profiles and nothing else', () => {

@@ -140,6 +140,13 @@ paired → `/login` (desktop QR or mobile face login). Screens never redirect
 on auth themselves. Each screen lays itself out with `AppScreen` (scroll,
 max width, aside, bottom-nav claim) and, for detail screens, `ScreenHeader`.
 
+The cold-start splash (`expo-splash-screen` in `app.config.ts`) shows Estela's still pose on
+the light (`#F4F1ED`) and dark (`#181816`) backgrounds: `src/assets/images/splash.png` and
+`splash-dark.png`, rendered once from the prototype's own Estela renderer (the particle still
+frame, cropped and centred at 600 of 1024 px on a transparent canvas). Until the phone run
+(finding #36) both splash and launcher icons were the template's atom; the launcher icon
+(`icon.png`, `adaptive-icon.png`) and `src-tauri/icons` still are, and wait for the owner's mark.
+
 - **Routes** (`src/app/`): `/` (entry router + dashboard: welcome header,
   activity, camera grid, projects carousel, agenda, notifications),
   `/agenda` (month/week/day calendar + event forms), `/projects`
@@ -4959,7 +4966,12 @@ The Inicio entry "Hablar con Argus" follows the same choice: voice opens
   {clientId, turnId}`; refusals are `voice:text_error {status, error,
   clientId}` (the router keeps `clientId` on its way to the `voice:error`
   listeners); `voice:done` ends the session; `voice:stt_correction` replaces
-  withheld words. App actions (`voice:action`) run through the call bridge
+  withheld words. A turn id is the server session's own count, starting
+  again at one in every chat session, so `AssistantChat` forgets the turn ids
+  of its earlier messages whenever a session opens. Before that, the reply of
+  a new session's turn matched an older, finished message with the same id
+  and was dropped, and the new message ended as unanswered although the
+  server had answered (phone run finding #31). App actions (`voice:action`) run through the call bridge
   with the voice ones and answer `voice:action_result`; a camera opens as a
   screen, since there is no call surface.
 - **Context.** The call bridge sends an open chat session the same
@@ -5700,6 +5712,16 @@ is `role="status"`, a polite live region (the prototype's error toast says
 the window bottom, not the safe area, so 108 is the prototype frame's number
 and has to follow the real tab bar's top once Phase 2 places it. The host
 `Toaster` is not mounted in the root layout yet: the legacy toaster still is.
+Since the phone run (finding #40) the legacy toaster follows the same place:
+bottom-centre, above the tab bar at `useNavOffsets().toast` on a phone, and the
+bottom inset plus `inset.toast.edge` where there is no bar, so a toast never
+sits over a screen title; it is swiped away downward, and its body text is no
+longer cut at three lines. The offline state is not a toast any more (finding
+#37): `TopNoticeBar` wraps the navigator, and while Argus is unreachable (after
+the 12 s rule) or an error toast is parked it takes its own row under the status
+bar, a one-line pill with the route's title and «Reintentar», and gives the
+screens below a top inset of 0, so nothing overlays a header and nothing is
+inset twice. Tapping the pill shows the route's full words as a short toast.
 
 **Menu.** Pointer (the web build, Tauri included) gets
 `@rn-primitives/dropdown-menu` from a ⋯ trigger and `@rn-primitives/context-menu`
@@ -7235,8 +7257,18 @@ Controls that cannot apply are hidden, never disabled (W17), and
 `talkNoteOf` says in words why talk is missing. A camera the sync row reports
 offline shows «La cámara no responde» with Reintentar before the stream even
 answers; a painted picture wins over that row. `model/talk-dock.ts` holds the
-hold-to-talk reducer: a press shorter than 300 ms latches talking until the
-next tap, which is the tap alternative of rule 25.
+hold-to-talk reducer over four events: a hold talks until it is released, a tap
+latches talking until the next tap (the tap alternative of rule 25), and
+leaving the screen always stops. The phone run (finding #1) found the old
+reducer, which read any press-out under 300 ms as a tap, latched the camera
+talk when a scroll started on the button: the scroll's cancel looked like a
+tap. `PressableSurface`'s `hold` now separates the two at the gesture: on
+native it is an RNGH `Pan` that activates only after `motion.hold.talk`
+(220 ms) without moving past the touch slop, so a scroll fails it, and once
+active the gesture handler owns the touch, so the scroll view cannot take it;
+its `onEnd` fires on release and on cancel. A tap is a separate `Tap` bounded
+by `motion.hold.slop`. On web the same contract is `onLongPress` after the
+same delay. The PTZ pad uses the same contract (a tap steps, a hold moves).
 
 **The stage says its state; no words for connecting.** `CameraLiveView`
 takes `onStatus`, and when it is given the view stops drawing its old status
@@ -7532,6 +7564,13 @@ landscape when a phone lies on its side); every decision below is a pure functio
   than the cap was clipped by TrueSheet with no way to scroll. `TrueSheet`'s `scrollable` makes its
   container `absoluteFill`, which breaks `auto`, so the capped `ScrollView` is the only way to have
   a content-sized sheet that still scrolls.
+- **Phone sheet chrome under the keyboard** (phone run finding #34). On a tiny phone with the
+  keyboard up, the pinned header and footer took all the room the keyboard left, so the field being
+  typed into was not visible. `sheetChromeOf` (`shared/theme/height-layout.ts`) decides from the
+  same room plus the measured footer: the footer stays pinned only while the header, the footer
+  and one field with its label (`size.field + space[8]`) fit above the keyboard; otherwise it
+  moves to the end of the scrolling body, and when even the header and one field do not fit the
+  header goes too. When the keyboard hides, the body scrolls the focused field back into view.
 - **Legacy `AdaptiveDialog` sheet.** `overlayBodyHeightOf` keeps the 62 % share on regular
   windows and gives the body all the room the sheet chrome leaves on short ones.
 - **Heroes.** `heroStepOf` (`shared/ui/status/status-scale.ts`) steps the sentence down to
@@ -7714,7 +7753,7 @@ reconnect or a remount), **removed** (to be removed by F-reminders).
 | Inicio · Ahora, Hoy, Mañana | `calendar_event`, `project_task`, `reminder` → `dashboard.agenda` (today), `calendar.entries` (month) | | `reminder` rows removed (F-reminders) |
 | Inicio · Recordatorios | `reminder` → `dashboard.agenda` | | removed (F-reminders) |
 | Inicio · Proyectos | `project`, `project_task` → `dashboard.projects`, `project.tasks` | | |
-| Inicio · Cámaras | `camera`, `zone` → `camera.list` | `/camera/overview` → camera·overview; `/camera/0/clips` → camera·clips | frames: snapshot images re-fetched every 30 s (media, not data) |
+| Inicio · Cámaras | `camera`, `zone` → `camera.list` | `/camera/overview` → camera·overview; `/camera/0/clips` → camera·clips | frames: snapshot images re-fetched every 30 s (media, not data); the last frame of each camera is kept in memory for the session (`camera-frame-cache.ts`, cleared on sign-out, never written to disk), so a tile paints it at once and keeps it under «Sin conexión» while Argus is unreachable (`cameraFaceOf`) |
 | Inicio · Lo que pasó | `camera` → `camera.list` | `/guard/episodes` → guard·episodes | |
 | Inicio · Clips recientes | `camera` → `camera.list` | `/camera/0/clips` → camera·clips | |
 | Inicio · Vigilancia | `camera` → `camera.list` | `/guard/environments` → guard·environments | |

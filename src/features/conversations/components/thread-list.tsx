@@ -7,6 +7,7 @@ import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { IS_WEB } from '@/shared/constants';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { size, space } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Text } from '@/shared/ui/text';
 import type { ArgusResult } from '@/features/voice';
@@ -69,7 +70,7 @@ const PILL_FLOAT = {
 
 const LIST_FILL = { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 } as const;
 
-const LIST_CONTENT = { paddingBottom: 12 } as const;
+const LIST_CONTENT = { paddingBottom: size.target + space[3] } as const;
 
 const ESTIMATED_ROW = 72;
 
@@ -179,6 +180,7 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
         maintainScrollAtEnd={paging.live ? { animated: !reduceMotion } : false}
         maintainVisibleContentPosition
         onScroll={thread.onScroll}
+        onLoad={thread.onLoad}
         onStartReachedThreshold={EDGE_SCREENS}
         onEndReachedThreshold={EDGE_SCREENS}
         contentContainerStyle={LIST_CONTENT}

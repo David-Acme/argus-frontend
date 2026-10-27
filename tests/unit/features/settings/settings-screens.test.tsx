@@ -256,6 +256,33 @@ describe('Ajustes on a phone', () => {
     expect(screen.getAllByRole('progressbar')).toHaveLength(3);
   });
 
+  test('an old first run of the recommended profile is told, without Deshacer or tuned by hand', () => {
+    const appliedAt = Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60;
+    const changed = {
+      ...PROFILES,
+      profiles: PROFILES.profiles.map((profile) => ({ ...profile, current: false })),
+      firstRun: { profile: 'balanced', state: 'applied', appliedAt, owners: [] },
+    } as unknown as SettingsProfiles;
+    render(
+      <HowCard
+        profiles={
+          {
+            profiles: changed,
+            failed: false,
+            reload: async () => undefined,
+            apply: async () => undefined,
+            revert: async () => undefined,
+            reverting: false,
+          } as never
+        }
+      />
+    );
+    expect(screen.queryByText(/ajustado a mano/)).toBeNull();
+    expect(screen.getByText(/con algún ajuste cambiado/)).toBeDefined();
+    expect(screen.getByText(/^Argus aplicó/)).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Deshacer' })).toBeNull();
+  });
+
   test('the search finds an option by its words and opens its service', () => {
     render(<SettingsScreen />);
     fireEvent.change(screen.getByPlaceholderText('Buscar un ajuste'), {

@@ -4,29 +4,35 @@ import { withUniwind } from 'uniwind';
 import { IS_ANDROID } from '@/shared/constants';
 import { useThemeTokens } from '@/shared/theme';
 import type { PressableSurfaceProps } from '@/shared/ui/pressable/pressable-types';
+import { HoldSurface } from '@/shared/ui/pressable/hold-surface.native';
 import { useSurfacePress } from '@/shared/ui/pressable/use-surface-press';
+
+type TapSurfaceProps = Omit<PressableSurfaceProps, 'hold'>;
 
 const StyledPressable = withUniwind(Pressable);
 
-export function PressableSurface({
+export function PressableSurface({ hold, ...props }: PressableSurfaceProps) {
+  if (hold) return <HoldSurface {...props} hold={hold} />;
+  return <TapSurface {...props} />;
+}
+
+function TapSurface({
   a11y,
   onPress,
   haptic,
   pressed,
-  hold,
   disabled,
   hitSlop,
   className,
   style,
   testID,
   children,
-}: PressableSurfaceProps) {
+}: TapSurfaceProps) {
   const { color } = useThemeTokens();
   const press = useSurfacePress({
     onPress,
     haptic,
     pressed: IS_ANDROID ? { scale: pressed?.scale } : pressed,
-    hold,
     disabled,
     style,
   });

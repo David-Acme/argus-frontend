@@ -3,12 +3,18 @@ import type { VoiceTranscriptLine } from '@/core/types';
 import { Text } from '@/shared/ui/text';
 import { useCallScale } from '@/features/voice/hooks/use-call-scale';
 
-export function CallCaptions({ lines }: { lines: readonly VoiceTranscriptLine[] }) {
+type CallCaptionsProps = { lines: readonly VoiceTranscriptLine[]; empty: string };
+
+export function CallCaptions({ lines, empty }: CallCaptionsProps) {
   const { captionLines } = useCallScale();
   const visible = lines.slice(-captionLines);
-  if (visible.length === 0) return null;
   return (
     <View accessibilityLiveRegion="polite" className="w-full gap-2">
+      {visible.length === 0 ? (
+        <Text variant="meta" tone="3" align="center">
+          {empty}
+        </Text>
+      ) : null}
       {visible.map((line) => (
         <Text
           key={line.id}

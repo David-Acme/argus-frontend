@@ -6,6 +6,8 @@ export const conversations = {
   'argus-meta-desktop': 'Hold Space to talk',
   'open-list': 'Argus. See the conversations',
   call: 'Call Argus',
+  more: 'More conversation options',
+  'see-list': 'See the conversations',
   'someone-home': 'Someone at home',
   you: 'You: {body}',
   unread: '{count} unread',
@@ -57,6 +59,8 @@ export const conversations = {
     tomorrow: 'What do I have tomorrow?',
     remind: 'Remind me…',
     'remind-draft': 'Remind me ',
+    yes: 'Yes',
+    no: 'No',
   },
   context: {
     label: 'What happens in this conversation',
@@ -68,7 +72,8 @@ export const conversations = {
   composer: {
     talk: 'Talk to Argus',
     stop: 'Send what I said',
-    listening: 'I am listening…',
+    cancel: 'Stop listening without sending',
+    listening: 'I am listening… tap to send',
     placeholder: 'Write to {name}',
     send: 'Send the message to {name}',
     'typed-note': '{name} gets it under your name: if they are talking to Argus it may say it aloud; if not, it leaves them a notice. You will not learn whether they read it or where they are.',

@@ -59,6 +59,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
   const offsets = useNavOffsets();
   const { mode, target, handlers } = useHoldToTalk(voice);
   const collapse = useCollapse(layout.gap);
+  const shown = mode === 'off' ? (listening ?? 'off') : mode;
   const frame = {
     height: layout.bar,
     bottom: offsets.footprint - layout.bar,
@@ -66,10 +67,14 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
   };
   return (
     <>
-      {mode === 'off' && !listening ? null : (
+      {shown === 'off' ? null : (
         <>
           <Aura tone="listen" mode="edge" />
-          <ListenCap label={copy.listening} solid={reduceTransparency} bottom={offsets.cap} />
+          <ListenCap
+            label={shown === 'toggle' ? copy.listeningTap : copy.listening}
+            solid={reduceTransparency}
+            bottom={offsets.cap}
+          />
         </>
       )}
       <Animated.View
@@ -88,7 +93,7 @@ export function NavBar({ items, active, onSelect, voice, copy, presence, listeni
               selected={active === item.key}
               hint={copy.argusHint}
               layout={layout}
-              listening={mode !== 'off' || Boolean(listening)}
+              listening={shown !== 'off'}
               target={target}
               handlers={handlers}
               presence={presence}
