@@ -37,6 +37,9 @@ const PAIRS: readonly Pair[] = [
   { fg: 'ink', bg: 'surface', min: GRAPHIC },
   { fg: 'ink', bg: 'bg', min: GRAPHIC },
   { fg: 'fill-press', bg: 'surface', min: GRAPHIC },
+  { fg: 'receipt-read', bg: 'fill', min: GRAPHIC },
+  { fg: 'receipt-read', bg: 'surface', min: GRAPHIC },
+  { fg: 'text-2', bg: 'fill', min: GRAPHIC },
 ];
 
 type Exception = { ratio: number; where: string };

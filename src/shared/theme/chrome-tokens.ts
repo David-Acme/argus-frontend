@@ -165,10 +165,17 @@ export const chromeSize = {
   languageSwitch: 112,
   presenceEyeTile: 30,
   presenceBubble: 28,
-  presenceThreadHead: 36,
+  presenceThreadHead: 40,
   presenceThreadEmpty: 96,
   columnContext: 360,
   threadMax: 760,
+  iconMeta: 16,
+  bubbleTail: 8,
+  noteWave: 28,
+  noteBar: 3,
+  noteWidth: 232,
+  scrollDown: 40,
+  unreadBadge: 20,
 } as const;
 
 export const chromeElevation = {

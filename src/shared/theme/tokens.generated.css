@@ -280,10 +280,17 @@
   --spacing-language-switch: 112px;
   --spacing-presence-eye-tile: 30px;
   --spacing-presence-bubble: 28px;
-  --spacing-presence-thread-head: 36px;
+  --spacing-presence-thread-head: 40px;
   --spacing-presence-thread-empty: 96px;
   --spacing-column-context: 360px;
   --spacing-thread-max: 760px;
+  --spacing-icon-meta: 16px;
+  --spacing-bubble-tail: 8px;
+  --spacing-note-wave: 28px;
+  --spacing-note-bar: 3px;
+  --spacing-note-width: 232px;
+  --spacing-scroll-down: 40px;
+  --spacing-unread-badge: 20px;
   --text-hero: 36px;
   --text-hero--line-height: 39.6px;
   --text-hero--letter-spacing: -1.08px;
@@ -521,6 +528,7 @@
       --color-ev3-bar: oklch(0.6199 0.0819 263.02);
       --color-ev4-bar: oklch(0.6437 0.1133 24.09);
       --color-on-media: oklch(1.0000 0 0);
+      --color-receipt-read: oklch(0.5160 0.1161 252.02);
     }
 
     @variant dark {
@@ -564,6 +572,7 @@
       --color-ev3-bar: oklch(0.7244 0.0752 263.93);
       --color-ev4-bar: oklch(0.6437 0.1133 24.09);
       --color-on-media: oklch(1.0000 0 0);
+      --color-receipt-read: oklch(0.7441 0.0969 252.39);
     }
   }
 }
