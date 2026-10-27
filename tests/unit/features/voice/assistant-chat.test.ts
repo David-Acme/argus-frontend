@@ -189,6 +189,28 @@ describe('the frames a typed turn receives', () => {
     expect(entry(1)).toMatchObject({ reply: 'Segundo.', status: 'done' });
   });
 
+  test('a new session numbers its turns from one again, and its reply still reaches the new message', async () => {
+    chat.send('recuérdame abrir la ventana');
+    await settle();
+    transport.emit('voice:assistant', { text: 'Recordatorio guardado.', turnId: 1 });
+    transport.emit('voice:text_done', { clientId: 'client-1', turnId: 1 });
+    chat.close();
+    chat.open();
+    chat.send('sí');
+    await settle();
+    transport.emit('voice:assistant', { text: 'Borré el recordatorio.', turnId: 1 });
+    transport.emit('voice:text_done', { clientId: 'client-2', turnId: 1 });
+    expect(transport.types()).toEqual([
+      'voice:start',
+      'voice:text',
+      'voice:stop',
+      'voice:start',
+      'voice:text',
+    ]);
+    expect(entry(0)).toMatchObject({ reply: 'Recordatorio guardado.', status: 'done' });
+    expect(entry(1)).toMatchObject({ reply: 'Borré el recordatorio.', status: 'done' });
+  });
+
   test('a turn that answered nothing ends as unanswered, with retry', async () => {
     chat.send('hola');
     await settle();

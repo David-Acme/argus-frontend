@@ -274,6 +274,9 @@ export class AssistantChat {
           ...(resume ? { resume: true } : {}),
         });
         this.session = 'open';
+        this.entries = this.entries.map((entry) =>
+          entry.turnId === null ? entry : { ...entry, turnId: null }
+        );
         this.openedAt = this.deps.now();
         this.resumeOnConnect = false;
         this.notify();

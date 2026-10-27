@@ -4959,7 +4959,12 @@ The Inicio entry "Hablar con Argus" follows the same choice: voice opens
   {clientId, turnId}`; refusals are `voice:text_error {status, error,
   clientId}` (the router keeps `clientId` on its way to the `voice:error`
   listeners); `voice:done` ends the session; `voice:stt_correction` replaces
-  withheld words. App actions (`voice:action`) run through the call bridge
+  withheld words. A turn id is the server session's own count, starting
+  again at one in every chat session, so `AssistantChat` forgets the turn ids
+  of its earlier messages whenever a session opens. Before that, the reply of
+  a new session's turn matched an older, finished message with the same id
+  and was dropped, and the new message ended as unanswered although the
+  server had answered (phone run finding #31). App actions (`voice:action`) run through the call bridge
   with the voice ones and answer `voice:action_result`; a camera opens as a
   screen, since there is no call surface.
 - **Context.** The call bridge sends an open chat session the same
