@@ -147,10 +147,12 @@ export function arrivedWhileAway({ live, previous, newest }: ArrivalInput): numb
   return 1;
 }
 
+export const KEYBOARD_GAP = 8;
+
 export function keyboardOffsets(bottomInset: number): KeyboardOffsets {
-  const inset = Math.max(bottomInset, 0);
-  const sticky = { closed: 0, opened: inset };
-  return { list: inset, sticky, pill: { ...sticky } };
+  const opened = Math.max(bottomInset, 0) - KEYBOARD_GAP;
+  const sticky = { closed: 0, opened };
+  return { list: opened, sticky, pill: { ...sticky } };
 }
 
 export function floatingDayOf(viewable: readonly ThreadItem[]): number | null {
