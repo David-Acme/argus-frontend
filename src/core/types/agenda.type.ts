@@ -1,10 +1,6 @@
-import type { IReminderCacheRow } from '@/core/interfaces';
 import type { CalendarEntry } from './calendar.type';
 
-export type AgendaKind = 'reminder' | 'event' | 'task';
-
-export type AgendaOrigin =
-  { kind: 'reminder'; row: IReminderCacheRow } | { kind: 'entry'; entry: CalendarEntry };
+export type AgendaKind = 'event' | 'task';
 
 export type AgendaItem = {
   id: string;
@@ -18,7 +14,7 @@ export type AgendaItem = {
   repeat: string | null;
   place: string | null;
   project: string | null;
-  origin: AgendaOrigin;
+  entry: CalendarEntry;
 };
 
 export type DayRange = { from: number; to: number };

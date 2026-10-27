@@ -19,7 +19,6 @@ src/core/database/tables/camera.table.ts
 src/core/database/tables/conversation-message.table.ts
 src/core/database/tables/index.ts
 src/core/database/tables/project-task.table.ts
-src/core/database/tables/reminder.table.ts
 src/core/i18n/locales/en/screens/approve/index.ts
 src/core/i18n/locales/en/screens/conversations/index.ts
 src/core/i18n/locales/en/screens/face/index.ts
@@ -126,7 +125,6 @@ src/core/services/view-cache/notification.projection.ts
 src/core/services/view-cache/paged-view.ts
 src/core/services/view-cache/project.projection.ts
 src/core/services/view-cache/projection.ts
-src/core/services/view-cache/reminder.projection.ts
 src/core/services/view-cache/summary.projection.ts
 src/core/services/zone.service.ts
 src/core/stores/in-app-alert.store.ts

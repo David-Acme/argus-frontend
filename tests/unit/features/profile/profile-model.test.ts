@@ -53,19 +53,22 @@ describe('the week', () => {
     expect(week.to.getDate()).toBe(25);
   });
 
-  test('counts what was done on its day and what is still due this week', () => {
-    const at = (day: number, hour: number) => new Date(2026, 9, day, hour).getTime();
+  test('counts the tasks due this week that are done and those still open', () => {
+    const at = (day: number) => new Date(2026, 9, day).getTime();
     const stats = weekStats(
       [
-        { scheduledAt: at(20, 9), isCompleted: true, completedAt: at(20, 8) },
-        { scheduledAt: at(21, 9), isCompleted: true, completedAt: at(23, 9) },
-        { scheduledAt: at(24, 9), isCompleted: false, completedAt: null },
-        { scheduledAt: at(12, 9), isCompleted: true, completedAt: at(12, 10) },
-        { scheduledAt: at(30, 9), isCompleted: false, completedAt: null },
+        { status: 'done', dueAt: at(20) },
+        { status: 'done', dueAt: at(25) },
+        { status: 'todo', dueAt: at(24) },
+        { status: 'doing', dueAt: at(19) },
+        { status: 'canceled', dueAt: at(22) },
+        { status: 'done', dueAt: at(12) },
+        { status: 'todo', dueAt: at(30) },
+        { status: 'todo', dueAt: null },
       ],
       week
     );
-    expect(stats).toEqual({ onTime: 1, pending: 1 });
+    expect(stats).toEqual({ done: 2, pending: 2 });
   });
 });
 

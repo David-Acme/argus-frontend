@@ -11,7 +11,6 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
   resident: {
     camera: FULL,
     zone: FULL,
-    reminder: FULL,
     calendar_event: FULL,
     calendar_event_share: FULL,
     project: FULL,
@@ -23,7 +22,6 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     conversation_message: READ_UPDATE_DELETE,
   },
   guard: {
-    reminder: FULL,
     camera: READ,
     zone: READ,
     person: READ,
@@ -32,7 +30,6 @@ const TABLE_ACCESS: Record<UserRole, Partial<Record<TableName, Permission[]>>> =
     conversation_message: READ_UPDATE_DELETE,
   },
   guest: {
-    reminder: FULL,
     camera: READ,
     user: READ,
     notification: READ_UPDATE_DELETE,

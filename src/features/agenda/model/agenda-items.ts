@@ -1,10 +1,7 @@
-import type { IReminderCacheRow } from '@/core/interfaces';
 import type { AgendaItem, CalendarEntry, DayRange, NowList } from '@/core/types';
 import { CALENDAR_OPEN_EVENT_MS } from '@/shared/constants';
-import { ARGUS_REMINDERS_SHOWN } from '@/features/agenda/constants/agenda.constant';
 
 export type AgendaSources = {
-  reminders: readonly IReminderCacheRow[];
   entries: readonly CalendarEntry[];
   projectNames: ReadonlyMap<string, string>;
 };
@@ -16,21 +13,6 @@ const STACK_ROWS = 3;
 const COLUMN_ROWS = 5;
 
 export const listLimit = (column: boolean): number => (column ? COLUMN_ROWS : STACK_ROWS);
-
-const fromReminder = (row: IReminderCacheRow): AgendaItem => ({
-  id: `reminder:${row.id}`,
-  kind: 'reminder',
-  title: row.title,
-  startsAt: row.scheduledAt,
-  endsAt: null,
-  allDay: false,
-  done: row.isCompleted,
-  started: false,
-  repeat: row.recurrenceRule,
-  place: null,
-  project: null,
-  origin: { kind: 'reminder', row },
-});
 
 const fromEntry =
   (projectNames: ReadonlyMap<string, string>) =>
@@ -46,17 +28,14 @@ const fromEntry =
     repeat: entry.series?.rule ?? null,
     place: entry.location || null,
     project: entry.projectId ? (projectNames.get(entry.projectId) ?? null) : null,
-    origin: { kind: 'entry', entry },
+    entry,
   });
 
 const byTime = (left: AgendaItem, right: AgendaItem): number =>
   Number(right.allDay) - Number(left.allDay) || left.startsAt - right.startsAt;
 
-export function agendaItems({ reminders, entries, projectNames }: AgendaSources): AgendaItem[] {
-  return [
-    ...(ARGUS_REMINDERS_SHOWN ? reminders.map(fromReminder) : []),
-    ...entries.filter((entry) => entry.source !== 'reminder').map(fromEntry(projectNames)),
-  ].sort(byTime);
+export function agendaItems({ entries, projectNames }: AgendaSources): AgendaItem[] {
+  return entries.map(fromEntry(projectNames)).sort(byTime);
 }
 
 export const itemEnd = (item: AgendaItem): number =>
@@ -95,16 +74,6 @@ export function nowList(items: readonly AgendaItem[], now: number, today: DayRan
 
 export const dayList = (items: readonly AgendaItem[], day: DayRange): AgendaItem[] =>
   items.filter((item) => within(item, day));
-
-export const upcomingReminders = (
-  items: readonly AgendaItem[],
-  after: number,
-  limit: number
-): AgendaItem[] =>
-  items
-    .filter((item) => item.kind === 'reminder' && !item.done && item.startsAt > after)
-    .sort((left, right) => left.startsAt - right.startsAt)
-    .slice(0, limit);
 
 export const projectNamesOf = (
   projects: readonly { id: string; name: string }[]

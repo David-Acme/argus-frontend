@@ -161,11 +161,11 @@ animation and photo content out.
 - Captured: `signed-in` (main), `unpaired`.
 
 ### Home (`/`)
-- `features/home/screens/home-screen.tsx` and its components; `features/reminders`,
+- `features/home/screens/home-screen.tsx` and its components;
   `features/response`, `features/modules` chip and checklist, shell overlays.
-- Purpose: the dashboard: alerts for the user, reminders, camera activity, today, projects,
-  cameras, security, summary, notifications.
-- Data: sync tables (reminder, calendar_event, project, project_task, camera, notification,
+- Purpose: the dashboard: alerts for the user, camera activity, today, projects,
+  cameras, security, summary, notifications. Reminders are Argus's server-side memory: no list.
+- Data: sync tables (calendar_event, project, project_task, camera, notification,
   conversation_message, user), `GET /notification/responses`, `/camera/overview`,
   `/guard/environments`, `/guard/proximity/me`, `/rtc/watch`, `PATCH /notification/read`.
 - Conditions and captures:
@@ -174,7 +174,7 @@ animation and photo content out.
     `night`]; one camera, nothing scheduled and the getting-started list [captured: `sparse`]
   - Ctrl+K on Inicio [captured: `command-open`]
   - new household (nothing synced, no environments) [captured: `empty-new-household`]
-  - many items and long text: 14 projects, 46 notifications, 12 reminders, long name [captured: `many-long`]
+  - many items and long text: 14 projects, 46 notifications, long name [captured: `many-long`]
   - before the context arrives [captured: `before-context`]
   - offline toast / icon, route unreachable / remote unavailable [captured]
   - bell popover with unread / empty [captured: `bell-popover`, `bell-popover-empty`]
@@ -187,10 +187,8 @@ animation and photo content out.
     productivity off, surveillance off [captured]
   - roles resident, guard, guest [captured]; inactive and unknown role → `inactive-role/*`
   - nav rail tooltip [captured]
-  - reminders: done list open, snooze menu, options menu (series), edit dialog, dialog
-    validation errors [captured: `reminders-done-open`, `reminder-snooze-menu`,
-    `reminder-options-menu`, `reminder-dialog`, `reminder-dialog-errors`]; snooze/complete/delete
-    toasts [not captured: transient]
+  - reminders: a reminder reaching the app as a call with «En 10 min» [captured: `reminder-rings`];
+    Command offering to ask Argus, with no reminder result [captured: `reminder-asks-argus`]
   - notification thread expanded, thread actions (module request "Activar", watch "Continuar
     aquí", visitor reply, tamper answers) [partly in `populated`/`many-long`; expanded thread not captured]
   - notification delete undo toast [not captured: transient]

@@ -5,8 +5,8 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { Notice } from '@/shared/ui/notice';
 import { SkeletonRow } from '@/shared/ui/resource-view';
 import { Section } from '@/shared/ui/section';
-import { useCommandLauncher } from '@/features/command';
 import { PanicButton } from '@/features/safety';
+import { useAskArgus } from '@/features/home/hooks/use-ask-argus';
 import type { InicioHero } from '@/features/home/hooks/use-inicio-hero';
 import { InicioAlert } from './inicio-alert';
 import type { FirstStep } from '@/features/home/model/inicio-states';
@@ -33,7 +33,7 @@ const CAMERAS_ROUTE = '/cameras';
 function FirstStepCard({ step }: FirstStepCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { openNew } = useCommandLauncher();
+  const ask = useAskArgus();
   if (step === 'camera')
     return (
       <Notice
@@ -47,6 +47,7 @@ function FirstStepCard({ step }: FirstStepCardProps) {
         }}
       />
     );
+  if (!ask) return null;
   return (
     <Notice
       icon="bell"
@@ -55,7 +56,7 @@ function FirstStepCard({ step }: FirstStepCardProps) {
       action={{
         label: t('screens.home.inicio.first.reminder-action'),
         primary: true,
-        onPress: openNew,
+        onPress: () => ask(t('screens.home.agenda-sections.empty-draft')),
       }}
     />
   );

@@ -44,7 +44,7 @@ export function useInicioStats(place: StatPlace): StatusStat[] {
     cameras: watches ? summary.camerasTotal : null,
     alerts: watches ? (today?.alerts ?? null) : null,
     detections: watches ? (today?.detections ?? null) : null,
-    pending: has(CAPABILITY.remindersRead) ? summary.remindersPending : null,
+    pending: has(CAPABILITY.agendaRead) ? summary.tasksOpen : null,
     place,
   });
   const labelOf = ({ kind, count }: HeroStat) => t(LABEL_KEYS[kind][count === 1 ? 0 : 1]);

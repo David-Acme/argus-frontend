@@ -70,15 +70,15 @@ function Overlays({ state }: AgendaLayoutProps) {
         projects={state.plan.projects}
         now={state.plan.now}
       />
-      {sharing && sharing.origin.kind === 'entry' ? (
+      {sharing ? (
         <CalendarEventShareDialog
           open
           onOpenChange={(open) => {
             if (!open) state.stopSharing();
           }}
-          eventId={calendarEntryRecordId(sharing.origin.entry)}
+          eventId={calendarEntryRecordId(sharing.entry)}
           eventTitle={sharing.title}
-          ownerId={sharing.origin.entry.ownerId ?? ''}
+          ownerId={sharing.entry.ownerId ?? ''}
         />
       ) : null}
     </>

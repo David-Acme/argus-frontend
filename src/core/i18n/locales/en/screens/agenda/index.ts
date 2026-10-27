@@ -1,6 +1,5 @@
 export const agenda = {
   kind: {
-    reminder: 'Reminder',
     event: 'Event',
     task: 'Task',
     shared: 'Shared event',
@@ -17,7 +16,6 @@ export const agenda = {
     free: 'Free',
     complete: 'Mark «{title}» as done',
     reopen: 'Mark «{title}» as not done',
-    'ask-reminder': 'Tell me about the reminder “{title}”',
     repeats: 'Repeats',
   },
   page: {
@@ -63,7 +61,6 @@ export const agenda = {
   },
   aside: {
     show: 'Show',
-    'show-reminder': 'Reminders',
     'show-event': 'Events',
     'show-task': 'Tasks',
     'show-shared': 'Shared with me',
@@ -75,7 +72,6 @@ export const agenda = {
   },
   detail: {
     edit: 'Edit',
-    ask: 'Ask Argus',
     more: 'More actions',
     skip: 'Skip this time',
     delete: 'Delete',

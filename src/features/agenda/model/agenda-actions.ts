@@ -5,10 +5,7 @@ export type AgendaCheck = 'open' | 'overdue' | 'progress' | 'done';
 
 export type Can = (table: TableName, permission: 'update' | 'delete') => boolean;
 
-const READ_ONLY: AgendaRights = { toggle: false, edit: false, remove: false };
-
 export function agendaRights(item: AgendaItem, can: Can): AgendaRights {
-  if (item.kind === 'reminder') return READ_ONLY;
   const table = item.kind === 'task' ? 'project_task' : 'calendar_event';
   const edit = can(table, 'update');
   return { toggle: item.kind === 'task' && edit, edit, remove: can(table, 'delete') };

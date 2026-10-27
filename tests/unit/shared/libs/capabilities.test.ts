@@ -95,13 +95,6 @@ describe('table permissions', () => {
     expect(tableAllowed(viewFor('owner'), 'camera', 'read')).toBe(true);
   });
 
-  test('reminders follow their own capability, for every role', () => {
-    for (const role of ['owner', 'resident', 'guard', 'guest'] as const) {
-      expect(tableAllowed(viewFor(role, { modules: [] }), 'reminder', 'read')).toBe(true);
-      expect(tableAllowed(viewFor(role, { modules: [] }), 'reminder', 'update')).toBe(true);
-    }
-  });
-
   test('an inactive role reads nothing from the role table', () => {
     const guard = viewFor('guard', { modules: [] });
     expect(tableAllowed(guard, 'user', 'read')).toBe(false);

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { calendarEventService } from '@/core/services/calendar-event.service';
-import type { AgendaItem, AgendaRights, CalendarEntry } from '@/core/types';
+import type { AgendaItem, AgendaRights } from '@/core/types';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
@@ -21,9 +21,6 @@ export type ItemActions = {
   remove: (item: AgendaItem) => void;
 };
 
-const entryOf = (item: AgendaItem): CalendarEntry | null =>
-  item.origin.kind === 'entry' ? item.origin.entry : null;
-
 export function useItemActions(): ItemActions {
   const { t } = useTranslation();
   const { can } = useCapabilities();
@@ -41,23 +38,20 @@ export function useItemActions(): ItemActions {
   };
 
   const canSkip = (item: AgendaItem): boolean => {
-    const entry = entryOf(item);
-    if (!entry || !item.repeat || item.done || !rightsOf(item).edit) return false;
-    return occurrenceOf(entry) !== null;
+    if (!item.repeat || item.done || !rightsOf(item).edit) return false;
+    return occurrenceOf(item.entry) !== null;
   };
 
   const toggle = (item: AgendaItem) => {
-    const entry = entryOf(item);
-    if (!entry || !rightsOf(item).toggle) return;
-    const started = single(item, () => toggleTask({ entry, t }));
+    if (!rightsOf(item).toggle) return;
+    const started = single(item, () => toggleTask({ entry: item.entry, t }));
     if (started && !item.done) feedback('success');
   };
 
   const skip = (item: AgendaItem) => {
-    const entry = entryOf(item);
-    const occurrence = entry ? occurrenceOf(entry) : null;
-    if (!entry || occurrence === null) return;
-    const recordId = calendarEntryRecordId(entry);
+    const occurrence = occurrenceOf(item.entry);
+    if (occurrence === null) return;
+    const recordId = calendarEntryRecordId(item.entry);
     const body = skipOccurrenceBody(occurrence);
     single(item, () =>
       runOptimistic({
@@ -70,8 +64,7 @@ export function useItemActions(): ItemActions {
   };
 
   const remove = (item: AgendaItem) => {
-    const entry = entryOf(item);
-    if (entry) single(item, () => removeEntry({ entry, t }));
+    single(item, () => removeEntry({ entry: item.entry, t }));
   };
 
   return { rightsOf, canSkip, toggle, skip, remove };

@@ -1,25 +1,24 @@
 import { describe, expect, test } from 'bun:test';
 import type { TableName } from '@/core/types';
 import { agendaCheck, agendaMenu, agendaRights } from '@/features/agenda/model/agenda-actions';
-import { at, entry, items, NOW, reminder } from '../home/agenda-fixtures';
+import { at, entry, items, NOW, task as timedTask } from '../home/agenda-fixtures';
 
 const allow = (allowed: readonly string[]) => (table: TableName, permission: string) =>
   allowed.includes(`${table}.${permission}`);
 
-const [meeting, done, plumber, task] = items(
-  [reminder('plomero', at(11)), reminder('hecho', at(9), { isCompleted: true })],
-  [
-    entry('event:m', at(14), { endsAt: at(16) }),
-    entry('task:t', at(18), { source: 'task', status: 'active' }),
-  ]
-).sort((left, right) => left.title.localeCompare(right.title));
+const [meeting, done, plumber, task] = items([
+  timedTask('plomero', at(11)),
+  timedTask('hecho', at(9), { status: 'complete' }),
+  entry('event:m', at(14), { endsAt: at(16) }),
+  entry('task:t', at(18), { source: 'task', status: 'active' }),
+]).sort((left, right) => left.title.localeCompare(right.title));
 
 describe('what an agenda row lets you do', () => {
-  test('Argus manages reminders: they are read-only; events and tasks follow their table', () => {
+  test('events and tasks follow their table, and nothing is allowed without it', () => {
     const can = allow(['calendar_event.update', 'project_task.update', 'project_task.delete']);
     const none = { toggle: false, edit: false, remove: false };
-    expect(agendaRights(plumber!, can)).toEqual(none);
-    expect(agendaRights(plumber!, allow(['reminder.update', 'reminder.delete']))).toEqual(none);
+    expect(agendaRights(plumber!, allow([]))).toEqual(none);
+    expect(agendaRights(meeting!, allow(['project_task.update']))).toEqual(none);
     expect(agendaRights(meeting!, can)).toEqual({ toggle: false, edit: true, remove: false });
     expect(agendaRights(task!, can)).toEqual({ toggle: true, edit: true, remove: true });
   });

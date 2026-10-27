@@ -67,7 +67,6 @@ export const common = {
   },
   'change-failed': {
     generic: 'No se guardó un cambio',
-    reminder: 'No se guardó el recordatorio',
     'calendar-event': 'No se guardó el evento',
     'calendar-event-share': 'No se guardó el cambio al compartir el evento',
     camera: 'No se guardó la cámara',
@@ -82,7 +81,6 @@ export const common = {
     'user-invitation': 'No se guardó el cambio en la invitación',
     deleted: {
       generic: 'No se eliminó un elemento',
-      reminder: 'No se eliminó el recordatorio',
       'calendar-event': 'No se eliminó el evento',
       'calendar-event-share': 'No se dejó de compartir el evento',
       camera: 'No se eliminó la cámara',

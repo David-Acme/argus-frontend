@@ -4,7 +4,6 @@ import type {
   IPeopleDirectoryCacheRow,
   IProjectCacheRow,
   IProjectTaskCacheRow,
-  IReminderCacheRow,
 } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
 import type { DateFormatter } from '@/shared/hooks/use-date-formatter/date';
@@ -12,7 +11,6 @@ import { firstOccurrenceAfter, parseRecurrenceRule, zoneClock } from '@/shared/l
 import { foldText, type SearchEntry, type SearchKind } from './command-search';
 
 export type SearchRows = {
-  reminders: readonly Pick<IReminderCacheRow, 'id' | 'title' | 'scheduledAt' | 'isCompleted'>[];
   events: readonly IEventListCacheRow[];
   tasks: readonly Pick<IProjectTaskCacheRow, 'id' | 'projectId' | 'title' | 'status' | 'dueAt'>[];
   projects: readonly Pick<IProjectCacheRow, 'id' | 'name'>[];
@@ -43,16 +41,6 @@ export function nextEventAt(event: IEventListCacheRow, now: number): number {
 
 export function searchEntries(rows: SearchRows, now: number): SearchEntry[] {
   return [
-    ...rows.reminders
-      .filter((reminder) => !reminder.isCompleted)
-      .map((reminder) =>
-        entryOf({
-          kind: 'reminder',
-          id: reminder.id,
-          title: reminder.title,
-          at: reminder.scheduledAt,
-        })
-      ),
     ...rows.events.map((event) =>
       entryOf({
         kind: 'event',

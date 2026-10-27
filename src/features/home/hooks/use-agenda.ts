@@ -8,13 +8,7 @@ import { useNow } from '@/shared/hooks/use-now';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useAgendaActions, type AgendaActions } from '@/features/home/hooks/use-agenda-actions';
-import {
-  agendaItems,
-  byStart,
-  CALENDAR_LENSES,
-  projectNamesOf,
-  useReminders,
-} from '@/features/agenda';
+import { agendaItems, byStart, CALENDAR_LENSES, projectNamesOf } from '@/features/agenda';
 import type { WordingContext } from '@/features/home/model/agenda-wording';
 
 export type Agenda = {
@@ -36,9 +30,7 @@ export function useAgenda(): Agenda {
   const date = useDateFormatter();
   const now = useNow(MINUTE_MS);
   const { has } = useCapabilities();
-  const readsReminders = has(CAPABILITY.remindersRead);
   const readsAgenda = has(CAPABILITY.agendaRead);
-  const reminders = useReminders();
   const actions = useAgendaActions();
   const start = date.startOfDay(new Date(now));
   const next = date.addDays(start, 1);
@@ -62,13 +54,12 @@ export function useAgenda(): Agenda {
       ]
     : NONE;
   const items = agendaItems({
-    reminders: readsReminders ? reminders.rows : NONE,
     entries,
     projectNames: projectNamesOf(projects),
   });
 
   return {
-    visible: readsReminders || readsAgenda,
+    visible: readsAgenda,
     synced,
     items,
     today,

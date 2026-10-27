@@ -7,7 +7,7 @@ import { moduleActionResultSchema, moduleImpactSchema, readModuleList } from '@/
 import { envelopeSchema, HTTP_CONTRACTS } from '@/core/contracts/http.contract';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 import { readEnvelope } from '@/core/services/http/http-envelope';
-import { TABLE_MAPS, toModelProps } from '@/core/services/sync/entity-mappers';
+import { toModelProps } from '@/core/services/sync/entity-mappers';
 import { decidedPhase } from '@/features/auth/model/approve';
 
 type Probe = {
@@ -216,18 +216,6 @@ describe('backend fixtures honour the app contracts', () => {
     for (const probe of successesOf('GET /modules')) {
       const info = unmask(envelopeSchema.parse(probe.response.json).info);
       expect(readModuleList(info)?.length).toBeGreaterThan(0);
-    }
-  });
-
-  test('the reminder rows the backend recorded carry every field the sync mapper reads', () => {
-    const rows = [...successesOf('POST /reminder'), ...successesOf('PATCH /reminder/{1}')];
-    expect(rows.length).toBeGreaterThanOrEqual(3);
-    for (const probe of rows) {
-      const info = unmask(envelopeSchema.parse(probe.response.json).info) as Record<string, unknown>;
-      expect(Object.keys(TABLE_MAPS.reminder).filter((field) => !(field in info))).toEqual([]);
-      const props = toModelProps('reminder', info);
-      expect(props.targetUserId).toBe(String(info.targetUserId));
-      expect(props.title).toBe(info.title);
     }
   });
 

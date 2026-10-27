@@ -1,12 +1,12 @@
-import type { IReminderCacheRow } from '@/core/interfaces';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
+import { isOpenTask } from '@/shared/libs/task-progress';
 
 export type WeekRange = { from: Date; to: Date };
 
-export type WeekStats = { onTime: number; pending: number };
+export type WeekStats = { done: number; pending: number };
 
-type ReminderRow = Pick<IReminderCacheRow, 'scheduledAt' | 'isCompleted' | 'completedAt'>;
+type TaskRow = Pick<IProjectTaskCacheRow, 'status' | 'dueAt'>;
 
-const DAY_MS = 86_400_000;
 const WEEK_DAYS = 7;
 const SUNDAY = 0;
 
@@ -24,20 +24,10 @@ export function weekOf(now: Date): WeekRange {
 const within = (at: number, week: WeekRange): boolean =>
   at >= week.from.getTime() && at <= week.to.getTime();
 
-const endOfDay = (at: number): number => {
-  const day = new Date(at);
-  day.setHours(0, 0, 0, 0);
-  return day.getTime() + DAY_MS - 1;
-};
-
-const onTime = (row: ReminderRow): boolean =>
-  row.isCompleted && row.completedAt !== null && row.completedAt <= endOfDay(row.scheduledAt);
-
-export function weekStats(rows: readonly ReminderRow[], week: WeekRange): WeekStats {
+export function weekStats(rows: readonly TaskRow[], week: WeekRange): WeekStats {
+  const due = rows.filter((row) => row.dueAt !== null && within(row.dueAt, week));
   return {
-    onTime: rows.filter(
-      (row) => row.completedAt !== null && within(row.completedAt, week) && onTime(row)
-    ).length,
-    pending: rows.filter((row) => !row.isCompleted && within(row.scheduledAt, week)).length,
+    done: due.filter((row) => row.status === 'done').length,
+    pending: due.filter(isOpenTask).length,
   };
 }

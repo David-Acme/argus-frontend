@@ -13,7 +13,7 @@ import {
   scopesOf,
   taskCreate,
 } from '@/features/agenda/model/item-draft';
-import { at, date, entry, items, NOW, reminder } from '../home/agenda-fixtures';
+import { at, date, entry, items, NOW, task } from '../home/agenda-fixtures';
 
 const twelveHour = createDateFormatter('en', {
   languageTag: 'en-US',
@@ -30,24 +30,18 @@ describe('the hour timeline of Día', () => {
     const empty = dayHours({ items: [], range, now: NOW }, date);
     expect(empty.hours[0]).toBe(7);
     expect(empty.hours.at(-1)).toBe(20);
-    const early = dayHours(
-      { items: items([reminder('Correr', at(5, 30))]), range, now: NOW },
-      date
-    );
+    const early = dayHours({ items: items([task('Correr', at(5, 30))]), range, now: NOW }, date);
     expect(early.hours[0]).toBe(5);
   });
 
   test('overlapping events share the width and the now line sits at the clock', () => {
     const plan = dayHours(
       {
-        items: items(
-          [],
-          [
-            entry('event:a', at(9), { endsAt: at(10) }),
-            entry('event:b', at(9, 30), { endsAt: at(11) }),
-            entry('event:c', at(12), { endsAt: at(13) }),
-          ]
-        ),
+        items: items([
+          entry('event:a', at(9), { endsAt: at(10) }),
+          entry('event:b', at(9, 30), { endsAt: at(11) }),
+          entry('event:c', at(12), { endsAt: at(13) }),
+        ]),
         range,
         now: NOW,
       },
@@ -141,25 +135,23 @@ describe('the Nuevo draft', () => {
     });
   });
 
-  test('a recurring event asks «solo esta» or «toda la serie»; a single one and a reminder do not', () => {
-    const [single, argus, series] = items(
-      [reminder('Sacar la basura', at(20), { recurrenceRule: 'FREQ=WEEKLY' })],
-      [
-        entry('event:yoga', at(7), {
-          title: 'Yoga',
-          series: { rule: 'FREQ=WEEKLY', startsAt: at(7), endsAt: null },
-        }),
-        entry('event:cita', at(9), { title: 'Cita' }),
-      ]
-    ).sort((left, right) => left.title.localeCompare(right.title));
+  test('a recurring event asks «solo esta» or «toda la serie»; a single one and a task do not', () => {
+    const [single, chore, series] = items([
+      task('Sacar la basura', at(20)),
+      entry('event:yoga', at(7), {
+        title: 'Yoga',
+        series: { rule: 'FREQ=WEEKLY', startsAt: at(7), endsAt: null },
+      }),
+      entry('event:cita', at(9), { title: 'Cita' }),
+    ]).sort((left, right) => left.title.localeCompare(right.title));
     expect(scopesOf(series ?? null)).toEqual(['one', 'series']);
     expect(scopesOf(single ?? null)).toEqual([]);
-    expect(scopesOf(argus ?? null)).toEqual([]);
+    expect(scopesOf(chore ?? null)).toEqual([]);
     expect(scopesOf(null)).toEqual([]);
   });
 
   test('editing an event clears the place it no longer has', () => {
-    const [event] = items([], [entry('event:x', at(10), { endsAt: at(11), location: 'Casa' })]);
+    const [event] = items([entry('event:x', at(10), { endsAt: at(11), location: 'Casa' })]);
     if (!event) throw new Error('no event');
     const draft = { ...draftFrom(event, date), place: '' };
     expect(draft.end).toBe('11:00');

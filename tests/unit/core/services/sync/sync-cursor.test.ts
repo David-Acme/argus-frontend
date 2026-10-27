@@ -113,6 +113,11 @@ describe('normalizeCursors', () => {
     });
   });
 
+  test('a cursor stored for reminders, which left the sync, is dropped', () => {
+    const stored = { reminder: { createdStart: 5, projection: SYNC_PROJECTION_VERSION } } as SyncCursors;
+    expect(Object.keys(normalizeCursors(stored))).not.toContain('reminder');
+  });
+
   test('every table gets a cursor even when nothing was stored', () => {
     const cursors = normalizeCursors({});
     expect(Object.keys(cursors)).toEqual([...SYNC_TABLE_KEYS]);
@@ -178,18 +183,18 @@ describe('deleted baselines', () => {
   });
 
   test('a response marks the baseline and seeds an empty deletion start only', () => {
-    const cursors: SyncCursors = { camera: {}, reminder: { deletedStart: 5, deletedId: 1 } };
+    const cursors: SyncCursors = { camera: {}, project: { deletedStart: 5, deletedId: 1 } };
     applyDeletedBaselines(
-      ['camera', 'reminder', 'zone', 'person'],
+      ['camera', 'project', 'zone', 'person'],
       {
         camera: { created: [], deleted: [], lastSyncDate: { deleted: 77, deletedId: 4 } },
-        reminder: { created: [], deleted: [], lastSyncDate: { deleted: 99, deletedId: 8 } },
+        project: { created: [], deleted: [], lastSyncDate: { deleted: 99, deletedId: 8 } },
         zone: { created: [], deleted: [], lastSyncDate: { deleted: 0 } },
       },
       cursors
     );
     expect(cursors.camera).toEqual({ deletedBaseline: true, deletedStart: 77, deletedId: 4 });
-    expect(cursors.reminder).toEqual({ deletedBaseline: true, deletedStart: 5, deletedId: 1 });
+    expect(cursors.project).toEqual({ deletedBaseline: true, deletedStart: 5, deletedId: 1 });
     expect(cursors.zone).toEqual({ deletedBaseline: true });
     expect(cursors.person).toBeUndefined();
   });
@@ -214,22 +219,22 @@ describe('page rows and cursor advance', () => {
     }));
     const created: SyncCreatedRows = new Map([
       ['camera', full],
-      ['reminder', [{ id: 5, createdAt: 50 }]],
+      ['project', [{ id: 5, createdAt: 50 }]],
       ['zone', []],
     ]);
     const deleted: SyncDeletedRows = new Map([
       ['camera', []],
-      ['reminder', [{ id: 6, deletedAt: 60 }]],
+      ['project', [{ id: 6, deletedAt: 60 }]],
       ['zone', []],
     ]);
-    const cursors: SyncCursors = { reminder: { createdStart: 1, deletedBaseline: true } };
+    const cursors: SyncCursors = { project: { createdStart: 1, deletedBaseline: true } };
     const more = advanceRowCursors(created, deleted, cursors);
     expect(more).toEqual(['camera']);
     expect(cursors.camera).toEqual({
       createdStart: 1000 + SYNC_PAGE_SIZE - 1,
       createdId: SYNC_PAGE_SIZE,
     });
-    expect(cursors.reminder).toEqual({
+    expect(cursors.project).toEqual({
       createdStart: 50,
       createdId: 5,
       deletedBaseline: true,
@@ -244,6 +249,24 @@ describe('withoutTables', () => {
   test('forgets only the cursors of the dropped tables so they are pulled again', () => {
     const cursors = { camera: { createdAt: 5 }, zone: { createdAt: 6 }, project: { createdAt: 7 } } as never;
     expect(withoutTables(cursors, ['camera', 'zone'])).toEqual({ project: { createdAt: 7 } } as never);
+  });
+});
+
+describe('reminders are server-only', () => {
+  test('a synchronize never asks for reminder or reminder_detail', () => {
+    const asked = Object.keys(buildSyncDto(SYNC_TABLE_KEYS, {}));
+    expect(asked).not.toContain('reminder');
+    expect(asked).not.toContain('reminder_detail');
+  });
+
+  test('a live reminder frame is never grouped into a batch', () => {
+    expect(syncTableKeyOf('reminder')).toBeNull();
+    const { created, deleted } = groupLiveEvents([
+      { operation: SYNC_OPERATION.Add, option: 'reminder', info: { id: 1 } },
+      { operation: SYNC_OPERATION.Delete, option: 'reminder', info: { id: 1, deletedAt: 3 } },
+    ] as never);
+    expect(created.size).toBe(0);
+    expect(deleted.size).toBe(0);
   });
 });
 

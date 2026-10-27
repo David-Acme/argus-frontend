@@ -52,13 +52,13 @@ describe('recurrence exceptions', () => {
         title: 'Movida',
       },
     ]);
-    expect(toModelProps('reminder', { id: 5, recurrenceExceptions: '[]' }).recurrenceExceptions).toEqual([]);
-    expect(toModelProps('reminder', { id: 5 }).recurrenceExceptions).toEqual([]);
-    expect(toModelProps('reminder', { id: 5, recurrenceExceptions: 'not json' }).recurrenceExceptions).toEqual([]);
+    expect(toModelProps('calendar_event', { id: 5, recurrenceExceptions: '[]' }).recurrenceExceptions).toEqual([]);
+    expect(toModelProps('calendar_event', { id: 5 }).recurrenceExceptions).toEqual([]);
+    expect(toModelProps('calendar_event', { id: 5, recurrenceExceptions: 'not json' }).recurrenceExceptions).toEqual([]);
   });
 
   test('the local row stores them as JSON text and an audit diff replaces them whole', () => {
-    const raw = toDirtyRaw('reminder', {
+    const raw = toDirtyRaw('calendar_event', {
       id: 5,
       recurrenceExceptions: JSON.stringify([{ occurrence: 1790600400, cancelled: true }]),
     });

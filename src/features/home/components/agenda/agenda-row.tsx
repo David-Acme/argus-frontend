@@ -36,7 +36,6 @@ const TRAIL_TONE: Record<Urgency, TextTone> = { overdue: 'alert', now: 'ok', lat
 
 function Lead({ item, wording, actions }: LeadProps) {
   if (item.kind === 'event') return <Avatar icon="cal" tone="event" size="mark" />;
-  if (item.kind === 'reminder') return <Avatar icon="bell" tone="accent" size="mark" />;
   const { t, now } = wording;
   const label = t(
     item.done ? 'screens.home.agenda-sections.reopen' : 'screens.home.agenda-sections.complete',

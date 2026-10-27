@@ -32,7 +32,7 @@ type RestProps = { items: readonly AgendaItem[]; context: ListContext };
 type Fact = { key: string; icon?: IconGlyph; title: string; meta: string };
 
 const ownerName = (item: AgendaItem, { owners }: ListContext): string | null =>
-  item.origin.kind === 'entry' ? (owners.get(item.origin.entry.ownerId ?? '') ?? null) : null;
+  owners.get(item.entry.ownerId ?? '') ?? null;
 
 function moreItems({ item, context, handlers }: PartProps): MenuItem[] {
   const { actions, t } = context;
@@ -84,14 +84,6 @@ function Actions(part: PartProps) {
           compact
         />
       ) : null}
-      {item.kind === 'reminder' ? (
-        <Button
-          label={t('screens.agenda.detail.ask')}
-          icon="mic"
-          onPress={() => context.onOpen(item)}
-          compact
-        />
-      ) : null}
       <More {...part} />
     </View>
   );
@@ -100,8 +92,7 @@ function Actions(part: PartProps) {
 function factRows(item: AgendaItem, context: ListContext, t: TranslateFn): Fact[] {
   const repeat = recurrenceLabel(item.repeat, t);
   const owner = categoryOf(item, context.viewer) === 'shared' ? ownerName(item, context) : null;
-  const notes =
-    item.origin.kind === 'reminder' ? item.origin.row.description : item.origin.entry.description;
+  const notes = item.entry.description;
   const rows: (Fact | null)[] = [
     item.place
       ? { key: 'place', icon: 'pin', title: item.place, meta: t('screens.agenda.detail.place') }

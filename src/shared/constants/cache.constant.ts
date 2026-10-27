@@ -1,5 +1,7 @@
 export const VIEW_CACHE_PREFIX = 'view.cache.v2.';
 
+export const RETIRED_VIEW_CACHE_KEYS = ['reminder.list'] as const;
+
 export const VIEW_CACHE_PAGE_SIZE = 40;
 
 export const VIEW_CACHE_LIST_LIMIT = 1000;
@@ -18,7 +20,6 @@ export const NOTIFICATION_FEED_SCOPE = 'all';
 export const EMPTY_DASHBOARD_SUMMARY = {
   camerasTotal: 0,
   camerasOnline: 0,
-  remindersPending: 0,
   projectsActive: 0,
   tasksOpen: 0,
 } as const;
@@ -37,7 +38,6 @@ export const VIEW_CACHE_KEYS = {
   cameraEvents: 'camera.events',
   calendarEntries: 'calendar.entries',
   eventList: 'event.list',
-  reminderList: 'reminder.list',
   projectList: 'project.list',
   projectTasks: 'project.tasks',
   taskList: 'task.list',

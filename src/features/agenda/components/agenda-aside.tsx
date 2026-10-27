@@ -32,14 +32,12 @@ type MonthCardProps = Pick<AgendaAsideProps, 'month'>;
 type FreeProps = { gaps: readonly FreeGap[]; context: ListContext };
 
 const SWATCH: Record<Category, string> = {
-  reminder: 'bg-ev1-bar',
   event: 'bg-ev3-bar',
   task: 'bg-ev2-bar',
   shared: 'bg-ev4-bar',
 };
 
 const SHOW_LABEL: Record<Category, TranslationKey> = {
-  reminder: 'screens.agenda.aside.show-reminder',
   event: 'screens.agenda.aside.show-event',
   task: 'screens.agenda.aside.show-task',
   shared: 'screens.agenda.aside.show-shared',

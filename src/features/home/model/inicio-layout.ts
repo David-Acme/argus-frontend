@@ -12,7 +12,6 @@ export type InicioSection =
   | 'people'
   | 'projects'
   | 'clips'
-  | 'reminders'
   | 'watch'
   | 'system'
   | 'help'
@@ -91,7 +90,6 @@ function widePlans(reads: InicioReads): ColumnPlan[] {
         ...when(reads.people, 'people'),
         ...when(reads.agenda, 'projects'),
         ...when(reads.cameras, 'clips'),
-        ...when(reads.agenda, 'reminders'),
         ...when(reads.system, 'system'),
         ...when(reads.sparse, 'help', 'try'),
       ],

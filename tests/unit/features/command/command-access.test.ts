@@ -15,14 +15,7 @@ const entry = (patch: Partial<SearchEntry> & Pick<SearchEntry, 'kind'>): SearchE
 describe('command access', () => {
   test('an owner with both modules searches everything, creates everything and jumps to the five sections', () => {
     const access = commandAccess(viewFor('owner'), true);
-    expect([...access.search].sort()).toEqual([
-      'camera',
-      'event',
-      'person',
-      'project',
-      'reminder',
-      'task',
-    ]);
+    expect([...access.search].sort()).toEqual(['camera', 'event', 'person', 'project', 'task']);
     expect(access.create).toEqual(['reminder', 'event', 'task', 'project']);
     expect(access.sections.map(({ key, shortcut }) => `${shortcut}:${key}`)).toEqual([
       '1:home',
@@ -41,7 +34,7 @@ describe('command access', () => {
 
   test('a module that is off takes its results, its actions and its section away, and the shortcuts close up', () => {
     const access = commandAccess(viewFor('owner', { modules: ['surveillance'] }), true);
-    expect([...access.search].sort()).toEqual(['camera', 'person', 'reminder']);
+    expect([...access.search].sort()).toEqual(['camera', 'person']);
     expect(access.create).toEqual(['reminder']);
     expect(access.sections.map(({ key, shortcut }) => `${shortcut}:${key}`)).toEqual([
       '1:home',
@@ -49,12 +42,11 @@ describe('command access', () => {
       '3:argus',
       '4:you',
     ]);
-    expect(access.agenda).toBe(false);
   });
 
-  test('a guard reads the directory and the cameras but no agenda and creates only reminders', () => {
+  test('a guard reads the directory and the cameras but no agenda, and only asks Argus for reminders', () => {
     const access = commandAccess(viewFor('guard'), true);
-    expect([...access.search].sort()).toEqual(['camera', 'person', 'reminder']);
+    expect([...access.search].sort()).toEqual(['camera', 'person']);
     expect(access.create).toEqual(['reminder']);
     expect(access.people).toBe('/people');
   });
@@ -76,18 +68,11 @@ describe('command access', () => {
   });
 
   test('each result opens its own screen', () => {
-    const open = { agenda: true, people: '/users' as const };
+    const open = { people: '/users' as const };
     expect(entryHref(entry({ kind: 'event', at: 1000 }), open)).toEqual({
       pathname: '/agenda',
       params: { at: '1000' },
     });
-    expect(entryHref(entry({ kind: 'reminder', at: 1000 }), open)).toEqual({
-      pathname: '/agenda',
-      params: { at: '1000' },
-    });
-    expect(entryHref(entry({ kind: 'reminder', at: 1000 }), { agenda: false, people: null })).toBe(
-      '/'
-    );
     expect(entryHref(entry({ kind: 'task', parentId: '3' }), open)).toEqual({
       pathname: '/projects',
       params: { id: '3', task: '7' },

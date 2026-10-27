@@ -1,16 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { nowList } from '@/features/agenda/model/agenda-items';
-import {
-  at,
-  entry,
-  items,
-  NOW,
-  prototypeDay,
-  reminder,
-  t,
-  TODAY,
-  wording,
-} from './agenda-fixtures';
+import { at, entry, items, NOW, prototypeDay, t, task, TODAY, wording } from './agenda-fixtures';
 
 mock.module('@/features/agenda', () => import('@/features/agenda/model/agenda-items'));
 
@@ -26,7 +16,7 @@ const byTitle = (title: string) => {
 describe('how Inicio words an agenda row', () => {
   test('time-to-go reads hace, ahora and en in minutes, hours and days', () => {
     const say = (startsAt: number) => {
-      const [item] = items([reminder('x', startsAt)]);
+      const [item] = items([task('x', startsAt)]);
       const value = timeToGo(item!, NOW);
       return value ? timeToGoText(value, t) : null;
     };
@@ -39,7 +29,7 @@ describe('how Inicio words an agenda row', () => {
 
   test('an ongoing event is now, and an all-day or done item has no time-to-go', () => {
     expect(timeToGoText(timeToGo(byTitle('Reunión con el arquitecto'), NOW)!, t)).toBe('ahora');
-    const [allDay] = items([], [entry('event:a', at(0), { isAllDay: true })]);
+    const [allDay] = items([entry('event:a', at(0), { isAllDay: true })]);
     expect(timeToGo(allDay!, NOW)).toBeNull();
     expect(timeToGo(byTitle('Yoga'), NOW)).toBeNull();
   });
@@ -66,7 +56,7 @@ describe('how Inicio words an agenda row', () => {
   });
 
   test('an overdue item from another day names its day', () => {
-    const [old] = items([reminder('x', at(10, 0, -2))]);
+    const [old] = items([task('x', at(10, 0, -2))]);
     expect(itemMeta(old!, 'now', wording)).toBe('Atrasado · Lun 19 · 10:00');
   });
 
@@ -75,15 +65,14 @@ describe('how Inicio words an agenda row', () => {
       '14:30 – 16:00 · en curso'
     );
     expect(itemMeta(byTitle('Pagar la luz'), 'day', wording)).toBe('17:00 · cada mes');
-    const [allDay] = items(
-      [],
-      [entry('event:a', at(0, 0, 1), { isAllDay: true, location: 'Clínica' })]
-    );
+    const [allDay] = items([
+      entry('event:a', at(0, 0, 1), { isAllDay: true, location: 'Clínica' }),
+    ]);
     expect(itemMeta(allDay!, 'day', wording)).toBe('Todo el día');
     expect(itemMeta(allDay!, 'now', wording)).toBe('Todo el día · Clínica');
   });
 
-  test('upcoming reminders name tomorrow or the weekday and date', () => {
+  test('a day and time names today, tomorrow or the weekday and date', () => {
     expect(dayAndTime(at(9, 0, 1), wording)).toBe('Mañana · 09:00');
     expect(dayAndTime(at(9, 0, 2), wording)).toBe('Vie 23 · 09:00');
     expect(dayAndTime(at(17), wording)).toBe('Hoy 17:00');

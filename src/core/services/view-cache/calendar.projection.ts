@@ -1,7 +1,6 @@
 import type {
   ICalendarEventCacheSource,
   IProjectTaskCalendarCacheSource,
-  IReminderCacheSource,
 } from '@/core/interfaces';
 import type {
   AgendaStatus,
@@ -30,11 +29,8 @@ import {
 import { endOfDay, startOfDay } from './dates';
 import type { ProjectionContext, ViewWrite } from './projection';
 
-export type CalendarReminder = Pick<IReminderCacheSource, 'id' | 'title' | 'scheduledAt' | 'isCompleted'>;
-
 export type CalendarProjectionInput = {
   events: readonly ICalendarEventCacheSource[];
-  reminders: readonly CalendarReminder[];
   tasks: readonly IProjectTaskCalendarCacheSource[];
   series?: readonly ICalendarEventCacheSource[];
   zone?: string | null;
@@ -158,24 +154,9 @@ export const calendarMonthRange = (value: Date): Range => ({
 });
 
 export const toCalendarEntries = (input: CalendarProjectionInput, { from, to }: Range): CalendarEntry[] => {
-  const { reminders, tasks } = input;
   const entries = eventEntries(input, { from, to });
 
-  for (const reminder of reminders) {
-    const startsAt = reminder.scheduledAt.getTime();
-    if (startsAt < from || startsAt > to) continue;
-    entries.push({
-      id: `reminder:${reminder.id}`,
-      source: 'reminder',
-      title: reminder.title,
-      startsAt,
-      endsAt: null,
-      isAllDay: false,
-      status: reminder.isCompleted ? 'complete' : 'upcoming',
-    });
-  }
-
-  for (const task of tasks) {
+  for (const task of input.tasks) {
     if (!task.dueAt) continue;
     const startsAt = task.dueAt.getTime();
     if (startsAt < from || startsAt > to) continue;
@@ -216,10 +197,6 @@ function eventStateAt(entry: CalendarEntry, now: number): CalendarEntryState {
 
 export function calendarEntryState(entry: CalendarEntry, now: number): CalendarEntryState {
   if (entry.source === 'task') return TASK_STATE[entry.status];
-  if (entry.source === 'reminder') {
-    if (entry.status === 'complete') return 'done';
-    return now < entry.startsAt ? 'upcoming' : 'overdue';
-  }
   return eventStateAt(entry, now);
 }
 

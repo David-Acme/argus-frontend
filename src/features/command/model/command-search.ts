@@ -1,4 +1,4 @@
-export type SearchKind = 'reminder' | 'event' | 'task' | 'project' | 'person' | 'camera';
+export type SearchKind = 'event' | 'task' | 'project' | 'person' | 'camera';
 
 export type SearchGroup = 'agenda' | 'projects' | 'people' | 'cameras';
 
@@ -17,7 +17,6 @@ export type SearchMatches = { group: SearchGroup; entries: readonly SearchEntry[
 export const SEARCH_GROUP_LIMIT = 5;
 
 const GROUP_OF: Readonly<Record<SearchKind, SearchGroup>> = {
-  reminder: 'agenda',
   event: 'agenda',
   task: 'agenda',
   project: 'projects',

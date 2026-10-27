@@ -26,7 +26,7 @@
 | Media | `expo-camera` (barcode/QR + face capture, mobile), `expo-audio`, `react-native-svg` + `qrcode` (QR rendering y avatar procedural). `@shopify/react-native-skia` eliminado (2026-10: dependencia, `postinstall` y `public/canvaskit.wasm`) |
 | Platform | `common.constant.ts` → `IS_WEB` / `IS_NATIVE` / `IS_ANDROID` / `IS_IOS` / `IS_TAURI` |
 | State | Zustand v5 — 8 stores: `auth`, `avatar`, `locale`, `onboarding`, `navigation`, `qr-scan`, `toast`, `confirm` |
-| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 13 tables mirroring the role-scoped backend sync surface |
+| Local DB | **WatermelonDB 0.28** — `SQLiteAdapter` (JSI) on native, `LokiJSAdapter` (IndexedDB) on web/Tauri; 12 tables mirroring the role-scoped backend sync surface |
 | Storage | `react-native-mmkv` (native) / localStorage (web) via `storageService`; **secrets** (caPem, JWT) via `secureStorageService` (`expo-secure-store` on mobile / `keyring` crate on Tauri) |
 | Icons | `lucide-react-native` — **centralized** in `icon.constant.ts` only |
 | i18n | Custom engine (`core/i18n`): typed keys, `useTranslation()` + imperative `t()`, `useLocaleStore` |
@@ -389,9 +389,9 @@ projections subscribe to those observables; screens read MMKV snapshots.
 
 ### Schema decisions
 
-- **13 tables** = the synced half of the backend's table surface
+- **12 tables** = the synced half of the backend's table surface
   (`SYNC_TABLE_KEYS` in `core/types/sync.type.ts`): `user`, `user_invitation`,
-  `camera`, `zone`, `reminder`, `calendar_event`, `calendar_event_share`,
+  `camera`, `zone`, `calendar_event`, `calendar_event_share`,
   `project`, `project_member`, `project_task`, `person`, `notification`,
   `conversation_message` (schema v15, "Conversations and the messenger"). The
   backend's `event` table has no local table any more and is not pulled
@@ -400,7 +400,8 @@ projections subscribe to those observables; screens read MMKV snapshots.
   went the same way (schema v11 drops both, a stray row included): neither has
   a writer on the server, and the camera row no longer carries a stream
   resolution. The backend keeps serving all three only for apps already
-  installed (the plan's D8). `context_note` has no local table either (not
+  installed (the plan's D8). `reminder` went in schema v18 (2026-10-27,
+  "Reminders are server-only" below). `context_note` has no local table either (not
   synced). `person` carries household persons only, live: identity sends an
   `Add` with the household row on enrolment and a field diff on every update,
   in the same eleven fields the pull serves; visitors never travel in it.
@@ -419,7 +420,7 @@ projections subscribe to those observables; screens read MMKV snapshots.
   `updatedAt`: `prepareUpdate()` touches `updated_at` whenever that property
   exists and `RawRecord._setRaw` destructures the missing column schema →
   TypeError on the first local update.
-- Relations only toward `camera` / `reminder`. Toward `user` only the raw id: role
+- Relations only toward `camera` / `project`. Toward `user` only the raw id: role
   filtering can leave that row absent locally and `Relation.fetch()` throws.
 - `tables/{domain}.table.ts` holds schema **and** model together (lynk splits them
   across 24+24 files and the contract between them is checked by eye), and
@@ -3876,10 +3877,8 @@ always visible.
 
 ### Reminders on Inicio
 
-`features/reminders`: pending first and overdue marked, done ones folded,
-create, edit, complete and delete (undo toast) through `/reminder`, optimistic.
-The projection `reminder.list` is core and never gated. The agenda keeps
-showing reminders with productivity; Inicio's Today no longer repeats them.
+None since 2026-10-27: reminders are Argus's server-side memory and the app
+keeps no copy ("Reminders are server-only" below). Inicio offers asking Argus.
 
 ### Impact, requests, invitations and the activity
 
@@ -5664,6 +5663,7 @@ many files; the reason names that cause.
 | `scripts/lib/bundle-baseline.txt` | `entry-chunk-bytes`, `dist-bytes` | Lead merge of `p2/inicio` (a22c419e), measured on the integrated tree: entry 6,444,328 → 6,502,624 B (+58,296) and `dist/` 8,922,342 → 8,945,214 B (+22,872). Inicio is the eager first screen, so its new composition, hero, states, «Esta noche», Estado and the help/try sections load with the entry; the entry stays 97,376 B under R-D36's 6,600,000 B ceiling. | 2026-10-26 |
 | `eslint-suppressions.json` | `src/features/cameras/hooks/use-form-submit.ts argus/http-home` | `p4/proyectos`: the old project and task forms were the other consumers of `shared/hooks/use-form-submit.ts`; with them gone the camera setup is its only reader, so the hook moves into `features/cameras` (the 2+ rule) with its one existing `http-home` suppression, unchanged in count. | 2026-10-26 |
 | `scripts/lib/quality-baseline.txt` | `is-flag-in-features` | The same move: the hook's existing `IS_WEB` check (no keyboard to dismiss on the web) now counts as a feature's. Nothing new is branched; the shared count falls by the same one. | 2026-10-26 |
+| `scripts/lib/quality-baseline.txt` | `scanned-files` (floor) | `f/reminders-server-only`: reminders left the app (owner decision 2026-10-26), and with them five source files and their test: the `reminder` table, the `reminder.list` projection, `useReminders`, the reminder lens and the Próximos recordatorios section. The floor follows the tree, 2,101 → 2,095; nothing else stopped being scanned. | 2026-10-27 |
 
 
 ## The overlay components, Phase 1 (2026-10-20, p1/ds-d)
@@ -6600,14 +6600,15 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
   computed against the moment the palette opened (`openedAt` in the store), not
   a ticking clock, so a mounted palette does not recompute every minute.
 - **Local first.** Results come from the view cache only, with no query per
-  keystroke: reminders (`reminder.list`), events (`event.list`, new: the 1000
+  keystroke: events (`event.list`, new: the 1000
   latest by start through `calendarEventService.observeLatest`, gated by the
   productivity module like every other productivity source), tasks
   (`task.list`, new: the flat list the project projection already builds per
   project, written once more so one hook can read every task), projects, the
   people directory and cameras. Each title is folded once (NFD, marks removed,
   lower case) when the entries are built; a keystroke only compares strings.
-  A recurring event is found at its next occurrence.
+  A recurring event is found at its next occurrence. Reminders are never a
+  result: the app keeps none (2026-10-27).
 - **Ranking** (`model/command-search.ts`): a title that starts with the query,
   then one with a word that starts with it, then one that contains it; ties go
   to the nearest upcoming, then the most recent past, then the undated; five
@@ -6638,8 +6639,8 @@ sidebar's ⌘K field, Inicio's search button and «Nuevo» call.
 ## Inicio's agenda sections (2026-10-26, Phase 2 T5, p2/inicio-agenda)
 
 `src/features/home/components/agenda/` holds `NowSection` (Ahora),
-`TodaySection` (Hoy), `TomorrowSection` (Mañana), `ProjectsSection` (Proyectos)
-and `UpcomingRemindersSection` (Próximos recordatorios). Each takes no props,
+`TodaySection` (Hoy), `TomorrowSection` (Mañana) and `ProjectsSection`
+(Proyectos); `UpcomingRemindersSection` went on 2026-10-27. Each takes no props,
 owns its hook and switches on `useInScreenColumn()`; T4 composes them.
 
 **Where the data comes from, all local.** `useAgenda` reads `reminder.list`
@@ -7293,7 +7294,7 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
   caches of the selected month and the next (the paged agenda feed went with
   the old Agenda view). Overdue first, then all-day, then by time, with the free
   slots of `dayTimeline` between them. A line is time | 4 px bar | title and
-  meta | repeat and check: the bar is `ev1-bar` reminders, `ev3-bar` events,
+  meta | repeat and check: the bar is `ev3-bar` events,
   `ev2-bar` tasks, `ev4-bar` events shared with you, red overdue, dashed for an
   event series and dotted for a free slot (segments, never a gradient). The
   bar colours are the prototype's `--ev*b`, added to `tokens.ts`.
@@ -7307,14 +7308,12 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
   clock (`parseClock` reads 24 h, 12 h, «930», «9.30»), which removes the
   12 h / 24 h mismatch between grid and forms (A12).
 - **Reminders are Argus's memory** (owner decision, 2026-10-26). The app never
-  creates, edits, completes, snoozes or deletes a reminder: there is no reminders
-  section and no reminder dialog, and the suggestion chips and Command's
-  «Pedirle a Argus que me recuerde…» open the Argus thread with a draft. Argus's
-  pending reminders show read-only in the Agenda list and in Inicio's Ahora (a
-  bell, no check, no menu), and a tap opens the thread asking about one. Whether
-  they show at all is one flag, `ARGUS_REMINDERS_SHOWN` in
-  `features/agenda/constants/agenda.constant.ts`, read by `agendaItems`; the
-  owner's answer is a one-line change.
+  creates, edits, completes, snoozes or deletes a reminder from a list: there is
+  no reminders section and no reminder dialog, and the suggestion chips and
+  Command's «Pedirle a Argus que me recuerde…» open the Argus thread with a
+  draft. The Agenda and Inicio's Ahora show events and tasks only; the
+  read-only reminder rows and their `ARGUS_REMINDERS_SHOWN` flag went with the
+  local table ("Reminders are server-only" below).
 - **Short phones** (`height-layout.ts`): a form sheet opens near full height and
   scrolls on a short or landscape window (`sheetDetentsOf`, `sheetScrolls`), the
   week strip drops its grab handle and the month uses small discs, so the list
@@ -7322,14 +7321,56 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
 - **«por Argus».** An event or a task Argus made ends its line's meta with
   «por Argus», also when it is late: `calendar_event.created_via` and
   `project_task.created_via` (schema v17) reach the month caches as the
-  entry's `createdVia`, read by `madeByArgus`. Reminders are all Argus's and
-  say nothing more.
-- **Slices.** The reminders slice merged into agenda: agenda reads
-  `useReminders` and reminders read agenda's day picker, which would close a
-  slice cycle. Inicio's agenda models moved here; the types they share live in
+  entry's `createdVia`, read by `madeByArgus`.
+- **Slices.** The reminders slice merged into agenda, and left with the local
+  table on 2026-10-27. Inicio's agenda models moved here; the types they share live in
   `core/types/agenda.type.ts` and `FREE_SLOT_RULES` in the calendar constants.
   The event share dialog is still the legacy one, opened from the detail's
   «Más acciones».
+
+## Reminders are server-only (2026-10-27, f/reminders-server-only)
+
+Owner decision 2026-10-26: reminders are Argus's server-side memory. The app
+neither stores nor shows them; the backend contract is B-reminders
+(`services/sync/CONTEXT.md`, "Reminders are server-only").
+
+- **Local storage.** Schema v18 drops the `reminder` table and with it every
+  local row (`unsafeExecuteSql('drop table if exists "reminder";')`; the
+  migration test plays a v17 database with a reminder and a notification and
+  checks the table goes and the notification stays). LokiJS ignores `sql`
+  steps, so the web and the desktop purge the retired collections themselves:
+  `database.web.ts` runs `findAndRemove()` on each name in `RETIRED_TABLES`
+  (`event`, `camera_stream`, `reminder_detail`, `reminder`) through the
+  adapter's `unsafeExecute`, which removes row by row so the incremental
+  IndexedDB adapter saves it.
+- **Sync.** `reminder` left `SYNC_TABLE_KEYS`, so a Synchronize never names it
+  (nor `reminder_detail`), a stored cursor for it is dropped by
+  `normalizeCursors`, a live Add/Delete/Log for it is ignored
+  (`syncTableKeyOf`) and an old reminder diff patches nothing
+  (`toAuditPatch`). `TableName` lost it with `ModelMap`; the activity journal's
+  `tableName: "reminder"` entries read as strings and keep displaying.
+- **View cache.** `reminder.list` and the reminder half of the calendar and
+  summary projections went (`DashboardSummary.remindersPending` too).
+  `RETIRED_VIEW_CACHE_KEYS` names the old key and the coordinator's `start`
+  forgets it for every user (`viewCacheService.forget`), so no reminder title
+  stays in storage.
+- **What stays.** `reminderService` keeps the two routes the app calls,
+  `PATCH /reminder/{id}` (`{isCompleted: true}`) and `POST /reminder/{id}/snooze`,
+  for the reminder call's «En 10 min» and the missed call's «Marcar hecho»; the
+  capabilities `reminders.read`/`reminders.write`, the reminder call category
+  and `reminderId`, the `memory.remind` result card and every «Pedirle a Argus
+  que me recuerde…» path.
+- **Inicio.** Ahora, Hoy and Mañana are events and tasks; Próximos
+  recordatorios went. The new-household step «Pide tu primer recordatorio»
+  asks Argus with «Recuérdame » (it needs `reminders.write` and
+  `messages.relay`) instead of opening the new-item actions. The wide band's
+  «pendientes» stat counts the open tasks (`tasksOpen`, `agenda.read`), and a
+  household counts as new or sparse by cameras, projects and open tasks.
+- **Tú.** «Esta semana» counted reminders; it now counts the tasks due this
+  week in `task.list`: done ones and open ones (`weekStats`), gated by
+  `project_task` read. An open question for the owner.
+- **Command** never searches reminders; «Pedirle a Argus que me recuerde…»
+  stays.
 
 ## Bienvenida y acceso (P7, 2026-10-26, p7/onboarding)
 

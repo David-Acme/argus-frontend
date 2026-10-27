@@ -8,7 +8,7 @@ import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
 import { agendaMenu, agendaRights } from '@/features/agenda/model/agenda-actions';
 import { screenFocus } from '../../shared/ui/screen-focus';
 import '../../shared/ui/translation-stub';
-import { at, items, prototypeDay, reminder, TODAY, TOMORROW, wording } from './agenda-fixtures';
+import { at, items, prototypeDay, task, TODAY, TOMORROW, wording } from './agenda-fixtures';
 
 type Calls = {
   toggled: string[];
@@ -81,8 +81,6 @@ const { NowSection } = await import('@/features/home/components/agenda/now-secti
 const { TodaySection } = await import('@/features/home/components/agenda/today-section');
 const { TomorrowSection } = await import('@/features/home/components/agenda/tomorrow-section');
 const { ProjectsSection } = await import('@/features/home/components/agenda/projects-section');
-const { UpcomingRemindersSection } =
-  await import('@/features/home/components/agenda/upcoming-reminders-section');
 const { AgendaRow } = await import('@/features/home/components/agenda/agenda-row');
 const { AgendaEmpty } = await import('@/features/home/components/agenda/agenda-empty');
 const { FreeRow } = await import('@/features/home/components/agenda/free-row');
@@ -120,9 +118,10 @@ describe('Ahora', () => {
     expect(screen.queryByText('Clase de guitarra')).toBeNull();
   });
 
-  test('Argus manages reminders: they have no check, and a tap opens them through Argus', () => {
+  test('a task completes from its check, and a tap opens its row', () => {
     render(<NowSection />);
-    expect(screen.queryByRole('checkbox')).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar «Pagar la luz» como hecho' }));
+    expect(calls.toggled).toEqual(['Pagar la luz']);
     fireEvent.click(rowNamed('Pagar la luz'));
     fireEvent.click(rowNamed('Reunión con el arquitecto'));
     expect(calls.opened).toEqual(['Pagar la luz', 'Reunión con el arquitecto']);
@@ -190,7 +189,7 @@ describe('Hoy and Mañana', () => {
     expect(within(section).getByText('16:00 – 17:00')).toBeDefined();
     expect(within(section).getByText('19:00 – 21:00')).toBeDefined();
     expect(within(section).getByText('14:30 – 16:00 · en curso')).toBeDefined();
-    expect(screen.queryByRole('checkbox', { name: 'Marcar «Yoga» como pendiente' })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: 'Marcar «Yoga» como pendiente' })).toBeDefined();
     fireEvent.click(screen.getByRole('link', { name: 'Agenda' }));
     expect(calls.pushed).toEqual(['/agenda']);
   });
@@ -210,31 +209,9 @@ describe('Hoy and Mañana', () => {
     expect(rowNamed('Pagar el agua').getAttribute('aria-label')).toBe('Pagar el agua, 09:00');
     expect(screen.queryByText('Pagar la luz')).toBeNull();
     first.unmount();
-    state.agenda = agenda(items([reminder('hoy', at(20))]));
+    state.agenda = agenda(items([task('hoy', at(20))]));
     render(inColumn(<TomorrowSection />));
     expect(screen.getByText('Día libre')).toBeDefined();
-  });
-});
-
-describe('Próximos recordatorios', () => {
-  const upcoming = () => items([1, 2, 3, 4, 5, 6].map((day) => reminder(`r${day}`, at(9, 0, day))));
-
-  test('the phone card shows three and the desktop column five, from tomorrow on', () => {
-    state.agenda = agenda(upcoming());
-    const first = render(<UpcomingRemindersSection />);
-    expect(screen.getByRole('heading', { name: 'Próximos recordatorios' })).toBeDefined();
-    expect(rowNamed('r1').getAttribute('aria-label')).toBe('r1, Mañana · 09:00');
-    expect(screen.getAllByRole('button')).toHaveLength(3);
-    first.unmount();
-    render(inColumn(<UpcomingRemindersSection />));
-    expect(screen.getAllByRole('button')).toHaveLength(5);
-    fireEvent.click(rowNamed('r2'));
-    expect(calls.opened).toEqual(['r2']);
-  });
-
-  test('nothing ahead renders nothing', () => {
-    state.agenda = agenda(items([reminder('hoy', at(20))]));
-    expect(render(<UpcomingRemindersSection />).container.textContent).toBe('');
   });
 });
 
@@ -310,10 +287,10 @@ describe('the agenda row pieces', () => {
     menuOf: () => [],
   };
 
-  test('a reminder row is read-only: no check, no menu, and a tap asks Argus about it', () => {
+  test('a read-only task row shows its state and no menu, and a tap opens it', () => {
     const plumber = prototypeDay().find((item) => item.title === 'Llamar al plomero')!;
     render(<AgendaRow item={plumber} place="now" wording={wording} actions={readOnly} />);
-    expect(screen.queryByRole('checkbox')).toBeNull();
+    expect(screen.getByRole('checkbox')).toBeDefined();
     fireEvent.click(rowNamed('Llamar al plomero'));
     expect(calls.opened).toEqual(['Llamar al plomero']);
     expect(calls.toggled).toEqual([]);

@@ -1,3 +1,5 @@
 export const DATABASE_NAME = 'argus';
 
-export const SCHEMA_VERSION = 17;
+export const SCHEMA_VERSION = 18;
+
+export const RETIRED_TABLES = ['event', 'camera_stream', 'reminder_detail', 'reminder'] as const;

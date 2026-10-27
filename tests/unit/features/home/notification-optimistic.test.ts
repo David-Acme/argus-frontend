@@ -81,7 +81,7 @@ describe('notification delete intents', () => {
 
   test('an intent of another table never touches the feed', () => {
     const intents = registry();
-    intents.begin({ table: 'reminder', kind: 'delete', recordId: '20' });
+    intents.begin({ table: 'project_task', kind: 'delete', recordId: '20' });
     expect(applyIntents(feed, intents.snapshot(), NOTIFICATION_LENSES)).toBe(feed);
   });
 });

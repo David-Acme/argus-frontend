@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { AgendaItem, DashboardProjectCard } from '@/core/types';
-import { at, date, entry, items, NOW, reminder } from '../../home/agenda-fixtures';
+import { at, date, entry, items, NOW, task } from '../../home/agenda-fixtures';
 import '../../../shared/ui/translation-stub';
 import { setWindowWidth } from '../../../shared/ui/window-width';
 
@@ -33,40 +33,38 @@ const project: DashboardProjectCard = {
 };
 
 const busyDay = (): AgendaItem[] =>
-  items(
-    [
-      reminder('Pagar la luz', at(11)),
-      reminder('Sacar la basura', at(20), { recurrenceRule: 'FREQ=WEEKLY' }),
-    ],
-    [
-      entry('event:tecnico', at(16, 30), {
-        title: 'Llamar al técnico',
-        endsAt: at(17),
-        location: 'Casa',
-        ownerId: '1',
-      }),
-      entry('event:cena', at(21), { title: 'Cena con Luis', endsAt: at(22), ownerId: '2' }),
-      entry('event:daily', at(8), {
-        title: 'Daily',
-        endsAt: at(8, 30),
-        ownerId: '1',
-        series: { rule: 'FREQ=DAILY', startsAt: at(8), endsAt: null },
-        id: 'event:daily@2026-10-21T13:00:00.000Z',
-      }),
-      entry('task:cajas', at(0), {
-        title: 'Comprar cajas',
-        source: 'task',
-        isAllDay: true,
-        projectId: '7',
-        createdVia: 'assistant',
-      }),
-      entry('event:gasfitero', at(9, 0, 1), {
-        title: 'Gasfitero',
-        endsAt: at(10, 0, 1),
-        ownerId: '1',
-      }),
-    ]
-  );
+  items([
+    task('Pagar la luz', at(11)),
+    task('Sacar la basura', at(20), {
+      series: { rule: 'FREQ=WEEKLY', startsAt: at(20), endsAt: null },
+    }),
+    entry('event:tecnico', at(16, 30), {
+      title: 'Llamar al técnico',
+      endsAt: at(17),
+      location: 'Casa',
+      ownerId: '1',
+    }),
+    entry('event:cena', at(21), { title: 'Cena con Luis', endsAt: at(22), ownerId: '2' }),
+    entry('event:daily', at(8), {
+      title: 'Daily',
+      endsAt: at(8, 30),
+      ownerId: '1',
+      series: { rule: 'FREQ=DAILY', startsAt: at(8), endsAt: null },
+      id: 'event:daily@2026-10-21T13:00:00.000Z',
+    }),
+    entry('task:cajas', at(0), {
+      title: 'Comprar cajas',
+      source: 'task',
+      isAllDay: true,
+      projectId: '7',
+      createdVia: 'assistant',
+    }),
+    entry('event:gasfitero', at(9, 0, 1), {
+      title: 'Gasfitero',
+      endsAt: at(10, 0, 1),
+      ownerId: '1',
+    }),
+  ]);
 
 mock.module('@/core/services/database.service', () => ({
   DatabaseService: class {
@@ -185,7 +183,7 @@ beforeEach(() => {
   calls.saved = [];
   calls.asked = [];
   state.items = busyDay();
-  state.caps = new Set(['reminders.read', 'reminders.write', 'agenda.read', 'messages.relay']);
+  state.caps = new Set(['agenda.read', 'messages.relay']);
   state.writes = true;
   state.params = { at: String(NOW) };
   state.projects = [project];
@@ -211,16 +209,12 @@ describe('Agenda on a phone', () => {
     expect(screen.getByText(/^Tarea · .*por Argus$/)).toBeDefined();
   });
 
-  test('a task has its check, a reminder is read-only and asks Argus, an event opens its detail', async () => {
+  test('a task has its check and an event opens its detail; no reminder row exists', async () => {
     render(<AgendaScreen />);
     expect(
       screen.getByRole('checkbox', { name: 'Marcar «Comprar cajas» como hecho' })
     ).toBeDefined();
-    expect(screen.queryByRole('checkbox', { name: 'Marcar «Pagar la luz» como hecho' })).toBeNull();
-    const asked = line('Pagar la luz');
-    if (!asked) throw new Error('no reminder');
-    fireEvent.click(asked);
-    expect(calls.asked).toEqual(['Cuéntame del recordatorio «Pagar la luz»']);
+    expect(screen.queryByText(/Recordatorio/)).toBeNull();
     const row = line('Llamar al técnico');
     if (!row) throw new Error('no line');
     fireEvent.click(row);
@@ -304,7 +298,7 @@ describe('Agenda on a phone', () => {
   });
 
   test('a read-only guest gets no + and no checks', () => {
-    state.caps = new Set(['agenda.read', 'reminders.read']);
+    state.caps = new Set(['agenda.read']);
     state.writes = false;
     render(<AgendaScreen />);
     expect(screen.queryByRole('button', { name: 'Nuevo evento o tarea' })).toBeNull();

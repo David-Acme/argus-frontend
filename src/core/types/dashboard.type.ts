@@ -13,7 +13,6 @@ export type DashboardProjectCard = {
 export type DashboardSummary = {
   camerasTotal: number;
   camerasOnline: number;
-  remindersPending: number;
   projectsActive: number;
   tasksOpen: number;
 };

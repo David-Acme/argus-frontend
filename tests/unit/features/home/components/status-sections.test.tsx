@@ -11,7 +11,6 @@ const state = {
   summary: {
     camerasTotal: 6,
     camerasOnline: 5,
-    remindersPending: 0,
     projectsActive: 0,
     tasksOpen: 0,
   },

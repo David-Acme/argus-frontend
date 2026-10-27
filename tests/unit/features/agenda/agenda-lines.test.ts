@@ -12,7 +12,7 @@ import {
   toggleShown,
 } from '@/features/agenda/model/agenda-lines';
 import type { DayWordContext, LineContext } from '@/features/agenda/model/agenda-lines';
-import { at, date, entry, items, NOW, reminder, t } from '../home/agenda-fixtures';
+import { at, date, entry, items, NOW, t, task } from '../home/agenda-fixtures';
 
 const context: LineContext & DayWordContext = {
   now: NOW,
@@ -23,30 +23,25 @@ const context: LineContext & DayWordContext = {
 };
 
 const prototype = () =>
-  items(
-    [
-      reminder('Pagar la luz', at(11)),
-      reminder('Sacar la basura', at(8), {
-        isCompleted: true,
-        completedAt: at(8),
-        recurrenceRule: 'FREQ=WEEKLY',
-      }),
-    ],
-    [
-      entry('event:tecnico', at(16, 30), {
-        title: 'Llamar al técnico',
-        endsAt: at(17),
-        location: 'Casa',
-        ownerId: '1',
-      }),
-      entry('event:cena', at(20), { title: 'Cena con Luis', endsAt: at(21), ownerId: '2' }),
-      entry('event:daily', at(8, 0, 1), {
-        title: 'Daily',
-        series: { rule: 'FREQ=DAILY', startsAt: at(8), endsAt: null },
-        ownerId: '1',
-      }),
-    ]
-  );
+  items([
+    task('Pagar la luz', at(11)),
+    task('Sacar la basura', at(8), {
+      status: 'complete',
+      series: { rule: 'FREQ=WEEKLY', startsAt: at(8), endsAt: null },
+    }),
+    entry('event:tecnico', at(16, 30), {
+      title: 'Llamar al técnico',
+      endsAt: at(17),
+      location: 'Casa',
+      ownerId: '1',
+    }),
+    entry('event:cena', at(20), { title: 'Cena con Luis', endsAt: at(21), ownerId: '2' }),
+    entry('event:daily', at(8, 0, 1), {
+      title: 'Daily',
+      series: { rule: 'FREQ=DAILY', startsAt: at(8), endsAt: null },
+      ownerId: '1',
+    }),
+  ]);
 
 const named = (title: string) => {
   const found = prototype().find((item) => item.title === title);
@@ -61,7 +56,7 @@ describe('the words of an agenda line', () => {
     expect(durationText(90 * 60_000, t)).toBe('1 h 30 min');
   });
 
-  test('an overdue reminder says since when, in alert', () => {
+  test('an overdue task says since when, in alert', () => {
     expect(lineWords(named('Pagar la luz'), context)).toEqual({
       time: '11:00',
       allDay: false,
@@ -71,10 +66,10 @@ describe('the words of an agenda line', () => {
     });
   });
 
-  test('a done reminder says done and how it repeats', () => {
+  test('a done task says done and how it repeats', () => {
     const words = lineWords(named('Sacar la basura'), context);
     expect(words.state).toBe('Hecho');
-    expect(words.meta).toBe('Recordatorio · cada semana');
+    expect(words.meta).toBe('Tarea · cada semana');
   });
 
   test('an event says its length and place, a shared one its owner', () => {
@@ -88,19 +83,16 @@ describe('the words of an agenda line', () => {
   });
 
   test('an event or a task Argus made says «por Argus» in its meta', () => {
-    const made = items(
-      [],
-      [
-        entry('event:argus', at(18), { title: 'Cita', ownerId: '1', createdVia: 'assistant' }),
-        entry('task:argus', at(0), {
-          title: 'Comprar focos',
-          source: 'task',
-          isAllDay: true,
-          createdVia: 'assistant',
-        }),
-        entry('event:app', at(19), { title: 'Cena', ownerId: '1', createdVia: 'app' }),
-      ]
-    );
+    const made = items([
+      entry('event:argus', at(18), { title: 'Cita', ownerId: '1', createdVia: 'assistant' }),
+      entry('task:argus', at(0), {
+        title: 'Comprar focos',
+        source: 'task',
+        isAllDay: true,
+        createdVia: 'assistant',
+      }),
+      entry('event:app', at(19), { title: 'Cena', ownerId: '1', createdVia: 'app' }),
+    ]);
     const meta = (title: string) => {
       const found = made.find((item) => item.title === title);
       if (!found) throw new Error(title);
@@ -136,7 +128,7 @@ describe('the colour bar and the filters', () => {
     expect(barOf(named('Daily'), NOW, '1')).toBe('series');
     expect(barOf(named('Llamar al técnico'), NOW, '1')).toBe('event');
     expect(barOf(named('Cena con Luis'), NOW, '1')).toBe('shared');
-    expect(categoryOf(named('Sacar la basura'), '1')).toBe('reminder');
+    expect(categoryOf(named('Sacar la basura'), '1')).toBe('task');
   });
 
   test('hiding a category hides its lines and showing it again brings them back', () => {

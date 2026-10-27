@@ -35,7 +35,7 @@ const OCT_1 = Date.UTC(2026, 9, 1, 5, 0, 0);
 
 describe('recurring events in the agenda', () => {
   test('a weekly event shows every occurrence of the window, each addressed by its own start', () => {
-    const entries = toCalendarEntries({ events: [], reminders: [], tasks: [], series: [event()], zone: 'America/Lima' }, range(OCT_1, 21));
+    const entries = toCalendarEntries({ events: [], tasks: [], series: [event()], zone: 'America/Lima' }, range(OCT_1, 21));
     expect(entries.map((entry) => entry.id)).toEqual([
       'event:e1@2026-10-05T13:00:00.000Z',
       'event:e1@2026-10-12T13:00:00.000Z',
@@ -54,7 +54,7 @@ describe('recurring events in the agenda', () => {
   test('the occurrences keep the household wall clock, whatever zone the device shows them in', () => {
     const lima = event({ id: 'e2', startsAt: new Date(Date.UTC(2026, 2, 27, 13, 0, 0)), endsAt: null, recurrenceRule: 'FREQ=DAILY' });
     const entries = toCalendarEntries(
-      { events: [], reminders: [], tasks: [], series: [lima], zone: 'America/Lima' },
+      { events: [], tasks: [], series: [lima], zone: 'America/Lima' },
       { from: Date.UTC(2026, 2, 27, 0, 0, 0), to: Date.UTC(2026, 2, 30, 0, 0, 0) }
     );
     expect(entries.map((entry) => entry.startsAt)).toEqual([
@@ -64,7 +64,7 @@ describe('recurring events in the agenda', () => {
     ]);
     const newYork = event({ id: 'e3', startsAt: new Date(Date.UTC(2026, 2, 7, 13, 0, 0)), endsAt: null, recurrenceRule: 'FREQ=DAILY' });
     const across = toCalendarEntries(
-      { events: [], reminders: [], tasks: [], series: [newYork], zone: 'America/New_York' },
+      { events: [], tasks: [], series: [newYork], zone: 'America/New_York' },
       { from: Date.UTC(2026, 2, 7, 0, 0, 0), to: Date.UTC(2026, 2, 9, 23, 0, 0) }
     );
     expect(across.map((entry) => entry.startsAt)).toEqual([
@@ -77,26 +77,26 @@ describe('recurring events in the agenda', () => {
   test('a recurring event inside the range query is expanded once, not shown twice', () => {
     const repeating = event();
     const entries = toCalendarEntries(
-      { events: [repeating], reminders: [], tasks: [], series: [repeating], zone: 'America/Lima' },
+      { events: [repeating], tasks: [], series: [repeating], zone: 'America/Lima' },
       range(OCT_1, 14)
     );
     expect(entries.map((entry) => entry.id)).toEqual([
       'event:e1@2026-10-05T13:00:00.000Z',
       'event:e1@2026-10-12T13:00:00.000Z',
     ]);
-    const alone = toCalendarEntries({ events: [repeating], reminders: [], tasks: [] }, range(OCT_1, 14));
+    const alone = toCalendarEntries({ events: [repeating], tasks: [] }, range(OCT_1, 14));
     expect(alone).toHaveLength(2);
   });
 
   test('a rule the app does not read leaves the event as one plain entry, and a removed rule wins over a stale series row', () => {
     const custom = event({ recurrenceRule: 'FREQ=WEEKLY;BYDAY=MO' });
     expect(
-      toCalendarEntries({ events: [custom], reminders: [], tasks: [], series: [custom] }, range(OCT_1, 21)).map(
+      toCalendarEntries({ events: [custom], tasks: [], series: [custom] }, range(OCT_1, 21)).map(
         (entry) => entry.id
       )
     ).toEqual(['event:e1']);
     const stopped = toCalendarEntries(
-      { events: [event({ recurrenceRule: null })], reminders: [], tasks: [], series: [event()] },
+      { events: [event({ recurrenceRule: null })], tasks: [], series: [event()] },
       range(OCT_1, 21)
     );
     expect(stopped.map((entry: CalendarEntry) => [entry.id, entry.series])).toEqual([['event:e1', undefined]]);
@@ -105,7 +105,7 @@ describe('recurring events in the agenda', () => {
   test('without a household zone the device zone expands the series', () => {
     const local = event({ startsAt: new Date(2026, 9, 5, 8, 0, 0), endsAt: null });
     const entries = toCalendarEntries(
-      { events: [], reminders: [], tasks: [], series: [local], zone: null },
+      { events: [], tasks: [], series: [local], zone: null },
       { from: new Date(2026, 9, 1).getTime(), to: new Date(2026, 9, 20).getTime() }
     );
     expect(entries.map((entry) => new Date(entry.startsAt).getHours())).toEqual([8, 8, 8]);
@@ -131,7 +131,7 @@ describe('the occurrence guard is sized per request', () => {
       recurrenceRule: 'FREQ=DAILY',
     });
     const rows = toCalendarEntries(
-      { events: [], reminders: [], tasks: [], series: [daily], zone: null },
+      { events: [], tasks: [], series: [daily], zone: null },
       span
     );
     expect(rows).toHaveLength(weeks * 7);
@@ -155,7 +155,7 @@ describe('one occurrence changed or skipped', () => {
   const SECOND = Date.UTC(2026, 9, 12, 13, 0, 0);
   const THIRD = Date.UTC(2026, 9, 19, 13, 0, 0);
   const entriesOf = (series: ICalendarEventCacheSource, days = 21): CalendarEntry[] =>
-    toCalendarEntries({ events: [], reminders: [], tasks: [], series: [series], zone: 'America/Lima' }, range(OCT_1, days));
+    toCalendarEntries({ events: [], tasks: [], series: [series], zone: 'America/Lima' }, range(OCT_1, days));
 
   test('a skipped occurrence leaves the agenda and the others stay', () => {
     const entries = entriesOf(event({ recurrenceExceptions: [{ occurrence: SECOND, cancelled: true }] }));
@@ -217,7 +217,6 @@ describe('one occurrence changed or skipped', () => {
     const entries = toCalendarEntries(
       {
         events: [event({ id: 'e2', recurrenceRule: null, createdVia: 'assistant' }), event({ id: 'e3', recurrenceRule: null, createdVia: '' })],
-        reminders: [],
         tasks: [{ ...task, createdVia: 'assistant' }, { ...task, id: 't2' }],
         series: [event({ createdVia: 'assistant' })],
       },

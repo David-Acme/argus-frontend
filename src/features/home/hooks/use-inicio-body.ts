@@ -23,7 +23,6 @@ export function useInicioBody(): InicioBody {
   const reads: InicioReads = {
     agenda: agendaOnInicio({
       productivity: moduleActive(MODULE_IDS.productivity),
-      reminders: has(CAPABILITY.remindersRead),
       agenda: has(CAPABILITY.agendaRead),
     }),
     news: news.readable && news.threads.length > 0,
@@ -38,7 +37,7 @@ export function useInicioBody(): InicioBody {
   const step = firstStep({
     summary,
     addsCameras: can('camera', 'create'),
-    addsReminders: has(CAPABILITY.remindersWrite),
+    asksReminders: has(CAPABILITY.remindersWrite) && has(CAPABILITY.messagesRelay),
   });
   const sos = sosOnInicio({ panics: has(CAPABILITY.safetyPanic), hasSecurityTab: guard.view });
   return { reads, step, sos };

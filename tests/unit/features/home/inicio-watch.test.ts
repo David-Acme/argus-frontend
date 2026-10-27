@@ -14,7 +14,6 @@ const CAMERAS = [
 const SUMMARY = {
   camerasTotal: 0,
   camerasOnline: 0,
-  remindersPending: 0,
   projectsActive: 0,
   tasksOpen: 0,
 };
@@ -96,7 +95,7 @@ describe('the system status', () => {
   test('a home with nothing pending is sparse', () => {
     expect(isSparse(SUMMARY)).toBe(true);
     expect(isSparse({ ...SUMMARY, camerasTotal: 3 })).toBe(true);
-    expect(isSparse({ ...SUMMARY, remindersPending: 1 })).toBe(false);
+    expect(isSparse({ ...SUMMARY, tasksOpen: 1 })).toBe(false);
   });
 });
 

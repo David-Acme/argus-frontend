@@ -65,7 +65,6 @@ export const common = {
   },
   'change-failed': {
     generic: 'A change was not saved',
-    reminder: 'The reminder was not saved',
     'calendar-event': 'The event was not saved',
     'calendar-event-share': 'The event sharing change was not saved',
     camera: 'The camera was not saved',
@@ -80,7 +79,6 @@ export const common = {
     'user-invitation': 'The change to the invitation was not saved',
     deleted: {
       generic: 'Something was not deleted',
-      reminder: 'The reminder was not deleted',
       'calendar-event': 'The event was not deleted',
       'calendar-event-share': 'The event was not unshared',
       camera: 'The camera was not removed',

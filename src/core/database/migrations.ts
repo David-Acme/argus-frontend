@@ -178,5 +178,9 @@ export const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 18,
+      steps: [unsafeExecuteSql('drop table if exists "reminder";')],
+    },
   ],
 });

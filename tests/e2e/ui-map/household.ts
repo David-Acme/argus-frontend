@@ -24,7 +24,7 @@ import {
   job,
   sessionRow,
 } from '../support/ui-map/backend';
-import { DAY, HOUR, HOUSEHOLD, NOW, reminder, user } from '../support/ui-map/data';
+import { DAY, HOUR, HOUSEHOLD, NOW, project, task, user } from '../support/ui-map/data';
 import type { Row, ScreenSpec, StateSpec } from '../support/ui-map/scenario';
 import { button, say } from '../support/ui-map/text';
 import type { TranslationKey } from '../../../src/core/types';
@@ -280,12 +280,10 @@ const MY_ACTIVITY = [
 ];
 
 const WEEK: Row[] = [
-  reminder(201, 'Sacar la basura', NOW - HOUR * 5, {
-    isCompleted: true,
-    completedAt: NOW - HOUR * 6,
-  }),
-  reminder(202, 'Pagar la luz', NOW - DAY, { isCompleted: true, completedAt: NOW - DAY - HOUR }),
-  reminder(203, 'Llamar al gasfitero', NOW + HOUR * 4),
+  project(710, 'Casa'),
+  task(810, 710, 'Sacar la basura', { status: 'done', dueAt: NOW - HOUR * 5 }),
+  task(811, 710, 'Pagar la luz', { status: 'done', dueAt: NOW - DAY }),
+  task(812, 710, 'Llamar al gasfitero', { dueAt: NOW + HOUR * 4 }),
 ];
 
 const catalog = (

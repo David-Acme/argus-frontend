@@ -1,6 +1,6 @@
 import type { AgendaStatus } from './dashboard.type';
 
-export type CalendarSource = 'event' | 'reminder' | 'task';
+export type CalendarSource = 'event' | 'task';
 
 export const CREATED_VIA = ['app', 'assistant'] as const;
 
@@ -11,7 +11,6 @@ export type CalendarEntryState =
   | 'ongoing'
   | 'today'
   | 'ended'
-  | 'overdue'
   | 'todo'
   | 'doing'
   | 'done';

@@ -34,9 +34,9 @@ export function createItem({ draft, moment, t }: CreateInput) {
 }
 
 export function saveItem({ draft, moment, t, item, scope }: SaveInput) {
-  if (item.origin.kind !== 'entry' || item.kind !== 'event') return nothing();
-  const recordId = calendarEntryRecordId(item.origin.entry);
-  const occurrence = occurrenceOf(item.origin.entry);
+  if (item.kind !== 'event') return nothing();
+  const recordId = calendarEntryRecordId(item.entry);
+  const occurrence = occurrenceOf(item.entry);
   if (scope === 'one' && occurrence !== null) {
     const body = editOccurrenceBody({
       occurrence,

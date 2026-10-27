@@ -41,10 +41,9 @@ describe('sharing an agenda event', () => {
     expect(canShareCalendarEntry(event('1'), { ...viewer, canManageShares: false })).toBe(false);
   });
 
-  test('a task or a reminder is never shared', () => {
+  test('a task is never shared', () => {
     const viewer = { userId: '1', canManageShares: true };
     expect(canShareCalendarEntry({ ...event('1'), source: 'task' }, viewer)).toBe(false);
-    expect(canShareCalendarEntry({ ...event('1'), source: 'reminder' }, viewer)).toBe(false);
   });
 });
 

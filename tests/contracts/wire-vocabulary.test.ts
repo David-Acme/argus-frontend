@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { backendRoot } from '@tests/support/backend-dir';
 import * as voice from '@/features/voice/constants/voice';
 import { deviceLoginStatusSchema } from '@/core/contracts/http.contract';
+import { schema } from '@/core/database/schema';
 import { CREATED_VIA } from '@/core/types/calendar.type';
 import { SYNC_TABLE_KEYS } from '@/core/types/sync.type';
 import { ARGUS_DEFAULT_ROUTE_PORTS } from '@/shared/constants/net.constant';
@@ -29,6 +30,27 @@ describe('wire vocabulary matches the backend', () => {
       ...read('packages/contracts/sync/src/sync/table-name.hxx').matchAll(/return "(\w+)";/g),
     ].map(([, name]) => name);
     expect(SYNC_TABLE_KEYS.filter((table) => !wire.includes(table))).toEqual([]);
+  });
+
+  test('no table the backend keeps server-only is synced or stored by the app', () => {
+    const access = read('packages/lib/auth/src/auth/role-access.hxx');
+    const block = access.slice(
+      access.indexOf('kServerOnlyTables'),
+      access.indexOf('};', access.indexOf('kServerOnlyTables'))
+    );
+    const names = new Map(
+      [
+        ...read('packages/contracts/sync/src/sync/table-name.hxx').matchAll(
+          /\{"(\w+)", TableName::(\w+)\}/g
+        ),
+      ].map(([, wire = '', member = '']) => [member, wire])
+    );
+    const serverOnly = [...block.matchAll(/TableName::(\w+)/g)].map(([, member = '']) =>
+      names.get(member)
+    );
+    expect(serverOnly).toEqual(['reminder', 'reminder_detail']);
+    expect(SYNC_TABLE_KEYS.filter((table) => serverOnly.includes(table))).toEqual([]);
+    expect(Object.keys(schema.tables).filter((table) => serverOnly.includes(table))).toEqual([]);
   });
 
   test('voice frame types are the ones the sync relay sends and accepts', () => {
