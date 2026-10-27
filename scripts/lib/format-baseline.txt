@@ -223,7 +223,6 @@ src/features/conversations/hooks/use-thread-list.ts
 src/features/conversations/model/conversation-optimistic.ts
 src/features/conversations/model/conversation-thread.ts
 src/features/conversations/model/thread-list.ts
-src/features/conversations/screens/conversations-screen.tsx
 src/features/in-app-alert/components/in-app-alert-banner.tsx
 src/features/modules/components/disable-dialog.tsx
 src/features/modules/components/impact-summary.tsx
@@ -340,7 +339,6 @@ src/features/visitors/screens/visitor-detail-screen.tsx
 src/features/visitors/services/visitor.service.ts
 src/features/voice/components/call-settings-dialog.tsx
 src/features/voice/hooks/use-call-audio.ts
-src/features/voice/hooks/use-call-bridge.ts
 src/features/voice/hooks/use-desktop-bridge.ts
 src/features/voice/model/call-audio.ts
 src/features/voice/model/call-decline.ts
@@ -448,7 +446,6 @@ tests/contracts/resource-contract.test.ts
 tests/contracts/role-access-contract.test.ts
 tests/contracts/session-contract.test.ts
 tests/contracts/voiceprint-contract.test.ts
-tests/contracts/wire-vocabulary.test.ts
 tests/e2e/call-window.e2e.ts
 tests/e2e/conversation-thread-list.e2e.ts
 tests/e2e/conversations.e2e.ts
@@ -546,7 +543,6 @@ tests/unit/features/cameras/clip-model.test.ts
 tests/unit/features/cameras/ptz-hold.test.ts
 tests/unit/features/cameras/tamper-evidence.test.ts
 tests/unit/features/conversations/conversation-thread.test.ts
-tests/unit/features/conversations/message-composer.test.ts
 tests/unit/features/conversations/thread-list.test.ts
 tests/unit/features/modules/module-impact.test.ts
 tests/unit/features/modules/module-request.test.ts

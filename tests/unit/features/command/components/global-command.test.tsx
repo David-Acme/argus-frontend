@@ -61,9 +61,6 @@ mock.module('@/shared/hooks/use-date-formatter', () => ({
       timeZone: null,
     }),
 }));
-mock.module('@/shared/libs/assistant-mode', () => ({
-  rememberAssistantMode: (mode: string) => calls.push(`mode ${mode}`),
-}));
 
 const { useCommandLauncher } = await import('@/features/command');
 const { GlobalCommand } = await import('@/features/command/components/global-command');
@@ -142,7 +139,7 @@ describe('GlobalCommand', () => {
     expect(screen.getByText('· hoy 23:00')).toBeDefined();
     expect(screen.getByText('· mañana 09:00')).toBeDefined();
     fireEvent.keyDown(input(), { key: 'Enter' });
-    expect(calls).toEqual(['send pagar', 'mode chat', 'push "/conversations/0"']);
+    expect(calls).toEqual(['send pagar', 'push "/conversations/0"']);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
@@ -152,7 +149,7 @@ describe('GlobalCommand', () => {
     press('/');
     type('pagar');
     fireEvent.keyDown(input(), { key: 'Enter' });
-    expect(calls).toEqual(['send pagar', 'draft pagar', 'mode chat', 'push "/conversations/0"']);
+    expect(calls).toEqual(['send pagar', 'draft pagar', 'push "/conversations/0"']);
   });
 
   test('a result opens its screen and a new reminder starts a draft to Argus', () => {
@@ -167,7 +164,7 @@ describe('GlobalCommand', () => {
     fireEvent.click(
       screen.getByRole('option', { name: 'Pedirle a Argus que me recuerde «pagar…»' })
     );
-    expect(calls).toEqual(['draft Recuérdame pagar', 'mode chat', 'push "/conversations/0"']);
+    expect(calls).toEqual(['draft Recuérdame pagar', 'push "/conversations/0"']);
   });
 
   test('N opens only the new-item actions and never asks Argus', () => {

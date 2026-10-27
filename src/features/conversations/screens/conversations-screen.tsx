@@ -1,43 +1,41 @@
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
-import { View } from 'react-native';
-import { AppScreen, ScreenHeader } from '@/shared/components/layout';
-import { EmptyState } from '@/shared/components/ui/empty-state';
 import { useNow } from '@/shared/hooks/use-now';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { ConversationRow } from '@/features/conversations/components/conversation-row';
+import { useWindowLayout } from '@/shared/theme';
+import { Screen } from '@/shared/ui/screen';
+import { ConversationDesk } from '@/features/conversations/components/conversation-desk';
+import { ConversationList } from '@/features/conversations/components/conversation-list';
+import { CONVERSATIONS_HREF } from '@/features/conversations/constants/conversation.constant';
 import { useConversations } from '@/features/conversations/hooks/use-conversations';
+import { conversationLayoutOf } from '@/features/conversations/model/conversation-layout';
 
-export default function ConversationsScreen() {
+const MINUTE_MS = 60_000;
+
+function ConversationsList() {
   const router = useRouter();
   const { t } = useTranslation();
-  const now = useNow(60000);
-  const conversations = useConversations();
-
-  const open = useCallback((counterpartId: number) => router.push(`/conversations/${counterpartId}`), [router]);
-
+  const now = useNow(MINUTE_MS);
+  const summaries = useConversations();
   return (
-    <AppScreen
-      header={
-        <ScreenHeader
-          title={t('screens.conversations.title')}
-          subtitle={t('screens.conversations.subtitle')}
-          onBack={router.canGoBack() ? () => router.back() : undefined}
-        />
+    <Screen
+      title={t('screens.conversations.title')}
+      back={
+        router.canGoBack()
+          ? { label: t('screens.conversations.back'), onPress: () => router.back() }
+          : undefined
       }>
-      {conversations.length === 0 ? (
-        <EmptyState
-          icon="messages-square"
-          title={t('screens.conversations.empty')}
-          hint={t('screens.conversations.empty-hint')}
-        />
-      ) : (
-        <View className="bg-card -mx-1 gap-0.5 rounded-3xl p-1 shadow-sm shadow-black/[0.06]">
-          {conversations.map((summary) => (
-            <ConversationRow key={summary.counterpartId} summary={summary} now={now} onOpen={open} />
-          ))}
-        </View>
-      )}
-    </AppScreen>
+      <ConversationList
+        summaries={summaries}
+        now={now}
+        selected={null}
+        onOpen={(id) => router.push(`${CONVERSATIONS_HREF}/${id}`)}
+      />
+    </Screen>
   );
+}
+
+export default function ConversationsScreen() {
+  const { windowClass } = useWindowLayout();
+  if (conversationLayoutOf(windowClass) === 'desk') return <ConversationDesk counterpartId={0} />;
+  return <ConversationsList />;
 }

@@ -506,73 +506,13 @@
       "count": 1
     }
   },
-  "src/features/conversations/components/assistant-composer.tsx": {
-    "@typescript-eslint/no-deprecated": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
   "src/features/conversations/components/message-bubble.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
     "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/conversations/components/message-composer.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/conversations/components/thread-list.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/conversations/components/typing-indicator.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
       "count": 1
     }
   },
   "src/features/conversations/hooks/use-thread-list.ts": {
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/conversations/screens/conversation-thread-screen.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/conversations/screens/conversations-screen.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
       "count": 1
     }
   },
@@ -1219,20 +1159,8 @@
     }
   },
   "src/features/voice/hooks/use-call-bridge.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 2
-    },
-    "max-statements": {
-      "count": 1
     }
   },
   "src/features/voice/hooks/use-desktop-bridge.ts": {

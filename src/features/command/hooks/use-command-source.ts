@@ -13,7 +13,6 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { rememberAssistantMode } from '@/shared/libs/assistant-mode';
 import type { CommandGroup, CommandIntent, CommandItem, CommandSource } from '@/shared/ui/command';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { useAssistantChat } from '@/features/voice';
@@ -107,7 +106,6 @@ export function useCommandSource({ intent, openedAt }: CommandSourceInput): Comm
 
   const openThread = (draft: string | null) => {
     if (draft !== null) chat.setDraft(draft);
-    rememberAssistantMode('chat');
     router.push(ASSISTANT_THREAD_HREF);
   };
 
