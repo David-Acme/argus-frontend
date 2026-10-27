@@ -1,5 +1,6 @@
 import type { BrowserContext } from 'playwright-core';
 import { ownerContext } from '../support/fake-argus';
+import { emit } from '../support/harness';
 import { BASELINE } from '../support/ui-map/backend';
 import { sleep, type Scene } from '../support/ui-map/capture';
 import {
@@ -19,7 +20,7 @@ import {
   user,
 } from '../support/ui-map/data';
 import type { Row, ScreenSpec } from '../support/ui-map/scenario';
-import { button, say, text } from '../support/ui-map/text';
+import { button, say } from '../support/ui-map/text';
 import type { TranslationKey } from '../../../src/core/types';
 
 const tab =
@@ -425,6 +426,113 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
         ],
       },
       {
+        state: 'thread-argus-results',
+        path: '/conversations/0',
+        rows: [
+          message(20, {
+            direction: 'out',
+            body: 'Pon el modo noche',
+            leg: 'phone',
+            createdAt: NOW - 120,
+          }),
+          message(21, { body: 'Modo Noche puesto. Vigilo puertas y patio.', createdAt: NOW - 110 }),
+          message(22, {
+            direction: 'out',
+            body: 'Pasa lo del dentista al viernes a las 10',
+            leg: 'phone',
+            createdAt: NOW - 60,
+          }),
+          message(23, {
+            body: 'Listo, moví «Dentista» al viernes a las 10:00.',
+            createdAt: NOW - 50,
+          }),
+        ],
+        act: async (_scene, baseUrl) => {
+          await sleep(1200);
+          await emit(baseUrl, [
+            {
+              frame: {
+                type: 'voice:result',
+                payload: {
+                  id: 31,
+                  tool: 'app.set_guard_mode',
+                  ok: true,
+                  data: {
+                    mode: 'night',
+                    previousMode: 'home',
+                    environmentId: 1,
+                    environmentName: 'Casa',
+                  },
+                },
+              },
+            },
+            {
+              frame: {
+                type: 'voice:result',
+                payload: {
+                  id: 32,
+                  tool: 'calendar.move_event',
+                  ok: true,
+                  data: {
+                    eventId: 7,
+                    title: 'Dentista',
+                    startsAt: NOW + 3 * DAY,
+                    endsAt: NOW + 3 * DAY + HOUR,
+                    previousStartsAt: NOW + 2 * DAY,
+                  },
+                },
+              },
+            },
+          ]);
+          await sleep(1000);
+        },
+        notes:
+          'voice:result is the assumed result frame (P5 adapter); results anchor by arrival time',
+      },
+      {
+        state: 'thread-argus-module-off',
+        path: '/conversations/0',
+        rows: [
+          message(24, {
+            direction: 'out',
+            body: 'Crea el proyecto Mudanza',
+            leg: 'phone',
+            createdAt: NOW - 30,
+          }),
+          message(25, {
+            body: 'Productividad está apagado; actívalo y lo creo.',
+            createdAt: NOW - 20,
+          }),
+        ],
+        act: async (_scene, baseUrl) => {
+          await sleep(1200);
+          await emit(baseUrl, [
+            {
+              frame: {
+                type: 'voice:result',
+                payload: {
+                  id: 33,
+                  tool: 'modules.enable',
+                  ok: true,
+                  data: { module: 'productivity' },
+                },
+              },
+            },
+          ]);
+          await sleep(1000);
+        },
+      },
+      {
+        state: 'thread-argus-mic-denied',
+        path: '/conversations/0',
+        rows: [message(26, { body: 'Hola, David.', createdAt: NOW - 30 })],
+        act: async (scene) => {
+          await click('screens.conversations.composer.talk')(scene);
+          await sleep(2500);
+        },
+        notes: 'headless Chromium denies the microphone: the hold fails with the permission notice',
+      },
+      {
         state: 'thread-member',
         path: '/conversations/2',
         routes: [{ method: 'PATCH', path: '/conversation/2/read', info: { updated: 1 } }],
@@ -488,12 +596,12 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
           }),
         ],
         act: async (scene) => {
-          await click('screens.conversations.actions')(scene);
-          await text(scene, 'screens.conversations.clear').first().click();
+          await click('screens.conversations.clear')(scene);
           await sleep(700);
         },
       },
       { state: 'thread-empty', path: '/conversations/42' },
+      { state: 'thread-argus-empty', path: '/conversations/0' },
       { state: 'thread-invalid-id', path: '/conversations/abc' },
       {
         state: 'mark-read-failed-toast',

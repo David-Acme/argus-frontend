@@ -331,6 +331,13 @@ const MODULE_DATA = {
   ],
 };
 
+const tomorrowAt = (hour: number): number => {
+  const day = new Date();
+  day.setDate(day.getDate() + 1);
+  day.setHours(hour, 0, 0, 0);
+  return Math.floor(day.getTime() / 1000);
+};
+
 const callFrame =
   (type: string, payload: Record<string, unknown>) =>
   async (_scene: Scene, baseUrl: string): Promise<void> => {
@@ -922,6 +929,55 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
             id: 1,
             name: 'app.show_camera',
             arguments: { camera: 'Patio trasero' },
+          })
+        ),
+      },
+      {
+        state: 'result-reminder-offer',
+        before: async (context) => {
+          await context.addInitScript(fakeMicrophone);
+        },
+        act: steps(
+          async () => {
+            await sleep(1500);
+          },
+          callFrame('voice:stt', { text: 'Mañana tengo que pagar el agua', final: true }),
+          callFrame('voice:assistant', { text: '¿Te lo recuerdo mañana a las 9:00?' }),
+          callFrame('voice:result', {
+            id: 11,
+            tool: 'memory.remind',
+            ok: true,
+            data: { title: 'Pagar el agua', remindAt: tomorrowAt(9), confirm: true },
+          })
+        ),
+        notes:
+          'voice:result is the assumed result frame (P5 adapter); the offer is answered aloud in the call',
+      },
+      {
+        state: 'result-agenda-list',
+        before: async (context) => {
+          await context.addInitScript(fakeMicrophone);
+        },
+        act: steps(
+          async () => {
+            await sleep(1500);
+          },
+          callFrame('voice:stt', { text: '¿Qué tengo mañana?', final: true }),
+          callFrame('voice:assistant', {
+            text: 'Mañana tienes tres cosas. La primera es a las 9.',
+          }),
+          callFrame('voice:result', {
+            id: 12,
+            tool: 'calendar.list_events',
+            ok: true,
+            data: {
+              day: tomorrowAt(0),
+              items: [
+                { id: 1, title: 'Pagar el agua', startsAt: tomorrowAt(9), kind: 'reminder' },
+                { id: 2, title: 'Técnico de internet', startsAt: tomorrowAt(14), kind: 'event' },
+                { id: 3, title: 'Cena con Luis', startsAt: tomorrowAt(20), kind: 'event' },
+              ],
+            },
           })
         ),
       },
