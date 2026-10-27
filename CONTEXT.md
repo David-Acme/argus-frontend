@@ -7797,7 +7797,15 @@ suggestion chips over the field and the microphone as tap-to-talk.
   the same header, with «escribiendo…» from its Typing frames.
 - **Bubbles** (`message-bubble.tsx`): mine on `fill`, theirs on `surface`, a
   tail on the first of a group (`BubbleTail`), 4 apart inside a group and 12
-  between groups; time and ticks inside at bottom-right (`BubbleMeta`): a
+  between groups. A bubble hugs its content up to 78 % of the thread: the
+  text is one start-aligned run that ends in a clear reserve as wide as the
+  time and ticks (`metaReserveOf`, unbreakable but for the space before it),
+  and the real `BubbleMeta` sits over that reserve at the bottom-end. The
+  line breaker makes the inline-time decision: a short line keeps the time on
+  its own line's end, and when the reserve does not fit it drops whole to a
+  line of its own, so the time never pushes the words to the end (phone run 2
+  #3 and #9: the old wrapping row grew to the maximum width and its
+  `justify-end` pushed short lines right). Time and ticks (`BubbleMeta`): a
   camera turn says «Por la cámara», a spoken turn «Por voz»; the phone and
   laptop legs are only in the spoken label. Actions through the shared menu:
   long press on phones, right click and a hover «⋯» (`bubble-more.web.tsx`)
@@ -7820,6 +7828,9 @@ suggestion chips over the field and the microphone as tap-to-talk.
   theirs, up to that id (`useDeliveryReports`, from the summaries, app-wide
   through `useConversationRuntime`); read with `upToId` while the thread is
   focused (`useReadReports`).
+- **Thinking** is a compact bubble like a one-line one (the same radius and
+  tail, 28 high, three 6 dots, `size.typingDot`), with no Estela beside it:
+  «escribiendo…» and Estela are in the header (phone run 2 #8).
 - **Typing** (`services/typing`): `Typing = 17` frames per counterpart until
   their `ttlMs` passes, an `active: false`, `voice:text_done`, `voice:done`
   or a lost socket. A member thread sends `{type: "typing", payload:

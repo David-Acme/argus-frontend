@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { Icon } from '@/shared/ui/icon';
 import type { IconGlyph, IconTone } from '@/shared/ui/icon';
 import { Text } from '@/shared/ui/text';
+import { glyphShownOf, metaLabelOf } from '@/features/conversations/model/bubble-meta';
 import type { BubbleStatus } from '@/features/conversations/model/receipts';
 
 export type BubbleMetaProps = { time: string; note: string | null; status: BubbleStatus | null };
@@ -16,11 +17,11 @@ const GLYPHS: Readonly<Record<Exclude<BubbleStatus, 'failed'>, Glyph>> = {
 };
 
 export function BubbleMeta({ time, note, status }: BubbleMetaProps) {
-  const glyph = status && status !== 'failed' ? GLYPHS[status] : null;
+  const glyph = glyphShownOf(status) ? GLYPHS[status] : null;
   return (
-    <View aria-hidden className="ml-2 shrink-0 flex-row items-center gap-1 self-end">
+    <View aria-hidden className="shrink-0 flex-row items-center gap-1">
       <Text variant="caption" tone="2" numberOfLines={1}>
-        {note ? `${note} · ${time}` : time}
+        {metaLabelOf(time, note)}
       </Text>
       {glyph ? <Icon name={glyph.name} size="meta" tone={glyph.tone} /> : null}
     </View>

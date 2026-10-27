@@ -17,6 +17,19 @@ describe('Text', () => {
     expect(screen.queryAllByRole('heading')).toHaveLength(1);
   });
 
+  test('a clear run keeps its room in the line without showing, as a bubble reserves its time', () => {
+    render(
+      <Text variant="body">
+        Hola
+        <Text variant="caption" tone="clear">
+          {' 21:54'}
+        </Text>
+      </Text>
+    );
+    const run = screen.getByText('21:54', { exact: false, selector: 'span' });
+    expect(run.parentElement?.textContent).toBe('Hola 21:54');
+  });
+
   test('a heading carries its level, so the web does not make every heading an h1', () => {
     render(
       <>
