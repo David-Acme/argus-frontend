@@ -1,4 +1,5 @@
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
+import { motion } from '@/shared/theme/tokens';
 import type { ArgusResult } from '@/features/voice';
 import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
@@ -155,16 +156,32 @@ export function keyboardOffsets(bottomInset: number): KeyboardOffsets {
   return { list: opened, sticky, pill: { ...sticky } };
 }
 
-export function floatingDayOf(viewable: readonly ThreadItem[]): number | null {
+export type FloatingDayInput = { viewable: readonly ThreadItem[]; today: number };
+
+export function floatingDayOf({ viewable, today }: FloatingDayInput): number | null {
   if (viewable[0]?.type === 'day') return null;
   const first = viewable.find(isMessageItem);
-  return first ? first.day : null;
+  return first && first.day !== today ? first.day : null;
 }
 
-export type DayPillInput = { day: number | null; scrolling: boolean; atEnd: boolean };
+export type DayPillInput = { day: number | null; atEnd: boolean; ready: boolean };
 
-export function dayPillOf({ day, scrolling, atEnd }: DayPillInput): number | null {
-  return scrolling && !atEnd ? day : null;
+export function dayPillOf({ day, atEnd, ready }: DayPillInput): number | null {
+  return ready && !atEnd ? day : null;
+}
+
+export type ScrollArmInput = { sinceArm: number; holdMs: number; reduceMotion: boolean };
+
+export type ScrollArm = { enter: number; hold: number; leave: number };
+
+export function scrollArmOf({ sinceArm, holdMs, reduceMotion }: ScrollArmInput): ScrollArm | null {
+  if (sinceArm < motion.duration.base) return null;
+  const lit = sinceArm < motion.duration.base + holdMs;
+  return {
+    enter: reduceMotion || lit ? 0 : motion.duration.base,
+    hold: holdMs,
+    leave: reduceMotion ? 0 : motion.duration.slow,
+  };
 }
 
 export type EstimateInput = { items: readonly ThreadItem[]; width: number };

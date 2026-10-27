@@ -12,7 +12,11 @@ import type { BubbleStatus } from '@/features/conversations/model/receipts';
 import type { ThreadItem } from '@/features/conversations/model/thread-list';
 import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
-export type ThreadDays = { startOfDay: (at: number) => number; dayLabel: (day: number) => string };
+export type ThreadDays = {
+  today: number;
+  startOfDay: (at: number) => number;
+  dayLabel: (day: number) => string;
+};
 
 export type ThreadChat = {
   typing: boolean;
