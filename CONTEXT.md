@@ -2630,17 +2630,31 @@ Guard posture is per environment now (backend 2f669111, `services/guard/CONTEXT.
 
 - **Creating a camera is four steps** (`components/camera-form.tsx`, `model/camera-form-steps.ts`):
   model, connection, test, details; an edit starts at the connection. The model step is
-  a searchable grid of `GET /camera/catalog` (`hooks/use-camera-catalog.ts`, a cached remote
-  resource) with brand, form and feature chips (`model/camera-catalog.ts`, unit-tested).
+  a searchable list of `GET /camera/catalog` (`hooks/use-camera-catalog.ts`, a cached remote
+  resource) with brand and type chips (`model/camera-catalog.ts`, unit-tested).
   Picking a model fills the driver, port, user, paths and `catalogId` (kept in the camera's
   `config`, projected as `catalogId`). The test step calls `POST /camera/probe` and words each
   step for the user (`model/camera-probe.ts`): unreachable, port refused, wrong user, wrong path,
   no cloud password for the speaker. A failed test does not block saving ("Continuar de todos
   modos"): a camera may be installed before it is plugged in. Save stays optimistic.
 - **Product pictures are our own drawings.** `components/camera-illustration.tsx` draws each
-  form factor (pan-tilt, outdoor pan-tilt, cube, bullet, turret, dome, doorbell) as line art in
-  `react-native-svg` from the theme tokens, so it follows light and dark. No vendor image is
-  copied or hot-linked.
+  catalog entry's `look` (`model/camera-looks.ts`: a shape, its mount and its traits such as
+  antennas, a spotlight or a dark front face) from the parts in `camera-illustration-parts.tsx`,
+  `-shapes.tsx` and `-ceiling.tsx`, as line art in `react-native-svg` from the theme tokens, so it
+  follows light and dark. The looks were drawn from the products' silhouettes as described in the
+  manufacturers' spec pages (a Tapo C100 is a tall pill on a neck, a C200 a sphere on a base, a C310
+  a bullet with two antennas, a C420 a battery body on a ball joint); an unknown look falls back to
+  the form factor. No vendor image, logo or artwork is copied or hot-linked. Rectangles are rounded
+  paths (`roundRect`), because `Rect`'s `x`/`y` are typed as the deprecated transform props.
+- **The model step (2026-10-27)** is a search field, two rows of wrapping filter chips (brand, and
+  indoor / outdoor / pan and tilt / doorbell) and the list. Each row shows the model's drawing and
+  its support level from the catalog (`support`: Completa, Video y control, Solo video, No
+  compatible). Tapping a row opens its detail under it (`camera-setup/model-detail.tsx`): what Argus
+  does with it (live video, AI detection, listen, talk, move, siren, motion alerts, each marked
+  whether Argus drives it), the manufacturer's specifications (`model/camera-catalog-specs.ts`) and
+  the spec sheet's host. «Continuar» applies the previewed model and stays disabled for a model that
+  cannot connect. Supported models sort first, brand profiles after them and incompatible models
+  last. An older backend without `support` reads it from the driver (`supportOf`).
 - **The cameras screen** (`screens/cameras-screen.tsx`) reads `GET /camera/overview` every 15 s
   while focused (`hooks/use-camera-overview.ts`): per camera last seen, picture health, sub-stream
   size/fps/bitrate, viewers and last detection, plus the recent detections (the synced `event`

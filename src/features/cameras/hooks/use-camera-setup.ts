@@ -15,7 +15,11 @@ import { CAMERA_DRIVER_SPECS } from '@/features/cameras/constants';
 import { useCameraCatalog } from '@/features/cameras/hooks/use-camera-catalog';
 import { useCameraProbe } from '@/features/cameras/hooks/use-camera-probe';
 import type { CameraProbe } from '@/features/cameras/hooks/use-camera-probe';
-import { catalogPrefill, findCatalogModel } from '@/features/cameras/model/camera-catalog';
+import {
+  catalogPrefill,
+  connectable,
+  findCatalogModel,
+} from '@/features/cameras/model/camera-catalog';
 import {
   DETAIL_FIELDS,
   cameraBodyOf,
@@ -35,7 +39,9 @@ export type CameraSetup = {
   step: CameraFormStep;
   catalog: ReturnType<typeof useCameraCatalog>;
   selectedModel: ICameraCatalogModel | null;
+  previewModel: ICameraCatalogModel | null;
   probe: CameraProbe;
+  preview: (model: ICameraCatalogModel) => void;
   chooseModel: (model: ICameraCatalogModel) => void;
   openModels: () => void;
   back: (() => void) | null;
@@ -101,11 +107,34 @@ function useSave(
   });
 }
 
+function applyModel(
+  form: UseFormReturn<CameraFormValues>,
+  picked: ICameraCatalogModel,
+  isEdit: boolean
+) {
+  const prefill = catalogPrefill(picked);
+  const values = form.getValues();
+  const previous = CAMERA_DRIVER_SPECS[values.driver];
+  form.setValue('catalogId', prefill.catalogId, { shouldDirty: true });
+  form.setValue('driver', prefill.driver);
+  form.setValue('manufacturer', prefill.manufacturer);
+  form.setValue('model', prefill.model);
+  if (!isEdit || values.port === String(previous.port)) form.setValue('port', prefill.port);
+  if (!isEdit || !values.username) form.setValue('username', prefill.username);
+  form.setValue('streamPath', prefill.streamPath);
+  form.setValue('subStreamPath', prefill.subStreamPath);
+  if (!CAMERA_DRIVER_SPECS[prefill.driver].requiresCloud) {
+    form.setValue('cloudUsername', '');
+    form.setValue('cloudPassword', '');
+  }
+}
+
 export function useCameraSetup(camera: ICameraCacheRow | null, onDone: () => void): CameraSetup {
   const isEdit = camera !== null;
   const steps = formSteps(isEdit);
   const [step, setStep] = useState<CameraFormStep>(steps[0] ?? 'connection');
   const [choosingModel, setChoosingModel] = useState(false);
+  const [previewId, setPreviewId] = useState('');
   const catalog = useCameraCatalog(true);
   const form = useForm<CameraFormValues>({
     resolver: zodResolver(cameraFormSchema),
@@ -118,25 +147,12 @@ export function useCameraSetup(camera: ICameraCacheRow | null, onDone: () => voi
     name: ['catalogId', 'driver', 'model'],
   });
   const selectedModel = findCatalogModel(catalog.models, { catalogId, driver, model });
+  const previewModel = catalog.models.find((entry) => entry.id === previewId) ?? selectedModel;
   const save = useSave(form, camera, onDone);
   const visible: CameraFormStep = choosingModel ? 'model' : step;
 
   const chooseModel = (picked: ICameraCatalogModel) => {
-    const prefill = catalogPrefill(picked);
-    const values = form.getValues();
-    const previous = CAMERA_DRIVER_SPECS[values.driver];
-    form.setValue('catalogId', prefill.catalogId, { shouldDirty: true });
-    form.setValue('driver', prefill.driver);
-    form.setValue('manufacturer', prefill.manufacturer);
-    form.setValue('model', prefill.model);
-    if (!isEdit || values.port === String(previous.port)) form.setValue('port', prefill.port);
-    if (!isEdit || !values.username) form.setValue('username', prefill.username);
-    form.setValue('streamPath', prefill.streamPath);
-    form.setValue('subStreamPath', prefill.subStreamPath);
-    if (!CAMERA_DRIVER_SPECS[prefill.driver].requiresCloud) {
-      form.setValue('cloudUsername', '');
-      form.setValue('cloudPassword', '');
-    }
+    applyModel(form, picked, isEdit);
     probe.forget();
     setChoosingModel(false);
     setStep('connection');
@@ -144,7 +160,7 @@ export function useCameraSetup(camera: ICameraCacheRow | null, onDone: () => voi
 
   const next = async () => {
     if (visible === 'model') {
-      if (selectedModel) chooseModel(selectedModel);
+      if (previewModel && connectable(previewModel)) chooseModel(previewModel);
       return;
     }
     if (step === 'connection') {
@@ -175,7 +191,9 @@ export function useCameraSetup(camera: ICameraCacheRow | null, onDone: () => voi
     step: visible,
     catalog,
     selectedModel,
+    previewModel,
     probe,
+    preview: (picked) => setPreviewId(picked.id),
     chooseModel,
     openModels: () => setChoosingModel(true),
     back,

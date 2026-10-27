@@ -3,9 +3,11 @@ import type {
   CameraDriverKind,
   CameraFeatureKey,
   CameraFormFactor,
+  CameraPowerKind,
   CameraPrivacyState,
   CameraProbeStepId,
   CameraProbeStepStatus,
+  CameraSupportLevel,
   DayNightMode,
 } from '@/core/types';
 
@@ -97,6 +99,25 @@ export interface ICameraCatalogDefaults {
   subStreamPath: string;
 }
 
+export interface ICameraCatalogSpecs {
+  fovDeg: number;
+  nightVisionM: number;
+  colorNight: boolean;
+  spotlight: boolean;
+  siren: boolean;
+  microphone: boolean;
+  twoWayAudio: boolean;
+  panDeg: number;
+  tiltDeg: number;
+  opticalZoom: number;
+  ipRating: string;
+  power: CameraPowerKind;
+  storageGb: number;
+  rtsp: boolean;
+  onvif: boolean;
+  onvifProfile: string;
+}
+
 export interface ICameraCatalogModel {
   id: string;
   brand: string;
@@ -111,6 +132,11 @@ export interface ICameraCatalogModel {
   defaults: ICameraCatalogDefaults;
   features: Record<CameraFeatureKey, boolean>;
   note: string;
+  support?: CameraSupportLevel;
+  tested: boolean;
+  look: string;
+  specs: ICameraCatalogSpecs | null;
+  source: string;
 }
 
 export interface ICameraCatalog {

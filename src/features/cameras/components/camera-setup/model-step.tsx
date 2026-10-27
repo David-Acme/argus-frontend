@@ -1,139 +1,138 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { View } from 'react-native';
 import type { ICameraCatalogModel } from '@/core/interfaces';
-import type { CameraFeatureKey, CameraFormFactor } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Choice } from '@/shared/ui/choice';
-import type { ChoiceOption } from '@/shared/ui/choice';
+import { FilterChip } from '@/shared/ui/chip';
 import { Field } from '@/shared/ui/field';
 import { Icon } from '@/shared/ui/icon';
-import { Inline, Stack } from '@/shared/ui/layout';
+import { Cluster, Stack } from '@/shared/ui/layout';
 import { Notice } from '@/shared/ui/notice';
 import { SkeletonRow } from '@/shared/ui/resource-view';
 import { Row } from '@/shared/ui/row';
 import { Text } from '@/shared/ui/text';
 import { CameraIllustration } from '@/features/cameras/components/camera-illustration';
+import { ModelDetail, SupportChip } from '@/features/cameras/components/camera-setup/model-detail';
 import type { CameraSetup } from '@/features/cameras/hooks/use-camera-setup';
 import {
-  CATALOG_FEATURE_FILTERS,
+  CATALOG_KINDS,
   catalogBrands,
   catalogLabel,
   filterCatalog,
   megapixelsOf,
-  presentFormFactors,
+  supportOf,
 } from '@/features/cameras/model/camera-catalog';
-import { FEATURE_LABEL, FORM_FACTOR_LABEL } from '@/features/cameras/model/camera-labels';
+import type { CatalogKind } from '@/features/cameras/model/camera-catalog';
+import { FORM_FACTOR_LABEL, KIND_LABEL } from '@/features/cameras/model/camera-labels';
 
 export type ModelStepProps = { setup: CameraSetup };
 
 type ModelRowsProps = {
   models: readonly ICameraCatalogModel[];
-  selectedId: string;
-  onSelect: (model: ICameraCatalogModel) => void;
+  previewId: string;
+  onPreview: (model: ICameraCatalogModel) => void;
 };
 
-const ALL = 'all';
+type CatalogFilterState = ReturnType<typeof useCatalogFilter>;
 
-function ModelRows({ models, selectedId, onSelect }: ModelRowsProps) {
+type CatalogFiltersProps = { filter: CatalogFilterState };
+
+type ChipRowProps = { label: string; children: ReactNode };
+
+function useModelMeta() {
   const { t } = useTranslation();
+  return (model: ICameraCatalogModel) => {
+    if (model.generic) return t('screens.cameras.catalog.generic');
+    const fov = model.specs && model.specs.fovDeg > 0 ? `${model.specs.fovDeg}°` : '';
+    return [t(FORM_FACTOR_LABEL[model.formFactor]), megapixelsOf(model.resolution), fov]
+      .filter(Boolean)
+      .join(' · ');
+  };
+}
+
+function ModelRows({ models, previewId, onPreview }: ModelRowsProps) {
+  const metaOf = useModelMeta();
   return models.map((model) => (
-    <Row
-      key={model.id}
-      leading={<CameraIllustration formFactor={model.formFactor} size={48} />}
-      title={model.generic ? model.brand : catalogLabel(model)}
-      meta={
-        model.generic
-          ? t('screens.cameras.catalog.generic')
-          : [t(FORM_FACTOR_LABEL[model.formFactor]), megapixelsOf(model.resolution)]
-              .filter(Boolean)
-              .join(' · ')
-      }
-      trailing={
-        model.id === selectedId ? <Icon name="check" size="small" tone="accent" /> : undefined
-      }
-      onPress={() => onSelect(model)}
-    />
+    <View key={model.id} className="gap-2">
+      <Row
+        leading={<CameraIllustration formFactor={model.formFactor} look={model.look} size={48} />}
+        title={catalogLabel(model)}
+        meta={metaOf(model)}
+        metaTone={supportOf(model) === 'none' ? '3' : undefined}
+        trailing={
+          model.id === previewId ? (
+            <Icon name="check" size="small" tone="accent" />
+          ) : (
+            <SupportChip support={supportOf(model)} />
+          )
+        }
+        onPress={() => onPreview(model)}
+      />
+      {model.id === previewId ? <ModelDetail model={model} /> : null}
+    </View>
   ));
 }
 
-type CatalogFilter = ReturnType<typeof useCatalogFilter>;
-
-type CatalogFiltersProps = { filter: CatalogFilter };
-
 function useCatalogFilter(models: readonly ICameraCatalogModel[]) {
-  const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [brand, setBrand] = useState<string>(ALL);
-  const [form, setForm] = useState<CameraFormFactor | typeof ALL>(ALL);
-  const [feature, setFeature] = useState<CameraFeatureKey | typeof ALL>(ALL);
-  const brands: ChoiceOption<string>[] = [
-    { value: ALL, label: t('screens.cameras.catalog.all-brands') },
-    ...catalogBrands(models).map((name) => ({ value: name, label: name })),
-  ];
-  const forms: ChoiceOption<CameraFormFactor | typeof ALL>[] = [
-    { value: ALL, label: t('screens.cameras.catalog.all-forms') },
-    ...presentFormFactors(models).map((value) => ({ value, label: t(FORM_FACTOR_LABEL[value]) })),
-  ];
-  const features: ChoiceOption<CameraFeatureKey | typeof ALL>[] = [
-    { value: ALL, label: t('screens.cameras.catalog.all-features') },
-    ...CATALOG_FEATURE_FILTERS.map((value) => ({ value, label: t(FEATURE_LABEL[value]) })),
-  ];
-  const visible = filterCatalog(models, {
-    query,
-    brand: brand === ALL ? null : brand,
-    formFactor: form === ALL ? null : form,
-    feature: feature === ALL ? null : feature,
-  });
+  const [brand, setBrand] = useState<string | null>(null);
+  const [kind, setKind] = useState<CatalogKind | null>(null);
+  const visible = filterCatalog(models, { query, brand, kind });
   const clear = () => {
     setQuery('');
-    setBrand(ALL);
-    setForm(ALL);
-    setFeature(ALL);
+    setBrand(null);
+    setKind(null);
   };
   return {
     query,
     setQuery,
     brand,
     setBrand,
-    form,
-    setForm,
-    feature,
-    setFeature,
-    brands,
-    forms,
-    features,
+    kind,
+    setKind,
+    brands: catalogBrands(models),
     visible,
     clear,
   };
 }
 
+function ChipRow({ label, children }: ChipRowProps) {
+  return (
+    <View role="group" aria-label={label}>
+      <Cluster gap={2}>{children}</Cluster>
+    </View>
+  );
+}
+
 function CatalogFilters({ filter }: CatalogFiltersProps) {
   const { t } = useTranslation();
   return (
-    <>
-      <Inline gap={2} fill>
-        <Choice
-          look="field"
-          label={t('screens.cameras.catalog.brand')}
-          options={filter.brands}
-          value={filter.brand}
-          onChange={filter.setBrand}
+    <Stack gap={2}>
+      <ChipRow label={t('screens.cameras.catalog.brand')}>
+        <FilterChip
+          label={t('screens.cameras.catalog.all-brands')}
+          selected={filter.brand == null}
+          onPress={() => filter.setBrand(null)}
         />
-        <Choice
-          look="field"
-          label={t('screens.cameras.catalog.form')}
-          options={filter.forms}
-          value={filter.form}
-          onChange={filter.setForm}
-        />
-      </Inline>
-      <Choice
-        look="field"
-        label={t('screens.cameras.catalog.feature')}
-        options={filter.features}
-        value={filter.feature}
-        onChange={filter.setFeature}
-      />
-    </>
+        {filter.brands.map((name) => (
+          <FilterChip
+            key={name}
+            label={name}
+            selected={filter.brand === name}
+            onPress={() => filter.setBrand(filter.brand === name ? null : name)}
+          />
+        ))}
+      </ChipRow>
+      <ChipRow label={t('screens.cameras.catalog.form')}>
+        {CATALOG_KINDS.map((value) => (
+          <FilterChip
+            key={value}
+            label={t(KIND_LABEL[value])}
+            selected={filter.kind === value}
+            onPress={() => filter.setKind(filter.kind === value ? null : value)}
+          />
+        ))}
+      </ChipRow>
+    </Stack>
   );
 }
 
@@ -159,14 +158,16 @@ export function ModelStep({ setup }: ModelStepProps) {
       </Stack>
     );
   return (
-    <Stack gap={4}>
-      <Text variant="meta">{t('screens.cameras.catalog.hint')}</Text>
+    <Stack gap={3}>
       <Field
         placeholder={t('screens.cameras.catalog.search')}
         value={filter.query}
         onChangeText={filter.setQuery}
       />
       <CatalogFilters filter={filter} />
+      <Text variant="meta" tone="2">
+        {t('screens.cameras.catalog.hint')}
+      </Text>
       {visible.length === 0 ? (
         <Notice
           icon="search"
@@ -178,8 +179,8 @@ export function ModelStep({ setup }: ModelStepProps) {
         <Stack gap={1}>
           <ModelRows
             models={visible}
-            selectedId={setup.selectedModel?.id ?? ''}
-            onSelect={setup.chooseModel}
+            previewId={setup.previewModel?.id ?? ''}
+            onPreview={setup.preview}
           />
         </Stack>
       )}

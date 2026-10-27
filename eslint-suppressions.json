@@ -353,14 +353,6 @@
       "count": 1
     }
   },
-  "src/features/cameras/components/camera-illustration.tsx": {
-    "@typescript-eslint/no-deprecated": {
-      "count": 16
-    },
-    "i18next/no-literal-string": {
-      "count": 12
-    }
-  },
   "src/features/cameras/components/camera-live-status.tsx": {
     "argus/activity-indicator-home": {
       "count": 1
