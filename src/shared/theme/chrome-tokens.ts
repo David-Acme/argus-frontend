@@ -119,6 +119,7 @@ export const chromeSize = {
   fab: 56,
   presenceHero: 66,
   presenceHeroSmall: 56,
+  presenceHeroLandscape: 48,
   presenceHeroDense: 58,
   presenceBand: 64,
   presenceTab: 36,

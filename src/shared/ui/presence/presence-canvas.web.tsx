@@ -7,7 +7,9 @@ import {
   frameDue,
   takeEndedEvent,
   type Driver,
+  type DriverInput,
   type Look,
+  type StillSpec,
   type Tick,
 } from './engine/driver';
 import { STREAK_FIELDS, type Sinks, type Stroke } from './engine/types';
@@ -131,22 +133,19 @@ type CanvasJob = {
   onEventEnd: PresenceCanvasProps['onEventEnd'];
 };
 
-function paintStillCanvas({ surface, driver, live, look, fade }: CanvasJob): undefined {
+type StillJob = {
+  surface: Surface;
+  spec: StillSpec;
+  input: DriverInput;
+  look: Look;
+  fade: number;
+};
+
+function paintStillCanvas({ surface, spec, input, look, fade }: StillJob): undefined {
   begin(surface, 1);
-  const tick: Tick = {
-    now: 8,
-    input: live.input.get(),
-    level: null,
-    scroll: 0,
-    leanX: 0,
-    leanY: 0,
-    steps: 1,
-    lag: 0,
-    split: false,
-  };
   const sinks = sinksFor(surface.context);
-  paintStill(driver, {
-    tick,
+  paintStill(spec, {
+    input,
     look,
     pass: { begin: () => begin(surface, fade), sinks, end: () => undefined },
   });
@@ -191,7 +190,7 @@ export function PresenceCanvas({
   live,
   seed,
   active,
-  stillKey,
+  still,
   onEventEnd,
 }: PresenceCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -209,20 +208,41 @@ export function PresenceCanvas({
 
   useEffect(() => {
     const context = ref.current?.getContext('2d');
+    if (!context) return;
+    const surface = { context, size: plan.size, ratio, additive: look.palette.additive };
+    const trail = plan.count > 0 ? fade : 1;
+    if (plan.still)
+      return paintStillCanvas({
+        surface,
+        spec: { count: plan.count, seed },
+        input: still,
+        look,
+        fade: trail,
+      });
     const current = driver.current;
-    if (!context || !current) return;
-    const job: CanvasJob = {
+    if (!running || !current) return;
+    return startLoop({
       element: () => ref.current,
-      surface: { context, size: plan.size, ratio, additive: look.palette.additive },
+      surface,
       driver: current,
       live,
       look,
-      fade: current.engine.particles.length > 0 ? fade : 1,
+      fade: trail,
       onEventEnd,
-    };
-    if (plan.still) return paintStillCanvas(job);
-    if (running) return startLoop(job);
-  }, [running, plan.still, plan.size, plan.count, stillKey, ratio, look, fade, live, onEventEnd]);
+    });
+  }, [
+    running,
+    plan.still,
+    plan.size,
+    plan.count,
+    seed,
+    still,
+    ratio,
+    look,
+    fade,
+    live,
+    onEventEnd,
+  ]);
 
   return <canvas ref={ref} width={pixels} height={pixels} style={box} aria-hidden />;
 }

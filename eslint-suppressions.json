@@ -377,13 +377,7 @@
       "count": 1
     },
     "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "complexity": {
       "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 3
     }
   },
   "src/features/cameras/components/camera-live-view.native.tsx": {
@@ -855,14 +849,6 @@
     },
     "max-lines-per-function": {
       "count": 1
-    }
-  },
-  "src/features/security/components/guard-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 2
     }
   },
   "src/features/security/components/guard-mode-picker.tsx": {

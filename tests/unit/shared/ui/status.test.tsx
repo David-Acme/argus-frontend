@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
-import { heightLayoutOf, size, useEffectsOverrides } from '@/shared/theme';
+import { heightLayoutOf, inset, size, type, typeRoles, useEffectsOverrides } from '@/shared/theme';
+import { heightFindings } from '../../../e2e/support/ui-map/height-audit';
 
 import { Status } from '@/shared/ui/status/status';
 import { CardStatus } from '@/shared/ui/status/status-card';
@@ -168,6 +169,17 @@ describe('Status', () => {
     expect(screen.getByRole('button', { name: 'Ver' })).toBeDefined();
   });
 
+  test('an alert hero above a card without a sentence is the one alert region', () => {
+    render(
+      <>
+        <HeroStatus tone="alert" sentence="Alguien en el patio." meta="Ahora" />
+        <Status variant="card" tone="alert" primary={{ label: 'Ver', onPress: () => undefined }} />
+      </>
+    );
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(screen.getByRole('alert').textContent).toContain('Alguien en el patio.');
+  });
+
   test('a change fades in, and reduced motion changes at once', () => {
     const live = render(
       <StatusFade change="a">
@@ -195,12 +207,15 @@ describe('Status', () => {
     for (const [width, height] of [
       [320, 568],
       [360, 640],
-      [740, 360],
     ] as const)
-      expect(heroStepOf({ wide: width > 600, height: at(width, height) })).toEqual({
+      expect(heroStepOf({ wide: false, height: at(width, height) })).toEqual({
         variant: 'heroSecondary',
         presence: size.presenceHeroSmall,
       });
+    expect(heroStepOf({ wide: true, height: at(740, 360) })).toEqual({
+      variant: 'heroSecondary',
+      presence: size.presenceHeroLandscape,
+    });
   });
 
   test('on a short phone the hero draws the small Estela beside its sentence', () => {
@@ -210,5 +225,34 @@ describe('Status', () => {
     );
     expect(screen.getByTestId('status-hero')).toBeDefined();
     expect(container.querySelector('canvas')?.style.width).toBe(`${size.presenceHeroSmall}px`);
+  });
+
+  test("in phone landscape the hero keeps Inicio's first step inside the height audit's top 40 %", () => {
+    const window = { width: 740, height: 360 };
+    const step = heroStepOf({ wide: true, height: heightLayoutOf(window) });
+    const sentence = typeRoles.heroSecondary.line + type.meta.line;
+    const firstContent =
+      size.topBarCompact +
+      inset.screen.barY * 2 +
+      inset.status.heroPad +
+      Math.max(step.presence, sentence) +
+      inset.section.top +
+      inset.notice.y;
+    const findings = heightFindings({
+      screen: 'home',
+      state: 'empty-new-household',
+      file: 'home/empty-new-household.png',
+      fullPage: false,
+      viewport: { name: 'phone-landscape', w: window.width, h: window.height },
+      height: {
+        chrome: 0,
+        firstContent: Math.round(firstContent),
+        underBar: [],
+        outside: [],
+        sheet: null,
+      },
+    });
+    expect(step.variant).toBe('heroSecondary');
+    expect(findings).toEqual([]);
   });
 });

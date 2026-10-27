@@ -1,6 +1,5 @@
 import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { CameraEnvironmentPanel } from './components/camera-environment-panel';
-export { GuardCard } from './components/guard-card';
 export {
   useCameraEnvironmentIndex,
   useGuardEnvironments,

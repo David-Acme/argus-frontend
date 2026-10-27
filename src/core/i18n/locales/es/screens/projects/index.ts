@@ -43,9 +43,6 @@ export const projects = {
     done: 'Hechas',
   },
   'lane-empty': {
-    todo: 'Nada por hacer',
-    doing: 'Nada en curso',
-    done: 'Nada hecho aún',
     drop: 'Arrastra una tarea aquí',
     wait: 'Aquí aparecerán las tareas',
   },

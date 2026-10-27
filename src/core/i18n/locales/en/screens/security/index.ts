@@ -428,13 +428,6 @@ export const security = {
       'failed-siren-disarm': 'Could not turn the siren off',
     },
   },
-  card: {
-    title: 'Security',
-    mode: '{mode}',
-    open: 'Open security',
-    places: '{count} places · {mode}',
-    'places-mixed': '{count} places · different modes',
-  },
   'camera-panel': {
     title: 'Place and security',
     description: 'Where this camera is and how Argus guards it.',

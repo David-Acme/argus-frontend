@@ -59,8 +59,16 @@ const canvasProps = {
   },
   seed: 9,
   active: true,
-  stillKey: 'idle',
-};
+  still: {
+    state: 'idle',
+    resting: true,
+    intensity: 0.5,
+    targetX: 0.3,
+    targetY: 0,
+    eventName: null,
+    eventId: 0,
+  },
+} as const;
 
 const activeInput = {
   get: () => ({

@@ -3,10 +3,18 @@ import * as DropdownPrimitive from '@rn-primitives/dropdown-menu';
 import { View } from 'react-native';
 import { space } from '@/shared/theme';
 import { Icon } from '@/shared/ui/icon';
+import { opensContextMenu } from './menu-keys';
 import { MENU_ROW, MenuRowContent, useMenuPanel } from './menu-row';
 import type { ButtonMenuProps, ContextMenuProps, MenuItems, MenuProps } from './menu-types';
 
 type ItemsProps = { items: MenuItems };
+
+type MenuKeyEvent = {
+  key: string;
+  shiftKey: boolean;
+  currentTarget: HTMLElement;
+  preventDefault: () => void;
+};
 
 const OFFSET = space[1];
 
@@ -53,12 +61,28 @@ function DropdownMenu({ label, items, icon = 'more' }: ButtonMenuProps) {
   );
 }
 
+function openFromKeys(event: MenuKeyEvent): void {
+  if (!opensContextMenu(event)) return;
+  event.preventDefault();
+  const { left, bottom } = event.currentTarget.getBoundingClientRect();
+  event.currentTarget.dispatchEvent(
+    new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: left,
+      clientY: bottom,
+    })
+  );
+}
+
+const KEYS = { onKeyDown: openFromKeys };
+
 function ContextMenu({ items, children }: ContextMenuProps) {
   const panel = useMenuPanel();
   return (
     <ContextPrimitive.Root>
       <ContextPrimitive.Trigger asChild>
-        <View>{children}</View>
+        <View {...KEYS}>{children}</View>
       </ContextPrimitive.Trigger>
       <ContextPrimitive.Portal>
         <ContextPrimitive.Content style={panel.style} className={panel.className}>

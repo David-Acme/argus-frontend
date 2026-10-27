@@ -7,6 +7,7 @@ import { StatusBadge } from '@/shared/components/ui/status-badge';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { cn } from '@/shared/libs/utils';
+import { liveStatusSpot } from '@/features/cameras/model/camera-live-spot';
 
 export type CameraLiveState = CameraStreamState | 'unsupported' | 'disabled';
 
@@ -21,6 +22,20 @@ type CameraLiveStatusProps = {
 };
 
 const PILL_MARGIN = 12;
+
+const RECONNECTING_DOT = 'bg-warning';
+
+const LIVE_DOT = 'bg-error';
+
+const LIVE_TEXT = 'text-foreground font-semibold';
+
+const CENTER_ID = 'camera-live-center';
+
+const CORNER_ID = 'camera-live-corner';
+
+type CenterPillProps = { picture: boolean; placeholder: Placeholder };
+
+type CornerPillProps = { live: boolean; corner?: { top: number; left: number } };
 
 type Placeholder = {
   icon: IconName | null;
@@ -89,6 +104,46 @@ const NOTICES: Record<CameraLiveNotice, Placeholder> = {
   },
 };
 
+function CenterPill({ picture, placeholder }: CenterPillProps) {
+  const { t } = useTranslation();
+  return (
+    <View
+      testID={CENTER_ID}
+      pointerEvents="none"
+      className={cn('absolute inset-0 items-center justify-center p-3', !picture && 'bg-surface-secondary')}>
+      <StatusBadge
+        surface="card"
+        label={t(picture ? 'screens.cameras.live.reconnecting' : placeholder.title)}
+        icon={picture ? undefined : (placeholder.icon ?? undefined)}
+        dotClassName={picture ? RECONNECTING_DOT : undefined}
+        className="max-w-full self-center"
+      />
+    </View>
+  );
+}
+
+function CornerPill({ live, corner }: CornerPillProps) {
+  const { t } = useTranslation();
+  return (
+    <View
+      testID={CORNER_ID}
+      pointerEvents="none"
+      className={cn('absolute', corner ? undefined : 'left-3 top-3')}
+      style={corner}>
+      {live ? (
+        <StatusBadge
+          surface="card"
+          label={t('screens.cameras.live.live')}
+          dotClassName={LIVE_DOT}
+          textClassName={LIVE_TEXT}
+        />
+      ) : (
+        <StatusBadge surface="card" label={t('screens.cameras.live.reconnecting')} dotClassName={RECONNECTING_DOT} />
+      )}
+    </View>
+  );
+}
+
 function placeholderFor(state: CameraLiveState, notice: CameraLiveNotice | null | undefined): Placeholder {
   if (notice && state !== 'unsupported' && state !== 'disabled') return NOTICES[notice];
   return PLACEHOLDERS[state];
@@ -107,45 +162,13 @@ export function CameraLiveStatus({
   const picture = painted && (state === 'live' || state === 'reconnecting' || state === 'connecting');
   const placeholder = placeholderFor(state, notice);
   const corner = insets ? { top: PILL_MARGIN + insets.top, left: PILL_MARGIN + insets.left } : undefined;
+  const spot = liveStatusSpot({ picture, live: state === 'live', compact, hidden });
 
-  if (hidden && picture) return null;
+  if (spot === 'none') return null;
 
-  if (picture) {
-    return (
-      <View
-        pointerEvents="none"
-        className={cn('absolute', corner ? undefined : 'left-3 top-3')}
-        style={corner}>
-        {state === 'live' ? (
-          <StatusBadge
-            surface="card"
-            label={t('screens.cameras.live.live')}
-            dotClassName="bg-error"
-            textClassName="text-foreground font-semibold"
-          />
-        ) : (
-          <StatusBadge
-            surface="card"
-            label={t('screens.cameras.live.reconnecting')}
-            dotClassName="bg-warning"
-          />
-        )}
-      </View>
-    );
-  }
+  if (spot === 'center') return <CenterPill picture={picture} placeholder={placeholder} />;
 
-  if (compact) {
-    return (
-      <View pointerEvents="none" className="bg-surface-secondary absolute inset-0">
-        <StatusBadge
-          surface="card"
-          label={t(placeholder.title)}
-          icon={placeholder.icon ?? undefined}
-          className="absolute bottom-3 left-3 max-w-[90%]"
-        />
-      </View>
-    );
-  }
+  if (spot === 'corner') return <CornerPill live={state === 'live'} corner={corner} />;
 
   return (
     <View className="bg-surface-secondary absolute inset-0 items-center justify-center gap-3 p-6">

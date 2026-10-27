@@ -186,22 +186,24 @@ export function takeEndedEvent(driver: Driver): PresenceEvent | null {
 
 export type StillPass = { begin: () => void; sinks: Sinks; end: () => void };
 
-export type StillInput = { tick: Tick; look: Look; pass: StillPass };
+export type StillSpec = { count: number; seed: number };
 
-export function paintStill(driver: Driver, { tick, look, pass }: StillInput): void {
+export type StillInput = { input: DriverInput; look: Look; pass: StillPass };
+
+export function paintStill(spec: StillSpec, { input, look, pass }: StillInput): void {
   'worklet';
+  const driver = createDriver(spec.count, spec.seed);
   const { engine } = driver;
-  engine.lx = engine.ly = 0;
-  engine.event = null;
   const base = 8;
   const frameAt = (i: number): Tick => {
     driver.sim = base + i / STEP_HZ;
     return {
-      ...tick,
       now: driver.sim,
+      input,
+      level: null,
+      scroll: 0,
       leanX: 0,
       leanY: 0,
-      scroll: 0,
       steps: 1,
       lag: 0,
       split: false,

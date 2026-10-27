@@ -8,7 +8,7 @@ import { useEffects } from '@/shared/theme/effects';
 import { tokens } from '@/shared/theme/tokens';
 import type { Look } from '@/shared/ui/presence/engine/driver';
 import type { PresenceEvent, PresenceState } from '@/shared/ui/presence/engine/types';
-import { planFor, seedFor } from '@/shared/ui/presence/plan';
+import { planFor, seedFor, stillInputOf } from '@/shared/ui/presence/plan';
 import { PresenceCanvas } from '@/shared/ui/presence/presence-canvas';
 import { usePresenceInput } from '@/shared/ui/presence/use-presence-input';
 import type { PresenceCue } from '@/shared/ui/presence/use-presence-input';
@@ -77,6 +77,7 @@ export function Presence({
     }),
     [size, dark, plan]
   );
+  const still = stillInputOf({ state, intensity, targetX: target?.x, targetY: target?.y });
   const cue = touch && (!event || touch.id > event.id) ? touch : event;
   const { input, active } = usePresenceInput({ state, intensity, target, event: cue, paused });
   const lean = useSharedValue<[number, number]>([0, 0]);
@@ -110,7 +111,7 @@ export function Presence({
         live={live}
         seed={seed}
         active={active}
-        stillKey={`${state}|${dark}`}
+        still={still}
         onEventEnd={onEventEnd}
       />
     </View>

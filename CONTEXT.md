@@ -5706,7 +5706,11 @@ on right click (Radix also opens it on a touch long press); touch (native)
 gets a sheet list from the same trigger and from a RNGH long press with
 `impactLight`. The context menu's items are given `role="menuitem"` because
 rn-primitives renders them as buttons. `items` is a tuple of at least two, so
-a single-item menu does not type-check (W38).
+a single-item menu does not type-check (W38). From the keyboard, the
+context-menu key or Shift+F10 on the focused row opens the same context menu
+(`opensContextMenu`): the trigger dispatches the `contextmenu` event Radix
+listens for at the row's bottom-left corner, so Inicio's agenda rows and
+Proyectos' task rows are operable without a pointer (WCAG 2.1.1).
 
 **Command.** `useCommand` owns the query and the selection over the groups a
 `source(query)` returns; the component fetches nothing. Free text adds a first
@@ -7406,6 +7410,11 @@ density and components.
   · Hechas, Hechas collapsed behind «Mostrar N»; the board with the three
   lanes appears only when the window is at least `BOARD_MIN_WIDTH` (1280),
   where three lanes still fit beside the list, and keeps drag between lanes.
+  Lanes size to their content: the board opts out of the column's grow, so a
+  short lane never stretches into an empty card, and an empty lane is one
+  quiet line under its head («Arrastra una tarea aquí», or «Aquí aparecerán
+  las tareas» for a view-only member). A long press (touch), a right click or
+  Shift+F10 / the context-menu key opens a task's menu.
   A task's `Check` completes or reopens it with Deshacer; a long press (touch)
   or right click opens its menu (Pasar a…, Editar, Borrar); a tap edits.
 - **Sheets.** One task sheet and one project sheet on the redesign's `Sheet`

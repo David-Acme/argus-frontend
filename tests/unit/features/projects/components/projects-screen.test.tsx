@@ -334,6 +334,16 @@ describe('Proyectos on wider screens', () => {
     expect(screen.getByText('Vaciar el armario')).toBeDefined();
   });
 
+  test('an empty lane is one quiet line under its head, not an empty card', () => {
+    setWindowWidth(1440);
+    state.rows.set('project.tasks.7', [task('1', 'Comprar cajas')]);
+    render(<ProjectsScreen />);
+    const doing = screen.getByTestId('task-lane-doing');
+    expect(within(doing).getByText('Arrastra una tarea aquí')).toBeDefined();
+    expect(within(doing).queryByText('Nada en curso')).toBeNull();
+    expect(within(screen.getByTestId('task-lane-todo')).getByText('Comprar cajas')).toBeDefined();
+  });
+
   test('with no projects the detail explains them instead of sitting blank', () => {
     setWindowWidth(1440);
     state.rows = new Map();

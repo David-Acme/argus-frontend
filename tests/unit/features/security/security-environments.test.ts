@@ -7,7 +7,6 @@ import {
   maskedInScope,
   headlineMode,
   matchEnvironment,
-  sharedMode,
   withCameraIn,
   withMode,
 } from '@/features/security/model/environments';
@@ -72,10 +71,9 @@ describe('environments', () => {
     const one = withMode(all, 'night', 3);
     expect(one.map((item) => item.mode)).toEqual(['home', 'home', 'night']);
     const every = withMode(all, 'away');
-    expect(sharedMode(every)).toBe('away');
+    expect([...new Set(every.map((item) => item.mode))]).toEqual(['away']);
     expect(every[1]?.effectiveMode).toBe('home');
     expect(withMode(all, 'armed')[1]?.effectiveMode).toBe('armed');
-    expect(sharedMode(one)).toBeNull();
   });
 
   test('the headline mode is the effective mode every environment shares, or none', () => {

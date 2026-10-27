@@ -3,8 +3,9 @@ import { View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Row } from '@/shared/ui/row';
+import { ColumnGrowProvider } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
+import { Text } from '@/shared/ui/text';
 import { LANE_LABEL, TASK_LANES } from '@/features/projects/constants/projects.constant';
 import type { ProjectView } from '@/features/projects/hooks/use-project-view';
 import type { TaskLaneKey } from '@/features/projects/model/task-lanes';
@@ -23,12 +24,6 @@ export type TaskBoardProps = { view: ProjectView; context: TaskContext };
 
 type LaneProps = TaskBoardProps & { lane: TaskLaneKey; index: number };
 
-const EMPTY_KEY = {
-  todo: 'screens.projects.lane-empty.todo',
-  doing: 'screens.projects.lane-empty.doing',
-  done: 'screens.projects.lane-empty.done',
-} as const;
-
 const PRESS_GUARD_MS = 350;
 
 const DROP_SETTLE_MS = 160;
@@ -38,24 +33,34 @@ function Lane({ view, context, lane, index }: LaneProps) {
   const tasks = view.lanes[lane];
   return (
     <TaskDropZone index={index}>
-      <Section title={t(LANE_LABEL[lane])} meta={String(tasks.length)} testID={`task-lane-${lane}`}>
-        {tasks.length === 0 ? (
-          <Row
-            title={t(EMPTY_KEY[lane])}
-            meta={t(
-              context.editable
-                ? 'screens.projects.lane-empty.drop'
-                : 'screens.projects.lane-empty.wait'
-            )}
-          />
-        ) : (
-          tasks.map((task) => (
+      {tasks.length === 0 ? (
+        <Section
+          title={t(LANE_LABEL[lane])}
+          meta={String(tasks.length)}
+          variant="plain"
+          testID={`task-lane-${lane}`}>
+          <View className="px-section-head-x">
+            <Text variant="meta" tone="3" numberOfLines={1}>
+              {t(
+                context.editable
+                  ? 'screens.projects.lane-empty.drop'
+                  : 'screens.projects.lane-empty.wait'
+              )}
+            </Text>
+          </View>
+        </Section>
+      ) : (
+        <Section
+          title={t(LANE_LABEL[lane])}
+          meta={String(tasks.length)}
+          testID={`task-lane-${lane}`}>
+          {tasks.map((task) => (
             <DraggableTask key={task.id} taskId={task.id} lane={index} disabled={!context.editable}>
               <TaskRow task={task} context={context} />
             </DraggableTask>
-          ))
-        )}
-      </Section>
+          ))}
+        </Section>
+      )}
     </TaskDropZone>
   );
 }
@@ -118,12 +123,14 @@ export function TaskBoard({ view, context }: TaskBoardProps) {
   };
   return (
     <TaskDragProvider value={context.editable ? drag : null}>
-      <View ref={boardRef} onLayout={measure} className="flex-row items-start gap-4">
-        {TASK_LANES.map((spec, index) => (
-          <Lane key={spec.key} view={view} context={guarded} lane={spec.key} index={index} />
-        ))}
-        <TaskGhostLayer ghost={ghost} offsetX={drag.ghostX} offsetY={drag.ghostY} />
-      </View>
+      <ColumnGrowProvider value={false}>
+        <View ref={boardRef} onLayout={measure} className="flex-row items-start gap-4">
+          {TASK_LANES.map((spec, index) => (
+            <Lane key={spec.key} view={view} context={guarded} lane={spec.key} index={index} />
+          ))}
+          <TaskGhostLayer ghost={ghost} offsetX={drag.ghostX} offsetY={drag.ghostY} />
+        </View>
+      </ColumnGrowProvider>
     </TaskDragProvider>
   );
 }

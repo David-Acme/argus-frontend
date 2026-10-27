@@ -10,7 +10,6 @@ src/features/auth/components/server-unreachable.tsx
 src/features/auth/components/session-gate.tsx
 src/features/cameras/components/camera-fullscreen.tsx
 src/features/cameras/components/camera-illustration.tsx
-src/features/cameras/components/camera-live-status.tsx
 src/features/cameras/components/camera-live-view.native.tsx
 src/features/cameras/components/camera-live-view.web.tsx
 src/features/cameras/components/camera-privacy-placeholder.tsx
@@ -73,7 +72,6 @@ src/features/security/components/emergency-contacts-panel.tsx
 src/features/security/components/environment-form-dialog.tsx
 src/features/security/components/environment-settings-panel.tsx
 src/features/security/components/expected-guest-form.tsx
-src/features/security/components/guard-card.tsx
 src/features/security/components/guard-mode-picker.tsx
 src/features/security/components/hours-editor.tsx
 src/features/security/components/hours-fields.tsx
