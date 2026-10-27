@@ -137,8 +137,10 @@ const once = async (
   }
 };
 
+const BOTH_THEMES = process.env.ARGUS_UI_MAP_THEMES === 'both';
+
 const looksOf = (state: StateSpec): readonly Look[] => {
-  if (PROTO) return [LIGHT_ES, DARK_ES];
+  if (PROTO || BOTH_THEMES) return [LIGHT_ES, DARK_ES];
   return state.main ? [LIGHT_ES, ...MAIN_LOOKS] : [LIGHT_ES];
 };
 

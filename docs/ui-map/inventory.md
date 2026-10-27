@@ -18,6 +18,8 @@ spec is skipped unless `ARGUS_UI_MAP_DIR` is set, so `verify` never runs it.
 `ARGUS_UI_MAP_VIEWPORTS=proto` swaps the viewport set for the redesign prototype's frames:
 proto-phone 360×760, proto-1280 1280×820, proto-1920 1920×1080 and proto-2560 2560×1440, every
 selected state in light/es and dark/es. The default set and its names are unchanged without it.
+`ARGUS_UI_MAP_THEMES=both` keeps the default viewports and shoots every selected state in light/es
+and dark/es (without it only the main state gets dark).
 Every manifest row carries `masks`: the viewport rectangles of the canvas and video elements
 (`canvas`) and of the images and background-image frames (`media`), so a comparison can leave
 animation and photo content out.
@@ -112,7 +114,7 @@ animation and photo content out.
   module route → splash up to 3 s [captured: `entry-gate/context-pending-splash`, the splash itself is
   gone by the first screenshot and the capture shows the core-only Home it falls back to];
   route refused → `/` or `/profile` [captured as `*-redirect` states: `agenda/module-off-redirect`,
-  `watch/module-off-redirect`, `people-directory/owner-redirect`].
+  `watch/module-off-redirect`].
 
 ### Privacy gate
 - Route: wraps every `(app)` screen. `features/privacy/components/privacy-gate.tsx`, `consent-form.tsx`.
@@ -198,9 +200,14 @@ animation and photo content out.
 - Captured: `module-guard` (main), `module-already-asked`, `paused-resident`, `unknown-role`,
   `sign-out-confirm`. Request outcome toasts [not captured: transient].
 
+### Novedades (`/notification`)
+- `features/home/screens/news-screen.tsx`.
+- Captured: `populated` (main), `many`, `filter-security`, `filter-pending`, `empty`.
+
 ### Notification link (`/notification?notificationId=`)
-- Captured: `waiting-for-row` (main): an id not among the synced rows waits indefinitely.
-  Redirects for found ids [not captured: they leave the screen at once].
+- Captured: `gone` (main): an id not among the synced rows reads «Este aviso ya no está» above
+  the feed once the first sync settled. Redirects for found ids [not captured: they leave the
+  screen at once].
 
 ### Agenda (`/agenda`)
 - `features/agenda/*`. Productivity module; owner and resident.
@@ -284,19 +291,20 @@ animation and photo content out.
 - Captured: `live-speaking` (main), `empty`, `waking-discreet`, `resumable`, `visitor-device`,
   `ended`, `end-confirm`, `module-off-redirect`.
 
-### Users (`/users`), Owner
-- `features/people/screens/users-screen.tsx`, sessions and privacy panels, visitors preview.
-- Captured: `populated` (main: members with presence, invitations in every state, connected
-  devices, household privacy, role card, visitors preview), `only-owner`, `many-long`,
-  `surveillance-off` (guard role paused), `panels-failed`, `new-invitation-dialog`,
-  `invitation-qr`, `edit-user-dialog`, `user-access-dialog`, `user-access-dialog-inactive`,
-  `role-guard-paused`.
+### Personas (`/users`, `/people/[id]`), Owner
+- `features/people/screens/people-screen.tsx` (one screen for `/users`, `/people` and
+  `/people/[id]`), its rows, invitations, person detail and sheets.
+- Captured: `populated` (main: member rows with presence in words, invitations in every state,
+  visitors row, household privacy; on desktop the first person beside the list), `only-owner`,
+  `many-long`, `surveillance-off`, `panels-failed`, `new-invitation-sheet`, `invite-from-profile`
+  (`?invite=1`), `invitation-qr`, `person`, `person-inactive`, `person-self`, `person-missing`,
+  `person-sessions-failed`, `edit-person-sheet`, `deactivate-confirm`, `role-guard-paused`.
 - Not captured: invitation used/closed live transitions, watchman/visitor acknowledgement
   dialogs, entrance sign dialog, minor/guardian confirms, biometric erase result toast.
 
 ### People directory (`/people`), Guard
-- Captured: `guard-populated` (main), `guard-filter-no-match`, `guard-person-dialog`,
-  `owner-redirect`. Portrait image [not captured: needs image fixtures].
+- Captured: `guard-populated` (main), `guard-person`, `owner-directory` (the Owner reads the same
+  Personas at `/people`). Portrait image [not captured: needs image fixtures].
 
 ### Visitors (`/users/visitors`, `/users/visitors/[id]`)
 - Captured gallery: `populated` (main), `empty`, `recognition-off`, `merge-mode`.
