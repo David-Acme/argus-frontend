@@ -1,8 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { DeviceLoginDetails } from '@/core/types';
 import { authService } from '@/core/services/auth.service';
-import { refusedPhase } from '@/features/auth/model/approve';
-import type { ApprovePhase } from '@/features/auth/model/approve';
+import {
+  decidedPhase,
+  decidingPhase,
+  isConfirming,
+  refusedPhase,
+} from '@/features/auth/model/approve';
+import type { ApproveDecision, ApprovePhase } from '@/features/auth/model/approve';
 import { parseLoginQr } from '@/features/auth/model/login-qr';
 
 export type Approve = {
@@ -10,12 +15,20 @@ export type Approve = {
   details: DeviceLoginDetails | null;
   scanned: (raw: string) => Promise<void>;
   approve: () => Promise<void>;
-  deny: () => void;
+  deny: () => Promise<void>;
+};
+
+const CALLS: Readonly<
+  Record<ApproveDecision, (id: string) => Promise<{ ok: boolean; status: number }>>
+> = {
+  approve: (id) => authService.approveDeviceLogin(id),
+  deny: (id) => authService.denyDeviceLogin(id),
 };
 
 export function useApprove(): Approve {
   const [phase, setPhase] = useState<ApprovePhase>('idle');
   const [details, setDetails] = useState<DeviceLoginDetails | null>(null);
+  const deciding = useRef(false);
 
   const scanned = useCallback(async (raw: string) => {
     const payload = parseLoginQr(raw);
@@ -33,17 +46,24 @@ export function useApprove(): Approve {
     setPhase(refusedPhase(answer.status));
   }, []);
 
-  const approve = useCallback(async () => {
-    if (!details) return;
-    setPhase('approving');
-    const answer = await authService.approveDeviceLogin(details.challengeId);
-    setPhase(answer.ok ? 'approved' : refusedPhase(answer.status));
-  }, [details]);
+  const decide = async (decision: ApproveDecision) => {
+    if (!details || deciding.current) return;
+    deciding.current = true;
+    setPhase(decidingPhase(decision));
+    try {
+      const next = decidedPhase(decision, await CALLS[decision](details.challengeId));
+      setPhase(next);
+      if (!isConfirming(next)) setDetails(null);
+    } finally {
+      deciding.current = false;
+    }
+  };
 
-  const deny = useCallback(() => {
-    setDetails(null);
-    setPhase('denied');
-  }, []);
-
-  return { phase, details, scanned, approve, deny };
+  return {
+    phase,
+    details,
+    scanned,
+    approve: () => decide('approve'),
+    deny: () => decide('deny'),
+  };
 }

@@ -8,6 +8,7 @@ import { envelopeSchema, HTTP_CONTRACTS } from '@/core/contracts/http.contract';
 import { privacyDirectorySchema, privacyMeSchema } from '@/core/contracts/privacy.contract';
 import { readEnvelope } from '@/core/services/http/http-envelope';
 import { TABLE_MAPS, toModelProps } from '@/core/services/sync/entity-mappers';
+import { decidedPhase } from '@/features/auth/model/approve';
 
 type Probe = {
   method: string;
@@ -228,6 +229,14 @@ describe('backend fixtures honour the app contracts', () => {
       expect(props.targetUserId).toBe(String(info.targetUserId));
       expect(props.title).toBe(info.title);
     }
+  });
+
+  test('refusing a cross-device login is recorded behind the device and session filters, and a gone challenge reads as expired', () => {
+    const refusals = probes.filter((probe) => probe.method === 'POST' && probe.route === '/auth/device-login/{1}/deny');
+    expect(refusals.map((probe) => probe.response.status).sort()).toEqual([401, 401, 404]);
+    const gone = refusals.find((probe) => probe.response.status === 404);
+    expect(envelopeSchema.parse(gone?.response.json).errors).toMatchObject({ code: 'NOT_FOUND' });
+    expect(decidedPhase('deny', { ok: false, status: gone?.response.status ?? 0 })).toBe('expired');
   });
 
   test('deleting an own reminder is recorded as a 204 without a body, which the envelope reader accepts', () => {

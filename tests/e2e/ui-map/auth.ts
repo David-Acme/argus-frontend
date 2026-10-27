@@ -197,6 +197,18 @@ export const AUTH: ScreenSpec[] = [
           await sleep(2600);
         },
       },
+      {
+        state: 'denied',
+        seed: signedOut(),
+        routes: [
+          ...LOGIN_QR,
+          { method: 'GET', path: `/auth/device-login/${CHALLENGE}`, info: { status: 'denied' } },
+        ],
+        act: async () => {
+          await sleep(2600);
+        },
+        notes: 'the phone answered «No fui yo»',
+      },
       { state: 'error', seed: signedOut(), notes: 'no /pairing/status route: 404' },
       {
         state: 'error-unpaired-device',

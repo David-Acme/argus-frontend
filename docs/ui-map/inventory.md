@@ -154,8 +154,8 @@ animation and photo content out.
 - `features/auth/screens/login-screen.tsx`.
 - Purpose: desktop sign-in by a QR the phone approves.
 - Data: `GET /pairing/status`, `POST /auth/device-login`, poll `GET /auth/device-login/{id}`.
-- Captured: `qr` (main), `loading` (status held), `waiting-owner`, `expired`, `error`,
-  `error-unpaired-device`. Approved ("¡Listo!") [not captured: shows for 600 ms, then redirects].
+- Captured: `qr` (main), `loading` (status held), `waiting-owner`, `expired`, `denied` (the
+  phone answered «No fui yo»), `error`, `error-unpaired-device`. Approved ("¡Listo!") [not captured: shows for 600 ms, then redirects].
 
 ### Not found (`+not-found`)
 - Captured: `signed-in` (main), `unpaired`.

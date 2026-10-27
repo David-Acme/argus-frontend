@@ -32,6 +32,8 @@ export const deviceLoginDetailsSchema = z.object({
   expiresAt: unixSeconds,
 }) satisfies z.ZodType<DeviceLoginDetails>;
 
+export const deviceLoginDeniedSchema = z.object({ denied: z.literal(true) });
+
 export const authSessionListSchema = z.object({
   sessions: z.array(authSessionSchema),
 }) satisfies z.ZodType<AuthSessionList>;

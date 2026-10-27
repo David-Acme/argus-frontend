@@ -7,7 +7,20 @@ import type {
 import type { IconGlyph } from '@/shared/ui/icon';
 
 export type ApprovePhase =
-  'idle' | 'checking' | 'confirm' | 'approving' | 'approved' | 'denied' | 'expired' | 'error';
+  | 'idle'
+  | 'checking'
+  | 'confirm'
+  | 'approving'
+  | 'approved'
+  | 'denying'
+  | 'denied'
+  | 'deny-failed'
+  | 'expired'
+  | 'error';
+
+export type ApproveDecision = 'approve' | 'deny';
+
+export type DecisionAnswer = { ok: boolean; status: number };
 
 type DeviceKind = 'desktop' | 'phone' | 'other';
 
@@ -60,11 +73,42 @@ export const fromHome = (details: DeviceLoginDetails): boolean => HOME.has(detai
 export const refusedPhase = (status: number): ApprovePhase =>
   GONE.has(status) ? 'expired' : 'error';
 
+const CONFIRMING: ReadonlySet<ApprovePhase> = new Set([
+  'confirm',
+  'approving',
+  'denying',
+  'deny-failed',
+]);
+
+const DECIDING: Readonly<Record<ApproveDecision, ApprovePhase>> = {
+  approve: 'approving',
+  deny: 'denying',
+};
+
+const DECIDED: Readonly<Record<ApproveDecision, ApprovePhase>> = {
+  approve: 'approved',
+  deny: 'denied',
+};
+
+export const decidingPhase = (decision: ApproveDecision): ApprovePhase => DECIDING[decision];
+
+export function decidedPhase(
+  decision: ApproveDecision,
+  { ok, status }: DecisionAnswer
+): ApprovePhase {
+  if (ok) return DECIDED[decision];
+  const refused = refusedPhase(status);
+  return decision === 'deny' && refused === 'error' ? 'deny-failed' : refused;
+}
+
+export const isConfirming = (phase: ApprovePhase): boolean => CONFIRMING.has(phase);
+
 export function approveNoteOf(
   phase: ApprovePhase
 ): { tone: 'ok' | 'alert'; key: TranslationKey } | null {
   if (phase === 'approved') return { tone: 'ok', key: 'screens.approve.approved' };
   if (phase === 'denied') return { tone: 'ok', key: 'screens.approve.denied' };
+  if (phase === 'deny-failed') return { tone: 'alert', key: 'screens.approve.deny-error' };
   if (phase === 'expired') return { tone: 'alert', key: 'screens.approve.expired' };
   if (phase === 'error') return { tone: 'alert', key: 'screens.approve.error' };
   return null;

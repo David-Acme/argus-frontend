@@ -22,6 +22,11 @@ export const login = {
     lead: 'Abre Argus en tu teléfono, crea tu cuenta con tu cara y vuelve aquí.',
     done: 'Ya lo hice',
   },
+  denied: {
+    title: 'No se aprobó la entrada',
+    lead: 'En el otro dispositivo dijeron que no eras tú. Si fuiste tú, empieza otra vez con un código nuevo.',
+    again: 'Empezar de nuevo',
+  },
   error: {
     title: 'No pude preparar el código',
     lead: 'Revisa que tu Argus esté encendido y en tu red.',

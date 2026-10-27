@@ -2,8 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   approveNoteOf,
   approveTitleOf,
+  decidedPhase,
+  decidingPhase,
   deviceGlyphOf,
   fromHome,
+  isConfirming,
   refusedPhase,
 } from '@/features/auth/model/approve';
 import { consentSignalsOf } from '@/features/auth/model/consent-signals';
@@ -40,6 +43,18 @@ describe('the sign-in on another device', () => {
     expect(showsQr('loading')).toBe(true);
     expect(showsQr('error')).toBe(false);
   });
+
+  test('a refusal on the phone ends the wait with its own words and a fresh start', () => {
+    expect(loginHeadingOf('denied', false)).toEqual({
+      title: 'screens.login.denied.title',
+      lead: 'screens.login.denied.lead',
+    });
+    expect(loginActionOf('denied')).toEqual({
+      action: 'refresh',
+      label: 'screens.login.denied.again',
+    });
+    expect(showsQr('denied')).toBe(false);
+  });
 });
 
 describe('approving on the phone', () => {
@@ -68,6 +83,23 @@ describe('approving on the phone', () => {
     expect(refusedPhase(500)).toBe('error');
     expect(approveNoteOf('denied')).toEqual({ tone: 'ok', key: 'screens.approve.denied' });
     expect(approveNoteOf('confirm')).toBeNull();
+  });
+
+  test('«No fui yo» refuses on the server and says so, or keeps the question to try again', () => {
+    expect(decidingPhase('deny')).toBe('denying');
+    expect(decidingPhase('approve')).toBe('approving');
+    expect(decidedPhase('deny', { ok: true, status: 200 })).toBe('denied');
+    expect(decidedPhase('approve', { ok: true, status: 200 })).toBe('approved');
+    expect(decidedPhase('deny', { ok: false, status: 404 })).toBe('expired');
+    expect(decidedPhase('deny', { ok: false, status: 0 })).toBe('deny-failed');
+    expect(decidedPhase('approve', { ok: false, status: 500 })).toBe('error');
+    expect(isConfirming('denying')).toBe(true);
+    expect(isConfirming('deny-failed')).toBe(true);
+    expect(isConfirming('denied')).toBe(false);
+    expect(approveNoteOf('deny-failed')).toEqual({
+      tone: 'alert',
+      key: 'screens.approve.deny-error',
+    });
   });
 });
 

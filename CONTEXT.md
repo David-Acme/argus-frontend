@@ -7369,8 +7369,17 @@ v2). What was decided while building it:
   `/rtc/token` body and in the socket leg's `voice:start`. Without a voice
   path or the microphone permission the step redirects to Listo
   (`callStepOf`).
-- **Approving on the phone**: «No fui yo» has no server route; it leaves the
-  challenge unapproved (it expires on its own) and says so.
+- **Approving on the phone**: «No fui yo» calls `POST /auth/device-login/{id}/deny`
+  (`authService.denyDeviceLogin`, zod-checked `{denied: true}`), single-flight in
+  the button and in `useApprove`, and says the request was refused. A gone
+  challenge (404/409/410) reads as expired; any other failure keeps the question
+  on screen with «No pude rechazar la entrada» so the button is the retry
+  (`decidedPhase`, `deny-failed`).
+- **The waiting device** learns the refusal on the poll it already runs: `GET
+  /auth/device-login/{id}` answers `status: "denied"`, a terminal state like
+  `expired` (`pollAnswerOutcome`, `settledPhaseOf`). The login screen stops
+  polling, hides the code and reads «No se aprobó la entrada» with «Empezar de
+  nuevo», which asks for a new challenge.
 - **Invitation**: the resolve answers the role, never the inviter's name or
   the home's, so the valid view says «Te invitaron a una casa» and the role's
   sentence.

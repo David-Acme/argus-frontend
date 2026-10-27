@@ -1,3 +1,5 @@
+import type { LoginPhase } from '@/features/auth/model/login-screen';
+
 export const LOGIN_QR_ROUTE = '/login?method=qr';
 
 export type LoginEntryInput = {
@@ -18,7 +20,9 @@ export type LoginPollInput = {
   refreshToken?: string | null;
 };
 
-export type LoginPollOutcome = 'approved' | 'expired' | 'waiting';
+export type LoginPollOutcome = 'approved' | 'expired' | 'denied' | 'waiting';
+
+export type LoginPollAnswer = { ok: boolean; info: LoginPollInput | null };
 
 export function loginPollOutcome({
   status,
@@ -26,6 +30,13 @@ export function loginPollOutcome({
   refreshToken,
 }: LoginPollInput): LoginPollOutcome {
   if (status === 'expired') return 'expired';
+  if (status === 'denied') return 'denied';
   if (status !== 'approved') return 'waiting';
   return accessToken && refreshToken ? 'approved' : 'waiting';
 }
+
+export const pollAnswerOutcome = ({ ok, info }: LoginPollAnswer): LoginPollOutcome =>
+  ok && info ? loginPollOutcome(info) : 'waiting';
+
+export const settledPhaseOf = (outcome: LoginPollOutcome): LoginPhase | null =>
+  outcome === 'waiting' ? null : outcome;

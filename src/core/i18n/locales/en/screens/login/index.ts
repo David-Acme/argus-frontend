@@ -22,6 +22,11 @@ export const login = {
     lead: 'Open Argus on your phone, create your account with your face and come back here.',
     done: 'I did it',
   },
+  denied: {
+    title: 'The sign-in was refused',
+    lead: 'The other device said it was not you. If it was you, start again with a new code.',
+    again: 'Start again',
+  },
   error: {
     title: 'I could not prepare the code',
     lead: 'Check that your Argus is on and on your network.',
