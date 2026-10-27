@@ -6757,9 +6757,8 @@ it sent you back to Inicio). It is now `NewsScreen` (home feature): with an id
 it renders the link screen exactly as before; without one it is the full feed,
 every thread as the same `NewsItem` under «Novedades», «Ver más» paging the
 local view while the server holds more, the same reading rule, and an empty
-state («Aquí verás lo que pase en tu casa»). §9.8's filter (Todo / Seguridad /
-Pendientes), thread lines and swipe-to-delete are not built yet; deletion still
-lives on the old home's activity card.
+state («Aquí verás lo que pase en tu casa»). P6b completed §9.8 on it; see
+"Personas y Novedades" below.
 
 **En casa** is who is home and since when: Owner only (`presence.read`, which
 the server grants the Owner alone and gates on surveillance), from
@@ -7420,3 +7419,63 @@ density and components.
   (`project.list`, `project.tasks.<id>`, `project.members.<id>`,
   `people.users`) with the optimistic lenses, so the screen paints from local
   data and follows `/sync` live.
+
+## Personas y Novedades (P6b, 2026-10-26, p6/personas)
+
+Spec §9.7 and §9.8, with no prototype frame of their own: they take Tú's rows
+and Inicio's Novedades.
+
+- **One Personas screen.** `/users` (Owner), `/people` (Guard) and
+  `/people/[id]` all render `PeopleScreen`. `route-access` now lets every role
+  that receives the directory open `/people` (Owner and Guard), so the Owner's
+  rows push `/people/[id]` like the Guard's; Resident and Guest still reach
+  only their own profile, from Tú. Phone: the list, and a pushed person whose
+  back returns to the list. Tablet and desktop: `Screen columns="panes"`, the
+  list (`size.columnWide`) beside the selected person, the first by default.
+  `?invite=1` (Tú's «Invitar» step) opens the invitation sheet at once.
+- **Rows, not cards.** `PersonRow` (a feature composition, because a selected
+  state does not fit `Row`'s ten props) is a flat initial, the name («Ana Ruiz
+  (tú)») and one line: «Rol · en casa desde 09:10», «fuera desde el 5 ene»,
+  «cuenta desactivada». No presence ring: presence is words, and only the
+  Owner reads it (`presence.read`, `GET /guard/presence`, view-cached and
+  re-read on `ResourceChanged guard/presence`). The per-user cards with their
+  truncating chips (`MembersPanel`, `PresenceChip`, `RoleAccessCard`, the
+  connected-devices panel and its insights, the access dialog, the guard's
+  search and role chips) are gone.
+- **The person.** Acceso (the role and what it may do, from `roleAreas`; a
+  tap opens the edit sheet for the Owner, without the role for oneself),
+  Sesiones (that user's sessions, each with Cerrar, then «Cerrar todas sus
+  sesiones»; a failed load is the failed state with Reintentar, never «Sin
+  sesiones abiertas», W6), Retrato (Guard only: the one-use portrait capability,
+  shown in the open detail only), Voz, Privacidad (the privacy feature's own
+  rows) and, at the bottom, the danger rows «Borrar datos biométricos» and
+  «Desactivar cuenta» (or «Reactivar cuenta»), each behind the redesign's
+  `Confirm` (W30). Rights are one pure function, `personRightsOf`.
+- **Invitations.** A section below the members for the Owner: pending
+  («Pendiente · vale hasta las 14:30», with Revocar behind `Confirm`), used,
+  lapsed and closed (with the module that closed it). «Invitar» in the top bar
+  opens a form `Sheet` with the role as a `Choice` (roles whose module is off
+  are left out, with a line saying so); «Crear y mostrar QR» is single-flight
+  twice over (the `Sheet` action's own flight and `createInvitationFlight`), so
+  a second tap cannot create a second invitation (A14). The QR opens in a
+  detail `Sheet` on a white frame with a 16 px quiet zone in both themes (A13),
+  follows the record live (waiting, used, closed, lapsed) and is revoked when
+  it closes unused. The token lives only in that sheet's state.
+- **Household privacy** stays the privacy feature's panel, in its own section
+  at the end of the Owner's list; it still uses that feature's legacy rows.
+- **Novedades** (`/notification`, `NewsScreen`): a `Choice` Todo / Seguridad /
+  Pendientes (Seguridad only while surveillance is on: guard, camera and
+  camera-conversation kinds; Pendientes is what is unread), each thread a
+  `FeedItem` with its thread line and the two notices before it hanging from it
+  (`NewsReply`), the X that deletes with Deshacer kept (it is the menu the
+  delete e2e drives), pull-to-refresh (`syncOnce`), «Ver más» with a failed
+  state and Reintentar, an offline line with the time the data is up to date
+  to, and an empty state per filter (the full one with Argus ideas). A push
+  link `?notificationId=` opens its target when the row is local; an id that
+  is not there after the first sync (`sync.ready`) reads «Este aviso ya no
+  está» above the feed. The waiting screen that could wait forever is gone.
+- **Data.** People, invitations and notifications are the view cache projected
+  from WatermelonDB (synced tables, live through `/sync`); presence, sessions
+  and the voice directory are HTTP and re-read on their `ResourceChanged` or
+  session signals.
+
