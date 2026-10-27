@@ -17,6 +17,7 @@ import type { ChatMark } from '@/features/conversations/model/assistant-chat-ove
 import { quoted } from '@/features/conversations/model/conversation-thread';
 import {
   bubbleNoteOf,
+  replyLineOf,
   spokenOf,
   STATUS_KEYS,
 } from '@/features/conversations/model/conversation-labels';
@@ -82,10 +83,7 @@ export function MessageBubble({
   const note = bubbleNoteOf(message, t);
   const time = date.formatTime(new Date(message.createdAt));
   const voiceNote = message.voiceNote;
-  const reply =
-    repliedBody === null
-      ? null
-      : t('screens.conversations.reply-to', { body: quoted(repliedBody) });
+  const reply = replyLineOf(repliedBody, t);
   const visitor = message.kind === 'visitor' ? t('screens.conversations.visitor') : null;
   const items = useBubbleActions({
     message,

@@ -6,6 +6,7 @@ import {
   type TranslateFn,
   type TranslationKey,
 } from '@/core/types';
+import { quoted } from '@/features/conversations/model/conversation-thread';
 import type { BubbleStatus } from '@/features/conversations/model/receipts';
 
 export const DELIVERY_STATE_KEYS = {
@@ -38,6 +39,9 @@ export function bubbleNoteOf(
   if (message.via === 'voice' && !message.voiceNote) return t('screens.conversations.by-voice');
   return null;
 }
+
+export const replyLineOf = (body: string | null, t: TranslateFn): string | null =>
+  body === null ? null : t('screens.conversations.reply-to', { body: quoted(body) });
 
 export const spokenOf = (parts: readonly (string | null)[]): string =>
   parts.filter((part): part is string => Boolean(part)).join('. ');
