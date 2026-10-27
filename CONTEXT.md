@@ -7777,6 +7777,100 @@ always takes typed turns, and voice is the microphone beside the field or the ca
   The shared `assistant-mode` lib, `ASSISTANT_MODE_STORAGE_KEY` and the
   `AssistantMode` type went with the «Voz | Chat» switch.
 
+## The chat, WhatsApp-like (U-chat, 2026-10-27, feat/chat-whatsapp)
+
+Owner revision of 2026-10-27 («que se vea como el chat de WhatsApp, esto como
+guía, mantén la identidad de la aplicación»), on the backend wire of
+integ/gaps-6 (backend `services/notification/CONTEXT.md` «Receipts, typing and
+voice notes in the chat», `services/sync/CONTEXT.md` «Typing»,
+`services/voice/CONTEXT.md` «Argus types and answers voice notes»). It
+supersedes, in «Argus: chat y voz» above: the header with «Argus ▾» and
+«Borrar», the Estela beside bubbles, the meta line under groups, the
+suggestion chips over the field and the microphone as tap-to-talk.
+
+- **Header** (`thread-header.tsx`): back, Estela 40 (still), the name on one
+  line and «en casa» or «escribiendo…» (accent) below, a plain call icon and
+  «⋯» (the shared anchored dropdown): Conversaciones (phone), Buscar, «Borrar
+  la conversación» last behind the menu's Confirm (`thread.clearWords`; the
+  older global confirm is gone from the clear). Tapping Argus on a phone opens
+  `ArgusInfo` (Conversaciones, what Argus did, En casa). A member thread has
+  the same header, with «escribiendo…» from its Typing frames.
+- **Bubbles** (`message-bubble.tsx`): mine on `fill`, theirs on `surface`, a
+  tail on the first of a group (`BubbleTail`), 4 apart inside a group and 12
+  between groups; time and ticks inside at bottom-right (`BubbleMeta`): a
+  camera turn says «Por la cámara», a spoken turn «Por voz»; the phone and
+  laptop legs are only in the spoken label. Actions through the shared menu:
+  long press on phones, right click and a hover «⋯» (`bubble-more.web.tsx`)
+  on web and desktop: Copiar (Compartir on native, which has no clipboard
+  package), Reenviar (failed), Ver transcripción (notes), «Eliminar para mí»
+  last behind the menu's Confirm. The backend has no per-message delete, so
+  «Eliminar para mí» removes the row from this device only and says so.
+  A closed question from Argus (`asksYesNo`) carries Sí/No inside its bubble;
+  suggestion chips are only in the empty thread.
+- **Ticks** (`model/receipts.ts`): member rows read `receipt` (sent ✓,
+  delivered ✓✓, read blue ✓✓ in `receipt-read`, a colour role measured at 3:1
+  on `fill`; blue on `ink` stays under 3:1 in both themes, which is why my
+  bubbles are `fill`, not `ink`); a row from before the receipts reads its
+  relay state. A typed turn to Argus reads its chat entry: the clock while
+  sending, ✓✓ once a Typing frame carries its `clientId`, blue ✓✓ on
+  `voice:text_done`, and the resend icon on `voice:text_error` or a session
+  that ended. A refused member send keeps a failed row with the resend icon
+  (`useThreadSend`, `runOptimistic({quiet})`), never a toast.
+- **Reporting**: delivered once per member thread whose newest line is
+  theirs, up to that id (`useDeliveryReports`, from the summaries, app-wide
+  through `useConversationRuntime`); read with `upToId` while the thread is
+  focused (`useReadReports`).
+- **Typing** (`services/typing`): `Typing = 17` frames per counterpart until
+  their `ttlMs` passes, an `active: false`, `voice:text_done`, `voice:done`
+  or a lost socket. A member thread sends `{type: "typing", payload:
+  {counterpartId, active}}` at most every 2.5 s while typing, and false after
+  5 s idle, on send or when the field empties (`model/typing-signal.ts`).
+- **Voice notes**: the round button is the microphone while the field is
+  empty. Phones hold it (`mic-hold.tsx`, a pan from touch-down): slide left
+  96 to cancel, up 72 to lock (trash and send then), release to send;
+  `expo-audio` records AAC mono 16 kHz at 32 kb/s in m4a. Web and desktop
+  click it (`mic-hold.web.tsx`) and send with the send button; MediaRecorder
+  records Opus in WebM or Ogg, or AAC in MP4, from a mono track
+  (`WEB_NOTE_TYPES`), handed to the desktop request as a data URI
+  (`src-tauri/src/net/http.rs`). The live wave and the timer show while
+  recording; 120 s sends by itself, under 300 ms is not a note. The upload is
+  the `audio` part; a note to Argus then asks for its turn with `voice:text
+  {clientId, noteId}` (`AssistantChat.sendNote`). The bubble plays one note
+  at a time (`services/note-player`, the one-use grant then the content, kept
+  in memory for the last six notes), 1×/1.5×/2×, the transcript folded. On
+  native the bytes play from a data URI: Android's player reads it, iOS's does
+  not and would need expo-file-system to write a file first. The speaker is
+  the default; the earpiece at the ear needs a proximity sensor package the
+  app does not have.
+- **Days and scrolling**: separators are pills (Hoy, Ayer, the weekday
+  within the week, «19 oct»), and a floating pill shows the day of the first
+  visible line while its own separator is off screen (`floatingDayOf`); the
+  scroll button is round with a double chevron and an unread badge.
+- **Search**: a sheet over a local `LIKE` on the thread's bodies, newest
+  first, 50 at most (`conversationService.searchThread`).
+- **Instant thread**: measured on the web build from the click on a
+  conversation row to the first bubble: 0 frames (`chat-whatsapp.e2e.ts`
+  writes it to `ARGUS_E2E_TIMINGS`). The page is read synchronously from MMKV
+  on the first render (`use-conversation-thread.test.tsx`). LegendList keeps
+  its containers at opacity 0 until its layout and initial scroll finish, so
+  `ThreadSnapshot` paints the cached tail (the same row components, bottom
+  aligned) until `onLoad`. The conversation screens are preloaded after the
+  first frame (`lazyScreen().preload`, otherwise the Suspense fallback is an
+  empty frame), and Argus plus the five newest threads are prewarmed
+  (`PagedView.prewarm`, which keeps their cached pages instead of letting
+  `retainScopes` drop them). `estimatedItemSize` follows the rows' text
+  length and the width, `estimatedListSize` the window. Keeping the thread
+  mounted between visits needs a navigator change (the stack pops it), owned
+  by the navigation track.
+- **Data sources**: thread, list, receipts and voice-note metadata: the
+  synced `conversation_message` (v20 adds `receipt`, `delivered_at`,
+  `seen_at`, `voice_note`) through the view cache; typing: `/sync` frames;
+  note audio: HTTP on demand (one-use grant), never stored.
+- **Calling back** (`shared/libs/call-back.ts`): «Devolver» on a missed
+  reminder call opens `/call?purpose=call_back&reminderId=<id>`; the call
+  sends both on `/rtc/token` and `voice:start`. Any other missed call keeps
+  the plain call.
+
 ## Local first, real time: the inventory (R-live, 2026-10-27)
 
 Every screen's data sources on redesign/main (63340650), audited against the

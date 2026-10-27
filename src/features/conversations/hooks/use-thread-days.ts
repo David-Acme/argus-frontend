@@ -15,7 +15,8 @@ export function useThreadDays(now: number): ThreadDays {
       const kind = dayKindOf(day, todayStart, yesterdayStart);
       if (kind === 'today') return t('screens.conversations.today');
       if (kind === 'yesterday') return t('screens.conversations.yesterday');
-      return date.formatFullDate(new Date(day));
+      if (kind === 'weekday') return date.formatWeekday(new Date(day));
+      return date.formatDayMonth(new Date(day));
     },
   };
 }

@@ -142,6 +142,17 @@ describe('where a news item leads and what it offers', () => {
     expect(newsActionOf(thread, '/call', ALWAYS)).toBe('call-back');
   });
 
+  test('a missed reminder call calls back about its reminder', () => {
+    const thread = threadOf({
+      kind: 'call',
+      callId: 'call-43',
+      category: 'reminder',
+      urgency: 'active',
+      reminderId: 9,
+    });
+    expect(newsTargetOf(thread, notificationHrefOf)).toBe('/call?purpose=call_back&reminderId=9');
+  });
+
   test('a household message opens the conversation and offers a reply', () => {
     const thread = threadOf({ kind: 'household_message', counterpartId: 7 });
     const target = newsTargetOf(thread, notificationHrefOf);

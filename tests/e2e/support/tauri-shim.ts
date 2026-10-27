@@ -8,6 +8,14 @@ export function installTauriShim(seed: ShimSeed): void {
   type Callback = (data: unknown) => void;
   type ShimSocket = { ws: WebSocket; channel: number; index: number };
   type Args = Record<string, unknown>;
+  type ShimFile = { name: string; uri: string; filename: string; contentType: string };
+  type ShimRequest = {
+    url: string;
+    method: string;
+    headers?: Record<string, string>;
+    body?: string;
+    files?: ShimFile[];
+  };
   const scope = window as unknown as Record<string, unknown>;
   if (scope.__TAURI_INTERNALS__) return;
 
@@ -72,14 +80,35 @@ export function installTauriShim(seed: ShimSeed): void {
     return body;
   };
 
+  const formOf = async (files: ShimFile[], body: string): Promise<FormData> => {
+    const form = new FormData();
+    const fields = (body ? JSON.parse(body) : {}) as Record<string, string>;
+    for (const [key, value] of Object.entries(fields)) form.append(key, value);
+    for (const file of files)
+      form.append(file.name, await (await fetch(file.uri)).blob(), file.filename);
+    return form;
+  };
+
   const request = async (args: Args): Promise<unknown> => {
-    const input = args.request as { url: string; method: string; headers?: Record<string, string>; body?: string };
-    if (cutOff(input.url) !== null) throw new Error('NETWORK_ERROR|the e2e harness cut this host off');
+    const input = args.request as ShimRequest;
+    if (cutOff(input.url) !== null)
+      throw new Error('NETWORK_ERROR|the e2e harness cut this host off');
     const method = input.method.toUpperCase();
+    const files = input.files ?? [];
+    const sent = Object.fromEntries(
+      Object.entries(input.headers ?? {}).filter(
+        ([key]) => files.length === 0 || key.toLowerCase() !== 'content-type'
+      )
+    );
     const response = await fetch(`/__api${pathOf(input.url)}`, {
       method,
-      headers: { ...(input.headers ?? {}), 'x-e2e-device': seed.device },
-      body: method === 'GET' || method === 'HEAD' ? undefined : (input.body ?? ''),
+      headers: { ...sent, 'x-e2e-device': seed.device },
+      body:
+        method === 'GET' || method === 'HEAD'
+          ? undefined
+          : files.length > 0
+            ? await formOf(files, input.body ?? '')
+            : (input.body ?? ''),
     });
     const headers: Record<string, string> = {};
     response.headers.forEach((value, key) => {
@@ -90,7 +119,8 @@ export function installTauriShim(seed: ShimSeed): void {
 
   const openSocket = (args: Args): Promise<null> => {
     const options = args.options as { socketId: string; url: string };
-    if (cutOff(options.url) !== null) return Promise.reject(new Error('NETWORK_ERROR|the e2e harness cut this host off'));
+    if (cutOff(options.url) !== null)
+      return Promise.reject(new Error('NETWORK_ERROR|the e2e harness cut this host off'));
     const channel = (args.onEvent as { id: number }).id;
     const path = pathOf(options.url);
     const query = path.includes('?') ? `&${path.slice(path.indexOf('?') + 1)}` : '';
@@ -125,7 +155,11 @@ export function installTauriShim(seed: ShimSeed): void {
     });
   };
 
-  const invoke = async (command: string, args: Args = {}, options: { headers?: Record<string, string> } = {}) => {
+  const invoke = async (
+    command: string,
+    args: Args = {},
+    options: { headers?: Record<string, string> } = {}
+  ) => {
     switch (command) {
       case 'argus_secure_get':
         return readSecure()[String(args.key)] ?? null;
@@ -176,7 +210,10 @@ export function installTauriShim(seed: ShimSeed): void {
     unregisterCallback: (id: number) => callbacks.delete(id),
     runCallback: (id: number, data: unknown) => callbacks.get(id)?.(data),
     callbacks,
-    metadata: { currentWindow: { label: 'main' }, currentWebview: { windowLabel: 'main', label: 'main' } },
+    metadata: {
+      currentWindow: { label: 'main' },
+      currentWebview: { windowLabel: 'main', label: 'main' },
+    },
     convertFileSrc: (path: string) => path,
   };
   scope.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => undefined };

@@ -25,6 +25,8 @@ const source = (patch: Partial<ConversationMessageSource> & { id: string }): Con
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: new Date(T0),
   ...patch,

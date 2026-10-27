@@ -6,6 +6,8 @@ import {
   type TranslateFn,
   type TranslationKey,
 } from '@/core/types';
+import { quoted } from '@/features/conversations/model/conversation-thread';
+import type { BubbleStatus } from '@/features/conversations/model/receipts';
 
 export const DELIVERY_STATE_KEYS = {
   sent: 'screens.conversations.state.sent',
@@ -20,6 +22,29 @@ export const LEG_KEYS = {
   phone: 'screens.conversations.leg.phone',
   laptop: 'screens.conversations.leg.laptop',
 } as const satisfies Record<ConversationLeg, TranslationKey>;
+
+export const STATUS_KEYS = {
+  sending: 'screens.conversations.status.sending',
+  sent: 'screens.conversations.status.sent',
+  delivered: 'screens.conversations.status.delivered',
+  read: 'screens.conversations.status.read',
+  failed: 'screens.conversations.status.failed',
+} as const satisfies Record<BubbleStatus, TranslationKey>;
+
+export function bubbleNoteOf(
+  message: Pick<IConversationMessageCacheRow, 'kind' | 'leg' | 'via' | 'voiceNote'>,
+  t: TranslateFn
+): string | null {
+  if (message.kind === 'turn' && message.leg === 'camera') return t(LEG_KEYS.camera);
+  if (message.via === 'voice' && !message.voiceNote) return t('screens.conversations.by-voice');
+  return null;
+}
+
+export const replyLineOf = (body: string | null, t: TranslateFn): string | null =>
+  body === null ? null : t('screens.conversations.reply-to', { body: quoted(body) });
+
+export const spokenOf = (parts: readonly (string | null)[]): string =>
+  parts.filter((part): part is string => Boolean(part)).join('. ');
 
 export const isArgus = (counterpartId: number): boolean => counterpartId === ARGUS_COUNTERPART_ID;
 

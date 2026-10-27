@@ -1,5 +1,6 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import type { AvatarTone } from '@/shared/ui/avatar';
+import { callBackHrefOf } from '@/shared/libs/call-back';
 import type { IconGlyph } from '@/shared/ui/icon';
 import {
   isThreadRead,
@@ -10,8 +11,6 @@ import {
 } from '@/features/home/model/notification-threads';
 
 export const NEWS_ROUTE = '/notification';
-
-export const NEWS_CALL_BACK_HREF = '/call';
 
 export const NEWS_STACK_LIMIT = 5;
 
@@ -92,7 +91,7 @@ export function newsTargetOf(
   thread: Thread,
   hrefOf: (data: Readonly<Record<string, unknown>>) => string
 ): string | null {
-  if (missedCallId(thread)) return NEWS_CALL_BACK_HREF;
+  if (missedCallId(thread)) return callBackHrefOf(thread.latest.data);
   const href = hrefOf(thread.latest.data);
   return href === '/' ? null : href;
 }

@@ -2,17 +2,21 @@ import {
   CONVERSATION_DIRECTIONS,
   CONVERSATION_KINDS,
   CONVERSATION_LEGS,
+  CONVERSATION_RECEIPTS,
   CONVERSATION_STATES,
   CONVERSATION_VIAS,
   CREATED_VIA,
+  VOICE_NOTE_MIMES,
 } from '@/core/types';
 import type {
   ConversationDirection,
   ConversationKind,
   ConversationLeg,
+  ConversationReceipt,
   ConversationResultFrame,
   ConversationState,
   ConversationVia,
+  ConversationVoiceNote,
   CreatedVia,
   RecurrenceException,
   ZonePoint,
@@ -56,6 +60,24 @@ export const sanitizeConversationState = (raw: unknown): ConversationState =>
 
 export const sanitizeConversationVia = (raw: unknown): ConversationVia | null =>
   memberOf(CONVERSATION_VIAS, raw);
+
+export const sanitizeConversationReceipt = (raw: unknown): ConversationReceipt | null =>
+  memberOf(CONVERSATION_RECEIPTS, raw);
+
+const VOICE_NOTE_ID = /^[0-9a-f]{32}$/;
+
+const peakOf = (raw: unknown): number =>
+  typeof raw === 'number' && Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : 0;
+
+export const sanitizeVoiceNote = (raw: unknown): ConversationVoiceNote | null => {
+  const note = sanitizeObject(raw);
+  const mime = memberOf(VOICE_NOTE_MIMES, note.mime);
+  const durationMs = note.durationMs;
+  if (typeof note.id !== 'string' || !VOICE_NOTE_ID.test(note.id) || mime === null) return null;
+  if (typeof durationMs !== 'number' || !Number.isFinite(durationMs) || durationMs < 0) return null;
+  const peaks = Array.isArray(note.peaks) ? note.peaks.map(peakOf) : [];
+  return { id: note.id, mime, durationMs: Math.round(durationMs), peaks };
+};
 
 const frameIdOf = (raw: unknown): string =>
   typeof raw === 'string' || typeof raw === 'number' ? String(raw) : '';

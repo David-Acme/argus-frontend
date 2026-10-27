@@ -81,7 +81,6 @@ import type {
   RtcTokenRequest,
   VoiceAction,
   VoiceActionOutcome,
-  VoicePurpose,
   VoiceStartOptions,
   VoiceTransport,
   VoiceActionRecord,
@@ -170,6 +169,13 @@ const END_ERRORS: Partial<Record<RtcEndReason, string>> = {
 };
 
 const devLog = (...args: unknown[]): void => log.debug('voice', ...args);
+
+type CallPurpose = Pick<VoiceStartOptions, 'purpose' | 'reminderId'>;
+
+const purposeOf = ({ purpose, reminderId }: VoiceStartOptions): CallPurpose => ({
+  ...(purpose ? { purpose } : {}),
+  ...(purpose && reminderId ? { reminderId } : {}),
+});
 
 class VoiceService {
   private mic: IVoiceMic | null = null;
@@ -312,7 +318,7 @@ class VoiceService {
       const handled = await this.startRealtime(session, {
         callId: options.callId,
         watchConversationId: options.watchConversationId,
-        ...(options.purpose ? { purpose: options.purpose } : {}),
+        ...purposeOf(options),
       }).catch((reason: unknown) => {
         log.error('voice', 'the call could not be answered', reason);
         if (this.isCurrent(session))
@@ -331,7 +337,7 @@ class VoiceService {
       this.fail('RTC_UNAVAILABLE|This device cannot take the camera conversation');
       return;
     }
-    await this.startLegacy(session, options.purpose);
+    await this.startLegacy(session, purposeOf(options));
   }
 
   completeWatchHandoff(conversationId: string): void {
@@ -557,7 +563,7 @@ class VoiceService {
       this.fail('SOCKET_LOST|Connection to Argus lost', { serverGone: true });
   }
 
-  private async startLegacy(session: number, purpose?: VoicePurpose): Promise<void> {
+  private async startLegacy(session: number, purpose: CallPurpose): Promise<void> {
     const connected = await synchronizeService.ensureConnected();
     if (!this.isCurrent(session)) return;
     if (!connected) {
@@ -568,7 +574,7 @@ class VoiceService {
     synchronizeService.send(VOICE_START_TYPE, {
       mode: VOICE_MODE_DUPLEX,
       leg: voiceLegOf(IS_NATIVE),
-      ...(purpose ? { purpose } : {}),
+      ...purpose,
     });
     this.serverSession = true;
     this.transport = 'sync';

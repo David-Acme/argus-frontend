@@ -8,6 +8,7 @@ import { CAPABILITY, NOTIFICATION_FEED_SCOPE, VIEW_CACHE_KEYS } from '@/shared/c
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { usePagedView } from '@/shared/hooks/use-infinite-list';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { callBackHref } from '@/shared/libs/call-back';
 import { Button } from '@/shared/ui/button';
 import { Text } from '@/shared/ui/text';
 import { CallAvatar } from '@/features/voice/components/call-avatar';
@@ -117,7 +118,7 @@ export function MissedCallCard() {
       return;
     }
     close();
-    if (action === 'call-back') router.navigate(CALL_SCREEN_PATH);
+    if (action === 'call-back') router.navigate(callBackHref(missed.reminderId));
     if (action === 'view')
       router.push(`/notification?notificationId=${encodeURIComponent(missed.notificationId)}`);
   };

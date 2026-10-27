@@ -6,6 +6,7 @@ export {
   type ButtonMenuProps,
   type ContextMenuProps,
   type MenuAction,
+  type MenuConfirm,
   type MenuItem,
   type MenuItems,
   type MenuProps,

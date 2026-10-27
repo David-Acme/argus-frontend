@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import type { TranslateFn } from '@/core/types';
 import {
+  bubbleNoteOf,
   counterpartNameOf,
   DELIVERY_STATE_KEYS,
   isArgus,
@@ -19,7 +20,6 @@ import { applyIntents, type OptimisticIntent } from '@/shared/libs/optimistic';
 import {
   dayKindOf,
   deliveryStateOf,
-  legOf,
   quoted,
   repliedBodyOf,
   replyBodies,
@@ -29,7 +29,9 @@ import {
 const DAY = 86_400_000;
 const T0 = Date.UTC(2026, 9, 19, 9, 0, 0);
 
-const message = (patch: Partial<IConversationMessageCacheRow> & { id: string }): IConversationMessageCacheRow => ({
+const message = (
+  patch: Partial<IConversationMessageCacheRow> & { id: string }
+): IConversationMessageCacheRow => ({
   counterpartId: 3,
   counterpartName: 'David',
   direction: 'out',
@@ -41,6 +43,8 @@ const message = (patch: Partial<IConversationMessageCacheRow> & { id: string }):
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: T0,
   ...patch,
@@ -61,7 +65,9 @@ describe('deliveryStateOf', () => {
     expect(deliveryStateOf(message({ id: '1', direction: 'in', state: 'received' }))).toBeNull();
     expect(deliveryStateOf(message({ id: '1', direction: 'in', state: 'delivered' }))).toBeNull();
     expect(deliveryStateOf(message({ id: '1', kind: 'turn', state: 'delivered' }))).toBeNull();
-    expect(deliveryStateOf(message({ id: '1', kind: 'visitor', direction: 'in', state: 'received' }))).toBeNull();
+    expect(
+      deliveryStateOf(message({ id: '1', kind: 'visitor', direction: 'in', state: 'received' }))
+    ).toBeNull();
   });
 
   test('an outgoing message still marked received shows nothing rather than a guess', () => {
@@ -79,19 +85,34 @@ describe('deliveryStateOf', () => {
   });
 });
 
-describe('legOf', () => {
-  test('only a turn shows where it was said', () => {
-    expect(legOf(message({ id: '1', kind: 'turn', leg: 'camera' }))).toBe('camera');
-    expect(legOf(message({ id: '1', kind: 'turn', leg: null }))).toBeNull();
-    expect(legOf(message({ id: '1', kind: 'relay', leg: 'phone' }))).toBeNull();
-    expect(LEG_KEYS.laptop).toBe('screens.conversations.leg.laptop');
+describe('bubbleNoteOf', () => {
+  test('a turn heard through a camera or by voice says so inside the bubble; a voice note does not repeat it', () => {
+    expect(bubbleNoteOf(message({ id: '1', kind: 'turn', leg: 'camera' }), t)).toBe(
+      LEG_KEYS.camera
+    );
+    expect(bubbleNoteOf(message({ id: '1', kind: 'turn', leg: 'laptop' }), t)).toBeNull();
+    expect(bubbleNoteOf(message({ id: '1', kind: 'turn', leg: 'phone', via: 'voice' }), t)).toBe(
+      'screens.conversations.by-voice'
+    );
+    expect(
+      bubbleNoteOf(
+        message({
+          id: '1',
+          via: 'voice',
+          voiceNote: { id: 'a'.repeat(32), mime: 'audio/ogg', durationMs: 1, peaks: [] },
+        }),
+        t
+      )
+    ).toBeNull();
   });
 });
 
 describe('dayKindOf', () => {
-  test('names today and yesterday, dates the rest', () => {
+  test('names today and yesterday, the weekday within the week, and dates the rest', () => {
     expect(dayKindOf(10 * DAY, 10 * DAY, 9 * DAY)).toBe('today');
     expect(dayKindOf(9 * DAY, 10 * DAY, 9 * DAY)).toBe('yesterday');
+    expect(dayKindOf(5 * DAY, 10 * DAY, 9 * DAY)).toBe('weekday');
+    expect(dayKindOf(4 * DAY, 10 * DAY, 9 * DAY)).toBe('weekday');
     expect(dayKindOf(3 * DAY, 10 * DAY, 9 * DAY)).toBe('date');
   });
 });
@@ -100,8 +121,22 @@ describe('replies', () => {
   test('a reply quotes the message it answers when the thread still holds it', () => {
     const thread = [
       message({ id: '1', messageKey: 'msg-1', body: 'Ven a comer' }),
-      message({ id: '2', direction: 'in', kind: 'reply', replyToKey: 'msg-1', body: 'Voy', state: 'received' }),
-      message({ id: '3', direction: 'in', kind: 'reply', replyToKey: 'msg-gone', body: '¿Qué?', state: 'received' }),
+      message({
+        id: '2',
+        direction: 'in',
+        kind: 'reply',
+        replyToKey: 'msg-1',
+        body: 'Voy',
+        state: 'received',
+      }),
+      message({
+        id: '3',
+        direction: 'in',
+        kind: 'reply',
+        replyToKey: 'msg-gone',
+        body: '¿Qué?',
+        state: 'received',
+      }),
     ];
     const bodies = replyBodies(thread);
     expect(repliedBodyOf(thread[1]!, bodies)).toBe('Ven a comer');
@@ -140,7 +175,9 @@ describe('labels', () => {
   });
 
   test('the preview of an outgoing line says it was the viewer', () => {
-    expect(previewOf(message({ id: '1', body: 'Ven\na comer' }), t)).toBe('screens.conversations.you:{"body":"Ven a comer"}');
+    expect(previewOf(message({ id: '1', body: 'Ven\na comer' }), t)).toBe(
+      'screens.conversations.you:{"body":"Ven a comer"}'
+    );
     expect(previewOf(message({ id: '1', direction: 'in', body: 'Voy' }), t)).toBe('Voy');
     expect(previewOf(message({ id: '1', direction: 'in', kind: 'visitor', body: '' }), t)).toBe(
       'screens.conversations.visitor'
@@ -173,7 +210,13 @@ describe('optimistic read and clear', () => {
 });
 
 describe('a typed message shows at once and gives way to the synced row', () => {
-  const draft = { counterpartId: 3, counterpartName: 'David', body: '¿Vienes a comer?', createdAt: T0 };
+  const draft = {
+    counterpartId: 3,
+    counterpartName: 'David',
+    body: '¿Vienes a comer?',
+    createdAt: T0,
+    voiceNote: null,
+  };
   const intentOf = (recordId: string, confirmed: boolean): OptimisticIntent => ({
     id: 'intent-1',
     ...typedMessageIntent(draft),
@@ -182,8 +225,30 @@ describe('a typed message shows at once and gives way to the synced row', () => 
     confirmed,
   });
 
+  test('a voice note shows at once without words, as a voice line still without its stored id', () => {
+    const [lens] = conversationLenses(3);
+    const voiceNote = { id: '', mime: 'audio/mp4' as const, durationMs: 4100, peaks: [10, 80] };
+    const row = lens?.create?.('pending:2', { ...draft, body: '', voiceNote });
+    expect(row).toMatchObject({
+      direction: 'out',
+      kind: 'relay',
+      body: '',
+      via: 'voice',
+      voiceNote,
+    });
+    expect(lens?.create?.('pending:3', { ...draft, body: '' })).toBeNull();
+    const [argusLens] = conversationLenses(0);
+    expect(
+      argusLens?.create?.('pending:4', { ...draft, counterpartId: 0, body: '', voiceNote })?.kind
+    ).toBe('turn');
+  });
+
   test('the intent is a create on the conversation table carrying the words', () => {
-    expect(typedMessageIntent(draft)).toEqual({ table: 'conversation_message', kind: 'create', values: draft });
+    expect(typedMessageIntent(draft)).toEqual({
+      table: 'conversation_message',
+      kind: 'create',
+      values: draft,
+    });
   });
 
   test('the pending row is the sender copy, still sent, at the end of its own thread only', () => {
@@ -199,12 +264,25 @@ describe('a typed message shows at once and gives way to the synced row', () => 
       body: '¿Vienes a comer?',
       isRead: true,
     });
-    expect(applyIntents(synced, [intentOf('pending-1', false)], conversationLenses(5))).toBe(synced);
-    expect(applyIntents(synced, [intentOf('pending-1', false)], CONVERSATION_MESSAGE_LENSES)).toBe(synced);
+    expect(applyIntents(synced, [intentOf('pending-1', false)], conversationLenses(5))).toBe(
+      synced
+    );
+    expect(applyIntents(synced, [intentOf('pending-1', false)], CONVERSATION_MESSAGE_LENSES)).toBe(
+      synced
+    );
   });
 
   test('once the server row with that id is synced, it is shown once', () => {
-    const synced = [message({ id: '42', direction: 'out', kind: 'relay', state: 'notified', counterpartId: 3, body: '¿Vienes a comer?' })];
+    const synced = [
+      message({
+        id: '42',
+        direction: 'out',
+        kind: 'relay',
+        state: 'notified',
+        counterpartId: 3,
+        body: '¿Vienes a comer?',
+      }),
+    ];
     const shown = applyIntents(synced, [intentOf('42', true)], conversationLenses(3));
     expect(shown.filter((row) => row.id === '42')).toHaveLength(1);
     expect(shown[0]?.state).toBe('notified');

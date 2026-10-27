@@ -61,6 +61,7 @@ export type RtcTokenRequest = {
   resume?: boolean;
   watchConversationId?: string;
   purpose?: VoicePurpose;
+  reminderId?: number;
 };
 
 export type RtcCallOutcome = 'not-found' | 'taken' | 'expired';

@@ -18,18 +18,24 @@ export type IconTone = Extract<
   | 'ev1-text'
   | 'ev2-text'
   | 'ev3-text'
+  | 'receipt-read'
 >;
 
 export type IconProps = {
   name: IconGlyph;
-  size?: 'small' | 'default' | 'large';
+  size?: 'meta' | 'small' | 'default' | 'large';
   tone?: IconTone;
   label?: string;
 };
 
 type ShapeProps = { shape: IconShape };
 
-const PIXELS = { small: sizes.iconSmall, default: sizes.icon, large: sizes.iconLarge } as const;
+const PIXELS = {
+  meta: sizes.iconMeta,
+  small: sizes.iconSmall,
+  default: sizes.icon,
+  large: sizes.iconLarge,
+} as const;
 
 function Shape({ shape }: ShapeProps) {
   if ('d' in shape) return <Path d={shape.d} />;

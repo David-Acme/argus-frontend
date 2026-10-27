@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react';
+import { ARGUS_COUNTERPART_ID } from '@/core/types';
 import { IS_NATIVE } from '@/shared/constants';
 import { useNow } from '@/shared/hooks/use-now';
 import { ensurePermission } from '@/shared/libs/permission-prompt';
@@ -16,12 +17,14 @@ import type { ArgusResult, ArgusTalk, AssistantChatState, HoldTalkFailure } from
 import { CHAT_CLOCK_SKEW_MS } from '@/features/conversations/constants/conversation.constant';
 import { useArgusSuggestions } from '@/features/conversations/hooks/use-argus-suggestions';
 import type { ConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
+import { useTyping } from '@/features/conversations/hooks/use-typing';
 import { chatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
-import type { ChatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
+import type { ChatMark, ChatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
+import { asksYesNo } from '@/features/conversations/model/suggestions';
 import type { Suggestion } from '@/features/conversations/model/suggestions';
+import type { RecordedNote } from '@/features/conversations/model/voice-note';
 import {
   anchorResults,
-  lastReplyOf,
   newestIncomingId,
   resultRowsOf,
   shownCameraOf,
@@ -30,6 +33,9 @@ import type { AnchoredResults } from '@/features/conversations/model/thread-resu
 
 export type ArgusThreadState = {
   overlay: ChatOverlay;
+  marks: ReadonlyMap<string, ChatMark>;
+  typed: ReadonlySet<string>;
+  askId: string | null;
   typing: boolean;
   results: readonly ArgusResult[];
   anchored: AnchoredResults;
@@ -41,6 +47,9 @@ export type ArgusThreadState = {
   suggestions: Suggestion[];
   draftVersion: number;
   send: (text: string) => boolean;
+  sendNote: (note: RecordedNote) => void;
+  retry: (clientId: string) => void;
+  dismiss: (clientId: string) => void;
   pick: (text: string, send: boolean) => void;
   failure: HoldTalkFailure | null;
   allowMic: () => Promise<void>;
@@ -54,18 +63,17 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
   const talk = useArgusTalk();
   const heard = useVoiceHeard();
   const now = useNow(MINUTE_MS);
+  const typingState = useTyping();
   const [draftVersion, setDraftVersion] = useState(0);
+  const { outbox } = thread;
   const overlay = chatOverlay({
-    messages: thread.messages,
+    messages: [...thread.messages, ...outbox.failed],
     entries: thread.live ? chat.entries : [],
     leg: IS_NATIVE ? 'phone' : 'laptop',
     skewMs: CHAT_CLOCK_SKEW_MS,
   });
-  const suggestions = useArgusSuggestions({
-    now,
-    shownCamera: shownCameraOf(results),
-    lastReply: lastReplyOf(overlay.rows),
-  });
+  const suggestions = useArgusSuggestions({ now, shownCamera: shownCameraOf(results) });
+  const last = overlay.rows.at(-1);
   const failure = talk.stage === 'failed' ? holdTalkFailureOf(talk.error) : null;
   const { dismiss } = talk;
   const closeFailure = useEffectEvent(() => dismiss());
@@ -74,6 +82,17 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     if (!thread.live) thread.toLatest();
     return chat.send(text) === 'sent';
   };
+
+  const sendNote = (note: RecordedNote) =>
+    void outbox.sendNote(note).then((row) => {
+      if (row?.voiceNote) chat.sendNote(row.voiceNote.id, row.body);
+    });
+
+  const retryMessage = (clientId: string) =>
+    outbox.owns(clientId) ? outbox.retry(clientId) : chat.retry(clientId);
+
+  const dismissMessage = (clientId: string) =>
+    outbox.owns(clientId) ? outbox.dismiss(clientId) : chat.dismiss(clientId);
 
   const pick = (text: string, sendNow: boolean) => {
     if (sendNow) {
@@ -97,7 +116,10 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
 
   return {
     overlay,
-    typing: overlay.typing || talk.stage === 'sending',
+    marks: new Map([...overlay.marks, ...outbox.marks]),
+    typed: typingState.typed,
+    askId: last?.direction === 'in' && asksYesNo(last.body) ? last.id : null,
+    typing: typingState.typing.has(ARGUS_COUNTERPART_ID) || talk.stage === 'sending',
     results,
     anchored: anchorResults(overlay.rows, threadResultsOf(resultRowsOf(overlay.rows), results)),
     newestIn: newestIncomingId(overlay.rows),
@@ -108,6 +130,9 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     suggestions,
     draftVersion,
     send,
+    sendNote,
+    retry: retryMessage,
+    dismiss: dismissMessage,
     pick,
     failure,
     allowMic,

@@ -3,16 +3,16 @@ export type ComposerButton = 'send' | 'mic' | 'stop';
 export type ComposerButtonInput = {
   typed: boolean;
   listening: boolean;
-  canListen: boolean;
+  canRecord: boolean;
 };
 
 export function composerButtonOf({
   typed,
   listening,
-  canListen,
+  canRecord,
 }: ComposerButtonInput): ComposerButton {
   if (listening) return 'stop';
-  if (typed || !canListen) return 'send';
+  if (typed || !canRecord) return 'send';
   return 'mic';
 }
 

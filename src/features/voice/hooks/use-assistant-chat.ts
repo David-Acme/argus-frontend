@@ -9,6 +9,7 @@ export type AssistantChatState = AssistantChatSnapshot & {
   readDraft: () => string;
   setDraft: (draft: string) => void;
   send: (draft: string) => AssistantChatSend;
+  sendNote: (noteId: string, transcript: string) => AssistantChatSend;
   retry: (clientId: string) => void;
   dismiss: (clientId: string) => void;
 };
@@ -18,6 +19,9 @@ const subscribe = (listener: () => void): (() => void) => assistantChat.subscrib
 const getSnapshot = (): AssistantChatSnapshot => assistantChat.snapshot;
 
 const send = (draft: string): AssistantChatSend => assistantChat.send(draft);
+
+const sendNote = (noteId: string, transcript: string): AssistantChatSend =>
+  assistantChat.sendNote(noteId, transcript);
 
 const retry = (clientId: string): void => assistantChat.retry(clientId);
 
@@ -45,5 +49,5 @@ export function useAssistantChat(active: boolean): AssistantChatState {
     (entry) => entry.status === 'waiting' || entry.status === 'sending'
   );
 
-  return { ...snapshot, busy, readDraft, setDraft, send, retry, dismiss };
+  return { ...snapshot, busy, readDraft, setDraft, send, sendNote, retry, dismiss };
 }

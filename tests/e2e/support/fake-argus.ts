@@ -19,7 +19,20 @@ export type RouteSpec = {
   modules?: Record<string, boolean>;
 };
 
-type SyncBody = { created?: { startTime?: number; startId?: number }; requiredCreate?: boolean; findLastDeleted?: boolean };
+export type ChatScript = {
+  reply: string | null;
+  fail?: boolean;
+  delayMs?: number;
+  holdTyping?: boolean;
+};
+
+type Audio = { type?: string; size?: number };
+
+type SyncBody = {
+  created?: { startTime?: number; startId?: number };
+  requiredCreate?: boolean;
+  findLastDeleted?: boolean;
+};
 
 const OPERATION = {
   InitialInfo: 0,
@@ -28,7 +41,39 @@ const OPERATION = {
   SynchronizeUserAuditLog: 3,
   Add: 4,
   Heartbeat: 11,
+  Typing: 17,
 } as const;
+
+const NOTE_MS = 2400;
+
+const NOTE_PEAKS = Array.from({ length: 48 }, (_, index) =>
+  Math.round(50 + 45 * Math.sin(index / 3))
+);
+
+const silentWav = (ms: number): string => {
+  const samples = Math.round((16000 * ms) / 1000);
+  const view = new DataView(new ArrayBuffer(44 + samples * 2));
+  const ascii = (at: number, text: string) =>
+    [...text].forEach((char, index) => view.setUint8(at + index, char.charCodeAt(0)));
+  ascii(0, 'RIFF');
+  view.setUint32(4, 36 + samples * 2, true);
+  ascii(8, 'WAVEfmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 16000, true);
+  view.setUint32(28, 32000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  ascii(36, 'data');
+  view.setUint32(40, samples * 2, true);
+  return Buffer.from(view.buffer).toString('base64');
+};
+
+const noteMime = (type: string | undefined): string => {
+  const base = (type ?? '').split(';')[0] ?? '';
+  return ['audio/ogg', 'audio/webm', 'audio/mp4', 'audio/aac'].includes(base) ? base : 'audio/webm';
+};
 
 export const OWNER = { id: 1, name: 'Ana', role: 'owner', isActive: true, personId: null } as const;
 
@@ -54,7 +99,11 @@ export const ownerContext = (enabled: Readonly<Record<string, boolean>> = {}) =>
   roles: [{ id: 'owner', module: 'core', active: true }],
   modules: [
     moduleBrief('core', text('Asistente y hogar', 'Assistant and home'), true),
-    moduleBrief('productivity', text('Productividad', 'Productivity'), enabled.productivity ?? true),
+    moduleBrief(
+      'productivity',
+      text('Productividad', 'Productivity'),
+      enabled.productivity ?? true
+    ),
     moduleBrief('surveillance', text('Vigilancia', 'Surveillance'), enabled.surveillance ?? true),
   ],
   version: 1,
@@ -86,6 +135,7 @@ export class FakeArgus {
   private readonly enabled: Record<string, boolean> = {};
   private contextPatch: Record<string, unknown> = {};
   private nextId = 100;
+  private chat: ChatScript | null = null;
   private clock = 0;
   readonly requests: string[] = [];
   readonly bodies: Record<string, string> = {};
@@ -100,11 +150,21 @@ export class FakeArgus {
     this.downUntil.clear();
     for (const key of Object.keys(this.enabled)) delete this.enabled[key];
     this.contextPatch = {};
+    this.chat = null;
     this.requests.length = 0;
     for (const key of Object.keys(this.bodies)) delete this.bodies[key];
     this.tables.clear();
     this.tables.set('user', [
-      { id: OWNER.id, name: OWNER.name, lastName: 'Ruiz', role: OWNER.role, lang: 'es', isActive: true, createdAt: 1790000000, updatedAt: 1790000000 },
+      {
+        id: OWNER.id,
+        name: OWNER.name,
+        lastName: 'Ruiz',
+        role: OWNER.role,
+        lang: 'es',
+        isActive: true,
+        createdAt: 1790000000,
+        updatedAt: 1790000000,
+      },
     ]);
   }
 
@@ -114,7 +174,10 @@ export class FakeArgus {
 
   storeMany(table: string, rows: readonly Row[]): void {
     const ids = new Set(rows.map((row) => row.id));
-    this.tables.set(table, [...this.rows(table).filter((existing) => !ids.has(existing.id)), ...rows]);
+    this.tables.set(table, [
+      ...this.rows(table).filter((existing) => !ids.has(existing.id)),
+      ...rows,
+    ]);
   }
 
   accepts(device: string): boolean {
@@ -131,7 +194,12 @@ export class FakeArgus {
       JSON.stringify({
         operation: OPERATION.InitialInfo,
         option: 'user',
-        info: { id: this.context().userId, role: this.context().role, isActive: true, context: this.context() },
+        info: {
+          id: this.context().userId,
+          role: this.context().role,
+          isActive: true,
+          context: this.context(),
+        },
       })
     );
   }
@@ -149,14 +217,30 @@ export class FakeArgus {
     }
     switch (message.type) {
       case 'sync':
-        socket.send(JSON.stringify({ operation: OPERATION.Synchronize, option: 'sync', info: this.synchronize(message.payload) }));
+        socket.send(
+          JSON.stringify({
+            operation: OPERATION.Synchronize,
+            option: 'sync',
+            info: this.synchronize(message.payload),
+          })
+        );
         return;
       case 'sync_audit_log':
-        socket.send(JSON.stringify({ operation: OPERATION.SynchronizeAuditLog, option: 'audit_log', info: this.audit(message.payload) }));
+        socket.send(
+          JSON.stringify({
+            operation: OPERATION.SynchronizeAuditLog,
+            option: 'audit_log',
+            info: this.audit(message.payload),
+          })
+        );
         return;
       case 'sync_user_audit_log':
         socket.send(
-          JSON.stringify({ operation: OPERATION.SynchronizeUserAuditLog, option: 'user_audit_log', info: this.audit(message.payload) })
+          JSON.stringify({
+            operation: OPERATION.SynchronizeUserAuditLog,
+            option: 'user_audit_log',
+            info: this.audit(message.payload),
+          })
         );
         return;
       case 'heartbeat':
@@ -164,14 +248,63 @@ export class FakeArgus {
           JSON.stringify({
             operation: OPERATION.Heartbeat,
             option: 'heartbeat',
-            info: { at: seconds(), intervalSeconds: 60, graceSeconds: 120, socketGraceSeconds: 30, armed: false, presence: 'home' },
+            info: {
+              at: seconds(),
+              intervalSeconds: 60,
+              graceSeconds: 120,
+              socketGraceSeconds: 30,
+              armed: false,
+              presence: 'home',
+            },
           })
         );
         return;
+      case 'typing':
+        this.record('WS typing', JSON.stringify(message.payload ?? null), socket.data.device);
+        return;
       default:
-        if (message.type?.startsWith('voice:')) this.record(`WS ${message.type}`, JSON.stringify(message.payload ?? null), socket.data.device);
+        if (message.type?.startsWith('voice:'))
+          this.record(
+            `WS ${message.type}`,
+            JSON.stringify(message.payload ?? null),
+            socket.data.device
+          );
+        if (message.type === 'voice:text') this.answerChat(socket, message.payload);
         return;
     }
+  }
+
+  script(chat: ChatScript): void {
+    this.chat = chat;
+  }
+
+  private answerChat(socket: DeviceSocket, payload: unknown): void {
+    const chat = this.chat;
+    const clientId = String((payload as { clientId?: unknown } | null)?.clientId ?? '');
+    if (!chat || !clientId) return;
+    const send = (frame: unknown) => socket.send(JSON.stringify(frame));
+    const typing = (active: boolean) =>
+      send({
+        operation: OPERATION.Typing,
+        option: 'conversation_message',
+        info: { counterpartId: 0, active, ttlMs: active ? 6000 : 0, clientId },
+      });
+    const delay = chat.delayMs ?? 300;
+    setTimeout(() => typing(true), delay);
+    if (chat.holdTyping) return;
+    setTimeout(() => {
+      if (chat.fail) {
+        typing(false);
+        send({
+          type: 'voice:text_error',
+          payload: { status: 503, error: 'UNAVAILABLE|Argus is not answering', clientId },
+        });
+        return;
+      }
+      send({ type: 'voice:assistant', payload: { text: chat.reply ?? '', turnId: 1, clientId } });
+      typing(false);
+      send({ type: 'voice:text_done', payload: { clientId, turnId: 1 } });
+    }, delay * 2);
   }
 
   private record(request: string, body: string, device: string): void {
@@ -195,7 +328,8 @@ export class FakeArgus {
   emit(frames: readonly DeviceFrame[]): void {
     for (const { device, frame, close } of frames) {
       const added = frame as { operation?: number; option?: string; info?: Row };
-      if (added.operation === OPERATION.Add && added.option && added.info) this.store(added.option, added.info);
+      if (added.operation === OPERATION.Add && added.option && added.info)
+        this.store(added.option, added.info);
       const message = JSON.stringify(frame);
       for (const socket of [...this.sockets]) {
         if (device && socket.data.device !== device) continue;
@@ -216,7 +350,10 @@ export class FakeArgus {
     if (spec.sets) this.define(spec.sets);
     if (spec.modules) Object.assign(this.enabled, spec.modules);
     const status = spec.status ?? 200;
-    const response = status === 204 ? new Response(null, { status }) : envelope(status, spec.info ?? null, spec.errors ?? null);
+    const response =
+      status === 204
+        ? new Response(null, { status })
+        : envelope(status, spec.info ?? null, spec.errors ?? null);
     if (spec.emits) {
       const frames = spec.emits;
       setTimeout(() => this.emit(frames), 0);
@@ -254,7 +391,11 @@ export class FakeArgus {
 
   async api(method: string, path: string, body: string, device: string): Promise<Response> {
     this.record(`${method} ${path}`, body, device);
-    if (this.isDown(device)) return envelope(503, null, { code: 'SERVICE_UNAVAILABLE', message: 'the e2e backend is down' });
+    if (this.isDown(device))
+      return envelope(503, null, {
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'the e2e backend is down',
+      });
     const bare = path.split('?')[0] ?? path;
     const spec =
       this.routes.get(this.key(method, path, device)) ??
@@ -263,9 +404,26 @@ export class FakeArgus {
       this.routes.get(this.key(method, bare));
     if (spec) return this.answer(spec);
     if (method === 'POST' && path === '/project') return this.createProject(body);
+    const conversation = /^\/conversation\/(\d+)\/(voice-note|delivered|read)$/.exec(bare);
+    if (conversation && method === 'POST' && conversation[2] === 'voice-note')
+      return this.storeNote(Number(conversation[1]), body);
+    if (conversation && method === 'PATCH') return envelope(200, { updated: 0 });
+    const play = /^\/conversation\/voice-note\/([0-9a-f]{32})\/play$/.exec(bare);
+    if (play && method === 'GET')
+      return envelope(200, { token: `note-${play[1]}`, expiresAt: seconds() + 60 });
+    if (/^\/conversation\/voice-note\/note-[0-9a-f]{32}\/content$/.test(bare) && method === 'GET')
+      return envelope(200, {
+        mimeType: 'audio/wav',
+        durationMs: NOTE_MS,
+        base64: silentWav(NOTE_MS),
+      });
     if (method === 'GET' && bare === '/privacy/me') return envelope(200, consentGiven);
-    if (method === 'GET' && bare === '/modules') return envelope(200, { modules: ownerContext(this.enabled).modules });
-    return envelope(404, null, { code: 'ROUTE_NOT_FOUND', message: `the e2e backend has no ${method} ${path}` });
+    if (method === 'GET' && bare === '/modules')
+      return envelope(200, { modules: ownerContext(this.enabled).modules });
+    return envelope(404, null, {
+      code: 'ROUTE_NOT_FOUND',
+      message: `the e2e backend has no ${method} ${path}`,
+    });
   }
 
   private createProject(body: string): Response {
@@ -286,6 +444,42 @@ export class FakeArgus {
     };
     this.tables.set('project', [...this.rows('project'), row]);
     this.broadcast({ operation: OPERATION.Add, option: 'project', info: row });
+    return envelope(201, row);
+  }
+
+  private storeNote(counterpartId: number, body: string): Response {
+    const audio = ((JSON.parse(body || '{}') as { audio?: Audio }).audio ?? null) as Audio | null;
+    if (!audio || !audio.size)
+      return envelope(422, null, { code: 'VALIDATION_ERROR', message: 'audio is required' });
+    const at = this.tick();
+    const id = this.nextId++;
+    const noteId = id.toString(16).padStart(32, '0');
+    const row: Row = {
+      id,
+      userId: OWNER.id,
+      counterpartId,
+      counterpartName: '',
+      direction: 'out',
+      kind: counterpartId === 0 ? 'turn' : 'relay',
+      body: counterpartId === 0 ? 'Nota de prueba para Argus' : '',
+      leg: null,
+      state: 'sent',
+      messageKey: `note-${OWNER.id}-${noteId}`,
+      replyToKey: null,
+      result: null,
+      via: 'voice',
+      receipt: 'sent',
+      deliveredAt: null,
+      seenAt: null,
+      voiceNote: { id: noteId, mime: noteMime(audio.type), durationMs: NOTE_MS, peaks: NOTE_PEAKS },
+      isRead: true,
+      readAt: null,
+      createdAt: at,
+      updatedAt: null,
+      deletedAt: null,
+    };
+    this.tables.set('conversation_message', [...this.rows('conversation_message'), row]);
+    this.broadcast({ operation: OPERATION.Add, option: 'conversation_message', info: row });
     return envelope(201, row);
   }
 

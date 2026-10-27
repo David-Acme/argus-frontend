@@ -22,6 +22,8 @@ export type ConversationMessageSource = Pick<
   | 'replyToKey'
   | 'result'
   | 'via'
+  | 'receipt'
+  | 'voiceNote'
   | 'isRead'
   | 'createdAt'
 >;
@@ -64,6 +66,8 @@ export const toConversationRow = (message: ConversationMessageSource): IConversa
   replyToKey: message.replyToKey ?? null,
   result: message.result ?? null,
   via: message.via ?? null,
+  receipt: message.receipt ?? null,
+  voiceNote: message.voiceNote ?? null,
   isRead: message.isRead,
   createdAt: message.createdAt.getTime(),
 });

@@ -37,20 +37,22 @@ import {
 } from '@/features/voice/model/call-stage';
 import { callKindOf } from '@/features/voice/model/incoming-surface';
 import { leaveCall } from '@/features/voice/model/leave-call';
+import { callStartOf } from '@/features/voice/model/call-back';
+import type { CallParams } from '@/features/voice/model/call-back';
 import { voiceActionLabel } from '@/features/voice/model/voice-action-label';
 import { argusCallSupported, voiceService } from '@/features/voice/services/voice';
 
 function CallScreen() {
   const router = useRouter();
   const { t, tk } = useTranslation();
-  const params = useLocalSearchParams<{ callId?: string; outside?: string }>();
+  const params = useLocalSearchParams<CallParams & { outside?: string }>();
   const enteredFromOutside = params.outside === '1';
   useEffect(() => {
     if (!enteredFromOutside || !params.callId) return;
     setCallLock(params.callId);
     return () => setCallLock(null);
   }, [enteredFromOutside, params.callId]);
-  const call = useCall(params.callId ? { callId: params.callId } : {});
+  const call = useCall(callStartOf(params));
   const [firstCall] = useState(() => storageService.getBoolean(VOICE_MIC_CONSENT_KEY) !== true);
   const [startedAt] = useState(() => Date.now());
   const cameras = useViewCacheRows<ICameraCacheRow>(VIEW_CACHE_KEYS.cameraList);

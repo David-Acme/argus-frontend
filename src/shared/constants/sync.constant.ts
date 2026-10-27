@@ -16,6 +16,7 @@ export const SYNC_OPERATION = {
   ResourceChanged: 14,
   WatchUpdate: 15,
   VoiceResult: 16,
+  Typing: 17,
 } as const;
 
 export const SYNC_AUDIT_CURSORS_PREFIX = 'app.sync.audit.';

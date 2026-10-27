@@ -18,12 +18,6 @@ export type RingChoicesInput = {
   snoozable: boolean;
 };
 
-export type ReminderLinkInput = {
-  category?: unknown;
-  urgency?: unknown;
-  reminderId?: unknown;
-};
-
 export function callKindOf(urgency: string | undefined): CallKind {
   return urgency === 'critical' ? 'alert' : 'reminder';
 }
@@ -35,17 +29,6 @@ export function ringSurfaceOf({ waiting, pathname }: RingSurfaceInput): RingSurf
 
 export function ringChoices({ kind, snoozable }: RingChoicesInput): RingChoice[] {
   return kind === 'reminder' && snoozable ? ['decline', 'snooze', 'answer'] : ['decline', 'answer'];
-}
-
-export function callReminderIdOf({
-  category,
-  urgency,
-  reminderId,
-}: ReminderLinkInput): number | null {
-  if (category !== 'reminder' || urgency === 'critical') return null;
-  return typeof reminderId === 'number' && Number.isInteger(reminderId) && reminderId > 0
-    ? reminderId
-    : null;
 }
 
 export function callSubjectOf(call: Pick<IncomingCall, 'reason' | 'subject'>): string {

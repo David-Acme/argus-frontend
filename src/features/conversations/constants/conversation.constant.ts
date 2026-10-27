@@ -15,6 +15,4 @@ export const SUGGESTION_KEYS: Readonly<
   today: 'screens.conversations.suggest.today',
   tomorrow: 'screens.conversations.suggest.tomorrow',
   remind: 'screens.conversations.suggest.remind',
-  yes: 'screens.conversations.suggest.yes',
-  no: 'screens.conversations.suggest.no',
 };

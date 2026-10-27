@@ -65,7 +65,9 @@ const openExchange = async (baseUrl: string, second: SecondDevice): Promise<void
   );
   await store(baseUrl, 'conversation_message', message(51, { body: REPLY }));
   await openThread(baseUrl, second);
-  await expect.poll(() => textCount(second.page, REPLY), { timeout: 10000 }).toBe(1);
+  await expect
+    .poll(() => second.page.getByLabel(/^On it\.\. /).count(), { timeout: 10000 })
+    .toBe(1);
 };
 
 test('a reminder offer is answered by button with its id, and the kept reminder settles the same card', async ({
@@ -178,10 +180,7 @@ test('the cards come back from the conversation itself, settled, and a spoken tu
     .toBe(1);
   expect(await buttonCount(page, 'Yes, remind me')).toBe(0);
   expect(await textCount(page, offer.data.title)).toBe(1);
-  await expect
-    .poll(() => page.getByText(/^From the phone · by voice · /).count(), { timeout: LIVE_MS })
-    .toBe(1);
-  expect(await page.getByText(/^By voice · /).count()).toBe(1);
+  await expect.poll(() => page.getByText(/^By voice · /).count(), { timeout: LIVE_MS }).toBe(2);
 
   expect(second.escapes).toEqual([]);
 });

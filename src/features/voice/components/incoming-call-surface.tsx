@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScopedTheme } from 'uniwind';
 import type { IncomingCall } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { callReminderIdOf } from '@/shared/libs/call-back';
 import { elevation, space } from '@/shared/theme';
 import { Text } from '@/shared/ui/text';
 import { CallAvatar } from '@/features/voice/components/call-avatar';
@@ -22,7 +23,6 @@ import { useReminderCall } from '@/features/voice/hooks/use-reminder-call';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 import {
   callKindOf,
-  callReminderIdOf,
   callSubjectOf,
   ringChoices,
   ringSurfaceOf,

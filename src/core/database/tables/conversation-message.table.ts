@@ -4,11 +4,13 @@ import type {
   ConversationDirection,
   ConversationKind,
   ConversationLeg,
+  ConversationReceipt,
   ConversationResultFrame,
   ConversationState,
   ConversationVia,
+  ConversationVoiceNote,
 } from '@/core/types';
-import { sanitizeResultFrames } from './sanitizers';
+import { sanitizeResultFrames, sanitizeVoiceNote } from './sanitizers';
 
 export const CONVERSATION_THREAD_INDEX_SQL =
   'create index if not exists "conversation_message_thread" on "conversation_message" ("user_id", "counterpart_id", "created_at");';
@@ -29,6 +31,10 @@ export const CONVERSATION_MESSAGE_SCHEMA = tableSchema({
     { name: 'reply_to_key', type: 'string', isOptional: true },
     { name: 'result', type: 'string', isOptional: true },
     { name: 'via', type: 'string', isOptional: true },
+    { name: 'receipt', type: 'string', isOptional: true },
+    { name: 'delivered_at', type: 'number', isOptional: true },
+    { name: 'seen_at', type: 'number', isOptional: true },
+    { name: 'voice_note', type: 'string', isOptional: true },
     { name: 'is_read', type: 'boolean' },
     { name: 'read_at', type: 'number', isOptional: true },
     { name: 'created_at', type: 'number' },
@@ -51,6 +57,10 @@ export class ConversationMessageModel extends Model {
   @field('reply_to_key') replyToKey!: string | null;
   @json('result', sanitizeResultFrames) result!: ConversationResultFrame[] | null;
   @field('via') via!: ConversationVia | null;
+  @field('receipt') receipt!: ConversationReceipt | null;
+  @date('delivered_at') deliveredAt!: Date | null;
+  @date('seen_at') seenAt!: Date | null;
+  @json('voice_note', sanitizeVoiceNote) voiceNote!: ConversationVoiceNote | null;
   @field('is_read') isRead!: boolean;
   @date('read_at') readAt!: Date | null;
   @date('created_at') createdAt!: Date;

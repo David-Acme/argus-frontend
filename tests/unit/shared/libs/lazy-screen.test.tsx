@@ -47,4 +47,17 @@ describe('lazyScreen', () => {
     expect(await screen.findByText('Detalle')).toBeDefined();
     expect(screen.queryByText('Cámaras')).toBeNull();
   });
+
+  test('a screen preloaded before it opens paints on its first frame, with no empty frame', async () => {
+    let loads = 0;
+    const Thread = lazyScreen(async () => {
+      loads += 1;
+      return { default: () => <p>Hilo</p> };
+    }, 'default');
+    await Thread.preload();
+    render(<Thread />);
+    expect(screen.getByText('Hilo')).toBeDefined();
+    await Thread.preload();
+    expect(loads).toBe(1);
+  });
 });

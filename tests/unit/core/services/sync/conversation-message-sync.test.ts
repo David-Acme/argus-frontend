@@ -4,7 +4,9 @@ import {
   sanitizeConversationDirection,
   sanitizeConversationKind,
   sanitizeConversationLeg,
+  sanitizeConversationReceipt,
   sanitizeConversationState,
+  sanitizeVoiceNote,
 } from '@/core/database/tables/sanitizers';
 import { planAuditEntries, toAuditRemoval } from '@/core/services/sync/audit-log-patch';
 import { knowsTable, toDirtyRaw, toModelProps, toPartialModelProps } from '@/core/services/sync/entity-mappers';
@@ -90,6 +92,10 @@ describe('mapping a conversation row', () => {
       reply_to_key: null,
       result: null,
       via: null,
+      receipt: null,
+      delivered_at: null,
+      seen_at: null,
+      voice_note: null,
       is_read: true,
       read_at: 1_790_000_050_000,
       created_at: 1_790_000_000_000,
@@ -134,6 +140,33 @@ describe('mapping a conversation row', () => {
     expect(sanitizeConversationState('notified')).toBe('notified');
   });
 
+  test('a row carries its receipt, its two receipt times and its voice note', () => {
+    const note = { id: 'a'.repeat(32), mime: 'audio/ogg', durationMs: 4200, peaks: [0, 40, 100] };
+    const raw = toDirtyRaw(
+      'conversation_message',
+      row({ receipt: 'delivered', deliveredAt: 1_790_000_010, seenAt: null, voiceNote: note })
+    );
+    expect(raw.receipt).toBe('delivered');
+    expect(raw.delivered_at).toBe(1_790_000_010_000);
+    expect(raw.seen_at).toBeNull();
+    expect(JSON.parse(String(raw.voice_note))).toEqual(note);
+    expect(toModelProps('conversation_message', row({ voiceNote: JSON.stringify(note) })).voiceNote).toEqual(note);
+    expect(toModelProps('conversation_message', row({ voiceNote: null })).voiceNote).toBeNull();
+  });
+
+  test('a receipt or a voice note outside the wire reads as none', () => {
+    expect(sanitizeConversationReceipt('seen')).toBeNull();
+    expect(sanitizeConversationReceipt('read')).toBe('read');
+    expect(sanitizeVoiceNote({ id: 'short', mime: 'audio/ogg', durationMs: 1, peaks: [] })).toBeNull();
+    expect(sanitizeVoiceNote({ id: 'b'.repeat(32), mime: 'audio/wav', durationMs: 1, peaks: [] })).toBeNull();
+    expect(sanitizeVoiceNote({ id: 'b'.repeat(32), mime: 'audio/mp4', durationMs: 900.4, peaks: [140, -3, 'x'] })).toEqual({
+      id: 'b'.repeat(32),
+      mime: 'audio/mp4',
+      durationMs: 900,
+      peaks: [100, 0, 0],
+    });
+  });
+
   test('a field diff maps only the fields it carries', () => {
     expect(
       toPartialModelProps('conversation_message', { state: 'answered', updatedAt: 1_790_000_200 })
@@ -176,6 +209,24 @@ describe('live conversation frames', () => {
       readAt: 1_790_000_400_000,
     });
     expect(plan.removals.size).toBe(0);
+  });
+
+  test('a receipt diff moves the sender copy forward with its times', () => {
+    const plan = planAuditEntries([
+      entry(20, 41, {
+        receipt: { previous: 'sent', current: 'delivered' },
+        deliveredAt: { previous: null, current: 1_790_000_600 },
+      }),
+      entry(21, 41, {
+        receipt: { previous: 'delivered', current: 'read' },
+        seenAt: { previous: null, current: 1_790_000_700 },
+      }),
+    ]);
+    expect(plan.patches.get('conversation_message')?.get('41')?.props).toEqual({
+      receipt: 'read',
+      deliveredAt: 1_790_000_600_000,
+      seenAt: 1_790_000_700_000,
+    });
   });
 
   test('a deletedAt in its diff is not a removal: its deletions travel as Delete frames and pulls', () => {

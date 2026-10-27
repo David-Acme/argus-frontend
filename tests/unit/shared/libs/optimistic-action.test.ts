@@ -42,7 +42,8 @@ mock.module('@/core/services/net', () => ({
 }));
 
 const { optimisticRegistry } = await import('@/shared/libs/optimistic');
-const { changeTitleKey, runOptimistic, serverRecordId } = await import('@/shared/libs/optimistic-action');
+const { changeTitleKey, runOptimistic, serverRecordId } =
+  await import('@/shared/libs/optimistic-action');
 
 const ok = <T>(info: T): IServiceResponse<T> => ({ ok: true, status: 200, info, errors: null });
 const refused = (code: string): IServiceResponse<null> => ({
@@ -105,7 +106,14 @@ describe('runOptimistic', () => {
 
   test('a write the server never received is told as a lost change and leaves no row behind', async () => {
     await runOptimistic({
-      intents: [{ table: 'calendar_event', kind: 'update', recordId: '3', values: { startsAt: 1_790_000_000 } }],
+      intents: [
+        {
+          table: 'calendar_event',
+          kind: 'update',
+          recordId: '3',
+          values: { startsAt: 1_790_000_000 },
+        },
+      ],
       call: async () => refused('WRITE_NOT_SENT'),
     });
     expect(optimisticRegistry.snapshot()).toEqual([]);
@@ -125,21 +133,57 @@ describe('runOptimistic', () => {
       errors: { code: 'CONFLICT', message: 'The event already moved' },
     };
     await runOptimistic({
-      intents: [{ table: 'calendar_event', kind: 'update', recordId: '3', values: { startsAt: 1_790_000_000 } }],
+      intents: [
+        {
+          table: 'calendar_event',
+          kind: 'update',
+          recordId: '3',
+          values: { startsAt: 1_790_000_000 },
+        },
+      ],
       call: async () => conflict,
       errorTitle: 'Could not snooze',
-      refusalNotice: (result) => (result.status === 409 ? { title: 'Already done', description: 'Nothing to snooze' } : null),
+      refusalNotice: (result) =>
+        result.status === 409 ? { title: 'Already done', description: 'Nothing to snooze' } : null,
     });
     expect(optimisticRegistry.snapshot()).toEqual([]);
-    expect(shown.at(-1)).toEqual({ intent: 'info', title: 'Already done', description: 'Nothing to snooze', action: undefined });
+    expect(shown.at(-1)).toEqual({
+      intent: 'info',
+      title: 'Already done',
+      description: 'Nothing to snooze',
+      action: undefined,
+    });
 
     await runOptimistic({
-      intents: [{ table: 'calendar_event', kind: 'update', recordId: '3', values: { startsAt: 1_790_000_000 } }],
+      intents: [
+        {
+          table: 'calendar_event',
+          kind: 'update',
+          recordId: '3',
+          values: { startsAt: 1_790_000_000 },
+        },
+      ],
       call: async () => refused('FORBIDDEN'),
       errorTitle: 'Could not snooze',
       refusalNotice: (result) => (result.status === 409 ? { title: 'Already done' } : null),
     });
     expect(shown.at(-1)).toMatchObject({ intent: 'error', title: 'Could not snooze' });
+  });
+
+  test('a quiet refusal rolls back and leaves the failure to the caller, with no toast', async () => {
+    let refusedCalls = 0;
+    const result = await runOptimistic({
+      intents: [{ table: 'conversation_message', kind: 'create', values: { body: 'Hola' } }],
+      call: async () => refused('NETWORK_ERROR'),
+      quiet: true,
+      onRefused: () => {
+        refusedCalls += 1;
+      },
+    });
+    expect(result).toBeNull();
+    expect(refusedCalls).toBe(1);
+    expect(optimisticRegistry.snapshot()).toEqual([]);
+    expect(shown).toEqual([]);
   });
 
   test('every attempt of one action carries the same idempotency key', async () => {
@@ -266,23 +310,33 @@ describe('runOptimistic', () => {
 
 describe('a refused change says which change it was', () => {
   test('the title names the record kind, and an unknown or empty change has a plain title', () => {
-    expect(changeTitleKey([{ table: 'project_task', kind: 'update' }])).toBe('common.change-failed.project-task');
-    expect(changeTitleKey([{ table: 'calendar_event', kind: 'create' }])).toBe('common.change-failed.calendar-event');
-    expect(changeTitleKey([{ table: 'notification', kind: 'update' }])).toBe('common.change-failed.notification');
+    expect(changeTitleKey([{ table: 'project_task', kind: 'update' }])).toBe(
+      'common.change-failed.project-task'
+    );
+    expect(changeTitleKey([{ table: 'calendar_event', kind: 'create' }])).toBe(
+      'common.change-failed.calendar-event'
+    );
+    expect(changeTitleKey([{ table: 'notification', kind: 'update' }])).toBe(
+      'common.change-failed.notification'
+    );
     expect(changeTitleKey([])).toBe('common.change-failed.generic');
   });
 
   test('a refused delete says it was not deleted, never that it was not saved', () => {
-    expect(changeTitleKey([{ table: 'calendar_event', kind: 'delete' }])).toBe('common.change-failed.deleted.calendar-event');
-    expect(changeTitleKey([{ table: 'project_task', kind: 'delete' }])).toBe('common.change-failed.deleted.project-task');
+    expect(changeTitleKey([{ table: 'calendar_event', kind: 'delete' }])).toBe(
+      'common.change-failed.deleted.calendar-event'
+    );
+    expect(changeTitleKey([{ table: 'project_task', kind: 'delete' }])).toBe(
+      'common.change-failed.deleted.project-task'
+    );
     expect(changeTitleKey([{ table: 'unknown_table' as 'project', kind: 'delete' }])).toBe(
-      'common.change-failed.deleted.generic',
+      'common.change-failed.deleted.generic'
     );
   });
 
   test('every verb reads right in Spanish and English', () => {
     const tables = Object.keys(localeDictionaries.es.common['change-failed']).filter(
-      (key) => key !== 'deleted' && key !== 'generic',
+      (key) => key !== 'deleted' && key !== 'generic'
     );
     for (const language of ['es', 'en'] as const) {
       const titles = localeDictionaries[language].common['change-failed'];
@@ -293,8 +347,14 @@ describe('a refused change says which change it was', () => {
         expect(text).not.toMatch(language === 'es' ? /guard/ : /saved/);
       }
     }
-    expect(localeDictionaries.es.common['change-failed'].deleted['calendar-event']).toBe('No se eliminó el evento');
-    expect(localeDictionaries.en.common['change-failed'].deleted['calendar-event']).toBe('The event was not deleted');
-    expect(localeDictionaries.es.common['change-failed']['calendar-event']).toBe('No se guardó el evento');
+    expect(localeDictionaries.es.common['change-failed'].deleted['calendar-event']).toBe(
+      'No se eliminó el evento'
+    );
+    expect(localeDictionaries.en.common['change-failed'].deleted['calendar-event']).toBe(
+      'The event was not deleted'
+    );
+    expect(localeDictionaries.es.common['change-failed']['calendar-event']).toBe(
+      'No se guardó el evento'
+    );
   });
 });

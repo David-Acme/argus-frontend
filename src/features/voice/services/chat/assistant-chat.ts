@@ -64,6 +64,8 @@ export const CHAT_ERRORS = {
   ended: 'CHAT_ENDED|The chat session ended',
 } as const;
 
+const CHAT_NOTE_ID = /^[0-9a-f]{32}$/;
+
 const asRecord = (payload: unknown): FrameRecord | null =>
   typeof payload === 'object' && payload !== null ? (payload as FrameRecord) : null;
 
@@ -188,7 +190,14 @@ export class AssistantChat {
     const text = chatMessageOf(draft);
     if (text === null) return 'invalid';
     if (this.hasPending()) return 'busy';
-    this.enqueue(text);
+    this.enqueue(text, null);
+    return 'sent';
+  }
+
+  sendNote(noteId: string, transcript: string): AssistantChatSend {
+    if (!CHAT_NOTE_ID.test(noteId)) return 'invalid';
+    if (this.hasPending()) return 'busy';
+    this.enqueue(transcript, noteId);
     return 'sent';
   }
 
@@ -196,7 +205,7 @@ export class AssistantChat {
     const entry = this.entries.find((candidate) => candidate.clientId === clientId);
     if (!entry || entry.status !== 'failed' || this.hasPending()) return;
     this.entries = this.entries.filter((candidate) => candidate.clientId !== clientId);
-    this.enqueue(entry.text);
+    this.enqueue(entry.text, entry.noteId ?? null);
   }
 
   dismiss(clientId: string): void {
@@ -232,7 +241,7 @@ export class AssistantChat {
     });
   }
 
-  private enqueue(text: string): void {
+  private enqueue(text: string, noteId: string | null): void {
     const entry: AssistantChatEntry = {
       clientId: this.deps.newClientId(),
       text,
@@ -241,6 +250,7 @@ export class AssistantChat {
       reply: '',
       turnId: null,
       error: null,
+      noteId,
     };
     this.entries = [...this.entries, entry].slice(-ASSISTANT_CHAT_ENTRIES_KEPT);
     if (this.deps.callActive()) {
@@ -255,7 +265,12 @@ export class AssistantChat {
     if (!(await this.ensureSession(false))) return;
     for (const entry of this.entries) {
       if (entry.status !== 'sending') continue;
-      this.deps.transport.send(VOICE_TEXT_TYPE, { text: entry.text, clientId: entry.clientId });
+      this.deps.transport.send(
+        VOICE_TEXT_TYPE,
+        entry.noteId
+          ? { clientId: entry.clientId, noteId: entry.noteId }
+          : { text: entry.text, clientId: entry.clientId }
+      );
       this.update(entry.clientId, { status: 'waiting' });
       this.arm(entry.clientId);
     }

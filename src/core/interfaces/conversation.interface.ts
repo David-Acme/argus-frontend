@@ -2,9 +2,11 @@ import type {
   ConversationDirection,
   ConversationKind,
   ConversationLeg,
+  ConversationReceipt,
   ConversationResultFrame,
   ConversationState,
   ConversationVia,
+  ConversationVoiceNote,
 } from '@/core/types';
 
 export interface IConversationMessageCacheRow {
@@ -20,6 +22,8 @@ export interface IConversationMessageCacheRow {
   replyToKey: string | null;
   result: ConversationResultFrame[] | null;
   via: ConversationVia | null;
+  receipt: ConversationReceipt | null;
+  voiceNote: ConversationVoiceNote | null;
   isRead: boolean;
   createdAt: number;
 }

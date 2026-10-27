@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type {
   IConversationMessageCacheRow,
   IConversationSummaryCacheRow,
@@ -12,16 +12,18 @@ import { useViewCacheRows, useViewCacheValue } from '@/shared/hooks/use-cached-r
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
+import type { MenuConfirm } from '@/shared/ui/menu';
 import { counterpartNameOf, isArgus } from '@/features/conversations/model/conversation-labels';
+import { useReadReports } from '@/features/conversations/hooks/use-read-reports';
+import { useThreadSend } from '@/features/conversations/hooks/use-thread-send';
+import type { ThreadSend } from '@/features/conversations/hooks/use-thread-send';
 import {
   conversationClearIntents,
   conversationLenses,
-  conversationReadIntents,
-  typedMessageIntent,
 } from '@/features/conversations/model/conversation-optimistic';
-import { unreadIncomingIds } from '@/features/conversations/model/conversation-thread';
 
 export type ConversationThread = {
+  counterpartId: number;
   messages: readonly IConversationMessageCacheRow[];
   loaded: boolean;
   hasOlder: boolean;
@@ -30,13 +32,12 @@ export type ConversationThread = {
   name: string;
   argus: boolean;
   clear: () => Promise<boolean>;
-  send: (body: string) => Promise<boolean>;
+  clearWords: MenuConfirm;
+  outbox: ThreadSend;
   loadOlder: () => Promise<boolean>;
   loadNewer: () => Promise<boolean>;
   toLatest: () => void;
 };
-
-const READ_ALL = '*';
 
 const NO_ROWS: readonly IConversationMessageCacheRow[] = [];
 
@@ -49,72 +50,64 @@ export function useConversationThread(counterpartId: number): ConversationThread
   const page = useViewCacheValue<IConversationThreadCache>(THREAD_KEY, scope);
   const synced = page?.rows ?? NO_ROWS;
   const live = page?.live ?? true;
-  const summaries = useViewCacheRows<IConversationSummaryCacheRow>(VIEW_CACHE_KEYS.conversationList);
+  const summaries = useViewCacheRows<IConversationSummaryCacheRow>(
+    VIEW_CACHE_KEYS.conversationList
+  );
   const lenses = useMemo(() => conversationLenses(counterpartId), [counterpartId]);
   const { rows: messages } = useOptimisticRows(synced, lenses);
   const summary = summaries.find((row) => row.counterpartId === counterpartId);
   const name = counterpartNameOf(counterpartId, summary?.counterpartName ?? '', t);
   const argus = isArgus(counterpartId);
-  const requested = useRef<ReadonlySet<string>>(new Set());
-  const unread = useMemo(() => unreadIncomingIds(messages), [messages]);
-  const unreadKey = unread.join(',');
-  const unreadElsewhere = (summary?.unread ?? 0) > unread.length;
+  useReadReports({ counterpartId, messages, unreadInSummary: summary?.unread ?? 0 });
 
-  const loadOlder = useCallback(() => viewCacheCoordinatorService.extendPages(THREAD_KEY, scope, 'older'), [scope]);
+  const loadOlder = useCallback(
+    () => viewCacheCoordinatorService.extendPages(THREAD_KEY, scope, 'older'),
+    [scope]
+  );
 
-  const loadNewer = useCallback(() => viewCacheCoordinatorService.extendPages(THREAD_KEY, scope, 'newer'), [scope]);
+  const loadNewer = useCallback(
+    () => viewCacheCoordinatorService.extendPages(THREAD_KEY, scope, 'newer'),
+    [scope]
+  );
 
-  const toLatest = useCallback(() => viewCacheCoordinatorService.resetPages(THREAD_KEY, scope), [scope]);
+  const toLatest = useCallback(
+    () => viewCacheCoordinatorService.resetPages(THREAD_KEY, scope),
+    [scope]
+  );
 
   const clear = useCallback(async (): Promise<boolean> => {
     if (userId === null) return false;
     const result = await runOptimistic({
       intents: conversationClearIntents(synced),
-      confirm: {
-        title: t('screens.conversations.clear-title', { name }),
-        description: argus
-          ? t('screens.conversations.clear-description-argus')
-          : t('screens.conversations.clear-description', { name }),
-        confirmLabel: t('screens.conversations.clear-confirm'),
-        intent: 'danger',
-      },
       call: () => conversationService.clearThread(String(userId), counterpartId),
       errorTitle: t('screens.conversations.clear-failed'),
     });
     return result !== null;
-  }, [argus, counterpartId, name, synced, t, userId]);
+  }, [counterpartId, synced, t, userId]);
 
-  const send = useCallback(
-    async (body: string): Promise<boolean> => {
+  const clearWords: MenuConfirm = {
+    title: t('screens.conversations.clear-title', { name }),
+    body: argus
+      ? t('screens.conversations.clear-description-argus')
+      : t('screens.conversations.clear-description', { name }),
+    confirmLabel: t('screens.conversations.clear-confirm'),
+  };
+
+  const outbox = useThreadSend({
+    counterpartId,
+    name,
+    beforeSend: () => {
       if (!live) toLatest();
-      const result = await runOptimistic({
-        intents: [typedMessageIntent({ counterpartId, counterpartName: name, body, createdAt: Date.now() })],
-        call: () => conversationService.send(counterpartId, body),
-        errorTitle: t('screens.conversations.composer.send-failed', { name }),
-      });
-      return result !== null;
     },
-    [counterpartId, live, name, t, toLatest]
-  );
+  });
 
   useEffect(() => {
     viewCacheCoordinatorService.watchPages(THREAD_KEY, scope);
     return () => viewCacheCoordinatorService.releasePages(THREAD_KEY, scope);
   }, [scope]);
 
-  useEffect(() => {
-    const fresh = unreadKey.split(',').filter((id) => id.length > 0 && !requested.current.has(id));
-    const elsewhere = unreadElsewhere && !requested.current.has(READ_ALL);
-    if (fresh.length === 0 && !elsewhere) return;
-    requested.current = new Set([...requested.current, ...fresh, ...(elsewhere ? [READ_ALL] : [])]);
-    void runOptimistic({
-      intents: conversationReadIntents(fresh),
-      call: () => conversationService.markRead(counterpartId),
-      errorTitle: t('screens.conversations.read-failed'),
-    });
-  }, [counterpartId, t, unreadElsewhere, unreadKey]);
-
   return {
+    counterpartId,
     messages,
     loaded: page !== null,
     hasOlder: page?.hasOlder ?? false,
@@ -123,7 +116,8 @@ export function useConversationThread(counterpartId: number): ConversationThread
     name,
     argus,
     clear,
-    send,
+    clearWords,
+    outbox,
     loadOlder,
     loadNewer,
     toLatest,

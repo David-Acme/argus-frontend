@@ -38,6 +38,7 @@ export type OptimisticAction<R> = {
   success?: string;
   errorTitle?: string;
   onRefused?: () => void;
+  quiet?: boolean;
   refusals?: (info: R) => OptimisticRefusal | null;
   refusalNotice?: (result: IServiceResponse<R>) => OptimisticNotice | null;
 };
@@ -76,7 +77,8 @@ export function changeTitleKey(
   intents: readonly Pick<OptimisticIntentInput<object>, 'table' | 'kind'>[]
 ): TranslationKey {
   const first = intents[0];
-  if (first?.kind === 'delete') return DELETE_TITLES[first.table] ?? 'common.change-failed.deleted.generic';
+  if (first?.kind === 'delete')
+    return DELETE_TITLES[first.table] ?? 'common.change-failed.deleted.generic';
   return (first && CHANGE_TITLES[first.table]) || 'common.change-failed.generic';
 }
 
@@ -135,6 +137,7 @@ export async function runOptimistic<R>(
   if (!result.ok) {
     rollback(begun);
     action.onRefused?.();
+    if (action.quiet) return null;
     const notice = action.refusalNotice?.(result) ?? null;
     if (notice) {
       toast.info(notice.title, notice.description);

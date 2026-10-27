@@ -246,6 +246,10 @@ class ViewCacheCoordinatorService {
     this.paged?.[key].watch(scope);
   }
 
+  prewarmPages(key: PagedViewKey, scopes: readonly string[]): void {
+    this.paged?.[key].prewarm(scopes);
+  }
+
   releasePages(key: PagedViewKey, scope: string): void {
     const id = `${key}|${scope}`;
     const holder = this.pageHolders.get(id);

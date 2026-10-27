@@ -1,166 +1,146 @@
 import { clsx } from 'clsx';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { isPendingRecordId } from '@/shared/libs/optimistic';
-import { size } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
-import { Icon } from '@/shared/ui/icon';
-import { Presence } from '@/shared/ui/presence';
-import type { PresenceState } from '@/shared/ui/presence';
 import { Text } from '@/shared/ui/text';
+import { BubbleFrame } from '@/features/conversations/components/bubble-frame';
+import { BubbleMeta } from '@/features/conversations/components/bubble-meta';
+import { BubbleTail } from '@/features/conversations/components/bubble-tail';
+import { VoiceNoteBubble } from '@/features/conversations/components/voice-note-bubble';
+import { useBubbleActions } from '@/features/conversations/hooks/use-bubble-actions';
 import { chatErrorMessage } from '@/features/conversations/model/assistant-chat-errors';
 import type { ChatMark } from '@/features/conversations/model/assistant-chat-overlay';
-import { DELIVERY_STATE_KEYS, LEG_KEYS } from '@/features/conversations/model/conversation-labels';
-import { deliveryStateOf, legOf, quoted } from '@/features/conversations/model/conversation-thread';
-
-export type BubblePresence = { state: PresenceState; live: boolean };
+import { quoted } from '@/features/conversations/model/conversation-thread';
+import {
+  bubbleNoteOf,
+  replyLineOf,
+  spokenOf,
+  STATUS_KEYS,
+} from '@/features/conversations/model/conversation-labels';
+import type { BubbleStatus } from '@/features/conversations/model/receipts';
 
 export type MessageBubbleProps = {
   message: IConversationMessageCacheRow;
   repliedBody: string | null;
+  status: BubbleStatus | null;
   mark?: ChatMark;
   groupStart?: boolean;
-  groupEnd?: boolean;
-  presence?: BubblePresence | null;
+  ask?: ReactNode;
   onRetry?: (clientId: string) => void;
   onDismiss?: (clientId: string) => void;
 };
 
-type FailedProps = { mark: ChatMark; body: string } & Pick<
-  MessageBubbleProps,
-  'onRetry' | 'onDismiss'
->;
+type QuoteProps = { text: string | null };
 
-const MINE = { maxWidth: '80%' } as const;
+type ResendProps = { mark: ChatMark; body: string; onRetry?: (clientId: string) => void };
 
-const THEIRS = { maxWidth: '92%' } as const;
+const MINE = { maxWidth: '82%' } as const;
 
-function Failed({ mark, body, onRetry, onDismiss }: FailedProps) {
-  const { t } = useTranslation();
+const THEIRS = { maxWidth: '86%' } as const;
+
+function Quote({ text }: QuoteProps) {
+  if (!text) return null;
   return (
-    <View
-      accessibilityLiveRegion="polite"
-      className="flex-row flex-wrap items-center justify-end gap-2 pt-1">
-      <Icon name="alert" size="small" tone="alert" />
-      <Text variant="caption" tone="alert">
-        {t('screens.conversations.chat.failed', { reason: chatErrorMessage(mark.error, t) })}
-      </Text>
-      {onDismiss ? (
-        <Button
-          compact
-          variant="ghost"
-          label={{
-            shown: t('screens.conversations.chat.dismiss'),
-            spoken: t('screens.conversations.chat.dismiss-label', { body: quoted(body) }),
-          }}
-          onPress={() => onDismiss(mark.clientId)}
-        />
-      ) : null}
-      {onRetry ? (
-        <Button
-          compact
-          label={{
-            shown: t('screens.conversations.chat.retry'),
-            spoken: t('screens.conversations.chat.retry-label', { body: quoted(body) }),
-          }}
-          onPress={() => onRetry(mark.clientId)}
-        />
-      ) : null}
-    </View>
+    <Text variant="caption" tone="2" numberOfLines={1}>
+      {text}
+    </Text>
   );
 }
 
-function useBubbleMeta(message: IConversationMessageCacheRow, sending: boolean): string {
+function Resend({ mark, body, onRetry }: ResendProps) {
   const { t } = useTranslation();
-  const date = useDateFormatter();
-  const time = date.formatTime(new Date(message.createdAt));
-  if (sending) return t('screens.conversations.chat.sending');
-  const leg = legOf(message);
-  const state = deliveryStateOf(message);
-  const where = state ? t(DELIVERY_STATE_KEYS[state]) : leg ? t(LEG_KEYS[leg]) : null;
-  if (message.via === 'voice')
-    return where
-      ? t('screens.conversations.meta-voice', { where, time })
-      : t('screens.conversations.meta-voice-plain', { time });
-  return where ? t('screens.conversations.meta', { where, time }) : time;
+  if (!onRetry) return null;
+  return (
+    <Button
+      iconOnly
+      compact
+      icon="refresh"
+      label={t('screens.conversations.chat.retry-label', { body: quoted(body) })}
+      onPress={() => onRetry(mark.clientId)}
+    />
+  );
 }
 
 export function MessageBubble({
   message,
   repliedBody,
+  status,
   mark,
   groupStart = true,
-  groupEnd = true,
-  presence = null,
+  ask = null,
   onRetry,
   onDismiss,
 }: MessageBubbleProps) {
   const { t } = useTranslation();
-  const outgoing = message.direction === 'out';
-  const visitor = message.kind === 'visitor';
-  const pending = isPendingRecordId(message.id) || mark?.status === 'sending';
-  const failed = mark?.status === 'failed' ? mark : null;
-  const meta = useBubbleMeta(message, outgoing && pending && failed === null);
-  const reply =
-    repliedBody === null
-      ? null
-      : t('screens.conversations.reply-to', { body: quoted(repliedBody) });
-  const label = [visitor ? t('screens.conversations.visitor') : null, reply, message.body, meta]
-    .filter((part): part is string => Boolean(part))
-    .join('. ');
-  const argus = presence !== null;
+  const date = useDateFormatter();
+  const [expanded, setExpanded] = useState(false);
+  const mine = message.direction === 'out';
+  const failed = status === 'failed' && mark ? mark : null;
+  const note = bubbleNoteOf(message, t);
+  const time = date.formatTime(new Date(message.createdAt));
+  const voiceNote = message.voiceNote;
+  const reply = replyLineOf(repliedBody, t);
+  const visitor = message.kind === 'visitor' ? t('screens.conversations.visitor') : null;
+  const items = useBubbleActions({
+    message,
+    failedId: failed?.clientId ?? null,
+    transcript: voiceNote ? { expanded, toggle: () => setExpanded((open) => !open) } : null,
+    onRetry,
+    onDismiss,
+  });
+  const label = spokenOf([
+    visitor,
+    reply,
+    voiceNote ? t('screens.conversations.note.label') : message.body,
+    note,
+    time,
+    status ? t(STATUS_KEYS[status]) : null,
+    failed ? chatErrorMessage(failed.error, t) : null,
+  ]);
   return (
-    <View
-      className={clsx(
-        groupStart ? 'pt-3' : 'pt-1',
-        outgoing ? 'items-end' : 'items-start',
-        pending && 'opacity-60'
-      )}>
-      <View
-        accessible
-        accessibilityLabel={label}
-        className="flex-row items-end gap-2"
-        style={outgoing ? MINE : THEIRS}>
-        {argus ? (
-          <View className="size-presence-bubble">
-            {groupEnd ? (
-              <Presence state={presence.state} size={size.presenceBubble} paused={!presence.live} />
-            ) : null}
-          </View>
-        ) : null}
-        <View
-          className={clsx(
-            'min-w-0 shrink gap-1 px-4 py-2',
-            outgoing ? 'bg-ink rounded-media' : 'bg-surface border-line rounded-media border',
-            groupEnd && (outgoing ? 'rounded-br-key' : 'rounded-bl-key')
-          )}>
-          {visitor ? (
-            <Text variant="caption" tone="2">
-              {t('screens.conversations.visitor')}
-            </Text>
-          ) : null}
-          {reply ? (
-            <Text variant="caption" tone={outgoing ? 'on-ink' : '3'} numberOfLines={1}>
-              {reply}
-            </Text>
-          ) : null}
-          <Text variant="body" tone={outgoing ? 'on-ink' : 'default'}>
-            {message.body}
-          </Text>
+    <View className={clsx(groupStart ? 'pt-3' : 'pt-1', mine ? 'items-end' : 'items-start')}>
+      <View className="flex-row items-center gap-1" style={mine ? MINE : THEIRS}>
+        {failed ? <Resend mark={failed} body={message.body} onRetry={onRetry} /> : null}
+        <View className="min-w-0 shrink">
+          <BubbleFrame items={items} label={label}>
+            <View
+              accessible
+              accessibilityLabel={label}
+              className={clsx(
+                'rounded-control min-w-0 shrink gap-1 px-3 py-2',
+                mine ? 'bg-fill' : 'bg-surface',
+                groupStart && (mine ? 'rounded-tr-none' : 'rounded-tl-none')
+              )}>
+              {groupStart ? (
+                <BubbleTail side={mine ? 'end' : 'start'} fill={mine ? 'fill' : 'surface'} />
+              ) : null}
+              <Quote text={visitor} />
+              <Quote text={reply} />
+              {voiceNote ? (
+                <VoiceNoteBubble
+                  note={voiceNote}
+                  transcript={message.body}
+                  expanded={expanded}
+                  onExpand={setExpanded}
+                />
+              ) : null}
+              <View className="flex-row flex-wrap items-end justify-end">
+                {voiceNote ? null : (
+                  <View className="min-w-0 shrink">
+                    <Text variant="body">{message.body}</Text>
+                  </View>
+                )}
+                <BubbleMeta time={time} note={note} status={status} />
+              </View>
+              {ask}
+            </View>
+          </BubbleFrame>
         </View>
       </View>
-      {groupEnd && failed === null ? (
-        <View className={clsx('px-1 pt-1', argus && 'pl-9')}>
-          <Text variant="caption" tone="3">
-            {meta}
-          </Text>
-        </View>
-      ) : null}
-      {failed ? (
-        <Failed mark={failed} body={message.body} onRetry={onRetry} onDismiss={onDismiss} />
-      ) : null}
     </View>
   );
 }

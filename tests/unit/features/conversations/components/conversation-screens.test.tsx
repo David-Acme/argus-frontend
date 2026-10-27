@@ -38,6 +38,8 @@ const summary = (
     replyToKey: null,
     result: null,
     via: null,
+    receipt: null,
+    voiceNote: null,
     isRead: false,
     createdAt: NOW,
   },

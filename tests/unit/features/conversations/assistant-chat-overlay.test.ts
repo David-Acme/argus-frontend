@@ -27,6 +27,8 @@ const row = (
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: 0,
   ...facts,
@@ -52,7 +54,7 @@ const spoken = row({
 });
 
 describe('typed turns over the synced thread', () => {
-  test('the typed message shows at once after the spoken history, with Argus typing', () => {
+  test('the typed message shows at once after the spoken history, marked with its own status', () => {
     const overlay = chatOverlay({
       messages: [spoken],
       entries: [entry()],
@@ -66,11 +68,14 @@ describe('typed turns over the synced thread', () => {
       body: '¿quién está en casa?',
       leg: 'laptop',
     });
-    expect(overlay.typing).toBe(true);
-    expect(overlay.marks.size).toBe(0);
+    expect(overlay.marks.get(chatRowId('c1'))).toEqual({
+      clientId: 'c1',
+      status: 'waiting',
+      error: null,
+    });
   });
 
-  test('the reply shows as an incoming bubble while it streams and the typing stops when the turn is done', () => {
+  test('the reply shows as an incoming bubble while it streams, and a done turn is marked done', () => {
     const streaming = chatOverlay({
       messages: [],
       entries: [entry({ reply: 'Ana está en casa.' })],
@@ -81,14 +86,13 @@ describe('typed turns over the synced thread', () => {
       [chatRowId('c1'), 'out'],
       [chatReplyRowId('c1'), 'in'],
     ]);
-    expect(streaming.typing).toBe(true);
     const done = chatOverlay({
       messages: [],
       entries: [entry({ reply: 'Ana está en casa.', status: 'done' })],
       leg: 'phone',
       skewMs: SKEW,
     });
-    expect(done.typing).toBe(false);
+    expect(done.marks.get(chatRowId('c1'))?.status).toBe('done');
   });
 
   test('once the backend stores the turn, the synced rows replace the live ones', () => {
@@ -148,7 +152,39 @@ describe('typed turns over the synced thread', () => {
       status: 'failed',
       error: 'SOCKET_LOST|gone',
     });
-    expect(overlay.typing).toBe(false);
+  });
+
+  test('a voice note to Argus marks its stored row instead of adding one, until Argus answered', () => {
+    const note = row({
+      id: '7',
+      direction: 'out',
+      body: 'compra pan',
+      createdAt: 10_100,
+      voiceNote: { id: 'a'.repeat(32), mime: 'audio/mp4', durationMs: 1200, peaks: [] },
+    });
+    const waiting = chatOverlay({
+      messages: [note],
+      entries: [
+        entry({
+          clientId: 'n1',
+          text: 'compra pan',
+          noteId: 'a'.repeat(32),
+          status: 'failed',
+          error: 'X|y',
+        }),
+      ],
+      leg: 'phone',
+      skewMs: SKEW,
+    });
+    expect(waiting.rows.map((message) => message.id)).toEqual(['7']);
+    expect(waiting.marks.get('7')?.status).toBe('failed');
+    const done = chatOverlay({
+      messages: [note],
+      entries: [entry({ clientId: 'n1', noteId: 'a'.repeat(32), status: 'done' })],
+      leg: 'phone',
+      skewMs: SKEW,
+    });
+    expect(done.marks.size).toBe(0);
   });
 
   test('without typed turns the thread is the synced rows untouched', () => {

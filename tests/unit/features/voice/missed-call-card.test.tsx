@@ -119,6 +119,13 @@ describe('MissedCallCard', () => {
     expect(container.textContent).toBe('');
   });
 
+  test('Devolver on a missed reminder call calls back about that reminder', () => {
+    feed.rows = [missed({ data: REMINDER_DATA })];
+    render(<MissedCallCard />);
+    fireEvent.click(screen.getByRole('button', { name: 'Devolver' }));
+    expect(navigate).toHaveBeenCalledWith('/call?purpose=call_back&reminderId=9');
+  });
+
   test('Ver lo que pasó opens the notification', () => {
     feed.rows = [missed({ data: { kind: 'call', urgency: 'critical' } })];
     render(<MissedCallCard />);

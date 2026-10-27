@@ -3,10 +3,14 @@ import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import {
   arrivedWhileAway,
   dayItemKey,
+  estimatedHeightOf,
+  estimatedItemSizeOf,
+  floatingDayOf,
   followNewItems,
   groupsWith,
   isMessageItem,
   keyboardOffsets,
+  prewarmScopesOf,
   stickyKeyboardStep,
   THREAD_GROUP_GAP_MS,
   threadItems,
@@ -34,6 +38,8 @@ const message = (
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: T0,
   ...patch,
@@ -139,7 +145,9 @@ describe('followNewItems', () => {
   const mine = message({ id: '12', direction: 'out', createdAt: T0 + 21 * MINUTE });
 
   test('the first look records the newest line and moves nothing', () => {
-    expect(followNewItems({ live: true, items: items(base), lastKey: null, unseen: 0, atEnd: true })).toEqual({
+    expect(
+      followNewItems({ live: true, items: items(base), lastKey: null, unseen: 0, atEnd: true })
+    ).toEqual({
       jump: false,
       unseen: 0,
       lastKey,
@@ -148,7 +156,13 @@ describe('followNewItems', () => {
 
   test('at the bottom a new line is followed by the list itself and nothing is counted', () => {
     expect(
-      followNewItems({ live: true, items: items([...base, incoming]), lastKey, unseen: 0, atEnd: true })
+      followNewItems({
+        live: true,
+        items: items([...base, incoming]),
+        lastKey,
+        unseen: 0,
+        atEnd: true,
+      })
     ).toEqual({
       jump: false,
       unseen: 0,
@@ -178,7 +192,13 @@ describe('followNewItems', () => {
 
   test('a line I send always takes me to the bottom, wherever I was', () => {
     expect(
-      followNewItems({ live: true, items: items([...base, incoming, mine]), lastKey, unseen: 3, atEnd: false })
+      followNewItems({
+        live: true,
+        items: items([...base, incoming, mine]),
+        lastKey,
+        unseen: 3,
+        atEnd: false,
+      })
     ).toEqual({
       jump: true,
       unseen: 0,
@@ -187,11 +207,15 @@ describe('followNewItems', () => {
   });
 
   test('reaching the bottom clears the count', () => {
-    expect(followNewItems({ live: true, items: items(base), lastKey, unseen: 4, atEnd: true }).unseen).toBe(0);
+    expect(
+      followNewItems({ live: true, items: items(base), lastKey, unseen: 4, atEnd: true }).unseen
+    ).toBe(0);
   });
 
   test('the typing indicator and a row that changed its id are not new lines', () => {
-    expect(followNewItems({ live: true, items: items(base, true), lastKey, unseen: 0, atEnd: false })).toEqual({
+    expect(
+      followNewItems({ live: true, items: items(base, true), lastKey, unseen: 0, atEnd: false })
+    ).toEqual({
       jump: false,
       unseen: 0,
       lastKey,
@@ -200,7 +224,9 @@ describe('followNewItems', () => {
       ...base.slice(0, -1),
       { ...base[base.length - 1], id: 'server-10' } as IConversationMessageCacheRow,
     ];
-    expect(followNewItems({ live: true, items: items(confirmed), lastKey, unseen: 1, atEnd: false })).toEqual({
+    expect(
+      followNewItems({ live: true, items: items(confirmed), lastKey, unseen: 1, atEnd: false })
+    ).toEqual({
       jump: false,
       unseen: 1,
       lastKey: 'server-10',
@@ -208,7 +234,15 @@ describe('followNewItems', () => {
   });
 
   test('lines a window cut off from the newest reads back while scrolling down are not new lines', () => {
-    expect(followNewItems({ live: false, items: items([...base, incoming, mine]), lastKey, unseen: 2, atEnd: true })).toEqual({
+    expect(
+      followNewItems({
+        live: false,
+        items: items([...base, incoming, mine]),
+        lastKey,
+        unseen: 2,
+        atEnd: true,
+      })
+    ).toEqual({
       jump: false,
       unseen: 2,
       lastKey: '12',
@@ -218,7 +252,13 @@ describe('followNewItems', () => {
   test('older lines loaded above are not new lines', () => {
     const window = items(base.slice(5));
     const grown = items(base);
-    const before = followNewItems({ live: true, items: window, lastKey: null, unseen: 0, atEnd: false });
+    const before = followNewItems({
+      live: true,
+      items: window,
+      lastKey: null,
+      unseen: 0,
+      atEnd: false,
+    });
     expect(
       followNewItems({ live: true, items: grown, lastKey: before.lastKey, unseen: 0, atEnd: false })
     ).toEqual({
@@ -281,5 +321,47 @@ describe('the composer after the keyboard', () => {
     expect(stickyKeyboardStep(true, 'resume', false)).toBe(false);
     expect(stickyKeyboardStep(true, 'leave', false)).toBe(false);
     expect(stickyKeyboardStep(false, 'resume', true)).toBe(false);
+  });
+});
+
+describe('the day pill and the size estimate', () => {
+  test('the pill floats with the day of the first visible line, and hides while any separator shows', () => {
+    const items = threadItems({
+      rows: [message({ id: '1' }), message({ id: '2', createdAt: T0 + DAY })],
+      startOfDay,
+      typing: false,
+    });
+    const [firstDay, first, secondDay, second] = items as ThreadItem[];
+    expect(floatingDayOf([first as ThreadItem])).toBe(startOfDay(T0));
+    expect(floatingDayOf([first as ThreadItem, secondDay as ThreadItem])).toBeNull();
+    expect(floatingDayOf([firstDay as ThreadItem, first as ThreadItem])).toBeNull();
+    expect(floatingDayOf([secondDay as ThreadItem, second as ThreadItem])).toBeNull();
+    expect(floatingDayOf([])).toBeNull();
+  });
+
+  test('a long message is estimated taller than a short one, a note and a day at their fixed sizes', () => {
+    const items = threadItems({
+      rows: [
+        message({ id: '1', body: 'Hola' }),
+        message({ id: '2', body: 'palabra '.repeat(60), createdAt: T0 + MINUTE }),
+      ],
+      startOfDay,
+      typing: true,
+    });
+    const [day, short, long, typing] = items as ThreadItem[];
+    expect(estimatedHeightOf(long as ThreadItem, 360)).toBeGreaterThan(
+      estimatedHeightOf(short as ThreadItem, 360)
+    );
+    expect(estimatedHeightOf(long as ThreadItem, 1440)).toBeLessThan(
+      estimatedHeightOf(long as ThreadItem, 360)
+    );
+    expect(estimatedHeightOf(day as ThreadItem, 360)).toBe(40);
+    expect(estimatedHeightOf(typing as ThreadItem, 360)).toBe(52);
+    expect(estimatedItemSizeOf({ items: [], width: 360 })).toBe(72);
+  });
+
+  test('Argus and the recent threads are warmed first, each once', () => {
+    expect(prewarmScopesOf([3, 0, 5, 3])).toEqual(['0', '3', '5']);
+    expect(prewarmScopesOf([1, 2, 3, 4, 5, 6, 7], 3)).toEqual(['0', '1', '2']);
   });
 });

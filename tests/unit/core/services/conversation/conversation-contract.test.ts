@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { conversationMessageSchema, conversationReadResultSchema } from '@/core/contracts/conversation.contract';
+import {
+  conversationMessageSchema,
+  conversationReadResultSchema,
+  voiceNoteContentSchema,
+  voiceNotePlayGrantSchema,
+} from '@/core/contracts/conversation.contract';
 
 const message = {
   id: 41,
@@ -38,5 +43,25 @@ describe('the conversation contract', () => {
   test('reads the read answer', () => {
     expect(conversationReadResultSchema.safeParse({ updated: 2 }).success).toBe(true);
     expect(conversationReadResultSchema.safeParse({}).success).toBe(false);
+  });
+
+  test('reads the receipt and the voice note, and an older row without them reads as none', () => {
+    const note = { id: 'c'.repeat(32), mime: 'audio/webm' as const, durationMs: 3100, peaks: [10, 90] };
+    const parsed = conversationMessageSchema.parse({ ...message, receipt: 'read', voiceNote: note });
+    expect(parsed.receipt).toBe('read');
+    expect(parsed.voiceNote).toEqual(note);
+    const older = conversationMessageSchema.parse(message);
+    expect(older.receipt).toBeNull();
+    expect(older.voiceNote).toBeNull();
+    expect(conversationMessageSchema.parse({ ...message, receipt: 'seen' }).receipt).toBeNull();
+  });
+
+  test('reads the play grant and the one-use content', () => {
+    expect(voiceNotePlayGrantSchema.safeParse({ token: 't'.repeat(43), expiresAt: 1_790_000_060 }).success).toBe(true);
+    expect(voiceNotePlayGrantSchema.safeParse({ token: '' , expiresAt: 1 }).success).toBe(false);
+    expect(
+      voiceNoteContentSchema.safeParse({ mimeType: 'audio/ogg', durationMs: 1200, base64: 'T2dnUw==' }).success
+    ).toBe(true);
+    expect(voiceNoteContentSchema.safeParse({ mimeType: 'audio/ogg', durationMs: 1200 }).success).toBe(false);
   });
 });

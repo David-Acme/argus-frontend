@@ -340,6 +340,27 @@ describe('PagedView', () => {
     view.stop();
   });
 
+  test('a kept view prewarms the recent scopes before they are watched and keeps their caches together', () => {
+    const opened: { scope: string; size: number }[] = [];
+    const view = new PagedView({ ...spec(opened, []), keep: true }, { userId: '1', now: new Date() });
+    viewCacheService.writeValue('notification.feed', { rows: [1] }, 'b');
+    viewCacheService.writeValue('notification.feed', { rows: [2] }, 'stale');
+    view.prewarm(['b', 'c', 'all']);
+    expect(opened.map((entry) => entry.scope)).toEqual(['all', 'b', 'c']);
+    expect(viewCacheService.readValue<{ rows: number[] }>('notification.feed', 'b')).toEqual({ rows: [1] });
+    expect(viewCacheService.readValue<{ rows: number[] }>('notification.feed', 'stale')).toBeNull();
+    view.watch('b');
+    expect(opened).toHaveLength(3);
+    view.stop();
+  });
+
+  test('a view that does not keep its scopes is not prewarmed', () => {
+    const opened: { scope: string; size: number }[] = [];
+    const view = new PagedView(spec(opened, []), { userId: '1', now: new Date() });
+    view.prewarm(['b']);
+    expect(opened.map((entry) => entry.scope)).toEqual(['all']);
+  });
+
   test('extending a scope nobody opened answers false', async () => {
     const view = new PagedView(spec([], []), { userId: '1', now: new Date() });
     expect(await view.extend('nowhere')).toBe(false);

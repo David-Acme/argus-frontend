@@ -67,7 +67,7 @@
   },
   "src/core/services/conversation.service.ts": {
     "argus/no-http-type-argument": {
-      "count": 3
+      "count": 1
     }
   },
   "src/core/services/conversation/thread-window.ts": {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { callReminderIdOf } from '@/shared/libs/call-back';
 import {
   callKindOf,
-  callReminderIdOf,
   callSubjectOf,
   ringChoices,
   ringSurfaceOf,

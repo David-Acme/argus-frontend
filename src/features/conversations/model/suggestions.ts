@@ -2,7 +2,7 @@ import { size } from '@/shared/theme/tokens';
 import type { HeightClass } from '@/shared/theme/height-layout';
 
 export type SuggestionId =
-  'show-camera' | 'who-home' | 'night-mode' | 'today' | 'tomorrow' | 'remind' | 'yes' | 'no';
+  'show-camera' | 'who-home' | 'night-mode' | 'today' | 'tomorrow' | 'remind';
 
 export type Suggestion = { id: SuggestionId; camera: string | null; send: boolean };
 
@@ -12,7 +12,6 @@ export type SuggestionInput = {
   setsMode: boolean;
   readsAgenda: boolean;
   hour: number;
-  asking: boolean;
 };
 
 export const SUGGESTIONS_SHOWN = 3;
@@ -23,11 +22,6 @@ const MORNING_UNTIL = 12;
 
 const OPEN_QUESTION =
   /^(qu[eé]|cu[aá]l(es)?|cu[aá]ndo|d[oó]nde|qui[eé]n(es)?|c[oó]mo|cu[aá]nt[oa]s?|por qu[eé]|para qu[eé]|what|which|when|where|who|whom|whose|how|why)(?=[\s,?]|$)/i;
-
-const ANSWERS: readonly Suggestion[] = [
-  { id: 'yes', camera: null, send: true },
-  { id: 'no', camera: null, send: true },
-];
 
 function candidates({
   cameraName,
@@ -53,7 +47,6 @@ function candidates({
 }
 
 export function suggestionsOf(input: SuggestionInput): Suggestion[] {
-  if (input.asking) return [...ANSWERS];
   return candidates(input).slice(0, SUGGESTIONS_SHOWN);
 }
 
