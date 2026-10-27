@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router';
+import type { IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { guardService } from '@/core/services/guard.service';
 import { viewCacheService } from '@/core/services/view-cache.service';
-import { VIEW_CACHE_KEYS } from '@/shared/constants';
+import { CAPABILITY, VIEW_CACHE_KEYS } from '@/shared/constants';
+import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useAccessView, useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { runServiceAction } from '@/shared/libs/service-action';
@@ -13,9 +15,11 @@ import type {
   ReminderResult,
   ScreenResult,
 } from '@/features/voice/model/argus-result';
+import { ownerNameOf } from '@/features/voice/model/module-owner';
 import { routeForScreen } from '@/features/voice/model/voice-actions';
 import { assistantChat } from '@/features/voice/services/chat';
 import { argusResults } from '@/features/voice/services/results';
+import { voiceService } from '@/features/voice/services/voice';
 
 export type ResultSurface = 'chat' | 'call';
 
@@ -28,7 +32,9 @@ export type ResultActions = {
   openScreen: ((result: ScreenResult) => void) | null;
   undoEvent: (result: EventMovedResult) => Promise<void>;
   undoMode: ((result: GuardModeResult) => Promise<void>) | null;
-  answer: ((result: ReminderResult, accepted: boolean) => void) | null;
+  answer: (result: ReminderResult, accepted: boolean) => void;
+  enablesModules: boolean;
+  ownerName: string | null;
 };
 
 const SECOND_MS = 1000;
@@ -39,7 +45,8 @@ export function useResultActions(surface: ResultSurface): ResultActions {
   const router = useRouter();
   const { t } = useTranslation();
   const view = useAccessView();
-  const { cameraActions, guard } = useCapabilities();
+  const { cameraActions, guard, has } = useCapabilities();
+  const people = useViewCacheRows<IPeopleDirectoryCacheRow>(VIEW_CACHE_KEYS.peopleUsers);
 
   const openScreen = (result: ScreenResult) => {
     const route = routeForScreen(result.screen, view, result.module ?? undefined);
@@ -70,8 +77,10 @@ export function useResultActions(surface: ResultSurface): ResultActions {
   };
 
   const answer = (result: ReminderResult, accepted: boolean) => {
-    const words = t(accepted ? 'screens.voice.results.yes' : 'screens.voice.results.no');
-    if (assistantChat.send(words) === 'sent') argusResults.answerOffer(result.id, accepted);
+    const confirm = { id: result.offerId, answer: accepted ? 'yes' : 'no' } as const;
+    const sent =
+      surface === 'call' ? voiceService.confirm(confirm) : assistantChat.confirm(confirm);
+    if (sent) argusResults.answerOffer(result, confirm.answer);
   };
 
   return {
@@ -86,6 +95,8 @@ export function useResultActions(surface: ResultSurface): ResultActions {
     openScreen,
     undoEvent,
     undoMode: guard.setMode ? undoMode : null,
-    answer: surface === 'chat' ? answer : null,
+    answer,
+    enablesModules: has(CAPABILITY.modulesManage),
+    ownerName: ownerNameOf(people),
   };
 }

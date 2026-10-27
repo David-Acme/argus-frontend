@@ -49,7 +49,7 @@ const { ResultHead, ResultShell } =
   await import('@/features/voice/components/results/result-shell');
 const { AgendaDayCard } = await import('@/features/voice/components/results/schedule-result-cards');
 
-function actionsOf(surface: ResultActions['surface']): ResultActions {
+function actionsOf(surface: ResultActions['surface'], enablesModules = true): ResultActions {
   return {
     surface,
     openCamera: (id) => calls.push(`camera ${id}`),
@@ -65,7 +65,9 @@ function actionsOf(surface: ResultActions['surface']): ResultActions {
       calls.push(`undo mode ${result.previousMode ?? ''}`);
       return Promise.resolve();
     },
-    answer: surface === 'chat' ? (_result, yes) => calls.push(`answer ${yes}`) : null,
+    answer: (result, yes) => calls.push(`${surface} answer ${result.offerId} ${yes}`),
+    enablesModules,
+    ownerName: enablesModules ? null : 'David',
   };
 }
 
@@ -104,39 +106,46 @@ describe('what Argus did, as a card', () => {
     expect(calls).toEqual(['camera c1']);
   });
 
-  test('an implicit reminder asks with two answers in the chat and by voice in the call', async () => {
-    const offer: ArgusResult = {
-      ...base,
-      status: 'pending',
-      kind: 'reminder',
-      asking: true,
-      title: 'Pagar el agua',
-      remindAt: TOMORROW_9,
-    };
-    await show(card(offer));
+  const offer = (title: string): ArgusResult => ({
+    ...base,
+    status: 'pending',
+    kind: 'reminder',
+    offerId: 'ab12',
+    asking: true,
+    answer: null,
+    title,
+    remindAt: TOMORROW_9,
+  });
+
+  test('an implicit reminder asks with two answers that name its question', async () => {
+    await show(card(offer('Pagar el agua')));
     expect(screen.getByText('Pagar el agua')).toBeDefined();
     expect(screen.getByText(/^Mañana · /)).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Sí, recuérdamelo' }));
     fireEvent.click(screen.getByRole('button', { name: 'No, gracias' }));
-    expect(calls).toEqual(['answer true', 'answer false']);
+    expect(calls).toEqual(['chat answer ab12 true', 'chat answer ab12 false']);
   });
 
-  test('in the call the offer is answered aloud', async () => {
+  test('in the call the same buttons answer the question', async () => {
+    await show(card(offer('Dentista'), 'call'));
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, recuérdamelo' }));
+    expect(calls).toEqual(['call answer ab12 true']);
+  });
+
+  test('an answered offer is settled: no buttons, and what it became', async () => {
+    const asking = offer('Dentista');
+    if (asking.kind !== 'reminder') throw new Error('not a reminder');
     await show(
-      card(
-        {
-          ...base,
-          status: 'pending',
-          kind: 'reminder',
-          asking: true,
-          title: 'Dentista',
-          remindAt: TOMORROW_9,
-        },
-        'call'
-      )
+      <>
+        {card({ ...asking, id: 'a', asking: false, answer: 'yes' })}
+        {card({ ...asking, id: 'b', asking: false, answer: 'no', status: 'failed' })}
+        {card({ ...asking, id: 'c', asking: false, answer: 'yes', status: 'done' })}
+      </>
     );
     expect(screen.queryByRole('button', { name: 'Sí, recuérdamelo' })).toBeNull();
-    expect(screen.getByText('Dímelo: «sí» o «no».')).toBeDefined();
+    expect(screen.getByText(/· Le dijiste que sí$/)).toBeDefined();
+    expect(screen.getByText(/· No lo guardé$/)).toBeDefined();
+    expect(screen.getByText(/· Te lo recuerdo$/)).toBeDefined();
   });
 
   test('a moved event shows before and after, opens the agenda and undoes', async () => {
@@ -206,16 +215,30 @@ describe('what Argus did, as a card', () => {
     );
     expect(screen.getByText('Mañana')).toBeDefined();
     expect(screen.getByText('2 cosas')).toBeDefined();
+    expect(screen.getByRole('group', { name: 'Mañana. 2 cosas' })).toBeDefined();
     expect(screen.getByText('Cena con Luis')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Abrir Agenda' }));
     expect(calls).toEqual([`agenda ${TOMORROW_9}`]);
   });
 
-  test('a request for a module that is off offers to turn it on', async () => {
+  test('a request for a module that is off offers the owner to turn it on', async () => {
     await show(card({ ...base, kind: 'screen', screen: 'modules', module: 'productivity' }));
     expect(screen.getByText('Productividad está apagado')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Activar Productividad' }));
     expect(calls).toEqual(['screen modules']);
+  });
+
+  test('anyone else is told whom to ask, with no button', async () => {
+    await show(
+      <ArgusResultCard
+        result={{ ...base, kind: 'screen', screen: 'modules', module: 'productivity' }}
+        live={false}
+        now={NOW}
+        actions={actionsOf('chat', false)}
+      />
+    );
+    expect(screen.getByText('Pídele a David que active Productividad.')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Activar Productividad' })).toBeNull();
   });
 
   test('the call shows only its own newest result, live while the window is tall', async () => {

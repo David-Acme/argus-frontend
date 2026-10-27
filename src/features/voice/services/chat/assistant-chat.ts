@@ -12,6 +12,7 @@ import {
   VOICE_ACTION_RESULT_TYPE,
   VOICE_ACTION_TYPE,
   VOICE_ASSISTANT_TYPE,
+  VOICE_CONFIRM_TYPE,
   VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_MODE_CHAT,
@@ -24,6 +25,7 @@ import {
   VOICE_TEXT_TYPE,
 } from '@/features/voice/constants/voice';
 import { VOICE_ERROR_TYPE } from '@/shared/constants';
+import type { VoiceConfirm } from '@/features/voice/model/argus-result';
 import type { AssistantSocket } from '@/features/voice/services/voice/assistant-socket';
 import { parseVoiceAction, parseVoiceError } from '@/features/voice/services/voice/voice-frames';
 
@@ -204,6 +206,15 @@ export class AssistantChat {
     if (next.length === this.entries.length) return;
     this.entries = next;
     this.notify();
+  }
+
+  confirm(answer: VoiceConfirm): boolean {
+    if (this.deps.callActive()) return false;
+    const userId = this.userId;
+    void this.ensureSession(false).then((open) => {
+      if (open && this.userId === userId) this.deps.transport.send(VOICE_CONFIRM_TYPE, answer);
+    });
+    return true;
   }
 
   sendContext(context: VoiceContext): void {

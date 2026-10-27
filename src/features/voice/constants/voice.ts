@@ -30,6 +30,7 @@ export const VOICE_TEXT_ERROR_TYPE = 'voice:text_error';
 export const VOICE_RESULT_TYPE = 'voice:result';
 export const VOICE_CONFIRM_TYPE = 'voice:confirm';
 export const ARGUS_RESULTS_KEPT = 30;
+export const AGENDA_DAY_MAX_ITEMS = 50;
 
 export const ASSISTANT_CHAT_MAX_CHARS = 500;
 export const ASSISTANT_CHAT_REPLY_TIMEOUT_MS = 90000;

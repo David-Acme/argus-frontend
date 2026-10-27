@@ -520,3 +520,29 @@ describe('the context a chat session receives', () => {
     expect(bridge).not.toMatch(/voiceService\.sendContext\(\{/);
   });
 });
+
+describe('an answer by button', () => {
+  test('opens the chat session if needed and sends voice:confirm with the question id', async () => {
+    expect(chat.confirm({ id: 'ab12', answer: 'yes' })).toBe(true);
+    await settle();
+    expect(transport.sent).toEqual([
+      { type: 'voice:start', payload: { mode: 'chat', leg: 'laptop' } },
+      { type: 'voice:confirm', payload: { id: 'ab12', answer: 'yes' } },
+    ]);
+    expect(chat.snapshot.entries).toEqual([]);
+  });
+
+  test('is not sent while a call holds the conversation', async () => {
+    callActive = true;
+    expect(chat.confirm({ id: 'ab12', answer: 'no' })).toBe(false);
+    await settle();
+    expect(transport.sent).toEqual([]);
+  });
+
+  test('is dropped when the account changes before the session opens', async () => {
+    chat.confirm({ id: 'ab12', answer: 'no' });
+    chat.bindUser('8');
+    await settle();
+    expect(transport.types()).not.toContain('voice:confirm');
+  });
+});

@@ -23,6 +23,7 @@ import {
   VOICE_ACTION_RESULT_TYPE,
   VOICE_ACTION_TYPE,
   VOICE_ASSISTANT_TYPE,
+  VOICE_CONFIRM_TYPE,
   VOICE_CONTEXT_TYPE,
   VOICE_DONE_TYPE,
   VOICE_EVENT_TYPE,
@@ -32,6 +33,7 @@ import {
   VOICE_MODE_DUPLEX,
   VOICE_MUTE_TYPE,
   VOICE_PREVIOUS_CALL_GRACE_MS,
+  VOICE_RESULT_TYPE,
   VOICE_RESUME_RETRY_MS,
   VOICE_RESUME_WINDOW_MS,
   VOICE_SAMPLE_RATE,
@@ -91,6 +93,7 @@ import type {
 } from '@/core/types';
 import { endRevokedSession } from '@/features/voice/services/voice/voice-session-end';
 import { concatPcm, pcmChunk } from '@/features/voice/model/pcm';
+import type { VoiceConfirm } from '@/features/voice/model/argus-result';
 import {
   INITIAL_CALL_BOUNDARY,
   boundaryAfterDone,
@@ -139,6 +142,7 @@ import {
 
 type Listener = () => void;
 type ActionListener = (action: VoiceAction) => void;
+type ResultListener = (payload: unknown) => void;
 type FailOptions = { serverGone: boolean };
 type ResumeListener = () => void;
 type FrameHandler = (payload: unknown) => void;
@@ -193,6 +197,7 @@ class VoiceService {
   private readonly playout = new VoicePlayout(() => this.handlePlayoutIdle());
   private listeners = new Set<Listener>();
   private actionListeners = new Set<ActionListener>();
+  private resultListeners = new Set<ResultListener>();
   private resumeListeners = new Set<ResumeListener>();
   private incomingListeners = new Set<IncomingListener>();
   private resuming = false;
@@ -450,6 +455,10 @@ class VoiceService {
     if (event.kind === 'data') {
       const frame = readRtcData(event.topic, event.payload);
       if (!frame) return;
+      if (frame.type === VOICE_RESULT_TYPE) {
+        for (const listener of this.resultListeners) listener(frame.payload);
+        return;
+      }
       const revocation = readRevocation(frame.type, frame.payload);
       if (revocation && isSessionRevocation(revocation)) this.beginRevoked(revocation.cause);
       else if (revocation) this.finishCall();
@@ -678,6 +687,19 @@ class VoiceService {
     return () => {
       this.actionListeners.delete(listener);
     };
+  }
+
+  onResult(listener: ResultListener): () => void {
+    this.resultListeners.add(listener);
+    return () => {
+      this.resultListeners.delete(listener);
+    };
+  }
+
+  confirm(answer: VoiceConfirm): boolean {
+    if (!this.active) return false;
+    this.sendVoice(VOICE_CONFIRM_TYPE, answer);
+    return true;
   }
 
   sendContext(context: VoiceContext): void {
