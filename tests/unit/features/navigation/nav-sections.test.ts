@@ -1,96 +1,144 @@
 import { describe, expect, test } from 'bun:test';
 import { accessFor, viewFor } from '@tests/support/access-fixtures';
+import { surfacesFor } from '@tests/support/app-surfaces';
 import { accessView } from '@/shared/libs/capabilities';
 import {
-  barShownOn,
-  sectionOf,
-  settingsVisible,
-  tabMove,
-  visibleTabs,
-} from '@/features/navigation/model/nav-sections';
+  activeChild,
+  activeKey,
+  barEntries,
+  barKey,
+  navGroups,
+  NO_PINS,
+  pinnedModules,
+  quickModules,
+  railEntries,
+  railFoot,
+  togglePin,
+} from '@/features/navigation/model/nav-model';
+import { barShownOn, tabMove } from '@/features/navigation/model/nav-sections';
 
-const keysOf = (tabs: ReturnType<typeof visibleTabs>) => tabs.map((tab) => tab.key);
+const keysOf = (entries: readonly { key: string }[]) => entries.map((entry) => entry.key);
 
-describe('visibleTabs', () => {
-  test('owner and resident with both modules get the five tabs, Argus in the centre', () => {
+describe('the phone bar', () => {
+  test('owner and resident with both modules: Inicio, two modules, Argus in the centre, Todo', () => {
     for (const role of ['owner', 'resident'] as const)
-      expect(keysOf(visibleTabs(viewFor(role)))).toEqual([
+      expect(keysOf(barEntries(surfacesFor(viewFor(role)), NO_PINS))).toEqual([
         'home',
-        'security',
+        'module:surveillance',
         'argus',
-        'agenda',
-        'you',
+        'module:productivity',
+        'all',
       ]);
   });
 
-  test('with one module off the owner and the resident get four', () => {
-    for (const role of ['owner', 'resident'] as const) {
-      expect(keysOf(visibleTabs(viewFor(role, { modules: ['surveillance'] })))).toEqual([
-        'home',
-        'security',
-        'argus',
-        'you',
-      ]);
-      expect(keysOf(visibleTabs(viewFor(role, { modules: ['productivity'] })))).toEqual([
-        'home',
-        'argus',
-        'agenda',
-        'you',
-      ]);
-    }
+  test('with one module: Inicio, it, Argus, Todo', () => {
+    expect(
+      keysOf(barEntries(surfacesFor(viewFor('owner', { modules: ['productivity'] })), NO_PINS))
+    ).toEqual(['home', 'module:productivity', 'argus', 'all']);
   });
 
-  test('a guard gets Inicio, Seguridad, Argus and Tú', () => {
-    expect(keysOf(visibleTabs(viewFor('guard')))).toEqual(['home', 'security', 'argus', 'you']);
+  test('a guest has no module: Inicio, Argus, Todo', () => {
+    expect(keysOf(barEntries(surfacesFor(viewFor('guest')), NO_PINS))).toEqual([
+      'home',
+      'argus',
+      'all',
+    ]);
   });
 
-  test('a guest gets Inicio, Argus and Tú', () => {
-    expect(keysOf(visibleTabs(viewFor('guest')))).toEqual(['home', 'argus', 'you']);
-  });
-
-  test('an unknown role gets Inicio and Tú, with no Argus', () => {
+  test('an unknown role keeps Inicio and Todo, with no Argus', () => {
     const unknown = accessView(
       { ...accessFor('guest'), role: null, roleActive: false, capabilities: [] },
       null
     );
-    expect(keysOf(visibleTabs(unknown))).toEqual(['home', 'you']);
+    expect(keysOf(barEntries(surfacesFor(unknown), NO_PINS))).toEqual(['home', 'all']);
   });
 
-  test('a guard whose module is off keeps only the baseline: Inicio and Tú', () => {
-    expect(keysOf(visibleTabs(viewFor('guard', { modules: ['productivity'] })))).toEqual([
+  test('a guard whose module is off keeps the baseline', () => {
+    expect(
+      keysOf(barEntries(surfacesFor(viewFor('guard', { modules: ['productivity'] })), NO_PINS))
+    ).toEqual(['home', 'all']);
+  });
+
+  test('a module outside the bar lights Todo', () => {
+    expect(
+      barKey(
+        'module:fake',
+        ['home', 'all'].map((key) => ({
+          key,
+          href: '',
+          icon: 'home',
+          label: 'screens.navigation.home',
+        }))
+      )
+    ).toBe('all');
+  });
+});
+
+describe('the rail and the sidebar', () => {
+  test('the rail: menu, Inicio, Argus, pinned modules, Todo; Tú at the foot', () => {
+    const resolved = surfacesFor(viewFor('owner'));
+    expect(keysOf(railEntries(resolved, NO_PINS))).toEqual([
+      'menu',
       'home',
-      'you',
+      'argus',
+      'module:surveillance',
+      'module:productivity',
+      'all',
     ]);
+    expect(keysOf(railFoot(resolved))).toEqual(['you']);
+  });
+
+  test('the sidebar: the core, every module with its sections, then the account', () => {
+    const groups = navGroups(surfacesFor(viewFor('owner')), NO_PINS);
+    expect(keysOf(groups.core)).toEqual(['home', 'argus', 'news']);
+    expect(keysOf(groups.modules)).toEqual(['module:surveillance', 'module:productivity']);
+    expect(keysOf(groups.modules[0]?.children ?? [])).toEqual([
+      'security',
+      'cameras',
+      'clips',
+      'episodes',
+      'watch',
+    ]);
+    expect(keysOf(groups.account)).toEqual(['you', 'settings']);
+  });
+
+  test("a resident reads no Ajustes, and the guest's sidebar has no module group", () => {
+    expect(keysOf(navGroups(surfacesFor(viewFor('resident')), NO_PINS).account)).toEqual(['you']);
+    expect(navGroups(surfacesFor(viewFor('guest')), NO_PINS).modules).toEqual([]);
   });
 });
 
-describe('settingsVisible', () => {
-  test('only the roles that manage settings see Ajustes', () => {
-    expect(settingsVisible(viewFor('owner'))).toBe(true);
-    expect(settingsVisible(viewFor('resident'))).toBe(false);
-    expect(settingsVisible(viewFor('guest'))).toBe(false);
+describe('pins', () => {
+  test('a saved pin leads, the rest fill by priority, an inactive pin is skipped', () => {
+    const modules = surfacesFor(viewFor('owner')).modules;
+    expect(pinnedModules(modules, ['productivity'], 1).map((module) => module.module)).toEqual([
+      'productivity',
+    ]);
+    expect(pinnedModules(modules, ['gone'], 2).map((module) => module.module)).toEqual([
+      'surveillance',
+      'productivity',
+    ]);
+    expect(quickModules(modules, { bar: [], quick: ['productivity'] })[0]?.module).toBe(
+      'productivity'
+    );
+    expect(togglePin(['a'], 'b', 2)).toEqual(['b', 'a']);
+    expect(togglePin(['a', 'b'], 'a', 2)).toEqual(['b']);
+    expect(togglePin(['a', 'b'], 'c', 2)).toEqual(['c', 'a']);
   });
 });
 
-describe('sectionOf', () => {
-  test('pushed child routes keep the tab that owns them', () => {
-    expect(sectionOf('/', false)).toBe('home');
-    expect(sectionOf('/notification', false)).toBe('home');
-    expect(sectionOf('/security/4', false)).toBe('security');
-    expect(sectionOf('/cameras/3', false)).toBe('security');
-    expect(sectionOf('/watch', false)).toBe('security');
-    expect(sectionOf('/conversations/0', false)).toBe('argus');
-    expect(sectionOf('/conversations', false)).toBe('argus');
-    expect(sectionOf('/agenda?edit=4', false)).toBe('agenda');
-    expect(sectionOf('/projects', false)).toBe('agenda');
-    expect(sectionOf('/profile', false)).toBe('you');
-    expect(sectionOf('/people', false)).toBe('you');
-    expect(sectionOf('/users/visitors/2', false)).toBe('you');
-  });
-
-  test('settings belong to Tú unless the sidebar shows Ajustes', () => {
-    expect(sectionOf('/settings/modules', false)).toBe('you');
-    expect(sectionOf('/settings/modules', true)).toBe('settings');
+describe('the active place', () => {
+  test('a pushed route keeps the module or the core place that owns it', () => {
+    const resolved = surfacesFor(viewFor('owner'));
+    expect(activeKey('/', resolved)).toBe('home');
+    expect(activeKey('/notification', resolved)).toBe('home');
+    expect(activeKey('/cameras/3', resolved)).toBe('module:surveillance');
+    expect(activeKey('/clips', resolved)).toBe('module:surveillance');
+    expect(activeKey('/conversations/0', resolved)).toBe('argus');
+    expect(activeKey('/projects', resolved)).toBe('module:productivity');
+    expect(activeKey('/profile', resolved)).toBe('you');
+    expect(activeKey('/settings/modules', resolved)).toBe('settings');
+    expect(activeChild('/clips/4', resolved)).toBe('clips');
   });
 });
 
@@ -110,6 +158,7 @@ describe('barShownOn', () => {
       expect(barShownOn(path)).toBe(true);
     for (const path of [
       '/cameras',
+      '/clips/4',
       '/conversations/0',
       '/security/2',
       '/watch',

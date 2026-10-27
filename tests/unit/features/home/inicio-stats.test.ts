@@ -1,10 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  agendaOnInicio,
-  firstStep,
-  isNewHousehold,
-  sosOnInicio,
-} from '@/features/home/model/inicio-states';
+import { firstStep, isNewHousehold, sosOnInicio } from '@/features/home/model/inicio-states';
 import { dayDetections, heroStats, statPlace } from '@/features/home/model/inicio-stats';
 
 const ALL = { cameras: 5, alerts: 0, detections: 4, pending: 3 };
@@ -107,13 +102,5 @@ describe('the SOS on Inicio', () => {
     expect(sosOnInicio({ panics: true, hasSecurityTab: false })).toBe(true);
     expect(sosOnInicio({ panics: true, hasSecurityTab: true })).toBe(false);
     expect(sosOnInicio({ panics: false, hasSecurityTab: false })).toBe(false);
-  });
-});
-
-describe('the agenda on Inicio', () => {
-  test('it belongs to Productividad and needs the agenda: reminders alone show nothing', () => {
-    expect(agendaOnInicio({ productivity: true, agenda: true })).toBe(true);
-    expect(agendaOnInicio({ productivity: false, agenda: true })).toBe(false);
-    expect(agendaOnInicio({ productivity: true, agenda: false })).toBe(false);
   });
 });

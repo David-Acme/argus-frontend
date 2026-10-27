@@ -33,7 +33,7 @@ const NAV: NavProps = {
   },
   presence: 'idle',
   onCommand: noop,
-  settings: { key: 'settings', label: copy.settings, icon: 'sliders' },
+  more: { foot: [{ key: 'settings', label: copy.settings, icon: 'sliders' }] },
 };
 
 const status = (

@@ -6,4 +6,13 @@ export {
   type NavStatusProps,
   type NavStatusRow,
 } from './nav-status';
-export type { ListenMode, NavCopy, NavItem, NavProps, NavVoice } from './nav-types';
+export type {
+  ListenMode,
+  NavCopy,
+  NavItem,
+  NavFold,
+  NavModules,
+  NavMore,
+  NavProps,
+  NavVoice,
+} from './nav-types';

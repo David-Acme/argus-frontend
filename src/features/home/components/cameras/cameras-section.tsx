@@ -2,11 +2,9 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import { useCameraSection } from '@/features/home/hooks/use-camera-section';
-import { rowMoment } from '@/features/home/model/camera-moments';
 import {
   gridColumns,
   gridRows,
-  stripItems,
   tileDetail,
   type CameraTile,
 } from '@/features/home/model/camera-tiles';
@@ -15,7 +13,7 @@ import { layout } from '@/shared/theme';
 import { MediaStrip } from '@/shared/ui/media';
 import { useInScreenColumn } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
-import { CameraMedia, ClipMedia } from './camera-media';
+import { CameraMedia } from './camera-media';
 
 type CameraGridProps = {
   tiles: readonly CameraTile[];
@@ -75,19 +73,7 @@ export function CamerasSection() {
         />
       ) : (
         <MediaStrip label={t('screens.home.camera-sections.strip')}>
-          {stripItems(section.latestClip, section.tiles).map((item) =>
-            item.kind === 'clip' ? (
-              <ClipMedia
-                key={`clip-${item.clip.id}`}
-                clip={item.clip}
-                named
-                detail={rowMoment(item.clip.at, section.now, section.format)}
-                onOpen={open}
-              />
-            ) : (
-              media(item.tile)
-            )
-          )}
+          {section.tiles.map(media)}
         </MediaStrip>
       )}
     </Section>

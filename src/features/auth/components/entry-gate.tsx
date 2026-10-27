@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from
 import { authService } from '@/core/services/auth.service';
 import { restoreEntryOf } from '@/core/services/session-restore';
 import { sessionService } from '@/core/services/session.service';
-import { moduleOfAppRoute } from '@/core/services/modules/module-state';
 import { useAuthStore } from '@/core/stores';
 import { CONTEXT_WAIT_MS, IS_NATIVE } from '@/shared/constants';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
@@ -64,7 +63,7 @@ export function EntryGate({ children }: PropsWithChildren) {
   const status = useAuthStore((state) => state.status);
   const pathname = usePathname();
   const view = useAccessView();
-  const pending = status === 'signed-in' && !view.ready && moduleOfAppRoute(pathname) !== null;
+  const pending = status === 'signed-in' && !view.ready;
   const waitedOut = useExpiry(pending, CONTEXT_WAIT_MS);
   const params = useGlobalSearchParams();
   const [requested] = useState(() => ({ pathname, params }));

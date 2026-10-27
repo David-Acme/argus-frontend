@@ -10,8 +10,6 @@ export type FirstStepInput = {
 
 export type SosInput = { panics: boolean; hasSecurityTab: boolean };
 
-export type AgendaReadInput = { productivity: boolean; agenda: boolean };
-
 export function isNewHousehold(summary: DashboardSummary): boolean {
   return summary.camerasTotal === 0 && summary.projectsActive === 0 && summary.tasksOpen === 0;
 }
@@ -28,8 +26,4 @@ export function firstStep({
 
 export function sosOnInicio({ panics, hasSecurityTab }: SosInput): boolean {
   return panics && !hasSecurityTab;
-}
-
-export function agendaOnInicio({ productivity, agenda }: AgendaReadInput): boolean {
-  return productivity && agenda;
 }

@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from 'expo-router';
-import { tabMove, type NavHref } from '@/features/navigation/model/nav-sections';
+import { tabMove } from '@/features/navigation/model/nav-sections';
 
-export function useSectionRoute(): (href: NavHref) => void {
+export function useSectionRoute(): (href: string) => void {
   const router = useRouter();
   const pathname = usePathname();
   return (href) => {

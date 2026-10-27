@@ -1,6 +1,10 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeAll, describe, expect, mock, test } from 'bun:test';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { viewFor } from '@tests/support/access-fixtures';
+import type { ReactNode } from 'react';
 import type { GuardMode, IncidentResponse } from '@/core/types';
+import type { AccessView } from '@/shared/libs/capabilities';
+import type { ModuleSurfaces, ResolvedSurfaces } from '@/shared/libs/surfaces';
 import type { InicioHero } from '@/features/home/hooks/use-inicio-hero';
 import '../../../shared/ui/translation-stub';
 import { setWindowWidth } from '../../../shared/ui/window-width';
@@ -42,6 +46,24 @@ const marker = (name: string) =>
   function Marker() {
     return <span>{name}</span>;
   };
+
+const registry: {
+  modules: readonly ModuleSurfaces[];
+  resolve: ((view: AccessView) => ResolvedSurfaces) | null;
+} = {
+  modules: [],
+  resolve: null,
+};
+
+function stateView(): AccessView {
+  const modules = state.productivity ? ['surveillance', 'productivity'] : ['surveillance'];
+  const extra = state.guardView ? ['guard.read'] : [];
+  return {
+    ...viewFor('owner', { modules }),
+    roleActive: state.roleActive,
+    capabilities: new Set([...state.granted, ...extra]),
+  };
+}
 
 mock.module('expo-router', () => ({
   useRouter: () => ({ push: (href: string) => routes.push(href) }),
@@ -111,33 +133,35 @@ mock.module('@/shared/ui/presence', () => ({
   useCentrePresence: () => false,
 }));
 
-mock.module('@/features/home/components/agenda/now-section', () => ({ NowSection: marker('now') }));
-mock.module('@/features/home/components/agenda/today-section', () => ({
+mock.module('@/features/home', () => ({
+  NowSection: marker('now'),
   TodaySection: marker('today'),
-}));
-mock.module('@/features/home/components/agenda/tomorrow-section', () => ({
   TomorrowSection: marker('tomorrow'),
-}));
-mock.module('@/features/home/components/agenda/projects-section', () => ({
   ProjectsSection: marker('projects'),
-}));
-mock.module('@/features/home/components/cameras/cameras-section', () => ({
   CamerasSection: marker('cameras'),
-}));
-mock.module('@/features/home/components/cameras/happened-section', () => ({
   HappenedSection: marker('happened'),
-}));
-mock.module('@/features/home/components/cameras/recent-clips-section', () => ({
-  RecentClipsSection: marker('clips'),
-}));
-mock.module('@/features/home/components/feed/news-section', () => ({
   NewsSection: marker('news'),
-}));
-mock.module('@/features/home/components/feed/home-people-section', () => ({
   HomePeopleSection: marker('people'),
+  WatchSection: marker('watch'),
+  SystemSection: marker('system'),
+  HelpSection: marker('help'),
+}));
+
+mock.module('@/features/cameras', () => ({ RecentClipsCard: marker('clips') }));
+
+mock.module('@/features/home/components/hero/module-shortcuts', () => ({
+  ModuleShortcuts: () => null,
+}));
+
+mock.module('@/shared/libs/surfaces', () => ({
+  useSurfaces: () => registry.resolve?.(stateView()),
+  SurfaceGroup: ({ children }: { children: ReactNode }) => children,
+  SurfaceSlot: ({ children }: { children: ReactNode }) => children,
 }));
 
 const { default: HomeScreen } = await import('@/features/home/screens/home-screen');
+const { APP_SURFACES } = await import('@/features/surfaces');
+const { resolveSurfaces } = await import('@/shared/libs/surfaces/surface-registry');
 
 const order = (names: readonly string[]) =>
   names
@@ -162,6 +186,10 @@ const ALL = [
   'system',
   'help',
 ];
+
+beforeAll(() => {
+  registry.resolve = (view) => resolveSurfaces(APP_SURFACES, view);
+});
 
 afterEach(() => {
   setWindowWidth(360);
@@ -191,7 +219,7 @@ describe('Inicio on a phone', () => {
     expect(screen.getByText('Buenas tardes, Ana')).toBeDefined();
     expect(screen.getByRole('heading', { name: 'Todo tranquilo.' })).toBeDefined();
     expect(screen.getByText('Modo casa · Luis y tú en casa')).toBeDefined();
-    expect(order(ALL)).toEqual(['now', 'cameras', 'news']);
+    expect(order(ALL)).toEqual(['now', 'cameras', 'clips', 'news']);
     expect(screen.queryByRole('button', { name: /Notificaciones/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Buscar o pedir a Argus' }));
     expect(launched).toEqual(['search']);
@@ -289,7 +317,7 @@ describe('Inicio on a desktop', () => {
     expect(screen.getByLabelText('Tu día')).toBeDefined();
     expect(screen.getByLabelText('Novedades')).toBeDefined();
     expect(screen.getByLabelText('En casa')).toBeDefined();
-    expect(order(ALL)).toEqual(['now', 'today', 'tomorrow', 'news', 'cameras', 'people']);
+    expect(order(ALL)).toEqual(['now', 'today', 'tomorrow', 'news', 'cameras', 'people', 'clips']);
     fireEvent.click(screen.getByRole('button', { name: /Nuevo/ }));
     expect(launched).toEqual(['new']);
   });
@@ -306,20 +334,20 @@ describe('Inicio at night, away and with little data', () => {
   test('at night the phone shows «Esta noche» and then Mañana instead of Ahora', () => {
     state.mode = 'night';
     render(<HomeScreen />);
-    expect(order(ALL)).toEqual(['watch', 'tomorrow', 'cameras', 'news']);
+    expect(order(ALL)).toEqual(['watch', 'tomorrow', 'cameras', 'clips', 'news']);
   });
 
   test('away, the watch leads and Ahora stays', () => {
     state.mode = 'away';
     render(<HomeScreen />);
-    expect(order(ALL)).toEqual(['watch', 'now', 'cameras', 'news']);
+    expect(order(ALL)).toEqual(['watch', 'now', 'cameras', 'clips', 'news']);
   });
 
   test('with Productividad off the agenda columns go, live, whatever the role reads', () => {
     setWindowWidth(1280);
     state.productivity = false;
     render(<HomeScreen />);
-    expect(order(ALL)).toEqual(['news', 'cameras', 'people']);
+    expect(order(ALL)).toEqual(['news', 'cameras', 'people', 'clips']);
   });
 
   test('a sparse home at 1280 px closes the side column with Estado', () => {

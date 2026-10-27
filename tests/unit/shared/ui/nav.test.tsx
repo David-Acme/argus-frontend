@@ -68,7 +68,7 @@ describe('Nav', () => {
   test('a tablet gets the rail, where the centre item opens the chat', () => {
     setWindowWidth(768);
     const { log, props } = setup({
-      settings: { key: 'settings', label: 'Ajustes', icon: 'sliders' },
+      more: { foot: [{ key: 'settings', label: 'Ajustes', icon: 'sliders' }] },
     });
     render(<Nav {...props} />);
     expect(screen.queryByRole('button', { name: COPY.command })).toBeNull();

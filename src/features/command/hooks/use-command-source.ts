@@ -10,6 +10,7 @@ import type { TranslationKey } from '@/core/types';
 import { ASSISTANT_THREAD_HREF, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useAccessView } from '@/shared/hooks/use-capabilities';
+import { useSurfaces } from '@/shared/libs/surfaces';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { CommandGroup, CommandIntent, CommandItem, CommandSource } from '@/shared/ui/command';
@@ -20,7 +21,6 @@ import {
   createHref,
   entryHref,
   type CreateKind,
-  type SectionKey,
 } from '@/features/command/model/command-access';
 import {
   searchEntries,
@@ -50,22 +50,6 @@ const KIND_ICONS: Readonly<Record<SearchKind, IconGlyph>> = {
   person: 'user',
   camera: 'cam',
 };
-
-const SECTION_ICONS: Readonly<Record<SectionKey, IconGlyph>> = {
-  home: 'home',
-  security: 'shield',
-  argus: 'mic',
-  agenda: 'cal',
-  you: 'user',
-};
-
-const SECTION_LABELS = {
-  home: 'screens.command.section-home',
-  security: 'screens.command.section-security',
-  argus: 'screens.command.section-argus',
-  agenda: 'screens.command.section-agenda',
-  you: 'screens.command.section-you',
-} as const satisfies Record<SectionKey, TranslationKey>;
 
 const GROUP_TITLES = {
   agenda: 'screens.command.group-agenda',
@@ -97,7 +81,7 @@ export function useCommandSource({ intent, openedAt }: CommandSourceInput): Comm
   const date = useDateFormatter();
   const chat = useAssistantChat(false);
   const rows = useSearchRows();
-  const access = commandAccess(useAccessView(), rows.projects.length > 0);
+  const access = commandAccess(useAccessView(), rows.projects.length > 0, useSurfaces());
   const entries = searchEntries(rows, openedAt).filter((entry) => access.search.has(entry.kind));
   const searching = intent === 'search';
 
@@ -131,13 +115,15 @@ export function useCommandSource({ intent, openedAt }: CommandSourceInput): Comm
         : router.push(createHref(kind)),
   });
 
-  const sectionItems: CommandItem[] = access.sections.map(({ key, href, shortcut }) => ({
-    id: `section:${key}`,
-    label: t(SECTION_LABELS[key]),
-    icon: SECTION_ICONS[key],
-    shortcut,
-    onRun: () => router.navigate(href),
-  }));
+  const sectionItems: CommandItem[] = access.sections.map(
+    ({ key, href, icon, label, shortcut }) => ({
+      id: `section:${key}`,
+      label: t(label),
+      icon,
+      shortcut,
+      onRun: () => router.navigate(href),
+    })
+  );
 
   const source: CommandSource = (query) => {
     const groups: CommandGroup[] = [

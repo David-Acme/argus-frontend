@@ -11,6 +11,22 @@ export type NavItem = {
   shortcut?: string;
   count?: string;
   argus?: boolean;
+  children?: readonly NavItem[];
+};
+
+export type NavModules = {
+  label: string;
+  expandLabel: (label: string) => string;
+  items: readonly NavItem[];
+  activeChild?: string | null;
+};
+
+export type NavFold = { label: string; onCollapse: () => void };
+
+export type NavMore = {
+  foot?: readonly NavItem[];
+  modules?: NavModules;
+  fold?: NavFold;
 };
 
 export type NavVoice = {
@@ -38,6 +54,6 @@ export type NavProps = {
   presence?: PresenceState;
   onCommand?: () => void;
   status?: ReactNode;
-  settings?: NavItem;
+  more?: NavMore;
   listening?: ListenMode;
 };

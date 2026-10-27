@@ -51,7 +51,8 @@ export const VIEW_CACHE_KEYS = {
   cameraCapabilities: 'camera.capabilities',
   cameraCatalog: 'camera.catalog',
   cameraOverview: 'camera.overview',
-  cameraClips: 'camera.clips',
+  clipFeed: 'camera.clip-feed',
+  navPins: 'navigation.pins',
   cameraRecording: 'camera.recording',
   cameraPresets: 'camera.presets',
   cameraAim: 'camera.aim',
@@ -88,7 +89,11 @@ export const VIEW_CACHE_KEYS = {
 
 export const ACCESS_CACHE_KEYS = [VIEW_CACHE_KEYS.appContext, VIEW_CACHE_KEYS.moduleCatalog] as const;
 
-export const CONTEXT_RESYNC_KEPT_KEYS = [...ACCESS_CACHE_KEYS, VIEW_CACHE_KEYS.privacyMe] as const;
+export const CONTEXT_RESYNC_KEPT_KEYS = [
+  ...ACCESS_CACHE_KEYS,
+  VIEW_CACHE_KEYS.privacyMe,
+  VIEW_CACHE_KEYS.navPins,
+] as const;
 
 export const buildViewCacheStorageKey = (
   userId: string,

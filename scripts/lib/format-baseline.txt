@@ -159,7 +159,6 @@ src/features/cameras/components/recording-paused-banner.tsx
 src/features/cameras/components/tamper-evidence-view.tsx
 src/features/cameras/components/web-camera-player.ts
 src/features/cameras/hooks/use-camera-aim.ts
-src/features/cameras/hooks/use-camera-clips.ts
 src/features/cameras/hooks/use-camera-device-settings.ts
 src/features/cameras/hooks/use-camera-live-audio.ts
 src/features/cameras/hooks/use-camera-patrol.ts
@@ -170,7 +169,6 @@ src/features/cameras/hooks/use-clip-playback.ts
 src/features/cameras/hooks/use-tamper-evidence.ts
 src/features/cameras/model/camera-aim.ts
 src/features/cameras/model/camera-catalog.ts
-src/features/cameras/model/camera-clips.ts
 src/features/cameras/model/camera-device.ts
 src/features/cameras/model/camera-form-steps.ts
 src/features/cameras/model/camera-live-audio.ts
@@ -484,7 +482,6 @@ tests/unit/features/cameras/camera-model.test.ts
 tests/unit/features/cameras/camera-recording.test.ts
 tests/unit/features/cameras/camera-stream.test.ts
 tests/unit/features/cameras/camera-talk-access.test.ts
-tests/unit/features/cameras/clip-model.test.ts
 tests/unit/features/cameras/ptz-hold.test.ts
 tests/unit/features/cameras/tamper-evidence.test.ts
 tests/unit/features/modules/module-impact.test.ts
