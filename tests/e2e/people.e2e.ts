@@ -26,7 +26,7 @@ test('a member enrolled on a third device appears in People on both devices, liv
     .first()
     .click();
   await expect(screen.getByRole('heading', 'People')).toBeVisible();
-  await expect(screen.getByText('Ana Ruiz').first()).toBeVisible();
+  await expect(screen.getByText('Ana Ruiz (you)', { exact: true }).first()).toBeVisible();
 
   const at = Math.floor(Date.now() / 1000);
   await emit(baseUrl, [

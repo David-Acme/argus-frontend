@@ -118,9 +118,11 @@ test('opening a thread reads it, shows where Argus turns were said, and clearing
 
   await expect.poll(() => requests(baseUrl), { timeout: LIVE_MS }).toContain('DELETE /conversation/3 @A');
   await expect
+    .poll(() => browser.evaluate(() => document.body.innerText.includes('You: Bring bread')), { timeout: LIVE_MS })
+    .toBe(true);
+  await expect
     .poll(() => browser.evaluate(() => document.body.innerText.includes('Dinner is ready')), { timeout: LIVE_MS })
     .toBe(false);
-  expect(await browser.evaluate(() => document.body.innerText.includes('You: Bring bread'))).toBe(true);
 
   expect(escapes).toEqual([]);
 });
