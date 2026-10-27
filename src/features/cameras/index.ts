@@ -17,6 +17,7 @@ export const CameraZonesScreen = lazyScreen(
 );
 export { CameraLiveView } from './components/camera-live-view';
 export { CameraSnapshotView } from './components/camera-snapshot-view';
+export { CameraPreview } from './components/camera-preview';
 export { useCameraCounts, type CameraCounts } from './hooks/use-camera-counts';
 export { useCameraOverview } from './hooks/use-camera-overview';
 export { useCameraPrivacy } from './hooks/use-camera-privacy';

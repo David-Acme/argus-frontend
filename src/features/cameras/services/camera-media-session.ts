@@ -10,10 +10,10 @@ import {
   CAMERA_STREAM_ACK_THRESHOLD_BYTES,
   CAMERA_STREAM_CONNECT_TIMEOUT_MS,
   CAMERA_STREAM_FRAME_HEADER_BYTES,
-  CAMERA_STREAM_FRAME_MAGIC,
   CAMERA_STREAM_STALL_MS,
   CAMERA_STREAM_WATCHDOG_MS,
 } from '@/features/cameras/constants';
+import { readMediaHeader } from '@/features/cameras/model/camera-preview';
 import { FragmentAssembler } from '@/features/cameras/model/fragment-assembler';
 import { mediaCloseAction, subscribeNotice, type MediaFrame } from '@/features/cameras/model/media-access';
 import { StreamMeter, type StreamStats } from '@/features/cameras/model/stream-meter';
@@ -31,7 +31,6 @@ export type CameraMediaDeps = MediaAccessDeps & {
   refresh: (failed: SessionCredential) => Promise<SessionRefreshOutcome>;
 };
 
-const KEYFRAME_FLAG = 0x01;
 const INIT_FRAME_TYPE = 1;
 const MEDIA_FRAME_TYPE = 2;
 const NO_SESSION = 'CAMERA_STREAM_NO_SESSION';
@@ -303,13 +302,10 @@ export class CameraMediaSession implements ICameraMediaSession {
   }
 
   private handleBinary(data: ArrayBuffer): void {
-    if (data.byteLength < CAMERA_STREAM_FRAME_HEADER_BYTES) return;
-    const header = new DataView(data, 0, CAMERA_STREAM_FRAME_HEADER_BYTES);
-    if (header.getUint8(0) !== CAMERA_STREAM_FRAME_MAGIC) return;
-
-    const type = header.getUint8(2);
-    const keyframe = (header.getUint8(3) & KEYFRAME_FLAG) === KEYFRAME_FLAG;
-    this.subId = header.getUint16(4);
+    const header = readMediaHeader(data);
+    if (!header) return;
+    const { type, keyframe } = header;
+    this.subId = header.subId;
     const payload = new Uint8Array(data, CAMERA_STREAM_FRAME_HEADER_BYTES);
 
     if (type === INIT_FRAME_TYPE) {

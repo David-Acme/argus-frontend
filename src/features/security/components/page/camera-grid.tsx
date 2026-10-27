@@ -6,6 +6,7 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { cameraFaceOf } from '@/shared/libs/camera-face';
 import { Button } from '@/shared/ui/button';
 import { Media } from '@/shared/ui/media';
+import { CameraPreview } from '@/features/cameras';
 import {
   gridColumnsFor,
   rowsOf,
@@ -24,9 +25,9 @@ export type CameraGridProps = {
   onTalk?: (cameraId: string) => void;
 };
 
-type TileProps = Omit<CameraGridProps, 'tiles'> & { tile: SecurityTile };
+type TileProps = Omit<CameraGridProps, 'tiles'> & { tile: SecurityTile; order: number };
 
-function CameraTile({ tile, frames, now, format, fill, onOpen, onTalk }: TileProps) {
+function CameraTile({ tile, order, frames, now, format, fill, onOpen, onTalk }: TileProps) {
   const { t } = useTranslation();
   const frame = frames.get(tile.id);
   const unreachable = useOfflineNotice();
@@ -69,8 +70,11 @@ function CameraTile({ tile, frames, now, format, fill, onOpen, onTalk }: TilePro
       frame={frame && !face.dormant ? { uri: frame } : undefined}
       fill={fill}
       reveal={fill ? reveal : undefined}
-      onPress={() => onOpen(tile.id)}
-    />
+      onPress={() => onOpen(tile.id)}>
+      {tile.state === 'live' && !face.stale ? (
+        <CameraPreview cameraId={tile.id} order={order} />
+      ) : null}
+    </Media>
   );
 }
 
@@ -84,7 +88,9 @@ export function CameraGrid({ tiles, fill, ...tile }: CameraGridProps) {
         <View key={index} className={clsx('gap-media-grid-gap flex-row', fill && 'flex-1')}>
           {row.map((item, slot) => (
             <View key={item?.id ?? `slot-${slot}`} className="min-w-0 flex-1">
-              {item ? <CameraTile tile={item} fill={fill} {...tile} /> : null}
+              {item ? (
+                <CameraTile tile={item} order={index * columns + slot} fill={fill} {...tile} />
+              ) : null}
             </View>
           ))}
         </View>
