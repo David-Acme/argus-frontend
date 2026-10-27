@@ -3,13 +3,11 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { useAuthStore } from '@/core/stores';
-import type { GuardEnvironment, GuardEnvironmentCreate, MenuOption } from '@/core/types';
+import type { GuardEnvironment, GuardEnvironmentCreate } from '@/core/types';
 import { AppScreen, ScreenHeader } from '@/shared/components/layout';
-import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
 import { Button } from '@/shared/components/ui/button';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { Icon } from '@/shared/components/ui/icon';
-import { IconButton } from '@/shared/components/ui/icon-button';
 import { Panel } from '@/shared/components/ui/panel';
 import { Text } from '@/shared/components/ui/text';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
@@ -17,6 +15,8 @@ import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { Menu } from '@/shared/ui/menu';
+import type { MenuItem, MenuItems } from '@/shared/ui/menu';
 import { MaskedCamerasNotice } from '@/shared/components/cameras/masked-cameras-notice';
 import { CameraContextPanel } from '@/features/security/components/camera-context-panel';
 import { EmergencyContactDialog } from '@/features/security/components/emergency-contact-dialog';
@@ -34,8 +34,6 @@ import { useEpisodes } from '@/features/security/hooks/use-episodes';
 import { camerasIn, postureKey } from '@/features/security/model/environments';
 import { episodeKey } from '@/features/security/model/episode';
 import { HAPPENED_COLUMN } from '@/features/security/model/happened';
-
-type EnvironmentAction = 'edit' | 'remove';
 
 type EnvironmentBodyProps = {
   environment: GuardEnvironment;
@@ -59,27 +57,22 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
   const cameras = camerasIn(current, guard.environments, allCameras);
   const pending = guard.pendingMode?.environmentId === current.id ? guard.pendingMode.mode : null;
 
-  const actions: MenuOption<EnvironmentAction>[] = [
-    { value: 'edit', label: t('screens.security.environments.edit'), icon: 'pencil' },
-    ...(current.isDefault
-      ? []
-      : [
-          {
-            value: 'remove' as const,
-            label: t('screens.security.environments.remove'),
-            icon: 'trash' as const,
-            destructive: true,
-          },
-        ]),
-  ];
-
-  const onAction = async (action: EnvironmentAction) => {
-    if (action === 'edit') {
-      setEditing(true);
-      return;
-    }
-    if (await guard.removeEnvironment(current)) router.replace('/security');
+  const edit: MenuItem = {
+    label: t('screens.security.environments.edit'),
+    icon: 'pencil',
+    family: 'edit',
+    onPress: () => setEditing(true),
   };
+  const remove: MenuItem = {
+    label: t('screens.security.environments.remove'),
+    icon: 'trash',
+    destructive: true,
+    confirm: 'by-action',
+    onPress: async () => {
+      if (await guard.removeEnvironment(current)) router.replace('/security');
+    },
+  };
+  const actions: MenuItems = current.isDefault ? [edit] : [edit, remove];
 
   const rename = (body: GuardEnvironmentCreate) => guard.updateEnvironment(current, body);
 
@@ -208,29 +201,32 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
             onBack={() => router.back()}
             action={
               access.review ? (
-                <AdaptiveMenu
-                  options={actions}
-                  onSelect={(action) => void onAction(action)}
-                  title={t('screens.security.environments.actions')}
-                  closeLabel={t('common.close')}
-                  trigger={
-                    <IconButton icon="more-horizontal" label={t('screens.security.environments.actions')} />
-                  }
-                />
+                <Menu label={t('screens.security.environments.actions')} items={actions} />
               ) : (
                 <View className="bg-surface-secondary size-10 items-center justify-center rounded-full">
-                  <Icon name={ENVIRONMENT_KIND_ICONS[current.kind]} className="text-foreground-secondary size-5" />
+                  <Icon
+                    name={ENVIRONMENT_KIND_ICONS[current.kind]}
+                    className="text-foreground-secondary size-5"
+                  />
                 </View>
               )
             }
           />
         }>
-        <ScrollView className="flex-1" contentContainerClassName="grow pb-6" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="grow pb-6"
+          showsVerticalScrollIndicator={false}>
           {layout}
         </ScrollView>
       </AppScreen>
       {editing ? (
-        <EnvironmentFormDialog open onOpenChange={setEditing} environment={current} onSubmit={rename} />
+        <EnvironmentFormDialog
+          open
+          onOpenChange={setEditing}
+          environment={current}
+          onSubmit={rename}
+        />
       ) : null}
       <EpisodeSheet
         episode={opened}
@@ -242,7 +238,9 @@ function EnvironmentBody({ environment }: EnvironmentBodyProps) {
         <EmergencyContactDialog
           open={addingContact}
           onOpenChange={setAddingContact}
-          onSave={(contact) => void response.setContacts([...(response.config?.contacts ?? []), contact])}
+          onSave={(contact) =>
+            void response.setContacts([...(response.config?.contacts ?? []), contact])
+          }
         />
       ) : null}
     </>

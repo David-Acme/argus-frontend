@@ -5,10 +5,10 @@ import { applyIntents, settledIntents, type OptimisticIntent } from '@/shared/li
 import {
   calendarEntryEditHref,
   calendarEntryRecordId,
+  deleteConfirmOf,
   editOccurrenceBody,
   isOccurrence,
   occurrenceOf,
-  seriesDeleteConfirm,
   skipOccurrenceBody,
 } from '@/features/agenda/model/calendar-entry-actions';
 import { byStart, CALENDAR_LENSES } from '@/features/agenda/model/calendar-optimistic';
@@ -87,14 +87,27 @@ describe('an occurrence addresses its event', () => {
     expect(left.map((entry) => entry.id)).toEqual(['event:12']);
   });
 
-  test('deleting a series asks first and says it applies to the whole series; a single event goes straight to undo', () => {
-    const labels = {
+  test('deleting names what goes away: the whole series for an occurrence, the event or the task otherwise', () => {
+    const words = {
       title: 'Delete Piano?',
-      description: 'Applies to the whole series',
-      confirmLabel: 'Delete every occurrence',
+      body: { event: 'The event goes', task: 'The task goes' },
+      seriesBody: 'Applies to the whole series',
+      confirmLabel: 'Delete',
+      seriesLabel: 'Delete every occurrence',
     };
-    expect(seriesDeleteConfirm(occurrence(1), labels)).toEqual({ ...labels, intent: 'danger' });
-    expect(seriesDeleteConfirm(plain, labels)).toBeUndefined();
+    expect(deleteConfirmOf({ source: 'event', series: occurrence(1).series }, words)).toEqual({
+      title: 'Delete Piano?',
+      body: 'Applies to the whole series',
+      confirmLabel: 'Delete every occurrence',
+    });
+    expect(deleteConfirmOf(plain, words)).toEqual({
+      title: 'Delete Piano?',
+      body: 'The event goes',
+      confirmLabel: 'Delete',
+    });
+    expect(deleteConfirmOf({ source: 'task', series: undefined }, words).body).toBe(
+      'The task goes'
+    );
   });
 
   test('the series actions read "se aplica a toda la serie" in Spanish and say the same in English', () => {

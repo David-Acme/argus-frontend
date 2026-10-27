@@ -103,13 +103,11 @@ src/shared/components/layout/edge-fade.tsx
 src/shared/components/layout/screen-header.tsx
 src/shared/components/sharing/share-members-dialog.tsx
 src/shared/components/ui/adaptive-dialog.tsx
-src/shared/components/ui/adaptive-menu.tsx
 src/shared/components/ui/adaptive-select.tsx
 src/shared/components/ui/blur-reveal.tsx
 src/shared/components/ui/brand-mark.tsx
 src/shared/components/ui/button.tsx
 src/shared/components/ui/confirm-dialog.tsx
-src/shared/components/ui/context-menu.tsx
 src/shared/components/ui/dialog.tsx
 src/shared/components/ui/empty-state.tsx
 src/shared/components/ui/filter-chips.tsx
@@ -126,7 +124,6 @@ src/shared/components/ui/option-row.tsx
 src/shared/components/ui/orbit-hero.tsx
 src/shared/components/ui/panel.tsx
 src/shared/components/ui/permission-list.tsx
-src/shared/components/ui/popover.tsx
 src/shared/components/ui/section-header.tsx
 src/shared/components/ui/segmented-control.tsx
 src/shared/components/ui/select-field.tsx

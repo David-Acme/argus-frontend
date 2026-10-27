@@ -7,6 +7,7 @@ import { roleLabelOf } from '@/shared/libs/role-label';
 import { Avatar } from '@/shared/ui/avatar';
 import type { AvatarTone } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
+import { Menu } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import type { Invitations } from '@/features/people/hooks/use-invitations';
@@ -60,7 +61,7 @@ function InvitationRow({ line, onRevoke }: InvitationRowProps) {
   const { t } = useTranslation();
   const meta = useInvitationMeta(line);
   const role = roleLabelOf(line.record.role, t);
-  return (
+  const row = (
     <Row
       leading={<Avatar icon="qr" tone={STATE_TONE[line.state]} />}
       title={t('screens.users.invitation-title', { role })}
@@ -79,6 +80,23 @@ function InvitationRow({ line, onRevoke }: InvitationRowProps) {
         ) : undefined
       }
     />
+  );
+  if (!line.revocable) return row;
+  return (
+    <Menu
+      context
+      label={t('screens.users.invitation-title', { role })}
+      items={[
+        {
+          label: t('screens.users.revoke'),
+          icon: 'x',
+          destructive: true,
+          confirm: 'by-action',
+          onPress: () => onRevoke(line),
+        },
+      ]}>
+      {row}
+    </Menu>
   );
 }
 

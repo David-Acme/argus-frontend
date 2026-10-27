@@ -11,6 +11,8 @@ export const projects = {
   'edit-project': 'Editar proyecto',
   'edit-task': 'Editar tarea',
   'remove-task': 'Borrar tarea',
+  'delete-task-title': '¿Borrar {title}?',
+  'delete-task-body': 'La tarea se borra de este proyecto.',
   'delete-project': 'Borrar proyecto',
   'delete-project-title': '¿Borrar {name}?',
   'delete-project-body': 'También se borran sus tareas. No se puede deshacer.',

@@ -6,21 +6,6 @@ import {
   SlideOutDown,
   ZoomIn,
 } from 'react-native-reanimated';
-import { IS_IOS } from '@/shared/constants';
-
-export type ContextMenuPlatform = 'android' | 'ios';
-
-type ContextMenuMotion = {
-  enterDuration: number;
-  exitDuration: number;
-  initialScale: number;
-};
-
-export function contextMenuMotion(platform: ContextMenuPlatform): ContextMenuMotion {
-  return platform === 'ios'
-    ? { enterDuration: 160, exitDuration: 120, initialScale: 0.98 }
-    : { enterDuration: 120, exitDuration: 90, initialScale: 0.985 };
-}
 
 export const easeOutCubic = Easing.out(Easing.cubic);
 
@@ -43,26 +28,6 @@ export const dialogIn = ZoomIn.withInitialValues({ transform: [{ scale: 0.95 }] 
   .mass(0.9);
 
 export const dialogOut = FadeOut.duration(150).easing(Easing.in(Easing.linear));
-
-export const menuIn = ZoomIn.withInitialValues({ transform: [{ scale: 0.96 }] })
-  .springify()
-  .damping(22)
-  .stiffness(300)
-  .mass(0.9);
-
-export const menuOut = FadeOut.duration(120).easing(Easing.in(Easing.linear));
-
-const contextMenu = contextMenuMotion(IS_IOS ? 'ios' : 'android');
-
-export const contextMenuIn = ZoomIn.withInitialValues({
-  transform: [{ scale: contextMenu.initialScale }],
-})
-  .duration(contextMenu.enterDuration)
-  .easing(easeOutCubic);
-
-export const contextMenuOut = FadeOut.duration(contextMenu.exitDuration).easing(
-  Easing.in(Easing.cubic)
-);
 
 export const sheetIn = SlideInDown.springify().damping(26).stiffness(320).mass(0.9);
 

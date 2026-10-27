@@ -153,6 +153,8 @@ export const agenda = {
   'state-doing': 'In progress',
   'state-done': 'Done',
   'delete-event-title': 'Delete {name}?',
+  'delete-event-body': 'The event is removed from the calendar.',
+  'delete-task-body': 'The task is removed from its project.',
   'pick-day': 'Pick a day',
   tomorrow: 'Tomorrow',
   'clear-day': 'Remove date',

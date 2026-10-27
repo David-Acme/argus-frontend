@@ -1,10 +1,8 @@
 import { View } from 'react-native';
 import type { TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Button } from '@/shared/ui/button';
-import type { IconGlyph } from '@/shared/ui/icon';
-import { Menu } from '@/shared/ui/menu';
-import type { MenuItem } from '@/shared/ui/menu';
+import { hasMenuItems, Menu } from '@/shared/ui/menu';
+import type { MenuAction, MenuItem } from '@/shared/ui/menu';
 import { Meter } from '@/shared/ui/meter';
 import { Notice } from '@/shared/ui/notice';
 import { Text } from '@/shared/ui/text';
@@ -31,31 +29,21 @@ const MENU_LABEL: Record<ProjectMenuKey, TranslationKey> = {
   ask: 'screens.projects.ask-argus',
 };
 
-const MENU_ICON: Record<ProjectMenuKey, IconGlyph> = {
-  members: 'users',
-  edit: 'sliders',
-  ask: 'mic',
+const MENU_LOOK: Record<ProjectMenuKey, Pick<MenuAction, 'icon' | 'family'>> = {
+  members: { icon: 'users', family: 'share' },
+  edit: { icon: 'pencil', family: 'edit' },
+  ask: { icon: 'mic', family: 'argus' },
 };
 
 export function ProjectMenu({ view, ask, handlers }: ProjectMenuProps) {
   const { t } = useTranslation();
   const items: MenuItem[] = projectMenu({ rights: view.rights, ask }).map((key) => ({
     label: t(MENU_LABEL[key]),
-    icon: MENU_ICON[key],
+    ...MENU_LOOK[key],
     onPress: handlers[key],
   }));
-  const [first, second, ...rest] = items;
-  if (!first) return null;
-  if (!second)
-    return (
-      <Button iconOnly icon={first.icon ?? 'more'} label={first.label} onPress={first.onPress} />
-    );
-  return (
-    <Menu
-      label={t('screens.projects.more', { name: view.project.name })}
-      items={[first, second, ...rest]}
-    />
-  );
+  if (!hasMenuItems(items)) return null;
+  return <Menu label={t('screens.projects.more', { name: view.project.name })} items={items} />;
 }
 
 export function ProjectHead({ view }: ProjectHeadProps) {

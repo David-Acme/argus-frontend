@@ -153,6 +153,8 @@ export const agenda = {
   'state-doing': 'En curso',
   'state-done': 'Hecho',
   'delete-event-title': '¿Eliminar {name}?',
+  'delete-event-body': 'El evento se borra de la agenda.',
+  'delete-task-body': 'La tarea se borra de su proyecto.',
   'pick-day': 'Elegir día',
   tomorrow: 'Mañana',
   'clear-day': 'Quitar fecha',

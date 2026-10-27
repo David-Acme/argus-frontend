@@ -28,6 +28,11 @@ export const home = {
   'notification-deleted': 'Notificación borrada',
   'notification-delete-failed': 'No se pudo borrar la notificación',
   thread: {
+    'delete-short': 'Borrar',
+    'delete-title': '¿Borrar este aviso?',
+    'delete-body': '«{title}» se quita de Novedades en todos tus dispositivos.',
+    'mark-read': 'Marcar como leído',
+    actions: 'Opciones de {title}',
     count: '{count} avisos',
     unread: 'Sin leer',
     delete: 'Borrar notificación: {title}',

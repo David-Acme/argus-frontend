@@ -4,9 +4,9 @@ import type { Setting, SettingChange, SettingsOwner } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { useWindowLayout } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/avatar';
-import { Confirm } from '@/shared/ui/confirm';
 import { Icon } from '@/shared/ui/icon';
 import { Menu } from '@/shared/ui/menu';
+import type { MenuItem } from '@/shared/ui/menu';
 import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
@@ -84,8 +84,26 @@ function Header({ owner, onChange }: HeaderProps) {
       owner,
       changed.map((setting) => ({ key: setting.key, value: setting.fallback }))
     );
-    setResetting(false);
   };
+  const resetItem: MenuItem =
+    changed.length > 0
+      ? {
+          label: t('screens.settings.more.reset'),
+          icon: 'refresh',
+          destructive: true,
+          confirm: {
+            title: t('screens.settings.more.reset-title', { name }),
+            body: t('screens.settings.more.reset-body', { count: String(changed.length) }),
+            confirmLabel: t('screens.settings.more.reset-confirm', { name }),
+          },
+          onPress: reset,
+        }
+      : {
+          label: t('screens.settings.more.reset'),
+          icon: 'refresh',
+          family: 'caution',
+          onPress: () => setResetting(true),
+        };
   return (
     <>
       <View className="flex-row items-center gap-4 pt-2">
@@ -105,33 +123,21 @@ function Header({ owner, onChange }: HeaderProps) {
               {
                 label: t('screens.settings.transfer.export'),
                 icon: 'download',
+                family: 'view',
                 onPress: () => setTransfer({ owner, mode: 'export' }),
               },
               {
                 label: t('screens.settings.transfer.import'),
                 icon: 'up',
+                family: 'edit',
                 onPress: () => setTransfer({ owner, mode: 'import' }),
               },
-              {
-                label: t('screens.settings.more.reset'),
-                icon: 'refresh',
-                destructive: true,
-                onPress: () => setResetting(true),
-              },
+              resetItem,
             ]}
           />
         ) : null}
       </View>
       <TransferSheet transfer={transfer} onApply={onChange} onClose={() => setTransfer(null)} />
-      <Confirm
-        open={resetting && changed.length > 0}
-        variant="destructive"
-        title={t('screens.settings.more.reset-title', { name })}
-        body={t('screens.settings.more.reset-body', { count: String(changed.length) })}
-        confirmLabel={t('screens.settings.more.reset-confirm', { name })}
-        onConfirm={reset}
-        onCancel={() => setResetting(false)}
-      />
       {resetting && changed.length === 0 ? (
         <Section variant="plain">
           <Notice inline icon="check" title={t('screens.settings.more.reset-none', { name })} />

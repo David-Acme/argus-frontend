@@ -1175,14 +1175,6 @@
       "count": 1
     }
   },
-  "src/shared/components/ui/adaptive-menu.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/shared/components/ui/adaptive-select.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 2
@@ -1199,11 +1191,6 @@
   "src/shared/components/ui/button.tsx": {
     "better-tailwindcss/no-restricted-classes": {
       "count": 5
-    }
-  },
-  "src/shared/components/ui/context-menu.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 6
     }
   },
   "src/shared/components/ui/dialog-submit-key.ts": {
@@ -1268,11 +1255,6 @@
   "src/shared/components/ui/permission-list.tsx": {
     "argus/no-template-key": {
       "count": 2
-    }
-  },
-  "src/shared/components/ui/popover.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
     }
   },
   "src/shared/components/ui/qr-code.tsx": {

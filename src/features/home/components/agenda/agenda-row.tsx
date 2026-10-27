@@ -1,11 +1,12 @@
-import type { AgendaItem, AgendaMenuAction, TranslationKey } from '@/core/types';
+import type { AgendaItem, AgendaMenuAction } from '@/core/types';
 import { Avatar } from '@/shared/ui/avatar';
 import { Check } from '@/shared/ui/check';
-import { Menu, type MenuItem } from '@/shared/ui/menu';
+import { hasMenuItems, Menu } from '@/shared/ui/menu';
+import type { MenuItem } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { Text, type TextTone } from '@/shared/ui/text';
 import type { AgendaActions } from '@/features/home/hooks/use-agenda-actions';
-import { agendaCheck, isOngoing } from '@/features/agenda';
+import { agendaCheck, isOngoing, removeConfirm } from '@/features/agenda';
 import {
   itemMeta,
   timeToGo,
@@ -26,11 +27,6 @@ export type AgendaRowProps = {
 type LeadProps = { item: AgendaItem; wording: WordingContext; actions: AgendaActions };
 
 type TrailProps = { label: string; urgency: Urgency };
-
-const MENU_LABEL: Record<AgendaMenuAction, TranslationKey> = {
-  edit: 'screens.home.agenda-sections.edit',
-  delete: 'screens.home.agenda-sections.delete',
-};
 
 const TRAIL_TONE: Record<Urgency, TextTone> = { overdue: 'alert', now: 'ok', later: '3' };
 
@@ -59,19 +55,34 @@ function trailOf(item: AgendaItem, place: MetaPlace, now: number) {
   return place === 'day' && isOngoing(item, now) ? timeToGo(item, now) : null;
 }
 
-function menuItems(item: AgendaItem, actions: AgendaActions, { t }: WordingContext): MenuItem[] {
-  return actions.menuOf(item).map((action) => ({
-    label: t(MENU_LABEL[action]),
-    destructive: action === 'delete',
-    onPress: () => actions.run(item, action),
-  }));
+function menuItem(
+  item: AgendaItem,
+  action: AgendaMenuAction,
+  { actions, wording }: Pick<AgendaRowProps, 'actions' | 'wording'>
+): MenuItem {
+  const { t } = wording;
+  const onPress = () => actions.run(item, action);
+  if (action === 'edit')
+    return {
+      label: t('screens.home.agenda-sections.edit'),
+      icon: 'pencil',
+      family: 'edit',
+      onPress,
+    };
+  return {
+    label: t('screens.home.agenda-sections.delete'),
+    icon: 'trash',
+    destructive: true,
+    confirm: removeConfirm({ entry: item.entry, t }),
+    onPress,
+  };
 }
 
 export function AgendaRow({ item, place, wording, actions }: AgendaRowProps) {
   const { now, t } = wording;
   const urgency = urgencyOf(item, now);
   const trail = trailOf(item, place, now);
-  const [first, second, ...rest] = menuItems(item, actions, wording);
+  const items = actions.menuOf(item).map((action) => menuItem(item, action, { actions, wording }));
   const row = (
     <Row
       title={item.title}
@@ -84,12 +95,12 @@ export function AgendaRow({ item, place, wording, actions }: AgendaRowProps) {
       testID={`agenda-row-${item.id}`}
     />
   );
-  if (!first || !second) return row;
+  if (!hasMenuItems(items)) return row;
   return (
     <Menu
       context
       label={t('screens.home.agenda-sections.actions', { title: item.title })}
-      items={[first, second, ...rest]}>
+      items={items}>
       {row}
     </Menu>
   );

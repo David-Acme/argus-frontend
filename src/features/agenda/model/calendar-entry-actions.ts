@@ -1,5 +1,5 @@
 import type { IOccurrenceChange } from '@/core/interfaces';
-import type { CalendarEntry, ConfirmRequest } from '@/core/types';
+import type { CalendarEntry } from '@/core/types';
 import type { Href } from 'expo-router';
 
 export type CalendarShareViewer = {
@@ -60,13 +60,24 @@ export function editOccurrenceBody({
   return body;
 }
 
-export type SeriesDeleteLabels = Pick<ConfirmRequest, 'title' | 'description' | 'confirmLabel'>;
+export type DeleteConfirm = { title: string; body: string; confirmLabel: string };
 
-export const seriesDeleteConfirm = (
-  entry: Pick<CalendarEntry, 'series'>,
-  labels: SeriesDeleteLabels
-): ConfirmRequest | undefined =>
-  isOccurrence(entry) ? { ...labels, intent: 'danger' } : undefined;
+export type DeleteWords = {
+  title: string;
+  body: Record<CalendarEntry['source'], string>;
+  seriesBody: string;
+  confirmLabel: string;
+  seriesLabel: string;
+};
+
+export function deleteConfirmOf(
+  entry: Pick<CalendarEntry, 'source' | 'series'>,
+  words: DeleteWords
+): DeleteConfirm {
+  if (isOccurrence(entry))
+    return { title: words.title, body: words.seriesBody, confirmLabel: words.seriesLabel };
+  return { title: words.title, body: words.body[entry.source], confirmLabel: words.confirmLabel };
+}
 
 export function calendarEntryEditHref(entry: CalendarEntry): Href | null {
   const recordId = calendarEntryRecordId(entry);

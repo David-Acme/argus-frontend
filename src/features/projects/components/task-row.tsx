@@ -1,8 +1,8 @@
 import type { IProjectTaskCacheRow } from '@/core/interfaces';
 import type { ProjectTaskStatus } from '@/core/types';
 import { Check } from '@/shared/ui/check';
-import { Menu } from '@/shared/ui/menu';
-import type { MenuItem, MenuItems } from '@/shared/ui/menu';
+import { hasMenuItems, Menu } from '@/shared/ui/menu';
+import type { MenuItem } from '@/shared/ui/menu';
 import { Row } from '@/shared/ui/row';
 import { LANE_LABEL, TASK_LANES } from '@/features/projects/constants/projects.constant';
 import { taskCheck, taskWords } from '@/features/projects/model/project-words';
@@ -11,22 +11,32 @@ import type { TaskContext } from '@/features/projects/model/task-view';
 
 export type TaskRowProps = { task: IProjectTaskCacheRow; context: TaskContext };
 
-const isMenu = (items: readonly MenuItem[]): items is MenuItems => items.length >= 2;
-
 function taskMenu({ task, context }: TaskRowProps): MenuItem[] {
   const { t, handlers } = context;
   const lane = laneOf(task.status);
-  const moves = TASK_LANES.filter((spec) => spec.key !== lane).map((spec) => ({
+  const moves: MenuItem[] = TASK_LANES.filter((spec) => spec.key !== lane).map((spec) => ({
     label: t('screens.projects.move-to', { lane: t(LANE_LABEL[spec.key]) }),
+    icon: spec.key === 'done' ? 'check' : 'move',
+    family: 'state',
     onPress: () => handlers.setStatus(task, spec.status),
   }));
   return [
     ...moves,
-    { label: t('screens.projects.edit-task'), onPress: () => handlers.edit(task) },
+    {
+      label: t('screens.projects.edit-task'),
+      icon: 'pencil',
+      family: 'edit',
+      onPress: () => handlers.edit(task),
+    },
     {
       label: t('screens.projects.remove-task'),
-      icon: 'x',
+      icon: 'trash',
       destructive: true,
+      confirm: {
+        title: t('screens.projects.delete-task-title', { title: task.title }),
+        body: t('screens.projects.delete-task-body'),
+        confirmLabel: t('common.confirm-delete'),
+      },
       onPress: () => handlers.remove(task),
     },
   ];
@@ -57,7 +67,7 @@ export function TaskRow({ task, context }: TaskRowProps) {
     />
   );
   const items = taskMenu({ task, context });
-  if (!editable || !isMenu(items)) return row;
+  if (!editable || !hasMenuItems(items)) return row;
   return (
     <Menu context label={task.title} items={items}>
       {row}
