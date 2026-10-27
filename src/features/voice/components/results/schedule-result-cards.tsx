@@ -73,7 +73,7 @@ export function EventMovedCard({ result, actions, now }: ScheduleCardProps<Event
   const when = useResultWhen(now);
   const meta = t('screens.voice.results.event-was', {
     when: when.rangeOf(result.startsAt, result.endsAt),
-    before: when.whenOf(result.previousStartsAt),
+    before: when.whenOf(result.previousStartsAt).toLocaleLowerCase(),
   });
   return (
     <ResultShell surface={actions.surface} label={result.title}>

@@ -288,6 +288,10 @@ export function callResultOf(results: readonly ArgusResult[], since: number): Ar
   return shownResults(results).findLast((result) => result.at >= since) ?? null;
 }
 
+const offersOnly = (result: ArgusResult): boolean =>
+  (result.kind === 'screen' && result.module !== null) ||
+  (result.kind === 'reminder' && result.asking);
+
 export function doneResults(results: readonly ArgusResult[]): ArgusResult[] {
-  return results.filter((result) => result.status === 'done').reverse();
+  return results.filter((result) => result.status === 'done' && !offersOnly(result)).reverse();
 }

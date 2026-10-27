@@ -108,7 +108,7 @@ export function CallSurface({
       {moment === 'ended' ? (
         <EndedSummary actions={actions} />
       ) : (
-        <View className="mt-6 w-full gap-3">
+        <View className="mt-6 min-h-0 w-full shrink gap-3 overflow-hidden">
           <CallCaptions lines={transcript} />
           {hint ? (
             <Text variant="meta" tone={phase === 'error' ? 'alert' : '2'} align="center">

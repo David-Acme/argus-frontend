@@ -28,7 +28,7 @@ export const conversations = {
   'clear-confirm': 'Borrar',
   'clear-failed': 'No se pudo borrar la conversación',
   'read-failed': 'No se pudo marcar como leída',
-  'mic-denied': 'Argus no puede oírte',
+  'mic-denied': 'Argus no puede oírte.',
   'mic-denied-hint': 'Permite el micrófono para hablarle.',
   'mic-allow': 'Permitir',
   state: {

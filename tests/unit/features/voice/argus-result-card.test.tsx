@@ -149,7 +149,7 @@ describe('what Argus did, as a card', () => {
         previousEndsAt: null,
       })
     );
-    expect(screen.getByText(/antes Hoy/)).toBeDefined();
+    expect(screen.getByText(/antes hoy/)).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Abrir' }));
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Deshacer' }));

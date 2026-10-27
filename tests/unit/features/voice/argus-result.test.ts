@@ -201,6 +201,18 @@ describe('which results show', () => {
     expect(callResultOf([camera('a', 1)], 3)).toBeNull();
   });
 
+  test('an offer still waiting for a yes is not something Argus did', () => {
+    const offer: ArgusResult = {
+      id: 'o',
+      at: 3,
+      status: 'done',
+      kind: 'screen',
+      screen: 'modules',
+      module: 'productivity',
+    };
+    expect(doneResults([camera('a', 1), offer])).toEqual([camera('a', 1)]);
+  });
+
   test('what Argus did lists the done results newest first', () => {
     const pending = { ...camera('p', 4), status: 'pending' as const };
     expect(doneResults([camera('a', 1), pending, camera('b', 2)]).map((r) => r.id)).toEqual([

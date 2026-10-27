@@ -28,7 +28,7 @@ export const conversations = {
   'clear-confirm': 'Clear',
   'clear-failed': 'The conversation could not be cleared',
   'read-failed': 'It could not be marked as read',
-  'mic-denied': 'Argus cannot hear you',
+  'mic-denied': 'Argus cannot hear you.',
   'mic-denied-hint': 'Allow the microphone to talk to it.',
   'mic-allow': 'Allow',
   state: {
