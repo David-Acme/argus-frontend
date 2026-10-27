@@ -7948,7 +7948,7 @@ surface reads: the composer's and the scroll button's `KeyboardStickyView`
 keyboard natively, so the two can not disagree on return; a focus regain or
 a return to `active` keeps what is known and never re-reads the cache. Only
 a fresh show lifts the composer again. `watchKeyboardTruth` and
-`keyboardTruthStep` (`shared/libs/keyboard-truth.ts`) are the pure part,
+`keyboardTruthStep` (`shared/hooks/use-keyboard-truth/keyboard-truth.ts`) are the pure part,
 tested with fake sources, the path «focus lost while the keyboard is up and
 no hide ever reported» included.
 

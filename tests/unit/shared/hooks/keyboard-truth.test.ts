@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { keyboardTruthStep, watchKeyboardTruth } from '@/shared/libs/keyboard-truth';
-import type { KeyboardSources } from '@/shared/libs/keyboard-truth';
+import { keyboardTruthStep, watchKeyboardTruth } from '@/shared/hooks/use-keyboard-truth/keyboard-truth';
+import type { KeyboardSources } from '@/shared/hooks/use-keyboard-truth/keyboard-truth';
 
 type Channel = 'show' | 'hide' | 'leave' | 'return';
 
