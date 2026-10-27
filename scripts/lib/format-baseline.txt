@@ -5,7 +5,6 @@ scripts/patch-expo-camera.mjs
 scripts/patch-livekit-audio.mjs
 scripts/probe-web-bundle.ts
 src/app/+html.tsx
-src/app/+native-intent.ts
 src/core/contracts/activity.contract.ts
 src/core/contracts/camera-patrol.contract.ts
 src/core/contracts/camera-sight.contract.ts
@@ -29,7 +28,6 @@ src/core/i18n/locales/en/screens/face/index.ts
 src/core/i18n/locales/en/screens/invitation/index.ts
 src/core/i18n/locales/en/screens/login/index.ts
 src/core/i18n/locales/en/screens/pairing/index.ts
-src/core/i18n/locales/en/screens/projects/index.ts
 src/core/i18n/locales/en/screens/proximity/index.ts
 src/core/i18n/locales/en/screens/qr/index.ts
 src/core/i18n/locales/en/screens/response/index.ts
@@ -44,7 +42,6 @@ src/core/i18n/locales/es/screens/face/index.ts
 src/core/i18n/locales/es/screens/invitation/index.ts
 src/core/i18n/locales/es/screens/login/index.ts
 src/core/i18n/locales/es/screens/pairing/index.ts
-src/core/i18n/locales/es/screens/projects/index.ts
 src/core/i18n/locales/es/screens/proximity/index.ts
 src/core/i18n/locales/es/screens/response/index.ts
 src/core/i18n/locales/es/screens/safety/index.ts
@@ -311,16 +308,6 @@ src/features/privacy/model/privacy.ts
 src/features/privacy/model/signage.ts
 src/features/privacy/services/privacy.service.ts
 src/features/privacy/services/signage-share/signage-share.web.ts
-src/features/projects/components/project-board-header.tsx
-src/features/projects/components/project-card-row.tsx
-src/features/projects/components/project-form.tsx
-src/features/projects/components/project-members-dialog.tsx
-src/features/projects/components/project-switcher.tsx
-src/features/projects/components/task-form.tsx
-src/features/projects/components/task-lane.tsx
-src/features/projects/components/task-row.tsx
-src/features/projects/model/project-access.ts
-src/features/projects/screens/projects-screen.tsx
 src/features/proximity/components/labelled-input.tsx
 src/features/proximity/components/proximity-section.tsx
 src/features/proximity/components/receiver-dialog.tsx
@@ -437,8 +424,6 @@ src/shared/components/ui/create-tile.tsx
 src/shared/components/ui/dialog.tsx
 src/shared/components/ui/empty-state.tsx
 src/shared/components/ui/filter-chips.tsx
-src/shared/components/ui/form-scroll-view.tsx
-src/shared/components/ui/form-text-field.tsx
 src/shared/components/ui/form.tsx
 src/shared/components/ui/icon-button.tsx
 src/shared/components/ui/list-row.tsx
@@ -446,7 +431,6 @@ src/shared/components/ui/morph-icon/morph-icon.native.tsx
 src/shared/components/ui/morph-icon/morph-icon.web.tsx
 src/shared/components/ui/option-row.tsx
 src/shared/components/ui/orbit-hero.tsx
-src/shared/components/ui/overlay-body.tsx
 src/shared/components/ui/permission-list.tsx
 src/shared/components/ui/qr-code-layout.ts
 src/shared/components/ui/responsive-grid.tsx
@@ -471,9 +455,7 @@ src/shared/hooks/use-capabilities.ts
 src/shared/hooks/use-date-formatter/date.ts
 src/shared/hooks/use-device-permissions/device-permissions.ts
 src/shared/hooks/use-device-permissions/index.ts
-src/shared/hooks/use-form-submit.ts
 src/shared/hooks/use-infinite-list.ts
-src/shared/hooks/use-overlay-body-height.ts
 src/shared/hooks/use-remote-resource.ts
 src/shared/hooks/use-service-action.ts
 src/shared/hooks/use-translation.ts
@@ -511,7 +493,6 @@ tests/e2e/guard.e2e.ts
 tests/e2e/notification-delete.e2e.ts
 tests/e2e/people.e2e.ts
 tests/e2e/presence.e2e.ts
-tests/e2e/project-members.e2e.ts
 tests/e2e/raw-keys.e2e.ts
 tests/e2e/response.e2e.ts
 tests/e2e/retest-r3.e2e.ts

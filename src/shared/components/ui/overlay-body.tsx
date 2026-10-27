@@ -6,8 +6,14 @@ import type {
   ScrollView as RNScrollView,
 } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
-import { IS_WEB, OVERLAY_RING_GUTTER } from '@/shared/constants';
-import { useOverlayBodyHeight } from '@/shared/hooks/use-overlay-body-height';
+import { useWindowDimensions } from 'react-native';
+import {
+  IS_WEB,
+  OVERLAY_BODY_HEIGHT_RATIO,
+  OVERLAY_BODY_MIN_HEIGHT,
+  OVERLAY_CHROME_HEIGHT,
+  OVERLAY_RING_GUTTER,
+} from '@/shared/constants';
 import { cn } from '@/shared/libs/utils';
 
 type ScrollListener = (offsetY: number) => void;
@@ -30,9 +36,22 @@ type ScrollableNode = { scrollHeight: number; clientHeight: number };
 
 const OverlayBodyContext = createContext<OverlayBodyContextValue | null>(null);
 
+function useOverlayBodyHeight(): number {
+  const { height } = useWindowDimensions();
+  const available = height - OVERLAY_CHROME_HEIGHT;
+  return Math.round(
+    Math.max(OVERLAY_BODY_MIN_HEIGHT, Math.min(height * OVERLAY_BODY_HEIGHT_RATIO, available))
+  );
+}
+
 function scrollableNode(scroll: RNScrollView | null): ScrollableNode | null {
   const node = (scroll as ScrollableHost | null)?.getScrollableNode?.();
-  if (typeof node !== 'object' || node === null || !('scrollHeight' in node) || !('clientHeight' in node)) {
+  if (
+    typeof node !== 'object' ||
+    node === null ||
+    !('scrollHeight' in node) ||
+    !('clientHeight' in node)
+  ) {
     return null;
   }
   return node as ScrollableNode;

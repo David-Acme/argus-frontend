@@ -1,106 +1,66 @@
-import { Pressable, View } from 'react-native';
-import type { MenuOption, ProjectTaskPriority, ProjectTaskStatus } from '@/core/types';
-import { AdaptiveMenu } from '@/shared/components/ui/adaptive-menu';
-import { Icon } from '@/shared/components/ui/icon';
-import { Text } from '@/shared/components/ui/text';
-import { cn } from '@/shared/libs/utils';
-import { TaskPriorityMark } from '@/features/projects/components/task-priority-mark';
-import { StatusBadge } from '@/shared/components/ui/status-badge';
-import { useTaskPressGuard } from '@/features/projects/components/task-drag';
+import type { IProjectTaskCacheRow } from '@/core/interfaces';
+import type { ProjectTaskStatus } from '@/core/types';
+import { Check } from '@/shared/ui/check';
+import { Menu } from '@/shared/ui/menu';
+import type { MenuItem, MenuItems } from '@/shared/ui/menu';
+import { Row } from '@/shared/ui/row';
+import { LANE_LABEL, TASK_LANES } from '@/features/projects/constants/projects.constant';
+import { taskCheck, taskWords } from '@/features/projects/model/project-words';
+import { laneOf } from '@/features/projects/model/task-lanes';
+import type { TaskContext } from '@/features/projects/model/task-view';
 
-type TaskRowProps = {
-  title: string;
-  status: ProjectTaskStatus;
-  priority: ProjectTaskPriority;
-  priorityLabel: string;
-  due?: string;
-  statusTag?: string;
-  statusOptions: readonly MenuOption<ProjectTaskStatus>[];
-  statusMenuTitle: string;
-  closeLabel: string;
-  onChangeStatus: (status: ProjectTaskStatus) => void;
-  onPress?: () => void;
-  pending?: boolean;
-  overdue?: boolean;
-};
+export type TaskRowProps = { task: IProjectTaskCacheRow; context: TaskContext };
 
-const STATUS_ICON: Record<ProjectTaskStatus, 'check-circle' | 'clock' | 'list-todo' | 'x'> = {
-  backlog: 'list-todo',
-  todo: 'list-todo',
-  doing: 'clock',
-  done: 'check-circle',
-  canceled: 'x',
-};
+const isMenu = (items: readonly MenuItem[]): items is MenuItems => items.length >= 2;
 
-export function TaskRow({
-  title,
-  status,
-  priority,
-  priorityLabel,
-  due,
-  statusTag,
-  statusOptions,
-  statusMenuTitle,
-  closeLabel,
-  onChangeStatus,
-  onPress,
-  pending = false,
-  overdue = false,
-}: TaskRowProps) {
-  const finished = status === 'done' || status === 'canceled';
-  const guardPress = useTaskPressGuard();
+function taskMenu({ task, context }: TaskRowProps): MenuItem[] {
+  const { t, handlers } = context;
+  const lane = laneOf(task.status);
+  const moves = TASK_LANES.filter((spec) => spec.key !== lane).map((spec) => ({
+    label: t('screens.projects.move-to', { lane: t(LANE_LABEL[spec.key]) }),
+    onPress: () => handlers.setStatus(task, spec.status),
+  }));
+  return [
+    ...moves,
+    { label: t('screens.projects.edit-task'), onPress: () => handlers.edit(task) },
+    {
+      label: t('screens.projects.remove-task'),
+      icon: 'x',
+      destructive: true,
+      onPress: () => handlers.remove(task),
+    },
+  ];
+}
 
+export function TaskRow({ task, context }: TaskRowProps) {
+  const { t, now, date, editable, handlers } = context;
+  const words = taskWords(task, { now, date, t });
+  const done = (task.status as ProjectTaskStatus) === 'done';
+  const today = date.startOfDay(new Date(now)).getTime();
+  const row = (
+    <Row
+      leading={
+        <Check
+          state={taskCheck(task, today)}
+          label={t(done ? 'screens.projects.reopen' : 'screens.projects.complete', {
+            title: task.title,
+          })}
+          onToggle={editable ? () => handlers.toggle(task) : undefined}
+        />
+      }
+      title={task.title}
+      meta={words.meta}
+      metaTone={words.alert ? 'alert' : undefined}
+      struck={done || task.status === 'canceled'}
+      onPress={editable ? () => handlers.edit(task) : undefined}
+      testID={`task-row-${task.id}`}
+    />
+  );
+  const items = taskMenu({ task, context });
+  if (!editable || !isMenu(items)) return row;
   return (
-    <View
-      accessibilityState={{ busy: pending }}
-      className={cn(
-        'bg-surface-secondary web:hover:bg-card-secondary min-h-11 flex-row items-center gap-3 rounded-xl px-3 py-2 web:select-none',
-        pending && 'opacity-60',
-      )}>
-      <AdaptiveMenu
-        options={statusOptions}
-        selected={status}
-        onSelect={onChangeStatus}
-        title={statusMenuTitle}
-        closeLabel={closeLabel}
-        trigger={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={statusMenuTitle}
-            disabled={pending}
-            hitSlop={10}
-            className="size-6 items-center justify-center active:opacity-60">
-            <Icon
-              name={STATUS_ICON[status]}
-              className={cn('size-[18px]', finished ? 'text-success' : 'text-muted-foreground')}
-            />
-          </Pressable>
-        }
-      />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={title}
-        className="flex-1 active:opacity-70"
-        disabled={pending}
-        onPress={() => guardPress(onPress)}>
-        <Text
-          variant="body"
-          className={cn(
-            finished ? 'text-muted-foreground line-through' : 'text-foreground'
-          )}
-          numberOfLines={1}>
-          {title}
-        </Text>
-      </Pressable>
-      {statusTag ? (
-        <StatusBadge label={statusTag} surface="card" className="self-center" />
-      ) : null}
-      {due ? (
-        <Text variant="micro" className={overdue && !finished ? 'text-error-strong font-medium' : undefined}>
-          {due}
-        </Text>
-      ) : null}
-      <TaskPriorityMark priority={priority} label={priorityLabel} />
-    </View>
+    <Menu context label={task.title} items={items}>
+      {row}
+    </Menu>
   );
 }

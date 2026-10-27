@@ -17,7 +17,8 @@ export function projectAccessOf({ ownerId, userId, members }: ProjectAccessInput
   return member.access === 'edit' ? 'edit' : 'view';
 }
 
-export const worksOnProject = (access: ProjectAccess): boolean => access === 'owner' || access === 'edit';
+export const worksOnProject = (access: ProjectAccess): boolean =>
+  access === 'owner' || access === 'edit';
 
 export const ownsProject = (access: ProjectAccess): boolean => access === 'owner';
 
@@ -27,6 +28,10 @@ export type MemberCandidateInput = {
   people: readonly IPeopleDirectoryCacheRow[];
 };
 
-export function memberCandidates({ ownerId, members, people }: MemberCandidateInput): IPeopleDirectoryCacheRow[] {
+export function memberCandidates({
+  ownerId,
+  members,
+  people,
+}: MemberCandidateInput): IPeopleDirectoryCacheRow[] {
   return shareCandidates({ table: 'project', ownerId, shared: members, people });
 }

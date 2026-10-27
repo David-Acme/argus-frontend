@@ -1,140 +1,129 @@
-import {
-  Children,
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from 'react';
-import { ScrollView, View, type LayoutChangeEvent } from 'react-native';
+import { useRef, useState } from 'react';
+import { View } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
-import { useWindowClass } from '@/shared/hooks/use-window-class';
+import { useTranslation } from '@/shared/hooks/use-translation';
+import { Row } from '@/shared/ui/row';
+import { Section } from '@/shared/ui/section';
+import { LANE_LABEL, TASK_LANES } from '@/features/projects/constants/projects.constant';
+import type { ProjectView } from '@/features/projects/hooks/use-project-view';
+import type { TaskLaneKey } from '@/features/projects/model/task-lanes';
+import type { TaskContext } from '@/features/projects/model/task-view';
 import {
   createPressGuard,
+  DraggableTask,
   TaskDragProvider,
   TaskDropZone,
   TaskGhostLayer,
-  type TaskDragState,
-  type TaskGhost,
 } from '@/features/projects/components/task-drag';
+import type { TaskDragState, TaskGhost } from '@/features/projects/components/task-drag';
+import { TaskRow } from '@/features/projects/components/task-row';
 
-type TaskBoardProps = {
-  children: ReactNode;
-  onMoveTask?: (taskId: string, lane: number) => void;
-};
+export type TaskBoardProps = { view: ProjectView; context: TaskContext };
 
-const SIDE_BY_SIDE_MIN = 600;
-const LANE_GAP = 12;
-const WIDE_LANE_GAP = 16;
-const LANE_INSET = 24;
-const LANE_MAX = 360;
-const BLEED = 40;
+type LaneProps = TaskBoardProps & { lane: TaskLaneKey; index: number };
+
+const EMPTY_KEY = {
+  todo: 'screens.projects.lane-empty.todo',
+  doing: 'screens.projects.lane-empty.doing',
+  done: 'screens.projects.lane-empty.done',
+} as const;
+
 const PRESS_GUARD_MS = 350;
+
 const DROP_SETTLE_MS = 160;
 
-const TaskLaneFillContext = createContext(false);
-
-export function useTaskLaneFill(): boolean {
-  return useContext(TaskLaneFillContext);
+function Lane({ view, context, lane, index }: LaneProps) {
+  const { t } = useTranslation();
+  const tasks = view.lanes[lane];
+  return (
+    <TaskDropZone index={index}>
+      <Section title={t(LANE_LABEL[lane])} meta={String(tasks.length)} testID={`task-lane-${lane}`}>
+        {tasks.length === 0 ? (
+          <Row
+            title={t(EMPTY_KEY[lane])}
+            meta={t(
+              context.editable
+                ? 'screens.projects.lane-empty.drop'
+                : 'screens.projects.lane-empty.wait'
+            )}
+          />
+        ) : (
+          tasks.map((task) => (
+            <DraggableTask key={task.id} taskId={task.id} lane={index} disabled={!context.editable}>
+              <TaskRow task={task} context={context} />
+            </DraggableTask>
+          ))
+        )}
+      </Section>
+    </TaskDropZone>
+  );
 }
 
-export function TaskBoard({ children, onMoveTask }: TaskBoardProps) {
-  const { isCompact } = useWindowClass();
-  const [width, setWidth] = useState(0);
+function useBoardDrag(view: ProjectView, context: TaskContext) {
   const boardRef = useRef<View>(null);
   const [pressGuard] = useState(() => createPressGuard(PRESS_GUARD_MS));
+  const [ghost, setGhost] = useState<TaskGhost | null>(null);
   const origin = useSharedValue(0);
   const span = useSharedValue(0);
   const hoverLane = useSharedValue(-1);
   const sourceLane = useSharedValue(-1);
   const ghostX = useSharedValue(0);
   const ghostY = useSharedValue(0);
-  const [ghost, setGhost] = useState<TaskGhost | null>(null);
-  const lanes = Children.toArray(children);
-  const laneCount = lanes.length;
-  const sideBySide = width > 0 ? width >= SIDE_BY_SIDE_MIN : !isCompact;
-  const laneWidth = Math.min(LANE_MAX, Math.max(240, width - LANE_INSET));
-
-  const lift = useCallback((next: TaskGhost) => {
-    boardRef.current?.measureInWindow((x, y) =>
-      setGhost({ ...next, x: next.x - x, y: next.y - y })
-    );
-  }, []);
-
-  const settle = useCallback((taskId: string) => {
-    setTimeout(
-      () => setGhost((current) => (current?.taskId === taskId ? null : current)),
-      DROP_SETTLE_MS
-    );
-  }, []);
-
-  const drag: TaskDragState | null =
-    sideBySide && onMoveTask
-      ? {
-          lanes: laneCount,
-          origin,
-          span,
-          hoverLane,
-          sourceLane,
-          ghostX,
-          ghostY,
-          ghostTaskId: ghost?.taskId ?? null,
-          lift,
-          settle,
-          drop: onMoveTask,
-          ...pressGuard,
-        }
-      : null;
-
+  const drop = (taskId: string, laneIndex: number) => {
+    const task = view.tasks.rows.find((candidate) => candidate.id === taskId);
+    const spec = TASK_LANES[laneIndex];
+    if (task && spec) context.handlers.setStatus(task, spec.status);
+  };
+  const drag: TaskDragState = {
+    lanes: TASK_LANES.length,
+    origin,
+    span,
+    hoverLane,
+    sourceLane,
+    ghostX,
+    ghostY,
+    ghostTaskId: ghost?.taskId ?? null,
+    lift: (next) =>
+      boardRef.current?.measureInWindow((x, y) =>
+        setGhost({ ...next, x: next.x - x, y: next.y - y })
+      ),
+    settle: (taskId) =>
+      setTimeout(
+        () => setGhost((current) => (current?.taskId === taskId ? null : current)),
+        DROP_SETTLE_MS
+      ),
+    drop,
+    ...pressGuard,
+  };
   const measure = (event: LayoutChangeEvent) => {
-    const next = event.nativeEvent.layout.width;
-    setWidth(next);
-    span.value = (next + WIDE_LANE_GAP) / Math.max(1, laneCount);
+    span.value = event.nativeEvent.layout.width / TASK_LANES.length;
     boardRef.current?.measureInWindow((x) => {
       origin.value = x;
     });
   };
-  const measureBled = (event: LayoutChangeEvent) =>
-    setWidth(event.nativeEvent.layout.width - BLEED);
+  return { boardRef, drag, ghost, measure };
+}
 
-  if (sideBySide) {
-    return (
-      <TaskLaneFillContext.Provider value>
-        <TaskDragProvider value={drag}>
-          <View
-            ref={boardRef}
-            className="min-h-[420px] flex-1 basis-0 flex-row items-stretch gap-4"
-            onLayout={measure}>
-            {lanes.map((lane, index) => (
-              <TaskDropZone key={index} index={index}>
-                {lane}
-              </TaskDropZone>
-            ))}
-            <TaskGhostLayer ghost={ghost} offsetX={ghostX} offsetY={ghostY} />
-          </View>
-        </TaskDragProvider>
-      </TaskLaneFillContext.Provider>
-    );
-  }
-
+export function TaskBoard({ view, context }: TaskBoardProps) {
+  const { boardRef, drag, ghost, measure } = useBoardDrag(view, context);
+  const guarded: TaskContext = {
+    ...context,
+    handlers: {
+      ...context.handlers,
+      edit: (task) => {
+        if (drag.pressAllowed()) context.handlers.edit(task);
+      },
+    },
+  };
   return (
-    <View onLayout={measureBled} className="-mx-5">
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={laneWidth + LANE_GAP}
-        snapToAlignment="start"
-        disableIntervalMomentum
-        contentContainerClassName="items-stretch px-5 pb-1"
-        contentContainerStyle={{ gap: LANE_GAP }}>
-        {lanes.map((lane, index) => (
-          <View key={index} className="min-h-[340px]" style={{ width: laneWidth }}>
-            {lane}
-          </View>
+    <TaskDragProvider value={context.editable ? drag : null}>
+      <View ref={boardRef} onLayout={measure} className="flex-row items-start gap-4">
+        {TASK_LANES.map((spec, index) => (
+          <Lane key={spec.key} view={view} context={guarded} lane={spec.key} index={index} />
         ))}
-      </ScrollView>
-    </View>
+        <TaskGhostLayer ghost={ghost} offsetX={drag.ghostX} offsetY={drag.ghostY} />
+      </View>
+    </TaskDragProvider>
   );
 }
