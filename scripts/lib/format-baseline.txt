@@ -402,7 +402,6 @@ tests/contracts/session-contract.test.ts
 tests/contracts/voiceprint-contract.test.ts
 tests/e2e/call-window.e2e.ts
 tests/e2e/conversation-thread-list.e2e.ts
-tests/e2e/conversations.e2e.ts
 tests/e2e/deep-link.e2e.ts
 tests/e2e/guard.e2e.ts
 tests/e2e/notification-delete.e2e.ts

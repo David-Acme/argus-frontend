@@ -545,10 +545,11 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
         path: '/conversations/0',
         rows: [message(26, { body: 'Hola, David.', createdAt: NOW - 30 })],
         act: async (scene) => {
-          await click('screens.conversations.composer.talk')(scene);
+          await click('screens.conversations.note.record')(scene);
           await sleep(2500);
         },
-        notes: 'headless Chromium denies the microphone: the hold fails with the permission notice',
+        notes:
+          'headless Chromium denies the microphone: the voice note does not start and the field stays',
       },
       {
         state: 'thread-member',

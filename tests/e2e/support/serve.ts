@@ -1,5 +1,5 @@
 import { extname, join, normalize, resolve, sep } from 'node:path';
-import { FakeArgus, type DeviceFrame, type RouteSpec } from './fake-argus';
+import { FakeArgus, type ChatScript, type DeviceFrame, type RouteSpec } from './fake-argus';
 
 const DIST_ROOT = resolve(join(import.meta.dir, '..', '..', '..', 'dist'));
 
@@ -15,10 +15,19 @@ const argus = new FakeArgus();
 const bundleFile = async (pathname: string): Promise<Response> => {
   const path = normalize(decodeURIComponent(pathname));
   const target = extname(path) ? resolve(DIST_ROOT, `.${path}`) : join(DIST_ROOT, 'index.html');
-  if (target !== DIST_ROOT && !target.startsWith(`${DIST_ROOT}${sep}`)) return new Response('Not found', { status: 404 });
+  if (target !== DIST_ROOT && !target.startsWith(`${DIST_ROOT}${sep}`))
+    return new Response('Not found', { status: 404 });
   const file = Bun.file(target);
   if (!(await file.exists())) return new Response('Not found', { status: 404 });
   return new Response(file);
+};
+
+const bodyOf = async (request: Request): Promise<string> => {
+  if (!(request.headers.get('content-type') ?? '').startsWith('multipart/form-data'))
+    return request.text();
+  const raw = await request.text();
+  const part = /name="audio"[^\r\n]*\r?\nContent-Type:\s*([^\r\n]+)/i.exec(raw);
+  return JSON.stringify({ audio: part ? { type: part[1], size: raw.length } : null });
 };
 
 const control = async (url: URL, request: Request): Promise<Response> => {
@@ -31,10 +40,19 @@ const control = async (url: URL, request: Request): Promise<Response> => {
       argus.patchContext((await request.json()) as Record<string, unknown>);
       return Response.json({ ok: true });
     case '/__e2e/store':
-      argus.store(url.searchParams.get('table') ?? '', (await request.json()) as Parameters<FakeArgus['store']>[1]);
+      argus.store(
+        url.searchParams.get('table') ?? '',
+        (await request.json()) as Parameters<FakeArgus['store']>[1]
+      );
       return Response.json({ ok: true });
     case '/__e2e/store-many':
-      argus.storeMany(url.searchParams.get('table') ?? '', (await request.json()) as Parameters<FakeArgus['storeMany']>[1]);
+      argus.storeMany(
+        url.searchParams.get('table') ?? '',
+        (await request.json()) as Parameters<FakeArgus['storeMany']>[1]
+      );
+      return Response.json({ ok: true });
+    case '/__e2e/chat':
+      argus.script((await request.json()) as ChatScript);
       return Response.json({ ok: true });
     case '/__e2e/emit':
       argus.emit((await request.json()) as DeviceFrame[]);
@@ -50,7 +68,9 @@ const control = async (url: URL, request: Request): Promise<Response> => {
       argus.refuse(device, Number(url.searchParams.get('ms') ?? 0));
       return Response.json({ refused: device });
     case '/__e2e/down':
-      return Response.json({ dropped: argus.down(device, Number(url.searchParams.get('ms') ?? 0)) });
+      return Response.json({
+        dropped: argus.down(device, Number(url.searchParams.get('ms') ?? 0)),
+      });
     case '/__e2e/connected':
       return Response.json({ connected: argus.connected(device) });
     case '/__e2e/rows':
@@ -70,18 +90,29 @@ const server = Bun.serve<{ device: string }>({
     if (url.pathname === '/__sync') {
       const device = url.searchParams.get('device') ?? '';
       if (!device || !argus.accepts(device)) return new Response('refused', { status: 503 });
-      return bun.upgrade(request, { data: { device } }) ? undefined : new Response('upgrade failed', { status: 400 });
+      return bun.upgrade(request, { data: { device } })
+        ? undefined
+        : new Response('upgrade failed', { status: 400 });
     }
     if (url.pathname.startsWith('/__e2e/')) return control(url, request);
     if (url.pathname.startsWith('/__api/')) {
       const path = `${url.pathname.slice('/__api'.length)}${url.search}`;
-      return argus.api(request.method, path, await request.text(), request.headers.get('x-e2e-device') ?? '');
+      return argus.api(
+        request.method,
+        path,
+        await bodyOf(request),
+        request.headers.get('x-e2e-device') ?? ''
+      );
     }
     return bundleFile(url.pathname);
   },
   websocket: {
     open: (socket) => argus.open(socket),
-    message: (socket, message) => argus.receive(socket, typeof message === 'string' ? message : new TextDecoder().decode(message)),
+    message: (socket, message) =>
+      argus.receive(
+        socket,
+        typeof message === 'string' ? message : new TextDecoder().decode(message)
+      ),
     close: (socket) => argus.close(socket),
   },
 });
