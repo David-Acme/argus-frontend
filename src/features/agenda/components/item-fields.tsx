@@ -9,11 +9,14 @@ import { formatRecurrenceRule, recurrenceLabel } from '@/shared/libs/recurrence'
 import { Choice } from '@/shared/ui/choice';
 import type { ChoiceOption } from '@/shared/ui/choice';
 import { Field } from '@/shared/ui/field';
+import { DateField, TimeField } from '@/shared/ui/picker';
+import type { FieldTime } from '@/shared/ui/picker';
 import { Switch } from '@/shared/ui/switch';
+import { Text } from '@/shared/ui/text';
 import type { ItemForm } from '@/features/agenda/hooks/use-item-form';
 import { REPEAT_CHOICES } from '@/features/agenda/constants/agenda.constant';
+import { inputClock, parseClock } from '@/features/agenda/model/clock-text';
 import type { DraftProblem, RepeatChoice } from '@/features/agenda/model/item-draft';
-import { DayField } from '@/features/agenda/components/day-field';
 import { FormLine } from '@/features/agenda/components/form-line';
 import type { ProjectOption } from '@/features/agenda/model/agenda-view';
 
@@ -24,10 +27,7 @@ export type ItemFieldsProps = {
   titleRef: RefObject<TextInput | null>;
 };
 
-type TimeProps = Pick<ItemFieldsProps, 'form'> & {
-  timeRef: RefObject<TextInput | null>;
-  placeRef: RefObject<TextInput | null>;
-};
+type TimeProps = Pick<ItemFieldsProps, 'form'>;
 
 const TITLE_LABEL = {
   event: 'screens.agenda.sheet.title-event',
@@ -42,6 +42,8 @@ const PROBLEM: Record<Exclude<DraftProblem, 'time'>, TranslationKey> = {
 };
 
 const NINE = 9;
+
+const HOUR = 60;
 
 function useProblem(form: ItemForm) {
   const { t } = useTranslation();
@@ -66,38 +68,38 @@ function repeatOptions(t: TranslateFn): ChoiceOption<RepeatChoice>[] {
 
 const hasTime = ({ kind, allDay }: ItemForm['draft']): boolean => kind === 'event' && !allDay;
 
-function TimeFields({ form, timeRef, placeRef }: TimeProps) {
+const minutesOf = (text: string): number | null => (text.trim() === '' ? null : parseClock(text));
+
+function useStart(form: ItemForm): FieldTime | undefined {
+  const date = useDateFormatter();
+  const { draft } = form;
+  if (!hasTime(draft)) return undefined;
+  return {
+    value: minutesOf(draft.time),
+    fallback: parseClock(date.defaultInputTime(new Date(draft.day))) ?? 0,
+    onChange: (minutes) => form.change({ time: inputClock(minutes) }),
+  };
+}
+
+function EndField({ form }: TimeProps) {
   const { t } = useTranslation();
   const problem = useProblem(form);
-  const endRef = useRef<TextInput>(null);
-  const { draft } = form;
-  const event = draft.kind === 'event';
-  const onDone = form.submit;
-  if (!hasTime(draft)) return null;
+  const start = useStart(form);
+  if (!start) return null;
+  const endError = problem('end');
   return (
-    <View className="gap-3">
-      <Field
-        ref={timeRef}
-        label={t('screens.agenda.sheet.time')}
-        value={draft.time}
-        onChangeText={(time) => form.change({ time })}
-        error={problem('time')}
-        submit={
-          event
-            ? { key: 'next', onSubmit: () => endRef.current?.focus() }
-            : { key: 'done', onSubmit: onDone }
-        }
+    <View>
+      <TimeField
+        label={t('screens.agenda.sheet.end')}
+        value={minutesOf(form.draft.end)}
+        fallback={(start.value ?? start.fallback) + HOUR}
+        onChange={(minutes) => form.change({ end: inputClock(minutes) })}
+        onClear={() => form.change({ end: '' })}
       />
-      {event ? (
-        <Field
-          ref={endRef}
-          label={t('screens.agenda.sheet.end')}
-          hint={t('screens.agenda.sheet.end-hint')}
-          value={draft.end}
-          onChangeText={(end) => form.change({ end })}
-          error={problem('end')}
-          submit={{ key: 'next', onSubmit: () => placeRef.current?.focus() }}
-        />
+      {endError ? (
+        <Text variant="meta" tone="alert">
+          {endError}
+        </Text>
       ) : null}
     </View>
   );
@@ -106,8 +108,8 @@ function TimeFields({ form, timeRef, placeRef }: TimeProps) {
 export function ItemFields({ form, projects, now, titleRef }: ItemFieldsProps) {
   const { t } = useTranslation();
   const problem = useProblem(form);
-  const timeRef = useRef<TextInput>(null);
   const placeRef = useRef<TextInput>(null);
+  const start = useStart(form);
   const { draft } = form;
   const editing = form.editing !== null;
   const single = editing && form.scope === 'one';
@@ -120,8 +122,8 @@ export function ItemFields({ form, projects, now, titleRef }: ItemFieldsProps) {
         onChangeText={(title) => form.change({ title })}
         error={problem('title', 'title-long')}
         submit={
-          hasTime(draft)
-            ? { key: 'next', onSubmit: () => timeRef.current?.focus() }
+          draft.kind === 'event'
+            ? { key: 'next', onSubmit: () => placeRef.current?.focus() }
             : { key: 'done', onSubmit: form.submit }
         }
       />
@@ -134,20 +136,29 @@ export function ItemFields({ form, projects, now, titleRef }: ItemFieldsProps) {
           onChange={(project) => form.change({ project })}
         />
       ) : null}
-      <DayField day={draft.day} now={now} onChange={(day) => form.change({ day })} />
-      {draft.kind === 'event' && !single ? (
-        <FormLine
-          label={t('screens.agenda.sheet.all-day')}
-          trailing={
-            <Switch
-              value={draft.allDay}
-              onValueChange={(allDay) => form.change({ allDay })}
-              label={t('screens.agenda.sheet.all-day')}
-            />
-          }
+      <View>
+        <DateField
+          label={t(start ? 'screens.agenda.sheet.starts' : 'screens.agenda.sheet.day')}
+          value={draft.day}
+          now={now}
+          quick
+          time={start}
+          onChange={(day) => form.change({ day })}
         />
-      ) : null}
-      <TimeFields form={form} timeRef={timeRef} placeRef={placeRef} />
+        {draft.kind === 'event' && !single ? (
+          <FormLine
+            label={t('screens.agenda.sheet.all-day')}
+            trailing={
+              <Switch
+                value={draft.allDay}
+                onValueChange={(allDay) => form.change({ allDay })}
+                label={t('screens.agenda.sheet.all-day')}
+              />
+            }
+          />
+        ) : null}
+        <EndField form={form} />
+      </View>
       {draft.kind === 'event' ? (
         <Field
           ref={placeRef}

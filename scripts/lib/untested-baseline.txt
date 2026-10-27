@@ -3,7 +3,6 @@ src/features/activity/components/activity-filters.tsx
 src/features/activity/components/activity-row.tsx
 src/features/activity/screens/activity-screen.tsx
 src/features/agenda/components/calendar-event-share-dialog.tsx
-src/features/agenda/components/day-picker-field.tsx
 src/features/auth/components/brand-splash.tsx
 src/features/auth/components/entry-gate.tsx
 src/features/auth/components/server-unreachable.tsx

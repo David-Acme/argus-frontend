@@ -3,14 +3,12 @@ import { View } from 'react-native';
 import type { TextInput } from 'react-native';
 import type { IProjectCacheRow } from '@/core/interfaces';
 import type { TranslationKey } from '@/core/types';
-import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Choice } from '@/shared/ui/choice';
 import { Field } from '@/shared/ui/field';
+import { DateField } from '@/shared/ui/picker';
 import { Row } from '@/shared/ui/row';
 import { Sheet } from '@/shared/ui/sheet';
-import { Switch } from '@/shared/ui/switch';
-import { DayField } from '@/features/agenda';
 import {
   LANE_LABEL,
   PRIORITY_LABEL,
@@ -36,25 +34,15 @@ const PROBLEM: Record<TaskProblem, TranslationKey> = {
 
 function DueFields({ form, now }: PartProps) {
   const { t } = useTranslation();
-  const date = useDateFormatter();
-  const { due } = form.draft;
-  const today = date.startOfDay(new Date(now)).getTime();
   return (
-    <View>
-      <Row
-        title={t('screens.projects.sheet.due')}
-        trailing={
-          <Switch
-            value={due !== null}
-            onValueChange={(on) => form.change({ due: on ? today : null })}
-            label={t('screens.projects.sheet.due')}
-          />
-        }
-      />
-      {due !== null ? (
-        <DayField day={due} now={now} onChange={(day) => form.change({ due: day })} />
-      ) : null}
-    </View>
+    <DateField
+      label={t('screens.projects.sheet.due')}
+      value={form.draft.due}
+      now={now}
+      quick
+      onChange={(day) => form.change({ due: day })}
+      onClear={() => form.change({ due: null })}
+    />
   );
 }
 

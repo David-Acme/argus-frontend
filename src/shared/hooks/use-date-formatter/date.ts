@@ -61,6 +61,10 @@ export type DateFormatter = {
   hourOf: (value: Date) => number;
   minuteOf: (value: Date) => number;
   isSameMonth: (left: Date, right: Date) => boolean;
+  weekStart: number;
+  hour12: boolean;
+  formatPeriod: (afternoon: boolean) => string;
+  formatShortDate: (value: Date) => string;
 };
 
 const ENGLISH_LOCALES = {
@@ -90,7 +94,8 @@ export function createDateFormatter(
 ): DateFormatter {
   const locale = dateLocale(language, preferences.regionCode);
   const startsOn = weekStartsOn(preferences.firstWeekday, locale.options?.weekStartsOn);
-  const timePattern = (preferences.uses24hourClock ?? language === 'es') ? 'HH:mm' : 'h:mm a';
+  const hour12 = !(preferences.uses24hourClock ?? language === 'es');
+  const timePattern = hour12 ? 'h:mm a' : 'HH:mm';
   const options = { locale, weekStartsOn: startsOn };
   const sentence = (text: string) => text.charAt(0).toLocaleUpperCase(language) + text.slice(1);
   const startDay = (value: Date) => startOfDayBase(value);
@@ -149,6 +154,10 @@ export function createDateFormatter(
     hourOf: getHours,
     minuteOf: (value) => value.getMinutes(),
     isSameMonth,
+    weekStart: startsOn,
+    hour12,
+    formatPeriod: (afternoon) => format(new Date(2000, 0, 1, afternoon ? 13 : 1), 'a', options),
+    formatShortDate: (value) => format(value, 'P', options),
   };
 }
 
@@ -156,7 +165,8 @@ export type ZoneWallReader = (epochMs: number) => WallTime;
 
 const WALL_PARTS = ['year', 'month', 'day', 'hour', 'minute', 'second'] as const;
 
-const isWallPart = (type: string): type is keyof WallTime => (WALL_PARTS as readonly string[]).includes(type);
+const isWallPart = (type: string): type is keyof WallTime =>
+  (WALL_PARTS as readonly string[]).includes(type);
 
 export function zoneWallReader(zone: string): ZoneWallReader | null {
   let formatter: Intl.DateTimeFormat;
@@ -175,7 +185,14 @@ export function zoneWallReader(zone: string): ZoneWallReader | null {
     return null;
   }
   const read: ZoneWallReader = (epochMs) => {
-    const wall: WallTime = { year: Number.NaN, month: Number.NaN, day: Number.NaN, hour: Number.NaN, minute: Number.NaN, second: Number.NaN };
+    const wall: WallTime = {
+      year: Number.NaN,
+      month: Number.NaN,
+      day: Number.NaN,
+      hour: Number.NaN,
+      minute: Number.NaN,
+      second: Number.NaN,
+    };
     let afternoon: boolean | null = null;
     for (const part of formatter.formatToParts(new Date(epochMs))) {
       if (part.type === 'dayPeriod') afternoon = /p/i.test(part.value);

@@ -276,3 +276,8 @@ export const presenceCopy = {
   events: 'Eventos',
   stage: 'Escenario',
 } as const;
+
+export const pickerCopy = {
+  starts: 'Empieza',
+  ends: 'Termina',
+} as const;

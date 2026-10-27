@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import type { ActivityFilter, ActivityPeriod, MenuOption } from '@/core/types';
 import { AdaptiveSelect } from '@/shared/components/ui/adaptive-select';
@@ -7,7 +7,7 @@ import { FilterChips } from '@/shared/components/ui/filter-chips';
 import { SelectField } from '@/shared/components/ui/select-field';
 import { Text } from '@/shared/components/ui/text';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { DayPickerField } from '@/features/agenda';
+import { DateField } from '@/shared/ui/picker';
 import {
   ACTIVITY_ACTIONS,
   ACTIVITY_PERIODS,
@@ -26,14 +26,19 @@ const ALL = 'all';
 
 export function ActivityFilters({ filter, modules, people, onChange }: ActivityFiltersProps) {
   const { t } = useTranslation();
+  const [now] = useState(() => Date.now());
   const periodOptions = useMemo(
-    () => ACTIVITY_PERIODS.map((value) => ({ value, label: t(`screens.activity.periods.${value}`) })),
+    () =>
+      ACTIVITY_PERIODS.map((value) => ({ value, label: t(`screens.activity.periods.${value}`) })),
     [t]
   );
   const actionOptions = useMemo(
     () => [
       { value: ALL, label: t('screens.activity.filters.all-actions') },
-      ...ACTIVITY_ACTIONS.map((value) => ({ value, label: t(`screens.activity.actions.${value}`) })),
+      ...ACTIVITY_ACTIONS.map((value) => ({
+        value,
+        label: t(`screens.activity.actions.${value}`),
+      })),
     ],
     [t]
   );
@@ -88,22 +93,20 @@ export function ActivityFilters({ filter, modules, people, onChange }: ActivityF
       <FilterChips options={periodOptions} value={filter.period} onChange={setPeriod} scroll />
       {filter.period === 'custom' ? (
         <View className="flex-row flex-wrap gap-3">
-          <View className="min-w-48 flex-1 gap-1">
-            <Text variant="micro" className="font-semibold tracking-wide uppercase">
-              {t('screens.activity.filters.from')}
-            </Text>
-            <DayPickerField
-              value={new Date(filter.from ?? 0)}
-              onChange={(day) => onChange({ ...filter, from: day.getTime() })}
+          <View className="min-w-48 flex-1">
+            <DateField
+              label={t('screens.activity.filters.from')}
+              value={filter.from ?? null}
+              now={now}
+              onChange={(day) => onChange({ ...filter, from: day })}
             />
           </View>
-          <View className="min-w-48 flex-1 gap-1">
-            <Text variant="micro" className="font-semibold tracking-wide uppercase">
-              {t('screens.activity.filters.to')}
-            </Text>
-            <DayPickerField
-              value={new Date(filter.to ?? 0)}
-              onChange={(day) => onChange({ ...filter, to: day.getTime() })}
+          <View className="min-w-48 flex-1">
+            <DateField
+              label={t('screens.activity.filters.to')}
+              value={filter.to ?? null}
+              now={now}
+              onChange={(day) => onChange({ ...filter, to: day })}
             />
           </View>
         </View>
@@ -126,11 +129,18 @@ export function ActivityFilters({ filter, modules, people, onChange }: ActivityF
           actionOptions,
           filter.action ?? ALL,
           (value) =>
-            onChange({ ...filter, action: value === ALL ? null : (value as ActivityFilter['action']) })
+            onChange({
+              ...filter,
+              action: value === ALL ? null : (value as ActivityFilter['action']),
+            })
         )}
       </View>
       {isFiltered(filter) ? (
-        <Button variant="ghost" size="sm" className="self-start" onPress={() => onChange(EMPTY_ACTIVITY_FILTER)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-start"
+          onPress={() => onChange(EMPTY_ACTIVITY_FILTER)}>
           <Text>{t('screens.activity.filters.clear')}</Text>
         </Button>
       ) : null}

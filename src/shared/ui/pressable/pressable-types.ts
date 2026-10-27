@@ -10,6 +10,7 @@ export type SurfaceAccessibility = {
   role: SurfaceRole;
   checked?: boolean | 'mixed';
   selected?: boolean;
+  expanded?: boolean;
   busy?: boolean;
   tabStop?: boolean;
 };

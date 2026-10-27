@@ -16,6 +16,7 @@ import { MediaDemo } from './demos/media-demo';
 import { MenuDemo } from './demos/menu-demo';
 import { NavDemo } from './demos/nav-demo';
 import { NoticeDemo } from './demos/notice-demo';
+import { PickerDemo } from './demos/picker-demo';
 import { PresenceDemo } from './demos/presence-demo';
 import { PressableDemo } from './demos/pressable-demo';
 import { ResourceViewDemo } from './demos/resource-view-demo';
@@ -60,6 +61,7 @@ export const catalogue: readonly CatalogueEntry[] = [
   { id: 'field', family: 'input', title: 'Field', Demo: FieldDemo },
   { id: 'field-code', family: 'input', title: 'Field, code', Demo: FieldCodeDemo },
   { id: 'choice', family: 'input', title: 'Choice', Demo: ChoiceDemo },
+  { id: 'picker', family: 'input', title: 'DateField, TimeField', Demo: PickerDemo },
   { id: 'aura', family: 'identity', title: 'Aura', Demo: AuraDemo },
   { id: 'status', family: 'content', title: 'Status', Demo: StatusDemo },
   { id: 'nav', family: 'foundations', title: 'Nav', Demo: NavDemo },

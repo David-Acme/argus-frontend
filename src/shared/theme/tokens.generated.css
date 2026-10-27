@@ -208,6 +208,11 @@
   --spacing-grabber-height: 5px;
   --spacing-dot: 8px;
   --spacing-menu-width: 220px;
+  --spacing-wheel-row: 36px;
+  --spacing-wheel-width: 64px;
+  --spacing-picker-day: 40px;
+  --spacing-picker-day-short: 32px;
+  --spacing-picker-width: 336px;
   --spacing-feed-leading: 42px;
   --spacing-thread: 2px;
   --spacing-thread-min: 12px;

@@ -68,7 +68,7 @@ function ContextMenu({ label, items, children, form, onRun }: ContextMenuProps &
   );
 }
 
-export function useMenuForm(): MenuForm {
+function useMenuForm(): MenuForm {
   const { navigation } = useWindowLayout();
   return menuForm({ navigation, finePointer: hasFinePointer() });
 }

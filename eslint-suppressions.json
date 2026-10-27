@@ -285,14 +285,6 @@
       "count": 1
     }
   },
-  "src/features/agenda/components/day-picker-field.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/auth/components/brand-splash.tsx": {
     "argus/activity-indicator-home": {
       "count": 1

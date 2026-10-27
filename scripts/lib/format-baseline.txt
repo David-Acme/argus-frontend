@@ -149,7 +149,6 @@ src/core/types/visitor.type.ts
 src/core/types/watch.type.ts
 src/core/types/watchdog.type.ts
 src/features/access/screens/inactive-role-screen.tsx
-src/features/activity/components/activity-filters.tsx
 src/features/activity/model/activity-filter.ts
 src/features/activity/model/activity-text.ts
 src/features/activity/screens/activity-screen.tsx
@@ -383,7 +382,6 @@ src/shared/constants/recurrence.constant.ts
 src/shared/constants/resource.constant.ts
 src/shared/hooks/use-cached-rows.ts
 src/shared/hooks/use-capabilities.ts
-src/shared/hooks/use-date-formatter/date.ts
 src/shared/hooks/use-device-permissions/device-permissions.ts
 src/shared/hooks/use-device-permissions/index.ts
 src/shared/hooks/use-infinite-list.ts
