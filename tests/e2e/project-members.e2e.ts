@@ -80,7 +80,7 @@ test('the owner adds a member on one device, the other device shows it live, and
   await screen.getByRole('button', 'Projects').first().click();
   await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
   await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
-  await screen.getByRole('button', 'More for Huerto').click();
+  await screen.getByLabel('More for Huerto').click();
   await screen.getByRole('menuitem', 'Members').click();
   await expect(screen.getByText('Only you work on this project for now.')).toBeVisible();
 
@@ -102,7 +102,7 @@ test('the owner adds a member on one device, the other device shows it live, and
   });
   await expect(screen.getByRole('button', 'Remove Luis Paz')).toBeVisible({ timeout: LIVE_MS });
 
-  await second.page.getByRole('button', { name: 'More for Huerto' }).click();
+  await second.page.getByLabel('More for Huerto', { exact: true }).click();
   await second.page.getByRole('menuitem', { name: 'Members' }).click();
   await expect
     .poll(() => countButtons(second.page, 'Remove Luis Paz'), { timeout: LIVE_MS })
@@ -138,7 +138,7 @@ test('a member who can only view sees the project without the controls that woul
   ).toBeVisible({
     timeout: 10000,
   });
-  await expect(screen.getByRole('button', 'More for Huerto')).toBeHidden();
+  await expect(screen.getByLabel('More for Huerto')).toBeHidden();
   await expect(screen.getByRole('button', 'New task')).toBeHidden();
   await expect(screen.getByRole('button', 'Edit project')).toBeHidden();
 

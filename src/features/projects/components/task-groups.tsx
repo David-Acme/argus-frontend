@@ -17,31 +17,33 @@ export type TasksEmptyProps = { name: string; onCreate?: () => void };
 export function TasksEmpty({ name, onCreate }: TasksEmptyProps) {
   const { t } = useTranslation();
   return (
-    <Stack gap={4}>
-      {onCreate ? (
-        <Empty
-          centred
-          icon="check"
-          message={t('screens.projects.line.no-tasks')}
-          detail={t('screens.projects.empty.tasks-body')}
-          action={{ label: t('screens.projects.new-task'), onPress: onCreate }}
-        />
-      ) : (
-        <Notice
-          icon="check"
-          title={t('screens.projects.line.no-tasks')}
-          body={t('screens.projects.empty.tasks-read-only')}
-        />
-      )}
-      {onCreate ? (
-        <Ideas
-          ideas={[
-            t('screens.projects.empty.idea-task', { name }),
-            t('screens.projects.empty.idea-split', { name }),
-          ]}
-        />
-      ) : null}
-    </Stack>
+    <Section variant="plain">
+      <Stack gap={4}>
+        {onCreate ? (
+          <Empty
+            centred
+            icon="check"
+            message={t('screens.projects.line.no-tasks')}
+            detail={t('screens.projects.empty.tasks-body')}
+            action={{ label: t('screens.projects.new-task'), onPress: onCreate }}
+          />
+        ) : (
+          <Notice
+            icon="check"
+            title={t('screens.projects.line.no-tasks')}
+            body={t('screens.projects.empty.tasks-read-only')}
+          />
+        )}
+        {onCreate ? (
+          <Ideas
+            ideas={[
+              t('screens.projects.empty.idea-task', { name }),
+              t('screens.projects.empty.idea-split', { name }),
+            ]}
+          />
+        ) : null}
+      </Stack>
+    </Section>
   );
 }
 

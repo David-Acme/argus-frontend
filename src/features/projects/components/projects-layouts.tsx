@@ -1,13 +1,9 @@
-import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { useBottomNavInset } from '@/shared/hooks/use-bottom-nav-inset';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { size } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
-import { Section } from '@/shared/ui/section';
-import { Ideas } from '@/features/agenda';
-import { PROJECT_IDEAS } from '@/features/projects/constants/projects.constant';
 import type { ProjectsScreenState } from '@/features/projects/hooks/use-projects-screen';
 import type { ProjectView } from '@/features/projects/hooks/use-project-view';
 import type { ProjectMenuHandlers } from '@/features/projects/components/project-head';
@@ -152,13 +148,11 @@ function DetailColumn({ state, view }: ViewProps) {
 
 function GuideColumn() {
   const { t } = useTranslation();
-  const blocks: ReactNode[] = [
-    <ProjectsGuide key="guide" />,
-    <Section key="ideas" title={t('screens.projects.empty.ideas-title')} variant="plain">
-      <Ideas ideas={PROJECT_IDEAS.map((key) => t(key))} />
-    </Section>,
-  ];
-  return <ScreenColumn label={t('screens.projects.detail')}>{blocks}</ScreenColumn>;
+  return (
+    <ScreenColumn label={t('screens.projects.detail')}>
+      <ProjectsGuide />
+    </ScreenColumn>
+  );
 }
 
 export function PanesProjects({ state }: ProjectsLayoutProps) {
