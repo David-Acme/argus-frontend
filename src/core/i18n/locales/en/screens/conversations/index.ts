@@ -6,6 +6,8 @@ export const conversations = {
   'argus-meta-desktop': 'Hold Space to talk',
   'open-list': 'Argus. See the conversations',
   call: 'Call Argus',
+  more: 'More conversation options',
+  'see-list': 'See the conversations',
   'someone-home': 'Someone at home',
   you: 'You: {body}',
   unread: '{count} unread',

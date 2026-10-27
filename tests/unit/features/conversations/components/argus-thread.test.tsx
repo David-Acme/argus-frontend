@@ -431,6 +431,28 @@ describe('the pieces of a thread', () => {
     expect(calls).toEqual(['back', 'clear', 'call']);
   });
 
+  test('on a phone Borrar waits in the ⋯ menu beside Ver las conversaciones, so the header keeps one line', async () => {
+    await show(
+      <ArgusHeader
+        desktop={false}
+        onBack={() => calls.push('back')}
+        onConversations={() => calls.push('list')}
+        onCall={() => calls.push('call')}
+        onClear={() => calls.push('clear')}
+      />
+    );
+    expect(screen.queryByRole('button', { name: 'Borrar la conversación' })).toBeNull();
+    const more = screen.getByRole('button', { name: 'Más opciones de la conversación' });
+    fireEvent.keyDown(more, { key: 'Enter' });
+    expect(
+      await screen.findByRole('menuitem', { name: 'Ver las conversaciones', hidden: true })
+    ).toBeDefined();
+    fireEvent.click(
+      await screen.findByRole('menuitem', { name: 'Borrar la conversación', hidden: true })
+    );
+    expect(calls).toEqual(['clear']);
+  });
+
   test('the frame and the list render what they are given', async () => {
     await show(
       <ThreadFrame phone header={<Text>Cabecera</Text>} composer={<Text>Redactor</Text>}>
