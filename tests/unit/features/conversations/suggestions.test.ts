@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { size } from '@/shared/theme/tokens';
-import { emptyMarkSizeOf, suggestionsOf } from '@/features/conversations/model/suggestions';
+import {
+  asksYesNo,
+  cameraToSuggest,
+  emptyMarkSizeOf,
+  suggestionsOf,
+} from '@/features/conversations/model/suggestions';
 import type { SuggestionInput } from '@/features/conversations/model/suggestions';
 
 const ALL: Omit<SuggestionInput, 'hour'> = {
@@ -8,6 +13,7 @@ const ALL: Omit<SuggestionInput, 'hour'> = {
   readsPresence: true,
   setsMode: true,
   readsAgenda: true,
+  asking: false,
 };
 
 const ids = (hour: number, patch: Partial<typeof ALL> = {}) =>
@@ -30,6 +36,7 @@ describe('the suggestions above the composer', () => {
       setsMode: false,
       readsAgenda: false,
       hour: 9,
+      asking: false,
     });
     expect(remind).toEqual({ id: 'remind', camera: null, send: false });
   });
@@ -49,5 +56,29 @@ describe('the Estela of an empty thread', () => {
     expect(emptyMarkSizeOf('short', false)).toBe(size.presenceWelcomeTiny);
     expect(emptyMarkSizeOf('tiny', false)).toBe(size.presenceMark);
     expect(emptyMarkSizeOf('regular', true)).toBe(size.presenceMark);
+  });
+});
+
+describe('suggestions that follow the conversation', () => {
+  test('while Argus waits for a yes or a no, the chips are Sí and No', () => {
+    expect(ids(15, { asking: true })).toEqual(['yes', 'no']);
+  });
+
+  test('a closed question asks for yes or no, an open one does not', () => {
+    expect(asksYesNo('¿Cancelo el recordatorio «Abrir la ventana»?')).toBe(true);
+    expect(asksYesNo('Recordatorio guardado. ¿Te lo recuerdo mañana a las 9:30?')).toBe(true);
+    expect(
+      asksYesNo('No encontré un recordatorio de «estirar piernas». ¿Cuál quieres cancelar?')
+    ).toBe(false);
+    expect(asksYesNo('Shall I cancel it?')).toBe(true);
+    expect(asksYesNo('Done. Which one do you mean?')).toBe(false);
+    expect(asksYesNo('Borré el recordatorio.')).toBe(false);
+    expect(asksYesNo(null)).toBe(false);
+  });
+
+  test('the camera just shown is not offered again; another one is, or none', () => {
+    expect(cameraToSuggest(['Cocina', 'Patio'], 'Cocina')).toBe('Patio');
+    expect(cameraToSuggest(['Cocina'], 'Cocina')).toBeNull();
+    expect(cameraToSuggest(['Cocina'], null)).toBe('Cocina');
   });
 });

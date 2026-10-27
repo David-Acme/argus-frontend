@@ -59,6 +59,8 @@ export const conversations = {
     tomorrow: 'What do I have tomorrow?',
     remind: 'Remind me…',
     'remind-draft': 'Remind me ',
+    yes: 'Yes',
+    no: 'No',
   },
   context: {
     label: 'What happens in this conversation',

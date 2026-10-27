@@ -3,7 +3,9 @@ import type { ArgusResult } from '@/features/voice';
 import {
   anchorResults,
   bubblePresenceOf,
+  lastReplyOf,
   newestIncomingId,
+  shownCameraOf,
   streamingResultId,
 } from '@/features/conversations/model/thread-results';
 
@@ -97,5 +99,14 @@ describe('which camera card streams', () => {
     const waiting = anchorResults(ROWS.slice(0, 3), [camera('a', 201_000)]);
     expect(streamingResultId(waiting, '2', 'a')).toBe('a');
     expect(streamingResultId(waiting, '2', null)).toBeNull();
+  });
+});
+
+describe('what the suggestions read from the thread', () => {
+  test('the camera Argus showed last, and the last words when they are Argus’s', () => {
+    expect(shownCameraOf([camera('a', 1), camera('b', 2, 'failed')])).toBe('Cocina');
+    expect(shownCameraOf([])).toBeNull();
+    expect(lastReplyOf([{ direction: 'out', body: 'hola' }])).toBeNull();
+    expect(lastReplyOf([{ direction: 'in', body: '¿Lo cancelo?' }])).toBe('¿Lo cancelo?');
   });
 });
