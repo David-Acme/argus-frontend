@@ -6,10 +6,13 @@ import { Check } from '@/shared/ui/check';
 import { Row } from '@/shared/ui/row';
 import { Screen, ScreenColumn, ScreenColumns } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
-import { Status, type StatusStat } from '@/shared/ui/status';
+import { Status } from '@/shared/ui/status';
+import type { StatusStat } from '@/shared/ui/status';
 import { Text } from '@/shared/ui/text';
-import { LabCase } from '../components/lab-case';
-import { copy } from './demo-copy';
+import { LabCase } from '@/features/ui-lab/components/lab-case';
+import { copy } from '@/features/ui-lab/demos/demo-copy';
+
+type HomeProps = { updating?: boolean };
 
 const noop = () => undefined;
 
@@ -72,15 +75,23 @@ function News() {
   );
 }
 
-function Home({ updating }: { updating?: boolean }) {
+function Home({ updating }: HomeProps) {
   return (
     <Screen
+      columns
       aura="calm"
       meta={copy.greeting}
       updating={updating ? copy.updating : undefined}
       actions={search}>
       <Status tone="calm" sentence={copy.hero} meta={copy.heroMeta} stats={STATS} presence="idle" />
-      <Now />
+      <ScreenColumns>
+        <ScreenColumn label={copy.now} width={size.columnSide}>
+          <Now />
+        </ScreenColumn>
+        <ScreenColumn label={copy.newsTitle}>
+          <News />
+        </ScreenColumn>
+      </ScreenColumns>
     </Screen>
   );
 }

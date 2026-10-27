@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ComponentType } from 'react';
 import { screenFocus } from './screen-focus';
 import './translation-stub';
+import { setWindowWidth } from './window-width';
 
 let search: Record<string, string> = {};
 
@@ -90,6 +91,17 @@ describe('ui-lab', () => {
       expect(container.querySelectorAll('[data-testid^="case-"]').length).toBeGreaterThan(0);
     });
   }
+
+  test('on a desktop window the screen demo keeps the hero band outside its columns', () => {
+    setWindowWidth(1280);
+    render(<ScreenDemo />);
+    const inicio = screen.getByTestId('case-inicio');
+    const column = inicio.querySelector('[aria-label="Ahora"]');
+    expect(column).not.toBeNull();
+    expect(column?.querySelector('[data-testid="status-hero"]')).toBeNull();
+    expect(inicio.querySelector('[data-testid="status-hero"]')).not.toBeNull();
+    setWindowWidth(360);
+  });
 
   test('a scene placeholder draws its bands', () => {
     const { container } = render(<Scene name="patio" />);
