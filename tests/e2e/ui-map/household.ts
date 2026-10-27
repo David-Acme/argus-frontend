@@ -232,10 +232,14 @@ const PROFILES = {
   },
 };
 
-const HOUSEHOLD_ROUTES: RouteSpec[] = [
-  ...BASELINE,
+export const SETTINGS_ROUTES: RouteSpec[] = [
   { method: 'GET', path: '/settings', info: SETTINGS },
   { method: 'GET', path: '/settings/profiles', info: PROFILES },
+];
+
+const HOUSEHOLD_ROUTES: RouteSpec[] = [
+  ...BASELINE,
+  ...SETTINGS_ROUTES,
   { method: 'GET', path: '/guard/proximity/receivers', info: RECEIVERS },
   { method: 'GET', path: '/guard/proximity/sensors', info: SENSORS },
   { method: 'GET', path: '/guard/proximity/people', info: PROXIMITY_PEOPLE },

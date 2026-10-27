@@ -3,7 +3,12 @@ import { expect, openFirst, test } from './support/devices';
 
 const LIVE_MS = 2000;
 
-test('what one device does reaches the activity history open on the other, live', async ({ app, browser, screen, second }) => {
+test('what one device does reaches the activity history open on the other, live', async ({
+  app,
+  browser,
+  screen,
+  second,
+}) => {
   const baseUrl = app.baseUrl ?? '';
   const at = Math.floor(Date.now() / 1000);
   const project = {
@@ -41,7 +46,13 @@ test('what one device does reaches the activity history open on the other, live'
       sets: [{ method: 'GET', path: '/sync/activity', info: { items: [entry], nextCursor: null } }],
       emits: [
         { frame: { operation: 4, option: 'project', info: project } },
-        { frame: { operation: 14, option: 'resource_changed', info: { domain: 'activity', scope: 'entries', ids: [] } } },
+        {
+          frame: {
+            operation: 14,
+            option: 'resource_changed',
+            info: { domain: 'activity', scope: 'entries', ids: [] },
+          },
+        },
       ],
     },
   ]);
@@ -50,18 +61,31 @@ test('what one device does reaches the activity history open on the other, live'
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
 
-  await second.page.getByRole('tab', { name: 'Settings' }).first().click();
-  await second.page.getByText('Activity history', { exact: true }).click();
-  await expect.poll(() => second.page.getByRole('heading', { name: 'Activity' }).count(), { timeout: 10000 }).toBe(1);
-  await expect.poll(() => second.page.getByText('created a project').count()).toBe(0);
+  await second.page.getByRole('tab', { name: 'You', exact: true }).first().click();
+  await second.page.getByRole('button', { name: 'Activity', exact: true }).first().click();
+  await expect
+    .poll(() => second.page.getByRole('heading', { name: 'Activity' }).count(), { timeout: 10000 })
+    .toBe(1);
+  await expect
+    .poll(() => second.page.getByText('created a project').filter({ visible: true }).count())
+    .toBe(0);
 
   await screen.getByRole('tab', 'Agenda').first().click();
-  await screen.getByRole('button', 'Projects').first().click();
+  await screen.getByRole('tab', 'Projects').first().click();
   await screen.getByRole('button', 'New project').first().click();
   await screen.getByPlaceholder('Move, renovation, trip…').fill(project.name);
   await screen.getByText('Save', { exact: true }).click();
 
-  await expect.poll(() => second.page.getByText(/Ana.* created a project/).count(), { timeout: LIVE_MS }).toBe(1);
+  await expect
+    .poll(
+      () =>
+        second.page
+          .getByText(/Ana.* created a project/)
+          .filter({ visible: true })
+          .count(),
+      { timeout: LIVE_MS }
+    )
+    .toBe(1);
 
   expect(escapes).toEqual([]);
   expect(second.escapes).toEqual([]);

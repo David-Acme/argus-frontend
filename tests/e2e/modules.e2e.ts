@@ -80,7 +80,7 @@ test('a module turned off on one device leaves the other at once, and comes back
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
   await emit(baseUrl, [{ frame: { operation: 4, option: 'project', info: renamed } }]);
   await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
-  await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
+  await second.page.getByRole('tab', { name: 'Projects', exact: true }).first().click();
   await expect.poll(() => onProjects(second.page), { timeout: 10000 }).toBeGreaterThan(0);
   await expect
     .poll(() => second.page.getByRole('button', { name: /^Huerto, / }).count(), { timeout: 10000 })
@@ -106,7 +106,7 @@ test('a module turned off on one device leaves the other at once, and comes back
     .toBeGreaterThan(0);
   await expect.poll(() => homeProductivity(second.page), { timeout: LIVE_MS }).toBe(2);
   await second.page.getByRole('tab', { name: 'Agenda', exact: true }).first().click();
-  await second.page.getByRole('button', { name: 'Projects', exact: true }).first().click();
+  await second.page.getByRole('tab', { name: 'Projects', exact: true }).first().click();
   await expect
     .poll(() => second.page.getByRole('button', { name: /^Huerto comunitario, / }).count(), {
       timeout: LIVE_MS,

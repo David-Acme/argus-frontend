@@ -41,7 +41,11 @@ const missingBaseline = (platform: string): string =>
   `no visual baseline for ${platform}: run \`bun run test:e2e:update-screens\` on this machine to record its set`;
 
 for (const size of WIDTHS) {
-  test(`the main screens look as recorded at ${size.name} width`, async ({ app, browser, screen }) => {
+  test(`the main screens look as recorded at ${size.name} width`, async ({
+    app,
+    browser,
+    screen,
+  }) => {
     const baseUrl = app.baseUrl ?? '';
     await routes(baseUrl, populated);
     await store(baseUrl, 'project', seededProject);
@@ -50,14 +54,16 @@ for (const size of WIDTHS) {
     await browser.addInitScript(installReducedMotion, null);
     await openFirst(browser, app);
     await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
-    await expect(screen.getByRole('heading', 'Someone at Patio trasero.')).toBeVisible({ timeout: 10000 });
+    await expect(screen.getByRole('heading', 'Someone at Patio trasero.')).toBeVisible({
+      timeout: 10000,
+    });
     const platform = await platformOf(browser);
     test.skip(!UPDATING && !platformRecorded(platform), missingBaseline(platform));
     await expect(screen.getByText('Now', { exact: true }).first()).toBeVisible();
     await expect(screen).toHaveScreenshot(`home-${size.name}-${platform}.png`, SHOT);
 
     await screen.getByRole('tab', 'Agenda').first().click();
-    await screen.getByRole('button', 'Projects').first().click();
+    await screen.getByRole('tab', 'Projects').first().click();
     await expect(screen.getByRole('button', 'New project').first()).toBeVisible({ timeout: 10000 });
     await browser.mouse.move(size.width - 2, size.height - 2);
     await settle(TOOLTIP_MS);
@@ -65,7 +71,9 @@ for (const size of WIDTHS) {
 
     await screen.getByRole('tab', 'Home').first().click();
     await screen.getByRole('tab', 'Security').first().click();
-    await expect(screen.getByText('Unknown person', { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(screen.getByText('Unknown person', { exact: true })).toBeVisible({
+      timeout: 10000,
+    });
     await browser.mouse.move(size.width - 2, size.height - 2);
     await settle(TOOLTIP_MS);
     await expect(screen).toHaveScreenshot(`security-${size.name}-${platform}.png`, SHOT);

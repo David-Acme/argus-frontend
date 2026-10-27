@@ -33,7 +33,10 @@ test('members do not read "No open sessions" when the sessions overview failed t
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'You').first().click();
-  await screen.getByRole('button', 'People').first().click();
+  await screen
+    .getByRole('button', /^People, /)
+    .first()
+    .click();
   await expect(screen.getByText(/Luis Paz/).first()).toBeVisible({ timeout: 10000 });
   await expect(
     screen.getByText('The connected devices could not be loaded.', { exact: true })

@@ -28,7 +28,8 @@ const visit = {
 };
 
 const requests = async (baseUrl: string): Promise<string[]> =>
-  ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] }).requests;
+  ((await (await fetch(new URL('/__e2e/requests', baseUrl))).json()) as { requests: string[] })
+    .requests;
 
 test('a refused event delete says it was not deleted, and its reopened alert stays until dismissed', async ({
   app,
@@ -49,20 +50,32 @@ test('a refused event delete says it was not deleted, and its reopened alert sta
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await screen.getByRole('tab', 'Agenda').first().click();
-  await screen.getByRole('button', 'Options').first().click();
+  await screen.getByRole('button', /^Prueba R3 sin red, /).click();
+  await screen.getByRole('button', 'More actions').last().click();
   await screen.getByText('Delete', { exact: true }).last().click();
 
-  await expect.poll(() => requests(baseUrl), { timeout: UNDO_MS + LIVE_MS }).toContain('DELETE /calendar-event/700 @A');
-  await expect(screen.getByText('The event was not deleted', { exact: true })).toBeVisible({ timeout: LIVE_MS });
+  await expect
+    .poll(() => requests(baseUrl), { timeout: UNDO_MS + LIVE_MS })
+    .toContain('DELETE /calendar-event/700 @A');
+  await expect(screen.getByText('The event was not deleted', { exact: true })).toBeVisible({
+    timeout: LIVE_MS,
+  });
   await expect(screen.getByText('The event was not saved', { exact: true })).toBeHidden();
 
   const parkedDot = screen.getByRole('button', 'The event was not deleted');
   await expect(parkedDot).toBeVisible({ timeout: UNDO_MS + LIVE_MS });
   await parkedDot.click();
   await expect(parkedDot).toBeHidden({ timeout: LIVE_MS });
-  await expect(screen.getByText('The event was not deleted', { exact: true }).first()).toBeVisible({ timeout: LIVE_MS });
-  await browser.evaluate((ms) => new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)), OUTLAST_TIMER_MS);
-  await expect(screen.getByText('The event was not deleted', { exact: true }).first()).toBeVisible();
+  await expect(screen.getByText('The event was not deleted', { exact: true }).first()).toBeVisible({
+    timeout: LIVE_MS,
+  });
+  await browser.evaluate(
+    (ms) => new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+    OUTLAST_TIMER_MS
+  );
+  await expect(
+    screen.getByText('The event was not deleted', { exact: true }).first()
+  ).toBeVisible();
   await expect(screen.getByText('Retry', { exact: true }).last()).toBeVisible();
 
   expect(escapes).toEqual([]);
