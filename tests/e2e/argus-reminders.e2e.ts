@@ -46,7 +46,7 @@ test('asking Argus creates a reminder that rings; no reminder list exists in the
   ]);
   await second.open('/agenda');
   await expect.poll(() => connected(baseUrl, 'B'), { timeout: 10000 }).toBe(1);
-  await page.getByRole('button', { name: 'New event or task', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'New event', exact: true }).first().waitFor();
   expect(await titleCount(page)).toBe(0);
 
   await second.open('/');
