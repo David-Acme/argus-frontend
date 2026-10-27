@@ -788,6 +788,10 @@ export const settings = {
         label: 'Silencio al terminar de hablar (ms)',
         hint: 'Cuánto silencio espera para saber que terminaste.',
       },
+      handoff_quiet_ms: {
+        label: 'Silencio de la cámara tras pasar al teléfono (ms)',
+        hint: 'Cuánto tiempo la cámara no escucha después de que la conversación pasa a tu teléfono.',
+      },
       idle_close_ms: {
         label: 'Cierre por inactividad (ms)',
         hint: 'Sin voz durante este tiempo, la conversación por la cámara termina.',

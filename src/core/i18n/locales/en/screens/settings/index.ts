@@ -711,6 +711,10 @@ export const settings = {
         label: 'Silence at the end of speech (ms)',
         hint: 'How much silence it waits for to know you have finished.',
       },
+      handoff_quiet_ms: {
+        label: 'Camera quiet after handing to the phone (ms)',
+        hint: 'How long the camera stops listening after the conversation moves to your phone.',
+      },
       idle_close_ms: {
         label: 'Close when idle (ms)',
         hint: 'With no voice for this long, the conversation through the camera ends.',
