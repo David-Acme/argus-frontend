@@ -1,6 +1,7 @@
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import { notificationThreadKey } from '@/core/services/notification';
-import { callKindOf, callReminderIdOf } from '@/features/voice/model/incoming-surface';
+import { callReminderIdOf } from '@/shared/libs/call-back';
+import { callKindOf } from '@/features/voice/model/incoming-surface';
 import type { CallKind } from '@/features/voice/model/incoming-surface';
 
 export type MissedCall = {

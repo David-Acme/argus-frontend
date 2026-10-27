@@ -4,20 +4,24 @@ import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 
 export function useCall(options: VoiceStartOptions = {}) {
   const session = useVoiceSession();
-  const { callId, purpose } = options;
+  const { callId, purpose, reminderId } = options;
   const { start, stop, setMuted } = session;
 
   useEffect(() => {
-    start({ ...(callId ? { callId } : {}), ...(purpose ? { purpose } : {}) });
+    start({
+      ...(callId ? { callId } : {}),
+      ...(purpose ? { purpose } : {}),
+      ...(reminderId ? { reminderId } : {}),
+    });
     return () => stop();
-  }, [callId, purpose, start, stop]);
+  }, [callId, purpose, reminderId, start, stop]);
 
   const toggleMute = useCallback(() => setMuted(!session.muted), [session.muted, setMuted]);
 
   const retry = useCallback(() => {
     stop();
-    start(purpose ? { purpose } : {});
-  }, [purpose, start, stop]);
+    start({ ...(purpose ? { purpose } : {}), ...(reminderId ? { reminderId } : {}) });
+  }, [purpose, reminderId, start, stop]);
 
   return {
     phase: session.phase,
