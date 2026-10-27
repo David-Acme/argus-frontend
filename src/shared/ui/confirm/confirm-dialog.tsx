@@ -1,7 +1,8 @@
 import * as AlertPrimitive from '@rn-primitives/alert-dialog';
 import { useEffect, useEffectEvent, type ReactNode } from 'react';
 import { BackHandler, Pressable, View } from 'react-native';
-import { layout } from '@/shared/theme';
+import Animated from 'react-native-reanimated';
+import { layout, overlayMotion, overlayWebIn } from '@/shared/theme';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { ConfirmBox } from './confirm-box';
 import { useConfirmLatch } from './use-confirm-latch';
@@ -10,6 +11,8 @@ import type { ConfirmProps } from './confirm-types';
 type FrameProps = { children: ReactNode };
 
 const CONTENT = { maxWidth: layout.dialog };
+
+const Scrim = Animated.createAnimatedComponent(Pressable);
 
 function Heading({ children }: FrameProps) {
   return (
@@ -60,26 +63,33 @@ export function ConfirmDialog({
         if (!next) cancel();
       }}>
       <AlertPrimitive.Portal>
-        <AlertPrimitive.Overlay className="bg-scrim web:backdrop-blur-scrim web:fixed px-dialog-edge absolute inset-0 items-center justify-center">
-          <Pressable
+        <AlertPrimitive.Overlay className="web:fixed px-dialog-edge absolute inset-0 items-center justify-center">
+          <Scrim
+            entering={overlayMotion.scrimIn}
+            exiting={overlayMotion.scrimOut}
             focusable={false}
             disabled={destructive}
             onPress={cancel}
-            className="absolute inset-0"
+            className={`bg-scrim web:backdrop-blur-scrim absolute inset-0 ${overlayWebIn.scrim}`}
           />
           <AlertPrimitive.Content style={CONTENT} className="w-full">
-            <ConfirmBox
-              title={title}
-              body={body}
-              confirmLabel={confirmLabel}
-              cancelLabel={t('common.cancel')}
-              destructive={destructive}
-              busy={latch.busy}
-              onConfirm={latch.once(onConfirm)}
-              onCancel={cancel}
-              Heading={Heading}
-              Description={Description}
-            />
+            <Animated.View
+              entering={overlayMotion.dialogIn}
+              exiting={overlayMotion.dialogOut}
+              className={`w-full items-center ${overlayWebIn.panel}`}>
+              <ConfirmBox
+                title={title}
+                body={body}
+                confirmLabel={confirmLabel}
+                cancelLabel={t('common.cancel')}
+                destructive={destructive}
+                busy={latch.busy}
+                onConfirm={latch.once(onConfirm)}
+                onCancel={cancel}
+                Heading={Heading}
+                Description={Description}
+              />
+            </Animated.View>
           </AlertPrimitive.Content>
         </AlertPrimitive.Overlay>
       </AlertPrimitive.Portal>

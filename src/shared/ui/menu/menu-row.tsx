@@ -6,7 +6,7 @@ import { Text } from '@/shared/ui/text';
 import { menuGroups } from './menu-model';
 import type { MenuFamily, MenuItem } from './menu-types';
 
-export type MenuRowLook = 'sheet' | 'anchored' | 'plain';
+export type MenuRowLook = 'sheet' | 'anchored';
 
 export type MenuRowContentProps = { item: MenuItem; look: MenuRowLook };
 
@@ -24,7 +24,7 @@ const INK: Record<MenuFamily | 'danger', Ink> = {
   danger: { well: 'bg-alert-soft', icon: 'alert' },
 };
 
-const WELL: Record<Exclude<MenuRowLook, 'plain'>, string> = {
+const WELL: Record<MenuRowLook, string> = {
   sheet: 'size-well-small rounded-seg-inner',
   anchored: 'size-event-mark rounded-sm',
 };
@@ -35,25 +35,17 @@ const POINTED =
 export const MENU_ROW: Record<MenuRowLook, string> = {
   sheet: 'min-h-row px-row-x gap-row-gap flex-row items-center',
   anchored: `min-h-target-min px-palette-item-x gap-palette-gap ${POINTED}`,
-  plain: `min-h-target px-row-x ${POINTED}`,
 };
 
 export const MENU_DIVIDER: Record<MenuRowLook, string> = {
   sheet: 'border-line mx-row-x border-t',
   anchored: 'border-line my-palette-group mx-palette-item-x border-t',
-  plain: 'border-line my-palette-group border-t',
 };
 
 const inkOf = (item: MenuItem): Ink => INK[item.destructive ? 'danger' : (item.family ?? 'view')];
 
 export function MenuRowContent({ item, look }: MenuRowContentProps) {
   const ink = inkOf(item);
-  if (look === 'plain')
-    return (
-      <Text variant="feed" tone={item.destructive ? 'alert' : 'default'} numberOfLines={1}>
-        {item.label}
-      </Text>
-    );
   return (
     <>
       <View className={clsx('items-center justify-center', WELL[look], ink.well)}>

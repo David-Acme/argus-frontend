@@ -2,18 +2,17 @@ import * as ContextPrimitive from '@rn-primitives/context-menu';
 import * as DropdownPrimitive from '@rn-primitives/dropdown-menu';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { space } from '@/shared/theme';
+import { overlayWebIn, space } from '@/shared/theme';
 import { Icon, type IconGlyph } from '@/shared/ui/icon';
 import { opensContextMenu } from './menu-keys';
 import { menuGroups } from './menu-model';
-import { MENU_DIVIDER, MENU_ROW, MenuRowContent, useMenuPanel, type MenuRowLook } from './menu-row';
+import { MENU_DIVIDER, MENU_ROW, MenuRowContent, useMenuPanel } from './menu-row';
 import type { MenuItem, MenuRun } from './menu-types';
 
 export type AnchoredButtonProps = {
   label: string;
   icon: IconGlyph;
   items: readonly MenuItem[];
-  look: MenuRowLook;
   onRun: MenuRun;
 };
 
@@ -26,8 +25,6 @@ export type AnchoredContextProps = {
 
 type ItemsProps = { items: readonly MenuItem[]; onRun: MenuRun };
 
-type DropdownItemsProps = ItemsProps & { look: MenuRowLook };
-
 type MenuKeyEvent = {
   key: string;
   shiftKey: boolean;
@@ -37,18 +34,21 @@ type MenuKeyEvent = {
 
 const OFFSET = space[1];
 
-function DropdownItems({ items, look, onRun }: DropdownItemsProps) {
+function DropdownItems({ items, onRun }: ItemsProps) {
   const { actions, dangers } = menuGroups(items);
   const row = (item: MenuItem) => (
-    <DropdownPrimitive.Item key={item.label} onPress={() => onRun(item)} className={MENU_ROW[look]}>
-      <MenuRowContent item={item} look={look} />
+    <DropdownPrimitive.Item
+      key={item.label}
+      onPress={() => onRun(item)}
+      className={MENU_ROW.anchored}>
+      <MenuRowContent item={item} look="anchored" />
     </DropdownPrimitive.Item>
   );
   return (
     <>
       {actions.map(row)}
       {actions.length > 0 && dangers.length > 0 ? (
-        <DropdownPrimitive.Separator className={MENU_DIVIDER[look]} />
+        <DropdownPrimitive.Separator className={MENU_DIVIDER.anchored} />
       ) : null}
       {dangers.map(row)}
     </>
@@ -77,7 +77,7 @@ function ContextItems({ items, onRun }: ItemsProps) {
   );
 }
 
-export function AnchoredButton({ label, icon, items, look, onRun }: AnchoredButtonProps) {
+export function AnchoredButton({ label, icon, items, onRun }: AnchoredButtonProps) {
   const panel = useMenuPanel();
   return (
     <DropdownPrimitive.Root>
@@ -94,8 +94,8 @@ export function AnchoredButton({ label, icon, items, look, onRun }: AnchoredButt
           insets={{ top: space[2], bottom: space[2], left: space[2], right: space[2] }}
           aria-label={label}
           style={panel.style}
-          className={panel.className}>
-          <DropdownItems items={items} look={look} onRun={onRun} />
+          className={`${panel.className} ${overlayWebIn.panel}`}>
+          <DropdownItems items={items} onRun={onRun} />
         </DropdownPrimitive.Content>
       </DropdownPrimitive.Portal>
     </DropdownPrimitive.Root>
@@ -129,7 +129,7 @@ export function AnchoredContext({ label, items, onRun, children }: AnchoredConte
         <ContextPrimitive.Content
           aria-label={label}
           style={panel.style}
-          className={panel.className}>
+          className={`${panel.className} ${overlayWebIn.panel}`}>
           <ContextItems items={items} onRun={onRun} />
         </ContextPrimitive.Content>
       </ContextPrimitive.Portal>

@@ -8,20 +8,20 @@ import {
   View,
   type LayoutChangeEvent,
 } from 'react-native';
-import { space } from '@/shared/theme';
+import Animated from 'react-native-reanimated';
+import { overlayMotion, space } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { PressableSurface } from '@/shared/ui/pressable';
 import { MenuHold } from './menu-hold';
 import { menuGroups, placeMenu, type MenuBox, type MenuRect } from './menu-model';
-import { MENU_DIVIDER, MENU_ROW, MenuRowContent, useMenuPanel, type MenuRowLook } from './menu-row';
+import { MENU_DIVIDER, MENU_ROW, MenuRowContent, useMenuPanel } from './menu-row';
 import type { MenuItem, MenuRun } from './menu-types';
 
 export type AnchoredButtonProps = {
   label: string;
   icon: IconGlyph;
   items: readonly MenuItem[];
-  look: MenuRowLook;
   onRun: MenuRun;
 };
 
@@ -34,7 +34,6 @@ export type AnchoredContextProps = {
 
 type PopoverProps = {
   anchor: MenuRect | null;
-  look: MenuRowLook;
   label: string;
   items: readonly MenuItem[];
   onClose: () => void;
@@ -60,7 +59,7 @@ function useBackCloses(open: boolean, onClose: () => void): void {
   }, [open]);
 }
 
-function MenuPopover({ anchor, look, label, items, onClose, onRun }: PopoverProps) {
+function MenuPopover({ anchor, label, items, onClose, onRun }: PopoverProps) {
   const name = useId();
   const panel = useMenuPanel();
   const window = useWindowDimensions();
@@ -85,9 +84,18 @@ function MenuPopover({ anchor, look, label, items, onClose, onRun }: PopoverProp
       a11y={{ label: item.label, role: 'menuitem' }}
       onPress={() => pick(item)}
       pressed={{ fill: true }}
-      className={MENU_ROW[look]}>
-      <MenuRowContent item={item} look={look} />
+      className={MENU_ROW.anchored}>
+      <MenuRowContent item={item} look="anchored" />
     </PressableSurface>
+  );
+  const body = (
+    <>
+      {actions.map(row)}
+      {actions.length > 0 && dangers.length > 0 ? (
+        <View role="separator" className={MENU_DIVIDER.anchored} />
+      ) : null}
+      {dangers.map(row)}
+    </>
   );
   return (
     <Portal name={name}>
@@ -96,19 +104,26 @@ function MenuPopover({ anchor, look, label, items, onClose, onRun }: PopoverProp
         role="menu"
         aria-label={label}
         onLayout={measure}
-        style={[panel.style, styles.panel, place, box ? null : styles.hidden]}
-        className={panel.className}>
-        {actions.map(row)}
-        {actions.length > 0 && dangers.length > 0 ? (
-          <View role="separator" className={MENU_DIVIDER[look]} />
-        ) : null}
-        {dangers.map(row)}
+        style={[styles.panel, place, box ? null : styles.hidden]}>
+        {box ? (
+          <Animated.View
+            entering={overlayMotion.menuIn}
+            exiting={overlayMotion.menuOut}
+            style={panel.style}
+            className={panel.className}>
+            {body}
+          </Animated.View>
+        ) : (
+          <View style={panel.style} className={panel.className}>
+            {body}
+          </View>
+        )}
       </View>
     </Portal>
   );
 }
 
-export function AnchoredButton({ label, icon, items, look, onRun }: AnchoredButtonProps) {
+export function AnchoredButton({ label, icon, items, onRun }: AnchoredButtonProps) {
   const trigger = useRef<View>(null);
   const [anchor, setAnchor] = useState<MenuRect | null>(null);
   const open = () =>
@@ -123,7 +138,6 @@ export function AnchoredButton({ label, icon, items, look, onRun }: AnchoredButt
       </View>
       <MenuPopover
         anchor={anchor}
-        look={look}
         label={label}
         items={items}
         onClose={() => setAnchor(null)}
@@ -142,7 +156,6 @@ export function AnchoredContext({ label, items, onRun, children }: AnchoredConte
       </MenuHold>
       <MenuPopover
         anchor={anchor}
-        look="anchored"
         label={label}
         items={items}
         onClose={() => setAnchor(null)}

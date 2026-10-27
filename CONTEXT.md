@@ -8152,9 +8152,16 @@ phone, tablet, desktop and web.
   `shared/ui/menu` (`Menu`). The form is a pure decision, `menuForm`
   (`menu-model.ts`): a phone (`navigation === 'bar'`) without a fine pointer
   gets the bottom sheet, anything else the anchored menu. A screen header's
-  «⋯» (the default `Menu` button) opens an anchored, text-only dropdown under
-  the button on every platform, phone included, like the reference the owner
-  sent (`uiux-map/redesign/later-phases/owner-2026-10-27/whatsapp-overflow-menu.jpg`);
+  «⋯» (the default `Menu` button) opens an anchored dropdown under the button
+  on every platform, phone included, placed like the reference the owner sent
+  (`uiux-map/redesign/later-phases/owner-2026-10-27/whatsapp-overflow-menu.jpg`)
+  and, since the owner found the text-only rows empty (2026-10-27), with the
+  same icon wells as every other menu row. The anchored menu and the shared
+  Confirm enter and leave with `overlayMotion` (`shared/theme/overlay-motion.ts`):
+  the panel springs in from 0.96 (the dialog from 0.95) over a 200 ms scrim
+  fade and fades out in 120–150 ms, the motion the deleted popover and dialog
+  had and the owner asked back because it felt native; the web uses the
+  `tw-animate` classes in `overlayWebIn`;
   an item's own «⋯» (`<Menu item …>`) and a row's long press use the sheet on
   phones. On tablet, desktop and web with a pointer, row actions open a context
   menu at the pointer (right click, the context-menu key or Shift+F10). Rows

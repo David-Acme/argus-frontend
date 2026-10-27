@@ -33,6 +33,7 @@ export { feedback } from './feedback';
 export { feedbackEnabled, setFeedbackEnabled } from './feedback-switch';
 export { hasFinePointer } from './pointer';
 export { usePressScale, type PressScaleKind } from './press-scale';
+export { overlayMotion, overlayWebIn } from './overlay-motion';
 export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tokens';
 export {
   heightClassOf,

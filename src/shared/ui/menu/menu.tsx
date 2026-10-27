@@ -23,15 +23,7 @@ function ButtonMenu({
   if (rest.length === 0)
     return <Button iconOnly icon={only.icon} label={only.label} onPress={() => onRun(only)} />;
   if (!item || form === 'anchored')
-    return (
-      <AnchoredButton
-        label={label}
-        icon={icon}
-        items={items}
-        look={item ? 'anchored' : 'plain'}
-        onRun={onRun}
-      />
-    );
+    return <AnchoredButton label={label} icon={icon} items={items} onRun={onRun} />;
   return (
     <>
       <Button iconOnly icon={icon} label={label} onPress={() => setOpen(true)} />

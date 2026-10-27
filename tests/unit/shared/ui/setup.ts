@@ -91,7 +91,12 @@ mock.module('uniwind', () => ({
 mock.module('react-native-reanimated', async () => {
   const web = await import('react-native-web');
   return {
-    default: { View: web.View, Text: web.Text, ScrollView: web.ScrollView },
+    default: {
+      View: web.View,
+      Text: web.Text,
+      ScrollView: web.ScrollView,
+      createAnimatedComponent: <T>(component: T) => component,
+    },
     useSharedValue: <T>(initial: T) => useRef(sharedValue(initial)).current,
     makeMutable: sharedValue,
     useAnimatedScrollHandler: () => () => undefined,
@@ -112,12 +117,19 @@ mock.module('react-native-reanimated', async () => {
         return this;
       }
     },
-    Easing: { bezier: () => () => 0, linear: (progress: number) => progress },
+    Easing: {
+      bezier: () => () => 0,
+      linear: (progress: number) => progress,
+      cubic: (progress: number) => progress,
+      in: <T>(easing: T) => easing,
+      out: <T>(easing: T) => easing,
+    },
     FadeIn: chain(),
     FadeOut: chain(),
     LinearTransition: chain(),
     SlideInUp: chain(),
     SlideOutUp: chain(),
+    ZoomIn: chain(),
   };
 });
 
