@@ -1,5 +1,5 @@
-entry-chunk-bytes 6556734
-dist-bytes 8909621
+entry-chunk-bytes 6564479
+dist-bytes 8930801
 lazy livekit-client
 lazy activity-screen
 lazy agenda-screen

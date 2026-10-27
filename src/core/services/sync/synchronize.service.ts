@@ -31,6 +31,7 @@ import { CONTEXT_RESYNC_KEPT_KEYS, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { SYNC_CATCH_UP_DELAY_MS } from './sync-constants';
 import { backoffDelay } from './sync-backoff';
 import { SyncConnection } from './sync-connection';
+import { watchPageLifecycle } from './sync-page-lifecycle';
 import { watchReconnectOpportunities } from './sync-reconnect-watch';
 import { openSocket } from './sync-socket';
 import { withoutCreatedCursor, withoutTables } from './sync-cursor';
@@ -179,6 +180,12 @@ class SynchronizeService {
     watchReconnectOpportunities(() => {
       void this.followRoute();
       this.retryNow();
+    });
+    watchPageLifecycle({
+      leave: () => this.disconnect(),
+      back: () => {
+        if (store.getState().status === 'signed-in') this.openSession();
+      },
     });
     if (store.getState().status === 'signed-in') this.openSession();
   }

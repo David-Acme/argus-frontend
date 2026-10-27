@@ -70,6 +70,12 @@ test('asking Argus creates a reminder that rings; no reminder list exists in the
   await expect
     .poll(() => page.getByRole('textbox').first().inputValue(), { timeout: LIVE_MS })
     .toBe('Remind me water the plants');
+  await page.getByRole('button', { name: 'Send the message to Argus', exact: true }).click();
+  await expect
+    .poll(() => page.getByText('Remind me water the plants', { exact: true }).count(), {
+      timeout: LIVE_MS,
+    })
+    .toBe(1);
 
   await emit(baseUrl, [
     {
@@ -85,7 +91,7 @@ test('asking Argus creates a reminder that rings; no reminder list exists in the
     },
   ]);
   await expect
-    .poll(() => page.getByText('I will remind you', { exact: true }).count(), { timeout: LIVE_MS })
+    .poll(() => page.getByText(/· I will remind you$/).count(), { timeout: LIVE_MS })
     .toBeGreaterThan(0);
 
   await emit(baseUrl, [
@@ -94,7 +100,7 @@ test('asking Argus creates a reminder that rings; no reminder list exists in the
         operation: 8,
         option: 'call',
         info: {
-          callId: 'call-reminder-701',
+          callId: 'call-701',
           reason: reminder.title,
           subject: reminder.title,
           summary: '',
