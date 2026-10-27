@@ -7,37 +7,67 @@ import {
 } from '@/shared/constants';
 import { normalizeCursors } from './sync-cursor';
 
+export type DatabaseFlush = () => Promise<void>;
+
 export class SyncCursorStore {
-  constructor(private readonly userScope: () => string) {}
+  private readonly held = new Map<string, string>();
+
+  constructor(
+    private readonly userScope: () => string,
+    private readonly flush: DatabaseFlush
+  ) {}
 
   load(): SyncCursors {
-    return normalizeCursors(storageService.getObject<SyncCursors>(this.rowKey()) ?? {});
+    return normalizeCursors(this.read<SyncCursors>(this.rowKey()) ?? {});
   }
 
   save(cursors: SyncCursors): void {
-    storageService.setObject(this.rowKey(), cursors);
+    this.write(this.rowKey(), cursors);
   }
 
   loadAudit(): AuditLogCursors {
-    return storageService.getObject<AuditLogCursors>(this.auditKey()) ?? {};
+    return this.read<AuditLogCursors>(this.auditKey()) ?? {};
   }
 
   saveAudit(cursors: AuditLogCursors): void {
-    storageService.setObject(this.auditKey(), cursors);
+    this.write(this.auditKey(), cursors);
   }
 
   loadGrants(): PendingGrantScopes {
-    return storageService.getObject<PendingGrantScopes>(this.grantsKey()) ?? {};
+    return this.read<PendingGrantScopes>(this.grantsKey()) ?? {};
   }
 
   saveGrants(grants: PendingGrantScopes): void {
-    storageService.setObject(this.grantsKey(), grants);
+    this.write(this.grantsKey(), grants);
   }
 
   clear(scope: string = this.userScope()): void {
-    storageService.remove(SYNC_CURSORS_PREFIX + scope);
-    storageService.remove(SYNC_AUDIT_CURSORS_PREFIX + scope);
-    storageService.remove(SYNC_GRANT_SCOPES_PREFIX + scope);
+    for (const key of [
+      SYNC_CURSORS_PREFIX + scope,
+      SYNC_AUDIT_CURSORS_PREFIX + scope,
+      SYNC_GRANT_SCOPES_PREFIX + scope,
+    ]) {
+      this.held.delete(key);
+      storageService.remove(key);
+    }
+  }
+
+  private read<T>(key: string): T | null {
+    const text = this.held.get(key);
+    return text === undefined ? storageService.getObject<T>(key) : (JSON.parse(text) as T);
+  }
+
+  private write(key: string, value: unknown): void {
+    const text = JSON.stringify(value);
+    this.held.set(key, text);
+    this.flush().then(
+      () => {
+        if (this.held.get(key) !== text) return;
+        this.held.delete(key);
+        storageService.set(key, text);
+      },
+      () => undefined
+    );
   }
 
   private rowKey(): string {

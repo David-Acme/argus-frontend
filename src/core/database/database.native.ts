@@ -16,3 +16,5 @@ const adapter = new SQLiteAdapter({
 });
 
 export const database = new Database({ adapter, modelClasses });
+
+export const flushDatabase = (): Promise<void> => Promise.resolve();
