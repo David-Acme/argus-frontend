@@ -13,8 +13,6 @@ import { SYNC_OPERATION } from '@/shared/constants/sync.constant';
 const backend = backendRoot();
 const read = (path: string) => readFileSync(join(backend, path), 'utf8');
 
-const AWAITED_VOICE_TYPES: readonly string[] = ['voice:result'];
-
 describe('wire vocabulary matches the backend', () => {
   test('SyncOperation values', () => {
     const header = read('packages/contracts/sync/src/sync/sync-operation.hxx');
@@ -63,11 +61,7 @@ describe('wire vocabulary matches the backend', () => {
         .filter(([name, value]) => name.endsWith('_TYPE') && typeof value === 'string')
         .map(([, value]) => value as string)
     );
-    const awaited = new Set(AWAITED_VOICE_TYPES);
-    expect([...awaited].filter((type) => backendTypes.has(type))).toEqual([]);
-    expect([...appTypes].filter((type) => !awaited.has(type)).sort()).toEqual(
-      [...backendTypes].sort()
-    );
+    expect([...appTypes].sort()).toEqual([...backendTypes].sort());
   });
 
   test('default route ports match each service listener', () => {
