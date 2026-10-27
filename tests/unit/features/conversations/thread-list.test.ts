@@ -3,6 +3,7 @@ import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import {
   arrivedWhileAway,
   dayItemKey,
+  dayPillOf,
   estimatedHeightOf,
   estimatedItemSizeOf,
   floatingDayOf,
@@ -325,7 +326,7 @@ describe('the composer after the keyboard', () => {
 });
 
 describe('the day pill and the size estimate', () => {
-  test('the pill floats with the day of the first visible line, and hides while any separator shows', () => {
+  test('the pill floats with the day of the first visible line, and hides while that line\'s separator tops the list', () => {
     const items = threadItems({
       rows: [message({ id: '1' }), message({ id: '2', createdAt: T0 + DAY })],
       startOfDay,
@@ -333,10 +334,17 @@ describe('the day pill and the size estimate', () => {
     });
     const [firstDay, first, secondDay, second] = items as ThreadItem[];
     expect(floatingDayOf([first as ThreadItem])).toBe(startOfDay(T0));
-    expect(floatingDayOf([first as ThreadItem, secondDay as ThreadItem])).toBeNull();
+    expect(floatingDayOf([first as ThreadItem, secondDay as ThreadItem])).toBe(startOfDay(T0));
     expect(floatingDayOf([firstDay as ThreadItem, first as ThreadItem])).toBeNull();
     expect(floatingDayOf([secondDay as ThreadItem, second as ThreadItem])).toBeNull();
     expect(floatingDayOf([])).toBeNull();
+  });
+
+  test('the pill shows only while the user scrolls away from the newest line', () => {
+    expect(dayPillOf({ day: T0, scrolling: true, atEnd: false })).toBe(T0);
+    expect(dayPillOf({ day: T0, scrolling: false, atEnd: false })).toBeNull();
+    expect(dayPillOf({ day: T0, scrolling: true, atEnd: true })).toBeNull();
+    expect(dayPillOf({ day: null, scrolling: true, atEnd: false })).toBeNull();
   });
 
   test('a long message is estimated taller than a short one, a note and a day at their fixed sizes', () => {

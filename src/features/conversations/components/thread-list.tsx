@@ -1,12 +1,13 @@
 import type { LegendListRenderItemProps, ViewToken } from '@legendapp/list/react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { IS_WEB } from '@/shared/constants';
 import { useReduceMotion } from '@/shared/hooks/use-reduce-motion';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { space, useWindowHeight, useWindowWidth } from '@/shared/theme';
+import { motion, space, useWindowHeight, useWindowWidth } from '@/shared/theme';
 import { Text } from '@/shared/ui/text';
 import { DaySeparator } from '@/features/conversations/components/day-separator';
 import { ScrollDown } from '@/features/conversations/components/scroll-down';
@@ -18,9 +19,12 @@ import type {
 } from '@/features/conversations/components/thread-item';
 import { ThreadScroller } from '@/features/conversations/components/thread-scroller';
 import { ThreadSnapshot } from '@/features/conversations/components/thread-snapshot';
+import { DAY_PILL_HOLD_MS } from '@/features/conversations/constants/conversation.constant';
+import { useScrollActivity } from '@/features/conversations/hooks/use-scroll-activity';
 import { useThreadList } from '@/features/conversations/hooks/use-thread-list';
 import { notePlayer } from '@/features/conversations/services/note-player';
 import {
+  dayPillOf,
   estimatedItemSizeOf,
   floatingDayOf,
   keyboardOffsets,
@@ -60,9 +64,11 @@ const LIST_FILL = { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 } as 
 
 const LIST_BOTTOM = space[3];
 
-const LIST_CONTENT = { paddingBottom: LIST_BOTTOM } as const;
+const PILL_IN = FadeIn.duration(motion.duration.base);
 
-const FLOATING_DAY = { position: 'absolute', top: space[2], left: 0, right: 0 } as const;
+const PILL_OUT = FadeOut.duration(motion.duration.slow);
+
+const LIST_CONTENT = { paddingBottom: LIST_BOTTOM } as const;
 
 const EDGE_SCREENS = 2;
 
@@ -99,6 +105,7 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
   const offsets = keyboardOffsets(insets.bottom);
   const [ready, setReady] = useState(false);
   const [floatingDay, setFloatingDay] = useState<number | null>(null);
+  const activity = useScrollActivity(DAY_PILL_HOLD_MS);
   const thread = useThreadList({
     rows,
     startOfDay: days.startOfDay,
@@ -117,6 +124,15 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
     thread.onLoad();
     setReady(true);
   };
+
+  const onScroll = () => {
+    thread.onScroll();
+    activity.touch();
+  };
+
+  const pill = ready
+    ? dayPillOf({ day: floatingDay, scrolling: activity.scrolling, atEnd: thread.atEnd })
+    : null;
 
   const onViewable = ({ viewableItems }: Viewable) =>
     setFloatingDay(floatingDayOf(viewableItems.map((token) => token.item)));
@@ -140,7 +156,7 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
         alignItemsAtEnd
         maintainScrollAtEnd={paging.live ? { animated: !reduceMotion } : false}
         maintainVisibleContentPosition
-        onScroll={thread.onScroll}
+        onScroll={onScroll}
         onLoad={onLoad}
         onViewableItemsChanged={onViewable}
         viewabilityConfig={ANY_PIXEL}
@@ -154,11 +170,15 @@ export function ThreadList({ rows, bodies, paging, days, chat, argus }: ThreadLi
       {ready ? null : (
         <ThreadSnapshot items={thread.items.slice(-THREAD_TAIL)} bottom={LIST_BOTTOM} {...view} />
       )}
-      {ready && floatingDay !== null ? (
-        <View pointerEvents="none" style={FLOATING_DAY}>
-          <DaySeparator floating label={days.dayLabel(floatingDay)} />
-        </View>
-      ) : null}
+      {pill === null ? null : (
+        <Animated.View
+          entering={reduceMotion ? undefined : PILL_IN}
+          exiting={reduceMotion ? undefined : PILL_OUT}
+          pointerEvents="none"
+          className="bg-bg absolute inset-x-0 top-0 py-1">
+          <DaySeparator floating label={days.dayLabel(pill)} />
+        </Animated.View>
+      )}
       <OlderLoader active={thread.loadingOlder} />
       {!thread.atEnd || !paging.live ? (
         <ScrollDown unseen={thread.unseen} onPress={thread.goToLatest} offset={offsets.pill} />

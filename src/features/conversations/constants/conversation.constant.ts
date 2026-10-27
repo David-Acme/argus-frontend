@@ -7,6 +7,8 @@ export const CHAT_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 export const CONVERSATIONS_HREF = '/conversations';
 
+export const DAY_PILL_HOLD_MS = 1000;
+
 export const SUGGESTION_KEYS: Readonly<
   Record<Exclude<SuggestionId, 'show-camera'>, TranslationKey>
 > = {

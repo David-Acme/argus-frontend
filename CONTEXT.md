@@ -7843,9 +7843,16 @@ suggestion chips over the field and the microphone as tap-to-talk.
   the default; the earpiece at the ear needs a proximity sensor package the
   app does not have.
 - **Days and scrolling**: separators are pills (Hoy, Ayer, the weekday
-  within the week, «19 oct»), and a floating pill shows the day of the first
-  visible line while its own separator is off screen (`floatingDayOf`); the
-  scroll button is round with a double chevron and an unread badge.
+  within the week, «19 oct») that stay in the flow between groups. A floating
+  pill shows the day of the first visible line only while the user scrolls
+  away from the newest line and its own separator is not at the top
+  (`floatingDayOf`, `dayPillOf`); it fades out 1 s after the last scroll
+  event (`DAY_PILL_HOLD_MS`, `useScrollActivity`). It sits in its own band at
+  the top of the list, on the screen background with a solid pill, so it
+  never lies over a bubble's text (phone run 2 #2). The scroll button is
+  round with a double chevron and an unread badge; it floats over older lines
+  and the list keeps no room for it, so the last bubble sits 12 above the
+  composer (phone run 2 #1).
 - **Search**: a sheet over a local `LIKE` on the thread's bodies, newest
   first, 50 at most (`conversationService.searchThread`).
 - **Instant thread**: measured on the web build from the click on a
