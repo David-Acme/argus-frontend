@@ -51,6 +51,10 @@ mock.module('@/features/home/hooks/use-recent-clip-tiles', () => ({
   useRecentClipTiles: () => data,
 }));
 
+mock.module('@/shared/components/layout/use-offline-notice', () => ({
+  useOfflineNotice: () => false,
+}));
+
 const { RecentClipsSection } =
   await import('@/features/home/components/cameras/recent-clips-section');
 const { ScreenColumn, ScreenColumns } = await import('@/shared/ui/screen/screen-columns');

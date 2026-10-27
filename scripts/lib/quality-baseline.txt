@@ -16,4 +16,4 @@ legacy-token-class 616
 manual-memo 329
 shared-value-dot-value 103
 untested-component-or-screen 142
-scanned-files 2097
+scanned-files 2115
