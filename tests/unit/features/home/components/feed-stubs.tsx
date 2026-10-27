@@ -1,4 +1,5 @@
 import { mock } from 'bun:test';
+import { useState } from 'react';
 import type { INotificationPreviewCacheRow } from '@/core/interfaces';
 import type { HomePerson } from '@/features/home/model/home-people';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@/features/home/model/notification-threads';
 import { notificationHrefOf } from '@/features/notification/model/notification-link';
 import { createDateFormatter } from '@/shared/hooks/use-date-formatter/date';
+import { infiniteFooter } from '@/shared/libs/infinite-list';
 import '../../../shared/ui/translation-stub';
 
 type Feed = {
@@ -92,6 +94,22 @@ const dates = createDateFormatter('es', {
   timeZone: null,
 });
 
+function useFeedPaging(feed: Feed) {
+  const [failed, setFailed] = useState(false);
+  const run = () => {
+    void feed.loadMore().then((ok) => setFailed(!ok));
+  };
+  return {
+    footer: infiniteFooter({ count: feed.rows.length, hasMore: feed.hasMore, failed, endAfter: 0 }),
+    loading: false,
+    onEndReached: run,
+    retry: () => {
+      setFailed(false);
+      run();
+    },
+  };
+}
+
 mock.module('expo-router', () => ({
   Redirect: () => null,
   useLocalSearchParams: () => params,
@@ -111,7 +129,7 @@ mock.module('@/features/home/hooks/use-news', () => ({
   useNews: () => ({
     readable: news.readable,
     threads: news.threads,
-    feed: news.feed,
+    feed: { ...news.feed, paging: useFeedPaging(news.feed) },
     read: (thread: NotificationThread) => reads.push(thread.key),
   }),
 }));

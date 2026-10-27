@@ -7,11 +7,7 @@ import type {
 } from '@/core/interfaces';
 import { PROJECT_DONE_PAGE_SIZE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheRows } from '@/shared/hooks/use-cached-rows';
-import {
-  useInfiniteList,
-  usePagedView,
-  type InfiniteListState,
-} from '@/shared/hooks/use-infinite-list';
+import { usePagedList, type InfiniteListState } from '@/shared/hooks/use-infinite-list';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import type { OptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import type { TaskProgress } from '@/shared/libs/task-progress';
@@ -36,10 +32,10 @@ const NO_TASKS: readonly IProjectTaskCacheRow[] = [];
 const NO_PROGRESS: TaskProgress = { done: 0, total: 0 };
 
 export function useProjectTaskPage(projectId: string) {
-  return usePagedView<IProjectTaskCacheRow, IProjectTasksPage>(
+  return usePagedList<IProjectTaskCacheRow, IProjectTasksPage>(
     VIEW_CACHE_KEYS.projectTasks,
     projectId,
-    projectId !== ''
+    { enabled: projectId !== '', endAfter: PROJECT_DONE_PAGE_SIZE }
   );
 }
 
@@ -55,17 +51,11 @@ export function useProjectTasks(projectId: string): ProjectTasks {
     projectTaskRows(page.snapshot?.open ?? NO_TASKS, page.rows),
     lenses
   );
-  const donePaging = useInfiniteList({
-    count: page.rows.length,
-    hasMore: page.hasMore,
-    loadMore: page.loadMore,
-    endAfter: PROJECT_DONE_PAGE_SIZE,
-  });
   return {
     ...tasks,
     progress: page.snapshot?.progress ?? NO_PROGRESS,
     doneTotal: page.snapshot?.doneTotal ?? 0,
-    donePaging,
+    donePaging: page.paging,
   };
 }
 

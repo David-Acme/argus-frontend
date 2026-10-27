@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { ResourceMatch, VisitorSettings, VisitorSummary } from '@/core/types';
 import { VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useViewCacheValue } from '@/shared/hooks/use-cached-rows';
-import { useInfiniteList, useRemoteFeed } from '@/shared/hooks/use-infinite-list';
+import { useFeedList } from '@/shared/hooks/use-infinite-list';
 import { useRemoteResource } from '@/shared/hooks/use-remote-resource';
+import { useSettled } from '@/shared/hooks/use-settled';
 import { useServiceAction } from '@/shared/hooks/use-service-action';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import type { RemoteFeedSnapshot } from '@/core/services/paging';
@@ -40,9 +41,13 @@ const VISITORS_RESOURCES: readonly ResourceMatch[] = [{ domain: 'identity', scop
 const NO_VISITORS: readonly VisitorSummary[] = [];
 
 export function useVisitorFeed({ filter, search }: VisitorQuery) {
-  const [settled, setSettled] = useState(search);
+  const settled = useSettled(search, VISITOR_SEARCH_DEBOUNCE_MS);
   const scope = visitorFeedScope({ filter, search: settled });
-  const feed = useRemoteFeed(visitorFeed, scope, true, VISITORS_RESOURCES);
+  const feed = useFeedList(visitorFeed, scope, {
+    resources: VISITORS_RESOURCES,
+    endAfter: VISITOR_PAGE_SIZE,
+    waiting: settled !== search,
+  });
   const base = useViewCacheValue<RemoteFeedSnapshot<VisitorSummary, unknown>>(
     visitorFeed.key,
     VISITOR_ALL_SCOPE
@@ -52,22 +57,10 @@ export function useVisitorFeed({ filter, search }: VisitorQuery) {
     () => (pending ? filterVisitors(base?.rows ?? NO_VISITORS, filter, search) : feed.rows),
     [base, feed.rows, filter, pending, search]
   );
-  const paging = useInfiniteList({
-    count: feed.rows.length,
-    hasMore: pending || feed.hasMore,
-    loadMore: feed.loadMore,
-    endAfter: VISITOR_PAGE_SIZE,
-  });
-
-  useEffect(() => {
-    if (search === settled) return;
-    const timer = setTimeout(() => setSettled(search), VISITOR_SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [search, settled]);
 
   return {
     rows,
-    paging,
+    paging: feed.paging,
     status: feed.status,
     known: base != null || feed.status === 'ready',
     reload: feed.reload,

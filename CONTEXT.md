@@ -6742,6 +6742,32 @@ the client. The agenda keeps loading by its visible range.
   now asks `dashboard.summary.projectsTotal` instead of reading the project
   list.
 
+## One paging mechanism (2026-10-27, feat/lists-paged-2)
+
+David: one simple, reusable mechanism; each list declares only its source,
+sort, filter and page size.
+
+- **A list is segments.** A service declares a list as one or more
+  `keysetSegment({clauses, sort, columns, pageSize})` (`DatabaseService`),
+  optionally behind a module gate (`gatedSegment`, `core/services/paging`).
+  Notifications (`feedSegment`), finished tasks (`doneSegment`) and the search
+  (eight segments) are declared this way; nothing else pages by hand.
+- **A paged view is `listPages`** (`core/services/view-cache/list-pages.ts`):
+  `{key, warm?, segments(scope, ctx), extra?(scope, ctx), project(values,
+  scope)}`. It owns the window (`SegmentWindow`), opening, extending and
+  sameness; the coordinator only registers it. All four paged views but the
+  chat thread (`notification.feed`, `command.search`, `project.tasks`) are
+  built with it; the thread keeps its two-way window (`ThreadWindow`, newer
+  and older pages around a reading position), which the keyset segments do
+  not model.
+- **A screen reads `usePagedList(key, scope, {enabled, endAfter})`** for a
+  local list and `useFeedList(feed, scope, {enabled, resources, endAfter,
+  waiting})` for a server feed (`shared/hooks/use-infinite-list.ts`); both
+  return the rows plus the `InfiniteListState`. The news screen's «Ver más»
+  reads that state instead of its own failed flag. `useSettled(value, ms)`
+  (`shared/hooks/use-settled.ts`) is the one typing debounce (search,
+  visitors).
+
 ## Tasks read the database by project (2026-10-27, feat/lists-paged)
 
 David asked every long list to page from the database. The coordinator no

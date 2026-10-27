@@ -11,6 +11,7 @@ export {
 export { likeWord, wordClauses } from './search';
 export {
   FIRST_SEGMENT,
+  gatedSegment,
   mapSegment,
   nextSegments,
   observeSegments,
@@ -18,4 +19,5 @@ export {
   sameSegments,
   type PageSegment,
   type SegmentWindow,
+  type SourceGate,
 } from './segments';

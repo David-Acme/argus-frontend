@@ -33,8 +33,8 @@ import { projectPeople } from './view-cache/people.projection';
 import { projectProjects } from './view-cache/project.projection';
 import { startOfNextDay } from './view-cache/dates';
 import { startProjection, type ProjectionContext } from './view-cache/projection';
-import { notificationPages, searchPages } from './view-cache-pages';
-import { projectProgress, projectTaskPages, startWeekTasks } from './view-cache-tasks';
+import { notificationPages, projectTaskPages, searchPages } from './view-cache-pages';
+import { projectProgress, startWeekTasks } from './view-cache-tasks';
 import { projectSummary } from './view-cache/summary.projection';
 
 const shared = <T>(source: Observable<T>): Observable<T> =>

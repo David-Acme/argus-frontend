@@ -1,18 +1,15 @@
 import type { Observable } from 'rxjs';
 import type { ISearchHitCacheRow } from '@/core/interfaces';
-import type { KeysetPage, KeysetWindow, SearchKind, SearchScope } from '@/core/types';
+import type { SearchKind, SearchScope } from '@/core/types';
 import { calendarEventService } from '@/core/services/calendar-event.service';
 import { cameraService } from '@/core/services/camera.service';
 import { notificationService } from '@/core/services/notification.service';
 import {
-  FIRST_SEGMENT,
+  gatedSegment,
   mapSegment,
-  nextSegments,
-  observeSegments,
-  sameKeyset,
-  sameSegments,
   type PageSegment,
   type SegmentWindow,
+  type SourceGate,
 } from '@/core/services/paging';
 import { projectService } from '@/core/services/project.service';
 import { projectTaskService } from '@/core/services/project-task.service';
@@ -25,15 +22,14 @@ import {
   personHit,
   projectHit,
   projectNotificationFeed,
+  listPages,
   projectSearch,
-  startProjection,
+  projectTasksPage,
   taskHit,
   type PagedViewSpec,
 } from './view-cache';
 
-export type SourceGate = {
-  of: <T>(moduleId: string, source: Observable<T>, empty: T) => Observable<T>;
-};
+const NO_COUNTS = { done: 0, total: 0, closed: 0 };
 
 type HitSegment = PageSegment<ISearchHitCacheRow>;
 
@@ -90,64 +86,43 @@ const SEGMENTS: readonly SegmentSpec[] = [
   },
 ];
 
-const EMPTY_PAGE: KeysetPage<ISearchHitCacheRow> = { rows: [], hasMore: false };
-
-function gated(segment: HitSegment, module: string | null, gate: SourceGate): HitSegment {
-  if (module === null) return segment;
-  return {
-    ...segment,
-    observe: (window) => gate.of(module, segment.observe(window), EMPTY_PAGE),
-    any: () => gate.of(module, segment.any(), false),
-  };
-}
-
 export function searchSegments(scope: SearchScope, gate: SourceGate): HitSegment[] {
   if (scope.words.length === 0) return [];
   return SEGMENTS.filter((spec) => scope.kinds.includes(spec.kind)).map((spec) =>
-    gated(spec.open(scope), spec.module, gate)
+    gatedSegment(spec.open(scope), spec.module, gate)
   );
 }
 
 export function searchPages(gate: SourceGate): PagedViewSpec<SegmentWindow> {
-  const segmentsOf = (scope: string) => {
-    const parsed = parseSearchScope(scope);
-    return { words: parsed?.words ?? [], segments: parsed ? searchSegments(parsed, gate) : [] };
-  };
-  return {
+  return listPages<ISearchHitCacheRow>({
     key: VIEW_CACHE_KEYS.commandSearch,
-    initial: () => FIRST_SEGMENT,
-    open: (scope, window, context) => {
-      const { words, segments } = segmentsOf(scope);
-      return startProjection(
-        {
-          sources: () => ({ page: observeSegments(segments, window) }),
-          project: (values) => projectSearch(values.page, scope, words),
-        },
-        context
-      );
+    segments: (scope) => {
+      const parsed = parseSearchScope(scope);
+      return parsed ? searchSegments(parsed, gate) : [];
     },
-    extend: (scope, window) => nextSegments(segmentsOf(scope).segments, window),
-    same: sameSegments,
-  };
+    project: ({ page }, scope) => projectSearch(page, scope, parseSearchScope(scope)?.words ?? []),
+  });
 }
 
-export function notificationPages(unread: Observable<number>): PagedViewSpec<KeysetWindow> {
-  return {
+export function notificationPages(unread: Observable<number>): PagedViewSpec<SegmentWindow> {
+  return listPages({
     key: VIEW_CACHE_KEYS.notificationFeed,
     warm: [NOTIFICATION_FEED_SCOPE],
-    initial: () => ({ through: null }),
-    open: (scope, window, context) =>
-      startProjection(
-        {
-          sources: () => ({
-            page: notificationService.observeFeedPage(context.userId, window),
-            unread,
-          }),
-          project: (values) => projectNotificationFeed(values, scope),
-        },
-        context
-      ),
-    extend: (_scope, window, context) => notificationService.nextFeedWindow(context.userId, window),
-    same: sameKeyset,
-  };
+    segments: (_scope, ctx) => [notificationService.feedSegment(ctx.userId)],
+    extra: () => ({ unread }),
+    project: (values, scope) => projectNotificationFeed(values, scope),
+  });
+}
+
+export function projectTaskPages(gate: SourceGate): PagedViewSpec<SegmentWindow> {
+  return listPages({
+    key: VIEW_CACHE_KEYS.projectTasks,
+    segments: (scope) => [gatedSegment(projectTaskService.doneSegment(scope), PRODUCTIVITY, gate)],
+    extra: (scope) => ({
+      open: gate.of(PRODUCTIVITY, projectTaskService.observeOpenForProject(scope), []),
+      counts: gate.of(PRODUCTIVITY, projectTaskService.observeProgress(scope), NO_COUNTS),
+    }),
+    project: ({ open, page, counts }, scope) =>
+      projectTasksPage({ open, done: page, counts }, scope),
+  });
 }
