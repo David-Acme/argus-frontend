@@ -25,7 +25,7 @@ import {
   sessionRow,
 } from '../support/ui-map/backend';
 import { DAY, HOUR, HOUSEHOLD, NOW, reminder, user } from '../support/ui-map/data';
-import type { Row, ScreenSpec } from '../support/ui-map/scenario';
+import type { Row, ScreenSpec, StateSpec } from '../support/ui-map/scenario';
 import { button, say } from '../support/ui-map/text';
 import type { TranslationKey } from '../../../src/core/types';
 
@@ -255,6 +255,9 @@ const HOUSEHOLD_ROUTES: RouteSpec[] = [
 
 const ROWS: Row[] = [...PEOPLE, ...CAMERAS];
 
+const withRows = (states: readonly StateSpec[]): StateSpec[] =>
+  states.map((state) => ({ rows: ROWS, ...state }));
+
 const activity = (id: number, table: string, action: string, title: string, ago: number) => ({
   id,
   userId: 1,
@@ -362,21 +365,23 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
     route: '/users',
     path: '/users',
     routes: HOUSEHOLD_ROUTES,
-    rows: ROWS,
-    states: [
+    states: withRows([
       { state: 'populated', main: true },
       { state: 'only-owner', rows: [] },
       {
         state: 'many-long',
-        rows: Array.from({ length: 24 }, (_, index) =>
-          user(
-            30 + index,
-            index % 5 === 0 ? 'María Fernanda Guadalupe' : `Persona ${index}`,
-            index % 5 === 0 ? 'de los Santos Villanueva Huamán' : 'Pérez',
-            ['resident', 'guard', 'guest'][index % 3] as string,
-            index % 7 !== 0
-          )
-        ),
+        rows: [
+          ...ROWS,
+          ...Array.from({ length: 24 }, (_, index) =>
+            user(
+              30 + index,
+              index % 5 === 0 ? 'María Fernanda Guadalupe' : `Persona ${index}`,
+              index % 5 === 0 ? 'de los Santos Villanueva Huamán' : 'Pérez',
+              ['resident', 'guard', 'guest'][index % 3] as string,
+              index % 7 !== 0
+            )
+          ),
+        ],
       },
       {
         state: 'surveillance-off',
@@ -399,7 +404,8 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
           },
         ],
       },
-      { state: 'new-invitation-dialog', act: click('screens.users.new-invitation') },
+      { state: 'new-invitation-sheet', act: click('screens.users.invite') },
+      { state: 'invite-from-profile', path: '/users?invite=1' },
       {
         state: 'invitation-qr',
         routes: [
@@ -421,23 +427,43 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
           },
           { method: 'DELETE', path: '/invitation/106', info: null },
         ],
-        act: steps(click('screens.users.new-invitation'), click('screens.users.show-qr', 'last')),
+        act: steps(click('screens.users.invite'), click('screens.users.show-qr', 'last')),
       },
-      { state: 'edit-user-dialog', act: clickName(/^(Editar|Edit) Luis/) },
+      { state: 'person', path: '/people/2' },
+      { state: 'person-inactive', path: '/people/8' },
+      { state: 'person-self', path: '/people/1' },
+      { state: 'person-missing', path: '/people/77' },
       {
-        state: 'user-access-dialog',
-        act: click('screens.users.access-of', 'first', { name: 'Luis Ruiz' }),
+        state: 'person-sessions-failed',
+        path: '/people/2',
+        routes: [
+          {
+            method: 'GET',
+            path: '/auth/users/2/sessions',
+            status: 500,
+            errors: { code: 'INTERNAL_ERROR', message: 'x' },
+          },
+          {
+            method: 'GET',
+            path: '/auth/users/sessions',
+            status: 500,
+            errors: { code: 'INTERNAL_ERROR', message: 'x' },
+          },
+        ],
       },
+      { state: 'edit-person-sheet', path: '/people/2', act: clickName(/^(Residente|Resident), /) },
       {
-        state: 'user-access-dialog-inactive',
-        act: click('screens.users.access-of', 'first', { name: 'Jorge Quispe' }),
+        state: 'deactivate-confirm',
+        path: '/people/2',
+        act: clickName(/^(Desactivar cuenta|Turn off account),/),
       },
       {
         state: 'role-guard-paused',
+        path: '/people/3',
         context: { modules: ownerContext({ surveillance: false }).modules },
-        act: clickName(/^(Editar|Edit) Carlos/),
+        act: clickName(/^(Guardia|Guard), /),
       },
-    ],
+    ]),
   },
   {
     screen: 'people-directory',
@@ -448,16 +474,11 @@ export const HOUSEHOLD_SCREENS: ScreenSpec[] = [
     rows: ROWS,
     states: [
       { state: 'guard-populated', role: 'guard', main: true },
+      { state: 'guard-person', role: 'guard', path: '/people/2' },
       {
-        state: 'guard-filter-no-match',
-        role: 'guard',
-        act: async (scene) => {
-          await scene.page.getByRole('textbox').first().fill('zzz');
-          await sleep(600);
-        },
+        state: 'owner-directory',
+        notes: 'an Owner opening /people reads the same Personas as /users',
       },
-      { state: 'guard-person-dialog', role: 'guard', act: clickName(/^Luis Ruiz\./) },
-      { state: 'owner-redirect', notes: 'an Owner opening /people is sent to /profile' },
     ],
   },
   {

@@ -1402,7 +1402,7 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
 
 - Roles shape the local projection, not merely the buttons: Owner sees
   `/users` (users + invitation metadata); Guard sees `/people` (directory only);
-  Resident/Guest see their own profile only. Reuse `peopleAccessOf(view)` from
+  both open a person at `/people/[id]`; Resident/Guest see their own profile only. Reuse `peopleAccessOf(view)` from
   `shared/libs/capabilities.ts` instead of scattering role checks.
 - **One question, one hook: `useCapabilities()`** (`shared/hooks/use-capabilities.ts`).
   What a person may use now is the backend's `capabilitiesFor(role, activeModules)`
@@ -1420,9 +1420,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
   authority: the app only hides.
 - Every role manages its own sessions from `/profile` ("Sesiones y
   dispositivos", `features/sessions`); `/settings` is the Owner's alone. The
-  Owner also sees every user's sessions in `/users` ("Dispositivos
-  conectados" and the per-user access dialog), closes them and turns
-  accounts off or back on. `sessionAccessForRole` mirrors the backend's
+  Owner also sees each user's sessions in that person's detail
+  (`/people/[id]`), closes them and turns accounts off or back on. `sessionAccessForRole` mirrors the backend's
   `kSessionAccess`, owner rows included (`manageOthers`).
 - Which role may open which screen is one table, `shared/libs/route-access.ts`
   (`routeFallback(path, view)`): the `(app)` layout redirects with it and the
@@ -1659,7 +1658,7 @@ cd src-tauri && cargo check
 | `src/features/cameras/services/camera-media.service.ts` | Socket `/media` (argus-camera): subscribe/ack/unsubscribe, framing `0xA7`, reconexión con backoff y ack guiado por el decoder |
 | `src/features/cameras/components/camera-live-view.*` | Vista en vivo de la cámara: nativa en móvil, WebCodecs+canvas en desktop/web (placeholder si el webview no soporta WebCodecs) |
 | `src-tauri/` | Desktop (Tauri 2 + Rust: `mdns-sd`, `reqwest/rustls`, `keyring`) |
-| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `CreateTile`, `ResponsiveGrid`, `ListRow`, `InfiniteList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
+| `src/shared/components/ui/` | Design system: `Text`, `Button`, `IconButton`, `Icon`, inputs and forms, dialogs/sheets/menus, `Panel`, `SectionHeader`, `EmptyState` (page/panel/inline), `ListRow`, `InfiniteList`, `FilterChips`, `StatusBadge`, `Switch`/`ToggleRow`, `TimelineItem`, `ConfirmDialog`, `Toaster` |
 | `src/app/welcome/` | Onboarding routes (nested Stack with fade), one-line re-exports of `features/auth` screens: `index` (the welcome hero), `pairing/`, `invitation/`, `privacy/`, `face/`, `modules/`, `module-privacy/`, `voice/` (the last six mobile-only); order and step counts come from `features/auth/model/onboarding-flow.ts` |
 | `src/app/login/index.tsx` | Desktop cross-device login QR (`features/auth` `LoginScreen`) |
 | `src/app/approve/index.tsx` | Mobile: scan another device's QR and approve its session (`features/auth`) |

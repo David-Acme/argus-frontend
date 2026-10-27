@@ -10,8 +10,6 @@ export const VISITOR_CATEGORY_ICONS: Readonly<Record<VisitorCategory, IconName>>
   watchlist: 'siren',
 };
 
-export const VISITOR_PREVIEW_COUNT = 6;
-
 export const VISITOR_PAGE_SIZE = 60;
 
 export const VISITOR_SEARCH_DEBOUNCE_MS = 250;

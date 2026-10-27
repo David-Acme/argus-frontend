@@ -20,18 +20,18 @@ export function useBiometricErase() {
   const erase = useCallback(
     async ({ userId, name }: BiometricEraseInput) => {
       const result = await run({
-        confirm: {
-          title: t('screens.users.biometrics.confirm-title', { name }),
-          description: t('screens.users.biometrics.confirm-description', { name }),
-          confirmLabel: t('screens.users.biometrics.erase'),
-          intent: 'danger',
-        },
         call: () => userManagementService.eraseBiometrics(userId),
         errorTitle: t('screens.users.biometrics.error'),
       });
       if (!result?.info) return false;
-      const directory = viewCacheService.readValue<VoiceprintDirectory>(VIEW_CACHE_KEYS.voiceprintUsers);
-      if (directory) viewCacheService.writeValue(VIEW_CACHE_KEYS.voiceprintUsers, withoutVoice(directory, userId));
+      const directory = viewCacheService.readValue<VoiceprintDirectory>(
+        VIEW_CACHE_KEYS.voiceprintUsers
+      );
+      if (directory)
+        viewCacheService.writeValue(
+          VIEW_CACHE_KEYS.voiceprintUsers,
+          withoutVoice(directory, userId)
+        );
       const summary = erasureSummary(result.info);
       toast.success(
         t('screens.users.biometrics.erased', { name }),
@@ -41,11 +41,11 @@ export function useBiometricErase() {
               faces: summary.faces,
               portraits: summary.portraits,
               samples: summary.samples,
-            }),
+            })
       );
       return true;
     },
-    [run, t],
+    [run, t]
   );
 
   return { erase, pending };

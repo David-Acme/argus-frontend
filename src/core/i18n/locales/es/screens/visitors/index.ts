@@ -3,7 +3,6 @@ export const visitors = {
   subtitle:
     'Rostros que Argus vio más de una vez y que no son de tu hogar. Ponles nombre y sabrá quién pasó.',
   section: 'Personas vistas',
-  'see-all': 'Ver todas',
   unnamed: 'Persona #{number}',
   'unnamed-plain': 'Persona sin nombre',
   'off-title': 'El reconocimiento de visitantes está apagado',
@@ -33,8 +32,7 @@ export const visitors = {
     acquaintance: 'Conocido',
     watchlist: 'Lista de vigilancia',
   },
-  'watchlist-hint':
-    'Si vuelve a aparecer, Argus te avisará de inmediato, sin esperar a confirmar.',
+  'watchlist-hint': 'Si vuelve a aparecer, Argus te avisará de inmediato, sin esperar a confirmar.',
   name: 'Nombre',
   'name-placeholder': 'Por ejemplo: Juan',
   type: 'Tipo',

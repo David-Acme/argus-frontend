@@ -461,6 +461,40 @@ export const HOME: ScreenSpec[] = [
     ],
   },
   {
+    screen: 'news',
+    inApp: true,
+    route: '/notification',
+    path: '/notification',
+    routes: BASELINE,
+    states: [
+      { state: 'populated', main: true, rows: POPULATED },
+      { state: 'many', rows: [...POPULATED, ...manyNotifications] },
+      {
+        state: 'filter-security',
+        rows: POPULATED,
+        act: async (scene) => {
+          await scene.page
+            .getByRole('radio', { name: say(scene, 'screens.home.news.filter.security') })
+            .first()
+            .click();
+          await sleep(700);
+        },
+      },
+      {
+        state: 'filter-pending',
+        rows: POPULATED,
+        act: async (scene) => {
+          await scene.page
+            .getByRole('radio', { name: say(scene, 'screens.home.news.filter.pending') })
+            .first()
+            .click();
+          await sleep(700);
+        },
+      },
+      { state: 'empty' },
+    ],
+  },
+  {
     screen: 'notification-link',
     inApp: true,
     route: '/notification',
@@ -468,9 +502,10 @@ export const HOME: ScreenSpec[] = [
     routes: BASELINE,
     states: [
       {
-        state: 'waiting-for-row',
+        state: 'gone',
         main: true,
-        notes: 'the id is not in the first 40 synced notifications: it waits, possibly forever',
+        notes:
+          'the id is not among the synced notifications: once the sync settles it says so above the feed',
       },
     ],
   },

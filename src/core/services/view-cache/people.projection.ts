@@ -1,13 +1,23 @@
 import type { UserInvitationModel, UserModel } from '@/core/database';
-import type { IInvitationRecord, IPeopleDirectoryCacheRow, IPeopleDirectoryFilter } from '@/core/interfaces';
+import type { IInvitationRecord, IPeopleDirectoryCacheRow } from '@/core/interfaces';
 import { VIEW_CACHE_KEYS, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants/cache.constant';
 import type { ViewWrite } from './projection';
 
-export type UserSource = Pick<UserModel, 'id' | 'name' | 'lastName' | 'role' | 'isActive' | 'createdAt' | 'updatedAt'>;
+export type UserSource = Pick<
+  UserModel,
+  'id' | 'name' | 'lastName' | 'role' | 'isActive' | 'createdAt' | 'updatedAt'
+>;
 
 export type InvitationSource = Pick<
   UserInvitationModel,
-  'id' | 'role' | 'maxRedemptions' | 'redemptionCount' | 'expiresAt' | 'createdBy' | 'revokedAt' | 'createdAt'
+  | 'id'
+  | 'role'
+  | 'maxRedemptions'
+  | 'redemptionCount'
+  | 'expiresAt'
+  | 'createdBy'
+  | 'revokedAt'
+  | 'createdAt'
 > &
   Partial<Pick<UserInvitationModel, 'revokedReason' | 'revokedModule'>>;
 
@@ -44,17 +54,4 @@ export function projectPeople({ users, invitations }: PeopleProjectionInput): Vi
     { key: VIEW_CACHE_KEYS.peopleUsers, rows: people, limit: VIEW_CACHE_LIST_LIMIT },
     { key: VIEW_CACHE_KEYS.peopleInvitations, rows: invitationRows, limit: VIEW_CACHE_LIST_LIMIT },
   ];
-}
-
-export function filterPeople(
-  rows: readonly IPeopleDirectoryCacheRow[],
-  filter: IPeopleDirectoryFilter,
-): readonly IPeopleDirectoryCacheRow[] {
-  const query = filter.query.trim().toLocaleLowerCase();
-  if (!query && filter.role === 'all') return rows;
-  return rows.filter((row) => {
-    if (filter.role !== 'all' && row.role !== filter.role) return false;
-    if (!query) return true;
-    return `${row.name} ${row.lastName}`.toLocaleLowerCase().includes(query) || row.role.includes(query);
-  });
 }

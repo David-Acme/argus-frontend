@@ -7,7 +7,6 @@ import {
   overviewOf,
   SESSION_LENSES,
   pairedDateOf,
-  sessionInsightsOf,
   sessionRowsOf,
   withoutSessions,
 } from '@/features/sessions/model/sessions';
@@ -109,8 +108,6 @@ describe('connected devices for the owner', () => {
     expect(users.map((user) => user.userId)).toEqual([1, 4]);
     expect(users[0]?.sessions.map((item) => item.platform)).toEqual(['ios', 'desktop']);
     expect(users[0]?.lastSeenAt).toBe(NOW - 60);
-    expect(users[0]?.groups).toEqual(['mobile', 'desktop']);
-    expect(users[1]?.groups).toEqual(['mobile']);
   });
 
   test('no answer yet is no rows, not an error', () => {
@@ -124,33 +121,6 @@ describe('connected devices for the owner', () => {
     expect(remaining?.users[0]?.sessions.map((item) => item.id)).toEqual([session('c').id]);
     expect(withoutSessions(overview, [])).toBe(overview);
     expect(withoutSessions(null, ['x'])).toBeNull();
-  });
-});
-
-describe('sessionInsightsOf', () => {
-  test('counts open and active-today sessions, the nearest expiry and the latest sign-ins', () => {
-    const sessions = [
-      session('a', {
-        current: true,
-        lastSeenAt: NOW - 3 * 86_400,
-        createdAt: NOW - 10,
-        expiresAt: NOW + 900,
-      }),
-      session('b', { lastSeenAt: NOW - 3_600, createdAt: NOW - 5_000, expiresAt: NOW + 100 }),
-      session('c', { lastSeenAt: NOW - 2 * 86_400, createdAt: NOW - 90_000, expiresAt: NOW - 1 }),
-    ];
-    const insights = sessionInsightsOf(sessions, NOW, 2);
-    expect(insights.open).toBe(3);
-    expect(insights.activeToday).toBe(2);
-    expect(insights.nextExpiry).toBe(NOW + 100);
-    expect(insights.recentSignIns.map((item) => item.id)).toEqual(
-      sessions.slice(0, 2).map((item) => item.id)
-    );
-  });
-
-  test('no sessions means nothing open and no expiry', () => {
-    const insights = sessionInsightsOf([], NOW, 4);
-    expect(insights).toEqual({ open: 0, activeToday: 0, nextExpiry: null, recentSignIns: [] });
   });
 });
 

@@ -21,14 +21,14 @@ const failing = (path: string) => ({
   errors: { code: 'INTERNAL_ERROR', message: 'x' },
 });
 
-test('members do not read "No open sessions" when the sessions overview failed to load', async ({
+test('a person whose sessions failed to load never reads "No open sessions."', async ({
   app,
   browser,
   screen,
 }) => {
   const baseUrl = app.baseUrl ?? '';
   await store(baseUrl, 'user', luis);
-  await routes(baseUrl, [failing('/auth/users/sessions')]);
+  await routes(baseUrl, [failing('/auth/users/sessions'), failing('/auth/users/2/sessions')]);
   const escapes = await openFirst(browser, app);
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
@@ -37,10 +37,13 @@ test('members do not read "No open sessions" when the sessions overview failed t
     .getByRole('button', /^People, /)
     .first()
     .click();
-  await expect(screen.getByText(/Luis Paz/).first()).toBeVisible({ timeout: 10000 });
-  await expect(
-    screen.getByText('The connected devices could not be loaded.', { exact: true })
-  ).toBeVisible({ timeout: 10000 });
+  await screen
+    .getByRole('button', /^Luis Paz, /)
+    .first()
+    .click();
+  await expect(screen.getByText('I could not load their sessions', { exact: true })).toBeVisible({
+    timeout: 10000,
+  });
   expect(await browser.evaluate(() => document.body.innerText.includes('No open sessions'))).toBe(
     false
   );
@@ -72,7 +75,7 @@ test('an empty sessions answer ends the search instead of searching forever', as
   expect(escapes).toEqual([]);
 });
 
-test('a notification link whose notice never arrives says so and offers a retry', async ({
+test('a notification link whose notice is not here says so once synced, over the feed', async ({
   app,
   browser,
   screen,
@@ -82,13 +85,12 @@ test('a notification link whose notice never arrives says so and offers a retry'
   await expect.poll(() => connected(baseUrl, 'A'), { timeout: 10000 }).toBe(1);
 
   await app.open('/notification?notificationId=999');
-  await expect(screen.getByText('Opening the notification', { exact: true })).toBeVisible({
-    timeout: 10000,
+  await expect(screen.getByText('This notice is no longer here', { exact: true })).toBeVisible({
+    timeout: 15000,
   });
-  await expect(screen.getByText('I could not find this notification', { exact: true })).toBeVisible(
-    { timeout: 15000 }
-  );
-  await expect(screen.getByText('Retry', { exact: true })).toBeVisible();
+  await expect(screen.getByText('Opening the notification', { exact: true })).toBeHidden();
+  await screen.getByRole('button', 'Close').first().click();
+  await expect(screen.getByText('This notice is no longer here', { exact: true })).toBeHidden();
 
   expect(escapes).toEqual([]);
 });

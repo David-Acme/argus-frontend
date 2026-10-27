@@ -610,88 +610,6 @@
       "count": 1
     }
   },
-  "src/features/notification/screens/notification-link-screen.tsx": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    }
-  },
-  "src/features/people/components/invitation-dialog.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/people/components/invitation-preview-dialog.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 2
-    }
-  },
-  "src/features/people/components/invitations-panel.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/people/components/managed-user-dialog.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/people/components/members-panel.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/people/components/person-details-dialog.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
-  "src/features/people/components/role-access-card.tsx": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/people/hooks/use-presence.ts": {
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/people/screens/people-directory-screen.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/people/screens/users-screen.tsx": {
-    "argus/no-template-key": {
-      "count": 4
-    },
-    "argus/no-visual-timer": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/people/services/portrait-preview.service.ts": {
     "argus/no-http-type-argument": {
       "count": 2
@@ -1091,19 +1009,6 @@
   "src/features/security/screens/security-screen.tsx": {
     "@typescript-eslint/no-misused-promises": {
       "count": 2
-    }
-  },
-  "src/features/sessions/components/connected-devices-panel.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/sessions/components/user-sessions-dialog.tsx": {
-    "i18next/no-literal-string": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "src/features/sessions/hooks/use-connected-devices.ts": {

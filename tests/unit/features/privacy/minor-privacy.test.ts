@@ -1,6 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { privacyDirectorySchema } from '@/core/contracts/privacy.contract';
 import { localeDictionaries } from '@/core/i18n/locales';
 import { translate } from '@/core/i18n/translate';
@@ -103,11 +101,5 @@ describe('the words the Owner reads', () => {
       expect(text('screens.privacy.minor.consent-title', { name: 'Lucía' })).toContain('Lucía');
       expect(text('screens.privacy.minor.protected').length).toBeGreaterThan(20);
     }
-  });
-
-  test('the row lives in the Owner inspection of another member', () => {
-    const screen = readFileSync(join(import.meta.dir, '../../../../src/features/people/screens/users-screen.tsx'), 'utf8');
-    expect(screen).toContain("inspectedUser.id !== currentUserId && inspectedUser.role !== 'owner'");
-    expect(screen).toContain('<MinorRow userId={Number(inspectedUser.id)} name={fullName(inspectedUser)} />');
   });
 });

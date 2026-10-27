@@ -16,7 +16,7 @@ import {
 } from '@/core/services/view-cache/camera.projection';
 import { projectEventList } from '@/core/services/view-cache/event.projection';
 import { projectNotificationFeed } from '@/core/services/view-cache/notification.projection';
-import { filterPeople, projectPeople } from '@/core/services/view-cache/people.projection';
+import { projectPeople } from '@/core/services/view-cache/people.projection';
 import { projectProjects } from '@/core/services/view-cache/project.projection';
 import { projectSummary } from '@/core/services/view-cache/summary.projection';
 import { VIEW_CACHE_PAGE_SIZE } from '@/shared/constants/cache.constant';
@@ -67,8 +67,24 @@ describe('camera projection', () => {
     const writes = projectCameras({
       cameras: [camera('1'), camera('2', { icon: 'camera', manufacturer: '', isOnline: false })],
       zones: [
-        { id: 'z1', cameraId: '1', name: 'Door', points: [], zoneType: 'alert', color: '#fff', isEnabled: true },
-        { id: 'z2', cameraId: '1', name: 'Yard', points: [], zoneType: 'monitor', color: '#000', isEnabled: false },
+        {
+          id: 'z1',
+          cameraId: '1',
+          name: 'Door',
+          points: [],
+          zoneType: 'alert',
+          color: '#fff',
+          isEnabled: true,
+        },
+        {
+          id: 'z2',
+          cameraId: '1',
+          name: 'Yard',
+          points: [],
+          zoneType: 'monitor',
+          color: '#000',
+          isEnabled: false,
+        },
       ],
     });
     expect(writes).toHaveLength(1);
@@ -85,7 +101,12 @@ describe('camera projection', () => {
   test('stream paths come from the config and never anything else in it', () => {
     const writes = projectCameras({
       cameras: [
-        camera('1', { config: { streamPath: '/Streaming/Channels/101', subStreamPath: '/Streaming/Channels/102' } }),
+        camera('1', {
+          config: {
+            streamPath: '/Streaming/Channels/101',
+            subStreamPath: '/Streaming/Channels/102',
+          },
+        }),
         camera('2', { config: { streamPath: 7, password: 'secret' } }),
       ],
       zones: [],
@@ -158,7 +179,16 @@ describe('camera projection', () => {
 
   test('the camera list watches every column its rows read', () => {
     expect(CAMERA_SOURCE_COLUMNS).toEqual(
-      expect.arrayContaining(['driver', 'port', 'username', 'cloud_username', 'retention_days', 'capabilities', 'config', 'is_online']),
+      expect.arrayContaining([
+        'driver',
+        'port',
+        'username',
+        'cloud_username',
+        'retention_days',
+        'capabilities',
+        'config',
+        'is_online',
+      ])
     );
     expect(CAMERA_SOURCE_COLUMNS).toHaveLength(CAMERA_SOURCE_FIELDS.length);
   });
@@ -173,7 +203,14 @@ describe('project projection', () => {
       ],
       tasks: [
         { id: 't1', projectId: 'p1', title: 'a', status: 'done', priority: 'none', dueAt: null },
-        { id: 't2', projectId: 'p1', title: 'b', status: 'todo', priority: 'high', dueAt: new Date(1000) },
+        {
+          id: 't2',
+          projectId: 'p1',
+          title: 'b',
+          status: 'todo',
+          priority: 'high',
+          dueAt: new Date(1000),
+        },
       ],
       members: [
         { id: 'm1', projectId: 'p1', userId: '2', access: 'edit' },
@@ -203,8 +240,26 @@ describe('project projection', () => {
     ]);
     expect(rowsOf(writes, 'project.members', 'p2')).toEqual([]);
     expect(rowsOf(writes, 'dashboard.projects')).toEqual([
-      { id: 'p1', ownerId: '1', name: 'Home', description: '', status: 'active', done: 1, total: 2, progress: 0.5 },
-      { id: 'p2', ownerId: '2', name: 'Empty', description: '', status: 'active', done: 0, total: 0, progress: 0 },
+      {
+        id: 'p1',
+        ownerId: '1',
+        name: 'Home',
+        description: '',
+        status: 'active',
+        done: 1,
+        total: 2,
+        progress: 0.5,
+      },
+      {
+        id: 'p2',
+        ownerId: '2',
+        name: 'Empty',
+        description: '',
+        status: 'active',
+        done: 0,
+        total: 0,
+        progress: 0,
+      },
     ]);
   });
 });
@@ -213,7 +268,13 @@ describe('event list projection', () => {
   test('every event is one searchable row in milliseconds, an empty rule read as none', () => {
     const writes = projectEventList({
       events: [
-        { id: 'e1', title: 'Cena', startsAt: new Date(5000), isAllDay: false, recurrenceRule: 'FREQ=WEEKLY' },
+        {
+          id: 'e1',
+          title: 'Cena',
+          startsAt: new Date(5000),
+          isAllDay: false,
+          recurrenceRule: 'FREQ=WEEKLY',
+        },
         { id: 'e2', title: 'Viaje', startsAt: new Date(9000), isAllDay: true, recurrenceRule: '' },
       ],
     });
@@ -253,7 +314,15 @@ describe('people projection', () => {
       ],
     });
     expect(rowsOf(writes, 'people.users')).toEqual([
-      { id: '1', name: 'Ana', lastName: 'Ruiz', role: 'owner', isActive: true, createdAt: 2000, updatedAt: 3000 },
+      {
+        id: '1',
+        name: 'Ana',
+        lastName: 'Ruiz',
+        role: 'owner',
+        isActive: true,
+        createdAt: 2000,
+        updatedAt: 3000,
+      },
     ]);
     expect(rowsOf(writes, 'people.invitations')).toEqual([
       {
@@ -269,18 +338,6 @@ describe('people projection', () => {
         createdAt: 4,
       },
     ]);
-  });
-
-  test('the directory filters in memory by name, last name and role', () => {
-    const rows = [
-      { ...user('1', 'Ana', 'Ruiz', 'owner'), createdAt: 0, updatedAt: 0 },
-      { ...user('2', 'Luis', 'Gómez', 'guard'), createdAt: 0, updatedAt: 0 },
-    ];
-    expect(filterPeople(rows, { query: '', role: 'all' })).toBe(rows);
-    expect(filterPeople(rows, { query: 'gÓm', role: 'all' }).map((row) => row.id)).toEqual(['2']);
-    expect(filterPeople(rows, { query: '', role: 'owner' }).map((row) => row.id)).toEqual(['1']);
-    expect(filterPeople(rows, { query: 'guard', role: 'all' }).map((row) => row.id)).toEqual(['2']);
-    expect(filterPeople(rows, { query: 'ana', role: 'guard' })).toEqual([]);
   });
 });
 
@@ -328,10 +385,18 @@ describe('notification projection', () => {
 
   test('a notification deleted on another device leaves the feed, the previews and the unread count', () => {
     const kept = { ...source, id: 'n2', title: 'Kept', isRead: true };
-    const before = projectNotificationFeed({ page: { rows: [source, kept], hasMore: false }, unread: 1 }, 'all');
-    expect(rowsOf(before, 'dashboard.notifications').map((item) => (item as { id: string }).id)).toEqual(['n1', 'n2']);
+    const before = projectNotificationFeed(
+      { page: { rows: [source, kept], hasMore: false }, unread: 1 },
+      'all'
+    );
+    expect(
+      rowsOf(before, 'dashboard.notifications').map((item) => (item as { id: string }).id)
+    ).toEqual(['n1', 'n2']);
 
-    const after = projectNotificationFeed({ page: { rows: [kept], hasMore: false }, unread: 0 }, 'all');
+    const after = projectNotificationFeed(
+      { page: { rows: [kept], hasMore: false }, unread: 0 },
+      'all'
+    );
     const keptRow = { ...row, id: 'n2', title: 'Kept', isRead: true };
     expect(valueOf(after, 'notification.feed', 'all')).toEqual({ rows: [keptRow], hasMore: false });
     expect(rowsOf(after, 'dashboard.notifications')).toEqual([keptRow]);
@@ -341,17 +406,21 @@ describe('notification projection', () => {
 
 describe('summary projection', () => {
   test('counts what the home cards show', () => {
-    const writes = projectSummary(
-      {
-        cameras: [
-          { isOnline: true, isEnabled: true },
-          { isOnline: true, isEnabled: false },
-        ],
-        reminders: [{ isCompleted: false }, { isCompleted: true }],
-        projects: [{ status: 'active' }, { status: 'planned' }, { status: 'paused' }, { status: 'done' }, { status: 'canceled' }],
-        tasks: [{ status: 'todo' }, { status: 'done' }, { status: 'canceled' }],
-      },
-    );
+    const writes = projectSummary({
+      cameras: [
+        { isOnline: true, isEnabled: true },
+        { isOnline: true, isEnabled: false },
+      ],
+      reminders: [{ isCompleted: false }, { isCompleted: true }],
+      projects: [
+        { status: 'active' },
+        { status: 'planned' },
+        { status: 'paused' },
+        { status: 'done' },
+        { status: 'canceled' },
+      ],
+      tasks: [{ status: 'todo' }, { status: 'done' }, { status: 'canceled' }],
+    });
     expect(valueOf(writes, 'dashboard.summary')).toEqual({
       camerasTotal: 2,
       camerasOnline: 1,
@@ -378,25 +447,39 @@ describe('calendar projections', () => {
         projectId: null,
       },
     ],
-    reminders: [{ id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false }],
-    tasks: [{ id: 't1', title: 'Fix', dueAt: new Date(2026, 9, 15), status: 'doing', projectId: 'p1' }],
+    reminders: [
+      { id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false },
+    ],
+    tasks: [
+      { id: 't1', title: 'Fix', dueAt: new Date(2026, 9, 15), status: 'doing', projectId: 'p1' },
+    ],
   };
 
   test('the active month and its neighbours are written as three scopes', () => {
     const writes = projectCalendar(sources, now);
-    expect(writes.map((write) => write.scope)).toEqual(['month.2026-09', 'month.2026-10', 'month.2026-11']);
-    expect((rowsOf(writes, 'calendar.entries', 'month.2026-11') as { id: string }[]).map((entry) => entry.id)).toEqual([
-      'event:e1',
+    expect(writes.map((write) => write.scope)).toEqual([
+      'month.2026-09',
+      'month.2026-10',
+      'month.2026-11',
     ]);
-    expect((rowsOf(writes, 'calendar.entries', 'month.2026-10') as { id: string }[]).map((entry) => entry.id)).toEqual([
-      'task:t1',
-      'reminder:r1',
-    ]);
+    expect(
+      (rowsOf(writes, 'calendar.entries', 'month.2026-11') as { id: string }[]).map(
+        (entry) => entry.id
+      )
+    ).toEqual(['event:e1']);
+    expect(
+      (rowsOf(writes, 'calendar.entries', 'month.2026-10') as { id: string }[]).map(
+        (entry) => entry.id
+      )
+    ).toEqual(['task:t1', 'reminder:r1']);
     expect(calendarMonthScope(now)).toBe('month.2026-10');
   });
 
   test("today's agenda keeps only today", () => {
-    const entries = rowsOf(projectAgenda(sources, ctx), 'dashboard.agenda', 'today') as { id: string; status: string }[];
+    const entries = rowsOf(projectAgenda(sources, ctx), 'dashboard.agenda', 'today') as {
+      id: string;
+      status: string;
+    }[];
     expect(entries.map((entry) => [entry.id, entry.status])).toEqual([
       ['task:t1', 'active'],
       ['reminder:r1', 'upcoming'],
@@ -460,11 +543,17 @@ describe('calendar entry state', () => {
   test('the projected reminder turns overdue as time passes, with no new projection', () => {
     const [reminder] = rowsOf(
       projectAgenda(
-        { events: [], reminders: [{ id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false }], tasks: [] },
-        ctx,
+        {
+          events: [],
+          reminders: [
+            { id: 'r1', title: 'Pay', scheduledAt: new Date(2026, 9, 15, 18), isCompleted: false },
+          ],
+          tasks: [],
+        },
+        ctx
       ),
       'dashboard.agenda',
-      'today',
+      'today'
     ) as CalendarEntry[];
     if (!reminder) throw new Error('no reminder');
     expect(calendarEntryState(reminder, at(17))).toBe('upcoming');

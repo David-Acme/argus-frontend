@@ -31,12 +31,12 @@ test('who is home changes on the People screen of both devices when a member arr
     .getByRole('button', { name: /^People, / })
     .first()
     .click();
-  await expect(screen.getByRole('button', /^Ana Ruiz\. Owner\. Away since/)).toBeVisible();
+  await expect(screen.getByRole('button', /^Ana Ruiz \(you\), Owner · away since/)).toBeVisible();
   await expect
     .poll(
       () =>
         second.page
-          .getByText(/^Away since/)
+          .getByText(/^Owner · away since/)
           .filter({ visible: true })
           .count(),
       { timeout: 10000 }
@@ -60,14 +60,14 @@ test('who is home changes on the People screen of both devices when a member arr
     },
   ]);
 
-  await expect(screen.getByRole('button', /^Ana Ruiz\. Owner\. At home since/)).toBeVisible({
+  await expect(screen.getByRole('button', /^Ana Ruiz \(you\), Owner · home since/)).toBeVisible({
     timeout: LIVE_MS,
   });
   await expect
     .poll(
       () =>
         second.page
-          .getByText(/^At home since/)
+          .getByText(/^Owner · home since/)
           .filter({ visible: true })
           .count(),
       { timeout: LIVE_MS }

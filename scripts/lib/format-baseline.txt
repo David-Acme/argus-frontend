@@ -3,7 +3,6 @@ scripts/link-argus-modules.mjs
 scripts/patch-argus-modules.mjs
 scripts/patch-expo-camera.mjs
 scripts/patch-livekit-audio.mjs
-scripts/probe-web-bundle.ts
 src/app/+html.tsx
 src/core/contracts/activity.contract.ts
 src/core/contracts/camera-patrol.contract.ts
@@ -32,7 +31,6 @@ src/core/i18n/locales/en/screens/qr/index.ts
 src/core/i18n/locales/en/screens/response/index.ts
 src/core/i18n/locales/en/screens/safety/index.ts
 src/core/i18n/locales/en/screens/security/index.ts
-src/core/i18n/locales/en/screens/users/index.ts
 src/core/i18n/locales/en/screens/watch/index.ts
 src/core/i18n/locales/en/screens/welcome/index.ts
 src/core/i18n/locales/es/screens/approve/index.ts
@@ -44,8 +42,6 @@ src/core/i18n/locales/es/screens/proximity/index.ts
 src/core/i18n/locales/es/screens/response/index.ts
 src/core/i18n/locales/es/screens/safety/index.ts
 src/core/i18n/locales/es/screens/security/index.ts
-src/core/i18n/locales/es/screens/users/index.ts
-src/core/i18n/locales/es/screens/visitors/index.ts
 src/core/i18n/locales/es/screens/watch/index.ts
 src/core/i18n/locales/es/screens/welcome/index.ts
 src/core/i18n/locales/schema.ts
@@ -53,7 +49,6 @@ src/core/i18n/translate.ts
 src/core/interfaces/calendar.interface.ts
 src/core/interfaces/camera.interface.ts
 src/core/interfaces/project.interface.ts
-src/core/interfaces/view-cache.interface.ts
 src/core/services/auth.service.ts
 src/core/services/beacon/beacon.native.ts
 src/core/services/calendar-event-share.service.ts
@@ -131,7 +126,6 @@ src/core/services/view-cache/conversation.projection.ts
 src/core/services/view-cache/module-source-gate.ts
 src/core/services/view-cache/notification.projection.ts
 src/core/services/view-cache/paged-view.ts
-src/core/services/view-cache/people.projection.ts
 src/core/services/view-cache/project.projection.ts
 src/core/services/view-cache/projection.ts
 src/core/services/view-cache/reminder.projection.ts
@@ -241,22 +235,9 @@ src/features/modules/model/module-request.ts
 src/features/modules/model/module-selection.ts
 src/features/modules/model/module-text.ts
 src/features/notification/hooks/use-notification-permission.ts
-src/features/notification/model/notification-link.ts
-src/features/notification/screens/notification-link-screen.tsx
-src/features/people/components/invitation-dialog.tsx
-src/features/people/components/invitation-preview-dialog.tsx
-src/features/people/components/managed-user-dialog.tsx
-src/features/people/components/members-panel.tsx
-src/features/people/components/role-access-card.tsx
-src/features/people/components/user-options.ts
-src/features/people/hooks/use-biometric-erase.ts
-src/features/people/hooks/use-presence.ts
 src/features/people/model/biometric-erase.ts
-src/features/people/model/people-optimistic.ts
 src/features/people/model/presence.ts
 src/features/people/model/role-areas.ts
-src/features/people/screens/people-directory-screen.tsx
-src/features/people/screens/users-screen.tsx
 src/features/people/services/presence.service.ts
 src/features/people/services/user-management.service.ts
 src/features/people/services/voiceprint.service.ts
@@ -324,7 +305,6 @@ src/features/security/model/mode-change.ts
 src/features/security/model/response-recipients.ts
 src/features/security/model/tamper-notice.ts
 src/features/security/screens/environment-screen.tsx
-src/features/sessions/components/user-sessions-dialog.tsx
 src/features/sessions/services/sessions.service.ts
 src/features/settings/hooks/use-settings.ts
 src/features/visitors/components/visitor-card.tsx
@@ -386,7 +366,6 @@ src/shared/components/ui/adaptive-select.tsx
 src/shared/components/ui/blur-reveal.tsx
 src/shared/components/ui/brand-mark.tsx
 src/shared/components/ui/button.tsx
-src/shared/components/ui/create-tile.tsx
 src/shared/components/ui/dialog.tsx
 src/shared/components/ui/empty-state.tsx
 src/shared/components/ui/filter-chips.tsx
@@ -399,7 +378,6 @@ src/shared/components/ui/option-row.tsx
 src/shared/components/ui/orbit-hero.tsx
 src/shared/components/ui/permission-list.tsx
 src/shared/components/ui/qr-code-layout.ts
-src/shared/components/ui/responsive-grid.tsx
 src/shared/components/ui/section-header.tsx
 src/shared/components/ui/segmented-control.tsx
 src/shared/components/ui/select.tsx
@@ -527,7 +505,6 @@ tests/unit/core/services/view-cache.test.ts
 tests/unit/core/services/view-cache/calendar-recurrence.test.ts
 tests/unit/core/services/view-cache/conversation-projection.test.ts
 tests/unit/core/services/view-cache/module-source-gate.test.ts
-tests/unit/core/services/view-cache/view-cache-projections.test.ts
 tests/unit/core/stores/pending-call-store.test.ts
 tests/unit/core/stores/toast-store.test.ts
 tests/unit/e2e/chromium-profile.test.ts
@@ -552,7 +529,6 @@ tests/unit/features/modules/module-impact.test.ts
 tests/unit/features/modules/module-request.test.ts
 tests/unit/features/modules/module-selection.test.ts
 tests/unit/features/modules/module-text.test.ts
-tests/unit/features/notification/notification-link.test.ts
 tests/unit/features/people/biometric-erase.test.ts
 tests/unit/features/people/invitation-flight.test.ts
 tests/unit/features/people/presence.test.ts
@@ -596,7 +572,6 @@ tests/unit/shared/components/ui/dialog-submit-key.test.ts
 tests/unit/shared/components/ui/morph-icon/morph-icon-driver.test.ts
 tests/unit/shared/hooks/date-formatter.test.ts
 tests/unit/shared/hooks/use-device-permissions/device-permissions.test.ts
-tests/unit/shared/libs/capabilities.test.ts
 tests/unit/shared/libs/offline-transition.test.ts
 tests/unit/shared/libs/optimistic-action.test.ts
 tests/unit/shared/libs/permission-prompt.test.ts

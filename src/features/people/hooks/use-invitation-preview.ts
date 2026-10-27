@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { inviteService } from '@/core/services/invite';
-import type { InvitationPreview } from '@/features/people/components/user-options';
 import { toastServiceError } from '@/shared/libs/service-error';
 import { replacedInvitation } from '@/features/people/model/invitation-flight';
+import type { InvitationPreview } from '@/features/people/model/invitations';
 
 type InvitationPreviewOptions = {
   onRevoked: () => void;

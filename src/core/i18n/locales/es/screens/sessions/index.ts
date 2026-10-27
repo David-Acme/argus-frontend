@@ -31,7 +31,6 @@ export const sessions = {
     date: 'Última vez el {date}',
   },
   since: 'Desde el {date}',
-  close: 'Cerrar',
   'close-label': 'Cerrar la sesión de {name}',
   'close-here': 'Cerrar sesión en este dispositivo',
   'close-others': 'Cerrar las demás sesiones',
@@ -68,15 +67,6 @@ export const sessions = {
       'Tendrás que volver a vincularlo con el código de tu casa para usar Argus aquí.',
   },
   admin: {
-    title: 'Dispositivos conectados',
-    hint: 'Quién tiene Argus abierto ahora y desde dónde.',
-    empty: 'Nadie tiene sesiones abiertas ahora.',
-    'empty-hint': 'Cuando alguien entre desde un teléfono u ordenador aparecerá aquí.',
-    loading: 'Buscando dispositivos…',
-    'load-error': 'No se pudieron cargar los dispositivos conectados.',
-    'device-count': '{count} dispositivos',
-    'device-count-one': '1 dispositivo',
-    'open-sessions': 'Sesiones',
     'no-sessions': 'Sin sesiones abiertas.',
     'no-sessions-hint': 'Cuando entre desde un dispositivo aparecerá aquí.',
     'disabled-hint': 'La cuenta está desactivada: no puede entrar hasta que la reactives.',
@@ -97,14 +87,6 @@ export const sessions = {
     'confirm-enable-description':
       'Podrá volver a entrar con su rostro. Sus sesiones anteriores siguen cerradas.',
     enabled: 'Cuenta de {name} reactivada',
-  },
-  insights: {
-    open: 'Sesiones abiertas',
-    'active-today': 'Activas hoy',
-    'next-expiry': 'Próxima caducidad',
-    'next-expiry-none': 'Ninguna',
-    'recent-sign-ins': 'Últimos inicios de sesión',
-    'signed-in-at': '{date}, {time}',
   },
   notice: {
     'closed-here': 'Se cerró la sesión de este dispositivo',

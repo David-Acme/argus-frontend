@@ -100,7 +100,7 @@ export function FeedItem({
           <View className="mt-thread-top w-thread min-h-thread-min bg-line flex-1 rounded-full" />
         ) : null}
       </View>
-      <View className="min-w-0 flex-1">
+      <View className={unreadLabel ? 'min-w-0 flex-1 pr-3' : 'min-w-0 flex-1'}>
         {onPress ? (
           <PressableSurface
             a11y={{
