@@ -1,4 +1,3 @@
-import type { TranslationKey } from '@/core/types';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { size } from '@/shared/theme';
 import { Chip } from '@/shared/ui/chip';
@@ -13,7 +12,7 @@ import { LIST_IDEAS } from '@/features/agenda/constants/agenda.constant';
 
 export type DayEmptyProps = { today: boolean; create?: { kind: ItemKind; onPress: () => void } };
 
-export type IdeasProps = { ideas: readonly TranslationKey[] };
+export type IdeasProps = { ideas: readonly string[] };
 
 type IdeaProps = { text: string; ask: ArgusDraft };
 
@@ -33,13 +32,12 @@ function Idea({ text, ask }: IdeaProps) {
 }
 
 export function Ideas({ ideas }: IdeasProps) {
-  const { t } = useTranslation();
   const ask = useArgusDraft();
   if (!ask) return null;
   return (
     <Cluster>
-      {ideas.map((key) => (
-        <Idea key={key} text={t(key)} ask={ask} />
+      {ideas.map((text) => (
+        <Idea key={text} text={text} ask={ask} />
       ))}
     </Cluster>
   );
@@ -68,7 +66,7 @@ export function DayEmpty({ today, create }: DayEmptyProps) {
       ) : (
         <Notice icon="cal" title={title} body={t('screens.agenda.empty.read-only')} />
       )}
-      <Ideas ideas={LIST_IDEAS} />
+      <Ideas ideas={LIST_IDEAS.map((key) => t(key))} />
     </Stack>
   );
 }

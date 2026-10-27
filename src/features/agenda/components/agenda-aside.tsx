@@ -118,7 +118,7 @@ export function asideBlocks({
       <FreeToday key="free" gaps={gaps} context={context} />
     ) : (
       <Section key="ideas" title={t('screens.agenda.empty.ideas-title')} variant="plain">
-        <Ideas ideas={ASIDE_IDEAS} />
+        <Ideas ideas={ASIDE_IDEAS.map((key) => t(key))} />
       </Section>
     ),
   ];
