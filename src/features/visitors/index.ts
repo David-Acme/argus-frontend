@@ -4,4 +4,3 @@ export const VisitorDetailScreen = lazyScreen(
   () => import('./screens/visitor-detail-screen'),
   'default'
 );
-export { VisitorsPreviewPanel } from './components/visitors-preview-panel';

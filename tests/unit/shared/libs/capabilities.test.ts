@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import type { TranslateFn } from '@/core/types';
 import { CAPABILITY } from '@/shared/constants';
 import {
   accessView,
@@ -11,11 +10,8 @@ import {
   tableAllowed,
 } from '@/shared/libs/capabilities';
 import { roleAreas } from '@/features/people/model/role-areas';
-import { inviteRoleOptions, roleOptions } from '@/features/people/components/user-options';
 import { hasAccess, sessionAccessForRole } from '@/shared/libs/role-access';
 import { accessFor, moduleRecord, noContextView, viewFor } from '@tests/support/access-fixtures';
-
-const labels = ((key: string) => key) as unknown as TranslateFn;
 
 describe('access view', () => {
   test('before any context only the core is on and nothing of a module is granted', () => {
@@ -45,7 +41,13 @@ describe('access view', () => {
 
   test('a module capability the context still lists is withheld while its module is off', () => {
     const access = accessFor('owner', { modules: ['surveillance'] });
-    const stale = accessView({ ...access, capabilities: [...access.capabilities, CAPABILITY.projectsRead, CAPABILITY.agendaRead] }, 'owner');
+    const stale = accessView(
+      {
+        ...access,
+        capabilities: [...access.capabilities, CAPABILITY.projectsRead, CAPABILITY.agendaRead],
+      },
+      'owner'
+    );
     expect(hasCapability(stale, CAPABILITY.projectsRead)).toBe(false);
     expect(hasCapability(stale, CAPABILITY.agendaRead)).toBe(false);
     expect(hasCapability(stale, CAPABILITY.cameraView)).toBe(true);
@@ -129,30 +131,6 @@ describe('roles of modules', () => {
     expect(offModuleOfRole(view, 'guest')).toBeNull();
   });
 
-  test('the invitation picker shows a role of an off module disabled with the module named', () => {
-    const off = viewFor('owner', { modules: [] });
-    const moduleOff = (role: string) => (offModuleOfRole(off, role) ? 'Vigilancia' : null);
-    const invite = inviteRoleOptions(labels, moduleOff);
-    expect(invite.map((option) => option.value)).toEqual(['resident', 'guest', 'guard']);
-    expect(invite.find((option) => option.value === 'guard')).toMatchObject({
-      disabled: true,
-      description: 'screens.users.role-module-off',
-    });
-    expect(invite.find((option) => option.value === 'resident')?.disabled).toBe(false);
-    expect(inviteRoleOptions(labels).map((option) => option.value)).toEqual(['resident', 'guard', 'guest']);
-  });
-
-  test('the role change picker keeps inactive roles selectable, with the hint, after the active ones', () => {
-    const off = viewFor('owner', { modules: [] });
-    const moduleOff = (role: string) => (offModuleOfRole(off, role) ? 'Vigilancia' : null);
-    const options = roleOptions(labels, moduleOff);
-    expect(options.map((option) => option.value)).toEqual(['owner', 'resident', 'guest', 'guard']);
-    const guard = options.find((option) => option.value === 'guard');
-    expect(guard?.disabled).toBeUndefined();
-    expect(guard?.description).toBe('screens.users.role-module-off');
-    expect(roleOptions(labels).map((option) => option.value)).toEqual(['owner', 'resident', 'guard', 'guest']);
-  });
-
   test('which module is off for a role', () => {
     expect(offModuleOfRole(viewFor('owner', { modules: [] }), 'guard')).toBe('surveillance');
     expect(offModuleOfRole(viewFor('owner'), 'guard')).toBeNull();
@@ -179,6 +157,10 @@ describe('a role this build does not know', () => {
   test('is granted nothing by any table or session rule and never throws', () => {
     const unknown = 'astronaut' as never;
     expect(hasAccess(unknown, 'camera', 'read')).toBe(false);
-    expect(sessionAccessForRole(unknown)).toEqual({ view: false, revoke: false, manageOthers: false });
+    expect(sessionAccessForRole(unknown)).toEqual({
+      view: false,
+      revoke: false,
+      manageOthers: false,
+    });
   });
 });

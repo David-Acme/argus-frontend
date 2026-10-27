@@ -47,13 +47,5 @@ export function useSessionLabels(now: number) {
     [dayOf, t]
   );
 
-  const deviceCount = useCallback(
-    (count: number) =>
-      count === 1
-        ? t('screens.sessions.admin.device-count-one')
-        : t('screens.sessions.admin.device-count', { count: String(count) }),
-    [t]
-  );
-
-  return { nameOf, platformOf, activityLabel, sinceLabel, deviceCount };
+  return { nameOf, platformOf, activityLabel, sinceLabel };
 }

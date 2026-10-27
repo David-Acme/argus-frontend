@@ -25,7 +25,7 @@ const ROUTE_RULES: Readonly<Record<string, RouteRule>> = {
     fallback: '/profile',
   },
   '/people': {
-    allows: (view) => peopleAccessOf(view).profileAction === 'directory',
+    allows: (view) => peopleAccessOf(view).receivesDirectory,
     fallback: '/profile',
   },
   '/security': { allows: (view) => guardAccessOf(view).view, fallback: '/' },

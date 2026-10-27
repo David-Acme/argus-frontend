@@ -88,12 +88,6 @@ export function useConnectedDevices({ enabled = true }: UseConnectedDevicesOptio
     async ({ userId, userName, sessions }: CloseUserSessionsInput) => {
       if (sessions.length === 0) return;
       const response = await runOptimistic({
-        confirm: {
-          title: t('screens.sessions.admin.confirm-all-title', { name: userName }),
-          description: t('screens.sessions.admin.confirm-all-description'),
-          confirmLabel: t('screens.sessions.admin.close-all'),
-          intent: 'danger',
-        },
         intents: sessionIntents(sessions),
         call: () => sessionsService.revokeAllOfUser(userId),
         success: t('screens.sessions.admin.closed-all', { name: userName }),

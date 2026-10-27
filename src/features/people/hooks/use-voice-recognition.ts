@@ -18,11 +18,12 @@ const NOTHING_LEARNED = 404;
 
 const loadDirectory = () => voiceprintService.directory();
 
-export function useVoiceRecognition(userId: number) {
+export function useVoiceRecognition(userId: number, enabled: boolean) {
   const { t } = useTranslation();
   const { data, mutate } = useRemoteResource({
     cacheKey: VIEW_CACHE_KEYS.voiceprintUsers,
     load: loadDirectory,
+    enabled,
     resources: VOICEPRINTS,
   });
   const { run, pending } = useServiceAction();
@@ -36,12 +37,6 @@ export function useVoiceRecognition(userId: number) {
     async ({ userId: subject, name }: ForgetVoiceInput) => {
       let before: VoiceprintDirectory | null = null;
       const result = await run({
-        confirm: {
-          title: t('screens.users.voice.forget-title', { name }),
-          description: t('screens.users.voice.forget-description'),
-          confirmLabel: t('screens.users.voice.forget'),
-          intent: 'danger',
-        },
         call: async () => {
           mutate((previous) => {
             before = previous;

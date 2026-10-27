@@ -31,7 +31,6 @@ export const sessions = {
     date: 'Last seen {date}',
   },
   since: 'Since {date}',
-  close: 'Sign out',
   'close-label': 'Sign out of {name}',
   'close-here': 'Sign out on this device',
   'close-others': 'Sign out of other sessions',
@@ -68,15 +67,6 @@ export const sessions = {
       'You will need your home code to pair it again before using Argus here.',
   },
   admin: {
-    title: 'Connected devices',
-    hint: 'Who has Argus open right now, and where.',
-    empty: 'Nobody has an open session right now.',
-    'empty-hint': 'When someone signs in from a phone or computer, it shows up here.',
-    loading: 'Looking for devices…',
-    'load-error': 'The connected devices could not be loaded.',
-    'device-count': '{count} devices',
-    'device-count-one': '1 device',
-    'open-sessions': 'Sessions',
     'no-sessions': 'No open sessions.',
     'no-sessions-hint': 'When they sign in from a device, it shows up here.',
     'disabled-hint': 'The account is turned off: they cannot sign in until you turn it back on.',
@@ -97,14 +87,6 @@ export const sessions = {
     'confirm-enable-description':
       'They can sign in again with their face. Their old sessions stay closed.',
     enabled: "{name}'s account is back on",
-  },
-  insights: {
-    open: 'Open sessions',
-    'active-today': 'Active today',
-    'next-expiry': 'Next expiry',
-    'next-expiry-none': 'None',
-    'recent-sign-ins': 'Latest sign-ins',
-    'signed-in-at': '{date}, {time}',
   },
   notice: {
     'closed-here': 'This device was signed out',

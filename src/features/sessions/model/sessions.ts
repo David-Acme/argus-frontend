@@ -1,4 +1,4 @@
-import type { AuthSession, IconName, SessionPlatform, UserSessionsOverview } from '@/core/types';
+import type { AuthSession, SessionPlatform, UserSessionsOverview } from '@/core/types';
 import { defineLens, type OptimisticLens } from '@/shared/libs/optimistic';
 
 export type SessionGroupKey = 'mobile' | 'desktop' | 'other';
@@ -29,20 +29,6 @@ const RELATIVE_DAYS = 7;
 
 const GROUP_ORDER: readonly SessionGroupKey[] = ['mobile', 'desktop', 'other'];
 
-export const SESSION_PLATFORM_ICONS: Readonly<Record<SessionPlatform, IconName>> = {
-  android: 'smartphone',
-  ios: 'smartphone',
-  desktop: 'laptop',
-  web: 'globe',
-  unknown: 'monitor-smartphone',
-};
-
-export const SESSION_GROUP_ICONS: Readonly<Record<SessionGroupKey, IconName>> = {
-  mobile: 'smartphone',
-  desktop: 'monitor',
-  other: 'monitor-smartphone',
-};
-
 export const sessionLens: OptimisticLens<AuthSession> = defineLens<AuthSession, object>({
   table: 'session',
   recordIdOf: (session) => session.id,
@@ -57,7 +43,6 @@ export type ConnectedUser = {
   userId: number;
   sessions: readonly AuthSession[];
   lastSeenAt: number;
-  groups: readonly SessionGroupKey[];
 };
 
 export const USER_SESSION_LENSES: readonly OptimisticLens<UserSessionRow>[] = [
@@ -119,41 +104,9 @@ export function connectedUsersOf(rows: readonly UserSessionRow[]): ConnectedUser
         userId,
         sessions: ordered,
         lastSeenAt: ordered[0]?.lastSeenAt ?? 0,
-        groups: GROUP_ORDER.filter((key) =>
-          ordered.some((session) => groupOf(session.platform) === key)
-        ),
       };
     })
     .sort((left, right) => right.lastSeenAt - left.lastSeenAt || left.userId - right.userId);
-}
-
-export type SessionInsights<T extends AuthSession> = {
-  open: number;
-  activeToday: number;
-  nextExpiry: number | null;
-  recentSignIns: readonly T[];
-};
-
-export function sessionInsightsOf<T extends AuthSession>(
-  sessions: readonly T[],
-  nowSeconds: number,
-  limit: number
-): SessionInsights<T> {
-  const activeToday = sessions.filter(
-    (session) => session.current || nowSeconds - session.lastSeenAt < DAY_S
-  ).length;
-  const expiries = sessions
-    .map((session) => session.expiresAt)
-    .filter((value) => value > nowSeconds);
-  const recentSignIns = [...sessions]
-    .sort((left, right) => right.createdAt - left.createdAt || left.id.localeCompare(right.id))
-    .slice(0, limit);
-  return {
-    open: sessions.length,
-    activeToday,
-    nextExpiry: expiries.length > 0 ? Math.min(...expiries) : null,
-    recentSignIns,
-  };
 }
 
 export function withoutSessions(

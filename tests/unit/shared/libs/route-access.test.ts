@@ -7,17 +7,18 @@ const everything = { modules: ['surveillance', 'productivity'] };
 const coreOnly = { modules: [] };
 
 describe('routeFallback by role', () => {
-  test('owner reaches settings and users but not the guard directory', () => {
+  test('owner reaches settings, users and each person of the directory', () => {
     const owner = viewFor('owner', everything);
     expect(routeFallback('/settings', owner)).toBeNull();
     expect(routeFallback('/users', owner)).toBeNull();
-    expect(routeFallback('/people', owner)).toBe('/profile');
+    expect(routeFallback('/people/4', owner)).toBeNull();
     expect(routeFallback('/security', owner)).toBeNull();
   });
 
   test('guard reaches the directory and security only', () => {
     const guard = viewFor('guard', everything);
     expect(routeFallback('/people', guard)).toBeNull();
+    expect(routeFallback('/people/4', guard)).toBeNull();
     expect(routeFallback('/security', guard)).toBeNull();
     expect(routeFallback('/users', guard)).toBe('/profile');
     expect(routeFallback('/settings', guard)).toBe('/profile');
@@ -28,6 +29,7 @@ describe('routeFallback by role', () => {
     expect(routeFallback('/security', guest)).toBe('/');
     expect(routeFallback('/security/3', guest)).toBe('/');
     expect(routeFallback('/people', guest)).toBe('/profile');
+    expect(routeFallback('/people/1', viewFor('resident', everything))).toBe('/profile');
     expect(routeFallback('/agenda', guest)).toBe('/');
     expect(routeFallback('/projects', guest)).toBe('/');
     expect(routeFallback('/cameras', guest)).toBeNull();

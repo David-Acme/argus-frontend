@@ -1,1 +1,1 @@
-export { PeopleDirectoryScreen as default } from '@/features/people';
+export { PeopleScreen as default } from '@/features/people';

@@ -3,7 +3,6 @@ export const visitors = {
   subtitle:
     'Faces Argus has seen more than once that are not part of your household. Name them and Argus will know who came by.',
   section: 'People seen',
-  'see-all': 'See all',
   unnamed: 'Person #{number}',
   'unnamed-plain': 'Unnamed person',
   'off-title': 'Visitor recognition is off',

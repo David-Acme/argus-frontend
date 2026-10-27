@@ -98,11 +98,6 @@ export interface IPeopleDirectoryCacheRow {
   updatedAt: number;
 }
 
-export interface IPeopleDirectoryFilter {
-  query: string;
-  role: UserRole | 'all';
-}
-
 export interface INotificationPreviewCacheRow {
   id: string;
   type: string;
@@ -201,7 +196,8 @@ export interface IOccurrenceChange {
   location?: string;
 }
 
-export type IReminderSnooze = { minutes: number; tomorrow?: never } | { tomorrow: true; minutes?: never };
+export type IReminderSnooze =
+  { minutes: number; tomorrow?: never } | { tomorrow: true; minutes?: never };
 
 export interface IProjectTaskCalendarCacheSource {
   id: string;
