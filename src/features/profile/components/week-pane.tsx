@@ -6,14 +6,12 @@ import { useTranslation } from '@/shared/hooks/use-translation';
 import { useThemeTokens } from '@/shared/theme';
 import { Avatar } from '@/shared/ui/avatar';
 import type { AvatarTone } from '@/shared/ui/avatar';
-import { FilterChip } from '@/shared/ui/chip';
 import type { IconGlyph } from '@/shared/ui/icon';
 import { Notice } from '@/shared/ui/notice';
 import { Row } from '@/shared/ui/row';
 import { Section } from '@/shared/ui/section';
 import { Text } from '@/shared/ui/text';
 import { RecentActivitySection } from '@/features/activity';
-import { useAskArgus } from '@/features/home';
 import { DevicesSection } from '@/features/sessions';
 import { useWeek } from '@/features/profile/hooks/use-week';
 import type { WeekStats } from '@/features/profile/model/week-stats';
@@ -39,12 +37,6 @@ const HELP = [
     meta: 'screens.profile.empty.answer.meta',
   },
 ] as const satisfies readonly { icon: IconGlyph; title: TranslationKey; meta: TranslationKey }[];
-
-const TRY: readonly TranslationKey[] = [
-  'screens.profile.empty.try.remind',
-  'screens.profile.empty.try.who',
-  'screens.profile.empty.try.night',
-];
 
 function Tile({ icon, tone, value, label }: TileProps) {
   const { elevation } = useThemeTokens();
@@ -106,7 +98,6 @@ function HelpSection() {
 
 function EmptyWeek() {
   const { t } = useTranslation();
-  const ask = useAskArgus();
   return (
     <>
       <View className="mt-section-top">
@@ -117,22 +108,6 @@ function EmptyWeek() {
         />
       </View>
       <HelpSection />
-      {ask ? (
-        <Section title={t('screens.profile.empty.try-title')} variant="plain">
-          <View className="flex-row flex-wrap gap-2">
-            {TRY.map((key) => (
-              <FilterChip
-                key={key}
-                size="suggestion"
-                icon="mic"
-                label={t(key)}
-                selected={false}
-                onPress={() => ask(t(key))}
-              />
-            ))}
-          </View>
-        </Section>
-      ) : null}
     </>
   );
 }

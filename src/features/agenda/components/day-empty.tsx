@@ -1,72 +1,29 @@
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { size } from '@/shared/theme';
-import { Chip } from '@/shared/ui/chip';
-import { Cluster, Stack } from '@/shared/ui/layout';
 import { Notice } from '@/shared/ui/notice';
-import { PressableSurface } from '@/shared/ui/pressable';
 import { Empty } from '@/shared/ui/resource-view';
-import { useArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
-import type { ArgusDraft } from '@/features/agenda/hooks/use-argus-draft';
 import type { ItemKind } from '@/features/agenda/model/item-draft';
-import { LIST_IDEAS } from '@/features/agenda/constants/agenda.constant';
 
 export type DayEmptyProps = { today: boolean; create?: { kind: ItemKind; onPress: () => void } };
-
-export type IdeasProps = { ideas: readonly string[] };
-
-type IdeaProps = { text: string; ask: ArgusDraft };
-
-const IDEA_SLOP = (size.target - size.chipSuggestion) / 2;
-
-function Idea({ text, ask }: IdeaProps) {
-  const { t } = useTranslation();
-  return (
-    <PressableSurface
-      a11y={{ label: t('screens.agenda.empty.ask', { text }), role: 'button' }}
-      onPress={() => ask(text)}
-      pressed={{ scale: 'surface' }}
-      hitSlop={IDEA_SLOP}>
-      <Chip label={text} icon="mic" size="suggestion" />
-    </PressableSurface>
-  );
-}
-
-export function Ideas({ ideas }: IdeasProps) {
-  const ask = useArgusDraft();
-  if (!ask) return null;
-  return (
-    <Cluster>
-      {ideas.map((text) => (
-        <Idea key={text} text={text} ask={ask} />
-      ))}
-    </Cluster>
-  );
-}
 
 export function DayEmpty({ today, create }: DayEmptyProps) {
   const { t } = useTranslation();
   const title = t(today ? 'screens.agenda.empty.today-title' : 'screens.agenda.empty.day-title');
-  return (
-    <Stack gap={4}>
-      {create ? (
-        <Empty
-          centred
-          icon="cal"
-          message={title}
-          detail={t('screens.agenda.empty.body')}
-          action={{
-            label: t(
-              create.kind === 'event'
-                ? 'screens.agenda.sheet.new-event'
-                : 'screens.agenda.sheet.new-task'
-            ),
-            onPress: create.onPress,
-          }}
-        />
-      ) : (
-        <Notice icon="cal" title={title} body={t('screens.agenda.empty.read-only')} />
-      )}
-      <Ideas ideas={LIST_IDEAS.map((key) => t(key))} />
-    </Stack>
-  );
+  if (create)
+    return (
+      <Empty
+        centred
+        icon="cal"
+        message={title}
+        detail={t('screens.agenda.empty.body')}
+        action={{
+          label: t(
+            create.kind === 'event'
+              ? 'screens.agenda.sheet.new-event'
+              : 'screens.agenda.sheet.new-task'
+          ),
+          onPress: create.onPress,
+        }}
+      />
+    );
+  return <Notice icon="cal" title={title} body={t('screens.agenda.empty.read-only')} />;
 }

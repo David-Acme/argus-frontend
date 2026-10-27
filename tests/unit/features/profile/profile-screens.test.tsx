@@ -16,7 +16,6 @@ type State = {
   household: Household;
   week: Week;
   pushed: unknown[];
-  asked: string[];
   signedOut: number;
   theme: string;
   reduced: boolean;
@@ -67,7 +66,6 @@ const state: State = {
   household: household(),
   week: { range: RANGE, stats: { done: 2, pending: 1 } },
   pushed: [],
-  asked: [],
   signedOut: 0,
   theme: 'system',
   reduced: false,
@@ -98,9 +96,6 @@ mock.module('@/features/activity', () => ({
       {fallback as never}
     </div>
   ),
-}));
-mock.module('@/features/home', () => ({
-  useAskArgus: () => (draft: string) => state.asked.push(draft),
 }));
 mock.module('@/features/modules', () => ({
   ModuleRequestsSection: () => <div>pedir módulos</div>,
@@ -173,7 +168,6 @@ beforeEach(() => {
     household: household(),
     week: { range: RANGE, stats: { done: 2, pending: 1 } },
     pushed: [],
-    asked: [],
     signedOut: 0,
     theme: 'system',
     reduced: false,
@@ -254,13 +248,12 @@ describe('Tú with panes', () => {
     expect(screen.getByText('Así te ayuda Argus')).toBeDefined();
   });
 
-  test('an empty week explains how Argus helps and asks Argus from a suggestion', () => {
+  test('an empty week explains how Argus helps, with no suggestion chips', () => {
     state.week = { range: RANGE, stats: { done: 0, pending: 0 } };
     render(<WeekPane />);
     expect(screen.getByText('Aquí verás tu semana con Argus')).toBeDefined();
     expect(screen.getByText('Cuida tu casa')).toBeDefined();
-    fireEvent.click(screen.getByRole('checkbox', { name: '¿Quién está en casa?' }));
-    expect(state.asked).toEqual(['¿Quién está en casa?']);
+    expect(screen.queryByRole('checkbox', { name: '¿Quién está en casa?' })).toBeNull();
   });
 });
 

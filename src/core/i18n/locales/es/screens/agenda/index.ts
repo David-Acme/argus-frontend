@@ -42,11 +42,6 @@ export const agenda = {
     'day-title': 'Nada este día',
     body: 'Pídele a Argus que te recuerde algo o crea un evento.',
     'read-only': 'Aquí verás lo que te compartan.',
-    ask: 'Pedirle a Argus: {text}',
-    'idea-light': 'Recuérdame pagar la luz el lunes',
-    'idea-dentist': 'Cita con el dentista el viernes a las 10',
-    'idea-project': 'Crea el proyecto Mudanza',
-    'ideas-title': 'Prueba a decirle',
   },
   guide: {
     title: 'Así funciona tu agenda',

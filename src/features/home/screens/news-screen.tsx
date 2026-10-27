@@ -7,11 +7,9 @@ import { Feed } from '@/shared/ui/feed-item';
 import { Notice } from '@/shared/ui/notice';
 import { Screen } from '@/shared/ui/screen';
 import { Section } from '@/shared/ui/section';
-import { IdeaChips } from '@/features/home/components/agenda/idea-chips';
 import { NewsItem } from '@/features/home/components/feed/news-item';
 import { NewsReply } from '@/features/home/components/feed/news-reply';
 import { NEWS_FILTER_LABEL } from '@/features/home/constants/news.constant';
-import { useAskArgus } from '@/features/home/hooks/use-ask-argus';
 import { useNewsScreen } from '@/features/home/hooks/use-news-screen';
 import type { NewsScreenState } from '@/features/home/hooks/use-news-screen';
 import { threadReplies } from '@/features/home/model/news-filter';
@@ -53,7 +51,6 @@ function StatusNotices({ state }: StateProps) {
 
 function Empty({ state }: StateProps) {
   const { t } = useTranslation();
-  const ask = useAskArgus();
   if (state.filter === 'pending')
     return (
       <Notice
@@ -71,19 +68,11 @@ function Empty({ state }: StateProps) {
       />
     );
   return (
-    <View className="gap-3">
-      <Notice
-        icon="bell"
-        title={t('screens.home.news.empty')}
-        body={t('screens.home.news.empty-hint')}
-      />
-      {ask ? (
-        <IdeaChips
-          ask={ask}
-          ideas={[t('screens.home.news.idea.today'), t('screens.home.news.idea.week')]}
-        />
-      ) : null}
-    </View>
+    <Notice
+      icon="bell"
+      title={t('screens.home.news.empty')}
+      body={t('screens.home.news.empty-hint')}
+    />
   );
 }
 

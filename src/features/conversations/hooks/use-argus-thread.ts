@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 import { ARGUS_COUNTERPART_ID } from '@/core/types';
 import { IS_NATIVE } from '@/shared/constants';
 import { useNow } from '@/shared/hooks/use-now';
@@ -15,19 +15,16 @@ import {
 } from '@/features/voice';
 import type { ArgusResult, ArgusTalk, AssistantChatState, HoldTalkFailure } from '@/features/voice';
 import { CHAT_CLOCK_SKEW_MS } from '@/features/conversations/constants/conversation.constant';
-import { useArgusSuggestions } from '@/features/conversations/hooks/use-argus-suggestions';
 import type { ConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
 import { useTyping } from '@/features/conversations/hooks/use-typing';
 import { chatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
 import type { ChatMark, ChatOverlay } from '@/features/conversations/model/assistant-chat-overlay';
-import { asksYesNo } from '@/features/conversations/model/suggestions';
-import type { Suggestion } from '@/features/conversations/model/suggestions';
+import { asksYesNo } from '@/features/conversations/model/conversation-thread';
 import type { RecordedNote } from '@/features/conversations/model/voice-note';
 import {
   anchorResults,
   newestIncomingId,
   resultRowsOf,
-  shownCameraOf,
 } from '@/features/conversations/model/thread-results';
 import type { AnchoredResults } from '@/features/conversations/model/thread-results';
 
@@ -44,13 +41,10 @@ export type ArgusThreadState = {
   talk: ArgusTalk;
   heard: string;
   now: number;
-  suggestions: Suggestion[];
-  draftVersion: number;
   send: (text: string) => boolean;
   sendNote: (note: RecordedNote) => void;
   retry: (clientId: string) => void;
   dismiss: (clientId: string) => void;
-  pick: (text: string, send: boolean) => void;
   failure: HoldTalkFailure | null;
   allowMic: () => Promise<void>;
 };
@@ -64,7 +58,6 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
   const heard = useVoiceHeard();
   const now = useNow(MINUTE_MS);
   const typingState = useTyping();
-  const [draftVersion, setDraftVersion] = useState(0);
   const { outbox } = thread;
   const overlay = chatOverlay({
     messages: [...thread.messages, ...outbox.failed],
@@ -72,7 +65,6 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     leg: IS_NATIVE ? 'phone' : 'laptop',
     skewMs: CHAT_CLOCK_SKEW_MS,
   });
-  const suggestions = useArgusSuggestions({ now, shownCamera: shownCameraOf(results) });
   const last = overlay.rows.at(-1);
   const failure = talk.stage === 'failed' ? holdTalkFailureOf(talk.error) : null;
   const { dismiss } = talk;
@@ -93,15 +85,6 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
 
   const dismissMessage = (clientId: string) =>
     outbox.owns(clientId) ? outbox.dismiss(clientId) : chat.dismiss(clientId);
-
-  const pick = (text: string, sendNow: boolean) => {
-    if (sendNow) {
-      send(text);
-      return;
-    }
-    chat.setDraft(text);
-    setDraftVersion((version) => version + 1);
-  };
 
   const allowMic = async () => {
     dismiss();
@@ -127,13 +110,10 @@ export function useArgusThread(thread: ConversationThread): ArgusThreadState {
     talk,
     heard,
     now,
-    suggestions,
-    draftVersion,
     send,
     sendNote,
     retry: retryMessage,
     dismiss: dismissMessage,
-    pick,
     failure,
     allowMic,
   };

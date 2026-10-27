@@ -100,9 +100,6 @@ mock.module('@/features/home/components/status/system-section', () => ({
 mock.module('@/features/home/components/status/help-section', () => ({
   HelpSection: marker('help'),
 }));
-mock.module('@/features/home/components/status/try-section', () => ({
-  TrySection: marker('try'),
-}));
 
 mock.module('@/features/safety', () => ({ PanicButton: marker('sos') }));
 
@@ -164,7 +161,6 @@ const ALL = [
   'clips',
   'system',
   'help',
-  'try',
 ];
 
 afterEach(() => {
@@ -250,7 +246,7 @@ describe('Inicio on a phone', () => {
     };
     render(<HomeScreen />);
     expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
-    expect(order(ALL)).toEqual(['news', 'system', 'try']);
+    expect(order(ALL)).toEqual(['news', 'system']);
     expect(screen.queryByText('5')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Conectar cámara' }));
     expect(routes).toEqual(['/cameras']);
@@ -302,7 +298,7 @@ describe('Inicio on a desktop', () => {
     setWindowWidth(1920);
     render(<HomeScreen />);
     expect(screen.getByLabelText('Cámaras')).toBeDefined();
-    expect(order(ALL)).toEqual(ALL.filter((name) => !['watch', 'help', 'try'].includes(name)));
+    expect(order(ALL)).toEqual(ALL.filter((name) => !['watch', 'help'].includes(name)));
   });
 });
 
@@ -330,7 +326,7 @@ describe('Inicio at night, away and with little data', () => {
     setWindowWidth(1280);
     state.summary = { ...state.summary, projectsActive: 0, tasksOpen: 0 };
     render(<HomeScreen />);
-    expect(order(['people', 'system', 'help', 'try'])).toEqual(['people', 'system', 'help', 'try']);
+    expect(order(['people', 'system', 'help'])).toEqual(['people', 'system', 'help']);
   });
 
   test('an empty feed is no blank column', () => {
@@ -343,7 +339,7 @@ describe('Inicio at night, away and with little data', () => {
 });
 
 describe('a new household on a tablet', () => {
-  test('fills with how Argus helps, what to say and the day', () => {
+  test('fills with how Argus helps and the day', () => {
     setWindowWidth(820);
     state.threads = 0;
     state.summary = {
@@ -354,6 +350,6 @@ describe('a new household on a tablet', () => {
     };
     render(<HomeScreen />);
     expect(screen.getByText('Conecta tu primera cámara')).toBeDefined();
-    expect(order(ALL)).toEqual(['system', 'help', 'try', 'today']);
+    expect(order(ALL)).toEqual(['system', 'help', 'today']);
   });
 });

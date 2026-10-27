@@ -268,7 +268,6 @@ const { TypingIndicator } = await import('@/features/conversations/components/ty
 const { DaySeparator } = await import('@/features/conversations/components/day-separator');
 const { ArgusComposer } = await import('@/features/conversations/components/argus-composer');
 const { MessageComposer } = await import('@/features/conversations/components/message-composer');
-const { SuggestionChips } = await import('@/features/conversations/components/suggestion-chips');
 const { BubbleMeta } = await import('@/features/conversations/components/bubble-meta');
 const { ArgusEmpty } = await import('@/features/conversations/components/argus-empty');
 const { TalkNotice } = await import('@/features/conversations/components/talk-notice');
@@ -317,22 +316,14 @@ beforeEach(() => {
 });
 
 describe('the Argus thread', () => {
-  test('an empty thread invites to write or talk with three suggestions that send at once', async () => {
+  test('an empty thread invites to write or talk, with no suggestion chips', async () => {
     await show(<ArgusThread thread={thread([])} desktop={false} />);
     expect(screen.getByText('Puedes escribirme o hablarme')).toBeDefined();
     expect(
-      screen.getAllByRole('button', { name: /Muéstrame Cocina|¿Qué tengo|¿Quién está|Modo noche/ })
-        .length
-    ).toBe(3);
-    fireEvent.click(screen.getByRole('button', { name: 'Muéstrame Cocina' }));
-    expect(calls).toContain('send Muéstrame Cocina');
-  });
-
-  test('an active thread has no suggestion chips', async () => {
-    await show(
-      <ArgusThread thread={thread([message('2', { body: 'Hola, David' })])} desktop={false} />
-    );
-    expect(screen.queryByRole('button', { name: 'Muéstrame Cocina' })).toBeNull();
+      screen.queryAllByRole('button', {
+        name: /Muéstrame Cocina|¿Qué tengo|¿Quién está|Modo noche/,
+      })
+    ).toHaveLength(0);
   });
 
   test('the header is one line: name, «en casa», a plain call icon and ⋯ with Borrar last', async () => {
@@ -559,7 +550,8 @@ describe('the pieces of a thread', () => {
   });
 
   test('a long transcript starts folded to two lines and opens with «Ver más»', async () => {
-    const body = 'Hola, Argus, quería saber qué tengo pendiente para mañana por la tarde y el jueves.';
+    const body =
+      'Hola, Argus, quería saber qué tengo pendiente para mañana por la tarde y el jueves.';
     await show(
       <MessageBubble
         message={message('4', { direction: 'out', body, via: 'voice', voiceNote: NOTE })}
@@ -573,7 +565,6 @@ describe('the pieces of a thread', () => {
     expect(clamped()).toBe(false);
     expect(screen.getByRole('button', { name: 'Ver menos' })).toBeDefined();
   });
-
 
   test('a bubble opens its actions: copy or share, and Eliminar para mí last behind a confirm', async () => {
     await show(
@@ -596,19 +587,10 @@ describe('the pieces of a thread', () => {
     expect(calls).toEqual(['forget 41']);
   });
 
-  test('suggestions fill the draft when they need more words', async () => {
-    const pick = mock((_text: string, _send: boolean) => undefined);
-    await show(
-      <SuggestionChips suggestions={[{ id: 'remind', camera: null, send: false }]} onPick={pick} />
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Recuérdame…' }));
-    expect(pick).toHaveBeenCalledWith('Recuérdame ', false);
-  });
-
   test('the empty state and the failure notice speak in words', async () => {
     await show(
       <>
-        <ArgusEmpty suggestions={[]} onPick={() => undefined} />
+        <ArgusEmpty />
         <TalkNotice failure="not-heard" onAllow={() => Promise.resolve()} />
       </>
     );

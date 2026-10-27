@@ -7834,7 +7834,7 @@ suggestion chips over the field and the microphone as tap-to-talk.
   last behind the menu's Confirm. The backend has no per-message delete, so
   «Eliminar para mí» removes the row from this device only and says so.
   A closed question from Argus (`asksYesNo`) carries Sí/No inside its bubble;
-  suggestion chips are only in the empty thread.
+  no suggestion chips anywhere, the empty thread included (phone run 2 #12).
 - **Ticks** (`model/receipts.ts`): member rows read `receipt` (sent ✓,
   delivered ✓✓, read blue ✓✓ in `receipt-read`, a colour role measured at 3:1
   on `fill` and `bubble-own`; blue on `ink` stays under 3:1 in both themes,
@@ -7921,6 +7921,27 @@ suggestion chips over the field and the microphone as tap-to-talk.
   reminder call opens `/call?purpose=call_back&reminderId=<id>`; the call
   sends both on `/rtc/token` and `voice:start`. Any other missed call keeps
   the plain call.
+
+## No system suggestions (phone run 2 #12, 2026-10-27)
+
+Owner, 2026-10-27: «quita todas las sugerencias del sistema». Every phrase
+chip and «Prueba…» block that offered words to say is gone, superseding the
+sections above that describe them: the empty Argus thread's suggestions
+(`suggestionsOf`, `SuggestionChips`, `useArgusSuggestions`), Inicio's
+«Prueba a decirle» (`TrySection`, `tryPhrases`, the `try` section of the
+layout) and the chips under Ahora's empty card (`IdeaChips`), Novedades'
+empty ideas, the Agenda's empty day and its aside «Prueba a decirle»
+(`Ideas`, `LIST_IDEAS`, `ASIDE_IDEAS`), Proyectos' and an empty project's
+ideas (`PROJECT_IDEAS`), Tú's «Prueba a decirle» and Seguridad's «Prueba
+esto» (`starters` keeps only `promise`). Their i18n keys went with them. An
+empty state is its one card with its message and, where it has one, its
+single primary action («Pídeselo a Argus», «Nuevo evento», «Nuevo
+proyecto», «Nueva tarea»), and nothing under it. Kept: a closed question
+from Argus still carries Sí/No inside its bubble (`asksYesNo`, now in
+`model/conversation-thread.ts`, keys `screens.conversations.answer.*`), and
+the camera wizard's name choices, which fill a field rather than suggest
+what to say. `Chip size="suggestion"` stays as the option-chip size the
+ui-lab's filters show.
 
 ## Local first, real time: the inventory (R-live, 2026-10-27)
 

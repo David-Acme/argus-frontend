@@ -21,7 +21,7 @@ import { HappenedSection } from '@/features/security/components/page/happened-se
 import { ModeControl } from '@/features/security/components/page/mode-control';
 import { MoreSection } from '@/features/security/components/page/more-section';
 import { PlacePicker } from '@/features/security/components/page/place-picker';
-import { PromiseSection, TrySection } from '@/features/security/components/page/starter-sections';
+import { PromiseSection } from '@/features/security/components/page/starter-sections';
 import { useSecurity } from '@/features/security/hooks/use-security';
 import { useCameraTiles } from '@/features/security/hooks/use-security-cameras';
 import { episodeKey } from '@/features/security/model/episode';
@@ -79,23 +79,15 @@ function AlertCard({ security, onOpen }: Pick<LayoutProps, 'security' | 'onOpen'
   );
 }
 
-function startersOf(security: Security, cameras: LayoutProps['cameras']) {
+function startersOf(cameras: LayoutProps['cameras']) {
   return starters({
     cameras: cameras.visible ? cameras.tiles.length : Number.POSITIVE_INFINITY,
-    feed: security.episodes.status,
-    episodes: security.episodes.rows.length,
   });
-}
-
-function nightOf(security: Security) {
-  const change = security.changeMode;
-  if (!change || security.selectedMode === 'night') return undefined;
-  return () => void change('night');
 }
 
 function PhoneLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
   const { t } = useTranslation();
-  const start = startersOf(security, cameras);
+  const start = startersOf(cameras);
   const words = statusWords(security.status, t);
   return (
     <>
@@ -123,7 +115,6 @@ function PhoneLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
         feedForm={false}
         onOpen={onOpen}
       />
-      {start.suggest ? <TrySection onNight={nightOf(security)} /> : null}
       <MoreSection guests={security.guests.list} environments={security.environments} />
     </>
   );
@@ -133,7 +124,7 @@ function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
   const { t } = useTranslation();
   const four = useWindowWidth() >= layout.fourColumns;
   const words = statusWords(security.status, t);
-  const start = startersOf(security, cameras);
+  const start = startersOf(cameras);
   const band: ReactNode = (
     <>
       <Picker security={security} />
@@ -172,7 +163,6 @@ function DesktopLayout({ security, cameras, onOpen, onConnect }: LayoutProps) {
             feedForm
             onOpen={onOpen}
           />
-          {start.suggest ? <TrySection onNight={nightOf(security)} /> : null}
           {four ? null : <VisitsSection guests={security.guests.list} now={security.now} />}
           {four ? null : (
             <MoreSection

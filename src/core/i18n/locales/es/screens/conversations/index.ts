@@ -93,14 +93,7 @@ export const conversations = {
     'loading-older': 'Cargando mensajes anteriores',
     go: 'Ir a lo más reciente',
   },
-  suggest: {
-    'show-camera': 'Muéstrame {name}',
-    'who-home': '¿Quién está en casa?',
-    'night-mode': 'Modo noche',
-    today: '¿Qué tengo hoy?',
-    tomorrow: '¿Qué tengo mañana?',
-    remind: 'Recuérdame…',
-    'remind-draft': 'Recuérdame ',
+  answer: {
     yes: 'Sí',
     no: 'No',
   },

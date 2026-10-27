@@ -167,8 +167,6 @@ export const copy = {
   nothingToday: 'Nada pendiente hoy',
   freeDay: 'Tienes el día libre.',
   askArgus: 'Pídele a Argus que te recuerde algo.',
-  askPayWater: '«Recuérdame pagar el agua»',
-  askTechnician: '«Agenda al técnico el jueves»',
   unread: 'Sin leer',
   carlos: 'Carlos',
   carlosWhen: '14:35',

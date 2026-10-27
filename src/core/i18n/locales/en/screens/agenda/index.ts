@@ -42,11 +42,6 @@ export const agenda = {
     'day-title': 'Nothing this day',
     body: 'Ask Argus to remind you of something, or create an event.',
     'read-only': 'What people share with you shows up here.',
-    ask: 'Ask Argus: {text}',
-    'idea-light': 'Remind me to pay the electricity on Monday',
-    'idea-dentist': 'Dentist on Friday at 10',
-    'idea-project': 'Create the Moving project',
-    'ideas-title': 'Try saying',
   },
   guide: {
     title: 'How your agenda works',

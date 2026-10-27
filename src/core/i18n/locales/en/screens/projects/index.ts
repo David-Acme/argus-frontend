@@ -75,11 +75,6 @@ export const projects = {
     'read-only': 'Projects shared with you will show here.',
     'tasks-body': 'Add the first one or ask Argus for it.',
     'tasks-read-only': 'This project’s tasks will show here.',
-    'ideas-title': 'Try saying',
-    'idea-move': 'Create the Moving project',
-    'idea-party': 'Plan mum’s birthday',
-    'idea-task': 'Add «Buy boxes» to {name}',
-    'idea-split': 'Split {name} into tasks',
   },
   guide: {
     title: 'How projects work',

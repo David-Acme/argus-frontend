@@ -1,5 +1,4 @@
 import { lazyScreen } from '@/shared/libs/lazy-screen';
-export { Ideas } from './components/day-empty';
 export { useArgusDraft } from './hooks/use-argus-draft';
 export { agendaCheck, agendaMenu, agendaRights } from './model/agenda-actions';
 export {

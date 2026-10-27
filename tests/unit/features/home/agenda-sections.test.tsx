@@ -150,29 +150,23 @@ describe('Ahora', () => {
     expect(screen.getAllByRole('button', { name: /,/ })).toHaveLength(3);
   });
 
-  test('nothing due shows the empty card, whose action and ideas ask Argus', () => {
+  test('nothing due shows the empty card, whose one action asks Argus, and no idea chips', () => {
     state.agenda = agenda([]);
     render(<NowSection />);
     expect(screen.getByText('Nada pendiente hoy')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Pídeselo a Argus' }));
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Pedirle a Argus: Recuérdame pagar el agua' })
-    );
-    expect(calls.asked).toEqual(['Recuérdame ', 'Recuérdame pagar el agua']);
-    expect(screen.getByText('«¿Qué tengo mañana?»')).toBeDefined();
+    expect(calls.asked).toEqual(['Recuérdame ']);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 
-  test('in a desktop column the ideas get their own heading under the card', () => {
+  test('in a desktop column the empty card stands alone under its heading', () => {
     state.agenda = agenda([]);
     render(inColumn(<NowSection />));
-    expect(screen.getAllByRole('heading').map((node) => node.textContent)).toEqual([
-      'Ahora',
-      'Ideas para empezar',
-    ]);
-    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(screen.getAllByRole('heading').map((node) => node.textContent)).toEqual(['Ahora']);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 
-  test('without the Argus chat the empty card keeps its words and drops the action and ideas', () => {
+  test('without the Argus chat the empty card keeps its words and drops the action', () => {
     state.agenda = agenda([]);
     state.askable = false;
     render(<NowSection />);

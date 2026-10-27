@@ -134,13 +134,6 @@ export const home = {
       answers: 'Te responde cuando le hablas',
       'answers-body': 'Mantén el centro y háblale',
     },
-    try: {
-      title: 'Prueba a decirle',
-      'who-home': '¿Quién está en casa?',
-      night: 'Pon el modo Noche',
-      happened: '¿Qué pasó hoy?',
-      today: '¿Qué tengo hoy?',
-    },
     connect: 'Conecta una cámara para que Argus vigile',
     columns: {
       agenda: 'Tu día',
@@ -163,10 +156,6 @@ export const home = {
     'empty-security-hint': 'Cuando tus cámaras vean algo, te lo cuento aquí.',
     'empty-pending': 'Estás al día',
     'empty-pending-hint': 'No tienes avisos sin leer.',
-    idea: {
-      today: '¿Qué pasó hoy en casa?',
-      week: 'Resúmeme la semana',
-    },
     filter: {
       label: 'Mostrar',
       all: 'Todo',

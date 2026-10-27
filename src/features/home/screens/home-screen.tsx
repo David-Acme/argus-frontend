@@ -19,7 +19,6 @@ import { InicioHero } from '@/features/home/components/hero/inicio-hero';
 import { InicioLead } from '@/features/home/components/hero/inicio-lead';
 import { HelpSection } from '@/features/home/components/status/help-section';
 import { SystemSection } from '@/features/home/components/status/system-section';
-import { TrySection } from '@/features/home/components/status/try-section';
 import { WatchSection } from '@/features/home/components/status/watch-section';
 import { useInicioHero, type InicioHero as Hero } from '@/features/home/hooks/use-inicio-hero';
 import {
@@ -56,7 +55,6 @@ const SECTIONS: Record<Exclude<InicioSection, 'lead'>, ComponentType> = {
   watch: WatchSection,
   system: SystemSection,
   help: HelpSection,
-  try: TrySection,
 };
 
 function InicioBody({ hero, place, body }: BodyProps) {
