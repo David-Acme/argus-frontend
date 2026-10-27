@@ -1,12 +1,19 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { isValidElement, type ReactElement } from 'react';
+import { inset, size } from '@/shared/theme/tokens';
 import './translation-stub';
+import { setWindowSize } from './window-width';
 
 const custom = mock((_jsx: unknown, _options: { id?: string; duration?: number }) => 'native-id');
 
+const offsets: number[] = [];
+
 mock.module('sonner-native', () => ({
-  Toaster: () => null,
+  Toaster: ({ offset }: { offset: number }) => {
+    offsets.push(offset);
+    return null;
+  },
   toast: { custom, dismiss: () => undefined },
 }));
 
@@ -78,6 +85,19 @@ describe('Toast', () => {
     const [jsx, options] = custom.mock.calls[0] ?? [];
     expect(isValidElement(jsx as ReactElement)).toBe(true);
     expect(options).toEqual({ id: ERROR_TOAST_ID, duration: 8000 });
-    expect(native.Toaster()).toBeDefined();
+  });
+
+  test('on the phone the toast floats just above the tab bar the window really has', () => {
+    render(<native.Toaster />);
+    setWindowSize(360, 640);
+    expect(offsets[0]).toBe(inset.toast.offset);
+    expect(offsets.at(-1)).toBe(
+      inset.toast.offset -
+        size.tabBar -
+        inset.nav.barBottom +
+        size.tabBarShort +
+        inset.nav.barBottomShort
+    );
+    setWindowSize(360, 800);
   });
 });

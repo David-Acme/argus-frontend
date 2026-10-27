@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import {
   heightClassOf,
   heightLayoutOf,
+  navBarOf,
+  navOffsetsOf,
   paletteTopOf,
   phoneLandscape,
   sheetBodyCapOf,
@@ -64,6 +66,38 @@ describe('responsive by height', () => {
       expect(detents).toEqual([1]);
       expect(sheetScrolls(detents)).toBe(true);
     }
+  });
+
+  test('the tab bar keeps at most 56 of chrome on short phones and drops its labels below 600 and on its side', () => {
+    const tall = navBarOf(heightLayoutOf({ width: 390, height: 844 }), 1);
+    const short = navBarOf(heightLayoutOf({ width: 360, height: 640 }), 1);
+    const tiny = navBarOf(heightLayoutOf({ width: 320, height: 568 }), 1);
+    const side = navBarOf(heightLayoutOf({ width: 740, height: 360 }), 1);
+    expect(tall).toMatchObject({ bar: size.tabBar, labelled: true, icon: 'default' });
+    expect(short).toMatchObject({ bar: size.tabBarShort, labelled: true, icon: 'small' });
+    expect(tiny).toMatchObject({ bar: size.tabBarShort, labelled: false, icon: 'default' });
+    expect(side).toMatchObject({ bar: size.tabBarShort, labelled: false });
+    for (const bar of [short, tiny, side]) {
+      expect(navOffsetsOf(bar, 0).footprint).toBeLessThanOrEqual(56);
+      expect(bar.tab).toBeLessThan(bar.bar);
+    }
+    expect(navBarOf(heightLayoutOf({ width: 390, height: 844 }), 1.3).labelled).toBe(false);
+  });
+
+  test('the content, the listening cap and the toast clear the bar that is really there', () => {
+    const tall = navOffsetsOf(navBarOf(heightLayoutOf({ width: 390, height: 844 }), 1), 0);
+    expect(tall).toEqual({
+      footprint: size.tabBar + inset.nav.barBottom,
+      clearance: inset.screen.bodyBottom,
+      cap: inset.nav.capBottom,
+      toast: inset.toast.offset,
+    });
+    const short = navOffsetsOf(navBarOf(heightLayoutOf({ width: 360, height: 640 }), 1), 0);
+    expect(short.footprint).toBe(size.tabBarShort + inset.nav.barBottomShort);
+    expect(short.clearance - short.footprint).toBe(tall.clearance - tall.footprint);
+    expect(
+      navOffsetsOf(navBarOf(heightLayoutOf({ width: 360, height: 640 }), 1), 34).footprint
+    ).toBe(size.tabBarShort + 34);
   });
 
   test('a sheet sizes to its content up to the ceiling, and its body scrolls in the room under the header and the keyboard', () => {

@@ -1,22 +1,19 @@
 import { Toaster as Sonner, toast as sonner } from 'sonner';
-import { feedback, inset } from '@/shared/theme';
+import { useNavOffsets } from '@/shared/hooks/use-bottom-nav-inset';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { feedback, inset } from '@/shared/theme';
 import { ToastCard } from './toast-card';
 import { cardPropsOf, planToast, type ToastInput } from './toast-policy';
 
-const MOBILE_OFFSET = {
-  bottom: inset.toast.offset,
-  left: inset.toast.edge,
-  right: inset.toast.edge,
-};
-
 export function Toaster() {
   const { t } = useTranslation();
+  const { toast: bottom } = useNavOffsets();
+  const mobileOffset = { bottom, left: inset.toast.edge, right: inset.toast.edge };
   return (
     <Sonner
       position="bottom-center"
       offset={inset.toast.edge}
-      mobileOffset={MOBILE_OFFSET}
+      mobileOffset={mobileOffset}
       containerAriaLabel={t('common.overlay.toasts')}
       toastOptions={{ unstyled: true }}
     />

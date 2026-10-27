@@ -1,5 +1,5 @@
 import { useWindowDimensions } from 'react-native';
-import { inset, layout, size, space } from './tokens';
+import { inset, layout, size, space, typeRoles } from './tokens';
 import type { WindowSize } from './window-layout';
 
 export type HeightClass = 'tiny' | 'short' | 'regular';
@@ -41,6 +41,56 @@ export function sheetDetentsOf(
 }
 
 export const sheetScrolls = (detents: readonly SheetDetent[]): boolean => detents[0] !== 'auto';
+
+export type NavBarLayout = {
+  bar: number;
+  tab: number;
+  gap: number;
+  labelled: boolean;
+  icon: 'default' | 'small';
+  presence: number;
+};
+
+export type NavOffsets = { footprint: number; clearance: number; cap: number; toast: number };
+
+const REGULAR_FOOTPRINT = size.tabBar + inset.nav.barBottom;
+
+export function navBarOf(layoutOfHeight: HeightLayout, fontScale: number): NavBarLayout {
+  const { heightClass, landscape } = layoutOfHeight;
+  const labelled = fontScale <= typeRoles.tab.maxScale && heightClass !== 'tiny' && !landscape;
+  if (heightClass === 'regular' && !landscape)
+    return {
+      bar: size.tabBar,
+      tab: size.tab,
+      gap: inset.nav.barBottom,
+      labelled,
+      icon: 'default',
+      presence: size.presenceTab,
+    };
+  return {
+    bar: size.tabBarShort,
+    tab: size.tabShort,
+    gap: inset.nav.barBottomShort,
+    labelled,
+    icon: labelled ? 'small' : 'default',
+    presence: labelled ? size.iconSmall : size.presenceTabShort,
+  };
+}
+
+export function navOffsetsOf({ bar, gap }: NavBarLayout, bottomInset: number): NavOffsets {
+  const footprint = Math.max(bottomInset, gap) + bar;
+  return {
+    footprint,
+    clearance: footprint + inset.screen.bodyBottom - REGULAR_FOOTPRINT,
+    cap: footprint + inset.nav.capBottom - REGULAR_FOOTPRINT,
+    toast: footprint + inset.toast.offset - REGULAR_FOOTPRINT,
+  };
+}
+
+export function useNavBarLayout(): NavBarLayout {
+  const { width, height, fontScale } = useWindowDimensions();
+  return navBarOf(heightLayoutOf({ width, height }), fontScale);
+}
 
 export function paletteTopOf({ heightClass, landscape }: HeightLayout): number {
   return heightClass === 'regular' && !landscape ? inset.palette.top : layout.gutterCompact;
