@@ -7173,12 +7173,32 @@ The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26
   for 30 minutes (unread `kind: call` notification), with «Ver lo que pasó» and «Devolver»; in
   Novedades the same row offers «Devolver». Devolver starts a new call with Argus: the missed call
   itself is closed on the server and cannot be rejoined.
-- **Snooze and Marcar hecho are hidden on purpose.** The reminder snooze path exists
-  (`POST /reminder/{id}/snooze`), but a call never names its reminder: `call_incoming`, the call
-  push and the missed-call notification carry no reminder id, and there is no route that rings a
-  call again later. The model already knows the buttons (`ringChoices({kind, snoozable})`,
-  `missedCallActions({kind, reminderLinked})`, `ringChoices(critical, snoozable)` on Android) and
-  the call sites pass `false` until argus-notification sends the reminder id.
+- **En 10 min and Marcar hecho (P5d).** argus-notification now names the reminder a call rings
+  for: `category` (`alert | reminder | notice`) and, when a reminder started the call, `reminderId`,
+  in `call_incoming`, the sealed ring and cancel pushes and the missed-call notification's `data`.
+  `callReminderIdOf` (TS) and `CallActionRules.grantOf` (Kotlin) are the one gate: a `reminder`
+  call that is not critical and names a positive reminder id. Never on an alert, never on a
+  calendar event call (it names no reminder). In the app the ring banner shows «En 10 min» between
+  Rechazar and Contestar (`POST /reminder/{id}/snooze {minutes:10}`, then the ring is declined) and
+  the missed card shows «Marcar hecho» before «Devolver» (`PATCH /reminder/{id} {isCompleted:true}`,
+  then the card closes and the note is read); both are single-flight (`useReminderCall`) with a toast
+  through the error map, and a refusal keeps the ring or the card. Novedades keeps «Devolver» only,
+  as the prototype draws it.
+- **The lock screen acts with a one-purpose token.** Only the sealed ring push carries
+  `actionToken` (64 hex) and `actionExpiresAt`. `PushRouter` keeps it as a `CallActionGrant` in
+  `PushStore`'s Keystore-sealed blob (`callGrants`, at most eight, dropped at `actionExpiresAt`), never
+  in plain prefs and never in a log line. The ring notification gets «En 10 min», `CallActivity` its
+  third round button, and a missed-call notification whose `episode` matches a kept grant gets
+  «Marcar hecho» (the grant records that notification's tag). A tap goes to `CallActions.request`:
+  single-flight per call, the ring is silenced locally, and the headless task `ArgusCallAction`
+  (`CallActionTaskService`, the decline task's pattern) posts `{token, action}` to
+  `POST /notification/call-action` through the app's own pinned transport, which adds
+  `X-Argus-Device-Credential` (the native module holds no server address, CA pin or credential, so
+  it does not open its own connection). The task reports the status back
+  (`ArgusPush.reportCallAction`), and `CallActionRules.outcomeOf` maps it to one silent line in the
+  missed notification's place: 200 done or snoozed, 403 not valid on this phone, 409 already handled,
+  410 expired, 404 the reminder is gone, 503 or no answer «Prueba otra vez» with the same button
+  (the server released the claim). Every other outcome drops the grant.
 - **Android, locked.** `CallActivity` is the same dark stage drawn natively: the private line,
   «Argus», the kind and subject, a still of Estela's idle hook (`EstelaStill`, the engine's swirl
   shape drawn once on a Canvas, never a figure-eight) and the round buttons in one row. The same still

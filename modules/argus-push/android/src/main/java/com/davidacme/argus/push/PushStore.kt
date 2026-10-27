@@ -71,6 +71,40 @@ internal class PushStore(context: Context) {
         prefs.edit().putString(KEY_SEEN, box.seal(obj.toString().toByteArray(Charsets.UTF_8))).apply()
     }
 
+    fun saveCallGrant(grant: CallActionGrant, nowSeconds: Long) {
+        synchronized(GRANTS_LOCK) { writeGrants(CallActionRules.withGrant(readGrants(), grant, nowSeconds)) }
+    }
+
+    fun callGrant(callId: String, nowSeconds: Long): CallActionGrant? =
+        synchronized(GRANTS_LOCK) { CallActionRules.forCall(readGrants(), callId, nowSeconds) }
+
+    fun claimMissedGrant(episode: String, tag: String, nowSeconds: Long): CallActionGrant? =
+        synchronized(GRANTS_LOCK) {
+            val grants = readGrants()
+            val grant = CallActionRules.forEpisode(grants, episode, nowSeconds) ?: return null
+            val marked = grant.copy(missedTag = tag)
+            writeGrants(CallActionRules.withGrant(grants, marked, nowSeconds))
+            marked
+        }
+
+    fun dropCallGrant(callId: String) {
+        synchronized(GRANTS_LOCK) { writeGrants(readGrants().filterNot { it.callId == callId }) }
+    }
+
+    private fun readGrants(): List<CallActionGrant> {
+        val sealed = prefs.getString(KEY_CALL_GRANTS, null) ?: return emptyList()
+        val plain = box.open(sealed) ?: return emptyList()
+        return CallActionRules.decode(String(plain, Charsets.UTF_8))
+    }
+
+    private fun writeGrants(grants: List<CallActionGrant>) {
+        if (grants.isEmpty()) {
+            prefs.edit().remove(KEY_CALL_GRANTS).apply()
+            return
+        }
+        prefs.edit().putString(KEY_CALL_GRANTS, box.seal(CallActionRules.encode(grants).toByteArray(Charsets.UTF_8))).apply()
+    }
+
     fun markRingStarted(episode: String, nowSeconds: Long) {
         if (episode.isEmpty()) return
         prefs.edit().putLong(ringKey(episode), nowSeconds).apply()
@@ -81,6 +115,8 @@ internal class PushStore(context: Context) {
     private fun ringKey(episode: String): String = KEY_RING_PREFIX + episode
 
     private companion object {
+        val GRANTS_LOCK = Any()
+        const val KEY_CALL_GRANTS = "callGrants"
         const val PREFS = "argus.push.state"
         const val STORE_KEY_ALIAS = "argus.push.store"
         const val KEY_TOKEN = "token"

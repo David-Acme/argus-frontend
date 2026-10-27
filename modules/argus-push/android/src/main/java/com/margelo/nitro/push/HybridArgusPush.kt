@@ -9,6 +9,7 @@ import com.davidacme.argus.push.BackgroundAccess
 import com.davidacme.argus.push.BackgroundStep
 import com.davidacme.argus.push.TelecomCall
 import com.davidacme.argus.push.endpointsJson
+import com.davidacme.argus.push.CallActions
 import com.davidacme.argus.push.CallControls
 import com.davidacme.argus.push.CallSummary
 import com.davidacme.argus.push.CallSession
@@ -81,6 +82,10 @@ class HybridArgusPush : HybridArgusPushSpec() {
 
   override fun ackDecline(callId: String) {
     PushStore(requireContext()).removeDecline(callId)
+  }
+
+  override fun reportCallAction(callId: String, action: String, status: Double) {
+    CallActions.report(requireContext(), callId, action, status.toInt())
   }
 
   override fun recordTrace(phase: String, outcome: String, reason: String) {

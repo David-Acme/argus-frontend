@@ -15,6 +15,7 @@ const unsupported: IPushService = {
   sendToBackground: () => undefined,
   stopOngoingCall: () => undefined,
   ackDecline: () => undefined,
+  reportCallAction: () => undefined,
   isKeyguardLocked: () => false,
   overKeyguard: () => false,
   requestUnlock: async () => true,

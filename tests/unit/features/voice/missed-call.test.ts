@@ -46,8 +46,26 @@ describe('the missed-call card', () => {
       title: 'Llamada perdida · Pagar la luz',
       body: 'Te llamé por la luz.',
       kind: 'reminder',
+      reminderId: null,
       at: NOW - 4 * 60_000,
     });
+  });
+
+  test('a missed reminder call keeps the reminder it names; an alert never does', () => {
+    const named = (data: Record<string, unknown>) =>
+      latestMissedCall({
+        rows: [row('6', { data })],
+        now: NOW,
+        windowMs: WINDOW,
+        dismissed: new Set(),
+      })?.reminderId;
+    expect(named({ kind: 'call', urgency: 'active', category: 'reminder', reminderId: 77 })).toBe(
+      77
+    );
+    expect(named({ kind: 'call', urgency: 'active', category: 'reminder' })).toBeNull();
+    expect(
+      named({ kind: 'call', urgency: 'critical', category: 'alert', reminderId: 77 })
+    ).toBeNull();
   });
 
   test('ignores old calls, other notifications and a card already answered', () => {

@@ -6,11 +6,13 @@ internal data class RingInfo(
     val subject: String,
     val critical: Boolean,
     val episode: String = "",
+    val snoozable: Boolean = false,
 )
 
 internal data class RingDisplay(
     val subject: String,
     val critical: Boolean,
+    val snoozable: Boolean,
 )
 
 internal enum class RingChoice { Decline, Snooze, Answer }

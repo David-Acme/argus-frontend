@@ -17,6 +17,10 @@ internal data class PushIntent(
     val subject: String = "",
     val episode: String = "",
     val ringFollows: Boolean = false,
+    val category: String = "",
+    val reminderId: Long = 0L,
+    val actionToken: String = "",
+    val actionExpiresAtSeconds: Long = 0L,
 ) {
     companion object {
         const val KIND_ALERT = "alert"
@@ -50,6 +54,10 @@ internal data class PushIntent(
                 cancel = obj.optBoolean("cancel", false),
                 type = obj.optString("type"),
                 subject = obj.optString("subject"),
+                category = obj.optString("category"),
+                reminderId = obj.optLong("reminderId", 0L),
+                actionToken = obj.optString("actionToken"),
+                actionExpiresAtSeconds = obj.optLong("actionExpiresAt", 0L),
             )
         }
 

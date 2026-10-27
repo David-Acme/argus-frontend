@@ -157,7 +157,7 @@ class CallActivity : Activity() {
         LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            ringChoices(display.critical, snoozable = false).forEach { choice ->
+            ringChoices(display.critical, display.snoozable).forEach { choice ->
                 addView(roundControl(choice, spanish) { choose(callId, choice) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             }
         }
@@ -172,7 +172,10 @@ class CallActivity : Activity() {
                 CallSession.answer(this, callId)
                 finish()
             }
-            RingChoice.Snooze -> Unit
+            RingChoice.Snooze -> {
+                CallActions.request(this, callId, CallActionKind.Snooze)
+                finishAndRemoveTask()
+            }
         }
     }
 

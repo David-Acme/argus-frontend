@@ -12,7 +12,9 @@ internal object PushActions {
     const val ACTION_HANG_UP = "com.davidacme.argus.push.HANG_UP"
     const val ACTION_SPEAKER = "com.davidacme.argus.push.SPEAKER"
     const val ACTION_MUTE = "com.davidacme.argus.push.MUTE"
+    const val ACTION_CALL_ACTION = "com.davidacme.argus.push.CALL_ACTION"
     const val EXTRA_CALL_ID = "com.davidacme.argus.push.CALL_ID"
+    const val EXTRA_CALL_ACTION = "com.davidacme.argus.push.CALL_ACTION_KIND"
 
     fun openCall(context: Context, callId: String, enteredFromOutside: Boolean) {
         val intent = appLinkIntent(context, callDeepLink(callId, enteredFromOutside))

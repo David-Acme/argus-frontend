@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   callKindOf,
+  callReminderIdOf,
   callSubjectOf,
   ringChoices,
   ringSurfaceOf,
@@ -44,6 +45,26 @@ describe('the ring buttons', () => {
 
   test('an alert never offers a snooze', () => {
     expect(ringChoices({ kind: 'alert', snoozable: true })).toEqual(['decline', 'answer']);
+  });
+
+  test('a call can act on a reminder only when it is a reminder call that names one', () => {
+    expect(callReminderIdOf({ category: 'reminder', urgency: 'active', reminderId: 77 })).toBe(77);
+    expect(
+      callReminderIdOf({ category: 'reminder', urgency: 'active', reminderId: null })
+    ).toBeNull();
+    expect(callReminderIdOf({ category: 'reminder', urgency: 'active', reminderId: 0 })).toBeNull();
+    expect(
+      callReminderIdOf({ category: 'reminder', urgency: 'active', reminderId: 1.5 })
+    ).toBeNull();
+    expect(
+      callReminderIdOf({ category: 'reminder', urgency: 'active', reminderId: '77' })
+    ).toBeNull();
+    expect(callReminderIdOf({ category: 'notice', urgency: 'active', reminderId: 77 })).toBeNull();
+    expect(callReminderIdOf({ category: 'alert', urgency: 'critical', reminderId: 77 })).toBeNull();
+    expect(
+      callReminderIdOf({ category: 'reminder', urgency: 'critical', reminderId: 77 })
+    ).toBeNull();
+    expect(callReminderIdOf({ urgency: 'active', reminderId: 77 })).toBeNull();
   });
 
   test('the subject names the call, falling back to its reason', () => {

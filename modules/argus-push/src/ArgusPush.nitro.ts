@@ -23,6 +23,7 @@ export interface ArgusPush extends HybridObject<{ android: 'kotlin'; ios: 'swift
   setCallMuted(muted: boolean): void;
   takeDeclines(): string[];
   ackDecline(callId: string): void;
+  reportCallAction(callId: string, action: string, status: number): void;
   endActiveCall(): void;
   stopOngoingCall(): void;
   sendToBackground(): void;

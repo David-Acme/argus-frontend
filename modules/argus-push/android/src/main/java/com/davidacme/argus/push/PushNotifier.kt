@@ -13,6 +13,8 @@ import com.margelo.nitro.push.R
 
 internal data class CallSummary(val title: String, val body: String)
 
+internal data class CallActionNotice(val callId: String, val tag: String, val line: String, val retry: CallActionKind?)
+
 internal object PushNotifier {
     private const val ALERT_NOTIFICATION_ID = 1
     private const val SUMMARY_NOTIFICATION_ID = 2
@@ -27,13 +29,22 @@ internal object PushNotifier {
         return manager.canUseFullScreenIntent()
     }
 
-    fun postAlert(context: Context, tag: String, channelId: String, copy: AlertCopy, deepLink: String?) {
+    fun postAlert(
+        context: Context,
+        tag: String,
+        channelId: String,
+        copy: AlertCopy,
+        deepLink: String?,
+        markDone: CallActionGrant? = null,
+    ) {
         PushChannels.ensure(context)
         val smallIcon = if (copy.callBack) R.drawable.argus_ic_phone else context.applicationInfo.icon
+        val actions = if (copy.callBack) missedActions(context, tag, markDone) else emptyList()
         val publicVersion = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(smallIcon)
             .setContentTitle(copy.publicTitle)
             .setContentText(copy.publicBody)
+            .apply { actions.forEach { addAction(it) } }
             .build()
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(smallIcon)
@@ -44,14 +55,10 @@ internal object PushNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(publicVersion)
             .setContentIntent(activity(context, tag.hashCode(), PushActions.launchIntent(context, deepLink)))
+            .apply { actions.forEach { addAction(it) } }
         if (copy.callBack) {
             builder.setGroup(MISSED_GROUP)
-                .addAction(
-                    R.drawable.argus_ic_phone,
-                    PushText.callBack(PushText.isSpanish()),
-                    activity(context, tag.hashCode() + CALL_BACK, PushActions.launchIntent(context, CALL_BACK_LINK)),
-                )
-            NativeTrace.record("ongoing", "shown", "missed-call-back-action")
+            NativeTrace.record("ongoing", "shown", if (markDone != null) "missed-mark-done-action" else "missed-call-back-action")
         }
         NotificationManagerCompat.from(context).notify(tag, ALERT_NOTIFICATION_ID, builder.build())
     }
@@ -88,6 +95,9 @@ internal object PushNotifier {
             .setAutoCancel(false)
             .setTimeoutAfter(timeoutMillis)
             .setStyle(NotificationCompat.CallStyle.forIncomingCall(caller, decline, answer))
+        if (ringChoices(info.critical, info.snoozable).contains(RingChoice.Snooze)) {
+            builder.addAction(callAction(context, info.callId, CallActionKind.Snooze))
+        }
         if (fullScreen) {
             builder.setFullScreenIntent(activity(context, requestCode(info.callId, FULL_SCREEN), callIntent(context, PushActions.ACTION_SHOW_CALL, info.callId)), true)
         }
@@ -114,6 +124,51 @@ internal object PushNotifier {
         NativeTrace.record("ongoing", "shown", "call-summary-silent")
     }
 
+    fun postCallActionNotice(context: Context, notice: CallActionNotice) {
+        PushChannels.ensure(context)
+        val builder = NotificationCompat.Builder(context, PushChannels.SUMMARY)
+            .setSmallIcon(R.drawable.argus_ic_phone)
+            .setContentTitle(PushText.TITLE)
+            .setContentText(notice.line)
+            .setGroup(MISSED_GROUP)
+            .setSilent(true)
+            .setAutoCancel(true)
+            .setContentIntent(activity(context, notice.tag.hashCode(), PushActions.launchIntent(context, null)))
+        notice.retry?.let { builder.addAction(callAction(context, notice.callId, it)) }
+        NotificationManagerCompat.from(context).notify(notice.tag, ALERT_NOTIFICATION_ID, builder.build())
+    }
+
+    private fun missedActions(context: Context, tag: String, markDone: CallActionGrant?): List<NotificationCompat.Action> =
+        missedCallActions(critical = false, reminderLinked = markDone != null).map { action ->
+            when (action) {
+                MissedCallAction.MarkDone -> callAction(context, markDone?.callId.orEmpty(), CallActionKind.Done)
+                MissedCallAction.CallBack -> NotificationCompat.Action.Builder(
+                    R.drawable.argus_ic_phone,
+                    PushText.callBack(PushText.isSpanish()),
+                    activity(context, tag.hashCode() + CALL_BACK, PushActions.launchIntent(context, CALL_BACK_LINK)),
+                ).build()
+            }
+        }
+
+    private fun callAction(context: Context, callId: String, kind: CallActionKind): NotificationCompat.Action {
+        val spanish = PushText.isSpanish()
+        val (icon, label, purpose) = when (kind) {
+            CallActionKind.Snooze -> Triple(R.drawable.argus_ic_clock, PushText.snooze(spanish), SNOOZE)
+            CallActionKind.Done -> Triple(R.drawable.argus_ic_phone, PushText.markDone(spanish), MARK_DONE)
+        }
+        val intent = Intent(context, PushActionReceiver::class.java)
+            .setAction(PushActions.ACTION_CALL_ACTION)
+            .putExtra(PushActions.EXTRA_CALL_ID, callId)
+            .putExtra(PushActions.EXTRA_CALL_ACTION, kind.wire)
+        val pending = PendingIntent.getBroadcast(
+            context,
+            requestCode(callId, purpose),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Action.Builder(icon, label, pending).build()
+    }
+
     private fun callIntent(context: Context, action: String, callId: String): Intent =
         Intent(context, CallActivity::class.java)
             .setAction(action)
@@ -136,4 +191,6 @@ internal object PushNotifier {
     private const val DECLINE = 2
     private const val FULL_SCREEN = 3
     private const val CALL_BACK = 5
+    private const val SNOOZE = 6
+    private const val MARK_DONE = 7
 }

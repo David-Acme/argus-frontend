@@ -18,15 +18,15 @@ import {
 } from '@/features/voice/constants/call.constant';
 import { useCallFloat } from '@/features/voice/hooks/use-call-float';
 import { useNow } from '@/features/voice/hooks/use-now';
+import { useReminderCall } from '@/features/voice/hooks/use-reminder-call';
 import { useVoiceSession } from '@/features/voice/hooks/use-voice-session';
 import { CALL_SCREEN_PATH } from '@/features/voice/model/incoming-surface';
 import {
   latestMissedCall,
   minutesAgo,
   missedCallActions,
-  type MissedCall,
-  type MissedCallAction,
 } from '@/features/voice/model/missed-call';
+import type { MissedCall, MissedCallAction } from '@/features/voice/model/missed-call';
 
 const HIDDEN_ON: readonly string[] = [CALL_SCREEN_PATH, '/notification', '/welcome', '/login'];
 
@@ -40,7 +40,7 @@ type MissedViewProps = {
   missed: MissedCall;
   now: number;
   actions: readonly MissedCallAction[];
-  onAct: (action: MissedCallAction) => void;
+  onAct: (action: MissedCallAction) => Promise<void>;
 };
 
 function MissedView({ missed, now, actions, onAct }: MissedViewProps) {
@@ -91,6 +91,7 @@ export function MissedCallCard() {
   const pathname = usePathname();
   const { has } = useCapabilities();
   const { isActive, waitingCall } = useVoiceSession();
+  const reminderCall = useReminderCall();
   const { rows } = usePagedView<INotificationPreviewCacheRow>(
     VIEW_CACHE_KEYS.notificationFeed,
     NOTIFICATION_FEED_SCOPE,
@@ -103,18 +104,26 @@ export function MissedCallCard() {
     isActive || waitingCall !== null || HIDDEN_ON.some((path) => pathname.startsWith(path));
   if (!missed || hidden) return null;
 
-  const act = (action: MissedCallAction) => {
+  const close = () => {
     setDismissed((previous) => new Set([...previous, missed.notificationId]));
     void notificationService.markRead({
       threadKey: missed.threadKey,
       ids: [missed.notificationId],
     });
+  };
+  const act = async (action: MissedCallAction) => {
+    if (action === 'mark-done') {
+      if (missed.reminderId !== null && (await reminderCall.markDone(missed.reminderId))) close();
+      return;
+    }
+    close();
     if (action === 'call-back') router.navigate(CALL_SCREEN_PATH);
     if (action === 'view')
       router.push(`/notification?notificationId=${encodeURIComponent(missed.notificationId)}`);
   };
-  const actions = missedCallActions({ kind: missed.kind, reminderLinked: false }).filter(
-    (action) => action !== 'call-back' || has(CAPABILITY.assistantVoice)
-  );
+  const actions = missedCallActions({
+    kind: missed.kind,
+    reminderLinked: missed.reminderId !== null,
+  }).filter((action) => action !== 'call-back' || has(CAPABILITY.assistantVoice));
   return <MissedView missed={missed} now={now} actions={actions} onAct={act} />;
 }

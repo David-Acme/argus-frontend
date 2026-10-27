@@ -77,6 +77,8 @@ export type RtcDeclineAnswer =
   | { kind: 'outcome'; outcome: RtcCallOutcome }
   | { kind: 'refused'; code: string; message: string };
 
+export type CallCategory = 'alert' | 'reminder' | 'notice';
+
 export type IncomingCall = {
   callId: string;
   reason: string;
@@ -84,6 +86,8 @@ export type IncomingCall = {
   summary: string;
   urgency: RtcCallUrgency;
   kind: RtcCallKind;
+  category?: CallCategory | null;
+  reminderId?: number | null;
   episodeId?: number | null;
   cameraId?: number | null;
   cameraName?: string | null;

@@ -175,6 +175,10 @@ export class IosPushService implements IPushService {
     }
   }
 
+  reportCallAction(): void {
+    return undefined;
+  }
+
   stopOngoingCall(): void {
     try {
       this.module().stopOngoingCall();

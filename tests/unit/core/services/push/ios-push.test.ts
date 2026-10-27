@@ -103,6 +103,8 @@ class FakeNative implements IArgusPushNative {
     this.declines = this.declines.filter((id) => id !== callId);
   }
 
+  reportCallAction(): void {}
+
   sendToBackground(): void {}
 
   stopOngoingCall(): void {
