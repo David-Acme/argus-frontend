@@ -20,6 +20,7 @@ import { useArgusThread } from '@/features/conversations/hooks/use-argus-thread'
 import type { ConversationThread } from '@/features/conversations/hooks/use-conversation-thread';
 import { useThreadDays } from '@/features/conversations/hooks/use-thread-days';
 import { replyBodies } from '@/features/conversations/model/conversation-thread';
+import { streamingResultId } from '@/features/conversations/model/thread-results';
 
 export type ArgusThreadProps = { thread: ConversationThread; desktop: boolean };
 
@@ -30,7 +31,11 @@ export function ArgusThread({ thread, desktop }: ArgusThreadProps) {
   const actions = useResultActions('chat');
   const days = useThreadDays(state.now);
   const rows = state.overlay.rows;
-  const liveId = liveCameraResultId(state.results);
+  const liveId = streamingResultId(
+    state.anchored,
+    state.newestIn,
+    liveCameraResultId(state.results)
+  );
   const calls = has(CAPABILITY.assistantVoice) && argusCallSupported();
   const empty = thread.loaded && rows.length === 0 && !state.typing;
 

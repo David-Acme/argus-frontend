@@ -213,6 +213,7 @@ export const voice = {
     live: 'En vivo',
     looking: 'Argus mira',
     'view-large': 'Ver en grande',
+    'view-live': 'Ver en vivo',
     talk: 'Hablar',
     view: 'Ver',
     'camera-shown': 'Te mostré {name}',

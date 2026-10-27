@@ -214,6 +214,7 @@ export const voice = {
     live: 'Live',
     looking: 'Argus is looking',
     'view-large': 'View full size',
+    'view-live': 'See it live',
     talk: 'Talk',
     view: 'View',
     'camera-shown': 'I showed you {name}',

@@ -4,6 +4,7 @@ import {
   anchorResults,
   bubblePresenceOf,
   newestIncomingId,
+  streamingResultId,
 } from '@/features/conversations/model/thread-results';
 
 const row = (id: string, direction: 'in' | 'out', createdAt: number) => ({
@@ -78,5 +79,23 @@ describe('the Estela beside a reply', () => {
   test('only the newest reply carries a live Estela', () => {
     expect(newestIncomingId(ROWS)).toBe('4');
     expect(newestIncomingId([row('1', 'out', 1)])).toBeNull();
+  });
+});
+
+describe('which camera card streams', () => {
+  test('the newest camera streams while its turn is the newest, and stops once the talk moves on', () => {
+    const shown = anchorResults(ROWS, [camera('a', 201_000)]);
+    expect(streamingResultId(shown, '4', 'a')).toBe('a');
+    const moved = anchorResults(
+      [...ROWS, row('5', 'out', 300_000), row('6', 'in', 301_000)],
+      [camera('a', 201_000)]
+    );
+    expect(streamingResultId(moved, '6', 'a')).toBeNull();
+  });
+
+  test('a camera whose reply has not arrived yet streams, and no camera means none', () => {
+    const waiting = anchorResults(ROWS.slice(0, 3), [camera('a', 201_000)]);
+    expect(streamingResultId(waiting, '2', 'a')).toBe('a');
+    expect(streamingResultId(waiting, '2', null)).toBeNull();
   });
 });

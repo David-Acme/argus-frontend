@@ -27,6 +27,8 @@ mock.module('@/shared/hooks/use-date-formatter', () => ({
 mock.module('@/features/cameras', () => ({
   CameraLiveView: ({ cameraId }: { cameraId: string }) => <Text>{`video ${cameraId}`}</Text>,
   useCameraPrivacy: () => 'off',
+  useCameraStill: (cameraId: string | null) =>
+    cameraId ? `data:image/jpeg;base64,${cameraId}` : null,
 }));
 mock.module('@/features/voice/hooks/use-argus-results', () => ({
   useArgusResults: () => [
@@ -94,10 +96,11 @@ describe('what Argus did, as a card', () => {
     expect(calls).toEqual(['camera c2', 'talk c2']);
   });
 
-  test('an earlier camera is a line that still opens it', async () => {
+  test('an earlier camera shows its last frame, stops streaming, and offers Ver en vivo', async () => {
     await show(card({ ...base, kind: 'camera', cameraId: 'c1', name: 'Patio' }));
-    expect(screen.getByText('Te mostré Patio')).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: 'Ver' }));
+    expect(screen.queryByText('video c1')).toBeNull();
+    expect(screen.queryByText('En vivo')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver en vivo' }));
     expect(calls).toEqual(['camera c1']);
   });
 
