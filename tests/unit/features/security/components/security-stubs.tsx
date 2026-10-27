@@ -39,6 +39,8 @@ export const access: Access = {
   create: true,
 };
 
+export const reach = { offline: false };
+
 export const data = {
   cameras: [
     { id: '3', name: 'Patio trasero' },
@@ -63,6 +65,7 @@ export function resetStubs(): void {
     talk: true,
     create: true,
   });
+  reach.offline = false;
   data.windows = [];
   data.environments = [];
   data.guests = [];
@@ -116,6 +119,10 @@ mock.module('@/shared/hooks/use-capabilities', () => ({
     cameraActions: { watch: access.watch, talk: access.talk },
     clips: { view: true },
   }),
+}));
+
+mock.module('@/shared/components/layout/use-offline-notice', () => ({
+  useOfflineNotice: () => reach.offline,
 }));
 
 mock.module('@/features/cameras', () => ({

@@ -1,15 +1,16 @@
 import { clsx } from 'clsx';
 import { useState } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
+import { useOfflineNotice } from '@/shared/components/layout/use-offline-notice';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cameraFaceOf } from '@/shared/libs/camera-face';
 import { Button } from '@/shared/ui/button';
-import { Media, type MediaDormant } from '@/shared/ui/media';
+import { Media } from '@/shared/ui/media';
 import {
   gridColumnsFor,
   rowsOf,
   tileLabel,
   type SecurityTile,
-  type TileState,
 } from '@/features/security/model/camera-tiles';
 import type { MomentFormat } from '@/features/security/model/moment';
 
@@ -25,17 +26,15 @@ export type CameraGridProps = {
 
 type TileProps = Omit<CameraGridProps, 'tiles'> & { tile: SecurityTile };
 
-const DORMANT: Readonly<Record<TileState, MediaDormant | undefined>> = {
-  live: undefined,
-  private: 'privacy',
-  off: 'off',
-  offline: 'off',
-};
-
 function CameraTile({ tile, frames, now, format, fill, onOpen, onTalk }: TileProps) {
   const { t } = useTranslation();
   const frame = frames.get(tile.id);
-  const live = tile.state === 'live';
+  const unreachable = useOfflineNotice();
+  const face = cameraFaceOf({
+    state: tile.state,
+    framed: frame !== undefined,
+    reachable: !unreachable,
+  });
   const reveal = (
     <>
       <Button
@@ -64,10 +63,10 @@ function CameraTile({ tile, frames, now, format, fill, onOpen, onTalk }: TilePro
   return (
     <Media
       name={tile.name}
-      detail={tileLabel(tile, now, format)}
-      live={live ? t('screens.security.camera-grid.live') : undefined}
-      dormant={DORMANT[tile.state]}
-      frame={frame ? { uri: frame } : undefined}
+      detail={face.stale ? t('screens.security.camera-grid.offline') : tileLabel(tile, now, format)}
+      live={face.live ? t('screens.security.camera-grid.live') : undefined}
+      dormant={face.dormant}
+      frame={frame && !face.dormant ? { uri: frame } : undefined}
       fill={fill}
       reveal={fill ? reveal : undefined}
       onPress={() => onOpen(tile.id)}

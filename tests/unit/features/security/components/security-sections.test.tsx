@@ -6,7 +6,7 @@ import type { CameraTiles } from '@/features/security/hooks/use-security-cameras
 import type { SecurityTile } from '@/features/security/model/camera-tiles';
 import { setWindowWidth } from '../../../shared/ui/window-width';
 import { NOW, environment, episode, format, guest, maintenanceWindow } from '../security-fixtures';
-import { access, calls, data, resetStubs, routes } from './security-stubs';
+import { access, calls, data, reach, resetStubs, routes } from './security-stubs';
 
 const { CameraGrid } = await import('@/features/security/components/page/camera-grid');
 const { CamerasSection } = await import('@/features/security/components/page/cameras-section');
@@ -97,7 +97,7 @@ describe('Cámaras', () => {
         <CamerasSection cameras={cameras()} desktop onConnect={() => undefined} />
       </InColumn>
     );
-    expect(screen.getByRole('button', { name: 'Sala, En vivo, sin novedad' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Sala, sin novedad' })).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Hablar por Patio trasero' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ver Sala' }));
     expect(screen.queryByRole('button', { name: 'Hablar por Dormitorio' })).toBeNull();
@@ -153,6 +153,28 @@ describe('Cámaras', () => {
       />
     );
     expect(container.textContent).toBe('');
+  });
+
+  test('a tile says En vivo only over a painted frame, and offline it keeps the last frame with Sin conexión', () => {
+    const frames = new Map([['3', 'data:image/jpeg;base64,AAAA']]);
+    const grid = () => (
+      <CameraGrid
+        tiles={[TILES[0], TILES[4]].filter((tile) => tile !== undefined)}
+        frames={frames}
+        now={NOW}
+        format={format}
+        fill={false}
+        onOpen={() => undefined}
+      />
+    );
+    const { rerender } = render(grid());
+    expect(screen.getByRole('button', { name: 'Patio trasero, En vivo, 14:45' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Sala, sin novedad' })).toBeDefined();
+    reach.offline = true;
+    rerender(grid());
+    expect(screen.getByRole('button', { name: 'Patio trasero, Sin conexión' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Sala, Sin conexión' })).toBeDefined();
+    expect(screen.queryByText('En vivo')).toBeNull();
   });
 
   test('the grid alone can open without talk', () => {

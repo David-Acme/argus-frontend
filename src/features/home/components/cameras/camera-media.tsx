@@ -1,8 +1,9 @@
-import type { MediaDormant } from '@/shared/ui/media';
 import { Media } from '@/shared/ui/media';
 import { Button } from '@/shared/ui/button';
-import type { CameraTile, ClipTile } from '@/features/home/model/camera-tiles';
+import { useOfflineNotice } from '@/shared/components/layout/use-offline-notice';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { cameraFaceOf } from '@/shared/libs/camera-face';
+import type { CameraTile, ClipTile } from '@/features/home/model/camera-tiles';
 
 export type CameraMediaProps = {
   tile: CameraTile;
@@ -19,22 +20,21 @@ export type ClipMediaProps = {
   onOpen: (cameraId: string) => void;
 };
 
-const DORMANT: Record<CameraTile['state'], MediaDormant | undefined> = {
-  live: undefined,
-  private: 'privacy',
-  off: 'off',
-  offline: 'off',
-};
-
 export function CameraMedia({ tile, detail, frame, fill, onOpen }: CameraMediaProps) {
   const { t } = useTranslation();
+  const unreachable = useOfflineNotice();
+  const face = cameraFaceOf({
+    state: tile.state,
+    framed: frame !== undefined,
+    reachable: !unreachable,
+  });
   return (
     <Media
       name={tile.name}
-      detail={detail || undefined}
-      live={tile.state === 'live' ? t('screens.home.camera-sections.live') : undefined}
-      dormant={DORMANT[tile.state]}
-      frame={frame ? { uri: frame } : undefined}
+      detail={face.stale ? t('screens.home.camera-sections.offline') : detail || undefined}
+      live={face.live ? t('screens.home.camera-sections.live') : undefined}
+      dormant={face.dormant}
+      frame={frame && !face.dormant ? { uri: frame } : undefined}
       fill={fill}
       onPress={() => onOpen(tile.id)}
     />

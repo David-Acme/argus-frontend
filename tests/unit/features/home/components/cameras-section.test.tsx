@@ -26,6 +26,8 @@ const NOW = new Date(2026, 9, 21, 15, 0).getTime();
 
 let data: CameraSectionData;
 
+const reach = { offline: false };
+
 function sectionData(overrides: Partial<CameraSectionData>): CameraSectionData {
   return {
     visible: true,
@@ -47,6 +49,10 @@ mock.module('expo-router', () => ({
   useLocalSearchParams: () => ({}),
   useRouter: () => ({ setParams: () => undefined, push: (href: string) => pushed.push(href) }),
   useIsFocused: () => screenFocus.focused,
+}));
+
+mock.module('@/shared/components/layout/use-offline-notice', () => ({
+  useOfflineNotice: () => reach.offline,
 }));
 
 mock.module('@/features/home/hooks/use-camera-section', () => ({
@@ -87,7 +93,7 @@ describe('CamerasSection', () => {
     expect(tiles).toEqual([
       'Clip · Puerta principal, 14:47',
       'Cocina, En vivo, 14:47',
-      'Patio trasero, En vivo, sin novedad',
+      'Patio trasero, sin novedad',
       'Dormitorio, Privada',
     ]);
     expect(forms.at(-1)).toEqual({ grid: false, wide: false });
@@ -119,9 +125,7 @@ describe('CamerasSection', () => {
     );
     expect(screen.queryByLabelText('Cámaras y último clip')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Cámaras' })).toBeDefined();
-    expect(
-      screen.getByRole('button', { name: 'Patio trasero, En vivo, sin novedad' })
-    ).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Patio trasero, sin novedad' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Dormitorio, Privada' })).toBeDefined();
     expect(forms.at(-1)?.grid).toBe(true);
   });
@@ -130,6 +134,21 @@ describe('CamerasSection', () => {
     data = sectionData({ visible: false });
     const { container } = render(<CamerasSection />);
     expect(container.textContent).toBe('');
+  });
+
+  test('when Argus is unreachable a live tile keeps its last frame and says Sin conexión', () => {
+    reach.offline = true;
+    render(
+      <CameraMedia
+        tile={{ id: '1', name: 'Cocina', state: 'live', at: null }}
+        detail="14:47"
+        frame="data:image/jpeg;base64,AAAA"
+        onOpen={() => undefined}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Cocina, Sin conexión' })).toBeDefined();
+    expect(screen.queryByText('En vivo')).toBeNull();
+    reach.offline = false;
   });
 
   test('a camera without a picture says why in words, and a clip names its camera', () => {

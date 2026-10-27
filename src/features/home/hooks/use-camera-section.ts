@@ -52,9 +52,11 @@ export function useCameraSection({ grid, wide }: CameraSectionForm): CameraSecti
     lastEventAt: view.lastEvent?.at ?? null,
   }));
   const tiles = cameraTiles(sources, grid ? gridLimit(wide) : STRIP_CAMERAS);
-  const live = new Set(tiles.filter((tile) => tile.state === 'live').map((tile) => tile.id));
+  const framed = new Set(
+    tiles.filter((tile) => tile.state === 'live' || tile.state === 'offline').map((tile) => tile.id)
+  );
   const frames = useCameraThumbnails(
-    cameras.filter((camera) => watch && live.has(camera.id)),
+    cameras.filter((camera) => watch && framed.has(camera.id)),
     perfTier !== 'low'
   );
   const recent = useRecentClips(1, watch && clips.view && !grid);

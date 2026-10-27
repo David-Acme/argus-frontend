@@ -2,16 +2,20 @@ import { useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 import type { ICameraCacheRow } from '@/core/interfaces';
 import { isPendingRecordId } from '@/shared/libs/optimistic';
+import { lastCameraFrames } from '@/features/cameras/services/camera-frame-cache';
 import { CameraThumbnailPoller } from '@/features/cameras/services/camera-thumbnail.service';
 
 const NO_THUMBNAILS: ReadonlyMap<string, string> = new Map();
 
 export function useCameraThumbnails(
   cameras: readonly ICameraCacheRow[],
-  repeat = true,
+  repeat = true
 ): ReadonlyMap<string, string> {
   const focused = useIsFocused();
   const [thumbnails, setThumbnails] = useState<ReadonlyMap<string, string>>(NO_THUMBNAILS);
+  const known = lastCameraFrames(
+    cameras.filter((camera) => !isPendingRecordId(camera.id)).map((camera) => camera.id)
+  );
   const watched = cameras
     .filter((camera) => camera.isEnabled && camera.isOnline && !isPendingRecordId(camera.id))
     .map((camera) => camera.id)
@@ -24,5 +28,5 @@ export function useCameraThumbnails(
     return () => poller.stop();
   }, [focused, repeat, watched]);
 
-  return thumbnails;
+  return new Map([...known, ...thumbnails]);
 }

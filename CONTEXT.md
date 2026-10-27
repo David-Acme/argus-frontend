@@ -7738,7 +7738,7 @@ reconnect or a remount), **removed** (to be removed by F-reminders).
 | Inicio · Ahora, Hoy, Mañana | `calendar_event`, `project_task`, `reminder` → `dashboard.agenda` (today), `calendar.entries` (month) | | `reminder` rows removed (F-reminders) |
 | Inicio · Recordatorios | `reminder` → `dashboard.agenda` | | removed (F-reminders) |
 | Inicio · Proyectos | `project`, `project_task` → `dashboard.projects`, `project.tasks` | | |
-| Inicio · Cámaras | `camera`, `zone` → `camera.list` | `/camera/overview` → camera·overview; `/camera/0/clips` → camera·clips | frames: snapshot images re-fetched every 30 s (media, not data) |
+| Inicio · Cámaras | `camera`, `zone` → `camera.list` | `/camera/overview` → camera·overview; `/camera/0/clips` → camera·clips | frames: snapshot images re-fetched every 30 s (media, not data); the last frame of each camera is kept in memory for the session (`camera-frame-cache.ts`, cleared on sign-out, never written to disk), so a tile paints it at once and keeps it under «Sin conexión» while Argus is unreachable (`cameraFaceOf`) |
 | Inicio · Lo que pasó | `camera` → `camera.list` | `/guard/episodes` → guard·episodes | |
 | Inicio · Clips recientes | `camera` → `camera.list` | `/camera/0/clips` → camera·clips | |
 | Inicio · Vigilancia | `camera` → `camera.list` | `/guard/environments` → guard·environments | |

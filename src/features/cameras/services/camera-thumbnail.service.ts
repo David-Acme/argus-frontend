@@ -1,5 +1,6 @@
 import { CAMERA_THUMBNAIL_REFRESH_MS } from '@/features/cameras/constants';
 import { cameraControlService } from '@/features/cameras/services/camera-control.service';
+import { rememberCameraFrame } from '@/features/cameras/services/camera-frame-cache';
 
 type ThumbnailListener = (thumbnails: ReadonlyMap<string, string>) => void;
 
@@ -11,7 +12,7 @@ export class CameraThumbnailPoller {
   constructor(
     private readonly ids: readonly string[],
     private readonly listener: ThumbnailListener,
-    private readonly repeat = true,
+    private readonly repeat = true
   ) {}
 
   start(): void {
@@ -31,9 +32,11 @@ export class CameraThumbnailPoller {
       if (this.stopped) return;
       if (result.ok && result.info?.image) {
         this.thumbnails.set(id, result.info.image);
+        rememberCameraFrame(id, result.info.image);
         this.listener(new Map(this.thumbnails));
       }
     }
-    if (!this.stopped && this.repeat) this.timer = setTimeout(() => void this.refresh(), CAMERA_THUMBNAIL_REFRESH_MS);
+    if (!this.stopped && this.repeat)
+      this.timer = setTimeout(() => void this.refresh(), CAMERA_THUMBNAIL_REFRESH_MS);
   }
 }
