@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
-import { Row } from '@/shared/ui/row';
 import { useDayNames } from '@/features/agenda/hooks/use-day-names';
 import { monthCells, monthOf, shiftMonth } from '@/features/agenda/model/agenda-days';
+import { FormLine } from '@/features/agenda/components/form-line';
 import { MonthGrid } from '@/features/agenda/components/month-grid';
 
 export type DayFieldProps = { day: number; now: number; onChange: (day: number) => void };
@@ -24,14 +24,13 @@ export function DayField({ day, now, onChange }: DayFieldProps) {
   };
   return (
     <View>
-      <Row
-        title={t('screens.agenda.sheet.day')}
-        trailing={date.formatPickerDay(new Date(day))}
-        chevron
+      <FormLine
+        label={t('screens.agenda.sheet.day')}
+        value={date.formatPickerDay(new Date(day))}
         onPress={() => setOpen(!open)}
       />
       {open ? (
-        <View className="px-2 pb-2">
+        <View className="pb-2">
           <MonthGrid
             cells={cells}
             names={names}

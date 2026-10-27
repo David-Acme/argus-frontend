@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { Text } from 'react-native';
 import type { AgendaItem, DashboardProjectCard } from '@/core/types';
 import { at, date, entry, items, NOW, task } from '../../home/agenda-fixtures';
 import '../../../shared/ui/translation-stub';
@@ -148,6 +149,7 @@ const { DayField } = await import('@/features/agenda/components/day-field');
 const { DayHead } = await import('@/features/agenda/components/day-head');
 const { DayView } = await import('@/features/agenda/components/day-view');
 const { EventBar } = await import('@/features/agenda/components/event-bar');
+const { FormLine } = await import('@/features/agenda/components/form-line');
 const { detailBlocks } = await import('@/features/agenda/components/item-detail');
 const { ItemFields } = await import('@/features/agenda/components/item-fields');
 const { ItemSheet } = await import('@/features/agenda/components/item-sheet');
@@ -379,5 +381,19 @@ describe('the agenda parts', () => {
         document.body
     );
     expect(days).toEqual([next]);
+  });
+
+  test('a form line carries the field label at the field edge, with its value or control', () => {
+    let opened = 0;
+    render(
+      <>
+        <FormLine label="Día" value="mar, 27 oct" onPress={() => (opened += 1)} />
+        <FormLine label="Todo el día" trailing={<Text>control</Text>} />
+      </>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Día, mar, 27 oct' }));
+    expect(opened).toBe(1);
+    expect(screen.getByText('Todo el día')).toBeDefined();
+    expect(screen.getByText('control')).toBeDefined();
   });
 });
