@@ -1,5 +1,5 @@
-entry-chunk-bytes 6545085
-dist-bytes 8867768
+entry-chunk-bytes 6556734
+dist-bytes 8909621
 lazy livekit-client
 lazy activity-screen
 lazy agenda-screen
@@ -12,13 +12,11 @@ lazy invitation-screen
 lazy lab-screens
 lazy login-screen
 lazy modules-screen
-lazy notification-link-screen
 lazy onboarding-call-screen
 lazy onboarding-module-privacy-screen
 lazy onboarding-modules-screen
 lazy onboarding-permissions-screen
 lazy pairing-screen
-lazy people-directory-screen
 lazy privacy-screen
 lazy profile-screen
 lazy projects-screen
@@ -26,9 +24,14 @@ lazy proximity-screens
 lazy qr-scan-screen
 lazy security-screens
 lazy settings-screen
-lazy users-screen
 lazy visitor-detail-screen
 lazy visitors-screen
 lazy watch-screen
 lazy expo-camera
 lazy qr-code
+lazy people-screen
+lazy account-screens
+lazy appearance-screen
+lazy name-screen
+lazy onboarding-ready-screen
+lazy sessions-screen
