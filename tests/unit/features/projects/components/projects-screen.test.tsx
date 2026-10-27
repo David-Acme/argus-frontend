@@ -48,7 +48,7 @@ const task = (id: string, title: string, patch: Partial<IProjectTaskCacheRow> = 
 
 const tasks: IProjectTaskCacheRow[] = [
   task('1', 'Comprar cajas', { dueAt: at(0, 0, -2) }),
-  task('2', 'Llamar a la mudanza', { status: 'doing' }),
+  task('2', 'Llamar a la mudanza', { status: 'doing', createdVia: 'assistant' }),
   task('3', 'Vaciar el armario', { status: 'done' }),
   task('4', 'Etiquetar cajas', { status: 'done' }),
 ];
@@ -238,6 +238,15 @@ describe('Proyectos on a phone', () => {
     expect(screen.getByText(/^Atrasada/)).toBeDefined();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar «Comprar cajas» como hecha' }));
     expect(calls.commands).toEqual(['status:Comprar cajas:done']);
+  });
+
+  test('a task Argus made says so in its row, the others do not', () => {
+    state.params = { id: '7' };
+    render(<ProjectsScreen />);
+    expect(
+      within(screen.getByTestId('task-row-2')).getByText('Sin fecha · por Argus')
+    ).toBeDefined();
+    expect(within(screen.getByTestId('task-row-1')).queryByText(/por Argus/)).toBeNull();
   });
 
   test('a right click on a task moves it, and Nueva tarea saves into the chosen state', async () => {

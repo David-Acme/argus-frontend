@@ -112,6 +112,14 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
       },
       { state: 'empty-default-view', notes: 'Nada para hoy, suggestions and the free next days' },
       {
+        state: 'by-argus',
+        rows: [
+          ...PRODUCTIVITY,
+          event(1500, 'Cita con el dentista', MIDNIGHT + HOUR * 15, { createdVia: 'assistant' }),
+        ],
+        notes: 'an event Argus made ends its meta with «por Argus»',
+      },
+      {
         state: 'deep-link-cold',
         rows: AGENDA_ROWS,
         deep: true,
@@ -292,6 +300,16 @@ export const PRODUCTIVITY_SCREENS: ScreenSpec[] = [
       {
         state: 'no-tasks',
         rows: [...HOUSEHOLD, project(700, 'Mudanza')],
+      },
+      {
+        state: 'by-argus',
+        rows: [
+          ...HOUSEHOLD,
+          project(700, 'Mudanza'),
+          task(805, 700, 'Pedir presupuesto del camión', { createdVia: 'assistant' }),
+          task(806, 700, 'Empacar los libros'),
+        ],
+        notes: 'a task Argus made ends its meta with «por Argus»',
       },
       {
         state: 'many-long',

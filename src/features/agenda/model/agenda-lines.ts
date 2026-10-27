@@ -38,6 +38,9 @@ const HOUR_MINUTES = 60;
 const ownerOf = (item: AgendaItem): string | null =>
   item.origin.kind === 'entry' ? (item.origin.entry.ownerId ?? null) : null;
 
+export const madeByArgus = (item: AgendaItem): boolean =>
+  item.origin.kind === 'entry' && item.origin.entry.createdVia === 'assistant';
+
 export function categoryOf(item: AgendaItem, viewer: string): Category {
   const owner = ownerOf(item);
   return item.kind === 'event' && owner !== null && owner !== viewer ? 'shared' : item.kind;
@@ -78,6 +81,7 @@ function detailsOf(item: AgendaItem, context: LineContext): string[] {
     item.place,
     item.project,
     category === 'shared' && owner ? (owners.get(owner) ?? null) : null,
+    madeByArgus(item) ? t('common.by-argus') : null,
   ].filter((part): part is string => Boolean(part));
 }
 
@@ -88,7 +92,12 @@ export function lineWords(item: AgendaItem, context: LineContext): LineWords {
     : date.formatTime(new Date(item.startsAt));
   const alert = isOverdue(item, now);
   const meta = alert
-    ? [t('screens.agenda.line.late-since', { time }), item.project, item.place]
+    ? [
+        t('screens.agenda.line.late-since', { time }),
+        item.project,
+        item.place,
+        madeByArgus(item) ? t('common.by-argus') : null,
+      ]
         .filter(Boolean)
         .join(' · ')
     : detailsOf(item, context).join(' · ');

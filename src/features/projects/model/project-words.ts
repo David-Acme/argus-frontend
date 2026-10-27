@@ -89,8 +89,11 @@ export function taskWords(task: IProjectTaskCacheRow, context: TaskWordsContext)
       ? t(PRIORITY_LABEL[task.priority as ProjectTaskPriority])
       : '',
   ].filter((part) => part.length > 0);
+  const said = parts.length > 0 ? parts : [t('screens.projects.line.no-date')];
   return {
-    meta: parts.length > 0 ? parts.join(' · ') : t('screens.projects.line.no-date'),
+    meta: [...said, task.createdVia === 'assistant' ? t('common.by-argus') : '']
+      .filter((part) => part.length > 0)
+      .join(' · '),
     alert: isOverdue(task, date.startOfDay(new Date(now)).getTime()),
   };
 }

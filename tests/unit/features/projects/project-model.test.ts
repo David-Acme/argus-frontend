@@ -83,6 +83,16 @@ describe('project words', () => {
     expect(taskWords(task({ status: 'done', dueAt: at(0, 0, -2) }), context).alert).toBe(false);
   });
 
+  test('a task Argus made says «por Argus» after its other words, and the app adds nothing', () => {
+    expect(taskWords(task({ createdVia: 'assistant' }), context).meta).toBe(
+      'Sin fecha · por Argus'
+    );
+    expect(taskWords(task({ createdVia: 'assistant', dueAt: at(0) }), context).meta).toBe(
+      'Para hoy · por Argus'
+    );
+    expect(taskWords(task({ createdVia: 'app' }), context).meta).toBe('Sin fecha');
+  });
+
   test('the check shows open, overdue, in progress and done', () => {
     const today = at(0);
     expect(taskCheck(task(), today)).toBe('open');

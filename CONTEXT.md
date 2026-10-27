@@ -7314,6 +7314,11 @@ replaces §9.4's Hoy/Calendario split: a Teams-like agenda.
   scrolls on a short or landscape window (`sheetDetentsOf`, `sheetScrolls`), the
   week strip drops its grab handle and the month uses small discs, so the list
   starts within the top 40 %.
+- **«por Argus».** An event or a task Argus made ends its line's meta with
+  «por Argus», also when it is late: `calendar_event.created_via` and
+  `project_task.created_via` (schema v17) reach the month caches as the
+  entry's `createdVia`, read by `madeByArgus`. Reminders are all Argus's and
+  say nothing more.
 - **Slices.** The reminders slice merged into agenda: agenda reads
   `useReminders` and reminders read agenda's day picker, which would close a
   slice cycle. Inicio's agenda models moved here; the types they share live in
@@ -7425,8 +7430,13 @@ density and components.
   keeps a «Pendiente» or «Cancelada» task's status when its lane did not change.
 - **Argus.** The empty list and the empty project offer suggestion chips that
   open the thread with a draft (the Agenda's `Ideas`, now exported and fed
-  translated text). «por Argus» is not shown: `project_task.created_by` is the
-  user Argus acted for, and no column says a row came from Argus.
+  translated text). A task Argus made ends its meta with «por Argus» (en «by
+  Argus»): the synced `project_task.created_via` (`'app' | 'assistant'`,
+  schema v17, `sanitizeCreatedVia` reads anything but `assistant` as the app, so a
+  migrated row and an old cached snapshot read as the app) travels into the
+  `project.tasks.<id>` cache rows as `createdVia`. `created_by` stays the user
+  Argus acted for. The column is set once at creation, so no audit diff
+  changes it.
 - **Data.** Everything is the view cache projected from WatermelonDB
   (`project.list`, `project.tasks.<id>`, `project.members.<id>`,
   `people.users`) with the optimistic lenses, so the screen paints from local

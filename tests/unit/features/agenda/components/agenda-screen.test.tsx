@@ -58,6 +58,7 @@ const busyDay = (): AgendaItem[] =>
         source: 'task',
         isAllDay: true,
         projectId: '7',
+        createdVia: 'assistant',
       }),
       entry('event:gasfitero', at(9, 0, 1), {
         title: 'Gasfitero',
@@ -202,6 +203,12 @@ describe('Agenda on a phone', () => {
     expect(screen.getByText('Evento compartido · Luis Paz')).toBeDefined();
     expect(screen.getAllByText('Libre').length).toBeGreaterThan(0);
     expect(exported.every((component) => typeof component === 'function')).toBe(true);
+  });
+
+  test('a task Argus made says «por Argus» in its line, and only that one', () => {
+    render(<AgendaScreen />);
+    expect(screen.getAllByText(/por Argus/)).toHaveLength(1);
+    expect(screen.getByText(/^Tarea · .*por Argus$/)).toBeDefined();
   });
 
   test('a task has its check, a reminder is read-only and asks Argus, an event opens its detail', async () => {
