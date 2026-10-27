@@ -177,6 +177,7 @@ export const size = {
   icon: 24,
   iconSmall: 20,
   iconStroke: 1.75,
+  iconStrokeFine: 1.5,
   well: 42,
   wellSmall: 36,
   avatar: 36,

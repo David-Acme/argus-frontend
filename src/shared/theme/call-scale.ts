@@ -10,31 +10,31 @@ export type CallScale = {
 const TALL: CallScale = {
   avatar: 168,
   endedAvatar: 140,
-  ringControl: 64,
-  panelControl: 56,
+  ringControl: 54,
+  panelControl: 48,
   avatarGap: 32,
   captionLines: 2,
 };
 const MEDIUM: CallScale = {
   avatar: 136,
   endedAvatar: 112,
-  ringControl: 64,
-  panelControl: 56,
+  ringControl: 54,
+  panelControl: 48,
   avatarGap: 24,
   captionLines: 2,
 };
 const SHORT: CallScale = {
   avatar: 104,
   endedAvatar: 88,
-  ringControl: 56,
-  panelControl: 52,
+  ringControl: 52,
+  panelControl: 48,
   avatarGap: 16,
   captionLines: 1,
 };
 const FLAT: CallScale = {
   avatar: 64,
   endedAvatar: 56,
-  ringControl: 52,
+  ringControl: 48,
   panelControl: 48,
   avatarGap: 8,
   captionLines: 1,

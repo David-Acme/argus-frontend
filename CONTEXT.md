@@ -7272,6 +7272,13 @@ The owner-approved prototype is `uiux-map/redesign/later-phases/owner-2026-10-26
   (`shared/theme/call-scale.ts`, tested) steps the avatar (168, 136, 104, 64), the gap above it, the ring
   and panel buttons (never below 48) and the caption lines (two, then one). `CallActivity` reads the same
   steps from the display height in dp (`callStageScaleOf`), title size included.
+- **A finer stage (phone run 2 #10, owner: «más pequeños, minimalista, delicado»).** The round
+  controls are about a sixth smaller: the ring buttons 54 (52 short, 48 flat; were 64/56/52) and the
+  panel buttons 48 at every height (were 56/52/48), in the app and in `CallActivity` alike; a control
+  under 48 gets a hit slop up to 48. Their glyphs draw at 1.5 (`Icon fine`, `size.iconStrokeFine`;
+  the native `argus_ic_*` vectors too, 22 dp in `CallActivity`), the captions at 12 and not bold, and
+  the in-call bar is a hairline outline (`border-line`, `px-2 py-2`) instead of a filled surface.
+  Order and colours hold: Colgar and Rechazar red, Contestar green.
 - **The missed card reads the paged notification feed** (`usePagedView`), the same subscription Inicio
   uses: the feed is a paged value, not a row list, and reading it as rows crashed the first capture build.
 - **The missed-call notification** offers «Devolver» (opens `argus://call`) and joins the
