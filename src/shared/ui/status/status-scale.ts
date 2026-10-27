@@ -13,6 +13,7 @@ const PRESENCE_SIZE: Record<HeroScale | 'page', number> = {
 };
 
 export function heroStepOf({ scale, wide, height }: HeroStepInput): HeroStep {
+  if (height.landscape) return { variant: 'heroSecondary', presence: size.presenceHeroLandscape };
   if (stageStepOf(height) !== 'regular')
     return { variant: 'heroSecondary', presence: size.presenceHeroSmall };
   if (wide) return { variant: 'hero', presence: PRESENCE_SIZE[scale ?? 'page'] };
