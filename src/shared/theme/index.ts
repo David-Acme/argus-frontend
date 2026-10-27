@@ -36,7 +36,10 @@ export { themeTokensOf, useThemeTokens, type ThemeTokens } from './use-theme-tok
 export {
   heightClassOf,
   heightLayoutOf,
+  paletteTopOf,
   phoneLandscape,
+  sheetBodyCapOf,
+  sheetCeilingOf,
   sheetDetentsOf,
   sheetScrolls,
   stageStepOf,
@@ -44,6 +47,7 @@ export {
   useHeightLayout,
   type HeightClass,
   type HeightLayout,
+  type SheetRoom,
   type SheetDetent,
   type SheetShape,
 } from './height-layout';

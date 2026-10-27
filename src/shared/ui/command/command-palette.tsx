@@ -7,7 +7,14 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { inset, layout, motion, useEffects, useThemeTokens } from '@/shared/theme';
+import {
+  heightLayoutOf,
+  layout,
+  motion,
+  paletteTopOf,
+  useEffects,
+  useThemeTokens,
+} from '@/shared/theme';
 
 type CommandPaletteProps = { children: ReactNode };
 
@@ -31,7 +38,7 @@ export function CommandPalette({ children }: CommandPaletteProps) {
   }));
   const frame = {
     width: paletteWidth(width),
-    maxHeight: height - inset.palette.top * 2,
+    maxHeight: height - paletteTopOf(heightLayoutOf({ width, height })) * 2,
     boxShadow: `${elevation.float}, ${elevation.glassInset}`,
   };
 

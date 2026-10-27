@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
-import { useEffectsOverrides } from '@/shared/theme';
+import { heightLayoutOf, size, useEffectsOverrides } from '@/shared/theme';
 
 import { Status } from '@/shared/ui/status/status';
 import { CardStatus } from '@/shared/ui/status/status-card';
 import { StatusFade } from '@/shared/ui/status/status-fade';
 import { HeroStatus } from '@/shared/ui/status/status-hero';
-import { setWindowWidth } from './window-width';
+import { heroStepOf } from '@/shared/ui/status/status-scale';
+import { setWindowSize, setWindowWidth } from './window-width';
 
 const STATS = [
   { icon: 'cam', value: '5', label: 'cámaras' },
@@ -15,7 +16,7 @@ const STATS = [
 ] as const;
 
 afterEach(() => {
-  setWindowWidth(360);
+  setWindowSize(360, 800);
   act(() => useEffectsOverrides.setState({ reduceMotion: null }));
 });
 
@@ -182,5 +183,32 @@ describe('Status', () => {
       </StatusFade>
     );
     expect((still.container.firstElementChild as HTMLElement).getAttribute('style')).toBeNull();
+  });
+
+  test('the hero steps down to the secondary sentence and the small Estela on short windows and on its side', () => {
+    const at = (width: number, height: number) => heightLayoutOf({ width, height });
+    expect(heroStepOf({ wide: false, height: at(390, 844) })).toEqual({
+      variant: 'heroCompact',
+      presence: size.presenceHero,
+    });
+    expect(heroStepOf({ wide: true, height: at(820, 1180) }).variant).toBe('hero');
+    for (const [width, height] of [
+      [320, 568],
+      [360, 640],
+      [740, 360],
+    ] as const)
+      expect(heroStepOf({ wide: width > 600, height: at(width, height) })).toEqual({
+        variant: 'heroSecondary',
+        presence: size.presenceHeroSmall,
+      });
+  });
+
+  test('on a short phone the hero draws the small Estela beside its sentence', () => {
+    setWindowSize(320, 568);
+    const { container } = render(
+      <HeroStatus tone="calm" sentence="Todo tranquilo" meta="Casa" stats={STATS} presence="idle" />
+    );
+    expect(screen.getByTestId('status-hero')).toBeDefined();
+    expect(container.querySelector('canvas')?.style.width).toBe(`${size.presenceHeroSmall}px`);
   });
 });

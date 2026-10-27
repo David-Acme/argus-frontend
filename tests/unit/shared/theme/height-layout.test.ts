@@ -2,13 +2,16 @@ import { describe, expect, test } from 'bun:test';
 import {
   heightClassOf,
   heightLayoutOf,
+  paletteTopOf,
   phoneLandscape,
+  sheetBodyCapOf,
+  sheetCeilingOf,
   sheetDetentsOf,
   sheetScrolls,
   stageStepOf,
   talkSizeOf,
 } from '@/shared/theme/height-layout';
-import { size } from '@/shared/theme/tokens';
+import { inset, layout, size, space } from '@/shared/theme/tokens';
 
 describe('responsive by height', () => {
   test('the short-phone viewports are short or tiny, a tall phone is regular', () => {
@@ -61,5 +64,22 @@ describe('responsive by height', () => {
       expect(detents).toEqual([1]);
       expect(sheetScrolls(detents)).toBe(true);
     }
+  });
+
+  test('a sheet sizes to its content up to the ceiling, and its body scrolls in the room under the header and the keyboard', () => {
+    expect(sheetCeilingOf({ height: 640, top: 24 })).toBe(640 - 24 - space[4]);
+    expect(sheetBodyCapOf({ height: 640, top: 24, header: 70, keyboard: 0 })).toBe(
+      640 - 24 - space[4] - 70
+    );
+    expect(sheetBodyCapOf({ height: 568, top: 20, header: 70, keyboard: 280 })).toBe(
+      568 - 20 - space[4] - 70 - 280
+    );
+    expect(sheetBodyCapOf({ height: 360, top: 0, header: 70, keyboard: 320 })).toBe(0);
+  });
+
+  test('the command palette drops from its desktop height only where the window is tall enough', () => {
+    expect(paletteTopOf(heightLayoutOf({ width: 1280, height: 820 }))).toBe(inset.palette.top);
+    expect(paletteTopOf(heightLayoutOf({ width: 360, height: 640 }))).toBe(layout.gutterCompact);
+    expect(paletteTopOf(heightLayoutOf({ width: 740, height: 360 }))).toBe(layout.gutterCompact);
   });
 });

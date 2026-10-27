@@ -1,7 +1,9 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Alert } from 'react-native';
+import { layout } from '@/shared/theme/tokens';
 import './translation-stub';
+import { setWindowSize } from './window-width';
 
 const { ConfirmBox } = await import('@/shared/ui/confirm/confirm-box');
 const { Confirm } = await import('@/shared/ui/confirm/confirm');
@@ -24,6 +26,22 @@ const siren = {
 };
 
 describe('Confirm', () => {
+  test('on a phone on its side the box stays inside the window and its body scrolls', () => {
+    setWindowSize(740, 360);
+    render(
+      <ConfirmBox
+        {...siren}
+        cancelLabel="Cancelar"
+        destructive={false}
+        onConfirm={() => undefined}
+        onCancel={() => undefined}
+      />
+    );
+    const box = screen.getByText(siren.title).closest('[style*="max-height"]') as HTMLElement;
+    expect(box.style.maxHeight).toBe(`${360 - layout.gutterMedium * 2}px`);
+    setWindowSize(360, 800);
+  });
+
   test('the box names the act and the cancel, and each button answers once', () => {
     let confirmed = 0;
     let cancelled = 0;

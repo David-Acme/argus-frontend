@@ -1,7 +1,14 @@
 import { clsx } from 'clsx';
 import { View } from 'react-native';
 import { useAnnounce } from '@/shared/hooks/use-announce';
-import { layout, size, useThemeTokens, useWindowLayout, type AuraTone } from '@/shared/theme';
+import {
+  layout,
+  size,
+  useHeightLayout,
+  useThemeTokens,
+  useWindowLayout,
+  type AuraTone,
+} from '@/shared/theme';
 import { Aura } from '@/shared/ui/aura';
 import { Chip } from '@/shared/ui/chip';
 import {
@@ -11,9 +18,10 @@ import {
   type PresenceState,
 } from '@/shared/ui/presence';
 import { PressableSurface } from '@/shared/ui/pressable';
-import { Text, type TextVariant } from '@/shared/ui/text';
+import { Text } from '@/shared/ui/text';
 import { StatusFade } from './status-fade';
-import type { HeroScale, HeroStatusProps, StatusStat, StatusTone } from './status-types';
+import { heroStepOf } from './status-scale';
+import type { HeroStatusProps, StatusStat, StatusTone } from './status-types';
 
 type StatsProps = { stats: readonly StatusStat[]; wrap: boolean };
 
@@ -60,28 +68,19 @@ function Stats({ stats, wrap }: StatsProps) {
   );
 }
 
-const PRESENCE_SIZE: Record<HeroScale | 'page', number> = {
-  page: size.presenceHero,
-  dense: size.presenceHeroDense,
-  secondary: size.presenceHeroSmall,
-};
-
-function sentenceVariant(scale: HeroScale | undefined, wide: boolean): TextVariant {
-  if (wide) return 'hero';
-  return scale === 'secondary' ? 'heroSecondary' : 'heroCompact';
-}
-
 function HeroRow(props: HeroStatusProps & { wide: boolean }) {
   const { tone, sentence, meta, stats = [], presence, presenceEvent, scale, wide } = props;
-  const presenceSize = PRESENCE_SIZE[scale ?? 'page'];
+  const step = heroStepOf({ scale, wide, height: useHeightLayout() });
   return (
     <View role={tone === 'alert' ? 'alert' : undefined}>
-      <View className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
+      <View
+        testID="status-hero"
+        className="gap-status-hero-gap px-status-hero-pad pt-status-hero-pad flex-row items-center">
         {presence ? (
-          <HeroPresence state={presence} size={presenceSize} event={presenceEvent} />
+          <HeroPresence state={presence} size={step.presence} event={presenceEvent} />
         ) : null}
         <StatusFade change={sentence} grow>
-          <Text variant={sentenceVariant(scale, wide)} heading={2}>
+          <Text variant={step.variant} heading={2}>
             {sentence}
           </Text>
           <Text variant="meta">{meta}</Text>
@@ -98,6 +97,7 @@ function HeroBand(props: HeroStatusProps) {
   const card = { boxShadow: elevation.card };
   return (
     <View
+      testID="status-hero"
       className="pt-status-band-top px-screen-column-x pb-status-band-bottom w-full self-center"
       style={BAND_MAX}>
       <View

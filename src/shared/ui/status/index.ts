@@ -8,3 +8,4 @@ export type {
   StatusStat,
   StatusTone,
 } from './status-types';
+export { heroStepOf, type HeroStep, type HeroStepInput } from './status-scale';

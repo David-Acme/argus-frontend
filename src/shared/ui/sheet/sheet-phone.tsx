@@ -5,15 +5,21 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IS_IOS } from '@/shared/constants';
 import { useEffects } from '@/shared/theme/effects';
-import { heightLayoutOf, sheetDetentsOf, sheetScrolls } from '@/shared/theme/height-layout';
+import {
+  heightLayoutOf,
+  sheetBodyCapOf,
+  sheetCeilingOf,
+  sheetDetentsOf,
+  sheetScrolls,
+} from '@/shared/theme/height-layout';
 import { tokens } from '@/shared/theme/tokens';
 import { PhoneFooter, SheetHeader } from './sheet-parts';
 import type { SheetActions, SheetProps } from './types';
 import { useDiscard } from './use-discard';
+import { useKeyboardInset } from './use-keyboard-inset';
 import { useSheetTheme, withAlpha, type SheetTheme } from './use-sheet-theme';
 
 const { space, radius, size, material, inset } = tokens;
-const CEILING_GAP = space[4];
 const FOCUS_GAP = space[4];
 const FIELD_TAIL = inset.field.top + inset.field.border;
 const GRABBER_ALPHA = 0.4;
@@ -54,25 +60,27 @@ export function focusScrollOffset(footerHeight: number): number {
   return FOCUS_GAP + FIELD_TAIL + footerHeight + 1 / PixelRatio.get();
 }
 
-type BodyProps = { long: boolean; clearance: number; testID?: string; children: ReactNode };
+type BodyProps = {
+  long: boolean;
+  clearance: number;
+  cap: number;
+  testID?: string;
+  children: ReactNode;
+};
 
-function Body({ long, clearance, testID, children }: BodyProps) {
+function Body({ long, clearance, cap, testID, children }: BodyProps) {
   const padding = [styles.body, { paddingBottom: clearance }];
+  const capped = long ? undefined : { maxHeight: cap };
   return (
     <GestureHandlerRootView style={styles.root}>
-      {long ? (
-        <ScrollView
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={padding}
-          testID={testID}>
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={padding} testID={testID}>
-          {children}
-        </View>
-      )}
+      <ScrollView
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        style={capped}
+        contentContainerStyle={padding}
+        testID={testID}>
+        {children}
+      </ScrollView>
     </GestureHandlerRootView>
   );
 }
@@ -110,6 +118,8 @@ export function SheetPhone(props: SheetProps) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [footerHeight, setFooterHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const room = { height, top: insets.top, header: headerHeight, keyboard: useKeyboardInset() };
   const detents = sheetDetentsOf(
     { long, form: actions !== undefined },
     heightLayoutOf({ width, height })
@@ -133,7 +143,9 @@ export function SheetPhone(props: SheetProps) {
       scrollableOptions={{ keyboardScrollOffset: focusScrollOffset(footerHeight) }}
       header={
         <GestureHandlerRootView style={styles.root}>
-          <View style={[styles.header, scrolls && styles.tallHeader, headerLine]}>
+          <View
+            onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
+            style={[styles.header, scrolls && styles.tallHeader, headerLine]}>
             <SheetHeader
               title={title}
               closeLabel={closeLabel}
@@ -156,7 +168,7 @@ export function SheetPhone(props: SheetProps) {
         ) : undefined
       }
       footerOptions={{ keyboardOffset: -insets.bottom }}
-      maxContentHeight={height - insets.top - CEILING_GAP}
+      maxContentHeight={sheetCeilingOf(room)}
       insetAdjustment="automatic"
       dismissible={!dirty}
       onBackPress={() => {
@@ -170,7 +182,7 @@ export function SheetPhone(props: SheetProps) {
       cornerRadius={radius.sheet}
       backgroundColor={surface}
       backgroundBlur={blurred ? 'system-material' : undefined}>
-      <Body long={scrolls} clearance={clearance} testID={props.testID}>
+      <Body long={scrolls} clearance={clearance} cap={sheetBodyCapOf(room)} testID={props.testID}>
         {children}
       </Body>
     </TrueSheet>
