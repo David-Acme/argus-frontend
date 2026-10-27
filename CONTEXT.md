@@ -7616,3 +7616,112 @@ always takes typed turns, and voice is the microphone beside the field or the ca
   `presenceThreadHead`, `presenceThreadEmpty`, `columnContext`, `threadMax`.
   The shared `assistant-mode` lib, `ASSISTANT_MODE_STORAGE_KEY` and the
   `AssistantMode` type went with the «Voz | Chat» switch.
+
+## Local first, real time: the inventory (R-live, 2026-10-27)
+
+Every screen's data sources on redesign/main (63340650), audited against the
+owner rule in AGENTS.md › "Local first, real time". **Synced** is a
+WatermelonDB table projected by `ViewCacheCoordinatorService` into the named
+view-cache key (painted from MMKV on the first frame, live with `/sync` Add,
+Delete and Log). **HTTP** is a `useRemoteResource`/`useRemoteFeed` read with
+its view-cache key as the first frame and the `ResourceChanged` pairs it
+re-reads on (it also re-reads after every reconnect). **Frames** is a socket
+frame of its own. Marks: **poll** (a timer re-reads), **no RC** (no
+`ResourceChanged` pair exists for it, so another device's change waits for a
+reconnect or a remount), **removed** (to be removed by F-reminders).
+
+| Screen / section | Synced → view cache | HTTP route → ResourceChanged | Marks |
+|---|---|---|---|
+| Inicio · hero, Sistema | `camera`, `project`, `project_task`, `reminder` → `dashboard.summary`; `sync.ready` | `/guard/environments` → guard·environments, camera·overview; `/camera/overview` → camera·overview | |
+| Inicio · Ahora, Hoy, Mañana | `calendar_event`, `project_task`, `reminder` → `dashboard.agenda` (today), `calendar.entries` (month) | | `reminder` rows removed (F-reminders) |
+| Inicio · Recordatorios | `reminder` → `dashboard.agenda` | | removed (F-reminders) |
+| Inicio · Proyectos | `project`, `project_task` → `dashboard.projects`, `project.tasks` | | |
+| Inicio · Cámaras | `camera`, `zone` → `camera.list` | `/camera/overview` → camera·overview; `/camera/0/clips` → camera·clips | frames: snapshot images re-fetched every 30 s (media, not data) |
+| Inicio · Lo que pasó | `camera` → `camera.list` | `/guard/episodes` → guard·episodes | |
+| Inicio · Clips recientes | `camera` → `camera.list` | `/camera/0/clips` → camera·clips | |
+| Inicio · Vigilancia | `camera` → `camera.list` | `/guard/environments` → guard·environments | |
+| Inicio · Novedades, Novedades screen | `notification` → `notification.feed` (paged), `dashboard.unread` | | |
+| Inicio · En casa, Personas · presencia | `user` → `people.users` | `/guard/presence` → guard·presence | |
+| Inicio · alerta | | `/notification/responses` + `ResponseUpdate` frames, reconnect, focus | |
+| Seguridad · modo, entornos, lugares | `camera` → `camera.list` | `/guard/environments`, `/guard/cameras` → guard·environments, camera·overview | |
+| Seguridad · episodios, detalle | | `/guard/episodes`, `/guard/episodes/{id}` → guard·episodes | |
+| Seguridad · visitas | `camera` → `camera.list` | `/guard/expected-guests` → guard·expected_visits | |
+| Seguridad · respuesta | | `/guard/environments/{id}/response` → guard·responses | |
+| Seguridad · mantenimiento | `camera` → `camera.list` | `/guard/maintenance` → guard·maintenance | |
+| Cámaras · lista | `camera`, `zone` → `camera.list` | | |
+| Cámara · en vivo | `camera` → `camera.list` | `/camera/{id}/status` → camera·status(id); `/camera/{id}/presets` → camera·status(id); `/camera/{id}/aim` → camera·aim(id); `/camera/{id}/patrol` → camera·status(id); `/camera/recording` → camera·recording; `/camera/{id}/capabilities` (re-read when the synced row changes) | |
+| Cámara · grabaciones | | `/camera/{id}/clips` → camera·clips(id) | |
+| Cámara · ajustes, zonas | `camera`, `zone` → `camera.list` | `/camera/catalog` (static) | |
+| Agenda | `calendar_event`, `project_task`, `reminder` → `calendar.entries`; `calendar_event_share` → `calendar.event.shares`; `project` → `dashboard.projects`; `user` → `people.users` | | `reminder` rows removed (F-reminders) |
+| Proyectos, proyecto | `project`, `project_task`, `project_member`, `user` → `project.list`, `project.tasks`, `project.members`, `people.users` | | |
+| Argus · hilo, Conversaciones | `conversation_message` → `conversation.thread` (paged), `conversation.list` | | results: `voice:result`/`voice:action` frames of the session |
+| Personas · directorio, invitaciones | `user`, `user_invitation` → `people.users`, `people.invitations` | | |
+| Personas · voces | | `/voiceprint/users` → identity·voiceprints | |
+| Personas · visitantes | `camera` → `camera.list` | `/visitor`, `/visitor/{id}`, `/visitor-settings` → identity·visitors | |
+| Tú · hero, hogar | `user`, `user_invitation` → `people.users`, `people.invitations`; `dashboard.summary` | | |
+| Tú · semana | `reminder` → `reminder.list` | | removed (F-reminders) |
+| Ajustes · servicios, perfiles | | `/settings`, `/settings/profiles` → settings·values | **poll** 4 s while a choice installs (no notice for install progress) |
+| Ajustes · módulos | context → `modules.catalog` | `ModuleUpdate`/`ContextUpdate` frames | |
+| Ajustes · privacidad | | `/privacy/me`, `/privacy/users` → identity·privacy_choice, identity·privacy_household | |
+| Ajustes · seguridad (PIN, coacción, sirena) | | `/guard/safety` → guard·safety_pin, guard·duress | |
+| Ajustes · actividad | `user` → `people.users` | `/sync/activity` → activity·entries | |
+| Ajustes · sesiones, dispositivos | | `/auth/sessions`, `/auth/users/sessions`, `/auth/users/{id}/sessions` | **no RC**; a session closed elsewhere reaches its own device by `AuthContextChanged` |
+| Ajustes · proximidad | `camera`, `user` → `camera.list`, `people.users` | `/guard/proximity/me`, `/receivers`, `/sensors`, `/people`; `/guard/cameras` → guard·environments, camera·overview | **no RC**; **poll** 15 s on `/guard/proximity/people` |
+| Ajustes · llamadas, Llamadas | `camera` → `camera.list` | `/notification/call-preferences`; `/guard/environments` → guard·environments | **no RC** on call preferences |
+| Vigía (cámara que habla) | | `/rtc/watch` + `WatchUpdate` frames, foreground | |
+| Command (⌘K) | `reminder`, `calendar_event`, `project_task`, `project`, `user`, `camera` → `reminder.list`, `event.list`, `task.list`, `project.list`, `people.users`, `camera.list` | | `reminder.list` removed (F-reminders) |
+| Navegación · insignia | `notification` → `dashboard.unread` | | |
+
+What the audit found and changed:
+
+- **A row synced just before a reload was lost for good on the web and the
+  desktop.** LokiJS keeps WatermelonDB in memory and writes it to IndexedDB on
+  a 500 ms autosave, while `SyncCursorStore` wrote the sync cursors to
+  `localStorage` at once. A reload or a closed window inside that window kept
+  the advanced cursor and lost the rows, and since the creation stream pages
+  from the cursor, nothing ever pulled them again (a project stored before the
+  first sync was missing after a reload 0 or 100 ms later, present after
+  1.5 s). The store now holds each cursor in memory and writes it to storage
+  only after `flushDatabase()` resolves: on the web that is Loki's own
+  `saveDatabase` (a save queued behind one in flight covers every write made
+  before the call), on native it resolves at once, because SQLite commits are
+  durable. A failed save leaves the stored cursor where it was, so the next
+  start pulls the rows again. Pinned by `sync-cursor-store.test.ts` and the
+  «reload right after the first sync» test of `live.e2e.ts`.
+- **No synced table is read over HTTP by a screen.** Three services still
+  carried an HTTP list of a synced table that nothing called:
+  `userManagementService.list` (`GET /user`), `inviteService.list`
+  (`GET /invitation`) and `conversationService.list` (`GET /conversation`,
+  with `conversationListSchema`, `conversationSummarySchema` and the
+  `ConversationSummary` type). They are deleted, so a later screen cannot reach
+  for them instead of the local read; `http-unchecked` fell from 84 to 82.
+- **Log diffs re-render every list.** Each source the coordinator observes
+  uses `observeWithColumns` over the columns its projection reads, except the
+  user directory, which projected `updatedAt` without observing `updated_at`;
+  it observes it now.
+- **What polls or waits has no notice to listen to** (backend, see below):
+  sessions, proximity, call preferences and settings install progress.
+- **Proof.** `tests/e2e/live.e2e.ts`: for an agenda event, a task, a project,
+  a notification, a camera's state and a member, Argus (the fake backend) adds,
+  edits (a Log diff) or deletes and both devices show it within 1 s with no
+  reload; the guard mode Argus sets reaches both within 1 s over
+  `ResourceChanged`; and with the server down (`/__e2e/down`: socket refused,
+  every `/__api` call 503) Agenda, Proyectos, Personas, Novedades and Cámaras
+  each paint their last rows within 1 s of a full reload, and «No connection to
+  Argus» is still hidden 11 s after the start and shows by 12 s. Measured on
+  this machine (emit to both devices showing it, `ARGUS_E2E_TIMINGS=<file>`
+  writes them): Add, Log and Delete 200–233 ms for every domain, the guard mode
+  over `ResourceChanged` 395 ms (300 ms of it the coalescing window), the
+  offline paint 42–361 ms per screen, the offline notice at 12.1 s. Device A's own
+  writes are proved by `two-device.e2e.ts`, `calendar-shares.e2e.ts`,
+  `project-members.e2e.ts` and `notification-delete.e2e.ts`; presence and
+  episodes over `ResourceChanged` by `presence.e2e.ts` and `guard.e2e.ts`.
+  Reminders get no spec (F-reminders removes them).
+- **Backend gaps.** `ResourceScope` has no scope for the session list
+  (`/auth/sessions`), proximity (`/guard/proximity/me`, `/receivers`,
+  `/sensors`, `/people`) or call preferences (`/notification/call-preferences`), and
+  argus-settings announces `settings·values` only on a write
+  (`SettingsGatewayService::write`), never when an owner's install job moves.
+  Only `project_task` and `calendar_event` record their actor
+  (`created_via`, creation only); `project`, `notification`, guard modes and
+  audit Log diffs carry none, so «por Argus» on an edit cannot be drawn.
