@@ -5,6 +5,7 @@ import {
   callAudioLabel,
   desktopDevicesOf,
   groupCallAudio,
+  inputNamed,
   livekitOutputKind,
 } from '@/features/voice/model/call-audio';
 
@@ -54,5 +55,29 @@ describe('the call audio model', () => {
     expect(groups.outputs.map((device) => device.kind)).toEqual(['output']);
     expect(groups.routes).toHaveLength(1);
     expect(desktopDevicesOf(null)).toEqual([]);
+  });
+});
+
+describe('the chosen microphone in a desktop call', () => {
+  const input = (id: string, name: string) =>
+    ({ id, kind: 'microphone', direction: 'input', name, active: false }) as const;
+  const devices = [
+    input('0', ''),
+    input('1', 'Built-in Audio Analog Stereo'),
+    input('2', 'Blue Yeti Stereo Microphone'),
+    {
+      id: '9',
+      kind: 'output',
+      direction: 'output',
+      name: 'Blue Yeti Stereo Microphone',
+      active: true,
+    } as const,
+  ];
+
+  test('the native input with the same name, or the one that contains it, carries the choice', () => {
+    expect(inputNamed(devices, 'blue yeti stereo microphone')?.id).toBe('2');
+    expect(inputNamed(devices, 'Blue Yeti')?.id).toBe('2');
+    expect(inputNamed(devices, 'USB headset')).toBeNull();
+    expect(inputNamed(devices, '  ')).toBeNull();
   });
 });

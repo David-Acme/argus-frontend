@@ -1,13 +1,20 @@
 import type { Participant, RemoteParticipant, RemoteTrack, Room } from 'livekit-client';
 import type { IRealtimeCall } from '@/core/interfaces';
 import type { RtcEvent, RtcIceServer, RtcJoin } from '@/core/types';
-import { chosenMicrophone, useMicrophoneStore } from '@/shared/libs/microphone';
 import { decodeUtf8, encodeUtf8, endReasonOf } from '@/features/voice/model/rtc-protocol';
 
 type Listener = (event: RtcEvent) => void;
 
+export type MicrophoneChoice = { deviceId: string; label: string };
+
+export type MicrophoneSource = {
+  chosen: () => MicrophoneChoice | null;
+  watch: (onChange: (choice: MicrophoneChoice | null) => void) => () => void;
+};
+
 export type LivekitCallOptions = {
   attachAudio: boolean;
+  microphone?: MicrophoneSource;
   prepare?: (join: RtcJoin) => Promise<RtcJoin>;
   release?: () => Promise<void>;
 };
@@ -16,8 +23,8 @@ const AGENT_STATE_ATTRIBUTE = 'lk.agent.state';
 
 const SYSTEM_DEVICE = 'default';
 
-function microphoneDeviceOf(): { deviceId?: string } {
-  const choice = chosenMicrophone();
+function microphoneDeviceOf(source: MicrophoneSource | undefined): { deviceId?: string } {
+  const choice = source?.chosen() ?? null;
   return choice ? { deviceId: choice.deviceId } : {};
 }
 
@@ -57,7 +64,7 @@ export class LivekitRealtimeCall implements IRealtimeCall {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
-        ...microphoneDeviceOf(),
+        ...microphoneDeviceOf(this.options.microphone),
       },
       publishDefaults: { dtx: true, red: true },
     });
@@ -142,10 +149,11 @@ export class LivekitRealtimeCall implements IRealtimeCall {
   }
 
   private followMicrophoneChoice(room: Room): void {
-    this.stopMicrophoneWatch = useMicrophoneStore.subscribe((state, previous) => {
-      if (state.choice?.deviceId === previous.choice?.deviceId) return;
+    const source = this.options.microphone;
+    if (!source) return;
+    this.stopMicrophoneWatch = source.watch((choice) => {
       void room
-        .switchActiveDevice('audioinput', state.choice?.deviceId ?? SYSTEM_DEVICE)
+        .switchActiveDevice('audioinput', choice?.deviceId ?? SYSTEM_DEVICE)
         .catch(() => undefined);
     });
   }

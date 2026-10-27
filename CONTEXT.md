@@ -7941,7 +7941,11 @@ every web capture asks for it with `deviceId: { ideal }`, so a missing
 device never fails a capture: voice notes (`use-note-recorder.web.ts`),
 hold-to-talk and camera talk (both through `voice-mic.web.ts`) and calls
 (LiveKit `audioCaptureDefaults.deviceId`, and `switchActiveDevice` when the
-choice changes mid-call). The list refreshes on `devicechange`; a chosen
+choice changes mid-call; the desktop's native call selects the native input
+with the same name through `argus_rtc_select_device`, `inputNamed`, since the
+WebKit and WebRTC device ids differ). The calls get the choice injected
+(`MicrophoneSource`, `rtc-microphone.ts`), so the LiveKit client stays free of
+the device storage. The list refreshes on `devicechange`; a chosen
 input that is gone is forgotten for the system one and a quiet notice says
 so once (`useMicrophoneNotice`, mounted where the choice is shown). A list
 the browser has not answered yet keeps the choice. The recording bar shows
