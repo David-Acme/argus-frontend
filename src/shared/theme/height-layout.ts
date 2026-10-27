@@ -115,6 +115,18 @@ export function sheetBodyCapOf(room: SheetRoom): number {
   return Math.max(0, sheetCeilingOf(room) - room.header - room.keyboard);
 }
 
+export type SheetChromeRoom = SheetRoom & { footer: number };
+
+export type SheetChrome = { footerPinned: boolean; header: boolean };
+
+const SHEET_FOCUS_ROOM = size.field + space[8];
+
+export function sheetChromeOf(room: SheetChromeRoom): SheetChrome {
+  const free = sheetCeilingOf(room) - room.keyboard;
+  const footerPinned = free >= room.header + room.footer + SHEET_FOCUS_ROOM;
+  return { footerPinned, header: footerPinned || free >= room.header + SHEET_FOCUS_ROOM };
+}
+
 export function useHeightLayout(): HeightLayout {
   const { width, height } = useWindowDimensions();
   return heightLayoutOf({ width, height });

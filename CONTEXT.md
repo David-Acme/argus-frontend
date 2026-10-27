@@ -7532,6 +7532,13 @@ landscape when a phone lies on its side); every decision below is a pure functio
   than the cap was clipped by TrueSheet with no way to scroll. `TrueSheet`'s `scrollable` makes its
   container `absoluteFill`, which breaks `auto`, so the capped `ScrollView` is the only way to have
   a content-sized sheet that still scrolls.
+- **Phone sheet chrome under the keyboard** (phone run finding #34). On a tiny phone with the
+  keyboard up, the pinned header and footer took all the room the keyboard left, so the field being
+  typed into was not visible. `sheetChromeOf` (`shared/theme/height-layout.ts`) decides from the
+  same room plus the measured footer: the footer stays pinned only while the header, the footer
+  and one field with its label (`size.field + space[8]`) fit above the keyboard; otherwise it
+  moves to the end of the scrolling body, and when even the header and one field do not fit the
+  header goes too. When the keyboard hides, the body scrolls the focused field back into view.
 - **Legacy `AdaptiveDialog` sheet.** `overlayBodyHeightOf` keeps the 62 % share on regular
   windows and gives the body all the room the sheet chrome leaves on short ones.
 - **Heroes.** `heroStepOf` (`shared/ui/status/status-scale.ts`) steps the sentence down to
