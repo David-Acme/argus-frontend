@@ -17,6 +17,15 @@ import {
   PROJECT_TASK_SCHEMA,
 } from './tables';
 
+const CONVERSATION_COLUMNS_ADDED_LATER: readonly string[] = [
+  'result',
+  'via',
+  'receipt',
+  'delivered_at',
+  'seen_at',
+  'voice_note',
+];
+
 const fromSchema = (schema: TableSchema, addedLater: readonly string[] = []) =>
   createTable({
     name: schema.name,
@@ -148,7 +157,7 @@ export const migrations = schemaMigrations({
         createTable({
           name: CONVERSATION_MESSAGE_SCHEMA.name,
           columns: CONVERSATION_MESSAGE_SCHEMA.columnArray.filter(
-            (column) => column.name !== 'result' && column.name !== 'via'
+            (column) => !CONVERSATION_COLUMNS_ADDED_LATER.includes(column.name)
           ),
           unsafeSql: (sql) => sql + CONVERSATION_THREAD_INDEX_SQL,
         }),
@@ -192,6 +201,20 @@ export const migrations = schemaMigrations({
           columns: [
             { name: 'result', type: 'string', isOptional: true },
             { name: 'via', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 20,
+      steps: [
+        addColumns({
+          table: 'conversation_message',
+          columns: [
+            { name: 'receipt', type: 'string', isOptional: true },
+            { name: 'delivered_at', type: 'number', isOptional: true },
+            { name: 'seen_at', type: 'number', isOptional: true },
+            { name: 'voice_note', type: 'string', isOptional: true },
           ],
         }),
       ],

@@ -13,4 +13,22 @@ export const conversationReadPath = (counterpartId: number): string => `${conver
 export const conversationMessagePath = (counterpartId: number): string =>
   `${conversationThreadPath(counterpartId)}/message`;
 
+export const conversationDeliveredPath = (counterpartId: number): string =>
+  `${conversationThreadPath(counterpartId)}/delivered`;
+
+export const conversationVoiceNotePath = (counterpartId: number): string =>
+  `${conversationThreadPath(counterpartId)}/voice-note`;
+
+export const voiceNotePlayPath = (noteId: string): string =>
+  `${CONVERSATION_PATH}/voice-note/${encodeURIComponent(noteId)}/play`;
+
+export const voiceNoteContentPath = (token: string): string =>
+  `${CONVERSATION_PATH}/voice-note/${encodeURIComponent(token)}/content`;
+
 export const CONVERSATION_MESSAGE_MAX_CHARS = 500;
+
+export const VOICE_NOTE_MAX_MS = 120_000;
+
+export const VOICE_NOTE_MIN_MS = 300;
+
+export const VOICE_NOTE_MAX_BYTES = 4 * 1024 * 1024;

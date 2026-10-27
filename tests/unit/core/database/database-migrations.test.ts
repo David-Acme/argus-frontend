@@ -763,3 +763,45 @@ describe('how a conversation turn was said and what Argus did', () => {
     });
   });
 });
+
+describe('the receipt and voice note columns', () => {
+  const RECEIPT_COLUMNS = ['receipt', 'delivered_at', 'seen_at', 'voice_note'];
+
+  const atVersionNineteen = (): AppSchema => {
+    const tables = Object.fromEntries(
+      Object.entries(schema.tables).map(([name, table]) => {
+        if (name !== 'conversation_message') return [name, table];
+        const columns = Object.fromEntries(
+          Object.entries(table.columns).filter(([column]) => !RECEIPT_COLUMNS.includes(column))
+        );
+        return [name, { ...table, columns, columnArray: Object.values(columns) }];
+      })
+    );
+    return { ...schema, version: 19, tables } as AppSchema;
+  };
+
+  test('a fresh database has the four columns on conversation messages', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(schema));
+    expect(columnsOf(db, 'conversation_message')).toEqual(expect.arrayContaining(RECEIPT_COLUMNS));
+  });
+
+  test('a version 19 database gains them through the migration, empty, and keeps its messages', () => {
+    const db = new Database(':memory:');
+    db.exec(encodeSchema(atVersionNineteen()));
+    expect(columnsOf(db, 'conversation_message')).not.toContain('receipt');
+    db.query(
+      'insert into conversation_message (id, _changed, _status, user_id, counterpart_id, counterpart_name, direction, kind, body, leg, state, message_key, reply_to_key, result, via, is_read, read_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run('52', '', 'synced', '7', '3', 'David', 'out', 'relay', 'Ven a comer', null, 'sent', 'k', null, null, null, 1, null, 1, 1);
+
+    const steps = stepsForMigration({ migrations, fromVersion: 19, toVersion: 20 });
+    expect(steps).not.toBeNull();
+    db.exec(encodeMigrationSteps(steps ?? []));
+
+    expect(columnsOf(db, 'conversation_message')).toEqual(expect.arrayContaining(RECEIPT_COLUMNS));
+    expect(
+      db.query('select body, receipt, delivered_at, seen_at, voice_note from conversation_message').get()
+    ).toEqual({ body: 'Ven a comer', receipt: null, delivered_at: null, seen_at: null, voice_note: null });
+  });
+});
+

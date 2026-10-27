@@ -41,6 +41,8 @@ const message = (patch: Partial<IConversationMessageCacheRow> & { id: string }):
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: T0,
   ...patch,

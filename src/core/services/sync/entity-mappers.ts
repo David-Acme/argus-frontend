@@ -3,6 +3,7 @@ import {
   sanitizeConversationDirection,
   sanitizeConversationKind,
   sanitizeConversationLeg,
+  sanitizeConversationReceipt,
   sanitizeConversationState,
   sanitizeConversationVia,
   sanitizeCreatedVia,
@@ -10,6 +11,7 @@ import {
   sanitizeRecurrenceExceptions,
   sanitizeResultFrames,
   sanitizeStringArray,
+  sanitizeVoiceNote,
   sanitizeZonePoints,
 } from '@/core/database/tables/sanitizers';
 import { parseCameraPrivacyState } from '@/shared/libs/camera-privacy';
@@ -222,6 +224,10 @@ export const TABLE_MAPS: Record<SyncTableKey, EntityFieldMap> = {
     replyToKey: toOptStr,
     result: (v) => sanitizeResultFrames(parseJson(v)),
     via: sanitizeConversationVia,
+    receipt: sanitizeConversationReceipt,
+    deliveredAt: toOptMs,
+    seenAt: toOptMs,
+    voiceNote: (v) => sanitizeVoiceNote(parseJson(v)),
     isRead: toBool,
     readAt: toOptMs,
     createdAt: toMs,
@@ -238,6 +244,7 @@ const JSON_COLUMNS = new Set([
   'details',
   'recurrence_exceptions',
   'result',
+  'voice_note',
 ]);
 
 const toSnake = (prop: string): string => prop.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);

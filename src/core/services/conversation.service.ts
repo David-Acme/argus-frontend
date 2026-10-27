@@ -2,16 +2,29 @@ import { Q } from '@nozbe/watermelondb';
 import type { Clause } from '@nozbe/watermelondb/QueryDescription';
 import { auditTime, combineLatest, from, map, of, startWith, switchMap, type Observable } from 'rxjs';
 import type { z } from 'zod';
-import { conversationMessageSchema, conversationReadResultSchema } from '@/core/contracts/conversation.contract';
+import {
+  conversationMessageSchema,
+  conversationReadResultSchema,
+  voiceNoteContentSchema,
+  voiceNotePlayGrantSchema,
+} from '@/core/contracts/conversation.contract';
 import type { ConversationMessageModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { ConversationMessage, ConversationReadResult } from '@/core/types';
+import type {
+  ConversationMessage,
+  ConversationReadResult,
+  NetHttpFile,
+  VoiceNoteContent,
+  VoiceNotePlayGrant,
+} from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { errorResponse } from '@/core/services/http/http-envelope';
 import {
+  conversationDeliveredPath,
   conversationMessagePath,
   conversationReadPath,
   conversationThreadPath,
+  conversationVoiceNotePath,
   INITIAL_THREAD_WINDOW,
   isHeadWindow,
   isLiveWindow,
@@ -22,16 +35,28 @@ import {
   threadWindowClauses,
   type ThreadFetch,
   type ThreadWindow,
+  voiceNoteContentPath,
+  voiceNotePlayPath,
 } from './conversation';
 import { DatabaseService } from './database.service';
 import type { ConversationSummaryFacts, ConversationThreadInput } from './view-cache/conversation.projection';
 
-const THREAD_COLUMNS = ['counterpart_name', 'body', 'state', 'is_read', 'read_at', 'updated_at'];
+const THREAD_COLUMNS = [
+  'counterpart_name',
+  'body',
+  'state',
+  'receipt',
+  'voice_note',
+  'is_read',
+  'read_at',
+  'updated_at',
+];
 
 const SUMMARY_REFRESH_MS = 120;
 
 const MAX_COUNTERPARTS = 200;
 
+const upTo = (upToId: number | null): Record<string, number> => (upToId === null ? {} : { upToId });
 
 const NEWEST_FIRST: Clause[] = [Q.sortBy('created_at', Q.desc), Q.sortBy('id', Q.desc)];
 
@@ -86,8 +111,33 @@ class ConversationService extends DatabaseService<'conversation_message'> {
     return INITIAL_THREAD_WINDOW;
   }
 
-  async markRead(counterpartId: number): Promise<IServiceResponse<ConversationReadResult>> {
-    return parsed(await httpService.patch<unknown>(conversationReadPath(counterpartId), {}), conversationReadResultSchema);
+  async markRead(counterpartId: number, upToId: number | null = null): Promise<IServiceResponse<ConversationReadResult>> {
+    return parsed(
+      await httpService.patch<unknown>(conversationReadPath(counterpartId), upTo(upToId)),
+      conversationReadResultSchema
+    );
+  }
+
+  async markDelivered(counterpartId: number, upToId: number): Promise<IServiceResponse<ConversationReadResult>> {
+    return parsed(
+      await httpService.patch<unknown>(conversationDeliveredPath(counterpartId), upTo(upToId)),
+      conversationReadResultSchema
+    );
+  }
+
+  async sendVoiceNote(counterpartId: number, file: NetHttpFile): Promise<IServiceResponse<ConversationMessage>> {
+    return parsed(
+      await httpService.postMultipart<unknown>(conversationVoiceNotePath(counterpartId), file),
+      conversationMessageSchema
+    );
+  }
+
+  async voiceNoteGrant(noteId: string): Promise<IServiceResponse<VoiceNotePlayGrant>> {
+    return parsed(await httpService.get<unknown>(voiceNotePlayPath(noteId)), voiceNotePlayGrantSchema);
+  }
+
+  async voiceNoteContent(token: string): Promise<IServiceResponse<VoiceNoteContent>> {
+    return parsed(await httpService.get<unknown>(voiceNoteContentPath(token)), voiceNoteContentSchema);
   }
 
   async send(counterpartId: number, body: string): Promise<IServiceResponse<ConversationMessage>> {

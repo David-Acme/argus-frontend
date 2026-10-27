@@ -30,6 +30,8 @@ export function typedMessageRow(
     replyToKey: null,
     result: null,
     via: null,
+    receipt: null,
+    voiceNote: null,
     isRead: true,
     createdAt: values.createdAt ?? 0,
   };

@@ -20,6 +20,21 @@ export const CONVERSATION_VIAS = ['voice', 'text'] as const;
 
 export type ConversationVia = (typeof CONVERSATION_VIAS)[number];
 
+export const CONVERSATION_RECEIPTS = ['sent', 'delivered', 'read'] as const;
+
+export type ConversationReceipt = (typeof CONVERSATION_RECEIPTS)[number];
+
+export const VOICE_NOTE_MIMES = ['audio/ogg', 'audio/webm', 'audio/mp4', 'audio/aac'] as const;
+
+export type VoiceNoteMime = (typeof VOICE_NOTE_MIMES)[number];
+
+export type ConversationVoiceNote = {
+  id: string;
+  mime: VoiceNoteMime;
+  durationMs: number;
+  peaks: number[];
+};
+
 export type ConversationResultFrame = {
   id: string;
   tool: string;
@@ -41,6 +56,8 @@ export type ConversationMessage = {
   state: ConversationState;
   messageKey: string;
   replyToKey: string | null;
+  receipt: ConversationReceipt | null;
+  voiceNote: ConversationVoiceNote | null;
   isRead: boolean;
   readAt: number | null;
   createdAt: number;
@@ -50,4 +67,15 @@ export type ConversationMessage = {
 
 export type ConversationReadResult = {
   updated: number;
+};
+
+export type VoiceNotePlayGrant = {
+  token: string;
+  expiresAt: number;
+};
+
+export type VoiceNoteContent = {
+  mimeType: string;
+  durationMs: number;
+  base64: string;
 };

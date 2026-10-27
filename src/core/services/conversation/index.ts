@@ -1,10 +1,17 @@
 export {
   CONVERSATION_MESSAGE_MAX_CHARS,
   CONVERSATION_PATH,
+  VOICE_NOTE_MAX_BYTES,
+  VOICE_NOTE_MAX_MS,
+  VOICE_NOTE_MIN_MS,
+  conversationDeliveredPath,
   conversationMessagePath,
   conversationReadPath,
   conversationThreadPath,
+  conversationVoiceNotePath,
   validCounterpartId,
+  voiceNoteContentPath,
+  voiceNotePlayPath,
 } from './conversation-paths';
 export {
   INITIAL_THREAD_WINDOW,

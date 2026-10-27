@@ -35,6 +35,8 @@ const chatRow = (
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   ...facts,
 });

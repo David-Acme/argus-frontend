@@ -41,6 +41,8 @@ const message = (
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: Date.UTC(2026, 9, 26, 15, 0),
   ...patch,

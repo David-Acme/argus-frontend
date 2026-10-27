@@ -27,6 +27,8 @@ const row = (
   replyToKey: null,
   result: null,
   via: null,
+  receipt: null,
+  voiceNote: null,
   isRead: true,
   createdAt: 0,
   ...facts,
