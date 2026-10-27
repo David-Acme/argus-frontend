@@ -1,6 +1,7 @@
 import { moduleOfAppRoute } from '@/core/services/modules/module-state';
 import { CAPABILITY, MODULE_IDS, type Capability } from '@/shared/constants';
 import {
+  clipAccessOf,
   guardAccessOf,
   hasCapability,
   isModuleActive,
@@ -30,6 +31,10 @@ const ROUTE_RULES: Readonly<Record<string, RouteRule>> = {
   },
   '/security': { allows: (view) => guardAccessOf(view).view, fallback: '/' },
   '/cameras': { allows: (view) => hasCapability(view, CAPABILITY.cameraView), fallback: '/' },
+  '/clips': {
+    allows: (view) => hasCapability(view, CAPABILITY.cameraView) && clipAccessOf(view).view,
+    fallback: '/',
+  },
   '/agenda': { allows: (view) => hasCapability(view, CAPABILITY.agendaRead), fallback: '/' },
   '/projects': {
     allows: (view) => view.roleActive && hasCapability(view, CAPABILITY.projectsRead),

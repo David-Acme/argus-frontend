@@ -8,11 +8,11 @@ import { Notice } from '@/shared/ui/notice';
 import { ClipPlayer } from '@/features/cameras/components/clip-player';
 import type { ClipPlayback } from '@/features/cameras/hooks/use-clip-playback';
 
-export type ClipStageProps = { playback: ClipPlayback };
+export type ClipStageProps = { playback: ClipPlayback; closable?: boolean };
 
 const FRAME = { aspectRatio: layout.mediaAspect, backgroundColor: illustration.media };
 
-export function ClipStage({ playback }: ClipStageProps) {
+export function ClipStage({ playback, closable = true }: ClipStageProps) {
   const { t } = useTranslation();
   if (playback.state === 'idle') return null;
   const failed = playback.state === 'failed' || playback.state === 'unsupported';
@@ -23,7 +23,7 @@ export function ClipStage({ playback }: ClipStageProps) {
           <Media name={t('screens.cameras.clips.image')} frame={{ uri: playback.image }} />
         ) : failed ? null : (
           <View className="rounded-media overflow-hidden" style={FRAME}>
-            <ClipPlayer file={playback.file} onEnded={playback.close} />
+            <ClipPlayer file={playback.file} onEnded={closable ? playback.close : undefined} />
           </View>
         )}
         {failed ? (
@@ -38,12 +38,22 @@ export function ClipStage({ playback }: ClipStageProps) {
             }
           />
         ) : null}
-        <Button
-          compact
-          variant="ghost"
-          label={t('screens.cameras.clips.close')}
-          onPress={playback.close}
-        />
+        {closable ? (
+          <Button
+            compact
+            variant="ghost"
+            label={t('screens.cameras.clips.close')}
+            onPress={playback.close}
+          />
+        ) : playback.file ? (
+          <Button
+            compact
+            variant="ghost"
+            icon="play"
+            label={t('screens.cameras.clips.replay')}
+            onPress={playback.replay}
+          />
+        ) : null}
       </Stack>
     </View>
   );

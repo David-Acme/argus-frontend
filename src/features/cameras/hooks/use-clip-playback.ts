@@ -12,6 +12,7 @@ export type ClipPlayback = {
   file: ClipFile | null;
   image: string | null;
   open: (clip: ICameraClip) => void;
+  replay: () => void;
   close: () => void;
 };
 
@@ -65,6 +66,10 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
     [cameraId],
   );
 
+  const replay = useCallback(() => {
+    setFile((current) => (current ? { ...current } : current));
+  }, []);
+
   const close = useCallback(() => {
     run.current += 1;
     setFile(null);
@@ -73,7 +78,7 @@ export function useClipPlayback(cameraId: string): ClipPlayback {
     setState('idle');
   }, []);
 
-  return { state, clip, file, image, open, close };
+  return { state, clip, file, image, open, replay, close };
 }
 
 export type ClipSink = {

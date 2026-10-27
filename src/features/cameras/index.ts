@@ -20,6 +20,8 @@ export { CameraSnapshotView } from './components/camera-snapshot-view';
 export { useCameraCounts, type CameraCounts } from './hooks/use-camera-counts';
 export { useCameraOverview } from './hooks/use-camera-overview';
 export { useCameraPrivacy } from './hooks/use-camera-privacy';
+export const ClipsScreen = lazyScreen(() => import('./screens/camera-screens'), 'ClipsScreen');
+export const ClipScreen = lazyScreen(() => import('./screens/camera-screens'), 'ClipScreen');
 export const CameraLabScreen = lazyScreen(
   () => import('./screens/camera-screens'),
   'CameraLabScreen'
@@ -29,7 +31,7 @@ export { TamperEvidenceView } from './components/tamper-evidence-view';
 export { useTamperEvidenceKeeper } from './hooks/use-tamper-evidence';
 export { useCameraThumbnails } from './hooks/use-camera-thumbnails';
 export { useCameraStill } from './hooks/use-camera-still';
-export { useRecentClips, type RecentClips } from './hooks/use-recent-clips';
+export { RecentClipsCard } from './components/clips/recent-clips-card';
 export {
   cameraMasked,
   cameraViews,
