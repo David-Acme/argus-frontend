@@ -68,23 +68,24 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
               <View style={{ flex: 1 }}>
-                <TopNoticeBar />
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    animation: 'fade',
-                    animationDuration: NAV_FADE_MS,
-                    animationTypeForReplace: 'push',
-                    contentStyle: { backgroundColor: bg },
-                  }}>
-                  <Stack.Protected guard={IS_NATIVE}>
-                    <Stack.Screen name="qr" />
-                    <Stack.Screen name="approve" />
-                  </Stack.Protected>
-                  <Stack.Screen name="welcome" />
-                  <Stack.Screen name="login" />
-                  <Stack.Screen name="(app)" />
-                </Stack>
+                <TopNoticeBar>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      animation: 'fade',
+                      animationDuration: NAV_FADE_MS,
+                      animationTypeForReplace: 'push',
+                      contentStyle: { backgroundColor: bg },
+                    }}>
+                    <Stack.Protected guard={IS_NATIVE}>
+                      <Stack.Screen name="qr" />
+                      <Stack.Screen name="approve" />
+                    </Stack.Protected>
+                    <Stack.Screen name="welcome" />
+                    <Stack.Screen name="login" />
+                    <Stack.Screen name="(app)" />
+                  </Stack>
+                </TopNoticeBar>
               </View>
               <CallPill />
               <MissedCallCard />

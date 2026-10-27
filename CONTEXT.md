@@ -5712,6 +5712,16 @@ is `role="status"`, a polite live region (the prototype's error toast says
 the window bottom, not the safe area, so 108 is the prototype frame's number
 and has to follow the real tab bar's top once Phase 2 places it. The host
 `Toaster` is not mounted in the root layout yet: the legacy toaster still is.
+Since the phone run (finding #40) the legacy toaster follows the same place:
+bottom-centre, above the tab bar at `useNavOffsets().toast` on a phone, and the
+bottom inset plus `inset.toast.edge` where there is no bar, so a toast never
+sits over a screen title; it is swiped away downward, and its body text is no
+longer cut at three lines. The offline state is not a toast any more (finding
+#37): `TopNoticeBar` wraps the navigator, and while Argus is unreachable (after
+the 12 s rule) or an error toast is parked it takes its own row under the status
+bar, a one-line pill with the route's title and «Reintentar», and gives the
+screens below a top inset of 0, so nothing overlays a header and nothing is
+inset twice. Tapping the pill shows the route's full words as a short toast.
 
 **Menu.** Pointer (the web build, Tauri included) gets
 `@rn-primitives/dropdown-menu` from a ⋯ trigger and `@rn-primitives/context-menu`

@@ -351,7 +351,6 @@ src/features/watch/services/watch.service.ts
 src/shared/components/cameras/masked-cameras-notice.tsx
 src/shared/components/layout/edge-fade.tsx
 src/shared/components/layout/offline-transition.ts
-src/shared/components/layout/top-notice-bar.tsx
 src/shared/components/sharing/share-members-dialog.tsx
 src/shared/components/ui/adaptive-dialog.tsx
 src/shared/components/ui/adaptive-menu.tsx

@@ -262,16 +262,17 @@ export const HOME: ScreenSpec[] = [
         notes: 'socket refused: only the core capabilities are known (no context yet)',
       },
       {
-        state: 'offline-toast',
+        state: 'offline-pill',
         rows: POPULATED,
         act: offline(13200),
-        notes: 'socket dropped and refused for 15 min; the warning toast',
+        notes:
+          'socket dropped and refused for 15 min; the one-line offline pill takes its own row over the screen',
       },
       {
-        state: 'offline-icon',
+        state: 'offline-pill-later',
         rows: POPULATED,
         act: offline(21000),
-        notes: 'after the toast closes, the wifi-off icon stays in the top bar',
+        notes: 'the pill stays in its row and never overlays the header; its details open on a tap',
       },
       {
         state: 'route-unreachable',
