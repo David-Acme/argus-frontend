@@ -3,11 +3,12 @@ import type { Clause } from '@nozbe/watermelondb/QueryDescription';
 import type { Observable } from 'rxjs';
 import type { NotificationModel } from '@/core/database';
 import type { IServiceResponse } from '@/core/interfaces';
-import type { KeysetPage, KeysetWindow, NotificationThreadTarget } from '@/core/types';
+import type { NotificationThreadTarget } from '@/core/types';
 import { httpService } from '@/core/services/http';
 import { NOTIFICATION_FEED_PAGE_SIZE } from '@/shared/constants';
 import { belongsToThread, notificationReadCalls, threadRemovalPaths, threadRemovalResult } from './notification';
-import { DatabaseService, type KeysetQuery } from './database.service';
+import { DatabaseService } from './database.service';
+import type { PageSegment } from './paging';
 
 const FEED_COLUMNS = ['type', 'title', 'body', 'data', 'is_read', 'read_at'];
 
@@ -16,21 +17,13 @@ class NotificationService extends DatabaseService<'notification'> {
     super('notification');
   }
 
-  observeFeedPage(userId: string, window: KeysetWindow): Observable<KeysetPage<NotificationModel>> {
-    return this.observeKeysetPage(this.feedQuery(userId), window);
-  }
-
-  nextFeedWindow(userId: string, window: KeysetWindow): Promise<KeysetWindow> {
-    return this.nextKeysetWindow(this.feedQuery(userId), window);
-  }
-
-  private feedQuery(userId: string): KeysetQuery {
-    return {
+  feedSegment(userId: string): PageSegment<NotificationModel> {
+    return this.keysetSegment({
       clauses: [Q.where('user_id', userId)],
       sort: { column: 'created_at', order: 'desc' },
       columns: FEED_COLUMNS,
       pageSize: NOTIFICATION_FEED_PAGE_SIZE,
-    };
+    });
   }
 
   async unreadIdsForUser(userId: string): Promise<string[]> {

@@ -7,8 +7,7 @@ import type {
   IProjectTaskUpdate,
   IServiceResponse,
 } from '@/core/interfaces';
-import type { KeysetPage, KeysetWindow } from '@/core/types';
-import { DatabaseService, type KeysetQuery } from './database.service';
+import { DatabaseService } from './database.service';
 import { wordClauses, type PageSegment } from './paging';
 import { PROJECT_DONE_PAGE_SIZE, SEARCH_PAGE_SIZE, VIEW_CACHE_LIST_LIMIT } from '@/shared/constants';
 import type { TaskProgress } from '@/shared/libs/task-progress';
@@ -49,12 +48,13 @@ class ProjectTaskService extends DatabaseService<'project_task'> {
     ]);
   }
 
-  observeDonePage(projectId: string, window: KeysetWindow): Observable<KeysetPage<ProjectTaskModel>> {
-    return this.observeKeysetPage(this.doneQuery(projectId), window);
-  }
-
-  nextDoneWindow(projectId: string, window: KeysetWindow): Promise<KeysetWindow> {
-    return this.nextKeysetWindow(this.doneQuery(projectId), window);
+  doneSegment(projectId: string): PageSegment<ProjectTaskModel> {
+    return this.keysetSegment({
+      clauses: [Q.where('project_id', projectId), Q.where('status', Q.oneOf(CLOSED_TASK_STATUSES))],
+      sort: { column: 'updated_at', order: 'desc' },
+      columns: TASK_COLUMNS,
+      pageSize: PROJECT_DONE_PAGE_SIZE,
+    });
   }
 
   observeProgress(projectId: string): Observable<TaskProgress & { closed: number }> {
@@ -77,15 +77,6 @@ class ProjectTaskService extends DatabaseService<'project_task'> {
       this.observeTotal([...due, Q.where('status', 'done')]),
       this.observeTotal(due),
     ]).pipe(map(([open, done, total]) => ({ open, done, total })));
-  }
-
-  private doneQuery(projectId: string): KeysetQuery {
-    return {
-      clauses: [Q.where('project_id', projectId), Q.where('status', Q.oneOf(CLOSED_TASK_STATUSES))],
-      sort: { column: 'updated_at', order: 'desc' },
-      columns: TASK_COLUMNS,
-      pageSize: PROJECT_DONE_PAGE_SIZE,
-    };
   }
 
   observeByProject(projectId: string): Observable<ProjectTaskModel[]> {

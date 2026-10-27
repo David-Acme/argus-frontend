@@ -26,6 +26,7 @@ export type InfiniteListState = {
 const SETTLE_MS = 1500;
 const DEFAULT_END_AFTER = 20;
 const NO_ROWS: readonly never[] = [];
+const NO_RESOURCES: readonly ResourceMatch[] = [];
 
 export function useInfiniteList({
   count,
@@ -186,4 +187,41 @@ export function useRemoteFeed<T, C>(
     loadMore,
     mutate,
   };
+}
+
+export type PagedListOptions = { enabled?: boolean; endAfter?: number };
+
+export function usePagedList<T, S extends PagedRows<T> = PagedRows<T>>(
+  key: PagedViewKey,
+  scope: string,
+  { enabled = true, endAfter }: PagedListOptions = {}
+) {
+  const view = usePagedView<T, S>(key, scope, enabled);
+  const paging = useInfiniteList({
+    count: view.rows.length,
+    hasMore: view.snapshot !== null && view.hasMore,
+    loadMore: view.loadMore,
+    endAfter,
+  });
+  return { ...view, paging };
+}
+
+export type FeedListOptions = PagedListOptions & {
+  resources?: readonly ResourceMatch[];
+  waiting?: boolean;
+};
+
+export function useFeedList<T, C>(
+  feed: RemoteFeed<T, C>,
+  scope: string,
+  { enabled = true, endAfter, resources = NO_RESOURCES, waiting = false }: FeedListOptions = {}
+) {
+  const list = useRemoteFeed(feed, scope, enabled, resources);
+  const paging = useInfiniteList({
+    count: list.rows.length,
+    hasMore: waiting || list.hasMore,
+    loadMore: list.loadMore,
+    endAfter,
+  });
+  return { ...list, paging };
 }

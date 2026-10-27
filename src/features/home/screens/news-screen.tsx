@@ -110,7 +110,7 @@ function More({ state }: StateProps) {
           tone="attention"
           icon="wifioff"
           title={t('screens.home.news.more-failed')}
-          action={{ label: t('common.retry'), onPress: state.loadMore }}
+          action={{ label: t('common.retry'), onPress: state.retryMore }}
         />
       </Section>
     );
