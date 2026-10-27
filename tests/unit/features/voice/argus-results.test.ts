@@ -105,6 +105,13 @@ describe('the results of this conversation', () => {
     expect(results.snapshot).toEqual([{ ...kept, asking: false, answer: 'no' }]);
   });
 
+  test('a result that arrives before any screen reads the store is kept when it first binds', () => {
+    const { results, send } = store();
+    send({ id: '8', tool: 'memory.remind', ok: true, data: { title: 'Regar', remindAt: 60 } });
+    results.bindUser('1');
+    expect(results.snapshot).toHaveLength(1);
+  });
+
   test('another account starts with no results', () => {
     const { results } = store();
     results.bindUser('1');

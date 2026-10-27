@@ -49,7 +49,9 @@ export class ArgusResults {
 
   bindUser(userId: string | null): void {
     if (this.userId === userId) return;
+    const signedIn = this.userId !== null;
     this.userId = userId;
+    if (!signedIn) return;
     this.results = [];
     this.notify();
   }
