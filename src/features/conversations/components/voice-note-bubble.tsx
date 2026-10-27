@@ -32,7 +32,9 @@ type TranscriptProps = {
 function Transcript({ transcript, expanded, onExpand }: TranscriptProps) {
   const { t } = useTranslation();
   if (transcript.trim().length === 0) return null;
-  const toggle = expanded ? t('screens.conversations.note.less') : t('screens.conversations.note.more');
+  const toggle = expanded
+    ? t('screens.conversations.note.less')
+    : t('screens.conversations.note.more');
   return (
     <View className="gap-1">
       <Text variant="meta" tone="2" numberOfLines={expanded ? undefined : TRANSCRIPT_LINES}>

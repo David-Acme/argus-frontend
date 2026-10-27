@@ -41,7 +41,8 @@ export function bubbleNoteOf(
   t: TranslateFn
 ): string | null {
   if (message.kind === 'turn' && message.leg === 'camera') return t(LEG_KEYS.camera);
-  const spokenInCall = message.via === 'voice' && !message.voiceNote && !answersNote(message.replyToKey);
+  const spokenInCall =
+    message.via === 'voice' && !message.voiceNote && !answersNote(message.replyToKey);
   return spokenInCall ? t('screens.conversations.by-voice') : null;
 }
 

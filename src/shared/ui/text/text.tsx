@@ -21,7 +21,6 @@ export type TextProps = {
   tone?: TextTone;
   heading?: HeadingLevel;
   struck?: boolean;
-  clear?: boolean;
   underline?: boolean;
   align?: 'start' | 'center';
   numberOfLines?: number;
@@ -133,12 +132,26 @@ function withMediaShadow(
   return scaled ? [scaled, MEDIA_SHADOW] : MEDIA_SHADOW;
 }
 
+export type ClearTextProps = { variant: TextVariant; children: string };
+
+export function ClearText({ variant, children }: ClearTextProps) {
+  const { style } = useTypeScale(variant);
+  return (
+    <NativeText
+      aria-hidden
+      maxFontSizeMultiplier={SPECS[variant].maxScale}
+      style={style}
+      className={clsx('web:font-system text-transparent', VARIANT_CLASS[variant])}>
+      {children}
+    </NativeText>
+  );
+}
+
 export function Text({
   variant = 'body',
   tone,
   heading,
   struck,
-  clear,
   underline,
   align = 'start',
   numberOfLines,
@@ -148,11 +161,9 @@ export function Text({
 }: TextProps) {
   const spec = SPECS[variant];
   const { style } = useTypeScale(variant);
-  const toneClass = clear
-    ? 'text-transparent'
-    : struck
-      ? 'text-text-3 line-through'
-      : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'];
+  const toneClass = struck
+    ? 'text-text-3 line-through'
+    : TONE_CLASS[tone ?? DEFAULT_TONE[variant] ?? 'default'];
   return (
     <NativeText
       role={heading ? 'heading' : undefined}

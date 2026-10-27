@@ -326,7 +326,7 @@ describe('the composer after the keyboard', () => {
 });
 
 describe('the day pill and the size estimate', () => {
-  test('the pill floats with the day of the first visible line, and hides while that line\'s separator tops the list', () => {
+  test("the pill floats with the day of the first visible line, and hides while that line's separator tops the list", () => {
     const items = threadItems({
       rows: [message({ id: '1' }), message({ id: '2', createdAt: T0 + DAY })],
       startOfDay,

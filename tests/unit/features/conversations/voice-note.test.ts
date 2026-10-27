@@ -86,6 +86,8 @@ describe('a voice note bubble', () => {
 
   test('a transcript longer than two lines folds behind «Ver más»', () => {
     expect(transcriptFolds('Compra pan')).toBe(false);
-    expect(transcriptFolds('Hola, Argus, quería saber qué tengo pendiente para mañana.')).toBe(true);
+    expect(transcriptFolds('Hola, Argus, quería saber qué tengo pendiente para mañana.')).toBe(
+      true
+    );
   });
 });

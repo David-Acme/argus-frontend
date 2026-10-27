@@ -6,7 +6,7 @@ import type { IConversationMessageCacheRow } from '@/core/interfaces';
 import { useDateFormatter } from '@/shared/hooks/use-date-formatter';
 import { useTranslation } from '@/shared/hooks/use-translation';
 import { Button } from '@/shared/ui/button';
-import { Text } from '@/shared/ui/text';
+import { ClearText, Text } from '@/shared/ui/text';
 import { BubbleFrame } from '@/features/conversations/components/bubble-frame';
 import { BubbleMeta } from '@/features/conversations/components/bubble-meta';
 import { BubbleTail } from '@/features/conversations/components/bubble-tail';
@@ -14,7 +14,11 @@ import { VoiceNoteBubble } from '@/features/conversations/components/voice-note-
 import { useBubbleActions } from '@/features/conversations/hooks/use-bubble-actions';
 import { chatErrorMessage } from '@/features/conversations/model/assistant-chat-errors';
 import type { ChatMark } from '@/features/conversations/model/assistant-chat-overlay';
-import { glyphShownOf, metaLabelOf, metaReserveOf } from '@/features/conversations/model/bubble-meta';
+import {
+  glyphShownOf,
+  metaLabelOf,
+  metaReserveOf,
+} from '@/features/conversations/model/bubble-meta';
 import { quoted } from '@/features/conversations/model/conversation-thread';
 import {
   bubbleNoteOf,
@@ -63,9 +67,7 @@ function BubbleText({ body, time, note, status }: BubbleTextProps) {
     <View className="min-w-0 shrink">
       <Text variant="body">
         {body}
-        <Text variant="caption" clear>
-          {reserve}
-        </Text>
+        <ClearText variant="caption">{reserve}</ClearText>
       </Text>
       <View className="absolute right-0 bottom-0">
         <BubbleMeta time={time} note={note} status={status} />

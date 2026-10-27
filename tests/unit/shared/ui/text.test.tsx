@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { Text, TextScaleProvider } from '@/shared/ui/text/text';
+import { ClearText, Text, TextScaleProvider } from '@/shared/ui/text/text';
 
 describe('Text', () => {
   test('renders its words and a heading role when asked', () => {
@@ -21,9 +21,7 @@ describe('Text', () => {
     render(
       <Text variant="body">
         Hola
-        <Text variant="caption" clear>
-          {' 21:54'}
-        </Text>
+        <ClearText variant="caption">{' 21:54'}</ClearText>
       </Text>
     );
     const run = screen.getByText('21:54', { exact: false, selector: 'span' });

@@ -7,7 +7,8 @@ import {
   metaReserveOf,
 } from '@/features/conversations/model/bubble-meta';
 
-const breaks = (text: string): number => [...text].filter((char) => /\s/.test(char) && char !== ' ' && char !== ' ').length;
+const breaks = (text: string): number =>
+  [...text].filter((char) => /\s/.test(char) && char !== ' ' && char !== ' ').length;
 
 describe('the time and ticks of a bubble', () => {
   test('the label is the time, after the note when there is one', () => {

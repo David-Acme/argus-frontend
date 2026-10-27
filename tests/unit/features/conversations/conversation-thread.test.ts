@@ -113,9 +113,9 @@ describe('bubbleNoteOf', () => {
         t
       )
     ).toBeNull();
-    expect(bubbleNoteOf(message({ id: '3', direction: 'in', via: 'voice', replyToKey: null }), t)).toBe(
-      'screens.conversations.by-voice'
-    );
+    expect(
+      bubbleNoteOf(message({ id: '3', direction: 'in', via: 'voice', replyToKey: null }), t)
+    ).toBe('screens.conversations.by-voice');
   });
 });
 
