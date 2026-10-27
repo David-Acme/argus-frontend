@@ -88,11 +88,19 @@ internal class PushRouter(private val context: Context) {
                 "exactAllowed=$exactAllowed verdict=$placed " +
                 "scheduled=${if (verdict == AlertVerdict.SilentUntilRingOrAlarm) scheduled else "n/a"}",
         )
+        val markDone = missedGrant(intent, copy, tag)
         when (placed) {
-            AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink)
+            AlertVerdict.FullAlarm -> PushNotifier.postAlert(context, tag, channel, copy, deepLink, markDone)
             AlertVerdict.Silent, AlertVerdict.SilentUntilRingOrAlarm ->
-                PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink)
+                PushNotifier.postAlert(context, tag, PushChannels.SILENT_ALERTS, copy, deepLink, markDone)
         }
+    }
+
+    private fun missedGrant(intent: PushIntent, copy: AlertCopy, tag: String): CallActionGrant? {
+        if (!copy.callBack || intent.urgency == "critical" || intent.episode.isEmpty()) return null
+        val grant = store.claimMissedGrant(intent.episode, tag, System.currentTimeMillis() / MILLIS)
+        PushLog.info("missed call reminder action=${grant != null}")
+        return grant
     }
 
     private fun alertJson(intentId: String, copy: AlertCopy, critical: Boolean, deepLink: String?): String =
@@ -114,6 +122,8 @@ internal class PushRouter(private val context: Context) {
         }
         if (store.isSeen("cancel:$callId", now) || store.isSeen("call:$callId", now)) return
         store.remember("call:$callId", now)
+        val grant = CallActionRules.grantOf(intent)
+        grant?.let { store.saveCallGrant(it, now) }
         CallSession.ring(
             context,
             RingInfo(
@@ -122,6 +132,7 @@ internal class PushRouter(private val context: Context) {
                 subject = intent.subject,
                 critical = intent.urgency == "critical",
                 episode = intent.episode,
+                snoozable = grant != null,
             ),
         )
     }

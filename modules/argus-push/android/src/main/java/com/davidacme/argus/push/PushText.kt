@@ -46,6 +46,20 @@ internal object PushText {
 
     fun callBack(spanish: Boolean): String = if (spanish) "Devolver" else "Call back"
 
+    fun markDone(spanish: Boolean): String = if (spanish) "Marcar hecho" else "Mark done"
+
+    fun callActionLine(outcome: CallActionOutcome, spanish: Boolean): String =
+        when (outcome) {
+            CallActionOutcome.Snoozed -> if (spanish) "Te llamo de nuevo en 10 min" else "I'll call you again in 10 min"
+            CallActionOutcome.Done -> if (spanish) "Marcado como hecho" else "Marked as done"
+            CallActionOutcome.Denied -> if (spanish) "Esta acción no vale en este teléfono" else "This action isn't valid on this phone"
+            CallActionOutcome.Used -> if (spanish) "Ese recordatorio ya estaba resuelto" else "That reminder was already handled"
+            CallActionOutcome.Expired -> if (spanish) "Ya pasó el tiempo para esta acción" else "This action has expired"
+            CallActionOutcome.Gone -> if (spanish) "Ese recordatorio ya no existe" else "That reminder no longer exists"
+            CallActionOutcome.Unavailable -> if (spanish) "Argus no pudo cambiarlo ahora. Prueba otra vez." else "Argus couldn't change it now. Try again."
+            CallActionOutcome.Unreached -> if (spanish) "No llegué a Argus. Prueba otra vez." else "Couldn't reach Argus. Try again."
+        }
+
     fun channelName(channelId: String, spanish: Boolean): String =
         when (channelId) {
             PushChannels.CRITICAL -> if (spanish) "Avisos críticos" else "Critical alerts"

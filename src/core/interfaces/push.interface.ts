@@ -33,6 +33,7 @@ export interface IArgusPushNative {
   setCallMuted(muted: boolean): void;
   takeDeclines(): string[];
   ackDecline(callId: string): void;
+  reportCallAction(callId: string, action: string, status: number): void;
   sendToBackground(): void;
   stopOngoingCall(): void;
   isKeyguardLocked(): boolean;
@@ -62,6 +63,7 @@ export interface IPushService {
   setCallMuted(muted: boolean): void;
   drainDeclines(): void;
   ackDecline(callId: string): void;
+  reportCallAction(callId: string, action: string, status: number): void;
   sendToBackground(): void;
   stopOngoingCall(): void;
   isKeyguardLocked(): boolean;

@@ -93,6 +93,9 @@ public class HybridArgusPush: HybridArgusPushSpec {
     store.removeDecline(callId)
   }
 
+  func reportCallAction(callId: String, action: String, status: Double) throws -> Void {
+  }
+
   func endActiveCall() throws -> Void {
     session.endActive()
   }

@@ -235,6 +235,15 @@ class NativePushService implements IPushService {
     }
   }
 
+  reportCallAction(callId: string, action: string, status: number): void {
+    if (!IS_ANDROID) return;
+    try {
+      this.module().reportCallAction(callId, action, status);
+    } catch (error) {
+      log.error('push', 'the call action result could not be shown', error);
+    }
+  }
+
   stopOngoingCall(): void {
     if (!IS_ANDROID) return;
     try {

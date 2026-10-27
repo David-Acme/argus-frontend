@@ -30,7 +30,7 @@ internal object CallSession {
 
     fun ringDisplay(callId: String): RingDisplay? =
         synchronized(lock) {
-            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.subject, it.info.critical) }
+            active?.takeIf { it.callId == callId }?.let { RingDisplay(it.info.subject, it.info.critical, it.info.snoozable) }
         }
 
     fun ring(context: Context, info: RingInfo) {
@@ -111,6 +111,11 @@ internal object CallSession {
         releaseCall(app, callId)
         TelecomCall.end(DisconnectCause.REJECTED)
         deliverDecline(app, callId)
+    }
+
+    fun silence(context: Context, callId: String) {
+        if (!releaseCall(context.applicationContext, callId)) return
+        TelecomCall.end(DisconnectCause.REJECTED)
     }
 
     fun cancel(context: Context, callId: String) {
