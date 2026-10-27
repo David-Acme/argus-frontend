@@ -1,6 +1,7 @@
 import type { TextInputProps } from 'react-native';
 
-export type TextContent = 'plain' | 'name' | 'email' | 'url' | 'number';
+export type TextContent =
+  'plain' | 'name' | 'given' | 'family' | 'email' | 'url' | 'number' | 'code' | 'address';
 
 export type SecretContent = 'password' | 'pin';
 
@@ -21,6 +22,8 @@ const LITERAL: InputTraits = { autoCapitalize: 'none', autoCorrect: false };
 export const TEXT_TRAITS: Record<TextContent, InputTraits> = {
   plain: { autoCapitalize: 'sentences' },
   name: { autoComplete: 'name', textContentType: 'name', autoCapitalize: 'words' },
+  given: { autoComplete: 'given-name', textContentType: 'givenName', autoCapitalize: 'words' },
+  family: { autoComplete: 'family-name', textContentType: 'familyName', autoCapitalize: 'words' },
   email: {
     ...LITERAL,
     inputMode: 'email',
@@ -29,6 +32,8 @@ export const TEXT_TRAITS: Record<TextContent, InputTraits> = {
   },
   url: { ...LITERAL, inputMode: 'url', autoComplete: 'url', textContentType: 'URL' },
   number: { ...LITERAL, inputMode: 'numeric', autoComplete: 'off' },
+  code: { ...LITERAL, autoCapitalize: 'characters', autoComplete: 'off' },
+  address: { ...LITERAL, inputMode: 'url', autoComplete: 'off' },
 };
 
 export const SECRET_TRAITS: Record<SecretContent, InputTraits> = {

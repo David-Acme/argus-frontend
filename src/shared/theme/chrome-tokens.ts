@@ -144,6 +144,20 @@ export const chromeSize = {
   previewPhone: 760,
   scrollbar: 10,
   scrollbarInset: 3,
+  presenceWelcome: 120,
+  presenceWelcomeShort: 96,
+  presenceWelcomeTiny: 72,
+  presenceMark: 52,
+  finder: 268,
+  finderShort: 228,
+  finderTiny: 188,
+  finderLandscape: 148,
+  finderDone: 84,
+  stepDot: 22,
+  stepDotHeight: 4,
+  stepNumber: 28,
+  loginQr: 200,
+  languageSwitch: 112,
 } as const;
 
 export const chromeElevation = {

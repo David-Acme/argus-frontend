@@ -83,4 +83,17 @@ describe('Notice', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pedir' }));
     expect(presses).toBe(1);
   });
+
+  test('ok and alert banners lead with a dot of their tone and state one fact', () => {
+    render(
+      <>
+        <Notice inline tone="ok" title="Encontré a tu Argus en tu red." />
+        <Notice inline tone="alert" title="Ese código no es de este Argus." />
+        <Notice inline tone="alert" icon="alert" title="Sin conexión." />
+      </>
+    );
+    expect(screen.getAllByRole('status')).toHaveLength(3);
+    expect(screen.getByText('Encontré a tu Argus en tu red.')).toBeDefined();
+    expect(screen.getByText('Ese código no es de este Argus.')).toBeDefined();
+  });
 });

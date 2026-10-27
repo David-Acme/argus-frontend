@@ -152,6 +152,20 @@ export const ICON_SHAPES = {
   minus: [{ d: 'M5 12h14' }],
   stop: [{ d: 'M8 7h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z' }],
   download: [{ d: 'M12 4v11M7 10l5 5 5-5M5 20h14' }],
+  screen: [
+    { d: 'M5 4.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z' },
+    { d: 'M8 20h8M12 16.5V20' },
+  ],
+  laptop: [
+    {
+      d: 'M5.8 5h12.4A1.8 1.8 0 0 1 20 6.8v7.4a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 14.2V6.8A1.8 1.8 0 0 1 5.8 5z',
+    },
+    { d: 'M2 19h20' },
+  ],
+  wifi: [
+    { d: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0' },
+    { cx: 12, cy: 19.5, r: 1 },
+  ],
 } as const satisfies Record<string, readonly IconShape[]>;
 
 export type IconGlyph = keyof typeof ICON_SHAPES;
