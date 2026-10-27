@@ -1,5 +1,6 @@
-import { IS_NATIVE } from '@/shared/constants';
 import { Stack } from 'expo-router';
+import { IS_NATIVE } from '@/shared/constants';
+import { WELCOME_ROUTES } from '@/features/auth';
 
 export default function WelcomeLayout() {
   return (
@@ -12,16 +13,13 @@ export default function WelcomeLayout() {
         gestureEnabled: true,
         contentStyle: { backgroundColor: 'transparent' },
       }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="pairing/index" />
+      {WELCOME_ROUTES.open.map((name) => (
+        <Stack.Screen key={name} name={name} />
+      ))}
       <Stack.Protected guard={IS_NATIVE}>
-        <Stack.Screen name="invitation/index" />
-        <Stack.Screen name="privacy/index" />
-        <Stack.Screen name="face/index" />
-        <Stack.Screen name="permissions/index" />
-        <Stack.Screen name="modules/index" />
-        <Stack.Screen name="module-privacy/index" />
-        <Stack.Screen name="voice/index" />
+        {WELCOME_ROUTES.native.map((name) => (
+          <Stack.Screen key={name} name={name} />
+        ))}
       </Stack.Protected>
     </Stack>
   );

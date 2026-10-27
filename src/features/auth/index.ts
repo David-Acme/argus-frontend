@@ -1,12 +1,18 @@
 import { lazyScreen } from '@/shared/libs/lazy-screen';
 export { EntryGate } from './components/entry-gate';
 export { SessionGate } from './components/session-gate';
+export { WELCOME_ROUTES } from './constants/welcome.constant';
 export const ApproveScreen = lazyScreen(() => import('./screens/approve-screen'), 'default');
 export const FaceScreen = lazyScreen(() => import('./screens/face-screen'), 'default');
 export const InvitationScreen = lazyScreen(() => import('./screens/invitation-screen'), 'default');
 export const LoginScreen = lazyScreen(() => import('./screens/login-screen'), 'default');
+export const NameScreen = lazyScreen(() => import('./screens/name-screen'), 'default');
 export const OnboardingCallScreen = lazyScreen(
   () => import('./screens/onboarding-call-screen'),
+  'default'
+);
+export const OnboardingReadyScreen = lazyScreen(
+  () => import('./screens/onboarding-ready-screen'),
   'default'
 );
 export const PairingScreen = lazyScreen(() => import('./screens/pairing-screen'), 'default');

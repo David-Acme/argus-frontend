@@ -37,7 +37,7 @@
   },
   "src/app/welcome/_layout.tsx": {
     "i18next/no-literal-string": {
-      "count": 10
+      "count": 1
     }
   },
   "src/core/contracts/context.contract.ts": {
@@ -309,137 +309,6 @@
       "count": 6
     }
   },
-  "src/features/auth/components/face-capture-sheet.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/face-guide-overlay.tsx": {
-    "argus/no-color-literal": {
-      "count": 2
-    },
-    "argus/no-inline-size": {
-      "count": 3
-    },
-    "argus/responsive-home": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 5
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/face-intro.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/face-web-notice.tsx": {
-    "i18next/no-literal-string": {
-      "count": 2
-    }
-  },
-  "src/features/auth/components/language-switch.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-template-key": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/welcome-mascot/mascot-body.tsx": {
-    "argus/no-color-literal": {
-      "count": 7
-    },
-    "i18next/no-literal-string": {
-      "count": 10
-    }
-  },
-  "src/features/auth/components/welcome-mascot/mascot-eyes.tsx": {
-    "argus/no-inline-size": {
-      "count": 6
-    },
-    "argus/no-visual-timer": {
-      "count": 2
-    },
-    "max-params": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/welcome-mascot/mascot-figure.tsx": {
-    "argus/no-color-literal": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 6
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/welcome-mascot/mascot-props.tsx": {
-    "@typescript-eslint/no-deprecated": {
-      "count": 3
-    },
-    "argus/no-color-literal": {
-      "count": 3
-    },
-    "argus/no-inline-size": {
-      "count": 4
-    },
-    "i18next/no-literal-string": {
-      "count": 11
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/welcome-mascot/orbit-chip.tsx": {
-    "argus/no-inline-size": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/components/welcome-mascot/orbit-track.tsx": {
-    "argus/no-color-literal": {
-      "count": 2
-    },
-    "argus/no-inline-size": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 4
-    }
-  },
-  "src/features/auth/components/welcome-mascot/welcome-hero.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-color-literal": {
-      "count": 3
-    },
-    "i18next/no-literal-string": {
-      "count": 3
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/constants/welcome-mascot.ts": {
-    "argus/no-color-literal": {
-      "count": 14
-    }
-  },
   "src/features/auth/hooks/use-deep-link-restore.ts": {
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
@@ -447,7 +316,7 @@
   },
   "src/features/auth/hooks/use-face-capture.ts": {
     "complexity": {
-      "count": 3
+      "count": 2
     },
     "max-depth": {
       "count": 1
@@ -470,11 +339,6 @@
       "count": 1
     }
   },
-  "src/features/auth/hooks/use-pairing-flow.ts": {
-    "@typescript-eslint/only-throw-error": {
-      "count": 2
-    }
-  },
   "src/features/auth/model/face-error.ts": {
     "complexity": {
       "count": 1
@@ -485,109 +349,13 @@
       "count": 1
     }
   },
-  "src/features/auth/screens/approve-screen.tsx": {
-    "argus/no-template-key": {
-      "count": 3
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "src/features/auth/screens/face-screen.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    },
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/responsive-home": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
     "i18next/no-literal-string": {
-      "count": 2
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
   "src/features/auth/screens/invitation-screen.tsx": {
     "i18next/no-literal-string": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/screens/login-screen.tsx": {
-    "@typescript-eslint/no-misused-promises": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 2
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/screens/onboarding-module-privacy-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/screens/pairing-screen.tsx": {
-    "argus/activity-indicator-home": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 2
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/auth/screens/privacy-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "i18next/no-literal-string": {
-      "count": 1
-    }
-  },
-  "src/features/auth/screens/welcome-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "argus/no-inline-size": {
-      "count": 1
-    },
-    "argus/responsive-home": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
@@ -813,30 +581,6 @@
       "count": 1
     }
   },
-  "src/features/modules/components/module-card-skeleton.tsx": {
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    }
-  },
-  "src/features/modules/components/module-card.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "better-tailwindcss/no-restricted-classes": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "src/features/modules/components/module-intro.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    }
-  },
   "src/features/modules/components/uninstall-dialog.tsx": {
     "argus/ds-owns-primitives": {
       "count": 1
@@ -858,17 +602,6 @@
   },
   "src/features/modules/model/module-text.ts": {
     "max-params": {
-      "count": 1
-    }
-  },
-  "src/features/modules/screens/modules-step-screen.tsx": {
-    "argus/ds-owns-primitives": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },

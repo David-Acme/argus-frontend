@@ -29,6 +29,7 @@ import { proximity } from './proximity';
 import { conversations } from './conversations';
 import { command } from './command';
 import { navigation } from './navigation';
+import { name } from './name';
 
 export const screens = {
   home,
@@ -62,4 +63,5 @@ export const screens = {
   conversations,
   command,
   navigation,
+  name,
 } as const;

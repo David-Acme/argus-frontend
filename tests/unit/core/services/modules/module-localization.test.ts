@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { introFor, localizedCatalog, localizedModule, roleMovesNoteOf } from '@/core/services/modules/module-text';
+import { localizedCatalog, localizedModule, roleMovesNoteOf } from '@/core/services/modules/module-text';
 import { moduleRecord } from '@tests/support/access-fixtures';
 
 const texts = {
@@ -33,18 +33,6 @@ describe('module texts in the app language', () => {
     expect(localizedCatalog(null, 'en')).toBeNull();
     const translated = localizedCatalog({ fetchedAt: 1, modules: [moduleRecord({ name: 'Vigilancia', texts })] }, 'en');
     expect(translated?.modules[0]?.name).toBe('Surveillance');
-  });
-});
-
-describe('module intro in the app language', () => {
-  const body = (what: string) => ({ what, examples: [`${what} 1`, `${what} 2`] });
-
-  test('prefers the language of the app, then the single body, then Spanish, then English', () => {
-    expect(introFor({ intro: { es: body('es'), en: body('en') } }, 'en')?.what).toBe('en');
-    expect(introFor({ intro: { any: body('any'), es: body('es') } }, 'en')?.what).toBe('any');
-    expect(introFor({ intro: { es: body('es') } }, 'en')?.what).toBe('es');
-    expect(introFor({ intro: { en: body('en') } }, 'es')?.what).toBe('en');
-    expect(introFor({ intro: null }, 'es')).toBeNull();
   });
 });
 

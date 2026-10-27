@@ -8,7 +8,6 @@ import {
   formatBytes,
   hardwareReasonText,
   failureText,
-  hostCommands,
   ownerName,
   jobLabelKey,
   moduleStatus,
@@ -155,33 +154,5 @@ describe('module status', () => {
       moduleStatus(module({ hardware: { verdict: 'insufficient', reasons: [], minRamMb: 0, recommendedRamMb: 0, freeDiskMb: 0 } }))
     ).toBe('blocked');
     expect(moduleStatus(module())).toBe('available');
-  });
-
-
-  test('host commands are shown only for provisioned parts not ready yet', () => {
-    const component = {
-      id: 'detector',
-      owner: 'camera',
-      reachable: true,
-      reported: true,
-      state: 'missing',
-      bytesPresent: 0,
-      bytesTotal: 1,
-      hostCommand: 'x',
-      reason: null,
-    };
-    expect(
-      hostCommands(
-        module({
-          components: [
-            { ...component, source: 'provisioned', ready: false },
-            { ...component, id: 'vision', source: 'download', ready: false, hostCommand: 'y' },
-            { ...component, id: 'done', source: 'provisioned', state: 'installed', ready: false, hostCommand: 'z' },
-            { ...component, id: 'silent', source: 'provisioned', reported: false, ready: false, hostCommand: 'w' },
-            { ...component, id: 'twin', source: 'provisioned', ready: false },
-          ],
-        })
-      )
-    ).toEqual(['x']);
   });
 });

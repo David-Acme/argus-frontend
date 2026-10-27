@@ -250,16 +250,3 @@ export function moduleNames(ids: readonly string[], modules: readonly ModuleReco
 }
 
 
-export const hostCommands = (module: ModuleRecord): string[] => [
-  ...new Set(
-    module.components
-      .filter(
-        (component) =>
-          component.source === 'provisioned' &&
-          component.reported &&
-          component.state !== 'installed' &&
-          component.hostCommand !== null
-      )
-      .map((component) => component.hostCommand ?? '')
-  ),
-];

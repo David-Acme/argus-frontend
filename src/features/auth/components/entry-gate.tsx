@@ -12,7 +12,10 @@ import { routeFallback } from '@/shared/libs/route-access';
 import { BrandSplash } from '@/features/auth/components/brand-splash';
 import { ServerUnreachable } from '@/features/auth/components/server-unreachable';
 import { nextHref } from '@/features/auth/model/onboarding-flow';
-import { forgetRequestedRoute, holdRequestedRoute } from '@/features/auth/hooks/use-deep-link-restore';
+import {
+  forgetRequestedRoute,
+  holdRequestedRoute,
+} from '@/features/auth/hooks/use-deep-link-restore';
 
 type EntryDestination = 'welcome' | 'owner-enroll' | 'login' | 'restore' | 'unreachable';
 
@@ -48,9 +51,12 @@ function EntryRedirect() {
   if (destination === null) return <BrandSplash />;
   if (destination === 'unreachable') return <ServerUnreachable onRetry={retry} />;
   if (destination === 'welcome') return <Redirect href="/welcome" />;
-  if (destination === 'owner-enroll') return <Redirect href={nextHref('owner', 'pair', { native: IS_NATIVE }) ?? '/welcome'} />;
+  if (destination === 'owner-enroll')
+    return <Redirect href={nextHref('owner', 'pair', { native: IS_NATIVE }) ?? '/welcome'} />;
   if (destination === 'restore')
-    return <Redirect href={{ pathname: '/welcome/face', params: { mode: 'login', restore: '1' } }} />;
+    return (
+      <Redirect href={{ pathname: '/welcome/face', params: { mode: 'login', restore: '1' } }} />
+    );
   return IS_NATIVE ? <Redirect href="/welcome/face?mode=login" /> : <Redirect href="/login" />;
 }
 
@@ -63,7 +69,8 @@ export function EntryGate({ children }: PropsWithChildren) {
   const params = useGlobalSearchParams();
   const [requested] = useState(() => ({ pathname, params }));
   const previousStatus = useRef(status);
-  const fallback = status === 'signed-in' && !(pending && !waitedOut) ? routeFallback(pathname, view) : null;
+  const fallback =
+    status === 'signed-in' && !(pending && !waitedOut) ? routeFallback(pathname, view) : null;
 
   useEffect(() => {
     holdRequestedRoute(requested.pathname, requested.params);

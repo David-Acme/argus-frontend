@@ -1,10 +1,27 @@
 import type { FaceDetection } from 'argus-face';
-import { createFaceDetector } from '@/features/auth/services/face-detector';
 import type { CameraView } from 'expo-camera';
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { IS_ANDROID } from '@/shared/constants';
-import { FACE_CENTER_X_TOL, FACE_CENTER_Y_MAX, FACE_CENTER_Y_MIN, FACE_CLOSE_MIN_HEIGHT, FACE_DRIFT_GRACE_MS, FACE_EYE_MIN_OPEN, FACE_FAR_MAX_HEIGHT, FACE_LOW_LIGHT_LUM, FACE_MAX_PITCH_DEG, FACE_MAX_ROLL_DEG, FACE_MAX_YAW_DEG, FACE_UI_UPDATE_MS, FACE_READY_STABLE_MS, FACE_SAMPLE_FAST_MS, FACE_SAMPLE_MS } from '@/features/auth/constants/face';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import type { FaceGuideSnapshot } from '@/core/types';
+import { IS_ANDROID } from '@/shared/constants';
+import {
+  FACE_CENTER_X_TOL,
+  FACE_CENTER_Y_MAX,
+  FACE_CENTER_Y_MIN,
+  FACE_CLOSE_MIN_HEIGHT,
+  FACE_DRIFT_GRACE_MS,
+  FACE_EYE_MIN_OPEN,
+  FACE_FAR_MAX_HEIGHT,
+  FACE_LOW_LIGHT_LUM,
+  FACE_MAX_PITCH_DEG,
+  FACE_MAX_ROLL_DEG,
+  FACE_MAX_YAW_DEG,
+  FACE_READY_STABLE_MS,
+  FACE_SAMPLE_FAST_MS,
+  FACE_SAMPLE_MS,
+  FACE_UI_UPDATE_MS,
+} from '@/features/auth/constants/face.constant';
+import { createFaceDetector } from '@/features/auth/services/face-detector';
 
 type UseFaceGuideOptions = {
   cameraRef: RefObject<CameraView | null>;
@@ -15,8 +32,8 @@ type UseFaceGuideOptions = {
 
 type FaceGuideData = Omit<FaceGuideSnapshot, 'reset'>;
 type UnknownRecord = Record<string, unknown>;
-type NativeFaceEvent = { nativeEvent: UnknownRecord };
-type FaceGuideResult = FaceGuideSnapshot & { onFacesDetected: (event: NativeFaceEvent) => void };
+export type FaceDetectionEvent = { nativeEvent: UnknownRecord };
+type FaceGuideResult = FaceGuideSnapshot & { onFacesDetected: (event: FaceDetectionEvent) => void };
 
 const abs = Math.abs;
 
@@ -55,7 +72,7 @@ function faceOrNull(value: unknown): FaceDetection | null {
   };
 }
 
-function readNativeFrame(event: NativeFaceEvent): { luminance: number; faces: FaceDetection[] } {
+function readNativeFrame(event: FaceDetectionEvent): { luminance: number; faces: FaceDetection[] } {
   const nativeEvent = isRecord(event?.nativeEvent) ? event.nativeEvent : {};
   const source = isRecord(nativeEvent.data)
     ? nativeEvent.data
@@ -102,7 +119,12 @@ function analyze(frame: { luminance: number; faces: FaceDetection[] }): FaceGuid
   return 'ready';
 }
 
-export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGuideOptions): FaceGuideResult {
+export function useFaceGuide({
+  cameraRef,
+  active,
+  onReady,
+  onDrift,
+}: UseFaceGuideOptions): FaceGuideResult {
   const face = useMemo(() => createFaceDetector(), []);
   const available = face !== null;
 
@@ -162,10 +184,7 @@ export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGui
         }
       }
 
-      if (
-        state !== lastUiStateRef.current ||
-        now - lastUiUpdateRef.current >= FACE_UI_UPDATE_MS
-      ) {
+      if (state !== lastUiStateRef.current || now - lastUiUpdateRef.current >= FACE_UI_UPDATE_MS) {
         const f = frameForUi.faces[0];
         setSnapshot({
           state,
@@ -184,15 +203,15 @@ export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGui
       }
       return state;
     },
-    [],
+    []
   );
 
   const onFacesDetected = useCallback(
-    (event: NativeFaceEvent) => {
+    (event: FaceDetectionEvent) => {
       if (!IS_ANDROID || !activeRef.current || !available) return;
       applyFrame(readNativeFrame(event));
     },
-    [applyFrame, available],
+    [applyFrame, available]
   );
 
   useEffect(() => {
@@ -217,7 +236,7 @@ export function useFaceGuide({ cameraRef, active, onReady, onDrift }: UseFaceGui
 
         timer = setTimeout(
           () => void sample(),
-          state === 'ready' ? FACE_SAMPLE_FAST_MS : FACE_SAMPLE_MS,
+          state === 'ready' ? FACE_SAMPLE_FAST_MS : FACE_SAMPLE_MS
         );
       } catch {
         if (!cancelled) timer = setTimeout(() => void sample(), FACE_SAMPLE_MS);

@@ -1453,16 +1453,18 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
 #### Rule 36 today: onboarding flows and modules
 
 - **A flow is data.** `features/auth/model/onboarding-flow.ts` declares each
-  flow as steps `{ id, screen, label, when, skippable }`: Owner `pair →
-  privacy → face → modules → module-privacy → meet`, invited `invitation →
-  privacy → face → meet`. Screens never hard-code the next route or a step
-  count: they call `nextHref(flow, step, { native, moduleSignals })` and
-  render `<OnboardingSteps flow step />`,
-  which hides itself when a platform sees fewer than two steps (the desktop
+  flow as steps `{ id, screen, label, when, counted }`: Owner `pair →
+  privacy → face → name → modules → module-privacy → permissions → meet →
+  ready`, invited `invitation → privacy → face → name → permissions → meet →
+  ready`. Screens never hard-code the next route or a step count: they ask
+  `useOnboardingNext().next(flow, step, moduleSignals?)` and render
+  `<OnboardingTop place={{ flow, step }} />`, whose dots count only the
+  `counted` steps and hide when a platform sees fewer than two (the desktop
   only pairs). The flow travels in the route as `mode`
   (`owner-enroll`/`invite-enroll`, privacy and face) or `flow` (the rest);
   `flowOf` reads either. A new step is one entry in `ONBOARDING_FLOWS` and a
-  screen.
+  screen. Every onboarding screen is drawn in `OnboardingFrame` (full screen
+  on a phone, one centred 480 card on the Aura from tablet width).
 - **Modules and the user's context come from the socket.**
   `core/services/context/` (`ContextEngine`) reads the context of
   `InitialInfo` (`{userId, role, roleActive, capabilities, roles, modules,
@@ -1538,7 +1540,8 @@ WebView: mobile → **Nitro** module, desktop → **Tauri (Rust)** commands.
 - **Welcome.** The Owner consents (core signals only) before the face, and
   after the modules answers for the signals of the modules chosen
   (`module-privacy`, dropped from the flow and its count when none has
-  signals). Module cards carry the intro of the catalog.
+  signals). The name is asked after the face, the first moment a session
+  exists for `PATCH /auth/me`.
 - **Reminders and the activity.** Reminders are core: `features/reminders`
   (Inicio always; `/reminder` HTTP, optimistic, own rows only) and the Owner's
   `features/activity` (`GET /sync/activity`, keyset paging, filters) are

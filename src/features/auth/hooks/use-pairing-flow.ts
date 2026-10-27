@@ -1,109 +1,114 @@
-import { useCallback, useState } from 'react';
-import { pairWithQr } from '@/core/services/net/net-pairing';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { NetDiscovery, NetError, NetErrorCode } from '@/core/types';
 import { netService } from '@/core/services/net';
-import { isPairingCode, normalizePairingCode, parsePairingQr } from '@/shared/libs/pairing-qr';
+import { pairWithQr } from '@/core/services/net/net-pairing';
 import { routePortsOf } from '@/core/services/net/net-routes';
-import { ARGUS_HOST, ARGUS_PAIRING_PORT } from '@/shared/constants';
-import type { NetError, QrPairingPayload } from '@/core/types';
+import { ARGUS_HOST } from '@/shared/constants';
+import { isPairingCode, normalizePairingCode, parsePairingQr } from '@/shared/libs/pairing-qr';
+import { parseAddress } from '@/features/auth/model/pairing-address';
+import type { PairingSearch } from '@/features/auth/model/pairing-state';
 
-export type PairingFlowPhase =
-  | 'idle'
-  | 'parsing'
-  | 'discovering'
-  | 'pairing'
-  | 'success'
-  | 'error';
+export type PairingRequest = { code: string; address: string };
 
-export type PairingFlowResult = {
-  phase: PairingFlowPhase;
-  error: NetError | null;
-  qr: QrPairingPayload | null;
-  run: (value: string, address?: string) => Promise<void>;
-  reset: () => void;
+export type PairingFlow = {
+  search: PairingSearch;
+  error: NetErrorCode | null;
+  paired: boolean;
+  busy: boolean;
+  connect: (request: PairingRequest) => Promise<void>;
+  scanned: (value: string) => Promise<void>;
+  searchAgain: () => void;
 };
 
-type ManualAddress = {
-  ip: string;
-  port: number;
-};
+const refusal = (code: NetErrorCode, message: string): Error & NetError =>
+  Object.assign(new Error(message), { code });
 
-const IPV4_PATTERN = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?::(\d{1,5}))?$/;
-const IPV6_PATTERN = /^\[?([0-9a-fA-F:]+)\]?(?::(\d{1,5}))?$/;
-
-function validPort(value: string | undefined): number | null {
-  const port = value ? Number(value) : ARGUS_PAIRING_PORT;
-  return port > 0 && port < 65536 ? port : null;
+async function findArgus(): Promise<NetDiscovery | null> {
+  try {
+    const found = await netService.discover();
+    return found.ip ? found : null;
+  } catch {
+    return null;
+  }
 }
 
-function parseAddress(address: string): ManualAddress | null {
-  const value = address.trim();
-  const ipv4 = value.match(IPV4_PATTERN);
-  if (ipv4) {
-    const octets = ipv4.slice(1, 5).map(Number);
-    const port = validPort(ipv4[5]);
-    if (octets.some((octet) => octet > 255) || port === null) return null;
-    return { ip: octets.join('.'), port };
-  }
-  const [, host = '', rawPort] = value.match(IPV6_PATTERN) ?? [];
-  if (host.includes(':') && (value.startsWith('[') || !rawPort)) {
-    const port = validPort(rawPort);
-    return port === null ? null : { ip: host, port };
-  }
-  return null;
-}
-
-async function pairWithCode(code: string, address?: string): Promise<void> {
-  if (address?.trim()) {
-    const manual = parseAddress(address);
-    if (!manual) {
-      throw { code: 'HOST_NOT_ALLOWED', message: 'Invalid server address' } as NetError;
-    }
-    await netService.pair({ host: ARGUS_HOST, ip: manual.ip, port: manual.port, code: code.trim(), routes: {} });
+async function pairWithCode(request: PairingRequest, found: NetDiscovery | null): Promise<void> {
+  const code = normalizePairingCode(request.code);
+  if (!isPairingCode(code)) throw refusal('INVALID_PAIRING_CODE', 'Invalid pairing code');
+  if (request.address.trim()) {
+    const manual = parseAddress(request.address);
+    if (!manual) throw refusal('HOST_NOT_ALLOWED', 'Invalid server address');
+    await netService.pair({ host: ARGUS_HOST, ...manual, code, routes: {} });
     return;
   }
-  const discovery = await netService.discover();
+  const target = found ?? (await findArgus());
+  if (!target) throw refusal('DISCOVERY_NOT_FOUND', 'No Argus server found on the network');
   await netService.pair({
     host: ARGUS_HOST,
-    ip: discovery.ip,
-    port: discovery.port,
-    code: code.trim(),
-    routes: routePortsOf(discovery.routes),
+    ip: target.ip,
+    port: target.port,
+    code,
+    routes: routePortsOf(target.routes),
   });
 }
 
-export function usePairingFlow(): PairingFlowResult {
-  const [phase, setPhase] = useState<PairingFlowPhase>('idle');
-  const [error, setError] = useState<NetError | null>(null);
-  const [qr, setQr] = useState<QrPairingPayload | null>(null);
+const codeOf = (reason: unknown): NetErrorCode =>
+  (reason as NetError | null)?.code ?? 'NETWORK_ERROR';
 
-  const run = useCallback(async (value: string, address?: string) => {
+export function usePairingFlow(): PairingFlow {
+  const [search, setSearch] = useState<PairingSearch>('searching');
+  const [found, setFound] = useState<NetDiscovery | null>(null);
+  const [error, setError] = useState<NetErrorCode | null>(null);
+  const [paired, setPaired] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const round = useRef(0);
+
+  const settle = useCallback((next: NetDiscovery | null, at: number) => {
+    if (at !== round.current) return;
+    setFound(next);
+    setSearch(next ? 'found' : 'missing');
+  }, []);
+
+  const searchAgain = useCallback(() => {
+    round.current += 1;
+    const at = round.current;
     setError(null);
-    setQr(null);
-    setPhase('parsing');
+    setSearch('searching');
+    void findArgus().then((next) => settle(next, at));
+  }, [settle]);
 
-    const parsed = parsePairingQr(value);
-    setPhase('discovering');
+  const attempt = useCallback(async (job: () => Promise<unknown>) => {
+    setError(null);
+    setBusy(true);
     try {
-      if (parsed) {
-        setQr(parsed);
-        await pairWithQr(parsed);
-      } else if (isPairingCode(value)) {
-        await pairWithCode(normalizePairingCode(value), address);
-      } else {
-        throw { code: 'INVALID_PAIRING_CODE', message: 'Invalid pairing code' } as NetError;
-      }
-      setPhase('success');
+      await job();
+      setPaired(true);
     } catch (reason) {
-      setError(reason as NetError);
-      setPhase('error');
+      setError(codeOf(reason));
+    } finally {
+      setBusy(false);
     }
   }, []);
 
-  const reset = useCallback(() => {
-    setPhase('idle');
-    setError(null);
-    setQr(null);
-  }, []);
+  const connect = useCallback(
+    (request: PairingRequest) => attempt(() => pairWithCode(request, found)),
+    [attempt, found]
+  );
 
-  return { phase, error, qr, run, reset };
+  const scanned = useCallback(
+    (value: string) =>
+      attempt(() => {
+        const qr = parsePairingQr(value);
+        if (!qr) throw refusal('INVALID_PAIRING_CODE', 'Invalid pairing code');
+        return pairWithQr(qr);
+      }),
+    [attempt]
+  );
+
+  useEffect(() => {
+    const at = round.current;
+    void findArgus().then((next) => settle(next, at));
+  }, [settle]);
+
+  return { search, error, paired, busy, connect, scanned, searchAgain };
 }

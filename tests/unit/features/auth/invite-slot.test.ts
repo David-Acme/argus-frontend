@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { clearInviteToken, holdInviteToken, readInviteToken } from '@/features/auth/model/invite-slot';
+import {
+  clearInviteToken,
+  holdInviteToken,
+  readInviteToken,
+} from '@/features/auth/model/invite-slot';
 
 describe('invite token slot', () => {
   test('a held token can be read again until it is cleared', () => {

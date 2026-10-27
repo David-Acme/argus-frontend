@@ -1,5 +1,5 @@
 import { localeDictionaries } from '@/core/i18n/locales';
-import type { LanguageCode, LocalizedText, ModuleCatalog, ModuleIntro, ModuleJob, ModuleRecord } from '@/core/types';
+import type { LanguageCode, LocalizedText, ModuleCatalog, ModuleJob, ModuleRecord } from '@/core/types';
 
 type KnownModuleText = { name: string; summary: string };
 
@@ -22,12 +22,6 @@ export function localizedCatalog(catalog: ModuleCatalog | null, language: Langua
   if (!catalog) return catalog;
   const modules = catalog.modules.map((module) => localizedModule(module, language));
   return modules.every((module, index) => module === catalog.modules[index]) ? catalog : { ...catalog, modules };
-}
-
-export function introFor(module: Pick<ModuleRecord, 'intro'>, language: LanguageCode): ModuleIntro | null {
-  const intro = module.intro;
-  if (!intro) return null;
-  return intro[language] ?? intro.any ?? intro.es ?? intro.en ?? null;
 }
 
 export function roleMovesNoteOf(

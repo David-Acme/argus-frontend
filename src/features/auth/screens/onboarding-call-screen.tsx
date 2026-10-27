@@ -1,23 +1,23 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
-import { OnboardingSteps } from '@/features/auth/components/onboarding-steps';
-import { Text } from '@/shared/components/ui/text';
-import { CallSurface, useCall, VoiceWebNotice } from '@/features/voice';
-import { IS_NATIVE } from '@/shared/constants';
-import { flowOf, isSkippable } from '@/features/auth/model/onboarding-flow';
-import { Button } from '@/shared/components/ui/button';
+import { ScopedTheme } from 'uniwind';
+import { useDevicePermissions } from '@/shared/hooks/use-device-permissions';
 import { useTranslation } from '@/shared/hooks/use-translation';
+import { Text } from '@/shared/ui/text';
+import { argusCallSupported, CallSurface, useCall } from '@/features/voice';
+import { callStepOf } from '@/features/auth/model/first-call';
+import { flowOf } from '@/features/auth/model/onboarding-flow';
+import type { OnboardingHref } from '@/features/auth/model/onboarding-flow';
+import { useOnboardingNext } from '@/features/auth/hooks/use-onboarding-next';
 
-function OnboardingCall() {
+type FirstCallProps = { next: OnboardingHref | '/' };
+
+function FirstCall({ next }: FirstCallProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{ flow?: string }>();
-  const flow = flowOf({ flow: params.flow });
-  const call = useCall();
-  const finish = useCallback(() => {
-    router.replace('/');
-  }, [router]);
+  const call = useCall({ purpose: 'onboarding' });
+  const finish = useCallback(() => router.replace(next), [next, router]);
 
   useEffect(() => {
     if (call.phase === 'done') finish();
@@ -29,21 +29,12 @@ function OnboardingCall() {
       muted={call.muted}
       error={call.error}
       transcript={call.transcript}
-      header={
-        <View className="gap-3">
-          <View className="flex-row items-center justify-between gap-3">
-            <OnboardingSteps flow={flow} step="meet" className="min-w-0 shrink" />
-            {isSkippable(flow, 'meet') ? (
-              <Button size="sm" variant="ghost" onPress={finish}>
-                <Text>{t('screens.welcome.skip')}</Text>
-              </Button>
-            ) : null}
-          </View>
-          <View className="gap-1">
-            <Text variant="headline">{t('screens.voice.intro-title')}</Text>
-            <Text variant="caption">{t('screens.voice.intro-hint')}</Text>
-          </View>
-        </View>
+      actions={call.actions}
+      connectedAt={call.connectedAt}
+      footnote={
+        <Text variant="caption" tone="3" align="center">
+          {t('screens.welcome.call.tip')}
+        </Text>
       }
       onToggleMute={call.toggleMute}
       onHangUp={finish}
@@ -52,6 +43,22 @@ function OnboardingCall() {
   );
 }
 
-export default function VoiceScreen() {
-  return IS_NATIVE ? <OnboardingCall /> : <VoiceWebNotice />;
+export default function OnboardingCallScreen() {
+  const flow = flowOf(useLocalSearchParams<{ flow?: string }>());
+  const { next } = useOnboardingNext();
+  const { permissions, loaded } = useDevicePermissions('call');
+  const after = next(flow, 'meet');
+  const step = callStepOf({
+    supported: argusCallSupported(),
+    loaded,
+    microphone: permissions.find((permission) => permission.id === 'microphone')?.granted ?? true,
+  });
+  if (step === 'skip') return <Redirect href={after} />;
+  if (step === 'wait')
+    return (
+      <ScopedTheme theme="dark">
+        <View className="bg-bg flex-1" />
+      </ScopedTheme>
+    );
+  return <FirstCall next={after} />;
 }

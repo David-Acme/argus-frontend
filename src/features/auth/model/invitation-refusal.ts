@@ -21,6 +21,8 @@ const KNOWN_MODULES: Readonly<Record<string, 'surveillance' | 'productivity' | '
 
 export function invitationRevokedText(revoked: InvitationRevoked, t: TranslateFn): string {
   const known = revoked.moduleId ? KNOWN_MODULES[revoked.moduleId] : undefined;
-  const module = known ? t(`screens.invitation.modules.${known}`) : t('screens.invitation.modules.other');
+  const module = known
+    ? t(`screens.invitation.modules.${known}`)
+    : t('screens.invitation.modules.other');
   return t('screens.invitation.revoked-module', { module });
 }
