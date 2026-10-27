@@ -78,3 +78,20 @@ export async function nextSegments<T>(
   if (filled === null) return windows;
   return [...windows, ...Array.from({ length: filled - at }, () => ({ through: null }))];
 }
+
+export type SourceGate = {
+  of: <T>(moduleId: string, source: Observable<T>, empty: T) => Observable<T>;
+};
+
+export function gatedSegment<T>(
+  segment: PageSegment<T>,
+  module: string | null,
+  gate: SourceGate
+): PageSegment<T> {
+  if (module === null) return segment;
+  return {
+    ...segment,
+    observe: (window) => gate.of(module, segment.observe(window), EMPTY_PAGE),
+    any: () => gate.of(module, segment.any(), false),
+  };
+}

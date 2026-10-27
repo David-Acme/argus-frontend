@@ -88,6 +88,18 @@ mock.module('@/shared/hooks/use-cached-rows', () => ({
 }));
 mock.module('@/shared/hooks/use-infinite-list', () => ({
   usePagedView: pagedView,
+  usePagedList: (key: string, scope: string, options: { enabled?: boolean } = {}) => {
+    const view = pagedView(key, scope, options.enabled ?? true);
+    return {
+      ...view,
+      paging: {
+        footer: view.hasMore ? 'loading' : 'none',
+        loading: false,
+        onEndReached: () => void view.loadMore(),
+        retry: () => undefined,
+      },
+    };
+  },
   useInfiniteList: ({
     hasMore,
     loadMore,

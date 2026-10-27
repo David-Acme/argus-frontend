@@ -41,17 +41,12 @@ export function useNewsScreen() {
   const offline = useOfflineNotice();
   const [filter, setFilter] = useState<NewsFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const [moreFailed, setMoreFailed] = useState(false);
   const filters = newsFilters(moduleActive(MODULE_IDS.surveillance));
   const shown: NewsFilter = filters.includes(filter) ? filter : 'all';
   const refresh = async () => {
     setRefreshing(true);
     await synchronizeService.syncOnce();
     setRefreshing(false);
-  };
-  const loadMore = async () => {
-    const ok = await news.feed.loadMore().catch(() => false);
-    setMoreFailed(!ok);
   };
   return {
     now,
@@ -64,8 +59,9 @@ export function useNewsScreen() {
     pick: setFilter,
     offline,
     syncedAt: offline ? synchronizeService.lastSyncAtValue : null,
-    moreFailed,
-    loadMore,
+    moreFailed: news.feed.paging.footer === 'error',
+    loadMore: news.feed.paging.onEndReached,
+    retryMore: news.feed.paging.retry,
     refresh: { refreshing, onRefresh: () => void refresh() },
     back: () => (router.canGoBack() ? router.back() : router.replace(HOME_HREF)),
   };

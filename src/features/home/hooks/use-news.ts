@@ -3,7 +3,7 @@ import { notificationService } from '@/core/services/notification.service';
 import { notificationThreadKey } from '@/core/services/notification';
 import { CAPABILITY, NOTIFICATION_FEED_SCOPE, VIEW_CACHE_KEYS } from '@/shared/constants';
 import { useCapabilities } from '@/shared/hooks/use-capabilities';
-import { usePagedView } from '@/shared/hooks/use-infinite-list';
+import { usePagedList } from '@/shared/hooks/use-infinite-list';
 import { useOptimisticRows } from '@/shared/hooks/use-optimistic-rows';
 import { runOptimistic } from '@/shared/libs/optimistic-action';
 import {
@@ -31,10 +31,10 @@ export function readThread(thread: Pick<NotificationThread, 'latest' | 'unreadId
 export function useNews() {
   const { has, moduleActive } = useCapabilities();
   const readable = has(CAPABILITY.notificationsRead);
-  const feed = usePagedView<INotificationPreviewCacheRow>(
+  const feed = usePagedList<INotificationPreviewCacheRow>(
     VIEW_CACHE_KEYS.notificationFeed,
     NOTIFICATION_FEED_SCOPE,
-    readable
+    { enabled: readable }
   );
   const { rows } = useOptimisticRows(feed.rows, NOTIFICATION_LENSES);
   const threads = groupNotifications(rows.filter((row) => notificationVisible(row, moduleActive)));
