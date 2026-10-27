@@ -32,7 +32,7 @@ export function CardStatus({
 }: CardStatusProps) {
   const { elevation } = useThemeTokens();
   const card = { boxShadow: elevation.float };
-  const alert = tone === 'alert';
+  const alert = tone === 'alert' && Boolean(sentence);
   useAnnounce(alert ? sentence : undefined);
   return (
     <View

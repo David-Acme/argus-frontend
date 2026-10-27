@@ -168,6 +168,17 @@ describe('Status', () => {
     expect(screen.getByRole('button', { name: 'Ver' })).toBeDefined();
   });
 
+  test('an alert hero above a card without a sentence is the one alert region', () => {
+    render(
+      <>
+        <HeroStatus tone="alert" sentence="Alguien en el patio." meta="Ahora" />
+        <Status variant="card" tone="alert" primary={{ label: 'Ver', onPress: () => undefined }} />
+      </>
+    );
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(screen.getByRole('alert').textContent).toContain('Alguien en el patio.');
+  });
+
   test('a change fades in, and reduced motion changes at once', () => {
     const live = render(
       <StatusFade change="a">

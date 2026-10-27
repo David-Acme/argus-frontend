@@ -177,9 +177,9 @@ describe('InicioLead', () => {
 });
 
 describe('InicioAlert', () => {
-  test('the alert shows the camera live, Ver cámara first, then the two answers', async () => {
+  test('the alert card leaves the announcement to the hero and shows the camera live, Ver cámara first, then the two answers', async () => {
     render(<InicioAlert response={RESPONSE} />);
-    expect(screen.getByRole('alert')).toBeDefined();
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByText('live')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Ver cámara' }));
     expect(routes).toEqual(['/cameras/3']);
