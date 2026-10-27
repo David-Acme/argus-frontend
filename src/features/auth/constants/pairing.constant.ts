@@ -2,6 +2,10 @@ import type { InfoRow } from '@/features/auth/model/info-row';
 
 export const PAIRED_PAUSE_MS = 700;
 
+export const NAMED_PAUSE_MS = 1400;
+
+export const HOME_NAME_WAIT_MS = 1500;
+
 export const WHERE_ROWS: readonly InfoRow[] = [
   {
     key: 'screen',

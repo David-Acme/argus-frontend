@@ -55,6 +55,17 @@ export const settings = {
     'reset-confirm': 'Restablecer {name}',
     'reset-none': '{name} ya está como vino de fábrica',
   },
+  household: {
+    title: 'Casa',
+    name: 'Nombre de la casa',
+    hint: 'Así se presenta Argus cuando un teléfono o un equipo lo encuentra en tu red.',
+    placeholder: 'Casa Acme',
+    unset: 'Sin nombre',
+    errors: {
+      invalid: 'Usa letras, números y signos; sin saltos de línea ni caracteres de control.',
+      long: 'Puede tener hasta 40 caracteres.',
+    },
+  },
   device: {
     title: 'Este dispositivo',
     haptics: 'Vibrar al confirmar',
@@ -189,6 +200,7 @@ export const settings = {
     guard: { name: 'Vigilancia', hint: 'Cuándo avisa, habla o hace sonar la sirena.' },
     camera: { name: 'Cámaras y grabación', hint: 'Detección, transmisión y salud de las cámaras.' },
     notification: { name: 'Avisos', hint: 'Cuántos avisos recibes y cuándo guardan silencio.' },
+    identity: { name: 'Casa', hint: 'El nombre con el que Argus se presenta.' },
   },
   groups: {
     voice: 'Voz',
@@ -227,6 +239,7 @@ export const settings = {
     privacy: 'Privacidad',
     recording: 'Grabación',
     ptz: 'Movimiento de la cámara',
+    household: 'Casa',
   },
   choices: {
     pocket: 'Pocket (rápido)',
@@ -274,6 +287,12 @@ export const settings = {
     tamper: advancedKeys.tamper,
     ptz: advancedKeys.ptz,
     look: advancedKeys.look,
+    identity: {
+      home_name: {
+        label: 'Nombre de la casa',
+        hint: 'Así se presenta Argus cuando un teléfono o un equipo lo encuentra en tu red.',
+      },
+    },
     tts: {
       engine_es: {
         label: 'Motor de voz en español',

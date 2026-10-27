@@ -12,7 +12,8 @@ export type SettingsOwnerName =
   | 'vlm'
   | 'guard'
   | 'camera'
-  | 'notification';
+  | 'notification'
+  | 'identity';
 
 export type ChoiceAvailability = 'installed' | 'installable' | 'installing' | 'hostOnly' | 'failed';
 

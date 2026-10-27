@@ -7371,8 +7371,23 @@ v2). What was decided while building it:
 - **The pairing code is a text field.** The server's code is 26–32 base32
   characters (or 8–12 hex), which six boxes cannot hold; the code field and
   the discovery fact sit centred, and a network that hides Argus opens the
-  address view with both fields. Discovery has no home name, so the fact
-  reads «Encontré a tu Argus en tu red».
+  address view with both fields. mDNS carries no home name, so the
+  discovery fact reads «Encontré a tu Argus en tu red». Once the pair call
+  succeeds the flow reads `GET /pairing/status` (now pinned) for the optional
+  `homeName` the Owner sets in Ajustes, waiting at most `HOME_NAME_WAIT_MS`;
+  with a name the note reads «Listo. Encontré a Casa Acme.» and stays
+  `NAMED_PAUSE_MS` before the app moves on, without one it keeps «Listo. Ya
+  conozco a tu Argus.» (`pairingStateOf`, `homeNameOf`, `pairedPauseOf`).
+- **The home name in Ajustes.** It is argus-identity's catalog key
+  `identity.home_name` on the `/settings` surface (owner `identity`), shown as
+  the «Casa» section at the top of the hub rather than a service row
+  (`serviceOwners` leaves the identity owner out). The sheet checks the name
+  as the server does (`home-name.ts`: NFC, trimmed and collapsed, up to 40
+  characters, no control or direction characters; empty clears it), saves
+  single-flight through `PATCH /settings/identity` and waits for the answer
+  instead of applying it optimistically; a 422 naming the key is the field's
+  error and any other failure is the usual toast. Data: the settings overview
+  view cache, re-read on `ResourceChanged` settings/values.
 - **The first call** is the existing call stage (`CallSurface`, which gained
   a `footnote` slot for «Puedes colgar cuando quieras») started with
   `useCall({ purpose: 'onboarding' })`; the purpose travels in the

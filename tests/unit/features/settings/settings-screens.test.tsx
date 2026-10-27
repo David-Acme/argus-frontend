@@ -108,6 +108,7 @@ const state = {
   reloads: 0,
   toasts: [] as string[],
   haptics: true,
+  household: null as Setting | null,
 };
 
 const t: TranslateFn = (key, ...rest) => translate(localeDictionaries.es, key, ...rest);
@@ -128,9 +129,13 @@ mock.module('@/features/settings/hooks/use-settings-hub', () => ({
       reverting: false,
     },
     owners: state.owners,
+    household: state.household,
     change: (owner: SettingsOwner, changes: SettingChange[]) =>
       state.applied.push({ owner: owner.service, changes }),
   }),
+}));
+mock.module('@/features/settings/services/settings.service', () => ({
+  settingsService: { update: async () => ({ ok: false, status: 503, info: null, errors: null }) },
 }));
 mock.module('@/features/settings/hooks/use-voice-preview', () => ({
   useVoicePreview: () => ({ playing: null, toggle: () => undefined }),
@@ -207,6 +212,7 @@ beforeEach(() => {
     reloads: 0,
     toasts: [],
     haptics: true,
+    household: null,
   });
 });
 
@@ -220,6 +226,13 @@ describe('Ajustes on a phone', () => {
     expect(screen.queryByText('tts')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /^Voz de Argus/ }));
     expect(state.pushed).toEqual([{ pathname: '/settings/[service]', params: { service: 'tts' } }]);
+  });
+
+  test('the hub opens on the home name when Argus has one to edit', () => {
+    state.household = setting('identity.home_name', { type: 'text', value: 'Casa Acme' });
+    render(<SettingsScreen />);
+    expect(screen.getByRole('button', { name: /^Nombre de la casa/ })).toBeDefined();
+    expect(screen.getByText('Casa Acme')).toBeDefined();
   });
 
   test('choosing another profile applies it with a way back', () => {

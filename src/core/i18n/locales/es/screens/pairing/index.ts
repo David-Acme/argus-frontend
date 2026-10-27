@@ -6,6 +6,7 @@ export const pairing = {
   searching: 'Buscando a tu Argus en tu red…',
   found: 'Encontré a tu Argus en tu red.',
   paired: 'Listo. Ya conozco a tu Argus.',
+  'paired-named': 'Listo. Encontré a {name}.',
   where: {
     screen: { title: 'En la pantalla de Argus', meta: 'Ajustes → Vincular un dispositivo' },
     box: { title: 'En la caja de tu equipo', meta: 'Etiqueta «Código de vínculo»' },

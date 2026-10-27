@@ -18,6 +18,7 @@ export const SERVICE_LOOK: Readonly<Record<SettingsOwnerName, ServiceLook>> = {
     tone: 'default',
     hint: 'screens.settings.owners.notification.hint',
   },
+  identity: { icon: 'home', tone: 'default', hint: 'screens.settings.owners.identity.hint' },
 };
 
 export type MeterKey = 'response' | 'memory' | 'voice';

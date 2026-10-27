@@ -1,4 +1,5 @@
 import type { Setting, SettingsOverview, SettingsOwner, SettingsOwnerName } from '@/core/types';
+import { HOUSEHOLD_OWNER } from '@/features/settings/constants/household.constant';
 import { isChanged, matchesQuery, ownerStatus } from '@/features/settings/model/settings-catalog';
 import type { SettingText } from '@/features/settings/model/settings-catalog';
 
@@ -34,7 +35,7 @@ const rank = (owner: SettingsOwner): number => {
 
 export function serviceOwners(overview: SettingsOverview): SettingsOwner[] {
   return overview.owners
-    .filter((owner) => ownerStatus(owner) !== 'unconfigured')
+    .filter((owner) => owner.service !== HOUSEHOLD_OWNER && ownerStatus(owner) !== 'unconfigured')
     .sort((left, right) => rank(left) - rank(right));
 }
 

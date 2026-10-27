@@ -54,9 +54,10 @@ function StateNote({ form }: PairingViewProps) {
   const { t } = useTranslation();
   const { note } = form.state;
   if (!note) return null;
+  const title = note.name ? t('screens.pairing.paired-named', { name: note.name }) : t(note.key);
   return (
     <View className="w-full" accessibilityLiveRegion="polite">
-      <Notice inline tone={note.tone} title={t(note.key)} />
+      <Notice inline tone={note.tone} title={title} />
     </View>
   );
 }
