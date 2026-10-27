@@ -610,11 +610,6 @@
       "count": 1
     }
   },
-  "src/features/notification/screens/notification-link-screen.tsx": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    }
-  },
   "src/features/people/services/portrait-preview.service.ts": {
     "argus/no-http-type-argument": {
       "count": 2

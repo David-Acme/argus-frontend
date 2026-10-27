@@ -13,7 +13,7 @@ loop-without-reduce-motion 1
 timer-in-component 1
 source-text-test 4
 legacy-token-class 681
-manual-memo 337
+manual-memo 336
 shared-value-dot-value 105
-untested-component-or-screen 157
-scanned-files 2047
+untested-component-or-screen 156
+scanned-files 2051

@@ -32,6 +32,8 @@ export const removal = { allowed: true };
 
 export const params: { notificationId?: string } = {};
 
+export const sync = { ready: true, offline: false, lastAt: null as number | null, synced: 0 };
+
 export const news = {
   readable: true,
   threads: [] as NotificationThread[],
@@ -74,6 +76,7 @@ export function reset(): void {
   removed.length = 0;
   removal.allowed = true;
   delete params.notificationId;
+  Object.assign(sync, { ready: true, offline: false, lastAt: null, synced: 0 });
   news.readable = true;
   news.threads = [];
   news.feed = { rows: [], hasMore: false, loadMore: async () => true };
@@ -143,7 +146,27 @@ mock.module('@/features/watch', () => ({
   WatchNotificationAction: () => null,
 }));
 
-mock.module('@/features/notification', () => ({
-  notificationHrefOf,
-  NotificationLinkScreen: () => <span>link-screen</span>,
+mock.module('@/features/notification', () => ({ notificationHrefOf }));
+
+mock.module('@/shared/hooks/use-cached-rows', () => ({
+  useViewCacheValue: () => sync.ready,
+  useViewCacheRows: () => [],
 }));
+
+mock.module('@/shared/components/layout/use-offline-notice', () => ({
+  useOfflineNotice: () => sync.offline,
+}));
+
+mock.module('@/core/services/sync', () => ({
+  synchronizeService: {
+    get lastSyncAtValue() {
+      return sync.lastAt;
+    },
+    syncOnce: () => {
+      sync.synced += 1;
+      return Promise.resolve();
+    },
+  },
+}));
+
+mock.module('@/features/home/hooks/use-ask-argus', () => ({ useAskArgus: () => null }));

@@ -236,8 +236,6 @@ src/features/modules/model/module-request.ts
 src/features/modules/model/module-selection.ts
 src/features/modules/model/module-text.ts
 src/features/notification/hooks/use-notification-permission.ts
-src/features/notification/model/notification-link.ts
-src/features/notification/screens/notification-link-screen.tsx
 src/features/people/model/biometric-erase.ts
 src/features/people/model/presence.ts
 src/features/people/model/role-areas.ts
@@ -532,7 +530,6 @@ tests/unit/features/modules/module-impact.test.ts
 tests/unit/features/modules/module-request.test.ts
 tests/unit/features/modules/module-selection.test.ts
 tests/unit/features/modules/module-text.test.ts
-tests/unit/features/notification/notification-link.test.ts
 tests/unit/features/people/biometric-erase.test.ts
 tests/unit/features/people/invitation-flight.test.ts
 tests/unit/features/people/presence.test.ts

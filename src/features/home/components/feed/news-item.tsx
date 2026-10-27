@@ -31,6 +31,7 @@ export type NewsItemProps = {
   now: number;
   onRead: (thread: NotificationThread) => void;
   onRemove?: (thread: NotificationThread) => void;
+  threadLine?: boolean;
 };
 
 type NewsActionsProps = {
@@ -48,10 +49,10 @@ const ACTION_KEYS = {
   'call-back': 'screens.home.news.call-back',
 } as const;
 
-function useNewsWhen(thread: NotificationThread, now: number): string {
+export function useNewsStamp(now: number): (at: number) => string | null {
   const { t } = useTranslation();
   const date = useDateFormatter();
-  const stamp = (at: number): string | null => {
+  return (at: number): string | null => {
     const value = newsStampOf(at, now);
     if (value === null) return null;
     const time = date.formatTime(value.at);
@@ -61,6 +62,11 @@ function useNewsWhen(thread: NotificationThread, now: number): string {
       value.kind === 'week' ? date.formatWeekdayShort(value.at) : date.formatDayMonth(value.at);
     return day.charAt(0).toLocaleUpperCase() + day.slice(1);
   };
+}
+
+function useNewsWhen(thread: NotificationThread, now: number): string {
+  const { t } = useTranslation();
+  const stamp = useNewsStamp(now);
   const count = thread.entries.length;
   return [
     ...rowTimes(thread.latest, {
@@ -100,7 +106,7 @@ function NewsActions({ thread, action, sight, onRead, onOpen, onRemove }: NewsAc
   );
 }
 
-export function NewsItem({ thread, now, onRead, onRemove }: NewsItemProps) {
+export function NewsItem({ thread, now, onRead, onRemove, threadLine }: NewsItemProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const sight = useSightNotice(thread.kind, thread.latest.data);
@@ -136,6 +142,7 @@ export function NewsItem({ thread, now, onRead, onRemove }: NewsItemProps) {
       when={when}
       text={words.text}
       unreadLabel={isThreadRead(thread) ? undefined : t('screens.home.thread.unread')}
+      thread={threadLine}
       actions={
         acts ? (
           <NewsActions

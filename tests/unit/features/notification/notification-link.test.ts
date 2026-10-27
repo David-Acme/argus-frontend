@@ -1,16 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { INotificationPreviewCacheRow } from '@/core/interfaces';
-import { notificationHrefOf, notificationLinkTarget } from '@/features/notification/model/notification-link';
-
-const row = (id: string, data: Record<string, unknown>): INotificationPreviewCacheRow => ({
-  id,
-  type: 'camera',
-  title: 'Argus',
-  body: 'Tienes un aviso nuevo.',
-  isRead: false,
-  data,
-  createdAt: 1,
-});
+import { notificationHrefOf } from '@/features/notification/model/notification-link';
 
 describe('the in-app href of a notification', () => {
   test('a path inside the app is kept', () => {
@@ -28,34 +17,27 @@ describe('the in-app href of a notification', () => {
   });
 });
 
-describe('the target of a notification link', () => {
-  const rows = [row('41', { url: '/security' }), row('42', { url: '/cameras/12' })];
-
-  test('a link without an id goes home', () => {
-    expect(notificationLinkTarget(rows, undefined)).toEqual({ kind: 'home' });
-  });
-
-  test('a row that is not local yet waits for the sync, it does not redirect', () => {
-    expect(notificationLinkTarget(rows, '99')).toEqual({ kind: 'waiting' });
-    expect(notificationLinkTarget(rows, '99', true)).toEqual({ kind: 'missing' });
-    expect(notificationLinkTarget([], '42')).toEqual({ kind: 'waiting' });
-  });
-
-  test('a local row opens the page its own data names', () => {
-    expect(notificationLinkTarget(rows, '42')).toEqual({ kind: 'open', href: '/cameras/12' });
-  });
-});
-
 describe('the href of a household message', () => {
   test('opens the thread with its counterpart, whatever url it carries', () => {
-    expect(notificationHrefOf({ kind: 'household_message', counterpartId: 3, fromUserId: 3, messageKey: 'm' })).toBe(
-      '/conversations/3'
-    );
-    expect(notificationHrefOf({ kind: 'household_message', counterpartId: 0, url: '/agenda' })).toBe('/conversations/0');
+    expect(
+      notificationHrefOf({
+        kind: 'household_message',
+        counterpartId: 3,
+        fromUserId: 3,
+        messageKey: 'm',
+      })
+    ).toBe('/conversations/3');
+    expect(
+      notificationHrefOf({ kind: 'household_message', counterpartId: 0, url: '/agenda' })
+    ).toBe('/conversations/0');
   });
 
   test('falls back to the sender, and to the url when neither id is usable', () => {
-    expect(notificationHrefOf({ kind: 'household_message', fromUserId: 5 })).toBe('/conversations/5');
-    expect(notificationHrefOf({ kind: 'household_message', counterpartId: 'x', url: '/agenda' })).toBe('/agenda');
+    expect(notificationHrefOf({ kind: 'household_message', fromUserId: 5 })).toBe(
+      '/conversations/5'
+    );
+    expect(
+      notificationHrefOf({ kind: 'household_message', counterpartId: 'x', url: '/agenda' })
+    ).toBe('/agenda');
   });
 });

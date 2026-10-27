@@ -42,7 +42,6 @@ src/features/modules/components/impact-summary.tsx
 src/features/modules/components/module-notices.tsx
 src/features/modules/components/module-request-button.tsx
 src/features/modules/components/uninstall-dialog.tsx
-src/features/notification/screens/notification-link-screen.tsx
 src/features/privacy/components/consent-form.tsx
 src/features/privacy/components/household-privacy-panel.tsx
 src/features/privacy/components/minor-row.tsx
