@@ -66,6 +66,7 @@ mock.module('@/features/cameras/services/camera-rtc', () => ({
   },
 }));
 mock.module('@/features/cameras/services/camera-media.service', () => ({
+  mediaDeps: {},
   cameraMediaService: {
     open: async (input: ICameraMediaOpenInput) => {
       const session = new FakeWs(input);

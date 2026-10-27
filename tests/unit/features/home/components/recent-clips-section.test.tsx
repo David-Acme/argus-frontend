@@ -51,6 +51,10 @@ mock.module('@/features/home/hooks/use-recent-clip-tiles', () => ({
   useRecentClipTiles: () => data,
 }));
 
+mock.module('@/features/cameras', () => ({
+  CameraPreview: () => null,
+}));
+
 mock.module('@/shared/components/layout/use-offline-notice', () => ({
   useOfflineNotice: () => false,
 }));

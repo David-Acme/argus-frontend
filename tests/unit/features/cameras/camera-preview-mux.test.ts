@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { IArgusSocket, ICameraMediaSink } from '@/core/interfaces';
 import type { PreviewState } from '@/features/cameras/model/camera-preview';
 
-mock.module('@/features/cameras/services/camera-media.service', () => ({ mediaDeps: {} }));
+mock.module('@/features/cameras/services/camera-media.service', () => ({
+  mediaDeps: {},
+  cameraMediaService: { open: () => Promise.reject(new Error('not used')) },
+}));
 
 const { CameraPreviewMux } = await import('@/features/cameras/services/camera-preview-mux');
 
